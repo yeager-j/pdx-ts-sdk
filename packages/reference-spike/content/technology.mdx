@@ -1,0 +1,476 @@
+---
+id: technology
+title: Technologies
+summary: A card in the research view — an area, a tier, a price, and whatever it unlocks by existing.
+---
+
+## Is a technology the right thing
+
+A technology is **a thing an empire researches once**. It appears as a card in
+one of the three research areas, costs research points, and when it finishes it
+stays finished. What it *does* is almost always indirect: it carries a country
+modifier, or it is named as a prerequisite by something else — a building, a
+ship component, a decision, another technology.
+
+That last part is the test. If nothing in your mod would be gated on it, a
+technology is probably the wrong shape:
+
+- **A country modifier on its own** — if you want an empire to be permanently
+  better at something with no research step, a static modifier or an edict says
+  that directly.
+- **A tradition or an ascension perk** — a choice the player makes from a small
+  menu, not a card that shows up among a hundred others.
+- **A building or a component** — the thing a technology usually unlocks. Write
+  that first; the technology is the gate in front of it.
+- **An event chain** — a story with beats. A technology has one beat, at the end.
+
+Two technologies of your own that require each other is the smallest interesting
+shape, and it is what most of this page builds toward.
+
+## What the player actually sees
+
+Worth knowing before you write fields, because several of them exist only to
+fill in one part of a card:
+
+- The **name and description**, from the text you write in the definition.
+- The **area** it is filed under — physics, society, or engineering — and the
+  **category** inside that area, which decides the icon behind the card.
+- A **tier**, which is roughly how far down the tree it sits.
+- A **price** in research points, and a research time the game works out from it.
+- A list of **"this unlocks"** lines under the description. Some of those the
+  game works out on its own from what names this technology as a prerequisite;
+  the rest you write.
+- Whether it is offered at all, and how often. The player sees three cards at a
+  time per area, drawn against the weights.
+
+## Start from the recipe
+
+There is a recipe for this. `create-stellaris-mod generate technology` writes a
+complete, reviewed technology and the feature file that places it, and the panel
+below is that file — not a copy of it. It is rendered by the same Catalog the
+command uses, at the time this page was built.
+
+Read it before the hand-written examples further down. Those isolate one
+decision each; this one is the shape all of them are variations on, and it is
+what you will actually be looking at ten minutes from now.
+
+<StoryPanel id="recipe-starter" />
+
+Two things in it are worth naming. `desc` ships as a `PLACEHOLDER:` string
+rather than as invented flavour text, because it is the one piece of author
+writing nothing can derive and a greppable marker is more honest than a
+plausible sentence. And the two commented-out lines compile the moment you
+delete the `// ` — the recipe does not show you an example it has not checked.
+
+<Claim id="registry" />
+
+The `import { mod } from "#mod"` at the top is the project's own alias for
+`src/mod.ts`, the single module a scaffolded project calls `createMod` in. Every
+other story on this page builds its own capability inline instead, because a
+story has to be readable on its own.
+
+## The smallest one that builds
+
+The recipe's file sets more than the game demands. This is the floor:
+
+```ts story="minimal" title="Name, area, tier, category — nothing else"
+import { createMod } from "@pdx-ts/sdk";
+
+export const mod = createMod({
+  name: "Lumen Survey",
+  prefix: "lumen" as const,
+  version: "0.1.0",
+  supportedVersion: "v4.4.*",
+});
+
+export const optics = mod.technology("optics", {
+  name: "Coherent Optics",
+  area: "physics",
+  tier: 1,
+  category: "particles",
+});
+
+export const feature = mod.feature("optics", [optics]);
+```
+
+<Claim id="required-floor" />
+
+The id in the output is `lumen_tech_optics`, not `lumen_optics`: the capability
+mints a registry segment into every content id. Pass
+`ids: { technology: "technology" }` to `createMod` if you would rather it read
+`lumen_technology_optics`.
+
+<Claim id="areas-are-closed" />
+
+<Convention id="one-category">
+
+Give a technology exactly one category, and write it as a bare value rather than
+as a one-element array. The rules type the key as a list and every technology
+the game ships writes exactly one entry in it, so the list is the file format
+showing through rather than a feature.
+
+Pick the category before the area: a category belongs to exactly one area in the
+game's own files, and picking a category that lives under a different area than
+the one you declared is not something the build can catch for you.
+
+</Convention>
+
+<Claim id="localisation" />
+
+Open the localization tab on any story here to see what came out.
+
+## Where it sits in the tree
+
+A technology's place in the tree is entirely its `prerequisites`. There is no
+parent, no position, and no ordering field — the tree is drawn from the graph
+these lists make.
+
+<Claim id="prerequisites-refs" />
+
+<Convention id="bind-prerequisites">
+
+Reference your own technologies by their binding and vanilla's by id string.
+Both compile, and only one of them survives a rename: a binding carries whatever
+id the capability minted for it, so changing the technology's name in one place
+changes every reference to it. A string that happens to match is a string that
+will one day not match.
+
+Importing a binding from another feature module is ordinary module API and does
+not place the technology twice. Only the module's own `feature` export places
+anything.
+
+</Convention>
+
+```ts story="prerequisites" title="Two of your own, one of the game's"
+import { createMod } from "@pdx-ts/sdk";
+
+export const mod = createMod({
+  name: "Deep Survey",
+  prefix: "deep" as const,
+  version: "0.1.0",
+  supportedVersion: "v4.4.*",
+});
+
+export const lensing = mod.technology("lensing", {
+  name: "Gravitational Lensing",
+  desc: "Bending starlight around a mass tells you what is behind it.",
+  area: "physics",
+  tier: 2,
+  category: "computing",
+  cost: 2000,
+  // A vanilla id is a plain string, taken as given. `vanilla.technology(...)`
+  // is the checked form, against the real id set.
+  prerequisites: ["tech_basic_science_lab_1"],
+});
+
+export const arrays = mod.technology("arrays", {
+  name: "Distributed Lens Arrays",
+  desc: "One lens is an instrument. A thousand is an observatory.",
+  area: "physics",
+  tier: 3,
+  category: "computing",
+  cost: 6000,
+  // The binding, not the id — this one moves if the technology is renamed.
+  prerequisites: [lensing, "tech_lasers_2"],
+});
+
+export const feature = mod.feature("lensing", [lensing, arrays]);
+```
+
+<Claim id="or-groups-omitted" />
+
+## What researching it does
+
+Two different things, and authors reach for the wrong one about half the time. A
+`modifier` changes the empire. A `prereqforDesc` entry changes what the card
+*says* it changes — it is display text, and writing one does not make anything
+happen.
+
+<Claim id="trigger-scopes" />
+
+<Claim id="unlock-lines" />
+
+<Convention id="say-what-it-unlocks">
+
+Write an unlock line for anything the technology makes possible that the game
+cannot work out on its own. The game already lists everything that names this
+technology as a prerequisite; what it cannot list is a decision your event chain
+gates on a flag, or a modifier the player would otherwise have to notice on
+their own.
+
+Leave it off when the automatic list already says it. A technology that repeats
+its own prerequisite list in prose reads as a bug in the tooltip.
+
+</Convention>
+
+An unlock line is also the one place on a technology where you do not write
+English. `title` and `desc` there are **localization keys**, not text — the game
+looks them up, and a sentence written straight into either one is shown to the
+player verbatim. `mod.localization` is what makes a key you own:
+
+```ts story="unlocks" title="A modifier, and a line saying what it did"
+import { createMod } from "@pdx-ts/sdk";
+
+export const mod = createMod({
+  name: "Foundry Works",
+  prefix: "forge" as const,
+  version: "0.1.0",
+  supportedVersion: "v4.4.*",
+});
+
+// Two keys of this mod's own, so the unlock line has something to look up.
+const platingTitle = mod.localization("unlock_plating", {
+  english: "Reinforced Hull Plating",
+});
+const platingDesc = mod.localization("unlock_plating_desc", {
+  english: "Ships refitted after this carry a second layer at no upkeep.",
+});
+
+export const microforge = mod.technology("microforge", {
+  // `name` and `desc` here *are* English: they are localization slots the
+  // build writes the keys for. The two fields below are the other kind.
+  name: "Microforge Casting",
+  desc: "Alloy poured in a vacuum sets without a grain to crack along.",
+  area: "engineering",
+  tier: 2,
+  category: "materials",
+  cost: 2000,
+  // Runs in country scope, because a technology is a thing an empire has.
+  modifier: (m) => {
+    m.country.alloys.produces.mult(0.05);
+  },
+  prereqforDesc: [
+    {
+      custom: [{ title: platingTitle.key, desc: platingDesc.key }],
+    },
+  ],
+});
+
+export const feature = mod.feature("microforge", [microforge, platingTitle, platingDesc]);
+```
+
+Compare the two tabs on that panel. The technology's own `name` became a
+localization entry keyed off its id; the unlock line's `title` was written into
+the definition as the key it is, and the text for it came from the standalone
+entry beside it.
+
+## Paying for it
+
+`cost` is research points, and it is the field with the most shapes.
+
+<Claim id="cost-dual" />
+
+<Convention id="always-cost">
+
+Write a `cost` on every technology except a starting one. The rules ask for it
+and the surface cannot, so this is the one field where being deliberate matters
+more than usual — the section below explains why nothing will tell you.
+
+Start from a vanilla technology at the same tier rather than from a round
+number. Research point costs are only meaningful next to each other, and the
+tiers the game ships are the scale the player has already learned.
+
+</Convention>
+
+```ts story="cost-curve" title="A price that moves"
+import { createMod, hasCountryFlag } from "@pdx-ts/sdk";
+
+export const mod = createMod({
+  name: "Salvage Runs",
+  prefix: "salv" as const,
+  version: "0.1.0",
+  supportedVersion: "v4.4.*",
+});
+
+export const reclamation = mod.technology("reclamation", {
+  name: "Wreck Reclamation",
+  desc: "Someone else's debris field is a parts bin with a bad address.",
+  area: "engineering",
+  tier: 2,
+  category: "voidcraft",
+  cost: {
+    base: 3000,
+    modifiers: [
+      {
+        factor: 0.75,
+        when: hasCountryFlag("salv_salvage_doctrine"),
+      },
+    ],
+  },
+});
+
+export const feature = mod.feature("reclamation", [reclamation]);
+```
+
+<Claim id="cost-modifier-unpinned" />
+
+## How often the game offers it
+
+Weights decide which three cards an empire is shown. `weight` is the base,
+`weightModifier` moves it for a particular empire, and `aiWeight` moves it only
+for the computer.
+
+```ts story="weighting" title="A base weight and a reason to want it"
+import { createMod, hasCountryFlag } from "@pdx-ts/sdk";
+
+export const mod = createMod({
+  name: "Hydro Survey",
+  prefix: "hydro" as const,
+  version: "0.1.0",
+  supportedVersion: "v4.4.*",
+});
+
+export const tidalMapping = mod.technology("tidal_mapping", {
+  name: "Tidal Mapping",
+  desc: "The moon pulls the same ocean twice a day, and it writes it down.",
+  area: "society",
+  tier: 2,
+  category: "new_worlds",
+  cost: 2000,
+  weight: 100,
+  weightModifier: {
+    modifiers: [
+      {
+        factor: 3,
+        desc: "The survey fleet has already found something down there.",
+        // Without this the row's localization key is a hash of the sentence
+        // above, and editing the sentence orphans the translation.
+        descKey: "anomaly_logged",
+        when: hasCountryFlag("hydro_anomaly_logged"),
+      },
+    ],
+  },
+  aiWeight: { factor: 0.5 },
+});
+
+export const feature = mod.feature("tidal_mapping", [tidalMapping]);
+```
+
+There is a second, coarser lever — weight groups, which raise a technology's
+chances once something else in the same group has been drawn. It is the one
+place on this registry where the surface is narrower than the rules:
+
+<Claim id="group-weights-narrowed" />
+
+## One technology, two faces
+
+A swap is the same research card wearing a different name, area and effects for
+an empire that matches a trigger — a psionic empire getting the mystical version
+of the same breakthrough.
+
+<Claim id="swap-layout" />
+
+```ts story="swap" title="A swap for empires that qualify"
+import { createMod, hasCountryFlag } from "@pdx-ts/sdk";
+
+export const mod = createMod({
+  name: "Rite Engines",
+  prefix: "rite" as const,
+  version: "0.1.0",
+  supportedVersion: "v4.4.*",
+});
+
+export const resonantDrive = mod.technology("resonant_drive", {
+  name: "Resonant Drive",
+  desc: "A field that pushes against the shape of space rather than through it.",
+  area: "physics",
+  tier: 3,
+  category: "field_manipulation",
+  cost: 6000,
+  technologySwap: [
+    {
+      // The swap's own id, and the localization key its name is written under.
+      // Nothing mints this one for you.
+      name: "rite_tech_choral_drive",
+      trigger: hasCountryFlag("rite_choir_ascendant"),
+      inheritIcon: false,
+      area: "society",
+      category: ["statecraft"],
+      weight: 120,
+    },
+  ],
+});
+
+export const feature = mod.feature("resonant_drive", [resonantDrive]);
+```
+
+## Changing a technology the game already has
+
+Adding a technology and changing one are different jobs. Vanilla's own
+definitions cannot be edited in place — PDXScript overrides replace the whole
+object — so changing one field of a vanilla technology means re-emitting all of
+its fields, which means reading them out of the game's files first.
+
+<Claim id="patch-surface" />
+
+No story on this page does it. Every story here compiles and synthesizes with
+nothing but the vendored rules, and a patch needs a parsed Stellaris install —
+so the example lives in the SDK's own README, where the install is a premise
+rather than a dependency the page would have to pretend it had.
+
+## Mistakes you will probably make
+
+**Confusing `modifier` with `prereqforDesc`.** One changes the empire, the other
+changes the tooltip. Writing the second does not do the first, and a technology
+whose card promises something it does not deliver is worse than one that
+promises nothing.
+
+**Writing English into an unlock line.** `prereqforDesc`'s `title` and `desc`
+are keys the game looks up, and every other text field on the definition is
+English the build writes a key for. Getting it backwards builds cleanly and
+prints your sentence into the game's own file; the build says so in
+`mod.warnings`, which is not somewhere you will look unprompted.
+
+**A category that belongs to another area.** `area` is checked and `category` is
+a reference; that a given category sits under a given area is a fact in the
+game's own files that nothing here reads. `particles` under `society` builds
+cleanly and files the card nowhere useful.
+
+**A feature stem that repeats the prefix.** `mod.feature("lumen_optics", …)` in
+a mod prefixed `lumen` writes `common/technology/lumen_lumen_optics.txt`. The
+prefix is added for you; name the stem after the feature alone.
+
+**Expecting a swap to be a technology.** A swap is a block inside a technology,
+not a definition of its own — it has no binding, nothing can list it as a
+prerequisite, and its id is a string you wrote.
+
+## What will bite you
+
+One thing about technologies is genuinely unresolved, and it is the field you
+will write first.
+
+**If you leave `cost` off, nothing will tell you.** The rules describe starting
+technologies and ordinary ones as two different shapes with two different
+answers, and the surface cannot tell them apart:
+
+<Claim id="start-subtype-unresolved" />
+
+The same gap covers `weight`, and one field on the other side of it:
+`costPerLevel` is required of a repeatable technology and optional on the
+surface, for the same reason — the surface does not know which technologies are
+repeatable either.
+
+## Two things the SDK decided
+
+Everything else on this page is projected from the rules. These two are not:
+neither is anything the rules state, and both are reviewed decisions recorded in
+this repository rather than facts about Stellaris.
+
+<SdkContracts />
+
+## Every field
+
+Everything above is the path through. This is the whole surface, including the
+members nested inside `technologySwap`, `prereqforDesc` and the weight blocks —
+for when you already know what you are looking for.
+
+<FieldTable />
+
+## Where this came from
+
+Every claim on this page is supported by one build of the SDK against one commit
+of the rules, one documentation dump, and one extraction from one game version.
+They are listed together because evidence from different builds is not
+interchangeable.
+
+<EvidenceSummary />

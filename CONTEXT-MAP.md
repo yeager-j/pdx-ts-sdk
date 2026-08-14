@@ -1,6 +1,6 @@
 # Context Map
 
-`@pdx-ts/sdk` spans six bounded contexts. They do not share one language: a
+`@pdx-ts/sdk` spans seven bounded contexts. They do not share one language: a
 word that is load-bearing in one is often meaningless in another, and several
 words change meaning as they cross a boundary. Each context's glossary is the
 authority for its own terms.
@@ -24,6 +24,9 @@ authority for its own terms.
 - [Scaffolding](./packages/create-stellaris-mod/CONTEXT.md) —
   `packages/create-stellaris-mod`. Turning generated field knowledge and
   curated conventions into TypeScript source a mod author owns.
+- [Authoring Reference](./packages/authoring-reference/CONTEXT.md) — assembles
+  versioned reference contributions into an offline, read-only local guide to
+  the SDK's authoring model.
 
 ## Relationships
 
@@ -54,6 +57,16 @@ direction is stated in passing; the translation is the point.
 - **Scaffolding → Authoring.** A recipe emits TypeScript source containing one
   Authoring **Feature**. An item recipe places one **Item** in it; a feature
   recipe coordinates several.
+
+- **CWT Codegen → Authoring Reference.** The Supported authoring model becomes
+  a documentation-only **Reference projection** of supported facts, known
+  dispositions, and unresolved evidence. Authoring Reference never feeds that
+  projection back into legality or generation.
+
+- **Scaffolding → Authoring Reference.** Curated conventions, their Guidance
+  dependencies, and Verified examples cross as a deterministic Reference
+  contribution. Authoring Reference validates and presents them but does not
+  decide their topology or defaults.
 
 - **CWT Codegen → PDXScript Syntax.** Codegen uses the parser to read the
   corpus extracted from a real install. The dependency runs one way only, and

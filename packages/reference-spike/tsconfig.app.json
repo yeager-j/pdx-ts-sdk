@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "customConditions": ["pdx-source"],
+    "erasableSyntaxOnly": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "lib": ["es2024", "DOM", "DOM.Iterable"],
+    "module": "preserve",
+    "moduleDetection": "force",
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "noUncheckedIndexedAccess": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "target": "ES2024",
+    "types": ["node", "vite/client"]
+  },
+  // The browser half only. Vite resolves these, not Node, which is why they
+  // compile under `bundler` resolution with `jsx` on while everything else in
+  // the package stays in the repository's root program. The root tsconfig
+  // excludes exactly this directory for the same reason.
+  "include": [
+    "src/app/**/*.ts",
+    "src/app/**/*.tsx",
+    "src/app/mdx.d.ts",
+    "src/build.ts",
+    "src/claims.ts",
+    "src/search.ts",
+    "src/facts.ts",
+    "vite.config.ts"
+  ]
+}

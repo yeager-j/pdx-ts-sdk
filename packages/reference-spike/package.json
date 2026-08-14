@@ -1,0 +1,47 @@
+{
+  "name": "@pdx-ts/reference-spike",
+  "version": "0.0.0",
+  "description": "Quarantined Authoring Reference spike. Never published, never promoted, deleted on a fail verdict.",
+  "type": "module",
+  "private": true,
+  "_why_build_viewer": "The viewer's build script is named build:viewer, not build, because the repository root runs `npm run build --workspaces --if-present`. A spike that joined the release build would be exactly the root integration the design rules out.",
+  "_why_mod_import": "`#mod` is the alias a scaffolded project gives its own `src/mod.ts`, and a Recipe renders `import { mod } from \"#mod\"` into every file it writes. Declaring it here is what lets the technology page's Recipe story be the Recipe's exact bytes — compiled and synthesized like every other story — instead of a copy with the import rewritten.",
+  "imports": {
+    "#mod": "./src/example/recipe-mod.ts"
+  },
+  "scripts": {
+    "dev": "vite",
+    "stories": "node --conditions=pdx-source src/build/stories-cli.ts",
+    "stories:check": "node --conditions=pdx-source src/build/stories-cli.ts --check",
+    "snapshot": "node --conditions=pdx-source src/build/cli.ts",
+    "snapshot:check": "node --conditions=pdx-source src/build/cli.ts --check",
+    "audit": "node --conditions=pdx-source audit/install-audit.ts",
+    "typecheck": "tsc -p tsconfig.app.json",
+    "build:viewer": "vite build",
+    "start": "vite build && vite preview"
+  },
+  "devDependencies": {
+    "@mdx-js/mdx": "^3.1.1",
+    "@mdx-js/react": "^3.1.1",
+    "@mdx-js/rollup": "^3.1.1",
+    "@pdx-ts/codegen-cwt": "*",
+    "@pdx-ts/pdxscript": "*",
+    "@pdx-ts/sdk": "*",
+    "@tailwindcss/vite": "^4.1.18",
+    "@types/mdx": "^2.0.14",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^5.1.0",
+    "class-variance-authority": "^0.7.1",
+    "create-stellaris-mod": "*",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.552.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "remark-frontmatter": "^5.0.0",
+    "shiki": "^4.4.3",
+    "tailwind-merge": "^3.4.1",
+    "tailwindcss": "^4.1.18",
+    "vite": "^8.1.5"
+  }
+}

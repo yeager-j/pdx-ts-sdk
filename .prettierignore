@@ -1,0 +1,13 @@
+# Prettier reformats what it is given, and two kinds of file in this repo must
+# keep the bytes their generator chose.
+#
+# `packages/sdk/src/generated` is deliberately absent: codegen runs Prettier
+# over its own output with this repo's config, so the formatter and the
+# generator already agree and the pre-commit hook is a no-op there.
+#
+# The reference spike's extracted stories are the opposite case. Each one is
+# the verbatim text of a fenced block in `content/situations.mdx` — that
+# byte-identity is the point, because the page shows the fence and the compiler
+# reads the module, and they have to be the same code. Reformatting the module
+# breaks `npm run stories:check`, which is what noticed.
+packages/reference-spike/src/example/generated/

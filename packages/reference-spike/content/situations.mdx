@@ -1,0 +1,574 @@
+---
+id: situation_type
+title: Situations
+summary: A slow, monthly problem attached to a target, advancing through named stages while the player picks an approach.
+---
+
+## Is a situation the right thing
+
+A situation is a **slow problem attached to something**. It has a target — a
+planet, a country, a fleet — and a progress bar that advances on its own every
+month until it finishes or fails. As it advances it passes through named
+**stages**, and the player usually picks an **approach** that changes how fast
+it moves and what it costs them.
+
+That shape is the test. If your idea is not a bar that fills over time, one of
+these is probably closer:
+
+- **An event chain** — a story told in discrete beats, each one a window the
+  player reads and answers. Situations have no beats; they have a slope.
+- **A special project** — something a science ship flies to and works on.
+  Situations are not assigned to anyone and nothing travels.
+- **A decision** — a button the player presses on a planet or an empire.
+  Instant, repeatable, no duration of its own.
+- **A modifier or an edict** — an effect that is simply on or off. Reach for a
+  situation only when the *progression* is the point.
+
+They combine, and the common shape uses several: an event chain that starts a
+situation, and the situation firing events of its own as it advances.
+
+## What the player actually sees
+
+Worth knowing before you write fields, because several of them exist only to
+feed a piece of interface:
+
+- A **progress bar** in the situation log, filling toward completion at the
+  rate `monthlyProgress` computes.
+- The **stage** the bar is currently in, by `name`, with its own icon.
+- A breakdown of **why the bar is moving at that speed** — one line per
+  `monthlyProgress` modifier, using that modifier's `desc`.
+- An **approach panel**, one entry per approach, each with two icons, a name, a
+  description, and whatever its modifiers do.
+- An entry in the **outliner**, if `showInOutliner` is set.
+
+## A situation that works
+
+Start here rather than from the smallest legal definition. A minimal situation
+builds and is disappointing — no stages, no approaches, nothing a player would
+recognise. It is easier to delete from something that works than to add to a
+stub when you do not yet know what is addable.
+
+```ts story="complete" title="Two stages, two approaches, a rate with a reason"
+import { createMod, hasSituationFlag } from "@pdx-ts/sdk";
+
+export const mod = createMod({
+  name: "Vergence",
+  prefix: "verge" as const,
+  version: "0.1.0",
+  supportedVersion: "v4.4.*",
+});
+
+export const collapse = mod.situationType("collapse", {
+  name: "Orbital Collapse",
+  desc: "The station's orbit is decaying, and the schedule is slipping.",
+  category: "negative",
+  monthlyProgress: {
+    base: 3,
+    modifiers: [
+      {
+        factor: 1.5,
+        // `descKey` pins the localization key. Without it the key is a hash of
+        // the sentence, and editing the sentence silently orphans every
+        // translation of it.
+        descKey: "decay_accelerating",
+        desc: "The decay is accelerating.",
+        when: hasSituationFlag("verge_decay_accelerating"),
+      },
+    ],
+  },
+  stages: {
+    verge_collapse_tremors: {
+      name: "Tremors",
+      desc: "Instruments are picking up the first wobble.",
+      icon: "GFX_situation_stage_tremors",
+      iconBackground: "GFX_situation_stage_tremors_bg",
+      end: { base: 40 },
+    },
+    verge_collapse_fracture: {
+      name: "Fracture",
+      desc: "Structural failures are spreading through the ring.",
+      icon: "GFX_situation_stage_fracture",
+      iconBackground: "GFX_situation_stage_fracture_bg",
+      end: { base: 100 },
+    },
+  },
+  approach: {
+    verge_collapse_brace: {
+      name: "Brace the Ring",
+      desc: "Pour alloys into the structure and buy time.",
+      icon: "GFX_situation_approach_brace",
+      iconBackground: "GFX_situation_approach_brace_bg",
+      default: true,
+      modifier: (m) => m.country.alloys.produces.mult(-0.05),
+    },
+    verge_collapse_evacuate: {
+      name: "Evacuate",
+      desc: "Write the station off and move everyone down the well.",
+      icon: "GFX_situation_approach_evacuate",
+      iconBackground: "GFX_situation_approach_evacuate_bg",
+      modifier: (m) => m.country.unity.produces.mult(-0.02),
+    },
+  },
+});
+
+export const feature = mod.feature("collapse", [collapse]);
+```
+
+<Claim id="registry" />
+
+The floor is lower than that. Two members are required, and everything else
+above is optional detail:
+
+```ts story="minimal" title="The smallest one that builds"
+import { createMod } from "@pdx-ts/sdk";
+
+export const mod = createMod({
+  name: "Quiet Drift",
+  prefix: "quiet" as const,
+  version: "0.1.0",
+  supportedVersion: "v4.4.*",
+});
+
+export const drift = mod.situationType("drift", {
+  name: "Quiet Drift",
+  monthlyProgress: { base: 1 },
+});
+
+export const feature = mod.feature("drift", [drift]);
+```
+
+<Claim id="monthly-progress-required" />
+
+The id in the output is `quiet_situation_type_drift`, not `quiet_drift`: the
+capability mints a registry segment into every content id. Pass
+`ids: { situationType: "situation" }` to `createMod` if you would rather it
+read `quiet_situation_drift`.
+
+## Stages
+
+Stages are the arc. Each record key is the stage's id, its localization key,
+and its position in the order, all at once — there is no sort field to get
+wrong. `end` is where a stage hands over to the next, on the same scale the bar
+fills.
+
+<Convention id="two-stages">
+
+Give a situation more than one stage, and write them in the order the player
+will meet them. A single stage makes the progress bar a countdown with no story
+in it — there is nothing to notice getting worse.
+
+The container layout means the order you write is the order the game reads.
+There is no sort key, and no way to reorder them later without moving the
+source, so decide the shape of the arc before you name the stages.
+
+</Convention>
+
+```ts story="stages" title="Two stages, one container"
+import { createMod } from "@pdx-ts/sdk";
+
+export const mod = createMod({
+  name: "Tidal Swell",
+  prefix: "tide" as const,
+  version: "0.1.0",
+  supportedVersion: "v4.4.*",
+});
+
+export const swell = mod.situationType("swell", {
+  name: "Tidal Swell",
+  monthlyProgress: { base: 3 },
+  stages: {
+    tide_swell_calm: {
+      name: "Calm",
+      desc: "The tide charts still look ordinary.",
+      icon: "GFX_situation_stage_calm",
+      iconBackground: "GFX_situation_stage_calm_bg",
+      end: { base: 40 },
+    },
+    tide_swell_surge: {
+      name: "Surge",
+      desc: "Coastal cities are moving inland.",
+      icon: "GFX_situation_stage_surge",
+      iconBackground: "GFX_situation_stage_surge_bg",
+      end: { base: 100 },
+    },
+  },
+});
+
+export const feature = mod.feature("swell", [swell]);
+```
+
+<Claim id="stages-layout" />
+
+## Approaches
+
+Approaches are the player's move. They pick one, it stays picked until they
+change it, and it usually trades a resource against the speed of the bar.
+
+<Convention id="default-approach">
+
+Mark exactly one approach `default: true`, and give every approach both an
+`icon` and an `iconBackground`. The default is what an empire is on before the
+player chooses, so a situation with none starts in a state you did not design.
+
+Both icons are required by the rules rather than optional. An approach missing
+either one does not build, which is the good failure — the bad one is shipping
+a situation whose approach panel is empty.
+
+</Convention>
+
+Open the output panel below and compare it with the stages one above. Same
+authoring shape, different PDXScript.
+
+```ts story="approaches" title="Two approaches, repeated siblings"
+import { createMod } from "@pdx-ts/sdk";
+
+export const mod = createMod({
+  name: "Algae Bloom",
+  prefix: "bloom" as const,
+  version: "0.1.0",
+  supportedVersion: "v4.4.*",
+});
+
+export const algae = mod.situationType("algae", {
+  name: "Algae Bloom",
+  monthlyProgress: { base: 2 },
+  approach: {
+    bloom_algae_harvest: {
+      name: "Harvest It",
+      desc: "Turn the bloom into feedstock and accept the smell.",
+      icon: "GFX_situation_approach_harvest",
+      iconBackground: "GFX_situation_approach_harvest_bg",
+      default: true,
+      modifier: (m) => m.country.food.produces.mult(0.05),
+    },
+    bloom_algae_purge: {
+      name: "Purge It",
+      desc: "Bleach the shallows and start the ecology over.",
+      icon: "GFX_situation_approach_purge",
+      iconBackground: "GFX_situation_approach_purge_bg",
+      modifier: (m) => m.country.unity.produces.mult(-0.02),
+    },
+  },
+});
+
+export const feature = mod.feature("algae", [algae]);
+```
+
+<Claim id="approach-layout" />
+
+An approach can be locked until the situation reaches a particular stage, and
+the SDK checks the stage name against the ones this definition declares.
+
+<Claim id="identity-boundary" />
+
+```ts story="gated-approach" title="An approach gated on a stage"
+import { createMod, currentStage } from "@pdx-ts/sdk";
+
+export const mod = createMod({
+  name: "Shroud Whispers",
+  prefix: "shroud" as const,
+  version: "0.1.0",
+  supportedVersion: "v4.4.*",
+});
+
+export const whisper = mod.situationType("whisper", {
+  name: "Shroud Whispers",
+  monthlyProgress: { base: 1 },
+  stages: {
+    shroud_whisper_faint: {
+      name: "Faint",
+      icon: "GFX_situation_stage_faint",
+      iconBackground: "GFX_situation_stage_faint_bg",
+      end: { base: 60 },
+    },
+    shroud_whisper_loud: {
+      name: "Loud",
+      icon: "GFX_situation_stage_loud",
+      iconBackground: "GFX_situation_stage_loud_bg",
+      end: { base: 120 },
+    },
+  },
+  approach: {
+    shroud_whisper_listen: {
+      name: "Listen",
+      icon: "GFX_situation_approach_listen",
+      iconBackground: "GFX_situation_approach_listen_bg",
+      default: true,
+    },
+    shroud_whisper_answer: {
+      name: "Answer",
+      icon: "GFX_situation_approach_answer",
+      iconBackground: "GFX_situation_approach_answer_bg",
+      // Misspell this and it does not compile. Nest it inside `and(...)` and
+      // it does compile, unchecked — which is what most vanilla script is.
+      allow: currentStage("shroud_whisper_loud"),
+    },
+  },
+});
+
+export const feature = mod.feature("whispers", [whisper]);
+```
+
+## Making the bar move
+
+`monthlyProgress` is a weight block, and unlike most weight blocks in the SDK
+every modifier row also carries display text. That is not decoration: the block
+is what a player opens to find out why their situation is getting worse.
+
+<Convention id="progress-desc">
+
+Put the whole rate in `monthlyProgress` and write a real sentence in every
+modifier row's `desc`. The text is required per row rather than optional
+because this block is the only place a player can find out why the bar is
+moving at the speed it is. A row that says "modifier" tells them nothing, and a
+situation whose pace looks arbitrary reads as a bug rather than as pressure.
+
+Write the text from the player's side: what is happening in the fiction, not
+which flag you checked.
+
+</Convention>
+
+```ts story="progress" title="A rate with reasons"
+import { createMod, hasSituationFlag, not } from "@pdx-ts/sdk";
+
+export const mod = createMod({
+  name: "Hull Rust",
+  prefix: "rust" as const,
+  version: "0.1.0",
+  supportedVersion: "v4.4.*",
+});
+
+export const decay = mod.situationType("decay", {
+  name: "Hull Rust",
+  monthlyProgress: {
+    base: 2,
+    modifiers: [
+      {
+        factor: 1.5,
+        descKey: "corrosion_spreading",
+        desc: "Corrosion is spreading through the frame.",
+        when: hasSituationFlag("rust_corrosion_spreading"),
+      },
+      {
+        subtract: 1,
+        descKey: "drydock_holding",
+        desc: "Drydock crews are keeping ahead of it.",
+        when: not(hasSituationFlag("rust_corrosion_spreading")),
+      },
+    ],
+  },
+});
+
+export const feature = mod.feature("decay", [decay]);
+```
+
+## The text the player reads
+
+You write English in the definition. The build produces the localization file
+and invents the key names — including for the `desc` on each progress modifier,
+which has no id of its own to hang one off.
+
+Open the localization tab on any story above to see what came out.
+
+<Claim id="nested-localisation" />
+
+A stage or an approach has an id to hang its key off. A `monthlyProgress`
+modifier row does not, so the build derives one — and by default it derives it
+from a **hash of your sentence**. Edit the sentence later and the key changes,
+which silently orphans every translation anyone has written against the old
+one. `descKey` pins it:
+
+```ts
+{
+  factor: 1.5,
+  descKey: "decay_accelerating",   // stable
+  desc: "The decay is accelerating.",  // free to reword
+}
+```
+
+The build says so itself, in `mod.warnings`, whenever you leave it out. Read
+that list — it is data rather than console output, so nothing prints it at you.
+
+## Starting it
+
+Defining a situation does not start one. `startSituation` does, and it is an
+effect like any other: it goes in an event, an on-action, a decision.
+
+<Claim id="target-scope-authored" />
+
+<SdkContracts />
+
+<Convention id="declare-target-scope">
+
+Declare `targetScope` on any situation your own script starts. It costs one
+line, it emits nothing, and it converts a whole class of silent in-game failure
+— starting a planet-shaped situation on a country — into a compile error.
+
+Leave it off only for a situation you never start yourself, such as one a
+player triggers through a decision you do not own. Without it, the generated
+`startSituation` signature still accepts the call, and the mistake surfaces as
+a situation that quietly does nothing.
+
+</Convention>
+
+```ts story="typed-start" title="A planet-targeted situation, started from an event"
+import { createMod, eventTarget, hasCountryFlag, not } from "@pdx-ts/sdk";
+
+export const mod = createMod({
+  name: "Orbital Drift",
+  prefix: "drift" as const,
+  version: "0.1.0",
+  supportedVersion: "v4.4.*",
+});
+
+const events = mod.namespace();
+
+export const orbit = mod.situationType("orbit", {
+  name: "Orbital Drift",
+  monthlyProgress: { base: 3 },
+  potential: not(hasCountryFlag("drift_orbit_resolved")),
+  targetScope: "planet",
+  onStart: (situation) => situation.setSituationFlag("drift_orbit_started"),
+});
+
+const driftingWorld = eventTarget<"planet">("drift_drifting_world");
+
+export const discovered = events.country(1, {
+  title: "A World Adrift",
+  desc: "Long-range survey confirms the orbit is decaying.",
+  isTriggeredOnly: true,
+  immediate: (country) => {
+    country.startSituation({
+      type: orbit,
+      target: driftingWorld,
+      // The body's `target(...)` is a planet scope because the declaration
+      // above said so. No second type argument needed.
+      effect: (situation) => {
+        situation.target((planet) => planet.setPlanetFlag("drift_drifting"));
+      },
+    });
+  },
+});
+
+export const feature = mod.feature("orbit", [orbit, discovered]);
+```
+
+<Claim id="trigger-scopes" />
+
+`currentStage`, `currentSituationApproach` and `canSetSituationApproach` read a
+running situation, and are checked against this definition's own keys in the
+four positions above. Nested inside a combinator or an effect closure they
+still compile, unchecked.
+
+There is no Situation recipe in `create-stellaris-mod` today, so every story on
+this page is hand-written.
+
+## Mistakes you will probably make
+
+Three of these caught the person who wrote the stories on this page. None is
+obvious from the types.
+
+**A situation-scoped trigger in `potential`.** Almost everything on a situation
+definition runs in situation scope, so reaching for `hasSituationFlag` is the
+natural move. `potential` is the exception — it decides whether an empire can
+have the situation at all, so it runs in **country** scope, and a situation
+trigger there does not compile.
+
+**A stage or approach key without your mod prefix.** The record keys are content
+ids, not local labels, and the capability refuses one that does not start with
+your prefix. Write `mymod_thing_stage_one`, not `stage_one`.
+
+**A feature stem that repeats the prefix.** `mod.feature("quiet_drift", …)` in a
+mod prefixed `quiet` writes `common/situations/quiet_quiet_drift.txt`. The
+prefix is added for you; name the stem after the feature alone.
+
+## What will bite you
+
+Three things about situations are unfinished. They are here rather than in a
+changelog because each one costs an afternoon if you meet it without warning.
+
+**If you wanted a different picture per condition, you cannot have it.** The
+game supports it and this surface does not.
+
+<Claim id="picture-block-omitted" />
+
+**If you wanted a stage in an exact colour, read the type and not the comment.**
+This one is worse than a missing feature, because the SDK actively tells you
+something untrue:
+
+<Claim id="stage-color-contradiction" />
+
+**If you were going to use `totalProgress`, know that nothing is checking you.**
+There are two ways a situation can measure progress and the surface cannot tell
+you which one you are in:
+
+<Claim id="progress-mode-unresolved" />
+
+<Convention id="prefer-end">
+
+Give each stage an `end` and leave `totalProgress` alone unless you
+specifically want section weights.
+
+This is a recommendation to stay out of the unresolved interaction above, not a
+claim that section weights are worse. The build cannot check the combination,
+the rules say the game logs an error when the two are mixed, and there is
+almost no shipped script to read for the other mode. If you do want section
+weights, expect to verify the result in game yourself.
+
+</Convention>
+
+The story below writes the mode nobody can describe. It compiles and it
+synthesizes, which is exactly the problem: the build has no opinion about
+whether it is correct, and neither does this page.
+
+```ts story="section-weights" title="Section weights — compiles, unverified"
+import { createMod } from "@pdx-ts/sdk";
+
+export const mod = createMod({
+  name: "Terraform Reshape",
+  prefix: "terra" as const,
+  version: "0.1.0",
+  supportedVersion: "v4.4.*",
+});
+
+export const reshape = mod.situationType("reshape", {
+  name: "Terraform Reshape",
+  monthlyProgress: { base: 5 },
+  totalProgress: { base: 600 },
+  stages: {
+    terra_reshape_seed: {
+      name: "Seeding",
+      icon: "GFX_situation_stage_seed",
+      iconBackground: "GFX_situation_stage_seed_bg",
+      sectionWeight: { base: 25 },
+    },
+    terra_reshape_bloom: {
+      name: "Blooming",
+      icon: "GFX_situation_stage_bloom",
+      iconBackground: "GFX_situation_stage_bloom_bg",
+      sectionWeight: { base: 75 },
+    },
+  },
+});
+
+export const feature = mod.feature("reshape", [reshape]);
+```
+
+## Every field
+
+Everything above is the path through. This is the whole surface, including the
+members nested inside `stages`, `approach` and the struct fields — for when you
+already know what you are looking for.
+
+<Claim id="stage-target-modifier-unpinned" />
+
+<FieldTable />
+
+## Where this came from
+
+Every claim on this page is supported by one build of the SDK against one commit
+of the rules, one documentation dump, and one extraction from one game version.
+They are listed together because evidence from different builds is not
+interchangeable.
+
+<EvidenceSummary />

@@ -1,0 +1,144 @@
+@import "tailwindcss";
+@import "./typeset.css";
+
+/*
+ * The shadcn/ui token set, trimmed to what this page renders, plus five status
+ * colors of its own.
+ *
+ * The status colors are the one place the spike spends real design effort: the
+ * whole hypothesis is that a reader can tell a guarantee from an observation
+ * from a guess at a glance, and that is a visual claim before it is a textual
+ * one. Everything else deliberately looks like default shadcn.
+ */
+
+@theme {
+  --color-background: oklch(1 0 0);
+  --color-foreground: oklch(0.145 0 0);
+  --color-card: oklch(1 0 0);
+  --color-muted: oklch(0.97 0 0);
+  --color-muted-foreground: oklch(0.46 0 0);
+  --color-border: oklch(0.922 0 0);
+  --color-accent: oklch(0.97 0 0);
+  --color-ring: oklch(0.708 0 0);
+
+  --color-contract: oklch(0.52 0.13 155);
+  --color-contract-soft: oklch(0.96 0.03 155);
+  --color-observed: oklch(0.52 0.11 240);
+  --color-observed-soft: oklch(0.96 0.03 240);
+  --color-curated: oklch(0.52 0.12 300);
+  --color-curated-soft: oklch(0.96 0.03 300);
+  --color-omission: oklch(0.52 0.13 60);
+  --color-omission-soft: oklch(0.96 0.04 60);
+  --color-unresolved: oklch(0.52 0.16 25);
+  --color-unresolved-soft: oklch(0.96 0.04 25);
+}
+
+/*
+ * Dark mode overrides the variables on `:root`, and must not be another
+ * `@theme` block.
+ *
+ * Tailwind v4 hoists every `@theme` declaration onto `:root` and drops the
+ * at-rule's surroundings, so an `@theme` nested in a media query emits its
+ * values unconditionally. This page was dark in both schemes for that reason
+ * until Shiki — which does respect the query — put light-theme code on a dark
+ * background and made it obvious.
+ *
+ * Utilities reference these as `var(--color-…)`, so overriding the variable is
+ * enough; nothing needs a second set of utilities.
+ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: oklch(0.16 0 0);
+    --color-foreground: oklch(0.96 0 0);
+    --color-card: oklch(0.2 0 0);
+    --color-muted: oklch(0.24 0 0);
+    --color-muted-foreground: oklch(0.7 0 0);
+    --color-border: oklch(0.3 0 0);
+    --color-accent: oklch(0.26 0 0);
+    --color-ring: oklch(0.55 0 0);
+
+    --color-contract: oklch(0.78 0.13 155);
+    --color-contract-soft: oklch(0.27 0.05 155);
+    --color-observed: oklch(0.78 0.11 240);
+    --color-observed-soft: oklch(0.27 0.05 240);
+    --color-curated: oklch(0.78 0.11 300);
+    --color-curated-soft: oklch(0.27 0.05 300);
+    --color-omission: oklch(0.82 0.13 75);
+    --color-omission-soft: oklch(0.28 0.05 75);
+    --color-unresolved: oklch(0.78 0.14 25);
+    --color-unresolved-soft: oklch(0.28 0.06 25);
+  }
+}
+
+/*
+ * The docs preset.
+ *
+ * Deliberately no webfont. The official install loads Geist through
+ * `next/font`, and this page's whole product boundary is that it needs no
+ * network — a reference that fetches from Google Fonts to render is a
+ * reference that renders differently on a plane. The stacks below are what
+ * the reader's machine already has, and the rhythm values are the ones the
+ * preset ships with.
+ */
+.typeset-docs {
+  --typeset-font-body:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --typeset-font-heading: var(--typeset-font-body);
+  --typeset-font-mono:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --typeset-size: 15px;
+  --typeset-leading: 1.75;
+  --typeset-flow: 1.25em;
+}
+
+/*
+ * Smooth scrolling only for readers who have not asked motion to stop.
+ * Unguarded, it animates an 11,000px jump for somebody whose system setting
+ * exists precisely to prevent that.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  -webkit-font-smoothing: antialiased;
+}
+
+/*
+ * Shiki, in both schemes from one build.
+ *
+ * The highlighter emits light colours as inline styles and dark ones as
+ * `--shiki-dark` custom properties beside them, so the swap is a media query
+ * over one HTML string — no second render, no JavaScript, and no flash on a
+ * page that has no theme toggle to begin with.
+ *
+ * The background is dropped in both schemes: the panel already has one, and
+ * Shiki's would put a second, differently-tinted rectangle inside it.
+ */
+.shiki,
+.shiki span {
+  background-color: transparent !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  .shiki,
+  .shiki span {
+    color: var(--shiki-dark) !important;
+    font-style: var(--shiki-dark-font-style) !important;
+    font-weight: var(--shiki-dark-font-weight) !important;
+    text-decoration: var(--shiki-dark-text-decoration) !important;
+  }
+}
+
+/*
+ * Anchored jumps from search and from the nav land below the sticky header
+ * rather than under it. The targets are the markdown headings themselves now,
+ * which is what carries the id.
+ */
+.typeset :is(h2, h3)[id] {
+  scroll-margin-top: 7rem;
+}

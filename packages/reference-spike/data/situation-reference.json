@@ -1,0 +1,6374 @@
+{
+  "schemaVersion": 1,
+  "identity": {
+    "sdkVersion": "0.2.0",
+    "cwtCommit": "ec350bdb4f9aa790e45ec88493b03046d5252439",
+    "docsRevision": "v4.4.1",
+    "corpusGameVersion": "4.4.6",
+    "vanillaIdsVersion": "4.4.6-r.1"
+  },
+  "pageId": "situations",
+  "registry": "situation_type",
+  "title": "Situations",
+  "summary": "A slow, monthly problem attached to a target, advancing through named stages while the player picks an approach.",
+  "facts": {
+    "registry": "situation_type",
+    "typeName": "SituationType",
+    "definitionPath": "game/common/situations",
+    "subtypes": [
+      {
+        "name": "bidirectional",
+        "gatedKeys": [
+          "complete_category",
+          "fail_category"
+        ],
+        "excludedKeys": [],
+        "absentUnless": null
+      },
+      {
+        "name": "dynamic_progress",
+        "gatedKeys": [
+          "stages.section_weight"
+        ],
+        "excludedKeys": [
+          "stages.end"
+        ],
+        "absentUnless": null
+      }
+    ],
+    "declared": [
+      {
+        "key": "abort_trigger",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 87,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "single_alias_right[trigger_clause]",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "active_tooltip",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 53,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "localisation",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "approach",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 128,
+            "cardinality": {
+              "min": 0,
+              "max": null
+            },
+            "declaredType": "block",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "approach.ai_weight",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 165,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "int",
+            "docs": []
+          },
+          {
+            "line": 167,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "block",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "approach.allow",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 135,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "single_alias_right[trigger_clause]",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "approach.custom_tooltip_with_modifiers",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 154,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "localisation",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "approach.default",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 133,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "yes",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "approach.icon",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 130,
+            "cardinality": {
+              "min": 1,
+              "max": 1
+            },
+            "declaredType": "<sprite>",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "approach.icon_background",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 131,
+            "cardinality": {
+              "min": 1,
+              "max": 1
+            },
+            "declaredType": "<sprite>",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "approach.modifier",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 141,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "single_alias_right[modifier_clause]",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "approach.name",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 129,
+            "cardinality": {
+              "min": 1,
+              "max": 1
+            },
+            "declaredType": "localisation",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "approach.on_select",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 163,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "single_alias_right[effect_clause]",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "approach.potential",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 137,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "single_alias_right[trigger_clause]",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "approach.resources",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 157,
+            "cardinality": {
+              "min": 0,
+              "max": null
+            },
+            "declaredType": "block",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "approach.target_modifier",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 144,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "single_alias_right[modifier_clause]",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "approach.triggered_modifier",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 148,
+            "cardinality": {
+              "min": 0,
+              "max": null
+            },
+            "declaredType": "single_alias_right[triggered_modifier_by_situation_clause]",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "approach.triggered_target_modifier",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 151,
+            "cardinality": {
+              "min": 0,
+              "max": null
+            },
+            "declaredType": "single_alias_right[triggered_modifier_by_situation_clause]",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "category",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 35,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "enum[situation_category]",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "complete_category",
+        "subtype": "bidirectional",
+        "arms": [
+          {
+            "line": 201,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "enum[situation_category]",
+            "docs": [
+              "Only for progress_direction = bidirectional - only affects progress towards completetion (right)"
+            ]
+          }
+        ]
+      },
+      {
+        "key": "complete_icon",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 216,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "<sprite>",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "complete_icon_frame",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 218,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "<sprite>",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "custom_tooltip",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 67,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "localisation",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "custom_tooltip_with_modifiers",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 69,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "localisation",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "desc",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 49,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "localisation",
+            "docs": []
+          },
+          {
+            "line": 51,
+            "cardinality": {
+              "min": 0,
+              "max": null
+            },
+            "declaredType": "single_alias_right[triggered_desc_clause]",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "fail_category",
+        "subtype": "bidirectional",
+        "arms": [
+          {
+            "line": 204,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "enum[situation_category]",
+            "docs": [
+              "Only for progress_direction = bidirectional - only affects progress towards fail (left)"
+            ]
+          }
+        ]
+      },
+      {
+        "key": "fail_icon",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 220,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "<sprite>",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "fail_icon_frame",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 222,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "<sprite>",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "initial_progress",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 177,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "int",
+            "docs": [
+              "The value the situation progress is going to have when starting. Important for bidirectional situations. if it is lower than start_value, it will be changed to start_value"
+            ]
+          }
+        ]
+      },
+      {
+        "key": "modifier",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 91,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "single_alias_right[modifier_clause]",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "monthly_progress",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 123,
+            "cardinality": {
+              "min": 1,
+              "max": 1
+            },
+            "declaredType": "block",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "on_abort",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 80,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "single_alias_right[effect_clause]",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "on_fail",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 78,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "single_alias_right[effect_clause]",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "on_monthly",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 104,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "block",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "on_monthly.events",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 106,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "block",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "on_monthly.random_events",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 113,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "block",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "on_progress_complete",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 82,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "single_alias_right[effect_clause]",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "on_start",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 76,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "single_alias_right[effect_clause]",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "override_active_desc",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 58,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "localisation",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "override_active_title",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 56,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "localisation",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "override_finisher_desc",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 62,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "localisation",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "override_finisher_title",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 60,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "localisation",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "override_progress_current_desc",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 64,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "localisation",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "permanent",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 210,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "bool",
+            "docs": [
+              "If yes, the situation does not end automatically when it reaches either extreme. It needs to be finished manually if needed.",
+              "Default: no"
+            ]
+          }
+        ]
+      },
+      {
+        "key": "picture",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 28,
+            "cardinality": {
+              "min": 0,
+              "max": null
+            },
+            "declaredType": "<sprite>",
+            "docs": []
+          },
+          {
+            "line": 30,
+            "cardinality": {
+              "min": 0,
+              "max": null
+            },
+            "declaredType": "block",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "potential",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 73,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "single_alias_right[trigger_clause]",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "progress_direction",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 194,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "monodirectional",
+            "docs": [
+              "monodirectional/bidirectional (defaults to monodirectional)"
+            ]
+          },
+          {
+            "line": 197,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "bidirectional",
+            "docs": [
+              "monodirectional/bidirectional (defaults to monodirectional)"
+            ]
+          }
+        ]
+      },
+      {
+        "key": "show_in_outliner",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 213,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "bool",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "situation_log_category",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 38,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "<situation_log_category>",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "stages",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 225,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "block",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "stages.color",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 252,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "single_alias_right[color_type_rgba]",
+            "docs": [
+              "Color for UI elements associated with this stage. Can be:",
+              "- A key from the named colors database (e.g. \"red\")",
+              "- A numeric RGBA vector (e.g. { 255 100 0 255 } or { 1.0 0.3 0.0 1.0 })",
+              "Defaults to SITUATION_STAGE_DEFAULT_COLOR"
+            ]
+          },
+          {
+            "line": 254,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "<named_color>",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "stages.custom_tooltip",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 256,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "localisation",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "stages.end",
+        "subtype": "not dynamic_progress",
+        "arms": [
+          {
+            "line": 230,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "int_value_field",
+            "docs": []
+          },
+          {
+            "line": 232,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "block",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "stages.icon",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 245,
+            "cardinality": {
+              "min": 1,
+              "max": 1
+            },
+            "declaredType": "<sprite>",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "stages.icon_background",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 246,
+            "cardinality": {
+              "min": 1,
+              "max": 1
+            },
+            "declaredType": "<sprite>",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "stages.modifier",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 266,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "single_alias_right[modifier_clause]",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "stages.on_enter",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 260,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "single_alias_right[effect_clause]",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "stages.on_first_enter",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 258,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "single_alias_right[effect_clause]",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "stages.potential",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 262,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "single_alias_right[trigger_clause]",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "stages.section_weight",
+        "subtype": "dynamic_progress",
+        "arms": [
+          {
+            "line": 239,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "int_value_field",
+            "docs": []
+          },
+          {
+            "line": 241,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "block",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "stages.target_modifier",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 274,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "single_alias_right[modifier_clause]",
+            "docs": [
+              "Target is typically a single colony carrier, your whole empire, or no target"
+            ]
+          }
+        ]
+      },
+      {
+        "key": "stages.triggered_modifier",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 269,
+            "cardinality": {
+              "min": 0,
+              "max": null
+            },
+            "declaredType": "single_alias_right[triggered_modifier_by_situation_clause]",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "stages.triggered_target_modifier",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 278,
+            "cardinality": {
+              "min": 0,
+              "max": null
+            },
+            "declaredType": "single_alias_right[triggered_modifier_by_situation_clause]",
+            "docs": [
+              "Target is typically a single colony carrier, your whole empire, or no target"
+            ]
+          }
+        ]
+      },
+      {
+        "key": "start_value",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 174,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "int",
+            "docs": [
+              "Situation will start at this number. Default is 0"
+            ]
+          }
+        ]
+      },
+      {
+        "key": "target_modifier",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 94,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "single_alias_right[modifier_clause]",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "title",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 41,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "localisation",
+            "docs": []
+          },
+          {
+            "line": 43,
+            "cardinality": {
+              "min": 0,
+              "max": null
+            },
+            "declaredType": "block",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "title.text",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 46,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "localisation",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "title.trigger",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 44,
+            "cardinality": {
+              "min": 1,
+              "max": 1
+            },
+            "declaredType": "single_alias_right[trigger_clause]",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "total_progress",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 183,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "int_value_field",
+            "docs": []
+          },
+          {
+            "line": 188,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "block",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "triggered_blocked_desc",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 85,
+            "cardinality": {
+              "min": 0,
+              "max": null
+            },
+            "declaredType": "single_alias_right[triggered_desc_clause]",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "triggered_modifier",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 98,
+            "cardinality": {
+              "min": 0,
+              "max": null
+            },
+            "declaredType": "single_alias_right[triggered_modifier_by_situation_clause]",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "triggered_target_modifier",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 101,
+            "cardinality": {
+              "min": 0,
+              "max": null
+            },
+            "declaredType": "single_alias_right[triggered_modifier_by_situation_clause]",
+            "docs": []
+          }
+        ]
+      }
+    ],
+    "lowered": [
+      {
+        "key": "picture",
+        "memberPath": [
+          "picture"
+        ],
+        "shape": "value",
+        "repeated": true,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "category",
+        "memberPath": [
+          "category"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": [
+          "positive",
+          "negative",
+          "neutral"
+        ],
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "situation_log_category",
+        "memberPath": [
+          "situationLogCategory"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "title",
+        "memberPath": [
+          "title"
+        ],
+        "shape": "dual",
+        "repeated": true,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "desc",
+        "memberPath": [
+          "conditionalDesc"
+        ],
+        "shape": "dual",
+        "repeated": true,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "active_tooltip",
+        "memberPath": [
+          "activeTooltip"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "override_active_title",
+        "memberPath": [
+          "overrideActiveTitle"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "override_active_desc",
+        "memberPath": [
+          "overrideActiveDesc"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "override_finisher_title",
+        "memberPath": [
+          "overrideFinisherTitle"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "override_finisher_desc",
+        "memberPath": [
+          "overrideFinisherDesc"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "override_progress_current_desc",
+        "memberPath": [
+          "overrideProgressCurrentDesc"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "custom_tooltip",
+        "memberPath": [
+          "customTooltip"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "custom_tooltip_with_modifiers",
+        "memberPath": [
+          "customTooltipWithModifiers"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "potential",
+        "memberPath": [
+          "potential"
+        ],
+        "shape": "trigger",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "country"
+        ],
+        "clause": "trigger",
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "on_start",
+        "memberPath": [
+          "onStart"
+        ],
+        "shape": "effect",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "situation"
+        ],
+        "clause": "effect",
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "on_fail",
+        "memberPath": [
+          "onFail"
+        ],
+        "shape": "effect",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "situation"
+        ],
+        "clause": "effect",
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "on_abort",
+        "memberPath": [
+          "onAbort"
+        ],
+        "shape": "effect",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "situation"
+        ],
+        "clause": "effect",
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "on_progress_complete",
+        "memberPath": [
+          "onProgressComplete"
+        ],
+        "shape": "effect",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "situation"
+        ],
+        "clause": "effect",
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "triggered_blocked_desc",
+        "memberPath": [
+          "triggeredBlockedDesc"
+        ],
+        "shape": "struct",
+        "repeated": true,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "abort_trigger",
+        "memberPath": [
+          "abortTrigger"
+        ],
+        "shape": "trigger",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "situation"
+        ],
+        "clause": "trigger",
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "modifier",
+        "memberPath": [
+          "modifier"
+        ],
+        "shape": "modifierBlock",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "country"
+        ],
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "target_modifier",
+        "memberPath": [
+          "targetModifier"
+        ],
+        "shape": "modifierBlock",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "planet"
+        ],
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "triggered_modifier",
+        "memberPath": [
+          "triggeredModifier"
+        ],
+        "shape": "triggeredModifierBlock",
+        "repeated": true,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "country"
+        ],
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "triggered_target_modifier",
+        "memberPath": [
+          "triggeredTargetModifier"
+        ],
+        "shape": "triggeredModifierBlock",
+        "repeated": true,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "planet"
+        ],
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "on_monthly",
+        "memberPath": [
+          "onMonthly"
+        ],
+        "shape": "struct",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "monthly_progress",
+        "memberPath": [
+          "monthlyProgress"
+        ],
+        "shape": "weightBlockWithLoc",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "situation"
+        ],
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "approach",
+        "memberPath": [
+          "approach"
+        ],
+        "shape": "repeatedStruct",
+        "repeated": true,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "start_value",
+        "memberPath": [
+          "startValue"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "initial_progress",
+        "memberPath": [
+          "initialProgress"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "total_progress",
+        "memberPath": [
+          "totalProgress"
+        ],
+        "shape": "dual",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "situation"
+        ],
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "progress_direction",
+        "memberPath": [
+          "progressDirection"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": [
+          "monodirectional",
+          "bidirectional"
+        ],
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "complete_category",
+        "memberPath": [
+          "completeCategory"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": [
+          "positive",
+          "negative",
+          "neutral"
+        ],
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "fail_category",
+        "memberPath": [
+          "failCategory"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": [
+          "positive",
+          "negative",
+          "neutral"
+        ],
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "permanent",
+        "memberPath": [
+          "permanent"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": [
+          "yes",
+          "no"
+        ],
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "show_in_outliner",
+        "memberPath": [
+          "showInOutliner"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": [
+          "yes",
+          "no"
+        ],
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "complete_icon",
+        "memberPath": [
+          "completeIcon"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "complete_icon_frame",
+        "memberPath": [
+          "completeIconFrame"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "fail_icon",
+        "memberPath": [
+          "failIcon"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "fail_icon_frame",
+        "memberPath": [
+          "failIconFrame"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "stages",
+        "memberPath": [
+          "stages"
+        ],
+        "shape": "repeatedStruct",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "title.trigger",
+        "memberPath": [
+          "title",
+          "trigger"
+        ],
+        "shape": "trigger",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "situation"
+        ],
+        "clause": "trigger",
+        "level": "nested",
+        "declaredIn": "body"
+      },
+      {
+        "key": "title.text",
+        "memberPath": [
+          "title",
+          "text"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "body"
+      },
+      {
+        "key": "desc.trigger",
+        "memberPath": [
+          "conditionalDesc",
+          "trigger"
+        ],
+        "shape": "trigger",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "situation"
+        ],
+        "clause": "trigger",
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "desc.text",
+        "memberPath": [
+          "conditionalDesc",
+          "text"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "triggered_blocked_desc.trigger",
+        "memberPath": [
+          "triggeredBlockedDesc",
+          "trigger"
+        ],
+        "shape": "trigger",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "situation"
+        ],
+        "clause": "trigger",
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "triggered_blocked_desc.text",
+        "memberPath": [
+          "triggeredBlockedDesc",
+          "text"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "triggered_modifier.potential",
+        "memberPath": [
+          "triggeredModifier"
+        ],
+        "shape": "trigger",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "situation"
+        ],
+        "clause": "trigger",
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "triggered_target_modifier.potential",
+        "memberPath": [
+          "triggeredTargetModifier"
+        ],
+        "shape": "trigger",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "situation"
+        ],
+        "clause": "trigger",
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "on_monthly.events",
+        "memberPath": [
+          "onMonthly",
+          "events"
+        ],
+        "shape": "valueList",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "body"
+      },
+      {
+        "key": "on_monthly.random_events",
+        "memberPath": [
+          "onMonthly",
+          "randomEvents"
+        ],
+        "shape": "weightedEvents",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "body"
+      },
+      {
+        "key": "monthly_progress.modifier",
+        "memberPath": [
+          "monthlyProgress"
+        ],
+        "shape": "weightModifier",
+        "repeated": true,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "situation"
+        ],
+        "clause": "trigger",
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "approach.icon",
+        "memberPath": [
+          "approach",
+          "icon"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "body"
+      },
+      {
+        "key": "approach.icon_background",
+        "memberPath": [
+          "approach",
+          "iconBackground"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "body"
+      },
+      {
+        "key": "approach.default",
+        "memberPath": [
+          "approach",
+          "default"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": [
+          "yes"
+        ],
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "body"
+      },
+      {
+        "key": "approach.allow",
+        "memberPath": [
+          "approach",
+          "allow"
+        ],
+        "shape": "trigger",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "situation"
+        ],
+        "clause": "trigger",
+        "level": "nested",
+        "declaredIn": "body"
+      },
+      {
+        "key": "approach.potential",
+        "memberPath": [
+          "approach",
+          "potential"
+        ],
+        "shape": "trigger",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "situation"
+        ],
+        "clause": "trigger",
+        "level": "nested",
+        "declaredIn": "body"
+      },
+      {
+        "key": "approach.modifier",
+        "memberPath": [
+          "approach",
+          "modifier"
+        ],
+        "shape": "modifierBlock",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "country"
+        ],
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "body"
+      },
+      {
+        "key": "approach.target_modifier",
+        "memberPath": [
+          "approach",
+          "targetModifier"
+        ],
+        "shape": "modifierBlock",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "planet"
+        ],
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "body"
+      },
+      {
+        "key": "approach.triggered_modifier",
+        "memberPath": [
+          "approach",
+          "triggeredModifier"
+        ],
+        "shape": "triggeredModifierBlock",
+        "repeated": true,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "country"
+        ],
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "body"
+      },
+      {
+        "key": "approach.triggered_modifier.potential",
+        "memberPath": [
+          "approach",
+          "triggeredModifier"
+        ],
+        "shape": "trigger",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "situation"
+        ],
+        "clause": "trigger",
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "approach.triggered_target_modifier",
+        "memberPath": [
+          "approach",
+          "triggeredTargetModifier"
+        ],
+        "shape": "triggeredModifierBlock",
+        "repeated": true,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "planet"
+        ],
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "body"
+      },
+      {
+        "key": "approach.triggered_target_modifier.potential",
+        "memberPath": [
+          "approach",
+          "triggeredTargetModifier"
+        ],
+        "shape": "trigger",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "situation"
+        ],
+        "clause": "trigger",
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "approach.custom_tooltip_with_modifiers",
+        "memberPath": [
+          "approach",
+          "customTooltipWithModifiers"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "body"
+      },
+      {
+        "key": "approach.resources",
+        "memberPath": [
+          "approach",
+          "resources"
+        ],
+        "shape": "economicResources",
+        "repeated": true,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "situation"
+        ],
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "body"
+      },
+      {
+        "key": "approach.on_select",
+        "memberPath": [
+          "approach",
+          "onSelect"
+        ],
+        "shape": "effect",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "situation"
+        ],
+        "clause": "effect",
+        "level": "nested",
+        "declaredIn": "body"
+      },
+      {
+        "key": "approach.ai_weight",
+        "memberPath": [
+          "approach",
+          "aiWeight"
+        ],
+        "shape": "dual",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "situation"
+        ],
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "body"
+      },
+      {
+        "key": "approach.ai_weight.modifier",
+        "memberPath": [
+          "approach",
+          "aiWeight"
+        ],
+        "shape": "weightModifier",
+        "repeated": true,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "situation"
+        ],
+        "clause": "trigger",
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "total_progress.modifier",
+        "memberPath": [
+          "totalProgress"
+        ],
+        "shape": "weightModifier",
+        "repeated": true,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "situation"
+        ],
+        "clause": "trigger",
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "stages.end",
+        "memberPath": [
+          "stages",
+          "end"
+        ],
+        "shape": "dual",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "situation"
+        ],
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "body"
+      },
+      {
+        "key": "stages.end.modifier",
+        "memberPath": [
+          "stages",
+          "end"
+        ],
+        "shape": "weightModifier",
+        "repeated": true,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "situation"
+        ],
+        "clause": "trigger",
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "stages.section_weight",
+        "memberPath": [
+          "stages",
+          "sectionWeight"
+        ],
+        "shape": "dual",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "situation"
+        ],
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "body"
+      },
+      {
+        "key": "stages.section_weight.modifier",
+        "memberPath": [
+          "stages",
+          "sectionWeight"
+        ],
+        "shape": "weightModifier",
+        "repeated": true,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "situation"
+        ],
+        "clause": "trigger",
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "stages.icon",
+        "memberPath": [
+          "stages",
+          "icon"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "body"
+      },
+      {
+        "key": "stages.icon_background",
+        "memberPath": [
+          "stages",
+          "iconBackground"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "body"
+      },
+      {
+        "key": "stages.color",
+        "memberPath": [
+          "stages",
+          "color"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "body"
+      },
+      {
+        "key": "stages.custom_tooltip",
+        "memberPath": [
+          "stages",
+          "customTooltip"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "body"
+      },
+      {
+        "key": "stages.on_first_enter",
+        "memberPath": [
+          "stages",
+          "onFirstEnter"
+        ],
+        "shape": "effect",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "situation"
+        ],
+        "clause": "effect",
+        "level": "nested",
+        "declaredIn": "body"
+      },
+      {
+        "key": "stages.on_enter",
+        "memberPath": [
+          "stages",
+          "onEnter"
+        ],
+        "shape": "effect",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "situation"
+        ],
+        "clause": "effect",
+        "level": "nested",
+        "declaredIn": "body"
+      },
+      {
+        "key": "stages.potential",
+        "memberPath": [
+          "stages",
+          "potential"
+        ],
+        "shape": "trigger",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "situation"
+        ],
+        "clause": "trigger",
+        "level": "nested",
+        "declaredIn": "body"
+      },
+      {
+        "key": "stages.modifier",
+        "memberPath": [
+          "stages",
+          "modifier"
+        ],
+        "shape": "modifierBlock",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "country"
+        ],
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "body"
+      },
+      {
+        "key": "stages.triggered_modifier",
+        "memberPath": [
+          "stages",
+          "triggeredModifier"
+        ],
+        "shape": "triggeredModifierBlock",
+        "repeated": true,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "country"
+        ],
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "body"
+      },
+      {
+        "key": "stages.triggered_modifier.potential",
+        "memberPath": [
+          "stages",
+          "triggeredModifier"
+        ],
+        "shape": "trigger",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "situation"
+        ],
+        "clause": "trigger",
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "stages.target_modifier",
+        "memberPath": [
+          "stages",
+          "targetModifier"
+        ],
+        "shape": "modifierBlock",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": "any",
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "body"
+      },
+      {
+        "key": "stages.triggered_target_modifier",
+        "memberPath": [
+          "stages",
+          "triggeredTargetModifier"
+        ],
+        "shape": "triggeredModifierBlock",
+        "repeated": true,
+        "wrapped": false,
+        "literals": null,
+        "scope": "any",
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "body"
+      },
+      {
+        "key": "stages.triggered_target_modifier.potential",
+        "memberPath": [
+          "stages",
+          "triggeredTargetModifier"
+        ],
+        "shape": "trigger",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "situation"
+        ],
+        "clause": "trigger",
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      }
+    ],
+    "repeatedStructs": [
+      {
+        "key": "approach",
+        "keying": "siblings",
+        "identityKey": "name"
+      },
+      {
+        "key": "stages",
+        "keying": "container",
+        "identityKey": null
+      }
+    ],
+    "partialLowerings": [
+      {
+        "key": "picture",
+        "droppedArms": [
+          "block"
+        ],
+        "keptArm": "<sprite>",
+        "loweredShape": "value"
+      },
+      {
+        "key": "stages.color",
+        "droppedArms": [
+          "single_alias_right[color_type_rgba]"
+        ],
+        "keptArm": "<named_color>",
+        "loweredShape": "value"
+      }
+    ],
+    "localisation": [
+      {
+        "member": "name",
+        "pattern": "$",
+        "required": true,
+        "owner": "situation_type"
+      },
+      {
+        "member": "type_name",
+        "pattern": "$_type",
+        "required": false,
+        "owner": "situation_type"
+      },
+      {
+        "member": "name",
+        "pattern": "$",
+        "required": true,
+        "owner": "stages"
+      },
+      {
+        "member": "desc",
+        "pattern": "$_desc",
+        "required": false,
+        "owner": "stages"
+      },
+      {
+        "member": "name",
+        "pattern": "$",
+        "required": true,
+        "owner": "approach"
+      },
+      {
+        "member": "desc",
+        "pattern": "$_desc",
+        "required": false,
+        "owner": "approach"
+      }
+    ],
+    "localisationExclusions": [
+      "situation_type.localisation.title ($) duplicates name at $",
+      "situation_type.localisation.title (title) has no `$` id placeholder — not a static <id>-keyed slot, excluded",
+      "situation_type.localisation.desc (desc) has no `$` id placeholder — not a static <id>-keyed slot, excluded",
+      "situation_type.localisation.active_tooltip (active_tooltip) has no `$` id placeholder — not a static <id>-keyed slot, excluded"
+    ],
+    "localisationRenames": [
+      "situation_type.desc — \"desc\" is a localization slot member, so the body field authors as \"conditionalDesc\""
+    ],
+    "declined": [],
+    "unsupported": [],
+    "inlineSplices": [],
+    "patchLocalisation": [],
+    "patchWidenings": [],
+    "patchExclusions": []
+  },
+  "sdkContracts": [
+    {
+      "member": "targetScope",
+      "statement": "`targetScope` declares which scope this situation's target is, once, on the definition. It is not a game field: nothing is written for it, and no rule mentions it. Every `startSituation` call site naming this definition is then checked against the declaration, so passing a planet to a country-targeted situation is a compile error instead of a situation that silently does nothing in game.",
+      "source": "packages/sdk/src/content/situations.ts",
+      "anchor": "`targetScope` is authored and emits nothing",
+      "whyNotDerived": "`links.cwt` gives the situation `target` link `output_scope = any` — a situation's target is whatever `start_situation` passed it, and the rules declare the contract nowhere. What the corpus shows is that each vanilla situation type is consistent about its target kind across all of its start sites, which is a reason to let an author declare the contract, not evidence of what the contract is.",
+      "serialized": false
+    },
+    {
+      "member": "startSituation",
+      "statement": "`startSituation({ type, target })` takes the situation type's declared `targetScope` as proof of the target it is handed, and types the effect body's `target(...)` from the same declaration. A situation type that declares no `targetScope` — and any vanilla or third-party id — still goes through the generated signature unchecked.",
+      "source": "packages/sdk/src/script/effects/situations.ts",
+      "anchor": "interface StartSituationEffectsExtension",
+      "whyNotDerived": "The overload is hand-written on top of the generated one, and the overlay refuses a `targetScope`-bearing ref in the generated signature so a declared contract can only ever be accepted by the checked overload.",
+      "serialized": true
+    },
+    {
+      "member": "approach / stages record keys",
+      "statement": "The record keys an author writes under `approach` and `stages` are nested content ids: the capability asserts the mod prefix on each one, and the same keys are what `currentSituationApproach`, `currentStage` and `canSetSituationApproach` are checked against when written directly into `approach.allow`, `approach.potential`, `stages.potential`, or `abortTrigger`.",
+      "source": "packages/sdk/src/content/situations.ts",
+      "anchor": "assertNestedId(id)",
+      "whyNotDerived": "The rules type the identity value and say nothing about prefixes or about which trigger positions can carry the identity through to a compile-time check.",
+      "serialized": true
+    }
+  ],
+  "evidence": {
+    "registry": "situation_type",
+    "gameVersion": "4.4.6",
+    "fingerprint": "918939fb521bcf1b31326e6778e6d65388f20d47d2ee0f9fd0c2c3c61f70ceac",
+    "definitions": 90,
+    "files": 20,
+    "fields": [
+      {
+        "key": "abort_trigger",
+        "definitions": 64,
+        "scalars": 0,
+        "blocks": 64,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "approach",
+        "definitions": 89,
+        "scalars": 0,
+        "blocks": 89,
+        "repeated": 76,
+        "values": [],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "approach.ai_weight",
+        "definitions": 36,
+        "scalars": 0,
+        "blocks": 36,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "approach.ai_weight.modifier",
+        "definitions": 15,
+        "scalars": 0,
+        "blocks": 15,
+        "repeated": 12,
+        "values": [],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "approach.allow",
+        "definitions": 26,
+        "scalars": 0,
+        "blocks": 26,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "approach.custom_tooltip_with_modifiers",
+        "definitions": 3,
+        "scalars": 3,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "approach_situation_the_seal_pump_exotic_gases_tt",
+          "approach_situation_the_seal_weave_astral_fabric_tt",
+          "approach_voidworm_plague_purge_infected_pops_tt",
+          "approach_voidworm_plague_support_fleets_tt",
+          "situation_passenger_satisfaction_crew_approach_tt",
+          "situation_passenger_satisfaction_passenger_approach_tt"
+        ],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "approach.default",
+        "definitions": 77,
+        "scalars": 77,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "yes"
+        ],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "approach.icon",
+        "definitions": 89,
+        "scalars": 89,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "GFX_situation_approach_alloys",
+          "GFX_situation_approach_amenities",
+          "GFX_situation_approach_astral",
+          "GFX_situation_approach_balance_sheet",
+          "GFX_situation_approach_blind",
+          "GFX_situation_approach_dark_matter",
+          "GFX_situation_approach_digestion",
+          "GFX_situation_approach_discurage_conversation",
+          "GFX_situation_approach_disrupt",
+          "GFX_situation_approach_encurage_conversation",
+          "GFX_situation_approach_energy_credits",
+          "GFX_situation_approach_engineering",
+          "GFX_situation_approach_exotic",
+          "GFX_situation_approach_fight",
+          "GFX_situation_approach_fist",
+          "GFX_situation_approach_fleet",
+          "GFX_situation_approach_flight",
+          "GFX_situation_approach_genetics",
+          "GFX_situation_approach_gift",
+          "GFX_situation_approach_handshake",
+          "GFX_situation_approach_hungry",
+          "GFX_situation_approach_incorporate",
+          "GFX_situation_approach_influence",
+          "GFX_situation_approach_minerals",
+          "GFX_situation_approach_nomad_emergency",
+          "GFX_situation_approach_nomad_good",
+          "GFX_situation_approach_nomad_neutral",
+          "GFX_situation_approach_nomad_very_good",
+          "GFX_situation_approach_open_conversation",
+          "GFX_situation_approach_physics",
+          "GFX_situation_approach_pop",
+          "GFX_situation_approach_radioactive",
+          "GFX_situation_approach_rare_crystals",
+          "GFX_situation_approach_research",
+          "GFX_situation_approach_scales",
+          "GFX_situation_approach_shrug",
+          "GFX_situation_approach_society",
+          "GFX_situation_approach_spiral",
+          "GFX_situation_approach_suspicious",
+          "GFX_situation_approach_synthesize",
+          "GFX_situation_approach_this_is_fine",
+          "GFX_situation_approach_threads",
+          "GFX_situation_approach_unity",
+          "GFX_situation_approach_volatile_motes",
+          "GFX_situation_approach_whip",
+          "GFX_situation_approach_zro",
+          "GFX_situation_icon_cloning",
+          "GFX_situation_icon_mutation",
+          "GFX_situation_icon_purity"
+        ],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "approach.icon_background",
+        "definitions": 89,
+        "scalars": 89,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "GFX_situation_approach_bg_green",
+          "GFX_situation_approach_bg_red",
+          "GFX_situation_approach_bg_yellow"
+        ],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "approach.modifier",
+        "definitions": 42,
+        "scalars": 0,
+        "blocks": 42,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "approach.on_select",
+        "definitions": 86,
+        "scalars": 0,
+        "blocks": 86,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "approach.potential",
+        "definitions": 19,
+        "scalars": 0,
+        "blocks": 19,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "approach.resources",
+        "definitions": 29,
+        "scalars": 0,
+        "blocks": 29,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "approach.target_modifier",
+        "definitions": 4,
+        "scalars": 0,
+        "blocks": 4,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "approach.triggered_modifier",
+        "definitions": 7,
+        "scalars": 0,
+        "blocks": 7,
+        "repeated": 3,
+        "values": [],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "approach.triggered_modifier.potential",
+        "definitions": 5,
+        "scalars": 0,
+        "blocks": 5,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "approach.triggered_target_modifier",
+        "definitions": 3,
+        "scalars": 0,
+        "blocks": 3,
+        "repeated": 2,
+        "values": [],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "approach.triggered_target_modifier.potential",
+        "definitions": 3,
+        "scalars": 0,
+        "blocks": 3,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "category",
+        "definitions": 65,
+        "scalars": 65,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "negative",
+          "neutral",
+          "positive"
+        ],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "complete_category",
+        "definitions": 1,
+        "scalars": 1,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "negative"
+        ],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "complete_icon",
+        "definitions": 85,
+        "scalars": 85,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "GFX_situation_exploding_planet",
+          "GFX_situation_outcome_ascension",
+          "GFX_situation_outcome_bankrupcy",
+          "GFX_situation_outcome_challenge",
+          "GFX_situation_outcome_eat",
+          "GFX_situation_outcome_eotc",
+          "GFX_situation_outcome_meh",
+          "GFX_situation_outcome_negative",
+          "GFX_situation_outcome_positive",
+          "GFX_situation_outcome_revolt",
+          "GFX_situation_outcome_unknown",
+          "GFX_toxify_world_outcome"
+        ],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "complete_icon_frame",
+        "definitions": 83,
+        "scalars": 83,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "GFX_situation_outcome_frame_blue",
+          "GFX_situation_outcome_frame_green",
+          "GFX_situation_outcome_frame_red"
+        ],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "desc",
+        "definitions": 9,
+        "scalars": 4,
+        "blocks": 5,
+        "repeated": 4,
+        "values": [
+          "situation_breach_shroud_desc",
+          "situation_end_of_the_cycle_desc",
+          "situation_end_of_the_cycle_endbringers_desc"
+        ],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "desc.text",
+        "definitions": 4,
+        "scalars": 4,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "situation_a_rift_in_space_desc",
+          "situation_a_rift_in_space_desc_riftworld_origin",
+          "situation_hyperthermia_desc",
+          "situation_hyperthermia_desc_perp",
+          "situation_initiate_storm_desc_agitate",
+          "situation_initiate_storm_desc_destabilize",
+          "situation_initiate_storm_desc_irradiate",
+          "situation_initiate_storm_desc_magnetize",
+          "situation_initiate_storm_desc_overfeed",
+          "situation_initiate_storm_desc_scramble",
+          "situation_initiate_storm_desc_sever",
+          "situation_initiate_storm_desc_supercharge",
+          "situation_planetary_revolt_desc_gestalt_breakaway_gestalt",
+          "situation_planetary_revolt_desc_gestalt_breakaway_wilderness",
+          "situation_planetary_revolt_desc_gestalt_standard",
+          "situation_planetary_revolt_desc_slave",
+          "situation_planetary_revolt_desc_standard"
+        ],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "desc.trigger",
+        "definitions": 5,
+        "scalars": 0,
+        "blocks": 5,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "fail_category",
+        "definitions": 1,
+        "scalars": 1,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "positive"
+        ],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "fail_icon",
+        "definitions": 23,
+        "scalars": 23,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "GFX_situation_outcome_meh",
+          "GFX_situation_outcome_negative",
+          "GFX_situation_outcome_planet_negative",
+          "GFX_situation_outcome_positive",
+          "GFX_situation_outcome_unknown"
+        ],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "fail_icon_frame",
+        "definitions": 23,
+        "scalars": 23,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "GFX_situation_outcome_frame_blue",
+          "GFX_situation_outcome_frame_green",
+          "GFX_situation_outcome_frame_red"
+        ],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "initial_progress",
+        "definitions": 65,
+        "scalars": 65,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "0",
+          "1",
+          "10",
+          "10000",
+          "119",
+          "15",
+          "1500",
+          "20",
+          "25",
+          "300",
+          "5",
+          "50",
+          "500",
+          "75"
+        ],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "inline_script",
+        "definitions": 4,
+        "scalars": 4,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "situations/consume_world_planet_pictures"
+        ],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "modifier",
+        "definitions": 4,
+        "scalars": 0,
+        "blocks": 4,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "monthly_progress",
+        "definitions": 90,
+        "scalars": 0,
+        "blocks": 90,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "monthly_progress.modifier",
+        "definitions": 82,
+        "scalars": 0,
+        "blocks": 82,
+        "repeated": 75,
+        "values": [],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "on_abort",
+        "definitions": 34,
+        "scalars": 0,
+        "blocks": 34,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "on_fail",
+        "definitions": 29,
+        "scalars": 0,
+        "blocks": 29,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "on_monthly",
+        "definitions": 59,
+        "scalars": 0,
+        "blocks": 59,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "on_monthly.events",
+        "definitions": 44,
+        "scalars": 0,
+        "blocks": 44,
+        "repeated": 0,
+        "values": [
+          "astral_situation.10",
+          "astral_situation.25",
+          "awareness.200",
+          "colony.190",
+          "crisis.10095",
+          "crisis.11000",
+          "crisis.8245",
+          "crisis.8350",
+          "cstorms.3110",
+          "cstorms.3130",
+          "cstorms.3160",
+          "cyber.105",
+          "cyber.2005",
+          "cyber.205",
+          "cyber.2205",
+          "cyber.3",
+          "cyber.305",
+          "cyber.4",
+          "cyber.410",
+          "cyber.420",
+          "cyber.430",
+          "cyber.5",
+          "cyber.5016",
+          "cyber.6",
+          "cyber.9",
+          "enclave.5555",
+          "enclave.5556",
+          "machine_age.2000",
+          "machine_age.3325",
+          "machine_age.4110",
+          "machine_age.4130",
+          "machine_age.4140",
+          "machine_age.4150",
+          "machine_age.4210",
+          "machine_age.4230",
+          "machine_age.4240",
+          "machine_age.4250",
+          "machine_age.4310",
+          "machine_age.4330",
+          "machine_age.4340",
+          "origin.6180",
+          "paragon.5006",
+          "paragon.5945",
+          "paragon.5946",
+          "preftl.20",
+          "preftl.2102",
+          "preftl.2103",
+          "preftl.2104",
+          "preftl.2105",
+          "preftl.2106",
+          "preftl.5",
+          "shroud_forged.100",
+          "shroud_forged.150",
+          "situation.2001",
+          "situation.204",
+          "synth.105",
+          "synth.205",
+          "synth.3",
+          "synth.305",
+          "synth.310",
+          "synth.405",
+          "synth.5",
+          "toxoids.8010",
+          "unrest.163"
+        ],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "on_monthly.random_events",
+        "definitions": 25,
+        "scalars": 0,
+        "blocks": 25,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "on_progress_complete",
+        "definitions": 88,
+        "scalars": 0,
+        "blocks": 88,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "on_start",
+        "definitions": 37,
+        "scalars": 0,
+        "blocks": 37,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "override_finisher_desc",
+        "definitions": 1,
+        "scalars": 1,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "nomad_max_reserves_breakdown"
+        ],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "override_finisher_title",
+        "definitions": 1,
+        "scalars": 1,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "situation_nomad_economy_capacity_title"
+        ],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "override_progress_current_desc",
+        "definitions": 1,
+        "scalars": 1,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "situation_nomad_economy_reserves_current"
+        ],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "permanent",
+        "definitions": 2,
+        "scalars": 2,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "yes"
+        ],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "picture",
+        "definitions": 86,
+        "scalars": 82,
+        "blocks": 4,
+        "repeated": 4,
+        "values": [
+          "GFX_evt_a_rift_in_space",
+          "GFX_evt_acquire_asset",
+          "GFX_evt_alien_propaganda",
+          "GFX_evt_arctic",
+          "GFX_evt_arkship_crisis",
+          "GFX_evt_astral_rift_library",
+          "GFX_evt_atmospheric_entry",
+          "GFX_evt_black_hole",
+          "GFX_evt_clocks",
+          "GFX_evt_conclave",
+          "GFX_evt_cosmic_storms_solar_storm",
+          "GFX_evt_crisis_declared",
+          "GFX_evt_crystal_sphere",
+          "GFX_evt_cyber_creed_2",
+          "GFX_evt_cyberization_1",
+          "GFX_evt_deficit",
+          "GFX_evt_disease_outbreak",
+          "GFX_evt_evolutionary_predators",
+          "GFX_evt_experimental_testing",
+          "GFX_evt_fallen_empire",
+          "GFX_evt_forever_cruise",
+          "GFX_evt_frenzied_voidworms",
+          "GFX_evt_friendly_enlightenment",
+          "GFX_evt_genetic_modification",
+          "GFX_evt_georadiation_bell",
+          "GFX_evt_glitchy_matrix",
+          "GFX_evt_hangar_bay",
+          "GFX_evt_hive_cyberization",
+          "GFX_evt_kaleidoscopic_lights",
+          "GFX_evt_knights",
+          "GFX_evt_machine_sapience",
+          "GFX_evt_mechromancy",
+          "GFX_evt_megastructure_construction",
+          "GFX_evt_mercenary_fleet",
+          "GFX_evt_microscopic_life",
+          "GFX_evt_molten",
+          "GFX_evt_open_revolt",
+          "GFX_evt_origin_stormchasers_specialproject",
+          "GFX_evt_physics_research",
+          "GFX_evt_rare_tech_cache",
+          "GFX_evt_relic_world_building",
+          "GFX_evt_robot_assembly_plant",
+          "GFX_evt_salute",
+          "GFX_evt_sapient_AI",
+          "GFX_evt_shroud_end_of_the_cycle",
+          "GFX_evt_shroud_forged_zrobot",
+          "GFX_evt_shroudwalker_enclave",
+          "GFX_evt_situation_the_seal",
+          "GFX_evt_situation_voidworm_plague",
+          "GFX_evt_space_station",
+          "GFX_evt_spymaster",
+          "GFX_evt_star_yellow",
+          "GFX_evt_supernova",
+          "GFX_evt_synth_fertility",
+          "GFX_evt_synth_queen",
+          "GFX_evt_synth_situation",
+          "GFX_evt_treasure_trove_pirate_fleet",
+          "GFX_evt_unplugged",
+          "GFX_evt_voidspawn",
+          "GFX_evt_waystation",
+          "GFX_evt_wormhole"
+        ],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "potential",
+        "definitions": 2,
+        "scalars": 0,
+        "blocks": 2,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "progress_direction",
+        "definitions": 7,
+        "scalars": 7,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "bidirectional",
+          "monodirectional"
+        ],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "show_in_outliner",
+        "definitions": 1,
+        "scalars": 1,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "no"
+        ],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "situation_log_category",
+        "definitions": 83,
+        "scalars": 83,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "ambitions",
+          "astral_rifts",
+          "crises",
+          "developments",
+          "empire_concerns",
+          "urgent_matters"
+        ],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "stages",
+        "definitions": 90,
+        "scalars": 0,
+        "blocks": 90,
+        "repeated": 1,
+        "values": [],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "stages.color",
+        "definitions": 1,
+        "scalars": 1,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "light_green",
+          "light_orange",
+          "warning_red",
+          "white"
+        ],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "stages.custom_tooltip",
+        "definitions": 56,
+        "scalars": 56,
+        "blocks": 0,
+        "repeated": 1,
+        "values": [
+          "approach_outcome_caeli",
+          "approach_outcome_steris",
+          "eotc_opinion_modifier_2_tooltip",
+          "eotc_opinion_modifier_3_tooltip",
+          "eotc_opinion_modifier_tooltip",
+          "genetic_stage_1_effects",
+          "genetic_stage_2_effects",
+          "genetic_stage_3_effects",
+          "sit_cd_stage1_tt",
+          "sit_cd_stage2_tt",
+          "sit_cd_stage3_tt",
+          "sit_cd_stage4_tt",
+          "sit_cd_stage5_tt",
+          "situation_breach_shroud_effects",
+          "situation_end_of_the_cycle_effects_1",
+          "situation_end_of_the_cycle_effects_2",
+          "situation_end_of_the_cycle_effects_3",
+          "situation_end_of_the_cycle_effects_4",
+          "situation_experimental_testing_stage_1_effect_tt",
+          "situation_insight_stages",
+          "situation_red_giant_expansion_stage_1",
+          "situation_red_giant_expansion_stage_2",
+          "situation_red_giant_expansion_stage_3",
+          "situation_red_giant_expansion_stage_4",
+          "situation_red_giant_expansion_stage_5",
+          "situation_reformists_struggle_1",
+          "situation_reformists_struggle_2",
+          "situation_reformists_struggle_3",
+          "situation_unplugged_stage_cyberize",
+          "situation_unplugged_stage_decyberize",
+          "situation_unplugged_stage_remain",
+          "stage_1_synthetic_fertility_synthesization_effects",
+          "stage_2_synthetic_fertility_synthesization_effects",
+          "stage_behemoth_finale_effects",
+          "stage_behemoth_finale_effects_regular",
+          "stage_cyberization_effects",
+          "stage_cyberization_hive_effects",
+          "stage_cybernetic_creed_cyberization_effects",
+          "stage_cybernetic_creed_the_conclave_effects",
+          "stage_digitization_effects",
+          "stage_edge_of_solar_system",
+          "stage_entered_solar_system",
+          "stage_feed_feed_feed",
+          "stage_insight_gathering",
+          "stage_knights_effects",
+          "stage_leviathan_2_tooltip",
+          "stage_leviathan_3_tooltip",
+          "stage_shroud_forged_balanced_tooltip",
+          "stage_shroud_forged_control_tooltip",
+          "stage_shroud_forged_free_tooltip",
+          "stage_shroud_forged_oppressed_tooltip",
+          "stage_shroud_forged_unrestricted_tooltip",
+          "stage_slushify",
+          "stage_stormfall_effects",
+          "stage_synthetic_fertility_problem_effects",
+          "stage_the_drive_effects",
+          "stage_transformation_effects",
+          "stage_unknown_effects",
+          "toxify_world_stage_effects"
+        ],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "stages.end",
+        "definitions": 89,
+        "scalars": 88,
+        "blocks": 1,
+        "repeated": 0,
+        "values": [
+          "1",
+          "10",
+          "100",
+          "1000",
+          "120",
+          "1200",
+          "125",
+          "135",
+          "140",
+          "1400",
+          "150",
+          "1500",
+          "180",
+          "1800",
+          "1920",
+          "20",
+          "200",
+          "2000",
+          "240",
+          "2400",
+          "25",
+          "250",
+          "30",
+          "300",
+          "3000",
+          "33",
+          "35",
+          "350",
+          "360",
+          "375",
+          "40",
+          "400",
+          "440",
+          "45",
+          "480",
+          "50",
+          "500",
+          "6",
+          "60",
+          "600",
+          "6000",
+          "625",
+          "65",
+          "66",
+          "67",
+          "70",
+          "700",
+          "74",
+          "75",
+          "750",
+          "780",
+          "80",
+          "800",
+          "875",
+          "90",
+          "900",
+          "95",
+          "980",
+          "99",
+          "999"
+        ],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "stages.icon",
+        "definitions": 90,
+        "scalars": 90,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "GFX_situation_stage_1",
+          "GFX_situation_stage_2",
+          "GFX_situation_stage_3",
+          "GFX_situation_stage_4",
+          "GFX_situation_stage_5",
+          "GFX_situation_stage_6",
+          "GFX_situation_stage_7",
+          "GFX_situation_stage_8",
+          "GFX_situation_stage_balanced",
+          "GFX_situation_stage_crew",
+          "GFX_situation_stage_eat",
+          "GFX_situation_stage_passenger",
+          "GFX_situation_stage_pre_ftl",
+          "GFX_situation_unplugged_stage_cyberize",
+          "GFX_situation_unplugged_stage_decyberize",
+          "GFX_situation_unplugged_stage_remain"
+        ],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "stages.icon_background",
+        "definitions": 90,
+        "scalars": 90,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "GFX_situation_stage_frame_blue",
+          "GFX_situation_stage_frame_gray",
+          "GFX_situation_stage_frame_green",
+          "GFX_situation_stage_frame_magenta",
+          "GFX_situation_stage_frame_orange",
+          "GFX_situation_stage_frame_red",
+          "GFX_situation_stage_frame_yellow"
+        ],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "stages.modifier",
+        "definitions": 13,
+        "scalars": 0,
+        "blocks": 13,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "stages.on_enter",
+        "definitions": 1,
+        "scalars": 0,
+        "blocks": 1,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "stages.on_first_enter",
+        "definitions": 60,
+        "scalars": 0,
+        "blocks": 60,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "stages.section_weight",
+        "definitions": 1,
+        "scalars": 1,
+        "blocks": 1,
+        "repeated": 0,
+        "values": [
+          "20",
+          "25",
+          "5"
+        ],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "stages.section_weight.modifier",
+        "definitions": 1,
+        "scalars": 0,
+        "blocks": 1,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "stages.target_modifier",
+        "definitions": 6,
+        "scalars": 0,
+        "blocks": 6,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "stages.triggered_modifier",
+        "definitions": 7,
+        "scalars": 0,
+        "blocks": 7,
+        "repeated": 6,
+        "values": [],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "stages.triggered_modifier.potential",
+        "definitions": 7,
+        "scalars": 0,
+        "blocks": 7,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "stages.triggered_target_modifier",
+        "definitions": 1,
+        "scalars": 0,
+        "blocks": 1,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "stages.triggered_target_modifier.potential",
+        "definitions": 1,
+        "scalars": 0,
+        "blocks": 1,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "start_value",
+        "definitions": 1,
+        "scalars": 1,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "0"
+        ],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "target_modifier",
+        "definitions": 3,
+        "scalars": 0,
+        "blocks": 3,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "title",
+        "definitions": 6,
+        "scalars": 5,
+        "blocks": 1,
+        "repeated": 1,
+        "values": [
+          "situation_breach_shroud",
+          "situation_end_of_the_cycle",
+          "situation_initiate_storm"
+        ],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "title.text",
+        "definitions": 1,
+        "scalars": 1,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "situation_a_rift_in_space",
+          "situation_a_rift_in_space_riftworld"
+        ],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "title.trigger",
+        "definitions": 1,
+        "scalars": 0,
+        "blocks": 1,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "total_progress",
+        "definitions": 1,
+        "scalars": 0,
+        "blocks": 1,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "triggered_blocked_desc",
+        "definitions": 15,
+        "scalars": 0,
+        "blocks": 15,
+        "repeated": 10,
+        "values": [],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "triggered_blocked_desc.text",
+        "definitions": 15,
+        "scalars": 15,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "situation_arkship_consuming_world_absent_desc",
+          "situation_augmentation_center_needed_desc",
+          "situation_augmentation_center_or_bazaar_needed_desc",
+          "situation_breach_shroud_endbringers_chamber_of_silence_needed_desc",
+          "situation_breach_shroud_endbringers_cult_of_the_voice_needed_desc",
+          "situation_breach_shroud_great_awakening_needed_desc",
+          "situation_breach_shroud_psi_corps_needed_desc",
+          "situation_cd_mod_bribe",
+          "situation_cd_mod_storm",
+          "situation_gene_tailoring_needed_desc",
+          "situation_genomic_facility_needed_desc",
+          "situation_identity_complex_needed_desc",
+          "situation_no_robot_research",
+          "situation_no_synthetics_adopt",
+          "situation_nomad_economy_critical_reserves_desc",
+          "situation_passenger_satisfaction_blocked_mutiny",
+          "situation_passenger_satisfaction_blocked_planetfall",
+          "situation_synth_queen_player_facing_declare_war"
+        ],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "triggered_blocked_desc.trigger",
+        "definitions": 15,
+        "scalars": 0,
+        "blocks": 15,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "triggered_modifier",
+        "definitions": 9,
+        "scalars": 0,
+        "blocks": 9,
+        "repeated": 6,
+        "values": [],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "triggered_modifier.potential",
+        "definitions": 9,
+        "scalars": 0,
+        "blocks": 9,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": true
+      }
+    ]
+  },
+  "claims": [
+    {
+      "id": "registry",
+      "subject": "mod.situationType",
+      "status": "supported-contract",
+      "statement": "`mod.situationType(name, def)` defines one situation type. The mod's prefix is minted into its id, and the definition is written to `common/situations/<feature>.txt`.",
+      "provenance": [
+        {
+          "kind": "codegen-projection",
+          "source": "vendor/cwtools-stellaris-config/config/common/situations.cwt — type[situation_type]",
+          "detail": "path = \"game/common/situations\""
+        }
+      ],
+      "guidance": []
+    },
+    {
+      "id": "monthly-progress-required",
+      "subject": "monthlyProgress",
+      "status": "supported-contract",
+      "statement": "`monthlyProgress` is required. It is a weight block whose every modifier row also carries display text, so the game can show a player why the situation is moving at the rate it is.",
+      "provenance": [
+        {
+          "kind": "codegen-projection",
+          "source": "vendor/cwtools-stellaris-config/config/common/situations.cwt:123",
+          "detail": "shape weightBlockWithLoc, scope situation"
+        }
+      ],
+      "guidance": []
+    },
+    {
+      "id": "stages-layout",
+      "subject": "stages",
+      "status": "supported-contract",
+      "statement": "`stages` is a keyed container: the whole collection is written as one `stages = { … }` block, and each record key becomes an entry inside it. Order is the order you write them in.",
+      "provenance": [
+        {
+          "kind": "codegen-projection",
+          "source": "vendor/cwtools-stellaris-config/config/common/situations.cwt:225",
+          "detail": "repeatedStruct, container keying, no identity field"
+        }
+      ],
+      "guidance": []
+    },
+    {
+      "id": "approach-layout",
+      "subject": "approach",
+      "status": "supported-contract",
+      "statement": "`approach` is written the other way round: the key repeats once per entry — `approach = { name = … } approach = { name = … }` — and your record key is lifted into each block's `name` field. Same authoring shape as `stages`, different PDXScript.",
+      "provenance": [
+        {
+          "kind": "codegen-projection",
+          "source": "vendor/cwtools-stellaris-config/config/common/situations.cwt:128",
+          "detail": "repeatedStruct, siblings keying, identity field `name`"
+        }
+      ],
+      "guidance": []
+    },
+    {
+      "id": "nested-localisation",
+      "subject": "stages / approach localization",
+      "status": "supported-contract",
+      "statement": "Every stage and approach key is a localization key too. `name` is emitted under the key itself and is required; `desc` is emitted under `<key>_desc` and is optional. You write English text in the definition and the build produces the localization entries.",
+      "provenance": [
+        {
+          "kind": "codegen-projection",
+          "source": "vendor/cwtools-stellaris-config/config/common/situations.cwt — type[situation_type] localisation",
+          "detail": "stages.name → $, stages.desc → $_desc, approach.name → $, approach.desc → $_desc"
+        }
+      ],
+      "guidance": []
+    },
+    {
+      "id": "trigger-scopes",
+      "subject": "potential / abortTrigger / onStart",
+      "status": "supported-contract",
+      "statement": "`potential` runs in country scope — it decides whether an empire can have the situation at all. Everything else on the definition — `abortTrigger`, `onStart`, `onFail`, `onAbort`, `onProgressComplete` — runs in situation scope.",
+      "provenance": [
+        {
+          "kind": "codegen-projection",
+          "source": "vendor/cwtools-stellaris-config/config/common/situations.cwt:73",
+          "detail": "scopes read from the rules' own `## replace_scopes` annotations"
+        }
+      ],
+      "guidance": []
+    },
+    {
+      "id": "stage-target-modifier-unpinned",
+      "subject": "stages.targetModifier",
+      "status": "supported-contract",
+      "statement": "A stage's `targetModifier` and `triggeredTargetModifier` are the one place the rules pin no scope, so the surface widens them to any scope rather than guessing. The same two members on the situation type and on an approach are pinned to planet. Nothing is checking a stage's target modifier keys against the scope your target actually is.",
+      "provenance": [
+        {
+          "kind": "codegen-projection",
+          "source": "vendor/cwtools-stellaris-config/config/common/situations.cwt:274",
+          "detail": "stages.targetModifier: an unpinned scope; approach.targetModifier: planet"
+        }
+      ],
+      "guidance": []
+    },
+    {
+      "id": "picture-block-omitted",
+      "subject": "picture",
+      "status": "known-omission",
+      "statement": "The rules declare `picture` twice: once as a plain sprite, and once as a trigger-gated block that picks a different image per condition. Only the plain sprite form is authorable. Both declarations repeat, so both would author as arrays and the writer could not tell which arm a value belonged to — unlike `title` and `desc`, whose scalar arm is single and which therefore lower as duals.",
+      "provenance": [
+        {
+          "kind": "codegen-projection",
+          "source": "vendor/cwtools-stellaris-config/config/common/situations.cwt:28",
+          "detail": "declared arms <sprite> | block; lowered value"
+        },
+        {
+          "kind": "recorded-disposition",
+          "source": "packages/sdk/tests/codegen/corpus-observations.ts — ACKNOWLEDGED_MISMATCHES, situation_type.picture form",
+          "detail": "family: indistinguishable-arms"
+        }
+      ],
+      "guidance": []
+    },
+    {
+      "id": "picture-usage",
+      "subject": "picture",
+      "status": "observed-example",
+      "supports": "picture-block-omitted",
+      "statement": "86 of the 90 shipped situation types write `picture`: 82 as a plain sprite and 4 as the conditional block. The block form is what the SDK cannot author.",
+      "provenance": [
+        {
+          "kind": "corpus",
+          "source": "packages/sdk/tests/fixtures/corpus/situation_type.json",
+          "detail": "Stellaris 4.4.6, 90 definitions"
+        }
+      ],
+      "guidance": []
+    },
+    {
+      "id": "stage-color-contradiction",
+      "subject": "stages.color",
+      "status": "known-omission",
+      "statement": "A stage's `color` accepts a named color only. The rules declare it twice — single_alias_right[color_type_rgba] as well as <named_color> — and only the named-color arm lowered. The documentation the surface carries on the member is the prose attached to the arm that did not: it still tells you a numeric RGBA vector is accepted, and the type will reject one. Treat the member's own doc comment as wrong until this is fixed.",
+      "provenance": [
+        {
+          "kind": "codegen-projection",
+          "source": "vendor/cwtools-stellaris-config/config/common/situations.cwt:252",
+          "detail": "declared arms <named_color> | single_alias_right[color_type_rgba]; lowered value"
+        },
+        {
+          "kind": "cwt-rule",
+          "source": "vendor/cwtools-stellaris-config/config/common/situations.cwt:252",
+          "detail": "Color for UI elements associated with this stage. Can be: - A key from the named colors database (e.g. \"red\") - A numeric RGBA vector (e.g. { 255 100 0 255 } or { 1.0 0.3 0.0 1.0 }) Defaults to SITUATION_STAGE_DEFAULT_COLOR"
+        }
+      ],
+      "guidance": []
+    },
+    {
+      "id": "stage-color-usage",
+      "subject": "stages.color",
+      "status": "observed-example",
+      "supports": "stage-color-contradiction",
+      "statement": "1 of the 90 shipped situation types set a stage color at all, which is far below the floor at which this repo's conformance gate treats a field as load-bearing. That the game ships almost no examples is not evidence that the field is unimportant, only that there is very little to read.",
+      "provenance": [
+        {
+          "kind": "corpus",
+          "source": "packages/sdk/tests/fixtures/corpus/situation_type.json",
+          "detail": "Stellaris 4.4.6"
+        }
+      ],
+      "guidance": []
+    },
+    {
+      "id": "progress-mode-unresolved",
+      "subject": "totalProgress / stages.end / stages.sectionWeight",
+      "status": "unresolved-behavior",
+      "statement": "A situation measures progress in one of two ways, and which one it is in is not something the surface can tell you. The rules gate `sectionWeight` behind a `dynamic_progress` subtype and withhold `end` from it, but the discriminator that puts a definition in that subtype is not carried into the model the SDK is generated from — so both members are optional, on every stage, always. The rules' own prose says setting `totalProgress` switches the mode and that mixing the two makes the game log an error; the subtype is keyed on the block form of `totalProgress` specifically, and nothing states what the scalar form does. The corpus cannot settle it either: 1 of the 90 shipped situation types write `totalProgress` at all. Nothing checks the combination for you at build time.",
+      "provenance": [
+        {
+          "kind": "cwt-rule",
+          "source": "vendor/cwtools-stellaris-config/config/common/situations.cwt:183",
+          "detail": "Setting this switches the Situation into SECTION WEIGHTS mode: every stage must then use `section_weight` and none may use `end` (the game logs an error if you mix the two)."
+        },
+        {
+          "kind": "codegen-projection",
+          "source": "vendor/cwtools-stellaris-config/config/common/situations.cwt — subtype[dynamic_progress]",
+          "detail": "gates stages.section_weight; withholds stages.end; discriminator not modeled"
+        },
+        {
+          "kind": "corpus",
+          "source": "packages/sdk/tests/fixtures/corpus/situation_type.json",
+          "detail": "total_progress in 1 definitions, stages.section_weight in 1"
+        }
+      ],
+      "guidance": []
+    },
+    {
+      "id": "target-scope-authored",
+      "subject": "targetScope",
+      "status": "supported-contract",
+      "statement": "`targetScope` is not a game field. No rule declares it, nothing is written for it, and the SDK strips it before serializing. It is an assertion you make about your own situation, and its whole value is that `startSituation` is then checked against it.",
+      "provenance": [
+        {
+          "kind": "sdk-source",
+          "source": "packages/sdk/src/content/situations.ts",
+          "detail": "`targetScope` is authored and emits nothing"
+        },
+        {
+          "kind": "codegen-projection",
+          "source": "vendor/cwtools-stellaris-config/config/common/situations.cwt — type[situation_type]",
+          "detail": "no `target_scope` key is declared or lowered"
+        }
+      ],
+      "guidance": []
+    },
+    {
+      "id": "identity-boundary",
+      "subject": "stages / approach record keys",
+      "status": "supported-contract",
+      "statement": "Your record keys are nested content ids, and the capability refuses one that does not carry the mod prefix. Written straight into `approach.allow`, `approach.potential`, `stages.potential` or `abortTrigger`, a `currentStage` or `currentSituationApproach` value is also checked against the keys this same definition declares. Nested inside a combinator or an effect closure it still compiles, unchecked — which is what most vanilla script looks like.",
+      "provenance": [
+        {
+          "kind": "sdk-source",
+          "source": "packages/sdk/src/content/situations.ts",
+          "detail": "approach identity field `name`; stages keyed by the record key itself"
+        },
+        {
+          "kind": "codegen-projection",
+          "source": "vendor/cwtools-stellaris-config/config/common/situations.cwt:128",
+          "detail": "the rules type the identity value and say nothing about prefixes"
+        }
+      ],
+      "guidance": []
+    }
+  ],
+  "conventions": [
+    {
+      "id": "two-stages",
+      "subject": "stages",
+      "status": "curated-convention",
+      "text": "Give a situation more than one stage, and write them in the order the player will meet them. A single stage makes the progress bar a countdown with no story in it — there is nothing to notice getting worse. The container layout means the order you write is the order the game reads. There is no sort key, and no way to reorder them later without moving the source, so decide the shape of the arc before you name the stages.",
+      "provenance": [
+        {
+          "kind": "maintainer",
+          "source": "packages/reference-spike/content/situations.mdx"
+        },
+        {
+          "kind": "corpus",
+          "source": "packages/sdk/tests/fixtures/corpus/situation_type.json",
+          "detail": "how many shipped types declare stages"
+        }
+      ],
+      "guidance": [
+        {
+          "subject": "layout:stages",
+          "kind": "contract",
+          "fingerprint": "1c4ce1ed26daa808"
+        },
+        {
+          "subject": "member:stages",
+          "kind": "contract",
+          "fingerprint": "328c531cc8c0ea79"
+        },
+        {
+          "subject": "evidence:stages",
+          "kind": "evidence",
+          "fingerprint": "3fe4e922189d79ee"
+        }
+      ]
+    },
+    {
+      "id": "progress-desc",
+      "subject": "monthlyProgress",
+      "status": "curated-convention",
+      "text": "Put the whole rate in monthlyProgress and write a real sentence in every modifier row's desc . The text is required per row rather than optional because this block is the only place a player can find out why the bar is moving at the speed it is. A row that says \"modifier\" tells them nothing, and a situation whose pace looks arbitrary reads as a bug rather than as pressure. Write the text from the player's side: what is happening in the fiction, not which flag you checked.",
+      "provenance": [
+        {
+          "kind": "maintainer",
+          "source": "packages/reference-spike/content/situations.mdx"
+        },
+        {
+          "kind": "corpus",
+          "source": "packages/sdk/tests/fixtures/corpus/situation_type.json",
+          "detail": "how many write at least one modifier row"
+        }
+      ],
+      "guidance": [
+        {
+          "subject": "member:monthly_progress",
+          "kind": "contract",
+          "fingerprint": "f5ea87cf9131a16a"
+        },
+        {
+          "subject": "evidence:monthly_progress.modifier",
+          "kind": "evidence",
+          "fingerprint": "21637b04c93b6d49"
+        }
+      ]
+    },
+    {
+      "id": "default-approach",
+      "subject": "approach",
+      "status": "curated-convention",
+      "text": "Mark exactly one approach default: true , and give every approach both an icon and an iconBackground . The default is what an empire is on before the player chooses, so a situation with none starts in a state you did not design. Both icons are required by the rules rather than optional. An approach missing either one does not build, which is the good failure — the bad one is shipping a situation whose approach panel is empty.",
+      "provenance": [
+        {
+          "kind": "maintainer",
+          "source": "packages/reference-spike/content/situations.mdx"
+        },
+        {
+          "kind": "corpus",
+          "source": "packages/sdk/tests/fixtures/corpus/situation_type.json",
+          "detail": "how many mark a default approach"
+        }
+      ],
+      "guidance": [
+        {
+          "subject": "member:approach.default",
+          "kind": "contract",
+          "fingerprint": "4187326089d05fd4"
+        },
+        {
+          "subject": "member:approach.icon",
+          "kind": "contract",
+          "fingerprint": "09ab90c36e71f9c7"
+        },
+        {
+          "subject": "evidence:approach.default",
+          "kind": "evidence",
+          "fingerprint": "9a8d67c57df8cdf2"
+        }
+      ]
+    },
+    {
+      "id": "prefer-end",
+      "subject": "stages.end",
+      "status": "curated-convention",
+      "text": "Give each stage an end and leave totalProgress alone unless you specifically want section weights. This is a recommendation to stay out of the unresolved interaction above, not a claim that section weights are worse. The build cannot check the combination, the rules say the game logs an error when the two are mixed, and there is almost no shipped script to read for the other mode. If you do want section weights, expect to verify the result in game yourself.",
+      "provenance": [
+        {
+          "kind": "maintainer",
+          "source": "packages/reference-spike/content/situations.mdx"
+        },
+        {
+          "kind": "corpus",
+          "source": "packages/sdk/tests/fixtures/corpus/situation_type.json",
+          "detail": "how many use per-stage `end`"
+        }
+      ],
+      "guidance": [
+        {
+          "subject": "subtype:dynamic_progress",
+          "kind": "contract",
+          "fingerprint": "a0c25ac2720fbb98"
+        },
+        {
+          "subject": "arms:total_progress",
+          "kind": "contract",
+          "fingerprint": "c9c8e89081486569"
+        },
+        {
+          "subject": "evidence:stages.end",
+          "kind": "evidence",
+          "fingerprint": "adb6672986f9dfb5"
+        },
+        {
+          "subject": "evidence:total_progress",
+          "kind": "evidence",
+          "fingerprint": "a7966655ea24f36d"
+        }
+      ]
+    },
+    {
+      "id": "declare-target-scope",
+      "subject": "targetScope",
+      "status": "curated-convention",
+      "text": "Declare targetScope on any situation your own script starts. It costs one line, it emits nothing, and it converts a whole class of silent in-game failure — starting a planet-shaped situation on a country — into a compile error. Leave it off only for a situation you never start yourself, such as one a player triggers through a decision you do not own. Without it, the generated startSituation signature still accepts the call, and the mistake surfaces as a situation that quietly does nothing.",
+      "provenance": [
+        {
+          "kind": "maintainer",
+          "source": "packages/reference-spike/content/situations.mdx"
+        },
+        {
+          "kind": "sdk-source",
+          "source": "packages/sdk/src/script/effects/situations.ts",
+          "detail": "the checked `startSituation` overload"
+        }
+      ],
+      "guidance": [
+        {
+          "subject": "absent:target_scope",
+          "kind": "contract",
+          "fingerprint": "e6cbeaa4e6fc35bc"
+        },
+        {
+          "subject": "member:stages.target_modifier",
+          "kind": "contract",
+          "fingerprint": "c02dd28481d3d27d"
+        }
+      ]
+    }
+  ],
+  "page": "packages/reference-spike/content/situations.mdx",
+  "sections": [
+    {
+      "id": "is-a-situation-the-right-thing",
+      "title": "Is a situation the right thing",
+      "text": "A situation is a slow problem attached to something . It has a target — a planet, a country, a fleet — and a progress bar that advances on its own every month until it finishes or fails. As it advances it passes through named stages , and the player usually picks an approach that changes how fast it moves and what it costs them. That shape is the test. If your idea is not a bar that fills over time, one of these is probably closer: An event chain — a story told in discrete beats, each one a window the player reads and answers. Situations have no beats; they have a slope. A special project — something a science ship flies to and works on. Situations are not assigned to anyone and nothing travels. A decision — a button the player presses on a planet or an empire. Instant, repeatable, no duration of its own. A modifier or an edict — an effect that is simply on or off. Reach for a situation only when the progression is the point. They combine, and the common shape uses several: an event chain that starts a situation, and the situation firing events of its own as it advances.",
+      "claims": [],
+      "conventions": [],
+      "stories": [],
+      "components": []
+    },
+    {
+      "id": "what-the-player-actually-sees",
+      "title": "What the player actually sees",
+      "text": "Worth knowing before you write fields, because several of them exist only to feed a piece of interface: A progress bar in the situation log, filling toward completion at the rate monthlyProgress computes. The stage the bar is currently in, by name , with its own icon. A breakdown of why the bar is moving at that speed — one line per monthlyProgress modifier, using that modifier's desc . An approach panel , one entry per approach, each with two icons, a name, a description, and whatever its modifiers do. An entry in the outliner , if showInOutliner is set.",
+      "claims": [],
+      "conventions": [],
+      "stories": [],
+      "components": []
+    },
+    {
+      "id": "a-situation-that-works",
+      "title": "A situation that works",
+      "text": "Start here rather than from the smallest legal definition. A minimal situation builds and is disappointing — no stages, no approaches, nothing a player would recognise. It is easier to delete from something that works than to add to a stub when you do not yet know what is addable. The floor is lower than that. Two members are required, and everything else above is optional detail: The id in the output is quiet_situation_type_drift , not quiet_drift : the capability mints a registry segment into every content id. Pass ids: { situationType: \"situation\" } to createMod if you would rather it read quiet_situation_drift .",
+      "claims": [
+        "registry",
+        "monthly-progress-required"
+      ],
+      "conventions": [],
+      "stories": [
+        "complete",
+        "minimal"
+      ],
+      "components": [
+        "Claim"
+      ]
+    },
+    {
+      "id": "stages",
+      "title": "Stages",
+      "text": "Stages are the arc. Each record key is the stage's id, its localization key, and its position in the order, all at once — there is no sort field to get wrong. end is where a stage hands over to the next, on the same scale the bar fills. Give a situation more than one stage, and write them in the order the player will meet them. A single stage makes the progress bar a countdown with no story in it — there is nothing to notice getting worse. The container layout means the order you write is the order the game reads. There is no sort key, and no way to reorder them later without moving the source, so decide the shape of the arc before you name the stages.",
+      "claims": [
+        "stages-layout"
+      ],
+      "conventions": [
+        "two-stages"
+      ],
+      "stories": [
+        "stages"
+      ],
+      "components": [
+        "Claim",
+        "Convention"
+      ]
+    },
+    {
+      "id": "approaches",
+      "title": "Approaches",
+      "text": "Approaches are the player's move. They pick one, it stays picked until they change it, and it usually trades a resource against the speed of the bar. Mark exactly one approach default: true , and give every approach both an icon and an iconBackground . The default is what an empire is on before the player chooses, so a situation with none starts in a state you did not design. Both icons are required by the rules rather than optional. An approach missing either one does not build, which is the good failure — the bad one is shipping a situation whose approach panel is empty. Open the output panel below and compare it with the stages one above. Same authoring shape, different PDXScript. An approach can be locked until the situation reaches a particular stage, and the SDK checks the stage name against the ones this definition declares.",
+      "claims": [
+        "approach-layout",
+        "identity-boundary"
+      ],
+      "conventions": [
+        "default-approach"
+      ],
+      "stories": [
+        "approaches",
+        "gated-approach"
+      ],
+      "components": [
+        "Claim",
+        "Convention"
+      ]
+    },
+    {
+      "id": "making-the-bar-move",
+      "title": "Making the bar move",
+      "text": "monthlyProgress is a weight block, and unlike most weight blocks in the SDK every modifier row also carries display text. That is not decoration: the block is what a player opens to find out why their situation is getting worse. Put the whole rate in monthlyProgress and write a real sentence in every modifier row's desc . The text is required per row rather than optional because this block is the only place a player can find out why the bar is moving at the speed it is. A row that says \"modifier\" tells them nothing, and a situation whose pace looks arbitrary reads as a bug rather than as pressure. Write the text from the player's side: what is happening in the fiction, not which flag you checked.",
+      "claims": [],
+      "conventions": [
+        "progress-desc"
+      ],
+      "stories": [
+        "progress"
+      ],
+      "components": [
+        "Convention"
+      ]
+    },
+    {
+      "id": "the-text-the-player-reads",
+      "title": "The text the player reads",
+      "text": "You write English in the definition. The build produces the localization file and invents the key names — including for the desc on each progress modifier, which has no id of its own to hang one off. Open the localization tab on any story above to see what came out. A stage or an approach has an id to hang its key off. A monthlyProgress modifier row does not, so the build derives one — and by default it derives it from a hash of your sentence . Edit the sentence later and the key changes, which silently orphans every translation anyone has written against the old one. descKey pins it: The build says so itself, in mod.warnings , whenever you leave it out. Read that list — it is data rather than console output, so nothing prints it at you.",
+      "claims": [
+        "nested-localisation"
+      ],
+      "conventions": [],
+      "stories": [],
+      "components": [
+        "Claim"
+      ]
+    },
+    {
+      "id": "starting-it",
+      "title": "Starting it",
+      "text": "Defining a situation does not start one. startSituation does, and it is an effect like any other: it goes in an event, an on-action, a decision. Declare targetScope on any situation your own script starts. It costs one line, it emits nothing, and it converts a whole class of silent in-game failure — starting a planet-shaped situation on a country — into a compile error. Leave it off only for a situation you never start yourself, such as one a player triggers through a decision you do not own. Without it, the generated startSituation signature still accepts the call, and the mistake surfaces as a situation that quietly does nothing. currentStage , currentSituationApproach and canSetSituationApproach read a running situation, and are checked against this definition's own keys in the four positions above. Nested inside a combinator or an effect closure they still compile, unchecked. There is no Situation recipe in create-stellaris-mod today, so every story on this page is hand-written.",
+      "claims": [
+        "target-scope-authored",
+        "trigger-scopes"
+      ],
+      "conventions": [
+        "declare-target-scope"
+      ],
+      "stories": [
+        "typed-start"
+      ],
+      "components": [
+        "Claim",
+        "Convention",
+        "SdkContracts"
+      ]
+    },
+    {
+      "id": "mistakes-you-will-probably-make",
+      "title": "Mistakes you will probably make",
+      "text": "Three of these caught the person who wrote the stories on this page. None is obvious from the types. A situation-scoped trigger in potential . Almost everything on a situation definition runs in situation scope, so reaching for hasSituationFlag is the natural move. potential is the exception — it decides whether an empire can have the situation at all, so it runs in country scope, and a situation trigger there does not compile. A stage or approach key without your mod prefix. The record keys are content ids, not local labels, and the capability refuses one that does not start with your prefix. Write mymod_thing_stage_one , not stage_one . A feature stem that repeats the prefix. mod.feature(\"quiet_drift\", …) in a mod prefixed quiet writes common/situations/quiet_quiet_drift.txt . The prefix is added for you; name the stem after the feature alone.",
+      "claims": [],
+      "conventions": [],
+      "stories": [],
+      "components": []
+    },
+    {
+      "id": "what-will-bite-you",
+      "title": "What will bite you",
+      "text": "Three things about situations are unfinished. They are here rather than in a changelog because each one costs an afternoon if you meet it without warning. If you wanted a different picture per condition, you cannot have it. The game supports it and this surface does not. If you wanted a stage in an exact colour, read the type and not the comment. This one is worse than a missing feature, because the SDK actively tells you something untrue: If you were going to use totalProgress , know that nothing is checking you. There are two ways a situation can measure progress and the surface cannot tell you which one you are in: Give each stage an end and leave totalProgress alone unless you specifically want section weights. This is a recommendation to stay out of the unresolved interaction above, not a claim that section weights are worse. The build cannot check the combination, the rules say the game logs an error when the two are mixed, and there is almost no shipped script to read for the other mode. If you do want section weights, expect to verify the result in game yourself. The story below writes the mode nobody can describe. It compiles and it synthesizes, which is exactly the problem: the build has no opinion about whether it is correct, and neither does this page.",
+      "claims": [
+        "picture-block-omitted",
+        "stage-color-contradiction",
+        "progress-mode-unresolved"
+      ],
+      "conventions": [
+        "prefer-end"
+      ],
+      "stories": [
+        "section-weights"
+      ],
+      "components": [
+        "Claim",
+        "Convention"
+      ]
+    },
+    {
+      "id": "every-field",
+      "title": "Every field",
+      "text": "Everything above is the path through. This is the whole surface, including the members nested inside stages , approach and the struct fields — for when you already know what you are looking for.",
+      "claims": [
+        "stage-target-modifier-unpinned"
+      ],
+      "conventions": [],
+      "stories": [],
+      "components": [
+        "Claim",
+        "FieldTable"
+      ]
+    },
+    {
+      "id": "where-this-came-from",
+      "title": "Where this came from",
+      "text": "Every claim on this page is supported by one build of the SDK against one commit of the rules, one documentation dump, and one extraction from one game version. They are listed together because evidence from different builds is not interchangeable.",
+      "claims": [],
+      "conventions": [],
+      "stories": [],
+      "components": [
+        "EvidenceSummary"
+      ]
+    }
+  ],
+  "fields": [
+    {
+      "key": "abort_trigger",
+      "member": "abortTrigger",
+      "shape": "trigger",
+      "required": false,
+      "repeated": false,
+      "scope": "situation",
+      "clause": "trigger",
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:87",
+      "evidence": {
+        "definitions": 64,
+        "scalars": 0,
+        "blocks": 64,
+        "belowPresenceFloor": false
+      },
+      "claims": []
+    },
+    {
+      "key": "active_tooltip",
+      "member": "activeTooltip",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:53",
+      "evidence": null,
+      "claims": []
+    },
+    {
+      "key": "approach",
+      "member": "approach",
+      "shape": "repeatedStruct",
+      "required": false,
+      "repeated": true,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:128",
+      "evidence": {
+        "definitions": 89,
+        "scalars": 0,
+        "blocks": 89,
+        "belowPresenceFloor": false
+      },
+      "claims": [
+        "approach-layout"
+      ]
+    },
+    {
+      "key": "approach.ai_weight",
+      "member": "approach.aiWeight",
+      "shape": "dual",
+      "required": false,
+      "repeated": false,
+      "scope": "situation",
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:165",
+      "evidence": {
+        "definitions": 36,
+        "scalars": 0,
+        "blocks": 36,
+        "belowPresenceFloor": false
+      },
+      "claims": [
+        "approach-layout"
+      ]
+    },
+    {
+      "key": "approach.ai_weight.modifier",
+      "member": "approach.aiWeight",
+      "shape": "weightModifier",
+      "required": false,
+      "repeated": true,
+      "scope": "situation",
+      "clause": "trigger",
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": {
+        "definitions": 15,
+        "scalars": 0,
+        "blocks": 15,
+        "belowPresenceFloor": true
+      },
+      "claims": [
+        "approach-layout"
+      ]
+    },
+    {
+      "key": "approach.allow",
+      "member": "approach.allow",
+      "shape": "trigger",
+      "required": false,
+      "repeated": false,
+      "scope": "situation",
+      "clause": "trigger",
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:135",
+      "evidence": {
+        "definitions": 26,
+        "scalars": 0,
+        "blocks": 26,
+        "belowPresenceFloor": false
+      },
+      "claims": [
+        "approach-layout"
+      ]
+    },
+    {
+      "key": "approach.custom_tooltip_with_modifiers",
+      "member": "approach.customTooltipWithModifiers",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:154",
+      "evidence": {
+        "definitions": 3,
+        "scalars": 3,
+        "blocks": 0,
+        "belowPresenceFloor": true
+      },
+      "claims": [
+        "approach-layout"
+      ]
+    },
+    {
+      "key": "approach.default",
+      "member": "approach.default",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": [
+        "yes"
+      ],
+      "level": "nested",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:133",
+      "evidence": {
+        "definitions": 77,
+        "scalars": 77,
+        "blocks": 0,
+        "belowPresenceFloor": false
+      },
+      "claims": [
+        "approach-layout"
+      ]
+    },
+    {
+      "key": "approach.icon",
+      "member": "approach.icon",
+      "shape": "value",
+      "required": true,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:130",
+      "evidence": {
+        "definitions": 89,
+        "scalars": 89,
+        "blocks": 0,
+        "belowPresenceFloor": false
+      },
+      "claims": [
+        "approach-layout"
+      ]
+    },
+    {
+      "key": "approach.icon_background",
+      "member": "approach.iconBackground",
+      "shape": "value",
+      "required": true,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:131",
+      "evidence": {
+        "definitions": 89,
+        "scalars": 89,
+        "blocks": 0,
+        "belowPresenceFloor": false
+      },
+      "claims": [
+        "approach-layout"
+      ]
+    },
+    {
+      "key": "approach.modifier",
+      "member": "approach.modifier",
+      "shape": "modifierBlock",
+      "required": false,
+      "repeated": false,
+      "scope": "country",
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:141",
+      "evidence": {
+        "definitions": 42,
+        "scalars": 0,
+        "blocks": 42,
+        "belowPresenceFloor": false
+      },
+      "claims": [
+        "approach-layout"
+      ]
+    },
+    {
+      "key": "approach.on_select",
+      "member": "approach.onSelect",
+      "shape": "effect",
+      "required": false,
+      "repeated": false,
+      "scope": "situation",
+      "clause": "effect",
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:163",
+      "evidence": {
+        "definitions": 86,
+        "scalars": 0,
+        "blocks": 86,
+        "belowPresenceFloor": false
+      },
+      "claims": [
+        "approach-layout"
+      ]
+    },
+    {
+      "key": "approach.potential",
+      "member": "approach.potential",
+      "shape": "trigger",
+      "required": false,
+      "repeated": false,
+      "scope": "situation",
+      "clause": "trigger",
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:137",
+      "evidence": {
+        "definitions": 19,
+        "scalars": 0,
+        "blocks": 19,
+        "belowPresenceFloor": true
+      },
+      "claims": [
+        "approach-layout"
+      ]
+    },
+    {
+      "key": "approach.resources",
+      "member": "approach.resources",
+      "shape": "economicResources",
+      "required": false,
+      "repeated": true,
+      "scope": "situation",
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:157",
+      "evidence": {
+        "definitions": 29,
+        "scalars": 0,
+        "blocks": 29,
+        "belowPresenceFloor": false
+      },
+      "claims": [
+        "approach-layout"
+      ]
+    },
+    {
+      "key": "approach.target_modifier",
+      "member": "approach.targetModifier",
+      "shape": "modifierBlock",
+      "required": false,
+      "repeated": false,
+      "scope": "planet",
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:144",
+      "evidence": {
+        "definitions": 4,
+        "scalars": 0,
+        "blocks": 4,
+        "belowPresenceFloor": true
+      },
+      "claims": [
+        "approach-layout"
+      ]
+    },
+    {
+      "key": "approach.triggered_modifier",
+      "member": "approach.triggeredModifier",
+      "shape": "triggeredModifierBlock",
+      "required": false,
+      "repeated": true,
+      "scope": "country",
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:148",
+      "evidence": {
+        "definitions": 7,
+        "scalars": 0,
+        "blocks": 7,
+        "belowPresenceFloor": true
+      },
+      "claims": [
+        "approach-layout"
+      ]
+    },
+    {
+      "key": "approach.triggered_modifier.potential",
+      "member": "approach.triggeredModifier",
+      "shape": "trigger",
+      "required": false,
+      "repeated": false,
+      "scope": "situation",
+      "clause": "trigger",
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": {
+        "definitions": 5,
+        "scalars": 0,
+        "blocks": 5,
+        "belowPresenceFloor": true
+      },
+      "claims": [
+        "approach-layout"
+      ]
+    },
+    {
+      "key": "approach.triggered_target_modifier",
+      "member": "approach.triggeredTargetModifier",
+      "shape": "triggeredModifierBlock",
+      "required": false,
+      "repeated": true,
+      "scope": "planet",
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:151",
+      "evidence": {
+        "definitions": 3,
+        "scalars": 0,
+        "blocks": 3,
+        "belowPresenceFloor": true
+      },
+      "claims": [
+        "approach-layout"
+      ]
+    },
+    {
+      "key": "approach.triggered_target_modifier.potential",
+      "member": "approach.triggeredTargetModifier",
+      "shape": "trigger",
+      "required": false,
+      "repeated": false,
+      "scope": "situation",
+      "clause": "trigger",
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": {
+        "definitions": 3,
+        "scalars": 0,
+        "blocks": 3,
+        "belowPresenceFloor": true
+      },
+      "claims": [
+        "approach-layout"
+      ]
+    },
+    {
+      "key": "category",
+      "member": "category",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": [
+        "positive",
+        "negative",
+        "neutral"
+      ],
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:35",
+      "evidence": {
+        "definitions": 65,
+        "scalars": 65,
+        "blocks": 0,
+        "belowPresenceFloor": false
+      },
+      "claims": []
+    },
+    {
+      "key": "complete_category",
+      "member": "completeCategory",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": [
+        "positive",
+        "negative",
+        "neutral"
+      ],
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [
+        "Only for progress_direction = bidirectional - only affects progress towards completetion (right)"
+      ],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:201",
+      "evidence": {
+        "definitions": 1,
+        "scalars": 1,
+        "blocks": 0,
+        "belowPresenceFloor": true
+      },
+      "claims": []
+    },
+    {
+      "key": "complete_icon",
+      "member": "completeIcon",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:216",
+      "evidence": {
+        "definitions": 85,
+        "scalars": 85,
+        "blocks": 0,
+        "belowPresenceFloor": false
+      },
+      "claims": []
+    },
+    {
+      "key": "complete_icon_frame",
+      "member": "completeIconFrame",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:218",
+      "evidence": {
+        "definitions": 83,
+        "scalars": 83,
+        "blocks": 0,
+        "belowPresenceFloor": false
+      },
+      "claims": []
+    },
+    {
+      "key": "custom_tooltip",
+      "member": "customTooltip",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:67",
+      "evidence": null,
+      "claims": []
+    },
+    {
+      "key": "custom_tooltip_with_modifiers",
+      "member": "customTooltipWithModifiers",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:69",
+      "evidence": null,
+      "claims": []
+    },
+    {
+      "key": "desc",
+      "member": "conditionalDesc",
+      "shape": "dual",
+      "required": false,
+      "repeated": true,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:49",
+      "evidence": {
+        "definitions": 9,
+        "scalars": 4,
+        "blocks": 5,
+        "belowPresenceFloor": true
+      },
+      "claims": []
+    },
+    {
+      "key": "desc.text",
+      "member": "conditionalDesc.text",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": {
+        "definitions": 4,
+        "scalars": 4,
+        "blocks": 0,
+        "belowPresenceFloor": true
+      },
+      "claims": []
+    },
+    {
+      "key": "desc.trigger",
+      "member": "conditionalDesc.trigger",
+      "shape": "trigger",
+      "required": false,
+      "repeated": false,
+      "scope": "situation",
+      "clause": "trigger",
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": {
+        "definitions": 5,
+        "scalars": 0,
+        "blocks": 5,
+        "belowPresenceFloor": true
+      },
+      "claims": []
+    },
+    {
+      "key": "fail_category",
+      "member": "failCategory",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": [
+        "positive",
+        "negative",
+        "neutral"
+      ],
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [
+        "Only for progress_direction = bidirectional - only affects progress towards fail (left)"
+      ],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:204",
+      "evidence": {
+        "definitions": 1,
+        "scalars": 1,
+        "blocks": 0,
+        "belowPresenceFloor": true
+      },
+      "claims": []
+    },
+    {
+      "key": "fail_icon",
+      "member": "failIcon",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:220",
+      "evidence": {
+        "definitions": 23,
+        "scalars": 23,
+        "blocks": 0,
+        "belowPresenceFloor": true
+      },
+      "claims": []
+    },
+    {
+      "key": "fail_icon_frame",
+      "member": "failIconFrame",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:222",
+      "evidence": {
+        "definitions": 23,
+        "scalars": 23,
+        "blocks": 0,
+        "belowPresenceFloor": true
+      },
+      "claims": []
+    },
+    {
+      "key": "initial_progress",
+      "member": "initialProgress",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [
+        "The value the situation progress is going to have when starting. Important for bidirectional situations. if it is lower than start_value, it will be changed to start_value"
+      ],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:177",
+      "evidence": {
+        "definitions": 65,
+        "scalars": 65,
+        "blocks": 0,
+        "belowPresenceFloor": false
+      },
+      "claims": []
+    },
+    {
+      "key": "modifier",
+      "member": "modifier",
+      "shape": "modifierBlock",
+      "required": false,
+      "repeated": false,
+      "scope": "country",
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:91",
+      "evidence": {
+        "definitions": 4,
+        "scalars": 0,
+        "blocks": 4,
+        "belowPresenceFloor": true
+      },
+      "claims": []
+    },
+    {
+      "key": "monthly_progress",
+      "member": "monthlyProgress",
+      "shape": "weightBlockWithLoc",
+      "required": true,
+      "repeated": false,
+      "scope": "situation",
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:123",
+      "evidence": {
+        "definitions": 90,
+        "scalars": 0,
+        "blocks": 90,
+        "belowPresenceFloor": false
+      },
+      "claims": [
+        "monthly-progress-required"
+      ]
+    },
+    {
+      "key": "monthly_progress.modifier",
+      "member": "monthlyProgress",
+      "shape": "weightModifier",
+      "required": false,
+      "repeated": true,
+      "scope": "situation",
+      "clause": "trigger",
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": {
+        "definitions": 82,
+        "scalars": 0,
+        "blocks": 82,
+        "belowPresenceFloor": false
+      },
+      "claims": [
+        "monthly-progress-required"
+      ]
+    },
+    {
+      "key": "on_abort",
+      "member": "onAbort",
+      "shape": "effect",
+      "required": false,
+      "repeated": false,
+      "scope": "situation",
+      "clause": "effect",
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:80",
+      "evidence": {
+        "definitions": 34,
+        "scalars": 0,
+        "blocks": 34,
+        "belowPresenceFloor": false
+      },
+      "claims": []
+    },
+    {
+      "key": "on_fail",
+      "member": "onFail",
+      "shape": "effect",
+      "required": false,
+      "repeated": false,
+      "scope": "situation",
+      "clause": "effect",
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:78",
+      "evidence": {
+        "definitions": 29,
+        "scalars": 0,
+        "blocks": 29,
+        "belowPresenceFloor": false
+      },
+      "claims": []
+    },
+    {
+      "key": "on_monthly",
+      "member": "onMonthly",
+      "shape": "struct",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:104",
+      "evidence": {
+        "definitions": 59,
+        "scalars": 0,
+        "blocks": 59,
+        "belowPresenceFloor": false
+      },
+      "claims": []
+    },
+    {
+      "key": "on_monthly.events",
+      "member": "onMonthly.events",
+      "shape": "valueList",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:106",
+      "evidence": {
+        "definitions": 44,
+        "scalars": 0,
+        "blocks": 44,
+        "belowPresenceFloor": false
+      },
+      "claims": []
+    },
+    {
+      "key": "on_monthly.random_events",
+      "member": "onMonthly.randomEvents",
+      "shape": "weightedEvents",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:113",
+      "evidence": {
+        "definitions": 25,
+        "scalars": 0,
+        "blocks": 25,
+        "belowPresenceFloor": false
+      },
+      "claims": []
+    },
+    {
+      "key": "on_progress_complete",
+      "member": "onProgressComplete",
+      "shape": "effect",
+      "required": false,
+      "repeated": false,
+      "scope": "situation",
+      "clause": "effect",
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:82",
+      "evidence": {
+        "definitions": 88,
+        "scalars": 0,
+        "blocks": 88,
+        "belowPresenceFloor": false
+      },
+      "claims": []
+    },
+    {
+      "key": "on_start",
+      "member": "onStart",
+      "shape": "effect",
+      "required": false,
+      "repeated": false,
+      "scope": "situation",
+      "clause": "effect",
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:76",
+      "evidence": {
+        "definitions": 37,
+        "scalars": 0,
+        "blocks": 37,
+        "belowPresenceFloor": false
+      },
+      "claims": []
+    },
+    {
+      "key": "override_active_desc",
+      "member": "overrideActiveDesc",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:58",
+      "evidence": null,
+      "claims": []
+    },
+    {
+      "key": "override_active_title",
+      "member": "overrideActiveTitle",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:56",
+      "evidence": null,
+      "claims": []
+    },
+    {
+      "key": "override_finisher_desc",
+      "member": "overrideFinisherDesc",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:62",
+      "evidence": {
+        "definitions": 1,
+        "scalars": 1,
+        "blocks": 0,
+        "belowPresenceFloor": true
+      },
+      "claims": []
+    },
+    {
+      "key": "override_finisher_title",
+      "member": "overrideFinisherTitle",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:60",
+      "evidence": {
+        "definitions": 1,
+        "scalars": 1,
+        "blocks": 0,
+        "belowPresenceFloor": true
+      },
+      "claims": []
+    },
+    {
+      "key": "override_progress_current_desc",
+      "member": "overrideProgressCurrentDesc",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:64",
+      "evidence": {
+        "definitions": 1,
+        "scalars": 1,
+        "blocks": 0,
+        "belowPresenceFloor": true
+      },
+      "claims": []
+    },
+    {
+      "key": "permanent",
+      "member": "permanent",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": [
+        "yes",
+        "no"
+      ],
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [
+        "If yes, the situation does not end automatically when it reaches either extreme. It needs to be finished manually if needed.",
+        "Default: no"
+      ],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:210",
+      "evidence": {
+        "definitions": 2,
+        "scalars": 2,
+        "blocks": 0,
+        "belowPresenceFloor": true
+      },
+      "claims": []
+    },
+    {
+      "key": "picture",
+      "member": "picture",
+      "shape": "value",
+      "required": false,
+      "repeated": true,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:28",
+      "evidence": {
+        "definitions": 86,
+        "scalars": 82,
+        "blocks": 4,
+        "belowPresenceFloor": false
+      },
+      "claims": [
+        "picture-block-omitted",
+        "picture-usage"
+      ]
+    },
+    {
+      "key": "potential",
+      "member": "potential",
+      "shape": "trigger",
+      "required": false,
+      "repeated": false,
+      "scope": "country",
+      "clause": "trigger",
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:73",
+      "evidence": {
+        "definitions": 2,
+        "scalars": 0,
+        "blocks": 2,
+        "belowPresenceFloor": true
+      },
+      "claims": []
+    },
+    {
+      "key": "progress_direction",
+      "member": "progressDirection",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": [
+        "monodirectional",
+        "bidirectional"
+      ],
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [
+        "monodirectional/bidirectional (defaults to monodirectional)"
+      ],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:194",
+      "evidence": {
+        "definitions": 7,
+        "scalars": 7,
+        "blocks": 0,
+        "belowPresenceFloor": true
+      },
+      "claims": []
+    },
+    {
+      "key": "show_in_outliner",
+      "member": "showInOutliner",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": [
+        "yes",
+        "no"
+      ],
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:213",
+      "evidence": {
+        "definitions": 1,
+        "scalars": 1,
+        "blocks": 0,
+        "belowPresenceFloor": true
+      },
+      "claims": []
+    },
+    {
+      "key": "situation_log_category",
+      "member": "situationLogCategory",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:38",
+      "evidence": {
+        "definitions": 83,
+        "scalars": 83,
+        "blocks": 0,
+        "belowPresenceFloor": false
+      },
+      "claims": []
+    },
+    {
+      "key": "stages",
+      "member": "stages",
+      "shape": "repeatedStruct",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:225",
+      "evidence": {
+        "definitions": 90,
+        "scalars": 0,
+        "blocks": 90,
+        "belowPresenceFloor": false
+      },
+      "claims": [
+        "stages-layout"
+      ]
+    },
+    {
+      "key": "stages.color",
+      "member": "stages.color",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "body",
+      "docs": [
+        "Color for UI elements associated with this stage. Can be:",
+        "- A key from the named colors database (e.g. \"red\")",
+        "- A numeric RGBA vector (e.g. { 255 100 0 255 } or { 1.0 0.3 0.0 1.0 })",
+        "Defaults to SITUATION_STAGE_DEFAULT_COLOR"
+      ],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:252",
+      "evidence": {
+        "definitions": 1,
+        "scalars": 1,
+        "blocks": 0,
+        "belowPresenceFloor": true
+      },
+      "claims": [
+        "stage-color-contradiction",
+        "stage-color-usage"
+      ]
+    },
+    {
+      "key": "stages.custom_tooltip",
+      "member": "stages.customTooltip",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:256",
+      "evidence": {
+        "definitions": 56,
+        "scalars": 56,
+        "blocks": 0,
+        "belowPresenceFloor": false
+      },
+      "claims": [
+        "stages-layout"
+      ]
+    },
+    {
+      "key": "stages.end",
+      "member": "stages.end",
+      "shape": "dual",
+      "required": false,
+      "repeated": false,
+      "scope": "situation",
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:230",
+      "evidence": {
+        "definitions": 89,
+        "scalars": 88,
+        "blocks": 1,
+        "belowPresenceFloor": false
+      },
+      "claims": [
+        "stages-layout"
+      ]
+    },
+    {
+      "key": "stages.end.modifier",
+      "member": "stages.end",
+      "shape": "weightModifier",
+      "required": false,
+      "repeated": true,
+      "scope": "situation",
+      "clause": "trigger",
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": null,
+      "claims": [
+        "stages-layout"
+      ]
+    },
+    {
+      "key": "stages.icon",
+      "member": "stages.icon",
+      "shape": "value",
+      "required": true,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:245",
+      "evidence": {
+        "definitions": 90,
+        "scalars": 90,
+        "blocks": 0,
+        "belowPresenceFloor": false
+      },
+      "claims": [
+        "stages-layout"
+      ]
+    },
+    {
+      "key": "stages.icon_background",
+      "member": "stages.iconBackground",
+      "shape": "value",
+      "required": true,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:246",
+      "evidence": {
+        "definitions": 90,
+        "scalars": 90,
+        "blocks": 0,
+        "belowPresenceFloor": false
+      },
+      "claims": [
+        "stages-layout"
+      ]
+    },
+    {
+      "key": "stages.modifier",
+      "member": "stages.modifier",
+      "shape": "modifierBlock",
+      "required": false,
+      "repeated": false,
+      "scope": "country",
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:266",
+      "evidence": {
+        "definitions": 13,
+        "scalars": 0,
+        "blocks": 13,
+        "belowPresenceFloor": true
+      },
+      "claims": [
+        "stages-layout"
+      ]
+    },
+    {
+      "key": "stages.on_enter",
+      "member": "stages.onEnter",
+      "shape": "effect",
+      "required": false,
+      "repeated": false,
+      "scope": "situation",
+      "clause": "effect",
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:260",
+      "evidence": {
+        "definitions": 1,
+        "scalars": 0,
+        "blocks": 1,
+        "belowPresenceFloor": true
+      },
+      "claims": [
+        "stages-layout"
+      ]
+    },
+    {
+      "key": "stages.on_first_enter",
+      "member": "stages.onFirstEnter",
+      "shape": "effect",
+      "required": false,
+      "repeated": false,
+      "scope": "situation",
+      "clause": "effect",
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:258",
+      "evidence": {
+        "definitions": 60,
+        "scalars": 0,
+        "blocks": 60,
+        "belowPresenceFloor": false
+      },
+      "claims": [
+        "stages-layout"
+      ]
+    },
+    {
+      "key": "stages.potential",
+      "member": "stages.potential",
+      "shape": "trigger",
+      "required": false,
+      "repeated": false,
+      "scope": "situation",
+      "clause": "trigger",
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:262",
+      "evidence": null,
+      "claims": [
+        "stages-layout"
+      ]
+    },
+    {
+      "key": "stages.section_weight",
+      "member": "stages.sectionWeight",
+      "shape": "dual",
+      "required": false,
+      "repeated": false,
+      "scope": "situation",
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:239",
+      "evidence": {
+        "definitions": 1,
+        "scalars": 1,
+        "blocks": 1,
+        "belowPresenceFloor": true
+      },
+      "claims": [
+        "stages-layout"
+      ]
+    },
+    {
+      "key": "stages.section_weight.modifier",
+      "member": "stages.sectionWeight",
+      "shape": "weightModifier",
+      "required": false,
+      "repeated": true,
+      "scope": "situation",
+      "clause": "trigger",
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": {
+        "definitions": 1,
+        "scalars": 0,
+        "blocks": 1,
+        "belowPresenceFloor": true
+      },
+      "claims": [
+        "stages-layout"
+      ]
+    },
+    {
+      "key": "stages.target_modifier",
+      "member": "stages.targetModifier",
+      "shape": "modifierBlock",
+      "required": false,
+      "repeated": false,
+      "scope": "any",
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "body",
+      "docs": [
+        "Target is typically a single colony carrier, your whole empire, or no target"
+      ],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:274",
+      "evidence": {
+        "definitions": 6,
+        "scalars": 0,
+        "blocks": 6,
+        "belowPresenceFloor": true
+      },
+      "claims": [
+        "stages-layout"
+      ]
+    },
+    {
+      "key": "stages.triggered_modifier",
+      "member": "stages.triggeredModifier",
+      "shape": "triggeredModifierBlock",
+      "required": false,
+      "repeated": true,
+      "scope": "country",
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:269",
+      "evidence": {
+        "definitions": 7,
+        "scalars": 0,
+        "blocks": 7,
+        "belowPresenceFloor": true
+      },
+      "claims": [
+        "stages-layout"
+      ]
+    },
+    {
+      "key": "stages.triggered_modifier.potential",
+      "member": "stages.triggeredModifier",
+      "shape": "trigger",
+      "required": false,
+      "repeated": false,
+      "scope": "situation",
+      "clause": "trigger",
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": {
+        "definitions": 7,
+        "scalars": 0,
+        "blocks": 7,
+        "belowPresenceFloor": true
+      },
+      "claims": [
+        "stages-layout"
+      ]
+    },
+    {
+      "key": "stages.triggered_target_modifier",
+      "member": "stages.triggeredTargetModifier",
+      "shape": "triggeredModifierBlock",
+      "required": false,
+      "repeated": true,
+      "scope": "any",
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "body",
+      "docs": [
+        "Target is typically a single colony carrier, your whole empire, or no target"
+      ],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:278",
+      "evidence": {
+        "definitions": 1,
+        "scalars": 0,
+        "blocks": 1,
+        "belowPresenceFloor": true
+      },
+      "claims": [
+        "stages-layout"
+      ]
+    },
+    {
+      "key": "stages.triggered_target_modifier.potential",
+      "member": "stages.triggeredTargetModifier",
+      "shape": "trigger",
+      "required": false,
+      "repeated": false,
+      "scope": "situation",
+      "clause": "trigger",
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": {
+        "definitions": 1,
+        "scalars": 0,
+        "blocks": 1,
+        "belowPresenceFloor": true
+      },
+      "claims": [
+        "stages-layout"
+      ]
+    },
+    {
+      "key": "start_value",
+      "member": "startValue",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [
+        "Situation will start at this number. Default is 0"
+      ],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:174",
+      "evidence": {
+        "definitions": 1,
+        "scalars": 1,
+        "blocks": 0,
+        "belowPresenceFloor": true
+      },
+      "claims": []
+    },
+    {
+      "key": "target_modifier",
+      "member": "targetModifier",
+      "shape": "modifierBlock",
+      "required": false,
+      "repeated": false,
+      "scope": "planet",
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:94",
+      "evidence": {
+        "definitions": 3,
+        "scalars": 0,
+        "blocks": 3,
+        "belowPresenceFloor": true
+      },
+      "claims": []
+    },
+    {
+      "key": "title",
+      "member": "title",
+      "shape": "dual",
+      "required": false,
+      "repeated": true,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:41",
+      "evidence": {
+        "definitions": 6,
+        "scalars": 5,
+        "blocks": 1,
+        "belowPresenceFloor": true
+      },
+      "claims": []
+    },
+    {
+      "key": "title.text",
+      "member": "title.text",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:46",
+      "evidence": {
+        "definitions": 1,
+        "scalars": 1,
+        "blocks": 0,
+        "belowPresenceFloor": true
+      },
+      "claims": []
+    },
+    {
+      "key": "title.trigger",
+      "member": "title.trigger",
+      "shape": "trigger",
+      "required": true,
+      "repeated": false,
+      "scope": "situation",
+      "clause": "trigger",
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:44",
+      "evidence": {
+        "definitions": 1,
+        "scalars": 0,
+        "blocks": 1,
+        "belowPresenceFloor": true
+      },
+      "claims": []
+    },
+    {
+      "key": "total_progress",
+      "member": "totalProgress",
+      "shape": "dual",
+      "required": false,
+      "repeated": false,
+      "scope": "situation",
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:183",
+      "evidence": {
+        "definitions": 1,
+        "scalars": 0,
+        "blocks": 1,
+        "belowPresenceFloor": true
+      },
+      "claims": []
+    },
+    {
+      "key": "total_progress.modifier",
+      "member": "totalProgress",
+      "shape": "weightModifier",
+      "required": false,
+      "repeated": true,
+      "scope": "situation",
+      "clause": "trigger",
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": null,
+      "claims": []
+    },
+    {
+      "key": "triggered_blocked_desc",
+      "member": "triggeredBlockedDesc",
+      "shape": "struct",
+      "required": false,
+      "repeated": true,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:85",
+      "evidence": {
+        "definitions": 15,
+        "scalars": 0,
+        "blocks": 15,
+        "belowPresenceFloor": true
+      },
+      "claims": []
+    },
+    {
+      "key": "triggered_blocked_desc.text",
+      "member": "triggeredBlockedDesc.text",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": {
+        "definitions": 15,
+        "scalars": 15,
+        "blocks": 0,
+        "belowPresenceFloor": true
+      },
+      "claims": []
+    },
+    {
+      "key": "triggered_blocked_desc.trigger",
+      "member": "triggeredBlockedDesc.trigger",
+      "shape": "trigger",
+      "required": false,
+      "repeated": false,
+      "scope": "situation",
+      "clause": "trigger",
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": {
+        "definitions": 15,
+        "scalars": 0,
+        "blocks": 15,
+        "belowPresenceFloor": true
+      },
+      "claims": []
+    },
+    {
+      "key": "triggered_modifier",
+      "member": "triggeredModifier",
+      "shape": "triggeredModifierBlock",
+      "required": false,
+      "repeated": true,
+      "scope": "country",
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:98",
+      "evidence": {
+        "definitions": 9,
+        "scalars": 0,
+        "blocks": 9,
+        "belowPresenceFloor": true
+      },
+      "claims": []
+    },
+    {
+      "key": "triggered_modifier.potential",
+      "member": "triggeredModifier",
+      "shape": "trigger",
+      "required": false,
+      "repeated": false,
+      "scope": "situation",
+      "clause": "trigger",
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": {
+        "definitions": 9,
+        "scalars": 0,
+        "blocks": 9,
+        "belowPresenceFloor": true
+      },
+      "claims": []
+    },
+    {
+      "key": "triggered_target_modifier",
+      "member": "triggeredTargetModifier",
+      "shape": "triggeredModifierBlock",
+      "required": false,
+      "repeated": true,
+      "scope": "planet",
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/situations.cwt:101",
+      "evidence": null,
+      "claims": []
+    },
+    {
+      "key": "triggered_target_modifier.potential",
+      "member": "triggeredTargetModifier",
+      "shape": "trigger",
+      "required": false,
+      "repeated": false,
+      "scope": "situation",
+      "clause": "trigger",
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": null,
+      "claims": []
+    }
+  ],
+  "stories": [
+    {
+      "id": "complete",
+      "title": "Two stages, two approaches, a rate with a reason",
+      "source": "packages/reference-spike/content/situations.mdx:51",
+      "code": "import { createMod, hasSituationFlag } from \"@pdx-ts/sdk\";\n\nexport const mod = createMod({\n  name: \"Vergence\",\n  prefix: \"verge\" as const,\n  version: \"0.1.0\",\n  supportedVersion: \"v4.4.*\",\n});\n\nexport const collapse = mod.situationType(\"collapse\", {\n  name: \"Orbital Collapse\",\n  desc: \"The station's orbit is decaying, and the schedule is slipping.\",\n  category: \"negative\",\n  monthlyProgress: {\n    base: 3,\n    modifiers: [\n      {\n        factor: 1.5,\n        // `descKey` pins the localization key. Without it the key is a hash of\n        // the sentence, and editing the sentence silently orphans every\n        // translation of it.\n        descKey: \"decay_accelerating\",\n        desc: \"The decay is accelerating.\",\n        when: hasSituationFlag(\"verge_decay_accelerating\"),\n      },\n    ],\n  },\n  stages: {\n    verge_collapse_tremors: {\n      name: \"Tremors\",\n      desc: \"Instruments are picking up the first wobble.\",\n      icon: \"GFX_situation_stage_tremors\",\n      iconBackground: \"GFX_situation_stage_tremors_bg\",\n      end: { base: 40 },\n    },\n    verge_collapse_fracture: {\n      name: \"Fracture\",\n      desc: \"Structural failures are spreading through the ring.\",\n      icon: \"GFX_situation_stage_fracture\",\n      iconBackground: \"GFX_situation_stage_fracture_bg\",\n      end: { base: 100 },\n    },\n  },\n  approach: {\n    verge_collapse_brace: {\n      name: \"Brace the Ring\",\n      desc: \"Pour alloys into the structure and buy time.\",\n      icon: \"GFX_situation_approach_brace\",\n      iconBackground: \"GFX_situation_approach_brace_bg\",\n      default: true,\n      modifier: (m) => m.country.alloys.produces.mult(-0.05),\n    },\n    verge_collapse_evacuate: {\n      name: \"Evacuate\",\n      desc: \"Write the station off and move everyone down the well.\",\n      icon: \"GFX_situation_approach_evacuate\",\n      iconBackground: \"GFX_situation_approach_evacuate_bg\",\n      modifier: (m) => m.country.unity.produces.mult(-0.02),\n    },\n  },\n});\n\nexport const feature = mod.feature(\"collapse\", [collapse]);\n",
+      "output": {
+        "common/situations/verge_collapse.txt": "verge_situation_type_collapse = {\n\tcategory = negative\n\tmonthly_progress = {\n\t\tbase = 3\n\t\tmodifier = {\n\t\t\tfactor = 1.5\n\t\t\tdesc = verge_situation_type_collapse_monthly_progress_decay_accelerating\n\t\t\thas_situation_flag = verge_decay_accelerating\n\t\t}\n\t}\n\tapproach = {\n\t\tname = verge_collapse_brace\n\t\ticon = GFX_situation_approach_brace\n\t\ticon_background = GFX_situation_approach_brace_bg\n\t\tdefault = yes\n\t\tmodifier = {\n\t\t\tcountry_alloys_produces_mult = -0.05\n\t\t}\n\t}\n\tapproach = {\n\t\tname = verge_collapse_evacuate\n\t\ticon = GFX_situation_approach_evacuate\n\t\ticon_background = GFX_situation_approach_evacuate_bg\n\t\tmodifier = {\n\t\t\tcountry_unity_produces_mult = -0.02\n\t\t}\n\t}\n\tstages = {\n\t\tverge_collapse_tremors = {\n\t\t\tend = {\n\t\t\t\tbase = 40\n\t\t\t}\n\t\t\ticon = GFX_situation_stage_tremors\n\t\t\ticon_background = GFX_situation_stage_tremors_bg\n\t\t}\n\t\tverge_collapse_fracture = {\n\t\t\tend = {\n\t\t\t\tbase = 100\n\t\t\t}\n\t\t\ticon = GFX_situation_stage_fracture\n\t\t\ticon_background = GFX_situation_stage_fracture_bg\n\t\t}\n\t}\n}\n",
+        "descriptor.mod": "name=\"Vergence\"\nversion=\"0.1.0\"\nsupported_version=\"v4.4.*\"\n",
+        "localisation/english/verge_collapse_l_english.yml": "﻿l_english:\n verge_collapse_brace:0 \"Brace the Ring\"\n verge_collapse_brace_desc:0 \"Pour alloys into the structure and buy time.\"\n verge_collapse_evacuate:0 \"Evacuate\"\n verge_collapse_evacuate_desc:0 \"Write the station off and move everyone down the well.\"\n verge_collapse_fracture:0 \"Fracture\"\n verge_collapse_fracture_desc:0 \"Structural failures are spreading through the ring.\"\n verge_collapse_tremors:0 \"Tremors\"\n verge_collapse_tremors_desc:0 \"Instruments are picking up the first wobble.\"\n verge_situation_type_collapse:0 \"Orbital Collapse\"\n verge_situation_type_collapse_desc:0 \"The station's orbit is decaying, and the schedule is slipping.\"\n verge_situation_type_collapse_monthly_progress_decay_accelerating:0 \"The decay is accelerating.\"\n"
+      },
+      "origin": "hand-written"
+    },
+    {
+      "id": "minimal",
+      "title": "The smallest one that builds",
+      "source": "packages/reference-spike/content/situations.mdx:122",
+      "code": "import { createMod } from \"@pdx-ts/sdk\";\n\nexport const mod = createMod({\n  name: \"Quiet Drift\",\n  prefix: \"quiet\" as const,\n  version: \"0.1.0\",\n  supportedVersion: \"v4.4.*\",\n});\n\nexport const drift = mod.situationType(\"drift\", {\n  name: \"Quiet Drift\",\n  monthlyProgress: { base: 1 },\n});\n\nexport const feature = mod.feature(\"drift\", [drift]);\n",
+      "output": {
+        "common/situations/quiet_drift.txt": "quiet_situation_type_drift = {\n\tmonthly_progress = {\n\t\tbase = 1\n\t}\n}\n",
+        "descriptor.mod": "name=\"Quiet Drift\"\nversion=\"0.1.0\"\nsupported_version=\"v4.4.*\"\n",
+        "localisation/english/quiet_drift_l_english.yml": "﻿l_english:\n quiet_situation_type_drift:0 \"Quiet Drift\"\n"
+      },
+      "origin": "hand-written"
+    },
+    {
+      "id": "stages",
+      "title": "Two stages, one container",
+      "source": "packages/reference-spike/content/situations.mdx:166",
+      "code": "import { createMod } from \"@pdx-ts/sdk\";\n\nexport const mod = createMod({\n  name: \"Tidal Swell\",\n  prefix: \"tide\" as const,\n  version: \"0.1.0\",\n  supportedVersion: \"v4.4.*\",\n});\n\nexport const swell = mod.situationType(\"swell\", {\n  name: \"Tidal Swell\",\n  monthlyProgress: { base: 3 },\n  stages: {\n    tide_swell_calm: {\n      name: \"Calm\",\n      desc: \"The tide charts still look ordinary.\",\n      icon: \"GFX_situation_stage_calm\",\n      iconBackground: \"GFX_situation_stage_calm_bg\",\n      end: { base: 40 },\n    },\n    tide_swell_surge: {\n      name: \"Surge\",\n      desc: \"Coastal cities are moving inland.\",\n      icon: \"GFX_situation_stage_surge\",\n      iconBackground: \"GFX_situation_stage_surge_bg\",\n      end: { base: 100 },\n    },\n  },\n});\n\nexport const feature = mod.feature(\"swell\", [swell]);\n",
+      "output": {
+        "common/situations/tide_swell.txt": "tide_situation_type_swell = {\n\tmonthly_progress = {\n\t\tbase = 3\n\t}\n\tstages = {\n\t\ttide_swell_calm = {\n\t\t\tend = {\n\t\t\t\tbase = 40\n\t\t\t}\n\t\t\ticon = GFX_situation_stage_calm\n\t\t\ticon_background = GFX_situation_stage_calm_bg\n\t\t}\n\t\ttide_swell_surge = {\n\t\t\tend = {\n\t\t\t\tbase = 100\n\t\t\t}\n\t\t\ticon = GFX_situation_stage_surge\n\t\t\ticon_background = GFX_situation_stage_surge_bg\n\t\t}\n\t}\n}\n",
+        "descriptor.mod": "name=\"Tidal Swell\"\nversion=\"0.1.0\"\nsupported_version=\"v4.4.*\"\n",
+        "localisation/english/tide_swell_l_english.yml": "﻿l_english:\n tide_situation_type_swell:0 \"Tidal Swell\"\n tide_swell_calm:0 \"Calm\"\n tide_swell_calm_desc:0 \"The tide charts still look ordinary.\"\n tide_swell_surge:0 \"Surge\"\n tide_swell_surge_desc:0 \"Coastal cities are moving inland.\"\n"
+      },
+      "origin": "hand-written"
+    },
+    {
+      "id": "approaches",
+      "title": "Two approaches, repeated siblings",
+      "source": "packages/reference-spike/content/situations.mdx:222",
+      "code": "import { createMod } from \"@pdx-ts/sdk\";\n\nexport const mod = createMod({\n  name: \"Algae Bloom\",\n  prefix: \"bloom\" as const,\n  version: \"0.1.0\",\n  supportedVersion: \"v4.4.*\",\n});\n\nexport const algae = mod.situationType(\"algae\", {\n  name: \"Algae Bloom\",\n  monthlyProgress: { base: 2 },\n  approach: {\n    bloom_algae_harvest: {\n      name: \"Harvest It\",\n      desc: \"Turn the bloom into feedstock and accept the smell.\",\n      icon: \"GFX_situation_approach_harvest\",\n      iconBackground: \"GFX_situation_approach_harvest_bg\",\n      default: true,\n      modifier: (m) => m.country.food.produces.mult(0.05),\n    },\n    bloom_algae_purge: {\n      name: \"Purge It\",\n      desc: \"Bleach the shallows and start the ecology over.\",\n      icon: \"GFX_situation_approach_purge\",\n      iconBackground: \"GFX_situation_approach_purge_bg\",\n      modifier: (m) => m.country.unity.produces.mult(-0.02),\n    },\n  },\n});\n\nexport const feature = mod.feature(\"algae\", [algae]);\n",
+      "output": {
+        "common/situations/bloom_algae.txt": "bloom_situation_type_algae = {\n\tmonthly_progress = {\n\t\tbase = 2\n\t}\n\tapproach = {\n\t\tname = bloom_algae_harvest\n\t\ticon = GFX_situation_approach_harvest\n\t\ticon_background = GFX_situation_approach_harvest_bg\n\t\tdefault = yes\n\t\tmodifier = {\n\t\t\tcountry_food_produces_mult = 0.05\n\t\t}\n\t}\n\tapproach = {\n\t\tname = bloom_algae_purge\n\t\ticon = GFX_situation_approach_purge\n\t\ticon_background = GFX_situation_approach_purge_bg\n\t\tmodifier = {\n\t\t\tcountry_unity_produces_mult = -0.02\n\t\t}\n\t}\n}\n",
+        "descriptor.mod": "name=\"Algae Bloom\"\nversion=\"0.1.0\"\nsupported_version=\"v4.4.*\"\n",
+        "localisation/english/bloom_algae_l_english.yml": "﻿l_english:\n bloom_algae_harvest:0 \"Harvest It\"\n bloom_algae_harvest_desc:0 \"Turn the bloom into feedstock and accept the smell.\"\n bloom_algae_purge:0 \"Purge It\"\n bloom_algae_purge_desc:0 \"Bleach the shallows and start the ecology over.\"\n bloom_situation_type_algae:0 \"Algae Bloom\"\n"
+      },
+      "origin": "hand-written"
+    },
+    {
+      "id": "gated-approach",
+      "title": "An approach gated on a stage",
+      "source": "packages/reference-spike/content/situations.mdx:264",
+      "code": "import { createMod, currentStage } from \"@pdx-ts/sdk\";\n\nexport const mod = createMod({\n  name: \"Shroud Whispers\",\n  prefix: \"shroud\" as const,\n  version: \"0.1.0\",\n  supportedVersion: \"v4.4.*\",\n});\n\nexport const whisper = mod.situationType(\"whisper\", {\n  name: \"Shroud Whispers\",\n  monthlyProgress: { base: 1 },\n  stages: {\n    shroud_whisper_faint: {\n      name: \"Faint\",\n      icon: \"GFX_situation_stage_faint\",\n      iconBackground: \"GFX_situation_stage_faint_bg\",\n      end: { base: 60 },\n    },\n    shroud_whisper_loud: {\n      name: \"Loud\",\n      icon: \"GFX_situation_stage_loud\",\n      iconBackground: \"GFX_situation_stage_loud_bg\",\n      end: { base: 120 },\n    },\n  },\n  approach: {\n    shroud_whisper_listen: {\n      name: \"Listen\",\n      icon: \"GFX_situation_approach_listen\",\n      iconBackground: \"GFX_situation_approach_listen_bg\",\n      default: true,\n    },\n    shroud_whisper_answer: {\n      name: \"Answer\",\n      icon: \"GFX_situation_approach_answer\",\n      iconBackground: \"GFX_situation_approach_answer_bg\",\n      // Misspell this and it does not compile. Nest it inside `and(...)` and\n      // it does compile, unchecked — which is what most vanilla script is.\n      allow: currentStage(\"shroud_whisper_loud\"),\n    },\n  },\n});\n\nexport const feature = mod.feature(\"whispers\", [whisper]);\n",
+      "output": {
+        "common/situations/shroud_whispers.txt": "shroud_situation_type_whisper = {\n\tmonthly_progress = {\n\t\tbase = 1\n\t}\n\tapproach = {\n\t\tname = shroud_whisper_listen\n\t\ticon = GFX_situation_approach_listen\n\t\ticon_background = GFX_situation_approach_listen_bg\n\t\tdefault = yes\n\t}\n\tapproach = {\n\t\tname = shroud_whisper_answer\n\t\ticon = GFX_situation_approach_answer\n\t\ticon_background = GFX_situation_approach_answer_bg\n\t\tallow = {\n\t\t\tcurrent_stage = shroud_whisper_loud\n\t\t}\n\t}\n\tstages = {\n\t\tshroud_whisper_faint = {\n\t\t\tend = {\n\t\t\t\tbase = 60\n\t\t\t}\n\t\t\ticon = GFX_situation_stage_faint\n\t\t\ticon_background = GFX_situation_stage_faint_bg\n\t\t}\n\t\tshroud_whisper_loud = {\n\t\t\tend = {\n\t\t\t\tbase = 120\n\t\t\t}\n\t\t\ticon = GFX_situation_stage_loud\n\t\t\ticon_background = GFX_situation_stage_loud_bg\n\t\t}\n\t}\n}\n",
+        "descriptor.mod": "name=\"Shroud Whispers\"\nversion=\"0.1.0\"\nsupported_version=\"v4.4.*\"\n",
+        "localisation/english/shroud_whispers_l_english.yml": "﻿l_english:\n shroud_situation_type_whisper:0 \"Shroud Whispers\"\n shroud_whisper_answer:0 \"Answer\"\n shroud_whisper_faint:0 \"Faint\"\n shroud_whisper_listen:0 \"Listen\"\n shroud_whisper_loud:0 \"Loud\"\n"
+      },
+      "origin": "hand-written"
+    },
+    {
+      "id": "progress",
+      "title": "A rate with reasons",
+      "source": "packages/reference-spike/content/situations.mdx:331",
+      "code": "import { createMod, hasSituationFlag, not } from \"@pdx-ts/sdk\";\n\nexport const mod = createMod({\n  name: \"Hull Rust\",\n  prefix: \"rust\" as const,\n  version: \"0.1.0\",\n  supportedVersion: \"v4.4.*\",\n});\n\nexport const decay = mod.situationType(\"decay\", {\n  name: \"Hull Rust\",\n  monthlyProgress: {\n    base: 2,\n    modifiers: [\n      {\n        factor: 1.5,\n        descKey: \"corrosion_spreading\",\n        desc: \"Corrosion is spreading through the frame.\",\n        when: hasSituationFlag(\"rust_corrosion_spreading\"),\n      },\n      {\n        subtract: 1,\n        descKey: \"drydock_holding\",\n        desc: \"Drydock crews are keeping ahead of it.\",\n        when: not(hasSituationFlag(\"rust_corrosion_spreading\")),\n      },\n    ],\n  },\n});\n\nexport const feature = mod.feature(\"decay\", [decay]);\n",
+      "output": {
+        "common/situations/rust_decay.txt": "rust_situation_type_decay = {\n\tmonthly_progress = {\n\t\tbase = 2\n\t\tmodifier = {\n\t\t\tfactor = 1.5\n\t\t\tdesc = rust_situation_type_decay_monthly_progress_corrosion_spreading\n\t\t\thas_situation_flag = rust_corrosion_spreading\n\t\t}\n\t\tmodifier = {\n\t\t\tsubtract = 1\n\t\t\tdesc = rust_situation_type_decay_monthly_progress_drydock_holding\n\t\t\tNOT = {\n\t\t\t\thas_situation_flag = rust_corrosion_spreading\n\t\t\t}\n\t\t}\n\t}\n}\n",
+        "descriptor.mod": "name=\"Hull Rust\"\nversion=\"0.1.0\"\nsupported_version=\"v4.4.*\"\n",
+        "localisation/english/rust_decay_l_english.yml": "﻿l_english:\n rust_situation_type_decay:0 \"Hull Rust\"\n rust_situation_type_decay_monthly_progress_corrosion_spreading:0 \"Corrosion is spreading through the frame.\"\n rust_situation_type_decay_monthly_progress_drydock_holding:0 \"Drydock crews are keeping ahead of it.\"\n"
+      },
+      "origin": "hand-written"
+    },
+    {
+      "id": "typed-start",
+      "title": "A planet-targeted situation, started from an event",
+      "source": "packages/reference-spike/content/situations.mdx:414",
+      "code": "import { createMod, eventTarget, hasCountryFlag, not } from \"@pdx-ts/sdk\";\n\nexport const mod = createMod({\n  name: \"Orbital Drift\",\n  prefix: \"drift\" as const,\n  version: \"0.1.0\",\n  supportedVersion: \"v4.4.*\",\n});\n\nconst events = mod.namespace();\n\nexport const orbit = mod.situationType(\"orbit\", {\n  name: \"Orbital Drift\",\n  monthlyProgress: { base: 3 },\n  potential: not(hasCountryFlag(\"drift_orbit_resolved\")),\n  targetScope: \"planet\",\n  onStart: (situation) => situation.setSituationFlag(\"drift_orbit_started\"),\n});\n\nconst driftingWorld = eventTarget<\"planet\">(\"drift_drifting_world\");\n\nexport const discovered = events.country(1, {\n  title: \"A World Adrift\",\n  desc: \"Long-range survey confirms the orbit is decaying.\",\n  isTriggeredOnly: true,\n  immediate: (country) => {\n    country.startSituation({\n      type: orbit,\n      target: driftingWorld,\n      // The body's `target(...)` is a planet scope because the declaration\n      // above said so. No second type argument needed.\n      effect: (situation) => {\n        situation.target((planet) => planet.setPlanetFlag(\"drift_drifting\"));\n      },\n    });\n  },\n});\n\nexport const feature = mod.feature(\"orbit\", [orbit, discovered]);\n",
+      "output": {
+        "common/situations/drift_orbit.txt": "drift_situation_type_orbit = {\n\tpotential = {\n\t\tNOT = {\n\t\t\thas_country_flag = drift_orbit_resolved\n\t\t}\n\t}\n\ton_start = {\n\t\tset_situation_flag = drift_orbit_started\n\t}\n\tmonthly_progress = {\n\t\tbase = 3\n\t}\n}\n",
+        "descriptor.mod": "name=\"Orbital Drift\"\nversion=\"0.1.0\"\nsupported_version=\"v4.4.*\"\n",
+        "events/drift_orbit.txt": "namespace = drift\n\ncountry_event = {\n\tid = drift.1\n\ttitle = drift.1.name\n\tdesc = drift.1.desc\n\tis_triggered_only = yes\n\timmediate = {\n\t\tstart_situation = {\n\t\t\ttype = drift_situation_type_orbit\n\t\t\ttarget = event_target:drift_drifting_world\n\t\t\teffect = {\n\t\t\t\ttarget = {\n\t\t\t\t\tset_planet_flag = drift_drifting\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n}\n",
+        "localisation/english/drift_orbit_l_english.yml": "﻿l_english:\n drift.1.desc:0 \"Long-range survey confirms the orbit is decaying.\"\n drift.1.name:0 \"A World Adrift\"\n drift_situation_type_orbit:0 \"Orbital Drift\"\n"
+      },
+      "origin": "hand-written"
+    },
+    {
+      "id": "section-weights",
+      "title": "Section weights — compiles, unverified",
+      "source": "packages/reference-spike/content/situations.mdx:524",
+      "code": "import { createMod } from \"@pdx-ts/sdk\";\n\nexport const mod = createMod({\n  name: \"Terraform Reshape\",\n  prefix: \"terra\" as const,\n  version: \"0.1.0\",\n  supportedVersion: \"v4.4.*\",\n});\n\nexport const reshape = mod.situationType(\"reshape\", {\n  name: \"Terraform Reshape\",\n  monthlyProgress: { base: 5 },\n  totalProgress: { base: 600 },\n  stages: {\n    terra_reshape_seed: {\n      name: \"Seeding\",\n      icon: \"GFX_situation_stage_seed\",\n      iconBackground: \"GFX_situation_stage_seed_bg\",\n      sectionWeight: { base: 25 },\n    },\n    terra_reshape_bloom: {\n      name: \"Blooming\",\n      icon: \"GFX_situation_stage_bloom\",\n      iconBackground: \"GFX_situation_stage_bloom_bg\",\n      sectionWeight: { base: 75 },\n    },\n  },\n});\n\nexport const feature = mod.feature(\"reshape\", [reshape]);\n",
+      "output": {
+        "common/situations/terra_reshape.txt": "terra_situation_type_reshape = {\n\tmonthly_progress = {\n\t\tbase = 5\n\t}\n\ttotal_progress = {\n\t\tbase = 600\n\t}\n\tstages = {\n\t\tterra_reshape_seed = {\n\t\t\tsection_weight = {\n\t\t\t\tbase = 25\n\t\t\t}\n\t\t\ticon = GFX_situation_stage_seed\n\t\t\ticon_background = GFX_situation_stage_seed_bg\n\t\t}\n\t\tterra_reshape_bloom = {\n\t\t\tsection_weight = {\n\t\t\t\tbase = 75\n\t\t\t}\n\t\t\ticon = GFX_situation_stage_bloom\n\t\t\ticon_background = GFX_situation_stage_bloom_bg\n\t\t}\n\t}\n}\n",
+        "descriptor.mod": "name=\"Terraform Reshape\"\nversion=\"0.1.0\"\nsupported_version=\"v4.4.*\"\n",
+        "localisation/english/terra_reshape_l_english.yml": "﻿l_english:\n terra_reshape_bloom:0 \"Blooming\"\n terra_reshape_seed:0 \"Seeding\"\n terra_situation_type_reshape:0 \"Terraform Reshape\"\n"
+      },
+      "origin": "hand-written"
+    }
+  ],
+  "aliases": [
+    "situation",
+    "situations",
+    "situation_type",
+    "situationType",
+    "mod.situationType",
+    "stages",
+    "approach",
+    "monthly_progress",
+    "monthlyProgress",
+    "start_situation",
+    "startSituation",
+    "targetScope",
+    "situation log",
+    "progress bar",
+    "section_weight",
+    "total_progress"
+  ],
+  "searchHint": "Search — try monthly_progress, startSituation, stages, or colour…"
+}

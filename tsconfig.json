@@ -33,9 +33,18 @@
   // author's program, not this one: they compile under their own tsconfig with
   // `@pdx-ts/sdk` symlinked in, which is what the matrix harness runs `tsc -p`
   // over.
+  // The reference spike's browser half is the one directory in the repo that
+  // is compiled by a bundler rather than by Node: it needs `jsx` and bundler
+  // resolution, which this program deliberately does not have. It compiles
+  // under `packages/reference-spike/tsconfig.app.json`. Everything else in
+  // that package — the probe, the snapshot build, the Verified example, the
+  // gates — stays here, which is what keeps the example's typecheck part of
+  // the repository's ordinary `npm run typecheck`.
   "exclude": [
     "node_modules",
     "dist",
+    "packages/reference-spike/src/app",
+    "packages/reference-spike/vite.config.ts",
     "packages/create-stellaris-mod/tests/fixtures",
     "packages/create-stellaris-mod/tests/goldens"
   ]

@@ -1,0 +1,5632 @@
+{
+  "schemaVersion": 1,
+  "identity": {
+    "sdkVersion": "0.2.0",
+    "cwtCommit": "ec350bdb4f9aa790e45ec88493b03046d5252439",
+    "docsRevision": "v4.4.1",
+    "corpusGameVersion": "4.4.6",
+    "vanillaIdsVersion": "4.4.6-r.1"
+  },
+  "pageId": "technology",
+  "registry": "technology",
+  "title": "Technologies",
+  "summary": "A card in the research view — an area, a tier, a price, and whatever it unlocks by existing.",
+  "facts": {
+    "registry": "technology",
+    "typeName": "Technology",
+    "definitionPath": "game/common/technology",
+    "subtypes": [
+      {
+        "name": "start",
+        "gatedKeys": [
+          "cost",
+          "starting_potential",
+          "weight"
+        ],
+        "excludedKeys": [
+          "cost",
+          "is_custom_tech_1",
+          "is_custom_tech_2",
+          "is_custom_tech_3",
+          "levels",
+          "weight"
+        ],
+        "absentUnless": null
+      },
+      {
+        "name": "rare",
+        "gatedKeys": [],
+        "excludedKeys": [],
+        "absentUnless": null
+      },
+      {
+        "name": "dangerous",
+        "gatedKeys": [],
+        "excludedKeys": [],
+        "absentUnless": null
+      },
+      {
+        "name": "insight",
+        "gatedKeys": [],
+        "excludedKeys": [],
+        "absentUnless": null
+      },
+      {
+        "name": "repeatable",
+        "gatedKeys": [
+          "cost_per_level"
+        ],
+        "excludedKeys": [],
+        "absentUnless": null
+      }
+    ],
+    "declared": [
+      {
+        "key": "ai_update_type",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 221,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "enum[tech_ai_type]",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "ai_weight",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 260,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "block",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "area",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 97,
+            "cardinality": {
+              "min": 1,
+              "max": 1
+            },
+            "declaredType": "enum[research_area]",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "category",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 99,
+            "cardinality": {
+              "min": 1,
+              "max": 1
+            },
+            "declaredType": "block",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "cost",
+        "subtype": "start",
+        "arms": [
+          {
+            "line": 109,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "int",
+            "docs": []
+          },
+          {
+            "line": 115,
+            "cardinality": {
+              "min": 1,
+              "max": 1
+            },
+            "declaredType": "int",
+            "docs": []
+          },
+          {
+            "line": 117,
+            "cardinality": {
+              "min": 1,
+              "max": 1
+            },
+            "declaredType": "block",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "cost_per_level",
+        "subtype": "repeatable",
+        "arms": [
+          {
+            "line": 200,
+            "cardinality": {
+              "min": 1,
+              "max": 1
+            },
+            "declaredType": "int",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "feature_flags",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 231,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "block",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "gateway",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 197,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "scalar",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "icon",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 105,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "icon[gfx/interface/icons/technologies]",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "is_custom_tech_1",
+        "subtype": "not start",
+        "arms": [
+          {
+            "line": 124,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "bool",
+            "docs": [
+              "NOT use in vanilla.Definition of dangerous technology, rare technology, and insightful technology provided to modders for use"
+            ]
+          }
+        ]
+      },
+      {
+        "key": "is_custom_tech_2",
+        "subtype": "not start",
+        "arms": [
+          {
+            "line": 127,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "bool",
+            "docs": [
+              "NOT use in vanilla.Definition of dangerous technology, rare technology, and insightful technology provided to modders for use"
+            ]
+          }
+        ]
+      },
+      {
+        "key": "is_custom_tech_3",
+        "subtype": "not start",
+        "arms": [
+          {
+            "line": 130,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "bool",
+            "docs": [
+              "NOT use in vanilla.Definition of dangerous technology, rare technology, and insightful technology provided to modders for use"
+            ]
+          }
+        ]
+      },
+      {
+        "key": "is_dangerous",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 226,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "bool",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "is_insight",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 228,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "bool",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "is_rare",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 224,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "bool",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "is_reverse_engineerable",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 218,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "bool",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "levels",
+        "subtype": "not start",
+        "arms": [
+          {
+            "line": 132,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "int[-1..100]",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "mod_weight_if_group_picked",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 210,
+            "cardinality": {
+              "min": 0,
+              "max": null
+            },
+            "declaredType": "block",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "modifier",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 238,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "single_alias_right[modifier_clause]",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "potential",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 192,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "single_alias_right[trigger_clause]",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "prereqfor_desc",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 241,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "block",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "prereqfor_desc.desc",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 248,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "localisation",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "prereqfor_desc.title",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 246,
+            "cardinality": {
+              "min": 1,
+              "max": 1
+            },
+            "declaredType": "localisation",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "prerequisites",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 136,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "block",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "start_tech",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 216,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "bool",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "starting_potential",
+        "subtype": "start",
+        "arms": [
+          {
+            "line": 267,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "single_alias_right[trigger_clause]",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "technology_swap",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 147,
+            "cardinality": {
+              "min": 0,
+              "max": null
+            },
+            "declaredType": "block",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "technology_swap.area",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 176,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "enum[research_area]",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "technology_swap.category",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 178,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "block",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "technology_swap.inherit_effects",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 157,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "bool",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "technology_swap.inherit_icon",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 153,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "bool",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "technology_swap.inherit_name",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 155,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "bool",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "technology_swap.modifier",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 163,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "single_alias_right[modifier_clause]",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "technology_swap.name",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 149,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "localisation",
+            "docs": []
+          },
+          {
+            "line": 151,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "scalar",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "technology_swap.prereqfor_desc",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 165,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "block",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "technology_swap.prereqfor_desc.desc",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 172,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "localisation",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "technology_swap.prereqfor_desc.title",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 170,
+            "cardinality": {
+              "min": 1,
+              "max": 1
+            },
+            "declaredType": "localisation",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "technology_swap.trigger",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 160,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "single_alias_right[trigger_clause]",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "technology_swap.weight",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 183,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "float",
+            "docs": []
+          },
+          {
+            "line": 185,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "block",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "tier",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 98,
+            "cardinality": {
+              "min": 1,
+              "max": 1
+            },
+            "declaredType": "<technology_tier>",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "weight",
+        "subtype": "start",
+        "arms": [
+          {
+            "line": 111,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "float",
+            "docs": []
+          },
+          {
+            "line": 120,
+            "cardinality": {
+              "min": 1,
+              "max": 1
+            },
+            "declaredType": "float",
+            "docs": []
+          }
+        ]
+      },
+      {
+        "key": "weight_groups",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 205,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "block",
+            "docs": [
+              "a weight group increases the chances of a technology appearing - if another tech of a similar group is picked."
+            ]
+          }
+        ]
+      },
+      {
+        "key": "weight_modifier",
+        "subtype": null,
+        "arms": [
+          {
+            "line": 254,
+            "cardinality": {
+              "min": 0,
+              "max": 1
+            },
+            "declaredType": "block",
+            "docs": []
+          }
+        ]
+      }
+    ],
+    "lowered": [
+      {
+        "key": "area",
+        "memberPath": [
+          "area"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": [
+          "physics",
+          "society",
+          "engineering"
+        ],
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "tier",
+        "memberPath": [
+          "tier"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "category",
+        "memberPath": [
+          "category"
+        ],
+        "shape": "valueList",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "icon",
+        "memberPath": [
+          "icon"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "cost",
+        "memberPath": [
+          "cost"
+        ],
+        "shape": "dual",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": "any",
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "weight",
+        "memberPath": [
+          "weight"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "is_custom_tech_1",
+        "memberPath": [
+          "isCustomTech1"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": [
+          "yes",
+          "no"
+        ],
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "is_custom_tech_2",
+        "memberPath": [
+          "isCustomTech2"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": [
+          "yes",
+          "no"
+        ],
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "is_custom_tech_3",
+        "memberPath": [
+          "isCustomTech3"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": [
+          "yes",
+          "no"
+        ],
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "levels",
+        "memberPath": [
+          "levels"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "prerequisites",
+        "memberPath": [
+          "prerequisites"
+        ],
+        "shape": "valueList",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "technology_swap",
+        "memberPath": [
+          "technologySwap"
+        ],
+        "shape": "struct",
+        "repeated": true,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "potential",
+        "memberPath": [
+          "potential"
+        ],
+        "shape": "trigger",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "country"
+        ],
+        "clause": "trigger",
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "gateway",
+        "memberPath": [
+          "gateway"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "cost_per_level",
+        "memberPath": [
+          "costPerLevel"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "weight_groups",
+        "memberPath": [
+          "weightGroups"
+        ],
+        "shape": "valueList",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "mod_weight_if_group_picked",
+        "memberPath": [
+          "modWeightIfGroupPicked"
+        ],
+        "shape": "scalarMap",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "start_tech",
+        "memberPath": [
+          "startTech"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": [
+          "yes",
+          "no"
+        ],
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "is_reverse_engineerable",
+        "memberPath": [
+          "isReverseEngineerable"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": [
+          "yes",
+          "no"
+        ],
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "ai_update_type",
+        "memberPath": [
+          "aiUpdateType"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": [
+          "all",
+          "military"
+        ],
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "is_rare",
+        "memberPath": [
+          "isRare"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": [
+          "yes",
+          "no"
+        ],
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "is_dangerous",
+        "memberPath": [
+          "isDangerous"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": [
+          "yes",
+          "no"
+        ],
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "is_insight",
+        "memberPath": [
+          "isInsight"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": [
+          "yes",
+          "no"
+        ],
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "feature_flags",
+        "memberPath": [
+          "featureFlags"
+        ],
+        "shape": "valueList",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "modifier",
+        "memberPath": [
+          "modifier"
+        ],
+        "shape": "modifierBlock",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "country"
+        ],
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "prereqfor_desc",
+        "memberPath": [
+          "prereqforDesc"
+        ],
+        "shape": "struct",
+        "repeated": true,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "weight_modifier",
+        "memberPath": [
+          "weightModifier"
+        ],
+        "shape": "weightBlock",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "country"
+        ],
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "ai_weight",
+        "memberPath": [
+          "aiWeight"
+        ],
+        "shape": "weightBlock",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "country"
+        ],
+        "clause": null,
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "starting_potential",
+        "memberPath": [
+          "startingPotential"
+        ],
+        "shape": "trigger",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "country"
+        ],
+        "clause": "trigger",
+        "level": "top",
+        "declaredIn": "body"
+      },
+      {
+        "key": "cost.modifier",
+        "memberPath": [
+          "cost"
+        ],
+        "shape": "weightModifier",
+        "repeated": true,
+        "wrapped": false,
+        "literals": null,
+        "scope": "any",
+        "clause": "trigger",
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "technology_swap.name",
+        "memberPath": [
+          "technologySwap",
+          "name"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "body"
+      },
+      {
+        "key": "technology_swap.inherit_icon",
+        "memberPath": [
+          "technologySwap",
+          "inheritIcon"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": [
+          "yes",
+          "no"
+        ],
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "body"
+      },
+      {
+        "key": "technology_swap.inherit_name",
+        "memberPath": [
+          "technologySwap",
+          "inheritName"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": [
+          "yes",
+          "no"
+        ],
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "body"
+      },
+      {
+        "key": "technology_swap.inherit_effects",
+        "memberPath": [
+          "technologySwap",
+          "inheritEffects"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": [
+          "yes",
+          "no"
+        ],
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "body"
+      },
+      {
+        "key": "technology_swap.trigger",
+        "memberPath": [
+          "technologySwap",
+          "trigger"
+        ],
+        "shape": "trigger",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "country"
+        ],
+        "clause": "trigger",
+        "level": "nested",
+        "declaredIn": "body"
+      },
+      {
+        "key": "technology_swap.modifier",
+        "memberPath": [
+          "technologySwap",
+          "modifier"
+        ],
+        "shape": "modifierBlock",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "country"
+        ],
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "body"
+      },
+      {
+        "key": "technology_swap.prereqfor_desc",
+        "memberPath": [
+          "technologySwap",
+          "prereqforDesc"
+        ],
+        "shape": "struct",
+        "repeated": true,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "body"
+      },
+      {
+        "key": "technology_swap.prereqfor_desc.hide_prereq_for_desc",
+        "memberPath": [
+          "technologySwap",
+          "prereqforDesc",
+          "hidePrereqForDesc"
+        ],
+        "shape": "value",
+        "repeated": true,
+        "wrapped": false,
+        "literals": [
+          "ship",
+          "custom",
+          "component",
+          "diplo_action",
+          "feature",
+          "resource"
+        ],
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "technology_swap.prereqfor_desc.ship",
+        "memberPath": [
+          "technologySwap",
+          "prereqforDesc"
+        ],
+        "shape": "struct",
+        "repeated": true,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "technology_swap.prereqfor_desc.ship.title",
+        "memberPath": [
+          "technologySwap",
+          "prereqforDesc",
+          "title"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "technology_swap.prereqfor_desc.ship.desc",
+        "memberPath": [
+          "technologySwap",
+          "prereqforDesc",
+          "desc"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "technology_swap.prereqfor_desc.custom",
+        "memberPath": [
+          "technologySwap",
+          "prereqforDesc"
+        ],
+        "shape": "struct",
+        "repeated": true,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "technology_swap.prereqfor_desc.custom.title",
+        "memberPath": [
+          "technologySwap",
+          "prereqforDesc",
+          "title"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "technology_swap.prereqfor_desc.custom.desc",
+        "memberPath": [
+          "technologySwap",
+          "prereqforDesc",
+          "desc"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "technology_swap.prereqfor_desc.component",
+        "memberPath": [
+          "technologySwap",
+          "prereqforDesc"
+        ],
+        "shape": "struct",
+        "repeated": true,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "technology_swap.prereqfor_desc.component.title",
+        "memberPath": [
+          "technologySwap",
+          "prereqforDesc",
+          "title"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "technology_swap.prereqfor_desc.component.desc",
+        "memberPath": [
+          "technologySwap",
+          "prereqforDesc",
+          "desc"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "technology_swap.prereqfor_desc.diplo_action",
+        "memberPath": [
+          "technologySwap",
+          "prereqforDesc"
+        ],
+        "shape": "struct",
+        "repeated": true,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "technology_swap.prereqfor_desc.diplo_action.title",
+        "memberPath": [
+          "technologySwap",
+          "prereqforDesc",
+          "title"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "technology_swap.prereqfor_desc.diplo_action.desc",
+        "memberPath": [
+          "technologySwap",
+          "prereqforDesc",
+          "desc"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "technology_swap.prereqfor_desc.feature",
+        "memberPath": [
+          "technologySwap",
+          "prereqforDesc"
+        ],
+        "shape": "struct",
+        "repeated": true,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "technology_swap.prereqfor_desc.feature.title",
+        "memberPath": [
+          "technologySwap",
+          "prereqforDesc",
+          "title"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "technology_swap.prereqfor_desc.feature.desc",
+        "memberPath": [
+          "technologySwap",
+          "prereqforDesc",
+          "desc"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "technology_swap.prereqfor_desc.resource",
+        "memberPath": [
+          "technologySwap",
+          "prereqforDesc"
+        ],
+        "shape": "struct",
+        "repeated": true,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "technology_swap.prereqfor_desc.resource.title",
+        "memberPath": [
+          "technologySwap",
+          "prereqforDesc",
+          "title"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "technology_swap.prereqfor_desc.resource.desc",
+        "memberPath": [
+          "technologySwap",
+          "prereqforDesc",
+          "desc"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "technology_swap.area",
+        "memberPath": [
+          "technologySwap",
+          "area"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": [
+          "physics",
+          "society",
+          "engineering"
+        ],
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "body"
+      },
+      {
+        "key": "technology_swap.category",
+        "memberPath": [
+          "technologySwap",
+          "category"
+        ],
+        "shape": "valueList",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "body"
+      },
+      {
+        "key": "technology_swap.weight",
+        "memberPath": [
+          "technologySwap",
+          "weight"
+        ],
+        "shape": "dual",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": "any",
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "body"
+      },
+      {
+        "key": "technology_swap.weight.modifier",
+        "memberPath": [
+          "technologySwap",
+          "weight"
+        ],
+        "shape": "weightModifier",
+        "repeated": true,
+        "wrapped": false,
+        "literals": null,
+        "scope": "any",
+        "clause": "trigger",
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "prereqfor_desc.hide_prereq_for_desc",
+        "memberPath": [
+          "prereqforDesc",
+          "hidePrereqForDesc"
+        ],
+        "shape": "value",
+        "repeated": true,
+        "wrapped": false,
+        "literals": [
+          "ship",
+          "custom",
+          "component",
+          "diplo_action",
+          "feature",
+          "resource"
+        ],
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "prereqfor_desc.ship",
+        "memberPath": [
+          "prereqforDesc"
+        ],
+        "shape": "struct",
+        "repeated": true,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "prereqfor_desc.ship.title",
+        "memberPath": [
+          "prereqforDesc",
+          "title"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "prereqfor_desc.ship.desc",
+        "memberPath": [
+          "prereqforDesc",
+          "desc"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "prereqfor_desc.custom",
+        "memberPath": [
+          "prereqforDesc"
+        ],
+        "shape": "struct",
+        "repeated": true,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "prereqfor_desc.custom.title",
+        "memberPath": [
+          "prereqforDesc",
+          "title"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "prereqfor_desc.custom.desc",
+        "memberPath": [
+          "prereqforDesc",
+          "desc"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "prereqfor_desc.component",
+        "memberPath": [
+          "prereqforDesc"
+        ],
+        "shape": "struct",
+        "repeated": true,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "prereqfor_desc.component.title",
+        "memberPath": [
+          "prereqforDesc",
+          "title"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "prereqfor_desc.component.desc",
+        "memberPath": [
+          "prereqforDesc",
+          "desc"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "prereqfor_desc.diplo_action",
+        "memberPath": [
+          "prereqforDesc"
+        ],
+        "shape": "struct",
+        "repeated": true,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "prereqfor_desc.diplo_action.title",
+        "memberPath": [
+          "prereqforDesc",
+          "title"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "prereqfor_desc.diplo_action.desc",
+        "memberPath": [
+          "prereqforDesc",
+          "desc"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "prereqfor_desc.feature",
+        "memberPath": [
+          "prereqforDesc"
+        ],
+        "shape": "struct",
+        "repeated": true,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "prereqfor_desc.feature.title",
+        "memberPath": [
+          "prereqforDesc",
+          "title"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "prereqfor_desc.feature.desc",
+        "memberPath": [
+          "prereqforDesc",
+          "desc"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "prereqfor_desc.resource",
+        "memberPath": [
+          "prereqforDesc"
+        ],
+        "shape": "struct",
+        "repeated": true,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "prereqfor_desc.resource.title",
+        "memberPath": [
+          "prereqforDesc",
+          "title"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "prereqfor_desc.resource.desc",
+        "memberPath": [
+          "prereqforDesc",
+          "desc"
+        ],
+        "shape": "value",
+        "repeated": false,
+        "wrapped": false,
+        "literals": null,
+        "scope": null,
+        "clause": null,
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "weight_modifier.modifier",
+        "memberPath": [
+          "weightModifier"
+        ],
+        "shape": "weightModifier",
+        "repeated": true,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "country"
+        ],
+        "clause": "trigger",
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      },
+      {
+        "key": "ai_weight.modifier",
+        "memberPath": [
+          "aiWeight"
+        ],
+        "shape": "weightModifier",
+        "repeated": true,
+        "wrapped": false,
+        "literals": null,
+        "scope": [
+          "country"
+        ],
+        "clause": "trigger",
+        "level": "nested",
+        "declaredIn": "alias-clause"
+      }
+    ],
+    "repeatedStructs": [],
+    "partialLowerings": [],
+    "localisation": [
+      {
+        "member": "name",
+        "pattern": "$",
+        "required": false,
+        "owner": "technology"
+      },
+      {
+        "member": "desc",
+        "pattern": "$_desc",
+        "required": false,
+        "owner": "technology"
+      }
+    ],
+    "localisationExclusions": [],
+    "localisationRenames": [],
+    "declined": [],
+    "unsupported": [],
+    "inlineSplices": [],
+    "patchLocalisation": [
+      "technology.name — replacement text under `<vanilla id>`",
+      "technology.desc — replacement text under `<vanilla id>_desc`"
+    ],
+    "patchWidenings": [
+      "technology.prerequisites also admits AnyOf<TechnologyRef> — Vanilla writes `OR = { ... }` alternation groups in five technology files, and the parsed surface hands them back as `AnyOf` values, so `[...t.prerequisites, mine]` has to be a legal patch input. A definition of the mod's own has no such need: nothing reads an authored OR group back out."
+    ],
+    "patchExclusions": []
+  },
+  "sdkContracts": [
+    {
+      "member": "name",
+      "statement": "Every technology must be given a `name`. The rules declare the localization slot but never mark it required — the SDK does, because a technology with no display name is a blank card in the research view rather than a lint to fix later. `desc` stays optional for the mirror reason: missing tooltip text is a thing to grow into.",
+      "source": "packages/codegen-cwt/src/overlay.ts",
+      "anchor": "\"technology.name\"",
+      "whyNotDerived": "`technologies_consolidated.cwt` declares `localisation = { name = \"$\" desc = \"$_desc\" }` and says nothing about which of the two a definition owes. Requiredness is the overlay's judgment, recorded in one reviewed table beside every other registry that made the same call, so the surface can refuse a nameless technology at compile time.",
+      "serialized": true
+    },
+    {
+      "member": "mod.patchTechnology",
+      "statement": "A patch of a vanilla technology is whole-object replacement: the build re-emits the complete definition, into a file whose name is computed to sort after every competing file, and fields the transform does not touch are carried through byte-faithfully. Technology's own override rule is `verified` rather than assumed — last-wins, whole-object, from four captured oracle runs — which is why it has a `patchX` at all.",
+      "source": "packages/sdk/src/stellaris/vanilla/override-rules.ts",
+      "anchor": "registry: \"technology\",",
+      "whyNotDerived": "No rule file describes what the game does when two files define the same technology. The answer came from running the game with colliding files and reading the result, and each cell of the table cites the run that established it. A projection of the rules could never produce this, and a page that guessed it would be guessing about data loss.",
+      "serialized": true
+    }
+  ],
+  "evidence": {
+    "registry": "technology",
+    "gameVersion": "4.4.6",
+    "fingerprint": "c4c879d5c74e529315e104e371cdbd46ab8dc14eb54624a72e030357e24ddf17",
+    "definitions": 679,
+    "files": 33,
+    "fields": [
+      {
+        "key": "ai_update_type",
+        "definitions": 264,
+        "scalars": 264,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "all",
+          "military"
+        ],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "ai_weight",
+        "definitions": 492,
+        "scalars": 0,
+        "blocks": 492,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "ai_weight.modifier",
+        "definitions": 221,
+        "scalars": 0,
+        "blocks": 221,
+        "repeated": 109,
+        "values": [],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "area",
+        "definitions": 679,
+        "scalars": 679,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "engineering",
+          "physics",
+          "society"
+        ],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "category",
+        "definitions": 679,
+        "scalars": 0,
+        "blocks": 679,
+        "repeated": 0,
+        "values": [
+          "archaeostudies",
+          "biology",
+          "computing",
+          "field_manipulation",
+          "industry",
+          "materials",
+          "military_theory",
+          "new_worlds",
+          "particles",
+          "propulsion",
+          "psionics",
+          "statecraft",
+          "voidcraft"
+        ],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "cost",
+        "definitions": 674,
+        "scalars": 664,
+        "blocks": 10,
+        "repeated": 0,
+        "values": [
+          "0",
+          "10000",
+          "100000",
+          "2000",
+          "200000",
+          "30000",
+          "300000",
+          "50000",
+          "6000",
+          "75000"
+        ],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "cost_per_level",
+        "definitions": 26,
+        "scalars": 26,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "feature_flags",
+        "definitions": 37,
+        "scalars": 0,
+        "blocks": 37,
+        "repeated": 0,
+        "values": [
+          "active_reconnaissance_unlocked",
+          "alien_cloning_unlocked",
+          "allow_psionic_aura_intensity_growth",
+          "allow_psionic_aura_intensity_spread",
+          "assist_cloaking_detection_unlocked",
+          "bliss_standard",
+          "build_terraform_station",
+          "campaign_edicts",
+          "droids",
+          "experimental_subspace_navigation",
+          "gateway_activation",
+          "gateway_construction",
+          "habitability_gene_modding",
+          "hyper_relay_construction",
+          "jump_method",
+          "megaengineering",
+          "modify_robots",
+          "modify_traits",
+          "mutations",
+          "planetary_ftl_inhibitor",
+          "pop_self_modification",
+          "robot_leaders",
+          "robots",
+          "sustain_cosmic_storm_unlocked",
+          "synths",
+          "tech_automated_exploration",
+          "terraform_inhabited",
+          "unity_ambitions",
+          "unlock_arcane_deciphering",
+          "unlock_astral_rift_exploration",
+          "unlock_astral_threads_actions",
+          "unlock_gravity_snares",
+          "unlock_psionic_aura",
+          "unlocks_auto_research",
+          "uplifting",
+          "wormhole_stabilization"
+        ],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "gateway",
+        "definitions": 52,
+        "scalars": 52,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "bio_ships",
+          "biological",
+          "capital",
+          "cloaking",
+          "detection",
+          "energy_weapons",
+          "espionage",
+          "infrastructure",
+          "kinetic_weapons",
+          "node_culling",
+          "node_reformatting",
+          "power_generation",
+          "psionics",
+          "robotics",
+          "ship",
+          "snare_capacity",
+          "tech_advanced_industrial_storm_protection",
+          "tech_advanced_storm_manipulation",
+          "tech_ship_hull_storm_breaker",
+          "tech_ship_hull_storm_weapons",
+          "tech_storm_prediction",
+          "zone"
+        ],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "icon",
+        "definitions": 12,
+        "scalars": 12,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "tech_archeology_lab",
+          "tech_covenant_composer",
+          "tech_covenant_cradle",
+          "tech_covenant_eater",
+          "tech_covenant_instrument",
+          "tech_covenant_whisperers",
+          "tech_exotic_gases",
+          "tech_mechanized_mining",
+          "tech_mega_assembly",
+          "tech_psionic_barrier",
+          "tech_volatile_motes",
+          "tech_xeno_linguistics"
+        ],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "is_dangerous",
+        "definitions": 52,
+        "scalars": 52,
+        "blocks": 0,
+        "repeated": 1,
+        "values": [
+          "yes"
+        ],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "is_insight",
+        "definitions": 13,
+        "scalars": 13,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "yes"
+        ],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "is_rare",
+        "definitions": 237,
+        "scalars": 237,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "no",
+          "yes"
+        ],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "is_reverse_engineerable",
+        "definitions": 43,
+        "scalars": 43,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "no",
+          "yes"
+        ],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "levels",
+        "definitions": 26,
+        "scalars": 26,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "-1",
+          "5"
+        ],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "mod_weight_if_group_picked",
+        "definitions": 34,
+        "scalars": 0,
+        "blocks": 34,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "modifier",
+        "definitions": 243,
+        "scalars": 0,
+        "blocks": 243,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "potential",
+        "definitions": 376,
+        "scalars": 0,
+        "blocks": 376,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "prereqfor_desc",
+        "definitions": 125,
+        "scalars": 0,
+        "blocks": 125,
+        "repeated": 1,
+        "values": [],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "prereqfor_desc.component",
+        "definitions": 10,
+        "scalars": 0,
+        "blocks": 10,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "prereqfor_desc.component.desc",
+        "definitions": 10,
+        "scalars": 10,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "TECH_UNLOCK_CONTAINMENT_VESSEL_DESC",
+          "TECH_UNLOCK_CURATOR_LAB_1_DESC",
+          "TECH_UNLOCK_CURATOR_LAB_2_DESC",
+          "TECH_UNLOCK_JUMPDRIVE_1_DESC",
+          "TECH_UNLOCK_PSI_JUMPDRIVE_1_DESC",
+          "TECH_UNLOCK_SENSOR_2_DESC",
+          "TECH_UNLOCK_SENSOR_3_DESC",
+          "TECH_UNLOCK_SENSOR_4_DESC",
+          "TECH_UNLOCK_SUBSPACE_DRIVE_DESC"
+        ],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "prereqfor_desc.component.title",
+        "definitions": 10,
+        "scalars": 10,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "TECH_UNLOCK_CONTAINMENT_VESSEL_TITLE",
+          "TECH_UNLOCK_CURATOR_LAB_1_TITLE",
+          "TECH_UNLOCK_CURATOR_LAB_2_TITLE",
+          "TECH_UNLOCK_JUMPDRIVE_1_TITLE",
+          "TECH_UNLOCK_PSI_JUMPDRIVE_1_TITLE",
+          "TECH_UNLOCK_SENSOR_2_TITLE",
+          "TECH_UNLOCK_SENSOR_3_TITLE",
+          "TECH_UNLOCK_SENSOR_4_TITLE",
+          "TECH_UNLOCK_SUBSPACE_DRIVE_TITLE"
+        ],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "prereqfor_desc.custom",
+        "definitions": 65,
+        "scalars": 0,
+        "blocks": 65,
+        "repeated": 1,
+        "values": [],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "prereqfor_desc.custom.desc",
+        "definitions": 56,
+        "scalars": 56,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "AGENDA_UNLOCK_NODE_CULLING_DESC",
+          "AGENDA_UNLOCK_NODE_REFORMATTING_DESC",
+          "TECH_UNLOCK_ADVANCED_GROWTH_CHAMBER_DESC",
+          "TECH_UNLOCK_ANTIMATTER_POWER_DESC",
+          "TECH_UNLOCK_CLEAR_BLOCKER_CONTRACT_DESC",
+          "TECH_UNLOCK_CLOAKING_1_DESC",
+          "TECH_UNLOCK_CLOAKING_2_DESC",
+          "TECH_UNLOCK_CLOAKING_3_DESC",
+          "TECH_UNLOCK_CLOAKING_DARK_MATTER_DESC",
+          "TECH_UNLOCK_CLOAKING_PSI_DESC",
+          "TECH_UNLOCK_COLD_FUSION_POWER_DESC",
+          "TECH_UNLOCK_COMBAT_COMPUTERS_1_DESC",
+          "TECH_UNLOCK_COMBAT_COMPUTERS_2_DESC",
+          "TECH_UNLOCK_COMBAT_COMPUTERS_3_DESC",
+          "TECH_UNLOCK_COMBAT_COMPUTERS_AUTONOMOUS_DESC",
+          "TECH_UNLOCK_COMBAT_COMPUTER_PRECOG_DESC",
+          "TECH_UNLOCK_CONSTRUCTION_SHIP_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_COSMOWORLD_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_DARK_MATTER_POWER_DESC",
+          "TECH_UNLOCK_DARK_MATTER_PROPULSION_DESC",
+          "TECH_UNLOCK_DEEP_SCAN_CONTRACT_DESC",
+          "TECH_UNLOCK_EPIGENETICS_DESC",
+          "TECH_UNLOCK_FISSION_POWER_DESC",
+          "TECH_UNLOCK_FUSION_POWER_DESC",
+          "TECH_UNLOCK_GENE_EXPRESSIONS_DESC",
+          "TECH_UNLOCK_HYPERDRIVE_1_DESC",
+          "TECH_UNLOCK_HYPERDRIVE_2_DESC",
+          "TECH_UNLOCK_HYPERDRIVE_3_DESC",
+          "TECH_UNLOCK_IDENTITY_COPY_DESC",
+          "TECH_UNLOCK_IDENTITY_FUSION_DESC",
+          "TECH_UNLOCK_IDENTITY_INITIALIZATION_DESC",
+          "TECH_UNLOCK_ION_CANNON_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_LEVIATHAN_MACHINE_DESC",
+          "TECH_UNLOCK_MINING_STATION_DESC",
+          "TECH_UNLOCK_RESEARCH_STATION_DESC",
+          "TECH_UNLOCK_SCRAMBLER_DESC",
+          "TECH_UNLOCK_STELLAR_IGNITION_CONTRACT_DESC",
+          "TECH_UNLOCK_THRUSTER_1_DESC",
+          "TECH_UNLOCK_THRUSTER_2_DESC",
+          "TECH_UNLOCK_THRUSTER_3_DESC",
+          "TECH_UNLOCK_THRUSTER_4_DESC",
+          "TECH_UNLOCK_VOCATIONAL_GENES_DESC",
+          "TECH_UNLOCK_WAYSTATION_2_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_ZERO_POINT_POWER_DESC",
+          "cosmogenesis_level_1_tech_desc",
+          "cosmogenesis_level_2_tech_desc",
+          "cosmogenesis_level_3_tech_desc",
+          "cosmogenesis_level_4_tech_desc",
+          "cosmogenesis_level_5_tech_desc",
+          "cosmogenesis_thesis_tech_desc",
+          "lgate_activation_desc",
+          "tech_akx_worm_partial_custom_desc",
+          "tech_controlled_mutations_2_tooltip",
+          "tech_improved_incubators_tt_desc",
+          "tech_metabolic_gases_tt_desc",
+          "tech_repeatable_lcluster_clue_desc",
+          "tech_storm_prediction_1_tooltip",
+          "tech_storm_prediction_2_tooltip"
+        ],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "prereqfor_desc.custom.title",
+        "definitions": 65,
+        "scalars": 65,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "TECH_UNLOCK_ADVANCED_GROWTH_CHAMBER_TITLE",
+          "TECH_UNLOCK_ANTIMATTER_POWER_TITLE",
+          "TECH_UNLOCK_CLEAR_BLOCKER_CONTRACT_TITLE",
+          "TECH_UNLOCK_CLOAKING_1_TITLE",
+          "TECH_UNLOCK_CLOAKING_2_TITLE",
+          "TECH_UNLOCK_CLOAKING_3_TITLE",
+          "TECH_UNLOCK_CLOAKING_DARK_MATTER_TITLE",
+          "TECH_UNLOCK_CLOAKING_PSI_TITLE",
+          "TECH_UNLOCK_COLD_FUSION_POWER_TITLE",
+          "TECH_UNLOCK_COMBAT_COMPUTERS_1_TITLE",
+          "TECH_UNLOCK_COMBAT_COMPUTERS_2_TITLE",
+          "TECH_UNLOCK_COMBAT_COMPUTERS_3_TITLE",
+          "TECH_UNLOCK_COMBAT_COMPUTERS_AUTONOMOUS_TITLE",
+          "TECH_UNLOCK_CONSTRUCTION_SHIP_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_COSMOWORLD_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_DARK_MATTER_POWER_TITLE",
+          "TECH_UNLOCK_DARK_MATTER_PROPULSION_TITLE",
+          "TECH_UNLOCK_DEEP_SCAN_CONTRACT_TITLE",
+          "TECH_UNLOCK_EPIGENETICS_TITLE",
+          "TECH_UNLOCK_FISSION_POWER_TITLE",
+          "TECH_UNLOCK_FUSION_POWER_TITLE",
+          "TECH_UNLOCK_GENE_EXPRESSIONS_TITLE",
+          "TECH_UNLOCK_HYPERDRIVE_1_TITLE",
+          "TECH_UNLOCK_HYPERDRIVE_2_TITLE",
+          "TECH_UNLOCK_HYPERDRIVE_3_TITLE",
+          "TECH_UNLOCK_IDENTITY_COPY_TITLE",
+          "TECH_UNLOCK_IDENTITY_FUSION_TITLE",
+          "TECH_UNLOCK_IDENTITY_INITIALIZATION_TITLE",
+          "TECH_UNLOCK_ION_CANNON_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_LEVIATHAN_MACHINE_TITLE",
+          "TECH_UNLOCK_MINING_STATION_TITLE",
+          "TECH_UNLOCK_RESEARCH_STATION_TITLE",
+          "TECH_UNLOCK_SCRAMBLER_TITLE",
+          "TECH_UNLOCK_STELLAR_IGNITION_CONTRACT_TITLE",
+          "TECH_UNLOCK_THRUSTER_1_TITLE",
+          "TECH_UNLOCK_THRUSTER_2_TITLE",
+          "TECH_UNLOCK_THRUSTER_3_TITLE",
+          "TECH_UNLOCK_THRUSTER_4_TITLE",
+          "TECH_UNLOCK_VOCATIONAL_GENES_TITLE",
+          "TECH_UNLOCK_WAYSTATION_2_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_ZERO_POINT_POWER_TITLE",
+          "add_lcluster_clue",
+          "cosmogenesis_level_1_tech_title",
+          "cosmogenesis_level_2_tech_title",
+          "cosmogenesis_level_3_tech_title",
+          "cosmogenesis_level_4_tech_title",
+          "cosmogenesis_level_5_tech_title",
+          "cosmogenesis_thesis_tech_title",
+          "lgate_activation_title",
+          "tech_akx_worm_partial_custom",
+          "tech_alien_cloning_tt",
+          "tech_combat_computers_bio_integration_effect",
+          "tech_controlled_mutations_2_title",
+          "tech_hyper_drive_bio_integration_effect",
+          "tech_improved_incubators_tt",
+          "tech_metabolic_gases_tt",
+          "tech_predatory_tactics_effect",
+          "tech_psionic_suppression_feature_tt",
+          "tech_satisfying_insults_effect",
+          "tech_sensors_bio_integration_effect",
+          "tech_storm_prediction_1_title",
+          "tech_storm_prediction_2_title",
+          "tech_thrusters_bio_integration_effect",
+          "tech_unusual_senses_effect"
+        ],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "prereqfor_desc.diplo_action",
+        "definitions": 3,
+        "scalars": 0,
+        "blocks": 3,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "prereqfor_desc.diplo_action.desc",
+        "definitions": 3,
+        "scalars": 3,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "TECH_UNLOCK_TERRAFORMING_NUKED_CHANGE_DESC",
+          "TECH_UNLOCK_VOLCANIC_TERRAFORM_DESC",
+          "TECH_UNLOCK_VOLCANO_TERRAFORM_DESC"
+        ],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "prereqfor_desc.diplo_action.title",
+        "definitions": 3,
+        "scalars": 3,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "TECH_UNLOCK_TERRAFORMING_NUKED_CHANGE_TITLE",
+          "TECH_UNLOCK_VOLCANIC_TERRAFORM_TITLE",
+          "TECH_UNLOCK_VOLCANO_TERRAFORM_TITLE"
+        ],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "prereqfor_desc.hide_prereq_for_desc",
+        "definitions": 38,
+        "scalars": 38,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "component",
+          "ship"
+        ],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "prereqfor_desc.ship",
+        "definitions": 47,
+        "scalars": 0,
+        "blocks": 47,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "prereqfor_desc.ship.desc",
+        "definitions": 47,
+        "scalars": 47,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "TECH_UNLOCK_ARKSHIP_1_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_ARKSHIP_2_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_ARKSHIP_3_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_BATTLECRUISER_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_BATTLESHIP_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_CITADEL_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_CIVILIAN_ARKSHIP_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_COLONY_SHIP_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_COLOSSUS_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_CORVETTE_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_COSMO_HARBINGER_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_COSMO_MAULER_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_COSMO_STINGER_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_COSMO_WEAVER_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_CRUISER_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_DESTROYER_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_ESCORT_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_FETITAN_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_JUGGERNAUT_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_MILITARY_ARKSHIP_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_OUTPOST_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_SCIENCE_ARKSHIP_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_SCIENCE_SHIP_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_STARHOLD_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_STARPORT_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_STAR_FORTRESS_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_TITAN_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_WAYSTATION_3_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_harbinger_stage_1_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_harbinger_stage_2_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_harbinger_stage_3_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_mauler_stage_1_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_mauler_stage_2_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_mauler_stage_3_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_stinger_stage_1_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_stinger_stage_2_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_stinger_stage_3_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_weaver_stage_1_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_weaver_stage_2_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_weaver_stage_3_CONSTRUCTION_DESC",
+          "deep_space_citadel_0_MEGASTRUCTURE_DETAILS",
+          "dyson_gun_0_MEGASTRUCTURE_DETAILS",
+          "dyson_swarm_1_MEGASTRUCTURE_DETAILS",
+          "habitat_central_complex_MEGASTRUCTURE_DETAILS",
+          "orbital_arc_furnace_1_MEGASTRUCTURE_DETAILS",
+          "orbital_ring_tier_1_MEGASTRUCTURE_DETAILS",
+          "waystation_megastructure_MEGASTRUCTURE_DETAILS"
+        ],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "prereqfor_desc.ship.title",
+        "definitions": 47,
+        "scalars": 47,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "TECH_UNLOCK_ARKSHIP_1_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_ARKSHIP_2_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_ARKSHIP_3_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_BATTLECRUISER_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_BATTLESHIP_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_CITADEL_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_CIVILIAN_ARKSHIP_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_COLONY_SHIP_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_COLOSSUS_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_CORVETTE_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_COSMO_HARBINGER_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_COSMO_MAULER_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_COSMO_STINGER_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_COSMO_WEAVER_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_CRUISER_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_DESTROYER_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_ESCORT_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_FETITAN_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_JUGGERNAUT_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_MILITARY_ARKSHIP_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_OUTPOST_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_SCIENCE_ARKSHIP_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_SCIENCE_SHIP_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_STARHOLD_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_STARPORT_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_STAR_FORTRESS_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_TITAN_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_WAYSTATION_3_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_harbinger_stage_1_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_harbinger_stage_2_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_harbinger_stage_3_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_mauler_stage_1_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_mauler_stage_2_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_mauler_stage_3_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_stinger_stage_1_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_stinger_stage_2_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_stinger_stage_3_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_weaver_stage_1_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_weaver_stage_2_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_weaver_stage_3_CONSTRUCTION_TITLE",
+          "allow_arc_furnace",
+          "allow_deep_space_citadel",
+          "allow_dyson_gun",
+          "allow_dyson_swarm",
+          "allow_habitats",
+          "allow_orbital_rings",
+          "allow_waystations"
+        ],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "prerequisites",
+        "definitions": 504,
+        "scalars": 0,
+        "blocks": 504,
+        "repeated": 0,
+        "values": [
+          "tech_archaeostudies",
+          "tech_battleship_hull_1",
+          "tech_battleships",
+          "tech_colossus",
+          "tech_corvette_hull_1",
+          "tech_corvettes",
+          "tech_cruiser_hull_1",
+          "tech_cruisers",
+          "tech_destroyer_hull_1",
+          "tech_destroyers",
+          "tech_growth_chamber_1",
+          "tech_habitat_1",
+          "tech_harbinger_growth_1",
+          "tech_harbingers",
+          "tech_industrial_storm_protection",
+          "tech_mandibles_2",
+          "tech_mauler_growth_1",
+          "tech_maulers",
+          "tech_sensors_2",
+          "tech_ship_hull_storm_breaker_1",
+          "tech_ship_storm_weapons_1",
+          "tech_space_construction",
+          "tech_starbase_1",
+          "tech_starbase_2",
+          "tech_starbase_3",
+          "tech_starbase_4",
+          "tech_stinger_growth_1",
+          "tech_stingers",
+          "tech_storm_manipulation",
+          "tech_storm_prediction_1",
+          "tech_titan_hull_1",
+          "tech_titans",
+          "tech_weaver_bio_anti_evasion_1",
+          "tech_weaver_bio_anti_evasion_2",
+          "tech_weaver_bio_anti_evasion_3",
+          "tech_weaver_bio_anti_evasion_4",
+          "tech_weaver_bio_anti_evasion_5",
+          "tech_weaver_bio_anti_fire_rate_1",
+          "tech_weaver_bio_anti_fire_rate_2",
+          "tech_weaver_bio_anti_fire_rate_3",
+          "tech_weaver_bio_anti_fire_rate_4",
+          "tech_weaver_bio_anti_fire_rate_5",
+          "tech_weaver_bio_confuser_1",
+          "tech_weaver_bio_confuser_2",
+          "tech_weaver_bio_confuser_3",
+          "tech_weaver_bio_confuser_4",
+          "tech_weaver_bio_confuser_5",
+          "tech_weaver_bio_evasion_1",
+          "tech_weaver_bio_evasion_2",
+          "tech_weaver_bio_evasion_3",
+          "tech_weaver_bio_evasion_4",
+          "tech_weaver_bio_evasion_5",
+          "tech_weaver_bio_fire_rate_1",
+          "tech_weaver_bio_fire_rate_2",
+          "tech_weaver_bio_fire_rate_3",
+          "tech_weaver_bio_fire_rate_4",
+          "tech_weaver_bio_fire_rate_5",
+          "tech_weaver_bio_healing_1",
+          "tech_weaver_bio_healing_2",
+          "tech_weaver_bio_healing_3",
+          "tech_weaver_bio_healing_4",
+          "tech_weaver_bio_healing_5",
+          "tech_weaver_growth_1",
+          "tech_weavers"
+        ],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "start_tech",
+        "definitions": 47,
+        "scalars": 47,
+        "blocks": 0,
+        "repeated": 3,
+        "values": [
+          "no",
+          "yes"
+        ],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "starting_potential",
+        "definitions": 19,
+        "scalars": 0,
+        "blocks": 19,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "technology_swap",
+        "definitions": 180,
+        "scalars": 0,
+        "blocks": 180,
+        "repeated": 16,
+        "values": [],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "technology_swap.area",
+        "definitions": 11,
+        "scalars": 11,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "society"
+        ],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "technology_swap.category",
+        "definitions": 11,
+        "scalars": 0,
+        "blocks": 11,
+        "repeated": 0,
+        "values": [
+          "biology",
+          "psionics"
+        ],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "technology_swap.inherit_effects",
+        "definitions": 162,
+        "scalars": 162,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "no",
+          "yes"
+        ],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "technology_swap.inherit_icon",
+        "definitions": 174,
+        "scalars": 174,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "no",
+          "yes"
+        ],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "technology_swap.modifier",
+        "definitions": 55,
+        "scalars": 0,
+        "blocks": 55,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "technology_swap.name",
+        "definitions": 180,
+        "scalars": 180,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "tech_archaeo_bio_lasers",
+          "tech_archaeostudies_wilderness",
+          "tech_assembly_pattern_tankbound",
+          "tech_bio_archaeo_mass_accelerator",
+          "tech_bio_archaeo_mass_drivers",
+          "tech_bio_archaeo_point_defence",
+          "tech_bio_archaeo_strike_crafts",
+          "tech_bio_archaeoarmor",
+          "tech_bio_archaeoshield",
+          "tech_bio_mass_drivers_1",
+          "tech_bio_mass_drivers_2",
+          "tech_bio_nanite_autocannon",
+          "tech_bio_nanite_flak_batteries",
+          "tech_bio_ship_armor_1",
+          "tech_bio_ship_armor_2",
+          "tech_bio_ship_armor_3",
+          "tech_bio_ship_armor_4",
+          "tech_bio_ship_armor_5",
+          "tech_bio_strike_craft_1",
+          "tech_bio_strike_craft_2",
+          "tech_bio_strike_craft_3",
+          "tech_bio_strike_craft_skrand",
+          "tech_biogenesis_colossus",
+          "tech_biogenesis_juggernaut",
+          "tech_biogenesis_titans",
+          "tech_bioship_thrusters_1",
+          "tech_bioship_thrusters_2",
+          "tech_bioship_thrusters_3",
+          "tech_bioship_thrusters_4",
+          "tech_construction_templates_tankbound",
+          "tech_extra_large_space_fauna_build_speed",
+          "tech_extra_large_space_fauna_hull_1",
+          "tech_extra_large_space_fauna_hull_2",
+          "tech_large_space_fauna_build_speed",
+          "tech_large_space_fauna_hull_1",
+          "tech_large_space_fauna_hull_2",
+          "tech_medium_space_fauna_build_speed",
+          "tech_medium_space_fauna_hull_1",
+          "tech_medium_space_fauna_hull_2",
+          "tech_mining_1",
+          "tech_mining_1_wilderness",
+          "tech_mining_2",
+          "tech_mining_3",
+          "tech_nomads_growth_chamber_2",
+          "tech_nomads_juggernaut",
+          "tech_nomads_space_construction",
+          "tech_nomads_titans",
+          "tech_powered_exoskeletons_wilderness",
+          "tech_small_space_fauna_build_speed",
+          "tech_small_space_fauna_hull_1",
+          "tech_small_space_fauna_hull_2",
+          "tech_space_mining_1",
+          "tech_space_mining_2",
+          "tech_space_mining_3",
+          "tech_space_mining_4",
+          "tech_space_mining_5",
+          "tech_storm_relief_center",
+          "tech_titanic_space_fauna_hull_1",
+          "tech_titanic_space_fauna_hull_2",
+          "tech_wilderness_alloys_1",
+          "tech_wilderness_alloys_2",
+          "tech_wilderness_industry",
+          "tech_wilderness_mineral_purification_1",
+          "tech_wilderness_mineral_purification_2"
+        ],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "technology_swap.prereqfor_desc",
+        "definitions": 28,
+        "scalars": 0,
+        "blocks": 28,
+        "repeated": 2,
+        "values": [],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "technology_swap.prereqfor_desc.custom",
+        "definitions": 28,
+        "scalars": 0,
+        "blocks": 28,
+        "repeated": 2,
+        "values": [],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "technology_swap.prereqfor_desc.custom.desc",
+        "definitions": 24,
+        "scalars": 24,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "AGENDA_UNLOCK_NODE_CULLING_DESC",
+          "REDUCED_CLONE_DEGRADATION_DESC",
+          "TECH_UNLOCK_ARKSHIP_GROWTH_CHAMBER_DESC",
+          "TECH_UNLOCK_ARKSHIP_JUGGERNAUT_AURAS_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_ARKSHIP_TITAN_AURAS_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_BIOSHIP_SENSOR_2_DESC",
+          "TECH_UNLOCK_BIOSHIP_SENSOR_3_DESC",
+          "TECH_UNLOCK_BIOSHIP_SENSOR_4_DESC",
+          "TECH_UNLOCK_BIOSHIP_THRUSTER_1_DESC",
+          "TECH_UNLOCK_BIOSHIP_THRUSTER_2_DESC",
+          "TECH_UNLOCK_BIOSHIP_THRUSTER_3_DESC",
+          "TECH_UNLOCK_BIOSHIP_THRUSTER_4_DESC",
+          "TECH_UNLOCK_BIOSHIP_THRUSTER_5_DESC",
+          "TECH_UNLOCK_BIO_ANTIMATTER_POWER_DESC",
+          "TECH_UNLOCK_BIO_COLD_FUSION_POWER_DESC",
+          "TECH_UNLOCK_BIO_DARK_MATTER_POWER_DESC",
+          "TECH_UNLOCK_BIO_FISSION_POWER_DESC",
+          "TECH_UNLOCK_BIO_FUSION_POWER_DESC",
+          "TECH_UNLOCK_BIO_HYPERDRIVE_1_DESC",
+          "TECH_UNLOCK_BIO_HYPERDRIVE_2_DESC",
+          "TECH_UNLOCK_BIO_HYPERDRIVE_3_DESC",
+          "TECH_UNLOCK_BIO_JUMPDRIVE_1_DESC",
+          "TECH_UNLOCK_BIO_PSI_JUMPDRIVE_1_DESC",
+          "TECH_UNLOCK_BIO_ZERO_POINT_POWER_DESC",
+          "TECH_UNLOCK_DEEP_SCAN_CONTRACT_DESC",
+          "TECH_UNLOCK_ION_CANNON_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_LOGISTIC_SHIP_CONSTRUCTION_DESC",
+          "TECH_UNLOCK_SENSOR_2_DESC"
+        ],
+        "belowPresenceFloor": true
+      },
+      {
+        "key": "technology_swap.prereqfor_desc.custom.title",
+        "definitions": 28,
+        "scalars": 28,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "AGENDA_UNLOCK_NODE_CULLING_TITLE",
+          "REDUCED_CLONE_DEGRADATION_TITLE",
+          "TECH_UNLOCK_ARKSHIP_GROWTH_CHAMBER_TITLE",
+          "TECH_UNLOCK_ARKSHIP_JUGGERNAUT_AURAS_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_ARKSHIP_TITAN_AURAS_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_BIOSHIP_SENSOR_2_TITLE",
+          "TECH_UNLOCK_BIOSHIP_SENSOR_3_TITLE",
+          "TECH_UNLOCK_BIOSHIP_SENSOR_4_TITLE",
+          "TECH_UNLOCK_BIOSHIP_THRUSTER_1_TITLE",
+          "TECH_UNLOCK_BIOSHIP_THRUSTER_2_TITLE",
+          "TECH_UNLOCK_BIOSHIP_THRUSTER_3_TITLE",
+          "TECH_UNLOCK_BIOSHIP_THRUSTER_4_TITLE",
+          "TECH_UNLOCK_BIOSHIP_THRUSTER_5_TITLE",
+          "TECH_UNLOCK_BIO_ANTIMATTER_POWER_TITLE",
+          "TECH_UNLOCK_BIO_COLD_FUSION_POWER_TITLE",
+          "TECH_UNLOCK_BIO_DARK_MATTER_POWER_TITLE",
+          "TECH_UNLOCK_BIO_FISSION_POWER_TITLE",
+          "TECH_UNLOCK_BIO_FUSION_POWER_TITLE",
+          "TECH_UNLOCK_BIO_HYPERDRIVE_1_TITLE",
+          "TECH_UNLOCK_BIO_HYPERDRIVE_2_TITLE",
+          "TECH_UNLOCK_BIO_HYPERDRIVE_3_TITLE",
+          "TECH_UNLOCK_BIO_JUMPDRIVE_1_TITLE",
+          "TECH_UNLOCK_BIO_PSI_JUMPDRIVE_1_TITLE",
+          "TECH_UNLOCK_BIO_ZERO_POINT_POWER_TITLE",
+          "TECH_UNLOCK_DEEP_SCAN_CONTRACT_TITLE",
+          "TECH_UNLOCK_ION_CANNON_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_LOGISTIC_SHIP_CONSTRUCTION_TITLE",
+          "TECH_UNLOCK_SENSOR_2_TITLE",
+          "tech_generate_celestial_storm_tt",
+          "tech_generate_electric_storm_tt",
+          "tech_generate_gravity_storm_tt",
+          "tech_generate_magnetic_storm_tt",
+          "tech_generate_particle_storm_tt"
+        ],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "technology_swap.trigger",
+        "definitions": 180,
+        "scalars": 0,
+        "blocks": 180,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "technology_swap.weight",
+        "definitions": 91,
+        "scalars": 0,
+        "blocks": 91,
+        "repeated": 0,
+        "values": [],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "tier",
+        "definitions": 679,
+        "scalars": 679,
+        "blocks": 0,
+        "repeated": 0,
+        "values": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+        ],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "weight",
+        "definitions": 641,
+        "scalars": 641,
+        "blocks": 0,
+        "repeated": 3,
+        "values": [
+          "0",
+          "1",
+          "60",
+          "70"
+        ],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "weight_groups",
+        "definitions": 34,
+        "scalars": 0,
+        "blocks": 34,
+        "repeated": 0,
+        "values": [
+          "deposit_blockers",
+          "repeatable"
+        ],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "weight_modifier",
+        "definitions": 562,
+        "scalars": 0,
+        "blocks": 562,
+        "repeated": 3,
+        "values": [],
+        "belowPresenceFloor": false
+      },
+      {
+        "key": "weight_modifier.modifier",
+        "definitions": 417,
+        "scalars": 0,
+        "blocks": 417,
+        "repeated": 283,
+        "values": [],
+        "belowPresenceFloor": false
+      }
+    ]
+  },
+  "claims": [
+    {
+      "id": "registry",
+      "subject": "mod.technology",
+      "status": "supported-contract",
+      "statement": "`mod.technology(name, def)` defines one researchable technology. The mod's prefix is minted into its id, and the definition is written to `common/technology/<feature>.txt`.",
+      "provenance": [
+        {
+          "kind": "codegen-projection",
+          "source": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt — type[technology]",
+          "detail": "path = \"game/common/technology\""
+        }
+      ],
+      "guidance": []
+    },
+    {
+      "id": "required-floor",
+      "subject": "area / tier / category",
+      "status": "supported-contract",
+      "statement": "`area`, `tier` and `category` are the keys the rules demand of every technology: each is declared exactly once, with a cardinality of one, outside any subtype. Nothing else on the definition is required by the rules — `cost` included, which is its own problem further down. A display name is required too, by the SDK rather than by the rules.",
+      "provenance": [
+        {
+          "kind": "codegen-projection",
+          "source": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt — type[technology]",
+          "detail": "cardinality 1..1 outside every subtype; 5 subtypes declared, 5 with no modeled discriminator"
+        }
+      ],
+      "guidance": []
+    },
+    {
+      "id": "areas-are-closed",
+      "subject": "area",
+      "status": "supported-contract",
+      "statement": "`area` is a closed set of 3 values — `physics`, `society` and `engineering` — so a typo there is a compile error. `category` is not closed the same way: it lowers as a `valueList` of references to `technology_category` definitions, which means the game's own categories and any your mod adds, and a bare string for anything else.",
+      "provenance": [
+        {
+          "kind": "codegen-projection",
+          "source": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:97",
+          "detail": "literals physics | society | engineering; category shape valueList"
+        }
+      ],
+      "guidance": []
+    },
+    {
+      "id": "cost-dual",
+      "subject": "cost",
+      "status": "supported-contract",
+      "statement": "`cost` takes either form the rules declare: a plain number of research points, or a weight block whose modifier rows move the price for the empire being asked. Both arms survived the lowering into one member, so there is no wrapper to choose between them.",
+      "provenance": [
+        {
+          "kind": "codegen-projection",
+          "source": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:109",
+          "detail": "declared arms int | int | block; lowered dual"
+        }
+      ],
+      "guidance": []
+    },
+    {
+      "id": "trigger-scopes",
+      "subject": "potential / modifier / weightModifier",
+      "status": "supported-contract",
+      "statement": "Every trigger and modifier block a technology carries runs in country scope — `potential`, `startingPotential`, `modifier`, `weightModifier`, `aiWeight` and `technologySwap.trigger`. There is no technology scope to reach for: a technology is a thing an empire researches, and the empire is what all of these are asked about.",
+      "provenance": [
+        {
+          "kind": "codegen-projection",
+          "source": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:192",
+          "detail": "scopes read from the rules' own `## replace_scopes` annotations"
+        }
+      ],
+      "guidance": []
+    },
+    {
+      "id": "cost-modifier-unpinned",
+      "subject": "cost.modifier",
+      "status": "supported-contract",
+      "statement": "The modifier rows inside a `cost` block are the one place on this registry the rules pin no scope, so the surface widens them to an unpinned scope rather than guessing. The identical rows inside `weightModifier` and `aiWeight` are pinned to country. Nothing is checking the triggers you write inside a cost block against the scope the game evaluates them in.",
+      "provenance": [
+        {
+          "kind": "codegen-projection",
+          "source": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:109",
+          "detail": "cost.modifier: an unpinned scope; weight_modifier.modifier: country; ai_weight.modifier: country"
+        }
+      ],
+      "guidance": []
+    },
+    {
+      "id": "prerequisites-refs",
+      "subject": "prerequisites",
+      "status": "supported-contract",
+      "statement": "`prerequisites` is a flat list of technology references, and every entry has to be researched before this one is offered. A binding from your own mod carries the id it was minted with; a vanilla or third-party id is a plain string the surface takes as given. The rules give the list no order and no weights.",
+      "provenance": [
+        {
+          "kind": "codegen-projection",
+          "source": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:136",
+          "detail": "lowered valueList; entries typed <technology>"
+        }
+      ],
+      "guidance": []
+    },
+    {
+      "id": "swap-layout",
+      "subject": "technologySwap",
+      "status": "supported-contract",
+      "statement": "`technologySwap` is a list of alternatives this technology becomes for an empire that matches the swap's own `trigger`. It emits the other way round from how you write it: one `technology_swap = { … }` block per entry, repeated as siblings. You author it as an array and not as a record of ids, because this registry declares no keyed collections at all — a swap's identity is the `name` field inside it, not a key you mint.",
+      "provenance": [
+        {
+          "kind": "codegen-projection",
+          "source": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:147",
+          "detail": "struct, repeated true; keyed collections on this registry: 0"
+        }
+      ],
+      "guidance": []
+    },
+    {
+      "id": "localisation",
+      "subject": "name / desc",
+      "status": "supported-contract",
+      "statement": "You write English in the definition and the build produces the localization file. The technology declares 2 slots: `name` under `<id>` and `desc` under `<id>_desc`. The keys are invented for you from the id the capability minted.",
+      "provenance": [
+        {
+          "kind": "codegen-projection",
+          "source": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt — type[technology] localisation",
+          "detail": "technology.name → $, technology.desc → $_desc"
+        }
+      ],
+      "guidance": []
+    },
+    {
+      "id": "unlock-lines",
+      "subject": "prereqforDesc",
+      "status": "supported-contract",
+      "statement": "`prereqforDesc` writes the \"this unlocks\" lines under a technology's tooltip, one entry per category — `ship`, `custom`, `component`, `diplo_action`, `feature` and `resource`. The rules declare at most one block per technology and the surface authors a list of them anyway: the shipped game writes two in at least one technology, and the arity follows the game rather than the declaration.",
+      "provenance": [
+        {
+          "kind": "codegen-projection",
+          "source": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:241",
+          "detail": "declared cardinality 0..1; lowered repeated true"
+        },
+        {
+          "kind": "recorded-disposition",
+          "source": "packages/codegen-cwt/src/overlay.ts — CONTENT_FIELD_OVERRIDES, technology.prereqfor_desc",
+          "detail": "arity: \"repeated\""
+        }
+      ],
+      "guidance": []
+    },
+    {
+      "id": "unlock-lines-usage",
+      "subject": "prereqforDesc",
+      "status": "observed-example",
+      "supports": "unlock-lines",
+      "statement": "125 of the 679 shipped technologies write an unlock line of their own, and 1 of those write more than one block — which is the definition the declaration does not admit. Of the categories, `custom` is the one most of them reach for: 65 definitions.",
+      "provenance": [
+        {
+          "kind": "corpus",
+          "source": "packages/sdk/tests/fixtures/corpus/technology.json",
+          "detail": "Stellaris 4.4.6, 679 definitions in 33 files"
+        }
+      ],
+      "guidance": []
+    },
+    {
+      "id": "group-weights-narrowed",
+      "subject": "modWeightIfGroupPicked",
+      "status": "known-omission",
+      "statement": "The rules let a technology write `mod_weight_if_group_picked` any number of times. The surface takes exactly one `scalarMap` — a map from weight-group name to a number — so a second block is not something you can author. The disposition is recorded rather than inferred: 34 of the 679 shipped technologies write the block and none of them writes it twice.",
+      "provenance": [
+        {
+          "kind": "codegen-projection",
+          "source": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:210",
+          "detail": "declared cardinality 0..inf; lowered scalarMap, repeated false"
+        },
+        {
+          "kind": "recorded-disposition",
+          "source": "packages/codegen-cwt/src/overlay.ts — CONTENT_FIELD_OVERRIDES, technology.mod_weight_if_group_picked",
+          "detail": "shape: \"scalarMap\", arity: \"single\""
+        },
+        {
+          "kind": "corpus",
+          "source": "packages/sdk/tests/fixtures/corpus/technology.json",
+          "detail": "Stellaris 4.4.6, 679 definitions in 33 files"
+        }
+      ],
+      "guidance": []
+    },
+    {
+      "id": "patch-surface",
+      "subject": "mod.patchTechnology",
+      "status": "supported-contract",
+      "statement": "Technology is one of the few registries with a patch surface. `mod.patchTechnology(parsed, transform)` takes a vanilla definition read out of a local install and re-emits the whole object with your changes folded in; every member the definition can author, a patch can change, because nothing is excluded from one. Its 2 localization slots are rewritable too, replacing vanilla's own text rather than adding a key.",
+      "provenance": [
+        {
+          "kind": "codegen-projection",
+          "source": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt — type[technology]",
+          "detail": "technology.name — replacement text under `<vanilla id>`; technology.desc — replacement text under `<vanilla id>_desc`"
+        },
+        {
+          "kind": "recorded-disposition",
+          "source": "packages/codegen-cwt/src/overlay.ts — CONTENT_PATCH_REGISTRIES, technology",
+          "detail": "verified in-game by the patches-that-provably-win calibration"
+        }
+      ],
+      "guidance": []
+    },
+    {
+      "id": "or-groups-omitted",
+      "subject": "prerequisites",
+      "status": "known-omission",
+      "statement": "The rules let a technology's `prerequisites` hold an `OR = { … }` alternation group — \"any one of these three\" — and the authoring surface does not. The member lowers to a flat list, so a definition of your own can only require all of its entries. The patch surface is the one place the alternation appears, and only as an input: a patch has to be able to hand back the group it was given.",
+      "provenance": [
+        {
+          "kind": "codegen-projection",
+          "source": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:136",
+          "detail": "technology.prerequisites also admits AnyOf<TechnologyRef> — Vanilla writes `OR = { ... }` alternation groups in five technology files, and the parsed surface hands them back as `AnyOf` values, so `[...t.prerequisites, mine]` has to be a legal patch input. A definition of the mod's own has no such need: nothing reads an authored OR group back out."
+        },
+        {
+          "kind": "recorded-disposition",
+          "source": "packages/codegen-cwt/src/overlay.ts — PATCH_WIDENINGS, technology.prerequisites",
+          "detail": "extraType: AnyOf<TechnologyRef>"
+        }
+      ],
+      "guidance": []
+    },
+    {
+      "id": "start-subtype-unresolved",
+      "subject": "cost / weight / startTech",
+      "status": "unresolved-behavior",
+      "statement": "The rules describe two kinds of technology and the surface cannot tell which one you are writing. `cost` and `weight` are declared twice over — once inside `subtype[start]`, where each is optional, and once outside it, where 2 of the 3 declarations of `cost` demand at least one. What puts a definition in that subtype is `start_tech = yes`, and that discriminator is not carried into the model the SDK is generated from, so both members are optional on every technology, always. Nothing at build time knows whether a technology without a cost is a starting technology or an oversight. The corpus cannot settle it either: 674 of the 679 shipped technologies write one.",
+      "provenance": [
+        {
+          "kind": "cwt-rule",
+          "source": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:109",
+          "detail": "int at line 109, cardinality 0..1; int at line 115, cardinality 1..1; block at line 117, cardinality 1..1"
+        },
+        {
+          "kind": "codegen-projection",
+          "source": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt — subtype[start]",
+          "detail": "gates cost, starting_potential, weight; withholds cost, is_custom_tech_1, is_custom_tech_2, is_custom_tech_3, levels, weight; discriminator not modeled"
+        },
+        {
+          "kind": "corpus",
+          "source": "packages/sdk/tests/fixtures/corpus/technology.json",
+          "detail": "Stellaris 4.4.6, 679 definitions in 33 files"
+        }
+      ],
+      "guidance": []
+    },
+    {
+      "id": "cost-usage",
+      "subject": "cost",
+      "status": "observed-example",
+      "supports": "start-subtype-unresolved",
+      "statement": "674 of the 679 shipped technologies write a cost: 664 as a plain number and 10 as the block form. 5 write none at all, and 47 of the 679 shipped technologies declare themselves starting technologies.",
+      "provenance": [
+        {
+          "kind": "corpus",
+          "source": "packages/sdk/tests/fixtures/corpus/technology.json",
+          "detail": "Stellaris 4.4.6, 679 definitions in 33 files"
+        }
+      ],
+      "guidance": []
+    }
+  ],
+  "conventions": [
+    {
+      "id": "always-cost",
+      "subject": "cost",
+      "status": "curated-convention",
+      "text": "Write a cost on every technology except a starting one. The rules ask for it and the surface cannot, so this is the one field where being deliberate matters more than usual — the section below explains why nothing will tell you. Start from a vanilla technology at the same tier rather than from a round number. Research point costs are only meaningful next to each other, and the tiers the game ships are the scale the player has already learned.",
+      "provenance": [
+        {
+          "kind": "maintainer",
+          "source": "packages/reference-spike/content/technology.mdx"
+        },
+        {
+          "kind": "corpus",
+          "source": "packages/sdk/tests/fixtures/corpus/technology.json",
+          "detail": "how many shipped technologies write a cost"
+        }
+      ],
+      "guidance": [
+        {
+          "subject": "member:cost",
+          "kind": "contract",
+          "fingerprint": "da1c02b5061c9428"
+        },
+        {
+          "subject": "subtype:start",
+          "kind": "contract",
+          "fingerprint": "df04ce32caf7073f"
+        },
+        {
+          "subject": "evidence:cost",
+          "kind": "evidence",
+          "fingerprint": "bba050024b20459d"
+        }
+      ]
+    },
+    {
+      "id": "one-category",
+      "subject": "category",
+      "status": "curated-convention",
+      "text": "Give a technology exactly one category, and write it as a bare value rather than as a one-element array. The rules type the key as a list and every technology the game ships writes exactly one entry in it, so the list is the file format showing through rather than a feature. Pick the category before the area: a category belongs to exactly one area in the game's own files, and picking a category that lives under a different area than the one you declared is not something the build can catch for you.",
+      "provenance": [
+        {
+          "kind": "maintainer",
+          "source": "packages/reference-spike/content/technology.mdx"
+        },
+        {
+          "kind": "corpus",
+          "source": "packages/sdk/tests/fixtures/corpus/technology.json",
+          "detail": "how many shipped technologies write a category, and in what form"
+        }
+      ],
+      "guidance": [
+        {
+          "subject": "member:category",
+          "kind": "contract",
+          "fingerprint": "1216a1beb845d49b"
+        },
+        {
+          "subject": "evidence:category",
+          "kind": "evidence",
+          "fingerprint": "87da58eaf04deeff"
+        }
+      ]
+    },
+    {
+      "id": "bind-prerequisites",
+      "subject": "prerequisites",
+      "status": "curated-convention",
+      "text": "Reference your own technologies by their binding and vanilla's by id string. Both compile, and only one of them survives a rename: a binding carries whatever id the capability minted for it, so changing the technology's name in one place changes every reference to it. A string that happens to match is a string that will one day not match. Importing a binding from another feature module is ordinary module API and does not place the technology twice. Only the module's own feature export places anything.",
+      "provenance": [
+        {
+          "kind": "maintainer",
+          "source": "packages/reference-spike/content/technology.mdx"
+        },
+        {
+          "kind": "corpus",
+          "source": "packages/sdk/tests/fixtures/corpus/technology.json",
+          "detail": "how many shipped technologies declare prerequisites"
+        }
+      ],
+      "guidance": [
+        {
+          "subject": "member:prerequisites",
+          "kind": "contract",
+          "fingerprint": "54666b328f9a88e1"
+        },
+        {
+          "subject": "evidence:prerequisites",
+          "kind": "evidence",
+          "fingerprint": "09d9b9183aed0ef4"
+        }
+      ]
+    },
+    {
+      "id": "say-what-it-unlocks",
+      "subject": "prereqforDesc",
+      "status": "curated-convention",
+      "text": "Write an unlock line for anything the technology makes possible that the game cannot work out on its own. The game already lists everything that names this technology as a prerequisite; what it cannot list is a decision your event chain gates on a flag, or a modifier the player would otherwise have to notice on their own. Leave it off when the automatic list already says it. A technology that repeats its own prerequisite list in prose reads as a bug in the tooltip.",
+      "provenance": [
+        {
+          "kind": "maintainer",
+          "source": "packages/reference-spike/content/technology.mdx"
+        },
+        {
+          "kind": "corpus",
+          "source": "packages/sdk/tests/fixtures/corpus/technology.json",
+          "detail": "how many shipped technologies write an unlock line of their own"
+        }
+      ],
+      "guidance": [
+        {
+          "subject": "member:prereqfor_desc",
+          "kind": "contract",
+          "fingerprint": "c79906e035fe8318"
+        },
+        {
+          "subject": "member:prereqfor_desc.custom.title",
+          "kind": "contract",
+          "fingerprint": "ec390a32dce88636"
+        },
+        {
+          "subject": "evidence:prereqfor_desc",
+          "kind": "evidence",
+          "fingerprint": "bdd9d7be59266e02"
+        }
+      ]
+    }
+  ],
+  "page": "packages/reference-spike/content/technology.mdx",
+  "sections": [
+    {
+      "id": "is-a-technology-the-right-thing",
+      "title": "Is a technology the right thing",
+      "text": "A technology is a thing an empire researches once . It appears as a card in one of the three research areas, costs research points, and when it finishes it stays finished. What it does is almost always indirect: it carries a country modifier, or it is named as a prerequisite by something else — a building, a ship component, a decision, another technology. That last part is the test. If nothing in your mod would be gated on it, a technology is probably the wrong shape: A country modifier on its own — if you want an empire to be permanently better at something with no research step, a static modifier or an edict says that directly. A tradition or an ascension perk — a choice the player makes from a small menu, not a card that shows up among a hundred others. A building or a component — the thing a technology usually unlocks. Write that first; the technology is the gate in front of it. An event chain — a story with beats. A technology has one beat, at the end. Two technologies of your own that require each other is the smallest interesting shape, and it is what most of this page builds toward.",
+      "claims": [],
+      "conventions": [],
+      "stories": [],
+      "components": []
+    },
+    {
+      "id": "what-the-player-actually-sees",
+      "title": "What the player actually sees",
+      "text": "Worth knowing before you write fields, because several of them exist only to fill in one part of a card: The name and description , from the text you write in the definition. The area it is filed under — physics, society, or engineering — and the category inside that area, which decides the icon behind the card. A tier , which is roughly how far down the tree it sits. A price in research points, and a research time the game works out from it. A list of \"this unlocks\" lines under the description. Some of those the game works out on its own from what names this technology as a prerequisite; the rest you write. Whether it is offered at all, and how often. The player sees three cards at a time per area, drawn against the weights.",
+      "claims": [],
+      "conventions": [],
+      "stories": [],
+      "components": []
+    },
+    {
+      "id": "start-from-the-recipe",
+      "title": "Start from the recipe",
+      "text": "There is a recipe for this. create-stellaris-mod generate technology writes a complete, reviewed technology and the feature file that places it, and the panel below is that file — not a copy of it. It is rendered by the same Catalog the command uses, at the time this page was built. Read it before the hand-written examples further down. Those isolate one decision each; this one is the shape all of them are variations on, and it is what you will actually be looking at ten minutes from now. Two things in it are worth naming. desc ships as a PLACEHOLDER: string rather than as invented flavour text, because it is the one piece of author writing nothing can derive and a greppable marker is more honest than a plausible sentence. And the two commented-out lines compile the moment you delete the // — the recipe does not show you an example it has not checked. The import { mod } from \"#mod\" at the top is the project's own alias for src/mod.ts , the single module a scaffolded project calls createMod in. Every other story on this page builds its own capability inline instead, because a story has to be readable on its own.",
+      "claims": [
+        "registry"
+      ],
+      "conventions": [],
+      "stories": [
+        "recipe-starter"
+      ],
+      "components": [
+        "Claim",
+        "StoryPanel"
+      ]
+    },
+    {
+      "id": "the-smallest-one-that-builds",
+      "title": "The smallest one that builds",
+      "text": "The recipe's file sets more than the game demands. This is the floor: The id in the output is lumen_tech_optics , not lumen_optics : the capability mints a registry segment into every content id. Pass ids: { technology: \"technology\" } to createMod if you would rather it read lumen_technology_optics . Give a technology exactly one category, and write it as a bare value rather than as a one-element array. The rules type the key as a list and every technology the game ships writes exactly one entry in it, so the list is the file format showing through rather than a feature. Pick the category before the area: a category belongs to exactly one area in the game's own files, and picking a category that lives under a different area than the one you declared is not something the build can catch for you. Open the localization tab on any story here to see what came out.",
+      "claims": [
+        "required-floor",
+        "areas-are-closed",
+        "localisation"
+      ],
+      "conventions": [
+        "one-category"
+      ],
+      "stories": [
+        "minimal"
+      ],
+      "components": [
+        "Claim",
+        "Convention"
+      ]
+    },
+    {
+      "id": "where-it-sits-in-the-tree",
+      "title": "Where it sits in the tree",
+      "text": "A technology's place in the tree is entirely its prerequisites . There is no parent, no position, and no ordering field — the tree is drawn from the graph these lists make. Reference your own technologies by their binding and vanilla's by id string. Both compile, and only one of them survives a rename: a binding carries whatever id the capability minted for it, so changing the technology's name in one place changes every reference to it. A string that happens to match is a string that will one day not match. Importing a binding from another feature module is ordinary module API and does not place the technology twice. Only the module's own feature export places anything.",
+      "claims": [
+        "prerequisites-refs",
+        "or-groups-omitted"
+      ],
+      "conventions": [
+        "bind-prerequisites"
+      ],
+      "stories": [
+        "prerequisites"
+      ],
+      "components": [
+        "Claim",
+        "Convention"
+      ]
+    },
+    {
+      "id": "what-researching-it-does",
+      "title": "What researching it does",
+      "text": "Two different things, and authors reach for the wrong one about half the time. A modifier changes the empire. A prereqforDesc entry changes what the card says it changes — it is display text, and writing one does not make anything happen. Write an unlock line for anything the technology makes possible that the game cannot work out on its own. The game already lists everything that names this technology as a prerequisite; what it cannot list is a decision your event chain gates on a flag, or a modifier the player would otherwise have to notice on their own. Leave it off when the automatic list already says it. A technology that repeats its own prerequisite list in prose reads as a bug in the tooltip. An unlock line is also the one place on a technology where you do not write English. title and desc there are localization keys , not text — the game looks them up, and a sentence written straight into either one is shown to the player verbatim. mod.localization is what makes a key you own: Compare the two tabs on that panel. The technology's own name became a localization entry keyed off its id; the unlock line's title was written into the definition as the key it is, and the text for it came from the standalone entry beside it.",
+      "claims": [
+        "trigger-scopes",
+        "unlock-lines"
+      ],
+      "conventions": [
+        "say-what-it-unlocks"
+      ],
+      "stories": [
+        "unlocks"
+      ],
+      "components": [
+        "Claim",
+        "Convention"
+      ]
+    },
+    {
+      "id": "paying-for-it",
+      "title": "Paying for it",
+      "text": "cost is research points, and it is the field with the most shapes. Write a cost on every technology except a starting one. The rules ask for it and the surface cannot, so this is the one field where being deliberate matters more than usual — the section below explains why nothing will tell you. Start from a vanilla technology at the same tier rather than from a round number. Research point costs are only meaningful next to each other, and the tiers the game ships are the scale the player has already learned.",
+      "claims": [
+        "cost-dual",
+        "cost-modifier-unpinned"
+      ],
+      "conventions": [
+        "always-cost"
+      ],
+      "stories": [
+        "cost-curve"
+      ],
+      "components": [
+        "Claim",
+        "Convention"
+      ]
+    },
+    {
+      "id": "how-often-the-game-offers-it",
+      "title": "How often the game offers it",
+      "text": "Weights decide which three cards an empire is shown. weight is the base, weightModifier moves it for a particular empire, and aiWeight moves it only for the computer. There is a second, coarser lever — weight groups, which raise a technology's chances once something else in the same group has been drawn. It is the one place on this registry where the surface is narrower than the rules:",
+      "claims": [
+        "group-weights-narrowed"
+      ],
+      "conventions": [],
+      "stories": [
+        "weighting"
+      ],
+      "components": [
+        "Claim"
+      ]
+    },
+    {
+      "id": "one-technology-two-faces",
+      "title": "One technology, two faces",
+      "text": "A swap is the same research card wearing a different name, area and effects for an empire that matches a trigger — a psionic empire getting the mystical version of the same breakthrough.",
+      "claims": [
+        "swap-layout"
+      ],
+      "conventions": [],
+      "stories": [
+        "swap"
+      ],
+      "components": [
+        "Claim"
+      ]
+    },
+    {
+      "id": "changing-a-technology-the-game-already-has",
+      "title": "Changing a technology the game already has",
+      "text": "Adding a technology and changing one are different jobs. Vanilla's own definitions cannot be edited in place — PDXScript overrides replace the whole object — so changing one field of a vanilla technology means re-emitting all of its fields, which means reading them out of the game's files first. No story on this page does it. Every story here compiles and synthesizes with nothing but the vendored rules, and a patch needs a parsed Stellaris install — so the example lives in the SDK's own README, where the install is a premise rather than a dependency the page would have to pretend it had.",
+      "claims": [
+        "patch-surface"
+      ],
+      "conventions": [],
+      "stories": [],
+      "components": [
+        "Claim"
+      ]
+    },
+    {
+      "id": "mistakes-you-will-probably-make",
+      "title": "Mistakes you will probably make",
+      "text": "Confusing modifier with prereqforDesc . One changes the empire, the other changes the tooltip. Writing the second does not do the first, and a technology whose card promises something it does not deliver is worse than one that promises nothing. Writing English into an unlock line. prereqforDesc 's title and desc are keys the game looks up, and every other text field on the definition is English the build writes a key for. Getting it backwards builds cleanly and prints your sentence into the game's own file; the build says so in mod.warnings , which is not somewhere you will look unprompted. A category that belongs to another area. area is checked and category is a reference; that a given category sits under a given area is a fact in the game's own files that nothing here reads. particles under society builds cleanly and files the card nowhere useful. A feature stem that repeats the prefix. mod.feature(\"lumen_optics\", …) in a mod prefixed lumen writes common/technology/lumen_lumen_optics.txt . The prefix is added for you; name the stem after the feature alone. Expecting a swap to be a technology. A swap is a block inside a technology, not a definition of its own — it has no binding, nothing can list it as a prerequisite, and its id is a string you wrote.",
+      "claims": [],
+      "conventions": [],
+      "stories": [],
+      "components": []
+    },
+    {
+      "id": "what-will-bite-you",
+      "title": "What will bite you",
+      "text": "One thing about technologies is genuinely unresolved, and it is the field you will write first. If you leave cost off, nothing will tell you. The rules describe starting technologies and ordinary ones as two different shapes with two different answers, and the surface cannot tell them apart: The same gap covers weight , and one field on the other side of it: costPerLevel is required of a repeatable technology and optional on the surface, for the same reason — the surface does not know which technologies are repeatable either.",
+      "claims": [
+        "start-subtype-unresolved"
+      ],
+      "conventions": [],
+      "stories": [],
+      "components": [
+        "Claim"
+      ]
+    },
+    {
+      "id": "two-things-the-sdk-decided",
+      "title": "Two things the SDK decided",
+      "text": "Everything else on this page is projected from the rules. These two are not: neither is anything the rules state, and both are reviewed decisions recorded in this repository rather than facts about Stellaris.",
+      "claims": [],
+      "conventions": [],
+      "stories": [],
+      "components": [
+        "SdkContracts"
+      ]
+    },
+    {
+      "id": "every-field",
+      "title": "Every field",
+      "text": "Everything above is the path through. This is the whole surface, including the members nested inside technologySwap , prereqforDesc and the weight blocks — for when you already know what you are looking for.",
+      "claims": [],
+      "conventions": [],
+      "stories": [],
+      "components": [
+        "FieldTable"
+      ]
+    },
+    {
+      "id": "where-this-came-from",
+      "title": "Where this came from",
+      "text": "Every claim on this page is supported by one build of the SDK against one commit of the rules, one documentation dump, and one extraction from one game version. They are listed together because evidence from different builds is not interchangeable.",
+      "claims": [],
+      "conventions": [],
+      "stories": [],
+      "components": [
+        "EvidenceSummary"
+      ]
+    }
+  ],
+  "fields": [
+    {
+      "key": "ai_update_type",
+      "member": "aiUpdateType",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": [
+        "all",
+        "military"
+      ],
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:221",
+      "evidence": {
+        "definitions": 264,
+        "scalars": 264,
+        "blocks": 0,
+        "belowPresenceFloor": false
+      },
+      "claims": []
+    },
+    {
+      "key": "ai_weight",
+      "member": "aiWeight",
+      "shape": "weightBlock",
+      "required": false,
+      "repeated": false,
+      "scope": "country",
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:260",
+      "evidence": {
+        "definitions": 492,
+        "scalars": 0,
+        "blocks": 492,
+        "belowPresenceFloor": false
+      },
+      "claims": []
+    },
+    {
+      "key": "ai_weight.modifier",
+      "member": "aiWeight",
+      "shape": "weightModifier",
+      "required": false,
+      "repeated": true,
+      "scope": "country",
+      "clause": "trigger",
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": {
+        "definitions": 221,
+        "scalars": 0,
+        "blocks": 221,
+        "belowPresenceFloor": false
+      },
+      "claims": []
+    },
+    {
+      "key": "area",
+      "member": "area",
+      "shape": "value",
+      "required": true,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": [
+        "physics",
+        "society",
+        "engineering"
+      ],
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:97",
+      "evidence": {
+        "definitions": 679,
+        "scalars": 679,
+        "blocks": 0,
+        "belowPresenceFloor": false
+      },
+      "claims": [
+        "areas-are-closed"
+      ]
+    },
+    {
+      "key": "category",
+      "member": "category",
+      "shape": "valueList",
+      "required": true,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:99",
+      "evidence": {
+        "definitions": 679,
+        "scalars": 0,
+        "blocks": 679,
+        "belowPresenceFloor": false
+      },
+      "claims": []
+    },
+    {
+      "key": "cost",
+      "member": "cost",
+      "shape": "dual",
+      "required": false,
+      "repeated": false,
+      "scope": "any",
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:109",
+      "evidence": {
+        "definitions": 674,
+        "scalars": 664,
+        "blocks": 10,
+        "belowPresenceFloor": false
+      },
+      "claims": [
+        "cost-dual",
+        "cost-usage"
+      ]
+    },
+    {
+      "key": "cost.modifier",
+      "member": "cost",
+      "shape": "weightModifier",
+      "required": false,
+      "repeated": true,
+      "scope": "any",
+      "clause": "trigger",
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": null,
+      "claims": [
+        "cost-modifier-unpinned"
+      ]
+    },
+    {
+      "key": "cost_per_level",
+      "member": "costPerLevel",
+      "shape": "value",
+      "required": true,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:200",
+      "evidence": {
+        "definitions": 26,
+        "scalars": 26,
+        "blocks": 0,
+        "belowPresenceFloor": false
+      },
+      "claims": []
+    },
+    {
+      "key": "feature_flags",
+      "member": "featureFlags",
+      "shape": "valueList",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:231",
+      "evidence": {
+        "definitions": 37,
+        "scalars": 0,
+        "blocks": 37,
+        "belowPresenceFloor": false
+      },
+      "claims": []
+    },
+    {
+      "key": "gateway",
+      "member": "gateway",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:197",
+      "evidence": {
+        "definitions": 52,
+        "scalars": 52,
+        "blocks": 0,
+        "belowPresenceFloor": false
+      },
+      "claims": []
+    },
+    {
+      "key": "icon",
+      "member": "icon",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:105",
+      "evidence": {
+        "definitions": 12,
+        "scalars": 12,
+        "blocks": 0,
+        "belowPresenceFloor": true
+      },
+      "claims": []
+    },
+    {
+      "key": "is_custom_tech_1",
+      "member": "isCustomTech1",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": [
+        "yes",
+        "no"
+      ],
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [
+        "NOT use in vanilla.Definition of dangerous technology, rare technology, and insightful technology provided to modders for use"
+      ],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:124",
+      "evidence": null,
+      "claims": []
+    },
+    {
+      "key": "is_custom_tech_2",
+      "member": "isCustomTech2",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": [
+        "yes",
+        "no"
+      ],
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [
+        "NOT use in vanilla.Definition of dangerous technology, rare technology, and insightful technology provided to modders for use"
+      ],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:127",
+      "evidence": null,
+      "claims": []
+    },
+    {
+      "key": "is_custom_tech_3",
+      "member": "isCustomTech3",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": [
+        "yes",
+        "no"
+      ],
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [
+        "NOT use in vanilla.Definition of dangerous technology, rare technology, and insightful technology provided to modders for use"
+      ],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:130",
+      "evidence": null,
+      "claims": []
+    },
+    {
+      "key": "is_dangerous",
+      "member": "isDangerous",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": [
+        "yes",
+        "no"
+      ],
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:226",
+      "evidence": {
+        "definitions": 52,
+        "scalars": 52,
+        "blocks": 0,
+        "belowPresenceFloor": false
+      },
+      "claims": []
+    },
+    {
+      "key": "is_insight",
+      "member": "isInsight",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": [
+        "yes",
+        "no"
+      ],
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:228",
+      "evidence": {
+        "definitions": 13,
+        "scalars": 13,
+        "blocks": 0,
+        "belowPresenceFloor": true
+      },
+      "claims": []
+    },
+    {
+      "key": "is_rare",
+      "member": "isRare",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": [
+        "yes",
+        "no"
+      ],
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:224",
+      "evidence": {
+        "definitions": 237,
+        "scalars": 237,
+        "blocks": 0,
+        "belowPresenceFloor": false
+      },
+      "claims": []
+    },
+    {
+      "key": "is_reverse_engineerable",
+      "member": "isReverseEngineerable",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": [
+        "yes",
+        "no"
+      ],
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:218",
+      "evidence": {
+        "definitions": 43,
+        "scalars": 43,
+        "blocks": 0,
+        "belowPresenceFloor": false
+      },
+      "claims": []
+    },
+    {
+      "key": "levels",
+      "member": "levels",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:132",
+      "evidence": {
+        "definitions": 26,
+        "scalars": 26,
+        "blocks": 0,
+        "belowPresenceFloor": false
+      },
+      "claims": []
+    },
+    {
+      "key": "mod_weight_if_group_picked",
+      "member": "modWeightIfGroupPicked",
+      "shape": "scalarMap",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:210",
+      "evidence": {
+        "definitions": 34,
+        "scalars": 0,
+        "blocks": 34,
+        "belowPresenceFloor": false
+      },
+      "claims": [
+        "group-weights-narrowed"
+      ]
+    },
+    {
+      "key": "modifier",
+      "member": "modifier",
+      "shape": "modifierBlock",
+      "required": false,
+      "repeated": false,
+      "scope": "country",
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:238",
+      "evidence": {
+        "definitions": 243,
+        "scalars": 0,
+        "blocks": 243,
+        "belowPresenceFloor": false
+      },
+      "claims": []
+    },
+    {
+      "key": "potential",
+      "member": "potential",
+      "shape": "trigger",
+      "required": false,
+      "repeated": false,
+      "scope": "country",
+      "clause": "trigger",
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:192",
+      "evidence": {
+        "definitions": 376,
+        "scalars": 0,
+        "blocks": 376,
+        "belowPresenceFloor": false
+      },
+      "claims": []
+    },
+    {
+      "key": "prereqfor_desc",
+      "member": "prereqforDesc",
+      "shape": "struct",
+      "required": false,
+      "repeated": true,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:241",
+      "evidence": {
+        "definitions": 125,
+        "scalars": 0,
+        "blocks": 125,
+        "belowPresenceFloor": false
+      },
+      "claims": [
+        "unlock-lines",
+        "unlock-lines-usage"
+      ]
+    },
+    {
+      "key": "prereqfor_desc.component",
+      "member": "prereqforDesc",
+      "shape": "struct",
+      "required": false,
+      "repeated": true,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": {
+        "definitions": 10,
+        "scalars": 0,
+        "blocks": 10,
+        "belowPresenceFloor": true
+      },
+      "claims": [
+        "unlock-lines",
+        "unlock-lines-usage"
+      ]
+    },
+    {
+      "key": "prereqfor_desc.component.desc",
+      "member": "prereqforDesc.desc",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": {
+        "definitions": 10,
+        "scalars": 10,
+        "blocks": 0,
+        "belowPresenceFloor": true
+      },
+      "claims": [
+        "unlock-lines",
+        "unlock-lines-usage"
+      ]
+    },
+    {
+      "key": "prereqfor_desc.component.title",
+      "member": "prereqforDesc.title",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": {
+        "definitions": 10,
+        "scalars": 10,
+        "blocks": 0,
+        "belowPresenceFloor": true
+      },
+      "claims": [
+        "unlock-lines",
+        "unlock-lines-usage"
+      ]
+    },
+    {
+      "key": "prereqfor_desc.custom",
+      "member": "prereqforDesc",
+      "shape": "struct",
+      "required": false,
+      "repeated": true,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": {
+        "definitions": 65,
+        "scalars": 0,
+        "blocks": 65,
+        "belowPresenceFloor": false
+      },
+      "claims": [
+        "unlock-lines",
+        "unlock-lines-usage"
+      ]
+    },
+    {
+      "key": "prereqfor_desc.custom.desc",
+      "member": "prereqforDesc.desc",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": {
+        "definitions": 56,
+        "scalars": 56,
+        "blocks": 0,
+        "belowPresenceFloor": false
+      },
+      "claims": [
+        "unlock-lines",
+        "unlock-lines-usage"
+      ]
+    },
+    {
+      "key": "prereqfor_desc.custom.title",
+      "member": "prereqforDesc.title",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": {
+        "definitions": 65,
+        "scalars": 65,
+        "blocks": 0,
+        "belowPresenceFloor": false
+      },
+      "claims": [
+        "unlock-lines",
+        "unlock-lines-usage"
+      ]
+    },
+    {
+      "key": "prereqfor_desc.diplo_action",
+      "member": "prereqforDesc",
+      "shape": "struct",
+      "required": false,
+      "repeated": true,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": {
+        "definitions": 3,
+        "scalars": 0,
+        "blocks": 3,
+        "belowPresenceFloor": true
+      },
+      "claims": [
+        "unlock-lines",
+        "unlock-lines-usage"
+      ]
+    },
+    {
+      "key": "prereqfor_desc.diplo_action.desc",
+      "member": "prereqforDesc.desc",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": {
+        "definitions": 3,
+        "scalars": 3,
+        "blocks": 0,
+        "belowPresenceFloor": true
+      },
+      "claims": [
+        "unlock-lines",
+        "unlock-lines-usage"
+      ]
+    },
+    {
+      "key": "prereqfor_desc.diplo_action.title",
+      "member": "prereqforDesc.title",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": {
+        "definitions": 3,
+        "scalars": 3,
+        "blocks": 0,
+        "belowPresenceFloor": true
+      },
+      "claims": [
+        "unlock-lines",
+        "unlock-lines-usage"
+      ]
+    },
+    {
+      "key": "prereqfor_desc.feature",
+      "member": "prereqforDesc",
+      "shape": "struct",
+      "required": false,
+      "repeated": true,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": null,
+      "claims": [
+        "unlock-lines",
+        "unlock-lines-usage"
+      ]
+    },
+    {
+      "key": "prereqfor_desc.feature.desc",
+      "member": "prereqforDesc.desc",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": null,
+      "claims": [
+        "unlock-lines",
+        "unlock-lines-usage"
+      ]
+    },
+    {
+      "key": "prereqfor_desc.feature.title",
+      "member": "prereqforDesc.title",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": null,
+      "claims": [
+        "unlock-lines",
+        "unlock-lines-usage"
+      ]
+    },
+    {
+      "key": "prereqfor_desc.hide_prereq_for_desc",
+      "member": "prereqforDesc.hidePrereqForDesc",
+      "shape": "value",
+      "required": false,
+      "repeated": true,
+      "scope": null,
+      "clause": null,
+      "literals": [
+        "ship",
+        "custom",
+        "component",
+        "diplo_action",
+        "feature",
+        "resource"
+      ],
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": {
+        "definitions": 38,
+        "scalars": 38,
+        "blocks": 0,
+        "belowPresenceFloor": false
+      },
+      "claims": [
+        "unlock-lines",
+        "unlock-lines-usage"
+      ]
+    },
+    {
+      "key": "prereqfor_desc.resource",
+      "member": "prereqforDesc",
+      "shape": "struct",
+      "required": false,
+      "repeated": true,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": null,
+      "claims": [
+        "unlock-lines",
+        "unlock-lines-usage"
+      ]
+    },
+    {
+      "key": "prereqfor_desc.resource.desc",
+      "member": "prereqforDesc.desc",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": null,
+      "claims": [
+        "unlock-lines",
+        "unlock-lines-usage"
+      ]
+    },
+    {
+      "key": "prereqfor_desc.resource.title",
+      "member": "prereqforDesc.title",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": null,
+      "claims": [
+        "unlock-lines",
+        "unlock-lines-usage"
+      ]
+    },
+    {
+      "key": "prereqfor_desc.ship",
+      "member": "prereqforDesc",
+      "shape": "struct",
+      "required": false,
+      "repeated": true,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": {
+        "definitions": 47,
+        "scalars": 0,
+        "blocks": 47,
+        "belowPresenceFloor": false
+      },
+      "claims": [
+        "unlock-lines",
+        "unlock-lines-usage"
+      ]
+    },
+    {
+      "key": "prereqfor_desc.ship.desc",
+      "member": "prereqforDesc.desc",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": {
+        "definitions": 47,
+        "scalars": 47,
+        "blocks": 0,
+        "belowPresenceFloor": false
+      },
+      "claims": [
+        "unlock-lines",
+        "unlock-lines-usage"
+      ]
+    },
+    {
+      "key": "prereqfor_desc.ship.title",
+      "member": "prereqforDesc.title",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": {
+        "definitions": 47,
+        "scalars": 47,
+        "blocks": 0,
+        "belowPresenceFloor": false
+      },
+      "claims": [
+        "unlock-lines",
+        "unlock-lines-usage"
+      ]
+    },
+    {
+      "key": "prerequisites",
+      "member": "prerequisites",
+      "shape": "valueList",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:136",
+      "evidence": {
+        "definitions": 504,
+        "scalars": 0,
+        "blocks": 504,
+        "belowPresenceFloor": false
+      },
+      "claims": [
+        "prerequisites-refs",
+        "or-groups-omitted"
+      ]
+    },
+    {
+      "key": "start_tech",
+      "member": "startTech",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": [
+        "yes",
+        "no"
+      ],
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:216",
+      "evidence": {
+        "definitions": 47,
+        "scalars": 47,
+        "blocks": 0,
+        "belowPresenceFloor": false
+      },
+      "claims": []
+    },
+    {
+      "key": "starting_potential",
+      "member": "startingPotential",
+      "shape": "trigger",
+      "required": false,
+      "repeated": false,
+      "scope": "country",
+      "clause": "trigger",
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:267",
+      "evidence": {
+        "definitions": 19,
+        "scalars": 0,
+        "blocks": 19,
+        "belowPresenceFloor": true
+      },
+      "claims": []
+    },
+    {
+      "key": "technology_swap",
+      "member": "technologySwap",
+      "shape": "struct",
+      "required": false,
+      "repeated": true,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:147",
+      "evidence": {
+        "definitions": 180,
+        "scalars": 0,
+        "blocks": 180,
+        "belowPresenceFloor": false
+      },
+      "claims": [
+        "swap-layout"
+      ]
+    },
+    {
+      "key": "technology_swap.area",
+      "member": "technologySwap.area",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": [
+        "physics",
+        "society",
+        "engineering"
+      ],
+      "level": "nested",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:176",
+      "evidence": {
+        "definitions": 11,
+        "scalars": 11,
+        "blocks": 0,
+        "belowPresenceFloor": true
+      },
+      "claims": [
+        "swap-layout"
+      ]
+    },
+    {
+      "key": "technology_swap.category",
+      "member": "technologySwap.category",
+      "shape": "valueList",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:178",
+      "evidence": {
+        "definitions": 11,
+        "scalars": 0,
+        "blocks": 11,
+        "belowPresenceFloor": true
+      },
+      "claims": [
+        "swap-layout"
+      ]
+    },
+    {
+      "key": "technology_swap.inherit_effects",
+      "member": "technologySwap.inheritEffects",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": [
+        "yes",
+        "no"
+      ],
+      "level": "nested",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:157",
+      "evidence": {
+        "definitions": 162,
+        "scalars": 162,
+        "blocks": 0,
+        "belowPresenceFloor": false
+      },
+      "claims": [
+        "swap-layout"
+      ]
+    },
+    {
+      "key": "technology_swap.inherit_icon",
+      "member": "technologySwap.inheritIcon",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": [
+        "yes",
+        "no"
+      ],
+      "level": "nested",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:153",
+      "evidence": {
+        "definitions": 174,
+        "scalars": 174,
+        "blocks": 0,
+        "belowPresenceFloor": false
+      },
+      "claims": [
+        "swap-layout"
+      ]
+    },
+    {
+      "key": "technology_swap.inherit_name",
+      "member": "technologySwap.inheritName",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": [
+        "yes",
+        "no"
+      ],
+      "level": "nested",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:155",
+      "evidence": null,
+      "claims": [
+        "swap-layout"
+      ]
+    },
+    {
+      "key": "technology_swap.modifier",
+      "member": "technologySwap.modifier",
+      "shape": "modifierBlock",
+      "required": false,
+      "repeated": false,
+      "scope": "country",
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:163",
+      "evidence": {
+        "definitions": 55,
+        "scalars": 0,
+        "blocks": 55,
+        "belowPresenceFloor": false
+      },
+      "claims": [
+        "swap-layout"
+      ]
+    },
+    {
+      "key": "technology_swap.name",
+      "member": "technologySwap.name",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:149",
+      "evidence": {
+        "definitions": 180,
+        "scalars": 180,
+        "blocks": 0,
+        "belowPresenceFloor": false
+      },
+      "claims": [
+        "swap-layout"
+      ]
+    },
+    {
+      "key": "technology_swap.prereqfor_desc",
+      "member": "technologySwap.prereqforDesc",
+      "shape": "struct",
+      "required": false,
+      "repeated": true,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:165",
+      "evidence": {
+        "definitions": 28,
+        "scalars": 0,
+        "blocks": 28,
+        "belowPresenceFloor": false
+      },
+      "claims": [
+        "swap-layout"
+      ]
+    },
+    {
+      "key": "technology_swap.prereqfor_desc.component",
+      "member": "technologySwap.prereqforDesc",
+      "shape": "struct",
+      "required": false,
+      "repeated": true,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": null,
+      "claims": [
+        "swap-layout"
+      ]
+    },
+    {
+      "key": "technology_swap.prereqfor_desc.component.desc",
+      "member": "technologySwap.prereqforDesc.desc",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": null,
+      "claims": [
+        "swap-layout"
+      ]
+    },
+    {
+      "key": "technology_swap.prereqfor_desc.component.title",
+      "member": "technologySwap.prereqforDesc.title",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": null,
+      "claims": [
+        "swap-layout"
+      ]
+    },
+    {
+      "key": "technology_swap.prereqfor_desc.custom",
+      "member": "technologySwap.prereqforDesc",
+      "shape": "struct",
+      "required": false,
+      "repeated": true,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": {
+        "definitions": 28,
+        "scalars": 0,
+        "blocks": 28,
+        "belowPresenceFloor": false
+      },
+      "claims": [
+        "swap-layout"
+      ]
+    },
+    {
+      "key": "technology_swap.prereqfor_desc.custom.desc",
+      "member": "technologySwap.prereqforDesc.desc",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": {
+        "definitions": 24,
+        "scalars": 24,
+        "blocks": 0,
+        "belowPresenceFloor": true
+      },
+      "claims": [
+        "swap-layout"
+      ]
+    },
+    {
+      "key": "technology_swap.prereqfor_desc.custom.title",
+      "member": "technologySwap.prereqforDesc.title",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": {
+        "definitions": 28,
+        "scalars": 28,
+        "blocks": 0,
+        "belowPresenceFloor": false
+      },
+      "claims": [
+        "swap-layout"
+      ]
+    },
+    {
+      "key": "technology_swap.prereqfor_desc.diplo_action",
+      "member": "technologySwap.prereqforDesc",
+      "shape": "struct",
+      "required": false,
+      "repeated": true,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": null,
+      "claims": [
+        "swap-layout"
+      ]
+    },
+    {
+      "key": "technology_swap.prereqfor_desc.diplo_action.desc",
+      "member": "technologySwap.prereqforDesc.desc",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": null,
+      "claims": [
+        "swap-layout"
+      ]
+    },
+    {
+      "key": "technology_swap.prereqfor_desc.diplo_action.title",
+      "member": "technologySwap.prereqforDesc.title",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": null,
+      "claims": [
+        "swap-layout"
+      ]
+    },
+    {
+      "key": "technology_swap.prereqfor_desc.feature",
+      "member": "technologySwap.prereqforDesc",
+      "shape": "struct",
+      "required": false,
+      "repeated": true,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": null,
+      "claims": [
+        "swap-layout"
+      ]
+    },
+    {
+      "key": "technology_swap.prereqfor_desc.feature.desc",
+      "member": "technologySwap.prereqforDesc.desc",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": null,
+      "claims": [
+        "swap-layout"
+      ]
+    },
+    {
+      "key": "technology_swap.prereqfor_desc.feature.title",
+      "member": "technologySwap.prereqforDesc.title",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": null,
+      "claims": [
+        "swap-layout"
+      ]
+    },
+    {
+      "key": "technology_swap.prereqfor_desc.hide_prereq_for_desc",
+      "member": "technologySwap.prereqforDesc.hidePrereqForDesc",
+      "shape": "value",
+      "required": false,
+      "repeated": true,
+      "scope": null,
+      "clause": null,
+      "literals": [
+        "ship",
+        "custom",
+        "component",
+        "diplo_action",
+        "feature",
+        "resource"
+      ],
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": null,
+      "claims": [
+        "swap-layout"
+      ]
+    },
+    {
+      "key": "technology_swap.prereqfor_desc.resource",
+      "member": "technologySwap.prereqforDesc",
+      "shape": "struct",
+      "required": false,
+      "repeated": true,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": null,
+      "claims": [
+        "swap-layout"
+      ]
+    },
+    {
+      "key": "technology_swap.prereqfor_desc.resource.desc",
+      "member": "technologySwap.prereqforDesc.desc",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": null,
+      "claims": [
+        "swap-layout"
+      ]
+    },
+    {
+      "key": "technology_swap.prereqfor_desc.resource.title",
+      "member": "technologySwap.prereqforDesc.title",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": null,
+      "claims": [
+        "swap-layout"
+      ]
+    },
+    {
+      "key": "technology_swap.prereqfor_desc.ship",
+      "member": "technologySwap.prereqforDesc",
+      "shape": "struct",
+      "required": false,
+      "repeated": true,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": null,
+      "claims": [
+        "swap-layout"
+      ]
+    },
+    {
+      "key": "technology_swap.prereqfor_desc.ship.desc",
+      "member": "technologySwap.prereqforDesc.desc",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": null,
+      "claims": [
+        "swap-layout"
+      ]
+    },
+    {
+      "key": "technology_swap.prereqfor_desc.ship.title",
+      "member": "technologySwap.prereqforDesc.title",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": null,
+      "claims": [
+        "swap-layout"
+      ]
+    },
+    {
+      "key": "technology_swap.trigger",
+      "member": "technologySwap.trigger",
+      "shape": "trigger",
+      "required": false,
+      "repeated": false,
+      "scope": "country",
+      "clause": "trigger",
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:160",
+      "evidence": {
+        "definitions": 180,
+        "scalars": 0,
+        "blocks": 180,
+        "belowPresenceFloor": false
+      },
+      "claims": [
+        "swap-layout"
+      ]
+    },
+    {
+      "key": "technology_swap.weight",
+      "member": "technologySwap.weight",
+      "shape": "dual",
+      "required": false,
+      "repeated": false,
+      "scope": "any",
+      "clause": null,
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:183",
+      "evidence": {
+        "definitions": 91,
+        "scalars": 0,
+        "blocks": 91,
+        "belowPresenceFloor": false
+      },
+      "claims": [
+        "swap-layout"
+      ]
+    },
+    {
+      "key": "technology_swap.weight.modifier",
+      "member": "technologySwap.weight",
+      "shape": "weightModifier",
+      "required": false,
+      "repeated": true,
+      "scope": "any",
+      "clause": "trigger",
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": null,
+      "claims": [
+        "swap-layout"
+      ]
+    },
+    {
+      "key": "tier",
+      "member": "tier",
+      "shape": "value",
+      "required": true,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:98",
+      "evidence": {
+        "definitions": 679,
+        "scalars": 679,
+        "blocks": 0,
+        "belowPresenceFloor": false
+      },
+      "claims": []
+    },
+    {
+      "key": "weight",
+      "member": "weight",
+      "shape": "value",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:111",
+      "evidence": {
+        "definitions": 641,
+        "scalars": 641,
+        "blocks": 0,
+        "belowPresenceFloor": false
+      },
+      "claims": []
+    },
+    {
+      "key": "weight_groups",
+      "member": "weightGroups",
+      "shape": "valueList",
+      "required": false,
+      "repeated": false,
+      "scope": null,
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [
+        "a weight group increases the chances of a technology appearing - if another tech of a similar group is picked."
+      ],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:205",
+      "evidence": {
+        "definitions": 34,
+        "scalars": 0,
+        "blocks": 34,
+        "belowPresenceFloor": false
+      },
+      "claims": []
+    },
+    {
+      "key": "weight_modifier",
+      "member": "weightModifier",
+      "shape": "weightBlock",
+      "required": false,
+      "repeated": false,
+      "scope": "country",
+      "clause": null,
+      "literals": null,
+      "level": "top",
+      "declaredIn": "body",
+      "docs": [],
+      "declaration": "vendor/cwtools-stellaris-config/config/common/technologies_consolidated.cwt:254",
+      "evidence": {
+        "definitions": 562,
+        "scalars": 0,
+        "blocks": 562,
+        "belowPresenceFloor": false
+      },
+      "claims": []
+    },
+    {
+      "key": "weight_modifier.modifier",
+      "member": "weightModifier",
+      "shape": "weightModifier",
+      "required": false,
+      "repeated": true,
+      "scope": "country",
+      "clause": "trigger",
+      "literals": null,
+      "level": "nested",
+      "declaredIn": "alias-clause",
+      "docs": [],
+      "declaration": null,
+      "evidence": {
+        "definitions": 417,
+        "scalars": 0,
+        "blocks": 417,
+        "belowPresenceFloor": false
+      },
+      "claims": []
+    }
+  ],
+  "stories": [
+    {
+      "id": "minimal",
+      "title": "Name, area, tier, category — nothing else",
+      "source": "packages/reference-spike/content/technology.mdx:76",
+      "code": "import { createMod } from \"@pdx-ts/sdk\";\n\nexport const mod = createMod({\n  name: \"Lumen Survey\",\n  prefix: \"lumen\" as const,\n  version: \"0.1.0\",\n  supportedVersion: \"v4.4.*\",\n});\n\nexport const optics = mod.technology(\"optics\", {\n  name: \"Coherent Optics\",\n  area: \"physics\",\n  tier: 1,\n  category: \"particles\",\n});\n\nexport const feature = mod.feature(\"optics\", [optics]);\n",
+      "output": {
+        "common/technology/lumen_optics.txt": "lumen_tech_optics = {\n\tarea = physics\n\ttier = 1\n\tcategory = { particles }\n}\n",
+        "descriptor.mod": "name=\"Lumen Survey\"\nversion=\"0.1.0\"\nsupported_version=\"v4.4.*\"\n",
+        "localisation/english/lumen_optics_l_english.yml": "﻿l_english:\n lumen_tech_optics:0 \"Coherent Optics\"\n"
+      },
+      "origin": "hand-written"
+    },
+    {
+      "id": "prerequisites",
+      "title": "Two of your own, one of the game's",
+      "source": "packages/reference-spike/content/technology.mdx:144",
+      "code": "import { createMod } from \"@pdx-ts/sdk\";\n\nexport const mod = createMod({\n  name: \"Deep Survey\",\n  prefix: \"deep\" as const,\n  version: \"0.1.0\",\n  supportedVersion: \"v4.4.*\",\n});\n\nexport const lensing = mod.technology(\"lensing\", {\n  name: \"Gravitational Lensing\",\n  desc: \"Bending starlight around a mass tells you what is behind it.\",\n  area: \"physics\",\n  tier: 2,\n  category: \"computing\",\n  cost: 2000,\n  // A vanilla id is a plain string, taken as given. `vanilla.technology(...)`\n  // is the checked form, against the real id set.\n  prerequisites: [\"tech_basic_science_lab_1\"],\n});\n\nexport const arrays = mod.technology(\"arrays\", {\n  name: \"Distributed Lens Arrays\",\n  desc: \"One lens is an instrument. A thousand is an observatory.\",\n  area: \"physics\",\n  tier: 3,\n  category: \"computing\",\n  cost: 6000,\n  // The binding, not the id — this one moves if the technology is renamed.\n  prerequisites: [lensing, \"tech_lasers_2\"],\n});\n\nexport const feature = mod.feature(\"lensing\", [lensing, arrays]);\n",
+      "output": {
+        "common/technology/deep_lensing.txt": "deep_tech_arrays = {\n\tarea = physics\n\ttier = 3\n\tcategory = { computing }\n\tcost = 6000\n\tprerequisites = { \"deep_tech_lensing\" \"tech_lasers_2\" }\n}\n\ndeep_tech_lensing = {\n\tarea = physics\n\ttier = 2\n\tcategory = { computing }\n\tcost = 2000\n\tprerequisites = { \"tech_basic_science_lab_1\" }\n}\n",
+        "descriptor.mod": "name=\"Deep Survey\"\nversion=\"0.1.0\"\nsupported_version=\"v4.4.*\"\n",
+        "localisation/english/deep_lensing_l_english.yml": "﻿l_english:\n deep_tech_arrays:0 \"Distributed Lens Arrays\"\n deep_tech_arrays_desc:0 \"One lens is an instrument. A thousand is an observatory.\"\n deep_tech_lensing:0 \"Gravitational Lensing\"\n deep_tech_lensing_desc:0 \"Bending starlight around a mass tells you what is behind it.\"\n"
+      },
+      "origin": "hand-written"
+    },
+    {
+      "id": "unlocks",
+      "title": "A modifier, and a line saying what it did",
+      "source": "packages/reference-spike/content/technology.mdx:211",
+      "code": "import { createMod } from \"@pdx-ts/sdk\";\n\nexport const mod = createMod({\n  name: \"Foundry Works\",\n  prefix: \"forge\" as const,\n  version: \"0.1.0\",\n  supportedVersion: \"v4.4.*\",\n});\n\n// Two keys of this mod's own, so the unlock line has something to look up.\nconst platingTitle = mod.localization(\"unlock_plating\", {\n  english: \"Reinforced Hull Plating\",\n});\nconst platingDesc = mod.localization(\"unlock_plating_desc\", {\n  english: \"Ships refitted after this carry a second layer at no upkeep.\",\n});\n\nexport const microforge = mod.technology(\"microforge\", {\n  // `name` and `desc` here *are* English: they are localization slots the\n  // build writes the keys for. The two fields below are the other kind.\n  name: \"Microforge Casting\",\n  desc: \"Alloy poured in a vacuum sets without a grain to crack along.\",\n  area: \"engineering\",\n  tier: 2,\n  category: \"materials\",\n  cost: 2000,\n  // Runs in country scope, because a technology is a thing an empire has.\n  modifier: (m) => {\n    m.country.alloys.produces.mult(0.05);\n  },\n  prereqforDesc: [\n    {\n      custom: [{ title: platingTitle.key, desc: platingDesc.key }],\n    },\n  ],\n});\n\nexport const feature = mod.feature(\"microforge\", [microforge, platingTitle, platingDesc]);\n",
+      "output": {
+        "common/technology/forge_microforge.txt": "forge_tech_microforge = {\n\tarea = engineering\n\ttier = 2\n\tcategory = { materials }\n\tcost = 2000\n\tmodifier = {\n\t\tcountry_alloys_produces_mult = 0.05\n\t}\n\tprereqfor_desc = {\n\t\tcustom = {\n\t\t\ttitle = forge_unlock_plating\n\t\t\tdesc = forge_unlock_plating_desc\n\t\t}\n\t}\n}\n",
+        "descriptor.mod": "name=\"Foundry Works\"\nversion=\"0.1.0\"\nsupported_version=\"v4.4.*\"\n",
+        "localisation/english/forge_microforge_l_english.yml": "﻿l_english:\n forge_tech_microforge:0 \"Microforge Casting\"\n forge_tech_microforge_desc:0 \"Alloy poured in a vacuum sets without a grain to crack along.\"\n forge_unlock_plating:0 \"Reinforced Hull Plating\"\n forge_unlock_plating_desc:0 \"Ships refitted after this carry a second layer at no upkeep.\"\n"
+      },
+      "origin": "hand-written"
+    },
+    {
+      "id": "cost-curve",
+      "title": "A price that moves",
+      "source": "packages/reference-spike/content/technology.mdx:275",
+      "code": "import { createMod, hasCountryFlag } from \"@pdx-ts/sdk\";\n\nexport const mod = createMod({\n  name: \"Salvage Runs\",\n  prefix: \"salv\" as const,\n  version: \"0.1.0\",\n  supportedVersion: \"v4.4.*\",\n});\n\nexport const reclamation = mod.technology(\"reclamation\", {\n  name: \"Wreck Reclamation\",\n  desc: \"Someone else's debris field is a parts bin with a bad address.\",\n  area: \"engineering\",\n  tier: 2,\n  category: \"voidcraft\",\n  cost: {\n    base: 3000,\n    modifiers: [\n      {\n        factor: 0.75,\n        when: hasCountryFlag(\"salv_salvage_doctrine\"),\n      },\n    ],\n  },\n});\n\nexport const feature = mod.feature(\"reclamation\", [reclamation]);\n",
+      "output": {
+        "common/technology/salv_reclamation.txt": "salv_tech_reclamation = {\n\tarea = engineering\n\ttier = 2\n\tcategory = { voidcraft }\n\tcost = {\n\t\tbase = 3000\n\t\tmodifier = {\n\t\t\tfactor = 0.75\n\t\t\thas_country_flag = salv_salvage_doctrine\n\t\t}\n\t}\n}\n",
+        "descriptor.mod": "name=\"Salvage Runs\"\nversion=\"0.1.0\"\nsupported_version=\"v4.4.*\"\n",
+        "localisation/english/salv_reclamation_l_english.yml": "﻿l_english:\n salv_tech_reclamation:0 \"Wreck Reclamation\"\n salv_tech_reclamation_desc:0 \"Someone else's debris field is a parts bin with a bad address.\"\n"
+      },
+      "origin": "hand-written"
+    },
+    {
+      "id": "weighting",
+      "title": "A base weight and a reason to want it",
+      "source": "packages/reference-spike/content/technology.mdx:313",
+      "code": "import { createMod, hasCountryFlag } from \"@pdx-ts/sdk\";\n\nexport const mod = createMod({\n  name: \"Hydro Survey\",\n  prefix: \"hydro\" as const,\n  version: \"0.1.0\",\n  supportedVersion: \"v4.4.*\",\n});\n\nexport const tidalMapping = mod.technology(\"tidal_mapping\", {\n  name: \"Tidal Mapping\",\n  desc: \"The moon pulls the same ocean twice a day, and it writes it down.\",\n  area: \"society\",\n  tier: 2,\n  category: \"new_worlds\",\n  cost: 2000,\n  weight: 100,\n  weightModifier: {\n    modifiers: [\n      {\n        factor: 3,\n        desc: \"The survey fleet has already found something down there.\",\n        // Without this the row's localization key is a hash of the sentence\n        // above, and editing the sentence orphans the translation.\n        descKey: \"anomaly_logged\",\n        when: hasCountryFlag(\"hydro_anomaly_logged\"),\n      },\n    ],\n  },\n  aiWeight: { factor: 0.5 },\n});\n\nexport const feature = mod.feature(\"tidal_mapping\", [tidalMapping]);\n",
+      "output": {
+        "common/technology/hydro_tidal_mapping.txt": "hydro_tech_tidal_mapping = {\n\tarea = society\n\ttier = 2\n\tcategory = { new_worlds }\n\tcost = 2000\n\tweight = 100\n\tweight_modifier = {\n\t\tmodifier = {\n\t\t\tfactor = 3\n\t\t\tdesc = hydro_tech_tidal_mapping_weight_modifier_anomaly_logged\n\t\t\thas_country_flag = hydro_anomaly_logged\n\t\t}\n\t}\n\tai_weight = {\n\t\tfactor = 0.5\n\t}\n}\n",
+        "descriptor.mod": "name=\"Hydro Survey\"\nversion=\"0.1.0\"\nsupported_version=\"v4.4.*\"\n",
+        "localisation/english/hydro_tidal_mapping_l_english.yml": "﻿l_english:\n hydro_tech_tidal_mapping:0 \"Tidal Mapping\"\n hydro_tech_tidal_mapping_desc:0 \"The moon pulls the same ocean twice a day, and it writes it down.\"\n hydro_tech_tidal_mapping_weight_modifier_anomaly_logged:0 \"The survey fleet has already found something down there.\"\n"
+      },
+      "origin": "hand-written"
+    },
+    {
+      "id": "swap",
+      "title": "A swap for empires that qualify",
+      "source": "packages/reference-spike/content/technology.mdx:363",
+      "code": "import { createMod, hasCountryFlag } from \"@pdx-ts/sdk\";\n\nexport const mod = createMod({\n  name: \"Rite Engines\",\n  prefix: \"rite\" as const,\n  version: \"0.1.0\",\n  supportedVersion: \"v4.4.*\",\n});\n\nexport const resonantDrive = mod.technology(\"resonant_drive\", {\n  name: \"Resonant Drive\",\n  desc: \"A field that pushes against the shape of space rather than through it.\",\n  area: \"physics\",\n  tier: 3,\n  category: \"field_manipulation\",\n  cost: 6000,\n  technologySwap: [\n    {\n      // The swap's own id, and the localization key its name is written under.\n      // Nothing mints this one for you.\n      name: \"rite_tech_choral_drive\",\n      trigger: hasCountryFlag(\"rite_choir_ascendant\"),\n      inheritIcon: false,\n      area: \"society\",\n      category: [\"statecraft\"],\n      weight: 120,\n    },\n  ],\n});\n\nexport const feature = mod.feature(\"resonant_drive\", [resonantDrive]);\n",
+      "output": {
+        "common/technology/rite_resonant_drive.txt": "rite_tech_resonant_drive = {\n\tarea = physics\n\ttier = 3\n\tcategory = { field_manipulation }\n\tcost = 6000\n\ttechnology_swap = {\n\t\tname = rite_tech_choral_drive\n\t\tinherit_icon = no\n\t\ttrigger = {\n\t\t\thas_country_flag = rite_choir_ascendant\n\t\t}\n\t\tarea = society\n\t\tcategory = { statecraft }\n\t\tweight = 120\n\t}\n}\n",
+        "descriptor.mod": "name=\"Rite Engines\"\nversion=\"0.1.0\"\nsupported_version=\"v4.4.*\"\n",
+        "localisation/english/rite_resonant_drive_l_english.yml": "﻿l_english:\n rite_tech_resonant_drive:0 \"Resonant Drive\"\n rite_tech_resonant_drive_desc:0 \"A field that pushes against the shape of space rather than through it.\"\n"
+      },
+      "origin": "hand-written"
+    },
+    {
+      "id": "recipe-starter",
+      "title": "What `generate technology` writes",
+      "source": "npx create-stellaris-mod generate technology \"Filament Weaving\"",
+      "code": "/**\n * One technology, and the feature that places it.\n *\n * Generated once by the `technology` recipe, and yours from here. Nothing reads\n * this file back: there is no marker in it, no version, and no upgrade — so\n * rename it, add to it, or delete it as the mod grows.\n *\n * `#mod` is the project's own alias for `src/mod.ts` (see `package.json#imports`),\n * so moving this file deeper inside the content directory never rewrites the\n * import. The filename decides nothing either: the `mod.feature(...)` call at the\n * bottom is what names the emitted files.\n */\n\nimport { mod } from \"#mod\";\n\nexport const filamentWeaving = mod.technology(\"filament_weaving\", {\n  name: \"Filament Weaving\",\n  desc: \"PLACEHOLDER: what researching this unlocks, in a sentence or two.\",\n  area: \"physics\",\n  category: \"particles\",\n  tier: 2,\n  cost: 2000,\n\n  // Technologies that must be researched first. A vanilla technology is a plain\n  // string, taken as given — nothing checks a bare literal;\n  // `vanilla.technology(...)` from @pdx-ts/sdk is the checked form, against the\n  // real id set when @pdx-ts/stellaris-ids is installed. One of your own is the\n  // binding another feature file exports, imported as usual.\n  // prerequisites: [\"tech_basic_science_lab_1\"],\n\n  // How likely the game is to offer this as a research option next to the\n  // others in its category. 100 is the conventional starting weight.\n  // weight: 100,\n});\n\nexport const feature = mod.feature(\"filament_weaving\", [filamentWeaving]);\n",
+      "output": {
+        "common/technology/ember_filament_weaving.txt": "ember_tech_filament_weaving = {\n\tarea = physics\n\ttier = 2\n\tcategory = { particles }\n\tcost = 2000\n}\n",
+        "descriptor.mod": "name=\"Ember Archive\"\nversion=\"0.1.0\"\nsupported_version=\"v4.4.*\"\n",
+        "localisation/english/ember_filament_weaving_l_english.yml": "﻿l_english:\n ember_tech_filament_weaving:0 \"Filament Weaving\"\n ember_tech_filament_weaving_desc:0 \"PLACEHOLDER: what researching this unlocks, in a sentence or two.\"\n"
+      },
+      "origin": "recipe"
+    }
+  ],
+  "aliases": [
+    "technology",
+    "technologies",
+    "tech",
+    "mod.technology",
+    "patchTechnology",
+    "research",
+    "research tree",
+    "prerequisites",
+    "technology_swap",
+    "technologySwap",
+    "prereqfor_desc",
+    "prereqforDesc",
+    "weight_modifier",
+    "weightModifier",
+    "ai_weight",
+    "aiWeight",
+    "cost",
+    "tier",
+    "category",
+    "area",
+    "repeatable technology"
+  ],
+  "searchHint": "Search — try prerequisites, weightModifier, prereqfor_desc, or tier…"
+}

@@ -12,6 +12,9 @@
       "pdx-source": "./src/cli.ts",
       "types": "./dist/cli.d.ts",
       "default": "./dist/cli.js"
+    },
+    "./catalog": {
+      "pdx-source": "./src/catalog/index.ts"
     }
   },
   "engines": {

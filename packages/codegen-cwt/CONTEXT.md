@@ -44,6 +44,12 @@ proves built-in recipes against that surface rather than consuming a second
 schema projection.
 _Avoid_: raw CWT model, prompt schema, runtime descriptor
 
+**Reference projection**:
+The structured, deterministic projection of the Supported authoring model from
+which a Reference build is assembled. It is documentation output only and is
+never read back as a legality or code-generation input.
+_Avoid_: documentation schema, runtime descriptor, second model
+
 **Graft**:
 A hand-written definer re-exported in place of the mechanical one, where the
 generic emitter cannot produce the right surface.

@@ -54,6 +54,19 @@ before dry-run presentation or exclusive publication. It becomes wholly
 author-owned once written.
 _Avoid_: resolved plan, render input, generated artifact
 
+**Verified example**:
+A deterministic displayed source example required to typecheck, build, and
+synthesize against the matching SDK. It may be hand-written for one reference
+page or supplied by a Recipe; it is copied by an author, never executed inside
+the reference viewer.
+_Avoid_: snippet, illustrative pseudocode, playground
+
+**Recipe example**:
+A Verified example produced by a real Recipe renderer. Reference pages show it
+when a relevant Recipe exists, alongside any narrower hand-written examples
+needed to teach the capability.
+_Avoid_: only example, recipe documentation
+
 **Recipe topology**:
 The curated structure describing which Items a feature recipe coordinates and
 which answers they share. It lives in the Recipe renderer rather than being
@@ -74,8 +87,14 @@ _Avoid_: corpus stats, usage data
 A maintainer judgment recorded in a Recipe — which structural choices become
 Intent questions, each question's Default answer, the Curated starter's
 contents, and author-facing explanations — justified by documentation,
-exemplars, or Measured evidence and cited informally in catalog source.
+exemplars, or Measured evidence through explicit Guidance dependencies.
 _Avoid_: best practice, opinionated default
+
+**Guidance dependency**:
+A stable reference from one Curated convention to the Supported authoring
+contract or Measured evidence it interprets. A semantic change invalidates the
+guidance for explicit review; formatting and source movement do not.
+_Avoid_: documentation hash, last-reviewed date, informal citation
 
 **Default answer**:
 The curated answer an Intent question resolves to under `--yes` or non-TTY
