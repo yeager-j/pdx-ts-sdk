@@ -89,9 +89,9 @@ import type {
 
 /**
  * A checked reference to a vanilla technology id.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise. Zero runtime validation either way — this only
- * constructs the branded reference the rest of the SDK already accepts.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
  */
 export function technology<const Id extends VanillaId<"technology">>(
   id: Id
@@ -101,9 +101,9 @@ export function technology<const Id extends VanillaId<"technology">>(
 
 /**
  * A checked reference to a vanilla building id.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise. Zero runtime validation either way — this only
- * constructs the branded reference the rest of the SDK already accepts.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
  */
 export function building<const Id extends VanillaId<"building">>(
   id: Id
@@ -113,9 +113,9 @@ export function building<const Id extends VanillaId<"building">>(
 
 /**
  * A checked reference to a vanilla tradition id.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise. Zero runtime validation either way — this only
- * constructs the branded reference the rest of the SDK already accepts.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
  */
 export function tradition<const Id extends VanillaId<"tradition">>(
   id: Id
@@ -125,9 +125,9 @@ export function tradition<const Id extends VanillaId<"tradition">>(
 
 /**
  * A checked reference to a vanilla tradition category id.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise. Zero runtime validation either way — this only
- * constructs the branded reference the rest of the SDK already accepts.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
  */
 export function traditionCategory<const Id extends VanillaId<"tradition_category">>(
   id: Id
@@ -137,9 +137,9 @@ export function traditionCategory<const Id extends VanillaId<"tradition_category
 
 /**
  * A checked reference to a vanilla ascension perk id.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise. Zero runtime validation either way — this only
- * constructs the branded reference the rest of the SDK already accepts.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
  */
 export function ascensionPerk<const Id extends VanillaId<"ascension_perk">>(
   id: Id
@@ -149,9 +149,9 @@ export function ascensionPerk<const Id extends VanillaId<"ascension_perk">>(
 
 /**
  * A checked reference to a vanilla agenda id.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise. Zero runtime validation either way — this only
- * constructs the branded reference the rest of the SDK already accepts.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
  */
 export function agenda<const Id extends VanillaId<"agenda">>(
   id: Id
@@ -161,9 +161,9 @@ export function agenda<const Id extends VanillaId<"agenda">>(
 
 /**
  * A checked reference to a vanilla edict id.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise. Zero runtime validation either way — this only
- * constructs the branded reference the rest of the SDK already accepts.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
  */
 export function edict<const Id extends VanillaId<"edict">>(id: Id): EdictRef & { readonly id: Id } {
   return { id };
@@ -171,9 +171,9 @@ export function edict<const Id extends VanillaId<"edict">>(id: Id): EdictRef & {
 
 /**
  * A checked reference to a vanilla decision id.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise. Zero runtime validation either way — this only
- * constructs the branded reference the rest of the SDK already accepts.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
  */
 export function decision<const Id extends VanillaId<"decision">>(
   id: Id
@@ -183,9 +183,9 @@ export function decision<const Id extends VanillaId<"decision">>(
 
 /**
  * A checked reference to a vanilla job id.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise. Zero runtime validation either way — this only
- * constructs the branded reference the rest of the SDK already accepts.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
  */
 export function job<const Id extends VanillaId<"job">>(id: Id): JobRef & { readonly id: Id } {
   return { id };
@@ -193,9 +193,9 @@ export function job<const Id extends VanillaId<"job">>(id: Id): JobRef & { reado
 
 /**
  * A checked reference to a vanilla global ship design id.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise. Zero runtime validation either way — this only
- * constructs the branded reference the rest of the SDK already accepts.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
  */
 export function globalShipDesign<const Id extends VanillaId<"global_ship_design">>(
   id: Id
@@ -205,9 +205,9 @@ export function globalShipDesign<const Id extends VanillaId<"global_ship_design"
 
 /**
  * A checked reference to a vanilla utility component template id.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise. Zero runtime validation either way — this only
- * constructs the branded reference the rest of the SDK already accepts.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
  */
 export function utilityComponentTemplate<const Id extends VanillaId<"utility_component_template">>(
   id: Id
@@ -217,9 +217,9 @@ export function utilityComponentTemplate<const Id extends VanillaId<"utility_com
 
 /**
  * A checked reference to a vanilla weapon component template id.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise. Zero runtime validation either way — this only
- * constructs the branded reference the rest of the SDK already accepts.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
  */
 export function weaponComponentTemplate<const Id extends VanillaId<"weapon_component_template">>(
   id: Id
@@ -229,9 +229,9 @@ export function weaponComponentTemplate<const Id extends VanillaId<"weapon_compo
 
 /**
  * A checked reference to a vanilla strike craft component template id.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise. Zero runtime validation either way — this only
- * constructs the branded reference the rest of the SDK already accepts.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
  */
 export function strikeCraftComponentTemplate<
   const Id extends VanillaId<"strike_craft_component_template">,
@@ -241,9 +241,9 @@ export function strikeCraftComponentTemplate<
 
 /**
  * A checked reference to a vanilla ship size id.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise. Zero runtime validation either way — this only
- * constructs the branded reference the rest of the SDK already accepts.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
  */
 export function shipSize<const Id extends VanillaId<"ship_size">>(
   id: Id
@@ -253,9 +253,9 @@ export function shipSize<const Id extends VanillaId<"ship_size">>(
 
 /**
  * A checked reference to a vanilla opinion modifier id.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise. Zero runtime validation either way — this only
- * constructs the branded reference the rest of the SDK already accepts.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
  */
 export function opinionModifier<const Id extends VanillaId<"opinion_modifier">>(
   id: Id
@@ -270,9 +270,9 @@ export function opinionModifier<const Id extends VanillaId<"opinion_modifier">>(
  * id verbatim — the buckets are navigation only and no part of the id.
  * `staticModifier(id)` accepts a string copied straight from a game file,
  * checked against the same id set with no completion menu ever built.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise, with no navigation. Zero runtime validation either
- * way.
+ * Both forms check against @pdx-ts/stellaris-ids's id set for this
+ * registry, so a misspelled id is a compile error. Zero runtime
+ * validation.
  */
 export const staticModifier: VanillaTrie<"static_modifier"> &
   (<const Id extends string>(
@@ -281,9 +281,9 @@ export const staticModifier: VanillaTrie<"static_modifier"> &
 
 /**
  * A checked reference to a vanilla scripted modifier id.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise. Zero runtime validation either way — this only
- * constructs the branded reference the rest of the SDK already accepts.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
  */
 export function scriptedModifier<const Id extends VanillaId<"scripted_modifier">>(
   id: Id
@@ -293,9 +293,9 @@ export function scriptedModifier<const Id extends VanillaId<"scripted_modifier">
 
 /**
  * A checked reference to a vanilla casus belli id.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise. Zero runtime validation either way — this only
- * constructs the branded reference the rest of the SDK already accepts.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
  */
 export function casusBelli<const Id extends VanillaId<"casus_belli">>(
   id: Id
@@ -305,9 +305,9 @@ export function casusBelli<const Id extends VanillaId<"casus_belli">>(
 
 /**
  * A checked reference to a vanilla war goal id.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise. Zero runtime validation either way — this only
- * constructs the branded reference the rest of the SDK already accepts.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
  */
 export function warGoal<const Id extends VanillaId<"war_goal">>(
   id: Id
@@ -317,9 +317,9 @@ export function warGoal<const Id extends VanillaId<"war_goal">>(
 
 /**
  * A checked reference to a vanilla agreement preset id.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise. Zero runtime validation either way — this only
- * constructs the branded reference the rest of the SDK already accepts.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
  */
 export function agreementPreset<const Id extends VanillaId<"agreement_preset">>(
   id: Id
@@ -329,9 +329,9 @@ export function agreementPreset<const Id extends VanillaId<"agreement_preset">>(
 
 /**
  * A checked reference to a vanilla bombardment stance id.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise. Zero runtime validation either way — this only
- * constructs the branded reference the rest of the SDK already accepts.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
  */
 export function bombardmentStance<const Id extends VanillaId<"bombardment_stance">>(
   id: Id
@@ -341,9 +341,9 @@ export function bombardmentStance<const Id extends VanillaId<"bombardment_stance
 
 /**
  * A checked reference to a vanilla archaeological site type id.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise. Zero runtime validation either way — this only
- * constructs the branded reference the rest of the SDK already accepts.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
  */
 export function archaeologicalSiteType<const Id extends VanillaId<"archaeological_site_type">>(
   id: Id
@@ -353,9 +353,9 @@ export function archaeologicalSiteType<const Id extends VanillaId<"archaeologica
 
 /**
  * A checked reference to a vanilla situation type id.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise. Zero runtime validation either way — this only
- * constructs the branded reference the rest of the SDK already accepts.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
  */
 export function situationType<const Id extends VanillaId<"situation_type">>(
   id: Id
@@ -365,9 +365,9 @@ export function situationType<const Id extends VanillaId<"situation_type">>(
 
 /**
  * A checked reference to a vanilla scripted loc id.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise. Zero runtime validation either way — this only
- * constructs the branded reference the rest of the SDK already accepts.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
  */
 export function scriptedLoc<const Id extends VanillaId<"scripted_loc">>(
   id: Id
@@ -377,9 +377,9 @@ export function scriptedLoc<const Id extends VanillaId<"scripted_loc">>(
 
 /**
  * A checked reference to a vanilla councilor id.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise. Zero runtime validation either way — this only
- * constructs the branded reference the rest of the SDK already accepts.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
  */
 export function councilor<const Id extends VanillaId<"councilor">>(
   id: Id
@@ -389,9 +389,9 @@ export function councilor<const Id extends VanillaId<"councilor">>(
 
 /**
  * A checked reference to a vanilla economic category id.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise. Zero runtime validation either way — this only
- * constructs the branded reference the rest of the SDK already accepts.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
  */
 export function economicCategory<const Id extends VanillaId<"economic_category">>(
   id: Id
@@ -401,9 +401,9 @@ export function economicCategory<const Id extends VanillaId<"economic_category">
 
 /**
  * A checked reference to a vanilla civic or origin id.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise. Zero runtime validation either way — this only
- * constructs the branded reference the rest of the SDK already accepts.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
  */
 export function civicOrOrigin<const Id extends VanillaId<"civic_or_origin">>(
   id: Id
@@ -413,9 +413,9 @@ export function civicOrOrigin<const Id extends VanillaId<"civic_or_origin">>(
 
 /**
  * A checked reference to a vanilla component set id.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise. Zero runtime validation either way — this only
- * constructs the branded reference the rest of the SDK already accepts.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
  */
 export function componentSet<const Id extends VanillaId<"component_set">>(
   id: Id
@@ -425,9 +425,9 @@ export function componentSet<const Id extends VanillaId<"component_set">>(
 
 /**
  * A checked reference to a vanilla section template id.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise. Zero runtime validation either way — this only
- * constructs the branded reference the rest of the SDK already accepts.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
  */
 export function sectionTemplate<const Id extends VanillaId<"section_template">>(
   id: Id
@@ -437,9 +437,9 @@ export function sectionTemplate<const Id extends VanillaId<"section_template">>(
 
 /**
  * A checked reference to a vanilla ambient object id.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise. Zero runtime validation either way — this only
- * constructs the branded reference the rest of the SDK already accepts.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
  */
 export function ambientObject<const Id extends VanillaId<"ambient_object">>(
   id: Id
@@ -449,9 +449,9 @@ export function ambientObject<const Id extends VanillaId<"ambient_object">>(
 
 /**
  * A checked reference to a vanilla graphical culture id.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise. Zero runtime validation either way — this only
- * constructs the branded reference the rest of the SDK already accepts.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
  */
 export function graphicalCulture<const Id extends VanillaId<"graphical_culture">>(
   id: Id
@@ -461,9 +461,9 @@ export function graphicalCulture<const Id extends VanillaId<"graphical_culture">
 
 /**
  * A checked reference to a vanilla starbase level id.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise. Zero runtime validation either way — this only
- * constructs the branded reference the rest of the SDK already accepts.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
  */
 export function starbaseLevel<const Id extends VanillaId<"starbase_level">>(
   id: Id
@@ -473,9 +473,9 @@ export function starbaseLevel<const Id extends VanillaId<"starbase_level">>(
 
 /**
  * A checked reference to a vanilla species class id.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise. Zero runtime validation either way — this only
- * constructs the branded reference the rest of the SDK already accepts.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
  */
 export function speciesClass<const Id extends VanillaId<"species_class">>(
   id: Id
@@ -485,9 +485,9 @@ export function speciesClass<const Id extends VanillaId<"species_class">>(
 
 /**
  * A checked reference to a vanilla country ship of size limit id.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise. Zero runtime validation either way — this only
- * constructs the branded reference the rest of the SDK already accepts.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
  */
 export function countryShipOfSizeLimit<const Id extends VanillaId<"country_ship_of_size_limit">>(
   id: Id
@@ -497,9 +497,9 @@ export function countryShipOfSizeLimit<const Id extends VanillaId<"country_ship_
 
 /**
  * A checked reference to a vanilla solar system initializer id.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise. Zero runtime validation either way — this only
- * constructs the branded reference the rest of the SDK already accepts.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
  */
 export function solarSystemInitializer<const Id extends VanillaId<"solar_system_initializer">>(
   id: Id
@@ -509,9 +509,9 @@ export function solarSystemInitializer<const Id extends VanillaId<"solar_system_
 
 /**
  * A checked reference to a vanilla event chain id.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise. Zero runtime validation either way — this only
- * constructs the branded reference the rest of the SDK already accepts.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
  */
 export function eventChain<const Id extends VanillaId<"event_chain">>(
   id: Id
@@ -521,9 +521,9 @@ export function eventChain<const Id extends VanillaId<"event_chain">>(
 
 /**
  * A checked reference to a vanilla special project id.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise. Zero runtime validation either way — this only
- * constructs the branded reference the rest of the SDK already accepts.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
  */
 export function specialProject<const Id extends VanillaId<"special_project">>(
   id: Id
@@ -533,9 +533,9 @@ export function specialProject<const Id extends VanillaId<"special_project">>(
 
 /**
  * A checked reference to a vanilla megastructure id.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise. Zero runtime validation either way — this only
- * constructs the branded reference the rest of the SDK already accepts.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
  */
 export function megastructure<const Id extends VanillaId<"megastructure">>(
   id: Id
@@ -550,9 +550,9 @@ export function megastructure<const Id extends VanillaId<"megastructure">>(
  * id verbatim — the buckets are navigation only and no part of the id.
  * `sound(id)` accepts a string copied straight from a game file,
  * checked against the same id set with no completion menu ever built.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise, with no navigation. Zero runtime validation either
- * way.
+ * Both forms check against @pdx-ts/stellaris-ids's id set for this
+ * registry, so a misspelled id is a compile error. Zero runtime
+ * validation.
  */
 export const sound: VanillaTrie<"sound"> &
   (<const Id extends string>(
@@ -566,9 +566,9 @@ export const sound: VanillaTrie<"sound"> &
  * id verbatim — the buckets are navigation only and no part of the id.
  * `soundEffect(id)` accepts a string copied straight from a game file,
  * checked against the same id set with no completion menu ever built.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise, with no navigation. Zero runtime validation either
- * way.
+ * Both forms check against @pdx-ts/stellaris-ids's id set for this
+ * registry, so a misspelled id is a compile error. Zero runtime
+ * validation.
  */
 export const soundEffect: VanillaTrie<"sound_effect"> &
   (<const Id extends string>(
@@ -582,9 +582,9 @@ export const soundEffect: VanillaTrie<"sound_effect"> &
  * id verbatim — the buckets are navigation only and no part of the id.
  * `sprite(id)` accepts a string copied straight from a game file,
  * checked against the same id set with no completion menu ever built.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise, with no navigation. Zero runtime validation either
- * way.
+ * Both forms check against @pdx-ts/stellaris-ids's id set for this
+ * registry, so a misspelled id is a compile error. Zero runtime
+ * validation.
  */
 export const sprite: VanillaTrie<"sprite"> &
   (<const Id extends string>(
@@ -593,9 +593,9 @@ export const sprite: VanillaTrie<"sprite"> &
 
 /**
  * A checked reference to a vanilla resource id.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise. Zero runtime validation either way — this only
- * constructs the branded reference the rest of the SDK already accepts.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
  */
 export function resource<const Id extends VanillaId<"resource">>(
   id: Id
@@ -605,9 +605,9 @@ export function resource<const Id extends VanillaId<"resource">>(
 
 /**
  * A checked reference to a vanilla situation log category id.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise. Zero runtime validation either way — this only
- * constructs the branded reference the rest of the SDK already accepts.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
  */
 export function situationLogCategory<const Id extends VanillaId<"situation_log_category">>(
   id: Id
@@ -617,9 +617,9 @@ export function situationLogCategory<const Id extends VanillaId<"situation_log_c
 
 /**
  * A checked reference to a vanilla star class id.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise. Zero runtime validation either way — this only
- * constructs the branded reference the rest of the SDK already accepts.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
  */
 export function starClass<const Id extends VanillaId<"star_class">>(
   id: Id
@@ -629,9 +629,9 @@ export function starClass<const Id extends VanillaId<"star_class">>(
 
 /**
  * A checked reference to a vanilla planet class id.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise. Zero runtime validation either way — this only
- * constructs the branded reference the rest of the SDK already accepts.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
  */
 export function planetClass<const Id extends VanillaId<"planet_class">>(
   id: Id
@@ -646,9 +646,9 @@ export function planetClass<const Id extends VanillaId<"planet_class">>(
  * id verbatim — the buckets are navigation only and no part of the id.
  * `deposit(id)` accepts a string copied straight from a game file,
  * checked against the same id set with no completion menu ever built.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise, with no navigation. Zero runtime validation either
- * way.
+ * Both forms check against @pdx-ts/stellaris-ids's id set for this
+ * registry, so a misspelled id is a compile error. Zero runtime
+ * validation.
  */
 export const deposit: VanillaTrie<"deposit"> &
   (<const Id extends string>(
@@ -662,9 +662,9 @@ export const deposit: VanillaTrie<"deposit"> &
  * id verbatim — the buckets are navigation only and no part of the id.
  * `anomalyCategory(id)` accepts a string copied straight from a game file,
  * checked against the same id set with no completion menu ever built.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise, with no navigation. Zero runtime validation either
- * way.
+ * Both forms check against @pdx-ts/stellaris-ids's id set for this
+ * registry, so a misspelled id is a compile error. Zero runtime
+ * validation.
  */
 export const anomalyCategory: VanillaTrie<"anomaly_category"> &
   (<const Id extends string>(
@@ -673,9 +673,9 @@ export const anomalyCategory: VanillaTrie<"anomaly_category"> &
 
 /**
  * A checked reference to a vanilla planet modifier id.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise. Zero runtime validation either way — this only
- * constructs the branded reference the rest of the SDK already accepts.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
  */
 export function planetModifier<const Id extends VanillaId<"planet_modifier">>(
   id: Id
@@ -685,9 +685,9 @@ export function planetModifier<const Id extends VanillaId<"planet_modifier">>(
 
 /**
  * A checked reference to a vanilla asteroid belt type id.
- * Checked against @pdx-ts/stellaris-ids when it is installed; any
- * string otherwise. Zero runtime validation either way — this only
- * constructs the branded reference the rest of the SDK already accepts.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
  */
 export function asteroidBeltType<const Id extends VanillaId<"asteroid_belt_type">>(
   id: Id
@@ -697,6 +697,6 @@ export function asteroidBeltType<const Id extends VanillaId<"asteroid_belt_type"
 
 /**
  * Vanilla event ids, navigable by namespace and local id.
- * The installed identifier package supplies exact EventRef scope and kind types.
+ * The identifier package supplies exact EventRef scope and kind types.
  */
 export const event: VanillaTrie<"event"> = makeEventTrie();

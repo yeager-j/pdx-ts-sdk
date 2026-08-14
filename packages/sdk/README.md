@@ -337,14 +337,16 @@ or one newer than the pin — bind it by hand. There the scope is your assertion
 and only name and parameters go unchecked with `.unchecked`:
 
 ```ts
-const pdHabitable = scriptedTrigger("pd_habitability_check", "planet");
-const modTrigger = scriptedTrigger.unchecked("othermod_check", ["country", "sector"]);
+const hasStage = scriptedTrigger("has_crisis_stage", "country");
+const pdHabitable = scriptedTrigger.unchecked("pd_habitability_check", "planet");
 ```
 
-`"any"` is the deliberate opt-out and yields a trigger that fits everywhere.
-Without the package installed, both binding forms still compile and every name
-is accepted. The mod-testing evaluator still refuses scripted triggers: the
-package carries names and scopes, never bodies to evaluate.
+`scriptedTrigger` takes a name the pinned package knows and checks its
+`$PARAM$` list; `.unchecked` takes any name and gives up only that check, which
+is what a third-party or newer-than-the-pin definition needs. `"any"` is the
+deliberate opt-out and yields a trigger that fits everywhere. The mod-testing
+evaluator still refuses scripted triggers: the package carries names and
+scopes, never bodies to evaluate.
 
 Patching is whole-object replacement and requires the real game files. Load a
 version-pinned install, create the patch through the capability, and compile it

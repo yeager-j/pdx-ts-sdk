@@ -137,7 +137,7 @@ function checkLocalCheckout(localSdk: string | undefined): void {
   if (localSdk === undefined) {
     return;
   }
-  const missing = ["sdk", "sdk-testing", "pdxscript"].filter(
+  const missing = ["sdk", "sdk-testing", "pdxscript", "stellaris-ids"].filter(
     (pkg) => !existsSync(path.join(localSdk, "packages", pkg, "dist"))
   );
   if (missing.length > 0) {
