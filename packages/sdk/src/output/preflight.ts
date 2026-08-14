@@ -73,8 +73,12 @@ export function assertRepresentableMaterialization(
   }
 
   const { limit, unit } = pathCeiling();
+  // Longest in the unit the ceiling is expressed in, which is not the same
+  // ordering: 90 CJK characters are shorter than 100 ASCII ones in UTF-16 and
+  // 170 bytes longer in UTF-8, so picking by `.length` on a POSIX host would
+  // measure the wrong path and pass a materialization that cannot be written.
   const longestRendered = [...rendered.keys()].reduce(
-    (longest, relPath) => (relPath.length > longest.length ? relPath : longest),
+    (longest, relPath) => (measure(relPath, unit) > measure(longest, unit) ? relPath : longest),
     ""
   );
   const staging = path.join(parent, LONGEST_SIBLING_PREFIX + "x".repeat(UUID_LENGTH));

@@ -161,10 +161,25 @@ async function recoverUnlocked(
   }
   const lastPhase = journal.lastPhase ?? "inspecting";
   assertNotHeld(target, journal, header, lastPhase);
-  if (!(await claimRecovery(journal.path))) {
+  const claim = await claimRecovery(journal.path, {
+    pid: header.pid,
+    startedAt: header.startedAt,
+  });
+  if (claim === "lost") {
     throw new MaterializationError(target, {
       reason: "busy",
       detail: `another recovery of ${target} is already running.`,
+    });
+  }
+  if (claim === "gone") {
+    // Another recovery finished this transaction between the read above and
+    // the claim. Acting on the journal now would be acting on a description
+    // of a state that has already been put right.
+    return freezeRecovery({
+      target,
+      outcome: "no-transaction",
+      actions: [],
+      warnings: await orphanWarnings(target, new Set()),
     });
   }
 

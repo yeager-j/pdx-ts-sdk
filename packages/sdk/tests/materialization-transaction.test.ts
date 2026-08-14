@@ -45,8 +45,9 @@ import {
   type RecoveryReport,
 } from "../src/index.ts";
 import { assertRepresentableMaterialization } from "../src/output/preflight.ts";
-import type { RenderedMod } from "../src/output/rendered.ts";
+import { createRenderedMod, type RenderedMod } from "../src/output/rendered.ts";
 import {
+  claimRecovery,
   lockPathFor,
   parseJournal,
   processIsAlive,
@@ -231,6 +232,18 @@ async function stageBuild(target: string, rendered: RenderedMod) {
 /** The manifest hash the SDK recorded in a materialized tree. */
 function manifestSha(target: string): string {
   return (JSON.parse(readFileSync(join(target, MANIFEST), "utf8")) as { sha256: string }).sha256;
+}
+
+/** An absolute directory path of exactly `total` characters, in legal parts. */
+function targetOfLength(total: number): string {
+  const parts: string[] = [];
+  let used = 0;
+  while (used + 201 < total) {
+    parts.push("d".repeat(200));
+    used += 201;
+  }
+  parts.push("d".repeat(Math.max(1, total - used - 1)));
+  return "/" + parts.join("/");
 }
 
 function siblings(parent: string): string[] {
@@ -709,6 +722,63 @@ describe("recovery reads the journal and nothing else", () => {
     expect(manifestSha(out)).toBe(previousSha);
   });
 
+  it("does not conjure a lock for a transaction another recovery already finished", async () => {
+    // Two recoveries of one dead transaction: both read the journal, the
+    // first one wins and unlinks the lock. The second must not recreate the
+    // file it is claiming — it would win an empty arbitration and then act on
+    // a journal describing a state that has already been put right, deleting
+    // and refusing against evidence that is no longer true.
+    const parent = tempDir();
+    const out = join(parent, "out");
+    await write(out, genOne);
+    const { paths } = await stageBuild(out, genTwo);
+    const lockPath = writeJournal({
+      target: out,
+      rendered: genTwo,
+      paths,
+      previousManifestSha256: manifestSha(out),
+      phases: ["staged", "content-deactivating"],
+    });
+    renameSync(out, paths.previous);
+    // What the second recovery read before the first one ran.
+    const stale = await readJournal(lockPath);
+    const identity = {
+      pid: stale!.header!.pid,
+      startedAt: stale!.header!.startedAt,
+    };
+
+    expect((await recoverMaterialization(out)).outcome).toBe("restored-previous");
+
+    expect(await claimRecovery(lockPath, identity)).toBe("gone");
+    expect(existsSync(lockPath)).toBe(false);
+    // And the ordinary entry point says the same thing, without touching the
+    // target the first recovery restored.
+    const second = await recoverMaterialization(out);
+    expect(second.outcome).toBe("no-transaction");
+    expect(second.actions).toEqual([]);
+    expect(readdirSync(parent)).toEqual(["out"]);
+  });
+
+  it("does not append its claim to a journal belonging to a different transaction", async () => {
+    // The other half of the same race: the lock was released and a fresh
+    // writer took it. That journal is not the one the claimant read, and a
+    // recovery record appended into it would be a stranger's arbitration
+    // record in a live writer's account of itself.
+    const parent = tempDir();
+    const out = join(parent, "out");
+    mkdirSync(out);
+    const lockPath = writeJournal({ target: out, rendered: genTwo, pid: process.pid });
+    const successor = readFileSync(lockPath, "utf8");
+
+    const claim = await claimRecovery(lockPath, {
+      pid: deadPid(),
+      startedAt: "1970-01-01T00:00:00.000Z",
+    });
+
+    expect(claim).toBe("gone");
+    expect(readFileSync(lockPath, "utf8")).toBe(successor);
+  });
+
   it("reports residue no journal names, and never removes it", async () => {
     const parent = tempDir();
     const out = join(parent, "out");
@@ -960,6 +1030,45 @@ describe("paths that cannot exist are refused before anything is created", () =>
     expect(thrown).toBeInstanceOf(MaterializationError);
     expect((thrown as MaterializationError).reason).toBe("unrepresentable");
   });
+
+  it.skipIf(process.platform === "win32")(
+    "measures the longest rendered path in the unit the platform limit uses",
+    () => {
+      // POSIX counts bytes. Ninety CJK characters are 270 of them and only 90
+      // UTF-16 units, so choosing the path to measure by `.length` picks the
+      // hundred-character ASCII sibling and never measures the one that
+      // actually overflows. Same target twice: the ASCII-only render fits, and
+      // adding the shorter-looking multibyte path must refuse. The wide path
+      // is split into components because one component may not exceed 255
+      // bytes either — a limit logical paths already enforce on their own.
+      const ascii = "a".repeat(100);
+      const wide = Array.from({ length: 3 }, () => "漢".repeat(30)).join("/");
+      const claim = (relPath: string) => ({ path: relPath, owner: "test", text: "x\n" });
+      const ceiling = process.platform === "darwin" ? 1024 : 4096;
+      const target = targetOfLength(ceiling - 200);
+
+      expect(() =>
+        assertRepresentableMaterialization(
+          target,
+          createRenderedMod("tx_probe", "", [claim(ascii)])
+        )
+      ).not.toThrow();
+
+      const error = (() => {
+        try {
+          assertRepresentableMaterialization(
+            target,
+            createRenderedMod("tx_probe", "", [claim(ascii), claim(wide)])
+          );
+          return undefined;
+        } catch (thrown) {
+          return thrown;
+        }
+      })();
+      expect(error).toBeInstanceOf(MaterializationError);
+      expect((error as MaterializationError).reason).toBe("unrepresentable");
+    }
+  );
 
   it("accepts the paths an ordinary materialization actually uses", () => {
     expect(() =>

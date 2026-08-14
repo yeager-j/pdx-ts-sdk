@@ -17,6 +17,7 @@
  */
 
 import { randomUUID } from "node:crypto";
+import { constants } from "node:fs";
 import { open, readFile, unlink, type FileHandle } from "node:fs/promises";
 import { hostname } from "node:os";
 import path from "node:path";
@@ -539,47 +540,111 @@ export function recoveryRequired(
   });
 }
 
+/** Which transaction a recovery believes it is about to recover. */
+export interface TransactionIdentity {
+  readonly pid: number;
+  readonly startedAt: string;
+}
+
+/**
+ * `"gone"` means the journal the caller read is no longer the file at that
+ * path: the transaction ended, or a fresh one replaced it, while the claim
+ * was being made. It is not a refusal — there is simply nothing left of the
+ * transaction the caller was going to recover.
+ */
+export type RecoveryClaim = "won" | "lost" | "gone";
+
 /**
  * Claim the right to recover a journal nobody holds. The file is the only
  * shared thing two processes have, so they arbitrate in it: each appends a
- * token in `O_APPEND` mode — one atomic write per record — and re-reads. The
- * first live claim wins. Claims from dead recoveries are ignored, or a
- * recovery that was itself killed would lock the target out for good, and so
- * are this process's own earlier claims: a recovery that refused and was then
- * retried must not be blocked by the record it left the first time. Two
- * recoveries inside one process are held apart by the in-process lock, not by
- * this.
+ * token and re-reads, and the first live claim wins. Claims from dead
+ * recoveries are ignored, or a recovery that was itself killed would lock the
+ * target out for good, and so are this process's own earlier claims: a
+ * recovery that refused and was then retried must not be blocked by the
+ * record it left the first time. Two recoveries inside one process are held
+ * apart by the in-process lock, not by this.
+ *
+ * The lock is opened `O_APPEND` without `O_CREAT`, and both reads go through
+ * that handle at an explicit offset. Between the caller reading the journal
+ * and arriving here, another recovery can finish and unlink the lock, and a
+ * new writer can then create its own — so a mode that creates the file would
+ * conjure a lock for a transaction that no longer exists and act on a journal
+ * read before all of it happened. Opening without creating catches the first
+ * case; comparing the header against the transaction the caller read catches
+ * the second, before anything is appended to a stranger's journal.
  */
-export async function claimRecovery(lockPath: string): Promise<boolean> {
-  const token = randomUUID();
-  const claim: JournalPhase = {
-    record: "phase",
-    phase: "recovering",
-    at: new Date().toISOString(),
-    pid: process.pid,
-    hostname: hostname(),
-    token,
-  };
-  const handle = await open(lockPath, "a");
+export async function claimRecovery(
+  lockPath: string,
+  expected: TransactionIdentity
+): Promise<RecoveryClaim> {
+  let handle: FileHandle;
   try {
+    handle = await open(lockPath, constants.O_RDWR | constants.O_APPEND);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      return "gone";
+    }
+    throw error;
+  }
+  try {
+    if (!isTransaction(parseJournal(lockPath, await readWholeFile(handle)), expected)) {
+      return "gone";
+    }
+    const token = randomUUID();
+    const claim: JournalPhase = {
+      record: "phase",
+      phase: "recovering",
+      at: new Date().toISOString(),
+      pid: process.pid,
+      hostname: hostname(),
+      token,
+    };
     await handle.write(`${JSON.stringify(claim)}\n`);
     await handle.sync();
+
+    const journal = parseJournal(lockPath, await readWholeFile(handle));
+    if (!isTransaction(journal, expected)) {
+      return "gone";
+    }
+    const claims = journal.records.filter(
+      (record): record is JournalPhase => record.record === "phase" && record.phase === "recovering"
+    );
+    const live = claims.filter(
+      (record) =>
+        record.token === token ||
+        (record.hostname === hostname() &&
+          record.pid !== undefined &&
+          record.pid !== process.pid &&
+          processIsAlive(record.pid))
+    );
+    return live[0]?.token === token ? "won" : "lost";
   } finally {
     await handle.close();
   }
-  const journal = await readJournal(lockPath);
-  const claims = (journal?.records ?? []).filter(
-    (record): record is JournalPhase => record.record === "phase" && record.phase === "recovering"
+}
+
+function isTransaction(journal: Journal, expected: TransactionIdentity): boolean {
+  return (
+    journal.header !== undefined &&
+    journal.header.pid === expected.pid &&
+    journal.header.startedAt === expected.startedAt
   );
-  const live = claims.filter(
-    (record) =>
-      record.token === token ||
-      (record.hostname === hostname() &&
-        record.pid !== undefined &&
-        record.pid !== process.pid &&
-        processIsAlive(record.pid))
-  );
-  return live[0]?.token === token;
+}
+
+/**
+ * The whole file behind a handle, from offset zero. Reading by path instead
+ * would read whatever inode holds that name now, which is the very thing the
+ * claim is trying to detect; the explicit offset keeps the append position
+ * untouched.
+ */
+async function readWholeFile(handle: FileHandle): Promise<string> {
+  const { size } = await handle.stat();
+  if (size === 0) {
+    return "";
+  }
+  const buffer = Buffer.alloc(size);
+  const { bytesRead } = await handle.read(buffer, 0, size, 0);
+  return buffer.toString("utf8", 0, bytesRead);
 }
 
 async function closeAndUnlink(handle: FileHandle, lockPath: string): Promise<void> {
