@@ -232,7 +232,7 @@ describe("file layout", () => {
     expect([...(corpus.occurrences.get("name")?.values ?? [])]).toEqual(["a"]);
   });
 
-  it("descends into every top-level block when the root key is `any`", () => {
+  it("descends into every top-level block when the one segment is `any`", () => {
     const corpus = corpusOfFiles(
       {
         "sprites.gfx": "spriteTypes = { one = { name = a } }\nobjectTypes = { two = { name = b } }",
@@ -241,6 +241,30 @@ describe("file layout", () => {
     );
     expect(corpus.definitions).toBe(2);
     expect([...(corpus.occurrences.get("name")?.values ?? [])]).toEqual(["a", "b"]);
+  });
+
+  // `swapped_job`'s `skip_root_key = { any swappable_data }`: the segments are
+  // successive levels, not alternatives. Applying them at one level would count
+  // each job's `swappable_data` container as a definition and measure the swaps
+  // inside it as that definition's fields.
+  it("applies a multi-segment root key as successive levels", () => {
+    const corpus = corpusOfFiles(
+      {
+        "jobs.txt": `
+          some_job = {
+            category = planet
+            swappable_data = { swap_a = { name = a } swap_b = { name = b } }
+          }
+          other_job = { category = planet }
+        `,
+      },
+      { skipRootKeys: ["any", "swappable_data"] }
+    );
+    expect(corpus.definitions).toBe(2);
+    expect([...(corpus.occurrences.get("name")?.values ?? [])]).toEqual(["a", "b"]);
+    // Neither the job's own fields nor the container that holds the swaps.
+    expect(corpus.occurrences.has("category")).toBe(false);
+    expect(corpus.occurrences.has("swappable_data")).toBe(false);
   });
 });
 

@@ -48,7 +48,17 @@ describe("a registry's declared file layout", () => {
     ).toThrow(/names no single concrete root block/);
   });
 
-  it("refuses several root keys, which say the file has more than one envelope", () => {
+  // The block form is a descent path, so two segments means the definitions
+  // sit inside another definition — `swapped_job`'s `{ any swappable_data }` is
+  // any job id, then that job's `swappable_data` block. There is no file-level
+  // wrapper there for the fold to write.
+  it("refuses a path deeper than one segment, which names no file-level envelope", () => {
+    expect(() =>
+      contentFileLayout("swapped_job", syntheticType({ skipRootKeys: ["any", "swappable_data"] }))
+    ).toThrow(/names no single concrete root block/);
+  });
+
+  it("refuses a deep path of concrete segments too", () => {
     expect(() =>
       contentFileLayout("sprite", syntheticType({ skipRootKeys: ["spriteTypes", "objectTypes"] }))
     ).toThrow(/names no single concrete root block/);

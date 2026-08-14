@@ -637,8 +637,11 @@ export interface RegistryLayout {
   /** `path_extension`, dotted. Absent means the game's `.txt` default. */
   readonly extension?: string;
   /**
-   * `skip_root_key`: the definitions sit one level inside a root block with one
-   * of these keys. `any` matches every top-level block.
+   * `skip_root_key` as a descent path: one segment per level the definitions
+   * sit below the file's top level, outermost first. `any` is a wildcard
+   * segment matching every block key at its own level — `swapped_job` declares
+   * `{ any swappable_data }`, which is any job id, then that job's
+   * `swappable_data` block, whose children are the definitions.
    */
   readonly skipRootKeys?: readonly string[];
 }
@@ -646,23 +649,24 @@ export interface RegistryLayout {
 /**
  * The items a file offers as definitions.
  *
- * Without `skip_root_key` that is the file's own top level. With one, the
- * definitions are the children of the matching root blocks, and a top-level
- * entry matching no root key belongs to something else in the same file, so it
- * is not counted at all.
+ * Without `skip_root_key` that is the file's own top level. With one, each
+ * segment selects the blocks to descend into at its own level and the
+ * definitions are what lies under the last segment. An entry matching no
+ * segment at its level belongs to something else in the same file, so it drops
+ * out and nothing below it is counted either.
  */
 function rootDefinitions(items: readonly PdxItem[], skipRootKeys: readonly string[]): PdxItem[] {
-  if (skipRootKeys.length === 0) {
-    return [...items];
+  let level = [...items];
+  for (const segment of skipRootKeys) {
+    level = level.flatMap((item) =>
+      item.kind === "entry" &&
+      item.value.kind === "container" &&
+      (segment === "any" || item.key === segment)
+        ? item.value.items
+        : []
+    );
   }
-  const any = skipRootKeys.includes("any");
-  return items.flatMap((item) =>
-    item.kind === "entry" &&
-    item.value.kind === "container" &&
-    (any || skipRootKeys.includes(item.key))
-      ? item.value.items
-      : []
-  );
+  return level;
 }
 
 /**
@@ -678,9 +682,9 @@ function rootDefinitions(items: readonly PdxItem[], skipRootKeys: readonly strin
  * — see {@link DescentNode}.
  *
  * `layout` is the registry's file layout as the rules declare it: which
- * extension its files carry, and which root block its definitions sit inside.
- * Both change what counts as a definition, so a reader given neither would
- * measure a `.gfx` registry as empty rather than as unread.
+ * extension its files carry, and how far inside them the definitions sit. Both
+ * change what counts as a definition, so a reader given neither would measure a
+ * `.gfx` registry as empty rather than as unread.
  */
 export function readRegistryCorpus(
   root: string,

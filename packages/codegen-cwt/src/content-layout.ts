@@ -1,6 +1,6 @@
 /**
  * The file layout a registry's CWT type declares: which extension its files
- * carry and which block, if any, its definitions sit inside.
+ * carry and how deep inside them its definitions sit.
  *
  * Both come off the type as the rules wrote them, so the answer is derived
  * rather than tabulated. It lives apart from the emitter that writes the
@@ -14,17 +14,25 @@ import type { ContentType } from "./cwt/rules.ts";
 export interface ContentFileLayout {
   /** `path_extension`, dotted, resolved — `.txt` is the game's default. */
   readonly fileExtension: string;
-  /** The single concrete `skip_root_key`, when the type declares exactly one. */
+  /** The one concrete `skip_root_key` segment, when the type declares exactly one. */
   readonly rootEnvelope?: string;
 }
 
 /**
  * Reads one registry's file layout off its type.
  *
- * A `skip_root_key` that is not exactly one concrete key throws rather than
- * resolving to something: `any` says every top-level block is an envelope and
- * several keys say the file has more than one, and neither shape tells the fold
- * which block to write. A manifest row in that shape needs an overlay decision.
+ * `skip_root_key`'s block form is a descent *path*, not a set of alternative
+ * keys: `swapped_job` declares `{ any swappable_data }`, meaning any job id at
+ * the first level and that job's `swappable_data` block at the second, with the
+ * swap definitions inside it. Only a path of exactly one concrete segment names
+ * a file-level envelope, because only then is the wrapper something the fold can
+ * write.
+ *
+ * Everything else throws rather than resolving to something. A lone `any` says
+ * the wrapper is whatever key happens to be there, and a deeper path says the
+ * definitions sit inside another definition — neither is a block the fold could
+ * put around a whole emitted file. A manifest row in either shape needs an
+ * overlay decision.
  */
 export function contentFileLayout(registry: string, type: ContentType): ContentFileLayout {
   const fileExtension = type.pathExtension ?? ".txt";
@@ -32,13 +40,13 @@ export function contentFileLayout(registry: string, type: ContentType): ContentF
   if (skipRootKeys.length === 0) {
     return { fileExtension };
   }
-  const concrete = skipRootKeys.filter((key) => key !== "any");
-  if (concrete.length !== 1) {
+  const envelope = skipRootKeys.length === 1 ? skipRootKeys[0]! : undefined;
+  if (envelope === undefined || envelope === "any") {
     throw new Error(
-      `type[${registry}] declares skip_root_key ${skipRootKeys.join(", ")}, which names no single ` +
-        "concrete root block, so the emitted file has no one envelope to sit inside. Decide the " +
-        "envelope in the overlay before manifesting this registry."
+      `type[${registry}] declares skip_root_key ${skipRootKeys.join("/")}, a descent path that ` +
+        "names no single concrete root block, so the emitted file has no one envelope to sit " +
+        "inside. Decide the envelope in the overlay before manifesting this registry."
     );
   }
-  return { fileExtension, rootEnvelope: concrete[0]! };
+  return { fileExtension, rootEnvelope: envelope };
 }
