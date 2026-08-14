@@ -7,6 +7,7 @@
 import { block, list, scalar, serialize } from "@pdx-ts/pdxscript";
 
 import type { PureMod } from "../compiler/model.ts";
+import { DESCRIPTOR_PATH, onActionsPath, shipOfSizeLimitsPath } from "../compiler/paths.ts";
 import { VanillaPathCollisionError } from "../errors.ts";
 import { normalizeLogicalPath } from "../ordering.ts";
 import {
@@ -19,7 +20,7 @@ import {
 export function render(mod: PureMod): RenderedMod {
   const { prefix } = mod.config;
   const files: RenderedClaim[] = [];
-  files.push({ path: "descriptor.mod", owner: "mod descriptor", text: renderDescriptor(mod) });
+  files.push({ path: DESCRIPTOR_PATH, owner: "mod descriptor", text: renderDescriptor(mod) });
   for (const file of mod.contentFiles) {
     files.push({
       path: file.relPath,
@@ -36,7 +37,7 @@ export function render(mod: PureMod): RenderedMod {
   }
   if (mod.shipOfSizeLimits.size > 0) {
     files.push({
-      path: `common/country_limits/ownership_limits/${prefix}_ownership_limits.txt`,
+      path: shipOfSizeLimitsPath(prefix),
       owner: "ship-of-size limits",
       text: serialize([
         block("default", [
@@ -50,7 +51,7 @@ export function render(mod: PureMod): RenderedMod {
   }
   if (mod.onActions.length > 0) {
     files.push({
-      path: `common/on_actions/${prefix}_on_actions.txt`,
+      path: onActionsPath(prefix),
       owner: "on-action hooks",
       text: serialize(mod.onActions),
     });
@@ -74,7 +75,7 @@ export function render(mod: PureMod): RenderedMod {
   // beat vanilla's rather than to occupy it.
   if (mod.vanillaPaths !== undefined) {
     for (const { path: relPath } of files) {
-      if (relPath !== "descriptor.mod" && mod.vanillaPaths.has(normalizeLogicalPath(relPath))) {
+      if (relPath !== DESCRIPTOR_PATH && mod.vanillaPaths.has(normalizeLogicalPath(relPath))) {
         throw new VanillaPathCollisionError(
           `this mod would emit ${relPath}, a path vanilla already occupies — a same-path ` +
             `collision silently replaces the entire vanilla file`

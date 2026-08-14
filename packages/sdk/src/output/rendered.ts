@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 
+import { MATERIALIZATION_MANIFEST_PATH } from "../compiler/paths.ts";
 import { PathOwnershipError, type PathOwnershipConflict } from "../errors.ts";
 import {
   compareLogicalPaths,
@@ -9,7 +10,6 @@ import {
 } from "../ordering.ts";
 
 const encoder = new TextEncoder();
-const MANIFEST_PATH = ".pdx-sdk-manifest.json";
 
 export interface RenderedFile {
   readonly path: LogicalPath;
@@ -188,8 +188,8 @@ export function createRenderedMod(
   const normalized = [
     ...claims.map((claim) => ({ claim, path: normalizeLogicalPath(claim.path), reserved: false })),
     {
-      claim: { path: MANIFEST_PATH, owner: "materializer", text: "" },
-      path: normalizeLogicalPath(MANIFEST_PATH),
+      claim: { path: MATERIALIZATION_MANIFEST_PATH, owner: "materializer", text: "" },
+      path: MATERIALIZATION_MANIFEST_PATH,
       reserved: true,
     },
   ];

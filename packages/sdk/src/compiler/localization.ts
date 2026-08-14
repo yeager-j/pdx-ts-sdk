@@ -1,7 +1,12 @@
 import type { LocalizationLanguage } from "../authoring/localization.ts";
 import type { LocalisationEntry } from "../content/authoring.ts";
 import type { ModWarning } from "../diagnostics.ts";
-import { compareLogicalPaths, compareUtf8, normalizeLogicalPath } from "../ordering.ts";
+import {
+  compareLogicalPaths,
+  compareUtf8,
+  normalizeLogicalPath,
+  type LogicalPath,
+} from "../ordering.ts";
 import type { LocalizationFile } from "./model.ts";
 
 const LOC_FORBIDDEN = /[\r\n\0]/;
@@ -48,7 +53,7 @@ function localizationPath(
   layer: LocalizationLayer,
   language: LocalizationLanguage,
   stem: string | undefined
-): ReturnType<typeof normalizeLogicalPath> {
+): LogicalPath {
   const filename = `${prefix}${stem === undefined ? "" : `_${stem}`}_l_${language}.yml`;
   const layerDir = layer === "replace" ? "replace/" : "";
   return normalizeLogicalPath(`localisation/${layerDir}${language}/${filename}`);
@@ -95,7 +100,7 @@ export function createLocalizationAccumulator(warnings: ModWarning[]): Localizat
       placed.sort((a, b) => compareLogicalPaths(a.relPath, b.relPath) || compareUtf8(a.key, b.key));
 
       const grouped = new Map<
-        string,
+        LogicalPath,
         { language: LocalizationLanguage; entries: LocalisationEntry[] }
       >();
       for (const entry of placed) {

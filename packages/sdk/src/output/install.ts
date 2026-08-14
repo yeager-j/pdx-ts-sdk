@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { mkdir, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
+import { MATERIALIZATION_MANIFEST_PATH } from "../compiler/paths.ts";
 import { MaterializationError, type MaterializationDriftKind } from "../errors.ts";
 import { modDir } from "../stellaris/launcher/mod-directory.ts";
 import {
@@ -20,7 +21,6 @@ import {
   discardPrevious,
   discardStaging,
   freezeReport,
-  MATERIALIZATION_MANIFEST,
   observeDescriptor,
   ownedSetMatches,
   reportForeign,
@@ -137,7 +137,7 @@ async function installUnlocked(
   const common = {
     contentDir,
     descriptorPath,
-    manifestPath: path.join(contentDir, MATERIALIZATION_MANIFEST),
+    manifestPath: path.join(contentDir, MATERIALIZATION_MANIFEST_PATH),
     foreignEntries: reportForeign(inspection.foreign),
   };
   if (

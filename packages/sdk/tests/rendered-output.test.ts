@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import type { ContentFile } from "../src/compiler/model.ts";
-import { createMod, PathOwnershipError, render, type PureMod } from "../src/index.ts";
+import {
+  createMod,
+  normalizeLogicalPath,
+  PathOwnershipError,
+  render,
+  type PureMod,
+} from "../src/index.ts";
 import {
   CapturedBytes,
   createRenderedMod,
@@ -51,14 +57,17 @@ describe("RenderedMod", () => {
     ["reserved manifest portable alias", ".PDX-SDK-MANIFEST.JSON"],
   ])("rejects a %s before any sink sees it", (_label, relPath) => {
     const first = compiled.contentFiles[0]!;
-    const forgedFile: ContentFile = { ...first, relPath };
+    const forgedFile: ContentFile = { ...first, relPath: normalizeLogicalPath(relPath) };
     const forged = { ...compiled, contentFiles: [...compiled.contentFiles, forgedFile] } as PureMod;
     expect(() => render(forged)).toThrow(PathOwnershipError);
   });
 
   it("reports ownership conflicts independently of claim order", () => {
     const first = compiled.contentFiles[0]!;
-    const alias: ContentFile = { ...first, relPath: first.relPath.toUpperCase() };
+    const alias: ContentFile = {
+      ...first,
+      relPath: normalizeLogicalPath(first.relPath.toUpperCase()),
+    };
     const forward = { ...compiled, contentFiles: [first, alias] } as PureMod;
     const backward = { ...compiled, contentFiles: [alias, first] } as PureMod;
 

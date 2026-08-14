@@ -5,13 +5,14 @@ import type { DefinedContent } from "../content/authoring.ts";
 import type { ModWarning } from "../diagnostics.ts";
 import type { EventItemBase } from "../events/types.ts";
 import type { ContentTypeName } from "../generated/content-registry.ts";
+import type { LogicalPath } from "../ordering.ts";
 import type { PatchPlan } from "../stellaris/vanilla/override-plan.ts";
 import type { ResolvedModConfig } from "./config.ts";
 
 /** One emitted file: path plus the entries serialized into it, in order. */
 export interface EmittedFile {
-  /** The normalized path relative to the mod root. */
-  readonly relPath: string;
+  /** The minted path relative to the mod root. */
+  readonly relPath: LogicalPath;
   /** The ordered PDXScript entries written to the file. */
   readonly entries: readonly PdxEntry[];
 }
@@ -25,14 +26,14 @@ export interface ContentFile extends EmittedFile {
 /** A group of definitions that share one registry and emitted path. */
 export interface DefinedGroup {
   readonly type: ContentTypeName;
-  readonly relPath: string;
+  readonly relPath: LogicalPath;
   readonly defined: readonly DefinedContent<string, { readonly id: string }>[];
 }
 
 /** One fully resolved localization file, ready for pure rendering. */
 export interface LocalizationFile {
-  /** The normalized path relative to the mod root. */
-  readonly relPath: string;
+  /** The minted path relative to the mod root. */
+  readonly relPath: LogicalPath;
   /** The language used by both the directory/filename and file header. */
   readonly language: LocalizationLanguage;
   /** Entries sorted by localization key. */
