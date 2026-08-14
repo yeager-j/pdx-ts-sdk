@@ -1,0 +1,39 @@
+---
+/**
+ * A curated convention: the machine half from the snapshot, the prose from the
+ * MDX slot.
+ *
+ * This is the one component where Astro's model is a genuinely better fit than
+ * React's. In the first viewer the convention's paragraphs arrive as
+ * `children`, a React tree that MDX built and that the component has to render
+ * through React. Here they arrive as an Astro slot — already-rendered HTML —
+ * so the shell can be markup and the prose stays markup, with no bridge
+ * between two rendering models in the middle of one callout.
+ */
+import { buildOf } from "../builds.ts";
+import Shell from "./Shell.astro";
+
+interface Props {
+  id: string;
+  page: string;
+}
+
+const { id, page } = Astro.props;
+const convention = buildOf(page).conventions.find((entry) => entry.id === id);
+---
+
+{
+  convention !== undefined && (
+    <Shell
+      id={convention.id}
+      subject={convention.subject}
+      status={convention.status}
+      provenance={convention.provenance}
+      guidance={convention.guidance}
+    >
+      <div class="text-sm">
+        <slot />
+      </div>
+    </Shell>
+  )
+}

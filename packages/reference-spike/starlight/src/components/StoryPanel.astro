@@ -1,0 +1,32 @@
+---
+/**
+ * A story, and the PDXScript it produced.
+ *
+ * The React component is imported unmodified and hydrated, because its tabs are
+ * real state: which of a story's output files you are looking at. This is the
+ * only place on either page that needs JavaScript in the browser, and
+ * `client:visible` is what makes that a per-component decision rather than a
+ * property of the whole page — the first viewer hydrated everything, because a
+ * React SPA has no other setting.
+ *
+ * `page` is the attribute the `pageOwnership` remark plugin adds. Without it a
+ * story id is ambiguous: both pages have a story called `minimal`, which the
+ * first viewer's outcome report caught by reasoning rather than by a failure.
+ */
+import { StoryPanel } from "../../../src/app/components/story-panel.tsx";
+import { buildOf } from "../builds.ts";
+import { coloursOf } from "../highlighting.ts";
+
+interface Props {
+  id: string;
+  page: string;
+}
+
+const { id, page } = Astro.props;
+const story = buildOf(page).stories.find((entry) => entry.id === id);
+const highlighted = await coloursOf(page, id);
+---
+
+<div class="not-content">
+  <StoryPanel client:visible story={story} highlighted={highlighted} />
+</div>

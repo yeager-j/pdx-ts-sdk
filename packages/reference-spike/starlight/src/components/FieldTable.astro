@@ -1,0 +1,22 @@
+---
+/**
+ * The complete supported-field reference, hydrated for its filter box.
+ *
+ * Imported unmodified from the first viewer. Complete is the requirement, so
+ * the table carries every row including the nested ones — 85 on Situations, 81
+ * on Technologies — and then has to stay readable, which is what the filter and
+ * the two toggles are for. That is state, so this one hydrates.
+ */
+import { FieldTable } from "../../../src/app/components/field-table.tsx";
+import { buildOf } from "../builds.ts";
+
+interface Props {
+  page: string;
+}
+
+const { page } = Astro.props;
+---
+
+<div class="not-content">
+  <FieldTable client:visible fields={buildOf(page).fields} />
+</div>

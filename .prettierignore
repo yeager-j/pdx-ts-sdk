@@ -11,3 +11,5 @@
 # reads the module, and they have to be the same code. Reformatting the module
 # breaks `npm run stories:check`, which is what noticed.
 packages/reference-spike/src/example/generated/
+# Astro-generated content and route types.
+packages/reference-spike/starlight/.astro/

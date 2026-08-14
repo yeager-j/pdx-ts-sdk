@@ -1,0 +1,27 @@
+---
+/**
+ * A derived claim, resolved from its page rather than from a closure.
+ *
+ * The React component this renders is `src/app/components/claim.tsx`, imported
+ * unmodified. That is the interesting half of the result: the components that
+ * carry the truth model needed no port at all, because they are pure functions
+ * of snapshot data and none of them needs JavaScript in the browser — the
+ * evidence disclosure is a `<details>`, which has been a browser feature for a
+ * decade. Astro renders them to static HTML and ships no runtime for them.
+ */
+import { Claim } from "../../../src/app/components/claim.tsx";
+import { buildOf, claimsOf } from "../builds.ts";
+
+interface Props {
+  id: string;
+  page: string;
+}
+
+const { id, page } = Astro.props;
+const { claims, supporting } = claimsOf(buildOf(page));
+const claim = claims.get(id);
+---
+
+<div class="not-content" data-pagefind-filter={claim && `status:${claim.status}`}>
+  <Claim claim={claim} supporting={supporting.get(id)} />
+</div>

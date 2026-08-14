@@ -1,0 +1,71 @@
+---
+/**
+ * Provenance, behind a disclosure.
+ *
+ * It has to be here — a claim you cannot check is an assertion — and it has to
+ * be closed, or ordinary reading turns into reading an audit log. A `<details>`
+ * does both with no JavaScript, which is why this component ships none.
+ */
+import { STATUS_LABEL, type GuidanceDependency, type Provenance, type ReferenceClaim } from "../../../src/claims.ts";
+import { InlineCode } from "../../../src/app/components/inline-code.tsx";
+
+interface Props {
+  id: string;
+  provenance: readonly Provenance[];
+  guidance: readonly GuidanceDependency[];
+  supporting?: readonly ReferenceClaim[];
+}
+
+const { id, provenance, guidance, supporting = [] } = Astro.props;
+
+const PROVENANCE_LABEL: Record<string, string> = {
+  "cwt-rule": "CWT rule",
+  "codegen-projection": "Projected from the authoring model",
+  "sdk-source": "Hand-written SDK source",
+  corpus: "Committed corpus",
+  "recorded-disposition": "Recorded disposition",
+  maintainer: "Maintainer judgment",
+};
+---
+
+<details data-testid={`evidence-${id}`} data-not-typeset class="not-content not-typeset mt-3">
+  <summary class="cursor-pointer select-none text-xs text-muted-foreground hover:text-foreground">
+    Evidence ({provenance.length}{guidance.length > 0 ? `, ${guidance.length} dependencies` : ""})
+  </summary>
+  <dl class="mt-2 space-y-2 border-l border-border pl-3 text-xs">
+    {
+      supporting.map((observation) => (
+        <div data-testid={`supporting-${observation.id}`}>
+          <dt class="font-medium">{STATUS_LABEL[observation.status]}</dt>
+          <dd class="text-muted-foreground">
+            <InlineCode text={observation.statement} />
+          </dd>
+        </div>
+      ))
+    }
+    {
+      provenance.map((entry) => (
+        <div>
+          <dt class="font-medium">{PROVENANCE_LABEL[entry.kind] ?? entry.kind}</dt>
+          <dd class="break-all font-mono text-muted-foreground">{entry.source}</dd>
+          {entry.detail !== undefined && <dd class="text-muted-foreground">{entry.detail}</dd>}
+        </div>
+      ))
+    }
+    {
+      guidance.length > 0 && (
+        <div>
+          <dt class="font-medium">Guidance dependencies</dt>
+          {guidance.map((dependency) => (
+            <dd class="font-mono text-muted-foreground">
+              {dependency.subject}{" "}
+              <span class="opacity-60">
+                ({dependency.kind} · {dependency.fingerprint})
+              </span>
+            </dd>
+          ))}
+        </div>
+      )
+    }
+  </dl>
+</details>

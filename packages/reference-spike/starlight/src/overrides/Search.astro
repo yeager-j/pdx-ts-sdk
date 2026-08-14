@@ -1,0 +1,31 @@
+---
+/**
+ * Starlight's search slot, filled with the reference's own index.
+ *
+ * A component override rather than a second search box beside Starlight's: two
+ * search inputs in one header is a worse answer than either one alone, and the
+ * entry-level index already covers the prose Pagefind was covering — section
+ * text is one of the five entry kinds it builds.
+ *
+ * `client:load` rather than `client:visible`, because this sits in the header
+ * and is the first thing a reader may reach for.
+ */
+import { ReferenceSearch } from "../components/ReferenceSearch.tsx";
+---
+
+<div class="ref-search">
+  <ReferenceSearch client:load />
+</div>
+
+<style>
+  /*
+   * Starlight's header is a three-column grid whose middle cell is this slot.
+   * Without a width the island collapses, because the React input is
+   * `w-full` inside a cell that has no size of its own.
+   */
+  .ref-search {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+</style>

@@ -18,9 +18,18 @@
     "audit": "node --conditions=pdx-source audit/install-audit.ts",
     "typecheck": "tsc -p tsconfig.app.json",
     "build:viewer": "vite build",
-    "start": "vite build && vite preview"
+    "start": "vite build && vite preview",
+    "dev:starlight": "astro dev --root starlight",
+    "build:starlight": "astro build --root starlight",
+    "start:starlight": "astro build --root starlight && cd starlight && astro preview",
+    "typecheck:starlight": "astro check --root starlight"
   },
   "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@astrojs/markdown-remark": "^7.2.2",
+    "@astrojs/mdx": "^7.0.5",
+    "@astrojs/react": "^6.0.2",
+    "@astrojs/starlight": "^0.41.7",
     "@mdx-js/mdx": "^3.1.1",
     "@mdx-js/react": "^3.1.1",
     "@mdx-js/rollup": "^3.1.1",
@@ -32,9 +41,10 @@
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^5.1.0",
+    "astro": "^7.2.2",
     "class-variance-authority": "^0.7.1",
-    "create-stellaris-mod": "*",
     "clsx": "^2.1.1",
+    "create-stellaris-mod": "*",
     "lucide-react": "^0.552.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
@@ -43,5 +53,7 @@
     "tailwind-merge": "^3.4.1",
     "tailwindcss": "^4.1.18",
     "vite": "^8.1.5"
-  }
+  },
+  "_why_two_viewers": "The follow-up spike asks whether a documentation framework can host the same evidence chain the hand-written viewer hosts. Both viewers render the same content/*.mdx and the same data/*.json, so the only variable is the thing doing the rendering. starlight/ is the second one; src/app/ is the first.",
+  "_why_preview_cd": "astro preview runs as a detached daemon in Astro 7, and the daemon re-resolves a relative --root against its own working directory: `--root starlight` from here becomes starlight/starlight and the daemon dies with \"output directory does not exist\", reported only in starlight/.astro/preview.log. Running it from inside the directory is the fix. build and check take --root without trouble."
 }

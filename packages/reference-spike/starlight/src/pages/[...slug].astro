@@ -1,0 +1,40 @@
+---
+/**
+ * The route, which exists only because Starlight's own does not take a
+ * `components` prop.
+ *
+ * Starlight renders `<Content frontmatter={entry.data} />` in
+ * `routes/common.astro`, with nothing to inject MDX components through. Every
+ * other way of getting `<Claim>` into the page means either importing it in the
+ * MDX — which would edit prose this port is meant to leave alone, and which the
+ * React viewer could not then compile — or overriding a component further down,
+ * by which point the content is already rendered HTML.
+ *
+ * A file-based route in `src/pages/` takes priority over an integration's
+ * injected route, so this replaces Starlight's for the docs collection and
+ * `<StarlightPage>` puts the page back inside Starlight's shell: sidebar,
+ * table of contents, search, theme toggle, pagination. Roughly twenty lines to
+ * regain everything the framework gives and keep the one thing it withholds.
+ */
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+import { getCollection, render } from "astro:content";
+
+import { DERIVED_COMPONENTS } from "../components/index.ts";
+
+export async function getStaticPaths() {
+  const entries = await getCollection("docs");
+  return entries.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+const { Content, headings } = await render(entry);
+---
+
+<StarlightPage
+  frontmatter={{ title: entry.data.title, description: entry.data.summary }}
+  headings={headings}
+>
+  <div data-pagefind-filter={`registry:${entry.data.id ?? entry.id}`}>
+    <Content components={DERIVED_COMPONENTS} />
+  </div>
+</StarlightPage>

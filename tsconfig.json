@@ -45,6 +45,9 @@
     "dist",
     "packages/reference-spike/src/app",
     "packages/reference-spike/vite.config.ts",
+    "packages/reference-spike/starlight",
+    "packages/stellaris-ids",
+    "examples",
     "packages/create-stellaris-mod/tests/fixtures",
     "packages/create-stellaris-mod/tests/goldens"
   ]

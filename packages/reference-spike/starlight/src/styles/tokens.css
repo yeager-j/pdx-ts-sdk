@@ -1,0 +1,145 @@
+@import "tailwindcss";
+
+/*
+ * The components this viewer shares with the first one live outside the Astro
+ * project, and Tailwind v4 detects sources from the stylesheet's own project
+ * root outward — so without this it scans `starlight/` and nothing else.
+ *
+ * That failure is quiet and it is nasty: the classes that also appear in this
+ * directory's `.astro` files still work, so the page renders *almost* right.
+ * What broke was `gap-1.5`, `px-2.5` and `py-1` — used only in
+ * `ui/primitives.tsx` — which turned the story panel's tab row into three
+ * unpadded buttons with no gap between them. Nothing errored. It was found by
+ * looking at the page.
+ */
+@source "../../../src/app/components";
+
+/*
+ * The whole stylesheet for this viewer, and the clearest measurement in the
+ * port.
+ *
+ * The first viewer needs 634 lines of CSS: 490 of shadcn/typeset to style the
+ * authored markdown, and 144 of shadcn tokens, dark-mode overrides, Shiki
+ * plumbing and scroll behaviour. Starlight ships all of the first file and most
+ * of the second. What is left is this — a bridge, not a theme.
+ *
+ * The components imported from the first viewer are written in Tailwind against
+ * shadcn token names. Rather than rewrite them against `--sl-color-*`, the
+ * shadcn names are defined *as* Starlight's, so the components inherit
+ * Starlight's palette, its dark mode and its theme toggle without knowing any
+ * of that happened. Five status colours remain genuinely this page's own,
+ * because the hypothesis is that a reader can tell a guarantee from a guess at
+ * a glance, and no framework has an opinion about that.
+ */
+
+@theme {
+  --color-background: var(--sl-color-bg);
+  --color-foreground: var(--sl-color-white);
+  --color-card: var(--sl-color-bg-nav);
+  --color-muted: var(--sl-color-gray-6);
+  --color-muted-foreground: var(--sl-color-gray-3);
+  --color-border: var(--sl-color-hairline-light);
+  --color-accent: var(--sl-color-gray-6);
+  --color-ring: var(--sl-color-accent);
+
+  --color-contract: var(--ref-contract);
+  --color-contract-soft: var(--ref-contract-soft);
+  --color-observed: var(--ref-observed);
+  --color-observed-soft: var(--ref-observed-soft);
+  --color-curated: var(--ref-curated);
+  --color-curated-soft: var(--ref-curated-soft);
+  --color-omission: var(--ref-omission);
+  --color-omission-soft: var(--ref-omission-soft);
+  --color-unresolved: var(--ref-unresolved);
+  --color-unresolved-soft: var(--ref-unresolved-soft);
+}
+
+/*
+ * The status colours, defined on `:root` rather than inside `@theme`.
+ *
+ * Tailwind v4 hoists every `@theme` declaration onto `:root` and discards the
+ * at-rule around it, so an `@theme` nested in a media query or an attribute
+ * selector emits unconditionally — the bug that left the first viewer dark in
+ * both colour schemes for most of its life. Defining the values as ordinary
+ * custom properties and referencing them from `@theme` above is what lets the
+ * dark set below actually be conditional.
+ *
+ * Keyed off `[data-theme="dark"]`, which is Starlight's switch, so these follow
+ * the reader's toggle rather than only their system setting. The first viewer
+ * had no toggle to follow.
+ */
+:root {
+  --ref-contract: oklch(0.52 0.13 155);
+  --ref-contract-soft: oklch(0.96 0.03 155);
+  --ref-observed: oklch(0.52 0.11 240);
+  --ref-observed-soft: oklch(0.96 0.03 240);
+  --ref-curated: oklch(0.52 0.12 300);
+  --ref-curated-soft: oklch(0.96 0.03 300);
+  --ref-omission: oklch(0.52 0.13 60);
+  --ref-omission-soft: oklch(0.96 0.04 60);
+  --ref-unresolved: oklch(0.52 0.16 25);
+  --ref-unresolved-soft: oklch(0.96 0.04 25);
+}
+
+:root[data-theme="dark"] {
+  --ref-contract: oklch(0.78 0.13 155);
+  --ref-contract-soft: oklch(0.27 0.05 155);
+  --ref-observed: oklch(0.78 0.11 240);
+  --ref-observed-soft: oklch(0.27 0.05 240);
+  --ref-curated: oklch(0.78 0.11 300);
+  --ref-curated-soft: oklch(0.27 0.05 300);
+  --ref-omission: oklch(0.82 0.13 75);
+  --ref-omission-soft: oklch(0.28 0.05 75);
+  --ref-unresolved: oklch(0.78 0.14 25);
+  --ref-unresolved-soft: oklch(0.28 0.06 25);
+}
+
+/*
+ * Tailwind's preflight resets the elements Starlight's markdown stylesheet
+ * styles, and Tailwind is imported second, so it wins. Only the derived
+ * components need Tailwind; the prose needs Starlight. Restoring the
+ * properties preflight flattens inside `.sl-markdown-content` is the smallest
+ * fix that keeps both, and it is one of the two real costs of reusing
+ * components written against another design system.
+ *
+ * The other cost is the mirror of this, and it is handled in the components
+ * rather than here: Starlight puts `margin-top` between adjacent children
+ * anywhere inside `.sl-markdown-content`, which is right for prose and wrong
+ * inside a toolbar. Its own opt-out is the `not-content` class, and the Astro
+ * wrappers carry it — the same job `not-typeset` does for the first viewer,
+ * spelled in the framework's vocabulary instead of shadcn's.
+ */
+.sl-markdown-content :is(h1, h2, h3, h4, h5, h6) {
+  font-size: revert;
+  font-weight: revert;
+}
+
+.sl-markdown-content :is(ul, ol) {
+  list-style: revert;
+  padding-inline-start: revert;
+}
+
+/*
+ * Shiki, in both schemes from one build.
+ *
+ * The highlighter emits light colours as inline styles and dark ones as
+ * `--shiki-dark` custom properties beside them, so the swap is one selector
+ * over one HTML string — no second render and no JavaScript. Starlight does
+ * this for its own code blocks; the story panels are rendered from the
+ * committed snapshot rather than from a fence, so they need it spelled out.
+ *
+ * The background is dropped in both schemes: the panel already has one, and
+ * Shiki's would put a second, differently-tinted rectangle inside it.
+ */
+.shiki,
+.shiki span {
+  background-color: transparent !important;
+}
+
+:root[data-theme="dark"] .shiki,
+:root[data-theme="dark"] .shiki span {
+  color: var(--shiki-dark) !important;
+  font-style: var(--shiki-dark-font-style) !important;
+  font-weight: var(--shiki-dark-font-weight) !important;
+  text-decoration: var(--shiki-dark-text-decoration) !important;
+}

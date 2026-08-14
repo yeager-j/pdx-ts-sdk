@@ -2,6 +2,10 @@
 /out-tsc
 /dist
 packages/*/dist
+# The framework viewer nests one level deeper than the pattern above reaches,
+# and Astro writes a generated types directory beside it.
+packages/reference-spike/starlight/dist
+packages/reference-spike/starlight/.astro
 examples/*/out
 
 # Unanchored: a workspace member whose dependency cannot hoist (a second major

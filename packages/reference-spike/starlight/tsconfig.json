@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "astro/tsconfigs/strict",
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "customConditions": ["pdx-source"],
+    "jsx": "react-jsx",
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "noUncheckedIndexedAccess": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "types": ["node"]
+  },
+  // The framework viewer, plus the shared components it imports — the
+  // components only. `src/app/App.tsx` and `src/app/pages.tsx` are the React
+  // viewer's shell and its page registry, and they belong to
+  // `tsconfig.app.json`: they depend on a Vite virtual module and on MDX typed
+  // as a React component, and Astro's own `.mdx` types say a default export is
+  // an `AstroComponentFactory`. Two viewers cannot hold one opinion about what
+  // an MDX file is, which is exactly why each compiles in its own program.
+  //
+  // Astro resolves these, not Node, so they compile under `bundler` resolution
+  // rather than in the repository's root program — the same division
+  // `tsconfig.app.json` makes, and the reason the root tsconfig excludes this
+  // directory too.
+  "include": [
+    ".astro/types.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    "**/*.astro",
+    "../src/app/components/**/*.tsx",
+    "../src/app/lib/**/*.ts"
+  ],
+  "exclude": ["dist", "node_modules"]
+}

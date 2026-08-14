@@ -15,6 +15,13 @@ The hypothesis it tests:
 
 [`OUTCOME.md`](./OUTCOME.md) is the verdict and the findings. Read that first.
 
+A follow-up spike asked a second question of the same material — whether the
+hand-written viewer should have been written at all, or whether a documentation
+framework could host it. `starlight/` is that port: both pages, rendered from
+the same `content/*.mdx` and the same `data/*.json`, judged against the same
+gates. [`OUTCOME-STARLIGHT.md`](./OUTCOME-STARLIGHT.md) is its verdict. Neither
+viewer is a product and both are deleted together.
+
 ## Running it
 
 ```sh
@@ -58,9 +65,19 @@ Editing a page means editing its `.mdx`, then re-running `stories` and
 extraction is a reviewable diff rather than a page showing code nothing ran.
 
 Adding a page means: a row in `src/build/pages.ts`, a row in
-`src/app/pages.tsx`, a claim builder beside `src/build/curation.ts`, its
-conventions in `content/conventions.ts`, and the `.mdx`. `tests/pages.test.ts`
-fails if the first two disagree.
+`src/app/pages.tsx`, a row in `starlight/src/builds.ts`, a claim builder beside
+`src/build/curation.ts`, its conventions in `content/conventions.ts`, and the
+`.mdx`. `tests/pages.test.ts` fails if the three registries disagree.
+
+The second viewer has its own scripts, and they are separate so the two never
+interfere:
+
+| Script                         | What it does                                        |
+| ------------------------------ | --------------------------------------------------- |
+| `npm run start:starlight`      | Builds and serves the framework viewer on `:4174`   |
+| `npm run dev:starlight`        | The authoring loop for it                           |
+| `npm run build:starlight`      | Builds `starlight/dist/` only                       |
+| `npm run typecheck:starlight`  | `astro check` over the framework viewer             |
 
 The gates run in the repository's ordinary `npm test` and `npm run typecheck`.
 Nothing was added to the root scripts; the package's `build` script is
@@ -80,7 +97,9 @@ src/build/recipes.ts         the Recipe Catalog's own `generate`, for the Recipe
 src/build/highlight.ts       build-time Shiki, plus grammars for PDXScript and Stellaris loc
 src/example/recipe-mod.ts    the module behind `#mod`, which is what a Recipe's output imports
 src/example/generated/       the extracted stories, committed so the compiler sees them
-src/app/                     the viewer
+src/search.ts                the entry-level faceted index, which both viewers use
+src/app/                     the first viewer: React, Vite, shadcn/typeset
+starlight/                   the second viewer: Astro Starlight, over the same content
 data/                        the committed, provenance-bearing snapshots
 tests/                       the gates, including the demonstrated negative controls
 audit/                       the install audit (Situations only)

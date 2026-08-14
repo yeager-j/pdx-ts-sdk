@@ -1,0 +1,92 @@
+---
+/**
+ * The callout a marked claim or a curated convention renders inside.
+ *
+ * A near-transcription of the `Shell` in `src/app/components/claim.tsx`, and
+ * the only component that had to be rewritten rather than imported. The reason
+ * is narrow: `Convention` needs the MDX's prose as a slot, and a slot is HTML
+ * that Astro has already rendered — there is no way to hand it to a React
+ * component as `children` without a bridge between two rendering models. So the
+ * shell exists twice, once per rendering model, and `tests/honesty.test.ts`
+ * checks the same statuses are marked in both.
+ *
+ * The design it implements is unchanged and is the whole hypothesis in one
+ * component. A Supported contract is set as ordinary prose with a quiet
+ * evidence link: marking it would tell the reader to be careful about the one
+ * kind of sentence they do not have to be careful about. The other four are
+ * callouts, because "the game does this once", "a maintainer thinks this",
+ * "the SDK cannot do this" and "nobody knows" all cost the reader something.
+ */
+import {
+  isMarked,
+  STATUS_LABEL,
+  STATUS_MEANING,
+  type ClaimStatus,
+  type GuidanceDependency,
+  type Provenance,
+  type ReferenceClaim,
+} from "../../../src/claims.ts";
+import Evidence from "./Evidence.astro";
+
+interface Props {
+  id: string;
+  subject: string;
+  status: ClaimStatus;
+  provenance: readonly Provenance[];
+  guidance: readonly GuidanceDependency[];
+  supporting?: readonly ReferenceClaim[];
+}
+
+const { id, subject, status, provenance, guidance, supporting = [] } = Astro.props;
+
+const RAIL: Record<ClaimStatus, string> = {
+  "supported-contract": "border-l-contract",
+  "observed-example": "border-l-observed",
+  "curated-convention": "border-l-curated",
+  "known-omission": "border-l-omission",
+  "unresolved-behavior": "border-l-unresolved",
+};
+
+const TONE: Record<ClaimStatus, string> = {
+  "supported-contract": "border-contract/30 bg-contract-soft text-contract",
+  "observed-example": "border-observed/30 bg-observed-soft text-observed",
+  "curated-convention": "border-curated/30 bg-curated-soft text-curated",
+  "known-omission": "border-omission/30 bg-omission-soft text-omission",
+  "unresolved-behavior": "border-unresolved/30 bg-unresolved-soft text-unresolved",
+};
+
+const badge =
+  "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium whitespace-nowrap";
+---
+
+{
+  isMarked(status) ? (
+    <div
+      data-testid={`claim-${id}`}
+      data-status={status}
+      data-subject={subject}
+      class:list={["my-5 rounded-r-lg border-l-4 bg-muted/40 px-4 py-3", RAIL[status]]}
+    >
+      <div data-not-typeset class="not-content not-typeset mb-1.5 flex flex-wrap items-center gap-2">
+        <span class:list={[badge, TONE[status]]}>{STATUS_LABEL[status]}</span>
+        <span class="font-mono text-xs text-muted-foreground">{subject}</span>
+      </div>
+      {/*
+        The slot is the only thing here that is prose, and it is the only thing
+        without `not-content`: the paragraphs a maintainer wrote should be set
+        by Starlight's markdown stylesheet exactly like the paragraphs around
+        the callout. The chrome should not.
+      */}
+      <slot />
+      <p data-not-typeset class="not-content not-typeset mt-2 text-xs text-muted-foreground">
+        {STATUS_MEANING[status]}
+      </p>
+      <Evidence id={id} provenance={provenance} guidance={guidance} supporting={supporting} />
+    </div>
+  ) : (
+    <div data-testid={`claim-${id}`} data-status={status} data-subject={subject}>
+      <slot />
+      <Evidence id={id} provenance={provenance} guidance={guidance} supporting={supporting} />
+    </div>
+  )
+}

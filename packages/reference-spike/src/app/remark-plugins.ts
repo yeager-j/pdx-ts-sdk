@@ -22,15 +22,37 @@
  * build in the first place.
  */
 
+/**
+ * The slice of an mdast node these two plugins touch.
+ *
+ * Structural rather than `mdast`'s own types, so the plugins carry no
+ * dependency on a syntax-tree package for a walk that is eight lines long. It
+ * has to stay *assignable from* a real mdast tree rather than merely
+ * different, though: both viewers pass these to a `unified` pipeline, and
+ * Astro's is typed strictly enough to check that a plugin accepts a `Root`.
+ *
+ * Three consequences, and they are the whole cost of sharing these plugins
+ * between two pipelines. `hProperties` is `Record<string, unknown>`, because
+ * hast's `Properties` admits numbers, booleans, arrays and `null`. There is no
+ * `[key: string]: unknown` index signature, because mdast's node types are
+ * closed interfaces and nothing closed is assignable to a type carrying one.
+ * And `attributes` is `unknown` rather than an array, because the mdast union
+ * has members — directives — whose `attributes` is an object.
+ *
+ * The alternative was to depend on `@types/mdast` and write the real union,
+ * which is a dependency and a second vocabulary for a walk that reads four
+ * fields.
+ */
 interface Node {
   type: string;
   depth?: number;
   lang?: string | null;
   meta?: string | null;
   value?: string;
+  name?: string | null;
+  attributes?: unknown;
   children?: Node[];
-  data?: { hProperties?: Record<string, string> };
-  [key: string]: unknown;
+  data?: { hProperties?: Record<string, unknown> };
 }
 
 /**

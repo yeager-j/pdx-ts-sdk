@@ -20,94 +20,14 @@ import { MDXProvider } from "@mdx-js/react";
 import type { ReactNode } from "react";
 import highlighted from "virtual:highlighted-stories";
 
-import type { ReferenceBuild } from "../build.ts";
 import { Claim, Convention } from "./components/claim.tsx";
+import { EvidenceSummary } from "./components/evidence-summary.tsx";
 import { FieldTable } from "./components/field-table.tsx";
-import { InlineCode } from "./components/inline-code.tsx";
+import { SdkContracts } from "./components/sdk-contracts.tsx";
 import { SearchPanel } from "./components/search-panel.tsx";
 import { StoryPanel } from "./components/story-panel.tsx";
-import { Badge, Card } from "./components/ui/primitives.tsx";
+import { Badge } from "./components/ui/primitives.tsx";
 import { PAGE_PARAM, VIEWER_PAGES, type ViewerPage } from "./pages.tsx";
-
-function Identity({ build }: { build: ReferenceBuild }) {
-  const rows: readonly (readonly [string, string])[] = [
-    ["SDK", build.identity.sdkVersion],
-    ["CWT rules", build.identity.cwtCommit.slice(0, 12)],
-    ["Game docs", build.identity.docsRevision],
-    ["Corpus", `Stellaris ${build.identity.corpusGameVersion}`],
-    ["Vanilla ids", build.identity.vanillaIdsVersion],
-  ];
-  return (
-    <div
-      data-testid="build-identity"
-      data-not-typeset
-      className="not-typeset flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground"
-    >
-      {rows.map(([label, value]) => (
-        <span key={label}>
-          {label} <span className="font-mono text-foreground">{value}</span>
-        </span>
-      ))}
-    </div>
-  );
-}
-
-function SdkContracts({ build }: { build: ReferenceBuild }) {
-  return (
-    <div data-not-typeset className="not-typeset my-5 space-y-3">
-      {build.sdkContracts.map((contract) => (
-        <Card key={contract.member} className="p-4" data-testid={`sdk-contract-${contract.member}`}>
-          <div className="mb-1 flex flex-wrap items-center gap-2">
-            <span className="font-mono text-sm">{contract.member}</span>
-            <Badge tone="contract">SDK-authored</Badge>
-            <Badge>{contract.serialized ? "reaches the output" : "emits nothing"}</Badge>
-          </div>
-          <p className="text-sm leading-relaxed">
-            <InlineCode text={contract.statement} />
-          </p>
-          <p className="mt-2 text-xs text-muted-foreground">
-            <span className="font-medium">Why the rules cannot say this: </span>
-            <InlineCode text={contract.whyNotDerived} />
-          </p>
-          <p className="mt-1 font-mono text-xs text-muted-foreground">{contract.source}</p>
-        </Card>
-      ))}
-    </div>
-  );
-}
-
-function EvidenceSummary({ build }: { build: ReferenceBuild }) {
-  const dependencies = build.conventions.reduce(
-    (total, convention) => total + convention.guidance.length,
-    0
-  );
-  const recipes = build.stories.filter((story) => story.origin === "recipe").length;
-  return (
-    <div className="my-5 space-y-3 text-sm">
-      <Identity build={build} />
-      <p className="text-muted-foreground">
-        Corpus observations come from {build.evidence.definitions} shipped {build.registry}{" "}
-        definitions across {build.evidence.files} files in Stellaris {build.evidence.gameVersion},
-        fingerprint{" "}
-        <span className="font-mono text-xs">{build.evidence.fingerprint.slice(0, 16)}</span>. They
-        record what the game writes — never that a form is generally legal, and never that you
-        should copy it.
-      </p>
-      <p className="text-muted-foreground">
-        This page was written in <span className="font-mono text-xs">{build.page}</span>. Its{" "}
-        {build.stories.length} stories were compiled and synthesized
-        {recipes === 0
-          ? ", all of them hand-written on the page"
-          : `, ${recipes} of them rendered by the Recipe Catalog rather than written here`}
-        ; its {build.claims.length} derived claims were projected from the authoring model; its{" "}
-        {build.conventions.length} curated conventions declare {dependencies} guidance dependencies
-        between them. A change to a depended-on contract fails the documentation gate, a change to
-        depended-on evidence raises a review item, and no last-reviewed date is recorded because it
-        would not mean anything.
-      </p>
-    </div>
-  );
-}
 
 /** The other pages this build carries, as ordinary links. */
 function PageTabs({ current }: { current: ViewerPage }) {
