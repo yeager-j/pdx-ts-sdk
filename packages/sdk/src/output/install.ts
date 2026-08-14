@@ -1,10 +1,11 @@
 import { randomUUID } from "node:crypto";
-import { mkdir, rename, rm, writeFile } from "node:fs/promises";
+import { rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import { MATERIALIZATION_MANIFEST_PATH } from "../compiler/paths.ts";
 import { MaterializationError, type MaterializationDriftKind } from "../errors.ts";
 import { modDir } from "../stellaris/launcher/mod-directory.ts";
+import { assertRepresentableMaterialization } from "./preflight.ts";
 import {
   issueReceipt,
   openReceipt,
@@ -14,20 +15,25 @@ import {
 } from "./receipt.ts";
 import { renderLauncherDescriptor } from "./render.ts";
 import type { RenderedMod } from "./rendered.ts";
+import { acquireTransaction, type MaterializationTransaction } from "./transaction.ts";
 import {
   activateMaterialization,
+  canonicalTarget,
   descriptorRecord,
   discardLeftover,
   discardPrevious,
   discardStaging,
+  disposeAfterFailure,
   freezeReport,
+  nearestPhysicalForm,
   observeDescriptor,
   ownedSetMatches,
   reportForeign,
   rollbackMaterialization,
   stageMaterialization,
+  stagingPaths,
   validateExistingMaterialization,
-  withMaterializationLock,
+  withMaterializationLocks,
   type CleanupWarning,
   type InstallReport,
   type LauncherDescriptorRecord,
@@ -36,7 +42,7 @@ import {
 
 const DIR_NAME_FORBIDDEN = /["\u0000-\u001f]/;
 
-function assertInstallDirName(dirName: string): void {
+export function assertInstallDirName(dirName: string): void {
   if (
     dirName === "" ||
     dirName === "." ||
@@ -95,25 +101,51 @@ async function installWith(
   options: InstallOptions,
   receipt: OpenedReceipt | undefined
 ): Promise<InstallReport> {
-  const root = path.resolve(options.modDir ?? modDir());
+  const requested = path.resolve(options.modDir ?? modDir());
   const dirName = options.dirName ?? rendered.prefix;
   assertInstallDirName(dirName);
-  const contentDir = path.join(root, dirName);
+  // Checked against the path the caller named, before anything is created:
+  // a mod directory the descriptor format cannot encode must refuse without
+  // making the directory it refused to install into.
+  renderLauncherDescriptor(rendered, path.join(requested, dirName));
+  // And representability before the mod directory is created, for the same
+  // reason: a refusal must not leave the directory chain it refused to fill.
+  const lexical = await nearestPhysicalForm(path.join(requested, dirName));
+  assertRepresentableMaterialization(
+    lexical,
+    rendered,
+    path.join(path.dirname(lexical), `${dirName}.mod`)
+  );
+
+  const contentDir = await canonicalTarget(path.join(requested, dirName));
+  const root = path.dirname(contentDir);
   const descriptorPath = path.join(root, `${dirName}.mod`);
   const descriptorContents = renderLauncherDescriptor(rendered, contentDir);
   const nextDescriptor = descriptorRecord(path.basename(descriptorPath), descriptorContents);
+  assertRepresentableMaterialization(contentDir, rendered, descriptorPath);
 
-  await mkdir(root, { recursive: true });
-  return withMaterializationLock(contentDir, () =>
-    installUnlocked(
+  return withMaterializationLocks([contentDir, descriptorPath], async () => {
+    const transaction = await acquireTransaction({
+      target: contentDir,
+      mode: "install",
+      prefix: rendered.prefix,
+      renderedSha256: rendered.sha256,
+      descriptor: {
+        path: descriptorPath,
+        sha256: nextDescriptor.sha256,
+        byteLength: nextDescriptor.byteLength,
+      },
+    });
+    return installUnlocked(
       rendered,
       contentDir,
       descriptorPath,
       descriptorContents,
       nextDescriptor,
-      receipt
-    )
-  );
+      receipt,
+      transaction
+    );
+  });
 }
 
 async function installUnlocked(
@@ -122,9 +154,49 @@ async function installUnlocked(
   descriptorPath: string,
   descriptorContents: string,
   nextDescriptor: LauncherDescriptorRecord,
-  receipt: OpenedReceipt | undefined
+  receipt: OpenedReceipt | undefined,
+  transaction: MaterializationTransaction
 ): Promise<InstallReport> {
   const root = path.dirname(contentDir);
+  const paths = stagingPaths(contentDir);
+  const descriptorStaging = path.join(root, `.pdx-descriptor-staging-${randomUUID()}`);
+  const descriptorPrevious = path.join(root, `.pdx-descriptor-previous-${randomUUID()}`);
+  const journaled = [paths.staging, paths.previous, descriptorStaging, descriptorPrevious];
+  try {
+    return await installJournaled(
+      rendered,
+      contentDir,
+      descriptorPath,
+      descriptorContents,
+      nextDescriptor,
+      receipt,
+      transaction,
+      { ...paths, descriptorStaging, descriptorPrevious }
+    );
+  } catch (error) {
+    await disposeAfterFailure(transaction, journaled, error);
+    throw error;
+  }
+}
+
+/** The four sibling paths one install moves through, journaled before use. */
+interface InstallPaths {
+  readonly staging: string;
+  readonly previous: string;
+  readonly descriptorStaging: string;
+  readonly descriptorPrevious: string;
+}
+
+async function installJournaled(
+  rendered: RenderedMod,
+  contentDir: string,
+  descriptorPath: string,
+  descriptorContents: string,
+  nextDescriptor: LauncherDescriptorRecord,
+  receipt: OpenedReceipt | undefined,
+  transaction: MaterializationTransaction,
+  paths: InstallPaths
+): Promise<InstallReport> {
   // Observed before staging, so a drift refusal from either half of the
   // install carries one receipt covering content and descriptor together.
   const descriptor = await observeDescriptor(descriptorPath);
@@ -146,23 +218,36 @@ async function installUnlocked(
     descriptor.state === "file" &&
     sameDescriptor(descriptor, nextDescriptor)
   ) {
+    await transaction.releaseClean();
     return freezeReport({ status: "unchanged", ...common, warnings: [] });
   }
 
+  const { descriptorStaging, descriptorPrevious } = paths;
+  await transaction.journalStaging({
+    staging: paths.staging,
+    previous: paths.previous,
+    hadPrevious: inspection.kind !== "absent",
+    ...(inspection.manifest === undefined
+      ? {}
+      : { previousManifestSha256: inspection.manifest.sha256 }),
+    descriptorStaging,
+    descriptorPrevious,
+    descriptorObserved: descriptor,
+  });
   const staged = await stageMaterialization(contentDir, rendered, "install", inspection, {
     launcherDescriptor: nextDescriptor,
+    paths,
   });
-  const descriptorStaging = path.join(root, `.pdx-descriptor-staging-${randomUUID()}`);
-  const descriptorPrevious = path.join(root, `.pdx-descriptor-previous-${randomUUID()}`);
   try {
     await writeFile(descriptorStaging, descriptorContents, { encoding: "utf8", flag: "wx" });
   } catch (error) {
     await discardStaging(staged);
     throw error;
   }
+  await transaction.record("staged");
 
   try {
-    await activateMaterialization(staged);
+    await activateMaterialization(staged, transaction);
   } catch (error) {
     await rm(descriptorStaging, { force: true });
     throw error;
@@ -172,23 +257,32 @@ async function installUnlocked(
     // What is on disk, not what ownership implies: a replayed receipt can waive
     // a descriptor that drifted to absent, and there is then nothing to move.
     if (descriptor.state !== "absent") {
+      await transaction.record("descriptor-deactivating");
       await rename(descriptorPath, descriptorPrevious);
       descriptorMovedAside = true;
     }
+    await transaction.record("descriptor-activating");
     await rename(descriptorStaging, descriptorPath);
   } catch (error) {
+    await transaction.record("rolling-back");
     if (descriptorMovedAside) {
       await rename(descriptorPrevious, descriptorPath);
     }
     await rm(descriptorStaging, { force: true });
     await rollbackMaterialization(staged);
+    await transaction.record("rolled-back");
     throw error;
   }
+  // Both renames landed: the install is published, and everything after this
+  // is cleanup that a warning reports rather than a failure that undoes it.
+  await transaction.record("committed");
 
   const warnings: CleanupWarning[] = [...(await discardPrevious(staged))];
   if (descriptorMovedAside) {
     warnings.push(...(await discardLeftover(descriptorPrevious)));
   }
+  await transaction.record("done");
+  await transaction.releaseClean();
   return freezeReport({ status: "written", ...common, warnings });
 }
 

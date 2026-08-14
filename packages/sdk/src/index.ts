@@ -309,6 +309,14 @@ export {
   type WriteReport,
 } from "./output/write.ts";
 export {
+  recoverInstallation,
+  recoverMaterialization,
+  type RecoverInstallationOptions,
+  type RecoveryAction,
+  type RecoveryReport,
+} from "./output/recover.ts";
+export type { MaterializationPhase } from "./output/transaction.ts";
+export {
   DEFAULT_CONTENT_PATTERN,
   discoverFeatures,
   type DiscoverOptions,
@@ -342,7 +350,9 @@ export {
   type ForeignRefusedEntry,
   type MaterializationDrift,
   type MaterializationDriftKind,
+  type MaterializationEvidence,
   type MaterializationFailure,
+  type MaterializationLockHolder,
   type PathClaimant,
   type PathConflictReason,
   type PathOwnershipConflict,

@@ -4,12 +4,15 @@
  * filename that cannot win — is a distinct class, so callers and tests can
  * tell them apart without matching message strings.
  *
- * The receipt import is type-only on purpose: `output/receipt.ts` reaches
- * `ordering.ts`, which reaches this module for `LogicalPathError`, so a value
- * import here would close a runtime cycle.
+ * The receipt and transaction imports are type-only on purpose:
+ * `output/receipt.ts` reaches `ordering.ts`, which reaches this module for
+ * `LogicalPathError`, and `output/transaction.ts` reaches it for
+ * `MaterializationError`, so a value import either way would close a runtime
+ * cycle.
  */
 
 import type { MaterializationReceipt } from "./output/receipt.ts";
+import type { MaterializationPhase } from "./output/transaction.ts";
 
 export class PdxSdkError extends Error {
   constructor(message: string) {
@@ -136,11 +139,27 @@ export interface ForeignRefusedEntry {
   readonly kind: "symlink" | "fifo" | "socket" | "device" | "unknown";
 }
 
+/** Who holds the transaction lock a `"busy"` refusal collided with. */
+export interface MaterializationLockHolder {
+  readonly pid: number;
+  /** Diagnostics only: no refusal is ever decided by how old a lock is. */
+  readonly startedAt: string;
+  readonly phase: MaterializationPhase;
+}
+
+/** One thing recovery expected to find and one thing it found instead. */
+export interface MaterializationEvidence {
+  readonly path: string;
+  readonly expected: string;
+  readonly observed: string;
+}
+
 /**
- * Every way a materialization can refuse, as data. `"recovery-required"` is
- * declared but not yet thrown: the transaction journal that makes an
- * interrupted materialization recognizable lands with SDK-172, and the union
- * is exhaustive from the start so callers do not have to widen later.
+ * Every way a materialization can refuse, as data. The union grew with
+ * SDK-172 — `"unrepresentable"` is new, and `"busy"` and
+ * `"recovery-required"` gained the fields a transaction journal can now
+ * supply — so callers switch on `reason` and treat an unknown one as a
+ * refusal they cannot interpret rather than assuming this list is final.
  */
 export type MaterializationFailure =
   | { readonly reason: "unowned"; readonly detail: string }
@@ -151,9 +170,26 @@ export type MaterializationFailure =
     }
   | { readonly reason: "foreign-conflict"; readonly conflicts: readonly ForeignClaimConflict[] }
   | { readonly reason: "foreign-unpreservable"; readonly entries: readonly ForeignRefusedEntry[] }
-  | { readonly reason: "busy"; readonly detail: string }
+  | {
+      readonly reason: "busy";
+      readonly detail: string;
+      /** Present when the collision was with another writer's lock file. */
+      readonly holder?: MaterializationLockHolder;
+    }
   | { readonly reason: "activation"; readonly rolledBack: boolean }
-  | { readonly reason: "recovery-required"; readonly detail: string };
+  | {
+      readonly reason: "recovery-required";
+      readonly detail: string;
+      /** The transaction journal to recover from, when one survives. */
+      readonly journalPath?: string;
+      readonly phase?: MaterializationPhase;
+      readonly evidence?: readonly MaterializationEvidence[];
+    }
+  | {
+      readonly reason: "unrepresentable";
+      readonly detail: string;
+      readonly paths: readonly string[];
+    };
 
 /** Materialization refused, or failed at the commit point. */
 export class MaterializationError extends PdxSdkError {
@@ -203,6 +239,8 @@ function describeFailure(target: string, failure: MaterializationFailure): strin
       );
     case "recovery-required":
       return `Refusing to materialize ${target}: ${failure.detail}`;
+    case "unrepresentable":
+      return `Refusing to materialize ${target}: ${failure.detail}`;
   }
 }
 
@@ -223,6 +261,20 @@ function freezeFailure(failure: MaterializationFailure): MaterializationFailure 
         ...failure,
         entries: Object.freeze(failure.entries.map((entry) => Object.freeze({ ...entry }))),
       });
+    case "busy":
+      return Object.freeze({
+        ...failure,
+        ...(failure.holder === undefined ? {} : { holder: Object.freeze({ ...failure.holder }) }),
+      });
+    case "recovery-required":
+      return Object.freeze({
+        ...failure,
+        ...(failure.evidence === undefined
+          ? {}
+          : { evidence: Object.freeze(failure.evidence.map((row) => Object.freeze({ ...row }))) }),
+      });
+    case "unrepresentable":
+      return Object.freeze({ ...failure, paths: Object.freeze([...failure.paths]) });
     default:
       return Object.freeze({ ...failure });
   }
