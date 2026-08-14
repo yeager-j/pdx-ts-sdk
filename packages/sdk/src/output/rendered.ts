@@ -6,6 +6,7 @@ import {
   compareLogicalPaths,
   compareUtf8,
   normalizeLogicalPath,
+  portableIdentity,
   type LogicalPath,
 } from "../ordering.ts";
 
@@ -197,11 +198,11 @@ export function createRenderedMod(
   for (let leftIndex = 0; leftIndex < normalized.length; leftIndex++) {
     const left = normalized[leftIndex]!;
     const leftComponents = left.path.split("/");
-    const leftPortable = leftComponents.map((component) => component.toLowerCase());
+    const leftPortable = leftComponents.map(portableIdentity);
     for (let rightIndex = leftIndex + 1; rightIndex < normalized.length; rightIndex++) {
       const right = normalized[rightIndex]!;
       const rightComponents = right.path.split("/");
-      const rightPortable = rightComponents.map((component) => component.toLowerCase());
+      const rightPortable = rightComponents.map(portableIdentity);
       const shared = Math.min(leftPortable.length, rightPortable.length);
       let common = 0;
       let alias = false;

@@ -62,6 +62,20 @@ describe("RenderedMod", () => {
     expect(() => render(forged)).toThrow(PathOwnershipError);
   });
 
+  it("rejects two claims only an uppercasing filesystem would collapse", () => {
+    // Greek medial and final sigma: distinct under lowercasing, one name under
+    // NTFS's uppercase table. Adjudicating by lowercase alone accepted both,
+    // and materializing on Windows then wrote two claims to one entry and lost
+    // a file's bytes. Claim versus claim, not claim versus a foreign entry —
+    // the sink's check is a separate gate and cannot stand in for this one.
+    expect(() =>
+      createRenderedMod("rendered_probe", "", [
+        { path: "assets/σigma.txt", owner: "medial", text: "one" },
+        { path: "assets/ςigma.txt", owner: "final", text: "two" },
+      ])
+    ).toThrow(PathOwnershipError);
+  });
+
   it("reports ownership conflicts independently of claim order", () => {
     const first = compiled.contentFiles[0]!;
     const alias: ContentFile = {
