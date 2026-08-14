@@ -25,9 +25,13 @@ import {
 import { compareUtf8 } from "../ordering.ts";
 import {
   issueReceipt,
+  openReceipt,
+  receiptDigest,
   type DescriptorSnapshot,
   type ForeignSnapshotEntry,
+  type MaterializationReceipt,
   type MaterializationSnapshot,
+  type OpenedReceipt,
   type OwnedSnapshotEntry,
 } from "./receipt.ts";
 import { renderedFileBytes, type RenderedMod } from "./rendered.ts";
@@ -96,7 +100,48 @@ export interface MaterializationInspection {
   readonly snapshot: MaterializationSnapshot;
   /** Every target-relative path the inspection accounted for. */
   readonly known: ReadonlySet<string>;
+  /** Owned drift a replay receipt matched, and so waived. Otherwise empty. */
+  readonly waivedDrift: readonly MaterializationDrift[];
+  /**
+   * Whether a replay receipt described exactly this state. The descriptor is
+   * digested into the receipt but examined by `install` after this pass, so it
+   * needs the verdict rather than only its consequence for the owned set.
+   */
+  readonly receiptAccepted: boolean;
   readonly manifest?: MaterializationManifest;
+}
+
+/** A foreign entry as a report names it: what it is, not how to carry it. */
+export interface ForeignReportEntry {
+  /** Target-relative, "/"-separated. */
+  readonly path: string;
+  readonly kind: "file" | "directory";
+}
+
+/** A leftover the SDK could not remove after the materialization committed. */
+export interface CleanupWarning {
+  /** Absolute path of the leftover. */
+  readonly path: string;
+  readonly message: string;
+}
+
+export interface MaterializationReport {
+  readonly status: "written" | "unchanged";
+  /** Absolute path of the ownership manifest. */
+  readonly manifestPath: string;
+  /** Preserved entries the SDK does not own, minus OS metadata. */
+  readonly foreignEntries: readonly ForeignReportEntry[];
+  readonly warnings: readonly CleanupWarning[];
+}
+
+export interface WriteReport extends MaterializationReport {
+  /** The authoritative absolute output path, whatever form the caller gave. */
+  readonly outDir: string;
+}
+
+export interface InstallReport extends MaterializationReport {
+  readonly contentDir: string;
+  readonly descriptorPath: string;
 }
 
 export interface StagedMaterialization {
@@ -140,24 +185,108 @@ export async function withMaterializationLock<T>(
 }
 
 /** Replace an SDK-owned output tree with exactly one rendered snapshot. */
-export async function write(outDir: string | URL, rendered: RenderedMod): Promise<void> {
-  const target = resolveTarget(outDir);
-  await withMaterializationLock(target, async () => {
-    const staged = await stageMaterialization(target, rendered, "build");
+export async function write(outDir: string | URL, rendered: RenderedMod): Promise<WriteReport> {
+  return materialize(resolveTarget(outDir), rendered, undefined);
+}
+
+/**
+ * `write`, plus the authority to replace owned entries that drifted.
+ *
+ * The receipt converts a drift refusal and nothing else. It has to describe
+ * the state found now to convert one; a receipt that does not, or a target
+ * that never drifted, simply waives nothing and this is `write`. That is safe
+ * because ordinary materialization already destroys nothing: an owned set
+ * matching the manifest is output the SDK wrote, and everything else is either
+ * preserved or refused. An unowned target is never replaceable at all.
+ */
+export async function replaceMaterialization(
+  outDir: string | URL,
+  rendered: RenderedMod,
+  receipt: MaterializationReceipt
+): Promise<WriteReport> {
+  return materialize(resolveTarget(outDir), rendered, openReceipt(receipt));
+}
+
+async function materialize(
+  target: string,
+  rendered: RenderedMod,
+  receipt: OpenedReceipt | undefined
+): Promise<WriteReport> {
+  return withMaterializationLock(target, async () => {
+    const inspection = await validateExistingMaterialization(target, rendered, "build", {
+      receipt,
+    });
+    const common = {
+      manifestPath: path.join(target, MATERIALIZATION_MANIFEST),
+      foreignEntries: reportForeign(inspection.foreign),
+    };
+    if (ownedSetMatches(inspection, rendered)) {
+      return freezeReport({ status: "unchanged", outDir: target, ...common, warnings: [] });
+    }
+    const staged = await stageMaterialization(target, rendered, "build", inspection);
     await activateMaterialization(staged);
-    await discardPrevious(staged);
+    return freezeReport({
+      status: "written",
+      outDir: target,
+      ...common,
+      warnings: await discardPrevious(staged),
+    });
   });
 }
 
+/**
+ * Whether the target already holds exactly this render. Waived drift is the
+ * one case where the manifest agrees with the render and the tree does not, so
+ * a replay must still stage.
+ */
+export function ownedSetMatches(
+  inspection: MaterializationInspection,
+  rendered: RenderedMod
+): boolean {
+  return (
+    inspection.kind === "owned" &&
+    inspection.waivedDrift.length === 0 &&
+    inspection.manifest?.sha256 === rendered.sha256
+  );
+}
+
+/** Every foreign entry a report names: OS metadata is carried but not reported. */
+export function reportForeign(foreign: readonly ForeignEntry[]): readonly ForeignReportEntry[] {
+  return foreign
+    .filter(
+      (entry) => !OS_METADATA_BASENAMES.has(entry.path.slice(entry.path.lastIndexOf("/") + 1))
+    )
+    .map((entry) => Object.freeze({ path: entry.path, kind: entry.kind }))
+    .sort((a, b) => compareUtf8(a.path, b.path));
+}
+
+export function freezeReport<T extends MaterializationReport>(report: T): T {
+  return Object.freeze({
+    ...report,
+    foreignEntries: Object.freeze([...report.foreignEntries]),
+    warnings: Object.freeze(report.warnings.map((warning) => Object.freeze({ ...warning }))),
+  });
+}
+
+export interface StageOptions {
+  /** Install mode only: the descriptor record the manifest must record. */
+  readonly launcherDescriptor?: LauncherDescriptorRecord;
+}
+
+/**
+ * Build the replacement tree beside the target. It takes the inspection rather
+ * than making one: staging a target nobody classified would carry no foreign
+ * entries and refuse nothing, so the two steps stay one decision.
+ */
 export async function stageMaterialization(
   target: string,
   rendered: RenderedMod,
   mode: MaterializationMode,
-  launcherDescriptor?: LauncherDescriptorRecord,
-  descriptor?: DescriptorSnapshot
+  inspection: MaterializationInspection,
+  options: StageOptions = {}
 ): Promise<StagedMaterialization> {
+  const launcherDescriptor = options.launcherDescriptor;
   await mkdir(path.dirname(target), { recursive: true });
-  const inspection = await validateExistingMaterialization(target, rendered, mode, descriptor);
   const staging = path.join(path.dirname(target), `.pdx-staging-${randomUUID()}`);
   const previous = path.join(path.dirname(target), `.pdx-previous-${randomUUID()}`);
   let preserved: readonly PreservedEntry[];
@@ -227,14 +356,35 @@ export async function rollbackMaterialization(staged: StagedMaterialization): Pr
   await rm(staged.staging, { recursive: true, force: true });
 }
 
-export async function discardPrevious(staged: StagedMaterialization): Promise<void> {
-  if (staged.hadPrevious) {
-    await rm(staged.previous, { recursive: true, force: true });
+/**
+ * Post-commit cleanup. The materialization is already published, so a leftover
+ * that cannot be removed is news for the report rather than a failure: throwing
+ * here would tell a caller their build failed when it succeeded.
+ */
+export async function discardPrevious(
+  staged: StagedMaterialization
+): Promise<readonly CleanupWarning[]> {
+  return staged.hadPrevious ? discardLeftover(staged.previous) : [];
+}
+
+export async function discardLeftover(leftover: string): Promise<readonly CleanupWarning[]> {
+  try {
+    await rm(leftover, { recursive: true, force: true });
+    return [];
+  } catch (error) {
+    return [{ path: leftover, message: error instanceof Error ? error.message : String(error) }];
   }
 }
 
 export async function discardStaging(staged: StagedMaterialization): Promise<void> {
   await rm(staged.staging, { recursive: true, force: true });
+}
+
+export interface InspectionOptions {
+  /** Install mode only: the launcher descriptor's state, observed already. */
+  readonly descriptor?: DescriptorSnapshot;
+  /** A replay receipt, which waives owned drift it describes exactly. */
+  readonly receipt?: OpenedReceipt;
 }
 
 /**
@@ -247,11 +397,12 @@ export async function validateExistingMaterialization(
   target: string,
   rendered: RenderedMod,
   mode: MaterializationMode,
-  descriptor?: DescriptorSnapshot
+  options: InspectionOptions = {}
 ): Promise<MaterializationInspection> {
+  const descriptor = options.descriptor;
   const targetStats = await lstatOrUndefined(target);
   if (targetStats === undefined) {
-    return { kind: "absent", foreign: [], snapshot: emptySnapshot(descriptor), known: new Set() };
+    return { kind: "absent", ...unmaterialized(descriptor) };
   }
   if (targetStats.isSymbolicLink()) {
     throw unowned(target, `Refusing to replace ${target}: it is a symlink, not an SDK-owned tree.`);
@@ -264,17 +415,18 @@ export async function validateExistingMaterialization(
   }
   const entries = await readdir(target);
   if (entries.length === 0) {
-    return { kind: "empty", foreign: [], snapshot: emptySnapshot(descriptor), known: new Set() };
+    return { kind: "empty", ...unmaterialized(descriptor) };
   }
 
   if (entries.every((name) => OS_METADATA_BASENAMES.has(name))) {
     const classified = await classifyTarget(target, new Map(), descriptor);
-    refuse(target, mode, rendered.prefix, rendered, classified);
+    const verdict = refuse(target, mode, rendered.prefix, rendered, classified, options.receipt);
     return {
       kind: "empty",
       foreign: classified.foreign,
       snapshot: classified.snapshot,
       known: classified.known,
+      ...verdict,
     };
   }
 
@@ -304,13 +456,14 @@ export async function validateExistingMaterialization(
     new Map(manifest.files.map((file) => [file.path, file])),
     descriptor
   );
-  refuse(target, mode, rendered.prefix, rendered, classified);
+  const verdict = refuse(target, mode, rendered.prefix, rendered, classified, options.receipt);
   return {
     kind: "owned",
     foreign: classified.foreign,
     snapshot: classified.snapshot,
     known: classified.known,
     manifest,
+    ...verdict,
   };
 }
 
@@ -337,13 +490,6 @@ export async function observeDescriptor(descriptorPath: string): Promise<Descrip
     byteLength: bytes.byteLength,
     sha256: createHash("sha256").update(bytes).digest("hex"),
   };
-}
-
-export async function installedDescriptorRecord(
-  target: string
-): Promise<LauncherDescriptorRecord | undefined> {
-  const manifest = await readManifest(path.join(target, MATERIALIZATION_MANIFEST), target);
-  return manifest.launcherDescriptor;
 }
 
 export function descriptorRecord(basename: string, contents: string): LauncherDescriptorRecord {
@@ -494,20 +640,29 @@ async function classifyTarget(
   };
 }
 
+/** What a pass through `refuse` leaves the inspection to carry. */
+type RefusalVerdict = Pick<MaterializationInspection, "waivedDrift" | "receiptAccepted">;
+
 function refuse(
   target: string,
   mode: MaterializationMode,
   prefix: string,
   rendered: RenderedMod,
-  classified: ClassifiedTarget
-): void {
+  classified: ClassifiedTarget,
+  receipt: OpenedReceipt | undefined
+): RefusalVerdict {
   if (classified.refused.length > 0) {
     throw new MaterializationError(target, {
       reason: "foreign-unpreservable",
       entries: classified.refused,
     });
   }
-  if (classified.drift.length > 0) {
+  // A receipt only ever subtracts a refusal, so an unmatched one is not itself
+  // an error: it waives nothing, and every refusal below fires as it would
+  // have without it.
+  const accepted =
+    receipt !== undefined && describesState(receipt, target, mode, prefix, classified.snapshot);
+  if (classified.drift.length > 0 && !accepted) {
     throw new MaterializationError(target, {
       reason: "drift",
       drift: classified.drift,
@@ -518,6 +673,27 @@ function refuse(
   if (conflicts.length > 0) {
     throw new MaterializationError(target, { reason: "foreign-conflict", conflicts });
   }
+  return { waivedDrift: accepted ? classified.drift : [], receiptAccepted: accepted };
+}
+
+/**
+ * Whether a receipt is a review of the state just observed. The digest already
+ * covers target, mode and prefix, but comparing them on their own is what
+ * makes a receipt from somewhere else read as the mismatch it is.
+ */
+function describesState(
+  receipt: OpenedReceipt,
+  target: string,
+  mode: MaterializationMode,
+  prefix: string,
+  snapshot: MaterializationSnapshot
+): boolean {
+  return (
+    receipt.target === target &&
+    receipt.mode === mode &&
+    receipt.prefix === prefix &&
+    receipt.digest === receiptDigest(target, mode, prefix, snapshot)
+  );
 }
 
 /**
@@ -767,8 +943,17 @@ function unowned(target: string, detail: string): MaterializationError {
   return new MaterializationError(target, { reason: "unowned", detail });
 }
 
-function emptySnapshot(descriptor?: DescriptorSnapshot): MaterializationSnapshot {
-  return { owned: [], foreign: [], ...(descriptor === undefined ? {} : { descriptor }) };
+/** The inspection of a target holding no materialization to drift from. */
+function unmaterialized(
+  descriptor: DescriptorSnapshot | undefined
+): Omit<MaterializationInspection, "kind"> {
+  return {
+    foreign: [],
+    snapshot: { owned: [], foreign: [], ...(descriptor === undefined ? {} : { descriptor }) },
+    known: new Set(),
+    waivedDrift: [],
+    receiptAccepted: false,
+  };
 }
 
 async function writeRenderedTree(

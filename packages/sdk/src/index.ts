@@ -294,12 +294,20 @@ export {
   type MintedLocalizationKey,
   type ReplacementLocalizationItem,
 } from "./authoring/localization.ts";
-export { install, type InstallOptions, type InstallResult } from "./output/install.ts";
+export { install, replaceInstallation, type InstallOptions } from "./output/install.ts";
 export { render } from "./output/render.ts";
 export { renderLauncherDescriptor } from "./output/render.ts";
 export type { RenderedFile, RenderedMod } from "./output/rendered.ts";
 export type { MaterializationReceipt } from "./output/receipt.ts";
-export { write } from "./output/write.ts";
+export {
+  replaceMaterialization,
+  write,
+  type CleanupWarning,
+  type ForeignReportEntry,
+  type InstallReport,
+  type MaterializationReport,
+  type WriteReport,
+} from "./output/write.ts";
 export {
   DEFAULT_CONTENT_PATTERN,
   discoverFeatures,

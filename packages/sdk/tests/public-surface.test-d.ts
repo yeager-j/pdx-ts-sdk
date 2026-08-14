@@ -71,6 +71,55 @@ describe("the public authoring surface", () => {
     expectTypeOf(mod.feature(undefined, [technology, building, megastructure])).toBeObject();
   });
 
+  it("returns one report shape from every materialization sink", () => {
+    // The sinks are what a build script's last line calls, so the report is
+    // the whole answer it gets: where the output went, what was carried, what
+    // could not be cleaned up.
+    expectTypeOf<Awaited<ReturnType<typeof sdk.write>>>().toEqualTypeOf<sdk.WriteReport>();
+    expectTypeOf<
+      Awaited<ReturnType<typeof sdk.replaceMaterialization>>
+    >().toEqualTypeOf<sdk.WriteReport>();
+    expectTypeOf<Awaited<ReturnType<typeof sdk.install>>>().toEqualTypeOf<sdk.InstallReport>();
+    expectTypeOf<
+      Awaited<ReturnType<typeof sdk.replaceInstallation>>
+    >().toEqualTypeOf<sdk.InstallReport>();
+
+    expectTypeOf<sdk.WriteReport>().toExtend<sdk.MaterializationReport>();
+    expectTypeOf<sdk.InstallReport>().toExtend<sdk.MaterializationReport>();
+    expectTypeOf<sdk.WriteReport["outDir"]>().toEqualTypeOf<string>();
+    expectTypeOf<sdk.InstallReport["contentDir"]>().toEqualTypeOf<string>();
+    expectTypeOf<sdk.InstallReport["descriptorPath"]>().toEqualTypeOf<string>();
+    expectTypeOf<sdk.MaterializationReport["status"]>().toEqualTypeOf<"written" | "unchanged">();
+    expectTypeOf<sdk.MaterializationReport["manifestPath"]>().toEqualTypeOf<string>();
+    expectTypeOf<sdk.MaterializationReport["foreignEntries"]>().toEqualTypeOf<
+      readonly sdk.ForeignReportEntry[]
+    >();
+    expectTypeOf<sdk.MaterializationReport["warnings"]>().toEqualTypeOf<
+      readonly sdk.CleanupWarning[]
+    >();
+    expectTypeOf<sdk.ForeignReportEntry["kind"]>().toEqualTypeOf<"file" | "directory">();
+    expectTypeOf<sdk.CleanupWarning>().toEqualTypeOf<{
+      readonly path: string;
+      readonly message: string;
+    }>();
+  });
+
+  it("takes no receipt a caller could have written themselves", () => {
+    // The brand is required, not optional. An optional one lets `{}` satisfy
+    // the parameter, which turns a forged review into a runtime error at the
+    // replay call — the place a caller has least reason to expect one.
+    expectTypeOf({}).not.toExtend<sdk.MaterializationReceipt>();
+    expectTypeOf<
+      Parameters<typeof sdk.replaceMaterialization>[2]
+    >().toEqualTypeOf<sdk.MaterializationReceipt>();
+    expectTypeOf<
+      Parameters<typeof sdk.replaceInstallation>[1]
+    >().toEqualTypeOf<sdk.MaterializationReceipt>();
+    const replay = (_receipt: sdk.MaterializationReceipt): void => {};
+    // @ts-expect-error — a plain object is not evidence of an observed state.
+    replay({});
+  });
+
   it("does not re-export legacy authoring values", () => {
     // @ts-expect-error — assembly is owned by the capability's compile method.
     void sdk.buildMod;
@@ -100,5 +149,7 @@ describe("the public authoring surface", () => {
     void sdk.patchMegastructure;
     // @ts-expect-error — contributions are capability methods.
     void sdk.addShipOfSizeLimits;
+    // @ts-expect-error — installing reports, so the bare result type is gone.
+    expectTypeOf<sdk.InstallResult>().toBeObject();
   });
 });

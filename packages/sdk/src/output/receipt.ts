@@ -23,9 +23,14 @@ const RECEIPT_VERSION = "1";
 
 declare const receiptBrand: unique symbol;
 
-/** Evidence of one observed target state; only `issueReceipt` mints one. */
+/**
+ * Evidence of one observed target state; only `issueReceipt` mints one. The
+ * brand is required rather than optional so `{}` does not satisfy it: an
+ * optional brand makes the forgery a runtime error at the replay call, which
+ * is exactly where a caller has least reason to expect one.
+ */
 export interface MaterializationReceipt {
-  readonly [receiptBrand]?: never;
+  readonly [receiptBrand]: never;
 }
 
 /** The drift-relevant kinds an owned path can be found in. */
@@ -84,7 +89,7 @@ export interface OpenedReceipt {
 }
 
 class Receipt implements OpenedReceipt, MaterializationReceipt {
-  declare readonly [receiptBrand]?: never;
+  declare readonly [receiptBrand]: never;
   readonly target: string;
   readonly mode: string;
   readonly prefix: string;
@@ -106,6 +111,19 @@ export function issueReceipt(
   snapshot: MaterializationSnapshot
 ): MaterializationReceipt {
   return new Receipt(target, mode, prefix, digestSnapshot(target, mode, prefix, snapshot));
+}
+
+/**
+ * The digest a receipt for this state would carry. Replay compares an offered
+ * receipt against it, and must reach the same value the refusal would mint.
+ */
+export function receiptDigest(
+  target: string,
+  mode: string,
+  prefix: string,
+  snapshot: MaterializationSnapshot
+): string {
+  return digestSnapshot(target, mode, prefix, snapshot);
 }
 
 export function openReceipt(receipt: MaterializationReceipt): OpenedReceipt {

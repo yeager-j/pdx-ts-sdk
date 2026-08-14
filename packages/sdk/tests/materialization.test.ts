@@ -32,10 +32,24 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { createMod, install, MaterializationError, render, write } from "../src/index.ts";
+import {
+  createMod,
+  install,
+  MaterializationError,
+  render,
+  renderLauncherDescriptor,
+  replaceInstallation,
+  replaceMaterialization,
+  write,
+  type MaterializationReceipt,
+} from "../src/index.ts";
 import { issueReceipt, openReceipt, type MaterializationSnapshot } from "../src/output/receipt.ts";
-import { createRenderedMod } from "../src/output/rendered.ts";
-import { activateMaterialization, stageMaterialization } from "../src/output/write.ts";
+import { createRenderedMod, type RenderedMod } from "../src/output/rendered.ts";
+import {
+  activateMaterialization,
+  stageMaterialization,
+  validateExistingMaterialization,
+} from "../src/output/write.ts";
 
 /** Permission tests are meaningless as root, which ignores the bits. */
 const asRoot = process.getuid?.() === 0;
@@ -77,6 +91,7 @@ const renderedBare = render(capability.compile([capability.feature(undefined, []
 
 const OWNED_FILE = "common/technology/mz_probe_technology.txt";
 const EXTRA_FILE = "common/technology/mz_probe_extra.txt";
+const MANIFEST = ".pdx-sdk-manifest.json";
 
 const temps: string[] = [];
 function tempDir(): string {
@@ -85,7 +100,17 @@ function tempDir(): string {
   return dir;
 }
 
+/** Directories a test made unwritable on purpose, so cleanup can undo it. */
+const unwritable: string[] = [];
+
 afterEach(() => {
+  for (const dir of unwritable.splice(0)) {
+    try {
+      chmodSync(dir, 0o700);
+    } catch {
+      // Already gone, or never created; the removal below is the point.
+    }
+  }
   for (const dir of temps.splice(0)) {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -108,13 +133,35 @@ async function materialized(): Promise<string> {
   return out;
 }
 
-/** The digest of the receipt a drift refusal hands back. */
-async function driftDigest(operation: Promise<unknown>): Promise<string> {
+/** The receipt a drift refusal hands back. */
+async function driftReceipt(operation: Promise<unknown>): Promise<MaterializationReceipt> {
   const error = await refusal(operation);
   if (error.failure.reason !== "drift") {
     throw new Error(`expected a drift refusal, got ${error.reason}`);
   }
-  return openReceipt(error.failure.receipt).digest;
+  return error.failure.receipt;
+}
+
+/** The digest of the receipt a drift refusal hands back. */
+async function driftDigest(operation: Promise<unknown>): Promise<string> {
+  return openReceipt(await driftReceipt(operation)).digest;
+}
+
+/** Stage without activating, the way the two sinks do it internally. */
+async function stageBuild(out: string, rendered: RenderedMod) {
+  const inspection = await validateExistingMaterialization(out, rendered, "build");
+  return stageMaterialization(out, rendered, "build", inspection);
+}
+
+/** Every rendered path present with exactly the rendered bytes, and no more. */
+function expectExactly(out: string, rendered: RenderedMod, extras: readonly string[]): void {
+  for (const file of rendered.values()) {
+    expect(readFileSync(join(out, ...file.path.split("/")))).toEqual(Buffer.from(file.bytes()));
+  }
+  const top = [...rendered.keys()].map((relPath) => relPath.split("/")[0]!);
+  expect(readdirSync(out).sort()).toEqual(
+    [...new Set([...top, MANIFEST, ...extras])].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))
+  );
 }
 
 describe("drift is the owned set and nothing else", () => {
@@ -464,7 +511,7 @@ describe("the target is rechecked at the commit point", () => {
     const out = await materialized();
     const notes = join(out, "notes.txt");
     writeFileSync(notes, "mine", "utf8");
-    const staged = await stageMaterialization(out, renderedMod, "build");
+    const staged = await stageBuild(out, renderedMod);
 
     writeFileSync(notes, "changed during staging", "utf8");
 
@@ -485,7 +532,7 @@ describe("the target is rechecked at the commit point", () => {
     // it into the set-aside tree and delete it with that tree. Nothing the
     // scan never saw may be destroyed on the strength of the scan.
     const out = await materialized();
-    const staged = await stageMaterialization(out, renderedMod, "build");
+    const staged = await stageBuild(out, renderedMod);
 
     writeFileSync(join(out, "dropped-in.txt"), "saved mid-build", "utf8");
 
@@ -507,7 +554,7 @@ describe("the target is rechecked at the commit point", () => {
     const parent = tempDir();
     const out = join(parent, "out");
     await write(out, renderedMod);
-    const staged = await stageMaterialization(out, renderedMod, "build");
+    const staged = await stageBuild(out, renderedMod);
 
     chmodSync(parent, 0o500);
     const error = await refusal(activateMaterialization(staged));
@@ -573,5 +620,227 @@ describe("receipts", () => {
     // Replay compares digests. A field the digest ignores is a change a
     // reviewed replacement would silently accept.
     expect(digestOf(changed)).not.toBe(digestOf(snapshot));
+  });
+});
+
+describe("a materialization that would change nothing does nothing", () => {
+  it("reports a second identical write as unchanged, untouched", async () => {
+    // Rewriting identical bytes is not free: it changes every mtime in the
+    // tree, which is what an editor, a file watcher and the launcher all key
+    // off. A build that produced the same render must be a no-op on disk.
+    const parent = tempDir();
+    const out = join(parent, "out");
+    expect((await write(out, renderedMod)).status).toBe("written");
+    const before = statSync(join(out, OWNED_FILE));
+
+    const report = await write(out, renderedMod);
+
+    expect(report.status).toBe("unchanged");
+    expect(report.outDir).toBe(out);
+    expect(report.manifestPath).toBe(join(out, MANIFEST));
+    expect(report.warnings).toEqual([]);
+    const after = statSync(join(out, OWNED_FILE));
+    expect(after.ino).toBe(before.ino);
+    expect(after.mtimeMs).toBe(before.mtimeMs);
+    // Nothing was staged: no sibling was created, used and renamed away.
+    expect(readdirSync(parent)).toEqual(["out"]);
+  });
+
+  it("reports a second identical install as unchanged, descriptor included", async () => {
+    // The descriptor is the other half of the same materialization, so
+    // "unchanged" has to cover it too — and rewriting it is what the launcher
+    // notices.
+    const root = tempDir();
+    const first = await install(renderedMod, { modDir: root });
+    expect(first.status).toBe("written");
+    const before = statSync(first.descriptorPath);
+
+    const report = await install(renderedMod, { modDir: root });
+
+    expect(report.status).toBe("unchanged");
+    expect(report.contentDir).toBe(first.contentDir);
+    expect(report.descriptorPath).toBe(first.descriptorPath);
+    expect(report.manifestPath).toBe(join(first.contentDir, MANIFEST));
+    expect(statSync(first.descriptorPath).mtimeMs).toBe(before.mtimeMs);
+    expect(readdirSync(root).sort()).toEqual(["mz_probe", "mz_probe.mod"]);
+  });
+});
+
+describe("the report says what was carried and what was left behind", () => {
+  it("lists foreign entries in order, and never OS metadata", async () => {
+    // The author's own files are the report's subject: they are what a build
+    // silently kept. OS metadata is noise nobody put there on purpose, so
+    // reporting it would train a reader to skip the list.
+    const out = await materialized();
+    mkdirSync(join(out, "extras"));
+    writeFileSync(join(out, "extras/keep.bin"), "payload", "utf8");
+    writeFileSync(join(out, "extras/.DS_Store"), "finder", "utf8");
+    writeFileSync(join(out, ".DS_Store"), "finder", "utf8");
+    writeFileSync(join(out, "notes.txt"), "mine", "utf8");
+
+    const written = await write(out, renderedWithExtra);
+
+    expect(written.status).toBe("written");
+    expect(written.foreignEntries).toEqual([
+      { path: "extras", kind: "directory" },
+      { path: "extras/keep.bin", kind: "file" },
+      { path: "notes.txt", kind: "file" },
+    ]);
+    // Exempt from the report, still carried across the swap.
+    expect(readFileSync(join(out, ".DS_Store"), "utf8")).toBe("finder");
+    expect(readFileSync(join(out, "extras/.DS_Store"), "utf8")).toBe("finder");
+
+    const unchanged = await write(out, renderedWithExtra);
+    expect(unchanged.status).toBe("unchanged");
+    expect(unchanged.foreignEntries).toEqual(written.foreignEntries);
+  });
+
+  it.skipIf(!posix)("warns about a leftover it could not remove after committing", async () => {
+    // The set-aside tree is removed after the swap has already published the
+    // new output. Failing there would report a build that succeeded as a
+    // failure, and hide the one thing the author has to clean up by hand.
+    const out = await materialized();
+    const locked = join(out, "locked");
+    mkdirSync(locked);
+    writeFileSync(join(locked, "held.txt"), "held", "utf8");
+    // Readable and traversable but not writable: the SDK can carry the entry
+    // into staging, and `rm -r` of the set-aside copy cannot unlink the child.
+    chmodSync(locked, 0o500);
+    unwritable.push(locked);
+
+    const report = await write(out, renderedWithExtra);
+
+    expect(report.status).toBe("written");
+    expect(report.warnings).toHaveLength(1);
+    const warning = report.warnings[0]!;
+    unwritable.push(join(warning.path, "locked"));
+    expect(warning.path).toContain(".pdx-previous-");
+    expect(warning.message).not.toBe("");
+    // The new output is published, and the author's directory came with it.
+    expect(existsSync(join(out, EXTRA_FILE))).toBe(true);
+    expect(readFileSync(join(locked, "held.txt"), "utf8")).toBe("held");
+  });
+});
+
+describe("a receipt replaces exactly the state it reviewed", () => {
+  it("replaces the drifted owned set and leaves foreign entries alone", async () => {
+    const out = await materialized();
+    writeFileSync(join(out, "notes.txt"), "mine\n", "utf8");
+    writeFileSync(join(out, OWNED_FILE), "hand edited", "utf8");
+    const receipt = await driftReceipt(write(out, renderedWithExtra));
+
+    const report = await replaceMaterialization(out, renderedWithExtra, receipt);
+
+    expect(report.status).toBe("written");
+    expectExactly(out, renderedWithExtra, ["notes.txt"]);
+    expect(readFileSync(join(out, "notes.txt"), "utf8")).toBe("mine\n");
+    expect(report.foreignEntries).toEqual([{ path: "notes.txt", kind: "file" }]);
+  });
+
+  it("refuses a stale receipt with a fresh one that then works", async () => {
+    // A receipt is evidence about one moment. If the tree moved on after it was
+    // issued, replaying it would accept a second change nobody reviewed — so
+    // the refusal repeats, with evidence for the state that exists now.
+    const out = join(tempDir(), "out");
+    await write(out, renderedWithExtra);
+    writeFileSync(join(out, OWNED_FILE), "hand edited", "utf8");
+    const stale = await driftReceipt(write(out, renderedWithExtra));
+
+    writeFileSync(join(out, EXTRA_FILE), "also edited", "utf8");
+    const error = await refusal(replaceMaterialization(out, renderedWithExtra, stale));
+
+    expect(error.reason).toBe("drift");
+    if (error.failure.reason !== "drift") {
+      throw new Error("unreachable");
+    }
+    expect(error.failure.drift.map((entry) => entry.path).sort()).toEqual(
+      [EXTRA_FILE, OWNED_FILE].sort()
+    );
+    const fresh = error.failure.receipt;
+    expect(openReceipt(fresh).digest).not.toBe(openReceipt(stale).digest);
+    expect(readFileSync(join(out, OWNED_FILE), "utf8")).toBe("hand edited");
+
+    expect((await replaceMaterialization(out, renderedWithExtra, fresh)).status).toBe("written");
+    expectExactly(out, renderedWithExtra, []);
+  });
+
+  it("never replaces a target that stopped being owned", async () => {
+    // There is no adoption mode. A receipt converts a drift refusal; it is not
+    // a claim of ownership over a tree the SDK no longer has a manifest for.
+    const out = await materialized();
+    writeFileSync(join(out, OWNED_FILE), "hand edited", "utf8");
+    const receipt = await driftReceipt(write(out, renderedMod));
+    rmSync(join(out, MANIFEST));
+
+    const error = await refusal(replaceMaterialization(out, renderedMod, receipt));
+
+    expect(error.reason).toBe("unowned");
+    expect(readFileSync(join(out, OWNED_FILE), "utf8")).toBe("hand edited");
+  });
+
+  it("refuses a forged receipt before touching the target", async () => {
+    const out = await materialized();
+    writeFileSync(join(out, OWNED_FILE), "hand edited", "utf8");
+
+    await expect(replaceMaterialization(out, renderedMod, {} as never)).rejects.toThrow(TypeError);
+
+    expect(readFileSync(join(out, OWNED_FILE), "utf8")).toBe("hand edited");
+  });
+
+  it("refuses a receipt issued for another target", async () => {
+    // Two outputs of the same mod drift identically often — the same edit, the
+    // same bytes. Only the target keeps one review from authorizing the other.
+    const first = await materialized();
+    const second = await materialized();
+    writeFileSync(join(first, OWNED_FILE), "hand edited", "utf8");
+    writeFileSync(join(second, OWNED_FILE), "hand edited", "utf8");
+    const receipt = await driftReceipt(write(first, renderedMod));
+
+    const error = await refusal(replaceMaterialization(second, renderedMod, receipt));
+
+    expect(error.reason).toBe("drift");
+    expect(readFileSync(join(second, OWNED_FILE), "utf8")).toBe("hand edited");
+  });
+
+  it("never replays over a descriptor that became a directory", async () => {
+    // The snapshot reduces a directory to the word "other", so no receipt can
+    // be evidence about what is inside it — and replacing it means renaming it
+    // aside and deleting it whole. This is the one drift a receipt cannot
+    // convert; the author removes the directory by hand.
+    const root = tempDir();
+    const { descriptorPath } = await install(renderedMod, { modDir: root });
+    rmSync(descriptorPath);
+    mkdirSync(descriptorPath);
+    writeFileSync(join(descriptorPath, "inside.txt"), "not reviewed", "utf8");
+
+    const receipt = await driftReceipt(install(renderedMod, { modDir: root }));
+    const again = await refusal(replaceInstallation(renderedMod, receipt, { modDir: root }));
+
+    expect(again.reason).toBe("drift");
+    if (again.failure.reason !== "drift") {
+      throw new Error("unreachable");
+    }
+    expect(again.failure.drift).toEqual([{ path: "mz_probe.mod", kind: "type-changed" }]);
+    expect(statSync(descriptorPath).isDirectory()).toBe(true);
+    expect(readFileSync(join(descriptorPath, "inside.txt"), "utf8")).toBe("not reviewed");
+  });
+
+  it("replays an install over a hand-edited launcher descriptor", async () => {
+    // The descriptor drifts on the content directory's receipt, so replaying
+    // it has to rewrite both halves back into agreement.
+    const root = tempDir();
+    const { contentDir, descriptorPath } = await install(renderedMod, { modDir: root });
+    writeFileSync(descriptorPath, 'name="Edited By Hand"\n', "utf8");
+    const receipt = await driftReceipt(install(renderedWithExtra, { modDir: root }));
+
+    const report = await replaceInstallation(renderedWithExtra, receipt, { modDir: root });
+
+    expect(report.status).toBe("written");
+    expect(report.contentDir).toBe(contentDir);
+    expect(readFileSync(descriptorPath, "utf8")).toBe(
+      renderLauncherDescriptor(renderedWithExtra, contentDir)
+    );
+    expectExactly(contentDir, renderedWithExtra, []);
+    expect(readdirSync(root).sort()).toEqual(["mz_probe", "mz_probe.mod"]);
   });
 });
