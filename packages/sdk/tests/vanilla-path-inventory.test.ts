@@ -36,7 +36,12 @@ describe("packagedVanillaPaths", () => {
     }
     const second = packagedVanillaPaths();
     expect(second).toBe(first);
-    expect(Object.isFrozen(first)).toBe(true);
+    // Real immutability, not `Object.isFrozen`: freezing a `Set` object
+    // leaves its `.add`/`.delete` internal-slot mutators reachable, so a
+    // frozen-but-still-mutable set would pass that check anyway. The
+    // wrapper this returns (`immutableSet`, compiler/freeze.ts) has no `add`
+    // at all.
+    expect((first as Partial<Set<string>>).add).toBeUndefined();
   });
 });
 

@@ -16,20 +16,27 @@
 
 import { VANILLA_PATH_GAME_VERSION, VANILLA_PATHS } from "@pdx-ts/stellaris-ids/paths";
 
+import { immutableSet } from "../compiler/freeze.ts";
 import { VanillaPathInventoryError } from "../errors.ts";
 import { vanillaPackageGameVersion } from "./version-scheme.ts";
 
 let cached: ReadonlySet<string> | undefined;
 
 /**
- * Every path the packaged vanilla inventory ships, as a frozen `Set`. Built
- * lazily on first call and memoized — the same reference comes back on every
- * later call — so the tens of thousands of entries are turned into a `Set`
- * at most once per process, however many builds run in it.
+ * Every path the packaged vanilla inventory ships, as an immutable `Set`.
+ * Built lazily on first call and memoized — the same reference comes back on
+ * every later call — so the tens of thousands of entries are turned into a
+ * `Set` at most once per process, however many builds run in it.
+ *
+ * `immutableSet` (`compiler/freeze.ts`), not `Object.freeze(new Set(...))`:
+ * freezing a `Set` object freezes its own properties but not the internal
+ * slots `.add`/`.delete` mutate, so a frozen `Set` still accepts `.add()`.
+ * This value is memoized module-wide and handed to every build, so a real
+ * mutator has to be absent, not merely refused by a check nothing enforces.
  */
 export function packagedVanillaPaths(): ReadonlySet<string> {
   if (cached === undefined) {
-    cached = Object.freeze(new Set(VANILLA_PATHS));
+    cached = immutableSet(VANILLA_PATHS);
   }
   return cached;
 }
