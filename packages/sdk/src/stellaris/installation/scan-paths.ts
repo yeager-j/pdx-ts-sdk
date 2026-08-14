@@ -127,8 +127,10 @@ export function readZipEntryNames(bytes: Uint8Array, context: string): readonly 
 
   const decoder = new TextDecoder("utf-8", { fatal: true });
   const names: string[] = [];
+  let records = 0;
   let cursor = directoryOffset;
   while (cursor < end) {
+    records += 1;
     if (cursor + CENTRAL_HEADER_LENGTH > end) {
       return refuse(
         `central directory record at ${cursor} overruns the directory; it is truncated`
@@ -164,6 +166,17 @@ export function readZipEntryNames(bytes: Uint8Array, context: string): readonly 
       names.push(name);
     }
     cursor = nameEnd + extraLength + commentLength;
+  }
+  // The archive's own count against the one just walked — directory entries
+  // included, because that is what the count counts. Without this, an archive
+  // truncated at a record boundary whose directory size was rewritten to match
+  // parses cleanly and yields a short inventory, which is the one failure this
+  // reader must never produce.
+  if (records !== entriesTotal) {
+    return refuse(
+      `states ${entriesTotal} central directory ${entriesTotal === 1 ? "record" : "records"} ` +
+        `and holds ${records}; the archive is truncated or malformed`
+    );
   }
   return names;
 }

@@ -192,6 +192,36 @@ describe("readZipEntryNames", () => {
     );
   });
 
+  it("refuses an archive whose stated entry count is not what its directory holds", () => {
+    // The failure the size checks cannot see: a truncation at a record
+    // boundary with the directory size rewritten to match it. Everything
+    // parses, and the only surviving evidence is the count the archive states.
+    const bytes = buildZip(["music/track.ogg", "gfx/ship.mesh"]);
+    eocdAt(bytes).setUint32(12, 46 + "music/track.ogg".length, true);
+    expect(() => readZipEntryNames(bytes, "chopped.zip")).toThrow(VanillaPathInventoryError);
+    expect(() => readZipEntryNames(bytes, "chopped.zip")).toThrow(
+      /^chopped\.zip: states 2 central directory records and holds 1/
+    );
+  });
+
+  it("refuses an archive carrying a ZIP64 locator", () => {
+    const valid = buildZip(["music/track.ogg"]);
+    const locator = new Uint8Array(20);
+    new DataView(locator.buffer).setUint32(0, 0x07064b50, true);
+    // Spliced in immediately before the end-of-central-directory record, which
+    // is where a real ZIP64 archive keeps it; the records before it are
+    // untouched, so every other field stays valid.
+    const bytes = concat([
+      valid.subarray(0, valid.length - 22),
+      locator,
+      valid.subarray(valid.length - 22),
+    ]);
+    expect(() => readZipEntryNames(bytes, "zip64.zip")).toThrow(VanillaPathInventoryError);
+    expect(() => readZipEntryNames(bytes, "zip64.zip")).toThrow(
+      /^zip64\.zip: carries a ZIP64 locator/
+    );
+  });
+
   it("refuses ZIP64 rather than guessing at what it cannot read", () => {
     const bytes = buildZip(["music/track.ogg"]);
     eocdAt(bytes).setUint16(10, 0xffff, true);
