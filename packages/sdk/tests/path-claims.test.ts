@@ -244,6 +244,25 @@ describe("vanilla evidence", () => {
     ).toEqual(["vanilla"]);
   });
 
+  it("names the vanilla file by its real spelling, not by its folded identity", () => {
+    // The identity is what matches; it is not a filename. Reporting the fold of
+    // `Straße.txt` would send an author looking for `strasse.txt`, which is
+    // nothing on disk — and the same applies to any vanilla path whose case or
+    // Unicode form the fold changes.
+    const conflicts = conflictsOf([claim("common/Straße.txt")], new Set(["common/Straße.txt"]));
+    expect(conflicts[0]!.claimants.map((claimant) => [claimant.kind, claimant.path])).toEqual([
+      ["content", "common/Straße.txt"],
+      ["vanilla", "common/Straße.txt"],
+    ]);
+  });
+
+  it("names the reserved path by its real spelling too", () => {
+    const conflicts = conflictsOf([claim("DESCRIPTOR.MOD")]);
+    expect(conflicts[0]!.claimants.find((claimant) => claimant.kind === "reserved")?.path).toBe(
+      "descriptor.mod"
+    );
+  });
+
   it("exempts the descriptor, which never lands in the game's own tree", () => {
     expect(() =>
       adjudicatePaths({

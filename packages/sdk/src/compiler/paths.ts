@@ -79,13 +79,21 @@ export interface PathClaim {
 }
 
 /**
- * Which producer kind may occupy each reserved path. The descriptor is reserved
- * from everyone *but its own channel*, which still has to emit it; the manifest
- * is reserved from everyone, and is the one reserved path no claim ever carries.
+ * Which producer kind may occupy each reserved path, keyed by portability
+ * identity so an aliased spelling is caught too. The descriptor is reserved from
+ * everyone *but its own channel*, which still has to emit it; the manifest is
+ * reserved from everyone, and is the one reserved path no claim ever carries.
+ * Each entry keeps its real spelling, because that is what a conflict reports.
  */
-const RESERVED_OCCUPANTS: ReadonlyMap<string, PathProducerKind | undefined> = new Map([
-  [portablePathKey(DESCRIPTOR_PATH), "descriptor" as const],
-  [portablePathKey(MATERIALIZATION_MANIFEST_PATH), undefined],
+const RESERVED_OCCUPANTS: ReadonlyMap<
+  string,
+  { readonly path: LogicalPath; readonly occupant: PathProducerKind | undefined }
+> = new Map([
+  [portablePathKey(DESCRIPTOR_PATH), { path: DESCRIPTOR_PATH, occupant: "descriptor" as const }],
+  [
+    portablePathKey(MATERIALIZATION_MANIFEST_PATH),
+    { path: MATERIALIZATION_MANIFEST_PATH, occupant: undefined },
+  ],
 ]);
 
 /** Read before "you have this twice": a path you may not have at all. */
@@ -171,15 +179,24 @@ export function adjudicatePaths(args: {
     }
   }
 
-  // Folded once rather than per node: SDK-173 grows this set to every path the
-  // base game and its DLC occupy, and membership is all the tree needs.
-  const vanillaKeys =
-    args.vanillaPaths === undefined
-      ? undefined
-      : new Set([...args.vanillaPaths].map((path) => portablePathKey(path as LogicalPath)));
+  // Folded once rather than per node: SDK-173 grows this to every path the base
+  // game and its DLC occupy, and a lookup is all the tree needs. It maps back to
+  // the real spelling rather than being a set of keys, because a conflict has to
+  // name a file the author can go and look at — the fold of `Straße.txt` is
+  // `strasse.txt`, which is nothing on disk. Two vanilla paths can share one
+  // key, so the byte-least wins, the same way a node picks among its spellings.
+  const vanillaByKey = args.vanillaPaths === undefined ? undefined : new Map<string, LogicalPath>();
+  for (const raw of args.vanillaPaths ?? []) {
+    const path = raw as LogicalPath;
+    const key = portablePathKey(path);
+    const seen = vanillaByKey!.get(key);
+    if (seen === undefined || compareUtf8(path, seen) < 0) {
+      vanillaByKey!.set(key, path);
+    }
+  }
 
   const conflicts: PathOwnershipConflict[] = [];
-  collectConflicts(root, vanillaKeys, conflicts);
+  collectConflicts(root, vanillaByKey, conflicts);
   if (conflicts.length > 0) {
     conflicts.sort(
       (a, b) =>
@@ -207,7 +224,7 @@ export function adjudicatePaths(args: {
  */
 function collectConflicts(
   node: Node,
-  vanillaKeys: ReadonlySet<string> | undefined,
+  vanillaByKey: ReadonlyMap<string, LogicalPath> | undefined,
   conflicts: PathOwnershipConflict[]
 ): void {
   const spellings = [...node.spellings.values()].sort((a, b) => compareUtf8(a.prefix, b.prefix));
@@ -257,14 +274,16 @@ function collectConflicts(
       }
     }
 
-    if (RESERVED_OCCUPANTS.has(node.key)) {
-      const sanctioned = RESERVED_OCCUPANTS.get(node.key);
-      const trespassers = [...files, ...through].filter((claimant) => claimant.kind !== sanctioned);
+    const reserved = RESERVED_OCCUPANTS.get(node.key);
+    if (reserved !== undefined) {
+      const trespassers = [...files, ...through].filter(
+        (claimant) => claimant.kind !== reserved.occupant
+      );
       if (trespassers.length > 0) {
         conflicts.push({
           path: nodePath,
           reason: "reserved",
-          claimants: [...trespassers, reservedClaimant(node.key)].sort(compareClaimants),
+          claimants: [...trespassers, reservedClaimant(reserved.path)].sort(compareClaimants),
         });
       }
     }
@@ -272,21 +291,18 @@ function collectConflicts(
     // Emitting over a vanilla file replaces that file wholesale. Reserved nodes
     // are exempt: `descriptor.mod` is every mod's own and never lands in the
     // game's own tree.
-    if (
-      vanillaKeys?.has(node.key) === true &&
-      !RESERVED_OCCUPANTS.has(node.key) &&
-      files.length > 0
-    ) {
+    const occupied = vanillaByKey?.get(node.key);
+    if (occupied !== undefined && reserved === undefined && files.length > 0) {
       conflicts.push({
         path: nodePath,
         reason: "vanilla",
-        claimants: [...files, vanillaClaimant(node.key)].sort(compareClaimants),
+        claimants: [...files, vanillaClaimant(occupied)].sort(compareClaimants),
       });
     }
   }
 
   for (const identity of [...node.children.keys()].sort(compareUtf8)) {
-    collectConflicts(node.children.get(identity)!, vanillaKeys, conflicts);
+    collectConflicts(node.children.get(identity)!, vanillaByKey, conflicts);
   }
 }
 
@@ -329,13 +345,19 @@ function claimantOf(
   };
 }
 
-function reservedClaimant(key: string): PathClaimant {
-  return { path: key, kind: "reserved", stems: [], detail: "reserved by the SDK", role: "file" };
+/**
+ * The other side of a reserved or vanilla conflict. Both take a real logical
+ * path rather than the node's portability identity: a claimant's `path` is the
+ * exact spelling of a file, and the fold of `Straße.txt` is `strasse.txt` —
+ * accurate as an identity, useless to an author trying to find the file.
+ */
+function reservedClaimant(path: LogicalPath): PathClaimant {
+  return { path, kind: "reserved", stems: [], detail: "reserved by the SDK", role: "file" };
 }
 
-function vanillaClaimant(key: string): PathClaimant {
+function vanillaClaimant(path: LogicalPath): PathClaimant {
   return {
-    path: key,
+    path,
     kind: "vanilla",
     stems: [],
     detail: "a file the base game or its DLC already occupies",
