@@ -40,9 +40,17 @@ export interface OwnedSnapshotEntry {
   readonly sha256: string;
 }
 
+/**
+ * Stat-identity rows. Two populations share this shape, because both are
+ * states the SDK observed but does not own the contents of: foreign entries,
+ * which are only ever files or directories, and the descendants of an owned
+ * path found as a directory — a type change whose subtree would otherwise
+ * digest identically no matter what is under it, which are recorded with
+ * whatever kind they were found in.
+ */
 export interface ForeignSnapshotEntry {
   readonly path: string;
-  readonly kind: "file" | "directory";
+  readonly kind: "file" | "directory" | "symlink" | "other";
   readonly dev: number;
   readonly ino: number;
   readonly size: number;
@@ -50,7 +58,9 @@ export interface ForeignSnapshotEntry {
 }
 
 export type DescriptorSnapshot =
-  | { readonly state: "absent" | "symlink" | "other" }
+  | { readonly state: "absent" }
+  | { readonly state: "symlink" }
+  | { readonly state: "other" }
   | {
       readonly state: "file";
       readonly basename: string;

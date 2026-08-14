@@ -17,6 +17,7 @@
 
 import { execFileSync } from "node:child_process";
 import {
+  chmodSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
@@ -33,7 +34,12 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { createMod, install, MaterializationError, render, write } from "../src/index.ts";
 import { issueReceipt, openReceipt, type MaterializationSnapshot } from "../src/output/receipt.ts";
+import { createRenderedMod } from "../src/output/rendered.ts";
 import { activateMaterialization, stageMaterialization } from "../src/output/write.ts";
+
+/** Permission tests are meaningless as root, which ignores the bits. */
+const asRoot = process.getuid?.() === 0;
+const posix = process.platform !== "win32" && !asRoot;
 
 const capability = createMod({
   name: "Materialization Probe",
@@ -102,6 +108,15 @@ async function materialized(): Promise<string> {
   return out;
 }
 
+/** The digest of the receipt a drift refusal hands back. */
+async function driftDigest(operation: Promise<unknown>): Promise<string> {
+  const error = await refusal(operation);
+  if (error.failure.reason !== "drift") {
+    throw new Error(`expected a drift refusal, got ${error.reason}`);
+  }
+  return openReceipt(error.failure.receipt).digest;
+}
+
 describe("drift is the owned set and nothing else", () => {
   it("refuses a modified owned file and hands back a receipt", async () => {
     // Rebuilding over a hand-edited owned file destroys the edit. The receipt
@@ -164,6 +179,23 @@ describe("drift is the owned set and nothing else", () => {
     }
     expect(error.failure.drift).toEqual([{ path: OWNED_FILE, kind }]);
   });
+
+  it("puts the contents of a type-changed directory in the receipt", async () => {
+    // "This owned file is now a directory" is the same sentence whatever is
+    // inside it. Replaying a receipt that stopped at the type change would
+    // accept a subtree nobody reviewed, so the subtree has to be digested.
+    const out = await materialized();
+    const child = join(out, OWNED_FILE, "child.txt");
+    rmSync(join(out, OWNED_FILE));
+    mkdirSync(join(out, OWNED_FILE));
+    writeFileSync(child, "one", "utf8");
+
+    const first = await driftDigest(write(out, renderedMod));
+    writeFileSync(child, "a considerably longer body", "utf8");
+    const second = await driftDigest(write(out, renderedMod));
+
+    expect(second).not.toBe(first);
+  });
 });
 
 describe("foreign entries survive the swap", () => {
@@ -212,6 +244,21 @@ describe("foreign entries survive the swap", () => {
     expect(readFileSync(join(contentDir, "extras/deep/keep.bin"), "utf8")).toBe("payload");
     expect(statSync(join(contentDir, "extras/deep/keep.bin")).ino).toBe(before);
     expect(readdirSync(root).sort()).toEqual(["mz_probe", "mz_probe.mod"]);
+  });
+
+  it.skipIf(!posix)("keeps a preserved directory's permissions", async () => {
+    // A directory is recreated in staging rather than moved, so its mode has
+    // to be reapplied: an author's 0700 folder silently becoming world-readable
+    // is a build changing something it was asked only to carry.
+    const out = await materialized();
+    mkdirSync(join(out, "private"));
+    writeFileSync(join(out, "private/secret.txt"), "hidden", "utf8");
+    chmodSync(join(out, "private"), 0o700);
+
+    await write(out, renderedMod);
+
+    expect(statSync(join(out, "private")).mode & 0o777).toBe(0o700);
+    expect(readFileSync(join(out, "private/secret.txt"), "utf8")).toBe("hidden");
   });
 });
 
@@ -310,6 +357,36 @@ describe("a rendered claim never lands on a foreign entry", () => {
     ]);
   });
 
+  it("refuses a foreign path that differs from a claim only by Unicode form", async () => {
+    // macOS hands back decomposed names for files stored under a composed one,
+    // and logical paths are always composed. Folding case alone would let the
+    // two names look distinct right up until the filesystem collapsed them.
+    const out = await bare();
+    // Written as escapes: the two literals are the same name in the two
+    // Unicode forms, and an editor that normalized the file would erase the case.
+    const composed = "assets/caf\u00e9.txt";
+    const decomposed = "assets/cafe\u0301.txt";
+    mkdirSync(join(out, "assets"));
+    writeFileSync(join(out, decomposed), "author's own", "utf8");
+    const claiming = createRenderedMod("mz_probe", "", [
+      { path: composed, owner: "test", text: "rendered\n" },
+    ]);
+
+    const error = await refusal(write(out, claiming));
+
+    expect(error.reason).toBe("foreign-conflict");
+    if (error.failure.reason !== "foreign-conflict") {
+      throw new Error("unreachable");
+    }
+    expect(error.failure.conflicts).toHaveLength(1);
+    const conflict = error.failure.conflicts[0]!;
+    expect(conflict.claimPath).toBe(composed);
+    expect(conflict.kind).toBe("occupied");
+    // Which form comes back is the filesystem's choice; both name one file.
+    expect(conflict.foreignPath.normalize("NFC")).toBe(composed);
+    expect(readFileSync(join(out, decomposed), "utf8")).toBe("author's own");
+  });
+
   it("refuses a foreign path that differs from a claim only by case", async () => {
     // A case-insensitive filesystem collapses the two, so the swap would
     // overwrite the author's file even though the names are not equal.
@@ -379,7 +456,7 @@ describe("an unowned target is never replaced", () => {
   });
 });
 
-describe("preserved identities are rechecked at the commit point", () => {
+describe("the target is rechecked at the commit point", () => {
   it("refuses to activate when a preserved file changed while staging", async () => {
     // Staging links the foreign file, then the activation rename publishes it.
     // A file rewritten in between would be published as whatever staging
@@ -401,6 +478,50 @@ describe("preserved identities are rechecked at the commit point", () => {
     expect(readdirSync(dirname(out))).toEqual(["out"]);
     expect(existsSync(join(out, OWNED_FILE))).toBe(true);
   });
+
+  it("refuses to activate when a new entry appeared while staging", async () => {
+    // A file saved into the output after the scan — by the author, or by the
+    // OS writing metadata — is in no preserved list, so the swap would carry
+    // it into the set-aside tree and delete it with that tree. Nothing the
+    // scan never saw may be destroyed on the strength of the scan.
+    const out = await materialized();
+    const staged = await stageMaterialization(out, renderedMod, "build");
+
+    writeFileSync(join(out, "dropped-in.txt"), "saved mid-build", "utf8");
+
+    const error = await refusal(activateMaterialization(staged));
+    expect(error.reason).toBe("busy");
+    if (error.failure.reason !== "busy") {
+      throw new Error("unreachable");
+    }
+    expect(error.failure.detail).toContain("dropped-in.txt");
+    expect(readFileSync(join(out, "dropped-in.txt"), "utf8")).toBe("saved mid-build");
+    expect(readdirSync(dirname(out))).toEqual(["out"]);
+  });
+
+  it.skipIf(!posix)("reports a failed set-aside rename as an activation failure", async () => {
+    // The rename that moves the old output aside used to sit outside the
+    // error contract: a parent that turned unwritable surfaced a raw errno and
+    // left the staging directory behind, with no statement about what happened
+    // to the author's output.
+    const parent = tempDir();
+    const out = join(parent, "out");
+    await write(out, renderedMod);
+    const staged = await stageMaterialization(out, renderedMod, "build");
+
+    chmodSync(parent, 0o500);
+    const error = await refusal(activateMaterialization(staged));
+    chmodSync(parent, 0o700);
+
+    expect(error.reason).toBe("activation");
+    if (error.failure.reason !== "activation") {
+      throw new Error("unreachable");
+    }
+    // Nothing moved, so the previous output is intact — and it says so.
+    expect(error.failure.rolledBack).toBe(true);
+    expect(error.cause).toBeDefined();
+    expect(existsSync(join(out, OWNED_FILE))).toBe(true);
+  });
 });
 
 describe("receipts", () => {
@@ -413,6 +534,23 @@ describe("receipts", () => {
   function digestOf(next: MaterializationSnapshot): string {
     return openReceipt(issueReceipt("/target", "install", "mz_probe", next)).digest;
   }
+
+  it("covers the launcher descriptor when content drifts on an install", async () => {
+    // Both halves of an install are one materialization. A content-drift
+    // receipt issued before anything looked at the sibling `.mod` would digest
+    // two different install states identically, and replaying it would
+    // overwrite a descriptor nobody reviewed. Same content state twice, only
+    // the descriptor differing, must give two digests.
+    const root = tempDir();
+    const { contentDir, descriptorPath } = await install(renderedMod, { modDir: root });
+    writeFileSync(join(contentDir, OWNED_FILE), "hand edited", "utf8");
+
+    const first = await driftDigest(install(renderedMod, { modDir: root }));
+    writeFileSync(descriptorPath, 'name="Edited By Hand"\n', "utf8");
+    const second = await driftDigest(install(renderedMod, { modDir: root }));
+
+    expect(second).not.toBe(first);
+  });
 
   it("refuses to open anything it did not issue", () => {
     // A receipt is a review of a state someone actually looked at. A plain

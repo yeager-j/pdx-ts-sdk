@@ -48,12 +48,13 @@ One validated Logical path and its immutable exact bytes, with byte length and S
 
 **Materialization**:
 Failure-safe exact activation of one Rendered mod beneath a chosen directory. The ownership manifest
-lets a later build remove stale generated files while refusing added, modified, missing, type-changed,
-or symlinked paths.
+lets a later build remove stale generated files while refusing drift on the paths it owns — modified,
+missing, type-changed, or symlinked.
 
-**Merge write**:
-The explicitly secondary sink that adds or overwrites the Rendered mod's files without deleting
-unrelated paths. It is not the scaffolded build default.
+**Foreign entry**:
+An entry present in a materialization target that the ownership manifest does not own. Foreign files
+and directories are preserved across activation, never deleted; foreign symlinks, FIFOs, sockets and
+devices cannot be preserved and are refused, as is any Rendered file claiming a foreign path.
 
 **Contribution**:
 An item that adds to a shared, non-id-keyed object several features write into

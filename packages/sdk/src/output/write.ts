@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import { constants, type Stats } from "node:fs";
 import {
+  chmod,
   copyFile,
   link,
   lstat,
@@ -24,6 +25,7 @@ import {
 import { compareUtf8 } from "../ordering.ts";
 import {
   issueReceipt,
+  type DescriptorSnapshot,
   type ForeignSnapshotEntry,
   type MaterializationSnapshot,
   type OwnedSnapshotEntry,
@@ -78,6 +80,8 @@ export interface ForeignEntry {
   readonly path: string;
   readonly kind: "file" | "directory";
   readonly identity: ForeignIdentity;
+  /** Permission bits, so a preserved directory keeps the ones it had. */
+  readonly permissions: number;
 }
 
 export interface PreservedEntry {
@@ -90,6 +94,8 @@ export interface MaterializationInspection {
   readonly kind: "absent" | "empty" | "owned";
   readonly foreign: readonly ForeignEntry[];
   readonly snapshot: MaterializationSnapshot;
+  /** Every target-relative path the inspection accounted for. */
+  readonly known: ReadonlySet<string>;
   readonly manifest?: MaterializationManifest;
 }
 
@@ -103,6 +109,7 @@ export interface StagedMaterialization {
   readonly prefix: string;
   readonly snapshot: MaterializationSnapshot;
   readonly preserved: readonly PreservedEntry[];
+  readonly known: ReadonlySet<string>;
 }
 
 const materializationTails = new Map<string, Promise<void>>();
@@ -146,10 +153,11 @@ export async function stageMaterialization(
   target: string,
   rendered: RenderedMod,
   mode: MaterializationMode,
-  launcherDescriptor?: LauncherDescriptorRecord
+  launcherDescriptor?: LauncherDescriptorRecord,
+  descriptor?: DescriptorSnapshot
 ): Promise<StagedMaterialization> {
   await mkdir(path.dirname(target), { recursive: true });
-  const inspection = await validateExistingMaterialization(target, rendered, mode);
+  const inspection = await validateExistingMaterialization(target, rendered, mode, descriptor);
   const staging = path.join(path.dirname(target), `.pdx-staging-${randomUUID()}`);
   const previous = path.join(path.dirname(target), `.pdx-previous-${randomUUID()}`);
   let preserved: readonly PreservedEntry[];
@@ -170,13 +178,24 @@ export async function stageMaterialization(
     prefix: rendered.prefix,
     snapshot: inspection.snapshot,
     preserved,
+    known: inspection.known,
   };
 }
 
 export async function activateMaterialization(staged: StagedMaterialization): Promise<void> {
-  await revalidatePreserved(staged);
+  await revalidateTarget(staged);
   if (staged.hadPrevious) {
-    await rename(staged.target, staged.previous);
+    try {
+      await rename(staged.target, staged.previous);
+    } catch (error) {
+      // The target never moved, so the previous output is exactly as found.
+      await removeQuietly(staged.staging);
+      throw new MaterializationError(
+        staged.target,
+        { reason: "activation", rolledBack: true },
+        { cause: error }
+      );
+    }
   }
   try {
     await rename(staged.staging, staged.target);
@@ -190,7 +209,7 @@ export async function activateMaterialization(staged: StagedMaterialization): Pr
       }
     }
     if (rolledBack) {
-      await rm(staged.staging, { recursive: true, force: true });
+      await removeQuietly(staged.staging);
     }
     throw new MaterializationError(
       staged.target,
@@ -227,11 +246,12 @@ export async function discardStaging(staged: StagedMaterialization): Promise<voi
 export async function validateExistingMaterialization(
   target: string,
   rendered: RenderedMod,
-  mode: MaterializationMode
+  mode: MaterializationMode,
+  descriptor?: DescriptorSnapshot
 ): Promise<MaterializationInspection> {
   const targetStats = await lstatOrUndefined(target);
   if (targetStats === undefined) {
-    return { kind: "absent", foreign: [], snapshot: emptySnapshot() };
+    return { kind: "absent", foreign: [], snapshot: emptySnapshot(descriptor), known: new Set() };
   }
   if (targetStats.isSymbolicLink()) {
     throw unowned(target, `Refusing to replace ${target}: it is a symlink, not an SDK-owned tree.`);
@@ -244,13 +264,18 @@ export async function validateExistingMaterialization(
   }
   const entries = await readdir(target);
   if (entries.length === 0) {
-    return { kind: "empty", foreign: [], snapshot: emptySnapshot() };
+    return { kind: "empty", foreign: [], snapshot: emptySnapshot(descriptor), known: new Set() };
   }
 
   if (entries.every((name) => OS_METADATA_BASENAMES.has(name))) {
-    const classified = await classifyTarget(target, new Map());
+    const classified = await classifyTarget(target, new Map(), descriptor);
     refuse(target, mode, rendered.prefix, rendered, classified);
-    return { kind: "empty", foreign: classified.foreign, snapshot: classified.snapshot };
+    return {
+      kind: "empty",
+      foreign: classified.foreign,
+      snapshot: classified.snapshot,
+      known: classified.known,
+    };
   }
 
   const manifestPath = path.join(target, MATERIALIZATION_MANIFEST);
@@ -276,14 +301,41 @@ export async function validateExistingMaterialization(
 
   const classified = await classifyTarget(
     target,
-    new Map(manifest.files.map((file) => [file.path, file]))
+    new Map(manifest.files.map((file) => [file.path, file])),
+    descriptor
   );
   refuse(target, mode, rendered.prefix, rendered, classified);
   return {
     kind: "owned",
     foreign: classified.foreign,
     snapshot: classified.snapshot,
+    known: classified.known,
     manifest,
+  };
+}
+
+/**
+ * The launcher descriptor's observed state. `install` reads it before staging
+ * so that a drift receipt covers both halves of an installed materialization:
+ * two installs differing only in their descriptor must not digest the same.
+ */
+export async function observeDescriptor(descriptorPath: string): Promise<DescriptorSnapshot> {
+  const stats = await lstatOrUndefined(descriptorPath);
+  if (stats === undefined) {
+    return { state: "absent" };
+  }
+  if (stats.isSymbolicLink()) {
+    return { state: "symlink" };
+  }
+  if (!stats.isFile()) {
+    return { state: "other" };
+  }
+  const bytes = await readFile(descriptorPath);
+  return {
+    state: "file",
+    basename: path.basename(descriptorPath),
+    byteLength: bytes.byteLength,
+    sha256: createHash("sha256").update(bytes).digest("hex"),
   };
 }
 
@@ -307,6 +359,7 @@ interface ClassifiedTarget {
   readonly drift: readonly MaterializationDrift[];
   readonly foreign: readonly ForeignEntry[];
   readonly refused: readonly ForeignRefusedEntry[];
+  readonly known: ReadonlySet<string>;
   readonly snapshot: MaterializationSnapshot;
 }
 
@@ -318,7 +371,8 @@ interface ClassifiedTarget {
  */
 async function classifyTarget(
   target: string,
-  ownedFiles: ReadonlyMap<string, { readonly byteLength: number; readonly sha256: string }>
+  ownedFiles: ReadonlyMap<string, { readonly byteLength: number; readonly sha256: string }>,
+  descriptor?: DescriptorSnapshot
 ): Promise<ClassifiedTarget> {
   const ownedDirectories = new Set<string>();
   for (const relPath of ownedFiles.keys()) {
@@ -334,6 +388,25 @@ async function classifyTarget(
   const owned: OwnedSnapshotEntry[] = [];
   const foreignSnapshot: ForeignSnapshotEntry[] = [];
   const seen = new Set<string>();
+  const known = new Set<string>([MATERIALIZATION_MANIFEST]);
+
+  /**
+   * An owned path found as a directory is drift, but which directory it is
+   * matters to anyone reviewing it: without the subtree, every possible set
+   * of contents under it digests the same.
+   */
+  const record = async (relative: string): Promise<void> => {
+    const dir = path.join(target, ...relative.split("/"));
+    for (const name of await readdir(dir)) {
+      const relPath = `${relative}/${name}`;
+      const stats = await lstat(path.join(dir, name));
+      known.add(relPath);
+      foreignSnapshot.push({ path: relPath, kind: observedKind(stats), ...identityOf(stats) });
+      if (stats.isDirectory()) {
+        await record(relPath);
+      }
+    }
+  };
 
   const walk = async (relative: string): Promise<void> => {
     const dir = relative === "" ? target : path.join(target, ...relative.split("/"));
@@ -344,6 +417,7 @@ async function classifyTarget(
       }
       const absolute = path.join(dir, name);
       const stats = await lstat(absolute);
+      known.add(relPath);
 
       const expected = ownedFiles.get(relPath);
       if (expected !== undefined) {
@@ -358,14 +432,13 @@ async function classifyTarget(
           if (bytes.byteLength !== expected.byteLength || sha256 !== expected.sha256) {
             drift.push({ path: relPath, kind: "modified" });
           }
+        } else if (stats.isDirectory()) {
+          drift.push({ path: relPath, kind: "type-changed" });
+          owned.push({ path: relPath, kind: "directory", byteLength: 0, sha256: "" });
+          await record(relPath);
         } else {
           drift.push({ path: relPath, kind: "type-changed" });
-          owned.push({
-            path: relPath,
-            kind: stats.isDirectory() ? "directory" : "other",
-            byteLength: 0,
-            sha256: "",
-          });
+          owned.push({ path: relPath, kind: "other", byteLength: 0, sha256: "" });
         }
         continue;
       }
@@ -388,7 +461,7 @@ async function classifyTarget(
       } else if (stats.isDirectory() || stats.isFile()) {
         const kind = stats.isDirectory() ? "directory" : "file";
         const identity = identityOf(stats);
-        foreign.push({ path: relPath, kind, identity });
+        foreign.push({ path: relPath, kind, identity, permissions: stats.mode & 0o7777 });
         foreignSnapshot.push({ path: relPath, kind, ...identity });
         if (kind === "directory") {
           await walk(relPath);
@@ -412,9 +485,11 @@ async function classifyTarget(
     drift: drift.sort(byPath),
     foreign: foreign.sort(byPath),
     refused: refused.sort(byPath),
+    known,
     snapshot: {
       owned: owned.sort(byPath),
       foreign: foreignSnapshot.sort(byPath),
+      ...(descriptor === undefined ? {} : { descriptor }),
     },
   };
 }
@@ -449,7 +524,9 @@ function refuse(
  * A rendered claim that lands on a foreign entry is a refusal, not a
  * replacement — the author's file would be silently destroyed by activation.
  * Comparison uses the lowercased portable component mapping `createRenderedMod`
- * already uses, because that is what the filesystem may collapse.
+ * already uses, because that is what the filesystem may collapse. Foreign
+ * names are normalized as well as folded: logical paths are NFC, and macOS
+ * hands back decomposed names for the same file.
  */
 function findClaimConflicts(
   rendered: RenderedMod,
@@ -458,7 +535,7 @@ function findClaimConflicts(
   const claimByPortable = new Map<string, string>();
   const claimsBelow = new Map<string, string>();
   for (const file of rendered.values()) {
-    const components = file.path.split("/").map((component) => component.toLowerCase());
+    const components = file.path.split("/").map(portableComponent);
     claimByPortable.set(components.join("/"), file.path);
     for (let index = 1; index < components.length; index++) {
       const ancestor = components.slice(0, index).join("/");
@@ -471,7 +548,7 @@ function findClaimConflicts(
 
   const conflicts: ForeignClaimConflict[] = [];
   for (const entry of foreign) {
-    const components = entry.path.split("/").map((component) => component.toLowerCase());
+    const components = entry.path.split("/").map(portableComponent);
     const portable = components.join("/");
     const claimed = claimByPortable.get(portable);
     if (claimed !== undefined) {
@@ -509,6 +586,10 @@ function findClaimConflicts(
     );
 }
 
+function portableComponent(component: string): string {
+  return component.normalize("NFC").toLowerCase();
+}
+
 function ancestorClaim(
   claimByPortable: ReadonlyMap<string, string>,
   components: readonly string[]
@@ -525,7 +606,11 @@ function ancestorClaim(
 /**
  * Foreign entries join the staged tree after the owned one, by hardlink where
  * the filesystem allows it, so activation stays one rename and the author's
- * bytes are never copied twice.
+ * bytes are never copied twice. A hardlinked or copied file keeps its own
+ * permissions; a recreated directory does not, so its mode is applied here —
+ * after the tree is populated, since a directory the author made unwritable
+ * cannot be filled first. ACLs and extended attributes are out of scope: the
+ * contract preserves the entry, not every attribute a filesystem can carry.
  */
 async function preserveForeign(
   target: string,
@@ -545,6 +630,11 @@ async function preserveForeign(
     }
     preserved.push({ path: entry.path, source, identity: entry.identity });
   }
+  for (const entry of foreign) {
+    if (entry.kind === "directory") {
+      await chmod(path.join(staging, ...entry.path.split("/")), entry.permissions);
+    }
+  }
   return preserved;
 }
 
@@ -561,11 +651,14 @@ async function linkOrCopy(source: string, destination: string): Promise<void> {
 }
 
 /**
- * The commit point: a preserved entry that changed while the owned tree was
- * being staged would be activated as a stale copy of itself, so the swap is
- * refused instead.
+ * The commit point. Two ways the target can have moved on since it was
+ * classified, and the swap destroys evidence of both: a preserved entry that
+ * changed would be published as a stale copy of itself, and an entry that
+ * appeared afterwards — the author saving a file, the OS writing metadata
+ * mid-build — would ride into the set-aside tree and be deleted with it.
+ * Neither is worth guessing at, so both refuse.
  */
-async function revalidatePreserved(staged: StagedMaterialization): Promise<void> {
+async function revalidateTarget(staged: StagedMaterialization): Promise<void> {
   const changed: string[] = [];
   for (const entry of staged.preserved) {
     const stats = await lstatOrUndefined(entry.source);
@@ -573,16 +666,65 @@ async function revalidatePreserved(staged: StagedMaterialization): Promise<void>
       changed.push(entry.path);
     }
   }
-  if (changed.length === 0) {
+  const appeared = (await membership(staged.target))
+    .filter((relPath) => !staged.known.has(relPath))
+    .sort(compareUtf8);
+
+  if (changed.length === 0 && appeared.length === 0) {
     return;
   }
-  await rm(staged.staging, { recursive: true, force: true });
+  await removeQuietly(staged.staging);
+  const moved = [...changed.sort(compareUtf8), ...appeared];
   throw new MaterializationError(staged.target, {
     reason: "busy",
     detail:
-      `${changed.length} preserved path${changed.length === 1 ? "" : "s"} changed while the ` +
-      `output was being staged: ${changed.join(", ")}.`,
+      `${moved.length} path${moved.length === 1 ? "" : "s"} changed or appeared while the ` +
+      `output was being staged: ${moved.join(", ")}.`,
   });
+}
+
+/**
+ * Every target-relative path present right now, by kind only — no hashing and
+ * no `lstat` per entry, since this runs on the way into every activation.
+ */
+async function membership(target: string): Promise<string[]> {
+  const found: string[] = [];
+  const walk = async (relative: string): Promise<void> => {
+    const dir = relative === "" ? target : path.join(target, ...relative.split("/"));
+    let entries;
+    try {
+      entries = await readdir(dir, { withFileTypes: true });
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+        return;
+      }
+      throw error;
+    }
+    for (const entry of entries) {
+      const relPath = relative === "" ? entry.name : `${relative}/${entry.name}`;
+      found.push(relPath);
+      // `readdir` never follows, so a symlink to a directory is not one here.
+      if (entry.isDirectory()) {
+        await walk(relPath);
+      }
+    }
+  };
+  await walk("");
+  return found;
+}
+
+/**
+ * Cleanup after a refusal is best effort: the refusal is the news, and a
+ * staging directory that cannot be removed (a parent turned read-only, which
+ * is often what failed the activation in the first place) must not replace
+ * the error explaining why.
+ */
+async function removeQuietly(target: string): Promise<void> {
+  try {
+    await rm(target, { recursive: true, force: true });
+  } catch {
+    // Deliberately swallowed; see above.
+  }
 }
 
 function sameIdentity(observed: ForeignIdentity, expected: ForeignIdentity): boolean {
@@ -596,6 +738,16 @@ function sameIdentity(observed: ForeignIdentity, expected: ForeignIdentity): boo
 
 function identityOf(stats: Stats): ForeignIdentity {
   return { dev: stats.dev, ino: stats.ino, size: stats.size, mtimeMs: stats.mtimeMs };
+}
+
+function observedKind(stats: Stats): ForeignSnapshotEntry["kind"] {
+  if (stats.isSymbolicLink()) {
+    return "symlink";
+  }
+  if (stats.isDirectory()) {
+    return "directory";
+  }
+  return stats.isFile() ? "file" : "other";
 }
 
 function specialKind(stats: Stats): ForeignRefusedEntry["kind"] {
@@ -615,8 +767,8 @@ function unowned(target: string, detail: string): MaterializationError {
   return new MaterializationError(target, { reason: "unowned", detail });
 }
 
-function emptySnapshot(): MaterializationSnapshot {
-  return { owned: [], foreign: [] };
+function emptySnapshot(descriptor?: DescriptorSnapshot): MaterializationSnapshot {
+  return { owned: [], foreign: [], ...(descriptor === undefined ? {} : { descriptor }) };
 }
 
 async function writeRenderedTree(

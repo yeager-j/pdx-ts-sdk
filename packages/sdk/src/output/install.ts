@@ -1,6 +1,5 @@
-import { createHash, randomUUID } from "node:crypto";
-import type { Stats } from "node:fs";
-import { lstat, mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
+import { mkdir, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import { MaterializationError, type MaterializationDriftKind } from "../errors.ts";
@@ -14,6 +13,7 @@ import {
   discardPrevious,
   discardStaging,
   installedDescriptorRecord,
+  observeDescriptor,
   rollbackMaterialization,
   stageMaterialization,
   withMaterializationLock,
@@ -83,9 +83,18 @@ async function installUnlocked(
   nextDescriptor: LauncherDescriptorRecord
 ): Promise<InstallResult> {
   const root = path.dirname(contentDir);
-  const staged = await stageMaterialization(contentDir, rendered, "install", nextDescriptor);
+  // Observed before staging, so a drift refusal from either half of the
+  // install carries one receipt covering content and descriptor together.
+  const descriptor = await observeDescriptor(descriptorPath);
+  const staged = await stageMaterialization(
+    contentDir,
+    rendered,
+    "install",
+    nextDescriptor,
+    descriptor
+  );
   try {
-    await validateCurrentDescriptor(contentDir, descriptorPath, staged);
+    await validateCurrentDescriptor(contentDir, descriptorPath, staged, descriptor);
   } catch (error) {
     await discardStaging(staged);
     throw error;
@@ -137,12 +146,12 @@ async function installUnlocked(
 async function validateCurrentDescriptor(
   contentDir: string,
   descriptorPath: string,
-  staged: StagedMaterialization
+  staged: StagedMaterialization,
+  descriptor: DescriptorSnapshot
 ): Promise<void> {
   const basename = path.basename(descriptorPath);
-  const stats = await lstatOrUndefined(descriptorPath);
   if (!staged.hadOwnedPrevious) {
-    if (stats !== undefined) {
+    if (descriptor.state !== "absent") {
       throw new MaterializationError(contentDir, {
         reason: "unowned",
         detail: `Refusing to install over ${descriptorPath}: it exists without an owned content materialization.`,
@@ -151,31 +160,24 @@ async function validateCurrentDescriptor(
     return;
   }
 
-  if (stats === undefined) {
-    throw descriptorDrift(contentDir, staged, basename, "missing", { state: "absent" });
+  if (descriptor.state === "absent") {
+    throw descriptorDrift(contentDir, staged, basename, "missing");
   }
-  if (stats.isSymbolicLink()) {
-    throw descriptorDrift(contentDir, staged, basename, "symlink", { state: "symlink" });
+  if (descriptor.state === "symlink") {
+    throw descriptorDrift(contentDir, staged, basename, "symlink");
   }
-  if (!stats.isFile()) {
-    throw descriptorDrift(contentDir, staged, basename, "type-changed", { state: "other" });
+  if (descriptor.state === "other") {
+    throw descriptorDrift(contentDir, staged, basename, "type-changed");
   }
 
-  const bytes = await readFile(descriptorPath);
-  const observed: DescriptorSnapshot = {
-    state: "file",
-    basename,
-    byteLength: bytes.byteLength,
-    sha256: createHash("sha256").update(bytes).digest("hex"),
-  };
   const expected = await installedDescriptorRecord(contentDir);
   if (
     expected === undefined ||
-    expected.basename !== observed.basename ||
-    expected.byteLength !== observed.byteLength ||
-    expected.sha256 !== observed.sha256
+    expected.basename !== descriptor.basename ||
+    expected.byteLength !== descriptor.byteLength ||
+    expected.sha256 !== descriptor.sha256
   ) {
-    throw descriptorDrift(contentDir, staged, basename, "modified", observed);
+    throw descriptorDrift(contentDir, staged, basename, "modified");
   }
 }
 
@@ -183,26 +185,11 @@ function descriptorDrift(
   contentDir: string,
   staged: StagedMaterialization,
   basename: string,
-  kind: MaterializationDriftKind,
-  descriptor: DescriptorSnapshot
+  kind: MaterializationDriftKind
 ): MaterializationError {
   return new MaterializationError(contentDir, {
     reason: "drift",
     drift: [{ path: basename, kind }],
-    receipt: issueReceipt(contentDir, staged.mode, staged.prefix, {
-      ...staged.snapshot,
-      descriptor,
-    }),
+    receipt: issueReceipt(contentDir, staged.mode, staged.prefix, staged.snapshot),
   });
-}
-
-async function lstatOrUndefined(target: string): Promise<Stats | undefined> {
-  try {
-    return await lstat(target);
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-      return undefined;
-    }
-    throw error;
-  }
 }
