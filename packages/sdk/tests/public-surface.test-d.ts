@@ -125,6 +125,16 @@ describe("the public authoring surface", () => {
     expectTypeOf<sdk.PureMod["vanillaPaths"]>();
   });
 
+  it("publishes the canonical byte comparator, not just its logical-path door", () => {
+    // `compareUtf8` is public on purpose (SDK-173). The canonical order over
+    // plain strings governs more than one artifact — the emission ledger, and
+    // now the vanilla path inventory `@pdx-ts/codegen-vanilla` emits — and a
+    // second implementation of "byte order" is a second authority that drifts.
+    expectTypeOf(sdk.compareUtf8).toBeFunction();
+    expectTypeOf<Parameters<typeof sdk.compareUtf8>>().toEqualTypeOf<[string, string]>();
+    expectTypeOf<ReturnType<typeof sdk.compareUtf8>>().toEqualTypeOf<-1 | 0 | 1>();
+  });
+
   it("takes no receipt a caller could have written themselves", () => {
     // The brand is required, not optional. An optional one lets `{}` satisfy
     // the parameter, which turns a forged review into a runtime error at the

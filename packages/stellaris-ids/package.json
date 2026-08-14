@@ -20,6 +20,11 @@
       "types": "./dist/effects.d.ts",
       "default": "./dist/effects.js"
     },
+    "./paths": {
+      "pdx-source": "./src/paths.ts",
+      "types": "./dist/paths.d.ts",
+      "default": "./dist/paths.js"
+    },
     "./package.json": "./package.json"
   },
   "publishConfig": {

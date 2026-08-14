@@ -306,3 +306,14 @@ export class VanillaPathCollisionError extends PdxSdkError {}
  * version that differs from the install a `VanillaView` was built from.
  */
 export class VanillaPackageMismatchError extends PdxSdkError {}
+
+/**
+ * The vanilla path inventory is present but cannot be trusted: a DLC archive
+ * that does not parse, an install directory that claimed to exist and would
+ * not be read, or a packaged inventory that was regenerated inconsistently.
+ *
+ * Separate from {@link VanillaPathCollisionError}, which is the ordinary
+ * answer that a mod's path is already vanilla's. This one says the inventory
+ * itself is unusable, so neither answer can be given.
+ */
+export class VanillaPathInventoryError extends PdxSdkError {}

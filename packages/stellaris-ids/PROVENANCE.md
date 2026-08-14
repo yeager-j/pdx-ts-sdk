@@ -5,14 +5,20 @@
 Every identifier vanilla Stellaris defines — content ids, scripted trigger and
 effect names with their `$PARAM$` lists, event ids and namespaces, sprite and
 sound names, resource keys — read out of a real, installed copy of the game
-and shipped as TypeScript types. `@pdx-ts/sdk` imports its lookup tables
+and shipped as TypeScript types. Alongside them, the install's path inventory:
+which paths vanilla occupies, by name. `@pdx-ts/sdk` imports its lookup tables
 (ADR-0006) so every vanilla reference is checked at compile time.
 
-The identifier surface is types with zero runtime payload. Two subpaths are the
-exception: `./triggers` and `./effects` carry one bound call per scripted
+The identifier surface is types with zero runtime payload. Three subpaths are
+the exception. `./triggers` and `./effects` carry one bound call per scripted
 definition, each a single `scriptedTrigger`/`scriptedEffect` call naming the
-definition and the scope inferred for it. They are `/*#__PURE__*/`-annotated so
-a bundler drops the ones a mod does not import.
+definition and the scope inferred for it; they are `/*#__PURE__*/`-annotated so
+a bundler drops the ones a mod does not import. `./paths` carries the path
+inventory as a frozen array of strings — path **names** only, never contents,
+hashes, sizes, or localized text. The names inside DLC archives are read from
+each archive's central directory, which is its table of names; no entry's data
+is ever inflated. Each is its own subpath so that importing the package's root
+loads none of them.
 
 ## Game version
 
@@ -77,9 +83,10 @@ This is a licensing boundary the generator enforces, not merely a convention:
 
 - **Here:** ids, definition names, scripted trigger/effect names and their
   `$PARAM$` lists, event ids and namespaces, sprite and sound names, resource
-  keys, event scope/kind contracts, and the scope each scripted definition is
-  legal in.
-- **Never here:** script bodies, localized text, descriptions, or asset data.
+  keys, event scope/kind contracts, the scope each scripted definition is
+  legal in, and the paths the install occupies.
+- **Never here:** script bodies, localized text, descriptions, or asset data —
+  and, for the path inventory, no file contents, sizes, or hashes either.
 
 Scripted-definition scopes are the one entry derived from a body rather than
 read off one, so it is worth being precise about what crosses. The generator
@@ -112,8 +119,10 @@ npm run codegen:vanilla
 
 Read the report the run prints (per-registry id counts, scoped/scopeless event
 and namespace counts, per-kind event counts, parameterized scripted
-trigger/effect counts, diagnostics, and any licensing-chokepoint rejections —
-there should be zero of the last). Review the diff under
+trigger/effect counts, the path inventory's counts — paths shipped, install
+files walked, DLC archives read, and metadata excluded — diagnostics, and any
+licensing-chokepoint rejections; there should be zero of the last). Review the
+diff under
 `packages/stellaris-ids/src` as a public-API change, then commit the
 generated output together with whatever prompted the regeneration (a game
 patch, a generator fix).
