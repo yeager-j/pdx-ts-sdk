@@ -8,7 +8,11 @@
  * to have exported cannot change what the child runs.
  */
 
-import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
+import {
+  spawn,
+  type ChildProcessWithoutNullStreams,
+  type SpawnOptionsWithoutStdio,
+} from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 import type { Generation } from "./crash-mod.ts";
@@ -24,6 +28,12 @@ export interface ChildRequest {
   /** The point to stop at; unused by `attempt`. */
   readonly point?: string;
   readonly generation: Generation;
+  /**
+   * Run under this many open file descriptors. A limit is the only way to ask
+   * whether the walk holds one descriptor per directory level, because the
+   * process cannot lower its own — so the shell lowers it before exec.
+   */
+  readonly descriptorLimit?: number;
 }
 
 /** What one materialization reported about itself, as data. */
@@ -45,19 +55,29 @@ export interface ChildOutcome {
 }
 
 export function spawnMaterializeChild(request: ChildRequest): ChildProcessWithoutNullStreams {
+  const argv = [
+    "--conditions=pdx-source",
+    CHILD,
+    request.command,
+    request.mode,
+    request.root,
+    request.dirName,
+    request.point ?? "-",
+    String(request.generation),
+  ];
+  const options: SpawnOptionsWithoutStdio = {
+    env: { ...process.env, NODE_OPTIONS: "" },
+    stdio: ["pipe", "pipe", "pipe"],
+  };
+  if (request.descriptorLimit === undefined) {
+    return spawn(process.execPath, argv, options);
+  }
+  // `"$0"` is the interpreter and `"$@"` its arguments, so nothing here is
+  // pasted into a shell word and no path needs quoting.
   return spawn(
-    process.execPath,
-    [
-      "--conditions=pdx-source",
-      CHILD,
-      request.command,
-      request.mode,
-      request.root,
-      request.dirName,
-      request.point ?? "-",
-      String(request.generation),
-    ],
-    { env: { ...process.env, NODE_OPTIONS: "" }, stdio: ["pipe", "pipe", "pipe"] }
+    "/bin/sh",
+    ["-c", `ulimit -n ${request.descriptorLimit}; exec "$0" "$@"`, process.execPath, ...argv],
+    options
   );
 }
 

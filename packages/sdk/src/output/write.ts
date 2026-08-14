@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
-import { constants, type Dir, type Stats } from "node:fs";
+import { constants, type Dir, type Dirent, type Stats } from "node:fs";
 import {
   chmod,
   copyFile,
@@ -730,7 +730,7 @@ async function classifyTarget(
    */
   const record = async (relative: string, identity: DirectoryIdentity): Promise<void> => {
     const dir = path.join(target, ...relative.split("/"));
-    for await (const entry of await openVerifiedDir(target, dir, identity)) {
+    for (const entry of await readVerifiedDir(target, dir, identity)) {
       const name = entry.name;
       const relPath = `${relative}/${name}`;
       const stats = await lstat(path.join(dir, name));
@@ -745,7 +745,7 @@ async function classifyTarget(
 
   const walk = async (relative: string, identity: DirectoryIdentity): Promise<void> => {
     const dir = relative === "" ? target : path.join(target, ...relative.split("/"));
-    for await (const entry of await openVerifiedDir(target, dir, identity)) {
+    for (const entry of await readVerifiedDir(target, dir, identity)) {
       const name = entry.name;
       const relPath = relative === "" ? name : `${relative}/${name}`;
       if (relPath === MATERIALIZATION_MANIFEST_PATH) {
@@ -834,7 +834,8 @@ async function classifyTarget(
 }
 
 /**
- * Open a directory, then prove it is the one that was classified.
+ * Read a directory through a handle, having proved it is the one that was
+ * classified.
  *
  * `readdir` takes a path, and a path is re-resolved every time it is used. A
  * foreign directory swapped for a symlink between the `lstat` that classified
@@ -845,6 +846,13 @@ async function classifyTarget(
  * later points at a symlink, or at a different inode, is refused rather than
  * read.
  *
+ * The entries are drained and the handle closed before the caller descends into
+ * any of them. Holding it open across the recursion would cost one descriptor
+ * per level of the tree, so a deep enough directory would fail at the process's
+ * descriptor limit rather than materialize — and the identity guarantee does
+ * not depend on holding it: these entries came through the verified handle,
+ * whatever the name means by the time the caller uses them.
+ *
  * It is not a full closure. Node exposes no `openat`, and no `fstat` on an open
  * `Dir`, so identity can only be checked through the path — which leaves a
  * window in which a swap put back before the `lstat` reads the substitute
@@ -853,11 +861,11 @@ async function classifyTarget(
  * commit-time backstop: a target whose membership or preserved entries moved
  * during the build refuses at the activation point regardless.
  */
-async function openVerifiedDir(
+async function readVerifiedDir(
   target: string,
   absolute: string,
   expected: DirectoryIdentity
-): Promise<Dir> {
+): Promise<Dirent[]> {
   let dir: Dir;
   try {
     dir = await opendir(absolute);
@@ -879,7 +887,13 @@ async function openVerifiedDir(
         : "it is not the directory that was read a moment earlier"
     );
   }
-  return dir;
+  // Exhausting the iterator closes the handle, which is why nothing here needs
+  // to unwind it: the read is over before the caller sees an entry.
+  const entries: Dirent[] = [];
+  for await (const entry of dir) {
+    entries.push(entry);
+  }
+  return entries;
 }
 
 /** Something under the target changed identity while it was being read. */
@@ -1159,7 +1173,7 @@ async function membership(target: string): Promise<string[]> {
   const found: string[] = [];
   const walk = async (relative: string, identity: DirectoryIdentity): Promise<void> => {
     const dir = relative === "" ? target : path.join(target, ...relative.split("/"));
-    for await (const entry of await openVerifiedDir(target, dir, identity)) {
+    for (const entry of await readVerifiedDir(target, dir, identity)) {
       const relPath = relative === "" ? entry.name : `${relative}/${entry.name}`;
       found.push(relPath);
       // `readdir` never follows, so a symlink to a directory is not one here.

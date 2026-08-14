@@ -14,6 +14,10 @@
  *
  * The swap is performed by the fault-injection seam at the exact instant the
  * attack needs, because a test that raced a timer would pass by luck.
+ *
+ * The last test here is about the same walk from the other side: hardening it
+ * must not have made it cost a file descriptor per directory level, or a deep
+ * enough tree would stop materializing at all.
  */
 
 import {
@@ -24,6 +28,7 @@ import {
   readdirSync,
   readFileSync,
   realpathSync,
+  renameSync,
   rmSync,
   symlinkSync,
   unlinkSync,
@@ -39,6 +44,7 @@ import { lockPathFor } from "../src/output/transaction.ts";
 import { renderGeneration } from "./helpers/crash-mod.ts";
 import { preserveEntry, traversalDescend } from "./helpers/crash-points.ts";
 import { symlinksAvailable } from "./helpers/fs-caps.ts";
+import { runMaterializeChild } from "./helpers/spawn-materialize.ts";
 
 const genOne = renderGeneration(1);
 const genTwo = renderGeneration(2);
@@ -96,6 +102,11 @@ async function scene(): Promise<{
  * The refusal came from the identity check and not from something else that
  * happens to say "busy" — a test that accepted any refusal would keep passing
  * with the hardening removed.
+ *
+ * Only used where the site cannot vary: a name that is a symlink when it is
+ * examined, and a file whose classified inode is still allocated elsewhere, are
+ * refused at the same place on every filesystem. Where inode reuse can move the
+ * refusal to the commit-time backstop, the test asserts the outcome instead.
  */
 function assertRefusedTheSwap(error: MaterializationError, path: string, because: string): void {
   expect(error.reason).toBe("busy");
@@ -140,12 +151,17 @@ describe.skipIf(!symlinksAvailable)("a target that changes under the walk is ref
     // leaves a name that passes every kind test and is not the tree that was
     // classified, and its contents would be carried across the activation as
     // though the author had written them.
+    //
+    // The original is renamed aside rather than removed, which keeps its inode
+    // allocated and so guarantees the substitute a different one on every
+    // filesystem. That makes the descent the site that catches this, here and
+    // everywhere; the variant below is the one where it cannot be.
     const { root, out, foreignDir, outside, secret } = await scene();
     _setMaterializationTestHook((point) => {
       if (point !== traversalDescend("stuff")) {
         return;
       }
-      rmSync(foreignDir, { recursive: true, force: true });
+      renameSync(foreignDir, join(root, "aside"));
       symlinkSync(outside, foreignDir);
       unlinkSync(foreignDir);
       mkdirSync(foreignDir);
@@ -161,6 +177,46 @@ describe.skipIf(!symlinksAvailable)("a target that changes under the walk is ref
     );
     assertUntouched(root, secret);
     expect(existsSync(lockPathFor(out))).toBe(false);
+  });
+
+  it("refuses when the substitute directory reuses the freed inode", async () => {
+    // The documented residual window, under test rather than merely described.
+    // Removing the original frees its inode number, and a filesystem that hands
+    // that number straight back to the next `mkdir` — ext4 readily does, APFS
+    // allocates onward and does not — gives the substitute the same device and
+    // inode the descent check compares. So on some filesystems the walk
+    // proceeds, and `revalidateTarget` refuses at the commit point instead, on
+    // the full identity including a modification time a fresh directory cannot
+    // fake.
+    //
+    // Two sites, one outcome, and the outcome is the contract: refused, with
+    // nothing published and nothing escaped. Pinning the site here would make
+    // the test a claim about the filesystem's inode allocation policy, which is
+    // what it was before ext4 disagreed with APFS about it.
+    const { root, out, foreignDir, outside, secret } = await scene();
+    _setMaterializationTestHook((point) => {
+      if (point !== traversalDescend("stuff")) {
+        return;
+      }
+      rmSync(foreignDir, { recursive: true, force: true });
+      symlinkSync(outside, foreignDir);
+      unlinkSync(foreignDir);
+      mkdirSync(foreignDir);
+      writeFileSync(join(foreignDir, "note.txt"), "a substitute\n", "utf8");
+    });
+
+    const error = await refusal(write(out, genTwo));
+
+    expect(error.reason).toBe("busy");
+    assertUntouched(root, secret);
+    expect(existsSync(lockPathFor(out))).toBe(false);
+    // The target is left in an ordinary state — a foreign directory somebody
+    // put there — so an honest build afterwards carries it rather than
+    // inheriting the refusal.
+    _setMaterializationTestHook();
+    expect((await write(out, genTwo)).status).toBe("written");
+    expect(readFileSync(join(foreignDir, "note.txt"), "utf8")).toBe("a substitute\n");
+    assertUntouched(root, secret);
   });
 
   it("refuses when the path to a preserved file changes before it is carried", async () => {
@@ -187,3 +243,54 @@ describe.skipIf(!symlinksAvailable)("a target that changes under the walk is ref
     expect(existsSync(lockPathFor(out))).toBe(false);
   });
 });
+
+describe.skipIf(process.platform === "win32")(
+  "the pinned walk costs no descriptor per level",
+  () => {
+    /**
+     * Deeper than any descriptor limit the child will be given, and short enough
+     * that the deepest path stays well inside the platform's path ceiling — about
+     * 470 characters, against 1024 on darwin.
+     */
+    const DEPTH = 200;
+    const DESCRIPTOR_LIMIT = 96;
+
+    it(
+      "materializes a deep foreign tree under a small descriptor limit",
+      { timeout: 30_000 },
+      async () => {
+        // Verifying identity means opening the directory, and a walk that held
+        // each handle while it recursed would hold one per level. That is not a
+        // refusal, a race, or anything the author could act on: it is an EMFILE
+        // in the middle of a build. The handle is therefore drained and closed
+        // before the descent, and this is what says so — the limit has to be
+        // lowered in a child, because a process cannot lower its own.
+        const root = tempDir();
+        const out = join(root, "out");
+        await write(out, genOne);
+        let deep = join(out, "deep");
+        mkdirSync(deep);
+        for (let level = 0; level < DEPTH; level++) {
+          deep = join(deep, "d");
+          mkdirSync(deep);
+        }
+        const bottom = join(deep, "note.txt");
+        writeFileSync(bottom, "the deepest file the author has\n", "utf8");
+
+        const built = await runMaterializeChild({
+          command: "attempt",
+          mode: "build",
+          root,
+          dirName: "out",
+          generation: 2,
+          descriptorLimit: DESCRIPTOR_LIMIT,
+        });
+
+        expect(built.report).toEqual({ ok: true, status: "written" });
+        // And the tree came across the activation, rather than being skipped by
+        // whatever gave up on it.
+        expect(readFileSync(bottom, "utf8")).toBe("the deepest file the author has\n");
+      }
+    );
+  }
+);

@@ -186,6 +186,9 @@ const KILL_MATRIX: readonly KillRow[] = [
     outcome: "restored-previous",
     generation: 1,
   },
+  // The journal says the swap is about to happen and the target is already
+  // aside: the staged tree is discarded and the previous output comes back.
+  { mode: "build", point: "content-activating", outcome: "restored-previous", generation: 1 },
   {
     mode: "build",
     point: RENAME_CONTENT_ACTIVATE,
@@ -193,8 +196,12 @@ const KILL_MATRIX: readonly KillRow[] = [
     generation: 2,
   },
   { mode: "build", point: "committed", outcome: "completed-activation", generation: 2 },
+  // Past the commit, with only the lock left to remove.
+  { mode: "build", point: "done", outcome: "cleaned", generation: 2 },
   // An install is not committed until the descriptor follows the content, so
-  // the same instant restores instead.
+  // the same instants restore instead.
+  { mode: "install", point: "inspecting", outcome: "cleaned", generation: 1 },
+  { mode: "install", point: "staging", outcome: "cleaned", generation: 1 },
   { mode: "install", point: "staged", outcome: "cleaned", generation: 1 },
   { mode: "install", point: "content-deactivating", outcome: "cleaned", generation: 1 },
   {
@@ -203,9 +210,16 @@ const KILL_MATRIX: readonly KillRow[] = [
     outcome: "restored-previous",
     generation: 1,
   },
+  { mode: "install", point: "content-activating", outcome: "restored-previous", generation: 1 },
   {
     mode: "install",
     point: RENAME_CONTENT_ACTIVATE,
+    outcome: "restored-previous",
+    generation: 1,
+  },
+  {
+    mode: "install",
+    point: "descriptor-deactivating",
     outcome: "restored-previous",
     generation: 1,
   },
@@ -215,6 +229,10 @@ const KILL_MATRIX: readonly KillRow[] = [
     outcome: "restored-previous",
     generation: 1,
   },
+  // The descriptor is aside and its replacement is about to land: the pair is
+  // put back rather than finished, because the rename that did not happen may
+  // have failed for a reason that is still true.
+  { mode: "install", point: "descriptor-activating", outcome: "restored-previous", generation: 1 },
   {
     mode: "install",
     point: RENAME_DESCRIPTOR_ACTIVATE,
@@ -222,14 +240,60 @@ const KILL_MATRIX: readonly KillRow[] = [
     generation: 2,
   },
   { mode: "install", point: "committed", outcome: "completed-activation", generation: 2 },
+  { mode: "install", point: "done", outcome: "cleaned", generation: 2 },
 ];
 
+/**
+ * Points no `SIGKILL` row can reach, each with the reason it cannot.
+ *
+ * The matrix is only a claim about crash safety if it is exhaustive, and a
+ * point that is neither covered nor excluded is a gap nobody chose. Every
+ * exclusion below is a statement about the production path — that a healthy
+ * writer never announces the point — rather than about what was convenient to
+ * test, and the in-process controls at the end of this file cover the failure
+ * paths named in them.
+ */
+const EXCLUDED_POINTS: ReadonlyMap<string, string> = new Map([
+  [
+    "rolling-back",
+    "only announced after an activation step failed, which no kill can cause; " +
+      "the in-process controls take this path by throwing instead.",
+  ],
+  [
+    "rolled-back",
+    "the record that closes a successful rollback, so it needs the same injected " +
+      "failure rather than a kill.",
+  ],
+  [
+    "failed",
+    "written by preserveAsEvidence when residue survives a failure; a killed " +
+      "writer records nothing, which is the case recovery exists for.",
+  ],
+  ["recovering", "appended by a recovery arbitrating with another recovery, never by a writer."],
+  [
+    TRAVERSAL_DESCEND_PREFIX,
+    "carries a target-relative path rather than naming one instant, and a kill " +
+      "mid-classification is the plainest case there is; the swap probes drive it.",
+  ],
+  [PRESERVE_PREFIX, "the same, one step later in the staging of foreign entries."],
+]);
+
 describe("a writer killed mid-transaction leaves a recoverable target", () => {
-  it("names only points the production seam announces", () => {
-    const vocabulary = new Set([...JOURNAL_POINTS, ...RENAME_POINTS]);
-    for (const row of KILL_MATRIX) {
-      expect(vocabulary).toContain(row.point);
+  it("covers every point the production seam announces, or says why not", () => {
+    // Two-way on purpose. A row naming a point that no longer exists would run
+    // to completion and assert a crash it never caused; a point with neither a
+    // row nor an exclusion is an instant nobody decided about, which is the
+    // more likely way this drifts as the phase list grows.
+    const vocabulary = [...JOURNAL_POINTS, ...RENAME_POINTS, ...POINT_PREFIXES].sort();
+    const covered = new Set(KILL_MATRIX.map((row) => row.point));
+    for (const point of covered) {
+      expect(vocabulary).toContain(point);
     }
+    for (const [point, reason] of EXCLUDED_POINTS) {
+      expect(covered).not.toContain(point);
+      expect(reason.length).toBeGreaterThan(0);
+    }
+    expect([...covered, ...EXCLUDED_POINTS.keys()].sort()).toEqual(vocabulary);
   });
 
   it.each(KILL_MATRIX)(
