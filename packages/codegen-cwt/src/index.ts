@@ -10,6 +10,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { format, resolveConfig } from "prettier";
 
+import { contentFileLayout } from "./content-layout.ts";
 import {
   CONTENT_MANIFEST,
   VANILLA_REF_EXTRAS,
@@ -1429,12 +1430,17 @@ function contentRegistry(
       }
       const outputDir = sourcePath.slice("game/".length);
       const fileStem = path.posix.basename(outputDir);
+      const layout = contentFileLayout(content.registry, content.type);
       return (
         "  {\n" +
         `    type: ${JSON.stringify(content.registry)},\n` +
         `    referenceName: ${JSON.stringify(content.referenceName)},\n` +
         `    outputDir: ${JSON.stringify(outputDir)},\n` +
         `    fileStem: ${JSON.stringify(fileStem)},\n` +
+        `    fileExtension: ${JSON.stringify(layout.fileExtension)},\n` +
+        (layout.rootEnvelope === undefined
+          ? ""
+          : `    rootEnvelope: ${JSON.stringify(layout.rootEnvelope)},\n`) +
         `    fields: ${content.emission.fieldsConstant},\n` +
         `    localisation: ${content.emission.localisationConstant},\n` +
         (content.keyword === undefined

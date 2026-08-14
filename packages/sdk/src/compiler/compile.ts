@@ -5,11 +5,12 @@
  * localization, reference validation, patch planning, and freezing.
  */
 
-import { kv, type PdxEntry } from "@pdx-ts/pdxscript";
+import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
 
 import { flattenItems, type ModItemInput } from "../authoring/feature.ts";
 import { LOCALIZATION_LANGUAGES } from "../authoring/localization.ts";
 import { ContentAuthoring } from "../content/authoring.ts";
+import type { ContentRegistryDescriptor } from "../content/schema.ts";
 import type { ContentItem } from "../content/types.ts";
 import type { ModWarning } from "../diagnostics.ts";
 import { OnActionAuthoring, type OnActionHookItem } from "../events/on-actions.ts";
@@ -45,8 +46,43 @@ import { validateReferences, type ReferenceUse } from "./references.ts";
 export { type BuildOptions, type ModConfig } from "./config.ts";
 export { type EmittedFile, type LocalizationFile, type PureMod } from "./model.ts";
 
-function emissionPath(prefix: string, outputDir: string, stem: string): LogicalPath {
-  return normalizeLogicalPath(`${outputDir}/${prefix}_${stem}.txt`);
+export function emissionPath(
+  prefix: string,
+  outputDir: string,
+  stem: string,
+  extension: string
+): LogicalPath {
+  return normalizeLogicalPath(`${outputDir}/${prefix}_${stem}${extension}`);
+}
+
+/**
+ * Which root block, if any, one emitted content file sits inside.
+ *
+ * A file merges every registry that shares its path, and an envelope is a
+ * property of the file rather than of a definition — so the registries sharing
+ * one file have to agree on it. They disagree only when a manifest puts a
+ * wrapped and an unwrapped registry in one directory, which no rule forbids and
+ * no emitted file could express, so this refuses rather than picks.
+ */
+export function fileRootEnvelope(
+  relPath: LogicalPath,
+  types: readonly string[],
+  envelopeOf: (type: string) => string | undefined
+): string | undefined {
+  const envelope = types.length === 0 ? undefined : envelopeOf(types[0]!);
+  for (const type of types) {
+    const other = envelopeOf(type);
+    if (other !== envelope) {
+      const describe = (value: string | undefined): string =>
+        value === undefined ? "no root block" : `"${value}"`;
+      throw new Error(
+        `content file ${relPath} would merge "${types[0]!}", which sits inside ` +
+          `${describe(envelope)}, with "${type}", which sits inside ${describe(other)} — one ` +
+          "root block per file; give one of them a different file stem"
+      );
+    }
+  }
+  return envelope;
 }
 
 function eventNumber(event: EventItemBase, namespace: string): number {
@@ -102,7 +138,7 @@ export function buildMod(
     }
     vanillaKeysByDir.set(dir, keys);
   }
-  const descriptorByType = new Map(
+  const descriptorByType = new Map<ContentTypeName, ContentRegistryDescriptor>(
     CONTENT_REGISTRIES.map((descriptor) => [descriptor.type as ContentTypeName, descriptor])
   );
   const ownIdsByDir = new Map<string, Map<string, ContentTypeName>>();
@@ -144,7 +180,12 @@ export function buildMod(
     }
     ownIds.set(item.def.id, item.type);
     ownIdsByDir.set(descriptor.outputDir, ownIds);
-    const relPath = emissionPath(config.prefix, descriptor.outputDir, stem ?? descriptor.fileStem);
+    const relPath = emissionPath(
+      config.prefix,
+      descriptor.outputDir,
+      stem ?? descriptor.fileStem,
+      descriptor.fileExtension
+    );
     const byPath =
       rawByType.get(item.type) ??
       new Map<LogicalPath, { items: Array<{ item: ContentItem; stem: string | undefined }> }>();
@@ -209,7 +250,17 @@ export function buildMod(
   }
   const contentFiles: ContentFile[] = pathOrder.map((relPath) => {
     const file = filesByPath.get(relPath)!;
-    return { relPath, types: file.types, ids: file.ids, entries: file.entries };
+    const envelope = fileRootEnvelope(
+      relPath,
+      file.types,
+      (type) => descriptorByType.get(type as ContentTypeName)?.rootEnvelope
+    );
+    return {
+      relPath,
+      types: file.types,
+      ids: file.ids,
+      entries: envelope === undefined ? file.entries : [block(envelope, file.entries)],
+    };
   });
 
   const placedEvents = flat.filter(
@@ -219,7 +270,7 @@ export function buildMod(
   const eventStem = new Map(placedEvents.map(({ item, stem }) => [item, stem] as const));
   const eventsByPath = new Map<LogicalPath, { namespace: string; events: EventItemBase[] }>();
   for (const { item, stem } of placedEvents) {
-    const relPath = emissionPath(config.prefix, "events", stem ?? "events");
+    const relPath = emissionPath(config.prefix, "events", stem ?? "events", ".txt");
     noteStem(stemsByPath, relPath, stem);
     const group = eventsByPath.get(relPath);
     if (group === undefined) {

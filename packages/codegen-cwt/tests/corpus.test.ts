@@ -20,6 +20,7 @@ import { fileURLToPath } from "node:url";
 import {
   readRegistryCorpus,
   type DescentNode,
+  type RegistryLayout,
   type SpliceMember,
 } from "@pdx-ts/codegen-cwt/corpus";
 import { loadRules } from "@pdx-ts/codegen-cwt/cwt/rules";
@@ -36,19 +37,40 @@ function corpusOf(
   contents: string,
   descents: readonly DescentNode[] = [],
   excludedKey: string | null = null,
-  spliceMembers: readonly SpliceMember[] = [PLANET]
+  spliceMembers: readonly SpliceMember[] = [PLANET],
+  layout: RegistryLayout = {}
+) {
+  return corpusOfFiles({ [`test${layout.extension ?? ".txt"}`]: contents }, layout, {
+    descents,
+    excludedKey,
+    spliceMembers,
+  });
+}
+
+/** The same reader over a whole directory, for the cases where filenames matter. */
+function corpusOfFiles(
+  files: Readonly<Record<string, string>>,
+  layout: RegistryLayout = {},
+  options: {
+    descents?: readonly DescentNode[];
+    excludedKey?: string | null;
+    spliceMembers?: readonly SpliceMember[];
+  } = {}
 ) {
   const root = mkdtempSync(path.join(tmpdir(), "pdx-corpus-"));
   mkdirSync(path.join(root, "common/systems"), { recursive: true });
-  writeFileSync(path.join(root, "common/systems/test.txt"), contents, "utf8");
+  for (const [name, contents] of Object.entries(files)) {
+    writeFileSync(path.join(root, "common/systems", name), contents, "utf8");
+  }
   return readRegistryCorpus(
     root,
     "common/systems",
     null,
     null,
-    descents,
-    spliceMembers,
-    excludedKey
+    options.descents ?? [],
+    options.spliceMembers ?? [PLANET],
+    options.excludedKey ?? null,
+    layout
   );
 }
 
@@ -162,6 +184,87 @@ describe("a sibling type sharing the directory", () => {
     expect(corpusOf(contents).definitions).toBe(2);
     expect(corpusOf(contents, [], "random_list").definitions).toBe(1);
     expect(corpusOf(contents, [], "random_list").occurrences.has("name")).toBe(false);
+  });
+});
+
+describe("file layout", () => {
+  // A registry whose files are not `.txt` reads as an empty directory rather
+  // than as an unread one, so the extension has to reach the reader or the
+  // conformance evidence for it is vacuous.
+  it("reads the files carrying the registry's own extension and no others", () => {
+    const corpus = corpusOfFiles(
+      {
+        "sprites.gfx": "one = { name = a }\ntwo = { name = b }",
+        "readme.txt": "three = { name = c }",
+      },
+      { extension: ".gfx" }
+    );
+    expect(corpus.files).toBe(1);
+    expect(corpus.definitions).toBe(2);
+    expect([...(corpus.occurrences.get("name")?.values ?? [])]).toEqual(["a", "b"]);
+  });
+
+  it("counts nothing when the extension does not match", () => {
+    const corpus = corpusOfFiles({ "sprites.gfx": "one = { name = a }" }, { extension: ".txt" });
+    expect(corpus.files).toBe(0);
+    expect(corpus.definitions).toBe(0);
+  });
+
+  // `skip_root_key = spriteTypes`: the definitions are the children of the
+  // root block, and the root block itself is not one of them.
+  it("descends one level into a named root block", () => {
+    const corpus = corpusOfFiles(
+      { "sprites.gfx": "spriteTypes = { one = { name = a } two = { name = b } }" },
+      { extension: ".gfx", skipRootKeys: ["spriteTypes"] }
+    );
+    expect(corpus.definitions).toBe(2);
+    expect(corpus.occurrences.get("name")?.definitions).toBe(2);
+  });
+
+  it("does not count a top-level entry belonging to no named root block", () => {
+    const corpus = corpusOfFiles(
+      {
+        "sprites.gfx": "spriteTypes = { one = { name = a } }\nobjectTypes = { two = { name = b } }",
+      },
+      { extension: ".gfx", skipRootKeys: ["spriteTypes"] }
+    );
+    expect(corpus.definitions).toBe(1);
+    expect([...(corpus.occurrences.get("name")?.values ?? [])]).toEqual(["a"]);
+  });
+
+  it("descends into every top-level block when the one segment is `any`", () => {
+    const corpus = corpusOfFiles(
+      {
+        "sprites.gfx": "spriteTypes = { one = { name = a } }\nobjectTypes = { two = { name = b } }",
+      },
+      { extension: ".gfx", skipRootKeys: ["any"] }
+    );
+    expect(corpus.definitions).toBe(2);
+    expect([...(corpus.occurrences.get("name")?.values ?? [])]).toEqual(["a", "b"]);
+  });
+
+  // `swapped_job`'s `skip_root_key = { any swappable_data }`: the segments are
+  // successive levels, not alternatives. Applying them at one level would count
+  // each job's `swappable_data` container as a definition and measure the swaps
+  // inside it as that definition's fields.
+  it("applies a multi-segment root key as successive levels", () => {
+    const corpus = corpusOfFiles(
+      {
+        "jobs.txt": `
+          some_job = {
+            category = planet
+            swappable_data = { swap_a = { name = a } swap_b = { name = b } }
+          }
+          other_job = { category = planet }
+        `,
+      },
+      { skipRootKeys: ["any", "swappable_data"] }
+    );
+    expect(corpus.definitions).toBe(2);
+    expect([...(corpus.occurrences.get("name")?.values ?? [])]).toEqual(["a", "b"]);
+    // Neither the job's own fields nor the container that holds the swaps.
+    expect(corpus.occurrences.has("category")).toBe(false);
+    expect(corpus.occurrences.has("swappable_data")).toBe(false);
   });
 });
 
