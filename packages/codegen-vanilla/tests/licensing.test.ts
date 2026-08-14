@@ -287,6 +287,25 @@ describe("generated output", () => {
   });
 });
 
+describe("emitVanillaPaths", () => {
+  it("orders the inventory by UTF-8 bytes, not by UTF-16 code units", () => {
+    // The one pair that separates the two orders: U+10000 is a supplementary
+    // character whose UTF-8 bytes start at 0xF0, above U+E000's 0xEE, while its
+    // UTF-16 surrogates (0xD800) sort *below* U+E000. JavaScript's `<` would
+    // emit these the other way round, and the inventory's contract — the same
+    // canonical order the scanner and the SDK's ledger use — would be broken
+    // for the first non-ASCII path Paradox ships.
+    const emitted = emitVanillaPaths(
+      ["gfx/\u{10000}.dds", "gfx/\uE000.dds"],
+      createChokepoint(),
+      "4.4.6"
+    );
+    const order = [...emitted.matchAll(/^ {2}"(.+)",$/gm)].map((match) => match[1]!);
+    expect(order).toEqual(["gfx/\uE000.dds", "gfx/\u{10000}.dds"]);
+    expect([...order].sort()).not.toEqual(order);
+  });
+});
+
 describe("compareIdentifiers", () => {
   it("orders by bytes, not by locale", () => {
     // `localeCompare` sorts "_" as if it were not there, so `a_b` would land

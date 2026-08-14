@@ -350,7 +350,12 @@ export {
   type PathProducerKind,
 } from "./errors.ts";
 export type { PathClaim, PathProducer } from "./compiler/paths.ts";
-export { compareLogicalPaths, normalizeLogicalPath, type LogicalPath } from "./ordering.ts";
+export {
+  compareLogicalPaths,
+  compareUtf8,
+  normalizeLogicalPath,
+  type LogicalPath,
+} from "./ordering.ts";
 export {
   REGISTRY_RULES,
   SUPPORTED_STELLARIS_BUILD,

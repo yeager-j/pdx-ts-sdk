@@ -10,6 +10,8 @@
  * prove that the two sources merge.
  */
 
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -146,6 +148,53 @@ describe("scanInstallPaths", () => {
   });
 });
 
+/**
+ * The scanner reads an archive through a file descriptor — its tail, then the
+ * byte range its index declares — rather than loading it whole. The thirty
+ * real DLC archives come to a gigabyte, and every `stellaris.load()` in PR 2
+ * runs this scan, so what is proved here is that the two-read path reads a real
+ * file on disk correctly and still refuses a broken one.
+ */
+describe("scanInstallPaths over an archive on disk", () => {
+  const FIXTURE_ZIP = path.join(FIXTURE, "dlc/fake_dlc01/fake_dlc01.zip");
+
+  function installWith(archive: Uint8Array): string {
+    const root = mkdtempSync(path.join(tmpdir(), "pdx-scan-paths-"));
+    mkdirSync(path.join(root, "dlc/pack"), { recursive: true });
+    writeFileSync(path.join(root, "dlc/pack/pack.zip"), archive);
+    return root;
+  }
+
+  it("reads the committed fixture archive from a file descriptor", () => {
+    const root = installWith(readFileSync(FIXTURE_ZIP));
+    try {
+      const scan = scanInstallPaths(root);
+      expect(scan.archives).toBe(1);
+      expect(scan.archiveEntries).toBe(4);
+      expect(scan.junkExcluded).toBe(3);
+      expect(scan.paths).toEqual(["dlc/pack/pack.zip", "music/fake_dlc_track.ogg"]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("refuses an archive whose declared directory range is past the end of the file", () => {
+    // The fixture's own end record kept, everything between the start of the
+    // file and it cut away: the index still says where it is, and it is no
+    // longer there.
+    const raw = readFileSync(FIXTURE_ZIP);
+    const root = installWith(concat([raw.subarray(0, 100), raw.subarray(raw.length - 22)]));
+    try {
+      expect(() => scanInstallPaths(root)).toThrow(VanillaPathInventoryError);
+      expect(() => scanInstallPaths(root)).toThrow(
+        /^dlc\/pack\/pack\.zip: central directory runs to \d+ bytes in a 122-byte file/
+      );
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+});
+
 describe("readZipEntryNames", () => {
   it("reads the central directory's names, comment and all", () => {
     const bytes = buildZip(["music/track.ogg", "gfx/ship.mesh"], "packed by a tool");
@@ -235,5 +284,34 @@ describe("readZipEntryNames", () => {
     expect(() => readZipEntryNames(bytes, "windows.zip")).toThrow(
       /^windows\.zip: entry name "music\\\\track\.ogg" contains a backslash/
     );
+  });
+
+  /**
+   * The archive is the one input in the inventory nobody in this repo wrote,
+   * and its names reach the Fold's vanilla evidence with no gate behind them.
+   * A name that escapes the game root is refused here or not at all.
+   */
+  it("refuses an entry name that is not a path inside the game root", () => {
+    for (const [name, reason] of [
+      ["/etc/passwd", /is absolute/],
+      ["C:/Stellaris/x.txt", /is absolute/],
+      ["../common/x.txt", /has a "\.\." component/],
+      ["gfx/./ship.mesh", /has a "\." component/],
+      ["gfx//ship.mesh", /empty component/],
+    ] as const) {
+      const bytes = buildZip([name]);
+      expect(() => readZipEntryNames(bytes, "hostile.zip"), name).toThrow(
+        VanillaPathInventoryError
+      );
+      expect(() => readZipEntryNames(bytes, "hostile.zip"), name).toThrow(reason);
+    }
+  });
+
+  it("keeps a directory entry's trailing separator out of the component check", () => {
+    // `music/` ends in the separator that marks a directory, which is not the
+    // empty component the check above refuses.
+    expect(readZipEntryNames(buildZip(["music/", "music/track.ogg"]), "ok.zip")).toEqual([
+      "music/track.ogg",
+    ]);
   });
 });

@@ -22,6 +22,7 @@
 
 import { camelCase, pascalCase, safeIdentifier } from "@pdx-ts/codegen-cwt/naming";
 import type { RuleScopes } from "@pdx-ts/codegen-cwt/scope-facts";
+import { compareUtf8 } from "@pdx-ts/sdk";
 
 import type { ScriptedDefinition } from "./read-scripted.ts";
 import type { TrieNode } from "./trie.ts";
@@ -473,7 +474,12 @@ export function emitVanillaPaths(
   gate: Chokepoint,
   gameVersion: string
 ): string {
-  const unique = [...new Set(paths)].sort(compareIdentifiers);
+  // `compareUtf8`, not `compareIdentifiers`: the inventory's contract is the
+  // canonical byte order the scanner and the SDK's ledger already use, and
+  // JavaScript's `<` is UTF-16 code-unit order, which disagrees for
+  // supplementary-plane characters. Identical for the ASCII vanilla ships
+  // today, and the point is that it stays right when that changes.
+  const unique = [...new Set(paths)].sort(compareUtf8);
   const lines = unique.map((one) => `  ${gate.pathLiteral(one, "vanilla path")},\n`).join("");
   return (
     header(gameVersion) +
