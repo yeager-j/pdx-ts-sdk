@@ -33,10 +33,12 @@ import { createLocalizationAccumulator } from "./localization.ts";
 import type { ContentFile, DefinedGroup, EmittedFile, PureMod } from "./model.ts";
 import { collectPatches, planPatches } from "./patches.ts";
 import {
+  adjudicatePaths,
   DESCRIPTOR_PATH,
   MATERIALIZATION_MANIFEST_PATH,
   onActionsPath,
   shipOfSizeLimitsPath,
+  type PathClaim,
 } from "./paths.ts";
 import { validateReferences, type ReferenceUse } from "./references.ts";
 
@@ -49,6 +51,26 @@ function emissionPath(prefix: string, outputDir: string, stem: string): LogicalP
 
 function eventNumber(event: EventItemBase, namespace: string): number {
   return Number(event.id.slice(namespace.length + 1));
+}
+
+/** Records which Feature placed something into a file. Unnamed features add none. */
+function noteStem(
+  stemsByPath: Map<LogicalPath, Set<string>>,
+  relPath: LogicalPath,
+  stem: string | undefined
+): void {
+  const stems = stemsByPath.get(relPath) ?? new Set<string>();
+  if (stem !== undefined) {
+    stems.add(stem);
+  }
+  stemsByPath.set(relPath, stems);
+}
+
+function stemsOf(
+  stemsByPath: ReadonlyMap<LogicalPath, Set<string>>,
+  relPath: LogicalPath
+): readonly string[] {
+  return [...(stemsByPath.get(relPath) ?? [])].sort(compareUtf8);
 }
 
 export function buildMod(
@@ -84,6 +106,10 @@ export function buildMod(
     CONTENT_REGISTRIES.map((descriptor) => [descriptor.type as ContentTypeName, descriptor])
   );
   const ownIdsByDir = new Map<string, Map<string, ContentTypeName>>();
+  // Which Features placed items into each emitted file. A file merges several
+  // Features' items whenever they share a stem or an output directory, so a
+  // path claim reports a set of stems rather than one.
+  const stemsByPath = new Map<LogicalPath, Set<string>>();
   const rawByType = new Map<
     ContentTypeName,
     Map<LogicalPath, { items: Array<{ item: ContentItem; stem: string | undefined }> }>
@@ -126,6 +152,7 @@ export function buildMod(
     group.items.push({ item, stem });
     byPath.set(relPath, group);
     rawByType.set(item.type, byPath);
+    noteStem(stemsByPath, relPath, stem);
   }
 
   // Pass 2: define in registry, path, and id order so localization follows
@@ -193,6 +220,7 @@ export function buildMod(
   const eventsByPath = new Map<LogicalPath, { namespace: string; events: EventItemBase[] }>();
   for (const { item, stem } of placedEvents) {
     const relPath = emissionPath(config.prefix, "events", stem ?? "events");
+    noteStem(stemsByPath, relPath, stem);
     const group = eventsByPath.get(relPath);
     if (group === undefined) {
       eventsByPath.set(relPath, { namespace: item.namespace, events: [item] });
@@ -274,7 +302,16 @@ export function buildMod(
   const onActionAuthoring = new OnActionAuthoring((event) =>
     includedEvents.has(event as unknown as EventItemBase)
   );
-  const bindings = flat.flatMap(({ item }) => (item.itemKind === "on-action" ? [item] : []));
+  const onActionStems = new Set<string>();
+  const bindings = flat.flatMap(({ item, stem }) => {
+    if (item.itemKind !== "on-action") {
+      return [];
+    }
+    if (stem !== undefined) {
+      onActionStems.add(stem);
+    }
+    return [item];
+  });
   const bindingOrder = (item: OnActionHookItem): string =>
     item.events.map((event) => event.id).join("\u0000");
   const orderedBindings = [...bindings].sort(
@@ -291,9 +328,13 @@ export function buildMod(
   const onActions = onActionAuthoring.entries();
 
   const contributedLimits: string[] = [];
-  for (const { item } of flat) {
+  const contributionStems = new Set<string>();
+  for (const { item, stem } of flat) {
     if (item.itemKind !== "contribution") {
       continue;
+    }
+    if (stem !== undefined) {
+      contributionStems.add(stem);
     }
     for (const id of item.ids) {
       contributedLimits.push(id);
@@ -364,22 +405,77 @@ export function buildMod(
     refUses,
   });
 
-  // Every path the mod occupies apart from the patch plans themselves. A
-  // computed patch filename that landed on one of these would emit two files
-  // at one path, and `winningPath` can only steer around what it is shown.
-  const occupiedPaths: LogicalPath[] = [
-    DESCRIPTOR_PATH,
-    MATERIALIZATION_MANIFEST_PATH,
-    ...contentFiles.map((file) => file.relPath),
-    ...eventFiles.map((file) => file.relPath),
-    ...localizationFiles.map((file) => file.relPath),
+  // One claim per emitted file, made by the merged file rather than by the
+  // items in it: content from several registries sharing an output directory,
+  // events from several Features, and localization keys registered under
+  // several stems all deliberately land in one file, and claiming per item
+  // would report those merges as duplicates.
+  const claims: PathClaim[] = [
+    {
+      path: DESCRIPTOR_PATH,
+      producer: { kind: "descriptor", stems: [], detail: "the mod descriptor" },
+    },
   ];
-  if (onActions.length > 0) {
-    occupiedPaths.push(onActionsPath(config.prefix));
+  for (const file of contentFiles) {
+    claims.push({
+      path: file.relPath,
+      producer: {
+        kind: "content",
+        stems: stemsOf(stemsByPath, file.relPath),
+        detail: `content ${file.ids.join(", ")}`,
+      },
+    });
   }
-  if (shipOfSizeLimits.size > 0) {
-    occupiedPaths.push(shipOfSizeLimitsPath(config.prefix));
+  for (const file of eventFiles) {
+    claims.push({
+      path: file.relPath,
+      producer: {
+        kind: "events",
+        stems: stemsOf(stemsByPath, file.relPath),
+        detail: `events in ${file.relPath}`,
+      },
+    });
   }
+  const resolvedShipOfSizeLimitsPath =
+    shipOfSizeLimits.size > 0 ? shipOfSizeLimitsPath(config.prefix) : undefined;
+  if (resolvedShipOfSizeLimitsPath !== undefined) {
+    claims.push({
+      path: resolvedShipOfSizeLimitsPath,
+      producer: {
+        kind: "ship-of-size-limits",
+        stems: [...contributionStems].sort(compareUtf8),
+        detail: "the shared ship-of-size limits",
+      },
+    });
+  }
+  const resolvedOnActionsPath = onActions.length > 0 ? onActionsPath(config.prefix) : undefined;
+  if (resolvedOnActionsPath !== undefined) {
+    claims.push({
+      path: resolvedOnActionsPath,
+      producer: {
+        kind: "on-actions",
+        stems: [...onActionStems].sort(compareUtf8),
+        detail: "the shared on-action hooks",
+      },
+    });
+  }
+  for (const file of localizationFiles) {
+    claims.push({
+      path: file.relPath,
+      producer: {
+        kind: "localization",
+        stems: file.stems,
+        detail: `${file.language} localization`,
+      },
+    });
+  }
+
+  // The patch plan mints its own filename and needs to steer clear of every
+  // path already spoken for. `winningPath` can only avoid what it is shown, so
+  // it sees the claims made so far rather than, as before, one registry's own
+  // content files.
+  const occupiedPaths = claims.map((claim) => claim.path);
+  occupiedPaths.push(MATERIALIZATION_MANIFEST_PATH);
 
   const patchPlans = Object.freeze(
     planPatches(config, contentFiles, patchesByRegistry, occupiedPaths).map((plan) =>
@@ -405,11 +501,39 @@ export function buildMod(
       });
     }
   }
+  for (const plan of patchPlans) {
+    const registries = [...new Set(plan.assertions.map((assertion) => assertion.registry))].sort(
+      compareUtf8
+    );
+    claims.push({
+      path: plan.relPath,
+      producer: {
+        kind: "patch-plan",
+        stems: [
+          ...new Set(
+            registries.flatMap((registry) =>
+              (patchesByRegistry.get(registry) ?? []).flatMap((patched) => {
+                const stem = patchStem.get(patched);
+                return stem === undefined ? [] : [stem];
+              })
+            )
+          ),
+        ].sort(compareUtf8),
+        detail: `the ${registries.join(", ")} patch plan`,
+      },
+    });
+  }
+
   const vanillaOrigin = options.vanilla ?? patches[0]?.source.origin;
   const vanillaPaths =
     vanillaOrigin === undefined
       ? undefined
       : immutableSet(vanillaOrigin.files.map((file) => file.path));
+
+  // The last thing the fold decides. Everything above minted a path; this rules
+  // on the whole set at once, so the `PureMod` below cannot exist unless every
+  // output has exactly one owner.
+  const paths = adjudicatePaths({ claims, vanillaPaths });
 
   if (options.vanilla !== undefined) {
     checkVanillaPackagePin(
@@ -472,7 +596,9 @@ export function buildMod(
     onActions,
     localizationFiles,
     shipOfSizeLimits,
+    onActionsPath: resolvedOnActionsPath,
+    shipOfSizeLimitsPath: resolvedShipOfSizeLimitsPath,
     patchPlans,
-    vanillaPaths,
+    paths,
   });
 }

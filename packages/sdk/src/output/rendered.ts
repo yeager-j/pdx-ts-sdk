@@ -1,14 +1,6 @@
 import { createHash } from "node:crypto";
 
-import { MATERIALIZATION_MANIFEST_PATH } from "../compiler/paths.ts";
-import { PathOwnershipError, type PathOwnershipConflict } from "../errors.ts";
-import {
-  compareLogicalPaths,
-  compareUtf8,
-  normalizeLogicalPath,
-  portableIdentity,
-  type LogicalPath,
-} from "../ordering.ts";
+import { compareLogicalPaths, normalizeLogicalPath, type LogicalPath } from "../ordering.ts";
 
 const encoder = new TextEncoder();
 
@@ -64,9 +56,13 @@ export class CapturedBytes {
   }
 }
 
+/**
+ * One file to serialize. There is no producer identity here any more: the fold
+ * adjudicated ownership before this module ran, and a second, prose copy of
+ * "who made this" that nothing reads would only drift from the ledger's.
+ */
 export interface RenderedClaim {
   readonly path: string;
-  readonly owner: string;
   readonly text?: string;
   readonly bytes?: Uint8Array;
   /** SDK-produced bytes, adopted rather than copied. See `CapturedBytes`. */
@@ -180,86 +176,35 @@ class ImmutableRenderedMod implements RenderedMod {
   }
 }
 
+/**
+ * Builds the rendered mod from claims the fold has already adjudicated.
+ *
+ * The ownership rules — aliases, file/directory clashes, reserved and vanilla
+ * paths — are settled in `compiler/paths.ts` before a `PureMod` exists, so
+ * nothing here rules on them. What stays is the structural invariant this
+ * object cannot hold without: one file per path. Two claims on one path would
+ * leave `#byPath` deduplicated while `#files` kept both, so `size` would
+ * over-count, the mod hash would fold the path twice, and the tree writer would
+ * write it twice with the second silently winning. Reaching that state means
+ * the SDK built the claim list wrong, not that the author did something — hence
+ * `TypeError`, like the other misuse guards in this file.
+ */
 export function createRenderedMod(
   prefix: string,
   descriptorHeader: string,
   claims: readonly RenderedClaim[]
 ): RenderedMod {
-  const conflicts: PathOwnershipConflict[] = [];
-  const normalized = [
-    ...claims.map((claim) => ({ claim, path: normalizeLogicalPath(claim.path), reserved: false })),
-    {
-      claim: { path: MATERIALIZATION_MANIFEST_PATH, owner: "materializer", text: "" },
-      path: MATERIALIZATION_MANIFEST_PATH,
-      reserved: true,
-    },
-  ];
-
-  for (let leftIndex = 0; leftIndex < normalized.length; leftIndex++) {
-    const left = normalized[leftIndex]!;
-    const leftComponents = left.path.split("/");
-    const leftPortable = leftComponents.map(portableIdentity);
-    for (let rightIndex = leftIndex + 1; rightIndex < normalized.length; rightIndex++) {
-      const right = normalized[rightIndex]!;
-      const rightComponents = right.path.split("/");
-      const rightPortable = rightComponents.map(portableIdentity);
-      const shared = Math.min(leftPortable.length, rightPortable.length);
-      let common = 0;
-      let alias = false;
-      while (common < shared && leftPortable[common] === rightPortable[common]) {
-        alias ||= leftComponents[common] !== rightComponents[common];
-        common++;
-      }
-      if (common === shared && leftPortable.length === rightPortable.length) {
-        conflicts.push({
-          path: canonicalFirst(left.path, right.path),
-          owners: canonicalOwners(left.claim.owner, right.claim.owner),
-          reason:
-            left.reserved || right.reserved
-              ? "reserved"
-              : left.path === right.path
-                ? "duplicate"
-                : "portable-alias",
-        });
-      } else if (common === shared) {
-        conflicts.push({
-          path: canonicalFirst(left.path, right.path),
-          owners: canonicalOwners(left.claim.owner, right.claim.owner),
-          reason: left.reserved || right.reserved ? "reserved" : "file-directory",
-        });
-      } else if (alias) {
-        conflicts.push({
-          path: canonicalFirst(left.path, right.path),
-          owners: canonicalOwners(left.claim.owner, right.claim.owner),
-          reason: left.reserved || right.reserved ? "reserved" : "portable-alias",
-        });
-      }
-    }
-  }
-
-  if (conflicts.length > 0) {
-    conflicts.sort(
-      (a, b) =>
-        compareUtf8(a.path, b.path) ||
-        compareUtf8(a.reason, b.reason) ||
-        compareUtf8(a.owners.join("\0"), b.owners.join("\0"))
-    );
-    throw new PathOwnershipError(conflicts);
-  }
-
-  const files = normalized
-    .filter(({ reserved }) => !reserved)
-    .map(({ claim, path }) => new ImmutableRenderedFile(path, claim))
+  const files = claims
+    .map((claim) => new ImmutableRenderedFile(normalizeLogicalPath(claim.path), claim))
     .sort((a, b) => compareLogicalPaths(a.path, b.path));
+  const paths = new Set(files.map((file) => file.path));
+  if (paths.size !== files.length) {
+    throw new TypeError(
+      `render() produced ${files.length} files for ${paths.size} distinct paths; ` +
+        `claims reaching this point are already adjudicated, so this is an SDK defect`
+    );
+  }
   return new ImmutableRenderedMod(prefix, descriptorHeader, files);
-}
-
-function canonicalFirst(left: LogicalPath, right: LogicalPath): LogicalPath {
-  return compareLogicalPaths(left, right) <= 0 ? left : right;
-}
-
-function canonicalOwners(left: string, right: string): readonly string[] {
-  return [left, right].sort(compareUtf8);
 }
 
 export function launcherDescriptor(rendered: RenderedMod, contentDir: string): string {

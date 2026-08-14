@@ -21,24 +21,89 @@ export class PdxSdkError extends Error {
 /** A raw path that cannot become a logical path (see ordering.ts). */
 export class LogicalPathError extends PdxSdkError {}
 
-export interface PathOwnershipConflict {
+/**
+ * Which output channel minted a path. Exhaustive from the start so callers do
+ * not have to widen later: `"asset"` has no producer until Asset capture lands,
+ * and `"vanilla"` names the game as the other side of a vanilla collision
+ * rather than a channel this mod owns.
+ */
+export type PathProducerKind =
+  | "descriptor"
+  | "content"
+  | "events"
+  | "on-actions"
+  | "ship-of-size-limits"
+  | "localization"
+  | "patch-plan"
+  | "asset"
+  | "reserved"
+  | "vanilla";
+
+/** Why one tree node cannot carry every claim made on it. */
+export type PathConflictReason =
+  "duplicate" | "portable-alias" | "file-directory" | "reserved" | "vanilla";
+
+/** One producer's side of a conflict. */
+export interface PathClaimant {
+  /** The exact spelling this producer claimed, mod-root-relative. */
   readonly path: string;
-  readonly owners: readonly string[];
-  readonly reason: "duplicate" | "portable-alias" | "file-directory" | "reserved";
+  readonly kind: PathProducerKind;
+  /** Every Feature stem that placed content into this file, sorted. Empty when
+   *  no Feature owns the producer, or its feature was unnamed. */
+  readonly stems: readonly string[];
+  /** Human detail — ids, language, registry. For reading, never for parsing. */
+  readonly detail: string;
+  /** Whether this producer's path *is* the node, or passes through it. */
+  readonly role: "file" | "directory";
 }
 
-/** Two output producers cannot own one portable logical path tree. */
+/**
+ * One reason that holds at one node of the output tree, naming every producer
+ * implicated in it. Keyed by node rather than by pair: five claims colliding on
+ * one path are one conflict with five claimants, not ten pairwise repetitions
+ * of the same fact.
+ */
+export interface PathOwnershipConflict {
+  /** The byte-least spelling claimed at the node. */
+  readonly path: string;
+  readonly reason: PathConflictReason;
+  readonly claimants: readonly PathClaimant[];
+}
+
+/**
+ * Two output producers cannot own one portable logical path tree.
+ *
+ * `conflicts` is the complete set with respect to paths — every node, every
+ * reason holding at it — rather than whichever collision was noticed first.
+ * It is ordered by path in UTF-8 byte order, then by reason in the fixed order
+ * `reserved`, `vanilla`, `duplicate`, `portable-alias`, `file-directory`, so a
+ * reader meets "you may not have this path at all" before "you have it twice".
+ * The order is a function of the claims alone, never of the order Features
+ * were registered in.
+ *
+ * Complete with respect to paths is the honest scope: the fold refuses
+ * duplicate ids, split namespaces, and duplicate localization keys before it
+ * ever adjudicates, so a build with both kinds of problem reports the other
+ * kind first.
+ */
 export class PathOwnershipError extends PdxSdkError {
   readonly conflicts: readonly PathOwnershipConflict[];
 
   constructor(conflicts: readonly PathOwnershipConflict[]) {
     super(
       `Output path ownership has ${conflicts.length} conflict${conflicts.length === 1 ? "" : "s"}: ` +
-        conflicts.map((conflict) => conflict.path).join(", ")
+        conflicts.map((conflict) => `${conflict.path} (${conflict.reason})`).join(", ")
     );
     this.conflicts = Object.freeze(
       conflicts.map((conflict) =>
-        Object.freeze({ ...conflict, owners: Object.freeze([...conflict.owners]) })
+        Object.freeze({
+          ...conflict,
+          claimants: Object.freeze(
+            conflict.claimants.map((claimant) =>
+              Object.freeze({ ...claimant, stems: Object.freeze([...claimant.stems]) })
+            )
+          ),
+        })
       )
     );
   }

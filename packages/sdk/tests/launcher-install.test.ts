@@ -34,10 +34,10 @@ import {
   createMod,
   install,
   MaterializationError,
+  PathOwnershipError,
   render,
   renderLauncherDescriptor,
   stellaris,
-  VanillaPathCollisionError,
   write,
   type ModConfig,
   type PureMod,
@@ -354,7 +354,7 @@ describe("install refuses a folder name that is not a folder name", () => {
 });
 
 describe("install is atomic in the ways that matter", () => {
-  /** A mod whose `render` throws: it emits at a path the vanilla view occupies. */
+  /** A build that refuses: it would emit at a path the vanilla view occupies. */
   function collidingMod(): PureMod {
     const vanilla = viewFromFiles({
       "common/technology/lp_probe_technology.txt": "tech_squatter = {\n\tarea = physics\n}\n",
@@ -376,11 +376,12 @@ describe("install is atomic in the ways that matter", () => {
     );
   }
 
-  it("leaves an existing install untouched when render throws", async () => {
+  it("leaves an existing install untouched when the build refuses", async () => {
     // The install used to delete the content directory *before* calling
-    // render, so a build that refused to render — a vanilla path collision, a
-    // malformed definition — took the user's working mod with it and left
-    // nothing in its place.
+    // render, so a build that refused — a vanilla path collision, a malformed
+    // definition — took the user's working mod with it and left nothing in its
+    // place. The refusal now happens earlier still, in the fold, which only
+    // widens the margin this test protects.
     const root = tempDir();
     const { contentDir } = await install(renderedMod, { modDir: root });
     const before = readdirSync(contentDir).sort();
@@ -390,7 +391,7 @@ describe("install is atomic in the ways that matter", () => {
     );
     const descriptorBefore = readFileSync(join(root, "lp_probe.mod"), "utf8");
 
-    expect(() => render(collidingMod())).toThrow(VanillaPathCollisionError);
+    expect(() => render(collidingMod())).toThrow(PathOwnershipError);
 
     expect(readdirSync(contentDir).sort()).toEqual(before);
     expect(
