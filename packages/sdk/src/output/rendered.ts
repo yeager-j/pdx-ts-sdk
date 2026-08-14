@@ -34,11 +34,42 @@ export interface RenderedMod extends Iterable<readonly [LogicalPath, RenderedFil
   entries(): IterableIterator<readonly [LogicalPath, RenderedFile]>;
 }
 
+/**
+ * Bytes the SDK itself produced, handed to a rendered file without a copy.
+ *
+ * `bytes` on a claim is defensive: the caller keeps their array and the
+ * rendered file takes a copy, because a claim can come from anywhere. This is
+ * the other half — a producer inside the SDK that built a buffer for exactly
+ * one rendered file and has no further use for it. The invariant the copy
+ * otherwise bought is now the creator's to keep: after handing a buffer here,
+ * it must neither retain nor mutate it, since the rendered file publishes those
+ * bytes under a hash taken once. `take` is single-use so exactly one file can
+ * ever own them.
+ */
+export class CapturedBytes {
+  #bytes: Uint8Array | undefined;
+
+  constructor(bytes: Uint8Array) {
+    this.#bytes = bytes;
+  }
+
+  take(): Uint8Array {
+    const bytes = this.#bytes;
+    if (bytes === undefined) {
+      throw new TypeError("Captured bytes were already adopted by a rendered file");
+    }
+    this.#bytes = undefined;
+    return bytes;
+  }
+}
+
 export interface RenderedClaim {
   readonly path: string;
   readonly owner: string;
   readonly text?: string;
   readonly bytes?: Uint8Array;
+  /** SDK-produced bytes, adopted rather than copied. See `CapturedBytes`. */
+  readonly captured?: CapturedBytes;
 }
 
 class ImmutableRenderedFile implements RenderedFile {
@@ -50,14 +81,18 @@ class ImmutableRenderedFile implements RenderedFile {
   readonly #bytes: Uint8Array;
 
   constructor(path: LogicalPath, claim: RenderedClaim) {
-    if ((claim.text === undefined) === (claim.bytes === undefined)) {
-      throw new TypeError(`Rendered claim ${path} must carry exactly one of text or bytes`);
+    const carried = [claim.text, claim.bytes, claim.captured].filter(
+      (source) => source !== undefined
+    );
+    if (carried.length !== 1) {
+      throw new TypeError(
+        `Rendered claim ${path} must carry exactly one of text, bytes or captured`
+      );
     }
     this.path = path;
     this.kind = claim.text === undefined ? "bytes" : "text";
     this.text = claim.text;
-    this.#bytes =
-      claim.text === undefined ? Uint8Array.from(claim.bytes!) : encoder.encode(claim.text);
+    this.#bytes = adopt(claim);
     this.byteLength = this.#bytes.byteLength;
     this.sha256 = createHash("sha256").update(this.#bytes).digest("hex");
     Object.freeze(this);
@@ -70,6 +105,14 @@ class ImmutableRenderedFile implements RenderedFile {
   ownedBytes(): Uint8Array {
     return this.#bytes;
   }
+}
+
+/** The claim's one source of bytes, copied only where the caller kept theirs. */
+function adopt(claim: RenderedClaim): Uint8Array {
+  if (claim.captured !== undefined) {
+    return claim.captured.take();
+  }
+  return claim.bytes === undefined ? encoder.encode(claim.text) : Uint8Array.from(claim.bytes);
 }
 
 class ImmutableRenderedMod implements RenderedMod {

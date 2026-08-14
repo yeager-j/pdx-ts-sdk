@@ -108,6 +108,19 @@ export function issueReceipt(
   return new Receipt(target, mode, prefix, digestSnapshot(target, mode, prefix, snapshot));
 }
 
+/**
+ * The digest a receipt for this state would carry. Replay compares an offered
+ * receipt against it, and must reach the same value the refusal would mint.
+ */
+export function receiptDigest(
+  target: string,
+  mode: string,
+  prefix: string,
+  snapshot: MaterializationSnapshot
+): string {
+  return digestSnapshot(target, mode, prefix, snapshot);
+}
+
 export function openReceipt(receipt: MaterializationReceipt): OpenedReceipt {
   if (!(receipt instanceof Receipt)) {
     throw new TypeError("Expected a materialization receipt issued by the SDK");
