@@ -298,7 +298,8 @@ export { install, type InstallOptions, type InstallResult } from "./output/insta
 export { render } from "./output/render.ts";
 export { renderLauncherDescriptor } from "./output/render.ts";
 export type { RenderedFile, RenderedMod } from "./output/rendered.ts";
-export { mergeWrite, write } from "./output/write.ts";
+export type { MaterializationReceipt } from "./output/receipt.ts";
+export { write } from "./output/write.ts";
 export {
   DEFAULT_CONTENT_PATTERN,
   discoverFeatures,
@@ -320,7 +321,7 @@ export {
   GameVersionError,
   InstallNotFoundError,
   LogicalPathError,
-  MaterializationDriftError,
+  MaterializationError,
   NoWinningFilenameError,
   PathOwnershipError,
   PdxSdkError,
@@ -329,7 +330,11 @@ export {
   UnverifiedRegistryError,
   VanillaPackageMismatchError,
   VanillaPathCollisionError,
-  UnownedMaterializationError,
+  type ForeignClaimConflict,
+  type ForeignRefusedEntry,
+  type MaterializationDrift,
+  type MaterializationDriftKind,
+  type MaterializationFailure,
 } from "./errors.ts";
 export { compareLogicalPaths, normalizeLogicalPath, type LogicalPath } from "./ordering.ts";
 export {

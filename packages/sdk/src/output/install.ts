@@ -1,10 +1,10 @@
-import { createHash, randomUUID } from "node:crypto";
-import type { Stats } from "node:fs";
-import { lstat, mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
+import { mkdir, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-import { MaterializationDriftError, UnownedMaterializationError } from "../errors.ts";
+import { MaterializationError, type MaterializationDriftKind } from "../errors.ts";
 import { modDir } from "../stellaris/launcher/mod-directory.ts";
+import { issueReceipt, type DescriptorSnapshot } from "./receipt.ts";
 import { renderLauncherDescriptor } from "./render.ts";
 import type { RenderedMod } from "./rendered.ts";
 import {
@@ -13,10 +13,12 @@ import {
   discardPrevious,
   discardStaging,
   installedDescriptorRecord,
+  observeDescriptor,
   rollbackMaterialization,
   stageMaterialization,
   withMaterializationLock,
   type LauncherDescriptorRecord,
+  type StagedMaterialization,
 } from "./write.ts";
 
 const DIR_NAME_FORBIDDEN = /["\u0000-\u001f]/;
@@ -81,9 +83,18 @@ async function installUnlocked(
   nextDescriptor: LauncherDescriptorRecord
 ): Promise<InstallResult> {
   const root = path.dirname(contentDir);
-  const staged = await stageMaterialization(contentDir, rendered, "install", nextDescriptor);
+  // Observed before staging, so a drift refusal from either half of the
+  // install carries one receipt covering content and descriptor together.
+  const descriptor = await observeDescriptor(descriptorPath);
+  const staged = await stageMaterialization(
+    contentDir,
+    rendered,
+    "install",
+    nextDescriptor,
+    descriptor
+  );
   try {
-    await validateCurrentDescriptor(contentDir, descriptorPath, staged.hadOwnedPrevious);
+    await validateCurrentDescriptor(contentDir, descriptorPath, staged, descriptor);
   } catch (error) {
     await discardStaging(staged);
     throw error;
@@ -127,67 +138,58 @@ async function installUnlocked(
   return { contentDir, descriptorPath };
 }
 
+/**
+ * The launcher descriptor is the second half of an installed materialization,
+ * so the same ownership rules cover it: it may only exist beside owned
+ * content, and it drifts on the content directory's own receipt.
+ */
 async function validateCurrentDescriptor(
   contentDir: string,
   descriptorPath: string,
-  hadPrevious: boolean
+  staged: StagedMaterialization,
+  descriptor: DescriptorSnapshot
 ): Promise<void> {
-  const stats = await lstatOrUndefined(descriptorPath);
-  if (!hadPrevious) {
-    if (stats !== undefined) {
-      throw new UnownedMaterializationError(
-        `Refusing to install over ${descriptorPath}: it exists without an owned content materialization.`
-      );
+  const basename = path.basename(descriptorPath);
+  if (!staged.hadOwnedPrevious) {
+    if (descriptor.state !== "absent") {
+      throw new MaterializationError(contentDir, {
+        reason: "unowned",
+        detail: `Refusing to install over ${descriptorPath}: it exists without an owned content materialization.`,
+      });
     }
     return;
   }
 
-  if (stats === undefined) {
-    throw new MaterializationDriftError(contentDir, [
-      { path: path.basename(descriptorPath), kind: "missing" },
-    ]);
+  if (descriptor.state === "absent") {
+    throw descriptorDrift(contentDir, staged, basename, "missing");
   }
-  if (stats.isSymbolicLink()) {
-    throw new MaterializationDriftError(contentDir, [
-      { path: path.basename(descriptorPath), kind: "symlink" },
-    ]);
+  if (descriptor.state === "symlink") {
+    throw descriptorDrift(contentDir, staged, basename, "symlink");
   }
-  if (!stats.isFile()) {
-    throw new MaterializationDriftError(contentDir, [
-      { path: path.basename(descriptorPath), kind: "type-changed" },
-    ]);
+  if (descriptor.state === "other") {
+    throw descriptorDrift(contentDir, staged, basename, "type-changed");
   }
 
   const expected = await installedDescriptorRecord(contentDir);
   if (
     expected === undefined ||
-    expected.basename !== path.basename(descriptorPath) ||
-    !(await descriptorMatches(descriptorPath, expected))
+    expected.basename !== descriptor.basename ||
+    expected.byteLength !== descriptor.byteLength ||
+    expected.sha256 !== descriptor.sha256
   ) {
-    throw new MaterializationDriftError(contentDir, [
-      { path: path.basename(descriptorPath), kind: "modified" },
-    ]);
+    throw descriptorDrift(contentDir, staged, basename, "modified");
   }
 }
 
-async function descriptorMatches(
-  descriptorPath: string,
-  expected: LauncherDescriptorRecord
-): Promise<boolean> {
-  const bytes = await readFile(descriptorPath);
-  return (
-    bytes.byteLength === expected.byteLength &&
-    createHash("sha256").update(bytes).digest("hex") === expected.sha256
-  );
-}
-
-async function lstatOrUndefined(target: string): Promise<Stats | undefined> {
-  try {
-    return await lstat(target);
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-      return undefined;
-    }
-    throw error;
-  }
+function descriptorDrift(
+  contentDir: string,
+  staged: StagedMaterialization,
+  basename: string,
+  kind: MaterializationDriftKind
+): MaterializationError {
+  return new MaterializationError(contentDir, {
+    reason: "drift",
+    drift: [{ path: basename, kind }],
+    receipt: issueReceipt(contentDir, staged.mode, staged.prefix, staged.snapshot),
+  });
 }

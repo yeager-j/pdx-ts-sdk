@@ -3,7 +3,13 @@
  * the patch slice makes — a missing install, an unverified registry rule, a
  * filename that cannot win — is a distinct class, so callers and tests can
  * tell them apart without matching message strings.
+ *
+ * The receipt import is type-only on purpose: `output/receipt.ts` reaches
+ * `ordering.ts`, which reaches this module for `LogicalPathError`, so a value
+ * import here would close a runtime cycle.
  */
+
+import type { MaterializationReceipt } from "./output/receipt.ts";
 
 export class PdxSdkError extends Error {
   constructor(message: string) {
@@ -38,26 +44,124 @@ export class PathOwnershipError extends PdxSdkError {
   }
 }
 
+/**
+ * How an owned path diverged. Drift is a statement about the manifest-owned
+ * set only: an entry the manifest does not own is foreign, never drift.
+ */
+export type MaterializationDriftKind = "missing" | "modified" | "type-changed" | "symlink";
+
 export interface MaterializationDrift {
   readonly path: string;
-  readonly kind: "added" | "missing" | "modified" | "type-changed" | "symlink";
+  readonly kind: MaterializationDriftKind;
 }
 
-/** A previously materialized tree no longer matches its ownership manifest. */
-export class MaterializationDriftError extends PdxSdkError {
-  readonly drift: readonly MaterializationDrift[];
+/** A rendered path collides with a foreign entry already in the target. */
+export interface ForeignClaimConflict {
+  /** The logical path the `RenderedMod` claims. */
+  readonly claimPath: string;
+  /** The target-relative on-disk entry it collides with. */
+  readonly foreignPath: string;
+  readonly kind: "occupied" | "file-directory";
+}
 
-  constructor(target: string, drift: readonly MaterializationDrift[]) {
-    super(
-      `Refusing to replace ${target}: its materialized output has ${drift.length} drifted ` +
-        `path${drift.length === 1 ? "" : "s"}. Remove or restore the changes before rebuilding.`
-    );
-    this.drift = Object.freeze(drift.map((entry) => Object.freeze({ ...entry })));
+/** A foreign entry of a kind materialization cannot carry across activation. */
+export interface ForeignRefusedEntry {
+  /** Target-relative. */
+  readonly path: string;
+  readonly kind: "symlink" | "fifo" | "socket" | "device" | "unknown";
+}
+
+/**
+ * Every way a materialization can refuse, as data. `"recovery-required"` is
+ * declared but not yet thrown: the transaction journal that makes an
+ * interrupted materialization recognizable lands with SDK-172, and the union
+ * is exhaustive from the start so callers do not have to widen later.
+ */
+export type MaterializationFailure =
+  | { readonly reason: "unowned"; readonly detail: string }
+  | {
+      readonly reason: "drift";
+      readonly drift: readonly MaterializationDrift[];
+      readonly receipt: MaterializationReceipt;
+    }
+  | { readonly reason: "foreign-conflict"; readonly conflicts: readonly ForeignClaimConflict[] }
+  | { readonly reason: "foreign-unpreservable"; readonly entries: readonly ForeignRefusedEntry[] }
+  | { readonly reason: "busy"; readonly detail: string }
+  | { readonly reason: "activation"; readonly rolledBack: boolean }
+  | { readonly reason: "recovery-required"; readonly detail: string };
+
+/** Materialization refused, or failed at the commit point. */
+export class MaterializationError extends PdxSdkError {
+  /** The canonical absolute target path. */
+  readonly target: string;
+  readonly failure: MaterializationFailure;
+
+  constructor(target: string, failure: MaterializationFailure, options?: { cause?: unknown }) {
+    super(describeFailure(target, failure));
+    this.target = target;
+    this.failure = freezeFailure(failure);
+    if (options?.cause !== undefined) {
+      this.cause = options.cause;
+    }
+  }
+
+  get reason(): MaterializationFailure["reason"] {
+    return this.failure.reason;
   }
 }
 
-/** A nonempty target has no valid SDK ownership manifest. */
-export class UnownedMaterializationError extends PdxSdkError {}
+function describeFailure(target: string, failure: MaterializationFailure): string {
+  switch (failure.reason) {
+    case "unowned":
+      return failure.detail;
+    case "drift":
+      return (
+        `Refusing to materialize ${target}: ${failure.drift.length} owned ` +
+        `path${failure.drift.length === 1 ? "" : "s"} drifted from the ownership manifest.`
+      );
+    case "foreign-conflict":
+      return (
+        `Refusing to materialize ${target}: ${failure.conflicts.length} rendered ` +
+        `path${failure.conflicts.length === 1 ? "" : "s"} collide with entries already there.`
+      );
+    case "foreign-unpreservable":
+      return (
+        `Refusing to materialize ${target}: ${failure.entries.length} foreign ` +
+        `entr${failure.entries.length === 1 ? "y" : "ies"} cannot be preserved across activation.`
+      );
+    case "busy":
+      return `Refusing to activate ${target}: ${failure.detail}`;
+    case "activation":
+      return (
+        `Failed to activate ${target}: the previous output ` +
+        `${failure.rolledBack ? "was restored" : "could not be restored and was left in place"}.`
+      );
+    case "recovery-required":
+      return `Refusing to materialize ${target}: ${failure.detail}`;
+  }
+}
+
+function freezeFailure(failure: MaterializationFailure): MaterializationFailure {
+  switch (failure.reason) {
+    case "drift":
+      return Object.freeze({
+        ...failure,
+        drift: Object.freeze(failure.drift.map((entry) => Object.freeze({ ...entry }))),
+      });
+    case "foreign-conflict":
+      return Object.freeze({
+        ...failure,
+        conflicts: Object.freeze(failure.conflicts.map((entry) => Object.freeze({ ...entry }))),
+      });
+    case "foreign-unpreservable":
+      return Object.freeze({
+        ...failure,
+        entries: Object.freeze(failure.entries.map((entry) => Object.freeze({ ...entry }))),
+      });
+    default:
+      return Object.freeze({ ...failure });
+  }
+}
 
 /** No Stellaris install at any searched location. */
 export class InstallNotFoundError extends PdxSdkError {}
