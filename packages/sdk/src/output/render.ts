@@ -6,6 +6,7 @@
 
 import { block, list, scalar, serialize } from "@pdx-ts/pdxscript";
 
+import { takeAssetBytes } from "../authoring/assets.ts";
 import type { PureMod } from "../compiler/model.ts";
 import { DESCRIPTOR_PATH } from "../compiler/paths.ts";
 import { PdxSdkError } from "../errors.ts";
@@ -17,10 +18,21 @@ import {
   type RenderedMod,
 } from "./rendered.ts";
 
+const renderedAssets = new WeakMap<PureMod, RenderedMod>();
+
 export function render(mod: PureMod): RenderedMod {
+  if (mod.assets.length > 0) {
+    const cached = renderedAssets.get(mod);
+    if (cached !== undefined) {
+      return cached;
+    }
+  }
   const { prefix } = mod.config;
   const files: RenderedClaim[] = [];
   files.push({ path: DESCRIPTOR_PATH, text: renderDescriptor(mod) });
+  for (const asset of mod.assets) {
+    files.push({ path: asset.path, captured: takeAssetBytes(asset) });
+  }
   for (const file of mod.contentFiles) {
     files.push({
       path: file.relPath,
@@ -63,7 +75,11 @@ export function render(mod: PureMod): RenderedMod {
     files.push({ path: plan.relPath, text: plan.content });
   }
   assertSerializesTheLedger(mod, files);
-  return createRenderedMod(prefix, renderDescriptor(mod), files);
+  const rendered = createRenderedMod(prefix, renderDescriptor(mod), files);
+  if (mod.assets.length > 0) {
+    renderedAssets.set(mod, rendered);
+  }
+  return rendered;
 }
 
 /**

@@ -285,6 +285,7 @@ export {
   type MintedContentId,
   type ModCapability,
 } from "./authoring/mod.ts";
+export type { AssetFileInput, AssetFileItem, AssetTreeInput } from "./authoring/assets.ts";
 export {
   LOCALIZATION_LANGUAGES,
   type LocalizationItem,

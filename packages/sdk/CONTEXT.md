@@ -23,9 +23,15 @@ _Avoid_: collection, group, module
 
 **Item**:
 A value an authoring method returns, tagged with an `itemKind` — content, event,
-on-action hook, patch, or contribution. Items register nothing; placing them in
-a feature is what makes them real.
+on-action hook, patch, contribution, localization, or Asset file. Items
+register nothing; placing them in a feature is what makes them real.
 _Avoid_: entry, definition, node
+
+**Asset file**:
+An opaque, byte-preserved regular file captured when `assetFile()` or
+`assetTree()` is called. Its item exposes only its logical path, length, and
+hash; source locations and captured bytes remain capability-owned. Placement
+in a Feature gives it provenance but never changes its logical path.
 
 **Definer**:
 The raw `defineX` function under a capability method. Internal lowering

@@ -1,5 +1,6 @@
 import type { PdxEntry } from "@pdx-ts/pdxscript";
 
+import type { AssetFileItem } from "../authoring/assets.ts";
 import type { LocalizationLanguage } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ModWarning } from "../diagnostics.ts";
@@ -53,6 +54,8 @@ export interface PureMod {
   readonly config: ResolvedModConfig;
   /** Diagnostics collected during the fold. */
   readonly warnings: readonly ModWarning[];
+  /** Captured opaque Asset files placed by Features, in canonical path order. */
+  readonly assets: readonly AssetFileItem[];
   /** Content emission, grouped by registry and collection file. */
   readonly contentFiles: readonly ContentFile[];
   /** Event emission: one file per stem and namespace. */

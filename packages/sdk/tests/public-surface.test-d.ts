@@ -35,6 +35,28 @@ describe("the public authoring surface", () => {
     expectTypeOf(DEFAULT_CONTENT_PATTERN).toEqualTypeOf<RegExp>();
   });
 
+  it("publishes opaque Asset items without exposing their source or bytes", () => {
+    const mod = createMod({
+      name: "Public assets",
+      prefix: "public_assets",
+      supportedVersion: "4.4.*",
+    });
+    expectTypeOf<sdk.AssetFileItem["itemKind"]>().toEqualTypeOf<"asset">();
+    expectTypeOf<sdk.AssetFileItem["path"]>().toEqualTypeOf<sdk.LogicalPath>();
+    expectTypeOf<sdk.AssetFileItem["byteLength"]>().toEqualTypeOf<number>();
+    expectTypeOf<sdk.AssetFileItem["sha256"]>().toEqualTypeOf<string>();
+    expectTypeOf<typeof mod.assetFile>().toEqualTypeOf<
+      (input: sdk.AssetFileInput) => sdk.AssetFileItem
+    >();
+    expectTypeOf<typeof mod.assetTree>().toEqualTypeOf<
+      (input: sdk.AssetTreeInput) => readonly sdk.AssetFileItem[]
+    >();
+    // @ts-expect-error — capture does not expose a source location.
+    expectTypeOf<sdk.AssetFileItem["source"]>();
+    // @ts-expect-error — capture does not expose mutable bytes.
+    expectTypeOf<sdk.AssetFileItem["bytes"]>();
+  });
+
   it("lets a consumer name each patchable registry's item type, and place it", () => {
     // The text guard in `tests/codegen/content-snapshot.test.ts` proves the
     // export lines exist for every overlay row; this proves the names are

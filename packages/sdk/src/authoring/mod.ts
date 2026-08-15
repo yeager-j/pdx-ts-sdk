@@ -37,6 +37,15 @@ import {
 import type { EventKindKey } from "../generated/events.ts";
 import type { ScopeName } from "../generated/scopes.ts";
 import {
+  assertAssetOwner,
+  captureAssetFile,
+  captureAssetTree,
+  type AssetCapabilityOwner,
+  type AssetFileInput,
+  type AssetFileItem,
+  type AssetTreeInput,
+} from "./assets.ts";
+import {
   assertNamespace,
   createFeature,
   FILE_STEM_PATTERN,
@@ -53,7 +62,7 @@ import {
 
 const capabilityFeatureOwner: unique symbol = Symbol("mod capability feature owner");
 
-interface CapabilityFeatureOwner<P extends string> {
+interface CapabilityFeatureOwner<P extends string> extends AssetCapabilityOwner {
   readonly prefix: P;
 }
 
@@ -114,6 +123,10 @@ export type ModCapability<P extends string, I extends IdProfile> = {
     stem: string | undefined,
     items: readonly T[]
   ): CapabilityFeature<P, T>;
+  /** Captures one regular source file into SDK-owned Asset bytes. */
+  assetFile(input: AssetFileInput): AssetFileItem;
+  /** Captures every regular file in one source directory into SDK-owned Asset bytes. */
+  assetTree(input: AssetTreeInput): readonly AssetFileItem[];
   /** Compiles only features placed by this capability into a pure mod value. */
   compile(features: readonly CapabilityFeature<P>[], options?: BuildOptions): PureMod;
   /** Creates a pure on-action contribution; place its returned value in a feature. */
@@ -250,7 +263,11 @@ function assertEventNamespace(namespace: string, prefix: string, where: string):
   }
 }
 
-function assertCapabilityItem(item: ModItem, prefix: string): void {
+function assertCapabilityItem(
+  item: ModItem,
+  owner: CapabilityFeatureOwner<string>,
+  prefix: string
+): void {
   switch (item.itemKind) {
     case "content":
       if (!belongsToPrefix(item.id, prefix)) {
@@ -295,6 +312,9 @@ function assertCapabilityItem(item: ModItem, prefix: string): void {
         );
       }
       return;
+    case "asset":
+      assertAssetOwner(item, owner);
+      return;
   }
 }
 
@@ -306,7 +326,7 @@ function assertCapabilityFeature<P extends string>(
   if (feature[capabilityFeatureOwner] !== owner) {
     throw new Error(`Feature does not belong to mod prefix "${prefix}"`);
   }
-  feature.items.forEach((item) => assertCapabilityItem(item, prefix));
+  feature.items.forEach((item) => assertCapabilityItem(item, owner, prefix));
 }
 
 function resolveIdProfile<I extends IdProfile>(profile: I): Readonly<I> {
@@ -347,7 +367,10 @@ export function createMod<const P extends string, const I extends IdProfile>(
 ): ModCapability<P, I | typeof DEFAULT_ID_PROFILE> {
   const config = resolveConfig(configInput);
   const ids = resolveIdProfile(options?.ids ?? DEFAULT_ID_PROFILE);
-  const owner: CapabilityFeatureOwner<P> = Object.freeze({ prefix: config.prefix });
+  const owner: CapabilityFeatureOwner<P> = Object.freeze({
+    prefix: config.prefix,
+    assetCapability: Symbol("asset capability"),
+  });
   const content = contentCapabilityMethods<P, I | typeof DEFAULT_ID_PROFILE>(
     mintContentId(config.prefix, ids),
     assertNestedDefinitionId(config.prefix),
@@ -368,8 +391,10 @@ export function createMod<const P extends string, const I extends IdProfile>(
     ...situationTypes,
     ...eventChains,
     namespace: <const N extends string>(name: N = "" as N) => eventsFor(config.prefix, name),
+    assetFile: (input: AssetFileInput) => captureAssetFile(owner, input),
+    assetTree: (input: AssetTreeInput) => captureAssetTree(owner, input),
     feature: <T extends ModItem>(stem: string | undefined, items: readonly T[]) => {
-      items.forEach((item) => assertCapabilityItem(item, config.prefix));
+      items.forEach((item) => assertCapabilityItem(item, owner, config.prefix));
       return Object.freeze({
         ...createFeature(stem, items),
         [capabilityFeatureOwner]: owner,
