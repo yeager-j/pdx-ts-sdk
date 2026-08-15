@@ -49,16 +49,33 @@ the answer changes product behavior, scope, or external authority.
 Use this decision tree before writing the plan:
 
 ```text
-Can the coordinator already name the implementation seam, governing source of truth,
-affected callers, and verification command from current evidence?
+Can the coordinator name the implementation seam, governing source of truth, affected
+callers, and verification command from current evidence?
 ├── Yes → Inspect the decision-driving files directly and write the plan.
-└── No
-    ├── Is the missing context discoverable read-only in the repository?
-    │   ├── Yes → Launch one smaller-model (Luna or Haiku) explorer, then write the plan.
-    │   └── No → Obtain the missing external context or ask the user.
+└── No — take each missing piece in turn:
+    ├── Do you already know the file, symbol, or command that holds the answer?
+    │   └── Yes → Read it yourself. One subagent round trip costs more than one Read.
+    ├── Is it discoverable read-only in the repository?
+    │   └── Yes → Delegate it as an exploration question.
+    └── Otherwise → Obtain the external context or ask the user.
 ```
 
-Require the explorer to remain read-only and report:
+#### Launching explorers
+
+- Split the gap into independent questions, one explorer each, and launch them in a **single
+  message**. Questions that do not feed each other run at the same time; separate messages run them
+  one after another for no gain.
+- Use a smaller model (Luna or Haiku) and require read-only tools.
+- State breadth in every prompt: `medium` for one known subsystem, `very thorough` when the answer
+  may sit in several directories or under more than one naming convention. An explorer given no
+  breadth returns a shallow sweep that the coordinator then has to repeat.
+- Ask locating questions only — paths, symbols, flow, commands. An explorer reads excerpts, not
+  whole files, so it can find code but cannot judge it. Never ask one to review a diff, rate code
+  quality, or confirm correctness; that answer is a guess, not evidence.
+- Give the user request and repository location, never a proposed solution. This prevents the
+  coordinator's early hypothesis from shaping the evidence.
+
+Require each explorer to report:
 
 - relevant paths and symbols;
 - current control and data flow;
@@ -66,10 +83,23 @@ Require the explorer to remain read-only and report:
 - tests and exact verification commands;
 - conflicting evidence and unresolved questions.
 
-Give the explorer the user request and repository location, not a proposed solution. This prevents
-the coordinator's early hypothesis from shaping the evidence. After the report, inspect every source
-whose contents materially determine the plan; the explorer maps the territory but does not own the
-design.
+#### While explorers run
+
+- Never run a delegated search yourself as well. It duplicates the work and produces a second answer
+  to reconcile against the first.
+- Never state, summarize, or assume a pending explorer's findings. The completion notification is
+  the only source of its result; anything written before it arrives is invention.
+- Do the contract work that does not depend on the answer: branch setup, issue and instruction
+  reading, and the parts of the plan the gap does not touch.
+
+#### After the report
+
+- Inspect every source whose contents materially determine the plan. The explorer maps the
+  territory; it does not own the design.
+- Send follow-up questions to the same explorer, which still holds the map. A fresh explorer
+  rebuilds that map from nothing and can rebuild it differently.
+- Restate in your own words every finding that changes the plan. Subagent reports never reach the
+  user, so an unrepeated finding is one the user never saw.
 
 ### 3. Write the Implementation Plan
 
