@@ -7,13 +7,15 @@
   "license": "MIT",
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "build": "tsc -p tsconfig.examples.json && astro build",
     "preview": "astro preview",
-    "typecheck": "astro check"
+    "typecheck": "astro check && tsc -p tsconfig.examples.json"
   },
   "dependencies": {
     "@astrojs/starlight": "^0.41.7",
     "@catppuccin/starlight": "^2.1.0",
+    "@pdx-ts/sdk": "*",
+    "@pdx-ts/stellaris-ids": "*",
     "astro": "^7.2.2",
     "sharp": "^0.35.3"
   },

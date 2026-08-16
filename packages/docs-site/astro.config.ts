@@ -1,6 +1,7 @@
 import starlight from "@astrojs/starlight";
 import catppuccin from "@catppuccin/starlight";
 import { defineConfig } from "astro/config";
+import { defaultClientConditions, defaultServerConditions } from "vite";
 
 /**
  * The sidebar has two sections and only two: Guides, the hand-written concept
@@ -29,4 +30,21 @@ export default defineConfig({
       plugins: [catppuccin()],
     }),
   ],
+  // The paired examples import `@pdx-ts/sdk` at build time, and workspace
+  // packages publish `exports` pointing at the never-built `dist/`. As in
+  // vitest.config.ts, `pdx-source` resolves them to sources — spelled for both
+  // halves of Vite's resolution, and with the defaults restored because a user
+  // `conditions` array replaces them. `noExternal` keeps the workspace
+  // packages inside Vite's resolver rather than leaving them to Node, which
+  // would resolve their `exports` to `dist/`.
+  vite: {
+    resolve: { conditions: ["pdx-source", ...defaultClientConditions] },
+    ssr: {
+      resolve: {
+        conditions: ["pdx-source", ...defaultServerConditions],
+        externalConditions: ["pdx-source"],
+      },
+      noExternal: ["@pdx-ts/sdk", "@pdx-ts/pdxscript", "@pdx-ts/stellaris-ids"],
+    },
+  },
 });

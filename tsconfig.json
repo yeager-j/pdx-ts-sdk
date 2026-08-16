@@ -37,7 +37,9 @@
   // modules (`astro:content`) are generated into `.astro/types.d.ts` by a
   // build, and `.astro` components are not TypeScript files. It extends
   // `astro/tsconfigs/strict` and gates itself with `astro check`, which
-  // `npm run typecheck` calls through to.
+  // `npm run typecheck` calls through to. Its paired examples additionally
+  // check under this program's semantics via its `tsconfig.examples.json`,
+  // which extends this file.
   "exclude": [
     "node_modules",
     "dist",
