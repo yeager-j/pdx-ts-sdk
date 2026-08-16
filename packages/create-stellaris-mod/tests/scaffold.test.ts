@@ -183,6 +183,7 @@ describe("a scaffolded project", () => {
     expect(manifest.prefix).toBe("smoke_mod");
     expect(manifest.config.name).toBe("Smoke Mod");
     expect(manifest.contentDirectory).toBe("src/content");
+    expect(manifest.assetsDirectory).toBe("assets");
   });
 
   it("aliases the mod module as #mod", () => {
@@ -293,6 +294,7 @@ describe("a scaffolded project", () => {
 
   it("builds a mod, fanning one feature module across two registries", () => {
     const output = runIn(projectDir, process.execPath, ["src/index.ts"]);
+    expect(output.trimStart().startsWith("captured 0 Asset files (0 bytes)\n")).toBe(true);
 
     // The claim `src/content/example.ts`'s own docblock makes: one module, one
     // stem, two registry directories.
@@ -304,6 +306,107 @@ describe("a scaffolded project", () => {
     const events = runIn(projectDir, "cat", ["out/events/smoke_mod_example.txt"]);
     expect(events).toContain("namespace = smoke_mod");
     expect(events).toContain("id = smoke_mod.1");
+  });
+
+  it("keeps a legacy manifest without assetsDirectory buildable", () => {
+    const manifestPath = path.join(projectDir, "stellaris-mod.json");
+    const original = readFileSync(manifestPath, "utf8");
+    const manifest = JSON.parse(original) as Record<string, unknown>;
+    delete manifest["assetsDirectory"];
+    writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+
+    try {
+      expect(() =>
+        runIn(projectDir, path.join(projectDir, "node_modules/.bin/tsc"), ["--noEmit"])
+      ).not.toThrow();
+      const output = runIn(projectDir, process.execPath, ["src/index.ts"]);
+      expect(output.trimStart().startsWith("captured 0 Asset files (0 bytes)\n")).toBe(true);
+    } finally {
+      writeFileSync(manifestPath, original);
+    }
+  });
+
+  it("recaptures the mirrored Asset tree on every build invocation", () => {
+    const assetsDir = path.join(projectDir, "assets");
+    const visible = path.join(assetsDir, "gfx/interface/icon.bin");
+    const hidden = path.join(assetsDir, ".hidden/secret.bin");
+    const probe = path.join(projectDir, "asset-recapture.mjs");
+    mkdirSync(path.dirname(visible), { recursive: true });
+    mkdirSync(path.dirname(hidden), { recursive: true });
+    writeFileSync(visible, "before");
+    writeFileSync(hidden, "hidden");
+    writeFileSync(
+      probe,
+      [
+        'import { writeFileSync } from "node:fs";',
+        'import { render } from "@pdx-ts/sdk";',
+        'import { buildTheMod } from "./src/mod.ts";',
+        "",
+        "const first = await buildTheMod();",
+        'writeFileSync(new URL("./assets/gfx/interface/icon.bin", import.meta.url), "after");',
+        "const second = await buildTheMod();",
+        'const firstText = Buffer.from(render(first).file("gfx/interface/icon.bin").bytes()).toString();',
+        'const secondText = Buffer.from(render(second).file("gfx/interface/icon.bin").bytes()).toString();',
+        "process.stdout.write(JSON.stringify({",
+        "  firstText,",
+        "  secondText,",
+        "  firstBytes: first.assets.reduce((total, asset) => total + asset.byteLength, 0),",
+        "  secondBytes: second.assets.reduce((total, asset) => total + asset.byteLength, 0),",
+        "}));",
+      ].join("\n")
+    );
+
+    try {
+      const captured = JSON.parse(runIn(projectDir, process.execPath, ["asset-recapture.mjs"])) as {
+        firstText: string;
+        secondText: string;
+        firstBytes: number;
+        secondBytes: number;
+      };
+      expect(captured).toEqual({
+        firstText: "before",
+        secondText: "after",
+        firstBytes: 12,
+        secondBytes: 11,
+      });
+
+      const buildOutput = runIn(projectDir, process.execPath, ["src/index.ts"]);
+      expect(buildOutput.trimStart().startsWith("captured 2 Asset files (11 bytes)\n")).toBe(true);
+      expect(buildOutput.indexOf("captured 2 Asset files (11 bytes)")).toBeLessThan(
+        buildOutput.indexOf("wrote gfx/interface/icon.bin")
+      );
+      expect(runIn(projectDir, "cat", ["out/gfx/interface/icon.bin"])).toBe("after");
+      expect(runIn(projectDir, "cat", ["out/.hidden/secret.bin"])).toBe("hidden");
+
+      rmSync(path.dirname(hidden), { recursive: true });
+      writeFileSync(visible, "x");
+      const singularOutput = runIn(projectDir, process.execPath, ["src/index.ts"]);
+      expect(singularOutput.trimStart().startsWith("captured 1 Asset file (1 byte)\n")).toBe(true);
+      mkdirSync(path.dirname(hidden), { recursive: true });
+      writeFileSync(hidden, "hidden");
+      writeFileSync(visible, "after");
+
+      const modDir = mkdtempSync(path.join(tmpdir(), "create-stellaris-mod-assets-"));
+      try {
+        const installOutput = execFileSync(process.execPath, ["src/install.ts"], {
+          cwd: projectDir,
+          encoding: "utf8",
+          stdio: ["ignore", "pipe", "pipe"],
+          env: { ...process.env, PDX_NO_VANILLA: "1", STELLARIS_MOD_DIR: modDir },
+        });
+        expect(installOutput.trimStart().startsWith("captured 2 Asset files (11 bytes)\n")).toBe(
+          true
+        );
+        expect(installOutput.indexOf("captured 2 Asset files (11 bytes)")).toBeLessThan(
+          installOutput.indexOf("Installed Smoke Mod for the launcher:")
+        );
+      } finally {
+        rmSync(modDir, { recursive: true, force: true });
+      }
+    } finally {
+      rmSync(assetsDir, { recursive: true, force: true });
+      rmSync(probe, { force: true });
+    }
   });
 
   it("emits a descriptor the launcher can read", () => {
@@ -342,6 +445,7 @@ describe("a scaffolded project", () => {
         stdio: ["ignore", "pipe", "pipe"],
         env: { ...process.env, PDX_NO_VANILLA: "1", STELLARIS_MOD_DIR: modDir },
       });
+      expect(output.trimStart().startsWith("captured 0 Asset files (0 bytes)\n")).toBe(true);
       expect(output).toContain("Installed Smoke Mod for the launcher:");
       expect(readdirSync(modDir).length).toBeGreaterThan(0);
     } finally {

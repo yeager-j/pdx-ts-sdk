@@ -22,6 +22,10 @@ export interface AssetFileInput {
 export interface AssetTreeInput {
   readonly source: string | URL;
   readonly into?: string;
+  /** Returns no Items when the source path does not exist. Defaults to false. */
+  readonly allowMissing?: boolean;
+  /** Returns no Items when the tree contains no regular files. Defaults to false. */
+  readonly allowEmpty?: boolean;
 }
 
 export interface AssetCapabilityOwner {
@@ -56,6 +60,7 @@ interface PlannedDirectory {
 }
 
 const records = new WeakMap<AssetFileItem, AssetRecord>();
+const EMPTY_ASSET_TREE: readonly AssetFileItem[] = Object.freeze([]);
 
 /** Test-only seam. This module is deliberately not exported from the package. */
 export const _assetCaptureTestHook: {
@@ -81,7 +86,11 @@ export function captureAssetTree(
   owner: AssetCapabilityOwner,
   input: AssetTreeInput
 ): readonly AssetFileItem[] {
-  const tree = planTree(sourcePath(input.source), input.into);
+  const source = sourcePath(input.source);
+  const tree = planTree(source, input.into, input.allowMissing ?? false, input.allowEmpty ?? false);
+  if (tree === undefined) {
+    return EMPTY_ASSET_TREE;
+  }
   assertSameIdentity(tree.root, tree.rootIdentity, "directory", "Asset tree root");
   const items = capturePlanned(owner, tree.files);
   assertSameIdentity(tree.root, tree.rootIdentity, "directory", "Asset tree root");
@@ -126,9 +135,17 @@ function planRegularFile(source: string, destination: LogicalPath): PlannedFile 
   return { source, path: destination, identity: identityOf(stat) };
 }
 
-function planTree(source: string, into: string | undefined): PlannedTree {
+function planTree(
+  source: string,
+  into: string | undefined,
+  allowMissing: boolean,
+  allowEmpty: boolean
+): PlannedTree | undefined {
   const prefix = into === undefined ? undefined : normalizeLogicalPath(into);
-  const root = lstatRequired(source, "Asset tree source");
+  const root = lstatTreeRoot(source, allowMissing);
+  if (root === undefined) {
+    return undefined;
+  }
   if (root.isSymbolicLink() || !root.isDirectory()) {
     throw new Error(`Asset tree source ${JSON.stringify(source)} must be a directory`);
   }
@@ -173,11 +190,22 @@ function planTree(source: string, into: string | undefined): PlannedTree {
     }
   }
 
-  if (files.length === 0) {
+  if (files.length === 0 && !allowEmpty) {
     throw new Error(`Asset tree source ${JSON.stringify(source)} contains no regular files`);
   }
   files.sort((a, b) => compareUtf8(a.path, b.path));
   return { root: source, rootIdentity: identityOf(root), files };
+}
+
+function lstatTreeRoot(source: string, allowMissing: boolean): Stats | undefined {
+  try {
+    return lstatSync(source);
+  } catch (error) {
+    if (allowMissing && (error as NodeJS.ErrnoException).code === "ENOENT") {
+      return undefined;
+    }
+    throw new Error(`Asset tree source ${JSON.stringify(source)} is unavailable`, { cause: error });
+  }
 }
 
 function capturePlanned(

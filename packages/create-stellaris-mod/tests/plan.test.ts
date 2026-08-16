@@ -153,10 +153,12 @@ describe("the Project Manifest", () => {
       $schema: string;
       mod: Record<string, unknown>;
       contentDirectory: string;
+      assetsDirectory: string;
     };
     expect(Object.keys(manifest.mod)).toEqual(["my_mod"]);
     expect(manifest.$schema).toBe("./stellaris-mod.schema.json");
     expect(manifest.contentDirectory).toBe("src/content");
+    expect(manifest.assetsDirectory).toBe("assets");
   });
 
   it("is where src/mod.ts reads the config from", () => {
@@ -213,6 +215,40 @@ describe("the Project Manifest", () => {
         `/project/${contentDirectory}/`
       );
     }
+  });
+
+  it("captures the manifest Asset tree inside each build invocation", () => {
+    const mod = plan().get("src/mod.ts")!;
+    expect(mod).toContain('"assetsDirectory" in manifest');
+    expect(mod).toContain("assetsDirectoryPattern.test(assetsDirectory)");
+    expect(mod).toContain('path.join(projectRoot, ...assetsDirectory.split("/"))');
+    expect(mod).toContain(
+      "mod.assetTree({ source: assetsDir, allowMissing: true, allowEmpty: true })"
+    );
+    expect(mod).toContain('mod.feature("assets", assets)');
+    expect(mod.indexOf("mod.assetTree(")).toBeGreaterThan(
+      mod.indexOf("export async function buildTheMod")
+    );
+  });
+
+  it("documents the default mirrored Asset directory", () => {
+    const readme = plan().get("README.md")!;
+    expect(readme).toContain("assets/gfx/interface/icon.dds");
+    expect(readme).toContain("gfx/interface/icon.dds");
+    expect(readme).toContain("missing or empty directory is valid");
+  });
+
+  it("reports one whole-mod Asset summary before build and install output", () => {
+    const mod = plan().get("src/mod.ts")!;
+    const build = plan().get("src/index.ts")!;
+    const install = plan().get("src/install.ts")!;
+    expect(mod).toContain("export function assetCaptureSummary(built: PureMod): string");
+    expect(build.indexOf("console.log(assetCaptureSummary(mod))")).toBeLessThan(
+      build.indexOf("const files = render(mod)")
+    );
+    expect(install.indexOf("console.log(assetCaptureSummary(mod))")).toBeLessThan(
+      install.indexOf("await install(render(mod))")
+    );
   });
 
   it("aliases the mod module, so feature source computes no relative path", () => {

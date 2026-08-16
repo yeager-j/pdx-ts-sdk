@@ -30,9 +30,9 @@ import type { Stats } from "node:fs";
 import { link as fsLink, open as fsOpen, lstat, mkdir, realpath, unlink } from "node:fs/promises";
 import path from "node:path";
 
-import { parseProjectLayout } from "./project-layout.ts";
+import { parseProjectLayoutField } from "./project-layout.ts";
 
-export { ContentDirectoryError } from "./project-layout.ts";
+export { ProjectLayoutError } from "./project-layout.ts";
 
 export class PublishError extends Error {
   constructor(message: string) {
@@ -74,7 +74,7 @@ export class UnsupportedPublicationError extends PublishError {
  * author meant by a path that does not mean what it says.
  */
 export function validateContentDirectory(raw: string): readonly string[] {
-  return parseProjectLayout(raw).contentSegments;
+  return parseProjectLayoutField("contentDirectory", raw);
 }
 
 /** What the target name currently is, as `lstat` sees it. */

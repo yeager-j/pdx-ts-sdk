@@ -32,6 +32,7 @@ import {
   type ProjectModConfig,
 } from "../src/manifest.ts";
 import type { Resolved } from "../src/options.ts";
+import { PROJECT_LAYOUT_FIELDS, projectLayoutFieldSchema } from "../src/project-layout.ts";
 import { manifestJson, manifestSchema } from "../src/templates/manifest.ts";
 
 const require = createRequire(import.meta.url);
@@ -81,6 +82,7 @@ const CORPUS: readonly Case[] = [
         },
       },
       contentDirectory: "src/content",
+      assetsDirectory: "assets",
     }),
     valid: true,
   },
@@ -92,6 +94,16 @@ const CORPUS: readonly Case[] = [
   {
     name: "a nested content directory",
     bytes: json({ ...MINIMAL, contentDirectory: "src/features/content" }),
+    valid: true,
+  },
+  {
+    name: "the default assets directory",
+    bytes: json({ ...MINIMAL, assetsDirectory: "assets" }),
+    valid: true,
+  },
+  {
+    name: "a nested assets directory",
+    bytes: json({ ...MINIMAL, assetsDirectory: "mod/assets" }),
     valid: true,
   },
 
@@ -223,6 +235,38 @@ const CORPUS: readonly Case[] = [
     bytes: json({ ...MINIMAL, contentDirectory }),
     valid: false,
   })),
+  {
+    name: "a numeric assetsDirectory",
+    bytes: json({ ...MINIMAL, assetsDirectory: 7 }),
+    valid: false,
+  },
+  ...["", "/assets", "./assets", "assets/../gfx", "assets//gfx"].map((assetsDirectory) => ({
+    name: `non-normalized assetsDirectory ${JSON.stringify(assetsDirectory)}`,
+    bytes: json({ ...MINIMAL, assetsDirectory }),
+    valid: false,
+  })),
+  ...["assets#fragment", "assets?query", "%2e%2e/assets"].map((assetsDirectory) => ({
+    name: `URL-reinterpreted assetsDirectory ${JSON.stringify(assetsDirectory)}`,
+    bytes: json({ ...MINIMAL, assetsDirectory }),
+    valid: false,
+  })),
+  ...[
+    "assets.",
+    "assets ",
+    " assets",
+    "CON",
+    "con.txt",
+    "COM1",
+    "lpt9.log",
+    "foo:bar",
+    'foo"bar',
+    "foo|bar",
+    "foo*bar",
+  ].map((assetsDirectory) => ({
+    name: `non-portable assetsDirectory ${JSON.stringify(assetsDirectory)}`,
+    bytes: json({ ...MINIMAL, assetsDirectory }),
+    valid: false,
+  })),
 ];
 
 function accepts(bytes: string): boolean {
@@ -244,6 +288,8 @@ describe("parseManifest", () => {
     const manifest = parseManifest(CORPUS[1]!.bytes, SOURCE);
     expect(manifest.prefix).toBe("my_mod");
     expect(manifest.contentDirectory).toBe("src/content");
+    expect(manifest.assetsDirectory).toBe("assets");
+    expect(manifest.layout.assetsSegments).toEqual(["assets"]);
     expect(manifest.sourcePath).toBe(SOURCE);
     expect(manifest.config).toEqual({
       name: "My Mod",
@@ -261,6 +307,8 @@ describe("parseManifest", () => {
     // trips through JSON.
     const manifest = parseManifest(json(MINIMAL), SOURCE);
     expect(Object.keys(manifest.config)).toEqual(["name", "supportedVersion"]);
+    expect(manifest.assetsDirectory).toBeUndefined();
+    expect(Object.keys(manifest.layout)).toEqual(["contentDirectory", "contentSegments"]);
   });
 
   it("copies tags rather than aliasing the parsed array", () => {
@@ -311,6 +359,11 @@ describe("parseManifest", () => {
     expect(accepts(rejected)).toBe(false);
     expect(validate(JSON.parse(accepted))).toBe(true);
     expect(validate(JSON.parse(rejected))).toBe(false);
+
+    const assetsSchema = projectLayoutFieldSchema(PROJECT_LAYOUT_FIELDS.assetsDirectory);
+    expect(assetsSchema["pattern"]).toBe(PROJECT_LAYOUT_FIELDS.assetsDirectory.pattern.source);
+    expect(accepts(json({ ...MINIMAL, assetsDirectory: "assets" }))).toBe(true);
+    expect(accepts(json({ ...MINIMAL, assetsDirectory: "../assets" }))).toBe(false);
   });
 });
 
@@ -491,6 +544,7 @@ describe("the manifest init writes", () => {
       tags: ["Technologies"],
     });
     expect(manifest.contentDirectory).toBe("src/content");
+    expect(manifest.assetsDirectory).toBe("assets");
   });
 
   it("points at the schema it ships beside", () => {

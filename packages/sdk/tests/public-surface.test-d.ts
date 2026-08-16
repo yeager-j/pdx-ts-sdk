@@ -51,6 +51,8 @@ describe("the public authoring surface", () => {
     expectTypeOf<typeof mod.assetTree>().toEqualTypeOf<
       (input: sdk.AssetTreeInput) => readonly sdk.AssetFileItem[]
     >();
+    expectTypeOf<sdk.AssetTreeInput["allowMissing"]>().toEqualTypeOf<boolean | undefined>();
+    expectTypeOf<sdk.AssetTreeInput["allowEmpty"]>().toEqualTypeOf<boolean | undefined>();
     // @ts-expect-error — capture does not expose a source location.
     expectTypeOf<sdk.AssetFileItem["source"]>();
     // @ts-expect-error — capture does not expose mutable bytes.

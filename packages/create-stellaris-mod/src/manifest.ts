@@ -2,8 +2,8 @@
  * `stellaris-mod.json` — the Project Manifest, read.
  *
  * The manifest is the author-owned source of truth for mod identity, launcher
- * metadata, and where feature source goes. `init` writes it; later commands
- * read it and never repair or migrate it.
+ * metadata, and where Feature and Asset source goes. `init` writes it; later
+ * commands read it and never repair or migrate it.
  *
  * The validation is hand-rolled rather than a schema validator at runtime, for
  * the reason `derive.ts` restates the SDK's prefix pattern: this package has no
@@ -21,7 +21,7 @@ import path from "node:path";
 import type { ModConfig } from "@pdx-ts/sdk";
 
 import { SUPPORTED_VERSION_PATTERN } from "./generated/verified-build.ts";
-import { parseProjectLayout, type ProjectLayout } from "./project-layout.ts";
+import { parseProjectLayout, PROJECT_LAYOUT_FIELDS, type ProjectLayout } from "./project-layout.ts";
 
 /** The one filename a project's manifest can have. */
 export const MANIFEST_BASENAME = "stellaris-mod.json";
@@ -41,7 +41,7 @@ export const PREFIX_PATTERN = /^[a-z][a-z0-9_]*$/;
  */
 export { SUPPORTED_VERSION_PATTERN } from "./generated/verified-build.ts";
 
-const TOP_LEVEL_KEYS = ["$schema", "mod", "contentDirectory"] as const;
+const TOP_LEVEL_KEYS = ["$schema", "mod", ...Object.keys(PROJECT_LAYOUT_FIELDS)] as const;
 
 /**
  * The one declarative description of the configuration under a manifest's
@@ -149,6 +149,8 @@ export interface ProjectManifest {
   readonly config: ProjectModConfig;
   /** A project-relative logical path. Validated as a path when it is used. */
   readonly contentDirectory: string;
+  /** A project-relative directory mirrored into the mod root, when configured. */
+  readonly assetsDirectory?: string;
   readonly layout: ProjectLayout;
   /** Where these bytes came from, for messages a later step needs to write. */
   readonly sourcePath: string;
@@ -205,16 +207,23 @@ export function parseManifest(bytes: string, sourcePath: string): ProjectManifes
         ])}.`
     );
   }
-  for (const required of ["mod", "contentDirectory"] as const) {
+  const requiredKeys = [
+    "mod",
+    ...Object.entries(PROJECT_LAYOUT_FIELDS)
+      .filter(([, field]) => field.required)
+      .map(([name]) => name),
+  ];
+  for (const required of requiredKeys) {
     if (!Object.hasOwn(root, required)) {
       throw new ManifestError(`${sourcePath} has no "${required}" key, which is required.`);
     }
   }
 
-  const layout = readProjectLayout(root["contentDirectory"], sourcePath);
+  const layout = readProjectLayoutFields(root, sourcePath);
   return {
     ...readMod(root["mod"], sourcePath),
     contentDirectory: layout.contentDirectory,
+    ...(layout.assetsDirectory === undefined ? {} : { assetsDirectory: layout.assetsDirectory }),
     layout,
     sourcePath,
   };
@@ -363,14 +372,24 @@ export async function findManifest(startDir: string): Promise<FoundManifest | un
   }
 }
 
-function readProjectLayout(value: unknown, sourcePath: string): ProjectLayout {
-  if (typeof value !== "string") {
-    throw new ManifestError(
-      `${sourcePath}: "contentDirectory" must be a string, and is ${describe(value)}.`
-    );
+function readProjectLayoutFields(root: Record<string, unknown>, sourcePath: string): ProjectLayout {
+  const values: Partial<Record<keyof typeof PROJECT_LAYOUT_FIELDS, string>> = {};
+  for (const field of Object.keys(PROJECT_LAYOUT_FIELDS) as Array<
+    keyof typeof PROJECT_LAYOUT_FIELDS
+  >) {
+    if (!Object.hasOwn(root, field)) {
+      continue;
+    }
+    const value = root[field];
+    if (typeof value !== "string") {
+      throw new ManifestError(
+        `${sourcePath}: ${JSON.stringify(field)} must be a string, and is ${describe(value)}.`
+      );
+    }
+    values[field] = value;
   }
   try {
-    return parseProjectLayout(value);
+    return parseProjectLayout(values as { contentDirectory: string; assetsDirectory?: string });
   } catch (error) {
     throw new ManifestError(
       `${sourcePath}: ${error instanceof Error ? error.message : String(error)}`

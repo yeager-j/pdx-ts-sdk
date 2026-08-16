@@ -6,7 +6,7 @@
  */
 
 import type { Resolved } from "../options.ts";
-import { PROJECT_CONTENT_DIRECTORY_PATTERN } from "../project-layout.ts";
+import { PROJECT_LAYOUT_FIELDS } from "../project-layout.ts";
 import { quoteTs } from "../quote.ts";
 
 export function modTs(resolved: Resolved): string {
@@ -14,11 +14,11 @@ export function modTs(resolved: Resolved): string {
     resolved.installPath === undefined ? "" : `import { loadVanilla } from "./vanilla.ts";\n`;
   const vanillaUse =
     resolved.installPath === undefined
-      ? `  return mod.compile(features);`
+      ? `  return mod.compile(featuresWithAssets);`
       : `  // A vanilla view enables checked vanilla references and patching.\n` +
         `  // Own content ids are minted from this mod's prefix.\n` +
         `  const vanilla = loadVanilla();\n` +
-        `  return mod.compile(features, vanilla === undefined ? {} : { vanilla });`;
+        `  return mod.compile(featuresWithAssets, vanilla === undefined ? {} : { vanilla });`;
 
   return `/**
  * The wiring from \`stellaris-mod.json\` to the mod capability, plus
@@ -77,7 +77,7 @@ export const mod = createMod(config);
 // the manifest reader and schema, and path.join keeps URL metacharacters from
 // being reinterpreted.
 // eslint-disable-next-line no-control-regex -- NUL is intentionally rejected by the shared path rule.
-const contentDirectoryPattern = new RegExp(${quoteTs(PROJECT_CONTENT_DIRECTORY_PATTERN.source)});
+const contentDirectoryPattern = new RegExp(${quoteTs(PROJECT_LAYOUT_FIELDS.contentDirectory.pattern.source)});
 if (!contentDirectoryPattern.test(manifest.contentDirectory)) {
   throw new Error(
     \`stellaris-mod.json contentDirectory \${JSON.stringify(manifest.contentDirectory)} is not a \` +
@@ -86,10 +86,41 @@ if (!contentDirectoryPattern.test(manifest.contentDirectory)) {
 }
 const projectRoot = fileURLToPath(new URL("../", import.meta.url));
 const contentDir = path.join(projectRoot, ...manifest.contentDirectory.split("/"));
+const assetsDirectory: unknown =
+  "assetsDirectory" in manifest ? manifest.assetsDirectory : undefined;
+// eslint-disable-next-line no-control-regex -- NUL is intentionally rejected by the shared path rule.
+const assetsDirectoryPattern = new RegExp(${quoteTs(PROJECT_LAYOUT_FIELDS.assetsDirectory.pattern.source)});
+if (
+  assetsDirectory !== undefined &&
+  (typeof assetsDirectory !== "string" || !assetsDirectoryPattern.test(assetsDirectory))
+) {
+  throw new Error(
+    \`stellaris-mod.json assetsDirectory \${JSON.stringify(assetsDirectory)} is not a normalized \` +
+      \`project-relative directory.\`
+  );
+}
+const assetsDir =
+  assetsDirectory === undefined
+    ? undefined
+    : path.join(projectRoot, ...assetsDirectory.split("/"));
 
 export async function buildTheMod(): Promise<PureMod> {
   const features = await discoverFeatures<typeof mod.config.prefix>(contentDir);
+  const assets =
+    assetsDir === undefined
+      ? []
+      : mod.assetTree({ source: assetsDir, allowMissing: true, allowEmpty: true });
+  const featuresWithAssets =
+    assets.length === 0 ? features : [...features, mod.feature("assets", assets)];
 ${vanillaUse}
+}
+
+export function assetCaptureSummary(built: PureMod): string {
+  const fileCount = built.assets.length;
+  const byteCount = built.assets.reduce((total, asset) => total + asset.byteLength, 0);
+  const files = fileCount === 1 ? "file" : "files";
+  const bytes = byteCount === 1 ? "byte" : "bytes";
+  return \`captured \${fileCount} Asset \${files} (\${byteCount} \${bytes})\`;
 }
 `;
 }
@@ -105,11 +136,12 @@ export function indexTs(): string {
 
 import { render, write } from "@pdx-ts/sdk";
 
-import { buildTheMod } from "./mod.ts";
+import { assetCaptureSummary, buildTheMod } from "./mod.ts";
 
 export const outDir = new URL("../out/", import.meta.url);
 
 const mod = await buildTheMod();
+console.log(assetCaptureSummary(mod));
 const files = render(mod);
 await write(outDir, files);
 
@@ -146,9 +178,10 @@ export function installTs(): string {
 
 import { install, render } from "@pdx-ts/sdk";
 
-import { buildTheMod, config } from "./mod.ts";
+import { assetCaptureSummary, buildTheMod, config } from "./mod.ts";
 
 const mod = await buildTheMod();
+console.log(assetCaptureSummary(mod));
 
 for (const warning of mod.warnings) {
   console.warn(\`warning (\${warning.code}): \${warning.message}\`);
