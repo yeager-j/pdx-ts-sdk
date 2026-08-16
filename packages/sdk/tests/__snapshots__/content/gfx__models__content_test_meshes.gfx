@@ -1,6 +1,6 @@
 objectTypes = {
 	pdxmesh = {
-		name = content_test_pdxmesh_station_hull
+		name = content_test_station_hull
 		file = gfx/models/content_test/station.mesh
 		scale = 1.5
 		meshsettings = {

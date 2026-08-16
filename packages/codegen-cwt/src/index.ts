@@ -54,6 +54,7 @@ import {
   docComment,
   indefiniteArticle,
   kebabCase,
+  pascalCase,
   referencesIdentifier,
   spokenName,
 } from "./naming.ts";
@@ -61,9 +62,14 @@ import {
   CONTENT_CONTRIBUTION_SINKS,
   CONTENT_FIELD_OVERRIDES,
   CONTENT_PATCH_REGISTRIES,
+  FILE_STEM_OVERLAYS,
   HAND_WRITTEN_CONTENT_DEFINERS,
+  MINT_SHAPE_OVERLAYS,
   REPEATED_STRUCT_FIELD_OVERRIDES,
+  SHAPE_MINT_REGISTRY,
+  SPRITE_SHAPE_MINTS,
   type HandWrittenDefiner,
+  type SpriteShapeMint,
 } from "./overlay.ts";
 import {
   compareToBaseline,
@@ -812,6 +818,7 @@ function contentDefiners(
   contents: readonly {
     manifest: ContentManifestEntry;
     registry: string;
+    referenceName: string;
     emission: ContentEmission;
   }[]
 ): {
@@ -827,6 +834,9 @@ function contentDefiners(
   const capabilityBindings: string[] = [];
   const profileMembers: string[] = [];
   const defaultProfileMembers: string[] = [];
+  const mintShapeRows: { method: string; head: string }[] = [];
+  const shapeMintTypes: string[] = [];
+  const shapeMintRefTypes: string[] = [];
   const capabilityRuntimeDefiners = new Set<string>();
   const nestedDefinitionTables: string[] = [];
   const capabilityPatchTypes: { registry: string; emission: ContentEmission }[] = [];
@@ -841,7 +851,15 @@ function contentDefiners(
     const patchable = CONTENT_PATCH_REGISTRIES.get(registry);
     const contribution = CONTENT_CONTRIBUTION_SINKS.get(registry);
     const method = camelCase(registry);
-    const minted = `MintedContentId<P, I, ${JSON.stringify(method)}, Name>`;
+    const mintShape = MINT_SHAPE_OVERLAYS.get(registry);
+    // A shaped registry has no `IdProfile` member to index, so its minted type
+    // is the segmentless one. `MintedIdOf` resolves both, and spelling the
+    // narrower `MintedContentId` where it applies keeps the emitted signature
+    // saying which of the two a registry uses.
+    const minted =
+      mintShape === undefined
+        ? `MintedContentId<P, I, ${JSON.stringify(method)}, Name>`
+        : `MintedIdOf<P, I, ${JSON.stringify(method)}, Name>`;
     const nestedDefinitionMembers = emission.emittedFields
       .filter((field) => field.shape === "repeatedStruct")
       .map((field) => camelCase(field.field))
@@ -853,18 +871,22 @@ function contentDefiners(
       );
     }
 
-    profileMembers.push(
-      docComment(
-        [
-          `The segment inserted between the mod prefix and ${article} ${spoken}'s logical name.`,
-          "Override it when this registry needs a different id convention.",
-        ],
-        "  "
-      ) + `  readonly ${method}: string;`
-    );
-    defaultProfileMembers.push(
-      `  ${method}: ${JSON.stringify(content.manifest.idSegment ?? registry)},`
-    );
+    if (mintShape === undefined) {
+      profileMembers.push(
+        docComment(
+          [
+            `The segment inserted between the mod prefix and ${article} ${spoken}'s logical name.`,
+            "Override it when this registry needs a different id convention.",
+          ],
+          "  "
+        ) + `  readonly ${method}: string;`
+      );
+      defaultProfileMembers.push(
+        `  ${method}: ${JSON.stringify(content.manifest.idSegment ?? registry)},`
+      );
+    } else {
+      mintShapeRows.push({ method, head: mintShape.head ?? "" });
+    }
 
     // A scope-parameterised registry erases S to `never`, not to its default:
     // `Trigger<S>` is contravariant, so `Def<Id, never>` is the supertype every
@@ -964,6 +986,19 @@ function contentDefiners(
         )
       );
       capabilityRuntimeDefiners.add(`define${name}`);
+      for (const shape of shapesFor(registry)) {
+        if (emission.scopeParameter !== null) {
+          throw new Error(
+            `Shape mint ${shape.method} targets scope-parameterised registry "${registry}", ` +
+              "whose definitions take a scope argument the emitted signature does not carry"
+          );
+        }
+        const emitted = shapeMintMethod(shape, name, contents);
+        shapeMintTypes.push(emitted.type);
+        capabilityMembers.push(emitted.member);
+        capabilityBindings.push(emitted.binding);
+        shapeMintRefTypes.push(...emitted.refTypes);
+      }
     }
     if (patchable !== undefined) {
       capabilityMembers.push(
@@ -1228,6 +1263,10 @@ function contentDefiners(
     ]);
   const capabilityImports =
     'import type { ContentItem } from "../content/types.ts";\n' +
+    (shapeMintTypes.length === 0
+      ? ""
+      : 'import { refId, type TypedRef } from "../script/scalar.ts";\n' +
+        importList("./refs.ts", shapeMintRefTypes)) +
     (capabilityRuntimeDefiners.size === 0
       ? ""
       : `import { ${[...capabilityRuntimeDefiners].sort().join(", ")} } from "./content-definers.ts";\n`) +
@@ -1287,6 +1326,43 @@ function contentDefiners(
         "    Object.keys(nested as Readonly<Record<string, unknown>>).forEach(assert);\n" +
         "  }\n" +
         "}\n\n") +
+    "type LogicalNameAsserter = (name: string) => void;\n\n" +
+    (shapeMintTypes.length === 0
+      ? ""
+      : docComment([
+          "The id a shape mint fills its hole with.",
+          "",
+          "A typed item or reference lowers to its id; an intentional raw string — a",
+          "target this build does not contain — passes through. Neither may be empty or",
+          "carry whitespace: the minted name is the single bare word the game looks the",
+          "sprite up by, so a hole that swallowed a space would emit a definition nothing",
+          "can reference.",
+        ]) +
+        "function shapeMintTarget(target: TypedRef<string> | string): string {\n" +
+        '  const id = typeof target === "string" ? target : refId(target);\n' +
+        '  if (typeof id !== "string" || id === "" || /\\s/.test(id)) {\n' +
+        "    throw new Error(\n" +
+        "      `A shape-minted sprite's target must be one bare word; received ${JSON.stringify(id)}`\n" +
+        "    );\n" +
+        "  }\n" +
+        "  return id;\n" +
+        "}\n\n" +
+        docComment([
+          "Records which capability minted a shape-minted definition, and under which",
+          "shape.",
+          "",
+          "A shape mint may carry no mod prefix at all — the name is built from another",
+          "definition's id — so a string-prefix test cannot decide whether the item",
+          "belongs to the capability placing it. The provenance can, and it is the only",
+          "reason the placement check works for these at all.",
+        ]) +
+        'function shapeMinted<T extends { readonly itemKind: "content" }>(\n' +
+        "  item: T,\n" +
+        "  prefix: string,\n" +
+        "  shape: string\n" +
+        "): T {\n" +
+        "  return { ...item, minted: { prefix, shape } } as T;\n" +
+        "}\n\n") +
     docComment([
       "Registry-specific id segments used when a mod capability mints content ids.",
       "Each member may override the conventional segment for its registry.",
@@ -1298,7 +1374,23 @@ function contentDefiners(
     "export const DEFAULT_ID_PROFILE = Object.freeze({\n" +
     defaultProfileMembers.join("\n") +
     "\n}) satisfies IdProfile;\n\n" +
-    docComment(["The literal id a capability mints for one logical content name."]) +
+    docComment([
+      "The literal each segmentless registry's minted name carries before the mod prefix.",
+      "",
+      "A registry appears here exactly when it has no `IdProfile` segment: its name is",
+      "`${head}${prefix}_${name}`, the head is fixed by the game rather than chosen by",
+      "the author, and there is nothing for a profile to override. The empty string is a",
+      "head — it says the mint is bare, not that the registry is absent.",
+    ]) +
+    "export const MINT_SHAPES = Object.freeze({\n" +
+    mintShapeRows.map((row) => `  ${row.method}: ${JSON.stringify(row.head)},`).join("\n") +
+    "\n} as const);\n\n" +
+    docComment(["A registry whose name is minted without an id segment."]) +
+    "export type MintShapedRegistry = keyof typeof MINT_SHAPES;\n\n" +
+    docComment([
+      "The literal id a capability mints for one logical content name, for a registry",
+      "carrying an `IdProfile` segment.",
+    ]) +
     "export type MintedContentId<\n" +
     "  P extends string,\n" +
     "  I extends IdProfile,\n" +
@@ -1306,12 +1398,33 @@ function contentDefiners(
     "  Name extends string,\n" +
     "> = `${P}_${I[K] & string}_${Name}`;\n\n" +
     docComment([
+      "The literal id a capability mints for one logical content name, for any registry.",
+      "",
+      "One arm per `MINT_SHAPES` member, then the segmented default. The arms are",
+      "generated from the same table the runtime reads, so a registry cannot mint one",
+      "shape and be typed as another.",
+    ]) +
+    "export type MintedIdOf<\n" +
+    "  P extends string,\n" +
+    "  I extends IdProfile,\n" +
+    "  K extends keyof I | MintShapedRegistry,\n" +
+    "  Name extends string,\n" +
+    "> = " +
+    mintShapeRows
+      .map(
+        (row) => `K extends ${JSON.stringify(row.method)}\n  ? \`${row.head}\${P}_\${Name}\`\n  : `
+      )
+      .join("") +
+    "MintedContentId<P, I, K & keyof I, Name>;\n\n" +
+    docComment([
       "The internal function that turns a registry key and logical name into an owned id.",
     ]) +
     "export type ContentIdMinter<P extends string, I extends IdProfile> = <\n" +
-    "  const K extends keyof I,\n" +
+    "  const K extends keyof I | MintShapedRegistry,\n" +
     "  const Name extends string,\n" +
-    ">(registry: K, name: Name) => MintedContentId<P, I, K, Name>;\n\n" +
+    ">(registry: K, name: Name) => MintedIdOf<P, I, K, Name>;\n\n" +
+    shapeMintTypes.join("\n") +
+    (shapeMintTypes.length === 0 ? "" : "\n") +
     docComment(["Content authoring methods bound to one mod capability's prefix and id profile."]) +
     "export interface ContentCapabilityMethods<P extends string, I extends IdProfile> {\n" +
     capabilityMembers.join("\n") +
@@ -1320,7 +1433,8 @@ function contentDefiners(
     "export function contentCapabilityMethods<P extends string, I extends IdProfile>(\n" +
     "  mint: ContentIdMinter<P, I>,\n" +
     "  assertNestedId: NestedDefinitionIdAsserter,\n" +
-    "  prefix: P\n" +
+    "  prefix: P,\n" +
+    "  assertName: LogicalNameAsserter\n" +
     "): ContentCapabilityMethods<P, I> {\n" +
     "  return Object.freeze({\n" +
     capabilityBindings.join("\n") +
@@ -1332,6 +1446,138 @@ function contentDefiners(
     capabilityCode: capabilityImports + "\n" + capability,
     definers: contents.length,
     grafted,
+  };
+}
+
+/** The audited shape mints one registry owns. */
+function shapesFor(registry: string): readonly SpriteShapeMint[] {
+  return registry === SHAPE_MINT_REGISTRY ? SPRITE_SHAPE_MINTS : [];
+}
+
+/**
+ * One {@link SPRITE_SHAPE_MINTS} row as a capability method.
+ *
+ * Nothing here is per-row hand code: the name type, the signature, the runtime
+ * mint and the provenance all come out of the row's head, hole and variants.
+ * Adding a row adds a method; there is no second place to edit.
+ *
+ * The name type is emitted as its own alias so the signature stays readable and
+ * so an author can spell the minted name themselves. Variants append their
+ * literal in declaration order, on both sides — the type appends it behind a
+ * conditional on the option's own boolean parameter, the runtime behind the
+ * same option's value — so the two cannot disagree about what a variant is
+ * called.
+ */
+function shapeMintMethod(
+  shape: SpriteShapeMint,
+  typeName: string,
+  contents: readonly { readonly registry: string; readonly referenceName: string }[]
+): {
+  readonly type: string;
+  readonly member: string;
+  readonly binding: string;
+  readonly refTypes: readonly string[];
+} {
+  const alias = `${pascalCase(shape.method)}Name`;
+  const variants = shape.variants ?? [];
+  const variantParameters = variants.map(
+    (variant) => `${pascalCase(variant.option)} extends boolean = false`
+  );
+  const variantArguments = variants.map((variant) => pascalCase(variant.option));
+  const variantTypeTail = variants
+    .map(
+      (variant) =>
+        `\${${pascalCase(variant.option)} extends true ? ${JSON.stringify(variant.suffix)} : ""}`
+    )
+    .join("");
+  const variantRuntimeTail = variants
+    .map(
+      (variant) =>
+        `\${options?.${variant.option} === true ? ${JSON.stringify(variant.suffix)} : ""}`
+    )
+    .join("");
+  const optionsParameter =
+    variants.length === 0
+      ? ""
+      : `,\n    options?: { ${variants
+          .map((variant) => `readonly ${variant.option}?: ${pascalCase(variant.option)}`)
+          .join("; ")} }`;
+
+  const named = shape.hole === "name";
+  const target = named ? undefined : (shape.hole as { readonly targetRegistry: string });
+  const targetContent =
+    target === undefined
+      ? undefined
+      : contents.find((content) => content.registry === target.targetRegistry);
+  if (target !== undefined && targetContent === undefined) {
+    throw new Error(
+      `Shape mint ${shape.method} targets registry "${target.targetRegistry}", which the content ` +
+        "manifest does not expose"
+    );
+  }
+  const refType =
+    targetContent === undefined ? undefined : `${pascalCase(targetContent.referenceName)}Ref`;
+  const parameterName = target === undefined ? "name" : camelCase(target.targetRegistry);
+
+  const aliasParameters = named
+    ? ["P extends string", "Name extends string", ...variantParameters]
+    : ["Target extends string", ...variantParameters];
+  const aliasBody = named
+    ? `\`${shape.head}\${P}_\${Name}${variantTypeTail}\``
+    : `\`${shape.head}\${Target}${variantTypeTail}\``;
+  const nameType = named
+    ? `${alias}<P, Name${variantArguments.map((one) => `, ${one}`).join("")}>`
+    : `${alias}<Target${variantArguments.map((one) => `, ${one}`).join("")}>`;
+  const def = `${typeName}Def<${nameType}>`;
+  const methodParameters = [
+    named ? "const Name extends string" : "const Target extends string",
+    ...variantParameters.map((one) => `const ${one}`),
+  ].join(",\n    ");
+  const argument = named
+    ? "name: Name"
+    : `${parameterName}: Target | (${refType} & { readonly id: Target })`;
+  const runtimeHole = named ? `\${prefix}_\${name}` : `\${shapeMintTarget(${parameterName})}`;
+
+  return {
+    type:
+      docComment([`The name a \`${shape.method}\` mints.`, "", `Seed: ${shape.seed}.`]) +
+      `export type ${alias}<\n  ${aliasParameters.join(",\n  ")},\n> = ${aliasBody};\n`,
+    member:
+      docComment(
+        [
+          `Defines the \`${shape.head}\`-led sprite the game generates${
+            named ? " from a name" : ` from a ${spokenName(target!.targetRegistry)}`
+          }.`,
+          named
+            ? "The capability mints and owns the full name, exactly as an ordinary definition does."
+            : "The minted name carries the target's id rather than the mod prefix, so ownership " +
+              "rides on the item as mint provenance instead of on the string.",
+          `In every other respect this is an ordinary ${spokenName(SHAPE_MINT_REGISTRY)} definition.`,
+          "",
+          `Seed: ${shape.seed}`,
+        ],
+        "  "
+      ) +
+      `  ${shape.method}<\n    ${methodParameters},\n  >(\n` +
+      `    ${argument},\n` +
+      `    def: Omit<${def}, "id">${optionsParameter}\n` +
+      `  ): ContentItem<${JSON.stringify(SHAPE_MINT_REGISTRY)}, ${def}>;`,
+    binding:
+      `    ${shape.method}: <\n      ${methodParameters},\n    >(\n` +
+      `      ${argument},\n` +
+      `      def: Omit<${def}, "id">${optionsParameter.replace("\n    ", "\n      ")}\n` +
+      `    ) => {\n` +
+      (named ? `      assertName(name);\n` : "") +
+      `      return shapeMinted(\n` +
+      `        define${typeName}({\n` +
+      `          ...def,\n` +
+      `          id: \`${shape.head}${runtimeHole}${variantRuntimeTail}\` as ${nameType},\n` +
+      `        } as ${def}),\n` +
+      `        prefix,\n` +
+      `        ${JSON.stringify(shape.method)}\n` +
+      `      );\n` +
+      `    },`,
+    refTypes: refType === undefined ? [] : [refType],
   };
 }
 
@@ -1475,8 +1721,11 @@ function contentRegistry(
         throw new Error(`type[${content.registry}] has unusable path ${sourcePath}`);
       }
       const outputDir = sourcePath.slice("game/".length);
-      const fileStem = path.posix.basename(outputDir);
+      // The directory's own last component, unless SDK-121 fixed a canonical
+      // stem for this registry — see `FILE_STEM_OVERLAYS`.
+      const fileStem = FILE_STEM_OVERLAYS.get(content.registry) ?? path.posix.basename(outputDir);
       const layout = contentFileLayout(content.registry, content.type);
+      const mintHead = MINT_SHAPE_OVERLAYS.get(content.registry)?.head;
       return (
         "  {\n" +
         `    type: ${JSON.stringify(content.registry)},\n` +
@@ -1484,6 +1733,7 @@ function contentRegistry(
         `    outputDir: ${JSON.stringify(outputDir)},\n` +
         `    fileStem: ${JSON.stringify(fileStem)},\n` +
         `    fileExtension: ${JSON.stringify(layout.fileExtension)},\n` +
+        (mintHead === undefined ? "" : `    mintHead: ${JSON.stringify(mintHead)},\n`) +
         (layout.rootEnvelope === undefined
           ? ""
           : `    rootEnvelope: ${JSON.stringify(layout.rootEnvelope)},\n`) +

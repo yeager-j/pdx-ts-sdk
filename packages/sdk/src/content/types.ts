@@ -28,6 +28,24 @@ export interface ContentItem<
   readonly type: K;
   readonly id: D["id"];
   readonly def: D;
+  /**
+   * Present only on a shape-minted definition (SDK-121): which capability
+   * minted it, and under which shape.
+   *
+   * A shape mint builds its name from another definition's id, so the result
+   * may carry no mod prefix at all — `GFX_fleet_order_button_ground_support_`
+   * plus a *vanilla* stance is a name this mod owns and no string test can
+   * recognise. The provenance is what the placement check reads instead, the
+   * same way a patch item's baked prefix is read: ownership has to be recorded
+   * where it is decided, because it cannot be recovered from the id.
+   */
+  readonly minted?: MintProvenance;
+}
+
+/** Which capability minted a shape-minted definition, and under which shape. */
+export interface MintProvenance {
+  readonly prefix: string;
+  readonly shape: string;
 }
 
 /** A contribution to a shared, non-id-keyed sink (`default = { ... }`). */

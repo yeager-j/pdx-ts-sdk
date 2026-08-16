@@ -10,7 +10,7 @@
  * The third leg measures the fixture output itself: every string literal that
  * is not a module specifier passes the same imported gate its emitter used —
  * the path gate for `paths.ts`, the identifier gate for everything else — and
- * no generated module carries runtime code beyond the three that must. One
+ * no generated module carries runtime code beyond the four that must. One
  * authority, applied twice.
  */
 
@@ -24,9 +24,11 @@ import {
   assertVanillaPath,
   compareIdentifiers,
   createChokepoint,
+  emitVanillaGfxIds,
   emitVanillaPaths,
 } from "../src/emit.ts";
 import { generateVanillaPackage } from "../src/generate.ts";
+import { RUNTIME_ID_SET_REGISTRIES } from "../src/manifest.ts";
 
 /** The repo root, from this module — never the directory vitest was started in. */
 const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
@@ -42,15 +44,18 @@ const OPTIONS = {
 const generated = generateVanillaPackage(OPTIONS);
 
 /**
- * The three files that carry runtime, and the only three. Everything else the
+ * The four files that carry runtime, and the only four. Everything else the
  * generator emits is types with zero payload. `triggers.ts` and `effects.ts`
  * hold one bound call per scripted definition (SDK-13); `paths.ts` holds the
  * install's path inventory, which is data because the SDK looks paths up at
  * build time rather than asking a compiler to hold a union of tens of
- * thousands of strings (SDK-173).
+ * thousands of strings (SDK-173); `gfx-ids.ts` holds the mint-shaped
+ * registries' ids, for the same reason one step over — a minted GFX name is
+ * only known at build time, so the collision refusal is a lookup rather than a
+ * type (SDK-121).
  */
 const BINDING_FILES = new Set(["triggers.ts", "effects.ts"]);
-const RUNTIME_FILES = new Set([...BINDING_FILES, "paths.ts"]);
+const RUNTIME_FILES = new Set([...BINDING_FILES, "paths.ts", "gfx-ids.ts"]);
 
 describe("assertVanillaIdentifier", () => {
   it("passes the names the game actually defines", () => {
@@ -151,6 +156,16 @@ describe("negative control", () => {
     expect(() =>
       emitVanillaPaths(["sound/ok.asset", "a = b"], createChokepoint(), "4.4.6")
     ).toThrow(/vanilla path: refusing to emit/);
+  });
+
+  it("refuses to emit an id set carrying anything but an identifier", () => {
+    expect(() =>
+      emitVanillaGfxIds(
+        [{ registry: "spriteType", ids: ["GFX_ok", "The Grand Herald has arrived."] }],
+        createChokepoint(),
+        "4.4.6"
+      )
+    ).toThrow(/spriteType id: refusing to emit/);
   });
 
   it("fails to generate against an install whose names are localised text", () => {
@@ -271,6 +286,36 @@ describe("generated output", () => {
     for (const line of body.slice(2, -1)) {
       expect(line).toMatch(/^ {2}"[^"\\]+",$/);
     }
+  });
+
+  /**
+   * The fourth runtime file, pinned the same way and for the same reason: a
+   * version stamp, one record of frozen string arrays, and one quoted id per
+   * line. Ids are inside the licensing boundary already — every one of them
+   * also ships as a member of that registry's id union — and this is what keeps
+   * the runtime form from becoming somewhere a body could ride along.
+   */
+  it("keeps the mint-shaped id sets to one quoted id per line", () => {
+    const text = generated.files.get("gfx-ids.ts");
+    expect(text, "gfx-ids.ts was not emitted").toBeDefined();
+    const body = text!.split("\n").filter((line) => line !== "" && !line.startsWith("//"));
+    expect(body[0]).toMatch(/^export const VANILLA_GFX_ID_GAME_VERSION = "4\.4\.6";$/);
+    expect(body[1]).toBe(
+      "export const VANILLA_GFX_IDS: Readonly<Record<string, readonly string[]>> = " +
+        "/*#__PURE__*/ Object.freeze({"
+    );
+    expect(body[body.length - 1]).toBe("});");
+    for (const line of body.slice(2, -1)) {
+      expect(line).toMatch(
+        /^(?: {2}"[\w]+": \/\*#__PURE__\*\/ Object\.freeze\(\[| {4}"[^"\\]+",| {2}\]\),)$/
+      );
+    }
+  });
+
+  it("covers every mint-shaped registry, and only those", () => {
+    const text = generated.files.get("gfx-ids.ts")!;
+    const registries = [...text.matchAll(/^ {2}"([^"]+)":/gm)].map((match) => match[1]!);
+    expect(registries).toEqual([...RUNTIME_ID_SET_REGISTRIES]);
   });
 
   it("carries the fixture's walked files and archive entries, and none of its junk", () => {

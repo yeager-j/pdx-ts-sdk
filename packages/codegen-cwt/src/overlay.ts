@@ -101,6 +101,165 @@ export const HAND_WRITTEN_CONTENT_DEFINERS = new Map<string, HandWrittenDefiner>
   ],
 ]);
 
+export interface MintShape {
+  /**
+   * The literal every minted name of this registry carries *before* the mod
+   * prefix. Omitted where there is none.
+   */
+  readonly head?: string;
+  readonly reason: string;
+}
+
+/**
+ * Registries whose names are minted rather than assembled from an id segment
+ * (SDK-121).
+ *
+ * The ordinary shape is `${prefix}_${segment}_${name}`, where the segment is an
+ * `IdProfile` member an author may override. A row here says that registry has
+ * no segment at all: its minted name is `${head}${prefix}_${name}`, the head is
+ * a fixed literal the game itself requires, and there is nothing for a profile
+ * to override — so the registry leaves `IdProfile` entirely rather than
+ * carrying a member no minting reads.
+ *
+ * Three consequences, all derived from this one table: the registry is dropped
+ * from `IdProfile`/`DEFAULT_ID_PROFILE`, its minted-id type is the segmentless
+ * template rather than `MintedContentId`, and its descriptor carries the head
+ * as `mintHead` so the runtime ownership checks measure against
+ * `${head}${prefix}_` rather than `${prefix}_`.
+ */
+export const MINT_SHAPE_OVERLAYS = new Map<string, MintShape>([
+  [
+    "spriteType",
+    {
+      head: "GFX_",
+      reason:
+        "SDK-121: every sprite name the game reads is `GFX_`-led — the engine finds a sprite by " +
+        "the literal name a `<sprite>` field spells, and vanilla writes `GFX_` on all 9,198 of " +
+        "them. So the head is the game's, not a convention an author may restyle, and a " +
+        "`sprite_type` id segment between prefix and name would only be a second thing to spell " +
+        "in every reference.",
+    },
+  ],
+  [
+    "pdxmesh",
+    {
+      reason:
+        "SDK-121: mesh names are bare — `${prefix}_${name}`, no registry segment and no suffix " +
+        "enforcement. A `.mesh` file's own object names are what an entity refers to, and " +
+        "vanilla spends no segment on them.",
+    },
+  ],
+  [
+    "pdxparticle",
+    {
+      reason:
+        "SDK-121: the same bare mint as pdxmesh, for the same reason — a particle name is " +
+        "referred to verbatim from `.asset` entities, and vanilla writes no segment.",
+    },
+  ],
+]);
+
+/**
+ * Emitted file stems that are not the last component of the registry's output
+ * directory (SDK-121).
+ *
+ * The derived stem is `basename(outputDir)`, which reads well under `common/`
+ * (`common/technologies` -> `mymod_technologies.txt`) and badly for the three
+ * GFX registries, whose directories are named for the *kind of file* rather
+ * than for what is in them: `interface/mymod_interface.gfx`,
+ * `gfx/models/mymod_models.gfx`. The canonical stems name the definitions.
+ *
+ * The `pdxparticle` row is redundant — `gfx/particles` already derives
+ * `particles` — and is written out anyway: this table is the complete audited
+ * statement of the three canonical GFX stems, so reading it should not require
+ * knowing which of them the derivation happens to agree with, and a directory
+ * rename upstream must not silently move a stem that SDK-121 fixed.
+ */
+export const FILE_STEM_OVERLAYS = new Map<string, string>([
+  ["spriteType", "sprites"],
+  ["pdxmesh", "meshes"],
+  ["pdxparticle", "particles"],
+]);
+
+/**
+ * How one shape mint fills its single hole.
+ *
+ * `name` — the author supplies a logical name and the mint carries the mod
+ * prefix, so the result is owned by construction.
+ *
+ * A target registry — the author supplies a reference to a definition of that
+ * registry (or an intentional raw string for one this build does not contain),
+ * and the mint carries *its* id. The result may contain no mod prefix at all,
+ * which is why a shape-minted item records the capability that minted it
+ * instead of being held to a string prefix.
+ */
+export type ShapeMintHole = "name" | { readonly targetRegistry: string };
+
+export interface SpriteShapeMint {
+  /** The capability method this row generates. */
+  readonly method: string;
+  /** The literal the minted name opens with, before the hole. */
+  readonly head: string;
+  readonly hole: ShapeMintHole;
+  /**
+   * Optional boolean options, each appending its own literal to the minted
+   * name. The game reads a separate sprite per variant.
+   */
+  readonly variants?: readonly { readonly option: string; readonly suffix: string }[];
+  /** Where in the rules this pattern is written, verbatim enough to re-find. */
+  readonly seed: string;
+  readonly reason: string;
+}
+
+/**
+ * The closed set of sprite names the game generates from something other than
+ * the sprite's own logical name (SDK-121's *shape mints*).
+ *
+ * A shape mint is still an ordinary `spriteType` definition — same `Def`, same
+ * registry, same emitted file, same duplicate and vanilla-collision checks. All
+ * that differs is how the name is assembled, because the engine builds these
+ * names itself from some other definition's id and will not read a sprite
+ * spelled any other way.
+ *
+ * Seeded from the `$`-patterns the vendored rules write in a type's `images`
+ * block. Only the patterns whose hole the SDK can actually fill are here; the
+ * rest are audited in SDK-121 and deliberately absent, because a method whose
+ * hole no typed value can supply is a raw-string trap wearing a name.
+ *
+ * {@link SHAPE_MINT_REGISTRY} is the registry every row below defines — stated
+ * rather than assumed, so the emitter matches on data instead of carrying a
+ * registry name of its own.
+ */
+export const SHAPE_MINT_REGISTRY = "spriteType";
+
+export const SPRITE_SHAPE_MINTS: readonly SpriteShapeMint[] = [
+  {
+    method: "spriteTextIcon",
+    head: "GFX_text_",
+    hole: "name",
+    seed: "`icon = GFX_text_$` in common/leader_classes.cwt's `images` block, and the same family in common/ship_sizes.cwt (`GFX_text_<key>` beside `GFX_<key>`)",
+    reason:
+      "SDK-121: the text icon is the inline sprite the game draws inside a line of text, and it " +
+      "is a wholly separate sprite from the plain icon beside it. Name-derived rather than " +
+      "target-derived because its two seeds do not share a target: `leader_class` is not a " +
+      "registry this SDK exposes, and `ship_size` fills the hole from its own `icon` scalar " +
+      "rather than from its id. What both need is a way to author the `GFX_text_`-led sprite at " +
+      "all, which a logical name gives.",
+  },
+  {
+    method: "spriteFleetOrderButtonGroundSupport",
+    head: "GFX_fleet_order_button_ground_support_",
+    hole: { targetRegistry: "bombardment_stance" },
+    variants: [{ option: "selected", suffix: "_selected" }],
+    seed: '`fleet_view = "GFX_fleet_order_button_ground_support_$"` and `fleet_view_selected = "GFX_fleet_order_button_ground_support_$_selected"`, both `# inferred`, in common/bombardment_stances.cwt',
+    reason:
+      "SDK-121: the fleet-view button for a bombardment stance. The hole is the stance's id, so " +
+      "the sprite for a vanilla stance carries no mod prefix at all and the mint has to take the " +
+      "stance rather than a name. `bombardment_stance` is a registry this SDK exposes, so the " +
+      "target is typed.",
+  },
+];
+
 /**
  * Registries whose collection factory also offers a vanilla patch.
  *

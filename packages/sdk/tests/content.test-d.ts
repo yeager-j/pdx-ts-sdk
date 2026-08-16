@@ -646,7 +646,7 @@ describe("generated content authoring types", () => {
     // than by the presence of the `as` narrowing. Without it an authored sprite
     // could not reach `event.picture` or any other `<sprite>` field.
     const icon = contentMod.spriteType("icon", { textureFile: "gfx/x.dds" });
-    expectTypeOf(icon.id).toEqualTypeOf<"content_types_sprite_type_icon">();
+    expectTypeOf(icon.id).toEqualTypeOf<"GFX_content_types_icon">();
     const asSprite: SpriteRef = icon;
     void asSprite;
     // A vanilla id is the same kind of thing, so it wears the same brand.
@@ -660,8 +660,8 @@ describe("generated content authoring types", () => {
     const icon = contentMod.spriteType("icon", { textureFile: "gfx/x.dds" });
     const mesh = contentMod.pdxmesh("hull", { file: "gfx/models/x.mesh" });
     const particle = contentMod.pdxparticle("dust", { type: "dust_file" });
-    expectTypeOf(mesh.id).toEqualTypeOf<"content_types_pdxmesh_hull">();
-    expectTypeOf(particle.id).toEqualTypeOf<"content_types_pdxparticle_dust">();
+    expectTypeOf(mesh.id).toEqualTypeOf<"content_types_hull">();
+    expectTypeOf(particle.id).toEqualTypeOf<"content_types_dust">();
 
     // @ts-expect-error — a mesh is not a sprite, whatever `<sprite>` asks for
     const meshAsSprite: SpriteRef = mesh;

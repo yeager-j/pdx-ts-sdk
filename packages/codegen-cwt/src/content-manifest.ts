@@ -201,10 +201,8 @@ export const CONTENT_MANIFEST = [
     name: "spriteType",
     as: "normal",
     keyword: "spriteType",
-    // The registry name is the game's camelCase keyword, and a minted id
-    // segment must be lowercase snake_case (`assertIdProfile`), so this is the
-    // one row where the default segment cannot be the registry name.
-    idSegment: "sprite_type",
+    // No `idSegment`: all three GFX registries carry a `MINT_SHAPE_OVERLAYS`
+    // row instead, which is what says they have no segment to override.
     oversized: true,
   },
   {

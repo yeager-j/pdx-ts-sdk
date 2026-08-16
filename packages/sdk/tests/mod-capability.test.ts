@@ -50,9 +50,9 @@ const COMPLETE_PROFILE = {
   eventChain: "event_chain",
   specialProject: "special_project",
   megastructure: "megastructure",
-  spriteType: "sprite_type",
-  pdxmesh: "pdxmesh",
-  pdxparticle: "pdxparticle",
+  // No GFX registries: `spriteType`, `pdxmesh` and `pdxparticle` mint
+  // segmentless names (SDK-121), so they are not `IdProfile` members and a
+  // profile naming one no longer compiles.
 } as const satisfies IdProfile;
 
 function mod() {

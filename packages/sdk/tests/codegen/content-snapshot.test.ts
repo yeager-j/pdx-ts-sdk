@@ -1790,7 +1790,9 @@ describe("generated content definers", () => {
         "      patch: (technology: Source) => TechnologyPatch\n" +
         "    ) => patchTechnology(technology, patch, prefix),"
     );
-    expect(capability).toContain("  prefix: P\n): ContentCapabilityMethods<P, I> {");
+    expect(capability).toContain(
+      "  prefix: P,\n  assertName: LogicalNameAsserter\n): ContentCapabilityMethods<P, I> {"
+    );
     expect(capability).toContain("readonly addShipOfSizeLimits: typeof addShipOfSizeLimits;");
     expect(capability).toContain(
       "The capability mints and owns the full id; the returned branded reference"

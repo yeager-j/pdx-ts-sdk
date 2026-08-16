@@ -11,6 +11,7 @@ import type { AssetFileItem } from "../authoring/assets.ts";
 import { flattenItems, type ModItemInput } from "../authoring/feature.ts";
 import { LOCALIZATION_LANGUAGES } from "../authoring/localization.ts";
 import { ContentAuthoring } from "../content/authoring.ts";
+import { contentDescriptor } from "../content/descriptors.ts";
 import type { ContentRegistryDescriptor } from "../content/schema.ts";
 import type { ContentItem } from "../content/types.ts";
 import type { ModWarning } from "../diagnostics.ts";
@@ -23,6 +24,7 @@ import {
   installedVanillaPackageVersion,
   vanillaIdsCheckWarning,
 } from "../identifiers/package-pin.ts";
+import { PACKAGED_ID_EVIDENCE } from "../identifiers/vanilla-gfx-ids.ts";
 import {
   checkVanillaPathInventoryConsistency,
   packagedVanillaPaths,
@@ -150,9 +152,6 @@ export function buildMod(
     }
     vanillaKeysByDir.set(dir, keys);
   }
-  const descriptorByType = new Map<ContentTypeName, ContentRegistryDescriptor>(
-    CONTENT_REGISTRIES.map((descriptor) => [descriptor.type as ContentTypeName, descriptor])
-  );
   const ownIdsByDir = new Map<string, Map<string, ContentTypeName>>();
   // Which Features placed items into each emitted file. A file merges several
   // Features' items whenever they share a stem or an output directory, so a
@@ -169,7 +168,7 @@ export function buildMod(
     if (item.itemKind !== "content") {
       continue;
     }
-    const descriptor = descriptorByType.get(item.type);
+    const descriptor = contentDescriptor(item.type);
     if (descriptor === undefined) {
       throw new Error(`Unknown generated content type "${item.type}"`);
     }
@@ -178,6 +177,18 @@ export function buildMod(
       throw new Error(
         `${item.type} id "${item.def.id}" collides with a vanilla ${item.type} of the same id — ` +
           `defining it would silently override vanilla content; patch it instead`
+      );
+    }
+    // The same refusal on packaged rather than loaded evidence. A mint-shaped
+    // registry has no id segment keeping its names clear of vanilla's, so the
+    // collision is real and provable from the shipped id sets — and there is no
+    // patch surface to redirect to, because a deliberate whole-object override
+    // of a vanilla GFX definition is out of scope (SDK-125).
+    if (PACKAGED_ID_EVIDENCE.get(item.type)?.().has(item.def.id) === true) {
+      throw new Error(
+        `${item.type} name "${item.def.id}" collides with a vanilla ${item.type} of the same ` +
+          `name — defining it would silently override vanilla content, and overriding a vanilla ` +
+          `${item.type} is out of scope; mint a different name`
       );
     }
     const ownIds = ownIdsByDir.get(descriptor.outputDir) ?? new Map<string, ContentTypeName>();
@@ -224,13 +235,17 @@ export function buildMod(
         type,
         relPath,
         defined: items.map(({ item, stem }) =>
-          content.define(item.type, item.def, (entries) =>
-            localization.register({
-              layer: "ordinary",
-              language: "english",
-              stem,
-              entries,
-            })
+          content.define(
+            item.type,
+            item.def,
+            (entries) =>
+              localization.register({
+                layer: "ordinary",
+                language: "english",
+                stem,
+                entries,
+              }),
+            item.minted
           )
         ),
       });
@@ -265,7 +280,7 @@ export function buildMod(
     const envelope = fileRootEnvelope(
       relPath,
       file.types,
-      (type) => descriptorByType.get(type as ContentTypeName)?.rootEnvelope
+      (type) => contentDescriptor(type)?.rootEnvelope
     );
     return {
       relPath,

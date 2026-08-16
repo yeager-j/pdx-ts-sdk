@@ -400,6 +400,22 @@ export interface ContentRegistryDescriptor {
    */
   readonly fileExtension: string;
   /**
+   * The literal a minted name of this registry carries *before* the mod prefix
+   * — `"GFX_"` for sprites, absent for every registry that mints
+   * `${prefix}_...` outright.
+   *
+   * It is what the ownership checks measure against: an own definition's name
+   * starts with `${mintHead ?? ""}${prefix}_`, not with `${prefix}_`, so a
+   * check that ignored this would report every sprite this mod defines as
+   * unprefixed. Reference checking keys off the same value, since a sprite
+   * reference naming this mod's own content is `GFX_`-led too.
+   *
+   * Absent does not mean "unminted": a registry may be segmentless and still
+   * head-less (`pdxmesh` mints a bare `${prefix}_${name}`). This records the
+   * head, and only the head.
+   */
+  readonly mintHead?: string;
+  /**
    * Set when the registry's definitions live one level inside a file-level
    * wrapper block instead of at the top level — sprites sit inside
    * `spriteTypes = { ... }`. The fold wraps a whole emitted file in one such

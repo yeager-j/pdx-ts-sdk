@@ -27,6 +27,7 @@ import {
   emitScriptedParams,
   emitTables,
   emitTrie,
+  emitVanillaGfxIds,
   emitVanillaPaths,
   enumFile,
   enumTypeName,
@@ -38,7 +39,11 @@ import {
   type TablesPlan,
 } from "./emit.ts";
 import type { InferredScope, ScriptedKind } from "./infer-scopes.ts";
-import { VANILLA_MANIFEST, type VanillaScriptedRow } from "./manifest.ts";
+import {
+  RUNTIME_ID_SET_REGISTRIES,
+  VANILLA_MANIFEST,
+  type VanillaScriptedRow,
+} from "./manifest.ts";
 import { buildTrie, countLeaves, DEFAULT_TRIE_THRESHOLD } from "./trie.ts";
 
 export interface GenerateOptions extends VanillaBuildFactsOptions {
@@ -319,6 +324,27 @@ export function generateVanillaPackage(options: GenerateOptions): {
   // strings behind its own `./paths` subpath, and the root must stay something
   // a project can import without loading it.
   files.set("paths.ts", emitVanillaPaths(facts.paths.paths, gate, gameVersion));
+  // The same reasoning, and the same shape: a runtime lookup the SDK performs
+  // per build, behind its own subpath so the root loads none of it.
+  files.set(
+    "gfx-ids.ts",
+    emitVanillaGfxIds(
+      RUNTIME_ID_SET_REGISTRIES.map((registry) => {
+        const read = facts.registries.find((one) => one.spec.registry === registry);
+        if (read === undefined) {
+          // An empty set here would not fail — it would silently stop refusing
+          // collisions for that registry, which is the one thing the set exists
+          // to do.
+          throw new Error(
+            `"${registry}" needs a runtime id set but no registry of that name was read`
+          );
+        }
+        return { registry, ids: read.read.ids };
+      }),
+      gate,
+      gameVersion
+    )
+  );
   files.set("index.ts", emitIndex(exports, gameVersion));
 
   const eventKinds = new Map<string, number>();

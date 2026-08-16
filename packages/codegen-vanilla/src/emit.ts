@@ -508,6 +508,48 @@ export function emitVanillaPaths(
   );
 }
 
+/**
+ * The ids of the mint-shaped registries, as runtime sets rather than as types.
+ *
+ * Same content as those registries' emitted id unions, in the one other form
+ * the SDK needs it: `buildMod` refuses a minted name that a vanilla definition
+ * already carries, and that is a lookup at build time rather than a question
+ * for a compiler. Nothing new crosses the licensing boundary — every string
+ * here is an id this package already ships as a type, through the same gate —
+ * but it is real runtime payload, so it lives behind its own `./gfx-ids`
+ * subpath and is not re-exported from the root, exactly as `./paths` is.
+ *
+ * One record rather than one constant per registry: the SDK reads it as a table
+ * keyed by registry name, so a registry added upstream needs no SDK change to
+ * be checked.
+ */
+export function emitVanillaGfxIds(
+  sets: readonly { readonly registry: string; readonly ids: readonly string[] }[],
+  gate: Chokepoint,
+  gameVersion: string
+): string {
+  const members = sets
+    .map(({ registry, ids }) => {
+      const context = `${registry} id`;
+      const lines = [...ids]
+        .sort(compareUtf8)
+        .map((id) => `    ${gate.literal(id, context)},\n`)
+        .join("");
+      return (
+        `  ${gate.literal(registry, "registry name")}: /*#__PURE__*/ Object.freeze([\n` +
+        `${lines}  ]),\n`
+      );
+    })
+    .join("");
+  return (
+    header(gameVersion) +
+    `export const VANILLA_GFX_ID_GAME_VERSION = ${gate.literal(gameVersion, "game version")};\n\n` +
+    "export const VANILLA_GFX_IDS: Readonly<Record<string, readonly string[]>> = " +
+    "/*#__PURE__*/ Object.freeze({\n" +
+    `${members}});\n`
+  );
+}
+
 export interface TablesPlan {
   /** Registry name -> its id union type and the file it lives in. */
   readonly ids: readonly { readonly registry: string; readonly file: string }[];

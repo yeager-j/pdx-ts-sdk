@@ -19,6 +19,7 @@ import {
   VANILLA_REF_EXTRAS,
   type VanillaRefExtra,
 } from "@pdx-ts/codegen-cwt/content-manifest";
+import { MINT_SHAPE_OVERLAYS } from "@pdx-ts/codegen-cwt/overlay";
 
 import type { BucketLayout } from "./trie.ts";
 
@@ -147,3 +148,23 @@ export const VANILLA_MANIFEST: readonly VanillaManifestRow[] = [
   ...SCRIPTED_ROWS,
   ...REF_ONLY_ROWS,
 ];
+
+/**
+ * Registries whose ids ship as a runtime membership set as well as a type.
+ *
+ * Read off `MINT_SHAPE_OVERLAYS` rather than listed, because that table is
+ * exactly the question: a registry with a mint shape has no id segment between
+ * the mod prefix and the name, so its minted names share one flat namespace
+ * with vanilla's — `GFX_${prefix}_${name}` sits beside vanilla's 9,198 `GFX_`
+ * names, and a bare `${prefix}_${name}` mesh sits beside vanilla's bare mesh
+ * names. Every other registry mints `${prefix}_${segment}_${name}`, where the
+ * segment is what keeps the two name spaces apart by construction and there is
+ * nothing for a lookup to find.
+ *
+ * So this is not "the GFX registries" spelled a second way; it is the property
+ * that makes the refusal necessary, and a future segmentless registry gets the
+ * evidence without anyone remembering to add it.
+ */
+export const RUNTIME_ID_SET_REGISTRIES: readonly string[] = CONTENT_ROWS.filter((row) =>
+  MINT_SHAPE_OVERLAYS.has(row.registry)
+).map((row) => row.registry);
