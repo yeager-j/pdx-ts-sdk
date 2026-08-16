@@ -151,7 +151,7 @@ describe("oversized registries: the checked call form", () => {
     const sprite = vanilla.spriteType("GFX_evt_ship_in_orbit");
     expectTypeOf(sprite.id).toEqualTypeOf<"GFX_evt_ship_in_orbit">();
     expectTypeOf(sprite).toExtend<SpriteRef>();
-    // @ts-expect-error `CheckedVanillaId` resolves to `InvalidVanillaId<"sprite", ...>`.
+    // @ts-expect-error `CheckedVanillaId` resolves to `InvalidVanillaId<"spriteType", ...>`.
     vanilla.spriteType("GFX_evt_ship_in_orbti");
   });
 });

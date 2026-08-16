@@ -45,7 +45,7 @@ export interface InvalidVanillaId<K extends string, Id extends string> {
  * This is the oversized-registry (trie) counterpart to `VanillaId`:
  * `VanillaId` narrows a *parameter type*, this narrows a *given literal*
  * against that same set — which is what a checked call form like
- * `vanilla.sprite("GFX_...")` needs, since a flat 9k-member union parameter is
+ * `vanilla.spriteType("GFX_...")` needs, since a flat 9k-member union parameter is
  * exactly the completion-menu blowup the trie exists to avoid.
  */
 export type CheckedVanillaId<K extends VanillaRegistry, Id extends string> = [Id] extends [

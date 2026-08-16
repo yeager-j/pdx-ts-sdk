@@ -61,7 +61,7 @@ describe("the FROM contract on the real event API", () => {
         {
           text: "Wrong media kind.",
           // @ts-expect-error — a sprite reference is not a sound-effect reference
-          showSound: vanilla.sprite("GFX_evt_ship_in_orbit"),
+          showSound: vanilla.spriteType("GFX_evt_ship_in_orbit"),
         },
       ],
       isTriggeredOnly: true,

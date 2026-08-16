@@ -293,9 +293,10 @@ remain available for intentional third-party references.
 const prerequisite = vanilla.technology("tech_lasers_1");
 ```
 
-Oversized id sets (sprites, sounds, and static modifiers) are also navigable
-by the vanilla file that defines them: `vanilla.sprite.eventpictures.GFX_…`
-and `vanilla.staticModifier.deficit.food_deficit`. `mod.compile()` refuses a
+Oversized id sets (sprite types, meshes, sounds, and static modifiers) are
+also navigable by the vanilla file that defines them:
+`vanilla.spriteType.eventpictures.GFX_…` and
+`vanilla.staticModifier.deficit.food_deficit`. `mod.compile()` refuses a
 loaded vanilla view whose install version disagrees with the package pin unless
 `acceptGameVersion` accepts it.
 

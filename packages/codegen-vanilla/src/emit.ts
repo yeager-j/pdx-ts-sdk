@@ -288,7 +288,7 @@ export interface TrieEmission {
  * The trie as files: one per top-level bucket, plus the registry's index.
  *
  * The emitted layout follows the buckets, which follow vanilla's own files —
- * `registries/sprite/eventpictures.ts` holds what `interface/eventpictures.gfx`
+ * `registries/sprite-type/eventpictures.ts` holds what `interface/eventpictures.gfx`
  * defines, `registries/sound/toxoids.ts` holds the whole `sound/toxoids/`
  * subtree. A bucket's subtree is written inline inside its file however deep it
  * goes: splitting it further would name files after something other than the
