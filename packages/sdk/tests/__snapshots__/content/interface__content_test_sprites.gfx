@@ -1,0 +1,23 @@
+spriteTypes = {
+	spriteType = {
+		name = GFX_content_test_council_icon
+		textureFile = gfx/interface/icons/content_test_council.dds
+		alwaysTransparent = no
+		noOfFrames = 2
+		animation = {
+			animationtextureFile = gfx/interface/icons/content_test_pulse.dds
+		}
+	}
+	spriteType = {
+		name = GFX_fleet_order_button_ground_support_content_test_bombardment_stance_scorched_earth
+		textureFile = gfx/interface/buttons/content_test_ground_support.dds
+	}
+	spriteType = {
+		name = GFX_fleet_order_button_ground_support_content_test_bombardment_stance_scorched_earth_selected
+		textureFile = gfx/interface/buttons/content_test_ground_support_selected.dds
+	}
+	spriteType = {
+		name = GFX_text_content_test_council_icon
+		textureFile = gfx/interface/icons/content_test_council_text.dds
+	}
+}

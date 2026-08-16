@@ -36,7 +36,9 @@
 // From: gfx/particles.cwt
 // From: content-manifest.ts
 
+import { recordShapeMint, type MintCapabilityOwner } from "../content/mint-provenance.ts";
 import type { ContentItem } from "../content/types.ts";
+import { refId, type TypedRef } from "../script/scalar.ts";
 import type {
   ParsedBuilding,
   ParsedMegastructure,
@@ -115,6 +117,7 @@ import type {
 import type { OpinionModifierDef } from "./opinion-modifier.ts";
 import type { PdxmeshDef } from "./pdxmesh.ts";
 import type { PdxparticleDef } from "./pdxparticle.ts";
+import type { BombardmentStanceRef } from "./refs.ts";
 import type { ScriptedLocDef } from "./scripted-loc.ts";
 import type { ScriptedModifierDef } from "./scripted-modifier.ts";
 import type { SectionTemplateDef } from "./section-template.ts";
@@ -156,6 +159,45 @@ function assertNestedDefinitionIds(
     }
     Object.keys(nested as Readonly<Record<string, unknown>>).forEach(assert);
   }
+}
+
+type LogicalNameAsserter = (name: string) => void;
+
+/**
+ * The id a shape mint fills its hole with.
+ * A typed item or reference lowers to its id; an intentional raw string — a
+ * target this build does not contain — passes through. Neither may be empty or
+ * carry whitespace: the minted name is the single bare word the game looks the
+ * sprite up by, so a hole that swallowed a space would emit a definition nothing
+ * can reference.
+ */
+function shapeMintTarget(target: TypedRef<string> | string): string {
+  const id = typeof target === "string" ? target : refId(target);
+  if (typeof id !== "string" || id === "" || /\s/.test(id)) {
+    throw new Error(
+      `A shape-minted sprite's target must be one bare word; received ${JSON.stringify(id)}`
+    );
+  }
+  return id;
+}
+
+/**
+ * Records which capability minted a shape-minted definition, and under which
+ * shape.
+ * A shape mint may carry no mod prefix at all — the name is built from another
+ * definition's id — so a string-prefix test cannot decide whether the item
+ * belongs to the capability placing it. `recordShapeMint` puts the answer in a
+ * module-private `WeakMap` no caller can write to, which is what the placement
+ * check reads. The `minted` property beside it is informational only: it is a
+ * public object an author could attach to anything, so it proves nothing and is
+ * never consulted.
+ */
+function shapeMinted<T extends { readonly itemKind: "content" }>(
+  item: T,
+  owner: MintCapabilityOwner,
+  shape: string
+): T {
+  return recordShapeMint({ ...item, minted: { prefix: owner.prefix, shape } } as T, owner, shape);
 }
 
 /**
@@ -353,21 +395,6 @@ export interface IdProfile {
    * Override it when this registry needs a different id convention.
    */
   readonly megastructure: string;
-  /**
-   * The segment inserted between the mod prefix and a sprite type's logical name.
-   * Override it when this registry needs a different id convention.
-   */
-  readonly spriteType: string;
-  /**
-   * The segment inserted between the mod prefix and a pdxmesh's logical name.
-   * Override it when this registry needs a different id convention.
-   */
-  readonly pdxmesh: string;
-  /**
-   * The segment inserted between the mod prefix and a pdxparticle's logical name.
-   * Override it when this registry needs a different id convention.
-   */
-  readonly pdxparticle: string;
 }
 
 /** The conventional id segments used when no profile override is supplied. */
@@ -410,12 +437,28 @@ export const DEFAULT_ID_PROFILE = Object.freeze({
   eventChain: "event_chain",
   specialProject: "special_project",
   megastructure: "megastructure",
-  spriteType: "sprite_type",
-  pdxmesh: "pdxmesh",
-  pdxparticle: "pdxparticle",
 }) satisfies IdProfile;
 
-/** The literal id a capability mints for one logical content name. */
+/**
+ * The literal each segmentless registry's minted name carries before the mod prefix.
+ * A registry appears here exactly when it has no `IdProfile` segment: its name is
+ * `${head}${prefix}_${name}`, the head is fixed by the game rather than chosen by
+ * the author, and there is nothing for a profile to override. The empty string is a
+ * head — it says the mint is bare, not that the registry is absent.
+ */
+export const MINT_SHAPES = Object.freeze({
+  spriteType: "GFX_",
+  pdxmesh: "",
+  pdxparticle: "",
+} as const);
+
+/** A registry whose name is minted without an id segment. */
+export type MintShapedRegistry = keyof typeof MINT_SHAPES;
+
+/**
+ * The literal id a capability mints for one logical content name, for a registry
+ * carrying an `IdProfile` segment.
+ */
 export type MintedContentId<
   P extends string,
   I extends IdProfile,
@@ -423,14 +466,48 @@ export type MintedContentId<
   Name extends string,
 > = `${P}_${I[K] & string}_${Name}`;
 
+/**
+ * The literal id a capability mints for one logical content name, for any registry.
+ * One arm per `MINT_SHAPES` member, then the segmented default. The arms are
+ * generated from the same table the runtime reads, so a registry cannot mint one
+ * shape and be typed as another.
+ */
+export type MintedIdOf<
+  P extends string,
+  I extends IdProfile,
+  K extends keyof I | MintShapedRegistry,
+  Name extends string,
+> = K extends "spriteType"
+  ? `GFX_${P}_${Name}`
+  : K extends "pdxmesh"
+    ? `${P}_${Name}`
+    : K extends "pdxparticle"
+      ? `${P}_${Name}`
+      : MintedContentId<P, I, K & keyof I, Name>;
+
 /** The internal function that turns a registry key and logical name into an owned id. */
 export type ContentIdMinter<P extends string, I extends IdProfile> = <
-  const K extends keyof I,
+  const K extends keyof I | MintShapedRegistry,
   const Name extends string,
 >(
   registry: K,
   name: Name
-) => MintedContentId<P, I, K, Name>;
+) => MintedIdOf<P, I, K, Name>;
+
+/**
+ * The name a `spriteTextIcon` mints.
+ * Seed: `icon = GFX_text_$` in common/leader_classes.cwt's `images` block, and the same family in common/ship_sizes.cwt (`GFX_text_<key>` beside `GFX_<key>`).
+ */
+export type SpriteTextIconName<P extends string, Name extends string> = `GFX_text_${P}_${Name}`;
+
+/**
+ * The name a `spriteFleetOrderButtonGroundSupport` mints.
+ * Seed: `fleet_view = "GFX_fleet_order_button_ground_support_$"` and `fleet_view_selected = "GFX_fleet_order_button_ground_support_$_selected"`, both `# inferred`, in common/bombardment_stances.cwt.
+ */
+export type SpriteFleetOrderButtonGroundSupportName<
+  Target extends string,
+  Selected extends boolean = false,
+> = `GFX_fleet_order_button_ground_support_${Target}${Selected extends true ? "_selected" : ""}`;
 
 /** Content authoring methods bound to one mod capability's prefix and id profile. */
 export interface ContentCapabilityMethods<P extends string, I extends IdProfile> {
@@ -880,8 +957,35 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
    */
   spriteType<const Name extends string>(
     name: Name,
-    def: Omit<SpriteTypeDef<MintedContentId<P, I, "spriteType", Name>>, "id">
-  ): ContentItem<"spriteType", SpriteTypeDef<MintedContentId<P, I, "spriteType", Name>>>;
+    def: Omit<SpriteTypeDef<MintedIdOf<P, I, "spriteType", Name>>, "id">
+  ): ContentItem<"spriteType", SpriteTypeDef<MintedIdOf<P, I, "spriteType", Name>>>;
+  /**
+   * Defines the `GFX_text_`-led sprite the game generates from a name.
+   * The capability mints and owns the full name, exactly as an ordinary definition does.
+   * In every other respect this is an ordinary sprite type definition.
+   * Seed: `icon = GFX_text_$` in common/leader_classes.cwt's `images` block, and the same family in common/ship_sizes.cwt (`GFX_text_<key>` beside `GFX_<key>`)
+   */
+  spriteTextIcon<const Name extends string>(
+    name: Name,
+    def: Omit<SpriteTypeDef<SpriteTextIconName<P, Name>>, "id">
+  ): ContentItem<"spriteType", SpriteTypeDef<SpriteTextIconName<P, Name>>>;
+  /**
+   * Defines the `GFX_fleet_order_button_ground_support_`-led sprite the game generates from a bombardment stance.
+   * The minted name carries the target's id rather than the mod prefix, so ownership rides on the item as mint provenance instead of on the string.
+   * In every other respect this is an ordinary sprite type definition.
+   * Seed: `fleet_view = "GFX_fleet_order_button_ground_support_$"` and `fleet_view_selected = "GFX_fleet_order_button_ground_support_$_selected"`, both `# inferred`, in common/bombardment_stances.cwt
+   */
+  spriteFleetOrderButtonGroundSupport<
+    const Target extends string,
+    const Selected extends boolean = false,
+  >(
+    bombardmentStance: Target | (BombardmentStanceRef & { readonly id: Target }),
+    def: Omit<SpriteTypeDef<SpriteFleetOrderButtonGroundSupportName<Target, Selected>>, "id">,
+    options?: { readonly selected?: Selected }
+  ): ContentItem<
+    "spriteType",
+    SpriteTypeDef<SpriteFleetOrderButtonGroundSupportName<Target, Selected>>
+  >;
   /**
    * Defines a pdxmesh from its logical name.
    * The capability mints and owns the full id; the returned branded reference
@@ -889,8 +993,8 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
    */
   pdxmesh<const Name extends string>(
     name: Name,
-    def: Omit<PdxmeshDef<MintedContentId<P, I, "pdxmesh", Name>>, "id">
-  ): ContentItem<"pdxmesh", PdxmeshDef<MintedContentId<P, I, "pdxmesh", Name>>>;
+    def: Omit<PdxmeshDef<MintedIdOf<P, I, "pdxmesh", Name>>, "id">
+  ): ContentItem<"pdxmesh", PdxmeshDef<MintedIdOf<P, I, "pdxmesh", Name>>>;
   /**
    * Defines a pdxparticle from its logical name.
    * The capability mints and owns the full id; the returned branded reference
@@ -898,15 +1002,17 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
    */
   pdxparticle<const Name extends string>(
     name: Name,
-    def: Omit<PdxparticleDef<MintedContentId<P, I, "pdxparticle", Name>>, "id">
-  ): ContentItem<"pdxparticle", PdxparticleDef<MintedContentId<P, I, "pdxparticle", Name>>>;
+    def: Omit<PdxparticleDef<MintedIdOf<P, I, "pdxparticle", Name>>, "id">
+  ): ContentItem<"pdxparticle", PdxparticleDef<MintedIdOf<P, I, "pdxparticle", Name>>>;
 }
 
 /** Builds the internal content-method table for a mod capability. */
 export function contentCapabilityMethods<P extends string, I extends IdProfile>(
   mint: ContentIdMinter<P, I>,
   assertNestedId: NestedDefinitionIdAsserter,
-  prefix: P
+  prefix: P,
+  assertName: LogicalNameAsserter,
+  mintOwner: MintCapabilityOwner
 ): ContentCapabilityMethods<P, I> {
   return Object.freeze({
     technology: <const Name extends string>(
@@ -1214,24 +1320,58 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
     ) => patchMegastructure(megastructure, patch, prefix),
     spriteType: <const Name extends string>(
       name: Name,
-      def: Omit<SpriteTypeDef<MintedContentId<P, I, "spriteType", Name>>, "id">
+      def: Omit<SpriteTypeDef<MintedIdOf<P, I, "spriteType", Name>>, "id">
     ) =>
       defineSpriteType({ ...def, id: mint("spriteType", name) } as SpriteTypeDef<
-        MintedContentId<P, I, "spriteType", Name>
+        MintedIdOf<P, I, "spriteType", Name>
       >),
+    spriteTextIcon: <const Name extends string>(
+      name: Name,
+      def: Omit<SpriteTypeDef<SpriteTextIconName<P, Name>>, "id">
+    ) => {
+      assertName(name);
+      return shapeMinted(
+        defineSpriteType({
+          ...def,
+          id: `GFX_text_${prefix}_${name}` as SpriteTextIconName<P, Name>,
+        } as SpriteTypeDef<SpriteTextIconName<P, Name>>),
+        mintOwner,
+        "spriteTextIcon"
+      );
+    },
+    spriteFleetOrderButtonGroundSupport: <
+      const Target extends string,
+      const Selected extends boolean = false,
+    >(
+      bombardmentStance: Target | (BombardmentStanceRef & { readonly id: Target }),
+      def: Omit<SpriteTypeDef<SpriteFleetOrderButtonGroundSupportName<Target, Selected>>, "id">,
+      options?: { readonly selected?: Selected }
+    ) => {
+      return shapeMinted(
+        defineSpriteType({
+          ...def,
+          id: `GFX_fleet_order_button_ground_support_${shapeMintTarget(bombardmentStance)}${options?.selected === true ? "_selected" : ""}` as SpriteFleetOrderButtonGroundSupportName<
+            Target,
+            Selected
+          >,
+        } as SpriteTypeDef<SpriteFleetOrderButtonGroundSupportName<Target, Selected>>),
+        mintOwner,
+        "spriteFleetOrderButtonGroundSupport"
+      );
+    },
     pdxmesh: <const Name extends string>(
       name: Name,
-      def: Omit<PdxmeshDef<MintedContentId<P, I, "pdxmesh", Name>>, "id">
+      def: Omit<PdxmeshDef<MintedIdOf<P, I, "pdxmesh", Name>>, "id">
     ) =>
       definePdxmesh({ ...def, id: mint("pdxmesh", name) } as PdxmeshDef<
-        MintedContentId<P, I, "pdxmesh", Name>
+        MintedIdOf<P, I, "pdxmesh", Name>
       >),
     pdxparticle: <const Name extends string>(
       name: Name,
-      def: Omit<PdxparticleDef<MintedContentId<P, I, "pdxparticle", Name>>, "id">
+      def: Omit<PdxparticleDef<MintedIdOf<P, I, "pdxparticle", Name>>, "id">
     ) =>
       definePdxparticle({ ...def, id: mint("pdxparticle", name) } as PdxparticleDef<
-        MintedContentId<P, I, "pdxparticle", Name>
+        MintedIdOf<P, I, "pdxparticle", Name>
       >),
   }) as ContentCapabilityMethods<P, I>;
 }

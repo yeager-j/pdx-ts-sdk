@@ -28,6 +28,31 @@ export interface ContentItem<
   readonly type: K;
   readonly id: D["id"];
   readonly def: D;
+  /**
+   * Present only on a shape-minted definition (SDK-121): which capability
+   * minted it, and under which shape.
+   *
+   * Informational, and deliberately not the SDK's evidence of ownership. It is
+   * an ordinary public object, so a caller can attach one to any item, and a
+   * check that trusted it would let a foreign definition place itself under
+   * this capability. The real record lives in a module-private table written
+   * only by the mint itself (`content/mint-provenance.ts`), and that is what
+   * every ownership check reads. This exists so an author can *see* how a name
+   * was built — in a log, a test, or a debugger — without reaching into the
+   * SDK.
+   */
+  readonly minted?: MintProvenance;
+}
+
+/**
+ * Which capability minted a shape-minted definition, and under which shape.
+ *
+ * See {@link ContentItem.minted}: this describes a mint, it does not certify
+ * one.
+ */
+export interface MintProvenance {
+  readonly prefix: string;
+  readonly shape: string;
 }
 
 /** A contribution to a shared, non-id-keyed sink (`default = { ... }`). */

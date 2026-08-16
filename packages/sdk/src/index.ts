@@ -343,8 +343,18 @@ export {
 // Generated item unions remain public; their raw constructors are internal
 // lowering machinery used by capability methods.
 export type * from "./generated/content-definers.ts";
+// One name type per `SPRITE_SHAPE_MINTS` row. A shape mint's name is not
+// `MintedContentId`-shaped, so without these a consumer cannot write down the
+// type of a definition they just authored. Listed by hand because this barrel
+// is the hand-written step, and `export type *` from the capability module
+// would publish its internals; `content-snapshot.test.ts` fails if a row is
+// added and its alias is not listed here.
+export type {
+  SpriteFleetOrderButtonGroundSupportName,
+  SpriteTextIconName,
+} from "./generated/content-capability.ts";
 export type { Feature, ModItem, ModItemInput, PlacedItem } from "./authoring/feature.ts";
-export type { ContentItem, ContributionItem } from "./content/types.ts";
+export type { ContentItem, ContributionItem, MintProvenance } from "./content/types.ts";
 export type { ModWarning } from "./diagnostics.ts";
 export type { OnActionHookItem } from "./events/on-actions.ts";
 export type { EventItem, EventItemBase } from "./events/types.ts";

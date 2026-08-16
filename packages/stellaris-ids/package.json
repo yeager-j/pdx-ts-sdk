@@ -25,6 +25,11 @@
       "types": "./dist/paths.d.ts",
       "default": "./dist/paths.js"
     },
+    "./gfx-ids": {
+      "pdx-source": "./src/gfx-ids.ts",
+      "types": "./dist/gfx-ids.d.ts",
+      "default": "./dist/gfx-ids.js"
+    },
     "./package.json": "./package.json"
   },
   "publishConfig": {

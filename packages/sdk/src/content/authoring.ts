@@ -12,6 +12,7 @@ import type { ModifierWithLoc } from "../script/effects/types.ts";
 import type { TypedRef } from "../script/scalar.ts";
 import { isComplexTriggerModifier } from "./blocks.ts";
 import { dualArm, fieldEntries, resolveFromClosures } from "./lower.ts";
+import type { ShapeMint } from "./mint-provenance.ts";
 import type { ContentField, ContentLocalisation, ContentRegistryDescriptor } from "./schema.ts";
 import type { WeightBlock } from "./types.ts";
 
@@ -130,10 +131,21 @@ export class ContentAuthoring {
     this.onLocKeyLooksLikeText = onLocKeyLooksLikeText ?? ((): void => {});
   }
 
+  /**
+   * `shapeMint` is the caller's *recorded* mint for this definition, read from
+   * `mint-provenance.ts` rather than off the item. Its presence is what waives
+   * the prefix check: the name of a shape-minted definition is built from
+   * another definition's id and may hold no mod prefix at all, and its
+   * ownership was decided — and checked — where it was minted, so re-deriving
+   * it from the string here could only get it wrong. Taking the record rather
+   * than a flag or a property is deliberate: only the SDK's own mint path can
+   * produce one, so no caller can waive the check by claiming to have.
+   */
   define<K extends string, D extends ContentDef>(
     type: K,
     rawDef: D,
-    registerLoc: RegisterLoc = this.registerLoc
+    registerLoc: RegisterLoc = this.registerLoc,
+    shapeMint?: ShapeMint
   ): DefinedContent<K, D> {
     const descriptor = this.byType.get(type);
     if (descriptor === undefined) {
@@ -145,7 +157,9 @@ export class ContentAuthoring {
       rawDef as Readonly<Record<string, unknown>>,
       descriptor.fields
     ) as D;
-    this.assertPrefixed(type, resolved.id);
+    if (shapeMint === undefined) {
+      this.assertPrefixed(type, resolved.id, descriptor.mintHead ?? "");
+    }
     const definitions = this.definitions.get(type) ?? [];
     if (definitions.some((existing) => existing.id === resolved.id)) {
       throw new Error(`Duplicate ${type} id "${resolved.id}"`);
@@ -185,13 +199,21 @@ export class ContentAuthoring {
     return (this.definitions.get(type) ?? []).map((definition) => definition.toEntries());
   }
 
-  private assertPrefixed(type: string, id: string): void {
-    if (!id.startsWith(`${this.prefix}_`)) {
-      this.onPrefixViolation(
-        `${type} id "${id}" must start with the mod prefix "${this.prefix}_" ` +
-          "so it cannot collide with vanilla or other mods"
-      );
+  /**
+   * `head` is the literal the registry's minted names carry before the prefix
+   * (`ContentRegistryDescriptor.mintHead`) — `"GFX_"` for sprites, `""` for
+   * everything else, including nested definition ids, which are never minted
+   * with a head of their own.
+   */
+  private assertPrefixed(type: string, id: string, head: string): void {
+    if (id.startsWith(`${head}${this.prefix}_`)) {
+      return;
     }
+    this.onPrefixViolation(
+      `${type} id "${id}" must start with the mod prefix "${this.prefix}_"` +
+        (head === "" ? "" : ` behind the "${head}" every ${type} name carries`) +
+        " so it cannot collide with vanilla or other mods"
+    );
   }
 
   /**
@@ -356,7 +378,7 @@ export class ContentAuthoring {
       const existingIds = this.nestedIds.get(identity);
       const pending = pendingIds.get(identity) ?? new Set<string>();
       for (const [id, nested] of Object.entries(record)) {
-        this.assertPrefixed(identity, id);
+        this.assertPrefixed(identity, id, "");
         if (existingIds?.has(id) || pending.has(id)) {
           throw new Error(`Duplicate ${identity} id "${id}"`);
         }

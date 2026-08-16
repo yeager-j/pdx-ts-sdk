@@ -1120,12 +1120,30 @@ function defineContentExample(): PureMod {
     type: "content_test_dust_file",
     scale: 0.75,
   });
+  // Two shape mints (SDK-121), in the same registry and the same file as the
+  // sprite above: one name-derived, one derived from a definition this build
+  // contains. The golden is where their names and their placement among the
+  // ordinary sprites are visible.
+  const textIcon = mod.spriteTextIcon("council_icon", {
+    textureFile: "gfx/interface/icons/content_test_council_text.dds",
+  });
+  const groundSupport = mod.spriteFleetOrderButtonGroundSupport(bombardmentStance, {
+    textureFile: "gfx/interface/buttons/content_test_ground_support.dds",
+  });
+  const groundSupportSelected = mod.spriteFleetOrderButtonGroundSupport(
+    bombardmentStance,
+    { textureFile: "gfx/interface/buttons/content_test_ground_support_selected.dds" },
+    { selected: true }
+  );
 
   return mod.compile([
     mod.feature(undefined, [
       icon,
       hull,
       drift,
+      textIcon,
+      groundSupport,
+      groundSupportSelected,
       agenda,
       machineMobilization,
       experimentalLab,
@@ -1184,10 +1202,10 @@ describe("generated content registries", () => {
     // in the emitted path, one root envelope wrapping the whole file rather
     // than appearing per definition, and the definition written under the
     // game's repeated keyword with its id in the `name` field.
-    for (const [path, envelope, keyword] of [
-      ["interface/content_test_interface.gfx", "spriteTypes", "spriteType"],
-      ["gfx/models/content_test_models.gfx", "objectTypes", "pdxmesh"],
-      ["gfx/particles/content_test_particles.gfx", "objectTypes", "pdxparticle"],
+    for (const [path, envelope, keyword, namePrefix] of [
+      ["interface/content_test_sprites.gfx", "spriteTypes", "spriteType", "GFX_content_test_"],
+      ["gfx/models/content_test_meshes.gfx", "objectTypes", "pdxmesh", "content_test_"],
+      ["gfx/particles/content_test_particles.gfx", "objectTypes", "pdxparticle", "content_test_"],
     ] as const) {
       const rendered = files.get(path);
       expect(rendered, path).toBeDefined();
@@ -1195,26 +1213,39 @@ describe("generated content registries", () => {
       expect(rendered!.endsWith("}\n"), path).toBe(true);
       // One envelope for the file, not one per definition.
       expect(rendered!.split(`${envelope} = {`).length - 1, path).toBe(1);
-      expect(rendered, path).toContain(`\t${keyword} = {\n\t\tname = content_test_`);
+      expect(rendered, path).toContain(`\t${keyword} = {\n\t\tname = ${namePrefix}`);
     }
   });
 
-  it("mints GFX ids through the standard profile, and never lets an author supply one", () => {
-    // The GFX mint shapes (`GFX_${prefix}_${name}`, segmentless mesh and
-    // particle names) are SDK-121's, not this slice's. Until then these ride
-    // the same profile every other registry does, which is what the ids below
-    // spell — `spriteType`'s segment is `sprite_type` because a minted segment
-    // must be lowercase snake_case and its registry name is the game's own
-    // camelCase keyword.
-    expect(files.get("interface/content_test_interface.gfx")).toContain(
-      "name = content_test_sprite_type_council_icon"
+  it("mints GFX names segmentlessly, and never lets an author supply one", () => {
+    // SDK-121: a sprite name is `GFX_`-led because the engine reads it that
+    // way, a mesh and a particle name are bare, and none of the three carries a
+    // registry segment — there is no `IdProfile` member to put one in.
+    expect(files.get("interface/content_test_sprites.gfx")).toContain(
+      "name = GFX_content_test_council_icon"
     );
-    expect(files.get("gfx/models/content_test_models.gfx")).toContain(
-      "name = content_test_pdxmesh_station_hull"
+    expect(files.get("gfx/models/content_test_meshes.gfx")).toContain(
+      "name = content_test_station_hull"
     );
     expect(files.get("gfx/particles/content_test_particles.gfx")).toContain(
-      "name = content_test_pdxparticle_dust_drift"
+      "name = content_test_dust_drift"
     );
+  });
+
+  it("mints each shape into the same file, ordered by name like every other definition", () => {
+    // A shape mint is an ordinary `spriteType` definition — same registry, same
+    // file, same ADR-0005 ordering. `GFX_content_test_council_icon` (the plain
+    // sprite) sorts ahead of `GFX_fleet_order_button_ground_support_*`, which
+    // sorts ahead of `GFX_text_content_test_council_icon`, and the `_selected`
+    // variant sorts after the one it varies.
+    const rendered = files.get("interface/content_test_sprites.gfx")!;
+    const names = [...rendered.matchAll(/name = (\S+)/g)].map((match) => match[1]!);
+    expect(names).toEqual([
+      "GFX_content_test_council_icon",
+      "GFX_fleet_order_button_ground_support_content_test_bombardment_stance_scorched_earth",
+      "GFX_fleet_order_button_ground_support_content_test_bombardment_stance_scorched_earth_selected",
+      "GFX_text_content_test_council_icon",
+    ]);
   });
 
   it("emits the audited canonical casing, never a spelling the game happens to prefer", () => {
@@ -1222,7 +1253,7 @@ describe("generated content registries", () => {
     // emission is not. Vanilla writes `texturefile` 6,141 times against 1,740
     // `textureFile`, and `animationtexturefile` 575 times against zero
     // `animationtextureFile` — the SDK writes the rules' spelling regardless.
-    const rendered = files.get("interface/content_test_interface.gfx")!;
+    const rendered = files.get("interface/content_test_sprites.gfx")!;
     expect(rendered).toContain("textureFile = ");
     expect(rendered).not.toContain("texturefile = ");
     expect(rendered).toContain("animationtextureFile = ");

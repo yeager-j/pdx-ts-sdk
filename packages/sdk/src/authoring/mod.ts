@@ -6,10 +6,12 @@ import {
   type ResolvedModConfig,
 } from "../compiler/config.ts";
 import type { PureMod } from "../compiler/model.ts";
+import { mintHeadOf } from "../content/descriptors.ts";
 import {
   eventChainCapabilityMethods,
   type EventChainCapabilityMethods,
 } from "../content/event-chains.ts";
+import { shapeMintOf } from "../content/mint-provenance.ts";
 import {
   situationTypeCapabilityMethods,
   type SituationTypeCapabilityMethods,
@@ -20,10 +22,13 @@ import type { EventDef } from "../events/types.ts";
 import {
   contentCapabilityMethods,
   DEFAULT_ID_PROFILE,
+  MINT_SHAPES,
   type ContentCapabilityMethods,
   type ContentIdMinter,
   type IdProfile as GeneratedIdProfile,
   type MintedContentId as GeneratedMintedContentId,
+  type MintedIdOf,
+  type MintShapedRegistry,
 } from "../generated/content-capability.ts";
 import {
   capabilityEvents,
@@ -164,16 +169,27 @@ function assertLogicalName(name: string): void {
   }
 }
 
+/**
+ * A registry either carries an id segment an author may override, or a fixed
+ * mint head the game requires — never both, and the generated `MINT_SHAPES`
+ * table says which. Reading the table here rather than branching on registry
+ * names is what keeps a new segmentless registry a codegen change alone.
+ */
 function mintContentId<P extends string, I extends IdProfile>(
   prefix: P,
   ids: I
 ): ContentIdMinter<P, I> {
-  return <const K extends keyof I, const Name extends string>(
+  return <const K extends keyof I | MintShapedRegistry, const Name extends string>(
     registry: K,
     name: Name
-  ): MintedContentId<P, I, K, Name> => {
+  ): MintedIdOf<P, I, K, Name> => {
     assertLogicalName(name);
-    return `${prefix}_${ids[registry]}_${name}` as MintedContentId<P, I, K, Name>;
+    const head = MINT_SHAPES[registry as MintShapedRegistry] as string | undefined;
+    const id =
+      head === undefined
+        ? `${prefix}_${ids[registry as keyof I]}_${name}`
+        : `${head}${prefix}_${name}`;
+    return id as MintedIdOf<P, I, K, Name>;
   };
 }
 
@@ -269,11 +285,34 @@ function assertCapabilityItem(
   prefix: string
 ): void {
   switch (item.itemKind) {
-    case "content":
-      if (!belongsToPrefix(item.id, prefix)) {
-        throw new Error(`Content id "${item.id}" does not belong to mod prefix "${prefix}"`);
+    case "content": {
+      // A shape-minted name is built from another definition's id and may carry
+      // no prefix at all, so ownership was recorded when it was minted. The
+      // record is read from the module-private table, never from `item.minted`
+      // — that property is a public object any caller can attach to any item,
+      // so trusting it would let a foreign definition place itself here. Where
+      // there is no record the name itself is the evidence, measured against
+      // the registry's own mint head.
+      const shapeMint = shapeMintOf(item);
+      if (shapeMint !== undefined) {
+        if (shapeMint.owner !== owner) {
+          throw new Error(
+            `The ${shapeMint.shape} sprite "${item.id}" was minted by a different capability — ` +
+              `the one for mod prefix "${shapeMint.owner.prefix}", not this one for "${prefix}". ` +
+              "Mint it with the same capability that places it."
+          );
+        }
+        return;
+      }
+      const head = mintHeadOf(item.type);
+      if (!item.id.startsWith(`${head}${prefix}_`)) {
+        throw new Error(
+          `Content id "${item.id}" does not belong to mod prefix "${prefix}"` +
+            (head === "" ? "" : ` (a ${item.type} name is "${head}${prefix}_"-led)`)
+        );
       }
       return;
+    }
     case "event":
       assertEventNamespace(item.namespace, prefix, "Event");
       return;
@@ -374,7 +413,11 @@ export function createMod<const P extends string, const I extends IdProfile>(
   const content = contentCapabilityMethods<P, I | typeof DEFAULT_ID_PROFILE>(
     mintContentId(config.prefix, ids),
     assertNestedDefinitionId(config.prefix),
-    config.prefix
+    config.prefix,
+    assertLogicalName,
+    // The identity a shape mint is recorded against, so a mint can be traced to
+    // one capability rather than merely to a prefix string.
+    owner
   );
   const situationTypes = situationTypeCapabilityMethods<P, I | typeof DEFAULT_ID_PROFILE>(
     mintContentId(config.prefix, ids),
