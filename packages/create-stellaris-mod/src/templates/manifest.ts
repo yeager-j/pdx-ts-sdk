@@ -2,10 +2,11 @@
  * `stellaris-mod.json` and the JSON schema beside it.
  *
  * The manifest is the project's single author-owned source of truth for mod
- * identity and launcher metadata: `src/mod.ts` is wiring from it to `createMod`
- * rather than a second place to state the same facts. The sole key under `mod`
- * is the mod prefix, which is what makes `keyof typeof manifest.mod` recover it
- * exactly rather than widening to `string`.
+ * identity, launcher metadata, and source layout: `src/mod.ts` is wiring from
+ * it to `createMod` rather than a second place to state the same facts. The
+ * sole key under `mod` is the mod prefix, which is what makes
+ * `keyof typeof manifest.mod` recover it exactly rather than widening to
+ * `string`.
  *
  * The schema is emitted into the project and referenced relatively, so an
  * author gets completion and in-editor errors without the project acquiring a
@@ -21,7 +22,7 @@
 
 import { PREFIX_PATTERN, PROJECT_MOD_FIELDS, projectModFieldSchema } from "../manifest.ts";
 import type { Resolved } from "../options.ts";
-import { PROJECT_CONTENT_DIRECTORY_PATTERN } from "../project-layout.ts";
+import { PROJECT_LAYOUT_FIELDS, projectLayoutFieldSchema } from "../project-layout.ts";
 
 export const MANIFEST_FILE = "stellaris-mod.json";
 export const MANIFEST_SCHEMA_FILE = "stellaris-mod.schema.json";
@@ -42,6 +43,7 @@ export function manifestJson(resolved: Resolved): string {
       },
     },
     contentDirectory: "src/content",
+    assetsDirectory: "assets",
   });
 }
 
@@ -50,10 +52,15 @@ export function manifestSchema(): string {
     $schema: "https://json-schema.org/draft/2020-12/schema",
     title: "Stellaris mod project manifest",
     description:
-      "Mod identity, launcher metadata, and where generated feature source goes. " +
+      "Mod identity, launcher metadata, generated Feature source, and the mirrored Asset tree. " +
       "src/mod.ts wires this to createMod.",
     type: "object",
-    required: ["mod", "contentDirectory"],
+    required: [
+      "mod",
+      ...Object.entries(PROJECT_LAYOUT_FIELDS)
+        .filter(([, field]) => field.required)
+        .map(([name]) => name),
+    ],
     additionalProperties: false,
     properties: {
       $schema: { type: "string" },
@@ -67,11 +74,12 @@ export function manifestSchema(): string {
         propertyNames: { pattern: PREFIX_PATTERN.source },
         additionalProperties: { $ref: "#/$defs/modConfig" },
       },
-      contentDirectory: {
-        description: "Normalized directory below src where generated feature source is written.",
-        type: "string",
-        pattern: PROJECT_CONTENT_DIRECTORY_PATTERN.source,
-      },
+      ...Object.fromEntries(
+        Object.entries(PROJECT_LAYOUT_FIELDS).map(([name, field]) => [
+          name,
+          projectLayoutFieldSchema(field),
+        ])
+      ),
     },
     $defs: {
       modConfig: {

@@ -120,6 +120,28 @@ describe("Asset capture", () => {
     }
   });
 
+  it("allows missing and empty trees only when each condition is explicit", () => {
+    const directory = tempDir();
+    const missing = join(directory, "missing");
+    const empty = join(directory, "empty");
+    mkdirSync(join(empty, "nested", "still-empty"), { recursive: true });
+    const capability = mod();
+
+    expect(() => capability.assetTree({ source: missing, allowEmpty: true })).toThrow(
+      "unavailable"
+    );
+    expect(() => capability.assetTree({ source: empty, allowMissing: true })).toThrow(
+      "contains no regular files"
+    );
+
+    const missingItems = capability.assetTree({ source: missing, allowMissing: true });
+    const emptyItems = capability.assetTree({ source: empty, allowEmpty: true });
+    expect(missingItems).toEqual([]);
+    expect(emptyItems).toEqual([]);
+    expect(Object.isFrozen(missingItems)).toBe(true);
+    expect(Object.isFrozen(emptyItems)).toBe(true);
+  });
+
   it("rejects NFC destination aliases before it reads any file", () => {
     const directory = tempDir();
     writeFileSync(join(directory, "café.dds"), "composed");
@@ -218,6 +240,9 @@ describe("Asset capture", () => {
     const fileRoot = join(tempDir(), "file-root");
     writeFileSync(fileRoot, "x");
     expect(() => capability.assetTree({ source: fileRoot })).toThrow("must be a directory");
+    expect(() =>
+      capability.assetTree({ source: fileRoot, allowMissing: true, allowEmpty: true })
+    ).toThrow("must be a directory");
     if (process.platform !== "win32" && process.getuid?.() !== 0) {
       const directory = tempDir();
       const source = join(directory, "private");

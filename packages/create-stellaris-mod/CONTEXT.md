@@ -11,14 +11,15 @@ and authored source cross this context's boundaries.
 ## Language
 
 **Project Manifest**:
-The author-owned source of truth for one project's mod identity, launcher metadata, and Feature
-source location. It is project configuration, not scaffolder installation state.
+The author-owned source of truth for one project's mod identity, launcher metadata, Feature source
+location, and mirrored Asset source tree. It is project configuration, not scaffolder installation
+state.
 _Avoid_: scaffolding config, mod config file, installation record
 
 **Project Layout**:
 The parsed, normalized placement contract derived from the Project Manifest. Feature source lives
-below `src/`; recipe publication, generated discovery wiring, and TypeScript project coverage all
-consume that same interpretation.
+below `src/`, while the Asset source tree mirrors the mod root; recipe publication, generated build
+wiring, and TypeScript project coverage all consume that same interpretation.
 
 **Recipe Catalog**:
 The built-in, discoverable set of parameterized recipes available to the

@@ -36,8 +36,8 @@ import { main } from "../src/cli.ts";
 import {
   CollisionError,
   ContainmentError,
-  ContentDirectoryError,
   preflightTarget,
+  ProjectLayoutError,
   publishExclusive,
   UnsupportedPublicationError,
   validateContentDirectory,
@@ -110,7 +110,7 @@ describe("validateContentDirectory", () => {
     ["src/content?query", "a URL query"],
     ["src/%2e%2e/outside", "a percent-encoded dot segment"],
   ])("refuses %o, which is %s", (raw) => {
-    expect(() => validateContentDirectory(raw)).toThrow(ContentDirectoryError);
+    expect(() => validateContentDirectory(raw)).toThrow(ProjectLayoutError);
   });
 });
 
