@@ -4,6 +4,9 @@
 packages/*/dist
 examples/*/out
 
+# Astro's generated types and build cache for the docs site.
+packages/docs-site/.astro/
+
 # Unanchored: a workspace member whose dependency cannot hoist (a second major
 # of something the root already has) gets its own nested node_modules.
 node_modules/

@@ -1,0 +1,11 @@
+{
+  // This package is the one workspace member outside the repository's single
+  // TypeScript program (see the root tsconfig's `exclude`). Astro generates the
+  // types for its virtual modules — `astro:content` above all — into
+  // `.astro/types.d.ts`, and `.astro` components are not TypeScript files, so
+  // the root program can neither resolve nor read this source. `astro check`,
+  // run by this package's `typecheck` script, is the gate instead.
+  "extends": "astro/tsconfigs/strict",
+  "include": [".astro/types.d.ts", "**/*"],
+  "exclude": ["dist"]
+}

@@ -526,6 +526,7 @@ and the override didn't take" becomes a build error.
 | [@pdx-ts/stellaris-ids](packages/stellaris-ids/README.md)       | Every identifier a real install defines, as version-pinned types, plus vanilla's scripted triggers and effects bound at their inferred scopes |
 | [@pdx-ts/codegen-cwt](packages/codegen-cwt/README.md)           | Rules-derived generator: emits the SDK's typed surface from the vendored cwtools rules                                                        |
 | [@pdx-ts/codegen-vanilla](packages/codegen-vanilla/README.md)   | Install-derived generator: emits @pdx-ts/stellaris-ids from an installed copy of the game                                                     |
+| [@pdx-ts/docs-site](packages/docs-site/README.md)               | The user-facing documentation site (Astro Starlight): guides plus a registry-keyed reference. Private, local-only for now                     |
 
 At the root: `vendor/` (the committed cwtools rules and doc dumps),
 `fixtures/` (the shared fake install the hermetic tests run against),
@@ -541,8 +542,9 @@ npm workspace; every command runs from the repository root.
 
 ```bash
 npm test                     # all suites, all packages (vitest)
-npm run typecheck            # tsc --noEmit
-npm run build                # emit each package's dist/
+npm run typecheck            # tsc --noEmit, then each package's own check
+npm run build                # emit each package's dist/, and the docs site
+npm run docs:dev             # serve the docs site at localhost:4321
 npm run example              # build examples/hello-galaxy/out/
 npm run codegen              # regenerate the SDK's types from the cwt rules
 npm run codegen:check        # ...and fail if committed output moved

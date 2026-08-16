@@ -1,0 +1,31 @@
+{
+  "name": "@pdx-ts/docs-site",
+  "version": "0.0.0",
+  "description": "User-facing documentation site for @pdx-ts/sdk",
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "typecheck": "astro check"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "^0.41.7",
+    "astro": "^7.2.2",
+    "sharp": "^0.35.3"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yeager-j/pdx-ts-sdk.git",
+    "directory": "packages/docs-site"
+  },
+  "homepage": "https://github.com/yeager-j/pdx-ts-sdk/tree/main/packages/docs-site#readme",
+  "bugs": {
+    "url": "https://github.com/yeager-j/pdx-ts-sdk/issues"
+  }
+}
