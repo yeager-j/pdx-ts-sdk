@@ -104,7 +104,10 @@ describe("event definitions in a namespace", () => {
       title: "A Title",
       desc: "A description.",
       isTriggeredOnly: true,
-      options: [{ name: "First." }, { name: "Second." }],
+      options: [
+        { name: "First.", key: "a" },
+        { name: "Second.", key: "b" },
+      ],
     });
     const loc = render(mod.compile([mod.feature("events", [titled])])).get(
       "localisation/english/event_test_events_l_english.yml"
@@ -113,6 +116,93 @@ describe("event definitions in a namespace", () => {
     expect(loc).toContain(' event_test.2.desc:0 "A description."');
     expect(loc).toContain(' event_test.2.a:0 "First."');
     expect(loc).toContain(' event_test.2.b:0 "Second."');
+  });
+
+  it("keeps an option localization key attached to its name when a prior option is inserted", () => {
+    const events = makeEvents();
+    const before = events.country(200, {
+      isTriggeredOnly: true,
+      options: [{ name: "Keep this translation." }],
+    });
+    const after = events.country(200, {
+      isTriggeredOnly: true,
+      options: [{ name: "Inserted option." }, { name: "Keep this translation." }],
+    });
+    const keyFor = (item: typeof before) => {
+      const files = render(mod.compile([mod.feature("events", [item])]));
+      const loc = files.get("localisation/english/event_test_events_l_english.yml")!;
+      return /^ (\S+):0 "Keep this translation\."$/m.exec(loc)?.[1];
+    };
+    expect(keyFor(after)).toBe(keyFor(before));
+  });
+
+  it("uses an explicit option key for every localized option field", () => {
+    const events = makeEvents();
+    const item = events.country(201, {
+      isTriggeredOnly: true,
+      options: [
+        {
+          name: "A changing caption.",
+          key: "accept_quest",
+          icon: { icon: "GFX_option", text: "Icon caption." },
+          responseText: "Response caption.",
+          aiChance: {
+            modifiers: [{ factor: 2, desc: "AI tooltip.", descKey: "ai_tooltip" }],
+          },
+        },
+      ],
+    });
+    const files = render(mod.compile([mod.feature("events", [item])]));
+    const rendered = files.get("events/event_test_events.txt")!;
+    expect(rendered).toContain("name = event_test.201.accept_quest");
+    expect(rendered).toContain("text = event_test.201.accept_quest.icon");
+    expect(rendered).toContain("response_text = event_test.201.accept_quest.response");
+    expect(files.get("localisation/english/event_test_events_l_english.yml")).toContain(
+      "event_test.201_option_accept_quest.ai_chance_ai_tooltip"
+    );
+  });
+
+  it("warns once and uses the exact eight-character name hash when key is omitted", () => {
+    const events = makeEvents();
+    const item = events.country(202, {
+      isTriggeredOnly: true,
+      options: [{ name: "Hash this option." }],
+    });
+    const compiled = mod.compile([mod.feature("events", [item])]);
+    expect(
+      compiled.warnings.filter((warning) => warning.code === "unstable-option-key")
+    ).toHaveLength(1);
+    expect(render(compiled).get("events/event_test_events.txt")).toContain(
+      "name = event_test.202.7ef0c6d8"
+    );
+  });
+
+  it("accepts a numeric-looking key and keeps it stable when the name changes", () => {
+    const events = makeEvents();
+    const before = events.country(204, {
+      isTriggeredOnly: true,
+      options: [{ name: "Original", key: "2a" }],
+    });
+    const after = events.country(204, {
+      isTriggeredOnly: true,
+      options: [{ name: "Renamed", key: "2a" }],
+    });
+    const keyFor = (item: typeof before) =>
+      render(mod.compile([mod.feature("events", [item])]))
+        .get("events/event_test_events.txt")!
+        .match(/name = (event_test\.204\.2a)/)?.[1];
+    expect(keyFor(before)).toBe("event_test.204.2a");
+    expect(keyFor(after)).toBe(keyFor(before));
+  });
+
+  it("rejects an unsafe explicit option key", () => {
+    const events = makeEvents();
+    expect(() =>
+      events.country(203, {
+        isTriggeredOnly: true,
+        options: [{ name: "Unsafe", key: "not safe" }],
+      })
+    ).toThrow('Localization key suffix "not safe"');
   });
 
   it("writes DoA-style conditional descriptions in order with generated localization", () => {

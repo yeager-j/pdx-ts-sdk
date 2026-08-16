@@ -5,6 +5,7 @@ import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
 import type { ModWarning } from "../diagnostics.ts";
 import type { EventKindKey } from "../generated/events.ts";
 import type { ScopeName } from "../generated/scopes.ts";
+import { localizationSuffix } from "../localization-key.ts";
 import { underField, type ContentRefUse } from "../references.ts";
 import {
   modifierDescKey,
@@ -15,8 +16,6 @@ import { recordEffects, scriptCtx } from "../script/effects/recorder.ts";
 import type { Modifier, ModifierWithLoc, ScriptCtx } from "../script/effects/types.ts";
 import { refId } from "../script/scalar.ts";
 import type { DefinedEvent, EventDef, LocSink } from "./types.ts";
-
-const OPTION_KEYS = "abcdefghijklmnopqrstuvwxyz";
 
 /**
  * Lowers a `WeightBlock`-shaped modifier row list, reusing the `modifier_rule`
@@ -317,7 +316,16 @@ export function buildEvent<S extends ScopeName, From extends ScopeName | undefin
     refs.push(...underField(recorded, "after"));
   }
   (def.options ?? []).forEach((option, index) => {
-    const optionKey = `${id}.${OPTION_KEYS[index] ?? `opt${index}`}`;
+    const optionSuffix = localizationSuffix(option.name, option.key);
+    const optionKey = `${id}.${optionSuffix.suffix}`;
+    if (optionSuffix.usedFallback) {
+      warnings.push({
+        code: "unstable-option-key",
+        message:
+          `Event option "${id}[${index}]" has no key; its localization key uses a hash of the ` +
+          "option name and will change if that text is edited. Set key to pin a stable key.",
+      });
+    }
     loc.register(optionKey, option.name);
     const optionEntries: PdxEntry[] = [kv("name", optionKey)];
     const where = `option[${index}]`;
@@ -357,7 +365,7 @@ export function buildEvent<S extends ScopeName, From extends ScopeName | undefin
         warnings,
         loc,
         id,
-        `option_${index}.ai_chance`,
+        `option_${optionSuffix.suffix}.ai_chance`,
         option.aiChance.modifiers
       );
       const aiChanceRefs: ContentRefUse[] = [];

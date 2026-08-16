@@ -300,7 +300,7 @@ export const welcome = events.country(1, {
       scoped.addResource({ resource: "influence", amount: 50 });
     });
   },
-  options: [{ name: "Interesting." }],
+  options: [{ name: "Interesting.", key: "interesting" }],
 });
 
 // Without a hook nothing fires this. It belongs in the feature with its event.

@@ -1,5 +1,7 @@
 /** Standalone, mod-bound localization authoring. */
 
+import { assertLocalizationSuffix } from "../localization-key.ts";
+
 /** Language directories and file headers supported by Stellaris 4.4.6. */
 export const LOCALIZATION_LANGUAGES = Object.freeze([
   "english",
@@ -55,7 +57,6 @@ export interface ReplacementLocalizationItem<
   readonly translations: LocalizationTranslations;
 }
 
-const LOCALIZATION_KEY_SUFFIX_PATTERN = /^[A-Za-z0-9_.\-']+$/;
 const LOCALIZATION_KEY_PATTERN = /^[A-Za-z0-9_][A-Za-z0-9_.\-']*$/;
 const languageSet = new Set<string>(LOCALIZATION_LANGUAGES);
 
@@ -88,12 +89,7 @@ export function createLocalizationItem<const P extends string, const Suffix exte
   keySuffix: Suffix,
   text: LocalizationText
 ): LocalizationItem<P, Suffix> {
-  if (!LOCALIZATION_KEY_SUFFIX_PATTERN.test(keySuffix)) {
-    throw new Error(
-      `Localization key suffix "${keySuffix}" must contain only ASCII letters, digits, ` +
-        `"_", ".", "-", or "'"`
-    );
-  }
+  assertLocalizationSuffix(keySuffix);
   const key = `${prefix}_${keySuffix}` as MintedLocalizationKey<P, Suffix>;
   if (!LOCALIZATION_KEY_PATTERN.test(key)) {
     throw new Error(`Localization key "${key}" is not valid for Stellaris 4.4.6`);

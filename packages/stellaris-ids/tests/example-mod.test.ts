@@ -99,12 +99,12 @@ const AMPLIFIERS_LOCALIZATION =
 
 const RESONANCE_LOCALIZATION =
   "﻿l_english:\n" +
-  ' hello_galaxy_resonance.1.a:0 "Fascinating."\n' +
   ' hello_galaxy_resonance.1.desc:0 "Deep in the lattice, something answers back."\n' +
+  ' hello_galaxy_resonance.1.fascinating:0 "Fascinating."\n' +
   ' hello_galaxy_resonance.1.name:0 "The Hum Returns"\n' +
-  ' hello_galaxy_resonance.2.a:0 "Noted."\n' +
   ' hello_galaxy_resonance.2.desc:0 "The crystal hum lingers over this world."\n' +
   ' hello_galaxy_resonance.2.name:0 "Aftershock"\n' +
+  ' hello_galaxy_resonance.2.noted:0 "Noted."\n' +
   ' hello_galaxy_tech_resonance_theory:0 "Crystal Resonance Theory"\n' +
   ' hello_galaxy_tech_resonance_theory_desc:0 "The lattice hums at frequencies we are only beginning to hear."\n' +
   ' hello_galaxy_tech_resonance_weapons:0 "Resonance Disruptors"\n' +

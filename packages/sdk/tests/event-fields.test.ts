@@ -315,6 +315,7 @@ describe("previously-omitted EventOption fields", () => {
       options: [
         {
           name: "First",
+          key: "a",
           icon: {
             icon: "GFX_option_icon",
             iconBackground: "GFX_option_bg",
@@ -393,6 +394,7 @@ describe("PR #15 review follow-ups (SDK-46)", () => {
       options: [
         {
           name: "First",
+          key: "a",
           aiChance: {
             factor: 10,
             modifiers: [
@@ -417,7 +419,7 @@ describe("PR #15 review follow-ups (SDK-46)", () => {
       "weight_multiplier = {\n\t\tfactor = 1\n\t\tmodifier = {\n\t\t\tfactor = 3\n\t\t\tdesc = event_fields.1030_weight_multiplier_weight_tooltip"
     );
     expect(rendered).toContain(
-      "ai_chance = {\n\t\t\tfactor = 10\n\t\t\tmodifier = {\n\t\t\t\tfactor = 4\n\t\t\t\tdesc = event_fields.1030_option_0.ai_chance_ai_chance_tooltip"
+      "ai_chance = {\n\t\t\tfactor = 10\n\t\t\tmodifier = {\n\t\t\t\tfactor = 4\n\t\t\t\tdesc = event_fields.1030_option_a.ai_chance_ai_chance_tooltip"
     );
 
     const loc = files.get("localisation/english/event_fields_events_l_english.yml")!;
@@ -428,7 +430,7 @@ describe("PR #15 review follow-ups (SDK-46)", () => {
       ' event_fields.1030_weight_multiplier_weight_tooltip:0 "Weight modifier tooltip."'
     );
     expect(loc).toContain(
-      ' event_fields.1030_option_0.ai_chance_ai_chance_tooltip:0 "AI chance modifier tooltip."'
+      ' event_fields.1030_option_a.ai_chance_ai_chance_tooltip:0 "AI chance modifier tooltip."'
     );
   });
 

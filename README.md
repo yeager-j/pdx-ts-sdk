@@ -71,7 +71,7 @@ export const aftershock = events.planet(2, {
   immediate: (planet, ctx) => {
     ctx.from.effects((country) => country.addResource({ resource: "influence", amount: 50 }));
   },
-  options: [{ name: "Noted." }],
+  options: [{ name: "Noted.", key: "noted" }],
 });
 
 export const humReturns = events.country(1, {
@@ -101,7 +101,7 @@ export const humReturns = events.country(1, {
       })
       .else((c) => c.log("the hum went unheard"));
   },
-  options: [{ name: "Fascinating." }],
+  options: [{ name: "Fascinating.", key: "fascinating" }],
 });
 
 export const feature = mod.feature("resonance", [
@@ -194,7 +194,7 @@ country_event = {
 		}
 	}
 	option = {
-		name = hello_galaxy_resonance.1.a
+		name = hello_galaxy_resonance.1.fascinating
 	}
 }
 ```

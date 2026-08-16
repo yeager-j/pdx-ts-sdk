@@ -40,6 +40,7 @@ export const resonanceTheory = events.planet(1, {
   options: [
     {
       name: "PLACEHOLDER: acknowledge it.",
+      key: "acknowledge",
       effects: (planet) => {
         // `planet` is this event's root scope, and the kind is what fixed it.
         // `setPlanetFlag` is in scope here; the other three scopes' flag

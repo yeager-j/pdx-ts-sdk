@@ -121,7 +121,7 @@ function capabilityFeatures() {
         country.addResource({ resource: "influence", amount: 50 });
       });
     },
-    options: [{ name: "Noted." }],
+    options: [{ name: "Noted.", key: "noted" }],
   });
   const hum = events.country(1, {
     title: "The Hum",
@@ -131,7 +131,7 @@ function capabilityFeatures() {
         planet.planetEvent({ id: aftershock, from: ctx.self, days: 30 });
       });
     },
-    options: [{ name: "Fascinating." }],
+    options: [{ name: "Fascinating.", key: "fascinating" }],
   });
   const patch = capability.patchTechnology(
     vanilla.definition("technology", "tech_gene_forging").require("cost", "prerequisites"),
@@ -772,7 +772,7 @@ describe("content reference integrity", () => {
             planet.saveEventTargetAs(eventTarget<"planet">("pp_mod_storm_world"));
           });
         },
-        options: [{ name: "Noted." }],
+        options: [{ name: "Noted.", key: "noted" }],
       }),
     ]);
     expect(buildInternal(CONFIG, [events]).warnings).toEqual([]);
@@ -1304,7 +1304,7 @@ tech_probe_zeta = {
         const event = events.country(10, {
           title: "Ten",
           isTriggeredOnly: true,
-          options: [{ name: "Noted." }],
+          options: [{ name: "Noted.", key: "noted" }],
         });
         eventItems.push(event);
         hookItems.push(orderMod.on(onActions.onGameStartCountry, [event]));
@@ -1313,7 +1313,7 @@ tech_probe_zeta = {
         const event = events.country(2, {
           title: "Two",
           isTriggeredOnly: true,
-          options: [{ name: "Fascinating." }],
+          options: [{ name: "Fascinating.", key: "fascinating" }],
         });
         eventItems.push(event);
         // A different hook, so the two registrations are hook-block ordering
@@ -1325,7 +1325,7 @@ tech_probe_zeta = {
           zetaNamespace.country(1, {
             title: "Zeta",
             isTriggeredOnly: true,
-            options: [{ name: "Noted." }],
+            options: [{ name: "Noted.", key: "noted" }],
           })
         );
       },

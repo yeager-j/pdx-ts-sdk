@@ -15,6 +15,7 @@ interface FlatWarning {
     | "missing-prefix"
     | "loc-quote-replaced"
     | "unstable-desc-key"
+    | "unstable-option-key"
     | "loc-key-looks-like-text"
     | "assumed-patch-rule"
     | "mismatched-vanilla-ids";

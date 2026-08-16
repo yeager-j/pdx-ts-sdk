@@ -1,10 +1,10 @@
 /** Lowering and localization registration for modifier-shaped effects. */
 
-import { createHash } from "node:crypto";
 import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
 
 import { MODIFIER_OPERATIONS } from "../../generated/modifier-policy.ts";
 import type { ScopeName } from "../../generated/scopes.ts";
+import { shortLocalizationHash } from "../../localization-key.ts";
 import { compareUtf8 } from "../../ordering.ts";
 import type { ContentRefUse } from "../../references.ts";
 import { toScalar } from "../scalar.ts";
@@ -139,7 +139,7 @@ export function modifierDescKey(
     }
     return { key: `${ownerId}_${fieldPath}_${modifier.descKey}` };
   }
-  const slug = createHash("sha256").update(modifier.desc).digest("hex").slice(0, 8);
+  const slug = shortLocalizationHash(modifier.desc);
   return {
     key: `${ownerId}_${fieldPath}_${slug}`,
     unstableWarning:
