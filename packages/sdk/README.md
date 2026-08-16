@@ -189,7 +189,7 @@ const humReturns = events.country(1, {
       planet.planetEvent({ id: aftershock, from: ctx.self, days: 30 });
     });
   },
-  options: [{ name: "Fascinating." }],
+  options: [{ name: "Fascinating.", key: "fascinating" }],
 });
 ```
 

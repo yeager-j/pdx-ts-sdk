@@ -255,6 +255,7 @@ function visibleFields(names: DerivedNames, kind: EventKind): readonly string[] 
     "options: [",
     "  {",
     `    name: ${quoteTs("PLACEHOLDER: acknowledge it.")},`,
+    '    key: "acknowledge",',
     `    effects: (${kind}) => {`,
     ...indent(flagLines(names, kind), "      "),
     "    },",

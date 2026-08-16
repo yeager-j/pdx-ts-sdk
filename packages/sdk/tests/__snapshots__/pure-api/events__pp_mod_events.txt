@@ -16,7 +16,7 @@ country_event = {
 		}
 	}
 	option = {
-		name = pp_mod.1.a
+		name = pp_mod.1.fascinating
 	}
 }
 
@@ -32,6 +32,6 @@ planet_event = {
 		}
 	}
 	option = {
-		name = pp_mod.2.a
+		name = pp_mod.2.noted
 	}
 }

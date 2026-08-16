@@ -145,7 +145,14 @@ export interface EventTriggeredDescription<S extends ScopeName> extends Triggere
 export interface EventOption<
   S extends ScopeName,
   From extends ScopeName | undefined,
-> extends GeneratedEventOptionFields<S, From> {}
+> extends GeneratedEventOptionFields<S, From> {
+  /**
+   * Safe localization suffix shared by the option name, icon caption, response,
+   * and AI-chance modifier descriptions. When omitted, the SDK uses the first
+   * eight characters of the name hash and emits an `unstable-option-key` warning.
+   */
+  readonly key?: string;
+}
 
 /**
  * A `location` value (`events.cwt:308`, `scope_field`): either a fixed
@@ -251,9 +258,9 @@ export type DefinedEvent<
    */
   readonly refs: readonly ContentRefUse[];
   /**
-   * Diagnostics collected at define time — today, just an `unstable-desc-key`
-   * entry per `aiChance`/`meanTimeToHappen`/`weightMultiplier` modifier row
-   * whose `desc` had no `descKey` (see `modifierDescKey`, `script/effects/modifiers.ts`).
+   * Diagnostics collected at define time. They can contain `unstable-desc-key`
+   * entries for unpinned modifier descriptions and `unstable-option-key`
+   * entries for options without an explicit key.
    * Events have no `ContentAuthoring` instance to hang `onUnstableDescKey`
    * off — they are built at the definer call site, before `buildMod` ever
    * runs — so this rides along the same way `refs` and `locEntries` do:
@@ -268,22 +275,6 @@ export type DefinedEvent<
 export interface LocSink {
   register(key: string, text: string): void;
 }
-
-/**
- * The suffixes an option's generated localisation key takes, by position:
- * `<id>.a`, `<id>.b`, ... — matching how vanilla names its own option keys.
- *
- * Index-derived, and therefore the translation-misalignment hazard
- * `modifierDescKey` (`script/effects/modifiers.ts`) refuses for modifier rows: inserting an
- * option mid-list repoints every later option's key at different text, with no
- * build error and no symptom until someone reads that language. Accepted here
- * rather than avoided, because the key is not only ours — `.a`/`.b` is the
- * convention Stellaris translators and existing localisation tooling expect
- * from an event's options, and a content-derived key (the modifier rows' fix)
- * would buy stability by emitting keys no translator recognizes. A modifier
- * row has no such convention to honor, which is exactly why the two go
- * different ways.
- */
 
 // ---------------------------------------------------------------------------
 // Fire effects: typed signatures over the runtime encoders
