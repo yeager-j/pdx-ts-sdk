@@ -1,4 +1,5 @@
 import starlight from "@astrojs/starlight";
+import catppuccin from "@catppuccin/starlight";
 import { defineConfig } from "astro/config";
 
 /**
@@ -22,6 +23,10 @@ export default defineConfig({
         { label: "Guides", items: [{ autogenerate: { directory: "guides" } }] },
         { label: "Reference", items: [{ autogenerate: { directory: "reference" } }] },
       ],
+      // Catppuccin, at the plugin's own defaults: mocha for dark, latte for
+      // light, mauve accent in both. `catppuccin({ dark: { flavor, accent },
+      // light: { flavor, accent } })` changes either half.
+      plugins: [catppuccin()],
     }),
   ],
 });
