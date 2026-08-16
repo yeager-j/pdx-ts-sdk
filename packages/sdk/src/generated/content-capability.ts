@@ -456,6 +456,38 @@ export const MINT_SHAPES = Object.freeze({
 export type MintShapedRegistry = keyof typeof MINT_SHAPES;
 
 /**
+ * The registries whose names are raw engine labels (SDK-183). Each row widens
+ * the logical-name charset for the ordinary prefixed mint (`name`) and states
+ * the charset a complete `prefix: false` name must satisfy (`exact`). The
+ * runtime mint reads this table; the registries are the overlay's
+ * `EXACT_NAME_MINTS` rows, so the typed overloads and the runtime checks come
+ * from the same data.
+ */
+export const EXACT_NAME_MINTS = Object.freeze({
+  pdxmesh: Object.freeze({ name: /^[a-z][A-Za-z0-9_]*$/, exact: /^[A-Za-z][A-Za-z0-9_]*$/ }),
+  pdxparticle: Object.freeze({ name: /^[a-z][A-Za-z0-9_]*$/, exact: /^[A-Za-z][A-Za-z0-9_]*$/ }),
+} as const);
+
+/** A registry whose mint offers the exact-name opt-out. */
+export type ExactNameRegistry = keyof typeof EXACT_NAME_MINTS;
+
+/**
+ * A complete definition name an author may spell with `prefix: false`: the mod
+ * prefix must appear as a `_`-delimited segment — head, tail, or interior. The
+ * bare prefix alone matches no arm, so a name that is nothing but the prefix is
+ * a compile error, like a name missing the segment entirely.
+ */
+export type ExactMintName<P extends string> =
+  `${P}_${string}` | `${string}_${P}` | `${string}_${P}_${string}`;
+
+/**
+ * Options an exact-name registry's capability method forwards to the mint.
+ * `prefix: false` means the name is the complete definition id; the default
+ * mints `${prefix}_${name}` as every other registry does.
+ */
+export type MintNameOptions = { readonly prefix?: boolean };
+
+/**
  * The literal id a capability mints for one logical content name, for a registry
  * carrying an `IdProfile` segment.
  */
@@ -491,7 +523,8 @@ export type ContentIdMinter<P extends string, I extends IdProfile> = <
   const Name extends string,
 >(
   registry: K,
-  name: Name
+  name: Name,
+  options?: MintNameOptions
 ) => MintedIdOf<P, I, K, Name>;
 
 /**
@@ -990,20 +1023,52 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
    * Defines a pdxmesh from its logical name.
    * The capability mints and owns the full id; the returned branded reference
    * flows into matching content-reference fields.
+   * A pdxmesh name is a raw engine label, so the logical name accepts
+   * interior uppercase after its leading lowercase letter ([a-z][A-Za-z0-9_]*).
    */
   pdxmesh<const Name extends string>(
     name: Name,
-    def: Omit<PdxmeshDef<MintedIdOf<P, I, "pdxmesh", Name>>, "id">
+    def: Omit<PdxmeshDef<MintedIdOf<P, I, "pdxmesh", Name>>, "id">,
+    options?: { readonly prefix?: true }
   ): ContentItem<"pdxmesh", PdxmeshDef<MintedIdOf<P, I, "pdxmesh", Name>>>;
+  /**
+   * Defines a pdxmesh from its complete name.
+   * `prefix: false` means only that the capability does not prepend the mod
+   * prefix — the prefix is still required inside `name` as a `_`-delimited
+   * segment (head, interior, or tail). The `Name` constraint enforces that at
+   * compile time and the mint re-checks it at runtime, so the name stays
+   * ownable and clear of other mods by construction.
+   */
+  pdxmesh<const Name extends ExactMintName<P>>(
+    name: Name,
+    def: Omit<PdxmeshDef<Name>, "id">,
+    options: { readonly prefix: false }
+  ): ContentItem<"pdxmesh", PdxmeshDef<Name>>;
   /**
    * Defines a pdxparticle from its logical name.
    * The capability mints and owns the full id; the returned branded reference
    * flows into matching content-reference fields.
+   * A pdxparticle name is a raw engine label, so the logical name accepts
+   * interior uppercase after its leading lowercase letter ([a-z][A-Za-z0-9_]*).
    */
   pdxparticle<const Name extends string>(
     name: Name,
-    def: Omit<PdxparticleDef<MintedIdOf<P, I, "pdxparticle", Name>>, "id">
+    def: Omit<PdxparticleDef<MintedIdOf<P, I, "pdxparticle", Name>>, "id">,
+    options?: { readonly prefix?: true }
   ): ContentItem<"pdxparticle", PdxparticleDef<MintedIdOf<P, I, "pdxparticle", Name>>>;
+  /**
+   * Defines a pdxparticle from its complete name.
+   * `prefix: false` means only that the capability does not prepend the mod
+   * prefix — the prefix is still required inside `name` as a `_`-delimited
+   * segment (head, interior, or tail). The `Name` constraint enforces that at
+   * compile time and the mint re-checks it at runtime, so the name stays
+   * ownable and clear of other mods by construction.
+   */
+  pdxparticle<const Name extends ExactMintName<P>>(
+    name: Name,
+    def: Omit<PdxparticleDef<Name>, "id">,
+    options: { readonly prefix: false }
+  ): ContentItem<"pdxparticle", PdxparticleDef<Name>>;
 }
 
 /** Builds the internal content-method table for a mod capability. */
@@ -1361,16 +1426,18 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
     },
     pdxmesh: <const Name extends string>(
       name: Name,
-      def: Omit<PdxmeshDef<MintedIdOf<P, I, "pdxmesh", Name>>, "id">
+      def: Omit<PdxmeshDef<MintedIdOf<P, I, "pdxmesh", Name>>, "id">,
+      options?: MintNameOptions
     ) =>
-      definePdxmesh({ ...def, id: mint("pdxmesh", name) } as PdxmeshDef<
+      definePdxmesh({ ...def, id: mint("pdxmesh", name, options) } as PdxmeshDef<
         MintedIdOf<P, I, "pdxmesh", Name>
       >),
     pdxparticle: <const Name extends string>(
       name: Name,
-      def: Omit<PdxparticleDef<MintedIdOf<P, I, "pdxparticle", Name>>, "id">
+      def: Omit<PdxparticleDef<MintedIdOf<P, I, "pdxparticle", Name>>, "id">,
+      options?: MintNameOptions
     ) =>
-      definePdxparticle({ ...def, id: mint("pdxparticle", name) } as PdxparticleDef<
+      definePdxparticle({ ...def, id: mint("pdxparticle", name, options) } as PdxparticleDef<
         MintedIdOf<P, I, "pdxparticle", Name>
       >),
   }) as ContentCapabilityMethods<P, I>;

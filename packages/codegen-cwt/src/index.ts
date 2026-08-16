@@ -66,6 +66,7 @@ import {
   CONTENT_CONTRIBUTION_SINKS,
   CONTENT_FIELD_OVERRIDES,
   CONTENT_PATCH_REGISTRIES,
+  EXACT_NAME_MINTS,
   FILE_STEM_OVERLAYS,
   HAND_WRITTEN_CONTENT_DEFINERS,
   MINT_SHAPE_OVERLAYS,
@@ -845,6 +846,7 @@ function contentDefiners(
   const profileMembers: string[] = [];
   const defaultProfileMembers: string[] = [];
   const mintShapeRows: { method: string; head: string }[] = [];
+  const exactNameRows: { method: string; namePattern: string; exactNamePattern: string }[] = [];
   const shapeMintTypes: string[] = [];
   const shapeMintRefTypes: string[] = [];
   const capabilityRuntimeDefiners = new Set<string>();
@@ -862,6 +864,24 @@ function contentDefiners(
     const contribution = CONTENT_CONTRIBUTION_SINKS.get(registry);
     const method = camelCase(registry);
     const mintShape = MINT_SHAPE_OVERLAYS.get(registry);
+    const exactName = EXACT_NAME_MINTS.get(registry);
+    // An exact name is the complete id, so the mint must be bare: a fixed head
+    // would still be prepended and the name would not be exact. The generic
+    // member/binding emission below is the only shape the opt-out is written
+    // for, so a grafted or scope-parameterised registry cannot carry a row.
+    if (exactName !== undefined) {
+      if (mintShape === undefined || mintShape.head !== undefined) {
+        throw new Error(
+          `EXACT_NAME_MINTS row "${registry}" requires a bare MINT_SHAPE_OVERLAYS row (no head)`
+        );
+      }
+      if (graft !== undefined || emission.scopeParameter !== null) {
+        throw new Error(
+          `EXACT_NAME_MINTS row "${registry}" targets a grafted or scope-parameterised registry, ` +
+            "which the emitted overloads do not carry"
+        );
+      }
+    }
     // A shaped registry has no `IdProfile` member to index, so its minted type
     // is the segmentless one. `MintedIdOf` resolves both, and spelling the
     // narrower `MintedContentId` where it applies keeps the emitted signature
@@ -968,33 +988,89 @@ function contentDefiners(
               )
               .join(" | ") +
             `\n  ): ContentItem<${key}, ${name}Def<${minted}, never>>${declaration};`;
-      capabilityMembers.push(
-        docComment(
-          [
-            `Defines ${article} ${spoken} from its logical name.`,
-            "The capability mints and owns the full id; the returned branded reference",
-            "flows into matching content-reference fields.",
-            ...(nestedDefinitionMembers.length === 0
-              ? []
-              : [
-                  "Nested-definition record keys are full ids and must belong to this capability's",
-                  "prefix, because other fields may reference them directly.",
-                ]),
-          ],
-          "  "
-        ) + signatures
-      );
-      capabilityBindings.push(
-        capabilityBinding(
+      if (exactName === undefined) {
+        capabilityMembers.push(
+          docComment(
+            [
+              `Defines ${article} ${spoken} from its logical name.`,
+              "The capability mints and owns the full id; the returned branded reference",
+              "flows into matching content-reference fields.",
+              ...(nestedDefinitionMembers.length === 0
+                ? []
+                : [
+                    "Nested-definition record keys are full ids and must belong to this capability's",
+                    "prefix, because other fields may reference them directly.",
+                  ]),
+            ],
+            "  "
+          ) + signatures
+        );
+        capabilityBindings.push(
+          capabilityBinding(
+            method,
+            parameters,
+            input,
+            `define${name}`,
+            def,
+            nestedDefinitionMembers,
+            nestedDefinitionTable
+          )
+        );
+      } else {
+        // The exact-name pair (SDK-183): the ordinary prefixed mint with the
+        // registry's widened charset, and the `prefix: false` overload under
+        // which the author spells the complete name. One runtime binding
+        // serves both — `mint` reads the option and the generated
+        // `EXACT_NAME_MINTS` table, so the branch lives in data, not here.
+        if (nestedDefinitionMembers.length > 0) {
+          throw new Error(
+            `EXACT_NAME_MINTS row "${registry}" has nested definition members, which the ` +
+              "emitted overloads do not carry"
+          );
+        }
+        exactNameRows.push({
           method,
-          parameters,
-          input,
-          `define${name}`,
-          def,
-          nestedDefinitionMembers,
-          nestedDefinitionTable
-        )
-      );
+          namePattern: exactName.namePattern,
+          exactNamePattern: exactName.exactNamePattern,
+        });
+        capabilityMembers.push(
+          docComment(
+            [
+              `Defines ${article} ${spoken} from its logical name.`,
+              "The capability mints and owns the full id; the returned branded reference",
+              "flows into matching content-reference fields.",
+              `A ${spoken} name is a raw engine label, so the logical name accepts`,
+              "interior uppercase after its leading lowercase letter ([a-z][A-Za-z0-9_]*).",
+            ],
+            "  "
+          ) +
+            `  ${method}<const Name extends string>(\n` +
+            `    name: Name,\n` +
+            `    def: ${input},\n` +
+            `    options?: { readonly prefix?: true }\n` +
+            `  ): ContentItem<${key}, ${result}>;\n` +
+            docComment(
+              [
+                `Defines ${article} ${spoken} from its complete name.`,
+                "`prefix: false` means only that the capability does not prepend the mod",
+                "prefix — the prefix is still required inside `name` as a `_`-delimited",
+                "segment (head, interior, or tail). The `Name` constraint enforces that at",
+                "compile time and the mint re-checks it at runtime, so the name stays",
+                "ownable and clear of other mods by construction.",
+              ],
+              "  "
+            ) +
+            `  ${method}<const Name extends ExactMintName<P>>(\n` +
+            `    name: Name,\n` +
+            `    def: Omit<${name}Def<Name>, "id">,\n` +
+            `    options: { readonly prefix: false }\n` +
+            `  ): ContentItem<${key}, ${name}Def<Name>>;`
+        );
+        capabilityBindings.push(
+          `    ${method}: ${parameters}(name: Name, def: ${input}, options?: MintNameOptions) =>\n` +
+            `      define${name}({ ...def, id: mint(${JSON.stringify(method)}, name, options) } as ${def}),`
+        );
+      }
       capabilityRuntimeDefiners.add(`define${name}`);
       for (const shape of shapesFor(registry)) {
         if (emission.scopeParameter !== null) {
@@ -1407,6 +1483,41 @@ function contentDefiners(
     docComment(["A registry whose name is minted without an id segment."]) +
     "export type MintShapedRegistry = keyof typeof MINT_SHAPES;\n\n" +
     docComment([
+      "The registries whose names are raw engine labels (SDK-183). Each row widens",
+      "the logical-name charset for the ordinary prefixed mint (`name`) and states",
+      "the charset a complete `prefix: false` name must satisfy (`exact`). The",
+      "runtime mint reads this table; the registries are the overlay's",
+      "`EXACT_NAME_MINTS` rows, so the typed overloads and the runtime checks come",
+      "from the same data.",
+    ]) +
+    "export const EXACT_NAME_MINTS = Object.freeze({\n" +
+    exactNameRows
+      .map(
+        (row) =>
+          `  ${row.method}: Object.freeze({ name: /${row.namePattern}/, ` +
+          `exact: /${row.exactNamePattern}/ }),`
+      )
+      .join("\n") +
+    "\n} as const);\n\n" +
+    docComment(["A registry whose mint offers the exact-name opt-out."]) +
+    "export type ExactNameRegistry = keyof typeof EXACT_NAME_MINTS;\n\n" +
+    docComment([
+      "A complete definition name an author may spell with `prefix: false`: the mod",
+      "prefix must appear as a `_`-delimited segment — head, tail, or interior. The",
+      "bare prefix alone matches no arm, so a name that is nothing but the prefix is",
+      "a compile error, like a name missing the segment entirely.",
+    ]) +
+    "export type ExactMintName<P extends string> =\n" +
+    "  | `${P}_${string}`\n" +
+    "  | `${string}_${P}`\n" +
+    "  | `${string}_${P}_${string}`;\n\n" +
+    docComment([
+      "Options an exact-name registry's capability method forwards to the mint.",
+      "`prefix: false` means the name is the complete definition id; the default",
+      "mints `${prefix}_${name}` as every other registry does.",
+    ]) +
+    "export type MintNameOptions = { readonly prefix?: boolean };\n\n" +
+    docComment([
       "The literal id a capability mints for one logical content name, for a registry",
       "carrying an `IdProfile` segment.",
     ]) +
@@ -1441,7 +1552,7 @@ function contentDefiners(
     "export type ContentIdMinter<P extends string, I extends IdProfile> = <\n" +
     "  const K extends keyof I | MintShapedRegistry,\n" +
     "  const Name extends string,\n" +
-    ">(registry: K, name: Name) => MintedIdOf<P, I, K, Name>;\n\n" +
+    ">(registry: K, name: Name, options?: MintNameOptions) => MintedIdOf<P, I, K, Name>;\n\n" +
     shapeMintTypes.join("\n") +
     (shapeMintTypes.length === 0 ? "" : "\n") +
     docComment(["Content authoring methods bound to one mod capability's prefix and id profile."]) +
@@ -1760,6 +1871,7 @@ function contentRegistry(
         `    fileStem: ${JSON.stringify(fileStem)},\n` +
         `    fileExtension: ${JSON.stringify(layout.fileExtension)},\n` +
         (mintHead === undefined ? "" : `    mintHead: ${JSON.stringify(mintHead)},\n`) +
+        (EXACT_NAME_MINTS.has(content.registry) ? "    exactNames: true,\n" : "") +
         (layout.rootEnvelope === undefined
           ? ""
           : `    rootEnvelope: ${JSON.stringify(layout.rootEnvelope)},\n`) +

@@ -68,6 +68,159 @@ describe("minted GFX names", () => {
   });
 });
 
+describe("exact-name identity (SDK-183)", () => {
+  it("accepts interior uppercase in a mesh or particle logical name", () => {
+    // Mesh and particle names are raw engine labels referenced verbatim from
+    // `.asset` files, so their charset is the engine's, not the SDK's stem
+    // rule. The leading letter stays lowercase: the widened rule is interior.
+    const mod = gfxMod("acme");
+    const mesh = mod.pdxmesh("tracer_M1S1_mesh", { file: "gfx/models/x.mesh" });
+    const particle = mod.pdxparticle("flash_M1S1", { type: "x_particle" });
+    expect(mesh.id).toBe("acme_tracer_M1S1_mesh");
+    expect(particle.id).toBe("acme_flash_M1S1");
+    expect(() => mod.pdxmesh("M1S1_mesh", { file: "gfx/models/x.mesh" })).toThrow(
+      /led by a lowercase letter/
+    );
+  });
+
+  it("keeps every other registry on the lowercase stem rule", () => {
+    // Negative control for the widening: the charset is per-registry data,
+    // so a sprite (the nearest GFX neighbour) and a segmented registry both
+    // still refuse what the two asset-label registries accept.
+    const mod = gfxMod("acme");
+    expect(() => mod.spriteType("icon_M1S1", { textureFile: "gfx/a.dds" })).toThrow(
+      /must be lowercase snake_case/
+    );
+    expect(() => mod.technology("laser_M1", {} as never)).toThrow(/must be lowercase snake_case/);
+  });
+
+  it("accepts an exact name carrying the prefix at the head, inside, and at the tail", () => {
+    const mod = gfxMod("acme");
+    const head = mod.pdxmesh(
+      "acme_hull_MK2_mesh",
+      { file: "gfx/models/x.mesh" },
+      {
+        prefix: false,
+      }
+    );
+    const interior = mod.pdxparticle(
+      "small_acme_flash_particle",
+      { type: "x_particle" },
+      {
+        prefix: false,
+      }
+    );
+    const tail = mod.pdxmesh("Turret_acme", { file: "gfx/models/y.mesh" }, { prefix: false });
+    expect(head.id).toBe("acme_hull_MK2_mesh");
+    expect(interior.id).toBe("small_acme_flash_particle");
+    expect(tail.id).toBe("Turret_acme");
+    // An explicit `prefix: true` is the default mint, spelled out.
+    expect(mod.pdxmesh("hull", { file: "gfx/models/z.mesh" }, { prefix: true }).id).toBe(
+      "acme_hull"
+    );
+  });
+
+  it("refuses an exact name that does not carry the prefix as a segment", () => {
+    // `prefix: false` opts out of the prepend, never of the prefix: a name
+    // with no `_`-delimited prefix segment is unownable, and so is the bare
+    // prefix alone or a run-on containment that is not a whole segment.
+    const mod = gfxMod("acme");
+    expect(() =>
+      mod.pdxmesh("small_flash_mesh" as never, { file: "gfx/models/x.mesh" }, { prefix: false })
+    ).toThrow(/must carry the mod prefix "acme" as a "_"-delimited segment/);
+    expect(() =>
+      mod.pdxmesh("acme" as never, { file: "gfx/models/x.mesh" }, { prefix: false })
+    ).toThrow(/must carry the mod prefix "acme" as a "_"-delimited segment/);
+    expect(() =>
+      mod.pdxparticle("acmeX_flash" as never, { type: "x_particle" }, { prefix: false })
+    ).toThrow(/must carry the mod prefix "acme" as a "_"-delimited segment/);
+    expect(() =>
+      mod.pdxmesh("acme mesh" as never, { file: "gfx/models/x.mesh" }, { prefix: false })
+    ).toThrow(/must be one bare word/);
+  });
+
+  it("refuses an exact name that lands on a real vanilla mesh name", () => {
+    // The same packaged-evidence refusal the default mint gets: the prefix
+    // `background` sits inside vanilla's `AI_background_details_mesh` as a
+    // whole segment, so the exact name is spellable — and still refused.
+    const mod = gfxMod("background");
+    expect(() =>
+      mod.compile([
+        mod.feature(undefined, [
+          mod.pdxmesh(
+            "AI_background_details_mesh",
+            { file: "gfx/models/x.mesh" },
+            {
+              prefix: false,
+            }
+          ),
+        ]),
+      ])
+    ).toThrow(
+      /pdxmesh name "AI_background_details_mesh" collides with a vanilla pdxmesh of the same name/
+    );
+  });
+
+  it("refuses a default mint and an exact name that land on one id", () => {
+    // The two paths share one namespace: it is the final id the duplicate
+    // check sees, however it was spelled.
+    const mod = gfxMod("acme");
+    expect(() =>
+      mod.compile([
+        mod.feature(undefined, [
+          mod.pdxmesh("hull", { file: "gfx/models/x.mesh" }),
+          mod.pdxmesh("acme_hull", { file: "gfx/models/y.mesh" }, { prefix: false }),
+        ]),
+      ])
+    ).toThrow(/Duplicate pdxmesh id "acme_hull"/);
+  });
+
+  it("places and emits an exact name without a missing-prefix warning", () => {
+    const mod = gfxMod("acme");
+    const pure = mod.compile([
+      mod.feature(undefined, [
+        mod.pdxparticle("small_acme_flash_particle", { type: "x_particle" }, { prefix: false }),
+      ]),
+    ]);
+    expect(pure.warnings).toEqual([]);
+    expect(render(pure).get("gfx/particles/acme_particles.gfx")).toContain(
+      "name = small_acme_flash_particle"
+    );
+  });
+
+  it("keeps the ownership check through the direct buildMod door", () => {
+    // `mod.feature` is not the only entrance; the fold measures the same
+    // segment containment, so the exact name raises no complaint there either.
+    const mod = gfxMod("acme");
+    const particle = mod.pdxparticle(
+      "small_acme_flash_particle",
+      { type: "x_particle" },
+      {
+        prefix: false,
+      }
+    );
+    const pure = buildMod(mod.config, [createFeature(undefined, [particle])]);
+    expect(pure.warnings).toEqual([]);
+  });
+
+  it("refuses an exact name placed in another capability's feature", () => {
+    // The name is still the ownership evidence: it carries the first mod's
+    // prefix as a segment and not the second's, so placement refuses it.
+    const first = gfxMod("first_mod");
+    const second = gfxMod("second_mod");
+    const particle = first.pdxparticle(
+      "small_first_mod_flash",
+      { type: "x_particle" },
+      {
+        prefix: false,
+      }
+    );
+    expect(() => second.feature(undefined, [particle])).toThrow(
+      /Content id "small_first_mod_flash" does not belong to mod prefix "second_mod"/
+    );
+  });
+});
+
 describe("vanilla-name collision", () => {
   it("refuses a sprite whose mint lands on a real vanilla sprite name", () => {
     // `GFX_evt_ship_in_orbit` is a vanilla sprite, and the prefix `evt` plus

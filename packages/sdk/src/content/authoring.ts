@@ -13,7 +13,12 @@ import type { TypedRef } from "../script/scalar.ts";
 import { isComplexTriggerModifier } from "./blocks.ts";
 import { dualArm, fieldEntries, resolveFromClosures } from "./lower.ts";
 import type { ShapeMint } from "./mint-provenance.ts";
-import type { ContentField, ContentLocalisation, ContentRegistryDescriptor } from "./schema.ts";
+import {
+  carriesPrefixSegment,
+  type ContentField,
+  type ContentLocalisation,
+  type ContentRegistryDescriptor,
+} from "./schema.ts";
 import type { WeightBlock } from "./types.ts";
 
 export type { AssetPathSink, AssetPathUse, ContentRefSink, ContentRefUse } from "../references.ts";
@@ -163,7 +168,7 @@ export class ContentAuthoring {
       descriptor.fields
     ) as D;
     if (shapeMint === undefined) {
-      this.assertPrefixed(type, resolved.id, descriptor.mintHead ?? "");
+      this.assertPrefixed(type, resolved.id, descriptor);
     }
     const definitions = this.definitions.get(type) ?? [];
     if (definitions.some((existing) => existing.id === resolved.id)) {
@@ -205,12 +210,30 @@ export class ContentAuthoring {
   }
 
   /**
-   * `head` is the literal the registry's minted names carry before the prefix
-   * (`ContentRegistryDescriptor.mintHead`) — `"GFX_"` for sprites, `""` for
-   * everything else, including nested definition ids, which are never minted
-   * with a head of their own.
+   * The descriptor states the registry's ownership measure. `mintHead` is the
+   * literal the registry's minted names carry before the prefix — `"GFX_"` for
+   * sprites, `""` for everything else, including nested definition ids, which
+   * are never minted with a head of their own. `exactNames` (SDK-183) switches
+   * the measure to `_`-delimited segment containment: an exact-name registry's
+   * own name may carry the prefix at its head, its tail, or inside.
    */
-  private assertPrefixed(type: string, id: string, head: string): void {
+  private assertPrefixed(
+    type: string,
+    id: string,
+    descriptor?: Pick<ContentRegistryDescriptor, "mintHead" | "exactNames">
+  ): void {
+    if (descriptor?.exactNames === true) {
+      if (carriesPrefixSegment(id, this.prefix)) {
+        return;
+      }
+      this.onPrefixViolation(
+        `${type} id "${id}" must carry the mod prefix "${this.prefix}" as a "_"-delimited ` +
+          `segment ("${this.prefix}_...", "..._${this.prefix}", or "..._${this.prefix}_...") ` +
+          "so it cannot collide with vanilla or other mods"
+      );
+      return;
+    }
+    const head = descriptor?.mintHead ?? "";
     if (id.startsWith(`${head}${this.prefix}_`)) {
       return;
     }
@@ -383,7 +406,9 @@ export class ContentAuthoring {
       const existingIds = this.nestedIds.get(identity);
       const pending = pendingIds.get(identity) ?? new Set<string>();
       for (const [id, nested] of Object.entries(record)) {
-        this.assertPrefixed(identity, id, "");
+        // Nested definition ids are never minted with a head and carry no
+        // exact-name allowance: no descriptor, so the plain measure applies.
+        this.assertPrefixed(identity, id);
         if (existingIds?.has(id) || pending.has(id)) {
           throw new Error(`Duplicate ${identity} id "${id}"`);
         }

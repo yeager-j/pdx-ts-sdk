@@ -159,6 +159,59 @@ export const MINT_SHAPE_OVERLAYS = new Map<string, MintShape>([
   ],
 ]);
 
+export interface ExactNameMint {
+  /**
+   * The charset a logical name may use under the ordinary prefixed mint, as a
+   * regex source. Wider than the global lowercase stem rule, because these
+   * names are raw engine labels rather than SDK-owned identifiers.
+   */
+  readonly namePattern: string;
+  /** The charset a complete `prefix: false` name may use, as a regex source. */
+  readonly exactNamePattern: string;
+  readonly reason: string;
+}
+
+/**
+ * Registries whose names are raw engine labels, and which therefore carry two
+ * identity allowances (SDK-183): the minted logical name accepts interior
+ * uppercase, and the capability method takes `prefix: false`, under which the
+ * author spells the complete definition name. The opt-out is only an opt-out of
+ * the *prepend* — the mod prefix must still appear in the name as a
+ * `_`-delimited segment (head, interior, or tail), which is what keeps the name
+ * ownable and collision-free by construction.
+ *
+ * A row here requires a bare `MINT_SHAPE_OVERLAYS` row (no head): an exact name
+ * is the whole id, so a fixed head would contradict it. The emitter enforces
+ * this. `spriteType` is deliberately absent — every sprite reference is a
+ * rule-inferred join the SDK can respell, so nothing forces a sprite name into
+ * a foreign shape.
+ */
+export const EXACT_NAME_MINTS = new Map<string, ExactNameMint>([
+  [
+    "pdxmesh",
+    {
+      namePattern: "^[a-z][A-Za-z0-9_]*$",
+      exactNamePattern: "^[A-Za-z][A-Za-z0-9_]*$",
+      reason:
+        "SDK-183: a mesh name is referenced verbatim from byte-preserved `.asset` files, so the " +
+        "SDK cannot respell it the way it can a rule-inferred join. Vanilla writes 589 mesh names " +
+        "with interior uppercase, and ported entities keep whatever spelling their assets " +
+        "already use — a name the mint cannot spell is a definition the SDK cannot author.",
+    },
+  ],
+  [
+    "pdxparticle",
+    {
+      namePattern: "^[a-z][A-Za-z0-9_]*$",
+      exactNamePattern: "^[A-Za-z][A-Za-z0-9_]*$",
+      reason:
+        "SDK-183: the same verbatim `.asset` reference as pdxmesh, plus a naming convention the " +
+        "prepend fights — vanilla writes 80 size-headed particle names (`small_..._particle`), " +
+        "where the size word must open the name and the owner's mark sits inside it.",
+    },
+  ],
+]);
+
 /**
  * Emitted file stems that are not the last component of the registry's output
  * directory (SDK-121).
