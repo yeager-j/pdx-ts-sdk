@@ -1056,7 +1056,9 @@ function contentDefiners(
                 "prefix — the prefix is still required inside `name` as a `_`-delimited",
                 "segment (head, interior, or tail). The `Name` constraint enforces that at",
                 "compile time and the mint re-checks it at runtime, so the name stays",
-                "ownable and clear of other mods by construction.",
+                "ownable and clear of other mods by construction. The minting capability",
+                "is recorded and placement verifies the record, so a name carrying a",
+                "second mod's prefix as another segment still places only with its minter.",
               ],
               "  "
             ) +
@@ -1067,8 +1069,10 @@ function contentDefiners(
             `  ): ContentItem<${key}, ${name}Def<Name>>;`
         );
         capabilityBindings.push(
-          `    ${method}: ${parameters}(name: Name, def: ${input}, options?: MintNameOptions) =>\n` +
-            `      define${name}({ ...def, id: mint(${JSON.stringify(method)}, name, options) } as ${def}),`
+          `    ${method}: ${parameters}(name: Name, def: ${input}, options?: MintNameOptions) => {\n` +
+            `      const item = define${name}({ ...def, id: mint(${JSON.stringify(method)}, name, options) } as ${def});\n` +
+            `      return options?.prefix === false ? recordExactNameMint(item, mintOwner) : item;\n` +
+            "    },"
         );
       }
       capabilityRuntimeDefiners.add(`define${name}`);
@@ -1349,11 +1353,16 @@ function contentDefiners(
     ]);
   const capabilityImports =
     'import type { ContentItem } from "../content/types.ts";\n' +
+    (shapeMintTypes.length === 0 && exactNameRows.length === 0
+      ? ""
+      : "import {\n" +
+        (exactNameRows.length === 0 ? "" : "  recordExactNameMint,\n") +
+        (shapeMintTypes.length === 0 ? "" : "  recordShapeMint,\n") +
+        "  type MintCapabilityOwner,\n} " +
+        'from "../content/mint-provenance.ts";\n') +
     (shapeMintTypes.length === 0
       ? ""
-      : "import {\n  recordShapeMint,\n  type MintCapabilityOwner,\n} " +
-        'from "../content/mint-provenance.ts";\n' +
-        'import { refId, type TypedRef } from "../script/scalar.ts";\n' +
+      : 'import { refId, type TypedRef } from "../script/scalar.ts";\n' +
         importList("./refs.ts", shapeMintRefTypes)) +
     (capabilityRuntimeDefiners.size === 0
       ? ""
@@ -1564,14 +1573,16 @@ function contentDefiners(
     "  mint: ContentIdMinter<P, I>,\n" +
     "  assertNestedId: NestedDefinitionIdAsserter,\n" +
     "  prefix: P" +
-    // Both only exist to serve shape mints: `assertName` holds a name-derived
-    // mint to the same logical-name rule every mint follows, and `mintOwner` is
-    // the identity a shape mint is recorded against. Emitting them where no row
-    // needs them would leave the generated function with parameters it never
-    // reads.
-    (shapeMintTypes.length === 0
+    // `assertName` only serves shape mints: it holds a name-derived mint to the
+    // same logical-name rule every mint follows. `mintOwner` is the identity a
+    // shape mint or an exact-name mint is recorded against. Emitting either
+    // where no row needs it would leave the generated function with parameters
+    // it never reads.
+    (shapeMintTypes.length === 0 && exactNameRows.length === 0
       ? "\n"
-      : ",\n  assertName: LogicalNameAsserter,\n  mintOwner: MintCapabilityOwner\n") +
+      : shapeMintTypes.length === 0
+        ? ",\n  mintOwner: MintCapabilityOwner\n"
+        : ",\n  assertName: LogicalNameAsserter,\n  mintOwner: MintCapabilityOwner\n") +
     "): ContentCapabilityMethods<P, I> {\n" +
     "  return Object.freeze({\n" +
     capabilityBindings.join("\n") +

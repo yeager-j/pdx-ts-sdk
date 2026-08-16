@@ -36,7 +36,11 @@
 // From: gfx/particles.cwt
 // From: content-manifest.ts
 
-import { recordShapeMint, type MintCapabilityOwner } from "../content/mint-provenance.ts";
+import {
+  recordExactNameMint,
+  recordShapeMint,
+  type MintCapabilityOwner,
+} from "../content/mint-provenance.ts";
 import type { ContentItem } from "../content/types.ts";
 import { refId, type TypedRef } from "../script/scalar.ts";
 import type {
@@ -1037,7 +1041,9 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
    * prefix — the prefix is still required inside `name` as a `_`-delimited
    * segment (head, interior, or tail). The `Name` constraint enforces that at
    * compile time and the mint re-checks it at runtime, so the name stays
-   * ownable and clear of other mods by construction.
+   * ownable and clear of other mods by construction. The minting capability
+   * is recorded and placement verifies the record, so a name carrying a
+   * second mod's prefix as another segment still places only with its minter.
    */
   pdxmesh<const Name extends ExactMintName<P>>(
     name: Name,
@@ -1062,7 +1068,9 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
    * prefix — the prefix is still required inside `name` as a `_`-delimited
    * segment (head, interior, or tail). The `Name` constraint enforces that at
    * compile time and the mint re-checks it at runtime, so the name stays
-   * ownable and clear of other mods by construction.
+   * ownable and clear of other mods by construction. The minting capability
+   * is recorded and placement verifies the record, so a name carrying a
+   * second mod's prefix as another segment still places only with its minter.
    */
   pdxparticle<const Name extends ExactMintName<P>>(
     name: Name,
@@ -1428,17 +1436,22 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
       name: Name,
       def: Omit<PdxmeshDef<MintedIdOf<P, I, "pdxmesh", Name>>, "id">,
       options?: MintNameOptions
-    ) =>
-      definePdxmesh({ ...def, id: mint("pdxmesh", name, options) } as PdxmeshDef<
+    ) => {
+      const item = definePdxmesh({ ...def, id: mint("pdxmesh", name, options) } as PdxmeshDef<
         MintedIdOf<P, I, "pdxmesh", Name>
-      >),
+      >);
+      return options?.prefix === false ? recordExactNameMint(item, mintOwner) : item;
+    },
     pdxparticle: <const Name extends string>(
       name: Name,
       def: Omit<PdxparticleDef<MintedIdOf<P, I, "pdxparticle", Name>>, "id">,
       options?: MintNameOptions
-    ) =>
-      definePdxparticle({ ...def, id: mint("pdxparticle", name, options) } as PdxparticleDef<
-        MintedIdOf<P, I, "pdxparticle", Name>
-      >),
+    ) => {
+      const item = definePdxparticle({
+        ...def,
+        id: mint("pdxparticle", name, options),
+      } as PdxparticleDef<MintedIdOf<P, I, "pdxparticle", Name>>);
+      return options?.prefix === false ? recordExactNameMint(item, mintOwner) : item;
+    },
   }) as ContentCapabilityMethods<P, I>;
 }

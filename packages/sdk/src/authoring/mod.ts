@@ -11,7 +11,7 @@ import {
   eventChainCapabilityMethods,
   type EventChainCapabilityMethods,
 } from "../content/event-chains.ts";
-import { shapeMintOf } from "../content/mint-provenance.ts";
+import { exactNameMintOf, shapeMintOf } from "../content/mint-provenance.ts";
 import { carriesPrefixSegment } from "../content/schema.ts";
 import {
   situationTypeCapabilityMethods,
@@ -370,9 +370,25 @@ function assertCapabilityItem(
         }
         return;
       }
-      // An exact-name registry (SDK-183) proves ownership by segment
-      // containment: its own names may carry the prefix at the head, the
-      // tail, or inside, so `startsWith` would refuse legitimate names.
+      // An exact-name mint (`prefix: false`, SDK-183) recorded its capability
+      // the way a shape mint does, and the record is the ownership evidence:
+      // a name can carry two mods' prefixes as segments, so containment alone
+      // would let either capability claim the item.
+      const exactMint = exactNameMintOf(item);
+      if (exactMint !== undefined) {
+        if (exactMint !== owner) {
+          throw new Error(
+            `The exact-name ${item.type} "${item.id}" was minted by a different capability — ` +
+              `the one for mod prefix "${exactMint.prefix}", not this one for "${prefix}". ` +
+              "Mint it with the same capability that places it."
+          );
+        }
+        return;
+      }
+      // An exact-name registry's own names may carry the prefix at the head,
+      // the tail, or inside, so `startsWith` would refuse legitimate names.
+      // Segment containment is the string evidence for an item that carries
+      // no record — one built outside the capability mint, or a spread copy.
       if (acceptsExactNames(item.type)) {
         if (!carriesPrefixSegment(item.id, prefix)) {
           throw new Error(

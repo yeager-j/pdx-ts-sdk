@@ -58,3 +58,28 @@ export function recordShapeMint<T extends object>(
 export function shapeMintOf(item: object): ShapeMint | undefined {
   return records.get(item);
 }
+
+const exactNameRecords = new WeakMap<object, MintCapabilityOwner>();
+
+/**
+ * Records the capability that minted one exact-name definition (`prefix:
+ * false`, SDK-183), with the same return-the-recorded-item contract as
+ * {@link recordShapeMint}.
+ *
+ * A separate table from the shape mints, deliberately: a shape-mint record
+ * *waives* the fold's string ownership measure (the name may carry no prefix
+ * at all), while an exact name still carries the prefix as a segment and the
+ * fold still measures it. What the string cannot decide is *which* capability
+ * minted the name — a name can carry two mods' prefixes as segments
+ * (`second_mod_first_mod_flash`), and containment would let either claim it —
+ * so placement reads this record and compares owner identity.
+ */
+export function recordExactNameMint<T extends object>(item: T, owner: MintCapabilityOwner): T {
+  exactNameRecords.set(item, owner);
+  return item;
+}
+
+/** The recorded owner for one exact-name item, or `undefined` if it was not exact-minted. */
+export function exactNameMintOf(item: object): MintCapabilityOwner | undefined {
+  return exactNameRecords.get(item);
+}

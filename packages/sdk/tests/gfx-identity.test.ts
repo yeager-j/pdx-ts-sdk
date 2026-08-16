@@ -204,8 +204,9 @@ describe("exact-name identity (SDK-183)", () => {
   });
 
   it("refuses an exact name placed in another capability's feature", () => {
-    // The name is still the ownership evidence: it carries the first mod's
-    // prefix as a segment and not the second's, so placement refuses it.
+    // The recorded mint is the ownership evidence, exactly as for a shape
+    // mint: the record names the minting capability, so placement refuses a
+    // foreign one before any string is measured.
     const first = gfxMod("first_mod");
     const second = gfxMod("second_mod");
     const particle = first.pdxparticle(
@@ -216,6 +217,50 @@ describe("exact-name identity (SDK-183)", () => {
       }
     );
     expect(() => second.feature(undefined, [particle])).toThrow(
+      /exact-name pdxparticle "small_first_mod_flash" was minted by a different capability — the one for mod prefix "first_mod", not this one for "second_mod"/
+    );
+  });
+
+  it("refuses a foreign exact name even when it carries the placing mod's prefix too", () => {
+    // A name can carry two mods' prefixes as segments, so containment alone
+    // would let either capability claim it. The record cannot: it names one
+    // capability, and only that one places the item.
+    const first = gfxMod("first_mod");
+    const second = gfxMod("second_mod");
+    const particle = first.pdxparticle(
+      "second_mod_first_mod_flash",
+      { type: "x_particle" },
+      {
+        prefix: false,
+      }
+    );
+    expect(() => second.feature(undefined, [particle])).toThrow(
+      /exact-name pdxparticle "second_mod_first_mod_flash" was minted by a different capability — the one for mod prefix "first_mod", not this one for "second_mod"/
+    );
+    // The rightful owner still places and compiles the very same item.
+    const pure = first.compile([first.feature(undefined, [particle])]);
+    expect(pure.warnings).toEqual([]);
+    expect(render(pure).get("gfx/particles/first_mod_particles.gfx")).toContain(
+      "name = second_mod_first_mod_flash"
+    );
+  });
+
+  it("measures a record-less copy by its name, like any hand-built item", () => {
+    // Spreading an item makes a new object the module-private table has never
+    // seen, so the string is the only evidence left — the same fallback a
+    // forged shape-mint provenance gets. Containment still refuses a name
+    // with no segment of the placing mod's prefix, and still cannot tell two
+    // prefixes apart, which is exactly why the record exists for real mints.
+    const first = gfxMod("first_mod");
+    const second = gfxMod("second_mod");
+    const particle = first.pdxparticle(
+      "small_first_mod_flash",
+      { type: "x_particle" },
+      {
+        prefix: false,
+      }
+    );
+    expect(() => second.feature(undefined, [{ ...particle }])).toThrow(
       /Content id "small_first_mod_flash" does not belong to mod prefix "second_mod"/
     );
   });
