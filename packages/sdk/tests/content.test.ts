@@ -1098,8 +1098,34 @@ function defineContentExample(): PureMod {
     sameOptionGroupAs: [surveyProject],
   });
 
+  // The three `.gfx` registries. Every other registry in this example writes
+  // `.txt` under `common/`; these carry a `path_extension` and a
+  // `skip_root_key`, so their goldens are what witnesses the layout half of the
+  // descriptor end to end — the extension in the path, the envelope wrapping
+  // the whole file, and the `keyword = { name = <id> ... }` body inside it.
+  const icon = mod.spriteType("council_icon", {
+    textureFile: "gfx/interface/icons/content_test_council.dds",
+    noOfFrames: 2,
+    alwaysTransparent: false,
+    animation: [{ animationtextureFile: "gfx/interface/icons/content_test_pulse.dds" }],
+  });
+  const hull = mod.pdxmesh("station_hull", {
+    file: "gfx/models/content_test/station.mesh",
+    scale: 1.5,
+    meshsettings: [{ name: "hull", index: 0, shader: "PdxMeshShip" }],
+  });
+  const drift = mod.pdxparticle("dust_drift", {
+    // Unchecked on purpose: the ids live in `.asset` files the SDK carries as
+    // opaque Assets, so there is no id set to check this spelling against.
+    type: "content_test_dust_file",
+    scale: 0.75,
+  });
+
   return mod.compile([
     mod.feature(undefined, [
+      icon,
+      hull,
+      drift,
       agenda,
       machineMobilization,
       experimentalLab,
@@ -1152,6 +1178,56 @@ describe("generated content registries", () => {
       );
     });
   }
+
+  it("writes each GFX registry to its declared path, inside its declared envelope", () => {
+    // The layout half of the descriptor, end to end. `.gfx` rather than `.txt`
+    // in the emitted path, one root envelope wrapping the whole file rather
+    // than appearing per definition, and the definition written under the
+    // game's repeated keyword with its id in the `name` field.
+    for (const [path, envelope, keyword] of [
+      ["interface/content_test_interface.gfx", "spriteTypes", "spriteType"],
+      ["gfx/models/content_test_models.gfx", "objectTypes", "pdxmesh"],
+      ["gfx/particles/content_test_particles.gfx", "objectTypes", "pdxparticle"],
+    ] as const) {
+      const rendered = files.get(path);
+      expect(rendered, path).toBeDefined();
+      expect(rendered!.startsWith(`${envelope} = {\n`), path).toBe(true);
+      expect(rendered!.endsWith("}\n"), path).toBe(true);
+      // One envelope for the file, not one per definition.
+      expect(rendered!.split(`${envelope} = {`).length - 1, path).toBe(1);
+      expect(rendered, path).toContain(`\t${keyword} = {\n\t\tname = content_test_`);
+    }
+  });
+
+  it("mints GFX ids through the standard profile, and never lets an author supply one", () => {
+    // The GFX mint shapes (`GFX_${prefix}_${name}`, segmentless mesh and
+    // particle names) are SDK-121's, not this slice's. Until then these ride
+    // the same profile every other registry does, which is what the ids below
+    // spell — `spriteType`'s segment is `sprite_type` because a minted segment
+    // must be lowercase snake_case and its registry name is the game's own
+    // camelCase keyword.
+    expect(files.get("interface/content_test_interface.gfx")).toContain(
+      "name = content_test_sprite_type_council_icon"
+    );
+    expect(files.get("gfx/models/content_test_models.gfx")).toContain(
+      "name = content_test_pdxmesh_station_hull"
+    );
+    expect(files.get("gfx/particles/content_test_particles.gfx")).toContain(
+      "name = content_test_pdxparticle_dust_drift"
+    );
+  });
+
+  it("emits the audited canonical casing, never a spelling the game happens to prefer", () => {
+    // Recognition is case-insensitive over an audited list (`casing.ts`);
+    // emission is not. Vanilla writes `texturefile` 6,141 times against 1,740
+    // `textureFile`, and `animationtexturefile` 575 times against zero
+    // `animationtextureFile` — the SDK writes the rules' spelling regardless.
+    const rendered = files.get("interface/content_test_interface.gfx")!;
+    expect(rendered).toContain("textureFile = ");
+    expect(rendered).not.toContain("texturefile = ");
+    expect(rendered).toContain("animationtextureFile = ");
+    expect(rendered).not.toContain("animationtexturefile = ");
+  });
 
   it("writes country_ship_of_size_limit under its two-segment nested path", () => {
     // country_limits.cwt declares `path = "game/common/country_limits/

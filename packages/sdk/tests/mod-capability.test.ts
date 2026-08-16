@@ -50,6 +50,9 @@ const COMPLETE_PROFILE = {
   eventChain: "event_chain",
   specialProject: "special_project",
   megastructure: "megastructure",
+  spriteType: "sprite_type",
+  pdxmesh: "pdxmesh",
+  pdxparticle: "pdxparticle",
 } as const satisfies IdProfile;
 
 function mod() {

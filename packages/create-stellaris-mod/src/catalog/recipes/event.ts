@@ -90,7 +90,7 @@ const PICTURE_EXAMPLE = "GFX_evt_mysterious_signal";
  * a picture in — so that is the variant the gate renders.
  */
 export const VANILLA_EXAMPLE_IDS = {
-  sprite: [PICTURE_EXAMPLE],
+  spriteType: [PICTURE_EXAMPLE],
 } as const satisfies Readonly<Record<string, readonly string[]>>;
 
 /** What one `event-kind` answer changes about the emitted source. */
@@ -262,7 +262,7 @@ function visibleFields(names: DerivedNames, kind: EventKind): readonly string[] 
     "],",
     "",
     "// The artwork the event window shows. The field takes a vanilla sprite id as",
-    "// a plain string, as given — nothing checks a bare literal. `vanilla.sprite(...)`",
+    "// a plain string, as given — nothing checks a bare literal. `vanilla.spriteType(...)`",
     "// from @pdx-ts/sdk is the checked form, against the real id set when",
     "// @pdx-ts/stellaris-ids is installed.",
     `// picture: ${quoteTs(PICTURE_EXAMPLE)},`,

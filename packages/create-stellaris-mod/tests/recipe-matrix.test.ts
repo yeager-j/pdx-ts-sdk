@@ -625,7 +625,13 @@ describe("the vanilla ids the examples cite", () => {
         `generated source`
     ).toContain(id);
 
-    const registryFile = path.join(ID_REGISTRIES, `${registry}.ts`);
+    // `@pdx-ts/stellaris-ids` names its files in kebab-case, splitting camel
+    // humps as well as underscores: `spriteType` -> `sprite-type.ts`.
+    const stem = registry
+      .replace(/([a-z0-9])([A-Z])/g, "$1-$2")
+      .replaceAll("_", "-")
+      .toLowerCase();
+    const registryFile = path.join(ID_REGISTRIES, `${stem}.ts`);
     expect(
       readFileSync(registryFile, "utf8"),
       `${id} is no longer in packages/stellaris-ids/src/registries/${registry}.ts. That package ` +

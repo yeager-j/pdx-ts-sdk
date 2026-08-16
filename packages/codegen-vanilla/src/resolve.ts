@@ -11,6 +11,7 @@
  * quietly ignores.
  */
 
+import { referenceNameOf, typesReferencedBySubtype } from "@pdx-ts/codegen-cwt/content-reference";
 import { loadContentTypesFrom, loadRules, type ContentType } from "@pdx-ts/codegen-cwt/cwt/rules";
 
 import type { VanillaIdRow } from "./manifest.ts";
@@ -19,6 +20,13 @@ import type { BucketLayout } from "./trie.ts";
 /** Where one registry's definitions live, and how to recognise them. */
 export interface RegistrySpec {
   readonly registry: string;
+  /**
+   * The CWT reference the SDK brands this registry's items with — `sprite` for
+   * `spriteType`, `model_mesh` for `pdxmesh`. Not derivable from the registry
+   * name, and a vanilla id wears the same brand a defined one does, so it comes
+   * from the same `referenceNameOf` the SDK's own emitter uses.
+   */
+  readonly referenceName: string;
   /** Directory under the install root, e.g. `common/technology`. */
   readonly path: string;
   /** File extension the registry's files carry, including the dot. */
@@ -29,6 +37,23 @@ export interface RegistrySpec {
   readonly nameField: string | null;
   /** Root block the definitions sit one level inside, e.g. `spriteTypes`. */
   readonly skipRootKey: string | null;
+  /**
+   * The non-negated type-level `## type_key_filter`: the one key the rules say
+   * every definition of this type is written under.
+   *
+   * Only load-bearing inside a {@link skipRootKey} root block, where it is what
+   * tells this type's definitions from a sibling type's sharing the same
+   * envelope. `type[model_mesh]` declares `= pdxmesh` and `gfx/models/`'s
+   * `objectTypes` blocks also hold `arrowType`; `type[particle]` declares
+   * `= pdxparticle`. `type[sprite]` declares none — its eight subtypes each
+   * carry their own filter instead, so no single key identifies a sprite and
+   * the whole envelope is the reference universe.
+   *
+   * Separate from {@link keyword}, which is the manifest's claim rather than
+   * the rules': the two are cross-checked below, but only the rules' own
+   * statement can say whether one key covers the whole type.
+   */
+  readonly keyFilter: string | null;
   /**
    * A top-level key that is *not* one of this registry's definitions, from a
    * negated `## type_key_filter <> key`.
@@ -73,12 +98,17 @@ export function resolveRegistries(
   const outside = rows.filter((row) => !rules.contentTypes.has(row.type));
   const extraSources = [...new Set(outside.map((row) => row.source))].sort();
   const extra = loadContentTypesFrom(configRoot, extraSources);
+  const subtypeReferencedTypes = typesReferencedBySubtype(rules);
   return rows.map((row) =>
-    resolveRow(row, rules.contentTypes.get(row.type) ?? extra.get(row.type))
+    resolveRow(row, rules.contentTypes.get(row.type) ?? extra.get(row.type), subtypeReferencedTypes)
   );
 }
 
-function resolveRow(row: VanillaIdRow, type: ContentType | undefined): RegistrySpec {
+function resolveRow(
+  row: VanillaIdRow,
+  type: ContentType | undefined,
+  subtypeReferencedTypes: ReadonlySet<string>
+): RegistrySpec {
   if (type === undefined) {
     throw new Error(`${row.source} no longer declares type[${row.type}]`);
   }
@@ -115,11 +145,13 @@ function resolveRow(row: VanillaIdRow, type: ContentType | undefined): RegistryS
   }
   return {
     registry: row.registry,
+    referenceName: referenceNameOf(type, row.as, subtypeReferencedTypes),
     path: path.slice("game/".length),
     extension: type.pathExtension ?? DEFAULT_EXTENSION,
     keyword,
     nameField: type.nameField,
     skipRootKey,
+    keyFilter: type.keyFilter !== null && !type.keyFilter.negated ? type.keyFilter.key : null,
     excludedKey: type.keyFilter?.negated === true ? type.keyFilter.key : null,
     pathStrict: type.pathStrict ?? false,
     bucket: row.bucket ?? "stripped-file",

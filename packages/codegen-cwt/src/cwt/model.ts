@@ -142,6 +142,13 @@ function classifyBracketed(
     case "icon":
       return { kind: "icon", path: argument };
     case "filepath":
+    // `filename[dir]` is CWT's "a path the game resolves relative to `dir`",
+    // against `filepath[dir]`'s "a path under `dir`". Both are one string in
+    // the file and both lower to `string`; the distinction is a lookup rule
+    // for a validator, not a shape. `model_mesh.meshsettings`' four texture
+    // members are the only ones in the vendored rules, and left unknown they
+    // were four fields the mesh registry could not author at all.
+    case "filename":
       return { kind: "filepath", path: argument };
     case "colour":
       return { kind: "colour", format: argument };
@@ -188,6 +195,7 @@ function classifyScalar(text: string, line: number, report?: ClassificationRepor
     case "int_variable_field":
       return { kind: "valueField", integer: true };
     case "filepath":
+    case "filename":
       return { kind: "filepath", path: null };
     // The unbracketed spelling of `scope[any]`: a scope named by any path the
     // game can follow, with nothing said about which scope it lands in. Read

@@ -1,11 +1,13 @@
 /**
  * The layout half of a generated registry descriptor.
  *
- * Measured against synthetic types rather than against the vendored rules: no
- * manifested registry declares `path_extension` or `skip_root_key` today, so
- * the vendored corpus can only witness the `.txt` default, and the two branches
- * that matter for a `.gfx` registry would otherwise go unread until one is
- * manifested.
+ * Measured against synthetic types rather than against the vendored rules.
+ * `spriteType`, `pdxmesh` and `pdxparticle` do declare `path_extension` and
+ * `skip_root_key`, and their end-to-end evidence is in
+ * `packages/sdk/tests/content.test.ts` — but all three declare a single
+ * concrete envelope, so the branches that refuse a descent path (`any`, or
+ * two segments) still have no witness in the vendored rules and would go
+ * unread without one here.
  */
 
 import { contentFileLayout } from "@pdx-ts/codegen-cwt/content-layout";

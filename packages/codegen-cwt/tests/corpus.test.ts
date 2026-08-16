@@ -47,31 +47,38 @@ function corpusOf(
   });
 }
 
-/** The same reader over a whole directory, for the cases where filenames matter. */
+/**
+ * The same reader over a whole directory, for the cases where filenames matter.
+ * A key with a `/` in it is a nested path, created under the registry root.
+ */
 function corpusOfFiles(
   files: Readonly<Record<string, string>>,
   layout: RegistryLayout = {},
   options: {
+    registry?: string;
+    keyword?: string | null;
+    nameField?: string | null;
     descents?: readonly DescentNode[];
     excludedKey?: string | null;
     spliceMembers?: readonly SpliceMember[];
   } = {}
 ) {
   const root = mkdtempSync(path.join(tmpdir(), "pdx-corpus-"));
-  mkdirSync(path.join(root, "common/systems"), { recursive: true });
   for (const [name, contents] of Object.entries(files)) {
-    writeFileSync(path.join(root, "common/systems", name), contents, "utf8");
+    const file = path.join(root, "common/systems", name);
+    mkdirSync(path.dirname(file), { recursive: true });
+    writeFileSync(file, contents, "utf8");
   }
-  return readRegistryCorpus(
-    root,
-    "common/systems",
-    null,
-    null,
-    options.descents ?? [],
-    options.spliceMembers ?? [PLANET],
-    options.excludedKey ?? null,
-    layout
-  );
+  return readRegistryCorpus(root, {
+    registry: options.registry ?? "system",
+    registryPath: "common/systems",
+    keyword: options.keyword ?? null,
+    nameField: options.nameField ?? null,
+    descents: options.descents ?? [],
+    spliceMembers: options.spliceMembers ?? [PLANET],
+    excludedKey: options.excludedKey ?? null,
+    layout,
+  });
 }
 
 describe("scalar observations", () => {
@@ -265,6 +272,140 @@ describe("file layout", () => {
     // Neither the job's own fields nor the container that holds the swaps.
     expect(corpus.occurrences.has("category")).toBe(false);
     expect(corpus.occurrences.has("swappable_data")).toBe(false);
+  });
+});
+
+describe("nested directories", () => {
+  // `interface/` and `gfx/models/` both nest, and both are manifested. A reader
+  // that walked one level flat measured `spriteType` from four of its 131 files
+  // and `pdxmesh` from four of its 301 — a coverage number over a fraction of
+  // the corpus, indistinguishable from a green one.
+  it("counts definitions in nested directories", () => {
+    const corpus = corpusOfFiles(
+      {
+        "top.gfx": "one = { name = a }",
+        "nested/inner.gfx": "two = { name = b }",
+        "nested/deeper/still.gfx": "three = { name = c }",
+      },
+      { extension: ".gfx" }
+    );
+    expect(corpus.files).toBe(3);
+    expect(corpus.definitions).toBe(3);
+    // Entry order is the walk's: each directory's names sorted, descending as
+    // it meets them, so `nested/deeper/still.gfx` precedes `nested/inner.gfx`
+    // and both precede `top.gfx`. Only its stability matters — the capped value
+    // sample keeps whichever scalars arrive first, and the result is committed.
+    expect([...(corpus.occurrences.get("name")?.values ?? [])]).toEqual(["c", "b", "a"]);
+  });
+
+  it("stops at the registry's own directory when the rules declare path_strict", () => {
+    // `common/technology/tier` and `common/technology/category` are two other
+    // CWT types. Descending would measure their bodies as technology fields.
+    const corpus = corpusOfFiles(
+      {
+        "top.txt": "one = { name = a }",
+        "tier/00_tiers.txt": "two = { name = b }",
+      },
+      { pathStrict: true }
+    );
+    expect(corpus.files).toBe(1);
+    expect(corpus.definitions).toBe(1);
+    expect([...(corpus.occurrences.get("name")?.values ?? [])]).toEqual(["a"]);
+  });
+});
+
+describe("audited key casing", () => {
+  // Enforced only for the registries `casing.ts` gives a table, which today is
+  // the three `.gfx` ones — every `common/` registry is read exactly as written.
+  const SPRITE_LAYOUT: RegistryLayout = { extension: ".gfx", skipRootKeys: ["spriteTypes"] };
+  const spriteCorpus = (files: Readonly<Record<string, string>>) =>
+    corpusOfFiles(files, SPRITE_LAYOUT, {
+      registry: "spriteType",
+      keyword: "spriteType",
+      nameField: "name",
+      spliceMembers: [],
+    });
+
+  it("merges an audited field-key variant into the canonical observation", () => {
+    // 6,141 `texturefile` against 1,740 `textureFile` in the shipped files.
+    // Read apart they are two half-counted fields, one of which the emitted
+    // interface cannot express.
+    const corpus = spriteCorpus({
+      "a.gfx": "spriteTypes = { spriteType = { name = a texturefile = one.dds } }",
+      "b.gfx": "spriteTypes = { spriteType = { name = b textureFile = two.dds } }",
+    });
+    expect(corpus.definitions).toBe(2);
+    expect(corpus.occurrences.get("textureFile")?.definitions).toBe(2);
+    expect(corpus.occurrences.has("texturefile")).toBe(false);
+  });
+
+  it("merges an audited keyword variant, so the definitions are counted", () => {
+    // 77 of vanilla's sprites are written `SpriteType`.
+    const corpus = spriteCorpus({
+      "a.gfx": "spriteTypes = { SpriteType = { name = a } spriteType = { name = b } }",
+    });
+    expect(corpus.definitions).toBe(2);
+  });
+
+  it("folds a variant written inside a descended block", () => {
+    // `animationtexturefile` is written 575 times and the rules' own
+    // `animationtextureFile` zero times, one level inside `animation`.
+    const corpus = corpusOfFiles(
+      {
+        "a.gfx":
+          "spriteTypes = { spriteType = { name = a " +
+          "animation = { animationtexturefile = one.dds } } }",
+      },
+      SPRITE_LAYOUT,
+      {
+        registry: "spriteType",
+        keyword: "spriteType",
+        nameField: "name",
+        spliceMembers: [],
+        descents: [{ field: "animation", mode: "struct", children: [] }],
+      }
+    );
+    expect(corpus.occurrences.get("animation.animationtextureFile")?.definitions).toBe(1);
+    expect(corpus.occurrences.has("animation.animationtexturefile")).toBe(false);
+  });
+
+  it("throws on a near-miss nobody audited, naming the registry, file, and key", () => {
+    expect(() =>
+      spriteCorpus({
+        "a.gfx": "spriteTypes = { spriteType = { name = a textureFile = one.dds } }",
+        "b.gfx": "spriteTypes = { spriteType = { name = b TEXTUREFILE = two.dds } }",
+      })
+    ).toThrow(/spriteType: b\.gfx writes "TEXTUREFILE".*"textureFile"/s);
+  });
+
+  it("throws on a near-miss of a key that is only in the corpus, not in the table", () => {
+    // `noOfFrames` is not an audited entry — the game writes it one way. A
+    // second spelling of it is still a near-miss and still has to be reviewed.
+    expect(() =>
+      spriteCorpus({
+        "a.gfx": "spriteTypes = { spriteType = { name = a noOfFrames = 2 } }",
+        "b.gfx": "spriteTypes = { spriteType = { name = b noofframes = 3 } }",
+      })
+    ).toThrow(/spriteType: b\.gfx writes "noofframes"/);
+  });
+
+  it("leaves an unrelated key of a sibling type in the same directory alone", () => {
+    // `interface/` also holds `bitmapfonts` blocks. A casing decision about
+    // another type's keys is not this registry's to make or to fail on.
+    const corpus = spriteCorpus({
+      "a.gfx": "spriteTypes = { spriteType = { name = a } } bitmapfonts = { x = { name = f } }",
+      "b.gfx": "BitmapFonts = { x = { name = g } }",
+    });
+    expect(corpus.definitions).toBe(1);
+  });
+
+  it("reads a registry with no casing table exactly as written", () => {
+    const corpus = corpusOfFiles({
+      "a.txt": "one = { textureFile = x }",
+      "b.txt": "two = { texturefile = y }",
+    });
+    expect(corpus.occurrences.get("textureFile")?.definitions).toBe(1);
+    expect(corpus.occurrences.get("texturefile")?.definitions).toBe(1);
   });
 });
 

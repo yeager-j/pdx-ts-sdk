@@ -1,0 +1,22 @@
+# Fixture particles. Same layout and same recognition rule as the meshes:
+# `type[particle]` declares `## type_key_filter = pdxparticle`, so a sibling
+# under any other key inside `objectTypes` is not one of its definitions.
+
+objectTypes = {
+
+	pdxparticle = {
+		name = "fake_dust_particle"
+		type = "fake_dust_file"
+		scale = 1.0
+	}
+
+	pdxparticle = {
+		name = "fake_spark_particle"
+		type = "fake_spark_file"
+		scale = 0.5
+	}
+
+	someOtherType = {
+		name = "fake_not_a_particle"
+	}
+}

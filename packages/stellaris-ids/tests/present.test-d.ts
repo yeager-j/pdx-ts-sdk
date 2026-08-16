@@ -148,11 +148,11 @@ describe("vanilla events", () => {
 
 describe("oversized registries: the checked call form", () => {
   it("accepts a real sprite id and rejects a typo", () => {
-    const sprite = vanilla.sprite("GFX_evt_ship_in_orbit");
+    const sprite = vanilla.spriteType("GFX_evt_ship_in_orbit");
     expectTypeOf(sprite.id).toEqualTypeOf<"GFX_evt_ship_in_orbit">();
     expectTypeOf(sprite).toExtend<SpriteRef>();
     // @ts-expect-error `CheckedVanillaId` resolves to `InvalidVanillaId<"sprite", ...>`.
-    vanilla.sprite("GFX_evt_ship_in_orbti");
+    vanilla.spriteType("GFX_evt_ship_in_orbti");
   });
 });
 
@@ -162,13 +162,13 @@ describe("oversized registries: trie navigation", () => {
     // is the file and no part of the id, so the leaf key is the whole id —
     // there is no `GFX`/`evt`/`ship` ladder, because a shared prefix is not a
     // category.
-    const leaf = vanilla.sprite.eventpictures.GFX_evt_ship_in_orbit;
+    const leaf = vanilla.spriteType.eventpictures.GFX_evt_ship_in_orbit;
     expectTypeOf(leaf.id).toEqualTypeOf<"GFX_evt_ship_in_orbit">();
     expectTypeOf(leaf).toExtend<SpriteRef>();
   });
 
   it("includes sprites recovered from nested operator-less entries", () => {
-    const leaf = vanilla.sprite.dlc_icons.GFX_checkmark_icon;
+    const leaf = vanilla.spriteType.dlc_icons.GFX_checkmark_icon;
     expectTypeOf(leaf.id).toEqualTypeOf<"GFX_checkmark_icon">();
     expectTypeOf(leaf).toExtend<SpriteRef>();
   });
@@ -177,12 +177,12 @@ describe("oversized registries: trie navigation", () => {
     // `eventpictures` is a filename, not a sprite. Only the types decide what
     // is a leaf — the runtime proxy would happily hand back a `.id` here.
     // @ts-expect-error
-    vanilla.sprite.eventpictures.id;
+    vanilla.spriteType.eventpictures.id;
   });
 
   it("rejects an id that file does not define", () => {
     // @ts-expect-error
-    vanilla.sprite.eventpictures.GFX_evt_ship_in_orbti;
+    vanilla.spriteType.eventpictures.GFX_evt_ship_in_orbti;
   });
 
   it("navigates a sound by every directory level of its source path", () => {
@@ -399,7 +399,8 @@ describe("the two sides' oversized thresholds agree", () => {
       | "static_modifier"
       | "sound"
       | "sound_effect"
-      | "sprite"
+      | "spriteType"
+      | "pdxmesh"
       | "deposit"
       | "anomaly_category"
     >();

@@ -46,8 +46,13 @@ import {
   type JobRef,
   type MegastructureFields,
   type MegastructurePatch,
+  type ModelAnimation,
+  type ModelMeshRef,
   type ModifierClosure,
   type OpinionModifierRef,
+  type ParticleRef,
+  type PdxmeshFields,
+  type PdxparticleFields,
   type PrereqForCategory,
   type ScopeName,
   type ScopeRef,
@@ -57,6 +62,7 @@ import {
   type SituationStageFields,
   type SituationTypeFields,
   type SpecialProjectRef,
+  type SpriteRef,
   type StrikeCraftComponentTemplateFields,
   type TechnologyFields,
   type TechnologyPatch,
@@ -631,6 +637,55 @@ describe("generated content authoring types", () => {
       shipSize: "ship_size_corvette",
       growthStages: [{ shipSize: "ship_size_corvette", requiredComponent: [util] }],
     });
+  });
+
+  it("brands an authored sprite as the reference every <sprite> field asks for", () => {
+    // `type[sprite]` declares eight subtypes and the rules never spell one in a
+    // reference, so a defined sprite is a `SpriteRef` outright — the opposite
+    // disposition to component_template above, and decided by the rules rather
+    // than by the presence of the `as` narrowing. Without it an authored sprite
+    // could not reach `event.picture` or any other `<sprite>` field.
+    const icon = contentMod.spriteType("icon", { textureFile: "gfx/x.dds" });
+    expectTypeOf(icon.id).toEqualTypeOf<"content_types_sprite_type_icon">();
+    const asSprite: SpriteRef = icon;
+    void asSprite;
+    // A vanilla id is the same kind of thing, so it wears the same brand.
+    const fromVanilla: SpriteRef = vanilla.spriteType("GFX_evt_ship_in_orbit");
+    void fromVanilla;
+    // And it flows into a real `<sprite>` field of another registry.
+    contentMod.spriteType("child", { parent: icon });
+  });
+
+  it("keeps the three GFX registries' items apart from each other", () => {
+    const icon = contentMod.spriteType("icon", { textureFile: "gfx/x.dds" });
+    const mesh = contentMod.pdxmesh("hull", { file: "gfx/models/x.mesh" });
+    const particle = contentMod.pdxparticle("dust", { type: "dust_file" });
+    expectTypeOf(mesh.id).toEqualTypeOf<"content_types_pdxmesh_hull">();
+    expectTypeOf(particle.id).toEqualTypeOf<"content_types_pdxparticle_dust">();
+
+    // @ts-expect-error — a mesh is not a sprite, whatever `<sprite>` asks for
+    const meshAsSprite: SpriteRef = mesh;
+    void meshAsSprite;
+    // @ts-expect-error — nor is a particle
+    const particleAsSprite: SpriteRef = particle;
+    void particleAsSprite;
+    // @ts-expect-error — and a sprite is not a mesh
+    const spriteAsMesh: ModelMeshRef = icon;
+    void spriteAsMesh;
+    const meshRef: ModelMeshRef = mesh;
+    const particleRef: ParticleRef = particle;
+    void meshRef;
+    void particleRef;
+  });
+
+  it("types pdxparticle.type as a plain string, with no reference to brand it", () => {
+    // `<particle_type>` names definitions in `.asset` files the SDK carries as
+    // opaque Assets. There is no registry, so `ParticleTypeRef` is a brand
+    // nothing can mint — the member is `string` and says so.
+    expectTypeOf<PdxparticleFields["type"]>().toEqualTypeOf<string>();
+    expectTypeOf<PdxmeshFields["animation"]>().toEqualTypeOf<
+      { id: ModelAnimation | string; type: string }[] | undefined
+    >();
   });
 
   it("authors component template resources/modifier, SMALL_SHIELD_1's missing fields (componentTemplateResources)", () => {

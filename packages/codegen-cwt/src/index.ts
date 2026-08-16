@@ -13,9 +13,11 @@ import { format, resolveConfig } from "prettier";
 import { contentFileLayout } from "./content-layout.ts";
 import {
   CONTENT_MANIFEST,
+  registryNameOf,
   VANILLA_REF_EXTRAS,
   type ContentManifestEntry,
 } from "./content-manifest.ts";
+import { referenceNameOf, typesReferencedBySubtype } from "./content-reference.ts";
 import { emitContentShapeProtocol } from "./content-shape.ts";
 import { deriveContentSwapIdentities, emitContentSwapProtocol } from "./content-swap-policy.ts";
 import { loadRules, scopeIndex, type ContentType } from "./cwt/rules.ts";
@@ -25,7 +27,7 @@ import { emitAliasStruct } from "./emit/alias-struct.ts";
 import { emitContentType, type ContentEmission } from "./emit/content-type.ts";
 import { emitEffects } from "./emit/effects.ts";
 import { emitEvents } from "./emit/events.ts";
-import { structuralSpliceOf } from "./emit/fields.ts";
+import { constantCase, structuralSpliceOf } from "./emit/fields.ts";
 import { classifyLinks, emitScopeLinkNavigation, emitScopeLinks } from "./emit/links.ts";
 import { emitModifiers, joinModifierScopes } from "./emit/modifiers.ts";
 import { emitOnActions } from "./emit/on-actions.ts";
@@ -47,7 +49,14 @@ import { parseScopeLinks } from "./logs/scopes.ts";
 import { parseTriggerDocs } from "./logs/trigger-docs.ts";
 import { lowerRuleTable } from "./lowered-rule.ts";
 import { createModifierOperationPolicy, emitModifierOperationProtocol } from "./modifier-policy.ts";
-import { camelCase, docComment, indefiniteArticle, referencesIdentifier } from "./naming.ts";
+import {
+  camelCase,
+  docComment,
+  indefiniteArticle,
+  kebabCase,
+  referencesIdentifier,
+  spokenName,
+} from "./naming.ts";
 import {
   CONTENT_CONTRIBUTION_SINKS,
   CONTENT_FIELD_OVERRIDES,
@@ -221,6 +230,8 @@ async function main(): Promise<void> {
     emission: ContentEmission;
     usage: ReturnType<Emitter["endFile"]>;
   }> = [];
+  const registryNames = new Set<string>();
+  const subtypeReferencedTypes = typesReferencedBySubtype(rules);
   for (const manifest of CONTENT_MANIFEST) {
     const type = rules.contentTypes.get(manifest.type);
     const body = rules.bodies.get(manifest.type);
@@ -228,7 +239,8 @@ async function main(): Promise<void> {
       throw new Error(`${manifest.source} no longer declares type[${manifest.type}] and its body`);
     }
     const entry: ContentManifestEntry = manifest;
-    const registry = entry.as ?? entry.type;
+    const registry = registryNameOf(entry);
+    assertRegistryName(entry, registry, registryNames);
     const keyword = entry.keyword;
     // A keyword the rules do declare must match what the manifest claims;
     // silence here would emit a top-level key the game quietly ignores.
@@ -241,26 +253,20 @@ async function main(): Promise<void> {
           "entry needs the keyword its entries are written under"
       );
     }
-    // A negated filter says which key the entries are *not* written under, so
-    // it constrains nothing about the keyword and cannot contradict it.
-    if (
-      type.keyFilter !== null &&
-      !type.keyFilter.negated &&
-      keyword !== undefined &&
-      keyword !== type.keyFilter.key
-    ) {
+    const filter = effectiveKeyFilter(type, entry.as);
+    if (filter !== null && keyword !== undefined && keyword !== filter.key) {
       throw new Error(
-        `type[${manifest.type}] declares ## type_key_filter = ${type.keyFilter.key} but the ` +
+        `${filter.source} declares ## type_key_filter = ${filter.key} but the ` +
           `manifest claims keyword ${keyword}`
       );
     }
     emitter.beginFile();
-    const emission = emitContentType(emitter, type, body, registry);
+    const emission = emitContentType(emitter, type, body, registry, entry.as);
     const usage = emitter.endFile();
     contents.push({
       manifest,
       registry,
-      referenceName: referenceNameOf(entry, type),
+      referenceName: referenceNameOf(type, entry.as, subtypeReferencedTypes),
       keyword,
       type,
       emission,
@@ -346,7 +352,7 @@ async function main(): Promise<void> {
   }
 
   // Registers every ref this namespace names (including the ref-only extras —
-  // sound, sound_effect, sprite, resource) with `emitter.usedRefs` before
+  // sound, sound_effect, resource) with `emitter.usedRefs` before
   // `refs.ts` is written below, so their `XRef` aliases survive even if
   // nothing else in the rules happens to reference them.
   const vanillaRefs = emitVanillaRefs(
@@ -497,7 +503,7 @@ async function main(): Promise<void> {
       referencesIdentifier(content.emission.code, name)
     );
     await write(
-      `${content.registry.replaceAll("_", "-")}.ts`,
+      `${kebabCase(content.registry)}.ts`,
       header(commit, [content.manifest.source]) +
         importList("../content/schema.ts", schemaTypes) +
         importList("../content/authoring.ts", authoringTypes) +
@@ -829,7 +835,7 @@ function contentDefiners(
     const { registry, emission } = content;
     const name = emission.typeName;
     const key = JSON.stringify(registry);
-    const spoken = registry.replaceAll("_", " ");
+    const spoken = spokenName(registry);
     const article = indefiniteArticle(spoken);
     const graft = HAND_WRITTEN_CONTENT_DEFINERS.get(registry);
     const patchable = CONTENT_PATCH_REGISTRIES.get(registry);
@@ -840,7 +846,7 @@ function contentDefiners(
       .filter((field) => field.shape === "repeatedStruct")
       .map((field) => camelCase(field.field))
       .sort();
-    const nestedDefinitionTable = `${registry.toUpperCase()}_NESTED_DEFINITION_MEMBERS`;
+    const nestedDefinitionTable = `${constantCase(emission.typeName)}_NESTED_DEFINITION_MEMBERS`;
     if (nestedDefinitionMembers.length > 0 && graft === undefined) {
       nestedDefinitionTables.push(
         `const ${nestedDefinitionTable} = ${JSON.stringify(nestedDefinitionMembers)} as const;\n`
@@ -1182,7 +1188,7 @@ function contentDefiners(
       .join("") +
     contents
       .map((content) => {
-        const from = `./${content.registry.replaceAll("_", "-")}.ts`;
+        const from = `./${kebabCase(content.registry)}.ts`;
         const types = [
           `${content.emission.typeName}Def`,
           // A scope-parameterised definer constrains S by the registry's own
@@ -1237,7 +1243,7 @@ function contentDefiners(
       .join("") +
     contents
       .map((content) =>
-        importList(`./${content.registry.replaceAll("_", "-")}.ts`, [
+        importList(`./${kebabCase(content.registry)}.ts`, [
           `${content.emission.typeName}Def`,
           ...(content.emission.scopeParameter?.selector === undefined
             ? []
@@ -1375,34 +1381,74 @@ function capabilityBinding(
   );
 }
 
+const REGISTRY_NAME = /^[A-Za-z][A-Za-z0-9_]*$/;
+
 /**
- * The CWT reference a registry's definitions satisfy — what a field holding
- * `<component_template>` is actually asking for.
+ * Checks one row's resolved registry name before anything derives from it.
  *
- * The registry name answers this for every registry that is a whole CWT type.
- * An `as` rename is not: three registries share `type[component_template]`,
- * one per subtype, and the rules refer to them as
- * `<component_template.utility_component_template>`. Branding those with the
- * SDK's own registry name left a defined component template unable to reach
- * any field that references one — the name it carried was not a name the rules
- * have.
- *
- * `as` therefore has to be the subtype's own name, and codegen says so rather
- * than inventing a reference the rules would not recognise.
+ * The name reaches an exported symbol, a capability method, a generated file
+ * stem and a fixture stem, so a name that is not an identifier stem fails the
+ * build somewhere far from the row that caused it. A `name` that merely
+ * restates what `as ?? type` already yields is dead weight that would drift,
+ * and two rows resolving to one name would silently overwrite each other's
+ * generated file.
  */
-function referenceNameOf(entry: ContentManifestEntry, type: ContentType): string {
-  if (entry.as === undefined) {
-    return type.name;
-  }
-  const subtype = type.subtypes.find((candidate) => candidate.name === entry.as);
-  if (subtype === undefined) {
-    const declared = type.subtypes.map((candidate) => candidate.name).join(", ");
+function assertRegistryName(
+  entry: ContentManifestEntry,
+  registry: string,
+  seen: Set<string>
+): void {
+  if (!REGISTRY_NAME.test(registry)) {
     throw new Error(
-      `The manifest renames type[${type.name}] to "${entry.as}", but that names no subtype ` +
-        `of it, so the rules have no reference for the registry. Declared subtypes: ${declared}`
+      `The manifest resolves type[${entry.type}] to registry name "${registry}", which is not ` +
+        "a legal identifier stem"
     );
   }
-  return `${type.name}.${subtype.name}`;
+  if (entry.name !== undefined && entry.name === (entry.as ?? entry.type)) {
+    throw new Error(
+      `The manifest's name "${entry.name}" for type[${entry.type}] is what the row already ` +
+        "resolves to, so the rename says nothing — drop it"
+    );
+  }
+  if (seen.has(registry)) {
+    throw new Error(
+      `Two manifest rows resolve to the registry name "${registry}", so they would generate ` +
+        "over each other"
+    );
+  }
+  seen.add(registry);
+}
+
+/**
+ * The `## type_key_filter` that constrains one manifest row's keyword.
+ *
+ * A type-level filter constrains every row reading that type. Where the type
+ * declares none, an `as` row is one subtype of it, and it is that subtype's own
+ * filter that says which key its definitions are written under — which is what
+ * lets the three `component_template` keywords and `sprite`'s `spriteType` be
+ * checked rather than trusted.
+ *
+ * A negated filter (`<> random_list`) names a key the entries are *not*
+ * written under, so it constrains nothing about the keyword and is dropped
+ * here rather than compared against.
+ */
+function effectiveKeyFilter(
+  type: ContentType,
+  as: string | undefined
+): { readonly key: string; readonly source: string } | null {
+  if (type.keyFilter !== null) {
+    return type.keyFilter.negated
+      ? null
+      : { key: type.keyFilter.key, source: `type[${type.name}]` };
+  }
+  if (as === undefined) {
+    return null;
+  }
+  const subtype = type.subtypes.find((candidate) => candidate.name === as);
+  if (subtype?.keyFilter == null || subtype.keyFilter.negated) {
+    return null;
+  }
+  return { key: subtype.keyFilter.key, source: `type[${type.name}] subtype[${as}]` };
 }
 
 function contentRegistry(
@@ -1417,7 +1463,7 @@ function contentRegistry(
 ): string {
   const imports = contents
     .map((content) => {
-      const file = `./${content.registry.replaceAll("_", "-")}.ts`;
+      const file = `./${kebabCase(content.registry)}.ts`;
       const values = [content.emission.fieldsConstant, content.emission.localisationConstant];
       return `import { ${values.join(", ")} } from ${JSON.stringify(file)};\n`;
     })

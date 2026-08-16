@@ -1,11 +1,11 @@
 /**
  * The two places the fold reads a registry's declared file layout.
  *
- * Both are unit-measured because no manifested registry declares a layout other
- * than the default yet: the first registry whose files are `.gfx` and whose
- * definitions sit inside a root block arrives with its own end-to-end evidence,
- * and until then these are the only witnesses that the descriptor's layout
- * reaches the emitted path and the emitted entries at all.
+ * Unit-measured here, and end-to-end in `content.test.ts` since `spriteType`,
+ * `pdxmesh` and `pdxparticle` became real `.gfx` registries with a root
+ * envelope. Both levels are worth keeping: these two witness the descriptor's
+ * layout reaching the emitted path and the emitted entries for any registry,
+ * including the extensions and envelopes no manifested registry declares.
  */
 
 import { describe, expect, it } from "vitest";

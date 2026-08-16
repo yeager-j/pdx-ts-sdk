@@ -54,7 +54,15 @@ export interface AliasDecl {
 export interface ContentSubtype {
   readonly name: string;
   readonly group: string | null;
-  readonly keyFilter: string | null;
+  /**
+   * `## type_key_filter`, keeping which way round it was written — the same
+   * shape {@link ContentType.keyFilter} carries, and for the same reason.
+   * `asset_selectors.cwt` writes `## type_key_filter <> room_selector` on
+   * `subtype[asset]`, so a reader that dropped the negation would take
+   * `room_selector` for the key that subtype's definitions *are* written under,
+   * when it is the one key they are not.
+   */
+  readonly keyFilter: { readonly key: string; readonly negated: boolean } | null;
   readonly pushScope: string | null;
   readonly displayName: string | null;
   /**
@@ -712,11 +720,15 @@ function readContentTypes(nodes: readonly CwtNode[], into: Map<string, ContentTy
             const option = findOption(node.options, name);
             return option?.value?.kind === "scalar" ? option.value.text : null;
           };
+          const subtypeKeyFilter = findOption(node.options, "type_key_filter");
           return [
             {
               name: subtype[2]!,
               group: scalarOption("group"),
-              keyFilter: scalarOption("type_key_filter"),
+              keyFilter:
+                subtypeKeyFilter?.value?.kind === "scalar"
+                  ? { key: subtypeKeyFilter.value.text, negated: subtypeKeyFilter.negated }
+                  : null,
               pushScope: scopeOf(node.options)?.this ?? null,
               displayName: scalarOption("display_name"),
               absentUnless: absentUnlessOf(node),

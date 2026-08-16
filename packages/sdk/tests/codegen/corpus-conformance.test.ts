@@ -39,6 +39,7 @@
  * game must notice.
  */
 
+import { OBSERVED_CASINGS } from "@pdx-ts/codegen-cwt/casing";
 import {
   conformance,
   shapeConformance,
@@ -264,6 +265,26 @@ describe("corpus conformance", () => {
     // keyword is wrong, and every other number here would be vacuous.
     const empty = reports.filter((report) => report.corpus.definitions === 0);
     expect(empty.map((report) => report.registry)).toEqual([]);
+  });
+
+  it("leaves no two field keys of a casing-enforced registry differing only by case", () => {
+    // The hermetic half of `casing.ts`. The extractor throws on an unaudited
+    // near-miss, but the extractor is install-gated: this reads the committed
+    // fixture instead, so a fold that stopped working — or a variant somebody
+    // added to the table but pointed at the wrong canonical — shows up in CI as
+    // two half-counted fields rather than as nothing at all.
+    const collisions = [...OBSERVED_CASINGS.keys()].flatMap((registry) => {
+      const fixture = loadRegistryFixture(registry);
+      const byLower = new Map<string, string[]>();
+      for (const field of Object.keys(fixture?.fields ?? {})) {
+        const lower = field.toLowerCase();
+        byLower.set(lower, [...(byLower.get(lower) ?? []), field]);
+      }
+      return [...byLower.values()]
+        .filter((spellings) => spellings.length > 1)
+        .map((spellings) => `${registry}: ${spellings.join(", ")}`);
+    });
+    expect(collisions).toEqual([]);
   });
 
   it("reports emitted fields the corpus never writes", () => {

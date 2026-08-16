@@ -435,8 +435,10 @@ function repeatedStructEmission(
     }
     const optional = memberOptional(group, REPEATED_STRUCT_FIELD_OVERRIDES.get(fieldPath));
     members.push(
-      docComment([...new Set(group.flatMap((field) => field.docs))], "  ") +
-        `  ${camelCase(name)}${optional ? "?" : ""}: ${lowering.memberType};\n`
+      docComment(
+        [...new Set([...group.flatMap((field) => field.docs), ...(lowering.docs ?? [])])],
+        "  "
+      ) + `  ${camelCase(name)}${optional ? "?" : ""}: ${lowering.memberType};\n`
     );
     fieldMetadata.push(lowering.metadata);
     if (lowering.code !== undefined) {
@@ -797,24 +799,24 @@ function patchTypes(
  * The body fields belonging to a registry that is one subtype of a shared CWT
  * type, rather than a whole type of its own.
  *
- * Mirrors `referenceNameOf`'s guard in `index.ts`: an `as` rename that names no
- * subtype has no rules behind it, and emitting the whole shared body under that
- * name would silently hand the registry every other subtype's fields.
+ * Mirrors `referenceNameOf`'s guard in `index.ts`: a manifest `as` that names
+ * no subtype has no rules behind it, and emitting the whole shared body under
+ * that name would silently hand the registry every other subtype's fields.
  */
 function registryFields(
   cwtType: ContentType,
-  registry: string,
+  subtype: string | undefined,
   fields: readonly RuleField[]
 ): readonly RuleField[] {
-  if (registry === cwtType.name) {
+  if (subtype === undefined) {
     return fields;
   }
-  const self = cwtType.subtypes.find((candidate) => candidate.name === registry);
+  const self = cwtType.subtypes.find((candidate) => candidate.name === subtype);
   if (self === undefined) {
     const declared = cwtType.subtypes.map((candidate) => candidate.name).join(", ");
     throw new Error(
-      `The manifest renames type[${cwtType.name}] to "${registry}", but that names no subtype ` +
-        "of it, so there is no subtype whose fields the registry could be cut down to. " +
+      `The manifest narrows type[${cwtType.name}] to subtype "${subtype}", but that names no ` +
+        "subtype of it, so there is no subtype whose fields the registry could be cut down to. " +
         `Declared subtypes: ${declared}`
     );
   }
@@ -825,15 +827,24 @@ export function emitContentType(
   emitter: Emitter,
   cwtType: ContentType,
   body: ContentBody,
-  registry: string = cwtType.name
+  registry: string = cwtType.name,
+  /**
+   * The CWT subtype this registry is, when it is one — the manifest's `as`.
+   *
+   * Deliberately not the registry name. The two coincided while every renamed
+   * registry was named after its subtype, but `spriteType` is `subtype[normal]`
+   * of `type[sprite]`, and reading the selector off the name would look for a
+   * `subtype[spriteType]` that does not exist.
+   */
+  subtype?: string
 ): ContentEmission {
   // One CWT type can back several registries — three keywords share
   // `type[component_template]`. Renaming once here makes every downstream
   // name, allowlist key, and overlay path follow the registry instead, and
-  // partitioning here makes the body follow it too: the shared body carries
-  // every subtype's arm, and only this registry's are its own.
+  // partitioning by the subtype makes the body follow it too: the shared body
+  // carries every subtype's arm, and only this registry's are its own.
   const type: ContentType = registry === cwtType.name ? cwtType : { ...cwtType, name: registry };
-  const fields = registryFields(cwtType, registry, body.fields);
+  const fields = registryFields(cwtType, subtype, body.fields);
   const grouped = mergeByName(fields, type.name);
   // CWT lists the name field among the body's fields, but the writer emits it
   // from the definition's id. Dropping it here keeps it out of the authoring
@@ -1085,7 +1096,10 @@ export function emitContentType(
       continue;
     }
     const optional = memberOptional(group, override);
-    const docs = docComment([...new Set(group.flatMap((field) => field.docs))], "  ");
+    const docs = docComment(
+      [...new Set([...group.flatMap((field) => field.docs), ...(lowered.docs ?? [])])],
+      "  "
+    );
     const memberType =
       parameter?.selector?.member === member ? parameter.parameterName : lowered.memberType;
     members.push(`${docs}  ${member}${optional ? "?" : ""}: ${memberType};\n`);
@@ -1124,8 +1138,12 @@ export function emitContentType(
   const typeName = pascalCase(type.name);
   const fieldsName =
     parameter?.selector === undefined ? `${typeName}Fields` : `${typeName}FieldsBase`;
-  const fieldsConstant = `${type.name.toUpperCase()}_FIELDS`;
-  const localisationConstant = `${type.name.toUpperCase()}_LOCALISATION`;
+  // Off the emitted type name rather than the registry, so a camelCase registry
+  // name splits at its humps the way every nested constant in the same file
+  // already does — `SPRITE_TYPE_FIELDS` beside `SPRITE_TYPE_ANIMATION_FIELDS`,
+  // not `SPRITETYPE_FIELDS`. Identical for every snake_case registry.
+  const fieldsConstant = `${constantCase(typeName)}_FIELDS`;
+  const localisationConstant = `${constantCase(typeName)}_LOCALISATION`;
   // A parameterised registry carries S on both interfaces and one extra
   // authoring member. `Defined${typeName}` deliberately does NOT take it: the
   // item a definer returns is a reference brand, and `Trigger<S>` is
