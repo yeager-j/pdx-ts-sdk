@@ -9,6 +9,8 @@
 
 import { describe, expect, it } from "vitest";
 
+import { createFeature } from "../src/authoring/feature.ts";
+import { buildMod } from "../src/compiler/compile.ts";
 import { always, createMod, render } from "../src/index.ts";
 
 function gfxMod<const P extends string>(prefix: P) {
@@ -219,14 +221,52 @@ describe("shape mints", () => {
   });
 
   it("refuses a shape mint placed in another capability's feature", () => {
-    // The provenance is what makes this checkable: the name says nothing about
-    // which mod minted it, so without the record the item would place anywhere.
+    // The recorded mint is what makes this checkable: the name says nothing
+    // about which mod minted it, so without the record the item would place
+    // anywhere.
     const first = gfxMod("first_mod");
     const second = gfxMod("second_mod");
     const icon = first.spriteTextIcon("council", { textureFile: "gfx/a.dds" });
     expect(() => second.feature(undefined, [icon])).toThrow(
-      /spriteTextIcon sprite "GFX_text_first_mod_council" was minted by the capability for mod prefix "first_mod", not "second_mod"/
+      /spriteTextIcon sprite "GFX_text_first_mod_council" was minted by a different capability — the one for mod prefix "first_mod", not this one for "second_mod"/
     );
+  });
+
+  it("refuses a hand-forged mint provenance", () => {
+    // `ContentItem.minted` is a public object, so an author can attach one to
+    // anything. It is informational, never the proof: the ownership record
+    // lives in a table only the mint itself writes to, so a forged property
+    // buys nothing and the foreign name is measured the ordinary way.
+    const first = gfxMod("first_mod");
+    const second = gfxMod("second_mod");
+    const foreign = first.spriteType("council", { textureFile: "gfx/a.dds" });
+    const forged = { ...foreign, minted: { prefix: "second_mod", shape: "spriteTextIcon" } };
+    expect(() => second.feature(undefined, [forged])).toThrow(
+      /Content id "GFX_first_mod_council" does not belong to mod prefix "second_mod"/
+    );
+  });
+
+  it("refuses a forged provenance reaching the fold directly", () => {
+    // `mod.feature` is not the only door: `buildMod` can be reached without a
+    // capability at all, so the fold reads the same record rather than
+    // trusting that placement already vouched for the item.
+    const first = gfxMod("first_mod");
+    const second = gfxMod("second_mod");
+    const foreign = first.spriteType("council", { textureFile: "gfx/a.dds" });
+    const forged = { ...foreign, minted: { prefix: "second_mod", shape: "spriteTextIcon" } };
+    const pure = buildMod(second.config, [createFeature(undefined, [forged])]);
+    expect(pure.warnings.map((warning) => warning.code)).toContain("missing-prefix");
+  });
+
+  it("keeps a genuine shape mint working through that same door", () => {
+    // Negative control for the two above: the record survives the fold, so a
+    // real prefix-less shape mint still raises no warning.
+    const mod = gfxMod("shapes");
+    const icon = mod.spriteFleetOrderButtonGroundSupport("indiscriminate_bombardment", {
+      textureFile: "gfx/a.dds",
+    });
+    const pure = buildMod(mod.config, [createFeature(undefined, [icon])]);
+    expect(pure.warnings).toEqual([]);
   });
 
   it("refuses a target that is not one bare word", () => {

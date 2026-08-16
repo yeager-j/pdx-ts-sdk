@@ -20,6 +20,7 @@ import {
   CONTENT_DECLINED_FIELDS,
   CONTENT_PATCH_REGISTRIES,
   HAND_WRITTEN_CONTENT_DEFINERS,
+  SPRITE_SHAPE_MINTS,
 } from "@pdx-ts/codegen-cwt/overlay";
 import { describe, expect, it } from "vitest";
 
@@ -1791,8 +1792,12 @@ describe("generated content definers", () => {
         "    ) => patchTechnology(technology, patch, prefix),"
     );
     expect(capability).toContain(
-      "  prefix: P,\n  assertName: LogicalNameAsserter\n): ContentCapabilityMethods<P, I> {"
+      "  prefix: P,\n  assertName: LogicalNameAsserter,\n  mintOwner: MintCapabilityOwner\n" +
+        "): ContentCapabilityMethods<P, I> {"
     );
+    // The shape mint's ownership record, not the item's own `minted` property.
+    expect(capability).toContain("recordShapeMint(");
+    expect(capability).toContain('        mintOwner,\n        "spriteTextIcon"');
     expect(capability).toContain("readonly addShipOfSizeLimits: typeof addShipOfSizeLimits;");
     expect(capability).toContain(
       "The capability mints and owns the full id; the returned branded reference"
@@ -1813,6 +1818,20 @@ describe("generated content definers", () => {
     expect(publicIndex).not.toContain("export { defineTechnology");
     expect(publicIndex).not.toContain("export { patchTechnology");
     expect(publicIndex).not.toContain("export { addShipOfSizeLimits");
+  });
+
+  it("exports every shape mint's name type from the root", () => {
+    // The same asymmetry one shape over. A shape-minted name is not
+    // `MintedContentId`-shaped, so a consumer who cannot name
+    // `SpriteTextIconName` cannot write down the type of the sprite they just
+    // authored, and the package publishes no generated-module subpath to reach
+    // it another way. Derived from the overlay, so a third row is held to the
+    // same bar without editing this test.
+    const publicIndex = readFileSync("packages/sdk/src/index.ts", "utf8");
+    const missing = SPRITE_SHAPE_MINTS.map((shape) => `${pascalCase(shape.method)}Name`).filter(
+      (symbol) => !new RegExp(`\\b${symbol}\\b`).test(publicIndex)
+    );
+    expect(missing).toEqual([]);
   });
 
   it("exports every patchable registry's whole patch vocabulary, symmetrically", () => {

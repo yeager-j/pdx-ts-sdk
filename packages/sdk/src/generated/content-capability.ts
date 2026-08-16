@@ -36,6 +36,7 @@
 // From: gfx/particles.cwt
 // From: content-manifest.ts
 
+import { recordShapeMint, type MintCapabilityOwner } from "../content/mint-provenance.ts";
 import type { ContentItem } from "../content/types.ts";
 import { refId, type TypedRef } from "../script/scalar.ts";
 import type {
@@ -185,15 +186,18 @@ function shapeMintTarget(target: TypedRef<string> | string): string {
  * shape.
  * A shape mint may carry no mod prefix at all — the name is built from another
  * definition's id — so a string-prefix test cannot decide whether the item
- * belongs to the capability placing it. The provenance can, and it is the only
- * reason the placement check works for these at all.
+ * belongs to the capability placing it. `recordShapeMint` puts the answer in a
+ * module-private `WeakMap` no caller can write to, which is what the placement
+ * check reads. The `minted` property beside it is informational only: it is a
+ * public object an author could attach to anything, so it proves nothing and is
+ * never consulted.
  */
 function shapeMinted<T extends { readonly itemKind: "content" }>(
   item: T,
-  prefix: string,
+  owner: MintCapabilityOwner,
   shape: string
 ): T {
-  return { ...item, minted: { prefix, shape } } as T;
+  return recordShapeMint({ ...item, minted: { prefix: owner.prefix, shape } } as T, owner, shape);
 }
 
 /**
@@ -1007,7 +1011,8 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
   mint: ContentIdMinter<P, I>,
   assertNestedId: NestedDefinitionIdAsserter,
   prefix: P,
-  assertName: LogicalNameAsserter
+  assertName: LogicalNameAsserter,
+  mintOwner: MintCapabilityOwner
 ): ContentCapabilityMethods<P, I> {
   return Object.freeze({
     technology: <const Name extends string>(
@@ -1330,7 +1335,7 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
           ...def,
           id: `GFX_text_${prefix}_${name}` as SpriteTextIconName<P, Name>,
         } as SpriteTypeDef<SpriteTextIconName<P, Name>>),
-        prefix,
+        mintOwner,
         "spriteTextIcon"
       );
     },
@@ -1350,7 +1355,7 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
             Selected
           >,
         } as SpriteTypeDef<SpriteFleetOrderButtonGroundSupportName<Target, Selected>>),
-        prefix,
+        mintOwner,
         "spriteFleetOrderButtonGroundSupport"
       );
     },

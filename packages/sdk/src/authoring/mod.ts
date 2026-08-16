@@ -11,6 +11,7 @@ import {
   eventChainCapabilityMethods,
   type EventChainCapabilityMethods,
 } from "../content/event-chains.ts";
+import { shapeMintOf } from "../content/mint-provenance.ts";
 import {
   situationTypeCapabilityMethods,
   type SituationTypeCapabilityMethods,
@@ -286,15 +287,19 @@ function assertCapabilityItem(
   switch (item.itemKind) {
     case "content": {
       // A shape-minted name is built from another definition's id and may carry
-      // no prefix at all, so it records the capability that minted it. Where
-      // the provenance exists it is the answer; where it does not, the name
-      // itself is, measured against the registry's own mint head.
-      if (item.minted !== undefined) {
-        if (item.minted.prefix !== prefix) {
+      // no prefix at all, so ownership was recorded when it was minted. The
+      // record is read from the module-private table, never from `item.minted`
+      // — that property is a public object any caller can attach to any item,
+      // so trusting it would let a foreign definition place itself here. Where
+      // there is no record the name itself is the evidence, measured against
+      // the registry's own mint head.
+      const shapeMint = shapeMintOf(item);
+      if (shapeMint !== undefined) {
+        if (shapeMint.owner !== owner) {
           throw new Error(
-            `The ${item.minted.shape} sprite "${item.id}" was minted by the capability for mod ` +
-              `prefix "${item.minted.prefix}", not "${prefix}". Mint it with the same capability ` +
-              "that places it."
+            `The ${shapeMint.shape} sprite "${item.id}" was minted by a different capability — ` +
+              `the one for mod prefix "${shapeMint.owner.prefix}", not this one for "${prefix}". ` +
+              "Mint it with the same capability that places it."
           );
         }
         return;
@@ -409,7 +414,10 @@ export function createMod<const P extends string, const I extends IdProfile>(
     mintContentId(config.prefix, ids),
     assertNestedDefinitionId(config.prefix),
     config.prefix,
-    assertLogicalName
+    assertLogicalName,
+    // The identity a shape mint is recorded against, so a mint can be traced to
+    // one capability rather than merely to a prefix string.
+    owner
   );
   const situationTypes = situationTypeCapabilityMethods<P, I | typeof DEFAULT_ID_PROFILE>(
     mintContentId(config.prefix, ids),

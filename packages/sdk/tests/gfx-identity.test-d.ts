@@ -9,6 +9,7 @@
 
 import { describe, expectTypeOf, it } from "vitest";
 
+import * as sdk from "../src/index.ts";
 import { always, createMod, type SpriteRef } from "../src/index.ts";
 
 const mod = createMod({ name: "GFX types", prefix: "gfx_types", supportedVersion: "4.4.*" });
@@ -79,6 +80,20 @@ describe("shape mint signatures", () => {
     expectTypeOf(
       button.id
     ).toEqualTypeOf<"GFX_fleet_order_button_ground_support_gfx_types_bombardment_stance_scorched">();
+  });
+
+  it("lets a consumer name the type of the sprite they just authored", () => {
+    // The point of exporting the aliases: a shape-minted name is not
+    // `MintedContentId`-shaped, so without them a consumer holding one of
+    // these items has no way to write its type down.
+    const icon: sdk.SpriteTextIconName<"gfx_types", "council"> = "GFX_text_gfx_types_council";
+    const button: sdk.SpriteFleetOrderButtonGroundSupportName<"vanilla_stance", true> =
+      "GFX_fleet_order_button_ground_support_vanilla_stance_selected";
+    void icon;
+    void button;
+    expectTypeOf(mod.spriteTextIcon("council", { textureFile: "a" }).id).toEqualTypeOf<
+      sdk.SpriteTextIconName<"gfx_types", "council">
+    >();
   });
 
   it("refuses a target of the wrong registry", () => {

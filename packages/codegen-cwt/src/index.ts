@@ -1265,7 +1265,9 @@ function contentDefiners(
     'import type { ContentItem } from "../content/types.ts";\n' +
     (shapeMintTypes.length === 0
       ? ""
-      : 'import { refId, type TypedRef } from "../script/scalar.ts";\n' +
+      : "import {\n  recordShapeMint,\n  type MintCapabilityOwner,\n} " +
+        'from "../content/mint-provenance.ts";\n' +
+        'import { refId, type TypedRef } from "../script/scalar.ts";\n' +
         importList("./refs.ts", shapeMintRefTypes)) +
     (capabilityRuntimeDefiners.size === 0
       ? ""
@@ -1326,10 +1328,10 @@ function contentDefiners(
         "    Object.keys(nested as Readonly<Record<string, unknown>>).forEach(assert);\n" +
         "  }\n" +
         "}\n\n") +
-    "type LogicalNameAsserter = (name: string) => void;\n\n" +
     (shapeMintTypes.length === 0
       ? ""
-      : docComment([
+      : "type LogicalNameAsserter = (name: string) => void;\n\n" +
+        docComment([
           "The id a shape mint fills its hole with.",
           "",
           "A typed item or reference lowers to its id; an intentional raw string — a",
@@ -1353,15 +1355,22 @@ function contentDefiners(
           "",
           "A shape mint may carry no mod prefix at all — the name is built from another",
           "definition's id — so a string-prefix test cannot decide whether the item",
-          "belongs to the capability placing it. The provenance can, and it is the only",
-          "reason the placement check works for these at all.",
+          "belongs to the capability placing it. `recordShapeMint` puts the answer in a",
+          "module-private `WeakMap` no caller can write to, which is what the placement",
+          "check reads. The `minted` property beside it is informational only: it is a",
+          "public object an author could attach to anything, so it proves nothing and is",
+          "never consulted.",
         ]) +
         'function shapeMinted<T extends { readonly itemKind: "content" }>(\n' +
         "  item: T,\n" +
-        "  prefix: string,\n" +
+        "  owner: MintCapabilityOwner,\n" +
         "  shape: string\n" +
         "): T {\n" +
-        "  return { ...item, minted: { prefix, shape } } as T;\n" +
+        "  return recordShapeMint(\n" +
+        "    { ...item, minted: { prefix: owner.prefix, shape } } as T,\n" +
+        "    owner,\n" +
+        "    shape\n" +
+        "  );\n" +
         "}\n\n") +
     docComment([
       "Registry-specific id segments used when a mod capability mints content ids.",
@@ -1433,8 +1442,15 @@ function contentDefiners(
     "export function contentCapabilityMethods<P extends string, I extends IdProfile>(\n" +
     "  mint: ContentIdMinter<P, I>,\n" +
     "  assertNestedId: NestedDefinitionIdAsserter,\n" +
-    "  prefix: P,\n" +
-    "  assertName: LogicalNameAsserter\n" +
+    "  prefix: P" +
+    // Both only exist to serve shape mints: `assertName` holds a name-derived
+    // mint to the same logical-name rule every mint follows, and `mintOwner` is
+    // the identity a shape mint is recorded against. Emitting them where no row
+    // needs them would leave the generated function with parameters it never
+    // reads.
+    (shapeMintTypes.length === 0
+      ? "\n"
+      : ",\n  assertName: LogicalNameAsserter,\n  mintOwner: MintCapabilityOwner\n") +
     "): ContentCapabilityMethods<P, I> {\n" +
     "  return Object.freeze({\n" +
     capabilityBindings.join("\n") +
@@ -1573,7 +1589,7 @@ function shapeMintMethod(
       `          ...def,\n` +
       `          id: \`${shape.head}${runtimeHole}${variantRuntimeTail}\` as ${nameType},\n` +
       `        } as ${def}),\n` +
-      `        prefix,\n` +
+      `        mintOwner,\n` +
       `        ${JSON.stringify(shape.method)}\n` +
       `      );\n` +
       `    },`,

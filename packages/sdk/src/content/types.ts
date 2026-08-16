@@ -32,17 +32,24 @@ export interface ContentItem<
    * Present only on a shape-minted definition (SDK-121): which capability
    * minted it, and under which shape.
    *
-   * A shape mint builds its name from another definition's id, so the result
-   * may carry no mod prefix at all — `GFX_fleet_order_button_ground_support_`
-   * plus a *vanilla* stance is a name this mod owns and no string test can
-   * recognise. The provenance is what the placement check reads instead, the
-   * same way a patch item's baked prefix is read: ownership has to be recorded
-   * where it is decided, because it cannot be recovered from the id.
+   * Informational, and deliberately not the SDK's evidence of ownership. It is
+   * an ordinary public object, so a caller can attach one to any item, and a
+   * check that trusted it would let a foreign definition place itself under
+   * this capability. The real record lives in a module-private table written
+   * only by the mint itself (`content/mint-provenance.ts`), and that is what
+   * every ownership check reads. This exists so an author can *see* how a name
+   * was built — in a log, a test, or a debugger — without reaching into the
+   * SDK.
    */
   readonly minted?: MintProvenance;
 }
 
-/** Which capability minted a shape-minted definition, and under which shape. */
+/**
+ * Which capability minted a shape-minted definition, and under which shape.
+ *
+ * See {@link ContentItem.minted}: this describes a mint, it does not certify
+ * one.
+ */
 export interface MintProvenance {
   readonly prefix: string;
   readonly shape: string;

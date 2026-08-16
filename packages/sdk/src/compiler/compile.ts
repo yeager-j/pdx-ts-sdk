@@ -12,6 +12,7 @@ import { flattenItems, type ModItemInput } from "../authoring/feature.ts";
 import { LOCALIZATION_LANGUAGES } from "../authoring/localization.ts";
 import { ContentAuthoring } from "../content/authoring.ts";
 import { contentDescriptor } from "../content/descriptors.ts";
+import { shapeMintOf } from "../content/mint-provenance.ts";
 import type { ContentRegistryDescriptor } from "../content/schema.ts";
 import type { ContentItem } from "../content/types.ts";
 import type { ModWarning } from "../diagnostics.ts";
@@ -245,7 +246,10 @@ export function buildMod(
                 stem,
                 entries,
               }),
-            item.minted
+            // The recorded mint, never the item's own `minted` property: a
+            // build reached directly through `buildMod` gets the same
+            // unforgeable answer `mod.feature` does.
+            shapeMintOf(item)
           )
         ),
       });
