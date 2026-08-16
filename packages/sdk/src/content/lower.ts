@@ -11,8 +11,14 @@ import {
   type PdxScalar,
 } from "@pdx-ts/pdxscript";
 
+import type { AssetFileItem } from "../authoring/assets.ts";
 import type { ScopeName } from "../generated/scopes.ts";
-import { underField, type ContentRefSink, type ContentRefUse } from "../references.ts";
+import {
+  underField,
+  type AssetPathSink,
+  type ContentRefSink,
+  type ContentRefUse,
+} from "../references.ts";
 import { recordEffects, scriptCtx } from "../script/effects/recorder.ts";
 import type { ScriptCtx } from "../script/effects/types.ts";
 import { refId, type TypedRef } from "../script/scalar.ts";
@@ -199,6 +205,7 @@ export function resolveFromClosures(
 
 interface LoweringContext {
   readonly collect?: ContentRefSink;
+  readonly collectPath?: AssetPathSink;
   readonly path: string;
   readonly ownerId: string;
 }
@@ -206,6 +213,7 @@ interface LoweringContext {
 function childContext(ctx: LoweringContext, segment: string, ownerId?: string): LoweringContext {
   return {
     collect: ctx.collect,
+    collectPath: ctx.collectPath,
     path: joinPath(ctx.path, segment),
     ownerId: ownerId ?? ctx.ownerId,
   };
@@ -259,12 +267,42 @@ function passthroughEntry(value: unknown): PdxEntry | undefined {
   return isPassthrough(value) && value.kind === "entry" ? value : undefined;
 }
 
+/**
+ * Whether an authored filepath value is a captured Asset rather than a raw
+ * string. `itemKind` is the same discriminant `flattenItems` places on, so an
+ * Item is recognised here exactly as it is recognised there.
+ */
+function isAssetFileItem(value: unknown): value is AssetFileItem {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    (value as { readonly itemKind?: unknown }).itemKind === "asset"
+  );
+}
+
 function contentScalar(
   value: unknown,
-  field: ContentFieldBase & ContentRefTypes & { readonly conversion: "identity" | "ref" },
+  field: ContentFieldBase &
+    ContentRefTypes & { readonly conversion: "identity" | "ref" | "assetPath" },
   quote: boolean,
   ctx?: LoweringContext
 ): PdxScalar {
+  if (field.conversion === "assetPath") {
+    // Both forms write a path and both are recorded: an Item is a path this
+    // build ships and can prove, a string is a path only the fold's evidence
+    // can speak to. Which one it was is the recorded `kind`, so the two
+    // fold-time checks — a placed-Asset proof and an existence warning — are
+    // told apart there rather than by re-inspecting the emitted scalar.
+    const item = isAssetFileItem(value) ? value : undefined;
+    const path = item?.path ?? (value as string);
+    if (ctx?.collectPath !== undefined) {
+      const where = { path, field: joinPath(ctx.path, field.key) };
+      ctx.collectPath(
+        item === undefined ? { kind: "string", ...where } : { kind: "item", item, ...where }
+      );
+    }
+    return quote ? quoted(path) : scalar(path);
+  }
   const converted = field.conversion === "ref" ? refId(value as TypedRef<string> | string) : value;
   if (
     ctx?.collect !== undefined &&

@@ -2,6 +2,7 @@
 // Source: cwtools-stellaris-config @ a4ee61a099b8
 // From: interface/sprites.cwt
 
+import type { AssetFileItem } from "../authoring/assets.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { AnimationMode, AnimationType, SpriteType } from "./enums.ts";
@@ -68,8 +69,20 @@ export const SPRITE_TYPE_ANIMATION_ANIMATIONTEXTURESCALE_FIELDS: readonly Conten
 ];
 
 export interface SpriteTypeAnimation {
-  animationmaskfile?: string;
-  animationtextureFile?: string;
+  /**
+   * A path from the mod root. An Asset file placed in a Feature lowers to its declared
+   * logical path; a plain string is written as it stands and checked at build time against
+   * the paths this mod captures and the vanilla file inventory, as a warning rather than an
+   * error — a DLC or third-party path is legitimate here.
+   */
+  animationmaskfile?: AssetFileItem | string;
+  /**
+   * A path from the mod root. An Asset file placed in a Feature lowers to its declared
+   * logical path; a plain string is written as it stands and checked at build time against
+   * the paths this mod captures and the vanilla file inventory, as a warning rather than an
+   * error — a DLC or third-party path is legitimate here.
+   */
+  animationtextureFile?: AssetFileItem | string;
   animationrotation?: number;
   animationlooping?: boolean;
   animationtime?: number;
@@ -87,14 +100,14 @@ export const SPRITE_TYPE_ANIMATION_FIELDS: readonly ContentField[] = [
     member: "animationmaskfile",
     shape: "value",
     form: "scalar",
-    conversion: "identity",
+    conversion: "assetPath",
   },
   {
     key: "animationtextureFile",
     member: "animationtextureFile",
     shape: "value",
     form: "scalar",
-    conversion: "identity",
+    conversion: "assetPath",
   },
   {
     key: "animationrotation",
@@ -172,16 +185,34 @@ export interface SpriteTypeFields {
   upperLeft?: SpriteTypeUpperLeft;
   /** Only when spriteType subtype not `progressbar&!piechart` applies. */
   lowerRight?: SpriteTypeLowerRight;
-  /** Only when spriteType subtype not `progressbar&!piechart` applies. */
-  textureFile?: string;
-  /** Only when spriteType subtype not `progressbar&!piechart` applies. */
-  maskingTexture?: string;
+  /**
+   * Only when spriteType subtype not `progressbar&!piechart` applies.
+   * A path from the mod root. An Asset file placed in a Feature lowers to its declared
+   * logical path; a plain string is written as it stands and checked at build time against
+   * the paths this mod captures and the vanilla file inventory, as a warning rather than an
+   * error — a DLC or third-party path is legitimate here.
+   */
+  textureFile?: AssetFileItem | string;
+  /**
+   * Only when spriteType subtype not `progressbar&!piechart` applies.
+   * A path from the mod root. An Asset file placed in a Feature lowers to its declared
+   * logical path; a plain string is written as it stands and checked at build time against
+   * the paths this mod captures and the vanilla file inventory, as a warning rather than an
+   * error — a DLC or third-party path is legitimate here.
+   */
+  maskingTexture?: AssetFileItem | string;
   /** Only when spriteType subtype not `progressbar&!piechart` applies. */
   spriteSheetSpriteType?: SpriteRef | string;
   /** Only when spriteType subtype not `progressbar&!piechart` applies. */
   defaultFrame?: number;
-  /** Only when spriteType subtype not `progressbar&!piechart` applies. */
-  effectFile?: string;
+  /**
+   * Only when spriteType subtype not `progressbar&!piechart` applies.
+   * A path from the mod root. An Asset file placed in a Feature lowers to its declared
+   * logical path; a plain string is written as it stands and checked at build time against
+   * the paths this mod captures and the vanilla file inventory, as a warning rather than an
+   * error — a DLC or third-party path is legitimate here.
+   */
+  effectFile?: AssetFileItem | string;
   /** Only when spriteType subtype not `progressbar&!piechart` applies. */
   alwaysTransparent?: boolean;
   /** Only when spriteType subtype not `progressbar&!piechart` applies. */
@@ -252,14 +283,14 @@ export const SPRITE_TYPE_FIELDS: readonly ContentField[] = [
     member: "textureFile",
     shape: "value",
     form: "scalar",
-    conversion: "identity",
+    conversion: "assetPath",
   },
   {
     key: "masking_texture",
     member: "maskingTexture",
     shape: "value",
     form: "scalar",
-    conversion: "identity",
+    conversion: "assetPath",
   },
   {
     key: "sprite_sheet_sprite_type",
@@ -281,7 +312,7 @@ export const SPRITE_TYPE_FIELDS: readonly ContentField[] = [
     member: "effectFile",
     shape: "value",
     form: "scalar",
-    conversion: "identity",
+    conversion: "assetPath",
   },
   {
     key: "alwaysTransparent",

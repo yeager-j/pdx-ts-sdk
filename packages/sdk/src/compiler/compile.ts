@@ -31,6 +31,7 @@ import {
   packagedVanillaPaths,
 } from "../identifiers/vanilla-paths.ts";
 import { compareUtf8, normalizeLogicalPath, type LogicalPath } from "../ordering.ts";
+import type { AssetPathUse } from "../references.ts";
 import type { VanillaView } from "../stellaris/vanilla/view.ts";
 import {
   resolveConfig,
@@ -134,6 +135,7 @@ export function buildMod(
   const warnings: ModWarning[] = [];
   const localization = createLocalizationAccumulator(warnings);
   const refUses: ReferenceUse[] = [];
+  const pathUses: { owner: string; use: AssetPathUse }[] = [];
 
   const content = new ContentAuthoring(
     config.prefix,
@@ -273,9 +275,31 @@ export function buildMod(
     for (const defined of group.defined) {
       file.ids.push(defined.id);
       file.entries.push(
-        defined.toEntries((use) => {
-          refUses.push({ owner: `${group.type} "${defined.id}"`, use });
-        })
+        defined.toEntries(
+          (use) => {
+            refUses.push({ owner: `${group.type} "${defined.id}"`, use });
+          },
+          (use) => {
+            pathUses.push({ owner: `${group.type} "${defined.id}"`, use });
+          }
+        )
+      );
+    }
+  }
+
+  // An Asset an emitted definition points at but no Feature places is the one
+  // asset-path failure that is provable rather than merely unverified: the
+  // Item exists, its path is written into the `.gfx`, and the file it names
+  // will not be in the mod. Checked here, right where the uses were recorded,
+  // because it needs nothing but this build's own placements.
+  const placedAssets = new Set(assets.map(({ item }) => item));
+  for (const { owner, use } of pathUses) {
+    if (use.kind === "item" && !placedAssets.has(use.item)) {
+      throw new Error(
+        `${owner} references the Asset file "${use.path}" in "${use.field}", but no Feature ` +
+          `passed to buildMod places it — the mod would ship a definition pointing at a file ` +
+          `that is not in it; add the Asset to a feature, or write the path as a string if the ` +
+          `file comes from somewhere else`
       );
     }
   }
@@ -485,6 +509,7 @@ export function buildMod(
     definedGroups,
     patched: patches,
     refUses,
+    vanillaIdsOf: (registry) => PACKAGED_ID_EVIDENCE.get(registry)?.(),
   });
 
   // One claim per emitted file, made by the merged file rather than by the
@@ -643,6 +668,39 @@ export function buildMod(
     ...[...vanillaOrigins].flatMap((origin) => origin.files.map((file) => file.path)),
     ...[...vanillaOrigins].flatMap((origin) => origin.pathInventory ?? []),
   ]);
+
+  // Raw filepath strings, classified once the whole vanilla path union exists —
+  // this is the first point in the fold where "does that file exist?" has all
+  // its evidence. Never an error in any arm: a DLC path, another mod's path,
+  // and a file the author ships outside the SDK are all legitimate here, and
+  // none of them is knowable from inside this build.
+  const placedAssetPaths = new Set<string>(assets.map(({ item }) => item.path));
+  for (const { owner, use } of pathUses) {
+    if (use.kind !== "string") {
+      continue;
+    }
+    let normalized: string;
+    try {
+      normalized = normalizeLogicalPath(use.path);
+    } catch {
+      // An unnormalizable string cannot match anything either set holds, so it
+      // is reported exactly like an unknown path, spelled as written.
+      normalized = use.path;
+    }
+    if (placedAssetPaths.has(normalized) || vanillaPaths.has(normalized)) {
+      continue;
+    }
+    warnings.push({
+      code: "unverified-asset-path",
+      message:
+        `${owner} writes the path "${use.path}" in "${use.field}", and no Asset this build ` +
+        `captures and no vanilla file has that path — check the spelling, or ignore this if the ` +
+        `file comes from a DLC, another mod, or outside the SDK`,
+      path: normalized,
+      field: use.field,
+      owner,
+    });
+  }
 
   // The last thing the fold decides. Everything above minted a path; this rules
   // on the whole set at once, so the `PureMod` below cannot exist unless every

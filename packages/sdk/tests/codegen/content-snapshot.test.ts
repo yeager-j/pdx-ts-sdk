@@ -1314,12 +1314,12 @@ describe("content-type codegen", () => {
     // any `<sprite>` field asks for.
     const spriteType = emissions.get("spriteType");
     expect(spriteType?.code).toContain("export interface SpriteTypeDef");
-    expect(spriteType?.code).toContain("textureFile?: string;");
+    expect(spriteType?.code).toContain("textureFile?: AssetFileItem | string;");
     expect(spriteType?.code).toContain("parent?: SpriteRef | string;");
     expect(spriteType?.code).toContain("animation?: SpriteTypeAnimation[];");
     // The rules' own casing, which is what the corpus reader folds onto.
     expect(spriteType?.code).toContain("transParencecheck?: boolean;");
-    expect(spriteType?.code).toContain("animationtextureFile?: string;");
+    expect(spriteType?.code).toContain("animationtextureFile?: AssetFileItem | string;");
     // The other seven subtypes' bodies, none of which is this registry's.
     for (const foreign of ["texture_size", "play_on_show", "colortwo", "is_hover"]) {
       expect(spriteType?.code, foreign).not.toContain(foreign);
