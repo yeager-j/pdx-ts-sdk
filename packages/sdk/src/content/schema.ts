@@ -1,4 +1,4 @@
-import type { ContentShape } from "../generated/content-shape.ts";
+import type { ContentConversion, ContentShape } from "../generated/content-shape.ts";
 
 /**
  * Generated field metadata and registry descriptors consumed by the content lowerer.
@@ -61,7 +61,15 @@ export interface ContentRefTypes {
 
 interface ContentValueField extends ContentFieldBase, ContentRefTypes {
   readonly shape: "value";
-  readonly conversion: "identity" | "ref";
+  /**
+   * `"assetPath"` marks a field the rules type `filepath`: its member is
+   * `AssetFileItem | string`, an Item lowers to its declared logical path, and
+   * either form is recorded as an {@link AssetPathUse} for the fold to check.
+   * The audited list of such fields is codegen's `ASSET_PATH_FIELDS` — the
+   * rules alone do not settle it, since CWT spells a mod-root path and a
+   * directory-relative filename with the same keyword.
+   */
+  readonly conversion: "identity" | "ref" | "assetPath";
   /**
    * The rules type this field's raw value as a localisation key rather than
    * free text (CWT's bare `= localisation`, distinct from a `"$"`-pattern
@@ -315,6 +323,19 @@ type Equal<Left, Right> =
 
 const CONTENT_SHAPE_PROTOCOL_IS_EXACT: Equal<ContentField["shape"], ContentShape> = true;
 void CONTENT_SHAPE_PROTOCOL_IS_EXACT;
+
+/**
+ * The same pin for the conversion vocabulary, over every field that carries
+ * one. A conversion the emitter writes and `contentScalar` does not implement
+ * would silently write the authored value as it stands, which for an
+ * `AssetFileItem` is `[object Object]` in a shipped `.gfx` file — a failure no
+ * type would otherwise catch, because `conversion` is a string in generated
+ * data rather than a call.
+ */
+type AnyConversion = Extract<ContentField, { readonly conversion: string }>["conversion"];
+
+const CONTENT_CONVERSION_PROTOCOL_IS_EXACT: Equal<AnyConversion, ContentConversion> = true;
+void CONTENT_CONVERSION_PROTOCOL_IS_EXACT;
 
 /**
  * Every shape a dual field's arm can actually be lowered to — every

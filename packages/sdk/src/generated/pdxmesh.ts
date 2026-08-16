@@ -2,6 +2,7 @@
 // Source: cwtools-stellaris-config @ a4ee61a099b8
 // From: gfx/model_entities.cwt
 
+import type { AssetFileItem } from "../authoring/assets.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { ModelAnimation } from "./enums.ts";
@@ -71,7 +72,13 @@ export const PDXMESH_ANIMATION_FIELDS: readonly ContentField[] = [
  * Generated from `type[model_mesh]` at `game/gfx/models`.
  */
 export interface PdxmeshFields {
-  file: string;
+  /**
+   * A path from the mod root. An Asset file placed in a Feature lowers to its declared
+   * logical path; a plain string is written as it stands and checked at build time against
+   * the paths this mod captures and the vanilla file inventory, as a warning rather than an
+   * error — a DLC or third-party path is legitimate here.
+   */
+  file: AssetFileItem | string;
   scale?: number;
   meshsettings?: PdxmeshMeshsettings[];
   animation?: PdxmeshAnimation[];
@@ -86,7 +93,7 @@ export interface PdxmeshDef<Id extends string = string> extends PdxmeshFields {
 export type DefinedPdxmesh<Id extends string = string> = DefinedContent<"pdxmesh", PdxmeshDef<Id>>;
 
 export const PDXMESH_FIELDS: readonly ContentField[] = [
-  { key: "file", member: "file", shape: "value", form: "scalar", conversion: "identity" },
+  { key: "file", member: "file", shape: "value", form: "scalar", conversion: "assetPath" },
   { key: "scale", member: "scale", shape: "value", form: "scalar", conversion: "identity" },
   {
     key: "meshsettings",

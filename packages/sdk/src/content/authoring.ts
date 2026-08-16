@@ -2,7 +2,7 @@
 import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
 
 import type { ScopeName } from "../generated/scopes.ts";
-import type { ContentRefSink } from "../references.ts";
+import type { AssetPathSink, ContentRefSink } from "../references.ts";
 import {
   modifierDescKey,
   registerComplexTriggerModifierDescKey,
@@ -16,7 +16,7 @@ import type { ShapeMint } from "./mint-provenance.ts";
 import type { ContentField, ContentLocalisation, ContentRegistryDescriptor } from "./schema.ts";
 import type { WeightBlock } from "./types.ts";
 
-export type { ContentRefSink, ContentRefUse } from "../references.ts";
+export type { AssetPathSink, AssetPathUse, ContentRefSink, ContentRefUse } from "../references.ts";
 
 /** A definition registered with a mod and usable as a typed cross-reference. */
 export interface DefinedContent<
@@ -25,8 +25,11 @@ export interface DefinedContent<
 > extends TypedRef<K> {
   readonly id: D["id"];
   readonly def: D;
-  /** Lowers the definition, reporting every reference it writes to `collect`. */
-  toEntries(collect?: ContentRefSink): PdxEntry;
+  /**
+   * Lowers the definition, reporting every reference it writes to `collect` and
+   * every filepath field it writes to `collectPath`.
+   */
+  toEntries(collect?: ContentRefSink, collectPath?: AssetPathSink): PdxEntry;
 }
 
 type ContentDef = { readonly id: string };
@@ -54,10 +57,12 @@ type RegisterLoc = (entries: readonly LocalisationEntry[]) => void;
 function toEntry(
   def: ContentDef,
   descriptor: ContentRegistryDescriptor,
-  collect?: ContentRefSink
+  collect?: ContentRefSink,
+  collectPath?: AssetPathSink
 ): PdxEntry {
   const fields = fieldEntries(def as Readonly<Record<string, unknown>>, descriptor.fields, {
     collect,
+    collectPath,
     path: "",
     ownerId: def.id,
   });
@@ -80,8 +85,8 @@ class ContentDefinition<K extends string, D extends ContentDef> implements Defin
     this.descriptor = descriptor;
   }
 
-  toEntries(collect?: ContentRefSink): PdxEntry {
-    return toEntry(this.def, this.descriptor, collect);
+  toEntries(collect?: ContentRefSink, collectPath?: AssetPathSink): PdxEntry {
+    return toEntry(this.def, this.descriptor, collect, collectPath);
   }
 }
 

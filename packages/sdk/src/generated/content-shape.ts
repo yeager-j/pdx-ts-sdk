@@ -27,3 +27,7 @@ export const CONTENT_SHAPES = [
 ] as const;
 
 export type ContentShape = (typeof CONTENT_SHAPES)[number];
+
+export const CONTENT_CONVERSIONS = ["identity", "ref", "assetPath"] as const;
+
+export type ContentConversion = (typeof CONTENT_CONVERSIONS)[number];

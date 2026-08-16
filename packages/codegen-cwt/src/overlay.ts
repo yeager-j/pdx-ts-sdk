@@ -182,6 +182,65 @@ export const FILE_STEM_OVERLAYS = new Map<string, string>([
 ]);
 
 /**
+ * The fields whose value is a path from the mod root, so a captured Asset can
+ * stand in for the string (SDK-121).
+ *
+ * Audited rather than derived, because CWT does not draw the distinction that
+ * matters here. `cwt/model.ts` lowers both `filepath` and `filename[dir]` to
+ * one `filepath` rule type — correctly, since both are one string in the file —
+ * but only the first is a path from the mod root. `filename[gfx/models]` is a
+ * bare name the game resolves inside that directory, and vanilla writes it that
+ * way (`texture_diffuse = "turret_object_diffuse.dds"`), so an `AssetFileItem`
+ * lowering to its declared logical path would write a path the game cannot
+ * follow. The four `model_mesh.meshsettings.texture_*` members are the only
+ * `filename[dir]` fields in the vendored rules, and they are deliberately
+ * absent below.
+ *
+ * Each row is one field the rules type bare `filepath` and vanilla writes as a
+ * mod-root path. Every one is checked at generation time against its actual
+ * declaration, so a row that stops being a `filepath` field fails codegen
+ * rather than quietly widening a member.
+ */
+export const ASSET_PATH_FIELDS = new Map<string, string>([
+  [
+    "spriteType.textureFile",
+    "interface/sprites.cwt declares `textureFile = filepath` with no directory; Stellaris 4.4.6 " +
+      'writes mod-root paths such as "gfx/event_pictures/celestial_storm.dds". It is the field ' +
+      "the whole Asset pipeline exists for — the image a sprite shows.",
+  ],
+  [
+    "spriteType.masking_texture",
+    "interface/sprites.cwt declares `masking_texture = filepath` with no directory; vanilla " +
+      'writes "gfx/interface/contacts/Contacts_Background_Mask.dds" and kin — the same mod-root ' +
+      "form as `textureFile`, for a second image file beside it.",
+  ],
+  [
+    "spriteType.effectFile",
+    "interface/sprites.cwt declares `effectFile = filepath` with no directory; vanilla writes " +
+      '"gfx/FX/buttonstate.shader". A shader rather than an image, but the same kind of value: a ' +
+      "file the mod may ship and address from its root.",
+  ],
+  [
+    "spriteType.animation.animationmaskfile",
+    "interface/sprites.cwt declares `animationmaskfile = filepath` with no directory inside the " +
+      'sprite `animation` block; vanilla writes "gfx/cursors/crosshair_mask.dds".',
+  ],
+  [
+    "spriteType.animation.animationtextureFile",
+    "interface/sprites.cwt declares `animationtextureFile = filepath` with no directory, in the " +
+      "same `animation` block and beside `animationmaskfile`. Stellaris 4.4.6 writes it zero " +
+      "times, so the declaration is the whole evidence — which is the reason to include it: a " +
+      "field with no shipped example is exactly the one an author has nothing to copy from.",
+  ],
+  [
+    "pdxmesh.file",
+    "gfx/model_entities.cwt declares `file = filepath` with no directory and the rule's own " +
+      'comment gives the mod-root form ("gfx/models/shielded_planet.mesh"); vanilla writes ' +
+      '"gfx/models/spacedust.mesh". It is the mesh a pdxmesh is.',
+  ],
+]);
+
+/**
  * How one shape mint fills its single hole.
  *
  * `name` — the author supplies a logical name and the mint carries the mod

@@ -27,7 +27,11 @@ import { emitAliasStruct } from "./emit/alias-struct.ts";
 import { emitContentType, type ContentEmission } from "./emit/content-type.ts";
 import { emitEffects } from "./emit/effects.ts";
 import { emitEvents } from "./emit/events.ts";
-import { constantCase, structuralSpliceOf } from "./emit/fields.ts";
+import {
+  assertEveryAssetPathFieldApplied,
+  constantCase,
+  structuralSpliceOf,
+} from "./emit/fields.ts";
 import { classifyLinks, emitScopeLinkNavigation, emitScopeLinks } from "./emit/links.ts";
 import { emitModifiers, joinModifierScopes } from "./emit/modifiers.ts";
 import { emitOnActions } from "./emit/on-actions.ts";
@@ -280,6 +284,8 @@ async function main(): Promise<void> {
     });
   }
 
+  assertEveryAssetPathFieldApplied();
+
   // An alias category emitted as its own shared module, from either of the two
   // reasons a category needs one: an overlay row lowering a *keyed* field onto
   // it (`civic_or_origin.potential` -> `government_trigger`), or a body
@@ -511,6 +517,10 @@ async function main(): Promise<void> {
     await write(
       `${kebabCase(content.registry)}.ts`,
       header(commit, [content.manifest.source]) +
+        importList(
+          "../authoring/assets.ts",
+          ["AssetFileItem"].filter((name) => referencesIdentifier(content.emission.code, name))
+        ) +
         importList("../content/schema.ts", schemaTypes) +
         importList("../content/authoring.ts", authoringTypes) +
         importList("../content/types.ts", typeTypes) +

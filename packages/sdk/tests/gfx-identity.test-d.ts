@@ -10,7 +10,15 @@
 import { describe, expectTypeOf, it } from "vitest";
 
 import * as sdk from "../src/index.ts";
-import { always, createMod, type SpriteRef } from "../src/index.ts";
+import {
+  always,
+  createMod,
+  type AssetFileItem,
+  type PdxmeshFields,
+  type PdxparticleFields,
+  type SpriteRef,
+  type SpriteTypeFields,
+} from "../src/index.ts";
 
 const mod = createMod({ name: "GFX types", prefix: "gfx_types", supportedVersion: "4.4.*" });
 
@@ -39,6 +47,43 @@ describe("minted GFX name types", () => {
         },
       }
     );
+  });
+});
+
+describe("the sprite brand join", () => {
+  // `referenceName: "sprite"` is the whole mechanism: an authored sprite and
+  // the packaged `vanilla.sprite` names brand alike, so every generated
+  // `<sprite>` field takes either without knowing which registry defined it.
+  // Nothing new was built for this — these are the proofs that the descriptor's
+  // one word did the joining.
+  it("flows an authored sprite into an unrelated registry's sprite field", () => {
+    const icon = mod.spriteType("edict_icon", { textureFile: "gfx/a.dds" });
+    mod.edict("survey", { name: "Survey", length: 360, icon });
+  });
+
+  it("refuses a mesh where a sprite belongs", () => {
+    const mesh = mod.pdxmesh("hull", { file: "gfx/models/x.mesh" });
+    // @ts-expect-error — `icon` is a `<sprite>` field; a mesh is not one
+    mod.edict("survey_mesh", { name: "Survey", length: 360, icon: mesh });
+  });
+});
+
+describe("asset path members", () => {
+  it("accepts a captured Asset and a plain string on the same field", () => {
+    expectTypeOf<PdxmeshFields["file"]>().toEqualTypeOf<AssetFileItem | string>();
+    expectTypeOf<NonNullable<SpriteTypeFields["textureFile"]>>().toEqualTypeOf<
+      AssetFileItem | string
+    >();
+    expectTypeOf<
+      NonNullable<NonNullable<SpriteTypeFields["animation"]>[number]["animationmaskfile"]>
+    >().toEqualTypeOf<AssetFileItem | string>();
+  });
+
+  it("leaves `pdxparticle.type` an ordinary unchecked string", () => {
+    // Not a path and not a reference: the `<particle_type>` ids live in opaque
+    // `.asset` files, so neither this slice's Item arm nor the reference guard
+    // has anything to say about it.
+    expectTypeOf<PdxparticleFields["type"]>().toEqualTypeOf<string>();
   });
 });
 

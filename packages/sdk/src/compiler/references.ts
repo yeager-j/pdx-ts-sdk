@@ -1,5 +1,6 @@
 import { regionItems, type PdxItem } from "@pdx-ts/pdxscript";
 
+import { contentDescriptor } from "../content/descriptors.ts";
 import { SWAP_IDENTITIES, type SwapIdentity } from "../content/swaps.ts";
 import { CONTENT_REGISTRIES } from "../generated/content-registry.ts";
 import type { ContentRefUse } from "../references.ts";
@@ -51,6 +52,17 @@ export function validateReferences(args: {
     readonly def: Readonly<Record<string, unknown>>;
   }[];
   readonly refUses: readonly ReferenceUse[];
+  /**
+   * The vanilla ids one registry ships, or `undefined` where the identifier
+   * package carries none for it.
+   *
+   * An argument rather than a direct read of `PACKAGED_ID_EVIDENCE` so this
+   * algorithm — the one thing here that has to be measured against hostile
+   * spellings — can be exercised with an id set a test states outright,
+   * instead of only against whatever the installed game version happens to
+   * ship.
+   */
+  readonly vanillaIdsOf: (registry: string) => ReadonlySet<string> | undefined;
 }): void {
   const ownEventId = new RegExp(`^${args.prefix}(_[a-z0-9_]*)?\\.\\d+$`);
   const scanned: string[] = [];
@@ -150,9 +162,6 @@ export function validateReferences(args: {
   }
 
   for (const { owner, use } of args.refUses) {
-    if (!use.id.startsWith(`${args.prefix}_`)) {
-      continue;
-    }
     const resolvedTargets = use.targets.map(resolveTargetRegistries);
     if (
       use.targets.length === 0 ||
@@ -160,18 +169,50 @@ export function validateReferences(args: {
     ) {
       continue;
     }
+    const registries = resolvedTargets.flatMap((resolved) => resolved!);
+    const target = use.targets.join(" or ");
+    // Which ownership test applies is the registry's own data, not a name: a
+    // registry that mints a head (`GFX_` before the prefix, see
+    // `ContentRegistryDescriptor.mintHead`) writes own names that do not start
+    // with the prefix at all, so `startsWith` would clear every one of them.
+    const minted = registries.some(
+      (registry) => contentDescriptor(registry)?.mintHead !== undefined
+    );
+    // Exact vanilla match, asked before anything is inferred from the spelling,
+    // and the order is the rule rather than an optimisation (SDK-121, amended
+    // 2026-08-13): containment alone misreads a short prefix that happens to
+    // occur inside a vanilla name — prefix `ui` against vanilla
+    // `GFX_astral_rift_ui_icon` — and would reject a reference that is simply
+    // vanilla's. Under ADR-0006 every vanilla name is known, so the question is
+    // always answerable.
     if (
-      resolvedTargets.some((registries) =>
-        registries!.some((registry) => builtIds.get(registry)?.has(use.id))
-      )
+      minted &&
+      registries.some((registry) => args.vanillaIdsOf(registry)?.has(use.id) === true)
     ) {
       continue;
     }
-    const target = use.targets.join(" or ");
+    // Containment for a minted registry, `_`-padded on both sides so a
+    // multi-segment prefix and a prefix at the very start or end of the name
+    // are the same test as one in the middle. A name that does not carry the
+    // prefix as a whole segment is some other author's, and this build has
+    // nothing to say about it.
+    const owned = minted
+      ? `_${use.id}_`.includes(`_${args.prefix}_`)
+      : use.id.startsWith(`${args.prefix}_`);
+    if (!owned) {
+      continue;
+    }
+    if (registries.some((registry) => builtIds.get(registry)?.has(use.id))) {
+      continue;
+    }
+    const because = minted
+      ? `the reference contains this mod's prefix "${args.prefix}" as a "_"-delimited name ` +
+        `segment and matches no vanilla ${target}`
+      : `the id carries this mod's prefix "${args.prefix}_"`;
     throw new Error(
       `${owner} references ${target} "${use.id}" in "${use.field}", but no such ${target} is ` +
-        `among the features passed to buildMod — the id carries this mod's prefix ` +
-        `"${args.prefix}_", so this build has to define it; was its feature passed to buildMod?`
+        `among the features passed to buildMod — ${because}, so this build has to define it; ` +
+        `was its feature passed to buildMod?`
     );
   }
 }

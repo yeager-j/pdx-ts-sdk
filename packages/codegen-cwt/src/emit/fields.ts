@@ -24,6 +24,7 @@ import {
 import type { AliasDecl } from "../cwt/rules.ts";
 import { camelCase, docComment, indefiniteArticle, isPlainName, pascalCase } from "../naming.ts";
 import {
+  ASSET_PATH_FIELDS,
   CONTENT_FIELD_OVERRIDES,
   FIELD_WIDENINGS,
   type ContentFieldOverride,
@@ -1978,7 +1979,101 @@ function assertedUncheckedString(
   return { group: group.map((field) => ({ ...field, type: { kind: "scalar" } })), docs };
 }
 
+/**
+ * Applies an `ASSET_PATH_FIELDS` row: the member accepts a captured Asset as
+ * well as a string, and the metadata says so, so the writer unwraps the Item to
+ * its declared logical path and the fold checks whichever form arrived.
+ *
+ * Applied to the lowered result rather than by rewriting the rule, because
+ * unlike `uncheckedString` there is no CWT spelling that already means this —
+ * the rules type the field `filepath` and are right to; what the row adds is
+ * the SDK's own knowledge that this particular path is one a mod can ship.
+ *
+ * The guards are what keep the row honest. A `filepath` declaration is required
+ * because the row asserts the value is a path; a `value` shape is required
+ * because an Item is one scalar; and a widening is refused because the union
+ * arms would then be unclear about which of them an Item satisfies.
+ */
+const appliedAssetPaths = new Set<string>();
+
+/**
+ * Fails when a row named a field the emitter never reached.
+ *
+ * The rows are hand-written dotted paths, so a typo — or a key the vendored
+ * rules renamed — would otherwise leave a field silently unmarked: a member
+ * that quietly stayed `string`, with no Item arm and no fold check, and nothing
+ * anywhere saying so. An audited list that is never measured is the one kind of
+ * gate that is always green.
+ */
+export function assertEveryAssetPathFieldApplied(): void {
+  const missed = [...ASSET_PATH_FIELDS.keys()].filter((path) => !appliedAssetPaths.has(path));
+  if (missed.length > 0) {
+    throw new Error(
+      `ASSET_PATH_FIELDS names ${missed.map((path) => `"${path}"`).join(", ")}, which no ` +
+        "emitted field matched. Every row must mark a real field; correct the path or drop the row."
+    );
+  }
+}
+
+function assertedAssetPath(
+  lowered: LoweredField | null,
+  group: readonly RuleField[],
+  name: string,
+  widening: string | undefined,
+  path: string
+): LoweredField | null {
+  if (!ASSET_PATH_FIELDS.has(path)) {
+    return lowered;
+  }
+  appliedAssetPaths.add(path);
+  const spelled = group.map((field) => field.type.kind).join(", ");
+  if (
+    lowered === null ||
+    lowered.admits.shape !== "value" ||
+    widening !== undefined ||
+    !group.every((field) => field.type.kind === "filepath")
+  ) {
+    throw new Error(
+      `The overlay marks ${path} an asset path, but it does not lower as one (shape: ` +
+        `${lowered?.admits.shape ?? "none"}, declarations: ${spelled}, widening: ` +
+        `${widening ?? "none"}). The row asserts the value is one mod-root path scalar.`
+    );
+  }
+  const base = "AssetFileItem | string";
+  const field = group[0]!;
+  return {
+    ...lowered,
+    memberType: repeatsSiblings(field, "value") ? arrayType(base) : base,
+    metadata: metadata(field, name, "value", ['conversion: "assetPath"']),
+    docs: [
+      ...(lowered.docs ?? []),
+      "A path from the mod root. An Asset file placed in a Feature lowers to its declared",
+      "logical path; a plain string is written as it stands and checked at build time against",
+      "the paths this mod captures and the vanilla file inventory, as a warning rather than an",
+      "error — a DLC or third-party path is legitimate here.",
+    ],
+  };
+}
+
 export function pickOrdinary(
+  emitter: Emitter,
+  declared: readonly RuleField[],
+  name: string,
+  ctx: FieldContext,
+  override: ContentFieldOverride | undefined,
+  widening: string | undefined,
+  path: string
+): LoweredField | null {
+  return assertedAssetPath(
+    pickLowering(emitter, declared, name, ctx, override, widening, path),
+    declared,
+    name,
+    widening,
+    path
+  );
+}
+
+function pickLowering(
   emitter: Emitter,
   declared: readonly RuleField[],
   name: string,

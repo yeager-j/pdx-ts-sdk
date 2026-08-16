@@ -62,7 +62,9 @@ describe("minted GFX names", () => {
     const files = render(pure);
     expect(files.has("gfx/models/shared_name_meshes.gfx")).toBe(true);
     expect(files.has("gfx/particles/shared_name_particles.gfx")).toBe(true);
-    expect(pure.warnings).toEqual([]);
+    // The mesh's `file` path is nothing this build captures, so it warns; that
+    // is the asset-path check doing its job and not a duplicate complaint.
+    expect(pure.warnings.map((warning) => warning.code)).toEqual(["unverified-asset-path"]);
   });
 });
 
@@ -214,7 +216,9 @@ describe("shape mints", () => {
         }),
       ]),
     ]);
-    expect(pure.warnings).toEqual([]);
+    // Only the uncaptured `textureFile` path warns — a prefix-less shape mint
+    // is a legitimate name, so nothing complains about the name itself.
+    expect(pure.warnings.map((warning) => warning.code)).toEqual(["unverified-asset-path"]);
     expect(render(pure).get("interface/shapes_sprites.gfx")).toContain(
       "name = GFX_fleet_order_button_ground_support_indiscriminate_bombardment"
     );
@@ -260,13 +264,15 @@ describe("shape mints", () => {
 
   it("keeps a genuine shape mint working through that same door", () => {
     // Negative control for the two above: the record survives the fold, so a
-    // real prefix-less shape mint still raises no warning.
+    // real prefix-less shape mint raises no ownership complaint. The one
+    // warning left is the uncaptured `textureFile` path, which is the
+    // asset-path check and says nothing about the name.
     const mod = gfxMod("shapes");
     const icon = mod.spriteFleetOrderButtonGroundSupport("indiscriminate_bombardment", {
       textureFile: "gfx/a.dds",
     });
     const pure = buildMod(mod.config, [createFeature(undefined, [icon])]);
-    expect(pure.warnings).toEqual([]);
+    expect(pure.warnings.map((warning) => warning.code)).toEqual(["unverified-asset-path"]);
   });
 
   it("refuses a target that is not one bare word", () => {
