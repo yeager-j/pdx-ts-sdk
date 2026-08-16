@@ -6,12 +6,13 @@ import {
   type ResolvedModConfig,
 } from "../compiler/config.ts";
 import type { PureMod } from "../compiler/model.ts";
-import { mintHeadOf } from "../content/descriptors.ts";
+import { acceptsExactNames, mintHeadOf } from "../content/descriptors.ts";
 import {
   eventChainCapabilityMethods,
   type EventChainCapabilityMethods,
 } from "../content/event-chains.ts";
-import { shapeMintOf } from "../content/mint-provenance.ts";
+import { exactNameMintOf, shapeMintOf } from "../content/mint-provenance.ts";
+import { carriesPrefixSegment } from "../content/schema.ts";
 import {
   situationTypeCapabilityMethods,
   type SituationTypeCapabilityMethods,
@@ -22,12 +23,15 @@ import type { EventDef } from "../events/types.ts";
 import {
   contentCapabilityMethods,
   DEFAULT_ID_PROFILE,
+  EXACT_NAME_MINTS,
   MINT_SHAPES,
   type ContentCapabilityMethods,
   type ContentIdMinter,
+  type ExactNameRegistry,
   type IdProfile as GeneratedIdProfile,
   type MintedContentId as GeneratedMintedContentId,
   type MintedIdOf,
+  type MintNameOptions,
   type MintShapedRegistry,
 } from "../generated/content-capability.ts";
 import {
@@ -169,11 +173,66 @@ function assertLogicalName(name: string): void {
   }
 }
 
+type ExactNameRules = (typeof EXACT_NAME_MINTS)[ExactNameRegistry];
+
+/**
+ * The logical-name rule for one registry: the global lowercase stem rule,
+ * unless the generated `EXACT_NAME_MINTS` table widens it. The table, not the
+ * registry name, is what decides — a new exact-name registry is a codegen
+ * change alone.
+ */
+function assertMintedName(registry: string, name: string): void {
+  const rules = EXACT_NAME_MINTS[registry as ExactNameRegistry] as ExactNameRules | undefined;
+  if (rules === undefined) {
+    assertLogicalName(name);
+    return;
+  }
+  if (!rules.name.test(name)) {
+    throw new Error(
+      `Logical ${registry} name "${name}" must be snake_case led by a lowercase letter; ` +
+        "interior uppercase is allowed ([a-z][A-Za-z0-9_]*)"
+    );
+  }
+}
+
+/**
+ * The `prefix: false` rule: the name is the complete definition id, one bare
+ * word, and the mod prefix must appear in it as a `_`-delimited segment. The
+ * generated method overloads already enforce both, so these are the runtime
+ * halves of the same contract for values that reach the mint another way.
+ */
+function assertExactName(registry: string, name: string, prefix: string): void {
+  const rules = EXACT_NAME_MINTS[registry as ExactNameRegistry] as ExactNameRules | undefined;
+  if (rules === undefined) {
+    throw new Error(
+      `Registry "${registry}" mints its names from a logical name and has no exact-name ` +
+        "opt-out; remove `prefix: false`"
+    );
+  }
+  const segment = `"${prefix}_...", "..._${prefix}", or "..._${prefix}_..."`;
+  if (!rules.exact.test(name)) {
+    throw new Error(
+      `Exact ${registry} name "${name}" must be one bare word ([A-Za-z][A-Za-z0-9_]*) that ` +
+        `carries the mod prefix "${prefix}" as a "_"-delimited segment (${segment})`
+    );
+  }
+  if (!carriesPrefixSegment(name, prefix)) {
+    throw new Error(
+      `Exact ${registry} name "${name}" must carry the mod prefix "${prefix}" as a ` +
+        `"_"-delimited segment (${segment}), and must be one bare word ` +
+        "([A-Za-z][A-Za-z0-9_]*) — `prefix: false` only means the capability does not " +
+        "prepend the prefix, never that the prefix may be absent"
+    );
+  }
+}
+
 /**
  * A registry either carries an id segment an author may override, or a fixed
  * mint head the game requires — never both, and the generated `MINT_SHAPES`
  * table says which. Reading the table here rather than branching on registry
- * names is what keeps a new segmentless registry a codegen change alone.
+ * names is what keeps a new segmentless registry a codegen change alone. The
+ * generated `EXACT_NAME_MINTS` table is read the same way for the per-registry
+ * name charset and the `prefix: false` opt-out.
  */
 function mintContentId<P extends string, I extends IdProfile>(
   prefix: P,
@@ -181,9 +240,16 @@ function mintContentId<P extends string, I extends IdProfile>(
 ): ContentIdMinter<P, I> {
   return <const K extends keyof I | MintShapedRegistry, const Name extends string>(
     registry: K,
-    name: Name
+    name: Name,
+    options?: MintNameOptions
   ): MintedIdOf<P, I, K, Name> => {
-    assertLogicalName(name);
+    if (options?.prefix === false) {
+      assertExactName(registry as string, name, prefix);
+      // The name is the complete id: the option opted out of the prepend, and
+      // the assertion above held it to the prefix-segment rule instead.
+      return name as string as MintedIdOf<P, I, K, Name>;
+    }
+    assertMintedName(registry as string, name);
     const head = MINT_SHAPES[registry as MintShapedRegistry] as string | undefined;
     const id =
       head === undefined
@@ -300,6 +366,34 @@ function assertCapabilityItem(
             `The ${shapeMint.shape} sprite "${item.id}" was minted by a different capability — ` +
               `the one for mod prefix "${shapeMint.owner.prefix}", not this one for "${prefix}". ` +
               "Mint it with the same capability that places it."
+          );
+        }
+        return;
+      }
+      // An exact-name mint (`prefix: false`, SDK-183) recorded its capability
+      // the way a shape mint does, and the record is the ownership evidence:
+      // a name can carry two mods' prefixes as segments, so containment alone
+      // would let either capability claim the item.
+      const exactMint = exactNameMintOf(item);
+      if (exactMint !== undefined) {
+        if (exactMint !== owner) {
+          throw new Error(
+            `The exact-name ${item.type} "${item.id}" was minted by a different capability — ` +
+              `the one for mod prefix "${exactMint.prefix}", not this one for "${prefix}". ` +
+              "Mint it with the same capability that places it."
+          );
+        }
+        return;
+      }
+      // An exact-name registry's own names may carry the prefix at the head,
+      // the tail, or inside, so `startsWith` would refuse legitimate names.
+      // Segment containment is the string evidence for an item that carries
+      // no record — one built outside the capability mint, or a spread copy.
+      if (acceptsExactNames(item.type)) {
+        if (!carriesPrefixSegment(item.id, prefix)) {
+          throw new Error(
+            `Content id "${item.id}" does not belong to mod prefix "${prefix}" ` +
+              `(a ${item.type} name carries the prefix as a "_"-delimited segment)`
           );
         }
         return;

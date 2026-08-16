@@ -399,6 +399,16 @@ export function aliasStructFieldsOf(category: string): readonly ContentField[] {
   return fields;
 }
 
+/**
+ * The exact-name ownership measure (SDK-183): whether `id` carries `prefix` as
+ * a whole `_`-delimited segment — head, interior, or tail — and is more than
+ * the bare prefix. Padding both sides with `_` makes the three positions, and
+ * a multi-segment prefix, one test; the reference guard uses the same idiom.
+ */
+export function carriesPrefixSegment(id: string, prefix: string): boolean {
+  return id !== prefix && `_${id}_`.includes(`_${prefix}_`);
+}
+
 /** Generated description of one authorable content registry. */
 export interface ContentRegistryDescriptor {
   readonly type: string;
@@ -436,6 +446,14 @@ export interface ContentRegistryDescriptor {
    * head, and only the head.
    */
   readonly mintHead?: string;
+  /**
+   * Set when the registry's names are raw engine labels with an exact-name
+   * mint (`prefix: false`, SDK-183). An own definition of such a registry may
+   * carry the mod prefix as any `_`-delimited segment of its name — head,
+   * interior, or tail — so the ownership checks measure segment containment
+   * rather than `startsWith`. The bare prefix alone is never a valid name.
+   */
+  readonly exactNames?: true;
   /**
    * Set when the registry's definitions live one level inside a file-level
    * wrapper block instead of at the top level — sprites sit inside

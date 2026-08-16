@@ -50,6 +50,52 @@ describe("minted GFX name types", () => {
   });
 });
 
+describe("exact-name mint types (SDK-183)", () => {
+  it("keeps the default mint's minted literal under the widened charset", () => {
+    const mesh = mod.pdxmesh("tracer_M1S1_mesh", { file: "gfx/models/x.mesh" });
+    expectTypeOf(mesh.id).toEqualTypeOf<"gfx_types_tracer_M1S1_mesh">();
+    const explicit = mod.pdxmesh("hull_explicit", { file: "gfx/models/x.mesh" }, { prefix: true });
+    expectTypeOf(explicit.id).toEqualTypeOf<"gfx_types_hull_explicit">();
+  });
+
+  it("types an exact name as its own literal in all three positions", () => {
+    const head = mod.pdxmesh(
+      "gfx_types_hull_MK2",
+      { file: "gfx/models/x.mesh" },
+      {
+        prefix: false,
+      }
+    );
+    expectTypeOf(head.id).toEqualTypeOf<"gfx_types_hull_MK2">();
+    const interior = mod.pdxparticle(
+      "small_gfx_types_flash",
+      { type: "x_particle" },
+      {
+        prefix: false,
+      }
+    );
+    expectTypeOf(interior.id).toEqualTypeOf<"small_gfx_types_flash">();
+    const tail = mod.pdxmesh("Turret_gfx_types", { file: "gfx/models/y.mesh" }, { prefix: false });
+    expectTypeOf(tail.id).toEqualTypeOf<"Turret_gfx_types">();
+  });
+
+  it("refuses an exact name missing the prefix segment at compile time", () => {
+    // @ts-expect-error — no `_`-delimited "gfx_types" segment anywhere in the name
+    mod.pdxmesh("small_flash_mesh", { file: "gfx/models/x.mesh" }, { prefix: false });
+    // @ts-expect-error — the bare prefix alone names nothing
+    mod.pdxmesh("gfx_types", { file: "gfx/models/x.mesh" }, { prefix: false });
+    // @ts-expect-error — containment must be a whole segment, not a substring
+    mod.pdxparticle("gfx_typesX_flash", { type: "x_particle" }, { prefix: false });
+  });
+
+  it("offers no options argument outside the two asset-label registries", () => {
+    // @ts-expect-error — spriteType takes name and def only
+    mod.spriteType("options_icon", { textureFile: "gfx/a.dds" }, { prefix: false });
+    // @ts-expect-error — a segmented registry takes name and def only
+    mod.edict("options_edict", { name: "x", length: 1 }, { prefix: false });
+  });
+});
+
 describe("the sprite brand join", () => {
   // `referenceName: "sprite"` is the whole mechanism: an authored sprite and
   // the packaged `vanilla.sprite` names brand alike, so every generated

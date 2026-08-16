@@ -33,3 +33,13 @@ export function contentDescriptor(type: string): ContentRegistryDescriptor | und
 export function mintHeadOf(type: string): string {
   return BY_TYPE.get(type)?.mintHead ?? "";
 }
+
+/**
+ * Whether this registry's own names may carry the mod prefix as any
+ * `_`-delimited segment (`ContentRegistryDescriptor.exactNames`) rather than
+ * only as their head. An unknown registry answers `false` for the same reason
+ * `mintHeadOf` answers `""`.
+ */
+export function acceptsExactNames(type: string): boolean {
+  return BY_TYPE.get(type)?.exactNames === true;
+}
