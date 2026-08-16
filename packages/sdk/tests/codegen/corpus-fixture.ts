@@ -30,7 +30,11 @@ import { createHash } from "node:crypto";
 import { mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { CONTENT_MANIFEST } from "@pdx-ts/codegen-cwt/content-manifest";
+import {
+  CONTENT_MANIFEST,
+  registryNameOf,
+  type ContentManifestEntry,
+} from "@pdx-ts/codegen-cwt/content-manifest";
 import {
   readRegistryCorpus,
   spliceMembersOf,
@@ -50,6 +54,7 @@ import { Emitter } from "@pdx-ts/codegen-cwt/emit/types";
 import { parseModifierDocs } from "@pdx-ts/codegen-cwt/logs/modifier-docs";
 import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
 import { CONTENT_DECLINED_FIELDS } from "@pdx-ts/codegen-cwt/overlay";
+import { relativeRegistryPath, walkRegistryFiles } from "@pdx-ts/codegen-cwt/registry-files";
 import { parse, scalarText, type PdxValue } from "@pdx-ts/pdxscript";
 
 import { InstallNotFoundError } from "../../src/errors.ts";
@@ -232,7 +237,7 @@ function declinedPathsOf(
  * install.
  */
 export interface RegistryMeasurement {
-  /** Generated registry name, `as ?? type` — also the fixture file stem. */
+  /** Generated registry name (`registryNameOf`) — also the fixture file stem. */
   readonly registry: string;
   /** Directory under the install root the corpus reads, e.g. `common/technology`. */
   readonly registryPath: string;
@@ -241,6 +246,8 @@ export interface RegistryMeasurement {
   readonly excludedKey: string | null;
   /** `path_extension`, dotted and resolved — which files in the directory count. */
   readonly pathExtension: string;
+  /** `path_strict`: the registry's subdirectories belong to other CWT types. */
+  readonly pathStrict: boolean;
   /** `skip_root_key`: the root blocks the definitions sit one level inside. */
   readonly skipRootKeys: readonly string[];
   /** Which block-valued fields the corpus reader must descend into, from the emission. */
@@ -256,8 +263,8 @@ export interface RegistryMeasurement {
 }
 
 export const MEASUREMENTS: readonly RegistryMeasurement[] = CONTENT_MANIFEST.map((manifest) => {
-  const entry = manifest as { type: string; keyword?: string; as?: string };
-  const registry = entry.as ?? entry.type;
+  const entry: ContentManifestEntry = manifest;
+  const registry = registryNameOf(entry);
   const type = rules.contentTypes.get(entry.type);
   const registryPath = type?.path?.replace(/^game\//, "") ?? "";
   const body = rules.bodies.get(entry.type);
@@ -265,7 +272,7 @@ export const MEASUREMENTS: readonly RegistryMeasurement[] = CONTENT_MANIFEST.map
   const emission =
     type === undefined || body === undefined
       ? null
-      : emitContentType(emitter, type, body, registry);
+      : emitContentType(emitter, type, body, registry, entry.as);
   emitter.endFile();
   // Nested paths come back prefixed with the registry (`situation_type.stages.icon`,
   // matching the dotted paths CONTENT_DECLINED_FIELDS/CONTENT_FIELD_OVERRIDES use)
@@ -286,6 +293,7 @@ export const MEASUREMENTS: readonly RegistryMeasurement[] = CONTENT_MANIFEST.map
     nameField: type?.nameField ?? null,
     excludedKey: type?.keyFilter?.negated === true ? type.keyFilter.key : null,
     pathExtension: type?.pathExtension ?? ".txt",
+    pathStrict: type?.pathStrict ?? false,
     skipRootKeys: type?.skipRootKeys ?? [],
     descents: emission?.corpusDescents ?? [],
     // Which blocks the reader must descend into is the emitter's answer: a
@@ -523,23 +531,27 @@ function sha256(text: string): string {
 
 /**
  * A drift-detectable statement of the registry directory's content: sorted
- * `name:sha256(bytes)` lines, hashed. The bytes reach nothing but the hash.
+ * `path:sha256(bytes)` lines, hashed. The bytes reach nothing but the hash.
+ *
+ * The path is relative to the registry's own directory and `/`-separated, so a
+ * registry whose files sit directly in it keeps the bare name it always
+ * fingerprinted — only the registries whose files nest see their fingerprint
+ * move, and those had no fingerprint worth the name before, since the walk did
+ * not reach the nested files at all.
  */
-function fingerprintRegistryDir(dir: string, extension: string): string {
-  let names: string[];
-  try {
-    names = readdirSync(dir)
-      .filter((name) => name.endsWith(extension))
-      .sort(compareUtf8);
-  } catch {
+function fingerprintRegistryDir(dir: string, extension: string, pathStrict: boolean): string {
+  const files = walkRegistryFiles(dir, extension, !pathStrict);
+  if (files.length === 0) {
     return "missing";
   }
-  const lines = names.map(
-    (name) =>
-      `${name}:${createHash("sha256")
-        .update(readFileSync(path.join(dir, name)))
-        .digest("hex")}`
-  );
+  const lines = files
+    .map(
+      (file) =>
+        `${relativeRegistryPath(dir, file)}:${createHash("sha256")
+          .update(readFileSync(file))
+          .digest("hex")}`
+    )
+    .sort(compareUtf8);
   return sha256(lines.join("\n"));
 }
 
@@ -562,19 +574,24 @@ export function extractCorpus(installPath: string): ExtractedCorpus {
   const registries = MEASUREMENTS.map((measurement) =>
     serializeCorpus(
       measurement.registry,
-      readRegistryCorpus(
-        installPath,
-        measurement.registryPath,
-        measurement.keyword,
-        measurement.nameField,
-        measurement.descents,
-        measurement.spliceMembers,
-        measurement.excludedKey,
-        { extension: measurement.pathExtension, skipRootKeys: measurement.skipRootKeys }
-      ),
+      readRegistryCorpus(installPath, {
+        registry: measurement.registry,
+        registryPath: measurement.registryPath,
+        keyword: measurement.keyword,
+        nameField: measurement.nameField,
+        descents: measurement.descents,
+        spliceMembers: measurement.spliceMembers,
+        excludedKey: measurement.excludedKey,
+        layout: {
+          extension: measurement.pathExtension,
+          pathStrict: measurement.pathStrict,
+          skipRootKeys: measurement.skipRootKeys,
+        },
+      }),
       fingerprintRegistryDir(
         path.join(installPath, measurement.registryPath),
-        measurement.pathExtension
+        measurement.pathExtension,
+        measurement.pathStrict
       ),
       scalarTuples(installPath, measurement, variables)
     )

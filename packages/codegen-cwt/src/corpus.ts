@@ -23,7 +23,7 @@
  * author can satisfy.
  */
 
-import { readdirSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import {
   isScalar,
@@ -34,7 +34,9 @@ import {
   type PdxValue,
 } from "@pdx-ts/pdxscript";
 
+import { CasingFolder, OBSERVED_CASINGS } from "./casing.ts";
 import type { EmittedField } from "./emit/fields.ts";
+import { relativeRegistryPath, walkRegistryFiles } from "./registry-files.ts";
 import type { RuleScopes } from "./scope-facts.ts";
 
 /**
@@ -637,6 +639,12 @@ export interface RegistryLayout {
   /** `path_extension`, dotted. Absent means the game's `.txt` default. */
   readonly extension?: string;
   /**
+   * `path_strict = yes`: the registry's files are the ones directly in its
+   * directory, and its subdirectories belong to other CWT types. Absent means
+   * the reader descends, which is what `interface/` and `gfx/models/` need.
+   */
+  readonly pathStrict?: boolean;
+  /**
    * `skip_root_key` as a descent path: one segment per level the definitions
    * sit below the file's top level, outermost first. `any` is a wildcard
    * segment matching every block key at its own level — `swapped_job` declares
@@ -655,13 +663,17 @@ export interface RegistryLayout {
  * segment at its level belongs to something else in the same file, so it drops
  * out and nothing below it is counted either.
  */
-function rootDefinitions(items: readonly PdxItem[], skipRootKeys: readonly string[]): PdxItem[] {
+function rootDefinitions(
+  items: readonly PdxItem[],
+  skipRootKeys: readonly string[],
+  matches: (spelling: string, canonical: string) => boolean
+): PdxItem[] {
   let level = [...items];
   for (const segment of skipRootKeys) {
     level = level.flatMap((item) =>
       item.kind === "entry" &&
       item.value.kind === "container" &&
-      (segment === "any" || item.key === segment)
+      (segment === "any" || matches(item.key, segment))
         ? item.value.items
         : []
     );
@@ -670,73 +682,121 @@ function rootDefinitions(items: readonly PdxItem[], skipRootKeys: readonly strin
 }
 
 /**
- * Reads every definition a registry's directory contains.
+ * One definition with every key at every depth replaced by its canonical
+ * spelling.
  *
- * `keyword` distinguishes the two layouts. Normally each top-level entry is one
- * definition keyed by its id. Where the rules set `name_field`, the top-level
- * key is a repeated keyword instead and the id sits in a body field — so only
- * entries under that keyword count, and the name field is not a field.
- *
- * `descents` names this registry's block-valued fields (if any), so their
- * contents are visible too instead of collapsing into one opaque top-level key
- * — see {@link DescentNode}.
- *
- * `layout` is the registry's file layout as the rules declare it: which
- * extension its files carry, and how far inside them the definitions sit. Both
- * change what counts as a definition, so a reader given neither would measure a
- * `.gfx` registry as empty rather than as unread.
+ * Whole-tree rather than key-by-key at the point of use: the same variant
+ * shows up inside a descended block as readily as at the top level — the game
+ * writes `animationtexturefile` 575 times inside `spriteType.animation` and
+ * never the `animationtextureFile` the rules declare — and a reader that folded
+ * only the outer level would report the interior as a field no author can
+ * write. Values are shared, not copied; only the entry spine is rebuilt.
  */
-export function readRegistryCorpus(
-  root: string,
-  registryPath: string,
-  keyword: string | null,
-  nameField: string | null,
-  descents: readonly DescentNode[] = [],
-  spliceMembers: readonly SpliceMember[] = [],
+function foldKeys(container: PdxContainer, fold: (spelling: string) => string): PdxContainer {
+  return {
+    ...container,
+    items: container.items.map((item) => {
+      if (item.kind === "container") {
+        return foldKeys(item, fold);
+      }
+      if (item.kind !== "entry") {
+        return item;
+      }
+      return {
+        ...item,
+        key: fold(item.key),
+        value: item.value.kind === "container" ? foldKeys(item.value, fold) : item.value,
+      };
+    }),
+  };
+}
+
+/** Everything {@link readRegistryCorpus} needs about one registry. */
+export interface RegistryRead {
+  /** Generated registry name — the key {@link OBSERVED_CASINGS} is looked up by. */
+  readonly registry: string;
+  /** Directory under the install root the corpus reads, e.g. `common/technology`. */
+  readonly registryPath: string;
+  /**
+   * The repeated top-level key each definition is written under, for registries
+   * CWT marks with `name_field`. Normally each top-level entry is one definition
+   * keyed by its id; with a keyword the id sits in a body field instead, so only
+   * entries under that keyword count and the name field is not a field.
+   */
+  readonly keyword: string | null;
+  readonly nameField: string | null;
+  /**
+   * This registry's block-valued fields, so their contents are visible instead
+   * of collapsing into one opaque top-level key — see {@link DescentNode}.
+   */
+  readonly descents?: readonly DescentNode[];
+  readonly spliceMembers?: readonly SpliceMember[];
   /**
    * A top-level key belonging to a sibling type that shares this directory,
    * from a negated `## type_key_filter <> key` — `random_list` under
    * `common/solar_system_initializers`. Counting one as a definition would
    * measure another type's body against this registry's fields.
    */
-  excludedKey: string | null = null,
-  layout: RegistryLayout = {}
-): RegistryCorpus {
-  const dir = path.join(root, registryPath);
-  const extension = layout.extension ?? ".txt";
-  let names: string[];
-  try {
-    // Sorted because `readdirSync` order is filesystem-dependent and the
-    // observations are committed as a fixture: the capped value sample keeps
-    // whichever scalars arrive first, so an unstable read order would diff on
-    // every re-extraction of an unchanged install.
-    names = readdirSync(dir)
-      .filter((name) => name.endsWith(extension))
-      .sort();
-  } catch {
+  readonly excludedKey?: string | null;
+  /**
+   * The registry's file layout as the rules declare it: which extension its
+   * files carry, whether its subdirectories are its own, and how far inside a
+   * file the definitions sit. All three change what counts as a definition, so
+   * a reader given none of them would measure a `.gfx` registry as empty
+   * rather than as unread.
+   */
+  readonly layout?: RegistryLayout;
+}
+
+/**
+ * Reads every definition a registry's directory holds.
+ *
+ * Key spellings are folded through {@link OBSERVED_CASINGS} for the registries
+ * that have a table — the keyword, the envelope segments, and every observed
+ * field key — so the game's own mixed casing lands on one observation instead
+ * of two, and an unaudited near-miss fails loudly. Registries with no table are
+ * read exactly as written, which is every `common/` registry.
+ */
+export function readRegistryCorpus(root: string, read: RegistryRead): RegistryCorpus {
+  const layout = read.layout ?? {};
+  const dir = path.join(root, read.registryPath);
+  const files = walkRegistryFiles(dir, layout.extension ?? ".txt", layout.pathStrict !== true);
+  if (files.length === 0) {
     return { definitions: 0, files: 0, occurrences: new Map() };
   }
-  const descentByField = new Map(descents.map((node) => [node.field, node]));
-  const spliceByKey = new Map(spliceMembers.map((member) => [member.key, member]));
+  const skipRootKeys = layout.skipRootKeys ?? [];
+  const casings = OBSERVED_CASINGS.get(read.registry);
+  const folder = casings === undefined ? null : new CasingFolder(read.registry, casings);
+  const descentByField = new Map((read.descents ?? []).map((node) => [node.field, node]));
+  const spliceByKey = new Map((read.spliceMembers ?? []).map((member) => [member.key, member]));
   const occurrences = new Map<string, FieldObservation>();
   let definitions = 0;
-  for (const name of names) {
-    const parsed = parse(readFileSync(path.join(dir, name), "utf8"));
-    for (const item of rootDefinitions(parsed.items, layout.skipRootKeys ?? [])) {
+  for (const file of files) {
+    const relative = relativeRegistryPath(dir, file);
+    const matches = (spelling: string, canonical: string): boolean =>
+      folder === null ? spelling === canonical : folder.matches(spelling, canonical, relative);
+    const fold = (spelling: string): string =>
+      folder === null ? spelling : folder.fold(spelling, relative);
+    const parsed = parse(readFileSync(file, "utf8"));
+    for (const item of rootDefinitions(parsed.items, skipRootKeys, matches)) {
       if (item.kind !== "entry" || item.value.kind !== "container") {
         continue;
       }
-      if (keyword !== null && item.key !== keyword) {
+      if (read.keyword !== null && !matches(item.key, read.keyword)) {
         continue;
       }
-      if (item.key === excludedKey) {
+      if (item.key === read.excludedKey) {
         continue;
       }
       definitions += 1;
+      // Folded once, over the whole definition, so every level below is read
+      // in canonical spellings — `descend` and its `record*` helpers never see
+      // a variant and need to know nothing about casing.
+      const definition = folder === null ? item.value : foldKeys(item.value, fold);
       const written = new Map<string, PdxValue[]>();
       const blockArity = new Map<string, boolean>();
-      for (const field of item.value.items) {
-        if (field.kind !== "entry" || field.key === nameField) {
+      for (const field of definition.items) {
+        if (field.kind !== "entry" || field.key === read.nameField) {
           continue;
         }
         written.set(field.key, [...(written.get(field.key) ?? []), field.value]);
@@ -752,7 +812,7 @@ export function readRegistryCorpus(
       observe(occurrences, written, blockArity);
     }
   }
-  return { definitions, files: names.length, occurrences };
+  return { definitions, files: files.length, occurrences };
 }
 
 /**

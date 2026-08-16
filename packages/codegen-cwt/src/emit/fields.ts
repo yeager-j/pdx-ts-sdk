@@ -93,6 +93,12 @@ export interface LoweredField {
    * and rides into `admits` so the gate knows the block holds bare blocks.
    */
   readonly wrapped?: boolean;
+  /**
+   * Doc lines the lowering itself contributes, beyond the rules' own `###`
+   * comments — how an overlay decision that weakens a type explains itself on
+   * the member a modder hovers.
+   */
+  readonly docs?: readonly string[];
   /** Extra top-level declarations a nested struct level needed, prepended by the caller. */
   readonly code?: string;
   /** Paths bubbled up from a nested struct level, already prefixed. */
@@ -1338,8 +1344,10 @@ function structShape(
     }
     const optional = memberOptional(group, CONTENT_FIELD_OVERRIDES.get(fieldPath));
     members.push(
-      docComment([...new Set(group.flatMap((inner) => inner.docs))], "  ") +
-        `  ${camelCase(fieldName)}${optional ? "?" : ""}: ${lowered.memberType};\n`
+      docComment(
+        [...new Set([...group.flatMap((inner) => inner.docs), ...(lowered.docs ?? [])])],
+        "  "
+      ) + `  ${camelCase(fieldName)}${optional ? "?" : ""}: ${lowered.memberType};\n`
     );
     fieldMetadata.push(lowered.metadata);
     if (lowered.code !== undefined) {
@@ -1919,6 +1927,57 @@ function assertedArity(
   return group.map((field) => ({ ...field, cardinality: { ...field.cardinality, max } }));
 }
 
+/**
+ * Applies `uncheckedString` by rewriting the declaration itself: a `<type>`
+ * reference becomes a plain `scalar`, which is already how CWT spells "any
+ * string" and which every emitter below already knows how to lower.
+ *
+ * Rewriting the rule rather than patching the lowered result is what keeps the
+ * member type, the metadata's `conversion`, the absent `refTypes` and the
+ * corpus gate's view of the field from having to be corrected one by one. The
+ * doc line rides on the same field, so it reaches the generated comment through
+ * the ordinary path.
+ *
+ * The guard is the point of the lever being narrow: every declaration in the
+ * group must be a bare `<type>` reference and the row must request no shape.
+ * Anything else and this would be erasing a check nobody asked it to.
+ */
+function assertedUncheckedString(
+  emitter: Emitter,
+  group: readonly RuleField[],
+  override: ContentFieldOverride | undefined,
+  path: string
+): { readonly group: readonly RuleField[]; readonly docs: readonly string[] } {
+  if (override?.uncheckedString !== true) {
+    return { group, docs: [] };
+  }
+  const targets = group.map((field) => field.type);
+  if (override.shape !== undefined || targets.some((type) => type.kind !== "typeRef")) {
+    const spelled = targets.map((type) => type.kind).join(", ");
+    throw new Error(
+      `The overlay marks ${path} uncheckedString, but its lowering is not a plain type ` +
+        `reference (shape: ${override.shape ?? "none"}, declarations: ${spelled}). The lever ` +
+        "only weakens a reference check; it must not erase any other checking."
+    );
+  }
+  const docs = targets.flatMap((type) => {
+    const name = (type as Extract<RuleType, { kind: "typeRef" }>).name;
+    const target = emitter.rules.contentTypes.get(name);
+    const where =
+      target?.path == null
+        ? "outside the SDK's typed registries"
+        : `in \`${target.pathExtension ?? ".txt"}\` files under ` +
+          `\`${target.path.replace(/^game\//, "")}\``;
+    return [
+      "Not checked: any string is accepted here.",
+      `The \`<${name}>\` ids this names live ${where},`,
+      "which the SDK carries as opaque Assets rather than as a typed registry,",
+      "so there is no id set to check a spelling against.",
+    ];
+  });
+  return { group: group.map((field) => ({ ...field, type: { kind: "scalar" } })), docs };
+}
+
 export function pickOrdinary(
   emitter: Emitter,
   declared: readonly RuleField[],
@@ -1928,21 +1987,31 @@ export function pickOrdinary(
   widening: string | undefined,
   path: string
 ): LoweredField | null {
-  const group = assertedArity(declared, override);
+  const unchecked = assertedUncheckedString(
+    emitter,
+    assertedArity(declared, override),
+    override,
+    path
+  );
+  const group = unchecked.group;
+  const documented = (lowered: LoweredField | null): LoweredField | null =>
+    lowered === null || unchecked.docs.length === 0
+      ? lowered
+      : { ...lowered, docs: unchecked.docs };
   if (override?.shape === undefined && group.length > 1) {
     const dual = lowerDual(emitter, group, name, ctx, override, widening, path);
     if (dual !== null) {
-      return dual;
+      return documented(dual);
     }
     const union = lowerScalarUnion(emitter, group, name, widening);
     if (union !== null) {
-      return union;
+      return documented(union);
     }
   }
   for (const field of group) {
     const lowered = lowerOrdinary(emitter, field, name, ctx, override, widening, path);
     if (lowered !== null) {
-      return lowered;
+      return documented(lowered);
     }
   }
   return null;

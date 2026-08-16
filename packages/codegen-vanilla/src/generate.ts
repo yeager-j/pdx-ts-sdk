@@ -235,7 +235,7 @@ export function generateVanillaPackage(options: GenerateOptions): {
     let trieReport: TrieReport | null = null;
     if (read.ids.length > threshold || spec.oversized === true) {
       const buckets = buildTrie(read.ids, read.sourcePaths, spec.bucket, basename(spec.path));
-      const emission = emitTrie(spec.registry, buckets, gate, gameVersion);
+      const emission = emitTrie(spec.registry, spec.referenceName, buckets, gate, gameVersion);
       for (const [path, text] of emission.files) {
         files.set(path, text);
       }

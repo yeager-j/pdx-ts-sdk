@@ -1,0 +1,11 @@
+spriteTypes = {
+	spriteType = {
+		name = content_test_sprite_type_council_icon
+		textureFile = gfx/interface/icons/content_test_council.dds
+		alwaysTransparent = no
+		noOfFrames = 2
+		animation = {
+			animationtextureFile = gfx/interface/icons/content_test_pulse.dds
+		}
+	}
+}

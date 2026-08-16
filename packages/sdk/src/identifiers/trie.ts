@@ -1,11 +1,11 @@
 /**
  * Shared runtime behind every oversized `vanilla.*` export
- * (`vanilla.sprite`, `vanilla.sound`, `vanilla.soundEffect`,
+ * (`vanilla.spriteType`, `vanilla.sound`, `vanilla.soundEffect`,
  * `vanilla.staticModifier`): one Proxy over a function, both callable and
  * navigable, built once here rather than once per registry in
  * `src/generated/vanilla-refs.ts`.
  *
- * - Called with an id (`vanilla.sprite("GFX_ship_combat_1")`) it returns
+ * - Called with an id (`vanilla.spriteType("GFX_ship_combat_1")`) it returns
  *   `{ id }` unchanged — the checked-string-call form, for an id copied
  *   straight out of a game file. `CheckedVanillaId` does the actual checking,
  *   at compile time; this function performs none of it at runtime.

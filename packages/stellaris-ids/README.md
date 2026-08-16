@@ -34,13 +34,14 @@ import { vanilla } from "@pdx-ts/sdk";
 vanilla.technology("tech_lasers_1"); // ok
 vanilla.technology("tech_lazers_1"); // compile error
 
-// Oversized registries (sprites 9.2k, sounds 5.9k, static modifiers 3.1k)
-// are also navigable, bucketed by the vanilla file each id is defined in.
-// Buckets are navigation only; the leaf spells the id verbatim:
-vanilla.sprite.eventpictures.GFX_evt_ship_in_orbit;
+// Oversized registries (sprite types 9.2k, sounds 5.9k, meshes 3.3k,
+// static modifiers 3.1k) are also navigable, bucketed by the vanilla file
+// each id is defined in. Buckets are navigation only; the leaf spells the
+// id verbatim:
+vanilla.spriteType.eventpictures.GFX_evt_ship_in_orbit;
 vanilla.staticModifier.deficit.food_deficit; // → "food_deficit"
 vanilla.soundEffect.toxoids.events.tox_events.event_first_contact_toxoid;
-vanilla.sprite("GFX_evt_ship_in_orbit"); // the checked call form, for copy-paste
+vanilla.spriteType("GFX_evt_ship_in_orbit"); // the checked call form, for copy-paste
 
 // Events navigate by namespace and local id. The leaf carries the full id,
 // exact event scope, and event kind, so only the matching fire effect accepts it:
@@ -119,10 +120,10 @@ Two guards keep the pin honest:
 src/
 ├── index.ts             type re-exports; zero runtime
 ├── tables.ts            the five lookup tables `@pdx-ts/sdk` imports
-├── registries/          one file per registry (43): literal-union id types;
-│                        the four oversized registries are directories of
-│                        per-bucket trie files instead
-│                        (registries/sprite/eventpictures.ts, ...)
+├── registries/          one file per registry (51): literal-union id types;
+│                        the seven oversized ones carry a directory of
+│                        per-bucket trie files beside that file
+│                        (registries/sprite-type/eventpictures.ts, ...)
 ├── events/              one types-only file per namespace plus the event trie
 ├── scripted-triggers.ts name → parameter-object tables (1,618 triggers)
 ├── scripted-effects.ts  same for effects (1,657)

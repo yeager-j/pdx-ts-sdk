@@ -54,7 +54,7 @@ export const resonanceTheory = events.ship(1, {
   ],
 
   // The artwork the event window shows. The field takes a vanilla sprite id as
-  // a plain string, as given — nothing checks a bare literal. `vanilla.sprite(...)`
+  // a plain string, as given — nothing checks a bare literal. `vanilla.spriteType(...)`
   // from @pdx-ts/sdk is the checked form, against the real id set when
   // @pdx-ts/stellaris-ids is installed.
   // picture: "GFX_evt_mysterious_signal",

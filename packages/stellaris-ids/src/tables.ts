@@ -56,6 +56,9 @@ import type { VanillaGraphicalCultureId } from "./registries/graphical-culture.t
 import type { VanillaJobId } from "./registries/job.ts";
 import type { VanillaMegastructureId } from "./registries/megastructure.ts";
 import type { VanillaOpinionModifierId } from "./registries/opinion-modifier.ts";
+import type { VanillaPdxmeshId } from "./registries/pdxmesh.ts";
+import type { VanillaPdxmeshTrie } from "./registries/pdxmesh/index.ts";
+import type { VanillaPdxparticleId } from "./registries/pdxparticle.ts";
 import type { VanillaPlanetClassId } from "./registries/planet-class.ts";
 import type { VanillaPlanetModifierId } from "./registries/planet-modifier.ts";
 import type { VanillaResourceId } from "./registries/resource.ts";
@@ -72,8 +75,8 @@ import type { VanillaSoundId } from "./registries/sound.ts";
 import type { VanillaSoundTrie } from "./registries/sound/index.ts";
 import type { VanillaSpecialProjectId } from "./registries/special-project.ts";
 import type { VanillaSpeciesClassId } from "./registries/species-class.ts";
-import type { VanillaSpriteId } from "./registries/sprite.ts";
-import type { VanillaSpriteTrie } from "./registries/sprite/index.ts";
+import type { VanillaSpriteTypeId } from "./registries/sprite-type.ts";
+import type { VanillaSpriteTypeTrie } from "./registries/sprite-type/index.ts";
 import type { VanillaStarClassId } from "./registries/star-class.ts";
 import type { VanillaStarbaseLevelId } from "./registries/starbase-level.ts";
 import type { VanillaStaticModifierId } from "./registries/static-modifier.ts";
@@ -127,9 +130,11 @@ export interface VanillaIds {
   readonly event_chain: VanillaEventChainId;
   readonly special_project: VanillaSpecialProjectId;
   readonly megastructure: VanillaMegastructureId;
+  readonly spriteType: VanillaSpriteTypeId;
+  readonly pdxmesh: VanillaPdxmeshId;
+  readonly pdxparticle: VanillaPdxparticleId;
   readonly sound: VanillaSoundId;
   readonly sound_effect: VanillaSoundEffectId;
-  readonly sprite: VanillaSpriteId;
   readonly resource: VanillaResourceId;
   readonly situation_log_category: VanillaSituationLogCategoryId;
   readonly star_class: VanillaStarClassId;
@@ -148,6 +153,11 @@ export interface VanillaEnums {
   readonly component_slot: VanillaComponentSlotMember;
   readonly starbase_module_category: VanillaStarbaseModuleCategoryMember;
   readonly event_chain_counter: VanillaEventChainCounterMember;
+  readonly model_animation: VanillaModelAnimationMember;
+  readonly model_state: VanillaModelStateMember;
+  readonly model_locator: VanillaModelLocatorMember;
+  readonly model_attachment: VanillaModelAttachmentMember;
+  readonly particle_force: VanillaParticleForceMember;
   readonly intel_token: VanillaIntelTokenMember;
   readonly job_tag: VanillaJobTagMember;
   readonly mission_counter: VanillaMissionCounterMember;
@@ -161,11 +171,6 @@ export interface VanillaEnums {
   readonly pop_faction_action: VanillaPopFactionActionMember;
   readonly trait_tag: VanillaTraitTagMember;
   readonly light_animation: VanillaLightAnimationMember;
-  readonly model_animation: VanillaModelAnimationMember;
-  readonly model_state: VanillaModelStateMember;
-  readonly model_locator: VanillaModelLocatorMember;
-  readonly model_attachment: VanillaModelAttachmentMember;
-  readonly particle_force: VanillaParticleForceMember;
   readonly scrollbar_type: VanillaScrollbarTypeMember;
   readonly extended_scrollbar_type: VanillaExtendedScrollbarTypeMember;
   readonly map_setup_scenario_system_id: VanillaMapSetupScenarioSystemIdMember;
@@ -175,9 +180,10 @@ export interface VanillaScriptedEffects extends VanillaScriptedEffectParams {}
 export interface VanillaTries {
   readonly event: VanillaEventTrie;
   readonly static_modifier: VanillaStaticModifierTrie;
+  readonly spriteType: VanillaSpriteTypeTrie;
+  readonly pdxmesh: VanillaPdxmeshTrie;
   readonly sound: VanillaSoundTrie;
   readonly sound_effect: VanillaSoundEffectTrie;
-  readonly sprite: VanillaSpriteTrie;
   readonly deposit: VanillaDepositTrie;
   readonly anomaly_category: VanillaAnomalyCategoryTrie;
 }

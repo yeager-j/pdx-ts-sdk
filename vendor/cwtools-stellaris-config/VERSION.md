@@ -4,9 +4,9 @@ Upstream: https://github.com/yeager-j/cwtools-stellaris-config
 
 | | |
 | --- | --- |
-| Commit | `ec350bdb4f9aa790e45ec88493b03046d5252439` |
-| Committed | 2026-08-12 |
-| Fetched | 2026-08-12 |
+| Commit | `a4ee61a099b8b20122362aabd250fb4bef971ce0` |
+| Committed | 2026-08-15 |
+| Fetched | 2026-08-15 |
 
 Licensed under the upstream MIT license, reproduced in `LICENSE`.
 
@@ -42,11 +42,11 @@ this snapshot can carry a fix before upstream merges it.
 
 ### Fixes this snapshot carries ahead of upstream
 
-Eight commits carried on our fork ahead of DragonKnightOfBreeze's `master`.
+Nine commits carried on our fork ahead of DragonKnightOfBreeze's `master`.
 The earlier rule corrections each delete a row from
 `packages/codegen-cwt/src/overlay.ts` or a special case in the loader rather
-than adding one; the GFX correction supplies the upstream-true rules needed by
-the upcoming GFX codegen work:
+than adding one; the GFX corrections supply the upstream-true rules needed by
+the GFX codegen work:
 
 - `2b960cc` `situations.cwt` `total_progress` declared `value_int_field`, a
   typo for `int_value_field`. Retires the loader's special case in
@@ -71,7 +71,16 @@ the upcoming GFX codegen work:
   the game's `scopes.log` and 27 documented triggers already treat as a
   scope. Retires the overlay's `EXTRA_SCOPES`.
 - `ec350bd` GFX type paths include the required `game/` root, and
-  `type[particle]` filters on the game's `pdxparticle` definition key.
+  `gfx/particles.cwt` gains a `## type_key_filter` for the game's `pdxparticle`
+  definition key.
+- `a4ee61a` corrects where `ec350bd` attached that filter. It sat on
+  `type[particle_type]`, one block below the type it describes. The game writes
+  `objectTypes = { pdxparticle = { name type scale } }` in the 39
+  `gfx/particles/*.gfx` files (1738 definitions) — that is `type[particle]`,
+  whose `path_extension` and `skip_root_key` already matched — and
+  `particle = { name subsystem … }` in the 1089 `*.asset` files (1108
+  definitions), which is `type[particle_type]`. So `pdxparticle` moves onto
+  `type[particle]` and `type[particle_type]` gains `## type_key_filter = particle`.
 
 `country_ship_of_size_limit.show` deliberately stays an overlay row rather
 than becoming a sixth annotation: its scope is inferred from the corpus

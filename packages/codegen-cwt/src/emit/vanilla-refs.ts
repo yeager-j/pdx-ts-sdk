@@ -11,8 +11,12 @@
  * package exports.
  */
 
-import type { ContentManifestEntry, VanillaRefExtra } from "../content-manifest.ts";
-import { camelCase, docComment } from "../naming.ts";
+import {
+  registryNameOf,
+  type ContentManifestEntry,
+  type VanillaRefExtra,
+} from "../content-manifest.ts";
+import { camelCase, docComment, spokenName } from "../naming.ts";
 import type { Emitter } from "./types.ts";
 
 export interface VanillaRefsEmission {
@@ -46,7 +50,7 @@ export function emitVanillaRefs(
 ): VanillaRefsEmission {
   const rows: VanillaRefRow[] = [
     ...manifest.map((entry): VanillaRefRow => {
-      const registry = entry.as ?? entry.type;
+      const registry = registryNameOf(entry);
       return {
         registry,
         refSource: referenceNames.get(registry) ?? entry.type,
@@ -82,14 +86,13 @@ function emitEventRow(): string {
 
 function emitRow(emitter: Emitter, row: VanillaRefRow): string {
   // Every ref this file names must survive into `refs.ts` even if nothing
-  // else in the rules happens to reference it — `sound`, `sound_effect`,
-  // `sprite`, and `resource` are ref-only extras with no other emitter
-  // touching them.
+  // else in the rules happens to reference it — `sound`, `sound_effect`, and
+  // `resource` are ref-only extras with no other emitter touching them.
   emitter.usedRefs.add(row.refSource);
   const refType = emitter.refTypeName(row.refSource);
   const name = camelCase(row.registry);
   const key = JSON.stringify(row.registry);
-  const spoken = row.registry.replaceAll("_", " ");
+  const spoken = spokenName(row.registry);
 
   if (!row.oversized) {
     return (

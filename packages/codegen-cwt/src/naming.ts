@@ -74,6 +74,39 @@ function words(name: string): string[] {
   return name.split(/[^A-Za-z0-9]+/).filter((part) => part !== "");
 }
 
+/**
+ * The same split, plus camel humps: `spriteType` is two words, not one.
+ *
+ * Registry names are mostly the rules' own snake_case, where the two splits
+ * agree. A `name` rename in the content manifest is the exception — it carries
+ * the game's own spelling of a definition keyword, and those are camelCase
+ * (`spriteType`). Splitting them keeps the file name and the prose spelling
+ * readable rather than emitting `spritetype.ts` and "a spriteType".
+ */
+function humpWords(name: string): string[] {
+  return words(name.replace(/([a-z0-9])([A-Z])/g, "$1 $2"));
+}
+
+/**
+ * A registry's generated file stem: `ascension_perk` -> `ascension-perk`,
+ * `spriteType` -> `sprite-type`.
+ */
+export function kebabCase(name: string): string {
+  return humpWords(name)
+    .map((part) => part.toLowerCase())
+    .join("-");
+}
+
+/**
+ * A registry's name as prose, for the generated doc comments a modder reads on
+ * hover: "an ascension perk", "a sprite type".
+ */
+export function spokenName(name: string): string {
+  return humpWords(name)
+    .map((part) => part.toLowerCase())
+    .join(" ");
+}
+
 export function camelCase(name: string): string {
   const [head = "", ...rest] = words(name);
   const start = head === "" ? "" : head[0]!.toLowerCase() + head.slice(1);
@@ -143,6 +176,14 @@ export function referencesIdentifier(code: string, identifier: string): boolean 
 
 export function docComment(lines: readonly string[], indent = ""): string {
   const body = lines.filter((line) => line.trim() !== "");
+  // A `*/` inside the body closes the comment early, so the rest of the line
+  // becomes code and the whole generated file stops parsing — which surfaces as
+  // a Prettier stack trace naming neither the file nor the doc line. One glob
+  // in a derived doc (`gfx/particles/**/*.asset`) is all it takes.
+  const closed = body.find((line) => line.includes("*/"));
+  if (closed !== undefined) {
+    throw new Error(`Doc line closes its own comment with "*/": ${closed}`);
+  }
   if (body.length === 0) {
     return "";
   }

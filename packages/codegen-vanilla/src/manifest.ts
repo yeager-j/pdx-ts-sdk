@@ -8,13 +8,14 @@
  *
  * The explicit rows are the identifier sets the SDK references but does not
  * define content for: scripted triggers and effects (names plus `$PARAM$`
- * lists, for SDK-13), sounds, sprites, and strategic resources. Each names the
+ * lists, for SDK-13), sounds, and strategic resources. Each names the
  * `.cwt` file that declares it, so its path, keyword, and extension are read
  * from the rules rather than written down twice.
  */
 
 import {
   CONTENT_MANIFEST,
+  registryNameOf,
   VANILLA_REF_EXTRAS,
   type VanillaRefExtra,
 } from "@pdx-ts/codegen-cwt/content-manifest";
@@ -29,8 +30,14 @@ export interface VanillaIdRow {
   readonly kind: "ids";
   /** The CWT type name. */
   readonly type: string;
-  /** The id set's name: the type unless one CWT type backs several registries. */
+  /** The id set's name: the type unless the manifest renames it. */
   readonly registry: string;
+  /**
+   * The CWT subtype the registry narrows to, when it is one. Only used to
+   * derive the SDK reference these ids are branded with, which is why it is the
+   * subtype and not the registry name — see `referenceNameOf`.
+   */
+  readonly as?: string;
   /** The declaring `.cwt` file, relative to the config root. */
   readonly source: string;
   /** Top-level keyword, for types the rules mark with `name_field`. */
@@ -61,26 +68,54 @@ export interface VanillaScriptedRow {
 
 export type VanillaManifestRow = VanillaIdRow | VanillaScriptedRow;
 
-const CONTENT_ROWS: readonly VanillaIdRow[] = CONTENT_MANIFEST.map((entry) => ({
-  kind: "ids",
-  type: entry.type,
-  registry: "as" in entry ? entry.as : entry.type,
-  source: entry.source,
-  ...("keyword" in entry ? { keyword: entry.keyword } : {}),
-  ...("oversized" in entry ? { oversized: entry.oversized } : {}),
-}));
+/**
+ * Bucket layouts for the content registries whose files are laid out unlike
+ * `common/`, keyed by the *registry* name.
+ *
+ * Which registries exist is `content-manifest.ts`'s to say; how the install
+ * arranges their files is this generator's, so the table sits here beside
+ * {@link EXTRA_BUCKETS} rather than in the manifest.
+ *
+ * - `spriteType`: `interface/` is one flat directory of `.gfx` files with no
+ *   load-order numbers and no restated token, so the verbatim stem is the
+ *   bucket — the shape the `sprite` ref-only row already had before the
+ *   registry became authorable.
+ * - `pdxmesh`: `gfx/models/` is a deep tree (301 files, up to five levels) whose
+ *   directories are the real categories — DLC, then subject, the way `sound/`
+ *   is. Flattening 3,269 ids onto 301 sibling stem buckets would throw the
+ *   navigation away and collide stems that repeat across directories
+ *   (`effects/cosmic_storms/GravityL.gfx` and kin).
+ */
+const CONTENT_BUCKETS: Partial<Record<string, BucketLayout>> = {
+  spriteType: "file",
+  pdxmesh: "directory",
+};
+
+const CONTENT_ROWS: readonly VanillaIdRow[] = CONTENT_MANIFEST.map((entry) => {
+  const registry = registryNameOf(entry);
+  const bucket = CONTENT_BUCKETS[registry];
+  return {
+    kind: "ids",
+    type: entry.type,
+    registry,
+    ...("as" in entry ? { as: entry.as } : {}),
+    source: entry.source,
+    ...("keyword" in entry ? { keyword: entry.keyword } : {}),
+    ...("oversized" in entry ? { oversized: entry.oversized } : {}),
+    ...(bucket === undefined ? {} : { bucket }),
+  };
+});
 
 /**
  * Identifier sets outside the content manifest.
  *
  * `sound`/`sound_effect` are the two of sound.cwt's seven types whose ids are
  * referenced from script (`decision.sound`, `event.show_sound`); the other five
- * name categories and compressors nothing points at. `sprite` covers
- * `event.picture` and every other `<sprite>` field. `resource` unlocks typing
+ * name categories and compressors nothing points at. `resource` unlocks typing
  * the `Record<string, number>` resource tables.
  *
- * These three are also the only registries whose files are laid out unlike
- * `common/`, so they are the only rows that state a {@link BucketLayout}.
+ * The two sound rows are laid out unlike `common/`, so they state a
+ * {@link BucketLayout}; the GFX registries do too, from {@link CONTENT_BUCKETS}.
  */
 const SCRIPTED_ROWS: readonly VanillaScriptedRow[] = [
   { kind: "scripted", registry: "scripted_trigger", dir: "common/scripted_triggers" },
@@ -90,7 +125,6 @@ const SCRIPTED_ROWS: readonly VanillaScriptedRow[] = [
 const EXTRA_BUCKETS = {
   sound: "directory",
   sound_effect: "directory",
-  sprite: "file",
 } as const satisfies Partial<Record<(typeof VANILLA_REF_EXTRAS)[number]["type"], BucketLayout>>;
 
 const REF_ONLY_ROWS: readonly VanillaIdRow[] = VANILLA_REF_EXTRAS.map((row) => {

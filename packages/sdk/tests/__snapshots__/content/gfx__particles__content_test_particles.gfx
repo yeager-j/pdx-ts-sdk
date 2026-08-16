@@ -1,0 +1,7 @@
+objectTypes = {
+	pdxparticle = {
+		name = content_test_pdxparticle_dust_drift
+		type = content_test_dust_file
+		scale = 0.75
+	}
+}

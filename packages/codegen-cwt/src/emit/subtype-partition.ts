@@ -53,11 +53,16 @@ function relationTo(
     return "self";
   }
   const other = declared.find((candidate) => candidate.name === name);
+  // Only a positive filter on both sides says the two are written under
+  // different keys. A negated one (`## type_key_filter <> room_selector`) says
+  // which key its subtype is *not* written under, which excludes nothing about
+  // the other, so it stays overlapping.
   if (
-    other !== undefined &&
-    other.keyFilter !== null &&
+    other?.keyFilter != null &&
+    !other.keyFilter.negated &&
     self.keyFilter !== null &&
-    other.keyFilter !== self.keyFilter
+    !self.keyFilter.negated &&
+    other.keyFilter.key !== self.keyFilter.key
   ) {
     return "disjoint";
   }

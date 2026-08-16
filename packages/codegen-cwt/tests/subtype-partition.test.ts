@@ -12,11 +12,11 @@ import type { ContentSubtype } from "@pdx-ts/codegen-cwt/cwt/rules";
 import { partitionSubtypeFields } from "@pdx-ts/codegen-cwt/emit/subtype-partition";
 import { describe, expect, it } from "vitest";
 
-function subtype(name: string, keyFilter: string | null): ContentSubtype {
+function subtype(name: string, keyFilter: string | null, negated = false): ContentSubtype {
   return {
     name,
     group: null,
-    keyFilter,
+    keyFilter: keyFilter === null ? null : { key: keyFilter, negated },
     pushScope: null,
     displayName: null,
     absentUnless: null,
@@ -30,6 +30,9 @@ const STRIKE_CRAFT = subtype("strike_craft_component_template", "strike_craft_co
 const PLANET_KILLER = subtype("planet_killer", "weapon_component_template");
 /** Declares no filter at all, so nothing is known to exclude it. */
 const UNFILTERED = subtype("required_component", null);
+/** Two of `sprites.cwt`'s eight, for the compound-predicate case below. */
+const NORMAL = subtype("normal", "spriteType");
+const PROGRESSBAR = subtype("progressbar", "progressbartype");
 
 const DECLARED = [UTILITY, WEAPON, STRIKE_CRAFT, PLANET_KILLER, UNFILTERED];
 
@@ -150,6 +153,38 @@ describe("partitionSubtypeFields", () => {
     expect(names(partitioned)).toEqual(["size", "subtype[planet_killer]", "range"]);
     expect(partitioned[2]!.cardinality).toEqual({ min: 0, max: 1 });
     expect(partitioned[2]!.docs).toEqual(["Reach."]);
+  });
+
+  it("keeps a compound negated arm standing rather than reading it", () => {
+    // `sprites.cwt` writes `subtype[!progressbar&!piechart]` around the whole
+    // plain-sprite body. `parseKey` models one subtype name per arm, so this
+    // arrives as a single negated arm named `progressbar&!piechart` — a name
+    // no declared subtype matches, hence "overlapping", hence kept.
+    //
+    // Pinned because the disposition is load-bearing and not obvious. Kept
+    // means every field survives into `spriteType`, conditional and optional,
+    // which is right; dropped would have emptied the registry. The predicate is
+    // in fact always true for `normal` (it is neither of the two named
+    // subtypes), so a compound-predicate model could inline it and lose the
+    // "Only when …" doc line on all 23 members. That is a readability change,
+    // not a correctness one, and it is not this change.
+    const compound = subtype("progressbar&!piechart", null);
+    const fields = [arm(compound.name, true, [named("textureFile"), named("noOfFrames")])];
+    const partitioned = partitionSubtypeFields(fields, NORMAL, [...DECLARED, PROGRESSBAR, NORMAL]);
+    expect(names(partitioned)).toEqual(["subtype[!progressbar&!piechart]"]);
+    expect(partitioned[0]).toBe(fields[0]);
+  });
+
+  it("does not treat a negated key filter as telling two subtypes apart", () => {
+    // `asset_selectors.cwt` writes `## type_key_filter <> room_selector` on
+    // `subtype[asset]` and `= room_selector` on `subtype[room]`. Read without
+    // the negation the two filters are equal and the pair looks overlapping by
+    // accident; read with it, `asset` states which key it is *not* under, which
+    // excludes nothing about `room`. Same verdict, for the stated reason.
+    const asset = subtype("asset", "room_selector", true);
+    const room = subtype("room", "room_selector");
+    const fields = [arm(room.name, false, [named("default")])];
+    expect(names(partitionSubtypeFields(fields, asset, [asset, room]))).toEqual(["subtype[room]"]);
   });
 
   it("leaves a body with no subtype arms exactly as it found it", () => {

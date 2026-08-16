@@ -146,6 +146,24 @@ export type {
   OpinionModifierFields,
 } from "./generated/opinion-modifier.ts";
 export type {
+  DefinedPdxmesh,
+  PdxmeshAnimation,
+  PdxmeshDef,
+  PdxmeshFields,
+  PdxmeshMeshsettings,
+} from "./generated/pdxmesh.ts";
+export type {
+  DefinedPdxparticle,
+  PdxparticleDef,
+  PdxparticleFields,
+} from "./generated/pdxparticle.ts";
+export type {
+  DefinedSpriteType,
+  SpriteTypeAnimation,
+  SpriteTypeDef,
+  SpriteTypeFields,
+} from "./generated/sprite-type.ts";
+export type {
   DefinedScriptedLoc,
   ScriptedLocDef,
   ScriptedLocFields,

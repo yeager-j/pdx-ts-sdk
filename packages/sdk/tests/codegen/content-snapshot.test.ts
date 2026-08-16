@@ -1,10 +1,15 @@
 import { readFileSync } from "node:fs";
-import { CONTENT_MANIFEST, type ContentManifestEntry } from "@pdx-ts/codegen-cwt/content-manifest";
+import {
+  CONTENT_MANIFEST,
+  registryNameOf,
+  type ContentManifestEntry,
+} from "@pdx-ts/codegen-cwt/content-manifest";
 import type { RuleField } from "@pdx-ts/codegen-cwt/cwt/model";
 import { loadRules } from "@pdx-ts/codegen-cwt/cwt/rules";
 import { emitAliasSplice } from "@pdx-ts/codegen-cwt/emit/alias-splice";
 import { emitContentType } from "@pdx-ts/codegen-cwt/emit/content-type";
 import {
+  constantCase,
   pickOrdinary,
   type EmittedField,
   type FieldContext,
@@ -43,10 +48,13 @@ const emissions = new Map(
       throw new Error(`Missing fixture rules for ${manifest.type}`);
     }
     // Keyed by registry, not CWT type: three keywords share
-    // type[component_template] and each is its own registry.
-    const registry = (manifest as { as?: string }).as ?? manifest.type;
+    // type[component_template] and each is its own registry. The subtype the
+    // registry narrows to is a separate argument — `spriteType` is
+    // `subtype[normal]`, and its name names no subtype at all.
+    const entry: ContentManifestEntry = manifest;
+    const registry = registryNameOf(entry);
     emitter.beginFile();
-    const emission = emitContentType(emitter, type, body, registry);
+    const emission = emitContentType(emitter, type, body, registry, entry.as);
     emitter.endFile();
     return [registry, emission] as const;
   })
@@ -1297,6 +1305,65 @@ describe("content-type codegen", () => {
     expect(graphicalCulture?.unsupported).toEqual([]);
   });
 
+  it("cuts spriteType down to the plain-sprite subtype and keeps the game's own name", () => {
+    // `type[sprite]` backs eight subtype keywords; `as: "normal"` selects the
+    // plain one, so the flag, portrait, progressbar and piechart bodies stay
+    // out. The name is `spriteType` — the keyword the game writes and the SDK
+    // exposes — while the reference stays `sprite`, which is the only spelling
+    // any `<sprite>` field asks for.
+    const spriteType = emissions.get("spriteType");
+    expect(spriteType?.code).toContain("export interface SpriteTypeDef");
+    expect(spriteType?.code).toContain("textureFile?: string;");
+    expect(spriteType?.code).toContain("parent?: SpriteRef | string;");
+    expect(spriteType?.code).toContain("animation?: SpriteTypeAnimation[];");
+    // The rules' own casing, which is what the corpus reader folds onto.
+    expect(spriteType?.code).toContain("transParencecheck?: boolean;");
+    expect(spriteType?.code).toContain("animationtextureFile?: string;");
+    // The other seven subtypes' bodies, none of which is this registry's.
+    for (const foreign of ["texture_size", "play_on_show", "colortwo", "is_hover"]) {
+      expect(spriteType?.code, foreign).not.toContain(foreign);
+    }
+    expect(spriteType?.unsupported).toEqual([]);
+  });
+
+  it("lowers pdxparticle.type to a documented unchecked string", () => {
+    // `type = <particle_type>` names the `.asset` half of gfx/particles, which
+    // the SDK carries as opaque Assets and will never manifest — so the checked
+    // arm of `ParticleTypeRef | string` is a brand nothing can mint. The
+    // `uncheckedString` overlay row lowers it to `string`, drops the `refTypes`
+    // that would send the fold looking for that registry, and says so on the
+    // member a modder hovers.
+    const pdxparticle = emissions.get("pdxparticle");
+    expect(pdxparticle?.code).toContain("type: string;");
+    expect(pdxparticle?.code).not.toContain("ParticleTypeRef");
+    expect(pdxparticle?.code).toContain("Not checked: any string is accepted here.");
+    expect(pdxparticle?.code).toContain(
+      "The `<particle_type>` ids this names live in `.asset` files under `gfx/particles`"
+    );
+    expect(pdxparticle?.code).toContain(
+      '{ key: "type", member: "type", shape: "value", form: "scalar", conversion: "identity" }'
+    );
+    expect(pdxparticle?.unsupported).toEqual([]);
+  });
+
+  it("lowers pdxmesh's repeated meshsettings and its own unchecked animation type", () => {
+    const pdxmesh = emissions.get("pdxmesh");
+    expect(pdxmesh?.code).toContain("meshsettings?: PdxmeshMeshsettings[];");
+    // `filename[gfx/models]`, which the classifier reads as a path-shaped
+    // string — left unknown these four were fields the registry could not author.
+    expect(pdxmesh?.code).toContain("textureDiffuse?: string;");
+    expect(pdxmesh?.code).toContain("textureWpo?: string;");
+    // `$shader_effect` is the config's marker for a name in a `.shader` file,
+    // not a value: 47 real shader names against a one-member literal union.
+    expect(pdxmesh?.code).toContain('shader?: "$shader_effect" | string;');
+    // The same dead-reference shape as pdxparticle.type, one level down.
+    expect(pdxmesh?.code).not.toContain("ModelAnimationRef");
+    expect(pdxmesh?.code).toContain(
+      "The `<model_animation>` ids this names live in `.asset` files under `gfx/models`"
+    );
+    expect(pdxmesh?.unsupported).toEqual([]);
+  });
+
   it("pins starbase_level's upgrade/downgrade triggers to starbase scope", () => {
     const starbaseLevel = emissions.get("starbase_level");
     expect(starbaseLevel?.code).toContain("export interface StarbaseLevelDef");
@@ -1598,7 +1665,7 @@ describe("generated content definers", () => {
   it("emits one raw definer and one item union per manifest registry", () => {
     for (const manifest of CONTENT_MANIFEST) {
       const entry = manifest as ContentManifestEntry;
-      const name = pascalCase(entry.as ?? entry.type);
+      const name = pascalCase(registryNameOf(entry));
       // A registry carrying a declared contract parameterises its item type by
       // the witness; the rest take no parameter.
       expect(definers, entry.type).toMatch(new RegExp(`export type ${name}Item(<| =)`));
@@ -1764,7 +1831,7 @@ describe("generated content definers", () => {
 
   it("derives every nested identity table from repeated-struct metadata", () => {
     const nestedByRegistry = CONTENT_MANIFEST.map((manifest) => {
-      const registry = (manifest as ContentManifestEntry).as ?? manifest.type;
+      const registry = registryNameOf(manifest);
       return {
         registry,
         members: emissions
@@ -1784,7 +1851,7 @@ describe("generated content definers", () => {
       { registry: "ascension_perk", members: ["traditionSwap"] },
     ]);
     for (const { registry, members } of nestedByRegistry) {
-      const table = `${registry.toUpperCase()}_NESTED_DEFINITION_MEMBERS`;
+      const table = `${constantCase(pascalCase(registry))}_NESTED_DEFINITION_MEMBERS`;
       expect(capability).toContain(
         `const ${table} = [${members.map((member) => JSON.stringify(member)).join(", ")}] as const;`
       );

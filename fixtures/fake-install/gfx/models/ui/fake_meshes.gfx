@@ -1,0 +1,26 @@
+# Fixture meshes. Definitions sit one level inside `objectTypes`, and unlike
+# sprites they are recognised by their keyword: `type[model_mesh]` declares
+# `## type_key_filter = pdxmesh`, so it says outright which key its own
+# definitions carry.
+#
+# `arrowType` is the reason that matters. Vanilla's `gfx/models/ui/_arrows.gfx`
+# writes twelve of them inside the same `objectTypes` block, and a reader that
+# accepted every child with a `name` handed those out as vanilla mesh ids.
+
+objectTypes = {
+
+	pdxmesh = {
+		name = "fake_station_mesh"
+		file = "gfx/models/fake/station.mesh"
+	}
+
+	pdxmesh = {
+		name = "fake_shuttle_mesh"
+		file = "gfx/models/fake/shuttle.mesh"
+	}
+
+	arrowType = {
+		name = "fake_move_arrow"
+		texture = "gfx/models/fake/arrow.dds"
+	}
+}

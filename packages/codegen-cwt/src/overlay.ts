@@ -341,6 +341,21 @@ export const FIELD_WIDENINGS = new Map<string, FieldWidening>([
         "`tier: 3`. Refusing a number here would be pedantically correct and useless.",
     },
   ],
+  [
+    "pdxmesh.meshsettings.shader",
+    {
+      extraType: "string",
+      reason:
+        "model_entities.cwt declares `shader = $shader_effect`, which is the config's own " +
+        "marker for a name defined in a `.shader` file rather than a value domain — the same " +
+        "spelling `section_templates.cwt` uses for `$mesh_locator`. Read as a value it is a " +
+        "one-member literal union nothing can satisfy, so without this the field is present " +
+        "and unfillable: Stellaris 4.4.6 writes 47 distinct real shader names " +
+        "(`PdxMeshShip`, `PdxMeshPlanetEmissive`, `AlphaBlendNoDepth`, …) across 2,980 of " +
+        "3,257 meshes, and none of them is `$shader_effect`. There is no id set to check " +
+        "against — `.shader` files are opaque to the SDK — so the widening is to `string`.",
+    },
+  ],
 ]);
 
 /**
@@ -846,6 +861,25 @@ export interface ContentFieldOverride {
   readonly optional?: true;
   /** Public name for a nested struct the mechanical path-derived name misstates. */
   readonly nestedTypeName?: string;
+  /**
+   * Lowers a `<type>` reference to a bare, unchecked `string`.
+   *
+   * The rules reference types the SDK has no registry for and never will:
+   * `pdxparticle.type` points at a `<particle_type>`, whose definitions live in
+   * `gfx/particles/*.asset` files the SDK models as opaque Assets. Left alone
+   * that field lowers to `ParticleTypeRef | string` — a union whose checked arm
+   * nothing can ever produce, so it is `string` wearing a type nobody can
+   * satisfy, plus a `refTypes` entry sending the fold looking for a registry
+   * that does not exist. This says so outright: the member is `string`, the
+   * metadata carries no `refTypes`, and the generated doc says where the real
+   * ids live and that they are not checked.
+   *
+   * Deliberately narrow. Codegen fails unless the field's every declaration is
+   * a plain `<type>` reference, because the lever must weaken exactly that one
+   * check and never quietly erase a shape, an enum, or a closed union along
+   * with it.
+   */
+  readonly uncheckedString?: true;
   readonly reason: string;
 }
 
@@ -1133,6 +1167,30 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
         "country_naval_cap_add on a relic, the second gating shroud_storm_repelling on a " +
         "technology. Two potentials cannot merge into one block, so the singular member the " +
         "rules imply leaves the second one unwritable rather than merely awkward.",
+    },
+  ],
+  [
+    "pdxparticle.type",
+    {
+      uncheckedString: true,
+      reason:
+        "particles.cwt declares `type = <particle_type>`, and `type[particle_type]` is the " +
+        "`.asset` half of gfx/particles — 1,089 files holding 1,108 `particle = { name " +
+        "subsystem ... }` definitions of emitter geometry, textures and shaders. The SDK " +
+        "carries `.asset` files as opaque Assets and will not manifest a registry for them, " +
+        "so `ParticleTypeRef` is a brand nothing can ever mint: the field is `string` either " +
+        "way, and saying so drops a refTypes entry that would send the fold looking for a " +
+        "registry that does not exist. All 1,740 shipped pdxparticles write it.",
+    },
+  ],
+  [
+    "pdxmesh.animation.type",
+    {
+      uncheckedString: true,
+      reason:
+        "The same shape one level down: model_entities.cwt declares `type = <model_animation>` " +
+        "and `type[model_animation]` is the `.asset` half of gfx/models, opaque to the SDK for " +
+        "the same reason. 3,087 of 3,257 shipped meshes write an animation block.",
     },
   ],
 ]);
