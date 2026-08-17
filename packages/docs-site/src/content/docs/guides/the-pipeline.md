@@ -1,6 +1,8 @@
 ---
 title: The pipeline
 description: Follow a mod from its authoring capability to compiled, rendered, and materialized files.
+sidebar:
+  order: 2
 ---
 
 Every build passes through four steps:

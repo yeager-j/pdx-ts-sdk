@@ -1,0 +1,139 @@
+---
+title: Features and discovery
+description: Place mod items explicitly, discover feature modules, and organize source without tying it to output layout.
+sidebar:
+  order: 3
+---
+
+import PairedExample from "../../../components/PairedExample.astro";
+
+A **Feature** is an explicit group of mod items with an output file stem. This
+complete example places a technology and the building it unlocks in one
+Feature:
+
+<PairedExample name="grouped-feature" />
+
+The PDXScript tab shows how that one Feature fans out into the technology,
+building, and localization files Stellaris expects.
+
+These items do not enter the build merely because their module was imported or
+because their values were exported. They enter when you place them in a
+Feature and pass that Feature to `mod.compile`.
+
+## Why Features are explicit
+
+`mod.compile` accepts capability-owned Features, not loose items. This gives
+the Fold two facts that TypeScript module layout cannot provide:
+
+- **Selection:** which definitions, events, localization, Asset files, and
+  other items belong in this build.
+- **Placement:** which authored file stem groups those items in outputs that
+  use per-feature files.
+
+The capability also prevents a Feature created by one mod from being compiled
+as part of another mod.
+
+A Feature can contain several kinds of item. For example, one gameplay concept
+may contain technologies, events, on-action hooks, localization, and Asset
+files. The Fold fans those items out to the directories Stellaris expects. You
+do not need one source directory for technologies and another for events.
+
+The stem in `mod.feature("resonance", items)` is lowercase `snake_case` and
+cannot contain `/`. For registry content, it contributes to paths such as:
+
+```text
+common/technology/my_mod_resonance.txt
+```
+
+The registry chooses the directory and extension; the mod prefix and Feature
+stem choose the filename.
+
+## Discover a directory of Features
+
+Small builds can import Features directly and pass them to `mod.compile`. For a
+file-per-feature project, `discoverFeatures` supplies the impure shell around
+the Fold:
+
+```ts
+import { createMod, discoverFeatures } from "@pdx-ts/sdk";
+
+export const mod = createMod({
+  name: "Crystal Resonance",
+  prefix: "crystal_resonance",
+  supportedVersion: "v4.0.*",
+});
+
+export async function buildTheMod() {
+  const features = await discoverFeatures<typeof mod.config.prefix>(
+    new URL("./content/", import.meta.url)
+  );
+
+  return mod.compile(features);
+}
+```
+
+`discoverFeatures(dir)` recursively walks the directory, selects feature
+modules, imports them, and reads only each module's named `feature` export.
+Other named exports and the default export remain ordinary module API; they are
+not registered implicitly.
+
+By default, discovery selects `.ts` files but excludes common companion files:
+
+```text
+*.test.ts
+*.test-d.ts
+*.spec.ts
+*.bench.ts
+*.d.ts
+```
+
+This lets a test sit beside its Feature without entering the build. Every
+selected module must export one named, stemmed Feature as `feature`.
+A plain helper module inside the discovered directory would therefore fail
+discovery. Keep helpers outside that directory, export them from a selected
+Feature module, or use a custom `include` pattern that selects only your
+feature-module naming convention.
+
+```ts
+const features = await discoverFeatures(contentDir, {
+  include: /\.feature\.ts$/,
+});
+```
+
+A custom `include` replaces the default pattern; it does not narrow it. The
+pattern matches `/`-separated paths relative to the directory.
+
+Discovery reads the filesystem and importing a module executes its top-level
+code, so `discoverFeatures` is impure. `mod.compile(features)` is the pure Fold
+that validates and assembles the returned values. Discovery sorts selected
+module paths for stable imports, but source or discovery order does not decide
+the Fold's canonical output order.
+
+## Source layout is not identity
+
+The module path and basename are not used as a Feature stem, content id, event
+id, or emitted path. These two source locations can produce the same output:
+
+```text
+src/content/resonance.ts
+src/content/research/crystal-theory.ts
+```
+
+If the moved module still exports the same `mod.feature("resonance", ...)`, with
+the same items, its mod output is unchanged. You may need to update relative
+imports, and the new path must still match discovery, but the path itself does
+not become mod content.
+
+The authored values remain significant:
+
+- Changing a Feature stem changes the per-feature output filenames.
+- Moving an item to a Feature with another stem changes where that item is
+  emitted.
+- Changing an item's authored logical name changes the id minted for it.
+- Changing an event namespace or number changes its event id.
+
+Organize `src/content/` around the concepts people maintain together: an event
+chain, research theme, origin, crisis, or another gameplay feature. Let the
+Fold map those concepts to Stellaris's output directories. This keeps source
+organization useful to the author without making refactors change game-facing
+identity by accident.

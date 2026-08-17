@@ -1,6 +1,8 @@
 ---
 title: Getting started
 description: Create, build, install, and run your first Stellaris mod.
+sidebar:
+  order: 1
 ---
 
 You need Stellaris and Node.js 22.18 or later. Start in the directory that
