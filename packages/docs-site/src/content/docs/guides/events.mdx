@@ -2,7 +2,7 @@
 title: Events
 description: Define event namespaces, bodies, options, targets, and typed event-to-event firing.
 sidebar:
-  order: 9
+  order: 8
 ---
 
 import { Aside } from "@astrojs/starlight/components";
@@ -29,9 +29,9 @@ lifecycle hook with [`mod.on`](/guides/on-actions/), or fire it from another
 typed effect as this example does.
 
 <Aside type="caution" title="Do not use mean-time-to-happen events">
-  Stellaris recommends against mean-time-to-happen (MTTH) events, and the SDK does not support that
-  scheduling model. Define events with `isTriggeredOnly: true`, then enter them through an on-action
-  or a typed event-fire effect.
+  The SDK supports `meanTimeToHappen`, but Stellaris developers recommend against MTTH. Do not use
+  it for new events. Set `isTriggeredOnly: true`, then enter the event through an on-action or a
+  typed event-fire effect.
 </Aside>
 
 ## A namespace owns a numbered event series
