@@ -23,6 +23,19 @@ Read `README.md` before making architectural changes. `docs/` holds only the ADR
 proposals that are not yet implemented — once something ships, the code and its gates are
 the record, so a doc describing shipped behavior is deleted rather than updated.
 
+`packages/docs-site` is the one exception, and only because it is not the same kind of
+thing: it is a product surface for mod authors, not internal record. Describing shipped
+behavior is its whole job, so the delete-when-shipped rule does not reach it. `docs/` keeps
+that rule unchanged.
+
+The exception costs something, so it is paid for rather than waived. Examples do not drift
+because they are gated: every `<name>.example.ts` under `packages/docs-site/src/content/docs/`
+typechecks against the workspace SDK, compiles through the Fold, and renders during
+`npm run docs:build`, which CI runs before anything is built so the site resolves the SDK's
+sources rather than a `dist/`. Prose is defended by structure instead — keep it thin and let
+the compiled example carry the meaning. A page section that restates behavior in prose is a
+review smell: it is the part no gate can hold to the code.
+
 ## Repository conventions
 
 - Use npm; `package-lock.json` is the lockfile.
