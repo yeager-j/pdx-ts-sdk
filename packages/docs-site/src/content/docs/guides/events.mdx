@@ -5,6 +5,8 @@ sidebar:
   order: 9
 ---
 
+import { Aside } from "@astrojs/starlight/components";
+
 import PairedExample from "../../../components/PairedExample.astro";
 
 Events are numbered scripts that Stellaris runs in a particular game scope.
@@ -13,7 +15,8 @@ checks their triggers and effects against that scope, and writes them under
 `events/`.
 
 This complete example defines a country event whose option selects a planet,
-saves it as an event target, and fires a planet event 30 days later:
+saves and immediately reopens it as an event target, and schedules a planet
+event 30 days later:
 
 <PairedExample name="events" />
 
@@ -21,9 +24,15 @@ The TypeScript runs while the mod is built. The rendered event file is what
 Stellaris later evaluates. Read [Triggers and effects](/guides/triggers-and-effects/)
 if that boundary is not yet familiar.
 
-An event still needs an entry point. Attach it to a game lifecycle hook with
-[`mod.on`](/guides/on-actions/), or fire it from another typed effect as this
-example does.
+An `isTriggeredOnly` event still needs an entry point. Attach it to a game
+lifecycle hook with [`mod.on`](/guides/on-actions/), or fire it from another
+typed effect as this example does.
+
+<Aside type="caution" title="Do not use mean-time-to-happen events">
+  Stellaris recommends against mean-time-to-happen (MTTH) events, and the SDK does not support that
+  scheduling model. Define events with `isTriggeredOnly: true`, then enter them through an on-action
+  or a typed event-fire effect.
+</Aside>
 
 ## A namespace owns a numbered event series
 
@@ -85,9 +94,11 @@ An event body combines display fields, execution rules, and script blocks:
 - `isTriggeredOnly`, `fireOnlyOnce`, window fields, pictures, sounds, and other
   generated fields control the game's event behavior.
 
-The event method's TypeScript type lists the fields supported for that kind.
-Unsupported or wrong-scope combinations fail during authoring instead of
-being copied into an unchecked object.
+The event method's TypeScript type checks which fields exist for that event
+kind and which scopes their triggers and effects accept. Some game rules depend
+on combinations of field values and are not represented by those types. Use
+the documented combinations rather than treating every object that typechecks
+as a valid game design.
 
 ## Give every option a stable key
 
@@ -128,20 +139,25 @@ const signalWorld = eventTarget<"planet">("crystal_resonance_signal_world");
 
 country.randomOwnedPlanet({ limit: hasOwner() }, (planet) => {
   planet.saveEventTargetAs(signalWorld);
+  signalWorld.effects((savedPlanet) => {
+    savedPlanet.log("the signal came from here");
+  });
 });
 ```
 
-The generic argument declares that `signalWorld` names a planet. The save call
-therefore exists only on a planet scope; trying to save a country under that
-target is a TypeScript error.
+The generic argument declares that `signalWorld` names a planet. Passing it to
+`planet.saveEventTargetAs(...)` therefore typechecks; trying to save a country
+under that target is a TypeScript error. Every scope object has the save method,
+but its target must name that object's scope.
 
-Pass the same value anywhere a compatible scope value is expected. The paired
-example uses it as the second event's window location:
+Pass the same value anywhere a compatible scope value or path is expected. The
+paired example reopens the saved planet immediately and schedules the next
+event from that scope:
 
 ```ts
-const aftershock = events.planet(2, {
-  location: signalWorld,
-  // Other fields omitted.
+planet.saveEventTargetAs(signalWorld);
+signalWorld.effects((savedPlanet) => {
+  savedPlanet.planetEvent({ id: aftershock, from: ctx.self, days: 30 });
 });
 ```
 
@@ -149,6 +165,11 @@ const aftershock = events.planet(2, {
 `saveGlobalEventTargetAs` only when the saved scope must survive beyond the
 current event chain. Both APIs check the saved scope, but the string name is
 still yours to keep unique. Prefix it with the mod prefix.
+
+A normal event target does not survive delayed event delivery. Consume it
+while recording the originating execution, as above. The delayed event should
+use its receiving scope for its own fields; the paired example sets
+`location: (ctx) => ctx.self` on the planet event.
 
 ## Fire typed event references
 

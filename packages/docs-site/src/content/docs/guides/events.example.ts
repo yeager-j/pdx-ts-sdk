@@ -13,7 +13,7 @@ const aftershock = events.planet(2, {
   from: "country",
   title: "A World Answers",
   desc: "The signal has found an echo beneath the planet's surface.",
-  location: signalWorld,
+  location: (ctx) => ctx.self,
   isTriggeredOnly: true,
   immediate: (_planet, ctx) => {
     ctx.from.effects((country) => {
@@ -34,7 +34,9 @@ const signalDetected = events.country(1, {
       effects: (country, ctx) => {
         country.randomOwnedPlanet({ limit: hasOwner() }, (planet) => {
           planet.saveEventTargetAs(signalWorld);
-          planet.planetEvent({ id: aftershock, from: ctx.self, days: 30 });
+          signalWorld.effects((savedPlanet) => {
+            savedPlanet.planetEvent({ id: aftershock, from: ctx.self, days: 30 });
+          });
         });
       },
     },
