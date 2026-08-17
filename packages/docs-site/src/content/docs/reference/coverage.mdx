@@ -1,0 +1,17 @@
+---
+title: Coverage
+description: What @pdx-ts/sdk can author today, what it cannot, and where each registry writes.
+registries: []
+sidebar:
+  order: 1
+---
+
+import RegistryCoverage from "../../../components/RegistryCoverage.astro";
+
+This page answers one question: can the SDK do X yet?
+
+Every row is derived at build time — the registries from the SDK's own generated tables, the
+folders from the game files `@pdx-ts/stellaris-ids` was generated against. Nothing here is
+maintained by hand, so nothing here can be out of date.
+
+<RegistryCoverage />

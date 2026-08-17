@@ -13,6 +13,11 @@
       "pdx-source": "./src/stellaris/index.ts",
       "types": "./dist/stellaris/index.d.ts",
       "default": "./dist/stellaris/index.js"
+    },
+    "./content-registries": {
+      "pdx-source": "./src/content-registries.ts",
+      "types": "./dist/content-registries.d.ts",
+      "default": "./dist/content-registries.js"
     }
   },
   "dependencies": {
