@@ -1,0 +1,246 @@
+---
+title: Events
+description: Define event namespaces, bodies, options, targets, and typed event-to-event firing.
+sidebar:
+  order: 9
+---
+
+import PairedExample from "../../../components/PairedExample.astro";
+
+Events are numbered scripts that Stellaris runs in a particular game scope.
+The SDK groups them in a mod-owned namespace, generates their localization,
+checks their triggers and effects against that scope, and writes them under
+`events/`.
+
+This complete example defines a country event whose option selects a planet,
+saves it as an event target, and fires a planet event 30 days later:
+
+<PairedExample name="events" />
+
+The TypeScript runs while the mod is built. The rendered event file is what
+Stellaris later evaluates. Read [Triggers and effects](/guides/triggers-and-effects/)
+if that boundary is not yet familiar.
+
+## A namespace owns a numbered event series
+
+Open a namespace from the mod capability, then choose an event kind and local
+number:
+
+```ts
+const events = mod.namespace("signal");
+
+const detected = events.country(1, {
+  title: "A Signal in the Noise",
+  isTriggeredOnly: true,
+});
+```
+
+The mod prefix and namespace suffix mint `crystal_resonance_signal`; the local
+number completes the event id `crystal_resonance_signal.1`. The returned event
+value carries that full id and its country scope.
+
+`mod.namespace()` without an argument uses the mod prefix itself:
+
+```ts
+const rootEvents = mod.namespace();
+const first = rootEvents.country(1, definition);
+// first.id is crystal_resonance.1
+```
+
+Namespace suffixes are lowercase `snake_case`, and event numbers are
+non-negative safe integers. The Fold rejects duplicate event ids.
+
+Events are not a content registry. A technology or building uses a generated
+registry method, a logical name, and an id segment. An event instead uses a
+scope-specific method, a namespace, and a number. That separate identity model
+is why events have their own output channel rather than a registry reference
+page.
+
+## The event kind selects its game scope
+
+Choose the method for the scope where Stellaris will run the event:
+
+```ts
+events.country(1, countryDefinition);
+events.planet(2, planetDefinition);
+events.fleet(3, fleetDefinition);
+```
+
+That choice controls the triggers accepted by the body and the scope object
+received by effect closures. For example, a country event's `immediate` and
+option effects receive country effects, while a planet event receives planet
+effects.
+
+An event body combines display fields, execution rules, and script blocks:
+
+- `title`, `desc`, and option names are English text. The SDK generates stable
+  localization keys under the event id.
+- `trigger`, `majorTrigger`, and similar fields are declarative game-time
+  conditions.
+- `immediate` runs when the event opens; `after` runs after the event closes.
+- `isTriggeredOnly`, `fireOnlyOnce`, window fields, pictures, sounds, and other
+  generated fields control the game's event behavior.
+
+The event method's TypeScript type lists the fields supported for that kind.
+Unsupported or wrong-scope combinations fail during authoring instead of
+being copied into an unchecked object.
+
+## Give every option a stable key
+
+Options contain localized text, optional visibility conditions, AI weighting,
+and effects:
+
+```ts
+options: [
+  {
+    name: "Trace it to the source.",
+    key: "trace_source",
+    effects: (country) => {
+      country.addResource({ resource: "influence", amount: 10 });
+    },
+  },
+];
+```
+
+The option above uses the localization key
+`crystal_resonance_signal.1.trace_source`. Related option text, such as an icon
+caption or response text, derives from the same suffix.
+
+Always set `key` for maintained content. If it is omitted, the SDK hashes the
+option name and records an `unstable-option-key` warning. That fallback keeps
+the event authorable, but editing the displayed text also changes its key.
+
+Option `trigger` controls visibility, `allow` can disable the choice, and
+`effects` records the PDXScript that runs when the player selects it. These are
+game-time rules; the TypeScript callbacks only record them during the build.
+
+## Save and reuse event targets
+
+An event target is a typed name for a game scope that script can save and use
+later:
+
+```ts
+const signalWorld = eventTarget<"planet">("crystal_resonance_signal_world");
+
+country.randomOwnedPlanet({ limit: hasOwner() }, (planet) => {
+  planet.saveEventTargetAs(signalWorld);
+});
+```
+
+The generic argument declares that `signalWorld` names a planet. The save call
+therefore exists only on a planet scope; trying to save a country under that
+target is a TypeScript error.
+
+Pass the same value anywhere a compatible scope value is expected. The paired
+example uses it as the second event's window location:
+
+```ts
+const aftershock = events.planet(2, {
+  location: signalWorld,
+  // Other fields omitted.
+});
+```
+
+`saveEventTargetAs` writes a normal event target. Use
+`saveGlobalEventTargetAs` only when the saved scope must survive beyond the
+current event chain. Both APIs check the saved scope, but the string name is
+still yours to keep unique. Prefix it with the mod prefix.
+
+## Fire typed event references
+
+Event values are also references. Fire one with the method matching its event
+kind:
+
+```ts
+planet.planetEvent({
+  id: aftershock,
+  from: ctx.self,
+  days: 30,
+});
+```
+
+The target scope is the planet that receives the event. Optional `days`,
+`months`, `years`, and `random` values control its delay. Passing the event
+value checks that a planet-fire effect receives a planet event; a country event
+cannot be substituted merely because its id is a string at runtime.
+
+The fired event must be placed in one of the Features passed to `mod.compile`.
+If an emitted file refers to an id that looks like one of this mod's events but
+that event was omitted, the Fold rejects the dangling reference.
+
+### Declare `FROM` when the called event needs it
+
+The paired planet event declares the scope it expects as `FROM`:
+
+```ts
+const aftershock = events.planet(2, {
+  from: "country",
+  immediate: (_planet, ctx) => {
+    ctx.from.effects((country) => {
+      country.addResource({ resource: "influence", amount: 50 });
+    });
+  },
+});
+```
+
+`from` is a compile-time contract; it does not emit a field in the event
+definition. At the fire site, `from: ctx.self` proves that the firing
+execution's root country satisfies that contract. The SDK emits a `scopes`
+override only when the witness is another reference.
+
+Natural event `FROM` is the firing execution's stable `ROOT`, not necessarily
+the current `THIS` inside a nested scope. [Scope and context](/guides/scope-and-context/#event-from-comes-from-execution-root)
+explains when to use `ctx.self`, `ctx.root`, or another absolute reference.
+
+### Use handles for forward or cyclic references
+
+Most code can define the called event first, as the paired example does. When
+two events refer to each other, mint their handles before defining either body:
+
+```ts
+const first = events.countryHandle(1);
+const second = events.countryHandle(2);
+
+const firstEvent = first.define({
+  isTriggeredOnly: true,
+  immediate: (country) => country.countryEvent({ id: second }),
+});
+
+const secondEvent = second.define({
+  isTriggeredOnly: true,
+  immediate: (country) => country.countryEvent({ id: first }),
+});
+```
+
+A handle already carries its final id, kind, scope, and optional `FROM`
+contract. `.define(...)` attaches the body without a placeholder id.
+
+## Keep one namespace in one Feature file
+
+Place event definitions in a Feature like other mod items:
+
+```ts
+export const feature = mod.feature("signal", [signalDetected, aftershock]);
+```
+
+The Fold writes that Feature's namespace to:
+
+```text
+events/crystal_resonance_signal.txt
+```
+
+and puts its generated text in the matching Feature-owned localization file.
+Events are sorted by number in the output, independent of their source order.
+
+One event file contains one namespace, and one namespace cannot be split over
+several Feature stems. Give each namespace its own Feature stem. A Feature
+without a stem uses `events/<prefix>_events.txt`.
+
+An event may also point to an `eventChain` definition. The chain is a separate
+content registry for narrative structure, counters, and related projects; the
+event remains owned by this `events/` channel and only stores the typed chain
+reference.
+
+[References and identity](/guides/references-and-identity/#events-have-namespace-and-number-identity)
+summarizes event ids beside the SDK's other reference forms. [Localization](/guides/localization/)
+explains the generated title, description, and option keys in more detail.
