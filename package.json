@@ -27,7 +27,7 @@
     "test:watch": "vitest",
     "example": "node --conditions=pdx-source examples/hello-galaxy/build.ts",
     "scaffold": "node --conditions=pdx-source packages/create-stellaris-mod/src/bin.ts",
-    "prepare": "husky"
+    "prepare": "node .husky/install.mjs"
   },
   "lint-staged": {
     "**/*.{ts,tsx}": "prettier --write"
