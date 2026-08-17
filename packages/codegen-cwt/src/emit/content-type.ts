@@ -25,6 +25,7 @@ import {
   type RepeatedStructDefinition,
 } from "../overlay.ts";
 import {
+  authoredLiterals,
   capitalizedArticle,
   constantCase,
   flatten,
@@ -475,7 +476,7 @@ function repeatedStructEmission(
       optional,
       docs: docLines,
       memberType: lowering.memberType,
-      ...(lowering.admits.literals === undefined ? {} : { literals: lowering.admits.literals }),
+      ...authoredLiterals(lowering.admits.literals),
     };
     docTables.push(...(lowering.docTables ?? []));
     fieldMetadata.push(lowering.metadata);
@@ -1170,7 +1171,7 @@ export function emitContentType(
       optional,
       docs: docLines,
       memberType,
-      ...(lowered.admits.literals === undefined ? {} : { literals: lowered.admits.literals }),
+      ...authoredLiterals(lowered.admits.literals),
     };
     docTables.push(...(lowered.docTables ?? []));
     patchMembers.push({ member, docs, memberType });

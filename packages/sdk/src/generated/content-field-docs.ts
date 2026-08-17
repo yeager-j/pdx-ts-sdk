@@ -351,7 +351,6 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
           "Only when technology subtype not `start` applies.",
         ],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       isCustomTech2: {
         optional: true,
@@ -360,7 +359,6 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
           "Only when technology subtype not `start` applies.",
         ],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       isCustomTech3: {
         optional: true,
@@ -369,7 +367,6 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
           "Only when technology subtype not `start` applies.",
         ],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       levels: {
         optional: true,
@@ -397,22 +394,17 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         docs: [],
         memberType: "Readonly<Record<string, number>>",
       },
-      startTech: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
-      isReverseEngineerable: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      startTech: { optional: true, docs: [], memberType: "boolean" },
+      isReverseEngineerable: { optional: true, docs: [], memberType: "boolean" },
       aiUpdateType: {
         optional: true,
         docs: [],
         memberType: "TechAiType",
         literals: ["all", "military"],
       },
-      isRare: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
-      isDangerous: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
-      isInsight: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      isRare: { optional: true, docs: [], memberType: "boolean" },
+      isDangerous: { optional: true, docs: [], memberType: "boolean" },
+      isInsight: { optional: true, docs: [], memberType: "boolean" },
       featureFlags: { optional: true, docs: [], memberType: "FeatureFlag[]" },
       modifier: { optional: true, docs: [], memberType: 'ModifierClosure<"country">' },
       prereqforDesc: { optional: true, docs: [], memberType: "TechnologyPrereqforDesc[]" },
@@ -429,9 +421,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
     TECHNOLOGY_TECHNOLOGY_SWAP_FIELDS,
     {
       name: { optional: true, docs: [], memberType: "string" },
-      inheritIcon: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
-      inheritName: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
-      inheritEffects: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      inheritIcon: { optional: true, docs: [], memberType: "boolean" },
+      inheritName: { optional: true, docs: [], memberType: "boolean" },
+      inheritEffects: { optional: true, docs: [], memberType: "boolean" },
       trigger: { optional: true, docs: [], memberType: 'Trigger<"country">' },
       modifier: { optional: true, docs: [], memberType: 'ModifierClosure<"country">' },
       prereqforDesc: {
@@ -567,7 +559,6 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
           "whether this building is exempt from being swapped into groups by the AI; default: no",
         ],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       category: {
         optional: true,
@@ -589,31 +580,20 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         ],
       },
       icon: { optional: true, docs: [], memberType: "string | BuildingRef" },
-      capital: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
-      canDemolish: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
-      canBeRuined: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
-      canBeDisabled: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
-      canBuild: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      capital: { optional: true, docs: [], memberType: "boolean" },
+      canDemolish: { optional: true, docs: [], memberType: "boolean" },
+      canBeRuined: { optional: true, docs: [], memberType: "boolean" },
+      canBeDisabled: { optional: true, docs: [], memberType: "boolean" },
+      canBuild: { optional: true, docs: [], memberType: "boolean" },
       baseCapAmount: { optional: true, docs: [], memberType: "number" },
-      addToFirstBuildingSlot: { optional: true, docs: [], memberType: "true", literals: ["yes"] },
-      isCappedByModifier: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
-      planetaryFtlInhibitor: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      addToFirstBuildingSlot: { optional: true, docs: [], memberType: "true" },
+      isCappedByModifier: { optional: true, docs: [], memberType: "boolean" },
+      planetaryFtlInhibitor: { optional: true, docs: [], memberType: "boolean" },
       positionPriority: { optional: true, docs: [], memberType: "number" },
       skipAutomationUpgrading: {
         optional: true,
         docs: ["colony automation will not try to upgrade this"],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       allow: {
         optional: true,
@@ -719,12 +699,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         memberType: 'TriggeredModifier<"army", "planet">[]',
       },
       triggeredDesc: { optional: true, docs: [], memberType: "BuildingTriggeredDesc[]" },
-      autoGenerateDescription: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      autoGenerateDescription: { optional: true, docs: [], memberType: "boolean" },
       resources: { optional: true, docs: [], memberType: 'EconomicResourceBlock<"colony">[]' },
       upgrades: {
         optional: true,
@@ -755,14 +730,8 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
           "Property on buildings which when added to the AI build queue will remove all non essential build tasks.",
         ],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
-      aiEstimateWithoutUnemployment: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      aiEstimateWithoutUnemployment: { optional: true, docs: [], memberType: "boolean" },
       additionalAiWeight: { optional: true, docs: [], memberType: "number" },
       aiWeightCoefficient: { optional: true, docs: [], memberType: "number" },
       customTooltip: { optional: true, docs: [], memberType: "string" },
@@ -813,9 +782,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
   [
     TRADITION_SWAP_FIELDS,
     {
-      inheritIcon: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
-      inheritName: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
-      inheritEffects: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      inheritIcon: { optional: true, docs: [], memberType: "boolean" },
+      inheritName: { optional: true, docs: [], memberType: "boolean" },
+      inheritEffects: { optional: true, docs: [], memberType: "boolean" },
       unlocksAgenda: { optional: true, docs: [], memberType: "AgendaRef | string" },
       customTooltip: { optional: true, docs: [], memberType: "string[]" },
       customTooltipWithModifiers: { optional: true, docs: [], memberType: "string[]" },
@@ -883,9 +852,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
   [
     ASCENSION_PERK_SWAP_FIELDS,
     {
-      inheritIcon: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
-      inheritName: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
-      inheritEffects: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      inheritIcon: { optional: true, docs: [], memberType: "boolean" },
+      inheritName: { optional: true, docs: [], memberType: "boolean" },
+      inheritEffects: { optional: true, docs: [], memberType: "boolean" },
       customTooltip: { optional: true, docs: [], memberType: "string[]" },
       customTooltipWithModifiers: { optional: true, docs: [], memberType: "string[]" },
       modifier: {
@@ -940,7 +909,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         memberType: "number",
       },
       icon: { optional: false, docs: [], memberType: "SpriteRef | string" },
-      isWartimeEdict: { optional: true, docs: [], memberType: "true", literals: ["yes"] },
+      isWartimeEdict: { optional: true, docs: [], memberType: "true" },
       edictLockInMonths: { optional: true, docs: [], memberType: "number" },
       edictCapUsage: { optional: true, docs: [], memberType: "number" },
       resources: { optional: true, docs: [], memberType: 'EconomicResourceBlock<"country">[]' },
@@ -994,13 +963,8 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
   [
     DECISION_FIELDS,
     {
-      ownedPlanetsOnly: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
-      important: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      ownedPlanetsOnly: { optional: true, docs: [], memberType: "boolean" },
+      important: { optional: true, docs: [], memberType: "boolean" },
       enactmentTime: { optional: true, docs: [], memberType: "number" },
       customTooltip: { optional: true, docs: [], memberType: "DecisionCustomTooltip<S>" },
       sound: { optional: true, docs: [], memberType: "SoundRef | string | SoundEffectRef" },
@@ -1055,53 +1019,22 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
     JOB_FIELDS,
     {
       category: { optional: true, docs: [], memberType: "PopCategoryRef | string" },
-      firstComeFirstServed: {
-        optional: true,
-        docs: ["default: no?"],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
-      isCappedByModifier: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
-      canBeAutomated: {
-        optional: true,
-        docs: ["default no"],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
-      autoGenerateDescription: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      firstComeFirstServed: { optional: true, docs: ["default: no?"], memberType: "boolean" },
+      isCappedByModifier: { optional: true, docs: [], memberType: "boolean" },
+      canBeAutomated: { optional: true, docs: ["default no"], memberType: "boolean" },
+      autoGenerateDescription: { optional: true, docs: [], memberType: "boolean" },
       swappableData: { optional: true, docs: [], memberType: "JobSwappableData" },
-      exemptFromAiAmenityPrioritization: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
-      countAsAvailableForAi: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
-      canSetPriority: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
-      isPreSapient: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
-      ignoresSapience: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
-      ignoresFavorite: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      exemptFromAiAmenityPrioritization: { optional: true, docs: [], memberType: "boolean" },
+      countAsAvailableForAi: { optional: true, docs: [], memberType: "boolean" },
+      canSetPriority: { optional: true, docs: [], memberType: "boolean" },
+      isPreSapient: { optional: true, docs: [], memberType: "boolean" },
+      ignoresSapience: { optional: true, docs: [], memberType: "boolean" },
+      ignoresFavorite: { optional: true, docs: [], memberType: "boolean" },
       purge: { optional: true, docs: [], memberType: "PurgeTypeRef | string" },
       contributesToDiploWeight: {
         optional: true,
         docs: ["Sets whether the job contributes to diplo weight. Default = yes"],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       possiblePreTriggers: {
         optional: true,
@@ -1200,18 +1133,13 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
   [
     JOB_POSSIBLE_PRE_TRIGGERS_FIELDS,
     {
-      hasOwner: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
-      isEnslaved: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
-      isBeingPurged: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
-      isBeingAssimilated: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
-      hasPlanet: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
-      isSapient: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
-      isRobotic: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      hasOwner: { optional: true, docs: [], memberType: "boolean" },
+      isEnslaved: { optional: true, docs: [], memberType: "boolean" },
+      isBeingPurged: { optional: true, docs: [], memberType: "boolean" },
+      isBeingAssimilated: { optional: true, docs: [], memberType: "boolean" },
+      hasPlanet: { optional: true, docs: [], memberType: "boolean" },
+      isSapient: { optional: true, docs: [], memberType: "boolean" },
+      isRobotic: { optional: true, docs: [], memberType: "boolean" },
     },
   ],
   [
@@ -1225,32 +1153,21 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
     GLOBAL_SHIP_DESIGN_FIELDS,
     {
       shipSize: { optional: true, docs: [], memberType: "ShipSizeRef | string" },
-      hideSize: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      hideSize: { optional: true, docs: [], memberType: "boolean" },
       upgradesTo: { optional: true, docs: [], memberType: "GlobalShipDesignRef | string" },
       newbornShipDesign: { optional: true, docs: [], memberType: "GlobalShipDesignRef | string" },
-      creatureDesignerTemplate: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      creatureDesignerTemplate: { optional: true, docs: [], memberType: "boolean" },
       customTradeWeight: { optional: true, docs: [], memberType: "number" },
-      isEventDesign: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      isEventDesign: { optional: true, docs: [], memberType: "boolean" },
       growthStages: { optional: true, docs: [], memberType: "GlobalShipDesignGrowthStages[]" },
-      useDesignName: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
-      regeneratesWhenDisabled: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      useDesignName: { optional: true, docs: [], memberType: "boolean" },
+      regeneratesWhenDisabled: { optional: true, docs: [], memberType: "boolean" },
       upgradeShipComponents: {
         optional: true,
         docs: [
           "whether this design should be set to automatically upgrade its components (default: no)",
         ],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       autoGenDesign: {
         optional: true,
@@ -1258,15 +1175,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
           'whether this design should be considered auto-generated, aka "auto-best" (default: no)',
         ],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       countryType: { optional: true, docs: [], memberType: "CountryTypeRef | string" },
-      isSpecialBuildable: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      isSpecialBuildable: { optional: true, docs: [], memberType: "boolean" },
       allowBuildableTrigger: {
         optional: true,
         docs: [],
@@ -1333,7 +1244,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       iconFrame: { optional: true, docs: [], memberType: "number" },
       prerequisites: { optional: true, docs: [], memberType: "(TechnologyRef | string)[]" },
       componentSet: { optional: true, docs: [], memberType: "ComponentSetRef | string" },
-      hidden: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      hidden: { optional: true, docs: [], memberType: "boolean" },
       classRestriction: {
         optional: true,
         docs: [
@@ -1364,16 +1275,11 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         docs: [],
         memberType: "string | UtilityComponentTemplateCustomTooltip",
       },
-      shouldAiUse: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      shouldAiUse: { optional: true, docs: [], memberType: "boolean" },
       validForCountry: { optional: true, docs: [], memberType: 'Trigger<"country">' },
       aiWeight: { optional: true, docs: [], memberType: 'WeightBlock<"country">' },
       resources: { optional: true, docs: [], memberType: 'EconomicResourceBlock<"ship">[]' },
-      isDefaultComponent: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      isDefaultComponent: { optional: true, docs: [], memberType: "boolean" },
       power: { optional: true, docs: [], memberType: "number" },
       size: {
         optional: true,
@@ -1409,9 +1315,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         docs: [],
         memberType: 'TriggeredModifier<"design">[]',
       },
-      ftl: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
-      ftlInhibitor: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
-      jumpdrive: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      ftl: { optional: true, docs: [], memberType: "boolean" },
+      ftlInhibitor: { optional: true, docs: [], memberType: "boolean" },
+      jumpdrive: { optional: true, docs: [], memberType: "boolean" },
       shipBehavior: { optional: true, docs: [], memberType: "ShipBehaviorRef | string" },
       sensorRange: { optional: true, docs: [], memberType: "number" },
       hyperlaneRange: { optional: true, docs: [], memberType: "number" },
@@ -1452,7 +1358,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
     {
       name: { optional: false, docs: [], memberType: "string" },
       limit: { optional: true, docs: [], memberType: 'Trigger<"ship">' },
-      systemWide: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      systemWide: { optional: true, docs: [], memberType: "boolean" },
       radius: { optional: true, docs: [], memberType: "number" },
       applyOn: { optional: true, docs: [], memberType: "AuraType", literals: ["ships", "fleets"] },
       stackInfo: {
@@ -1494,14 +1400,14 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
     UTILITY_COMPONENT_TEMPLATE_FRIENDLY_AURA_GRAPHICS_AREA_EFFECT_FIELDS,
     {
       entity: { optional: false, docs: [], memberType: "ModelEntityRef | string" },
-      dynamicScale: { optional: false, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      dynamicScale: { optional: false, docs: [], memberType: "boolean" },
     },
   ],
   [
     UTILITY_COMPONENT_TEMPLATE_FRIENDLY_AURA_GRAPHICS_SHIP_EFFECT_FIELDS,
     {
       entity: { optional: false, docs: [], memberType: "ModelEntityRef | string" },
-      dynamicScale: { optional: false, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      dynamicScale: { optional: false, docs: [], memberType: "boolean" },
     },
   ],
   [
@@ -1509,7 +1415,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
     {
       name: { optional: false, docs: [], memberType: "string" },
       limit: { optional: true, docs: [], memberType: 'Trigger<"ship">' },
-      systemWide: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      systemWide: { optional: true, docs: [], memberType: "boolean" },
       radius: { optional: true, docs: [], memberType: "number" },
       applyOn: { optional: true, docs: [], memberType: "AuraType", literals: ["ships", "fleets"] },
       stackInfo: {
@@ -1556,14 +1462,14 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
     UTILITY_COMPONENT_TEMPLATE_HOSTILE_AURA_GRAPHICS_AREA_EFFECT_FIELDS,
     {
       entity: { optional: false, docs: [], memberType: "ModelEntityRef | string" },
-      dynamicScale: { optional: false, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      dynamicScale: { optional: false, docs: [], memberType: "boolean" },
     },
   ],
   [
     UTILITY_COMPONENT_TEMPLATE_HOSTILE_AURA_GRAPHICS_SHIP_EFFECT_FIELDS,
     {
       entity: { optional: false, docs: [], memberType: "ModelEntityRef | string" },
-      dynamicScale: { optional: false, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      dynamicScale: { optional: false, docs: [], memberType: "boolean" },
     },
   ],
   [
@@ -1597,7 +1503,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       iconFrame: { optional: true, docs: [], memberType: "number" },
       prerequisites: { optional: true, docs: [], memberType: "(TechnologyRef | string)[]" },
       componentSet: { optional: true, docs: [], memberType: "ComponentSetRef | string" },
-      hidden: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      hidden: { optional: true, docs: [], memberType: "boolean" },
       classRestriction: {
         optional: true,
         docs: [
@@ -1628,7 +1534,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         docs: [],
         memberType: "string | WeaponComponentTemplateCustomTooltip",
       },
-      shouldAiUse: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      shouldAiUse: { optional: true, docs: [], memberType: "boolean" },
       validForCountry: { optional: true, docs: [], memberType: 'Trigger<"country">' },
       aiWeight: { optional: true, docs: [], memberType: 'WeightBlock<"country">' },
       resources: {
@@ -1660,12 +1566,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         memberType: "WeaponType2",
         literals: ["instant", "point_defence", "missile", "planet_killer", "engulf"],
       },
-      hideDamageValuesFromTooltip: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      hideDamageValuesFromTooltip: { optional: true, docs: [], memberType: "boolean" },
       targetableShipSizes: {
         optional: true,
         docs: [],
@@ -1686,14 +1587,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       },
       projectileGfx: { optional: true, docs: [], memberType: "ProjectileRef | string" },
       color: { optional: true, docs: [], memberType: "number[]" },
-      canDestroyStars: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      canDestroyStars: { optional: true, docs: [], memberType: "boolean" },
       entity: { optional: true, docs: [], memberType: "ModelEntityRef | string" },
-      useShipMainTarget: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      useShipMainTarget: { optional: true, docs: [], memberType: "boolean" },
       targetType: { optional: true, docs: [], memberType: "TargetTypeRef | string" },
       targetFocus: {
         optional: true,
@@ -1708,13 +1604,13 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       },
       firingArc: { optional: true, docs: [], memberType: "number" },
       minRange: { optional: true, docs: [], memberType: "number" },
-      prioProjectile: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      prioProjectile: { optional: true, docs: [], memberType: "boolean" },
       possible: {
         optional: true,
         docs: [],
         memberType: 'WithFrom<Trigger<"design">, "design", "country">',
       },
-      staticRotation: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      staticRotation: { optional: true, docs: [], memberType: "boolean" },
       planetDestructionGfx: { optional: true, docs: [], memberType: "string" },
       targetWeights: { optional: true, docs: [], memberType: "Readonly<Record<string, number>>" },
       damage: { optional: true, docs: [], memberType: "WeaponComponentTemplateDamage" },
@@ -1827,7 +1723,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
     {
       name: { optional: false, docs: [], memberType: "string" },
       limit: { optional: true, docs: [], memberType: 'Trigger<"ship">' },
-      systemWide: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      systemWide: { optional: true, docs: [], memberType: "boolean" },
       radius: { optional: true, docs: [], memberType: "number" },
       applyOn: { optional: true, docs: [], memberType: "AuraType", literals: ["ships", "fleets"] },
       stackInfo: {
@@ -1869,14 +1765,14 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
     WEAPON_COMPONENT_TEMPLATE_FRIENDLY_AURA_GRAPHICS_AREA_EFFECT_FIELDS,
     {
       entity: { optional: false, docs: [], memberType: "ModelEntityRef | string" },
-      dynamicScale: { optional: false, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      dynamicScale: { optional: false, docs: [], memberType: "boolean" },
     },
   ],
   [
     WEAPON_COMPONENT_TEMPLATE_FRIENDLY_AURA_GRAPHICS_SHIP_EFFECT_FIELDS,
     {
       entity: { optional: false, docs: [], memberType: "ModelEntityRef | string" },
-      dynamicScale: { optional: false, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      dynamicScale: { optional: false, docs: [], memberType: "boolean" },
     },
   ],
   [
@@ -1884,7 +1780,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
     {
       name: { optional: false, docs: [], memberType: "string" },
       limit: { optional: true, docs: [], memberType: 'Trigger<"ship">' },
-      systemWide: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      systemWide: { optional: true, docs: [], memberType: "boolean" },
       radius: { optional: true, docs: [], memberType: "number" },
       applyOn: { optional: true, docs: [], memberType: "AuraType", literals: ["ships", "fleets"] },
       stackInfo: {
@@ -1931,14 +1827,14 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
     WEAPON_COMPONENT_TEMPLATE_HOSTILE_AURA_GRAPHICS_AREA_EFFECT_FIELDS,
     {
       entity: { optional: false, docs: [], memberType: "ModelEntityRef | string" },
-      dynamicScale: { optional: false, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      dynamicScale: { optional: false, docs: [], memberType: "boolean" },
     },
   ],
   [
     WEAPON_COMPONENT_TEMPLATE_HOSTILE_AURA_GRAPHICS_SHIP_EFFECT_FIELDS,
     {
       entity: { optional: false, docs: [], memberType: "ModelEntityRef | string" },
-      dynamicScale: { optional: false, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      dynamicScale: { optional: false, docs: [], memberType: "boolean" },
     },
   ],
   [
@@ -1972,7 +1868,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       iconFrame: { optional: true, docs: [], memberType: "number" },
       prerequisites: { optional: true, docs: [], memberType: "(TechnologyRef | string)[]" },
       componentSet: { optional: true, docs: [], memberType: "ComponentSetRef | string" },
-      hidden: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      hidden: { optional: true, docs: [], memberType: "boolean" },
       classRestriction: {
         optional: true,
         docs: [
@@ -2003,7 +1899,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         docs: [],
         memberType: "string | StrikeCraftComponentTemplateCustomTooltip",
       },
-      shouldAiUse: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      shouldAiUse: { optional: true, docs: [], memberType: "boolean" },
       validForCountry: { optional: true, docs: [], memberType: 'Trigger<"country">' },
       aiWeight: { optional: true, docs: [], memberType: 'WeightBlock<"country">' },
       resources: {
@@ -2111,7 +2007,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
     {
       name: { optional: false, docs: [], memberType: "string" },
       limit: { optional: true, docs: [], memberType: 'Trigger<"ship">' },
-      systemWide: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      systemWide: { optional: true, docs: [], memberType: "boolean" },
       radius: { optional: true, docs: [], memberType: "number" },
       applyOn: { optional: true, docs: [], memberType: "AuraType", literals: ["ships", "fleets"] },
       stackInfo: {
@@ -2153,14 +2049,14 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
     STRIKE_CRAFT_COMPONENT_TEMPLATE_FRIENDLY_AURA_GRAPHICS_AREA_EFFECT_FIELDS,
     {
       entity: { optional: false, docs: [], memberType: "ModelEntityRef | string" },
-      dynamicScale: { optional: false, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      dynamicScale: { optional: false, docs: [], memberType: "boolean" },
     },
   ],
   [
     STRIKE_CRAFT_COMPONENT_TEMPLATE_FRIENDLY_AURA_GRAPHICS_SHIP_EFFECT_FIELDS,
     {
       entity: { optional: false, docs: [], memberType: "ModelEntityRef | string" },
-      dynamicScale: { optional: false, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      dynamicScale: { optional: false, docs: [], memberType: "boolean" },
     },
   ],
   [
@@ -2168,7 +2064,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
     {
       name: { optional: false, docs: [], memberType: "string" },
       limit: { optional: true, docs: [], memberType: 'Trigger<"ship">' },
-      systemWide: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      systemWide: { optional: true, docs: [], memberType: "boolean" },
       radius: { optional: true, docs: [], memberType: "number" },
       applyOn: { optional: true, docs: [], memberType: "AuraType", literals: ["ships", "fleets"] },
       stackInfo: {
@@ -2215,14 +2111,14 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
     STRIKE_CRAFT_COMPONENT_TEMPLATE_HOSTILE_AURA_GRAPHICS_AREA_EFFECT_FIELDS,
     {
       entity: { optional: false, docs: [], memberType: "ModelEntityRef | string" },
-      dynamicScale: { optional: false, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      dynamicScale: { optional: false, docs: [], memberType: "boolean" },
     },
   ],
   [
     STRIKE_CRAFT_COMPONENT_TEMPLATE_HOSTILE_AURA_GRAPHICS_SHIP_EFFECT_FIELDS,
     {
       entity: { optional: false, docs: [], memberType: "ModelEntityRef | string" },
-      dynamicScale: { optional: false, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      dynamicScale: { optional: false, docs: [], memberType: "boolean" },
     },
   ],
   [
@@ -2256,25 +2152,18 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         optional: true,
         docs: [],
         memberType: "(GraphicalCultureRef | string)[] | boolean",
-        literals: ["yes", "no"],
       },
-      isSpaceObject: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
-      isReckoningShip: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      isSpaceObject: { optional: true, docs: [], memberType: "boolean" },
+      isReckoningShip: { optional: true, docs: [], memberType: "boolean" },
       isEntropyConduit: {
         optional: true,
         docs: [
           "Indicates that this ship is a type of entropy conduit ship used in the galactic hyperthermia crisis",
         ],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
-      scalesWithPlanet: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
-      canBeInspected: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      scalesWithPlanet: { optional: true, docs: [], memberType: "boolean" },
+      canBeInspected: { optional: true, docs: [], memberType: "boolean" },
       preCommunicationsName: { optional: true, docs: [], memberType: "string" },
       entity: {
         optional: true,
@@ -2295,39 +2184,23 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       rotationSpeed: { optional: true, docs: [], memberType: "number" },
       collisionRadius: { optional: true, docs: [], memberType: "number" },
       maxHitpoints: { optional: true, docs: [], memberType: "number" },
-      isListed: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
-      componentsAddToCost: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
-      isDesignable: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
-      neverMia: {
-        optional: true,
-        docs: ["default: no?"],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      isListed: { optional: true, docs: [], memberType: "boolean" },
+      componentsAddToCost: { optional: true, docs: [], memberType: "boolean" },
+      isDesignable: { optional: true, docs: [], memberType: "boolean" },
+      neverMia: { optional: true, docs: ["default: no?"], memberType: "boolean" },
       buildTime: {
         optional: true,
         docs: ["may be deprecated, tell Dayshine and Caligula if yes"],
         memberType: "number",
       },
-      isCivilian: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
-      cloakingForbidden: {
-        optional: true,
-        docs: ["default: no"],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      isCivilian: { optional: true, docs: [], memberType: "boolean" },
+      cloakingForbidden: { optional: true, docs: ["default: no"], memberType: "boolean" },
       buildBlockRadius: { optional: true, docs: [], memberType: "number" },
-      canDisable: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      canDisable: { optional: true, docs: [], memberType: "boolean" },
       stayDisabled: {
         optional: true,
         docs: ["Ship stays disabled until explicitly re-enabled from script"],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       modifier: {
         optional: true,
@@ -2371,28 +2244,16 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
           "Only when ship_size subtype `arkship` applies.",
         ],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
-      isOrbitalRing: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      isOrbitalRing: { optional: true, docs: [], memberType: "boolean" },
       iconFrame: { optional: true, docs: [], memberType: "number" },
       baseBuildtime: { optional: true, docs: [], memberType: "number" },
-      canHaveFederationDesign: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
-      enableDefaultDesign: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      canHaveFederationDesign: { optional: true, docs: [], memberType: "boolean" },
+      enableDefaultDesign: { optional: true, docs: [], memberType: "boolean" },
       enable3dviewInShipBrowser: {
         optional: true,
         docs: ["if yes, ship design will have a 3d view in the ship browser"],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       selectable: { optional: true, docs: [], memberType: "Trigger<never>" },
       defaultBehavior: { optional: true, docs: [], memberType: "ShipBehaviorRef | string" },
@@ -2412,13 +2273,8 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         docs: [],
         memberType: "(ComponentSetRequiredComponentRef | string)[]",
       },
-      validTargetAggressiveStance: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
-      autoUpgrade: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      validTargetAggressiveStance: { optional: true, docs: [], memberType: "boolean" },
+      autoUpgrade: { optional: true, docs: [], memberType: "boolean" },
       shipClassIconFrame: { optional: true, docs: [], memberType: "number" },
       forceShowShipClassIconFrame: {
         optional: true,
@@ -2427,7 +2283,6 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
           "Default: no",
         ],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       evaluationResource: {
         optional: true,
@@ -2438,19 +2293,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         ],
         memberType: "ResourceRef | string",
       },
-      usesNamePrefix: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
-      isSpaceFaunaShip: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
-      isReanimated: {
-        optional: true,
-        docs: ["default: no?"],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      usesNamePrefix: { optional: true, docs: [], memberType: "boolean" },
+      isSpaceFaunaShip: { optional: true, docs: [], memberType: "boolean" },
+      isReanimated: { optional: true, docs: ["default: no?"], memberType: "boolean" },
       mutationComponentsSize: {
         optional: true,
         docs: ["Only when ship_size subtype `space_fauna` applies."],
@@ -2462,18 +2307,8 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         docs: ["Only when ship_size subtype `space_fauna` applies."],
         memberType: "ShipSizeSpaceFaunaValues",
       },
-      takesNameFromShipDesign: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
-      flipControlOnDisable: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      takesNameFromShipDesign: { optional: true, docs: [], memberType: "boolean" },
+      flipControlOnDisable: { optional: true, docs: [], memberType: "boolean" },
       combatDisengageChance: { optional: true, docs: [], memberType: "number" },
       potentialCountry: { optional: true, docs: [], memberType: 'Trigger<"country">' },
       possibleCountry: { optional: true, docs: [], memberType: 'Trigger<"country">' },
@@ -2489,20 +2324,14 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
           "Removes the chance for the ship size to instantly get killed by emergency ftl. It can still be killed by the random Emergency FTL damage effect.",
         ],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       aiShipData: { optional: true, docs: [], memberType: "ShipSizeAiShipData" },
-      availableToEveryone: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      availableToEveryone: { optional: true, docs: [], memberType: "boolean" },
       roleBackground: { optional: true, docs: [], memberType: "SpriteRef | string" },
       onClickSound: { optional: true, docs: [], memberType: "SoundEffectRef | string" },
       mapIconOverride: { optional: true, docs: [], memberType: "ShipSizeMapIconOverride" },
       customStateLocPrefix: { optional: true, docs: [], memberType: "string" },
-      isBioShip: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      isBioShip: { optional: true, docs: [], memberType: "boolean" },
       shipFamilyName: {
         optional: true,
         docs: ["Only when ship_size subtype `bio_ship` applies."],
@@ -2523,21 +2352,11 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         docs: ["Only when ship_size subtype `bio_ship` applies."],
         memberType: "ShipSizeRef | string",
       },
-      displayAttackNeutralFleetButton: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      displayAttackNeutralFleetButton: { optional: true, docs: [], memberType: "boolean" },
       constructionOffsetMult: { optional: true, docs: [], memberType: "number" },
       carriesColony: { optional: true, docs: [], memberType: "PlanetClassRef | string" },
       collectsStockpileFrom: { optional: true, docs: [], memberType: "ShipClass[]" },
-      collectsStockpileToCountry: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      collectsStockpileToCountry: { optional: true, docs: [], memberType: "boolean" },
       shipStockpileCapacity: { optional: true, docs: [], memberType: "number" },
       constructionCapabilities: {
         optional: true,
@@ -2563,13 +2382,11 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
           "Default: no.",
         ],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       isStartingArkship: {
         optional: true,
         docs: ["Only when ship_size subtype `arkship` applies."],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       baseShipSize: {
         optional: true,
@@ -2580,7 +2397,6 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         optional: true,
         docs: ["Only when ship_size subtype `arkship` applies."],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       encampmentRequiredProgress: {
         optional: true,
@@ -2631,12 +2447,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         docs: [],
         memberType: "GlobalShipDesignRef | string",
       },
-      canBreedAlone: {
-        optional: true,
-        docs: ["default: no"],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      canBreedAlone: { optional: true, docs: ["default: no"], memberType: "boolean" },
       iconFrame: { optional: false, docs: [], memberType: "number" },
     },
   ],
@@ -2712,7 +2523,6 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
           "Only when opinion_modifier subtype not `triggered_opinion_modifier` applies.",
         ],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       min: {
         optional: true,
@@ -2736,13 +2546,11 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         optional: true,
         docs: ["Only when opinion_modifier subtype not `triggered_opinion_modifier` applies."],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       monthly: {
         optional: true,
         docs: ["Only when opinion_modifier subtype not `triggered_opinion_modifier` applies."],
         memberType: "true",
-        literals: ["yes"],
       },
       months: {
         optional: true,
@@ -2756,7 +2564,6 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
           "Only when opinion_modifier subtype `block_triggered` applies.",
         ],
         memberType: "true",
-        literals: ["yes"],
       },
       trigger: {
         optional: true,
@@ -2786,14 +2593,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         docs: ["Only when static_modifier subtype `planet` applies."],
         memberType: "string",
       },
-      important: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      important: { optional: true, docs: [], memberType: "boolean" },
       customTooltip: { optional: true, docs: [], memberType: "string" },
-      showOnlyCustomTooltip: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      showOnlyCustomTooltip: { optional: true, docs: [], memberType: "boolean" },
       applyModifierToOtherPlanets: {
         optional: true,
         docs: [],
@@ -2803,7 +2605,6 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         optional: true,
         docs: ["Hides it from the country government modifiers interface"],
         memberType: "true",
-        literals: ["yes"],
       },
     },
   ],
@@ -2821,7 +2622,6 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         optional: true,
         docs: ["show as a % or not (default: no)"],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       minMult: {
         optional: true,
@@ -2837,38 +2637,20 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
           'sets if it registers as "good" (i.e. a positive number is green, a negative red). Default no.',
         ],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       neutral: {
         optional: true,
         docs: ["sets if no value is either good or bad (all is yellow). Default no."],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       hidden: {
         optional: true,
         docs: ["probably hides it in tooltips? Needs testing. Default no."],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
-      noDiff: {
-        optional: true,
-        docs: ["Default no"],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
-      capZeroToOne: {
-        optional: true,
-        docs: ["Default no"],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
-      localizeWithValueKey: {
-        optional: true,
-        docs: ["Default no"],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      noDiff: { optional: true, docs: ["Default no"], memberType: "boolean" },
+      capZeroToOne: { optional: true, docs: ["Default no"], memberType: "boolean" },
+      localizeWithValueKey: { optional: true, docs: ["Default no"], memberType: "boolean" },
       category: {
         optional: false,
         docs: [
@@ -2937,7 +2719,6 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
           "Caligula's note: Always used in Vanilla (even when yes), so marked as obligatory unless someone knows better",
         ],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       proxyWarResources: {
         optional: true,
@@ -2953,7 +2734,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         ],
         memberType: 'EffectBlock<"country", "country">',
       },
-      showInDiplomacy: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      showInDiplomacy: { optional: true, docs: [], memberType: "boolean" },
       aggregatedMessageKey: { optional: true, docs: [], memberType: "string" },
     },
   ],
@@ -2961,7 +2742,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
     WAR_GOAL_FIELDS,
     {
       casusBelli: { optional: false, docs: [], memberType: "CasusBelliRef | string" },
-      proxyWarsOnly: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      proxyWarsOnly: { optional: true, docs: [], memberType: "boolean" },
       hide: {
         optional: true,
         docs: [],
@@ -2980,7 +2761,6 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
           "Defenders get this war goal if no war goal is picked in time. If multiple war goals are set to be defender default, the first one scripted in the file is chosen. No by default.",
         ],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       threatMultiplier: {
         optional: true,
@@ -2991,14 +2771,12 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         optional: true,
         docs: ["This decides whether claims should be listed in the description. No by default."],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
-      totalWar: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      totalWar: { optional: true, docs: [], memberType: "boolean" },
       hideIfNoCb: {
         optional: true,
         docs: ["Hide this wargoal if country doesn't have the requisite CB. No by default."],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       secretFealtiesJoinAttacker: {
         optional: true,
@@ -3006,7 +2784,6 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
           "Will countriews that have sworn secret fealty to the attacker join the war? No by default.",
         ],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       surrenderAcceptance: {
         optional: true,
@@ -3030,18 +2807,8 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         memberType: "WarGoalRef | string",
       },
       forbiddenPeaceOffers: { optional: true, docs: [], memberType: "WarGoalForbiddenPeaceOffers" },
-      releaseOccupiedSystemsOnStatusQuo: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
-      showAgreementTerms: {
-        optional: true,
-        docs: ["default: no"],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      releaseOccupiedSystemsOnStatusQuo: { optional: true, docs: [], memberType: "boolean" },
+      showAgreementTerms: { optional: true, docs: ["default: no"], memberType: "boolean" },
       potential: {
         optional: true,
         docs: ["FROM = The targeted country, THIS = The acting country"],
@@ -3091,14 +2858,8 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         optional: true,
         docs: ["Starbases are destroyed instead of ownership being transferred"],
         memberType: "true",
-        literals: ["yes"],
       },
-      shouldIgnoreFederations: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      shouldIgnoreFederations: { optional: true, docs: [], memberType: "boolean" },
     },
   ],
   [
@@ -3143,7 +2904,6 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         optional: true,
         docs: ["Whether the term should show up on the agreement negotiation screen (default: no)"],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       shouldAiUseForProposals: {
         optional: true,
@@ -3151,14 +2911,8 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
           "The ai will skip this when trying to find best/preffered agreement preset to negotiate existing or propose new agreement (default: yes)",
         ],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
-      canPresetBeChanged: {
-        optional: true,
-        docs: ["default: yes"],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      canPresetBeChanged: { optional: true, docs: ["default: yes"], memberType: "boolean" },
     },
   ],
   [
@@ -3168,7 +2922,6 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         optional: true,
         docs: ["default: yes"],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       forcedInitialLoyalty: { optional: true, docs: [], memberType: "number" },
       discreteTerms: {
@@ -3219,7 +2972,6 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         optional: false,
         docs: ["Is this the default stance that new fleets will use?"],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       stopWhenArmiesDead: {
         optional: true,
@@ -3227,22 +2979,15 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
           "Will this stance continue to bombard planets where all defensive armies are dead? default = no",
         ],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
-      stopWhenGroundCombat: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
-      acceptSurrender: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      stopWhenGroundCombat: { optional: true, docs: [], memberType: "boolean" },
+      acceptSurrender: { optional: true, docs: [], memberType: "boolean" },
       abductPops: {
         optional: true,
         docs: [
           "Will this stance attempt to abduct pops to your own planets instead of killing them? default = no",
         ],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       planetDamage: {
         optional: true,
@@ -3517,9 +3262,8 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
           "Default: no",
         ],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
-      showInOutliner: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      showInOutliner: { optional: true, docs: [], memberType: "boolean" },
       completeIcon: { optional: true, docs: [], memberType: "SpriteRef | string" },
       completeIconFrame: { optional: true, docs: [], memberType: "SpriteRef | string" },
       failIcon: { optional: true, docs: [], memberType: "SpriteRef | string" },
@@ -3573,7 +3317,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
     {
       icon: { optional: false, docs: [], memberType: "SpriteRef | string" },
       iconBackground: { optional: false, docs: [], memberType: "SpriteRef | string" },
-      default: { optional: true, docs: [], memberType: "true", literals: ["yes"] },
+      default: { optional: true, docs: [], memberType: "true" },
       allow: { optional: true, docs: [], memberType: 'Trigger<"situation">' },
       potential: { optional: true, docs: [], memberType: 'Trigger<"situation">' },
       modifier: { optional: true, docs: [], memberType: 'ModifierClosure<"country">' },
@@ -3656,7 +3400,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
   [
     SCRIPTED_LOC_FIELDS,
     {
-      random: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      random: { optional: true, docs: [], memberType: "boolean" },
       text: { optional: true, docs: [], memberType: "ScriptedLocText[]" },
       value: { optional: true, docs: [], memberType: "ScriptValue" },
       default: { optional: true, docs: [], memberType: "string | SpriteRef" },
@@ -3783,12 +3527,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
     ECONOMIC_CATEGORY_FIELDS,
     {
       parent: { optional: true, docs: [], memberType: "EconomicCategoryRef | string" },
-      useForAiBudget: {
-        optional: true,
-        docs: ["default: no"],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      useForAiBudget: { optional: true, docs: ["default: no"], memberType: "boolean" },
       aiUseParentForResourcesUpkeep: {
         optional: true,
         docs: [],
@@ -3803,7 +3542,6 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         optional: true,
         docs: ["Only when economic_category subtype `hidden` applies."],
         memberType: "true",
-        literals: ["yes"],
       },
       modifierCategory: {
         optional: true,
@@ -3834,12 +3572,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
           "colony",
         ],
       },
-      addUnscaledValueToTooltip: {
-        optional: true,
-        docs: ["default: no"],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      addUnscaledValueToTooltip: { optional: true, docs: ["default: no"], memberType: "boolean" },
       scaledValueKey: { optional: true, docs: [], memberType: "string" },
       generateAddModifiers: {
         optional: true,
@@ -3879,7 +3612,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
     ECONOMIC_CATEGORY_TRIGGERED_COST_MODIFIER_FIELDS,
     {
       key: { optional: false, docs: [], memberType: "EconomicCategoryRef | string" },
-      useParentIcon: { optional: true, docs: [], memberType: "true", literals: ["yes"] },
+      useParentIcon: { optional: true, docs: [], memberType: "true" },
       modifierTypes: {
         optional: false,
         docs: [],
@@ -3893,7 +3626,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
     ECONOMIC_CATEGORY_TRIGGERED_PRODUCES_MODIFIER_FIELDS,
     {
       key: { optional: false, docs: [], memberType: "EconomicCategoryRef | string" },
-      useParentIcon: { optional: true, docs: [], memberType: "true", literals: ["yes"] },
+      useParentIcon: { optional: true, docs: [], memberType: "true" },
       modifierTypes: {
         optional: false,
         docs: [],
@@ -3907,7 +3640,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
     ECONOMIC_CATEGORY_TRIGGERED_UPKEEP_MODIFIER_FIELDS,
     {
       key: { optional: false, docs: [], memberType: "EconomicCategoryRef | string" },
-      useParentIcon: { optional: true, docs: [], memberType: "true", literals: ["yes"] },
+      useParentIcon: { optional: true, docs: [], memberType: "true" },
       modifierTypes: {
         optional: false,
         docs: [],
@@ -3921,7 +3654,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
     ECONOMIC_CATEGORY_TRIGGERED_LOGISTICS_MODIFIER_FIELDS,
     {
       key: { optional: false, docs: [], memberType: "EconomicCategoryRef | string" },
-      useParentIcon: { optional: true, docs: [], memberType: "true", literals: ["yes"] },
+      useParentIcon: { optional: true, docs: [], memberType: "true" },
       modifierTypes: {
         optional: false,
         docs: [],
@@ -3983,7 +3716,6 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         optional: true,
         docs: ["default: no", "Only when civic_or_origin subtype `origin` applies."],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       multiplyByHabitabilityEffectModifier: {
         optional: true,
@@ -4003,7 +3735,6 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         optional: true,
         docs: ["default: yes", "Only when civic_or_origin subtype `civic` applies."],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       modification: {
         optional: true,
@@ -4012,13 +3743,11 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
           "Only when civic_or_origin subtype `civic` applies.",
         ],
         memberType: "CivicOrOriginModification | boolean",
-        literals: ["yes", "no"],
       },
       canBuildRulerShip: {
         optional: true,
         docs: ["default: no", "Only when civic_or_origin subtype `civic` applies."],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       traits: {
         optional: true,
@@ -4048,7 +3777,6 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         optional: true,
         docs: ["Only when civic_or_origin subtype `origin` applies."],
         memberType: "true",
-        literals: ["yes"],
       },
       picture: {
         optional: true,
@@ -4069,13 +3797,11 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         optional: true,
         docs: ["default: no", "Only when civic_or_origin subtype `origin` applies."],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       advancedStart: {
         optional: true,
         docs: ["Only when civic_or_origin subtype `origin` applies."],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       softTraits: {
         optional: true,
@@ -4092,7 +3818,6 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
           "Only when civic_or_origin subtype `origin` applies.",
         ],
         memberType: "true",
-        literals: ["yes"],
       },
       habitabilityPreference: {
         optional: true,
@@ -4103,7 +3828,6 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         optional: true,
         docs: ["Only when civic_or_origin subtype `origin` applies."],
         memberType: "false",
-        literals: ["no"],
       },
       blocksRandomMachineEmpireGeneration: {
         optional: true,
@@ -4112,7 +3836,6 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
           "Only when civic_or_origin subtype `origin` applies.",
         ],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       room: { optional: true, docs: [], memberType: "string | AssetSelectorRoomRef" },
       cityGraphicalCulture: {
@@ -4159,12 +3882,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         docs: ["modifier that is applied to the country when triggers are evaluated as true"],
         memberType: "ModifierClosure<ScopeName>",
       },
-      hideModifiers: {
-        optional: true,
-        docs: ["default: no"],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      hideModifiers: { optional: true, docs: ["default: no"], memberType: "boolean" },
     },
   ],
   [
@@ -4203,42 +3921,12 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
   [
     COMPONENT_SET_FIELDS,
     {
-      requiredComponentSet: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
-      isCoreComponentSet: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
-      isSpaceFaunaComponentSet: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
-      affectsTargetType: {
-        optional: true,
-        docs: ["default = yes"],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
-      affectsTargetFocus: {
-        optional: true,
-        docs: ["default = yes"],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
-      isDefaultSpaceFaunaComponentSet: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      requiredComponentSet: { optional: true, docs: [], memberType: "boolean" },
+      isCoreComponentSet: { optional: true, docs: [], memberType: "boolean" },
+      isSpaceFaunaComponentSet: { optional: true, docs: [], memberType: "boolean" },
+      affectsTargetType: { optional: true, docs: ["default = yes"], memberType: "boolean" },
+      affectsTargetFocus: { optional: true, docs: ["default = yes"], memberType: "boolean" },
+      isDefaultSpaceFaunaComponentSet: { optional: true, docs: [], memberType: "boolean" },
       icon: {
         optional: true,
         docs: [
@@ -4263,12 +3951,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       shipSize: { optional: true, docs: [], memberType: "(ShipSizeRef | string)[]" },
       fitsOnSlot: { optional: true, docs: [], memberType: "SectionSlot[]" },
       entity: { optional: false, docs: [], memberType: "ModelEntityRef | string" },
-      compatibleWithAllShipSizes: {
-        optional: true,
-        docs: [],
-        memberType: "true",
-        literals: ["yes"],
-      },
+      compatibleWithAllShipSizes: { optional: true, docs: [], memberType: "true" },
       icon: {
         optional: true,
         docs: [
@@ -4278,12 +3961,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       },
       iconFrame: { optional: true, docs: [], memberType: "number" },
       aiTags: { optional: true, docs: [], memberType: '(ComponentTag | "citadel")[]' },
-      shouldDrawComponents: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      shouldDrawComponents: { optional: true, docs: [], memberType: "boolean" },
       resources: { optional: true, docs: [], memberType: "EconomicResourceBlock<ScopeName>[]" },
       prerequisites: { optional: true, docs: [], memberType: "(TechnologyRef | string)[]" },
       componentSlot: { optional: true, docs: [], memberType: "SectionTemplateComponentSlot[]" },
@@ -4302,7 +3980,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       name: { optional: false, docs: [], memberType: "string" },
       template: { optional: false, docs: [], memberType: "ComponentSlotTemplateRef | string" },
       locatorname: { optional: false, docs: [], memberType: 'ModelLocator | "$mesh_locator"' },
-      isSideSlot: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      isSideSlot: { optional: true, docs: [], memberType: "boolean" },
       rotation: { optional: true, docs: [], memberType: "number" },
       position: { optional: true, docs: [], memberType: "SectionTemplateComponentSlotPosition" },
       sectionInstance: { optional: true, docs: [], memberType: "number" },
@@ -4319,12 +3997,11 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
     AMBIENT_OBJECT_FIELDS,
     {
       entity: { optional: false, docs: [], memberType: "ModelEntityRef | string" },
-      selectable: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      selectable: { optional: true, docs: [], memberType: "boolean" },
       showName: {
         optional: true,
         docs: ["Determines whether you can read the name of the object ingame."],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       description: { optional: true, docs: [], memberType: "string" },
       tooltip: { optional: true, docs: [], memberType: "string" },
@@ -4333,9 +4010,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
   [
     GRAPHICAL_CULTURE_FIELDS,
     {
-      hasCityGraphics: { optional: true, docs: [], memberType: "false", literals: ["no"] },
+      hasCityGraphics: { optional: true, docs: [], memberType: "false" },
       fallback: { optional: true, docs: [], memberType: "GraphicalCultureRef | string" },
-      shipColor: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      shipColor: { optional: true, docs: [], memberType: "boolean" },
       shipLighting: { optional: true, docs: [], memberType: "GraphicalCultureShipLighting" },
       randomized: { optional: true, docs: [], memberType: "Trigger<never>" },
       selectable: { optional: true, docs: [], memberType: "Trigger<never>" },
@@ -4377,26 +4054,18 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         optional: true,
         docs: ["Default yes, if yes starbase will be shown in outliner"],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       displayEmpireShield: {
         optional: true,
         docs: ["Default no, if yes empire shield will be shown even if there's no colony"],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       displayMapIcon: {
         optional: true,
         docs: ["Default yes, if yes starbase map icon will be shown even if there's no colony"],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
-      displayShipyardButton: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      displayShipyardButton: { optional: true, docs: [], memberType: "boolean" },
       levelWeight: {
         optional: true,
         docs: ["Default 0, used for claim cost and required module/building level"],
@@ -4418,7 +4087,6 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         optional: true,
         docs: ["Default no, if yes starbase may be used as homebase for fleets"],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       collectsTrade: {
         optional: true,
@@ -4426,22 +4094,15 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
           "Default yes, if no then starbase_trade_collection_range_add and starbase_trade_protection_range_add will have no effect on starbases of this level",
         ],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       upgradePossible: { optional: true, docs: [], memberType: 'Trigger<"starbase">' },
       portrait: { optional: true, docs: [], memberType: "SpriteRef | string" },
-      specialConstruction: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      specialConstruction: { optional: true, docs: [], memberType: "boolean" },
       downgradePotential: { optional: true, docs: [], memberType: 'Trigger<"starbase">' },
       canAlwaysDismantle: {
         optional: true,
         docs: ["Default no, if yes you can dismantle this starbase even if there are colonies"],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       starbaseCapacityUsed: { optional: true, docs: [], memberType: "number" },
       moduleSlots: { optional: true, docs: [], memberType: '(number | "spinal_mount_1")[]' },
@@ -4469,12 +4130,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       archetype: { optional: true, docs: [], memberType: "SpeciesArchetypeRef | string" },
       modifier: { optional: true, docs: [], memberType: 'ModifierClosure<"pop_group">' },
       playable: { optional: true, docs: [], memberType: "Trigger<never>" },
-      randomized: {
-        optional: true,
-        docs: [],
-        memberType: "boolean | Trigger<never>",
-        literals: ["yes", "no"],
-      },
+      randomized: { optional: true, docs: [], memberType: "boolean | Trigger<never>" },
       upliftedInto: { optional: true, docs: [], memberType: "SpeciesClassRef | string" },
       upliftedPortraits: {
         optional: true,
@@ -4499,16 +4155,11 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         docs: [],
         memberType: "(PortraitRef | string | PortraitGroupRef)[]",
       },
-      gender: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      gender: { optional: true, docs: [], memberType: "boolean" },
       graphicalCulture: { optional: true, docs: [], memberType: "GraphicalCultureRef | string" },
       movePopSoundEffect: { optional: true, docs: [], memberType: "SoundEffectRef | string" },
-      useClimatePreference: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
-      portraitModding: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      useClimatePreference: { optional: true, docs: [], memberType: "boolean" },
+      portraitModding: { optional: true, docs: [], memberType: "boolean" },
       leaderAgeMin: { optional: true, docs: [], memberType: "number" },
       leaderAgeMax: { optional: true, docs: [], memberType: "number" },
       resources: { optional: true, docs: [], memberType: "EconomicResourceBlock<ScopeName>[]" },
@@ -4516,7 +4167,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       ethicsToPrefer: { optional: true, docs: [], memberType: "(EthicRef | string)[]" },
       preferredEthicsWeight: { optional: true, docs: [], memberType: "WeightBlock<never>" },
       trait: { optional: true, docs: [], memberType: "TraitRef | string" },
-      generateShipset: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      generateShipset: { optional: true, docs: [], memberType: "boolean" },
       addedClimateLabels: {
         optional: true,
         docs: [],
@@ -4615,13 +4266,8 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       spawnChance: { optional: true, docs: [], memberType: "number" },
       scaledSpawnChance: { optional: true, docs: [], memberType: "number" },
       scaledSpawnSettings: { optional: true, docs: [], memberType: "string" },
-      preventAnomalies: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
-      primitiveSystem: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      preventAnomalies: { optional: true, docs: [], memberType: "boolean" },
+      primitiveSystem: { optional: true, docs: [], memberType: "boolean" },
       innerRadiusOffset: { optional: true, docs: [], memberType: "number" },
       outerRadiusOffset: { optional: true, docs: [], memberType: "number" },
       planet: {
@@ -4637,12 +4283,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         memberType: "ScriptValue | SolarSystemInitializerOrbitDistance",
       },
       orbitalLine: { optional: true, docs: [], memberType: "SolarSystemInitializerOrbitalLine[]" },
-      hasIndependentOrbitalLine: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      hasIndependentOrbitalLine: { optional: true, docs: [], memberType: "boolean" },
       initEffect: {
         optional: true,
         docs: [
@@ -4658,7 +4299,6 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
           "default: no. If yes, when a suitable neighbor is not found, a new solar system will be created to fulfill it.",
         ],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       neighborSystem: {
         optional: true,
@@ -4790,18 +4430,8 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         docs: [],
         memberType: "SituationLogCategoryRef | string",
       },
-      location: {
-        optional: true,
-        docs: ["default: no"],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
-      removeWhenCompleted: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      location: { optional: true, docs: ["default: no"], memberType: "boolean" },
+      removeWhenCompleted: { optional: true, docs: [], memberType: "boolean" },
       projectType: { optional: true, docs: [], memberType: "string" },
       eventScope: {
         optional: false,
@@ -4820,7 +4450,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       daysToResearch: { optional: true, docs: [], memberType: "number" },
       conditionalDesc: { optional: true, docs: [], memberType: "SpecialProjectDesc[]" },
       sameOptionGroupAs: { optional: true, docs: [], memberType: "(SpecialProjectRef | string)[]" },
-      sound: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      sound: { optional: true, docs: [], memberType: "boolean" },
       aIWaitDays: { optional: true, docs: [], memberType: 'WeightBlock<"country">' },
       requirements: { optional: true, docs: [], memberType: "SpecialProjectRequirements" },
       triggeredRequirement: {
@@ -4896,17 +4526,12 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       leader: { optional: true, docs: [], memberType: "LeaderClassRef | string" },
       assaultArmies: { optional: true, docs: [], memberType: "number" },
       defenseArmies: { optional: true, docs: [], memberType: "number" },
-      researchStation: { optional: true, docs: [], memberType: "true", literals: ["yes"] },
-      miningStation: { optional: true, docs: [], memberType: "true", literals: ["yes"] },
-      observationStation: { optional: true, docs: [], memberType: "true", literals: ["yes"] },
+      researchStation: { optional: true, docs: [], memberType: "true" },
+      miningStation: { optional: true, docs: [], memberType: "true" },
+      observationStation: { optional: true, docs: [], memberType: "true" },
       skill: { optional: true, docs: [], memberType: "number" },
       fleetPower: { optional: true, docs: [], memberType: "number" },
-      isFounderSpecies: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      isFounderSpecies: { optional: true, docs: [], memberType: "boolean" },
       hasTrait: { optional: true, docs: [], memberType: "TraitLeaderTraitRef | string" },
       sizeRequirement: {
         optional: true,
@@ -4936,9 +4561,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
     {
       entity: { optional: false, docs: [], memberType: "ModelEntityRef | string" },
       constructionEntity: { optional: true, docs: [], memberType: "string" },
-      rotateToCenter: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
-      scaleOffset: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
-      isGrandArchive: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      rotateToCenter: { optional: true, docs: [], memberType: "boolean" },
+      scaleOffset: { optional: true, docs: [], memberType: "boolean" },
+      isGrandArchive: { optional: true, docs: [], memberType: "boolean" },
       constructionScale: {
         optional: true,
         docs: ["to avoid z-fighting of construction entity with the base entity"],
@@ -4955,28 +4580,17 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         ],
         memberType: "SpriteRef | string",
       },
-      isShroudSeal: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
-      placeEntityOnPlanetPlane: {
-        optional: true,
-        docs: ["default: yes"],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      isShroudSeal: { optional: true, docs: [], memberType: "boolean" },
+      placeEntityOnPlanetPlane: { optional: true, docs: ["default: yes"], memberType: "boolean" },
       entityOffset: { optional: true, docs: [], memberType: "MegastructureEntityOffset" },
       planeOffset: { optional: true, docs: [], memberType: "number" },
-      constructionBlocksOthers: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      constructionBlocksOthers: { optional: true, docs: [], memberType: "boolean" },
       buildOutsideGravityWell: {
         optional: true,
         docs: [
           "deprecated, replaced with `build_type = inside_gravity_well/outside_gravity_well/around_planet'",
         ],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       buildType: {
         optional: true,
@@ -4986,32 +4600,16 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         memberType: "MegaBuildType",
         literals: ["inside_gravity_well", "outside_gravity_well", "around_planet"],
       },
-      showGalacticMapIcon: {
-        optional: true,
-        docs: ["default: yes"],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
-      hideName: {
-        optional: true,
-        docs: ["default: no"],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      showGalacticMapIcon: { optional: true, docs: ["default: yes"], memberType: "boolean" },
+      hideName: { optional: true, docs: ["default: no"], memberType: "boolean" },
       mustSelectShipDesign: {
         optional: true,
         docs: [
           "default = no, means the mega structure should offer a choice of design when becoming a starbase (only applies to megastructure that become starbases )",
         ],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
-      showInOutliner: {
-        optional: true,
-        docs: ["default: yes"],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      showInOutliner: { optional: true, docs: ["default: yes"], memberType: "boolean" },
       bypassType: { optional: true, docs: [], memberType: "BypassRef | string" },
       upgradeDesc: {
         optional: true,
@@ -5026,12 +4624,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       tooltipSystemScore: { optional: true, docs: [], memberType: 'WeightBlock<"system">' },
       tooltipSystemScoreLowThreshold: { optional: true, docs: [], memberType: "number" },
       tooltipSystemScoreHighThreshold: { optional: true, docs: [], memberType: "number" },
-      tooltipShowStarResources: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      tooltipShowStarResources: { optional: true, docs: [], memberType: "boolean" },
       tooltipBestSystemsHeader: { optional: true, docs: [], memberType: "string" },
       tooltipSystemFilter: {
         optional: true,
@@ -5043,7 +4636,6 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         optional: true,
         docs: ["Only when megastructure subtype `has_prereqs` applies."],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       prereqName: {
         optional: true,
@@ -5078,32 +4670,16 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         memberType: 'Trigger<"megastructure">',
       },
       resources: { optional: true, docs: [], memberType: "EconomicResourceBlock<ScopeName>[]" },
-      overlordCanUpgrade: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      overlordCanUpgrade: { optional: true, docs: [], memberType: "boolean" },
       usePlanetResource: {
         optional: true,
         docs: [
           "default = no; decides if the megastructure will mine the underlying resources if its on top of a planet/star",
         ],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
-      scalesWithPlanet: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
-      isRuinedOrbitalRing: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      scalesWithPlanet: { optional: true, docs: [], memberType: "boolean" },
+      isRuinedOrbitalRing: { optional: true, docs: [], memberType: "boolean" },
       countryModifier: {
         optional: true,
         docs: ["accepts country modifiers"],
@@ -5181,12 +4757,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         memberType:
           'WithFrom<Trigger<"megastructure">, "megastructure", "country", "megastructure">',
       },
-      canBeDismantledByNonOwner: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      canBeDismantledByNonOwner: { optional: true, docs: [], memberType: "boolean" },
       dismantlePossible: {
         optional: true,
         docs: [],
@@ -5296,13 +4867,11 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         optional: true,
         docs: ["Only when spriteType subtype not `progressbar&!piechart` applies."],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       transParencecheck: {
         optional: true,
         docs: ["Only when spriteType subtype not `progressbar&!piechart` applies."],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       borderSize: {
         optional: true,
@@ -5341,25 +4910,21 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         optional: true,
         docs: ["Only when spriteType subtype not `progressbar&!piechart` applies."],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       closeUp: {
         optional: true,
         docs: ["Only when spriteType subtype not `progressbar&!piechart` applies."],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       midCloseUp: {
         optional: true,
         docs: ["Only when spriteType subtype not `progressbar&!piechart` applies."],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       tilingCenter: {
         optional: true,
         docs: ["Only when spriteType subtype not `progressbar&!piechart` applies."],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       clicksound: {
         optional: true,
@@ -5375,7 +4940,6 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         optional: true,
         docs: ["Only when spriteType subtype not `progressbar&!piechart` applies."],
         memberType: "boolean",
-        literals: ["yes", "no"],
       },
       animation: {
         optional: true,
@@ -5436,12 +5000,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         memberType: "AssetFileItem | string",
       },
       animationrotation: { optional: true, docs: [], memberType: "number" },
-      animationlooping: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      animationlooping: { optional: true, docs: [], memberType: "boolean" },
       animationtime: { optional: true, docs: [], memberType: "number" },
       animationdelay: { optional: true, docs: [], memberType: "number" },
       animationblendmode: {
@@ -5644,7 +5203,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       values: {
         optional: false,
         docs: ["The group's operands, emitted as repeated `value` keys."],
-        memberType: "readonly AuthorityRef | string[]",
+        memberType: "readonly (AuthorityRef | string)[]",
       },
     },
   ],
@@ -5684,7 +5243,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       values: {
         optional: false,
         docs: ["The group's operands, emitted as repeated `value` keys."],
-        memberType: "readonly CountryTypeRef | string[]",
+        memberType: "readonly (CountryTypeRef | string)[]",
       },
     },
   ],
@@ -5724,7 +5283,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       values: {
         optional: false,
         docs: ["The group's operands, emitted as repeated `value` keys."],
-        memberType: "readonly EthicRef | string[]",
+        memberType: "readonly (EthicRef | string)[]",
       },
     },
   ],
@@ -5764,7 +5323,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       values: {
         optional: false,
         docs: ["The group's operands, emitted as repeated `value` keys."],
-        memberType: "readonly CivicOrOriginCivicRef | string[]",
+        memberType: "readonly (CivicOrOriginCivicRef | string)[]",
       },
     },
   ],
@@ -5804,7 +5363,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       values: {
         optional: false,
         docs: ["The group's operands, emitted as repeated `value` keys."],
-        memberType: "readonly CivicOrOriginOriginRef | string[]",
+        memberType: "readonly (CivicOrOriginOriginRef | string)[]",
       },
     },
   ],
@@ -5844,7 +5403,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       values: {
         optional: false,
         docs: ["The group's operands, emitted as repeated `value` keys."],
-        memberType: "readonly TraitSpeciesTraitRef | string[]",
+        memberType: "readonly (TraitSpeciesTraitRef | string)[]",
       },
     },
   ],
@@ -5884,7 +5443,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       values: {
         optional: false,
         docs: ["The group's operands, emitted as repeated `value` keys."],
-        memberType: "readonly SpeciesClassRef | string[]",
+        memberType: "readonly (SpeciesClassRef | string)[]",
       },
     },
   ],
@@ -5924,7 +5483,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       values: {
         optional: false,
         docs: ["The group's operands, emitted as repeated `value` keys."],
-        memberType: "readonly SpeciesArchetypeRef | string[]",
+        memberType: "readonly (SpeciesArchetypeRef | string)[]",
       },
     },
   ],
@@ -5964,7 +5523,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       values: {
         optional: false,
         docs: ["The group's operands, emitted as repeated `value` keys."],
-        memberType: "readonly PlanetClassRef | string[]",
+        memberType: "readonly (PlanetClassRef | string)[]",
       },
     },
   ],
@@ -6004,7 +5563,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       values: {
         optional: false,
         docs: ["The group's operands, emitted as repeated `value` keys."],
-        memberType: "readonly GraphicalCultureRef | string[]",
+        memberType: "readonly (GraphicalCultureRef | string)[]",
       },
     },
   ],
@@ -6033,12 +5592,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         memberType: "ScriptValue | PlanetInitializerOrbitDistance",
       },
       orbitalLine: { optional: true, docs: [], memberType: "PlanetInitializerOrbitalLine[]" },
-      hasIndependentOrbitalLine: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      hasIndependentOrbitalLine: { optional: true, docs: [], memberType: "boolean" },
       flags: { optional: true, docs: [], memberType: "PlanetFlag[]" },
       orbitAngle: {
         optional: true,
@@ -6046,9 +5600,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         memberType: '"random" | number | PlanetInitializerOrbitAngle',
       },
       size: { optional: true, docs: [], memberType: "number | PlanetInitializerSize" },
-      hasRing: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
-      homePlanet: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
-      startingPlanet: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      hasRing: { optional: true, docs: [], memberType: "boolean" },
+      homePlanet: { optional: true, docs: [], memberType: "boolean" },
+      startingPlanet: { optional: true, docs: [], memberType: "boolean" },
       tileBlocker: { optional: true, docs: [], memberType: "(DepositBlockerRef | string)[]" },
       modifiers: { optional: true, docs: [], memberType: '"none"', literals: ["none"] },
       modifier: { optional: true, docs: [], memberType: "(PlanetModifierRef | string)[]" },
@@ -6130,12 +5684,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         memberType: "ScriptValue | MoonInitializerOrbitDistance",
       },
       orbitalLine: { optional: true, docs: [], memberType: "MoonInitializerOrbitalLine[]" },
-      hasIndependentOrbitalLine: {
-        optional: true,
-        docs: [],
-        memberType: "boolean",
-        literals: ["yes", "no"],
-      },
+      hasIndependentOrbitalLine: { optional: true, docs: [], memberType: "boolean" },
       flags: { optional: true, docs: [], memberType: "PlanetFlag[]" },
       orbitAngle: {
         optional: true,
@@ -6143,9 +5692,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         memberType: '"random" | number | MoonInitializerOrbitAngle',
       },
       size: { optional: true, docs: [], memberType: "number | MoonInitializerSize" },
-      hasRing: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
-      homePlanet: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
-      startingPlanet: { optional: true, docs: [], memberType: "boolean", literals: ["yes", "no"] },
+      hasRing: { optional: true, docs: [], memberType: "boolean" },
+      homePlanet: { optional: true, docs: [], memberType: "boolean" },
+      startingPlanet: { optional: true, docs: [], memberType: "boolean" },
       tileBlockers: { optional: true, docs: [], memberType: '"none"', literals: ["none"] },
       tileBlocker: { optional: true, docs: [], memberType: "(DepositBlockerRef | string)[]" },
       modifiers: { optional: true, docs: [], memberType: '"none"', literals: ["none"] },

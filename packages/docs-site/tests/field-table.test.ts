@@ -79,6 +79,36 @@ describe("buildFieldTable", () => {
     expect(declined.some((row) => row.path === "planet_initializer.change_orbit")).toBe(true);
   });
 
+  it("omits game-token literals from boolean members", () => {
+    // A boolean admits `yes`/`no` in script, but authors pass `true`/`false` —
+    // printing the tokens would document strings that do not type-check.
+    const model = buildFieldTable("situation_type");
+    const permanent = model.rows.find((row) => row.member === "permanent");
+    expect(permanent?.type).toBe("boolean");
+    expect(permanent?.literals).toBeUndefined();
+  });
+
+  it("parenthesizes union element types in clause group arrays", () => {
+    const model = buildFieldTable("civic_or_origin");
+    const valuesRows = model.subTables
+      .flatMap((table) => table.rows)
+      .filter((row) => row.member === "values");
+    expect(valuesRows.length).toBeGreaterThan(0);
+    for (const row of valuesRows) {
+      // `readonly (A | B)[]`, never the misparsed `readonly A | B[]`.
+      expect(row.type).toMatch(/^readonly (\(.+\)|\S+)\[\]$/);
+    }
+  });
+
+  it("keeps conditional requirements on nested localisation slots", () => {
+    const model = buildFieldTable("tradition");
+    const swap = model.rows.find((row) => row.member === "traditionSwap");
+    const table = model.subTables.find((entry) => entry.id === swap?.subTable);
+    const name = table?.localisation?.find((slot) => slot.member === "name");
+    expect(name?.required).toBe(false);
+    expect(name?.requiredUnless).toBe("inheritName");
+  });
+
   it("marks a dual member once, under its shared authoring member", () => {
     const model = buildFieldTable("situation_type");
     const picture = [...model.rows, ...model.subTables.flatMap((table) => table.rows)].filter(

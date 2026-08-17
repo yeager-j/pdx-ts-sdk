@@ -11,6 +11,7 @@
  */
 import { buildFieldTable } from "../field-table.ts";
 import FieldRows from "./FieldRows.astro";
+import LocalisationSlots from "./LocalisationSlots.astro";
 
 interface Props {
   /** The registry name, as spelled in CONTENT_REGISTRIES (`technology`). */
@@ -39,38 +40,7 @@ const OMISSION_LABELS = {
         Text members emitted to localization rather than into the definition body. The pattern's{" "}
         <code>$</code> is the definition's id.
       </p>
-      <table>
-        <thead>
-          <tr>
-            <th>Member</th>
-            <th>Key pattern</th>
-            <th>Required</th>
-          </tr>
-        </thead>
-        <tbody>
-          {model.localisation.map((slot) => (
-            <tr>
-              <td>
-                <code>{slot.member}</code>
-              </td>
-              <td>
-                <code>{slot.pattern}</code>
-              </td>
-              <td>
-                {slot.required ? (
-                  "yes"
-                ) : slot.requiredUnless !== undefined ? (
-                  <>
-                    unless <code>{slot.requiredUnless}</code> is set
-                  </>
-                ) : (
-                  "no"
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <LocalisationSlots slots={model.localisation} />
     </>
   )
 }
@@ -83,16 +53,13 @@ const OMISSION_LABELS = {
       </h3>
       <FieldRows rows={table.rows} anchor={anchor} />
       {table.localisation && (
-        <p>
-          Each entry's key is its id and localization key
-          {table.localisation.map((slot) => (
-            <>
-              {"; "}
-              <code>{slot.pattern}</code> is {slot.required ? "required" : "optional"}
-            </>
-          ))}
-          .
-        </p>
+        <>
+          <p>
+            Each entry also has localization members; the pattern's <code>$</code> is the entry's
+            own key.
+          </p>
+          <LocalisationSlots slots={table.localisation} />
+        </>
       )}
     </>
   ))

@@ -324,7 +324,7 @@ function clauseDocTables(
         values: {
           optional: false,
           docs: ["The group's operands, emitted as repeated `value` keys."],
-          memberType: `readonly ${ref.type}[]`,
+          memberType: `readonly ${ref.type.includes(" | ") ? `(${ref.type})` : ref.type}[]`,
         },
       },
     },

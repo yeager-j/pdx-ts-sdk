@@ -31,6 +31,7 @@ import { isOptional } from "../cwt/model.ts";
 import { camelCase, docComment, indefiniteArticle } from "../naming.ts";
 import { CONTENT_DECLINED_FIELDS, CONTENT_FIELD_OVERRIDES, FIELD_WIDENINGS } from "../overlay.ts";
 import {
+  authoredLiterals,
   lowerStructuralSplice,
   mergeByName,
   omissionLine,
@@ -159,7 +160,7 @@ export function emitAliasSplice(emitter: Emitter, category: string): AliasSplice
       optional,
       docs: docLines,
       memberType: lowering.memberType,
-      ...(lowering.admits.literals === undefined ? {} : { literals: lowering.admits.literals }),
+      ...authoredLiterals(lowering.admits.literals),
     };
     docTables.push(...(lowering.docTables ?? []));
     fieldMetadata.push(lowering.metadata);

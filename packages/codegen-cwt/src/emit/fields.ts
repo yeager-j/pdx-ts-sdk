@@ -117,6 +117,25 @@ export interface FieldOmissionRow {
 }
 
 /**
+ * The literals a doc row may carry: the admitted set, except where lowering
+ * changes the authored representation. `admits.literals` speaks the game's
+ * tokens because the corpus gate measures shipped files, but boolean fields
+ * author as `true`/`false` while admitting `yes`/`no` — printing those tokens
+ * in a docs table tells an author to pass strings that do not type-check.
+ * Booleans are the only conversion with that mismatch, and their admitted
+ * sets are exactly the subsets of `{yes, no}`, so those are omitted; the
+ * member type `boolean` already says everything the row would.
+ */
+export function authoredLiterals(literals: readonly string[] | undefined): {
+  readonly literals?: readonly string[];
+} {
+  if (literals === undefined || literals.every((token) => token === "yes" || token === "no")) {
+    return {};
+  }
+  return { literals };
+}
+
+/**
  * The report line a row has always printed as, per kind — declined rows use
  * an em dash, unsupported rows parenthesize, collapsed rows carry their own
  * leading `(pattern)`. Changing a format here changes the codegen report.
@@ -1426,7 +1445,7 @@ function structShape(
       optional,
       docs: docLines,
       memberType: lowered.memberType,
-      ...(lowered.admits.literals === undefined ? {} : { literals: lowered.admits.literals }),
+      ...authoredLiterals(lowered.admits.literals),
     };
     docTables.push(...(lowered.docTables ?? []));
     fieldMetadata.push(lowered.metadata);
