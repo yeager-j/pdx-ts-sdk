@@ -31,10 +31,10 @@ that rule unchanged.
 The exception costs something, so it is paid for rather than waived. Examples do not drift
 because they are gated: every `<name>.example.ts` under `packages/docs-site/src/content/docs/`
 typechecks against the workspace SDK, compiles through the Fold, and renders during
-`npm run docs:build`, which CI runs before anything is built so the site resolves the SDK's
-sources rather than a `dist/`. Prose is defended by structure instead — keep it thin and let
-the compiled example carry the meaning. A page section that restates behavior in prose is a
-review smell: it is the part no gate can hold to the code.
+`npm run docs:build`, which CI runs against a deleted `packages/*/dist` so the site resolves
+the SDK's sources rather than compiled output. Prose is defended by structure instead — keep
+it thin and let the compiled example carry the meaning. A page section that restates behavior
+in prose is a review smell: it is the part no gate can hold to the code.
 
 ## Repository conventions
 

@@ -32,12 +32,16 @@ jobs:
       # the workspace SDK, compiles through the Fold, and renders. A broken
       # example fails this build.
       #
-      # It runs before `npm run build` on purpose, with no `packages/*/dist` on
-      # disk yet. That is what proves the site resolves the workspace packages
-      # to their sources: built after, it would find `dist/` and the coverage
-      # and example gates would check compiled output instead of the sources
-      # under review, silently, exactly as they did before SDK-214.
-      - run: npm run docs:build
+      # Deleting `dist/` is half the gate, so it happens in this step rather
+      # than a neighbouring one. The site must resolve the workspace packages
+      # to their sources (SDK-214), and an empty tree is what proves it; with
+      # `dist/` on disk the coverage and example gates can check compiled
+      # output instead of the sources under review, silently, as they did
+      # before. No earlier step can be assumed to leave the tree empty: `npm
+      # test` `npm pack`s each package for the scaffolder test, and `prepack`
+      # builds `dist/` on the way.
+      - name: Docs gate, against sources rather than dist/
+        run: rm -rf packages/*/dist && npm run docs:build
       - run: npm run build
       - run: npm run codegen:verified-build:check
       # The CI-style codegen drift gate: regenerates from vendored inputs and
