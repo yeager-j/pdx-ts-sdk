@@ -24,8 +24,15 @@ import { VANILLA_PATH_GAME_VERSION, VANILLA_PATHS } from "@pdx-ts/stellaris-ids/
 
 /** A page of the site, as the gate needs to see it. */
 export interface ReferencePage {
-  /** The collection id, which is also the route: `reference/technology`. */
+  /** The collection id — what the gate reasons about and names in its errors. */
   readonly id: string;
+  /**
+   * Where the page is served. Supplied by the caller rather than built from
+   * {@link id}, because how a collection id becomes a URL is Starlight's rule
+   * and it moves — a base path, a locale prefix — and this module has no
+   * business knowing it.
+   */
+  readonly href: string;
   readonly title: string;
   /**
    * The registries this page documents. Present on every `reference/` page,
@@ -196,6 +203,17 @@ function parentOf(folder: string): string {
   return folder.slice(0, folder.lastIndexOf("/"));
 }
 
+/**
+ * The reference section, by collection id.
+ *
+ * The section index is `reference`, not `reference/index` — Astro's loader
+ * strips the file name — so a bare `startsWith("reference/")` misses the one
+ * page that most obviously belongs to the section.
+ */
+function isReferencePage(id: string): boolean {
+  return id === "reference" || id.startsWith("reference/");
+}
+
 /** Every folder that directly holds a file, from a flat list of file paths. */
 export function foldersHoldingFiles(
   paths: readonly string[],
@@ -211,15 +229,26 @@ export function foldersHoldingFiles(
 }
 
 /**
- * The game concepts under `common/`, one folder each.
+ * The game concepts under `common/`, one location each.
  *
- * A folder holding script files is a concept — except when its parent holds
- * script files too, in which case the child is the parent's own file layout
- * rather than a separate thing (`common/inline_scripts/ai` is inline scripts,
- * filed; `common/random_names/base` is random names, filed). The exception to
- * the exception is where the supported line runs between the two:
- * `common/technology/category` is not technology and `common/governments/civics`
- * is not governments, and those are exactly the distinctions this page reports.
+ * Usually a location is a folder: a folder holding script files is a concept,
+ * except when its parent holds script files too, in which case the child is the
+ * parent's own file layout rather than a separate thing
+ * (`common/inline_scripts/ai` is inline scripts, filed; `common/random_names/base`
+ * is random names, filed). The exception to the exception is where the supported
+ * line runs between the two: `common/technology/category` is not technology and
+ * `common/governments/civics` is not governments, and those are exactly the
+ * distinctions this page reports.
+ *
+ * Some are a single file at the root instead. The game keeps a few types in one
+ * file rather than a folder — the rules declare `alert` and `achievement` with a
+ * `path_file` under `game/common` — and a folder-only walk would fold those into
+ * `common/` and drop them, leaving real unsupported concepts off a page whose
+ * whole job is to list them. So a `.txt` sitting directly in `common/` is its
+ * own row. Two of the four are the game's own notes to modders rather than
+ * content, and they show; naming them to filter them would be exactly the
+ * hand-kept list this derivation exists to avoid, and a reader loses nothing by
+ * seeing that the SDK cannot author a readme.
  *
  * `common/` itself is the scope, never a concept, so nothing collapses into it.
  */
@@ -235,6 +264,10 @@ export function scriptConcepts(
     const collapses =
       parent !== "common" && folders.has(parent) && !claimed.has(folder) && !claimed.has(parent);
     if (!collapses) concepts.push(folder);
+  }
+  for (const path of paths) {
+    if (!path.startsWith(SCRIPT_ROOT) || !path.endsWith(SCRIPT_EXTENSION)) continue;
+    if (!path.slice(SCRIPT_ROOT.length).includes("/")) concepts.push(path);
   }
   return concepts.sort();
 }
@@ -254,11 +287,25 @@ export function coverRegistries(
 
   const pagesByRegistry = new Map<string, ReferencePage>();
   for (const page of pages) {
-    if (page.id.startsWith("reference/") && page.registries === undefined) {
+    const isReference = isReferencePage(page.id);
+    if (isReference && page.registries === undefined) {
       throw new Error(
         `The reference page "${page.id}" declares no "registries" frontmatter. Every page under ` +
           `reference/ states which registries it documents, and an index page states an empty ` +
           `list — that is what makes the coverage gate derivable rather than guessed.`
+      );
+    }
+    // The frontmatter key is on the whole docs collection, because the schema
+    // cannot see a page's route. The invariant it serves is narrower: a
+    // registry is owned by a reference page. A guide claiming one would satisfy
+    // the gate and put a /guides/ link in the reference table, so it is an
+    // error rather than something to quietly ignore — the guide almost
+    // certainly meant to cross-link, which is prose, not frontmatter.
+    if (!isReference && page.registries !== undefined) {
+      throw new Error(
+        `The page "${page.id}" declares "registries" frontmatter, but only pages under reference/ ` +
+          `document a registry. Delete the key: to point at a registry from a guide, link to its ` +
+          `reference page.`
       );
     }
     for (const registry of page.registries ?? []) {
@@ -314,7 +361,7 @@ export function coverRegistries(
       folder: entry.folder,
       ...(page === undefined
         ? { undocumented: undocumented[entry.registry] }
-        : { page: { href: `/${page.id}/`, title: page.title } }),
+        : { page: { href: page.href, title: page.title } }),
     };
   });
 }

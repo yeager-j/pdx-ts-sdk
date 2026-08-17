@@ -35,6 +35,7 @@ const REGISTRIES = [
 
 const page = (id: string, registries?: readonly string[]): ReferencePage => ({
   id,
+  href: `/${id}/`,
   title: id,
   ...(registries === undefined ? {} : { registries }),
 });
@@ -112,6 +113,41 @@ describe("the registry gate", () => {
       })
     ).not.toThrow();
   });
+
+  // The section index is `reference`, not `reference/index`: the id has no
+  // slash, so the obvious membership test misses the page most obviously in the
+  // section, and it declares an empty list rather than none.
+  it("counts the section index as a reference page", () => {
+    const skips = { technology: "SDK-201", building: "SDK-201" };
+    expect(() => coverRegistries(REGISTRIES, [page("reference")], skips)).toThrow(
+      /declares no "registries" frontmatter/
+    );
+    expect(() => coverRegistries(REGISTRIES, [page("reference", [])], skips)).not.toThrow();
+  });
+
+  it("rejects a guide claiming a registry, rather than letting it satisfy the gate", () => {
+    expect(() =>
+      coverRegistries(REGISTRIES, [page("guides/triggers-and-effects", ["technology"])], {
+        building: "SDK-201",
+      })
+    ).toThrow(/only pages under reference\/ document a registry/);
+  });
+
+  it("links a page at the route the caller gives it, not at its id", () => {
+    const rows = coverRegistries(
+      REGISTRIES,
+      [
+        {
+          id: "reference/technology",
+          href: "/docs/reference/tech/",
+          title: "Technology",
+          registries: ["technology"],
+        },
+      ],
+      { building: "SDK-201" }
+    );
+    expect(rows[0]?.page?.href).toBe("/docs/reference/tech/");
+  });
 });
 
 describe("the folder diff", () => {
@@ -150,7 +186,12 @@ describe("the folder diff", () => {
 
   it("never collapses a top-level folder into common/ itself", () => {
     const paths = ["common/achievements.txt", "common/edicts/00_edicts.txt"];
-    expect(scriptConcepts(paths, new Set())).toEqual(["common/edicts"]);
+    expect(scriptConcepts(paths, new Set())).toContain("common/edicts");
+  });
+
+  it("counts a type the game keeps in one root file, which has no folder to find", () => {
+    const paths = ["common/alerts.txt", "common/edicts/00_edicts.txt", "common/notes.json"];
+    expect(scriptConcepts(paths, new Set())).toEqual(["common/alerts.txt", "common/edicts"]);
   });
 });
 
@@ -186,6 +227,11 @@ describe("the real coverage", () => {
 
   it("claims the on-actions folder for the channel that writes it", () => {
     expect(coverage.unsupported).not.toContain("common/on_actions");
+  });
+
+  it("reports the types the game keeps in a root file", () => {
+    expect(coverage.unsupported).toContain("common/alerts.txt");
+    expect(coverage.unsupported).toContain("common/achievements.txt");
   });
 
   it("prints a call that exists for every registry", () => {

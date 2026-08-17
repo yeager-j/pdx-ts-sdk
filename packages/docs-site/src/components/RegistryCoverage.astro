@@ -10,8 +10,13 @@ import { getCollection } from "astro:content";
 
 import { buildCoverage } from "../registry-coverage.ts";
 
+// Starlight routes a docs entry by its collection id under the site's base, so
+// the URL is built here rather than in the gate: this is the file that knows
+// how Starlight is configured, and the gate should not have to.
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 const pages = (await getCollection("docs")).map((entry) => ({
   id: entry.id,
+  href: `${base}/${entry.id}/`,
   title: entry.data.title,
   registries: entry.data.registries,
 }));
@@ -106,16 +111,17 @@ const documented = coverage.registries.filter((row) => row.page !== undefined).l
 <h2 id="not-yet-supported">Not supported yet</h2>
 
 <p>
-  The {coverage.unsupported.length} folders below hold script content in Stellaris {
+  The {coverage.unsupported.length} locations below hold script content in Stellaris {
     coverage.gameVersion
   } and no registry writes to any of them. There is no page for these, and no type: the SDK cannot
   author them today.
 </p>
 
 <p>
-  The list covers <code>common/</code>, the game's script-content root. Asset trees —{" "}
-  <code>gfx/</code>, <code>interface/</code>, <code>sound/</code> — are the Assets channel's
-  business, and the three registries that write into them are in the first table.
+  The list covers <code>common/</code>, the game's script-content root — a folder per concept,
+  except for the few types the game keeps in a single file. Asset trees — <code>gfx/</code>,{" "}
+  <code>interface/</code>, <code>sound/</code> — are the Assets channel's business, and the three
+  registries that write into them are in the first table.
 </p>
 
 <ul>
