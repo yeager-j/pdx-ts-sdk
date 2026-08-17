@@ -7,4 +7,6 @@ The guides are the mental model: the build pipeline, features and discovery, tri
 effects, references and identity, localization, events, on-actions, assets, patching vanilla,
 testing, and diagnostics.
 
-They are not written yet. This page holds the section open.
+Start with [Getting started](/guides/getting-started/) to create, build, install, and run a mod.
+Then use [Your first technology](/guides/your-first-technology/) to see one complete TypeScript
+definition beside the PDXScript and localization it produces.
