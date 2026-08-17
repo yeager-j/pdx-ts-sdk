@@ -1,0 +1,163 @@
+---
+title: Localization
+description: Generate content text, create standalone keys, replace existing text, and emit safe Stellaris localization files.
+sidebar:
+  order: 8
+---
+
+import PairedExample from "../../../components/PairedExample.astro";
+
+The SDK turns author-facing text into the localization keys and files that
+Stellaris loads. Use the narrowest authoring surface for each kind of text:
+
+- Put a definition's own text in its generated localization members, such as
+  `name` and `desc`.
+- Use `mod.localization` when another script field needs a standalone key owned
+  by your mod.
+- Use `mod.replaceLocalization` only when you intend to replace an exact key
+  that already exists.
+
+This complete example uses all three:
+
+<PairedExample name="localization" />
+
+Compare the TypeScript with the rendered files. The building's text, the
+standalone tooltip, and the exact replacement take different routes into the
+game's localization layers.
+
+## Put definition text on the definition
+
+Generated content methods expose the text slots declared for that content
+type. For a building, `name` and `desc` are English source text:
+
+```ts
+const resonanceArchive = mod.building("resonance_archive", {
+  name: "Resonance Archive",
+  desc: "A living record of every harmonic signal we have found.",
+  // Other fields omitted.
+});
+```
+
+The SDK mints the building id and applies the registry's localization patterns:
+
+| Member | Generated key                                       |
+| ------ | --------------------------------------------------- |
+| `name` | `crystal_resonance_building_resonance_archive`      |
+| `desc` | `crystal_resonance_building_resonance_archive_desc` |
+
+The text does not appear in the building's PDXScript body. The game-facing
+definition uses its id, while the Fold registers the matching localization
+entries in the same Feature's language file.
+
+Each registry reference page lists its generated localization slots and key
+patterns. A `$` in a pattern means the definition id. Some nested entries have
+their own ids and localization slots; for those rows, `$` means the nested
+entry's id.
+
+Use these members whenever the text belongs to a generated definition. They
+keep the definition, required-text checks, and key pattern together.
+
+## Create a standalone key with `mod.localization`
+
+Some PDXScript fields expect a localization key but do not own the text. Create
+one explicitly and pass its `.key` to that field:
+
+```ts
+const archiveTooltip = mod.localization("archive_tooltip", {
+  english: "Stores discoveries made through resonance research.",
+  french: "Conserve les découvertes issues de la recherche en résonance.",
+});
+
+const archive = mod.building("resonance_archive", {
+  // Other fields omitted.
+  customTooltip: archiveTooltip.key,
+});
+```
+
+`mod.localization` prefixes the suffix, so this item owns the complete key
+`crystal_resonance_archive_tooltip`. The exact key remains in the type of
+`.key`, which makes it safe to pass through helpers without copying the final
+string.
+
+A string is shorthand for English-only text:
+
+```ts
+const label = mod.localization("archive_label", "Resonance Archive");
+```
+
+For translations, pass a language record with `english` plus any supported
+Stellaris languages. English is required, and TypeScript rejects unknown
+language names. The Fold emits only the language files that have text.
+
+Localization values are mod items, not global registrations. Place them in a
+Feature and include that Feature in `mod.compile`, just like content and
+events. Their Feature stem selects the localization filename.
+
+## Replace an exact existing key deliberately
+
+`mod.replaceLocalization` preserves the key exactly and writes it under the
+game's replacement layer:
+
+```ts
+const reconsider = mod.replaceLocalization("crisis.2010.a", {
+  english: "Reconsider the signal.",
+  french: "Réexaminez le signal.",
+});
+```
+
+The key is not prefixed or normalized. The English entry is written to a path
+such as:
+
+```text
+localisation/replace/english/crystal_resonance_resonance_l_english.yml
+```
+
+Use this for a free-standing key that a typed content patch cannot reach, such
+as existing event option text. The SDK validates the key's shape but cannot
+prove that the key exists in Stellaris or another mod. A typo therefore creates
+an unused entry instead of replacing anything.
+
+Ordinary localization and replacement localization are separate layers. Even
+if they name the same key, the Fold keeps both files because the replacement
+layer is the deliberate winner in game.
+
+## Duplicate keys fail before files are written
+
+The Fold checks localization keys across every selected Feature. Two entries in
+the same layer and language may share a key only when their text is identical.
+Identical registrations collapse to one deterministic file; different text
+throws an error such as:
+
+```text
+Duplicate localization key "crystal_resonance_archive_tooltip" for english
+```
+
+The check includes text generated from content definitions, event text,
+standalone localization, and localization contributed by patches. You do not
+need to coordinate filenames to get this protection: the key is checked
+globally before the Feature-owned files are resolved.
+
+Keep every key and displayed value on one source line. Use the two characters
+`\\n` when Stellaris should display a line break. A literal line break or NUL
+byte is rejected because it could turn the rest of the file into unintended
+entries. Since the game's format has no quote escape, the Fold replaces a
+double quote in displayed text with a single quote and records a warning.
+
+## `localization` in TypeScript, `localisation` on disk
+
+The SDK's API and this documentation use the American spelling
+**localization**. Stellaris requires the British spelling in its directory
+names, so rendered paths use **`localisation/`** and
+**`localisation/replace/`**. Do not rename those directories after the build.
+
+Every emitted `.yml` file also starts with a UTF-8 byte order mark (BOM), then
+the language header and sorted entries:
+
+```pdxloc
+l_english:
+ crystal_resonance_archive_tooltip:0 "Stores discoveries made through resonance research."
+```
+
+The BOM is not visible in the example tab, but it is present in the rendered
+file. Stellaris silently ignores localization files without it, so the renderer
+adds it automatically.
