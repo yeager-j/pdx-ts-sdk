@@ -31,13 +31,18 @@ import { isOptional } from "../cwt/model.ts";
 import { camelCase, docComment, indefiniteArticle } from "../naming.ts";
 import { CONTENT_DECLINED_FIELDS, CONTENT_FIELD_OVERRIDES, FIELD_WIDENINGS } from "../overlay.ts";
 import {
+  authoredLiterals,
   lowerStructuralSplice,
   mergeByName,
+  omissionLine,
   pickOrdinary,
   spliceTypeName,
   structuralSpliceOf,
   topLevelSplices,
+  type DocTable,
   type EmittedField,
+  type FieldOmissionRow,
+  type MemberDocRow,
 } from "./fields.ts";
 import type { Emitter } from "./types.ts";
 
@@ -73,6 +78,10 @@ export interface AliasSpliceEmission {
   readonly declinedFields: readonly string[];
   /** Declared in the category but not expressible, each with its reason. */
   readonly unsupported: readonly string[];
+  /** The declined and unsupported rows the two prose lists are printed from. */
+  readonly omissions: readonly FieldOmissionRow[];
+  /** Doc rows for the category's own table and every table nested inside it. */
+  readonly docTables: readonly DocTable[];
 }
 
 /**
@@ -99,12 +108,14 @@ export function emitAliasSplice(emitter: Emitter, category: string): AliasSplice
 
   const members: string[] = [];
   const fieldMetadata: string[] = [];
-  const declinedFields: string[] = [];
-  const unsupported: string[] = [];
+  const declinedFields: FieldOmissionRow[] = [];
+  const unsupported: FieldOmissionRow[] = [];
   const emittedFields: EmittedField[] = [];
   const corpusDescents: DescentNode[] = [];
   const extraCode: string[] = [];
   const spliceCategories: string[] = [];
+  const memberDocs: Record<string, MemberDocRow> = {};
+  const docTables: DocTable[] = [];
   // A member's own interior comes back rooted at the category, since that is
   // the path its overlay rows are keyed by; the corpus reader knows only the
   // member key. Re-rooting here is the one place the two spellings meet, the
@@ -119,7 +130,7 @@ export function emitAliasSplice(emitter: Emitter, category: string): AliasSplice
     const fieldPath = `${category}.${name}`;
     const declined = CONTENT_DECLINED_FIELDS.get(fieldPath);
     if (declined !== undefined) {
-      declinedFields.push(`${fieldPath} — ${declined}`);
+      declinedFields.push({ path: fieldPath, kind: "declined", reason: declined });
       continue;
     }
     const lowering = pickOrdinary(
@@ -132,14 +143,26 @@ export function emitAliasSplice(emitter: Emitter, category: string): AliasSplice
       fieldPath
     );
     if (lowering === null) {
-      unsupported.push(`${fieldPath} (no declaration the emitter can lower)`);
+      unsupported.push({
+        path: fieldPath,
+        kind: "unsupported",
+        reason: "no declaration the emitter can lower",
+      });
       continue;
     }
     const optional = group.every((field) => isOptional(field.cardinality));
+    const docLines = [...new Set(group.flatMap((field) => field.docs))];
     members.push(
-      docComment([...new Set(group.flatMap((field) => field.docs))], "  ") +
+      docComment(docLines, "  ") +
         `  ${camelCase(name)}${optional ? "?" : ""}: ${lowering.memberType};\n`
     );
+    memberDocs[camelCase(name)] = {
+      optional,
+      docs: docLines,
+      memberType: lowering.memberType,
+      ...authoredLiterals(lowering.admits.literals),
+    };
+    docTables.push(...(lowering.docTables ?? []));
     fieldMetadata.push(lowering.metadata);
     if (lowering.code !== undefined) {
       extraCode.push(lowering.code);
@@ -164,13 +187,19 @@ export function emitAliasSplice(emitter: Emitter, category: string): AliasSplice
     }
     const lowered = lowerStructuralSplice(emitter, nestedCategory, nested.docs);
     if (lowered === null) {
-      unsupported.push(
-        `${category}.alias_name[${nestedCategory}] (spliced unkeyed; that category has ` +
-          "no authoring member)"
-      );
+      unsupported.push({
+        path: `${category}.alias_name[${nestedCategory}]`,
+        kind: "unsupported",
+        reason: "spliced unkeyed; that category has no authoring member",
+      });
       continue;
     }
     members.push(docComment(lowered.docs, "  ") + `  ${lowered.member}?: ${lowered.memberType};\n`);
+    memberDocs[lowered.member] = {
+      optional: true,
+      docs: lowered.docs,
+      memberType: lowered.memberType,
+    };
     fieldMetadata.push(lowered.metadata);
     emittedFields.push({ field: `${splice.memberKey}.${lowered.key!}`, ...lowered.admits! });
     spliceCategories.push(nestedCategory);
@@ -205,7 +234,9 @@ export function emitAliasSplice(emitter: Emitter, category: string): AliasSplice
     spliceCategories,
     emittedFields,
     corpusDescents,
-    declinedFields,
-    unsupported,
+    declinedFields: declinedFields.map(omissionLine),
+    unsupported: unsupported.map(omissionLine),
+    omissions: [...declinedFields, ...unsupported],
+    docTables: [{ constant: fieldsConstant, members: memberDocs }, ...docTables],
   };
 }

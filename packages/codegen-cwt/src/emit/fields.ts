@@ -80,6 +80,77 @@ export interface EmittedField {
    */
   readonly clause?: "trigger" | "effect";
 }
+/**
+ * One authoring member's human-readable half, for the generated field-docs
+ * ledger: what the emitted interface says about the member, as data a docs
+ * build can render — the same doc lines that become the JSDoc, the same
+ * optionality that becomes the `?`, the same type text intellisense shows.
+ */
+export interface MemberDocRow {
+  readonly optional: boolean;
+  readonly docs: readonly string[];
+  readonly memberType: string;
+  /** Every scalar the member admits, when the lowering closed the set. */
+  readonly literals?: readonly string[];
+}
+
+/**
+ * One emitted field table's documentation rows, named by the constant the
+ * table is emitted as (`TECHNOLOGY_FIELDS`) so the ledger can key its map by
+ * the very same runtime array the descriptors reference.
+ */
+export interface DocTable {
+  readonly constant: string;
+  readonly members: Readonly<Record<string, MemberDocRow>>;
+}
+
+/**
+ * A field the rules declare that the authoring surface leaves out, as one
+ * structured row. The codegen report and the generated ledger are both
+ * projections of these rows — see {@link omissionLine} for the report's.
+ */
+export interface FieldOmissionRow {
+  /** The path exactly as the codegen report prints it. */
+  readonly path: string;
+  readonly kind: "declined" | "unsupported" | "collapsed";
+  readonly reason: string;
+}
+
+/**
+ * The literals a doc row may carry: the admitted set, except where lowering
+ * changes the authored representation. `admits.literals` speaks the game's
+ * tokens because the corpus gate measures shipped files, but boolean fields
+ * author as `true`/`false` while admitting `yes`/`no` — printing those tokens
+ * in a docs table tells an author to pass strings that do not type-check.
+ * Booleans are the only conversion with that mismatch, and their admitted
+ * sets are exactly the subsets of `{yes, no}`, so those are omitted; the
+ * member type `boolean` already says everything the row would.
+ */
+export function authoredLiterals(literals: readonly string[] | undefined): {
+  readonly literals?: readonly string[];
+} {
+  if (literals === undefined || literals.every((token) => token === "yes" || token === "no")) {
+    return {};
+  }
+  return { literals };
+}
+
+/**
+ * The report line a row has always printed as, per kind — declined rows use
+ * an em dash, unsupported rows parenthesize, collapsed rows carry their own
+ * leading `(pattern)`. Changing a format here changes the codegen report.
+ */
+export function omissionLine(row: FieldOmissionRow): string {
+  switch (row.kind) {
+    case "declined":
+      return `${row.path} — ${row.reason}`;
+    case "unsupported":
+      return `${row.path} (${row.reason})`;
+    case "collapsed":
+      return `${row.path} ${row.reason}`;
+  }
+}
+
 export interface LoweredField {
   readonly memberType: string;
   readonly metadata: string;
@@ -102,8 +173,14 @@ export interface LoweredField {
   readonly docs?: readonly string[];
   /** Extra top-level declarations a nested struct level needed, prepended by the caller. */
   readonly code?: string;
-  /** Paths bubbled up from a nested struct level, already prefixed. */
-  readonly unsupported?: readonly string[];
+  /** Rows bubbled up from a nested struct level, their paths already prefixed. */
+  readonly unsupported?: readonly FieldOmissionRow[];
+  /**
+   * Documentation rows for every field table {@link code} declares, one
+   * {@link DocTable} per emitted `..._FIELDS` constant, bubbled unchanged —
+   * the table constant names the rows, so no path arithmetic rides along.
+   */
+  readonly docTables?: readonly DocTable[];
   /**
    * What the block's own members admit, at their dotted paths and at every
    * level below — the interior the corpus gate would otherwise measure nothing
@@ -1150,7 +1227,9 @@ interface StructShape {
   readonly fieldsConstant: string;
   /** The interface and field-table declarations, for the caller to prepend. */
   readonly code: string;
-  readonly unsupported: readonly string[];
+  readonly unsupported: readonly FieldOmissionRow[];
+  /** Doc rows for the struct's own table and every table nested inside it. */
+  readonly docTables: readonly DocTable[];
   /** Each member's admits at `${path}.${name}`, plus whatever they nest in turn. */
   readonly nested: readonly EmittedField[];
   /** Descent nodes for the members that are themselves blocks worth walking. */
@@ -1229,11 +1308,13 @@ function reroot(fields: readonly EmittedField[], from: string, to: string): Emit
  */
 interface EnumKeyedMembers extends Pick<
   StructShape,
-  "code" | "unsupported" | "nested" | "children"
+  "code" | "unsupported" | "nested" | "children" | "docTables"
 > {
   /** One interface member per enum value, already indented and documented. */
   readonly members: readonly string[];
   readonly fieldMetadata: readonly string[];
+  /** One doc row per enum value, for the owning block's own table. */
+  readonly memberDocs: Readonly<Record<string, MemberDocRow>>;
 }
 
 function enumKeyedMembers(
@@ -1258,6 +1339,7 @@ function enumKeyedMembers(
   const fieldMetadata: string[] = [];
   const nested: EmittedField[] = [];
   const children: DescentNode[] = [];
+  const memberDocs: Record<string, MemberDocRow> = {};
   const docs = docComment(keyed.declaration.docs, "  ");
   for (const value of keyed.values) {
     const memberPath = `${path}.${value}`;
@@ -1267,9 +1349,9 @@ function enumKeyedMembers(
       cardinality: { ...keyed.declaration.cardinality, min: 0 },
     };
     const repeated = repeatsSiblings(field, "struct");
-    members.push(
-      docs + `  ${camelCase(value)}?: ${repeated ? arrayType(entry.typeName) : entry.typeName};\n`
-    );
+    const memberType = repeated ? arrayType(entry.typeName) : entry.typeName;
+    members.push(docs + `  ${camelCase(value)}?: ${memberType};\n`);
+    memberDocs[camelCase(value)] = { optional: true, docs: keyed.declaration.docs, memberType };
     fieldMetadata.push(metadata(field, value, "struct", [`fields: ${entry.fieldsConstant}`]));
     nested.push(
       { field: memberPath, shape: "struct", repeated },
@@ -1280,10 +1362,12 @@ function enumKeyedMembers(
   return {
     members,
     fieldMetadata,
+    memberDocs,
     code: entry.code,
     unsupported: entry.unsupported,
     nested,
     children,
+    docTables: entry.docTables,
   };
 }
 
@@ -1325,9 +1409,11 @@ function structShape(
   const members: string[] = [];
   const fieldMetadata: string[] = [];
   const extraCode: string[] = [];
-  const unsupported: string[] = [];
+  const unsupported: FieldOmissionRow[] = [];
   const nested: EmittedField[] = [];
   const children: DescentNode[] = [];
+  const memberDocs: Record<string, MemberDocRow> = {};
+  const docTables: DocTable[] = [];
   for (const [fieldName, group] of grouped) {
     const fieldPath = `${path}.${fieldName}`;
     const lowered = pickOrdinary(
@@ -1340,16 +1426,28 @@ function structShape(
       fieldPath
     );
     if (lowered === null) {
-      unsupported.push(`${fieldPath} (no declaration the emitter can lower)`);
+      unsupported.push({
+        path: fieldPath,
+        kind: "unsupported",
+        reason: "no declaration the emitter can lower",
+      });
       continue;
     }
     const optional = memberOptional(group, CONTENT_FIELD_OVERRIDES.get(fieldPath));
+    const docLines = [
+      ...new Set([...group.flatMap((inner) => inner.docs), ...(lowered.docs ?? [])]),
+    ];
     members.push(
-      docComment(
-        [...new Set([...group.flatMap((inner) => inner.docs), ...(lowered.docs ?? [])])],
-        "  "
-      ) + `  ${camelCase(fieldName)}${optional ? "?" : ""}: ${lowered.memberType};\n`
+      docComment(docLines, "  ") +
+        `  ${camelCase(fieldName)}${optional ? "?" : ""}: ${lowered.memberType};\n`
     );
+    memberDocs[camelCase(fieldName)] = {
+      optional,
+      docs: docLines,
+      memberType: lowered.memberType,
+      ...authoredLiterals(lowered.admits.literals),
+    };
+    docTables.push(...(lowered.docTables ?? []));
     fieldMetadata.push(lowered.metadata);
     if (lowered.code !== undefined) {
       extraCode.push(lowered.code);
@@ -1383,13 +1481,17 @@ function structShape(
     }
     members.push(...expanded.members);
     fieldMetadata.push(...expanded.fieldMetadata);
+    Object.assign(memberDocs, expanded.memberDocs);
     extraCode.push(expanded.code);
     unsupported.push(...expanded.unsupported);
     nested.push(...expanded.nested);
     children.push(...expanded.children);
+    docTables.push(...expanded.docTables);
   }
   if (inlineTrigger !== undefined) {
-    members.push(`  when?: ${withFrom(`Trigger<${inlineTrigger.type}>`, inlineTrigger)};\n`);
+    const whenType = withFrom(`Trigger<${inlineTrigger.type}>`, inlineTrigger);
+    members.push(`  when?: ${whenType};\n`);
+    memberDocs.when = { optional: true, docs: [], memberType: whenType };
     fieldMetadata.push('{ member: "when", shape: "inlineTrigger" }');
     nested.push({
       field: `${path}.when`,
@@ -1410,6 +1512,7 @@ function structShape(
     fieldsConstant,
     nested,
     children,
+    docTables: [{ constant: fieldsConstant, members: memberDocs }, ...docTables],
     code:
       extraCode.join("") +
       `export interface ${typeName}${generic?.declaration ?? ""} {\n` +
@@ -1461,6 +1564,7 @@ function lowerStructMap(
     admits: { shape: "structMap", repeated: repeatsSiblings(field, "structMap") },
     code: shape.code,
     unsupported: shape.unsupported,
+    docTables: shape.docTables,
     nested: shape.nested,
     // One field table serves every engine key, so the key itself never enters
     // the path the reader records — see `structMap` in {@link DescentNode}.
@@ -1532,6 +1636,7 @@ function lowerStruct(
     wrapped,
     code,
     unsupported,
+    docTables: shape.docTables,
     nested: shape.nested,
     // `wrapped` is exactly the reader's distinction too: the container holds
     // bare anonymous blocks rather than being one.
@@ -1568,6 +1673,7 @@ function lowerTriggerStruct(
     admits: { shape: "triggerStruct", repeated },
     code: shape.code,
     unsupported: shape.unsupported,
+    docTables: shape.docTables,
     nested: shape.nested,
     descents: [
       {
@@ -1869,6 +1975,7 @@ function lowerDual(
     },
     code: arms.map((arm) => arm.code ?? "").join(""),
     unsupported: arms.flatMap((arm) => arm.unsupported ?? []),
+    docTables: arms.flatMap((arm) => arm.docTables ?? []),
     // The block arm alone: a scalar arm has no interior, and both arms share
     // the one key the reader descends from.
     ...(block.nested === undefined ? {} : { nested: block.nested }),
