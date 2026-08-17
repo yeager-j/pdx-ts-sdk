@@ -1,6 +1,8 @@
 ---
 title: Getting started
 description: Create, build, install, and run your first Stellaris mod.
+sidebar:
+  order: 1
 ---
 
 You need Stellaris and Node.js 22.18 or later. Start in the directory that
@@ -64,8 +66,7 @@ A file at `assets/gfx/interface/icon.dds` is copied byte-for-byte to
 game-start event, and the hook that fires that event. Each content item is
 placed in the exported `feature`; the build then writes it to the directory
 Stellaris expects. Start by changing the technology's `name` and `desc`, or
-follow [Your first technology](/guides/your-first-technology/) for a small,
-compiled example of one item and its generated localization.
+change the event and its effects to begin shaping the scaffold into your mod.
 
 ## Build the mod
 

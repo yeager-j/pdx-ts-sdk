@@ -1,0 +1,169 @@
+---
+title: Advantages of TypeScript
+description: Use real language features to configure builds, generate related content, and remove repetition.
+sidebar:
+  order: 6
+---
+
+import PairedExample from "../../../components/PairedExample.astro";
+
+The SDK runs ordinary TypeScript at build time. That gives mod authoring the
+same tools as any other program: variables, functions, modules, arrays, loops,
+conditionals, arithmetic, and tests.
+
+These tools generate the mod; they do not run inside Stellaris. The game still
+receives ordinary PDXScript. [Triggers and effects](/guides/triggers-and-effects/)
+explains that boundary in detail.
+
+## Build different variants deliberately
+
+A build-time condition can include diagnostics in one output and omit them
+from another:
+
+```ts
+const includeDebugLog = process.env.MOD_DEBUG === "1";
+
+immediate: (country) => {
+  if (includeDebugLog) {
+    country.log("debug build");
+  }
+};
+```
+
+Run the build with `MOD_DEBUG=1` and the emitted effect block contains the log.
+Run it without that environment variable and the log is absent. Stellaris does
+not evaluate `MOD_DEBUG`; the selected branch has already recorded its output
+before the game starts.
+
+This pattern can also select development-only events, extra assertions,
+instrumentation, or balance profiles. Treat the input as part of the build,
+not invisible machine state: document it, print the selected profile, and pin
+it in automated builds when reproducible output matters. Two builds from the
+same commit can produce different bytes when their environment differs.
+
+Use `scope.if(...)` instead when the decision depends on game state.
+
+## Generate a family with a loop
+
+Related definitions often follow a rule. A technology ladder may scale its
+cost, advance its tier, and require the previous technology. TypeScript can
+state that rule once:
+
+<PairedExample name="technology-ladder" />
+
+The source starts with one foundation technology, then uses a `for` loop to
+create five observatory upgrades. Each iteration:
+
+- derives a stable logical name from the level;
+- computes cost, tier, and weight;
+- uses a template literal for localization; and
+- carries the previous typed technology into `prerequisites`.
+
+The PDXScript tab contains six ordinary technology definitions. Neither the
+loop nor the `previous` variable exists in the built mod.
+
+This is more than shorter syntax. The prerequisite chain is constructed from
+the same values placed in the Feature, so renaming or reordering the generator
+does not leave a second list of string ids to update.
+
+## Generate a typed cross-product
+
+Repetition multiplies quickly when every category needs its own variants.
+Three empire kinds with four ambitions each require twelve event options in
+PDXScript. Keep the differences in typed data and generate the repeated shape:
+
+<PairedExample name="mapped-event-options" />
+
+This example derives the closed `EmpireKind` union from `EMPIRE_KINDS`. Its
+other types turn design assumptions into checks:
+
+- `FourAmbitions` requires exactly four entries for every empire kind.
+- `Ambition` requires a key, displayed name, reward resource, and amount.
+- `RewardResource` rejects a misspelled or unintended resource.
+- `Record<EmpireKind, FourAmbitions>` requires regular, hive, and machine data.
+- `Record<EmpireKind, Trigger<"country">>` requires one country-scoped
+  visibility condition for every kind.
+
+Adding another value to `EMPIRE_KINDS` makes both records fail typechecking
+until the new empire kind has ambitions and a condition. Removing one ambition
+from a group breaks the four-entry tuple. The data cannot quietly fall out of
+step with the generator.
+
+`flatMap(...map(...))` then forms the cross-product: one option for every
+ambition in every empire kind. Each option receives a stable combined key, the
+correct visibility Trigger, localized text, and its reward effect. The
+PDXScript tab shows all twelve ordinary option blocks; at game time each empire
+sees the four whose Trigger matches it.
+
+The `as const` preserves the table's literal keys and values while `satisfies`
+checks its shape without widening those literals. Named object fields are also
+safer to maintain than a positional 2D array: readers do not have to remember
+which column means resource or amount, and swapping two values of the same
+primitive type is less likely to pass unnoticed.
+
+## Extract helpers without inventing a second language
+
+Repeated policy can also become a normal function:
+
+```ts
+function scaledCost(level: number): number {
+  return 1000 * 2 ** level;
+}
+
+function displayName(calibration: string): string {
+  return `${calibration} Observatory Arrays`;
+}
+```
+
+Helpers can live in another module, accept typed SDK values, and have direct
+unit tests. Constants and tables can be shared the same way. There is no macro
+system or template format to learn alongside TypeScript.
+
+Keep the abstraction at the level of the repeated idea. A helper named
+`scaledCost` communicates a rule; a generic function with many unrelated
+options can hide the Stellaris definition it was meant to clarify.
+
+## Test script behavior without launching the game
+
+Authored events and triggers are TypeScript values, so a normal Vitest suite
+can import them. `@pdx-ts/sdk-testing` provides a small interpreter for
+verified trigger and effect semantics:
+
+```ts
+import { fixture } from "@pdx-ts/sdk-testing";
+import { describe, expect, it } from "vitest";
+
+import { flags, welcome } from "./welcome.ts";
+
+describe("the welcome event", () => {
+  it("flags the country and grants influence", () => {
+    const world = fixture({ countries: [{ name: "Player" }] }, { events: [welcome] });
+    const player = world.country(0);
+
+    world.fire(welcome, player);
+
+    expect(player.hasFlag(flags.welcomed)).toBe(true);
+    expect(player.resource("influence")).toBe(50);
+  });
+});
+```
+
+This runs in milliseconds and does not need Stellaris or the launcher. The
+fixture is intentionally not a complete game simulator: it implements only
+semantics that have been verified and throws when a test reaches an unknown
+one. Use it for fast checks of the script logic it supports, not as proof of
+unmodeled game behavior.
+
+## Prefer rules over copied boilerplate
+
+TypeScript generation works best when the repeated content has a real
+relationship:
+
+- a progression where each item depends on the previous one;
+- a fixed shape populated from a data table;
+- a shared calculation or naming rule;
+- a build profile that deliberately includes or excludes content.
+
+Write unrelated definitions explicitly. The goal is not the fewest lines of
+source; it is one clear source of truth for each decision, with ordinary
+PDXScript as the inspectable result.
