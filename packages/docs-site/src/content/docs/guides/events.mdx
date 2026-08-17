@@ -21,6 +21,10 @@ The TypeScript runs while the mod is built. The rendered event file is what
 Stellaris later evaluates. Read [Triggers and effects](/guides/triggers-and-effects/)
 if that boundary is not yet familiar.
 
+An event still needs an entry point. Attach it to a game lifecycle hook with
+[`mod.on`](/guides/on-actions/), or fire it from another typed effect as this
+example does.
+
 ## A namespace owns a numbered event series
 
 Open a namespace from the mod capability, then choose an event kind and local

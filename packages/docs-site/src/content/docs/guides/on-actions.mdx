@@ -1,0 +1,184 @@
+---
+title: On-actions
+description: Attach your events to the named hooks Stellaris invokes as the game changes.
+sidebar:
+  order: 10
+---
+
+import PairedExample from "../../../components/PairedExample.astro";
+
+An **on-action** is a named hook that Stellaris invokes when something happens:
+the game starts, a ship enters a system, a colony changes hands, or another
+engine-defined transition occurs. Your mod contributes event ids to that hook;
+the game calls those events when it reaches the hook.
+
+This complete example attaches one country event to the game-start country
+hook:
+
+<PairedExample name="on-actions" />
+
+The event definition and the hook contribution are separate mod items. The
+Fold writes the event under `events/`, its text under `localisation/`, and the
+registration under `common/on_actions/`.
+
+## Attach an event with `mod.on`
+
+Import the generated hook table, choose a hook, and pass one or more event
+values:
+
+```ts
+import { onActions } from "@pdx-ts/sdk";
+
+const atGameStart = mod.on(onActions.onGameStartCountry, [firstSignal]);
+```
+
+`mod.on` creates an on-action contribution. It does not register globally when
+the line executes. Place the returned value in a Feature and include that
+Feature in `mod.compile`:
+
+```ts
+export const feature = mod.feature("awakening", [firstSignal, atGameStart]);
+```
+
+The hooked event must be placed in the same build too. A contribution that
+names an event omitted from the selected Features fails during the Fold.
+
+Set `isTriggeredOnly: true` on events entered through on-actions. The game is
+supplying their entry point; they should not also be eligible for an ordinary
+mean-time-to-happen evaluation.
+
+## Find hooks through `onActions`
+
+`onActions` is generated from the hook declarations for the supported
+Stellaris version. Use editor autocomplete after `onActions.` to browse the
+available names, and open a member's definition to read any source
+documentation carried with it.
+
+The TypeScript member is camel-cased while its value preserves the exact game
+name:
+
+| TypeScript member                 | Game hook                  |
+| --------------------------------- | -------------------------- |
+| `onActions.onGameStartCountry`    | `on_game_start_country`    |
+| `onActions.onMonthlyPulseCountry` | `on_monthly_pulse_country` |
+| `onActions.onEnteringSystem`      | `on_entering_system`       |
+
+This generated table is the versioned list. Do not copy a hook name into a raw
+string: `mod.on` accepts an `OnActionRef`, so a misspelling or a hook absent
+from the selected game metadata fails in TypeScript.
+
+Some game hooks are scopeless, such as `onActions.onGameStart`. They remain
+visible because they exist in Stellaris, but the SDK cannot attach an event to
+them until it supports a scopeless event kind. Use a scoped counterpart when
+one exists; for game start, that is `onActions.onGameStartCountry`.
+
+## The hook decides `THIS` and `FROM`
+
+Each generated hook carries the scope it supplies as `THIS` and, when present,
+its `FROM` scope. Every event in the `mod.on` list must declare that exact
+contract.
+
+The paired example works because both sides are country-scoped and neither
+declares `FROM`:
+
+```ts
+const firstSignal = events.country(1, {
+  isTriggeredOnly: true,
+  // Other fields omitted.
+});
+
+mod.on(onActions.onGameStartCountry, [firstSignal]);
+```
+
+A planet event cannot be attached to this hook. A country event that declares
+`from: "country"` cannot be attached either, because the hook supplies no
+`FROM`.
+
+For a hook that supplies both scopes, declare both on the event:
+
+```ts
+const arrival = events.ship(2, {
+  from: "system",
+  isTriggeredOnly: true,
+  immediate: (_ship, ctx) => {
+    ctx.from.effects((system) => {
+      system.log("a ship entered this system");
+    });
+  },
+});
+
+mod.on(onActions.onEnteringSystem, [arrival]);
+```
+
+`onEnteringSystem` supplies a ship as `THIS` and a system as `FROM`. The event
+method and its `from` declaration preserve those two facts through the event
+body. A mismatch is a TypeScript error and is checked again during the Fold.
+
+```ts
+const arrival = events.ship(2, {
+  from: "country", // Wrong scope
+});
+
+// TypeScript error (Type "country" is not assignable to type "system")
+//                                     ↓
+mod.on(onActions.onEnteringSystem, [arrival]);
+```
+
+[Scope and context](/guides/scope-and-context/) explains how `THIS`, `ROOT`,
+and `FROM` behave inside the event's triggers and effects.
+
+## Hooking is different from firing
+
+Both operations cause the game to run an event, but they enter the game from
+different places:
+
+| Hook with `mod.on`                                | Fire from an effect                                  |
+| ------------------------------------------------- | ---------------------------------------------------- |
+| Adds an event id to an engine-defined hook        | Writes an event-fire effect into authored script     |
+| The hook supplies the target scope and `FROM`     | The effect's current scope selects the target        |
+| Runs when Stellaris reaches that named transition | Runs when the containing effect executes             |
+| Has no per-registration delay                     | Can set `days`, `months`, `years`, or `random` delay |
+
+Use an on-action when the entry point is a lifecycle event that Stellaris
+already exposes. Use `countryEvent`, `planetEvent`, and the other typed fire
+methods when your own event, content effect, or script flow decides when the
+next event runs.
+
+Hooking does not emit a `country_event = { ... }` effect. It emits a list entry
+such as:
+
+```pdxscript
+on_game_start_country = {
+  events = { crystal_resonance_awakening.1 }
+}
+```
+
+The [Events guide](/guides/events/#fire-typed-event-references) explains typed
+event firing, delays, targets, and explicit `FROM` witnesses.
+
+## One shared on-actions file
+
+Every `mod.on` contribution in the build merges into:
+
+```text
+common/on_actions/crystal_resonance_on_actions.txt
+```
+
+This path is shared across Features. A Feature stem organizes the source item
+but does not create another on-actions file or relocate the contribution.
+
+Several events can be attached in one call:
+
+```ts
+mod.on(onActions.onGameStartCountry, [firstSignal, secondSignal]);
+```
+
+The list must be non-empty. Its event order is preserved because Stellaris
+fires that list in order. Hook blocks themselves use canonical name order, and
+the order of Features or separate contribution calls does not control their
+serialized position.
+
+The same event cannot be registered twice on the same hook. It can be attached
+to different compatible hooks, and one hook can collect events from several
+Features. The Fold merges all valid contributions, rejects duplicates, and
+writes the shared file only when the build contains at least one on-action.
