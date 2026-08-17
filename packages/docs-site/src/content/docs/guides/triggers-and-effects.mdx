@@ -150,6 +150,9 @@ One build includes the `log` effect or omits it. Stellaris does not reevaluate
 `MOD_DEBUG`. A TypeScript `for` loop works the same way: it can record several
 effect entries, but no JavaScript loop is written into the mod.
 
+[See more build-time TypeScript patterns](/guides/advantages-of-typescript/),
+including generated technology ladders and data-driven event options.
+
 Effect closures must remain synchronous. Do asynchronous work before creating
 the definition, await its result, and then close over that result. The recorder
 rejects async closures and scope objects used after their recording closure has
