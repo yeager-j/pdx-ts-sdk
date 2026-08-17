@@ -28,10 +28,10 @@ An `isTriggeredOnly` event still needs an entry point. Attach it to a game
 lifecycle hook with [`mod.on`](/guides/on-actions/), or fire it from another
 typed effect as this example does.
 
-<Aside type="note" title="Mean-time-to-happen is a separate scheduling model">
-  The SDK can author `meanTimeToHappen` for events that are not triggered-only. This guide uses
-  explicit entry points instead: set `isTriggeredOnly: true`, then enter the event through an
-  on-action or a typed event-fire effect.
+<Aside type="caution" title="Do not use mean-time-to-happen events">
+  The SDK supports `meanTimeToHappen`, but Stellaris developers recommend against MTTH. Do not use
+  it for new events. Set `isTriggeredOnly: true`, then enter the event through an on-action or a
+  typed event-fire effect.
 </Aside>
 
 ## A namespace owns a numbered event series
