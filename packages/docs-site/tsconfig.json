@@ -1,0 +1,25 @@
+{
+  // This package is the one workspace member outside the repository's single
+  // TypeScript program (see the root tsconfig's `exclude`). Astro generates the
+  // types for its virtual modules — `astro:content` above all — into
+  // `.astro/types.d.ts`, and `.astro` components are not TypeScript files, so
+  // the root program can neither resolve nor read this source. `astro check`,
+  // run by this package's `typecheck` script, is the gate for the site itself;
+  // the paired examples additionally check under the root program's semantics
+  // through `tsconfig.examples.json`.
+  "extends": "astro/tsconfigs/strict",
+  "include": [".astro/types.d.ts", "**/*"],
+  "exclude": ["dist"],
+  "compilerOptions": {
+    // The component imports `@pdx-ts/sdk`, whose `exports` point at the
+    // never-built `dist/`; `pdx-source` resolves it to sources, the same as
+    // the root program. The remaining options let those sources check here:
+    // they import with `.ts` extensions, target ES2024, and are written under
+    // `isolatedModules`/`erasableSyntaxOnly`, not `verbatimModuleSyntax`.
+    "customConditions": ["pdx-source"],
+    "allowImportingTsExtensions": true,
+    "target": "ES2024",
+    "lib": ["es2024", "DOM", "DOM.Iterable"],
+    "verbatimModuleSyntax": false
+  }
+}

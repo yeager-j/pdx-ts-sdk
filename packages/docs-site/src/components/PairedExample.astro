@@ -1,0 +1,27 @@
+---
+/**
+ * The two-tab paired example: the lesson's whole TypeScript source on one tab,
+ * every file `render()` produces on the other, each under its logical path.
+ * The multi-file output is the point — one technology example also shows the
+ * localization it emits.
+ */
+import { Code, TabItem, Tabs } from "@astrojs/starlight/components";
+
+import { pairedExample } from "./paired-examples.ts";
+
+interface Props {
+  name: string;
+}
+
+const { name } = Astro.props;
+const example = pairedExample(name);
+---
+
+<Tabs syncKey="paired-example">
+  <TabItem label="TypeScript">
+    <Code code={example.source} lang="ts" />
+  </TabItem>
+  <TabItem label="PDXScript">
+    {example.files.map((file) => <Code code={file.text} lang={file.lang} title={file.path} />)}
+  </TabItem>
+</Tabs>
