@@ -1,0 +1,151 @@
+---
+title: Assets
+description: Ship textures, models, audio, and other files with checked paths from GFX definitions.
+sidebar:
+  order: 10
+---
+
+An **Asset file** is a file the SDK carries without interpreting its contents.
+Textures, models, audio, fonts, and notices can all take this route. The SDK
+captures the source bytes, gives them a logical path from the mod root, and
+mirrors those exact bytes into the rendered mod.
+
+## Put files in the scaffolded `assets/` directory
+
+Projects created by `create-stellaris-mod` contain this manifest setting:
+
+```json
+{
+  "assetsDirectory": "assets"
+}
+```
+
+For ordinary projects, put files under `assets/` in their final Stellaris
+layout. The directory root maps directly to the rendered mod root:
+
+```text
+assets/gfx/interface/icon.dds  →  gfx/interface/icon.dds
+assets/gfx/models/ship.mesh    →  gfx/models/ship.mesh
+```
+
+The generated `src/mod.ts` captures the complete tree with `mod.assetTree` and
+places the returned items in an `assets` Feature. A missing or empty `assets/`
+directory is allowed, so the scaffold does not create it; add the directory
+when the mod needs its first Asset file. Keep the generated wiring described in
+[Getting started](/guides/getting-started/#what-the-scaffolder-creates).
+
+Each build reads the tree and captures a fresh byte snapshot. Later changes to
+the source files cannot change a build that has already produced its
+`PureMod`. Running the build again captures the current files.
+
+## Refer to Asset paths from GFX definitions
+
+Write the finished mod-root path in a GFX definition. For example, a file at
+`assets/gfx/interface/crystal_resonance/icon.dds` is used like this:
+
+```ts
+const iconSprite = mod.spriteType("resonance_icon", {
+  textureFile: "gfx/interface/crystal_resonance/icon.dds",
+});
+```
+
+Six generated GFX fields accept an Asset path:
+
+| Definition             | Fields                                        |
+| ---------------------- | --------------------------------------------- |
+| `spriteType`           | `textureFile`, `maskingTexture`, `effectFile` |
+| `spriteType.animation` | `animationmaskfile`, `animationtextureFile`   |
+| `pdxmesh`              | `file`                                        |
+
+Each field accepts `AssetFileItem | string`. A string is the usual choice for
+a file under the scaffolded `assets/` directory. It is also the right choice
+for a file supplied by vanilla, DLC, another mod, or a process outside the
+SDK.
+
+Strings are preserved as written. During the Fold, the SDK compares each one
+with the Asset paths captured by this build and its vanilla file inventory. A
+path it cannot find produces a structured `unverified-asset-path` warning with
+the path, field, and owning definition:
+
+```ts
+const externalSprite = mod.spriteType("external_icon", {
+  textureFile: "gfx/interface/other_mod/icon.dds",
+});
+```
+
+The warning is not an error because an unknown DLC or third-party path can be
+legitimate. Treat it as a spelling check: fix it when the build should own the
+file, and review or ignore it when another source owns the path. An
+unnormalizable string also warns instead of stopping the build.
+
+## Advanced: declare a custom Asset source
+
+Use `mod.assetFile` when one source file needs an explicit or remapped logical
+path:
+
+```ts
+const icon = mod.assetFile({
+  source: new URL("../art/exported-icon.dds", import.meta.url),
+  path: "gfx/interface/crystal_resonance/icon.dds",
+});
+```
+
+`source` must be an absolute filesystem path or a `file:` URL. `path` is a
+portable path relative to the finished mod root. The source directory is not
+part of the output path unless you put it there explicitly.
+
+Use `mod.assetTree` when a directory needs a different destination root:
+
+```ts
+const shipAssets = mod.assetTree({
+  source: new URL("../model-exports/", import.meta.url),
+  into: "gfx/models/crystal_resonance",
+});
+```
+
+If the source contains `ships/frigate.mesh`, this declaration produces an
+Asset item at `gfx/models/crystal_resonance/ships/frigate.mesh`. The walk
+includes hidden files, follows a stable path order, and rejects symbolic links
+and non-regular filesystem entries. A missing or empty tree is normally an
+error. Set `allowMissing: true` or `allowEmpty: true` only when absence is part
+of the build contract.
+
+These calls read synchronously and snapshot the bytes when they declare the
+Asset items. Place the returned items in a
+[Feature](/guides/features-and-discovery/) that you pass to `mod.compile`:
+
+```ts
+const assets = mod.feature("assets", [icon, ...shipAssets]);
+const built = mod.compile([gameplay, assets]);
+```
+
+The Feature selects the items, but its stem does not relocate them. Each Asset
+always renders at its own declared logical path. An unplaced Asset is inert,
+just like any other item that is not in a compiled Feature.
+
+An advanced declaration can pass the Asset item directly to a typed GFX field
+instead of repeating its logical path:
+
+```ts
+const iconSprite = mod.spriteType("resonance_icon", {
+  textureFile: icon,
+});
+
+const feature = mod.feature("interface", [icon, iconSprite]);
+```
+
+The generated GFX writes the item's logical path:
+
+```text
+textureFile = gfx/interface/crystal_resonance/icon.dds
+```
+
+The same Asset item must also be placed in a compiled Feature. If a definition
+references an item that the build does not place, the Fold fails: it can prove
+that the rendered definition would point at a file missing from the mod.
+
+The [Fold](/guides/the-pipeline/) checks every output path together before it
+produces a `PureMod`. It rejects duplicate paths, portable case aliases,
+file-versus-directory clashes, reserved SDK paths, and collisions with known
+vanilla files. This prevents a custom Asset declaration from silently
+replacing another output.
