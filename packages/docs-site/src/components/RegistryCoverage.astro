@@ -1,0 +1,129 @@
+---
+/**
+ * The coverage page's three tables, and the site's registry gate.
+ *
+ * `buildCoverage` throws on any registry that is neither documented nor
+ * excused, so importing this component into the page is what gives the gate its
+ * teeth: the failure happens during `astro build`, locally and in CI.
+ */
+import { getCollection } from "astro:content";
+
+import { buildCoverage } from "../registry-coverage.ts";
+
+const pages = (await getCollection("docs")).map((entry) => ({
+  id: entry.id,
+  title: entry.data.title,
+  registries: entry.data.registries,
+}));
+
+const coverage = buildCoverage(pages);
+const documented = coverage.registries.filter((row) => row.page !== undefined).length;
+---
+
+<h2 id="content-registries">Content registries</h2>
+
+<p>
+  {coverage.registries.length} registries, {documented} with a reference page. Each one defines a
+  kind of game content, and writes into the folder named here.
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Registry</th>
+      <th>Call</th>
+      <th>Game folder</th>
+      <th>Reference</th>
+    </tr>
+  </thead>
+  <tbody>
+    {
+      coverage.registries.map((row) => (
+        <tr>
+          <td>{row.registry}</td>
+          <td>
+            <code>mod.{row.method}</code>
+          </td>
+          <td>
+            <code>{row.folder}</code>
+          </td>
+          <td>
+            {row.page ? (
+              <a href={row.page.href}>{row.page.title}</a>
+            ) : (
+              <span>Not written yet ({row.undocumented})</span>
+            )}
+          </td>
+        </tr>
+      ))
+    }
+  </tbody>
+</table>
+
+<h2 id="channels">Channels</h2>
+
+<p>
+  These are supported too, but they are not registries: they mint no content ids and are not
+  generated from a content type. The guides cover them.
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Concept</th>
+      <th>Call</th>
+      <th>Game folder</th>
+      <th>What it is</th>
+    </tr>
+  </thead>
+  <tbody>
+    {
+      coverage.channels.map((channel) => (
+        <tr>
+          <td>{channel.concept}</td>
+          <td>
+            {channel.methods.map((method, index) => (
+              <>
+                {index > 0 && <br />}
+                <code>{method}</code>
+              </>
+            ))}
+          </td>
+          <td>
+            {channel.folders.length === 0 ? (
+              <span>Wherever you place them</span>
+            ) : (
+              channel.folders.map((folder) => <code>{folder}</code>)
+            )}
+          </td>
+          <td>{channel.summary}</td>
+        </tr>
+      ))
+    }
+  </tbody>
+</table>
+
+<h2 id="not-yet-supported">Not supported yet</h2>
+
+<p>
+  The {coverage.unsupported.length} folders below hold script content in Stellaris {
+    coverage.gameVersion
+  } and no registry writes to any of them. There is no page for these, and no type: the SDK cannot
+  author them today.
+</p>
+
+<p>
+  The list covers <code>common/</code>, the game's script-content root. Asset trees —{" "}
+  <code>gfx/</code>, <code>interface/</code>, <code>sound/</code> — are the Assets channel's
+  business, and the three registries that write into them are in the first table.
+</p>
+
+<ul>
+  {
+    coverage.unsupported.map((folder) => (
+      <li>
+        <code>{folder}</code>
+      </li>
+    ))
+  }
+</ul>

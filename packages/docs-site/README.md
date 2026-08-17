@@ -41,3 +41,29 @@ The same machinery is the site's drift gate. `npm run docs:build` first typechec
 example under the repository program's semantics (`tsc -p tsconfig.examples.json`), then
 `astro build` imports and renders each one. An example that stops compiling — a type error,
 a Fold error, a render error — fails the docs build, locally and in CI.
+
+## Registry coverage
+
+Reference pages are keyed to the SDK's content registries, and the page list is derived rather
+than kept: `src/registry-coverage.ts` reads the registries out of the SDK's generated descriptor
+table, the pages out of the content collection, and diffs both against the install's own folder
+list (`@pdx-ts/stellaris-ids`'s committed `VANILLA_PATHS`). `/reference/coverage/` is that
+derivation rendered — supported registries and the game folder each writes to, the channels that
+are not registries, and the concepts the SDK cannot author yet.
+
+It is also a gate. Every registry must be documented by a page or excused by a line in
+`UNDOCUMENTED_REGISTRIES`, and every page under `reference/` must declare which registries it
+documents:
+
+```yaml
+---
+title: Technology
+registries: [technology]
+---
+```
+
+A registry with neither, a page claiming a registry that does not exist, two pages claiming one
+registry, or a skip line left behind after its page landed — each fails `astro build`. Adding a
+registry to the SDK therefore breaks the docs build until somebody writes its page or says in one
+line which ticket will. Declare `registries: []` on a reference page that documents none, such as
+the section index.
