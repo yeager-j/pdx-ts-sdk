@@ -10,3 +10,6 @@ testing, and diagnostics.
 Start with [Getting started](/guides/getting-started/) to create, build, install, and run a mod.
 Then use [Your first technology](/guides/your-first-technology/) to see one complete TypeScript
 definition beside the PDXScript and localization it produces.
+
+[The pipeline](/guides/the-pipeline/) names each build stage and explains what the Fold checks,
+what `render` returns, and when to use `write` or `install`.
