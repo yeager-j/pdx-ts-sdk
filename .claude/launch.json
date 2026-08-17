@@ -1,0 +1,19 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "docs-preview",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "docs:preview"],
+      "port": 4321,
+      "autoPort": true
+    },
+    {
+      "name": "docs-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "docs:dev"],
+      "port": 4321,
+      "autoPort": true
+    }
+  ]
+}
