@@ -3,7 +3,7 @@ import { createMod } from "@pdx-ts/sdk";
 const mod = createMod({
   name: "My First Mod",
   prefix: "my_mod",
-  supportedVersion: "v4.0.*",
+  supportedVersion: "v4.4.*",
 });
 
 const resonanceTheory = mod.technology("resonance_theory", {

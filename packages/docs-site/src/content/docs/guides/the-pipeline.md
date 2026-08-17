@@ -19,7 +19,7 @@ import { createMod, install, render, write } from "@pdx-ts/sdk";
 const mod = createMod({
   name: "Crystal Resonance",
   prefix: "crystal_resonance",
-  supportedVersion: "v4.0.*",
+  supportedVersion: "v4.4.*",
 });
 
 const feature = mod.feature("resonance", [

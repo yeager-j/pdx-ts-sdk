@@ -3,7 +3,7 @@ import { and, countryFlags, createMod, hasCountryFlag, not } from "@pdx-ts/sdk";
 const mod = createMod({
   name: "Crystal Resonance",
   prefix: "crystal_resonance",
-  supportedVersion: "v4.0.*",
+  supportedVersion: "v4.4.*",
 });
 
 const flags = countryFlags("crystal_resonance_heard_the_hum", "crystal_resonance_rejected_the_hum");

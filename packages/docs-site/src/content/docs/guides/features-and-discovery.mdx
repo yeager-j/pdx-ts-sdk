@@ -7,9 +7,9 @@ sidebar:
 
 import PairedExample from "../../../components/PairedExample.astro";
 
-A **Feature** is an explicit group of mod items with an output file stem. This
-complete example places a technology and the building it unlocks in one
-Feature:
+A **Feature** is an explicit group of mod items with an optional output file
+stem. This complete example places a technology and the building it unlocks in
+one named Feature:
 
 <PairedExample name="grouped-feature" />
 
@@ -38,8 +38,8 @@ may contain technologies, events, on-action hooks, localization, and Asset
 files. The Fold fans those items out to the directories Stellaris expects. You
 do not need one source directory for technologies and another for events.
 
-The stem in `mod.feature("resonance", items)` is lowercase `snake_case` and
-cannot contain `/`. For registry content, it contributes to paths such as:
+A named stem in `mod.feature("resonance", items)` is lowercase `snake_case`
+and cannot contain `/`. For registry content, it contributes to paths such as:
 
 ```text
 common/technology/my_mod_resonance.txt
@@ -47,6 +47,11 @@ common/technology/my_mod_resonance.txt
 
 The registry chooses the directory and extension; the mod prefix and Feature
 stem choose the filename.
+
+A directly compiled Feature may use `undefined` instead of a stem. Discovery
+requires every selected module to export a Feature with a defined stem. Asset
+paths and shared outputs such as on-action contributions and patch plans have
+their own canonical paths, so a Feature stem does not relocate them.
 
 ## Discover a directory of Features
 
@@ -60,7 +65,7 @@ import { createMod, discoverFeatures } from "@pdx-ts/sdk";
 export const mod = createMod({
   name: "Crystal Resonance",
   prefix: "crystal_resonance",
-  supportedVersion: "v4.0.*",
+  supportedVersion: "v4.4.*",
 });
 
 export async function buildTheMod() {
@@ -126,9 +131,10 @@ not become mod content.
 
 The authored values remain significant:
 
-- Changing a Feature stem changes the per-feature output filenames.
-- Moving an item to a Feature with another stem changes where that item is
-  emitted.
+- Changing a Feature stem changes stem-sensitive registry, event, and
+  localization filenames.
+- Moving a stem-sensitive item to a Feature with another stem changes its
+  per-feature output file. Asset and shared-output paths remain unchanged.
 - Changing an item's authored logical name changes the id minted for it.
 - Changing an event namespace or number changes its event id.
 

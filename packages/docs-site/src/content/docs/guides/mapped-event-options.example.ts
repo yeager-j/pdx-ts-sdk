@@ -4,7 +4,7 @@ import { isHiveEmpire, isMachineEmpire } from "@pdx-ts/stellaris-ids/triggers";
 const mod = createMod({
   name: "Signals in the Dust",
   prefix: "signals_in_the_dust",
-  supportedVersion: "v4.0.*",
+  supportedVersion: "v4.4.*",
 });
 
 const EMPIRE_KINDS = ["regular", "hive", "machine"] as const;

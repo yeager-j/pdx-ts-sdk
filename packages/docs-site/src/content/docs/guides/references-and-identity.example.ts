@@ -5,7 +5,7 @@ import { isRegularEmpire } from "@pdx-ts/stellaris-ids/triggers";
 const mod = createMod({
   name: "Luminous Cartography",
   prefix: "luminous_cartography",
-  supportedVersion: "v4.0.*",
+  supportedVersion: "v4.4.*",
 });
 
 const spectralSurveying = mod.technology("spectral_surveying", {
