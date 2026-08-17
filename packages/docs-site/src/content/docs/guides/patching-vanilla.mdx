@@ -1,18 +1,20 @@
 ---
 title: Patching vanilla
-description: Replace selected vanilla definitions with complete objects that provably win load order.
+description: Build complete-object replacements and emit files planned to win load order.
 sidebar:
   order: 14
 ---
 
-A vanilla patch changes a definition that Stellaris already provides. For the
-registries the SDK supports, duplicate definitions are treated as complete
-objects rather than field-by-field merges. The SDK starts from the parsed
-vanilla object, changes selected fields, and re-emits the complete replacement.
+A vanilla patch changes a definition that Stellaris already provides. The SDK
+starts from the parsed vanilla object, changes selected fields, and re-emits a
+complete replacement. Whole-object replacement is verified for technologies
+and buildings. Megastructures currently use an explicit, visible assumption
+until an in-game observable can distinguish replacement from merging.
 
-Patching requires a local Stellaris install. `stellaris.load()` reads the real
-game files and returns the definitions and file enumeration needed to build
-the replacement safely.
+Patching real installed content normally starts from a local Stellaris install.
+`stellaris.load()` reads the game files and returns the definitions and file
+enumeration needed to build the replacement safely. The exported
+`viewFromFiles()` creates a hermetic view for tests and controlled inputs.
 
 ## Load vanilla and transform a definition
 
@@ -114,16 +116,19 @@ that registry:
 
 The SDK's reviewed registry overlay grants each `patchX` method separately.
 If a registry has no patch method, its resolver or replacement behavior is not
-proved well enough for this API. Use a dedicated patch-registry addition with
-new game evidence rather than treating another content method as permission.
+established well enough for this API. An accepted assumption remains visible
+through an `assumed-patch-rule` warning and the emitted file header. Use a
+dedicated patch-registry addition with new game evidence rather than treating
+another content method as permission.
 
 ## Failures protect the replacement claim
 
 The Fold also refuses patches when:
 
 - two selected Features patch the same id in the same registry;
-- patches come from different vanilla loads;
-- the compile-time vanilla view differs from the view that supplied a patch;
+- patches come from vanilla views with different manifests;
+- the compile-time vanilla manifest differs from the manifest that supplied a
+  patch;
 - the loaded game version differs from the version of the resolver evidence,
   unless the mod configuration explicitly accepts that game version; or
 - a carried expression depends on file-local state the emitted patch cannot

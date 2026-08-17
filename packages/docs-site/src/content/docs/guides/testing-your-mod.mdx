@@ -76,10 +76,10 @@ expect(world.day).toBe(30);
 expect(world.fired.map((record) => record.id)).toEqual([entry.id, followup.id]);
 ```
 
-`advance(days)` accepts a non-negative whole number of days. It delivers every
-queued event due in that window, including events queued by another delivery.
-The fired log records each event id, day, scope, `FROM`, and whether the fire
-came from the harness or an effect.
+`advance(days)` accepts a non-negative safe integer number of days. It delivers
+every queued event due in that window, including events queued by another
+delivery. The fired log records each event id, day, scope, `FROM`, and whether
+the fire came from the harness or an effect.
 
 Advancing the clock does not simulate the rest of the galaxy. In particular,
 the harness does not tick situation progress, stages, completion, or

@@ -173,10 +173,10 @@ Several events can be attached in one call:
 mod.on(onActions.onGameStartCountry, [firstSignal, secondSignal]);
 ```
 
-The list must be non-empty. Its event order is preserved because Stellaris
-fires that list in order. Hook blocks themselves use canonical name order, and
-the order of Features or separate contribution calls does not control their
-serialized position.
+The typed API requires a non-empty list. Event order is preserved within that
+one `mod.on` call because Stellaris fires the list in order. Hook blocks and
+separate contributions use canonical order; the order of Features or calls
+does not control their serialized position.
 
 The same event cannot be registered twice on the same hook. It can be attached
 to different compatible hooks, and one hook can collect events from several

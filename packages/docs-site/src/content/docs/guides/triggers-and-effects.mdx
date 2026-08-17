@@ -81,9 +81,9 @@ potential = {
 }
 ```
 
-PDXScript blocks are already implicit ANDs, so `and(a, b)` can place both
-conditions directly in a field such as `potential` or `limit`. It does not need
-to emit a redundant `AND = { ... }` wrapper there.
+Ordinary condition fields such as `potential` and `limit` implicitly AND their
+direct members, so `and(a, b)` can place both conditions directly in those
+fields. Combinator blocks have their own grouping semantics.
 
 ### Combine conditions explicitly
 
@@ -102,7 +102,7 @@ both,” while `nor(a, b)` means “neither.” This distinction matters because
 immediate children of Stellaris's `NOT` block have NOR semantics. Let the SDK
 build the tree instead of trying to recreate the grouping by hand.
 
-Triggers are ordinary immutable values. You can name one, return one from a
+Triggers are ordinary read-only values. You can name one, return one from a
 helper, compose it into a larger tree, and reuse it anywhere its scope permits.
 The same `resonanceReady` value in the paired example becomes both a technology
 condition and an effect limit.

@@ -38,8 +38,9 @@ const mod = createMod({
 ```
 
 The prefix is lowercase `snake_case`. It is the mod's namespace for content
-ids and output filenames. Most content definitions take a logical name, also
-in lowercase `snake_case`, and mint the full id from three parts:
+ids and contributes to most SDK-generated output filenames. Most content
+definitions take a logical name, also in lowercase `snake_case`, and mint the
+full id from three parts:
 
 | Part             | Technology example                             |
 | ---------------- | ---------------------------------------------- |
@@ -60,7 +61,8 @@ const surveying = mod.technology("spectral_surveying", definition);
 ```
 
 The resulting `surveying.id` is the complete minted id. The value also carries
-its registry type and the capability that created it.
+its registry reference type. The mod capability enforces ownership when it
+places items in a Feature.
 
 The default registry segments form the SDK's id profile. Advanced projects can
 provide a complete custom profile with `createMod(config, { ids: profile })`,

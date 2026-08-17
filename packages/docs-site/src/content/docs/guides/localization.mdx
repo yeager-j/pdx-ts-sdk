@@ -49,10 +49,9 @@ The text does not appear in the building's PDXScript body. The game-facing
 definition uses its id, while the Fold registers the matching localization
 entries in the same Feature's language file.
 
-Each registry reference page lists its generated localization slots and key
-patterns. A `$` in a pattern means the definition id. Some nested entries have
-their own ids and localization slots; for those rows, `$` means the nested
-entry's id.
+Generated localization slot patterns use `$` to mean the definition id. Some
+nested entries have their own ids and localization slots; for those rows, `$`
+means the nested entry's id.
 
 Use these members whenever the text belongs to a generated definition. They
 keep the definition, required-text checks, and key pattern together.

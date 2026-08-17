@@ -51,7 +51,7 @@ stem choose the filename.
 A directly compiled Feature may use `undefined` instead of a stem. Discovery
 requires every selected module to export a Feature with a defined stem. Asset
 paths and shared outputs such as on-action contributions and patch plans have
-their own canonical paths, so a Feature stem does not relocate them.
+their own path rules, so a Feature stem does not directly relocate them.
 
 ## Discover a directory of Features
 
@@ -134,7 +134,8 @@ The authored values remain significant:
 - Changing a Feature stem changes stem-sensitive registry, event, and
   localization filenames.
 - Moving a stem-sensitive item to a Feature with another stem changes its
-  per-feature output file. Asset and shared-output paths remain unchanged.
+  per-feature output file. Asset paths remain unchanged, while shared outputs
+  continue to follow their own path rules.
 - Changing an item's authored logical name changes the id minted for it.
 - Changing an event namespace or number changes its event id.
 

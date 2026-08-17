@@ -52,15 +52,15 @@ TypeScript values until you place them in a Feature and pass that Feature to
 
 `mod.compile(features)` is **the Fold**. It combines the selected Features into
 one immutable `PureMod`. Source file layout is not part of the result: Feature
-stems, content registries, event namespaces, and localization rules decide the
-logical output paths.
+stems, content registries, event namespaces, localization rules, explicit Asset
+paths, and shared-output rules decide the logical output paths.
 
 The Fold is also the main validation boundary. It refuses a build when it can
 prove that the assembled mod is inconsistent, including:
 
-- **Duplicate or colliding ids:** two definitions would compete for one id, an
-  event id appears twice, or a new definition would silently replace known
-  vanilla content.
+- **Duplicate or colliding ids and paths:** two definitions would compete for
+  one id, an event id appears twice, or an emitted path would silently replace
+  known vanilla content.
 - **Dangling references:** a reference that carries this mod's identity names
   no definition or event among the selected Features. A typed Asset file
   reference also fails when no selected Feature places that file.
@@ -81,8 +81,10 @@ Read non-blocking diagnostics from `compiled.warnings`.
 ## 3. `render`: produce an exact snapshot
 
 `render(compiled)` serializes the `PureMod` into an immutable `RenderedMod`.
-The snapshot contains every mod-root-relative output, including PDXScript,
-localization, captured Asset bytes, and `descriptor.mod`.
+The snapshot contains every adjudicated mod-content output, including
+PDXScript, localization, captured Asset bytes, and `descriptor.mod`. It does
+not contain the ownership metadata that materialization writes beside that
+content.
 
 A `RenderedMod` is an iterable collection keyed by logical path. Each
 `RenderedFile` says whether it contains text or bytes and exposes its byte
@@ -96,8 +98,8 @@ or installed for the launcher.
 
 ## 4. `write` or `install`: materialize the snapshot
 
-Both functions materialize the exact `RenderedMod`, but they target different
-places:
+Both functions materialize the `RenderedMod` content exactly, but they target
+different places:
 
 | Function | Destination | Launcher descriptor |
 | --- | --- | --- |
@@ -109,6 +111,10 @@ file lives inside the mod directory and describes the mod. The launcher-side
 `<dirName>.mod` file lives beside the installed content directory and adds a
 `path="..."` line that points to it. `render` cannot create this second file
 because its contents depend on the final install location.
+
+Both functions also write `.pdx-sdk-manifest.json`, which records SDK ownership
+and digests for later drift checks. This is materialization metadata, not a file
+in the `RenderedMod` snapshot.
 
 `write` returns the resolved `outDir`; `install` returns both `contentDir` and
 `descriptorPath`. Both also report whether anything changed and refuse to
