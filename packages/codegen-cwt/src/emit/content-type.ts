@@ -32,11 +32,15 @@ import {
   memberOptional,
   mergeByName,
   metadata,
+  omissionLine,
   pickOrdinary,
   repeatsSiblings,
   wildcardBlockOf,
+  type DocTable,
   type EmittedField,
   type FieldContext,
+  type FieldOmissionRow,
+  type MemberDocRow,
 } from "./fields.ts";
 import { partitionSubtypeFields } from "./subtype-partition.ts";
 import { Emitter } from "./types.ts";
@@ -61,6 +65,18 @@ export interface ContentEmission {
    * nothing ever claimed to author.
    */
   readonly corpusDescents: readonly DescentNode[];
+  /**
+   * Every declined, unsupported, and collapsed row, structured. The three
+   * prose lists below are projections of these rows ({@link omissionLine});
+   * the generated field-docs ledger is the other projection.
+   */
+  readonly omissions: readonly FieldOmissionRow[];
+  /**
+   * Documentation rows for every field table the emission declares — the
+   * registry's own and each nested one — keyed by the emitted constant's
+   * name, for the generated field-docs ledger.
+   */
+  readonly docTables: readonly DocTable[];
   /** Refused outright by CONTENT_DECLINED_FIELDS, each with its reason. */
   readonly declinedFields: readonly string[];
   /**
@@ -111,7 +127,7 @@ interface PatchMember {
 }
 interface LocalisationPlan {
   readonly entries: ContentType["localisation"];
-  readonly aliases: readonly string[];
+  readonly aliases: readonly FieldOmissionRow[];
 }
 
 /**
@@ -195,23 +211,25 @@ function conditionalRequirement(
 function planLocalisation(type: ContentType): LocalisationPlan {
   const byPattern = new Map<string, ContentType["localisation"][number]>();
   const byMember = new Map<string, ContentType["localisation"][number]>();
-  const aliases: string[] = [];
+  const aliases: FieldOmissionRow[] = [];
   const collapse = (
     dropped: ContentType["localisation"][number],
     canonical: ContentType["localisation"][number]
   ): void => {
-    aliases.push(
-      `${type.name}.localisation.${dropped.key} (${dropped.pattern}) duplicates ` +
-        `${canonical.key} at ${canonical.pattern}`
-    );
+    aliases.push({
+      path: `${type.name}.localisation.${dropped.key}`,
+      kind: "collapsed",
+      reason: `(${dropped.pattern}) duplicates ${canonical.key} at ${canonical.pattern}`,
+    });
   };
 
   for (const entry of type.localisation) {
     if (!entry.pattern.includes("$")) {
-      aliases.push(
-        `${type.name}.localisation.${entry.key} (${entry.pattern}) has no ` +
-          "`$` id placeholder — not a static <id>-keyed slot, excluded"
-      );
+      aliases.push({
+        path: `${type.name}.localisation.${entry.key}`,
+        kind: "collapsed",
+        reason: `(${entry.pattern}) has no \`$\` id placeholder — not a static <id>-keyed slot, excluded`,
+      });
       continue;
     }
     const member = camelCase(entry.key);
@@ -322,9 +340,9 @@ function repeatedStructEmission(
   readonly memberType: string;
   readonly metadata: string;
   /** Refused outright by CONTENT_DECLINED_FIELDS, each with its reason. */
-  readonly declinedFields: readonly string[];
+  readonly declinedFields: readonly FieldOmissionRow[];
   /** Present in the struct's rules but not expressible, or a member-name collision. */
-  readonly unsupported: readonly string[];
+  readonly unsupported: readonly FieldOmissionRow[];
   /**
    * Fields successfully lowered, under dotted paths like `situation.stages.icon`
    * — including those lowered inside one of those (`…stages.chance.modifier`).
@@ -332,7 +350,9 @@ function repeatedStructEmission(
   readonly emittedFields: readonly EmittedField[];
   /** How the corpus reader reaches the interiors of the entry's own block fields. */
   readonly children: readonly DescentNode[];
-  readonly localisationAliases: readonly string[];
+  readonly localisationAliases: readonly FieldOmissionRow[];
+  /** Doc rows for the entry's own table and every table nested inside it. */
+  readonly docTables: readonly DocTable[];
   /** Where the record key lives, read off the field's own declaration. */
   readonly keying: "siblings" | "container";
   /** The body field carrying the record key, for `"siblings"` keying. */
@@ -399,11 +419,13 @@ function repeatedStructEmission(
 
   const members: string[] = [];
   const fieldMetadata: string[] = [];
-  const declinedFields: string[] = [];
-  const unsupported: string[] = [];
+  const declinedFields: FieldOmissionRow[] = [];
+  const unsupported: FieldOmissionRow[] = [];
   const emittedFields: EmittedField[] = [];
   const children: DescentNode[] = [];
   const extraCode: string[] = [];
+  const memberDocs: Record<string, MemberDocRow> = {};
+  const docTables: DocTable[] = [];
 
   // Everything the struct's rules declare is emitted, in the rules'
   // declaration order — the same loop shape the top level uses, one level
@@ -413,11 +435,15 @@ function repeatedStructEmission(
     const fieldPath = `${ownerPath}.${name}`;
     const declined = CONTENT_DECLINED_FIELDS.get(fieldPath);
     if (declined !== undefined) {
-      declinedFields.push(`${fieldPath} — ${declined}`);
+      declinedFields.push({ path: fieldPath, kind: "declined", reason: declined });
       continue;
     }
     if (localisationMemberNames.has(camelCase(name))) {
-      unsupported.push(`${fieldPath} (collides with the "${camelCase(name)}" localization slot)`);
+      unsupported.push({
+        path: fieldPath,
+        kind: "unsupported",
+        reason: `collides with the "${camelCase(name)}" localization slot`,
+      });
       continue;
     }
     const lowering = pickOrdinary(
@@ -430,16 +456,28 @@ function repeatedStructEmission(
       fieldPath
     );
     if (lowering === null) {
-      unsupported.push(`${fieldPath} (no declaration the emitter can lower)`);
+      unsupported.push({
+        path: fieldPath,
+        kind: "unsupported",
+        reason: "no declaration the emitter can lower",
+      });
       continue;
     }
     const optional = memberOptional(group, REPEATED_STRUCT_FIELD_OVERRIDES.get(fieldPath));
+    const docLines = [
+      ...new Set([...group.flatMap((field) => field.docs), ...(lowering.docs ?? [])]),
+    ];
     members.push(
-      docComment(
-        [...new Set([...group.flatMap((field) => field.docs), ...(lowering.docs ?? [])])],
-        "  "
-      ) + `  ${camelCase(name)}${optional ? "?" : ""}: ${lowering.memberType};\n`
+      docComment(docLines, "  ") +
+        `  ${camelCase(name)}${optional ? "?" : ""}: ${lowering.memberType};\n`
     );
+    memberDocs[camelCase(name)] = {
+      optional,
+      docs: docLines,
+      memberType: lowering.memberType,
+      ...(lowering.admits.literals === undefined ? {} : { literals: lowering.admits.literals }),
+    };
+    docTables.push(...(lowering.docTables ?? []));
     fieldMetadata.push(lowering.metadata);
     if (lowering.code !== undefined) {
       extraCode.push(lowering.code);
@@ -462,7 +500,11 @@ function repeatedStructEmission(
   }
 
   if (localisationType === undefined) {
-    unsupported.push(`${ownerPath} (missing type[${config.localisationType}] localization)`);
+    unsupported.push({
+      path: ownerPath,
+      kind: "unsupported",
+      reason: `missing type[${config.localisationType}] localization`,
+    });
   }
   const constantPrefix = constantCase(typeName);
   const fieldsConstant = `${constantPrefix}_FIELDS`;
@@ -473,7 +515,7 @@ function repeatedStructEmission(
     localisationType === undefined
       ? "[]"
       : localisationMetadata(localisationType, localisationPlan!);
-  const localisationAliases: readonly string[] = localisationPlan?.aliases ?? [];
+  const localisationAliases: readonly FieldOmissionRow[] = localisationPlan?.aliases ?? [];
   const code =
     extraCode.join("") +
     `export interface ${typeName}Fields {\n` +
@@ -507,6 +549,7 @@ function repeatedStructEmission(
     emittedFields,
     children,
     localisationAliases,
+    docTables: [{ constant: fieldsConstant, members: memberDocs }, ...docTables],
     keying,
     identityKey,
   };
@@ -885,13 +928,15 @@ export function emitContentType(
   const emittedFields: EmittedField[] = [];
   const nestedEmittedFields: EmittedField[] = [];
   const corpusDescents: DescentNode[] = [];
-  const declinedFields: string[] = [];
+  const declinedFields: FieldOmissionRow[] = [];
   const inlineSplices: string[] = [];
-  const unsupported: string[] = [];
+  const unsupported: FieldOmissionRow[] = [];
   const extraCode: string[] = [];
-  const localisationAliases: string[] = [];
+  const localisationAliases: FieldOmissionRow[] = [];
   const members: string[] = [];
   const fieldMetadata: string[] = [];
+  const memberDocs: Record<string, MemberDocRow> = {};
+  const docTables: DocTable[] = [];
   const emittedMembers = new Set<string>();
   const patchMembers: PatchMember[] = [];
   const patchExclusions: string[] = [];
@@ -970,22 +1015,29 @@ export function emitContentType(
       // narrowing `declaration.key` does not re-type `declaration` itself.
       const lowered = lowerTopLevelSplice(emitter, { ...declaration, key }, fieldContext);
       if (lowered === null) {
-        unsupported.push(
-          `alias_name[${category}] (spliced unkeyed at the top level; that category has ` +
-            "no authoring member)"
-        );
+        unsupported.push({
+          path: `alias_name[${category}]`,
+          kind: "unsupported",
+          reason: "spliced unkeyed at the top level; that category has no authoring member",
+        });
         continue;
       }
       if (emittedMembers.has(lowered.member) || localisationMemberNames.has(lowered.member)) {
-        unsupported.push(
-          `alias_name[${category}] (spliced unkeyed at the top level; its "${lowered.member}" ` +
-            "member is already taken)"
-        );
+        unsupported.push({
+          path: `alias_name[${category}]`,
+          kind: "unsupported",
+          reason: `spliced unkeyed at the top level; its "${lowered.member}" member is already taken`,
+        });
         continue;
       }
       members.push(
         docComment(lowered.docs, "  ") + `  ${lowered.member}?: ${lowered.memberType};\n`
       );
+      memberDocs[lowered.member] = {
+        optional: true,
+        docs: lowered.docs,
+        memberType: lowered.memberType,
+      };
       fieldMetadata.push(lowered.metadata);
       emittedMembers.add(lowered.member);
       inlineSplices.push(category);
@@ -1031,7 +1083,7 @@ export function emitContentType(
     const path = `${type.name}.${name}`;
     const declined = CONTENT_DECLINED_FIELDS.get(path);
     if (declined !== undefined) {
-      declinedFields.push(`${path} — ${declined}`);
+      declinedFields.push({ path, kind: "declined", reason: declined });
       continue;
     }
     const override = CONTENT_FIELD_OVERRIDES.get(path);
@@ -1043,12 +1095,19 @@ export function emitContentType(
           ? null
           : repeatedStructEmission(emitter, group[0]!, path, config, fieldContext);
       if (config === undefined || nested === null) {
-        unsupported.push(`${name} (repeated-struct overlay is incomplete)`);
+        unsupported.push({
+          path: name,
+          kind: "unsupported",
+          reason: "repeated-struct overlay is incomplete",
+        });
         continue;
       }
       const optional = memberOptional(group, override);
-      const docs = docComment([...new Set(group.flatMap((field) => field.docs))], "  ");
+      const docLines = [...new Set(group.flatMap((field) => field.docs))];
+      const docs = docComment(docLines, "  ");
       members.push(`${docs}  ${member}${optional ? "?" : ""}: ${nested.memberType};\n`);
+      memberDocs[member] = { optional, docs: docLines, memberType: nested.memberType };
+      docTables.push(...nested.docTables);
       patchMembers.push({ member, docs, memberType: nested.memberType });
       extraCode.push(nested.code);
       fieldMetadata.push(nested.metadata);
@@ -1092,17 +1151,28 @@ export function emitContentType(
       path
     );
     if (lowered === null) {
-      unsupported.push(`${name} (no declaration the emitter can lower)`);
+      unsupported.push({
+        path: name,
+        kind: "unsupported",
+        reason: "no declaration the emitter can lower",
+      });
       continue;
     }
     const optional = memberOptional(group, override);
-    const docs = docComment(
-      [...new Set([...group.flatMap((field) => field.docs), ...(lowered.docs ?? [])])],
-      "  "
-    );
+    const docLines = [
+      ...new Set([...group.flatMap((field) => field.docs), ...(lowered.docs ?? [])]),
+    ];
+    const docs = docComment(docLines, "  ");
     const memberType =
       parameter?.selector?.member === member ? parameter.parameterName : lowered.memberType;
     members.push(`${docs}  ${member}${optional ? "?" : ""}: ${memberType};\n`);
+    memberDocs[member] = {
+      optional,
+      docs: docLines,
+      memberType,
+      ...(lowered.admits.literals === undefined ? {} : { literals: lowered.admits.literals }),
+    };
+    docTables.push(...(lowered.docTables ?? []));
     patchMembers.push({ member, docs, memberType });
     fieldMetadata.push(
       member === camelCase(name)
@@ -1271,6 +1341,15 @@ export function emitContentType(
     `export const ${localisationConstant}: readonly ContentLocalisation[] = ` +
     `${localisationMetadata(type, localisationPlan, localisationPointers)};\n`;
 
+  // The prose lists are projections of the same rows the ledger carries, so
+  // the report and the generated field docs cannot drift apart. Sorting by the
+  // printed line keeps the report's historical order.
+  const declinedRows = [...declinedFields].sort((a, b) => {
+    const lineA = omissionLine(a);
+    const lineB = omissionLine(b);
+    return lineA < lineB ? -1 : lineA > lineB ? 1 : 0;
+  });
+  const collapsedRows = [...localisationPlan.aliases, ...localisationAliases];
   return {
     code,
     typeName,
@@ -1279,11 +1358,13 @@ export function emitContentType(
     emittedFields,
     nestedEmittedFields,
     corpusDescents,
-    declinedFields: declinedFields.sort(),
+    omissions: [...declinedRows, ...unsupported, ...collapsedRows],
+    docTables: [{ constant: fieldsConstant, members: memberDocs }, ...docTables],
+    declinedFields: declinedRows.map(omissionLine),
     inlineSplices,
-    unsupported,
+    unsupported: unsupported.map(omissionLine),
     scopeParameter: parameter,
-    localisationAliases: [...localisationPlan.aliases, ...localisationAliases],
+    localisationAliases: collapsedRows.map(omissionLine),
     localisationRenames,
     patchExclusions: patchCode === "" ? [] : patchExclusions,
     patchWidenings: patchCode === "" ? [] : patchWidenings,

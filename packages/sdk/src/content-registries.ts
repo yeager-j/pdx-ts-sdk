@@ -12,10 +12,29 @@
  * this is the only place the two sit side by side. `CONTENT_MANIFEST` in
  * `@pdx-ts/codegen-cwt` is the list's origin but carries no folder, because the
  * folder is read from the CWT rules during generation.
+ *
+ * The field-docs ledger rides along for the same consumer: per-member doc
+ * prose, optionality, and type text keyed by the field-table arrays the
+ * descriptors themselves hold (`field.fields`, `aliasStructFieldsOf`), plus
+ * the declined/unsupported/collapsed rows the codegen report prints, so a
+ * reference page can render a field table that marks what is absent instead
+ * of hiding it.
  */
 export {
   CONTENT_REGISTRIES,
   type ContentReferenceName,
   type ContentTypeName,
 } from "./generated/content-registry.ts";
-export type { ContentRegistryDescriptor } from "./content/schema.ts";
+export type {
+  ContentField,
+  ContentLocalisation,
+  ContentRegistryDescriptor,
+} from "./content/schema.ts";
+export { aliasStructFieldsOf } from "./content/schema.ts";
+export {
+  ALIAS_STRUCT_FIELD_OMISSIONS,
+  CONTENT_FIELD_MEMBER_DOCS,
+  CONTENT_FIELD_OMISSIONS,
+  type ContentFieldOmission,
+  type ContentMemberDoc,
+} from "./generated/content-field-docs.ts";

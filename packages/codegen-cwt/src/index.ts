@@ -24,6 +24,7 @@ import { loadRules, scopeIndex, type ContentType } from "./cwt/rules.ts";
 import { createEffectPolicy, emitEffectPolicyProtocol } from "./effect-policy.ts";
 import { emitAliasSplice, type AliasSpliceEmission } from "./emit/alias-splice.ts";
 import { emitAliasStruct } from "./emit/alias-struct.ts";
+import { emitContentFieldDocs, type FieldDocsModule } from "./emit/content-field-docs.ts";
 import { emitContentType, type ContentEmission } from "./emit/content-type.ts";
 import { emitEffects } from "./emit/effects.ts";
 import { emitEvents } from "./emit/events.ts";
@@ -31,6 +32,8 @@ import {
   assertEveryAssetPathFieldApplied,
   constantCase,
   structuralSpliceOf,
+  type DocTable,
+  type FieldOmissionRow,
 } from "./emit/fields.ts";
 import { classifyLinks, emitScopeLinkNavigation, emitScopeLinks } from "./emit/links.ts";
 import { emitModifiers, joinModifierScopes } from "./emit/modifiers.ts";
@@ -305,6 +308,8 @@ async function main(): Promise<void> {
       readonly usage: Usage;
       readonly emittedMembers: readonly string[];
       readonly declinedMembers: readonly string[];
+      readonly omissions: readonly FieldOmissionRow[];
+      readonly docTables: readonly DocTable[];
     }
   >();
   const aliasSplices = new Map<string, AliasSpliceEmission>();
@@ -345,6 +350,8 @@ async function main(): Promise<void> {
       usage,
       emittedMembers: emission.emittedFields.map((field) => field.field),
       declinedMembers: [...emission.declinedFields, ...emission.unsupported],
+      omissions: emission.omissions,
+      docTables: emission.docTables,
     });
     for (const nested of emission.spliceCategories) {
       emitCategory(nested, "splice");
@@ -552,6 +559,28 @@ async function main(): Promise<void> {
     (source, index, sources) => sources.indexOf(source) === index
   );
   await write("content-registry.ts", header(commit, contentSources) + contentRegistry(contents));
+  // The field-docs ledger: every table's doc rows plus the omission rows the
+  // report prints, one generated module the docs build can import. Emitted
+  // from the same emissions as the tables themselves, so the two cannot drift.
+  const fieldDocsModules: FieldDocsModule[] = [
+    ...contents.map((content) => ({
+      module: `./${kebabCase(content.registry)}.ts`,
+      docTables: content.emission.docTables,
+    })),
+    ...[...aliasCategories].map(([category, emission]) => ({
+      module: `./${category.replaceAll("_", "-")}.ts`,
+      docTables: emission.docTables,
+    })),
+  ];
+  await write(
+    "content-field-docs.ts",
+    header(commit, [...contentSources, "codegen-cwt field-docs ledger"]) +
+      emitContentFieldDocs(
+        fieldDocsModules,
+        new Map(contents.map((content) => [content.registry, content.emission.omissions])),
+        new Map([...aliasCategories].map(([category, emission]) => [category, emission.omissions]))
+      )
+  );
   const contentSwaps = deriveContentSwapIdentities(rules, contents);
   await write(
     "content-swaps.ts",
