@@ -1,0 +1,156 @@
+---
+import {
+  describeTraditionTreeTemplate,
+  TRADITION_TREE_TEMPLATES,
+  type TraditionTreeNode,
+} from "../tradition-tree-templates.ts";
+
+const NODE_RADIUS = 17;
+const COLUMN_GAP = 60;
+const ROW_GAP = 58;
+const PADDING = 29;
+const VIEWBOX_WIDTH = PADDING * 2 + COLUMN_GAP * 2;
+const VIEWBOX_HEIGHT = PADDING * 2 + ROW_GAP * 2;
+
+const point = (node: TraditionTreeNode) => ({
+  x: PADDING + node.column * COLUMN_GAP,
+  y: PADDING + node.row * ROW_GAP,
+});
+
+const line = (from: TraditionTreeNode, to: TraditionTreeNode) => {
+  const start = point(from);
+  const finish = point(to);
+  const dx = finish.x - start.x;
+  const dy = finish.y - start.y;
+  const distance = Math.hypot(dx, dy);
+  const unitX = dx / distance;
+  const unitY = dy / distance;
+
+  return {
+    x1: start.x + unitX * NODE_RADIUS,
+    y1: start.y + unitY * NODE_RADIUS,
+    x2: finish.x - unitX * (NODE_RADIUS + 5),
+    y2: finish.y - unitY * (NODE_RADIUS + 5),
+  };
+};
+---
+
+<div class="template-gallery">
+  {
+    TRADITION_TREE_TEMPLATES.map((template) => {
+      const nodes = new Map(template.nodes.map((templateNode) => [templateNode.slot, templateNode]));
+      const rows = Math.max(...template.nodes.map((templateNode) => templateNode.row)) + 1;
+      const rowOffset = rows === 2 ? ROW_GAP / 2 : 0;
+      const titleId = `${template.name}-title`;
+      const descriptionId = `${template.name}-description`;
+      const markerId = `${template.name}-arrow`;
+      const description = describeTraditionTreeTemplate(template);
+
+      return (
+        <figure class="template-card">
+          <svg
+            viewBox={`0 0 ${VIEWBOX_WIDTH} ${VIEWBOX_HEIGHT}`}
+            role="img"
+            aria-labelledby={`${titleId} ${descriptionId}`}
+          >
+            <title id={titleId}>{template.name}</title>
+            <desc id={descriptionId}>{description}.</desc>
+            <defs>
+              <marker
+                id={markerId}
+                viewBox="0 0 8 8"
+                refX="7"
+                refY="4"
+                markerWidth="6"
+                markerHeight="6"
+                orient="auto-start-reverse"
+              >
+                <path d="M 0 0 L 8 4 L 0 8 z" class="arrowhead" />
+              </marker>
+            </defs>
+            <g aria-hidden="true" transform={`translate(0 ${rowOffset})`}>
+              {template.edges.map((templateEdge) => {
+                const from = nodes.get(templateEdge.from)!;
+                const to = nodes.get(templateEdge.to)!;
+                const coordinates = line(from, to);
+                return <line {...coordinates} class="edge" marker-end={`url(#${markerId})`} />;
+              })}
+              {template.nodes.map((templateNode) => {
+                const coordinates = point(templateNode);
+                return (
+                  <g transform={`translate(${coordinates.x} ${coordinates.y})`}>
+                    <path
+                      d="M 0 -17 L 15 -8.5 L 15 8.5 L 0 17 L -15 8.5 L -15 -8.5 z"
+                      class="node"
+                    />
+                    <text x="0" y="1" class="node-label">
+                      {templateNode.slot}
+                    </text>
+                  </g>
+                );
+              })}
+            </g>
+          </svg>
+          <figcaption>
+            <code>{template.name}</code>
+          </figcaption>
+        </figure>
+      );
+    })
+  }
+</div>
+
+<style>
+  .template-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+    gap: 0.75rem;
+    margin-block: 1.25rem;
+  }
+
+  .template-card {
+    display: grid;
+    grid-template-rows: 1fr auto;
+    margin: 0;
+    overflow: hidden;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.75rem;
+    background: var(--sl-color-gray-7);
+  }
+
+  svg {
+    width: 100%;
+    height: 11rem;
+    padding: 0.75rem;
+  }
+
+  figcaption {
+    padding: 0.65rem 0.8rem;
+    border-top: 1px solid var(--sl-color-gray-5);
+    background: var(--sl-color-gray-6);
+    text-align: center;
+  }
+
+  .edge {
+    stroke: var(--sl-color-gray-3);
+    stroke-width: 2;
+  }
+
+  .arrowhead {
+    fill: var(--sl-color-gray-3);
+  }
+
+  .node {
+    fill: var(--sl-color-accent-low);
+    stroke: var(--sl-color-accent-high);
+    stroke-width: 2;
+  }
+
+  .node-label {
+    fill: var(--sl-color-white);
+    font-size: 13px;
+    font-weight: 700;
+    text-anchor: middle;
+    dominant-baseline: middle;
+  }
+</style>

@@ -106,8 +106,6 @@ export const UNDOCUMENTED_REGISTRIES: Readonly<Record<string, string>> = {
   spriteType: "SDK-205 — GFX registries",
   pdxmesh: "SDK-205 — GFX registries",
   pdxparticle: "SDK-205 — GFX registries",
-  tradition: "SDK-207 — traditions and tradition categories",
-  tradition_category: "SDK-207 — traditions and tradition categories",
   event_chain: "SDK-212 — event chains and special projects",
   special_project: "SDK-212 — event chains and special projects",
 };
