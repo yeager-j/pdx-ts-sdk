@@ -101,6 +101,37 @@ export const HAND_WRITTEN_CONTENT_DEFINERS = new Map<string, HandWrittenDefiner>
   ],
 ]);
 
+export interface ContentSubtypeReferenceRefinement {
+  /** Authored boolean member that selects the CWT subtype. */
+  readonly member: string;
+  /** Qualified CWT reference carried by definitions that select the subtype. */
+  readonly reference: string;
+  /** Why the general registry reference is not sufficient at consuming fields. */
+  readonly reason: string;
+}
+
+/**
+ * Attribute-selected subtypes whose capability return must retain a qualified
+ * reference. The rules use these qualified references at consuming fields, so
+ * widening the returned item to the registry's general reference would force
+ * authors through the field's raw-string escape hatch.
+ */
+export const CONTENT_SUBTYPE_REFERENCE_REFINEMENTS = new Map<
+  string,
+  ContentSubtypeReferenceRefinement
+>([
+  [
+    "component_set",
+    {
+      member: "requiredComponentSet",
+      reference: "component_set.required_component",
+      reason:
+        "ship_size.required_component_set accepts only the required_component subtype, which " +
+        "component_set selects with required_component_set = yes.",
+    },
+  ],
+]);
+
 export interface MintShape {
   /**
    * The literal every minted name of this registry carries *before* the mod

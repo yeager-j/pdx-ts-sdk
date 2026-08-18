@@ -2,8 +2,6 @@
 title: Situations
 description: Define long-running progress tracks with stages, approaches, monthly events, and typed targets.
 registries: [situation_type]
-sidebar:
-  order: 2
 ---
 
 import { Aside } from "@astrojs/starlight/components";
@@ -314,8 +312,8 @@ country event to `onActions.onGameStartCountry`; that event selects a planet,
 saves it as a typed event target, checks that the selection succeeded, and
 calls `startSituation`. In a real mod,
 the entry point can instead be a decision, another event, a special project,
-or any legal effect. Read [Events](/guides/events/) for event bodies and typed
-firing, and [On-actions](/guides/on-actions/) for lifecycle hooks and their
+or any legal effect. Read [Events](/concepts/events/) for event bodies and typed
+firing, and [On-actions](/concepts/on-actions/) for lifecycle hooks and their
 `THIS`/`FROM` contracts.
 
 ## Lifecycle callbacks and modifiers

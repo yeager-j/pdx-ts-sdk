@@ -1,0 +1,163 @@
+---
+title: Global Ship Designs
+description: Assemble fixed hulls, sections, equipment slots, required components, upgrade links, and growth stages.
+registries: [global_ship_design]
+---
+
+import { Aside } from "@astrojs/starlight/components";
+
+import FieldTable from "../../../components/FieldTable.astro";
+
+A **global ship design** is a pre-scripted loadout. It selects a ship size,
+places section templates on that hull's mounts, installs components into the
+sections' named slots, and supplies required core components. Stellaris uses
+global designs for constructors, colony ships, event ships, special
+buildables, creatures, and other fixed paths. The SDK writes them under
+`common/global_ship_designs/`.
+
+The [Ships overview](/concepts/ships/) contains a complete Aegis carrier
+design with its owned hull, sections, component sets, and all three component
+template kinds.
+
+## One design closes the assembly graph
+
+The fixed loadout uses four direct references:
+
+```ts
+const design = mod.globalShipDesign("aegis", {
+  name: "Aegis",
+  shipSize: hull,
+  section: [
+    {
+      template: bow,
+      slot: "bow",
+      component: [
+        { slot: "MEDIUM_GUN_01", template: beam },
+        { slot: "MEDIUM_GUN_02", template: beam },
+      ],
+    },
+  ],
+  requiredComponent: [reactor],
+});
+```
+
+- `shipSize` selects the hull.
+- `section[].template` selects a section compatible with that hull.
+- `section[].slot` names the hull mount that receives it.
+- `section[].component` maps each section equipment-slot name to one component
+  template.
+- `requiredComponent` supplies utility components for the hull's required
+  component sets.
+
+Use owned SDK items for all four layers. The Fold then rejects an owned
+definition that is referenced but omitted from the compiled Features.
+
+## Section slot and equipment slot are different names
+
+In one section row, `slot: "mid"` refers to the hull's section mount.
+Inside its component rows, `slot: "STRIKE_CRAFT_01"` refers to an equipment
+position declared by that section.
+
+The SDK types common slot names but cannot compare a selected section's actual
+slot declarations with the design. Keep the section and design side by side,
+reuse constants for nonstandard names, and inspect the emitted design.
+
+<Aside type="caution" title="A fixed design can still be incomplete">
+  A serialized design is not proof that every hull mount is filled, every utility position has a
+  component, every required component set has one selected member, or every component fits its
+  socket. Stellaris owns those compatibility checks.
+</Aside>
+
+## Required components fill hull-level families
+
+`requiredComponent` accepts utility component templates only. It is for
+reactors, drives, sensors, computers, and other families listed by the ship
+size's `requiredComponentSet`.
+
+Ordinary armor, shields, auxiliary components, weapons, and strike craft
+belong in the relevant section's `component` array. Their slot names come from
+the section's hardpoint declarations or utility-slot counts.
+
+When copying a vanilla design, inspect both the design and the selected ship
+size. A short design can be complete because the hull has only a few required
+families; another hull can need several required components even when its
+visible sections look similar.
+
+## A global design does not unlock a player hull
+
+`isEventDesign`, `isSpecialBuildable`, `allowBuildableTrigger`, `countryType`,
+and related fields control special selection paths. They do not replace the
+ship size's designer, technology, construction, or visibility policy.
+
+Use a global design when a game path needs an exact loadout. Use a designable
+ship size, compatible section pool, component availability, and default-design
+policy when the player or AI should assemble the ship through the ordinary
+designer.
+
+`allowBuildableTrigger` is a reference to a scripted trigger, not an inline
+trigger closure. Use a checked vanilla scripted-trigger reference or a stable
+id provided by the mod's scripted-trigger source.
+
+## Names, regeneration, and automatic upgrades are separate
+
+- `name` creates the design's localized display text.
+- `useDesignName` controls whether ships take the design name.
+- `regeneratesWhenDisabled` controls regeneration of a disabled design.
+- `upgradeShipComponents` allows automatic component upgrades for the fixed
+  design.
+- `autoGenDesign` marks the design as automatically generated or auto-best.
+- `upgradesTo` and `newbornShipDesign` link this design to other global-design
+  ids.
+
+Choose these policies separately. A design can have a stable visible name
+without automatic upgrades, and an upgrade link does not make every installed
+component compatible with the destination.
+
+## Growth stages replace the loadout by stage
+
+`growthStages` is a repeated wrapped structure for ships whose hull and loadout
+change through a growth system. Each stage contains its own:
+
+- `shipSize`;
+- section list with templates, hull slots, and installed components; and
+- required utility components.
+
+Treat each stage as a complete design snapshot. Do not assume unspecified
+sections or components carry forward from the top-level design or the previous
+stage. Verify the exact transition, component retention, art, cost, and save
+state with the complete vanilla family you are modeling.
+
+`creatureDesignerTemplate` and `newbornShipDesign` also belong to specialized
+creature and fauna lifecycles. They are not general shortcuts for an ordinary
+military upgrade chain.
+
+## Current limits and testing advice
+
+- Global ship designs have no patch surface. `mod.patchGlobalShipDesign` does
+  not exist.
+- The SDK checks reference ownership and output, but not hull/section
+  compatibility, equipment slots, component sizes, power balance, required-set
+  coverage, or the game path that selects the design.
+- `customTradeWeight`, `countryType`, special-build fields, creature fields,
+  and growth stages require system-specific live evidence.
+- Vanilla warns against applying country ship-of-size limits to hulls used by
+  global designs.
+
+Spawn or construct the design through every intended path. Check its name,
+sections, component slots, required cores, power, cost, art, combat behavior,
+automatic upgrades, disable/regenerate behavior, stage transitions, and
+save/load.
+
+## API and vanilla references
+
+- [`GlobalShipDesignDef`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/global-ship-design.ts)
+  is the generated definition used by `mod.globalShipDesign`.
+- [`vanilla.globalShipDesign`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
+  provides checked references to vanilla global-design ids.
+
+## Field reference
+
+The nested tables cover top-level sections, their installed components, and
+complete growth-stage loadouts.
+
+<FieldTable registry="global_ship_design" />

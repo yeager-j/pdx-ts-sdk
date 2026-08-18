@@ -25,7 +25,7 @@ Stellaris later evaluates. Read [Triggers and effects](/guides/triggers-and-effe
 if that boundary is not yet familiar.
 
 An `isTriggeredOnly` event still needs an entry point. Attach it to a game
-lifecycle hook with [`mod.on`](/guides/on-actions/), or fire it from another
+lifecycle hook with [`mod.on`](/concepts/on-actions/), or fire it from another
 typed effect as this example does.
 
 <Aside type="caution" title="Do not use mean-time-to-happen events">
@@ -267,5 +267,5 @@ event remains owned by this `events/` channel and only stores the typed chain
 reference.
 
 [References and identity](/guides/references-and-identity/#events-have-namespace-and-number-identity)
-summarizes event ids beside the SDK's other reference forms. [Localization](/guides/localization/)
+summarizes event ids beside the SDK's other reference forms. [Localization](/concepts/localization/)
 explains the generated title, description, and option keys in more detail.

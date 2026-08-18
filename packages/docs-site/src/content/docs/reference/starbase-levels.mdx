@@ -1,0 +1,157 @@
+---
+title: Starbase Levels
+description: Map starbase progression ids to hulls, upgrade links, capacity, UI behavior, module and building slots, AI policy, and art.
+registries: [starbase_level]
+---
+
+import { Aside } from "@astrojs/starlight/components";
+
+import FieldTable from "../../../components/FieldTable.astro";
+import PairedExample from "../../../components/PairedExample.astro";
+
+A **starbase level** maps one progression level to a starbase ship size and its
+station-level policy. It controls the next upgrade, capacity use, module and
+building positions, map and outliner display, home-base and trade behavior,
+AI weight, construction rules, and starbase-view art. The SDK writes levels
+under `common/starbase_levels/`.
+
+Starbase levels attach to the wider [ship stack](/concepts/ships/) at the ship
+size. They do not define that hull's sections, components, or fixed design.
+
+## A level selects a hull; it does not assemble one
+
+`shipSize` is required. The selected size must already describe a usable
+starbase hull, with its own section, component, graphics, and construction
+contracts.
+
+```ts
+const relayBastion = mod.starbaseLevel("bastion", {
+  shipSize: vanilla.shipSize("starbase_starhold"),
+  levelWeight: 2,
+  starbaseCapacityUsed: 1,
+  moduleSlots: [1, 2, 3, 4],
+  buildingSlots: [1, 2],
+});
+```
+
+Changing `moduleSlots` does not add module hardpoints to a model, and changing
+`shipSize` does not migrate the old hull's component rules. Read the complete
+vanilla level and its selected ship size together.
+
+## Build an explicit upgrade chain
+
+`nextLevel` points from one level to the level that replaces it on upgrade.
+The final level omits it. This example defines a two-step custom chain while
+reusing vanilla starport and starhold hulls:
+
+<PairedExample name="starbase-levels" />
+
+The example does not replace the vanilla outpost chain. Some selected starting
+level or predecessor must name `relay_bastions_starbase_level_port` before its
+custom `nextLevel` link can be reached. Defining a level does not splice it
+into existing progression and there is no `mod.patchStarbaseLevel` surface.
+
+<Aside type="caution" title="Avoid loops and dead ends">
+  The SDK checks references but does not traverse `nextLevel` links. A cycle can make progression
+  nonsensical, while an unreferenced first level can remain unreachable. Map the full chain and test
+  every upgrade and downgrade in Stellaris.
+</Aside>
+
+## Level weight, AI weight, and capacity answer different questions
+
+- `levelWeight` is the station's progression weight. Vanilla uses it in claim
+  cost and requirements for modules and buildings.
+- `aiWeight` is a starbase-scoped weight block with the owning country as
+  `FROM`; it ranks level behavior for the AI.
+- `starbaseCapacityUsed` is the number of starbase-capacity units consumed by
+  a station at this level.
+
+Do not derive one from another. A strategically important special level can
+have a high progression weight, a conditional AI weight, and a capacity cost
+chosen for balance.
+
+## Module and building slots are position lists
+
+`moduleSlots` and `buildingSlots` list engine slot positions that the UI and
+station support. Ordinary levels use integers. The generated types also admit
+special positions such as `spinal_mount_1` and `lower_1` through `lower_4`.
+
+The list values are not counts. `[1, 2, 3, 4]` exposes four named positions;
+`[4]` does not mean four slots. Preserve the exact special positions required
+by the selected hull and starbase UI.
+
+Test modules and buildings in every position, including upgrades and
+downgrades with occupied slots. The SDK does not simulate retention, removal,
+or invalid buildings during a level transition.
+
+## Display, trade, and home-base policy are independent
+
+The registry separates several UI and behavior switches:
+
+- `showInOutliner`, `displayMapIcon`, and `displayEmpireShield` control
+  visibility in different surfaces.
+- `displayShipyardButton` controls the station-view shipyard action.
+- `potentialHomeBase` lets fleets select the starbase as a home base.
+- `collectsTrade` controls whether trade collection and protection range
+  modifiers affect this level.
+- `canAlwaysDismantle` relaxes dismantling restrictions.
+
+Many fields have game defaults. State a value when the level intentionally
+differs or when the policy is important to the lesson; do not assume an
+outliner switch also controls the map or empire shield.
+
+## Upgrade and downgrade triggers run on the starbase
+
+`upgradePossible` and `downgradePotential` are starbase-scoped triggers.
+`aiWeight` also evaluates on the starbase and exposes the owner as `FROM`.
+
+Use the triggers for state that belongs to the current station and its owner.
+Keep technology, empire policy, system state, and special construction rules
+at the same seam used by the vanilla chain you are extending.
+
+`specialConstruction` marks a specialized construction path; it does not
+provide that path. A new level still needs a source that creates or advances a
+starbase to its id.
+
+## Pictures, portraits, and localization keys
+
+`picture` accepts either one sprite or a conditional block with a
+starbase-scoped trigger and sprite. Vanilla uses the conditional form to swap
+the station-view background for bioship empires. `portrait` selects separate
+station art.
+
+`levelTooltip` is an existing localization key. The registry does not create
+English text for it, so declare that key through the mod's localization
+channel when it belongs to this mod.
+
+Graphics must agree with the selected ship size and starbase UI. The SDK checks
+sprite reference shapes, not whether the final composition renders.
+
+## Current limits and testing advice
+
+- Starbase levels have no patch surface. Existing vanilla progression cannot
+  be changed through `mod.patchStarbaseLevel`.
+- The SDK cannot prove that a custom first level is reachable, a chain is
+  acyclic, the hull supports the listed slots, or upgrades preserve a valid
+  station.
+- Special construction and dismantling behavior need their surrounding game
+  system; the flag alone is not a complete feature.
+
+Test initial creation, every upgrade and downgrade, AI behavior, capacity use,
+claim and building requirements, occupied module and building slots, home-base
+selection, trade, outliner and map display, pictures, portraits, dismantling,
+destruction, ownership changes, and save/load at each level.
+
+## API and vanilla references
+
+- [`StarbaseLevelDef`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/starbase-level.ts)
+  is the generated definition used by `mod.starbaseLevel`.
+- [`vanilla.starbaseLevel`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
+  provides checked references to vanilla starbase-level ids.
+
+## Field reference
+
+The nested table covers the conditional picture arm in addition to progression,
+display, trigger, capacity, and slot members.
+
+<FieldTable registry="starbase_level" />

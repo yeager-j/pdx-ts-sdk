@@ -1,0 +1,157 @@
+---
+title: Weapon Components
+description: Define mounted ship weapons, delivery and projectile behavior, damage, targeting, costs, modifiers, and effects.
+registries: [weapon_component_template]
+---
+
+import { Aside } from "@astrojs/starlight/components";
+
+import FieldTable from "../../../components/FieldTable.astro";
+
+A **weapon component template** defines one weapon that can occupy a compatible
+section hardpoint. It owns weapon size and delivery type, projectile or beam
+art, damage, range, accuracy, tracking, target policy, cost, unlocks, modifiers,
+and optional hit effects. The SDK writes weapons into
+`common/component_templates/`.
+
+The [Ships overview](/concepts/ships/) mounts a custom medium beam into three
+named section slots of a fixed design.
+
+## Three definitions must agree on compatibility
+
+A mounted weapon crosses three layers:
+
+1. The section's `componentSlot[].template` selects a component-slot template
+   such as `medium_turret`.
+2. The weapon's `size` and behavior must be compatible with that socket.
+3. A global design's `component[].slot` names the section slot and its
+   `template` names this weapon.
+
+The weapon's `componentSet` groups it with related sizes or upgrade tiers. The
+set does not select the hardpoint.
+
+```ts
+const beam = mod.weaponComponentTemplate("beam", {
+  icon: "GFX_ship_part_laser_1",
+  componentSet: beamSet,
+  size: "medium",
+  type: "instant",
+  projectileGfx: "infrared_laser_m",
+  damage: { min: 10, max: 24 },
+  range: 60,
+  accuracy: 0.9,
+  tracking: 0.3,
+});
+```
+
+The SDK checks field values and references but does not prove that a component
+slot accepts a particular weapon or that the slot's model locator can display
+its art.
+
+## Delivery, art, and damage are separate
+
+`type` selects the weapon delivery mode described by the game rules.
+`projectileGfx` selects the beam or projectile definition, and `entity` can
+select a mounted weapon entity. Those graphics fields do not supply combat
+numbers.
+
+The combat payload includes:
+
+- `damage.min` and `damage.max`;
+- hull, armor, and shield damage multipliers;
+- armor and shield penetration;
+- range, minimum range, firing arc, accuracy, and tracking;
+- missile speed, evasion, health, armor, shield, and retarget range;
+- windup and total firing time;
+- collateral and target-size factors.
+
+Define a coherent delivery model. Missile durability does not make sense for
+an instant beam, and beam art does not make missile movement values useful.
+Use a complete current vanilla weapon of the same delivery type as the
+baseline.
+
+<Aside type="caution" title="Graphics still require model locators">
+  A mounted weapon entity needs the culture-aware art and muzzle locator expected by Stellaris. The
+  SDK cannot inspect the entity or prove that projectiles leave from the intended hardpoint.
+</Aside>
+
+## Availability, upgrades, and designer policy share the base fields
+
+Weapon components use the same family and selection fields as the other
+component registries:
+
+- `prerequisites`, `potential`, `possible`, `validForCountry`, and
+  `showTechUnlockIf` gate availability;
+- `sizeRestriction` and `classRestriction` constrain hulls;
+- `componentSet`, `upgradesTo`, `upgradePath`, and `blockedBy` shape the
+  component family;
+- `tags`, `aiTags`, `aiTagWeight`, `aiWeight`, and `shouldAiUse` guide designer
+  roles and automatic selection.
+
+The rules expose both `possible` and `potential` on weapon templates. Follow a
+current vanilla family that uses the intended seam and test the UI result; do
+not treat the names as interchangeable without a game witness.
+
+## Target selection can be broad or explicit
+
+`targetType`, `targetFocus`, `targetWeights`, `targetableShipSizes`,
+`useShipMainTarget`, `prioProjectile`, and `pointDefenceTargets` influence how
+the weapon selects targets. The component set's `affectsTargetType` and
+`affectsTargetFocus` flags can disable two of those dimensions.
+
+Keep weapon tags, AI tags, and target policy consistent. A point-defense
+weapon needs the projectile or strike-craft target categories it is expected
+to intercept. A spinal weapon needs a firing arc and role that match its
+section and ship behavior.
+
+## On-hit effects change scope
+
+`onHit` records an effect on the target ship with the firing ship as `FROM`.
+Use it for gameplay that belongs to a successful hit, not for ordinary damage
+numbers already represented by the weapon fields.
+
+Keep the effect small and deterministic. High-rate weapons can execute it many
+times, and the SDK does not simulate performance, stacking, immunities, or
+multiplayer behavior.
+
+## Costs, modifiers, and auras
+
+`resources` supports component construction cost and upkeep. Weapon templates
+also admit ship and design modifiers, repeated triggered modifiers, injected
+modifiers, and friendly or hostile auras. These are independent of the core
+damage block and can affect the mounting ship or other ships.
+
+An injected modifier has its own stack and duration policy. An aura has range,
+application timing, stack information, graphics, and optional daily damage.
+Use stable stack ids and test repeated weapons on the same ship and across a
+fleet.
+
+## Current limits and testing advice
+
+- Weapon components have no patch surface.
+  `mod.patchWeaponComponentTemplate` does not exist.
+- The SDK cannot simulate damage per day, firing cadence, target choice,
+  projectile interception, on-hit frequency, aura stacking, or AI design
+  quality.
+- The generated type accepts many combinations because the game grammar does;
+  that is not proof that every combination is meaningful.
+
+Test slot compatibility, design availability, upgrades, power and cost,
+tooltip values, firing arcs, muzzle positions, every target class, damage and
+penetration, projectile behavior, on-hit effects, AI selection, combat
+performance, and save/load.
+
+## API and vanilla references
+
+- [`WeaponComponentTemplateDef`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/weapon-component-template.ts)
+  is the generated definition used by `mod.weaponComponentTemplate`.
+- [`vanilla.weaponComponentTemplate`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
+  provides checked vanilla weapon ids.
+
+## Field reference
+
+The nested tables include damage, windup, injected modifiers, conditional
+tooltips, auras, daily aura damage, weights, resources, and triggered
+modifiers.
+
+<FieldTable registry="weapon_component_template" />

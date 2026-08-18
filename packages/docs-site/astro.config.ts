@@ -24,6 +24,7 @@ export default defineConfig({
       ],
       sidebar: [
         { label: "Guides", items: [{ autogenerate: { directory: "guides" } }] },
+        { label: "Concepts", items: [{ autogenerate: { directory: "concepts" } }] },
         { label: "Reference", items: [{ autogenerate: { directory: "reference" } }] },
       ],
       // Catppuccin, at the plugin's own defaults: mocha for dark, latte for
@@ -51,5 +52,8 @@ export default defineConfig({
   // why `vite.resolve` and `vite.ssr` cannot.
   vite: {
     plugins: [pdxSourceResolution()],
+  },
+  server: {
+    allowedHosts: ["jacksons-macbook-air.tailc2a080.ts.net"],
   },
 });

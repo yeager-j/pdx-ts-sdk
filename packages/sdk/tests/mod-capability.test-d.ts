@@ -6,6 +6,7 @@ import {
   currentSituationApproach,
   currentStage,
   type CapabilityEventItem,
+  type ComponentSetRequiredComponentRef,
   type ContentItem,
   type IdProfile,
   type MintedContentId,
@@ -60,6 +61,22 @@ const profile = {
 } as const satisfies IdProfile;
 
 describe("mod capability types", () => {
+  it("preserves attribute-selected component-set subtype references", () => {
+    const mod = createMod({
+      name: "Component sets",
+      prefix: "component_set_types",
+      supportedVersion: "4.4.*",
+    });
+    const required = mod.componentSet("reactor", { requiredComponentSet: true });
+    const ordinary = mod.componentSet("weapon", {});
+    const acceptsRequired = (_set: ComponentSetRequiredComponentRef): void => {};
+
+    acceptsRequired(required);
+    expectTypeOf(required.def.requiredComponentSet).toEqualTypeOf<true>();
+    // @ts-expect-error — an ordinary component set does not carry the required-component subtype.
+    acceptsRequired(ordinary);
+  });
+
   it("mints exact default and custom ids without accepting caller ids", () => {
     const defaults = createMod({
       name: "Defaults",

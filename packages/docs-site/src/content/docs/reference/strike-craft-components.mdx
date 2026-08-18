@@ -1,0 +1,139 @@
+---
+title: Strike Craft Components
+description: Define hangar-launched craft, their carried weapon, movement, defenses, regeneration, targeting, costs, and availability.
+registries: [strike_craft_component_template]
+---
+
+import { Aside } from "@astrojs/starlight/components";
+
+import FieldTable from "../../../components/FieldTable.astro";
+
+A **strike-craft component template** defines one hangar component and the
+small craft it launches. It combines component-family policy with carried
+weapon values, craft count, regeneration, movement, defenses, engagement, and
+target selection. The SDK writes strike craft into
+`common/component_templates/`.
+
+The [Ships overview](/concepts/ships/) places custom Aegis interceptors into a
+`large_strike_craft` section hardpoint.
+
+## The section holds the hangar component
+
+A strike-craft section slot looks like this:
+
+```ts
+componentSlot: [{
+  name: "STRIKE_CRAFT_01",
+  template: "large_strike_craft",
+  locatorname: "strike_craft_locator_01",
+}],
+```
+
+The global design fills `STRIKE_CRAFT_01` with a strike-craft component whose
+`size` matches the slot. `componentSet` groups this component with its upgrade
+family; it is not the slot template.
+
+Use current section entities built for hangars. A weapon locator and a
+strike-craft launch locator are not interchangeable even when both are plain
+strings in script.
+
+## One component describes a squadron and its weapon
+
+The main fields form three groups:
+
+| Group                 | Members                                                                                                              |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Squadron lifecycle    | `count`, `regenerationPerDay`, `launchTime`                                                                          |
+| Movement and survival | `health`, `armor`, `shield`, `evasion`, `speed`, `rotationSpeed`, `acceleration`                                     |
+| Carried weapon        | `weaponType`, `projectileGfx`, `damage`, `cooldown`, `range`, `accuracy`, `tracking`, penetration and damage factors |
+
+`engagementRange` governs when the carrier launches and commits the craft;
+`attackRange` belongs to the craft's attack behavior. `shipBehavior` selects
+the craft AI. Keep these values coherent with speed, weapon range, and the
+carrier's combat role.
+
+```ts
+const interceptors = mod.strikeCraftComponentTemplate("interceptors", {
+  icon: "GFX_ship_part_strike_craft_fighter_1",
+  componentSet: wingSet,
+  entity: "bomber_entity",
+  size: "large",
+  weaponType: "point_defence",
+  shipBehavior: "fighters_behavior",
+  count: 8,
+  regenerationPerDay: 0.5,
+  launchTime: 2,
+  damage: { min: 4, max: 10 },
+  engagementRange: 125,
+});
+```
+
+<Aside type="caution" title="The component needs more than a hangar icon">
+  `entity`, projectile graphics, behavior, movement, defenses, weapon values, and launch policy all
+  participate. Start from one complete current vanilla strike-craft definition and change the
+  intended design dimensions; do not assemble a craft from unrelated rows.
+</Aside>
+
+## Point defense is a target policy
+
+Strike craft can themselves intercept projectiles or other strike craft.
+`pointDefenceTargets` chooses the supported target categories, while
+`weaponType`, tags, and AI tags classify the component. Accuracy, tracking,
+range, cooldown, speed, and engagement range still determine whether that
+policy works in combat.
+
+The Aegis example uses `pointDefenceTargets: ["strike_craft"]`. That list does
+not give the component point-defense numbers or behavior by itself.
+
+## Availability and upgrades follow component-family rules
+
+Like utility and weapon templates, strike craft support:
+
+- `prerequisites`, `potential`, `validForCountry`, and `showTechUnlockIf`;
+- `componentSet`, `upgradesTo`, `upgradePath`, and `blockedBy`;
+- `sizeRestriction` and the deprecated `classRestriction`;
+- tags, AI tags, weights, and `shouldAiUse`;
+- construction cost and upkeep in `resources`.
+
+An upgrade row should preserve the component's section compatibility unless
+changing the required hangar size is intentional. Verify automatic upgrades
+on existing carriers as well as new designs.
+
+## Modifiers and auras affect the carrier or nearby ships
+
+`shipModifier` applies to the mounting ship. Friendly and hostile aura blocks
+have the same stack, range, application, graphics, modifier, and optional
+daily-damage structures exposed by the other component registries.
+
+These fields do not describe the individual launched craft's base statistics;
+use the dedicated health, armor, shield, evasion, movement, and weapon members
+for that payload.
+
+## Current limits and testing advice
+
+- Strike-craft components have no patch surface.
+  `mod.patchStrikeCraftComponentTemplate` does not exist.
+- The SDK cannot simulate launch cadence, replacement rate, craft AI,
+  interception, retargeting, engagement distance, carrier behavior, or combat
+  performance.
+- Model, projectile, icon, and behavior ids remain external asset or game-data
+  contracts.
+
+Test hangar compatibility, launch locators, squadron count, replacement after
+losses, disengagement and re-engagement, movement, weapon fire, interception,
+every target category, upgrades, AI carrier designs, combat performance, and
+save/load during an active battle.
+
+## API and vanilla references
+
+- [`StrikeCraftComponentTemplateDef`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/strike-craft-component-template.ts)
+  is the generated definition used by `mod.strikeCraftComponentTemplate`.
+- [`vanilla.strikeCraftComponentTemplate`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
+  provides checked vanilla strike-craft-component ids.
+
+## Field reference
+
+The nested tables cover damage, conditional tooltips, auras, aura graphics and
+stacking, daily aura damage, costs, and weights.
+
+<FieldTable registry="strike_craft_component_template" />

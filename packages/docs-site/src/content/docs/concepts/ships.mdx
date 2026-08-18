@@ -1,0 +1,214 @@
+---
+title: Ships
+description: Connect hulls, sections, component families, components, fixed designs, starbase levels, and ownership limits.
+sidebar:
+  order: 6
+---
+
+import { Aside } from "@astrojs/starlight/components";
+
+import PairedExample from "../../../components/PairedExample.astro";
+
+A ship is assembled from several registries that share references but own
+different decisions. A **ship size** defines the hull and its section mounts.
+**Section templates** fit those mounts and expose equipment slots.
+**Component sets** group related equipment, while three kinds of **component
+template** define the equipment itself. A **global ship design** can then lock
+one hull, its sections, and its components into a complete scripted design.
+
+The SDK writes each registry to the Stellaris folder that owns it:
+
+| Layer                         | SDK call                                                                  | Game folder                                  |
+| ----------------------------- | ------------------------------------------------------------------------- | -------------------------------------------- |
+| Hull                          | [`mod.shipSize`](/reference/ship-sizes/)                                  | `common/ship_sizes/`                         |
+| Section                       | [`mod.sectionTemplate`](/reference/section-templates/)                    | `common/section_templates/`                  |
+| Component family              | [`mod.componentSet`](/reference/component-sets/)                          | `common/component_sets/`                     |
+| Utility or required component | [`mod.utilityComponentTemplate`](/reference/utility-components/)          | `common/component_templates/`                |
+| Weapon                        | [`mod.weaponComponentTemplate`](/reference/weapon-components/)            | `common/component_templates/`                |
+| Strike craft                  | [`mod.strikeCraftComponentTemplate`](/reference/strike-craft-components/) | `common/component_templates/`                |
+| Fixed design                  | [`mod.globalShipDesign`](/reference/global-ship-designs/)                 | `common/global_ship_designs/`                |
+| Starbase progression          | [`mod.starbaseLevel`](/reference/starbase-levels/)                        | `common/starbase_levels/`                    |
+| Country capacity policy       | [`mod.countryShipOfSizeLimit`](/reference/ship-of-size-limits/)           | `common/country_limits/ship_of_size_limits/` |
+
+The three component-template calls are separate TypeScript APIs because their
+fields differ. They still emit the three game keywords into the same
+`common/component_templates/` output file when they share a Feature stem.
+
+## The core assembly graph
+
+The direct references run in this order:
+
+```text
+ship size
+  ├─ section slot name ───────────────┐
+  └─ required component-set ids ──┐   │
+                                  │   ▼
+component set ◀─ component template   section template
+                  ▲                    ├─ compatible ship size
+                  │                    ├─ fitting section slot name
+                  └─ global design ────┴─ equipment slot name
+```
+
+Two names in this graph are easy to confuse:
+
+- A section's `componentSlot[].template` is a **component-slot template**, such
+  as `medium_turret` or `large_strike_craft`. It defines what shape of
+  equipment fits that position.
+- A component template's `componentSet` is a **component set**, such as a
+  family of reactors, lasers, or strike craft. It groups alternatives and
+  upgrade rows.
+
+The global design does not point to component sets. It places specific
+component-template ids into the slot names declared by each chosen section.
+
+## Complete worked example: an Aegis carrier
+
+This example creates a non-player-designed cruiser-class ship while reusing
+vanilla cruiser models. It defines three component sets; one utility, one
+weapon, and one strike-craft component; a three-mount hull; three matching
+sections; and a fixed global design that installs every custom component.
+
+<PairedExample name="ship-stack" />
+
+The owned values flow through the example instead of being copied as strings:
+
+1. `reactorSet`, `beamSet`, and `wingSet` are passed to their component
+   templates.
+2. `hull` is passed to every section's `shipSize`.
+3. `bow`, `mid`, and `stern` are passed to the design.
+4. `beam` and `interceptors` fill named section slots, while `reactor` fills
+   the hull's required component family.
+
+Because `reactorSet` declares `requiredComponentSet: true`, its returned
+reference carries the required-component subtype and can flow directly into
+the hull's `requiredComponentSet` list. An ordinary component set is rejected
+there.
+
+<Aside type="caution" title="The example reuses vanilla art">
+  The script is complete, but the visible ship depends on vanilla `cruiser_entity`, section
+  entities, locators, sprites, projectiles, and strike-craft art. A mod that supplies original
+  models must also ship the corresponding GFX definitions and assets. The SDK checks the script
+  references; it does not inspect a model's skeleton or locators.
+</Aside>
+
+## Hull slots and section slots must agree
+
+`shipSize.sectionSlots` is an engine-keyed map. Its keys, such as `bow`, `mid`,
+and `stern`, are not content ids and do not receive the mod prefix. Each row
+names one or more locators on the hull's core entity:
+
+```ts
+sectionSlots: {
+  bow: { locator: ["part1"] },
+  mid: { locator: ["part2"] },
+  stern: { locator: ["part3"] },
+},
+```
+
+A section template declares the same connection from the other side with
+`fitsOnSlot`. A design repeats the slot when it places the chosen section.
+These three values must agree:
+
+| Source                     | Value in the example |
+| -------------------------- | -------------------- |
+| Hull section-slot key      | `mid`                |
+| Section `fitsOnSlot` entry | `mid`                |
+| Design section `slot`      | `mid`                |
+
+The SDK types the well-known slot names but cannot inspect the target model.
+If `part2` is absent from the hull entity, the script still compiles and the
+section will not attach correctly in game.
+
+## Section equipment is another name-matching seam
+
+Each `componentSlot` gives the design a stable slot name, a component-slot
+template, and a locator on the section entity:
+
+```ts
+componentSlot: [{
+  name: "STRIKE_CRAFT_01",
+  template: "large_strike_craft",
+  locatorname: "strike_craft_locator_01",
+}],
+```
+
+The design must use the exact `STRIKE_CRAFT_01` name and place a compatible
+large strike-craft component there. Weapon size and kind must likewise match
+the component-slot template. Utility-slot counts create engine-named positions
+such as `MEDIUM_UTILITY_1`; they do not name a component set.
+
+Current Stellaris section files use `template = "small_turret"` and related
+component-slot-template ids. The old `common/HOW_TO_MAKE_NEW_SHIPS.txt` example
+still shows `slot_size` and `slot_type`; treat that spelling as outdated and
+follow current vanilla definitions and the generated `SectionTemplateDef`.
+
+## Components have a shared base and distinct payloads
+
+All three component-template registries share selection fields such as
+`componentSet`, `prerequisites`, `upgradesTo`, `potential`, `aiWeight`,
+`resources`, `sizeRestriction`, and `blockedBy`. Their payloads then diverge:
+
+| Template     | Main responsibility                                                                          |
+| ------------ | -------------------------------------------------------------------------------------------- |
+| Utility      | Power, sensors, FTL, ship behavior, modifiers, auras, and required core equipment.           |
+| Weapon       | Weapon delivery, damage, range, accuracy, tracking, projectile behavior, and on-hit effects. |
+| Strike craft | Launched-craft count, regeneration, movement, defenses, engagement, and its carried weapon.  |
+
+`componentSet` groups alternatives; it does not make one component valid for a
+particular hull. Use the component's `potential`, `sizeRestriction`,
+`prerequisites`, and the section slot's shape to express availability.
+
+## Global designs are fixed loadouts
+
+`mod.globalShipDesign` is for pre-scripted designs used by events, special
+ships, constructors, colony ships, and similar game-owned paths. It is not a
+second component-family system and does not make a player-designable hull
+appear in the ship designer.
+
+Inside each design section:
+
+- `template` selects a section definition;
+- `slot` selects the hull mount that receives it; and
+- each `component` maps one section equipment-slot name to one component
+  template.
+
+`requiredComponent` supplies utility components from required component sets,
+such as a reactor, sensor, drive, thruster, or combat computer. It does not
+fill the section's ordinary armor, shield, auxiliary, or weapon positions.
+
+## Starbase levels and ownership limits branch from the hull
+
+Starbase levels and country limits both point to ship sizes, but neither joins
+the design assembly chain.
+
+- A [starbase level](/reference/starbase-levels/) maps one level id to a
+  starbase ship size, UI behavior, slot counts, AI weight, and an optional next
+  level. The selected ship size owns its sections and components elsewhere.
+- A [ship-of-size limit](/reference/ship-of-size-limits/) groups one or more
+  ship sizes under a country capacity formula. `mod.addShipOfSizeLimits` then
+  contributes that policy id to the game's shared `default` ownership block.
+
+Vanilla explicitly warns against applying a ship-of-size limit to sizes used
+by global designs. The Aegis example therefore has no country limit. Use the
+limit registry for the hull systems it was designed for, and test capacity
+accounting in the live game.
+
+## What the SDK checks, and what Stellaris must check
+
+The Fold checks owned ids, prefixes, reference presence, callback scopes,
+output collisions, and serialization. The docs build also compiles and renders
+the example above. It cannot establish these live-game facts:
+
+- the hull and section entities exist for every intended graphical culture;
+- every hull and section locator exists in the model skeleton;
+- component sizes and types are accepted in every named slot;
+- the design is selected or spawned by its intended game path;
+- required component families have a usable default component;
+- AI weights, upgrade paths, and technology gates produce the intended loadout;
+- starbase upgrade chains and ship-limit capacity behave correctly after save
+  and load.
+
+Test with `-script_debug`, inspect `error.log`, open the design in the ship
+viewer when the hull supports it, spawn every fixed design, and check every
+graphical culture the mod supports. See [Testing your mod](/guides/testing-your-mod/)
+for the wider validation split.
