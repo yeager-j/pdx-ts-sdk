@@ -83,7 +83,6 @@ export interface Coverage {
  * that a *new* registry cannot slip in silently.
  */
 export const UNDOCUMENTED_REGISTRIES: Readonly<Record<string, string>> = {
-  technology: "SDK-201 — progression and economy",
   ascension_perk: "SDK-201 — progression and economy",
   building: "SDK-201 — progression and economy",
   economic_category: "SDK-201 — progression and economy",
