@@ -121,7 +121,7 @@ import type {
 import type { OpinionModifierDef } from "./opinion-modifier.ts";
 import type { PdxmeshDef } from "./pdxmesh.ts";
 import type { PdxparticleDef } from "./pdxparticle.ts";
-import type { BombardmentStanceRef } from "./refs.ts";
+import type { BombardmentStanceRef, ComponentSetRequiredComponentRef } from "./refs.ts";
 import type { ScriptedLocDef } from "./scripted-loc.ts";
 import type { ScriptedModifierDef } from "./scripted-modifier.ts";
 import type { SectionTemplateDef } from "./section-template.ts";
@@ -859,6 +859,18 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
    * The capability mints and owns the full id; the returned branded reference
    * flows into matching content-reference fields.
    */
+  componentSet<const Name extends string>(
+    name: Name,
+    def: Omit<ComponentSetDef<MintedContentId<P, I, "componentSet", Name>>, "id"> & {
+      readonly requiredComponentSet: true;
+    }
+  ): ContentItem<
+    "component_set",
+    ComponentSetDef<MintedContentId<P, I, "componentSet", Name>> & {
+      readonly requiredComponentSet: true;
+    }
+  > &
+    ComponentSetRequiredComponentRef;
   componentSet<const Name extends string>(
     name: Name,
     def: Omit<ComponentSetDef<MintedContentId<P, I, "componentSet", Name>>, "id">

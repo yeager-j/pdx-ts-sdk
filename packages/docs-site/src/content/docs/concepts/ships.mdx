@@ -79,10 +79,10 @@ The owned values flow through the example instead of being copied as strings:
 4. `beam` and `interceptors` fill named section slots, while `reactor` fills
    the hull's required component family.
 
-`requiredComponentSet` is the one current subtype seam where the generic
-`componentSet` item is wider than the field's required-component reference.
-The example uses `reactorSet.id`, so the id remains derived from the owned
-definition instead of being copied.
+Because `reactorSet` declares `requiredComponentSet: true`, its returned
+reference carries the required-component subtype and can flow directly into
+the hull's `requiredComponentSet` list. An ordinary component set is rejected
+there.
 
 <Aside type="caution" title="The example reuses vanilla art">
   The script is complete, but the visible ship depends on vanilla `cruiser_entity`, section

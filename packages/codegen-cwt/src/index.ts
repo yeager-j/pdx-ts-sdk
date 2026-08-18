@@ -69,6 +69,7 @@ import {
   CONTENT_CONTRIBUTION_SINKS,
   CONTENT_FIELD_OVERRIDES,
   CONTENT_PATCH_REGISTRIES,
+  CONTENT_SUBTYPE_REFERENCE_REFINEMENTS,
   EXACT_NAME_MINTS,
   FILE_STEM_OVERLAYS,
   HAND_WRITTEN_CONTENT_DEFINERS,
@@ -891,6 +892,7 @@ function contentDefiners(
     const graft = HAND_WRITTEN_CONTENT_DEFINERS.get(registry);
     const patchable = CONTENT_PATCH_REGISTRIES.get(registry);
     const contribution = CONTENT_CONTRIBUTION_SINKS.get(registry);
+    const referenceRefinement = CONTENT_SUBTYPE_REFERENCE_REFINEMENTS.get(registry);
     const method = camelCase(registry);
     const mintShape = MINT_SHAPE_OVERLAYS.get(registry);
     const exactName = EXACT_NAME_MINTS.get(registry);
@@ -1002,7 +1004,14 @@ function contentDefiners(
       const result = `${name}Def<${minted}${scoped === null ? "" : ", never"}>`;
       const signatures =
         scoped?.selector === undefined
-          ? `  ${method}${parameters}(\n` +
+          ? (referenceRefinement === undefined
+              ? ""
+              : `  ${method}<const Name extends string>(\n` +
+                `    name: Name,\n` +
+                `    def: Omit<${def}, "id"> & { readonly ${referenceRefinement.member}: true }\n` +
+                `  ): ContentItem<${key}, ${result} & { readonly ${referenceRefinement.member}: true }> & ` +
+                `${pascalCase(referenceRefinement.reference)}Ref;\n`) +
+            `  ${method}${parameters}(\n` +
             `    name: Name,\n` +
             `    def: ${input}\n` +
             `  ): ContentItem<${key}, ${result}>${declaration};`
@@ -1382,6 +1391,12 @@ function contentDefiners(
     ]);
   const capabilityImports =
     'import type { ContentItem } from "../content/types.ts";\n' +
+    importList(
+      "./refs.ts",
+      [...CONTENT_SUBTYPE_REFERENCE_REFINEMENTS.values()].map(
+        (refinement) => `${pascalCase(refinement.reference)}Ref`
+      )
+    ) +
     (shapeMintTypes.length === 0 && exactNameRows.length === 0
       ? ""
       : "import {\n" +

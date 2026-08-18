@@ -57,10 +57,9 @@ global design then lists the selected utility component ids in
   hull that can use the size has at least one legal choice.
 </Aside>
 
-Because `mod.componentSet` returns the general component-set item type, use an
-owned required set's `.id` in `shipSize.requiredComponentSet`. This preserves
-rename safety without casting the general item to the generated required-set
-subtype.
+When the definition contains `requiredComponentSet: true`, `mod.componentSet`
+returns a reference with the required-component subtype. Pass that owned value
+directly to `shipSize.requiredComponentSet`; an ordinary set is rejected.
 
 ## Ordinary sets and required sets use the same registry
 

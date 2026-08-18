@@ -119,7 +119,7 @@ const hull = mod.shipSize("aegis", {
     mid: { locator: ["part2"] },
     stern: { locator: ["part3"] },
   },
-  requiredComponentSet: [reactorSet.id],
+  requiredComponentSet: [reactorSet],
 });
 
 const bow = mod.sectionTemplate("aegis_bow", {
