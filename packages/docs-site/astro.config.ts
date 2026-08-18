@@ -53,4 +53,7 @@ export default defineConfig({
   vite: {
     plugins: [pdxSourceResolution()],
   },
+  server: {
+    allowedHosts: ["jacksons-macbook-air.tailc2a080.ts.net"],
+  },
 });
