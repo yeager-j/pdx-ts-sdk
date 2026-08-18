@@ -1,0 +1,387 @@
+---
+title: Situations
+description: Define long-running progress tracks with stages, approaches, monthly events, and typed targets.
+registries: [situation_type]
+sidebar:
+  order: 2
+---
+
+import { Aside } from "@astrojs/starlight/components";
+
+import FieldTable from "../../../components/FieldTable.astro";
+import PairedExample from "../../../components/PairedExample.astro";
+
+A **situation type** defines a long-running process owned by an empire. The
+running situation has progress, a current stage, an optional approach chosen
+by the player or AI, and an optional target such as a planet. It can apply
+modifiers, run effects as its state changes, and fire events every month.
+
+This worked example defines a three-stage crystal bloom with two approaches.
+A country event selects a planet and starts the situation. Monthly progress
+depends on the current approach and stage, random situation events can move
+the progress in either direction, and a final event opens when progress
+completes:
+
+<PairedExample name="situations" />
+
+The example is intentionally multi-file. `mod.situationType` writes the
+definition under `common/situations/`, the namespace writes its events under
+`events/`, `mod.on` writes the game-start registration under
+`common/on_actions/`, and the authored display text produces localization.
+
+## A situation is a small state machine
+
+Treat one situation as six connected parts:
+
+| Part             | Responsibility                                                                   |
+| ---------------- | -------------------------------------------------------------------------------- |
+| Situation type   | Declares the progress model, stages, approaches, callbacks, and UI fields.       |
+| Start effect     | Creates one running instance and supplies its target.                            |
+| Monthly progress | Calculates the amount added to progress each month.                              |
+| Stages           | Divide the progress track into named sections and react to stage entry.          |
+| Approaches       | Let the player or AI select a policy that changes progress, costs, or modifiers. |
+| Situation events | Present choices and effects in the running situation scope.                      |
+
+Define the type before its start event so that `startSituation` receives the
+typed item rather than a copied id. Put the definition, every owned event it
+references, the start event, and the on-action contribution in Features passed
+to the same `mod.compile` call. The Fold rejects an owned reference whose
+definition was left out of the build.
+
+## Model monthly progress explicitly
+
+`monthlyProgress` is required. Its `base` and matching modifier rows are
+evaluated by Stellaris in the running situation scope each month:
+
+```ts
+monthlyProgress: {
+  base: 3,
+  modifiers: [
+    {
+      add: 2,
+      desc: "Our observers let the bloom develop naturally.",
+      descKey: "observation_progress",
+      when: currentSituationApproach(observe),
+    },
+  ],
+},
+```
+
+Every modifier row needs `desc`. The SDK registers that explanation as
+localization because the game shows it in the progress tooltip. Set a stable
+`descKey` when the row will be maintained over time; this keeps its
+localization identity separate from edits to the English text.
+
+Use `add` for a flat change and `factor` for a multiplier. Conditions such as
+`currentSituationApproach(...)`, `currentStage(...)`, and situation flags let
+the calculation follow the rest of the state machine. Keep the calculation in
+`monthlyProgress`; use `addSituationProgress` for discrete outcomes such as an
+event choice or an approach being selected.
+
+### Choose one stage progress model
+
+Situations support two incompatible ways to size their stages.
+
+In **threshold mode**, omit `totalProgress` and give every stage an `end` value:
+
+```ts
+stages: {
+  [investigation]: {
+    name: "Investigation",
+    end: 40,
+    icon: "GFX_situation_stage_1",
+    iconBackground: "GFX_situation_stage_frame_blue",
+  },
+  [containment]: {
+    name: "Containment",
+    end: { base: 100, modifiers: [{ factor: 1.25, when: difficultTarget }] },
+    icon: "GFX_situation_stage_2",
+    iconBackground: "GFX_situation_stage_frame_blue",
+  },
+},
+```
+
+In **section-weight mode**, set `totalProgress` and give every stage a
+`sectionWeight`. The worked example uses a total of `100` and weights of
+`30`, `40`, and `30`. A total or section weight can also be a situation-scoped
+weight block when its value must be calculated at runtime.
+
+<Aside type="caution" title="Do not mix end and sectionWeight">
+  Setting `totalProgress` switches the game to section-weight mode. Every stage must then use
+  `sectionWeight`, and no stage may use `end`. The TypeScript type can express both fields because
+  it cannot derive one member's legality from the value of another. Stellaris reports the mixed form
+  as an error.
+</Aside>
+
+Use threshold mode when the boundaries themselves are the clearest model. Use
+section-weight mode when each stage should own a share of a separately
+calculated total.
+
+### Monodirectional and bidirectional progress
+
+`progressDirection` defaults to `"monodirectional"`. Progress moves toward the
+completion edge, and `onProgressComplete` runs when it reaches that edge.
+
+Use `"bidirectional"` when the center has meaningful success and failure
+directions:
+
+```ts
+progressDirection: "bidirectional",
+startValue: -100,
+initialProgress: 0,
+completeCategory: "positive",
+failCategory: "negative",
+monthlyProgress: { base: -2 },
+```
+
+`startValue` defines the lower bound. `initialProgress` selects the starting
+position and is clamped up to `startValue` when it is lower. `completeCategory`
+and `failCategory` only apply to bidirectional situations. Set `permanent: true`
+only when reaching an edge must not finish the situation automatically; your
+effects must then finish or remove it deliberately.
+
+The SDK checks each field's own type, but it does not enforce these
+value-dependent combinations. Choose the direction and stage model first,
+then use only the fields that belong to that model.
+
+## Give stages stable, ordered identities
+
+`stages` is a record whose keys are the complete stage ids. Each key must use
+the mod prefix. The values hold the localized name and description, icons,
+progress size, entry effects, conditions, and modifiers:
+
+```ts
+const germination = "crystal_bloom_situation_bloom_stage_germination" as const;
+
+stages: {
+  [germination]: {
+    name: "Germination",
+    desc: "Thin crystal roots spread below the surface.",
+    sectionWeight: 30,
+    icon: "GFX_situation_stage_1",
+    iconBackground: "GFX_situation_stage_frame_blue",
+    onFirstEnter: (situation) => {
+      situation.setSituationFlag("crystal_bloom_germinated");
+    },
+  },
+},
+```
+
+Stage declaration order is content: the SDK preserves it in the emitted
+`stages = { ... }` container. Keep the record in progress order.
+
+`onFirstEnter` runs only the first time an instance reaches that stage.
+`onEnter` also runs when progress leaves and later re-enters the stage, which
+is especially important for bidirectional situations. Use the first form for
+one-time setup and the second only for repeatable work.
+
+`modifier` runs in country scope. `targetModifier` runs in the situation's
+target scope, but the generated stage type accepts any game scope because the
+rules do. Keep it consistent with the target passed when the situation starts.
+
+Stage `color` currently accepts a named-color reference or string. The game
+rules also describe numeric RGBA vectors, but the SDK does not yet expose that
+form. Use a named color rather than forcing a vector through the type.
+
+## Approaches are selectable policies
+
+`approach` is another record of complete, prefixed ids. Set one entry as the
+default and use `potential` and `allow` for different jobs:
+
+- `potential` decides whether an approach belongs in this situation instance.
+- `allow` decides whether a present approach can be selected now.
+- `onSelect` records the effects that run when selection changes.
+- `resources` declares the displayed and charged economic cost.
+- `aiWeight` ranks legal approaches for the AI.
+- `modifier` and `targetModifier` apply country and target modifiers while the
+  approach is active.
+
+The worked example keeps **Intervene** visible but locks it until the
+**Flowering** stage:
+
+```ts
+[intervene]: {
+  name: "Intervene",
+  icon: "GFX_situation_approach_genetics",
+  iconBackground: "GFX_situation_approach_bg_red",
+  allow: currentStage(flowering),
+  onSelect: (situation) => situation.addSituationProgress(5),
+  aiWeight: 2,
+},
+```
+
+The SDK checks direct stage and approach names used by an approach's `allow`
+or `potential`, a stage's `potential`, and the situation's `abortTrigger`
+against the keys declared in the same definition. Other fields do not always
+carry that definition-specific identity. Declare ids once as `const` values
+and reuse them in progress modifiers, events, and effects so a rename cannot
+leave a stale string behind.
+
+Although stages and approaches are both authored as TypeScript records, their
+PDXScript forms differ. Stages emit inside one keyed `stages` container.
+Approaches emit as repeated sibling `approach = { name = ... }` blocks. Let the
+SDK lower these structures; do not shape raw PDXScript around them.
+
+## Declare and preserve the target scope
+
+Many situations track a planet or another object. Declare that contract once
+with `targetScope`:
+
+```ts
+const crystalBloom = mod.situationType("crystal_bloom", {
+  targetScope: "planet",
+  // Other fields omitted.
+});
+```
+
+`targetScope` is a TypeScript-only contract. It does not emit a
+`target_scope` field. When owned content starts the situation, the declared
+type requires a matching typed scope value:
+
+```ts
+const bloomWorld = eventTarget<"planet">("crystal_bloom_world");
+
+country.startSituation({
+  type: crystalBloom,
+  target: bloomWorld,
+  effect: (situation) => {
+    situation.target((planet) => planet.setPlanetFlag("crystal_bloom_host"));
+  },
+});
+```
+
+The `effect` callback above knows that `.target(...)` opens a planet because
+`type` carries `targetScope: "planet"`. A country target or an untyped bare
+string is a TypeScript error.
+
+That inference is local to `startSituation`. In callbacks stored on the type,
+such as `onStart`, `onProgressComplete`, stage entry effects, or situation
+event effects, use an explicit link when you need the target:
+
+```ts
+onProgressComplete: (situation) => {
+  situation.target<"planet">((planet) => {
+    planet.setPlanetFlag("crystal_bloom_complete");
+  });
+},
+```
+
+The game owns the runtime link. The type argument states what your design
+already established; it does not create or validate a target at runtime.
+
+## Wire events around the situation
+
+Use a situation event for UI and effects that run against the active
+situation:
+
+```ts
+const setback = events.situation(2, {
+  title: "Unstable Growth",
+  location: target<"planet">(),
+  isTriggeredOnly: true,
+  options: [
+    {
+      name: "Stabilize the lattice.",
+      key: "stabilize_lattice",
+      effects: (situation) => situation.addSituationProgress(-5),
+    },
+  ],
+});
+```
+
+`location: target<"planet">()` tells the event window to show the running
+situation's target. The generic is an author assertion here; it is not read
+from the situation type definition.
+
+`onMonthly.events` fires every listed event each month. `randomEvents` chooses
+from weighted rows instead. Omit `event` to make a no-event arm:
+
+```ts
+onMonthly: {
+  randomEvents: [
+    { weight: 8, event: setback },
+    { weight: 12, event: insight },
+    { weight: 80 },
+  ],
+},
+```
+
+Only situation and scopeless events belong in these lists. Pass owned event
+values instead of copied ids so event kind and build ownership remain checked.
+
+A situation does not start itself. The worked example attaches a hidden
+country event to `onActions.onGameStartCountry`; that event selects a planet,
+saves it as a typed event target, checks that the selection succeeded, and
+calls `startSituation`. In a real mod,
+the entry point can instead be a decision, another event, a special project,
+or any legal effect. Read [Events](/guides/events/) for event bodies and typed
+firing, and [On-actions](/guides/on-actions/) for lifecycle hooks and their
+`THIS`/`FROM` contracts.
+
+## Lifecycle callbacks and modifiers
+
+The top-level callbacks all run in situation scope:
+
+| Member               | When it runs                                             |
+| -------------------- | -------------------------------------------------------- |
+| `onStart`            | After the running situation is created.                  |
+| `onProgressComplete` | When progress reaches the completion edge.               |
+| `onFail`             | When a bidirectional situation reaches its failure edge. |
+| `onAbort`            | When `abortTrigger` causes the situation to abort.       |
+
+Use `abortTrigger` for a state that makes the situation invalid, and pair it
+with `onAbort` when cleanup is required. Use `potential` separately: it is a
+country-scoped gate for whether the situation type is available, not a
+replacement for an active instance's abort rule.
+
+Top-level `modifier` applies to the owning country. `targetModifier` applies
+to a planet target. The corresponding `triggeredModifier` arrays add
+situation-scoped conditions. Approaches and stages provide similar modifier
+slots for policy-specific and phase-specific effects. Prefer those declarative
+modifiers over monthly effects that repeatedly add and remove equivalent
+bonuses.
+
+## Localization and identity
+
+The logical name passed to `mod.situationType` mints the top-level id. With the
+default id profile, this call:
+
+```ts
+mod.situationType("crystal_bloom", definition);
+```
+
+mints `crystal_bloom_situation_type_crystal_bloom`. Its `name`, `typeName`, and
+`desc` text produce localization owned by that definition. Stage and approach
+`name` and `desc` values also produce localization under their record keys.
+
+Stage and approach keys are nested definition ids rather than logical names,
+so write the complete prefixed value. Keep the ids stable after release. A
+display-text edit should change localization, not the identity that save games,
+triggers, and effects refer to.
+
+## Current limitations and testing advice
+
+- The game rules permit conditional situation pictures, but the SDK currently
+  accepts only a list of fixed sprite references in `picture`.
+- Numeric RGBA stage colors are not represented by the current `color` type;
+  use a named color.
+- The SDK types individual fields but cannot prove every valid combination of
+  progress direction, stage mode, and completion behavior.
+- `targetScope` checks owned `startSituation` calls. Vanilla, third-party, and
+  raw situation ids do not carry that authored contract.
+- The simulation harness does not advance situation months, progress, stages,
+  completion, or `onMonthly`. Use it to test surrounding entry conditions and
+  event effects, then verify the running situation in Stellaris. See
+  [Testing your mod](/guides/testing-your-mod/).
+
+For a maintained situation, test at least the two progress edges, every stage
+transition, approach availability and cost, abort cleanup, missing or invalid
+targets, monthly no-event arms, and save/load while the situation is active.
+
+## Field reference
+
+The tables below are generated from the same descriptors and field metadata
+that drive situation authoring and serialization. Nested tables cover stages,
+approaches, monthly events, conditional text, modifiers, and resource blocks.
+
+<FieldTable registry="situation_type" />

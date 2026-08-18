@@ -86,7 +86,6 @@ export const UNDOCUMENTED_REGISTRIES: Readonly<Record<string, string>> = {
   technology: "SDK-201 — progression and economy",
   ascension_perk: "SDK-201 — progression and economy",
   building: "SDK-201 — progression and economy",
-  job: "SDK-201 — progression and economy",
   economic_category: "SDK-201 — progression and economy",
   static_modifier: "SDK-201 — progression and economy",
   scripted_modifier: "SDK-201 — progression and economy",
@@ -107,7 +106,6 @@ export const UNDOCUMENTED_REGISTRIES: Readonly<Record<string, string>> = {
   spriteType: "SDK-205 — GFX registries",
   pdxmesh: "SDK-205 — GFX registries",
   pdxparticle: "SDK-205 — GFX registries",
-  situation_type: "SDK-206 — situations",
   tradition: "SDK-207 — traditions and tradition categories",
   tradition_category: "SDK-207 — traditions and tradition categories",
   ship_size: "SDK-208 — the ship stack",
@@ -121,7 +119,6 @@ export const UNDOCUMENTED_REGISTRIES: Readonly<Record<string, string>> = {
   country_ship_of_size_limit: "SDK-208 — the ship stack",
   solar_system_initializer: "SDK-209 — solar system initializers",
   megastructure: "SDK-210 — megastructures",
-  archaeological_site_type: "SDK-211 — archaeological sites",
   event_chain: "SDK-212 — event chains and special projects",
   special_project: "SDK-212 — event chains and special projects",
 };
