@@ -10,6 +10,7 @@
  * ledger fails `astro build` on the first page that carries a field table.
  */
 import { buildFieldTable } from "../field-table.ts";
+import { renderInlineMarkdown } from "../inline-markdown.ts";
 import FieldRows from "./FieldRows.astro";
 import LocalisationSlots from "./LocalisationSlots.astro";
 
@@ -20,6 +21,12 @@ interface Props {
 
 const { registry } = Astro.props;
 const model = buildFieldTable(registry);
+const omissions = await Promise.all(
+  model.omissions.map(async (row) => ({
+    ...row,
+    reasonHtml: await renderInlineMarkdown(row.reason),
+  })),
+);
 
 const anchor = (id: string): string => `fields-${id.replaceAll(/[^a-zA-Z0-9_-]/g, "-")}`;
 
@@ -66,7 +73,7 @@ const OMISSION_LABELS = {
 }
 
 {
-  model.omissions.length > 0 && (
+  omissions.length > 0 && (
     <>
       <h3 id={anchor(`${registry}-not-authorable`)}>Fields the SDK does not author</h3>
       <p>
@@ -75,9 +82,10 @@ const OMISSION_LABELS = {
         is a bug; please report it.
       </p>
       <ul>
-        {model.omissions.map((row) => (
+        {omissions.map((row) => (
           <li>
-            <code>{row.path}</code> — <em>{OMISSION_LABELS[row.kind]}</em>: {row.reason}
+            <code>{row.path}</code> — <em>{OMISSION_LABELS[row.kind]}</em>: {" "}
+            <Fragment set:html={row.reasonHtml} />
           </li>
         ))}
       </ul>
