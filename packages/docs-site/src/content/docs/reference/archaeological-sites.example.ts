@@ -10,6 +10,7 @@ import {
   leaderClass,
   not,
   onActions,
+  vanilla,
 } from "@pdx-ts/sdk";
 import { defaultSiteVisibleTrigger } from "@pdx-ts/stellaris-ids/triggers";
 
@@ -25,7 +26,7 @@ const sealedDoor = events.fleet(1, {
   from: "archaeological_site",
   title: "The Sealed Door",
   desc: "The excavation has reached a door with no visible controls.",
-  picture: "GFX_evt_archaeological_site",
+  picture: vanilla.spriteType("GFX_evt_archaeological_dig"),
   location: (ctx) => ctx.from,
   archaeology: true,
   isTriggeredOnly: true,
@@ -46,7 +47,7 @@ const memoryVault = events.fleet(2, {
   from: "archaeological_site",
   title: "The Memory Vault",
   desc: "Rows of crystal lattices still hold fragments of their makers' memories.",
-  picture: "GFX_evt_archaeological_site",
+  picture: vanilla.spriteType("GFX_evt_archaeological_dig"),
   location: (ctx) => ctx.from,
   archaeology: true,
   isTriggeredOnly: true,
@@ -67,7 +68,7 @@ const lastCustodian = events.fleet(3, {
   from: "archaeological_site",
   title: "The Last Custodian",
   desc: "One machine remains awake beneath the archive and offers us its final catalogue.",
-  picture: "GFX_evt_archaeological_site",
+  picture: vanilla.spriteType("GFX_evt_archaeological_dig"),
   location: (ctx) => ctx.from,
   archaeology: true,
   isTriggeredOnly: true,
@@ -87,7 +88,7 @@ const lastCustodian = events.fleet(3, {
 const silentArchive = mod.archaeologicalSiteType("silent_archive", {
   name: "The Silent Archive",
   desc: "An underground complex is transmitting a faint archival beacon.",
-  picture: "GFX_archaeological_site_generic",
+  picture: vanilla.spriteType("GFX_evt_habitable_dig_site"),
   maxInstances: 1,
   weight: 0,
   stages: 3,

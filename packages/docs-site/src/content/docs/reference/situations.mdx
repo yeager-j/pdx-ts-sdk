@@ -89,14 +89,14 @@ stages: {
   [investigation]: {
     name: "Investigation",
     end: 40,
-    icon: "GFX_situation_stage_investigation",
-    iconBackground: "GFX_situation_stage_bg",
+    icon: "GFX_situation_stage_1",
+    iconBackground: "GFX_situation_stage_frame_blue",
   },
   [containment]: {
     name: "Containment",
     end: { base: 100, modifiers: [{ factor: 1.25, when: difficultTarget }] },
-    icon: "GFX_situation_stage_containment",
-    iconBackground: "GFX_situation_stage_bg",
+    icon: "GFX_situation_stage_2",
+    iconBackground: "GFX_situation_stage_frame_blue",
   },
 },
 ```
@@ -158,8 +158,8 @@ stages: {
     name: "Germination",
     desc: "Thin crystal roots spread below the surface.",
     sectionWeight: 30,
-    icon: "GFX_situation_stage_germination",
-    iconBackground: "GFX_situation_stage_bg",
+    icon: "GFX_situation_stage_1",
+    iconBackground: "GFX_situation_stage_frame_blue",
     onFirstEnter: (situation) => {
       situation.setSituationFlag("crystal_bloom_germinated");
     },
@@ -202,7 +202,7 @@ The worked example keeps **Intervene** visible but locks it until the
 ```ts
 [intervene]: {
   name: "Intervene",
-  icon: "GFX_situation_approach_intervene",
+  icon: "GFX_situation_approach_genetics",
   iconBackground: "GFX_situation_approach_bg_red",
   allow: currentStage(flowering),
   onSelect: (situation) => situation.addSituationProgress(5),
