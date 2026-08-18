@@ -1,0 +1,165 @@
+---
+title: Ship-of-Size Limits
+description: Define country capacity pools for ship sizes and contribute those policies to the game's shared ownership-limit sink.
+registries: [country_ship_of_size_limit]
+---
+
+import { Aside } from "@astrojs/starlight/components";
+
+import FieldTable from "../../../components/FieldTable.astro";
+import PairedExample from "../../../components/PairedExample.astro";
+
+A **country ship-of-size limit** defines one shared capacity pool for one or
+more ship sizes. Its formula combines a base capacity, an optional maximum,
+and a fraction of the country's current naval capacity. A separate
+`mod.addShipOfSizeLimits` contribution applies the policy to the game's shared
+ownership-limit list.
+
+The definition writes under `common/country_limits/ship_of_size_limits/`.
+The contribution writes a second file under
+`common/country_limits/ownership_limits/`.
+
+## Definition and application are two separate items
+
+This example defines a Dreadnought hull, defines its capacity policy, and adds
+that policy to the shared sink:
+
+<PairedExample name="ship-size-limits" />
+
+The important sequence is:
+
+```ts
+const limit = mod.countryShipOfSizeLimit("dreadnoughts", {
+  shipTypes: [dreadnought],
+  base: 80,
+  max: 800,
+  navalCapFraction: 0.1,
+  show: isScopeValid(),
+});
+
+const applyLimit = mod.addShipOfSizeLimits([limit]);
+```
+
+`countryShipOfSizeLimit` is an owned definition with a prefixed id.
+`addShipOfSizeLimits` is a contribution with no id of its own. Put both items
+in the compiled Features. If the definition is present but the contribution
+is omitted, the SDK still emits the definition file but no shared ownership
+file applies it.
+
+The example keeps the hull small to isolate this capacity seam. Before the
+Dreadnought can be used in a game, complete its sections, components, graphics,
+and design or scripted creation path as described in [Ships](/concepts/ships/).
+
+## The pool is shared across every listed size
+
+`shipTypes` is one list, not one independent limit per entry. All listed hulls
+consume the same calculated capacity. Use one definition when variants should
+compete for one pool, as vanilla titan variants do. Use separate definitions
+when the capacities must remain independent.
+
+Pass owned ship-size items where possible. Checked vanilla refs are available
+through `vanilla.shipSize(...)`; a raw string is the escape hatch for a hull
+owned by another mod.
+
+The SDK checks an owned prefixed reference against the compiled content. It
+cannot prove that a third-party string exists at game load time.
+
+## Capacity uses a formula, not a fixed ship count
+
+The game's rule comment defines the pool as:
+
+```text
+capacity = min(max, base + navalCapFraction × current naval capacity)
+```
+
+`max` is optional. `base`, `max`, and `navalCapFraction` accept script values,
+so a maintained policy can derive them from modifiers instead of hard-coded
+numbers.
+
+Vanilla's comments scale several values to the target hull's
+`size_multiplier`; for example, its titan base is one titan-sized capacity
+unit rather than the literal number `1`. Start from the complete vanilla limit
+whose hull accounting matches yours, then verify the top-bar capacity and
+construction behavior in game.
+
+<Aside type="caution" title="Do not assume base is a ship count">
+  A value such as `80` can represent enough capacity for one hull whose game accounting is `80`.
+  Copying the visible number without the ship-size relationship can allow far too many or no useful
+  ships.
+</Aside>
+
+## `show` controls the tooltip condition
+
+`show` is a required country-scoped trigger. It controls whether the
+ship-capacity tooltip appears on the top bar; it is not the pool formula and
+does not unlock the hull.
+
+Vanilla limits commonly combine `is_scope_valid` with a technology, origin,
+country type, or global-state condition. Match the visibility rule to the game
+path that introduces the limited hull. A hidden tooltip can make a working
+limit look broken to the player.
+
+For federation or Galactic Community designs, the installed game comments
+describe different `FROM` context. The SDK exposes the direct country-scoped
+trigger contract; verify federation and community cases in the exact design
+path you use.
+
+## Contributions aggregate and deduplicate
+
+Repeated `mod.addShipOfSizeLimits` calls accumulate into one shared file. The
+Fold resolves each owned or external id, sorts the final set, and collapses
+duplicates. It emits the engine-owned structure:
+
+```txt
+default = {
+  ship_of_size_limits = { your_limit another_mod_limit }
+}
+```
+
+This is additive shared output, not an override of `default`. The contribution
+uses the mod prefix for its file path but does not mint a new wrapper id.
+
+If no contribution is present, no ownership-limit file is emitted. This keeps
+an unused definition from silently applying itself.
+
+## Do not combine this with global-design hulls by default
+
+Vanilla's own file says not to use ship-of-size limits for ship sizes that can
+be used by global designs. The [global-design](/reference/global-ship-designs/)
+selection and ownership paths have different assumptions.
+
+Treat that warning as a system boundary. Do not limit the Aegis worked
+example's hull merely because the API accepts the reference. If a special
+gameplay design needs a cap, first find a current vanilla design with the same
+creation and ownership path, then verify the behavior live.
+
+## Current limits and testing advice
+
+- Country ship-of-size limits have no patch surface.
+  `mod.patchCountryShipOfSizeLimit` does not exist.
+- `mod.addShipOfSizeLimits` adds ids to the shared sink; it does not alter a
+  limit's formula or ship list.
+- The SDK does not simulate capacity consumption, top-bar UI, naval-capacity
+  changes, federation/community context, construction rejection, ownership
+  transfer, or design-specific exceptions.
+
+Test the base capacity, maximum, naval-capacity scaling, every grouped hull,
+the `show` trigger, zero and very high naval capacity, technology and origin
+changes, capture and transfer, federation and community paths where relevant,
+ship destruction, reinforcement, save/load, and removal of the mod.
+
+## API and vanilla references
+
+- [`CountryShipOfSizeLimitDef`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/country-ship-of-size-limit.ts)
+  is the generated definition used by `mod.countryShipOfSizeLimit`.
+- [`mod.addShipOfSizeLimits`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/content-capability.ts)
+  contributes limit ids to the shared ownership sink.
+- [`vanilla.countryShipOfSizeLimit`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
+  provides checked references to vanilla limit ids.
+
+## Field reference
+
+The table covers the policy definition. The additive contribution has no
+definition fields and is documented above.
+
+<FieldTable registry="country_ship_of_size_limit" />

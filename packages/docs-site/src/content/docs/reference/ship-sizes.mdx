@@ -1,0 +1,197 @@
+---
+title: Ship Sizes
+description: Define hull behavior, section mounts, required equipment families, graphics, construction, and AI fleet policy.
+registries: [ship_size]
+---
+
+import { Aside } from "@astrojs/starlight/components";
+
+import FieldTable from "../../../components/FieldTable.astro";
+
+A **ship size** is the hull-level definition for a class of ship or space
+object. It owns movement and durability, designer visibility, construction
+policy, section mounts, required component families, strategic-map display,
+and many specialized rules for stations, fauna, bioships, and arkships. The
+SDK writes ship sizes under `common/ship_sizes/`.
+
+Start with the [Ships overview](/concepts/ships/) for the complete
+size → sections → components → design example. Its Aegis hull is passed as a
+typed value to three section templates and one global design.
+
+## A hull is the root of the assembly graph
+
+The most important connections are:
+
+| Ship-size member                  | Connects to                                                   |
+| --------------------------------- | ------------------------------------------------------------- |
+| `sectionSlots`                    | Named mounts on the core model and matching section templates |
+| `requiredComponentSet`            | Component sets that every design of this size must fill       |
+| `entity`                          | The base model entity used for the hull skeleton              |
+| `class`                           | The engine's broad ship class, such as military or starbase   |
+| `prerequisites`                   | Technologies that unlock the size                             |
+| `defaultBehavior` and `shipRoles` | Combat behavior and designer role policy                      |
+
+`mod.shipSize("aegis", def)` mints a prefixed ship-size id. Pass the returned
+item to `sectionTemplate.shipSize`, `globalShipDesign.shipSize`,
+`starbaseLevel.shipSize`, or `countryShipOfSizeLimit.shipTypes` instead of
+copying its id.
+
+## Section slots join script and models
+
+`sectionSlots` is a record keyed by engine slot names:
+
+```ts
+sectionSlots: {
+  bow: { locator: ["part1"] },
+  mid: { locator: ["part2"] },
+  stern: { locator: ["part3"] },
+},
+```
+
+The record keys are not content ids and remain unprefixed. Each locator must
+exist on the hull's core entity. A compatible section repeats the key in
+`fitsOnSlot`, and a fixed design repeats it in `section[].slot`.
+
+A slot can list more than one locator. That is a model attachment list, not a
+list of interchangeable section ids. Preserve its order and verify every
+attachment in the live model.
+
+<Aside type="caution" title="Types cannot inspect model skeletons">
+  `part1` and related locator names are strings because they belong to the selected asset. The SDK
+  can preserve the map and check its shape, but only Stellaris can prove that the entity contains
+  those locators and that the attached sections render correctly.
+</Aside>
+
+## Required component sets are obligations
+
+`requiredComponentSet` lists component families that a design must supply in
+addition to its section equipment. Vanilla military hulls commonly require
+power, FTL, thruster, sensor, and combat-computer sets. A global design fills
+them through `requiredComponent`.
+
+Only component sets declared with `requiredComponentSet: true` belong here.
+The current generic `mod.componentSet` return type does not preserve that
+subtype, so use the owned item's `.id` when connecting a newly declared
+required set:
+
+```ts
+const reactorSet = mod.componentSet("reactor", {
+  requiredComponentSet: true,
+  isCoreComponentSet: true,
+  icon: "GFX_ship_part_reactor_1",
+});
+
+const hull = mod.shipSize("aegis", {
+  class: "shipclass_military",
+  requiredComponentSet: [reactorSet.id],
+});
+```
+
+The component set does not supply the component by itself. Define at least one
+compatible utility component in that set, and make a default or fixed choice
+available for every design path that uses the hull.
+
+## Choose the authoring path deliberately
+
+Several switches answer different questions:
+
+- `isDesignable` controls whether players can edit the hull in the ship
+  designer.
+- `enableDefaultDesign` lets countries receive an engine-generated starting
+  design for the size.
+- `isListed` controls list visibility; it is not a substitute for a fixed
+  design or scripted spawn path.
+- `isCivilian`, `isSpaceStation`, `isSpaceObject`, and `class` describe the
+  hull's engine category and behavior.
+- `constructionType`, `potentialConstruction`, and `possibleConstruction`
+  govern construction routes and conditions.
+
+For an ordinary player-designed military class, combine designer visibility,
+technologies, valid sections, required component families, and a supported
+construction type. For a special event ship, a hidden non-designable hull plus
+a [global ship design](/reference/global-ship-designs/) is usually clearer.
+The Aegis worked example uses the second path.
+
+Do not assume `globalShipDesign` unlocks a designable hull. Fixed global
+designs and ship-designer availability are separate systems.
+
+## Graphics use the hull id and graphical culture
+
+By convention, Stellaris first looks for a culture-prefixed core entity such
+as `mammalian_01_corvette_entity`, then can fall back to an unprefixed entity.
+`entity` can reuse another hull's base entity, as vanilla's frigate reuses
+`corvette_entity`.
+
+`graphicalCulture` narrows or disables the normal graphical-culture selection
+for special sizes. It does not create a graphical culture or any assets. See
+the [Ships overview](/concepts/ships/) for the second graphics seam: each
+section has its own entity, attached to the locators declared here.
+
+When adding original art, verify:
+
+- the core entity naming for every supported graphical culture;
+- all section attachment locators;
+- target locators used during combat;
+- map, role, class, and browser sprites;
+- scaling, collision radius, and selection behavior.
+
+## Movement, durability, cost, and fleet accounting are separate
+
+Fields such as `maxSpeed`, `acceleration`, `rotationSpeed`, `maxHitpoints`,
+`collisionRadius`, and `combatDisengageChance` define hull behavior. Other
+numbers serve different systems:
+
+- `sizeMultiplier` affects the physical and combat scale used by several game
+  systems.
+- `fleetSlotSize` is fleet command usage.
+- `baseBuildtime` and `resources` define construction time, cost, upkeep, and
+  logistics.
+- `minUpgradeCost` sets lower bounds per resource.
+- `formationPriority` controls position in fleet formation.
+- `starbaseCapacityUsed` belongs to the starbase-level definition, not here.
+
+Do not copy a vanilla number without also copying the system it belongs to.
+A ship can be visually large, occupy little fleet command, and consume a
+different amount in a country ship-limit formula.
+
+## AI roles and specialized hull families
+
+`shipRoles` supplies broad designer roles. `triggeredShipRoles` adds roles
+under scope-agnostic conditions, while `defaultBehavior` chooses the combat
+behavior and `aiShipData` controls fleet composition targets.
+
+The same registry also holds specialized branches for space fauna, bioships,
+arkships, colony carriers, constructors, and hero ships. Fields such as
+`spaceFaunaValues`, `mutationComponentsSize`, `growthStageDescriptor`,
+`bioshipGrowthProgressRequired`, `encampmentRequiredProgress`, and `heroShip`
+belong to those engine systems. Use their complete vanilla family as the
+reference; setting one marker does not construct the rest of that lifecycle.
+
+## Current limits and testing advice
+
+- Ship sizes have no patch surface. `mod.patchShipSize` does not exist.
+- The SDK cannot prove that a component exists for every required component
+  set or that every compatible section fills every hull mount.
+- `selectable`, country/planet/construction triggers, and AI weights are typed,
+  but their combined selection policy requires live-game testing.
+- A new hull id can require component `potential` or `sizeRestriction` updates
+  before existing equipment accepts it.
+
+Test designer visibility, unlock timing, every section combination, required
+component defaults, construction, fleet command, movement, combat, upgrades,
+AI selection, graphical cultures, and save/load.
+
+## API and vanilla references
+
+- [`ShipSizeDef`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/ship-size.ts)
+  is the generated definition used by `mod.shipSize`.
+- [`vanilla.shipSize`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
+  provides checked references to ship-size ids from the selected
+  `@pdx-ts/stellaris-ids` version.
+
+## Field reference
+
+The generated table includes the general hull fields and the nested structures
+for section slots, AI fleet data, map icons, fauna values, and hero ships.
+
+<FieldTable registry="ship_size" />

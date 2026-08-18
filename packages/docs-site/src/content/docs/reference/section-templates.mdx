@@ -1,0 +1,154 @@
+---
+title: Section Templates
+description: Fit model sections to hull mounts and declare their weapon, strike-craft, utility, cost, and modifier seams.
+registries: [section_template]
+---
+
+import { Aside } from "@astrojs/starlight/components";
+
+import FieldTable from "../../../components/FieldTable.astro";
+
+A **section template** is one attachable part of a ship. It declares which
+ship sizes accept it, which hull slot it fits, the section model entity, its
+named weapon or strike-craft positions, and its utility-slot counts. The SDK
+writes section templates under `common/section_templates/`.
+
+The [Ships overview](/concepts/ships/) defines bow, mid, and stern sections
+for one complete Aegis design and shows the emitted files.
+
+## A section joins three name systems
+
+One section must make three independent sets of names agree:
+
+| Connection         | Section member         | Other owner                                   |
+| ------------------ | ---------------------- | --------------------------------------------- |
+| Compatible hull    | `shipSize`             | `mod.shipSize` definition                     |
+| Hull attachment    | `fitsOnSlot`           | Key in `shipSize.sectionSlots`                |
+| Equipment position | `componentSlot[].name` | `globalShipDesign.section[].component[].slot` |
+
+Use owned ship-size items in `shipSize`. The section's own id is minted by
+`mod.sectionTemplate`; the slot names are engine keys and stay unprefixed.
+
+```ts
+const mid = mod.sectionTemplate("aegis_mid", {
+  shipSize: [hull],
+  fitsOnSlot: ["mid"],
+  entity: "cruiser_mid_S2HB_entity",
+});
+```
+
+`compatibleWithAllShipSizes: true` bypasses the explicit compatibility list.
+Reserve it for a section whose model, slot name, utility layout, and gameplay
+rules really work across every target hull. An explicit `shipSize` list is
+safer for ordinary sections.
+
+## Component slots describe sockets, not equipment
+
+Each `componentSlot` row declares one named hardpoint:
+
+```ts
+componentSlot: [{
+  name: "STRIKE_CRAFT_01",
+  template: "large_strike_craft",
+  locatorname: "strike_craft_locator_01",
+  rotation: 90,
+}],
+```
+
+- `name` is the slot key a fixed design fills.
+- `template` is a component-slot-template id such as `small_turret`,
+  `medium_turret`, `point_defence_turret`, or `large_strike_craft`.
+- `locatorname` is a locator on the section model.
+- `rotation`, `position`, `isSideSlot`, and `sectionInstance` adjust specialized
+  placement.
+
+The `template` here is not a component set and not a weapon component. It
+defines which equipment shape the slot accepts. The actual component is chosen
+by the ship designer or by a global design.
+
+<Aside type="caution" title="Use current section syntax">
+  The installed `common/HOW_TO_MAKE_NEW_SHIPS.txt` still illustrates the old
+  `slot_size` and `slot_type` members. Current vanilla sections and the SDK use
+  `template = <component-slot-template>`. Copy the current definition, not the old sample syntax.
+</Aside>
+
+## Utility slots are counts
+
+Utility positions use four numeric fields rather than `componentSlot` rows:
+
+- `smallUtilitySlots`
+- `mediumUtilitySlots`
+- `largeUtilitySlots`
+- `auxUtilitySlots`
+
+Stellaris derives names such as `MEDIUM_UTILITY_1` from those counts. A global
+design can fill those names through its section `component` rows. Required
+components such as reactors and sensors remain separate and belong in
+`globalShipDesign.requiredComponent`.
+
+Do not add utility counts to compensate for a missing required component set.
+One controls ordinary section equipment; the other controls mandatory
+hull-level equipment.
+
+## The entity and locators are one graphics contract
+
+The section entity is attached to the locator chosen by the matching hull
+slot. Equipment entities are then attached to the locators declared by
+`componentSlot`.
+
+For culture-aware ship art, Stellaris normally prefixes the section entity
+with the current graphical culture. The base `cruiser_mid_S2HB_entity` can
+therefore select a culture-specific entity such as
+`mammalian_01_cruiser_mid_S2HB_entity`.
+
+The SDK accepts model-entity and locator references but cannot inspect the
+asset graph. Verify that:
+
+1. the hull entity contains the section attachment locator;
+2. the section entity exists for each graphical culture;
+3. every equipment locator exists on that entity; and
+4. turret and strike-craft art uses the locators expected by its component.
+
+## Cost, availability, and AI selection belong to the section
+
+`resources` can add section construction cost or upkeep. `prerequisites`
+unlocks the section with technologies. `aiTags` and `aiWeight` control how the
+designer or AI classifies and selects it.
+
+Keep these rules aligned with the equipment layout. A carrier section should
+have carrier-oriented tags and a weight policy that does not select it before
+usable strike craft exist. A torpedo section should gate the technology and
+role that make its hardpoints meaningful.
+
+`modifier` and `shipModifier` both record ship-scoped modifier blocks because
+the rules admit both PDXScript keys. Follow the vanilla definition you are
+modeling; do not assume the duplicate-looking names are interchangeable.
+
+## Current limits and testing advice
+
+- Section templates have no patch surface. `mod.patchSectionTemplate` does not
+  exist.
+- The SDK checks reference types and serialization, but not slot completeness,
+  model locators, component compatibility, or visual overlap.
+- `icon` is present in vanilla section definitions, but the upstream rules
+  note that it may be unused. Do not rely on it without a live UI witness.
+- Section order in a global design does not repair a wrong `slot`; use the
+  explicit hull mount name.
+
+Test every hull and graphical culture, the 3D ship viewer, automatic and manual
+designs, AI section selection, construction cost, component placement, firing
+origins, damage states, and save/load.
+
+## API and vanilla references
+
+- [`SectionTemplateDef`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/section-template.ts)
+  is the generated definition used by `mod.sectionTemplate`.
+- [`vanilla.sectionTemplate`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
+  provides checked references to vanilla section-template ids.
+
+## Field reference
+
+The nested table covers component-slot position and placement data in addition
+to the section's compatibility, resources, AI, utility, and modifier fields.
+
+<FieldTable registry="section_template" />
