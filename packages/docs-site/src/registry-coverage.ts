@@ -120,7 +120,6 @@ export const UNDOCUMENTED_REGISTRIES: Readonly<Record<string, string>> = {
   country_ship_of_size_limit: "SDK-208 — the ship stack",
   solar_system_initializer: "SDK-209 — solar system initializers",
   megastructure: "SDK-210 — megastructures",
-  archaeological_site_type: "SDK-211 — archaeological sites",
   event_chain: "SDK-212 — event chains and special projects",
   special_project: "SDK-212 — event chains and special projects",
 };

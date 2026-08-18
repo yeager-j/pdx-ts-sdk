@@ -1,0 +1,287 @@
+---
+title: Archaeological Sites
+description: Build ordered dig chapters, connect their fleet events, control excavation, and place sites in the galaxy.
+registries: [archaeological_site_type]
+sidebar:
+  order: 3
+---
+
+import { Aside } from "@astrojs/starlight/components";
+
+import FieldTable from "../../../components/FieldTable.astro";
+import PairedExample from "../../../components/PairedExample.astro";
+
+An **archaeological site type** defines a dig site that a science ship can
+excavate one chapter at a time. It supplies the site name and description,
+controls who can see and excavate it, lists the ordered chapter events, and
+handles failed excavation rolls. The SDK writes these definitions under
+`common/archaeological_site_types/`.
+
+The site type is only one part of the story. Each completed chapter fires a
+fleet event, and some other effect must first place the site on a planet or
+another supported game object. This complete example connects all three
+parts: a directly placed site, three chapters, and three archaeology events.
+
+<PairedExample name="archaeological-sites" />
+
+The example uses `weight: 0` because it places this story site by name. It also
+grants one clue after every failed roll to keep the sample's failure policy
+small and visible. A production site can use a richer score-based policy.
+
+## A dig site has three connected layers
+
+| Layer                    | Responsibility                                                                    |
+| ------------------------ | --------------------------------------------------------------------------------- |
+| Archaeological site type | Declares display fields, excavation gates, ordered stages, and lifecycle effects. |
+| Fleet events             | Present each completed chapter and apply its rewards or consequences.             |
+| Placement effect         | Chooses the object that owns the site and creates either a named or random type.  |
+
+`mod.archaeologicalSiteType` returns a typed site reference. Pass that value to
+`createArchaeologicalSite` and place it in the same compiled Feature as every
+owned chapter event it references. The Fold then rejects a missing owned site
+or event instead of leaving a copied id for Stellaris to fail at runtime.
+
+## Chapters are ordered stages
+
+Set `stages` to the exact number of `stage` entries. Stellaris treats the
+array order as chapter order:
+
+```ts
+stages: 3,
+stage: [
+  { difficulty: 2, icon: "GFX_archaeology_runes_A1", event: sealedDoor },
+  {
+    difficulty: { min: 3, max: 4 },
+    icon: "GFX_archaeology_runes_A2",
+    event: memoryVault,
+  },
+  { difficulty: 5, icon: "GFX_archaeology_runes_A3", event: lastCustodian },
+],
+```
+
+Each entry has three jobs:
+
+- `difficulty` sets the chapter's excavation difficulty. A number is fixed;
+  `{ min, max }` lets the game choose a value in that interval.
+- `icon` is the rune sprite shown for that chapter.
+- `event` is the fleet event fired when the chapter completes.
+
+The SDK checks that `event` is a fleet-event reference, but it does not compare
+the numeric `stages` field with the array length. Keep them together and change
+them in one edit.
+
+<Aside type="caution" title="Do not model chapters as separate site types">
+  One site type owns the ordered chapter list. Use a second site type only when the story must move
+  to another object or become a separately discovered dig site. In that case, the final chapter
+  event can place the next named site.
+</Aside>
+
+## Every chapter points to an archaeology fleet event
+
+A stage event runs in fleet scope because the excavating science ship receives
+it. Declare the site as its `FROM`, mark it as an archaeology event, and use
+that `FROM` for the window location:
+
+```ts
+const sealedDoor = events.fleet(1, {
+  from: "archaeological_site",
+  title: "The Sealed Door",
+  desc: "The excavation has reached a door with no visible controls.",
+  location: (ctx) => ctx.from,
+  archaeology: true,
+  isTriggeredOnly: true,
+  options: [
+    {
+      name: "Cut through the seal.",
+      key: "cut_the_seal",
+      effects: (fleet) => {
+        fleet.owner.effects((country) => {
+          country.addResource({ resource: "engineering_research", amount: 250 });
+        });
+      },
+    },
+  ],
+});
+```
+
+The stage completes before this event opens. Use the event for the chapter's
+text, choices, rewards, flags, and follow-up event calls. `fleet.owner` opens
+the excavating empire when a reward belongs to the country; `ctx.from` opens
+the archaeological site when an option must change the dig itself.
+
+Keep `isTriggeredOnly: true`. The stage owns the entry point, so the event does
+not need a mean-time-to-happen trigger. See [Events](/guides/events/) for event
+options, typed firing, and `FROM` contracts.
+
+## Failed rolls are a separate path
+
+`onRollFailed` runs in fleet scope with the archaeological site as `FROM`.
+The worked example gives the current stage one clue:
+
+```ts
+onRollFailed: (_fleet, ctx) => {
+  ctx.from.effects((site) => {
+    site.addStageClues(1);
+  });
+},
+```
+
+This callback does not replace a chapter event. It runs when an excavation
+roll fails; the stage event runs only when the chapter finishes.
+
+Vanilla's common failure policy is more involved. It branches on the roll
+score, grants zero, one, or two clues, awards scientist experience, and can
+select a random archaeology incident. Reproduce that policy deliberately if
+your site needs it. A fixed clue, a custom setback, or no progress can also be
+valid, but each choice changes the expected length of the dig.
+
+## Separate visibility from excavation permission
+
+The three trigger fields answer different questions:
+
+| Field       | Runtime scope                   | Meaning                                          |
+| ----------- | ------------------------------- | ------------------------------------------------ |
+| `visible`   | `THIS = country`, `FROM = site` | Can this country see the site?                   |
+| `potential` | `THIS = fleet`, `FROM = site`   | Does the excavation action exist for this fleet? |
+| `allow`     | `THIS = fleet`, `FROM = site`   | If the action exists, is it enabled now?         |
+
+Omitting `potential` leaves the excavation action present. `allow` and
+`visible` are required, so even a broadly accessible site must state its
+policy. The example uses vanilla's standard rules: the fleet needs a scientist
+leader, and a normal country sees the site when it has enough system intel or
+the site planet lies within its borders.
+
+```ts
+allow: (ctx) => and(
+  exists(leader(ctx.self)),
+  leader(leaderClass("scientist")),
+),
+visible: defaultSiteVisibleTrigger(),
+```
+
+`defaultSiteVisibleTrigger` is a checked, version-pinned vanilla scripted
+trigger from `@pdx-ts/stellaris-ids/triggers`.
+
+In a maintained mod, use `visible` for discovery, borders, intel, or a
+story flag. Use `potential` for a fleet that should never receive the action,
+and `allow` for a temporary requirement that the UI should show as disabled.
+Vanilla's common visibility trigger shows a site to a normal country when it
+has sufficient system intel or the site planet lies within its borders;
+creation alone does not guarantee immediate visibility.
+
+The closure form exposes `FROM` when the rule depends on site state:
+
+```ts
+allow: (ctx) => and(
+  scientistIsReady,
+  ctx.from.trigger(siteIsUnlocked),
+),
+```
+
+The two placeholder triggers above stand for your own fleet- and site-scoped
+conditions. A plain trigger is clearer when the rule never reads `FROM`.
+
+## Place a named site from an effect
+
+A site definition does not place itself. Call `createArchaeologicalSite` from
+the planet, system, or other supported object that should own the site:
+
+```ts
+country.randomOwnedPlanet({ limit: not(archaeologicalSite(always())) }, (planet) => {
+  planet.preventAnomaly();
+  planet.createArchaeologicalSite(silentArchive);
+});
+```
+
+The example first excludes planets that already link to an archaeological
+site. Vanilla named-placement call sites also guard occupancy and often call
+`prevent_anomaly` or clear a conflicting deposit before creation. The engine's
+behavior for creating a named site on an occupied object is not documented, so
+do not use the creation effect as the occupancy check.
+
+The caller chooses the location. Common entry points include an anomaly or
+event option, a solar-system initializer's `init_effect`, a survey on-action,
+or the final event of another dig. If location selection can fail, set story
+flags and consume one-time state only after you have selected a valid target.
+
+`maxInstances` does not protect direct named placement. It is checked only for
+random site creation, so a one-off story chain must enforce its own uniqueness.
+
+## Random creation is a selection policy
+
+Pass the literal `"random"` when the game should select a site type:
+
+```ts
+planet.createArchaeologicalSite("random");
+```
+
+For this path, each candidate's `weight` is evaluated against the current
+planet and `maxInstances` limits how many copies random selection may create.
+A weight block can gate or favor planet classes, DLC state, flags, and other
+planet-scoped conditions. Random does not mean that every type is equally
+likely.
+
+Use `weight: 0` for a story site that should be created only by name. Many
+vanilla chains do this. Use a positive fixed or conditional weight only when
+the type belongs in a random pool.
+
+<Aside type="caution" title="Random creation does not choose the location">
+  The calling effect has already selected the planet or other object. The random operation chooses a
+  site type for that object. Survey events and scripted placement effects are responsible for
+  finding a legal location before they call it.
+</Aside>
+
+## Descriptions and lifecycle effects
+
+Use `desc` for one localized description. The SDK emits both the localization
+entry and the raw `desc = <generated key>` pointer that the game reads. Do not
+set `desc` and `conditionalDesc` together.
+
+Use `conditionalDesc` when the displayed text changes by site-scoped
+conditions. Its string form is an existing localization key; its array form is
+an ordered list of `{ trigger, text }` clauses. The first matching clause is
+used, so put specific conditions before a fallback.
+
+The remaining lifecycle effects run at different scopes:
+
+- `onCreate` runs on the archaeological site when creation succeeds.
+- `onVisible` runs on each country when the site becomes visible, with the
+  site as `FROM`.
+- `onRollFailed` runs on the excavating fleet, with the site as `FROM`.
+
+Use `onCreate` for site-local setup, `onVisible` for a discovery notification
+or country state, and `onRollFailed` for excavation consequences. Do not put
+chapter rewards in these hooks when the stage event is the actual owner.
+
+## What to verify in Stellaris
+
+The SDK verifies references, field types, scopes, emitted files, and
+localization. It does not simulate the excavation system. Test at least:
+
+- every chapter event, option, reward, and `FROM` use;
+- fixed and interval difficulty values at several scientist skill levels;
+- failed rolls and any clue or random-incident branches;
+- visibility before and after the intended discovery condition;
+- `potential` and `allow` with both legal and illegal fleets;
+- placement when no eligible location exists and when a site is already there;
+- random weight, planet-class gates, and instance limits, if used;
+- save and load during each chapter and after the final event.
+
+See [Testing your mod](/guides/testing-your-mod/) for the SDK's simulation
+boundary and the checks that still require the live game.
+
+## API and vanilla references
+
+- [`ArchaeologicalSiteTypeDef`](https://github.com/pdx-ts/pdx-sdk/blob/main/packages/sdk/src/generated/archaeological-site-type.ts)
+  is the generated TypeScript definition used by `mod.archaeologicalSiteType`.
+- [`vanilla.archaeologicalSiteType`](https://github.com/pdx-ts/pdx-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
+  provides checked references to the archaeological site ids in the selected
+  `@pdx-ts/stellaris-ids` game version.
+
+## Field reference
+
+The tables below are generated from the same descriptors and field metadata
+that drive archaeological-site authoring and serialization. Nested tables
+cover chapter stages, difficulty intervals, and conditional descriptions.
+
+<FieldTable registry="archaeological_site_type" />
