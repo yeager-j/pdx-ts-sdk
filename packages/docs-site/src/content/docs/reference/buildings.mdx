@@ -1,0 +1,216 @@
+---
+title: Buildings
+description: Define planetary construction gates, limits, jobs, resources, lifecycle behavior, technology display, and vanilla patches.
+registries: [building]
+---
+
+import { Aside } from "@astrojs/starlight/components";
+
+import FieldTable from "../../../components/FieldTable.astro";
+import PairedExample from "../../../components/PairedExample.astro";
+
+A **building** is a constructible feature on a colony. Its definition controls
+where it appears, when construction is allowed, what it costs, which jobs or
+modifiers it supplies, and what happens as it moves through its lifecycle. The
+SDK writes building definitions under `common/buildings/`.
+
+This minimal example defines a one-per-planet research building with a
+technology prerequisite, construction cost, upkeep, and direct Physics
+Research output:
+
+<PairedExample name="buildings-basic" />
+
+The full example later on adds a technology, a custom job, separate display and
+construction gates, a modifier-based cap, conditional upkeep, and lifecycle
+effects.
+
+## Who can build it, and where
+
+Building availability has several layers. Keep each rule in the field that
+answers its question:
+
+| Field          | Responsibility                                                                |
+| -------------- | ----------------------------------------------------------------------------- |
+| `potential`    | Decides whether the building appears in a colony's construction list.         |
+| `allow`        | Decides whether a visible building is enabled or grayed out for construction. |
+| `canBuild`     | Marks the definition as directly constructible.                               |
+| `ownerType`    | Selects `corporate` branch-office or `subject_holding` ownership.             |
+| `buildingSets` | Matches the building to planet-class building sets and can remove mismatches. |
+| `capital`      | Marks a capital building.                                                     |
+| `capitalTier`  | Gives the tier for a definition that uses the capital subtype.                |
+
+Both `potential` and `allow` are colony-scoped triggers. Use `potential` for a
+hard list-visibility rule and `allow` for a condition the player should see and
+be able to satisfy. A building that fails `potential` is absent rather than
+disabled.
+
+`buildingSets` is not an eligibility trigger. It participates in the game's
+planet-class building-set matching. Vanilla buildings can belong to more than
+one set, such as both `research` and `physics`.
+
+<Aside type="caution" title="Capital fields are a subtype contract">
+  `capitalTier` is legal only for the capital building subtype. Do not use `capital: true` as a
+  substitute for a colony trigger such as `isCapital()`; one classifies the definition and the other
+  tests the current colony.
+</Aside>
+
+## Limits
+
+The three direct limit fields run in different scopes:
+
+| Field           | Scope   | Meaning                                    |
+| --------------- | ------- | ------------------------------------------ |
+| `empireLimit`   | Country | Caps copies across the owning empire.      |
+| `planetLimit`   | Planet  | Caps copies on one planet.                 |
+| `districtLimit` | Colony  | Connects the cap to colony district state. |
+
+Each accepts either a number or a conditional weight block. No field means no
+limit. The game rules also permit a multiplier of `-1` to remove a planet or
+district limit; the empire-limit rules warn against a negative base because
+the engine ignores it.
+
+`baseCapAmount` supplies the building's base value when a modifier-driven cap
+is used. Pair it with `isCappedByModifier: true`. This cap can still affect a
+planet or district limit whose multiplier removes its direct limit.
+
+Use the smallest scope that states the actual rule. A one-per-world laboratory
+needs `planetLimit: 1`; it does not need an empire-wide trigger that counts
+buildings manually.
+
+## Lifecycle hooks and state transitions
+
+Building hooks are colony-scoped effect closures:
+
+| Hook         | Runs when the building is… |
+| ------------ | -------------------------- |
+| `onQueued`   | added to the build queue.  |
+| `onUnqueued` | removed from the queue.    |
+| `onBuilt`    | completed.                 |
+| `onEnabled`  | enabled.                   |
+| `onDestroy`  | destroyed.                 |
+| `onRepaired` | repaired.                  |
+
+Use these for consequences, such as setting a flag or applying a modifier.
+They do not replace the matching trigger fields:
+
+| Trigger                    | Result when it becomes true                               |
+| -------------------------- | --------------------------------------------------------- |
+| `abortTrigger`             | Cancels ongoing construction.                             |
+| `abortConstructionTrigger` | Also cancels ongoing construction.                        |
+| `ruinedTrigger`            | Changes the completed building to its ruined state.       |
+| `destroyTrigger`           | Destroys it, or converts it through a `convertTo` target. |
+
+Keep transition conditions in triggers and one-time work in hooks. For
+example, use `destroyTrigger` to express when a building can no longer exist,
+then use `onDestroy` only for cleanup caused by that transition.
+
+## Jobs and output
+
+A building can produce resources directly through `resources[].produces`, or
+it can add job capacity through a planet modifier. These models have different
+game behavior: direct output needs no worker, while a job follows its own
+eligibility, assignment, upkeep, production, and swap rules.
+
+The advanced example defines a `stormAnalyst` job and adds two positions with
+the dynamic modifier key `job_<job-id>_add`:
+
+```ts
+planetModifier: (modifier) => {
+  modifier.unchecked(`job_${stormAnalyst.id}_add`, 2);
+  modifier.planet.jobs.physics.research.produces.mult(0.1);
+},
+```
+
+The `unchecked` call is deliberate. Job-capacity modifier names are derived
+from the referenced job id, and the current modifier builder does not type that
+dynamic family. The owned job reference still supplies the exact prefixed id.
+See [Jobs](/reference/jobs/) for job eligibility, production, swaps, and
+testing advice.
+
+Vanilla commonly expands `inline_script` macros to choose different jobs for
+regular, hive-minded, and machine empires. `BuildingDef` has no general
+inline-script field, so do not copy one of those calls as if it were a literal
+job member. Model the supported result explicitly, including each owner policy
+your building needs.
+
+## Technology gating and display
+
+These fields are related, but none replaces another:
+
+| Field              | Responsibility                                                      |
+| ------------------ | ------------------------------------------------------------------- |
+| `prerequisites`    | Names technologies required by the building.                        |
+| `showInTech`       | Associates the building with technology entries for unlock display. |
+| `showTechUnlockIf` | Country-scoped condition for showing that technology unlock.        |
+| `category`         | Places the building in a building category.                         |
+| `icon`             | Reuses another building id or names building icon art explicitly.   |
+| `positionPriority` | Supplies the building's display priority.                           |
+
+Use the reference returned by `mod.technology(...)` for a technology owned by
+the same mod, and `vanilla.technology(...)` for a checked Vanilla id. See
+[Technologies](/reference/technologies/) for research-tree design and draw
+rules.
+
+Most ordinary Vanilla buildings omit `icon`; the game rules infer
+`gfx/interface/icons/buildings/<building-id>.dds`. Set `icon` when the building
+must reuse different art, as the advanced example does. An icon reference does
+not copy or create the asset.
+
+<PairedExample name="buildings-advanced" />
+
+## Patching a Vanilla building
+
+`mod.patchBuilding` starts from an installed, parsed building and applies a
+typed transform. The callback names only changed fields, but the SDK emits a
+complete-object replacement and carries untouched and unsupported source
+members through:
+
+```ts
+const capitalPatch = mod.patchBuilding(
+  vanillaView.definition("building", "building_capital_1"),
+  (capital) => ({
+    planetLimit: 2,
+    positionPriority: capital.positionPriority?.value ?? 0,
+  })
+);
+```
+
+Building replacement is verified as last-wins and whole-object replacement.
+The compiler selects an output filename that sorts after every loaded Vanilla
+file that defines the same id. It cannot prove the result against another mod
+that replaces that id later. Read [Patching vanilla](/guides/patching-vanilla/)
+for loading the install, requiring parsed members, and the filename proof.
+
+## Current limits and testing advice
+
+- The SDK checks field shapes, trigger and effect scopes, owned and Vanilla
+  references, emitted paths, and localization. It does not simulate colony
+  automation, build-list display, limits, job assignment, or lifecycle timing.
+- `aiWeight` is retained for rule compatibility, but the source rules say the
+  game no longer uses it unless `economic_plans` is overridden. Prefer the
+  current AI resource and weight fields for new content.
+- The source rules do not establish a quantity limit for `showInTech`. Treat it
+  as a list and test every displayed unlock in game.
+
+Test an eligible and ineligible colony, every owner type and building set, each
+numeric or conditional cap, queue cancellation, ruin, destruction, repair and
+reenabling, direct and job-based output, technology display, AI construction,
+upgrades or conversions, and save/load. See [Testing your mod](/guides/testing-your-mod/)
+for the boundary between SDK checks and live-game verification.
+
+## API and vanilla references
+
+- [`BuildingDef`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/building.ts)
+  is the generated TypeScript definition used by `mod.building`.
+- [`vanilla.building`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
+  provides checked references to building ids in the selected
+  `@pdx-ts/stellaris-ids` game version.
+
+## Field reference
+
+The tables below are generated from the same descriptors and field metadata
+that drive building authoring and serialization. Nested tables cover
+conditional limits, resources, triggered modifiers, descriptions, and AI
+resource production.
+
+<FieldTable registry="building" />

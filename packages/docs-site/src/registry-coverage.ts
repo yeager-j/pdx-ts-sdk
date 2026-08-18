@@ -84,7 +84,6 @@ export interface Coverage {
  */
 export const UNDOCUMENTED_REGISTRIES: Readonly<Record<string, string>> = {
   ascension_perk: "SDK-201 — progression and economy",
-  building: "SDK-201 — progression and economy",
   economic_category: "SDK-201 — progression and economy",
   static_modifier: "SDK-201 — progression and economy",
   scripted_modifier: "SDK-201 — progression and economy",
