@@ -126,10 +126,10 @@ game behavior: direct output needs no worker, while a job follows its own
 eligibility, assignment, upkeep, production, and swap rules.
 
 The full example below defines a `stormAnalyst` job and adds two positions with
-the dynamic modifier key `job_<job-id>_add`. It writes that key through
-`modifier.unchecked` on purpose. Job-capacity modifier names are derived from
-the referenced job id, and the current modifier builder does not type that
-dynamic family. The owned job reference still supplies the exact prefixed id.
+the dynamic modifier key `job_<job-id>_add`. Use
+`modifier.job(stormAnalyst).add(2)` to derive that key from the owned job
+reference. Job-capacity modifier names are derived from the referenced job id,
+including the mod prefix.
 See [Jobs](/reference/jobs/) for job eligibility, production, swaps, and
 testing advice.
 

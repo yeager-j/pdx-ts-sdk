@@ -34,7 +34,7 @@ const orbitalAnalysisCenter = mod.building("orbital_analysis_center", {
   name: "Orbital Analysis Center",
   desc: "A sensor complex that employs specialists to study orbital traffic.",
   planetModifier: (modifier) => {
-    modifier.unchecked(`job_${orbitalAnalyst.id}_add`, 2);
+    modifier.job(orbitalAnalyst).add(2);
   },
 });
 

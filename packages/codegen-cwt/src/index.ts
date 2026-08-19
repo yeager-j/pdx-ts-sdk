@@ -406,7 +406,11 @@ async function main(): Promise<void> {
   );
   await write(
     "modifiers.ts",
-    header(commit, ["script-docs/v4.4.1/modifiers.log", "modifier_categories.cwt"]) +
+    header(commit, [
+      "script-docs/v4.4.1/modifiers.log",
+      "modifier_categories.cwt",
+      "modifiers.cwt",
+    ]) +
       'import type { CustomModifiers } from "../content/types.ts";\n' +
       'import type { ScopeName } from "./scopes.ts";\n\n' +
       modifiers.code

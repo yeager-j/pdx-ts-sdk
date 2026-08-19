@@ -2,6 +2,7 @@
 // Source: cwtools-stellaris-config @ a4ee61a099b8
 // From: script-docs/v4.4.1/modifiers.log
 // From: modifier_categories.cwt
+// From: modifiers.cwt
 
 import type { CustomModifiers } from "../content/types.ts";
 import type { ScopeName } from "./scopes.ts";
@@ -67787,6 +67788,149 @@ interface ModifierPath3456 {
   readonly zone: ModifierPath1723;
 }
 
+export const MODIFIER_REFERENCE_FAMILIES = {
+  job: {
+    target: "job",
+    placeholder: "<job>",
+    operations: {
+      add: "job_<job>_add",
+      "per.pop": "job_<job>_per_pop",
+      "per.crime": "job_<job>_per_crime",
+      "max.workforce.add": "job_<job>_max_workforce_add",
+      "max.workforce.mult": "job_<job>_max_workforce_mult",
+      "automated.workforce.mult": "job_<job>_automated_workforce_mult",
+      "workforce.mult": "pop_<job>_workforce_mult",
+      "bonus.workforce.mult": "pop_<job>_bonus_workforce_mult",
+    },
+  },
+} as const;
+
+export type JobModifierOperations_Planet = {
+  readonly add: ModifierSetter;
+  readonly per: { readonly crime: ModifierSetter; readonly pop: ModifierSetter };
+  readonly max: {
+    readonly workforce: { readonly add: ModifierSetter; readonly mult: ModifierSetter };
+  };
+  readonly automated: { readonly workforce: { readonly mult: ModifierSetter } };
+  readonly workforce: { readonly mult: ModifierSetter };
+  readonly bonus: { readonly workforce: { readonly mult: ModifierSetter } };
+};
+
+export type JobModifierPath_Planet = ModifierPath3247 &
+  ((value: import("./refs.ts").JobRef) => JobModifierOperations_Planet);
+
+export type JobModifierOperations_Ship = {
+  readonly add: ModifierSetter;
+  readonly per: { readonly crime: ModifierSetter; readonly pop: ModifierSetter };
+  readonly max: {
+    readonly workforce: { readonly add: ModifierSetter; readonly mult: ModifierSetter };
+  };
+  readonly automated: { readonly workforce: { readonly mult: ModifierSetter } };
+};
+
+export type JobModifierPath_Ship = ModifierPath3404 &
+  ((value: import("./refs.ts").JobRef) => JobModifierOperations_Ship);
+
+export type JobModifierOperations_Starbase = {
+  readonly add: ModifierSetter;
+  readonly per: { readonly crime: ModifierSetter; readonly pop: ModifierSetter };
+  readonly max: {
+    readonly workforce: { readonly add: ModifierSetter; readonly mult: ModifierSetter };
+  };
+  readonly automated: { readonly workforce: { readonly mult: ModifierSetter } };
+};
+
+export type JobModifierPath_Starbase = ModifierPath3404 &
+  ((value: import("./refs.ts").JobRef) => JobModifierOperations_Starbase);
+
+export type JobModifierOperations_Colony = {
+  readonly add: ModifierSetter;
+  readonly per: { readonly crime: ModifierSetter; readonly pop: ModifierSetter };
+  readonly max: {
+    readonly workforce: { readonly add: ModifierSetter; readonly mult: ModifierSetter };
+  };
+  readonly automated: { readonly workforce: { readonly mult: ModifierSetter } };
+  readonly workforce: { readonly mult: ModifierSetter };
+  readonly bonus: { readonly workforce: { readonly mult: ModifierSetter } };
+};
+
+export type JobModifierPath_Colony = ModifierPath693 &
+  ((value: import("./refs.ts").JobRef) => JobModifierOperations_Colony);
+
+export type JobModifierOperations_Sector = {
+  readonly add: ModifierSetter;
+  readonly per: { readonly crime: ModifierSetter; readonly pop: ModifierSetter };
+  readonly max: {
+    readonly workforce: { readonly add: ModifierSetter; readonly mult: ModifierSetter };
+  };
+  readonly automated: { readonly workforce: { readonly mult: ModifierSetter } };
+  readonly workforce: { readonly mult: ModifierSetter };
+  readonly bonus: { readonly workforce: { readonly mult: ModifierSetter } };
+};
+
+export type JobModifierPath_Sector = ModifierPath3247 &
+  ((value: import("./refs.ts").JobRef) => JobModifierOperations_Sector);
+
+export type JobModifierOperations_System = {
+  readonly add: ModifierSetter;
+  readonly per: { readonly crime: ModifierSetter; readonly pop: ModifierSetter };
+  readonly max: {
+    readonly workforce: { readonly add: ModifierSetter; readonly mult: ModifierSetter };
+  };
+  readonly automated: { readonly workforce: { readonly mult: ModifierSetter } };
+  readonly workforce: { readonly mult: ModifierSetter };
+  readonly bonus: { readonly workforce: { readonly mult: ModifierSetter } };
+};
+
+export type JobModifierPath_System = ModifierPath3247 &
+  ((value: import("./refs.ts").JobRef) => JobModifierOperations_System);
+
+export type JobModifierOperations_Country = {
+  readonly add: ModifierSetter;
+  readonly per: { readonly crime: ModifierSetter; readonly pop: ModifierSetter };
+  readonly max: {
+    readonly workforce: { readonly add: ModifierSetter; readonly mult: ModifierSetter };
+  };
+  readonly automated: { readonly workforce: { readonly mult: ModifierSetter } };
+  readonly workforce: { readonly mult: ModifierSetter };
+  readonly bonus: { readonly workforce: { readonly mult: ModifierSetter } };
+};
+
+export type JobModifierPath_Country = ModifierPath693 &
+  ((value: import("./refs.ts").JobRef) => JobModifierOperations_Country);
+
+export type JobModifierOperations_Species = {
+  readonly workforce: { readonly mult: ModifierSetter };
+  readonly bonus: { readonly workforce: { readonly mult: ModifierSetter } };
+};
+
+export type JobModifierPath_Species = (
+  value: import("./refs.ts").JobRef
+) => JobModifierOperations_Species;
+
+export type JobModifierOperations_PopGroup = {
+  readonly workforce: { readonly mult: ModifierSetter };
+  readonly bonus: { readonly workforce: { readonly mult: ModifierSetter } };
+};
+
+export type JobModifierPath_PopGroup = (
+  value: import("./refs.ts").JobRef
+) => JobModifierOperations_PopGroup;
+
+export type JobModifierOperations_Any = {
+  readonly add: ModifierSetter;
+  readonly per: { readonly crime: ModifierSetter; readonly pop: ModifierSetter };
+  readonly max: {
+    readonly workforce: { readonly add: ModifierSetter; readonly mult: ModifierSetter };
+  };
+  readonly automated: { readonly workforce: { readonly mult: ModifierSetter } };
+  readonly workforce: { readonly mult: ModifierSetter };
+  readonly bonus: { readonly workforce: { readonly mult: ModifierSetter } };
+};
+
+export type JobModifierPath_Any = ModifierPath693 &
+  ((value: import("./refs.ts").JobRef) => JobModifierOperations_Any);
+
 /**
  * Records modifiers valid in `army` scope: each path segment completes
  * from a small menu, and the joined path is the game's flat modifier name.
@@ -67814,6 +67958,7 @@ export interface AstralRiftModifierRecorder extends ModifierPath238 {
  * from a small menu, and the joined path is the game's flat modifier name.
  */
 export interface ColonyModifierRecorder extends ModifierPath1724 {
+  readonly job: JobModifierPath_Colony;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof ColonyModifierBlock & string, value: number): void;
   /** Sets a modifier by an arbitrary, unchecked name. */
@@ -67825,6 +67970,7 @@ export interface ColonyModifierRecorder extends ModifierPath1724 {
  * from a small menu, and the joined path is the game's flat modifier name.
  */
 export interface CountryModifierRecorder extends ModifierPath2576 {
+  readonly job: JobModifierPath_Country;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof CountryModifierBlock & string, value: number): void;
   /** Sets a modifier by an arbitrary, unchecked name. */
@@ -67902,6 +68048,7 @@ export interface MegastructureModifierRecorder extends ModifierPath3239 {
  * from a small menu, and the joined path is the game's flat modifier name.
  */
 export interface PlanetModifierRecorder extends ModifierPath3394 {
+  readonly job: JobModifierPath_Planet;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof PlanetModifierBlock & string, value: number): void;
   /** Sets a modifier by an arbitrary, unchecked name. */
@@ -67924,6 +68071,7 @@ export interface PopFactionModifierRecorder extends ModifierPath3395 {
  * from a small menu, and the joined path is the game's flat modifier name.
  */
 export interface PopGroupModifierRecorder extends ModifierPath3399 {
+  readonly job: JobModifierPath_PopGroup;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof PopGroupModifierBlock & string, value: number): void;
   /** Sets a modifier by an arbitrary, unchecked name. */
@@ -67935,6 +68083,7 @@ export interface PopGroupModifierRecorder extends ModifierPath3399 {
  * from a small menu, and the joined path is the game's flat modifier name.
  */
 export interface SectorModifierRecorder extends ModifierPath3402 {
+  readonly job: JobModifierPath_Sector;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof SectorModifierBlock & string, value: number): void;
   /** Sets a modifier by an arbitrary, unchecked name. */
@@ -67946,6 +68095,7 @@ export interface SectorModifierRecorder extends ModifierPath3402 {
  * from a small menu, and the joined path is the game's flat modifier name.
  */
 export interface ShipModifierRecorder extends ModifierPath3426 {
+  readonly job: JobModifierPath_Ship;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof ShipModifierBlock & string, value: number): void;
   /** Sets a modifier by an arbitrary, unchecked name. */
@@ -67957,6 +68107,7 @@ export interface ShipModifierRecorder extends ModifierPath3426 {
  * from a small menu, and the joined path is the game's flat modifier name.
  */
 export interface SpeciesModifierRecorder extends ModifierPath3449 {
+  readonly job: JobModifierPath_Species;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof SpeciesModifierBlock & string, value: number): void;
   /** Sets a modifier by an arbitrary, unchecked name. */
@@ -67979,6 +68130,7 @@ export interface SpyNetworkModifierRecorder extends ModifierPath3451 {
  * from a small menu, and the joined path is the game's flat modifier name.
  */
 export interface StarbaseModifierRecorder extends ModifierPath3453 {
+  readonly job: JobModifierPath_Starbase;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof StarbaseModifierBlock & string, value: number): void;
   /** Sets a modifier by an arbitrary, unchecked name. */
@@ -67990,6 +68142,7 @@ export interface StarbaseModifierRecorder extends ModifierPath3453 {
  * from a small menu, and the joined path is the game's flat modifier name.
  */
 export interface SystemModifierRecorder extends ModifierPath3455 {
+  readonly job: JobModifierPath_System;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof SystemModifierBlock & string, value: number): void;
   /** Sets a modifier by an arbitrary, unchecked name. */
@@ -68035,6 +68188,7 @@ export interface UnscopedModifierRecorder {
  * and `m.planet.jobs.alloys.produces.mult(0.1)` both resolve here.
  */
 export interface AnyScopeModifierRecorder extends ModifierPath3456 {
+  readonly job: JobModifierPath_Any;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof AnyScopeModifierBlock & string, value: number): void;
   /** Sets a modifier by an arbitrary, unchecked name. */

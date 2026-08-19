@@ -2,6 +2,8 @@ import { describe, it } from "vitest";
 
 import type { ModifierClosure, TriggeredModifier } from "../src/content/types.ts";
 import type { BuildingDef } from "../src/generated/building.ts";
+import type { JobRef } from "../src/generated/refs.ts";
+import { vanilla } from "../src/index.ts";
 
 declare module "../src/content/types.ts" {
   interface CustomModifiers {
@@ -11,8 +13,45 @@ declare module "../src/content/types.ts" {
 }
 
 function countryModifiers(_m: ModifierClosure<"country">): void {}
+function colonyModifiers(_m: ModifierClosure<"colony">): void {}
+function popGroupModifiers(_m: ModifierClosure<"pop_group">): void {}
+function federationModifiers(_m: ModifierClosure<"federation">): void {}
 
 describe("modifier path safety", () => {
+  it("supports all job-derived colony operations and static paths", () => {
+    const job: JobRef = { id: "mymod_job" };
+    colonyModifiers((m) => {
+      m.job(job).add(1);
+      m.job(job).per.pop(1);
+      m.job(job).per.crime(1);
+      m.job(job).max.workforce.add(1);
+      m.job(job).max.workforce.mult(1);
+      m.job(job).automated.workforce.mult(1);
+      m.job(job).workforce.mult(1);
+      m.job(job).bonus.workforce.mult(1);
+      m.job.technician.add(1);
+      m.job(vanilla.job("farmer")).add(1);
+      const selected = m.job(job);
+      // @ts-expect-error — selecting a reference returns operations, not another selector
+      selected(job);
+      // @ts-expect-error — concrete vanilla paths stay on m.job, not the selected family
+      selected.technician.add(1);
+    });
+  });
+
+  it("limits pop-group job operations and rejects non-job refs", () => {
+    const job: JobRef = { id: "mymod_job" };
+    popGroupModifiers((m) => {
+      m.job(job).workforce.mult(1);
+      m.job(job).bonus.workforce.mult(1);
+      // @ts-expect-error — colony-only operation
+      m.job(job).add(1);
+    });
+    // @ts-expect-error — unrelated scopes have no callable job family
+    federationModifiers((m) => m.job(job).add(1));
+    // @ts-expect-error — technology refs cannot select job modifiers
+    colonyModifiers((m) => m.job(vanilla.technology("tech_lasers_1")).add(1));
+  });
   it("accepts real paths valid in the scope, including generated names", () => {
     countryModifiers((m) => {
       m.country.unity.produces.mult(0.01);

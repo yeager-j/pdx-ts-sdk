@@ -12,10 +12,26 @@
 import type { RuleSet } from "../cwt/rules.ts";
 import type { ModifierDocs } from "../logs/modifier-docs.ts";
 import { docComment, pascalCase } from "../naming.ts";
-import { UNIVERSAL_SCOPES } from "../overlay.ts";
+import { MODIFIER_FAMILY_OVERLAYS, UNIVERSAL_SCOPES } from "../overlay.ts";
 
 /** Resolves a raw scope token to its canonical name, or `null` if unknown. */
 export type CanonicalScope = (token: string) => string | null;
+
+export interface DynamicModifierFamily {
+  readonly family: string;
+  readonly reference: string;
+  readonly target: string;
+  readonly placeholder: string;
+  readonly scopeOperations: ReadonlyMap<string, readonly string[][]>;
+  readonly operationTemplates: ReadonlyMap<string, string>;
+}
+
+interface DynamicModifierOperation {
+  readonly path: string;
+  readonly segments: readonly string[];
+  readonly template: string;
+  readonly categories: readonly string[];
+}
 
 export interface ModifierJoin {
   /** Names in an `any`-scoped category (`All`, `Economic Units`): valid everywhere. */
@@ -26,6 +42,7 @@ export interface ModifierJoin {
   readonly unscoped: readonly string[];
   /** Categories the dump or `modifiers.cwt` name that the category table lacks. */
   readonly unknownCategories: readonly string[];
+  readonly dynamicFamilies: readonly DynamicModifierFamily[];
 }
 
 export function joinModifierScopes(
@@ -59,6 +76,9 @@ export function joinModifierScopes(
   };
   for (const categories of rules.modifierDecls.values()) {
     noteCategories(categories);
+  }
+  for (const template of rules.modifierTemplates) {
+    noteCategories(template.categories);
   }
 
   const universal: string[] = [];
@@ -94,6 +114,75 @@ export function joinModifierScopes(
     universal: universal.sort(),
     groups,
     unscoped: unscoped.sort(),
+    dynamicFamilies: MODIFIER_FAMILY_OVERLAYS.flatMap((family) => {
+      const placeholder = `<${family.family}>`;
+      const operations: DynamicModifierOperation[] = [];
+      const seenPaths = new Set<string>();
+      for (const template of rules.modifierTemplates) {
+        const placeholderIndex = template.name.indexOf(placeholder);
+        if (placeholderIndex < 0) {
+          continue;
+        }
+        if (template.name.indexOf(placeholder, placeholderIndex + placeholder.length) >= 0) {
+          throw new Error(
+            `Dynamic modifier template has multiple placeholders: "${template.name}"`
+          );
+        }
+        const suffix = template.name.slice(placeholderIndex + placeholder.length);
+        if (!suffix.startsWith("_")) {
+          throw new Error(`Dynamic modifier template suffix must start with _: "${template.name}"`);
+        }
+        const operationSuffix = suffix.slice(1);
+        const segments = operationSuffix.split("_");
+        if (operationSuffix.length === 0 || segments.some((token) => token.length === 0)) {
+          throw new Error(`Unsupported dynamic modifier template shape "${template.name}"`);
+        }
+        const path = segments.join(".");
+        if (seenPaths.has(path)) {
+          throw new Error(`Duplicate dynamic modifier operation path "${path}"`);
+        }
+        seenPaths.add(path);
+        operations.push({
+          path,
+          segments,
+          template: template.name,
+          categories: template.categories,
+        });
+      }
+      if (operations.length === 0) {
+        return [];
+      }
+      const scopeOperations = new Map<string, string[][]>();
+      const operationTemplates = new Map<string, string>();
+      for (const operation of operations) {
+        operationTemplates.set(operation.path, operation.template);
+        for (const category of operation.categories) {
+          const scopes = categoryScopes.get(category);
+          if (scopes === undefined || scopes === "any") {
+            continue;
+          }
+          for (const scope of scopes) {
+            const existing = scopeOperations.get(scope) ?? [];
+            existing.push([...operation.segments]);
+            scopeOperations.set(scope, existing);
+          }
+        }
+      }
+      scopeOperations.set(
+        "any",
+        operations.map((operation) => [...operation.segments])
+      );
+      return [
+        {
+          family: family.family,
+          reference: family.reference,
+          target: family.target,
+          placeholder,
+          scopeOperations,
+          operationTemplates,
+        },
+      ];
+    }),
     unknownCategories: [...unknownCategories].sort(),
   };
 }
@@ -117,6 +206,40 @@ function property(name: string): string {
 
 function memberBlock(names: readonly string[]): string {
   return `{\n${[...names].sort().map(property).join("")}}\n`;
+}
+
+interface OperationTree {
+  terminal: boolean;
+  readonly children: Map<string, OperationTree>;
+}
+
+function operationMembers(operations: readonly string[][]): string {
+  const tree: OperationTree = { terminal: false, children: new Map() };
+  for (const operation of operations) {
+    let current = tree;
+    for (const token of operation) {
+      let child = current.children.get(token);
+      if (child === undefined) {
+        child = { terminal: false, children: new Map() };
+        current.children.set(token, child);
+      }
+      current = child;
+    }
+    current.terminal = true;
+  }
+  const render = (node: OperationTree): string => {
+    if (node.children.size === 0) {
+      return "ModifierSetter";
+    }
+    const members = `{ ${[...node.children]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, child]) => `readonly ${key}: ${render(child)};`)
+      .join(" ")} }`;
+    return node.terminal ? `ModifierSetter & ${members}` : members;
+  };
+  return [...tree.children]
+    .map(([key, child]) => `  readonly ${key}: ${render(child)};\n`)
+    .join("");
 }
 
 /**
@@ -289,6 +412,7 @@ export function emitModifiers(join: ModifierJoin): ModifierEmission {
 
   const trie = new TrieEmitter();
   const rootNames = new Map<string, string>();
+  const rootNodes = new Map<string, TrieNode>();
   for (const scope of scopes) {
     const names = [
       ...join.universal,
@@ -296,13 +420,46 @@ export function emitModifiers(join: ModifierJoin): ModifierEmission {
         .filter(([key]) => key.split(" ").includes(scope))
         .flatMap(([, names]) => names),
     ];
-    rootNames.set(scope, trie.emit(trieOf(names)));
+    const root = trieOf(names);
+    rootNodes.set(scope, root);
+    rootNames.set(scope, trie.emit(root));
   }
   // The unscoped root: every name at once. Its subtrees are overwhelmingly the
   // ones the per-scope roots already emitted, so the DAG dedup absorbs almost
   // all of it.
-  const anyScopeRoot = trie.emit(trieOf([...join.universal, ...[...join.groups.values()].flat()]));
+  const anyRoot = trieOf([...join.universal, ...[...join.groups.values()].flat()]);
+  const anyScopeRoot = trie.emit(anyRoot);
+  rootNodes.set("any", anyRoot);
   code += trie.lines.join("\n") + "\n\n";
+
+  code += `export const MODIFIER_REFERENCE_FAMILIES = ${JSON.stringify(
+    Object.fromEntries(
+      join.dynamicFamilies.map((family) => [
+        family.family,
+        {
+          target: family.target,
+          placeholder: family.placeholder,
+          operations: Object.fromEntries(family.operationTemplates),
+        },
+      ])
+    )
+  )} as const;\n\n`;
+
+  for (const family of join.dynamicFamilies) {
+    for (const [name, operations] of family.scopeOperations) {
+      const typeName = `${pascalCase(family.family)}ModifierPath_${pascalCase(name)}`;
+      const operationsType = `${pascalCase(family.family)}ModifierOperations_${pascalCase(name)}`;
+      const root = rootNodes.get(name);
+      const staticJob = root?.children.get(family.family);
+      code += `export type ${operationsType} = {\n`;
+      code += operationMembers(operations);
+      code += "};\n\n";
+      const selector = `(value: import("./refs.ts").${family.reference}) => ${operationsType}`;
+      const pathType =
+        staticJob === undefined ? selector : `${trie.emit(staticJob)} & (${selector})`;
+      code += `export type ${typeName} = ${pathType};\n\n`;
+    }
+  }
 
   for (const scope of scopes) {
     code +=
@@ -311,6 +468,14 @@ export function emitModifiers(join: ModifierJoin): ModifierEmission {
         "from a small menu, and the joined path is the game's flat modifier name.",
       ]) +
       `export interface ${pascalCase(scope)}ModifierRecorder extends ${rootNames.get(scope)} {\n` +
+      join.dynamicFamilies
+        .map((family) => {
+          const type = family.scopeOperations.has(scope)
+            ? `${pascalCase(family.family)}ModifierPath_${pascalCase(scope)}`
+            : undefined;
+          return type === undefined ? "" : `  readonly ${family.family}: ${type};\n`;
+        })
+        .join("") +
       "  /** Sets a modifier by its flat name, checked against every known name. */\n" +
       `  raw(name: keyof ${pascalCase(scope)}ModifierBlock & string, value: number): void;\n` +
       "  /** Sets a modifier by an arbitrary, unchecked name. */\n" +
@@ -343,6 +508,11 @@ export function emitModifiers(join: ModifierJoin): ModifierEmission {
       "and `m.planet.jobs.alloys.produces.mult(0.1)` both resolve here.",
     ]) +
     `export interface AnyScopeModifierRecorder extends ${anyScopeRoot} {\n` +
+    join.dynamicFamilies
+      .map(
+        (family) => `  readonly ${family.family}: ${pascalCase(family.family)}ModifierPath_Any;\n`
+      )
+      .join("") +
     "  /** Sets a modifier by its flat name, checked against every known name. */\n" +
     "  raw(name: keyof AnyScopeModifierBlock & string, value: number): void;\n" +
     "  /** Sets a modifier by an arbitrary, unchecked name. */\n" +
