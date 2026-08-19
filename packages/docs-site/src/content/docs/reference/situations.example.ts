@@ -58,7 +58,13 @@ const bloomComplete = events.situation(4, {
   desc: "The organism opens into a stable, resonant structure.",
   location: target<"planet">(),
   isTriggeredOnly: true,
-  options: [{ name: "Listen to its song.", key: "listen" }],
+  options: [
+    {
+      name: "Listen to its song.",
+      key: "listen",
+      effects: (situation, ctx) => situation.destroySituation(ctx.self),
+    },
+  ],
 });
 
 const crystalBloom = mod.situationType("crystal_bloom", {

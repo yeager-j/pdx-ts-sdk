@@ -105,9 +105,10 @@ you are actually recording.
 
 Distinct names such as `country` and `planet` can be easier to read, but they
 leave the outer recorder callable. When nested PDXScript must refer back to an
-outer game scope, use `ctx.root`, `ctx.from`, or another absolute reference;
-do not call the outer recorder. Reusing `s` is a guardrail for code where
-accidentally reaching for that recorder is the recurring problem.
+outer game scope, use an absolute reference — `ctx.root` or `ctx.from`,
+described in the next section — not the outer recorder. Reusing `s` is a
+guardrail for code where accidentally reaching for that recorder is the
+recurring problem.
 
 ## Context keeps stable scopes available
 
@@ -121,32 +122,51 @@ immediate: (planet, ctx) => {
 };
 ```
 
-The available context depends on the field's generated contract:
+This event runs in planet scope and declares a country `FROM`.
+`ctx.from.effects(...)` opens that country and records `add_resource` inside a
+`from = { ... }` block.
 
-- `ctx.self` is the block's initial `THIS` as a value.
+The available context depends on what the field declares:
+
+- `ctx.self` names the block's own `THIS`. It is relative, so it is a value to
+  pass, not a reference to open.
 - `ctx.root` is the execution's stable `ROOT`, when the field declares it.
 - `ctx.from` is the field's declared `FROM`, when it has one.
 
 `ctx.root` and `ctx.from` are typed references. You can open them with
-`.effects(...)`, pass them to fields that expect a scope value, or follow legal
-links from them. If a field does not declare one of these scopes, that context
-member is an inert sentinel rather than a reference you can use.
+`.effects(...)`, put a condition on them with `.trigger(...)`, pass them to
+fields that expect a scope value, or follow legal links from them. If a field
+does not declare one of these scopes, that context member cannot be used and
+TypeScript rejects it.
 
-`ctx.self` is deliberately a value, not an openable reference. It serializes as
-relative `this`; writing it inside a nested scope block would name that nested
-`THIS`, not recover the scope where the outer closure began. Use the outer
-scope parameter while recording in the same block, and use stable `root`,
-`from`, or another absolute reference when nested script must refer back.
+`ctx.self` is deliberately a value, not an openable reference. It serializes
+as relative `this`, so opening or navigating from it inside a nested block
+would start from that nested `THIS`, not recover the scope where the outer
+closure began. Use the outer scope parameter while recording in the same
+block, and use stable `root`, `from`, or another absolute reference when
+nested script must refer back.
+
+Effect closures are not the only place `ctx` appears. Trigger and weight
+fields whose rules declare a `FROM` also accept a one-parameter closure form,
+`(ctx) => Trigger`, so a condition can name `ctx.from` or `ctx.self` — for
+example `allow: (ctx) => ctx.from.trigger(siteIsUnlocked)` on an
+archaeological site. See
+[Archaeological sites](/reference/archaeological-sites/) for a worked example.
 
 ## Event `FROM` comes from execution `ROOT`
 
+An event fire is the exception to the caution above: the `from:` argument is
+checked, not navigated. The value is a **witness** — it proves to the type
+checker which scope the called event will see as `FROM` — and nothing is
+opened from it.
+
 When one event fires another without an explicit scopes override, the called
 event receives the firing execution's `ROOT` as natural `FROM`. It does not
-always receive the call site's current `THIS`.
-
-At a top-level event effect, `THIS` and `ROOT` are the same. `ctx.self` can
-therefore witness the natural `FROM` expected by the event being fired, even
-after a nested block changes `THIS`:
+always receive the call site's current `THIS`. At a top-level event effect,
+`THIS` and `ROOT` are the same. `ctx.self` can therefore witness the natural
+`FROM` expected by the event being fired, even after a nested block changes
+`THIS`. `stormWorld` below is a saved event target — a scope stored earlier
+under a name; see [Events](/concepts/events/):
 
 ```ts
 const stormWorld = eventTarget<"planet">("crystal_resonance_storm_world");
@@ -175,7 +195,7 @@ initEffect: (planet, ctx) => {
 ```
 
 The type system rejects the unsafe `ctx.self` form at known split-root sites.
-If the check is bypassed, the build retains a runtime guard rather than writing
+If a type assertion bypasses that check, the build throws rather than writing
 a misleading event fire.
 
 ## Relative and absolute references
@@ -183,34 +203,31 @@ a misleading event fire.
 The difference is easiest to remember by asking what happens after a nested
 scope change:
 
-| Reference | Meaning inside nested script |
-| --- | --- |
-| `this` / `ctx.self` | Relative to the block where it is written |
+| Reference           | Meaning inside nested script                  |
+| ------------------- | --------------------------------------------- |
+| `this` / `ctx.self` | Relative to the block where it is written     |
 | `root` / `ctx.root` | The same execution root throughout the script |
-| `from` / `ctx.from` | The same declared FROM throughout the script |
-| Saved event target | The scope captured when the target was saved |
+| `from` / `ctx.from` | The same declared FROM throughout the script  |
+| Saved event target  | The scope captured when the target was saved  |
 
 Use relative navigation when the relationship should move with the current
 block. Use an absolute reference when the script must keep naming one known
 scope after `THIS` changes.
 
-## What “the recorder is scope-agnostic” means
+PDXScript has more scope words than this table. `PREV`, `PREVPREV`, and
+`FROMFROM` appear across thousands of vanilla blocks, and some rules declare
+them for fields the SDK generates. The SDK cannot write or witness them yet:
+`ctx` exposes `self`, `root`, and `from` only, and no escape hatch emits
+`prev` or `fromfrom`. Script that needs one of those scopes cannot be
+authored today.
 
-The effect recorder does not contain a second handwritten table that decides
-which effects are legal in each scope. It records effect calls and scope
-blocks. Generated TypeScript interfaces enforce scope legality before the
-recorder runs.
+## Where scope legality is checked
 
-This does **not** mean every effect is legal everywhere. It means the legal
-surface is selected statically:
-
-- A country closure receives a country scope interface.
-- A planet closure receives a planet scope interface.
-- A scope link's callback receives its declared landing interface.
-- `ctx.from` and `ctx.root` expose only scopes the owning field declares.
-
-The shared recorder can then serialize calls without repeating those rules at
-runtime.
+Scope legality is decided by the generated TypeScript interfaces before the
+recorder runs: each closure receives the scope interface its field declares, a
+scope link's callback receives its declared landing interface, and `ctx.from`
+and `ctx.root` expose only scopes the owning field declares. The recorder
+itself only records and serializes; it does not repeat those rules at runtime.
 
 ## Read scope type errors as game rules
 

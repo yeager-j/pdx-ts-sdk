@@ -83,9 +83,6 @@ export interface Coverage {
  * that a *new* registry cannot slip in silently.
  */
 export const UNDOCUMENTED_REGISTRIES: Readonly<Record<string, string>> = {
-  technology: "SDK-201 — progression and economy",
-  ascension_perk: "SDK-201 — progression and economy",
-  building: "SDK-201 — progression and economy",
   economic_category: "SDK-201 — progression and economy",
   static_modifier: "SDK-201 — progression and economy",
   scripted_modifier: "SDK-201 — progression and economy",
@@ -136,6 +133,12 @@ export const CHANNELS: readonly ChannelRow[] = [
     methods: ["mod.on"],
     folders: ["common/on_actions"],
     summary: "Hooks onto the points the game fires, rather than firing an event yourself.",
+  },
+  {
+    concept: "Ship-of-size limits",
+    methods: ["mod.addShipOfSizeLimits"],
+    folders: ["common/country_limits/ownership_limits"],
+    summary: "Contributions to the shared ownership-limits file; ids only, no definition minted.",
   },
   {
     concept: "Localization",

@@ -1,6 +1,6 @@
 ---
 title: The pipeline
-description: Follow a mod from its authoring capability to compiled, rendered, and materialized files.
+description: Follow a mod from `createMod` to compiled, rendered, and written files.
 sidebar:
   order: 3
 ---
@@ -32,43 +32,40 @@ const rendered = render(compiled);
 // Build into a project directory:
 await write(new URL("../../out/", import.meta.url), rendered);
 
-// Or install for the Stellaris launcher:
+// ...or, in the install entry point, install for the launcher:
 await install(rendered);
 ```
 
-In a real entry point, choose `write` or `install` for the job you are running.
+A scaffolded project reads the name, prefix, and supported version from
+`stellaris-mod.json`; they are written out here so the snippet stands alone.
 
-## 1. `createMod`: establish ownership
+## 1. `createMod`: bind the mod's identity
 
-`createMod` validates the launcher configuration and returns an immutable,
-prefix-bound authoring capability. Its methods create definitions, references,
-events, localization, Asset files, and Features that belong to that mod.
+`createMod` validates the launcher configuration and returns an immutable
+`mod` object bound to your prefix — the SDK calls this the authoring
+capability. Its methods create definitions, references, events, localization,
+[Asset files](/concepts/assets/), and Features that belong to that mod.
 
-This step does not assemble or serialize the mod. Definitions remain ordinary
-TypeScript values until you place them in a Feature and pass that Feature to
-`mod.compile`.
+This step does not assemble or serialize the mod. Definitions stay ordinary
+TypeScript values until a [Feature](/guides/features-and-discovery/) carries
+them into `mod.compile`.
 
 ## 2. `mod.compile`: the Fold
 
 `mod.compile(features)` is **the Fold**. It combines the selected Features into
 one immutable `PureMod`. Source file layout is not part of the result: Feature
-stems, content registries, event namespaces, localization rules, explicit Asset
-paths, and shared-output rules decide the logical output paths.
+stems (which also name event files, one namespace per stem), content
+registries, localization rules, explicit Asset paths, and shared-output rules
+decide the logical output paths — the mod-relative paths, such as
+`common/technology/crystal_resonance_resonance.txt`, that do not depend on
+where the mod is later written.
 
 The Fold is also the main validation boundary. It refuses a build when it can
-prove that the assembled mod is inconsistent, including:
-
-- **Duplicate or colliding ids and paths:** two definitions would compete for
-  one id, an event id appears twice, or an emitted path would silently replace
-  known vanilla content.
-- **Dangling references:** a reference that carries this mod's identity names
-  no definition or event among the selected Features. A typed Asset file
-  reference also fails when no selected Feature places that file.
-- **Event namespace collisions:** one output file would mix namespaces, or one
-  namespace would be split across multiple file stems.
-- **Conflicting path claims:** two producers claim one path, a file and a
-  directory need the same path, spellings alias on common filesystems, or a
-  claim conflicts with an SDK-reserved or known vanilla path.
+prove that the assembled mod is inconsistent: duplicate ids, dangling
+references, conflicting or aliased path claims, collisions with SDK-reserved
+or [known vanilla paths](/guides/patching-vanilla/), and mixed or split event
+namespaces. [Warnings and diagnostics](/guides/warnings-and-diagnostics/)
+lists the full set.
 
 These checks happen before serialization and before disk access. A successful
 Fold therefore has one owner for every logical output path.
@@ -76,15 +73,16 @@ Fold therefore has one owner for every logical output path.
 Not every uncertain condition is an error. For example, a raw Asset path that
 is neither captured by this build nor known as a vanilla path becomes a warning
 because it may come from a DLC, another mod, or a file managed outside the SDK.
-Read non-blocking diagnostics from `compiled.warnings`.
+The `PureMod` that `mod.compile` returns carries these non-blocking
+diagnostics on its `warnings` array.
 
-## 3. `render`: produce an exact snapshot
+## 3. `render`: produce the finished bytes
 
 `render(compiled)` serializes the `PureMod` into an immutable `RenderedMod`.
-The snapshot contains every adjudicated mod-content output, including
+The snapshot contains every output the Fold assigned an owner, including
 PDXScript, localization, captured Asset bytes, and `descriptor.mod`. It does
-not contain the ownership metadata that materialization writes beside that
-content.
+not contain `.pdx-sdk-manifest.json`, the ownership record that `write` and
+`install` add beside the content — see step 4.
 
 A `RenderedMod` is an iterable collection keyed by logical path. Each
 `RenderedFile` says whether it contains text or bytes and exposes its byte
@@ -98,24 +96,40 @@ or installed for the launcher.
 
 ## 4. `write` or `install`: materialize the snapshot
 
-Both functions materialize the `RenderedMod` content exactly, but they target
+Both functions materialize the `RenderedMod` content, but they target
 different places:
 
-| Function | Destination | Launcher descriptor |
-| --- | --- | --- |
-| `write(outDir, rendered)` | Any output directory you choose | Does not create one |
-| `install(rendered, options?)` | The Stellaris launcher mod directory, or `options.modDir` | Creates a sibling `<dirName>.mod` file |
+| Function                      | Destination                                               | Launcher descriptor                                  |
+| ----------------------------- | --------------------------------------------------------- | ---------------------------------------------------- |
+| `write(outDir, rendered)`     | Any output directory you choose                           | Does not create one                                  |
+| `install(rendered, options?)` | The Stellaris launcher mod directory, or `options.modDir` | Creates `<dirName>.mod` beside the content directory |
+
+`install` accepts two options: `modDir` picks the launcher's mod directory,
+defaulting to the platform location or to the `STELLARIS_MOD_DIR` environment
+variable when it is set, and `dirName` names the installed content folder,
+defaulting to the mod prefix.
 
 The rendered snapshot already contains the mod's own `descriptor.mod`. That
 file lives inside the mod directory and describes the mod. The launcher-side
 `<dirName>.mod` file lives beside the installed content directory and adds a
 `path="..."` line that points to it. `render` cannot create this second file
-because its contents depend on the final install location.
+because its contents depend on the final install location. To produce one for
+a directory you chose yourself, call
+`renderLauncherDescriptor(rendered, contentDir)`.
 
 Both functions also write `.pdx-sdk-manifest.json`, which records SDK ownership
-and digests for later drift checks. This is materialization metadata, not a file
-in the `RenderedMod` snapshot.
+and digests for later drift checks. This is materialization metadata, not a
+file in the `RenderedMod` snapshot.
 
-`write` returns the resolved `outDir`; `install` returns both `contentDir` and
-`descriptorPath`. Both also report whether anything changed and refuse to
-silently replace SDK-owned output that has drifted since the previous run.
+Files in the target that the SDK does not own are preserved, not deleted: the
+materialization carries them through unchanged, and a rendered path that lands
+on a foreign entry is refused rather than overwritten. `write` returns the
+resolved `outDir`; `install` returns both `contentDir` and `descriptorPath`.
+Each report also says whether anything on disk changed and lists the
+`foreignEntries` it preserved, and both functions refuse to silently replace
+SDK-owned output that has drifted since the previous run.
+
+A refusal is not a dead end. A drift refusal carries a receipt; pass it to
+`replaceMaterialization` or `replaceInstallation` to replace the drifted
+output deliberately. An interrupted run leaves a transaction that
+`recoverMaterialization` or `recoverInstallation` completes or rolls back.

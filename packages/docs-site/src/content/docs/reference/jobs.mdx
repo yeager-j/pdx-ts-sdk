@@ -15,25 +15,30 @@ modifiers it applies, how attractive it is during assignment, and how it may
 change its displayed identity. The SDK writes job definitions under
 `common/pop_jobs/`.
 
-A job does not create its own positions. A building, district, deposit, or
-other source adds job capacity to a colony through a `job_<job-id>_add`
-modifier. This first example defines a specialist job and a building that adds
-two positions:
+A job does not create its own positions. For a capped job
+(`isCappedByModifier: true` — 102 of vanilla's 365 jobs), a building,
+deposit, or other source adds capacity through a `job_<job-id>_add` modifier.
+Districts do this too, but districts have no SDK content registry yet, so
+this page's examples use a building. An uncapped job
+(`isCappedByModifier: false` — 56 vanilla jobs, including ordinary workers
+such as `servant` and `peasant`) does not take its position count from that
+modifier. This first example defines a capped specialist job and a building
+that adds two positions:
 
 <PairedExample name="jobs-basic" />
 
 The example uses `unchecked` for the generated modifier name because the
-install-derived modifier table knows vanilla job modifiers, not the id of a
-job declared by this mod. The string is still derived from `orbitalAnalyst.id`,
-so a renamed job cannot leave a copied id behind.
+checked modifier names cover vanilla job modifiers, not a job this mod
+declares. The string is still derived from `orbitalAnalyst.id`, so renaming
+the job changes the modifier name with it. The worked example later on adds
+swaps, conditional output, overlord production, modifiers, and assignment
+weight.
 
 ## A working job connects three kinds of definition
 
-| Part            | Responsibility                                                                |
-| --------------- | ----------------------------------------------------------------------------- |
-| Job             | Declares eligibility, output, modifiers, display data, and assignment weight. |
-| Capacity source | Adds a number of positions with `job_<job-id>_add`.                           |
-| Pop category    | Gives the job its social rank and the category's broader economic rules.      |
+A job declares the work. A capacity source adds positions with
+`job_<job-id>_add`. A pop category gives the job its social rank and the
+category's broader economic rules.
 
 `category` points to a pop category such as `worker`, `specialist`,
 `simple_drone`, or `complex_drone`. It does not select the economic category
@@ -45,14 +50,13 @@ Vanilla commonly hides the capacity detail behind an inline script. For
 example, its generator district calls `jobs/technicians_add`; that script adds
 `job_technician_add` for a regular empire, `job_technician_drone_add` for a
 gestalt empire, and a Fallen Empire acolyte job for a spiritualist Fallen
-Empire. Copying only the district's visible job count would miss that
-owner-dependent dispatch.
+Empire. Copying only the district's visible job count would miss the branch
+on empire type — and `JobDef` has no general inline-script field, so model
+each owner policy explicitly (see Current limits below).
 
-See the generated
-[`BuildingDef`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/building.ts)
-API for the capacity source's authoring fields, and
-[Localization](/concepts/localization/) for text that is not owned by one
-definition. Districts do not currently have an SDK content registry.
+See [Buildings](/reference/buildings/) for the capacity source's authoring
+fields, and [Localization](/concepts/localization/) for text that is not
+owned by one definition.
 
 ## Eligibility is a three-stage filter
 
@@ -65,19 +69,12 @@ a full pop-group trigger.
 | `possiblePrecalc`     | One of five named job checks | Reuses the game's precomputed ruler, specialist, worker, drone, or precursor eligibility policy. |
 | `possible`            | `pop_group` trigger          | Applies the job-specific rule that remains after the cheap checks.                               |
 
-An omitted pre-trigger is ignored; it does not mean `false`. State every cheap
-exclusion that is always true for the job. A normal specialist commonly uses:
-
-```ts
-possiblePreTriggers: {
-  hasOwner: true,
-  isBeingPurged: false,
-  isBeingAssimilated: false,
-  isSapient: true,
-},
-possiblePrecalc: "can_fill_specialist_job",
-possible: jobSpecificRule,
-```
+An omitted pre-trigger is ignored; it does not mean `false`. State every
+cheap exclusion that is always true for the job. The first example shows the
+usual specialist shape: pre-triggers for owner, purge, assimilation, and
+sapience, `possiblePrecalc: "can_fill_specialist_job"`, and a `possible`
+trigger for whatever rule is specific to the job. Add `isEnslaved: false`
+when the job must not be worked by enslaved pops, as the swap example does.
 
 The current `possiblePrecalc` values are `can_fill_ruler_job`,
 `can_fill_specialist_job`, `can_fill_worker_job`, `can_fill_drone_job`, and
@@ -98,13 +95,9 @@ state. Vanilla uses this heavily: a technician can appear as a mote harvester,
 and one physicist definition selects among several specialist names and icons.
 
 The `default` block provides the base display metadata. Each `swapType` row
-then supplies:
-
-- a required planet-scoped `trigger`;
-- a required numeric or conditional `weight` used to choose among eligible
-  rows; and
-- optional overrides for the alternative job `name`, description key, job
-  icon, building icon, and condition-string localization key.
+adds a planet-scoped `trigger` and a `weight`; when several rows match, the
+weights choose among them. The nested field tables below cover the optional
+display overrides.
 
 This worked example declares a normal harmonic researcher, a swap-only crystal
 resonator, conditional local output, an overlord contribution, modifiers, and
@@ -122,44 +115,37 @@ text. `buildingIcon` refers to the building art associated with the job, while
 `icon` selects a job icon. These fields do not add capacity and do not connect
 the job to the referenced building's behavior.
 
-When several swap rows match, their weights select among those alternatives.
-Keep the default identity useful even when no row matches, and order or weight
-overlapping rows deliberately. Vanilla also keeps dedicated definitions such
-as `mote_harvester` and `duelist` that exist only as swap targets.
+Keep the default identity useful even when no row matches, and order or
+weight overlapping rows deliberately. Vanilla also keeps dedicated
+definitions such as `mote_harvester` and `duelist` that exist only as swap
+targets.
 
 ## Resources have two owners
 
-Both resource fields accept repeated economic blocks, so one job can have a
-base output plus conditional production, upkeep, or logistics rows.
+`resources` and `overlordResources` credit different sides of the same job:
 
 | Member              | Trigger scope | Economic owner                                   |
 | ------------------- | ------------- | ------------------------------------------------ |
 | `resources`         | `colony`      | The colony and empire that employ the pop group. |
 | `overlordResources` | `pop_group`   | The overlord side of subject-job production.     |
 
-Each block can set an economic `category` and any supported operation:
-`cost`, `produces`, `upkeep`, or `logistics`. Each operation carries an open
-resource-to-number map, an optional `when` trigger in the field's scope, and
-optional scripted multipliers.
+Both fields accept repeated economic blocks, so one job can have a base
+output plus conditional production, upkeep, or logistics rows. Each block can
+set an economic `category` and any supported operation: `cost`, `produces`,
+`upkeep`, or `logistics`. Each operation carries an open resource-to-number
+map, an optional `when` trigger in the field's scope, and optional scripted
+multipliers.
 
-Use separate entries when the condition differs:
+Use separate entries when the condition differs. The worked example above
+does this: one entry carries the base output and upkeep, and a second adds
+its production only where `when` holds.
 
-```ts
-resources: [
-  {
-    category: "planet_physicists",
-    produces: { amounts: { physics_research: 3 } },
-    upkeep: { amounts: { consumer_goods: 1 } },
-  },
-  {
-    category: "planet_physicists",
-    produces: {
-      amounts: { physics_research: 2 },
-      when: specialLaboratoryIsPresent,
-    },
-  },
-],
-```
+The emitted shape differs from vanilla's here. Vanilla repeats `produces` or
+`upkeep` arms inside one `resources = { ... }` block and never writes two
+sibling blocks for one category. The SDK's `EconomicResourceBlock` carries at
+most one arm of each kind, so conditional output becomes sibling blocks — a
+spelling vanilla never uses. A ported vanilla job will not round-trip to the
+same text; test conditional output in game.
 
 Do not put the employer's normal output in `overlordResources`. Vanilla
 overlord jobs keep the local upkeep or production in `resources`, then use the
@@ -193,20 +179,23 @@ Inside a triggered row, `modifiers` writes modifier keys directly in the row;
 rules admit both shapes, and the vanilla field you are reproducing determines
 which one to use.
 
-Some legal fields are uncommon. In the current vanilla Jobs corpus,
-`popGroupModifier` and `triggeredSystemModifier` have no active example, while
-country, planet, system, and both triggered pop-group variants do. Treat the
+Some legal fields are uncommon. Among the jobs vanilla ships,
+`popGroupModifier` and `triggeredSystemModifier` have no active example,
+while the flat `countryModifier`, `planetModifier`, and `systemModifier`
+closures and both triggered pop-group variants do. Treat the
 generated type as proof that the grammar accepts a field, not proof that every
 combination has established gameplay behavior.
 
-## Weight and player priority answer different questions
+## Assignment weight, priority, and automation
 
 `weight` is evaluated in pop-group scope when the game compares jobs for a
-candidate worker. Its `base` gives the starting score, and conditional
-modifier rows add or multiply that score. Trait affinity, slavery rules, and
-citizenship are common weight inputs. Eligibility should still live in the
-three `possible` layers: a weight of zero is not a substitute for making a job
-illegal.
+candidate worker. `base` gives a starting score, but nearly every vanilla job
+writes the block's top-level `weight` operation instead
+(`weight = { weight = @ruler_job_weight }`), which the SDK also supports,
+alongside `mult`, `factor`, `add`, `modifiers`, and `scaledModifiers` rows.
+Trait affinity, slavery rules, and citizenship are common weight inputs.
+Eligibility should still live in the three `possible` layers: a weight of
+zero is not a substitute for making a job illegal.
 
 The remaining assignment switches control other parts of the system:
 
@@ -220,23 +209,28 @@ The remaining assignment switches control other parts of the system:
   preferred applied modifier.
 
 The installed game files do not document the algorithm behind
-`firstComeFirstServed`, and no current vanilla job supplies `autoTraitPrio`.
-Use either only when the mod has a concrete design need, then compare worker
-assignment before and after the change in Stellaris. Vanilla uses
-`canSetPriority: false` for many overlord and event-controlled jobs that the
-player should not manage as ordinary work.
+`firstComeFirstServed`; use it only with a concrete design need, then compare
+worker assignment in Stellaris. `autoTraitPrio` is widespread in vanilla —
+129 jobs supply it, always through
+`inline_script = "jobs/automodding_priority_<resource>"`, so the list is
+invisible in the job body itself. Supply the list directly;
+`common/traits/000_documentation_autmodding_species_traits.txt` documents the
+rule. Vanilla uses `canSetPriority: false` for many overlord and
+event-controlled jobs that the player should not manage as ordinary work.
 
 ## Localization and identity
 
-`mod.job("orbital_analyst", definition)` mints a stable job id from the mod
-prefix and logical name. The four top-level text members generate:
+`mod.job("orbital_analyst", definition)` mints the job id from the mod
+prefix, the registry segment, and the logical name —
+`orbital_analysis_job_orbital_analyst` in the first example. The four
+top-level text members generate keys from that full id:
 
-| Member   | Localization key       |
-| -------- | ---------------------- |
-| `name`   | `job_<id>`             |
-| `plural` | `job_<id>_plural`      |
-| `desc`   | `job_<id>_desc`        |
-| `effect` | `job_<id>_effect_desc` |
+| Member   | Key in the first example                               |
+| -------- | ------------------------------------------------------ |
+| `name`   | `job_orbital_analysis_job_orbital_analyst`             |
+| `plural` | `job_orbital_analysis_job_orbital_analyst_plural`      |
+| `desc`   | `job_orbital_analysis_job_orbital_analyst_desc`        |
+| `effect` | `job_orbital_analysis_job_orbital_analyst_effect_desc` |
 
 `name` is required by the SDK. Supply the other three when the UI can show
 them; in particular, `effect` is the short output summary rather than the
@@ -256,6 +250,9 @@ economic modifiers, and localization can all refer to them.
 - Script-value multipliers are supported in resource and triggered-modifier
   shapes, but a copied vanilla expression still needs a checked SDK
   representation or an explicit escape hatch.
+- The game rules permit `divide_over_pop_groups` on
+  `triggeredPlanetPopGroupModifierForSpecies`; the SDK's `TriggeredModifier`
+  does not model it. No vanilla job uses it.
 - The SDK checks field types, trigger and modifier scopes, owned references,
   emitted paths, and localization. It does not simulate workforce assignment,
   swap selection, automation, or overlord accounting.
@@ -279,6 +276,8 @@ SDK checks and live-game verification.
 
 The tables below are generated from the same descriptors and field metadata
 that drive job authoring and serialization. Nested tables cover swappable
-data, pre-triggers, resource operations, weights, and triggered modifiers.
+data (with its `default` and `swap_type` blocks), pre-triggers, and triggered
+tags; resource blocks, weights, and triggered modifiers render as their
+shared block types.
 
 <FieldTable registry="job" />

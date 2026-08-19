@@ -21,9 +21,9 @@ This complete example uses all three:
 
 <PairedExample name="localization" />
 
-Compare the TypeScript with the rendered files. The building's text, the
-standalone tooltip, and the exact replacement take different routes into the
-game's localization layers.
+Compare the TypeScript with the rendered files. The building's text and the
+standalone tooltip share one ordinary language file. The replacement is
+written separately, under the game's replace directory.
 
 ## Put definition text on the definition
 
@@ -46,15 +46,13 @@ The SDK mints the building id and applies the registry's localization patterns:
 | `desc` | `crystal_resonance_building_resonance_archive_desc` |
 
 The text does not appear in the building's PDXScript body. The game-facing
-definition uses its id, while the Fold registers the matching localization
-entries in the same Feature's language file.
+definition uses its id, while the [Fold](/guides/the-pipeline/) registers the
+matching localization entries in the same Feature's language file.
 
-Generated localization slot patterns use `$` to mean the definition id. Some
-nested entries have their own ids and localization slots; for those rows, `$`
-means the nested entry's id.
-
-Use these members whenever the text belongs to a generated definition. They
-keep the definition, required-text checks, and key pattern together.
+Each registry reference page lists its localization slots as `$`-patterns,
+such as `$_desc` in the [building field tables](/reference/buildings/). In
+those tables `$` means the definition id, and for a nested entry's slots it
+means that entry's own key.
 
 ## Create a standalone key with `mod.localization`
 
@@ -67,15 +65,15 @@ const archiveTooltip = mod.localization("archive_tooltip", {
   french: "Conserve les découvertes issues de la recherche en résonance.",
 });
 
-const archive = mod.building("resonance_archive", {
-  // Other fields omitted.
+// The same building as before, showing only the tooltip field.
+const resonanceArchive = mod.building("resonance_archive", {
   customTooltip: archiveTooltip.key,
 });
 ```
 
-`mod.localization` prefixes the suffix, so this item owns the complete key
-`crystal_resonance_archive_tooltip`. The exact key remains in the type of
-`.key`, which makes it safe to pass through helpers without copying the final
+`mod.localization` adds the mod prefix to the name you pass, so this item owns
+the complete key `crystal_resonance_archive_tooltip`. That literal key is part
+of `.key`'s type, so you can pass it through helpers without copying the final
 string.
 
 A string is shorthand for English-only text:
@@ -85,36 +83,42 @@ const label = mod.localization("archive_label", "Resonance Archive");
 ```
 
 For translations, pass a language record with `english` plus any supported
-Stellaris languages. English is required, and TypeScript rejects unknown
-language names. The Fold emits only the language files that have text.
+Stellaris languages: `braz_por`, `french`, `german`, `japanese`, `korean`,
+`polish`, `russian`, `simp_chinese`, and `spanish`. The SDK exports the list
+as `LOCALIZATION_LANGUAGES`. English is required, and TypeScript rejects
+unknown language names. The Fold emits only the language files that have
+text.
 
-Localization values are mod items, not global registrations. Place them in a
-Feature and include that Feature in `mod.compile`, just like content and
-events. Their Feature stem selects the localization filename.
+Calling `mod.localization` does not emit anything on its own. The returned
+value is a mod item: place it in a [Feature](/guides/features-and-discovery/)
+and include that Feature in `mod.compile`, just like content and events. The
+Feature's stem selects the localization filename.
 
 ## Replace an exact existing key deliberately
 
-`mod.replaceLocalization` preserves the key exactly and writes it under the
-game's replacement layer:
+The paired example's `mod.replaceLocalization("crisis.2010.a", ...)` call
+preserves the key exactly and writes it under the game's replacement layer.
+The key is not prefixed or normalized — it must start with an ASCII letter,
+digit, or `_`, and contain only ASCII letters, digits, `_`, `.`, `-`, or `'`.
 
-```ts
-const reconsider = mod.replaceLocalization("crisis.2010.a", {
-  english: "Reconsider the signal.",
-  french: "Réexaminez le signal.",
-});
-```
-
-The key is not prefixed or normalized. The English entry is written to a path
-such as:
+Each language entry goes to
+`localisation/replace/<language>/<prefix>_<feature stem>_l_<language>.yml`.
+In the example, the `resonance` Feature makes the English file:
 
 ```text
 localisation/replace/english/crystal_resonance_resonance_l_english.yml
 ```
 
 Use this for a free-standing key that a typed content patch cannot reach, such
-as existing event option text. The SDK validates the key's shape but cannot
-prove that the key exists in Stellaris or another mod. A typo therefore creates
-an unused entry instead of replacing anything.
+as existing event option text. The SDK cannot prove that the key exists in
+Stellaris or another mod. A typo therefore creates an unused entry instead of
+replacing anything.
+
+A language record always carries `english`, so a replacement cannot ship a
+translation alone: the English text is emitted into the replace layer too, and
+it wins over the original English. To replace only the French text of a
+vanilla key, copy the vanilla English string into `english` so English games
+keep their original words.
 
 Ordinary localization and replacement localization are separate layers. Even
 if they name the same key, the Fold keeps both files because the replacement
@@ -136,13 +140,15 @@ standalone localization, and localization contributed by patches. You do not
 need to coordinate filenames to get this protection: the key is checked
 globally before the Feature-owned files are resolved.
 
-Keep every key and displayed value on one source line. Use the two characters
-`\\n` when Stellaris should display a line break. A literal line break or NUL
+Keep every key and displayed value on one source line. For a line break that
+Stellaris should display, write `\\n` in the TypeScript string — the escaped
+backslash plus `n` — so the emitted file holds the two characters `\n`, which
+is how the game's own localization spells one. A literal line break or NUL
 byte is rejected because it could turn the rest of the file into unintended
 entries. Since the game's format has no quote escape, the Fold replaces a
 double quote in displayed text with a single quote and records a warning.
 
-## `localization` in TypeScript, `localisation` on disk
+## What the emitted `.yml` files look like
 
 The SDK's API and this documentation use the American spelling
 **localization**. Stellaris requires the British spelling in its directory
@@ -157,6 +163,13 @@ l_english:
  crystal_resonance_archive_tooltip:0 "Stores discoveries made through resonance research."
 ```
 
-The BOM is not visible in the example tab, but it is present in the rendered
-file. Stellaris silently ignores localization files without it, so the renderer
-adds it automatically.
+The BOM is not visible in the PDXScript tab of the example above, but it is
+present in the rendered file. Stellaris silently ignores localization files
+without it, so the renderer adds it automatically.
+
+Displayed text passes through to the game unchanged, so Stellaris markup works
+as usual: scope properties such as `[Root.GetName]`, colour codes such as
+`§Y...§!`, icon tags such as `£energy£`, and `$VARIABLE$` slots. The SDK does
+not check these; the game interprets them at display time. Text that must vary
+by game-state trigger is scripted localization (`mod.scriptedLoc`, emitted
+under `common/scripted_loc`) — a content registry, not a localization entry.

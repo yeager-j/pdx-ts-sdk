@@ -45,7 +45,9 @@ const documented = coverage.registries.filter((row) => row.page !== undefined).l
     {
       coverage.registries.map((row) => (
         <tr>
-          <td>{row.registry}</td>
+          <td>
+            <code>{row.registry}</code>
+          </td>
           <td>
             <code>mod.{row.method}</code>
           </td>
@@ -65,11 +67,19 @@ const documented = coverage.registries.filter((row) => row.page !== undefined).l
   </tbody>
 </table>
 
+<p>Rows with no page name the batch of work that will write it.</p>
+
 <h2 id="channels">Channels</h2>
 
 <p>
   These are supported too, but they are not registries: they mint no content ids and are not
-  generated from a content type. The guides cover them.
+  generated from a content type. Each has its own page: <a href={`${base}/concepts/events/`}
+    >Events</a
+  >, <a href={`${base}/concepts/on-actions/`}>On-actions</a>, <a
+    href={`${base}/concepts/localization/`}>Localization</a
+  >, <a href={`${base}/concepts/assets/`}>Assets</a>, and <a
+    href={`${base}/reference/ship-of-size-limits/`}>Ship-of-size limits</a
+  >.
 </p>
 
 <table>
@@ -108,20 +118,22 @@ const documented = coverage.registries.filter((row) => row.page !== undefined).l
   </tbody>
 </table>
 
-<h2 id="not-yet-supported">Not supported yet</h2>
+<h2 id="not-supported-yet">Not supported yet</h2>
 
 <p>
   The {coverage.unsupported.length} locations below hold script content in Stellaris {
     coverage.gameVersion
-  } and no registry writes to any of them. There is no page for these, and no type: the SDK cannot
-  author them today.
+  } and nothing the SDK authors writes to any of them. There is no page for these and no generated
+  TypeScript type, so the SDK cannot author them today.
 </p>
 
 <p>
-  The list covers <code>common/</code>, the game's script-content root — a folder per concept,
-  except for the few types the game keeps in a single file. Asset trees — <code>gfx/</code>,{" "}
-  <code>interface/</code>, <code>sound/</code> — are the Assets channel's business, and the three
-  registries that write into them are in the first table.
+  The list covers <code>common/</code> only — a folder per concept, except for the handful of
+  files the game keeps at the root of <code>common/</code>, two of which are the game's own notes
+  to modders rather than content. Script content the game keeps elsewhere — <code>map/</code>,{" "}
+  <code>prescripted_countries/</code>, flag colors, music, fonts — is also unsupported and not
+  listed here. Asset trees — <code>gfx/</code>, <code>interface/</code>, <code>sound/</code> — are
+  the Assets channel's business, and the registries that write into them are in the first table.
 </p>
 
 <ul>

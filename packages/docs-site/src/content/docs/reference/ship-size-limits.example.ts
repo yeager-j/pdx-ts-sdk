@@ -13,6 +13,7 @@ const dreadnought = mod.shipSize("dreadnought", {
   class: "shipclass_military",
   isDesignable: false,
   isListed: false,
+  sizeMultiplier: 60,
   sectionSlots: {
     bow: { locator: ["part1"] },
     mid: { locator: ["part2"] },
@@ -22,8 +23,8 @@ const dreadnought = mod.shipSize("dreadnought", {
 
 const dreadnoughtLimit = mod.countryShipOfSizeLimit("dreadnoughts", {
   shipTypes: [dreadnought],
-  base: 80,
-  max: 800,
+  base: 60, // one Dreadnought: 1 * the hull's sizeMultiplier
+  max: 600, // ten Dreadnoughts
   navalCapFraction: 0.1,
   show: isScopeValid(),
 });
