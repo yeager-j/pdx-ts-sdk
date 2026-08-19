@@ -83,9 +83,6 @@ export interface Coverage {
  * that a *new* registry cannot slip in silently.
  */
 export const UNDOCUMENTED_REGISTRIES: Readonly<Record<string, string>> = {
-  economic_category: "SDK-201 — progression and economy",
-  static_modifier: "SDK-201 — progression and economy",
-  scripted_modifier: "SDK-201 — progression and economy",
   agenda: "SDK-202 — government and politics",
   edict: "SDK-202 — government and politics",
   decision: "SDK-202 — government and politics",
