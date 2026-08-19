@@ -9,10 +9,10 @@ import { Aside } from "@astrojs/starlight/components";
 import FieldTable from "../../../components/FieldTable.astro";
 
 A **strike-craft component template** defines one hangar component and the
-small craft it launches. It combines component-family policy with carried
-weapon values, craft count, regeneration, movement, defenses, engagement, and
-target selection. The SDK writes strike craft into
-`common/component_templates/`.
+small craft it launches. It combines component-set membership, availability,
+and upgrade rules with carried weapon values, craft count, regeneration,
+movement, defenses, engagement, and target selection. The SDK writes strike
+craft into `common/component_templates/`.
 
 The [Ships overview](/concepts/ships/) places custom Aegis interceptors into a
 `large_strike_craft` section hardpoint.
@@ -29,28 +29,35 @@ componentSlot: [{
 }],
 ```
 
-The global design fills `STRIKE_CRAFT_01` with a strike-craft component whose
-`size` matches the slot. `componentSet` groups this component with its upgrade
-family; it is not the slot template.
+The design fills `STRIKE_CRAFT_01` with a strike-craft component whose `size`
+matches the slot. [`componentSet`](/reference/component-sets/) groups this
+component with its upgrade family; it is not the slot template. The
+[Ships overview](/concepts/ships/) covers the slot-naming rules themselves.
 
-Use current section entities built for hangars. A weapon locator and a
-strike-craft launch locator are not interchangeable even when both are plain
-strings in script.
+Copy the section entity from a current vanilla hangar section. A weapon
+locator and a strike-craft launch locator are not interchangeable, even though
+both are plain strings in script.
 
 ## One component describes a squadron and its weapon
 
-The main fields form three groups:
+The main fields form four groups:
 
-| Group                 | Members                                                                                                              |
-| --------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| Squadron lifecycle    | `count`, `regenerationPerDay`, `launchTime`                                                                          |
-| Movement and survival | `health`, `armor`, `shield`, `evasion`, `speed`, `rotationSpeed`, `acceleration`                                     |
-| Carried weapon        | `weaponType`, `projectileGfx`, `damage`, `cooldown`, `range`, `accuracy`, `tracking`, penetration and damage factors |
+| Group                 | Fields                                                                                                   |
+| --------------------- | -------------------------------------------------------------------------------------------------------- |
+| Squadron lifecycle    | `count`, `regenerationPerDay`, `launchTime`                                                              |
+| Movement and survival | `health`, `armor`, `shield`, `evasion`, `speed`, `rotationSpeed`, `acceleration`                         |
+| Carried weapon        | `weaponType`, `projectileGfx`, `damage`, `cooldown`, `range`, `accuracy`, `tracking`                     |
+| Damage scaling        | `hullDamage`, `armorDamage`, `shieldDamage`, `armorPenetration`, `shieldPenetration`, `sizeDamageFactor` |
 
-`engagementRange` governs when the carrier launches and commits the craft;
-`attackRange` belongs to the craft's attack behavior. `shipBehavior` selects
-the craft AI. Keep these values coherent with speed, weapon range, and the
-carrier's combat role.
+Three fields carry a distance. `range` is the carried weapon's reach; every
+vanilla strike-craft definition sets it. `engagementRange` governs when the
+carrier launches and commits the craft. `attackRange` is undocumented and one
+vanilla definition sets it, so leave it out unless you are copying that
+definition. `shipBehavior` selects the craft AI. Keep these values coherent
+with speed and the carrier's combat role.
+
+An abridged version of the Aegis interceptors from the
+[Ships overview](/concepts/ships/):
 
 ```ts
 const interceptors = mod.strikeCraftComponentTemplate("interceptors", {
@@ -78,22 +85,30 @@ const interceptors = mod.strikeCraftComponentTemplate("interceptors", {
 
 Strike craft can themselves intercept projectiles or other strike craft.
 `pointDefenceTargets` chooses the supported target categories, while
-`weaponType`, tags, and AI tags classify the component. Accuracy, tracking,
-range, cooldown, speed, and engagement range still determine whether that
-policy works in combat.
+`weaponType`, tags, and AI tags classify the component. The combat numbers
+above decide whether that policy works; the target list alone gives the
+component no point-defense ability.
 
-The Aegis example uses `pointDefenceTargets: ["strike_craft"]`. That list does
-not give the component point-defense numbers or behavior by itself.
+The full Aegis example on the [Ships overview](/concepts/ships/) adds
+`pointDefenceTargets: ["strike_craft"]`.
 
 ## Availability and upgrades follow component-family rules
 
-Like utility and weapon templates, strike craft support:
+Like [utility](/reference/utility-components/) and
+[weapon](/reference/weapon-components/) templates, strike craft support:
 
 - `prerequisites`, `potential`, `validForCountry`, and `showTechUnlockIf`;
-- `componentSet`, `upgradesTo`, `upgradePath`, and `blockedBy`;
-- `sizeRestriction` and the deprecated `classRestriction`;
+- `componentSet`, `upgradesTo`, and `upgradePath`;
+- `sizeRestriction`, `classRestriction`, `blockedBy`, and `shipLimit`;
 - tags, AI tags, weights, and `shouldAiUse`;
 - construction cost and upkeep in `resources`.
+
+The generated rules mark only `classRestriction` deprecated, but the game's
+shipped component documentation deprecates all four restriction fields:
+`potential` replaces `classRestriction` and `sizeRestriction`, and a `possible`
+trigger replaces `blockedBy` and `shipLimit`. Prefer `potential`. The SDK does
+not expose `possible` on this registry, and no vanilla strike-craft definition
+uses any of the four.
 
 An upgrade row should preserve the component's section compatibility unless
 changing the required hangar size is intentional. Verify automatic upgrades
@@ -101,9 +116,11 @@ on existing carriers as well as new designs.
 
 ## Modifiers and auras affect the carrier or nearby ships
 
-`shipModifier` applies to the mounting ship. Friendly and hostile aura blocks
-have the same stack, range, application, graphics, modifier, and optional
-daily-damage structures exposed by the other component registries.
+`shipModifier` applies to the mounting ship. `friendlyAura` and `hostileAura`
+use the same name, stack, range, application, modifier, and graphics structure
+described under [utility component auras](/reference/utility-components/).
+Only `hostileAura` carries `damagePerDay`, although the game's shipped
+component documentation shows daily damage under the friendly block as well.
 
 These fields do not describe the individual launched craft's base statistics;
 use the dedicated health, armor, shield, evasion, movement, and weapon members
@@ -116,8 +133,12 @@ for that payload.
 - The SDK cannot simulate launch cadence, replacement rate, craft AI,
   interception, retargeting, engagement distance, carrier behavior, or combat
   performance.
-- Model, projectile, icon, and behavior ids remain external asset or game-data
-  contracts.
+- The SDK checks that model, projectile, icon, and behavior ids are spelled as
+  references; it cannot prove the game or your mod supplies the matching asset.
+- Most vanilla strike-craft components build their cost from an `inline_script`
+  macro inside `resources`. `StrikeCraftComponentTemplateDef` has no
+  inline-script field, so write the resolved category, cost, and upkeep amounts
+  instead of copying one of those blocks.
 
 Test hangar compatibility, launch locators, squadron count, replacement after
 losses, disengagement and re-engagement, movement, weapon fire, interception,

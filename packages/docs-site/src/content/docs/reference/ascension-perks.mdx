@@ -35,13 +35,21 @@ different questions in the perk selection interface:
 Put structural eligibility in `potential`: empire type, required downloadable
 content, mutually exclusive paths, or another condition that should remove the
 perk from consideration. Put requirements that the player can satisfy in
-`possible`: the number of perks already selected, a technology, or another
-progression gate whose failure should explain why selection is blocked.
+`possible`: the number of perks already selected or another progression gate
+whose failure should explain why selection is blocked.
 
-Vanilla commonly uses a `potential` condition to exclude a perk after the
-country already owns it, and a `possible` condition with failure text for its
-prerequisite count. The SDK lowers your triggers, but it does not choose or
-generate those player-facing failure messages for you.
+A technology prerequisite works in either field. In `potential` it hides the
+perk until the technology is researched, which is what the basic example above
+does. Vanilla always puts technology checks in `possible` instead, so the perk
+stays visible and the tooltip can say what is missing.
+
+Vanilla also excludes a perk in `potential` once the country owns it, and it
+wraps almost every `possible` condition in `custom_tooltip = { fail_text = ... }`
+so a blocked perk explains itself. Build that with the
+`customTooltip({ failText, conditions })` trigger and create the text with
+`mod.localization(...)`; see [Localization](/concepts/localization/). Neither
+example on this page shows it. The SDK writes the triggers you give it and
+never invents the player-facing message.
 
 <Aside type="caution" title="AI weight is not availability">
   `aiWeight` ranks a perk for the AI after the availability rules apply. A zero weight does not
@@ -55,32 +63,46 @@ name comes from the game's shared tradition rules; the field belongs directly
 to an ascension perk. Each record key is the variant's full emitted id, so a
 mod-owned key must start with the mod prefix.
 
+Ascension perks often sit at the end of a tradition category or represent an
+ascension path. The perk and the tradition tree remain separate definitions;
+connect them through the game's normal references and selection rules. See
+[Traditions](/reference/traditions/) for building the trees themselves, their
+prerequisites, and the swap surface that belongs to a tradition.
+
 This example replaces the perk's presentation, modifier, and enable effect for
 machine empires while keeping the base icon:
 
 <PairedExample name="ascension-perks-advanced" />
 
-Each swap field has one responsibility:
+These five fields control which variant applies and what it reuses:
 
-| Field            | Responsibility                                                               |
-| ---------------- | ---------------------------------------------------------------------------- |
-| `trigger`        | Makes this variant eligible for the current country.                         |
-| `weight`         | Chooses the highest-weight variant when more than one eligible swap matches. |
-| `inheritIcon`    | Reuses the base perk's icon.                                                 |
-| `inheritName`    | Reuses the base perk's displayed name, so the swap does not need `name`.     |
-| `inheritEffects` | Reuses the base modifier and `onEnabled` effect.                             |
+| Field            | Responsibility                                                           |
+| ---------------- | ------------------------------------------------------------------------ |
+| `trigger`        | Makes this variant eligible for the current country.                     |
+| `weight`         | Sets the chance of this variant when more than one swap is eligible.     |
+| `inheritIcon`    | Reuses the base perk's icon.                                             |
+| `inheritName`    | Reuses the base perk's displayed name, so the swap does not need `name`. |
+| `inheritEffects` | Reuses the base modifier and `onEnabled` effect.                         |
+
+A swap's remaining fields (`name`, `flavor`, `effects`, `modifier`,
+`onEnabled`, and the tooltip fields) mirror the base perk's and replace
+whatever the inheritance flags do not carry over.
 
 Set all three inheritance flags deliberately. If `inheritEffects` is `false`,
 put the complete replacement `modifier` and `onEnabled` behavior on the swap.
 If it is `true`, omit those replacement fields and let the base perk supply the
-behavior. Avoid overlapping triggers unless the weights express an intentional
-choice.
+behavior. Two swaps whose triggers both match are settled by chance in
+proportion to their weights, not by the higher weight winning, so keep the
+triggers exclusive unless a chance split is what you want.
 
-The SDK requires a swap `name` unless `inheritName` is true. A swap that does
-not inherit its icon also needs a matching GFX definition and asset. See
+Every perk icon is inferred from an id: an ordinary perk needs a
+`GFX_<perk-id>` sprite, and a swap that does not inherit its icon needs
+`GFX_<swap-id>`. The id is the full minted id, so the advanced example's perk
+needs `GFX_adaptive_destinies_ascension_perk_adaptive_destinies`. The SDK does
+not create these sprites or their textures. See
 [Assets](/concepts/assets/) for authoring GFX definitions and texture files.
 
-## What the perk does
+## Modifiers, effects, and tooltips
 
 Ascension perks can combine continuing bonuses, conditional bonuses, and a
 one-time selection effect:
@@ -99,16 +121,14 @@ not use it as a migration hook for countries that selected the perk in an
 older save.
 
 Create custom tooltip text with `mod.localization(...)` and pass the returned
-`.key`. At the root, `customTooltip` accepts one key and replaces the generated
-modifier tooltip. Swap variants accept arrays for both `customTooltip` and
-`customTooltipWithModifiers`; the latter adds text while retaining the
-generated modifier lines.
+`.key`.
 
 <Aside type="caution" title="Root tooltip support is narrower than Vanilla">
-  Vanilla uses repeated `custom_tooltip` fields and root-level `custom_tooltip_with_modifiers` in
-  some ascension perks. The current `AscensionPerkDef` exposes one root `customTooltip` and does not
-  expose a root `customTooltipWithModifiers`. Those broader forms are available only inside
-  `traditionSwap`.
+  Vanilla uses repeated `custom_tooltip` fields and a root-level `custom_tooltip_with_modifiers` in
+  a few ascension perks. The current `AscensionPerkDef` takes one root `customTooltip` and has no
+  root `customTooltipWithModifiers`. Both broader forms are available only inside `traditionSwap`,
+  where each takes an array; `customTooltipWithModifiers` adds text while keeping the generated
+  modifier lines.
 </Aside>
 
 ## Localization follows perk and swap ids
@@ -131,20 +151,21 @@ A swap uses its record key as its identity. The advanced example's
 | `flavor`  | `adaptive_destinies_ascension_perk_machine_destinies_delayed` |
 | `effects` | `adaptive_destinies_ascension_perk_machine_destinies_desc`    |
 
-`flavor` and `effects` are optional. If the swap inherits its name, it does not
-need a new `name` key. Keep perk and swap ids stable after release because
-scripts, localization, icons, and other definitions can refer to them.
-
-Ascension perks often sit at the end of a tradition category or represent an
-ascension path. The perk and the tradition tree remain separate definitions;
-connect them through the game's normal references and selection rules. See the
-[Traditions deep reference](/reference/traditions/) for complete trees,
-prerequisites, and tradition swaps.
+`flavor` is the delayed explanatory text and `effects` is the short effect
+summary, so a swap's `effects` uses the same `_desc` suffix the base perk's
+`desc` uses. Both are optional. If the swap inherits its name, it does not need
+a new `name` key. Keep perk and swap ids stable after release because scripts,
+localization, icons, and other definitions can refer to them.
 
 ## Current limits and testing advice
 
 - Ascension perks have no patch surface. `mod.patchAscensionPerk` does not
-  exist.
+  exist. See [Coverage](/reference/coverage/) for the registries that can be
+  patched today, and [Patching vanilla](/guides/patching-vanilla/) for how a
+  patch works.
+- There is no registry for `ascension_perk_category`, the definition that
+  groups perks into the Ascension Paths and Ambitions panels. A perk you define
+  sits outside those panels.
 - The SDK checks field shapes, trigger and effect scopes, localization,
   nested swap ids, references, and emitted paths. It does not simulate perk
   slots, the selection interface, AI choice, swap resolution, modifier behavior,
@@ -166,5 +187,9 @@ checks and live-game verification.
   [Vanilla ascension perk ids](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/stellaris-ids/src/registries/ascension-perk.ts).
 
 ## Field reference
+
+The tables below are generated from the same descriptors and field metadata
+that drive perk authoring and serialization. Nested tables cover the swap,
+triggered-modifier, and weight fields.
 
 <FieldTable registry="ascension_perk" />

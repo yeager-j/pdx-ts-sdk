@@ -26,7 +26,6 @@ const relayPort = mod.starbaseLevel("port", {
   aiWeight: { base: 2 },
   starbaseCapacityUsed: 1,
   potentialHomeBase: true,
-  displayShipyardButton: true,
   collectsTrade: true,
   upgradePossible: always(),
   downgradePotential: always(),

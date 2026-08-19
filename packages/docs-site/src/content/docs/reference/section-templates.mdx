@@ -16,26 +16,36 @@ writes section templates under `common/section_templates/`.
 The [Ships overview](/concepts/ships/) defines bow, mid, and stern sections
 for one complete Aegis design and shows the emitted files.
 
-## A section joins three name systems
+## A section joins four name systems
 
-One section must make three independent sets of names agree:
+One section must make four independent sets of names agree:
 
-| Connection         | Section member         | Other owner                                   |
-| ------------------ | ---------------------- | --------------------------------------------- |
-| Compatible hull    | `shipSize`             | `mod.shipSize` definition                     |
-| Hull attachment    | `fitsOnSlot`           | Key in `shipSize.sectionSlots`                |
-| Equipment position | `componentSlot[].name` | `globalShipDesign.section[].component[].slot` |
+| Connection         | Section member             | Where the name is defined                                           |
+| ------------------ | -------------------------- | ------------------------------------------------------------------- |
+| Compatible hull    | `shipSize`                 | [`mod.shipSize`](/reference/ship-sizes/), or a vanilla hull         |
+| Hull attachment    | `fitsOnSlot`               | Key in `shipSize.sectionSlots`                                      |
+| Equipment shape    | `componentSlot[].template` | Component-slot templates the game defines                           |
+| Equipment position | `componentSlot[].name`     | `globalShipDesign.section[].component[].slot`, or the ship designer |
 
-Use owned ship-size items in `shipSize`. The section's own id is minted by
-`mod.sectionTemplate`; the slot names are engine keys and stay unprefixed.
+`shipSize` accepts owned ship-size items and checked vanilla hulls, so a new
+section can attach to a shipped ship with `vanilla.shipSize("battleship")`.
+The section's own id is minted by `mod.sectionTemplate`; the slot names are
+engine keys and stay unprefixed.
 
 ```ts
 const mid = mod.sectionTemplate("aegis_mid", {
+  name: "Aegis Carrier Core",
   shipSize: [hull],
   fitsOnSlot: ["mid"],
   entity: "cruiser_mid_S2HB_entity",
 });
 ```
+
+`name` supplies the text the ship designer shows. The SDK writes it through
+[Localization](/concepts/localization/) under the section id. A section on a
+player-designable hull needs it, or the designer shows the raw key instead.
+The SDK leaves `name` optional for every section and does not check which
+hulls are designable.
 
 `compatibleWithAllShipSizes: true` bypasses the explicit compatibility list.
 Reserve it for a section whose model, slot name, utility layout, and gameplay
@@ -44,7 +54,8 @@ safer for ordinary sections.
 
 ## Component slots describe sockets, not equipment
 
-Each `componentSlot` row declares one named hardpoint:
+Each `componentSlot` row declares one named hardpoint. The mid section above
+carries a single strike-craft row:
 
 ```ts
 componentSlot: [{
@@ -55,7 +66,7 @@ componentSlot: [{
 }],
 ```
 
-- `name` is the slot key a fixed design fills.
+- `name` is the slot key a fixed design or the ship designer fills.
 - `template` is a component-slot-template id such as `small_turret`,
   `medium_turret`, `point_defence_turret`, or `large_strike_craft`.
 - `locatorname` is a locator on the section model.
@@ -74,17 +85,13 @@ by the ship designer or by a global design.
 
 ## Utility slots are counts
 
-Utility positions use four numeric fields rather than `componentSlot` rows:
-
-- `smallUtilitySlots`
-- `mediumUtilitySlots`
-- `largeUtilitySlots`
-- `auxUtilitySlots`
+Utility positions are counts — `smallUtilitySlots`, `mediumUtilitySlots`,
+`largeUtilitySlots`, and `auxUtilitySlots` — not `componentSlot` rows.
 
 Stellaris derives names such as `MEDIUM_UTILITY_1` from those counts. A global
 design can fill those names through its section `component` rows. Required
 components such as reactors and sensors remain separate and belong in
-`globalShipDesign.requiredComponent`.
+[`globalShipDesign.requiredComponent`](/reference/global-ship-designs/).
 
 Do not add utility counts to compensate for a missing required component set.
 One controls ordinary section equipment; the other controls mandatory
@@ -104,12 +111,12 @@ therefore select a culture-specific entity such as
 The SDK accepts model-entity and locator references but cannot inspect the
 asset graph. Verify that:
 
-1. the hull entity contains the section attachment locator;
-2. the section entity exists for each graphical culture;
-3. every equipment locator exists on that entity; and
-4. turret and strike-craft art uses the locators expected by its component.
+- the hull entity contains the section attachment locator
+- the section entity exists for each graphical culture
+- every equipment locator exists on that entity
+- turret and strike-craft art uses the locators expected by its component
 
-## Cost, availability, and AI selection belong to the section
+## Cost, unlocks, and AI selection
 
 `resources` can add section construction cost or upkeep. `prerequisites`
 unlocks the section with technologies. `aiTags` and `aiWeight` control how the
@@ -120,9 +127,14 @@ have carrier-oriented tags and a weight policy that does not select it before
 usable strike craft exist. A torpedo section should gate the technology and
 role that make its hardpoints meaningful.
 
-`modifier` and `shipModifier` both record ship-scoped modifier blocks because
-the rules admit both PDXScript keys. Follow the vanilla definition you are
-modeling; do not assume the duplicate-looking names are interchangeable.
+## The two modifier keys have no vanilla example
+
+The rules list two ship-scoped modifier keys for this registry, `modifier` and
+`ship_modifier`, so the SDK exposes `modifier` and `shipModifier`. Neither key
+has a shipped example: none of the 482 vanilla section templates writes
+either one. The only shipped `ship_modifier` use is on ship sizes, which is a
+different registry. Prefer `modifier`, and confirm in the running game that
+the modifier applies before you build on it.
 
 ## Current limits and testing advice
 
@@ -131,13 +143,18 @@ modeling; do not assume the duplicate-looking names are interchangeable.
 - The SDK checks reference types and serialization, but not slot completeness,
   model locators, component compatibility, or visual overlap.
 - `icon` is present in vanilla section definitions, but the upstream rules
-  note that it may be unused. Do not rely on it without a live UI witness.
-- Section order in a global design does not repair a wrong `slot`; use the
-  explicit hull mount name.
+  note that it may be unused. Do not rely on it until you have seen it appear
+  in the game's interface.
+- A global design places each section by its `slot` value, not by the order of
+  the section rows. Moving a row does not correct a wrong `slot`.
+- A `resources` block takes one `cost`, `produces`, `upkeep`, and `logistics`
+  arm each. Vanilla defense-platform sections write three trigger-gated `cost`
+  arms inside one block; that shape cannot be authored yet.
 
-Test every hull and graphical culture, the 3D ship viewer, automatic and manual
-designs, AI section selection, construction cost, component placement, firing
-origins, damage states, and save/load.
+Check the section on every hull and graphical culture, in the 3D ship viewer,
+and in automatic and manual designs. Then test AI section selection,
+construction cost, component placement, firing origins, damage states, and
+save/load.
 
 ## API and vanilla references
 
@@ -145,10 +162,12 @@ origins, damage states, and save/load.
   is the generated definition used by `mod.sectionTemplate`.
 - [`vanilla.sectionTemplate`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
   provides checked references to vanilla section-template ids.
+- [`vanilla.shipSize`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
+  provides checked references to vanilla hulls for `shipSize`.
 
 ## Field reference
 
-The nested table covers component-slot position and placement data in addition
-to the section's compatibility, resources, AI, utility, and modifier fields.
+The generated tables cover the section's own fields and the nested
+component-slot rows, including position and placement data.
 
 <FieldTable registry="section_template" />

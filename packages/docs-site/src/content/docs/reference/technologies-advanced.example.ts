@@ -15,7 +15,7 @@ const unlockDesc = mod.localization(
   "Resonance Observatories improve planetary Physics Research."
 );
 const gatewayDescription = mod.replaceLocalization(
-  "gateway_adaptive_orbital_science",
+  "gateway_adaptive_science_orbital",
   "Adaptive Orbital Science path: Researching this technology leads to further advancements in orbital science."
 );
 
@@ -27,7 +27,7 @@ const orbitalDynamics = mod.technology("orbital_dynamics", {
   category: "computing",
   cost: 4_000,
   prerequisites: [vanilla.technology("tech_space_science_1")],
-  gateway: "adaptive_orbital_science",
+  gateway: "adaptive_science_orbital",
   weight: 80,
   weightModifier: {
     modifiers: [{ factor: 2, when: hasCivic("civic_technocracy") }],

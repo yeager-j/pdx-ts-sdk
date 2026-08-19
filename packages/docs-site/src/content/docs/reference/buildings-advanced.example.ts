@@ -60,7 +60,6 @@ const stormAnalysisCenter = mod.building("storm_analysis_center", {
   buildingSets: ["research", "physics"],
   canBuild: true,
   planetLimit: 1,
-  isCappedByModifier: true,
   baseCapAmount: 1,
   positionPriority: 20,
   potential: not(hasModifier("resort_colony")),

@@ -18,13 +18,10 @@ handles failed excavation rolls. The SDK writes these definitions under
 The site type is only one part of the story. Each completed chapter fires a
 fleet event, and some other effect must first place the site on a planet or
 another supported game object. This complete example connects all three
-parts: a directly placed site, three chapters, and three archaeology events.
+parts: the site type, its three chapter events, and the effect that places it
+on a planet.
 
 <PairedExample name="archaeological-sites" />
-
-The example uses `weight: 0` because it places this story site by name. It also
-grants one clue after every failed roll to keep the sample's failure policy
-small and visible. A production site can use a richer score-based policy.
 
 ## A dig site has three connected layers
 
@@ -34,15 +31,21 @@ small and visible. A production site can use a richer score-based policy.
 | Fleet events             | Present each completed chapter and apply its rewards or consequences.             |
 | Placement effect         | Chooses the object that owns the site and creates either a named or random type.  |
 
-`mod.archaeologicalSiteType` returns a typed site reference. Pass that value to
-`createArchaeologicalSite` and place it in the same compiled Feature as every
-owned chapter event it references. The Fold then rejects a missing owned site
-or event instead of leaving a copied id for Stellaris to fail at runtime.
+`mod.archaeologicalSiteType` returns a typed site reference. Pass that value
+to `createArchaeologicalSite`, and put the site definition and every owned
+chapter event it references in [Features](/guides/features-and-discovery/)
+passed to the same `mod.compile` call. The [Fold](/guides/the-pipeline/) then
+rejects a missing site or event at build time, rather than letting Stellaris
+fail on a dangling id at runtime.
+
+A vanilla site type cannot be altered: archaeological sites have no
+`mod.patch<Type>` surface, and a vanilla id cannot be re-declared. See
+[Patching vanilla](/guides/patching-vanilla/).
 
 ## Chapters are ordered stages
 
-Set `stages` to the exact number of `stage` entries. Stellaris treats the
-array order as chapter order:
+The game shows chapters; the field is `stage`. Set `stages` to the exact
+number of `stage` entries. Stellaris treats the array order as chapter order:
 
 ```ts
 stages: 3,
@@ -88,6 +91,7 @@ const sealedDoor = events.fleet(1, {
   location: (ctx) => ctx.from,
   archaeology: true,
   isTriggeredOnly: true,
+  // Other fields omitted.
   options: [
     {
       name: "Cut through the seal.",
@@ -106,6 +110,11 @@ The stage completes before this event opens. Use the event for the chapter's
 text, choices, rewards, flags, and follow-up event calls. `fleet.owner` opens
 the excavating empire when a reward belongs to the country; `ctx.from` opens
 the archaeological site when an option must change the dig itself.
+
+Most vanilla chapter events also lock excavation for the duration of the
+window: they set `site.setSiteProgressLocked()` in `immediate` through
+`ctx.from.effects(...)` and release it with `setSiteProgressLocked(false)` in
+`after`. Do the same when the dig must not advance while the player reads.
 
 Keep `isTriggeredOnly: true`. The stage owns the entry point, so the event does
 not need a mean-time-to-happen trigger. See [Events](/concepts/events/) for event
@@ -129,9 +138,22 @@ roll fails; the stage event runs only when the chapter finishes.
 
 Vanilla's common failure policy is more involved. It branches on the roll
 score, grants zero, one, or two clues, awards scientist experience, and can
-select a random archaeology incident. Reproduce that policy deliberately if
-your site needs it. A fixed clue, a custom setback, or no progress can also be
-valid, but each choice changes the expected length of the dig.
+select a random archaeology incident. Nearly every vanilla site delegates it
+to one checked scripted effect, which the SDK can call directly:
+
+```ts
+onRollFailed: (_fleet, ctx) => {
+  ctx.from.effects((site) => {
+    site.run(standardArchaeologicalSiteOnRollFailed({ RANDOM_EVENTS: "no_events" }));
+  });
+},
+```
+
+`standardArchaeologicalSiteOnRollFailed` comes from
+`@pdx-ts/stellaris-ids/effects`; vanilla passes `all_random_events` for sites
+that may roll incidents and `no_events` for quiet ones. A fixed clue, a
+custom setback, or no progress can also be valid, but each choice changes the
+expected length of the dig.
 
 ## Separate visibility from excavation permission
 
@@ -163,21 +185,21 @@ trigger from `@pdx-ts/stellaris-ids/triggers`.
 In a maintained mod, use `visible` for discovery, borders, intel, or a
 story flag. Use `potential` for a fleet that should never receive the action,
 and `allow` for a temporary requirement that the UI should show as disabled.
-Vanilla's common visibility trigger shows a site to a normal country when it
-has sufficient system intel or the site planet lies within its borders;
-creation alone does not guarantee immediate visibility.
+Creation alone does not make a site visible.
 
 The closure form exposes `FROM` when the rule depends on site state:
 
 ```ts
+// scientistIsReady and siteIsUnlocked are your own triggers.
 allow: (ctx) => and(
   scientistIsReady,
   ctx.from.trigger(siteIsUnlocked),
 ),
 ```
 
-The two placeholder triggers above stand for your own fleet- and site-scoped
-conditions. A plain trigger is clearer when the rule never reads `FROM`.
+Use the closure form whenever the rule reads anything from `ctx` — `ctx.self`
+or `ctx.from`, as both `allow` examples above do. A plain Trigger value is
+clearer when the rule needs neither.
 
 ## Place a named site from an effect
 
@@ -192,18 +214,31 @@ country.randomOwnedPlanet({ limit: not(archaeologicalSite(always())) }, (planet)
 ```
 
 The example first excludes planets that already link to an archaeological
-site. Vanilla named-placement call sites also guard occupancy and often call
-`prevent_anomaly` or clear a conflicting deposit before creation. The engine's
-behavior for creating a named site on an occupied object is not documented, so
-do not use the creation effect as the occupancy check.
+site. Most vanilla named placements sit in solar-system initializers, on a
+body the initializer just created, so they need no guard. Roughly a fifth of
+named call sites — those placing onto an existing, possibly occupied body —
+call `preventAnomaly` (vanilla's `prevent_anomaly`), clear a conflicting
+deposit, or check for an existing site first. The engine's behavior for
+creating a named site on an occupied object is not documented, so do not use
+the creation effect as the occupancy check.
+
+Vanilla spells the occupancy guard `exists = archaeological_site`. A plain
+trigger position cannot express that form today, because `exists()` needs a
+scope value that only `ctx` supplies, so the example writes the
+scope-transition form `NOT = { archaeological_site = { always = yes } }`
+instead. The two express the same check, though vanilla only ever writes the
+first.
 
 The caller chooses the location. Common entry points include an anomaly or
 event option, a solar-system initializer's `init_effect`, a survey on-action,
 or the final event of another dig. If location selection can fail, set story
 flags and consume one-time state only after you have selected a valid target.
 
-`maxInstances` does not protect direct named placement. It is checked only for
-random site creation, so a one-off story chain must enforce its own uniqueness.
+`maxInstances` does not protect direct named placement. It is checked only
+for random site creation, so a one-off story chain must enforce its own
+uniqueness. The paired example guards with a global flag: the placing event
+requires the flag to be absent and sets it after creation. The example's
+`maxInstances: 1` matters only if its weight ever becomes positive.
 
 ## Random creation is a selection policy
 
@@ -229,7 +264,7 @@ the type belongs in a random pool.
   finding a legal location before they call it.
 </Aside>
 
-## Descriptions and lifecycle effects
+## Descriptions
 
 Use `desc` for one localized description. The SDK emits both the localization
 entry and the raw `desc = <generated key>` pointer that the game reads. Do not
@@ -240,15 +275,20 @@ conditions. Its string form is an existing localization key; its array form is
 an ordered list of `{ trigger, text }` clauses. The first matching clause is
 used, so put specific conditions before a fallback.
 
-The remaining lifecycle effects run at different scopes:
+## Lifecycle effects
+
+The lifecycle effects run at different scopes:
 
 - `onCreate` runs on the archaeological site when creation succeeds.
 - `onVisible` runs on each country when the site becomes visible, with the
   site as `FROM`.
-- `onRollFailed` runs on the excavating fleet, with the site as `FROM`.
+- `onRollFailed` runs on the excavating fleet, with the site as `FROM` — see
+  [Failed rolls are a separate path](#failed-rolls-are-a-separate-path).
 
-Use `onCreate` for site-local setup, `onVisible` for a discovery notification
-or country state, and `onRollFailed` for excavation consequences. Do not put
+Use `onCreate` for site-local setup and `onVisible` for a discovery
+notification or country state. Half of vanilla's site types fire the stock
+discovery notification from `onVisible`, which the SDK writes as
+`country.countryEvent({ id: vanilla.event.story.$5, days: 30 })`. Do not put
 chapter rewards in these hooks when the stage event is the actual owner.
 
 ## What to verify in Stellaris

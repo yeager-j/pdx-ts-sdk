@@ -9,26 +9,29 @@ import { Aside } from "@astrojs/starlight/components";
 import FieldTable from "../../../components/FieldTable.astro";
 
 A **weapon component template** defines one weapon that can occupy a compatible
-section hardpoint. It owns weapon size and delivery type, projectile or beam
-art, damage, range, accuracy, tracking, target policy, cost, unlocks, modifiers,
-and optional hit effects. The SDK writes weapons into
+section hardpoint. It owns the weapon's socket compatibility, how it delivers
+damage, and what happens on a hit. The SDK writes weapons into
 `common/component_templates/`.
 
-The [Ships overview](/concepts/ships/) mounts a custom medium beam into three
-named section slots of a fixed design.
+The [Ships overview](/concepts/ships/) builds a complete fixed design that
+mounts one custom medium beam in three named section slots.
 
 ## Three definitions must agree on compatibility
 
 A mounted weapon crosses three layers:
 
-1. The section's `componentSlot[].template` selects a component-slot template
-   such as `medium_turret`.
+1. The [section template](/reference/section-templates/)'s
+   `componentSlot[].template` selects a component-slot template such as
+   `medium_turret`.
 2. The weapon's `size` and behavior must be compatible with that socket.
-3. A global design's `component[].slot` names the section slot and its
-   `template` names this weapon.
+3. A [global ship design](/reference/global-ship-designs/)'s `component[].slot`
+   names the section slot and its `template` names this weapon.
 
-The weapon's `componentSet` groups it with related sizes or upgrade tiers. The
-set does not select the hardpoint.
+The weapon's [component set](/reference/component-sets/) groups it with related
+sizes or upgrade tiers. The set does not select the hardpoint.
+
+A weapon declares its socket compatibility with `size`, its family with
+`componentSet`, and its weapon type with `tags`:
 
 ```ts
 const beam = mod.weaponComponentTemplate("beam", {
@@ -36,6 +39,7 @@ const beam = mod.weaponComponentTemplate("beam", {
   componentSet: beamSet,
   size: "medium",
   type: "instant",
+  tags: ["weapon_type_energy", "m_slot"],
   projectileGfx: "infrared_laser_m",
   damage: { min: 10, max: 24 },
   range: 60,
@@ -55,20 +59,35 @@ its art.
 select a mounted weapon entity. Those graphics fields do not supply combat
 numbers.
 
-The combat payload includes:
-
-- `damage.min` and `damage.max`;
-- hull, armor, and shield damage multipliers;
-- armor and shield penetration;
-- range, minimum range, firing arc, accuracy, and tracking;
-- missile speed, evasion, health, armor, shield, and retarget range;
-- windup and total firing time;
-- collateral and target-size factors.
+The combat payload groups into a damage core (`damage`, the hull, armor, and
+shield multipliers, the two penetration fields, and the collateral and
+size-damage factors), geometry (`range`, `minRange`, `firingArc`, `accuracy`,
+`tracking`), missile durability (`missileSpeed` and its companions), and timing
+(`windup`, `totalFireTime`).
 
 Define a coherent delivery model. Missile durability does not make sense for
 an instant beam, and beam art does not make missile movement values useful.
-Use a complete current vanilla weapon of the same delivery type as the
-baseline.
+
+### Vanilla keeps its weapon numbers in a CSV
+
+Vanilla defines almost every weapon number in
+`common/component_templates/weapon_components.csv`, and mutation weapons in
+`mutation_weapon_components.csv`, with one row per weapon key. No vanilla
+weapon script block sets `damage`, `range`, `tracking`, `power`, `windup`, or
+`cooldown`; every named vanilla weapon has a CSV row instead. A vanilla weapon
+opened as a baseline therefore shows tags, prerequisites, `potential`, and art,
+and no combat values.
+
+The rules accept both places, so an SDK weapon writes its numbers inline as Def
+fields, as the example above does. Authoring a new weapon works. Two things do
+not. The SDK writes only `.txt`, so it cannot rebalance a vanilla weapon the way
+vanilla itself is balanced, and two CSV-only columns, `cooldown` (rate of fire)
+and `military_power_multiplier`, have no Def field at all.
+
+A few vanilla weapons set a value in both places and the two disagree.
+`SMALL_BIO_PLASMA_2` has `accuracy = 1` in the script and `0.80` in the CSV row.
+The game does not document which source wins, so do not read a vanilla script
+value as that weapon's effective stat.
 
 <Aside type="caution" title="Graphics still require model locators">
   A mounted weapon entity needs the culture-aware art and muzzle locator expected by Stellaris. The
@@ -82,33 +101,45 @@ component registries:
 
 - `prerequisites`, `potential`, `possible`, `validForCountry`, and
   `showTechUnlockIf` gate availability;
-- `sizeRestriction` and `classRestriction` constrain hulls;
-- `componentSet`, `upgradesTo`, `upgradePath`, and `blockedBy` shape the
-  component family;
-- `tags`, `aiTags`, `aiTagWeight`, `aiWeight`, and `shouldAiUse` guide designer
-  roles and automatic selection.
+- `componentSet`, `upgradesTo`, and `upgradePath` shape the component family;
+- `tags` are game-mechanical, not designer hints: the `weapon_type_*` tags
+  decide which weapon-type modifiers reach the weapon and which turret entity
+  the component-slot template draws, and the slot-class tags (`s_slot`,
+  `m_slot`, `l_slot`, `x_slot`) classify the weapon in the designer;
+- `aiTags`, `aiTagWeight`, `aiWeight`, and `shouldAiUse` guide automatic
+  selection.
 
-The rules expose both `possible` and `potential` on weapon templates. Follow a
-current vanilla family that uses the intended seam and test the UI result; do
-not treat the names as interchangeable without a game witness.
+A weapon with no `weapon_type_*` tag is left out of every weapon-type modifier
+and renders no turret in a slot that picks its entity by tag, such as
+`medium_turret`.
+
+`potential` decides whether the weapon appears in the list for a slot.
+`possible` lets the weapon forbid other components in the same design. Both are
+design-scoped with the owning country as `FROM`. Vanilla weapons use `potential`
+only.
+
+Four older fields are deprecated and no current vanilla weapon uses them:
+`sizeRestriction` and `classRestriction` are replaced by `potential`, and
+`shipLimit` and `blockedBy` are replaced by `possible`. Put new work in the
+trigger seams.
 
 ## Target selection can be broad or explicit
 
 `targetType`, `targetFocus`, `targetWeights`, `targetableShipSizes`,
 `useShipMainTarget`, `prioProjectile`, and `pointDefenceTargets` influence how
-the weapon selects targets. The component set's `affectsTargetType` and
-`affectsTargetFocus` flags can disable two of those dimensions.
+the weapon selects targets.
 
 Keep weapon tags, AI tags, and target policy consistent. A point-defense
 weapon needs the projectile or strike-craft target categories it is expected
 to intercept. A spinal weapon needs a firing arc and role that match its
 section and ship behavior.
 
-## On-hit effects change scope
+## `onHit` runs on the target ship
 
-`onHit` records an effect on the target ship with the firing ship as `FROM`.
-Use it for gameplay that belongs to a successful hit, not for ordinary damage
-numbers already represented by the weapon fields.
+`onHit` records an effect on the target ship with the firing ship as `FROM`
+(see [Scope and context](/guides/scope-and-context/)). Use it for gameplay that
+belongs to a successful hit, not for ordinary damage numbers already
+represented by the weapon fields.
 
 Keep the effect small and deterministic. High-rate weapons can execute it many
 times, and the SDK does not simulate performance, stacking, immunities, or
@@ -117,19 +148,32 @@ multiplayer behavior.
 ## Costs, modifiers, and auras
 
 `resources` supports component construction cost and upkeep. Weapon templates
-also admit ship and design modifiers, repeated triggered modifiers, injected
-modifiers, and friendly or hostile auras. These are independent of the core
-damage block and can affect the mounting ship or other ships.
+also admit ship and design modifiers, repeated triggered modifiers, an
+`injectedModifier`, and friendly or hostile auras. These are independent of the
+core damage block and can affect the mounting ship or other ships.
 
-An injected modifier has its own stack and duration policy. An aura has range,
-application timing, stack information, graphics, and optional daily damage.
-Use stable stack ids and test repeated weapons on the same ship and across a
-fleet.
+`injectedModifier` pairs a modifier with its own `stackInfo`. An aura carries a
+`limit` trigger for the condition an affected ship must meet, `radius` or
+`systemWide` for reach, `applyOn` for whether the modifier lands on individual
+ships or on whole fleets, stack information, and graphics. Only `hostileAura`
+takes `damagePerDay`. Use stable stack ids and test repeated weapons on the
+same ship and across a fleet.
 
 ## Current limits and testing advice
 
 - Weapon components have no patch surface.
   `mod.patchWeaponComponentTemplate` does not exist.
+- The SDK writes only `.txt`. It cannot emit `weapon_components.csv`, so
+  `cooldown` and `military_power_multiplier` are out of reach.
+- The game documents several weapon keys the vendored rules do not carry, so
+  the Def has no field for them: `chain_damage`, `chain_range`, and
+  `chain_count` for arc weapons; the min/max block form of `collateralDamage`,
+  which the Def takes as a single number; `max_range`; `slot_restriction`, the
+  weapon-side counterpart to the section and design controls above; and
+  `build_time`. No current vanilla weapon uses any of them either.
+- The game's own documentation shows `damagePerDay` inside `friendlyAura`, but
+  the rules give it to `hostileAura` only, and no vanilla component uses it on
+  either side.
 - The SDK cannot simulate damage per day, firing cadence, target choice,
   projectile interception, on-hit frequency, aura stacking, or AI design
   quality.
