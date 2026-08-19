@@ -41,7 +41,7 @@ import {
   recordShapeMint,
   type MintCapabilityOwner,
 } from "../content/mint-provenance.ts";
-import type { ContentItem } from "../content/types.ts";
+import type { ContentItem, EconomicCategoryWitness } from "../content/types.ts";
 import { refId, type TypedRef } from "../script/scalar.ts";
 import type {
   ParsedBuilding,
@@ -108,7 +108,7 @@ import type { CountryShipOfSizeLimitDef } from "./country-ship-of-size-limit.ts"
 import type { DecisionDef, DecisionScope } from "./decision.ts";
 import type { EconomicCategoryDef } from "./economic-category.ts";
 import type { EdictDef } from "./edict.ts";
-import type { SpEventScope } from "./enums.ts";
+import type { ScriptedModifierCategory, SpEventScope } from "./enums.ts";
 import type { EventChainDef } from "./event-chain.ts";
 import type { GlobalShipDesignDef } from "./global-ship-design.ts";
 import type { GraphicalCultureDef } from "./graphical-culture.ts";
@@ -751,12 +751,14 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
    * The capability mints and owns the full id; the returned branded reference
    * flows into matching content-reference fields.
    */
-  scriptedModifier<const Name extends string>(
+  scriptedModifier<const Name extends string, W extends ScriptedModifierCategory>(
     name: Name,
-    def: Omit<ScriptedModifierDef<MintedContentId<P, I, "scriptedModifier", Name>>, "id">
+    def: Omit<ScriptedModifierDef<MintedContentId<P, I, "scriptedModifier", Name>>, "id"> & {
+      readonly category: W;
+    }
   ): ContentItem<
     "scripted_modifier",
-    ScriptedModifierDef<MintedContentId<P, I, "scriptedModifier", Name>>
+    ScriptedModifierDef<MintedContentId<P, I, "scriptedModifier", Name>> & { readonly category: W }
   >;
   /**
    * Defines a casus belli from its logical name.
@@ -838,12 +840,12 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
    * The capability mints and owns the full id; the returned branded reference
    * flows into matching content-reference fields.
    */
-  economicCategory<const Name extends string>(
+  economicCategory<const Name extends string, W extends EconomicCategoryWitness>(
     name: Name,
-    def: Omit<EconomicCategoryDef<MintedContentId<P, I, "economicCategory", Name>>, "id">
+    def: Omit<EconomicCategoryDef<MintedContentId<P, I, "economicCategory", Name>>, "id"> & W
   ): ContentItem<
     "economic_category",
-    EconomicCategoryDef<MintedContentId<P, I, "economicCategory", Name>>
+    EconomicCategoryDef<MintedContentId<P, I, "economicCategory", Name>> & W
   >;
   /**
    * Defines a civic or origin from its logical name.
@@ -1239,9 +1241,11 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
       defineStaticModifier({ ...def, id: mint("staticModifier", name) } as StaticModifierDef<
         MintedContentId<P, I, "staticModifier", Name>
       >),
-    scriptedModifier: <const Name extends string>(
+    scriptedModifier: <const Name extends string, W extends ScriptedModifierCategory>(
       name: Name,
-      def: Omit<ScriptedModifierDef<MintedContentId<P, I, "scriptedModifier", Name>>, "id">
+      def: Omit<ScriptedModifierDef<MintedContentId<P, I, "scriptedModifier", Name>>, "id"> & {
+        readonly category: W;
+      }
     ) =>
       defineScriptedModifier({ ...def, id: mint("scriptedModifier", name) } as ScriptedModifierDef<
         MintedContentId<P, I, "scriptedModifier", Name>
@@ -1300,9 +1304,9 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
       defineCouncilor({ ...def, id: mint("councilor", name) } as CouncilorDef<
         MintedContentId<P, I, "councilor", Name>
       >),
-    economicCategory: <const Name extends string>(
+    economicCategory: <const Name extends string, W extends EconomicCategoryWitness>(
       name: Name,
-      def: Omit<EconomicCategoryDef<MintedContentId<P, I, "economicCategory", Name>>, "id">
+      def: Omit<EconomicCategoryDef<MintedContentId<P, I, "economicCategory", Name>>, "id"> & W
     ) =>
       defineEconomicCategory({ ...def, id: mint("economicCategory", name) } as EconomicCategoryDef<
         MintedContentId<P, I, "economicCategory", Name>

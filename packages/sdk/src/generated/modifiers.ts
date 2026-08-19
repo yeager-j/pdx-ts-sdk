@@ -67788,6 +67788,174 @@ interface ModifierPath3456 {
   readonly zone: ModifierPath1723;
 }
 
+export interface ModifierCategoryScopes {
+  readonly "AI Economy": [];
+  readonly All: "any";
+  readonly Armies: ["army", "colony", "country", "planet", "sector", "system"];
+  readonly "Astral Rift": ["astral_rift"];
+  readonly "Civilian Ships": ["colony", "country", "fleet", "sector", "ship", "starbase", "system"];
+  readonly Colony: ["colony", "country", "planet", "sector", "ship", "starbase", "system"];
+  readonly Countries: ["colony", "country", "federation"];
+  readonly Deposits: ["colony", "country", "deposit", "planet", "sector", "ship", "system"];
+  readonly "Economic Units": "any";
+  readonly Espionage: ["country", "spy_network"];
+  readonly Federations: ["federation"];
+  readonly Fleets: ["country", "fleet"];
+  readonly "Galactic Community": ["country"];
+  readonly Habitability: ["colony", "country", "planet", "sector", "species", "system"];
+  readonly Leaders: ["country", "leader"];
+  readonly Megastructures: ["country", "megastructure"];
+  readonly "Military Ships": ["colony", "country", "fleet", "sector", "ship", "starbase", "system"];
+  readonly "Orbital Stations": ["country", "fleet", "sector", "ship", "starbase", "system"];
+  readonly "Owned Ships": ["colony", "country", "fleet", "sector", "ship", "starbase", "system"];
+  readonly Planets: ["colony", "country", "planet", "sector", "system"];
+  readonly "Pop Factions": ["country", "pop_faction"];
+  readonly Pops: ["colony", "country", "planet", "pop_group", "sector", "species", "system"];
+  readonly "Science Ships": ["colony", "country", "fleet", "sector", "ship", "starbase", "system"];
+  readonly "Ship Design Stats": ["design"];
+  readonly Ships: ["country", "fleet", "leader", "planet", "sector", "ship", "starbase", "system"];
+  readonly "Space Stations": ["country", "fleet", "sector", "ship", "starbase", "system"];
+  readonly "Star Systems": ["system"];
+  readonly Starbases: ["country", "sector", "starbase", "system"];
+  readonly "Transport Ships": [
+    "colony",
+    "country",
+    "fleet",
+    "sector",
+    "ship",
+    "starbase",
+    "system",
+  ];
+  readonly Waystations: ["country", "fleet", "sector", "ship", "starbase", "system"];
+}
+
+export type ScriptedCategoryMap<C extends string> = C extends "all"
+  ? "All"
+  : C extends "economic_unit"
+    ? "Economic Units"
+    : C extends "pop_group"
+      ? "Pops"
+      : C extends "pop_faction"
+        ? "Pop Factions"
+        : C extends "ship"
+          ? | "Orbital Stations"
+            | "Space Stations"
+            | "Military Ships"
+            | "Civilian Ships"
+            | "Science Ships"
+            | "Transport Ships"
+          : C extends "station"
+            ? "Orbital Stations" | "Space Stations"
+            : C extends "fleet"
+              ? "Fleets"
+              : C extends "country"
+                ? "Countries"
+                : C extends "planet"
+                  ? "Planets"
+                  : C extends "army"
+                    ? "Armies"
+                    : C extends "leader"
+                      ? "Leaders"
+                      : C extends "deposit"
+                        ? "Deposits"
+                        : C extends "megastructure"
+                          ? "Megastructures"
+                          : C extends "habitability"
+                            ? "Habitability"
+                            : C extends "starbase"
+                              ? "Starbases"
+                              : C extends "system"
+                                ? "Star Systems"
+                                : C extends "federation"
+                                  ? "Federations"
+                                  : C extends "espionage"
+                                    ? "Espionage"
+                                    : C extends "colony"
+                                      ? "Colony"
+                                      : C;
+export type ModifierCategoryScopesFor<C extends string> = C extends keyof ModifierCategoryScopes
+  ? ModifierCategoryScopes[C] extends readonly string[]
+    ? ModifierCategoryScopes[C][number]
+    : "any"
+  : never;
+
+export type ModifierCategoryAllowed<S extends ScopeName, C extends string> = [ScopeName] extends [S]
+  ? true
+  : "any" extends ModifierCategoryScopesFor<ScriptedCategoryMap<C>>
+    ? true
+    : S extends ModifierCategoryScopesFor<ScriptedCategoryMap<C>>
+      ? true
+      : false;
+
+export type IsUnion<T, Whole = T> = T extends unknown
+  ? [Whole] extends [T]
+    ? false
+    : true
+  : never;
+export type ScriptedModifierSelector<S extends ScopeName> = <
+  const T extends import("../generated/content-definers.ts").ScriptedModifierItem,
+>(
+  item: T &
+    (IsUnion<T["def"]["category"]> extends true
+      ? never
+      : ModifierCategoryAllowed<S, T["def"]["category"]> extends true
+        ? {}
+        : never)
+) => { readonly set: ModifierSetter };
+
+export type EconomicCategorySelector<S extends ScopeName> = <
+  const T extends import("../generated/content-definers.ts").EconomicCategoryItem,
+>(
+  item: T &
+    (IsUnion<EconomicWitnessOf<T>> extends true
+      ? never
+      : EconomicCategoryAllowed<S, EconomicWitnessOf<T>> extends true
+        ? {}
+        : never)
+) => EconomicCategoryRecorder<EconomicWitnessOf<T>>;
+export type EconomicWitnessOf<
+  T extends import("../generated/content-definers.ts").EconomicCategoryItem,
+> = T extends { readonly def: infer D }
+  ? {
+      readonly modifierCategory: D extends { readonly modifierCategory: infer M } ? M : undefined;
+      readonly generateAddModifiers: D extends { readonly generateAddModifiers: infer A }
+        ? A
+        : undefined;
+      readonly generateMultModifiers: D extends { readonly generateMultModifiers: infer U }
+        ? U
+        : undefined;
+    }
+  : never;
+export type EconomicCategoryAllowed<
+  S extends ScopeName,
+  W extends import("../content/types.ts").EconomicCategoryWitness,
+> = ModifierCategoryAllowed<
+  S,
+  W["modifierCategory"] extends string ? W["modifierCategory"] : "economic_unit"
+>;
+export type EconomicCategoryRecorder<
+  W extends import("../content/types.ts").EconomicCategoryWitness,
+> = {
+  readonly resource: (
+    resource: import("../generated/refs.ts").ResourceRef | string
+  ) => EconomicResourceRecorder<W>;
+} & {
+  [K in W["generateMultModifiers"] extends readonly (infer M)[] ? M & string : never]: {
+    readonly mult: ModifierSetter;
+  };
+};
+export type EconomicResourceRecorder<
+  W extends import("../content/types.ts").EconomicCategoryWitness,
+> = {
+  [K in W["generateAddModifiers"] extends readonly (infer A)[] ? A & string : never]: {
+    readonly add: ModifierSetter;
+  };
+} & {
+  [K in W["generateMultModifiers"] extends readonly (infer M)[] ? M & string : never]: {
+    readonly mult: ModifierSetter;
+  };
+};
+
 export const MODIFIER_REFERENCE_FAMILIES = {
   job: {
     target: "job",
@@ -67936,6 +68104,8 @@ export type JobModifierPath_Any = ModifierPath693 &
  * from a small menu, and the joined path is the game's flat modifier name.
  */
 export interface ArmyModifierRecorder extends ModifierPath235 {
+  readonly scripted: ScriptedModifierSelector<"army">;
+  readonly economic: EconomicCategorySelector<"army">;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof ArmyModifierBlock & string, value: number): void;
   /** Sets a modifier by an arbitrary, unchecked name. */
@@ -67947,6 +68117,8 @@ export interface ArmyModifierRecorder extends ModifierPath235 {
  * from a small menu, and the joined path is the game's flat modifier name.
  */
 export interface AstralRiftModifierRecorder extends ModifierPath238 {
+  readonly scripted: ScriptedModifierSelector<"astral_rift">;
+  readonly economic: EconomicCategorySelector<"astral_rift">;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof AstralRiftModifierBlock & string, value: number): void;
   /** Sets a modifier by an arbitrary, unchecked name. */
@@ -67958,6 +68130,8 @@ export interface AstralRiftModifierRecorder extends ModifierPath238 {
  * from a small menu, and the joined path is the game's flat modifier name.
  */
 export interface ColonyModifierRecorder extends ModifierPath1724 {
+  readonly scripted: ScriptedModifierSelector<"colony">;
+  readonly economic: EconomicCategorySelector<"colony">;
   readonly job: JobModifierPath_Colony;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof ColonyModifierBlock & string, value: number): void;
@@ -67970,6 +68144,8 @@ export interface ColonyModifierRecorder extends ModifierPath1724 {
  * from a small menu, and the joined path is the game's flat modifier name.
  */
 export interface CountryModifierRecorder extends ModifierPath2576 {
+  readonly scripted: ScriptedModifierSelector<"country">;
+  readonly economic: EconomicCategorySelector<"country">;
   readonly job: JobModifierPath_Country;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof CountryModifierBlock & string, value: number): void;
@@ -67982,6 +68158,8 @@ export interface CountryModifierRecorder extends ModifierPath2576 {
  * from a small menu, and the joined path is the game's flat modifier name.
  */
 export interface DepositModifierRecorder extends ModifierPath2579 {
+  readonly scripted: ScriptedModifierSelector<"deposit">;
+  readonly economic: EconomicCategorySelector<"deposit">;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof DepositModifierBlock & string, value: number): void;
   /** Sets a modifier by an arbitrary, unchecked name. */
@@ -67993,6 +68171,8 @@ export interface DepositModifierRecorder extends ModifierPath2579 {
  * from a small menu, and the joined path is the game's flat modifier name.
  */
 export interface DesignModifierRecorder extends ModifierPath2725 {
+  readonly scripted: ScriptedModifierSelector<"design">;
+  readonly economic: EconomicCategorySelector<"design">;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof DesignModifierBlock & string, value: number): void;
   /** Sets a modifier by an arbitrary, unchecked name. */
@@ -68004,6 +68184,8 @@ export interface DesignModifierRecorder extends ModifierPath2725 {
  * from a small menu, and the joined path is the game's flat modifier name.
  */
 export interface FederationModifierRecorder extends ModifierPath2751 {
+  readonly scripted: ScriptedModifierSelector<"federation">;
+  readonly economic: EconomicCategorySelector<"federation">;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof FederationModifierBlock & string, value: number): void;
   /** Sets a modifier by an arbitrary, unchecked name. */
@@ -68015,6 +68197,8 @@ export interface FederationModifierRecorder extends ModifierPath2751 {
  * from a small menu, and the joined path is the game's flat modifier name.
  */
 export interface FleetModifierRecorder extends ModifierPath2932 {
+  readonly scripted: ScriptedModifierSelector<"fleet">;
+  readonly economic: EconomicCategorySelector<"fleet">;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof FleetModifierBlock & string, value: number): void;
   /** Sets a modifier by an arbitrary, unchecked name. */
@@ -68026,6 +68210,8 @@ export interface FleetModifierRecorder extends ModifierPath2932 {
  * from a small menu, and the joined path is the game's flat modifier name.
  */
 export interface LeaderModifierRecorder extends ModifierPath3097 {
+  readonly scripted: ScriptedModifierSelector<"leader">;
+  readonly economic: EconomicCategorySelector<"leader">;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof LeaderModifierBlock & string, value: number): void;
   /** Sets a modifier by an arbitrary, unchecked name. */
@@ -68037,6 +68223,8 @@ export interface LeaderModifierRecorder extends ModifierPath3097 {
  * from a small menu, and the joined path is the game's flat modifier name.
  */
 export interface MegastructureModifierRecorder extends ModifierPath3239 {
+  readonly scripted: ScriptedModifierSelector<"megastructure">;
+  readonly economic: EconomicCategorySelector<"megastructure">;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof MegastructureModifierBlock & string, value: number): void;
   /** Sets a modifier by an arbitrary, unchecked name. */
@@ -68048,6 +68236,8 @@ export interface MegastructureModifierRecorder extends ModifierPath3239 {
  * from a small menu, and the joined path is the game's flat modifier name.
  */
 export interface PlanetModifierRecorder extends ModifierPath3394 {
+  readonly scripted: ScriptedModifierSelector<"planet">;
+  readonly economic: EconomicCategorySelector<"planet">;
   readonly job: JobModifierPath_Planet;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof PlanetModifierBlock & string, value: number): void;
@@ -68060,6 +68250,8 @@ export interface PlanetModifierRecorder extends ModifierPath3394 {
  * from a small menu, and the joined path is the game's flat modifier name.
  */
 export interface PopFactionModifierRecorder extends ModifierPath3395 {
+  readonly scripted: ScriptedModifierSelector<"pop_faction">;
+  readonly economic: EconomicCategorySelector<"pop_faction">;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof PopFactionModifierBlock & string, value: number): void;
   /** Sets a modifier by an arbitrary, unchecked name. */
@@ -68071,6 +68263,8 @@ export interface PopFactionModifierRecorder extends ModifierPath3395 {
  * from a small menu, and the joined path is the game's flat modifier name.
  */
 export interface PopGroupModifierRecorder extends ModifierPath3399 {
+  readonly scripted: ScriptedModifierSelector<"pop_group">;
+  readonly economic: EconomicCategorySelector<"pop_group">;
   readonly job: JobModifierPath_PopGroup;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof PopGroupModifierBlock & string, value: number): void;
@@ -68083,6 +68277,8 @@ export interface PopGroupModifierRecorder extends ModifierPath3399 {
  * from a small menu, and the joined path is the game's flat modifier name.
  */
 export interface SectorModifierRecorder extends ModifierPath3402 {
+  readonly scripted: ScriptedModifierSelector<"sector">;
+  readonly economic: EconomicCategorySelector<"sector">;
   readonly job: JobModifierPath_Sector;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof SectorModifierBlock & string, value: number): void;
@@ -68095,6 +68291,8 @@ export interface SectorModifierRecorder extends ModifierPath3402 {
  * from a small menu, and the joined path is the game's flat modifier name.
  */
 export interface ShipModifierRecorder extends ModifierPath3426 {
+  readonly scripted: ScriptedModifierSelector<"ship">;
+  readonly economic: EconomicCategorySelector<"ship">;
   readonly job: JobModifierPath_Ship;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof ShipModifierBlock & string, value: number): void;
@@ -68107,6 +68305,8 @@ export interface ShipModifierRecorder extends ModifierPath3426 {
  * from a small menu, and the joined path is the game's flat modifier name.
  */
 export interface SpeciesModifierRecorder extends ModifierPath3449 {
+  readonly scripted: ScriptedModifierSelector<"species">;
+  readonly economic: EconomicCategorySelector<"species">;
   readonly job: JobModifierPath_Species;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof SpeciesModifierBlock & string, value: number): void;
@@ -68119,6 +68319,8 @@ export interface SpeciesModifierRecorder extends ModifierPath3449 {
  * from a small menu, and the joined path is the game's flat modifier name.
  */
 export interface SpyNetworkModifierRecorder extends ModifierPath3451 {
+  readonly scripted: ScriptedModifierSelector<"spy_network">;
+  readonly economic: EconomicCategorySelector<"spy_network">;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof SpyNetworkModifierBlock & string, value: number): void;
   /** Sets a modifier by an arbitrary, unchecked name. */
@@ -68130,6 +68332,8 @@ export interface SpyNetworkModifierRecorder extends ModifierPath3451 {
  * from a small menu, and the joined path is the game's flat modifier name.
  */
 export interface StarbaseModifierRecorder extends ModifierPath3453 {
+  readonly scripted: ScriptedModifierSelector<"starbase">;
+  readonly economic: EconomicCategorySelector<"starbase">;
   readonly job: JobModifierPath_Starbase;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof StarbaseModifierBlock & string, value: number): void;
@@ -68142,6 +68346,8 @@ export interface StarbaseModifierRecorder extends ModifierPath3453 {
  * from a small menu, and the joined path is the game's flat modifier name.
  */
 export interface SystemModifierRecorder extends ModifierPath3455 {
+  readonly scripted: ScriptedModifierSelector<"system">;
+  readonly economic: EconomicCategorySelector<"system">;
   readonly job: JobModifierPath_System;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof SystemModifierBlock & string, value: number): void;
@@ -68188,6 +68394,8 @@ export interface UnscopedModifierRecorder {
  * and `m.planet.jobs.alloys.produces.mult(0.1)` both resolve here.
  */
 export interface AnyScopeModifierRecorder extends ModifierPath3456 {
+  readonly scripted: ScriptedModifierSelector<ScopeName>;
+  readonly economic: EconomicCategorySelector<ScopeName>;
   readonly job: JobModifierPath_Any;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof AnyScopeModifierBlock & string, value: number): void;

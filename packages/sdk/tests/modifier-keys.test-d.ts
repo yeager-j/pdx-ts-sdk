@@ -2,8 +2,12 @@ import { describe, it } from "vitest";
 
 import type { ModifierClosure, TriggeredModifier } from "../src/content/types.ts";
 import type { BuildingDef } from "../src/generated/building.ts";
+import type {
+  EconomicCategoryItem,
+  ScriptedModifierItem,
+} from "../src/generated/content-definers.ts";
 import type { JobRef } from "../src/generated/refs.ts";
-import { vanilla } from "../src/index.ts";
+import { createMod, vanilla } from "../src/index.ts";
 
 declare module "../src/content/types.ts" {
   interface CustomModifiers {
@@ -16,6 +20,87 @@ function countryModifiers(_m: ModifierClosure<"country">): void {}
 function colonyModifiers(_m: ModifierClosure<"colony">): void {}
 function popGroupModifiers(_m: ModifierClosure<"pop_group">): void {}
 function federationModifiers(_m: ModifierClosure<"federation">): void {}
+function leaderModifiers(_m: ModifierClosure<"leader">): void {}
+
+const ownedModifierMod = createMod({ name: "Owned", prefix: "mymod", supportedVersion: "v4.4.*" });
+const ownedScripted = ownedModifierMod.scriptedModifier("efficiency", { category: "country" });
+const planetScripted = ownedModifierMod.scriptedModifier("planet_efficiency", {
+  category: "planet",
+});
+const secondCountryScripted = ownedModifierMod.scriptedModifier("second_efficiency", {
+  category: "country",
+});
+const ownedEconomic = ownedModifierMod.economicCategory("operations", {
+  modifierCategory: "country",
+  generateAddModifiers: ["cost"],
+  generateMultModifiers: ["upkeep"],
+});
+const secondOwnedEconomic = ownedModifierMod.economicCategory("second_operations", {
+  modifierCategory: "country",
+  generateAddModifiers: ["cost"],
+  generateMultModifiers: ["upkeep"],
+});
+const differentEconomic = ownedModifierMod.economicCategory("different_operations", {
+  modifierCategory: "country",
+  generateMultModifiers: ["cost"],
+});
+const scriptedAlias: ScriptedModifierItem<"country"> = ownedScripted;
+const economicAlias: EconomicCategoryItem = ownedEconomic;
+void scriptedAlias;
+void economicAlias;
+declare const bareScripted: ScriptedModifierItem;
+declare const bareEconomic: EconomicCategoryItem;
+// @ts-expect-error — a bare scripted item has no unambiguous category witness
+countryModifiers((m) => m.scripted(bareScripted).set(1));
+// @ts-expect-error — a bare economic item has no operation witness
+countryModifiers((m) => m.economic(bareEconomic).resource("energy").cost.add(1));
+
+countryModifiers((m) => {
+  m.scripted(ownedScripted).set(1);
+  m.economic(ownedEconomic).resource("energy").cost.add(1);
+  // @ts-expect-error — cost has no declared multiplier
+  m.economic(ownedEconomic).resource("energy").cost.mult(1);
+  m.economic(ownedEconomic).resource("energy").upkeep.mult(1);
+  m.economic(ownedEconomic).upkeep.mult(1);
+  // @ts-expect-error — no broad additive operation
+  m.economic(ownedEconomic).upkeep.add(1);
+  // @ts-expect-error — triggered_* declarations do not create recorder operations
+  m.economic(ownedEconomic).triggeredCost.mult(1);
+});
+
+declare const chooseOwnedModifier: boolean;
+const sameScriptedWitness = chooseOwnedModifier ? ownedScripted : secondCountryScripted;
+const differentScriptedWitness = chooseOwnedModifier ? ownedScripted : planetScripted;
+const sameEconomicWitness = chooseOwnedModifier ? ownedEconomic : secondOwnedEconomic;
+const differentEconomicWitness = chooseOwnedModifier ? ownedEconomic : differentEconomic;
+countryModifiers((m) => {
+  m.scripted(sameScriptedWitness).set(1);
+  m.economic(sameEconomicWitness).resource("energy").upkeep.mult(1);
+  // @ts-expect-error — narrow items with different category witnesses before selecting one
+  m.scripted(differentScriptedWitness).set(1);
+  // @ts-expect-error — narrow items with different operation witnesses before selecting one
+  m.economic(differentEconomicWitness).resource("energy").upkeep.mult(1);
+});
+
+// @ts-expect-error — a scripted modifier item cannot select an economic recorder
+countryModifiers((m) => m.economic(ownedScripted));
+// @ts-expect-error — an economic category item cannot select scripted modifiers
+countryModifiers((m) => m.scripted(ownedEconomic).set(1));
+// @ts-expect-error — incompatible declared category
+federationModifiers((m) => m.scripted(planetScripted).set(1));
+// @ts-expect-error — Countries-category economic modifiers are not valid on leaders
+leaderModifiers((m) => m.economic(ownedEconomic).resource("energy").upkeep.mult(1));
+const unsupportedScripted = ownedModifierMod.scriptedModifier("unsupported", { category: "none" });
+// @ts-expect-error — unsupported modifier categories are rejected
+countryModifiers((m) => m.scripted(unsupportedScripted).set(1));
+const unsupportedComponent = ownedModifierMod.scriptedModifier("component", {
+  category: "component",
+});
+const unsupportedPopJob = ownedModifierMod.scriptedModifier("pop_job", { category: "pop_job" });
+// @ts-expect-error — component is unsupported
+countryModifiers((m) => m.scripted(unsupportedComponent).set(1));
+// @ts-expect-error — pop_job is unsupported
+countryModifiers((m) => m.scripted(unsupportedPopJob).set(1));
 
 describe("modifier path safety", () => {
   it("supports all job-derived colony operations and static paths", () => {

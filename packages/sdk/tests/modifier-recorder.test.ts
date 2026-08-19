@@ -5,6 +5,45 @@ import { modifierEntries, triggeredModifierBlock } from "../src/content/blocks.t
 import type { JobRef } from "../src/generated/refs.ts";
 
 describe("job-derived modifier recorder", () => {
+  it("emits owned scripted and economic modifier keys", () => {
+    const scripted = {
+      itemKind: "content" as const,
+      type: "scripted_modifier" as const,
+      id: "mymod_efficiency",
+      def: { id: "mymod_efficiency", category: "country" as const },
+    };
+    const category = {
+      itemKind: "content" as const,
+      type: "economic_category" as const,
+      id: "mymod_expeditions",
+      def: {
+        id: "mymod_expeditions",
+        generateAddModifiers: ["cost"] as const,
+        generateMultModifiers: ["upkeep"] as const,
+      },
+    };
+    const entries = modifierEntries((modifier) => {
+      modifier.scripted(scripted).set(0.2);
+      modifier.economic(category).resource("energy").cost.add(3);
+      modifier.economic(category).resource("energy").upkeep.mult(0.1);
+      modifier.economic(category).upkeep.mult(0.5);
+    });
+    expect(serialize(entries)).toContain("mymod_efficiency = 0.2");
+    expect(serialize(entries)).toContain("mymod_expeditions_energy_cost_add = 3");
+    expect(serialize(entries)).toContain("mymod_expeditions_energy_upkeep_mult = 0.1");
+    expect(serialize(entries)).toContain("mymod_expeditions_upkeep_mult = 0.5");
+  });
+
+  it("rejects owned selectors retained after the closure", () => {
+    let select: ((item: typeof undefined) => unknown) | undefined;
+    expect(() => {
+      modifierEntries((modifier) => {
+        select = modifier.scripted as never;
+      });
+      select?.(undefined);
+    }).toThrow(/closure that has already returned/);
+  });
+
   it("emits every rule-derived operation with the complete job id", () => {
     const job: JobRef = { id: "mymod_job_with_under_score" };
     const entries = modifierEntries((modifier) => {

@@ -1,13 +1,5 @@
 import { createMod } from "@pdx-ts/sdk";
 
-declare module "@pdx-ts/sdk" {
-  interface CustomModifiers {
-    readonly [key: `deep_space_logistics_economic_category_expeditions_${string}`]:
-      number | undefined;
-    readonly deep_space_logistics_scripted_modifier_expedition_efficiency_mult?: number;
-  }
-}
-
 const mod = createMod({
   name: "Deep Space Logistics",
   prefix: "deep_space_logistics",
@@ -27,8 +19,6 @@ const expeditionEfficiency = mod.scriptedModifier("expedition_efficiency_mult", 
   category: "country",
 });
 
-const expeditionEnergyUpkeep = `${expeditions.id}_energy_upkeep_mult` as const;
-
 const surveyProtocols = mod.edict("survey_protocols", {
   name: "Deep-Space Survey Protocols",
   description: "Fund long-range expeditions beyond charted space.",
@@ -45,16 +35,16 @@ const surveyProtocols = mod.edict("survey_protocols", {
     },
   ],
   modifier: (modifier) => {
-    modifier.raw(expeditionEnergyUpkeep, -0.25);
-    modifier.raw(expeditionEfficiency.id, 0.2);
+    modifier.economic(expeditions).resource("energy").upkeep.mult(-0.25);
+    modifier.scripted(expeditionEfficiency).set(0.2);
   },
 });
 
 const routeDisruption = mod.staticModifier("route_disruption", {
   name: "Route Disruption",
   modifiers: (modifier) => {
-    modifier.raw(expeditionEnergyUpkeep, 0.5);
-    modifier.raw(expeditionEfficiency.id, -0.1);
+    modifier.economic(expeditions).resource("energy").upkeep.mult(0.5);
+    modifier.scripted(expeditionEfficiency).set(-0.1);
   },
 });
 

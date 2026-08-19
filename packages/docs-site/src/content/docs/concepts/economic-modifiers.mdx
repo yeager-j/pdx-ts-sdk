@@ -70,17 +70,16 @@ modifier = {
 }
 ```
 
-The SDK's modifier builder spells the same generated key as a path:
+The SDK derives the same generated key from the owned category and resource:
 
 ```ts
-modifier.raw(expeditionEnergyUpkeep, -0.25);
+modifier.economic(expeditions).resource("energy").upkeep.mult(-0.25);
 ```
 
-This key is created by the mod, so it is not part of the SDK's install-derived
-modifier paths. The example declares the family's pattern through
-`CustomModifiers`; `raw` then checks the assembled flat name. The economic
-category connects that value to every resource transaction that selects
-`expeditions`.
+The owned category is a content reference, so the SDK derives the key and
+records that category reference for the build's missing-definition check. The
+resource id remains an open game resource name. The economic category connects
+that value to every resource transaction that selects `expeditions`.
 
 ## A category generates a family, not one fixed key
 
@@ -177,11 +176,11 @@ long-lived definition already owns the modifier block.
 | Apply or remove several modifier values as one named effect        | A [static modifier](/reference/static-modifiers/).                                                         |
 | Give a technology, building, tradition, or civic a permanent bonus | That definition's own `modifier` field.                                                                    |
 
-When adding a custom economic category, its generated keys do not exist in the
-SDK's install-derived modifier table. Declare their pattern through
-`CustomModifiers` and use `modifier.raw(...)` for checked flat names, or use
-`modifier.unchecked(...)` as a deliberate escape hatch. Prefer the declaration
-when several call sites share the family.
+When adding a custom economic category, use the owned recorder seams shown in
+the example: `modifier.economic(category).resource(resource)` derives each key
+from the declaration. Use `modifier.scripted(item).set(value)` for an owned
+scripted modifier. `raw` and `unchecked` remain available for external or
+deferred names.
 
 Finally, test the whole path in Stellaris: the resource block, category
 inheritance, value source, receiving scope, tooltip, AI budget behavior, and

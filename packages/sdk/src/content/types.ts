@@ -3,6 +3,7 @@
  */
 import type { ContentReferenceName, ContentTypeName } from "../generated/content-registry.ts";
 import type { ScopeObjOf } from "../generated/effects.ts";
+import type { EconomicModifierCategory, ScriptedModifierCategory } from "../generated/enums.ts";
 import type { ScopedModifierBlock, ScopedModifierRecorder } from "../generated/modifiers.ts";
 import type { EconomicCategoryRef } from "../generated/refs.ts";
 import type { ScopeName } from "../generated/scopes.ts";
@@ -78,6 +79,12 @@ export interface ContributionItem {
  *     }
  */
 export interface CustomModifiers {}
+
+export interface EconomicCategoryWitness {
+  readonly modifierCategory?: ScriptedModifierCategory;
+  readonly generateAddModifiers?: readonly EconomicModifierCategory[];
+  readonly generateMultModifiers?: readonly EconomicModifierCategory[];
+}
 
 /**
  * The known modifier names for scope `S`, as one flat interface.
