@@ -13,7 +13,7 @@ on:
     branches: [main]
 
 jobs:
-  ci:
+  typecheck-and-codegen:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,12 +22,37 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      # Must run before build: build refreshes the generated module, whereas
-      # this proves package.json's version was committed into the source tree.
+      # Keep this in a checkout isolated from the build job: build refreshes
+      # the generated module, whereas this proves package.json's version was
+      # committed into the source tree.
       - run: npm run codegen:scaffolder-version:check
       - run: npm run typecheck
+      - run: npm run codegen:verified-build:check
+      # The CI-style codegen drift gate: regenerates from vendored inputs and
+      # fails on any diff against the committed packages/sdk/src/generated.
+      - run: npm run codegen:check
+
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
       - run: npm test
       - run: npm run test:asset-scale
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
       # The docs drift gate (SDK-185): every paired example typechecks against
       # the workspace SDK, compiles through the Fold, and renders. A broken
       # example fails this build.
@@ -37,13 +62,18 @@ jobs:
       # to their sources (SDK-214), and an empty tree is what proves it; with
       # `dist/` on disk the coverage and example gates can check compiled
       # output instead of the sources under review, silently, as they did
-      # before. No earlier step can be assumed to leave the tree empty: `npm
-      # test` `npm pack`s each package for the scaffolder test, and `prepack`
-      # builds `dist/` on the way.
+      # before. Keep the deletion inside this job so later edits cannot make
+      # the source-tree guarantee depend on another job's filesystem.
       - name: Docs gate, against sources rather than dist/
         run: rm -rf packages/*/dist && npm run docs:build
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
       - run: npm run build
-      - run: npm run codegen:verified-build:check
-      # The CI-style codegen drift gate: regenerates from vendored inputs and
-      # fails on any diff against the committed packages/sdk/src/generated.
-      - run: npm run codegen:check
