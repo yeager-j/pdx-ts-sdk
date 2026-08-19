@@ -88,9 +88,6 @@ export const UNDOCUMENTED_REGISTRIES: Readonly<Record<string, string>> = {
   decision: "SDK-202 — government and politics",
   councilor: "SDK-202 — government and politics",
   civic_or_origin: "SDK-202 — government and politics",
-  spriteType: "SDK-205 — GFX registries",
-  pdxmesh: "SDK-205 — GFX registries",
-  pdxparticle: "SDK-205 — GFX registries",
 };
 
 /**
