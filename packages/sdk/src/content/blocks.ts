@@ -3,6 +3,7 @@ import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
 
 import { MODIFIER_REFERENCE_FAMILIES } from "../generated/modifiers.ts";
 import type { ScopeName } from "../generated/scopes.ts";
+import { isVanillaRef } from "../identifiers/trie.ts";
 import { underField, type ContentRefSink, type ContentRefUse } from "../references.ts";
 import {
   complexTriggerModifierEntry,
@@ -63,10 +64,15 @@ interface DynamicModifierFamily {
   readonly placeholder: string;
   readonly operations: Readonly<Record<string, string>>;
   readonly id: string;
+  readonly verifiedVanilla: boolean;
 }
 
 function modifierRecorder(
-  record: (name: string, amount: number, reference?: { target: string; id: string }) => void,
+  record: (
+    name: string,
+    amount: number,
+    reference?: { target: string; id: string; verifiedVanilla: boolean }
+  ) => void,
   live: { value: boolean }
 ): unknown {
   const assertLive = (member: string): void => {
@@ -106,11 +112,12 @@ function modifierRecorder(
           const family = MODIFIER_REFERENCE_FAMILIES[selector];
           if (family !== undefined) {
             assertLive(path[0]!);
-            const id = refId(args[0] as TypedRef<string>);
+            const reference = args[0] as TypedRef<string>;
+            const id = refId(reference);
             if (typeof id !== "string") {
               throw new Error(`Dynamic modifier family "${selector}" requires a content reference`);
             }
-            return node(path, { ...family, id });
+            return node(path, { ...family, id, verifiedVanilla: isVanillaRef(reference) });
           }
         }
         assertLive(path.join("_"));
@@ -143,7 +150,12 @@ export function modifierEntries(closure: ModifierClosure, collect?: ContentRefSi
       modifierRecorder((name, amount, reference) => {
         entries.push(kv(name, amount));
         if (reference !== undefined) {
-          collect?.({ targets: [reference.target], id: reference.id, field: name });
+          collect?.({
+            targets: [reference.target],
+            id: reference.id,
+            field: name,
+            verifiedVanilla: reference.verifiedVanilla ? true : undefined,
+          });
         }
       }, live) as never
     );

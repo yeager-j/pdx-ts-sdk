@@ -592,6 +592,22 @@ describe("content reference integrity", () => {
     expect(emittedBuilding).toContain("job_farmer_add = 1");
   });
 
+  it("accepts a checked vanilla job whose id starts with the mod prefix", () => {
+    const config = { ...CONFIG, prefix: "bio" };
+    const building = defineBuildingInternal({
+      id: "bio_building_vanilla_job",
+      name: "Vanilla Job Building",
+      planetModifier: (modifier) => modifier.job(vanillaJob("bio_trophy")).add(1),
+    });
+
+    const files = render(
+      buildInternal(config, [createFeatureInternal("vanilla_job_prefix_collision", [building])])
+    );
+    const emittedBuilding = [...files].find(([path]) => path.startsWith("common/buildings/"))?.[1]
+      .text;
+    expect(emittedBuilding).toContain("job_bio_trophy_add = 1");
+  });
+
   it("derives modifier keys from public logical job names", () => {
     const mod = createMod({
       name: "Job Reference Names",

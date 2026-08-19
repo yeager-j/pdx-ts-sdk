@@ -8,7 +8,9 @@
  * codegen) — it never reads an install itself, and emits nothing but typed
  * wrappers around `{ id }`. `VanillaId`/`CheckedVanillaId`/`VanillaTrie` do
  * every bit of the actual checking, at compile time, against the tables that
- * package exports.
+ * package exports. `makeVanillaRef` also keeps private runtime provenance so
+ * the Fold can distinguish a checked vanilla reference from a same-spelled
+ * owned id without shipping every vanilla id as runtime data.
  */
 
 import {
@@ -106,7 +108,7 @@ function emitRow(emitter: Emitter, row: VanillaRefRow): string {
       `export function ${name}<const Id extends VanillaId<${key}>>(\n` +
       "  id: Id\n" +
       `): ${refType} & { readonly id: Id } {\n` +
-      "  return { id };\n" +
+      `  return makeVanillaRef(id) as ${refType} & { readonly id: Id };\n` +
       "}\n"
     );
   }

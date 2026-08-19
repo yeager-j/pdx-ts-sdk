@@ -24,6 +24,8 @@ export interface ContentRefUse {
   readonly id: string;
   /** Dotted PDXScript key path to the field holding it, e.g. `section.template`. */
   readonly field: string;
+  /** The value came from a compile-time-checked `vanilla.*` helper. */
+  readonly verifiedVanilla?: true;
 }
 
 /** Where an encoder reports the references it writes. */

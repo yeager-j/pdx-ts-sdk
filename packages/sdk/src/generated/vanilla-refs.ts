@@ -37,7 +37,7 @@
 // From: content-manifest.ts (VANILLA_REF_EXTRAS)
 
 import type { CheckedVanillaId, VanillaId, VanillaTrie } from "../identifiers/contracts.ts";
-import { makeEventTrie, makeIdTrie } from "../identifiers/trie.ts";
+import { makeEventTrie, makeIdTrie, makeVanillaRef } from "../identifiers/trie.ts";
 import type {
   AgendaRef,
   AgreementPresetRef,
@@ -101,7 +101,7 @@ import type {
 export function technology<const Id extends VanillaId<"technology">>(
   id: Id
 ): TechnologyRef & { readonly id: Id } {
-  return { id };
+  return makeVanillaRef(id) as TechnologyRef & { readonly id: Id };
 }
 
 /**
@@ -113,7 +113,7 @@ export function technology<const Id extends VanillaId<"technology">>(
 export function building<const Id extends VanillaId<"building">>(
   id: Id
 ): BuildingRef & { readonly id: Id } {
-  return { id };
+  return makeVanillaRef(id) as BuildingRef & { readonly id: Id };
 }
 
 /**
@@ -125,7 +125,7 @@ export function building<const Id extends VanillaId<"building">>(
 export function tradition<const Id extends VanillaId<"tradition">>(
   id: Id
 ): TraditionRef & { readonly id: Id } {
-  return { id };
+  return makeVanillaRef(id) as TraditionRef & { readonly id: Id };
 }
 
 /**
@@ -137,7 +137,7 @@ export function tradition<const Id extends VanillaId<"tradition">>(
 export function traditionCategory<const Id extends VanillaId<"tradition_category">>(
   id: Id
 ): TraditionCategoryRef & { readonly id: Id } {
-  return { id };
+  return makeVanillaRef(id) as TraditionCategoryRef & { readonly id: Id };
 }
 
 /**
@@ -149,7 +149,7 @@ export function traditionCategory<const Id extends VanillaId<"tradition_category
 export function ascensionPerk<const Id extends VanillaId<"ascension_perk">>(
   id: Id
 ): AscensionPerkRef & { readonly id: Id } {
-  return { id };
+  return makeVanillaRef(id) as AscensionPerkRef & { readonly id: Id };
 }
 
 /**
@@ -161,7 +161,7 @@ export function ascensionPerk<const Id extends VanillaId<"ascension_perk">>(
 export function agenda<const Id extends VanillaId<"agenda">>(
   id: Id
 ): AgendaRef & { readonly id: Id } {
-  return { id };
+  return makeVanillaRef(id) as AgendaRef & { readonly id: Id };
 }
 
 /**
@@ -171,7 +171,7 @@ export function agenda<const Id extends VanillaId<"agenda">>(
  * only constructs the branded reference the rest of the SDK accepts.
  */
 export function edict<const Id extends VanillaId<"edict">>(id: Id): EdictRef & { readonly id: Id } {
-  return { id };
+  return makeVanillaRef(id) as EdictRef & { readonly id: Id };
 }
 
 /**
@@ -183,7 +183,7 @@ export function edict<const Id extends VanillaId<"edict">>(id: Id): EdictRef & {
 export function decision<const Id extends VanillaId<"decision">>(
   id: Id
 ): DecisionRef & { readonly id: Id } {
-  return { id };
+  return makeVanillaRef(id) as DecisionRef & { readonly id: Id };
 }
 
 /**
@@ -193,7 +193,7 @@ export function decision<const Id extends VanillaId<"decision">>(
  * only constructs the branded reference the rest of the SDK accepts.
  */
 export function job<const Id extends VanillaId<"job">>(id: Id): JobRef & { readonly id: Id } {
-  return { id };
+  return makeVanillaRef(id) as JobRef & { readonly id: Id };
 }
 
 /**
@@ -205,7 +205,7 @@ export function job<const Id extends VanillaId<"job">>(id: Id): JobRef & { reado
 export function globalShipDesign<const Id extends VanillaId<"global_ship_design">>(
   id: Id
 ): GlobalShipDesignRef & { readonly id: Id } {
-  return { id };
+  return makeVanillaRef(id) as GlobalShipDesignRef & { readonly id: Id };
 }
 
 /**
@@ -217,7 +217,7 @@ export function globalShipDesign<const Id extends VanillaId<"global_ship_design"
 export function utilityComponentTemplate<const Id extends VanillaId<"utility_component_template">>(
   id: Id
 ): ComponentTemplateUtilityComponentTemplateRef & { readonly id: Id } {
-  return { id };
+  return makeVanillaRef(id) as ComponentTemplateUtilityComponentTemplateRef & { readonly id: Id };
 }
 
 /**
@@ -229,7 +229,7 @@ export function utilityComponentTemplate<const Id extends VanillaId<"utility_com
 export function weaponComponentTemplate<const Id extends VanillaId<"weapon_component_template">>(
   id: Id
 ): ComponentTemplateWeaponComponentTemplateRef & { readonly id: Id } {
-  return { id };
+  return makeVanillaRef(id) as ComponentTemplateWeaponComponentTemplateRef & { readonly id: Id };
 }
 
 /**
@@ -241,7 +241,9 @@ export function weaponComponentTemplate<const Id extends VanillaId<"weapon_compo
 export function strikeCraftComponentTemplate<
   const Id extends VanillaId<"strike_craft_component_template">,
 >(id: Id): ComponentTemplateStrikeCraftComponentTemplateRef & { readonly id: Id } {
-  return { id };
+  return makeVanillaRef(id) as ComponentTemplateStrikeCraftComponentTemplateRef & {
+    readonly id: Id;
+  };
 }
 
 /**
@@ -253,7 +255,7 @@ export function strikeCraftComponentTemplate<
 export function shipSize<const Id extends VanillaId<"ship_size">>(
   id: Id
 ): ShipSizeRef & { readonly id: Id } {
-  return { id };
+  return makeVanillaRef(id) as ShipSizeRef & { readonly id: Id };
 }
 
 /**
@@ -265,7 +267,7 @@ export function shipSize<const Id extends VanillaId<"ship_size">>(
 export function opinionModifier<const Id extends VanillaId<"opinion_modifier">>(
   id: Id
 ): OpinionModifierRef & { readonly id: Id } {
-  return { id };
+  return makeVanillaRef(id) as OpinionModifierRef & { readonly id: Id };
 }
 
 /**
@@ -293,7 +295,7 @@ export const staticModifier: VanillaTrie<"static_modifier"> &
 export function scriptedModifier<const Id extends VanillaId<"scripted_modifier">>(
   id: Id
 ): ScriptedModifierRef & { readonly id: Id } {
-  return { id };
+  return makeVanillaRef(id) as ScriptedModifierRef & { readonly id: Id };
 }
 
 /**
@@ -305,7 +307,7 @@ export function scriptedModifier<const Id extends VanillaId<"scripted_modifier">
 export function casusBelli<const Id extends VanillaId<"casus_belli">>(
   id: Id
 ): CasusBelliRef & { readonly id: Id } {
-  return { id };
+  return makeVanillaRef(id) as CasusBelliRef & { readonly id: Id };
 }
 
 /**
@@ -317,7 +319,7 @@ export function casusBelli<const Id extends VanillaId<"casus_belli">>(
 export function warGoal<const Id extends VanillaId<"war_goal">>(
   id: Id
 ): WarGoalRef & { readonly id: Id } {
-  return { id };
+  return makeVanillaRef(id) as WarGoalRef & { readonly id: Id };
 }
 
 /**
@@ -329,7 +331,7 @@ export function warGoal<const Id extends VanillaId<"war_goal">>(
 export function agreementPreset<const Id extends VanillaId<"agreement_preset">>(
   id: Id
 ): AgreementPresetRef & { readonly id: Id } {
-  return { id };
+  return makeVanillaRef(id) as AgreementPresetRef & { readonly id: Id };
 }
 
 /**
@@ -341,7 +343,7 @@ export function agreementPreset<const Id extends VanillaId<"agreement_preset">>(
 export function bombardmentStance<const Id extends VanillaId<"bombardment_stance">>(
   id: Id
 ): BombardmentStanceRef & { readonly id: Id } {
-  return { id };
+  return makeVanillaRef(id) as BombardmentStanceRef & { readonly id: Id };
 }
 
 /**
@@ -353,7 +355,7 @@ export function bombardmentStance<const Id extends VanillaId<"bombardment_stance
 export function archaeologicalSiteType<const Id extends VanillaId<"archaeological_site_type">>(
   id: Id
 ): ArchaeologicalSiteTypeRef & { readonly id: Id } {
-  return { id };
+  return makeVanillaRef(id) as ArchaeologicalSiteTypeRef & { readonly id: Id };
 }
 
 /**
@@ -365,7 +367,7 @@ export function archaeologicalSiteType<const Id extends VanillaId<"archaeologica
 export function situationType<const Id extends VanillaId<"situation_type">>(
   id: Id
 ): SituationTypeRef & { readonly id: Id } {
-  return { id };
+  return makeVanillaRef(id) as SituationTypeRef & { readonly id: Id };
 }
 
 /**
@@ -377,7 +379,7 @@ export function situationType<const Id extends VanillaId<"situation_type">>(
 export function scriptedLoc<const Id extends VanillaId<"scripted_loc">>(
   id: Id
 ): ScriptedLocRef & { readonly id: Id } {
-  return { id };
+  return makeVanillaRef(id) as ScriptedLocRef & { readonly id: Id };
 }
 
 /**
@@ -389,7 +391,7 @@ export function scriptedLoc<const Id extends VanillaId<"scripted_loc">>(
 export function councilor<const Id extends VanillaId<"councilor">>(
   id: Id
 ): CouncilorRef & { readonly id: Id } {
-  return { id };
+  return makeVanillaRef(id) as CouncilorRef & { readonly id: Id };
 }
 
 /**
@@ -401,7 +403,7 @@ export function councilor<const Id extends VanillaId<"councilor">>(
 export function economicCategory<const Id extends VanillaId<"economic_category">>(
   id: Id
 ): EconomicCategoryRef & { readonly id: Id } {
-  return { id };
+  return makeVanillaRef(id) as EconomicCategoryRef & { readonly id: Id };
 }
 
 /**
@@ -413,7 +415,7 @@ export function economicCategory<const Id extends VanillaId<"economic_category">
 export function civicOrOrigin<const Id extends VanillaId<"civic_or_origin">>(
   id: Id
 ): CivicOrOriginRef & { readonly id: Id } {
-  return { id };
+  return makeVanillaRef(id) as CivicOrOriginRef & { readonly id: Id };
 }
 
 /**
@@ -425,7 +427,7 @@ export function civicOrOrigin<const Id extends VanillaId<"civic_or_origin">>(
 export function componentSet<const Id extends VanillaId<"component_set">>(
   id: Id
 ): ComponentSetRef & { readonly id: Id } {
-  return { id };
+  return makeVanillaRef(id) as ComponentSetRef & { readonly id: Id };
 }
 
 /**
@@ -437,7 +439,7 @@ export function componentSet<const Id extends VanillaId<"component_set">>(
 export function sectionTemplate<const Id extends VanillaId<"section_template">>(
   id: Id
 ): SectionTemplateRef & { readonly id: Id } {
-  return { id };
+  return makeVanillaRef(id) as SectionTemplateRef & { readonly id: Id };
 }
 
 /**
@@ -449,7 +451,7 @@ export function sectionTemplate<const Id extends VanillaId<"section_template">>(
 export function ambientObject<const Id extends VanillaId<"ambient_object">>(
   id: Id
 ): AmbientObjectRef & { readonly id: Id } {
-  return { id };
+  return makeVanillaRef(id) as AmbientObjectRef & { readonly id: Id };
 }
 
 /**
@@ -461,7 +463,7 @@ export function ambientObject<const Id extends VanillaId<"ambient_object">>(
 export function graphicalCulture<const Id extends VanillaId<"graphical_culture">>(
   id: Id
 ): GraphicalCultureRef & { readonly id: Id } {
-  return { id };
+  return makeVanillaRef(id) as GraphicalCultureRef & { readonly id: Id };
 }
 
 /**
@@ -473,7 +475,7 @@ export function graphicalCulture<const Id extends VanillaId<"graphical_culture">
 export function starbaseLevel<const Id extends VanillaId<"starbase_level">>(
   id: Id
 ): StarbaseLevelRef & { readonly id: Id } {
-  return { id };
+  return makeVanillaRef(id) as StarbaseLevelRef & { readonly id: Id };
 }
 
 /**
@@ -485,7 +487,7 @@ export function starbaseLevel<const Id extends VanillaId<"starbase_level">>(
 export function speciesClass<const Id extends VanillaId<"species_class">>(
   id: Id
 ): SpeciesClassRef & { readonly id: Id } {
-  return { id };
+  return makeVanillaRef(id) as SpeciesClassRef & { readonly id: Id };
 }
 
 /**
@@ -497,7 +499,7 @@ export function speciesClass<const Id extends VanillaId<"species_class">>(
 export function countryShipOfSizeLimit<const Id extends VanillaId<"country_ship_of_size_limit">>(
   id: Id
 ): CountryShipOfSizeLimitRef & { readonly id: Id } {
-  return { id };
+  return makeVanillaRef(id) as CountryShipOfSizeLimitRef & { readonly id: Id };
 }
 
 /**
@@ -509,7 +511,7 @@ export function countryShipOfSizeLimit<const Id extends VanillaId<"country_ship_
 export function solarSystemInitializer<const Id extends VanillaId<"solar_system_initializer">>(
   id: Id
 ): SolarSystemInitializerRef & { readonly id: Id } {
-  return { id };
+  return makeVanillaRef(id) as SolarSystemInitializerRef & { readonly id: Id };
 }
 
 /**
@@ -521,7 +523,7 @@ export function solarSystemInitializer<const Id extends VanillaId<"solar_system_
 export function eventChain<const Id extends VanillaId<"event_chain">>(
   id: Id
 ): EventChainRef & { readonly id: Id } {
-  return { id };
+  return makeVanillaRef(id) as EventChainRef & { readonly id: Id };
 }
 
 /**
@@ -533,7 +535,7 @@ export function eventChain<const Id extends VanillaId<"event_chain">>(
 export function specialProject<const Id extends VanillaId<"special_project">>(
   id: Id
 ): SpecialProjectRef & { readonly id: Id } {
-  return { id };
+  return makeVanillaRef(id) as SpecialProjectRef & { readonly id: Id };
 }
 
 /**
@@ -545,7 +547,7 @@ export function specialProject<const Id extends VanillaId<"special_project">>(
 export function megastructure<const Id extends VanillaId<"megastructure">>(
   id: Id
 ): MegastructureRef & { readonly id: Id } {
-  return { id };
+  return makeVanillaRef(id) as MegastructureRef & { readonly id: Id };
 }
 
 /**
@@ -589,7 +591,7 @@ export const pdxmesh: VanillaTrie<"pdxmesh"> &
 export function pdxparticle<const Id extends VanillaId<"pdxparticle">>(
   id: Id
 ): ParticleRef & { readonly id: Id } {
-  return { id };
+  return makeVanillaRef(id) as ParticleRef & { readonly id: Id };
 }
 
 /**
@@ -633,7 +635,7 @@ export const soundEffect: VanillaTrie<"sound_effect"> &
 export function resource<const Id extends VanillaId<"resource">>(
   id: Id
 ): ResourceRef & { readonly id: Id } {
-  return { id };
+  return makeVanillaRef(id) as ResourceRef & { readonly id: Id };
 }
 
 /**
@@ -645,7 +647,7 @@ export function resource<const Id extends VanillaId<"resource">>(
 export function situationLogCategory<const Id extends VanillaId<"situation_log_category">>(
   id: Id
 ): SituationLogCategoryRef & { readonly id: Id } {
-  return { id };
+  return makeVanillaRef(id) as SituationLogCategoryRef & { readonly id: Id };
 }
 
 /**
@@ -657,7 +659,7 @@ export function situationLogCategory<const Id extends VanillaId<"situation_log_c
 export function starClass<const Id extends VanillaId<"star_class">>(
   id: Id
 ): StarClassRef & { readonly id: Id } {
-  return { id };
+  return makeVanillaRef(id) as StarClassRef & { readonly id: Id };
 }
 
 /**
@@ -669,7 +671,7 @@ export function starClass<const Id extends VanillaId<"star_class">>(
 export function planetClass<const Id extends VanillaId<"planet_class">>(
   id: Id
 ): PlanetClassRef & { readonly id: Id } {
-  return { id };
+  return makeVanillaRef(id) as PlanetClassRef & { readonly id: Id };
 }
 
 /**
@@ -713,7 +715,7 @@ export const anomalyCategory: VanillaTrie<"anomaly_category"> &
 export function planetModifier<const Id extends VanillaId<"planet_modifier">>(
   id: Id
 ): PlanetModifierRef & { readonly id: Id } {
-  return { id };
+  return makeVanillaRef(id) as PlanetModifierRef & { readonly id: Id };
 }
 
 /**
@@ -725,7 +727,7 @@ export function planetModifier<const Id extends VanillaId<"planet_modifier">>(
 export function asteroidBeltType<const Id extends VanillaId<"asteroid_belt_type">>(
   id: Id
 ): AsteroidBeltTypeRef & { readonly id: Id } {
-  return { id };
+  return makeVanillaRef(id) as AsteroidBeltTypeRef & { readonly id: Id };
 }
 
 /**
