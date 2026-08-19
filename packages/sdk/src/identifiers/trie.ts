@@ -1,3 +1,21 @@
+const vanillaReferences = new WeakSet<object>();
+
+/** Constructs the runtime `{ id }` behind a checked `vanilla.*` reference. */
+export function makeVanillaRef(id: string): { readonly id: string } {
+  const reference = { id };
+  vanillaReferences.add(reference);
+  return reference;
+}
+
+/** Whether a reference came from a compile-time-checked `vanilla.*` helper. */
+export function isVanillaRef(value: unknown): boolean {
+  return (
+    (typeof value === "object" || typeof value === "function") &&
+    value !== null &&
+    vanillaReferences.has(value)
+  );
+}
+
 /**
  * Shared runtime behind every oversized `vanilla.*` export
  * (`vanilla.spriteType`, `vanilla.sound`, `vanilla.soundEffect`,
@@ -32,8 +50,8 @@
 // path came from), not because the proxy needs it to function today.
 export function makeIdTrie(registry: string): any {
   void registry;
-  const node = (path: readonly string[]): unknown =>
-    new Proxy(() => undefined, {
+  const node = (path: readonly string[]): unknown => {
+    const reference = new Proxy(() => undefined, {
       get(_target, prop) {
         if (typeof prop !== "string") {
           return undefined;
@@ -47,9 +65,12 @@ export function makeIdTrie(registry: string): any {
         return typeof prop === "string";
       },
       apply(_target, _thisArg, args: unknown[]) {
-        return { id: args[0] };
+        return makeVanillaRef(args[0] as string);
       },
     });
+    vanillaReferences.add(reference);
+    return reference;
+  };
   return node([]);
 }
 
@@ -65,8 +86,8 @@ export function makeEventTrie(): any {
     const localId = /^\$\d+$/.test(navigationKey) ? navigationKey.slice(1) : navigationKey;
     return `${namespace}.${localId}`;
   };
-  const node = (path: readonly string[]): unknown =>
-    new Proxy(() => undefined, {
+  const node = (path: readonly string[]): unknown => {
+    const reference = new Proxy(() => undefined, {
       get(_target, prop) {
         if (typeof prop !== "string") {
           return undefined;
@@ -86,5 +107,8 @@ export function makeEventTrie(): any {
         return typeof prop === "string";
       },
     });
+    vanillaReferences.add(reference);
+    return reference;
+  };
   return node([]);
 }

@@ -18,6 +18,19 @@ import type { ContentShape } from "./content-shape.ts";
 export const UNIVERSAL_SCOPES = new Set(["all", "any"]);
 
 /**
+ * Dynamic modifier families whose placeholder segment is a typed content ref.
+ * The allowlist is deliberately narrow: only the audited `<job>` templates
+ * receive a callable recorder path; every other template remains raw/unchecked.
+ */
+export const MODIFIER_FAMILY_OVERLAYS = [
+  {
+    family: "job",
+    reference: "JobRef",
+    target: "job",
+  },
+] as const;
+
+/**
  * Structural triggers the SDK models by hand rather than generating.
  *
  * These are not conditions, they are the shape of the condition tree, and the

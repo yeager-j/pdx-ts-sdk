@@ -11,6 +11,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
+import { isVanillaRef } from "../src/identifiers/trie.ts";
 import { createMod, refId, render, vanilla } from "../src/index.ts";
 import { toScalar } from "../src/script/scalar.ts";
 
@@ -22,6 +23,14 @@ const CONFIG = {
 const mod = createMod(CONFIG);
 
 describe("checked helpers in ref fields", () => {
+  it("keeps checked vanilla provenance outside the public reference shape", () => {
+    const checked = vanilla.job("bio_trophy");
+
+    expect(isVanillaRef(checked)).toBe(true);
+    expect(isVanillaRef({ id: checked.id })).toBe(false);
+    expect(Object.keys(checked)).toEqual(["id"]);
+  });
+
   it("serializes a vanilla technology reference as its bare id", () => {
     const technologies = mod.feature(undefined, [
       mod.technology("probe", {

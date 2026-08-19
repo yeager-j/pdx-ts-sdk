@@ -23,8 +23,11 @@ import { on as onInternal } from "../src/events/on-actions.ts";
 import type { EventItem } from "../src/events/types.ts";
 import {
   addShipOfSizeLimits as addShipOfSizeLimitsInternal,
+  defineBuilding as defineBuildingInternal,
   defineCountryShipOfSizeLimit as defineCountryShipOfSizeLimitInternal,
   defineGlobalShipDesign as defineGlobalShipDesignInternal,
+  defineJob as defineJobInternal,
+  defineStaticModifier as defineStaticModifierInternal,
   defineTechnology as defineTechnologyInternal,
   defineTradition as defineTraditionInternal,
   defineUtilityComponentTemplate as defineUtilityComponentTemplateInternal,
@@ -32,6 +35,7 @@ import {
   patchTechnology as patchTechnologyInternal,
 } from "../src/generated/content-definers.ts";
 import { namespace as namespaceInternal } from "../src/generated/event-definers.ts";
+import { job as vanillaJob } from "../src/generated/vanilla-refs.ts";
 import {
   always,
   and,
@@ -519,6 +523,121 @@ describe("event namespaces", () => {
 });
 
 describe("content reference integrity", () => {
+  it("folds owned job references and rejects omitted owned jobs", () => {
+    const job = defineJobInternal({
+      id: "pp_mod_job_owned",
+      name: "Owned Job",
+      category: "worker",
+    });
+    const building = defineBuildingInternal({
+      id: "pp_mod_building_job_ref",
+      name: "Job Building",
+      planetModifier: (m) => m.job(job).add(1),
+    });
+    const owned = createFeatureInternal("job_owned", [job, building]);
+    const ownedFiles = render(buildInternal(CONFIG, [owned]));
+    const ownedBuilding = [...ownedFiles].find(([path]) =>
+      path.startsWith("common/buildings/")
+    )?.[1].text;
+    expect(ownedBuilding).toContain("job_pp_mod_job_owned_add = 1");
+
+    const omitted = createFeatureInternal("job_omitted", [building]);
+    expect(() => buildInternal(CONFIG, [omitted])).toThrow(
+      'references job "pp_mod_job_owned" in "planet_modifier.job_pp_mod_job_owned_add"'
+    );
+
+    const triggeredBuilding = defineBuildingInternal({
+      id: "pp_mod_building_triggered_job_ref",
+      name: "Triggered Job Building",
+      triggeredPlanetModifier: [{ modifier: (modifier) => modifier.job(job).add(2) }],
+    });
+    expect(() =>
+      buildInternal(CONFIG, [createFeatureInternal("job_triggered_omitted", [triggeredBuilding])])
+    ).toThrow(
+      'references job "pp_mod_job_owned" in "triggered_planet_modifier.modifier.job_pp_mod_job_owned_add"'
+    );
+
+    const inlineStaticModifier = defineStaticModifierInternal({
+      id: "pp_mod_static_modifier_job_ref",
+      name: "Inline Job Modifier",
+      modifiers: (modifier) => modifier.job(job).add(3),
+    });
+    expect(() =>
+      buildInternal(CONFIG, [createFeatureInternal("job_inline_omitted", [inlineStaticModifier])])
+    ).toThrow('references job "pp_mod_job_owned" in "job_pp_mod_job_owned_add"');
+
+    const triggeredInlineBuilding = defineBuildingInternal({
+      id: "pp_mod_building_triggered_inline_job_ref",
+      name: "Triggered Inline Job Building",
+      triggeredPlanetModifier: [{ modifiers: (modifier) => modifier.job(job).add(4) }],
+    });
+    expect(() =>
+      buildInternal(CONFIG, [
+        createFeatureInternal("job_triggered_inline_omitted", [triggeredInlineBuilding]),
+      ])
+    ).toThrow(
+      'references job "pp_mod_job_owned" in "triggered_planet_modifier.job_pp_mod_job_owned_add"'
+    );
+  });
+
+  it("accepts checked vanilla job references", () => {
+    const building = defineBuildingInternal({
+      id: "pp_mod_building_vanilla_job",
+      name: "Vanilla Job Building",
+      planetModifier: (m) => m.job(vanillaJob("farmer")).add(1),
+    });
+    const files = render(buildInternal(CONFIG, [createFeatureInternal("vanilla_job", [building])]));
+    const emittedBuilding = [...files].find(([path]) => path.startsWith("common/buildings/"))?.[1]
+      .text;
+    expect(emittedBuilding).toContain("job_farmer_add = 1");
+  });
+
+  it("accepts a checked vanilla job whose id starts with the mod prefix", () => {
+    const config = { ...CONFIG, prefix: "bio" };
+    const building = defineBuildingInternal({
+      id: "bio_building_vanilla_job",
+      name: "Vanilla Job Building",
+      planetModifier: (modifier) => modifier.job(vanillaJob("bio_trophy")).add(1),
+    });
+
+    const files = render(
+      buildInternal(config, [createFeatureInternal("vanilla_job_prefix_collision", [building])])
+    );
+    const emittedBuilding = [...files].find(([path]) => path.startsWith("common/buildings/"))?.[1]
+      .text;
+    expect(emittedBuilding).toContain("job_bio_trophy_add = 1");
+  });
+
+  it("derives modifier keys from public logical job names", () => {
+    const mod = createMod({
+      name: "Job Reference Names",
+      prefix: "job_names",
+      supportedVersion: "4.4.*",
+    });
+    const first = mod.job("orbital_analyst", {
+      name: "Orbital Analyst",
+      category: "specialist",
+    });
+    const renamed = mod.job("deep_space_analyst", {
+      name: "Deep-Space Analyst",
+      category: "specialist",
+    });
+    const building = mod.building("analysis_center", {
+      name: "Analysis Center",
+      planetModifier: (modifier) => {
+        modifier.job(first).add(1);
+        modifier.job(renamed).add(2);
+      },
+    });
+    const files = render(mod.compile([mod.feature("job_names", [first, renamed, building])]));
+    const emittedBuilding = [...files].find(([path]) => path.startsWith("common/buildings/"))?.[1]
+      .text;
+
+    expect(first.id).not.toBe(renamed.id);
+    expect(emittedBuilding).toContain(`job_${first.id}_add = 1`);
+    expect(emittedBuilding).toContain(`job_${renamed.id}_add = 2`);
+  });
+
   it("resolves a reference across two collections of the same build", () => {
     const base = techsWith("base_techs", "pp_mod_tech_base");
     const derived = createFeatureInternal("derived_techs", [

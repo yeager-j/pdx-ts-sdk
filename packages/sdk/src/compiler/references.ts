@@ -171,6 +171,9 @@ export function validateReferences(args: {
     }
     const registries = resolvedTargets.flatMap((resolved) => resolved!);
     const target = use.targets.join(" or ");
+    if (use.verifiedVanilla === true) {
+      continue;
+    }
     // Which ownership test applies is the registry's own data, not a name: a
     // registry that mints a head (`GFX_` before the prefix, see
     // `ContentRegistryDescriptor.mintHead`) writes own names that do not start

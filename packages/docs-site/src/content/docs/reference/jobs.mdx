@@ -27,10 +27,9 @@ that adds two positions:
 
 <PairedExample name="jobs-basic" />
 
-The example uses `unchecked` for the generated modifier name because the
-checked modifier names cover vanilla job modifiers, not a job this mod
-declares. The string is still derived from `orbitalAnalyst.id`, so renaming
-the job changes the modifier name with it. The worked example later on adds
+The modifier recorder accepts the owned job reference directly. The emitted
+key is derived from `orbitalAnalyst.id`, so renaming the job changes the key
+with it. The worked example later on adds
 swaps, conditional output, overlord production, modifiers, and assignment
 weight.
 

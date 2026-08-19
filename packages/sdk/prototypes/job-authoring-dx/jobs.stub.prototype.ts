@@ -159,7 +159,7 @@ function swapTo(job: JobRef & { readonly id: string }, spec: SwapToSpec): JobSwa
 }
 
 function modifiers(
-  closure: (modifier: ScopedModifierRecorder<"colony"> & ProposedJobModifiers) => void
+  closure: (modifier: Omit<ScopedModifierRecorder<"colony">, "job"> & ProposedJobModifiers) => void
 ): ModifierClosure<"colony"> {
   return (recorder) => {
     const proposed = new Proxy(recorder, {
@@ -175,7 +175,7 @@ function modifiers(
         }
         return Reflect.get(target, property, receiver) as unknown;
       },
-    }) as ScopedModifierRecorder<"colony"> & ProposedJobModifiers;
+    }) as unknown as Omit<ScopedModifierRecorder<"colony">, "job"> & ProposedJobModifiers;
     closure(proposed);
   };
 }

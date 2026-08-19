@@ -230,8 +230,13 @@ export interface RuleSet {
   /** Concrete modifier names `modifiers.cwt` declares, with their categories. */
   readonly modifierDecls: ReadonlyMap<string, readonly string[]>;
   /** Templated `modifiers.cwt` rows (`<ship_size>_…`) the game expands from content. */
-  readonly modifierTemplates: readonly string[];
+  readonly modifierTemplates: readonly ModifierTemplate[];
   readonly diagnostics: readonly CwtDiagnostic[];
+}
+
+export interface ModifierTemplate {
+  readonly name: string;
+  readonly categories: readonly string[];
 }
 
 export interface ComplexEnum {
@@ -525,7 +530,7 @@ function readModifierCategories(nodes: readonly CwtNode[], into: Map<string, str
 function readModifierDecls(
   nodes: readonly CwtNode[],
   into: Map<string, string[]>,
-  templates: string[]
+  templates: ModifierTemplate[]
 ): void {
   for (const outer of assignments(nodes)) {
     if (outer.key.text !== "modifiers" || outer.value.kind !== "block") {
@@ -536,7 +541,10 @@ function readModifierDecls(
         continue;
       }
       if (entry.key.text.includes("<") || entry.key.text.includes("[")) {
-        templates.push(entry.key.text);
+        const categories = entry.value.nodes.flatMap((item) =>
+          item.kind === "value" && item.value.kind === "scalar" ? [item.value.text] : []
+        );
+        templates.push({ name: entry.key.text, categories });
         continue;
       }
       const categories = entry.value.nodes.flatMap((item) =>
@@ -831,7 +839,7 @@ export function loadRules(root: string): RuleSet {
   const onActions: OnActionDecl[] = [];
   const modifierCategories = new Map<string, string[]>();
   const modifierDecls = new Map<string, string[]>();
-  const modifierTemplates: string[] = [];
+  const modifierTemplates: ModifierTemplate[] = [];
   const singleAliases = new Map<string, SingleAliasTarget>();
   const diagnostics: CwtDiagnostic[] = [];
   const classificationDiagnostics = new Set<string>();

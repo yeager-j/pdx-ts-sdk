@@ -28,6 +28,30 @@ describe("the modifier dump", () => {
 });
 
 describe("the modifier scope join", () => {
+  it("derives the audited job family from all eight templates", () => {
+    const family = join.dynamicFamilies.find((entry) => entry.family === "job");
+    const templates = rules.modifierTemplates.filter((template) => template.name.includes("<job>"));
+    expect(templates).toHaveLength(8);
+    expect(templates.filter((template) => template.categories.includes("Colony"))).toHaveLength(6);
+    expect(templates.filter((template) => template.categories.includes("Pops"))).toHaveLength(2);
+    expect(Object.fromEntries(family?.operationTemplates ?? [])).toEqual({
+      add: "job_<job>_add",
+      "per.pop": "job_<job>_per_pop",
+      "per.crime": "job_<job>_per_crime",
+      "max.workforce.add": "job_<job>_max_workforce_add",
+      "max.workforce.mult": "job_<job>_max_workforce_mult",
+      "automated.workforce.mult": "job_<job>_automated_workforce_mult",
+      "workforce.mult": "pop_<job>_workforce_mult",
+      "bonus.workforce.mult": "pop_<job>_bonus_workforce_mult",
+    });
+    expect(family?.scopeOperations.get("colony")).toHaveLength(8);
+    expect(family?.scopeOperations.get("pop_group")).toHaveLength(2);
+    expect(family?.scopeOperations.has("federation")).toBe(false);
+    expect(emission.code).toContain("MODIFIER_REFERENCE_FAMILIES");
+    expect(
+      readFileSync(path.join(ROOT, "packages/sdk/src/generated/modifiers.ts"), "utf8")
+    ).toContain("// From: modifiers.cwt");
+  });
   it("files the generated economic modifiers the curated rules cannot list", () => {
     expect(rules.modifierDecls.has("country_unity_produces_mult")).toBe(false);
     expect(join.universal).toContain("country_unity_produces_mult");

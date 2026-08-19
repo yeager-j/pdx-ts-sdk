@@ -1,7 +1,9 @@
 /** Reusable PDXScript encoders for content block shapes. */
 import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
 
+import { MODIFIER_REFERENCE_FAMILIES } from "../generated/modifiers.ts";
 import type { ScopeName } from "../generated/scopes.ts";
+import { isVanillaRef } from "../identifiers/trie.ts";
 import { underField, type ContentRefSink, type ContentRefUse } from "../references.ts";
 import {
   complexTriggerModifierEntry,
@@ -10,7 +12,7 @@ import {
 } from "../script/effects/modifiers.ts";
 import { assertSynchronousClosure } from "../script/effects/recorder.ts";
 import type { ComplexTriggerModifier, Modifier } from "../script/effects/types.ts";
-import { refId } from "../script/scalar.ts";
+import { refId, type TypedRef } from "../script/scalar.ts";
 import { scriptValueScalar, type ScriptValue } from "../script/trigger-core.ts";
 import type {
   EconomicResourceBlock,
@@ -42,6 +44,9 @@ function descOwnerKey(ctx: LoweringContext, key: string): string {
 }
 
 function joinPath(path: string, segment: string): string {
+  if (segment === "") {
+    return path;
+  }
   return path === "" ? segment : `${path}.${segment}`;
 }
 
@@ -54,8 +59,20 @@ function collectRefs(ctx: LoweringContext, refs: readonly ContentRefUse[], segme
   }
 }
 
+interface DynamicModifierFamily {
+  readonly target: string;
+  readonly placeholder: string;
+  readonly operations: Readonly<Record<string, string>>;
+  readonly id: string;
+  readonly verifiedVanilla: boolean;
+}
+
 function modifierRecorder(
-  record: (name: string, amount: number) => void,
+  record: (
+    name: string,
+    amount: number,
+    reference?: { target: string; id: string; verifiedVanilla: boolean }
+  ) => void,
   live: { value: boolean }
 ): unknown {
   const assertLive = (member: string): void => {
@@ -74,7 +91,7 @@ function modifierRecorder(
         "closure the recorder is handed to, rather than storing the recorder and using it later."
     );
   };
-  const node = (path: readonly string[]): unknown =>
+  const node = (path: readonly string[], dynamicFamily?: DynamicModifierFamily): unknown =>
     new Proxy(() => undefined, {
       get(_target, prop) {
         if (typeof prop !== "string") {
@@ -87,23 +104,60 @@ function modifierRecorder(
             record(name, amount);
           };
         }
-        return node([...path, prop]);
+        return node([...path, prop], dynamicFamily);
       },
       apply(_target, _thisArg, args) {
+        if (path.length === 1) {
+          const selector = path[0] as keyof typeof MODIFIER_REFERENCE_FAMILIES;
+          const family = MODIFIER_REFERENCE_FAMILIES[selector];
+          if (family !== undefined) {
+            assertLive(path[0]!);
+            const reference = args[0] as TypedRef<string>;
+            const id = refId(reference);
+            if (typeof id !== "string") {
+              throw new Error(`Dynamic modifier family "${selector}" requires a content reference`);
+            }
+            return node(path, { ...family, id, verifiedVanilla: isVanillaRef(reference) });
+          }
+        }
         assertLive(path.join("_"));
-        record(path.join("_"), args[0] as number);
+        const flat = path.join("_");
+        if (dynamicFamily !== undefined) {
+          const operation = path.slice(1).join(".");
+          const template = dynamicFamily.operations[operation];
+          if (template === undefined) {
+            throw new Error(`Unknown dynamic modifier operation "${path[0]}.${operation}"`);
+          }
+          record(
+            template.replace(dynamicFamily.placeholder, dynamicFamily.id),
+            args[0] as number,
+            dynamicFamily
+          );
+          return;
+        }
+        record(flat, args[0] as number);
       },
     });
   return node([]);
 }
 
-export function modifierEntries(closure: ModifierClosure): PdxEntry[] {
+export function modifierEntries(closure: ModifierClosure, collect?: ContentRefSink): PdxEntry[] {
   const entries: PdxEntry[] = [];
   const live = { value: true };
   let result: unknown;
   try {
     result = closure(
-      modifierRecorder((name, amount) => entries.push(kv(name, amount)), live) as never
+      modifierRecorder((name, amount, reference) => {
+        entries.push(kv(name, amount));
+        if (reference !== undefined) {
+          collect?.({
+            targets: [reference.target],
+            id: reference.id,
+            field: name,
+            verifiedVanilla: reference.verifiedVanilla ? true : undefined,
+          });
+        }
+      }, live) as never
     );
   } finally {
     // Dead as soon as the closure returns, however it returns — an author's
@@ -118,8 +172,12 @@ export function modifierEntries(closure: ModifierClosure): PdxEntry[] {
   return entries;
 }
 
-export function modifierBlock(key: string, value: ModifierClosure): PdxEntry {
-  return block(key, modifierEntries(value));
+export function modifierBlock(
+  key: string,
+  value: ModifierClosure,
+  collect?: ContentRefSink
+): PdxEntry {
+  return block(key, modifierEntries(value, collect));
 }
 
 /**
@@ -296,10 +354,12 @@ export function triggeredModifierBlock(
     entries.push(kv("not_potential_override_text_key", value.notPotentialOverrideTextKey));
   }
   if (value.modifier !== undefined) {
-    entries.push(modifierBlock("modifier", value.modifier));
+    entries.push(
+      modifierBlock("modifier", value.modifier, (use) => collectRefs(ctx, [use], `${key}.modifier`))
+    );
   }
   if (value.modifiers !== undefined) {
-    entries.push(...modifierEntries(value.modifiers));
+    entries.push(...modifierEntries(value.modifiers, (use) => collectRefs(ctx, [use], key)));
   }
   if (value.description !== undefined) {
     entries.push(kv("description", value.description));

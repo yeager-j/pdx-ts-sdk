@@ -232,6 +232,9 @@ function descOwnerKey(ctx: LoweringContext, key: string): string {
 }
 
 function joinPath(path: string, segment: string): string {
+  if (segment === "") {
+    return path;
+  }
   return path === "" ? segment : `${path}.${segment}`;
 }
 
@@ -464,10 +467,16 @@ export function fieldEntries(
         break;
       }
       case "modifierBlock":
-        entries.push(modifierBlock(field.key, value as ModifierClosure));
+        entries.push(
+          modifierBlock(field.key, value as ModifierClosure, (use) =>
+            collectRefs(ctx, [use], field.key)
+          )
+        );
         break;
       case "inlineModifiers":
-        entries.push(...modifierEntries(value as ModifierClosure));
+        entries.push(
+          ...modifierEntries(value as ModifierClosure, (use) => collectRefs(ctx, [use], ""))
+        );
         break;
       case "inlineTrigger":
         entries.push(...(value as Trigger<ScopeName>).entries);
