@@ -57,22 +57,22 @@ their written order.
 ## Generate a typed cross-product
 
 Repetition multiplies quickly when every category needs its own variants.
-Three empire kinds with four ambitions each require twelve event options in
+Three empire kinds with four options each require twelve event options in
 PDXScript. Keep the differences in typed data and generate the repeated shape:
 
 <PairedExample name="mapped-event-options" />
 
 This example derives the closed `EmpireKind` union from `EMPIRE_KINDS`, keeps
 the differences in one typed table, and forms the cross-product with
-`flatMap(...map(...))`: one option for every ambition in every empire kind.
-Each option receives a stable combined key, the correct visibility Trigger,
-localized text, and its reward effect. The PDXScript tab shows all twelve
-ordinary option blocks; at game time each empire sees the four whose Trigger
-matches it.
+`flatMap(...map(...))`: one event option for every table entry in every empire
+kind. Each generated option receives a stable combined key, the correct
+visibility Trigger, localized text, and its reward effect. The PDXScript tab
+shows all twelve ordinary option blocks; at game time each empire sees the four
+whose Trigger matches it.
 
 The types turn design assumptions into checks. Adding another value to
 `EMPIRE_KINDS` makes both records fail typechecking until the new empire kind
-has ambitions and a condition. Removing one ambition from a group breaks the
+has options and a condition. Removing one option from a group breaks the
 four-entry tuple. The data cannot quietly fall out of step with the generator.
 
 The `as const` preserves the table's literal keys and values while `satisfies`

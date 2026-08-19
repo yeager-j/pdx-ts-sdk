@@ -12,16 +12,21 @@ type EmpireKind = (typeof EMPIRE_KINDS)[number];
 
 type RewardResource = "alloys" | "energy" | "food" | "influence" | "unity";
 
-interface Ambition {
+interface EmpireOption {
   readonly key: string;
   readonly name: string;
   readonly resource: RewardResource;
   readonly amount: number;
 }
 
-type FourAmbitions = readonly [Ambition, Ambition, Ambition, Ambition];
+type FourOptions = readonly [
+  EmpireOption,
+  EmpireOption,
+  EmpireOption,
+  EmpireOption,
+];
 
-const AMBITIONS_BY_EMPIRE = {
+const OPTIONS_BY_EMPIRE = {
   regular: [
     {
       key: "horizon_corps",
@@ -100,7 +105,7 @@ const AMBITIONS_BY_EMPIRE = {
       amount: 100,
     },
   ],
-} as const satisfies Record<EmpireKind, FourAmbitions>;
+} as const satisfies Record<EmpireKind, FourOptions>;
 
 const EMPIRE_CONDITION = {
   regular: and(isHiveEmpire(false), isMachineEmpire(false)),
@@ -110,12 +115,12 @@ const EMPIRE_CONDITION = {
 
 const events = mod.namespace("signal");
 
-const chooseAmbition = events.country(1, {
+const chooseResponse = events.country(1, {
   title: "A Signal in the Dust",
   desc: "An ancient relay offers twelve paths, but only four suit the minds receiving its call.",
   isTriggeredOnly: true,
   options: EMPIRE_KINDS.flatMap((kind) =>
-    AMBITIONS_BY_EMPIRE[kind].map(({ key, name, resource, amount }) => ({
+    OPTIONS_BY_EMPIRE[kind].map(({ key, name, resource, amount }) => ({
       key: `${kind}_${key}`,
       name,
       trigger: EMPIRE_CONDITION[kind],
@@ -126,4 +131,4 @@ const chooseAmbition = events.country(1, {
   ),
 });
 
-export default mod.compile([mod.feature("signal", [chooseAmbition])]);
+export default mod.compile([mod.feature("signal", [chooseResponse])]);

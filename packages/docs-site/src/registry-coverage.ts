@@ -87,7 +87,6 @@ export const UNDOCUMENTED_REGISTRIES: Readonly<Record<string, string>> = {
   edict: "SDK-202 — government and politics",
   decision: "SDK-202 — government and politics",
   councilor: "SDK-202 — government and politics",
-  civic_or_origin: "SDK-202 — government and politics",
 };
 
 /**
