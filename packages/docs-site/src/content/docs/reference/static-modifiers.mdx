@@ -1,0 +1,82 @@
+---
+title: Static Modifiers
+description: Bundle concrete modifier values into named effects that game content can apply and remove.
+registries: [static_modifier]
+---
+
+import { Aside } from "@astrojs/starlight/components";
+
+import FieldTable from "../../../components/FieldTable.astro";
+import PairedExample from "../../../components/PairedExample.astro";
+
+A **static modifier** is a named bundle of concrete modifier values. Events,
+situations, planets, and other game systems can apply or remove that bundle as
+one unit. The SDK writes definitions under `common/static_modifiers/`.
+
+See [Economic modifiers](/concepts/economic-modifiers/) for how a static bundle
+can supply values to generated economic keys and scripted-modifier keys.
+
+## Write modifier values directly into the definition
+
+The `modifiers` callback uses the SDK's modifier builder. Its rows are written
+at the root of the static-modifier block:
+
+<PairedExample name="static-modifiers" />
+
+There is no `modifier = { ... }` or `modifiers = { ... }` wrapper in the
+emitted PDXScript. Stellaris expects keys such as
+`country_unity_produces_mult` directly beside the definition's metadata. Use
+the returned item wherever an SDK field accepts a static-modifier reference.
+
+The callback accepts modifier keys from several scopes because the definition
+can be applied by different game systems. Type checking proves that a modifier
+key exists; it does not prove that the object receiving this static modifier
+can use every value in the bundle.
+
+## Display metadata must match the application path
+
+`name` is required and `desc` is optional. The SDK emits them as localization
+for the minted modifier id and its `_desc` key.
+
+`iconFrame` belongs to the planet-modifier form in the game rules. `icon`,
+`important`, `customTooltip`, and `showOnlyCustomTooltip` are general fields;
+vanilla frequently uses the icon and tooltip fields for planet modifiers. The
+generated interface cannot prove that the receiving game system displays them,
+and the SDK does not check that an icon file exists.
+
+Use `hideFromCountryList: true` when a modifier should not appear in the
+country government modifier list. It does not hide the modifier from every
+other interface.
+
+## Cross-planet propagation needs a paired definition
+
+`applyModifierToOtherPlanets` points to a second static modifier. Vanilla's
+`penal_colony` uses it to apply a crime reduction to the empire's other
+planets. The source comment states that this link works only for timed planet
+modifiers, while the decision that applies `penal_colony` uses `days = -1`.
+Treat the lifetime requirement as game-specific behavior to verify.
+
+Define both modifiers, pass the returned target item to
+`applyModifierToOtherPlanets`, and test application, expiration, owner changes,
+planet creation, and save/load. A checked reference confirms the target id, but
+the SDK does not enforce any lifetime requirement.
+
+<Aside type="caution" title="Application semantics come from the caller">
+  A static modifier only defines the bundle. The event, situation, planet feature, or other caller
+  decides the target, duration, stacking, and removal behavior. Test that complete path in
+  Stellaris.
+</Aside>
+
+See [Testing your mod](/guides/testing-your-mod/) for the live-game checks that
+the build cannot perform.
+
+## API and vanilla references
+
+- [`StaticModifierDef`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/static-modifier.ts)
+  is the generated definition used by `mod.staticModifier`.
+- [`vanilla.staticModifier`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
+  provides checked references to vanilla static-modifier ids.
+
+## Field reference
+
+<FieldTable registry="static_modifier" />

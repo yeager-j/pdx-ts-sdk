@@ -1,0 +1,60 @@
+---
+title: Sprite Types
+description: Define textures and animated images for Stellaris interfaces.
+registries: [spriteType]
+---
+
+import FieldTable from "../../../components/FieldTable.astro";
+import PairedExample from "../../../components/PairedExample.astro";
+
+A **sprite type** gives a texture or animated image a name that Stellaris can
+use from interface and other GFX definitions. The SDK writes sprite definitions
+under `interface/` in a `.gfx` file with a `spriteTypes` envelope.
+
+## Define the sprite after adding its files
+
+Put custom textures and effects in the scaffolded `assets/` directory, then
+refer to their final mod-root paths from the definition. The [Assets](/concepts/assets/)
+page explains the file layout, path checks, and direct `AssetFileItem` form.
+
+This example defines an ordinary sprite and two specialized sprite-name shapes:
+
+<PairedExample name="sprite-types" />
+
+`mod.spriteType("rift_chart_icon", ...)` mints
+`GFX_starfall_rift_chart_icon`. Sprite types always use the `GFX_` head and do
+not include a registry segment. They deliberately have no `{ prefix: false }`
+form.
+
+The definition's `textureFile`, `maskingTexture`, and `effectFile` fields are
+mod-root Asset paths. The nested `animation.animationmaskfile` and
+`animation.animationtextureFile` fields are Asset paths too. A plain string is
+preserved and checked as described on the Assets page.
+
+## Use the specialized name shapes when a game field requires them
+
+`mod.spriteTextIcon("rift_chart", ...)` mints
+`GFX_text_starfall_rift_chart`. It is otherwise an ordinary sprite type.
+
+`mod.spriteFleetOrderButtonGroundSupport(target, ...)` mints
+`GFX_fleet_order_button_ground_support_<target>`. Pass `{ selected: true }` to
+append `_selected`. The target can be a bombardment-stance reference or a raw
+stance id. The example passes its owned stance item so the sprite name includes
+the stance's full minted id. These helpers keep the inferred Stellaris naming
+families in one place; use them only for fields that require those exact shapes.
+
+All three methods return sprite references and write through the same
+`spriteType` registry. Their final names must therefore be unique.
+
+## API and vanilla references
+
+- [`SpriteTypeDef`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/sprite-type.ts)
+  is the generated definition used by all three methods.
+- [`vanilla.spriteType`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
+  provides checked references to vanilla sprite ids.
+
+Sprite types have no patch surface. `mod.patchSpriteType` does not exist.
+
+## Field reference
+
+<FieldTable registry="spriteType" />

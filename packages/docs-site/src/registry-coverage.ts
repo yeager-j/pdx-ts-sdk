@@ -82,30 +82,7 @@ export interface Coverage {
  * because the reference milestone has not started — the gate's value today is
  * that a *new* registry cannot slip in silently.
  */
-export const UNDOCUMENTED_REGISTRIES: Readonly<Record<string, string>> = {
-  economic_category: "SDK-201 — progression and economy",
-  static_modifier: "SDK-201 — progression and economy",
-  scripted_modifier: "SDK-201 — progression and economy",
-  agenda: "SDK-202 — government and politics",
-  edict: "SDK-202 — government and politics",
-  decision: "SDK-202 — government and politics",
-  councilor: "SDK-202 — government and politics",
-  civic_or_origin: "SDK-202 — government and politics",
-  casus_belli: "SDK-203 — diplomacy and war",
-  war_goal: "SDK-203 — diplomacy and war",
-  agreement_preset: "SDK-203 — diplomacy and war",
-  bombardment_stance: "SDK-203 — diplomacy and war",
-  opinion_modifier: "SDK-203 — diplomacy and war",
-  ambient_object: "SDK-204 — world and flavor",
-  graphical_culture: "SDK-204 — world and flavor",
-  species_class: "SDK-204 — world and flavor",
-  scripted_loc: "SDK-204 — world and flavor",
-  spriteType: "SDK-205 — GFX registries",
-  pdxmesh: "SDK-205 — GFX registries",
-  pdxparticle: "SDK-205 — GFX registries",
-  event_chain: "SDK-212 — event chains and special projects",
-  special_project: "SDK-212 — event chains and special projects",
-};
+export const UNDOCUMENTED_REGISTRIES: Readonly<Record<string, string>> = {};
 
 /**
  * The authoring surfaces that are not registries.
