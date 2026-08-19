@@ -1,0 +1,76 @@
+---
+title: Bombardment Stances
+description: Define fleet availability, planetary and army damage, population effects, surrender, and AI choice.
+registries: [bombardment_stance]
+---
+
+import { Aside } from "@astrojs/starlight/components";
+
+import FieldTable from "../../../components/FieldTable.astro";
+import PairedExample from "../../../components/PairedExample.astro";
+
+A **bombardment stance** is a fleet's policy for orbital bombardment. It
+controls which fleets can select the stance, when bombardment stops, damage to
+the planet and armies, population loss or abduction, surrender, and AI choice.
+The SDK writes stances under `common/bombardment_stances/`.
+
+## Gate the stance from fleet scope
+
+`trigger` is required and runs on the fleet. The example follows vanilla's
+selective stance by checking a policy flag on the fleet owner:
+
+<PairedExample name="bombardment-stances" />
+
+`default` is also required. Set it to true only for the one stance new fleets
+should start with in the complete set available to your mod. The SDK does not
+check that the loaded definitions have exactly one default.
+
+## Damage and population fields use different scales
+
+`planetDamage` and `armyDamage` are general damage multipliers. `planetDamage`
+can also be a weight block evaluated from the fleet with the bombarded planet
+as `FROM`. `killPopChance` is the chance applied when planetary damage reaches
+the game's threshold, and `killPopAmount` gives the minimum and maximum amount
+killed or abducted in one occurrence.
+
+`minPopsToKillPop` stops population loss or abduction at or below the supplied
+amount. The rules do not define that amount's unit. Current vanilla uses `2100`
+for selective bombardment and `1100` for indiscriminate bombardment; start from
+a current comparable stance and verify the threshold in game.
+
+`stopWhenArmiesDead`, `stopWhenGroundCombat`, and `acceptSurrender` are
+independent. A stance can stop when defenses fall, stop while ground combat is
+happening, and accept surrender, or choose a different combination.
+`abductPops` changes the population outcome instead of changing the damage
+multipliers.
+
+## AI weight can inspect the target planet
+
+`aiWeight` is required. It runs from fleet scope with the bombarded planet as
+`FROM`, so modifiers can consider the target as well as the fleet and its
+owner. Vanilla lowers the weight sharply when a target should not be treated
+as a hostile defended planet.
+
+<Aside type="caution" title="The stance id also selects UI art">
+  Stellaris derives bombardment buttons from the stance id, including
+  `GFX_fleet_order_button_ground_support_<id>` and its `_selected` variant. The registry has no
+  graphics field, and the SDK does not check that those sprites exist.
+</Aside>
+
+Test fleet eligibility, the default on new fleets, button art, stance changes,
+all stop and surrender paths, planet and army damage, population thresholds,
+abduction, AI selection, ownership changes, and save/load in Stellaris. See
+[Testing your mod](/guides/testing-your-mod/).
+
+## API and vanilla references
+
+- [`BombardmentStanceDef`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/bombardment-stance.ts)
+  is the generated definition used by `mod.bombardmentStance`.
+- [`vanilla.bombardmentStance`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
+  provides checked references to vanilla bombardment-stance ids.
+
+## Field reference
+
+The nested table covers the minimum and maximum population amount.
+
+<FieldTable registry="bombardment_stance" />

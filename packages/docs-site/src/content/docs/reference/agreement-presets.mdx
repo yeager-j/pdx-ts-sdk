@@ -1,0 +1,77 @@
+---
+title: Agreement Presets
+description: Assemble default diplomatic agreement terms, subsidies, visibility, eligibility, and AI preferences.
+registries: [agreement_preset]
+---
+
+import { Aside } from "@astrojs/starlight/components";
+
+import FieldTable from "../../../components/FieldTable.astro";
+import PairedExample from "../../../components/PairedExample.astro";
+
+An **agreement preset** is a named starting package for a diplomatic agreement,
+such as a vassal, tributary, or specialist-subject arrangement. It selects the
+default term values, resource subsidies, eligibility, and AI preferences shown
+when an agreement is proposed. The SDK writes presets under
+`common/agreement_presets/`.
+
+## Build the package from existing terms and values
+
+`termData` is required. Each `discreteTerms` row pairs a term key from
+`common/agreement_terms/` with a compatible value from
+`common/agreement_term_values/`. Each `resourceTerms` row selects a resource
+term value and a subsidy percentage from `-1` through `1`:
+
+<PairedExample name="agreement-presets" />
+
+The SDK accepts strings for these keys and values. It cannot prove that a term
+and value belong together, so copy both from the same vanilla agreement family
+and test the negotiation screen. In the example, `0.3` follows vanilla's
+tributary preset and means a 30 percent subsidy on that resource term.
+
+`hasCooldownOnFirstRenegotiation` defaults to yes in the game rules.
+`forcedInitialLoyalty` changes the starting loyalty supplied by the preset.
+Both belong inside `termData`, beside the term lists.
+
+## Visible presets and hidden variants have different roles
+
+Visible presets are choices in the agreement proposal UI. `overlordWeight` and
+`subjectWeight` rank a preset for each side, while `potential` decides whether
+it applies to the acting country and its counterpart. These blocks use country
+scope with the other country as `FROM`.
+
+Vanilla also defines hidden AI variants. For example,
+`preset_vassal_mean_01` has `parent = preset_vassal`, repeats a complete
+`term_data` block, changes the weights, and sets `hidden = yes`. The current
+rules expose `parent` but do not define what the game inherits through it.
+Follow vanilla's pattern and give each child its complete terms.
+
+`shouldAiUseForProposals` controls whether AI proposal search considers the
+preset. `canPresetBeChanged` defaults to true, but the current rules do not
+describe the exact UI or renegotiation behavior it changes. Verify both
+switches in the intended agreement flow. They do not replace `potential` or
+the two weight blocks.
+
+<Aside type="caution" title="The SDK does not author agreement terms">
+  This registry assembles term and value ids that already exist in vanilla or another mod. There is
+  no `mod.agreementTerm` or `mod.agreementTermValue` authoring surface, so a custom preset cannot
+  define the behavior behind a new raw id.
+</Aside>
+
+Test visibility, every term/value pairing, subsidy direction and amount,
+initial loyalty, both parties' acceptance, AI proposals, renegotiation, hidden
+variants, specialist transitions, and save/load in Stellaris. See
+[Testing your mod](/guides/testing-your-mod/).
+
+## API and vanilla references
+
+- [`AgreementPresetDef`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/agreement-preset.ts)
+  is the generated definition used by `mod.agreementPreset`.
+- [`vanilla.agreementPreset`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
+  provides checked references to vanilla agreement-preset ids.
+
+## Field reference
+
+The nested tables cover discrete term pairs and resource subsidy rows.
+
+<FieldTable registry="agreement_preset" />

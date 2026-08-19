@@ -1,0 +1,78 @@
+---
+title: Casus Belli
+description: Define when an empire has a cause for war and connect it to one or more war goals.
+registries: [casus_belli]
+---
+
+import { Aside } from "@astrojs/starlight/components";
+
+import FieldTable from "../../../components/FieldTable.astro";
+import PairedExample from "../../../components/PairedExample.astro";
+
+A **casus belli** is a cause for war. It decides which empires can hold that
+cause, when it is valid against a target, when a scripted grant expires early,
+and whether it appears in diplomacy or creates a notification. The SDK writes
+casus belli definitions under `common/casus_belli/`.
+
+## Connect the cause to a war goal
+
+A casus belli does not define the outcome of a war. A
+[war goal](/reference/war-goals/) points back to it and supplies the peace,
+acceptance, and end-of-war behavior. This example defines both sides of that
+relationship and passes the owned casus belli directly to `casusBelli`:
+
+<PairedExample name="casus-belli-and-war-goal" />
+
+The Fold checks that the owned `frontierClaim` item is included in the compiled
+Features. It does not prove that another game path grants the cause or offers
+the war goal in every intended diplomatic state.
+
+## Potential, validity, and destruction are different gates
+
+- `potential` runs on the attacker and filters the countries that may use this
+  kind of cause.
+- `isValid` runs daily with the attacker as `THIS` and the target as `FROM`. It
+  creates or removes automatically evaluated causes, but does not govern a
+  cause granted directly by script.
+- `destroyIf` uses the same scopes and can remove a scripted grant before its
+  normal expiration.
+
+The example is a simplified claim/conquest-shaped pair: it admits only
+ordinary, non-nomadic countries and keeps the cause only while the attacker has
+a claim on the target. Vanilla's `cb_claim` adds federation, total-war,
+overlord, subject, and subject-claim guards. Copy those surrounding rules when
+the custom cause should behave like the vanilla cause. Vanilla's
+`cb_subjugation` is a useful contrasting case. It has relative-power and crisis
+checks, can expire early through `destroy_if`, and is shared by more than one
+war goal.
+
+<Aside type="caution" title="Scripted grants use a different lifetime">
+  A duration on an effect that grants a casus belli and the definition's `destroyIf` can both end
+  the grant. Test automatic acquisition and scripted acquisition separately.
+</Aside>
+
+## Notifications, diplomacy, and proxy wars
+
+`showNotification` is required by the generated TypeScript contract even
+though the game describes it as defaulting to yes. Set it deliberately. Vanilla
+claim causes use `false` to avoid duplicate claim notifications.
+
+`showInDiplomacy` controls whether the cause is shown on the diplomacy surface.
+`proxyWarResources` and `onProxyWarStart` apply only when the cause is selected
+for a proxy war: the first records the instigator's cost, and the second runs
+when that proxy war is validated.
+
+Test acquisition and removal, target changes, diplomatic visibility,
+notifications, every linked war goal, proxy-war cost and effects, and save/load
+in Stellaris. See [Testing your mod](/guides/testing-your-mod/).
+
+## API and vanilla references
+
+- [`CasusBelliDef`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/casus-belli.ts)
+  is the generated definition used by `mod.casusBelli`.
+- [`vanilla.casusBelli`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
+  provides checked references to vanilla casus-belli ids.
+
+## Field reference
+
+<FieldTable registry="casus_belli" />

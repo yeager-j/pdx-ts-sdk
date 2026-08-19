@@ -1,0 +1,77 @@
+---
+title: Opinion Modifiers
+description: Define static, accumulating, time-limited, and automatically triggered diplomatic opinion changes.
+registries: [opinion_modifier]
+---
+
+import { Aside } from "@astrojs/starlight/components";
+
+import FieldTable from "../../../components/FieldTable.astro";
+import PairedExample from "../../../components/PairedExample.astro";
+
+An **opinion modifier** is a named change to one country's opinion of another.
+Its fields cover effect-applied, accumulating, decaying, growing, timed, and
+triggered forms. The SDK writes modifiers under `common/opinion_modifiers/`.
+
+## Define a modifier for effects to apply
+
+This example defines a positive modifier with `decay: 1` and `unique: true`:
+
+<PairedExample name="opinion-modifiers" />
+
+Use the returned item with effects and triggers that accept an opinion-modifier
+reference, such as `addOpinionModifier`, `removeOpinionModifier`, and
+`hasOpinionModifier`. Include the definition and the event or other entry point
+that applies it in the same compiled feature graph.
+
+`opinion`, `decay`, and `growth` each accept either a number or a country-scoped
+weight block. In those blocks, `ROOT` is the country holding the opinion and
+`FROM` is the country it concerns. Use a weight block when the value depends on
+either country; use a number when the value is constant.
+
+## Accumulating and unique modifiers solve different problems
+
+Vanilla uses `accumulative` for modifiers applied repeatedly, with `min` on
+negative modifiers and `max` on positive modifiers. Its
+`opinion_genocidal_our_species`, for example, sets `accumulative = yes`,
+`min = -1000`, and a decay block.
+
+The current rules accept `unique`, `monthly`, and `months` but do not describe
+their exact replacement, timing, or expiration behavior. Test each switch with
+the exact effect that applies the modifier.
+
+## Triggered modifiers are a separate shape
+
+Set `trigger` to select the triggered-opinion subtype. It uses the same country
+pair: the country holding the opinion is `ROOT`, and the other country is
+`FROM`. Vanilla's interstellar-assembly modifiers use this form with conditions
+that inspect whether the other country owns the relevant megastructure. Verify
+the game's evaluation timing and removal behavior in the live game.
+
+Do not combine `trigger` with `decay`, `growth`, `accumulative`, `unique`,
+`monthly`, or `months`. Those fields belong to the non-triggered subtype.
+`blockTriggered: true` is a third form that stops automatic trigger behavior;
+it is not a general switch to add to every modifier. The TypeScript interface
+exposes all fields together, so the SDK does not enforce these subtype rules.
+
+<Aside type="caution" title="Direction matters">
+  Opinion is directional. Verify which country holds the opinion and which country it concerns at
+  every effect call and trigger. A correctly typed reference does not prove that the two countries
+  were supplied in the intended order.
+</Aside>
+
+Test effect application and removal, direction, stacking or uniqueness,
+minimum and maximum bounds, decay and growth, duration, automatic trigger
+changes, AI response, and save/load in Stellaris. See
+[Testing your mod](/guides/testing-your-mod/).
+
+## API and vanilla references
+
+- [`OpinionModifierDef`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/opinion-modifier.ts)
+  is the generated definition used by `mod.opinionModifier`.
+- [`vanilla.opinionModifier`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
+  provides checked references to vanilla opinion-modifier ids.
+
+## Field reference
+
+<FieldTable registry="opinion_modifier" />
