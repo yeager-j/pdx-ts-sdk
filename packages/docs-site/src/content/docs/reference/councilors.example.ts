@@ -9,7 +9,7 @@ const mod = createMod({
 const frontierMinister = mod.councilor("frontier_minister", {
   name: "Frontier Minister",
   desc: "Coordinates the administration of distant colonies.",
-  leaderClass: ["leader_class_official"],
+  leaderClass: ["official"],
   possible: always(),
   isLeaderPossible: always(),
   modifier: (modifier) => modifier.country.unity.produces.mult(0.02),

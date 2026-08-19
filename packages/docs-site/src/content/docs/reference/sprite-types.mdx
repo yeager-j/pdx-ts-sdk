@@ -39,8 +39,9 @@ preserved and checked as described on the Assets page.
 `mod.spriteFleetOrderButtonGroundSupport(target, ...)` mints
 `GFX_fleet_order_button_ground_support_<target>`. Pass `{ selected: true }` to
 append `_selected`. The target can be a bombardment-stance reference or a raw
-stance id. These helpers keep the inferred Stellaris naming families in one
-place; use them only for fields that require those exact shapes.
+stance id. The example passes its owned stance item so the sprite name includes
+the stance's full minted id. These helpers keep the inferred Stellaris naming
+families in one place; use them only for fields that require those exact shapes.
 
 All three methods return sprite references and write through the same
 `spriteType` registry. Their final names must therefore be unique.

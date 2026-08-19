@@ -1,4 +1,4 @@
-import { createMod } from "@pdx-ts/sdk";
+import { always, createMod } from "@pdx-ts/sdk";
 
 const mod = createMod({
   name: "Starfall Interface",
@@ -14,8 +14,15 @@ const chartTextIcon = mod.spriteTextIcon("rift_chart", {
   textureFile: "gfx/interface/starfall/rift_chart_text.dds",
 });
 
+const riftSuppression = mod.bombardmentStance("rift_suppression", {
+  name: "Rift Suppression",
+  trigger: always(),
+  default: false,
+  aiWeight: { base: 1 },
+});
+
 const selectedSupportButton = mod.spriteFleetOrderButtonGroundSupport(
-  "rift_suppression",
+  riftSuppression,
   {
     textureFile: "gfx/interface/starfall/rift_suppression_selected.dds",
     noOfFrames: 3,
@@ -23,6 +30,11 @@ const selectedSupportButton = mod.spriteFleetOrderButtonGroundSupport(
   { selected: true }
 );
 
-export const feature = mod.feature("interface", [chartIcon, chartTextIcon, selectedSupportButton]);
+export const feature = mod.feature("interface", [
+  chartIcon,
+  chartTextIcon,
+  riftSuppression,
+  selectedSupportButton,
+]);
 
 export default mod.compile([feature]);
