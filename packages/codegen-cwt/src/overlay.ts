@@ -31,6 +31,40 @@ export const MODIFIER_FAMILY_OVERLAYS = [
 ] as const;
 
 /**
+ * Scripted modifier categories mapped to the modifier_categories.cwt labels.
+ * RuleSet does not parse enums.cwt metadata; Pop Group is normalized to Pops,
+ * while none/component/pop_job intentionally have no supported mapping.
+ */
+export const SCRIPTED_MODIFIER_CATEGORY_MAP = {
+  all: ["All"],
+  economic_unit: ["Economic Units"],
+  pop_group: ["Pops"],
+  pop_faction: ["Pop Factions"],
+  ship: [
+    "Orbital Stations",
+    "Space Stations",
+    "Military Ships",
+    "Civilian Ships",
+    "Science Ships",
+    "Transport Ships",
+  ],
+  station: ["Orbital Stations", "Space Stations"],
+  fleet: ["Fleets"],
+  country: ["Countries"],
+  planet: ["Planets"],
+  army: ["Armies"],
+  leader: ["Leaders"],
+  deposit: ["Deposits"],
+  megastructure: ["Megastructures"],
+  habitability: ["Habitability"],
+  starbase: ["Starbases"],
+  system: ["Star Systems"],
+  federation: ["Federations"],
+  espionage: ["Espionage"],
+  colony: ["Colony"],
+} as const;
+
+/**
  * Structural triggers the SDK models by hand rather than generating.
  *
  * These are not conditions, they are the shape of the condition tree, and the

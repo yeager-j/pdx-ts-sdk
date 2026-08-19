@@ -25,14 +25,18 @@ import {
   addShipOfSizeLimits as addShipOfSizeLimitsInternal,
   defineBuilding as defineBuildingInternal,
   defineCountryShipOfSizeLimit as defineCountryShipOfSizeLimitInternal,
+  defineEconomicCategory as defineEconomicCategoryInternal,
   defineGlobalShipDesign as defineGlobalShipDesignInternal,
   defineJob as defineJobInternal,
+  defineScriptedModifier as defineScriptedModifierInternal,
   defineStaticModifier as defineStaticModifierInternal,
   defineTechnology as defineTechnologyInternal,
   defineTradition as defineTraditionInternal,
   defineUtilityComponentTemplate as defineUtilityComponentTemplateInternal,
   defineWeaponComponentTemplate as defineWeaponComponentTemplateInternal,
   patchTechnology as patchTechnologyInternal,
+  type EconomicCategoryItem,
+  type ScriptedModifierItem,
 } from "../src/generated/content-definers.ts";
 import { namespace as namespaceInternal } from "../src/generated/event-definers.ts";
 import { job as vanillaJob } from "../src/generated/vanilla-refs.ts";
@@ -523,6 +527,65 @@ describe("event namespaces", () => {
 });
 
 describe("content reference integrity", () => {
+  it("folds owned scripted and economic modifier references and renames derived keys", () => {
+    const scripted = defineScriptedModifierInternal({
+      id: "pp_mod_efficiency",
+      category: "country",
+    }) as ScriptedModifierItem<"country">;
+    const economic = defineEconomicCategoryInternal({
+      id: "pp_mod_operations",
+      modifierCategory: "country",
+      generateMultModifiers: ["upkeep"],
+    }) as EconomicCategoryItem<{
+      readonly modifierCategory: "country";
+      readonly generateMultModifiers: readonly ["upkeep"];
+    }>;
+    const renamedScripted = defineScriptedModifierInternal({
+      id: "pp_mod_renamed_efficiency",
+      category: "country",
+    }) as ScriptedModifierItem<"country">;
+    const renamedEconomic = defineEconomicCategoryInternal({
+      id: "pp_mod_renamed_operations",
+      modifierCategory: "country",
+      generateMultModifiers: ["upkeep"],
+    }) as EconomicCategoryItem<{
+      readonly modifierCategory: "country";
+      readonly generateMultModifiers: readonly ["upkeep"];
+    }>;
+    const building = defineBuildingInternal({
+      id: "pp_mod_owned_modifier_building",
+      name: "Owned",
+      planetModifier: (m) => {
+        m.scripted(scripted).set(1);
+        m.economic(economic).resource("energy").upkeep.mult(0.2);
+        m.scripted(renamedScripted).set(2);
+        m.economic(renamedEconomic).resource("energy").upkeep.mult(0.3);
+      },
+    });
+    const files = render(
+      buildInternal(CONFIG, [
+        createFeatureInternal("owned_modifier", [
+          scripted,
+          economic,
+          renamedScripted,
+          renamedEconomic,
+          building,
+        ]),
+      ])
+    );
+    const text = [...files].find(([path]) => path.startsWith("common/buildings/"))?.[1].text;
+    expect(text).toContain("pp_mod_efficiency = 1");
+    expect(text).toContain("pp_mod_operations_energy_upkeep_mult = 0.2");
+    expect(text).toContain("pp_mod_renamed_efficiency = 2");
+    expect(text).toContain("pp_mod_renamed_operations_energy_upkeep_mult = 0.3");
+    expect(() =>
+      buildInternal(CONFIG, [createFeatureInternal("omitted_scripted", [economic, building])])
+    ).toThrow(/references scripted_modifier/);
+    expect(() =>
+      buildInternal(CONFIG, [createFeatureInternal("omitted_economic", [scripted, building])])
+    ).toThrow(/references economic_category/);
+  });
+
   it("folds owned job references and rejects omitted owned jobs", () => {
     const job = defineJobInternal({
       id: "pp_mod_job_owned",

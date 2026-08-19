@@ -35,7 +35,7 @@
 // From: gfx/model_entities.cwt
 // From: gfx/particles.cwt
 
-import type { ContentItem, ContributionItem } from "../content/types.ts";
+import type { ContentItem, ContributionItem, EconomicCategoryWitness } from "../content/types.ts";
 import { refId, type TypedRef } from "../script/scalar.ts";
 import { patchContent } from "../stellaris/vanilla/patch.ts";
 import type {
@@ -64,7 +64,7 @@ import type { CountryShipOfSizeLimitDef } from "./country-ship-of-size-limit.ts"
 import type { DecisionDef, DecisionScope } from "./decision.ts";
 import type { EconomicCategoryDef } from "./economic-category.ts";
 import type { EdictDef } from "./edict.ts";
-import type { SpEventScope } from "./enums.ts";
+import type { ScriptedModifierCategory, SpEventScope } from "./enums.ts";
 import type { EventChainDef } from "./event-chain.ts";
 import type { GlobalShipDesignDef } from "./global-ship-design.ts";
 import type { GraphicalCultureDef } from "./graphical-culture.ts";
@@ -407,7 +407,10 @@ export function defineStaticModifier<const Id extends string>(
 }
 
 /** What a scripted modifier feature can contain. */
-export type ScriptedModifierItem = ContentItem<"scripted_modifier", ScriptedModifierDef>;
+export type ScriptedModifierItem<W extends ScriptedModifierCategory = ScriptedModifierCategory> =
+  ContentItem<"scripted_modifier", ScriptedModifierDef> & {
+    readonly def: ScriptedModifierDef & { readonly category: W };
+  };
 
 /**
  * Internal lowering primitive for a scripted modifier. Public authors call
@@ -536,7 +539,17 @@ export function defineCouncilor<const Id extends string>(
 }
 
 /** What an economic category feature can contain. */
-export type EconomicCategoryItem = ContentItem<"economic_category", EconomicCategoryDef>;
+export type EconomicCategoryItem<W extends EconomicCategoryWitness = EconomicCategoryWitness> =
+  ContentItem<
+    "economic_category",
+    Omit<EconomicCategoryDef, "modifierCategory" | "generateAddModifiers" | "generateMultModifiers">
+  > & {
+    readonly def: Omit<
+      EconomicCategoryDef,
+      "modifierCategory" | "generateAddModifiers" | "generateMultModifiers"
+    > &
+      W;
+  };
 
 /**
  * Internal lowering primitive for an economic category. Public authors call

@@ -12,7 +12,11 @@
 import type { RuleSet } from "../cwt/rules.ts";
 import type { ModifierDocs } from "../logs/modifier-docs.ts";
 import { docComment, pascalCase } from "../naming.ts";
-import { MODIFIER_FAMILY_OVERLAYS, UNIVERSAL_SCOPES } from "../overlay.ts";
+import {
+  MODIFIER_FAMILY_OVERLAYS,
+  SCRIPTED_MODIFIER_CATEGORY_MAP,
+  UNIVERSAL_SCOPES,
+} from "../overlay.ts";
 
 /** Resolves a raw scope token to its canonical name, or `null` if unknown. */
 export type CanonicalScope = (token: string) => string | null;
@@ -43,6 +47,8 @@ export interface ModifierJoin {
   /** Categories the dump or `modifiers.cwt` name that the category table lacks. */
   readonly unknownCategories: readonly string[];
   readonly dynamicFamilies: readonly DynamicModifierFamily[];
+  /** Sound scope evidence for modifier categories, used by owned selectors. */
+  readonly categoryScopes: ReadonlyMap<string, "any" | readonly string[]>;
 }
 
 export function joinModifierScopes(
@@ -184,6 +190,12 @@ export function joinModifierScopes(
       ];
     }),
     unknownCategories: [...unknownCategories].sort(),
+    categoryScopes: new Map(
+      [...categoryScopes].map(([category, scopes]) => [
+        category,
+        scopes === "any" ? "any" : [...scopes].sort(),
+      ])
+    ),
   };
 }
 
@@ -431,6 +443,36 @@ export function emitModifiers(join: ModifierJoin): ModifierEmission {
   const anyScopeRoot = trie.emit(anyRoot);
   rootNodes.set("any", anyRoot);
   code += trie.lines.join("\n") + "\n\n";
+  const categoryScopeEntries = [...join.categoryScopes]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([category, scopes]) => {
+      const value = scopes === "any" ? '"any"' : JSON.stringify(scopes);
+      return `  readonly ${JSON.stringify(category)}: ${value};`;
+    });
+  code +=
+    "export interface ModifierCategoryScopes {\n" + categoryScopeEntries.join("\n") + "\n}\n\n";
+  const scriptedCategoryMap = Object.entries(SCRIPTED_MODIFIER_CATEGORY_MAP)
+    .map(
+      ([category, targets]) =>
+        `C extends ${JSON.stringify(category)} ? ${targets.map((target) => JSON.stringify(target)).join(" | ")}`
+    )
+    .join(" : ");
+  code +=
+    `export type ScriptedCategoryMap<C extends string> = ${scriptedCategoryMap} : C;\n` +
+    'export type ModifierCategoryScopesFor<C extends string> = C extends keyof ModifierCategoryScopes ? ModifierCategoryScopes[C] extends readonly string[] ? ModifierCategoryScopes[C][number] : "any" : never;\n\n' +
+    "export type ModifierCategoryAllowed<S extends ScopeName, C extends string> = " +
+    '[ScopeName] extends [S] ? true : "any" extends ModifierCategoryScopesFor<ScriptedCategoryMap<C>> ? true : S extends ModifierCategoryScopesFor<ScriptedCategoryMap<C>> ? true : false;\n\n';
+  code +=
+    "export type IsUnion<T, Whole = T> = T extends unknown ? ([Whole] extends [T] ? false : true) : never;\n" +
+    'export type ScriptedModifierSelector<S extends ScopeName> = <const T extends import("../generated/content-definers.ts").ScriptedModifierItem>(' +
+    'item: T & (IsUnion<T["def"]["category"]> extends true ? never : ModifierCategoryAllowed<S, T["def"]["category"]> extends true ? {} : never)) => { readonly set: ModifierSetter };\n\n';
+  code +=
+    'export type EconomicCategorySelector<S extends ScopeName> = <const T extends import("../generated/content-definers.ts").EconomicCategoryItem>(' +
+    "item: T & (IsUnion<EconomicWitnessOf<T>> extends true ? never : EconomicCategoryAllowed<S, EconomicWitnessOf<T>> extends true ? {} : never)) => EconomicCategoryRecorder<EconomicWitnessOf<T>>;\n" +
+    'export type EconomicWitnessOf<T extends import("../generated/content-definers.ts").EconomicCategoryItem> = T extends { readonly def: infer D } ? { readonly modifierCategory: D extends { readonly modifierCategory: infer M } ? M : undefined; readonly generateAddModifiers: D extends { readonly generateAddModifiers: infer A } ? A : undefined; readonly generateMultModifiers: D extends { readonly generateMultModifiers: infer U } ? U : undefined } : never;\n' +
+    'export type EconomicCategoryAllowed<S extends ScopeName, W extends import("../content/types.ts").EconomicCategoryWitness> = ModifierCategoryAllowed<S, W["modifierCategory"] extends string ? W["modifierCategory"] : "economic_unit">;\n' +
+    'export type EconomicCategoryRecorder<W extends import("../content/types.ts").EconomicCategoryWitness> = { readonly resource: (resource: import("../generated/refs.ts").ResourceRef | string) => EconomicResourceRecorder<W> } & { [K in W["generateMultModifiers"] extends readonly (infer M)[] ? M & string : never]: { readonly mult: ModifierSetter } };\n' +
+    'export type EconomicResourceRecorder<W extends import("../content/types.ts").EconomicCategoryWitness> = { [K in W["generateAddModifiers"] extends readonly (infer A)[] ? A & string : never]: { readonly add: ModifierSetter } } & { [K in W["generateMultModifiers"] extends readonly (infer M)[] ? M & string : never]: { readonly mult: ModifierSetter } };\n\n';
 
   code += `export const MODIFIER_REFERENCE_FAMILIES = ${JSON.stringify(
     Object.fromEntries(
@@ -468,6 +510,8 @@ export function emitModifiers(join: ModifierJoin): ModifierEmission {
         "from a small menu, and the joined path is the game's flat modifier name.",
       ]) +
       `export interface ${pascalCase(scope)}ModifierRecorder extends ${rootNames.get(scope)} {\n` +
+      `  readonly scripted: ScriptedModifierSelector<${JSON.stringify(scope)}>;\n` +
+      `  readonly economic: EconomicCategorySelector<${JSON.stringify(scope)}>;\n` +
       join.dynamicFamilies
         .map((family) => {
           const type = family.scopeOperations.has(scope)
@@ -508,6 +552,8 @@ export function emitModifiers(join: ModifierJoin): ModifierEmission {
       "and `m.planet.jobs.alloys.produces.mult(0.1)` both resolve here.",
     ]) +
     `export interface AnyScopeModifierRecorder extends ${anyScopeRoot} {\n` +
+    "  readonly scripted: ScriptedModifierSelector<ScopeName>;\n" +
+    "  readonly economic: EconomicCategorySelector<ScopeName>;\n" +
     join.dynamicFamilies
       .map(
         (family) => `  readonly ${family.family}: ${pascalCase(family.family)}ModifierPath_Any;\n`

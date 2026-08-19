@@ -967,9 +967,19 @@ function contentDefiners(
     // value widened to that union is ambiguous at the call site rather than
     // unchecked.
     const witness = declaredWitness(content, graft);
+    const modifierWitness =
+      registry === "scripted_modifier"
+        ? "ScriptedModifierCategory"
+        : registry === "economic_category"
+          ? "EconomicCategoryWitness"
+          : null;
     const itemArms = [
-      `ContentItem<${key}, ${name}Def${erased}>` +
-        (witness === null ? "" : ` & { readonly ${witness.member}: W }`),
+      modifierWitness === null
+        ? `ContentItem<${key}, ${name}Def${erased}>` +
+          (witness === null ? "" : ` & { readonly ${witness.member}: W }`)
+        : registry === "scripted_modifier"
+          ? `ContentItem<${key}, ${name}Def${erased}> & { readonly def: ${name}Def${erased} & { readonly category: W } }`
+          : `ContentItem<${key}, Omit<${name}Def${erased}, "modifierCategory" | "generateAddModifiers" | "generateMultModifiers">> & { readonly def: Omit<${name}Def${erased}, "modifierCategory" | "generateAddModifiers" | "generateMultModifiers"> & W }`,
     ];
     if (patchable !== undefined) {
       itemArms.push(`${name}PatchItem`);
@@ -994,7 +1004,11 @@ function contentDefiners(
         declaredFrom === undefined ? "" : ` & { readonly ${declaredFrom.member}: L }`;
       const parameters =
         scoped === null
-          ? "<const Name extends string>"
+          ? registry === "scripted_modifier"
+            ? "<const Name extends string, W extends ScriptedModifierCategory>"
+            : registry === "economic_category"
+              ? "<const Name extends string, W extends EconomicCategoryWitness>"
+              : "<const Name extends string>"
           : `<\n    const Name extends string,\n    ${scoped.parameterName} extends ` +
             `${scoped.parameterType} = ${JSON.stringify(scoped.parameterFallback)},` +
             `${declaredFromParameter}\n  >`;
@@ -1003,9 +1017,18 @@ function contentDefiners(
         `${declaredFrom === undefined ? "" : ", L"}>`;
       const input =
         scoped?.selector === undefined
-          ? `Omit<${def}, "id">`
+          ? registry === "scripted_modifier"
+            ? `Omit<${def}, "id"> & { readonly category: W }`
+            : registry === "economic_category"
+              ? `Omit<${def}, "id"> & W`
+              : `Omit<${def}, "id">`
           : `${name}Fields<${scoped.parameterName}${declaredFrom === undefined ? "" : ", L"}>`;
-      const result = `${name}Def<${minted}${scoped === null ? "" : ", never"}>`;
+      const result =
+        registry === "scripted_modifier"
+          ? `${name}Def<${minted}> & { readonly category: W }`
+          : registry === "economic_category"
+            ? `${name}Def<${minted}> & W`
+            : `${name}Def<${minted}${scoped === null ? "" : ", never"}>`;
       const signatures =
         scoped?.selector === undefined
           ? (referenceRefinement === undefined
@@ -1318,7 +1341,11 @@ function contentDefiners(
             ]),
       ]) +
         `export type ${name}Item${
-          witness === null ? "" : `<W extends ${witness.type} = ${witness.type}>`
+          modifierWitness !== null
+            ? `<W extends ${modifierWitness} = ${modifierWitness}>`
+            : witness === null
+              ? ""
+              : `<W extends ${witness.type} = ${witness.type}>`
         } = ${itemArms.join(" | ")};\n\n` +
         definitions.join("\n")
     );
@@ -1329,6 +1356,9 @@ function contentDefiners(
   );
   const refImports = contents.some((content) => CONTENT_CONTRIBUTION_SINKS.has(content.registry));
   const contentItemTypes = [...runtimeItemTypes].filter((name) => !name.endsWith("PatchItem"));
+  if (contents.some((content) => content.registry === "economic_category")) {
+    contentItemTypes.push("EconomicCategoryWitness");
+  }
   // A hand-written definer's declared witness is spelled in the overlay, so
   // the type it names has to be imported on its word rather than derived —
   // `ScopeName` is the only one so far, and it is the only scope type this
@@ -1385,6 +1415,9 @@ function contentDefiners(
       })
       .join("") +
     importList("./enums.ts", [
+      ...(contents.some((content) => content.registry === "scripted_modifier")
+        ? ["ScriptedModifierCategory"]
+        : []),
       ...new Set(
         contents.flatMap((content) =>
           content.emission.scopeParameter?.selector === undefined
@@ -1394,7 +1427,10 @@ function contentDefiners(
       ),
     ]);
   const capabilityImports =
-    'import type { ContentItem } from "../content/types.ts";\n' +
+    'import type { ContentItem, EconomicCategoryWitness } from "../content/types.ts";\n' +
+    (contents.some((content) => content.registry === "scripted_modifier")
+      ? 'import type { ScriptedModifierCategory } from "./enums.ts";\n'
+      : "") +
     importList(
       "./refs.ts",
       [...CONTENT_SUBTYPE_REFERENCE_REFINEMENTS.values()].map(

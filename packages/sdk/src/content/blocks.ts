@@ -104,6 +104,116 @@ function modifierRecorder(
             record(name, amount);
           };
         }
+        if (path.length === 0 && prop === "scripted") {
+          return (item: { readonly id: string; readonly type: string }) => {
+            assertLive("scripted");
+            if (item.type !== "scripted_modifier") {
+              throw new Error("modifier.scripted requires a scripted modifier item");
+            }
+            const id = refId(item as never);
+            if (typeof id !== "string") {
+              throw new Error("modifier.scripted requires a content reference");
+            }
+            return {
+              set: (amount: number) => {
+                assertLive("scripted.set");
+                record(id, amount, {
+                  target: "scripted_modifier",
+                  id,
+                  verifiedVanilla: false,
+                });
+              },
+            };
+          };
+        }
+        if (path.length === 0 && prop === "economic") {
+          return (item: {
+            readonly id: string;
+            readonly type: string;
+            readonly def: Record<string, unknown>;
+          }) => {
+            assertLive("economic");
+            if (item.type !== "economic_category") {
+              throw new Error("modifier.economic requires an economic category item");
+            }
+            const id = refId(item as never);
+            if (typeof id !== "string") {
+              throw new Error("modifier.economic requires a content reference");
+            }
+            const def = item.def;
+            const add = new Set((def.generateAddModifiers as readonly string[] | undefined) ?? []);
+            const mult = new Set(
+              (def.generateMultModifiers as readonly string[] | undefined) ?? []
+            );
+            return new Proxy(
+              {},
+              {
+                get: (_target, key: string) => {
+                  if (key === "resource") {
+                    return (resource: unknown) => {
+                      assertLive("economic.resource");
+                      const resourceId =
+                        typeof resource === "string" ? resource : refId(resource as never);
+                      if (typeof resourceId !== "string") {
+                        throw new Error("modifier.economic.resource requires a resource reference");
+                      }
+                      return new Proxy(
+                        {},
+                        {
+                          get: (_target, kind: string) => {
+                            assertLive(`economic.resource.${kind}`);
+                            if (!add.has(kind) && !mult.has(kind)) {
+                              return undefined;
+                            }
+                            return {
+                              ...(add.has(kind)
+                                ? {
+                                    add: (amount: number) => {
+                                      assertLive(`economic.resource.${kind}.add`);
+                                      record(`${id}_${resourceId}_${kind}_add`, amount, {
+                                        target: "economic_category",
+                                        id,
+                                        verifiedVanilla: false,
+                                      });
+                                    },
+                                  }
+                                : {}),
+                              ...(mult.has(kind)
+                                ? {
+                                    mult: (amount: number) => {
+                                      assertLive(`economic.resource.${kind}.mult`);
+                                      record(`${id}_${resourceId}_${kind}_mult`, amount, {
+                                        target: "economic_category",
+                                        id,
+                                        verifiedVanilla: false,
+                                      });
+                                    },
+                                  }
+                                : {}),
+                            };
+                          },
+                        }
+                      );
+                    };
+                  }
+                  if (mult.has(key)) {
+                    return {
+                      mult: (amount: number) => {
+                        assertLive(`economic.${key}.mult`);
+                        record(`${id}_${key}_mult`, amount, {
+                          target: "economic_category",
+                          id,
+                          verifiedVanilla: false,
+                        });
+                      },
+                    };
+                  }
+                  return undefined;
+                },
+              }
+            );
+          };
+        }
         return node([...path, prop], dynamicFamily);
       },
       apply(_target, _thisArg, args) {

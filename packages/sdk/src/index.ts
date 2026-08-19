@@ -264,6 +264,7 @@ export type {
 } from "./events/types.ts";
 export type {
   CustomModifiers,
+  EconomicCategoryWitness,
   EconomicResourceBlock,
   EconomicResourceBlockNoProduce,
   EconomicResourceOperation,
@@ -281,6 +282,7 @@ export type {
   WeightBlockWithLocOperations,
   WithFrom,
 } from "./content/types.ts";
+export type { EconomicCategoryItem, ScriptedModifierItem } from "./generated/content-definers.ts";
 export type { DefinedContent } from "./content/authoring.ts";
 export type {
   ModifierBlockByScope,
