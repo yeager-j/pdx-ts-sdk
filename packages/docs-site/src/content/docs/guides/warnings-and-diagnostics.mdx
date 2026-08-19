@@ -9,12 +9,14 @@ The SDK reports mod problems through two channels:
 
 - It **throws** when it can prove the requested mod is invalid or unsafe to
   emit.
-- It returns non-blocking **warning data** on `mod.warnings` when the build can
-  continue but needs the author's attention.
+- It returns non-blocking **warning data** on the `warnings` array of the
+  compiled mod that `mod.compile` returns, when the build can continue but
+  needs the author's attention.
 
-Mod authoring and the Fold do not print those diagnostics. Your build script
-decides how to display warnings, whether CI rejects selected codes, and how a
-thrown error reaches the command line.
+Mod authoring and the [Fold](/guides/the-pipeline/) do not print those
+diagnostics (with one exception, noted below). Your build script decides how
+to display warnings, whether CI rejects selected codes, and how a thrown
+error reaches the command line.
 
 ## Invalid builds throw
 
@@ -23,12 +25,11 @@ example, an Asset source must exist and be a regular file, a configuration
 prefix must have the required shape, and an explicit localization key must be
 valid when it is declared.
 
-Other failures need the complete set of selected Features, so the
-[Fold](/guides/the-pipeline/) throws from `mod.compile`. Representative cases
-include:
+Other failures need the complete set of selected Features, so the Fold throws
+from `mod.compile`. Representative cases include:
 
 - duplicate content or event ids;
-- missing required fields or localization;
+- missing required localization text;
 - authored references whose targets are not in the build;
 - two different values for one localization key;
 - an Asset item referenced by GFX but not placed in a Feature;
@@ -36,16 +37,31 @@ include:
 - output paths that collide with known vanilla files; and
 - a vanilla patch whose replacement or winning filename cannot be proved.
 
+Missing required fields are not on this list: the generated TypeScript types
+enforce them, so they surface in `npm run typecheck`, not from the build
+script — which is why the scaffold runs both.
+
 These are not warnings because continuing would produce a mod the SDK already
 knows is incomplete, ambiguous, or unsafe. Catch an error only when the build
 script can add useful context or perform cleanup; do not catch it merely to
 continue rendering.
 
+### Writing and installing can still fail
+
 Rendering should normally succeed once the Fold returns a `PureMod`. Writing
 or installing can still throw `MaterializationError` when the destination is
-unowned, has drifted, contains a conflicting foreign file, is busy, or cannot
-be replaced safely. That failure protects files already on disk; deleting the
-error and retrying does not resolve the underlying conflict.
+unowned, has drifted, contains a conflicting foreign file, is busy, needs
+recovery, or cannot be replaced safely. That failure protects files already
+on disk. Catching the error and retrying does not resolve the conflict; the
+deliberate ways forward — a receipt-based replacement for drift, and recovery
+for an interrupted run — are covered in
+[The pipeline](/guides/the-pipeline/#4-write-or-install-materialize-the-snapshot).
+
+Every SDK refusal is a named error class under one `PdxSdkError` base, so a
+build script can tell one refusal from another. `MaterializationError`
+exposes its `reason` and structured `failure`, and `PathOwnershipError` lists
+its `conflicts`, the same way the warning fields below carry data. Catch by
+class, not by message text.
 
 ## Successful builds can carry warnings
 
@@ -62,23 +78,26 @@ const rendered = render(built);
 await write(outDir, rendered);
 ```
 
-`create-stellaris-mod` generates the same warning loop after its write step.
-The SDK returns the data; the project entry point chooses when to print it. The
-install entry point has its own warning loop because it calls the shared build
-directly and must not depend on another command having displayed the warnings.
+`create-stellaris-mod` generates the same loop in both its write and install
+entry points, so warnings appear whichever command you run.
 
-Warnings do not stop rendering, writing, or installing. Display all of them in
-local builds. In CI, decide explicitly which codes should fail the build for
-your project instead of treating the absence of an exception as the absence
-of diagnostic work.
+Warnings do not stop rendering, writing, or installing. Display all of them
+in local builds. In CI, choose which codes fail your build: a build that
+throws nothing can still report warnings worth acting on.
 
-:::note[One operational notice]
+`write` and `install` also return a report of their own: its `status` says
+whether anything changed, `foreignEntries` lists preserved files the SDK does
+not own, and its `warnings` carry cleanup problems found after the write
+committed. A build script that prints only the compiled warnings discards
+those, so check the report too.
+
+:::note[The loader can print a cache notice]
 `stellaris.load()` may print a direct notice if its optional parse cache cannot
 be written and the loader must reparse on each build. That notice concerns
 loader performance, not mod validity, and is not a `ModWarning`.
 :::
 
-## `ModWarning` is a discriminated union
+## Every warning has a code
 
 Every warning has a stable `code` and a human-readable `message`. The current
 codes are:
@@ -90,7 +109,7 @@ codes are:
 | `unstable-desc-key`       | A modifier description has no `descKey`; its generated localization key depends on the description text and changes when that text changes.          |
 | `unstable-option-key`     | An event option has no `key`; its generated localization key depends on the option name and changes when that text changes.                          |
 | `loc-key-looks-like-text` | A field expects a localization key, but the supplied string contains spaces and looks like displayed prose.                                          |
-| `assumed-patch-rule`      | A vanilla patch relies on resolver behavior that is not fully verified; the emitted patch header records the judgment.                               |
+| `assumed-patch-rule`      | A vanilla patch relies on resolver behavior that is not fully verified; the emitted patch header records the assumption.                             |
 | `mismatched-vanilla-ids`  | The build explicitly accepted an installed game version different from the pinned `@pdx-ts/stellaris-ids` version, so some checked ids may be stale. |
 | `unverified-asset-path`   | A raw GFX path matches neither an Asset captured by this build nor the available vanilla path inventory.                                             |
 
@@ -112,7 +131,7 @@ the dotted GFX field such as `animation.animationmaskfile`, and `owner` names
 the definition that wrote it. These fields let a build report or group the
 problem without parsing prose.
 
-Use the `code` discriminant to narrow the union:
+Check `code` first; TypeScript then knows which extra fields the warning has:
 
 ```ts
 import type { ModWarning } from "@pdx-ts/sdk";
@@ -137,22 +156,25 @@ structured fields instead.
 
 Most warnings have a direct authoring fix:
 
-- Add the mod prefix to an exact id or event namespace reported by
-  `missing-prefix`.
-- Replace a localization double quote yourself when punctuation matters.
-- Add `descKey` to a modifier row or `key` to an event option before
-  translations depend on the generated localization key.
-- Pass displayed text through localization and give a loc-key field the key,
-  not the text.
-- Align `@pdx-ts/stellaris-ids` with the installed game version instead of
-  relying permanently on `acceptGameVersion`.
-- For an unverified Asset path, fix the spelling or put the file under the
-  scaffolded `assets/` tree. If the path intentionally belongs to DLC or
-  another mod, document that dependency and allow the warning deliberately.
-
-An `assumed-patch-rule` warning describes the patch planner's evidence rather
-than a typo in the authoring code. Keep it visible and verify the affected
-behavior in game, especially after a Stellaris update.
+- `missing-prefix` — add the mod prefix to the exact id or event namespace it
+  reports; see [References and identity](/guides/references-and-identity/).
+- `loc-quote-replaced` — replace the double quote yourself when the
+  punctuation matters; see [Localization](/concepts/localization/).
+- `unstable-desc-key` and `unstable-option-key` — add `descKey` to the
+  modifier row or `key` to the event option before translations depend on the
+  generated key.
+- `loc-key-looks-like-text` — pass displayed text through localization and
+  give the localization-key field the key, not the text.
+- `assumed-patch-rule` — not a typo in authoring code: the emitted patch
+  header records the assumption the
+  [patch planner](/guides/patching-vanilla/) made. Keep it visible and verify
+  the affected behavior in game, especially after a Stellaris update.
+- `mismatched-vanilla-ids` — align `@pdx-ts/stellaris-ids` with the installed
+  game version instead of relying permanently on `acceptGameVersion`.
+- `unverified-asset-path` — fix the spelling or put the file under the
+  scaffolded [`assets/` tree](/concepts/assets/). If the path intentionally
+  belongs to DLC or another mod, document that dependency and allow the
+  warning deliberately.
 
 ## Make a deliberate CI policy
 

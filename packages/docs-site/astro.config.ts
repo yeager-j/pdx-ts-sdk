@@ -6,8 +6,9 @@ import { GRAMMARS } from "./src/pdx-languages.ts";
 import { pdxSourceResolution } from "./src/pdx-source-resolution.ts";
 
 /**
- * The sidebar has two sections and only two: Guides, the hand-written concept
- * pages, and Reference, one page per content registry. Both autogenerate from
+ * The sidebar has three sections and only three: Guides, the hand-written
+ * workflow pages; Concepts, the surfaces that span many content types; and
+ * Reference, one page per documented content registry. All autogenerate from
  * their directory, so a page joins the navigation by existing.
  */
 export default defineConfig({

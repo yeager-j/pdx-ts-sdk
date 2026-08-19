@@ -8,13 +8,10 @@ sidebar:
 import PairedExample from "../../../components/PairedExample.astro";
 
 A **Feature** is an explicit group of mod items with an optional output file
-stem. This complete example places a technology and the building it unlocks in
-one named Feature:
+stem — the middle part of the emitted filename. This complete example places a
+technology and the building it unlocks in one named Feature:
 
 <PairedExample name="grouped-feature" />
-
-The PDXScript tab shows how that one Feature fans out into the technology,
-building, and localization files Stellaris expects.
 
 These items do not enter the build merely because their module was imported or
 because their values were exported. They enter when you place them in a
@@ -22,24 +19,29 @@ Feature and pass that Feature to `mod.compile`.
 
 ## Why Features are explicit
 
-`mod.compile` accepts capability-owned Features, not loose items. This gives
-the Fold two facts that TypeScript module layout cannot provide:
+`mod.compile` — [the Fold](/guides/the-pipeline/) — accepts only Features
+created by this mod's `createMod` object, not loose items. This gives the Fold
+two facts that TypeScript module layout cannot provide:
 
-- **Selection:** which definitions, events, localization, Asset files, and
-  other items belong in this build.
+- **Selection:** which definitions, events, localization,
+  [Asset files](/concepts/assets/), and other items belong in this build.
 - **Placement:** which authored file stem groups those items in outputs that
   use per-feature files.
 
-The capability also prevents a Feature created by one mod from being compiled
+This ownership also prevents a Feature created by one mod from being compiled
 as part of another mod.
 
-A Feature can contain several kinds of item. For example, one gameplay concept
-may contain technologies, events, on-action hooks, localization, and Asset
-files. The Fold fans those items out to the directories Stellaris expects. You
-do not need one source directory for technologies and another for events.
+A Feature can hold several kinds of item at once — technologies, events,
+[on-action contributions](/concepts/on-actions/),
+[patch plans](/guides/patching-vanilla/), localization, and Asset files — so
+you do not need one source directory per content kind. The Fold fans them out
+to the directories Stellaris expects.
 
-A named stem in `mod.feature("resonance", items)` is lowercase `snake_case`
-and cannot contain `/`. For registry content, it contributes to paths such as:
+## Feature stems and output filenames
+
+A Feature stem must be lowercase `snake_case` and cannot contain `/`. In
+`mod.feature("resonance", items)`, the stem is `resonance`. For registry
+content, it contributes to paths such as:
 
 ```text
 common/technology/my_mod_resonance.txt
@@ -48,23 +50,30 @@ common/technology/my_mod_resonance.txt
 The registry chooses the directory and extension; the mod prefix and Feature
 stem choose the filename.
 
-A directly compiled Feature may use `undefined` instead of a stem. Discovery
-requires every selected module to export a Feature with a defined stem. Asset
-paths and shared outputs such as on-action contributions and patch plans have
-their own path rules, so a Feature stem does not directly relocate them.
+A directly compiled Feature may pass `undefined` instead of a stem:
+`mod.feature(undefined, items)`. The outputs then fall back to their default
+filenames — registry content uses the registry's own stem
+(`common/technology/my_mod_technology.txt`), events use
+`events/<prefix>_events.txt`, and localization drops the stem segment
+(`localisation/english/<prefix>_l_english.yml`).
+
+Asset paths and shared outputs such as on-action contributions and patch
+plans have their own path rules, so a Feature stem does not directly relocate
+them.
 
 ## Discover a directory of Features
 
 Small builds can import Features directly and pass them to `mod.compile`. For a
-file-per-feature project, `discoverFeatures` supplies the impure shell around
-the Fold:
+file-per-feature project, `discoverFeatures` reads a content directory and
+returns the Features to compile. This is what the scaffold's `src/mod.ts`
+does in its `buildTheMod` function:
 
 ```ts
 import { createMod, discoverFeatures } from "@pdx-ts/sdk";
 
 export const mod = createMod({
-  name: "Crystal Resonance",
-  prefix: "crystal_resonance",
+  name: "My First Mod",
+  prefix: "my_mod",
   supportedVersion: "v4.4.*",
 });
 
@@ -77,10 +86,11 @@ export async function buildTheMod() {
 }
 ```
 
-`discoverFeatures(dir)` recursively walks the directory, selects feature
-modules, imports them, and reads only each module's named `feature` export.
-Other named exports and the default export remain ordinary module API; they are
-not registered implicitly.
+`discoverFeatures(dir)` accepts a directory `URL` or an absolute path string.
+It recursively walks the directory, selects feature modules, imports them, and
+reads only each module's named `feature` export. Other named exports and the
+default export remain ordinary module API; they are not registered implicitly.
+The type argument binds the discovered Features to this mod's prefix.
 
 By default, discovery selects `.ts` files but excludes common companion files:
 
@@ -100,19 +110,25 @@ Feature module, or use a custom `include` pattern that selects only your
 feature-module naming convention.
 
 ```ts
-const features = await discoverFeatures(contentDir, {
-  include: /\.feature\.ts$/,
-});
+const features = await discoverFeatures<typeof mod.config.prefix>(
+  new URL("./content/", import.meta.url),
+  { include: /\.feature\.ts$/ }
+);
 ```
 
 A custom `include` replaces the default pattern; it does not narrow it. The
-pattern matches `/`-separated paths relative to the directory.
+default is exported as `DEFAULT_CONTENT_PATTERN` for compositions that start
+from it. The pattern matches `/`-separated paths relative to the directory. A
+walk that selects nothing throws — a directory with no TypeScript and an
+`include` that matched none of the TypeScript files are reported as two
+distinct errors — so a mistyped pattern cannot produce a silently empty
+build.
 
 Discovery reads the filesystem and importing a module executes its top-level
 code, so `discoverFeatures` is impure. `mod.compile(features)` is the pure Fold
 that validates and assembles the returned values. Discovery sorts selected
 module paths for stable imports, but source or discovery order does not decide
-the Fold's canonical output order.
+the Fold's output order.
 
 ## Source layout is not identity
 
@@ -131,11 +147,10 @@ not become mod content.
 
 The authored values remain significant:
 
-- Changing a Feature stem changes stem-sensitive registry, event, and
-  localization filenames.
-- Moving a stem-sensitive item to a Feature with another stem changes its
-  per-feature output file. Asset paths remain unchanged, while shared outputs
-  continue to follow their own path rules.
+- Changing a Feature stem changes every filename that contains the stem: the
+  registry, event, and localization outputs.
+- Moving such an item to a Feature with another stem changes its per-feature
+  output file.
 - Changing an item's authored logical name changes the id minted for it.
 - Changing an event namespace or number changes its event id.
 
@@ -144,3 +159,6 @@ chain, research theme, origin, crisis, or another gameplay feature. Let the
 Fold map those concepts to Stellaris's output directories. This keeps source
 organization useful to the author without making refactors change game-facing
 identity by accident.
+
+[References and identity](/guides/references-and-identity/) explains the id
+minting rules behind the last two bullets.

@@ -19,6 +19,9 @@ This complete example connects three kinds of reference:
 - a vanilla scripted effect receives an authored technology as its `TECH`
   parameter.
 
+The example also carries a scripted Trigger in `potential` and an event minted
+from a namespace and number; both get their own sections below.
+
 <PairedExample name="references-and-identity" />
 
 The source never repeats either authored technology's final id. In the
@@ -27,47 +30,52 @@ left the vanilla id unchanged.
 
 ## A prefix and logical name mint the id
 
-`createMod` binds a prefix to the authoring capability:
+`createMod` binds a prefix to the authoring capability —
+`prefix: "luminous_cartography"` in the example above. The prefix is lowercase
+`snake_case`. It is the mod's namespace for content ids and contributes to
+most SDK-generated output filenames. Most content definitions take a logical
+name, also in lowercase `snake_case`, and mint the full id from three parts:
 
-```ts
-const mod = createMod({
-  name: "Luminous Cartography",
-  prefix: "luminous_cartography",
-  supportedVersion: "v4.4.*",
-});
-```
+| Part             | Technology example     |
+| ---------------- | ---------------------- |
+| Mod prefix       | `luminous_cartography` |
+| Registry segment | `tech`                 |
+| Logical name     | `spectral_surveying`   |
 
-The prefix is lowercase `snake_case`. It is the mod's namespace for content
-ids and contributes to most SDK-generated output filenames. Most content
-definitions take a logical name, also in lowercase `snake_case`, and mint the
-full id from three parts:
-
-| Part             | Technology example                             |
-| ---------------- | ---------------------------------------------- |
-| Mod prefix       | `luminous_cartography`                         |
-| Registry segment | `tech`                                         |
-| Logical name     | `spectral_surveying`                           |
-| Minted id        | `luminous_cartography_tech_spectral_surveying` |
+Together they mint `luminous_cartography_tech_spectral_surveying`.
 
 The registry supplies its segment. For example,
 `mod.building("spectral_archive", ...)` mints
-`luminous_cartography_building_spectral_archive` instead.
+`luminous_cartography_building_spectral_archive` instead. Three registries
+mint a different shape: `mod.spriteType("resonance_icon", ...)` mints
+`GFX_luminous_cartography_resonance_icon`, and `mod.pdxmesh` and
+`mod.pdxparticle` mint `<prefix>_<name>` with no registry segment.
 
 Use logical names at definition sites. Do not manually repeat the prefix or
 registry segment:
 
 ```ts
-const surveying = mod.technology("spectral_surveying", definition);
+const spectralSurveying = mod.technology("spectral_surveying", {
+  // Other fields omitted.
+});
 ```
 
-The resulting `surveying.id` is the complete minted id. The value also carries
-its registry reference type. The mod capability enforces ownership when it
-places items in a Feature.
+The resulting `spectralSurveying.id` is the complete minted id. The value also
+carries its registry reference type. A Feature accepts only items minted by
+the same `createMod` call, so an item from another mod cannot be placed in
+this build.
 
-The default registry segments form the SDK's id profile. Advanced projects can
-provide a complete custom profile with `createMod(config, { ids: profile })`,
-but a partial override is rejected: identity must follow one coherent profile
-for the whole capability.
+:::note
+The set of registry segments is the mod's **id profile**. Advanced projects
+can replace the whole profile with `createMod(config, { ids: profile })`; a
+partial override is rejected, because one build must mint every id the same
+way.
+:::
+
+Some definitions contain nested ids instead of references to separately
+minted items. Those fields require a complete lowercase `snake_case` id that
+starts with the mod prefix. The SDK does not silently derive a nested id from
+its parent, because Stellaris treats that nested key as its own identity.
 
 An item's source filename is not part of this identity. A Feature stem controls
 which output file receives the item, not its id. See
@@ -103,20 +111,21 @@ field.
 Use the SDK's `vanilla.*` helpers for content defined by Stellaris:
 
 ```ts
+// Inside mod.technology(...).
 prerequisites: [spectralSurveying, vanilla.technology("tech_lasers_1")];
 ```
 
 The hard peer dependency `@pdx-ts/stellaris-ids` supplies the literal ids for
-the game version that installed package was generated from. A typo such as
+the game version the installed package was generated from. A typo such as
 `tech_lazers_1` is therefore a TypeScript error. The helper returns a reference
 for the requested registry, so a checked vanilla building cannot be passed
 where a technology is required.
 
 There is no mode where a missing identifier package silently widens these
 helpers to unchecked strings. The package must resolve, and an id must belong
-to its pinned set or TypeScript rejects it. When a build also loads a vanilla
-install view, the Fold separately checks that the package and install game
-versions match unless the build explicitly accepts that install version.
+to its pinned set or TypeScript rejects it. Builds that also load a local
+Stellaris install must match the identifier package's game version; see
+[Patching vanilla](/guides/patching-vanilla/).
 
 Large registries also provide navigable forms that are grouped by their
 vanilla source file:
@@ -129,12 +138,17 @@ vanilla.staticModifier.deficit.food_deficit;
 Those groups are only navigation. The leaf still carries the exact vanilla id.
 The checked call form remains available when copying a known id is clearer.
 
+Vanilla events are checked the same way through a navigable trie:
+`vanilla.event.crisis.$10` is a typed reference to the country event
+`crisis.10`, carrying its scope and kind.
+
 ### Raw strings are an explicit external escape hatch
 
 Reference fields still accept raw strings for ids that cannot appear in the
 pinned vanilla package, such as content supplied by another mod:
 
 ```ts
+// Inside mod.technology(...).
 prerequisites: ["partner_mod_tech_shared_sensors"];
 ```
 
@@ -143,14 +157,12 @@ of an external string, and the Fold cannot prove that another mod will be
 installed. Prefer an authored item for your own content and `vanilla.*` for
 Stellaris content.
 
-This raw-string escape hatch is not a degraded vanilla mode. It is an explicit
-claim that the target lives outside the current build's checked identity sets.
-
 ## Scripted triggers and effects are checked bindings
 
 Vanilla's scripted triggers and effects are definitions in
-`common/scripted_triggers` and `common/scripted_effects`. They are different
-from native Trigger and effect rules generated by the SDK.
+`common/scripted_triggers` and `common/scripted_effects`. They are not the
+same as the Trigger and effect builders the SDK generates from the game's
+rules.
 
 Import their pre-bound functions from the identifier package:
 
@@ -165,31 +177,44 @@ Each binding carries three facts extracted for the selected game version:
 - its `$PARAM$` names and which are required; and
 - the scopes in which its body is legal.
 
-That is why the paired example accepts `isRegularEmpire()` as a country-scoped
-Trigger and checks the uppercase `TECH` parameter here:
+The example uses both. `isRegularEmpire()` typechecks in `potential` because
+its inferred scope is `country`, and the effect call below is rejected if
+`TECH` is misspelled or missing:
 
 ```ts
+// Inside the event definition.
 immediate: (country) => {
   country.run(giveTechOptionOrProgressEffect({ TECH: observatoryNetworks }));
 };
 ```
 
 A scripted effect binding creates an inert effect call. Use `scope.run(...)`
-inside an effect closure to record it. A scripted Trigger returns a normal
-Trigger value and can be composed with `and`, `or`, and the other Trigger
+inside an effect closure to record it. A scripted trigger binding returns an
+ordinary Trigger value, so it composes with `and`, `or`, and the other Trigger
 builders.
 
-Some parameterless scripted triggers accept an optional boolean. For example,
-`isMachineEmpire(false)` serializes the scripted trigger as `no`; it does not
-call TypeScript with the current empire.
+Every parameterless scripted trigger accepts an optional boolean:
+`isMachineEmpire(false)` emits `is_machine_empire = no`. The boolean is an
+argument in the emitted script, not a build-time test — your TypeScript never
+learns whether the empire is a machine empire. A trigger that takes `$PARAM$`s
+takes its parameter bag instead of the boolean.
 
-The identifier package carries names, parameter lists, and inferred scopes. It
-does not ship vanilla script bodies, localization, or assets. If its analysis
-cannot determine a narrow legal scope for a scripted definition, the binding
-widens rather than guessing a restriction.
+The package ships names, parameters, and inferred scopes — never vanilla
+script bodies, localization, or assets. When the scope cannot be determined,
+the binding widens rather than guessing a restriction, so a wide scope is not
+proof the definition is legal everywhere.
+
+When the inferred scope of a known vanilla definition is wrong for your use,
+re-bind it without giving up name checking:
+`scriptedTrigger("is_regular_empire", "planet")` checks the name against the
+pinned package and asserts only the scope. A misspelled name is still a
+TypeScript error in this form. The same applies to
+`scriptedEffect(name, scope)`, and
+`scriptedTriggerModifier("check_recent_migration", { AMOUNT: 5 })` binds a
+vanilla trigger-based modifier row by checked name and parameters.
 
 For a scripted definition supplied by another mod or a newer game version, the
-SDK provides an explicit escape hatch:
+SDK provides the fully unchecked escape hatch:
 
 ```ts
 import { scriptedEffect, scriptedTrigger } from "@pdx-ts/sdk";
@@ -197,15 +222,17 @@ import { scriptedEffect, scriptedTrigger } from "@pdx-ts/sdk";
 const hasChartedRift = scriptedTrigger.unchecked("has_charted_rift", "country");
 const chartRift = scriptedEffect.unchecked("chart_rift", "country");
 
+// Inside the event definition.
 immediate: (country) => {
   country.run(chartRift());
 };
 ```
 
-The name, parameters, and claimed scope are unchecked in these forms. An
+The name, parameters, and claimed scope are all unchecked in that form. An
 unchecked scripted effect still creates an inert call and must be passed to
 `scope.run(...)`. Prefer the pre-bound imports whenever the definition is
-present in the pinned identifier package.
+present in the pinned identifier package, and the checked
+`scriptedTrigger(name, scope)` form when only the scope needs overriding.
 
 [Triggers and effects](/guides/triggers-and-effects/) explains how Trigger
 values and recorded effect calls cross the build-time/game-time boundary.
@@ -214,29 +241,27 @@ may be legal in one callback and rejected in another.
 
 ## Events have namespace-and-number identity
 
-Events do not use registry segments. A namespace created without a suffix is
-the mod prefix; a suffix extends it:
+The paired example's `mod.namespace("discovery")` shows the other identity
+scheme. Events do not use registry segments. A namespace created without a
+suffix is the mod prefix; a suffix extends it:
 
 ```ts
 const rootEvents = mod.namespace(); // luminous_cartography
 const discovery = mod.namespace("discovery"); // luminous_cartography_discovery
 
-const event = discovery.country(1, definition);
-// event.id is luminous_cartography_discovery.1
+const patternEmerges = discovery.country(1, {
+  // Other fields omitted.
+});
+// patternEmerges.id is luminous_cartography_discovery.1
 ```
 
 The local event number is a non-negative safe integer. Keep one namespace in
 one Feature stem: the Fold emits a namespace's events together, orders them by
 number, and rejects duplicate event ids.
 
-Some definitions contain nested ids instead of references to separately
-minted items. Those fields require a complete lowercase `snake_case` id that
-starts with the mod prefix. The SDK does not silently derive a nested id from
-its parent, because Stellaris treats that nested key as its own identity.
-
 ## Exact names are only for meshes and particles
 
-Most ids should always be minted. Mesh and particle labels are the narrow
+Mint every id by default. Mesh and particle labels are the narrow
 exception because opaque `.asset` files can refer to an engine label that must
 be preserved verbatim.
 

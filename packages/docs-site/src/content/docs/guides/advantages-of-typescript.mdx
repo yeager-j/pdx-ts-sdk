@@ -1,6 +1,6 @@
 ---
 title: Advantages of TypeScript
-description: Use real language features to configure builds, generate related content, and remove repetition.
+description: Use real language features to configure builds, generate related content, remove repetition, and test script behavior.
 sidebar:
   order: 11
 ---
@@ -17,31 +17,20 @@ explains that boundary in detail.
 
 ## Build different variants deliberately
 
-A build-time condition can include diagnostics in one output and omit them
-from another:
+A build-time condition can include content in one output and omit it from
+another. [Triggers and effects](/guides/triggers-and-effects/) closes with the
+`MOD_DEBUG` example: an environment variable decides whether an event's
+`immediate` block records a log line. The same switch can select
+development-only events, extra assertions, instrumentation, or balance
+profiles.
 
-```ts
-const includeDebugLog = process.env.MOD_DEBUG === "1";
+Treat the input as part of the build, not invisible machine state: document
+it, print the selected profile, and pin it in automated builds when
+reproducible output matters. Two builds from the same commit can produce
+different bytes when their environment differs.
 
-immediate: (country) => {
-  if (includeDebugLog) {
-    country.log("debug build");
-  }
-};
-```
-
-Run the build with `MOD_DEBUG=1` and the emitted effect block contains the log.
-Run it without that environment variable and the log is absent. Stellaris does
-not evaluate `MOD_DEBUG`; the selected branch has already recorded its output
-before the game starts.
-
-This pattern can also select development-only events, extra assertions,
-instrumentation, or balance profiles. Treat the input as part of the build,
-not invisible machine state: document it, print the selected profile, and pin
-it in automated builds when reproducible output matters. Two builds from the
-same commit can produce different bytes when their environment differs.
-
-Use `scope.if(...)` instead when the decision depends on game state.
+Use [`scope.if`](/guides/triggers-and-effects/#use-scopeif-for-an-in-game-branch)
+instead when the decision depends on game state.
 
 ## Generate a family with a loop
 
@@ -51,20 +40,19 @@ state that rule once:
 
 <PairedExample name="technology-ladder" />
 
-The source starts with one foundation technology, then uses a `for` loop to
-create five observatory upgrades. Each iteration:
-
-- derives a stable logical name from the level;
-- computes cost, tier, and weight;
-- uses a template literal for localization; and
-- carries the previous typed technology into `prerequisites`.
-
-The PDXScript tab contains six ordinary technology definitions. Neither the
-loop nor the `previous` variable exists in the built mod.
+One foundation technology, then five generated upgrades, each requiring the
+one before it. The PDXScript tab contains six ordinary technology definitions.
+Neither the loop nor the `previous` variable exists in the built mod.
 
 This is more than shorter syntax. The prerequisite chain is constructed from
 the same values placed in the Feature, so renaming or reordering the generator
 does not leave a second list of string ids to update.
+
+The output order is the SDK's, not the loop's. Emission order is a function of
+content — definitions sort by emitted path and id — so the foundation
+technology appears last in the file even though the loop creates it first.
+Lists inside one definition, such as `prerequisites` or event options, keep
+their written order.
 
 ## Generate a typed cross-product
 
@@ -74,36 +62,30 @@ PDXScript. Keep the differences in typed data and generate the repeated shape:
 
 <PairedExample name="mapped-event-options" />
 
-This example derives the closed `EmpireKind` union from `EMPIRE_KINDS`. Its
-other types turn design assumptions into checks:
+This example derives the closed `EmpireKind` union from `EMPIRE_KINDS`, keeps
+the differences in one typed table, and forms the cross-product with
+`flatMap(...map(...))`: one option for every ambition in every empire kind.
+Each option receives a stable combined key, the correct visibility Trigger,
+localized text, and its reward effect. The PDXScript tab shows all twelve
+ordinary option blocks; at game time each empire sees the four whose Trigger
+matches it.
 
-- `FourAmbitions` requires exactly four entries for every empire kind.
-- `Ambition` requires a key, displayed name, reward resource, and amount.
-- `RewardResource` rejects a misspelled or unintended resource.
-- `Record<EmpireKind, FourAmbitions>` requires regular, hive, and machine data.
-- `Record<EmpireKind, Trigger<"country">>` requires one country-scoped
-  visibility condition for every kind.
-
-Adding another value to `EMPIRE_KINDS` makes both records fail typechecking
-until the new empire kind has ambitions and a condition. Removing one ambition
-from a group breaks the four-entry tuple. The data cannot quietly fall out of
-step with the generator.
-
-`flatMap(...map(...))` then forms the cross-product: one option for every
-ambition in every empire kind. Each option receives a stable combined key, the
-correct visibility Trigger, localized text, and its reward effect. The
-PDXScript tab shows all twelve ordinary option blocks; at game time each empire
-sees the four whose Trigger matches it.
+The types turn design assumptions into checks. Adding another value to
+`EMPIRE_KINDS` makes both records fail typechecking until the new empire kind
+has ambitions and a condition. Removing one ambition from a group breaks the
+four-entry tuple. The data cannot quietly fall out of step with the generator.
 
 The `as const` preserves the table's literal keys and values while `satisfies`
 checks its shape without widening those literals. Named object fields are also
-safer to maintain than a positional 2D array: readers do not have to remember
-which column means resource or amount, and swapping two values of the same
-primitive type is less likely to pass unnoticed.
+safer to maintain than positional rows such as
+`["horizon_corps", "influence", 25]`: readers do not have to remember which
+column means resource or amount, and swapping two values of the same primitive
+type is less likely to pass unnoticed.
 
 ## Extract helpers without inventing a second language
 
-Repeated policy can also become a normal function:
+The ladder above computes cost and display name inline. Both are ordinary
+rules, so both can move into named functions:
 
 ```ts
 function scaledCost(level: number): number {
@@ -126,33 +108,15 @@ options can hide the Stellaris definition it was meant to clarify.
 ## Test script behavior without launching the game
 
 Authored events and triggers are TypeScript values, so a normal Vitest suite
-can import them. `@pdx-ts/sdk-testing` provides a small interpreter for
-verified trigger and effect semantics:
+can import them and assert on their shape directly — the cross-product above
+can be tested for its twelve options without any harness.
 
-```ts
-import { fixture } from "@pdx-ts/sdk-testing";
-import { describe, expect, it } from "vitest";
-
-import { flags, welcome } from "./welcome.ts";
-
-describe("the welcome event", () => {
-  it("flags the country and grants influence", () => {
-    const world = fixture({ countries: [{ name: "Player" }] }, { events: [welcome] });
-    const player = world.country(0);
-
-    world.fire(welcome, player);
-
-    expect(player.hasFlag(flags.welcomed)).toBe(true);
-    expect(player.resource("influence")).toBe(50);
-  });
-});
-```
-
-This runs in milliseconds and does not need Stellaris or the launcher. The
-fixture is intentionally not a complete game simulator: it implements only
-semantics that have been verified and throws when a test reaches an unknown
-one. Use it for fast checks of the script logic it supports, not as proof of
-unmodeled game behavior.
+For running script, `@pdx-ts/sdk-testing` provides a small interpreter for
+verified trigger and effect semantics. [Testing your mod](/guides/testing-your-mod/)
+shows the fixture workflow and carries the caution that the harness is an
+unstable, deliberately incomplete API. Its limits matter here: delivery runs
+no option selection, so the fixture refuses an event whose options carry
+effects. Test such an event as a value, not through delivery.
 
 ## Prefer rules over copied boilerplate
 

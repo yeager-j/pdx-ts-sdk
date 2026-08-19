@@ -6,19 +6,21 @@ sidebar:
 ---
 
 An **Asset file** is a file the SDK carries without interpreting its contents.
-Textures, models, audio, fonts, and notices can all take this route. The SDK
-captures the source bytes, gives them a logical path from the mod root, and
-mirrors those exact bytes into the rendered mod.
+Textures, models, audio, fonts, and license or notice files can all take this
+route. The SDK captures the source bytes, gives them a logical path from the
+mod root, and mirrors those exact bytes into the rendered mod.
+
+Some file kinds need a definition as well as bytes. A custom sound plays only
+through a `soundeffect` entry in a `sound/*.asset` descriptor, and the SDK has
+no sound registry — write that descriptor by hand and ship it as an Asset file
+too. The same route covers any file the game reads through a definition the
+SDK does not author.
 
 ## Put files in the scaffolded `assets/` directory
 
-Projects created by `create-stellaris-mod` contain this manifest setting:
-
-```json
-{
-  "assetsDirectory": "assets"
-}
-```
+Projects created by `create-stellaris-mod` name this directory as
+`assetsDirectory` in `stellaris-mod.json`; the scaffold layout is described in
+[Getting started](/guides/getting-started/#the-project-layout).
 
 For ordinary projects, put files under `assets/` in their final Stellaris
 layout. The directory root maps directly to the rendered mod root:
@@ -31,8 +33,8 @@ assets/gfx/models/ship.mesh    →  gfx/models/ship.mesh
 The generated `src/mod.ts` captures the complete tree with `mod.assetTree` and
 places the returned items in an `assets` Feature. A missing or empty `assets/`
 directory is allowed, so the scaffold does not create it; add the directory
-when the mod needs its first Asset file. Keep the generated wiring described in
-[Getting started](/guides/getting-started/#what-the-scaffolder-creates).
+when the mod needs its first Asset file. Leave the generated `mod.assetTree`
+call in place; it is what makes the directory reach the build.
 
 Each build reads the tree and captures a fresh byte snapshot. Later changes to
 the source files cannot change a build that has already produced its
@@ -49,13 +51,22 @@ const iconSprite = mod.spriteType("resonance_icon", {
 });
 ```
 
-Six generated GFX fields accept an Asset path:
+These generated GFX fields accept an Asset path:
 
 | Definition             | Fields                                        |
 | ---------------------- | --------------------------------------------- |
 | `spriteType`           | `textureFile`, `maskingTexture`, `effectFile` |
 | `spriteType.animation` | `animationmaskfile`, `animationtextureFile`   |
 | `pdxmesh`              | `file`                                        |
+
+A warning names the field in dotted form, for example
+`animation.animationmaskfile`.
+
+The `pdxmesh` texture fields (`textureDiffuse`, `textureNormal`,
+`textureSpecular`, `textureWpo`) are absent from this table on purpose. The
+game reads them as bare file names, not mod-root paths — vanilla writes
+`texture_diffuse = "turret_object_diffuse.dds"` — so give them a file name
+alone. They get no `unverified-asset-path` check.
 
 Each field accepts `AssetFileItem | string`. A string is the usual choice for
 a file under the scaffolded `assets/` directory. It is also the right choice
@@ -64,8 +75,10 @@ SDK.
 
 Strings are preserved as written. During the Fold, the SDK compares each one
 with the Asset paths captured by this build and its vanilla file inventory. A
-path it cannot find produces a structured `unverified-asset-path` warning with
-the path, field, and owning definition:
+path it cannot find produces a structured
+[`unverified-asset-path` warning](/guides/warnings-and-diagnostics/) with the
+path, field, and owning definition. For example, this path belongs to another
+mod, so the build cannot verify it:
 
 ```ts
 const externalSprite = mod.spriteType("external_icon", {
@@ -75,10 +88,11 @@ const externalSprite = mod.spriteType("external_icon", {
 
 The warning is not an error because an unknown DLC or third-party path can be
 legitimate. Treat it as a spelling check: fix it when the build should own the
-file, and review or ignore it when another source owns the path. An
-unnormalizable string also warns instead of stopping the build.
+file, and review or ignore it when another source owns the path. A string the
+SDK cannot resolve to a path inside the mod root also warns instead of
+stopping the build.
 
-## Advanced: declare a custom Asset source
+## Declare an Asset source explicitly
 
 Use `mod.assetFile` when one source file needs an explicit or remapped logical
 path:
@@ -108,30 +122,19 @@ Asset item at `gfx/models/crystal_resonance/ships/frigate.mesh`. The walk
 includes hidden files, follows a stable path order, and rejects symbolic links
 and non-regular filesystem entries. A missing or empty tree is normally an
 error. Set `allowMissing: true` or `allowEmpty: true` only when absence is part
-of the build contract.
+of the build contract. Both calls snapshot the bytes when they declare the
+Asset items, the same way the scaffolded tree does.
 
-These calls read synchronously and snapshot the bytes when they declare the
-Asset items. Place the returned items in a
-[Feature](/guides/features-and-discovery/) that you pass to `mod.compile`:
+## Place Asset items in a Feature
 
-```ts
-const assets = mod.feature("assets", [icon, ...shipAssets]);
-const built = mod.compile([gameplay, assets]);
-```
-
-The Feature selects the items, but its stem does not relocate them. Each Asset
-always renders at its own declared logical path. An unplaced Asset is inert,
-just like any other item that is not in a compiled Feature.
-
-An advanced declaration can pass the Asset item directly to a typed GFX field
-instead of repeating its logical path:
+A declaration can pass the Asset item directly to a typed GFX field instead of
+repeating its logical path. This is the same sprite as earlier, written with
+the item:
 
 ```ts
 const iconSprite = mod.spriteType("resonance_icon", {
   textureFile: icon,
 });
-
-const feature = mod.feature("interface", [icon, iconSprite]);
 ```
 
 The generated GFX writes the item's logical path:
@@ -140,12 +143,35 @@ The generated GFX writes the item's logical path:
 textureFile = gfx/interface/crystal_resonance/icon.dds
 ```
 
-The same Asset item must also be placed in a compiled Feature. If a definition
-references an item that the build does not place, the Fold fails: it can prove
-that the rendered definition would point at a file missing from the mod.
+Sprite definitions are items too, so one
+[Feature](/guides/features-and-discovery/) can carry the Assets and the
+definitions that use them:
+
+```ts
+const assets = mod.feature("assets", [icon, ...shipAssets, iconSprite]);
+// gameplay is the project's other Feature.
+const built = mod.compile([gameplay, assets]);
+```
+
+The Feature selects the items, but its stem does not relocate them. Each Asset
+always renders at its own declared logical path.
+
+An Asset that nothing references and no Feature places is inert, like any
+other unplaced item. An Asset a definition references must be placed: if the
+build does not place it, the Fold fails, because it can prove the rendered
+definition would point at a file missing from the mod.
+
+## The Fold checks every output path
 
 The [Fold](/guides/the-pipeline/) checks every output path together before it
 produces a `PureMod`. It rejects duplicate paths, portable case aliases,
 file-versus-directory clashes, reserved SDK paths, and collisions with known
 vanilla files. This prevents a custom Asset declaration from silently
 replacing another output.
+
+The vanilla rule also refuses a deliberate replacement: the SDK never ships a
+file at a path the base game or its DLC already occupies, and no build option
+allows it. To change vanilla art, ship the file at a new path and point the
+definition at it — through your own definition, or a
+[patch of the vanilla definition](/guides/patching-vanilla/) where a patch
+surface exists.

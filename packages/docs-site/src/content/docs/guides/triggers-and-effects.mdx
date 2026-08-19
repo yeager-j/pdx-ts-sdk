@@ -14,10 +14,10 @@ The most important rule is about time:
 
 This creates a deliberate difference between the SDK's two script models:
 
-| Model | What you author | When TypeScript handles it | When Stellaris handles it |
-| --- | --- | --- | --- |
-| Trigger | A declarative condition tree | The tree is constructed during the build | The condition is evaluated in game |
-| Effect | A synchronous recording closure | The closure runs once during the build and records PDXScript entries | The recorded entries execute in game |
+| Model   | What you author                 | At build time (TypeScript)                          | At game time (Stellaris)     |
+| ------- | ------------------------------- | --------------------------------------------------- | ---------------------------- |
+| Trigger | A declarative condition tree    | The tree is constructed                             | The condition is evaluated   |
+| Effect  | A synchronous recording closure | The closure runs once and records PDXScript entries | The recorded entries execute |
 
 The complete example below reuses one country-scoped Trigger in two places. A
 technology uses it as `potential`, and an event uses it as the `limit` of an
@@ -41,12 +41,18 @@ has_country_flag = crystal_resonance_heard_the_hum
 It does not check the current game state. There is no current country while
 Node.js is building the mod.
 
+Leaf builders take the shapes the game rules declare. A flag test takes one
+argument. A numeric test takes a comparison operator and a value, such as
+`numOwnedPlanets(">=", 3)`, and some argument objects embed the operator as a
+tuple, such as `hasCountryResource({ type: "energy", amount: [">=", 100] })`.
+The accepted operators are `=`, `>`, `<`, `>=`, `<=`, and `!=`.
+
 Do not write a boolean-returning callback for an in-game condition:
 
 ```ts
 // Wrong model: this TypeScript would run during the build, not in Stellaris.
 const wrongPotential = () => {
-  if (someCondition && otherCondition) {
+  if (heardTheHum && !rejectedTheHum) {
     return true;
   }
 
@@ -70,48 +76,50 @@ const technology = mod.technology("resonance_weapons", {
 });
 ```
 
-The game receives an ordinary trigger block:
-
-```pdxscript
-potential = {
-	has_country_flag = crystal_resonance_heard_the_hum
-	NOT = {
-		has_country_flag = crystal_resonance_rejected_the_hum
-	}
-}
-```
+The paired example above builds exactly this Trigger; its PDXScript tab shows
+the `potential` block the game receives.
 
 Ordinary condition fields such as `potential` and `limit` implicitly AND their
 direct members, so `and(a, b)` can place both conditions directly in those
-fields. Combinator blocks have their own grouping semantics.
+fields.
+
+Triggers are ordinary read-only values. You can name one, return one from a
+helper, compose it into a larger tree, and reuse it anywhere its scope
+permits.
+
+A Trigger cannot be the condition of a plain TypeScript `if`. A Trigger is
+typed as callable on purpose: write `if (resonanceReady)` and TypeScript
+reports the error it reports for any always-truthy function, instead of
+quietly treating the condition tree as `true`. Calling a Trigger throws, with
+a message about the build-time and game-time boundary.
+
+Some trigger fields also accept a closure form, `(ctx) => Trigger`, for a
+condition that must name the definition's `FROM` or `ROOT` scope. That closure
+returns a declarative tree like any other; it is not a boolean callback.
+[Scope and context](/guides/scope-and-context/) covers `ctx`.
 
 ### Combine conditions explicitly
 
 Use trigger combinators for game-time logic:
 
-| TypeScript | Game-time meaning |
-| --- | --- |
-| `and(a, b)` or `a.and(b)` | Both conditions pass |
-| `or(a, b)` | At least one condition passes |
-| `not(a)` | The condition does not pass |
-| `nor(a, b)` | Neither condition passes |
-| `nand(a, b)` | The conditions do not all pass |
+| TypeScript                | Game-time meaning              |
+| ------------------------- | ------------------------------ |
+| `and(a, b)` or `a.and(b)` | Both conditions pass           |
+| `or(a, b)`                | At least one condition passes  |
+| `not(a)`                  | The condition does not pass    |
+| `nor(a, b)`               | Neither condition passes       |
+| `nand(a, b)`              | The conditions do not all pass |
 
 The combinators preserve grouping. For example, `not(and(a, b))` remains “not
 both,” while `nor(a, b)` means “neither.” This distinction matters because the
 immediate children of Stellaris's `NOT` block have NOR semantics. Let the SDK
 build the tree instead of trying to recreate the grouping by hand.
 
-Triggers are ordinary read-only values. You can name one, return one from a
-helper, compose it into a larger tree, and reuse it anywhere its scope permits.
-The same `resonanceReady` value in the paired example becomes both a technology
-condition and an effect limit.
-
-An actual Trigger cannot be used as the condition of a plain TypeScript `if`.
-The SDK gives Trigger values a poison call signature so TypeScript reports the
-always-truthy function instead of silently treating the condition tree as
-`true`. Calling a Trigger also throws with guidance about the build-time and
-game-time boundary.
+Beyond the table, `calcTrueIf({ amount, conditions })` passes when at least
+`amount` of its conditions pass — the one combinator with no TypeScript
+equivalent — and `hiddenTrigger(...)` hides its conditions from generated
+tooltips. The `customTooltip` trigger builders replace a block's generated
+tooltip text.
 
 ## Effects are build-time recording closures
 
@@ -128,10 +136,10 @@ handle, not a live empire from a running game. Calling
 `country.addResource(...)` appends an `add_resource` entry to the event's
 `immediate` block.
 
-The exact build phase depends on the authoring surface. Event effects such as
-`immediate` record eagerly when the event definition is created. Some content
-effect fields record later, when the Fold lowers that definition. This timing
-inside the build is not game logic; neither kind of closure runs in Stellaris.
+The exact moment of recording varies — event effects record when the event is
+created, and some content effect fields record when the
+[Fold](/guides/the-pipeline/) lowers the definition — but every closure runs
+during the build. None runs in Stellaris.
 
 This means ordinary TypeScript control flow is still useful, but it controls
 the build:
@@ -192,24 +200,31 @@ else = {
 }
 ```
 
-Both TypeScript callbacks above execute during the same build-time recording
-pass so their branch bodies can be recorded. At game time, Stellaris evaluates
-`limit` and executes only the matching recorded branch.
+The build runs both callbacks, so both branches end up in the file. In game,
+Stellaris evaluates `limit` and executes only the matching branch.
 
 Continue a chain with `.elseIf(condition, body)` and finish it with
 `.else(body)`. Keep the calls chained together: Stellaris associates
 `else_if` and `else` with the preceding `if` by position, so the recorder
 refuses an unrelated effect inserted between chain links.
 
-Other structural effects use the same model. An iterator's `limit` is a
-Trigger evaluated for each candidate in game, while its callback records the
-body during the build:
+### Other structural effects
+
+Structural effects share the model: TypeScript records the shape, Stellaris
+runs it. An iterator's `limit` is a Trigger evaluated for each candidate in
+game, while its callback records the body during the build:
 
 ```ts
 country.everyOwnedPlanet({ limit: hasOwner() }, (candidate) => {
   candidate.log("owned world");
 });
 ```
+
+The same family covers in-game randomness and repetition: `randomList` and
+`lockedRandomList` pick one weighted arm, `random({ chance })` runs its body
+sometimes, `whileLoop({ count })` repeats it, and `hiddenEffect` runs its body
+without tooltip text. Reach for these, not `Math.random()` or a TypeScript
+loop, when the game must decide at run time.
 
 The Trigger passed to a field or `limit`, and the effects available on a scope
 object, are checked against the scope where Stellaris will run that block.
