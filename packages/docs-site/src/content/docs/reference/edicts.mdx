@@ -1,0 +1,46 @@
+---
+title: Edicts
+description: Define country edicts with costs, upkeep, availability, modifiers, and activation hooks.
+registries: [edict]
+---
+
+import FieldTable from "../../../components/FieldTable.astro";
+import PairedExample from "../../../components/PairedExample.astro";
+
+An **edict** is a country policy that applies modifiers while it is active and
+can charge activation or upkeep resources. The SDK writes definitions under
+`common/edicts/`.
+
+## Define an ongoing edict
+
+Every edict needs a `length` and `icon`. Vanilla uses `length: -1` for many
+ongoing edicts:
+
+<PairedExample name="edicts" />
+
+Each `resources` entry can select an economic category and define a cost,
+upkeep, or both. The example uses vanilla's `edicts` category. You can instead
+pass an SDK-defined economic category; see [Economic modifiers](/concepts/economic-modifiers/)
+for a complete custom-category example.
+
+`potential` controls whether the edict is shown, while `allow` controls whether
+it can be activated. `modifier`, `triggeredCountryModifier`, and
+`relayNetworkModifier` provide different country-modifier shapes. The SDK also
+exposes `effect` and `onDisabled` country-effect blocks. Verify their timing,
+resource charging, and UI state in Stellaris for the game version you support.
+
+Technology-gated edicts can combine `prerequisites` with `showTechUnlockIf`.
+Use `vanilla.technology(...)` for a checked vanilla technology reference.
+
+## API and vanilla references
+
+- [`EdictDef`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/edict.ts)
+  is the generated definition used by `mod.edict`.
+- [`vanilla.edict`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
+  provides checked references to vanilla edict ids.
+
+Edicts have no patch surface. `mod.patchEdict` does not exist.
+
+## Field reference
+
+<FieldTable registry="edict" />

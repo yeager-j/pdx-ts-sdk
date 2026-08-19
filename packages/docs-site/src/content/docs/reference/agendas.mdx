@@ -1,0 +1,49 @@
+---
+title: Agendas
+description: Define council agendas, their availability, active modifiers, and completion effects.
+registries: [agenda]
+---
+
+import FieldTable from "../../../components/FieldTable.astro";
+import PairedExample from "../../../components/PairedExample.astro";
+
+An **agenda** is a council program that a country can prepare and launch. Its
+definition controls availability, progress cost, effects, and modifiers. The
+SDK writes definitions under `common/council_agendas/`.
+
+## Define the agenda lifecycle
+
+The shipped game's agenda guide separates the lifecycle into selection,
+preparation, and launch. `potential` controls when an agenda is shown, `allow`
+controls when it can be selected, `modifier` applies while it is being
+prepared, and `effect` runs when it launches:
+
+<PairedExample name="agendas" />
+
+`agendaCost` is required and accepts a number or script value. `agendaCooldown`
+uses the same shape. The example also applies a reusable `finishModifier` when
+the agenda launches. `initEffect` is the earlier hook for work that must run
+when the agenda is selected.
+
+Vanilla agendas often combine authority, civic, DLC, or council-state checks
+in `potential` and `allow`. Keep those checks separate when the agenda may be
+visible but temporarily unavailable. Test the selection, preparation, launch,
+and cooldown flow in Stellaris; the generated types verify script shape, not
+the complete council runtime.
+
+`initialEffectCustomLoc` expects a localization key rather than English source
+text. Create that key with `mod.localization` when you need custom preparation
+text.
+
+## API and vanilla references
+
+- [`AgendaDef`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/agenda.ts)
+  is the generated definition used by `mod.agenda`.
+- [`vanilla.agenda`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
+  provides checked references to vanilla agenda ids.
+
+Agendas have no patch surface. `mod.patchAgenda` does not exist.
+
+## Field reference
+
+<FieldTable registry="agenda" />
