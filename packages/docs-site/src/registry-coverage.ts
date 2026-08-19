@@ -135,6 +135,12 @@ export const CHANNELS: readonly ChannelRow[] = [
     summary: "Hooks onto the points the game fires, rather than firing an event yourself.",
   },
   {
+    concept: "Ship-of-size limits",
+    methods: ["mod.addShipOfSizeLimits"],
+    folders: ["common/country_limits/ownership_limits"],
+    summary: "Contributions to the shared ownership-limits file; ids only, no definition minted.",
+  },
+  {
     concept: "Localization",
     methods: ["mod.localization", "mod.replaceLocalization"],
     folders: ["localisation"],
