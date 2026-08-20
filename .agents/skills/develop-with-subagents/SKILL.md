@@ -19,7 +19,7 @@ subagent when moving on to the next task.
   model identifier or silently delegate to a coordinator-equivalent model.
   - Defaults:
     - Claude: Sonnet for low/medium difficulty tasks, Opus for medium/high difficulty tasks. Use Haiku for exploration.
-    - Codex: Luna (XHigh Effort) for low/medium difficulty tasks, Terra (High Effort) for medium/high difficulty tasks. Use Luna for exploration.
+    - Codex: The `coder` subagent for low/medium difficulty tasks or the `pro-coder` subagent for medium/high difficulty tasks. Use `researcher` for exploration.
 - Create one implementation agent and record its handle immediately. Resume that agent for every
   implementation follow-up and fault repair; do not replace it while it remains available.
 - Review the finished work yourself. Never delegate final review or accept the implementation
@@ -44,68 +44,14 @@ Before delegating:
 Do not delegate an ambiguous contract. Resolve ambiguity from local evidence; ask the user only when
 the answer changes product behavior, scope, or external authority.
 
-### 2. Decide Whether to Delegate Exploration
-
-Use this decision tree before writing the plan:
-
-```text
-Can the coordinator name the implementation seam, governing source of truth, affected
-callers, and verification command from current evidence?
-├── Yes → Inspect the decision-driving files directly and write the plan.
-└── No — take each missing piece in turn:
-    ├── Do you already know the file, symbol, or command that holds the answer?
-    │   └── Yes → Read it yourself. One subagent round trip costs more than one Read.
-    ├── Is it discoverable read-only in the repository?
-    │   └── Yes → Delegate it as an exploration question.
-    └── Otherwise → Obtain the external context or ask the user.
-```
-
-#### Launching explorers
-
-- Split the gap into independent questions, one explorer each, and launch them in a **single
-  message**. Questions that do not feed each other run at the same time; separate messages run them
-  one after another for no gain.
-- Use a smaller model (Luna or Haiku) and require read-only tools.
-- State breadth in every prompt: `medium` for one known subsystem, `very thorough` when the answer
-  may sit in several directories or under more than one naming convention. An explorer given no
-  breadth returns a shallow sweep that the coordinator then has to repeat.
-- Ask locating questions only — paths, symbols, flow, commands. An explorer reads excerpts, not
-  whole files, so it can find code but cannot judge it. Never ask one to review a diff, rate code
-  quality, or confirm correctness; that answer is a guess, not evidence.
-- Give the user request and repository location, never a proposed solution. This prevents the
-  coordinator's early hypothesis from shaping the evidence.
-
-Require each explorer to report:
-
-- relevant paths and symbols;
-- current control and data flow;
-- repository instructions and invariants;
-- tests and exact verification commands;
-- conflicting evidence and unresolved questions.
-
-#### While explorers run
-
-- Never run a delegated search yourself as well. It duplicates the work and produces a second answer
-  to reconcile against the first.
-- Never state, summarize, or assume a pending explorer's findings. The completion notification is
-  the only source of its result; anything written before it arrives is invention.
-- Do the contract work that does not depend on the answer: branch setup, issue and instruction
-  reading, and the parts of the plan the gap does not touch.
-
-#### After the report
-
-- Inspect every source whose contents materially determine the plan. The explorer maps the
-  territory; it does not own the design.
-- Send follow-up questions to the same explorer, which still holds the map. A fresh explorer
-  rebuilds that map from nothing and can rebuild it differently.
-- Restate in your own words every finding that changes the plan. Subagent reports never reach the
-  user, so an unrepeated finding is one the user never saw.
+### 2. Perform repository exploration
 
 ### 3. Write the Implementation Plan
 
 Write the plan before launching the implementation agent. Include:
 
 - the user-visible and technical outcome;
+- technical design for the seams and APIs;
 - files or modules expected to change and why;
 - ordered implementation steps;
 - invariants and scope exclusions;

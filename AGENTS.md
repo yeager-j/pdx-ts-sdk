@@ -224,3 +224,8 @@ result. Use `npm run example` when changing synthesis behavior or the quickstart
 Prefer focused Vitest runs while iterating, but finish with the full relevant gates. Snapshot
 changes are review evidence: update them only when the serialized output change is intentional,
 then inspect their contents rather than accepting them blindly.
+
+## Filing Linear Tickets
+
+When filing Linear tickets, make sure to include Labels, a Priority, and an Estimate (T-shirt sizing). Fetch the
+available Labels from Linear before filing. Use AskUserQuestion for Priority and Estimate, providing a recommendation.
