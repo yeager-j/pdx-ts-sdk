@@ -1,4 +1,4 @@
-import { block, cmp, kv, quoted, serialize } from "@pdx-ts/pdxscript";
+import { block, cmp, kv, quoted, serialize, varRef } from "@pdx-ts/pdxscript";
 import { describe, expect, it } from "vitest";
 
 describe("serialize", () => {
@@ -22,6 +22,26 @@ describe("serialize", () => {
       }
       "
     `);
+  });
+
+  it("serializes every scalar comparison operand the authoring layer can lower", () => {
+    expect(
+      serialize([
+        cmp("size", ">", 8),
+        cmp("size", ">", varRef("@minimum_size")),
+        cmp("size", ">", "local_spent_biomass"),
+        cmp("size", ">", "this.local_spent_biomass"),
+        cmp("size", ">", "value:minimum_size"),
+        cmp("size", ">", "trigger:has_minimum_size"),
+      ])
+    ).toBe(
+      "size > 8\n\n" +
+        "size > @minimum_size\n\n" +
+        "size > local_spent_biomass\n\n" +
+        "size > this.local_spent_biomass\n\n" +
+        "size > value:minimum_size\n\n" +
+        "size > trigger:has_minimum_size\n"
+    );
   });
 
   it("indents nested blocks with tabs", () => {

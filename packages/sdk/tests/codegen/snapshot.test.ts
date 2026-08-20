@@ -33,10 +33,18 @@ describe("emitted trigger signatures", () => {
     `);
   });
 
-  it("comparison: takes the operator the game writes", () => {
+  it("value-field comparison: keeps the CWT ScriptValue operand", () => {
     expect(declaration("numMoons")).toMatchInlineSnapshot(`
-      "export function numMoons(op: PdxOp, value: number): Trigger<"carrier" | "planet" | "ship"> {
-        return trigger([cmp("num_moons", op, value)]);
+      "export function numMoons(op: PdxOp, value: ScriptValue): Trigger<"carrier" | "planet" | "ship"> {
+        return trigger([cmp("num_moons", op, scriptValueScalar(value))]);
+      }"
+    `);
+  });
+
+  it("plain numeric comparison: keeps an ordinary number operand", () => {
+    expect(declaration("aiArmorRatio")).toMatchInlineSnapshot(`
+      "export function aiArmorRatio(op: PdxOp, value: number): Trigger<"country"> {
+        return trigger([cmp("ai_armor_ratio", op, value)]);
       }"
     `);
   });
@@ -70,7 +78,7 @@ describe("emitted trigger signatures", () => {
     expect(argsInterface("CountOwnedPopGroupArgs")).toMatchInlineSnapshot(`
       "export interface CountOwnedPopGroupArgs {
         limit?: Trigger<"pop_group">;
-        count: number | readonly [PdxOp, number] | "all";
+        count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
       }"
     `);
     expect(declaration("countOwnedPopGroup")).toMatchInlineSnapshot(`
@@ -87,7 +95,7 @@ describe("emitted trigger signatures", () => {
         }
         entries.push(
           typeof args.count === "object"
-            ? cmp("count", args.count[0], args.count[1])
+            ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
             : kv("count", args.count)
         );
         return trigger([block("count_owned_pop_group", entries)], refs);
@@ -98,7 +106,7 @@ describe("emitted trigger signatures", () => {
   it("splice + fields: the trigger splice becomes an implicit conditions argument", () => {
     expect(argsInterface("CalcTrueIfArgs")).toMatchInlineSnapshot(`
       "export interface CalcTrueIfArgs {
-        amount: number | readonly [PdxOp, number];
+        amount: ScriptValue | readonly [PdxOp, ScriptValue];
         conditions: Trigger<ScopeName>;
       }"
     `);
@@ -108,7 +116,7 @@ describe("emitted trigger signatures", () => {
         const refs: ContentRefUse[] = [];
         entries.push(
           typeof args.amount === "object"
-            ? cmp("amount", args.amount[0], args.amount[1])
+            ? cmp("amount", args.amount[0], scriptValueScalar(args.amount[1]))
             : kv("amount", args.amount)
         );
         entries.push(...args.conditions.entries);
@@ -116,6 +124,15 @@ describe("emitted trigger signatures", () => {
         return trigger([block("calc_true_if", entries)], refs);
       }"
     `);
+  });
+
+  it("plain numeric comparison fields stay numeric", () => {
+    expect(argsInterface("DistanceArgs")).toContain(
+      "minDistance?: number | readonly [PdxOp, number];"
+    );
+    expect(argsInterface("DistanceArgs")).toContain(
+      "maxDistance?: number | readonly [PdxOp, number];"
+    );
   });
 
   it("scope[X]: one branded scope value, and no raw-string arm", () => {
@@ -130,7 +147,7 @@ describe("emitted trigger signatures", () => {
     expect(argsInterface("CheckModifierValueArgs")).toMatchInlineSnapshot(`
       "export interface CheckModifierValueArgs {
         modifier: string;
-        value: number | readonly [PdxOp, number];
+        value: ScriptValue | readonly [PdxOp, ScriptValue];
       }"
     `);
   });

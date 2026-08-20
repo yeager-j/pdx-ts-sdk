@@ -252,7 +252,7 @@ function memberType(field: ArgField, outerScope: string, owner: string): string 
     }
     case "comparison": {
       const literals = value.literals.map((literal) => JSON.stringify(literal));
-      return ["number", "readonly [PdxOp, number]", ...literals].join(" | ");
+      return [value.value.type, `readonly [PdxOp, ${value.value.type}]`, ...literals].join(" | ");
     }
   }
 }
@@ -331,6 +331,7 @@ function scalarMeta(value: TsValue): string {
     value.booleanLiterals === undefined
       ? null
       : `booleanLiterals: ${JSON.stringify(value.booleanLiterals)}`,
+    value.objectKinds === undefined ? null : `objectKinds: ${JSON.stringify(value.objectKinds)}`,
   ].filter((member): member is string => member !== null);
   return members.length === 0 ? "{}" : `{ ${members.join(", ")} }`;
 }
@@ -725,8 +726,10 @@ export function emitEffects(
     "  readonly refTypes?: readonly string[];\n" +
     "  /** Literal yes/no arms that lower to PDXScript booleans rather than strings. */\n" +
     '  readonly booleanLiterals?: readonly ("yes" | "no")[];\n' +
+    "  /** Object-backed scalar forms accepted by a mixed scalar/block field. */\n" +
+    '  readonly objectKinds?: readonly ("scope-ref" | "typed-ref")[];\n' +
     "  /** Scalar and structured-block arms for an overloaded field. */\n" +
-    '  readonly scalar?: Pick<EffectFieldMeta, "refTypes" | "booleanLiterals">;\n' +
+    '  readonly scalar?: Pick<EffectFieldMeta, "refTypes" | "booleanLiterals" | "objectKinds">;\n' +
     "  readonly fields?: readonly EffectFieldMeta[];\n" +
     "}\n\n" +
     "export type EffectShapeMeta =\n" +

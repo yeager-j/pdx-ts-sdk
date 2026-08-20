@@ -20,8 +20,10 @@ export interface EffectFieldMeta {
   readonly refTypes?: readonly string[];
   /** Literal yes/no arms that lower to PDXScript booleans rather than strings. */
   readonly booleanLiterals?: readonly ("yes" | "no")[];
+  /** Object-backed scalar forms accepted by a mixed scalar/block field. */
+  readonly objectKinds?: readonly ("scope-ref" | "typed-ref")[];
   /** Scalar and structured-block arms for an overloaded field. */
-  readonly scalar?: Pick<EffectFieldMeta, "refTypes" | "booleanLiterals">;
+  readonly scalar?: Pick<EffectFieldMeta, "refTypes" | "booleanLiterals" | "objectKinds">;
   readonly fields?: readonly EffectFieldMeta[];
 }
 
@@ -911,6 +913,28 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         { prop: "location", key: "location", kind: "value" },
         { prop: "category", key: "category", kind: "value" },
         { prop: "picture", key: "picture", kind: "value", refTypes: ["sprite"] },
+      ],
+    },
+  },
+  createPopGroup: {
+    key: "create_pop_group",
+    shape: {
+      kind: "fields",
+      fields: [
+        { prop: "species", key: "species", kind: "value" },
+        { prop: "popGroup", key: "pop_group", kind: "value" },
+        {
+          prop: "ethos",
+          key: "ethos",
+          kind: "scalar-or-fields",
+          scalar: { objectKinds: ["scope-ref"] },
+          fields: [{ prop: "ethic", key: "ethic", kind: "value", refTypes: ["ethic"] }],
+        },
+        { prop: "category", key: "category", kind: "value", refTypes: ["pop_category"] },
+        { prop: "size", key: "size", kind: "value" },
+        { prop: "random", key: "random", kind: "value" },
+        { prop: "growthCategory", key: "growth_category", kind: "value" },
+        { prop: "effect", key: "effect", kind: "effect" },
       ],
     },
   },
@@ -5545,6 +5569,38 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   shipGrowthStage: { key: "ship_growth_stage", shape: { kind: "scope-link" } },
   solarSystem: { key: "solar_system", shape: { kind: "scope-link" } },
   spaceOwner: { key: "space_owner", shape: { kind: "scope-link" } },
+  spawnAstralRift: {
+    key: "spawn_astral_rift",
+    shape: {
+      kind: "fields",
+      fields: [
+        { prop: "inPlaceOf", key: "in_place_of", kind: "value" },
+        { prop: "randomPos", key: "random_pos", kind: "value" },
+        {
+          prop: "orbitDistance",
+          key: "orbit_distance",
+          kind: "scalar-or-fields",
+          scalar: {},
+          fields: [
+            { prop: "min", key: "min", kind: "value" },
+            { prop: "max", key: "max", kind: "value" },
+          ],
+        },
+        { prop: "orbitAngle", key: "orbit_angle", kind: "value" },
+        { prop: "tolerance", key: "tolerance", kind: "value" },
+        { prop: "id", key: "id", kind: "value" },
+        { prop: "relativeTo", key: "relative_to", kind: "value" },
+        {
+          prop: "graphicsEntityName",
+          key: "graphics_entity_name",
+          kind: "value",
+          refTypes: ["model_entity"],
+        },
+        { prop: "spawnSound", key: "spawn_sound", kind: "value" },
+        { prop: "initEffect", key: "init_effect", kind: "effect" },
+      ],
+    },
+  },
   spawnCustomDebris: {
     key: "spawn_custom_debris",
     shape: {
@@ -5561,6 +5617,44 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     },
   },
   spawnerPlanet: { key: "spawner_planet", shape: { kind: "scope-link" } },
+  spawnNaturalWormhole: {
+    key: "spawn_natural_wormhole",
+    shape: {
+      kind: "fields",
+      fields: [
+        { prop: "inPlaceOf", key: "in_place_of", kind: "value" },
+        { prop: "bypassType", key: "bypass_type", kind: "value", refTypes: ["bypass"] },
+        {
+          prop: "orbitDistance",
+          key: "orbit_distance",
+          kind: "scalar-or-fields",
+          scalar: {},
+          fields: [
+            { prop: "min", key: "min", kind: "value" },
+            { prop: "max", key: "max", kind: "value" },
+          ],
+        },
+        {
+          prop: "orbitAngle",
+          key: "orbit_angle",
+          kind: "scalar-or-fields",
+          scalar: {},
+          fields: [
+            { prop: "min", key: "min", kind: "value" },
+            { prop: "max", key: "max", kind: "value" },
+          ],
+        },
+        { prop: "randomPos", key: "random_pos", kind: "value" },
+        {
+          prop: "graphicsEntityName",
+          key: "graphics_entity_name",
+          kind: "value",
+          refTypes: ["model_entity"],
+        },
+        { prop: "initEffect", key: "init_effect", kind: "effect" },
+      ],
+    },
+  },
   spawnPsionicAura: {
     key: "spawn_psionic_aura",
     shape: {

@@ -66,6 +66,30 @@ export function refId<T extends string | number | boolean>(
 /** Anything that lowers to one PDXScript scalar. */
 export type ScalarArg = string | number | boolean | TypedRef<string> | ScopeValue;
 
+export type ScalarObjectKind = "scope-ref" | "typed-ref";
+
+/**
+ * Whether an object-shaped authored value belongs to a structured block arm.
+ * Generated mixed-field metadata names every SDK scalar object kind the scalar
+ * arm accepts, so this decision follows the generated contract rather than
+ * treating every object as a block.
+ */
+export function isStructuredValue(
+  value: unknown,
+  scalarObjectKinds: readonly ScalarObjectKind[]
+): value is Record<string, unknown> {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return false;
+  }
+  if (scalarObjectKinds.includes("scope-ref") && "kind" in value && value.kind === "scope-ref") {
+    return false;
+  }
+  if (scalarObjectKinds.includes("typed-ref") && "id" in value && typeof value.id === "string") {
+    return false;
+  }
+  return true;
+}
+
 export function toScalar(
   value: unknown,
   booleanLiterals: readonly ("yes" | "no")[] = []

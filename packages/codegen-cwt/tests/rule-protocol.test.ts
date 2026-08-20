@@ -160,6 +160,26 @@ describe("LoweredRule", () => {
     );
   });
 
+  it("emits create_pop_group from its mixed ethos rule and keeps it out of the skip report", () => {
+    const policy = createEffectPolicy(rules);
+    const emitted = emitEffects(new Emitter(rules), docs.effects, scopes, effects, policy, []);
+
+    expect(emitted.interfaces).toContain("createPopGroup(args:");
+    expect(emitted.interfaces).toContain('ethos?: "random" | ScopeValue<');
+    expect(emitted.interfaces).toContain("| { ethic: EthicRef | string };");
+    expect(emitted.interfaces).toContain("size?: ScriptValue;");
+    expect(emitted.interfaces).toContain("effect?: (scope: PopGroupScope) => void");
+    expect(emitted.meta).toContain('createPopGroup: { key: "create_pop_group"');
+    expect(emitted.meta).toContain('scalar: { objectKinds: ["scope-ref"] }');
+    expect(emitted.references.find((row) => row.key === "create_pop_group")?.availability).toEqual({
+      kind: "scopes",
+      scopes: ["carrier", "colony", "planet", "ship"],
+    });
+    expect(emitted.skipped).not.toContainEqual(
+      expect.objectContaining({ name: "create_pop_group" })
+    );
+  });
+
   it("rejects an effect-field overlay after CWT starts declaring that field", () => {
     const ambient = effects.get("create_ambient_object")!;
     const block = ambient.blocks[0]!;
@@ -191,7 +211,7 @@ describe("LoweredRule", () => {
     );
   });
 
-  it("rejects scalar/block overloads whose mixed scalar union includes an object-backed ref", () => {
+  it("carries an object-backed scalar discriminator through a scalar/block overload", () => {
     const ambient = effects.get("create_ambient_object")!;
     const block = ambient.blocks[0]!;
     const scalarOffset = block.named.find(
@@ -215,9 +235,15 @@ describe("LoweredRule", () => {
       null,
       new Set()
     );
-    expect(merged).toBe(
-      'field "entity_offset" has an object-shaped scalar arm that is ambiguous with its structured arm'
-    );
+    expect(merged).not.toBeTypeOf("string");
+    if (typeof merged === "string") {
+      throw new Error(merged);
+    }
+    expect(merged).toHaveLength(1);
+    expect(merged[0]?.value).toMatchObject({
+      kind: "scalarOrFields",
+      scalar: { objectKinds: ["typed-ref"] },
+    });
   });
 });
 

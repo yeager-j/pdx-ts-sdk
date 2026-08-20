@@ -57,6 +57,7 @@ import type {
   AssetSelectorRoomRef,
   AsteroidBeltTypeRef,
   AstralActionUsesCustomCooldownRef,
+  AstralRiftRef,
   AuthorityRef,
   BombardmentStanceRef,
   BuildingCorporateRef,
@@ -114,7 +115,9 @@ import type {
   PlanetClassHabitablePlanetRef,
   PlanetClassRandomListRef,
   PlanetClassRef,
+  PlanetModifierRef,
   PolicyRef,
+  PopCategoryRef,
   PopFactionRef,
   PopulationControlRef,
   PortraitGroupRef,
@@ -689,6 +692,69 @@ export interface EffectsIn4Scopes2b24 {
    * ```
    */
   closeBranchOffice(value?: boolean): void;
+
+  /**
+   * Creates a new pop_group on the scoped planet
+   * ```
+   * create_pop_group = {
+   * 	pop_group = <base pop group> (optional; if omitted, species is required)
+   * 	species = last_created / <target> / random (optional; if omitted, base pop group is required)
+   * 	ethos = { ethic = <key> } / random (optional; if no base group and no ethic is provided, ethos will be randomized)
+   * 	category = <pop category> (optional; if omitted and no base group is defined, use category from first assigned job)
+   * 	size = <number> (optional, default: POP_BULK_UNIT_SIZE)
+   * 	random = <number> (optional) If set, the amount will be randomized in [max(0, size - random), size + random].
+   * 	growth_category = <key> (optional, default: 'GROWTH_CAT_OTHER')
+   * 	effect = <init effect> (optional)
+   * }
+   * ```
+   */
+  createPopGroup(args: {
+    species?:
+      | ScopeValue<
+          | "army"
+          | "carrier"
+          | "country"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "planet"
+          | "pop_group"
+          | "ship"
+          | "species"
+        >
+      | string;
+    popGroup?: ScopeValue<"pop_group">;
+    ethos?:
+      | "random"
+      | ScopeValue<
+          | "agreement"
+          | "archaeological_site"
+          | "army"
+          | "carrier"
+          | "country"
+          | "debris"
+          | "deposit"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "megastructure"
+          | "planet"
+          | "pop_faction"
+          | "pop_group"
+          | "sector"
+          | "ship"
+          | "situation"
+          | "spy_network"
+          | "starbase"
+          | "system"
+        >
+      | { ethic: EthicRef | string };
+    category?: PopCategoryRef | string;
+    size?: ScriptValue;
+    random?: ScriptValue;
+    growthCategory?: string;
+    effect?: (scope: PopGroupScope) => void;
+  }): void;
 
   /**
    * Creates a sector with the scoped colony as capital, if it's not already within a sector
@@ -11812,6 +11878,74 @@ export interface EffectsInSystem {
     days?: ScriptValue;
     months?: ScriptValue;
     years?: ScriptValue;
+  }): void;
+
+  /**
+   * Spawns a new astral rift in the scoped system.
+   * ```
+   * If the id is not set or equal to none, spawns a random rift from the pool once exploration begins.
+   * Can be spawned relatively to an existing spatial object, tolerance is applied to the angle to avoid already existing planets.
+   * spawn_astral_rift = { random_pos = yes/no (default = no, exclusive with relative_to and in_place_of) orbit_distance = 100 orbit_angle = 360 id = astral_rift_key/none (optional) relative_to = target (optional) tolerance = (optional) in_place_of = spatial_object (optional) graphics_entity_name = entity (optional) spawn_sound = yes/no (default = yes) init_effect = {} }
+   * ```
+   */
+  spawnAstralRift(args: {
+    inPlaceOf?: ScopeValue<
+      | "ambient_object"
+      | "archaeological_site"
+      | "astral_rift"
+      | "bypass"
+      | "carrier"
+      | "colony"
+      | "debris"
+      | "fleet"
+      | "megastructure"
+      | "planet"
+      | "ship"
+      | "situation"
+      | "starbase"
+      | "system"
+    >;
+    randomPos?: boolean;
+    orbitDistance?: ScriptValue | { min: ScriptValue; max: ScriptValue };
+    orbitAngle?: number;
+    tolerance?: number;
+    id?: AstralRiftRef | string | "none";
+    relativeTo?: ScopeValue;
+    graphicsEntityName?: ModelEntityRef | string;
+    spawnSound?: boolean;
+    initEffect?: (scope: AstralRiftScope) => void;
+  }): void;
+
+  /**
+   * Spawns a new natural wormhole in the scoped system.
+   * ```
+   * Use in_place_of instead of orbit_X / random_pos to use the location of an existing spatial object
+   * spawn_natural_wormhole = { bypass_type = <wormhole/sealed_wormhole> orbit_distance = 100 orbit_angle = 90 random_pos = yes/no in_place_of = <target> (optional) graphics_entity_name = <entity> (optional) }
+   * ```
+   */
+  spawnNaturalWormhole(args: {
+    inPlaceOf?: ScopeValue<
+      | "ambient_object"
+      | "archaeological_site"
+      | "astral_rift"
+      | "bypass"
+      | "carrier"
+      | "colony"
+      | "debris"
+      | "fleet"
+      | "megastructure"
+      | "planet"
+      | "ship"
+      | "situation"
+      | "starbase"
+      | "system"
+    >;
+    bypassType: BypassRef | string;
+    orbitDistance?: ScriptValue | { min: ScriptValue; max: ScriptValue };
+    orbitAngle?: "random" | number | { min: number; max: number };
+    randomPos?: boolean;
+    graphicsEntityName?: ModelEntityRef | string;
+    initEffect?: (scope: BypassScope) => void;
   }): void;
 
   /**

@@ -60,6 +60,30 @@ describe("emitted effect signatures", () => {
     expect(entry).toContain('{ prop: "effect", key: "effect", kind: "effect" }');
   });
 
+  it("createPopGroup exposes every CWT field and its pushed pop-group effect", () => {
+    const create = signature("createPopGroup");
+    expect(create).toContain("species?:");
+    expect(create).toContain('popGroup?: ScopeValue<"pop_group">;');
+    expect(create).toContain('ethos?:\n      | "random"');
+    expect(create).toContain("| { ethic: EthicRef | string };");
+    expect(create).toContain("category?: PopCategoryRef | string;");
+    expect(create).toContain("size?: ScriptValue;");
+    expect(create).toContain("random?: ScriptValue;");
+    expect(create).toContain("growthCategory?: string;");
+    expect(create).toContain("effect?: (scope: PopGroupScope) => void;");
+  });
+
+  it("createPopGroup metadata discriminates scope-valued ethos from its structured arm", () => {
+    const start = meta.indexOf("  createPopGroup: {");
+    const end = meta.indexOf("  createResearchStation:", start);
+    const entry = meta.slice(start, end);
+    expect(entry).toContain('key: "create_pop_group"');
+    expect(entry).toContain('prop: "ethos"');
+    expect(entry).toContain('kind: "scalar-or-fields"');
+    expect(entry).toContain('scalar: { objectKinds: ["scope-ref"] }');
+    expect(entry).toContain('{ prop: "effect", key: "effect", kind: "effect" }');
+  });
+
   it("bool: an omitted argument means yes", () => {
     expect(signature("destroyColony")).toMatchInlineSnapshot(
       `"destroyColony(value?: boolean): void;"`

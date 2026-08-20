@@ -3,8 +3,9 @@ import { describe, expect, it } from "vitest";
 
 import type { PlanetClassRef } from "../src/generated/refs.ts";
 import { eventTarget } from "../src/script/effects/recorder.ts";
-import { toScalar } from "../src/script/scalar.ts";
+import { isStructuredValue, toScalar } from "../src/script/scalar.ts";
 import {
+  aiArmorRatio,
   and,
   anyCountry,
   canAccessSystem,
@@ -23,6 +24,7 @@ import {
   not,
   or,
   owner,
+  popGroupSize,
   resourceStockpilePercent,
   target,
   trigger,
@@ -282,6 +284,14 @@ describe("trigger builders", () => {
     );
   });
 
+  it("uses generated scalar object kinds to distinguish references from structured values", () => {
+    expect(isStructuredValue(eventTarget<"planet">("triggers_test_world"), ["scope-ref"])).toBe(
+      false
+    );
+    expect(isStructuredValue({ id: "pc_gaia" }, ["typed-ref"])).toBe(false);
+    expect(isStructuredValue({ ethic: "ethic_materialist" }, ["scope-ref"])).toBe(true);
+  });
+
   it("throws an explanatory error when a trigger is called like a function", () => {
     const condition = hasGlobalFlag("some_flag");
     expect(() => condition()).toThrow(/BUILD time/);
@@ -302,6 +312,34 @@ describe("trigger builders", () => {
     const variable = resourceStockpilePercent({ resource: "energy", value: "@my_value" });
     expect(serialize([...variable.entries])).toBe(
       "resource_stockpile_percent = {\n\tresource = energy\n\tvalue = @my_value\n}\n"
+    );
+  });
+
+  it("serializes every ScriptValue comparison operand without changing plain numeric comparisons", () => {
+    const comparisons = [
+      popGroupSize(">", 8),
+      popGroupSize(">", "@minimum_pop_group_size"),
+      popGroupSize(">", "local_spent_biomass"),
+      popGroupSize(">", "this.local_spent_biomass"),
+      popGroupSize(">", "value:minimum_pop_group_size"),
+      popGroupSize(">", "trigger:has_minimum_pop_group_size"),
+      aiArmorRatio(">", 0.5),
+    ];
+
+    expect(serialize(comparisons.flatMap((comparison) => [...comparison.entries]))).toBe(
+      "pop_group_size > 8\n" +
+        "\n" +
+        "pop_group_size > @minimum_pop_group_size\n" +
+        "\n" +
+        "pop_group_size > local_spent_biomass\n" +
+        "\n" +
+        "pop_group_size > this.local_spent_biomass\n" +
+        "\n" +
+        "pop_group_size > value:minimum_pop_group_size\n" +
+        "\n" +
+        "pop_group_size > trigger:has_minimum_pop_group_size\n" +
+        "\n" +
+        "ai_armor_ratio > 0.5\n"
     );
   });
 });
