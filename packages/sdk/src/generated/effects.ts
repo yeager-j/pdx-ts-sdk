@@ -12219,6 +12219,102 @@ export interface UniversalEffects extends EnableSpecialProjectEffectsExtension {
   countryListTooltip(args: { limit: Trigger<"country"> }): void;
 
   /**
+   * Creates a new ambient object
+   * ```
+   * create_ambient_object = { type = <key> location = <target> }
+   * For VFX use:
+   * create_ambient_object = {
+   * 	type = <key>
+   * 	scale = <float>
+   * 	location = <target>
+   * 	use_3d_location = <bool, use 3D entity or 2D coordinate of the location entity as base>
+   * 	entity_offset = {
+   * 		min = <int>
+   * 		max = <int>
+   * 	}
+   * 	entity_offset_angle = {
+   * 		min = <int>
+   * 		max = <int>
+   * 	}
+   * 	entity_offset_height = {
+   * 		min = <int>
+   * 		max = <int>
+   * 	}
+   * 	entity_face_object = star/FROM/etc
+   * 	entity_scale_to_size = yes/no
+   * 	play_animation_once = yes/no
+   * 	target = <target>
+   * 	duration = <int, days>
+   * 	is_wreck = yes/no
+   * }
+   * ```
+   */
+  createAmbientObject(args: {
+    type: AmbientObjectRef | string;
+    location?: ScopeValue<
+      | "ambient_object"
+      | "archaeological_site"
+      | "astral_rift"
+      | "bypass"
+      | "carrier"
+      | "colony"
+      | "debris"
+      | "fleet"
+      | "megastructure"
+      | "planet"
+      | "ship"
+      | "situation"
+      | "starbase"
+      | "system"
+    >;
+    scale?: number;
+    use3dLocation?: boolean;
+    entityOffset?: number | { min: number; max: number };
+    entityOffsetAngle?: number | { min: number; max: number };
+    entityOffsetHeight?: number | { min: number; max: number };
+    baseAngleTowards?: ScopeValue<
+      | "ambient_object"
+      | "archaeological_site"
+      | "astral_rift"
+      | "bypass"
+      | "carrier"
+      | "colony"
+      | "country"
+      | "debris"
+      | "fleet"
+      | "megastructure"
+      | "planet"
+      | "ship"
+      | "situation"
+      | "starbase"
+      | "system"
+    >;
+    entityFaceObject?: ScopeValue<
+      | "ambient_object"
+      | "archaeological_site"
+      | "astral_rift"
+      | "bypass"
+      | "carrier"
+      | "colony"
+      | "debris"
+      | "fleet"
+      | "megastructure"
+      | "planet"
+      | "ship"
+      | "situation"
+      | "starbase"
+      | "system"
+    >;
+    entityScaleToSize?: boolean;
+    scriptedScale?: Variable;
+    playAnimationOnce?: boolean;
+    duration?: number;
+    isWreck?: boolean;
+    target?: ScopeValue;
+    effect?: (scope: AmbientObjectScope) => void;
+  }): void;
+
+  /**
    * Creates a cluster centered around the specified spatial object
    * ```
    * create_cluster = {

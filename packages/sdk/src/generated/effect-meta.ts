@@ -4,7 +4,8 @@
 // From: aliases.cwt
 // From: links.cwt
 
-export type EffectFieldKind = "value" | "comparison" | "trigger" | "effect" | "modifiers";
+export type EffectFieldKind =
+  "value" | "comparison" | "trigger" | "effect" | "modifiers" | "scalar-or-fields";
 
 export interface EffectFieldMeta {
   readonly prop: string;
@@ -19,6 +20,9 @@ export interface EffectFieldMeta {
   readonly refTypes?: readonly string[];
   /** Literal yes/no arms that lower to PDXScript booleans rather than strings. */
   readonly booleanLiterals?: readonly ("yes" | "no")[];
+  /** Scalar and structured-block arms for an overloaded field. */
+  readonly scalar?: Pick<EffectFieldMeta, "refTypes" | "booleanLiterals">;
+  readonly fields?: readonly EffectFieldMeta[];
 }
 
 export type EffectShapeMeta =
@@ -725,6 +729,57 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   countryRemoveEthic: {
     key: "country_remove_ethic",
     shape: { kind: "value", refTypes: ["ethic"] },
+  },
+  createAmbientObject: {
+    key: "create_ambient_object",
+    shape: {
+      kind: "fields",
+      fields: [
+        { prop: "type", key: "type", kind: "value", refTypes: ["ambient_object"] },
+        { prop: "location", key: "location", kind: "value" },
+        { prop: "scale", key: "scale", kind: "value" },
+        { prop: "use3dLocation", key: "use_3d_location", kind: "value" },
+        {
+          prop: "entityOffset",
+          key: "entity_offset",
+          kind: "scalar-or-fields",
+          scalar: {},
+          fields: [
+            { prop: "min", key: "min", kind: "value" },
+            { prop: "max", key: "max", kind: "value" },
+          ],
+        },
+        {
+          prop: "entityOffsetAngle",
+          key: "entity_offset_angle",
+          kind: "scalar-or-fields",
+          scalar: {},
+          fields: [
+            { prop: "min", key: "min", kind: "value" },
+            { prop: "max", key: "max", kind: "value" },
+          ],
+        },
+        {
+          prop: "entityOffsetHeight",
+          key: "entity_offset_height",
+          kind: "scalar-or-fields",
+          scalar: {},
+          fields: [
+            { prop: "min", key: "min", kind: "value" },
+            { prop: "max", key: "max", kind: "value" },
+          ],
+        },
+        { prop: "baseAngleTowards", key: "base_angle_towards", kind: "value" },
+        { prop: "entityFaceObject", key: "entity_face_object", kind: "value" },
+        { prop: "entityScaleToSize", key: "entity_scale_to_size", kind: "value" },
+        { prop: "scriptedScale", key: "scripted_scale", kind: "value" },
+        { prop: "playAnimationOnce", key: "play_animation_once", kind: "value" },
+        { prop: "duration", key: "duration", kind: "value" },
+        { prop: "isWreck", key: "is_wreck", kind: "value" },
+        { prop: "target", key: "target", kind: "value" },
+        { prop: "effect", key: "effect", kind: "effect" },
+      ],
+    },
   },
   createArchaeologicalSite: { key: "create_archaeological_site", shape: { kind: "value" } },
   createArmyTransport: {

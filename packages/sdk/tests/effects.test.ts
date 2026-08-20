@@ -2,13 +2,14 @@ import { serialize, type PdxEntry } from "@pdx-ts/pdxscript";
 import { describe, expect, it } from "vitest";
 
 import type { EffectPathOf } from "../src/generated/effects.ts";
-import { countryFlags } from "../src/generated/value-sets.ts";
+import { ambientObjectFlags, countryFlags } from "../src/generated/value-sets.ts";
 import {
   eventTarget,
   isEventFireKey,
   makeScope,
   recordEffects,
   scopeRef,
+  scopeValue,
 } from "../src/script/effects/recorder.ts";
 import { hasOwner, isAtWar } from "../src/script/triggers.ts";
 
@@ -16,6 +17,112 @@ const flags = countryFlags("effects_test_flag");
 const stormWorld = eventTarget<"planet">("effects_test_target");
 
 describe("the effect recorder over generated meta", () => {
+  it("serializes a minimal ambient-object placement", () => {
+    const sink: PdxEntry[] = [];
+    const system = makeScope<"system">(sink);
+
+    system.createAmbientObject({
+      type: "effects_test_probe",
+      location: scopeValue<"system">("this"),
+    });
+
+    expect(serialize(sink)).toBe(`create_ambient_object = {
+	type = effects_test_probe
+	location = this
+}
+`);
+  });
+
+  it("serializes a scaled explicit-location ambient object", () => {
+    const sink: PdxEntry[] = [];
+    const system = makeScope<"system">(sink);
+
+    system.createAmbientObject({
+      type: "effects_test_scaled_probe",
+      location: scopeValue<"planet">("from"),
+      scale: 2.5,
+    });
+
+    expect(serialize(sink)).toBe(`create_ambient_object = {
+	type = effects_test_scaled_probe
+	location = from
+	scale = 2.5
+}
+`);
+  });
+
+  it("serializes 3D placement offsets and optional ambient-object flags", () => {
+    const sink: PdxEntry[] = [];
+    const system = makeScope<"system">(sink);
+
+    system.createAmbientObject({
+      type: "effects_test_wreck",
+      location: scopeValue<"system">("this"),
+      scale: 1.5,
+      use3dLocation: true,
+      entityOffset: { min: -2, max: 4 },
+      entityOffsetAngle: { min: 15, max: 75 },
+      entityOffsetHeight: { min: -1.5, max: 3.5 },
+      baseAngleTowards: scopeValue<"country">("from"),
+      entityFaceObject: scopeValue<"planet">("from"),
+      entityScaleToSize: true,
+      scriptedScale: "effects_test_scale",
+      playAnimationOnce: true,
+      target: scopeValue<"country">("root"),
+      duration: 30,
+      isWreck: true,
+    });
+
+    expect(serialize(sink)).toBe(`create_ambient_object = {
+	type = effects_test_wreck
+	location = this
+	scale = 1.5
+	use_3d_location = yes
+	entity_offset = {
+		min = -2
+		max = 4
+	}
+	entity_offset_angle = {
+		min = 15
+		max = 75
+	}
+	entity_offset_height = {
+		min = -1.5
+		max = 3.5
+	}
+	base_angle_towards = from
+	entity_face_object = from
+	entity_scale_to_size = yes
+	scripted_scale = effects_test_scale
+	play_animation_once = yes
+	duration = 30
+	is_wreck = yes
+	target = root
+}
+`);
+  });
+
+  it("records an inline effect in the pushed ambient-object scope", () => {
+    const sink: PdxEntry[] = [];
+    const system = makeScope<"system">(sink);
+    const flags = ambientObjectFlags("effects_test_ambient_flag");
+
+    system.createAmbientObject({
+      type: "effects_test_effect_probe",
+      effect: (ambient) => {
+        ambient.setAmbientObjectFlag(flags.effects_test_ambient_flag);
+      },
+    });
+
+    expect(serialize(sink)).toBe(`create_ambient_object = {
+	type = effects_test_effect_probe
+	effect = {
+		set_ambient_object_flag = effects_test_ambient_flag
+	}
+}
+`);
+  });
+
   it("identifies generated event-fire effects without inferring their legal caller scopes", () => {
     expect(isEventFireKey("observer_event")).toBe(true);
     expect(isEventFireKey("country_event")).toBe(true);

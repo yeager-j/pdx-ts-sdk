@@ -201,6 +201,25 @@ function fieldEntries(
         entries.push(kv(field.key, scalar));
         break;
       }
+      case "scalar-or-fields":
+        if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+          entries.push(
+            block(
+              field.key,
+              fieldEntries(
+                field.fields ?? [],
+                value as Record<string, unknown>,
+                `${path}.${field.key}`,
+                refs
+              )
+            )
+          );
+        } else {
+          const scalar = toScalar(value, field.scalar?.booleanLiterals);
+          recordRef(refs, field.scalar?.refTypes, `${path}.${field.key}`, scalar);
+          entries.push(kv(field.key, scalar));
+        }
+        break;
       case "comparison":
         if (Array.isArray(value)) {
           entries.push(cmp(field.key, value[0] as PdxOp, value[1] as number));

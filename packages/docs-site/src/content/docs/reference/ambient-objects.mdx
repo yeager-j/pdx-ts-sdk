@@ -4,8 +4,6 @@ description: Define selectable or decorative objects that events and system init
 registries: [ambient_object]
 ---
 
-import { Aside } from "@astrojs/starlight/components";
-
 import FieldTable from "../../../components/FieldTable.astro";
 import PairedExample from "../../../components/PairedExample.astro";
 
@@ -14,12 +12,19 @@ probe, derelict ship, or decorative wreck. Its definition selects a model
 entity and optional map text. The SDK writes definitions under
 `common/ambient_objects/`.
 
-## Define the object separately from its placement
+## Define the object and place it from an initializer
 
 The model entity is required. A selectable object can also show a localized
 name, description, and tooltip:
 
 <PairedExample name="ambient-objects" />
+
+`createAmbientObject` places a defined object from an effect closure. Its
+`type` accepts the branded result of `mod.ambientObject` (or a raw id), while
+`location` and the optional offsets describe where the game creates it. The
+`effect` callback runs in the new `ambient_object` scope, so setup such as a
+flag can stay next to the placement. The paired example defines, places, and
+configures one object through that complete path.
 
 `name` is English source text. The SDK emits it under the ambient object's
 minted id. `description` and `tooltip` are different: they expect localization
@@ -30,12 +35,6 @@ translations.
 The raw `entity` id must name a model entity supplied by Stellaris or a mod.
 The SDK checks a branded model-entity reference when one is available, but it
 also accepts raw ids for custom GFX definitions.
-
-<Aside type="caution" title="The SDK does not place ambient objects yet">
-  `mod.ambientObject` defines an object but does not create an instance in a system. Stellaris
-  normally places one with `create_ambient_object` in an event or initializer. The SDK does not
-  currently expose that effect, so another supported script path must perform the placement.
-</Aside>
 
 ## Selectable and decorative objects
 

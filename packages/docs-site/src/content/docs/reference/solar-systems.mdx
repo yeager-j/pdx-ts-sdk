@@ -121,11 +121,8 @@ layout phase.
 Stellaris can treat an invalid random planet class as `class = none`. Run the
 game with `-script_debug` when testing randomized classes.
 
-Three things the game does in these blocks are not authorable yet:
+Two things the game does in these blocks are not authorable yet:
 
-- The SDK generates no `createAmbientObject`. Vanilla calls that effect about
-  500 times inside these blocks, so decorative objects such as debris and
-  derelicts cannot be placed from an `initEffect`.
 - The SDK has no PREV, the game's link out to an enclosing scope. A planet or
   moon callback receives `ctx.self`, `ctx.root`, and `ctx.from` only, so it
   cannot reach its own system or the previous system in the tree.

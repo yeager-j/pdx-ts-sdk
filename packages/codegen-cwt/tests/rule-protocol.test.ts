@@ -11,6 +11,7 @@ import { createEffectPolicy } from "@pdx-ts/codegen-cwt/effect-policy";
 import { emitEffects } from "@pdx-ts/codegen-cwt/emit/effects";
 import { emitEvents } from "@pdx-ts/codegen-cwt/emit/events";
 import { emitScopeLinks } from "@pdx-ts/codegen-cwt/emit/links";
+import { mergeFields } from "@pdx-ts/codegen-cwt/emit/shape";
 import { Emitter } from "@pdx-ts/codegen-cwt/emit/types";
 import { createEventFieldPolicy } from "@pdx-ts/codegen-cwt/event-field-policy";
 import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
@@ -95,6 +96,128 @@ describe("LoweredRule", () => {
     expect(rule.body.splice).toEqual({ scope: null });
     expect([...rule.body.clauses]).toEqual([["limit", null]]);
     expect([...rule.body.args]).toEqual(["count"]);
+  });
+
+  it("retains create_ambient_object's scalar/block overloads for codegen", () => {
+    const rule = effects.get("create_ambient_object")!;
+    const fields = rule.blocks[0]!.named.filter((field) => field.key.kind === "name");
+    expect(
+      fields.map((field) => (field.key.kind === "name" ? field.key.name : "<non-name>"))
+    ).toEqual([
+      "type",
+      "location",
+      "scale",
+      "use_3d_location",
+      "entity_offset",
+      "entity_offset",
+      "entity_offset_angle",
+      "entity_offset_angle",
+      "entity_offset_height",
+      "entity_offset_height",
+      "base_angle_towards",
+      "base_angle_towards",
+      "entity_face_object",
+      "entity_scale_to_size",
+      "scripted_scale",
+      "play_animation_once",
+      "duration",
+      "is_wreck",
+      "effect",
+    ]);
+    for (const name of ["entity_offset", "entity_offset_angle", "entity_offset_height"]) {
+      expect(
+        fields.filter((field) => field.key.kind === "name" && field.key.name === name)
+      ).toHaveLength(2);
+    }
+
+    const policy = createEffectPolicy(rules);
+    const emitted = emitEffects(new Emitter(rules), docs.effects, scopes, effects, policy, []);
+    expect(emitted.interfaces).toContain("createAmbientObject(args:");
+    const ambientSignature = emitted.interfaces.slice(
+      emitted.interfaces.indexOf("createAmbientObject(args:"),
+      emitted.interfaces.indexOf("createAmbientObject(args:") + 1_500
+    );
+    expect(ambientSignature).toContain("target?: ScopeValue");
+    expect(emitted.interfaces).toContain("entityOffset?: number | { min: number; max: number }");
+    expect(emitted.meta).toContain('kind: "scalar-or-fields"');
+    expect(emitted.interfaces).toContain("effect?: (scope: AmbientObjectScope) => void");
+    expect(emitted.fieldAdditions).toEqual([
+      expect.stringContaining("create_ambient_object.target"),
+    ]);
+    expect(emitted.interfaces).not.toContain("createColony(args:");
+    expect(emitted.interfaces).not.toContain("startColony(args:");
+    expect(emitted.skipped).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: "create_colony",
+          reason: expect.stringContaining("repeated nested fields"),
+        }),
+        expect.objectContaining({
+          name: "start_colony",
+          reason: expect.stringContaining("repeated nested fields"),
+        }),
+      ])
+    );
+  });
+
+  it("rejects an effect-field overlay after CWT starts declaring that field", () => {
+    const ambient = effects.get("create_ambient_object")!;
+    const block = ambient.blocks[0]!;
+    const location = block.named.find(
+      (field) => field.key.kind === "name" && field.key.name === "location"
+    )!;
+    const changed = new Map(effects);
+    changed.set("create_ambient_object", {
+      ...ambient,
+      blocks: [
+        {
+          ...block,
+          named: [
+            ...block.named,
+            {
+              ...location,
+              key: { kind: "name", name: "target" },
+              type: { kind: "scope", name: "any" },
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(() =>
+      emitEffects(new Emitter(rules), docs.effects, scopes, changed, createEffectPolicy(rules), [])
+    ).toThrow(
+      'EFFECT_FIELD_ADDITIONS names "create_ambient_object.target", which CWT now declares'
+    );
+  });
+
+  it("rejects scalar/block overloads whose mixed scalar union includes an object-backed ref", () => {
+    const ambient = effects.get("create_ambient_object")!;
+    const block = ambient.blocks[0]!;
+    const scalarOffset = block.named.find(
+      (field) =>
+        field.key.kind === "name" &&
+        field.key.name === "entity_offset" &&
+        field.type.kind !== "block"
+    )!;
+    const fields = block.named.filter(
+      (field) => field.key.kind === "name" && field.key.name === "entity_offset"
+    );
+    const merged = mergeFields(
+      new Emitter(rules),
+      [
+        ...fields,
+        {
+          ...scalarOffset,
+          type: { kind: "typeRef", name: "ambient_object" },
+        },
+      ],
+      null,
+      new Set()
+    );
+    expect(merged).toBe(
+      'field "entity_offset" has an object-shaped scalar arm that is ambiguous with its structured arm'
+    );
   });
 });
 

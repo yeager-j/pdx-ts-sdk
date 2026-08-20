@@ -12,7 +12,7 @@
  * reports it, nothing is dropped silently.
  */
 
-import { isOptional, type RuleField, type RuleType } from "../cwt/model.ts";
+import { isOptional, isRepeated, type RuleField, type RuleType } from "../cwt/model.ts";
 import { UNIVERSAL_SCOPES } from "../overlay.ts";
 import type { Emitter, TsValue } from "./types.ts";
 
@@ -75,6 +75,17 @@ export type ClauseCategory = "trigger" | "effect" | "modifier_rule";
 
 export type ArgValue =
   | { readonly kind: "scalar"; readonly value: TsValue }
+  /**
+   * A field that accepts either one scalar value or a structured block. The
+   * scalar arm must be distinguishable from the object-shaped block at
+   * runtime; typed refs, scope values, and ScriptValue are therefore rejected
+   * rather than guessing which arm an authored object meant.
+   */
+  | {
+      readonly kind: "scalarOrFields";
+      readonly scalar: TsValue;
+      readonly fields: readonly ArgField[];
+    }
   /**
    * A typed hole for a nested clause. `scope` is the canonical scope the
    * clause runs in, or `null` for "the enclosing rule's own scope". `splice`
@@ -161,6 +172,24 @@ function clauseScope(
 }
 
 /**
+ * The recorder distinguishes structured values by their object shape. These
+ * scalar forms can also be objects at authoring time, so a scalar/block union
+ * containing one would be ambiguous and must stay out of the generated API.
+ */
+function scalarArmIsObjectShaped(value: TsValue): boolean {
+  return value.objectShaped === true;
+}
+
+/** Nested repeated members need arrays, which an ArgField does not model. */
+function hasRepeatedNestedField(fields: readonly RuleField[]): boolean {
+  return fields.some(
+    (field) =>
+      isRepeated(field.cardinality) ||
+      (field.type.kind === "block" && hasRepeatedNestedField(field.type.fields))
+  );
+}
+
+/**
  * Merges the repeated keys an overloaded rule produces into one typed field
  * each. `inheritedScope` is the raw scope the declaration pushes, if any —
  * clause fields without their own `## push_scope` run there.
@@ -212,6 +241,55 @@ export function mergeFields(
     }
     if (clauses.length > 0) {
       return `field "${name}" overloaded between a clause and a scalar`;
+    }
+
+    const structured = group.filter(
+      (
+        field
+      ): field is RuleField & { readonly type: Extract<RuleType, { readonly kind: "block" }> } =>
+        field.type.kind === "block"
+    );
+    if (structured.length > 0) {
+      const scalarDeclarations = group.filter((field) => field.type.kind !== "block");
+      if (structured.length !== 1 || scalarDeclarations.length === 0) {
+        return `field "${name}" has more than one structured/scalar arm`;
+      }
+      if (group.some((field) => isRepeated(field.cardinality))) {
+        return `field "${name}" has repeated structured/scalar arms`;
+      }
+      const scalar = emitter.unionFor(scalarDeclarations.map((field) => field.type));
+      if (scalar === null) {
+        return `field "${name}" has a scalar arm the emitter cannot express`;
+      }
+      if (scalarArmIsObjectShaped(scalar)) {
+        return `field "${name}" has an object-shaped scalar arm that is ambiguous with its structured arm`;
+      }
+      const block = structured[0]!.type;
+      if (block.bare.length > 0) {
+        return `field "${name}" structured arm has bare values`;
+      }
+      if (hasRepeatedNestedField(block.fields)) {
+        return `field "${name}" structured arm has repeated nested fields`;
+      }
+      const fields = mergeFields(
+        emitter,
+        block.fields,
+        structured[0]!.scope?.this ?? inheritedScope,
+        allowedClauses
+      );
+      if (typeof fields === "string") {
+        return `field "${name}" structured arm ${fields}`;
+      }
+      if (fields.length === 0) {
+        return `field "${name}" structured arm has no typeable fields`;
+      }
+      merged.push({
+        name,
+        value: { kind: "scalarOrFields", scalar, fields },
+        optional,
+        docs,
+      });
+      continue;
     }
 
     if (group.some((field) => field.comparison)) {

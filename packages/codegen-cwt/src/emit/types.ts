@@ -56,6 +56,14 @@ export interface TsValue {
    * unrelated signal.
    */
   readonly scriptValue?: true;
+  /**
+   * True when any authoring form in this value is represented by an object.
+   * Scalar/block overloads need this fact before runtime: their recorder uses
+   * object shape to choose the structured arm, so an object-backed scalar
+   * would otherwise be serialized as the block. Unlike `refTypes`, unioning
+   * preserves this when only one arm is object-backed.
+   */
+  readonly objectShaped?: true;
 }
 
 export interface Usage {
@@ -181,7 +189,12 @@ export class Emitter {
         // folding it into one of those. `ScriptValue` already includes
         // `number` as an arm, so every existing numeric call site keeps
         // typechecking unchanged; only the non-numeric forms are new.
-        return { type: "ScriptValue", toScalar: (e) => e, scriptValue: true };
+        return {
+          type: "ScriptValue",
+          toScalar: (e) => e,
+          scriptValue: true,
+          objectShaped: true,
+        };
       case "scalar":
       case "localisation":
       case "filepath":
@@ -201,14 +214,18 @@ export class Emitter {
       case "scope": {
         const argument = type.name.toLowerCase();
         if (argument === "any" || argument === "all") {
-          return { type: "ScopeValue", toScalar: (e) => `${e}.path` };
+          return { type: "ScopeValue", toScalar: (e) => `${e}.path`, objectShaped: true };
         }
         const canonical = this.canonicalScope(type.name);
         if (canonical === null) {
           this.unknownScopes.add(type.name);
           return { type: "string", toScalar: (e) => e };
         }
-        return { type: scopeValueType([canonical]), toScalar: (e) => `${e}.path` };
+        return {
+          type: scopeValueType([canonical]),
+          toScalar: (e) => `${e}.path`,
+          objectShaped: true,
+        };
       }
       case "scopeGroup": {
         const members = this.rules.scopeGroups.get(type.name);
@@ -228,7 +245,11 @@ export class Emitter {
         }
         this.usedScopeGroups.add(type.name);
         const scopes = [...new Set(canonical as string[])].sort();
-        return { type: scopeValueType(scopes), toScalar: (e) => `${e}.path` };
+        return {
+          type: scopeValueType(scopes),
+          toScalar: (e) => `${e}.path`,
+          objectShaped: true,
+        };
       }
       case "literal":
         return {
@@ -256,7 +277,12 @@ export class Emitter {
         this.usedRefs.add(type.name);
         this.scopedRefs.add(type.name);
         const name = this.refTypeName(type.name);
-        return { type: `${name} | string`, toScalar: (e) => `refId(${e})`, refTypes: [type.name] };
+        return {
+          type: `${name} | string`,
+          toScalar: (e) => `refId(${e})`,
+          refTypes: [type.name],
+          objectShaped: true,
+        };
       }
       default:
         return null;
@@ -284,6 +310,7 @@ export class Emitter {
       ? [...new Set(values.flatMap((value) => [...value!.literals!]))]
       : undefined;
     const booleanLiterals = [...new Set(values.flatMap((value) => value!.booleanLiterals ?? []))];
+    const objectShaped = values.some((value) => value!.objectShaped === true) ? true : undefined;
     if (converts.size > 1) {
       return {
         type: parts.join(" | "),
@@ -291,6 +318,7 @@ export class Emitter {
         refTypes,
         literals,
         ...(booleanLiterals.length === 0 ? {} : { booleanLiterals }),
+        ...(objectShaped === undefined ? {} : { objectShaped }),
       };
     }
     // Propagated only on this branch: `refId(e)` above is not `scriptValueScalar`-
@@ -304,6 +332,7 @@ export class Emitter {
       literals,
       ...(booleanLiterals.length === 0 ? {} : { booleanLiterals }),
       ...(scriptValue === undefined ? {} : { scriptValue }),
+      ...(objectShaped === undefined ? {} : { objectShaped }),
     };
   }
 }
