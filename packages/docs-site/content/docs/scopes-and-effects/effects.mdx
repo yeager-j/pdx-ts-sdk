@@ -10,7 +10,7 @@ one entry here: what it writes, what it accepts, and where you can call it. A sc
 other question — what is legal on the interface you are holding.
 
 Entries fall into three categories. An **effect** writes one PDXScript key. A **structural** method
-is control flow — `if`, `every`, `random` — that shapes the block it wraps. An **event-fire** method
+is control flow — `if`, `random`, `whileLoop` — that shapes the block it wraps. An **event-fire** method
 fires an event; its availability says where the fire call is legal, and its own entry says which
 scope the fired event's body runs in, which is a different scope.
 

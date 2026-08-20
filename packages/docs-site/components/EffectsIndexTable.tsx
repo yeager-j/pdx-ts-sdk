@@ -119,12 +119,11 @@ function typeNodeOf(row: EffectsIndexRow): TypeNode {
   return {
     // A method row has no optional-member `?` suffix to suppress.
     required: true,
-    type: (
-      <>
-        <code>{row.signatureSummary}</code>
-        <span className="ms-2 text-fd-muted-foreground">{CATEGORY_LABELS[row.category]}</span>
-      </>
-    ),
+    // The category rides in the row's own line, not in the type column: the
+    // type column is hidden on a narrow container, and which of the three
+    // kinds a method is has to be readable at every width.
+    badge: CATEGORY_LABELS[row.category],
+    type: <code>{row.signatureSummary}</code>,
     typeDescription: (
       <code className="whitespace-pre-wrap [overflow-wrap:anywhere]">{row.signature}</code>
     ),

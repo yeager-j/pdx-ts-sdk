@@ -27,6 +27,14 @@ export interface TypeNode {
   gameKey?: ReactNode;
 
   /**
+   * Local extension: a short label shown in the row's own line, beside the
+   * name. The type column is hidden on a narrow container, so a fact that
+   * must be readable at every width — an effect's category — belongs here
+   * rather than folded into `type`.
+   */
+  badge?: ReactNode;
+
+  /**
    * type signature (short)
    */
   type: ReactNode;
@@ -136,6 +144,7 @@ export function TypeTableItem({
     gameKey,
     availability,
     eventBodyScope,
+    badge,
     required = false,
     deprecated,
     typeDescription,
@@ -186,7 +195,16 @@ export function TypeTableItem({
         open ? "shadow-sm bg-fd-background not-last:mb-2" : "border-transparent"
       )}
     >
-      <CollapsibleTrigger className="relative flex flex-row items-center w-full group text-start px-3 py-2 not-prose hover:bg-fd-accent">
+      <CollapsibleTrigger
+        className={cn(
+          "relative flex flex-row items-center w-full group text-start px-3 py-2 not-prose hover:bg-fd-accent",
+          // The name column refuses to shrink, so on a narrow container a long
+          // name would push the badge under the chevron. Wrapping drops the
+          // badge to its own line instead of truncating either one. Rows
+          // without a badge keep the original single-line class list.
+          badge && "flex-wrap"
+        )}
+      >
         <code
           className={cn(
             "text-fd-primary min-w-fit w-1/3 font-mono font-medium pe-2",
@@ -196,6 +214,13 @@ export function TypeTableItem({
           {name}
           {!required && "?"}
         </code>
+        {/*
+          The badge sits beside the name rather than at the end of the row:
+          the chevron is absolutely positioned against the row's end, and the
+          type column that would otherwise reserve room for it disappears on a
+          narrow container. A row without a badge renders exactly as before.
+        */}
+        {badge && <span className="text-fd-muted-foreground text-xs pe-2 shrink-0">{badge}</span>}
         {typeDescriptionLink ? (
           <Link
             href={typeDescriptionLink}
