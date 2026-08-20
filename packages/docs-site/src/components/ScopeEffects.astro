@@ -1,0 +1,33 @@
+---
+import type { ScriptMethodRow } from "../scope-reference.ts";
+import EffectReferenceTable from "./EffectReferenceTable.astro";
+
+interface Props {
+  universal: readonly ScriptMethodRow[];
+  scopeSpecific: readonly ScriptMethodRow[];
+}
+
+const { universal, scopeSpecific } = Astro.props;
+---
+
+<p>
+  These are the ordinary effect methods that the SDK exposes on this generated interface. This is
+  not a list of every effect Stellaris supports.
+</p>
+
+<details>
+  <summary>{universal.length} universal effects</summary>
+  <p>These generated methods are available on every scope interface.</p>
+  <EffectReferenceTable rows={universal} caption="Universal ordinary effects" />
+</details>
+
+{
+  scopeSpecific.length === 0 ? (
+    <p>This scope adds no scope-specific ordinary effects beyond the universal set.</p>
+  ) : (
+    <EffectReferenceTable
+      rows={scopeSpecific}
+      caption="Ordinary effects specific to this scope"
+    />
+  )
+}

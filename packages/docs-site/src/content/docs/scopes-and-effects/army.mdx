@@ -1,0 +1,45 @@
+---
+title: Army scope
+description: Generated methods, event-kind empty state, and transitions for ArmyScope.
+sidebar:
+  order: 5
+---
+
+import EventFireMethods from "../../../components/EventFireMethods.astro";
+import EventKinds from "../../../components/EventKinds.astro";
+import ScopeEffects from "../../../components/ScopeEffects.astro";
+import ScopeIdentity from "../../../components/ScopeIdentity.astro";
+import ScopeTransitions from "../../../components/ScopeTransitions.astro";
+import StructuralMethods from "../../../components/StructuralMethods.astro";
+import { buildScopeReference } from "../../../scope-reference.ts";
+
+export const model = buildScopeReference("army");
+
+<ScopeIdentity model={model} />
+
+Army scope represents an army unit while Stellaris evaluates script against that unit.
+
+## Common entry points
+
+Common entry points include army-scoped callbacks and scope changes from planets, fleets, or related
+military objects. These are examples, not an exhaustive list of game paths.
+
+## Event kinds whose bodies run in this scope
+
+<EventKinds rows={model.eventKinds} />
+
+## Ordinary effects
+
+<ScopeEffects universal={model.universalEffects} scopeSpecific={model.scopeEffects} />
+
+## Structural and control-flow methods
+
+<StructuralMethods rows={model.structuralMethods} />
+
+## Event-fire methods
+
+<EventFireMethods rows={model.eventFireMethods} />
+
+## Outgoing scope transitions
+
+<ScopeTransitions rows={model.transitions} />

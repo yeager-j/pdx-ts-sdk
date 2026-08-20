@@ -6,10 +6,11 @@ import { GRAMMARS } from "./src/pdx-languages.ts";
 import { pdxSourceResolution } from "./src/pdx-source-resolution.ts";
 
 /**
- * The sidebar has three sections and only three: Guides, the hand-written
- * workflow pages; Concepts, the surfaces that span many content types; and
- * Reference, one page per documented content registry. All autogenerate from
- * their directory, so a page joins the navigation by existing.
+ * The sidebar has four sections: Guides, the hand-written workflow pages;
+ * Concepts, the surfaces that span many content types; Scopes & Effects, the
+ * generated script-method reference; and Reference, one page per documented
+ * content registry. All autogenerate from their directory, so a page joins the
+ * navigation by existing.
  */
 export default defineConfig({
   integrations: [
@@ -26,6 +27,10 @@ export default defineConfig({
       sidebar: [
         { label: "Guides", items: [{ autogenerate: { directory: "guides" } }] },
         { label: "Concepts", items: [{ autogenerate: { directory: "concepts" } }] },
+        {
+          label: "Scopes & Effects",
+          items: [{ autogenerate: { directory: "scopes-and-effects" } }],
+        },
         { label: "Reference", items: [{ autogenerate: { directory: "reference" } }] },
       ],
       // Catppuccin, at the plugin's own defaults: mocha for dark, latte for

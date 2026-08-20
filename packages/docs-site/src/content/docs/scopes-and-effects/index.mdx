@@ -1,0 +1,23 @@
+---
+title: Scopes & Effects
+description: Generated reference for the SDK methods and transitions available in each scope.
+sidebar:
+  order: 1
+---
+
+This section is the generated-method reference for scopes. Each scope page identifies the scope
+literal and SDK interface, then lists the methods and scope transitions that the current generated
+SDK contract exposes there.
+
+“Effects” here means SDK-supported methods legal on a generated scope interface. It does not mean
+every effect that Stellaris accepts. Generated documentation and types establish the SDK authoring
+contract; they do not prove every detail of live-game behavior.
+
+Read the conceptual prerequisites first:
+
+- [Triggers and effects](/guides/triggers-and-effects/) explains recording and evaluation.
+- [Scope and context](/guides/scope-and-context/) explains `THIS`, `ROOT`, `FROM`, and scope changes.
+- [Events](/concepts/events/) explains event bodies and typed event references.
+
+The first production slice covers [Country](./country/), [Planet](./planet/), and [Army](./army/).
+They test multiple event kinds, one conventional event kind, and an explicit no-event-kind state.
