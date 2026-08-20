@@ -6,12 +6,12 @@ import { NextResponse, type NextRequest } from "next/server";
  * `Accept` header prefers Markdown is rewritten to the page's Markdown twin
  * under `/llms.mdx/`.
  *
- * The rewritten response carries `Vary: Accept`. The plain HTML branch
- * cannot: Next.js owns the `Vary` header on page responses and discards any
- * value set here or in `next.config` `headers()` (verified empirically).
- * On Vercel that is harmless for its own CDN — the proxy runs before the
- * cache and a rewrite changes the cache key, so the two representations
- * never share an entry. A downstream shared cache without that behavior
+ * `Vary: Accept` is declared on the rewrite and reaches the response under
+ * `next start`, but not on Vercel — the serving layer owns `Vary` on page
+ * responses and discards the value on both branches (verified empirically
+ * against a preview deployment). That is harmless for Vercel's own CDN:
+ * the proxy runs before the cache and a rewrite changes the cache key, so
+ * the two representations never share an entry. A downstream shared cache
  * could in theory serve cached HTML to an agent; `/llms.txt` therefore
  * links the explicit `/llms.mdx/<path>/content.md` URLs, which need no
  * negotiation at all.
