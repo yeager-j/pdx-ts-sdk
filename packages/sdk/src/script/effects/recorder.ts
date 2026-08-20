@@ -7,7 +7,7 @@ import { FIRE_EFFECT_KEYS, type StructuralEffectMethod } from "../../generated/e
 import type { ScopeObjOf } from "../../generated/effects.ts";
 import type { ScopeName } from "../../generated/scopes.ts";
 import type { ContentRefUse } from "../../references.ts";
-import { refId, toScalar } from "../scalar.ts";
+import { isStructuredValue, refId, toScalar } from "../scalar.ts";
 import type { ScriptedEffectCall } from "../scripted.ts";
 import { trigger, type Trigger } from "../trigger-core.ts";
 import { modifierEntry } from "./modifiers.ts";
@@ -202,7 +202,7 @@ function fieldEntries(
         break;
       }
       case "scalar-or-fields":
-        if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+        if (isStructuredValue(value, field.scalar?.objectKinds ?? [])) {
           entries.push(
             block(
               field.key,
@@ -222,7 +222,7 @@ function fieldEntries(
         break;
       case "comparison":
         if (Array.isArray(value)) {
-          entries.push(cmp(field.key, value[0] as PdxOp, value[1] as number));
+          entries.push(cmp(field.key, value[0] as PdxOp, toScalar(value[1])));
         } else {
           const scalar = toScalar(value, field.booleanLiterals);
           recordRef(refs, field.refTypes, `${path}.${field.key}`, scalar);

@@ -57,14 +57,15 @@ export interface TsValue {
    */
   readonly scriptValue?: true;
   /**
-   * True when any authoring form in this value is represented by an object.
-   * Scalar/block overloads need this fact before runtime: their recorder uses
-   * object shape to choose the structured arm, so an object-backed scalar
-   * would otherwise be serialized as the block. Unlike `refTypes`, unioning
-   * preserves this when only one arm is object-backed.
+   * Runtime-discriminated object forms this scalar admits. A mixed scalar and
+   * structured field carries these into generated metadata so the recorder can
+   * select the scalar arm from an SDK value's own contract instead of guessing
+   * from `typeof value === "object"`.
    */
-  readonly objectShaped?: true;
+  readonly objectKinds?: readonly ScalarObjectKind[];
 }
+
+export type ScalarObjectKind = "scope-ref" | "typed-ref";
 
 export interface Usage {
   readonly enums: string[];
@@ -193,7 +194,6 @@ export class Emitter {
           type: "ScriptValue",
           toScalar: (e) => e,
           scriptValue: true,
-          objectShaped: true,
         };
       case "scalar":
       case "localisation":
@@ -214,7 +214,11 @@ export class Emitter {
       case "scope": {
         const argument = type.name.toLowerCase();
         if (argument === "any" || argument === "all") {
-          return { type: "ScopeValue", toScalar: (e) => `${e}.path`, objectShaped: true };
+          return {
+            type: "ScopeValue",
+            toScalar: (e) => `${e}.path`,
+            objectKinds: ["scope-ref"],
+          };
         }
         const canonical = this.canonicalScope(type.name);
         if (canonical === null) {
@@ -224,7 +228,7 @@ export class Emitter {
         return {
           type: scopeValueType([canonical]),
           toScalar: (e) => `${e}.path`,
-          objectShaped: true,
+          objectKinds: ["scope-ref"],
         };
       }
       case "scopeGroup": {
@@ -248,7 +252,7 @@ export class Emitter {
         return {
           type: scopeValueType(scopes),
           toScalar: (e) => `${e}.path`,
-          objectShaped: true,
+          objectKinds: ["scope-ref"],
         };
       }
       case "literal":
@@ -281,7 +285,7 @@ export class Emitter {
           type: `${name} | string`,
           toScalar: (e) => `refId(${e})`,
           refTypes: [type.name],
-          objectShaped: true,
+          objectKinds: ["typed-ref"],
         };
       }
       default:
@@ -310,7 +314,7 @@ export class Emitter {
       ? [...new Set(values.flatMap((value) => [...value!.literals!]))]
       : undefined;
     const booleanLiterals = [...new Set(values.flatMap((value) => value!.booleanLiterals ?? []))];
-    const objectShaped = values.some((value) => value!.objectShaped === true) ? true : undefined;
+    const objectKinds = [...new Set(values.flatMap((value) => value!.objectKinds ?? []))];
     if (converts.size > 1) {
       return {
         type: parts.join(" | "),
@@ -318,7 +322,7 @@ export class Emitter {
         refTypes,
         literals,
         ...(booleanLiterals.length === 0 ? {} : { booleanLiterals }),
-        ...(objectShaped === undefined ? {} : { objectShaped }),
+        ...(objectKinds.length === 0 ? {} : { objectKinds }),
       };
     }
     // Propagated only on this branch: `refId(e)` above is not `scriptValueScalar`-
@@ -332,7 +336,7 @@ export class Emitter {
       literals,
       ...(booleanLiterals.length === 0 ? {} : { booleanLiterals }),
       ...(scriptValue === undefined ? {} : { scriptValue }),
-      ...(objectShaped === undefined ? {} : { objectShaped }),
+      ...(objectKinds.length === 0 ? {} : { objectKinds }),
     };
   }
 }

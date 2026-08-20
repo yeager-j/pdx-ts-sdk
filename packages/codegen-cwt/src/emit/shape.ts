@@ -77,9 +77,8 @@ export type ArgValue =
   | { readonly kind: "scalar"; readonly value: TsValue }
   /**
    * A field that accepts either one scalar value or a structured block. The
-   * scalar arm must be distinguishable from the object-shaped block at
-   * runtime; typed refs, scope values, and ScriptValue are therefore rejected
-   * rather than guessing which arm an authored object meant.
+   * scalar arm's runtime object kinds are carried by `TsValue`, so generated
+   * code can distinguish SDK scalar values from the structured block.
    */
   | {
       readonly kind: "scalarOrFields";
@@ -99,7 +98,11 @@ export type ArgValue =
       readonly splice: boolean;
     }
   /** `count == int_value_field`, plus any literal overloads (`count = all`). */
-  | { readonly kind: "comparison"; readonly literals: readonly string[] };
+  | {
+      readonly kind: "comparison";
+      readonly value: TsValue;
+      readonly literals: readonly string[];
+    };
 
 export interface ArgField {
   readonly name: string;
@@ -171,13 +174,18 @@ function clauseScope(
     : canonical;
 }
 
-/**
- * The recorder distinguishes structured values by their object shape. These
- * scalar forms can also be objects at authoring time, so a scalar/block union
- * containing one would be ambiguous and must stay out of the generated API.
- */
-function scalarArmIsObjectShaped(value: TsValue): boolean {
-  return value.objectShaped === true;
+/** The authored operand type for a CWT comparison, or its skip reason. */
+export function comparisonValue(emitter: Emitter, types: readonly RuleType[]): TsValue | string {
+  const value = emitter.unionFor(types);
+  if (
+    value === null ||
+    value.type
+      .split(" | ")
+      .some((part) => part !== "number" && part !== "ScriptValue" && part !== "boolean")
+  ) {
+    return "comparison operand is not a scalar numeric or boolean value";
+  }
+  return value;
 }
 
 /** Nested repeated members need arrays, which an ArgField does not model. */
@@ -261,9 +269,6 @@ export function mergeFields(
       if (scalar === null) {
         return `field "${name}" has a scalar arm the emitter cannot express`;
       }
-      if (scalarArmIsObjectShaped(scalar)) {
-        return `field "${name}" has an object-shaped scalar arm that is ambiguous with its structured arm`;
-      }
       const block = structured[0]!.type;
       if (block.bare.length > 0) {
         return `field "${name}" structured arm has bare values`;
@@ -293,28 +298,19 @@ export function mergeFields(
     }
 
     if (group.some((field) => field.comparison)) {
-      const value = emitter.unionFor(
+      const value = comparisonValue(
+        emitter,
         group.filter((field) => field.comparison).map((field) => field.type)
       );
-      // `PdxOp`'s `>`/`<`/etc. only ever compare against a game-evaluated
-      // number, so a comparison field's *authored* signature stays plain
-      // `number` regardless of whether the rules declare `int`/`float` or
-      // `value_field` — `cmp()` (pdxscript) takes a `number`, not a
-      // `ScriptValue`. This only has to keep recognising `value_field` as
-      // numeric enough to emit, the same as before `ScriptValue` existed;
-      // widening what a comparison itself can hold is a separate change.
-      if (
-        value === null ||
-        value.type.split(" | ").some((part) => part !== "number" && part !== "ScriptValue")
-      ) {
-        return `comparison field "${name}" is not numeric`;
+      if (typeof value === "string") {
+        return `comparison field "${name}" ${value}`;
       }
       const rest = group.filter((field) => !field.comparison).map((field) => field.type);
       const literals = rest.flatMap((type) => (type.kind === "literal" ? [type.text] : []));
       if (literals.length !== rest.length) {
         return `comparison field "${name}" overloaded with a non-literal declaration`;
       }
-      merged.push({ name, value: { kind: "comparison", literals }, optional, docs });
+      merged.push({ name, value: { kind: "comparison", value, literals }, optional, docs });
       continue;
     }
 

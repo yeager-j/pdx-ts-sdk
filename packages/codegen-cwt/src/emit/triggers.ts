@@ -13,7 +13,13 @@ import type { DocEntry } from "../logs/trigger-docs.ts";
 import type { LoweredRule } from "../lowered-rule.ts";
 import { camelCase, docComment, isPlainName, pascalCase, safeIdentifier } from "../naming.ts";
 import { HAND_WRITTEN_TRIGGER_RULES_BY_KEY } from "../trigger-policy.ts";
-import { mergeFields, type ArgField, type ClauseCategory, type SkippedRule } from "./shape.ts";
+import {
+  comparisonValue,
+  mergeFields,
+  type ArgField,
+  type ClauseCategory,
+  type SkippedRule,
+} from "./shape.ts";
 import { Emitter, type TsValue } from "./types.ts";
 
 const TRIGGER_CLAUSES = new Set<ClauseCategory>(["trigger"]);
@@ -29,7 +35,7 @@ export interface TriggerEmission {
 
 type Shape =
   | { readonly kind: "bool" }
-  | { readonly kind: "comparison" }
+  | { readonly kind: "comparison"; readonly value: TsValue }
   | { readonly kind: "value"; readonly value: TsValue }
   /** A localisation scalar or a typed trigger block, dispatched by `typeof`. */
   | { readonly kind: "stringOrFields"; readonly fields: readonly ArgField[] }
@@ -39,7 +45,13 @@ type Shape =
 
 function shapeOf(emitter: Emitter, rule: LoweredRule): Shape | string {
   if (rule.comparison) {
-    return { kind: "comparison" };
+    const value = comparisonValue(
+      emitter,
+      rule.declarations
+        .filter((declaration) => declaration.comparison)
+        .map((declaration) => declaration.type)
+    );
+    return typeof value === "string" ? value : { kind: "comparison", value };
   }
   if (rule.blocks.length === 0) {
     const value = emitter.unionFor(rule.scalars.map((declaration) => declaration.type));
@@ -157,11 +169,17 @@ function emitBoolean(fn: string, key: string, scope: string, docs: string[]): st
   );
 }
 
-function emitComparison(fn: string, key: string, scope: string, docs: string[]): string {
+function emitComparison(
+  fn: string,
+  key: string,
+  scope: string,
+  docs: string[],
+  value: TsValue
+): string {
   return (
     docComment(docs) +
-    `export function ${fn}(op: PdxOp, value: number): Trigger<${scope}> {\n` +
-    `  return trigger([cmp(${JSON.stringify(key)}, op, value)]);\n}\n`
+    `export function ${fn}(op: PdxOp, value: ${value.type}): Trigger<${scope}> {\n` +
+    `  return trigger([cmp(${JSON.stringify(key)}, op, ${pushExpr(value, "value")})]);\n}\n`
   );
 }
 
@@ -220,7 +238,7 @@ function memberType(field: ArgField, outerScope: string): string {
       return `Trigger<${value.scope === null ? outerScope : JSON.stringify(value.scope)}>`;
     case "comparison": {
       const literals = value.literals.map((literal) => JSON.stringify(literal));
-      return ["number", "readonly [PdxOp, number]", ...literals].join(" | ");
+      return [value.value.type, `readonly [PdxOp, ${value.value.type}]`, ...literals].join(" | ");
     }
   }
 }
@@ -276,7 +294,7 @@ function pushCode(
         })
         .join("\n");
       return (
-        `if (typeof ${access} === "object" && ${access} !== null && !Array.isArray(${access})) {\n` +
+        `if (isStructuredValue(${access}, ${JSON.stringify(field.value.scalar.objectKinds ?? [])})) {\n` +
         `  const nestedEntries: PdxEntry[] = [];\n` +
         `${nested}\n` +
         `  ${sink}.push(block(${key}, nestedEntries));\n` +
@@ -295,7 +313,8 @@ function pushCode(
     case "comparison":
       return (
         `${sink}.push(typeof ${access} === "object" ` +
-        `? cmp(${key}, ${access}[0], ${access}[1]) : kv(${key}, ${access}));`
+        `? cmp(${key}, ${access}[0], ${pushExpr(field.value.value, `${access}[1]`)}) : ` +
+        `kv(${key}, ${pushExpr(field.value.value, access)}));`
       );
   }
 }
@@ -386,7 +405,7 @@ function emitOne(key: string, shape: Shape, scope: string, docs: string[]): stri
     case "bool":
       return emitBoolean(fn, key, scope, docs);
     case "comparison":
-      return emitComparison(fn, key, scope, docs);
+      return emitComparison(fn, key, scope, docs, shape.value);
     case "value":
       return emitValue(fn, key, scope, docs, shape.value);
     case "stringOrFields":

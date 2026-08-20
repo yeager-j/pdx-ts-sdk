@@ -6,6 +6,7 @@ import type { TechnologyDef } from "../src/generated/technology.ts";
 import { countryFlags, planetFlags, type CountryFlag } from "../src/generated/value-sets.ts";
 import { eventTarget } from "../src/index.ts";
 import {
+  aiArmorRatio,
   anyTraitOfSpecies,
   customTooltip,
   hasCountryFlag,
@@ -13,6 +14,7 @@ import {
   hasElectionType,
   hasPlanetFlag,
   numMoons,
+  popGroupSize,
   relativePower,
   type Trigger,
 } from "../src/script/triggers.ts";
@@ -70,6 +72,15 @@ describe("shapes the rules give a signature", () => {
     numMoons("<", 4);
     // @ts-expect-error — num_moons is written `num_moons < 4`, so the operator is not optional
     numMoons(4);
+  });
+
+  it("distinguishes numeric comparisons from CWT value-field comparisons", () => {
+    popGroupSize(">", 8);
+    popGroupSize(">", "local_spent_biomass");
+    popGroupSize(">", "@minimum_pop_group_size");
+    aiArmorRatio(">", 0.5);
+    // @ts-expect-error — ai_armor_ratio is a plain CWT float comparison
+    aiArmorRatio(">", "local_spent_biomass");
   });
 
   it("closes the enum on a block trigger's field", () => {

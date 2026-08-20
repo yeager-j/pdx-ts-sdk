@@ -622,7 +622,7 @@ async function main(): Promise<void> {
       `import { trigger, type Trigger${referencesIdentifier(triggers.code, "ScriptValue") ? ", type ScriptValue" : ""}` +
       `${referencesIdentifier(triggers.code, "scriptValueScalar") ? ", scriptValueScalar" : ""} } ` +
       'from "../script/trigger-core.ts";\n' +
-      'import { refId } from "../script/scalar.ts";\n' +
+      `import { refId${referencesIdentifier(triggers.code, "isStructuredValue") ? ", isStructuredValue" : ""} } from "../script/scalar.ts";\n` +
       'import type { ScopeName } from "./scopes.ts";\n' +
       importList(
         "./enums.ts",

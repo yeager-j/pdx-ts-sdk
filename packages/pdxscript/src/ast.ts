@@ -199,8 +199,13 @@ export function kv(key: string, value: string | number | boolean | PdxValue): Pd
   return entry(key, "=", isNode ? value : scalar(value));
 }
 
-export function cmp(key: string, op: PdxOp, value: number): PdxEntry {
-  return entry(key, op, scalar(value));
+export function cmp(
+  key: string,
+  op: PdxOp,
+  value: string | number | boolean | PdxScalar
+): PdxEntry {
+  const isNode = typeof value === "object" && value !== null && "kind" in value;
+  return entry(key, op, isNode ? value : scalar(value));
 }
 
 /** Sugar for the common all-entries container: `key = { a = 1 b = 2 }`. */

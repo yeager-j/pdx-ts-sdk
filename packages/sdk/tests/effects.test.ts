@@ -123,6 +123,63 @@ describe("the effect recorder over generated meta", () => {
 `);
   });
 
+  it("serializes every createPopGroup ethos arm and all generated fields", () => {
+    const sink: PdxEntry[] = [];
+    const planet = makeScope<"planet">(sink);
+
+    planet.createPopGroup({ species: "effects_test_species", ethos: "random" });
+    planet.createPopGroup({
+      species: scopeValue<"species">("root"),
+      ethos: scopeValue<"pop_group">("this"),
+    });
+    planet.createPopGroup({
+      popGroup: scopeValue<"pop_group">("from"),
+      ethos: scopeValue<"country">("root"),
+    });
+    planet.createPopGroup({
+      species: scopeValue<"species">("root"),
+      popGroup: scopeValue<"pop_group">("from"),
+      ethos: { ethic: { id: "ethic_materialist" } },
+      category: { id: "specialist" },
+      size: "local_spent_biomass",
+      random: "@effects_test_variance",
+      growthCategory: "GROWTH_CAT_OTHER",
+      effect: (popGroup) => popGroup.setPopGroupFlag("effects_test_created"),
+    });
+
+    expect(serialize(sink)).toBe(
+      "create_pop_group = {\n" +
+        "\tspecies = effects_test_species\n" +
+        "\tethos = random\n" +
+        "}\n" +
+        "\n" +
+        "create_pop_group = {\n" +
+        "\tspecies = root\n" +
+        "\tethos = this\n" +
+        "}\n" +
+        "\n" +
+        "create_pop_group = {\n" +
+        "\tpop_group = from\n" +
+        "\tethos = root\n" +
+        "}\n" +
+        "\n" +
+        "create_pop_group = {\n" +
+        "\tspecies = root\n" +
+        "\tpop_group = from\n" +
+        "\tethos = {\n" +
+        "\t\tethic = ethic_materialist\n" +
+        "\t}\n" +
+        "\tcategory = specialist\n" +
+        "\tsize = local_spent_biomass\n" +
+        "\trandom = @effects_test_variance\n" +
+        "\tgrowth_category = GROWTH_CAT_OTHER\n" +
+        "\teffect = {\n" +
+        "\t\tset_pop_group_flag = effects_test_created\n" +
+        "\t}\n" +
+        "}\n"
+    );
+  });
+
   it("identifies generated event-fire effects without inferring their legal caller scopes", () => {
     expect(isEventFireKey("observer_event")).toBe(true);
     expect(isEventFireKey("country_event")).toBe(true);
