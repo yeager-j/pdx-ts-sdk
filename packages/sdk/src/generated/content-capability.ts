@@ -41,7 +41,11 @@ import {
   recordShapeMint,
   type MintCapabilityOwner,
 } from "../content/mint-provenance.ts";
-import type { ContentItem, EconomicCategoryWitness } from "../content/types.ts";
+import type {
+  ContentItem,
+  EconomicCategoryWitness,
+  ExactEconomicCategoryWitness,
+} from "../content/types.ts";
 import { refId, type TypedRef } from "../script/scalar.ts";
 import type {
   ParsedBuilding,
@@ -853,7 +857,8 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
       | "triggeredUpkeepModifier"
       | "triggeredLogisticsModifier"
     > &
-      W
+      W &
+      ExactEconomicCategoryWitness<W>
   ): ContentItem<
     "economic_category",
     Omit<
@@ -1338,7 +1343,8 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
         | "triggeredUpkeepModifier"
         | "triggeredLogisticsModifier"
       > &
-        W
+        W &
+        ExactEconomicCategoryWitness<W>
     ) =>
       defineEconomicCategory({ ...def, id: mint("economicCategory", name) } as EconomicCategoryDef<
         MintedContentId<P, I, "economicCategory", Name>

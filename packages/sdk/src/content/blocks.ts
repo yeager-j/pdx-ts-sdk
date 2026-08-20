@@ -113,10 +113,10 @@ function economicTriggeredRows(id: string, def: Record<string, unknown>): Map<st
         );
       }
       const modifierTypes = (row as { readonly modifierTypes?: unknown }).modifierTypes;
-      if (!Array.isArray(modifierTypes) || modifierTypes.length === 0) {
+      if (!Array.isArray(modifierTypes)) {
         throw new Error(
           `Economic category "${id}" has malformed ${member} row "${key}"; ` +
-            "modifierTypes must be a non-empty array"
+            "modifierTypes must be an array"
         );
       }
       const capabilities = rowsByKey.get(`${key}\u0000${operation}`) ?? new Set<string>();
@@ -153,16 +153,14 @@ function economicTriggeredRecorder(
       id: selectedId,
       verifiedVanilla: isVanillaRef(selected),
     };
-    const available = new Set<string>();
+    let declared = false;
     for (const operation of ECONOMIC_TRIGGERED_OPERATIONS) {
       const capabilities = triggeredRows.get(`${selectedId}\u0000${operation}`);
       if (capabilities !== undefined) {
-        for (const modifierType of capabilities) {
-          available.add(`${operation}.${modifierType}`);
-        }
+        declared = true;
       }
     }
-    if (available.size === 0) {
+    if (!declared) {
       throw new Error(
         `Economic category "${id}" has no triggered modifier row for key "${selectedId}"`
       );

@@ -67978,6 +67978,28 @@ export type EconomicTriggeredKeys<W extends import("../content/types.ts").Econom
   {
     [F in EconomicTriggeredField]: EconomicTriggeredKeyOfRow<EconomicTriggeredRows<W, F>>;
   }[EconomicTriggeredField];
+export type EconomicTriggeredRowModifierTypes<R> = R extends { readonly modifierTypes: infer M }
+  ? M extends readonly ("add" | "mult")[]
+    ? number extends M["length"]
+      ? never
+      : M[number] & ("add" | "mult")
+    : never
+  : never;
+export type EconomicTriggeredWidenedKeyOfRow<R> = R extends {
+  readonly key: infer K;
+  readonly modifierTypes: infer M;
+}
+  ? M extends readonly ("add" | "mult")[]
+    ? number extends M["length"]
+      ? EconomicTriggeredKeyId<K>
+      : never
+    : EconomicTriggeredKeyId<K>
+  : never;
+export type EconomicTriggeredWidenedKeys<
+  W extends import("../content/types.ts").EconomicCategoryWitness,
+> = {
+  [F in EconomicTriggeredField]: EconomicTriggeredWidenedKeyOfRow<EconomicTriggeredRows<W, F>>;
+}[EconomicTriggeredField];
 export type EconomicTriggeredTypes<
   W extends import("../content/types.ts").EconomicCategoryWitness,
   F extends EconomicTriggeredField,
@@ -67986,9 +68008,7 @@ export type EconomicTriggeredTypes<
   EconomicTriggeredRows<W, F> extends infer R
     ? R extends unknown
       ? K extends EconomicTriggeredRowKey<R>
-        ? R extends { readonly modifierTypes: readonly (infer M)[] }
-          ? M & ("add" | "mult")
-          : never
+        ? EconomicTriggeredRowModifierTypes<R>
         : never
       : never
     : never;
@@ -68004,9 +68024,11 @@ export type EconomicTriggeredKeyGuard<
     ? string extends I
       ? never
       : [I] extends [EconomicTriggeredKeys<W>]
-        ? IsUnion<EconomicTriggeredCapability<W, I>> extends true
-          ? never
-          : K
+        ? [Extract<I, EconomicTriggeredWidenedKeys<W>>] extends [never]
+          ? IsUnion<EconomicTriggeredCapability<W, I>> extends true
+            ? never
+            : K
+          : never
         : never
     : never;
 export type EconomicTriggeredResourceRecorder<

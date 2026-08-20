@@ -20,6 +20,7 @@ describe("job-derived modifier recorder", () => {
         id: "mymod_expeditions",
         generateAddModifiers: ["cost"] as const,
         generateMultModifiers: ["upkeep"] as const,
+        triggeredCostModifier: [{ key: "mymod_unused_triggered", modifierTypes: [] }] as const,
       },
     };
     const entries = modifierEntries((modifier) => {
@@ -136,6 +137,34 @@ describe("job-derived modifier recorder", () => {
       modifierEntries((modifier) => (modifier.economic as any)(malformed).triggered("mymod_key"))
     ).toThrow(/malformed triggeredCostModifier/);
 
+    const missingModifierTypes = {
+      ...malformed,
+      id: "mymod_missing_modifier_types",
+      def: {
+        id: "mymod_missing_modifier_types",
+        triggeredCostModifier: [{ key: "mymod_key" }] as never,
+      },
+    };
+    expect(() =>
+      modifierEntries((modifier) =>
+        (modifier.economic as any)(missingModifierTypes).triggered("mymod_key")
+      )
+    ).toThrow(/modifierTypes must be an array/);
+
+    const unknownModifierType = {
+      ...malformed,
+      id: "mymod_unknown_modifier_type",
+      def: {
+        id: "mymod_unknown_modifier_type",
+        triggeredCostModifier: [{ key: "mymod_key", modifierTypes: ["bogus"] }] as never,
+      },
+    };
+    expect(() =>
+      modifierEntries((modifier) =>
+        (modifier.economic as any)(unknownModifierType).triggered("mymod_key")
+      )
+    ).toThrow(/unknown modifier type/);
+
     const category = {
       itemKind: "content" as const,
       type: "economic_category" as const,
@@ -148,6 +177,37 @@ describe("job-derived modifier recorder", () => {
     expect(() =>
       modifierEntries((modifier) => (modifier.economic as any)(category).triggered("mymod_missing"))
     ).toThrow(/no triggered modifier row/);
+  });
+
+  it("keeps declared empty rows inert without affecting direct families", () => {
+    const emptyKey = {
+      itemKind: "content" as const,
+      type: "economic_category" as const,
+      id: "mymod_empty_key",
+      def: { id: "mymod_empty_key" },
+    };
+    const category = {
+      itemKind: "content" as const,
+      type: "economic_category" as const,
+      id: "mymod_empty_category",
+      def: {
+        id: "mymod_empty_category",
+        generateAddModifiers: ["cost"] as const,
+        triggeredCostModifier: [{ key: emptyKey, modifierTypes: [] }] as const,
+      },
+    };
+    const direct = modifierEntries((modifier) => {
+      const economic = modifier.economic as any;
+      economic(category).resource("energy").cost.add(2);
+      expect(() => economic(category).triggered(emptyKey)).not.toThrow();
+    });
+    expect(serialize(direct)).toContain("mymod_empty_category_energy_cost_add = 2");
+    expect(() =>
+      modifierEntries((modifier) => {
+        const economic = modifier.economic as any;
+        economic(category).triggered(emptyKey).cost.mult(1);
+      })
+    ).toThrow(/does not support cost\.mult/);
   });
 
   it("rejects owned selectors retained after the closure", () => {

@@ -1040,7 +1040,7 @@ function contentDefiners(
           ? registry === "scripted_modifier"
             ? `Omit<${def}, "id"> & { readonly category: W }`
             : registry === "economic_category"
-              ? `${economicInputBase} & W`
+              ? `${economicInputBase} & W & ExactEconomicCategoryWitness<W>`
               : `Omit<${def}, "id">`
           : `${name}Fields<${scoped.parameterName}${declaredFrom === undefined ? "" : ", L"}>`;
       const result =
@@ -1246,7 +1246,7 @@ function contentDefiners(
           : parameters;
       const definerInput =
         registry === "economic_category"
-          ? `Omit<${name}Def<Id>, ${economicWitnessOmit}> & W`
+          ? `Omit<${name}Def<Id>, ${economicWitnessOmit}> & W & ExactEconomicCategoryWitness<W>`
           : `${name}Def<Id${scoped === null ? "" : `, ${scoped.parameterName}`}` +
             `${declaredFrom === undefined ? "" : ", L"}>`;
       const definerResult =
@@ -1391,7 +1391,7 @@ function contentDefiners(
   const refImports = contents.some((content) => CONTENT_CONTRIBUTION_SINKS.has(content.registry));
   const contentItemTypes = [...runtimeItemTypes].filter((name) => !name.endsWith("PatchItem"));
   if (contents.some((content) => content.registry === "economic_category")) {
-    contentItemTypes.push("EconomicCategoryWitness");
+    contentItemTypes.push("EconomicCategoryWitness", "ExactEconomicCategoryWitness");
   }
   // A hand-written definer's declared witness is spelled in the overlay, so
   // the type it names has to be imported on its word rather than derived —
@@ -1461,7 +1461,7 @@ function contentDefiners(
       ),
     ]);
   const capabilityImports =
-    'import type { ContentItem, EconomicCategoryWitness } from "../content/types.ts";\n' +
+    'import type { ContentItem, EconomicCategoryWitness, ExactEconomicCategoryWitness } from "../content/types.ts";\n' +
     (contents.some((content) => content.registry === "scripted_modifier")
       ? 'import type { ScriptedModifierCategory } from "./enums.ts";\n'
       : "") +

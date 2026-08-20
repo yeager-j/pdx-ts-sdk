@@ -108,6 +108,34 @@ export interface EconomicCategoryTriggeredModifierWitness {
   readonly trigger?: Trigger<never>;
 }
 
+type EconomicCategoryTriggeredWitnessField =
+  | "triggeredCostModifier"
+  | "triggeredProducesModifier"
+  | "triggeredUpkeepModifier"
+  | "triggeredLogisticsModifier";
+
+type ExactEconomicCategoryTriggeredRow<R> = R extends EconomicCategoryTriggeredModifierWitness
+  ? Exclude<keyof R, keyof EconomicCategoryTriggeredModifierWitness> extends never
+    ? R
+    : never
+  : R;
+
+type ExactEconomicCategoryTriggeredRows<T> = T extends readonly unknown[]
+  ? { readonly [K in keyof T]: ExactEconomicCategoryTriggeredRow<T[K]> }
+  : T;
+
+/**
+ * Keeps const-inferred economic witnesses while closing the nested triggered
+ * row shape against misspelled fields. The generated row interfaces carry the
+ * same four members, so this constraint stays in sync with their authoring
+ * surface without reopening arbitrary nested keys.
+ */
+export type ExactEconomicCategoryWitness<W extends EconomicCategoryWitness> = {
+  [K in keyof W]: K extends EconomicCategoryTriggeredWitnessField
+    ? ExactEconomicCategoryTriggeredRows<W[K]>
+    : W[K];
+};
+
 /**
  * The known modifier names for scope `S`, as one flat interface.
  *

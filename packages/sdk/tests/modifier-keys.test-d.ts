@@ -6,8 +6,9 @@ import type {
   EconomicCategoryItem,
   ScriptedModifierItem,
 } from "../src/generated/content-definers.ts";
+import type { EconomicModifierType } from "../src/generated/enums.ts";
 import type { JobRef } from "../src/generated/refs.ts";
-import { createMod, vanilla } from "../src/index.ts";
+import { always, createMod, vanilla } from "../src/index.ts";
 
 declare module "../src/content/types.ts" {
   interface CustomModifiers {
@@ -90,6 +91,31 @@ const differingCapabilityKeyEconomic = ownedModifierMod.economicCategory(
     ],
   }
 );
+const emptyTriggeredEconomic = ownedModifierMod.economicCategory("empty_triggered_operations", {
+  modifierCategory: "country",
+  triggeredCostModifier: [{ key: triggeredCostKey, modifierTypes: [] }],
+});
+const optionalTriggeredEconomic = ownedModifierMod.economicCategory("optional_triggered_fields", {
+  modifierCategory: "country",
+  triggeredCostModifier: [
+    { key: triggeredCostKey, modifierTypes: ["mult"], useParentIcon: true, trigger: always() },
+  ],
+});
+ownedModifierMod.economicCategory("misspelled_triggered_field", {
+  modifierCategory: "country",
+  // @ts-expect-error — nested triggered rows reject misspelled generated fields
+  triggeredCostModifier: [{ key: triggeredCostKey, modifierTypes: ["mult"], useParentIcom: true }],
+});
+const mutableTriggeredTypes: EconomicModifierType[] = ["mult"];
+const readonlyTriggeredTypes: readonly EconomicModifierType[] = ["mult"];
+const widenedMutableEconomic = ownedModifierMod.economicCategory("widened_mutable", {
+  modifierCategory: "country",
+  triggeredCostModifier: [{ key: triggeredCostKey, modifierTypes: mutableTriggeredTypes }],
+});
+const widenedReadonlyEconomic = ownedModifierMod.economicCategory("widened_readonly", {
+  modifierCategory: "country",
+  triggeredCostModifier: [{ key: triggeredCostKey, modifierTypes: readonlyTriggeredTypes }],
+});
 const scriptedAlias: ScriptedModifierItem<"country"> = ownedScripted;
 const economicAlias: EconomicCategoryItem = ownedEconomic;
 void scriptedAlias;
@@ -135,6 +161,14 @@ countryModifiers((m) => {
   logistics.logistics.mult(1);
   logistics.resource("energy").logistics.add(1);
   logistics.resource("energy").logistics.mult(1);
+  const empty = m.economic(emptyTriggeredEconomic).triggered(triggeredCostKey);
+  // @ts-expect-error — an empty declared row has no modifier operations
+  empty.cost.mult(1);
+  m.economic(optionalTriggeredEconomic).triggered(triggeredCostKey).cost.mult(1);
+  // @ts-expect-error — widened mutable modifier types cannot prove capabilities
+  m.economic(widenedMutableEconomic).triggered(triggeredCostKey).cost.mult(1);
+  // @ts-expect-error — widened readonly modifier types cannot prove capabilities
+  m.economic(widenedReadonlyEconomic).triggered(triggeredCostKey).cost.mult(1);
   // @ts-expect-error — undeclared triggered key
   m.economic(triggeredEconomic).triggered("not_declared");
   const widenedKey: string = "starbase_shipyard_build";

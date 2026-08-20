@@ -35,7 +35,12 @@
 // From: gfx/model_entities.cwt
 // From: gfx/particles.cwt
 
-import type { ContentItem, ContributionItem, EconomicCategoryWitness } from "../content/types.ts";
+import type {
+  ContentItem,
+  ContributionItem,
+  EconomicCategoryWitness,
+  ExactEconomicCategoryWitness,
+} from "../content/types.ts";
 import { refId, type TypedRef } from "../script/scalar.ts";
 import { patchContent } from "../stellaris/vanilla/patch.ts";
 import type {
@@ -574,7 +579,8 @@ export function defineEconomicCategory<
     | "triggeredUpkeepModifier"
     | "triggeredLogisticsModifier"
   > &
-    W
+    W &
+    ExactEconomicCategoryWitness<W>
 ): ContentItem<
   "economic_category",
   Omit<
