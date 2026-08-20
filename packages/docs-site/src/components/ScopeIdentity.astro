@@ -1,0 +1,22 @@
+---
+import { Card, CardGrid } from "@astrojs/starlight/components";
+
+import type { ScopeReferenceModel } from "../scope-reference.ts";
+
+interface Props {
+  model: ScopeReferenceModel;
+}
+
+const { model } = Astro.props;
+---
+
+<CardGrid>
+  <Card title="Scope literal">
+    <code>{model.scope}</code>
+  </Card>
+  <Card title="Generated SDK interface">
+    <code>{model.interfaceName}</code>
+  </Card>
+</CardGrid>
+
+<p>{model.prose.description}</p>

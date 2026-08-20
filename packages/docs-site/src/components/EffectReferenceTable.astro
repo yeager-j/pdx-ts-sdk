@@ -1,0 +1,66 @@
+---
+import type { ScriptMethodRow } from "../scope-reference.ts";
+import { renderInlineMarkdown } from "../inline-markdown.ts";
+
+interface Props {
+  rows: readonly ScriptMethodRow[];
+  caption: string;
+  showAvailability?: boolean;
+}
+
+const { rows, caption, showAvailability = false } = Astro.props;
+const renderedRows = await Promise.all(
+  rows.map(async (row) => ({
+    ...row,
+    summaryHtml: await renderInlineMarkdown(row.summary),
+    availabilityLabel:
+      row.availability.kind === "universal"
+        ? "All generated scopes"
+        : row.availability.scopes.join(", "),
+  }))
+);
+---
+
+<table>
+  <caption>{caption}</caption>
+  <thead>
+    <tr>
+      <th>Method</th>
+      <th>Game key</th>
+      {showAvailability && <th>Availability</th>}
+      <th>TypeScript signature</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    {
+      renderedRows.map((row) => (
+        <tr>
+          <td>
+            <code>{row.method}</code>
+          </td>
+          <td>{row.key === undefined ? <em>none</em> : <code>{row.key}</code>}</td>
+          {showAvailability && <td>{row.availabilityLabel}</td>}
+          <td>
+            <code class="signature">{row.signature}</code>
+          </td>
+          <td>
+            <Fragment set:html={row.summaryHtml} />
+          </td>
+        </tr>
+      ))
+    }
+  </tbody>
+</table>
+
+<style>
+  caption {
+    text-align: left;
+    font-weight: 600;
+    padding-block: 0.5rem;
+  }
+
+  .signature {
+    white-space: pre-wrap;
+  }
+</style>
