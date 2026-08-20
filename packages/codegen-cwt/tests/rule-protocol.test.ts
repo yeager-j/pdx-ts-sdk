@@ -274,6 +274,27 @@ describe("the effect ownership policy", () => {
     expect(events.fireMethods).toBe(22);
   });
 
+  it("does not grant fire ownership without declared receiving scopes", () => {
+    const effects = new Map(rules.effects);
+    effects.set(
+      "country_event",
+      rules.effects
+        .get("country_event")!
+        .map((declaration) => ({ ...declaration, supportedScopes: null }))
+    );
+    const changedRules = { ...rules, effects };
+    const changedPolicy = createEffectPolicy(changedRules);
+    const events = emitEvents(new Emitter(changedRules), changedPolicy);
+
+    expect(changedPolicy.fireKeys.has("country_event")).toBe(false);
+    expect(changedPolicy.byKey.get("country_event")).toMatchObject({ owner: "generated" });
+    expect(events.skipped).toContainEqual({
+      name: "country_event",
+      category: "missing-fire-rule-scope",
+      detail: "no fire-effect rule with `## scopes`",
+    });
+  });
+
   it("accounts explicitly for CWT-owned and SDK-synthetic methods", () => {
     expect(policy.structuralMethods).toEqual(
       new Set([

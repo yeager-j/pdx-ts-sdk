@@ -149,4 +149,16 @@ describe("the script-generation gap ledger", () => {
       )
     ).toThrow("trigger:sample_rule: intentional exclusions do not belong in the gap ledger");
   });
+
+  it("rejects a tracked generation gap that becomes policy-owned", () => {
+    expect(() =>
+      reconcileScriptGaps(
+        {
+          triggers: [skippedRule("sample_rule", "handwritten-trigger", "now owned by policy")],
+          effects: [],
+        },
+        [row()]
+      )
+    ).toThrow("trigger:sample_rule: stale ledger row; current category is handwritten-trigger");
+  });
 });

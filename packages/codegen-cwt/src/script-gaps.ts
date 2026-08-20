@@ -286,8 +286,11 @@ export function reconcileScriptGaps(
 
   for (const row of ledger) {
     const id = identity(row);
-    if (!actualByIdentity.has(id)) {
+    const skip = actualByIdentity.get(id);
+    if (skip === undefined) {
       errors.push(`${id}: stale ledger row; the rule now emits or no longer exists`);
+    } else if (POLICY_CATEGORIES.has(skip.category) || skip.category === "abstract-placeholder") {
+      errors.push(`${id}: stale ledger row; current category is ${skip.category}`);
     }
   }
 

@@ -55,7 +55,11 @@ export function createEffectPolicy(rules: RuleSet): EffectPolicy {
   }
 
   for (const kind of eventKinds(rules)) {
-    if (kind.scope === null || !rules.effects.has(kind.key)) {
+    const declarations = rules.effects.get(kind.key);
+    const hasReceivingScopes = declarations?.some(
+      (declaration) => (declaration.supportedScopes?.length ?? 0) > 0
+    );
+    if (kind.scope === null || hasReceivingScopes !== true) {
       continue;
     }
     if (byKey.has(kind.key)) {
