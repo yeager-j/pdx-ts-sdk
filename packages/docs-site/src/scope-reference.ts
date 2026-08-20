@@ -4,7 +4,6 @@ import {
   SCRIPT_REFERENCE_SCOPES,
   SCRIPT_SCOPE_LINK_REFERENCES,
   type ScriptEffectReference,
-  type ScriptReferenceAvailability,
   type ScriptScopeLinkReference,
 } from "@pdx-ts/sdk/script-reference";
 
@@ -14,7 +13,6 @@ export interface ScriptMethodRow {
   readonly signature: string;
   readonly docs: readonly string[];
   readonly summary: string;
-  readonly availability: ScriptReferenceAvailability;
 }
 
 export interface ScopeTransitionRow {
@@ -54,7 +52,7 @@ export interface ScopeReferenceSources {
   readonly eventKinds: Readonly<Record<string, EventKindSource>>;
 }
 
-const DEFAULT_SOURCES: ScopeReferenceSources = {
+export const DEFAULT_SOURCES: ScopeReferenceSources = {
   scopes: SCRIPT_REFERENCE_SCOPES,
   effects: SCRIPT_EFFECT_REFERENCES,
   scopeLinks: SCRIPT_SCOPE_LINK_REFERENCES,
@@ -69,7 +67,7 @@ function interfaceNameOf(scope: ScopeName): string {
   return `${stem}Scope`;
 }
 
-function summaryOf(docs: readonly string[]): string {
+export function summaryOf(docs: readonly string[]): string {
   const prose = docs.slice(0, docs.indexOf("```") === -1 ? docs.length : docs.indexOf("```"));
   const summary = prose.filter((line) => line.trim() !== "").join(" ");
   if (summary !== "") {
@@ -85,7 +83,6 @@ function methodRowOf(reference: ScriptEffectReference): ScriptMethodRow {
     signature: reference.signature,
     docs: reference.docs,
     summary: summaryOf(reference.docs),
-    availability: reference.availability,
   };
 }
 
@@ -95,7 +92,7 @@ function isLegalOn(reference: ScriptEffectReference, scope: ScopeName): boolean 
   );
 }
 
-function assertSources(sources: ScopeReferenceSources): void {
+export function assertSources(sources: ScopeReferenceSources): void {
   const knownScopes = new Set(sources.scopes);
   const methods = new Set<string>();
   for (const reference of sources.effects) {
@@ -189,20 +186,4 @@ export function buildScopeReference(
         summary: summaryOf(reference.docs),
       })),
   };
-}
-
-export function buildEffectPreview(
-  methods: readonly string[],
-  sources: ScopeReferenceSources = DEFAULT_SOURCES
-): readonly ScriptMethodRow[] {
-  assertSources(sources);
-  return methods.map((method) => {
-    const reference = sources.effects.find(
-      (candidate) => candidate.kind === "effect" && candidate.method === method
-    );
-    if (reference === undefined) {
-      throw new Error(`No generated ordinary-effect row named "${method}".`);
-    }
-    return methodRowOf(reference);
-  });
 }

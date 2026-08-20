@@ -27,6 +27,14 @@ export interface TypeNode {
   gameKey?: ReactNode;
 
   /**
+   * Local extension: a short label shown in the row's own line, beside the
+   * name. The type column is hidden on a narrow container, so a fact that
+   * must be readable at every width — an effect's category — belongs here
+   * rather than folded into `type`.
+   */
+  badge?: ReactNode;
+
+  /**
    * type signature (short)
    */
   type: ReactNode;
@@ -41,6 +49,13 @@ export interface TypeNode {
    * detail row when set.
    */
   availability?: ReactNode;
+
+  /**
+   * Local extension: for an event-fire method, the scope the fired event's
+   * body runs in — a different fact from where the call is legal, so it gets
+   * its own detail row.
+   */
+  eventBodyScope?: ReactNode;
 
   /**
    * Optional `href` for the type
@@ -62,15 +77,20 @@ export interface TypeNode {
 
 const fieldVariants = cva("text-fd-muted-foreground not-prose pe-2");
 
-export function TypeTable({
+/**
+ * Local extension: the card, border, and column headings without the rows.
+ * A caller that chooses its own rows — the effects index, which filters and
+ * paginates them — renders `TypeTableItem` children inside this instead of
+ * handing over a whole `type` record.
+ */
+export function TypeTableFrame({
   id,
-  type,
   className,
   nameHeader,
   typeHeader,
+  children,
   ...props
 }: {
-  type: Record<string, TypeNode>;
   /** Local extension: header label for the name column (default "Prop"). */
   nameHeader?: ReactNode;
   /** Local extension: header label for the type column (default "Type"). */
@@ -91,14 +111,30 @@ export function TypeTable({
         <p className="w-1/3">{nameHeader ?? t("Prop")}</p>
         <p className="@max-xl:hidden">{typeHeader ?? t("Type")}</p>
       </div>
-      {Object.entries(type).map(([key, value]) => (
-        <Item key={key} parentId={id} name={key} item={value} hasKeyColumn />
-      ))}
+      {children}
     </div>
   );
 }
 
-function Item({
+export function TypeTable({
+  id,
+  type,
+  ...props
+}: {
+  type: Record<string, TypeNode>;
+  nameHeader?: ReactNode;
+  typeHeader?: ReactNode;
+} & ComponentProps<"div">) {
+  return (
+    <TypeTableFrame id={id} {...props}>
+      {Object.entries(type).map(([key, value]) => (
+        <TypeTableItem key={key} parentId={id} name={key} item={value} hasKeyColumn />
+      ))}
+    </TypeTableFrame>
+  );
+}
+
+export function TypeTableItem({
   parentId,
   name,
   hasKeyColumn = false,
@@ -107,6 +143,8 @@ function Item({
     description,
     gameKey,
     availability,
+    eventBodyScope,
+    badge,
     required = false,
     deprecated,
     typeDescription,
@@ -125,10 +163,21 @@ function Item({
   const [open, setOpen] = useState(false);
   const id = parentId ? `${parentId}-${name}` : undefined;
 
+  /**
+   * Local extension: the upstream component reads the hash once, on mount, so
+   * a row already on screen stayed shut when a later link named it. The
+   * effects index links rows to each other and pages between them, so the row
+   * follows the hash for as long as it lives. `replaceState` on open does not
+   * raise `hashchange`, so opening a row cannot re-enter this.
+   */
   useEffect(() => {
-    const hash = window.location.hash;
-    if (!id || !hash) return;
-    if (`#${id}` === hash) setOpen(true);
+    if (!id) return;
+    const openIfNamed = (): void => {
+      if (window.location.hash === `#${id}`) setOpen(true);
+    };
+    openIfNamed();
+    window.addEventListener("hashchange", openIfNamed);
+    return () => window.removeEventListener("hashchange", openIfNamed);
   }, [id]);
 
   return (
@@ -146,7 +195,16 @@ function Item({
         open ? "shadow-sm bg-fd-background not-last:mb-2" : "border-transparent"
       )}
     >
-      <CollapsibleTrigger className="relative flex flex-row items-center w-full group text-start px-3 py-2 not-prose hover:bg-fd-accent">
+      <CollapsibleTrigger
+        className={cn(
+          "relative flex flex-row items-center w-full group text-start px-3 py-2 not-prose hover:bg-fd-accent",
+          // The name column refuses to shrink, so on a narrow container a long
+          // name would push the badge under the chevron. Wrapping drops the
+          // badge to its own line instead of truncating either one. Rows
+          // without a badge keep the original single-line class list.
+          badge && "flex-wrap"
+        )}
+      >
         <code
           className={cn(
             "text-fd-primary min-w-fit w-1/3 font-mono font-medium pe-2",
@@ -156,6 +214,13 @@ function Item({
           {name}
           {!required && "?"}
         </code>
+        {/*
+          The badge sits beside the name rather than at the end of the row:
+          the chevron is absolutely positioned against the row's end, and the
+          type column that would otherwise reserve room for it disappears on a
+          narrow container. A row without a badge renders exactly as before.
+        */}
+        {badge && <span className="text-fd-muted-foreground text-xs pe-2 shrink-0">{badge}</span>}
         {typeDescriptionLink ? (
           <Link
             href={typeDescriptionLink}
@@ -191,6 +256,12 @@ function Item({
             <>
               <p className={cn(fieldVariants())}>{t("Availability")}</p>
               <p className="my-auto not-prose">{availability}</p>
+            </>
+          )}
+          {eventBodyScope && (
+            <>
+              <p className={cn(fieldVariants())}>{t("Event body scope")}</p>
+              <p className="my-auto not-prose">{eventBodyScope}</p>
             </>
           )}
           {defaultValue && (

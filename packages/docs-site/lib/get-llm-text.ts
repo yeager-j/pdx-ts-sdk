@@ -1,10 +1,13 @@
 import { renderPlaceholder } from "fumadocs-core/mdx-plugins/remark-llms.runtime";
 
 import { coveragePages } from "@/lib/coverage-pages";
+import { scopePages } from "@/lib/scope-pages";
 import type { source } from "@/lib/source";
+import { buildEffectsIndex } from "@/src/effects-index";
 import { buildFieldTable } from "@/src/field-table";
 import {
   coverageMarkdown,
+  effectsIndexMarkdown,
   eventFireMethodsMarkdown,
   eventKindsMarkdown,
   fieldTableMarkdown,
@@ -27,8 +30,8 @@ type Page = (typeof source)["$inferPage"];
  * The processed Markdown carries placeholders for the generated components
  * (see `lib/source.ts`); each is re-rendered here from the same derived
  * model the page renders, so the text export carries the actual tables and
- * examples. A placeholder with no usable data — the hand-fed preview table
- * on the effects page — degrades to a note instead of an empty tag.
+ * examples. A placeholder whose attributes name no usable model degrades to a
+ * note instead of an empty tag.
  */
 export async function getLLMText(page: Page): Promise<string> {
   const rendered = await renderPlaceholder(
@@ -97,6 +100,6 @@ function renderersFor(page: Page): Parameters<typeof renderPlaceholder>[1] {
     StructuralMethods: () => withScopeModel("StructuralMethods", structuralMethodsMarkdown),
     EventKinds: () => withScopeModel("EventKinds", (model) => eventKindsMarkdown(model.eventKinds)),
     EventFireMethods: () => withScopeModel("EventFireMethods", eventFireMethodsMarkdown),
-    EffectReferenceTable: () => note("EffectReferenceTable"),
+    EffectsIndex: () => effectsIndexMarkdown(buildEffectsIndex(scopePages())),
   };
 }
