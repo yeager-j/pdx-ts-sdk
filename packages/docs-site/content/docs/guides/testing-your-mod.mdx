@@ -1,0 +1,252 @@
+---
+title: Testing your mod
+description: Run recorded trigger, effect, and event logic in Vitest without launching Stellaris.
+---
+
+<Callout type="warn" title="Unstable API">
+`@pdx-ts/sdk-testing` is unfinished. Its public API and modeled semantics will
+likely change significantly as the interpreter grows. Expect to update tests
+when upgrading the package.
+</Callout>
+`@pdx-ts/sdk-testing` interprets selected triggers and effects outside
+Stellaris. It gives event chains fast unit tests over small, declared fixture
+worlds, without launching the game or using the console.
+
+The interpreter is deliberately not a complete Stellaris simulator. It models
+only semantics that have been verified, and it throws rather than guesses when
+a test reaches anything else: a missing simulator feature is visible work,
+while guessed semantics could produce a green test for a world Stellaris would
+never create. A passing test says the modeled script logic does what you
+intended; it does not prove every game system surrounding that logic.
+
+Projects created by `create-stellaris-mod` already have the package wired up,
+with a colocated example test — see
+[Getting started](/guides/getting-started/). In another project, install it as
+a development dependency:
+
+```sh
+npm install --save-dev @pdx-ts/sdk-testing
+```
+
+## Fire an event in a fixture
+
+The normal workflow is to import an authored event, build the smallest world
+state it needs, fire it, and inspect the resulting handles:
+
+```ts
+import { fixture } from "@pdx-ts/sdk-testing";
+import { describe, expect, it } from "vitest";
+
+import { flags } from "../flags.ts";
+import { welcome } from "./example.ts";
+
+describe("the welcome event", () => {
+  it("flags the country and pays out the first time", () => {
+    const world = fixture({ countries: [{ name: "Player" }] }, { events: [welcome] });
+    const player = world.country(0);
+
+    world.fire(welcome, player);
+
+    expect(player.hasFlag(flags.my_mod_welcomed)).toBe(true);
+    expect(player.resource("influence")).toBe(50);
+  });
+});
+```
+
+The first argument to `fixture` declares state such as global flags,
+countries, owned planets, fleets, situations, archaeological sites,
+technologies, resources, and storage limits. A declared `storage` capacity
+caps `add_resource` for that resource; undeclared resources are unbounded. The
+fixture does not fill in a real galaxy for you. If the behavior depends on a
+fact, put that fact in the fixture.
+
+The second argument registers every event the world may deliver. `world.fire`
+accepts only the exact registered event, a matching scope handle, and — when
+the event declares a `FROM` contract — a matching `from` handle. These checks
+keep a test from firing an event in a context its definition cannot receive.
+
+Handles read the current fixture state, so the `player` value above sees the
+flag and resource changes after delivery. Interpretation is transactional: if
+an effect throws part-way through a sequence, the fixture keeps none of that
+sequence's changes.
+
+## Advance delayed event chains
+
+An event effect can queue another registered event. Here `entry`'s `immediate`
+block queues `followup` thirty days later; move the fixture clock to deliver
+due fires:
+
+```ts
+const world = fixture({ countries: [{ name: "Player" }] }, { events: [entry, followup] });
+
+world.fire(entry, world.country(0));
+world.advance(30);
+
+expect(world.day).toBe(30);
+expect(world.fired.map((record) => record.id)).toEqual([entry.id, followup.id]);
+```
+
+`advance(days)` accepts a non-negative safe integer number of days. It
+delivers every queued event due in that window, including events queued by
+another delivery. A queued fire's delay is `days` plus `months` × 30 plus
+`years` × 360; the harness exports the constants as `DAYS_PER_MONTH` and
+`DAYS_PER_YEAR`, so `advance(30)` matches an event queued with `months: 1`.
+The fired log records each event id, day, scope, `FROM`, and whether the fire
+came from the harness or an effect.
+
+Advancing the clock does not simulate the rest of the galaxy. In particular,
+the harness does not tick situation progress, stages, completion, or
+`onMonthly`. Crossing one of its 30-day month boundaries while a non-static
+situation exists therefore throws. Keep the test within the month, set
+`staticProgress: true` on the fixture situation when the chain genuinely does
+not depend on progress, or test the weight arithmetic directly:
+`evaluateWeightBlock(type.def.monthlyProgress, world.situation(0))` applies
+the base and one operation per modifier row, in order. It refuses
+`complex_trigger_modifier` rows, rows with several operations, non-literal
+operands, and the `weight` operation. See
+[Situations](/reference/situations/) for the weight fields themselves.
+
+## Force `random_list` branches
+
+For a `random_list`, supply zero-based branch indices instead of accepting a
+nondeterministic result:
+
+```ts
+world.fire(randomEvent, world.country(0), { arms: [1, 0] });
+```
+
+The plan is consumed in execution order, including delayed events in the same
+chain. The test fails if it needs an arm you did not supply or if any supplied
+choice remains unused.
+
+## Run an effect closure directly
+
+An effect closure that is not attached to an event is tested with `run`. It
+records the closure with the SDK's real recorder, interprets it against a
+clone of the fixture world, and returns a `RunResult` carrying the changed
+`after` handle, the fires it queued, and the log it wrote. The original world
+is untouched, so one fixture can serve several `run` calls.
+
+## Evaluate and explain Triggers directly
+
+Use `evaluate` when a test concerns a
+[Trigger](/guides/triggers-and-effects/) rather than a whole event.
+`canReceiveSignal` here is an authored country Trigger:
+
+```ts
+import { evaluate, explain, renderExplanation } from "@pdx-ts/sdk-testing";
+
+expect(evaluate(canReceiveSignal, player)).toBe(false);
+
+// Print the trace while diagnosing a failure.
+console.log(renderExplanation(explain(canReceiveSignal, player)));
+```
+
+`explain` returns a tree with the result of each modeled subcondition.
+`renderExplanation` turns it into a readable trace:
+
+```text
+✗ AND
+  ✓ has_global_flag = lattice_awake — set globally
+  ✗ has_country_flag = heard_the_hum — not set on country "Player"
+```
+
+This is often more useful than one final `false`: it identifies which authored
+condition did not match the fixture.
+
+The whitelisted `log` effect writes to a readable log of its own, exposed as
+`world.log` and on each `RunResult`; `renderFired(world)` renders the fired
+log as text for goldens and failure messages.
+
+## Add the optional Vitest matchers
+
+The core interpreter has no test-framework dependency. Register its optional
+Vitest matchers in a setup file:
+
+```ts
+// vitest.setup.ts
+import { installMatchers } from "@pdx-ts/sdk-testing/matchers";
+
+installMatchers();
+```
+
+Then configure `setupFiles: ["./vitest.setup.ts"]` in `vitest.config.ts`. The
+matchers add focused assertions:
+
+```ts
+expect(world.fired).toContainEvent(followup, { day: 30 });
+expect(canReceiveSignal).toHoldFor(player);
+```
+
+`toHoldFor` uses the same explanation tree in its failure message, while
+`toContainEvent` prints the fired-event log when no matching delivery exists.
+Use ordinary Vitest assertions for fixture state; the matchers only cover the
+fired log and Trigger results.
+
+## Event delivery runs only `immediate`
+
+The fixture can honestly deliver only events whose behavior it implements.
+Delivery runs the event's `immediate` block and nothing else. Registering an
+event that carries any of the following throws, before a test can record a
+fire whose real payoff was skipped:
+
+- an event-level `trigger`;
+- options with effects; or
+- `abortTrigger`, `abortEffect`, or `after`.
+
+An option with only a name, icon, or gate is allowed because there are no
+option effects to omit. `meanTimeToHappen` is the one inert case rather than a
+refusal: the fixture will not schedule that event, but a test may fire it
+explicitly to exercise its immediate effects.
+
+`fireOnlyOnce` is enforced: delivering the same event a second time in one
+fixture throws. The game does not document every detail of how that count is
+scoped, so use a fresh fixture when a test needs an independent firing rather
+than relying on an invented counting rule.
+
+## Only five scopes can enter a fixture
+
+The SDK writes script for about forty Stellaris scope kinds and defines
+[events](/concepts/events/) in nineteen of them. The testing package models
+five scopes:
+
+```ts
+type SimScopeName = "country" | "planet" | "fleet" | "situation" | "archaeological_site";
+```
+
+These five are the ones with a built state model or a verified role. A fleet
+is identity only — a fire target and a `FROM` witness with no assertable
+state — and an archaeological site enters a fixture as the `FROM` of a
+fleet-scoped excavation event, since sites have no event kind of their own. A
+leader-scoped event, for example, is valid SDK content but cannot enter a
+fixture today. Registering it throws a diagnostic that lists the modeled
+scopes. The harness does not approximate it as a country or provide an empty
+leader object, because either choice could make incorrect logic pass.
+
+The same distinction applies within supported scopes. A planet in the fixture
+can link to its owner because that relationship is modeled; an arbitrary
+generated scope link is not assumed to work merely because the SDK can emit
+it.
+
+## Unknown script semantics throw
+
+The interpreter uses a reviewed whitelist for Trigger keys, effect keys,
+structural blocks, iterators, scope links, and event fields. The implemented
+slice includes common operations such as:
+
+- country and global flags;
+- technologies, resources, deposits, and owned planets;
+- situation variables, progress, approaches, and targets;
+- `AND`, `OR`, `NOT`, `NOR`, and `NAND`;
+- runtime `if` branches, `hidden_effect`, and forced `random_list` branches;
+- `every_owned_planet`; and
+- immediate and delayed event fires with checked scope and `FROM`.
+
+This list is illustrative, not a promise that every related Stellaris key is
+modeled. If a Trigger, effect, iterator, link, scripted binding, or event
+field is outside the whitelist, the interpreter throws `InterpreterError` with
+a coverage summary. It also checks the complete Trigger before evaluating it,
+so an unknown branch cannot hide behind short-circuit behavior.
+
+[Warnings and diagnostics](/guides/warnings-and-diagnostics/) covers the
+build-time half of the same split: what the SDK proves before any test runs.

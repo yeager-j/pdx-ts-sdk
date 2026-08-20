@@ -1,0 +1,84 @@
+---
+title: Scripted Modifiers
+description: Register custom modifier keys with display, formatting, value, and object-category metadata.
+registries: [scripted_modifier]
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+
+import { FieldTable } from "@/components/FieldTable";
+import { PairedExample } from "@/components/PairedExample";
+
+A **scripted modifier** registers a custom numerical modifier key and describes
+how Stellaris displays and reads its value. The definition does not supply the
+value or apply an effect by itself. The SDK writes definitions under
+`common/scripted_modifiers/`.
+
+Start with [Economic modifiers](/concepts/economic-modifiers/) to compare this
+explicit value hook with generated economic modifier families and static
+modifier bundles.
+
+## Register the key before another script supplies its value
+
+This example registers a beneficial country-category modifier key and formats
+it as a percentage with one decimal place:
+
+<PairedExample name="scripted-modifiers" />
+
+Another calculation or game system must read or supply the minted key
+`frontier_metrics_scripted_modifier_expedition_output_mult`. Vanilla states
+this rule directly: new scripted modifiers do nothing by default.
+
+`category` is required. It identifies the kind of object from which the value
+is read. Choose the lowest accurate category in the hierarchy. For example,
+vanilla classifies `pop_job_amenities_mult` as `colony` and uses it in job and
+resource calculations, while pop-lifestyle modifiers use `pop_group`.
+
+## Formatting does not define the calculation
+
+`percentage` changes number formatting. `maxDecimals` controls displayed
+precision, while `minMult` sets the minimum when the modifier is used as a
+multiplier. None of these fields creates a calculation or chooses a consumer.
+
+`good` makes positive values beneficial and negative values harmful in the
+usual green/red presentation. `neutral` marks values as neither beneficial nor
+harmful. Do not enable both without first confirming the intended display in
+the exact tooltip.
+
+When `localizeWithValueKey` is true, the game rules expect the localized `name`
+to include `$VALUE$` so the number can be printed there. Verify that replacement
+in the exact tooltip. If `name` is omitted, the SDK emits no localization entry
+for the modifier.
+
+## Icons and less-defined switches need live verification
+
+`icon` names a modifier icon. Vanilla normally supplies the filename stem from
+`gfx/interface/icons/modifiers/`, without `.dds`. The SDK accepts a string and
+does not verify that the corresponding asset exists.
+
+The current game rules expose `hidden`, `noDiff`, and `capZeroToOne`, but do not
+define their complete behavior. They describe localization and icons only for
+non-hidden definitions, while the SDK still emits a provided `name` or `icon`
+when `hidden` is true. Avoid that combination unless a current vanilla example
+matches the same path. Verify tooltips, positive and negative values, zero and
+one boundaries, and save/load in Stellaris.
+
+<Callout type="warn" title="This is not a static modifier">
+  A static modifier bundles concrete values for another system to apply. A scripted modifier
+  registers one key whose value comes from another calculation. Choose the registry that matches the
+  data you need to author.
+</Callout>
+
+See [Testing your mod](/guides/testing-your-mod/) for the checks that remain
+outside the generated TypeScript contract.
+
+## API and vanilla references
+
+- [`ScriptedModifierDef`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/scripted-modifier.ts)
+  is the generated definition used by `mod.scriptedModifier`.
+- [`vanilla.scriptedModifier`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
+  provides checked references to vanilla scripted-modifier ids.
+
+## Field reference
+
+<FieldTable registry="scripted_modifier" />

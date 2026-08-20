@@ -1,0 +1,64 @@
+---
+title: Graphical Cultures
+description: Connect a species class to ship families, fallback assets, map colors, and ship lighting.
+registries: [graphical_culture]
+---
+
+import { FieldTable } from "@/components/FieldTable";
+import { PairedExample } from "@/components/PairedExample";
+
+A **graphical culture** selects the visual family used for ships and cities.
+Species classes point to it through `graphicalCulture`. The SDK writes
+definitions under `common/graphical_culture/`.
+
+## Define the ship presentation
+
+The main controls are the supported ship categories, fallback culture, ship
+color behavior, and three-direction lighting setup:
+
+<PairedExample name="graphical-cultures" />
+
+Stellaris expects each `camLight*Dir` list to contain one three-number direction
+vector. The generated TypeScript type is `number[]` and does not enforce that
+length. The near and far values tune how the ship is lit at different camera
+distances. Start from the lighting values of a vanilla culture with a similar
+ship set, then inspect the result at several zoom levels. The SDK does not
+check whether the result is visually balanced.
+
+`shipKinds` lists the ship categories this culture supports.
+`shipSelectionWeight` ranks a culture for the current species and country;
+vanilla cultures commonly start at zero and raise the matching culture to 10.
+The example uses a constant weight because it defines one culture for its mod.
+
+## Always provide a compatible fallback
+
+`fallback` lets Stellaris try another culture when an asset is missing. A new
+culture rarely supplies every possible model, so point it to a visually
+compatible vanilla or mod-defined culture. Vanilla's humanoid and plantoid
+cultures both fall back to `mammalian_01`.
+
+`randomized` and `selectable` control where the culture can be offered. Vanilla
+uses these triggers to gate DLC-specific cultures and uses `always = no` for
+hidden cultures such as `caravaneer_01`. The generated contract accepts only
+conditions valid without assuming one fixed evaluation scope; `always()` is
+the usual unconditional choice.
+
+Test random empire generation, the species creator, every ship category,
+missing-asset fallback, ship colors, lighting at multiple zoom levels, and
+save/load in Stellaris. See [Testing your mod](/guides/testing-your-mod/).
+
+## API and vanilla references
+
+- [`GraphicalCultureDef`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/graphical-culture.ts)
+  is the generated definition used by `mod.graphicalCulture`.
+- [`vanilla.graphicalCulture`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
+  provides checked references to vanilla graphical-culture ids.
+
+Graphical cultures have no patch surface. `mod.patchGraphicalCulture` does not
+exist.
+
+## Field reference
+
+The nested table lists every ship-lighting value.
+
+<FieldTable registry="graphical_culture" />

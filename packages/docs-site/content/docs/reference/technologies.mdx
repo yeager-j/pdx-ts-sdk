@@ -1,0 +1,301 @@
+---
+title: Technologies
+description: Build research trees, draw weights, repeatable advances, conditional swaps, unlocks, and vanilla patches.
+registries: [technology]
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+
+import { FieldTable } from "@/components/FieldTable";
+import { PairedExample } from "@/components/PairedExample";
+
+A **technology** is one research option in the Physics, Society, or Engineering
+deck. Its definition places it in the research tree, controls when and how
+often it may be drawn, and may apply country modifiers or expose game feature
+flags. The SDK writes technology definitions under `common/technology/`.
+
+This minimal example defines one ordinary Physics technology with a fixed
+cost and draw weight:
+
+<PairedExample name="technologies-basic" />
+
+The advanced example further down connects a technology to a building, adds a
+conditional draw weight and a country-specific swap, and defines a repeatable
+follow-up.
+
+## Placement in the tree
+
+These fields answer different questions about progression:
+
+| Field           | Responsibility                                                       |
+| --------------- | -------------------------------------------------------------------- |
+| `area`          | Selects the Physics, Society, or Engineering deck.                   |
+| `tier`          | Places the technology in the game's tier progression.                |
+| `category`      | Assigns the research category used by scientist expertise and rules. |
+| `prerequisites` | Names technologies that must already be researched.                  |
+| `gateway`       | Labels the technology as a gateway for a broader progression family. |
+| `startTech`     | Marks a technology for the starting-technology flow.                 |
+
+`area` and `category` are not interchangeable. A Physics technology may use
+the `particles` or `computing` category, for example. Write exactly one
+category: multiple categories are not supported. Every `category` block
+Stellaris ships names exactly one, and mods follow the same rule. The
+generated type accepts a list only because the vendored rule's cardinality is
+wrong — tracked in
+[SDK-227](https://linear.app/unnamed-system/issue/SDK-227/technology-category-incorrectly-accepts-multiple-entries).
+The SDK also accepts the bare value, which is the form to use.
+
+Use references returned by `mod.technology(...)` for dependencies owned by the
+mod, and `vanilla.technology(...)` for checked Vanilla ids, as the advanced
+example does for `tech_space_science_1`.
+
+The SDK checks owned and Vanilla references, but it does not prove that the
+tier, category, gateway, and prerequisite graph form sensible progression.
+Vanilla normally gives a tiered technology a prerequisite from the previous
+tier. Treat `gateway` as an additional progression label, not as a substitute
+for `prerequisites`.
+
+### Gateway labels need localization
+
+Stellaris looks up a gateway's description under `gateway_<gateway>`. The
+advanced example writes this technology field:
+
+```pdxscript
+gateway = adaptive_science_orbital
+```
+
+so it must also create this localization key:
+
+```pdxloc
+gateway_adaptive_science_orbital: "Adaptive Orbital Science path: Researching this technology leads to further advancements in orbital science."
+```
+
+The key must match the `gateway` value exactly after the `gateway_` prefix.
+Include the mod prefix in a mod-owned gateway value, as the example does, so
+it cannot collide with a vanilla or third-party gateway.
+
+The example makes that exact key with `mod.replaceLocalization` and places the
+returned item in the same Feature as the technology. `mod.localization` is not
+suitable for this pattern because it puts the mod prefix before the supplied
+suffix instead of preserving the required `gateway_<gateway>` key. See
+[Localization](/concepts/localization/) for the difference between the two.
+
+### Starting technologies have a separate eligibility check
+
+`startTech: true` enters the starting-technology flow. `startingPotential`
+controls whether a country starts with that technology, while `potential`
+controls whether the technology is available to that country more generally.
+Vanilla uses both on starting ship technologies so special origins and ship
+sets receive the correct starting definition.
+
+Do not set `startTech` only to make a normal technology easy to draw. Use its
+cost and weight rules, or grant it through an explicit effect.
+
+## Draw weight
+
+Technology availability and selection use several layers:
+
+| Field                    | Role                                                                       |
+| ------------------------ | -------------------------------------------------------------------------- |
+| `potential`              | Removes the technology from consideration for countries that do not match. |
+| `weight`                 | Supplies the base weight for drawing the technology as a research option.  |
+| `weightModifier`         | Changes that draw weight from country conditions.                          |
+| `weightGroups`           | Names the weight groups this technology belongs to.                        |
+| `modWeightIfGroupPicked` | Multiplies this technology's weight when a named group is already drawn.   |
+| `aiWeight`               | Weights the AI's choice among available research options.                  |
+| `isRare`, `isDangerous`  | Marks the technology for the corresponding UI and game classification.     |
+| `isInsight`              | Marks a First Contact insight technology.                                  |
+
+Keep hard eligibility in `potential`. A zero `weight` prevents an ordinary
+random draw, but it does not express why the technology is unavailable.
+Vanilla uses `weight: 0` for technologies granted as explicit research
+options, including First Contact insights and some event technologies.
+
+`weightModifier` is a country-scoped weight block. Each matching row changes
+the base draw weight:
+
+```ts
+weight: 80,
+weightModifier: {
+  modifiers: [
+    { factor: 2, when: hasCivic("civic_technocracy") },
+  ],
+},
+```
+
+`weightGroups` and `modWeightIfGroupPicked` operate between alternatives. If
+one offered technology belongs to the `repeatable` group, a remaining candidate
+with `{ repeatable: 0.01 }` multiplies its weight by `0.01`. They do not make a
+technology repeatable; `levels` does that. Group names are open strings, so
+use one stable spelling across every participating technology.
+
+<Callout type="warn" title="Rarity flags do not grant or gate a technology">
+  `isRare`, `isDangerous`, and `isInsight` classify a technology. They do not replace `potential`,
+  prerequisites, draw weight, or an effect that adds a research option. Vanilla often combines a
+  rarity flag with those separate rules.
+</Callout>
+
+## Repeatable technologies
+
+`levels` makes one technology researchable more than once. Vanilla uses
+`levels: -1` for an unlimited repeatable and a positive value for a bounded
+number of levels. `costPerLevel` supplies the additional per-level cost. The
+advanced example's `orbitalForecasting` is an unlimited repeatable built from
+`levels: -1` and `costPerLevel: 2_500`.
+
+The modifier is applied again for each researched level. Keep the per-level
+bonus small enough to stack safely, and test the final intended level as well
+as the first. Repeatability and weight groups are independent: a repeatable
+can omit the group fields, and a non-repeatable can participate in a group.
+
+## Technology swaps
+
+`technologySwap` changes how one technology appears or what it does for a
+country that matches the swap's `trigger`. Vanilla uses swaps for cases such
+as biological ships and nomadic empires. The first matching swap wins, so
+make triggers mutually exclusive when order should not decide the result.
+
+Each swap has its own identity in `name`. The remaining fields choose what it
+inherits or replaces:
+
+| Field            | Responsibility                                                           |
+| ---------------- | ------------------------------------------------------------------------ |
+| `trigger`        | Selects countries that use this alternative.                             |
+| `inheritName`    | Reuses the base technology's displayed name.                             |
+| `inheritIcon`    | Reuses the base technology's icon.                                       |
+| `inheritEffects` | Reuses the base technology's effects instead of the swap's replacements. |
+| `modifier`       | Supplies the swap's country modifier.                                    |
+| `area`           | Replaces the base research area.                                         |
+| `category`       | Replaces the base research category.                                     |
+| `weight`         | Supplies the swap's draw weight.                                         |
+
+A swap's `category` replaces the base technology's category. The same rule
+applies: give it exactly one. Unlike the top-level field, the generated swap
+member must currently be written as a one-element list — `category:
+["biology"]` — another shape SDK-227 covers. Set the inheritance flags
+explicitly, especially when the swap changes `modifier`. Test every trigger
+branch in the research interface because the SDK lowers the blocks but does
+not simulate swap selection.
+
+A swap's `name` is also a localization key. When `inheritName` is false — the
+shape every technology swap in Stellaris uses — the game reads the swap's
+displayed name from `<name>` and its description from `<name>_desc`. A
+technology swap has no generated localization slots, so the SDK neither
+creates those entries nor reports them as missing. Write them yourself and
+check the swap in game. See [Localization](/concepts/localization/).
+
+`mod.patchTechnology` cannot target a swap by its own name; it refuses with a
+`SwapPatchError`. Patch the parent technology instead, and its swaps ride
+through unchanged.
+
+## What the technology does
+
+A technology can apply a continuing country `modifier` and expose
+`featureFlags` that game systems recognize. `prereqforDesc` adds UI rows that
+describe unlocked ships, components, diplomatic actions, features, resources,
+or custom content. Its `title` and optional `desc` values are localization
+keys, so create those strings with `mod.localization` and pass their `.key`
+values.
+
+Most concrete unlocks belong to the thing being unlocked. A building uses its
+own `prerequisites`, as the advanced example does. Ship sizes and component
+templates follow the same pattern. `prereqforDesc` describes that unlock in
+the technology interface; it does not enforce the building or component
+prerequisite by itself.
+
+This separation matters when an unlock changes. Update the consumer's
+`prerequisites` first, then keep the technology's tooltip rows in agreement.
+See [Buildings](/reference/buildings/) for the consumer side of a technology
+unlock.
+
+This executable example puts the progression, draw, swap, unlock, and
+repeatable pieces together:
+
+<PairedExample name="technologies-advanced" />
+
+## Patch a Vanilla technology
+
+`mod.patchTechnology` starts from a parsed Vanilla definition, replaces the
+selected fields, and emits a complete definition in a file proven to sort
+after the Vanilla files that define the same id:
+
+```ts
+const vanillaView = stellaris.load();
+
+const geneTailoring = mod.patchTechnology(
+  vanillaView.definition("technology", "tech_gene_tailoring").require("cost", "prerequisites"),
+  (technology) => ({
+    cost: technology.cost.value * 2,
+    prerequisites: [...technology.prerequisites, myNewTechnology],
+  })
+);
+
+const patches = mod.feature("technology_patches", [geneTailoring]);
+const built = mod.compile([patches], { vanilla: vanillaView });
+```
+
+`vanillaView` is the loaded install, not the imported `vanilla` id namespace
+used earlier on this page. `mod.compile` must receive the same loaded view the
+patch was built from.
+
+The callback mentions only changed members, but the emitted definition is not
+partial. The SDK carries every untouched parsed entry, including fields it
+does not model, into the replacement. `.require(...)` proves that an optional
+parsed member exists before the callback reads it. Technology is the only
+registry whose parsed members can be read this way; a parsed building or
+megastructure is opaque.
+
+A patch's `name` and `desc` rewrite Vanilla's own text. The SDK emits them to
+`localisation/replace/` under Vanilla's key, so they rename the technology
+rather than add a key.
+
+Technology is the SDK's strongest patch case: last-wins file order and
+whole-object replacement are both verified in Stellaris. The filename proof
+covers Vanilla plus the current mod, not another third-party mod that replaces
+the same id. See [Patching vanilla](/guides/patching-vanilla/) for loading the
+install, file-local variables, failure guards, and the complete replacement
+contract.
+
+## Current limits and testing advice
+
+- `prerequisites` takes a flat list. It cannot express the `OR = { … }`
+  alternation Stellaris uses in 19 of its own prerequisite blocks. A patch can
+  write one with `anyOf(...)`, but an authored technology cannot, so state one
+  concrete prerequisite chain instead.
+- Vanilla nests `inline_script` inside `cost` and `weight_modifier` to share
+  the rare-technology and cosmic-storm weight macros. `TechnologyDef` has no
+  inline-script field, so write out the cost and weight rules you want rather
+  than copying such a block.
+- There is no registry for `technology_category` or `technology_tier`.
+  `category` and `tier` accept raw strings, so a name no definition supplies is
+  emitted without an error. Use only categories and tiers that already exist.
+  See [Coverage](/reference/coverage/) for the content types the SDK can
+  author.
+- A technology swap's `name` is a localization key with no generated slot, as
+  the swaps section above describes.
+- The SDK checks field shapes, reference ownership, trigger and modifier
+  scopes, localization registration, and emitted paths. It does not simulate
+  the research deck, tier progression, draw probabilities, AI choices,
+  repeatable stacking, swap selection, or feature behavior.
+
+Test a new technology in Stellaris with countries that both pass and fail its
+`potential`, with and without every prerequisite, and under each draw-weight
+and swap condition. For a repeatable, test later levels and save/load. For an
+unlock, confirm both the technology tooltip and the unlocked definition's
+actual availability. See [Testing your mod](/guides/testing-your-mod/) for the
+boundary between SDK checks and live-game verification.
+
+## API and vanilla references
+
+- [`TechnologyDef`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/technology.ts)
+  is the generated authoring contract.
+- [`vanilla.technology(...)`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
+  checks ids against the install-derived
+  [Vanilla technology ids](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/stellaris-ids/src/registries/technology.ts).
+
+## Field reference
+
+These tables are generated from the SDK's own field definitions. Nested tables
+cover technology swaps and the `prereqforDesc` rows.
+
+<FieldTable registry="technology" />

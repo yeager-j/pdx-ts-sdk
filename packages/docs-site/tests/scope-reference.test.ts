@@ -83,21 +83,27 @@ describe("buildScopeReference", () => {
 
   it("rejects duplicate generated methods", () => {
     const input = sources();
+    const [firstEffect] = input.effects;
+    if (firstEffect === undefined) throw new Error("fixture has no effects");
     expect(() =>
       buildScopeReference("country", {
         ...input,
-        effects: [...input.effects, input.effects[0]],
+        effects: [...input.effects, firstEffect],
       })
     ).toThrow(/Duplicate generated script method/);
   });
 
   it("rejects a scope link misclassified as a method", () => {
     const input = sources();
-    const link = input.scopeLinks[0];
+    const [firstEffect] = input.effects;
+    const [link] = input.scopeLinks;
+    if (firstEffect === undefined || link === undefined) {
+      throw new Error("fixture has no effects or scope links");
+    }
     expect(() =>
       buildScopeReference("country", {
         ...input,
-        effects: [...input.effects, { ...input.effects[0], method: link.member }],
+        effects: [...input.effects, { ...firstEffect, method: link.member }],
       })
     ).toThrow(/Scope link.*also classified as a script method/);
   });

@@ -29,7 +29,7 @@ behavior is its whole job, so the delete-when-shipped rule does not reach it. `d
 that rule unchanged.
 
 The exception costs something, so it is paid for rather than waived. Examples do not drift
-because they are gated: every `<name>.example.ts` under `packages/docs-site/src/content/docs/`
+because they are gated: every `<name>.example.ts` under `packages/docs-site/content/docs/`
 typechecks against the workspace SDK, compiles through the Fold, and renders during
 `npm run docs:build`, which CI runs against a deleted `packages/*/dist` so the site resolves
 the SDK's sources rather than compiled output. Prose is defended by structure instead — keep

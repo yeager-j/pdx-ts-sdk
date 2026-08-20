@@ -1,0 +1,77 @@
+---
+title: Scripted Localization
+description: Select a localization key or script value when Stellaris renders dynamic text.
+registries: [scripted_loc]
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+
+import { FieldTable } from "@/components/FieldTable";
+import { PairedExample } from "@/components/PairedExample";
+
+**Scripted localization** selects a localization key or script value when text
+is rendered. Call it inside localization with syntax such as
+`[Root.GetSomething]`. The SDK writes definitions under
+`common/scripted_loc/`.
+
+This registry chooses text; it does not define the displayed strings. See
+[Localization](/concepts/localization/) for ordinary keys, translations,
+replacement text, formatting, and emitted files.
+
+## Create the text keys, then select among them
+
+The example creates two ordinary localization entries, gives their keys to a
+weighted scripted-localization definition, and calls the minted definition
+from another localized string:
+
+<PairedExample name="scripted-localization" />
+
+`localizationKey` accepts an ordinary key, sprite reference, or other scalar
+that Stellaris can render. It is not English source text and does not create a
+localization entry. Passing `.key` from `mod.localization` keeps the two sides
+connected without copying the final prefixed key.
+
+The call site must use the complete minted id. Building the expression from
+`greeting.id`, as the example does, keeps it aligned with the mod prefix.
+
+## Choose by weight, trigger, or source order
+
+`random` defaults to true in Stellaris. When it is true, valid `text` entries
+are selected randomly by weight. When it is false, the valid entry with the
+highest weight wins; equal or absent weights select the first matching entry.
+`default` is used only when every text trigger fails.
+
+Vanilla uses scripted localization for state-dependent branches such as
+country flags and variable ranges. The definition is evaluated in the scope
+of the localization call site, so one definition can be called from different
+scope types. The generated API therefore accepts only triggers and weight
+conditions that are valid without assuming one fixed scope. At present, this
+is best suited to unconditional or scope-portable branches; a typical
+country-only condition does not type-check in this registry.
+
+<Callout type="warn" title="Test every call site">
+  The SDK can check the definition shape, but it cannot prove the scope of a localization string at
+  runtime. Test every call site, every branch, the no-match default, random weighting, and each
+  language in Stellaris.
+</Callout>
+
+Use `value` instead of `text` when the definition should expose a script value.
+Do not combine the two forms unless you have verified that behavior for your
+specific use; the game example documents them as alternatives.
+
+## API and vanilla references
+
+- [`ScriptedLocDef`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/scripted-loc.ts)
+  is the generated definition used by `mod.scriptedLoc`.
+- [`vanilla.scriptedLoc`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
+  provides checked references to vanilla scripted-localization ids.
+
+Scripted localization has no patch surface. `mod.patchScriptedLoc` does not
+exist.
+
+## Field reference
+
+The nested table lists the weight, trigger, and localization key for each text
+entry.
+
+<FieldTable registry="scripted_loc" />

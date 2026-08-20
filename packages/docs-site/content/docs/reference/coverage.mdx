@@ -1,0 +1,21 @@
+---
+title: Coverage
+description: What @pdx-ts/sdk can author today, what it cannot, and where each registry writes.
+registries: []
+---
+
+import { RegistryCoverage } from "@/components/RegistryCoverage";
+
+This page answers one question: can the SDK author this kind of Stellaris content yet? Three
+tables follow: the content registries, the other authoring channels, and the `common/` folders
+nothing writes to yet.
+
+The registry rows come from the SDK's own generated tables and the not-supported list from the
+game files `@pdx-ts/stellaris-ids` was generated against, both derived at build time, so neither
+can fall behind the SDK. The channel table and the notes on registries with no page yet are the
+two hand-written parts, because no derivation can know them.
+
+Patching vanilla definitions is a separate per-registry capability; see
+[Patching vanilla](/guides/patching-vanilla/) for the registries that support it.
+
+<RegistryCoverage />

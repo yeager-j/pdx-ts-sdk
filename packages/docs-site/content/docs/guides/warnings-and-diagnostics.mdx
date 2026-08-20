@@ -1,0 +1,206 @@
+---
+title: Warnings and diagnostics
+description: Handle build failures and structured warnings without losing important diagnostics.
+---
+
+The SDK reports mod problems through two channels:
+
+- It **throws** when it can prove the requested mod is invalid or unsafe to
+  emit.
+- It returns non-blocking **warning data** on the `warnings` array of the
+  compiled mod that `mod.compile` returns, when the build can continue but
+  needs the author's attention.
+
+Mod authoring and the [Fold](/guides/the-pipeline/) do not print those
+diagnostics (with one exception, noted below). Your build script decides how
+to display warnings, whether CI rejects selected codes, and how a thrown
+error reaches the command line.
+
+## Invalid builds throw
+
+An authoring call may throw immediately when its own input is invalid. For
+example, an Asset source must exist and be a regular file, a configuration
+prefix must have the required shape, and an explicit localization key must be
+valid when it is declared.
+
+Other failures need the complete set of selected Features, so the Fold throws
+from `mod.compile`. Representative cases include:
+
+- duplicate content or event ids;
+- missing required localization text;
+- authored references whose targets are not in the build;
+- two different values for one localization key;
+- an Asset item referenced by GFX but not placed in a Feature;
+- duplicate, aliased, reserved, or file-versus-directory output paths;
+- output paths that collide with known vanilla files; and
+- a vanilla patch whose replacement or winning filename cannot be proved.
+
+Missing required fields are not on this list: the generated TypeScript types
+enforce them, so they surface in `npm run typecheck`, not from the build
+script — which is why the scaffold runs both.
+
+These are not warnings because continuing would produce a mod the SDK already
+knows is incomplete, ambiguous, or unsafe. Catch an error only when the build
+script can add useful context or perform cleanup; do not catch it merely to
+continue rendering.
+
+### Writing and installing can still fail
+
+Rendering should normally succeed once the Fold returns a `PureMod`. Writing
+or installing can still throw `MaterializationError` when the destination is
+unowned, has drifted, contains a conflicting foreign file, is busy, needs
+recovery, or cannot be replaced safely. That failure protects files already
+on disk. Catching the error and retrying does not resolve the conflict; the
+deliberate ways forward — a receipt-based replacement for drift, and recovery
+for an interrupted run — are covered in
+[The pipeline](/guides/the-pipeline/#4-write-or-install-materialize-the-snapshot).
+
+Every SDK refusal is a named error class under one `PdxSdkError` base, so a
+build script can tell one refusal from another. `MaterializationError`
+exposes its `reason` and structured `failure`, and `PathOwnershipError` lists
+its `conflicts`, the same way the warning fields below carry data. Catch by
+class, not by message text.
+
+## Successful builds can carry warnings
+
+Read warnings from the immutable `PureMod` returned by `mod.compile`:
+
+```ts
+const built = mod.compile(features);
+
+for (const warning of built.warnings) {
+  console.warn(`warning (${warning.code}): ${warning.message}`);
+}
+
+const rendered = render(built);
+await write(outDir, rendered);
+```
+
+`create-stellaris-mod` generates the same loop in both its write and install
+entry points, so warnings appear whichever command you run.
+
+Warnings do not stop rendering, writing, or installing. Display all of them
+in local builds. In CI, choose which codes fail your build: a build that
+throws nothing can still report warnings worth acting on.
+
+`write` and `install` also return a report of their own: its `status` says
+whether anything changed, `foreignEntries` lists preserved files the SDK does
+not own, and its `warnings` carry cleanup problems found after the write
+committed. A build script that prints only the compiled warnings discards
+those, so check the report too.
+
+<Callout type="info" title="The loader can print a cache notice">
+`stellaris.load()` may print a direct notice if its optional parse cache cannot
+be written and the loader must reparse on each build. That notice concerns
+loader performance, not mod validity, and is not a `ModWarning`.
+</Callout>
+## Every warning has a code
+
+Every warning has a stable `code` and a human-readable `message`. The current
+codes are:
+
+| Code                      | Meaning                                                                                                                                              |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `missing-prefix`          | A complete content id or event namespace does not carry this mod's prefix, so it may collide with vanilla or another mod.                            |
+| `loc-quote-replaced`      | Localization text contained `"`; the output format cannot escape it, so the SDK replaced it with `'`.                                                |
+| `unstable-desc-key`       | A modifier description has no `descKey`; its generated localization key depends on the description text and changes when that text changes.          |
+| `unstable-option-key`     | An event option has no `key`; its generated localization key depends on the option name and changes when that text changes.                          |
+| `loc-key-looks-like-text` | A field expects a localization key, but the supplied string contains spaces and looks like displayed prose.                                          |
+| `assumed-patch-rule`      | A vanilla patch relies on resolver behavior that is not fully verified; the emitted patch header records the assumption.                             |
+| `mismatched-vanilla-ids`  | The build explicitly accepted an installed game version different from the pinned `@pdx-ts/stellaris-ids` version, so some checked ids may be stale. |
+| `unverified-asset-path`   | A raw GFX path matches neither an Asset captured by this build nor the available vanilla path inventory.                                             |
+
+Most variants are the flat shape `{ code, message }`. An
+`unverified-asset-path` warning also carries structured fields:
+
+```ts
+interface UnverifiedAssetPathWarning {
+  readonly code: "unverified-asset-path";
+  readonly message: string;
+  readonly path: string;
+  readonly field: string;
+  readonly owner: string;
+}
+```
+
+`path` is the normalized logical path when normalization succeeds, `field` is
+the dotted GFX field such as `animation.animationmaskfile`, and `owner` names
+the definition that wrote it. These fields let a build report or group the
+problem without parsing prose.
+
+Check `code` first; TypeScript then knows which extra fields the warning has:
+
+```ts
+import type { ModWarning } from "@pdx-ts/sdk";
+
+function reportWarning(warning: ModWarning): void {
+  if (warning.code === "unverified-asset-path") {
+    console.warn(`${warning.owner}.${warning.field}: cannot verify ${warning.path}`);
+    return;
+  }
+
+  console.warn(`warning (${warning.code}): ${warning.message}`);
+}
+```
+
+The warnings array and its entries are frozen snapshots. Do not mutate them.
+The Fold does not deduplicate warnings, so repeated authored problems can
+produce repeated entries. Do not identify a warning by its array index or
+depend on categories appearing in one fixed order; use `code` and the
+structured fields instead.
+
+## Respond to each warning at its source
+
+Most warnings have a direct authoring fix:
+
+- `missing-prefix` — add the mod prefix to the exact id or event namespace it
+  reports; see [References and identity](/guides/references-and-identity/).
+- `loc-quote-replaced` — replace the double quote yourself when the
+  punctuation matters; see [Localization](/concepts/localization/).
+- `unstable-desc-key` and `unstable-option-key` — add `descKey` to the
+  modifier row or `key` to the event option before translations depend on the
+  generated key.
+- `loc-key-looks-like-text` — pass displayed text through localization and
+  give the localization-key field the key, not the text.
+- `assumed-patch-rule` — not a typo in authoring code: the emitted patch
+  header records the assumption the
+  [patch planner](/guides/patching-vanilla/) made. Keep it visible and verify
+  the affected behavior in game, especially after a Stellaris update.
+- `mismatched-vanilla-ids` — align `@pdx-ts/stellaris-ids` with the installed
+  game version instead of relying permanently on `acceptGameVersion`.
+- `unverified-asset-path` — fix the spelling or put the file under the
+  scaffolded [`assets/` tree](/concepts/assets/). If the path intentionally
+  belongs to DLC or another mod, document that dependency and allow the
+  warning deliberately.
+
+## Make a deliberate CI policy
+
+A strict project may reject every warning:
+
+```ts
+if (built.warnings.length > 0) {
+  throw new Error(
+    `Refusing to publish with warnings:\n${built.warnings
+      .map((warning) => `- ${warning.code}: ${warning.message}`)
+      .join("\n")}`
+  );
+}
+```
+
+Another project may allow specific external Asset paths while rejecting all
+other warnings:
+
+```ts
+const allowedExternalPaths = new Set(["gfx/interface/partner_mod/icon.dds"]);
+const blocked = built.warnings.filter(
+  (warning) => warning.code !== "unverified-asset-path" || !allowedExternalPaths.has(warning.path)
+);
+
+if (blocked.length > 0) {
+  throw new Error(blocked.map((warning) => warning.message).join("\n"));
+}
+```
+
+Choose the policy in the project entry point or release command, close to the
+decision to write or install. Keep ordinary local builds informative rather
+than silent, and make exceptions by code with a reason a maintainer can review.

@@ -1,0 +1,193 @@
+---
+title: Origins
+description: Define empire-start selection rules, system initializers, colony preferences, species setup, modifiers, weights, and localization.
+registries: []
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+
+import { FieldTable } from "@/components/FieldTable";
+import { PairedExample } from "@/components/PairedExample";
+
+An **origin** describes an empire's starting circumstances. Its definition can
+control who may select it, which system initializer the game uses, the starting
+colony and habitability preference, enforced species traits, continuing
+country modifiers, and random-generation rules. The SDK writes origins under
+`common/governments/civics/` beside civics.
+
+[Civics](/reference/civics/) and origins share the game's `civic_or_origin`
+registry and the SDK's `mod.civicOrOrigin(...)` method. An origin is selected
+by setting `isOrigin: true`.
+
+This minimal origin adds a small research bonus and ordinary empire-creation
+requirements without naming a replacement starting system:
+
+<PairedExample name="origins-basic" />
+
+The advanced example later on defines and connects a custom home system,
+starting colony class, habitability preference, start-screen flag, and
+generation limits.
+
+## `isOrigin` is the subtype boundary
+
+Always set `isOrigin: true` on an origin. Without it, the same shared definition
+is treated as a civic and origin-only fields do not make it an origin for you.
+
+Shared selection fields behave as they do for civics:
+
+| Field        | Type                     | Responsibility                                           |
+| ------------ | ------------------------ | -------------------------------------------------------- |
+| `playable`   | `Trigger<"no_scope">`    | Allows or blocks selection by a human player.            |
+| `aiPlayable` | `Trigger<"no_scope">`    | Allows or blocks selection by generated AI empires.      |
+| `potential`  | `GovernmentTriggerBlock` | Classifies compatible empire and species configurations. |
+| `possible`   | `GovernmentTriggerBlock` | States the combination required for selection.           |
+
+`potential` and `possible` use the government-requirements data model, not
+ordinary script triggers. They can filter authorities, ethics, civics, the
+current origin, traits, species class or archetype, preferred planet class,
+graphical culture, and nomadic state. See
+[Civic requirements](/reference/civics/#empire-creation-requirements-are-a-data-model)
+for clause grouping and the difference from `Trigger` values.
+
+<Callout type="warn" title="The origin definition does not run country setup effects">
+  Stellaris implements many Vanilla origin starts through scripted effects, inline scripts, events,
+  blockers, deposits, and other files outside `common/governments/civics/`. The SDK emits only the
+  fields you author. Copying an origin's visible definition does not copy its external setup flow.
+</Callout>
+
+## Choose the starting system deliberately
+
+`initializers` is a list of solar system initializer references. Pass the value
+returned by `mod.solarSystemInitializer(...)` for a system owned by the same
+mod, `vanilla.solarSystemInitializer(...)` for a checked Vanilla id, or a raw
+string only for an intentional third-party reference.
+
+An initializer controls the system's objects and layout. The origin fields
+around it state empire-level starting preferences:
+
+| Field                    | Responsibility                                           |
+| ------------------------ | -------------------------------------------------------- |
+| `initializers`           | Names the candidate home-system recipes.                 |
+| `startingColony`         | Selects the starting colony's planet class.              |
+| `habitabilityPreference` | Sets the empire's preferred planet class.                |
+| `advancedStart`          | Writes the game's advanced-start marker.                 |
+| `flags`                  | Supplies country flags that other game scripts can read. |
+
+Keep the initializer's home planet, `startingColony`, and
+`habitabilityPreference` consistent unless the mismatch is part of the design.
+The types prove each reference exists; they do not prove the combined start is
+playable.
+
+The advanced example defines a small custom initializer instead of borrowing a
+Vanilla origin's initializer:
+
+<PairedExample name="origins-advanced" />
+
+Read [Solar Systems](/reference/solar-systems/) before building a larger start.
+That page covers ordered system geometry, home planets, setup effects, neighbor
+systems, and initializer testing.
+
+## Species and secondary-pop setup
+
+Origins can constrain or adjust species creation with these fields:
+
+| Field                 | Responsibility                                                             |
+| --------------------- | -------------------------------------------------------------------------- |
+| `traits`              | Enforces primary-species traits that cannot be removed.                    |
+| `softTraits`          | Supplies primary-species traits that can be removed.                       |
+| `hasSecondarySpecies` | Enables secondary-species customization and supplies its title and traits. |
+| `portrait`            | Selects a required species portrait.                                       |
+
+Trait arrays take trait references. The SDK checks owned and known Vanilla
+references, but it does not calculate trait points or picks, validate species
+archetype compatibility, or simulate the empire designer. Test both the editor
+and the generated starting pops.
+
+`hasSecondarySpecies.title` is an existing localization key. Create custom text
+with `mod.localization(...)` and pass its `.key`.
+
+## Origin-only generation controls
+
+These origin-only fields expose game-generation markers used by Vanilla:
+
+| Field                                 | Responsibility                                            |
+| ------------------------------------- | --------------------------------------------------------- |
+| `maxOnceGlobal`                       | Writes the global uniqueness marker.                      |
+| `blocksRandomMachineEmpireGeneration` | Blocks invalid random individual-machine combinations.    |
+| `nonColonizablePlanetClassNeighbor`   | Writes a special non-colonizable-neighbor marker.         |
+| `preferredPlanetClassNeighbor`        | Writes the corresponding preferred-class-neighbor marker. |
+
+`randomWeight` controls random origin selection and `aiWeight` controls the AI
+weight where the game consults it. Neither weight is an eligibility rule. Keep
+`playable`, `aiPlayable`, `potential`, and `possible` explicit.
+
+The source rules explain the individual-machine block, but they do not define
+the exact runtime selection behavior of the uniqueness or neighbor markers.
+Vanilla uses them on specialized origins. Test their effect in a generated
+galaxy before depending on them; the SDK only serializes the values.
+
+## Presentation, modifiers, and swaps
+
+`name` creates localization at the full origin id and `desc` creates
+`<full-id>_desc`. `description`, `negativeDescription`, `customTooltip`, and
+`customTooltipWithModifiers` take existing localization keys. They do not
+accept display text directly.
+
+`icon` is a raw path to the small origin icon. `picture` is a sprite reference
+for the larger origin illustration. The examples reuse Vanilla assets; the SDK
+does not copy or validate those files. Add custom art through
+[Assets](/concepts/assets/) and test both views in the empire designer.
+
+The shared `modifier` field applies continuing country modifiers. It does not
+perform one-time start work. Put system-object setup in initializer effects and
+author country events or other supported content for additional setup flows.
+
+Origins also share `swapType` with civics. A swap can change presentation and
+modifiers conditionally, but its trigger may be evaluated before a country
+scope exists. Follow the guard and testing guidance in
+[Conditional civic variants](/reference/civics/#conditional-swaptype-variants).
+
+## Ids and output
+
+`mod.civicOrOrigin("surveyors_legacy", ...)` mints the full id
+`surveyors_legacy_civic_or_origin_surveyors_legacy`. Keep it stable after
+release because empire presets, scripts, localization, and other definitions
+can refer to it.
+
+Origins and civics share an output file. Definitions from one feature stem use
+`common/governments/civics/<prefix>_<stem>_civics.txt`; a directly compiled
+feature without a stem uses `<prefix>_civics.txt`.
+
+## Current limits and testing advice
+
+- There is no `mod.patchCivicOrOrigin` method. The SDK does not support
+  whole-object patches for Vanilla origins.
+- The SDK checks field shapes, subtype-marked fields, references, requirement
+  blocks, scopes, localization, ids, and output paths. It does not simulate
+  empire creation, starting-system selection, starting pops, random generation,
+  AI choice, external origin scripts, or save migration.
+- `initializers` links definitions but does not infer a system, colony class,
+  habitability preference, or setup event from the origin's name.
+
+Test every allowed and blocked empire configuration, the selected home-system
+layout, homeworld class, habitability, starting species and pops, flags,
+modifiers, random generation, uniqueness, AI selection, icon and picture,
+localization, and save/load. Run the game with script error logging enabled so
+missing external setup work is visible.
+
+## API and Vanilla references
+
+- [`CivicOrOriginDef`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/civic-or-origin.ts)
+  is the shared generated definition used by `mod.civicOrOrigin`.
+- [`GovernmentTriggerBlock`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/government-trigger.ts)
+  defines the requirements data accepted by `potential` and `possible`.
+- [`vanilla.civicOrOrigin(...)`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
+  checks civic and origin ids against the selected game version's
+  [Vanilla civic and origin ids](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/stellaris-ids/src/registries/civic-or-origin.ts).
+
+## Field reference
+
+Origins share this generated table with civics. The descriptions mark each
+origin-only, civic-only, and shared field.
+
+<FieldTable registry="civic_or_origin" />

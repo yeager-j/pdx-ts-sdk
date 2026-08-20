@@ -1,0 +1,58 @@
+---
+title: Particles
+description: Register particle types from opaque asset descriptors with pdxparticle definitions.
+registries: [pdxparticle]
+---
+
+import { FieldTable } from "@/components/FieldTable";
+import { PairedExample } from "@/components/PairedExample";
+
+A **pdxparticle** gives an engine particle type a label and an optional scale.
+The SDK writes definitions under `gfx/particles/` in a `.gfx` file with an
+`objectTypes` envelope.
+
+## Connect the label to a particle type
+
+<PairedExample name="particles" />
+
+`type` must name a `particle_type` defined in a `.asset` file. The SDK carries
+`.asset` files as opaque bytes, so it cannot inspect their definitions or check
+this label. Put the descriptor and its textures or models in the scaffolded
+`assets/` directory as explained in [Assets](/concepts/assets/).
+
+`type` is an engine id, not a mod-root path. It does not receive the Asset-path
+check used by `spriteType.textureFile` or `pdxmesh.file`. Test the complete
+particle definition in Stellaris to catch a missing or misspelled label.
+
+## Keep the engine label compatible with the descriptor
+
+The default call mints `<prefix>_<name>` with no registry segment. The example
+therefore produces `starfall_relay_pulse`.
+
+Use `{ prefix: false }` only when an existing `.asset` file requires a complete
+label in another shape:
+
+```ts
+mod.pdxparticle(
+  "small_starfall_relay_pulse",
+  { type: "starfall_relay_pulse_file", scale: 0.5 },
+  { prefix: false }
+);
+```
+
+The complete name must still contain `starfall` as a whole `_`-delimited
+segment. It may appear at the start, inside, or at the end. This keeps the
+definition owned by the mod even when the SDK does not prepend the prefix.
+
+## API and vanilla references
+
+- [`PdxparticleDef`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/pdxparticle.ts)
+  is the generated definition used by `mod.pdxparticle`.
+- [`vanilla.pdxparticle`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
+  provides checked references to vanilla particle ids.
+
+Particles have no patch surface. `mod.patchPdxparticle` does not exist.
+
+## Field reference
+
+<FieldTable registry="pdxparticle" />

@@ -33,13 +33,12 @@
   // author's program, not this one: they compile under their own tsconfig with
   // `@pdx-ts/sdk` symlinked in, which is what the matrix harness runs `tsc -p`
   // over.
-  // The docs site is an Astro program, not this one: the types for its virtual
-  // modules (`astro:content`) are generated into `.astro/types.d.ts` by a
-  // build, and `.astro` components are not TypeScript files. It extends
-  // `astro/tsconfigs/strict` and gates itself with `astro check`, which
-  // `npm run typecheck` calls through to. Its paired examples additionally
-  // check under this program's semantics via its `tsconfig.examples.json`,
-  // which extends this file.
+  // The docs site is a Next.js program, not this one: its modules resolve the
+  // way the bundler does (`moduleResolution: "bundler"`, JSX, path aliases),
+  // not under NodeNext. It carries its own tsconfig and runs its own
+  // `tsc --noEmit` as its `typecheck` script, which `npm run typecheck` calls
+  // through to. Its paired examples additionally check under this program's
+  // semantics via its `tsconfig.examples.json`, which extends this file.
   "exclude": [
     "node_modules",
     "dist",

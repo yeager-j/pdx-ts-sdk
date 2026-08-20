@@ -1,0 +1,67 @@
+---
+title: Ambient Objects
+description: Define selectable or decorative objects that events and system initializers can place in space.
+registries: [ambient_object]
+---
+
+import { FieldTable } from "@/components/FieldTable";
+import { PairedExample } from "@/components/PairedExample";
+
+An **ambient object** is a visual object placed in a solar system, such as a
+probe, derelict ship, or decorative wreck. Its definition selects a model
+entity and optional map text. The SDK writes definitions under
+`common/ambient_objects/`.
+
+## Define the object and place it from an initializer
+
+The model entity is required. A selectable object can also show a localized
+name, description, and tooltip:
+
+<PairedExample name="ambient-objects" />
+
+`createAmbientObject` places a defined object from an effect closure. Its
+`type` accepts the branded result of `mod.ambientObject` (or a raw id), while
+`location` and the optional offsets describe where the game creates it. The
+`effect` callback runs in the new `ambient_object` scope, so setup such as a
+flag can stay next to the placement. The paired example defines, places, and
+configures one object through that complete path.
+
+`name` is English source text. The SDK emits it under the ambient object's
+minted id. `description` and `tooltip` are different: they expect localization
+keys, so the example creates those keys with `mod.localization` and passes
+their `.key` values. See [Localization](/concepts/localization/) for adding
+translations.
+
+The raw `entity` id must name a model entity supplied by Stellaris or a mod.
+The SDK checks a branded model-entity reference when one is available, but it
+also accepts raw ids for custom GFX definitions.
+
+## Selectable and decorative objects
+
+Vanilla's sublight probe and selectable abandoned ship set both `selectable`
+and `showName`, then provide description and tooltip keys. Its non-selectable
+abandoned-ship variant sets both flags to false, keeps a scalar `name` id, and
+omits the description and tooltip.
+
+Follow those two shapes. For a visible map target, set `selectable: true` and
+`showName: true`, then provide its text. For an unnamed decorative object, set
+both to false and omit `name`, `description`, and `tooltip`. The current SDK
+always treats a supplied `name` as localized text, including when `showName` is
+false, so it does not expose vanilla's scalar-name form for unnamed objects.
+
+Test the complete placement path, selection, label, tooltip, system reload,
+and save/load in Stellaris. See [Testing your mod](/guides/testing-your-mod/).
+
+## API and vanilla references
+
+- [`AmbientObjectDef`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/ambient-object.ts)
+  is the generated definition used by `mod.ambientObject`.
+- [`vanilla.ambientObject`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
+  provides checked references to vanilla ambient-object ids.
+
+Ambient objects have no patch surface. `mod.patchAmbientObject` does not
+exist.
+
+## Field reference
+
+<FieldTable registry="ambient_object" />

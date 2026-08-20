@@ -1,0 +1,15 @@
+{
+  "title": "Guides",
+  "pages": [
+    "getting-started",
+    "features-and-discovery",
+    "the-pipeline",
+    "triggers-and-effects",
+    "scope-and-context",
+    "references-and-identity",
+    "advantages-of-typescript",
+    "warnings-and-diagnostics",
+    "testing-your-mod",
+    "patching-vanilla"
+  ]
+}
