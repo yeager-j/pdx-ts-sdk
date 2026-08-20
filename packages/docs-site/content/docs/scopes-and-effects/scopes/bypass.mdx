@@ -1,0 +1,46 @@
+---
+title: "Bypass"
+description: "Generated methods, event kinds, and transitions for BypassScope."
+scope: bypass
+generatedBy: scope-reference
+---
+
+import { EventFireMethods } from "@/components/EventFireMethods";
+import { EventKinds } from "@/components/EventKinds";
+import { ScopeEffects } from "@/components/ScopeEffects";
+import { ScopeIdentity } from "@/components/ScopeIdentity";
+import { ScopeTransitions } from "@/components/ScopeTransitions";
+import { StructuralMethods } from "@/components/StructuralMethods";
+import { buildScopeReference } from "@/src/scope-reference";
+
+export const model = buildScopeReference("bypass");
+
+<ScopeIdentity model={model} />
+
+A bypass is a travel-connection object, such as a wormhole-like route. Scripts can lock it for a
+country, renew that lock, and link paired wormholes. It models access-controlled connections
+between systems without assuming that every bypass has the same in-game presentation.
+
+## Common entry points
+
+Common entry points include `bypass_event` bodies and typed callbacks that supply a `BypassScope`.
+
+## Event kinds whose bodies run in this scope
+
+<EventKinds rows={model.eventKinds} />
+
+## Ordinary effects
+
+<ScopeEffects universalCount={model.universalEffects.length} scopeSpecific={model.scopeEffects} />
+
+## Structural and control-flow methods
+
+<StructuralMethods rows={model.structuralMethods} />
+
+## Event-fire methods
+
+<EventFireMethods rows={model.eventFireMethods} />
+
+## Outgoing scope transitions
+
+<ScopeTransitions rows={model.transitions} />

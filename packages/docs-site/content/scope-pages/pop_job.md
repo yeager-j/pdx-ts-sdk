@@ -1,8 +1,10 @@
-# Pop job scope
+# Pop job
 
-Pop job scope represents a population job through the generated SDK script interface.
+A pop job is the job-assignment context for populations. Its generated methods select pop groups
+that contain the job and can kill or sacrifice part of the assigned population. It is a narrow view
+of employment relationships rather than an individual worker or a complete job lifecycle.
 
 ## Common entry points
 
-Enter this scope through typed callbacks or script contracts that supply a `PopJobScope`. The
-generated transition table below records the outgoing links available from that context.
+Common entry points are typed callbacks or script contracts that supply a `PopJobScope`; the SDK
+generates no dedicated pop-job event kind.

@@ -1,10 +1,11 @@
-# Country scope
+# Country
 
-Country scope represents a game object that Stellaris evaluates as a country, including an empire
-acting in its own script context.
+A country is the empire-level script context, including playable empires and other country-shaped
+actors. Country operations cover diplomacy, resources, research, policies, ownership, fleets,
+colonies, designs, federations, and the Galactic Community. It is the central context for decisions
+that affect an empire as a whole rather than one of its owned objects.
 
 ## Common entry points
 
-Common entry points include country and observer event bodies, country-scoped on-actions and
-callbacks, and scope links from owned game objects. These are examples, not an exhaustive list of
-game paths.
+Common entry points include country and observer event bodies, country-scoped callbacks, and links
+that expose an object's owner, controller, or space owner.

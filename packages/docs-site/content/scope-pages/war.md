@@ -1,8 +1,11 @@
-# War scope
+# War
 
-War scope represents a war while the SDK records script against that war.
+A war is an aggregate conflict context with participants and opposing sides. Scripts can iterate
+attackers, defenders, and all participants, remove a participant, set the war goal, and store war
+flags. It coordinates conflict-wide state rather than the fleets, armies, and countries acting
+inside the war.
 
 ## Common entry points
 
-Enter this scope through typed callbacks or script contracts that supply a `WarScope`. The generated
-transition table below records the outgoing links available from that context.
+Common entry points are war iterators and typed callbacks that supply a `WarScope`; outgoing links
+identify the attacker, defender, and proxy-war instigator countries.

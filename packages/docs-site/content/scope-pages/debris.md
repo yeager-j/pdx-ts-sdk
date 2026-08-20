@@ -1,8 +1,11 @@
-# Debris scope
+# Debris
 
-Debris scope represents a debris object through the generated SDK script interface.
+Debris is a wreckage object left in space. Its scoped API can transfer debris ownership and perform
+the supported space-fauna reanimation operation, while standard links provide owner and system
+context. It gives post-destruction content a typed object to inspect without defining a separate
+debris event lifecycle.
 
 ## Common entry points
 
-Enter this scope through typed callbacks or script contracts that supply a `DebrisScope`. The
-generated transition table below records the outgoing links available from that context.
+Common entry points are typed callbacks or script contracts that supply a `DebrisScope`; the SDK
+generates no debris-specific event kind.

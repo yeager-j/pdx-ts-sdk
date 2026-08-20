@@ -1,8 +1,10 @@
-# First contact scope
+# First contact
 
-First contact scope represents a first-contact process through the generated SDK script interface.
+A first-contact scope represents a contact site or process between empires. Scripts can set its
+stage, finish contact, and store permanent or timed flags. It carries the progression of discovering
+and identifying another civilization during the contact process.
 
 ## Common entry points
 
-Common entry points include `first_contact_event` bodies and the generated `reverseFirstContact`
-scope link. These are examples, not an exhaustive list of game paths.
+Common entry points include `first_contact_event` bodies, first-contact callbacks, and the
+`reverseFirstContact` link between the two sides' corresponding contact sites.

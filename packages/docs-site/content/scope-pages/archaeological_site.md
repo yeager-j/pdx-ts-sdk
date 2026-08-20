@@ -1,8 +1,11 @@
-# Archaeological site scope
+# Archaeological site
 
-Archaeological site scope represents an archaeological site while the SDK records script against it.
+An archaeological site is a staged investigation in a star system. Scripts can add expedition log
+entries, adjust clues and progress, reset or select the current stage, or finish the site. This context
+supports event-driven excavation stories while keeping the current expedition state attached to
+the site.
 
 ## Common entry points
 
-Common entry points include archaeological-site callbacks and the generated `archaeologicalSite`
-scope link. These are examples, not an exhaustive list of game paths.
+Common entry points include archaeological-site callbacks and the `archaeologicalSite` link from
+supported objects in the same system.

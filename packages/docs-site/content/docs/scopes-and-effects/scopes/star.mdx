@@ -1,0 +1,48 @@
+---
+title: "Star"
+description: "Generated methods, event kinds, and transitions for StarScope."
+scope: star
+generatedBy: scope-reference
+---
+
+import { EventFireMethods } from "@/components/EventFireMethods";
+import { EventKinds } from "@/components/EventKinds";
+import { ScopeEffects } from "@/components/ScopeEffects";
+import { ScopeIdentity } from "@/components/ScopeIdentity";
+import { ScopeTransitions } from "@/components/ScopeTransitions";
+import { StructuralMethods } from "@/components/StructuralMethods";
+import { buildScopeReference } from "@/src/scope-reference";
+
+export const model = buildScopeReference("star");
+
+<ScopeIdentity model={model} />
+
+A star is the SDK's typed primary-star context for a system. The CWT rules describe the `star` link
+as selecting that primary star but mechanically report its output as a planet scope, so this page
+does not imply a separate mutable object model. `StarScope` is mainly a navigation and contract
+context whose exact generated surface remains authoritative.
+
+## Common entry points
+
+Common entry points are star-level callbacks or script contracts that supply a `StarScope`; the SDK
+generates no dedicated star event kind.
+
+## Event kinds whose bodies run in this scope
+
+<EventKinds rows={model.eventKinds} />
+
+## Ordinary effects
+
+<ScopeEffects universalCount={model.universalEffects.length} scopeSpecific={model.scopeEffects} />
+
+## Structural and control-flow methods
+
+<StructuralMethods rows={model.structuralMethods} />
+
+## Event-fire methods
+
+<EventFireMethods rows={model.eventFireMethods} />
+
+## Outgoing scope transitions
+
+<ScopeTransitions rows={model.transitions} />

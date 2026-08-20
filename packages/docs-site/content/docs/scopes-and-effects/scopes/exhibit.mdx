@@ -1,0 +1,48 @@
+---
+title: "Exhibit"
+description: "Generated methods, event kinds, and transitions for ExhibitScope."
+scope: exhibit
+generatedBy: scope-reference
+---
+
+import { EventFireMethods } from "@/components/EventFireMethods";
+import { EventKinds } from "@/components/EventKinds";
+import { ScopeEffects } from "@/components/ScopeEffects";
+import { ScopeIdentity } from "@/components/ScopeIdentity";
+import { ScopeTransitions } from "@/components/ScopeTransitions";
+import { StructuralMethods } from "@/components/StructuralMethods";
+import { buildScopeReference } from "@/src/scope-reference";
+
+export const model = buildScopeReference("exhibit");
+
+<ScopeIdentity model={model} />
+
+An exhibit is a display context associated with a specimen. Triggers can inspect whether the
+exhibit is active and read the contained specimen's rarity or category, but the generated interface
+adds no exhibit-specific ordinary effects. It is therefore an inspection-oriented view of museum
+or collection content rather than a mutable lifecycle API.
+
+## Common entry points
+
+Common entry points include country-level exhibit iterators and typed callbacks that supply an
+`ExhibitScope`.
+
+## Event kinds whose bodies run in this scope
+
+<EventKinds rows={model.eventKinds} />
+
+## Ordinary effects
+
+<ScopeEffects universalCount={model.universalEffects.length} scopeSpecific={model.scopeEffects} />
+
+## Structural and control-flow methods
+
+<StructuralMethods rows={model.structuralMethods} />
+
+## Event-fire methods
+
+<EventFireMethods rows={model.eventFireMethods} />
+
+## Outgoing scope transitions
+
+<ScopeTransitions rows={model.transitions} />

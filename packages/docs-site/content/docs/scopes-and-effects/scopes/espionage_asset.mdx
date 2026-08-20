@@ -1,0 +1,48 @@
+---
+title: "Espionage asset"
+description: "Generated methods, event kinds, and transitions for EspionageAssetScope."
+scope: espionage_asset
+generatedBy: scope-reference
+---
+
+import { EventFireMethods } from "@/components/EventFireMethods";
+import { EventKinds } from "@/components/EventKinds";
+import { ScopeEffects } from "@/components/ScopeEffects";
+import { ScopeIdentity } from "@/components/ScopeIdentity";
+import { ScopeTransitions } from "@/components/ScopeTransitions";
+import { StructuralMethods } from "@/components/StructuralMethods";
+import { buildScopeReference } from "@/src/scope-reference";
+
+export const model = buildScopeReference("espionage_asset");
+
+<ScopeIdentity model={model} />
+
+An espionage asset is an asset held and used by a spy network or operation. Scripts can tag or
+track it with permanent or timed flags, while operation and network contexts handle assignment, creation,
+destruction, and iteration. It is the individual resource within the broader machinery of covert
+operations.
+
+## Common entry points
+
+Common entry points include asset iterators on spy networks and espionage operations, plus typed
+callbacks that supply an `EspionageAssetScope`.
+
+## Event kinds whose bodies run in this scope
+
+<EventKinds rows={model.eventKinds} />
+
+## Ordinary effects
+
+<ScopeEffects universalCount={model.universalEffects.length} scopeSpecific={model.scopeEffects} />
+
+## Structural and control-flow methods
+
+<StructuralMethods rows={model.structuralMethods} />
+
+## Event-fire methods
+
+<EventFireMethods rows={model.eventFireMethods} />
+
+## Outgoing scope transitions
+
+<ScopeTransitions rows={model.transitions} />

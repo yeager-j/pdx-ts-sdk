@@ -6,6 +6,7 @@ import {
 } from "@pdx-ts/sdk/script-reference";
 import { describe, expect, it } from "vitest";
 
+import { scopeEffectsMarkdown } from "../src/llm-markdown.ts";
 import { validateScopePages, type ScopePageClaim } from "../src/scope-page-coverage.ts";
 import { parseScopePageSource } from "../src/scope-page-source.ts";
 import { buildScopeReference, type ScopeReferenceSources } from "../src/scope-reference.ts";
@@ -21,8 +22,8 @@ const methodsOf = (rows: readonly { readonly method: string }[]): readonly strin
   rows.map((row) => row.method);
 
 const page = (routeScope: string, declaredScope: string | null = routeScope): ScopePageClaim => ({
-  id: `scopes-and-effects/${routeScope}`,
-  href: `/scopes-and-effects/${routeScope}/`,
+  id: `scopes-and-effects/scopes/${routeScope}`,
+  href: `/scopes-and-effects/scopes/${routeScope}/`,
   title: `${routeScope} scope`,
   routeScope,
   ...(declaredScope === null ? {} : { declaredScope }),
@@ -87,6 +88,15 @@ describe("buildScopeReference", () => {
       ...army.eventFireMethods,
     ];
     expect(methodsOf(allMethods)).not.toContain("colony");
+  });
+
+  it("links to the universal effect inventory instead of repeating it", () => {
+    const alliance = buildScopeReference("alliance");
+    const markdown = scopeEffectsMarkdown(alliance);
+    expect(markdown).toContain(
+      `[${alliance.universalEffects.length} universal effects](/scopes-and-effects/effects/)`
+    );
+    expect(markdown).not.toContain("activateGateway");
   });
 
   it("rejects an unknown scope with an actionable error", () => {
@@ -179,13 +189,13 @@ describe("scope page coverage", () => {
 
   it("requires scope frontmatter on every scope page", () => {
     expect(() => validateScopePages(["country"], [page("country", null)])).toThrow(
-      'Scope pages missing "scope" frontmatter: "scopes-and-effects/country".'
+      'Scope pages missing "scope" frontmatter: "scopes-and-effects/scopes/country".'
     );
   });
 });
 
 describe("scope page prose", () => {
-  const prose = `# Country scope
+  const prose = `# Country
 
 Country scope represents a country.
 
@@ -196,7 +206,7 @@ Common entry points include country event bodies.`;
   it("parses only the page-owned title and prose", () => {
     expect(parseScopePageSource("country", prose)).toEqual({
       scope: "country",
-      title: "Country scope",
+      title: "Country",
       prose: prose.slice(prose.indexOf("\n") + 1).trim(),
     });
   });

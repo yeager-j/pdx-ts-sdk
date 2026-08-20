@@ -1,0 +1,48 @@
+---
+title: "Pop faction"
+description: "Generated methods, event kinds, and transitions for PopFactionScope."
+scope: pop_faction
+generatedBy: scope-reference
+---
+
+import { EventFireMethods } from "@/components/EventFireMethods";
+import { EventKinds } from "@/components/EventKinds";
+import { ScopeEffects } from "@/components/ScopeEffects";
+import { ScopeIdentity } from "@/components/ScopeIdentity";
+import { ScopeTransitions } from "@/components/ScopeTransitions";
+import { StructuralMethods } from "@/components/StructuralMethods";
+import { buildScopeReference } from "@/src/scope-reference";
+
+export const model = buildScopeReference("pop_faction");
+
+<ScopeIdentity model={model} />
+
+A pop faction is a political group formed by part of an empire's population. Scripts can inspect
+its approval, support, type, and parameters, mark its extorted state, and store permanent or timed faction
+flags. It is the faction-level view of domestic politics rather than an individual pop group or
+the country as a whole.
+
+## Common entry points
+
+Common entry points include `pop_faction_event` bodies, faction iterators, and links from a pop
+group or leader to its faction.
+
+## Event kinds whose bodies run in this scope
+
+<EventKinds rows={model.eventKinds} />
+
+## Ordinary effects
+
+<ScopeEffects universalCount={model.universalEffects.length} scopeSpecific={model.scopeEffects} />
+
+## Structural and control-flow methods
+
+<StructuralMethods rows={model.structuralMethods} />
+
+## Event-fire methods
+
+<EventFireMethods rows={model.eventFireMethods} />
+
+## Outgoing scope transitions
+
+<ScopeTransitions rows={model.transitions} />

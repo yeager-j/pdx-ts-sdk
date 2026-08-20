@@ -1,0 +1,47 @@
+---
+title: "First contact"
+description: "Generated methods, event kinds, and transitions for FirstContactScope."
+scope: first_contact
+generatedBy: scope-reference
+---
+
+import { EventFireMethods } from "@/components/EventFireMethods";
+import { EventKinds } from "@/components/EventKinds";
+import { ScopeEffects } from "@/components/ScopeEffects";
+import { ScopeIdentity } from "@/components/ScopeIdentity";
+import { ScopeTransitions } from "@/components/ScopeTransitions";
+import { StructuralMethods } from "@/components/StructuralMethods";
+import { buildScopeReference } from "@/src/scope-reference";
+
+export const model = buildScopeReference("first_contact");
+
+<ScopeIdentity model={model} />
+
+A first-contact scope represents a contact site or process between empires. Scripts can set its
+stage, finish contact, and store permanent or timed flags. It carries the progression of discovering
+and identifying another civilization during the contact process.
+
+## Common entry points
+
+Common entry points include `first_contact_event` bodies, first-contact callbacks, and the
+`reverseFirstContact` link between the two sides' corresponding contact sites.
+
+## Event kinds whose bodies run in this scope
+
+<EventKinds rows={model.eventKinds} />
+
+## Ordinary effects
+
+<ScopeEffects universalCount={model.universalEffects.length} scopeSpecific={model.scopeEffects} />
+
+## Structural and control-flow methods
+
+<StructuralMethods rows={model.structuralMethods} />
+
+## Event-fire methods
+
+<EventFireMethods rows={model.eventFireMethods} />
+
+## Outgoing scope transitions
+
+<ScopeTransitions rows={model.transitions} />

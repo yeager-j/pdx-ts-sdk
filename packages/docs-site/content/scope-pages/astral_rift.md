@@ -1,8 +1,10 @@
-# Astral rift scope
+# Astral rift
 
-Astral rift scope represents an astral rift while the SDK records script against that rift.
+An astral rift is an exploration site with scripted event progression. Scripts can add clues and
+modifiers, select the next rift event, and finish the exploration. It provides the stateful setting
+for stories that unfold while an empire and fleet investigate the rift.
 
 ## Common entry points
 
-Common entry points include `astral_rift_event` bodies and the generated `astralRift` scope link.
-These are examples, not an exhaustive list of game paths.
+Common entry points include `astral_rift_event` bodies, rift exploration callbacks, and links from
+the rift's system context.

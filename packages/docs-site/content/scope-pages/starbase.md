@@ -1,8 +1,10 @@
-# Starbase scope
+# Starbase
 
-Starbase scope represents a starbase while the SDK records script against that starbase.
+A starbase is a station context in a star system. Scripts can manage modules, buildings, standalone
+components, size, construction type, network relationships, and starbase flags. It is the orbital
+infrastructure hub of a system rather than one of the ordinary ships around it.
 
 ## Common entry points
 
-Common entry points include `starbase_event` bodies and the generated `starbase` scope link. These
-are examples, not an exhaustive list of game paths.
+Common entry points include `starbase_event` bodies and links from planets, ships, fleets, systems,
+or colonies.

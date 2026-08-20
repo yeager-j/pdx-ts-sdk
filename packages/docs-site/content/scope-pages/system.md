@@ -1,8 +1,11 @@
-# System scope
+# System
 
-System scope represents a star system through the generated SDK script interface.
+A system is a star system or galactic-object context and its local orbital network. Scripts can
+inspect neighboring systems, fleets, ships, stations, planets, bypasses, and storms, and can manage
+claims, star class, asteroid belts, nebulae, auras, and starbases. It is the spatial frame that
+connects local celestial and military objects to the wider galaxy map.
 
 ## Common entry points
 
-Common entry points include `system_event` bodies and generated links such as `solarSystem`,
-`targetSystem`, and `lastCreatedSystem`. These are examples, not an exhaustive list of game paths.
+Common entry points include `system_event` bodies and links or iterators that select an object's
+solar system, target system, or neighboring system.

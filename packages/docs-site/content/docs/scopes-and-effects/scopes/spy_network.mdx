@@ -1,0 +1,47 @@
+---
+title: "Spy network"
+description: "Generated methods, event kinds, and transitions for SpyNetworkScope."
+scope: spy_network
+generatedBy: scope-reference
+---
+
+import { EventFireMethods } from "@/components/EventFireMethods";
+import { EventKinds } from "@/components/EventKinds";
+import { ScopeEffects } from "@/components/ScopeEffects";
+import { ScopeIdentity } from "@/components/ScopeIdentity";
+import { ScopeTransitions } from "@/components/ScopeTransitions";
+import { StructuralMethods } from "@/components/StructuralMethods";
+import { buildScopeReference } from "@/src/scope-reference";
+
+export const model = buildScopeReference("spy_network");
+
+<ScopeIdentity model={model} />
+
+A spy network is the espionage-state context for a network and its assets and operations. Scripts
+can change network level, create or destroy assets, iterate operations, and store permanent or timed
+network flags. It is the operational frame for covert activity against a target.
+
+## Common entry points
+
+Common entry points include links from espionage operations or spymaster envoys and typed
+espionage callbacks that supply a `SpyNetworkScope`.
+
+## Event kinds whose bodies run in this scope
+
+<EventKinds rows={model.eventKinds} />
+
+## Ordinary effects
+
+<ScopeEffects universalCount={model.universalEffects.length} scopeSpecific={model.scopeEffects} />
+
+## Structural and control-flow methods
+
+<StructuralMethods rows={model.structuralMethods} />
+
+## Event-fire methods
+
+<EventFireMethods rows={model.eventFireMethods} />
+
+## Outgoing scope transitions
+
+<ScopeTransitions rows={model.transitions} />

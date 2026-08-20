@@ -1,0 +1,47 @@
+---
+title: "Astral rift"
+description: "Generated methods, event kinds, and transitions for AstralRiftScope."
+scope: astral_rift
+generatedBy: scope-reference
+---
+
+import { EventFireMethods } from "@/components/EventFireMethods";
+import { EventKinds } from "@/components/EventKinds";
+import { ScopeEffects } from "@/components/ScopeEffects";
+import { ScopeIdentity } from "@/components/ScopeIdentity";
+import { ScopeTransitions } from "@/components/ScopeTransitions";
+import { StructuralMethods } from "@/components/StructuralMethods";
+import { buildScopeReference } from "@/src/scope-reference";
+
+export const model = buildScopeReference("astral_rift");
+
+<ScopeIdentity model={model} />
+
+An astral rift is an exploration site with scripted event progression. Scripts can add clues and
+modifiers, select the next rift event, and finish the exploration. It provides the stateful setting
+for stories that unfold while an empire and fleet investigate the rift.
+
+## Common entry points
+
+Common entry points include `astral_rift_event` bodies, rift exploration callbacks, and links from
+the rift's system context.
+
+## Event kinds whose bodies run in this scope
+
+<EventKinds rows={model.eventKinds} />
+
+## Ordinary effects
+
+<ScopeEffects universalCount={model.universalEffects.length} scopeSpecific={model.scopeEffects} />
+
+## Structural and control-flow methods
+
+<StructuralMethods rows={model.structuralMethods} />
+
+## Event-fire methods
+
+<EventFireMethods rows={model.eventFireMethods} />
+
+## Outgoing scope transitions
+
+<ScopeTransitions rows={model.transitions} />

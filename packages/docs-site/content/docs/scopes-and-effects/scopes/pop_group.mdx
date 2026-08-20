@@ -1,0 +1,48 @@
+---
+title: "Pop group"
+description: "Generated methods, event kinds, and transitions for PopGroupScope."
+scope: pop_group
+generatedBy: scope-reference
+---
+
+import { EventFireMethods } from "@/components/EventFireMethods";
+import { EventKinds } from "@/components/EventKinds";
+import { ScopeEffects } from "@/components/ScopeEffects";
+import { ScopeIdentity } from "@/components/ScopeIdentity";
+import { ScopeTransitions } from "@/components/ScopeTransitions";
+import { StructuralMethods } from "@/components/StructuralMethods";
+import { buildScopeReference } from "@/src/scope-reference";
+
+export const model = buildScopeReference("pop_group");
+
+<ScopeIdentity model={model} />
+
+A pop group is a grouped population context. Scripts can change its amount or species, clear its
+ethics, force faction evaluation, and inspect traits associated with its species. It is the local
+population unit used for demographic, employment, and faction behavior without representing a
+whole species.
+
+## Common entry points
+
+Common entry points include `pop_group_event` bodies and links from armies, planets, ships, or
+countries that expose a related pop group.
+
+## Event kinds whose bodies run in this scope
+
+<EventKinds rows={model.eventKinds} />
+
+## Ordinary effects
+
+<ScopeEffects universalCount={model.universalEffects.length} scopeSpecific={model.scopeEffects} />
+
+## Structural and control-flow methods
+
+<StructuralMethods rows={model.structuralMethods} />
+
+## Event-fire methods
+
+<EventFireMethods rows={model.eventFireMethods} />
+
+## Outgoing scope transitions
+
+<ScopeTransitions rows={model.transitions} />

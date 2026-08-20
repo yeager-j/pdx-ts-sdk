@@ -1,10 +1,11 @@
-# DLC recommendation scope
+# DLC recommendation
 
-DLC recommendation scope represents a value exposed through the SDK's canonical
-`dlc_recommendation` script context.
+DLC recommendation is the typed context used while the game evaluates recommendation content. Its
+known trigger surface can inspect properties such as name-list category and origin, but the
+generated interface adds no recommendation-specific ordinary effects. It is an evaluation context,
+not evidence of a persistent game object or author-controlled lifecycle.
 
 ## Common entry points
 
-Enter this scope through typed callbacks or script contracts that supply a
-`DlcRecommendationScope`. The generated transition table below records no universal scope-link
-property for entering it.
+Common entry points are typed recommendation callbacks or script contracts that supply a
+`DlcRecommendationScope`.

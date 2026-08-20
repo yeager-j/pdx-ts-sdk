@@ -1,8 +1,11 @@
-# Ship growth stage scope
+# Ship growth stage
 
-Ship growth stage scope represents a generated growth-stage context for a ship.
+A ship growth stage is the current growth-stage value inside a ship's design. The generated SDK
+provides a narrow typed context with no dedicated event kind or growth-stage-specific ordinary
+effects. It is useful for script contracts that inspect a design's current stage without assuming
+a biological or construction lifecycle.
 
 ## Common entry points
 
-Common entry points include the generated `shipGrowthStage` scope link and typed callbacks that
-supply a `ShipGrowthStageScope`. These are examples, not an exhaustive list of game paths.
+The canonical entry point is a ship's `shipGrowthStage` link, which supplies a
+`ShipGrowthStageScope`.

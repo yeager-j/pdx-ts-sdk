@@ -206,8 +206,7 @@ export function eventKindsMarkdown(rows: readonly EventKindRow[]): string {
 
 export function scopeEffectsMarkdown(model: ScopeReferenceModel): string {
   const sections = [
-    `**${model.universalEffects.length} universal effects, available on every scope interface:**`,
-    methodTable(model.universalEffects),
+    `[${model.universalEffects.length} universal effects](/scopes-and-effects/effects/) are available on every scope interface and listed once in the Effects index.`,
   ];
   if (model.scopeEffects.length === 0) {
     sections.push("This scope adds no scope-specific ordinary effects beyond the universal set.");

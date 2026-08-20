@@ -1,0 +1,48 @@
+---
+title: "Agreement"
+description: "Generated methods, event kinds, and transitions for AgreementScope."
+scope: agreement
+generatedBy: scope-reference
+---
+
+import { EventFireMethods } from "@/components/EventFireMethods";
+import { EventKinds } from "@/components/EventKinds";
+import { ScopeEffects } from "@/components/ScopeEffects";
+import { ScopeIdentity } from "@/components/ScopeIdentity";
+import { ScopeTransitions } from "@/components/ScopeTransitions";
+import { StructuralMethods } from "@/components/StructuralMethods";
+import { buildScopeReference } from "@/src/scope-reference";
+
+export const model = buildScopeReference("agreement");
+
+<ScopeIdentity model={model} />
+
+An agreement is the diplomatic contract between an overlord and a subject. Scripts can set its
+preset and terms, adjust loyalty, and control rules for integration, diplomacy, expansion, war,
+access, and sensors. It provides the mechanical frame for the permissions and obligations of a
+subject relationship.
+
+## Common entry points
+
+Common entry points include `agreement_event` bodies and typed callbacks that supply an
+`AgreementScope`; other paths depend on the enclosing script contract.
+
+## Event kinds whose bodies run in this scope
+
+<EventKinds rows={model.eventKinds} />
+
+## Ordinary effects
+
+<ScopeEffects universalCount={model.universalEffects.length} scopeSpecific={model.scopeEffects} />
+
+## Structural and control-flow methods
+
+<StructuralMethods rows={model.structuralMethods} />
+
+## Event-fire methods
+
+<EventFireMethods rows={model.eventFireMethods} />
+
+## Outgoing scope transitions
+
+<ScopeTransitions rows={model.transitions} />

@@ -1,10 +1,11 @@
-# Galactic community scope
+# Galactic Community
 
-Galactic community scope represents the galactic community through the generated SDK script
-interface.
+Galactic Community is the typed context for galaxy-wide diplomatic institutions and policy state.
+Its trigger surface describes formation, the council, council positions, and active resolutions,
+while the generated interface adds no community-specific ordinary effects. It is useful when
+evaluating collective galactic governance rather than the membership state of one country.
 
 ## Common entry points
 
-Enter this scope through typed callbacks or script contracts that supply a
-`GalacticCommunityScope`. The generated transition table below records no universal property for
-entering it.
+Common entry points are typed diplomatic callbacks or script contracts that supply a
+`GalacticCommunityScope`.

@@ -1,0 +1,48 @@
+---
+title: "Species"
+description: "Generated methods, event kinds, and transitions for SpeciesScope."
+scope: species
+generatedBy: scope-reference
+---
+
+import { EventFireMethods } from "@/components/EventFireMethods";
+import { EventKinds } from "@/components/EventKinds";
+import { ScopeEffects } from "@/components/ScopeEffects";
+import { ScopeIdentity } from "@/components/ScopeIdentity";
+import { ScopeTransitions } from "@/components/ScopeTransitions";
+import { StructuralMethods } from "@/components/StructuralMethods";
+import { buildScopeReference } from "@/src/scope-reference";
+
+export const model = buildScopeReference("species");
+
+<ScopeIdentity model={model} />
+
+A species is the context for a biological or constructed population identity and its
+characteristics. Scripts can change its portrait and characteristics, manage rights and controls,
+inspect traits, and iterate its pop groups. It is the identity-level view shared by populations
+across worlds rather than one local group.
+
+## Common entry points
+
+Common entry points include species links from countries, ships, pop groups, leaders, and armies,
+plus callbacks that expose founder, growing, assembling, or declining species.
+
+## Event kinds whose bodies run in this scope
+
+<EventKinds rows={model.eventKinds} />
+
+## Ordinary effects
+
+<ScopeEffects universalCount={model.universalEffects.length} scopeSpecific={model.scopeEffects} />
+
+## Structural and control-flow methods
+
+<StructuralMethods rows={model.structuralMethods} />
+
+## Event-fire methods
+
+<EventFireMethods rows={model.eventFireMethods} />
+
+## Outgoing scope transitions
+
+<ScopeTransitions rows={model.transitions} />

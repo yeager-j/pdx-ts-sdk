@@ -1,0 +1,47 @@
+---
+title: "Species trait"
+description: "Generated methods, event kinds, and transitions for SpeciesTraitScope."
+scope: species_trait
+generatedBy: scope-reference
+---
+
+import { EventFireMethods } from "@/components/EventFireMethods";
+import { EventKinds } from "@/components/EventKinds";
+import { ScopeEffects } from "@/components/ScopeEffects";
+import { ScopeIdentity } from "@/components/ScopeIdentity";
+import { ScopeTransitions } from "@/components/ScopeTransitions";
+import { StructuralMethods } from "@/components/StructuralMethods";
+import { buildScopeReference } from "@/src/scope-reference";
+
+export const model = buildScopeReference("species_trait");
+
+<ScopeIdentity model={model} />
+
+A species trait is a typed trait value associated with a species. The SDK uses it as the callback
+scope for trait iterators, but generates no trait-specific ordinary effects or dedicated event kind.
+It is an inspection context for trait-level checks rather than a mutable trait lifecycle API.
+
+## Common entry points
+
+Common entry points include species and pop-group trait iterators that supply a
+`SpeciesTraitScope`.
+
+## Event kinds whose bodies run in this scope
+
+<EventKinds rows={model.eventKinds} />
+
+## Ordinary effects
+
+<ScopeEffects universalCount={model.universalEffects.length} scopeSpecific={model.scopeEffects} />
+
+## Structural and control-flow methods
+
+<StructuralMethods rows={model.structuralMethods} />
+
+## Event-fire methods
+
+<EventFireMethods rows={model.eventFireMethods} />
+
+## Outgoing scope transitions
+
+<ScopeTransitions rows={model.transitions} />
