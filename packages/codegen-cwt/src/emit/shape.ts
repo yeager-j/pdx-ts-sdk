@@ -8,17 +8,78 @@
  * overloaded with literals like `count = all`).
  *
  * Classification is shared between the trigger and effect emitters; rendering
- * stays with each emitter. A `string` return is the skip reason — the caller
- * reports it, nothing is dropped silently.
+ * stays with each emitter. A `SkipReason` return carries the stable category
+ * and report detail, so nothing is dropped silently.
  */
 
 import { isOptional, isRepeated, type RuleField, type RuleType } from "../cwt/model.ts";
 import { UNIVERSAL_SCOPES } from "../overlay.ts";
 import type { Emitter, TsValue } from "./types.ts";
 
-export interface SkippedRule {
+export type ScriptGenerationSkipCategory =
+  | "invalid-rule-name"
+  | "missing-rule-scope"
+  | "unknown-scope"
+  | "missing-push-scope"
+  | "comparison-effect"
+  | "parameterised-placeholder"
+  | "unsupported-value"
+  | "multiple-block-forms"
+  | "scalar-block-overload"
+  | "bare-value-block"
+  | "unsupported-alias-splice"
+  | "unsupported-clause"
+  | "unknown-push-scope"
+  | "empty-block"
+  | "reserved-field-collision"
+  | "computed-field-key"
+  | "mixed-clause-categories"
+  | "clause-scalar-overload"
+  | "multiple-structured-scalar-arms"
+  | "repeated-structured-scalar-arms"
+  | "unsupported-scalar-arm"
+  | "structured-bare-values"
+  | "repeated-nested-field"
+  | "empty-structured-arm"
+  | "unsupported-comparison-operand"
+  | "comparison-overload"
+  | "unsupported-field-value";
+
+export type ScriptSkipCategory =
+  | ScriptGenerationSkipCategory
+  | "abstract-placeholder"
+  | "handwritten-trigger"
+  | "structural-effect"
+  | "event-fire-effect"
+  | "scopeless-event-kind"
+  | "missing-fire-rule-scope"
+  | "event-policy-rejected"
+  | "value-link"
+  | "data-link"
+  | "missing-output-scope"
+  | "polymorphic-output-scope"
+  | "unknown-output-scope"
+  | "unknown-input-scope";
+
+export interface SkipReason {
+  readonly category: ScriptSkipCategory;
+  readonly detail: string;
+}
+
+export interface SkippedRule extends SkipReason {
   readonly name: string;
-  readonly reason: string;
+}
+
+export function skipReason(category: ScriptSkipCategory, detail: string): SkipReason {
+  return { category, detail };
+}
+
+export function skippedRule(
+  name: string,
+  category: ScriptSkipCategory,
+  detail: string
+): SkippedRule {
+  return { name, category, detail };
 }
 
 /**
@@ -155,14 +216,14 @@ function expandEnumKeys(emitter: Emitter, fields: readonly RuleField[]): RuleFie
 /**
  * Resolves the scope a clause field runs in: the field's own `## push_scope`,
  * else the declaration's, else the enclosing rule's scope (`null`).
- * A `string` return is the skip reason.
+ * A `SkipReason` return is the classified skip reason.
  */
 function clauseScope(
   emitter: Emitter,
   name: string,
   fields: readonly RuleField[],
   inherited: string | null
-): string | null | { readonly reason: string } {
+): string | null | SkipReason {
   const pushed =
     fields.map((field) => field.scope?.this).find((scope) => scope != null) ?? inherited;
   if (pushed == null) {
@@ -170,12 +231,15 @@ function clauseScope(
   }
   const canonical = emitter.canonicalScope(pushed);
   return canonical === null
-    ? { reason: `field "${name}" pushes an unknown scope (${pushed})` }
+    ? skipReason("unknown-push-scope", `field "${name}" pushes an unknown scope (${pushed})`)
     : canonical;
 }
 
 /** The authored operand type for a CWT comparison, or its skip reason. */
-export function comparisonValue(emitter: Emitter, types: readonly RuleType[]): TsValue | string {
+export function comparisonValue(
+  emitter: Emitter,
+  types: readonly RuleType[]
+): TsValue | SkipReason {
   const value = emitter.unionFor(types);
   if (
     value === null ||
@@ -183,7 +247,10 @@ export function comparisonValue(emitter: Emitter, types: readonly RuleType[]): T
       .split(" | ")
       .some((part) => part !== "number" && part !== "ScriptValue" && part !== "boolean")
   ) {
-    return "comparison operand is not a scalar numeric or boolean value";
+    return skipReason(
+      "unsupported-comparison-operand",
+      "comparison operand is not a scalar numeric or boolean value"
+    );
   }
   return value;
 }
@@ -207,11 +274,11 @@ export function mergeFields(
   fields: readonly RuleField[],
   inheritedScope: string | null,
   allowedClauses: ReadonlySet<ClauseCategory>
-): ArgField[] | string {
+): ArgField[] | SkipReason {
   const grouped = new Map<string, RuleField[]>();
   for (const field of expandEnumKeys(emitter, fields)) {
     if (field.key.kind !== "name") {
-      return "block with computed or subtype field keys";
+      return skipReason("computed-field-key", "block with computed or subtype field keys");
     }
     const existing = grouped.get(field.key.name);
     if (existing === undefined) {
@@ -230,14 +297,17 @@ export function mergeFields(
     if (clauses.length === group.length) {
       const category = clauseOf(group[0]!.type)!;
       if (group.some((field) => clauseOf(field.type) !== category)) {
-        return `field "${name}" mixes clause categories`;
+        return skipReason("mixed-clause-categories", `field "${name}" mixes clause categories`);
       }
       if (!allowedClauses.has(category)) {
-        return `field "${name}" splices ${category}, which this emitter cannot type`;
+        return skipReason(
+          "unsupported-clause",
+          `field "${name}" splices ${category}, which this emitter cannot type`
+        );
       }
       const scope = clauseScope(emitter, name, group, inheritedScope);
       if (typeof scope === "object" && scope !== null) {
-        return scope.reason;
+        return scope;
       }
       merged.push({
         name,
@@ -248,7 +318,10 @@ export function mergeFields(
       continue;
     }
     if (clauses.length > 0) {
-      return `field "${name}" overloaded between a clause and a scalar`;
+      return skipReason(
+        "clause-scalar-overload",
+        `field "${name}" overloaded between a clause and a scalar`
+      );
     }
 
     const structured = group.filter(
@@ -260,21 +333,36 @@ export function mergeFields(
     if (structured.length > 0) {
       const scalarDeclarations = group.filter((field) => field.type.kind !== "block");
       if (structured.length !== 1 || scalarDeclarations.length === 0) {
-        return `field "${name}" has more than one structured/scalar arm`;
+        return skipReason(
+          "multiple-structured-scalar-arms",
+          `field "${name}" has more than one structured/scalar arm`
+        );
       }
       if (group.some((field) => isRepeated(field.cardinality))) {
-        return `field "${name}" has repeated structured/scalar arms`;
+        return skipReason(
+          "repeated-structured-scalar-arms",
+          `field "${name}" has repeated structured/scalar arms`
+        );
       }
       const scalar = emitter.unionFor(scalarDeclarations.map((field) => field.type));
       if (scalar === null) {
-        return `field "${name}" has a scalar arm the emitter cannot express`;
+        return skipReason(
+          "unsupported-scalar-arm",
+          `field "${name}" has a scalar arm the emitter cannot express`
+        );
       }
       const block = structured[0]!.type;
       if (block.bare.length > 0) {
-        return `field "${name}" structured arm has bare values`;
+        return skipReason(
+          "structured-bare-values",
+          `field "${name}" structured arm has bare values`
+        );
       }
       if (hasRepeatedNestedField(block.fields)) {
-        return `field "${name}" structured arm has repeated nested fields`;
+        return skipReason(
+          "repeated-nested-field",
+          `field "${name}" structured arm has repeated nested fields`
+        );
       }
       const fields = mergeFields(
         emitter,
@@ -282,11 +370,17 @@ export function mergeFields(
         structured[0]!.scope?.this ?? inheritedScope,
         allowedClauses
       );
-      if (typeof fields === "string") {
-        return `field "${name}" structured arm ${fields}`;
+      if (!Array.isArray(fields)) {
+        return {
+          ...fields,
+          detail: `field "${name}" structured arm ${fields.detail}`,
+        };
       }
       if (fields.length === 0) {
-        return `field "${name}" structured arm has no typeable fields`;
+        return skipReason(
+          "empty-structured-arm",
+          `field "${name}" structured arm has no typeable fields`
+        );
       }
       merged.push({
         name,
@@ -302,13 +396,19 @@ export function mergeFields(
         emitter,
         group.filter((field) => field.comparison).map((field) => field.type)
       );
-      if (typeof value === "string") {
-        return `comparison field "${name}" ${value}`;
+      if ("category" in value) {
+        return {
+          ...value,
+          detail: `comparison field "${name}" ${value.detail}`,
+        };
       }
       const rest = group.filter((field) => !field.comparison).map((field) => field.type);
       const literals = rest.flatMap((type) => (type.kind === "literal" ? [type.text] : []));
       if (literals.length !== rest.length) {
-        return `comparison field "${name}" overloaded with a non-literal declaration`;
+        return skipReason(
+          "comparison-overload",
+          `comparison field "${name}" overloaded with a non-literal declaration`
+        );
       }
       merged.push({ name, value: { kind: "comparison", value, literals }, optional, docs });
       continue;
@@ -316,7 +416,10 @@ export function mergeFields(
 
     const value = emitter.unionFor(group.map((field) => field.type));
     if (value === null) {
-      return `field "${name}" has a type the emitter cannot express`;
+      return skipReason(
+        "unsupported-field-value",
+        `field "${name}" has a type the emitter cannot express`
+      );
     }
     merged.push({ name, value: { kind: "scalar", value }, optional, docs });
   }

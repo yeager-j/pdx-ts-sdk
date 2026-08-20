@@ -150,11 +150,13 @@ describe("LoweredRule", () => {
       expect.arrayContaining([
         expect.objectContaining({
           name: "create_colony",
-          reason: expect.stringContaining("repeated nested fields"),
+          category: "repeated-nested-field",
+          detail: expect.stringContaining("repeated nested fields"),
         }),
         expect.objectContaining({
           name: "start_colony",
-          reason: expect.stringContaining("repeated nested fields"),
+          category: "repeated-nested-field",
+          detail: expect.stringContaining("repeated nested fields"),
         }),
       ])
     );
@@ -235,9 +237,9 @@ describe("LoweredRule", () => {
       null,
       new Set()
     );
-    expect(merged).not.toBeTypeOf("string");
-    if (typeof merged === "string") {
-      throw new Error(merged);
+    expect(Array.isArray(merged)).toBe(true);
+    if (!Array.isArray(merged)) {
+      throw new Error(merged.detail);
     }
     expect(merged).toHaveLength(1);
     expect(merged[0]?.value).toMatchObject({
@@ -266,9 +268,31 @@ describe("the effect ownership policy", () => {
 
     expect(events.skipped).toContainEqual({
       name: "country_event",
-      reason: "no fire-effect rule with `## scopes`",
+      category: "missing-fire-rule-scope",
+      detail: "no fire-effect rule with `## scopes`",
     });
     expect(events.fireMethods).toBe(22);
+  });
+
+  it("does not grant fire ownership without declared receiving scopes", () => {
+    const effects = new Map(rules.effects);
+    effects.set(
+      "country_event",
+      rules.effects
+        .get("country_event")!
+        .map((declaration) => ({ ...declaration, supportedScopes: null }))
+    );
+    const changedRules = { ...rules, effects };
+    const changedPolicy = createEffectPolicy(changedRules);
+    const events = emitEvents(new Emitter(changedRules), changedPolicy);
+
+    expect(changedPolicy.fireKeys.has("country_event")).toBe(false);
+    expect(changedPolicy.byKey.get("country_event")).toMatchObject({ owner: "generated" });
+    expect(events.skipped).toContainEqual({
+      name: "country_event",
+      category: "missing-fire-rule-scope",
+      detail: "no fire-effect rule with `## scopes`",
+    });
   });
 
   it("accounts explicitly for CWT-owned and SDK-synthetic methods", () => {

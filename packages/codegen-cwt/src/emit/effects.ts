@@ -32,9 +32,12 @@ import type { ScriptEffectReferenceRow, ScriptScopeLinkReferenceRow } from "./sc
 import {
   canonicalScopeSet,
   mergeFields,
+  skippedRule,
+  skipReason,
   type ArgField,
   type ClauseCategory,
   type SkippedRule,
+  type SkipReason,
 } from "./shape.ts";
 import { canonicalScopes } from "./support.ts";
 import { Emitter, type TsValue } from "./types.ts";
@@ -132,16 +135,16 @@ interface EmittedScopeLink {
 function shapeOf(
   emitter: Emitter,
   rule: LoweredRule
-): EffectShape | { readonly reason: string } | { readonly scalarOnly: EffectShape } {
+): EffectShape | SkipReason | { readonly scalarOnly: EffectShape } {
   if (rule.comparison) {
-    return { reason: "declared with a comparison operator" };
+    return skipReason("comparison-effect", "declared with a comparison operator");
   }
   const blocks = rule.blocks;
   const scalars = rule.scalars;
 
   if (blocks.length === 0) {
     if (scalars.some((s) => s.type.kind === "literal" && s.type.text.startsWith("$"))) {
-      return { reason: "parameterised placeholder rule" };
+      return skipReason("parameterised-placeholder", "parameterised placeholder rule");
     }
     // Effects spell booleans `destroy_colony = yes`, which classifies as the
     // literal `yes` rather than a bool — both mean the same toggle.
@@ -152,9 +155,10 @@ function shapeOf(
     }
     const value = emitter.unionFor(scalars.map((declaration) => declaration.type));
     if (value === null) {
-      return {
-        reason: `unsupported value type (${scalars.map((s) => s.type.kind).join(", ")})`,
-      };
+      return skipReason(
+        "unsupported-value",
+        `unsupported value type (${scalars.map((s) => s.type.kind).join(", ")})`
+      );
     }
     return { kind: "value", value };
   }
@@ -172,35 +176,38 @@ function shapeOf(
     if ("kind" in fallback) {
       return { scalarOnly: fallback };
     }
-    return { reason: "overloaded between a block and a scalar" };
+    return skipReason("scalar-block-overload", "overloaded between a block and a scalar");
   }
   if (blocks.length > 1) {
-    return { reason: "multiple block declarations" };
+    return skipReason("multiple-block-forms", "multiple block declarations");
   }
 
   const block = blocks[0]!;
   const body = block.type;
   if (body.bare.length > 0) {
-    return { reason: "block with bare values" };
+    return skipReason("bare-value-block", "block with bare values");
   }
   const categories = new Set(
     block.splices.flatMap((field) => (field.key.kind === "aliasName" ? [field.key.category] : []))
   );
   if (categories.has("modifier_rule")) {
-    return { reason: "contains a modifier_rule splice" };
+    return skipReason("unsupported-alias-splice", "contains a modifier_rule splice");
   }
   if (categories.has("trigger")) {
-    return { reason: "contains a bare trigger splice" };
+    return skipReason("unsupported-alias-splice", "contains a bare trigger splice");
   }
   if (categories.size > 0 && !categories.has("effect")) {
-    return { reason: `splices a category the emitter cannot type (${[...categories].join(", ")})` };
+    return skipReason(
+      "unsupported-alias-splice",
+      `splices a category the emitter cannot type (${[...categories].join(", ")})`
+    );
   }
 
   const named = block.named;
   const pushedRaw = block.inheritedScope;
   const merged = named.length === 0 ? [] : mergeFields(emitter, named, pushedRaw, EFFECT_CLAUSES);
-  if (typeof merged === "string") {
-    return { reason: merged };
+  if (!Array.isArray(merged)) {
+    return merged;
   }
 
   if (categories.has("effect")) {
@@ -208,13 +215,13 @@ function shapeOf(
     if (pushedRaw !== null) {
       scope = emitter.canonicalScope(pushedRaw);
       if (scope === null) {
-        return { reason: `push_scope names no known scope (${pushedRaw})` };
+        return skipReason("unknown-push-scope", `push_scope names no known scope (${pushedRaw})`);
       }
     }
     return { kind: "wrapper", scope, fields: merged.length === 0 ? null : merged };
   }
   if (merged.length === 0) {
-    return { reason: "block with no typeable fields" };
+    return skipReason("empty-block", "block with no typeable fields");
   }
   return { kind: "fields", fields: merged };
 }
@@ -444,33 +451,45 @@ export function emitEffects(
     const declarations = rule.declarations;
     const ownership = policy.byKey.get(key.toLowerCase());
     if (ownership?.owner !== "generated") {
-      skipped.push({
-        name: key,
-        reason:
+      skipped.push(
+        skippedRule(
+          key,
+          ownership?.owner === "fire" ? "event-fire-effect" : "structural-effect",
           ownership?.owner === "fire"
             ? "typed by the event-fire emitter"
-            : `hand-written structural effect${ownership?.reason === undefined ? "" : `: ${ownership.reason}`}`,
-      });
+            : `hand-written structural effect${ownership?.reason === undefined ? "" : `: ${ownership.reason}`}`
+        )
+      );
+      continue;
+    }
+    if (key === "<scripted_effect>") {
+      skipped.push(
+        skippedRule(key, "abstract-placeholder", "abstract scripted-effect placeholder")
+      );
       continue;
     }
     if (!isPlainName(key)) {
-      skipped.push({ name: key, reason: "not a plain rule name" });
+      skipped.push(skippedRule(key, "invalid-rule-name", "not a plain rule name"));
       continue;
     }
     const doc = docs.get(key);
     if (rule.supportedScopes.length === 0) {
-      skipped.push({ name: key, reason: "no scopes in either the rules or the game's dump" });
+      skipped.push(
+        skippedRule(key, "missing-rule-scope", "no scopes in either the rules or the game's dump")
+      );
       continue;
     }
     const scopes = rule.scopes;
     const outerScope = rule.scopeType;
     if (scopes === null || outerScope === null) {
-      skipped.push({ name: key, reason: `unknown scope in ${rule.supportedScopes.join(" ")}` });
+      skipped.push(
+        skippedRule(key, "unknown-scope", `unknown scope in ${rule.supportedScopes.join(" ")}`)
+      );
       continue;
     }
     const shape = shapeOf(emitter, rule);
-    if ("reason" in shape) {
-      skipped.push({ name: key, reason: shape.reason });
+    if ("category" in shape) {
+      skipped.push({ name: key, ...shape });
       continue;
     }
     const base = "scalarOnly" in shape ? shape.scalarOnly : shape;

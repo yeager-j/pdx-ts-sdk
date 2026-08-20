@@ -17,7 +17,7 @@
 
 import type { ScopeLink } from "../logs/scopes.ts";
 import { camelCase, docComment, safeIdentifier } from "../naming.ts";
-import { canonicalScopeSet, scopeType, type SkippedRule } from "./shape.ts";
+import { canonicalScopeSet, scopeType, skippedRule, type SkippedRule } from "./shape.ts";
 import type { Emitter } from "./types.ts";
 
 /** A link both emitters can lower: output canonical and singular. */
@@ -64,32 +64,45 @@ export function classifyLinks(
   for (const name of [...emitter.rules.links.keys()].sort()) {
     const link = emitter.rules.links.get(name)!;
     if (link.type === "value") {
-      skipped.push({ name, reason: "value link (produces a number, not scope navigation)" });
+      skipped.push(
+        skippedRule(name, "value-link", "value link (produces a number, not scope navigation)")
+      );
       continue;
     }
     if (link.fromData) {
-      skipped.push({ name, reason: "data-driven link (from_data)" });
+      skipped.push(skippedRule(name, "data-link", "data-driven link (from_data)"));
       continue;
     }
     if (link.outputScope === null) {
-      skipped.push({ name, reason: "declares no output_scope" });
+      skipped.push(skippedRule(name, "missing-output-scope", "declares no output_scope"));
       continue;
     }
     if (link.outputScope.toLowerCase() === "any") {
       navigation.set(name, "any");
-      skipped.push({
-        name,
-        reason: "output scope is runtime-polymorphic (any) — gated on situations, see roadmap",
-      });
+      skipped.push(
+        skippedRule(
+          name,
+          "polymorphic-output-scope",
+          "output scope is runtime-polymorphic (any) — gated on situations, see roadmap"
+        )
+      );
       continue;
     }
     const outputScope = emitter.canonicalScope(link.outputScope);
     if (outputScope === null) {
-      skipped.push({ name, reason: `output names no known scope (${link.outputScope})` });
+      skipped.push(
+        skippedRule(
+          name,
+          "unknown-output-scope",
+          `output names no known scope (${link.outputScope})`
+        )
+      );
       continue;
     }
     if (canonicalScopeSet(link.inputScopes, scopeIndex) === null) {
-      skipped.push({ name, reason: `unknown scope in ${link.inputScopes.join(" ")}` });
+      skipped.push(
+        skippedRule(name, "unknown-input-scope", `unknown scope in ${link.inputScopes.join(" ")}`)
+      );
       continue;
     }
     navigation.set(name, outputScope);

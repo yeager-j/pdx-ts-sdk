@@ -16,9 +16,12 @@ import { HAND_WRITTEN_TRIGGER_RULES_BY_KEY } from "../trigger-policy.ts";
 import {
   comparisonValue,
   mergeFields,
+  skippedRule,
+  skipReason,
   type ArgField,
   type ClauseCategory,
   type SkippedRule,
+  type SkipReason,
 } from "./shape.ts";
 import { Emitter, type TsValue } from "./types.ts";
 
@@ -43,7 +46,7 @@ type Shape =
   | { readonly kind: "wrapper"; readonly scope: string }
   | { readonly kind: "fields"; readonly fields: readonly ArgField[] };
 
-function shapeOf(emitter: Emitter, rule: LoweredRule): Shape | string {
+function shapeOf(emitter: Emitter, rule: LoweredRule): Shape | SkipReason {
   if (rule.comparison) {
     const value = comparisonValue(
       emitter,
@@ -51,30 +54,36 @@ function shapeOf(emitter: Emitter, rule: LoweredRule): Shape | string {
         .filter((declaration) => declaration.comparison)
         .map((declaration) => declaration.type)
     );
-    return typeof value === "string" ? value : { kind: "comparison", value };
+    return "category" in value ? value : { kind: "comparison", value };
   }
   if (rule.blocks.length === 0) {
     const value = emitter.unionFor(rule.scalars.map((declaration) => declaration.type));
     if (value === null) {
-      return `unsupported value type (${rule.scalars.map((d) => d.type.kind).join(", ")})`;
+      return skipReason(
+        "unsupported-value",
+        `unsupported value type (${rule.scalars.map((d) => d.type.kind).join(", ")})`
+      );
     }
     return rule.scalars.every((declaration) => declaration.type.kind === "bool")
       ? { kind: "bool" }
       : { kind: "value", value };
   }
   if (rule.blocks.length > 1) {
-    return "overloaded between multiple block forms";
+    return skipReason("multiple-block-forms", "overloaded between multiple block forms");
   }
   if (
     rule.scalars.length > 0 &&
     !rule.scalars.every((declaration) => declaration.type.kind === "localisation")
   ) {
-    return "overloaded between a block and a non-localisation scalar";
+    return skipReason(
+      "scalar-block-overload",
+      "overloaded between a block and a non-localisation scalar"
+    );
   }
   const block = rule.blocks[0]!;
   const body = block.type;
   if (body.bare.length > 0) {
-    return "block with bare values";
+    return skipReason("bare-value-block", "block with bare values");
   }
   const splices = block.splices;
   const named = block.named;
@@ -85,31 +94,34 @@ function shapeOf(emitter: Emitter, rule: LoweredRule): Shape | string {
       splices.map((splice) => (splice.key.kind === "aliasName" ? splice.key.category : ""))
     );
     if (categories.size !== 1 || !categories.has("trigger")) {
-      return `splices a category the emitter cannot type (${[...categories].sort().join(", ")})`;
+      return skipReason(
+        "unsupported-alias-splice",
+        `splices a category the emitter cannot type (${[...categories].sort().join(", ")})`
+      );
     }
     if (named.length === 0) {
       if (pushedRaw === null) {
-        return "scope change with no push_scope annotation";
+        return skipReason("missing-push-scope", "scope change with no push_scope annotation");
       }
       const scope = emitter.canonicalScope(pushedRaw);
       return scope === null
-        ? `push_scope names no known scope (${pushedRaw})`
+        ? skipReason("unknown-push-scope", `push_scope names no known scope (${pushedRaw})`)
         : { kind: "wrapper", scope };
     }
     // A splice alongside named fields (`calc_true_if = { amount == int ... }`):
     // the splice becomes an implicit `conditions` clause argument.
     const fields = mergeFields(emitter, named, pushedRaw, TRIGGER_CLAUSES);
-    if (typeof fields === "string") {
+    if (!Array.isArray(fields)) {
       return fields;
     }
     if (fields.some((field) => field.name === "conditions")) {
-      return 'a rule field is already named "conditions"';
+      return skipReason("reserved-field-collision", 'a rule field is already named "conditions"');
     }
     let scope: string | null = null;
     if (pushedRaw !== null) {
       scope = emitter.canonicalScope(pushedRaw);
       if (scope === null) {
-        return `push_scope names no known scope (${pushedRaw})`;
+        return skipReason("unknown-push-scope", `push_scope names no known scope (${pushedRaw})`);
       }
     }
     const shape: Shape = {
@@ -128,11 +140,11 @@ function shapeOf(emitter: Emitter, rule: LoweredRule): Shape | string {
   }
 
   const fields = mergeFields(emitter, named, pushedRaw, TRIGGER_CLAUSES);
-  if (typeof fields === "string") {
+  if (!Array.isArray(fields)) {
     return fields;
   }
   if (fields.length === 0) {
-    return "block with no typeable fields";
+    return skipReason("empty-block", "block with no typeable fields");
   }
   return stringOrFields(rule, { kind: "fields", fields });
 }
@@ -145,7 +157,7 @@ function shapeOf(emitter: Emitter, rule: LoweredRule): Shape | string {
 function stringOrFields(
   rule: LoweredRule,
   shape: Extract<Shape, { readonly kind: "fields" }>
-): Shape | string {
+): Shape {
   if (rule.scalars.length === 0) {
     return shape;
   }
@@ -433,31 +445,44 @@ export function emitTriggers(
     const declarations = rule.declarations;
     const handWritten = HAND_WRITTEN_TRIGGER_RULES_BY_KEY.get(key.toLowerCase());
     if (handWritten !== undefined) {
-      skipped.push({
-        name: key,
-        reason: `hand-written ${handWritten.kind}: ${handWritten.reason}`,
-      });
+      skipped.push(
+        skippedRule(
+          key,
+          "handwritten-trigger",
+          `hand-written ${handWritten.kind}: ${handWritten.reason}`
+        )
+      );
+      continue;
+    }
+    if (key === "<scripted_trigger>") {
+      skipped.push(
+        skippedRule(key, "abstract-placeholder", "abstract scripted-trigger placeholder")
+      );
       continue;
     }
     if (!isPlainName(key)) {
-      skipped.push({ name: key, reason: "not a plain rule name" });
+      skipped.push(skippedRule(key, "invalid-rule-name", "not a plain rule name"));
       continue;
     }
     const doc = docs.get(key);
     // The rules are authoritative where they carry `## scopes`; the dump is the
     // fallback for the handful of rules that do not, and stays the cross-check.
     if (rule.supportedScopes.length === 0) {
-      skipped.push({ name: key, reason: "no scopes in either the rules or the game's dump" });
+      skipped.push(
+        skippedRule(key, "missing-rule-scope", "no scopes in either the rules or the game's dump")
+      );
       continue;
     }
     const scope = rule.scopeType;
     if (scope === null) {
-      skipped.push({ name: key, reason: `unknown scope in ${rule.supportedScopes.join(" ")}` });
+      skipped.push(
+        skippedRule(key, "unknown-scope", `unknown scope in ${rule.supportedScopes.join(" ")}`)
+      );
       continue;
     }
     const shape = shapeOf(emitter, rule);
-    if (typeof shape === "string") {
-      skipped.push({ name: key, reason: shape });
+    if ("category" in shape) {
+      skipped.push({ name: key, ...shape });
       continue;
     }
     chunks.push(emitOne(key, shape, scope, tsDoc(declarations, doc)));

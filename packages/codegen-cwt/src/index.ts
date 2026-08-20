@@ -39,7 +39,6 @@ import { classifyLinks, emitScopeLinkNavigation, emitScopeLinks } from "./emit/l
 import { emitModifiers, joinModifierScopes } from "./emit/modifiers.ts";
 import { emitOnActions } from "./emit/on-actions.ts";
 import { emitScriptReferences } from "./emit/script-reference.ts";
-import type { SkippedRule } from "./emit/shape.ts";
 import {
   canonicalScopes,
   emitEnums,
@@ -88,6 +87,7 @@ import {
   type DriftBaseline,
   type DriftReport,
 } from "./reconcile.ts";
+import { formatScriptGapReport, reconcileScriptGaps } from "./script-gaps.ts";
 import { RESERVED_TRIGGER_EXPORT_NAMES } from "./trigger-policy.ts";
 
 /**
@@ -203,10 +203,6 @@ async function main(): Promise<void> {
   const effectPolicy = createEffectPolicy(rules);
   const modifierOperationPolicy = createModifierOperationPolicy(rules);
   const eventFieldPolicy = createEventFieldPolicy(rules);
-  await write(
-    "content-shape.ts",
-    header(commit, ["codegen-cwt ContentShape protocol"]) + emitContentShapeProtocol()
-  );
   emitter.beginFile();
   const loweredTriggers = lowerRuleTable(rules.triggers, docs.triggers, emitter, index);
   const triggers = emitTriggers(emitter, docs.triggers, loweredTriggers);
@@ -233,6 +229,16 @@ async function main(): Promise<void> {
     classifiedLinks.links
   );
   const effectUsage = emitter.endFile();
+  const scriptGapReport = reconcileScriptGaps({
+    triggers: triggers.skipped,
+    effects: effects.skipped,
+  });
+  const scriptGapLines = formatScriptGapReport(scriptGapReport);
+
+  await write(
+    "content-shape.ts",
+    header(commit, ["codegen-cwt ContentShape protocol"]) + emitContentShapeProtocol()
+  );
 
   const contents: Array<{
     manifest: (typeof CONTENT_MANIFEST)[number];
@@ -811,11 +817,12 @@ async function main(): Promise<void> {
     reportSection(`${category} members declined`, emission.declinedMembers);
   }
 
-  reportSection("Triggers not emitted", summarise(triggers.skipped));
-  reportSection("Effects not emitted", summarise(effects.skipped));
+  reportSection("Policy-owned script rules", scriptGapLines.policyOwned);
+  reportSection("Abstract script placeholders", scriptGapLines.abstractPlaceholders);
+  reportSection("Tracked script-generation gaps", scriptGapLines.trackedGaps);
   reportSection(
     "Scope links not emitted",
-    classifiedLinks.skipped.map((entry) => `${entry.name} — ${entry.reason}`)
+    classifiedLinks.skipped.map((entry) => `${entry.name} — ${entry.detail}`)
   );
   reportSection("Effects emitted scalar-only (block overload dropped)", effects.scalarOnly);
   reportSection("Effect field types replaced by the overlay", effects.fieldTypeOverrides);
@@ -823,7 +830,7 @@ async function main(): Promise<void> {
   reportSection("On-actions not emitted", onActions.skipped);
   reportSection(
     "Event kinds without full typing",
-    events.skipped.map((entry) => `${entry.name} — ${entry.reason}`)
+    events.skipped.map((entry) => `${entry.name} — ${entry.detail}`)
   );
   reportSection("Enums widened to string (rules declare no values)", valuelessEnums(emitter));
   reportSection(
@@ -2066,16 +2073,6 @@ function importList(from: string, names: readonly string[]): string {
     return "";
   }
   return `import type { ${[...new Set(names)].sort().join(", ")} } from ${JSON.stringify(from)};\n`;
-}
-
-function summarise(skipped: readonly SkippedRule[]): string[] {
-  const grouped = new Map<string, string[]>();
-  for (const entry of skipped) {
-    grouped.set(entry.reason, [...(grouped.get(entry.reason) ?? []), entry.name]);
-  }
-  return [...grouped]
-    .sort((left, right) => right[1].length - left[1].length)
-    .map(([reason, names]) => `${names.length} — ${reason}, e.g. ${names.slice(0, 3).join(", ")}`);
 }
 
 await main();
