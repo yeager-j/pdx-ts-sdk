@@ -1,23 +1,30 @@
 ---
 title: Effects
-description: How generated effect rows are presented across scope reference pages.
+description: Every script method the SDK generates, with its PDXScript key, signature, and where it is legal.
 ---
 
-import { EffectReferenceTable } from "@/components/EffectReferenceTable";
-import { buildEffectPreview } from "@/src/scope-reference";
+import { EffectsIndex } from "@/components/EffectsIndex";
 
-The full effect inventory is generated from the same metadata as the scope pages. Ordinary effects,
-structural methods, event-fire methods, and scope transitions remain separate because they have
-different authoring roles.
+This is the effects-first view of the same generated metadata the scope pages use. Each method has
+one entry here: what it writes, what it accepts, and where you can call it. A scope page answers the
+other question — what is legal on the interface you are holding.
 
-This initial index shows the shared row format with one universal effect and one scope-specific
-effect. Use a scope page to see every method legal on that generated interface.
+Entries fall into three categories. An **effect** writes one PDXScript key. A **structural** method
+is control flow — `if`, `every`, `random` — that shapes the block it wraps. An **event-fire** method
+fires an event; its availability says where the fire call is legal, and its own entry says which
+scope the fired event's body runs in, which is a different scope.
 
-<EffectReferenceTable
-  rows={buildEffectPreview(["activateGateway", "setPlanetName"])}
-  caption="Effect row preview"
-  showAvailability
-/>
+Availability is either every scope or an explicit list. They are separate statements: a method
+marked as available everywhere is universal by construction, not a list that happens to name all of
+them. Scopes link to their reference page where one is written.
 
-The availability column describes the generated SDK contract. The game key is the fixed PDXScript
-key when the method has one, while the TypeScript signature is the author-facing call shape.
+Each row has a stable `#effects-methodName` anchor — `#effects-addResource` — that survives
+filtering and paging, so a link to a method keeps working.
+
+Scope links, the properties that move you from one scope to another, are not methods and are not
+listed here. They live on the scope pages, under the transitions each scope offers.
+
+"Every method" means the SDK's current authoring surface, generated from the vendored rules. It is
+not the set of effects Stellaris supports.
+
+<EffectsIndex />

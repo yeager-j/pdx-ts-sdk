@@ -43,6 +43,13 @@ export interface TypeNode {
   availability?: ReactNode;
 
   /**
+   * Local extension: for an event-fire method, the scope the fired event's
+   * body runs in — a different fact from where the call is legal, so it gets
+   * its own detail row.
+   */
+  eventBodyScope?: ReactNode;
+
+  /**
    * Optional `href` for the type
    */
   typeDescriptionLink?: string;
@@ -62,15 +69,20 @@ export interface TypeNode {
 
 const fieldVariants = cva("text-fd-muted-foreground not-prose pe-2");
 
-export function TypeTable({
+/**
+ * Local extension: the card, border, and column headings without the rows.
+ * A caller that chooses its own rows — the effects index, which filters and
+ * paginates them — renders `TypeTableItem` children inside this instead of
+ * handing over a whole `type` record.
+ */
+export function TypeTableFrame({
   id,
-  type,
   className,
   nameHeader,
   typeHeader,
+  children,
   ...props
 }: {
-  type: Record<string, TypeNode>;
   /** Local extension: header label for the name column (default "Prop"). */
   nameHeader?: ReactNode;
   /** Local extension: header label for the type column (default "Type"). */
@@ -91,14 +103,30 @@ export function TypeTable({
         <p className="w-1/3">{nameHeader ?? t("Prop")}</p>
         <p className="@max-xl:hidden">{typeHeader ?? t("Type")}</p>
       </div>
-      {Object.entries(type).map(([key, value]) => (
-        <Item key={key} parentId={id} name={key} item={value} hasKeyColumn />
-      ))}
+      {children}
     </div>
   );
 }
 
-function Item({
+export function TypeTable({
+  id,
+  type,
+  ...props
+}: {
+  type: Record<string, TypeNode>;
+  nameHeader?: ReactNode;
+  typeHeader?: ReactNode;
+} & ComponentProps<"div">) {
+  return (
+    <TypeTableFrame id={id} {...props}>
+      {Object.entries(type).map(([key, value]) => (
+        <TypeTableItem key={key} parentId={id} name={key} item={value} hasKeyColumn />
+      ))}
+    </TypeTableFrame>
+  );
+}
+
+export function TypeTableItem({
   parentId,
   name,
   hasKeyColumn = false,
@@ -107,6 +135,7 @@ function Item({
     description,
     gameKey,
     availability,
+    eventBodyScope,
     required = false,
     deprecated,
     typeDescription,
@@ -125,10 +154,21 @@ function Item({
   const [open, setOpen] = useState(false);
   const id = parentId ? `${parentId}-${name}` : undefined;
 
+  /**
+   * Local extension: the upstream component reads the hash once, on mount, so
+   * a row already on screen stayed shut when a later link named it. The
+   * effects index links rows to each other and pages between them, so the row
+   * follows the hash for as long as it lives. `replaceState` on open does not
+   * raise `hashchange`, so opening a row cannot re-enter this.
+   */
   useEffect(() => {
-    const hash = window.location.hash;
-    if (!id || !hash) return;
-    if (`#${id}` === hash) setOpen(true);
+    if (!id) return;
+    const openIfNamed = (): void => {
+      if (window.location.hash === `#${id}`) setOpen(true);
+    };
+    openIfNamed();
+    window.addEventListener("hashchange", openIfNamed);
+    return () => window.removeEventListener("hashchange", openIfNamed);
   }, [id]);
 
   return (
@@ -191,6 +231,12 @@ function Item({
             <>
               <p className={cn(fieldVariants())}>{t("Availability")}</p>
               <p className="my-auto not-prose">{availability}</p>
+            </>
+          )}
+          {eventBodyScope && (
+            <>
+              <p className={cn(fieldVariants())}>{t("Event body scope")}</p>
+              <p className="my-auto not-prose">{eventBodyScope}</p>
             </>
           )}
           {defaultValue && (

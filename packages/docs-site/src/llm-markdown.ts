@@ -1,3 +1,4 @@
+import type { EffectCategory, EffectsIndexModel, ScopeLinkTarget } from "./effects-index.ts";
 import type { FieldRow, FieldTableModel } from "./field-table.ts";
 import type { PairedExampleData } from "./paired-example-data.ts";
 import type { Coverage } from "./registry-coverage.ts";
@@ -127,32 +128,63 @@ export function pairedExampleMarkdown(name: string, data: PairedExampleData): st
   return sections.join("\n\n");
 }
 
-function methodTable(rows: readonly ScriptMethodRow[], showAvailability: boolean): string {
-  const header = ["Method", "Game key", "TypeScript signature", "Notes"];
-  if (showAvailability) {
-    header.splice(2, 0, "Availability");
-  }
+function methodTable(rows: readonly ScriptMethodRow[]): string {
   return table(
-    header,
-    rows.map((row) => {
-      const cells = [
-        `\`${row.method}\``,
-        row.key === undefined ? "none" : `\`${row.key}\``,
-        `\`${row.signature}\``,
-        row.summary,
-      ];
-      if (showAvailability) {
-        cells.splice(
-          2,
-          0,
-          row.availability.kind === "universal"
-            ? "All generated scopes"
-            : row.availability.scopes.join(", ")
-        );
-      }
-      return cells;
-    })
+    ["Method", "Game key", "TypeScript signature", "Notes"],
+    rows.map((row) => [
+      `\`${row.method}\``,
+      row.key === undefined ? "none" : `\`${row.key}\``,
+      `\`${row.signature}\``,
+      row.summary,
+    ])
   );
+}
+
+function scopeTarget(target: ScopeLinkTarget): string {
+  return target.href === undefined
+    ? `\`${target.scope}\``
+    : `[\`${target.scope}\`](${target.href})`;
+}
+
+const CATEGORY_LABELS: Record<EffectCategory, string> = {
+  effect: "effect",
+  structural: "structural",
+  "event-fire": "event fire",
+};
+
+/**
+ * The effects index as one full-inventory table. The page paginates and
+ * filters its rows behind client JavaScript, so this export — not the HTML —
+ * is the surface that carries every method in one readable piece.
+ */
+export function effectsIndexMarkdown(model: EffectsIndexModel): string {
+  return [
+    `${model.counts.effect} ordinary effects, ${model.counts.structural} structural methods, and ${model.counts.eventFire} event-fire methods. Availability is either every scope or the explicit list named here; an event-fire method's body scope is where the fired event runs, which the availability column does not say.`,
+    table(
+      [
+        "Method",
+        "Anchor",
+        "Game key",
+        "Category",
+        "Availability",
+        "Event body scope",
+        "TypeScript signature",
+        "Notes",
+      ],
+      model.entries.map((entry) => [
+        `\`${entry.method}\``,
+        `#${entry.anchor}`,
+        entry.key === undefined ? "none" : `\`${entry.key}\``,
+        CATEGORY_LABELS[entry.category],
+        entry.availability.kind === "universal"
+          ? "Every scope"
+          : entry.availability.scopes.map(scopeTarget).join(", "),
+        entry.eventBodyScope === undefined ? "none" : scopeTarget(entry.eventBodyScope),
+        `\`${entry.signature}\``,
+        entry.summary,
+      ])
+    ),
+  ].join("\n\n");
 }
 
 export function scopeIdentityMarkdown(model: ScopeReferenceModel): string {
@@ -175,28 +207,25 @@ export function eventKindsMarkdown(rows: readonly EventKindRow[]): string {
 export function scopeEffectsMarkdown(model: ScopeReferenceModel): string {
   const sections = [
     `**${model.universalEffects.length} universal effects, available on every scope interface:**`,
-    methodTable(model.universalEffects, false),
+    methodTable(model.universalEffects),
   ];
   if (model.scopeEffects.length === 0) {
     sections.push("This scope adds no scope-specific ordinary effects beyond the universal set.");
   } else {
-    sections.push(
-      "**Ordinary effects specific to this scope:**",
-      methodTable(model.scopeEffects, false)
-    );
+    sections.push("**Ordinary effects specific to this scope:**", methodTable(model.scopeEffects));
   }
   return sections.join("\n\n");
 }
 
 export function structuralMethodsMarkdown(model: ScopeReferenceModel): string {
-  return methodTable(model.structuralMethods, false);
+  return methodTable(model.structuralMethods);
 }
 
 export function eventFireMethodsMarkdown(model: ScopeReferenceModel): string {
   if (model.eventFireMethods.length === 0) {
     return "The generated interface has no legal event-fire method.";
   }
-  return methodTable(model.eventFireMethods, false);
+  return methodTable(model.eventFireMethods);
 }
 
 export function scopeTransitionsMarkdown(rows: readonly ScopeTransitionRow[]): string {

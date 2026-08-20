@@ -18,6 +18,7 @@
     "@fuma-translate/react": "^1.0.2",
     "@pdx-ts/sdk": "*",
     "@pdx-ts/stellaris-ids": "*",
+    "@tanstack/react-table": "^9.1.2",
     "class-variance-authority": "^0.7.1",
     "fumadocs-core": "^16.14.5",
     "fumadocs-mdx": "^15.3.0",

@@ -25,7 +25,7 @@ const docs = defineDocs({
       includeProcessedMarkdown: {
         mdxAsPlaceholder: [
           "Callout",
-          "EffectReferenceTable",
+          "EffectsIndex",
           "EventFireMethods",
           "EventKinds",
           "FieldTable",
