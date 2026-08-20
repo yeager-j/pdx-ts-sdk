@@ -13,6 +13,8 @@ const docs = defineDocs({
        * and forbids it elsewhere.
        */
       registries: z.array(z.string()).optional(),
+      /** The canonical generated scope documented by a scope reference page. */
+      scope: z.string().optional(),
     }),
     postprocess: {
       /**

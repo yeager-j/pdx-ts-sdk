@@ -2,28 +2,38 @@ import { SCRIPT_REFERENCE_SCOPES } from "@pdx-ts/sdk/script-reference";
 
 import { source } from "@/lib/source";
 import type { ScopePageLink } from "@/src/effects-index";
+import { validateScopePages } from "@/src/scope-page-coverage";
 
 const SCOPE_SECTION = "scopes-and-effects";
-const SCOPE_NAMES = new Set<string>(SCRIPT_REFERENCE_SCOPES);
+const NON_SCOPE_PAGES = new Set(["effects"]);
 
 /**
  * The scope pages the site publishes, as the effects index needs to see them.
  * A page counts as a scope page when it sits under the scopes section and its
- * own slug is a generated scope name, so the set grows as later work writes
- * more of them. Routing lives here, the way `lib/coverage-pages.ts` keeps it
- * out of the coverage gate; `src/effects-index.ts` only validates the names.
+ * own frontmatter declares its canonical generated scope. Routing lives here,
+ * the way `lib/coverage-pages.ts` keeps it out of the coverage gate; the pure
+ * validator receives page claims without knowing how Fumadocs found them.
  */
 export function scopePages(): ScopePageLink[] {
-  return source.getPages().flatMap((page) => {
-    const [section, scope] = page.slugs;
+  const claims = source.getPages().flatMap((page) => {
+    const [section, routeScope] = page.slugs;
     if (
       page.slugs.length !== 2 ||
       section !== SCOPE_SECTION ||
-      scope === undefined ||
-      !SCOPE_NAMES.has(scope)
+      routeScope === undefined ||
+      NON_SCOPE_PAGES.has(routeScope)
     ) {
       return [];
     }
-    return [{ scope, href: `${page.url.replace(/\/$/, "")}/`, title: page.data.title }];
+    return [
+      {
+        id: page.slugs.join("/"),
+        href: `${page.url.replace(/\/$/, "")}/`,
+        title: page.data.title,
+        routeScope,
+        declaredScope: page.data.scope,
+      },
+    ];
   });
+  return validateScopePages(SCRIPT_REFERENCE_SCOPES, claims);
 }
