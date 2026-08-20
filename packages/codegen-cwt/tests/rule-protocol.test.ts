@@ -150,11 +150,13 @@ describe("LoweredRule", () => {
       expect.arrayContaining([
         expect.objectContaining({
           name: "create_colony",
-          reason: expect.stringContaining("repeated nested fields"),
+          category: "repeated-nested-field",
+          detail: expect.stringContaining("repeated nested fields"),
         }),
         expect.objectContaining({
           name: "start_colony",
-          reason: expect.stringContaining("repeated nested fields"),
+          category: "repeated-nested-field",
+          detail: expect.stringContaining("repeated nested fields"),
         }),
       ])
     );
@@ -235,9 +237,9 @@ describe("LoweredRule", () => {
       null,
       new Set()
     );
-    expect(merged).not.toBeTypeOf("string");
-    if (typeof merged === "string") {
-      throw new Error(merged);
+    expect(Array.isArray(merged)).toBe(true);
+    if (!Array.isArray(merged)) {
+      throw new Error(merged.detail);
     }
     expect(merged).toHaveLength(1);
     expect(merged[0]?.value).toMatchObject({
@@ -266,7 +268,8 @@ describe("the effect ownership policy", () => {
 
     expect(events.skipped).toContainEqual({
       name: "country_event",
-      reason: "no fire-effect rule with `## scopes`",
+      category: "missing-fire-rule-scope",
+      detail: "no fire-effect rule with `## scopes`",
     });
     expect(events.fireMethods).toBe(22);
   });

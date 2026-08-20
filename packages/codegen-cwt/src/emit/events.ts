@@ -33,7 +33,7 @@ import type { EffectPolicy } from "../effect-policy.ts";
 import { eventKinds, type EventKindSpec } from "../event-kinds.ts";
 import { camelCase, docComment, indefiniteArticle, pascalCase } from "../naming.ts";
 import type { ScriptEffectReferenceRow } from "./script-reference.ts";
-import { canonicalScopeSet, type SkippedRule } from "./shape.ts";
+import { canonicalScopeSet, skippedRule, type SkippedRule } from "./shape.ts";
 import { Emitter } from "./types.ts";
 
 export interface EventsEmission {
@@ -188,7 +188,13 @@ export function emitEvents(emitter: Emitter, policy: EffectPolicy): EventsEmissi
     if (kind.scope !== null) {
       return true;
     }
-    skipped.push({ name: kind.key, reason: "scopeless event kind — closures cannot be typed" });
+    skipped.push(
+      skippedRule(
+        kind.key,
+        "scopeless-event-kind",
+        "scopeless event kind — closures cannot be typed"
+      )
+    );
     return false;
   });
   const capabilityNames = new Set<string>();
@@ -325,11 +331,19 @@ export function emitEvents(emitter: Emitter, policy: EffectPolicy): EventsEmissi
     const declarations = emitter.rules.effects.get(kind.key);
     const supported = declarations?.flatMap((decl) => decl.supportedScopes ?? []) ?? [];
     if (supported.length === 0) {
-      skipped.push({ name: kind.key, reason: "no fire-effect rule with `## scopes`" });
+      skipped.push(
+        skippedRule(kind.key, "missing-fire-rule-scope", "no fire-effect rule with `## scopes`")
+      );
       continue;
     }
     if (!policy.fireKeys.has(kind.key)) {
-      skipped.push({ name: kind.key, reason: "fire-effect rule rejected by the ownership policy" });
+      skipped.push(
+        skippedRule(
+          kind.key,
+          "event-policy-rejected",
+          "fire-effect rule rejected by the ownership policy"
+        )
+      );
       continue;
     }
     const receiving = canonicalScopeSet(supported, index);

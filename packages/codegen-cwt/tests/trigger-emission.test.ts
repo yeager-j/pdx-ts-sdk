@@ -45,12 +45,25 @@ describe("trigger emission", () => {
       "success_text",
     ]);
     expect(emission.skipped.filter((rule) => mixed.includes(rule.name))).toEqual([
-      { name: "<scripted_trigger>", reason: "not a plain rule name" },
-      { name: "has_resource", reason: "overloaded between a block and a non-localisation scalar" },
-      { name: "intel_level", reason: "overloaded between a block and a non-localisation scalar" },
+      {
+        name: "<scripted_trigger>",
+        category: "abstract-placeholder",
+        detail: "abstract scripted-trigger placeholder",
+      },
+      {
+        name: "has_resource",
+        category: "scalar-block-overload",
+        detail: "overloaded between a block and a non-localisation scalar",
+      },
+      {
+        name: "intel_level",
+        category: "scalar-block-overload",
+        detail: "overloaded between a block and a non-localisation scalar",
+      },
       {
         name: "is_war_participant",
-        reason: "overloaded between a block and a non-localisation scalar",
+        category: "scalar-block-overload",
+        detail: "overloaded between a block and a non-localisation scalar",
       },
     ]);
   });
