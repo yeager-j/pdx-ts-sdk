@@ -8,11 +8,6 @@ import { describe, expect, it } from "vitest";
 
 import { buildScopeReference, type ScopeReferenceSources } from "../src/scope-reference.ts";
 
-const prose = {
-  description: "A test description.",
-  commonEntries: "A test entry point.",
-};
-
 const sources = (): ScopeReferenceSources => ({
   scopes: SCRIPT_REFERENCE_SCOPES,
   effects: SCRIPT_EFFECT_REFERENCES,
@@ -25,23 +20,23 @@ const methodsOf = (rows: readonly { readonly method: string }[]): readonly strin
 
 describe("buildScopeReference", () => {
   it("joins scope identity and every event kind whose body runs in the scope", () => {
-    const country = buildScopeReference("country", prose);
+    const country = buildScopeReference("country");
     expect(country.interfaceName).toBe("CountryScope");
     expect(country.eventKinds.map((kind) => kind.key)).toEqual(["country_event", "observer_event"]);
 
-    const planet = buildScopeReference("planet", prose);
+    const planet = buildScopeReference("planet");
     expect(planet.interfaceName).toBe("PlanetScope");
     expect(planet.eventKinds.map((kind) => kind.key)).toEqual(["planet_event"]);
 
-    const army = buildScopeReference("army", prose);
+    const army = buildScopeReference("army");
     expect(army.interfaceName).toBe("ArmyScope");
     expect(army.eventKinds).toEqual([]);
   });
 
   it("keeps universal, scope-specific, structural, and event-fire methods separate", () => {
-    const country = buildScopeReference("country", prose);
-    const planet = buildScopeReference("planet", prose);
-    const army = buildScopeReference("army", prose);
+    const country = buildScopeReference("country");
+    const planet = buildScopeReference("planet");
+    const army = buildScopeReference("army");
 
     for (const model of [country, planet, army]) {
       expect(methodsOf(model.universalEffects)).toContain("activateGateway");
@@ -59,7 +54,7 @@ describe("buildScopeReference", () => {
   });
 
   it("keeps scope links in transitions and out of method tables", () => {
-    const army = buildScopeReference("army", prose);
+    const army = buildScopeReference("army");
     expect(army.transitions.some((row) => row.member === "colony")).toBe(true);
     const allMethods = [
       ...army.universalEffects,
@@ -71,7 +66,7 @@ describe("buildScopeReference", () => {
   });
 
   it("rejects an unknown scope with an actionable error", () => {
-    expect(() => buildScopeReference("no_such_scope", prose)).toThrow(
+    expect(() => buildScopeReference("no_such_scope")).toThrow(
       /No generated scope row.*SCRIPT_REFERENCE_SCOPES/
     );
   });
@@ -79,7 +74,7 @@ describe("buildScopeReference", () => {
   it("rejects a missing generated scope row", () => {
     const input = sources();
     expect(() =>
-      buildScopeReference("country", prose, {
+      buildScopeReference("country", {
         ...input,
         scopes: input.scopes.filter((scope) => scope !== "country"),
       })
@@ -89,7 +84,7 @@ describe("buildScopeReference", () => {
   it("rejects duplicate generated methods", () => {
     const input = sources();
     expect(() =>
-      buildScopeReference("country", prose, {
+      buildScopeReference("country", {
         ...input,
         effects: [...input.effects, input.effects[0]],
       })
@@ -100,7 +95,7 @@ describe("buildScopeReference", () => {
     const input = sources();
     const link = input.scopeLinks[0];
     expect(() =>
-      buildScopeReference("country", prose, {
+      buildScopeReference("country", {
         ...input,
         effects: [...input.effects, { ...input.effects[0], method: link.member }],
       })

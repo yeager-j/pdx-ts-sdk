@@ -8,11 +8,6 @@ import {
   type ScriptScopeLinkReference,
 } from "@pdx-ts/sdk/script-reference";
 
-export interface ScopeReferenceProse {
-  readonly description: string;
-  readonly commonEntries: string;
-}
-
 export interface ScriptMethodRow {
   readonly method: string;
   readonly key?: string;
@@ -38,7 +33,6 @@ export interface EventKindRow {
 export interface ScopeReferenceModel {
   readonly scope: ScopeName;
   readonly interfaceName: string;
-  readonly prose: ScopeReferenceProse;
   readonly eventKinds: readonly EventKindRow[];
   readonly universalEffects: readonly ScriptMethodRow[];
   readonly scopeEffects: readonly ScriptMethodRow[];
@@ -153,7 +147,6 @@ function assertScope(scope: string, sources: ScopeReferenceSources): asserts sco
 
 export function buildScopeReference(
   scope: string,
-  prose: ScopeReferenceProse,
   sources: ScopeReferenceSources = DEFAULT_SOURCES
 ): ScopeReferenceModel {
   assertScope(scope, sources);
@@ -172,7 +165,6 @@ export function buildScopeReference(
   return {
     scope,
     interfaceName: interfaceNameOf(scope),
-    prose,
     eventKinds: Object.values(sources.eventKinds)
       .filter((eventKind) => eventKind.scope === scope)
       .map(({ key, subtype }) => ({ key, subtype }))

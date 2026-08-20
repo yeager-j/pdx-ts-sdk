@@ -13,18 +13,16 @@ import ScopeTransitions from "../../../components/ScopeTransitions.astro";
 import StructuralMethods from "../../../components/StructuralMethods.astro";
 import { buildScopeReference } from "../../../scope-reference.ts";
 
-export const model = buildScopeReference("army", {
-  description:
-    "Army scope represents an army unit while Stellaris evaluates script against that unit.",
-  commonEntries:
-    "Common entry points include army-scoped callbacks and scope changes from planets, fleets, or related military objects. These are examples, not an exhaustive list of game paths.",
-});
+export const model = buildScopeReference("army");
 
 <ScopeIdentity model={model} />
 
+Army scope represents an army unit while Stellaris evaluates script against that unit.
+
 ## Common entry points
 
-{model.prose.commonEntries}
+Common entry points include army-scoped callbacks and scope changes from planets, fleets, or related
+military objects. These are examples, not an exhaustive list of game paths.
 
 ## Event kinds whose bodies run in this scope
 

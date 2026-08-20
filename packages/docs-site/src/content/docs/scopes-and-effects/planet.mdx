@@ -13,18 +13,16 @@ import ScopeTransitions from "../../../components/ScopeTransitions.astro";
 import StructuralMethods from "../../../components/StructuralMethods.astro";
 import { buildScopeReference } from "../../../scope-reference.ts";
 
-export const model = buildScopeReference("planet", {
-  description:
-    "Planet scope represents a game object that Stellaris evaluates through its planet script interface.",
-  commonEntries:
-    "Common entry points include planet event bodies, planet-scoped callbacks, and scope links or iterators that select a planet. These are examples, not an exhaustive list of game paths.",
-});
+export const model = buildScopeReference("planet");
 
 <ScopeIdentity model={model} />
 
+Planet scope represents a game object that Stellaris evaluates through its planet script interface.
+
 ## Common entry points
 
-{model.prose.commonEntries}
+Common entry points include planet event bodies, planet-scoped callbacks, and scope links or
+iterators that select a planet. These are examples, not an exhaustive list of game paths.
 
 ## Event kinds whose bodies run in this scope
 

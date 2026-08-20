@@ -13,18 +13,18 @@ import ScopeTransitions from "../../../components/ScopeTransitions.astro";
 import StructuralMethods from "../../../components/StructuralMethods.astro";
 import { buildScopeReference } from "../../../scope-reference.ts";
 
-export const model = buildScopeReference("country", {
-  description:
-    "Country scope represents a game object that Stellaris evaluates as a country, including an empire acting in its own script context.",
-  commonEntries:
-    "Common entry points include country and observer event bodies, country-scoped on-actions and callbacks, and scope links from owned game objects. These are examples, not an exhaustive list of game paths.",
-});
+export const model = buildScopeReference("country");
 
 <ScopeIdentity model={model} />
 
+Country scope represents a game object that Stellaris evaluates as a country, including an empire
+acting in its own script context.
+
 ## Common entry points
 
-{model.prose.commonEntries}
+Common entry points include country and observer event bodies, country-scoped on-actions and
+callbacks, and scope links from owned game objects. These are examples, not an exhaustive list of
+game paths.
 
 ## Event kinds whose bodies run in this scope
 

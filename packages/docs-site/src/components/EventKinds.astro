@@ -15,15 +15,17 @@ const { rows } = Astro.props;
       legal callback or scope transition instead.
     </p>
   ) : (
-    <table>
-      <caption>Generated event kinds for this body scope</caption>
-      <thead>
+    <>
+      <p>The following table contains generated event kinds for this body scope.</p>
+
+      <table>
+        <thead>
         <tr>
           <th>Event kind</th>
           <th>Generated subtype</th>
         </tr>
-      </thead>
-      <tbody>
+        </thead>
+        <tbody>
         {rows.map((row) => (
           <tr>
             <td>
@@ -34,7 +36,8 @@ const { rows } = Astro.props;
             </td>
           </tr>
         ))}
-      </tbody>
-    </table>
+        </tbody>
+      </table>
+    </>
   )
 }
