@@ -28,10 +28,12 @@
  *   scope is the kind's from this table.
  */
 
+import { scopeIndex } from "../cwt/rules.ts";
 import type { EffectPolicy } from "../effect-policy.ts";
 import { eventKinds, type EventKindSpec } from "../event-kinds.ts";
 import { camelCase, docComment, indefiniteArticle, pascalCase } from "../naming.ts";
-import type { SkippedRule } from "./shape.ts";
+import type { ScriptEffectReferenceRow } from "./script-reference.ts";
+import { canonicalScopeSet, type SkippedRule } from "./shape.ts";
 import { Emitter } from "./types.ts";
 
 export interface EventsEmission {
@@ -42,6 +44,7 @@ export interface EventsEmission {
   readonly definers: number;
   readonly fireMethods: number;
   readonly skipped: readonly SkippedRule[];
+  readonly fireReferences: readonly ScriptEffectReferenceRow[];
 }
 
 type EmittedKind = EventKindSpec;
@@ -125,22 +128,32 @@ function capabilityBinding(kind: EmittedKind & { scope: string }): string {
 }
 
 function fireOverloads(kind: EmittedKind & { scope: string }): string {
+  return (
+    docComment(fireDocs(kind), "    ") +
+    fireSignature(kind)
+      .split("\n")
+      .map((line) => `    ${line}`)
+      .join("\n") +
+    "\n"
+  );
+}
+
+function fireDocs(kind: EmittedKind & { scope: string }): readonly string[] {
+  const spoken = kind.key.replaceAll("_", " ");
+  return [
+    `Fires ${indefiniteArticle(spoken)} ${spoken} for the scoped ${kind.scope}, after any delay.`,
+  ];
+}
+
+function fireSignature(kind: EmittedKind & { scope: string }): string {
   const method = camelCase(kind.key);
   const scope = JSON.stringify(kind.scope);
   const subtype = JSON.stringify(kind.subtype);
-  const spoken = kind.key.replaceAll("_", " ");
   return (
-    docComment(
-      [
-        `Fires ${indefiniteArticle(spoken)} ${spoken} for the scoped ${kind.scope}, after any ` +
-          "delay.",
-      ],
-      "    "
-    ) +
-    `    ${method}(args: FireEventArgs<${scope}, undefined, ${subtype}>): void;\n` +
-    `    ${method}<F extends ScopeName>(\n` +
-    `      args: WitnessedFireEventArgs<${scope}, F, ${subtype}>\n` +
-    `    ): void;\n`
+    `${method}(args: FireEventArgs<${scope}, undefined, ${subtype}>): void;\n` +
+    `${method}<F extends ScopeName>(\n` +
+    `  args: WitnessedFireEventArgs<${scope}, F, ${subtype}>\n` +
+    `): void;`
   );
 }
 
@@ -306,6 +319,8 @@ export function emitEvents(emitter: Emitter, policy: EffectPolicy): EventsEmissi
   // whose rule the effects file no longer declares gets no typed fire method
   // and is reported rather than guessed at.
   const byInterface = new Map<string, (EmittedKind & { scope: string })[]>();
+  const fireReferences = new Map<string, ScriptEffectReferenceRow>();
+  const index = scopeIndex(emitter.rules);
   for (const kind of scoped) {
     const declarations = emitter.rules.effects.get(kind.key);
     const supported = declarations?.flatMap((decl) => decl.supportedScopes ?? []) ?? [];
@@ -317,22 +332,26 @@ export function emitEvents(emitter: Emitter, policy: EffectPolicy): EventsEmissi
       skipped.push({ name: kind.key, reason: "fire-effect rule rejected by the ownership policy" });
       continue;
     }
-    const targets = supported.some((scope) => scope === "any" || scope === "all")
-      ? ["UniversalEffects"]
-      : [
-          ...new Set(
-            supported.map((scope) => {
-              const canonical = emitter.canonicalScope(scope);
-              if (canonical === null) {
-                throw new Error(`fire effect ${kind.key} declares unknown scope ${scope}`);
-              }
-              return `${pascalCase(canonical)}Scope`;
-            })
-          ),
-        ];
+    const receiving = canonicalScopeSet(supported, index);
+    if (receiving === null) {
+      throw new Error(`fire effect ${kind.key} declares unknown receiving scope`);
+    }
+    const targets =
+      receiving === "universal"
+        ? ["UniversalEffects"]
+        : receiving.map((scope) => `${pascalCase(scope)}Scope`);
     for (const target of targets) {
       byInterface.set(target, [...(byInterface.get(target) ?? []), kind]);
     }
+    fireReferences.set(kind.key, {
+      method: camelCase(kind.key),
+      key: kind.key,
+      kind: "event-fire",
+      availability:
+        receiving === "universal" ? { kind: "universal" } : { kind: "scopes", scopes: receiving },
+      signature: fireSignature(kind),
+      docs: fireDocs(kind),
+    });
   }
 
   const fireMethods = [...byInterface.values()].reduce((sum, list) => sum + list.length, 0);
@@ -364,5 +383,6 @@ export function emitEvents(emitter: Emitter, policy: EffectPolicy): EventsEmissi
     definers: scoped.length,
     fireMethods,
     skipped,
+    fireReferences: [...fireReferences.values()],
   };
 }

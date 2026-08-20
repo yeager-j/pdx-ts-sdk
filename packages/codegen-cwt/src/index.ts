@@ -38,6 +38,7 @@ import {
 import { classifyLinks, emitScopeLinkNavigation, emitScopeLinks } from "./emit/links.ts";
 import { emitModifiers, joinModifierScopes } from "./emit/modifiers.ts";
 import { emitOnActions } from "./emit/on-actions.ts";
+import { emitScriptReferences } from "./emit/script-reference.ts";
 import type { SkippedRule } from "./emit/shape.ts";
 import {
   canonicalScopes,
@@ -715,6 +716,23 @@ async function main(): Promise<void> {
       'import type { ScopeName } from "./scopes.ts";\n\n' +
       events.firesCode
   );
+  const scriptReferences = emitScriptReferences(
+    canonicalScopes(rules.scopes),
+    [...effects.references, ...events.fireReferences],
+    effects.scopeLinkReferences
+  );
+  await write(
+    "script-reference.ts",
+    header(commit, [
+      "scopes.cwt",
+      "effects.cwt",
+      "aliases.cwt",
+      "links.cwt",
+      "events/events.cwt",
+      "script-docs/v4.4.1/effects.log",
+      "script-docs/v4.4.1/scopes.log",
+    ]) + scriptReferences.code
+  );
   await write(
     "event-fields.ts",
     header(commit, ["events/events.cwt", "codegen-cwt event field support policy"]) +
@@ -766,6 +784,12 @@ async function main(): Promise<void> {
   console.log(
     `event kinds: ${events.kinds} (${events.definers} definers, ` +
       `${events.fireMethods} typed fire methods)`
+  );
+  console.log(
+    `script reference metadata: ${effects.references.length} ordinary effects, ` +
+      `${events.fireReferences.length} event fires, ` +
+      `${effectPolicy.structuralMethods.size} structural methods, ` +
+      `${scriptReferences.scopeLinks} scope links`
   );
   console.log(
     `on-actions: ${onActions.emitted} emitted (${onActions.noScope} scopeless and currently rejected)`
