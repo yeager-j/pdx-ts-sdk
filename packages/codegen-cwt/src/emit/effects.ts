@@ -28,6 +28,7 @@ import {
   EFFECT_FIELD_TYPE_OVERRIDES,
 } from "../overlay.ts";
 import type { ClassifiedLink } from "./links.ts";
+import type { ScriptEffectReferenceRow, ScriptScopeLinkReferenceRow } from "./script-reference.ts";
 import {
   canonicalScopeSet,
   mergeFields,
@@ -55,6 +56,10 @@ export interface EffectEmission {
   readonly fieldAdditions: readonly string[];
   /** Scope-link path properties emitted from the shared link table. */
   readonly linkEmitted: number;
+  /** Machine-readable rows projected from the post-overlay effect clusters. */
+  readonly references: readonly ScriptEffectReferenceRow[];
+  /** Machine-readable rows projected from the post-classification link clusters. */
+  readonly scopeLinkReferences: readonly ScriptScopeLinkReferenceRow[];
 }
 
 type EffectShape =
@@ -267,18 +272,23 @@ function argsType(fields: readonly ArgField[], outerScope: string, owner: string
 function methodSignature(effect: EmittedEffect, outerScope: string): string {
   const { method, key, shape } = effect;
   const doc = docComment(effect.docs, "  ");
+  return doc + methodSignatureText(effect, outerScope);
+}
+
+function methodSignatureText(effect: EmittedEffect, outerScope: string): string {
+  const { method, key, shape } = effect;
   switch (shape.kind) {
     case "bool":
-      return `${doc}  ${method}(value?: boolean): void;\n`;
+      return `  ${method}(value?: boolean): void;\n`;
     case "value":
-      return `${doc}  ${method}(value: ${shape.value.type}): void;\n`;
+      return `  ${method}(value: ${shape.value.type}): void;\n`;
     case "fields":
-      return `${doc}  ${method}(args: ${argsType(shape.fields, outerScope, key)}): void;\n`;
+      return `  ${method}(args: ${argsType(shape.fields, outerScope, key)}): void;\n`;
     case "wrapper": {
       const body = `body: (scope: ${scopeInterfaceName(shape.scope)}) => void`;
       return shape.fields === null
-        ? `${doc}  ${method}(${body}): void;\n`
-        : `${doc}  ${method}(args: ${argsType(shape.fields, outerScope, key)}, ${body}): void;\n`;
+        ? `  ${method}(${body}): void;\n`
+        : `  ${method}(args: ${argsType(shape.fields, outerScope, key)}, ${body}): void;\n`;
     }
   }
 }
@@ -719,6 +729,34 @@ export function emitEffects(
     metaEntries +
     "};\n";
 
+  const references = sortedClusters.flatMap((cluster) => {
+    const availability = cluster.scopes;
+    const outerScope =
+      availability === "universal"
+        ? "ScopeName"
+        : availability.map((scope) => JSON.stringify(scope)).join(" | ");
+    return cluster.effects.map((effect): ScriptEffectReferenceRow => ({
+      method: effect.method,
+      key: effect.key,
+      kind: "effect",
+      availability:
+        availability === "universal"
+          ? { kind: "universal" }
+          : { kind: "scopes", scopes: availability },
+      signature: methodSignatureText(effect, outerScope).trim(),
+      docs: effect.docs,
+    }));
+  });
+  const scopeLinkReferences = sortedLinkClusters.flatMap((cluster): ScriptScopeLinkReferenceRow[] =>
+    cluster.links.map((link) => ({
+      member: link.method,
+      fromScopes:
+        cluster.scopes === "universal" ? canonicalScopes(emitter.rules.scopes) : cluster.scopes,
+      toScope: link.outputScope,
+      docs: link.docs,
+    }))
+  );
+
   return {
     interfaces,
     meta,
@@ -736,5 +774,7 @@ export function emitEffects(
       )
     ),
     linkEmitted: links.length,
+    references,
+    scopeLinkReferences,
   };
 }
