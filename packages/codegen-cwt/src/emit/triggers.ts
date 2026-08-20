@@ -214,6 +214,8 @@ function memberType(field: ArgField, outerScope: string): string {
   switch (value.kind) {
     case "scalar":
       return value.value.type;
+    case "scalarOrFields":
+      return `${value.scalar.type} | { ${value.fields.map((nested) => `${camelCase(nested.name)}${nested.optional ? "?" : ""}: ${memberType(nested, outerScope)}`).join("; ")} }`;
     case "clause":
       return `Trigger<${value.scope === null ? outerScope : JSON.stringify(value.scope)}>`;
     case "comparison": {
@@ -229,16 +231,25 @@ function contributesRefs(field: ArgField): boolean {
   if (field.value.kind === "clause") {
     return true;
   }
-  return field.value.kind === "scalar" && field.value.value.refTypes !== undefined;
+  if (field.value.kind === "scalar") {
+    return field.value.value.refTypes !== undefined;
+  }
+  return field.value.kind === "scalarOrFields" && field.value.fields.some(contributesRefs);
 }
 
-function pushCode(field: ArgField, access: string, owner: string, index: number): string {
+function pushCode(
+  field: ArgField,
+  access: string,
+  owner: string,
+  index: number,
+  sink = "entries"
+): string {
   const key = JSON.stringify(field.name);
   switch (field.value.kind) {
     case "scalar": {
       const { refTypes } = field.value.value;
       if (refTypes === undefined) {
-        return `entries.push(kv(${key}, ${pushExpr(field.value.value, access)}));`;
+        return `${sink}.push(kv(${key}, ${pushExpr(field.value.value, access)}));`;
       }
       // Indexed rather than named after the field, so the local can never
       // collide with `args`, `entries`, `refs`, or a sibling field's name.
@@ -246,20 +257,44 @@ function pushCode(field: ArgField, access: string, owner: string, index: number)
       const field_ = JSON.stringify(`${owner}.${field.name}`);
       return (
         `const ${local} = ${field.value.value.toScalar(access)};\n` +
-        `    entries.push(kv(${key}, ${local}));\n` +
+        `    ${sink}.push(kv(${key}, ${local}));\n` +
         `    refs.push({ targets: ${JSON.stringify(refTypes)}, id: ${local}, field: ${field_} });`
+      );
+    }
+    case "scalarOrFields": {
+      const nested = field.value.fields
+        .map((nestedField, nestedIndex) => {
+          const nestedAccess = `${access}.${camelCase(nestedField.name)}`;
+          const code = pushCode(
+            nestedField,
+            nestedAccess,
+            `${owner}.${field.name}`,
+            nestedIndex,
+            "nestedEntries"
+          );
+          return nestedField.optional ? `if (${nestedAccess} !== undefined) {\n  ${code}\n}` : code;
+        })
+        .join("\n");
+      return (
+        `if (typeof ${access} === "object" && ${access} !== null && !Array.isArray(${access})) {\n` +
+        `  const nestedEntries: PdxEntry[] = [];\n` +
+        `${nested}\n` +
+        `  ${sink}.push(block(${key}, nestedEntries));\n` +
+        `} else {\n` +
+        `  ${sink}.push(kv(${key}, ${pushExpr(field.value.scalar, access)}));\n` +
+        `}`
       );
     }
     case "clause":
       return (
         (field.value.splice
-          ? `entries.push(...${access}.entries);\n`
-          : `entries.push(block(${key}, [...${access}.entries]));\n`) +
+          ? `${sink}.push(...${access}.entries);\n`
+          : `${sink}.push(block(${key}, [...${access}.entries]));\n`) +
         `    refs.push(...${access}.refs);`
       );
     case "comparison":
       return (
-        `entries.push(typeof ${access} === "object" ` +
+        `${sink}.push(typeof ${access} === "object" ` +
         `? cmp(${key}, ${access}[0], ${access}[1]) : kv(${key}, ${access}));`
       );
   }

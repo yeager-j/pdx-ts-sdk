@@ -96,6 +96,60 @@ describe("LoweredRule", () => {
     expect([...rule.body.clauses]).toEqual([["limit", null]]);
     expect([...rule.body.args]).toEqual(["count"]);
   });
+
+  it("retains create_ambient_object's scalar/block overloads for codegen", () => {
+    const rule = effects.get("create_ambient_object")!;
+    const fields = rule.blocks[0]!.named.filter((field) => field.key.kind === "name");
+    expect(
+      fields.map((field) => (field.key.kind === "name" ? field.key.name : "<non-name>"))
+    ).toEqual([
+      "type",
+      "location",
+      "scale",
+      "use_3d_location",
+      "entity_offset",
+      "entity_offset",
+      "entity_offset_angle",
+      "entity_offset_angle",
+      "entity_offset_height",
+      "entity_offset_height",
+      "base_angle_towards",
+      "base_angle_towards",
+      "entity_face_object",
+      "entity_scale_to_size",
+      "scripted_scale",
+      "play_animation_once",
+      "duration",
+      "is_wreck",
+      "effect",
+    ]);
+    for (const name of ["entity_offset", "entity_offset_angle", "entity_offset_height"]) {
+      expect(
+        fields.filter((field) => field.key.kind === "name" && field.key.name === name)
+      ).toHaveLength(2);
+    }
+
+    const policy = createEffectPolicy(rules);
+    const emitted = emitEffects(new Emitter(rules), docs.effects, scopes, effects, policy, []);
+    expect(emitted.interfaces).toContain("createAmbientObject(args:");
+    expect(emitted.interfaces).toContain("entityOffset?: number | { min: number; max: number }");
+    expect(emitted.meta).toContain('kind: "scalar-or-fields"');
+    expect(emitted.interfaces).toContain("effect?: (scope: AmbientObjectScope) => void");
+    expect(emitted.interfaces).not.toContain("createColony(args:");
+    expect(emitted.interfaces).not.toContain("startColony(args:");
+    expect(emitted.skipped).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: "create_colony",
+          reason: expect.stringContaining("repeated nested fields"),
+        }),
+        expect.objectContaining({
+          name: "start_colony",
+          reason: expect.stringContaining("repeated nested fields"),
+        }),
+      ])
+    );
+  });
 });
 
 describe("the effect ownership policy", () => {

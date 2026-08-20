@@ -7,15 +7,59 @@
 import type { PdxEntry } from "@pdx-ts/pdxscript";
 import { describe, expectTypeOf, it } from "vitest";
 
-import { planetFlags } from "../src/generated/value-sets.ts";
+import type { AmbientObjectRef, BuildingRef } from "../src/generated/refs.ts";
+import { ambientObjectFlags, countryFlags, planetFlags } from "../src/generated/value-sets.ts";
 import type { EffectPath, EffectPathOf } from "../src/index.ts";
-import { eventTarget, makeScope } from "../src/script/effects/recorder.ts";
+import { eventTarget, makeScope, scopeValue } from "../src/script/effects/recorder.ts";
 import { isAtWar } from "../src/script/triggers.ts";
 
 const sink: PdxEntry[] = [];
 const flags = planetFlags("effects_type_test_flag");
+const ambientFlags = ambientObjectFlags("effects_type_test_ambient_flag");
+const ambientRef: AmbientObjectRef = { id: "effects_type_test_ambient" };
+const buildingRef = { id: "effects_type_test_building" } as BuildingRef;
 
 describe("generated effect scope safety", () => {
+  it("types ambient-object placement refs, locations, and scalar/range offsets", () => {
+    const system = makeScope<"system">(sink);
+    system.createAmbientObject({
+      type: ambientRef,
+      location: scopeValue<"planet">("from"),
+      entityOffset: 2,
+      entityOffsetAngle: { min: 10, max: 20 },
+      entityOffsetHeight: { min: -1, max: 1 },
+      effect: (ambient) =>
+        ambient.setAmbientObjectFlag(ambientFlags.effects_type_test_ambient_flag),
+    });
+    system.createAmbientObject({
+      type: "effects_type_test_raw_ambient",
+      entityOffset: { min: 0, max: 4 },
+    });
+  });
+
+  it("rejects invalid ambient-object placement forms", () => {
+    const system = makeScope<"system">(sink);
+    // @ts-expect-error — create_ambient_object.type accepts ambient_object refs, not buildings
+    system.createAmbientObject({ type: buildingRef });
+    system.createAmbientObject({
+      type: "effects_type_test_raw_ambient",
+      // @ts-expect-error — location is narrowed to the spatial_object scope group
+      location: scopeValue<"country">("from"),
+    });
+    // @ts-expect-error — the structured arm requires both range bounds
+    system.createAmbientObject({ type: "effects_type_test_raw_ambient", entityOffset: { min: 1 } });
+    // @ts-expect-error — offsets accept one scalar or one range block, not arrays
+    system.createAmbientObject({ type: "effects_type_test_raw_ambient", entityOffset: [1, 2] });
+    system.createAmbientObject({
+      type: "effects_type_test_raw_ambient",
+      effect: (ambient) =>
+        // @ts-expect-error — the pushed scope is ambient_object, not country
+        ambient.setCountryFlag(
+          countryFlags("effects_type_test_country_flag").effects_type_test_country_flag
+        ),
+    });
+  });
+
   it("rejects an effect outside its declared scopes", () => {
     const country = makeScope<"country">(sink);
     // @ts-expect-error — destroy_colony is declared for colony/planet/ship/carrier, not country

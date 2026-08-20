@@ -51,6 +51,7 @@ import type { EmittedField } from "@pdx-ts/codegen-cwt/emit/fields";
 import { describe, expect, it } from "vitest";
 
 import { InstallNotFoundError } from "../../src/errors.ts";
+import { isEffectKey } from "../../src/script/effects/recorder.ts";
 import {
   corpusOfFixture,
   FIXTURE_PATH,
@@ -170,6 +171,16 @@ function observedShapes(): ObservedShape[] {
 }
 
 describe("corpus conformance", () => {
+  it("keeps create_ambient_object observed in initializer effects and generated", () => {
+    const solarSystem = loadRegistryFixture("solar_system_initializer");
+    const initEffect = solarSystem?.fields.init_effect;
+    expect(initEffect?.keys).toContain("create_ambient_object");
+    expect(
+      initEffect?.keysByDefinition.some((keys) => keys.includes("create_ambient_object"))
+    ).toBe(true);
+    expect(isEffectKey("create_ambient_object")).toBe(true);
+  });
+
   it("records mixed trigger structs at their sibling and synthetic trigger paths", () => {
     const megastructure = loadRegistryFixture("megastructure")!;
     expect(megastructure.fields.placement_rules).toMatchObject({

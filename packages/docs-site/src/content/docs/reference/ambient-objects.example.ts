@@ -21,6 +21,18 @@ const relay = mod.ambientObject("relay", {
   tooltip: relayTooltip.key,
 });
 
-export const feature = mod.feature("relay", [relayDescription, relayTooltip, relay]);
+const relaySystem = mod.solarSystemInitializer("relay_system", {
+  class: "sc_g",
+  planet: [{ class: "star", orbitDistance: 0, size: 20 }],
+  initEffect: (system, ctx) => {
+    system.createAmbientObject({
+      type: relay,
+      location: ctx.self,
+      effect: (ambient) => ambient.setAmbientObjectFlag("ancient_relay_spawned"),
+    });
+  },
+});
+
+export const feature = mod.feature("relay", [relayDescription, relayTooltip, relay, relaySystem]);
 
 export default mod.compile([feature]);

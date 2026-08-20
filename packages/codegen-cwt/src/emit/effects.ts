@@ -181,6 +181,8 @@ function memberType(field: ArgField, outerScope: string, owner: string): string 
   switch (value.kind) {
     case "scalar":
       return value.value.type;
+    case "scalarOrFields":
+      return `${value.scalar.type} | ${argsType(value.fields, outerScope, owner)}`;
     case "clause": {
       const scope = value.scope === null ? outerScope : JSON.stringify(value.scope);
       if (value.category === "trigger") {
@@ -246,7 +248,20 @@ function booleanLiteralsMeta(value: TsValue | undefined): string {
     : `, booleanLiterals: ${JSON.stringify(value.booleanLiterals)}`;
 }
 
+function scalarMeta(value: TsValue): string {
+  const members = [
+    value.refTypes === undefined ? null : `refTypes: ${JSON.stringify(value.refTypes)}`,
+    value.booleanLiterals === undefined
+      ? null
+      : `booleanLiterals: ${JSON.stringify(value.booleanLiterals)}`,
+  ].filter((member): member is string => member !== null);
+  return members.length === 0 ? "{}" : `{ ${members.join(", ")} }`;
+}
+
 function fieldMeta(field: ArgField): string {
+  if (field.value.kind === "scalarOrFields") {
+    return `{ prop: ${JSON.stringify(camelCase(field.name))}, key: ${JSON.stringify(field.name)}, kind: "scalar-or-fields", scalar: ${scalarMeta(field.value.scalar)}, fields: [${field.value.fields.map(fieldMeta).join(", ")}] }`;
+  }
   const kind =
     field.value.kind === "scalar"
       ? "value"
@@ -603,7 +618,7 @@ export function emitEffects(
     .join("");
   const meta =
     "export type EffectFieldKind = " +
-    '"value" | "comparison" | "trigger" | "effect" | "modifiers";\n\n' +
+    '"value" | "comparison" | "trigger" | "effect" | "modifiers" | "scalar-or-fields";\n\n' +
     "export interface EffectFieldMeta {\n" +
     "  readonly prop: string;\n" +
     "  readonly key: string;\n" +
@@ -620,6 +635,9 @@ export function emitEffects(
     "  readonly refTypes?: readonly string[];\n" +
     "  /** Literal yes/no arms that lower to PDXScript booleans rather than strings. */\n" +
     '  readonly booleanLiterals?: readonly ("yes" | "no")[];\n' +
+    "  /** Scalar and structured-block arms for an overloaded field. */\n" +
+    '  readonly scalar?: Pick<EffectFieldMeta, "refTypes" | "booleanLiterals">;\n' +
+    "  readonly fields?: readonly EffectFieldMeta[];\n" +
     "}\n\n" +
     "export type EffectShapeMeta =\n" +
     '  | { readonly kind: "bool" }\n' +

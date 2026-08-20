@@ -35,6 +35,31 @@ function metaEntry(name: string): string {
 }
 
 describe("emitted effect signatures", () => {
+  it("createAmbientObject exposes its scalar/block offsets and pushed scope", () => {
+    const create = signature("createAmbientObject");
+    expect(create).toContain("type: AmbientObjectRef | string;");
+    expect(create).toContain("location?: ScopeValue<");
+    expect(create).toContain("scale?: number;");
+    expect(create).toContain("use3dLocation?: boolean;");
+    expect(create).toContain("entityOffset?: number | { min: number; max: number };");
+    expect(create).toContain("entityOffsetAngle?: number | { min: number; max: number };");
+    expect(create).toContain("entityOffsetHeight?: number | { min: number; max: number };");
+    expect(create).toContain("scriptedScale?: Variable;");
+    expect(create).toContain("effect?: (scope: AmbientObjectScope) => void;");
+  });
+
+  it("createAmbientObject metadata preserves nested scalar/block arms", () => {
+    const start = meta.indexOf("  createAmbientObject: {");
+    const end = meta.indexOf("  createCluster:", start);
+    const entry = meta.slice(start, end);
+    expect(entry).toContain('key: "create_ambient_object"');
+    expect(entry.match(/kind: "scalar-or-fields"/g)).toHaveLength(3);
+    expect(entry).toContain('key: "entity_offset"');
+    expect(entry).toContain('key: "entity_offset_angle"');
+    expect(entry).toContain('key: "entity_offset_height"');
+    expect(entry).toContain('{ prop: "effect", key: "effect", kind: "effect" }');
+  });
+
   it("bool: an omitted argument means yes", () => {
     expect(signature("destroyColony")).toMatchInlineSnapshot(
       `"destroyColony(value?: boolean): void;"`

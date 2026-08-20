@@ -2568,6 +2568,29 @@ describe("generated content registries", () => {
   });
 });
 
+describe("effect references in generated content", () => {
+  it("checks an owned ambient-object ref in a solar-system initializer closure", () => {
+    const cap = capabilityFor(configFor("Ambient effect reference test", "ambient_ref_test"));
+    const ambient = cap.ambientObject("wreck", {
+      name: "Reference Wreck",
+      entity: "ambient_ref_test_entity",
+    });
+    const system = cap.solarSystemInitializer("home", {
+      class: "sc_g",
+      initEffect: (scope) => {
+        scope.createAmbientObject({ type: ambient });
+      },
+    });
+    const complete = cap.feature(undefined, [ambient, system]);
+    expect(() => render(cap.compile([complete]))).not.toThrow();
+
+    const omitted = cap.feature(undefined, [system]);
+    expect(() => render(cap.compile([omitted]))).toThrow(
+      /references ambient_object .*create_ambient_object\.type/
+    );
+  });
+});
+
 describe("SDK-44: conditionally-required localization and the global_ship_design name hole", () => {
   it("requires tradition_swap.name unless inheritName is set (sdk44ConditionalRequired)", () => {
     const cap = capabilityFor(configFor("SDK-44 test", "sdk44"));
