@@ -3,7 +3,11 @@
  */
 import type { ContentReferenceName, ContentTypeName } from "../generated/content-registry.ts";
 import type { ScopeObjOf } from "../generated/effects.ts";
-import type { EconomicModifierCategory, ScriptedModifierCategory } from "../generated/enums.ts";
+import type {
+  EconomicModifierCategory,
+  EconomicModifierType,
+  ScriptedModifierCategory,
+} from "../generated/enums.ts";
 import type { ScopedModifierBlock, ScopedModifierRecorder } from "../generated/modifiers.ts";
 import type { EconomicCategoryRef } from "../generated/refs.ts";
 import type { ScopeName } from "../generated/scopes.ts";
@@ -84,6 +88,24 @@ export interface EconomicCategoryWitness {
   readonly modifierCategory?: ScriptedModifierCategory;
   readonly generateAddModifiers?: readonly EconomicModifierCategory[];
   readonly generateMultModifiers?: readonly EconomicModifierCategory[];
+  readonly triggeredCostModifier?: readonly EconomicCategoryTriggeredModifierWitness[];
+  readonly triggeredProducesModifier?: readonly EconomicCategoryTriggeredModifierWitness[];
+  readonly triggeredUpkeepModifier?: readonly EconomicCategoryTriggeredModifierWitness[];
+  readonly triggeredLogisticsModifier?: readonly EconomicCategoryTriggeredModifierWitness[];
+}
+
+/**
+ * The literal part of one economic category triggered-modifier row.
+ *
+ * The generated row also carries `useParentIcon` and `trigger`; they remain
+ * optional here so a generated row can flow through the witness without
+ * widening its key or modifier-type literals.
+ */
+export interface EconomicCategoryTriggeredModifierWitness {
+  readonly key: EconomicCategoryRef | string;
+  readonly modifierTypes: readonly EconomicModifierType[];
+  readonly useParentIcon?: true;
+  readonly trigger?: Trigger<never>;
 }
 
 /**

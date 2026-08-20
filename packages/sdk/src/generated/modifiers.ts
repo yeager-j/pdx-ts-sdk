@@ -67924,6 +67924,20 @@ export type EconomicWitnessOf<
       readonly generateMultModifiers: D extends { readonly generateMultModifiers: infer U }
         ? U
         : undefined;
+      readonly triggeredCostModifier: D extends { readonly triggeredCostModifier: infer C }
+        ? C
+        : undefined;
+      readonly triggeredProducesModifier: D extends { readonly triggeredProducesModifier: infer P }
+        ? P
+        : undefined;
+      readonly triggeredUpkeepModifier: D extends { readonly triggeredUpkeepModifier: infer U }
+        ? U
+        : undefined;
+      readonly triggeredLogisticsModifier: D extends {
+        readonly triggeredLogisticsModifier: infer L;
+      }
+        ? L
+        : undefined;
     }
   : never;
 export type EconomicCategoryAllowed<
@@ -67933,12 +67947,104 @@ export type EconomicCategoryAllowed<
   S,
   W["modifierCategory"] extends string ? W["modifierCategory"] : "economic_unit"
 >;
+export type EconomicTriggeredField = "cost" | "produces" | "upkeep" | "logistics";
+export type EconomicTriggeredWitnessField<F extends EconomicTriggeredField> = F extends "cost"
+  ? "triggeredCostModifier"
+  : F extends "produces"
+    ? "triggeredProducesModifier"
+    : F extends "upkeep"
+      ? "triggeredUpkeepModifier"
+      : "triggeredLogisticsModifier";
+export type EconomicTriggeredRows<
+  W extends import("../content/types.ts").EconomicCategoryWitness,
+  F extends EconomicTriggeredField,
+> = W[EconomicTriggeredWitnessField<F>] extends readonly (infer R)[] ? R : never;
+export type EconomicTriggeredKeyId<K> = K extends string
+  ? K
+  : K extends { readonly id: infer I extends string }
+    ? I
+    : never;
+export type EconomicTriggeredRowKey<R> = R extends { readonly key: infer K }
+  ? EconomicTriggeredKeyId<K>
+  : never;
+export type EconomicTriggeredKeyOfRow<R> = R extends { readonly key: infer K }
+  ? EconomicTriggeredKeyId<K> extends infer I extends string
+    ? string extends I
+      ? never
+      : I
+    : never
+  : never;
+export type EconomicTriggeredKeys<W extends import("../content/types.ts").EconomicCategoryWitness> =
+  {
+    [F in EconomicTriggeredField]: EconomicTriggeredKeyOfRow<EconomicTriggeredRows<W, F>>;
+  }[EconomicTriggeredField];
+export type EconomicTriggeredTypes<
+  W extends import("../content/types.ts").EconomicCategoryWitness,
+  F extends EconomicTriggeredField,
+  K extends string,
+> =
+  EconomicTriggeredRows<W, F> extends infer R
+    ? R extends unknown
+      ? K extends EconomicTriggeredRowKey<R>
+        ? R extends { readonly modifierTypes: readonly (infer M)[] }
+          ? M & ("add" | "mult")
+          : never
+        : never
+      : never
+    : never;
+export type EconomicTriggeredCapability<
+  W extends import("../content/types.ts").EconomicCategoryWitness,
+  K extends string,
+> = K extends unknown ? { [F in EconomicTriggeredField]: EconomicTriggeredTypes<W, F, K> } : never;
+export type EconomicTriggeredKeyGuard<
+  W extends import("../content/types.ts").EconomicCategoryWitness,
+  K,
+> =
+  EconomicTriggeredKeyId<K> extends infer I extends string
+    ? string extends I
+      ? never
+      : [I] extends [EconomicTriggeredKeys<W>]
+        ? IsUnion<EconomicTriggeredCapability<W, I>> extends true
+          ? never
+          : K
+        : never
+    : never;
+export type EconomicTriggeredResourceRecorder<
+  W extends import("../content/types.ts").EconomicCategoryWitness,
+  K extends string,
+> = {
+  [F in EconomicTriggeredField as "add" extends EconomicTriggeredTypes<W, F, K> ? F : never]: {
+    readonly add: ModifierSetter;
+  };
+} & {
+  [F in EconomicTriggeredField as "mult" extends EconomicTriggeredTypes<W, F, K> ? F : never]: {
+    readonly mult: ModifierSetter;
+  };
+};
+export type EconomicTriggeredRecorder<
+  W extends import("../content/types.ts").EconomicCategoryWitness,
+  K extends string,
+> = {
+  readonly resource: (
+    resource: import("../generated/refs.ts").ResourceRef | string
+  ) => EconomicTriggeredResourceRecorder<W, K>;
+} & {
+  [F in EconomicTriggeredField as "mult" extends EconomicTriggeredTypes<W, F, K> ? F : never]: {
+    readonly mult: ModifierSetter;
+  };
+};
+export type EconomicTriggeredSelector<
+  W extends import("../content/types.ts").EconomicCategoryWitness,
+> = <const K extends import("../generated/refs.ts").EconomicCategoryRef | string>(
+  key: K & (EconomicTriggeredKeyGuard<W, K> extends never ? never : unknown)
+) => EconomicTriggeredRecorder<W, EconomicTriggeredKeyId<K> & string>;
 export type EconomicCategoryRecorder<
   W extends import("../content/types.ts").EconomicCategoryWitness,
 > = {
   readonly resource: (
     resource: import("../generated/refs.ts").ResourceRef | string
   ) => EconomicResourceRecorder<W>;
+  readonly triggered: EconomicTriggeredSelector<W>;
 } & {
   [K in W["generateMultModifiers"] extends readonly (infer M)[] ? M & string : never]: {
     readonly mult: ModifierSetter;

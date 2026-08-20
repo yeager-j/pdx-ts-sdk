@@ -26,6 +26,22 @@ does not grant a bonus. A static modifier or ordinary `modifier` field can
 supply a bonus, but it does not decide which resource transactions belong to a
 category.
 
+An economic category can also declare triggered modifier rows. The triggered
+field name selects the transaction family (`cost`, `produces`, `upkeep`, or
+`logistics`); each row owns a key, and its `modifierTypes` selects `add` or
+`mult`. Select the source category, then the owned row key:
+
+```ts
+modifier.economic(expeditions).triggered(shipyardOperations).cost.mult(-0.1);
+modifier.economic(expeditions).triggered(shipyardOperations).resource("energy").cost.mult(-0.2);
+```
+
+The emitted modifier starts with the selected row key, not the source category:
+`<row-key>_cost_mult` and `<row-key>_energy_cost_mult`. The SDK records both
+economic-category references, so omitting either owned definition fails the
+build. Resource-specific families can expose `add` and `mult`; broad families expose
+only `mult`.
+
 The complete original example below follows all five parts. Read the
 TypeScript first, then compare it with the generated economic category,
 scripted modifier, edict, and static modifier files:

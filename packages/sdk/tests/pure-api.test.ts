@@ -552,6 +552,14 @@ describe("content reference integrity", () => {
       readonly modifierCategory: "country";
       readonly generateMultModifiers: readonly ["upkeep"];
     }>;
+    const triggeredKeyDefinition = defineEconomicCategoryInternal({
+      id: "pp_mod_triggered_key",
+    });
+    const triggeredEconomic = defineEconomicCategoryInternal({
+      id: "pp_mod_triggered_operations",
+      modifierCategory: "country",
+      triggeredCostModifier: [{ key: triggeredKeyDefinition, modifierTypes: ["mult"] }],
+    });
     const building = defineBuildingInternal({
       id: "pp_mod_owned_modifier_building",
       name: "Owned",
@@ -560,6 +568,7 @@ describe("content reference integrity", () => {
         m.economic(economic).resource("energy").upkeep.mult(0.2);
         m.scripted(renamedScripted).set(2);
         m.economic(renamedEconomic).resource("energy").upkeep.mult(0.3);
+        m.economic(triggeredEconomic).triggered(triggeredKeyDefinition).cost.mult(0.4);
       },
     });
     const files = render(
@@ -569,6 +578,8 @@ describe("content reference integrity", () => {
           economic,
           renamedScripted,
           renamedEconomic,
+          triggeredKeyDefinition,
+          triggeredEconomic,
           building,
         ]),
       ])
@@ -578,12 +589,37 @@ describe("content reference integrity", () => {
     expect(text).toContain("pp_mod_operations_energy_upkeep_mult = 0.2");
     expect(text).toContain("pp_mod_renamed_efficiency = 2");
     expect(text).toContain("pp_mod_renamed_operations_energy_upkeep_mult = 0.3");
+    expect(text).toContain("pp_mod_triggered_key_cost_mult = 0.4");
     expect(() =>
       buildInternal(CONFIG, [createFeatureInternal("omitted_scripted", [economic, building])])
     ).toThrow(/references scripted_modifier/);
     expect(() =>
       buildInternal(CONFIG, [createFeatureInternal("omitted_economic", [scripted, building])])
     ).toThrow(/references economic_category/);
+    expect(() =>
+      buildInternal(CONFIG, [
+        createFeatureInternal("omitted_triggered_key", [
+          scripted,
+          economic,
+          renamedScripted,
+          renamedEconomic,
+          triggeredEconomic,
+          building,
+        ]),
+      ])
+    ).toThrow(/references economic_category "pp_mod_triggered_key"/);
+    expect(() =>
+      buildInternal(CONFIG, [
+        createFeatureInternal("omitted_triggered_source", [
+          scripted,
+          economic,
+          renamedScripted,
+          renamedEconomic,
+          triggeredKeyDefinition,
+          building,
+        ]),
+      ])
+    ).toThrow(/references economic_category "pp_mod_triggered_operations"/);
   });
 
   it("folds owned job references and rejects omitted owned jobs", () => {

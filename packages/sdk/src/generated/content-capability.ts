@@ -840,12 +840,33 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
    * The capability mints and owns the full id; the returned branded reference
    * flows into matching content-reference fields.
    */
-  economicCategory<const Name extends string, W extends EconomicCategoryWitness>(
+  economicCategory<const Name extends string, const W extends EconomicCategoryWitness>(
     name: Name,
-    def: Omit<EconomicCategoryDef<MintedContentId<P, I, "economicCategory", Name>>, "id"> & W
+    def: Omit<
+      EconomicCategoryDef<MintedContentId<P, I, "economicCategory", Name>>,
+      | "id"
+      | "modifierCategory"
+      | "generateAddModifiers"
+      | "generateMultModifiers"
+      | "triggeredCostModifier"
+      | "triggeredProducesModifier"
+      | "triggeredUpkeepModifier"
+      | "triggeredLogisticsModifier"
+    > &
+      W
   ): ContentItem<
     "economic_category",
-    EconomicCategoryDef<MintedContentId<P, I, "economicCategory", Name>> & W
+    Omit<
+      EconomicCategoryDef<MintedContentId<P, I, "economicCategory", Name>>,
+      | "modifierCategory"
+      | "generateAddModifiers"
+      | "generateMultModifiers"
+      | "triggeredCostModifier"
+      | "triggeredProducesModifier"
+      | "triggeredUpkeepModifier"
+      | "triggeredLogisticsModifier"
+    > &
+      W
   >;
   /**
    * Defines a civic or origin from its logical name.
@@ -1304,9 +1325,20 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
       defineCouncilor({ ...def, id: mint("councilor", name) } as CouncilorDef<
         MintedContentId<P, I, "councilor", Name>
       >),
-    economicCategory: <const Name extends string, W extends EconomicCategoryWitness>(
+    economicCategory: <const Name extends string, const W extends EconomicCategoryWitness>(
       name: Name,
-      def: Omit<EconomicCategoryDef<MintedContentId<P, I, "economicCategory", Name>>, "id"> & W
+      def: Omit<
+        EconomicCategoryDef<MintedContentId<P, I, "economicCategory", Name>>,
+        | "id"
+        | "modifierCategory"
+        | "generateAddModifiers"
+        | "generateMultModifiers"
+        | "triggeredCostModifier"
+        | "triggeredProducesModifier"
+        | "triggeredUpkeepModifier"
+        | "triggeredLogisticsModifier"
+      > &
+        W
     ) =>
       defineEconomicCategory({ ...def, id: mint("economicCategory", name) } as EconomicCategoryDef<
         MintedContentId<P, I, "economicCategory", Name>

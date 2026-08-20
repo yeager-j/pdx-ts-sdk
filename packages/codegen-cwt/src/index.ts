@@ -973,13 +973,25 @@ function contentDefiners(
         : registry === "economic_category"
           ? "EconomicCategoryWitness"
           : null;
+    const economicWitnessMembers = [
+      "modifierCategory",
+      "generateAddModifiers",
+      "generateMultModifiers",
+      "triggeredCostModifier",
+      "triggeredProducesModifier",
+      "triggeredUpkeepModifier",
+      "triggeredLogisticsModifier",
+    ] as const;
+    const economicWitnessOmit = economicWitnessMembers
+      .map((member) => JSON.stringify(member))
+      .join(" | ");
     const itemArms = [
       modifierWitness === null
         ? `ContentItem<${key}, ${name}Def${erased}>` +
           (witness === null ? "" : ` & { readonly ${witness.member}: W }`)
         : registry === "scripted_modifier"
           ? `ContentItem<${key}, ${name}Def${erased}> & { readonly def: ${name}Def${erased} & { readonly category: W } }`
-          : `ContentItem<${key}, Omit<${name}Def${erased}, "modifierCategory" | "generateAddModifiers" | "generateMultModifiers">> & { readonly def: Omit<${name}Def${erased}, "modifierCategory" | "generateAddModifiers" | "generateMultModifiers"> & W }`,
+          : `ContentItem<${key}, Omit<${name}Def${erased}, ${economicWitnessOmit}> & W>`,
     ];
     if (patchable !== undefined) {
       itemArms.push(`${name}PatchItem`);
@@ -1007,7 +1019,7 @@ function contentDefiners(
           ? registry === "scripted_modifier"
             ? "<const Name extends string, W extends ScriptedModifierCategory>"
             : registry === "economic_category"
-              ? "<const Name extends string, W extends EconomicCategoryWitness>"
+              ? "<const Name extends string, const W extends EconomicCategoryWitness>"
               : "<const Name extends string>"
           : `<\n    const Name extends string,\n    ${scoped.parameterName} extends ` +
             `${scoped.parameterType} = ${JSON.stringify(scoped.parameterFallback)},` +
@@ -1015,19 +1027,27 @@ function contentDefiners(
       const def =
         `${name}Def<${minted}${scoped === null ? "" : `, ${scoped.parameterName}`}` +
         `${declaredFrom === undefined ? "" : ", L"}>`;
+      const economicInputBase =
+        registry === "economic_category"
+          ? `Omit<${def}, "id" | ${economicWitnessOmit}>`
+          : `Omit<${def}, "id">`;
+      const economicResultBase =
+        registry === "economic_category"
+          ? `Omit<${name}Def<${minted}>, ${economicWitnessOmit}>`
+          : `${name}Def<${minted}>`;
       const input =
         scoped?.selector === undefined
           ? registry === "scripted_modifier"
             ? `Omit<${def}, "id"> & { readonly category: W }`
             : registry === "economic_category"
-              ? `Omit<${def}, "id"> & W`
+              ? `${economicInputBase} & W`
               : `Omit<${def}, "id">`
           : `${name}Fields<${scoped.parameterName}${declaredFrom === undefined ? "" : ", L"}>`;
       const result =
         registry === "scripted_modifier"
           ? `${name}Def<${minted}> & { readonly category: W }`
           : registry === "economic_category"
-            ? `${name}Def<${minted}> & W`
+            ? `${economicResultBase} & W`
             : `${name}Def<${minted}${scoped === null ? "" : ", never"}>`;
       const signatures =
         scoped?.selector === undefined
@@ -1220,13 +1240,28 @@ function contentDefiners(
           : `<\n  const Id extends string,\n  ${scoped.parameterName} extends ` +
             `${scoped.parameterType} = ${JSON.stringify(scoped.parameterFallback)},\n` +
             `${declaredFromParameter}>`;
+      const definerParameters =
+        registry === "economic_category"
+          ? "<const Id extends string, const W extends EconomicCategoryWitness>"
+          : parameters;
+      const definerInput =
+        registry === "economic_category"
+          ? `Omit<${name}Def<Id>, ${economicWitnessOmit}> & W`
+          : `${name}Def<Id${scoped === null ? "" : `, ${scoped.parameterName}`}` +
+            `${declaredFrom === undefined ? "" : ", L"}>`;
+      const definerResult =
+        registry === "economic_category"
+          ? `ContentItem<${key}, Omit<${name}Def<Id>, ${economicWitnessOmit}> & W>`
+          : `ContentItem<${key}, ${name}Def<Id${scoped === null ? "" : ", never"}>>`;
       const stripped = [
         ...(scoped !== null && scoped.selector === undefined ? ["scope"] : []),
         ...(declaredFrom === undefined ? [] : [declaredFrom.member]),
       ];
       const body =
         scoped === null
-          ? `  return { itemKind: "content", type: ${key}, id: def.id, def };\n`
+          ? registry === "economic_category"
+            ? `  return { itemKind: "content", type: ${key}, id: def.id, def } as ${definerResult};\n`
+            : `  return { itemKind: "content", type: ${key}, id: def.id, def };\n`
           : stripped.length === 0
             ? `  return { itemKind: "content", type: ${key}, id: def.id, ` +
               `def: def as unknown as ${name}Def<Id, never> };\n`
@@ -1259,10 +1294,9 @@ function contentDefiners(
                     ]),
               ]),
         ]) +
-          `export function define${name}${parameters}(\n` +
-          `  def: ${name}Def<Id${scoped === null ? "" : `, ${scoped.parameterName}`}` +
-          `${declaredFrom === undefined ? "" : ", L"}>\n` +
-          `): ContentItem<${key}, ${name}Def<Id${scoped === null ? "" : ", never"}>>` +
+          `export function define${name}${definerParameters}(\n` +
+          `  def: ${definerInput}\n` +
+          `): ${definerResult}` +
           `${declaration} {\n` +
           body +
           "}\n"

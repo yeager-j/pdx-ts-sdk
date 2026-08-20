@@ -67,14 +67,195 @@ interface DynamicModifierFamily {
   readonly verifiedVanilla: boolean;
 }
 
-function modifierRecorder(
-  record: (
-    name: string,
-    amount: number,
-    reference?: { target: string; id: string; verifiedVanilla: boolean }
-  ) => void,
-  live: { value: boolean }
-): unknown {
+interface ModifierReference {
+  readonly target: string;
+  readonly id: string;
+  readonly verifiedVanilla: boolean;
+}
+
+const ECONOMIC_TRIGGERED_OPERATIONS = ["cost", "produces", "upkeep", "logistics"] as const;
+type EconomicTriggeredOperation = (typeof ECONOMIC_TRIGGERED_OPERATIONS)[number];
+
+type ModifierRecord = (
+  name: string,
+  amount: number,
+  reference?: ModifierReference | readonly ModifierReference[]
+) => void;
+
+function economicTriggeredRows(id: string, def: Record<string, unknown>): Map<string, Set<string>> {
+  const rowsByKey = new Map<string, Set<string>>();
+  const fields: readonly (readonly [EconomicTriggeredOperation, string])[] = [
+    ["cost", "triggeredCostModifier"],
+    ["produces", "triggeredProducesModifier"],
+    ["upkeep", "triggeredUpkeepModifier"],
+    ["logistics", "triggeredLogisticsModifier"],
+  ];
+  for (const [operation, member] of fields) {
+    const rows = def[member];
+    if (rows === undefined) {
+      continue;
+    }
+    if (!Array.isArray(rows)) {
+      throw new Error(
+        `Economic category "${id}" has malformed ${member}; expected an array of rows`
+      );
+    }
+    for (const row of rows) {
+      if (row === null || typeof row !== "object") {
+        throw new Error(
+          `Economic category "${id}" has malformed ${member}; each row must be an object`
+        );
+      }
+      const key = refId((row as { readonly key?: unknown }).key as never);
+      if (typeof key !== "string" || key.length === 0) {
+        throw new Error(
+          `Economic category "${id}" has malformed ${member}; each row requires a key`
+        );
+      }
+      const modifierTypes = (row as { readonly modifierTypes?: unknown }).modifierTypes;
+      if (!Array.isArray(modifierTypes) || modifierTypes.length === 0) {
+        throw new Error(
+          `Economic category "${id}" has malformed ${member} row "${key}"; ` +
+            "modifierTypes must be a non-empty array"
+        );
+      }
+      const capabilities = rowsByKey.get(`${key}\u0000${operation}`) ?? new Set<string>();
+      for (const modifierType of modifierTypes) {
+        if (modifierType !== "add" && modifierType !== "mult") {
+          throw new Error(
+            `Economic category "${id}" has malformed ${member} row "${key}"; ` +
+              `unknown modifier type "${String(modifierType)}"`
+          );
+        }
+        capabilities.add(modifierType);
+      }
+      rowsByKey.set(`${key}\u0000${operation}`, capabilities);
+    }
+  }
+  return rowsByKey;
+}
+
+function economicTriggeredRecorder(
+  id: string,
+  sourceReference: ModifierReference,
+  triggeredRows: ReadonlyMap<string, ReadonlySet<string>>,
+  assertLive: (member: string) => void,
+  record: ModifierRecord
+): (selected: unknown) => unknown {
+  return (selected: unknown) => {
+    assertLive("economic.triggered");
+    const selectedId = refId(selected as never);
+    if (typeof selectedId !== "string" || selectedId.length === 0) {
+      throw new Error(`modifier.economic.triggered requires an economic category reference or id`);
+    }
+    const selectedReference: ModifierReference = {
+      target: "economic_category",
+      id: selectedId,
+      verifiedVanilla: isVanillaRef(selected),
+    };
+    const available = new Set<string>();
+    for (const operation of ECONOMIC_TRIGGERED_OPERATIONS) {
+      const capabilities = triggeredRows.get(`${selectedId}\u0000${operation}`);
+      if (capabilities !== undefined) {
+        for (const modifierType of capabilities) {
+          available.add(`${operation}.${modifierType}`);
+        }
+      }
+    }
+    if (available.size === 0) {
+      throw new Error(
+        `Economic category "${id}" has no triggered modifier row for key "${selectedId}"`
+      );
+    }
+    return new Proxy(
+      {},
+      {
+        get: (_target, operation: string) => {
+          if (operation === "resource") {
+            return (resource: unknown) => {
+              assertLive(`economic.triggered(${selectedId}).resource`);
+              const resourceId = typeof resource === "string" ? resource : refId(resource as never);
+              if (typeof resourceId !== "string") {
+                throw new Error(
+                  "modifier.economic.triggered.resource requires a resource reference"
+                );
+              }
+              return new Proxy(
+                {},
+                {
+                  get: (_resourceTarget, resourceOperation: string) => {
+                    const capabilities = triggeredRows.get(
+                      `${selectedId}\u0000${resourceOperation}`
+                    );
+                    if (capabilities === undefined) {
+                      throw new Error(
+                        `Economic category triggered key "${selectedId}" has no ` +
+                          `"${resourceOperation}" modifier family`
+                      );
+                    }
+                    return new Proxy(
+                      {},
+                      {
+                        get: (_operationTarget, modifierType: string) => {
+                          if (!capabilities.has(modifierType)) {
+                            throw new Error(
+                              `Economic category triggered key "${selectedId}" ` +
+                                `does not support ${resourceOperation}.${modifierType}`
+                            );
+                          }
+                          return (amount: number) => {
+                            assertLive(
+                              `economic.triggered(${selectedId}).resource.${resourceOperation}.${modifierType}`
+                            );
+                            record(
+                              `${selectedId}_${resourceId}_${resourceOperation}_${modifierType}`,
+                              amount,
+                              [sourceReference, selectedReference]
+                            );
+                          };
+                        },
+                      }
+                    );
+                  },
+                }
+              );
+            };
+          }
+          if (!ECONOMIC_TRIGGERED_OPERATIONS.includes(operation as EconomicTriggeredOperation)) {
+            throw new Error(
+              `Economic category triggered key "${selectedId}" has unknown ` +
+                `modifier operation "${operation}"`
+            );
+          }
+          const capabilities = triggeredRows.get(`${selectedId}\u0000${operation}`);
+          if (capabilities === undefined) {
+            throw new Error(
+              `Economic category triggered key "${selectedId}" has no ` +
+                `"${operation}" modifier family`
+            );
+          }
+          if (!capabilities.has("mult")) {
+            throw new Error(
+              `Economic category triggered key "${selectedId}" does not support ` +
+                `${operation}.mult`
+            );
+          }
+          return {
+            mult: (amount: number) => {
+              assertLive(`economic.triggered(${selectedId}).${operation}.mult`);
+              record(`${selectedId}_${operation}_mult`, amount, [
+                sourceReference,
+                selectedReference,
+              ]);
+            },
+          };
+        },
+      }
+    );
+  };
+}
+
+function modifierRecorder(record: ModifierRecord, live: { value: boolean }): unknown {
   const assertLive = (member: string): void => {
     if (live.value) {
       return;
@@ -141,10 +322,19 @@ function modifierRecorder(
               throw new Error("modifier.economic requires a content reference");
             }
             const def = item.def;
+            if (def === null || typeof def !== "object") {
+              throw new Error("modifier.economic requires an economic category definition");
+            }
+            const sourceReference: ModifierReference = {
+              target: "economic_category",
+              id,
+              verifiedVanilla: isVanillaRef(item),
+            };
             const add = new Set((def.generateAddModifiers as readonly string[] | undefined) ?? []);
             const mult = new Set(
               (def.generateMultModifiers as readonly string[] | undefined) ?? []
             );
+            const triggeredRows = economicTriggeredRows(id, def);
             return new Proxy(
               {},
               {
@@ -170,11 +360,11 @@ function modifierRecorder(
                                 ? {
                                     add: (amount: number) => {
                                       assertLive(`economic.resource.${kind}.add`);
-                                      record(`${id}_${resourceId}_${kind}_add`, amount, {
-                                        target: "economic_category",
-                                        id,
-                                        verifiedVanilla: false,
-                                      });
+                                      record(
+                                        `${id}_${resourceId}_${kind}_add`,
+                                        amount,
+                                        sourceReference
+                                      );
                                     },
                                   }
                                 : {}),
@@ -182,11 +372,11 @@ function modifierRecorder(
                                 ? {
                                     mult: (amount: number) => {
                                       assertLive(`economic.resource.${kind}.mult`);
-                                      record(`${id}_${resourceId}_${kind}_mult`, amount, {
-                                        target: "economic_category",
-                                        id,
-                                        verifiedVanilla: false,
-                                      });
+                                      record(
+                                        `${id}_${resourceId}_${kind}_mult`,
+                                        amount,
+                                        sourceReference
+                                      );
                                     },
                                   }
                                 : {}),
@@ -196,15 +386,20 @@ function modifierRecorder(
                       );
                     };
                   }
+                  if (key === "triggered") {
+                    return economicTriggeredRecorder(
+                      id,
+                      sourceReference,
+                      triggeredRows,
+                      assertLive,
+                      record
+                    );
+                  }
                   if (mult.has(key)) {
                     return {
                       mult: (amount: number) => {
                         assertLive(`economic.${key}.mult`);
-                        record(`${id}_${key}_mult`, amount, {
-                          target: "economic_category",
-                          id,
-                          verifiedVanilla: false,
-                        });
+                        record(`${id}_${key}_mult`, amount, sourceReference);
                       },
                     };
                   }
@@ -260,12 +455,15 @@ export function modifierEntries(closure: ModifierClosure, collect?: ContentRefSi
       modifierRecorder((name, amount, reference) => {
         entries.push(kv(name, amount));
         if (reference !== undefined) {
-          collect?.({
-            targets: [reference.target],
-            id: reference.id,
-            field: name,
-            verifiedVanilla: reference.verifiedVanilla ? true : undefined,
-          });
+          const references = Array.isArray(reference) ? reference : [reference];
+          for (const use of references) {
+            collect?.({
+              targets: [use.target],
+              id: use.id,
+              field: name,
+              verifiedVanilla: use.verifiedVanilla ? true : undefined,
+            });
+          }
         }
       }, live) as never
     );

@@ -34,6 +34,122 @@ describe("job-derived modifier recorder", () => {
     expect(serialize(entries)).toContain("mymod_expeditions_upkeep_mult = 0.5");
   });
 
+  it("emits triggered economic families with the selected row key", () => {
+    const costKey = {
+      itemKind: "content" as const,
+      type: "economic_category" as const,
+      id: "mymod_cost_key",
+      def: { id: "mymod_cost_key" },
+    };
+    const category = {
+      itemKind: "content" as const,
+      type: "economic_category" as const,
+      id: "mymod_source_category",
+      def: {
+        id: "mymod_source_category",
+        triggeredCostModifier: [
+          { key: costKey, modifierTypes: ["add"] },
+          { key: costKey, modifierTypes: ["mult"] },
+        ] as const,
+        triggeredProducesModifier: [
+          { key: "mymod_produces_key", modifierTypes: ["add", "mult"] },
+        ] as const,
+        triggeredUpkeepModifier: [{ key: "mymod_upkeep_key", modifierTypes: ["mult"] }] as const,
+        triggeredLogisticsModifier: [
+          { key: "mymod_logistics_key", modifierTypes: ["add", "mult"] },
+        ] as const,
+      },
+    };
+    const entries = modifierEntries((modifier) => {
+      const economic = modifier.economic as any;
+      const cost = economic(category).triggered(costKey);
+      cost.cost.mult(0.1);
+      cost.resource("energy").cost.add(1);
+      cost.resource("energy").cost.mult(0.2);
+      const produces = economic(category).triggered("mymod_produces_key");
+      produces.produces.mult(0.3);
+      produces.resource("minerals").produces.add(2);
+      produces.resource("minerals").produces.mult(0.4);
+      const upkeep = economic(category).triggered("mymod_upkeep_key");
+      upkeep.upkeep.mult(0.5);
+      upkeep.resource("energy").upkeep.mult(0.6);
+      const logistics = economic(category).triggered("mymod_logistics_key");
+      logistics.logistics.mult(0.7);
+      logistics.resource("energy").logistics.add(3);
+      logistics.resource("energy").logistics.mult(0.8);
+    });
+    const output = serialize(entries);
+    expect(output).toContain("mymod_cost_key_cost_mult = 0.1");
+    expect(output).toContain("mymod_cost_key_energy_cost_add = 1");
+    expect(output).toContain("mymod_cost_key_energy_cost_mult = 0.2");
+    expect(output).toContain("mymod_produces_key_produces_mult = 0.3");
+    expect(output).toContain("mymod_produces_key_minerals_produces_add = 2");
+    expect(output).toContain("mymod_produces_key_minerals_produces_mult = 0.4");
+    expect(output).toContain("mymod_upkeep_key_upkeep_mult = 0.5");
+    expect(output).toContain("mymod_upkeep_key_energy_upkeep_mult = 0.6");
+    expect(output).toContain("mymod_logistics_key_logistics_mult = 0.7");
+    expect(output).toContain("mymod_logistics_key_energy_logistics_add = 3");
+    expect(output).toContain("mymod_logistics_key_energy_logistics_mult = 0.8");
+    expect(output).not.toContain("mymod_source_category_cost_mult");
+  });
+
+  it("collects both the source and selected triggered key references", () => {
+    const costKey = {
+      itemKind: "content" as const,
+      type: "economic_category" as const,
+      id: "mymod_cost_key",
+      def: { id: "mymod_cost_key" },
+    };
+    const category = {
+      itemKind: "content" as const,
+      type: "economic_category" as const,
+      id: "mymod_source_category",
+      def: {
+        id: "mymod_source_category",
+        triggeredCostModifier: [{ key: costKey, modifierTypes: ["mult"] }] as const,
+      },
+    };
+    const uses: Array<{ id: string; targets: readonly string[] }> = [];
+    modifierEntries(
+      (modifier) => {
+        (modifier.economic as any)(category).triggered(costKey).cost.mult(1);
+      },
+      (use) => uses.push({ id: use.id, targets: use.targets })
+    );
+    expect(uses).toEqual([
+      { id: "mymod_source_category", targets: ["economic_category"] },
+      { id: "mymod_cost_key", targets: ["economic_category"] },
+    ]);
+  });
+
+  it("rejects malformed and undeclared triggered selections", () => {
+    const malformed = {
+      itemKind: "content" as const,
+      type: "economic_category" as const,
+      id: "mymod_malformed_category",
+      def: {
+        id: "mymod_malformed_category",
+        triggeredCostModifier: {} as never,
+      },
+    };
+    expect(() =>
+      modifierEntries((modifier) => (modifier.economic as any)(malformed).triggered("mymod_key"))
+    ).toThrow(/malformed triggeredCostModifier/);
+
+    const category = {
+      itemKind: "content" as const,
+      type: "economic_category" as const,
+      id: "mymod_category",
+      def: {
+        id: "mymod_category",
+        triggeredCostModifier: [{ key: "mymod_cost_key", modifierTypes: ["mult"] }] as const,
+      },
+    };
+    expect(() =>
+      modifierEntries((modifier) => (modifier.economic as any)(category).triggered("mymod_missing"))
+    ).toThrow(/no triggered modifier row/);
+  });
+
   it("rejects owned selectors retained after the closure", () => {
     let select: ((item: typeof undefined) => unknown) | undefined;
     expect(() => {
