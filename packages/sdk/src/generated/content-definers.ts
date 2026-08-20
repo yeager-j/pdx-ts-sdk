@@ -35,7 +35,12 @@
 // From: gfx/model_entities.cwt
 // From: gfx/particles.cwt
 
-import type { ContentItem, ContributionItem, EconomicCategoryWitness } from "../content/types.ts";
+import type {
+  ContentItem,
+  ContributionItem,
+  EconomicCategoryWitness,
+  ExactEconomicCategoryWitness,
+} from "../content/types.ts";
 import { refId, type TypedRef } from "../script/scalar.ts";
 import { patchContent } from "../stellaris/vanilla/patch.ts";
 import type {
@@ -542,24 +547,68 @@ export function defineCouncilor<const Id extends string>(
 export type EconomicCategoryItem<W extends EconomicCategoryWitness = EconomicCategoryWitness> =
   ContentItem<
     "economic_category",
-    Omit<EconomicCategoryDef, "modifierCategory" | "generateAddModifiers" | "generateMultModifiers">
-  > & {
-    readonly def: Omit<
+    Omit<
       EconomicCategoryDef,
-      "modifierCategory" | "generateAddModifiers" | "generateMultModifiers"
+      | "modifierCategory"
+      | "generateAddModifiers"
+      | "generateMultModifiers"
+      | "triggeredCostModifier"
+      | "triggeredProducesModifier"
+      | "triggeredUpkeepModifier"
+      | "triggeredLogisticsModifier"
     > &
-      W;
-  };
+      W
+  >;
 
 /**
  * Internal lowering primitive for an economic category. Public authors call
  * `mod.economicCategory(name, def)`, then place the returned item with
  * `mod.feature(...)` before compiling the same capability.
  */
-export function defineEconomicCategory<const Id extends string>(
-  def: EconomicCategoryDef<Id>
-): ContentItem<"economic_category", EconomicCategoryDef<Id>> {
-  return { itemKind: "content", type: "economic_category", id: def.id, def };
+export function defineEconomicCategory<
+  const Id extends string,
+  const W extends EconomicCategoryWitness,
+>(
+  def: Omit<
+    EconomicCategoryDef<Id>,
+    | "modifierCategory"
+    | "generateAddModifiers"
+    | "generateMultModifiers"
+    | "triggeredCostModifier"
+    | "triggeredProducesModifier"
+    | "triggeredUpkeepModifier"
+    | "triggeredLogisticsModifier"
+  > &
+    W &
+    ExactEconomicCategoryWitness<W>
+): ContentItem<
+  "economic_category",
+  Omit<
+    EconomicCategoryDef<Id>,
+    | "modifierCategory"
+    | "generateAddModifiers"
+    | "generateMultModifiers"
+    | "triggeredCostModifier"
+    | "triggeredProducesModifier"
+    | "triggeredUpkeepModifier"
+    | "triggeredLogisticsModifier"
+  > &
+    W
+> {
+  return { itemKind: "content", type: "economic_category", id: def.id, def } as ContentItem<
+    "economic_category",
+    Omit<
+      EconomicCategoryDef<Id>,
+      | "modifierCategory"
+      | "generateAddModifiers"
+      | "generateMultModifiers"
+      | "triggeredCostModifier"
+      | "triggeredProducesModifier"
+      | "triggeredUpkeepModifier"
+      | "triggeredLogisticsModifier"
+    > &
+      W
+  >;
 }
 
 /** What a civic or origin feature can contain. */

@@ -6,8 +6,9 @@ import type {
   EconomicCategoryItem,
   ScriptedModifierItem,
 } from "../src/generated/content-definers.ts";
+import type { EconomicModifierType } from "../src/generated/enums.ts";
 import type { JobRef } from "../src/generated/refs.ts";
-import { createMod, vanilla } from "../src/index.ts";
+import { always, createMod, vanilla } from "../src/index.ts";
 
 declare module "../src/content/types.ts" {
   interface CustomModifiers {
@@ -44,6 +45,77 @@ const differentEconomic = ownedModifierMod.economicCategory("different_operation
   modifierCategory: "country",
   generateMultModifiers: ["cost"],
 });
+const triggeredCostKey = ownedModifierMod.economicCategory("starbase_shipyard_build", {});
+const triggeredProducesKey = ownedModifierMod.economicCategory("planet_technician", {});
+const triggeredUpkeepKey = ownedModifierMod.economicCategory("ship_military", {});
+const triggeredLogisticsKey = ownedModifierMod.economicCategory("logistics_lane", {});
+const otherTriggeredKey = ownedModifierMod.economicCategory("other_shipyard_build", {});
+const triggeredEconomic = ownedModifierMod.economicCategory("triggered_operations", {
+  modifierCategory: "country",
+  triggeredCostModifier: [
+    { key: triggeredCostKey, modifierTypes: ["add"] },
+    { key: triggeredCostKey, modifierTypes: ["mult"] },
+  ],
+  triggeredProducesModifier: [{ key: triggeredProducesKey, modifierTypes: ["add", "mult"] }],
+  triggeredUpkeepModifier: [{ key: triggeredUpkeepKey, modifierTypes: ["mult"] }],
+  triggeredLogisticsModifier: [{ key: triggeredLogisticsKey, modifierTypes: ["add", "mult"] }],
+});
+const sameTriggeredEconomic = ownedModifierMod.economicCategory("same_triggered_operations", {
+  modifierCategory: "country",
+  triggeredCostModifier: [
+    { key: triggeredCostKey, modifierTypes: ["add"] },
+    { key: triggeredCostKey, modifierTypes: ["mult"] },
+  ],
+  triggeredProducesModifier: [{ key: triggeredProducesKey, modifierTypes: ["add", "mult"] }],
+  triggeredUpkeepModifier: [{ key: triggeredUpkeepKey, modifierTypes: ["mult"] }],
+  triggeredLogisticsModifier: [{ key: triggeredLogisticsKey, modifierTypes: ["add", "mult"] }],
+});
+const otherTriggeredEconomic = ownedModifierMod.economicCategory("other_triggered_operations", {
+  modifierCategory: "country",
+  triggeredCostModifier: [{ key: otherTriggeredKey, modifierTypes: ["mult"] }],
+});
+const sameCapabilityKeyEconomic = ownedModifierMod.economicCategory("same_key_capabilities", {
+  modifierCategory: "country",
+  triggeredCostModifier: [
+    { key: triggeredCostKey, modifierTypes: ["mult"] },
+    { key: otherTriggeredKey, modifierTypes: ["mult"] },
+  ],
+});
+const differingCapabilityKeyEconomic = ownedModifierMod.economicCategory(
+  "differing_key_capabilities",
+  {
+    modifierCategory: "country",
+    triggeredCostModifier: [
+      { key: triggeredCostKey, modifierTypes: ["add"] },
+      { key: otherTriggeredKey, modifierTypes: ["mult"] },
+    ],
+  }
+);
+const emptyTriggeredEconomic = ownedModifierMod.economicCategory("empty_triggered_operations", {
+  modifierCategory: "country",
+  triggeredCostModifier: [{ key: triggeredCostKey, modifierTypes: [] }],
+});
+const optionalTriggeredEconomic = ownedModifierMod.economicCategory("optional_triggered_fields", {
+  modifierCategory: "country",
+  triggeredCostModifier: [
+    { key: triggeredCostKey, modifierTypes: ["mult"], useParentIcon: true, trigger: always() },
+  ],
+});
+ownedModifierMod.economicCategory("misspelled_triggered_field", {
+  modifierCategory: "country",
+  // @ts-expect-error — nested triggered rows reject misspelled generated fields
+  triggeredCostModifier: [{ key: triggeredCostKey, modifierTypes: ["mult"], useParentIcom: true }],
+});
+const mutableTriggeredTypes: EconomicModifierType[] = ["mult"];
+const readonlyTriggeredTypes: readonly EconomicModifierType[] = ["mult"];
+const widenedMutableEconomic = ownedModifierMod.economicCategory("widened_mutable", {
+  modifierCategory: "country",
+  triggeredCostModifier: [{ key: triggeredCostKey, modifierTypes: mutableTriggeredTypes }],
+});
+const widenedReadonlyEconomic = ownedModifierMod.economicCategory("widened_readonly", {
+  modifierCategory: "country",
+  triggeredCostModifier: [{ key: triggeredCostKey, modifierTypes: readonlyTriggeredTypes }],
+});
 const scriptedAlias: ScriptedModifierItem<"country"> = ownedScripted;
 const economicAlias: EconomicCategoryItem = ownedEconomic;
 void scriptedAlias;
@@ -68,11 +140,53 @@ countryModifiers((m) => {
   m.economic(ownedEconomic).triggeredCost.mult(1);
 });
 
+countryModifiers((m) => {
+  const triggered = m.economic(triggeredEconomic).triggered(triggeredCostKey);
+  triggered.cost.mult(1);
+  triggered.resource("energy").cost.add(1);
+  triggered.resource("energy").cost.mult(1);
+  // @ts-expect-error — the broad form permits only mult
+  triggered.cost.add(1);
+  // @ts-expect-error — no broad additive operation
+  triggered.produces.add(1);
+  const produces = m.economic(triggeredEconomic).triggered(triggeredProducesKey);
+  produces.produces.mult(1);
+  produces.resource("energy").produces.add(1);
+  produces.resource("energy").produces.mult(1);
+  const upkeep = m.economic(triggeredEconomic).triggered(triggeredUpkeepKey);
+  upkeep.upkeep.mult(1);
+  // @ts-expect-error — ship_military has no resource-specific add
+  upkeep.resource("energy").upkeep.add(1);
+  const logistics = m.economic(triggeredEconomic).triggered(triggeredLogisticsKey);
+  logistics.logistics.mult(1);
+  logistics.resource("energy").logistics.add(1);
+  logistics.resource("energy").logistics.mult(1);
+  const empty = m.economic(emptyTriggeredEconomic).triggered(triggeredCostKey);
+  // @ts-expect-error — an empty declared row has no modifier operations
+  empty.cost.mult(1);
+  m.economic(optionalTriggeredEconomic).triggered(triggeredCostKey).cost.mult(1);
+  // @ts-expect-error — widened mutable modifier types cannot prove capabilities
+  m.economic(widenedMutableEconomic).triggered(triggeredCostKey).cost.mult(1);
+  // @ts-expect-error — widened readonly modifier types cannot prove capabilities
+  m.economic(widenedReadonlyEconomic).triggered(triggeredCostKey).cost.mult(1);
+  // @ts-expect-error — undeclared triggered key
+  m.economic(triggeredEconomic).triggered("not_declared");
+  const widenedKey: string = "starbase_shipyard_build";
+  // @ts-expect-error — widened keys cannot prove a declared row
+  m.economic(triggeredEconomic).triggered(widenedKey);
+  // @ts-expect-error — a scripted modifier is the wrong registry for a triggered key
+  m.economic(triggeredEconomic).triggered(ownedScripted);
+});
+
 declare const chooseOwnedModifier: boolean;
 const sameScriptedWitness = chooseOwnedModifier ? ownedScripted : secondCountryScripted;
 const differentScriptedWitness = chooseOwnedModifier ? ownedScripted : planetScripted;
 const sameEconomicWitness = chooseOwnedModifier ? ownedEconomic : secondOwnedEconomic;
 const differentEconomicWitness = chooseOwnedModifier ? ownedEconomic : differentEconomic;
+const sameTriggeredWitness = chooseOwnedModifier ? triggeredEconomic : sameTriggeredEconomic;
+const differentTriggeredWitness = chooseOwnedModifier ? triggeredEconomic : otherTriggeredEconomic;
+const sameCapabilityKey = chooseOwnedModifier ? triggeredCostKey : otherTriggeredKey;
+const differingCapabilityKey = chooseOwnedModifier ? triggeredCostKey : otherTriggeredKey;
 countryModifiers((m) => {
   m.scripted(sameScriptedWitness).set(1);
   m.economic(sameEconomicWitness).resource("energy").upkeep.mult(1);
@@ -80,6 +194,12 @@ countryModifiers((m) => {
   m.scripted(differentScriptedWitness).set(1);
   // @ts-expect-error — narrow items with different operation witnesses before selecting one
   m.economic(differentEconomicWitness).resource("energy").upkeep.mult(1);
+  m.economic(sameTriggeredWitness).triggered(triggeredCostKey).cost.mult(1);
+  // @ts-expect-error — differing triggered row witnesses require narrowing
+  m.economic(differentTriggeredWitness).triggered(triggeredCostKey).cost.mult(1);
+  m.economic(sameCapabilityKeyEconomic).triggered(sameCapabilityKey).cost.mult(1);
+  // @ts-expect-error — differing capability witnesses require narrowing
+  m.economic(differingCapabilityKeyEconomic).triggered(differingCapabilityKey).cost.mult(1);
 });
 
 // @ts-expect-error — a scripted modifier item cannot select an economic recorder
@@ -90,6 +210,8 @@ countryModifiers((m) => m.scripted(ownedEconomic).set(1));
 federationModifiers((m) => m.scripted(planetScripted).set(1));
 // @ts-expect-error — Countries-category economic modifiers are not valid on leaders
 leaderModifiers((m) => m.economic(ownedEconomic).resource("energy").upkeep.mult(1));
+// @ts-expect-error — triggered economic modifiers keep the source category scope
+leaderModifiers((m) => m.economic(triggeredEconomic).triggered(triggeredCostKey).cost.mult(1));
 const unsupportedScripted = ownedModifierMod.scriptedModifier("unsupported", { category: "none" });
 // @ts-expect-error — unsupported modifier categories are rejected
 countryModifiers((m) => m.scripted(unsupportedScripted).set(1));

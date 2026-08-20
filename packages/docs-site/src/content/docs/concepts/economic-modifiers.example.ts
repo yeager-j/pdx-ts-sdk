@@ -6,10 +6,13 @@ const mod = createMod({
   supportedVersion: "v4.4.*",
 });
 
+const shipyardOperations = mod.economicCategory("shipyard_operations", {});
+
 const expeditions = mod.economicCategory("expeditions", {
   useForAiBudget: true,
   modifierCategory: "country",
   generateMultModifiers: ["cost", "upkeep"],
+  triggeredCostModifier: [{ key: shipyardOperations, modifierTypes: ["mult"] }],
 });
 
 const expeditionEfficiency = mod.scriptedModifier("expedition_efficiency_mult", {
@@ -36,6 +39,7 @@ const surveyProtocols = mod.edict("survey_protocols", {
   ],
   modifier: (modifier) => {
     modifier.economic(expeditions).resource("energy").upkeep.mult(-0.25);
+    modifier.economic(expeditions).triggered(shipyardOperations).cost.mult(-0.1);
     modifier.scripted(expeditionEfficiency).set(0.2);
   },
 });
@@ -50,6 +54,7 @@ const routeDisruption = mod.staticModifier("route_disruption", {
 
 export const feature = mod.feature("expedition_economy", [
   expeditions,
+  shipyardOperations,
   expeditionEfficiency,
   surveyProtocols,
   routeDisruption,

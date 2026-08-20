@@ -3,7 +3,11 @@
  */
 import type { ContentReferenceName, ContentTypeName } from "../generated/content-registry.ts";
 import type { ScopeObjOf } from "../generated/effects.ts";
-import type { EconomicModifierCategory, ScriptedModifierCategory } from "../generated/enums.ts";
+import type {
+  EconomicModifierCategory,
+  EconomicModifierType,
+  ScriptedModifierCategory,
+} from "../generated/enums.ts";
 import type { ScopedModifierBlock, ScopedModifierRecorder } from "../generated/modifiers.ts";
 import type { EconomicCategoryRef } from "../generated/refs.ts";
 import type { ScopeName } from "../generated/scopes.ts";
@@ -84,7 +88,53 @@ export interface EconomicCategoryWitness {
   readonly modifierCategory?: ScriptedModifierCategory;
   readonly generateAddModifiers?: readonly EconomicModifierCategory[];
   readonly generateMultModifiers?: readonly EconomicModifierCategory[];
+  readonly triggeredCostModifier?: readonly EconomicCategoryTriggeredModifierWitness[];
+  readonly triggeredProducesModifier?: readonly EconomicCategoryTriggeredModifierWitness[];
+  readonly triggeredUpkeepModifier?: readonly EconomicCategoryTriggeredModifierWitness[];
+  readonly triggeredLogisticsModifier?: readonly EconomicCategoryTriggeredModifierWitness[];
 }
+
+/**
+ * The literal part of one economic category triggered-modifier row.
+ *
+ * The generated row also carries `useParentIcon` and `trigger`; they remain
+ * optional here so a generated row can flow through the witness without
+ * widening its key or modifier-type literals.
+ */
+export interface EconomicCategoryTriggeredModifierWitness {
+  readonly key: EconomicCategoryRef | string;
+  readonly modifierTypes: readonly EconomicModifierType[];
+  readonly useParentIcon?: true;
+  readonly trigger?: Trigger<never>;
+}
+
+type EconomicCategoryTriggeredWitnessField =
+  | "triggeredCostModifier"
+  | "triggeredProducesModifier"
+  | "triggeredUpkeepModifier"
+  | "triggeredLogisticsModifier";
+
+type ExactEconomicCategoryTriggeredRow<R> = R extends EconomicCategoryTriggeredModifierWitness
+  ? Exclude<keyof R, keyof EconomicCategoryTriggeredModifierWitness> extends never
+    ? R
+    : never
+  : R;
+
+type ExactEconomicCategoryTriggeredRows<T> = T extends readonly unknown[]
+  ? { readonly [K in keyof T]: ExactEconomicCategoryTriggeredRow<T[K]> }
+  : T;
+
+/**
+ * Keeps const-inferred economic witnesses while closing the nested triggered
+ * row shape against misspelled fields. The generated row interfaces carry the
+ * same four members, so this constraint stays in sync with their authoring
+ * surface without reopening arbitrary nested keys.
+ */
+export type ExactEconomicCategoryWitness<W extends EconomicCategoryWitness> = {
+  [K in keyof W]: K extends EconomicCategoryTriggeredWitnessField
+    ? ExactEconomicCategoryTriggeredRows<W[K]>
+    : W[K];
+};
 
 /**
  * The known modifier names for scope `S`, as one flat interface.
