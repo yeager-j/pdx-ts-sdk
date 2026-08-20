@@ -1,4 +1,8 @@
 {
   "title": "Scopes & Effects",
-  "pages": ["index", "effects", "country", "planet", "army"]
+  "pages": [
+    "index",
+    "effects",
+    "scopes"
+  ]
 }

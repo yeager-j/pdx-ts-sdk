@@ -1,0 +1,48 @@
+---
+title: "Storm"
+description: "Generated methods, event kinds, and transitions for StormScope."
+scope: storm
+generatedBy: scope-reference
+---
+
+import { EventFireMethods } from "@/components/EventFireMethods";
+import { EventKinds } from "@/components/EventKinds";
+import { ScopeEffects } from "@/components/ScopeEffects";
+import { ScopeIdentity } from "@/components/ScopeIdentity";
+import { ScopeTransitions } from "@/components/ScopeTransitions";
+import { StructuralMethods } from "@/components/StructuralMethods";
+import { buildScopeReference } from "@/src/scope-reference";
+
+export const model = buildScopeReference("storm");
+
+<ScopeIdentity model={model} />
+
+Storm represents a cosmic storm and the systems in its influence. Scripts can iterate systems
+added to, removed from, or currently within the storm, store storm flags, and lock the storm in
+place. It is the moving weather-like galactic phenomenon, distinct from its separate influence-field
+context.
+
+## Common entry points
+
+Common entry points include `cosmic_storm_event` bodies and the `lastCreatedCosmicStorm` link after
+an effect creates a storm.
+
+## Event kinds whose bodies run in this scope
+
+<EventKinds rows={model.eventKinds} />
+
+## Ordinary effects
+
+<ScopeEffects universalCount={model.universalEffects.length} scopeSpecific={model.scopeEffects} />
+
+## Structural and control-flow methods
+
+<StructuralMethods rows={model.structuralMethods} />
+
+## Event-fire methods
+
+<EventFireMethods rows={model.eventFireMethods} />
+
+## Outgoing scope transitions
+
+<ScopeTransitions rows={model.transitions} />

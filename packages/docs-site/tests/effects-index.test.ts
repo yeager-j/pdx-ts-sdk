@@ -23,9 +23,9 @@ const sources = (): ScopeReferenceSources => ({
 
 /** The pages the site publishes today, as `lib/scope-pages.ts` supplies them. */
 const pages: readonly ScopePageLink[] = [
-  { scope: "army", href: "/scopes-and-effects/army/", title: "Army scope" },
-  { scope: "country", href: "/scopes-and-effects/country/", title: "Country scope" },
-  { scope: "planet", href: "/scopes-and-effects/planet/", title: "Planet scope" },
+  { scope: "army", href: "/scopes-and-effects/scopes/army/", title: "Army scope" },
+  { scope: "country", href: "/scopes-and-effects/scopes/country/", title: "Country scope" },
+  { scope: "planet", href: "/scopes-and-effects/scopes/planet/", title: "Planet scope" },
 ];
 
 const index = () => buildEffectsIndex(pages);
@@ -88,9 +88,9 @@ describe("buildEffectsIndex", () => {
       throw new Error("addResource should be universal");
     }
     expect(addResource.availability.publishedScopePages).toEqual([
-      { scope: "army", href: "/scopes-and-effects/army/", title: "Army scope" },
-      { scope: "country", href: "/scopes-and-effects/country/", title: "Country scope" },
-      { scope: "planet", href: "/scopes-and-effects/planet/", title: "Planet scope" },
+      { scope: "army", href: "/scopes-and-effects/scopes/army/", title: "Army scope" },
+      { scope: "country", href: "/scopes-and-effects/scopes/country/", title: "Country scope" },
+      { scope: "planet", href: "/scopes-and-effects/scopes/planet/", title: "Planet scope" },
     ]);
   });
 
@@ -100,7 +100,7 @@ describe("buildEffectsIndex", () => {
       throw new Error("setPlanetName should be scope-limited");
     }
     expect(setPlanetName.availability.scopes).toEqual([
-      { scope: "planet", href: "/scopes-and-effects/planet/", title: "Planet scope" },
+      { scope: "planet", href: "/scopes-and-effects/scopes/planet/", title: "Planet scope" },
     ]);
   });
 
@@ -113,7 +113,7 @@ describe("buildEffectsIndex", () => {
     });
     expect(targets.find((target) => target.scope === "country")).toEqual({
       scope: "country",
-      href: "/scopes-and-effects/country/",
+      href: "/scopes-and-effects/scopes/country/",
       title: "Country scope",
     });
   });
@@ -126,7 +126,7 @@ describe("buildEffectsIndex", () => {
     const observerEvent = entryFor("observerEvent");
     expect(observerEvent.availability.kind).toBe("universal");
     expect(observerEvent.eventBodyScope?.scope).toBe("country");
-    expect(observerEvent.eventBodyScope?.href).toBe("/scopes-and-effects/country/");
+    expect(observerEvent.eventBodyScope?.href).toBe("/scopes-and-effects/scopes/country/");
   });
 
   it("gives a non-fire entry no event body scope", () => {

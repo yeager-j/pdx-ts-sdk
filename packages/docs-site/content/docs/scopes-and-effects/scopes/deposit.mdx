@@ -1,6 +1,8 @@
 ---
-title: Country scope
-description: Generated methods, event kinds, and transitions for CountryScope.
+title: "Deposit"
+description: "Generated methods, event kinds, and transitions for DepositScope."
+scope: deposit
+generatedBy: scope-reference
 ---
 
 import { EventFireMethods } from "@/components/EventFireMethods";
@@ -11,18 +13,18 @@ import { ScopeTransitions } from "@/components/ScopeTransitions";
 import { StructuralMethods } from "@/components/StructuralMethods";
 import { buildScopeReference } from "@/src/scope-reference";
 
-export const model = buildScopeReference("country");
+export const model = buildScopeReference("deposit");
 
 <ScopeIdentity model={model} />
 
-Country scope represents a game object that Stellaris evaluates as a country, including an empire
-acting in its own script context.
+A deposit is a localized resource or feature attached to a planet. Scripts can clear its blocker,
+remove it, and store permanent or timed flags on it. It is the feature-level context beneath the
+broader colony or planet flow that creates and manages planetary deposits.
 
 ## Common entry points
 
-Common entry points include country and observer event bodies, country-scoped on-actions and
-callbacks, and scope links from owned game objects. These are examples, not an exhaustive list of
-game paths.
+Common entry points include deposit-creation callbacks and the `lastAddedDeposit` link from
+supported planetary contexts.
 
 ## Event kinds whose bodies run in this scope
 
@@ -30,7 +32,7 @@ game paths.
 
 ## Ordinary effects
 
-<ScopeEffects universal={model.universalEffects} scopeSpecific={model.scopeEffects} />
+<ScopeEffects universalCount={model.universalEffects.length} scopeSpecific={model.scopeEffects} />
 
 ## Structural and control-flow methods
 

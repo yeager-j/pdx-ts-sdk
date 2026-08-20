@@ -112,3 +112,11 @@ registry, or a skip line left behind after its page landed — each fails `next 
 registry to the SDK therefore breaks the docs build until somebody writes its page or says in
 one line which ticket will. Declare `registries: []` on a reference page that documents none,
 such as the section index.
+
+## Scope page generation
+
+Scope reference prose lives in `content/scope-pages/<scope>.md`. Each source contains one title, a
+short representation paragraph, and a `Common entry points` section. Run
+`npm run docs:scopes:generate` from the repository root after editing one. The generator commits the
+shared MDX shell and alphabetical sidebar order; `npm run docs:scopes:check` and the ordinary docs
+build fail when those generated files drift from the canonical SDK scope inventory.

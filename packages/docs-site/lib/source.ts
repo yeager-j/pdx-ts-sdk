@@ -13,6 +13,10 @@ const docs = defineDocs({
        * and forbids it elsewhere.
        */
       registries: z.array(z.string()).optional(),
+      /** The canonical generated scope documented by a scope reference page. */
+      scope: z.string().optional(),
+      /** Identifies committed scope-reference projections without rendering into page content. */
+      generatedBy: z.literal("scope-reference").optional(),
     }),
     postprocess: {
       /**

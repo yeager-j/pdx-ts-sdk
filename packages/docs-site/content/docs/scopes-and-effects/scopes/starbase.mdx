@@ -1,6 +1,8 @@
 ---
-title: Army scope
-description: Generated methods, event-kind empty state, and transitions for ArmyScope.
+title: "Starbase"
+description: "Generated methods, event kinds, and transitions for StarbaseScope."
+scope: starbase
+generatedBy: scope-reference
 ---
 
 import { EventFireMethods } from "@/components/EventFireMethods";
@@ -11,16 +13,18 @@ import { ScopeTransitions } from "@/components/ScopeTransitions";
 import { StructuralMethods } from "@/components/StructuralMethods";
 import { buildScopeReference } from "@/src/scope-reference";
 
-export const model = buildScopeReference("army");
+export const model = buildScopeReference("starbase");
 
 <ScopeIdentity model={model} />
 
-Army scope represents an army unit while Stellaris evaluates script against that unit.
+A starbase is a station context in a star system. Scripts can manage modules, buildings, standalone
+components, size, construction type, network relationships, and starbase flags. It is the orbital
+infrastructure hub of a system rather than one of the ordinary ships around it.
 
 ## Common entry points
 
-Common entry points include army-scoped callbacks and scope changes from planets, fleets, or related
-military objects. These are examples, not an exhaustive list of game paths.
+Common entry points include `starbase_event` bodies and links from planets, ships, fleets, systems,
+or colonies.
 
 ## Event kinds whose bodies run in this scope
 
@@ -28,7 +32,7 @@ military objects. These are examples, not an exhaustive list of game paths.
 
 ## Ordinary effects
 
-<ScopeEffects universal={model.universalEffects} scopeSpecific={model.scopeEffects} />
+<ScopeEffects universalCount={model.universalEffects.length} scopeSpecific={model.scopeEffects} />
 
 ## Structural and control-flow methods
 

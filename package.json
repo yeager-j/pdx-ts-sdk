@@ -19,6 +19,8 @@
     "docs:dev": "npm run dev --workspace @pdx-ts/docs-site",
     "docs:build": "npm run build --workspace @pdx-ts/docs-site",
     "docs:preview": "npm run preview --workspace @pdx-ts/docs-site",
+    "docs:scopes:check": "npm run scopes:check --workspace @pdx-ts/docs-site",
+    "docs:scopes:generate": "npm run scopes:generate --workspace @pdx-ts/docs-site",
     "corpus:extract": "node --conditions=pdx-source packages/sdk/tests/codegen/corpus-extract.ts",
     "corpus:check": "node --conditions=pdx-source packages/sdk/tests/codegen/corpus-check.ts",
     "typecheck": "tsc --noEmit && npm run typecheck --workspaces --if-present",

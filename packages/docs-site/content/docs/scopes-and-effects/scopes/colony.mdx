@@ -1,0 +1,48 @@
+---
+title: "Colony"
+description: "Generated methods, event kinds, and transitions for ColonyScope."
+scope: colony
+generatedBy: scope-reference
+---
+
+import { EventFireMethods } from "@/components/EventFireMethods";
+import { EventKinds } from "@/components/EventKinds";
+import { ScopeEffects } from "@/components/ScopeEffects";
+import { ScopeIdentity } from "@/components/ScopeIdentity";
+import { ScopeTransitions } from "@/components/ScopeTransitions";
+import { StructuralMethods } from "@/components/StructuralMethods";
+import { buildScopeReference } from "@/src/scope-reference";
+
+export const model = buildScopeReference("colony");
+
+<ScopeIdentity model={model} />
+
+A colony is a colonized-world context used by planetary management scripts. Its generated effects
+cover construction, districts, buildings, colony type, controller, deposits, terraforming, and
+population operations. It is the operational settlement view of a world rather than the broader
+planet context, which can also represent uncolonized worlds.
+
+## Common entry points
+
+Common entry points include `colony_event` bodies, colony-scoped callbacks, and links that select a
+country capital or sector capital.
+
+## Event kinds whose bodies run in this scope
+
+<EventKinds rows={model.eventKinds} />
+
+## Ordinary effects
+
+<ScopeEffects universalCount={model.universalEffects.length} scopeSpecific={model.scopeEffects} />
+
+## Structural and control-flow methods
+
+<StructuralMethods rows={model.structuralMethods} />
+
+## Event-fire methods
+
+<EventFireMethods rows={model.eventFireMethods} />
+
+## Outgoing scope transitions
+
+<ScopeTransitions rows={model.transitions} />

@@ -51,8 +51,8 @@ function note(name: string): string {
  * slug names the scope, so the renderer rebuilds the same model.
  */
 function scopeModelOf(page: Page): ScopeReferenceModel | undefined {
-  const [section, scope] = page.slugs;
-  if (section !== "scopes-and-effects" || scope === undefined) {
+  const [section, group, scope] = page.slugs;
+  if (section !== "scopes-and-effects" || group !== "scopes" || scope === undefined) {
     return undefined;
   }
   try {

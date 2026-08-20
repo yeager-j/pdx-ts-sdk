@@ -1,0 +1,48 @@
+---
+title: "Sector"
+description: "Generated methods, event kinds, and transitions for SectorScope."
+scope: sector
+generatedBy: scope-reference
+---
+
+import { EventFireMethods } from "@/components/EventFireMethods";
+import { EventKinds } from "@/components/EventKinds";
+import { ScopeEffects } from "@/components/ScopeEffects";
+import { ScopeIdentity } from "@/components/ScopeIdentity";
+import { ScopeTransitions } from "@/components/ScopeTransitions";
+import { StructuralMethods } from "@/components/StructuralMethods";
+import { buildScopeReference } from "@/src/scope-reference";
+
+export const model = buildScopeReference("sector");
+
+<ScopeIdentity model={model} />
+
+A sector is a regional context that groups an empire's space and colonies. Sector methods iterate
+owned colonies, planets, systems, and pre-FTL countries within its borders, and can store sector
+flags. It is the administrative view between an individual system and the country that owns the
+region.
+
+## Common entry points
+
+Common entry points include the `sector` link, sector iterators, and typed callbacks; for leaders,
+the documented sector is their current location rather than necessarily their governor assignment.
+
+## Event kinds whose bodies run in this scope
+
+<EventKinds rows={model.eventKinds} />
+
+## Ordinary effects
+
+<ScopeEffects universalCount={model.universalEffects.length} scopeSpecific={model.scopeEffects} />
+
+## Structural and control-flow methods
+
+<StructuralMethods rows={model.structuralMethods} />
+
+## Event-fire methods
+
+<EventFireMethods rows={model.eventFireMethods} />
+
+## Outgoing scope transitions
+
+<ScopeTransitions rows={model.transitions} />

@@ -1,0 +1,48 @@
+---
+title: "Fleet"
+description: "Generated methods, event kinds, and transitions for FleetScope."
+scope: fleet
+generatedBy: scope-reference
+---
+
+import { EventFireMethods } from "@/components/EventFireMethods";
+import { EventKinds } from "@/components/EventKinds";
+import { ScopeEffects } from "@/components/ScopeEffects";
+import { ScopeIdentity } from "@/components/ScopeIdentity";
+import { ScopeTransitions } from "@/components/ScopeTransitions";
+import { StructuralMethods } from "@/components/StructuralMethods";
+import { buildScopeReference } from "@/src/scope-reference";
+
+export const model = buildScopeReference("fleet");
+
+<ScopeIdentity model={model} />
+
+A fleet is a collection of ships acting as one operational unit. Fleet scripts can manage orders
+and actions, create army transports, and apply the broader movement and combat operations exposed
+by the generated interface. It is the formation-level context that groups individual ships for
+coordinated activity.
+
+## Common entry points
+
+Common entry points include `fleet_event` bodies, fleet-scoped callbacks, and links from ships,
+leaders, armies, starbases, and related orbital objects.
+
+## Event kinds whose bodies run in this scope
+
+<EventKinds rows={model.eventKinds} />
+
+## Ordinary effects
+
+<ScopeEffects universalCount={model.universalEffects.length} scopeSpecific={model.scopeEffects} />
+
+## Structural and control-flow methods
+
+<StructuralMethods rows={model.structuralMethods} />
+
+## Event-fire methods
+
+<EventFireMethods rows={model.eventFireMethods} />
+
+## Outgoing scope transitions
+
+<ScopeTransitions rows={model.transitions} />

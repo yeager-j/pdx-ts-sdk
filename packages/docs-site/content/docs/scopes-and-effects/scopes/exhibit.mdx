@@ -1,6 +1,8 @@
 ---
-title: Planet scope
-description: Generated methods, event kinds, and transitions for PlanetScope.
+title: "Exhibit"
+description: "Generated methods, event kinds, and transitions for ExhibitScope."
+scope: exhibit
+generatedBy: scope-reference
 ---
 
 import { EventFireMethods } from "@/components/EventFireMethods";
@@ -11,16 +13,19 @@ import { ScopeTransitions } from "@/components/ScopeTransitions";
 import { StructuralMethods } from "@/components/StructuralMethods";
 import { buildScopeReference } from "@/src/scope-reference";
 
-export const model = buildScopeReference("planet");
+export const model = buildScopeReference("exhibit");
 
 <ScopeIdentity model={model} />
 
-Planet scope represents a game object that Stellaris evaluates through its planet script interface.
+An exhibit is a display context associated with a specimen. Triggers can inspect whether the
+exhibit is active and read the contained specimen's rarity or category, but the generated interface
+adds no exhibit-specific ordinary effects. It is therefore an inspection-oriented view of museum
+or collection content rather than a mutable lifecycle API.
 
 ## Common entry points
 
-Common entry points include planet event bodies, planet-scoped callbacks, and scope links or
-iterators that select a planet. These are examples, not an exhaustive list of game paths.
+Common entry points include country-level exhibit iterators and typed callbacks that supply an
+`ExhibitScope`.
 
 ## Event kinds whose bodies run in this scope
 
@@ -28,7 +33,7 @@ iterators that select a planet. These are examples, not an exhaustive list of ga
 
 ## Ordinary effects
 
-<ScopeEffects universal={model.universalEffects} scopeSpecific={model.scopeEffects} />
+<ScopeEffects universalCount={model.universalEffects.length} scopeSpecific={model.scopeEffects} />
 
 ## Structural and control-flow methods
 

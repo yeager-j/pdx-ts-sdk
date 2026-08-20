@@ -1,0 +1,48 @@
+---
+title: "System"
+description: "Generated methods, event kinds, and transitions for SystemScope."
+scope: system
+generatedBy: scope-reference
+---
+
+import { EventFireMethods } from "@/components/EventFireMethods";
+import { EventKinds } from "@/components/EventKinds";
+import { ScopeEffects } from "@/components/ScopeEffects";
+import { ScopeIdentity } from "@/components/ScopeIdentity";
+import { ScopeTransitions } from "@/components/ScopeTransitions";
+import { StructuralMethods } from "@/components/StructuralMethods";
+import { buildScopeReference } from "@/src/scope-reference";
+
+export const model = buildScopeReference("system");
+
+<ScopeIdentity model={model} />
+
+A system is a star system or galactic-object context and its local orbital network. Scripts can
+inspect neighboring systems, fleets, ships, stations, planets, bypasses, and storms, and can manage
+claims, star class, asteroid belts, nebulae, auras, and starbases. It is the spatial frame that
+connects local celestial and military objects to the wider galaxy map.
+
+## Common entry points
+
+Common entry points include `system_event` bodies and links or iterators that select an object's
+solar system, target system, or neighboring system.
+
+## Event kinds whose bodies run in this scope
+
+<EventKinds rows={model.eventKinds} />
+
+## Ordinary effects
+
+<ScopeEffects universalCount={model.universalEffects.length} scopeSpecific={model.scopeEffects} />
+
+## Structural and control-flow methods
+
+<StructuralMethods rows={model.structuralMethods} />
+
+## Event-fire methods
+
+<EventFireMethods rows={model.eventFireMethods} />
+
+## Outgoing scope transitions
+
+<ScopeTransitions rows={model.transitions} />
