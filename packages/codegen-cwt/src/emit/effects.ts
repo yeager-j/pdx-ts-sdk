@@ -293,6 +293,25 @@ function methodSignatureText(effect: EmittedEffect, outerScope: string): string 
   }
 }
 
+function extensionArgsName(effect: EmittedEffect): string {
+  return `${pascalCase(camelCase(effect.key))}Args`;
+}
+
+function extensionFallbackSignature(effect: EmittedEffect, outerScope: string): string {
+  if (effect.shape.kind === "fields") {
+    return `  ${effect.method}(args: ${extensionArgsName(effect)}): void;\n`;
+  }
+  return methodSignatureText(effect, outerScope);
+}
+
+function referenceSignature(effect: EmittedEffect, outerScope: string): string {
+  const seam = EFFECT_EXTENSION_SEAMS.get(effect.key);
+  if (seam === undefined) {
+    return methodSignatureText(effect, outerScope).trim();
+  }
+  return `${seam.referenceSignature}\n${extensionFallbackSignature(effect, outerScope).trim()}`;
+}
+
 /** `refTypes: [...]`, when every form the value admits is a `<type>` reference.
  * One non-reference arm and it is omitted: an id-shaped value would then be
  * legal for reasons no registry can see. */
@@ -569,7 +588,7 @@ export function emitEffects(
     // The args go out under their own name as well: the hand-written overload
     // narrows two members of this object and has no business restating the
     // rest, which are the rules' to change.
-    const argsName = `${pascalCase(camelCase(key))}Args`;
+    const argsName = extensionArgsName(effect);
     const args =
       effect.shape.kind === "fields"
         ? docComment([`The arguments \`${camelCase(key)}\` takes, as the rules declare them.`]) +
@@ -577,7 +596,7 @@ export function emitEffects(
         : "";
     const signature =
       effect.shape.kind === "fields"
-        ? `${docComment(effect.docs, "  ")}  ${effect.method}(args: ${argsName}): void;\n`
+        ? `${docComment(effect.docs, "  ")}${extensionFallbackSignature(effect, clusterScope(owner))}`
         : methodSignature(effect, clusterScope(owner));
     interfaceChunks.push(
       args +
@@ -743,7 +762,7 @@ export function emitEffects(
         availability === "universal"
           ? { kind: "universal" }
           : { kind: "scopes", scopes: availability },
-      signature: methodSignatureText(effect, outerScope).trim(),
+      signature: referenceSignature(effect, outerScope),
       docs: effect.docs,
     }));
   });

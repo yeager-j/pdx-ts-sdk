@@ -34,6 +34,28 @@ describe("script reference metadata", () => {
     expect(ambient?.docs.join("\n")).toContain("target = <target>");
   });
 
+  it("projects handwritten effect overloads before their generated fallbacks", () => {
+    const start = SCRIPT_EFFECT_REFERENCES.find(
+      (reference) => reference.method === "startSituation"
+    );
+    const startOverload =
+      "startSituation<T extends ScopeName>(args: { type: Unambiguous<T, SituationTargetContract<T>>; target: ScopeValue<NoInfer<T>>; effect?: (scope: SituationEffectScope<T>) => void }): void;";
+    const startFallback = "startSituation(args: StartSituationArgs): void;";
+    const startSignature = start?.signature ?? "";
+    expect(startSignature).toBe(`${startOverload}\n${startFallback}`);
+    expect(startSignature).not.toContain("startSituation(args: {");
+
+    const project = SCRIPT_EFFECT_REFERENCES.find(
+      (reference) => reference.method === "enableSpecialProject"
+    );
+    const projectOverload =
+      'enableSpecialProject<L extends SpecialProjectLocationScope>(args: Omit<EnableSpecialProjectArgs, "name" | "location"> & { name: Unambiguous<L, SpecialProjectLocationContract<L>>; location: ScopeValue<NoInfer<L>> }): void;';
+    const projectFallback = "enableSpecialProject(args: EnableSpecialProjectArgs): void;";
+    const projectSignature = project?.signature ?? "";
+    expect(projectSignature).toBe(`${projectOverload}\n${projectFallback}`);
+    expect(projectSignature).not.toContain("enableSpecialProject(args: {");
+  });
+
   it("joins event-fire rows to receiving scopes and overload signatures", () => {
     const observer = SCRIPT_EFFECT_REFERENCES.find(
       (reference) => reference.method === "observerEvent"

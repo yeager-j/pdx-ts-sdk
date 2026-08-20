@@ -3283,7 +3283,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "universal" },
     signature:
-      'enableSpecialProject(args: { name: (SpecialProjectRef & { locationScope?: never }) | string; owner?: ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system">; location?: ScopeValue<"ambient_object"|"archaeological_site"|"astral_rift"|"bypass"|"carrier"|"colony"|"debris"|"fleet"|"megastructure"|"planet"|"ship"|"situation"|"starbase"|"system"> }): void;',
+      'enableSpecialProject<L extends SpecialProjectLocationScope>(args: Omit<EnableSpecialProjectArgs, "name" | "location"> & { name: Unambiguous<L, SpecialProjectLocationContract<L>>; location: ScopeValue<NoInfer<L>> }): void;\nenableSpecialProject(args: EnableSpecialProjectArgs): void;',
     docs: [
       "Enables a specific special research project for target country at a specific location (should be same as the current scope where possible)",
       "",
@@ -16065,7 +16065,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["country"] },
     signature:
-      "startSituation(args: { type: (SituationTypeRef & { targetScope?: never }) | string; target?: ScopeValue; effect?: (scope: SituationScope) => void }): void;",
+      "startSituation<T extends ScopeName>(args: { type: Unambiguous<T, SituationTargetContract<T>>; target: ScopeValue<NoInfer<T>>; effect?: (scope: SituationEffectScope<T>) => void }): void;\nstartSituation(args: StartSituationArgs): void;",
     docs: [
       "Begins a situation.",
       "",

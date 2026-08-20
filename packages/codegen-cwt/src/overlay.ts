@@ -660,6 +660,8 @@ export const EFFECT_FIELD_TYPE_OVERRIDES = new Map<string, EffectFieldTypeOverri
 export interface EffectExtensionSeam {
   /** The emitted interface the hand-written overload augments. */
   readonly interfaceName: string;
+  /** The hand-written overload's display signature for script references. */
+  readonly referenceSignature: string;
   readonly reason: string;
 }
 
@@ -683,6 +685,8 @@ export const EFFECT_EXTENSION_SEAMS = new Map<string, EffectExtensionSeam>([
     "start_situation",
     {
       interfaceName: "StartSituationEffectsExtension",
+      referenceSignature:
+        "startSituation<T extends ScopeName>(args: { type: Unambiguous<T, SituationTargetContract<T>>; target: ScopeValue<NoInfer<T>>; effect?: (scope: SituationEffectScope<T>) => void }): void;",
       reason:
         "`startSituation` takes the situation's author-declared `targetScope` as proof of the " +
         "target it is passed (src/script/effects/situations.ts).",
@@ -692,6 +696,8 @@ export const EFFECT_EXTENSION_SEAMS = new Map<string, EffectExtensionSeam>([
     "enable_special_project",
     {
       interfaceName: "EnableSpecialProjectEffectsExtension",
+      referenceSignature:
+        'enableSpecialProject<L extends SpecialProjectLocationScope>(args: Omit<EnableSpecialProjectArgs, "name" | "location"> & { name: Unambiguous<L, SpecialProjectLocationContract<L>>; location: ScopeValue<NoInfer<L>> }): void;',
       reason:
         "`enableSpecialProject` checks its `location` against the project's author-declared " +
         "`locationScope`, which is also the FROM its success callbacks read " +
