@@ -1,80 +1,48 @@
-/**
- * Every Vite environment resolves the workspace packages to their sources.
- *
- * This is a gate on the gate. The docs build checks two things for real — that
- * every registry the SDK exposes has a reference page, and that every paired
- * example compiles and renders — and both are worthless if the build reads a
- * `dist/` instead of the sources under review. That is not hypothetical: the
- * condition used to be spelled as `vite.resolve` and `vite.ssr.resolve`, which
- * reach only the environments named `client` and `ssr`, and Astro renders
- * static pages in a third one named `prerender`.
- *
- * So the assertion is deliberately name-blind: whatever environments exist,
- * each one carries the condition. An environment Astro adds later is covered
- * without anyone remembering to come back here.
- */
-
-import { defaultClientConditions, defaultServerConditions, resolveConfig } from "vite";
 import { describe, expect, it } from "vitest";
 
-import { pdxSourceResolution } from "../src/pdx-source-resolution.ts";
+import { PDX_NEXT_CONFIG } from "../src/next-config-values.mjs";
+import { withPdxSourceResolution } from "../src/pdx-source-resolution.mjs";
 
 /**
- * The four environments Astro uses — `client` and `ssr` during a build, plus
- * `prerender` for static pages and `astro` for the dev module runner — and one
- * invented name standing in for the fifth Astro has not added yet.
+ * The docs build must resolve `@pdx-ts/*` to package sources, never `dist/`
+ * — the repo does not build `dist/` during development, and CI proves the
+ * end-to-end behavior by running `docs:build` with every `dist/` deleted.
+ * These tests pin the two config halves that guarantee it inside webpack:
+ * the `pdx-source` condition, and keeping the workspace packages bundled
+ * (`transpilePackages`) so Node's condition-blind resolver never sees them.
  */
-const ENVIRONMENTS = ["client", "ssr", "prerender", "astro", "invented"] as const;
-
-async function resolveEnvironments() {
-  const config = await resolveConfig(
-    {
-      configFile: false,
-      logLevel: "silent",
-      plugins: [pdxSourceResolution()],
-      environments: Object.fromEntries(ENVIRONMENTS.map((name) => [name, {}])),
-    },
-    "build"
-  );
-  return config.environments;
-}
-
-describe("pdxSourceResolution", () => {
-  it("puts the source condition in every environment", async () => {
-    const environments = await resolveEnvironments();
-
-    expect(Object.keys(environments).sort()).toEqual([...ENVIRONMENTS].sort());
-    for (const [name, environment] of Object.entries(environments)) {
-      expect(environment.resolve.conditions, name).toContain("pdx-source");
-    }
+describe("withPdxSourceResolution", () => {
+  it("prepends pdx-source ahead of webpack's defaults", () => {
+    const config = withPdxSourceResolution({});
+    expect(config.resolve?.conditionNames).toEqual(["pdx-source", "..."]);
   });
 
-  it("adds the condition rather than replacing Vite's defaults", async () => {
-    const environments = await resolveEnvironments();
-
-    // A user `conditions` array replaces the defaults instead of extending
-    // them, so losing `module`/`node`/`browser` is the near miss worth pinning.
-    expect(environments.client.resolve.conditions).toEqual(
-      expect.arrayContaining([...defaultClientConditions])
-    );
-    for (const name of ["ssr", "prerender", "astro", "invented"] as const) {
-      expect(environments[name].resolve.conditions, name).toEqual(
-        expect.arrayContaining([...defaultServerConditions])
-      );
-    }
+  it("preserves conditions a future config might set", () => {
+    const config = withPdxSourceResolution({
+      resolve: { conditionNames: ["worker", "..."] },
+    });
+    expect(config.resolve?.conditionNames).toEqual(["pdx-source", "worker", "..."]);
   });
 
-  it("keeps the workspace packages inside Vite's resolver on the server", async () => {
-    const environments = await resolveEnvironments();
+  it("does not double the condition", () => {
+    const once = withPdxSourceResolution({});
+    const twice = withPdxSourceResolution(once);
+    expect(
+      twice.resolve?.conditionNames?.filter((name: string) => name === "pdx-source")
+    ).toHaveLength(1);
+  });
+});
 
-    // Externalized, these are resolved by Node, which is not passed the
-    // condition and would read `dist/`. The client bundles everything anyway.
-    for (const name of ["ssr", "prerender", "astro", "invented"] as const) {
-      const noExternal = [environments[name].resolve.noExternal].flat();
-      expect(
-        noExternal.some((entry) => entry instanceof RegExp && entry.test("@pdx-ts/sdk")),
-        name
-      ).toBe(true);
-    }
+describe("the Next.js config", () => {
+  it("keeps both workspace packages inside webpack", () => {
+    expect(PDX_NEXT_CONFIG.transpilePackages).toEqual(["@pdx-ts/sdk", "@pdx-ts/stellaris-ids"]);
+  });
+
+  it("keeps the Astro site's trailing-slash URLs", () => {
+    expect(PDX_NEXT_CONFIG.trailingSlash).toBe(true);
+  });
+
+  it("is a server build, so proxy.ts can content-negotiate Markdown", () => {
+    expect(PDX_NEXT_CONFIG).not.toHaveProperty("output");
   });
 });

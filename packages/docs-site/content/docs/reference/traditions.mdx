@@ -1,0 +1,258 @@
+---
+title: Traditions
+description: Build complete tradition trees, prerequisites, localization, conditional descriptions, and empire-specific swaps.
+registries: [tradition, tradition_category]
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+
+import { FieldTable } from "@/components/FieldTable";
+import { PairedExample } from "@/components/PairedExample";
+import { TraditionTreeTemplates } from "@/components/TraditionTreeTemplates";
+
+A **tradition category** is the tree shown in the Traditions interface. A
+**tradition** is one entry in that tree. Most entries are selectable nodes;
+two are not — the category's adoption bonus and its finish bonus. The two
+registries are separate because the game stores them in separate folders:
+
+| SDK API                 | Game folder                    | Responsibility                                       |
+| ----------------------- | ------------------------------ | ---------------------------------------------------- |
+| `mod.tradition`         | `common/traditions/`           | One adoption bonus, finish bonus, or tree node.      |
+| `mod.traditionCategory` | `common/tradition_categories/` | The layout, membership, visibility, and AI priority. |
+
+This example builds a complete tree: five ordinary traditions, an adoption
+bonus, and a finish bonus. The category connects them through typed
+references, and the later traditions use `possible` to gate on earlier ones:
+
+<PairedExample name="traditions-tree" />
+
+## A complete tree has three kinds of member
+
+The category connects all of the definitions:
+
+| Category member | What it points to                                                 |
+| --------------- | ----------------------------------------------------------------- |
+| `adoptionBonus` | The tradition applied when the country adopts the category.       |
+| `finishBonus`   | The tradition applied after it selects every ordinary tree node.  |
+| `traditions`    | The ordered list of ordinary nodes placed into the tree template. |
+
+Do not include the adoption bonus or the finish bonus in `traditions`.
+Stellaris adds both automatically. They are still normal `mod.tradition`
+items and must be part of the compiled
+[Feature](/guides/features-and-discovery/). No tradition carries a cost:
+`TraditionDef` exposes no cost member, and the game's rules forbid one on a
+finish bonus.
+
+The SDK checks every owned reference during the
+[Fold](/guides/the-pipeline/). If the category points to a tradition that was
+declared but not included in the compiled Features, compilation fails instead
+of writing a broken tree.
+
+<Callout type="warn" title="Source order is not membership">
+  Putting traditions next to a category in one TypeScript file does not connect them. Only
+  `adoptionBonus`, `finishBonus`, and `traditions` establish membership. Keep the complete tree in
+  one Feature so its ownership is easy to audit.
+</Callout>
+
+## The template and prerequisites describe different graphs
+
+`treeTemplate` names a layout that already exists in the game's Traditions
+interface. Every template holds exactly five ordinary tradition positions,
+and the `traditions` array fills those numbered positions in order. Stellaris
+4.4.6 defines these eleven templates:
+
+<TraditionTreeTemplates />
+
+<Callout type="warn" title="Tree templates do not encode prerequisites">
+  The template supplies positions and arrow art. A tradition's country-scoped `possible` trigger
+  controls whether that node can be selected. In the tree example above, `distributedArchives` and
+  `relayDoctrine` both gate on `hasTradition(surveyTeams)`; the template only decides where those
+  nodes sit.
+</Callout>
+
+Choose a template whose arrangement and visual arrows match the prerequisites
+you wrote, then check the finished layout in the Traditions screen.
+
+## Localization follows definition identity
+
+`mod.tradition("survey_teams", ...)` mints the full id
+`deep_space_tradition_survey_teams` from the tree example's `deep_space`
+prefix. Its text members generate this key family:
+
+| Member    | Generated localization key                  |
+| --------- | ------------------------------------------- |
+| `name`    | `deep_space_tradition_survey_teams`         |
+| `flavor`  | `deep_space_tradition_survey_teams_delayed` |
+| `effects` | `deep_space_tradition_survey_teams_desc`    |
+
+`name` is required. `flavor` is the tradition's description text, which the
+game reads from the `_delayed` key, and `effects` is the short effect
+description shown by the tradition UI. The category's `name` and `desc`
+similarly produce `deep_space_tradition_category_deep_space` and
+`deep_space_tradition_category_deep_space_desc`.
+
+Keep category and tradition ids stable after release. Scripts, prerequisites,
+graphics definitions, and localization can refer to those ids.
+
+## Category policy is country-scoped
+
+The remaining category fields answer three separate questions:
+
+- `potential` decides whether the category is available to a country.
+- `aiWeight` ranks the category when the AI chooses among available trees.
+- `conditionalDesc` gives one available category different descriptions for
+  different empire types.
+
+Vanilla uses `potential` for rules such as ascension path exclusivity, empire
+type, origin, and downloadable-content availability. Keep legality in
+`potential`; a zero AI weight does not make a category unavailable to the
+player.
+
+Each `conditionalDesc` row holds a country trigger and a localization **key**,
+not English text. Create that text with `mod.localization`, then pass its
+`.key`. The swaps example below does this with `machineCategoryDescription`.
+See [Localization](/concepts/localization/) for how those entries are written.
+
+All eight vanilla categories that use conditional descriptions cover the
+whole empire-type space, with two to five rows each. The SDK does not check
+that coverage, and whether the game falls back to the plain `desc` key when
+no row matches is not documented. Write a row for every empire type the
+category is available to.
+
+## Effects, modifiers, and tooltips belong to the tradition
+
+`modifier` and `triggeredModifier` carry continuing country bonuses.
+`onEnabled` carries a one-time state change. `customTooltip` and
+`customTooltipWithModifiers` both take localization keys: the first is shown
+instead of the generated modifier tooltip, the second in addition to it.
+
+`onEnabled` runs when a country selects the tradition. It is not a migration
+hook: adding it to a tradition that countries already hold is not a reliable
+way to reach those saves. Make effects safe against duplicate execution where
+practical, and test selection, completion, save/load, and any event or flag
+transitions in the game.
+
+`unlocksAgenda` unlocks nothing. It only writes the "unlocks this Agenda"
+tooltip line. The agenda gates itself: its own `allow` or `potential` needs
+`has_tradition = <tradition id>`, which is what every vanilla agenda named by
+an `unlocks_agenda` field does. Without that gate the tradition advertises an
+agenda that stays locked.
+
+## Swaps replace a tradition for empires that match a trigger
+
+`traditionSwap` is a keyed record of conditional alternatives. Each record
+key is the alternative's own full emitted id — normally the base tradition's
+minted id plus a suffix, as in
+`adaptive_horizons_tradition_networked_surveyors_machine`. Because the id is
+written out in full, it must carry the mod prefix. This example adds a
+machine-specific name, flavor, effects, modifier, and category description:
+
+<PairedExample name="traditions-swaps" />
+
+The swap fields have separate responsibilities:
+
+| Member           | Responsibility                                                           |
+| ---------------- | ------------------------------------------------------------------------ |
+| `trigger`        | Makes the alternative eligible for the current country.                  |
+| `weight`         | Chooses between eligible alternatives when more than one matches.        |
+| `inheritName`    | Reuses the base tradition's `name`; a new `name` is then not required.   |
+| `inheritIcon`    | Reuses the base tradition's inferred icon.                               |
+| `inheritEffects` | Reuses the base tradition's `modifier`, `effects` text, and `onEnabled`. |
+
+All three inheritance flags default to false, matching the game. Set each one
+deliberately: the example sets `inheritIcon` and `inheritEffects` explicitly
+and leaves `inheritName` unset. When `inheritName` is not true, the SDK
+requires `name` and writes it under the swap record's id. Optional `flavor`
+and `effects` use that id's `_delayed` and `_desc` keys.
+
+Every swap needs a record key, even one that inherits its whole identity,
+because the SDK always writes that key as the swap's `name`. Vanilla may omit
+`name` in that case — 12 of its 194 swaps do — so such a swap emits one line
+vanilla would not. It is harmless: 52 vanilla swaps write both `name` and
+`inherit_name = yes`.
+
+The top-level tradition `aiWeight` applies to the base tradition and its
+swaps. A swap's own `weight` only resolves alternatives whose `trigger` is
+true. Avoid overlapping triggers unless the relative weights are intentional.
+
+<Callout type="warn" title="Swap ids must be unique in the authored mod">
+  The SDK represents swaps as a TypeScript record and applies its normal nested-id uniqueness check
+  across the whole mod, not per tradition. Vanilla does reuse one swap id across two traditions —
+  `tr_psionics_adopt_shroudwalker` appears inside both `tr_psionics_adopt` and
+  `tr_psionics_shroud_adopt` — so porting a tree shaped like that needs distinct prefixed ids, or
+  the shared behavior moved into the base tradition.
+</Callout>
+
+## Tradition art is inferred from ids
+
+Ordinary tradition icons are inferred as `GFX_<tradition-id>`. A swap that
+does not inherit its icon uses `GFX_<swap-id>`.
+
+The exemption for the adoption and finish nodes is keyed on the id, not on
+the role: the rules ignore the inferred icon for any id ending in `_adopt` or
+`_finish`. The install matches exactly. Of 234 vanilla traditions, the 64
+with no `GFX_<id>` sprite all end in one of those two suffixes, so neither
+node needs a sprite of its own; the Traditions screen draws the adopt entry
+through its own button sprite, `GFX_adopt_tradition_category_button`. Both
+examples on this page call `mod.tradition("adopt", ...)` and
+`mod.tradition("finish", ...)`, which mint ids inside the rule. A node named
+differently falls outside it.
+
+Categories use several sprites named from the category id, including
+`GFX_tradition_category_bg_<category-id>`,
+`GFX_tradition_hex_bg_<category-id>`, and
+`GFX_tradition_category_icon_<category-id>`. The registry definitions do not
+create these GFX definitions or their texture files. Add the matching art to
+the mod. Without it the mod still compiles, but the tree shows missing
+graphics in game. See [Assets](/concepts/assets/) for typed GFX definitions
+and asset placement.
+
+## Current limits and testing advice
+
+- Traditions and tradition categories have no patch surface.
+  `mod.patchTradition` and `mod.patchTraditionCategory` do not exist.
+- `treeTemplate` is an unchecked GUI template name. The SDK does not validate
+  its arrangement, compare its arrows with the prerequisite graph, or check
+  that `traditions` holds the five entries every template has positions for.
+- `TraditionDef` has no `inline_script` member. Vanilla uses inline scripts in
+  six tradition files — Aptitude, Statecraft, Domination, Cloning, Mutation,
+  and Purity — to share modifier and effect fragments. Write those bodies out
+  in full instead.
+- The game documents two tradition fields the vendored rules do not declare,
+  so the SDK cannot emit them: `potential`, a visibility trigger separate from
+  `possible`, and `on_disabled`, which runs when a country loses the
+  tradition. No vanilla tradition uses either.
+- The SDK checks owned references, localization requirements, trigger and
+  effect scopes, nested swap ids, and emitted paths. It does not simulate
+  prerequisite progression, category selection, AI choice, swap resolution,
+  completion, or UI rendering.
+
+Test adoption, every prerequisite edge, all five ordinary selections,
+completion, each category eligibility branch, every swap trigger, overlapping
+swap weights, AI selection, icons, localization, and save/load. See
+[Testing your mod](/guides/testing-your-mod/) for the boundary between SDK
+checks and live-game verification.
+
+## API and vanilla references
+
+- [`TraditionDef`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/tradition.ts)
+  is the generated TypeScript definition used by `mod.tradition`.
+- [`TraditionCategoryDef`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/tradition-category.ts)
+  is the generated definition used by `mod.traditionCategory`.
+- [`vanilla.tradition` and `vanilla.traditionCategory`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
+  provide checked references to ids from the selected
+  `@pdx-ts/stellaris-ids` game version.
+
+## Field reference
+
+These tables are generated from the same descriptors and field metadata that
+drive authoring and serialization. The tradition table includes nested swap,
+weight, and triggered-modifier fields.
+
+### Traditions
+
+<FieldTable registry="tradition" />
+
+### Tradition categories
+
+<FieldTable registry="tradition_category" />

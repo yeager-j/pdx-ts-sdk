@@ -1,0 +1,204 @@
+---
+title: Special Projects
+description: Define situation-log objectives with costs or durations, eligible fleets, locations, and typed callbacks.
+registries: [special_project]
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+
+import { FieldTable } from "@/components/FieldTable";
+import { PairedExample } from "@/components/PairedExample";
+
+A **special project** is a situation-log objective that a country can enable
+and resolve. It may consume Physics, Society, or Engineering Research; take a
+fixed number of days; require a science, construction, military, or transport
+fleet; or complete entirely through script. Its definition controls progress,
+assignment requirements, display, and callbacks for success, failure, and
+cancellation. The SDK writes special projects under `common/special_projects/`.
+
+Stellaris uses “research” in API and script names such as `daysToResearch`, even
+for drilling, bombardment, army deployment, and other non-scientific
+operations. Treat those names as engine vocabulary, not a restriction on what
+a special project represents.
+
+This definition-only example creates a fixed-duration drilling operation for a
+construction ship. It emits a usable project definition, but no running country
+receives it until an effect enables it:
+
+<PairedExample name="special-projects-basic" />
+
+The lifecycle example later on selects a planet, enables a fixed-duration
+science-ship operation there, reacts to progress, and fires a completion event.
+
+## What a special project can represent
+
+The registry supports several gameplay shapes:
+
+| Shape                  | Typical fields                                                       | Examples                                                                                                     |
+| ---------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Empire-level objective | `eventScope: "country_event"`, often no `requirements`               | A country pays a research cost, waits for a fixed duration, or reaches scripted completion.                  |
+| Fleet operation        | `eventScope: "ship_event"` plus `requirements`                       | A science ship investigates, a constructor drills, a military fleet intervenes, or transports deploy armies. |
+| Bombardment operation  | `projectType: "project_type_bombardment"` plus military requirements | A fleet performs a scripted bombardment through the situation log.                                           |
+
+`eventScope` controls callback scope; it does not by itself choose who may work
+on the project. `requirements` controls eligible fleets when assignment is part
+of the objective. A country-scoped project can omit fleet requirements
+entirely.
+
+## Enable a project from script
+
+A definition does not place the project in any country's situation log. Call
+`enableSpecialProject` from an event or another effect:
+
+```ts
+country.enableSpecialProject({
+  name: analyzeSignal,
+  owner: ctx.self,
+  location: signalWorld,
+});
+```
+
+`owner` is the country that receives the project. `location` is the spatial
+object where it appears and the scope supplied to its progress and success
+callbacks. Pass both explicitly when writing owned content; this makes the
+project's runtime identity clear and lets the SDK check the location contract.
+
+The generated effects also expose `completeSpecialProject` and
+`abortSpecialProject` for flows that must resolve a running project from other
+script. Their `location` must identify the same running instance when multiple
+instances or locations could exist.
+
+## Choose cost and duration behavior
+
+Special projects support two common progress models:
+
+| Model          | Fields                                         | Use                                                                                                             |
+| -------------- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Research cost  | `cost` greater than zero plus `techDepartment` | Spend Physics, Society, or Engineering Research. A weight block can calculate the cost from country conditions. |
+| Fixed duration | `cost: 0` plus `daysToResearch`                | Take a fixed number of days. Fleet requirements decide who performs the operation when present.                 |
+
+Do not give one project both a positive research cost and a positive
+`daysToResearch`. Vanilla sometimes writes `days_to_research = 0` beside a
+positive cost; that zero does not create a fixed-duration project.
+
+`timelimit` is separate from project duration. It is the time before an
+unfinished project expires and runs `onFail`. An operation can therefore take
+90 days to complete but expire if nobody finishes it within 360 days.
+
+Script can also call `completeSpecialProject` or `abortSpecialProject` instead
+of waiting for ordinary progress. Cost, duration, and fleet assignment are
+independent choices; use only the parts that describe the objective.
+
+## Describe who can work on it
+
+`requirements` describes which fleet may be assigned. Common members include
+science ships, constructors, military ships, leader class and skill, fleet
+power, army counts, technologies, traits, and station requirements.
+
+`triggeredRequirement` adds one custom fleet-scoped condition with localized
+explanatory text and a required count. The SDK accepts one such block. The
+game's shipped documentation shows repeated blocks, but the current vendored
+rule permits one, so combine custom checks into one fleet trigger.
+
+`sameOptionGroupAs` places several projects in one alternative choice group.
+List the other project items there. Sharing a location or an
+[event chain](/reference/event-chains/) does not make projects mutually
+exclusive.
+
+## Keep event scope and location scope distinct
+
+`eventScope` selects the scope used as `THIS` by `onStart`, progress, and
+`onSuccess` callbacks. Any fleet operation normally uses `"ship_event"`, so
+those callbacks receive ship effects; the fleet requirement decides whether
+that ship belongs to a science, construction, military, or transport fleet.
+
+The project's location comes from the `location` passed to
+`enableSpecialProject`. Declare that contract with `locationScope`:
+
+```ts
+const project = mod.specialProject("analyze_signal", {
+  eventScope: "ship_event",
+  locationScope: "planet",
+  onSuccess: (ship, ctx) => {
+    ctx.from.effects((planet) => planet.setPlanetFlag("crystal_survey_analyzed"));
+  },
+});
+```
+
+`locationScope` is an SDK type contract and emits no PDXScript field. It makes
+`ctx.from` a planet in the success callback and requires every owned
+`enableSpecialProject` call to pass a planet. If it is omitted, the game still
+accepts a location, but the SDK cannot expose that callback scope safely.
+
+The `location: true` definition field is unrelated: it only asks the situation
+log to show the project on the map. It neither supplies a location nor types
+one.
+
+<Callout type="warn" title="Failure and cancellation scopes differ">
+  `failTrigger` and `abortTrigger` run in country scope with the `eventScope` object as `FROM`; the
+  creation location is `FROMFROM`. `onFail` instead receives the creation location as `FROM`. The
+  game's rules do not specify `onCancel`'s `FROM`, and shipped scripts reach the location through
+  `FROMFROM`. The SDK currently types `ctx.from` as the event scope in both `onFail` and `onCancel`,
+  which disagrees with that evidence. Avoid reading `ctx.from` in those two callbacks; save a
+  durable target before the project starts when cleanup needs one.
+</Callout>
+
+## Complete lifecycle example
+
+This example starts from an ordinary country event. It selects an owned planet
+and enables a project that requires a science ship and scientist. The project
+marks its ship and planet when work begins, records halfway progress, and
+fires a ship event on success. Failure and cancellation record separate country
+flags:
+
+<PairedExample name="special-projects-lifecycle" />
+
+The completion event expects a planet as `FROM`. Passing `ctx.from` from the
+project callback preserves the same location for the event's picture and text.
+The project does not use an event chain; its entry, progress, and completion
+remain fully functional without one.
+
+## Optional event-chain association
+
+Set `eventChain` when the project should appear inside an existing narrative
+log:
+
+```ts
+const project = mod.specialProject("analyze_signal", {
+  eventChain: crystalMystery,
+  eventScope: "ship_event",
+});
+```
+
+This associates the project with the log entry only. It does not start or end
+the chain, change project completion, or fire an event. The
+[Event Chains](/reference/event-chains/) page covers that independent
+lifecycle.
+
+## Current limits and testing advice
+
+- Special projects have no patch surface. `mod.patchSpecialProject` does not
+  exist.
+- The SDK checks field shapes, owned references, callback scopes, and declared
+  locations, but it does not simulate fleet assignment, cost progress,
+  duration, time limits, cancellation, or situation-log presentation.
+- `icon` is a raw asset path. The SDK does not prove that the texture exists.
+- Keep finite `timelimit` paths safe when the assigned ship or planet has
+  disappeared. Do not assume a transient scope still exists during cleanup.
+
+Test enabling, target selection, available-fleet requirements, both progress
+models, callbacks, success, scripted completion, expiry, cancellation, map
+display, and save/load in the running game.
+
+## API and Vanilla references
+
+- [`SpecialProjectDef`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/special-project.ts)
+  is the generated definition used by `mod.specialProject`.
+- [`vanilla.specialProject`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
+  provides checked references to Vanilla special-project ids.
+- [Events](/concepts/events/) covers the entry and completion events commonly
+  used around a project.
+
+## Field reference
+
+<FieldTable registry="special_project" />

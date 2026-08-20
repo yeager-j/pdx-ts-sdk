@@ -1,25 +1,60 @@
 {
-  // This package is the one workspace member outside the repository's single
-  // TypeScript program (see the root tsconfig's `exclude`). Astro generates the
-  // types for its virtual modules — `astro:content` above all — into
-  // `.astro/types.d.ts`, and `.astro` components are not TypeScript files, so
-  // the root program can neither resolve nor read this source. `astro check`,
-  // run by this package's `typecheck` script, is the gate for the site itself;
-  // the paired examples additionally check under the root program's semantics
-  // through `tsconfig.examples.json`.
-  "extends": "astro/tsconfigs/strict",
-  "include": [".astro/types.d.ts", "**/*"],
-  "exclude": ["dist"],
+  // The docs site is the one workspace member outside the repo's single
+  // NodeNext program: Next.js code resolves like its bundler does, so the
+  // package carries its own bundler-moduleResolution config. The examples
+  // under content/docs/ are still checked as members of the root program via
+  // tsconfig.examples.json.
   "compilerOptions": {
-    // The component imports `@pdx-ts/sdk`, whose `exports` point at the
-    // never-built `dist/`; `pdx-source` resolves it to sources, the same as
-    // the root program. The remaining options let those sources check here:
-    // they import with `.ts` extensions, target ES2024, and are written under
-    // `isolatedModules`/`erasableSyntaxOnly`, not `verbatimModuleSyntax`.
-    "customConditions": ["pdx-source"],
-    "allowImportingTsExtensions": true,
     "target": "ES2024",
-    "lib": ["es2024", "DOM", "DOM.Iterable"],
-    "verbatimModuleSyntax": false
-  }
+    // es2024, not esnext: the SDK's sources are checked under the root
+    // program's es2024 libs, and a wider lib here would demand newer
+    // built-in surfaces (ReadonlySet's ES2025 methods) from them.
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "es2024"
+    ],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    // Resolves `@pdx-ts/*` to package sources, matching the webpack
+    // `pdx-source` condition in next.config.mjs.
+    "customConditions": [
+      "pdx-source"
+    ],
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "paths": {
+      "@/*": [
+        "./*"
+      ]
+    },
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    "**/*.mjs",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "out",
+    "content"
+  ]
 }

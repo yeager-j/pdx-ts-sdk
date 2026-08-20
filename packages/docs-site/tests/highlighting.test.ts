@@ -13,6 +13,7 @@
  */
 
 import { createHighlighter } from "shiki";
+import { createJavaScriptRegexEngine } from "shiki/engine/javascript";
 import { beforeAll, describe, expect, it } from "vitest";
 
 import { GRAMMARS } from "../src/pdx-languages.ts";
@@ -28,13 +29,23 @@ type Registered = "pdxscript" | "pdxloc";
 let scopeOf: (code: string, lang: Registered) => Map<string, string>;
 
 beforeAll(async () => {
+  // Two engines, one truth: the site highlights with Shiki's JavaScript
+  // regex engine (the fumadocs default), while Oniguruma is the reference
+  // implementation the grammars were written against. Every case below runs
+  // under both and asserts they tokenize identically, so an engine
+  // difference fails here rather than rendering silently wrong on a page.
   const highlighter = await createHighlighter({
     themes: ["catppuccin-latte"],
     langs: [GRAMMARS.pdxscript, GRAMMARS.pdxloc],
   });
-  scopeOf = (code, lang) => {
-    const { tokens } = highlighter.codeToTokens(code, {
-      lang: lang as Parameters<typeof highlighter.codeToTokens>[1]["lang"],
+  const jsEngineHighlighter = await createHighlighter({
+    themes: ["catppuccin-latte"],
+    langs: [GRAMMARS.pdxscript, GRAMMARS.pdxloc],
+    engine: createJavaScriptRegexEngine({ forgiving: false }),
+  });
+  const scopesWith = (instance: typeof highlighter, code: string, lang: Registered) => {
+    const { tokens } = instance.codeToTokens(code, {
+      lang: lang as Parameters<typeof instance.codeToTokens>[1]["lang"],
       theme: "catppuccin-latte",
       includeExplanation: true,
     });
@@ -56,6 +67,12 @@ beforeAll(async () => {
       }
     }
     return found;
+  };
+  scopeOf = (code, lang) => {
+    const reference = scopesWith(highlighter, code, lang);
+    const jsEngine = scopesWith(jsEngineHighlighter, code, lang);
+    expect(jsEngine).toEqual(reference);
+    return reference;
   };
 });
 

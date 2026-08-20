@@ -1,0 +1,172 @@
+---
+title: Utility Components
+description: Define reactors, drives, sensors, computers, defenses, auras, modifiers, and other non-weapon ship equipment.
+registries: [utility_component_template]
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+
+import { FieldTable } from "@/components/FieldTable";
+
+A **utility component template** defines non-weapon ship equipment. The same
+registry covers ordinary utility-slot components and required equipment such
+as reactors, FTL drives, thrusters, sensors, and combat computers. It also
+supports ship behavior, modifiers, targeting, and friendly or hostile auras.
+The SDK writes utility components into `common/component_templates/`.
+
+The [Ships overview](/concepts/ships/) fits a custom required reactor to the
+Aegis hull and lists it in the fixed design's `requiredComponent`.
+
+## The set groups the family; the component owns the tier
+
+Every maintained component should have a deliberate
+[`componentSet`](/reference/component-sets/). The set groups alternatives and
+can make the family required by a hull. The component owns the concrete tier,
+size, cost, unlock, availability, and effects.
+
+```ts
+const reactor = mod.utilityComponentTemplate("reactor", {
+  name: "Aegis Zero-Point Reactor",
+  icon: vanilla.spriteType("GFX_ship_part_reactor_5"),
+  componentSet: reactorSet,
+  isDefaultComponent: true,
+  size: "medium",
+  power: 500,
+});
+```
+
+A component does not become a reactor, sensor, or computer from its icon. Its
+set and payload establish that role.
+
+`isDefaultComponent` has no documentation in the game files or in the
+generated rules, and vanilla uses it once: on `NEUROCHIPS_SWARM_DEFAULT`, the
+head of a space-fauna component set with an upgrade chain. Read it as the
+pre-selected member of a set, and confirm the behavior in the running game. It
+does not make a component legal when its `potential`, technology, country,
+size, or set connection rejects it.
+
+## Ordinary utility slots and required components differ
+
+An ordinary armor, shield, or auxiliary component fills a position that a
+section's utility counts create — `smallUtilitySlots`, `mediumUtilitySlots`,
+`largeUtilitySlots`, and `auxUtilitySlots` on a
+[section template](/reference/section-templates/). A required component fills
+one of the hull's required component sets and appears in
+`globalShipDesign.requiredComponent` for a fixed design.
+
+Do not use `requiredComponent` as a shortcut for ordinary armor or auxiliary
+positions, and do not fill a required set from an ordinary slot.
+
+`size: "extra_large"` has no ordinary position to land in: a section counts
+only small, medium, large, and auxiliary utility slots. Vanilla reaches its
+extra-large utility components through `common/mutations`, a registry the SDK
+does not expose.
+
+## Availability is evaluated at several layers
+
+Availability and upgrade policy are set by several fields, each with a
+different reach:
+
+- `prerequisites` names technology ids.
+- `potential` is design-scoped with the owning country as `FROM`.
+- `validForCountry` and `showTechUnlockIf` apply country policy.
+- `sizeRestriction` and `classRestriction` are both legacy. The game's own
+  component documentation deprecates them in favor of `potential`, and no
+  vanilla component uses either. Narrow hulls with `potential`.
+- `blockedBy`, `upgradesTo`, `upgradePath`, `aiWeight`, `aiTags`, and
+  `shouldAiUse` are described in the field reference below.
+
+Use the narrowest layer that owns the rule. A technology belongs in
+`prerequisites`; a hull-specific design condition belongs in `potential`; a
+country policy belongs in the country gate.
+
+<Callout type="warn" title="A new hull may need component updates">
+  Adding a ship size does not guarantee that vanilla or custom utility components accept it. Read
+  their `potential`, especially for hull-family-specific thrusters, reactors, computers, and bioship
+  equipment.
+</Callout>
+
+## Power, movement, sensors, and behavior are independent payloads
+
+`power` is the component's contribution to the design's power balance. The
+specialized fields then describe the equipment:
+
+- `ftl`, `ftlInhibitor`, and `jumpdrive` mark drive capabilities;
+- `sensorRange` and `hyperlaneRange` define detection and route reach;
+- `shipBehavior` selects a combat behavior;
+- `targetType` and `targetFocus` participate only when the component set allows
+  those targeting fields;
+- `scriptedAction` connects supported component actions.
+
+## Modifiers operate at ship and design seams
+
+The registry admits direct `modifier`, `shipModifier`, and
+`shipDesignModifier` closures plus repeated triggered ship and design
+modifiers. Use a direct closure for an unconditional value and a triggered row
+when the value depends on runtime conditions.
+
+The existence of both `modifier` and `shipModifier` follows the game grammar.
+Copy the key used by a current vanilla component with the same behavior; do
+not assume the duplicate-looking names are interchangeable.
+
+## Auras are complete nested systems
+
+`friendlyAura` and `hostileAura` are repeated blocks, and a hostile aura can
+also apply daily damage. The nested tables in the field reference below carry
+their members.
+
+Keep stack ids stable. Two effects that must not stack have to agree on one
+`stackInfo.id`, while unrelated effects need distinct ids. Test range,
+graphics, application timing, stacking, target filters, and fleet transitions
+in the live game.
+
+## Costs
+
+`resources` supports repeated economic blocks for component cost, upkeep,
+production, or logistics in ship scope. Most ordinary equipment uses a
+`ship_components` category with construction cost and optional upkeep.
+
+## Localization belongs to the component
+
+`name` emits [localization](/concepts/localization/) for the component id. Set
+text belongs to the component set; component text identifies this exact tier
+or variant. `customTooltip` can use an existing key or a conditional block.
+The text members of `customTooltip` are localization keys. This registry does
+not emit their text.
+
+## Current limits and testing advice
+
+- Utility components have no patch surface.
+  `mod.patchUtilityComponentTemplate` does not exist.
+- The SDK does not author `inline_script`. Vanilla uses it to splice whole
+  component definitions and shared cost or weight blocks. Write an ordinary
+  TypeScript helper that returns the shared fields instead.
+- `possible`, which the game's component documentation names as the
+  replacement for the deprecated `shipLimit` and `blockedBy`, is declared for
+  weapon components only, so the SDK cannot write it here. Vanilla utility
+  components still use `shipLimit` and `blockedBy`.
+- The SDK does not simulate design power balance, component selection,
+  aura stacking, movement, sensors, or upgrade choice.
+- Entity and sprite references do not prove that the required asset exists in
+  every graphical culture.
+
+Test designer availability, default selection, required-set completeness,
+power, costs, upgrades, AI choice, every modifier, drives and sensors, aura
+stacking, graphics, combat, and save/load.
+
+## API and vanilla references
+
+- [`UtilityComponentTemplateDef`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/utility-component-template.ts)
+  is the generated definition used by `mod.utilityComponentTemplate`.
+- [`vanilla.utilityComponentTemplate`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
+  provides checked vanilla utility-component ids.
+
+## Field reference
+
+The nested tables cover conditional tooltips, aura stacking and graphics, and
+daily aura damage. `resources`, `aiWeight`, `triggeredShipModifier`, and
+`triggeredShipDesignModifier` use the shared `EconomicResourceBlock`,
+`WeightBlock`, and `TriggeredModifier` shapes; the table names those types but
+does not expand their members.
+
+<FieldTable registry="utility_component_template" />

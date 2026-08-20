@@ -1,36 +1,48 @@
 {
   "name": "@pdx-ts/docs-site",
   "version": "0.0.0",
-  "description": "User-facing documentation site for @pdx-ts/sdk",
-  "type": "module",
   "private": true,
-  "license": "MIT",
+  "type": "module",
   "scripts": {
-    "dev": "astro dev",
-    "build": "tsc -p tsconfig.examples.json && astro build && node scripts/check-field-table-markdown.mjs",
-    "preview": "astro preview",
-    "typecheck": "astro check && tsc -p tsconfig.examples.json"
+    "dev": "npm run examples:check && next dev --webpack",
+    "examples:check": "node --conditions=pdx-source scripts/check-examples.ts",
+    "build": "tsc -p tsconfig.examples.json && npm run examples:check && next build --webpack && node scripts/check-field-table-markdown.mjs",
+    "preview": "next start",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.examples.json"
+  },
+  "engines": {
+    "node": ">=22"
   },
   "dependencies": {
-    "@astrojs/markdown-remark": "^7.2.2",
-    "@astrojs/starlight": "^0.41.7",
-    "@catppuccin/starlight": "^2.1.0",
+    "@base-ui/react": "^1.7.0",
+    "@fuma-translate/react": "^1.0.2",
     "@pdx-ts/sdk": "*",
     "@pdx-ts/stellaris-ids": "*",
-    "astro": "^7.2.2",
-    "sharp": "^0.35.3"
+    "class-variance-authority": "^0.7.1",
+    "fumadocs-core": "^16.14.5",
+    "fumadocs-mdx": "^15.3.0",
+    "fumadocs-ui": "^16.14.5",
+    "hast-util-to-jsx-runtime": "^2.3.6",
+    "lucide-react": "^1.33.0",
+    "next": "^16.1.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "rehype-stringify": "^10.0.1",
+    "remark-gfm": "^4.0.1",
+    "remark-parse": "^11.0.0",
+    "remark-rehype": "^11.1.2",
+    "unified": "^11.0.5",
+    "zod": "^4.0.0"
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.10",
-    "shiki": "^4.4.3"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/yeager-j/pdx-ts-sdk.git",
-    "directory": "packages/docs-site"
-  },
-  "homepage": "https://github.com/yeager-j/pdx-ts-sdk/tree/main/packages/docs-site#readme",
-  "bugs": {
-    "url": "https://github.com/yeager-j/pdx-ts-sdk/issues"
+    "@tailwindcss/postcss": "^4.1.0",
+    "@types/mdx": "^2.0.13",
+    "@types/node": "^26.2.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "shiki": "^4.4.3",
+    "tailwindcss": "^4.1.0",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.11"
   }
 }

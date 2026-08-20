@@ -1,0 +1,152 @@
+---
+title: Event Chains
+description: Build situation-log narratives with explicit lifecycle effects, typed counters, events, and cleanup rules.
+registries: [event_chain]
+---
+
+import { FieldTable } from "@/components/FieldTable";
+import { PairedExample } from "@/components/PairedExample";
+
+An **event chain** is a situation-log entry that groups narrative activity and
+tracks optional counters. It supplies display and progress state, but it does
+not describe an event graph or run script by itself. The SDK writes event-chain
+definitions under `common/event_chains/`.
+
+This minimal example defines one chain with an icon and event picture:
+
+<PairedExample name="event-chains-basic" />
+
+The lifecycle example later on starts the chain from an event, advances a typed
+counter across two events, detects when the threshold is complete, and fires a
+separate conclusion that closes the log entry.
+
+## Start, associate, and end a chain explicitly
+
+`beginEventChain` starts a chain for a country. Pass `target` when the current
+effect scope is not enough to identify that country:
+
+```ts
+country.beginEventChain({ eventChain: crystalMystery, target: ctx.self });
+```
+
+An event's `eventChain` member associates that event with the situation-log
+entry:
+
+```ts
+const discovery = events.country(1, {
+  eventChain: crystalMystery,
+  isTriggeredOnly: true,
+});
+```
+
+That reference does not start the chain or decide which event runs next. Fire
+each event explicitly, then call `endEventChain` from the outcome that finishes
+the narrative. The game does not infer that the last associated event means the
+chain is complete.
+
+An `abortTrigger` on the definition is a separate automatic cleanup rule. It
+runs in country scope and is useful when the whole story becomes invalid, such
+as when a required country flag or target disappears. Keep normal success
+cleanup explicit so the final event controls when the log entry closes.
+
+## Counters track progress; they do not run script
+
+Each member of `counter` declares one named value. `max` is an optional
+completion threshold:
+
+```ts
+counter: { [signalsDecoded.key]: { max: 2 } },
+```
+
+Use `addEventChainCounter` and `resetEventChainCounter` to change it, and
+`hasCompletedEventChainCounter` to test whether a bounded counter reached its
+maximum. For a chain defined by the current mod, the SDK carries the declared
+counter names into those calls, so a misspelling is a TypeScript error. Vanilla
+and third-party chain references cannot provide that counter-name union and
+accept an unchecked string instead.
+
+Counter labels use the counter key itself, not a key derived from the chain.
+The lifecycle example creates the label with `mod.localization` and uses its
+`.key` as both the counter name and the effect argument. This keeps the emitted
+counter and localization in agreement.
+
+Omit `max` for an unbounded statistic. Reaching a maximum changes the counter's
+completion state, but it does not fire an event or end the chain by itself.
+
+Check completion after the effect that may reach the threshold, then fire the
+next event explicitly:
+
+```ts
+country.addEventChainCounter({
+  eventChain: crystalMystery,
+  counter: signalsDecoded.key,
+  amount: 1,
+});
+country.if(
+  hasCompletedEventChainCounter({
+    eventChain: crystalMystery,
+    counter: signalsDecoded.key,
+  }),
+  (owner) => owner.countryEvent({ id: signalCompleted })
+);
+```
+
+Vanilla precursor stories follow this shape: an artifact event increments its
+chain counter, a hidden event checks `has_completed_event_chain_counter`, and a
+separate completion event ends that chain or starts the next one.
+
+## Complete lifecycle example
+
+This example starts a chain for the player at game start. The first event
+records one decoded signal and fires a second event. Event 2 records the second
+signal, detects that the bounded counter is complete, and fires a third event.
+Only that conclusion grants Physics Research and ends the chain:
+
+<PairedExample name="event-chains-lifecycle" />
+
+The event definitions carry `eventChain` for situation-log association, while
+their effects independently control the actual sequence. Event definition
+order does not control runtime order.
+
+## Categories and related content
+
+`situationLogCategory` places a chain in an existing situation-log UI category.
+Use a checked `vanilla.situationLogCategory(...)` reference when a shipped
+category fits. A category is shared UI taxonomy, not part of the chain's event
+sequence.
+
+Other content can also associate with a chain. A
+[special project](/reference/special-projects/) has an optional `eventChain`
+member, but neither concept requires the other: a chain can contain only
+events, and a project can exist without any chain.
+
+Use a [situation](/reference/situations/) instead when progress itself needs
+stages, approaches, monthly modifiers, or positive and negative completion
+edges. Event chains are better suited to a log around discrete narrative
+steps.
+
+## Current limits and testing advice
+
+- Event chains have no patch surface. `mod.patchEventChain` does not exist.
+- The SDK checks owned references and counter names, but it does not simulate
+  chain activation, counter display, abort evaluation, or situation-log UI.
+- `icon` is a raw asset path. The SDK does not prove that the texture exists.
+- The counter key is also its localization key. Prefix custom keys to avoid
+  collisions with Vanilla and other mods.
+
+Test chain start, associated event display, each counter transition, completed
+counter behavior, abort cleanup, normal completion, and save/load in the
+running game.
+
+## API and Vanilla references
+
+- [`EventChainDef`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/event-chain.ts)
+  is the generated definition used by `mod.eventChain`.
+- [`vanilla.eventChain`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
+  provides checked references to Vanilla event-chain ids.
+- [Events](/concepts/events/) covers event namespaces, bodies, options, and
+  typed event-to-event firing.
+
+## Field reference
+
+<FieldTable registry="event_chain" />

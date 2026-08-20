@@ -1,31 +1,46 @@
-import { createMarkdownProcessor, type Node, type RemarkPlugin } from "@astrojs/markdown-remark";
+import rehypeStringify from "rehype-stringify";
+import remarkGfm from "remark-gfm";
+import remarkParse from "remark-parse";
+import remarkRehype from "remark-rehype";
+import { unified } from "unified";
 
-const renderHtmlAsText: RemarkPlugin = () => (tree) => {
-  const visit = (node: Node): void => {
-    if (node.type === "html") {
-      node.type = "text";
-    }
+interface MarkdownNode {
+  type: string;
+  children?: MarkdownNode[];
+}
 
-    if ("children" in node && Array.isArray(node.children)) {
-      node.children.forEach(visit);
-    }
+/**
+ * Raw HTML in the generated docs prose renders as text, not markup: the
+ * ledger's strings describe game syntax like `<id>`, and an angle-bracket
+ * placeholder must survive to the page instead of vanishing as an unknown
+ * tag. The post-build HTML check pins this behavior.
+ */
+function renderHtmlAsText() {
+  return (tree: MarkdownNode): void => {
+    const visit = (node: MarkdownNode): void => {
+      if (node.type === "html") {
+        node.type = "text";
+      }
+      node.children?.forEach(visit);
+    };
+    visit(tree);
   };
+}
 
-  visit(tree);
-};
-
-const processor = await createMarkdownProcessor({
-  remarkPlugins: [renderHtmlAsText],
-  syntaxHighlight: false,
-});
+const processor = unified()
+  .use(remarkParse)
+  .use(remarkGfm)
+  .use(renderHtmlAsText)
+  .use(remarkRehype)
+  .use(rehypeStringify);
 
 export async function renderInlineMarkdown(source: string): Promise<string> {
-  const { code } = await processor.render(source);
-  const paragraph = code.match(/^<p>([\s\S]*)<\/p>\n?$/);
+  const code = String(await processor.process(source));
+  const paragraph = code.match(/^<p>([\s\S]*)<\/p>\n?$/)?.[1];
 
-  if (!paragraph || /<\/?p>/.test(paragraph[1])) {
+  if (paragraph === undefined || /<\/?p>/.test(paragraph)) {
     throw new Error(`Expected inline Markdown, received: ${JSON.stringify(source)}`);
   }
 
-  return paragraph[1];
+  return paragraph;
 }

@@ -1,0 +1,82 @@
+---
+title: War Goals
+description: Define the outcome, peace options, availability, hooks, and AI policy for a cause of war.
+registries: [war_goal]
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+
+import { FieldTable } from "@/components/FieldTable";
+import { PairedExample } from "@/components/PairedExample";
+
+A **war goal** defines what a war is trying to achieve. It selects a
+[casus belli](/reference/casus-belli/), controls when the goal can be chosen,
+sets its peace and surrender policy, and can run effects when the goal is set or
+the war ends. The SDK writes war goals under `common/war_goals/`.
+
+## Point the goal at its cause
+
+`casusBelli` is required. Pass an owned item from `mod.casusBelli`, as in this
+claim/conquest pair, or a checked `vanilla.casusBelli(...)` reference when the
+goal belongs to a vanilla cause:
+
+<PairedExample name="casus-belli-and-war-goal" />
+
+A raw string is available for an intentional third-party reference, but the
+SDK cannot check that the named casus belli exists.
+
+The relationship is not one-to-one. Vanilla's `cb_subjugation` is used by both
+`wg_subjugation` and `wg_tribute`, which apply different availability and peace
+behavior to the same cause. Start from the diplomatic cause, then make separate
+goals when the outcomes differ.
+
+## Potential and possible answer different questions
+
+Both triggers run with the acting country as `THIS` and the target as `FROM`.
+Use `potential` to filter the goals relevant to the acting country. Use
+`possible` for the target-specific rules that decide whether the goal can be
+selected now.
+
+The example excludes nomadic attackers and targets. Vanilla conquest adds
+checks for the Galactic Emperor and Pax Galactica. Copy those surrounding
+rules when your goal participates in the same systems; a typed trigger only
+proves that its scopes and references are legal.
+
+## Always choose the allowed peace offers
+
+`allowedPeaceOffers` can contain `status_quo`, `surrender`, and
+`demand_surrender`. The generated property is optional, but the game rules say
+that omitting the block allows no peace and is usually a bug. Set the list for
+every ordinary goal.
+
+`forbiddenPeaceOffers` supplies localization keys for offers that should be
+disabled. It does not replace `allowedPeaceOffers`. Other fields control claim
+cession, status-quo occupation release, forced defender goals, agreement-term
+display, surrender acceptance, war exhaustion, and whether the war is total.
+
+<Callout type="warn" title="War effects run with diplomatic scopes">
+  `onWargoalSet`, `onStatusQuo`, and `onAccept` run with the acting country as `THIS` and the
+  targeted country as `FROM`. Keep target-dependent work inside that scope contract and test all
+  three endings in Stellaris.
+</Callout>
+
+`aiWeight` ranks the goal for the AI in the same acting-country/target-country
+scope pair. It does not make an otherwise impossible goal selectable.
+
+Test declaration from every intended diplomatic state, attacker and defender
+goal selection, all peace offers, claims, occupation release, surrender and
+status-quo effects, federation behavior, threat and exhaustion, AI choice, and
+save/load. See [Testing your mod](/guides/testing-your-mod/).
+
+## API and vanilla references
+
+- [`WarGoalDef`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/war-goal.ts)
+  is the generated definition used by `mod.warGoal`.
+- [`vanilla.warGoal`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
+  provides checked references to vanilla war-goal ids.
+
+## Field reference
+
+The nested table includes the localization keys under `forbiddenPeaceOffers`.
+
+<FieldTable registry="war_goal" />

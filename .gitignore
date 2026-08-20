@@ -4,8 +4,12 @@
 packages/*/dist
 examples/*/out
 
-# Astro's generated types and build cache for the docs site.
-packages/docs-site/.astro/
+# The docs site's build output, caches, and generated example manifest.
+packages/docs-site/.next/
+packages/docs-site/.source/
+packages/docs-site/.examples/
+next-env.d.ts
+*.tsbuildinfo
 
 # Unanchored: a workspace member whose dependency cannot hoist (a second major
 # of something the root already has) gets its own nested node_modules.

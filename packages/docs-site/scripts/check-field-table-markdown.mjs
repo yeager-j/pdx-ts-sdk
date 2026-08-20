@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const html = await readFile(
-  new URL("../dist/reference/situations/index.html", import.meta.url),
+  new URL("../.next/server/app/reference/situations.html", import.meta.url),
   "utf8"
 );
 

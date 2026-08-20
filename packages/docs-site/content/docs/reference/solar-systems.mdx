@@ -1,0 +1,278 @@
+---
+title: Solar Systems
+description: Define ordered stars, planets, moons, belts, neighboring systems, and event-spawned system trees.
+registries: [solar_system_initializer]
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+
+import { FieldTable } from "@/components/FieldTable";
+import { PairedExample } from "@/components/PairedExample";
+
+A **solar system initializer** is a recipe that creates the objects and layout
+inside one system. It selects the star class, places ordered planets and moons,
+adds asteroid belts, runs setup effects, and can continue into neighboring
+initializers. The SDK writes these definitions under
+`common/solar_system_initializers/`.
+
+This first example defines a star, a named habitable world, its moon, an
+asteroid belt, and setup effects on both the world and system:
+
+<PairedExample name="solar-systems-basic" />
+
+The example sets no `usage`, so only an explicit reference can select this
+system. That is the safest default for a story system. See
+[Random galaxy selection](#random-galaxy-selection-is-a-separate-policy) for
+the opt-in.
+
+## The initializer is a tree, not a flat list
+
+The top-level definition owns one system. Its `planet` array contains ordered,
+anonymous object templates. A planet can contain more planets and moons; a
+moon can contain more moons. This models systems with several stars as well as
+ordinary planets with satellites.
+
+| Level        | What its `class` means                                     | Children                    |
+| ------------ | ---------------------------------------------------------- | --------------------------- |
+| Initializer  | The star class shown on the galaxy map                     | Top-level `planet` entries  |
+| Planet entry | A planet class; `"star"` uses the initializer's star class | `planet` and `moon` entries |
+| Moon entry   | A planet class for an object orbiting its parent           | More `moon` entries         |
+
+The star is also an object, so every system lists it as the first `planet`
+entry with `class: "star"`. The initializer's own `class` only selects which
+star class that entry uses.
+
+The array order is part of the geometry. Both polar coordinates are relative
+to the previous object at that level: `orbitDistance` advances the radius, and
+`orbitAngle` advances the bearing. An omitted `count` creates one object; a
+number or `{ min, max }` creates a repeated template.
+
+Vanilla writes binary and trinary systems as sibling top-level `planet`
+entries, one `class: "star"` entry per star, each with its own `orbitDistance`
+from the previous entry. A single star usually sits at `orbitDistance: 0`, but
+a binary pair can offset both stars from the system center.
+
+### Advance an orbit without creating an object
+
+Stellaris accepts positional `change_orbit` statements between planet or moon
+blocks. The SDK does not expose `changeOrbit`, because collecting those
+statements into one property would move them away from the array position that
+gives them meaning. Use the game's equivalent long form in the ordered array:
+
+```ts
+moon: [
+  { class: "pc_asteroid", orbitDistance: 8, size: 3 },
+  { class: "none", orbitDistance: 10 },
+  { class: "pc_ice_asteroid", orbitDistance: 6, size: 4 },
+],
+```
+
+The `"none"` entry advances the orbit cursor but creates no visible object.
+Keep it at the exact point where the gap belongs.
+
+### Orbital lines and asteroid belts are separate geometry
+
+`orbitalLine` adds a visible orbit measured from the parent, not accumulated
+from the previous object the way `orbitDistance` is.
+`hasIndependentOrbitalLine` keeps an object's line after that object is
+removed. Neither field creates a planet.
+
+`asteroidBelt` belongs to the top-level initializer. Each entry selects an
+asteroid-belt type and a radius from the system center. A belt also does not
+place asteroid planets; add those as ordered planet entries when the system
+needs interactable asteroid objects.
+
+## Only the top-level initializer has an id
+
+`mod.solarSystemInitializer("haven", definition)` mints the full id
+`frontier_cartography_solar_system_initializer_haven`: mod prefix, registry id
+segment, then logical name. The prefix rule is checked once, on that top-level
+definition. The value returned by the call is a branded reference that can be
+passed to `spawnSystem`, `neighborSystem.initializer`, origins, and other
+initializer reference fields.
+
+Nested planets and moons have no ids. Their `name` fields are localization
+keys, not logical names or definitions, so they do not receive an id suffix or
+an automatic prefix. The initializer's own `name` field is a localization key
+too, and it gets no prefix either. The first example shows the shape: define
+the text with [`mod.localization`](/concepts/localization/) and pass its
+`.key`.
+
+<Callout type="warn" title="Names are not references">
+  Renaming a planet's localization key does not change any initializer id. If another script must
+  find an object later, give it a prefixed flag in `initEffect` or save it as an event target.
+</Callout>
+
+## Setup effects run after the objects exist
+
+Stellaris creates the initializer's objects first, runs the individual planet
+and moon `initEffect` blocks, then runs the top-level initializer's
+`initEffect`.
+
+- A top-level `initEffect` receives system scope.
+- A planet or moon `initEffect` receives planet scope.
+
+Use these effects for state that depends on the created object: flags,
+deposits, modifiers, event targets, or follow-up events. Keep layout in the
+declarative fields. An effect that tries to create or reposition the
+initializer's core geometry is harder to reason about and runs later than the
+layout phase.
+
+Stellaris can treat an invalid random planet class as `class = none`. Run the
+game with `-script_debug` when testing randomized classes.
+
+Two things the game does in these blocks are not authorable yet:
+
+- The SDK has no PREV, the game's link out to an enclosing scope. A planet or
+  moon callback receives `ctx.self`, `ctx.root`, and `ctx.from` only, so it
+  cannot reach its own system or the previous system in the tree.
+- `ctx.root` in a planet or moon callback is typed as `country`. The rules
+  declare that for fallen-empire initializers. In any other initializer the
+  game's ROOT there is the first system in the tree, so `ctx.root` names the
+  wrong scope and nothing warns.
+
+## Neighbor systems extend the initializer tree
+
+Each `neighborSystem` row names another initializer and constrains where the
+game should find a suitable neighboring system. Distance, hyperlane distance,
+jump count, orientation, spawn chance, and a trigger can narrow the choice.
+The game evaluates that trigger in system scope, but the generated field type
+is `Trigger<never>`, which accepts a condition written for any scope. Keep it
+system-scoped yourself; nothing checks it here.
+
+With `mandatoryNeighbors: false` or omitted, the game can leave the link
+unfulfilled. With `mandatoryNeighbors: true`, it creates a new system when it
+cannot find a suitable existing one. A forced neighbor uses a random distance
+and angle inside the declared bounds and receives a one-jump hyperlane. The
+game still runs the neighbor trigger against the system it created. If the
+trigger fails, the game keeps the system anyway and writes an error to the
+log.
+
+Use a branded reference for another initializer owned by the same mod. The
+second example below passes the `sentinel` reference into `neighborSystem`
+rather than its string id. Use
+`vanilla.solarSystemInitializer("sol_system_initializer")` for a checked
+vanilla id. A raw string is the escape hatch for another mod's initializer.
+
+Nothing detects a cycle between initializer definitions or proves that a
+required neighbor tree can be placed, so keep neighbor trees finite.
+
+## Spawn a complete system from an event
+
+`spawnSystem` creates a system at a position relative to its current scope.
+Pass the initializer value rather than copying its string id. Its nested
+`effect` receives the newly created system, so it is safer than relying on the
+ambient `last_created_system` link after other effects run.
+
+This complete example defines the requested system, its mandatory neighbor,
+and a triggered-only system event that spawns the tree near the event's
+current system:
+
+<PairedExample name="solar-systems-event" />
+
+Each `spawnSystem` argument does a different job. Placement is the effect's
+job; geometry inside the system is the initializer's.
+
+| Input                                         | Responsibility                                                           |
+| --------------------------------------------- | ------------------------------------------------------------------------ |
+| `minDistance` / `maxDistance`                 | Straight-line distance range from the event's current system             |
+| `minJumps` / `maxJumps`                       | Optional range in the existing hyperlane graph                           |
+| `minOrientationAngle` / `maxOrientationAngle` | Optional angular sector around the current system                        |
+| `hyperlane`                                   | Whether the new system gets an automatic hyperlane connection            |
+| `isDiscovered`                                | Whether the new system starts discovered                                 |
+| `initializer`                                 | The objects, layout, effects, and neighbor tree created at that position |
+| `effect`                                      | Follow-up effects in the new system's scope                              |
+
+The event is `isTriggeredOnly`, so another script must fire it on the existing
+system that should anchor placement. An event option, on-action, anomaly,
+special project, or another effect can be that entry point. See
+[Events](/concepts/events/) for typed event firing.
+
+The game makes 15 placement attempts, relaxes its normal system-spacing rule
+for the last two, then defaults to the center of the galaxy if no location is
+found. Test late-game spawning, small galaxies, blocked directions, and the
+no-valid-position case. If a story requires a specific route, verify the
+generated hyperlane after spawning and repair it explicitly when necessary.
+
+## Megastructures use the same spawn effect
+
+A [megastructure's](/reference/megastructures/) `onBuildComplete` callback
+runs in its system and can call the same `system.spawnSystem(...)` effect.
+This makes a completed gateway, relay, or other construction a valid story
+entry point for an initializer.
+
+Vanilla megastructures usually fire an event from their completion hook and
+let that event own the next story step; vanilla has no example of a
+megastructure calling `spawn_system` directly. Prefer that event boundary when
+players need a message or choice, when several build outcomes converge, or
+when the spawn must be delayed. Call `spawnSystem` directly from
+`onBuildComplete` only when system creation is the immediate construction
+result.
+
+## Random galaxy selection is a separate policy
+
+The `usage` array opts an initializer into game-controlled selection. Common
+values include `empire_init`, `misc_system_init`, `custom_empire`,
+`fallen_empire_init`, `origin`, and `nomad_init`. With no usage, only explicit
+references can select the initializer.
+
+`usageOdds` weights a candidate within its usage, while `spawnChance` and
+`scaledSpawnChance` control whether the initializer is considered. `maxInstances`
+limits how often it may be used; a negative value means unrestricted. These
+fields affect selection, not the geometry inside the system.
+
+For a fixed story system, omit `usage` and spawn the definition by reference.
+For a random galaxy feature, choose one intended usage and test across galaxy
+sizes and empire settings. Do not add `misc_system_init` merely to make a
+manual `spawnSystem` call work; explicit calls do not need it.
+
+## Current limits and testing advice
+
+- Solar system initializers have no patch surface. `mod.patchSolarSystemInitializer`
+  does not exist.
+- The generated `neighborSystem` type cannot prove that a useful distance or
+  jump constraint is present. Supply at least one placement constraint.
+- `class` on a planet or moon entry accepts a bare string and checks nothing,
+  so a misspelled planet class compiles and emits. `vanilla.planetClass`,
+  `vanilla.starClass`, and `vanilla.asteroidBeltType` build checked ids where
+  you want them.
+- There is no `inlineScript` field. A shared planet tree or weight block has
+  to be written out in TypeScript rather than pulled from a script file.
+- The SDK checks types, effect-callback scopes, owned references, prefixes,
+  output paths, and serialization. It does not simulate galaxy generation,
+  placement attempts, initializer selection, random planet-class validity, or
+  hyperlane topology.
+
+Test the initializer in a fresh galaxy and through every scripted spawn path.
+Check three groups:
+
+- Geometry: object order and names in system view, asteroid-belt radii, nested
+  moon orbits.
+- Scripting: flags and effects, repeated spawning, save and load.
+- Placement: required neighbors, hyperlanes, discovery state, and a crowded
+  galaxy with no valid position.
+
+The `Draw.SystemInit` console command shows which initializer created each
+system, and how an initializer tree continued into its neighbors. See
+[Testing your mod](/guides/testing-your-mod/) for the wider validation split.
+
+## API and vanilla references
+
+- [`SolarSystemInitializerDef`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/solar-system-initializer.ts)
+  is the generated TypeScript definition used by
+  `mod.solarSystemInitializer`.
+- [`PlanetInitializerFields`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/planet-initializer.ts)
+  and
+  [`MoonInitializerFields`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/moon-initializer.ts)
+  describe the anonymous ordered tree.
+- [`vanilla.solarSystemInitializer`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
+  provides checked references to initializer ids in the selected
+  `@pdx-ts/stellaris-ids` game version.
+
+## Field reference
+
+The tables below are generated from the same descriptors and field metadata
+that drive authoring and serialization. Nested tables cover planet and moon
+templates, asteroid belts, orbital lines, weights, and neighbor systems.
+
+<FieldTable registry="solar_system_initializer" />

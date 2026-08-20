@@ -1,10 +1,10 @@
 {
   // The typecheck half of the docs compile gate: every paired example checks
   // as a member of the repository's single program semantics — NodeNext,
-  // `customConditions: ["pdx-source"]`, strict — not the Astro program.
-  // `exclude` must be overridden: the inherited one names `packages/docs-site`
+  // `customConditions: ["pdx-source"]`, strict — not the Next.js program.
+  // `exclude` must be overridden: the inherited one names this package
   // relative to the root config, which would swallow every input here.
   "extends": "../../tsconfig.json",
-  "include": ["src/content/docs/**/*.example.ts"],
+  "include": ["content/docs/**/*.example.ts"],
   "exclude": []
 }
