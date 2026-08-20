@@ -776,6 +776,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         { prop: "playAnimationOnce", key: "play_animation_once", kind: "value" },
         { prop: "duration", key: "duration", kind: "value" },
         { prop: "isWreck", key: "is_wreck", kind: "value" },
+        { prop: "target", key: "target", kind: "value" },
         { prop: "effect", key: "effect", kind: "effect" },
       ],
     },

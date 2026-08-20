@@ -68,6 +68,7 @@ describe("the effect recorder over generated meta", () => {
       entityScaleToSize: true,
       scriptedScale: "effects_test_scale",
       playAnimationOnce: true,
+      target: scopeValue<"country">("root"),
       duration: 30,
       isWreck: true,
     });
@@ -96,6 +97,7 @@ describe("the effect recorder over generated meta", () => {
 	play_animation_once = yes
 	duration = 30
 	is_wreck = yes
+	target = root
 }
 `);
   });

@@ -11,6 +11,7 @@ import { createEffectPolicy } from "@pdx-ts/codegen-cwt/effect-policy";
 import { emitEffects } from "@pdx-ts/codegen-cwt/emit/effects";
 import { emitEvents } from "@pdx-ts/codegen-cwt/emit/events";
 import { emitScopeLinks } from "@pdx-ts/codegen-cwt/emit/links";
+import { mergeFields } from "@pdx-ts/codegen-cwt/emit/shape";
 import { Emitter } from "@pdx-ts/codegen-cwt/emit/types";
 import { createEventFieldPolicy } from "@pdx-ts/codegen-cwt/event-field-policy";
 import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
@@ -132,9 +133,17 @@ describe("LoweredRule", () => {
     const policy = createEffectPolicy(rules);
     const emitted = emitEffects(new Emitter(rules), docs.effects, scopes, effects, policy, []);
     expect(emitted.interfaces).toContain("createAmbientObject(args:");
+    const ambientSignature = emitted.interfaces.slice(
+      emitted.interfaces.indexOf("createAmbientObject(args:"),
+      emitted.interfaces.indexOf("createAmbientObject(args:") + 1_500
+    );
+    expect(ambientSignature).toContain("target?: ScopeValue");
     expect(emitted.interfaces).toContain("entityOffset?: number | { min: number; max: number }");
     expect(emitted.meta).toContain('kind: "scalar-or-fields"');
     expect(emitted.interfaces).toContain("effect?: (scope: AmbientObjectScope) => void");
+    expect(emitted.fieldAdditions).toEqual([
+      expect.stringContaining("create_ambient_object.target"),
+    ]);
     expect(emitted.interfaces).not.toContain("createColony(args:");
     expect(emitted.interfaces).not.toContain("startColony(args:");
     expect(emitted.skipped).toEqual(
@@ -148,6 +157,66 @@ describe("LoweredRule", () => {
           reason: expect.stringContaining("repeated nested fields"),
         }),
       ])
+    );
+  });
+
+  it("rejects an effect-field overlay after CWT starts declaring that field", () => {
+    const ambient = effects.get("create_ambient_object")!;
+    const block = ambient.blocks[0]!;
+    const location = block.named.find(
+      (field) => field.key.kind === "name" && field.key.name === "location"
+    )!;
+    const changed = new Map(effects);
+    changed.set("create_ambient_object", {
+      ...ambient,
+      blocks: [
+        {
+          ...block,
+          named: [
+            ...block.named,
+            {
+              ...location,
+              key: { kind: "name", name: "target" },
+              type: { kind: "scope", name: "any" },
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(() =>
+      emitEffects(new Emitter(rules), docs.effects, scopes, changed, createEffectPolicy(rules), [])
+    ).toThrow(
+      'EFFECT_FIELD_ADDITIONS names "create_ambient_object.target", which CWT now declares'
+    );
+  });
+
+  it("rejects scalar/block overloads whose mixed scalar union includes an object-backed ref", () => {
+    const ambient = effects.get("create_ambient_object")!;
+    const block = ambient.blocks[0]!;
+    const scalarOffset = block.named.find(
+      (field) =>
+        field.key.kind === "name" &&
+        field.key.name === "entity_offset" &&
+        field.type.kind !== "block"
+    )!;
+    const fields = block.named.filter(
+      (field) => field.key.kind === "name" && field.key.name === "entity_offset"
+    );
+    const merged = mergeFields(
+      new Emitter(rules),
+      [
+        ...fields,
+        {
+          ...scalarOffset,
+          type: { kind: "typeRef", name: "ambient_object" },
+        },
+      ],
+      null,
+      new Set()
+    );
+    expect(merged).toBe(
+      'field "entity_offset" has an object-shaped scalar arm that is ambiguous with its structured arm'
     );
   });
 });

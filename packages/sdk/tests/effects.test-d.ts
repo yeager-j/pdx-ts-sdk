@@ -28,6 +28,7 @@ describe("generated effect scope safety", () => {
       entityOffset: 2,
       entityOffsetAngle: { min: 10, max: 20 },
       entityOffsetHeight: { min: -1, max: 1 },
+      target: scopeValue<"country">("root"),
       effect: (ambient) =>
         ambient.setAmbientObjectFlag(ambientFlags.effects_type_test_ambient_flag),
     });

@@ -177,9 +177,7 @@ function clauseScope(
  * containing one would be ambiguous and must stay out of the generated API.
  */
 function scalarArmIsObjectShaped(value: TsValue): boolean {
-  return (
-    value.refTypes !== undefined || value.scriptValue === true || value.type.includes("ScopeValue")
-  );
+  return value.objectShaped === true;
 }
 
 /** Nested repeated members need arrays, which an ArgField does not model. */

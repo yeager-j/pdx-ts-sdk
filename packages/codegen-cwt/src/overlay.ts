@@ -1,4 +1,5 @@
 import type { ContentShape } from "./content-shape.ts";
+import type { RuleType } from "./cwt/model.ts";
 
 /**
  * The hand-maintained overlay: every place the generated API deliberately
@@ -572,6 +573,40 @@ export interface EffectFieldTypeOverride {
   readonly type: string;
   readonly reason: string;
 }
+
+export interface EffectFieldAddition {
+  readonly name: string;
+  readonly type: RuleType;
+  readonly optional: boolean;
+  readonly source: string;
+  readonly reason: string;
+}
+
+/**
+ * Fields the game documentation declares for an effect but CWT omits.
+ *
+ * These rows extend only an existing generated args block. The effect emitter
+ * rejects a missing effect, a non-block shape, an unsupported field type, or a
+ * field that later appears in CWT, so an upstream correction cannot leave this
+ * table as a silent second declaration.
+ */
+export const EFFECT_FIELD_ADDITIONS = new Map<string, readonly EffectFieldAddition[]>([
+  [
+    "create_ambient_object",
+    [
+      {
+        name: "target",
+        type: { kind: "scope", name: "any" },
+        optional: true,
+        source: "vendor/cwtools-stellaris-config/script-docs/v4.4.1/effects.log:782-800",
+        reason:
+          "The game documentation accepts `target = <target>` in the VFX form, but the CWT " +
+          "rule omits that field. The minimal documented form does not require it, so the " +
+          "authoring member is optional.",
+      },
+    ],
+  ],
+]);
 
 /**
  * Type text for one named field of one effect's args object, replacing what

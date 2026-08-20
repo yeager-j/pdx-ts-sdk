@@ -23,15 +23,8 @@ name, description, and tooltip:
 `type` accepts the branded result of `mod.ambientObject` (or a raw id), while
 `location` and the optional offsets describe where the game creates it. The
 `effect` callback runs in the new `ambient_object` scope, so setup such as a
-flag can stay next to the placement:
-
-```ts
-system.createAmbientObject({
-  type: relay,
-  location: ctx.self,
-  effect: (ambient) => ambient.setAmbientObjectFlag("ancient_relay_spawned"),
-});
-```
+flag can stay next to the placement. The paired example defines, places, and
+configures one object through that complete path.
 
 `name` is English source text. The SDK emits it under the ambient object's
 minted id. `description` and `tooltip` are different: they expect localization

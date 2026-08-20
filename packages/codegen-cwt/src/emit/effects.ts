@@ -22,7 +22,11 @@ import type { EffectPolicy } from "../effect-policy.ts";
 import type { DocEntry } from "../logs/trigger-docs.ts";
 import type { LoweredRule } from "../lowered-rule.ts";
 import { camelCase, docComment, isPlainName, pascalCase, safeIdentifier } from "../naming.ts";
-import { EFFECT_EXTENSION_SEAMS, EFFECT_FIELD_TYPE_OVERRIDES } from "../overlay.ts";
+import {
+  EFFECT_EXTENSION_SEAMS,
+  EFFECT_FIELD_ADDITIONS,
+  EFFECT_FIELD_TYPE_OVERRIDES,
+} from "../overlay.ts";
 import type { ClassifiedLink } from "./links.ts";
 import {
   canonicalScopeSet,
@@ -47,6 +51,8 @@ export interface EffectEmission {
   readonly scalarOnly: readonly string[];
   /** `EFFECT_FIELD_TYPE_OVERRIDES` rows applied, with the reason each states. */
   readonly fieldTypeOverrides: readonly string[];
+  /** `EFFECT_FIELD_ADDITIONS` rows applied, with their evidence and rationale. */
+  readonly fieldAdditions: readonly string[];
   /** Scope-link path properties emitted from the shared link table. */
   readonly linkEmitted: number;
 }
@@ -61,6 +67,48 @@ type EffectShape =
       readonly fields: readonly ArgField[] | null;
     }
   | { readonly kind: "fields"; readonly fields: readonly ArgField[] };
+
+function addOverlayFields(emitter: Emitter, key: string, shape: EffectShape): EffectShape {
+  const additions = EFFECT_FIELD_ADDITIONS.get(key);
+  if (additions === undefined) {
+    return shape;
+  }
+  if (shape.kind !== "fields" && shape.kind !== "wrapper") {
+    throw new Error(
+      `EFFECT_FIELD_ADDITIONS names "${key}", but that effect does not emit an args block`
+    );
+  }
+  const fields = shape.fields ?? [];
+  const names = new Set(fields.map((field) => field.name));
+  const added = additions.map((addition): ArgField => {
+    if (names.has(addition.name)) {
+      throw new Error(
+        `EFFECT_FIELD_ADDITIONS names "${key}.${addition.name}", which CWT now declares — ` +
+          "retire the overlay row"
+      );
+    }
+    names.add(addition.name);
+    const value = emitter.valueFor(addition.type);
+    if (value === null) {
+      throw new Error(
+        `EFFECT_FIELD_ADDITIONS names "${key}.${addition.name}" with an unsupported ` +
+          `field type (${addition.type.kind})`
+      );
+    }
+    return {
+      name: addition.name,
+      value: { kind: "scalar", value },
+      optional: addition.optional,
+      docs: [],
+    };
+  });
+  const firstClause = fields.findIndex((field) => field.value.kind === "clause");
+  const insertion = firstClause === -1 ? fields.length : firstClause;
+  return {
+    ...shape,
+    fields: [...fields.slice(0, insertion), ...added, ...fields.slice(insertion)],
+  };
+}
 
 interface EmittedEffect {
   readonly method: string;
@@ -348,6 +396,7 @@ export function emitEffects(
 ): EffectEmission {
   const skipped: SkippedRule[] = [];
   const scalarOnly: string[] = [];
+  const appliedFieldAdditions = new Set<string>();
   const byShape = new Map<string, number>();
   interface Cluster {
     readonly scopes: readonly string[] | "universal";
@@ -394,7 +443,11 @@ export function emitEffects(
       skipped.push({ name: key, reason: shape.reason });
       continue;
     }
-    const resolved = "scalarOnly" in shape ? shape.scalarOnly : shape;
+    const base = "scalarOnly" in shape ? shape.scalarOnly : shape;
+    const resolved = addOverlayFields(emitter, key, base);
+    if (EFFECT_FIELD_ADDITIONS.has(key)) {
+      appliedFieldAdditions.add(key);
+    }
     if ("scalarOnly" in shape) {
       scalarOnly.push(key);
     }
@@ -429,6 +482,14 @@ export function emitEffects(
     if (!fieldKeys.has(key)) {
       throw new Error(
         `EFFECT_FIELD_TYPE_OVERRIDES names "${key}", which no emitted effect field matches — ` +
+          "retire the overlay row or fix its key"
+      );
+    }
+  }
+  for (const key of EFFECT_FIELD_ADDITIONS.keys()) {
+    if (!appliedFieldAdditions.has(key)) {
+      throw new Error(
+        `EFFECT_FIELD_ADDITIONS names "${key}", which no emitted effect matches — ` +
           "retire the overlay row or fix its key"
       );
     }
@@ -668,6 +729,11 @@ export function emitEffects(
     scalarOnly,
     fieldTypeOverrides: [...EFFECT_FIELD_TYPE_OVERRIDES].map(
       ([key, override]) => `${key} → ${override.type} — ${override.reason}`
+    ),
+    fieldAdditions: [...EFFECT_FIELD_ADDITIONS].flatMap(([key, additions]) =>
+      additions.map(
+        (addition) => `${key}.${addition.name} ← ${addition.source} — ${addition.reason}`
+      )
     ),
     linkEmitted: links.length,
   };

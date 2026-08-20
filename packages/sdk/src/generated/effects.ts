@@ -12310,6 +12310,7 @@ export interface UniversalEffects extends EnableSpecialProjectEffectsExtension {
     playAnimationOnce?: boolean;
     duration?: number;
     isWreck?: boolean;
+    target?: ScopeValue;
     effect?: (scope: AmbientObjectScope) => void;
   }): void;
 
