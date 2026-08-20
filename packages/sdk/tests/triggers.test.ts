@@ -9,6 +9,7 @@ import {
   and,
   anyCountry,
   canAccessSystem,
+  countOwnedPopGroup,
   currentSituationApproach,
   currentStage,
   customTooltip,
@@ -340,6 +341,14 @@ describe("trigger builders", () => {
         "pop_group_size > trigger:has_minimum_pop_group_size\n" +
         "\n" +
         "ai_armor_ratio > 0.5\n"
+    );
+  });
+
+  it("lowers a direct ScriptValue comparison field before serialization", () => {
+    const condition = countOwnedPopGroup({ count: "@wanted" });
+
+    expect(serialize([...condition.entries])).toBe(
+      "count_owned_pop_group = {\n\tcount = @wanted\n}\n"
     );
   });
 });

@@ -1443,7 +1443,7 @@ export function branchOfficeValue(
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
-      : kv("value", args.value)
+      : kv("value", scriptValueScalar(args.value))
   );
   return trigger([block("branch_office_value", entries)]);
 }
@@ -1475,7 +1475,7 @@ export function calcTrueIf(args: CalcTrueIfArgs): Trigger<ScopeName> {
   entries.push(
     typeof args.amount === "object"
       ? cmp("amount", args.amount[0], scriptValueScalar(args.amount[1]))
-      : kv("amount", args.amount)
+      : kv("amount", scriptValueScalar(args.amount))
   );
   entries.push(...args.conditions.entries);
   refs.push(...args.conditions.refs);
@@ -1991,7 +1991,7 @@ export function checkGalaxySetupValue(args: CheckGalaxySetupValueArgs): Trigger<
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
-      : kv("value", args.value)
+      : kv("value", scriptValueScalar(args.value))
   );
   return trigger([block("check_galaxy_setup_value", entries)]);
 }
@@ -2032,7 +2032,7 @@ export function checkModifierValue(
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
-      : kv("value", args.value)
+      : kv("value", scriptValueScalar(args.value))
   );
   return trigger([block("check_modifier_value", entries)]);
 }
@@ -2106,7 +2106,7 @@ export function checkVariable(
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
-      : kv("value", args.value)
+      : kv("value", scriptValueScalar(args.value))
   );
   return trigger([block("check_variable", entries)]);
 }
@@ -2169,47 +2169,47 @@ export function checkVariableArithmetic(
   entries.push(
     typeof args.which === "object"
       ? cmp("which", args.which[0], scriptValueScalar(args.which[1]))
-      : kv("which", args.which)
+      : kv("which", scriptValueScalar(args.which))
   );
   if (args.add !== undefined) {
     entries.push(
       typeof args.add === "object"
         ? cmp("add", args.add[0], scriptValueScalar(args.add[1]))
-        : kv("add", args.add)
+        : kv("add", scriptValueScalar(args.add))
     );
   }
   if (args.subtract !== undefined) {
     entries.push(
       typeof args.subtract === "object"
         ? cmp("subtract", args.subtract[0], scriptValueScalar(args.subtract[1]))
-        : kv("subtract", args.subtract)
+        : kv("subtract", scriptValueScalar(args.subtract))
     );
   }
   if (args.multiply !== undefined) {
     entries.push(
       typeof args.multiply === "object"
         ? cmp("multiply", args.multiply[0], scriptValueScalar(args.multiply[1]))
-        : kv("multiply", args.multiply)
+        : kv("multiply", scriptValueScalar(args.multiply))
     );
   }
   if (args.divide !== undefined) {
     entries.push(
       typeof args.divide === "object"
         ? cmp("divide", args.divide[0], scriptValueScalar(args.divide[1]))
-        : kv("divide", args.divide)
+        : kv("divide", scriptValueScalar(args.divide))
     );
   }
   if (args.modulo !== undefined) {
     entries.push(
       typeof args.modulo === "object"
         ? cmp("modulo", args.modulo[0], scriptValueScalar(args.modulo[1]))
-        : kv("modulo", args.modulo)
+        : kv("modulo", scriptValueScalar(args.modulo))
     );
   }
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
-      : kv("value", args.value)
+      : kv("value", scriptValueScalar(args.value))
   );
   return trigger([block("check_variable_arithmetic", entries)]);
 }
@@ -2520,7 +2520,7 @@ export function countActiveFirstContact(args: CountActiveFirstContactArgs): Trig
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_active_first_contact", entries)], refs);
 }
@@ -2549,7 +2549,7 @@ export function countAgreement(args: CountAgreementArgs): Trigger<"country" | "n
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_agreement", entries)], refs);
 }
@@ -2578,7 +2578,7 @@ export function countAmbientObject(args: CountAmbientObjectArgs): Trigger<ScopeN
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_ambient_object", entries)], refs);
 }
@@ -2607,7 +2607,7 @@ export function countArchaeologicalSite(args: CountArchaeologicalSiteArgs): Trig
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_archaeological_site", entries)], refs);
 }
@@ -2636,7 +2636,7 @@ export function countAssociate(args: CountAssociateArgs): Trigger<"federation"> 
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_associate", entries)], refs);
 }
@@ -2665,7 +2665,7 @@ export function countAstralRift(args: CountAstralRiftArgs): Trigger<ScopeName> {
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_astral_rift", entries)], refs);
 }
@@ -2694,7 +2694,7 @@ export function countAttacker(args: CountAttackerArgs): Trigger<"war"> {
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_attacker", entries)], refs);
 }
@@ -2733,7 +2733,7 @@ export function countAvailableDebris(args: CountAvailableDebrisArgs): Trigger<"c
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_available_debris", entries)], refs);
 }
@@ -2762,7 +2762,7 @@ export function countBypass(args: CountBypassArgs): Trigger<ScopeName> {
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_bypass", entries)], refs);
 }
@@ -2791,7 +2791,7 @@ export function countBypassInSystem(args: CountBypassInSystemArgs): Trigger<"sys
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_bypass_in_system", entries)], refs);
 }
@@ -2820,7 +2820,7 @@ export function countCombatantFleet(args: CountCombatantFleetArgs): Trigger<"fle
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_combatant_fleet", entries)], refs);
 }
@@ -2860,7 +2860,7 @@ export function countControlledColony(args: CountControlledColonyArgs): Trigger<
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_controlled_colony", entries)], refs);
 }
@@ -2889,7 +2889,7 @@ export function countControlledFleet(args: CountControlledFleetArgs): Trigger<"c
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_controlled_fleet", entries)], refs);
 }
@@ -2918,7 +2918,7 @@ export function countControlledPlanet(args: CountControlledPlanetArgs): Trigger<
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_controlled_planet", entries)], refs);
 }
@@ -2947,7 +2947,7 @@ export function countControlledShip(args: CountControlledShipArgs): Trigger<"cou
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_controlled_ship", entries)], refs);
 }
@@ -2976,7 +2976,7 @@ export function countCosmicStorm(args: CountCosmicStormArgs): Trigger<ScopeName>
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_cosmic_storm", entries)], refs);
 }
@@ -3007,7 +3007,7 @@ export function countCosmicStormEndPosition(
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_cosmic_storm_end_position", entries)], refs);
 }
@@ -3038,7 +3038,7 @@ export function countCosmicStormStartPosition(
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_cosmic_storm_start_position", entries)], refs);
 }
@@ -3067,7 +3067,7 @@ export function countCouncilMember(args: CountCouncilMemberArgs): Trigger<ScopeN
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_council_member", entries)], refs);
 }
@@ -3096,7 +3096,7 @@ export function countCountry(args: CountCountryArgs): Trigger<ScopeName> {
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_country", entries)], refs);
 }
@@ -3127,7 +3127,7 @@ export function countCountryNeighborToSystem(
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_country_neighbor_to_system", entries)], refs);
 }
@@ -3156,7 +3156,7 @@ export function countDefender(args: CountDefenderArgs): Trigger<"war"> {
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_defender", entries)], refs);
 }
@@ -3187,7 +3187,7 @@ export function countDeposit(
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_deposit", entries)], refs);
 }
@@ -3222,7 +3222,7 @@ export function countDeposits(
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_deposits", entries)], refs);
 }
@@ -3264,7 +3264,7 @@ export function countEnslavedSpecies(
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_enslaved_species", entries)], refs);
 }
@@ -3293,7 +3293,7 @@ export function countEnvoy(args: CountEnvoyArgs): Trigger<"country"> {
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_envoy", entries)], refs);
 }
@@ -3324,7 +3324,7 @@ export function countEspionageAsset(
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_espionage_asset", entries)], refs);
 }
@@ -3355,7 +3355,7 @@ export function countEspionageOperation(
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_espionage_operation", entries)], refs);
 }
@@ -3383,7 +3383,7 @@ export function countExactSpecies(
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_exact_species", entries)], refs);
 }
@@ -3412,7 +3412,7 @@ export function countExhibit(args: CountExhibitArgs): Trigger<"country"> {
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_exhibit", entries)], refs);
 }
@@ -3443,7 +3443,7 @@ export function countExistingSpeciesTraits(
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_existing_species_traits", entries)], refs);
 }
@@ -3472,7 +3472,7 @@ export function countFederation(args: CountFederationArgs): Trigger<ScopeName> {
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_federation", entries)], refs);
 }
@@ -3501,7 +3501,7 @@ export function countFederationAlly(args: CountFederationAllyArgs): Trigger<"cou
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_federation_ally", entries)], refs);
 }
@@ -3530,7 +3530,7 @@ export function countFirstContact(args: CountFirstContactArgs): Trigger<"country
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_first_contact", entries)], refs);
 }
@@ -3561,7 +3561,7 @@ export function countFleetInOrbit(
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_fleet_in_orbit", entries)], refs);
 }
@@ -3590,7 +3590,7 @@ export function countFleetInSystem(args: CountFleetInSystemArgs): Trigger<"syste
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_fleet_in_system", entries)], refs);
 }
@@ -3619,7 +3619,7 @@ export function countGalaxyFleet(args: CountGalaxyFleetArgs): Trigger<ScopeName>
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_galaxy_fleet", entries)], refs);
 }
@@ -3648,7 +3648,7 @@ export function countGalaxyPlanet(args: CountGalaxyPlanetArgs): Trigger<ScopeNam
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_galaxy_planet", entries)], refs);
 }
@@ -3677,7 +3677,7 @@ export function countGalaxySector(args: CountGalaxySectorArgs): Trigger<ScopeNam
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_galaxy_sector", entries)], refs);
 }
@@ -3706,7 +3706,7 @@ export function countGalaxySpecies(args: CountGalaxySpeciesArgs): Trigger<ScopeN
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_galaxy_species", entries)], refs);
 }
@@ -3735,7 +3735,7 @@ export function countGalcomMember(args: CountGalcomMemberArgs): Trigger<ScopeNam
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_galcom_member", entries)], refs);
 }
@@ -3766,7 +3766,7 @@ export function countGroundCombatAttacker(
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_ground_combat_attacker", entries)], refs);
 }
@@ -3797,7 +3797,7 @@ export function countGroundCombatDefender(
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_ground_combat_defender", entries)], refs);
 }
@@ -3836,7 +3836,7 @@ export function countIssuedMission(args: CountIssuedMissionArgs): Trigger<"count
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_issued_mission", entries)], refs);
 }
@@ -3865,7 +3865,7 @@ export function countJobPopGroup(args: CountJobPopGroupArgs): Trigger<"pop_job">
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_job_pop_group", entries)], refs);
 }
@@ -3894,7 +3894,7 @@ export function countMegastructure(args: CountMegastructureArgs): Trigger<ScopeN
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_megastructure", entries)], refs);
 }
@@ -3923,7 +3923,7 @@ export function countMember(args: CountMemberArgs): Trigger<"federation"> {
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_member", entries)], refs);
 }
@@ -3952,7 +3952,7 @@ export function countMoon(args: CountMoonArgs): Trigger<"carrier" | "colony" | "
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_moon", entries)], refs);
 }
@@ -3981,7 +3981,7 @@ export function countNeighborCountry(args: CountNeighborCountryArgs): Trigger<"c
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_neighbor_country", entries)], refs);
 }
@@ -4010,7 +4010,7 @@ export function countNeighborSystem(args: CountNeighborSystemArgs): Trigger<"sys
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_neighbor_system", entries)], refs);
 }
@@ -4041,7 +4041,7 @@ export function countNeighborSystemEuclidean(
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_neighbor_system_euclidean", entries)], refs);
 }
@@ -4072,7 +4072,7 @@ export function countObservedPreFtlWithinBorder(
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_observed_pre_ftl_within_border", entries)], refs);
 }
@@ -4101,7 +4101,7 @@ export function countOrbitalStation(args: CountOrbitalStationArgs): Trigger<"cou
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_orbital_station", entries)], refs);
 }
@@ -4130,7 +4130,7 @@ export function countOwnedArmy(args: CountOwnedArmyArgs): Trigger<"country"> {
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_owned_army", entries)], refs);
 }
@@ -4159,7 +4159,7 @@ export function countOwnedColony(args: CountOwnedColonyArgs): Trigger<"country" 
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_owned_colony", entries)], refs);
 }
@@ -4188,7 +4188,7 @@ export function countOwnedContract(args: CountOwnedContractArgs): Trigger<"count
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_owned_contract", entries)], refs);
 }
@@ -4217,7 +4217,7 @@ export function countOwnedDesign(args: CountOwnedDesignArgs): Trigger<"country">
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_owned_design", entries)], refs);
 }
@@ -4246,7 +4246,7 @@ export function countOwnedFleet(args: CountOwnedFleetArgs): Trigger<"country"> {
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_owned_fleet", entries)], refs);
 }
@@ -4275,7 +4275,7 @@ export function countOwnedLeader(args: CountOwnedLeaderArgs): Trigger<"country">
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_owned_leader", entries)], refs);
 }
@@ -4304,7 +4304,7 @@ export function countOwnedMegastructure(args: CountOwnedMegastructureArgs): Trig
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_owned_megastructure", entries)], refs);
 }
@@ -4333,7 +4333,7 @@ export function countOwnedMission(args: CountOwnedMissionArgs): Trigger<"country
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_owned_mission", entries)], refs);
 }
@@ -4364,7 +4364,7 @@ export function countOwnedNonprimaryStarbase(
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_owned_nonprimary_starbase", entries)], refs);
 }
@@ -4393,7 +4393,7 @@ export function countOwnedPlanet(args: CountOwnedPlanetArgs): Trigger<"country" 
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_owned_planet", entries)], refs);
 }
@@ -4426,7 +4426,7 @@ export function countOwnedPopAmount(
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_owned_pop_amount", entries)], refs);
 }
@@ -4459,7 +4459,7 @@ export function countOwnedPopGroup(
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_owned_pop_group", entries)], refs);
 }
@@ -4490,7 +4490,7 @@ export function countOwnedPopJob(
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_owned_pop_job", entries)], refs);
 }
@@ -4519,7 +4519,7 @@ export function countOwnedPopSpecies(args: CountOwnedPopSpeciesArgs): Trigger<"c
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_owned_pop_species", entries)], refs);
 }
@@ -4548,7 +4548,7 @@ export function countOwnedSector(args: CountOwnedSectorArgs): Trigger<"country">
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_owned_sector", entries)], refs);
 }
@@ -4577,7 +4577,7 @@ export function countOwnedShip(args: CountOwnedShipArgs): Trigger<"country" | "f
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_owned_ship", entries)], refs);
 }
@@ -4608,7 +4608,7 @@ export function countOwnedSpecies(
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_owned_species", entries)], refs);
 }
@@ -4637,7 +4637,7 @@ export function countOwnedStarbase(args: CountOwnedStarbaseArgs): Trigger<"count
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_owned_starbase", entries)], refs);
 }
@@ -4668,7 +4668,7 @@ export function countOwnedStormInfluenceField(
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_owned_storm_influence_field", entries)], refs);
 }
@@ -4699,7 +4699,7 @@ export function countOwnedWorkforce(
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_owned_workforce", entries)], refs);
 }
@@ -4730,7 +4730,7 @@ export function countPlanetArmy(
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_planet_army", entries)], refs);
 }
@@ -4759,7 +4759,7 @@ export function countPlanetWithinBorder(args: CountPlanetWithinBorderArgs): Trig
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_planet_within_border", entries)], refs);
 }
@@ -4788,7 +4788,7 @@ export function countPlayableCountry(args: CountPlayableCountryArgs): Trigger<Sc
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_playable_country", entries)], refs);
 }
@@ -4817,7 +4817,7 @@ export function countPoolLeader(args: CountPoolLeaderArgs): Trigger<"country"> {
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_pool_leader", entries)], refs);
 }
@@ -4846,7 +4846,7 @@ export function countPopFaction(args: CountPopFactionArgs): Trigger<"country"> {
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_pop_faction", entries)], refs);
 }
@@ -4880,7 +4880,7 @@ export function countPotentialWarParticipants(
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_potential_war_participants", entries)], refs);
 }
@@ -4911,7 +4911,7 @@ export function countPreFtlWithinBorder(
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_pre_ftl_within_border", entries)], refs);
 }
@@ -4940,7 +4940,7 @@ export function countRelation(args: CountRelationArgs): Trigger<"country"> {
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_relation", entries)], refs);
 }
@@ -4969,7 +4969,7 @@ export function countRimSystem(args: CountRimSystemArgs): Trigger<ScopeName> {
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_rim_system", entries)], refs);
 }
@@ -4998,7 +4998,7 @@ export function countRivalCountry(args: CountRivalCountryArgs): Trigger<"country
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_rival_country", entries)], refs);
 }
@@ -5027,7 +5027,7 @@ export function countShipInSystem(args: CountShipInSystemArgs): Trigger<"system"
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_ship_in_system", entries)], refs);
 }
@@ -5057,7 +5057,7 @@ export function countShipSizeInSystem(args: CountShipSizeInSystemArgs): Trigger<
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_ship_size_in_system", entries)], refs);
 }
@@ -5086,7 +5086,7 @@ export function countSituation(args: CountSituationArgs): Trigger<"country"> {
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_situation", entries)], refs);
 }
@@ -5114,7 +5114,7 @@ export function countSpecies(
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_species", entries)], refs);
 }
@@ -5143,7 +5143,7 @@ export function countSpeciesPopGroup(args: CountSpeciesPopGroupArgs): Trigger<"s
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_species_pop_group", entries)], refs);
 }
@@ -5181,7 +5181,7 @@ export function countSpeciesTraits(args: CountSpeciesTraitsArgs): Trigger<"pop_g
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_species_traits", entries)], refs);
 }
@@ -5210,7 +5210,7 @@ export function countSpynetwork(args: CountSpynetworkArgs): Trigger<"country" | 
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_spynetwork", entries)], refs);
 }
@@ -5235,7 +5235,7 @@ export function countStarbaseBuildings(
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   if (args.type !== undefined) {
     const id1 = refId(args.type);
@@ -5272,7 +5272,7 @@ export function countStarbaseInNetwork(args: CountStarbaseInNetworkArgs): Trigge
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_starbase_in_network", entries)], refs);
 }
@@ -5301,7 +5301,7 @@ export function countStarbaseInSystem(args: CountStarbaseInSystemArgs): Trigger<
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_starbase_in_system", entries)], refs);
 }
@@ -5326,7 +5326,7 @@ export function countStarbaseModules(
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   if (args.type !== undefined) {
     const id1 = refId(args.type);
@@ -5359,7 +5359,7 @@ export function countStarbaseSizes(args: CountStarbaseSizesArgs): Trigger<"count
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   const id1 = refId(args.starbaseSize);
   entries.push(kv("starbase_size", id1));
@@ -5395,7 +5395,7 @@ export function countSubject(args: CountSubjectArgs): Trigger<"country"> {
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_subject", entries)], refs);
 }
@@ -5424,7 +5424,7 @@ export function countSystem(args: CountSystemArgs): Trigger<ScopeName> {
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_system", entries)], refs);
 }
@@ -5453,7 +5453,7 @@ export function countSystemAddedToStorm(args: CountSystemAddedToStormArgs): Trig
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_system_added_to_storm", entries)], refs);
 }
@@ -5482,7 +5482,7 @@ export function countSystemAmbientObject(args: CountSystemAmbientObjectArgs): Tr
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_system_ambient_object", entries)], refs);
 }
@@ -5513,7 +5513,7 @@ export function countSystemInCosmicStormInfluenceField(
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_system_in_cosmic_storm_influence_field", entries)], refs);
 }
@@ -5542,7 +5542,7 @@ export function countSystemMegastructure(args: CountSystemMegastructureArgs): Tr
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_system_megastructure", entries)], refs);
 }
@@ -5571,7 +5571,7 @@ export function countSystemPlanet(args: CountSystemPlanetArgs): Trigger<"system"
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_system_planet", entries)], refs);
 }
@@ -5600,7 +5600,7 @@ export function countSystemPlanetColony(args: CountSystemPlanetColonyArgs): Trig
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_system_planet_colony", entries)], refs);
 }
@@ -5631,7 +5631,7 @@ export function countSystemRemovedFromStorm(
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_system_removed_from_storm", entries)], refs);
 }
@@ -5660,7 +5660,7 @@ export function countSystemShipColony(args: CountSystemShipColonyArgs): Trigger<
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_system_ship_colony", entries)], refs);
 }
@@ -5689,7 +5689,7 @@ export function countSystemWithAura(args: CountSystemWithAuraArgs): Trigger<"cou
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_system_with_aura", entries)], refs);
 }
@@ -5720,7 +5720,7 @@ export function countSystemWithinBorder(
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_system_within_border", entries)], refs);
 }
@@ -5749,7 +5749,7 @@ export function countSystemWithinStorm(args: CountSystemWithinStormArgs): Trigge
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_system_within_storm", entries)], refs);
 }
@@ -5790,7 +5790,7 @@ export function countTargetingSituation(
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_targeting_situation", entries)], refs);
 }
@@ -5812,7 +5812,7 @@ export function countTechOptions(args: CountTechOptionsArgs): Trigger<"country">
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_tech_options", entries)]);
 }
@@ -5844,7 +5844,7 @@ export function countTraitAvailableForSpecies(
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_trait_available_for_species", entries)], refs);
 }
@@ -5876,7 +5876,7 @@ export function countTraitOfSpecies(
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_trait_of_species", entries)], refs);
 }
@@ -5914,7 +5914,7 @@ export function countUsedNavalCap(
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_used_naval_cap", entries)], refs);
 }
@@ -5953,7 +5953,7 @@ export function countWar(args: CountWarArgs): Trigger<"country"> {
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_war", entries)], refs);
 }
@@ -5982,7 +5982,7 @@ export function countWarParticipant(args: CountWarParticipantArgs): Trigger<"war
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_war_participant", entries)], refs);
 }
@@ -6010,7 +6010,7 @@ export function countWarParticipants(args: CountWarParticipantsArgs): Trigger<"w
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("count_war_participants", entries)], refs);
 }
@@ -6054,14 +6054,14 @@ export function customProgress(args: CustomProgressArgs): Trigger<ScopeName> {
             args.currentValCoeff[0],
             scriptValueScalar(args.currentValCoeff[1])
           )
-        : kv("current_val_coeff", args.currentValCoeff)
+        : kv("current_val_coeff", scriptValueScalar(args.currentValCoeff))
     );
   }
   if (args.finalValCoeff !== undefined) {
     entries.push(
       typeof args.finalValCoeff === "object"
         ? cmp("final_val_coeff", args.finalValCoeff[0], scriptValueScalar(args.finalValCoeff[1]))
-        : kv("final_val_coeff", args.finalValCoeff)
+        : kv("final_val_coeff", scriptValueScalar(args.finalValCoeff))
     );
   }
   if (args.mode !== undefined) {
@@ -6426,7 +6426,7 @@ export function distanceToEmpire(
   entries.push(
     typeof args.distance === "object"
       ? cmp("distance", args.distance[0], scriptValueScalar(args.distance[1]))
-      : kv("distance", args.distance)
+      : kv("distance", scriptValueScalar(args.distance))
   );
   if (args.useBypasses !== undefined) {
     entries.push(kv("use_bypasses", args.useBypasses));
@@ -6581,7 +6581,7 @@ export function envoyOpinionChange(args: EnvoyOpinionChangeArgs): Trigger<"count
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
-      : kv("value", args.value)
+      : kv("value", scriptValueScalar(args.value))
   );
   return trigger([block("envoy_opinion_change", entries)]);
 }
@@ -6985,7 +6985,7 @@ export function freeJobsOfType(
     entries.push(
       typeof args.value === "object"
         ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
-        : kv("value", args.value)
+        : kv("value", scriptValueScalar(args.value))
     );
   }
   return trigger([block("free_jobs_of_type", entries)], refs);
@@ -7095,7 +7095,7 @@ export function getAttunementPointsFor(args: GetAttunementPointsForArgs): Trigge
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
-      : kv("value", args.value)
+      : kv("value", scriptValueScalar(args.value))
   );
   if (args.negative !== undefined) {
     entries.push(kv("negative", args.negative));
@@ -7175,7 +7175,7 @@ export function habitability(
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
-      : kv("value", args.value)
+      : kv("value", scriptValueScalar(args.value))
   );
   return trigger([block("habitability", entries)]);
 }
@@ -8249,7 +8249,7 @@ export function hasCountryResource(args: HasCountryResourceArgs): Trigger<"count
   entries.push(
     typeof args.amount === "object"
       ? cmp("amount", args.amount[0], scriptValueScalar(args.amount[1]))
-      : kv("amount", args.amount)
+      : kv("amount", scriptValueScalar(args.amount))
   );
   return trigger([block("has_country_resource", entries)], refs);
 }
@@ -9144,7 +9144,7 @@ export function hasIntelLevel(args: HasIntelLevelArgs): Trigger<"country"> {
   entries.push(
     typeof args.level === "object"
       ? cmp("level", args.level[0], scriptValueScalar(args.level[1]))
-      : kv("level", args.level)
+      : kv("level", scriptValueScalar(args.level))
   );
   return trigger([block("has_intel_level", entries)], refs);
 }
@@ -9192,7 +9192,7 @@ export function hasIntelReport(args: HasIntelReportArgs): Trigger<"country"> {
   entries.push(
     typeof args.level === "object"
       ? cmp("level", args.level[0], scriptValueScalar(args.level[1]))
-      : kv("level", args.level)
+      : kv("level", scriptValueScalar(args.level))
   );
   return trigger([block("has_intel_report", entries)], refs);
 }
@@ -9591,7 +9591,7 @@ export function hasMonthlyIncome(args: HasMonthlyIncomeArgs): Trigger<"country">
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
-      : kv("value", args.value)
+      : kv("value", scriptValueScalar(args.value))
   );
   return trigger([block("has_monthly_income", entries)], refs);
 }
@@ -9874,21 +9874,21 @@ export function hasPassedResolution(args: HasPassedResolutionArgs): Trigger<"cou
     entries.push(
       typeof args.days === "object"
         ? cmp("days", args.days[0], scriptValueScalar(args.days[1]))
-        : kv("days", args.days)
+        : kv("days", scriptValueScalar(args.days))
     );
   }
   if (args.months !== undefined) {
     entries.push(
       typeof args.months === "object"
         ? cmp("months", args.months[0], scriptValueScalar(args.months[1]))
-        : kv("months", args.months)
+        : kv("months", scriptValueScalar(args.months))
     );
   }
   if (args.years !== undefined) {
     entries.push(
       typeof args.years === "object"
         ? cmp("years", args.years[0], scriptValueScalar(args.years[1]))
-        : kv("years", args.years)
+        : kv("years", scriptValueScalar(args.years))
     );
   }
   return trigger([block("has_passed_resolution", entries)]);
@@ -11161,7 +11161,7 @@ export function hostileMilitaryPower(args: HostileMilitaryPowerArgs): Trigger<"s
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
-      : kv("value", args.value)
+      : kv("value", scriptValueScalar(args.value))
   );
   return trigger([block("hostile_military_power", entries)]);
 }
@@ -11304,7 +11304,7 @@ export function intel(args: IntelArgs): Trigger<"country"> {
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
-      : kv("value", args.value)
+      : kv("value", scriptValueScalar(args.value))
   );
   return trigger([block("intel", entries)]);
 }
@@ -15467,7 +15467,7 @@ export function marketResourcePrice(args: MarketResourcePriceArgs): Trigger<"cou
     entries.push(
       typeof args.amount === "object"
         ? cmp("amount", args.amount[0], scriptValueScalar(args.amount[1]))
-        : kv("amount", args.amount)
+        : kv("amount", scriptValueScalar(args.amount))
     );
   }
   if (args.tradeType !== undefined) {
@@ -15476,7 +15476,7 @@ export function marketResourcePrice(args: MarketResourcePriceArgs): Trigger<"cou
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
-      : kv("value", args.value)
+      : kv("value", scriptValueScalar(args.value))
   );
   return trigger([block("market_resource_price", entries)], refs);
 }
@@ -15601,7 +15601,7 @@ export function nbPopExactSpecies(
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
-      : kv("value", args.value)
+      : kv("value", scriptValueScalar(args.value))
   );
   return trigger([block("nb_pop_exact_species", entries)]);
 }
@@ -15680,7 +15680,7 @@ export function numAssignedJobs(
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
-      : kv("value", args.value)
+      : kv("value", scriptValueScalar(args.value))
   );
   if (args.automatedWorkforce !== undefined) {
     entries.push(kv("automated_workforce", args.automatedWorkforce));
@@ -15731,7 +15731,7 @@ export function numBuildings(
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
-      : kv("value", args.value)
+      : kv("value", scriptValueScalar(args.value))
   );
   if (args.category !== undefined) {
     entries.push(kv("category", args.category));
@@ -15775,7 +15775,7 @@ export function numClaimsOnSystem(args: NumClaimsOnSystemArgs): Trigger<"country
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-      : kv("count", args.count)
+      : kv("count", scriptValueScalar(args.count))
   );
   return trigger([block("num_claims_on_system", entries)]);
 }
@@ -15979,7 +15979,7 @@ export function numDistricts(
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
-      : kv("value", args.value)
+      : kv("value", scriptValueScalar(args.value))
   );
   return trigger([block("num_districts", entries)]);
 }
@@ -16124,7 +16124,7 @@ export function numFavors(args: NumFavorsArgs): Trigger<"country"> {
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
-      : kv("value", args.value)
+      : kv("value", scriptValueScalar(args.value))
   );
   return trigger([block("num_favors", entries)]);
 }
@@ -16158,7 +16158,7 @@ export function numFreeDistricts(
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
-      : kv("value", args.value)
+      : kv("value", scriptValueScalar(args.value))
   );
   return trigger([block("num_free_districts", entries)]);
 }
@@ -16254,7 +16254,7 @@ export function numKilledShips(args: NumKilledShipsArgs): Trigger<"country"> {
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
-      : kv("value", args.value)
+      : kv("value", scriptValueScalar(args.value))
   );
   return trigger([block("num_killed_ships", entries)]);
 }
@@ -16364,14 +16364,14 @@ export function numNeighborSystems(args: NumNeighborSystemsArgs): Trigger<ScopeN
     entries.push(
       typeof args.minDistance === "object"
         ? cmp("min_distance", args.minDistance[0], scriptValueScalar(args.minDistance[1]))
-        : kv("min_distance", args.minDistance)
+        : kv("min_distance", scriptValueScalar(args.minDistance))
     );
   }
   if (args.maxDistance !== undefined) {
     entries.push(
       typeof args.maxDistance === "object"
         ? cmp("max_distance", args.maxDistance[0], scriptValueScalar(args.maxDistance[1]))
-        : kv("max_distance", args.maxDistance)
+        : kv("max_distance", scriptValueScalar(args.maxDistance))
     );
   }
   return trigger([block("num_neighbor_systems", entries)], refs);
@@ -16492,7 +16492,7 @@ export function numPopsAssignedToJob(args: NumPopsAssignedToJobArgs): Trigger<"p
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
-      : kv("value", args.value)
+      : kv("value", scriptValueScalar(args.value))
   );
   return trigger([block("num_pops_assigned_to_job", entries)]);
 }
@@ -16576,7 +16576,7 @@ export function numResearchedTechsOfTier(args: NumResearchedTechsOfTierArgs): Tr
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
-      : kv("value", args.value)
+      : kv("value", scriptValueScalar(args.value))
   );
   entries.push(
     typeof args.tier === "object" ? cmp("tier", args.tier[0], args.tier[1]) : kv("tier", args.tier)
@@ -16634,7 +16634,7 @@ export function numShipsInDebris(args: NumShipsInDebrisArgs): Trigger<"debris"> 
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
-      : kv("value", args.value)
+      : kv("value", scriptValueScalar(args.value))
   );
   return trigger([block("num_ships_in_debris", entries)], refs);
 }
@@ -16731,7 +16731,7 @@ export function numTakenPlanets(args: NumTakenPlanetsArgs): Trigger<"country"> {
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
-      : kv("value", args.value)
+      : kv("value", scriptValueScalar(args.value))
   );
   return trigger([block("num_taken_planets", entries)]);
 }
@@ -16868,7 +16868,7 @@ export function numZones(
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
-      : kv("value", args.value)
+      : kv("value", scriptValueScalar(args.value))
   );
   return trigger([block("num_zones", entries)]);
 }
@@ -16921,7 +16921,7 @@ export function opinion(args: OpinionArgs): Trigger<"country"> {
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
-      : kv("value", args.value)
+      : kv("value", scriptValueScalar(args.value))
   );
   return trigger([block("opinion", entries)]);
 }
@@ -17004,7 +17004,7 @@ export function opposingEthicsDivergence(
   entries.push(
     typeof args.steps === "object"
       ? cmp("steps", args.steps[0], scriptValueScalar(args.steps[1]))
-      : kv("steps", args.steps)
+      : kv("steps", scriptValueScalar(args.steps))
   );
   entries.push(kv("who", args.who.path));
   return trigger([block("opposing_ethics_divergence", entries)]);
@@ -17136,12 +17136,12 @@ export function planetHappinessAboveThreshold(
   entries.push(
     typeof args.threshold === "object"
       ? cmp("threshold", args.threshold[0], scriptValueScalar(args.threshold[1]))
-      : kv("threshold", args.threshold)
+      : kv("threshold", scriptValueScalar(args.threshold))
   );
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
-      : kv("value", args.value)
+      : kv("value", scriptValueScalar(args.value))
   );
   return trigger([block("planet_happiness_above_threshold", entries)], refs);
 }
@@ -17177,7 +17177,7 @@ export function planetResourceCompare(
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
-      : kv("value", args.value)
+      : kv("value", scriptValueScalar(args.value))
   );
   return trigger([block("planet_resource_compare", entries)], refs);
 }
@@ -17239,7 +17239,7 @@ export function popAmountPercentage(
   entries.push(
     typeof args.percentage === "object"
       ? cmp("percentage", args.percentage[0], scriptValueScalar(args.percentage[1]))
-      : kv("percentage", args.percentage)
+      : kv("percentage", scriptValueScalar(args.percentage))
   );
   return trigger([block("pop_amount_percentage", entries)], refs);
 }
@@ -17332,7 +17332,7 @@ export function popMaintenanceCost(args: PopMaintenanceCostArgs): Trigger<"pop_g
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
-      : kv("value", args.value)
+      : kv("value", scriptValueScalar(args.value))
   );
   return trigger([block("pop_maintenance_cost", entries)], refs);
 }
@@ -17412,7 +17412,7 @@ export function relativeEncryptionDecryption(
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
-      : kv("value", args.value)
+      : kv("value", scriptValueScalar(args.value))
   );
   return trigger([block("relative_encryption_decryption", entries)]);
 }
@@ -17491,7 +17491,7 @@ export function resourceExpensesCompare(args: ResourceExpensesCompareArgs): Trig
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
-      : kv("value", args.value)
+      : kv("value", scriptValueScalar(args.value))
   );
   return trigger([block("resource_expenses_compare", entries)], refs);
 }
@@ -17519,7 +17519,7 @@ export function resourceIncomeCompare(args: ResourceIncomeCompareArgs): Trigger<
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
-      : kv("value", args.value)
+      : kv("value", scriptValueScalar(args.value))
   );
   return trigger([block("resource_income_compare", entries)], refs);
 }
@@ -17561,7 +17561,7 @@ export function resourceIncomeToExpenditureBalanceRatio(
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
-      : kv("value", args.value)
+      : kv("value", scriptValueScalar(args.value))
   );
   return trigger([block("resource_income_to_expenditure_balance_ratio", entries)], refs);
 }
@@ -17601,7 +17601,7 @@ export function resourceRevenueCompare(args: ResourceRevenueCompareArgs): Trigge
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
-      : kv("value", args.value)
+      : kv("value", scriptValueScalar(args.value))
   );
   return trigger([block("resource_revenue_compare", entries)], refs);
 }
@@ -17634,20 +17634,20 @@ export function resourceStockpileCompare(
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
-      : kv("value", args.value)
+      : kv("value", scriptValueScalar(args.value))
   );
   if (args.mult !== undefined) {
     entries.push(
       typeof args.mult === "object"
         ? cmp("mult", args.mult[0], scriptValueScalar(args.mult[1]))
-        : kv("mult", args.mult)
+        : kv("mult", scriptValueScalar(args.mult))
     );
   }
   if (args.multiplier !== undefined) {
     entries.push(
       typeof args.multiplier === "object"
         ? cmp("multiplier", args.multiplier[0], scriptValueScalar(args.multiplier[1]))
-        : kv("multiplier", args.multiplier)
+        : kv("multiplier", scriptValueScalar(args.multiplier))
     );
   }
   return trigger([block("resource_stockpile_compare", entries)], refs);
@@ -18077,7 +18077,7 @@ export function techUnlockedRatio(args: TechUnlockedRatioArgs): Trigger<"country
   entries.push(
     typeof args.ratio === "object"
       ? cmp("ratio", args.ratio[0], scriptValueScalar(args.ratio[1]))
-      : kv("ratio", args.ratio)
+      : kv("ratio", scriptValueScalar(args.ratio))
   );
   return trigger([block("tech_unlocked_ratio", entries)]);
 }
@@ -18163,7 +18163,7 @@ export function theirOpinion(args: TheirOpinionArgs): Trigger<"country"> {
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
-      : kv("value", args.value)
+      : kv("value", scriptValueScalar(args.value))
   );
   return trigger([block("their_opinion", entries)]);
 }
@@ -18243,7 +18243,7 @@ export function timedFlagDaysLeft(
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
-      : kv("value", args.value)
+      : kv("value", scriptValueScalar(args.value))
   );
   return trigger([block("timed_flag_days_left", entries)]);
 }
@@ -18296,7 +18296,7 @@ export function trust(args: TrustArgs): Trigger<"country"> {
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
-      : kv("value", args.value)
+      : kv("value", scriptValueScalar(args.value))
   );
   return trigger([block("trust", entries)]);
 }
@@ -18543,7 +18543,7 @@ export function warBegunNumFleetsGoneMia(args: WarBegunNumFleetsGoneMiaArgs): Tr
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
-      : kv("value", args.value)
+      : kv("value", scriptValueScalar(args.value))
   );
   return trigger([block("war_begun_num_fleets_gone_mia", entries)]);
 }
@@ -18694,7 +18694,7 @@ export function yearsOfPeace(args: YearsOfPeaceArgs): Trigger<"country"> {
   entries.push(
     typeof args.value === "object"
       ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
-      : kv("value", args.value)
+      : kv("value", scriptValueScalar(args.value))
   );
   return trigger([block("years_of_peace", entries)]);
 }

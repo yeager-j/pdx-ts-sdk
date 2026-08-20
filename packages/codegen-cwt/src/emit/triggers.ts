@@ -313,7 +313,8 @@ function pushCode(
     case "comparison":
       return (
         `${sink}.push(typeof ${access} === "object" ` +
-        `? cmp(${key}, ${access}[0], ${pushExpr(field.value.value, `${access}[1]`)}) : kv(${key}, ${access}));`
+        `? cmp(${key}, ${access}[0], ${pushExpr(field.value.value, `${access}[1]`)}) : ` +
+        `kv(${key}, ${pushExpr(field.value.value, access)}));`
       );
   }
 }

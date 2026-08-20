@@ -96,7 +96,7 @@ describe("emitted trigger signatures", () => {
         entries.push(
           typeof args.count === "object"
             ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
-            : kv("count", args.count)
+            : kv("count", scriptValueScalar(args.count))
         );
         return trigger([block("count_owned_pop_group", entries)], refs);
       }"
@@ -117,7 +117,7 @@ describe("emitted trigger signatures", () => {
         entries.push(
           typeof args.amount === "object"
             ? cmp("amount", args.amount[0], scriptValueScalar(args.amount[1]))
-            : kv("amount", args.amount)
+            : kv("amount", scriptValueScalar(args.amount))
         );
         entries.push(...args.conditions.entries);
         refs.push(...args.conditions.refs);
