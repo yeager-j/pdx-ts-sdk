@@ -3376,8 +3376,8 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
     overrideId?: TimelineEventId;
     overrideTooltip?: string;
     overrideTypes?: readonly ScopeTypeToken[];
-    overrideText?: readonly "value[gui_element_name]:localisation"[];
-    overrideTexture?: readonly "value[gui_element_name]:<sprite>"[];
+    overrideText?: readonly string[];
+    overrideTexture?: readonly string[];
     targets?: readonly ScopeValue[];
     overrideTooltipDelayed?: string;
   }): void;
@@ -3699,7 +3699,7 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    */
   copyAscensionPerksFrom(args: {
     target: ScopeValue<"country">;
-    exceptions?: readonly [AscensionPerkRef | string];
+    exceptions?: readonly (AscensionPerkRef | string)[];
   }): void;
 
   /**
@@ -3818,7 +3818,7 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    */
   copyTraditionsFrom(args: {
     target: ScopeValue<"country">;
-    exceptions?: readonly [TraditionRef | string];
+    exceptions?: readonly (TraditionRef | string)[];
   }): void;
 
   /**
@@ -3853,7 +3853,7 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
     name?: string | ScopeValue<"fleet"> | { key: string; variableString?: readonly string[] };
     size: ScriptValue;
     canOverflow?: boolean;
-    shipDesigns: readonly string[];
+    shipDesigns?: readonly string[];
     effect?: (scope: FleetScope) => void;
   }): void;
 
@@ -12519,7 +12519,7 @@ export interface EffectsInSystem {
     planeOffset?: number;
     depositBlockers?: "none";
     modifiers?: "none";
-    modifier?: PlanetModifierRef | string;
+    modifier?: readonly (PlanetModifierRef | string)[];
     flags?: readonly PlanetFlag[];
     size?: number | "random";
     hasRing?: boolean;
@@ -14563,12 +14563,12 @@ export interface UniversalEffects extends EnableSpecialProjectEffectsExtension {
    * ```
    */
   stormApplyAftermathModifier(args: {
-    severity: {
+    severity: readonly {
       modifier: StaticModifierRef | string;
       days: number;
       chance?: readonly Modifier<ScopeName>[];
       effect?: (scope: ScopeObjOf<ScopeName>) => void;
-    };
+    }[];
   }): void;
 
   /** Just a tooltip (shows the effect but does not run it) */

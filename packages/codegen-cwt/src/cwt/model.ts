@@ -117,6 +117,7 @@ export interface RuleBareValue {
 }
 
 const BRACKETED = /^([^\[\]]+)\[([^\[\]]*)\]$/;
+const VALUE_PAIR = /^value(?:_set)?\[[^\]]+\]:(?:localisation|<[^>]+>)$/;
 const RANGE = /^(-?[\d.]+|-?inf)\.\.(-?[\d.]+|-?inf)$/;
 const CARDINALITY = /^~?(\d+)\.\.(\d+|inf)$/;
 
@@ -215,6 +216,9 @@ function classifyScalar(text: string, line: number, report?: ClassificationRepor
   }
   if (text.startsWith("<") && text.endsWith(">")) {
     return { kind: "typeRef", name: text.slice(1, -1) };
+  }
+  if (VALUE_PAIR.test(text)) {
+    return { kind: "scalar" };
   }
   const bracketed = BRACKETED.exec(text);
   if (bracketed !== null) {

@@ -110,6 +110,61 @@ start_storm_area_placing = {
 `);
   });
 
+  it("serializes reviewed value lists and repeated effect fields", () => {
+    const sink: PdxEntry[] = [];
+    const country = makeScope<"country">(sink);
+    const system = makeScope<"system">(sink);
+
+    country.addTimelineEvent({
+      type: "effects_test_timeline_event",
+      overrideText: ["button:effects_test_text"],
+      overrideTexture: ["button:GFX_effects_test_button"],
+    });
+    country.copyAscensionPerksFrom({
+      target: scopeValue<"country">("root"),
+      exceptions: ["effects_test_perk_a", "effects_test_perk_b"],
+    });
+    system.spawnPlanet({
+      class: "pc_continental",
+      modifier: ["effects_test_modifier_a", "effects_test_modifier_b"],
+    });
+    country.stormApplyAftermathModifier({
+      severity: [
+        { modifier: "effects_test_storm_a", days: 30 },
+        { modifier: "effects_test_storm_b", days: 60 },
+      ],
+    });
+
+    expect(serialize(sink)).toBe(`add_timeline_event = {
+\ttype = effects_test_timeline_event
+\toverride_text = { button:effects_test_text }
+\toverride_texture = { button:GFX_effects_test_button }
+}
+
+copy_ascension_perks_from = {
+\ttarget = root
+\texceptions = { effects_test_perk_a effects_test_perk_b }
+}
+
+spawn_planet = {
+\tclass = pc_continental
+\tmodifier = effects_test_modifier_a
+\tmodifier = effects_test_modifier_b
+}
+
+storm_apply_aftermath_modifier = {
+\tseverity = {
+\t\tmodifier = effects_test_storm_a
+\t\tdays = 30
+\t}
+\tseverity = {
+\t\tmodifier = effects_test_storm_b
+\t\tdays = 60
+\t}
+}
+`);
+  });
+
   it("serializes a minimal ambient-object placement", () => {
     const sink: PdxEntry[] = [];
     const system = makeScope<"system">(sink);

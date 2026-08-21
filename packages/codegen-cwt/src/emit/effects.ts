@@ -25,7 +25,7 @@ import { camelCase, docComment, isPlainName, pascalCase, safeIdentifier } from "
 import {
   EFFECT_EXTENSION_SEAMS,
   EFFECT_FIELD_ADDITIONS,
-  EFFECT_FIELD_OPTIONALITY_OVERRIDES,
+  EFFECT_FIELD_CARDINALITY_OVERRIDES,
   EFFECT_FIELD_TYPE_OVERRIDES,
 } from "../overlay.ts";
 import type { ClassifiedLink } from "./links.ts";
@@ -60,8 +60,8 @@ export interface EffectEmission {
   readonly fieldTypeOverrides: readonly string[];
   /** `EFFECT_FIELD_ADDITIONS` rows applied, with their evidence and rationale. */
   readonly fieldAdditions: readonly string[];
-  /** `EFFECT_FIELD_OPTIONALITY_OVERRIDES` rows applied, with their evidence and rationale. */
-  readonly fieldOptionalityOverrides: readonly string[];
+  /** `EFFECT_FIELD_CARDINALITY_OVERRIDES` rows applied, with their evidence and rationale. */
+  readonly fieldCardinalityOverrides: readonly string[];
   /** Scope-link path properties emitted from the shared link table. */
   readonly linkEmitted: number;
   /** Machine-readable rows projected from the post-overlay effect clusters. */
@@ -83,8 +83,8 @@ type EffectShape =
 
 function applyFieldOverlays(emitter: Emitter, key: string, shape: EffectShape): EffectShape {
   const additions = EFFECT_FIELD_ADDITIONS.get(key) ?? [];
-  const optionalityOverrides = EFFECT_FIELD_OPTIONALITY_OVERRIDES.get(key) ?? [];
-  if (additions.length === 0 && optionalityOverrides.length === 0) {
+  const cardinalityOverrides = EFFECT_FIELD_CARDINALITY_OVERRIDES.get(key) ?? [];
+  if (additions.length === 0 && cardinalityOverrides.length === 0) {
     return shape;
   }
   if (shape.kind !== "fields" && shape.kind !== "wrapper") {
@@ -93,25 +93,68 @@ function applyFieldOverlays(emitter: Emitter, key: string, shape: EffectShape): 
     );
   }
   let fields = shape.fields ?? [];
-  const appliedOptionality = new Set<string>();
+  const appliedCardinality = new Set<string>();
   fields = fields.map((field) => {
-    const override = optionalityOverrides.find((candidate) => candidate.name === field.name);
+    const override = cardinalityOverrides.find((candidate) => candidate.name === field.name);
     if (override === undefined) {
       return field;
     }
-    if (field.optional === override.optional) {
+    if (
+      override.optional === undefined &&
+      override.repeated === undefined &&
+      override.valueList === undefined
+    ) {
       throw new Error(
-        `EFFECT_FIELD_OPTIONALITY_OVERRIDES names "${key}.${field.name}", but CWT already ` +
-          `makes it ${override.optional ? "optional" : "required"} — retire the overlay row`
+        `EFFECT_FIELD_CARDINALITY_OVERRIDES names "${key}.${field.name}" without a change`
       );
     }
-    appliedOptionality.add(field.name);
-    return { ...field, optional: override.optional };
+    let resolved = field;
+    if (override.optional !== undefined) {
+      if (field.optional === override.optional) {
+        throw new Error(
+          `EFFECT_FIELD_CARDINALITY_OVERRIDES names "${key}.${field.name}", but CWT already ` +
+            `makes it ${override.optional ? "optional" : "required"} — retire that override`
+        );
+      }
+      resolved = { ...resolved, optional: override.optional };
+    }
+    if (override.repeated !== undefined) {
+      if (field.repeated === override.repeated) {
+        throw new Error(
+          `EFFECT_FIELD_CARDINALITY_OVERRIDES names "${key}.${field.name}", but lowering already ` +
+            `makes it ${override.repeated ? "repeated" : "singular"} — retire that override`
+        );
+      }
+      resolved = { ...resolved, repeated: override.repeated };
+    }
+    if (override.valueList !== undefined) {
+      if (field.value.kind !== "valueList") {
+        throw new Error(
+          `EFFECT_FIELD_CARDINALITY_OVERRIDES names "${key}.${field.name}" as a value list, ` +
+            "but the field does not lower to one"
+        );
+      }
+      if (
+        field.value.cardinality.min === override.valueList.min &&
+        field.value.cardinality.max === override.valueList.max
+      ) {
+        throw new Error(
+          `EFFECT_FIELD_CARDINALITY_OVERRIDES names "${key}.${field.name}", but CWT already ` +
+            "declares that value-list cardinality — retire that override"
+        );
+      }
+      resolved = {
+        ...resolved,
+        value: { ...field.value, cardinality: override.valueList },
+      };
+    }
+    appliedCardinality.add(field.name);
+    return resolved;
   });
-  for (const override of optionalityOverrides) {
-    if (!appliedOptionality.has(override.name)) {
+  for (const override of cardinalityOverrides) {
+    if (!appliedCardinality.has(override.name)) {
       throw new Error(
-        `EFFECT_FIELD_OPTIONALITY_OVERRIDES names "${key}.${override.name}", which no ` +
+        `EFFECT_FIELD_CARDINALITY_OVERRIDES names "${key}.${override.name}", which no ` +
           "emitted effect field matches — retire the overlay row or fix its key"
       );
     }
@@ -486,7 +529,7 @@ export function emitEffects(
   const skipped: SkippedRule[] = [];
   const scalarOnly: string[] = [];
   const appliedFieldAdditions = new Set<string>();
-  const appliedFieldOptionalityOverrides = new Set<string>();
+  const appliedFieldCardinalityOverrides = new Set<string>();
   const byShape = new Map<string, number>();
   interface Cluster {
     readonly scopes: readonly string[] | "universal";
@@ -557,8 +600,8 @@ export function emitEffects(
     if (EFFECT_FIELD_ADDITIONS.has(key)) {
       appliedFieldAdditions.add(key);
     }
-    if (EFFECT_FIELD_OPTIONALITY_OVERRIDES.has(key)) {
-      appliedFieldOptionalityOverrides.add(key);
+    if (EFFECT_FIELD_CARDINALITY_OVERRIDES.has(key)) {
+      appliedFieldCardinalityOverrides.add(key);
     }
     if ("scalarOnly" in shape) {
       scalarOnly.push(key);
@@ -606,10 +649,10 @@ export function emitEffects(
       );
     }
   }
-  for (const key of EFFECT_FIELD_OPTIONALITY_OVERRIDES.keys()) {
-    if (!appliedFieldOptionalityOverrides.has(key)) {
+  for (const key of EFFECT_FIELD_CARDINALITY_OVERRIDES.keys()) {
+    if (!appliedFieldCardinalityOverrides.has(key)) {
       throw new Error(
-        `EFFECT_FIELD_OPTIONALITY_OVERRIDES names "${key}", which no emitted effect ` +
+        `EFFECT_FIELD_CARDINALITY_OVERRIDES names "${key}", which no emitted effect ` +
           "matches — retire the overlay row or fix its key"
       );
     }
@@ -887,11 +930,17 @@ export function emitEffects(
         (addition) => `${key}.${addition.name} ← ${addition.source} — ${addition.reason}`
       )
     ),
-    fieldOptionalityOverrides: [...EFFECT_FIELD_OPTIONALITY_OVERRIDES].flatMap(([key, overrides]) =>
-      overrides.map(
-        (override) =>
-          `${key}.${override.name} → ${override.optional ? "optional" : "required"} ← ${override.source} — ${override.reason}`
-      )
+    fieldCardinalityOverrides: [...EFFECT_FIELD_CARDINALITY_OVERRIDES].flatMap(([key, overrides]) =>
+      overrides.map((override) => {
+        const changes = [
+          override.optional === undefined ? null : override.optional ? "optional" : "required",
+          override.repeated === undefined ? null : override.repeated ? "repeated" : "singular",
+          override.valueList === undefined
+            ? null
+            : `value-list ${override.valueList.min}..${override.valueList.max ?? "inf"}`,
+        ].filter((change): change is string => change !== null);
+        return `${key}.${override.name} → ${changes.join(", ")} ← ${override.source} — ${override.reason}`;
+      })
     ),
     linkEmitted: links.length,
     references,

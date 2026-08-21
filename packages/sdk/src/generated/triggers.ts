@@ -18437,7 +18437,7 @@ export function traitHasAllTags(values: readonly string[]): Trigger<"species_tra
 }
 
 /**
- * Checks if the last acquired specimen is of the given rarity
+ * Checks if a trait has at least one tag from the list
  * ```
  * trait_has_any_tag = { biological lithoids }
  * ```

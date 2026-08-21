@@ -12,6 +12,7 @@ import type { AliasDecl } from "../cwt/rules.ts";
 import type { DocEntry } from "../logs/trigger-docs.ts";
 import type { LoweredRule } from "../lowered-rule.ts";
 import { camelCase, docComment, isPlainName, pascalCase, safeIdentifier } from "../naming.ts";
+import { TRIGGER_DOC_SUMMARY_OVERRIDES } from "../overlay.ts";
 import { HAND_WRITTEN_TRIGGER_RULES_BY_KEY } from "../trigger-policy.ts";
 import {
   bareBlockValue,
@@ -35,6 +36,7 @@ export interface TriggerEmission {
   readonly emitted: number;
   readonly byShape: ReadonlyMap<string, number>;
   readonly skipped: readonly SkippedRule[];
+  readonly docOverrides: readonly string[];
   /** Every emitted function name, for the scope-link collision guard. */
   readonly names: ReadonlySet<string>;
 }
@@ -576,6 +578,7 @@ export function emitTriggers(
   const byShape = new Map<string, number>();
   const chunks: string[] = [];
   const names = new Set<string>();
+  const appliedDocOverrides = new Set<string>();
   let emitted = 0;
 
   for (const key of [...rules.keys()].sort()) {
@@ -623,11 +626,44 @@ export function emitTriggers(
       skipped.push({ name: key, ...shape });
       continue;
     }
-    chunks.push(emitOne(key, shape, scope, tsDoc(declarations, doc)));
+    const docsForRule = tsDoc(declarations, doc);
+    const docOverride = TRIGGER_DOC_SUMMARY_OVERRIDES.get(key);
+    if (docOverride !== undefined) {
+      if (doc?.summary.trim() !== docOverride.summary) {
+        throw new Error(
+          `TRIGGER_DOC_SUMMARY_OVERRIDES names "${key}", but its source summary changed`
+        );
+      }
+      if (docsForRule[0]?.trim() === docOverride.summary) {
+        throw new Error(
+          `TRIGGER_DOC_SUMMARY_OVERRIDES names "${key}", but CWT now has the corrected summary`
+        );
+      }
+      docsForRule[0] = docOverride.summary;
+      appliedDocOverrides.add(key);
+    }
+    chunks.push(emitOne(key, shape, scope, docsForRule));
     names.add(safeIdentifier(camelCase(key)));
     byShape.set(shape.kind, (byShape.get(shape.kind) ?? 0) + 1);
     emitted += 1;
   }
 
-  return { code: chunks.join("\n"), emitted, byShape, skipped, names };
+  for (const key of TRIGGER_DOC_SUMMARY_OVERRIDES.keys()) {
+    if (!appliedDocOverrides.has(key)) {
+      throw new Error(
+        `TRIGGER_DOC_SUMMARY_OVERRIDES names "${key}", which no generated trigger matches`
+      );
+    }
+  }
+
+  return {
+    code: chunks.join("\n"),
+    emitted,
+    byShape,
+    skipped,
+    names,
+    docOverrides: [...TRIGGER_DOC_SUMMARY_OVERRIDES].map(
+      ([key, override]) => `${key} ← ${override.source} — ${override.reason}`
+    ),
+  };
 }

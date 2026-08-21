@@ -1,5 +1,5 @@
 import type { ContentShape } from "./content-shape.ts";
-import type { RuleType } from "./cwt/model.ts";
+import type { Cardinality, RuleType } from "./cwt/model.ts";
 
 /**
  * The hand-maintained overlay: every place the generated API deliberately
@@ -567,6 +567,26 @@ export const EXTRA_ALIAS_CATEGORIES = new Map<string, string>([
   ],
 ]);
 
+export interface TriggerDocSummaryOverride {
+  readonly summary: string;
+  readonly source: string;
+  readonly reason: string;
+}
+
+/** Trigger summaries whose CWT prose disagrees with the game's documentation dump. */
+export const TRIGGER_DOC_SUMMARY_OVERRIDES = new Map<string, TriggerDocSummaryOverride>([
+  [
+    "trait_has_any_tag",
+    {
+      summary: "Checks if a trait has at least one tag from the list",
+      source: "vendor/cwtools-stellaris-config/script-docs/v4.4.1/triggers.log:3404-3406",
+      reason:
+        "The CWT summary was copied from an unrelated specimen-rarity trigger; the game's " +
+        "documentation dump describes this trigger's tag-list behavior.",
+    },
+  ],
+]);
+
 export interface FieldWidening {
   /** Appended to the mechanically derived type. */
   readonly extraType: string;
@@ -587,9 +607,11 @@ export interface EffectFieldAddition {
   readonly reason: string;
 }
 
-export interface EffectFieldOptionalityOverride {
+export interface EffectFieldCardinalityOverride {
   readonly name: string;
-  readonly optional: boolean;
+  readonly optional?: boolean;
+  readonly repeated?: boolean;
+  readonly valueList?: Cardinality;
   readonly source: string;
   readonly reason: string;
 }
@@ -634,10 +656,10 @@ export const EFFECT_FIELD_ADDITIONS = new Map<string, readonly EffectFieldAdditi
   ],
 ]);
 
-/** Fields whose documented optionality disagrees with CWT cardinality. */
-export const EFFECT_FIELD_OPTIONALITY_OVERRIDES = new Map<
+/** Fields whose documented or declared cardinality is lost by mechanical lowering. */
+export const EFFECT_FIELD_CARDINALITY_OVERRIDES = new Map<
   string,
-  readonly EffectFieldOptionalityOverride[]
+  readonly EffectFieldCardinalityOverride[]
 >([
   [
     "declare_war",
@@ -649,6 +671,71 @@ export const EFFECT_FIELD_OPTIONALITY_OVERRIDES = new Map<
         reason:
           "The game documentation explicitly calls the war name optional, while the CWT " +
           "alias splice has default required cardinality.",
+      },
+    ],
+  ],
+  [
+    "copy_ascension_perks_from",
+    [
+      {
+        name: "exceptions",
+        valueList: { min: 0, max: null },
+        source: "vendor/cwtools-stellaris-config/script-docs/v4.4.1/effects.log:2847-2851",
+        reason:
+          "The game documentation shows more than one exception, while the anonymous CWT " +
+          "member has default singleton cardinality.",
+      },
+    ],
+  ],
+  [
+    "copy_traditions_from",
+    [
+      {
+        name: "exceptions",
+        valueList: { min: 0, max: null },
+        source: "vendor/cwtools-stellaris-config/script-docs/v4.4.1/effects.log:2840-2844",
+        reason:
+          "The game documentation shows more than one exception, while the anonymous CWT " +
+          "member has default singleton cardinality.",
+      },
+    ],
+  ],
+  [
+    "create_balanced_fleet",
+    [
+      {
+        name: "ship_designs",
+        optional: true,
+        source: "vendor/cwtools-stellaris-config/script-docs/v4.4.1/effects.log:3724-3731",
+        reason:
+          "The game documentation explicitly says the design list is optional, while CWT " +
+          "gives the enclosing field default required cardinality.",
+      },
+    ],
+  ],
+  [
+    "spawn_planet",
+    [
+      {
+        name: "modifier",
+        repeated: true,
+        source: "vendor/cwtools-stellaris-config/config/effects.cwt:3716-3717",
+        reason:
+          "CWT explicitly allows repeated modifier entries, which the shared field merge " +
+          "otherwise collapses to one scalar member.",
+      },
+    ],
+  ],
+  [
+    "storm_apply_aftermath_modifier",
+    [
+      {
+        name: "severity",
+        repeated: true,
+        source: "vendor/cwtools-stellaris-config/script-docs/v4.4.1/effects.log:2662-2664",
+        reason:
+          "The game documentation allows up to ten severities, while CWT gives the field " +
+          "default singleton cardinality.",
       },
     ],
   ],

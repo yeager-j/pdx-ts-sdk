@@ -1160,7 +1160,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["country"] },
     signature:
-      'addTimelineEvent(args: { type: TimelineEventsRef | string; date?: string; overrideId?: TimelineEventId; overrideTooltip?: string; overrideTypes?: readonly ScopeTypeToken[]; overrideText?: readonly "value[gui_element_name]:localisation"[]; overrideTexture?: readonly "value[gui_element_name]:<sprite>"[]; targets?: readonly ScopeValue[]; overrideTooltipDelayed?: string }): void;',
+      "addTimelineEvent(args: { type: TimelineEventsRef | string; date?: string; overrideId?: TimelineEventId; overrideTooltip?: string; overrideTypes?: readonly ScopeTypeToken[]; overrideText?: readonly string[]; overrideTexture?: readonly string[]; targets?: readonly ScopeValue[]; overrideTooltipDelayed?: string }): void;",
     docs: [
       "Adds a new timeline event for the scope country.",
       "",
@@ -2278,7 +2278,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["country"] },
     signature:
-      'copyAscensionPerksFrom(args: { target: ScopeValue<"country">; exceptions?: readonly [(AscensionPerkRef | string)] }): void;',
+      'copyAscensionPerksFrom(args: { target: ScopeValue<"country">; exceptions?: readonly (AscensionPerkRef | string)[] }): void;',
     docs: [
       "Copies the Ascension Perks of the target country into the scoped country. Perks are added to the existing perks, and the potential/possible triggers are respected.the perkss listed in the exceptions list are not copied.",
       "",
@@ -2363,7 +2363,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["country"] },
     signature:
-      'copyTraditionsFrom(args: { target: ScopeValue<"country">; exceptions?: readonly [(TraditionRef | string)] }): void;',
+      'copyTraditionsFrom(args: { target: ScopeValue<"country">; exceptions?: readonly (TraditionRef | string)[] }): void;',
     docs: [
       "Copies the traditions of the target country into the scoped country. Traditions are added to the existing traditions, and the potential/possible triggers are respected.the traditions listed in the exceptions list are not copied.",
       "",
@@ -2563,7 +2563,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["country"] },
     signature:
-      'createBalancedFleet(args: { name?: string | ScopeValue<"fleet"> | { key: string; variableString?: readonly string[] }; size: ScriptValue; canOverflow?: boolean; shipDesigns: readonly string[]; effect?: (scope: FleetScope) => void }): void;',
+      'createBalancedFleet(args: { name?: string | ScopeValue<"fleet"> | { key: string; variableString?: readonly string[] }; size: ScriptValue; canOverflow?: boolean; shipDesigns?: readonly string[]; effect?: (scope: FleetScope) => void }): void;',
     docs: [
       "Creates a fleet of the requested size, distributing ships deterministically across the listed designs by each ship_size's ai_ship_data.fraction.",
       "",
@@ -16340,7 +16340,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["system"] },
     signature:
-      'spawnPlanet(args: { class: PlanetClassRef | string | PlanetClassRandomListRef | "random" | "random_colonizable"; generateRandomName?: boolean; checkOverlap?: boolean; name?: string; location?: ScopeValue<"ambient_object"|"archaeological_site"|"army"|"carrier"|"colony"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_group"|"ship"|"starbase"|"system"> | "none"; orbitLocation?: boolean; orbitDistance?: ScriptValue | { min: ScriptValue; max: ScriptValue }; orbitDistanceOffset?: ScriptValue; planeOffset?: number; depositBlockers?: "none"; modifiers?: "none"; modifier?: PlanetModifierRef | string; flags?: readonly PlanetFlag[]; size?: number | "random"; hasRing?: boolean; spawnBeyondGravityWell?: boolean; orbitAngle?: "random" | number | { min: number; max: number }; orbitAngleOffset?: number; initEffect?: (scope: PlanetScope) => void }): void;',
+      'spawnPlanet(args: { class: PlanetClassRef | string | PlanetClassRandomListRef | "random" | "random_colonizable"; generateRandomName?: boolean; checkOverlap?: boolean; name?: string; location?: ScopeValue<"ambient_object"|"archaeological_site"|"army"|"carrier"|"colony"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_group"|"ship"|"starbase"|"system"> | "none"; orbitLocation?: boolean; orbitDistance?: ScriptValue | { min: ScriptValue; max: ScriptValue }; orbitDistanceOffset?: ScriptValue; planeOffset?: number; depositBlockers?: "none"; modifiers?: "none"; modifier?: readonly (PlanetModifierRef | string)[]; flags?: readonly PlanetFlag[]; size?: number | "random"; hasRing?: boolean; spawnBeyondGravityWell?: boolean; orbitAngle?: "random" | number | { min: number; max: number }; orbitAngleOffset?: number; initEffect?: (scope: PlanetScope) => void }): void;',
     docs: ["Spawns a planet in a system."],
   },
   {
@@ -16594,7 +16594,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "universal" },
     signature:
-      "stormApplyAftermathModifier(args: { severity: { modifier: StaticModifierRef | string; days: number; chance?: readonly Modifier<ScopeName>[]; effect?: (scope: ScopeObjOf<ScopeName>) => void } }): void;",
+      "stormApplyAftermathModifier(args: { severity: readonly ({ modifier: StaticModifierRef | string; days: number; chance?: readonly Modifier<ScopeName>[]; effect?: (scope: ScopeObjOf<ScopeName>) => void })[] }): void;",
     docs: [
       "Applies Cosmic Storm Aftermath Modifiers. You can specify up to a max of 10 Severities and each one will be chosen based on it's chance.",
       "",

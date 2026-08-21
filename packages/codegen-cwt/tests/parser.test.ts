@@ -150,6 +150,15 @@ describe("rule types", () => {
     });
   });
 
+  it("classifies colon-paired dynamic values as authored scalar tokens", () => {
+    expect(classify(only("text = value[gui_element_name]:localisation").value)).toEqual({
+      kind: "scalar",
+    });
+    expect(classify(only("texture = value[gui_element_name]:<sprite>").value)).toEqual({
+      kind: "scalar",
+    });
+  });
+
   it("keeps anonymous block-member order, cardinality, and documentation", () => {
     const type = classify(
       only(
