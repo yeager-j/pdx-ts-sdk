@@ -256,12 +256,16 @@ export function TypeTableItem({
               </p>
             </>
           )}
-          {typeDescription && (
-            <>
-              <p className={cn(fieldVariants())}>{t("Type")}</p>
-              <p className="my-auto not-prose">{typeDescription}</p>
-            </>
-          )}
+          <p className={cn(fieldVariants())}>{t("Type")}</p>
+          <p className="my-auto min-w-0 not-prose [overflow-wrap:anywhere]">
+            {typeDescriptionLink ? (
+              <Link href={typeDescriptionLink} className="underline">
+                {typeDescription ?? type}
+              </Link>
+            ) : (
+              (typeDescription ?? type)
+            )}
+          </p>
           {availability && (
             <>
               <p className={cn(fieldVariants())}>{t("Availability")}</p>
