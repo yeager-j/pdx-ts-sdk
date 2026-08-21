@@ -7,8 +7,13 @@
 import type { PdxEntry } from "@pdx-ts/pdxscript";
 import { describe, expectTypeOf, it } from "vitest";
 
-import type { AmbientObjectRef, BuildingRef } from "../src/generated/refs.ts";
-import { ambientObjectFlags, countryFlags, planetFlags } from "../src/generated/value-sets.ts";
+import type { AmbientObjectRef, BuildingRef, MegastructureRef } from "../src/generated/refs.ts";
+import {
+  ambientObjectFlags,
+  countryFlags,
+  megastructureFlags,
+  planetFlags,
+} from "../src/generated/value-sets.ts";
 import type { EffectPath, EffectPathOf } from "../src/index.ts";
 import { eventTarget, makeScope, scopeValue } from "../src/script/effects/recorder.ts";
 import { isAtWar } from "../src/script/triggers.ts";
@@ -18,6 +23,10 @@ const flags = planetFlags("effects_type_test_flag");
 const ambientFlags = ambientObjectFlags("effects_type_test_ambient_flag");
 const ambientRef: AmbientObjectRef = { id: "effects_type_test_ambient" };
 const buildingRef = { id: "effects_type_test_building" } as BuildingRef;
+const megastructureRef = { id: "effects_type_test_megastructure" } as MegastructureRef;
+const megastructureFlag = megastructureFlags(
+  "effects_type_test_megastructure_flag"
+).effects_type_test_megastructure_flag;
 
 describe("generated effect scope safety", () => {
   it("types ambient-object placement refs, locations, and scalar/range offsets", () => {
@@ -59,6 +68,48 @@ describe("generated effect scope safety", () => {
           countryFlags("effects_type_test_country_flag").effects_type_test_country_flag
         ),
     });
+  });
+
+  it("types spawn-megastructure refs, names, ranges, and its pushed scope", () => {
+    const system = makeScope<"system">(sink);
+    system.spawnMegastructure({
+      type: megastructureRef,
+      name: {
+        key: "effects_type_test_megastructure_name",
+        variableString: ["effects_type_test_variable"],
+      },
+      orbitAngle: { min: 10, max: 20 },
+      initEffect: (megastructure) => megastructure.setMegastructureFlag(megastructureFlag),
+    });
+  });
+
+  it("rejects invalid spawn-megastructure forms", () => {
+    const system = makeScope<"system">(sink);
+    system.spawnMegastructure({
+      // @ts-expect-error — spawn_megastructure.type accepts megastructure refs, not buildings
+      type: buildingRef,
+      name: "effects_type_test_name",
+    });
+    system.spawnMegastructure({
+      type: megastructureRef,
+      name: {
+        key: "effects_type_test_name",
+        // @ts-expect-error — repeated variable_string entries author as an array
+        variableString: "effects_type_test_variable",
+      },
+    });
+    system.spawnMegastructure({
+      type: megastructureRef,
+      name: "effects_type_test_name",
+      initEffect: (megastructure) =>
+        // @ts-expect-error — the pushed scope is megastructure, not country
+        megastructure.setCountryFlag(
+          countryFlags("effects_type_test_country_flag").effects_type_test_country_flag
+        ),
+    });
+    const country = makeScope<"country">(sink);
+    // @ts-expect-error — spawn_megastructure is declared only in system scope
+    country.spawnMegastructure({ type: megastructureRef, name: "effects_type_test_name" });
   });
 
   it("rejects an effect outside its declared scopes", () => {

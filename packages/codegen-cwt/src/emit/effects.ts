@@ -25,12 +25,14 @@ import { camelCase, docComment, isPlainName, pascalCase, safeIdentifier } from "
 import {
   EFFECT_EXTENSION_SEAMS,
   EFFECT_FIELD_ADDITIONS,
+  EFFECT_FIELD_OPTIONALITY_OVERRIDES,
   EFFECT_FIELD_TYPE_OVERRIDES,
 } from "../overlay.ts";
 import type { ClassifiedLink } from "./links.ts";
 import type { ScriptEffectReferenceRow, ScriptScopeLinkReferenceRow } from "./script-reference.ts";
 import {
   canonicalScopeSet,
+  expandAliasFields,
   mergeFields,
   skippedRule,
   skipReason,
@@ -57,6 +59,8 @@ export interface EffectEmission {
   readonly fieldTypeOverrides: readonly string[];
   /** `EFFECT_FIELD_ADDITIONS` rows applied, with their evidence and rationale. */
   readonly fieldAdditions: readonly string[];
+  /** `EFFECT_FIELD_OPTIONALITY_OVERRIDES` rows applied, with their evidence and rationale. */
+  readonly fieldOptionalityOverrides: readonly string[];
   /** Scope-link path properties emitted from the shared link table. */
   readonly linkEmitted: number;
   /** Machine-readable rows projected from the post-overlay effect clusters. */
@@ -76,17 +80,41 @@ type EffectShape =
     }
   | { readonly kind: "fields"; readonly fields: readonly ArgField[] };
 
-function addOverlayFields(emitter: Emitter, key: string, shape: EffectShape): EffectShape {
-  const additions = EFFECT_FIELD_ADDITIONS.get(key);
-  if (additions === undefined) {
+function applyFieldOverlays(emitter: Emitter, key: string, shape: EffectShape): EffectShape {
+  const additions = EFFECT_FIELD_ADDITIONS.get(key) ?? [];
+  const optionalityOverrides = EFFECT_FIELD_OPTIONALITY_OVERRIDES.get(key) ?? [];
+  if (additions.length === 0 && optionalityOverrides.length === 0) {
     return shape;
   }
   if (shape.kind !== "fields" && shape.kind !== "wrapper") {
     throw new Error(
-      `EFFECT_FIELD_ADDITIONS names "${key}", but that effect does not emit an args block`
+      `Effect field overlay names "${key}", but that effect does not emit an args block`
     );
   }
-  const fields = shape.fields ?? [];
+  let fields = shape.fields ?? [];
+  const appliedOptionality = new Set<string>();
+  fields = fields.map((field) => {
+    const override = optionalityOverrides.find((candidate) => candidate.name === field.name);
+    if (override === undefined) {
+      return field;
+    }
+    if (field.optional === override.optional) {
+      throw new Error(
+        `EFFECT_FIELD_OPTIONALITY_OVERRIDES names "${key}.${field.name}", but CWT already ` +
+          `makes it ${override.optional ? "optional" : "required"} — retire the overlay row`
+      );
+    }
+    appliedOptionality.add(field.name);
+    return { ...field, optional: override.optional };
+  });
+  for (const override of optionalityOverrides) {
+    if (!appliedOptionality.has(override.name)) {
+      throw new Error(
+        `EFFECT_FIELD_OPTIONALITY_OVERRIDES names "${key}.${override.name}", which no ` +
+          "emitted effect field matches — retire the overlay row or fix its key"
+      );
+    }
+  }
   const names = new Set(fields.map((field) => field.name));
   const added = additions.map((addition): ArgField => {
     if (names.has(addition.name)) {
@@ -196,14 +224,13 @@ function shapeOf(
   if (categories.has("trigger")) {
     return skipReason("unsupported-alias-splice", "contains a bare trigger splice");
   }
-  if (categories.size > 0 && !categories.has("effect")) {
-    return skipReason(
-      "unsupported-alias-splice",
-      `splices a category the emitter cannot type (${[...categories].join(", ")})`
-    );
+  const argumentFields = body.fields.filter(
+    (field) => field.key.kind !== "aliasName" || field.key.category !== "effect"
+  );
+  const named = expandAliasFields(emitter, argumentFields);
+  if (!Array.isArray(named)) {
+    return named;
   }
-
-  const named = block.named;
   const pushedRaw = block.inheritedScope;
   const merged = named.length === 0 ? [] : mergeFields(emitter, named, pushedRaw, EFFECT_CLAUSES);
   if (!Array.isArray(merged)) {
@@ -238,30 +265,34 @@ function memberType(field: ArgField, outerScope: string, owner: string): string 
     return override.type;
   }
   const value = field.value;
-  switch (value.kind) {
-    case "scalar":
-      return value.value.type;
-    case "scalarOrFields":
-      return `${value.scalar.type} | ${argsType(value.fields, outerScope, owner)}`;
-    case "clause": {
-      const scope = value.scope === null ? outerScope : JSON.stringify(value.scope);
-      if (value.category === "trigger") {
-        return `Trigger<${scope}>`;
+  const type = (() => {
+    switch (value.kind) {
+      case "scalar":
+        return value.value.type;
+      case "scalarOrFields":
+        return `${value.scalar.type} | ${argsType(value.fields, outerScope, owner)}`;
+      case "clause": {
+        const scope = value.scope === null ? outerScope : JSON.stringify(value.scope);
+        if (value.category === "trigger") {
+          return `Trigger<${scope}>`;
+        }
+        if (value.category === "modifier_rule") {
+          return `readonly Modifier<${scope}>[]`;
+        }
+        return value.scope === null
+          ? `(scope: ScopeObjOf<${scope}>) => void`
+          : `(scope: ${scopeInterfaceName(value.scope)}) => void`;
       }
-      if (value.category === "modifier_rule") {
-        return `readonly Modifier<${scope}>[]`;
+      case "comparison": {
+        const literals = value.literals.map((literal) => JSON.stringify(literal));
+        return [value.value.type, `readonly [PdxOp, ${value.value.type}]`, ...literals].join(" | ");
       }
-      // `this` is illegal inside a nested object type, so same-scope effect
-      // closures in an args object get the cluster's scope union instead.
-      return value.scope === null
-        ? `(scope: ScopeObjOf<${scope}>) => void`
-        : `(scope: ${scopeInterfaceName(value.scope)}) => void`;
     }
-    case "comparison": {
-      const literals = value.literals.map((literal) => JSON.stringify(literal));
-      return [value.value.type, `readonly [PdxOp, ${value.value.type}]`, ...literals].join(" | ");
-    }
+  })();
+  if (field.repeated !== true) {
+    return type;
   }
+  return `readonly ${type.includes(" | ") ? `(${type})` : type}[]`;
 }
 
 function scopeInterfaceName(scope: string | null): string {
@@ -344,8 +375,9 @@ function scalarMeta(value: TsValue): string {
 }
 
 function fieldMeta(field: ArgField): string {
+  const repeated = field.repeated === true ? ", repeated: true" : "";
   if (field.value.kind === "scalarOrFields") {
-    return `{ prop: ${JSON.stringify(camelCase(field.name))}, key: ${JSON.stringify(field.name)}, kind: "scalar-or-fields", scalar: ${scalarMeta(field.value.scalar)}, fields: [${field.value.fields.map(fieldMeta).join(", ")}] }`;
+    return `{ prop: ${JSON.stringify(camelCase(field.name))}, key: ${JSON.stringify(field.name)}, kind: "scalar-or-fields", scalar: ${scalarMeta(field.value.scalar)}, fields: [${field.value.fields.map(fieldMeta).join(", ")}]${repeated} }`;
   }
   const kind =
     field.value.kind === "scalar"
@@ -361,7 +393,7 @@ function fieldMeta(field: ArgField): string {
   const booleanLiterals = booleanLiteralsMeta(
     field.value.kind === "scalar" ? field.value.value : undefined
   );
-  return `{ prop: ${JSON.stringify(camelCase(field.name))}, key: ${JSON.stringify(field.name)}, kind: ${JSON.stringify(kind)}${refTypes}${booleanLiterals} }`;
+  return `{ prop: ${JSON.stringify(camelCase(field.name))}, key: ${JSON.stringify(field.name)}, kind: ${JSON.stringify(kind)}${refTypes}${booleanLiterals}${repeated} }`;
 }
 
 function metaEntry(effect: EmittedEffect): string {
@@ -434,6 +466,7 @@ export function emitEffects(
   const skipped: SkippedRule[] = [];
   const scalarOnly: string[] = [];
   const appliedFieldAdditions = new Set<string>();
+  const appliedFieldOptionalityOverrides = new Set<string>();
   const byShape = new Map<string, number>();
   interface Cluster {
     readonly scopes: readonly string[] | "universal";
@@ -487,15 +520,25 @@ export function emitEffects(
       );
       continue;
     }
-    const shape = shapeOf(emitter, rule);
+    const isolatesNameAliasUsage = rule.blocks.some((block) =>
+      block.splices.some((field) => field.key.kind === "aliasName" && field.key.category === "name")
+    );
+    const ruleEmitter = isolatesNameAliasUsage ? new Emitter(emitter.rules) : emitter;
+    const shape = shapeOf(ruleEmitter, rule);
     if ("category" in shape) {
       skipped.push({ name: key, ...shape });
       continue;
     }
+    if (isolatesNameAliasUsage) {
+      emitter.absorb(ruleEmitter);
+    }
     const base = "scalarOnly" in shape ? shape.scalarOnly : shape;
-    const resolved = addOverlayFields(emitter, key, base);
+    const resolved = applyFieldOverlays(emitter, key, base);
     if (EFFECT_FIELD_ADDITIONS.has(key)) {
       appliedFieldAdditions.add(key);
+    }
+    if (EFFECT_FIELD_OPTIONALITY_OVERRIDES.has(key)) {
+      appliedFieldOptionalityOverrides.add(key);
     }
     if ("scalarOnly" in shape) {
       scalarOnly.push(key);
@@ -540,6 +583,14 @@ export function emitEffects(
       throw new Error(
         `EFFECT_FIELD_ADDITIONS names "${key}", which no emitted effect matches — ` +
           "retire the overlay row or fix its key"
+      );
+    }
+  }
+  for (const key of EFFECT_FIELD_OPTIONALITY_OVERRIDES.keys()) {
+    if (!appliedFieldOptionalityOverrides.has(key)) {
+      throw new Error(
+        `EFFECT_FIELD_OPTIONALITY_OVERRIDES names "${key}", which no emitted effect ` +
+          "matches — retire the overlay row or fix its key"
       );
     }
   }
@@ -747,6 +798,8 @@ export function emitEffects(
     '  readonly booleanLiterals?: readonly ("yes" | "no")[];\n' +
     "  /** Object-backed scalar forms accepted by a mixed scalar/block field. */\n" +
     '  readonly objectKinds?: readonly ("scope-ref" | "typed-ref")[];\n' +
+    "  /** Whether the field accepts repeated entries under the same script key. */\n" +
+    "  readonly repeated?: boolean;\n" +
     "  /** Scalar and structured-block arms for an overloaded field. */\n" +
     '  readonly scalar?: Pick<EffectFieldMeta, "refTypes" | "booleanLiterals" | "objectKinds">;\n' +
     "  readonly fields?: readonly EffectFieldMeta[];\n" +
@@ -812,6 +865,12 @@ export function emitEffects(
     fieldAdditions: [...EFFECT_FIELD_ADDITIONS].flatMap(([key, additions]) =>
       additions.map(
         (addition) => `${key}.${addition.name} ← ${addition.source} — ${addition.reason}`
+      )
+    ),
+    fieldOptionalityOverrides: [...EFFECT_FIELD_OPTIONALITY_OVERRIDES].flatMap(([key, overrides]) =>
+      overrides.map(
+        (override) =>
+          `${key}.${override.name} → ${override.optional ? "optional" : "required"} ← ${override.source} — ${override.reason}`
       )
     ),
     linkEmitted: links.length,

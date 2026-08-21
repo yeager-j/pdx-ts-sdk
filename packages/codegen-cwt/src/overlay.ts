@@ -527,6 +527,11 @@ export const CONTENT_CONTRIBUTION_SINKS = new Map<string, ContributionSink>([
  */
 export const EXTRA_ALIAS_CATEGORIES = new Map<string, string>([
   [
+    "name",
+    "The shared name field grammar spliced into creation and mutation effects. Its one member " +
+      "accepts a localisation/scalar value or a structured key with repeated variable strings.",
+  ],
+  [
     "pop_pre_trigger",
     "Seven plain bools consumed by `job.possible_pre_triggers` (and " +
       "pop_faction_type's can_join_pre_triggers). Every member is `bool`, so the " +
@@ -582,6 +587,13 @@ export interface EffectFieldAddition {
   readonly reason: string;
 }
 
+export interface EffectFieldOptionalityOverride {
+  readonly name: string;
+  readonly optional: boolean;
+  readonly source: string;
+  readonly reason: string;
+}
+
 /**
  * Fields the game documentation declares for an effect but CWT omits.
  *
@@ -603,6 +615,40 @@ export const EFFECT_FIELD_ADDITIONS = new Map<string, readonly EffectFieldAdditi
           "The game documentation accepts `target = <target>` in the VFX form, but the CWT " +
           "rule omits that field. The minimal documented form does not require it, so the " +
           "authoring member is optional.",
+      },
+    ],
+  ],
+  [
+    "create_ship",
+    [
+      {
+        name: "create_colony",
+        type: { kind: "bool" },
+        optional: true,
+        source: "vendor/cwtools-stellaris-config/script-docs/v4.4.1/effects.log:345-358",
+        reason:
+          "The game documentation accepts `create_colony = yes/no`, defaulting to yes, but " +
+          "the CWT rule omits the field. The default makes the authoring member optional.",
+      },
+    ],
+  ],
+]);
+
+/** Fields whose documented optionality disagrees with CWT cardinality. */
+export const EFFECT_FIELD_OPTIONALITY_OVERRIDES = new Map<
+  string,
+  readonly EffectFieldOptionalityOverride[]
+>([
+  [
+    "declare_war",
+    [
+      {
+        name: "name",
+        optional: true,
+        source: "vendor/cwtools-stellaris-config/script-docs/v4.4.1/effects.log:590-596",
+        reason:
+          "The game documentation explicitly calls the war name optional, while the CWT " +
+          "alias splice has default required cardinality.",
       },
     ],
   ],

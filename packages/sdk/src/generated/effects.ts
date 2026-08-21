@@ -694,6 +694,70 @@ export interface EffectsIn4Scopes2b24 {
   closeBranchOffice(value?: boolean): void;
 
   /**
+   * Creates a new army
+   * ```
+   * create_army = {
+   * 	name = <string>
+   * 	owner = <target>
+   * 	species = <target>/random
+   * 	type = <key>
+   * }
+   * ```
+   */
+  createArmy(args: {
+    name?: string | "random" | { key: string; variableString?: readonly string[] };
+    owner: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+    type: ArmyRef | string;
+    species?:
+      | ScopeValue<
+          | "army"
+          | "carrier"
+          | "country"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "planet"
+          | "pop_group"
+          | "ship"
+          | "species"
+        >
+      | string;
+    leader?: ScopeValue<
+      | "archaeological_site"
+      | "army"
+      | "country"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "pop_faction"
+      | "sector"
+      | "ship"
+    >;
+    effect?: (scope: ArmyScope) => void;
+  }): void;
+
+  /**
    * Creates a new pop_group on the scoped planet
    * ```
    * create_pop_group = {
@@ -2404,6 +2468,58 @@ export interface EffectsInArmy {
   damageArmy(value: ScriptValue): void;
 
   /**
+   * Modifies army with parameters:
+   * ```
+   * modify_army = {
+   * 	name = <string>
+   * 	owner = <target>
+   * 	species = <target>/random
+   * 	type = <key>
+   * }
+   * ```
+   */
+  modifyArmy(args: {
+    name?: "random" | string | { key: string; variableString?: readonly string[] };
+    owner?: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+    species?:
+      | ScopeValue<
+          | "army"
+          | "carrier"
+          | "country"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "planet"
+          | "pop_group"
+          | "ship"
+          | "species"
+        >
+      | string;
+    type?: ArmyRef | string;
+  }): void;
+
+  /**
    * Removes the scoped army
    * ```
    * remove_army = yes
@@ -3642,6 +3758,44 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
   deactivateFogMachine(value?: boolean): void;
 
   /**
+   * Declares war between the scoped country and target country
+   * ```
+   * declare_war = {
+   * 	target = <target country>
+   * 	name = <optional war name>
+   * 	attacker_war_goal = <war goal>
+   * }
+   * ```
+   */
+  declareWar(args: {
+    target: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+    attackerWarGoal: WarGoalRef | string;
+    name?: string | { key: string; variableString?: readonly string[] };
+    effect?: (scope: WarScope) => void;
+  }): void;
+
+  /**
    * Destroys the scoped country
    * ```
    * destroy_country = yes
@@ -4460,6 +4614,39 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
       | "system"
     >;
     target?: ScopeValue<"country">;
+  }): void;
+
+  /**
+   * Join federation with target
+   * ```
+   * join_alliance = { who = <target> override_requirements = yes/no }
+   * ```
+   */
+  joinAlliance(args: {
+    who: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+    overrideRequirements: boolean;
+    name: string | { key: string; variableString?: readonly string[] };
   }): void;
 
   /**
@@ -9050,6 +9237,105 @@ export interface EffectsInFleetShip {
   setTerrifiedBy(value: ScopeValue<"ship">): void;
 }
 
+/** Effects valid in: fleet, starbase. */
+export interface EffectsInFleetStarbase {
+  /**
+   * Creates a new ship
+   * ```
+   * create_ship = {
+   * 	name = <string/random>
+   * 	design = <ship design key/target/last_created_design, or use random_existing_design>
+   * 	random_existing_design = <ship size key>
+   * 	graphical_culture = <graphical culture key> graphical_culture_fallback = <graphical culture key>
+   * prefix = <Y(default)/N, determines if ship name should use owner country prefix>
+   * 	suffix = <Y/N(default), determines if ship name should use numericals. If so, name will be added to the owner country's namelist>
+   * 	colonizer_species = <species, default: fleet owner founder species> age = <int> (optional)
+   * 	rarity = <common/rare/epic/exceptional, used only if ship is space fauna> (optional, fallbacks to highest owned genetic material if applicable but not set)
+   * 	growth_stage = <integer value between 1 and the amount of growth stages in the design> (optional, use the first growth stage by default)
+   * 	create_colony = yes/no (default: yes; if yes, will also create the carrier colony,only when ship_size is marked to carry a colony. WARNING: carrier ships with no colony are killed on a daily basis)
+   * }
+   * ```
+   */
+  createShip(args: {
+    name?:
+      string | "random" | ScopeValue<"ship"> | { key: string; variableString?: readonly string[] };
+    design?: string | GlobalShipDesignRef | ScopeValue<"design"> | "last_created_design";
+    randomExistingDesign?: ShipSizeRef | string;
+    prefix?: boolean;
+    suffix?: boolean;
+    graphicalCulture?:
+      | GraphicalCultureRef
+      | string
+      | ScopeValue<
+          | "agreement"
+          | "archaeological_site"
+          | "army"
+          | "carrier"
+          | "country"
+          | "debris"
+          | "deposit"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "megastructure"
+          | "planet"
+          | "pop_faction"
+          | "pop_group"
+          | "sector"
+          | "ship"
+          | "situation"
+          | "species"
+          | "spy_network"
+          | "starbase"
+          | "system"
+        >;
+    graphicalCultureFallback?:
+      | GraphicalCultureRef
+      | string
+      | ScopeValue<
+          | "agreement"
+          | "archaeological_site"
+          | "army"
+          | "carrier"
+          | "country"
+          | "debris"
+          | "deposit"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "megastructure"
+          | "planet"
+          | "pop_faction"
+          | "pop_group"
+          | "sector"
+          | "ship"
+          | "situation"
+          | "species"
+          | "spy_network"
+          | "starbase"
+          | "system"
+        >;
+    upgradable?: boolean;
+    colonizerSpecies?: ScopeValue<
+      | "army"
+      | "carrier"
+      | "country"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "planet"
+      | "pop_group"
+      | "ship"
+      | "species"
+    >;
+    age?: number | "min" | "random";
+    rarity?: ShipRarity;
+    createColony?: boolean;
+    effect?: (scope: ShipScope) => void;
+    growthStage?: number;
+  }): void;
+}
+
 /** Effects valid in: leader. */
 export interface EffectsInLeader {
   /**
@@ -11914,6 +12200,81 @@ export interface EffectsInSystem {
     graphicsEntityName?: ModelEntityRef | string;
     spawnSound?: boolean;
     initEffect?: (scope: AstralRiftScope) => void;
+  }): void;
+
+  /**
+   * Spawns a mega structure in a system.
+   * ```
+   * spawn_megastructure = {
+   * 	type = ring_world_ruined
+   * 	name = <string>
+   * 	owner = <target>
+   * 	planet = <planet/star target>
+   * 	coords_from = <target> (use this or 'planet' to set the location)
+   * 	graphical_culture = <target>
+   * 	orbit_distance = 50
+   * 	orbit_angle = 50
+   * }
+   * ```
+   */
+  spawnMegastructure(args: {
+    type: MegastructureRef | string;
+    planet?: ScopeValue<
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "deposit"
+      | "fleet"
+      | "megastructure"
+      | "planet"
+      | "pop_group"
+      | "ship"
+    >;
+    coordsFrom?: ScopeValue<
+      | "ambient_object"
+      | "archaeological_site"
+      | "astral_rift"
+      | "bypass"
+      | "carrier"
+      | "colony"
+      | "debris"
+      | "fleet"
+      | "megastructure"
+      | "planet"
+      | "ship"
+      | "situation"
+      | "starbase"
+      | "system"
+    >;
+    name: string | { key: string; variableString?: readonly string[] };
+    orbitAngle?: "random" | number | { min: number; max: number };
+    orbitDistance?: ScriptValue | { min: ScriptValue; max: ScriptValue };
+    owner?: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+    graphicalCulture?:
+      GraphicalCultureRef | string | ScopeValue<"country" | "megastructure" | "ship">;
+    randomPos?: boolean;
+    initEffect?: (scope: MegastructureScope) => void;
   }): void;
 
   /**
@@ -14783,6 +15144,7 @@ export interface FleetScope
     EffectsInFleet,
     EffectsInFleetMegastructureShip,
     EffectsInFleetShip,
+    EffectsInFleetStarbase,
     UniversalEffects,
     EffectPathsIn11Scopes2089,
     EffectPathsIn13Scopesa2e3,
@@ -15149,6 +15511,7 @@ export interface StarbaseScope
     EffectsIn5Scopesb6d1,
     EffectsIn9Scopes5f8a,
     EffectsIn9Scopesd3d6,
+    EffectsInFleetStarbase,
     EffectsInPlanetStarbase,
     EffectsInStarbase,
     UniversalEffects,

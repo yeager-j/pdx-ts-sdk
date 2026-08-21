@@ -72,29 +72,6 @@ export const SCRIPT_GENERATION_GAPS: readonly ScriptGenerationGap[] = [
     ["pop_event", "remove_pop_flag", "set_pop_flag", "set_timed_pop_flag"]
   ),
   ...acknowledged(
-    "effect",
-    "unsupported-alias-splice",
-    "SDK-244",
-    "The effect emitter cannot type the name alias category.",
-    [
-      "clone_leader",
-      "create_army",
-      "create_balanced_fleet",
-      "create_country",
-      "create_fleet",
-      "create_leader",
-      "create_random_fleet",
-      "create_rebels",
-      "create_saved_leader",
-      "create_ship",
-      "create_species",
-      "declare_war",
-      "join_alliance",
-      "modify_army",
-      "spawn_megastructure",
-    ]
-  ),
-  ...acknowledged(
     "trigger",
     "missing-push-scope",
     "SDK-245",
@@ -123,7 +100,14 @@ export const SCRIPT_GENERATION_GAPS: readonly ScriptGenerationGap[] = [
     "repeated-nested-field",
     "SDK-246",
     "The script argument model has no array form for repeated nested fields.",
-    ["create_colony", "start_colony"]
+    ["create_colony", "create_country", "create_rebels", "start_colony"]
+  ),
+  ...acknowledged(
+    "effect",
+    "repeated-structured-scalar-arms",
+    "SDK-246",
+    "The script argument model cannot preserve repetition across scalar and structured arms.",
+    ["create_species"]
   ),
   ...acknowledged(
     "trigger",
@@ -180,10 +164,15 @@ export const SCRIPT_GENERATION_GAPS: readonly ScriptGenerationGap[] = [
     [
       "add_timeline_event",
       "clear_relations",
+      "clone_leader",
       "copy_ascension_perks_from",
       "copy_techs_from",
       "copy_traditions_from",
+      "create_balanced_fleet",
+      "create_leader",
       "create_message",
+      "create_random_fleet",
+      "create_saved_leader",
       "custom_tooltip_with_params",
       "fire_on_action",
       "give_specimen",
@@ -194,6 +183,13 @@ export const SCRIPT_GENERATION_GAPS: readonly ScriptGenerationGap[] = [
       "start_storm_area_placing",
       "storm_apply_aftermath_modifier",
     ]
+  ),
+  ...acknowledged(
+    "effect",
+    "unsupported-field-value",
+    "SDK-253",
+    "The create_fleet parent field uses the malformed CWT keyword sceop[fleet].",
+    ["create_fleet"]
   ),
   ...acknowledged(
     "effect",

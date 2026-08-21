@@ -169,7 +169,50 @@ export interface ArgField {
   readonly name: string;
   readonly value: ArgValue;
   readonly optional: boolean;
+  readonly repeated?: boolean;
   readonly docs: readonly string[];
+}
+
+type AliasExpandedField = RuleField & { readonly aliasCategory: string };
+
+function isAliasExpandedField(field: RuleField): field is AliasExpandedField {
+  return "aliasCategory" in field;
+}
+
+export function expandAliasFields(
+  emitter: Emitter,
+  fields: readonly RuleField[]
+): RuleField[] | SkipReason {
+  const expanded: RuleField[] = [];
+  for (const field of fields) {
+    if (field.key.kind !== "aliasName") {
+      expanded.push(field);
+      continue;
+    }
+    const members = emitter.rules.aliasCategories.get(field.key.category);
+    if (members === undefined) {
+      return skipReason(
+        "unsupported-alias-splice",
+        `splices a category the emitter cannot type (${field.key.category})`
+      );
+    }
+    for (const [name, declarations] of members) {
+      for (const declaration of declarations) {
+        const expandedField: AliasExpandedField = {
+          key: { kind: "name", name },
+          type: declaration.type,
+          cardinality: field.cardinality,
+          docs: [...field.docs, ...declaration.docs],
+          scope: field.scope ?? declaration.scope,
+          line: field.line,
+          comparison: field.comparison || declaration.comparison,
+          aliasCategory: field.key.category,
+        };
+        expanded.push(expandedField);
+      }
+    }
+  }
+  return expanded;
 }
 
 /** The category of a block holding nothing but alias splices, else null. */
@@ -273,7 +316,8 @@ export function mergeFields(
   emitter: Emitter,
   fields: readonly RuleField[],
   inheritedScope: string | null,
-  allowedClauses: ReadonlySet<ClauseCategory>
+  allowedClauses: ReadonlySet<ClauseCategory>,
+  preserveRepeated = false
 ): ArgField[] | SkipReason {
   const grouped = new Map<string, RuleField[]>();
   for (const field of expandEnumKeys(emitter, fields)) {
@@ -291,6 +335,7 @@ export function mergeFields(
   const merged: ArgField[] = [];
   for (const [name, group] of grouped) {
     const optional = group.some((field) => isOptional(field.cardinality));
+    const repeated = preserveRepeated && group.some((field) => isRepeated(field.cardinality));
     const docs = group.flatMap((field) => field.docs);
     const clauses = group.filter((field) => clauseOf(field.type) !== null);
 
@@ -313,6 +358,7 @@ export function mergeFields(
         name,
         value: { kind: "clause", category, scope, splice: false },
         optional,
+        ...(repeated ? { repeated: true } : {}),
         docs,
       });
       continue;
@@ -358,7 +404,8 @@ export function mergeFields(
           `field "${name}" structured arm has bare values`
         );
       }
-      if (hasRepeatedNestedField(block.fields)) {
+      const preserveNested = group.some(isAliasExpandedField);
+      if (hasRepeatedNestedField(block.fields) && !preserveNested) {
         return skipReason(
           "repeated-nested-field",
           `field "${name}" structured arm has repeated nested fields`
@@ -368,7 +415,8 @@ export function mergeFields(
         emitter,
         block.fields,
         structured[0]!.scope?.this ?? inheritedScope,
-        allowedClauses
+        allowedClauses,
+        preserveNested
       );
       if (!Array.isArray(fields)) {
         return {
@@ -386,6 +434,7 @@ export function mergeFields(
         name,
         value: { kind: "scalarOrFields", scalar, fields },
         optional,
+        ...(repeated ? { repeated: true } : {}),
         docs,
       });
       continue;
@@ -410,7 +459,13 @@ export function mergeFields(
           `comparison field "${name}" overloaded with a non-literal declaration`
         );
       }
-      merged.push({ name, value: { kind: "comparison", value, literals }, optional, docs });
+      merged.push({
+        name,
+        value: { kind: "comparison", value, literals },
+        optional,
+        ...(repeated ? { repeated: true } : {}),
+        docs,
+      });
       continue;
     }
 
@@ -421,7 +476,13 @@ export function mergeFields(
         `field "${name}" has a type the emitter cannot express`
       );
     }
-    merged.push({ name, value: { kind: "scalar", value }, optional, docs });
+    merged.push({
+      name,
+      value: { kind: "scalar", value },
+      optional,
+      ...(repeated ? { repeated: true } : {}),
+      docs,
+    });
   }
   return merged;
 }

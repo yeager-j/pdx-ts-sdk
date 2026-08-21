@@ -2589,6 +2589,28 @@ describe("effect references in generated content", () => {
       /references ambient_object .*create_ambient_object\.type/
     );
   });
+
+  it("checks an owned megastructure ref in a solar-system initializer closure", () => {
+    const cap = capabilityFor(configFor("Megastructure effect reference test", "mega_ref_test"));
+    const megastructure = cap.megastructure("gateway", {
+      name: "Reference Gateway",
+      entity: "mega_ref_test_entity",
+      buildTime: 3600,
+    });
+    const system = cap.solarSystemInitializer("home", {
+      class: "sc_g",
+      initEffect: (scope) => {
+        scope.spawnMegastructure({ type: megastructure, name: "mega_ref_test_gateway" });
+      },
+    });
+    const complete = cap.feature(undefined, [megastructure, system]);
+    expect(() => render(cap.compile([complete]))).not.toThrow();
+
+    const omitted = cap.feature(undefined, [system]);
+    expect(() => render(cap.compile([omitted]))).toThrow(
+      /references megastructure .*spawn_megastructure\.type/
+    );
+  });
 });
 
 describe("SDK-44: conditionally-required localization and the global_ship_design name hole", () => {

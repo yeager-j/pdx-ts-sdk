@@ -162,6 +162,30 @@ export class Emitter {
     };
   }
 
+  absorb(other: Emitter): void {
+    for (const name of other.usedEnums) {
+      this.usedEnums.add(name);
+      this.scopedEnums.add(name);
+    }
+    for (const name of other.usedRefs) {
+      this.usedRefs.add(name);
+      this.scopedRefs.add(name);
+    }
+    for (const name of other.usedValueSets) {
+      this.usedValueSets.add(name);
+      this.scopedValueSets.add(name);
+    }
+    for (const name of other.unknownScopes) {
+      this.unknownScopes.add(name);
+    }
+    for (const name of other.unknownScopeGroups) {
+      this.unknownScopeGroups.add(name);
+    }
+    for (const name of other.usedScopeGroups) {
+      this.usedScopeGroups.add(name);
+    }
+  }
+
   enumTypeName(name: string): string {
     return pascalCase(name);
   }

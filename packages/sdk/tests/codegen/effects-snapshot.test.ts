@@ -34,6 +34,15 @@ function metaEntry(name: string): string {
   return meta.slice(start, end + 2).trim();
 }
 
+function structuredMetaEntry(name: string): string {
+  const start = meta.indexOf(`  ${name}: {`);
+  if (start === -1) {
+    throw new Error(`${name} is not in the generated effect meta`);
+  }
+  const end = meta.indexOf("\n  },", start);
+  return meta.slice(start, end + 5).trim();
+}
+
 describe("emitted effect signatures", () => {
   it("createAmbientObject exposes its scalar/block offsets and pushed scope", () => {
     const create = signature("createAmbientObject");
@@ -49,9 +58,7 @@ describe("emitted effect signatures", () => {
   });
 
   it("createAmbientObject metadata preserves nested scalar/block arms", () => {
-    const start = meta.indexOf("  createAmbientObject: {");
-    const end = meta.indexOf("  createCluster:", start);
-    const entry = meta.slice(start, end);
+    const entry = structuredMetaEntry("createAmbientObject");
     expect(entry).toContain('key: "create_ambient_object"');
     expect(entry.match(/kind: "scalar-or-fields"/g)).toHaveLength(3);
     expect(entry).toContain('key: "entity_offset"');
@@ -74,9 +81,7 @@ describe("emitted effect signatures", () => {
   });
 
   it("createPopGroup metadata discriminates scope-valued ethos from its structured arm", () => {
-    const start = meta.indexOf("  createPopGroup: {");
-    const end = meta.indexOf("  createResearchStation:", start);
-    const entry = meta.slice(start, end);
+    const entry = structuredMetaEntry("createPopGroup");
     expect(entry).toContain('key: "create_pop_group"');
     expect(entry).toContain('prop: "ethos"');
     expect(entry).toContain('kind: "scalar-or-fields"');

@@ -826,6 +826,10 @@ async function main(): Promise<void> {
   );
   reportSection("Effects emitted scalar-only (block overload dropped)", effects.scalarOnly);
   reportSection("Effect field types replaced by the overlay", effects.fieldTypeOverrides);
+  reportSection(
+    "Effect field optionality replaced by the overlay",
+    effects.fieldOptionalityOverrides
+  );
   reportSection("Effect fields added by the overlay", effects.fieldAdditions);
   reportSection("On-actions not emitted", onActions.skipped);
   reportSection(
