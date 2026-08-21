@@ -11,7 +11,8 @@ Stellaris loads. Use the narrowest authoring surface for each kind of text:
 - Put a definition's own text in its generated localization members, such as
   `name` and `desc`.
 - Use `mod.localization` when another script field needs a standalone key owned
-  by your mod.
+  by your mod. It adds the mod prefix by default, or can preserve an exact key
+  in the ordinary localization layer.
 - Use `mod.replaceLocalization` only when you intend to replace an exact key
   that already exists.
 
@@ -92,6 +93,30 @@ value is a mod item: place it in a [Feature](/guides/features-and-discovery/)
 and include that Feature in `mod.compile`, just like content and events. The
 Feature's stem selects the localization filename.
 
+### Preserve an exact key in ordinary localization
+
+Some game-defined key patterns decide the complete key spelling. A technology
+with `gateway: "crystal_resonance_orbital"`, for example, needs the exact key
+`gateway_crystal_resonance_orbital`:
+
+```ts
+const gatewayDescription = mod.localization(
+  "gateway_crystal_resonance_orbital",
+  "Orbital Resonance path: Researching this technology leads to further advancements.",
+  { prefix: false }
+);
+```
+
+`prefix: false` changes only the emitted key. The item still belongs to the
+creating mod, still goes in a Feature, and still writes to ordinary
+`localisation/<language>/`. Its `.key` type is the exact supplied string.
+
+Use this option only when Stellaris decides the full key pattern. The SDK checks
+the key's syntax and duplicate registrations, but it cannot prevent the exact
+key from colliding with Vanilla or another mod. Include the mod prefix within
+the key where the game-defined pattern permits it, as the gateway value above
+does.
+
 ## Replace an exact existing key deliberately
 
 The paired example's `mod.replaceLocalization("crisis.2010.a", ...)` call
@@ -111,6 +136,10 @@ Use this for a free-standing key that a typed content patch cannot reach, such
 as existing event option text. The SDK cannot prove that the key exists in
 Stellaris or another mod. A typo therefore creates an unused entry instead of
 replacing anything.
+
+Do not use `replaceLocalization` only because a new mod-owned key needs exact
+spelling. Use `mod.localization(key, text, { prefix: false })` for that case so
+the entry remains in ordinary localization.
 
 A language record always carries `english`, so a replacement cannot ship a
 translation alone: the English text is emitted into the replace layer too, and

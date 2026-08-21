@@ -25,6 +25,21 @@ describe("standalone localization types", () => {
     expectTypeOf(counter.key).toEqualTypeOf<
       MintedLocalizationKey<"localization_types", "COUNTER.01">
     >();
+    const explicitPrefix = mod.localization("explicit_prefix", "Explicit prefix", {
+      prefix: true,
+    });
+    expectTypeOf(explicitPrefix).toEqualTypeOf<
+      LocalizationItem<"localization_types", "explicit_prefix">
+    >();
+    expectTypeOf(explicitPrefix.key).toEqualTypeOf<"localization_types_explicit_prefix">();
+
+    const exact = mod.localization("gateway_localization_types", "Gateway", { prefix: false });
+    expectTypeOf(exact).toEqualTypeOf<
+      LocalizationItem<"localization_types", "gateway_localization_types", false>
+    >();
+    expectTypeOf(exact.key).toEqualTypeOf<"gateway_localization_types">();
+    mod.feature("exact", [mod.localization("COUNTER", "Counter", { prefix: false })]);
+
     const replacement = mod.replaceLocalization("crisis.2010.a", {
       english: "Reconsider.",
       french: "Réfléchissez.",

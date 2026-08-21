@@ -74,11 +74,13 @@ The key must match the `gateway` value exactly after the `gateway_` prefix.
 Include the mod prefix in a mod-owned gateway value, as the example does, so
 it cannot collide with a vanilla or third-party gateway.
 
-The example makes that exact key with `mod.replaceLocalization` and places the
-returned item in the same Feature as the technology. `mod.localization` is not
-suitable for this pattern because it puts the mod prefix before the supplied
-suffix instead of preserving the required `gateway_<gateway>` key. See
-[Localization](/concepts/localization/) for the difference between the two.
+The example makes that exact ordinary key with
+`mod.localization(key, text, { prefix: false })` and places the returned item
+in the same Feature as the technology. Disabling automatic prefixing can
+collide with Vanilla or another mod, so include the mod prefix in the gateway
+value itself. Use `mod.replaceLocalization` only when deliberately replacing an
+existing key through `localisation/replace/`. See
+[Localization](/concepts/localization/) for the complete distinction.
 
 ### Starting technologies have a separate eligibility check
 

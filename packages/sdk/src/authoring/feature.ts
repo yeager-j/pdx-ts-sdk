@@ -28,7 +28,7 @@ export type ModItem =
   | OnActionHookItem
   | ContentPatchItem
   | ContributionItem
-  | LocalizationItem
+  | LocalizationItem<string, string, boolean>
   | ReplacementLocalizationItem
   | AssetFileItem;
 
