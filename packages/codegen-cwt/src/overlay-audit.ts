@@ -34,9 +34,9 @@ export interface RegistryKeyedOverlayTable {
  *
  * Covers `MINT_SHAPE_OVERLAYS`, `EXACT_NAME_MINTS`, `FILE_STEM_OVERLAYS`,
  * `HAND_WRITTEN_CONTENT_DEFINERS`, `CONTENT_CONTRIBUTION_SINKS`,
- * `CONTENT_SUBTYPE_REFERENCE_REFINEMENTS`, and `CONTENT_PATCH_REGISTRIES` —
- * every overlay table keyed directly by a registry name, as opposed to a
- * `<registry>.<field>` path.
+ * `CONTENT_SUBTYPE_REFERENCE_REFINEMENTS`, `CONTENT_PATCH_REGISTRIES`, and
+ * `CONTENT_SCOPE_PARAMETERS` — every overlay table keyed directly by a
+ * registry name, as opposed to a `<registry>.<field>` path.
  */
 export function assertOverlayRegistriesKnown(
   tables: readonly RegistryKeyedOverlayTable[],
@@ -71,7 +71,20 @@ export function assertPatchWideningsTargetPatchableRegistries(
   patchableRegistries: ReadonlySet<string>
 ): void {
   for (const key of keys) {
-    const registry = key.split(".")[0]!;
+    const segments = key.split(".");
+    // A member name never contains a dot, so a widening key is always exactly
+    // one registry segment and one member segment. The consumption site
+    // (`emit/content-type.ts`'s `patchTypes`) reads this table with an exact
+    // `${type.name}.${entry.member}` lookup — a three-segment key like
+    // `technology.prerequisites.extra` would resolve a registry correctly
+    // here while never matching that lookup, leaving the row silently dead.
+    if (segments.length !== 2 || segments[0] === "" || segments[1] === "") {
+      throw new Error(
+        `${tableId} names "${key}", which is not a "<registry>.<member>" path — ` +
+          "retire the row or fix the key"
+      );
+    }
+    const registry = segments[0]!;
     if (!patchableRegistries.has(registry)) {
       throw new Error(
         `${tableId} widens "${key}", whose registry "${registry}" is not in ` +
@@ -138,9 +151,13 @@ export function assertHandWrittenTriggerExportsMatchRules(
   loadedTriggerRuleKeys: ReadonlySet<string>
 ): void {
   for (const entry of exports) {
-    if (entry.ruleKey === undefined || !entry.expectedInRules) {
+    if (!entry.expectedInRules) {
       continue;
     }
+    // Narrowed to the `expectedInRules: true` arm here, so `ruleKey` is a
+    // required `string` — the union in trigger-policy.ts makes the
+    // `expectedInRules: true`-with-no-`ruleKey` combination a compile error
+    // rather than something this check has to guard against at runtime.
     if (!loadedTriggerRuleKeys.has(entry.ruleKey.toLowerCase())) {
       throw new Error(
         `HAND_WRITTEN_TRIGGER_EXPORTS names ruleKey "${entry.ruleKey}" for export ` +

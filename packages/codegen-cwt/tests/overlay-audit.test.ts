@@ -26,6 +26,7 @@ import {
   CONTENT_DECLINED_FIELDS,
   CONTENT_FIELD_OVERRIDES,
   CONTENT_PATCH_REGISTRIES,
+  CONTENT_SCOPE_PARAMETERS,
   CONTENT_SUBTYPE_REFERENCE_REFINEMENTS,
   EXACT_NAME_MINTS,
   FIELD_WIDENINGS,
@@ -46,7 +47,11 @@ import {
   assertScriptedModifierCategoryMapValid,
   OverlayAudit,
 } from "@pdx-ts/codegen-cwt/overlay-audit";
-import { HAND_WRITTEN_TRIGGER_EXPORTS } from "@pdx-ts/codegen-cwt/trigger-policy";
+import {
+  HAND_WRITTEN_TRIGGER_EXPORTS,
+  handWrittenTriggerRulesByKey,
+  type HandWrittenTriggerExport,
+} from "@pdx-ts/codegen-cwt/trigger-policy";
 import { describe, expect, it } from "vitest";
 
 const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
@@ -71,6 +76,7 @@ describe("assertOverlayRegistriesKnown", () => {
             keys: CONTENT_SUBTYPE_REFERENCE_REFINEMENTS.keys(),
           },
           { tableId: "CONTENT_PATCH_REGISTRIES", keys: CONTENT_PATCH_REGISTRIES.keys() },
+          { tableId: "CONTENT_SCOPE_PARAMETERS", keys: CONTENT_SCOPE_PARAMETERS.keys() },
         ],
         realRegistryNames
       )
@@ -84,6 +90,21 @@ describe("assertOverlayRegistriesKnown", () => {
         realRegistryNames
       )
     ).toThrow('FAKE_TABLE names "not_a_real_registry", which is not a known registry');
+  });
+
+  it("rejects a CONTENT_SCOPE_PARAMETERS row keyed to a renamed or mistyped registry", () => {
+    // Review fault 4: CONTENT_SCOPE_PARAMETERS is consumed only via
+    // `CONTENT_SCOPE_PARAMETERS.get(registry)` (emit/content-type.ts's
+    // `scopeParameterOf`) — a row FOUND there is checked further (scope
+    // names, declaredFrom), but a row keyed to a registry nothing resolves
+    // to is never looked up at all, so it rotted silently until this table
+    // joined the Group A registry-keyed check in index.ts.
+    expect(() =>
+      assertOverlayRegistriesKnown(
+        [{ tableId: "CONTENT_SCOPE_PARAMETERS", keys: ["decisionn"] }],
+        realRegistryNames
+      )
+    ).toThrow('CONTENT_SCOPE_PARAMETERS names "decisionn", which is not a known registry');
   });
 });
 
@@ -108,6 +129,24 @@ describe("assertPatchWideningsTargetPatchableRegistries", () => {
         patchableRegistries
       )
     ).toThrow('PATCH_WIDENINGS widens "decision.custom_tooltip", whose registry "decision"');
+  });
+
+  it("rejects a three-segment key even when its first segment is patchable", () => {
+    // The real consumption site (emit/content-type.ts's `patchTypes`) reads
+    // this table with an exact `${type.name}.${entry.member}` lookup, so
+    // "technology.prerequisites.extra" would resolve a patchable registry
+    // here while never matching that lookup at all — a row that looks live
+    // but is silently dead. Review fault 1.
+    expect(() =>
+      assertPatchWideningsTargetPatchableRegistries(
+        "PATCH_WIDENINGS",
+        ["technology.prerequisites.extra"],
+        patchableRegistries
+      )
+    ).toThrow(
+      'PATCH_WIDENINGS names "technology.prerequisites.extra", which is not a ' +
+        '"<registry>.<member>" path'
+    );
   });
 });
 
@@ -195,6 +234,49 @@ describe("assertHandWrittenTriggerExportsMatchRules", () => {
         loadedTriggerRuleKeys
       )
     ).not.toThrow();
+  });
+});
+
+describe("HandWrittenTriggerExport's discriminated shape", () => {
+  it("cannot represent expectedInRules: true with no ruleKey (compile-time only)", () => {
+    // Review fault 2: this combination used to type-check and pass the
+    // runtime validator by being skipped unchecked (`ruleKey === undefined`
+    // short-circuited it) — it would reserve `exportName` while never
+    // entering `HAND_WRITTEN_TRIGGER_RULES_BY_KEY`, so `emit/triggers.ts`
+    // would still generate the rules-declared trigger of the same key and
+    // the hand-written export would silently shadow it. The union in
+    // trigger-policy.ts now makes the combination unrepresentable, so the
+    // proof lives at compile time: without the `@ts-expect-error` below,
+    // `npm run typecheck` (which covers this test file) fails.
+    // @ts-expect-error — expectedInRules: true requires ruleKey: string.
+    const impossible: HandWrittenTriggerExport = {
+      exportName: "impossible",
+      kind: "typed-leaf-trigger",
+      expectedInRules: true,
+      reason: "test",
+    };
+    expect(impossible.exportName).toBe("impossible");
+  });
+});
+
+describe("handWrittenTriggerRulesByKey", () => {
+  it("resolves a ruleKey however it is cased, matching emit/triggers.ts's own .toLowerCase() lookup", () => {
+    // Review fault 3: emit/triggers.ts looks up `key.toLowerCase()` where
+    // `key` is a loaded trigger rule's own spelling (e.g. "current_stage").
+    // Before this fix the by-key map stored `ruleKey` verbatim, so a row
+    // spelled "Current_Stage" would validate fine (the validator lowercases
+    // *its* candidate) but never be found at the real consumption site,
+    // leaving both the generated and hand-written triggers live at once.
+    const mixedCaseRow: HandWrittenTriggerExport = {
+      exportName: "mixedCaseExport",
+      ruleKey: "Current_Stage",
+      kind: "typed-leaf-trigger",
+      expectedInRules: true,
+      reason: "test",
+    };
+    const byKey = handWrittenTriggerRulesByKey([mixedCaseRow]);
+    expect(byKey.get("current_stage")).toBe(mixedCaseRow);
+    expect(byKey.get("Current_Stage")).toBeUndefined();
   });
 });
 
@@ -310,6 +392,7 @@ describe("the real pipeline's overlay tables", () => {
             keys: CONTENT_SUBTYPE_REFERENCE_REFINEMENTS.keys(),
           },
           { tableId: "CONTENT_PATCH_REGISTRIES", keys: CONTENT_PATCH_REGISTRIES.keys() },
+          { tableId: "CONTENT_SCOPE_PARAMETERS", keys: CONTENT_SCOPE_PARAMETERS.keys() },
         ],
         registryNames
       )
