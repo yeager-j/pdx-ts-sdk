@@ -21,7 +21,14 @@ import type { AliasDecl } from "../cwt/rules.ts";
 import type { EffectPolicy } from "../effect-policy.ts";
 import type { DocEntry } from "../logs/trigger-docs.ts";
 import type { LoweredRule } from "../lowered-rule.ts";
-import { camelCase, docComment, isPlainName, pascalCase, safeIdentifier } from "../naming.ts";
+import {
+  camelCase,
+  compareStrings,
+  docComment,
+  isPlainName,
+  pascalCase,
+  safeIdentifier,
+} from "../naming.ts";
 import {
   EFFECT_EXTENSION_SEAMS,
   EFFECT_FIELD_ADDITIONS,
@@ -479,8 +486,15 @@ function scopeLinkMetaEntry(link: EmittedScopeLink): string {
   return `  ${link.method}: { key: ${JSON.stringify(link.key)}, shape: { kind: "scope-link" } },\n`;
 }
 
-/** Deterministic short tag for long scope sets, stable across runs. */
-function hashTag(text: string): string {
+/**
+ * Deterministic short tag for long scope sets, stable across runs.
+ *
+ * Exported for {@link registerClusterName}'s tests: the 4 hex digits kept
+ * here are only 16 bits, so a birthday-bound search over a few hundred
+ * synthetic scope sets reliably finds two that collide, which is the fault
+ * {@link registerClusterName} exists to catch.
+ */
+export function hashTag(text: string): string {
   let hash = 5381;
   for (let i = 0; i < text.length; i++) {
     hash = (hash * 33) ^ text.charCodeAt(i);
@@ -488,7 +502,8 @@ function hashTag(text: string): string {
   return (hash >>> 0).toString(16).padStart(8, "0").slice(0, 4);
 }
 
-function clusterName(scopes: readonly string[] | "universal"): string {
+/** Exported alongside {@link hashTag} so a collision test can mint real cluster names. */
+export function clusterName(scopes: readonly string[] | "universal"): string {
   if (scopes === "universal") {
     return "UniversalEffects";
   }
@@ -500,6 +515,36 @@ function clusterName(scopes: readonly string[] | "universal"): string {
 
 function pathClusterName(scopes: readonly string[] | "universal"): string {
   return clusterName(scopes).replace("Effects", "EffectPaths");
+}
+
+/**
+ * Guards `hashTag`'s 4-hex truncation. Two different scope sets can hash to
+ * the same tag, and `clusterName`/`pathClusterName` would then mint the same
+ * `export interface` name for both — a fault TypeScript never reports: two
+ * same-named interface declarations merge, so every scope in either cluster
+ * silently gains the union of both clusters' methods.
+ *
+ * `minted` is created fresh per emission pass by the caller rather than held
+ * here, so two pipeline runs in one process (several test files do this)
+ * cannot see each other's names, and a name minted twice for the *same*
+ * scope set — legitimate, since nothing currently dedupes clusters across
+ * the effect and link-cluster loops — is not an error.
+ */
+export function registerClusterName(
+  minted: Map<string, string>,
+  name: string,
+  scopes: readonly string[] | "universal"
+): void {
+  const signature = scopes === "universal" ? "universal" : scopes.join("|");
+  const existing = minted.get(name);
+  if (existing !== undefined && existing !== signature) {
+    throw new Error(
+      `Cluster name "${name}" was minted for scope set [${existing}] and again for a ` +
+        `different scope set [${signature}] — hashTag's 4-hex digest collided; widen the ` +
+        "tag or rename the cluster."
+    );
+  }
+  minted.set(name, signature);
 }
 
 function pathProperty(link: EmittedScopeLink): string {
@@ -696,13 +741,17 @@ export function emitEffects(
   }
 
   const sortedClusters = [...clusters.values()].sort((left, right) =>
-    clusterName(left.scopes).localeCompare(clusterName(right.scopes))
+    compareStrings(clusterName(left.scopes), clusterName(right.scopes))
   );
   const sortedLinkClusters = [...linkClusters.values()].sort((left, right) =>
-    pathClusterName(left.scopes).localeCompare(pathClusterName(right.scopes))
+    compareStrings(pathClusterName(left.scopes), pathClusterName(right.scopes))
   );
 
   const interfaceChunks: string[] = [];
+  // Local to this pass, not module state: see registerClusterName's doc
+  // comment for why. Shared between the two cluster-emission loops below
+  // because both mint into the same file's export namespace.
+  const mintedClusterNames = new Map<string, string>();
   const clusterScope = (cluster: Cluster): string =>
     cluster.scopes === "universal"
       ? "ScopeName"
@@ -744,6 +793,7 @@ export function emitEffects(
   }
   for (const cluster of sortedClusters) {
     const name = clusterName(cluster.scopes);
+    registerClusterName(mintedClusterNames, name, cluster.scopes);
     const outerScope = clusterScope(cluster);
     const heading =
       cluster.scopes === "universal"
@@ -767,6 +817,7 @@ export function emitEffects(
 
   for (const cluster of sortedLinkClusters) {
     const name = pathClusterName(cluster.scopes);
+    registerClusterName(mintedClusterNames, name, cluster.scopes);
     const heading =
       cluster.scopes === "universal"
         ? ["Effect scope paths valid in every scope."]
@@ -837,7 +888,7 @@ export function emitEffects(
       .flatMap((cluster) => cluster.links)
       .map((link) => ({ method: link.method, entry: scopeLinkMetaEntry(link) })),
   ]
-    .sort((left, right) => left.method.localeCompare(right.method))
+    .sort((left, right) => compareStrings(left.method, right.method))
     .map(({ entry }) => entry)
     .join("");
   const meta =

@@ -159,6 +159,52 @@ export function quoteLiteral(value: string): string {
 }
 
 /**
+ * A member name (reserved words included — `interface { for: number }` is
+ * legal, since a property key is never evaluated as a binding) fit to
+ * interpolate bare into an interface member or object-literal key position.
+ *
+ * Every `camelCase`/`pascalCase` output the emitters mint from CWT names is
+ * one of these today, so nothing currently exercises the quoted arm; it
+ * exists for the CWT or enum name that eventually is not — `90_day`,
+ * `some-dashed-key` — which would otherwise interpolate into invalid
+ * TypeScript that Prettier fails on with no indication of which generated
+ * name caused it.
+ */
+export function propertyName(name: string): string {
+  return PROPERTY_IDENTIFIER.test(name) ? name : JSON.stringify(name);
+}
+
+/**
+ * {@link propertyName}'s companion for the read side: `objectExpression.name`
+ * when `name` is a bare identifier, `objectExpression[JSON.stringify(name)]`
+ * otherwise — the same `PROPERTY_IDENTIFIER` test, so declaration and access
+ * agree on what counts as an identifier. The reserved-word nuance in
+ * `propertyName`'s doc holds here too: `x.for` is legal member access, since
+ * a property name is never evaluated as a binding.
+ */
+export function propertyAccess(objectExpression: string, name: string): string {
+  return PROPERTY_IDENTIFIER.test(name)
+    ? `${objectExpression}.${name}`
+    : `${objectExpression}[${JSON.stringify(name)}]`;
+}
+
+const PROPERTY_IDENTIFIER = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
+
+/**
+ * Plain codepoint order for generated output, where `Array.prototype.sort`'s
+ * default coercion is wrong (it stringifies and still sorts lexically, so it
+ * is fine for strings but a trap for anything else) and `localeCompare` is
+ * wrong for a different reason: it depends on the running locale and on
+ * whether the Node build has full ICU data, and it disagrees with codepoint
+ * order on mixed-case input (`"Z".localeCompare("a")` is negative under the
+ * common default locale, positive under codepoint order). Committed output
+ * has to sort the same on every machine that runs codegen.
+ */
+export function compareStrings(a: string, b: string): number {
+  return a < b ? -1 : a > b ? 1 : 0;
+}
+
+/**
  * Whether generated `code` names `identifier` as a whole word, not merely as a
  * substring.
  *

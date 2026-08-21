@@ -1,4 +1,9 @@
-import { pluralize, referencesIdentifier } from "@pdx-ts/codegen-cwt/naming";
+import {
+  pluralize,
+  propertyAccess,
+  propertyName,
+  referencesIdentifier,
+} from "@pdx-ts/codegen-cwt/naming";
 import { describe, expect, it } from "vitest";
 
 describe("pluralize", () => {
@@ -14,6 +19,30 @@ describe("pluralize", () => {
     // evidence otherwise is two lines of committed generated output.
     expect(pluralize("customStarNames")).toBe("customStarNames");
     expect(pluralize("customPlanetNames")).toBe("customPlanetNames");
+  });
+});
+
+describe("propertyName", () => {
+  it("leaves a plain identifier bare", () => {
+    expect(propertyName("mult")).toBe("mult");
+  });
+
+  it("quotes a name that starts with a digit", () => {
+    expect(propertyName("90_day")).toBe('"90_day"');
+  });
+
+  it("quotes a name with a dash", () => {
+    expect(propertyName("some-dashed-key")).toBe('"some-dashed-key"');
+  });
+});
+
+describe("propertyAccess", () => {
+  it("emits dot access for a plain identifier", () => {
+    expect(propertyAccess("args", "mult")).toBe("args.mult");
+  });
+
+  it("emits bracket access for a name that is not a plain identifier", () => {
+    expect(propertyAccess("args", "90Day")).toBe('args["90Day"]');
   });
 });
 

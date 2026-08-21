@@ -416,11 +416,11 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
+  addTerraformProgress: { key: "add_terraform_progress", shape: { kind: "value" } },
   addTerraformationTotalTimeMult: {
     key: "add_terraformation_total_time_mult",
     shape: { kind: "value" },
   },
-  addTerraformProgress: { key: "add_terraform_progress", shape: { kind: "value" } },
   addThreat: {
     key: "add_threat",
     shape: {
@@ -1343,9 +1343,9 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   endAllTreatiesWith: { key: "end_all_treaties_with", shape: { kind: "value" } },
   endEventChain: { key: "end_event_chain", shape: { kind: "value", refTypes: ["event_chain"] } },
   endFleetContract: { key: "end_fleet_contract", shape: { kind: "bool" } },
-  endgameTelemetry: { key: "endgame_telemetry", shape: { kind: "value" } },
   endRivalry: { key: "end_rivalry", shape: { kind: "value" } },
   endTruce: { key: "end_truce", shape: { kind: "value" } },
+  endgameTelemetry: { key: "endgame_telemetry", shape: { kind: "value" } },
   envoyLocationCountry: { key: "envoy_location_country", shape: { kind: "scope-link" } },
   establishBranchOffice: { key: "establish_branch_office", shape: { kind: "value" } },
   establishCommunications: { key: "establish_communications", shape: { kind: "value" } },
@@ -2218,6 +2218,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   orbit: { key: "orbit", shape: { kind: "scope-link" } },
   orbitalDefence: { key: "orbital_defence", shape: { kind: "scope-link" } },
   orbitalStation: { key: "orbital_station", shape: { kind: "scope-link" } },
+  orderForcedReturn: { key: "order_forced_return", shape: { kind: "bool" } },
   orderedActiveFirstContact: {
     key: "ordered_active_first_contact",
     shape: {
@@ -3442,7 +3443,6 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
-  orderForcedReturn: { key: "order_forced_return", shape: { kind: "bool" } },
   overlord: { key: "overlord", shape: { kind: "scope-link" } },
   ownedFleetListTooltip: {
     key: "owned_fleet_list_tooltip",
@@ -3964,7 +3964,6 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
-  randomizeFlagSymbol: { key: "randomize_flag_symbol", shape: { kind: "value" } },
   randomJobPopGroup: {
     key: "random_job_pop_group",
     shape: {
@@ -4565,6 +4564,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
+  randomizeFlagSymbol: { key: "randomize_flag_symbol", shape: { kind: "value" } },
   reanimateSpaceFauna: {
     key: "reanimate_space_fauna",
     shape: { kind: "fields", fields: [{ prop: "fleet", key: "fleet", kind: "value" }] },
@@ -4773,6 +4773,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "remove_stage_modifier",
     shape: { kind: "value", refTypes: ["static_modifier"] },
   },
+  removeStarFlag: { key: "remove_star_flag", shape: { kind: "value" } },
   removeStarbaseBuilding: {
     key: "remove_starbase_building",
     shape: {
@@ -4803,7 +4804,6 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
-  removeStarFlag: { key: "remove_star_flag", shape: { kind: "value" } },
   removeTerrified: { key: "remove_terrified", shape: { kind: "bool" } },
   removeTradition: { key: "remove_tradition", shape: { kind: "value", refTypes: ["tradition"] } },
   removeTraditionTree: {
@@ -5307,7 +5307,6 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
-  setPlanetaryAscensionTier: { key: "set_planetary_ascension_tier", shape: { kind: "value" } },
   setPlanetEntity: {
     key: "set_planet_entity",
     shape: {
@@ -5329,6 +5328,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: { kind: "value", refTypes: ["purge_type"] },
   },
   setPlanetSize: { key: "set_planet_size", shape: { kind: "value" } },
+  setPlanetaryAscensionTier: { key: "set_planetary_ascension_tier", shape: { kind: "value" } },
   setPlayer: { key: "set_player", shape: { kind: "value" } },
   setPolicy: {
     key: "set_policy",
@@ -5402,10 +5402,10 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   setRuleCanSubjectVote: { key: "set_rule_can_subject_vote", shape: { kind: "bool" } },
   setRuleJoinOverlordWars: { key: "set_rule_join_overlord_wars", shape: { kind: "value" } },
   setRuleJoinSubjectWars: { key: "set_rule_join_subject_wars", shape: { kind: "value" } },
-  setRulerTitleFemale: { key: "set_ruler_title_female", shape: { kind: "value" } },
-  setRulerTitleMale: { key: "set_ruler_title_male", shape: { kind: "value" } },
   setRuleSubjectHasAccess: { key: "set_rule_subject_has_access", shape: { kind: "bool" } },
   setRuleSubjectHasSensors: { key: "set_rule_subject_has_sensors", shape: { kind: "bool" } },
+  setRulerTitleFemale: { key: "set_ruler_title_female", shape: { kind: "value" } },
+  setRulerTitleMale: { key: "set_ruler_title_male", shape: { kind: "value" } },
   setSavedDate: {
     key: "set_saved_date",
     shape: {
@@ -5459,6 +5459,8 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   setSpeciesHomeworld: { key: "set_species_homeworld", shape: { kind: "value" } },
   setSpeciesIdentity: { key: "set_species_identity", shape: { kind: "value" } },
   setSpynetworkFlag: { key: "set_spynetwork_flag", shape: { kind: "value" } },
+  setStarClass: { key: "set_star_class", shape: { kind: "value", refTypes: ["star_class"] } },
+  setStarFlag: { key: "set_star_flag", shape: { kind: "value" } },
   setStarbaseBuilding: {
     key: "set_starbase_building",
     shape: {
@@ -5484,8 +5486,6 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "set_starbase_size",
     shape: { kind: "value", refTypes: ["ship_size.starbase"] },
   },
-  setStarClass: { key: "set_star_class", shape: { kind: "value", refTypes: ["star_class"] } },
-  setStarFlag: { key: "set_star_flag", shape: { kind: "value" } },
   setStormFlag: { key: "set_storm_flag", shape: { kind: "value" } },
   setSubjectOf: {
     key: "set_subject_of",
@@ -5801,8 +5801,8 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
-  setTimedStarbaseFlag: {
-    key: "set_timed_starbase_flag",
+  setTimedStarFlag: {
+    key: "set_timed_star_flag",
     shape: {
       kind: "fields",
       fields: [
@@ -5813,8 +5813,8 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
-  setTimedStarFlag: {
-    key: "set_timed_star_flag",
+  setTimedStarbaseFlag: {
+    key: "set_timed_starbase_flag",
     shape: {
       kind: "fields",
       fields: [
@@ -5937,7 +5937,6 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
-  spawnerPlanet: { key: "spawner_planet", shape: { kind: "scope-link" } },
   spawnMegastructure: {
     key: "spawn_megastructure",
     shape: {
@@ -6122,6 +6121,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
+  spawnerPlanet: { key: "spawner_planet", shape: { kind: "scope-link" } },
   species: { key: "species", shape: { kind: "scope-link" } },
   spynetwork: { key: "spynetwork", shape: { kind: "scope-link" } },
   star: { key: "star", shape: { kind: "scope-link" } },

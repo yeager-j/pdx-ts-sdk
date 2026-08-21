@@ -11,7 +11,15 @@ import { isOptional } from "../cwt/model.ts";
 import type { AliasDecl } from "../cwt/rules.ts";
 import type { DocEntry } from "../logs/trigger-docs.ts";
 import type { LoweredRule } from "../lowered-rule.ts";
-import { camelCase, docComment, isPlainName, pascalCase, safeIdentifier } from "../naming.ts";
+import {
+  camelCase,
+  docComment,
+  isPlainName,
+  pascalCase,
+  propertyAccess,
+  propertyName,
+  safeIdentifier,
+} from "../naming.ts";
 import { TRIGGER_DOC_SUMMARY_OVERRIDES } from "../overlay.ts";
 import { HAND_WRITTEN_TRIGGER_RULES_BY_KEY } from "../trigger-policy.ts";
 import {
@@ -285,7 +293,7 @@ function valueListType(
     value.scalar?.type,
     value.fields === null
       ? null
-      : `{ ${value.fields.map((field) => `${camelCase(field.name)}${field.optional ? "?" : ""}: ${memberType(field, outerScope)}`).join("; ")} }`,
+      : `{ ${value.fields.map((field) => `${propertyName(camelCase(field.name))}${field.optional ? "?" : ""}: ${memberType(field, outerScope)}`).join("; ")} }`,
   ].filter((arm): arm is string => arm !== null && arm !== undefined);
   const item = arms.length === 1 && !arms[0]!.includes(" | ") ? arms[0]! : `(${arms.join(" | ")})`;
   return cardinalityArrayType(item, value.cardinality);
@@ -339,7 +347,7 @@ function pushCode(
     case "scalarOrFields": {
       const nested = field.value.fields
         .map((nestedField, nestedIndex) => {
-          const nestedAccess = `${access}.${camelCase(nestedField.name)}`;
+          const nestedAccess = propertyAccess(access, camelCase(nestedField.name));
           const code = pushCode(
             nestedField,
             nestedAccess,
@@ -363,7 +371,7 @@ function pushCode(
     case "fields": {
       const nested = field.value.fields
         .map((nestedField, nestedIndex) => {
-          const nestedAccess = `${access}.${camelCase(nestedField.name)}`;
+          const nestedAccess = propertyAccess(access, camelCase(nestedField.name));
           const code = pushCode(
             nestedField,
             nestedAccess,
@@ -432,7 +440,7 @@ function pushValueListCode(
     }
     const nested = structured
       .map((field, nestedIndex) => {
-        const nestedAccess = `${item}.${camelCase(field.name)}`;
+        const nestedAccess = propertyAccess(item, camelCase(field.name));
         const code = pushCode(field, nestedAccess, owner, nestedIndex, "nestedEntries");
         return field.optional ? `if (${nestedAccess} !== undefined) {\n  ${code}\n}` : code;
       })
@@ -481,12 +489,12 @@ function emitFields(
     .map(
       (field) =>
         docComment(field.docs, "  ") +
-        `  ${camelCase(field.name)}${field.optional ? "?" : ""}: ${memberType(field, scope)};\n`
+        `  ${propertyName(camelCase(field.name))}${field.optional ? "?" : ""}: ${memberType(field, scope)};\n`
     )
     .join("");
   const pushes = fields
     .map((field, index) => {
-      const access = `args.${camelCase(field.name)}`;
+      const access = propertyAccess("args", camelCase(field.name));
       const push = `    ${pushCode(field, access, key, index)}\n`;
       return field.optional ? `  if (${access} !== undefined) {\n${push}  }\n` : push.slice(2);
     })
@@ -521,12 +529,12 @@ function emitStringOrFields(
     .map(
       (field) =>
         docComment(field.docs, "  ") +
-        `  ${camelCase(field.name)}${field.optional ? "?" : ""}: ${memberType(field, returnScope)};\n`
+        `  ${propertyName(camelCase(field.name))}${field.optional ? "?" : ""}: ${memberType(field, returnScope)};\n`
     )
     .join("");
   const pushes = fields
     .map((field, index) => {
-      const access = `args.${camelCase(field.name)}`;
+      const access = propertyAccess("args", camelCase(field.name));
       const push = `    ${pushCode(field, access, key, index)}\n`;
       return field.optional ? `  if (${access} !== undefined) {\n${push}  }\n` : push.slice(2);
     })

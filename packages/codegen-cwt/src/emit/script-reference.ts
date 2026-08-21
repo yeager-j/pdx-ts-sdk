@@ -1,5 +1,7 @@
 /** Machine-readable metadata for the public script reference surface. */
 
+import { compareStrings } from "../naming.ts";
+
 export type ScriptReferenceAvailability =
   { readonly kind: "universal" } | { readonly kind: "scopes"; readonly scopes: readonly string[] };
 
@@ -171,8 +173,8 @@ export function emitScriptReferences(
   scopeLinks: readonly ScriptScopeLinkReferenceRow[]
 ): ScriptReferenceEmission {
   validateScriptReferences(scopes, effects, scopeLinks);
-  const effectRows = [...effects].sort((left, right) => left.method.localeCompare(right.method));
-  const linkRows = [...scopeLinks].sort((left, right) => left.member.localeCompare(right.member));
+  const effectRows = [...effects].sort((left, right) => compareStrings(left.method, right.method));
+  const linkRows = [...scopeLinks].sort((left, right) => compareStrings(left.member, right.member));
   const structuralImport =
     'import { STRUCTURAL_EFFECT_REFERENCES } from "../script/effects/structural-reference.ts";\n';
   const code =

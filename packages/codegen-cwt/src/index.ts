@@ -29,7 +29,6 @@ import { emitContentType, type ContentEmission } from "./emit/content-type.ts";
 import { emitEffects } from "./emit/effects.ts";
 import { emitEvents } from "./emit/events.ts";
 import {
-  assertEveryAssetPathFieldApplied,
   constantCase,
   structuralSpliceOf,
   type DocTable,
@@ -72,6 +71,7 @@ import {
   assertScriptedModifierCategoryMapValid,
 } from "./overlay-audit.ts";
 import {
+  ASSET_PATH_FIELDS,
   CONTENT_CONTRIBUTION_SINKS,
   CONTENT_DECLINED_FIELDS,
   CONTENT_FIELD_OVERRIDES,
@@ -310,8 +310,6 @@ async function main(): Promise<void> {
     });
   }
 
-  assertEveryAssetPathFieldApplied();
-
   // An alias category emitted as its own shared module, from either of the two
   // reasons a category needs one: an overlay row lowering a *keyed* field onto
   // it (`civic_or_origin.potential` -> `government_trigger`), or a body
@@ -442,6 +440,7 @@ async function main(): Promise<void> {
     "REPEATED_STRUCT_DEFINITIONS",
     REPEATED_STRUCT_DEFINITIONS.keys()
   );
+  emitter.overlayAudit.assertAllApplied("ASSET_PATH_FIELDS", ASSET_PATH_FIELDS.keys());
 
   // Registers every ref this namespace names (including the ref-only extras —
   // sound, sound_effect, resource) with `emitter.usedRefs` before
