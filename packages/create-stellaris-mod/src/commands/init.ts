@@ -16,7 +16,7 @@ import { preflight, writeTree } from "../fs.ts";
 import { VERIFIED_STELLARIS_BUILD } from "../generated/verified-build.ts";
 import type { CliIo } from "../io.ts";
 import { helpText, parseArgv, type Resolved } from "../options.ts";
-import { planFiles } from "../plan.ts";
+import { planProject } from "../plan.ts";
 import { resolveInteractive, resolveNonInteractive } from "../prompts.ts";
 import { CancelledError } from "../terminal.ts";
 import { VERSION } from "../version.ts";
@@ -67,12 +67,13 @@ export async function runInit(argv: readonly string[], io: CliIo): Promise<numbe
   // the checkout check below test the same directory npm will.
   const localSdk =
     resolved.localSdk === undefined ? undefined : path.resolve(io.cwd, resolved.localSdk);
-  const files = planFiles({ ...resolved, targetDir, localSdk }, packageName);
+  const project = planProject({ ...resolved, targetDir, localSdk }, packageName);
 
   if (parsed.values["dry-run"] === true) {
     io.stdout.write(`Would scaffold ${targetDir}:\n`);
-    for (const relPath of files.keys()) {
-      io.stdout.write(`  ${relPath}\n`);
+    for (const [relPath, entry] of project) {
+      const target = entry.kind === "symlink" ? ` -> ${entry.target}` : "";
+      io.stdout.write(`  ${relPath}${target}\n`);
     }
     for (const command of plannedCommands(resolved)) {
       io.stdout.write(`  $ ${command}\n`);
@@ -83,7 +84,7 @@ export async function runInit(argv: readonly string[], io: CliIo): Promise<numbe
   try {
     checkLocalCheckout(localSdk);
     await preflight(targetDir);
-    await writeTree(targetDir, files);
+    await writeTree(targetDir, project);
   } catch (error) {
     io.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
     return 1;

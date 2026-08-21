@@ -527,6 +527,7 @@ describe("the manifest init writes", () => {
     localSdk: undefined,
     prettier: true,
     eslint: true,
+    llmSupport: true,
     git: true,
     install: true,
     packageManager: "npm",

@@ -1,14 +1,15 @@
 /**
- * `planFiles(resolved)`: the whole scaffold as a value.
+ * `planProject(resolved)`: the whole scaffold as a value.
  *
- * Deliberately the same shape as the SDK's own `render` — a resolved config in,
- * a path-to-contents map out, no I/O — so the interesting assertions can be
- * made against a `Map` instead of a directory. Everything impure (mkdir, spawn,
- * prompts) lives in the shell around it.
+ * A resolved config goes in and a path-to-entry map comes out, with no I/O, so
+ * the interesting assertions can be made against a `Map` instead of a
+ * directory. Everything impure (mkdir, symlink, spawn, prompts) lives in the
+ * shell around it.
  */
 
 import { toPackageName } from "./derive.ts";
 import type { Resolved } from "./options.ts";
+import { agentsMd, claudeAgent, codexAgent, pdxSdkDocsSkill } from "./templates/llm.ts";
 import {
   MANIFEST_FILE,
   MANIFEST_SCHEMA_FILE,
@@ -34,44 +35,66 @@ import {
   vanillaTs,
 } from "./templates/source.ts";
 
-export function planFiles(resolved: Resolved, packageName?: string): Map<string, string> {
-  const files = new Map<string, string>();
+export type ProjectEntry =
+  | { readonly kind: "file"; readonly contents: string }
+  | { readonly kind: "symlink"; readonly target: string };
+
+export type ProjectPlan = ReadonlyMap<string, ProjectEntry>;
+
+export function planProject(resolved: Resolved, packageName?: string): Map<string, ProjectEntry> {
+  const entries = new Map<string, ProjectEntry>();
   const name = packageName ?? toPackageName(resolved.targetDir.split(/[\\/]/).pop() ?? "");
 
-  files.set("package.json", packageJson(resolved, name));
+  const file = (relPath: string, contents: string): void => {
+    entries.set(relPath, { kind: "file", contents });
+  };
+  const symlink = (relPath: string, target: string): void => {
+    entries.set(relPath, { kind: "symlink", target });
+  };
+
+  file("package.json", packageJson(resolved, name));
   // The Project Manifest, and the schema `$schema` points at relatively. Both
   // are the author's from here on: `generate` reads the manifest and never
   // repairs or migrates it.
-  files.set(MANIFEST_FILE, manifestJson(resolved));
-  files.set(MANIFEST_SCHEMA_FILE, manifestSchema());
-  files.set("tsconfig.json", tsconfigJson());
-  files.set("vitest.config.ts", vitestConfig());
-  files.set(".gitignore", gitignore());
-  files.set("README.md", readme(resolved));
+  file(MANIFEST_FILE, manifestJson(resolved));
+  file(MANIFEST_SCHEMA_FILE, manifestSchema());
+  file("tsconfig.json", tsconfigJson());
+  file("vitest.config.ts", vitestConfig());
+  file(".gitignore", gitignore());
+  file("README.md", readme(resolved));
 
   if (resolved.prettier) {
-    files.set(".prettierrc", prettierrc());
+    file(".prettierrc", prettierrc());
   }
   if (resolved.eslint) {
-    files.set("eslint.config.js", eslintConfig());
+    file("eslint.config.js", eslintConfig());
   }
 
-  files.set("src/mod.ts", modTs(resolved));
-  files.set("src/index.ts", indexTs());
-  files.set("src/install.ts", installTs());
-  files.set("src/flags.ts", flagsTs(resolved));
-  files.set("src/content/example.ts", contentExampleTs(resolved));
-  files.set("src/content/example.test.ts", contentExampleTestTs(resolved));
+  file("src/mod.ts", modTs(resolved));
+  file("src/index.ts", indexTs());
+  file("src/install.ts", installTs());
+  file("src/flags.ts", flagsTs(resolved));
+  file("src/content/example.ts", contentExampleTs(resolved));
+  file("src/content/example.test.ts", contentExampleTestTs(resolved));
 
   // Only when an install was found: the module calls `stellaris.load()`, and
   // shipping it unconditionally would put a file in the project whose whole
   // purpose is unavailable.
   if (resolved.installPath !== undefined) {
-    files.set("src/vanilla.ts", vanillaTs(resolved));
+    file("src/vanilla.ts", vanillaTs(resolved));
+  }
+
+  if (resolved.llmSupport) {
+    file("AGENTS.md", agentsMd());
+    symlink("CLAUDE.md", "AGENTS.md");
+    file(".agents/skills/pdx-sdk-docs/SKILL.md", pdxSdkDocsSkill());
+    symlink(".claude/skills", "../.agents/skills");
+    file(".claude/agents/pdx-docs-expert.md", claudeAgent());
+    file(".codex/agents/pdx-docs-expert.toml", codexAgent());
   }
 
   // Sorted, so the scaffold is a function of the config and not of the order
   // this file happens to set keys in — the same property the SDK's emission
   // order has.
-  return new Map([...files].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)));
+  return new Map([...entries].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)));
 }

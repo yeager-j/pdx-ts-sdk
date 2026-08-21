@@ -3,8 +3,10 @@
  */
 
 import { randomUUID } from "node:crypto";
-import { lstat, mkdir, readdir, rename, rm, writeFile } from "node:fs/promises";
+import { lstat, mkdir, readdir, rename, rm, symlink, writeFile } from "node:fs/promises";
 import path from "node:path";
+
+import type { ProjectPlan } from "./plan.ts";
 
 /**
  * Refuse a target that already exists.
@@ -36,20 +38,22 @@ export async function preflight(targetDir: string): Promise<void> {
   );
 }
 
-export async function writeTree(
-  targetDir: string,
-  files: ReadonlyMap<string, string>
-): Promise<void> {
+export async function writeTree(targetDir: string, entries: ProjectPlan): Promise<void> {
   const target = path.resolve(targetDir);
   const parent = path.dirname(target);
   await mkdir(parent, { recursive: true });
   const staging = path.join(parent, `.create-stellaris-mod-${randomUUID()}`);
   try {
     await mkdir(staging);
-    for (const [relPath, contents] of files) {
-      const stagedFile = path.join(staging, relPath);
-      await mkdir(path.dirname(stagedFile), { recursive: true });
-      await writeFile(stagedFile, contents, "utf8");
+    for (const [relPath, entry] of entries) {
+      const stagedEntry = path.join(staging, relPath);
+      await mkdir(path.dirname(stagedEntry), { recursive: true });
+      if (entry.kind === "file") {
+        await writeFile(stagedEntry, entry.contents, "utf8");
+      } else {
+        validateLinkTarget(staging, stagedEntry, entry.target);
+        await symlink(entry.target, stagedEntry);
+      }
     }
     try {
       await lstat(target);
@@ -63,5 +67,16 @@ export async function writeTree(
   } catch (error) {
     await rm(staging, { recursive: true, force: true });
     throw error;
+  }
+}
+
+function validateLinkTarget(staging: string, stagedLink: string, target: string): void {
+  if (path.isAbsolute(target)) {
+    throw new Error(`Refusing absolute symlink target ${JSON.stringify(target)}.`);
+  }
+  const destination = path.resolve(path.dirname(stagedLink), target);
+  const relative = path.relative(staging, destination);
+  if (relative === ".." || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
+    throw new Error(`Refusing project-escaping symlink target ${JSON.stringify(target)}.`);
   }
 }

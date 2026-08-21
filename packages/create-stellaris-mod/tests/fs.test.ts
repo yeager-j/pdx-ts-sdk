@@ -6,9 +6,12 @@
 
 import {
   existsSync,
+  lstatSync,
   mkdirSync,
   mkdtempSync,
   readdirSync,
+  readFileSync,
+  readlinkSync,
   rmSync,
   symlinkSync,
   writeFileSync,
@@ -18,8 +21,12 @@ import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { preflight, writeTree } from "../src/fs.ts";
+import type { ProjectEntry } from "../src/plan.ts";
 
 const temps: string[] = [];
+const file = (contents: string): ProjectEntry => ({ kind: "file", contents });
+const link = (target: string): ProjectEntry => ({ kind: "symlink", target });
+
 function tempRoot(): string {
   const dir = mkdtempSync(path.join(tmpdir(), "csm-fs-"));
   temps.push(dir);
@@ -39,13 +46,37 @@ describe("writeTree", () => {
     await writeTree(
       target,
       new Map([
-        ["README.md", "hello"],
-        ["src/mod.ts", "export {}"],
+        ["README.md", file("hello")],
+        ["src/mod.ts", file("export {}")],
       ])
     );
 
     expect(existsSync(path.join(target, "README.md"))).toBe(true);
     expect(existsSync(path.join(target, "src/mod.ts"))).toBe(true);
+    expect(readdirSync(root)).toEqual(["new-mod"]);
+  });
+
+  it("publishes relative links with their exact targets and readable destinations", async () => {
+    const root = tempRoot();
+    const target = path.join(root, "new-mod");
+    await writeTree(
+      target,
+      new Map([
+        [".agents/skills/pdx-sdk-docs/SKILL.md", file("# docs\n")],
+        [".claude/skills", link("../.agents/skills")],
+        ["AGENTS.md", file("# agents\n")],
+        ["CLAUDE.md", link("AGENTS.md")],
+      ])
+    );
+
+    expect(lstatSync(path.join(target, "CLAUDE.md")).isSymbolicLink()).toBe(true);
+    expect(readlinkSync(path.join(target, "CLAUDE.md"))).toBe("AGENTS.md");
+    expect(readFileSync(path.join(target, "CLAUDE.md"), "utf8")).toBe("# agents\n");
+    expect(lstatSync(path.join(target, ".claude/skills")).isSymbolicLink()).toBe(true);
+    expect(readlinkSync(path.join(target, ".claude/skills"))).toBe("../.agents/skills");
+    expect(readFileSync(path.join(target, ".claude/skills/pdx-sdk-docs/SKILL.md"), "utf8")).toBe(
+      "# docs\n"
+    );
     expect(readdirSync(root)).toEqual(["new-mod"]);
   });
 
@@ -57,7 +88,7 @@ describe("writeTree", () => {
     await preflight(target);
     symlinkSync(outside, target, "dir");
 
-    await expect(writeTree(target, new Map([["README.md", "escaped"]]))).rejects.toThrow(
+    await expect(writeTree(target, new Map([["README.md", file("escaped")]]))).rejects.toThrow(
       /appeared while the project was staged/
     );
 
@@ -72,8 +103,41 @@ describe("writeTree", () => {
       writeTree(
         target,
         new Map([
-          ["a", "file"],
-          ["a/b", "impossible child"],
+          ["a", file("file")],
+          ["a/b", file("impossible child")],
+        ])
+      )
+    ).rejects.toThrow();
+
+    expect(existsSync(target)).toBe(false);
+    expect(readdirSync(root)).toEqual([]);
+  });
+
+  it.each([
+    ["/tmp/outside", /absolute symlink target/],
+    ["../../outside", /project-escaping symlink target/],
+  ])("rejects unsafe link target %s and removes staging", async (linkTarget, message) => {
+    const root = tempRoot();
+    const target = path.join(root, "new-mod");
+
+    await expect(writeTree(target, new Map([["unsafe", link(linkTarget)]]))).rejects.toThrow(
+      message
+    );
+
+    expect(existsSync(target)).toBe(false);
+    expect(readdirSync(root)).toEqual([]);
+  });
+
+  it("removes staging after link creation itself fails", async () => {
+    const root = tempRoot();
+    const target = path.join(root, "new-mod");
+
+    await expect(
+      writeTree(
+        target,
+        new Map([
+          ["a/b", file("occupies a")],
+          ["a", link("b")],
         ])
       )
     ).rejects.toThrow();

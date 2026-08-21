@@ -29,10 +29,12 @@
 import { execFileSync, spawnSync } from "node:child_process";
 import {
   existsSync,
+  lstatSync,
   mkdirSync,
   mkdtempSync,
   readdirSync,
   readFileSync,
+  readlinkSync,
   rmSync,
   symlinkSync,
   writeFileSync,
@@ -171,6 +173,28 @@ afterAll(() => {
 });
 
 describe("a scaffolded project", () => {
+  it("carries the project-local Codex and Claude bundle", () => {
+    const claudeInstructions = path.join(projectDir, "CLAUDE.md");
+    const claudeSkills = path.join(projectDir, ".claude/skills");
+    expect(lstatSync(claudeInstructions).isSymbolicLink()).toBe(true);
+    expect(readlinkSync(claudeInstructions)).toBe("AGENTS.md");
+    expect(readFileSync(claudeInstructions, "utf8")).toBe(
+      readFileSync(path.join(projectDir, "AGENTS.md"), "utf8")
+    );
+    expect(lstatSync(claudeSkills).isSymbolicLink()).toBe(true);
+    expect(readlinkSync(claudeSkills)).toBe("../.agents/skills");
+    expect(readFileSync(path.join(claudeSkills, "pdx-sdk-docs/SKILL.md"), "utf8")).toContain(
+      "# Retrieving @pdx-ts/sdk docs"
+    );
+    expect(lstatSync(path.join(projectDir, ".claude/agents/pdx-docs-expert.md")).isFile()).toBe(
+      true
+    );
+    expect(lstatSync(path.join(projectDir, ".codex/agents/pdx-docs-expert.toml")).isFile()).toBe(
+      true
+    );
+    expect(existsSync(path.join(projectDir, "LLM-SETUP.md"))).toBe(false);
+  });
+
   it("carries a Project Manifest the CLI can read back", () => {
     // The emitter and the adapter `generate` will use are different modules.
     // This is the round trip on real bytes on a real disk: what init wrote is
