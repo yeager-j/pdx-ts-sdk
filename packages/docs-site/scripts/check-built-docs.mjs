@@ -38,6 +38,13 @@ const effectsHtml = await readFile(
   new URL("../.next/server/app/scopes-and-effects/effects.html", import.meta.url),
   "utf8"
 );
+const effectsMarkdown = await readFile(
+  new URL(
+    "../.next/server/app/llms.mdx/scopes-and-effects/effects/content.md.body",
+    import.meta.url
+  ),
+  "utf8"
+);
 const countryHtml = await readFile(
   new URL("../.next/server/app/scopes-and-effects/scopes/country.html", import.meta.url),
   "utf8"
@@ -50,15 +57,18 @@ const armyHtml = await readFile(
 assert.match(overviewHtml, /<h1[^>]*>Overview<\/h1>/);
 assert.match(effectsHtml, /<h1[^>]*>List of Effects<\/h1>/);
 
-// `win` is the last method alphabetically. Its server-rendered row proves the
-// no-JavaScript page contains the complete inventory rather than only page 1.
-assert.match(effectsHtml, /id="effects-win"/);
-assert.match(effectsHtml, /id="effects-addResource"/);
+assert.match(effectsHtml, /id="effects-abortSituation"/);
+assert.doesNotMatch(effectsHtml, /id="effects-win"/);
 assert.match(effectsHtml, /<summary[^>]*>/);
-assert.match(effectsHtml, /id="effects-addResource-details"/);
+assert.match(effectsHtml, /id="effects-abortSituation-details"/);
 assert.equal(effectsHtml.match(/Scope pages for universal methods/g)?.length, 1);
 assert.match(effectsHtml, /Method or PDXScript key/);
 assert.match(effectsHtml, /Legal on scope/);
+
+// The browser view is paged, while the agent-facing Markdown representation
+// carries the complete table. `win` is the last method alphabetically.
+assert.match(effectsMarkdown, /#effects-addResource/);
+assert.match(effectsMarkdown, /#effects-win/);
 
 assert.match(countryHtml, /href="\/scopes-and-effects\/effects\/#effects-countryEvent"/);
 assert.match(countryHtml, /overflow-x-auto"><table/);

@@ -22,8 +22,8 @@ each published scope page directly.
 
 Each entry has a stable `#effects-methodName` anchor. For example,
 [`#effects-addResource`](#effects-addResource) opens `addResource` even when filtering or paging is
-active. The complete inventory is present in the page's server-rendered HTML; filtering and paging
-are optional enhancements when client JavaScript is available.
+active. The browser view uses client JavaScript for filtering, paging, and deep-link focus. Agents
+that request the Markdown representation receive the complete inventory as one unpaginated table.
 
 Scope-link properties are not effects. They navigate to another scope and appear under **Outgoing
 scope transitions** on each scope page.

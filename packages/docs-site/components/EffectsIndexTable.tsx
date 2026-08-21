@@ -161,7 +161,6 @@ export function EffectsIndexTable({
   });
   const [requestedAnchor, setRequestedAnchor] = useState<string | null>(null);
   const [pendingAnchor, setPendingAnchor] = useState<string | null>(null);
-  const [enhanced, setEnhanced] = useState(false);
 
   /**
    * `useTable` returns a fresh instance object on every render, so the table
@@ -176,10 +175,6 @@ export function EffectsIndexTable({
     rows.forEach((row, index) => pages.set(row.anchor, Math.floor(index / PAGE_SIZE)));
     return pages;
   }, [rows]);
-
-  useEffect(() => {
-    setEnhanced(true);
-  }, []);
 
   useEffect(() => {
     const readHash = (): void => setRequestedAnchor(window.location.hash.slice(1));
@@ -221,7 +216,7 @@ export function EffectsIndexTable({
   const matched = table.getFilteredRowModel().rows.length;
   const pageCount = table.getPageCount();
   const pageIndex = table.state.pagination?.pageIndex ?? 0;
-  const visibleRows = enhanced ? table.getRowModel().rows : table.getFilteredRowModel().rows;
+  const visibleRows = table.getRowModel().rows;
   const focusClass =
     "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current";
 
@@ -237,7 +232,7 @@ export function EffectsIndexTable({
         </p>
       </details>
 
-      <div className="flex flex-wrap items-end gap-3" hidden={!enhanced}>
+      <div className="flex flex-wrap items-end gap-3">
         <div className="flex flex-col gap-1">
           <label className="text-fd-muted-foreground text-sm" htmlFor="effects-filter-text">
             Method or PDXScript key
@@ -289,7 +284,7 @@ export function EffectsIndexTable({
         </div>
       </div>
 
-      <p className="text-fd-muted-foreground text-sm" aria-live="polite" hidden={!enhanced}>
+      <p className="text-fd-muted-foreground text-sm" aria-live="polite">
         {matched} of {rows.length} methods
         {pageCount > 1 ? `, page ${pageIndex + 1} of ${pageCount}` : ""}.
       </p>
@@ -317,7 +312,7 @@ export function EffectsIndexTable({
         handler re-reads the live state rather than trusting the rendered
         `disabled`.
       */}
-      <div className="flex items-center gap-3" hidden={!enhanced || pageCount <= 1}>
+      <div className="flex items-center gap-3" hidden={pageCount <= 1}>
         <button
           type="button"
           className={`rounded-lg border px-3 py-1.5 text-sm disabled:opacity-50 ${focusClass}`}
