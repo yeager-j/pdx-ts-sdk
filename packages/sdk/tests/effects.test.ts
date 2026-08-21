@@ -161,6 +161,34 @@ describe("the effect recorder over generated meta", () => {
 `);
   });
 
+  it("serializes the documented create-ship colony toggle", () => {
+    const sink: PdxEntry[] = [];
+    const fleet = makeScope<"fleet">(sink);
+
+    fleet.createShip({ createColony: false });
+
+    expect(serialize(sink)).toBe(`create_ship = {
+	create_colony = no
+}
+`);
+  });
+
+  it("serializes declare-war without its documented optional name", () => {
+    const sink: PdxEntry[] = [];
+    const country = makeScope<"country">(sink);
+
+    country.declareWar({
+      target: scopeValue<"country">("from"),
+      attackerWarGoal: "effects_test_war_goal",
+    });
+
+    expect(serialize(sink)).toBe(`declare_war = {
+	target = from
+	attacker_war_goal = effects_test_war_goal
+}
+`);
+  });
+
   it("serializes every generated spawn-megastructure field and its pushed scope", () => {
     const sink: PdxEntry[] = [];
     const system = makeScope<"system">(sink);

@@ -587,6 +587,13 @@ export interface EffectFieldAddition {
   readonly reason: string;
 }
 
+export interface EffectFieldOptionalityOverride {
+  readonly name: string;
+  readonly optional: boolean;
+  readonly source: string;
+  readonly reason: string;
+}
+
 /**
  * Fields the game documentation declares for an effect but CWT omits.
  *
@@ -608,6 +615,40 @@ export const EFFECT_FIELD_ADDITIONS = new Map<string, readonly EffectFieldAdditi
           "The game documentation accepts `target = <target>` in the VFX form, but the CWT " +
           "rule omits that field. The minimal documented form does not require it, so the " +
           "authoring member is optional.",
+      },
+    ],
+  ],
+  [
+    "create_ship",
+    [
+      {
+        name: "create_colony",
+        type: { kind: "bool" },
+        optional: true,
+        source: "vendor/cwtools-stellaris-config/script-docs/v4.4.1/effects.log:345-358",
+        reason:
+          "The game documentation accepts `create_colony = yes/no`, defaulting to yes, but " +
+          "the CWT rule omits the field. The default makes the authoring member optional.",
+      },
+    ],
+  ],
+]);
+
+/** Fields whose documented optionality disagrees with CWT cardinality. */
+export const EFFECT_FIELD_OPTIONALITY_OVERRIDES = new Map<
+  string,
+  readonly EffectFieldOptionalityOverride[]
+>([
+  [
+    "declare_war",
+    [
+      {
+        name: "name",
+        optional: true,
+        source: "vendor/cwtools-stellaris-config/script-docs/v4.4.1/effects.log:590-596",
+        reason:
+          "The game documentation explicitly calls the war name optional, while the CWT " +
+          "alias splice has default required cardinality.",
       },
     ],
   ],

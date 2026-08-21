@@ -143,6 +143,7 @@ describe("LoweredRule", () => {
     expect(emitted.interfaces).toContain("effect?: (scope: AmbientObjectScope) => void");
     expect(emitted.fieldAdditions).toEqual([
       expect.stringContaining("create_ambient_object.target"),
+      expect.stringContaining("create_ship.create_colony"),
     ]);
     expect(emitted.interfaces).not.toContain("createColony(args:");
     expect(emitted.interfaces).not.toContain("startColony(args:");
@@ -245,6 +246,17 @@ describe("LoweredRule", () => {
     expect(emitted.interfaces).toContain("spawnMegastructure(args:");
     expect(emitted.interfaces).toContain("type: MegastructureRef | string");
     expect(emitted.interfaces).toContain("initEffect?: (scope: MegastructureScope) => void");
+    expect(emitted.interfaces).toContain("createColony?: boolean");
+    const declareWarSignature = emitted.interfaces.slice(
+      emitted.interfaces.indexOf("declareWar(args:"),
+      emitted.interfaces.indexOf("declareWar(args:") + 1_500
+    );
+    expect(declareWarSignature).toContain(
+      "name?: string | { key: string; variableString?: readonly string[] }"
+    );
+    expect(emitted.fieldOptionalityOverrides).toEqual([
+      expect.stringContaining("declare_war.name → optional"),
+    ]);
     expect(emitted.meta).toContain(
       '{ prop: "variableString", key: "variable_string", kind: "value", repeated: true }'
     );
@@ -252,6 +264,32 @@ describe("LoweredRule", () => {
     expect(usage.enums).not.toContain("contact_rule");
     expect(usage.refs).not.toContain("name_list");
     expect(usage.refs).not.toContain("species_class");
+  });
+
+  it("rejects a stale effect-field optionality override", () => {
+    const declareWar = effects.get("declare_war")!;
+    const block = declareWar.blocks[0]!;
+    const changed = new Map(effects);
+    changed.set("declare_war", {
+      ...declareWar,
+      blocks: [
+        {
+          ...block,
+          type: {
+            ...block.type,
+            fields: block.type.fields.map((field) =>
+              field.key.kind === "aliasName" && field.key.category === "name"
+                ? { ...field, cardinality: { min: 0, max: 1 } }
+                : field
+            ),
+          },
+        },
+      ],
+    });
+
+    expect(() =>
+      emitEffects(new Emitter(rules), docs.effects, scopes, changed, createEffectPolicy(rules), [])
+    ).toThrow(/CWT already makes it optional/);
   });
 
   it("rejects an effect-field overlay after CWT starts declaring that field", () => {

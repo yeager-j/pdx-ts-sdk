@@ -1004,6 +1004,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         { prop: "colonizerSpecies", key: "colonizer_species", kind: "value" },
         { prop: "age", key: "age", kind: "value" },
         { prop: "rarity", key: "rarity", kind: "value" },
+        { prop: "createColony", key: "create_colony", kind: "value" },
         { prop: "effect", key: "effect", kind: "effect" },
         { prop: "growthStage", key: "growth_stage", kind: "value" },
       ],

@@ -25,6 +25,7 @@ import { camelCase, docComment, isPlainName, pascalCase, safeIdentifier } from "
 import {
   EFFECT_EXTENSION_SEAMS,
   EFFECT_FIELD_ADDITIONS,
+  EFFECT_FIELD_OPTIONALITY_OVERRIDES,
   EFFECT_FIELD_TYPE_OVERRIDES,
 } from "../overlay.ts";
 import type { ClassifiedLink } from "./links.ts";
@@ -58,6 +59,8 @@ export interface EffectEmission {
   readonly fieldTypeOverrides: readonly string[];
   /** `EFFECT_FIELD_ADDITIONS` rows applied, with their evidence and rationale. */
   readonly fieldAdditions: readonly string[];
+  /** `EFFECT_FIELD_OPTIONALITY_OVERRIDES` rows applied, with their evidence and rationale. */
+  readonly fieldOptionalityOverrides: readonly string[];
   /** Scope-link path properties emitted from the shared link table. */
   readonly linkEmitted: number;
   /** Machine-readable rows projected from the post-overlay effect clusters. */
@@ -77,17 +80,41 @@ type EffectShape =
     }
   | { readonly kind: "fields"; readonly fields: readonly ArgField[] };
 
-function addOverlayFields(emitter: Emitter, key: string, shape: EffectShape): EffectShape {
-  const additions = EFFECT_FIELD_ADDITIONS.get(key);
-  if (additions === undefined) {
+function applyFieldOverlays(emitter: Emitter, key: string, shape: EffectShape): EffectShape {
+  const additions = EFFECT_FIELD_ADDITIONS.get(key) ?? [];
+  const optionalityOverrides = EFFECT_FIELD_OPTIONALITY_OVERRIDES.get(key) ?? [];
+  if (additions.length === 0 && optionalityOverrides.length === 0) {
     return shape;
   }
   if (shape.kind !== "fields" && shape.kind !== "wrapper") {
     throw new Error(
-      `EFFECT_FIELD_ADDITIONS names "${key}", but that effect does not emit an args block`
+      `Effect field overlay names "${key}", but that effect does not emit an args block`
     );
   }
-  const fields = shape.fields ?? [];
+  let fields = shape.fields ?? [];
+  const appliedOptionality = new Set<string>();
+  fields = fields.map((field) => {
+    const override = optionalityOverrides.find((candidate) => candidate.name === field.name);
+    if (override === undefined) {
+      return field;
+    }
+    if (field.optional === override.optional) {
+      throw new Error(
+        `EFFECT_FIELD_OPTIONALITY_OVERRIDES names "${key}.${field.name}", but CWT already ` +
+          `makes it ${override.optional ? "optional" : "required"} — retire the overlay row`
+      );
+    }
+    appliedOptionality.add(field.name);
+    return { ...field, optional: override.optional };
+  });
+  for (const override of optionalityOverrides) {
+    if (!appliedOptionality.has(override.name)) {
+      throw new Error(
+        `EFFECT_FIELD_OPTIONALITY_OVERRIDES names "${key}.${override.name}", which no ` +
+          "emitted effect field matches — retire the overlay row or fix its key"
+      );
+    }
+  }
   const names = new Set(fields.map((field) => field.name));
   const added = additions.map((addition): ArgField => {
     if (names.has(addition.name)) {
@@ -439,6 +466,7 @@ export function emitEffects(
   const skipped: SkippedRule[] = [];
   const scalarOnly: string[] = [];
   const appliedFieldAdditions = new Set<string>();
+  const appliedFieldOptionalityOverrides = new Set<string>();
   const byShape = new Map<string, number>();
   interface Cluster {
     readonly scopes: readonly string[] | "universal";
@@ -505,9 +533,12 @@ export function emitEffects(
       emitter.absorb(ruleEmitter);
     }
     const base = "scalarOnly" in shape ? shape.scalarOnly : shape;
-    const resolved = addOverlayFields(emitter, key, base);
+    const resolved = applyFieldOverlays(emitter, key, base);
     if (EFFECT_FIELD_ADDITIONS.has(key)) {
       appliedFieldAdditions.add(key);
+    }
+    if (EFFECT_FIELD_OPTIONALITY_OVERRIDES.has(key)) {
+      appliedFieldOptionalityOverrides.add(key);
     }
     if ("scalarOnly" in shape) {
       scalarOnly.push(key);
@@ -552,6 +583,14 @@ export function emitEffects(
       throw new Error(
         `EFFECT_FIELD_ADDITIONS names "${key}", which no emitted effect matches — ` +
           "retire the overlay row or fix its key"
+      );
+    }
+  }
+  for (const key of EFFECT_FIELD_OPTIONALITY_OVERRIDES.keys()) {
+    if (!appliedFieldOptionalityOverrides.has(key)) {
+      throw new Error(
+        `EFFECT_FIELD_OPTIONALITY_OVERRIDES names "${key}", which no emitted effect ` +
+          "matches — retire the overlay row or fix its key"
       );
     }
   }
@@ -826,6 +865,12 @@ export function emitEffects(
     fieldAdditions: [...EFFECT_FIELD_ADDITIONS].flatMap(([key, additions]) =>
       additions.map(
         (addition) => `${key}.${addition.name} ← ${addition.source} — ${addition.reason}`
+      )
+    ),
+    fieldOptionalityOverrides: [...EFFECT_FIELD_OPTIONALITY_OVERRIDES].flatMap(([key, overrides]) =>
+      overrides.map(
+        (override) =>
+          `${key}.${override.name} → ${override.optional ? "optional" : "required"} ← ${override.source} — ${override.reason}`
       )
     ),
     linkEmitted: links.length,

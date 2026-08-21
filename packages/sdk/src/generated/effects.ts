@@ -3791,7 +3791,7 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
       | "system"
     >;
     attackerWarGoal: WarGoalRef | string;
-    name: string | { key: string; variableString?: readonly string[] };
+    name?: string | { key: string; variableString?: readonly string[] };
     effect?: (scope: WarScope) => void;
   }): void;
 
@@ -9330,6 +9330,7 @@ export interface EffectsInFleetStarbase {
     >;
     age?: number | "min" | "random";
     rarity?: ShipRarity;
+    createColony?: boolean;
     effect?: (scope: ShipScope) => void;
     growthStage?: number;
   }): void;
