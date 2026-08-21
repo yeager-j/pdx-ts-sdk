@@ -16,7 +16,12 @@ import Link from "fumadocs-core/link";
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { TypeTableFrame, TypeTableItem, type TypeNode } from "@/src/components/type-table";
-import type { EffectCategory, EffectsIndexEntry, ScopeLinkTarget } from "@/src/effects-index";
+import type {
+  EffectAvailability,
+  EffectCategory,
+  EffectsIndexEntry,
+  ScopeLinkTarget,
+} from "@/src/effects-index";
 
 /**
  * The index row as the server hands it over: the model entry plus the two
@@ -38,17 +43,22 @@ const CATEGORY_LABELS: Record<EffectCategory, string> = {
   "event-fire": "Event fire",
 };
 
-/**
- * A universal method is legal everywhere, so it matches whatever scope the
- * reader selects. The sentinel says that outright rather than copying all
- * forty-odd scope names onto every universal row.
- */
-const EVERY_SCOPE = "every";
+export const UNIVERSAL_SCOPE_FILTER = "__universal__";
 
-const legalScopesOf = (row: EffectsIndexRow): readonly string[] | typeof EVERY_SCOPE =>
-  row.availability.kind === "universal"
-    ? EVERY_SCOPE
-    : row.availability.scopes.map((target) => target.scope);
+export function matchesScopeFilter(
+  availability: EffectAvailability,
+  filterValue: unknown
+): boolean {
+  const selectedScope = String(filterValue);
+  if (selectedScope === "") return true;
+  if (selectedScope === UNIVERSAL_SCOPE_FILTER) {
+    return availability.kind === "universal";
+  }
+  return (
+    availability.kind === "universal" ||
+    availability.scopes.some((target) => target.scope === selectedScope)
+  );
+}
 
 const features = tableFeatures({
   columnFilteringFeature,
@@ -58,8 +68,7 @@ const features = tableFeatures({
 });
 
 const filterFn_legalOnScope = constructFilterFn<typeof features, EffectsIndexRow>({
-  filter: (dataValue, filterValue) =>
-    dataValue === EVERY_SCOPE || (dataValue as readonly string[]).includes(String(filterValue)),
+  filter: matchesScopeFilter,
   autoRemove: (filterValue) => filterValue === undefined || filterValue === "",
 });
 
@@ -75,7 +84,10 @@ const columns = helper.columns([
     id: "text",
     filterFn: filterFn_includesString,
   }),
-  helper.accessor(legalScopesOf, { id: "scope", filterFn: filterFn_legalOnScope }),
+  helper.accessor((row) => row.availability, {
+    id: "scope",
+    filterFn: filterFn_legalOnScope,
+  }),
   helper.accessor((row) => row.category, {
     id: "category",
     filterFn: filterFn_equalsString,
@@ -257,6 +269,7 @@ export function EffectsIndexTable({
             onChange={(event) => applyFilter(scopeColumn, event.target.value)}
           >
             <option value="">Any scope</option>
+            <option value={UNIVERSAL_SCOPE_FILTER}>Universal</option>
             {scopeOptions.map((scope) => (
               <option key={scope} value={scope}>
                 {scope}

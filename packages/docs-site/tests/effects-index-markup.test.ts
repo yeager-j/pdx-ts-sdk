@@ -2,7 +2,12 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import { EffectsIndexTable, type EffectsIndexRow } from "../components/EffectsIndexTable.tsx";
+import {
+  EffectsIndexTable,
+  matchesScopeFilter,
+  UNIVERSAL_SCOPE_FILTER,
+  type EffectsIndexRow,
+} from "../components/EffectsIndexTable.tsx";
 
 const addResource: EffectsIndexRow = {
   method: "addResource",
@@ -43,7 +48,23 @@ describe("EffectsIndexTable markup", () => {
     expect(html).toContain('for="effects-filter-text"');
     expect(html).toContain('for="effects-filter-scope"');
     expect(html).toContain('for="effects-filter-category"');
+    expect(html).toContain(`<option value="${UNIVERSAL_SCOPE_FILTER}">Universal</option>`);
     expect(html).toContain("No methods match the selected filters.");
+  });
+
+  it("distinguishes universal availability from legality on a selected scope", () => {
+    const countryOnly: EffectsIndexRow["availability"] = {
+      kind: "scopes",
+      scopes: [{ scope: "country" }],
+    };
+
+    expect(matchesScopeFilter(addResource.availability, "")).toBe(true);
+    expect(matchesScopeFilter(countryOnly, "")).toBe(true);
+    expect(matchesScopeFilter(addResource.availability, UNIVERSAL_SCOPE_FILTER)).toBe(true);
+    expect(matchesScopeFilter(countryOnly, UNIVERSAL_SCOPE_FILTER)).toBe(false);
+    expect(matchesScopeFilter(addResource.availability, "country")).toBe(true);
+    expect(matchesScopeFilter(countryOnly, "country")).toBe(true);
+    expect(matchesScopeFilter(countryOnly, "planet")).toBe(false);
   });
 
   it("server-renders native expandable rows with a stable anchor and full panel", () => {
