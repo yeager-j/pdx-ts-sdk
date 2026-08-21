@@ -40,6 +40,19 @@ describe("standalone localization types", () => {
     expectTypeOf(exact.key).toEqualTypeOf<"gateway_localization_types">();
     mod.feature("exact", [mod.localization("COUNTER", "Counter", { prefix: false })]);
 
+    const optionalExactOptions: { readonly prefix?: false } = {};
+    const optionalExact = mod.localization(
+      "optional_exact",
+      "Optional exact",
+      optionalExactOptions
+    );
+    expectTypeOf(optionalExact).toEqualTypeOf<
+      LocalizationItem<"localization_types", "optional_exact", boolean>
+    >();
+    expectTypeOf(optionalExact.key).toEqualTypeOf<
+      "optional_exact" | "localization_types_optional_exact"
+    >();
+
     const replacement = mod.replaceLocalization("crisis.2010.a", {
       english: "Reconsider.",
       french: "Réfléchissez.",

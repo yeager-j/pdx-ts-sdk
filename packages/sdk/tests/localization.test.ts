@@ -27,6 +27,10 @@ describe("standalone localization authoring", () => {
     expect(mod.localization("EXPLICIT", "Explicit", { prefix: true }).key).toBe(
       "localization_test_EXPLICIT"
     );
+    const optionalExactOptions: { readonly prefix?: false } = {};
+    expect(mod.localization("OPTIONAL", "Optional", optionalExactOptions).key).toBe(
+      "localization_test_OPTIONAL"
+    );
   });
 
   it("rejects suffixes outside the empirical Stellaris 4.4.6 alphabet", () => {

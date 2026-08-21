@@ -46,6 +46,26 @@ export interface LocalizationItem<
   readonly translations: LocalizationTranslations;
 }
 
+/** The standalone localization method bound to one mod prefix. */
+export interface LocalizationMethod<P extends string> {
+  <const Key extends string>(key: Key, text: LocalizationText): LocalizationItem<P, Key>;
+  <const Key extends string>(
+    key: Key,
+    text: LocalizationText,
+    options: { readonly prefix: false }
+  ): LocalizationItem<P, Key, false>;
+  <const Key extends string>(
+    key: Key,
+    text: LocalizationText,
+    options: { readonly prefix?: true }
+  ): LocalizationItem<P, Key>;
+  <const Key extends string>(
+    key: Key,
+    text: LocalizationText,
+    options: { readonly prefix?: boolean }
+  ): LocalizationItem<P, Key, boolean>;
+}
+
 /** An immutable, deliberate replacement of an exact existing localization key. */
 export interface ReplacementLocalizationItem<
   P extends string = string,
@@ -97,16 +117,12 @@ function resolveTranslations(text: LocalizationText): LocalizationTranslations {
 }
 
 /** Creates a prefix-owned standalone localization item. */
-export function createLocalizationItem<
-  const P extends string,
-  const Key extends string,
-  const ShouldPrefix extends boolean = true,
->(
+function createLocalizationItem<const P extends string, const Key extends string>(
   prefix: P,
   key: Key,
   text: LocalizationText,
-  options: { readonly prefix?: ShouldPrefix } = {}
-): LocalizationItem<P, Key, ShouldPrefix> {
+  options: { readonly prefix?: boolean } = {}
+): LocalizationItem<P, Key, boolean> {
   const shouldPrefix = options.prefix ?? true;
   let emittedKey: string;
   if (shouldPrefix) {
@@ -119,7 +135,7 @@ export function createLocalizationItem<
     assertExactOrdinaryLocalizationKey(key);
     emittedKey = key;
   }
-  const typedKey = emittedKey as LocalizationItem<P, Key, ShouldPrefix>["key"];
+  const typedKey = emittedKey as LocalizationItem<P, Key, boolean>["key"];
   return Object.freeze({
     itemKind: "localization",
     layer: "ordinary",
@@ -127,6 +143,37 @@ export function createLocalizationItem<
     prefix,
     translations: resolveTranslations(text),
   });
+}
+
+/** Binds standalone localization authoring to one mod prefix. */
+export function localizationFor<const P extends string>(prefix: P): LocalizationMethod<P> {
+  function localization<const Key extends string>(
+    key: Key,
+    text: LocalizationText
+  ): LocalizationItem<P, Key>;
+  function localization<const Key extends string>(
+    key: Key,
+    text: LocalizationText,
+    options: { readonly prefix: false }
+  ): LocalizationItem<P, Key, false>;
+  function localization<const Key extends string>(
+    key: Key,
+    text: LocalizationText,
+    options: { readonly prefix?: true }
+  ): LocalizationItem<P, Key>;
+  function localization<const Key extends string>(
+    key: Key,
+    text: LocalizationText,
+    options: { readonly prefix?: boolean }
+  ): LocalizationItem<P, Key, boolean>;
+  function localization<const Key extends string>(
+    key: Key,
+    text: LocalizationText,
+    options: { readonly prefix?: boolean } = {}
+  ): LocalizationItem<P, Key, boolean> {
+    return createLocalizationItem(prefix, key, text, options);
+  }
+  return localization;
 }
 
 /** Creates a prefix-owned item that deliberately replaces an exact existing key. */
