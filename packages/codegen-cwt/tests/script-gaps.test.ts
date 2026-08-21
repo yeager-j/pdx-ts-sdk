@@ -60,10 +60,10 @@ describe("the script-generation gap ledger", () => {
       effects: effects.skipped,
     });
 
-    expect(SCRIPT_GENERATION_GAPS).toHaveLength(67);
+    expect(SCRIPT_GENERATION_GAPS).toHaveLength(61);
     expect(report.policyOwned).toHaveLength(38);
     expect(report.abstractPlaceholders).toHaveLength(2);
-    expect(report.trackedGaps).toHaveLength(67);
+    expect(report.trackedGaps).toHaveLength(61);
     expect(report.abstractPlaceholders.map((entry) => entry.name)).toEqual([
       "<scripted_effect>",
       "<scripted_trigger>",
@@ -77,12 +77,13 @@ describe("the script-generation gap ledger", () => {
     });
     const lines = formatScriptGapReport(report);
 
-    expect(lines.trackedGaps).toHaveLength(67);
+    expect(lines.trackedGaps).toHaveLength(61);
     expect(lines.trackedGaps).toContain(
-      "effect spawn_megastructure [unsupported-alias-splice] — SDK-244: " +
-        "The effect emitter cannot type the name alias category. " +
-        "(splices a category the emitter cannot type (name))"
+      "effect create_fleet [unsupported-field-value] — SDK-253: " +
+        "The create_fleet parent field uses the malformed CWT keyword sceop[fleet]. " +
+        '(field "parent" has a type the emitter cannot express)'
     );
+    expect(lines.trackedGaps.every((line) => !line.includes("SDK-244"))).toBe(true);
     expect(lines.trackedGaps.every((line) => /SDK-[0-9]+/.test(line))).toBe(true);
     expect(lines.trackedGaps.every((line) => !line.includes("e.g."))).toBe(true);
   });

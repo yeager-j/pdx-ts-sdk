@@ -182,6 +182,78 @@ describe("LoweredRule", () => {
     );
   });
 
+  it("expands the name alias category into effect argument fields", () => {
+    const effectEmitter = new Emitter(rules);
+    effectEmitter.beginFile();
+    const emitted = emitEffects(
+      effectEmitter,
+      docs.effects,
+      scopes,
+      effects,
+      createEffectPolicy(rules),
+      []
+    );
+    const nameEffects = [
+      "clone_leader",
+      "create_army",
+      "create_balanced_fleet",
+      "create_country",
+      "create_fleet",
+      "create_leader",
+      "create_random_fleet",
+      "create_rebels",
+      "create_saved_leader",
+      "create_ship",
+      "create_species",
+      "declare_war",
+      "join_alliance",
+      "modify_army",
+      "spawn_megastructure",
+    ];
+
+    for (const name of nameEffects) {
+      expect(emitted.skipped).not.toContainEqual(
+        expect.objectContaining({ name, category: "unsupported-alias-splice" })
+      );
+    }
+    for (const name of [
+      "create_army",
+      "create_ship",
+      "declare_war",
+      "join_alliance",
+      "modify_army",
+      "spawn_megastructure",
+    ]) {
+      expect(emitted.skipped).not.toContainEqual(expect.objectContaining({ name }));
+    }
+    expect(
+      emitted.skipped
+        .filter((skip) => nameEffects.includes(skip.name))
+        .map(({ name, category }) => [name, category])
+    ).toEqual([
+      ["clone_leader", "multiple-structured-scalar-arms"],
+      ["create_balanced_fleet", "multiple-structured-scalar-arms"],
+      ["create_country", "repeated-nested-field"],
+      ["create_fleet", "unsupported-field-value"],
+      ["create_leader", "multiple-structured-scalar-arms"],
+      ["create_random_fleet", "multiple-structured-scalar-arms"],
+      ["create_rebels", "repeated-nested-field"],
+      ["create_saved_leader", "multiple-structured-scalar-arms"],
+      ["create_species", "repeated-structured-scalar-arms"],
+    ]);
+    expect(emitted.interfaces).toContain("variableString?: readonly string[]");
+    expect(emitted.interfaces).toContain("spawnMegastructure(args:");
+    expect(emitted.interfaces).toContain("type: MegastructureRef | string");
+    expect(emitted.interfaces).toContain("initEffect?: (scope: MegastructureScope) => void");
+    expect(emitted.meta).toContain(
+      '{ prop: "variableString", key: "variable_string", kind: "value", repeated: true }'
+    );
+    const usage = effectEmitter.endFile();
+    expect(usage.enums).not.toContain("contact_rule");
+    expect(usage.refs).not.toContain("name_list");
+    expect(usage.refs).not.toContain("species_class");
+  });
+
   it("rejects an effect-field overlay after CWT starts declaring that field", () => {
     const ambient = effects.get("create_ambient_object")!;
     const block = ambient.blocks[0]!;
@@ -194,6 +266,17 @@ describe("LoweredRule", () => {
       blocks: [
         {
           ...block,
+          type: {
+            ...block.type,
+            fields: [
+              ...block.type.fields,
+              {
+                ...location,
+                key: { kind: "name", name: "target" },
+                type: { kind: "scope", name: "any" },
+              },
+            ],
+          },
           named: [
             ...block.named,
             {

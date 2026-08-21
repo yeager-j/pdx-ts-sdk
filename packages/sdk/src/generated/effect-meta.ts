@@ -22,6 +22,8 @@ export interface EffectFieldMeta {
   readonly booleanLiterals?: readonly ("yes" | "no")[];
   /** Object-backed scalar forms accepted by a mixed scalar/block field. */
   readonly objectKinds?: readonly ("scope-ref" | "typed-ref")[];
+  /** Whether the field accepts repeated entries under the same script key. */
+  readonly repeated?: boolean;
   /** Scalar and structured-block arms for an overloaded field. */
   readonly scalar?: Pick<EffectFieldMeta, "refTypes" | "booleanLiterals" | "objectKinds">;
   readonly fields?: readonly EffectFieldMeta[];
@@ -784,6 +786,29 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     },
   },
   createArchaeologicalSite: { key: "create_archaeological_site", shape: { kind: "value" } },
+  createArmy: {
+    key: "create_army",
+    shape: {
+      kind: "fields",
+      fields: [
+        {
+          prop: "name",
+          key: "name",
+          kind: "scalar-or-fields",
+          scalar: {},
+          fields: [
+            { prop: "key", key: "key", kind: "value" },
+            { prop: "variableString", key: "variable_string", kind: "value", repeated: true },
+          ],
+        },
+        { prop: "owner", key: "owner", kind: "value" },
+        { prop: "type", key: "type", kind: "value", refTypes: ["army"] },
+        { prop: "species", key: "species", kind: "value" },
+        { prop: "leader", key: "leader", kind: "value" },
+        { prop: "effect", key: "effect", kind: "effect" },
+      ],
+    },
+  },
   createArmyTransport: {
     key: "create_army_transport",
     shape: {
@@ -949,6 +974,41 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     },
   },
   createSector: { key: "create_sector", shape: { kind: "bool" } },
+  createShip: {
+    key: "create_ship",
+    shape: {
+      kind: "fields",
+      fields: [
+        {
+          prop: "name",
+          key: "name",
+          kind: "scalar-or-fields",
+          scalar: { objectKinds: ["scope-ref"] },
+          fields: [
+            { prop: "key", key: "key", kind: "value" },
+            { prop: "variableString", key: "variable_string", kind: "value", repeated: true },
+          ],
+        },
+        { prop: "design", key: "design", kind: "value" },
+        {
+          prop: "randomExistingDesign",
+          key: "random_existing_design",
+          kind: "value",
+          refTypes: ["ship_size"],
+        },
+        { prop: "prefix", key: "prefix", kind: "value" },
+        { prop: "suffix", key: "suffix", kind: "value" },
+        { prop: "graphicalCulture", key: "graphical_culture", kind: "value" },
+        { prop: "graphicalCultureFallback", key: "graphical_culture_fallback", kind: "value" },
+        { prop: "upgradable", key: "upgradable", kind: "value" },
+        { prop: "colonizerSpecies", key: "colonizer_species", kind: "value" },
+        { prop: "age", key: "age", kind: "value" },
+        { prop: "rarity", key: "rarity", kind: "value" },
+        { prop: "effect", key: "effect", kind: "effect" },
+        { prop: "growthStage", key: "growth_stage", kind: "value" },
+      ],
+    },
+  },
   createShipDesign: {
     key: "create_ship_design",
     shape: { kind: "fields", fields: [{ prop: "design", key: "design", kind: "value" }] },
@@ -984,6 +1044,32 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   dateDistortion: { key: "date_distortion", shape: { kind: "bool" } },
   deactivateFogMachine: { key: "deactivate_fog_machine", shape: { kind: "bool" } },
   debugBreak: { key: "debug_break", shape: { kind: "bool" } },
+  declareWar: {
+    key: "declare_war",
+    shape: {
+      kind: "fields",
+      fields: [
+        { prop: "target", key: "target", kind: "value" },
+        {
+          prop: "attackerWarGoal",
+          key: "attacker_war_goal",
+          kind: "value",
+          refTypes: ["war_goal"],
+        },
+        {
+          prop: "name",
+          key: "name",
+          kind: "scalar-or-fields",
+          scalar: {},
+          fields: [
+            { prop: "key", key: "key", kind: "value" },
+            { prop: "variableString", key: "variable_string", kind: "value", repeated: true },
+          ],
+        },
+        { prop: "effect", key: "effect", kind: "effect" },
+      ],
+    },
+  },
   decliningSpecies: { key: "declining_species", shape: { kind: "scope-link" } },
   decreaseCouncilSize: { key: "decrease_council_size", shape: { kind: "bool" } },
   defender: { key: "defender", shape: { kind: "scope-link" } },
@@ -1746,6 +1832,26 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     },
   },
   issuer: { key: "issuer", shape: { kind: "scope-link" } },
+  joinAlliance: {
+    key: "join_alliance",
+    shape: {
+      kind: "fields",
+      fields: [
+        { prop: "who", key: "who", kind: "value" },
+        { prop: "overrideRequirements", key: "override_requirements", kind: "value" },
+        {
+          prop: "name",
+          key: "name",
+          kind: "scalar-or-fields",
+          scalar: {},
+          fields: [
+            { prop: "key", key: "key", kind: "value" },
+            { prop: "variableString", key: "variable_string", kind: "value", repeated: true },
+          ],
+        },
+      ],
+    },
+  },
   joinWar: { key: "join_war", shape: { kind: "value" } },
   joinWarOnSide: {
     key: "join_war_on_side",
@@ -1849,6 +1955,27 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   },
   mergeSpecies: { key: "merge_species", shape: { kind: "bool" } },
   miningStation: { key: "mining_station", shape: { kind: "scope-link" } },
+  modifyArmy: {
+    key: "modify_army",
+    shape: {
+      kind: "fields",
+      fields: [
+        {
+          prop: "name",
+          key: "name",
+          kind: "scalar-or-fields",
+          scalar: {},
+          fields: [
+            { prop: "key", key: "key", kind: "value" },
+            { prop: "variableString", key: "variable_string", kind: "value", repeated: true },
+          ],
+        },
+        { prop: "owner", key: "owner", kind: "value" },
+        { prop: "species", key: "species", kind: "value" },
+        { prop: "type", key: "type", kind: "value", refTypes: ["army"] },
+      ],
+    },
+  },
   modifySpecies: {
     key: "modify_species",
     shape: {
@@ -5617,6 +5744,51 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     },
   },
   spawnerPlanet: { key: "spawner_planet", shape: { kind: "scope-link" } },
+  spawnMegastructure: {
+    key: "spawn_megastructure",
+    shape: {
+      kind: "fields",
+      fields: [
+        { prop: "type", key: "type", kind: "value", refTypes: ["megastructure"] },
+        { prop: "planet", key: "planet", kind: "value" },
+        { prop: "coordsFrom", key: "coords_from", kind: "value" },
+        {
+          prop: "name",
+          key: "name",
+          kind: "scalar-or-fields",
+          scalar: {},
+          fields: [
+            { prop: "key", key: "key", kind: "value" },
+            { prop: "variableString", key: "variable_string", kind: "value", repeated: true },
+          ],
+        },
+        {
+          prop: "orbitAngle",
+          key: "orbit_angle",
+          kind: "scalar-or-fields",
+          scalar: {},
+          fields: [
+            { prop: "min", key: "min", kind: "value" },
+            { prop: "max", key: "max", kind: "value" },
+          ],
+        },
+        {
+          prop: "orbitDistance",
+          key: "orbit_distance",
+          kind: "scalar-or-fields",
+          scalar: {},
+          fields: [
+            { prop: "min", key: "min", kind: "value" },
+            { prop: "max", key: "max", kind: "value" },
+          ],
+        },
+        { prop: "owner", key: "owner", kind: "value" },
+        { prop: "graphicalCulture", key: "graphical_culture", kind: "value" },
+        { prop: "randomPos", key: "random_pos", kind: "value" },
+        { prop: "initEffect", key: "init_effect", kind: "effect" },
+      ],
+    },
+  },
   spawnNaturalWormhole: {
     key: "spawn_natural_wormhole",
     shape: {

@@ -194,58 +194,61 @@ function fieldEntries(
     if (value === undefined) {
       continue;
     }
-    switch (field.kind) {
-      case "value": {
-        const scalar = toScalar(value, field.booleanLiterals);
-        recordRef(refs, field.refTypes, `${path}.${field.key}`, scalar);
-        entries.push(kv(field.key, scalar));
-        break;
-      }
-      case "scalar-or-fields":
-        if (isStructuredValue(value, field.scalar?.objectKinds ?? [])) {
-          entries.push(
-            block(
-              field.key,
-              fieldEntries(
-                field.fields ?? [],
-                value as Record<string, unknown>,
-                `${path}.${field.key}`,
-                refs
-              )
-            )
-          );
-        } else {
-          const scalar = toScalar(value, field.scalar?.booleanLiterals);
-          recordRef(refs, field.scalar?.refTypes, `${path}.${field.key}`, scalar);
-          entries.push(kv(field.key, scalar));
-        }
-        break;
-      case "comparison":
-        if (Array.isArray(value)) {
-          entries.push(cmp(field.key, value[0] as PdxOp, toScalar(value[1])));
-        } else {
+    const values = field.repeated === true ? (value as readonly unknown[]) : [value];
+    for (const value of values) {
+      switch (field.kind) {
+        case "value": {
           const scalar = toScalar(value, field.booleanLiterals);
           recordRef(refs, field.refTypes, `${path}.${field.key}`, scalar);
           entries.push(kv(field.key, scalar));
+          break;
         }
-        break;
-      case "trigger":
-        entries.push(block(field.key, [...(value as Trigger).entries]));
-        refs.push(...(value as Trigger).refs);
-        break;
-      case "effect":
-        entries.push(block(field.key, recordEffects(refs, value as (scope: unknown) => void)));
-        break;
-      case "modifiers":
-        entries.push(
-          block(
-            field.key,
-            (value as readonly Modifier<ScopeName>[]).map((modifier) =>
-              modifierEntry(modifier, refs)
+        case "scalar-or-fields":
+          if (isStructuredValue(value, field.scalar?.objectKinds ?? [])) {
+            entries.push(
+              block(
+                field.key,
+                fieldEntries(
+                  field.fields ?? [],
+                  value as Record<string, unknown>,
+                  `${path}.${field.key}`,
+                  refs
+                )
+              )
+            );
+          } else {
+            const scalar = toScalar(value, field.scalar?.booleanLiterals);
+            recordRef(refs, field.scalar?.refTypes, `${path}.${field.key}`, scalar);
+            entries.push(kv(field.key, scalar));
+          }
+          break;
+        case "comparison":
+          if (Array.isArray(value)) {
+            entries.push(cmp(field.key, value[0] as PdxOp, toScalar(value[1])));
+          } else {
+            const scalar = toScalar(value, field.booleanLiterals);
+            recordRef(refs, field.refTypes, `${path}.${field.key}`, scalar);
+            entries.push(kv(field.key, scalar));
+          }
+          break;
+        case "trigger":
+          entries.push(block(field.key, [...(value as Trigger).entries]));
+          refs.push(...(value as Trigger).refs);
+          break;
+        case "effect":
+          entries.push(block(field.key, recordEffects(refs, value as (scope: unknown) => void)));
+          break;
+        case "modifiers":
+          entries.push(
+            block(
+              field.key,
+              (value as readonly Modifier<ScopeName>[]).map((modifier) =>
+                modifierEntry(modifier, refs)
+              )
             )
-          )
-        );
-        break;
+          );
+          break;
+      }
     }
   }
   return entries;

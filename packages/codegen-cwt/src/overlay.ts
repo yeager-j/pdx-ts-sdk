@@ -527,6 +527,11 @@ export const CONTENT_CONTRIBUTION_SINKS = new Map<string, ContributionSink>([
  */
 export const EXTRA_ALIAS_CATEGORIES = new Map<string, string>([
   [
+    "name",
+    "The shared name field grammar spliced into creation and mutation effects. Its one member " +
+      "accepts a localisation/scalar value or a structured key with repeated variable strings.",
+  ],
+  [
     "pop_pre_trigger",
     "Seven plain bools consumed by `job.possible_pre_triggers` (and " +
       "pop_faction_type's can_join_pre_triggers). Every member is `bool`, so the " +

@@ -2,7 +2,12 @@ import { serialize, type PdxEntry } from "@pdx-ts/pdxscript";
 import { describe, expect, it } from "vitest";
 
 import type { EffectPathOf } from "../src/generated/effects.ts";
-import { ambientObjectFlags, countryFlags } from "../src/generated/value-sets.ts";
+import {
+  ambientObjectFlags,
+  armyFlags,
+  countryFlags,
+  megastructureFlags,
+} from "../src/generated/value-sets.ts";
 import {
   eventTarget,
   isEventFireKey,
@@ -15,6 +20,8 @@ import { hasOwner, isAtWar } from "../src/script/triggers.ts";
 
 const flags = countryFlags("effects_test_flag");
 const stormWorld = eventTarget<"planet">("effects_test_target");
+const createdArmyFlags = armyFlags("effects_test_created_army");
+const createdMegastructureFlags = megastructureFlags("effects_test_created_megastructure");
 
 describe("the effect recorder over generated meta", () => {
   it("serializes a minimal ambient-object placement", () => {
@@ -118,6 +125,80 @@ describe("the effect recorder over generated meta", () => {
 	type = effects_test_effect_probe
 	effect = {
 		set_ambient_object_flag = effects_test_ambient_flag
+	}
+}
+`);
+  });
+
+  it("serializes a structured name with repeated variables in a pushed army scope", () => {
+    const sink: PdxEntry[] = [];
+    const planet = makeScope<"planet">(sink);
+
+    planet.createArmy({
+      name: {
+        key: "effects_test_army_name",
+        variableString: ["effects_test_first", "effects_test_second"],
+      },
+      owner: scopeValue<"country">("root"),
+      type: "effects_test_army",
+      species: "random",
+      effect: (army) => army.setArmyFlag(createdArmyFlags.effects_test_created_army),
+    });
+
+    expect(serialize(sink)).toBe(`create_army = {
+	name = {
+		key = effects_test_army_name
+		variable_string = effects_test_first
+		variable_string = effects_test_second
+	}
+	owner = root
+	type = effects_test_army
+	species = random
+	effect = {
+		set_army_flag = effects_test_created_army
+	}
+}
+`);
+  });
+
+  it("serializes every generated spawn-megastructure field and its pushed scope", () => {
+    const sink: PdxEntry[] = [];
+    const system = makeScope<"system">(sink);
+
+    system.spawnMegastructure({
+      type: "effects_test_megastructure",
+      planet: scopeValue<"planet">("from"),
+      coordsFrom: scopeValue<"system">("this"),
+      name: { key: "effects_test_megastructure_name", variableString: ["effects_test_owner"] },
+      orbitAngle: { min: 45, max: 90 },
+      orbitDistance: "@effects_test_distance",
+      owner: scopeValue<"country">("root"),
+      graphicalCulture: "effects_test_graphical_culture",
+      randomPos: false,
+      initEffect: (megastructure) =>
+        megastructure.setMegastructureFlag(
+          createdMegastructureFlags.effects_test_created_megastructure
+        ),
+    });
+
+    expect(serialize(sink)).toBe(`spawn_megastructure = {
+	type = effects_test_megastructure
+	planet = from
+	coords_from = this
+	name = {
+		key = effects_test_megastructure_name
+		variable_string = effects_test_owner
+	}
+	orbit_angle = {
+		min = 45
+		max = 90
+	}
+	orbit_distance = @effects_test_distance
+	owner = root
+	graphical_culture = effects_test_graphical_culture
+	random_pos = no
+	init_effect = {
+		set_megastructure_flag = effects_test_created_megastructure
 	}
 }
 `);
