@@ -38,7 +38,7 @@ export type RuleType =
   | {
       readonly kind: "block";
       readonly fields: readonly RuleField[];
-      readonly bare: readonly RuleType[];
+      readonly bare: readonly RuleBareValue[];
       /**
        * The `single_alias` name this block expanded from, when it was written
        * as `single_alias_right[x]` rather than spelled out inline. Expansion is
@@ -106,6 +106,14 @@ export interface RuleField {
   readonly line: number;
   /** `==` marks a comparison field, written in script as `count > 4`. */
   readonly comparison: boolean;
+}
+
+export interface RuleBareValue {
+  readonly type: RuleType;
+  readonly cardinality: Cardinality;
+  readonly docs: readonly string[];
+  readonly scope: ScopeContext | null;
+  readonly line: number;
 }
 
 const BRACKETED = /^([^\[\]]+)\[([^\[\]]*)\]$/;
@@ -255,13 +263,19 @@ export function classifyBlock(
   report?: ClassificationReporter
 ): RuleType {
   const fields: RuleField[] = [];
-  const bare: RuleType[] = [];
+  const bare: RuleBareValue[] = [];
   for (const node of block.nodes) {
     if (node.kind === "assignment") {
       fields.push(toField(node.key, node, resolve, report));
       continue;
     }
-    bare.push(classify(node.value, resolve, report));
+    bare.push({
+      type: classify(node.value, resolve, report),
+      cardinality: cardinalityOf(node.options),
+      docs: node.docs,
+      scope: scopeOf(node.options),
+      line: node.line,
+    });
   }
   return { kind: "block", fields, bare };
 }

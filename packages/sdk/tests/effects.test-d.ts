@@ -50,6 +50,34 @@ describe("generated effect scope safety", () => {
     });
   });
 
+  it("types bare-value lists, mixed list arms, and bare effect clauses", () => {
+    const country = makeScope<"country">(sink);
+    country.copyTechsFrom({ target: scopeValue<"country">("root"), except: ["tech_a", "tech_b"] });
+    country.createRandomFleet({
+      shipDesigns: ["corvette", { design: "destroyer", weight: 2, min: 1, max: 3 }],
+    });
+    country.startStormAreaPlacing({
+      cosmicStorm: "storm_test",
+      reticleRadius: [],
+      maxRange: [],
+      onConfirm: (scope) => scope.log("confirmed"),
+    });
+
+    // @ts-expect-error — a bare-value list must be wrapped in an array
+    country.copyTechsFrom({ target: scopeValue<"country">("root"), except: "tech_a" });
+    country.createRandomFleet({
+      // @ts-expect-error — a structured list arm requires its design field
+      shipDesigns: [{ weight: 2 }],
+    });
+    country.startStormAreaPlacing({
+      cosmicStorm: "storm_test",
+      reticleRadius: [],
+      maxRange: [],
+      // @ts-expect-error — an anonymous effect clause authors as a closure
+      onConfirm: "set_country_flag = confirmed",
+    });
+  });
+
   it("types ambient-object placement refs, locations, and scalar/range offsets", () => {
     const system = makeScope<"system">(sink);
     system.createAmbientObject({

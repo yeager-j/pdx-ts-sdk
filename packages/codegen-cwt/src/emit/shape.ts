@@ -12,7 +12,14 @@
  * and report detail, so nothing is dropped silently.
  */
 
-import { isOptional, isRepeated, type RuleField, type RuleType } from "../cwt/model.ts";
+import {
+  isOptional,
+  isRepeated,
+  type Cardinality,
+  type RuleBareValue,
+  type RuleField,
+  type RuleType,
+} from "../cwt/model.ts";
 import { UNIVERSAL_SCOPES } from "../overlay.ts";
 import type { Emitter, TsValue } from "./types.ts";
 
@@ -150,6 +157,13 @@ export type ArgValue =
       readonly scalar: TsValue;
       readonly fields: readonly ArgField[];
     }
+  /** One braced value containing anonymous scalar or structured items. */
+  | {
+      readonly kind: "valueList";
+      readonly scalar: TsValue | null;
+      readonly fields: readonly ArgField[] | null;
+      readonly cardinality: Cardinality;
+    }
   /**
    * A typed hole for a nested clause. `scope` is the canonical scope the
    * clause runs in, or `null` for "the enclosing rule's own scope". `splice`
@@ -282,6 +296,21 @@ function clauseScope(
     : canonical;
 }
 
+function bareClauseScope(
+  emitter: Emitter,
+  value: RuleBareValue,
+  inherited: string | null
+): string | null | SkipReason {
+  const pushed = value.scope?.this ?? inherited;
+  if (pushed == null) {
+    return null;
+  }
+  const canonical = emitter.canonicalScope(pushed);
+  return canonical === null
+    ? skipReason("unknown-push-scope", `bare clause pushes an unknown scope (${pushed})`)
+    : canonical;
+}
+
 /** The authored operand type for a CWT comparison, or its skip reason. */
 export function comparisonValue(
   emitter: Emitter,
@@ -309,6 +338,117 @@ function hasRepeatedNestedField(fields: readonly RuleField[]): boolean {
       isRepeated(field.cardinality) ||
       (field.type.kind === "block" && hasRepeatedNestedField(field.type.fields))
   );
+}
+
+function combinedCardinality(values: readonly RuleBareValue[]): Cardinality {
+  return {
+    min: values.reduce((sum, value) => sum + value.cardinality.min, 0),
+    max: values.some((value) => value.cardinality.max === null)
+      ? null
+      : values.reduce((sum, value) => sum + value.cardinality.max!, 0),
+  };
+}
+
+export function cardinalityArrayType(item: string, cardinality: Cardinality): string {
+  const tuple = (length: number): string =>
+    `readonly [${Array.from({ length }, () => item).join(", ")}]`;
+  if (cardinality.max !== null) {
+    return Array.from({ length: cardinality.max - cardinality.min + 1 }, (_, index) =>
+      tuple(cardinality.min + index)
+    ).join(" | ");
+  }
+  return cardinality.min === 0
+    ? `readonly ${item}[]`
+    : `readonly [${Array.from({ length: cardinality.min }, () => item).join(", ")}, ...${item}[]]`;
+}
+
+/** Lowers the anonymous contents of one braced field. */
+export function bareBlockValue(
+  emitter: Emitter,
+  bare: readonly RuleBareValue[],
+  inheritedScope: string | null,
+  allowedClauses: ReadonlySet<ClauseCategory>
+): ArgValue | SkipReason {
+  const clauses = bare.filter((value) => clauseOf(value.type) !== null);
+  if (clauses.length > 0) {
+    if (clauses.length !== bare.length || clauses.length !== 1) {
+      return skipReason(
+        "mixed-clause-categories",
+        "bare block mixes a clause with other anonymous values"
+      );
+    }
+    const value = clauses[0]!;
+    const category = clauseOf(value.type)!;
+    if (!allowedClauses.has(category)) {
+      return skipReason(
+        "unsupported-clause",
+        `bare block contains ${category}, which this emitter cannot type`
+      );
+    }
+    if (isRepeated(value.cardinality)) {
+      return skipReason("repeated-nested-field", "bare block contains a repeated clause");
+    }
+    const scope = bareClauseScope(emitter, value, inheritedScope);
+    return typeof scope === "object" && scope !== null
+      ? scope
+      : { kind: "clause", category, scope, splice: false };
+  }
+
+  const structured = bare.filter(
+    (
+      value
+    ): value is RuleBareValue & {
+      readonly type: Extract<RuleType, { readonly kind: "block" }>;
+    } => value.type.kind === "block"
+  );
+  if (structured.length > 1) {
+    return skipReason(
+      "multiple-structured-scalar-arms",
+      "bare block has more than one structured arm"
+    );
+  }
+
+  let fields: readonly ArgField[] | null = null;
+  if (structured.length === 1) {
+    const block = structured[0]!.type;
+    if (block.bare.length > 0) {
+      return skipReason("structured-bare-values", "bare structured arm nests bare values");
+    }
+    if (hasRepeatedNestedField(block.fields)) {
+      return skipReason("repeated-nested-field", "bare structured arm has repeated fields");
+    }
+    const lowered = mergeFields(
+      emitter,
+      block.fields,
+      structured[0]!.scope?.this ?? inheritedScope,
+      allowedClauses
+    );
+    if (!Array.isArray(lowered)) {
+      return lowered;
+    }
+    if (lowered.length === 0) {
+      return skipReason("empty-structured-arm", "bare structured arm has no typeable fields");
+    }
+    fields = lowered;
+  }
+
+  const scalarDeclarations = bare.filter((value) => value.type.kind !== "block");
+  const scalar =
+    scalarDeclarations.length === 0
+      ? null
+      : emitter.unionFor(scalarDeclarations.map((value) => value.type));
+  if (scalarDeclarations.length > 0 && scalar === null) {
+    return skipReason("unsupported-field-value", "bare block has a scalar arm it cannot express");
+  }
+  if (scalar === null && fields === null) {
+    return skipReason("empty-block", "bare block has no typeable values");
+  }
+  return {
+    kind: "valueList",
+    scalar,
+    fields,
+    cardinality: combinedCardinality(bare),
+  };
 }
 
 /**
@@ -396,10 +536,29 @@ export function mergeFields(
       }
       const block = structured[0]!.type;
       if (block.bare.length > 0) {
-        return skipReason(
-          "structured-bare-values",
-          `field "${name}" structured arm has bare values`
+        if (scalarDeclarations.length > 0) {
+          return skipReason(
+            "multiple-structured-scalar-arms",
+            `field "${name}" mixes a bare-value block with a scalar arm`
+          );
+        }
+        const value = bareBlockValue(
+          emitter,
+          block.bare,
+          structured[0]!.scope?.this ?? inheritedScope,
+          allowedClauses
         );
+        if ("detail" in value) {
+          return { ...value, detail: `field "${name}" structured arm ${value.detail}` };
+        }
+        merged.push({
+          name,
+          value,
+          optional,
+          ...(repeated ? { repeated: true } : {}),
+          docs,
+        });
+        continue;
       }
       const preserveNested = group.some(isAliasExpandedField);
       if (hasRepeatedNestedField(block.fields) && !preserveNested) {

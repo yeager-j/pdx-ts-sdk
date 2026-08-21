@@ -32,6 +32,7 @@ import type { ClassifiedLink } from "./links.ts";
 import type { ScriptEffectReferenceRow, ScriptScopeLinkReferenceRow } from "./script-reference.ts";
 import {
   canonicalScopeSet,
+  cardinalityArrayType,
   expandAliasFields,
   mergeFields,
   skippedRule,
@@ -273,6 +274,15 @@ function memberType(field: ArgField, outerScope: string, owner: string): string 
         return argsType(value.fields, outerScope, owner);
       case "scalarOrFields":
         return `${value.scalar.type} | ${argsType(value.fields, outerScope, owner)}`;
+      case "valueList": {
+        const arms = [
+          value.scalar?.type,
+          value.fields === null ? null : argsType(value.fields, outerScope, owner),
+        ].filter((arm): arm is string => arm !== null && arm !== undefined);
+        const item =
+          arms.length === 1 && !arms[0]!.includes(" | ") ? arms[0]! : `(${arms.join(" | ")})`;
+        return cardinalityArrayType(item, value.cardinality);
+      }
       case "clause": {
         const scope = value.scope === null ? outerScope : JSON.stringify(value.scope);
         if (value.category === "trigger") {
@@ -383,6 +393,11 @@ function fieldMeta(field: ArgField): string {
   }
   if (field.value.kind === "scalarOrFields") {
     return `{ prop: ${JSON.stringify(camelCase(field.name))}, key: ${JSON.stringify(field.name)}, kind: "scalar-or-fields", scalar: ${scalarMeta(field.value.scalar)}, fields: [${field.value.fields.map(fieldMeta).join(", ")}]${repeated} }`;
+  }
+  if (field.value.kind === "valueList") {
+    const scalar = field.value.scalar;
+    const fields = field.value.fields;
+    return `{ prop: ${JSON.stringify(camelCase(field.name))}, key: ${JSON.stringify(field.name)}, kind: "value-list"${scalar === null ? "" : `, scalar: ${scalarMeta(scalar)}`}${fields === null ? "" : `, fields: [${fields.map(fieldMeta).join(", ")}]`}${repeated} }`;
   }
   const kind =
     field.value.kind === "scalar"
@@ -784,7 +799,7 @@ export function emitEffects(
     .join("");
   const meta =
     "export type EffectFieldKind = " +
-    '"value" | "comparison" | "trigger" | "effect" | "modifiers" | "fields" | "scalar-or-fields";\n\n' +
+    '"value" | "comparison" | "trigger" | "effect" | "modifiers" | "fields" | "scalar-or-fields" | "value-list";\n\n' +
     "export interface EffectFieldMeta {\n" +
     "  readonly prop: string;\n" +
     "  readonly key: string;\n" +

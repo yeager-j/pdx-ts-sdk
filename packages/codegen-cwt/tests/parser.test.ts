@@ -150,6 +150,43 @@ describe("rule types", () => {
     });
   });
 
+  it("keeps anonymous block-member order, cardinality, and documentation", () => {
+    const type = classify(
+      only(
+        [
+          "values = {",
+          "  ## cardinality = 0..inf",
+          "  ### First values stay first.",
+          "  <technology>",
+          "  ## cardinality = 0..1",
+          "  scalar",
+          "}",
+        ].join("\n")
+      ).value
+    );
+
+    expect(type).toEqual({
+      kind: "block",
+      fields: [],
+      bare: [
+        {
+          type: { kind: "typeRef", name: "technology" },
+          cardinality: { min: 0, max: null },
+          docs: ["First values stay first."],
+          scope: null,
+          line: 4,
+        },
+        {
+          type: { kind: "scalar" },
+          cardinality: { min: 0, max: 1 },
+          docs: [],
+          scope: null,
+          line: 6,
+        },
+      ],
+    });
+  });
+
   it("classifies the scope forms, including the unbracketed one", () => {
     expect(classify(only("who = scope_group[target_country]").value)).toEqual({
       kind: "scopeGroup",

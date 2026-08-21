@@ -5,7 +5,14 @@
 // From: links.cwt
 
 export type EffectFieldKind =
-  "value" | "comparison" | "trigger" | "effect" | "modifiers" | "fields" | "scalar-or-fields";
+  | "value"
+  | "comparison"
+  | "trigger"
+  | "effect"
+  | "modifiers"
+  | "fields"
+  | "scalar-or-fields"
+  | "value-list";
 
 export interface EffectFieldMeta {
   readonly prop: string;
@@ -436,6 +443,28 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
+  addTimelineEvent: {
+    key: "add_timeline_event",
+    shape: {
+      kind: "fields",
+      fields: [
+        { prop: "type", key: "type", kind: "value", refTypes: ["timeline_events"] },
+        { prop: "date", key: "date", kind: "value" },
+        { prop: "overrideId", key: "override_id", kind: "value" },
+        { prop: "overrideTooltip", key: "override_tooltip", kind: "value" },
+        { prop: "overrideTypes", key: "override_types", kind: "value-list", scalar: {} },
+        { prop: "overrideText", key: "override_text", kind: "value-list", scalar: {} },
+        { prop: "overrideTexture", key: "override_texture", kind: "value-list", scalar: {} },
+        {
+          prop: "targets",
+          key: "targets",
+          kind: "value-list",
+          scalar: { objectKinds: ["scope-ref"] },
+        },
+        { prop: "overrideTooltipDelayed", key: "override_tooltip_delayed", kind: "value" },
+      ],
+    },
+  },
   addToGalacticCommunity: { key: "add_to_galactic_community", shape: { kind: "bool" } },
   addToGalacticCommunityNoMessage: {
     key: "add_to_galactic_community_no_message",
@@ -674,6 +703,16 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   clearOrders: { key: "clear_orders", shape: { kind: "bool" } },
   clearPlanetModifiers: { key: "clear_planet_modifiers", shape: { kind: "bool" } },
   clearPlanetPurgeType: { key: "clear_planet_purge_type", shape: { kind: "bool" } },
+  clearRelations: {
+    key: "clear_relations",
+    shape: {
+      kind: "fields",
+      fields: [
+        { prop: "target", key: "target", kind: "value" },
+        { prop: "relations", key: "relations", kind: "value-list", scalar: {} },
+      ],
+    },
+  },
   clearResources: { key: "clear_resources", shape: { kind: "bool" } },
   clearUnchartedSpace: { key: "clear_uncharted_space", shape: { kind: "value" } },
   clearVariable: { key: "clear_variable", shape: { kind: "value" } },
@@ -711,6 +750,21 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   contactCountry: { key: "contact_country", shape: { kind: "scope-link" } },
   controller: { key: "controller", shape: { kind: "scope-link" } },
   convertToSpecialist: { key: "convert_to_specialist", shape: { kind: "value" } },
+  copyAscensionPerksFrom: {
+    key: "copy_ascension_perks_from",
+    shape: {
+      kind: "fields",
+      fields: [
+        { prop: "target", key: "target", kind: "value" },
+        {
+          prop: "exceptions",
+          key: "exceptions",
+          kind: "value-list",
+          scalar: { refTypes: ["ascension_perk"], objectKinds: ["typed-ref"] },
+        },
+      ],
+    },
+  },
   copyEthosAndAuthority: { key: "copy_ethos_and_authority", shape: { kind: "value" } },
   copyFlagsAndVariablesFrom: { key: "copy_flags_and_variables_from", shape: { kind: "value" } },
   copyRandomTechFrom: {
@@ -722,6 +776,36 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         { prop: "category", key: "category", kind: "value", refTypes: ["technology_category"] },
         { prop: "area", key: "area", kind: "value" },
         { prop: "progress", key: "progress", kind: "value" },
+      ],
+    },
+  },
+  copyTechsFrom: {
+    key: "copy_techs_from",
+    shape: {
+      kind: "fields",
+      fields: [
+        { prop: "target", key: "target", kind: "value" },
+        {
+          prop: "except",
+          key: "except",
+          kind: "value-list",
+          scalar: { refTypes: ["technology"], objectKinds: ["typed-ref"] },
+        },
+      ],
+    },
+  },
+  copyTraditionsFrom: {
+    key: "copy_traditions_from",
+    shape: {
+      kind: "fields",
+      fields: [
+        { prop: "target", key: "target", kind: "value" },
+        {
+          prop: "exceptions",
+          key: "exceptions",
+          kind: "value-list",
+          scalar: { refTypes: ["tradition"], objectKinds: ["typed-ref"] },
+        },
       ],
     },
   },
@@ -824,6 +908,28 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         { prop: "shipName", key: "ship_name", kind: "value" },
         { prop: "armyName", key: "army_name", kind: "value" },
         { prop: "species", key: "species", kind: "value" },
+        { prop: "effect", key: "effect", kind: "effect" },
+      ],
+    },
+  },
+  createBalancedFleet: {
+    key: "create_balanced_fleet",
+    shape: {
+      kind: "fields",
+      fields: [
+        {
+          prop: "name",
+          key: "name",
+          kind: "scalar-or-fields",
+          scalar: { objectKinds: ["scope-ref"] },
+          fields: [
+            { prop: "key", key: "key", kind: "value" },
+            { prop: "variableString", key: "variable_string", kind: "value", repeated: true },
+          ],
+        },
+        { prop: "size", key: "size", kind: "value" },
+        { prop: "canOverflow", key: "can_overflow", kind: "value" },
+        { prop: "shipDesigns", key: "ship_designs", kind: "value-list", scalar: {} },
         { prop: "effect", key: "effect", kind: "effect" },
       ],
     },
@@ -959,6 +1065,39 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         { prop: "size", key: "size", kind: "value" },
         { prop: "random", key: "random", kind: "value" },
         { prop: "growthCategory", key: "growth_category", kind: "value" },
+        { prop: "effect", key: "effect", kind: "effect" },
+      ],
+    },
+  },
+  createRandomFleet: {
+    key: "create_random_fleet",
+    shape: {
+      kind: "fields",
+      fields: [
+        {
+          prop: "name",
+          key: "name",
+          kind: "scalar-or-fields",
+          scalar: { objectKinds: ["scope-ref"] },
+          fields: [
+            { prop: "key", key: "key", kind: "value" },
+            { prop: "variableString", key: "variable_string", kind: "value", repeated: true },
+          ],
+        },
+        { prop: "size", key: "size", kind: "value" },
+        { prop: "canOverflow", key: "can_overflow", kind: "value" },
+        {
+          prop: "shipDesigns",
+          key: "ship_designs",
+          kind: "value-list",
+          scalar: {},
+          fields: [
+            { prop: "design", key: "design", kind: "value" },
+            { prop: "weight", key: "weight", kind: "value" },
+            { prop: "min", key: "min", kind: "value" },
+            { prop: "max", key: "max", kind: "value" },
+          ],
+        },
         { prop: "effect", key: "effect", kind: "effect" },
       ],
     },
@@ -1820,6 +1959,22 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       fields: [
         { prop: "controller", key: "controller", kind: "value" },
         { prop: "days", key: "days", kind: "value" },
+      ],
+    },
+  },
+  giveSpecimen: {
+    key: "give_specimen",
+    shape: {
+      kind: "fields",
+      fields: [
+        { prop: "key", key: "key", kind: "value", refTypes: ["specimen"] },
+        { prop: "origin", key: "origin", kind: "value" },
+        {
+          prop: "targets",
+          key: "targets",
+          kind: "value-list",
+          scalar: { objectKinds: ["scope-ref"] },
+        },
       ],
     },
   },
@@ -5866,6 +6021,51 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
+  spawnPlanet: {
+    key: "spawn_planet",
+    shape: {
+      kind: "fields",
+      fields: [
+        { prop: "class", key: "class", kind: "value" },
+        { prop: "generateRandomName", key: "generate_random_name", kind: "value" },
+        { prop: "checkOverlap", key: "check_overlap", kind: "value" },
+        { prop: "name", key: "name", kind: "value" },
+        { prop: "location", key: "location", kind: "value" },
+        { prop: "orbitLocation", key: "orbit_location", kind: "value" },
+        {
+          prop: "orbitDistance",
+          key: "orbit_distance",
+          kind: "scalar-or-fields",
+          scalar: {},
+          fields: [
+            { prop: "min", key: "min", kind: "value" },
+            { prop: "max", key: "max", kind: "value" },
+          ],
+        },
+        { prop: "orbitDistanceOffset", key: "orbit_distance_offset", kind: "value" },
+        { prop: "planeOffset", key: "plane_offset", kind: "value" },
+        { prop: "depositBlockers", key: "deposit_blockers", kind: "value" },
+        { prop: "modifiers", key: "modifiers", kind: "value" },
+        { prop: "modifier", key: "modifier", kind: "value", refTypes: ["planet_modifier"] },
+        { prop: "flags", key: "flags", kind: "value-list", scalar: {} },
+        { prop: "size", key: "size", kind: "value" },
+        { prop: "hasRing", key: "has_ring", kind: "value" },
+        { prop: "spawnBeyondGravityWell", key: "spawn_beyond_gravity_well", kind: "value" },
+        {
+          prop: "orbitAngle",
+          key: "orbit_angle",
+          kind: "scalar-or-fields",
+          scalar: {},
+          fields: [
+            { prop: "min", key: "min", kind: "value" },
+            { prop: "max", key: "max", kind: "value" },
+          ],
+        },
+        { prop: "orbitAngleOffset", key: "orbit_angle_offset", kind: "value" },
+        { prop: "initEffect", key: "init_effect", kind: "effect" },
+      ],
+    },
+  },
   spawnPsionicAura: {
     key: "spawn_psionic_aura",
     shape: {
@@ -5932,6 +6132,26 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         { prop: "type", key: "type", kind: "value", refTypes: ["situation_type"] },
         { prop: "target", key: "target", kind: "value" },
         { prop: "effect", key: "effect", kind: "effect" },
+      ],
+    },
+  },
+  startStormAreaPlacing: {
+    key: "start_storm_area_placing",
+    shape: {
+      kind: "fields",
+      fields: [
+        {
+          prop: "sacrificeLeaderWithUi",
+          key: "sacrifice_leader_with_ui",
+          kind: "value",
+          booleanLiterals: ["yes"],
+        },
+        { prop: "cosmicStorm", key: "cosmic_storm", kind: "value", refTypes: ["storm_types"] },
+        { prop: "immediate", key: "immediate", kind: "value", booleanLiterals: ["yes"] },
+        { prop: "reticleRadius", key: "reticle_radius", kind: "modifiers" },
+        { prop: "maxRange", key: "max_range", kind: "modifiers" },
+        { prop: "onConfirm", key: "on_confirm", kind: "effect" },
+        { prop: "onCancel", key: "on_cancel", kind: "effect" },
       ],
     },
   },
@@ -6007,6 +6227,25 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         { prop: "name", key: "name", kind: "value" },
         { prop: "ethics", key: "ethics", kind: "value" },
         { prop: "government", key: "government", kind: "value" },
+      ],
+    },
+  },
+  stormApplyAftermathModifier: {
+    key: "storm_apply_aftermath_modifier",
+    shape: {
+      kind: "fields",
+      fields: [
+        {
+          prop: "severity",
+          key: "severity",
+          kind: "fields",
+          fields: [
+            { prop: "modifier", key: "modifier", kind: "value", refTypes: ["static_modifier"] },
+            { prop: "days", key: "days", kind: "value" },
+            { prop: "chance", key: "chance", kind: "modifiers" },
+            { prop: "effect", key: "effect", kind: "effect" },
+          ],
+        },
       ],
     },
   },

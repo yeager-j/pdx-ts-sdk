@@ -59,6 +59,57 @@ set_diplomacy_action_setting = {
 `);
   });
 
+  it("serializes scalar, mixed, and clause-valued bare blocks in author order", () => {
+    const sink: PdxEntry[] = [];
+    const country = makeScope<"country">(sink);
+
+    country.copyTechsFrom({
+      target: scopeValue<"country">("root"),
+      except: ["tech_alpha", "tech_beta"],
+    });
+    country.createRandomFleet({
+      shipDesigns: ["corvette", { design: "destroyer", weight: 2, min: 1, max: 3 }, "cruiser"],
+      effect: (fleet) => fleet.setFleetFlag("effects_test_created_fleet"),
+    });
+    country.startStormAreaPlacing({
+      cosmicStorm: "effects_test_storm",
+      reticleRadius: [],
+      maxRange: [],
+      onConfirm: (scope) => scope.log("effects_test_confirmed"),
+    });
+
+    expect(serialize(sink)).toBe(`copy_techs_from = {
+	target = root
+	except = { tech_alpha tech_beta }
+}
+
+create_random_fleet = {
+	ship_designs = {
+		corvette
+		{
+			design = destroyer
+			weight = 2
+			min = 1
+			max = 3
+		}
+		cruiser
+	}
+	effect = {
+		set_fleet_flag = effects_test_created_fleet
+	}
+}
+
+start_storm_area_placing = {
+	cosmic_storm = effects_test_storm
+	reticle_radius = {}
+	max_range = {}
+	on_confirm = {
+		log = effects_test_confirmed
+	}
+}
+`);
+  });
+
   it("serializes a minimal ambient-object placement", () => {
     const sink: PdxEntry[] = [];
     const system = makeScope<"system">(sink);

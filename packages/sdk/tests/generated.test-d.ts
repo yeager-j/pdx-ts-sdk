@@ -9,6 +9,7 @@ import {
   aiArmorRatio,
   anyTraitOfSpecies,
   customTooltip,
+  hasActiveEvent,
   hasCountryFlag,
   hasEdict,
   hasElectionType,
@@ -16,6 +17,8 @@ import {
   numMoons,
   popGroupSize,
   relativePower,
+  totalWorkforceWithJobTag,
+  traitHasAllTags,
   type Trigger,
 } from "../src/script/triggers.ts";
 
@@ -98,6 +101,17 @@ describe("shapes the rules give a signature", () => {
     hasElectionType("oligarchic");
     // @ts-expect-error — not an election type
     hasElectionType("monarchy_of_vibes");
+  });
+
+  it("types ordered bare-value trigger blocks as arrays", () => {
+    hasActiveEvent(["mymod.1", { id: "mymod.2" }]);
+    traitHasAllTags(["biological", "lithoid"]);
+    totalWorkforceWithJobTag({ tags: ["farmer", "researcher"], value: [">=", 100] });
+
+    // @ts-expect-error — a bare-value block is an ordered array, not one scalar
+    hasActiveEvent("mymod.1");
+    // @ts-expect-error — nested bare values stay inside their enclosing list block
+    totalWorkforceWithJobTag({ tags: "farmer", value: 100 });
   });
 });
 

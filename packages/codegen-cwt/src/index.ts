@@ -620,7 +620,7 @@ async function main(): Promise<void> {
   await write(
     "triggers.ts",
     header(commit, ["triggers.cwt", "aliases.cwt", "script-docs/v4.4.1/triggers.log"]) +
-      'import { block, cmp, kv, type PdxEntry, type PdxOp } from "@pdx-ts/pdxscript";\n' +
+      'import { block, cmp, container, kv, scalar, type PdxEntry, type PdxItem, type PdxOp } from "@pdx-ts/pdxscript";\n' +
       'import type { ContentRefUse } from "../references.ts";\n' +
       (referencesIdentifier(triggers.code, "ScopeValue")
         ? 'import type { ScopeValue } from "../script/effects/types.ts";\n'

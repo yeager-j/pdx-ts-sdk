@@ -233,11 +233,9 @@ describe("LoweredRule", () => {
         .map(({ name, category }) => [name, category])
     ).toEqual([
       ["clone_leader", "repeated-nested-field"],
-      ["create_balanced_fleet", "structured-bare-values"],
       ["create_country", "repeated-nested-field"],
       ["create_fleet", "unsupported-field-value"],
       ["create_leader", "repeated-nested-field"],
-      ["create_random_fleet", "structured-bare-values"],
       ["create_rebels", "repeated-nested-field"],
       ["create_saved_leader", "repeated-nested-field"],
       ["create_species", "repeated-structured-scalar-arms"],

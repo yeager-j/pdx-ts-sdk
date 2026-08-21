@@ -14,11 +14,14 @@ import type { LoweredRule } from "../lowered-rule.ts";
 import { camelCase, docComment, isPlainName, pascalCase, safeIdentifier } from "../naming.ts";
 import { HAND_WRITTEN_TRIGGER_RULES_BY_KEY } from "../trigger-policy.ts";
 import {
+  bareBlockValue,
+  cardinalityArrayType,
   comparisonValue,
   mergeFields,
   skippedRule,
   skipReason,
   type ArgField,
+  type ArgValue,
   type ClauseCategory,
   type SkippedRule,
   type SkipReason,
@@ -40,6 +43,10 @@ type Shape =
   | { readonly kind: "bool" }
   | { readonly kind: "comparison"; readonly value: TsValue }
   | { readonly kind: "value"; readonly value: TsValue }
+  | {
+      readonly kind: "valueList";
+      readonly value: Extract<ArgValue, { readonly kind: "valueList" }>;
+    }
   /** A localisation scalar or a typed trigger block, dispatched by `typeof`. */
   | { readonly kind: "stringOrFields"; readonly fields: readonly ArgField[] }
   /** A block whose entire content is a nested trigger, i.e. a scope change. */
@@ -83,7 +90,16 @@ function shapeOf(emitter: Emitter, rule: LoweredRule): Shape | SkipReason {
   const block = rule.blocks[0]!;
   const body = block.type;
   if (body.bare.length > 0) {
-    return skipReason("bare-value-block", "block with bare values");
+    if (body.fields.length > 0) {
+      return skipReason("bare-value-block", "block mixes bare values with named fields");
+    }
+    const value = bareBlockValue(emitter, body.bare, block.inheritedScope, TRIGGER_CLAUSES);
+    if ("detail" in value) {
+      return value;
+    }
+    return value.kind === "valueList"
+      ? { kind: "valueList", value }
+      : skipReason("unsupported-clause", "top-level bare block contains a clause");
   }
   const splices = block.splices;
   const named = block.named;
@@ -248,6 +264,8 @@ function memberType(field: ArgField, outerScope: string): string {
       return `{ ${value.fields.map((nested) => `${camelCase(nested.name)}${nested.optional ? "?" : ""}: ${memberType(nested, outerScope)}`).join("; ")} }`;
     case "scalarOrFields":
       return `${value.scalar.type} | { ${value.fields.map((nested) => `${camelCase(nested.name)}${nested.optional ? "?" : ""}: ${memberType(nested, outerScope)}`).join("; ")} }`;
+    case "valueList":
+      return valueListType(value, outerScope);
     case "clause":
       return `Trigger<${value.scope === null ? outerScope : JSON.stringify(value.scope)}>`;
     case "comparison": {
@@ -255,6 +273,20 @@ function memberType(field: ArgField, outerScope: string): string {
       return [value.value.type, `readonly [PdxOp, ${value.value.type}]`, ...literals].join(" | ");
     }
   }
+}
+
+function valueListType(
+  value: Extract<ArgValue, { readonly kind: "valueList" }>,
+  outerScope: string
+): string {
+  const arms = [
+    value.scalar?.type,
+    value.fields === null
+      ? null
+      : `{ ${value.fields.map((field) => `${camelCase(field.name)}${field.optional ? "?" : ""}: ${memberType(field, outerScope)}`).join("; ")} }`,
+  ].filter((arm): arm is string => arm !== null && arm !== undefined);
+  const item = arms.length === 1 && !arms[0]!.includes(" | ") ? arms[0]! : `(${arms.join(" | ")})`;
+  return cardinalityArrayType(item, value.cardinality);
 }
 
 /** Whether this field can put a content reference into the emitted tree: a
@@ -265,6 +297,12 @@ function contributesRefs(field: ArgField): boolean {
   }
   if (field.value.kind === "scalar") {
     return field.value.value.refTypes !== undefined;
+  }
+  if (field.value.kind === "valueList") {
+    return (
+      field.value.scalar?.refTypes !== undefined ||
+      (field.value.fields?.some(contributesRefs) ?? false)
+    );
   }
   return (
     (field.value.kind === "fields" || field.value.kind === "scalarOrFields") &&
@@ -340,6 +378,8 @@ function pushCode(
         `${sink}.push(block(${key}, nestedEntries));`
       );
     }
+    case "valueList":
+      return pushValueListCode(field.value, access, `${owner}.${field.name}`, index, key, sink);
     case "clause":
       return (
         (field.value.splice
@@ -354,6 +394,77 @@ function pushCode(
         `kv(${key}, ${pushExpr(field.value.value, access)}));`
       );
   }
+}
+
+function pushValueListCode(
+  value: Extract<ArgValue, { readonly kind: "valueList" }>,
+  access: string,
+  owner: string,
+  index: number,
+  key: string,
+  sink: string
+): string {
+  const items = `items${index}`;
+  const item = `item${index}`;
+  const scalar = value.scalar;
+  const structured = value.fields;
+  const scalarPush = (() => {
+    if (scalar === null) {
+      return "";
+    }
+    const expression = pushExpr(scalar, item);
+    const pdxScalar = scalar.scriptValue === true ? expression : `scalar(${expression})`;
+    if (scalar.refTypes === undefined) {
+      return `${items}.push(${pdxScalar});`;
+    }
+    const id = `id${index}`;
+    return (
+      `const ${id} = ${scalar.toScalar(item)};\n` +
+      `${items}.push(scalar(${id}));\n` +
+      `refs.push({ targets: ${JSON.stringify(scalar.refTypes)}, id: ${id}, field: ${JSON.stringify(owner)} });`
+    );
+  })();
+  const structuredPush = (() => {
+    if (structured === null) {
+      return "";
+    }
+    const nested = structured
+      .map((field, nestedIndex) => {
+        const nestedAccess = `${item}.${camelCase(field.name)}`;
+        const code = pushCode(field, nestedAccess, owner, nestedIndex, "nestedEntries");
+        return field.optional ? `if (${nestedAccess} !== undefined) {\n  ${code}\n}` : code;
+      })
+      .join("\n");
+    return `const nestedEntries: PdxEntry[] = [];\n${nested}\n${items}.push(container(nestedEntries));`;
+  })();
+  const body =
+    scalar !== null && structured !== null
+      ? `if (isStructuredValue(${item}, ${JSON.stringify(scalar.objectKinds ?? [])})) {\n${structuredPush}\n} else {\n${scalarPush}\n}`
+      : structuredPush || scalarPush;
+  return (
+    `const ${items}: PdxItem[] = [];\n` +
+    `for (const ${item} of ${access}) {\n${body}\n}\n` +
+    `${sink}.push(kv(${key}, container(${items})));`
+  );
+}
+
+function emitValueList(
+  fn: string,
+  key: string,
+  scope: string,
+  docs: string[],
+  value: Extract<ArgValue, { readonly kind: "valueList" }>
+): string {
+  const field: ArgField = { name: key, value, optional: false, docs: [] };
+  const withRefs = contributesRefs(field);
+  return (
+    docComment(docs) +
+    `export function ${fn}(values: ${valueListType(value, scope)}): Trigger<${scope}> {\n` +
+    `  const entries: PdxEntry[] = [];\n` +
+    (withRefs ? `  const refs: ContentRefUse[] = [];\n` : "") +
+    `  ${pushValueListCode(value, "values", key, 0, JSON.stringify(key), "entries")}\n` +
+    `  return trigger(entries${withRefs ? ", refs" : ""});\n}\n`
+  );
 }
 
 function emitFields(
@@ -445,6 +556,8 @@ function emitOne(key: string, shape: Shape, scope: string, docs: string[]): stri
       return emitComparison(fn, key, scope, docs, shape.value);
     case "value":
       return emitValue(fn, key, scope, docs, shape.value);
+    case "valueList":
+      return emitValueList(fn, key, scope, docs, shape.value);
     case "stringOrFields":
       return emitStringOrFields(fn, key, scope, docs, shape.fields);
     case "wrapper":

@@ -4,7 +4,16 @@
 // From: aliases.cwt
 // From: script-docs/v4.4.1/triggers.log
 
-import { block, cmp, kv, type PdxEntry, type PdxOp } from "@pdx-ts/pdxscript";
+import {
+  block,
+  cmp,
+  container,
+  kv,
+  scalar,
+  type PdxEntry,
+  type PdxItem,
+  type PdxOp,
+} from "@pdx-ts/pdxscript";
 
 import type { ContentRefUse } from "../references.ts";
 import type { ScopeValue } from "../script/effects/types.ts";
@@ -90,6 +99,7 @@ import type {
   EspionageOperationRef,
   EthicRef,
   EventChainRef,
+  EventRef,
   FederationLawCategoryRef,
   FederationLawRef,
   FederationPerkRef,
@@ -7250,6 +7260,29 @@ export function hasActiveBuilding(
     [kv("has_active_building", id)],
     [{ targets: ["building"], id, field: "has_active_building" }]
   );
+}
+
+/**
+ * Checks if country has active events:
+ * ```
+ * has_active_event = {
+ * 	event.1
+ * 	event.2
+ * 	event.n
+ * }
+ * ```
+ */
+export function hasActiveEvent(values: readonly (EventRef | string)[]): Trigger<"country"> {
+  const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
+  const items0: PdxItem[] = [];
+  for (const item0 of values) {
+    const id0 = refId(item0);
+    items0.push(scalar(id0));
+    refs.push({ targets: ["event"], id: id0, field: "has_active_event" });
+  }
+  entries.push(kv("has_active_event", container(items0)));
+  return trigger(entries, refs);
 }
 
 /**
@@ -18295,6 +18328,128 @@ export function timedFlagDaysLeft(
       : kv("value", scriptValueScalar(args.value))
   );
   return trigger([block("timed_flag_days_left", entries)]);
+}
+
+export interface TotalCountryWorkforceWithJobTagArgs {
+  tags: readonly string[];
+  value: ScriptValue | readonly [PdxOp, ScriptValue];
+}
+
+/**
+ * Checks how much workforce that has jobs with all given tags in a country
+ * ```
+ * total_country_workforce_with_job_tag = { tags = { farmer trader } value = 1000 }
+ * ```
+ */
+export function totalCountryWorkforceWithJobTag(
+  args: TotalCountryWorkforceWithJobTagArgs
+): Trigger<"country"> {
+  const entries: PdxEntry[] = [];
+  const items0: PdxItem[] = [];
+  for (const item0 of args.tags) {
+    items0.push(scalar(item0));
+  }
+  entries.push(kv("tags", container(items0)));
+  entries.push(
+    typeof args.value === "object"
+      ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
+      : kv("value", scriptValueScalar(args.value))
+  );
+  return trigger([block("total_country_workforce_with_job_tag", entries)]);
+}
+
+export interface TotalSystemWorkforceWithJobTagArgs {
+  limit?: Trigger<"pop_job">;
+  tags: readonly string[];
+  value: ScriptValue | readonly [PdxOp, ScriptValue];
+}
+
+/**
+ * Checks how much workforce that has jobs with all given tags in a system
+ * ```
+ * total_system_workforce_with_job_tag = { tags = { farmer trader } limit = { is_owned_by = root } value = 1000 }
+ * ```
+ */
+export function totalSystemWorkforceWithJobTag(
+  args: TotalSystemWorkforceWithJobTagArgs
+): Trigger<"system"> {
+  const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
+  if (args.limit !== undefined) {
+    entries.push(block("limit", [...args.limit.entries]));
+    refs.push(...args.limit.refs);
+  }
+  const items1: PdxItem[] = [];
+  for (const item1 of args.tags) {
+    items1.push(scalar(item1));
+  }
+  entries.push(kv("tags", container(items1)));
+  entries.push(
+    typeof args.value === "object"
+      ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
+      : kv("value", scriptValueScalar(args.value))
+  );
+  return trigger([block("total_system_workforce_with_job_tag", entries)], refs);
+}
+
+export interface TotalWorkforceWithJobTagArgs {
+  tags: readonly string[];
+  value: ScriptValue | readonly [PdxOp, ScriptValue];
+}
+
+/**
+ * Checks how much workforce that has jobs with all given tags in a planet
+ * ```
+ * total_workforce_with_job_tag = { tags = { farmer trader } value = 1000 }
+ * ```
+ */
+export function totalWorkforceWithJobTag(
+  args: TotalWorkforceWithJobTagArgs
+): Trigger<"carrier" | "colony" | "planet" | "ship"> {
+  const entries: PdxEntry[] = [];
+  const items0: PdxItem[] = [];
+  for (const item0 of args.tags) {
+    items0.push(scalar(item0));
+  }
+  entries.push(kv("tags", container(items0)));
+  entries.push(
+    typeof args.value === "object"
+      ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
+      : kv("value", scriptValueScalar(args.value))
+  );
+  return trigger([block("total_workforce_with_job_tag", entries)]);
+}
+
+/**
+ * Checks if a trait has all tags in the list
+ * ```
+ * trait_has_all_tags = { biological lithoids }
+ * ```
+ */
+export function traitHasAllTags(values: readonly string[]): Trigger<"species_trait"> {
+  const entries: PdxEntry[] = [];
+  const items0: PdxItem[] = [];
+  for (const item0 of values) {
+    items0.push(scalar(item0));
+  }
+  entries.push(kv("trait_has_all_tags", container(items0)));
+  return trigger(entries);
+}
+
+/**
+ * Checks if the last acquired specimen is of the given rarity
+ * ```
+ * trait_has_any_tag = { biological lithoids }
+ * ```
+ */
+export function traitHasAnyTag(values: readonly string[]): Trigger<"species_trait"> {
+  const entries: PdxEntry[] = [];
+  const items0: PdxItem[] = [];
+  for (const item0 of values) {
+    items0.push(scalar(item0));
+  }
+  entries.push(kv("trait_has_any_tag", container(items0)));
+  return trigger(entries);
 }
 
 /**

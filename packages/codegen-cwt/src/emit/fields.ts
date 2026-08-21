@@ -197,7 +197,9 @@ export interface LoweredField {
 }
 
 function bareValuesOf(type: RuleType): readonly RuleType[] | null {
-  return type.kind === "block" && type.bare.length > 0 ? type.bare : null;
+  return type.kind === "block" && type.bare.length > 0
+    ? type.bare.map((value) => value.type)
+    : null;
 }
 
 type BlockType = Extract<RuleType, { kind: "block" }>;
@@ -223,8 +225,8 @@ function structBlockOf(
   if (type.kind !== "block") {
     return null;
   }
-  if (type.fields.length === 0 && type.bare.length === 1 && type.bare[0]!.kind === "block") {
-    return { block: type.bare[0] as BlockType, wrapped: true };
+  if (type.fields.length === 0 && type.bare.length === 1 && type.bare[0]!.type.kind === "block") {
+    return { block: type.bare[0]!.type, wrapped: true };
   }
   if (type.fields.length > 0) {
     return { block: type, wrapped: false };
