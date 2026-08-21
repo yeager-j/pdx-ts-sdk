@@ -1,9 +1,9 @@
 ---
-name: add-registry-docs
+name: add-sdk-docs
 description: User-invoked workflow in which the coordinator launches research subagents and writes documentation for a registry item.
 ---
 
-# Add Registry Docs
+# Add SDK Docs
 
 Stellaris is installed at `/Users/jackson/Library/Application Support/Steam/steamapps/common/Stellaris`.
 
@@ -17,7 +17,7 @@ Process:
 
 You may end up creating multiple documentation pages in a single session, so don't open a PR until the user asks.
 
-## Reference Content
+## Registry Content
 
 These instructions are for writing content that lives in `src/content/docs/reference`. Do not follow them for Tutorials or Guides.
 
@@ -62,20 +62,26 @@ Links to related documentation and helpful pointers.
 
 Use the following syntax for step-by-step instructions:
 
-```
-import { Steps } from '@astrojs/starlight/components';
+```mdxjs
+import { Step, Steps } from '@/src/components/steps';
 
 <Steps>
+  <Step>
 
-1. Import the component into your MDX file:
+    ### Hello World
 
-   Additional step content. This can be multiple paragraphs or even components like PairedExample. The additional content must be aligned with the step title (ie "Import the component..."), like these instructions are.
+    This is some content.
 
-2. Wrap `<Steps>` around your ordered list items.
+  </Step>
 
+  <Step>
+
+    ### Hello World
+
+  </Step>
 </Steps>
 ```
 
 ## Fact-Checking
 
-Before claiming a page is complete, launch a Luna subagent to go through the page line by line and fact check. When it reports back, verify its claims and make the necessary repairs.
+Before claiming a page is complete, launch a `doc-fact-checker` subagent to go through the page line by line and fact check. When it reports back, verify its claims and make the necessary repairs.
