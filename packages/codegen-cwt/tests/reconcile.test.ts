@@ -103,6 +103,33 @@ describe("the drift gate", () => {
     expect(report.unknownKeywords).toEqual(["effects.cwt:2902 sceop[fleet]"]);
   });
 
+  it("carries a per-file reference-count signature on the one accepted unknown scope", () => {
+    expect(report.unknownScopes).toEqual(["pop — effects.log:52, triggers.log:73"]);
+  });
+
+  it("finds no malformed doc-dump blocks in the vendored dumps today", () => {
+    expect(report.malformedDocBlocks).toEqual([]);
+    expect(report.malformedModifierBlocks).toEqual([]);
+  });
+
+  it("catches a malformed trigger/effect doc block the baseline does not expect", () => {
+    expect(
+      compareToBaseline(report, {
+        ...baseline,
+        malformedDocBlocks: ["triggers.log:1 made up block"],
+      })
+    ).toEqual(["  - malformed trigger/effect doc block: triggers.log:1 made up block"]);
+  });
+
+  it("catches a malformed modifier doc block the baseline does not expect", () => {
+    expect(
+      compareToBaseline(report, {
+        ...baseline,
+        malformedModifierBlocks: ["modifiers.log:1 made up line"],
+      })
+    ).toEqual(["  - malformed modifier doc block: modifiers.log:1 made up line"]);
+  });
+
   it("names a trigger that appeared in only one source", () => {
     const injected: DriftBaseline = {
       ...baseline,

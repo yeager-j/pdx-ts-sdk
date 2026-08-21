@@ -173,6 +173,8 @@ function checkDrift(report: DriftReport, rebaseline: boolean): void {
   // instead of crashing on the missing field.
   const baseline = {
     links: { rulesOnly: [], docsOnly: [] },
+    malformedDocBlocks: [],
+    malformedModifierBlocks: [],
     ...(JSON.parse(readFileSync(BASELINE, "utf8")) as Partial<DriftBaseline>),
   } as DriftBaseline;
   if (rebaseline) {

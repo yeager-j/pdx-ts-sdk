@@ -131,6 +131,25 @@ export interface RegistryCorpus {
 }
 
 /**
+ * Every value {@link DescentNode.mode} may hold, as a runtime const the type
+ * derives from rather than a second, hand-kept list. `descend`'s switch turns
+ * every arm here into a compile failure if it is missing one (see its
+ * `never`-typed default), and `packages/sdk/tests/codegen/corpus-conformance.test.ts`
+ * checks its own `TOTAL_RECORDING_MODES` is a subset of this list instead of
+ * an independently maintained set that a new mode could silently outrun.
+ */
+export const DESCENT_MODES = [
+  "struct",
+  "wrappedStruct",
+  "structMap",
+  "repeatedStruct",
+  "weightModifiers",
+  "triggeredModifierPotential",
+  "economicResourceOperationTrigger",
+  "triggerStruct",
+] as const;
+
+/**
  * One block-valued field the reader descends into, and the nodes for whatever
  * it in turn contains.
  *
@@ -174,15 +193,7 @@ export interface RegistryCorpus {
 export interface DescentNode {
   /** The game's key at this level; the corpus path grows `<prefix>.<field>`. */
   readonly field: string;
-  readonly mode:
-    | "struct"
-    | "wrappedStruct"
-    | "structMap"
-    | "repeatedStruct"
-    | "weightModifiers"
-    | "triggeredModifierPotential"
-    | "economicResourceOperationTrigger"
-    | "triggerStruct";
+  readonly mode: (typeof DESCENT_MODES)[number];
   /** `repeatedStruct` only. */
   readonly keying?: "container" | "siblings";
   /** `repeatedStruct` with "siblings" keying only — the field carrying the id. */
@@ -292,6 +303,16 @@ function descend(
     case "triggerStruct":
       recordTriggerStruct(value, path, node, children, seen, blockArity);
       return;
+    default: {
+      // Exhaustiveness, not defensiveness: `node.mode` is only assignable to
+      // `never` here because every DESCENT_MODES member has its own case
+      // above. Add a mode without a case and this line fails to compile,
+      // rather than the switch silently returning void for it — which is
+      // exactly what a bare `switch (node.mode) { ... }` with no default did
+      // before this arm existed.
+      const unreachable: never = node.mode;
+      throw new Error(`Unhandled descent mode: ${String(unreachable)}`);
+    }
   }
 }
 
@@ -905,15 +926,22 @@ export interface ShapeMismatch {
  * field lowered to a union of a scalar and a block, dispatched at write time by
  * what the author passed.
  *
- * A shape missing here gets no form verdict rather than a guessed one.
+ * A shape missing here gets no form verdict rather than a guessed one — which
+ * is only sound for a shape whose own top-level `EmittedField` never reaches
+ * this lookup in the first place. Every other {@link CONTENT_SHAPES} member
+ * must have a row: the table is string-keyed, so a typo'd or forgotten shape
+ * silently exempts a field rather than failing loudly. `written-form.test.ts`
+ * pins `CONTENT_SHAPES` against this map's keys plus {@link WRITTEN_FORM_EXEMPT}
+ * in both directions, so a fifth gap cannot join either list unreviewed.
  */
-const WRITTEN_FORM = new Map<string, "scalar" | "block" | "both">([
+export const WRITTEN_FORM = new Map<string, "scalar" | "block" | "both">([
   ["value", "scalar"],
   ["dual", "both"],
   ["valueList", "block"],
   ["trigger", "block"],
   ["effect", "block"],
   ["economicResources", "block"],
+  ["economicResourceOperation", "block"],
   ["economicResourcesNoProduce", "block"],
   ["triggeredModifierBlock", "block"],
   ["modifierBlock", "block"],
@@ -922,10 +950,33 @@ const WRITTEN_FORM = new Map<string, "scalar" | "block" | "both">([
   ["weightModifier", "block"],
   ["weightedEvents", "block"],
   ["struct", "block"],
+  ["triggerStruct", "block"],
   ["aliasStruct", "block"],
   ["structMap", "block"],
   ["scalarMap", "block"],
   ["repeatedStruct", "block"],
+]);
+
+/**
+ * {@link CONTENT_SHAPES} members with no {@link WRITTEN_FORM} row, each with
+ * the reason its own top-level occurrence never reaches the lookup — not
+ * merely "nobody got to it yet".
+ */
+export const WRITTEN_FORM_EXEMPT = new Map<string, string>([
+  [
+    "inlineModifiers",
+    "splices modifiers unkeyed at the block root (lowerTopLevelSplice in " +
+      "emit/fields.ts): there is no field key of its own, so no EmittedField " +
+      "carrying this shape is ever produced to look it up.",
+  ],
+  [
+    "inlineTrigger",
+    "the generated descriptor's own metadata names this shape, but the " +
+      "corpus-facing nested field it produces is measured under the plain " +
+      '"trigger" shape instead (the inlineTrigger arm of structShape in ' +
+      "emit/fields.ts) — the interior IS checked, just under trigger's " +
+      "existing row rather than one of its own.",
+  ],
 ]);
 
 /**
