@@ -174,6 +174,20 @@ export function propertyName(name: string): string {
   return PROPERTY_IDENTIFIER.test(name) ? name : JSON.stringify(name);
 }
 
+/**
+ * {@link propertyName}'s companion for the read side: `objectExpression.name`
+ * when `name` is a bare identifier, `objectExpression[JSON.stringify(name)]`
+ * otherwise — the same `PROPERTY_IDENTIFIER` test, so declaration and access
+ * agree on what counts as an identifier. The reserved-word nuance in
+ * `propertyName`'s doc holds here too: `x.for` is legal member access, since
+ * a property name is never evaluated as a binding.
+ */
+export function propertyAccess(objectExpression: string, name: string): string {
+  return PROPERTY_IDENTIFIER.test(name)
+    ? `${objectExpression}.${name}`
+    : `${objectExpression}[${JSON.stringify(name)}]`;
+}
+
 const PROPERTY_IDENTIFIER = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
 
 /**

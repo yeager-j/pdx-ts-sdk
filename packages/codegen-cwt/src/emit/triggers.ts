@@ -16,6 +16,7 @@ import {
   docComment,
   isPlainName,
   pascalCase,
+  propertyAccess,
   propertyName,
   safeIdentifier,
 } from "../naming.ts";
@@ -346,7 +347,7 @@ function pushCode(
     case "scalarOrFields": {
       const nested = field.value.fields
         .map((nestedField, nestedIndex) => {
-          const nestedAccess = `${access}.${camelCase(nestedField.name)}`;
+          const nestedAccess = propertyAccess(access, camelCase(nestedField.name));
           const code = pushCode(
             nestedField,
             nestedAccess,
@@ -370,7 +371,7 @@ function pushCode(
     case "fields": {
       const nested = field.value.fields
         .map((nestedField, nestedIndex) => {
-          const nestedAccess = `${access}.${camelCase(nestedField.name)}`;
+          const nestedAccess = propertyAccess(access, camelCase(nestedField.name));
           const code = pushCode(
             nestedField,
             nestedAccess,
@@ -439,7 +440,7 @@ function pushValueListCode(
     }
     const nested = structured
       .map((field, nestedIndex) => {
-        const nestedAccess = `${item}.${camelCase(field.name)}`;
+        const nestedAccess = propertyAccess(item, camelCase(field.name));
         const code = pushCode(field, nestedAccess, owner, nestedIndex, "nestedEntries");
         return field.optional ? `if (${nestedAccess} !== undefined) {\n  ${code}\n}` : code;
       })
@@ -493,7 +494,7 @@ function emitFields(
     .join("");
   const pushes = fields
     .map((field, index) => {
-      const access = `args.${camelCase(field.name)}`;
+      const access = propertyAccess("args", camelCase(field.name));
       const push = `    ${pushCode(field, access, key, index)}\n`;
       return field.optional ? `  if (${access} !== undefined) {\n${push}  }\n` : push.slice(2);
     })
@@ -533,7 +534,7 @@ function emitStringOrFields(
     .join("");
   const pushes = fields
     .map((field, index) => {
-      const access = `args.${camelCase(field.name)}`;
+      const access = propertyAccess("args", camelCase(field.name));
       const push = `    ${pushCode(field, access, key, index)}\n`;
       return field.optional ? `  if (${access} !== undefined) {\n${push}  }\n` : push.slice(2);
     })
