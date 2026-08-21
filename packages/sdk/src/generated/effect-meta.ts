@@ -5,7 +5,7 @@
 // From: links.cwt
 
 export type EffectFieldKind =
-  "value" | "comparison" | "trigger" | "effect" | "modifiers" | "scalar-or-fields";
+  "value" | "comparison" | "trigger" | "effect" | "modifiers" | "fields" | "scalar-or-fields";
 
 export interface EffectFieldMeta {
   readonly prop: string;
@@ -1722,6 +1722,26 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   finishSite: { key: "finish_site", shape: { kind: "value" } },
   finishTerraformation: { key: "finish_terraformation", shape: { kind: "bool" } },
   finishUpgrade: { key: "finish_upgrade", shape: { kind: "bool" } },
+  fireOnAction: {
+    key: "fire_on_action",
+    shape: {
+      kind: "fields",
+      fields: [
+        { prop: "onAction", key: "on_action", kind: "value", refTypes: ["on_action"] },
+        {
+          prop: "scopes",
+          key: "scopes",
+          kind: "fields",
+          fields: [
+            { prop: "from", key: "from", kind: "value" },
+            { prop: "fromfrom", key: "fromfrom", kind: "value" },
+            { prop: "fromfromfrom", key: "fromfromfrom", kind: "value" },
+            { prop: "fromfromfromfrom", key: "fromfromfromfrom", kind: "value" },
+          ],
+        },
+      ],
+    },
+  },
   firstDamagingCountry: { key: "first_damaging_country", shape: { kind: "scope-link" } },
   fleet: { key: "fleet", shape: { kind: "scope-link" } },
   fleetActionResearchSpecialProject: {
@@ -4896,6 +4916,24 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   setDeposit: { key: "set_deposit", shape: { kind: "value", refTypes: ["deposit"] } },
   setDepositFlag: { key: "set_deposit_flag", shape: { kind: "value" } },
   setDesignFlag: { key: "set_design_flag", shape: { kind: "value" } },
+  setDiplomacyActionSetting: {
+    key: "set_diplomacy_action_setting",
+    shape: {
+      kind: "fields",
+      fields: [
+        { prop: "action", key: "action", kind: "value", refTypes: ["diplomatic_action"] },
+        {
+          prop: "settings",
+          key: "settings",
+          kind: "fields",
+          fields: [
+            { prop: "voteType", key: "vote_type", kind: "value" },
+            { prop: "acceptanceType", key: "acceptance_type", kind: "value" },
+          ],
+        },
+      ],
+    },
+  },
   setDisableAtHealth: { key: "set_disable_at_health", shape: { kind: "value" } },
   setDisabled: { key: "set_disabled", shape: { kind: "bool" } },
   setEmergencyFundActive: { key: "set_emergency_fund_active", shape: { kind: "bool" } },

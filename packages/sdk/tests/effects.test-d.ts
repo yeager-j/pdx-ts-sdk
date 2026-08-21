@@ -29,6 +29,27 @@ const megastructureFlag = megastructureFlags(
 ).effects_type_test_megastructure_flag;
 
 describe("generated effect scope safety", () => {
+  it("types structured-only effect fields and rejects scalar substitutes", () => {
+    const country = makeScope<"country">(sink);
+    country.fireOnAction({
+      onAction: "effects_type_test_on_action",
+      scopes: { from: scopeValue<"country">("root") },
+    });
+    // @ts-expect-error — scopes is a structured block, not a scalar scope path
+    country.fireOnAction({ onAction: "effects_type_test_on_action", scopes: "root" });
+
+    const federation = makeScope<"federation">(sink);
+    federation.setDiplomacyActionSetting({
+      action: "effects_type_test_diplomatic_action",
+      settings: { voteType: "unanimous_vote", acceptanceType: "default" },
+    });
+    federation.setDiplomacyActionSetting({
+      action: "effects_type_test_diplomatic_action",
+      // @ts-expect-error — settings is a structured block, not a bare enum value
+      settings: "default",
+    });
+  });
+
   it("types ambient-object placement refs, locations, and scalar/range offsets", () => {
     const system = makeScope<"system">(sink);
     system.createAmbientObject({

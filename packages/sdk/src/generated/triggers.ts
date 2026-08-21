@@ -16259,6 +16259,55 @@ export function numKilledShips(args: NumKilledShipsArgs): Trigger<"country"> {
   return trigger([block("num_killed_ships", entries)]);
 }
 
+export interface NumLeaderTraitsArgs {
+  value: ScriptValue | readonly [PdxOp, ScriptValue];
+  /** default: any */
+  isCouncilor?: AnyOrBool;
+  /** default: yes */
+  isSubclass?: boolean;
+  /** default: any */
+  negative?: AnyOrBool;
+  /** default: no */
+  countTiers?: boolean;
+  /** filters on whether the trait has a modifier that contains the specified string */
+  containsModifier?: { string: string; type: AnyOrBool; isSubclass: AnyOrBool };
+}
+
+/**
+ * Checks the number of leader traits or total tiers of traits for a specific leader
+ * ```
+ * num_leader_traits = {  value > 2/variable  is_councilor = <any(default)/yes(only)/no(only)> negative <any(default)/no(only)/yes(only)>  count_tiers = <yes/no(default)> contains_modifier = { string = "federation" type=<any(default)/yes(only)/no(only) # filters on whether the trait has a modifier that contains the string "string"is_subclass = <any(default)/yes(only)/no(only) }
+ * ```
+ */
+export function numLeaderTraits(args: NumLeaderTraitsArgs): Trigger<"leader"> {
+  const entries: PdxEntry[] = [];
+  entries.push(
+    typeof args.value === "object"
+      ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
+      : kv("value", scriptValueScalar(args.value))
+  );
+  if (args.isCouncilor !== undefined) {
+    entries.push(kv("is_councilor", args.isCouncilor));
+  }
+  if (args.isSubclass !== undefined) {
+    entries.push(kv("is_subclass", args.isSubclass));
+  }
+  if (args.negative !== undefined) {
+    entries.push(kv("negative", args.negative));
+  }
+  if (args.countTiers !== undefined) {
+    entries.push(kv("count_tiers", args.countTiers));
+  }
+  if (args.containsModifier !== undefined) {
+    const nestedEntries: PdxEntry[] = [];
+    nestedEntries.push(kv("string", args.containsModifier.string));
+    nestedEntries.push(kv("type", args.containsModifier.type));
+    nestedEntries.push(kv("is_subclass", args.containsModifier.isSubclass));
+    entries.push(block("contains_modifier", nestedEntries));
+  }
+  return trigger([block("num_leader_traits", entries)]);
+}
+
 /**
  * Checks the number of marauder empires specified by the galaxy setup
  * ```

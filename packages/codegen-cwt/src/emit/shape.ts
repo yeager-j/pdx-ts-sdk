@@ -136,6 +136,10 @@ export type ClauseCategory = "trigger" | "effect" | "modifier_rule";
 
 export type ArgValue =
   | { readonly kind: "scalar"; readonly value: TsValue }
+  | {
+      readonly kind: "fields";
+      readonly fields: readonly ArgField[];
+    }
   /**
    * A field that accepts either one scalar value or a structured block. The
    * scalar arm's runtime object kinds are carried by `TsValue`, so generated
@@ -378,7 +382,7 @@ export function mergeFields(
     );
     if (structured.length > 0) {
       const scalarDeclarations = group.filter((field) => field.type.kind !== "block");
-      if (structured.length !== 1 || scalarDeclarations.length === 0) {
+      if (structured.length !== 1) {
         return skipReason(
           "multiple-structured-scalar-arms",
           `field "${name}" has more than one structured/scalar arm`
@@ -388,13 +392,6 @@ export function mergeFields(
         return skipReason(
           "repeated-structured-scalar-arms",
           `field "${name}" has repeated structured/scalar arms`
-        );
-      }
-      const scalar = emitter.unionFor(scalarDeclarations.map((field) => field.type));
-      if (scalar === null) {
-        return skipReason(
-          "unsupported-scalar-arm",
-          `field "${name}" has a scalar arm the emitter cannot express`
         );
       }
       const block = structured[0]!.type;
@@ -428,6 +425,23 @@ export function mergeFields(
         return skipReason(
           "empty-structured-arm",
           `field "${name}" structured arm has no typeable fields`
+        );
+      }
+      if (scalarDeclarations.length === 0) {
+        merged.push({
+          name,
+          value: { kind: "fields", fields },
+          optional,
+          ...(repeated ? { repeated: true } : {}),
+          docs,
+        });
+        continue;
+      }
+      const scalar = emitter.unionFor(scalarDeclarations.map((field) => field.type));
+      if (scalar === null) {
+        return skipReason(
+          "unsupported-scalar-arm",
+          `field "${name}" has a scalar arm the emitter cannot express`
         );
       }
       merged.push({
