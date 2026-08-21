@@ -209,7 +209,7 @@ function conditionalRequirement(
  * after the rules-derived collapse — a synthetic row never displaces a real
  * declared slot, it only fills a gap one leaves.
  */
-function planLocalisation(type: ContentType): LocalisationPlan {
+function planLocalisation(emitter: Emitter, type: ContentType): LocalisationPlan {
   const byPattern = new Map<string, ContentType["localisation"][number]>();
   const byMember = new Map<string, ContentType["localisation"][number]>();
   const aliases: FieldOmissionRow[] = [];
@@ -252,6 +252,7 @@ function planLocalisation(type: ContentType): LocalisationPlan {
     if (typeName !== type.name || byMember.has(member!)) {
       continue;
     }
+    emitter.overlayAudit.applied("SYNTHETIC_LOCALISATION", path);
     byMember.set(member!, {
       key: member!,
       pattern: synthetic.pattern,
@@ -263,11 +264,20 @@ function planLocalisation(type: ContentType): LocalisationPlan {
   return { entries: [...byMember.values()], aliases };
 }
 
-function localisationMembers(type: ContentType, plan = planLocalisation(type)): string {
+function localisationMembers(
+  emitter: Emitter,
+  type: ContentType,
+  plan = planLocalisation(emitter, type)
+): string {
   return plan.entries
     .map((entry) => {
       const field = camelCase(entry.key);
-      const required = entry.required || REQUIRED_LOCALISATION.has(`${type.name}.${field}`);
+      const requiredKey = `${type.name}.${field}`;
+      const overlayRequired = REQUIRED_LOCALISATION.has(requiredKey);
+      if (overlayRequired) {
+        emitter.overlayAudit.applied("REQUIRED_LOCALISATION", requiredKey);
+      }
+      const required = entry.required || overlayRequired;
       const pattern = entry.pattern.replace("$", "<id>");
       return (
         docComment([`English text emitted to localization under \`${pattern}\`.`], "  ") +
@@ -285,8 +295,9 @@ function localisationMembers(type: ContentType, plan = planLocalisation(type)): 
  * field loop has run. See {@link renamedOffLocalisation}.
  */
 function localisationMetadata(
+  emitter: Emitter,
   type: ContentType,
-  plan = planLocalisation(type),
+  plan = planLocalisation(emitter, type),
   pointers: ReadonlyMap<string, string> = new Map()
 ): string {
   return (
@@ -294,7 +305,12 @@ function localisationMetadata(
     plan.entries
       .map((entry) => {
         const member = camelCase(entry.key);
-        const required = entry.required || REQUIRED_LOCALISATION.has(`${type.name}.${member}`);
+        const requiredKey = `${type.name}.${member}`;
+        const overlayRequired = REQUIRED_LOCALISATION.has(requiredKey);
+        if (overlayRequired) {
+          emitter.overlayAudit.applied("REQUIRED_LOCALISATION", requiredKey);
+        }
+        const required = entry.required || overlayRequired;
         const conditional = conditionalRequirement(type, entry);
         const requiredUnless =
           conditional === null ? "" : `, requiredUnless: ${JSON.stringify(conditional)}`;
@@ -405,7 +421,7 @@ function repeatedStructEmission(
   const localisationType =
     config.localisationType === undefined ? syntheticIdentityLocalisation(typeName) : declaredType;
   const localisationPlan =
-    localisationType === undefined ? null : planLocalisation(localisationType);
+    localisationType === undefined ? null : planLocalisation(emitter, localisationType);
   // A struct field can share a name with the struct's own localisation slot
   // without meaning the same thing, exactly the collision the top level
   // guards against — the localisation member wins and the body field is
@@ -436,6 +452,7 @@ function repeatedStructEmission(
     const fieldPath = `${ownerPath}.${name}`;
     const declined = CONTENT_DECLINED_FIELDS.get(fieldPath);
     if (declined !== undefined) {
+      emitter.overlayAudit.applied("CONTENT_DECLINED_FIELDS", fieldPath);
       declinedFields.push({ path: fieldPath, kind: "declined", reason: declined });
       continue;
     }
@@ -447,12 +464,16 @@ function repeatedStructEmission(
       });
       continue;
     }
+    const repeatedStructOverride = REPEATED_STRUCT_FIELD_OVERRIDES.get(fieldPath);
+    if (repeatedStructOverride !== undefined) {
+      emitter.overlayAudit.applied("REPEATED_STRUCT_FIELD_OVERRIDES", fieldPath);
+    }
     const lowering = pickOrdinary(
       emitter,
       group,
       name,
       ctx,
-      REPEATED_STRUCT_FIELD_OVERRIDES.get(fieldPath),
+      repeatedStructOverride,
       undefined,
       fieldPath
     );
@@ -464,7 +485,7 @@ function repeatedStructEmission(
       });
       continue;
     }
-    const optional = memberOptional(group, REPEATED_STRUCT_FIELD_OVERRIDES.get(fieldPath));
+    const optional = memberOptional(group, repeatedStructOverride);
     const docLines = [
       ...new Set([...group.flatMap((field) => field.docs), ...(lowering.docs ?? [])]),
     ];
@@ -511,11 +532,13 @@ function repeatedStructEmission(
   const fieldsConstant = `${constantPrefix}_FIELDS`;
   const localisationConstant = `${constantPrefix}_LOCALISATION`;
   const locMembers =
-    localisationType === undefined ? "" : localisationMembers(localisationType, localisationPlan!);
+    localisationType === undefined
+      ? ""
+      : localisationMembers(emitter, localisationType, localisationPlan!);
   const locMetadata =
     localisationType === undefined
       ? "[]"
-      : localisationMetadata(localisationType, localisationPlan!);
+      : localisationMetadata(emitter, localisationType, localisationPlan!);
   const localisationAliases: readonly FieldOmissionRow[] = localisationPlan?.aliases ?? [];
   const code =
     extraCode.join("") +
@@ -945,7 +968,7 @@ export function emitContentType(
   const patchLocMembers: string[] = [];
   const localisationRenames: string[] = [];
   const localisationPointers = new Map<string, string>();
-  const localisationPlan = planLocalisation(type);
+  const localisationPlan = planLocalisation(emitter, type);
   const localisationMemberNames = new Set(
     localisationPlan.entries.map((entry) => camelCase(entry.key))
   );
@@ -1084,13 +1107,20 @@ export function emitContentType(
     const path = `${type.name}.${name}`;
     const declined = CONTENT_DECLINED_FIELDS.get(path);
     if (declined !== undefined) {
+      emitter.overlayAudit.applied("CONTENT_DECLINED_FIELDS", path);
       declinedFields.push({ path, kind: "declined", reason: declined });
       continue;
     }
     const override = CONTENT_FIELD_OVERRIDES.get(path);
+    if (override !== undefined) {
+      emitter.overlayAudit.applied("CONTENT_FIELD_OVERRIDES", path);
+    }
     const member = renamedOffLocalisation(name);
     if (override?.shape === "repeatedStruct") {
       const config = REPEATED_STRUCT_DEFINITIONS.get(path);
+      if (config !== undefined) {
+        emitter.overlayAudit.applied("REPEATED_STRUCT_DEFINITIONS", path);
+      }
       const nested =
         config === undefined
           ? null
@@ -1141,6 +1171,9 @@ export function emitContentType(
       continue;
     }
     const widening = FIELD_WIDENINGS.get(path);
+    if (widening !== undefined) {
+      emitter.overlayAudit.applied("FIELD_WIDENINGS", path);
+    }
     const loweredContext = selectedContext(fieldContext, parameter, member);
     const lowered = pickOrdinary(
       emitter,
@@ -1309,7 +1342,7 @@ export function emitContentType(
     `export interface ${fieldsName}${generic} {\n` +
     scopeMember +
     declaredFromMember +
-    localisationMembers(type, localisationPlan) +
+    localisationMembers(emitter, type, localisationPlan) +
     members.join("") +
     "}\n\n" +
     (parameter?.selector === undefined
@@ -1340,7 +1373,7 @@ export function emitContentType(
     fieldMetadata.map((entry) => `  ${entry},\n`).join("") +
     "];\n\n" +
     `export const ${localisationConstant}: readonly ContentLocalisation[] = ` +
-    `${localisationMetadata(type, localisationPlan, localisationPointers)};\n`;
+    `${localisationMetadata(emitter, type, localisationPlan, localisationPointers)};\n`;
 
   // The prose lists are projections of the same rows the ledger carries, so
   // the report and the generated field docs cannot drift apart. Sorting by the

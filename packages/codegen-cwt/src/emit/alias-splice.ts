@@ -130,16 +130,25 @@ export function emitAliasSplice(emitter: Emitter, category: string): AliasSplice
     const fieldPath = `${category}.${name}`;
     const declined = CONTENT_DECLINED_FIELDS.get(fieldPath);
     if (declined !== undefined) {
+      emitter.overlayAudit.applied("CONTENT_DECLINED_FIELDS", fieldPath);
       declinedFields.push({ path: fieldPath, kind: "declined", reason: declined });
       continue;
+    }
+    const override = CONTENT_FIELD_OVERRIDES.get(fieldPath);
+    if (override !== undefined) {
+      emitter.overlayAudit.applied("CONTENT_FIELD_OVERRIDES", fieldPath);
+    }
+    const widening = FIELD_WIDENINGS.get(fieldPath);
+    if (widening !== undefined) {
+      emitter.overlayAudit.applied("FIELD_WIDENINGS", fieldPath);
     }
     const lowering = pickOrdinary(
       emitter,
       group,
       name,
       ctx,
-      CONTENT_FIELD_OVERRIDES.get(fieldPath),
-      FIELD_WIDENINGS.get(fieldPath)?.extraType,
+      override,
+      widening?.extraType,
       fieldPath
     );
     if (lowering === null) {

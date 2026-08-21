@@ -1418,13 +1418,21 @@ function structShape(
   const docTables: DocTable[] = [];
   for (const [fieldName, group] of grouped) {
     const fieldPath = `${path}.${fieldName}`;
+    const override = CONTENT_FIELD_OVERRIDES.get(fieldPath);
+    if (override !== undefined) {
+      emitter.overlayAudit.applied("CONTENT_FIELD_OVERRIDES", fieldPath);
+    }
+    const widening = FIELD_WIDENINGS.get(fieldPath);
+    if (widening !== undefined) {
+      emitter.overlayAudit.applied("FIELD_WIDENINGS", fieldPath);
+    }
     const lowered = pickOrdinary(
       emitter,
       group,
       fieldName,
       ctx,
-      CONTENT_FIELD_OVERRIDES.get(fieldPath),
-      FIELD_WIDENINGS.get(fieldPath)?.extraType,
+      override,
+      widening?.extraType,
       fieldPath
     );
     if (lowered === null) {
@@ -1435,7 +1443,7 @@ function structShape(
       });
       continue;
     }
-    const optional = memberOptional(group, CONTENT_FIELD_OVERRIDES.get(fieldPath));
+    const optional = memberOptional(group, override);
     const docLines = [
       ...new Set([...group.flatMap((inner) => inner.docs), ...(lowered.docs ?? [])]),
     ];
