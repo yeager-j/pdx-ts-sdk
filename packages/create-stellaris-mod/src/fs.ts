@@ -3,7 +3,18 @@
  */
 
 import { randomUUID } from "node:crypto";
-import { lstat, mkdir, readdir, rename, rm, symlink, writeFile } from "node:fs/promises";
+import { constants } from "node:fs";
+import {
+  copyFile,
+  cp,
+  lstat,
+  mkdir,
+  readdir,
+  rename,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import path from "node:path";
 
 import type { ProjectPlan } from "./plan.ts";
@@ -51,8 +62,7 @@ export async function writeTree(targetDir: string, entries: ProjectPlan): Promis
       if (entry.kind === "file") {
         await writeFile(stagedEntry, entry.contents, "utf8");
       } else {
-        validateLinkTarget(staging, stagedEntry, entry.target);
-        await symlink(entry.target, stagedEntry);
+        await materializeLink(staging, stagedEntry, entry.target);
       }
     }
     try {
@@ -70,7 +80,7 @@ export async function writeTree(targetDir: string, entries: ProjectPlan): Promis
   }
 }
 
-function validateLinkTarget(staging: string, stagedLink: string, target: string): void {
+async function materializeLink(staging: string, stagedLink: string, target: string): Promise<void> {
   if (path.isAbsolute(target)) {
     throw new Error(`Refusing absolute symlink target ${JSON.stringify(target)}.`);
   }
@@ -78,5 +88,21 @@ function validateLinkTarget(staging: string, stagedLink: string, target: string)
   const relative = path.relative(staging, destination);
   if (relative === ".." || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
     throw new Error(`Refusing project-escaping symlink target ${JSON.stringify(target)}.`);
+  }
+  const targetStat = await lstat(destination);
+  const linkType = targetStat.isDirectory() ? "dir" : "file";
+  try {
+    await symlink(target, stagedLink, linkType);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "EPERM") {
+      throw error;
+    }
+    if (targetStat.isDirectory()) {
+      await cp(destination, stagedLink, { recursive: true, errorOnExist: true, force: false });
+    } else if (targetStat.isFile()) {
+      await copyFile(destination, stagedLink, constants.COPYFILE_EXCL);
+    } else {
+      throw error;
+    }
   }
 }

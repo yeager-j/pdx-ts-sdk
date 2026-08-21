@@ -69,11 +69,21 @@ describe("writeTree", () => {
       ])
     );
 
-    expect(lstatSync(path.join(target, "CLAUDE.md")).isSymbolicLink()).toBe(true);
-    expect(readlinkSync(path.join(target, "CLAUDE.md"))).toBe("AGENTS.md");
+    const claudeInstructions = path.join(target, "CLAUDE.md");
+    const claudeInstructionsStat = lstatSync(claudeInstructions);
+    if (claudeInstructionsStat.isSymbolicLink()) {
+      expect(readlinkSync(claudeInstructions)).toBe("AGENTS.md");
+    } else {
+      expect(claudeInstructionsStat.isFile()).toBe(true);
+    }
     expect(readFileSync(path.join(target, "CLAUDE.md"), "utf8")).toBe("# agents\n");
-    expect(lstatSync(path.join(target, ".claude/skills")).isSymbolicLink()).toBe(true);
-    expect(readlinkSync(path.join(target, ".claude/skills"))).toBe("../.agents/skills");
+    const claudeSkills = path.join(target, ".claude/skills");
+    const claudeSkillsStat = lstatSync(claudeSkills);
+    if (claudeSkillsStat.isSymbolicLink()) {
+      expect(readlinkSync(claudeSkills)).toBe("../.agents/skills");
+    } else {
+      expect(claudeSkillsStat.isDirectory()).toBe(true);
+    }
     expect(readFileSync(path.join(target, ".claude/skills/pdx-sdk-docs/SKILL.md"), "utf8")).toBe(
       "# docs\n"
     );
@@ -136,6 +146,7 @@ describe("writeTree", () => {
       writeTree(
         target,
         new Map([
+          ["b", file("valid link destination")],
           ["a/b", file("occupies a")],
           ["a", link("b")],
         ])

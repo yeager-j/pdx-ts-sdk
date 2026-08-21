@@ -10,6 +10,7 @@ import { parse as parseToml } from "smol-toml";
 import { describe, expect, it } from "vitest";
 import { parse as parseYaml } from "yaml";
 
+import { SDK_DOCS_REVISION } from "../src/generated/package-version.ts";
 import { VERIFIED_STELLARIS_BUILD } from "../src/generated/verified-build.ts";
 import type { Resolved } from "../src/options.ts";
 import { planProject, type ProjectEntry } from "../src/plan.ts";
@@ -88,6 +89,10 @@ describe("the scaffolded tree", () => {
     expect(entries.get(".codex/agents/pdx-docs-expert.toml")?.kind).toBe("file");
     expect(plan().get("AGENTS.md")).toContain("without forking or inheriting conversation history");
     expect(plan().get("AGENTS.md")).toContain("return a concise blocker");
+    expect(plan().get("AGENTS.md")).toContain("SDK version: <version>");
+    expect(plan().get("AGENTS.md")).toContain(
+      `SDK revision: <revision>\` line to equal \`${SDK_DOCS_REVISION}`
+    );
     expect(entries.get("CLAUDE.md")).toEqual({ kind: "symlink", target: "AGENTS.md" });
     expect(entries.get(".claude/skills")).toEqual({
       kind: "symlink",
@@ -167,6 +172,15 @@ describe("the scaffolded tree", () => {
     expect(claudeInstructions).toBe(codex.developer_instructions);
     const behavior = `${claude}\n${codex.developer_instructions}`;
     expect(behavior).toContain("retrieve fresh for every question");
+    expect(behavior).toContain(
+      "read only the `@pdx-ts/sdk` dependency in the project's `package.json`"
+    );
+    expect(behavior).toContain("SDK version: <version>");
+    expect(behavior).toContain(`SDK revision: <revision>\` line to equal \`${SDK_DOCS_REVISION}`);
+    expect(behavior).toContain("a `file:` checkout");
+    expect(behavior).toContain(
+      "documentation-version or revision mismatch without authoring advice"
+    );
     expect(behavior).toContain("temporary `llms-full.txt` cache");
     expect(behavior).toContain("remove the cache with `unlink`");
     expect(behavior).toContain("remove the empty directory with `rmdir`");

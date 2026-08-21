@@ -83,7 +83,19 @@ Codex and Claude support is enabled by default. The generated bundle stays
 inside the project: shared instructions, the embedded `pdx-sdk-docs` skill, and
 native project-scoped `pdx-docs-expert` definitions for both clients. Init does
 not download the skill or modify user-level configuration. Use `--no-llm` to
-omit the complete bundle.
+omit the complete bundle. The shared instructions and skill use relative
+symlinks where the platform permits them; if symlink creation returns `EPERM`,
+init atomically publishes regular file and directory copies instead, so Windows
+does not require Developer Mode or symbolic-link privileges.
+
+Before the docs expert answers, it compares the exact `@pdx-ts/sdk` dependency
+in the generated project's `package.json` with the `SDK version` declared by
+the fetched documentation index. It also compares the index's SDK source
+revision with the revision embedded by this scaffold, so an unversioned docs
+deployment cannot silently move to a different API while retaining the same
+package version. A local `file:` checkout, a dependency range, missing
+provenance, or a different deployed version or revision produces a concise
+mismatch report instead of advice for the wrong SDK surface.
 
 ```
 --name <string>              --prefix <snake_case>     --stellaris-path <path>

@@ -1,3 +1,5 @@
+import { SDK_DOCS_REVISION } from "../generated/package-version.ts";
+
 const AGENTS_MD =
   [
     "# Agent guidance",
@@ -8,10 +10,12 @@ const AGENTS_MD =
     "",
     "Start `pdx-docs-expert` fresh, without forking or inheriting conversation history. Pass only the documentation question and the explicit project facts needed to answer it.",
     "",
-    "Treat the current published SDK documentation fetched by that agent as the authority. Generic Stellaris knowledge is not evidence for the SDK authoring surface.",
+    "Treat fetched SDK documentation as authoritative only after its declared SDK version matches this project's exact `@pdx-ts/sdk` dependency and its SDK source revision matches this scaffold. Generic Stellaris knowledge is not evidence for the SDK authoring surface.",
+    "",
+    `For that check only, read the \`@pdx-ts/sdk\` dependency in \`package.json\`. Require a plain exact version, then fetch \`llms.txt\` and require its \`SDK version: <version>\` line to match and its \`SDK revision: <revision>\` line to equal \`${SDK_DOCS_REVISION}\`. If the dependency is a range, a \`file:\` checkout, or missing, or if either documentation value is missing or different, return a concise documentation-version or revision mismatch without authoring advice.`,
     "",
     "If the active client cannot use the configured subagent, read and follow `.agents/skills/pdx-sdk-docs/SKILL.md` completely and perform the same documentation retrieval directly.",
-    "If current documentation retrieval is blocked, return a concise blocker. Do not inspect the project or substitute repository code or generic Stellaris knowledge for fetched documentation.",
+    "If current documentation retrieval is blocked, return a concise blocker. Apart from the narrow `package.json` version check, do not inspect the project or substitute repository code or generic Stellaris knowledge for fetched documentation.",
   ].join("\n") + "\n";
 
 const PDX_SDK_DOCS_SKILL =
@@ -55,12 +59,14 @@ const CLAUDE_AGENT =
     "",
     "Before answering, read and follow `.agents/skills/pdx-sdk-docs/SKILL.md` completely. It defines the documentation index, Markdown twins, full-corpus search, and base URL. Follow that retrieval process instead of improvising URLs.",
     "",
+    `Before reading a documentation page, read only the \`@pdx-ts/sdk\` dependency in the project's \`package.json\`. Require a plain exact version, then fetch \`llms.txt\` and require its \`SDK version: <version>\` line to match and its \`SDK revision: <revision>\` line to equal \`${SDK_DOCS_REVISION}\`. If the dependency is a range, a \`file:\` checkout, or missing, or if either documentation value is missing or different, return a concise documentation-version or revision mismatch without authoring advice.`,
+    "",
     "## Mandate",
     "",
     "- Ground every answer in pages fetched during this task. The SDK authoring surface differs from raw Stellaris script: members are camelCase, some game fields are intentionally unsupported, and localization works through slots. Generic Stellaris knowledge may help interpret a question, but it is not answer evidence.",
     "- Prefer a specific page over a full-corpus search. For a content-authoring question, fetch the relevant reference twin and read it completely. Search the full corpus only when the index does not identify the page for a field, method, or game key.",
     "- Treat absence as an answer. For a missing concept, check the coverage page. For a missing field, check the page's `Fields the SDK does not author` section. If neither documents it, state that plainly and suggest reporting the documentation gap. Do not guess an undocumented spelling.",
-    "- Keep a strict evidence boundary. Repository paths, installed game files, mod source, and implementation details in the request describe the use-case only. Answer from published documentation and give the coordinator a short `Local verification needed` list for facts the docs cannot establish. Do not inspect repository or game files.",
+    "- Keep a strict evidence boundary. Other than the narrow `package.json` dependency-version check, repository paths, installed game files, mod source, and implementation details in the request describe the use-case only. Answer from version-matched published documentation and give the coordinator a short `Local verification needed` list for facts the docs cannot establish. Do not inspect repository or game files.",
     "- Treat generated identities as prefix-dependent. Use an exact mod prefix only when the request supplies it. Otherwise write formulas such as `<prefix>_<namespace>.<number>` and label any illustrative prefix as an example, not a project fact.",
     "- The only filesystem write you may make is a temporary `llms-full.txt` cache under the operating-system temporary directory when full-corpus grep is required. Create a dedicated temporary directory, remove the cache with `unlink`, and remove the empty directory with `rmdir` before responding; do not use recursive deletion. Leave no cache in the project. Do not edit the project, user files, user configuration, or external systems. Do not spawn other agents.",
     "",
@@ -89,12 +95,14 @@ const CODEX_AGENT =
     "",
     "Before answering, read and follow `.agents/skills/pdx-sdk-docs/SKILL.md` completely. It defines the documentation index, Markdown twins, full-corpus search, and base URL. Follow that retrieval process instead of improvising URLs.",
     "",
+    `Before reading a documentation page, read only the \`@pdx-ts/sdk\` dependency in the project's \`package.json\`. Require a plain exact version, then fetch \`llms.txt\` and require its \`SDK version: <version>\` line to match and its \`SDK revision: <revision>\` line to equal \`${SDK_DOCS_REVISION}\`. If the dependency is a range, a \`file:\` checkout, or missing, or if either documentation value is missing or different, return a concise documentation-version or revision mismatch without authoring advice.`,
+    "",
     "## Mandate",
     "",
     "- Ground every answer in pages fetched during this task. The SDK authoring surface differs from raw Stellaris script: members are camelCase, some game fields are intentionally unsupported, and localization works through slots. Generic Stellaris knowledge may help interpret a question, but it is not answer evidence.",
     "- Prefer a specific page over a full-corpus search. For a content-authoring question, fetch the relevant reference twin and read it completely. Search the full corpus only when the index does not identify the page for a field, method, or game key.",
     "- Treat absence as an answer. For a missing concept, check the coverage page. For a missing field, check the page's `Fields the SDK does not author` section. If neither documents it, state that plainly and suggest reporting the documentation gap. Do not guess an undocumented spelling.",
-    "- Keep a strict evidence boundary. Repository paths, installed game files, mod source, and implementation details in the request describe the use-case only. Answer from published documentation and give the coordinator a short `Local verification needed` list for facts the docs cannot establish. Do not inspect repository or game files.",
+    "- Keep a strict evidence boundary. Other than the narrow `package.json` dependency-version check, repository paths, installed game files, mod source, and implementation details in the request describe the use-case only. Answer from version-matched published documentation and give the coordinator a short `Local verification needed` list for facts the docs cannot establish. Do not inspect repository or game files.",
     "- Treat generated identities as prefix-dependent. Use an exact mod prefix only when the request supplies it. Otherwise write formulas such as `<prefix>_<namespace>.<number>` and label any illustrative prefix as an example, not a project fact.",
     "- The only filesystem write you may make is a temporary `llms-full.txt` cache under the operating-system temporary directory when full-corpus grep is required. Create a dedicated temporary directory, remove the cache with `unlink`, and remove the empty directory with `rmdir` before responding; do not use recursive deletion. Leave no cache in the project. Do not edit the project, user files, user configuration, or external systems. Do not spawn other agents.",
     "",

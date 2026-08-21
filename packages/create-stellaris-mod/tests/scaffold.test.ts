@@ -176,13 +176,21 @@ describe("a scaffolded project", () => {
   it("carries the project-local Codex and Claude bundle", () => {
     const claudeInstructions = path.join(projectDir, "CLAUDE.md");
     const claudeSkills = path.join(projectDir, ".claude/skills");
-    expect(lstatSync(claudeInstructions).isSymbolicLink()).toBe(true);
-    expect(readlinkSync(claudeInstructions)).toBe("AGENTS.md");
+    const claudeInstructionsStat = lstatSync(claudeInstructions);
+    if (claudeInstructionsStat.isSymbolicLink()) {
+      expect(readlinkSync(claudeInstructions)).toBe("AGENTS.md");
+    } else {
+      expect(claudeInstructionsStat.isFile()).toBe(true);
+    }
     expect(readFileSync(claudeInstructions, "utf8")).toBe(
       readFileSync(path.join(projectDir, "AGENTS.md"), "utf8")
     );
-    expect(lstatSync(claudeSkills).isSymbolicLink()).toBe(true);
-    expect(readlinkSync(claudeSkills)).toBe("../.agents/skills");
+    const claudeSkillsStat = lstatSync(claudeSkills);
+    if (claudeSkillsStat.isSymbolicLink()) {
+      expect(readlinkSync(claudeSkills)).toBe("../.agents/skills");
+    } else {
+      expect(claudeSkillsStat.isDirectory()).toBe(true);
+    }
     expect(readFileSync(path.join(claudeSkills, "pdx-sdk-docs/SKILL.md"), "utf8")).toContain(
       "# Retrieving @pdx-ts/sdk docs"
     );
