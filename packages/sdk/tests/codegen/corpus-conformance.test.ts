@@ -42,6 +42,7 @@
 import { OBSERVED_CASINGS } from "@pdx-ts/codegen-cwt/casing";
 import {
   conformance,
+  DESCENT_MODES,
   shapeConformance,
   VALUE_SAMPLE,
   type DescentNode,
@@ -103,14 +104,31 @@ const reports = MEASUREMENTS.flatMap((measurement) => {
 const byRegistry = new Map(reports.map((report) => [report.registry, report]));
 
 /**
+ * Descent modes {@link TOTAL_RECORDING_MODES} deliberately excludes, each with
+ * the reason an empty interior under it is a correct reading rather than a
+ * stale fixture.
+ *
+ * `weightModifiers` and `triggeredModifierPotential` are selective by design:
+ * a weight block written as `{ factor = 2 }` has no `modifier` row, and
+ * recording nothing there is correct, not a hole. Eleven such blocks exist
+ * across the fixture today. `economicResourceOperationTrigger` is the same
+ * shape of selective: the operation's `trigger` declaration is `0..1`
+ * (`economicResourceOperationParts` in codegen-cwt's `emit/fields.ts`), so an
+ * operation with no trigger row is legal and records nothing under
+ * `<field>.trigger`.
+ */
+const SELECTIVE_DESCENT_MODES = new Set([
+  "weightModifiers",
+  "triggeredModifierPotential",
+  "economicResourceOperationTrigger",
+]);
+
+/**
  * The descent modes that record *every* key of the blocks they reach, so an
  * observed non-empty block under one of them must leave at least one interior
- * path behind.
- *
- * `weightModifiers` and `triggeredModifierPotential` are excluded because they
- * are selective by design: a weight block written as `{ factor = 2 }` has no
- * `modifier` row, and recording nothing there is the correct reading, not a
- * hole. Eleven such blocks exist across the fixture today.
+ * path behind. Every {@link DESCENT_MODES} member lands in exactly one of this
+ * set or {@link SELECTIVE_DESCENT_MODES} — asserted below — so a new descent
+ * mode fails this suite instead of silently joining neither.
  */
 const TOTAL_RECORDING_MODES = new Set([
   "struct",
@@ -119,6 +137,18 @@ const TOTAL_RECORDING_MODES = new Set([
   "repeatedStruct",
   "triggerStruct",
 ]);
+
+describe("the descent-mode classification stays exhaustive", () => {
+  it("puts every DESCENT_MODES member in TOTAL_RECORDING_MODES or SELECTIVE_DESCENT_MODES, never both", () => {
+    for (const mode of DESCENT_MODES) {
+      const total = TOTAL_RECORDING_MODES.has(mode);
+      const selective = SELECTIVE_DESCENT_MODES.has(mode);
+      expect(total || selective, `${mode} is classified as neither total nor selective`).toBe(true);
+      expect(total && selective, `${mode} is classified as both total and selective`).toBe(false);
+    }
+    expect(TOTAL_RECORDING_MODES.size + SELECTIVE_DESCENT_MODES.size).toBe(DESCENT_MODES.length);
+  });
+});
 
 /** Every descent path in one registry's tree, with the mode that reaches it. */
 function descentPaths(

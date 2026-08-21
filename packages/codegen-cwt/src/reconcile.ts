@@ -75,7 +75,26 @@ export interface DriftReport {
   readonly malformedOptions: readonly string[];
   /** Bracketed CWT value keywords the classifier does not understand. */
   readonly unknownKeywords: readonly string[];
-  /** Scopes named by either source that `scopes.cwt` does not define. */
+  /**
+   * Dump blocks `logs/trigger-docs.ts` could not read — no name line or no
+   * `Supported Scopes:` line — as `<file>:<line> <text>`. A vendored-dump
+   * bump that breaks block parsing moved these silently before: `npm test`
+   * pinned {@link DocDump.malformed}'s count, but `npm run codegen` never saw
+   * it, so a parser regression could ship without failing the drift gate.
+   */
+  readonly malformedDocBlocks: readonly string[];
+  /** `modifiers.log` lines `logs/modifier-docs.ts` could not read, the same way. */
+  readonly malformedModifierBlocks: readonly string[];
+  /**
+   * Scopes named by either source that `scopes.cwt` does not define, each as
+   * `<location> <scope>` — where the reference was seen, so an accepted name
+   * cannot silently cover a *different* rule that starts referencing a
+   * retired scope later. `<location>` is `<file>:<line>` for every source
+   * that carries one (rule declarations, scope links, doc-dump entries); a
+   * modifier-category reference instead carries `modifier_categories.cwt
+   * category:<name>`, since `RuleSet.modifierCategories` does not keep node
+   * location and category names are themselves unique keys in that one file.
+   */
   readonly unknownScopes: readonly string[];
   /** Rules whose `## scopes` disagree with the game's own dump. */
   readonly scopeConflicts: {
@@ -131,10 +150,17 @@ function scopeSet(scopes: Set<string> | null): ScopeSet {
 }
 
 function compareScopes(
-  table: ReadonlyMap<string, readonly { readonly supportedScopes: readonly string[] | null }[]>,
+  table: ReadonlyMap<
+    string,
+    readonly {
+      readonly supportedScopes: readonly string[] | null;
+      readonly file: string;
+      readonly line: number;
+    }[]
+  >,
   documented: ReadonlyMap<string, { readonly scopes: readonly string[] }>,
   index: ReadonlyMap<string, string>,
-  note: (scopes: readonly string[]) => void
+  note: (scopes: readonly string[], location: string) => void
 ): { conflicts: ScopeConflict[]; unscoped: string[] } {
   const conflicts: ScopeConflict[] = [];
   const unscoped: string[] = [];
@@ -145,7 +171,15 @@ function compareScopes(
       unscoped.push(name);
       continue;
     }
-    note(declared);
+    // Per declaration, not the flattened `declared`: a name with several
+    // `alias[...]` declarations (an overload) would otherwise lose which one
+    // actually wrote a given scope token, and `note` needs that rule's own
+    // file:line, not just some declaration of the same name.
+    for (const declaration of declarations) {
+      if (declaration.supportedScopes !== null) {
+        note(declaration.supportedScopes, `${declaration.file}:${declaration.line}`);
+      }
+    }
     const docs = documented.get(name);
     if (docs === undefined) {
       continue;
@@ -170,29 +204,47 @@ export function reconcile(
   dumpLinks: readonly ScopeLink[]
 ): DriftReport {
   const index = scopeIndex(rules);
-  const unknown = new Set<string>();
+  // Scope name -> where it was first seen. First rather than every sighting:
+  // the same retired scope name (`pop`) is referenced by hundreds of doc-dump
+  // entries, and the baseline tracks which *names* are accepted, not how many
+  // rules mention each — see the field doc on `DriftReport.unknownScopes`.
+  const unknown = new Map<string, string>();
 
-  const note = (scopes: readonly string[]): void => {
+  const note = (scopes: readonly string[], location: string): void => {
     for (const scope of scopes) {
-      if (!index.has(scope) && !UNIVERSAL_SCOPES.has(scope)) {
-        unknown.add(scope);
+      if (!index.has(scope) && !UNIVERSAL_SCOPES.has(scope) && !unknown.has(scope)) {
+        unknown.set(scope, location);
       }
     }
   };
   for (const entry of [...docs.triggers.values(), ...docs.effects.values()]) {
-    note(entry.scopes);
+    note(entry.scopes, entry.location);
   }
-  for (const tokens of rules.modifierCategories.values()) {
-    note(tokens.map((token) => token.toLowerCase()));
+  // Modifier categories are the one source with no location to give: CWT node
+  // position is discarded while `readModifierCategories` (cwt/rules.ts) builds
+  // `RuleSet.modifierCategories`, and widening that map's type to carry it is
+  // a bigger change than this drift gate warrants. `modifier_categories.cwt`
+  // is a single file and a category name is a unique key inside it, so the
+  // category name re-finds the reference just as reliably as a line number
+  // would.
+  for (const [category, tokens] of rules.modifierCategories) {
+    note(
+      tokens.map((token) => token.toLowerCase()),
+      `modifier_categories.cwt category:${category}`
+    );
   }
 
   const staticLinks = [...rules.links.values()].filter(
     (link) => link.type === "scope" && !link.fromData
   );
   for (const link of staticLinks) {
-    note(link.inputScopes.map((scope) => scope.toLowerCase()));
+    const location = `${link.file}:${link.line}`;
+    note(
+      link.inputScopes.map((scope) => scope.toLowerCase()),
+      location
+    );
     if (link.outputScope !== null) {
-      note([link.outputScope.toLowerCase()]);
+      note([link.outputScope.toLowerCase()], location);
     }
   }
 
@@ -225,7 +277,9 @@ export function reconcile(
       .filter((diagnostic) => diagnostic.kind === "unknown-keyword")
       .map(describeDiagnostic)
       .sort(),
-    unknownScopes: [...unknown].sort(),
+    malformedDocBlocks: [...docs.malformed].sort(),
+    malformedModifierBlocks: [...modifierDocs.malformed].sort(),
+    unknownScopes: [...unknown].map(([scope, location]) => `${location} ${scope}`).sort(),
     scopeConflicts: {
       triggers: triggerScopes.conflicts,
       effects: effectScopes.conflicts,
@@ -377,6 +431,16 @@ export function compareToBaseline(report: DriftReport, baseline: DriftBaseline):
     ),
     ...compareList("malformed option", report.malformedOptions, baseline.malformedOptions),
     ...compareList("unknown CWT keyword", report.unknownKeywords, baseline.unknownKeywords),
+    ...compareList(
+      "malformed trigger/effect doc block",
+      report.malformedDocBlocks,
+      baseline.malformedDocBlocks
+    ),
+    ...compareList(
+      "malformed modifier doc block",
+      report.malformedModifierBlocks,
+      baseline.malformedModifierBlocks
+    ),
     ...compareList("unknown scope", report.unknownScopes, baseline.unknownScopes),
     ...compareScopeEvidence(report, baseline),
   ];

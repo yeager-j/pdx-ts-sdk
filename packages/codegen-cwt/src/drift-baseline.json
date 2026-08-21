@@ -45,8 +45,10 @@
   "unknownKeywords": [
     "effects.cwt:2902 sceop[fleet]"
   ],
+  "malformedDocBlocks": [],
+  "malformedModifierBlocks": [],
   "unknownScopes": [
-    "pop"
+    "triggers.log:73 pop"
   ],
   "scopeResolutions": [
     {
