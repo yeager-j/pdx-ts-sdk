@@ -62,9 +62,9 @@ import {
   type ModItem,
 } from "./feature.ts";
 import {
-  createLocalizationItem,
   createReplacementLocalizationItem,
-  type LocalizationItem,
+  localizationFor,
+  type LocalizationMethod,
   type LocalizationText,
   type ReplacementLocalizationItem,
 } from "./localization.ts";
@@ -143,13 +143,13 @@ export type ModCapability<P extends string, I extends IdProfile> = {
   /**
    * Creates standalone localization under a key owned by this mod.
    *
+   * Keys include the mod prefix by default. Pass `{ prefix: false }` only when
+   * Stellaris requires an exact key in the ordinary localization layer.
+   *
    * Place the returned item in a feature and use its exact `.key` wherever
    * Stellaris expects a localization key.
    */
-  localization<const Suffix extends string>(
-    keySuffix: Suffix,
-    text: LocalizationText
-  ): LocalizationItem<P, Suffix>;
+  readonly localization: LocalizationMethod<P>;
   /**
    * Deliberately replaces an existing localization key without adding the mod prefix.
    *
@@ -542,8 +542,7 @@ export function createMod<const P extends string, const I extends IdProfile>(
       return buildMod(config, features, buildOptions);
     },
     on,
-    localization: <const Suffix extends string>(keySuffix: Suffix, text: LocalizationText) =>
-      createLocalizationItem(config.prefix, keySuffix, text),
+    localization: localizationFor(config.prefix),
     replaceLocalization: <const Key extends string>(key: Key, text: LocalizationText) =>
       createReplacementLocalizationItem(config.prefix, key, text),
   }) as ModCapability<P, I | typeof DEFAULT_ID_PROFILE>;

@@ -24,6 +24,13 @@ describe("standalone localization authoring", () => {
     expect(suffixes.map((suffix) => mod.localization(suffix, suffix).key)).toEqual(
       suffixes.map((suffix) => `localization_test_${suffix}`)
     );
+    expect(mod.localization("EXPLICIT", "Explicit", { prefix: true }).key).toBe(
+      "localization_test_EXPLICIT"
+    );
+    const optionalExactOptions: { readonly prefix?: false } = {};
+    expect(mod.localization("OPTIONAL", "Optional", optionalExactOptions).key).toBe(
+      "localization_test_OPTIONAL"
+    );
   });
 
   it("rejects suffixes outside the empirical Stellaris 4.4.6 alphabet", () => {
@@ -81,6 +88,29 @@ describe("standalone localization authoring", () => {
     expect(files.get(frenchPath)).toBe(
       '﻿l_french:\n localization_test_ASCENSION_COUNTER:0 "Ascension française"\n'
     );
+  });
+
+  it("preserves exact ordinary keys without using the replacement layer", () => {
+    const mod = capability();
+    const gateway = mod.localization("gateway_localization_test", "Gateway", { prefix: false });
+    const files = render(mod.compile([mod.feature("gateway", [gateway])]));
+
+    expect(gateway.key).toBe("gateway_localization_test");
+    expect(files.get("localisation/english/localization_test_gateway_l_english.yml")).toBe(
+      '﻿l_english:\n gateway_localization_test:0 "Gateway"\n'
+    );
+    expect([...files.keys()]).not.toContain(
+      "localisation/replace/english/localization_test_gateway_l_english.yml"
+    );
+  });
+
+  it("validates exact ordinary keys as complete localization keys", () => {
+    const mod = capability();
+    for (const key of ["", ".leading_dot", "-leading-hyphen", "bad key", "bad:key"]) {
+      expect(() => mod.localization(key, "Text", { prefix: false })).toThrow(
+        /Exact ordinary localization key/
+      );
+    }
   });
 
   it("uses the base filename for an undefined stem and emits no empty files", () => {
@@ -176,15 +206,26 @@ describe("standalone localization authoring", () => {
         mod.feature("zeta", [mod.localization("COLLISION", "Second")]),
       ])
     ).toThrow('Duplicate localization key "localization_test_COLLISION" for english');
+
+    expect(() =>
+      mod.compile([
+        mod.feature("alpha", [
+          mod.localization("gateway_localization_test", "First", { prefix: false }),
+        ]),
+        mod.feature("zeta", [
+          mod.localization("gateway_localization_test", "Second", { prefix: false }),
+        ]),
+      ])
+    ).toThrow('Duplicate localization key "gateway_localization_test" for english');
   });
 
   it("rejects placement through a different mod capability", () => {
     const alpha = capability("alpha_loc");
     const beta = capability("beta_loc");
-    const label = alpha.localization("LABEL", "Label");
+    const label = alpha.localization("gateway_alpha_loc", "Label", { prefix: false });
 
     expect(() => beta.feature("foreign", [label])).toThrow(
-      'Localization key "alpha_loc_LABEL" belongs to mod prefix "alpha_loc", not "beta_loc"'
+      'Localization key "gateway_alpha_loc" belongs to mod prefix "alpha_loc", not "beta_loc"'
     );
   });
 });

@@ -14,9 +14,10 @@ const unlockDesc = mod.localization(
   "orbital_dynamics_unlock_desc",
   "Resonance Observatories improve planetary Physics Research."
 );
-const gatewayDescription = mod.replaceLocalization(
+const gatewayDescription = mod.localization(
   "gateway_adaptive_science_orbital",
-  "Adaptive Orbital Science path: Researching this technology leads to further advancements in orbital science."
+  "Adaptive Orbital Science path: Researching this technology leads to further advancements in orbital science.",
+  { prefix: false }
 );
 
 const orbitalDynamics = mod.technology("orbital_dynamics", {
