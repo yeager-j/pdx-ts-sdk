@@ -10,9 +10,10 @@ npm run docs:build    # prerender into .next/
 npm run docs:preview  # serve the built site (next start)
 ```
 
-The sidebar has four sections under `content/docs/`, each ordered by its `meta.json`:
+The sidebar has five sections under `content/docs/`, each ordered by its `meta.json`:
 
 - `guides/` — hand-written workflow pages.
+- `tutorials/` — end-to-end lessons that build complete mod features.
 - `concepts/` — concepts that span content types.
 - `scopes-and-effects/` — generated scope and script-method references.
 - `reference/` — one page per content registry.

@@ -12,6 +12,7 @@ const orbitalAnalyst = mod.job("orbital_analyst", {
   desc: "Studies traffic and sensor data from the colony's orbital space.",
   effect: "Orbital Analysts produce Physics Research.",
   category: "specialist",
+  isCappedByModifier: true,
   possiblePreTriggers: {
     hasOwner: true,
     isBeingPurged: false,
@@ -34,7 +35,7 @@ const orbitalAnalysisCenter = mod.building("orbital_analysis_center", {
   name: "Orbital Analysis Center",
   desc: "A sensor complex that employs specialists to study orbital traffic.",
   planetModifier: (modifier) => {
-    modifier.job(orbitalAnalyst).add(2);
+    modifier.job(orbitalAnalyst).add(200);
   },
 });
 

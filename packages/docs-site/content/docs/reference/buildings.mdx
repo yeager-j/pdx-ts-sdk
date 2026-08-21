@@ -125,13 +125,16 @@ it can add job capacity through a planet modifier. These models have different
 game behavior: direct output needs no worker, while a job follows its own
 eligibility, assignment, upkeep, production, and swap rules.
 
-The full example below defines a `stormAnalyst` job and adds two positions with
+The full example below defines a `stormAnalyst` job and adds `200` capacity with
 the dynamic modifier key `job_<job-id>_add`. Use
-`modifier.job(stormAnalyst).add(2)` to derive that key from the owned job
+`modifier.job(stormAnalyst).add(200)` to derive that key from the owned job
 reference. Job-capacity modifier names are derived from the referenced job id,
 including the mod prefix.
 See [Jobs](/reference/jobs/) for job eligibility, production, swaps, and
 testing advice.
+
+For an end-to-end walkthrough with a custom job economy, see
+[Create a job and its building](/tutorials/jobs-and-buildings/).
 
 Vanilla often calls `inline_script` to pick different jobs for regular,
 hive-minded, and machine empires. `BuildingDef` has no inline-script field, so

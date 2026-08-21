@@ -12,6 +12,7 @@ const stormAnalyst = mod.job("storm_analyst", {
   desc: "Models how extreme weather moves through planetary atmospheres.",
   effect: "Storm Analysts produce Physics Research.",
   category: "specialist",
+  isCappedByModifier: true,
   possiblePreTriggers: {
     hasOwner: true,
     isBeingPurged: false,
@@ -78,7 +79,7 @@ const stormAnalysisCenter = mod.building("storm_analysis_center", {
   showInTech: [atmosphericModeling],
   showTechUnlockIf: hasCivic("civic_technocracy"),
   planetModifier: (modifier) => {
-    modifier.unchecked(`job_${stormAnalyst.id}_add`, 2);
+    modifier.job(stormAnalyst).add(200);
     modifier.planet.jobs.physics.research.produces.mult(0.1);
   },
   onQueued: (colony) => {

@@ -15,15 +15,14 @@ modifiers it applies, how attractive it is during assignment, and how it may
 change its displayed identity. The SDK writes job definitions under
 `common/pop_jobs/`.
 
-A job does not create its own positions. For a capped job
-(`isCappedByModifier: true` — 102 of vanilla's 365 jobs), a building,
-deposit, or other source adds capacity through a `job_<job-id>_add` modifier.
-Districts do this too, but districts have no SDK content registry yet, so
-this page's examples use a building. An uncapped job
+A capped job (`isCappedByModifier: true` — 102 of vanilla's 365 jobs) commonly
+receives capacity from a building, deposit, or other source through a
+`job_<job-id>_add` modifier. Districts do this too, but districts have no SDK
+content registry yet, so this page's examples use a building. An uncapped job
 (`isCappedByModifier: false` — 56 vanilla jobs, including ordinary workers
-such as `servant` and `peasant`) does not take its position count from that
+such as `servant` and `peasant`) does not take its capacity from that
 modifier. This first example defines a capped specialist job and a building
-that adds two positions:
+that adds `200` job capacity:
 
 <PairedExample name="jobs-basic" />
 
@@ -35,9 +34,15 @@ weight.
 
 ## A working job connects three kinds of definition
 
-A job declares the work. A capacity source adds positions with
+A job declares the work. A capacity source adds workforce capacity with
 `job_<job-id>_add`. A pop category gives the job its social rank and the
 category's broader economic rules.
+
+Stellaris 4.0 uses a workforce scale where `100` corresponds to one pop under
+the old model. Job-capacity modifiers should use multiples of `10` in almost
+every case. Basic research labs add `60` each of physicists, biologists, and
+engineers. Most buildings that provide one job type start at `200`, while
+higher tiers commonly use `400` or `600`.
 
 `category` points to a pop category such as `worker`, `specialist`,
 `simple_drone`, or `complex_drone`. It does not select the economic category
@@ -56,6 +61,9 @@ each owner policy explicitly (see Current limits below).
 See [Buildings](/reference/buildings/) for the capacity source's authoring
 fields, and [Localization](/concepts/localization/) for text that is not
 owned by one definition.
+
+For an end-to-end walkthrough, see
+[Create a job and its building](/tutorials/jobs-and-buildings/).
 
 ## Eligibility is a three-stage filter
 
@@ -257,7 +265,7 @@ economic modifiers, and localization can all refer to them.
   swap selection, automation, or overlord accounting.
 
 Test at least one eligible and ineligible pop group, every capacity source,
-zero and nonzero open positions, each swap condition, overlapping swap rows,
+zero and nonzero available capacity, each swap condition, overlapping swap rows,
 conditional production and upkeep, overlord output, modifier activation,
 manual priority controls, AI assignment, and save/load after pops take the
 job. See [Testing your mod](/guides/testing-your-mod/) for the boundary between

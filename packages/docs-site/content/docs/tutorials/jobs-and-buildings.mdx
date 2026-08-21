@@ -1,0 +1,298 @@
+---
+title: Create a Job and Its Building
+description: Define a specialist job, add its capacity from a building, and give its resource transactions typed economic modifiers.
+---
+
+import { PairedExample } from "@/components/PairedExample";
+import { Step, Steps } from "@/src/components/steps";
+
+## Overview
+
+This tutorial builds a **Signal Curator** specialist for regular empires, a
+**Subspace Archive** that provides its job capacity, and a dedicated economic
+category for changing only that job's production and upkeep.
+
+## End Result
+
+<PairedExample name="jobs-and-buildings" />
+
+## Step-By-Step Instructions
+
+<Steps>
+  <Step>
+
+    ### Create the mod and an economic category for the job
+
+    A job's `resources` block selects an economic category. Give this job its own category so
+    modifiers can target its transactions without changing every specialist job on the colony.
+
+    ```ts
+    import { always, createMod, isCapital, owner, vanilla } from "@pdx-ts/sdk";
+    import { isRegularEmpire } from "@pdx-ts/stellaris-ids/triggers";
+
+    const mod = createMod({
+      name: "Subspace Archives",
+      prefix: "subspace_archives",
+      supportedVersion: "v4.4.*",
+    });
+
+    const signalCuratorEconomy = mod.economicCategory("signal_curators", {
+      parent: vanilla.economicCategory("planet_jobs_specialist"),
+      modifierCategory: "colony",
+      generateMultModifiers: ["produces", "upkeep"],
+    });
+    ```
+
+    The parent keeps the new category inside the specialist economy. `modifierCategory: "colony"`
+    classifies where its generated values can be read and applied, and `generateMultModifiers`
+    creates the typed production and upkeep multiplier families used by the building later.
+
+  </Step>
+  <Step>
+
+    ### Define the job and its resource transactions
+
+    Register the job with `mod.job`. This example follows the common vanilla pattern of marking a
+    job as capped when a building provides a fixed amount of capacity. Split eligibility between
+    simple pre-trigger booleans, a named precalculated check, and the full `possible` trigger.
+
+    ```ts
+    const signalCurator = mod.job("signal_curator", {
+      name: "Signal Curator",
+      plural: "Signal Curators",
+      desc: "Interprets faint transmissions preserved in the subspace archives.",
+      effect: "Signal Curators produce Physics Research and Unity.",
+      category: "specialist",
+      isCappedByModifier: true,
+      possiblePreTriggers: {
+        hasOwner: true,
+        isBeingPurged: false,
+        isBeingAssimilated: false,
+        isSapient: true,
+      },
+      possiblePrecalc: "can_fill_specialist_job",
+      possible: always(),
+      resources: [
+        {
+          category: signalCuratorEconomy,
+          produces: { amounts: { physics_research: 4, unity: 1 } },
+          upkeep: { amounts: { consumer_goods: 1.5 } },
+        },
+        {
+          category: signalCuratorEconomy,
+          produces: {
+            amounts: { physics_research: 1 },
+            when: isCapital(),
+          },
+        },
+      ],
+      weight: { base: 1 },
+    });
+    ```
+
+    The first resource block always produces and consumes its listed amounts. The second adds one
+    Physics Research only on the empire capital. Use separate blocks when transactions have
+    different conditions.
+
+  </Step>
+  <Step>
+
+    ### Add the job capacity and economic modifiers from a building
+
+    Stellaris 4.0 changed job capacity to the new workforce scale: `100` now corresponds to one pop
+    under the old model. Add capacity in multiples of `10` in almost every case. A basic research
+    lab adds `60` each of physicists, biologists, and engineers; most buildings that provide one job
+    type start at `200`, with higher tiers commonly using `400` or `600`.
+
+    This single-job building therefore adds `200` Signal Curator capacity from its
+    `planetModifier`, then adds `100` more on the capital through a triggered modifier.
+
+    ```ts
+    const subspaceArchive = mod.building("subspace_archive", {
+      name: "Subspace Archive",
+      desc: "A shielded repository where specialists recover signals from subspace noise.",
+      icon: "building_research_lab_1",
+      category: "research",
+      buildingSets: ["research", "physics"],
+      canBuild: true,
+      baseBuildtime: 360,
+      planetLimit: 1,
+      potential: owner(isRegularEmpire()),
+      resources: [
+        {
+          category: "planet_buildings",
+          cost: { amounts: { minerals: 500, rare_crystals: 25 } },
+          upkeep: { amounts: { energy: 4, rare_crystals: 1 } },
+        },
+      ],
+      planetModifier: (modifier) => {
+        modifier.job(signalCurator).add(200);
+        modifier.economic(signalCuratorEconomy).resource("physics_research").produces.mult(0.15);
+        modifier.economic(signalCuratorEconomy).resource("consumer_goods").upkeep.mult(-0.1);
+      },
+      triggeredPlanetModifier: [
+        {
+          when: isCapital(),
+          modifiers: (modifier) => modifier.job(signalCurator).add(100),
+        },
+      ],
+    });
+    ```
+
+    `modifier.job(signalCurator).add(200)` derives the capacity key from the owned job reference.
+    The economic recorder derives separate keys from the owned category and resource names: the
+    first increases this category's Physics Research output by 15%, and the second reduces its
+    Consumer Goods upkeep by 10%. These bonuses affect every transaction that selects
+    `signalCuratorEconomy`, so keep the category dedicated to this job if that is the intended
+    target.
+
+    `potential: owner(isRegularEmpire())` keeps this basic building out of hive and machine build
+    lists. Those empires cannot fill a specialist job through `can_fill_specialist_job`; the
+    advanced section replaces this availability gate with explicit gestalt capacity branches.
+
+  </Step>
+  <Step>
+
+    ### Compile all referenced definitions together
+
+    Put the economic category, job, and building in one feature, then compile it. The Fold verifies
+    the owned references before it emits the category, job, building, and localization files.
+
+    ```ts
+    export const feature = mod.feature("subspace_archives", [
+      signalCuratorEconomy,
+      signalCurator,
+      subspaceArchive,
+    ]);
+
+    export default mod.compile([feature]);
+    ```
+
+    Omitting the job or economic category while keeping the building would fail compilation instead
+    of emitting a dangling owned reference.
+
+  </Step>
+</Steps>
+
+## Advanced: Regular, Hive, and Machine Variants
+
+Vanilla research jobs split policy at two boundaries. Research buildings add
+physicists, biologists, and engineers for regular empires, but add the matching
+calculator jobs for hive and machine empires. Each calculator definition then
+uses `swappableData` for hive-specific Brain Drone names and art. The same job
+also branches its upkeep: machine calculators consume Energy, while hive
+calculators consume Minerals.
+
+These are **empire-type** branches, not species checks. A regular empire may
+employ several kinds of species, but its research building still follows the
+regular-empire capacity policy. The building evaluates the owner type; the job
+definition evaluates whether a pop group may work the selected job.
+
+The advanced version applies that pattern to the Subspace Archive:
+
+| Owner type | Fillable job      | Displayed identity     | Category        | Upkeep             |
+| ---------- | ----------------- | ---------------------- | --------------- | ------------------ |
+| Regular    | `signalCurator`   | Signal Curator         | `specialist`    | 1.5 Consumer Goods |
+| Hive       | `signalProcessor` | Resonance Weaver Drone | `complex_drone` | 4 Minerals         |
+| Machine    | `signalProcessor` | Signal Processor Unit  | `complex_drone` | 3 Energy           |
+
+<PairedExample name="jobs-and-buildings-advanced" />
+
+The advanced example also tightens eligibility to the vanilla researcher
+pattern: regular curators use `complexSpecialistJobCheckTrigger()`, while the
+shared drone job uses `canThink()` after `can_fill_drone_job`.
+
+### Reuse mechanics while swapping hive flavor
+
+`resonanceWeaver` is a display-only job whose `possible` trigger is always
+false. The fillable `signalProcessor` points to it from a hive-only
+`swappableData.swapType` row. Hive and machine empires therefore share one
+production, eligibility, and assignment definition while presenting different
+names, descriptions, and icons.
+
+This is the same division used by vanilla's calculator researchers: the
+calculator job owns the mechanics, while a swap-only Brain Drone definition
+owns the hive presentation. Use separate fillable jobs instead when hive and
+machine variants need different eligibility, modifiers, or assignment weight—not
+only different resource arms and flavor.
+
+### Branch resource upkeep inside the shared job
+
+The shared job keeps its production in one unconditional resource block, then
+uses separate conditional blocks for Minerals and Energy upkeep:
+
+```ts
+resources: [
+  {
+    category: signalCuratorEconomy,
+    produces: { amounts: { physics_research: 4, unity: 1 } },
+  },
+  {
+    category: signalCuratorEconomy,
+    upkeep: {
+      amounts: { minerals: 4 },
+      when: owner(isHiveEmpire()),
+    },
+  },
+  {
+    category: signalCuratorEconomy,
+    upkeep: {
+      amounts: { energy: 3 },
+      when: owner(isMachineEmpire()),
+    },
+  },
+],
+```
+
+The conditions navigate from the resource block's colony scope to its owning
+country. Keep the conditions mutually exclusive so one workforce does not pay
+both upkeep arms.
+
+Because the variants consume three different resources, the advanced building
+uses the category-wide `modifier.economic(signalCuratorEconomy).upkeep.mult(-0.1)`
+family. The Consumer Goods-specific modifier from the first example would not
+change the hive or machine upkeep arms.
+
+### Select capacity from the building's owner
+
+The building no longer adds one job unconditionally. Its triggered modifiers
+choose the regular or gestalt definition from the owning empire:
+
+```ts
+triggeredPlanetModifier: [
+  {
+    when: owner(isRegularEmpire()),
+    modifiers: (modifier) => modifier.job(signalCurator).add(200),
+  },
+  {
+    when: owner(isHiveEmpire()),
+    modifiers: (modifier) => modifier.job(signalProcessor).add(200),
+  },
+  {
+    when: owner(isMachineEmpire()),
+    modifiers: (modifier) => modifier.job(signalProcessor).add(200),
+  },
+],
+```
+
+The complete example repeats those branches for the capital's additional
+`100` capacity. Do not add capacity for all variants and depend on eligibility
+to hide the unused jobs; branch at the capacity source so the colony receives
+only the job family it can use.
+
+## Further Reading & Notes
+
+- [`resources`](/reference/jobs/#resources-have-two-owners) defines what the assigned workforce
+  produces and consumes. It does not create job capacity.
+- [`modifier.job(jobRef)`](/reference/buildings/#jobs-and-output) creates capacity and other
+  job-derived modifier keys. It does not define the worker's resource output.
+- [Economic modifiers](/concepts/economic-modifiers/) explains how a resource transaction selects
+  a category and how a modifier supplies a value for one generated key.
+- [Economic Categories](/reference/economic-categories/) covers parents, modifier generation, AI
+  budgets, and triggered category rows.
+- Vanilla buildings often use `inline_script` to choose different jobs for regular and gestalt
+  empires. `BuildingDef` has no general inline-script field, so define each supported policy
+  explicitly, as the advanced example does.
+- Test the building on capital and non-capital colonies, with unused and fully assigned capacity.
+  Check the displayed production, upkeep, construction limits, AI assignment, and save/load in
+  Stellaris.
