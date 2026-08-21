@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
 
 /**
@@ -13,7 +14,10 @@ import { defineConfig } from "vitest/config";
  * is what workspace packages are. Projects do not inherit these from the root
  * config, so each one repeats them.
  */
-const resolve = { conditions: ["pdx-source"] };
+const resolve = {
+  alias: { "@": fileURLToPath(new URL("./packages/docs-site", import.meta.url)) },
+  conditions: ["pdx-source"],
+};
 
 const ssr = {
   resolve: {

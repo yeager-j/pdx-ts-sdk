@@ -1,30 +1,35 @@
 ---
-title: Effects
-description: Every script method the SDK generates, with its PDXScript key, signature, and where it is legal.
+title: List of Effects
+description: Every SDK script method, with its PDXScript key, signature, category, and legal scopes.
 ---
 
 import { EffectsIndex } from "@/components/EffectsIndex";
 
-This is the effects-first view of the same generated metadata the scope pages use. Each method has
-one entry here: what it writes, what it accepts, and where you can call it. A scope page answers the
-other question — what is legal on the interface you are holding.
+Use this page when you know a TypeScript method or PDXScript key and need to find its exact
+signature and legal scopes. For the opposite lookup, open a page under **Scopes** to see everything
+available on one generated scope interface.
 
-Entries fall into three categories. An **effect** writes one PDXScript key. A **structural** method
-is control flow — `if`, `random`, `whileLoop` — that shapes the block it wraps. An **event-fire** method
-fires an event; its availability says where the fire call is legal, and its own entry says which
-scope the fired event's body runs in, which is a different scope.
+The list contains one canonical entry for every method in the current SDK script-reference model:
 
-Availability is either every scope or an explicit list. They are separate statements: a method
-marked as available everywhere is universal by construction, not a list that happens to name all of
-them. Scopes link to their reference page where one is written.
+- **Effect** entries are ordinary generated effect methods.
+- **Structural** entries record control flow, iteration, saved targets, or other script structure.
+- **Event fire** entries record typed event fires. **Availability** says where the fire call is
+  legal; **Event body scope** says where the fired event runs.
 
-Each row has a stable `#effects-methodName` anchor — `#effects-addResource` — that survives
-filtering and paging, so a link to a method keeps working.
+Availability is either universal or an explicit scope list. Universal methods share one expandable
+scope-page list instead of repeating the same links in every row. Scope-specific availability links
+each published scope page directly.
 
-Scope links, the properties that move you from one scope to another, are not methods and are not
-listed here. They live on the scope pages, under the transitions each scope offers.
+Each entry has a stable `#effects-methodName` anchor. For example,
+[`#effects-addResource`](#effects-addResource) opens `addResource` even when filtering or paging is
+active. The complete inventory is present in the page's server-rendered HTML; filtering and paging
+are optional enhancements when client JavaScript is available.
 
-"Every method" means the SDK's current authoring surface, generated from the vendored rules. It is
-not the set of effects Stellaris supports.
+Scope-link properties are not effects. They navigate to another scope and appear under **Outgoing
+scope transitions** on each scope page.
+
+This is the SDK-supported authoring surface, not an exhaustive list of live-game effects. Its rows
+come from the SDK's post-overlay generated records and the reviewed reference records owned by
+handwritten structural methods.
 
 <EffectsIndex />

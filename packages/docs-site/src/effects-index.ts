@@ -33,7 +33,7 @@ export interface ScopeLinkTarget {
  * when a scope is added.
  */
 export type EffectAvailability =
-  | { readonly kind: "universal"; readonly publishedScopePages: readonly ScopeLinkTarget[] }
+  | { readonly kind: "universal" }
   | { readonly kind: "scopes"; readonly scopes: readonly ScopeLinkTarget[] };
 
 export interface EffectsIndexEntry {
@@ -52,6 +52,8 @@ export interface EffectsIndexEntry {
 
 export interface EffectsIndexModel {
   readonly entries: readonly EffectsIndexEntry[];
+  /** One shared link list for methods whose availability is universal. */
+  readonly scopePages: readonly ScopeLinkTarget[];
   readonly counts: {
     readonly effect: number;
     readonly structural: number;
@@ -93,22 +95,16 @@ function targetOf(scope: ScopeName, pages: ReadonlyMap<string, ScopePageLink>): 
 }
 
 /**
- * A universal entry links every scope page the site publishes today, and picks
- * up new ones as later work writes them — the readable reading of "links to
- * every scope it is available on" for a method available on all of them.
+ * Scope-specific availability carries its own targets. Universal availability
+ * is a semantic fact, so its scope-page links live once on the index model
+ * rather than being copied onto every universal entry.
  */
 function availabilityOf(
   availability: ScopeReferenceSources["effects"][number]["availability"],
-  pages: ReadonlyMap<string, ScopePageLink>,
-  sources: ScopeReferenceSources
+  pages: ReadonlyMap<string, ScopePageLink>
 ): EffectAvailability {
   if (availability.kind === "universal") {
-    return {
-      kind: "universal",
-      publishedScopePages: sources.scopes
-        .filter((scope) => pages.has(scope))
-        .map((scope) => targetOf(scope, pages)),
-    };
+    return { kind: "universal" };
   }
   return {
     kind: "scopes",
@@ -156,7 +152,7 @@ export function buildEffectsIndex(
 
   const entries = sources.effects
     .map((reference): EffectsIndexEntry => {
-      const availability = availabilityOf(reference.availability, pages, sources);
+      const availability = availabilityOf(reference.availability, pages);
       return {
         method: reference.method,
         anchor: effectAnchor(reference.method),
@@ -179,6 +175,9 @@ export function buildEffectsIndex(
 
   return {
     entries,
+    scopePages: sources.scopes
+      .filter((scope) => pages.has(scope))
+      .map((scope) => targetOf(scope, pages)),
     counts: {
       effect: countOf("effect"),
       structural: countOf("structural"),

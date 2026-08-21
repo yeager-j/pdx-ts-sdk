@@ -17,7 +17,7 @@ export function ScopeEffects({
 
       <p>
         <a href="/scopes-and-effects/effects/">{universalCount} universal effects</a> are available
-        on every scope interface and listed once in the Effects index.
+        on every scope interface and listed once in List of Effects.
       </p>
 
       {scopeSpecific.length === 0 ? (

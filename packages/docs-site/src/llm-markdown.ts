@@ -1,4 +1,9 @@
-import type { EffectCategory, EffectsIndexModel, ScopeLinkTarget } from "./effects-index.ts";
+import {
+  effectAnchor,
+  type EffectCategory,
+  type EffectsIndexModel,
+  type ScopeLinkTarget,
+} from "./effects-index.ts";
 import type { FieldRow, FieldTableModel } from "./field-table.ts";
 import type { PairedExampleData } from "./paired-example-data.ts";
 import type { Coverage } from "./registry-coverage.ts";
@@ -132,7 +137,7 @@ function methodTable(rows: readonly ScriptMethodRow[]): string {
   return table(
     ["Method", "Game key", "TypeScript signature", "Notes"],
     rows.map((row) => [
-      `\`${row.method}\``,
+      `[\`${row.method}\`](/scopes-and-effects/effects/#${effectAnchor(row.method)})`,
       row.key === undefined ? "none" : `\`${row.key}\``,
       `\`${row.signature}\``,
       row.summary,
@@ -160,6 +165,7 @@ const CATEGORY_LABELS: Record<EffectCategory, string> = {
 export function effectsIndexMarkdown(model: EffectsIndexModel): string {
   return [
     `${model.counts.effect} ordinary effects, ${model.counts.structural} structural methods, and ${model.counts.eventFire} event-fire methods. Availability is either every scope or the explicit list named here; an event-fire method's body scope is where the fired event runs, which the availability column does not say.`,
+    `Universal methods are available on every generated scope interface. Published scope pages: ${model.scopePages.map(scopeTarget).join(", ")}.`,
     table(
       [
         "Method",
@@ -206,7 +212,7 @@ export function eventKindsMarkdown(rows: readonly EventKindRow[]): string {
 
 export function scopeEffectsMarkdown(model: ScopeReferenceModel): string {
   const sections = [
-    `[${model.universalEffects.length} universal effects](/scopes-and-effects/effects/) are available on every scope interface and listed once in the Effects index.`,
+    `[${model.universalEffects.length} universal effects](/scopes-and-effects/effects/) are available on every scope interface and listed once in List of Effects.`,
   ];
   if (model.scopeEffects.length === 0) {
     sections.push("This scope adds no scope-specific ordinary effects beyond the universal set.");

@@ -58,6 +58,9 @@ The generated types carry the landing scope through longer paths too. For
 example, a path such as `planet.owner.capitalScope.effects(...)` lands in
 colony scope before its callback records effects.
 
+Use the [Scopes & Effects overview](/scopes-and-effects/) to choose a scope-first lookup. Each scope
+page keeps legal methods separate from the outgoing properties that navigate to another scope.
+
 Declarative triggers use scope links instead of effect callbacks:
 
 ```ts
@@ -226,6 +229,9 @@ recorder runs: each closure receives the scope interface its field declares, a
 scope link's callback receives its declared landing interface, and `ctx.from`
 and `ctx.root` expose only scopes the owning field declares. The recorder
 itself only records and serializes; it does not repeat those rules at runtime.
+
+The [scope catalog](/scopes-and-effects/) shows the generated interface, legal methods, event kinds,
+and outgoing transitions for every canonical SDK scope.
 
 ## Read scope type errors as game rules
 

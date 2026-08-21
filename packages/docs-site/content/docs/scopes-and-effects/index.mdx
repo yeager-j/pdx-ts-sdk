@@ -1,23 +1,41 @@
 ---
-title: Scopes & Effects
-description: Generated reference for the SDK methods and transitions available in each scope.
+title: Overview
+description: Choose a scope-first or effect-first path through the SDK script reference.
 ---
 
-This section is the generated-method reference for scopes. Each scope page identifies the scope
-literal and SDK interface, then lists the methods and scope transitions that the current generated
-SDK contract exposes there.
+Use this reference in either direction:
 
-“Effects” here means SDK-supported methods legal on a generated scope interface. It does not mean
-every effect that Stellaris accepts. Generated documentation and types establish the SDK authoring
-contract; they do not prove every detail of live-game behavior.
+- **Scope first:** open a page under **Scopes** when you know the interface you have and need to
+  see its legal effects, event-fire methods, and outgoing scope transitions.
+- **Effect first:** open [List of Effects](./effects/) when you know a TypeScript method or
+  PDXScript key and need its signature, category, and legal scopes.
 
-Read the conceptual prerequisites first:
+Both views read the same script-reference records. They describe the current SDK-supported
+authoring surface after its reviewed overlays and handwritten structural methods are applied. They
+do not claim to list every effect or scope behavior available in a live Stellaris build.
+
+## Read the model before the inventory
 
 - [Triggers and effects](/guides/triggers-and-effects/) explains recording and evaluation.
 - [Scope and context](/guides/scope-and-context/) explains `THIS`, `ROOT`, `FROM`, and scope changes.
 - [Events](/concepts/events/) explains event bodies and typed event references.
 
-The scope catalog covers every canonical scope in the current generated SDK. The alphabetical scope
-list in the sidebar updates with that generated inventory. [Country](./scopes/country/) demonstrates
-multiple event kinds, [Storm](./scopes/storm/) demonstrates an event key that does not mechanically
-match its scope name, and [Army](./scopes/army/) shows the explicit no-event-kind state.
+## What the reference classifies
+
+**Ordinary effects** are the generated SDK methods that record game effects. Their entries show the
+PDXScript key, exact TypeScript signature, and availability.
+
+**Structural and control-flow methods** record branching, iteration, targets, and other script
+structure. They are handwritten SDK methods with their own reference records; some have no single
+fixed PDXScript key.
+
+**Event-fire methods** record a typed event fire. Each entry keeps two facts separate: the scopes
+where the fire call is legal and the scope where the fired event body runs.
+
+Scope-link properties are different. They navigate from one scope interface to another, so each
+scope page lists them under **Outgoing scope transitions**, not as effects.
+
+The scope catalog contains one page for every canonical generated SDK scope. Start with
+[Country](./scopes/country/) for multiple event kinds, [Storm](./scopes/storm/) for an event key that
+does not mechanically match its scope name, or [Army](./scopes/army/) for the explicit no-event-kind
+state.

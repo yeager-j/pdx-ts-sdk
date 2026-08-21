@@ -8,9 +8,10 @@ turns your triggers, effects, and content definitions into PDXScript and writes 
 Stellaris launcher can load.
 
 The **Guides** explain the workflow once, in reading order. **Concepts** covers content that
-spans many content types — events, on-actions, localization, assets, and ships. The
-**Reference** documents the content types one page at a time: what each is in game terms, its
-fields, and a compiled example where the type stands alone.
+spans many content types — events, on-actions, localization, assets, and ships. **Scopes &
+Effects** provides scope-first and effect-first lookup for the generated script surface. The
+registry **Reference** documents content types one page at a time: what each is in game terms,
+its fields, and a compiled example where the type stands alone.
 
 Start with [Getting started](/guides/getting-started/) to create and run your first mod. The
 [Coverage](/reference/coverage/) page lists every content type the SDK can author, including

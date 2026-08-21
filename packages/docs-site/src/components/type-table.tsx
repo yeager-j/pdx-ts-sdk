@@ -7,7 +7,6 @@ import { ChevronDown } from "lucide-react";
 import { useEffect, useState, type ComponentProps, type ReactNode } from "react";
 
 import { cn } from "../lib/cn";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./ui/collapsible";
 
 export interface ParameterNode {
   name: string;
@@ -33,6 +32,9 @@ export interface TypeNode {
    * rather than folded into `type`.
    */
   badge?: ReactNode;
+
+  /** Optional canonical reference for a member, shown in the expanded details. */
+  referenceLink?: string;
 
   /**
    * type signature (short)
@@ -145,6 +147,7 @@ export function TypeTableItem({
     availability,
     eventBodyScope,
     badge,
+    referenceLink,
     required = false,
     deprecated,
     typeDescription,
@@ -162,6 +165,13 @@ export function TypeTableItem({
   const t = useTranslations({ note: "type table" });
   const [open, setOpen] = useState(false);
   const id = parentId ? `${parentId}-${name}` : undefined;
+  const panelId = id === undefined ? undefined : `${id}-details`;
+  const setNamedOpen = (nextOpen: boolean): void => {
+    if (nextOpen && id) {
+      window.history.replaceState(null, "", `#${id}`);
+    }
+    setOpen(nextOpen);
+  };
 
   /**
    * Local extension: the upstream component reads the hash once, on mount, so
@@ -181,23 +191,23 @@ export function TypeTableItem({
   }, [id]);
 
   return (
-    <Collapsible
+    <details
       id={id}
       open={open}
-      onOpenChange={(v) => {
-        if (v && id) {
-          window.history.replaceState(null, "", `#${id}`);
-        }
-        setOpen(v);
-      }}
+      onToggle={(event) => setNamedOpen(event.currentTarget.open)}
       className={cn(
-        "rounded-xl border overflow-hidden scroll-m-20 transition-all",
+        "group rounded-xl border overflow-hidden scroll-m-20 transition-all",
         open ? "shadow-sm bg-fd-background not-last:mb-2" : "border-transparent"
       )}
     >
-      <CollapsibleTrigger
+      <summary
+        onKeyDown={(event) => {
+          if (event.key !== "Enter" && event.key !== " ") return;
+          event.preventDefault();
+          setNamedOpen(!open);
+        }}
         className={cn(
-          "relative flex flex-row items-center w-full group text-start px-3 py-2 not-prose hover:bg-fd-accent",
+          "relative flex cursor-pointer list-none flex-row items-center w-full text-start px-3 py-2 not-prose hover:bg-fd-accent focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-current [&::-webkit-details-marker]:hidden",
           // The name column refuses to shrink, so on a narrow container a long
           // name would push the badge under the chevron. Wrapping drops the
           // badge to its own line instead of truncating either one. Rows
@@ -207,7 +217,7 @@ export function TypeTableItem({
       >
         <code
           className={cn(
-            "text-fd-primary min-w-fit w-1/3 font-mono font-medium pe-2",
+            "text-fd-primary min-w-0 w-1/3 font-mono font-medium pe-2 [overflow-wrap:anywhere]",
             deprecated && "line-through text-fd-primary/50"
           )}
         >
@@ -231,10 +241,10 @@ export function TypeTableItem({
         ) : (
           <span className="@max-xl:hidden min-w-0 flex-1 truncate pe-6">{type}</span>
         )}
-        <ChevronDown className="absolute inset-e-2 size-4 text-fd-muted-foreground transition-transform group-data-[open]:rotate-180" />
-      </CollapsibleTrigger>
-      <CollapsibleContent>
-        <div className="grid grid-cols-[1fr_3fr] gap-y-4 text-sm p-3 overflow-auto fd-scroll-container border-t">
+        <ChevronDown className="absolute inset-e-2 size-4 text-fd-muted-foreground transition-transform group-open:rotate-180" />
+      </summary>
+      <div id={panelId}>
+        <div className="grid grid-cols-1 @md:grid-cols-[1fr_3fr] gap-y-2 @md:gap-y-4 text-sm p-3 overflow-auto fd-scroll-container border-t">
           <div className="text-sm prose col-span-full prose-no-margin empty:hidden">
             {description}
           </div>
@@ -255,13 +265,23 @@ export function TypeTableItem({
           {availability && (
             <>
               <p className={cn(fieldVariants())}>{t("Availability")}</p>
-              <p className="my-auto not-prose">{availability}</p>
+              <p className="my-auto min-w-0 not-prose [overflow-wrap:anywhere]">{availability}</p>
             </>
           )}
           {eventBodyScope && (
             <>
               <p className={cn(fieldVariants())}>{t("Event body scope")}</p>
               <p className="my-auto not-prose">{eventBodyScope}</p>
+            </>
+          )}
+          {referenceLink && (
+            <>
+              <p className={cn(fieldVariants())}>{t("Reference")}</p>
+              <p className="my-auto not-prose">
+                <Link href={referenceLink} className="underline">
+                  Open the canonical effect entry
+                </Link>
+              </p>
             </>
           )}
           {defaultValue && (
@@ -290,7 +310,7 @@ export function TypeTableItem({
             </>
           )}
         </div>
-      </CollapsibleContent>
-    </Collapsible>
+      </div>
+    </details>
   );
 }

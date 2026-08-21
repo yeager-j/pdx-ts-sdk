@@ -46,7 +46,14 @@ const docs = defineDocs({
   },
 });
 
-// The site serves at the root, like the Astro site did: `/reference/situations/`.
+/**
+ * The root `content/docs/meta.json` fixes the four independent sidebar sections:
+ * Guides, Concepts, Scopes & Effects, and registry Reference. Each section's
+ * own metadata controls its page order; the generated page tree supplies the
+ * labels and routes to Fumadocs.
+ *
+ * The site serves at the root, like the Astro site did: `/reference/situations/`.
+ */
 export const source = loader({
   baseUrl: "/",
   source: docs.toFumadocsSource(),
