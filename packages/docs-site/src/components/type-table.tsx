@@ -110,8 +110,8 @@ export function TypeTableFrame({
       {...props}
     >
       <div className="flex font-medium items-center px-3 py-1 not-prose text-fd-muted-foreground">
-        <p className="w-1/3">{nameHeader ?? t("Prop")}</p>
-        <p className="@max-xl:hidden">{typeHeader ?? t("Type")}</p>
+        <p className="flex-1/3">{nameHeader ?? t("Prop")}</p>
+        <p className="flex-2/3 @max-xl:hidden">{typeHeader ?? t("Type")}</p>
       </div>
       {children}
     </div>
@@ -217,7 +217,7 @@ export function TypeTableItem({
       >
         <code
           className={cn(
-            "text-fd-primary min-w-0 w-1/3 font-mono font-medium pe-2 [overflow-wrap:anywhere]",
+            "text-fd-primary min-w-0 flex-1/3 font-mono font-medium pe-2 [overflow-wrap:anywhere]",
             deprecated && "line-through text-fd-primary/50"
           )}
         >
@@ -234,12 +234,12 @@ export function TypeTableItem({
         {typeDescriptionLink ? (
           <Link
             href={typeDescriptionLink}
-            className="underline @max-xl:hidden min-w-0 flex-1 truncate pe-6"
+            className="underline @max-xl:hidden min-w-0 flex-2/3 truncate pe-6"
           >
             {type}
           </Link>
         ) : (
-          <span className="@max-xl:hidden min-w-0 flex-1 truncate pe-6">{type}</span>
+          <span className="@max-xl:hidden min-w-0 flex-2/3 truncate pe-6">{type}</span>
         )}
         <ChevronDown className="absolute inset-e-2 size-4 text-fd-muted-foreground transition-transform group-open:rotate-180" />
       </summary>
