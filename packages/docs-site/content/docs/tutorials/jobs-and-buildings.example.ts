@@ -1,4 +1,5 @@
-import { always, createMod, isCapital, vanilla } from "@pdx-ts/sdk";
+import { always, createMod, isCapital, owner, vanilla } from "@pdx-ts/sdk";
+import { isRegularEmpire } from "@pdx-ts/stellaris-ids/triggers";
 
 const mod = createMod({
   name: "Subspace Archives",
@@ -53,6 +54,7 @@ const subspaceArchive = mod.building("subspace_archive", {
   canBuild: true,
   baseBuildtime: 360,
   planetLimit: 1,
+  potential: owner(isRegularEmpire()),
   resources: [
     {
       category: "planet_buildings",

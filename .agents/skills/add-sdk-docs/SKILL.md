@@ -10,6 +10,7 @@ Stellaris is installed at `/Users/jackson/Library/Application Support/Steam/stea
 Write user-facing documentation for a registry item (technologies, buildings, megastructures, etc). These tasks will differ from normal Linear tickets. Instead of delegating the writing to a subagent, write the doc content yourself.
 
 Process:
+
 1. Gather relevant context for the page using `researcher` agents.
 2. Write the documentation content.
 3. The user will review.
@@ -19,10 +20,11 @@ You may end up creating multiple documentation pages in a single session, so don
 
 ## Registry Content
 
-These instructions are for writing content that lives in `src/content/docs/reference`. Do not follow them for Tutorials or Guides.
+These instructions are for writing content that lives in `packages/docs-site/content/docs/reference`. Do not follow them for Tutorials or Guides.
 
 First, check `packages/docs-site/complexity.md`.
-- Highly complex registry items should be researched thoroughly. The page should include multiple examples, best practices, and gotchas. Make sure to read multiple Vanilla examples in full before writing and trace how they're used.  If the registry item has a complex field (such as swaps, stages, or is composed of multiple components) make sure there are subsections for each.
+
+- Highly complex registry items should be researched thoroughly. The page should include multiple examples, best practices, and gotchas. Make sure to read multiple Vanilla examples in full before writing and trace how they're used. If the registry item has a complex field (such as swaps, stages, or is composed of multiple components) make sure there are subsections for each.
 - Moderately complex registry items should be researched in detail. The page should include a simple and a bells-and-whistles example. Similar to the above, make sure to create subsections for complex fields.
 - Simple registry items can follow a standard template: what the concept is in game terms + its game folder; minimal paired example; one or two notable examples (the editorial call per page); generated field table; patch section only where patchable; links to the Def type and the registry's vanilla ids.
 
@@ -30,7 +32,7 @@ Each Reference page must include the `<FieldTable />` component.
 
 ## Writing Tutorials
 
-These instructions are for writing content that lives in `src/content/docs/tutorials`.
+These instructions are for writing content that lives in `packages/docs-site/content/docs/tutorials`.
 
 When writing tutorials, never create a trivial example. Search vanilla Stellaris content for non-trivial examples and then rewrite them, changing them to be distinct from vanilla. Never reproduce Stellaris content directly for licensing reasons. Make sure to read the full content of inline scripts since they usually hide complex implementation details.
 

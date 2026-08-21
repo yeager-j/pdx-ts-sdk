@@ -8,9 +8,9 @@ import { Step, Steps } from "@/src/components/steps";
 
 ## Overview
 
-This tutorial builds a **Signal Curator** specialist, a **Subspace Archive**
-that provides its job capacity, and a dedicated economic category for changing
-only that job's production and upkeep.
+This tutorial builds a **Signal Curator** specialist for regular empires, a
+**Subspace Archive** that provides its job capacity, and a dedicated economic
+category for changing only that job's production and upkeep.
 
 ## End Result
 
@@ -27,7 +27,8 @@ only that job's production and upkeep.
     modifiers can target its transactions without changing every specialist job on the colony.
 
     ```ts
-    import { always, createMod, isCapital, vanilla } from "@pdx-ts/sdk";
+    import { always, createMod, isCapital, owner, vanilla } from "@pdx-ts/sdk";
+    import { isRegularEmpire } from "@pdx-ts/stellaris-ids/triggers";
 
     const mod = createMod({
       name: "Subspace Archives",
@@ -116,6 +117,7 @@ only that job's production and upkeep.
       canBuild: true,
       baseBuildtime: 360,
       planetLimit: 1,
+      potential: owner(isRegularEmpire()),
       resources: [
         {
           category: "planet_buildings",
@@ -143,6 +145,10 @@ only that job's production and upkeep.
     Consumer Goods upkeep by 10%. These bonuses affect every transaction that selects
     `signalCuratorEconomy`, so keep the category dedicated to this job if that is the intended
     target.
+
+    `potential: owner(isRegularEmpire())` keeps this basic building out of hive and machine build
+    lists. Those empires cannot fill a specialist job through `can_fill_specialist_job`; the
+    advanced section replaces this availability gate with explicit gestalt capacity branches.
 
   </Step>
   <Step>
