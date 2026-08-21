@@ -23,6 +23,7 @@ import {
   nand,
   nor,
   not,
+  numLeaderTraits,
   or,
   owner,
   popGroupSize,
@@ -291,6 +292,25 @@ describe("trigger builders", () => {
     );
     expect(isStructuredValue({ id: "pc_gaia" }, ["typed-ref"])).toBe(false);
     expect(isStructuredValue({ ethic: "ethic_materialist" }, ["scope-ref"])).toBe(true);
+  });
+
+  it("serializes a generated structured-only field", () => {
+    expect(
+      serialize([
+        ...numLeaderTraits({
+          value: [">=", 2],
+          containsModifier: { string: "federation", type: "any", isSubclass: "any" },
+        }).entries,
+      ])
+    ).toBe(`num_leader_traits = {
+\tvalue >= 2
+\tcontains_modifier = {
+\t\tstring = federation
+\t\ttype = any
+\t\tis_subclass = any
+\t}
+}
+`);
   });
 
   it("throws an explanatory error when a trigger is called like a function", () => {

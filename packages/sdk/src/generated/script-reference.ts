@@ -5372,6 +5372,21 @@ export const SCRIPT_EFFECT_REFERENCES = [
     ],
   },
   {
+    method: "fireOnAction",
+    key: "fire_on_action",
+    kind: "effect",
+    availability: { kind: "universal" },
+    signature:
+      "fireOnAction(args: { onAction: OnActionRef | string; scopes?: { from?: ScopeValue; fromfrom?: ScopeValue; fromfromfrom?: ScopeValue; fromfromfromfrom?: ScopeValue } }): void;",
+    docs: [
+      "Fires a made-up on_action.",
+      "",
+      "```",
+      "fire_on_action = { on_action = <string> scopes = { from = X fromfrom = Y } }",
+      "```",
+    ],
+  },
+  {
     method: "firstContactEvent",
     key: "first_contact_event",
     kind: "event-fire",
@@ -13486,6 +13501,24 @@ export const SCRIPT_EFFECT_REFERENCES = [
       "",
       "```",
       "set_design_flag = <key> (note: one can use e.g. my_flag@from to track relationships between objects)",
+      "```",
+    ],
+  },
+  {
+    method: "setDiplomacyActionSetting",
+    key: "set_diplomacy_action_setting",
+    kind: "effect",
+    availability: { kind: "scopes", scopes: ["federation"] },
+    signature:
+      "setDiplomacyActionSetting(args: { action: DiplomaticActionRef | string; settings: { voteType?: VoteType; acceptanceType?: AcceptanceType } }): void;",
+    docs: [
+      "Sets diplomatic action custom setting.",
+      "",
+      "```",
+      "set_diplomacy_action_setting = {",
+      "\taction = <action_key>",
+      "\tsettings = { vote_type = default }",
+      "}",
       "```",
     ],
   },

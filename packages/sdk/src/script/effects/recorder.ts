@@ -222,6 +222,19 @@ function fieldEntries(
             entries.push(kv(field.key, scalar));
           }
           break;
+        case "fields":
+          entries.push(
+            block(
+              field.key,
+              fieldEntries(
+                field.fields ?? [],
+                value as Record<string, unknown>,
+                `${path}.${field.key}`,
+                refs
+              )
+            )
+          );
+          break;
         case "comparison":
           if (Array.isArray(value)) {
             entries.push(cmp(field.key, value[0] as PdxOp, toScalar(value[1])));

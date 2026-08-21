@@ -16,6 +16,7 @@ import type {
 } from "../script/effects/types.ts";
 import type { ScriptValue, Trigger } from "../script/trigger-core.ts";
 import type {
+  AcceptanceType,
   AddDepositType,
   AggroRangeMeasureFrom,
   AgreementSubjectExpand,
@@ -42,6 +43,7 @@ import type {
   TechnologyArea,
   TruceType,
   TutorialLevel,
+  VoteType,
   WarSide,
 } from "./enums.ts";
 import type {
@@ -8505,6 +8507,20 @@ export interface EffectsInFederation {
   setAllowSubjectsToJoin(value?: boolean): void;
 
   /**
+   * Sets diplomatic action custom setting.
+   * ```
+   * set_diplomacy_action_setting = {
+   * 	action = <action_key>
+   * 	settings = { vote_type = default }
+   * }
+   * ```
+   */
+  setDiplomacyActionSetting(args: {
+    action: DiplomaticActionRef | string;
+    settings: { voteType?: VoteType; acceptanceType?: AcceptanceType };
+  }): void;
+
+  /**
    * Sets different voting weight.
    * ```
    * set_equal_voting_power = <yes/no>
@@ -13290,6 +13306,22 @@ export interface UniversalEffects extends EnableSpecialProjectEffectsExtension {
     args: { limit?: Trigger<"megastructure"> },
     body: (scope: MegastructureScope) => void
   ): void;
+
+  /**
+   * Fires a made-up on_action.
+   * ```
+   * fire_on_action = { on_action = <string> scopes = { from = X fromfrom = Y } }
+   * ```
+   */
+  fireOnAction(args: {
+    onAction: OnActionRef | string;
+    scopes?: {
+      from?: ScopeValue;
+      fromfrom?: ScopeValue;
+      fromfromfrom?: ScopeValue;
+      fromfromfromfrom?: ScopeValue;
+    };
+  }): void;
 
   /**
    * Copies a value from the galaxy setup into a variable, optionally scaling it by an int value

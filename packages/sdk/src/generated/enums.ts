@@ -4,6 +4,9 @@
 
 import type { VanillaEnumMember } from "../identifiers/contracts.ts";
 
+/** `enum[acceptance_type]`. */
+export type AcceptanceType = "default" | "leader";
+
 /** `enum[add_deposit_type]`. */
 export type AddDepositType = "random" | "random_blocker" | "random_nonblocker";
 
@@ -628,6 +631,9 @@ export type UtilityComponentSlot =
 
 /** `enum[utility_slot_size]`. */
 export type UtilitySlotSize = "extra_large" | "large" | "medium" | "small" | "aux";
+
+/** `enum[vote_type]`. */
+export type VoteType = "unanimous_vote" | "majority_vote" | "leader";
 
 /** `enum[war_goal_hide]`. */
 export type WarGoalHide = "never" | "always" | "no_cb";

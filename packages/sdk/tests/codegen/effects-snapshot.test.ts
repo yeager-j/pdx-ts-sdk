@@ -89,6 +89,22 @@ describe("emitted effect signatures", () => {
     expect(entry).toContain('{ prop: "effect", key: "effect", kind: "effect" }');
   });
 
+  it("emits structured-only field types and metadata", () => {
+    const fire = signature("fireOnAction");
+    expect(fire).toContain("scopes?: {");
+    expect(fire).toContain("from?: ScopeValue;");
+    expect(fire).toContain("fromfromfromfrom?: ScopeValue;");
+    const setting = signature("setDiplomacyActionSetting");
+    expect(setting).toContain("settings: {");
+    expect(setting).toContain("voteType?: VoteType");
+    expect(setting).toContain("acceptanceType?: AcceptanceType");
+
+    for (const method of ["fireOnAction", "setDiplomacyActionSetting"]) {
+      const entry = structuredMetaEntry(method);
+      expect(entry).toContain('kind: "fields"');
+    }
+  });
+
   it("bool: an omitted argument means yes", () => {
     expect(signature("destroyColony")).toMatchInlineSnapshot(
       `"destroyColony(value?: boolean): void;"`

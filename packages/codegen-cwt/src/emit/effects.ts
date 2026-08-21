@@ -269,6 +269,8 @@ function memberType(field: ArgField, outerScope: string, owner: string): string 
     switch (value.kind) {
       case "scalar":
         return value.value.type;
+      case "fields":
+        return argsType(value.fields, outerScope, owner);
       case "scalarOrFields":
         return `${value.scalar.type} | ${argsType(value.fields, outerScope, owner)}`;
       case "clause": {
@@ -376,6 +378,9 @@ function scalarMeta(value: TsValue): string {
 
 function fieldMeta(field: ArgField): string {
   const repeated = field.repeated === true ? ", repeated: true" : "";
+  if (field.value.kind === "fields") {
+    return `{ prop: ${JSON.stringify(camelCase(field.name))}, key: ${JSON.stringify(field.name)}, kind: "fields", fields: [${field.value.fields.map(fieldMeta).join(", ")}]${repeated} }`;
+  }
   if (field.value.kind === "scalarOrFields") {
     return `{ prop: ${JSON.stringify(camelCase(field.name))}, key: ${JSON.stringify(field.name)}, kind: "scalar-or-fields", scalar: ${scalarMeta(field.value.scalar)}, fields: [${field.value.fields.map(fieldMeta).join(", ")}]${repeated} }`;
   }
@@ -779,7 +784,7 @@ export function emitEffects(
     .join("");
   const meta =
     "export type EffectFieldKind = " +
-    '"value" | "comparison" | "trigger" | "effect" | "modifiers" | "scalar-or-fields";\n\n' +
+    '"value" | "comparison" | "trigger" | "effect" | "modifiers" | "fields" | "scalar-or-fields";\n\n' +
     "export interface EffectFieldMeta {\n" +
     "  readonly prop: string;\n" +
     "  readonly key: string;\n" +

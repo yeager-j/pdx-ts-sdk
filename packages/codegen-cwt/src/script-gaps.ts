@@ -100,14 +100,24 @@ export const SCRIPT_GENERATION_GAPS: readonly ScriptGenerationGap[] = [
     "repeated-nested-field",
     "SDK-246",
     "The script argument model has no array form for repeated nested fields.",
-    ["create_colony", "create_country", "create_rebels", "start_colony"]
+    [
+      "clone_leader",
+      "create_colony",
+      "create_country",
+      "create_leader",
+      "create_rebels",
+      "create_saved_leader",
+      "custom_tooltip_with_params",
+      "release_vivarium_fauna_count",
+      "start_colony",
+    ]
   ),
   ...acknowledged(
     "effect",
     "repeated-structured-scalar-arms",
     "SDK-246",
     "The script argument model cannot preserve repetition across scalar and structured arms.",
-    ["create_species"]
+    ["create_message", "create_species", "set_fleet_formation"]
   ),
   ...acknowledged(
     "trigger",
@@ -115,6 +125,36 @@ export const SCRIPT_GENERATION_GAPS: readonly ScriptGenerationGap[] = [
     "SDK-247",
     "The trigger argument model cannot represent bare block values.",
     ["has_active_event", "trait_has_all_tags", "trait_has_any_tag"]
+  ),
+  ...acknowledged(
+    "trigger",
+    "structured-bare-values",
+    "SDK-247",
+    "The script argument model cannot represent bare values inside a nested block.",
+    [
+      "total_country_workforce_with_job_tag",
+      "total_system_workforce_with_job_tag",
+      "total_workforce_with_job_tag",
+    ]
+  ),
+  ...acknowledged(
+    "effect",
+    "structured-bare-values",
+    "SDK-247",
+    "The script argument model cannot represent bare values inside a nested block.",
+    [
+      "add_timeline_event",
+      "clear_relations",
+      "copy_ascension_perks_from",
+      "copy_techs_from",
+      "copy_traditions_from",
+      "create_balanced_fleet",
+      "create_random_fleet",
+      "give_specimen",
+      "spawn_planet",
+      "start_storm_area_placing",
+      "storm_apply_aftermath_modifier",
+    ]
   ),
   ...acknowledged(
     "trigger",
@@ -142,46 +182,6 @@ export const SCRIPT_GENERATION_GAPS: readonly ScriptGenerationGap[] = [
       "set_agreement_terms",
       "set_country_code_flags",
       "set_trade_conversions",
-    ]
-  ),
-  ...acknowledged(
-    "trigger",
-    "multiple-structured-scalar-arms",
-    "SDK-251",
-    "The field merger cannot preserve multiple structured and scalar declarations.",
-    [
-      "num_leader_traits",
-      "total_country_workforce_with_job_tag",
-      "total_system_workforce_with_job_tag",
-      "total_workforce_with_job_tag",
-    ]
-  ),
-  ...acknowledged(
-    "effect",
-    "multiple-structured-scalar-arms",
-    "SDK-251",
-    "The field merger cannot preserve multiple structured and scalar declarations.",
-    [
-      "add_timeline_event",
-      "clear_relations",
-      "clone_leader",
-      "copy_ascension_perks_from",
-      "copy_techs_from",
-      "copy_traditions_from",
-      "create_balanced_fleet",
-      "create_leader",
-      "create_message",
-      "create_random_fleet",
-      "create_saved_leader",
-      "custom_tooltip_with_params",
-      "fire_on_action",
-      "give_specimen",
-      "release_vivarium_fauna_count",
-      "set_diplomacy_action_setting",
-      "set_fleet_formation",
-      "spawn_planet",
-      "start_storm_area_placing",
-      "storm_apply_aftermath_modifier",
     ]
   ),
   ...acknowledged(

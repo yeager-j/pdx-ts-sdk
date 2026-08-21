@@ -232,14 +232,14 @@ describe("LoweredRule", () => {
         .filter((skip) => nameEffects.includes(skip.name))
         .map(({ name, category }) => [name, category])
     ).toEqual([
-      ["clone_leader", "multiple-structured-scalar-arms"],
-      ["create_balanced_fleet", "multiple-structured-scalar-arms"],
+      ["clone_leader", "repeated-nested-field"],
+      ["create_balanced_fleet", "structured-bare-values"],
       ["create_country", "repeated-nested-field"],
       ["create_fleet", "unsupported-field-value"],
-      ["create_leader", "multiple-structured-scalar-arms"],
-      ["create_random_fleet", "multiple-structured-scalar-arms"],
+      ["create_leader", "repeated-nested-field"],
+      ["create_random_fleet", "structured-bare-values"],
       ["create_rebels", "repeated-nested-field"],
-      ["create_saved_leader", "multiple-structured-scalar-arms"],
+      ["create_saved_leader", "repeated-nested-field"],
       ["create_species", "repeated-structured-scalar-arms"],
     ]);
     expect(emitted.interfaces).toContain("variableString?: readonly string[]");
@@ -366,6 +366,22 @@ describe("LoweredRule", () => {
     expect(merged[0]?.value).toMatchObject({
       kind: "scalarOrFields",
       scalar: { objectKinds: ["typed-ref"] },
+    });
+  });
+
+  it("preserves a structured-only field without inventing a scalar arm", () => {
+    const settings = effects.get("set_diplomacy_action_setting")!;
+    const merged = mergeFields(new Emitter(rules), settings.blocks[0]!.named, null, new Set());
+    expect(Array.isArray(merged)).toBe(true);
+    if (!Array.isArray(merged)) {
+      throw new Error(merged.detail);
+    }
+    expect(merged.find((field) => field.name === "settings")?.value).toMatchObject({
+      kind: "fields",
+      fields: [
+        expect.objectContaining({ name: "vote_type" }),
+        expect.objectContaining({ name: "acceptance_type" }),
+      ],
     });
   });
 });

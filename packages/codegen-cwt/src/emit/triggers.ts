@@ -244,6 +244,8 @@ function memberType(field: ArgField, outerScope: string): string {
   switch (value.kind) {
     case "scalar":
       return value.value.type;
+    case "fields":
+      return `{ ${value.fields.map((nested) => `${camelCase(nested.name)}${nested.optional ? "?" : ""}: ${memberType(nested, outerScope)}`).join("; ")} }`;
     case "scalarOrFields":
       return `${value.scalar.type} | { ${value.fields.map((nested) => `${camelCase(nested.name)}${nested.optional ? "?" : ""}: ${memberType(nested, outerScope)}`).join("; ")} }`;
     case "clause":
@@ -264,7 +266,10 @@ function contributesRefs(field: ArgField): boolean {
   if (field.value.kind === "scalar") {
     return field.value.value.refTypes !== undefined;
   }
-  return field.value.kind === "scalarOrFields" && field.value.fields.some(contributesRefs);
+  return (
+    (field.value.kind === "fields" || field.value.kind === "scalarOrFields") &&
+    field.value.fields.some(contributesRefs)
+  );
 }
 
 function pushCode(
@@ -313,6 +318,26 @@ function pushCode(
         `} else {\n` +
         `  ${sink}.push(kv(${key}, ${pushExpr(field.value.scalar, access)}));\n` +
         `}`
+      );
+    }
+    case "fields": {
+      const nested = field.value.fields
+        .map((nestedField, nestedIndex) => {
+          const nestedAccess = `${access}.${camelCase(nestedField.name)}`;
+          const code = pushCode(
+            nestedField,
+            nestedAccess,
+            `${owner}.${field.name}`,
+            nestedIndex,
+            "nestedEntries"
+          );
+          return nestedField.optional ? `if (${nestedAccess} !== undefined) {\n  ${code}\n}` : code;
+        })
+        .join("\n");
+      return (
+        `const nestedEntries: PdxEntry[] = [];\n` +
+        `${nested}\n` +
+        `${sink}.push(block(${key}, nestedEntries));`
       );
     }
     case "clause":

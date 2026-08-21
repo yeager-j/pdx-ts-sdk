@@ -24,6 +24,41 @@ const createdArmyFlags = armyFlags("effects_test_created_army");
 const createdMegastructureFlags = megastructureFlags("effects_test_created_megastructure");
 
 describe("the effect recorder over generated meta", () => {
+  it("serializes generated structured-only effect fields", () => {
+    const sink: PdxEntry[] = [];
+    const country = makeScope<"country">(sink);
+    const federation = makeScope<"federation">(sink);
+
+    country.fireOnAction({
+      onAction: "effects_test_on_action",
+      scopes: {
+        from: scopeValue<"country">("root"),
+        fromfrom: scopeValue<"planet">("from"),
+      },
+    });
+    federation.setDiplomacyActionSetting({
+      action: "effects_test_diplomatic_action",
+      settings: { voteType: "majority_vote", acceptanceType: "leader" },
+    });
+
+    expect(serialize(sink)).toBe(`fire_on_action = {
+\ton_action = effects_test_on_action
+\tscopes = {
+\t\tfrom = root
+\t\tfromfrom = from
+\t}
+}
+
+set_diplomacy_action_setting = {
+\taction = effects_test_diplomatic_action
+\tsettings = {
+\t\tvote_type = majority_vote
+\t\tacceptance_type = leader
+\t}
+}
+`);
+  });
+
   it("serializes a minimal ambient-object placement", () => {
     const sink: PdxEntry[] = [];
     const system = makeScope<"system">(sink);
