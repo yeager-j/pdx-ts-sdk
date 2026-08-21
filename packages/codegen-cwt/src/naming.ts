@@ -177,6 +177,20 @@ export function propertyName(name: string): string {
 const PROPERTY_IDENTIFIER = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
 
 /**
+ * Plain codepoint order for generated output, where `Array.prototype.sort`'s
+ * default coercion is wrong (it stringifies and still sorts lexically, so it
+ * is fine for strings but a trap for anything else) and `localeCompare` is
+ * wrong for a different reason: it depends on the running locale and on
+ * whether the Node build has full ICU data, and it disagrees with codepoint
+ * order on mixed-case input (`"Z".localeCompare("a")` is negative under the
+ * common default locale, positive under codepoint order). Committed output
+ * has to sort the same on every machine that runs codegen.
+ */
+export function compareStrings(a: string, b: string): number {
+  return a < b ? -1 : a > b ? 1 : 0;
+}
+
+/**
  * Whether generated `code` names `identifier` as a whole word, not merely as a
  * substring.
  *

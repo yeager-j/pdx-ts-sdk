@@ -31,7 +31,7 @@
 import { scopeIndex } from "../cwt/rules.ts";
 import type { EffectPolicy } from "../effect-policy.ts";
 import { eventKinds, type EventKindSpec } from "../event-kinds.ts";
-import { camelCase, docComment, indefiniteArticle, pascalCase } from "../naming.ts";
+import { camelCase, compareStrings, docComment, indefiniteArticle, pascalCase } from "../naming.ts";
 import type { ScriptEffectReferenceRow } from "./script-reference.ts";
 import { canonicalScopeSet, skippedRule, type SkippedRule } from "./shape.ts";
 import { Emitter } from "./types.ts";
@@ -378,7 +378,7 @@ export function emitEvents(emitter: Emitter, policy: EffectPolicy): EventsEmissi
     ]) +
     'declare module "./effects.ts" {\n' +
     [...byInterface.entries()]
-      .sort(([left], [right]) => left.localeCompare(right))
+      .sort(([left], [right]) => compareStrings(left, right))
       .map(
         ([target, list]) =>
           `  interface ${target} {\n` + list.map(fireOverloads).join("\n") + "  }\n"

@@ -21,7 +21,14 @@ import type { AliasDecl } from "../cwt/rules.ts";
 import type { EffectPolicy } from "../effect-policy.ts";
 import type { DocEntry } from "../logs/trigger-docs.ts";
 import type { LoweredRule } from "../lowered-rule.ts";
-import { camelCase, docComment, isPlainName, pascalCase, safeIdentifier } from "../naming.ts";
+import {
+  camelCase,
+  compareStrings,
+  docComment,
+  isPlainName,
+  pascalCase,
+  safeIdentifier,
+} from "../naming.ts";
 import {
   EFFECT_EXTENSION_SEAMS,
   EFFECT_FIELD_ADDITIONS,
@@ -734,10 +741,10 @@ export function emitEffects(
   }
 
   const sortedClusters = [...clusters.values()].sort((left, right) =>
-    clusterName(left.scopes).localeCompare(clusterName(right.scopes))
+    compareStrings(clusterName(left.scopes), clusterName(right.scopes))
   );
   const sortedLinkClusters = [...linkClusters.values()].sort((left, right) =>
-    pathClusterName(left.scopes).localeCompare(pathClusterName(right.scopes))
+    compareStrings(pathClusterName(left.scopes), pathClusterName(right.scopes))
   );
 
   const interfaceChunks: string[] = [];
@@ -881,7 +888,7 @@ export function emitEffects(
       .flatMap((cluster) => cluster.links)
       .map((link) => ({ method: link.method, entry: scopeLinkMetaEntry(link) })),
   ]
-    .sort((left, right) => left.method.localeCompare(right.method))
+    .sort((left, right) => compareStrings(left.method, right.method))
     .map(({ entry }) => entry)
     .join("");
   const meta =

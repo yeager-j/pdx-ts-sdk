@@ -11,7 +11,7 @@
 
 import type { RuleSet } from "../cwt/rules.ts";
 import type { ModifierDocs } from "../logs/modifier-docs.ts";
-import { docComment, pascalCase, propertyName } from "../naming.ts";
+import { compareStrings, docComment, pascalCase, propertyName } from "../naming.ts";
 import {
   MODIFIER_FAMILY_OVERLAYS,
   SCRIPTED_MODIFIER_CATEGORY_MAP,
@@ -241,7 +241,7 @@ function operationMembers(operations: readonly string[][]): string {
       return "ModifierSetter";
     }
     const members = `{ ${[...node.children]
-      .sort(([a], [b]) => a.localeCompare(b))
+      .sort(([a], [b]) => compareStrings(a, b))
       .map(([key, child]) => `readonly ${key}: ${render(child)};`)
       .join(" ")} }`;
     return node.terminal ? `ModifierSetter & ${members}` : members;
@@ -441,7 +441,7 @@ export function emitModifiers(join: ModifierJoin): ModifierEmission {
   rootNodes.set("any", anyRoot);
   code += trie.lines.join("\n") + "\n\n";
   const categoryScopeEntries = [...join.categoryScopes]
-    .sort(([a], [b]) => a.localeCompare(b))
+    .sort(([a], [b]) => compareStrings(a, b))
     .map(([category, scopes]) => {
       const value = scopes === "any" ? '"any"' : JSON.stringify(scopes);
       return `  readonly ${JSON.stringify(category)}: ${value};`;
