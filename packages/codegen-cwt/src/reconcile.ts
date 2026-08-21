@@ -87,13 +87,24 @@ export interface DriftReport {
   readonly malformedModifierBlocks: readonly string[];
   /**
    * Scopes named by either source that `scopes.cwt` does not define, each as
-   * `<location> <scope>` — where the reference was seen, so an accepted name
-   * cannot silently cover a *different* rule that starts referencing a
-   * retired scope later. `<location>` is `<file>:<line>` for every source
-   * that carries one (rule declarations, scope links, doc-dump entries); a
-   * modifier-category reference instead carries `modifier_categories.cwt
-   * category:<name>`, since `RuleSet.modifierCategories` does not keep node
-   * location and category names are themselves unique keys in that one file.
+   * `<scope> — <token>, <token>, ...` with sorted tokens summarizing *where*
+   * the scope is referenced, so an accepted name cannot silently cover a
+   * later reference from somewhere new — the exact case a bare accepted-name
+   * list missed. A token is `<file>:<count>` — the number of references to
+   * this scope counted in that one file, not a line number, so a dump-line
+   * shift from an unrelated edit does not move the baseline — for every
+   * source that groups into files (doc dumps, rule declarations, scope
+   * links); a modifier-category reference instead contributes one
+   * `modifier_categories.cwt category:<name>` token per referencing category,
+   * since `RuleSet.modifierCategories` keeps no node location and the
+   * category name is itself the finer identity there.
+   *
+   * Accepted gap: a reference removed from a file and a new one added to the
+   * *same* file, in the same regeneration, can leave that file's count
+   * unchanged and so go unreported — `compareToBaseline` sees counts, not
+   * identities, within one file. Widening this further would mean carrying
+   * line numbers again, which is the exact churn counting was chosen to
+   * avoid; a swap this narrow is judged unlikely enough to accept.
    */
   readonly unknownScopes: readonly string[];
   /** Rules whose `## scopes` disagree with the game's own dump. */
@@ -155,12 +166,11 @@ function compareScopes(
     readonly {
       readonly supportedScopes: readonly string[] | null;
       readonly file: string;
-      readonly line: number;
     }[]
   >,
   documented: ReadonlyMap<string, { readonly scopes: readonly string[] }>,
   index: ReadonlyMap<string, string>,
-  note: (scopes: readonly string[], location: string) => void
+  note: (scopes: readonly string[], file: string) => void
 ): { conflicts: ScopeConflict[]; unscoped: string[] } {
   const conflicts: ScopeConflict[] = [];
   const unscoped: string[] = [];
@@ -174,10 +184,10 @@ function compareScopes(
     // Per declaration, not the flattened `declared`: a name with several
     // `alias[...]` declarations (an overload) would otherwise lose which one
     // actually wrote a given scope token, and `note` needs that rule's own
-    // file:line, not just some declaration of the same name.
+    // file to count against.
     for (const declaration of declarations) {
       if (declaration.supportedScopes !== null) {
-        note(declaration.supportedScopes, `${declaration.file}:${declaration.line}`);
+        note(declaration.supportedScopes, declaration.file);
       }
     }
     const docs = documented.get(name);
@@ -204,31 +214,55 @@ export function reconcile(
   dumpLinks: readonly ScopeLink[]
 ): DriftReport {
   const index = scopeIndex(rules);
-  // Scope name -> where it was first seen. First rather than every sighting:
-  // the same retired scope name (`pop`) is referenced by hundreds of doc-dump
-  // entries, and the baseline tracks which *names* are accepted, not how many
-  // rules mention each — see the field doc on `DriftReport.unknownScopes`.
-  const unknown = new Map<string, string>();
+  // Scope name -> file -> how many references to it were counted in that
+  // file, and scope name -> the literal tokens contributed by sources with no
+  // file to count against (modifier categories). Counts rather than
+  // locations: the same retired scope name (`pop`) is referenced by hundreds
+  // of doc-dump entries, and recording each one's line would churn the
+  // baseline on every unrelated dump edit that shifts a line number. See the
+  // field doc on `DriftReport.unknownScopes` for the exact shape and its one
+  // accepted gap.
+  const unknownFileCounts = new Map<string, Map<string, number>>();
+  const unknownTokens = new Map<string, Set<string>>();
 
-  const note = (scopes: readonly string[], location: string): void => {
+  const noteCount = (scopes: readonly string[], file: string): void => {
     for (const scope of scopes) {
-      if (!index.has(scope) && !UNIVERSAL_SCOPES.has(scope) && !unknown.has(scope)) {
-        unknown.set(scope, location);
+      if (index.has(scope) || UNIVERSAL_SCOPES.has(scope)) {
+        continue;
       }
+      const perFile = unknownFileCounts.get(scope) ?? new Map<string, number>();
+      perFile.set(file, (perFile.get(file) ?? 0) + 1);
+      unknownFileCounts.set(scope, perFile);
     }
   };
-  for (const entry of [...docs.triggers.values(), ...docs.effects.values()]) {
-    note(entry.scopes, entry.location);
+  const noteToken = (scopes: readonly string[], token: string): void => {
+    for (const scope of scopes) {
+      if (index.has(scope) || UNIVERSAL_SCOPES.has(scope)) {
+        continue;
+      }
+      const tokens = unknownTokens.get(scope) ?? new Set<string>();
+      tokens.add(token);
+      unknownTokens.set(scope, tokens);
+    }
+  };
+  // Two loops rather than one over the merged values: each dump file is its
+  // own counting bucket, and a merged loop would have needed to recover which
+  // file an entry came from.
+  for (const entry of docs.triggers.values()) {
+    noteCount(entry.scopes, "triggers.log");
   }
-  // Modifier categories are the one source with no location to give: CWT node
-  // position is discarded while `readModifierCategories` (cwt/rules.ts) builds
-  // `RuleSet.modifierCategories`, and widening that map's type to carry it is
-  // a bigger change than this drift gate warrants. `modifier_categories.cwt`
-  // is a single file and a category name is a unique key inside it, so the
-  // category name re-finds the reference just as reliably as a line number
-  // would.
+  for (const entry of docs.effects.values()) {
+    noteCount(entry.scopes, "effects.log");
+  }
+  // Modifier categories are the one source with no file-scoped count to give:
+  // CWT node position is discarded while `readModifierCategories`
+  // (cwt/rules.ts) builds `RuleSet.modifierCategories`, and widening that
+  // map's type to carry it is a bigger change than this drift gate warrants.
+  // `modifier_categories.cwt` is a single file and a category name is a
+  // unique key inside it, so one token per referencing category re-finds the
+  // reference just as reliably as a count would.
   for (const [category, tokens] of rules.modifierCategories) {
-    note(
+    noteToken(
       tokens.map((token) => token.toLowerCase()),
       `modifier_categories.cwt category:${category}`
     );
@@ -238,13 +272,12 @@ export function reconcile(
     (link) => link.type === "scope" && !link.fromData
   );
   for (const link of staticLinks) {
-    const location = `${link.file}:${link.line}`;
-    note(
+    noteCount(
       link.inputScopes.map((scope) => scope.toLowerCase()),
-      location
+      link.file
     );
     if (link.outputScope !== null) {
-      note([link.outputScope.toLowerCase()], location);
+      noteCount([link.outputScope.toLowerCase()], link.file);
     }
   }
 
@@ -254,8 +287,18 @@ export function reconcile(
     (token) => index.get(token.toLowerCase()) ?? null
   );
 
-  const triggerScopes = compareScopes(rules.triggers, docs.triggers, index, note);
-  const effectScopes = compareScopes(rules.effects, docs.effects, index, note);
+  const triggerScopes = compareScopes(rules.triggers, docs.triggers, index, noteCount);
+  const effectScopes = compareScopes(rules.effects, docs.effects, index, noteCount);
+
+  const unknownScopeNames = new Set([...unknownFileCounts.keys(), ...unknownTokens.keys()]);
+  const unknownScopes = [...unknownScopeNames].sort().map((scope) => {
+    const fileTokens = [...(unknownFileCounts.get(scope) ?? new Map<string, number>())].map(
+      ([file, count]) => `${file}:${count}`
+    );
+    const literalTokens = [...(unknownTokens.get(scope) ?? new Set<string>())];
+    const tokens = [...fileTokens, ...literalTokens].sort();
+    return `${scope} — ${tokens.join(", ")}`;
+  });
 
   return {
     triggers: driftBetween(rules.triggers.keys(), docs.triggers.keys()),
@@ -279,7 +322,7 @@ export function reconcile(
       .sort(),
     malformedDocBlocks: [...docs.malformed].sort(),
     malformedModifierBlocks: [...modifierDocs.malformed].sort(),
-    unknownScopes: [...unknown].map(([scope, location]) => `${location} ${scope}`).sort(),
+    unknownScopes,
     scopeConflicts: {
       triggers: triggerScopes.conflicts,
       effects: effectScopes.conflicts,

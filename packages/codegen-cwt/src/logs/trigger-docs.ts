@@ -110,6 +110,15 @@ function parseSection(file: string, body: string, malformed: string[]): Map<stri
     buffer = [];
     meaningfulStart = null;
   }
+  // A block with no trailing `Supported Scopes:` line never reaches the loop
+  // body above, so without this it silently vanishes at EOF instead of
+  // surfacing as either an entry or a malformed block — exactly the shape a
+  // truncated dump takes. `meaningfulStart` is the same guard the loop uses:
+  // trailing blank/noise-only lines (there are some in the real dumps) leave
+  // it `null` and are correctly dropped rather than reported.
+  if (meaningfulStart !== null) {
+    malformed.push(`${file}:${meaningfulStart} ${buffer.join(" ").trim().slice(0, 80)}`);
+  }
   return entries;
 }
 

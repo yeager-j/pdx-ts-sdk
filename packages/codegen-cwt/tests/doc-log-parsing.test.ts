@@ -40,6 +40,26 @@ describe("malformed doc-dump blocks carry a re-findable identity", () => {
     const docs = parseModifierDocs("- valid_entry, Category: Pops\n- not even close\n");
     expect(docs.malformed).toEqual(["modifiers.log:2 - not even close"]);
   });
+
+  it("reports a final block with no terminating Supported Scopes line, instead of dropping it", () => {
+    // No trailing "Supported Scopes:" line at all — a truncated dump, the one
+    // shape of corruption a terminator-only flush cannot see.
+    const docs = parseTriggerDocs("truncated_trigger - this block never closes\n", "");
+    expect(docs.malformed).toEqual(["triggers.log:1 truncated_trigger - this block never closes"]);
+    expect(docs.triggers.size).toBe(0);
+  });
+
+  it("does not report a malformed block for trailing blank or noise-only lines at EOF", () => {
+    // The real dumps end this way (see the "still zero malformed entries"
+    // check below) — a file that ends in padding, not a truncated block, must
+    // not gain a bogus malformed entry from the EOF flush.
+    const docs = parseTriggerDocs(
+      "has_thing - Checks a thing\nSupported Scopes: country\n\n====\n\n",
+      ""
+    );
+    expect(docs.malformed).toEqual([]);
+    expect(docs.triggers.size).toBe(1);
+  });
 });
 
 describe("a malformed doc-dump block reaches the codegen-time drift gate", () => {
@@ -83,5 +103,24 @@ describe("a malformed doc-dump block reaches the codegen-time drift gate", () =>
       baseline
     );
     expect(differences.some((line) => line.includes("malformed modifier doc block"))).toBe(true);
+  });
+
+  it("fails compareToBaseline once a NEW reference to an already-accepted scope appears", () => {
+    // "pop" is already accepted in the committed baseline. A first-sighting-
+    // only recording would leave the baseline holding once this fires — the
+    // exact gap the review caught: a per-file token count instead moves.
+    const corrupted = parseTriggerDocs(
+      `${readFileSync(`${DOCS}/triggers.log`, "utf8")}\n` +
+        "synthetic_new_pop_reference - test only, not a real trigger\n" +
+        "Supported Scopes: pop\n",
+      readFileSync(`${DOCS}/effects.log`, "utf8")
+    );
+    const differences = compareToBaseline(
+      reconcile(rules, corrupted, modifierDocs, dumpLinks),
+      baseline
+    );
+    expect(differences.some((line) => line.includes("unknown scope") && line.includes("pop"))).toBe(
+      true
+    );
   });
 });

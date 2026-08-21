@@ -103,8 +103,8 @@ describe("the drift gate", () => {
     expect(report.unknownKeywords).toEqual(["effects.cwt:2902 sceop[fleet]"]);
   });
 
-  it("carries the discovery location on the one accepted unknown scope", () => {
-    expect(report.unknownScopes).toEqual(["triggers.log:73 pop"]);
+  it("carries a per-file reference-count signature on the one accepted unknown scope", () => {
+    expect(report.unknownScopes).toEqual(["pop — effects.log:52, triggers.log:73"]);
   });
 
   it("finds no malformed doc-dump blocks in the vendored dumps today", () => {
