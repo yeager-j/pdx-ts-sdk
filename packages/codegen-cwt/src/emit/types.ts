@@ -6,6 +6,7 @@
 import type { RuleType } from "../cwt/model.ts";
 import { scopeIndex, type RuleSet } from "../cwt/rules.ts";
 import { pascalCase } from "../naming.ts";
+import { OverlayAudit } from "../overlay-audit.ts";
 
 export interface TsValue {
   readonly type: string;
@@ -113,6 +114,14 @@ function mergeScopeArms(parts: readonly string[]): string[] {
 
 export class Emitter {
   readonly rules: RuleSet;
+  /**
+   * Tracks which path-keyed overlay rows (`CONTENT_FIELD_OVERRIDES` and its
+   * siblings) were actually read at their consumption site, for the
+   * end-of-run staleness assertions in `index.ts`'s `main()`. One instance
+   * per pipeline run — see `overlay-audit.ts`'s doc comment for why this
+   * lives here rather than as module-level state.
+   */
+  readonly overlayAudit = new OverlayAudit();
   /** Everything referenced anywhere, so `enums.ts` and `refs.ts` declare it. */
   readonly usedEnums = new Set<string>();
   readonly usedRefs = new Set<string>();

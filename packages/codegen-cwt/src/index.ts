@@ -66,17 +66,30 @@ import {
   spokenName,
 } from "./naming.ts";
 import {
+  assertHandWrittenTriggerExportsMatchRules,
+  assertOverlayRegistriesKnown,
+  assertPatchWideningsTargetPatchableRegistries,
+  assertScriptedModifierCategoryMapValid,
+} from "./overlay-audit.ts";
+import {
   CONTENT_CONTRIBUTION_SINKS,
+  CONTENT_DECLINED_FIELDS,
   CONTENT_FIELD_OVERRIDES,
   CONTENT_PATCH_REGISTRIES,
   CONTENT_SUBTYPE_REFERENCE_REFINEMENTS,
   EXACT_NAME_MINTS,
+  FIELD_WIDENINGS,
   FILE_STEM_OVERLAYS,
   HAND_WRITTEN_CONTENT_DEFINERS,
   MINT_SHAPE_OVERLAYS,
+  PATCH_WIDENINGS,
+  REPEATED_STRUCT_DEFINITIONS,
   REPEATED_STRUCT_FIELD_OVERRIDES,
+  REQUIRED_LOCALISATION,
+  SCRIPTED_MODIFIER_CATEGORY_MAP,
   SHAPE_MINT_REGISTRY,
   SPRITE_SHAPE_MINTS,
+  SYNTHETIC_LOCALISATION,
   type HandWrittenDefiner,
   type SpriteShapeMint,
 } from "./overlay.ts";
@@ -88,7 +101,7 @@ import {
   type DriftReport,
 } from "./reconcile.ts";
 import { formatScriptGapReport, reconcileScriptGaps } from "./script-gaps.ts";
-import { RESERVED_TRIGGER_EXPORT_NAMES } from "./trigger-policy.ts";
+import { HAND_WRITTEN_TRIGGER_EXPORTS, RESERVED_TRIGGER_EXPORT_NAMES } from "./trigger-policy.ts";
 
 /**
  * Every path this script touches is anchored to the module, not the process:
@@ -378,6 +391,55 @@ async function main(): Promise<void> {
       emitCategory(category, "splice");
     }
   }
+
+  // Overlay-table staleness. Every table below is consulted through a plain
+  // `.get()`/`.has()` lookup, so a row nothing matches would otherwise fail
+  // silently: the lookup just returns `undefined` and the emitter falls back
+  // to its mechanical reading. `EFFECT_FIELD_TYPE_OVERRIDES` and its siblings
+  // already get this treatment inside `emit/effects.ts`; this closes the same
+  // gap for every other overlay table (SDK-255).
+  assertOverlayRegistriesKnown(
+    [
+      { tableId: "MINT_SHAPE_OVERLAYS", keys: MINT_SHAPE_OVERLAYS.keys() },
+      { tableId: "EXACT_NAME_MINTS", keys: EXACT_NAME_MINTS.keys() },
+      { tableId: "FILE_STEM_OVERLAYS", keys: FILE_STEM_OVERLAYS.keys() },
+      { tableId: "HAND_WRITTEN_CONTENT_DEFINERS", keys: HAND_WRITTEN_CONTENT_DEFINERS.keys() },
+      { tableId: "CONTENT_CONTRIBUTION_SINKS", keys: CONTENT_CONTRIBUTION_SINKS.keys() },
+      {
+        tableId: "CONTENT_SUBTYPE_REFERENCE_REFINEMENTS",
+        keys: CONTENT_SUBTYPE_REFERENCE_REFINEMENTS.keys(),
+      },
+      { tableId: "CONTENT_PATCH_REGISTRIES", keys: CONTENT_PATCH_REGISTRIES.keys() },
+    ],
+    registryNames
+  );
+  assertPatchWideningsTargetPatchableRegistries(
+    "PATCH_WIDENINGS",
+    PATCH_WIDENINGS.keys(),
+    new Set(CONTENT_PATCH_REGISTRIES.keys())
+  );
+  assertScriptedModifierCategoryMapValid(
+    SCRIPTED_MODIFIER_CATEGORY_MAP,
+    new Set(rules.enums.get("scripted_modifier_category") ?? []),
+    new Set(rules.modifierCategories.keys())
+  );
+  assertHandWrittenTriggerExportsMatchRules(
+    HAND_WRITTEN_TRIGGER_EXPORTS,
+    new Set([...rules.triggers.keys()].map((key) => key.toLowerCase()))
+  );
+  emitter.overlayAudit.assertAllApplied("CONTENT_FIELD_OVERRIDES", CONTENT_FIELD_OVERRIDES.keys());
+  emitter.overlayAudit.assertAllApplied(
+    "REPEATED_STRUCT_FIELD_OVERRIDES",
+    REPEATED_STRUCT_FIELD_OVERRIDES.keys()
+  );
+  emitter.overlayAudit.assertAllApplied("FIELD_WIDENINGS", FIELD_WIDENINGS.keys());
+  emitter.overlayAudit.assertAllApplied("CONTENT_DECLINED_FIELDS", CONTENT_DECLINED_FIELDS.keys());
+  emitter.overlayAudit.assertAllApplied("REQUIRED_LOCALISATION", REQUIRED_LOCALISATION.keys());
+  emitter.overlayAudit.assertAllApplied("SYNTHETIC_LOCALISATION", SYNTHETIC_LOCALISATION.keys());
+  emitter.overlayAudit.assertAllApplied(
+    "REPEATED_STRUCT_DEFINITIONS",
+    REPEATED_STRUCT_DEFINITIONS.keys()
+  );
 
   // Registers every ref this namespace names (including the ref-only extras —
   // sound, sound_effect, resource) with `emitter.usedRefs` before
