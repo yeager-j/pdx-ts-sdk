@@ -41,7 +41,7 @@ When finished writing the tutorial, add links to it in the relevant Reference pa
 ### Structure
 
 ```md
-# Tutorial title
+## Overview
 
 Short description of what we're building.
 
