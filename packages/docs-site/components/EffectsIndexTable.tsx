@@ -16,7 +16,12 @@ import Link from "fumadocs-core/link";
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { TypeTableFrame, TypeTableItem, type TypeNode } from "@/src/components/type-table";
-import type { EffectCategory, EffectsIndexEntry, ScopeLinkTarget } from "@/src/effects-index";
+import type {
+  EffectAvailability,
+  EffectCategory,
+  EffectsIndexEntry,
+  ScopeLinkTarget,
+} from "@/src/effects-index";
 
 /**
  * The index row as the server hands it over: the model entry plus the two
@@ -38,17 +43,22 @@ const CATEGORY_LABELS: Record<EffectCategory, string> = {
   "event-fire": "Event fire",
 };
 
-/**
- * A universal method is legal everywhere, so it matches whatever scope the
- * reader selects. The sentinel says that outright rather than copying all
- * forty-odd scope names onto every universal row.
- */
-const EVERY_SCOPE = "every";
+export const UNIVERSAL_SCOPE_FILTER = "__universal__";
 
-const legalScopesOf = (row: EffectsIndexRow): readonly string[] | typeof EVERY_SCOPE =>
-  row.availability.kind === "universal"
-    ? EVERY_SCOPE
-    : row.availability.scopes.map((target) => target.scope);
+export function matchesScopeFilter(
+  availability: EffectAvailability,
+  filterValue: unknown
+): boolean {
+  const selectedScope = String(filterValue);
+  if (selectedScope === "") return true;
+  if (selectedScope === UNIVERSAL_SCOPE_FILTER) {
+    return availability.kind === "universal";
+  }
+  return (
+    availability.kind === "universal" ||
+    availability.scopes.some((target) => target.scope === selectedScope)
+  );
+}
 
 const features = tableFeatures({
   columnFilteringFeature,
@@ -58,8 +68,7 @@ const features = tableFeatures({
 });
 
 const filterFn_legalOnScope = constructFilterFn<typeof features, EffectsIndexRow>({
-  filter: (dataValue, filterValue) =>
-    dataValue === EVERY_SCOPE || (dataValue as readonly string[]).includes(String(filterValue)),
+  filter: matchesScopeFilter,
   autoRemove: (filterValue) => filterValue === undefined || filterValue === "",
 });
 
@@ -75,7 +84,10 @@ const columns = helper.columns([
     id: "text",
     filterFn: filterFn_includesString,
   }),
-  helper.accessor(legalScopesOf, { id: "scope", filterFn: filterFn_legalOnScope }),
+  helper.accessor((row) => row.availability, {
+    id: "scope",
+    filterFn: filterFn_legalOnScope,
+  }),
   helper.accessor((row) => row.category, {
     id: "category",
     filterFn: filterFn_equalsString,
@@ -86,7 +98,7 @@ const initialState = { pagination: { pageIndex: 0, pageSize: PAGE_SIZE } };
 
 function ScopeList({ targets }: { targets: readonly ScopeLinkTarget[] }) {
   return (
-    <>
+    <span className="[overflow-wrap:anywhere]">
       {targets.map((target, index) => (
         <Fragment key={target.scope}>
           {index > 0 && ", "}
@@ -99,18 +111,13 @@ function ScopeList({ targets }: { targets: readonly ScopeLinkTarget[] }) {
           )}
         </Fragment>
       ))}
-    </>
+    </span>
   );
 }
 
 function availabilityNode(row: EffectsIndexRow): ReactNode {
   if (row.availability.kind === "universal") {
-    return (
-      <>
-        Every scope. Scope pages written so far:{" "}
-        <ScopeList targets={row.availability.publishedScopePages} />.
-      </>
-    );
+    return <>Every generated scope interface. See the shared scope list above.</>;
   }
   return <ScopeList targets={row.availability.scopes} />;
 }
@@ -144,9 +151,11 @@ function typeNodeOf(row: EffectsIndexRow): TypeNode {
 export function EffectsIndexTable({
   rows,
   scopeOptions,
+  scopePages,
 }: {
   rows: readonly EffectsIndexRow[];
   scopeOptions: readonly string[];
+  scopePages: readonly ScopeLinkTarget[];
 }) {
   /**
    * `autoResetPageIndex` is off because it fires from the filtered row model's
@@ -203,7 +212,9 @@ export function EffectsIndexTable({
 
   useEffect(() => {
     if (pendingAnchor === null) return;
-    document.getElementById(pendingAnchor)?.scrollIntoView({ block: "center" });
+    const target = document.getElementById(pendingAnchor);
+    target?.querySelector<HTMLElement>("summary")?.focus({ preventScroll: true });
+    target?.scrollIntoView({ block: "center" });
     setPendingAnchor(null);
   }, [pendingAnchor]);
 
@@ -217,9 +228,22 @@ export function EffectsIndexTable({
   const matched = table.getFilteredRowModel().rows.length;
   const pageCount = table.getPageCount();
   const pageIndex = table.state.pagination?.pageIndex ?? 0;
+  const visibleRows = table.getRowModel().rows;
+  const focusClass =
+    "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current";
 
   return (
     <div className="not-prose my-6 flex flex-col gap-3">
+      <details className="rounded-xl border bg-fd-card px-3 py-2">
+        <summary className={`cursor-pointer font-medium ${focusClass}`}>
+          Scope pages for universal methods ({scopePages.length})
+        </summary>
+        <p className="mt-2 text-sm">
+          Universal methods are available on every generated scope interface:{" "}
+          <ScopeList targets={scopePages} />.
+        </p>
+      </details>
+
       <div className="flex flex-wrap items-end gap-3">
         <div className="flex flex-col gap-1">
           <label className="text-fd-muted-foreground text-sm" htmlFor="effects-filter-text">
@@ -228,7 +252,7 @@ export function EffectsIndexTable({
           <input
             id="effects-filter-text"
             type="search"
-            className="rounded-lg border bg-fd-card px-3 py-1.5 text-sm"
+            className={`max-w-full rounded-lg border bg-fd-card px-3 py-1.5 text-sm ${focusClass}`}
             placeholder="addResource, add_resource"
             value={String(textColumn?.getFilterValue() ?? "")}
             onChange={(event) => applyFilter(textColumn, event.target.value)}
@@ -240,11 +264,12 @@ export function EffectsIndexTable({
           </label>
           <select
             id="effects-filter-scope"
-            className="rounded-lg border bg-fd-card px-3 py-1.5 text-sm"
+            className={`max-w-full rounded-lg border bg-fd-card px-3 py-1.5 text-sm ${focusClass}`}
             value={String(scopeColumn?.getFilterValue() ?? "")}
             onChange={(event) => applyFilter(scopeColumn, event.target.value)}
           >
             <option value="">Any scope</option>
+            <option value={UNIVERSAL_SCOPE_FILTER}>Universal</option>
             {scopeOptions.map((scope) => (
               <option key={scope} value={scope}>
                 {scope}
@@ -258,7 +283,7 @@ export function EffectsIndexTable({
           </label>
           <select
             id="effects-filter-category"
-            className="rounded-lg border bg-fd-card px-3 py-1.5 text-sm"
+            className={`max-w-full rounded-lg border bg-fd-card px-3 py-1.5 text-sm ${focusClass}`}
             value={String(categoryColumn?.getFilterValue() ?? "")}
             onChange={(event) => applyFilter(categoryColumn, event.target.value)}
           >
@@ -277,17 +302,21 @@ export function EffectsIndexTable({
         {pageCount > 1 ? `, page ${pageIndex + 1} of ${pageCount}` : ""}.
       </p>
 
-      <TypeTableFrame id="effects" nameHeader="Method" typeHeader="Signature" className="my-0">
-        {table.getRowModel().rows.map((row) => (
-          <TypeTableItem
-            key={row.original.method}
-            parentId="effects"
-            name={row.original.method}
-            item={typeNodeOf(row.original)}
-            hasKeyColumn
-          />
-        ))}
-      </TypeTableFrame>
+      {visibleRows.length === 0 ? (
+        <p>No methods match the selected filters.</p>
+      ) : (
+        <TypeTableFrame id="effects" nameHeader="Method" typeHeader="Signature" className="my-0">
+          {visibleRows.map((row) => (
+            <TypeTableItem
+              key={row.original.method}
+              parentId="effects"
+              name={row.original.method}
+              item={typeNodeOf(row.original)}
+              hasKeyColumn
+            />
+          ))}
+        </TypeTableFrame>
+      )}
 
       {/*
         `nextPage` clamps only against a manual page count, which client
@@ -296,10 +325,10 @@ export function EffectsIndexTable({
         handler re-reads the live state rather than trusting the rendered
         `disabled`.
       */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3" hidden={pageCount <= 1}>
         <button
           type="button"
-          className="rounded-lg border px-3 py-1.5 text-sm disabled:opacity-50"
+          className={`rounded-lg border px-3 py-1.5 text-sm disabled:opacity-50 ${focusClass}`}
           onClick={() => table.previousPage()}
           disabled={!table.getCanPreviousPage()}
         >
@@ -307,7 +336,7 @@ export function EffectsIndexTable({
         </button>
         <button
           type="button"
-          className="rounded-lg border px-3 py-1.5 text-sm disabled:opacity-50"
+          className={`rounded-lg border px-3 py-1.5 text-sm disabled:opacity-50 ${focusClass}`}
           onClick={() => {
             if (table.getCanNextPage()) table.nextPage();
           }}

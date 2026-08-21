@@ -1,4 +1,5 @@
 import { TypeTable, type TypeNode } from "@/src/components/type-table";
+import { effectAnchor } from "@/src/effects-index";
 import { renderInlineMarkdown } from "@/src/inline-markdown";
 import type { ScriptMethodRow } from "@/src/scope-reference";
 import { summarizeSignature } from "@/src/signature-summary";
@@ -21,6 +22,7 @@ export async function EffectReferenceTable({ rows }: { rows: readonly ScriptMeth
           // `required` suppresses the optional-member `?` suffix, which has
           // no meaning for a method row.
           required: true,
+          referenceLink: `/scopes-and-effects/effects/#${effectAnchor(row.method)}`,
           type: <code>{summarizeSignature(row.signature) ?? "function"}</code>,
           typeDescription: (
             <code className="whitespace-pre-wrap [overflow-wrap:anywhere]">{row.signature}</code>

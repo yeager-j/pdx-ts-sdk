@@ -38,7 +38,7 @@ const entryFor = (method: string): EffectsIndexEntry => {
 
 const scopeNamesOf = (entry: EffectsIndexEntry): readonly string[] =>
   entry.availability.kind === "universal"
-    ? entry.availability.publishedScopePages.map((target) => target.scope)
+    ? index().scopePages.map((target) => target.scope)
     : entry.availability.scopes.map((target) => target.scope);
 
 describe("buildEffectsIndex", () => {
@@ -80,14 +80,14 @@ describe("buildEffectsIndex", () => {
     expect(entryFor("observerEvent").category).toBe("event-fire");
   });
 
-  it("links a universal method to every published scope page", () => {
+  it("links universal availability to one shared list of every published scope page", () => {
     const addResource = entryFor("addResource");
     expect(addResource.anchor).toBe("effects-addResource");
     expect(addResource.key).toBe("add_resource");
     if (addResource.availability.kind !== "universal") {
       throw new Error("addResource should be universal");
     }
-    expect(addResource.availability.publishedScopePages).toEqual([
+    expect(index().scopePages).toEqual([
       { scope: "army", href: "/scopes-and-effects/scopes/army/", title: "Army scope" },
       { scope: "country", href: "/scopes-and-effects/scopes/country/", title: "Country scope" },
       { scope: "planet", href: "/scopes-and-effects/scopes/planet/", title: "Planet scope" },
