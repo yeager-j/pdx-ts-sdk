@@ -159,6 +159,24 @@ export function quoteLiteral(value: string): string {
 }
 
 /**
+ * A member name (reserved words included — `interface { for: number }` is
+ * legal, since a property key is never evaluated as a binding) fit to
+ * interpolate bare into an interface member or object-literal key position.
+ *
+ * Every `camelCase`/`pascalCase` output the emitters mint from CWT names is
+ * one of these today, so nothing currently exercises the quoted arm; it
+ * exists for the CWT or enum name that eventually is not — `90_day`,
+ * `some-dashed-key` — which would otherwise interpolate into invalid
+ * TypeScript that Prettier fails on with no indication of which generated
+ * name caused it.
+ */
+export function propertyName(name: string): string {
+  return PROPERTY_IDENTIFIER.test(name) ? name : JSON.stringify(name);
+}
+
+const PROPERTY_IDENTIFIER = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
+
+/**
  * Whether generated `code` names `identifier` as a whole word, not merely as a
  * substring.
  *

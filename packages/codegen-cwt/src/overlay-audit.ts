@@ -177,11 +177,11 @@ export function assertHandWrittenTriggerExportsMatchRules(
  *
  * One instance per pipeline run, owned by the `Emitter` that is already
  * threaded to every site that would call {@link applied}. This deliberately
- * is not module-level mutable state: `emit/fields.ts`'s `appliedAssetPaths`
- * module-level `Set` is the pattern this replaces going forward, not one to
- * extend — it has no owner, so nothing scopes it to one run or lets two
- * pipeline runs in the same process (as several test files perform) avoid
- * leaking applied-state into each other.
+ * is not module-level mutable state: `emit/fields.ts` used to track
+ * `ASSET_PATH_FIELDS` the same way (a module-level `appliedAssetPaths` `Set`,
+ * folded into this class by SDK-256) — that shape has no owner, so nothing
+ * scopes it to one run or lets two pipeline runs in the same process (as
+ * several test files perform) avoid leaking applied-state into each other.
  */
 export class OverlayAudit {
   private readonly appliedKeys = new Map<string, Set<string>>();

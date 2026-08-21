@@ -22,7 +22,14 @@ import {
   type ScopeContext,
 } from "../cwt/model.ts";
 import type { AliasDecl } from "../cwt/rules.ts";
-import { camelCase, docComment, indefiniteArticle, isPlainName, pascalCase } from "../naming.ts";
+import {
+  camelCase,
+  docComment,
+  indefiniteArticle,
+  isPlainName,
+  pascalCase,
+  propertyName,
+} from "../naming.ts";
 import {
   ASSET_PATH_FIELDS,
   CONTENT_FIELD_OVERRIDES,
@@ -1352,7 +1359,7 @@ function enumKeyedMembers(
     };
     const repeated = repeatsSiblings(field, "struct");
     const memberType = repeated ? arrayType(entry.typeName) : entry.typeName;
-    members.push(docs + `  ${camelCase(value)}?: ${memberType};\n`);
+    members.push(docs + `  ${propertyName(camelCase(value))}?: ${memberType};\n`);
     memberDocs[camelCase(value)] = { optional: true, docs: keyed.declaration.docs, memberType };
     fieldMetadata.push(metadata(field, value, "struct", [`fields: ${entry.fieldsConstant}`]));
     nested.push(
@@ -1449,7 +1456,7 @@ function structShape(
     ];
     members.push(
       docComment(docLines, "  ") +
-        `  ${camelCase(fieldName)}${optional ? "?" : ""}: ${lowered.memberType};\n`
+        `  ${propertyName(camelCase(fieldName))}${optional ? "?" : ""}: ${lowered.memberType};\n`
     );
     memberDocs[camelCase(fieldName)] = {
       optional,
@@ -2110,29 +2117,16 @@ function assertedUncheckedString(
  * because the row asserts the value is a path; a `value` shape is required
  * because an Item is one scalar; and a widening is refused because the union
  * arms would then be unclear about which of them an Item satisfies.
- */
-const appliedAssetPaths = new Set<string>();
-
-/**
- * Fails when a row named a field the emitter never reached.
  *
- * The rows are hand-written dotted paths, so a typo — or a key the vendored
- * rules renamed — would otherwise leave a field silently unmarked: a member
- * that quietly stayed `string`, with no Item arm and no fold check, and nothing
- * anywhere saying so. An audited list that is never measured is the one kind of
- * gate that is always green.
+ * Presence — every `ASSET_PATH_FIELDS` row reaching a real consumption site —
+ * is tracked through `emitter.overlayAudit`, the same SDK-255 mechanism every
+ * other path-keyed overlay table uses (`index.ts`'s `assertAllApplied("ASSET_PATH_FIELDS",
+ * ...)` closes the loop); this function's own throw above is the *shape* check
+ * beyond presence, that a row marked here actually lowers as one mod-root path
+ * scalar, which `OverlayAudit` cannot express and stays here.
  */
-export function assertEveryAssetPathFieldApplied(): void {
-  const missed = [...ASSET_PATH_FIELDS.keys()].filter((path) => !appliedAssetPaths.has(path));
-  if (missed.length > 0) {
-    throw new Error(
-      `ASSET_PATH_FIELDS names ${missed.map((path) => `"${path}"`).join(", ")}, which no ` +
-        "emitted field matched. Every row must mark a real field; correct the path or drop the row."
-    );
-  }
-}
-
 function assertedAssetPath(
+  emitter: Emitter,
   lowered: LoweredField | null,
   group: readonly RuleField[],
   name: string,
@@ -2142,7 +2136,7 @@ function assertedAssetPath(
   if (!ASSET_PATH_FIELDS.has(path)) {
     return lowered;
   }
-  appliedAssetPaths.add(path);
+  emitter.overlayAudit.applied("ASSET_PATH_FIELDS", path);
   const spelled = group.map((field) => field.type.kind).join(", ");
   if (
     lowered === null ||
@@ -2182,6 +2176,7 @@ export function pickOrdinary(
   path: string
 ): LoweredField | null {
   return assertedAssetPath(
+    emitter,
     pickLowering(emitter, declared, name, ctx, override, widening, path),
     declared,
     name,

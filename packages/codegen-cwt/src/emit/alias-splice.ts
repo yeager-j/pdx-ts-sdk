@@ -28,7 +28,7 @@
 
 import type { DescentNode } from "../corpus.ts";
 import { isOptional } from "../cwt/model.ts";
-import { camelCase, docComment, indefiniteArticle } from "../naming.ts";
+import { camelCase, docComment, indefiniteArticle, propertyName } from "../naming.ts";
 import { CONTENT_DECLINED_FIELDS, CONTENT_FIELD_OVERRIDES, FIELD_WIDENINGS } from "../overlay.ts";
 import {
   authoredLiterals,
@@ -163,7 +163,7 @@ export function emitAliasSplice(emitter: Emitter, category: string): AliasSplice
     const docLines = [...new Set(group.flatMap((field) => field.docs))];
     members.push(
       docComment(docLines, "  ") +
-        `  ${camelCase(name)}${optional ? "?" : ""}: ${lowering.memberType};\n`
+        `  ${propertyName(camelCase(name))}${optional ? "?" : ""}: ${lowering.memberType};\n`
     );
     memberDocs[camelCase(name)] = {
       optional,
@@ -203,7 +203,10 @@ export function emitAliasSplice(emitter: Emitter, category: string): AliasSplice
       });
       continue;
     }
-    members.push(docComment(lowered.docs, "  ") + `  ${lowered.member}?: ${lowered.memberType};\n`);
+    members.push(
+      docComment(lowered.docs, "  ") +
+        `  ${propertyName(lowered.member)}?: ${lowered.memberType};\n`
+    );
     memberDocs[lowered.member] = {
       optional: true,
       docs: lowered.docs,

@@ -9,7 +9,7 @@
 import type { DescentNode } from "../corpus.ts";
 import { isOptional, type RuleField } from "../cwt/model.ts";
 import type { ContentBody, ContentType } from "../cwt/rules.ts";
-import { camelCase, docComment, indefiniteArticle, pascalCase } from "../naming.ts";
+import { camelCase, docComment, indefiniteArticle, pascalCase, propertyName } from "../naming.ts";
 import {
   CONTENT_DECLINED_FIELDS,
   CONTENT_FIELD_OVERRIDES,
@@ -281,7 +281,7 @@ function localisationMembers(
       const pattern = entry.pattern.replace("$", "<id>");
       return (
         docComment([`English text emitted to localization under \`${pattern}\`.`], "  ") +
-        `  ${field}${required ? "" : "?"}: string;\n`
+        `  ${propertyName(field)}${required ? "" : "?"}: string;\n`
       );
     })
     .join("");
@@ -491,7 +491,7 @@ function repeatedStructEmission(
     ];
     members.push(
       docComment(docLines, "  ") +
-        `  ${camelCase(name)}${optional ? "?" : ""}: ${lowering.memberType};\n`
+        `  ${propertyName(camelCase(name))}${optional ? "?" : ""}: ${lowering.memberType};\n`
     );
     memberDocs[camelCase(name)] = {
       optional,
@@ -820,7 +820,7 @@ function patchTypes(
           "of the ordinary one — a rename, not a new key.",
         ],
         "  "
-      ) + `  readonly ${member}?: string;\n`
+      ) + `  readonly ${propertyName(member)}?: string;\n`
     );
   });
   const members = patchMembers.map((entry) => {
@@ -831,7 +831,7 @@ function patchTypes(
       );
     }
     const extra = widening === undefined ? "" : `, ${widening.extraType}`;
-    return `${entry.docs}  readonly ${entry.member}?: PatchInput<${entry.memberType}${extra}>;\n`;
+    return `${entry.docs}  readonly ${propertyName(entry.member)}?: PatchInput<${entry.memberType}${extra}>;\n`;
   });
   for (const [path, widening] of PATCH_WIDENINGS) {
     const [registry, member] = path.split(".");
@@ -1055,7 +1055,8 @@ export function emitContentType(
         continue;
       }
       members.push(
-        docComment(lowered.docs, "  ") + `  ${lowered.member}?: ${lowered.memberType};\n`
+        docComment(lowered.docs, "  ") +
+          `  ${propertyName(lowered.member)}?: ${lowered.memberType};\n`
       );
       memberDocs[lowered.member] = {
         optional: true,
@@ -1136,7 +1137,9 @@ export function emitContentType(
       const optional = memberOptional(group, override);
       const docLines = [...new Set(group.flatMap((field) => field.docs))];
       const docs = docComment(docLines, "  ");
-      members.push(`${docs}  ${member}${optional ? "?" : ""}: ${nested.memberType};\n`);
+      members.push(
+        `${docs}  ${propertyName(member)}${optional ? "?" : ""}: ${nested.memberType};\n`
+      );
       memberDocs[member] = { optional, docs: docLines, memberType: nested.memberType };
       docTables.push(...nested.docTables);
       patchMembers.push({ member, docs, memberType: nested.memberType });
@@ -1199,7 +1202,7 @@ export function emitContentType(
     const docs = docComment(docLines, "  ");
     const memberType =
       parameter?.selector?.member === member ? parameter.parameterName : lowered.memberType;
-    members.push(`${docs}  ${member}${optional ? "?" : ""}: ${memberType};\n`);
+    members.push(`${docs}  ${propertyName(member)}${optional ? "?" : ""}: ${memberType};\n`);
     memberDocs[member] = {
       optional,
       docs: docLines,

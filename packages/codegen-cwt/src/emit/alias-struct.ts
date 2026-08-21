@@ -46,7 +46,7 @@
 
 import type { RuleField, RuleType } from "../cwt/model.ts";
 import type { AliasDecl } from "../cwt/rules.ts";
-import { camelCase, docComment, isPlainName, pascalCase } from "../naming.ts";
+import { camelCase, docComment, isPlainName, pascalCase, propertyName } from "../naming.ts";
 import { formOfShape } from "./authored-form.ts";
 import { omissionLine, type DocTable, type FieldOmissionRow, type MemberDocRow } from "./fields.ts";
 import type { Emitter, TsValue } from "./types.ts";
@@ -417,7 +417,7 @@ export function emitAliasStruct(
   const clauseTables: string[] = [];
   const docTables: DocTable[] = [];
   for (const [key, value] of scalars) {
-    blockMembers.push(`  ${memberName(key)}?: ${value.type};\n`);
+    blockMembers.push(`  ${propertyName(memberName(key))}?: ${value.type};\n`);
     memberDocs[memberName(key)] = { optional: true, docs: [], memberType: value.type };
     metadata.push(valueField(key, value));
   }
@@ -429,7 +429,7 @@ export function emitAliasStruct(
     const docLines = members.get(name)![0]!.docs;
     const docs = docComment(docLines, "  ");
     if (shape.kind === "scalar") {
-      blockMembers.push(`${docs}  ${memberName(name)}?: ${shape.value.type};\n`);
+      blockMembers.push(`${docs}  ${propertyName(memberName(name))}?: ${shape.value.type};\n`);
       memberDocs[memberName(name)] = {
         optional: true,
         docs: docLines,
@@ -441,7 +441,7 @@ export function emitAliasStruct(
       const memberClauseFieldsConstant = `${memberConstant}_CLAUSE_FIELDS`;
       const memberGroupFieldsConstant = `${memberConstant}_CLAUSE_GROUP_FIELDS`;
       const memberType = `${clauseName}<${shape.ref.type}>`;
-      blockMembers.push(`${docs}  ${memberName(name)}?: ${memberType};\n`);
+      blockMembers.push(`${docs}  ${propertyName(memberName(name))}?: ${memberType};\n`);
       memberDocs[memberName(name)] = { optional: true, docs: docLines, memberType };
       metadata.push(
         `  { key: ${JSON.stringify(name)}, member: ${JSON.stringify(memberName(name))}, ` +
@@ -461,7 +461,7 @@ export function emitAliasStruct(
       );
     } else {
       const memberType = `readonly ${typeName}[]`;
-      blockMembers.push(`${docs}  ${combinatorMemberName(name)}?: ${memberType};\n`);
+      blockMembers.push(`${docs}  ${propertyName(combinatorMemberName(name))}?: ${memberType};\n`);
       memberDocs[combinatorMemberName(name)] = { optional: true, docs: docLines, memberType };
       metadata.push(
         `  { key: ${JSON.stringify(name)}, member: ${JSON.stringify(combinatorMemberName(name))}, ` +

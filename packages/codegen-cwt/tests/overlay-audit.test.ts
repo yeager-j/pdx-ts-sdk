@@ -22,6 +22,7 @@ import { emitContentType } from "@pdx-ts/codegen-cwt/emit/content-type";
 import { structuralSpliceOf } from "@pdx-ts/codegen-cwt/emit/fields";
 import { Emitter } from "@pdx-ts/codegen-cwt/emit/types";
 import {
+  ASSET_PATH_FIELDS,
   CONTENT_CONTRIBUTION_SINKS,
   CONTENT_DECLINED_FIELDS,
   CONTENT_FIELD_OVERRIDES,
@@ -465,6 +466,31 @@ describe("the real pipeline's overlay tables", () => {
       emitter.overlayAudit.assertAllApplied("CONTENT_FIELD_OVERRIDES", staleTable.keys())
     ).toThrow(
       'CONTENT_FIELD_OVERRIDES names "technology.not_a_real_field", which no consumption site applied'
+    );
+  });
+
+  it("clears the ASSET_PATH_FIELDS gate against today's table (SDK-256)", () => {
+    const { emitter } = runContentAndAliasPipeline();
+    expect(() =>
+      emitter.overlayAudit.assertAllApplied("ASSET_PATH_FIELDS", ASSET_PATH_FIELDS.keys())
+    ).not.toThrow();
+  });
+
+  it("does not leak ASSET_PATH_FIELDS state between separate pipeline runs (SDK-256)", () => {
+    // The bug this guards: emit/fields.ts used to track which ASSET_PATH_FIELDS
+    // rows had been applied in a module-level Set with no reset. A *second*
+    // in-process pipeline run — this test file's own pattern, and something
+    // several other suites do too — would find the first run's entries still
+    // present and pass the presence check vacuously, even though the second
+    // run's own emitter never touched those fields. Folding the tracking into
+    // `OverlayAudit`, one instance per `Emitter`, is what makes a fresh
+    // emitter fail honestly instead.
+    runContentAndAliasPipeline();
+    const freshEmitter = new Emitter(rules);
+    expect(() =>
+      freshEmitter.overlayAudit.assertAllApplied("ASSET_PATH_FIELDS", ASSET_PATH_FIELDS.keys())
+    ).toThrow(
+      'ASSET_PATH_FIELDS names "spriteType.textureFile", which no consumption site applied'
     );
   });
 });
