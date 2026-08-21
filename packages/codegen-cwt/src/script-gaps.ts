@@ -121,43 +121,6 @@ export const SCRIPT_GENERATION_GAPS: readonly ScriptGenerationGap[] = [
   ),
   ...acknowledged(
     "trigger",
-    "bare-value-block",
-    "SDK-247",
-    "The trigger argument model cannot represent bare block values.",
-    ["has_active_event", "trait_has_all_tags", "trait_has_any_tag"]
-  ),
-  ...acknowledged(
-    "trigger",
-    "structured-bare-values",
-    "SDK-247",
-    "The script argument model cannot represent bare values inside a nested block.",
-    [
-      "total_country_workforce_with_job_tag",
-      "total_system_workforce_with_job_tag",
-      "total_workforce_with_job_tag",
-    ]
-  ),
-  ...acknowledged(
-    "effect",
-    "structured-bare-values",
-    "SDK-247",
-    "The script argument model cannot represent bare values inside a nested block.",
-    [
-      "add_timeline_event",
-      "clear_relations",
-      "copy_ascension_perks_from",
-      "copy_techs_from",
-      "copy_traditions_from",
-      "create_balanced_fleet",
-      "create_random_fleet",
-      "give_specimen",
-      "spawn_planet",
-      "start_storm_area_placing",
-      "storm_apply_aftermath_modifier",
-    ]
-  ),
-  ...acknowledged(
-    "trigger",
     "scalar-block-overload",
     "SDK-248",
     "The trigger emitter has no sound discriminator for non-localisation scalar and block arms.",

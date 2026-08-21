@@ -50,6 +50,73 @@ describe("generated effect scope safety", () => {
     });
   });
 
+  it("types bare-value lists, mixed list arms, and bare effect clauses", () => {
+    const country = makeScope<"country">(sink);
+    country.addTimelineEvent({
+      type: "effects_type_test_timeline_event",
+      overrideText: ["button:effects_type_test_text"],
+      overrideTexture: ["button:GFX_effects_type_test_button"],
+    });
+    country.copyAscensionPerksFrom({
+      target: scopeValue<"country">("root"),
+      exceptions: ["effects_type_test_perk_a", "effects_type_test_perk_b"],
+    });
+    country.copyTechsFrom({ target: scopeValue<"country">("root"), except: ["tech_a", "tech_b"] });
+    country.copyTraditionsFrom({
+      target: scopeValue<"country">("root"),
+      exceptions: ["effects_type_test_tradition_a", "effects_type_test_tradition_b"],
+    });
+    country.createBalancedFleet({ size: 10 });
+    country.createRandomFleet({
+      shipDesigns: ["corvette", { design: "destroyer", weight: 2, min: 1, max: 3 }],
+    });
+    const system = makeScope<"system">(sink);
+    system.spawnPlanet({
+      class: "pc_continental",
+      modifier: ["effects_type_test_modifier_a", "effects_type_test_modifier_b"],
+    });
+    country.startStormAreaPlacing({
+      cosmicStorm: "storm_test",
+      reticleRadius: [],
+      maxRange: [],
+      onConfirm: (scope) => scope.log("confirmed"),
+    });
+    country.stormApplyAftermathModifier({
+      severity: [
+        { modifier: "effects_type_test_storm_a", days: 30 },
+        { modifier: "effects_type_test_storm_b", days: 60 },
+      ],
+    });
+
+    country.addTimelineEvent({
+      type: "effects_type_test_timeline_event",
+      // @ts-expect-error — override pairs author as a list of complete key:value strings
+      overrideText: "button:effects_type_test_text",
+    });
+    // @ts-expect-error — a bare-value list must be wrapped in an array
+    country.copyTechsFrom({ target: scopeValue<"country">("root"), except: "tech_a" });
+    country.createRandomFleet({
+      // @ts-expect-error — a structured list arm requires its design field
+      shipDesigns: [{ weight: 2 }],
+    });
+    country.startStormAreaPlacing({
+      cosmicStorm: "storm_test",
+      reticleRadius: [],
+      maxRange: [],
+      // @ts-expect-error — an anonymous effect clause authors as a closure
+      onConfirm: "set_country_flag = confirmed",
+    });
+    system.spawnPlanet({
+      class: "pc_continental",
+      // @ts-expect-error — repeated modifier entries author as an array
+      modifier: "effects_type_test_modifier",
+    });
+    country.stormApplyAftermathModifier({
+      // @ts-expect-error — repeated severity blocks author as an array
+      severity: { modifier: "effects_type_test_storm", days: 30 },
+    });
+  });
+
   it("types ambient-object placement refs, locations, and scalar/range offsets", () => {
     const system = makeScope<"system">(sink);
     system.createAmbientObject({

@@ -38,7 +38,7 @@ export type RuleType =
   | {
       readonly kind: "block";
       readonly fields: readonly RuleField[];
-      readonly bare: readonly RuleType[];
+      readonly bare: readonly RuleBareValue[];
       /**
        * The `single_alias` name this block expanded from, when it was written
        * as `single_alias_right[x]` rather than spelled out inline. Expansion is
@@ -108,7 +108,16 @@ export interface RuleField {
   readonly comparison: boolean;
 }
 
+export interface RuleBareValue {
+  readonly type: RuleType;
+  readonly cardinality: Cardinality;
+  readonly docs: readonly string[];
+  readonly scope: ScopeContext | null;
+  readonly line: number;
+}
+
 const BRACKETED = /^([^\[\]]+)\[([^\[\]]*)\]$/;
+const VALUE_PAIR = /^value(?:_set)?\[[^\]]+\]:(?:localisation|<[^>]+>)$/;
 const RANGE = /^(-?[\d.]+|-?inf)\.\.(-?[\d.]+|-?inf)$/;
 const CARDINALITY = /^~?(\d+)\.\.(\d+|inf)$/;
 
@@ -208,6 +217,9 @@ function classifyScalar(text: string, line: number, report?: ClassificationRepor
   if (text.startsWith("<") && text.endsWith(">")) {
     return { kind: "typeRef", name: text.slice(1, -1) };
   }
+  if (VALUE_PAIR.test(text)) {
+    return { kind: "scalar" };
+  }
   const bracketed = BRACKETED.exec(text);
   if (bracketed !== null) {
     return classifyBracketed(bracketed[1]!, bracketed[2]!, text, line, report);
@@ -255,13 +267,19 @@ export function classifyBlock(
   report?: ClassificationReporter
 ): RuleType {
   const fields: RuleField[] = [];
-  const bare: RuleType[] = [];
+  const bare: RuleBareValue[] = [];
   for (const node of block.nodes) {
     if (node.kind === "assignment") {
       fields.push(toField(node.key, node, resolve, report));
       continue;
     }
-    bare.push(classify(node.value, resolve, report));
+    bare.push({
+      type: classify(node.value, resolve, report),
+      cardinality: cardinalityOf(node.options),
+      docs: node.docs,
+      scope: scopeOf(node.options),
+      line: node.line,
+    });
   }
   return { kind: "block", fields, bare };
 }

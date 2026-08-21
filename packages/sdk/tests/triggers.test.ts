@@ -13,6 +13,7 @@ import {
   currentSituationApproach,
   currentStage,
   customTooltip,
+  hasActiveEvent,
   hasCompletedEventChainCounter,
   hasCountryFlag,
   hasGlobalFlag,
@@ -29,6 +30,8 @@ import {
   popGroupSize,
   resourceStockpilePercent,
   target,
+  totalWorkforceWithJobTag,
+  traitHasAllTags,
   trigger,
   yearsPassed,
 } from "../src/script/triggers.ts";
@@ -311,6 +314,25 @@ describe("trigger builders", () => {
 \t}
 }
 `);
+  });
+
+  it("serializes top-level and nested bare-value trigger blocks in author order", () => {
+    const conditions = [
+      hasActiveEvent(["events_test.1", { id: "events_test.2" }]),
+      traitHasAllTags(["biological", "lithoid"]),
+      totalWorkforceWithJobTag({ tags: ["farmer", "researcher"], value: [">=", 100] }),
+    ];
+
+    expect(serialize(conditions.flatMap((condition) => [...condition.entries]))).toBe(
+      "has_active_event = { events_test.1 events_test.2 }\n" +
+        "\n" +
+        "trait_has_all_tags = { biological lithoid }\n" +
+        "\n" +
+        "total_workforce_with_job_tag = {\n" +
+        "\ttags = { farmer researcher }\n" +
+        "\tvalue >= 100\n" +
+        "}\n"
+    );
   });
 
   it("throws an explanatory error when a trigger is called like a function", () => {

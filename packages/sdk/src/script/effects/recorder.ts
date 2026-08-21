@@ -1,6 +1,16 @@
 /** The scope-agnostic effect recorder behind generated scope interfaces. */
 
-import { block, cmp, kv, type PdxEntry, type PdxOp, type PdxScalar } from "@pdx-ts/pdxscript";
+import {
+  block,
+  cmp,
+  container,
+  kv,
+  scalar as pdxScalar,
+  type PdxEntry,
+  type PdxItem,
+  type PdxOp,
+  type PdxScalar,
+} from "@pdx-ts/pdxscript";
 
 import { EFFECT_META, type EffectFieldMeta } from "../../generated/effect-meta.ts";
 import { FIRE_EFFECT_KEYS, type StructuralEffectMethod } from "../../generated/effect-policy.ts";
@@ -235,6 +245,33 @@ function fieldEntries(
             )
           );
           break;
+        case "value-list": {
+          const items: PdxItem[] = [];
+          for (const item of value as readonly unknown[]) {
+            if (
+              field.fields !== undefined &&
+              (field.scalar === undefined ||
+                isStructuredValue(item, field.scalar.objectKinds ?? []))
+            ) {
+              items.push(
+                container(
+                  fieldEntries(
+                    field.fields,
+                    item as Record<string, unknown>,
+                    `${path}.${field.key}`,
+                    refs
+                  )
+                )
+              );
+              continue;
+            }
+            const scalar = toScalar(item, field.scalar?.booleanLiterals);
+            recordRef(refs, field.scalar?.refTypes, `${path}.${field.key}`, scalar);
+            items.push(typeof scalar === "object" ? scalar : pdxScalar(scalar));
+          }
+          entries.push(kv(field.key, container(items)));
+          break;
+        }
         case "comparison":
           if (Array.isArray(value)) {
             entries.push(cmp(field.key, value[0] as PdxOp, toScalar(value[1])));

@@ -21,6 +21,7 @@ import type {
   AggroRangeMeasureFrom,
   AgreementSubjectExpand,
   AgreementWar,
+  CountryRelation,
   FederationSuccessionTerm,
   FederationSuccessionType,
   FleetStance,
@@ -35,6 +36,7 @@ import type {
   PatronContactState,
   RefreshPortraits,
   ResearchArea,
+  ScopeTypeToken,
   ShipRarity,
   SituationApproach,
   SpecimensRarity,
@@ -3357,6 +3359,30 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
   addTechProgress(args: { tech: TechnologyRef | string; progress: ScriptValue }): void;
 
   /**
+   * Adds a new timeline event for the scope country.
+   * ```
+   * add_timeline_event = {
+   *   type = timeline_event_planet
+   *   date = 2300.1.1 (optional - if not present, current date is used)
+   *   targets = { ... } (optional - array of event targets. This depends on localization and what event targets the type requires)
+   *   (There is also overrides that can be used to override settings on the database entries. The Id is required, and the others are optional)
+   *   override_id = my_defined_unique_id
+   *   override_text = { "button:MY_OTHER_LOC_STRING" "button2:ANOTHER_LOC_OVERRIDE" }  override_texture = { "button:GFX_short_button button2:GFX_otherbutton" }  override_tooltip, "loc_tooltip"  override_tooltip_delayed, "loc_delayed_tooltip"}
+   * ```
+   */
+  addTimelineEvent(args: {
+    type: TimelineEventsRef | string;
+    date?: string;
+    overrideId?: TimelineEventId;
+    overrideTooltip?: string;
+    overrideTypes?: readonly ScopeTypeToken[];
+    overrideText?: readonly string[];
+    overrideTexture?: readonly string[];
+    targets?: readonly ScopeValue[];
+    overrideTooltipDelayed?: string;
+  }): void;
+
+  /**
    * Tries to add the scoped country to the Galactic Community
    * ```
    * add_to_galactic_community = yes/no
@@ -3591,6 +3617,20 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
   }): void;
 
   /**
+   * Clears relations between scoped and target countries
+   * ```
+   * clear_relations = {
+   * 	 target = <target country>
+   * 	 relations = { <> }
+   *  }
+   * ```
+   */
+  clearRelations(args: {
+    target: ScopeValue<"country">;
+    relations: readonly [CountryRelation];
+  }): void;
+
+  /**
    * Clears resources of a country
    * ```
    * clear_resources = yes
@@ -3646,6 +3686,20 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
       | "starbase"
       | "system"
     >;
+  }): void;
+
+  /**
+   * Copies the Ascension Perks of the target country into the scoped country. Perks are added to the existing perks, and the potential/possible triggers are respected.the perkss listed in the exceptions list are not copied.
+   * ```
+   * copy_ascension_perks_from = {
+   *     target = FROM
+   *     exceptions = { perk1 perk2 }
+   * }
+   * ```
+   */
+  copyAscensionPerksFrom(args: {
+    target: ScopeValue<"country">;
+    exceptions?: readonly (AscensionPerkRef | string)[];
   }): void;
 
   /**
@@ -3719,6 +3773,55 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
   }): void;
 
   /**
+   * Copies all techs from the target country to the scoped country, except for some exceptions listed. Tech weights (and weight modifiers) are honoured, meaning that techs a country should not have will not be copied.
+   * ```
+   * copy_techs_from = {
+   * 	target = country
+   * 	except = { tech_1 tech_2 }
+   * }
+   * ```
+   */
+  copyTechsFrom(args: {
+    target: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+    except?: readonly (TechnologyRef | string)[];
+  }): void;
+
+  /**
+   * Copies the traditions of the target country into the scoped country. Traditions are added to the existing traditions, and the potential/possible triggers are respected.the traditions listed in the exceptions list are not copied.
+   * ```
+   * copy_traditions_from = {
+   *     target = FROM
+   *     exceptions = { tradition1 tradition2 }
+   * }
+   * ```
+   */
+  copyTraditionsFrom(args: {
+    target: ScopeValue<"country">;
+    exceptions?: readonly (TraditionRef | string)[];
+  }): void;
+
+  /**
    * Adds a specific ethic to the scoped country
    * ```
    * country_add_ethic = <key>
@@ -3733,6 +3836,26 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   countryRemoveEthic(value: EthicRef | string): void;
+
+  /**
+   * Creates a fleet of the requested size, distributing ships deterministically across the listed designs by each ship_size's ai_ship_data.fraction.
+   * ```
+   * create_balanced_fleet = {
+   * 	name = <string>
+   * 	size = <int>
+   * 	can_overflow = yes/no # default yes
+   * 	ship_designs = { NAME_a NAME_b } # optional; if omitted, uses the country's own designs
+   * 	effect = { <set_location etc effects go here> }
+   * }
+   * ```
+   */
+  createBalancedFleet(args: {
+    name?: string | ScopeValue<"fleet"> | { key: string; variableString?: readonly string[] };
+    size: ScriptValue;
+    canOverflow?: boolean;
+    shipDesigns?: readonly string[];
+    effect?: (scope: FleetScope) => void;
+  }): void;
 
   /**
    * Creates a new fleet from empire designs up to specified fraction of naval cap
@@ -3750,6 +3873,32 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   createPatronRelation(value: "patron_type"): void;
+
+  /**
+   * Creates a fleet of the requested size by repeatedly picking ships from the listed designs at random, weighted by each entry's weight (default 1). Each entry may also specify a guaranteed min count and a max cap. If ship_designs is omitted, falls back to the country's own AI-recruitable designs at uniform weight.
+   * ```
+   * create_random_fleet = {
+   * 	name = <string>
+   * 	size = <int>
+   * 	can_overflow = yes/no # default yes
+   * 	ship_designs = { # optional; if omitted, uses the country's own designs at uniform weight
+   * 		NAME_a # bare name, weight 1, no min/max
+   * 		{ design = NAME_b weight = 2.4 min = 1 max = 3 }
+   * 	}
+   * 	effect = { <set_location etc effects go here> }
+   * }
+   * ```
+   */
+  createRandomFleet(args: {
+    name?:
+      string | "random" | ScopeValue<"fleet"> | { key: string; variableString?: readonly string[] };
+    size?: ScriptValue;
+    canOverflow?: boolean;
+    shipDesigns?: readonly (
+      string | { design: string; weight?: number; min?: number; max?: number }
+    )[];
+    effect?: (scope: FleetScope) => void;
+  }): void;
 
   /**
    * Deactivates country fog machine
@@ -4529,6 +4678,18 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   giveDna(args: { shipCategory: ShipCategoriesRef | string; rarity?: SpecimensRarity }): void;
+
+  /**
+   * Gives a given specimen to the target country.
+   * ```
+   * give_specimen = { key = <specimen> origin = <key> }
+   * ```
+   */
+  giveSpecimen(args: {
+    key: SpecimenRef | string;
+    origin?: string;
+    targets?: readonly [ScopeValue];
+  }): void;
 
   /**
    * Instantly gives a specific tech to the scoped country
@@ -12325,6 +12486,49 @@ export interface EffectsInSystem {
     initEffect?: (scope: BypassScope) => void;
   }): void;
 
+  /** Spawns a planet in a system. */
+  spawnPlanet(args: {
+    class: PlanetClassRef | string | PlanetClassRandomListRef | "random" | "random_colonizable";
+    generateRandomName?: boolean;
+    checkOverlap?: boolean;
+    name?: string;
+    location?:
+      | ScopeValue<
+          | "ambient_object"
+          | "archaeological_site"
+          | "army"
+          | "carrier"
+          | "colony"
+          | "country"
+          | "debris"
+          | "deposit"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "megastructure"
+          | "planet"
+          | "pop_group"
+          | "ship"
+          | "starbase"
+          | "system"
+        >
+      | "none";
+    orbitLocation?: boolean;
+    orbitDistance?: ScriptValue | { min: ScriptValue; max: ScriptValue };
+    orbitDistanceOffset?: ScriptValue;
+    planeOffset?: number;
+    depositBlockers?: "none";
+    modifiers?: "none";
+    modifier?: readonly (PlanetModifierRef | string)[];
+    flags?: readonly PlanetFlag[];
+    size?: number | "random";
+    hasRing?: boolean;
+    spawnBeyondGravityWell?: boolean;
+    orbitAngle?: "random" | number | { min: number; max: number };
+    orbitAngleOffset?: number;
+    initEffect?: (scope: PlanetScope) => void;
+  }): void;
+
   /**
    * Spawns a Psionic Aura in scoped system, where country is the aura's owner.
    * ```
@@ -14329,12 +14533,43 @@ export interface UniversalEffects extends EnableSpecialProjectEffectsExtension {
   }): void;
 
   /**
+   * Starts the storm placing mode with radius
+   * ```
+   * radius = <float>
+   * ```
+   */
+  startStormAreaPlacing(args: {
+    sacrificeLeaderWithUi?: "yes";
+    cosmicStorm: StormTypesRef | string;
+    immediate?: "yes";
+    reticleRadius: readonly Modifier<ScopeName>[];
+    maxRange: readonly Modifier<ScopeName>[];
+    onConfirm?: (scope: ScopeObjOf<ScopeName>) => void;
+    onCancel?: (scope: ScopeObjOf<ScopeName>) => void;
+  }): void;
+
+  /**
    * Stops the crisis ambient loop
    * ```
    * stop_crisis_sound = yes
    * ```
    */
   stopCrisisSound(value?: boolean): void;
+
+  /**
+   * Applies Cosmic Storm Aftermath Modifiers. You can specify up to a max of 10 Severities and each one will be chosen based on it's chance.
+   * ```
+   * storm_apply_aftermath_modifier = { severity = { modifier = <key>, days = <ModifierDuration> chance = <WeightedChance> effect  = <OnAppliedOptionalEffect> }}
+   * ```
+   */
+  stormApplyAftermathModifier(args: {
+    severity: readonly {
+      modifier: StaticModifierRef | string;
+      days: number;
+      chance?: readonly Modifier<ScopeName>[];
+      effect?: (scope: ScopeObjOf<ScopeName>) => void;
+    }[];
+  }): void;
 
   /** Just a tooltip (shows the effect but does not run it) */
   tooltip(body: (scope: this) => void): void;

@@ -83,4 +83,14 @@ describe("trigger emission", () => {
     expect(emission.code).toContain('return trigger([kv("custom_tooltip", value)]);');
     expect(emission.code).toContain('return trigger([block("custom_tooltip", entries)], refs);');
   });
+
+  it("uses the audited game-doc summary when CWT prose is wrong", () => {
+    const fn = emission.code.indexOf("export function traitHasAnyTag");
+    const summary = emission.code.indexOf("Checks if a trait has at least one tag from the list");
+    expect(summary).toBeGreaterThan(0);
+    expect(fn - summary).toBeLessThan(500);
+    expect(emission.docOverrides).toEqual([
+      expect.stringContaining("trait_has_any_tag ← vendor/cwtools-stellaris-config"),
+    ]);
+  });
 });

@@ -620,7 +620,7 @@ async function main(): Promise<void> {
   await write(
     "triggers.ts",
     header(commit, ["triggers.cwt", "aliases.cwt", "script-docs/v4.4.1/triggers.log"]) +
-      'import { block, cmp, kv, type PdxEntry, type PdxOp } from "@pdx-ts/pdxscript";\n' +
+      'import { block, cmp, container, kv, scalar, type PdxEntry, type PdxItem, type PdxOp } from "@pdx-ts/pdxscript";\n' +
       'import type { ContentRefUse } from "../references.ts";\n' +
       (referencesIdentifier(triggers.code, "ScopeValue")
         ? 'import type { ScopeValue } from "../script/effects/types.ts";\n'
@@ -820,6 +820,7 @@ async function main(): Promise<void> {
   reportSection("Policy-owned script rules", scriptGapLines.policyOwned);
   reportSection("Abstract script placeholders", scriptGapLines.abstractPlaceholders);
   reportSection("Tracked script-generation gaps", scriptGapLines.trackedGaps);
+  reportSection("Trigger summaries replaced by the overlay", triggers.docOverrides);
   reportSection(
     "Scope links not emitted",
     classifiedLinks.skipped.map((entry) => `${entry.name} — ${entry.detail}`)
@@ -827,8 +828,8 @@ async function main(): Promise<void> {
   reportSection("Effects emitted scalar-only (block overload dropped)", effects.scalarOnly);
   reportSection("Effect field types replaced by the overlay", effects.fieldTypeOverrides);
   reportSection(
-    "Effect field optionality replaced by the overlay",
-    effects.fieldOptionalityOverrides
+    "Effect field cardinality replaced by the overlay",
+    effects.fieldCardinalityOverrides
   );
   reportSection("Effect fields added by the overlay", effects.fieldAdditions);
   reportSection("On-actions not emitted", onActions.skipped);

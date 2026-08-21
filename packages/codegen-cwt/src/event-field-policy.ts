@@ -443,7 +443,7 @@ function ruleTypeSignature(type: RuleType): string {
       return `literal[${JSON.stringify(type.text)}]`;
     case "block": {
       const fields = type.fields.map(fieldSignature).sort();
-      const bare = type.bare.map(ruleTypeSignature).sort();
+      const bare = type.bare.map((value) => ruleTypeSignature(value.type)).sort();
       return `block{fields=[${fields.join(";")}];bare=[${bare.join(";")}]}`;
     }
   }

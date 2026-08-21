@@ -233,11 +233,9 @@ describe("LoweredRule", () => {
         .map(({ name, category }) => [name, category])
     ).toEqual([
       ["clone_leader", "repeated-nested-field"],
-      ["create_balanced_fleet", "structured-bare-values"],
       ["create_country", "repeated-nested-field"],
       ["create_fleet", "unsupported-field-value"],
       ["create_leader", "repeated-nested-field"],
-      ["create_random_fleet", "structured-bare-values"],
       ["create_rebels", "repeated-nested-field"],
       ["create_saved_leader", "repeated-nested-field"],
       ["create_species", "repeated-structured-scalar-arms"],
@@ -254,8 +252,13 @@ describe("LoweredRule", () => {
     expect(declareWarSignature).toContain(
       "name?: string | { key: string; variableString?: readonly string[] }"
     );
-    expect(emitted.fieldOptionalityOverrides).toEqual([
+    expect(emitted.fieldCardinalityOverrides).toEqual([
       expect.stringContaining("declare_war.name → optional"),
+      expect.stringContaining("copy_ascension_perks_from.exceptions → value-list 0..inf"),
+      expect.stringContaining("copy_traditions_from.exceptions → value-list 0..inf"),
+      expect.stringContaining("create_balanced_fleet.ship_designs → optional"),
+      expect.stringContaining("spawn_planet.modifier → repeated"),
+      expect.stringContaining("storm_apply_aftermath_modifier.severity → repeated"),
     ]);
     expect(emitted.meta).toContain(
       '{ prop: "variableString", key: "variable_string", kind: "value", repeated: true }'
@@ -266,7 +269,7 @@ describe("LoweredRule", () => {
     expect(usage.refs).not.toContain("species_class");
   });
 
-  it("rejects a stale effect-field optionality override", () => {
+  it("rejects a stale effect-field cardinality override", () => {
     const declareWar = effects.get("declare_war")!;
     const block = declareWar.blocks[0]!;
     const changed = new Map(effects);

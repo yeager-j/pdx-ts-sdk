@@ -34,7 +34,7 @@ export function typesReferencedBySubtype(rules: RuleSet): ReadonlySet<string> {
     if (type.kind === "block") {
       visitFields(type.fields);
       for (const bare of type.bare) {
-        visitType(bare);
+        visitType(bare.type);
       }
     }
   };

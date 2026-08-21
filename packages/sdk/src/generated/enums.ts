@@ -77,6 +77,17 @@ export type ComponentSlot = VanillaEnumMember<"component_slot"> | (string & {});
  */
 export type ComponentTag = VanillaEnumMember<"component_tag"> | (string & {});
 
+/** `enum[country_relation]`. */
+export type CountryRelation =
+  | "commercial_pact"
+  | "migration_access"
+  | "research_agreement"
+  | "defensive_pact"
+  | "is_under_societal_enlightenment"
+  | "is_under_open_technological_enlightenment"
+  | "is_under_stratified_technological_enlightenment"
+  | "has_pre_ftl_trade";
+
 /** `enum[crisis_type]`. */
 export type CrisisType = "prethoryn" | "unbidden" | "contingency" | "synth_queen" | "all" | "any";
 
