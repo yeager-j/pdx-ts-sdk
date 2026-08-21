@@ -141,6 +141,7 @@ export function resolveNonInteractive(argv: ParsedArgv, targetDir: string): Reso
     localSdk: flag(values, "local"),
     prettier: boolFlag(values, "prettier") ?? true,
     eslint: boolFlag(values, "eslint") ?? true,
+    llmSupport: boolFlag(values, "llm") ?? true,
     git: boolFlag(values, "git") ?? true,
     install: boolFlag(values, "install") ?? true,
     packageManager: flag(values, "pm") ?? detectPackageManager(),
@@ -217,6 +218,15 @@ export async function resolveInteractive(argv: ParsedArgv, io: CliIo): Promise<R
     boolFlag(values, "prettier") ?? unwrap(await confirm({ ...streams, message: "Add Prettier?" }));
   const eslint =
     boolFlag(values, "eslint") ?? unwrap(await confirm({ ...streams, message: "Add ESLint?" }));
+  const llmSupport =
+    boolFlag(values, "llm") ??
+    unwrap(
+      await confirm({
+        ...streams,
+        message: "Add Codex and Claude support?",
+        initialValue: true,
+      })
+    );
   const git =
     boolFlag(values, "git") ??
     unwrap(await confirm({ ...streams, message: "Initialize a git repository?" }));
@@ -237,6 +247,7 @@ export async function resolveInteractive(argv: ParsedArgv, io: CliIo): Promise<R
     localSdk: flag(values, "local"),
     prettier,
     eslint,
+    llmSupport,
     git,
     install: shouldInstall,
     packageManager,

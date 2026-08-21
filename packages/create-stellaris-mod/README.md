@@ -20,6 +20,13 @@ and writes a project that typechecks, tests and builds on the first
 
 ```
 my-mod/
+├── AGENTS.md             shared Codex and Claude project guidance
+├── CLAUDE.md -> AGENTS.md
+├── .agents/skills/pdx-sdk-docs/SKILL.md
+├── .claude/
+│   ├── agents/pdx-docs-expert.md
+│   └── skills -> ../.agents/skills
+├── .codex/agents/pdx-docs-expert.toml
 ├── package.json  tsconfig.json  vitest.config.ts
 ├── stellaris-mod.json     the Project Manifest: mod identity and launcher metadata
 ├── stellaris-mod.schema.json  its schema, for your editor
@@ -72,11 +79,29 @@ Every prompt has a flag, so the CLI is scriptable. With `--yes`, or whenever
 stdin is not a TTY, it takes the defaults and never asks — a CI run cannot hang
 on a prompt nobody will see.
 
+Codex and Claude support is enabled by default. The generated bundle stays
+inside the project: shared instructions, the embedded `pdx-sdk-docs` skill, and
+native project-scoped `pdx-docs-expert` definitions for both clients. Init does
+not download the skill or modify user-level configuration. Use `--no-llm` to
+omit the complete bundle. The shared instructions and skill use relative
+symlinks where the platform permits them; if symlink creation returns `EPERM`,
+init atomically publishes regular file and directory copies instead, so Windows
+does not require Developer Mode or symbolic-link privileges.
+
+Before the docs expert answers, it compares the exact `@pdx-ts/sdk` dependency
+in the generated project's `package.json` with the `SDK version` declared by
+the fetched documentation index. It also compares the index's SDK source
+revision with the revision embedded by this scaffold, so an unversioned docs
+deployment cannot silently move to a different API while retaining the same
+package version. A local `file:` checkout, a dependency range, missing
+provenance, or a different deployed version or revision produces a concise
+mismatch report instead of advice for the wrong SDK surface.
+
 ```
 --name <string>              --prefix <snake_case>     --stellaris-path <path>
 --supported-version <v4.4.*> --tags <a,b>              --local <path-to-pdx-sdk>
 --pm <npm|pnpm|yarn|bun>     --dry-run                 -y, --yes
---no-prettier  --no-eslint  --no-git  --no-install
+--no-prettier  --no-eslint  --no-llm  --no-git  --no-install
 ```
 
 A missing Stellaris install is not fatal: the scaffold drops `src/vanilla.ts`,
@@ -163,9 +188,9 @@ The `scaffold` script exists because running `src/bin.ts` directly needs
 `node --conditions=pdx-source`, the condition that resolves workspace packages
 to their sources rather than the `dist/` they publish.
 
-`src/plan.ts` is pure — a resolved config in, a path-to-contents map out,
-deliberately the same shape as the SDK's own `render` — so most assertions run
-against a `Map` rather than a directory. `tests/scaffold.test.ts` is the gate
+`src/plan.ts` is pure — a resolved config in, a map of regular-file and
+relative-symlink entries out — so most assertions run against a `Map` rather
+than a directory. `tests/scaffold.test.ts` is the gate
 that matters: it scaffolds into a temp directory, symlinks the dependency tree,
 and then typechecks, builds and tests the result with the real toolchain,
 because templates are strings and nothing else checks the code they produce.

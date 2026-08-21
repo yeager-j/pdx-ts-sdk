@@ -1,15 +1,19 @@
 /**
- * The scaffold as a value. Everything here runs against `planFiles`, with no
+ * The scaffold as a value. Everything here runs against `planProject`, with no
  * filesystem — which is the point of keeping the plan pure.
  */
 
+import { createHash } from "node:crypto";
 import { vanillaPackageInstallRange } from "@pdx-ts/sdk";
 import semver from "semver";
+import { parse as parseToml } from "smol-toml";
 import { describe, expect, it } from "vitest";
+import { parse as parseYaml } from "yaml";
 
+import { SDK_DOCS_REVISION } from "../src/generated/package-version.ts";
 import { VERIFIED_STELLARIS_BUILD } from "../src/generated/verified-build.ts";
 import type { Resolved } from "../src/options.ts";
-import { planFiles } from "../src/plan.ts";
+import { planProject, type ProjectEntry } from "../src/plan.ts";
 import { SCAFFOLDER_RELEASE_MANIFEST } from "../src/release-manifest.ts";
 import { checkSdkCompatibility } from "../src/sdk-range.ts";
 import { idsRange } from "../src/templates/project.ts";
@@ -26,13 +30,23 @@ const base: Resolved = {
   localSdk: undefined,
   prettier: true,
   eslint: true,
+  llmSupport: true,
   git: true,
   install: true,
   packageManager: "npm",
 };
 
+function project(overrides: Partial<Resolved> = {}): Map<string, ProjectEntry> {
+  return planProject({ ...base, ...overrides }, "my-mod");
+}
+
 function plan(overrides: Partial<Resolved> = {}): Map<string, string> {
-  return planFiles({ ...base, ...overrides }, "my-mod");
+  return new Map(
+    [...project(overrides)].map(([relPath, entry]) => [
+      relPath,
+      entry.kind === "file" ? entry.contents : `-> ${entry.target}`,
+    ])
+  );
 }
 
 function manifest(files: Map<string, string>): Record<string, Record<string, string>> {
@@ -42,8 +56,14 @@ function manifest(files: Map<string, string>): Record<string, Record<string, str
 describe("the scaffolded tree", () => {
   it("is the same set of files every time", () => {
     expect([...plan().keys()]).toEqual([
+      ".agents/skills/pdx-sdk-docs/SKILL.md",
+      ".claude/agents/pdx-docs-expert.md",
+      ".claude/skills",
+      ".codex/agents/pdx-docs-expert.toml",
       ".gitignore",
       ".prettierrc",
+      "AGENTS.md",
+      "CLAUDE.md",
       "README.md",
       "eslint.config.js",
       "package.json",
@@ -59,6 +79,113 @@ describe("the scaffolded tree", () => {
       "tsconfig.json",
       "vitest.config.ts",
     ]);
+  });
+
+  it("models the enabled LLM bundle as four files and two exact relative links", () => {
+    const entries = project();
+    expect(entries.get("AGENTS.md")?.kind).toBe("file");
+    expect(entries.get(".agents/skills/pdx-sdk-docs/SKILL.md")?.kind).toBe("file");
+    expect(entries.get(".claude/agents/pdx-docs-expert.md")?.kind).toBe("file");
+    expect(entries.get(".codex/agents/pdx-docs-expert.toml")?.kind).toBe("file");
+    expect(plan().get("AGENTS.md")).toContain("without forking or inheriting conversation history");
+    expect(plan().get("AGENTS.md")).toContain("return a concise blocker");
+    expect(plan().get("AGENTS.md")).toContain("SDK version: <version>");
+    expect(plan().get("AGENTS.md")).toContain(
+      `SDK revision: <revision>\` line to equal \`${SDK_DOCS_REVISION}`
+    );
+    expect(entries.get("CLAUDE.md")).toEqual({ kind: "symlink", target: "AGENTS.md" });
+    expect(entries.get(".claude/skills")).toEqual({
+      kind: "symlink",
+      target: "../.agents/skills",
+    });
+    expect(entries.has("LLM-SETUP.md")).toBe(false);
+  });
+
+  it("omits the complete LLM bundle when disabled", () => {
+    const entries = project({ llmSupport: false });
+    for (const relPath of [
+      "AGENTS.md",
+      "CLAUDE.md",
+      ".agents/skills/pdx-sdk-docs/SKILL.md",
+      ".claude/skills",
+      ".claude/agents/pdx-docs-expert.md",
+      ".codex/agents/pdx-docs-expert.toml",
+    ]) {
+      expect(entries.has(relPath), relPath).toBe(false);
+    }
+  });
+
+  it("embeds the reviewed docs skill byte for byte", () => {
+    const bytes = plan().get(".agents/skills/pdx-sdk-docs/SKILL.md")!;
+    expect(createHash("sha256").update(bytes).digest("hex")).toBe(
+      "e870f27fb4efdd3bd4bece9fd81ad3130531b3c9306bac44cea95feec3d340dd"
+    );
+  });
+
+  it("emits valid native Claude and Codex agent configuration", () => {
+    const claude = plan().get(".claude/agents/pdx-docs-expert.md")!;
+    const frontmatter = /^---\n([\s\S]*?)\n---\n/.exec(claude);
+    expect(frontmatter).not.toBeNull();
+    const claudeConfig = parseYaml(frontmatter![1]!) as {
+      name: string;
+      tools: string;
+      model: string;
+      effort: string;
+      permissionMode: string;
+      skills: string[];
+    };
+    expect(claudeConfig).toMatchObject({
+      name: "pdx-docs-expert",
+      model: "sonnet",
+      effort: "medium",
+      permissionMode: "acceptEdits",
+      skills: ["pdx-sdk-docs"],
+    });
+    expect(claudeConfig.tools.split(/,\s*/)).toEqual(["Bash", "WebFetch", "Read", "Grep"]);
+    expect(claudeConfig.tools).not.toMatch(/\b(?:Write|Edit)\b/);
+
+    const codex = parseToml(plan().get(".codex/agents/pdx-docs-expert.toml")!) as {
+      name: string;
+      model: string;
+      model_reasoning_effort: string;
+      sandbox_mode: string;
+      developer_instructions: string;
+      sandbox_workspace_write: {
+        network_access: boolean;
+        exclude_slash_tmp: boolean;
+        exclude_tmpdir_env_var: boolean;
+      };
+    };
+    expect(codex).toMatchObject({
+      name: "pdx-docs-expert",
+      model: "gpt-5.6-luna",
+      model_reasoning_effort: "medium",
+      sandbox_mode: "workspace-write",
+      sandbox_workspace_write: {
+        network_access: true,
+        exclude_slash_tmp: false,
+        exclude_tmpdir_env_var: false,
+      },
+    });
+
+    const claudeInstructions = claude.slice(frontmatter![0].length);
+    expect(claudeInstructions).toBe(codex.developer_instructions);
+    const behavior = `${claude}\n${codex.developer_instructions}`;
+    expect(behavior).toContain("retrieve fresh for every question");
+    expect(behavior).toContain(
+      "read only the `@pdx-ts/sdk` dependency in the project's `package.json`"
+    );
+    expect(behavior).toContain("SDK version: <version>");
+    expect(behavior).toContain(`SDK revision: <revision>\` line to equal \`${SDK_DOCS_REVISION}`);
+    expect(behavior).toContain("a `file:` checkout");
+    expect(behavior).toContain(
+      "documentation-version or revision mismatch without authoring advice"
+    );
+    expect(behavior).toContain("temporary `llms-full.txt` cache");
+    expect(behavior).toContain("remove the cache with `unlink`");
+    expect(behavior).toContain("remove the empty directory with `rmdir`");
+    expect(behavior).toContain("Do not edit the project, user files, user configuration");
+    expect(behavior).not.toMatch(/\/Users\/|~\/|LLM-SETUP/);
   });
 
   it("drops the opt-outs and their dependencies together", () => {

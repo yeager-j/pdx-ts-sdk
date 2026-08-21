@@ -150,12 +150,36 @@ describe("init", () => {
     expect(spelled.out()).toBe(bare.out());
     expect(bare.out()).toContain("stellaris-mod.json");
     expect(bare.out()).toContain("src/content/example.ts");
+    expect(bare.out()).toContain("  CLAUDE.md -> AGENTS.md\n");
+    expect(bare.out()).toContain("  .claude/skills -> ../.agents/skills\n");
+    expect(bare.out()).toContain("  .codex/agents/pdx-docs-expert.toml\n");
+  });
+
+  it("omits the complete agent bundle with --no-llm and writes nothing in dry-run", async () => {
+    const root = mkdtempSync(path.join(tmpdir(), "create-stellaris-mod-dry-"));
+    try {
+      const { io, out, err } = capture(root);
+      expect(await main(["--dry-run", "--yes", "--no-llm", "my-mod"], io)).toBe(0);
+      expect(out()).not.toMatch(/AGENTS\.md|CLAUDE\.md|\.agents\/|\.claude\/|\.codex\//);
+      expect(err()).toBe("");
+      expect(existsSync(path.join(root, "my-mod"))).toBe(false);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 
   it("resolves the target directory against the injected cwd", async () => {
     const { io, out } = capture("/tmp/elsewhere");
     expect(await main(["--dry-run", "--yes", "my-mod"], io)).toBe(0);
     expect(out()).toContain("Would scaffold /tmp/elsewhere/my-mod:");
+  });
+
+  it("enables the agent bundle by default when stdin is not a TTY", async () => {
+    const { io, out, err } = capture("/tmp/elsewhere");
+    expect(await main(["--dry-run", "my-mod"], io)).toBe(0);
+    expect(out()).toContain("  AGENTS.md\n");
+    expect(out()).toContain("  CLAUDE.md -> AGENTS.md\n");
+    expect(err()).toBe("");
   });
 
   it("takes a directory named like a command when the command is spelled out", async () => {
@@ -173,6 +197,7 @@ describe("init", () => {
       expect(out(), command).toContain(command);
     }
     expect(out()).toContain("--no-git");
+    expect(out()).toContain("--no-llm");
     expect(err()).toBe("");
   });
 

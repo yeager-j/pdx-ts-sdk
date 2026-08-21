@@ -1,5 +1,6 @@
 import type * as PageTree from "fumadocs-core/page-tree";
 
+import { SDK_DOCS_REVISION_LINE, SDK_DOCS_VERSION_LINE } from "@/lib/sdk-docs-version";
 import { pageMarkdownSegments, source } from "@/lib/source";
 
 /**
@@ -11,7 +12,13 @@ import { pageMarkdownSegments, source } from "@/lib/source";
  */
 export function llmsIndex(): string {
   const tree = source.getPageTree();
-  const out: string[] = [`# ${nameOf(tree.name)}`, ""];
+  const out: string[] = [
+    `# ${nameOf(tree.name)}`,
+    "",
+    SDK_DOCS_VERSION_LINE,
+    SDK_DOCS_REVISION_LINE,
+    "",
+  ];
   for (const child of tree.children) {
     out.push(...formatNode(child, 0));
   }

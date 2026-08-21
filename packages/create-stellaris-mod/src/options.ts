@@ -98,6 +98,11 @@ export const FLAGS = {
   },
   prettier: { type: "boolean", negatable: true, describe: "Prettier config (default: yes)" },
   eslint: { type: "boolean", negatable: true, describe: "ESLint config (default: yes)" },
+  llm: {
+    type: "boolean",
+    negatable: true,
+    describe: "Codex and Claude project support (default: yes)",
+  },
   git: { type: "boolean", negatable: true, describe: "Initialize a git repository (default: yes)" },
   install: { type: "boolean", negatable: true, describe: "Install dependencies (default: yes)" },
   "dry-run": { type: "boolean", describe: "Print what would be written, write nothing" },
@@ -183,6 +188,7 @@ export interface Resolved {
   readonly localSdk: string | undefined;
   readonly prettier: boolean;
   readonly eslint: boolean;
+  readonly llmSupport: boolean;
   readonly git: boolean;
   readonly install: boolean;
   readonly packageManager: string;

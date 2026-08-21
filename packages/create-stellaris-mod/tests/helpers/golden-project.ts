@@ -31,7 +31,7 @@ import path from "node:path";
 import ts from "typescript";
 
 import type { Resolved } from "../../src/options.ts";
-import { planFiles } from "../../src/plan.ts";
+import { planProject } from "../../src/plan.ts";
 
 const PACKAGE = path.resolve(import.meta.dirname, "../..");
 const REPO = path.resolve(PACKAGE, "../..");
@@ -48,6 +48,7 @@ const GOLDEN_PROJECT: Resolved = {
   localSdk: undefined,
   prettier: false,
   eslint: false,
+  llmSupport: true,
   git: false,
   install: false,
   packageManager: "npm",
@@ -166,13 +167,17 @@ export function createGoldenProject(): GoldenProject {
  * matrix needs: an empty content directory and a build harness whose output
  * directory is supplied by the test. `createGoldenProject` adds its source-link
  * compiler condition afterwards; it is intentionally not production plan data.
- * No committed mirror can silently drift from `planFiles`.
+ * No committed mirror can silently drift from `planProject`.
  */
 function materializeGoldenProject(dir: string): void {
-  for (const [relPath, contents] of planFiles(GOLDEN_PROJECT, "golden-fixture")) {
+  for (const [relPath, entry] of planProject(GOLDEN_PROJECT, "golden-fixture")) {
     const target = path.join(dir, relPath);
     mkdirSync(path.dirname(target), { recursive: true });
-    writeFileSync(target, contents);
+    if (entry.kind === "file") {
+      writeFileSync(target, entry.contents);
+    } else {
+      symlinkSync(entry.target, target);
+    }
   }
 
   rmSync(path.join(dir, "src/content/example.ts"));

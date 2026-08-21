@@ -46,7 +46,9 @@
     "@types/semver": "^7.8.0",
     "ajv": "^8.17.1",
     "eslint": "^9.39.5",
-    "typescript-eslint": "^8.66.0"
+    "smol-toml": "^1.8.0",
+    "typescript-eslint": "^8.66.0",
+    "yaml": "^2.9.0"
   },
   "repository": {
     "type": "git",
