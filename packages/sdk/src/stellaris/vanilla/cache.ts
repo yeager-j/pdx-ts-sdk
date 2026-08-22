@@ -6,7 +6,7 @@
  * input.
  *
  * The cache is an optimization, never a dependency: an unwritable directory
- * warns once and proceeds uncached. At technology-only scope the saving is
+ * proceeds uncached, silently. At technology-only scope the saving is
  * milliseconds; the layer exists so `load()` keeps its shape when the full
  * `common/` tree lands, where "install layer too slow to run every build" is
  * the handoff's named escape hatch.
@@ -65,8 +65,6 @@ export function readCache(dir: string, key: string): readonly ParsedSource[] | u
   }
 }
 
-let warnedUnwritable = false;
-
 export function writeCache(dir: string, key: string, sources: readonly ParsedSource[]): void {
   const payload: CacheFile = { formatVersion: CACHE_FORMAT_VERSION, sources };
   try {
@@ -76,12 +74,10 @@ export function writeCache(dir: string, key: string, sources: readonly ParsedSou
     writeFileSync(temp, JSON.stringify(payload), "utf8");
     renameSync(temp, target);
     prune(dir, key);
-  } catch (error) {
-    if (!warnedUnwritable) {
-      warnedUnwritable = true;
-      const message = error instanceof Error ? error.message : String(error);
-      console.warn(`pdx-ts: parse cache disabled (${message}); every build will re-parse`);
-    }
+  } catch {
+    // The cache is an optimization, not a dependency, and a cache failure is
+    // neither a thrown error nor `mod.warnings` data — it is a silent miss.
+    // `load()` returns the same view it would have returned uncached.
   }
 }
 

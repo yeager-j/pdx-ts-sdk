@@ -18,14 +18,22 @@ import {
   type RenderedMod,
 } from "./rendered.ts";
 
-const renderedAssets = new WeakMap<PureMod, RenderedMod>();
+const renderedMods = new WeakMap<PureMod, RenderedMod>();
 
+/**
+ * Serializes a compiled mod into the files a materialization writes.
+ *
+ * Rendering is pure over a frozen `PureMod`, so the result is a function of
+ * the mod's identity: every call with the same `PureMod` returns the same
+ * `RenderedMod` instance, whether or not the mod carries assets. The first
+ * call does the work and captures any asset bytes (which are single-use);
+ * later calls return that snapshot. A render that throws caches nothing, so
+ * the same mod throws again on the next call.
+ */
 export function render(mod: PureMod): RenderedMod {
-  if (mod.assets.length > 0) {
-    const cached = renderedAssets.get(mod);
-    if (cached !== undefined) {
-      return cached;
-    }
+  const cached = renderedMods.get(mod);
+  if (cached !== undefined) {
+    return cached;
   }
   const { prefix } = mod.config;
   const files: RenderedClaim[] = [];
@@ -76,9 +84,7 @@ export function render(mod: PureMod): RenderedMod {
   }
   assertSerializesTheLedger(mod, files);
   const rendered = createRenderedMod(prefix, renderDescriptor(mod), files);
-  if (mod.assets.length > 0) {
-    renderedAssets.set(mod, rendered);
-  }
+  renderedMods.set(mod, rendered);
   return rendered;
 }
 
