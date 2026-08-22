@@ -181,6 +181,10 @@ Treat these as triggers to investigate, not automatic verdicts:
 
 ## Distillation
 
+For operational guidance on names, functions, control flow, comments, and public documentation, use
+the companion [Code Style](../code-style/SKILL.md) skill. This document remains the authority for
+architecture, boundaries, interfaces, test strategy, and verification.
+
 0. **One authority for each piece of knowledge (DRY).**
 1. **Keep it simple; don't get clever.**
 2. **Give functions and files clear names and purposes.**
