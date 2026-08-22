@@ -11,8 +11,8 @@
  * cycle.
  */
 
+import type { MaterializationPhase } from "./output/journal.ts";
 import type { MaterializationReceipt } from "./output/receipt.ts";
-import type { MaterializationPhase } from "./output/transaction.ts";
 
 export class PdxSdkError extends Error {
   constructor(message: string) {

@@ -38,8 +38,9 @@ import {
   write,
   type RecoveryReport,
 } from "../src/index.ts";
+import { MATERIALIZATION_PHASES } from "../src/output/journal.ts";
 import { _setMaterializationTestHook } from "../src/output/test-hooks.ts";
-import { lockPathFor, MATERIALIZATION_PHASES } from "../src/output/transaction.ts";
+import { lockPathFor } from "../src/output/transaction.ts";
 import { renderGeneration, type Generation } from "./helpers/crash-mod.ts";
 import {
   JOURNAL_POINTS,

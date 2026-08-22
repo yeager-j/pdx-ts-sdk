@@ -336,7 +336,7 @@ export {
   type RecoveryAction,
   type RecoveryReport,
 } from "./output/recover.ts";
-export type { MaterializationPhase } from "./output/transaction.ts";
+export type { MaterializationPhase } from "./output/journal.ts";
 export {
   DEFAULT_CONTENT_PATTERN,
   discoverFeatures,

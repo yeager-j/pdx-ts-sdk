@@ -30,6 +30,7 @@ import { MATERIALIZATION_MANIFEST_PATH } from "../compiler/paths.ts";
 import { MaterializationError, type MaterializationEvidence } from "../errors.ts";
 import { modDir } from "../stellaris/launcher/mod-directory.ts";
 import { assertInstallDirName } from "./install.ts";
+import type { Journal, JournalHeader, JournalStaging, MaterializationPhase } from "./journal.ts";
 import type { DescriptorSnapshot } from "./receipt.ts";
 import {
   claimRecovery,
@@ -39,10 +40,6 @@ import {
   processIsAlive,
   recoveryRequired,
   tryReadJournal,
-  type Journal,
-  type JournalHeader,
-  type JournalStaging,
-  type MaterializationPhase,
 } from "./transaction.ts";
 import {
   observeDescriptor,
@@ -178,7 +175,7 @@ async function recoverUnlocked(
   const lastPhase = journal.lastPhase ?? "inspecting";
   assertJournalDescribes(target, journal, header);
   assertNotHeld(target, journal, header, lastPhase);
-  const claim = await claimRecovery(journal.path, {
+  const claim = await claimRecovery(target, journal.path, {
     pid: header.pid,
     startedAt: header.startedAt,
   });

@@ -13,7 +13,7 @@
  * target-relative path.
  */
 
-import { MATERIALIZATION_PHASES } from "../../src/output/transaction.ts";
+import { MATERIALIZATION_PHASES } from "../../src/output/journal.ts";
 
 /** One point per journal phase; the name is the phase itself. */
 export const JOURNAL_POINTS: readonly string[] = [...MATERIALIZATION_PHASES];

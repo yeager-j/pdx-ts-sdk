@@ -24,123 +24,23 @@ import path from "node:path";
 
 import { MaterializationError, type MaterializationLockHolder } from "../errors.ts";
 import { compareUtf8 } from "../ordering.ts";
-import type { DescriptorSnapshot } from "./receipt.ts";
+import {
+  JOURNAL_VERSION,
+  JournalFormatError,
+  parseJournal,
+  type Journal,
+  type JournalHeader,
+  type JournalMarker,
+  type JournalPhase,
+  type JournalRecord,
+  type JournalStaging,
+  type MaterializationPhase,
+} from "./journal.ts";
 import { _materializationTestPoint } from "./test-hooks.ts";
 import type { MaterializationMode } from "./write.ts";
 
-export const JOURNAL_VERSION = 1;
-
 /** The lock file's basename prefix, a sibling like `.pdx-staging-*` is. */
 export const LOCK_BASENAME_PREFIX = ".pdx-lock-";
-
-/**
- * How far a transaction had got. The rename phases are intents: each is
- * journaled immediately before a rename, and no completion record follows,
- * because a rename is atomic and its outcome is readable from disk — the
- * set-aside names are UUIDs, so "both the old and the new tree are at the
- * target" is not a state that can exist.
- *
- * Data rather than a bare union because the phase names are also the names of
- * the journal fault-injection points, and the crash matrix asserts its own
- * table against this list: a phase added here without a row there fails.
- */
-export const MATERIALIZATION_PHASES = [
-  "inspecting",
-  "staging",
-  "staged",
-  "content-deactivating",
-  "content-activating",
-  "descriptor-deactivating",
-  "descriptor-activating",
-  "committed",
-  "done",
-  "rolling-back",
-  "rolled-back",
-  "failed",
-  "recovering",
-] as const;
-
-export type MaterializationPhase = (typeof MATERIALIZATION_PHASES)[number];
-
-/** Line 1 of a primary journal: who is writing, to where, and what. */
-export interface JournalHeader {
-  readonly record: "header";
-  readonly version: number;
-  readonly phase: "inspecting";
-  readonly pid: number;
-  readonly hostname: string;
-  /** Diagnostics only; never an input to any decision. */
-  readonly startedAt: string;
-  readonly mode: MaterializationMode;
-  readonly prefix: string;
-  readonly target: string;
-  readonly renderedSha256: string;
-  /** Install mode only, from here down. */
-  readonly descriptorPath?: string;
-  readonly descriptorSha256?: string;
-  readonly descriptorByteLength?: number;
-  readonly secondaryLockPath?: string;
-}
-
-/**
- * The whole content of the descriptor lock. Two locks, one journal: the
- * descriptor side only points at the primary, so there is never a second
- * account of the same transaction to reconcile.
- */
-export interface JournalMarker {
-  readonly record: "marker";
-  readonly pid: number;
-  readonly hostname: string;
-  readonly primary: string;
-}
-
-/**
- * The set-aside and staging paths, journaled before anything creates them.
- * Writing the UUID names down first is what entitles recovery to delete them
- * later: a directory the journal never named is somebody else's.
- */
-export interface JournalStaging {
-  readonly record: "staging";
-  readonly phase: "staging";
-  readonly at: string;
-  readonly staging: string;
-  readonly previous: string;
-  readonly hadPrevious: boolean;
-  readonly previousManifestSha256?: string;
-  readonly descriptorStaging?: string;
-  readonly descriptorPrevious?: string;
-  readonly descriptorObserved?: DescriptorSnapshot;
-}
-
-export interface JournalPhase {
-  readonly record: "phase";
-  readonly phase: MaterializationPhase;
-  readonly at: string;
-  readonly detail?: string;
-  /** `recovering` records only: the arbitration between two recoveries. */
-  readonly pid?: number;
-  readonly hostname?: string;
-  readonly token?: string;
-}
-
-export type JournalRecord = JournalHeader | JournalMarker | JournalStaging | JournalPhase;
-
-/** A journal as read back: whole records, plus what they add up to. */
-export interface Journal {
-  readonly path: string;
-  readonly header?: JournalHeader;
-  readonly marker?: JournalMarker;
-  readonly staging?: JournalStaging;
-  readonly records: readonly JournalRecord[];
-  /**
-   * The last phase the transaction itself announced. `recovering` records are
-   * excluded: they are arbitration between recoveries, not progress by the
-   * writer, and a recovery that died must not change which row applies.
-   */
-  readonly lastPhase?: MaterializationPhase;
-  /** False when the file holds no usable record at all. */
-  readonly readable: boolean;
-}
 
 export function lockPathFor(target: string): string {
   return path.join(path.dirname(target), LOCK_BASENAME_PREFIX + path.basename(target));
@@ -178,7 +78,7 @@ export async function readJournal(lockPath: string): Promise<Journal | undefined
  */
 export type JournalRead =
   | { readonly ok: true; readonly journal: Journal | undefined }
-  | { readonly ok: false; readonly error: NodeJS.ErrnoException };
+  | { readonly ok: false; readonly error: Error };
 
 export async function tryReadJournal(lockPath: string): Promise<JournalRead> {
   try {
@@ -192,50 +92,16 @@ export async function tryReadJournal(lockPath: string): Promise<JournalRead> {
   }
 }
 
-/** Why a lock file could not be read, for a refusal message. */
-export function describeReadFailure(error: NodeJS.ErrnoException): string {
-  return error.code ?? error.message;
-}
-
-export function parseJournal(lockPath: string, text: string): Journal {
-  const lines = text.split("\n");
-  const records: JournalRecord[] = [];
-  for (let index = 0; index < lines.length; index++) {
-    const line = lines[index]!;
-    if (line === "") {
-      continue;
-    }
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(line);
-    } catch {
-      // A partial tail is the record a kill interrupted mid-append. Anything
-      // torn further up is corruption, and stops the read where it is.
-      break;
-    }
-    if (!isRecord(parsed)) {
-      break;
-    }
-    records.push(parsed);
+/**
+ * Why a lock file could not be read, for a refusal message. A file that is
+ * not a journal already says which record and which rule, so it is quoted
+ * whole; anything else is an errno, which needs the caller's path around it.
+ */
+export function describeReadFailure(error: Error): string {
+  if (error instanceof JournalFormatError) {
+    return error.message;
   }
-
-  let lastPhase: MaterializationPhase | undefined;
-  for (const record of records) {
-    if (record.record === "header" || record.record === "staging") {
-      lastPhase = record.phase;
-    } else if (record.record === "phase" && record.phase !== "recovering") {
-      lastPhase = record.phase;
-    }
-  }
-  return {
-    path: lockPath,
-    header: records.find((record): record is JournalHeader => record.record === "header"),
-    marker: records.find((record): record is JournalMarker => record.record === "marker"),
-    staging: records.find((record): record is JournalStaging => record.record === "staging"),
-    records,
-    ...(lastPhase === undefined ? {} : { lastPhase }),
-    readable: records.length > 0,
-  };
+  return (error as NodeJS.ErrnoException).code ?? error.message;
 }
 
 /**
@@ -361,8 +227,15 @@ export class MaterializationTransaction {
   }
 }
 
+/** One record, all of it, then fsync. */
+async function appendRecord(handle: FileHandle, record: JournalRecord): Promise<void> {
+  await writeWholly(handle, Buffer.from(`${JSON.stringify(record)}\n`, "utf8"));
+  await handle.sync();
+  await announce(record);
+}
+
 /**
- * One record, all of it, then fsync.
+ * Every byte, however many writes it takes.
  *
  * `write` is allowed to write fewer bytes than it was given, and a journal is
  * only evidence if a record is either wholly there or recognizably torn. A
@@ -370,8 +243,7 @@ export class MaterializationTransaction {
  * up to the cut — or worse, splices the next record onto the remainder — so
  * the loop runs to completion before anything is synced or announced.
  */
-async function appendRecord(handle: FileHandle, record: JournalRecord): Promise<void> {
-  const bytes = Buffer.from(`${JSON.stringify(record)}\n`, "utf8");
+async function writeWholly(handle: FileHandle, bytes: Buffer): Promise<void> {
   let written = 0;
   while (written < bytes.byteLength) {
     const { bytesWritten } = await handle.write(bytes, written, bytes.byteLength - written);
@@ -382,8 +254,6 @@ async function appendRecord(handle: FileHandle, record: JournalRecord): Promise<
     }
     written += bytesWritten;
   }
-  await handle.sync();
-  await announce(record);
 }
 
 /**
@@ -671,8 +541,12 @@ export type RecoveryClaim = "won" | "lost" | "gone";
  * read before all of it happened. Opening without creating catches the first
  * case; comparing the header against the transaction the caller read catches
  * the second, before anything is appended to a stranger's journal.
+ *
+ * A claim is the record that lands on a dead writer's torn tail, so it starts
+ * a line of its own rather than being spliced onto the half-written one.
  */
 export async function claimRecovery(
+  target: string,
   lockPath: string,
   expected: TransactionIdentity
 ): Promise<RecoveryClaim> {
@@ -686,7 +560,8 @@ export async function claimRecovery(
     throw error;
   }
   try {
-    if (!isTransaction(parseJournal(lockPath, await readWholeFile(handle)), expected)) {
+    const before = await readWholeFile(handle);
+    if (!isTransaction(readClaimedJournal(target, lockPath, before), expected)) {
       return "gone";
     }
     const token = randomUUID();
@@ -698,9 +573,12 @@ export async function claimRecovery(
       hostname: hostname(),
       token,
     };
+    if (before !== "" && !before.endsWith("\n")) {
+      await writeWholly(handle, Buffer.from("\n", "utf8"));
+    }
     await appendRecord(handle, claim);
 
-    const journal = parseJournal(lockPath, await readWholeFile(handle));
+    const journal = readClaimedJournal(target, lockPath, await readWholeFile(handle));
     if (!isTransaction(journal, expected) || !(await pathStillNames(handle, lockPath))) {
       return "gone";
     }
@@ -746,6 +624,22 @@ export async function pathStillNames(handle: FileHandle, lockPath: string): Prom
   return named.dev === held.dev && named.ino === held.ino;
 }
 
+/**
+ * The journal an arbitration is reading. A file that is not one cannot be
+ * claimed or acted on, so the claim becomes the same refusal the caller would
+ * have raised had the read failed one step earlier.
+ */
+function readClaimedJournal(target: string, lockPath: string, text: string): Journal {
+  try {
+    return parseJournal(lockPath, text);
+  } catch (error) {
+    if (error instanceof JournalFormatError) {
+      throw recoveryRequired(target, lockPath, error.message, undefined);
+    }
+    throw error;
+  }
+}
+
 function isTransaction(journal: Journal, expected: TransactionIdentity): boolean {
   return (
     journal.header !== undefined &&
@@ -778,12 +672,4 @@ async function closeAndUnlink(handle: FileHandle, lockPath: string): Promise<voi
       throw error;
     }
   });
-}
-
-function isRecord(value: unknown): value is JournalRecord {
-  if (typeof value !== "object" || value === null) {
-    return false;
-  }
-  const kind = (value as Record<string, unknown>)["record"];
-  return kind === "header" || kind === "marker" || kind === "staging" || kind === "phase";
 }

@@ -19,6 +19,7 @@
 
 import { randomUUID } from "node:crypto";
 import {
+  appendFileSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
@@ -46,16 +47,19 @@ import {
   write,
   type RecoveryReport,
 } from "../src/index.ts";
+import {
+  JournalFormatError,
+  parseJournal,
+  type MaterializationPhase,
+} from "../src/output/journal.ts";
 import { assertRepresentableMaterialization } from "../src/output/preflight.ts";
 import { createRenderedMod, type RenderedMod } from "../src/output/rendered.ts";
 import {
   claimRecovery,
   lockPathFor,
-  parseJournal,
   pathStillNames,
   processIsAlive,
   readJournal,
-  type MaterializationPhase,
 } from "../src/output/transaction.ts";
 import {
   descriptorRecord,
@@ -224,6 +228,78 @@ function writeJournal(options: JournalOptions): string {
   return lockPath;
 }
 
+/**
+ * One record of a journal, as the bytes on disk rather than as a typed value:
+ * the decoder tests are about files a writer never wrote.
+ */
+type RawRecord = Record<string, unknown>;
+
+function headerRecord(overrides: RawRecord = {}): RawRecord {
+  return {
+    record: "header",
+    version: 1,
+    phase: "inspecting",
+    pid: 1,
+    hostname: "h",
+    startedAt: "t",
+    mode: "build",
+    prefix: "tx_probe",
+    target: "/out",
+    renderedSha256: "x",
+    ...overrides,
+  };
+}
+
+/** The install half of a header, which a build header must not carry. */
+const INSTALL_HEADER_FIELDS: RawRecord = {
+  mode: "install",
+  descriptorPath: "/out.mod",
+  descriptorSha256: "d",
+  descriptorByteLength: 12,
+  secondaryLockPath: "/.pdx-lock-out.mod",
+};
+
+function stagingRecord(overrides: RawRecord = {}): RawRecord {
+  return {
+    record: "staging",
+    phase: "staging",
+    at: "t",
+    staging: "/s",
+    previous: "/p",
+    hadPrevious: true,
+    ...overrides,
+  };
+}
+
+/** The install half of a staging record. */
+const INSTALL_STAGING_FIELDS: RawRecord = {
+  descriptorStaging: "/ds",
+  descriptorPrevious: "/dp",
+  descriptorObserved: { state: "absent" },
+};
+
+function phaseRecord(phase: string, overrides: RawRecord = {}): RawRecord {
+  return { record: "phase", phase, at: "t", ...overrides };
+}
+
+function markerRecord(overrides: RawRecord = {}): RawRecord {
+  return { record: "marker", pid: 1, hostname: "h", primary: "/lock", ...overrides };
+}
+
+const BUILD_HEADER = JSON.stringify(headerRecord());
+
+/** A journal's text. A string stands for a line no record serializes to. */
+function journalText(...lines: readonly (RawRecord | string)[]): string {
+  return `${lines.map((line) => (typeof line === "string" ? line : JSON.stringify(line))).join("\n")}\n`;
+}
+
+/** The journal a writer of `mode` that got exactly this far would leave. */
+function historyText(mode: "build" | "install", phases: readonly string[]): string {
+  const header = mode === "build" ? headerRecord() : headerRecord(INSTALL_HEADER_FIELDS);
+  const staging = mode === "build" ? stagingRecord() : stagingRecord(INSTALL_STAGING_FIELDS);
+  return journalText(header, staging, ...phases.map((phase) => phaseRecord(phase)));
+}
+
 /** Stage a build the way `materialize` does, without activating it. */
 async function stageBuild(target: string, rendered: RenderedMod) {
   const inspection = await validateExistingMaterialization(target, rendered, "build");
@@ -335,7 +411,13 @@ describe("the lock is exclusive, and says who holds it", () => {
     const parent = tempDir();
     const out = join(parent, "out");
     mkdirSync(out);
-    writeJournal({ target: out, rendered: genOne, pid: process.pid, phases: ["staged"] });
+    writeJournal({
+      target: out,
+      rendered: genOne,
+      paths: stagingPaths(out),
+      pid: process.pid,
+      phases: ["staged"],
+    });
 
     const error = await refusal(write(out, genOne));
 
@@ -356,7 +438,12 @@ describe("the lock is exclusive, and says who holds it", () => {
     const parent = tempDir();
     const out = join(parent, "out");
     mkdirSync(out);
-    const lockPath = writeJournal({ target: out, rendered: genOne, phases: ["staged"] });
+    const lockPath = writeJournal({
+      target: out,
+      rendered: genOne,
+      paths: stagingPaths(out),
+      phases: ["staged"],
+    });
 
     const error = await refusal(write(out, genOne));
 
@@ -402,11 +489,32 @@ describe("the lock is exclusive, and says who holds it", () => {
     writeJournal({
       target: out,
       rendered: genOne,
+      paths: stagingPaths(out),
       pid: process.pid,
       phases: ["staged", "failed"],
     });
 
     expect((await refusal(write(out, genOne))).reason).toBe("recovery-required");
+  });
+
+  it("refuses with recovery-required when the held lock holds an illegal history", async () => {
+    // The decoder's verdict is the writer's refusal: a lock nobody can read
+    // as a transaction is not one to wait for, and not one to write over.
+    const parent = tempDir();
+    const out = join(parent, "out");
+    mkdirSync(out);
+    writeJournal({
+      target: out,
+      rendered: genOne,
+      paths: stagingPaths(out),
+      pid: process.pid,
+      phases: ["staged", "content-deactivating", "done"],
+    });
+
+    const error = await refusal(write(out, genTwo));
+
+    expect(error.reason).toBe("recovery-required");
+    expect(error.message).toContain('announces "done" after "content-deactivating"');
   });
 });
 
@@ -478,12 +586,7 @@ describe("the journal survives being read back", () => {
   it("ignores a record a kill interrupted mid-append", async () => {
     // fsync happens per record, so the tail is the only thing a kill can tear.
     // Refusing to read a torn tail would make every killed build unrecoverable.
-    const journal = parseJournal(
-      "/lock",
-      '{"record":"header","version":1,"phase":"inspecting","pid":1,"hostname":"h",' +
-        '"startedAt":"t","mode":"build","prefix":"tx_probe","target":"/out","renderedSha256":"x"}\n' +
-        '{"record":"phase","phase":"stag'
-    );
+    const journal = parseJournal("/lock", `${BUILD_HEADER}\n{"record":"phase","phase":"stag`);
 
     expect(journal.readable).toBe(true);
     expect(journal.lastPhase).toBe("inspecting");
@@ -493,11 +596,373 @@ describe("the journal survives being read back", () => {
     // A recovery that died must not change which row the next one reads.
     const journal = parseJournal(
       "/lock",
-      '{"record":"staging","phase":"staging","at":"t","staging":"/s","previous":"/p","hadPrevious":true}\n' +
-        '{"record":"phase","phase":"recovering","at":"t","pid":1,"token":"a"}\n'
+      `${BUILD_HEADER}\n` +
+        '{"record":"staging","phase":"staging","at":"t","staging":"/s","previous":"/p","hadPrevious":true}\n' +
+        '{"record":"phase","phase":"recovering","at":"t","pid":1,"hostname":"h","token":"a"}\n'
     );
 
     expect(journal.lastPhase).toBe("staging");
+  });
+});
+
+describe("the journal decoder fails closed", () => {
+  /** The refusal itself, so a case can assert which record and which rule. */
+  function rejection(text: string): JournalFormatError {
+    let thrown: unknown;
+    try {
+      parseJournal("/lock", text);
+    } catch (error) {
+      thrown = error;
+    }
+    expect(thrown).toBeInstanceOf(JournalFormatError);
+    return thrown as JournalFormatError;
+  }
+
+  const CLAIM = { pid: 1, hostname: "h", token: "a" };
+
+  /** Each fabricated journal, the record it breaks on, and the rule broken. */
+  const REJECTED: readonly [string, string, number, RegExp][] = [
+    [
+      "a record kind nothing writes",
+      journalText(headerRecord(), { record: "note" }),
+      2,
+      /"record" kind/,
+    ],
+    [
+      "a phase name nothing announces",
+      journalText(headerRecord(), phaseRecord("tidying")),
+      2,
+      /"phase"/,
+    ],
+    [
+      "inspecting as a phase record",
+      journalText(headerRecord(), phaseRecord("inspecting")),
+      2,
+      /only the header and staging records/,
+    ],
+    [
+      "staging as a phase record",
+      journalText(headerRecord(), phaseRecord("staging")),
+      2,
+      /only the header and staging records/,
+    ],
+    ["a second header", journalText(headerRecord(), headerRecord()), 2, /second header record/],
+    [
+      "a journal that does not open with its header",
+      journalText(phaseRecord("staged"), headerRecord()),
+      1,
+      /opens with a header/,
+    ],
+    [
+      "a marker among a writer's own records",
+      journalText(headerRecord(), markerRecord()),
+      2,
+      /second marker record/,
+    ],
+    [
+      "a marker file carrying more than the marker",
+      journalText(markerRecord(), phaseRecord("staged")),
+      2,
+      /descriptor marker/,
+    ],
+    [
+      "a second staging record",
+      journalText(headerRecord(), stagingRecord(), stagingRecord()),
+      3,
+      /directly after the header/,
+    ],
+    [
+      "a staging record the header does not precede",
+      journalText(headerRecord(), phaseRecord("staged"), stagingRecord()),
+      3,
+      /directly after the header/,
+    ],
+    [
+      "a journal from a version this build cannot read",
+      journalText(headerRecord({ version: 2 })),
+      1,
+      /version 1 header/,
+    ],
+    [
+      "a build header carrying the install half",
+      journalText(headerRecord({ descriptorPath: "/out.mod" })),
+      1,
+      /only an install writes/,
+    ],
+    [
+      "an install header missing half of it",
+      journalText(
+        headerRecord({
+          mode: "install",
+          descriptorPath: "/out.mod",
+          descriptorSha256: "d",
+          descriptorByteLength: 12,
+        })
+      ),
+      1,
+      /"secondaryLockPath"/,
+    ],
+    [
+      "a build staging record carrying the descriptor half",
+      journalText(headerRecord(), stagingRecord(INSTALL_STAGING_FIELDS)),
+      2,
+      /only an install writes/,
+    ],
+    [
+      "an install staging record with nothing observed",
+      journalText(
+        headerRecord(INSTALL_HEADER_FIELDS),
+        stagingRecord({ descriptorStaging: "/ds", descriptorPrevious: "/dp" })
+      ),
+      2,
+      /"descriptorObserved"/,
+    ],
+    [
+      "a descriptor observation that is not one",
+      journalText(
+        headerRecord(INSTALL_HEADER_FIELDS),
+        stagingRecord({
+          ...INSTALL_STAGING_FIELDS,
+          descriptorObserved: { state: "file", basename: "out.mod" },
+        })
+      ),
+      2,
+      /"descriptorObserved\.byteLength"/,
+    ],
+    [
+      "a field no record of its kind has",
+      journalText(headerRecord(), stagingRecord({ hurry: true })),
+      2,
+      /"hurry"/,
+    ],
+    [
+      "a field of the wrong type",
+      journalText(headerRecord(), stagingRecord({ hadPrevious: "yes" })),
+      2,
+      /boolean "hadPrevious"/,
+    ],
+    [
+      "a record missing a field it must have",
+      journalText(headerRecord(), stagingRecord(), { record: "phase", phase: "staged" }),
+      3,
+      /string "at"/,
+    ],
+    [
+      "an empty line between records",
+      `${BUILD_HEADER}\n\n${JSON.stringify(stagingRecord())}\n`,
+      2,
+      /empty line/,
+    ],
+    [
+      "a phase going backwards",
+      historyText("build", ["staged", "content-activating", "committed", "staged"]),
+      6,
+      /"staged" after "committed"/,
+    ],
+    [
+      "a phase the writer could not have skipped to",
+      historyText("build", ["staged", "committed"]),
+      4,
+      /"committed" after "staged"/,
+    ],
+    [
+      "a journal claiming it finished from a state that had not activated",
+      historyText("build", ["staged", "content-deactivating", "done"]),
+      5,
+      /"done" after "content-deactivating"/,
+    ],
+    [
+      "a descriptor phase in a build",
+      historyText("build", ["staged", "content-activating", "descriptor-activating"]),
+      5,
+      /only an install writes/,
+    ],
+    [
+      "progress after a recorded failure",
+      historyText("build", ["staged", "failed", "content-activating"]),
+      5,
+      /after "failed"/,
+    ],
+    [
+      "progress after a recovery took over",
+      journalText(
+        headerRecord(),
+        stagingRecord(),
+        phaseRecord("staged"),
+        phaseRecord("recovering", CLAIM),
+        phaseRecord("content-activating")
+      ),
+      5,
+      /after a recovery claim/,
+    ],
+    [
+      "a phase announced twice",
+      historyText("build", ["staged", "content-activating", "committed", "committed"]),
+      6,
+      /"committed" after "committed"/,
+    ],
+    [
+      "a rollback announced twice",
+      historyText("build", ["staged", "content-activating", "rolled-back", "rolled-back"]),
+      6,
+      /"rolled-back" after "rolled-back"/,
+    ],
+    [
+      "a recovery claim with no token to arbitrate on",
+      journalText(headerRecord(), phaseRecord("recovering", { pid: 1, hostname: "h" })),
+      2,
+      /"token"/,
+    ],
+    [
+      "a writer's own record carrying a claim's token",
+      journalText(headerRecord(), stagingRecord(), phaseRecord("staged", { token: "a" })),
+      3,
+      /only a "recovering" claim/,
+    ],
+    [
+      "a whole record where only a claim can follow a torn one",
+      journalText(headerRecord(), '{"record":"phase","phase":"content-deac', phaseRecord("staged")),
+      3,
+      /torn record 2/,
+    ],
+  ];
+
+  it.each(REJECTED)("refuses %s", (_label, text, line, detail) => {
+    const error = rejection(text);
+
+    expect(error.line).toBe(line);
+    expect(error.detail).toMatch(detail);
+    expect(error.message).toBe(`/lock: record ${line} ${error.detail}`);
+  });
+
+  it("reads a torn tail followed only by recovery claims", () => {
+    // The one malformation a kill produces: the writer died mid-append, and
+    // the recoveries that came along afterwards appended their claims.
+    const journal = parseJournal(
+      "/lock",
+      journalText(
+        headerRecord(),
+        stagingRecord(),
+        phaseRecord("staged"),
+        '{"record":"phase","phase":"content-deac',
+        phaseRecord("recovering", CLAIM),
+        phaseRecord("recovering", { pid: 2, hostname: "h", token: "b" })
+      )
+    );
+
+    expect(journal.records).toHaveLength(5);
+    expect(journal.lastPhase).toBe("staged");
+  });
+});
+
+describe("every history a writer can leave is accepted", () => {
+  /** The full content-and-descriptor path an install takes to commit. */
+  const INSTALL_COMMIT = [
+    "staged",
+    "content-deactivating",
+    "content-activating",
+    "descriptor-deactivating",
+    "descriptor-activating",
+    "committed",
+    "done",
+  ];
+
+  const HISTORIES: readonly [string, "build" | "install", readonly string[], string][] = [
+    [
+      "a build that committed over a previous output",
+      "build",
+      ["staged", "content-deactivating", "content-activating", "committed", "done"],
+      "done",
+    ],
+    [
+      "a first build, with nothing to set aside",
+      "build",
+      ["staged", "content-activating", "committed", "done"],
+      "done",
+    ],
+    [
+      "a build that rolled its previous output back",
+      "build",
+      ["staged", "content-deactivating", "content-activating", "rolling-back", "rolled-back"],
+      "rolled-back",
+    ],
+    [
+      "a first build that rolled back",
+      "build",
+      ["staged", "content-activating", "rolled-back"],
+      "rolled-back",
+    ],
+    [
+      "a rollback whose own rename did not land",
+      "build",
+      ["staged", "content-deactivating", "content-activating", "rolling-back"],
+      "rolling-back",
+    ],
+    ["an install that committed both halves", "install", INSTALL_COMMIT, "done"],
+    [
+      "an install with no descriptor to set aside",
+      "install",
+      ["staged", "content-activating", "descriptor-activating", "committed", "done"],
+      "done",
+    ],
+    [
+      "an install that rolled back from the descriptor set-aside",
+      "install",
+      [
+        "staged",
+        "content-deactivating",
+        "content-activating",
+        "descriptor-deactivating",
+        "rolling-back",
+        "rolled-back",
+      ],
+      "rolled-back",
+    ],
+    [
+      "an install that rolled back from the descriptor rename",
+      "install",
+      [
+        "staged",
+        "content-deactivating",
+        "content-activating",
+        "descriptor-activating",
+        "rolling-back",
+        "rolled-back",
+      ],
+      "rolled-back",
+    ],
+    [
+      "an install that rolled back in its content half",
+      "install",
+      ["staged", "content-deactivating", "content-activating", "rolling-back", "rolled-back"],
+      "rolled-back",
+    ],
+  ];
+
+  it.each(HISTORIES)("accepts %s", (_label, mode, phases, lastPhase) => {
+    const journal = parseJournal("/lock", historyText(mode, phases));
+
+    expect(journal.lastPhase).toBe(lastPhase);
+    expect(journal.readable).toBe(true);
+  });
+
+  it("accepts a failure recorded wherever an install had got to", () => {
+    for (let reached = 0; reached <= INSTALL_COMMIT.length; reached++) {
+      const phases = [...INSTALL_COMMIT.slice(0, reached), "failed"];
+
+      expect(parseJournal("/lock", historyText("install", phases)).lastPhase).toBe("failed");
+    }
+  });
+
+  it("accepts the claims recoveries append after the writer stopped", () => {
+    const text =
+      historyText("build", ["staged", "content-deactivating", "failed"]) +
+      journalText(
+        phaseRecord("recovering", { pid: 1, hostname: "h", token: "a" }),
+        phaseRecord("recovering", { pid: 2, hostname: "h", token: "b" })
+      );
+
+    expect(parseJournal("/lock", text).lastPhase).toBe("failed");
   });
 });
 
@@ -516,7 +981,13 @@ describe("recovery reads the journal and nothing else", () => {
   it("refuses to recover a transaction whose writer is still running", async () => {
     const out = join(tempDir(), "out");
     await write(out, genOne);
-    writeJournal({ target: out, rendered: genOne, pid: process.pid, phases: ["staged"] });
+    writeJournal({
+      target: out,
+      rendered: genOne,
+      paths: stagingPaths(out),
+      pid: process.pid,
+      phases: ["staged"],
+    });
 
     const error = await refusal(recoverMaterialization(out));
 
@@ -778,7 +1249,7 @@ describe("recovery reads the journal and nothing else", () => {
 
     expect((await recoverMaterialization(out)).outcome).toBe("restored-previous");
 
-    expect(await claimRecovery(lockPath, identity)).toBe("gone");
+    expect(await claimRecovery(out, lockPath, identity)).toBe("gone");
     expect(existsSync(lockPath)).toBe(false);
     // And the ordinary entry point says the same thing, without touching the
     // target the first recovery restored.
@@ -799,13 +1270,41 @@ describe("recovery reads the journal and nothing else", () => {
     const lockPath = writeJournal({ target: out, rendered: genTwo, pid: process.pid });
     const successor = readFileSync(lockPath, "utf8");
 
-    const claim = await claimRecovery(lockPath, {
+    const claim = await claimRecovery(out, lockPath, {
       pid: deadPid(),
       startedAt: "1970-01-01T00:00:00.000Z",
     });
 
     expect(claim).toBe("gone");
     expect(readFileSync(lockPath, "utf8")).toBe(successor);
+  });
+
+  it("appends its claim on a fresh line after a torn tail", async () => {
+    // The tail a kill leaves has no newline, so a claim written straight
+    // after it would be spliced onto the half-written record and lost: every
+    // recovery would then read its own claim as missing and report "lost".
+    const parent = tempDir();
+    const out = join(parent, "out");
+    mkdirSync(out);
+    const lockPath = writeJournal({
+      target: out,
+      rendered: genOne,
+      paths: stagingPaths(out),
+      phases: ["staged"],
+    });
+    appendFileSync(lockPath, '{"record":"phase","phase":"content-deac', "utf8");
+    const journal = await readJournal(lockPath);
+
+    const claim = await claimRecovery(out, lockPath, {
+      pid: journal!.header!.pid,
+      startedAt: journal!.header!.startedAt,
+    });
+
+    expect(claim).toBe("won");
+    const claims = parseJournal(lockPath, readFileSync(lockPath, "utf8")).records.filter(
+      (record) => record.record === "phase" && record.phase === "recovering"
+    );
+    expect(claims).toHaveLength(1);
   });
 
   it.skipIf(process.platform === "win32")(
@@ -1119,6 +1618,61 @@ describe("dirname is not part of the contract", () => {
   });
 });
 
+describe("an illegal history refuses before recovery touches anything", () => {
+  it("refuses a journal claiming it finished from a state that had not activated", async () => {
+    // The reproduction. The tree is a real pre-commit state: the previous
+    // output set aside, the staged tree not yet renamed into its place. The
+    // journal has one record too many. Read as progress, "done" says the
+    // transaction committed and cleaned up, so everything the journal names
+    // is residue — including the set-aside copy, which is the only output
+    // there is.
+    const parent = tempDir();
+    const out = join(parent, "out");
+    await write(out, genOne);
+    const previousSha = manifestSha(out);
+    const { paths } = await stageBuild(out, genTwo);
+    const lockPath = writeJournal({
+      target: out,
+      rendered: genTwo,
+      paths,
+      previousManifestSha256: previousSha,
+      phases: ["staged", "content-deactivating", "done"],
+    });
+    renameSync(out, paths.previous);
+    const lockBefore = readFileSync(lockPath, "utf8");
+
+    const error = await refusal(recoverMaterialization(out));
+
+    expect(error.reason).toBe("recovery-required");
+    if (error.failure.reason !== "recovery-required") {
+      throw new Error("unreachable");
+    }
+    expect(error.failure.journalPath).toBe(lockPath);
+    expect(error.message).toContain('announces "done" after "content-deactivating"');
+    expect(existsSync(out)).toBe(false);
+    expect(manifestSha(paths.previous)).toBe(previousSha);
+    expect(existsSync(join(paths.staging, MANIFEST))).toBe(true);
+    expect(readFileSync(lockPath, "utf8")).toBe(lockBefore);
+
+    // The same tree, with a journal that describes it: only the extra record
+    // stood between this state and its recovery.
+    writeJournal({
+      target: out,
+      rendered: genTwo,
+      paths,
+      previousManifestSha256: previousSha,
+      phases: ["staged", "content-deactivating"],
+    });
+
+    const report = await recoverMaterialization(out);
+
+    expect(report.outcome).toBe("restored-previous");
+    expect(manifestSha(out)).toBe(previousSha);
+    expect(existsSync(join(out, GEN_TWO_ONLY))).toBe(false);
+    expect(readdirSync(parent)).toEqual(["out"]);
+  });
+});
+
 describe("a journal only has authority over its own siblings", () => {
   it("refuses a journal naming a staging path somewhere else entirely", async () => {
     // The journal lives in the directory it protects, so anyone who can write
@@ -1357,7 +1911,7 @@ describe("a descriptor symlink is compared by what it points at", () => {
       rendered: genTwo,
       paths: staged.paths,
       descriptor: { ...staged.descriptor, observed: { state: "symlink" } },
-      phases: ["staged", "descriptor-deactivating"],
+      phases: ["staged", "content-deactivating", "content-activating", "descriptor-deactivating"],
     });
     return staged;
   }
