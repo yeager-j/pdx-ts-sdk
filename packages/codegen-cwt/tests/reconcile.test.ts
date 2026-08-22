@@ -11,7 +11,7 @@ import {
   updatedBaseline,
   type DriftBaseline,
   type ScopeConflict,
-} from "@pdx-ts/codegen-cwt/reconcile";
+} from "@pdx-ts/codegen-cwt/reconcile/reconcile";
 import { SPECIAL_SCOPE_PATHS } from "@pdx-ts/codegen-cwt/special-scope-paths";
 import { describe, expect, it } from "vitest";
 

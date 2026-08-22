@@ -2,7 +2,7 @@ import {
   emitScriptReferences,
   validateScriptReferences,
   type ScriptEffectReferenceRow,
-} from "@pdx-ts/codegen-cwt/emit/script-reference";
+} from "@pdx-ts/codegen-cwt/emit/script/script-reference";
 import { describe, expect, it } from "vitest";
 
 const effect = (overrides: Partial<ScriptEffectReferenceRow> = {}): ScriptEffectReferenceRow => ({

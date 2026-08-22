@@ -14,7 +14,7 @@
 
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import type { RuleScopes } from "@pdx-ts/codegen-cwt/scope-facts";
+import type { RuleScopes } from "@pdx-ts/codegen-cwt/lower/scope-facts";
 import { locateInstall, requireGameVersion } from "@pdx-ts/sdk/stellaris";
 import { beforeAll, describe, expect, it } from "vitest";
 

@@ -12,10 +12,10 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseCwt } from "@pdx-ts/codegen-cwt/cwt/parser";
 import { readAliases, type AliasDecl } from "@pdx-ts/codegen-cwt/cwt/rules";
-import { emitAliasStruct } from "@pdx-ts/codegen-cwt/emit/alias-struct";
-import { Emitter } from "@pdx-ts/codegen-cwt/emit/types";
+import { emitAliasStruct } from "@pdx-ts/codegen-cwt/emit/content/alias-struct";
 import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { EXTRA_ALIAS_CATEGORIES } from "@pdx-ts/codegen-cwt/overlay";
+import { Emitter } from "@pdx-ts/codegen-cwt/render/emitter";
 import { describe, expect, it } from "vitest";
 
 /** The repo root, from this module — never the directory vitest was started in. */

@@ -17,8 +17,8 @@
 
 import { readFileSync, statSync } from "node:fs";
 import path from "node:path";
-import { auditedSpellings } from "@pdx-ts/codegen-cwt/casing";
-import { relativeRegistryPath, walkRegistryFiles } from "@pdx-ts/codegen-cwt/registry-files";
+import { auditedSpellings } from "@pdx-ts/codegen-cwt/corpus/casing";
+import { relativeRegistryPath, walkRegistryFiles } from "@pdx-ts/codegen-cwt/corpus/registry-files";
 import { parse, type PdxItem } from "@pdx-ts/pdxscript";
 
 import { compareIdentifiers } from "./emit.ts";

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { CONTENT_SHAPES, contentShape, type ContentShape } from "../src/content-shape.ts";
-import { formOfShape, type AuthoredForm } from "../src/emit/authored-form.ts";
+import { formOfShape, type AuthoredForm } from "../src/lower/authored-form.ts";
+import { CONTENT_SHAPES, contentShape, type ContentShape } from "../src/lower/content-shape.ts";
 
 describe("the closed content shape protocol", () => {
   it("classifies every shape without a default arm", () => {

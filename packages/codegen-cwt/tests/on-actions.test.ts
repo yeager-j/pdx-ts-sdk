@@ -1,6 +1,6 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { emitOnActions } from "@pdx-ts/codegen-cwt/emit/on-actions";
+import { emitOnActions } from "@pdx-ts/codegen-cwt/emit/script/on-actions";
 import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { describe, expect, it } from "vitest";
 

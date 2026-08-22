@@ -31,11 +31,6 @@ import { mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "nod
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
-  CONTENT_MANIFEST,
-  registryNameOf,
-  type ContentManifestEntry,
-} from "@pdx-ts/codegen-cwt/content-manifest";
-import {
   readRegistryCorpus,
   spliceMembersOf,
   type DescentNode,
@@ -44,18 +39,23 @@ import {
   type RuleScopes,
   type SpliceMember,
 } from "@pdx-ts/codegen-cwt/corpus";
+import { relativeRegistryPath, walkRegistryFiles } from "@pdx-ts/codegen-cwt/corpus/registry-files";
 import { scopeIndex } from "@pdx-ts/codegen-cwt/cwt/rules";
-import { emitAliasSplice } from "@pdx-ts/codegen-cwt/emit/alias-splice";
-import { emitContentType } from "@pdx-ts/codegen-cwt/emit/content-type";
-import type { EmittedField } from "@pdx-ts/codegen-cwt/emit/fields";
-import { joinModifierScopes } from "@pdx-ts/codegen-cwt/emit/modifiers";
-import { canonicalScopeSet, declaredScopes } from "@pdx-ts/codegen-cwt/emit/shape";
-import { Emitter } from "@pdx-ts/codegen-cwt/emit/types";
+import { emitAliasSplice } from "@pdx-ts/codegen-cwt/emit/content/alias-splice";
+import { emitContentType } from "@pdx-ts/codegen-cwt/emit/content/content-type";
+import { joinModifierScopes } from "@pdx-ts/codegen-cwt/emit/script/modifiers";
 import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { parseModifierDocs } from "@pdx-ts/codegen-cwt/logs/modifier-docs";
 import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
+import type { EmittedField } from "@pdx-ts/codegen-cwt/lower/fields";
+import { canonicalScopeSet, declaredScopes } from "@pdx-ts/codegen-cwt/lower/script-shape";
 import { CONTENT_DECLINED_FIELDS } from "@pdx-ts/codegen-cwt/overlay";
-import { relativeRegistryPath, walkRegistryFiles } from "@pdx-ts/codegen-cwt/registry-files";
+import {
+  CONTENT_MANIFEST,
+  registryNameOf,
+  type ContentManifestEntry,
+} from "@pdx-ts/codegen-cwt/policy/manifest";
+import { Emitter } from "@pdx-ts/codegen-cwt/render/emitter";
 import { parse, scalarText, type PdxValue } from "@pdx-ts/pdxscript";
 
 import { InstallNotFoundError } from "../../src/errors.ts";

@@ -9,31 +9,20 @@ import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { contentFileLayout } from "./content-layout.ts";
-import {
-  CONTENT_MANIFEST,
-  registryNameOf,
-  VANILLA_REF_EXTRAS,
-  type ContentManifestEntry,
-} from "./content-manifest.ts";
-import { referenceNameOf, typesReferencedBySubtype } from "./content-reference.ts";
-import { emitContentShapeProtocol } from "./content-shape.ts";
-import { deriveContentSwapIdentities, emitContentSwapProtocol } from "./content-swap-policy.ts";
 import { scopeIndex, type ContentType } from "./cwt/rules.ts";
-import { createEffectPolicy, emitEffectPolicyProtocol } from "./effect-policy.ts";
-import { emitAliasSplice, type AliasSpliceEmission } from "./emit/alias-splice.ts";
-import { emitAliasStruct } from "./emit/alias-struct.ts";
-import { emitContentFieldDocs, type FieldDocsModule } from "./emit/content-field-docs.ts";
-import { emitContentType, type ContentEmission } from "./emit/content-type.ts";
-import { contentDefiners } from "./emit/definers.ts";
-import { emitEffects } from "./emit/effects.ts";
-import { emitEvents } from "./emit/events.ts";
-import type { DocTable, FieldOmissionRow } from "./emit/field-rows.ts";
-import { classifyLinks, emitScopeLinkNavigation, emitScopeLinks } from "./emit/links.ts";
-import { emitModifiers, joinModifierScopes } from "./emit/modifiers.ts";
-import { emitOnActions } from "./emit/on-actions.ts";
-import { structuralSpliceOf } from "./emit/rule-shapes.ts";
-import { emitScriptReferences } from "./emit/script-reference.ts";
+import { emitAliasSplice, type AliasSpliceEmission } from "./emit/content/alias-splice.ts";
+import { emitAliasStruct } from "./emit/content/alias-struct.ts";
+import { emitContentType, type ContentEmission } from "./emit/content/content-type.ts";
+import { contentDefiners } from "./emit/content/definers.ts";
+import { emitContentFieldDocs, type FieldDocsModule } from "./emit/content/field-docs.ts";
+import { emitVanillaRefs } from "./emit/content/vanilla-refs.ts";
+import { emitEffects } from "./emit/script/effects.ts";
+import { emitEvents } from "./emit/script/events.ts";
+import { classifyLinks, emitScopeLinkNavigation, emitScopeLinks } from "./emit/script/links.ts";
+import { emitModifiers, joinModifierScopes } from "./emit/script/modifiers.ts";
+import { emitOnActions } from "./emit/script/on-actions.ts";
+import { emitScriptReferences } from "./emit/script/script-reference.ts";
+import { emitTriggers } from "./emit/script/triggers.ts";
 import {
   canonicalScopes,
   emitEnums,
@@ -42,25 +31,22 @@ import {
   emitValueSets,
   valuelessEnums,
 } from "./emit/support.ts";
-import { importList } from "./emit/symbols.ts";
-import { emitTriggers } from "./emit/triggers.ts";
-import { Emitter, type Usage } from "./emit/types.ts";
-import { emitVanillaRefs } from "./emit/vanilla-refs.ts";
-import { createEventFieldPolicy, emitEventFieldProtocol } from "./event-field-policy.ts";
-import { header, write, writeModule } from "./generated-file.ts";
 import { loadRules } from "./load-rules.ts";
 import { parseModifierDocs } from "./logs/modifier-docs.ts";
 import { parseScopeLinks } from "./logs/scopes.ts";
 import { parseTriggerDocs } from "./logs/trigger-docs.ts";
-import { lowerRuleTable } from "./lowered-rule.ts";
-import { createModifierOperationPolicy, emitModifierOperationProtocol } from "./modifier-policy.ts";
+import { contentFileLayout } from "./lower/content-layout.ts";
+import { referenceNameOf, typesReferencedBySubtype } from "./lower/content-reference.ts";
+import { emitContentShapeProtocol } from "./lower/content-shape.ts";
+import { lowerRuleTable } from "./lower/lowered-rule.ts";
+import { structuralSpliceOf } from "./lower/rule-shapes.ts";
 import { docComment, kebabCase } from "./naming.ts";
 import {
   assertHandWrittenTriggerExportsMatchRules,
   assertOverlayRegistriesKnown,
   assertPatchWideningsTargetPatchableRegistries,
   assertScriptedModifierCategoryMapValid,
-} from "./overlay-audit.ts";
+} from "./overlay/audit.ts";
 import {
   ASSET_PATH_FIELDS,
   CONTENT_CONTRIBUTION_SINKS,
@@ -81,16 +67,33 @@ import {
   REQUIRED_LOCALISATION,
   SCRIPTED_MODIFIER_CATEGORY_MAP,
   SYNTHETIC_LOCALISATION,
-} from "./overlay.ts";
+} from "./overlay/index.ts";
+import { deriveContentSwapIdentities, emitContentSwapProtocol } from "./policy/content-swaps.ts";
+import { createEffectPolicy, emitEffectPolicyProtocol } from "./policy/effects.ts";
+import { createEventFieldPolicy, emitEventFieldProtocol } from "./policy/event-fields.ts";
+import {
+  CONTENT_MANIFEST,
+  registryNameOf,
+  VANILLA_REF_EXTRAS,
+  type ContentManifestEntry,
+} from "./policy/manifest.ts";
+import {
+  createModifierOperationPolicy,
+  emitModifierOperationProtocol,
+} from "./policy/modifiers.ts";
+import { formatScriptGapReport, reconcileScriptGaps } from "./policy/script-gaps.ts";
+import { HAND_WRITTEN_TRIGGER_EXPORTS, RESERVED_TRIGGER_EXPORT_NAMES } from "./policy/triggers.ts";
 import {
   compareToBaseline,
   reconcile,
   updatedBaseline,
   type DriftBaseline,
   type DriftReport,
-} from "./reconcile.ts";
-import { formatScriptGapReport, reconcileScriptGaps } from "./script-gaps.ts";
-import { HAND_WRITTEN_TRIGGER_EXPORTS, RESERVED_TRIGGER_EXPORT_NAMES } from "./trigger-policy.ts";
+} from "./reconcile/reconcile.ts";
+import { Emitter, type Usage } from "./render/emitter.ts";
+import type { DocTable, FieldOmissionRow } from "./render/field-rows.ts";
+import { header, write, writeModule } from "./render/generated-file.ts";
+import { importList } from "./render/symbols.ts";
 
 /**
  * Every path this script touches is anchored to the module, not the process:

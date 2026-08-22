@@ -13,13 +13,13 @@
  * from the rules rather than written down twice.
  */
 
+import { MINT_SHAPE_OVERLAYS } from "@pdx-ts/codegen-cwt/overlay";
 import {
   CONTENT_MANIFEST,
   registryNameOf,
   VANILLA_REF_EXTRAS,
   type VanillaRefExtra,
-} from "@pdx-ts/codegen-cwt/content-manifest";
-import { MINT_SHAPE_OVERLAYS } from "@pdx-ts/codegen-cwt/overlay";
+} from "@pdx-ts/codegen-cwt/policy/manifest";
 
 import type { BucketLayout } from "./trie.ts";
 

@@ -8,14 +8,14 @@
  */
 
 import { emitScopes } from "@pdx-ts/codegen-cwt/emit/support";
+import { referencesIdentifier } from "@pdx-ts/codegen-cwt/naming";
+import { Emitter } from "@pdx-ts/codegen-cwt/render/emitter";
 import {
   assertRecordedImportsAreUsed,
   ImportRecorder,
   KNOWN_SYMBOLS,
   renderImports,
-} from "@pdx-ts/codegen-cwt/emit/symbols";
-import { Emitter } from "@pdx-ts/codegen-cwt/emit/types";
-import { referencesIdentifier } from "@pdx-ts/codegen-cwt/naming";
+} from "@pdx-ts/codegen-cwt/render/symbols";
 import { describe, expect, it } from "vitest";
 
 /** The Emitter's import recorder needs no rules, so an empty rule set will do. */

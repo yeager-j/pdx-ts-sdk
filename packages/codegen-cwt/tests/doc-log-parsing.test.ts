@@ -11,7 +11,11 @@ import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { parseModifierDocs } from "@pdx-ts/codegen-cwt/logs/modifier-docs";
 import { parseScopeLinks } from "@pdx-ts/codegen-cwt/logs/scopes";
 import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
-import { compareToBaseline, reconcile, type DriftBaseline } from "@pdx-ts/codegen-cwt/reconcile";
+import {
+  compareToBaseline,
+  reconcile,
+  type DriftBaseline,
+} from "@pdx-ts/codegen-cwt/reconcile/reconcile";
 import { describe, expect, it } from "vitest";
 
 /** The repo root, from this module — never the directory vitest was started in. */

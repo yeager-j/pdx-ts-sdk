@@ -1,16 +1,10 @@
 import { readFileSync } from "node:fs";
-import {
-  CONTENT_MANIFEST,
-  registryNameOf,
-  type ContentManifestEntry,
-} from "@pdx-ts/codegen-cwt/content-manifest";
 import type { RuleField } from "@pdx-ts/codegen-cwt/cwt/model";
-import { emitAliasSplice } from "@pdx-ts/codegen-cwt/emit/alias-splice";
-import { emitContentType } from "@pdx-ts/codegen-cwt/emit/content-type";
-import { pickOrdinary, type EmittedField } from "@pdx-ts/codegen-cwt/emit/fields";
-import type { FieldContext } from "@pdx-ts/codegen-cwt/emit/scope-context";
-import { Emitter } from "@pdx-ts/codegen-cwt/emit/types";
+import { emitAliasSplice } from "@pdx-ts/codegen-cwt/emit/content/alias-splice";
+import { emitContentType } from "@pdx-ts/codegen-cwt/emit/content/content-type";
 import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
+import { pickOrdinary, type EmittedField } from "@pdx-ts/codegen-cwt/lower/fields";
+import type { FieldContext } from "@pdx-ts/codegen-cwt/lower/scope-context";
 import { constantCase, pascalCase } from "@pdx-ts/codegen-cwt/naming";
 import {
   CONTENT_DECLINED_FIELDS,
@@ -18,6 +12,12 @@ import {
   HAND_WRITTEN_CONTENT_DEFINERS,
   SPRITE_SHAPE_MINTS,
 } from "@pdx-ts/codegen-cwt/overlay";
+import {
+  CONTENT_MANIFEST,
+  registryNameOf,
+  type ContentManifestEntry,
+} from "@pdx-ts/codegen-cwt/policy/manifest";
+import { Emitter } from "@pdx-ts/codegen-cwt/render/emitter";
 import { describe, expect, it } from "vitest";
 
 /** Just the names: the emitter now describes each field's lowered shape too. */

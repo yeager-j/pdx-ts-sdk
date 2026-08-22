@@ -39,7 +39,6 @@
  * game must notice.
  */
 
-import { OBSERVED_CASINGS } from "@pdx-ts/codegen-cwt/casing";
 import {
   conformance,
   DESCENT_MODES,
@@ -48,7 +47,8 @@ import {
   type DescentNode,
   type RuleScopes,
 } from "@pdx-ts/codegen-cwt/corpus";
-import type { EmittedField } from "@pdx-ts/codegen-cwt/emit/fields";
+import { OBSERVED_CASINGS } from "@pdx-ts/codegen-cwt/corpus/casing";
+import type { EmittedField } from "@pdx-ts/codegen-cwt/lower/fields";
 import { describe, expect, it } from "vitest";
 
 import { InstallNotFoundError } from "../../src/errors.ts";

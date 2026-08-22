@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { CONTENT_SHAPES } from "../src/content-shape.ts";
-import { WRITTEN_FORM, WRITTEN_FORM_EXEMPT } from "../src/corpus.ts";
+import { WRITTEN_FORM, WRITTEN_FORM_EXEMPT } from "../src/corpus/corpus.ts";
+import { CONTENT_SHAPES } from "../src/lower/content-shape.ts";
 
 describe("the written-form table covers every content shape", () => {
   it("gives every CONTENT_SHAPES member a row or a named exemption, and nothing else", () => {

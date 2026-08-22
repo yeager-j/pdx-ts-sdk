@@ -1,7 +1,7 @@
 /** Emitters for the small supporting modules: scopes, enums, and references. */
 
 import { camelCase, docComment, pascalCase, pluralize } from "../naming.ts";
-import type { Emitter } from "./types.ts";
+import type { Emitter } from "../render/emitter.ts";
 
 export function canonicalScopes(scopes: ReadonlyMap<string, readonly string[]>): string[] {
   const names = [...scopes.keys()].map((name) => name.toLowerCase().replaceAll(" ", "_"));

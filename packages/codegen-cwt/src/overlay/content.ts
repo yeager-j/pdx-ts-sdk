@@ -8,7 +8,7 @@
  * its place.
  */
 
-import type { ContentShape } from "../content-shape.ts";
+import type { ContentShape } from "../lower/content-shape.ts";
 
 /**
  * Structural triggers the SDK models by hand rather than generating.

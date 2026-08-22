@@ -9,7 +9,7 @@
 
 import type { RuleField } from "@pdx-ts/codegen-cwt/cwt/model";
 import type { ContentSubtype } from "@pdx-ts/codegen-cwt/cwt/rules";
-import { partitionSubtypeFields } from "@pdx-ts/codegen-cwt/emit/subtype-partition";
+import { partitionSubtypeFields } from "@pdx-ts/codegen-cwt/lower/subtype-partition";
 import { describe, expect, it } from "vitest";
 
 function subtype(name: string, keyFilter: string | null, negated = false): ContentSubtype {
