@@ -40,6 +40,11 @@ Read `README.md` before making architectural changes.
 `packages/codegen-cwt/` (`@pdx-ts/codegen-cwt`); `verified-build.ts` comes from the hermetic
 `@pdx-ts/codegen-vanilla` verified-build projection. Never edit generated files by hand.
 
+`packages/create-stellaris-mod/src/generated/package-version.ts` and
+`packages/docs-site/lib/generated/sdk-docs-revision.ts` are the exception: they hold a hash of
+`packages/sdk/src` and are regenerated on every install, typecheck, test, and build, so they are
+gitignored rather than committed.
+
 The main inputs are:
 
 - `vendor/cwtools-stellaris-config/` for vendored CWT rules and Stellaris documentation dumps

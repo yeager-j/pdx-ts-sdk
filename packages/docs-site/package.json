@@ -6,11 +6,11 @@
   "scripts": {
     "dev": "npm run examples:check && next dev --webpack",
     "examples:check": "node --conditions=pdx-source scripts/check-examples.ts",
-    "build": "tsc -p tsconfig.examples.json && npm run examples:check && npm run scopes:check && next build --webpack && node scripts/check-built-docs.mjs",
+    "build": "node ../create-stellaris-mod/scripts/generate-version.mjs && tsc -p tsconfig.examples.json && npm run examples:check && npm run scopes:check && next build --webpack && node scripts/check-built-docs.mjs",
     "preview": "next start",
     "scopes:check": "node --conditions=pdx-source scripts/generate-scope-pages.ts --check",
     "scopes:generate": "node --conditions=pdx-source scripts/generate-scope-pages.ts",
-    "typecheck": "tsc --noEmit && tsc -p tsconfig.examples.json"
+    "typecheck": "node ../create-stellaris-mod/scripts/generate-version.mjs && tsc --noEmit && tsc -p tsconfig.examples.json"
   },
   "engines": {
     "node": ">=22"
