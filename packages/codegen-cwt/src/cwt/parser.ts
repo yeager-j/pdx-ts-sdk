@@ -9,52 +9,82 @@
 
 import { CwtSyntaxError, tokenize, type Token } from "./lexer.ts";
 
+/** An assignment or comparison operator in a CWT rule. */
 export type CwtOp = "=" | "==";
 
+/** A scalar CWT value as written in the source. */
 export interface CwtScalar {
+  /** Identifies this value as a scalar. */
   readonly kind: "scalar";
+  /** The scalar text without surrounding quotes. */
   readonly text: string;
+  /** Whether the source enclosed the scalar in double quotes. */
   readonly quoted: boolean;
+  /** The one-based source line containing the scalar. */
   readonly line: number;
 }
 
+/** An ordered CWT block containing assignments and bare values. */
 export interface CwtBlock {
+  /** Identifies this value as a block. */
   readonly kind: "block";
+  /** The block's ordered child nodes. */
   readonly nodes: readonly CwtNode[];
+  /** The one-based source line containing the opening brace. */
   readonly line: number;
 }
 
+/** A scalar or block value in a CWT rule. */
 export type CwtValue = CwtScalar | CwtBlock;
 
 /** A `## key = value`, `## key <> value`, or bare `## flag` annotation. */
 export interface CwtOption {
+  /** The option name after the `##` marker. */
   readonly name: string;
+  /** Whether the option uses the `<>` operator. */
   readonly negated: boolean;
+  /** The option value, or `null` for a bare flag. */
   readonly value: CwtValue | null;
+  /** The one-based source line containing the option. */
   readonly line: number;
 }
 
+/** A keyed CWT rule with its bound documentation and options. */
 export interface CwtAssignment {
+  /** Identifies this node as an assignment. */
   readonly kind: "assignment";
+  /** The scalar key on the left side of the operator. */
   readonly key: CwtScalar;
+  /** The assignment or comparison operator. */
   readonly op: CwtOp;
+  /** The value on the right side of the operator. */
   readonly value: CwtValue;
+  /** Documentation comments bound to this assignment. */
   readonly docs: readonly string[];
+  /** Option comments bound to this assignment. */
   readonly options: readonly CwtOption[];
+  /** The one-based source line containing the key. */
   readonly line: number;
 }
 
 /** A value standing alone inside a block, such as `<technology>` in a prerequisites rule. */
 export interface CwtBareValue {
+  /** Identifies this node as a bare value. */
   readonly kind: "value";
+  /** The scalar or block value. */
   readonly value: CwtValue;
+  /** Documentation comments bound to this value. */
   readonly docs: readonly string[];
+  /** Option comments bound to this value. */
   readonly options: readonly CwtOption[];
+  /** The one-based source line containing the value. */
   readonly line: number;
 }
 
+/** An assignment or bare value within a CWT file or block. */
 export type CwtNode = CwtAssignment | CwtBareValue;
 
+/** A recoverable condition reported while reading CWT source. */
 export type DiagnosticKind = "malformed-option" | "orphan-comment" | "unknown-keyword";
 
 /**
@@ -66,15 +96,23 @@ export type DiagnosticKind = "malformed-option" | "orphan-comment" | "unknown-ke
  * quietly missing rule.
  */
 export interface CwtDiagnostic {
+  /** The diagnostic category. */
   readonly kind: DiagnosticKind;
+  /** The source file that contains the condition. */
   readonly file: string;
+  /** The one-based source line that contains the condition. */
   readonly line: number;
+  /** The source text associated with the condition. */
   readonly text: string;
 }
 
+/** The parsed nodes and recoverable diagnostics for one CWT source file. */
 export interface CwtParseResult {
+  /** The source file name supplied to the parser. */
   readonly file: string;
+  /** The ordered top-level nodes. */
   readonly nodes: readonly CwtNode[];
+  /** Recoverable conditions found while parsing. */
   readonly diagnostics: readonly CwtDiagnostic[];
 }
 
@@ -147,10 +185,7 @@ class Parser {
   }
 
   private parseNode(): CwtNode {
-    const docs = this.pendingDocs;
-    const options = this.pendingOptions;
-    this.pendingDocs = [];
-    this.pendingOptions = [];
+    const { docs, options } = this.takePendingAnnotations();
 
     const first = this.parseValue();
     const next = this.peek();
@@ -235,7 +270,8 @@ class Parser {
   }
 
   private flushOrphans(): void {
-    for (const doc of this.pendingDocs) {
+    const { docs, options } = this.takePendingAnnotations();
+    for (const doc of docs) {
       this.diagnostics.push({
         kind: "orphan-comment",
         file: this.file,
@@ -243,7 +279,7 @@ class Parser {
         text: `### ${doc}`,
       });
     }
-    for (const option of this.pendingOptions) {
+    for (const option of options) {
       this.diagnostics.push({
         kind: "orphan-comment",
         file: this.file,
@@ -251,8 +287,13 @@ class Parser {
         text: `## ${option.name}`,
       });
     }
+  }
+
+  private takePendingAnnotations(): { docs: string[]; options: CwtOption[] } {
+    const annotations = { docs: this.pendingDocs, options: this.pendingOptions };
     this.pendingDocs = [];
     this.pendingOptions = [];
+    return annotations;
   }
 }
 
@@ -260,6 +301,7 @@ function describe(token: Token): string {
   return token.kind === "eof" ? "end of file" : `'${token.text}'`;
 }
 
+/** Parses one CWT source file without discarding recoverable diagnostics. */
 export function parseCwt(source: string, file: string): CwtParseResult {
   const parser = new Parser(tokenize(source, file), file);
   const nodes = parser.parseTopLevel();

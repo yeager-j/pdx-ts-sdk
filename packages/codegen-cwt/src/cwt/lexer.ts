@@ -6,20 +6,29 @@
  * comments that bind to the *following* entry, and the `==` operator.
  */
 
+/** The lexical categories recognized in a CWT source file. */
 export type TokenKind = "identifier" | "op" | "lbrace" | "rbrace" | "doc" | "option" | "eof";
 
+/** One CWT token with its source spelling and location. */
 export interface Token {
+  /** The token's lexical category. */
   readonly kind: TokenKind;
   /** Identifiers: the raw text. Operators: "=" or "==". Comments: the body after the `#` run. */
   readonly text: string;
+  /** Whether an identifier was enclosed in double quotes. */
   readonly quoted: boolean;
+  /** The one-based source line containing the token. */
   readonly line: number;
 }
 
+/** A syntax error tied to a CWT source file and line. */
 export class CwtSyntaxError extends Error {
+  /** The source file that contains the invalid syntax. */
   readonly file: string;
+  /** The one-based source line that contains the invalid syntax. */
   readonly line: number;
 
+  /** Creates a syntax error with a source-qualified message. */
   constructor(message: string, file: string, line: number) {
     super(`${file}:${line}: ${message}`);
     this.name = "CwtSyntaxError";
@@ -44,6 +53,7 @@ function classifyComment(hashes: number): TokenKind | null {
   return null;
 }
 
+/** Tokenizes one CWT source file, including semantic `##` and `###` comments. */
 export function tokenize(source: string, file: string): Token[] {
   const text = source.charCodeAt(0) === 0xfeff ? source.slice(1) : source;
   const tokens: Token[] = [];

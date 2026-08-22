@@ -44,11 +44,15 @@ export function contributesRefs(field: ArgField): boolean {
   );
 }
 
+/**
+ * Renders the statements that serialize one lowered trigger argument.
+ * Nested fields recurse into their own entry arrays while reference-bearing values also record uses.
+ */
 export function pushCode(
   emitter: Emitter,
   field: ArgField,
   access: string,
-  owner: string,
+  parentFieldPath: string,
   index: number,
   sink = "entries"
 ): string {
@@ -65,14 +69,14 @@ export function pushCode(
       // Indexed rather than named after the field, so the local can never
       // collide with `args`, `entries`, `refs`, or a sibling field's name.
       const local = `id${index}`;
-      const field_ = JSON.stringify(`${owner}.${field.name}`);
+      const fieldPath = JSON.stringify(`${parentFieldPath}.${field.name}`);
       if (field.value.value.scalarSymbol !== undefined) {
         emitter.use(field.value.value.scalarSymbol);
       }
       return (
         `const ${local} = ${field.value.value.toScalar(access)};\n` +
         `    ${sink}.push(${emitter.use("kv")}(${key}, ${local}));\n` +
-        `    refs.push({ targets: ${JSON.stringify(refTypes)}, id: ${local}, field: ${field_} });`
+        `    refs.push({ targets: ${JSON.stringify(refTypes)}, id: ${local}, field: ${fieldPath} });`
       );
     }
     case "scalarOrFields": {
@@ -83,7 +87,7 @@ export function pushCode(
             emitter,
             nestedField,
             nestedAccess,
-            `${owner}.${field.name}`,
+            `${parentFieldPath}.${field.name}`,
             nestedIndex,
             "nestedEntries"
           );
@@ -108,7 +112,7 @@ export function pushCode(
             emitter,
             nestedField,
             nestedAccess,
-            `${owner}.${field.name}`,
+            `${parentFieldPath}.${field.name}`,
             nestedIndex,
             "nestedEntries"
           );
@@ -126,7 +130,7 @@ export function pushCode(
         emitter,
         field.value,
         access,
-        `${owner}.${field.name}`,
+        `${parentFieldPath}.${field.name}`,
         index,
         key,
         sink
@@ -148,11 +152,15 @@ export function pushCode(
   }
 }
 
+/**
+ * Renders serialization for one cardinality-bearing list of scalar or structured values.
+ * Mixed lists dispatch each item once and preserve both item order and reference reporting.
+ */
 export function pushValueListCode(
   emitter: Emitter,
   value: Extract<ArgValue, { readonly kind: "valueList" }>,
   access: string,
-  owner: string,
+  fieldPath: string,
   index: number,
   key: string,
   sink: string
@@ -178,7 +186,7 @@ export function pushValueListCode(
     return (
       `const ${id} = ${scalar.toScalar(item)};\n` +
       `${items}.push(${emitter.use("scalar")}(${id}));\n` +
-      `refs.push({ targets: ${JSON.stringify(scalar.refTypes)}, id: ${id}, field: ${JSON.stringify(owner)} });`
+      `refs.push({ targets: ${JSON.stringify(scalar.refTypes)}, id: ${id}, field: ${JSON.stringify(fieldPath)} });`
     );
   })();
   const structuredPush = (() => {
@@ -188,7 +196,14 @@ export function pushValueListCode(
     const nested = structured
       .map((field, nestedIndex) => {
         const nestedAccess = propertyAccess(item, camelCase(field.name));
-        const code = pushCode(emitter, field, nestedAccess, owner, nestedIndex, "nestedEntries");
+        const code = pushCode(
+          emitter,
+          field,
+          nestedAccess,
+          fieldPath,
+          nestedIndex,
+          "nestedEntries"
+        );
         return field.optional ? `if (${nestedAccess} !== undefined) {\n  ${code}\n}` : code;
       })
       .join("\n");

@@ -9,8 +9,12 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { scopeIndex, type ContentType } from "./cwt/rules.ts";
-import { emitAliasCategories } from "./emit/content/alias-categories.ts";
+import { scopeIndex, type ContentType, type RuleSet } from "./cwt/rules.ts";
+import {
+  emitAliasCategories,
+  type AliasCategoryEmission,
+} from "./emit/content/alias-categories.ts";
+import type { AliasSpliceEmission } from "./emit/content/alias-splice.ts";
 import { emitContentType, type ContentEmission } from "./emit/content/content-type.ts";
 import { contentDefiners } from "./emit/content/definers.ts";
 import { emitContentFieldDocs, type FieldDocsModule } from "./emit/content/field-docs.ts";
@@ -70,7 +74,7 @@ import { deriveContentSwapIdentities, emitContentSwapProtocol } from "./policy/c
 import { createEffectPolicy, emitEffectPolicyProtocol } from "./policy/effects.ts";
 import { createEventFieldPolicy, emitEventFieldProtocol } from "./policy/event-fields.ts";
 import {
-  assertRegistryName,
+  assertAndRecordRegistryName,
   CONTENT_MANIFEST,
   effectiveKeyFilter,
   registryNameOf,
@@ -85,74 +89,214 @@ import { formatScriptGapReport, reconcileScriptGaps } from "./policy/script-gaps
 import { HAND_WRITTEN_TRIGGER_EXPORTS, RESERVED_TRIGGER_EXPORT_NAMES } from "./policy/triggers.ts";
 import { checkDrift } from "./reconcile/baseline.ts";
 import { reconcile } from "./reconcile/reconcile.ts";
-import { Emitter } from "./render/emitter.ts";
+import { Emitter, type Usage } from "./render/emitter.ts";
 import { header, write, writeModule } from "./render/generated-file.ts";
 import { importList } from "./render/symbols.ts";
 import { printReport, reportSection } from "./report.ts";
 
-/**
- * Every path this script touches is anchored to the module, not the process:
- * the inputs live in the repo, not in whatever directory `npm run codegen` was
- * invoked from, and a generator that silently reads a different rule set when
- * run from a subdirectory would be a nasty way to learn that.
- */
-const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
-const VENDOR = path.join(ROOT, "vendor/cwtools-stellaris-config");
-const CONFIG = path.join(VENDOR, "config");
-/** The dump directory matching the game version these rules target. */
-const DOCS = path.join(VENDOR, "script-docs/v4.4.1");
+const REPOSITORY_ROOT = fileURLToPath(new URL("../../../", import.meta.url));
+const CWT_VENDOR_DIRECTORY = path.join(REPOSITORY_ROOT, "vendor/cwtools-stellaris-config");
+const CWT_CONFIG_DIRECTORY = path.join(CWT_VENDOR_DIRECTORY, "config");
+const SCRIPT_DOCS_DIRECTORY = path.join(CWT_VENDOR_DIRECTORY, "script-docs/v4.4.1");
 
-function upstreamCommit(): string {
-  const version = readFileSync(`${VENDOR}/VERSION.md`, "utf8");
+interface EmittedManifestContent {
+  readonly manifest: (typeof CONTENT_MANIFEST)[number];
+  readonly registry: string;
+  readonly referenceName: string;
+  readonly keyword: string | undefined;
+  readonly type: ContentType;
+  readonly emission: ContentEmission;
+  readonly usage: Usage;
+}
+
+interface ManifestContentEmission {
+  readonly contents: EmittedManifestContent[];
+  readonly registryNames: ReadonlySet<string>;
+}
+
+interface GeneratorSources {
+  readonly rules: RuleSet;
+  readonly docs: ReturnType<typeof parseTriggerDocs>;
+  readonly links: ReturnType<typeof parseScopeLinks>;
+  readonly modifierDocs: ReturnType<typeof parseModifierDocs>;
+}
+
+interface ScriptRuleEmission {
+  readonly triggers: ReturnType<typeof emitTriggers>;
+  readonly triggerUsage: Usage;
+  readonly classifiedLinks: ReturnType<typeof classifyLinks>;
+  readonly scopeLinks: ReturnType<typeof emitScopeLinks>;
+  readonly effects: ReturnType<typeof emitEffects>;
+  readonly effectUsage: Usage;
+  readonly scriptGapLines: ReturnType<typeof formatScriptGapReport>;
+}
+
+interface EventModuleEmission {
+  readonly events: ReturnType<typeof emitEvents>;
+  readonly scriptReferences: ReturnType<typeof emitScriptReferences>;
+  readonly onActions: ReturnType<typeof emitOnActions>;
+}
+
+interface SharedRuleModuleInput {
+  readonly commit: string;
+  readonly rules: RuleSet;
+  readonly emitter: Emitter;
+  readonly modifierDocs: ReturnType<typeof parseModifierDocs>;
+  readonly modifierOperationPolicy: ReturnType<typeof createModifierOperationPolicy>;
+}
+
+interface ContentModuleInput {
+  readonly commit: string;
+  readonly rules: RuleSet;
+  readonly emitter: Emitter;
+  readonly contents: readonly EmittedManifestContent[];
+  readonly aliasCategories: ReadonlyMap<string, AliasCategoryEmission>;
+  readonly vanillaRefs: ReturnType<typeof emitVanillaRefs>;
+}
+
+interface ScriptModuleInput {
+  readonly commit: string;
+  readonly emitter: Emitter;
+  readonly triggers: ReturnType<typeof emitTriggers>;
+  readonly triggerUsage: Usage;
+  readonly classifiedLinks: ReturnType<typeof classifyLinks>;
+  readonly scopeLinks: ReturnType<typeof emitScopeLinks>;
+  readonly effects: ReturnType<typeof emitEffects>;
+  readonly effectUsage: Usage;
+  readonly effectPolicy: ReturnType<typeof createEffectPolicy>;
+}
+
+interface EventModuleInput {
+  readonly commit: string;
+  readonly rules: RuleSet;
+  readonly emitter: Emitter;
+  readonly effects: ReturnType<typeof emitEffects>;
+  readonly effectPolicy: ReturnType<typeof createEffectPolicy>;
+  readonly eventFieldPolicy: ReturnType<typeof createEventFieldPolicy>;
+}
+
+interface CodegenReportInput {
+  readonly commit: string;
+  readonly rules: RuleSet;
+  readonly emitter: Emitter;
+  readonly scopeLinks: ReturnType<typeof emitScopeLinks>;
+  readonly effects: ReturnType<typeof emitEffects>;
+  readonly modifiers: ReturnType<typeof emitModifiers>;
+  readonly triggers: ReturnType<typeof emitTriggers>;
+  readonly contents: readonly EmittedManifestContent[];
+  readonly definers: ReturnType<typeof contentDefiners>;
+  readonly vanillaRefs: ReturnType<typeof emitVanillaRefs>;
+  readonly events: ReturnType<typeof emitEvents>;
+  readonly scriptReferences: ReturnType<typeof emitScriptReferences>;
+  readonly effectPolicy: ReturnType<typeof createEffectPolicy>;
+  readonly onActions: ReturnType<typeof emitOnActions>;
+  readonly aliasCategories: ReadonlyMap<string, AliasCategoryEmission>;
+  readonly aliasSplices: ReadonlyMap<string, AliasSpliceEmission>;
+  readonly scriptGapLines: ReturnType<typeof formatScriptGapReport>;
+  readonly classifiedLinks: ReturnType<typeof classifyLinks>;
+}
+
+function readUpstreamCommit(vendorDirectory: string): string {
+  const version = readFileSync(path.join(vendorDirectory, "VERSION.md"), "utf8");
   return /`([0-9a-f]{40})`/.exec(version)?.[1] ?? "unknown";
 }
 
-/**
- * A registry's field count: its own keys, plus the fields lowered inside their
- * blocks where it has any. The two are counted apart because they are reached
- * differently — a nested field is authorable only through the member that owns
- * it, and only a `corpusDescents` walk measures it.
- */
-function fieldCount(emission: ContentEmission): string {
-  const nested = emission.nestedEmittedFields.length;
+function readGeneratorSources(
+  configDirectory: string,
+  scriptDocsDirectory: string
+): GeneratorSources {
+  const rules = loadRules(configDirectory);
+  const docs = parseTriggerDocs(
+    readFileSync(path.join(scriptDocsDirectory, "triggers.log"), "utf8"),
+    readFileSync(path.join(scriptDocsDirectory, "effects.log"), "utf8")
+  );
+  const links = parseScopeLinks(readFileSync(path.join(scriptDocsDirectory, "scopes.log"), "utf8"));
+  const modifierDocs = parseModifierDocs(
+    readFileSync(path.join(scriptDocsDirectory, "modifiers.log"), "utf8")
+  );
+  return { rules, docs, links, modifierDocs };
+}
+
+function describeEmittedFields(emission: ContentEmission): string {
+  const nestedFieldCount = emission.nestedEmittedFields.length;
   return (
-    `${emission.emittedFields.length} fields emitted` + (nested === 0 ? "" : ` (+${nested} nested)`)
+    `${emission.emittedFields.length} fields emitted` +
+    (nestedFieldCount === 0 ? "" : ` (+${nestedFieldCount} nested)`)
   );
 }
 
-async function main(): Promise<void> {
-  const rebaseline = process.argv.includes("--rebaseline");
-  const commit = upstreamCommit();
+function assertManifestKeywordMatchesType(entry: ContentManifestEntry, type: ContentType): void {
+  const keyword = entry.keyword;
+  if (keyword !== undefined && type.nameField === null) {
+    throw new Error(`type[${entry.type}] declares no name_field, so it has no keyword`);
+  }
+  if (keyword === undefined && type.nameField !== null) {
+    throw new Error(
+      `type[${entry.type}] declares name_field=${type.nameField}, so the manifest ` +
+        "entry needs the keyword its entries are written under"
+    );
+  }
+  const keyFilter = effectiveKeyFilter(type, entry.as);
+  if (keyFilter !== null && keyword !== undefined && keyword !== keyFilter.key) {
+    throw new Error(
+      `${keyFilter.source} declares ## type_key_filter = ${keyFilter.key} but the ` +
+        `manifest claims keyword ${keyword}`
+    );
+  }
+}
 
-  const rules = loadRules(CONFIG);
-  const docs = parseTriggerDocs(
-    readFileSync(`${DOCS}/triggers.log`, "utf8"),
-    readFileSync(`${DOCS}/effects.log`, "utf8")
-  );
-  const links = parseScopeLinks(readFileSync(`${DOCS}/scopes.log`, "utf8"));
-  const modifierDocs = parseModifierDocs(readFileSync(`${DOCS}/modifiers.log`, "utf8"));
+function emitManifestContents(rules: RuleSet, emitter: Emitter): ManifestContentEmission {
+  const contents: EmittedManifestContent[] = [];
+  const registryNames = new Set<string>();
+  const subtypeReferencedTypes = typesReferencedBySubtype(rules);
 
-  checkDrift(reconcile(rules, docs, modifierDocs, links), rebaseline);
+  for (const manifestEntry of CONTENT_MANIFEST) {
+    const entry: ContentManifestEntry = manifestEntry;
+    const type = rules.contentTypes.get(entry.type);
+    const body = rules.bodies.get(entry.type);
+    if (type === undefined || body === undefined) {
+      throw new Error(`${entry.source} no longer declares type[${entry.type}] and its body`);
+    }
 
-  const emitter = new Emitter(rules);
+    const registry = registryNameOf(entry);
+    assertAndRecordRegistryName(entry, registry, registryNames);
+    assertManifestKeywordMatchesType(entry, type);
+
+    emitter.beginFile();
+    const emission = emitContentType(emitter, type, body, registry, entry.as);
+    const usage = emitter.endFile();
+    contents.push({
+      manifest: manifestEntry,
+      registry,
+      referenceName: referenceNameOf(type, entry.as, subtypeReferencedTypes),
+      keyword: entry.keyword,
+      type,
+      emission,
+      usage,
+    });
+  }
+
+  return { contents, registryNames };
+}
+
+function emitScriptRules(
+  rules: RuleSet,
+  docs: ReturnType<typeof parseTriggerDocs>,
+  links: ReturnType<typeof parseScopeLinks>,
+  emitter: Emitter,
+  effectPolicy: ReturnType<typeof createEffectPolicy>
+): ScriptRuleEmission {
   const index = scopeIndex(rules);
-  const effectPolicy = createEffectPolicy(rules);
-  const modifierOperationPolicy = createModifierOperationPolicy(rules);
-  const eventFieldPolicy = createEventFieldPolicy(rules);
+
   emitter.beginFile();
   const loweredTriggers = lowerRuleTable(rules.triggers, docs.triggers, emitter, index);
   const triggers = emitTriggers(emitter, docs.triggers, loweredTriggers);
   const triggerUsage = emitter.endFile();
 
-  const dumpLinks = new Map(links.map((link) => [link.name, link]));
-  const classifiedLinks = classifyLinks(emitter, dumpLinks, index);
-  // The hand exports of src/script/triggers.ts share the links file's export
-  // namespace through its `export *`, so they count as taken names too.
-  const scopeLinks = emitScopeLinks(
-    classifiedLinks,
-    index,
-    new Set([...triggers.names, ...RESERVED_TRIGGER_EXPORT_NAMES])
-  );
+  const documentedLinks = new Map(links.map((link) => [link.name, link]));
+  const classifiedLinks = classifyLinks(emitter, documentedLinks, index);
+  const reservedScopeLinkNames = new Set([...triggers.names, ...RESERVED_TRIGGER_EXPORT_NAMES]);
+  const scopeLinks = emitScopeLinks(classifiedLinks, index, reservedScopeLinkNames);
 
   emitter.beginFile();
   const loweredEffects = lowerRuleTable(rules.effects, docs.effects, emitter, index);
@@ -165,85 +309,27 @@ async function main(): Promise<void> {
     classifiedLinks.links
   );
   const effectUsage = emitter.endFile();
-  const scriptGapReport = reconcileScriptGaps({
+  const scriptGaps = reconcileScriptGaps({
     triggers: triggers.skipped,
     effects: effects.skipped,
   });
-  const scriptGapLines = formatScriptGapReport(scriptGapReport);
 
-  await write(
-    "content-shape.ts",
-    header(commit, ["codegen-cwt ContentShape protocol"]) + emitContentShapeProtocol()
-  );
+  return {
+    triggers,
+    triggerUsage,
+    classifiedLinks,
+    scopeLinks,
+    effects,
+    effectUsage,
+    scriptGapLines: formatScriptGapReport(scriptGaps),
+  };
+}
 
-  const contents: Array<{
-    manifest: (typeof CONTENT_MANIFEST)[number];
-    /** Registry name: the CWT type unless the manifest renames it via `as`. */
-    registry: string;
-    /** The CWT reference this registry's definitions satisfy. */
-    referenceName: string;
-    /** Top-level keyword, for registries CWT marks with `name_field`. */
-    keyword: string | undefined;
-    type: ContentType;
-    emission: ContentEmission;
-    usage: ReturnType<Emitter["endFile"]>;
-  }> = [];
-  const registryNames = new Set<string>();
-  const subtypeReferencedTypes = typesReferencedBySubtype(rules);
-  for (const manifest of CONTENT_MANIFEST) {
-    const type = rules.contentTypes.get(manifest.type);
-    const body = rules.bodies.get(manifest.type);
-    if (type === undefined || body === undefined) {
-      throw new Error(`${manifest.source} no longer declares type[${manifest.type}] and its body`);
-    }
-    const entry: ContentManifestEntry = manifest;
-    const registry = registryNameOf(entry);
-    assertRegistryName(entry, registry, registryNames);
-    const keyword = entry.keyword;
-    // A keyword the rules do declare must match what the manifest claims;
-    // silence here would emit a top-level key the game quietly ignores.
-    if (keyword !== undefined && type.nameField === null) {
-      throw new Error(`type[${manifest.type}] declares no name_field, so it has no keyword`);
-    }
-    if (keyword === undefined && type.nameField !== null) {
-      throw new Error(
-        `type[${manifest.type}] declares name_field=${type.nameField}, so the manifest ` +
-          "entry needs the keyword its entries are written under"
-      );
-    }
-    const filter = effectiveKeyFilter(type, entry.as);
-    if (filter !== null && keyword !== undefined && keyword !== filter.key) {
-      throw new Error(
-        `${filter.source} declares ## type_key_filter = ${filter.key} but the ` +
-          `manifest claims keyword ${keyword}`
-      );
-    }
-    emitter.beginFile();
-    const emission = emitContentType(emitter, type, body, registry, entry.as);
-    const usage = emitter.endFile();
-    contents.push({
-      manifest,
-      registry,
-      referenceName: referenceNameOf(type, entry.as, subtypeReferencedTypes),
-      keyword,
-      type,
-      emission,
-      usage,
-    });
-  }
-
-  const { aliasCategories, aliasSplices } = emitAliasCategories(
-    emitter,
-    rules,
-    contents.flatMap((content) => content.emission.inlineSplices)
-  );
-
-  // Overlay-table staleness. Every table below is consulted through a plain
-  // `.get()`/`.has()` lookup, so a row nothing matches would otherwise fail
-  // silently: the lookup just returns `undefined` and the emitter falls back
-  // to its mechanical reading. `EFFECT_FIELD_TYPE_OVERRIDES` and its siblings
-  // already get this treatment inside `emit/effects.ts`; this closes the same
-  // gap for every other overlay table (SDK-255).
+function assertGenerationPolicies(
+  rules: RuleSet,
+  emitter: Emitter,
+  registryNames: ReadonlySet<string>
+): void {
   assertOverlayRegistriesKnown(
     [
       { tableId: "MINT_SHAPE_OVERLAYS", keys: MINT_SHAPE_OVERLAYS.keys() },
@@ -289,223 +375,49 @@ async function main(): Promise<void> {
     REPEATED_STRUCT_DEFINITIONS.keys()
   );
   emitter.overlayAudit.assertAllApplied("ASSET_PATH_FIELDS", ASSET_PATH_FIELDS.keys());
+}
 
-  // Registers every ref this namespace names (including the ref-only extras —
-  // sound, sound_effect, resource) with `emitter.usedRefs` before
-  // `refs.ts` is written below, so their `XRef` aliases survive even if
-  // nothing else in the rules happens to reference them.
-  const vanillaRefs = emitVanillaRefs(
-    emitter,
-    CONTENT_MANIFEST,
-    VANILLA_REF_EXTRAS,
-    new Map(contents.map((content) => [content.registry, content.referenceName]))
-  );
-
-  await write(
-    "scopes.ts",
-    header(commit, ["scopes.cwt"]) + emitScopes(canonicalScopes(rules.scopes))
-  );
-  await write(
-    "refs.ts",
-    header(commit, ["type references across the rule files"]) + emitRefs(emitter)
-  );
-  await write(
-    "enums.ts",
-    header(commit, ["enums.cwt"]) +
-      'import type { VanillaEnumMember } from "../identifiers/contracts.ts";\n\n' +
-      emitEnums(emitter)
-  );
-  await write(
-    "value-sets.ts",
-    header(commit, ["value sets referenced across the rule files"]) + emitValueSets(emitter)
-  );
-  const modifiers = emitModifiers(
-    joinModifierScopes(rules, modifierDocs, (token) => emitter.canonicalScope(token))
-  );
-  await write(
-    "modifiers.ts",
-    header(commit, [
-      "script-docs/v4.4.1/modifiers.log",
-      "modifier_categories.cwt",
-      "modifiers.cwt",
-    ]) +
-      'import type { CustomModifiers } from "../content/types.ts";\n' +
-      'import type { ScopeName } from "./scopes.ts";\n\n' +
-      modifiers.code
-  );
-  await write(
-    "modifier-policy.ts",
-    header(commit, ["modifier_rule.cwt"]) + emitModifierOperationProtocol(modifierOperationPolicy)
-  );
-  for (const [category, emission] of aliasCategories) {
-    await writeModule(
-      `${category.replaceAll("_", "-")}.ts`,
-      commit,
-      [`alias[${category}:...] across the rule files`],
-      emitter,
-      emission.usage,
-      emission.code
+function describeAliasCategory(
+  category: string,
+  emission: AliasCategoryEmission,
+  splice: AliasSpliceEmission | undefined,
+  rules: RuleSet
+): string {
+  if (splice === undefined) {
+    return (
+      `${category}: ${emission.emittedMembers.length} alias-struct members emitted` +
+      ` of ${rules.aliasCategories.get(category)?.size ?? 0} declared`
     );
   }
-  for (const content of contents) {
-    await writeModule(
-      `${kebabCase(content.registry)}.ts`,
-      commit,
-      [content.manifest.source],
-      emitter,
-      content.usage,
-      content.emission.code
-    );
-  }
-  const contentSources = CONTENT_MANIFEST.map((entry) => entry.source).filter(
-    (source, index, sources) => sources.indexOf(source) === index
+  return (
+    `${category}: ${emission.emittedMembers.length} fields emitted into ` +
+    `${splice.typeName}, spliced as \`${splice.memberKey}\``
   );
-  await write("content-registry.ts", header(commit, contentSources) + contentRegistry(contents));
-  // The field-docs ledger: every table's doc rows plus the omission rows the
-  // report prints, one generated module the docs build can import. Emitted
-  // from the same emissions as the tables themselves, so the two cannot drift.
-  const fieldDocsModules: FieldDocsModule[] = [
-    ...contents.map((content) => ({
-      module: `./${kebabCase(content.registry)}.ts`,
-      docTables: content.emission.docTables,
-    })),
-    ...[...aliasCategories].map(([category, emission]) => ({
-      module: `./${category.replaceAll("_", "-")}.ts`,
-      docTables: emission.docTables,
-    })),
-  ];
-  await write(
-    "content-field-docs.ts",
-    header(commit, [...contentSources, "codegen-cwt field-docs ledger"]) +
-      emitContentFieldDocs(
-        fieldDocsModules,
-        new Map(contents.map((content) => [content.registry, content.emission.omissions])),
-        new Map([...aliasCategories].map(([category, emission]) => [category, emission.omissions]))
-      )
-  );
-  const contentSwaps = deriveContentSwapIdentities(rules, contents);
-  await write(
-    "content-swaps.ts",
-    header(commit, [...contentSources, "CWT base_type declarations"]) +
-      emitContentSwapProtocol(contentSwaps)
-  );
-  const definers = contentDefiners(contents);
-  await write("content-definers.ts", header(commit, contentSources) + definers.code);
-  await write(
-    "content-capability.ts",
-    header(commit, [...contentSources, "content-manifest.ts"]) + definers.capabilityCode
-  );
-  await write(
-    "vanilla-refs.ts",
-    header(commit, [...contentSources, "content-manifest.ts (VANILLA_REF_EXTRAS)"]) +
-      'import type { CheckedVanillaId, VanillaId, VanillaTrie } from "../identifiers/contracts.ts";\n' +
-      'import { makeEventTrie, makeIdTrie, makeVanillaRef } from "../identifiers/trie.ts";\n' +
-      importList(
-        "./refs.ts",
-        vanillaRefs.refs.map((name) => emitter.refTypeName(name))
-      ) +
-      "\n" +
-      vanillaRefs.code
-  );
-  await writeModule(
-    "triggers.ts",
-    commit,
-    ["triggers.cwt", "aliases.cwt", "script-docs/v4.4.1/triggers.log"],
-    emitter,
-    triggerUsage,
-    triggers.code
-  );
-  await write(
-    "links.ts",
-    header(commit, ["links.cwt", "script-docs/v4.4.1/scopes.log"]) +
-      'import { block } from "@pdx-ts/pdxscript";\n' +
-      'import { navigateScope } from "../script/effects/recorder.ts";\n' +
-      'import type { ScopeRef, ScopeValue } from "../script/effects/types.ts";\n' +
-      'import { trigger, type Trigger } from "../script/trigger-core.ts";\n' +
-      'import type { ScopeName } from "./scopes.ts";\n\n' +
-      scopeLinks.code
-  );
-  await write(
-    "link-meta.ts",
-    header(commit, ["links.cwt"]) +
-      'import type { ScopeName } from "./scopes.ts";\n\n' +
-      emitScopeLinkNavigation(classifiedLinks.navigation)
-  );
-  await writeModule(
-    "effects.ts",
-    commit,
-    [
-      "effects.cwt",
-      "aliases.cwt",
-      "links.cwt",
-      "script-docs/v4.4.1/effects.log",
-      "script-docs/v4.4.1/scopes.log",
-    ],
-    emitter,
-    effectUsage,
-    effects.interfaces
-  );
-  await write(
-    "effect-meta.ts",
-    header(commit, ["effects.cwt", "aliases.cwt", "links.cwt"]) + effects.meta
-  );
-  await write(
-    "effect-policy.ts",
-    header(commit, ["effects.cwt", "events/events.cwt"]) + emitEffectPolicyProtocol(effectPolicy)
-  );
-  const events = emitEvents(emitter, effectPolicy);
-  await write(
-    "events.ts",
-    header(commit, ["events/events.cwt"]) +
-      'import type { ScopeName } from "./scopes.ts";\n\n' +
-      events.code
-  );
-  await write(
-    "event-definers.ts",
-    header(commit, ["events/events.cwt"]) +
-      'import { assertEventNumber, buildEvent } from "../events/lower.ts";\n' +
-      'import type { EventDef, EventItem, EventRef } from "../events/types.ts";\n' +
-      'import { assertNamespace } from "../authoring/feature.ts";\n' +
-      'import { EVENT_KINDS, type EventKindKey } from "./events.ts";\n' +
-      'import type { ScopeName } from "./scopes.ts";\n\n' +
-      events.definerCode
-  );
-  await write(
-    "event-fires.ts",
-    header(commit, ["events/events.cwt", "effects.cwt"]) +
-      'import type { FireEventArgs, WitnessedFireEventArgs } from "../events/types.ts";\n' +
-      'import type { ScopeName } from "./scopes.ts";\n\n' +
-      events.firesCode
-  );
-  const scriptReferences = emitScriptReferences(
-    canonicalScopes(rules.scopes),
-    [...effects.references, ...events.fireReferences],
-    effects.scopeLinkReferences
-  );
-  await write(
-    "script-reference.ts",
-    header(commit, [
-      "scopes.cwt",
-      "effects.cwt",
-      "aliases.cwt",
-      "links.cwt",
-      "events/events.cwt",
-      "script-docs/v4.4.1/effects.log",
-      "script-docs/v4.4.1/scopes.log",
-    ]) + scriptReferences.code
-  );
-  await write(
-    "event-fields.ts",
-    header(commit, ["events/events.cwt", "codegen-cwt event field support policy"]) +
-      emitEventFieldProtocol(eventFieldPolicy)
-  );
-  const onActions = emitOnActions(rules);
-  await write("on-actions.ts", header(commit, ["on_actions.cwt"]) + onActions.code);
+}
 
-  // Every line below is collected here as it becomes available, rather than
-  // printed at the point it is computed — `printReport` is the one place this
-  // function actually reaches `console.log`.
+function buildCodegenReport(input: CodegenReportInput): string[] {
+  const {
+    aliasCategories,
+    aliasSplices,
+    classifiedLinks,
+    commit,
+    contents,
+    definers,
+    effectPolicy,
+    effects,
+    emitter,
+    events,
+    modifiers,
+    onActions,
+    rules,
+    scopeLinks,
+    scriptGapLines,
+    scriptReferences,
+    triggers,
+    vanillaRefs,
+  } = input;
   const report: string[] = [];
+
   report.push(`cwtools-stellaris-config @ ${commit.slice(0, 12)}`);
   report.push(
     `\nscopes: ${canonicalScopes(rules.scopes).length}` +
@@ -526,15 +438,15 @@ async function main(): Promise<void> {
   );
   report.push(
     `triggers: ${triggers.emitted} emitted of ${rules.triggers.size} declared` +
-      ` (${[...triggers.byShape].map(([kind, n]) => `${kind} ${n}`).join(", ")})`
+      ` (${[...triggers.byShape].map(([kind, count]) => `${kind} ${count}`).join(", ")})`
   );
   report.push(
     `effects: ${effects.emitted} emitted of ${rules.effects.size} declared` +
-      ` (${[...effects.byShape].map(([kind, n]) => `${kind} ${n}`).join(", ")}` +
+      ` (${[...effects.byShape].map(([kind, count]) => `${kind} ${count}`).join(", ")}` +
       `; clusters ${effects.clusterCount})`
   );
   for (const content of contents) {
-    report.push(`${content.registry}: ${fieldCount(content.emission)}`);
+    report.push(`${content.registry}: ${describeEmittedFields(content.emission)}`);
   }
   report.push(
     `content definers: ${definers.definers} emitted` +
@@ -560,19 +472,7 @@ async function main(): Promise<void> {
     `on-actions: ${onActions.emitted} emitted (${onActions.noScope} scopeless and currently rejected)`
   );
   for (const [category, emission] of aliasCategories) {
-    // The two kinds count different things, so they say different things. A
-    // struct category lowers the category's own members, and the interesting
-    // number is how many of them survived. A splice category has exactly one
-    // member by construction; what it lowers is the fields *inside* that
-    // member's block, so "of 1 declared" would be true and useless.
-    const splice = aliasSplices.get(category);
-    report.push(
-      splice === undefined
-        ? `${category}: ${emission.emittedMembers.length} alias-struct members emitted` +
-            ` of ${rules.aliasCategories.get(category)?.size ?? 0} declared`
-        : `${category}: ${emission.emittedMembers.length} fields emitted into ` +
-            `${splice.typeName}, spliced as \`${splice.memberKey}\``
-    );
+    report.push(describeAliasCategory(category, emission, aliasSplices.get(category), rules));
     reportSection(report, `${category} members declined`, emission.declinedMembers);
   }
 
@@ -621,12 +521,11 @@ async function main(): Promise<void> {
     contents.flatMap((content) => content.emission.localisationRenames)
   );
   for (const content of contents) {
-    const type = content.registry;
-    report.push(`\n${type}: ${fieldCount(content.emission)}`);
-    reportSection(report, `${type} fields declined`, content.emission.declinedFields);
+    report.push(`\n${content.registry}: ${describeEmittedFields(content.emission)}`);
+    reportSection(report, `${content.registry} fields declined`, content.emission.declinedFields);
     reportSection(
       report,
-      `${type} alias categories spliced unkeyed at the top level`,
+      `${content.registry} alias categories spliced unkeyed at the top level`,
       content.emission.inlineSplices
     );
     reportSection(
@@ -655,7 +554,341 @@ async function main(): Promise<void> {
       content.emission.patchLocMembers
     );
   }
-  printReport(report);
+
+  return report;
+}
+
+async function writeSharedRuleModules(
+  input: SharedRuleModuleInput
+): Promise<ReturnType<typeof emitModifiers>> {
+  const { commit, emitter, modifierDocs, modifierOperationPolicy, rules } = input;
+
+  await write(
+    "scopes.ts",
+    header(commit, ["scopes.cwt"]) + emitScopes(canonicalScopes(rules.scopes))
+  );
+  await write(
+    "refs.ts",
+    header(commit, ["type references across the rule files"]) + emitRefs(emitter)
+  );
+  await write(
+    "enums.ts",
+    header(commit, ["enums.cwt"]) +
+      'import type { VanillaEnumMember } from "../identifiers/contracts.ts";\n\n' +
+      emitEnums(emitter)
+  );
+  await write(
+    "value-sets.ts",
+    header(commit, ["value sets referenced across the rule files"]) + emitValueSets(emitter)
+  );
+
+  const modifiers = emitModifiers(
+    joinModifierScopes(rules, modifierDocs, (token) => emitter.canonicalScope(token))
+  );
+  await write(
+    "modifiers.ts",
+    header(commit, [
+      "script-docs/v4.4.1/modifiers.log",
+      "modifier_categories.cwt",
+      "modifiers.cwt",
+    ]) +
+      'import type { CustomModifiers } from "../content/types.ts";\n' +
+      'import type { ScopeName } from "./scopes.ts";\n\n' +
+      modifiers.code
+  );
+  await write(
+    "modifier-policy.ts",
+    header(commit, ["modifier_rule.cwt"]) + emitModifierOperationProtocol(modifierOperationPolicy)
+  );
+
+  return modifiers;
+}
+
+async function writeContentModules(
+  input: ContentModuleInput
+): Promise<ReturnType<typeof contentDefiners>> {
+  const { aliasCategories, commit, contents, emitter, rules, vanillaRefs } = input;
+
+  for (const [category, emission] of aliasCategories) {
+    await writeModule(
+      `${category.replaceAll("_", "-")}.ts`,
+      commit,
+      [`alias[${category}:...] across the rule files`],
+      emitter,
+      emission.usage,
+      emission.code
+    );
+  }
+  for (const content of contents) {
+    await writeModule(
+      `${kebabCase(content.registry)}.ts`,
+      commit,
+      [content.manifest.source],
+      emitter,
+      content.usage,
+      content.emission.code
+    );
+  }
+
+  const contentSources = [...new Set(CONTENT_MANIFEST.map((entry) => entry.source))];
+  await write("content-registry.ts", header(commit, contentSources) + contentRegistry(contents));
+
+  const fieldDocsModules: FieldDocsModule[] = [
+    ...contents.map((content) => ({
+      module: `./${kebabCase(content.registry)}.ts`,
+      docTables: content.emission.docTables,
+    })),
+    ...[...aliasCategories].map(([category, emission]) => ({
+      module: `./${category.replaceAll("_", "-")}.ts`,
+      docTables: emission.docTables,
+    })),
+  ];
+  await write(
+    "content-field-docs.ts",
+    header(commit, [...contentSources, "codegen-cwt field-docs ledger"]) +
+      emitContentFieldDocs(
+        fieldDocsModules,
+        new Map(contents.map((content) => [content.registry, content.emission.omissions])),
+        new Map([...aliasCategories].map(([category, emission]) => [category, emission.omissions]))
+      )
+  );
+
+  const contentSwaps = deriveContentSwapIdentities(rules, contents);
+  await write(
+    "content-swaps.ts",
+    header(commit, [...contentSources, "CWT base_type declarations"]) +
+      emitContentSwapProtocol(contentSwaps)
+  );
+
+  const definers = contentDefiners(contents);
+  await write("content-definers.ts", header(commit, contentSources) + definers.code);
+  await write(
+    "content-capability.ts",
+    header(commit, [...contentSources, "content-manifest.ts"]) + definers.capabilityCode
+  );
+  await write(
+    "vanilla-refs.ts",
+    header(commit, [...contentSources, "content-manifest.ts (VANILLA_REF_EXTRAS)"]) +
+      'import type { CheckedVanillaId, VanillaId, VanillaTrie } from "../identifiers/contracts.ts";\n' +
+      'import { makeEventTrie, makeIdTrie, makeVanillaRef } from "../identifiers/trie.ts";\n' +
+      importList(
+        "./refs.ts",
+        vanillaRefs.refs.map((name) => emitter.refTypeName(name))
+      ) +
+      "\n" +
+      vanillaRefs.code
+  );
+
+  return definers;
+}
+
+async function writeScriptModules(input: ScriptModuleInput): Promise<void> {
+  const {
+    classifiedLinks,
+    commit,
+    effectPolicy,
+    effectUsage,
+    effects,
+    emitter,
+    scopeLinks,
+    triggers,
+    triggerUsage,
+  } = input;
+
+  await writeModule(
+    "triggers.ts",
+    commit,
+    ["triggers.cwt", "aliases.cwt", "script-docs/v4.4.1/triggers.log"],
+    emitter,
+    triggerUsage,
+    triggers.code
+  );
+  await write(
+    "links.ts",
+    header(commit, ["links.cwt", "script-docs/v4.4.1/scopes.log"]) +
+      'import { block } from "@pdx-ts/pdxscript";\n' +
+      'import { navigateScope } from "../script/effects/recorder.ts";\n' +
+      'import type { ScopeRef, ScopeValue } from "../script/effects/types.ts";\n' +
+      'import { trigger, type Trigger } from "../script/trigger-core.ts";\n' +
+      'import type { ScopeName } from "./scopes.ts";\n\n' +
+      scopeLinks.code
+  );
+  await write(
+    "link-meta.ts",
+    header(commit, ["links.cwt"]) +
+      'import type { ScopeName } from "./scopes.ts";\n\n' +
+      emitScopeLinkNavigation(classifiedLinks.navigation)
+  );
+  await writeModule(
+    "effects.ts",
+    commit,
+    [
+      "effects.cwt",
+      "aliases.cwt",
+      "links.cwt",
+      "script-docs/v4.4.1/effects.log",
+      "script-docs/v4.4.1/scopes.log",
+    ],
+    emitter,
+    effectUsage,
+    effects.interfaces
+  );
+  await write(
+    "effect-meta.ts",
+    header(commit, ["effects.cwt", "aliases.cwt", "links.cwt"]) + effects.meta
+  );
+  await write(
+    "effect-policy.ts",
+    header(commit, ["effects.cwt", "events/events.cwt"]) + emitEffectPolicyProtocol(effectPolicy)
+  );
+}
+
+async function writeEventModules(input: EventModuleInput): Promise<EventModuleEmission> {
+  const { commit, effectPolicy, effects, emitter, eventFieldPolicy, rules } = input;
+
+  const events = emitEvents(emitter, effectPolicy);
+  await write(
+    "events.ts",
+    header(commit, ["events/events.cwt"]) +
+      'import type { ScopeName } from "./scopes.ts";\n\n' +
+      events.code
+  );
+  await write(
+    "event-definers.ts",
+    header(commit, ["events/events.cwt"]) +
+      'import { assertEventNumber, buildEvent } from "../events/lower.ts";\n' +
+      'import type { EventDef, EventItem, EventRef } from "../events/types.ts";\n' +
+      'import { assertNamespace } from "../authoring/feature.ts";\n' +
+      'import { EVENT_KINDS, type EventKindKey } from "./events.ts";\n' +
+      'import type { ScopeName } from "./scopes.ts";\n\n' +
+      events.definerCode
+  );
+  await write(
+    "event-fires.ts",
+    header(commit, ["events/events.cwt", "effects.cwt"]) +
+      'import type { FireEventArgs, WitnessedFireEventArgs } from "../events/types.ts";\n' +
+      'import type { ScopeName } from "./scopes.ts";\n\n' +
+      events.firesCode
+  );
+
+  const scriptReferences = emitScriptReferences(
+    canonicalScopes(rules.scopes),
+    [...effects.references, ...events.fireReferences],
+    effects.scopeLinkReferences
+  );
+  await write(
+    "script-reference.ts",
+    header(commit, [
+      "scopes.cwt",
+      "effects.cwt",
+      "aliases.cwt",
+      "links.cwt",
+      "events/events.cwt",
+      "script-docs/v4.4.1/effects.log",
+      "script-docs/v4.4.1/scopes.log",
+    ]) + scriptReferences.code
+  );
+  await write(
+    "event-fields.ts",
+    header(commit, ["events/events.cwt", "codegen-cwt event field support policy"]) +
+      emitEventFieldProtocol(eventFieldPolicy)
+  );
+
+  const onActions = emitOnActions(rules);
+  await write("on-actions.ts", header(commit, ["on_actions.cwt"]) + onActions.code);
+
+  return { events, scriptReferences, onActions };
+}
+
+async function main(): Promise<void> {
+  const rebaseline = process.argv.includes("--rebaseline");
+  const commit = readUpstreamCommit(CWT_VENDOR_DIRECTORY);
+  const { docs, links, modifierDocs, rules } = readGeneratorSources(
+    CWT_CONFIG_DIRECTORY,
+    SCRIPT_DOCS_DIRECTORY
+  );
+
+  checkDrift(reconcile(rules, docs, modifierDocs, links), rebaseline);
+
+  const emitter = new Emitter(rules);
+  const effectPolicy = createEffectPolicy(rules);
+  const modifierOperationPolicy = createModifierOperationPolicy(rules);
+  const eventFieldPolicy = createEventFieldPolicy(rules);
+  const scriptRules = emitScriptRules(rules, docs, links, emitter, effectPolicy);
+
+  await write(
+    "content-shape.ts",
+    header(commit, ["codegen-cwt ContentShape protocol"]) + emitContentShapeProtocol()
+  );
+
+  const { contents, registryNames } = emitManifestContents(rules, emitter);
+
+  const { aliasCategories, aliasSplices } = emitAliasCategories(
+    emitter,
+    rules,
+    contents.flatMap((content) => content.emission.inlineSplices)
+  );
+  assertGenerationPolicies(rules, emitter, registryNames);
+
+  const vanillaRefs = emitVanillaRefs(
+    emitter,
+    CONTENT_MANIFEST,
+    VANILLA_REF_EXTRAS,
+    new Map(contents.map((content) => [content.registry, content.referenceName]))
+  );
+
+  const modifiers = await writeSharedRuleModules({
+    commit,
+    rules,
+    emitter,
+    modifierDocs,
+    modifierOperationPolicy,
+  });
+  const definers = await writeContentModules({
+    commit,
+    rules,
+    emitter,
+    contents,
+    aliasCategories,
+    vanillaRefs,
+  });
+  await writeScriptModules({
+    commit,
+    emitter,
+    ...scriptRules,
+    effectPolicy,
+  });
+  const { events, scriptReferences, onActions } = await writeEventModules({
+    commit,
+    rules,
+    emitter,
+    effects: scriptRules.effects,
+    effectPolicy,
+    eventFieldPolicy,
+  });
+
+  printReport(
+    buildCodegenReport({
+      commit,
+      rules,
+      emitter,
+      scopeLinks: scriptRules.scopeLinks,
+      effects: scriptRules.effects,
+      modifiers,
+      triggers: scriptRules.triggers,
+      contents,
+      definers,
+      vanillaRefs,
+      events,
+      scriptReferences,
+      effectPolicy,
+      onActions,
+      aliasCategories,
+      aliasSplices,
+      scriptGapLines: scriptRules.scriptGapLines,
+      classifiedLinks: scriptRules.classifiedLinks,
+    })
+  );
 }
 
 await main();

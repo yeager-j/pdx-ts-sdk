@@ -13,8 +13,11 @@ import { Emitter } from "../../render/emitter.ts";
 import type { FieldOmissionRow } from "../../render/field-rows.ts";
 import { member as renderMember } from "../../render/writer.ts";
 
+/** Canonical localisation slots and the declarations collapsed onto them. */
 export interface LocalisationPlan {
+  /** One surviving localisation declaration per generated authoring member. */
   readonly entries: ContentType["localisation"];
+  /** Duplicate or non-static declarations omitted from the generated surface. */
   readonly aliases: readonly FieldOmissionRow[];
 }
 
@@ -75,26 +78,11 @@ function conditionalRequirement(
 }
 
 /**
- * Collapses declared localisation entries onto one member per TS field name.
+ * Plans one authoring slot per static, id-keyed localisation member. The first declaration wins
+ * when patterns or generated member names collide; later declarations are reported as aliases.
  *
- * A pattern with no `$` id placeholder is not a static `<id>`-keyed slot at
- * all — CWT also uses this position for data-path pointers like `job`'s
- * `condition_string = swappable_data/default/condition_string`, meaning "read
- * this nested field's value instead of a localisation key". The SDK's writer
- * only knows how to substitute an id into `$`, so those entries are excluded
- * outright rather than emitted as a member no definition could satisfy
- * correctly.
- *
- * Two distinct collisions occur among what remains: the same *pattern*
- * declared under two keys (`council_agenda_name` and `name` both writing
- * `council_agenda_$_name`), and the same *member* name declared with two
- * patterns. Emitting one interface member per surviving entry means either
- * collision left standing would be a duplicate TypeScript property, so the
- * first-declared entry wins and the rest collapse to aliases.
- *
- * {@link SYNTHETIC_LOCALISATION} adds slots the rules never declare at all,
- * after the rules-derived collapse — a synthetic row never displaces a real
- * declared slot, it only fills a gap one leaves.
+ * Entries without a `$` placeholder describe data paths rather than static localisation slots and
+ * are reported as collapsed. Synthetic slots fill only names no declared slot already claims.
  */
 export function planLocalisation(emitter: Emitter, type: ContentType): LocalisationPlan {
   const byPattern = new Map<string, ContentType["localisation"][number]>();
@@ -151,6 +139,7 @@ export function planLocalisation(emitter: Emitter, type: ContentType): Localisat
   return { entries: [...byMember.values()], aliases };
 }
 
+/** Renders a content type's localisation slots as generated interface members. */
 export function localisationMembers(
   emitter: Emitter,
   type: ContentType,

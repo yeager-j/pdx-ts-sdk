@@ -37,6 +37,13 @@ Concise code is not necessarily simple: expand an expression into named steps wh
 would otherwise require mental execution, unusual language knowledge, or navigation through extra
 indirection. Do not add extensibility for a variation that does not exist.
 
+**Diagnostic:** Understanding an expression requires mentally executing nested callbacks,
+conditionals, chains, or a non-obvious language feature. Would named intermediate values make its
+sequence and meaning visible?
+
+**Diagnostic:** An abstraction supports configuration, callbacks, or variants for which only one
+real use exists. What present requirement earns that flexibility?
+
 ## 2. Give names and functions one truthful purpose
 
 Names describe the role a value plays and the behavior a function performs. They must not hide an
@@ -50,6 +57,13 @@ that only forwards arguments or gives a second name to one obvious expression: i
 without hiding a decision. Keep the expression inline until the function owns meaningful behavior.
 Keep each function at one conceptual level: an orchestration function names its steps; the called
 functions contain their details.
+
+**Diagnostic:** A function changes purpose, conceptual level, or kind of work while reading it. Does
+it contain more than one coherent operation? A function over 100 lines warrants this inspection, but
+length alone is not the defect.
+
+**Diagnostic:** A name such as `data`, `item`, `result`, `helper`, or `process` requires reading its
+implementation to learn its domain role. What truth could the name carry?
 
 ## 3. Keep a pure core inside an explicit impure shell
 
@@ -88,6 +102,14 @@ async function transformFile(filePath: string, config: Config): Promise<void> {
 }
 ```
 
+**Diagnostic:** Meaningful decisions or transformations are interleaved with side effects, so
+testing the rule requires performing or mocking those effects. Can the result be calculated before
+the shell applies it?
+
+**Diagnostic:** A function presented as pure reads mutable configuration, the clock, randomness,
+environment state, storage, or another variable dependency that is not an argument. Which input
+should be explicit?
+
 ## 4. Make code explain itself
 
 Code structure and names explain what the program does. Rewrite code instead of adding a comment
@@ -96,6 +118,12 @@ that narrates its syntax or compensates for a vague name.
 Use an inline comment only for information code cannot carry: rationale, an external constraint, a
 protocol or concurrency requirement, a counterintuitive trade-off, or the provenance of a necessary
 workaround. A normative comment should become proportionate enforcement when possible.
+
+**Diagnostic:** A comment restates control flow, data flow, or an expression, or compensates for a
+vague name. Can the code carry the same information directly?
+
+**Diagnostic:** A workaround or normative comment does not name its cause, constraint, enforcement,
+or removal condition. Would a future maintainer know when it is safe to change?
 
 ## 5. Document the public surface
 
@@ -112,6 +140,13 @@ Do NOT narrativize in the JSDocs. Do NOT explain the inner workings of a functio
 project lore or factoids. The consumer doesn't need to know the member's life story. Treat JSDocs
 as public documentation, not a novel.
 
+**Diagnostic:** A consumer must inspect the implementation or tests to learn the member's
+constraints, units, mutation, ordering, failure behavior, or required setup. Which part of that
+contract belongs in the JSDoc?
+
+**Diagnostic:** A JSDoc repeats names and types or narrates implementation without changing how a
+consumer uses the member. What consumer-relevant information does it provide?
+
 ## 6. Apply DRY to knowledge, not text
 
 Use DRY in the Hunt and Thomas sense: each piece of knowledge has one authority. Extract code when
@@ -119,11 +154,25 @@ copies must change together because they encode the same rule, policy, or invari
 code separate when it represents different concepts that may change independently. There is no
 numeric duplication threshold; small duplication is cheaper than false coupling.
 
+**Diagnostic:** The same rule, policy, invariant, mapping, or significant constant is encoded in
+several places that must change together. Which place should be its authority?
+
+**Diagnostic:** A shared abstraction has accumulated flags, branches, or caller-specific
+terminology to preserve differences between its users. Do those users share knowledge, or only
+shape?
+
 ## 7. Prefer composition over inheritance
 
 Use composition when collaborators can vary independently. Inheritance is justified only when the
 subtype preserves the parent contract and the hierarchy is the simplest model of the relationship.
 Never create a base class solely to reuse implementation.
+
+**Diagnostic:** A subclass overrides inherited behavior with a no-op, throws for valid parent
+operations, narrows accepted inputs, or exists only to access protected implementation. Does it
+preserve the parent contract?
+
+**Diagnostic:** The base class changes repeatedly to support the needs of one subtype. Is that
+behavior an independently varying collaborator?
 
 ## 8. Keep the happy path linear
 
@@ -131,11 +180,22 @@ Use guard clauses for invalid, absent, exceptional, and already-complete cases s
 remains direct and unindented. Do not invert every conditional mechanically: keep related
 alternatives together when their symmetry is clearer as an `if`/`else` or exhaustive dispatch.
 
+**Diagnostic:** The normal successful operation remains nested beneath checks for invalid, absent,
+exceptional, or already-complete cases. Would guard clauses expose the main path?
+
+**Diagnostic:** Following the successful path requires tracking several levels of indentation or
+repeatedly remembering which earlier conditions remain true. Can the control flow be flattened
+without separating symmetric alternatives?
+
 ## 9. Decide each distinction once
 
 When the same condition controls several nearby operations, resolve it once into a named value,
-selected implementation, or cohesive branch. Repeated checks are the Diagnostic; branches
-themselves are not. Engineering Principles governs the larger placement and modeling decision.
+selected implementation, or cohesive branch. Engineering Principles governs the larger placement
+and modeling decision.
+
+**Diagnostic:** The same predicate or discriminant is checked several times to select related
+values, collaborators, or operations. Can the distinction be resolved once into a named result or
+cohesive branch?
 
 ## Self-review
 

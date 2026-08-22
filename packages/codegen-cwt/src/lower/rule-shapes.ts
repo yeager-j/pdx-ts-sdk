@@ -16,32 +16,26 @@ import { camelCase, isPlainName } from "../naming.ts";
 import { type ContentFieldShape } from "../overlay/index.ts";
 import type { Emitter } from "../render/emitter.ts";
 
+/** Returns a block's anonymous value types, or `null` when it has none. */
 export function bareValuesOf(type: RuleType): readonly RuleType[] | null {
   return type.kind === "block" && type.bare.length > 0
     ? type.bare.map((value) => value.type)
     : null;
 }
 
+/** A CWT rule type narrowed to its block form. */
 export type BlockType = Extract<RuleType, { kind: "block" }>;
 
 /**
- * Finds the anonymous-block shape behind a repeated-struct field, in either of
- * CWT's two spellings.
- *
- * "Direct": the field's own type is a block of ordinary named fields —
- * `text = { trigger = { ... } }` repeated, or a singular fixed-shape block
- * like `forbidden_peace_offers = { demand_surrender = ... }`.
- *
- * "Wrapped": the field is a singular container whose only content is one bare
- * anonymous block declared repeatable inside it — `discrete_terms = { ##
- * cardinality = 0..inf { key = ... value = ... } }`. The repetition lives on
- * the bare declaration, not on `discrete_terms` itself, so the result is
- * always a list regardless of the outer field's own cardinality — the same
- * convention `lowerValueList` already uses for bare scalar lists.
+ * Finds a struct block in CWT's direct or single-bare-block spelling.
+ * `wrapped` is true when anonymous repetition occurs inside the outer field key.
  */
-export function structBlockOf(
-  type: RuleType
-): { readonly block: BlockType; readonly wrapped: boolean } | null {
+export function structBlockOf(type: RuleType): {
+  /** The anonymous block containing the struct's fields. */
+  readonly block: BlockType;
+  /** Whether the block is a bare value nested inside the outer key. */
+  readonly wrapped: boolean;
+} | null {
   if (type.kind !== "block") {
     return null;
   }
@@ -56,23 +50,18 @@ export function structBlockOf(
 
 /** One enum-keyed block declaration, and the key set the rules close it to. */
 export interface EnumKeyedEntry {
+  /** The computed enum-key declaration. */
   readonly declaration: RuleField;
+  /** The block shape shared by every enum key. */
   readonly block: BlockType;
+  /** The closed set of plain enum keys. */
   readonly values: readonly string[];
 }
 
 /**
- * Finds that declaration inside a block type:
- * `enum[prereq_for_category] = { title = localisation … }`.
- *
- * Unlike `scalar = { … }`, which says nothing about which keys are legal, an
- * enum key names its keys exactly — so the declaration is one shape written
- * under each of a known, small set of names, and `enumKeyedMembers` (see
- * `fields.ts`) lowers it that way without an overlay row to disambiguate it.
- *
- * Declines a block with more than one such declaration, and an enum the rules
- * name but never populate (`valueFor` already reads that as an open `string`,
- * which is not a key set anything could expand).
+ * Finds the sole block declaration keyed by a small, populated enum.
+ * Returns `null` when the declaration is ambiguous or the enum cannot provide a closed
+ * set of plain member names.
  */
 export function enumKeyedEntryOf(emitter: Emitter, block: BlockType): EnumKeyedEntry | null {
   const candidates = block.fields.flatMap((field) =>
@@ -92,14 +81,8 @@ export function enumKeyedEntryOf(emitter: Emitter, block: BlockType): EnumKeyedE
 }
 
 /**
- * Finds the single wildcard-keyed block declaration inside a block type, the
- * shape CWT uses for a keyed collection: `stages = { scalar = { icon = ... } }`
- * says "any scalar key maps to this block", not a field literally named
- * `scalar` — `classifyKey` reads that as a `computed` key rather than a `name`
- * one, so `mergeByName` (which only keeps `name` keys) sees nothing there.
- *
- * Ambiguous input — no such declaration, or more than one — declines rather
- * than guessing which one is the record's real shape.
+ * Finds the single computed-key block used as a wildcard record value.
+ * Returns `null` when no such declaration exists or several candidates are ambiguous.
  */
 export function wildcardBlockOf(type: RuleType): BlockType | null {
   if (type.kind !== "block") {
@@ -112,6 +95,10 @@ export function wildcardBlockOf(type: RuleType): BlockType | null {
   return candidates.length === 1 ? candidates[0]!.type : null;
 }
 
+/**
+ * Returns the one alias category spliced throughout a block, or `null` when
+ * the block contains other fields or multiple categories.
+ */
 export function spliceCategory(type: RuleType): string | null {
   if (type.kind !== "block") {
     return null;
@@ -209,9 +196,9 @@ function economicSpliceShape(type: RuleType): ContentFieldShape | null {
 }
 
 /**
- * The runtime shape a field's own declaration names, or `null` when it names
- * none. Read only where the overlay states nothing, so an explicit row still
- * wins over the derivation.
+ * Derives a runtime shape from a field's named clause or economic splice.
+ * Call it only when no overlay shape is present; `undefined` means the declaration
+ * does not identify a supported shape.
  */
 export function derivedClauseShape(field: RuleField): ContentFieldShape | undefined {
   if (field.type.kind !== "block") {
@@ -222,19 +209,8 @@ export function derivedClauseShape(field: RuleField): ContentFieldShape | undefi
 }
 
 /**
- * Rewrites an all-scalar alias category as ordinary named fields.
- *
- * `possible_pre_triggers = { alias_name[pop_pre_trigger] = ... }` is a struct
- * wearing a splice's clothes: the category admits exactly seven members and
- * every one of them is a plain `bool`, so naming them turns the field into
- * something `lowerStruct` already knows how to emit — no new runtime shape, no
- * `Trigger` that would let an author write conditions the game will not read.
- *
- * Returns `null` for any category with a member the struct pipeline cannot
- * express (`government_trigger`'s clause blocks and self-recursive
- * combinators), leaving the field to be reported as unsupported rather than
- * half-lowered. One `RuleField` per declaration, so a member declared twice
- * merges through `mergeByName` exactly like an ordinary repeated key.
+ * Expands an all-scalar alias category into ordinary optional named fields.
+ * Returns `null` if any member name or value cannot be represented by the struct pipeline.
  */
 export function aliasScalarFields(emitter: Emitter, category: string): RuleField[] | null {
   const members = emitter.rules.aliasCategories.get(category);
@@ -267,25 +243,26 @@ export function aliasScalarFields(emitter: Emitter, category: string): RuleField
   return fields;
 }
 
-export type AliasNameField = RuleField & { readonly key: Extract<FieldKey, { kind: "aliasName" }> };
+/** A CWT rule field narrowed to an unkeyed alias splice. */
+export type AliasNameField = RuleField & {
+  /** The alias-splice key and its category. */
+  readonly key: Extract<FieldKey, { kind: "aliasName" }>;
+};
 
 /**
- * A *structural* alias category: one whose single member is a block, so the
- * category names a nested body rather than a vocabulary of rules.
- *
- * `alias[planet_initializer:planet]` is the case. Splicing that category into a
- * body means "a `planet = { ... }` block may appear here", and since `planet`'s
- * own body splices `planet_initializer` and `moon_initializer` back into itself,
- * the grammar is recursive and the nesting unbounded.
- *
- * The single-member invariant is enforced rather than worked around: a category
- * with two block members would need a naming scheme for the interfaces, and no
- * such category exists. Declining reports the gap instead of inventing one.
+ * Recognizes an alias category containing exactly one named block member.
+ * Returns that structural declaration for nested interface lowering, or `null` when
+ * the category is absent, ambiguous, or scalar-valued.
  */
 export function structuralSpliceOf(
   emitter: Emitter,
   category: string
-): { readonly memberKey: string; readonly declaration: AliasDecl } | null {
+): {
+  /** The PDXScript key emitted for the structural member. */
+  readonly memberKey: string;
+  /** The category's sole block declaration. */
+  readonly declaration: AliasDecl;
+} | null {
   const members = emitter.rules.aliasCategories.get(category);
   if (members === undefined || members.size !== 1) {
     return null;
@@ -320,18 +297,16 @@ export function triggeredModifierPotential(field: RuleField): RuleField {
   return potentials[0]!;
 }
 
+/** The structurally required parts of an economic-resource operation block. */
 export interface EconomicResourceOperationParts {
+  /** The optional trigger clause that gates the operation. */
   readonly trigger: RuleField;
 }
 
 /**
- * Confirms the mixed CWT block the reusable economic-operation contract owns.
- *
- * A resource map alone is not this shape: `when` must correspond to exactly
- * one direct trigger clause and every complex maths sibling must remain
- * writable through `mult`/`multiplier`. Keeping this structural check beside
- * the lowering means an overlay cannot accidentally apply the shape to a
- * superficially similar block and silently discard one of its declared arms.
+ * Validates and extracts the required parts of an economic-resource operation block.
+ * The field must contain exactly one resource arm, optional trigger arm, and repeated
+ * complex-maths arm; otherwise this function throws.
  */
 export function economicResourceOperationParts(field: RuleField): EconomicResourceOperationParts {
   if (field.type.kind !== "block" || field.type.bare.length !== 0) {
@@ -376,17 +351,20 @@ export function economicResourceOperationParts(field: RuleField): EconomicResour
   return { trigger: triggers[0]! };
 }
 
+/** The ordinary and trigger portions of a mixed trigger-struct block. */
 export interface TriggerStruct {
+  /** The block after the trigger splice has been removed. */
   readonly block: BlockType;
+  /** The original trigger-splice declaration. */
   readonly trigger: RuleField;
+  /** The PDXScript names retained in {@link block}. */
   readonly ordinaryKeys: readonly string[];
 }
 
 /**
- * The one mixed block shape a normal struct cannot lower without losing its
- * splice: direct trigger entries plus ordinary named siblings.  It is narrow
- * on purpose; every other splice/computed/subtype/bare combination remains
- * unsupported rather than being partially emitted.
+ * Recognizes a block containing one direct trigger splice and ordinary named fields.
+ * Returns `null` for computed, subtype, bare, or conflicting `when` shapes that cannot
+ * be represented without loss.
  */
 export function triggerStructOf(type: RuleType): TriggerStruct | null {
   if (type.kind !== "block" || type.bare.length !== 0) {

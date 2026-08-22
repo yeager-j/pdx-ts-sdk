@@ -24,9 +24,11 @@
 
 import type { DocTable, FieldOmissionRow, MemberDocRow } from "../../render/field-rows.ts";
 
+/** Field-table documentation imported from one generated registry or alias module. */
 export interface FieldDocsModule {
   /** Generated-module specifier the tables are imported from, e.g. `./technology.ts`. */
   readonly module: string;
+  /** Documentation rows for every field table exported by the module. */
   readonly docTables: readonly DocTable[];
 }
 
@@ -63,6 +65,10 @@ function serializeOmissions(rows: readonly FieldOmissionRow[]): string {
   );
 }
 
+/**
+ * Emits the importable field-docs ledger from registry and alias documentation rows.
+ * Repeated table names within one module must agree, while cross-module collisions receive aliases.
+ */
 export function emitContentFieldDocs(
   modules: readonly FieldDocsModule[],
   registryOmissions: ReadonlyMap<string, readonly FieldOmissionRow[]>,

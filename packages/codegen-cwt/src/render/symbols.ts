@@ -21,10 +21,14 @@
  * `packages/sdk/src/generated/`, so one spelling per name is enough.
  */
 
+/** Whether a generated module uses an imported name as a TypeScript type or runtime value. */
 export type SymbolKind = "type" | "value";
 
+/** The authoritative module and import kind for one hand-written SDK symbol. */
 export interface KnownSymbol {
+  /** The module specifier as written from the generated output directory. */
   readonly module: string;
+  /** Whether generated files must retain the import at runtime. */
   readonly kind: SymbolKind;
 }
 
@@ -80,115 +84,125 @@ const SYMBOL_MODULES: readonly ModuleSymbols[] = [
   { module: "./scopes.ts", types: ["ScopeName"] },
 ];
 
+function addKnownSymbols(
+  table: Map<string, KnownSymbol>,
+  module: string,
+  names: readonly string[] | undefined,
+  kind: SymbolKind
+): void {
+  for (const name of names ?? []) {
+    const existing = table.get(name);
+    if (existing !== undefined) {
+      throw new Error(
+        `Symbol "${name}" is declared by both ${existing.module} and ${module}; ` +
+          "a name has one source module or the import table has no authority"
+      );
+    }
+    table.set(name, { module, kind });
+  }
+}
+
 function buildKnownSymbols(): ReadonlyMap<string, KnownSymbol> {
   const table = new Map<string, KnownSymbol>();
   for (const entry of SYMBOL_MODULES) {
-    const rows: readonly (readonly [readonly string[] | undefined, SymbolKind])[] = [
-      [entry.types, "type"],
-      [entry.values, "value"],
-    ];
-    for (const [names, kind] of rows) {
-      for (const name of names ?? []) {
-        const existing = table.get(name);
-        if (existing !== undefined) {
-          throw new Error(
-            `Symbol "${name}" is declared by both ${existing.module} and ${entry.module}; ` +
-              "a name has one source module or the import table has no authority"
-          );
-        }
-        table.set(name, { module: entry.module, kind });
-      }
-    }
+    addKnownSymbols(table, entry.module, entry.types, "type");
+    addKnownSymbols(table, entry.module, entry.values, "value");
   }
   return table;
 }
 
-/** Every hand-written SDK symbol an emitter may write into generated output. */
+/** The authoritative module and import kind for every fixed SDK symbol available to emitters. */
 export const KNOWN_SYMBOLS = buildKnownSymbols();
 
 /**
- * Resolves one name against {@link KNOWN_SYMBOLS}, or throws.
- *
- * The single lookup every caller goes through, so "which module is this name
- * in" has one answer and "this name is not one we know" has one message.
- * `hint` says what to do about it, which differs by caller: an emitter spelling
- * a symbol is a different mistake from an overlay row naming one.
+ * Returns the authoritative import metadata for a fixed SDK symbol.
+ * Throws with the caller's remediation hint when the name is not registered.
  */
 export function knownSymbol(name: string, hint: string): KnownSymbol {
   const symbol = KNOWN_SYMBOLS.get(name);
   if (symbol === undefined) {
     throw new Error(
-      `"${name}" is not a known SDK symbol (KNOWN_SYMBOLS in emit/symbols.ts). ${hint}`
+      `"${name}" is not a known SDK symbol (KNOWN_SYMBOLS in render/symbols.ts). ${hint}`
     );
   }
   return symbol;
 }
 
 /**
- * One generated file's recorded imports.
- *
- * Named imports are keyed by module and then by name, so recording the same
- * symbol from two emitters is idempotent. `sideEffect` holds the modules that
- * additionally need a bare `import "../emit/x.ts";` — the alias-category registration
- * ordering, which a type-only import would erase.
+ * Collects named and side-effect imports while one generated file is emitted.
+ * Repeated named imports are idempotent, while conflicting type/value uses fail immediately.
  */
 export class ImportRecorder {
   private readonly named = new Map<string, Map<string, SymbolKind>>();
   private readonly sideEffect = new Set<string>();
 
+  /**
+   * Records one named import, combining repeated uses of the same symbol.
+   * A symbol cannot be recorded as both a type and a value from the same module.
+   */
   add(module: string, name: string, kind: SymbolKind): void {
-    const names = this.named.get(module) ?? new Map<string, SymbolKind>();
-    const existing = names.get(name);
+    const moduleImports = this.named.get(module) ?? new Map<string, SymbolKind>();
+    const existing = moduleImports.get(name);
     if (existing !== undefined && existing !== kind) {
       throw new Error(
         `Import "${name}" from ${module} is recorded as both a ${existing} and a ${kind}`
       );
     }
-    names.set(name, kind);
-    this.named.set(module, names);
+    moduleImports.set(name, kind);
+    this.named.set(module, moduleImports);
   }
 
+  /** Records a bare import needed for module initialization or registration. */
   addSideEffect(module: string): void {
     this.sideEffect.add(module);
   }
 
+  /** Returns a detached snapshot that later recordings cannot mutate. */
   snapshot(): FileImports {
+    const named = new Map<string, Map<string, SymbolKind>>();
+    for (const [module, imports] of this.named) {
+      named.set(module, new Map(imports));
+    }
     return {
-      named: new Map([...this.named].map(([module, names]) => [module, new Map(names)] as const)),
+      named,
       sideEffect: new Set(this.sideEffect),
     };
   }
 }
 
+/** The named and side-effect imports required by one generated file. */
 export interface FileImports {
+  /** Named imports grouped by module specifier and symbol name. */
   readonly named: ReadonlyMap<string, ReadonlyMap<string, SymbolKind>>;
+  /** Modules that must also be imported for their initialization effects. */
   readonly sideEffect: ReadonlySet<string>;
 }
 
 /**
- * The import block for one generated file.
- *
- * A pure function of the recorded set: modules sorted by specifier, names sorted
- * within a statement, type-only and value imports written as separate statements
- * — which is the repo's own source style, and which the Prettier import plugin
- * then merges into the single per-module statement the committed output carries.
- *
- * The bare side-effect imports come last, and deliberately so: the plugin treats
- * a side-effect import as a reordering barrier (it cannot know the import is
- * safe to move past), so one written in the middle would split the sorted block
- * in two.
+ * Renders a deterministic import block for one generated file.
+ * Modules and names are sorted, type/value imports stay distinct, and side-effect imports come
+ * last so Prettier does not split the named-import block at a reordering barrier.
  */
 export function renderImports(imports: FileImports): string {
   const statements: string[] = [];
-  for (const module of [...imports.named.keys()].sort()) {
-    const names = imports.named.get(module)!;
-    const of = (kind: SymbolKind): string[] =>
+  const namedImports = [...imports.named.entries()];
+  namedImports.sort(([leftModule], [rightModule]) => {
+    if (leftModule < rightModule) {
+      return -1;
+    }
+    if (leftModule > rightModule) {
+      return 1;
+    }
+    return 0;
+  });
+  for (const [module, names] of namedImports) {
+    const namesOfKind = (kind: SymbolKind): string[] =>
       [...names]
         .filter(([, entry]) => entry === kind)
         .map(([name]) => name)
         .sort();
-    const types = of("type");
-    const values = of("value");
+    const types = namesOfKind("type");
+    const values = namesOfKind("value");
     if (types.length > 0) {
       statements.push(`import type { ${types.join(", ")} } from ${JSON.stringify(module)};\n`);
     }
@@ -203,10 +217,8 @@ export function renderImports(imports: FileImports): string {
 }
 
 /**
- * A static `import type { ... } from "module"` statement for a fixed list of
- * names, deduplicated and sorted — the counterpart to {@link renderImports}
- * for a caller that already knows exactly which names it needs rather than
- * recording uses as it emits.
+ * Renders a type-only import for a fixed list of names.
+ * Names are deduplicated and sorted; an empty list produces no statement.
  */
 export function importList(from: string, names: readonly string[]): string {
   if (names.length === 0) {
@@ -216,19 +228,12 @@ export function importList(from: string, names: readonly string[]): string {
 }
 
 /**
- * Fails codegen when a file imports a symbol its body never mentions.
- *
- * One-way on purpose. The recorded set is the authority for what gets imported,
- * so this cannot be the check that a *missing* record is caught — that shows up
- * as a generated file referencing an undeclared name, which `npm run typecheck`
- * reports. What it does catch is the opposite mistake: a recording made on a
- * path whose text never reached the output, which would emit a dead import and
- * quietly grow the generated diff. `body` is matched on word boundaries, so a
- * name mentioned only in a doc comment counts — this is a floor, not a proof of
- * use.
+ * Throws when a recorded named import is absent from the generated module body.
+ * This check catches extra records only; TypeScript reports missing records as unresolved names.
+ * The supplied identifier matcher defines what counts as a reference, including documentation.
  */
 export function assertRecordedImportsAreUsed(
-  file: string,
+  outputFile: string,
   body: string,
   imports: FileImports,
   references: (code: string, identifier: string) => boolean
@@ -243,7 +248,7 @@ export function assertRecordedImportsAreUsed(
   }
   if (unused.length > 0) {
     throw new Error(
-      `${file} records imports its body never references: ${unused.sort().join(", ")}. ` +
+      `${outputFile} records imports its body never references: ${unused.sort().join(", ")}. ` +
         "The recording is on a path whose text did not reach the output — move it to the " +
         "site that writes the name."
     );

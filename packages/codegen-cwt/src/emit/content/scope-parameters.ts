@@ -13,22 +13,35 @@ import { Emitter } from "../../render/emitter.ts";
 
 /** A {@link ContentScopeParameter.declaredFrom} row, resolved against the rules. */
 export interface DeclaredFrom {
+  /** Authoring member that declares the location scope without emitting a field. */
   readonly member: string;
   /** The emitted union of scopes the declaration may name. */
   readonly typeName: string;
+  /** Canonical scopes admitted by the referenced CWT scope group. */
   readonly scopes: readonly string[];
+  /** Definition members whose callbacks receive this scope as FROM. */
   readonly members: readonly string[];
+  /** Effect whose argument supplies the declared location. */
   readonly effect: string;
 }
 
+/** Resolved scope-parameter policy for one generated content registry. */
 export interface ScopeParameter {
+  /** Name of the generated scope union. */
   readonly typeName: string;
+  /** Canonical scopes the definition may declare. */
   readonly scopes: readonly string[];
+  /** Scope used when the author omits the declaration. */
   readonly fallback: string;
+  /** Generic parameter name used by the generated definition. */
   readonly parameterName: "S" | "E";
+  /** Constraint applied to the generated scope parameter. */
   readonly parameterType: string;
+  /** Default type argument for the generated scope parameter. */
   readonly parameterFallback: string;
+  /** Optional discriminator that selects a definition's callback scope. */
   readonly selector?: NonNullable<ContentScopeParameter["selector"]>;
+  /** Optional declaration tying callback FROM to a starting effect argument. */
   readonly declaredFrom?: DeclaredFrom;
 }
 

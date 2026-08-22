@@ -1,9 +1,9 @@
 /**
  * Serializes the `effect-meta.ts` output: one `EFFECT_META` entry per method
- * telling the runtime recorder (`src/script/effects/recorder.ts`, a single
- * scope-agnostic Proxy) how to serialize the call. The Proxy throws on names
- * missing from this table. The sibling `effects.ts` emitter builds the typed
- * interfaces over the same per-effect record.
+ * telling the runtime recorder (`packages/sdk/src/script/effects/recorder.ts`, a
+ * single scope-agnostic Proxy) how to serialize the call. The Proxy throws on
+ * names missing from this table. The sibling `effects.ts` emitter builds the
+ * typed interfaces over the same per-effect record.
  */
 
 import type { ArgField } from "../../lower/script-shape.ts";
@@ -34,6 +34,29 @@ function scalarMeta(value: TsValue): string {
   return members.length === 0 ? "{}" : `{ ${members.join(", ")} }`;
 }
 
+function fieldKind(field: ArgField): string {
+  const value = field.value;
+  switch (value.kind) {
+    case "scalar":
+      return "value";
+    case "comparison":
+      return "comparison";
+    case "scalarOrFields":
+      return "effect";
+    case "clause":
+      switch (value.category) {
+        case "trigger":
+          return "trigger";
+        case "modifier_rule":
+          return "modifiers";
+        case "effect":
+          return "effect";
+      }
+    default:
+      throw new Error(`Field ${field.name} has no scalar metadata kind`);
+  }
+}
+
 function fieldMeta(field: ArgField): string {
   const repeated = field.repeated === true ? ", repeated: true" : "";
   if (field.value.kind === "fields") {
@@ -47,16 +70,7 @@ function fieldMeta(field: ArgField): string {
     const fields = field.value.fields;
     return `{ prop: ${JSON.stringify(camelCase(field.name))}, key: ${JSON.stringify(field.name)}, kind: "value-list"${scalar === null ? "" : `, scalar: ${scalarMeta(scalar)}`}${fields === null ? "" : `, fields: [${fields.map(fieldMeta).join(", ")}]`}${repeated} }`;
   }
-  const kind =
-    field.value.kind === "scalar"
-      ? "value"
-      : field.value.kind === "comparison"
-        ? "comparison"
-        : field.value.category === "trigger"
-          ? "trigger"
-          : field.value.category === "modifier_rule"
-            ? "modifiers"
-            : "effect";
+  const kind = fieldKind(field);
   const refTypes = refTypesSuffix(field.value.kind === "scalar" ? field.value.value : undefined);
   const booleanLiterals = booleanLiteralsMeta(
     field.value.kind === "scalar" ? field.value.value : undefined

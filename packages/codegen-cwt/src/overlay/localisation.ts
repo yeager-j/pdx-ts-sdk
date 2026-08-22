@@ -43,9 +43,11 @@ export const REQUIRED_LOCALISATION = new Set([
   "megastructure.name",
 ]);
 
+/** Describes a generated localisation slot that the vendored type metadata omits. */
 export interface SyntheticLocalisation {
   /** The `$`-bearing pattern to synthesize, e.g. `"$_desc"`. */
   readonly pattern: string;
+  /** Audited evidence that the registry needs the generated slot. */
   readonly reason: string;
 }
 
@@ -61,8 +63,8 @@ export interface SyntheticLocalisation {
  * fix relies on) and the registry ends up with *no* slot where an author can
  * write real flavor text and get a generated key. The body's own `desc` field
  * (`archaeology.cwt:44`, dual with the `triggered_desc_clause` block form,
- * which `emit/content-type.ts` renames to `conditionalDesc` because the slot
- * this row adds takes the `desc` member) is `conversion: "identity"` either
+ * which `emit/content/content-type.ts` renames to `conditionalDesc` because the
+ * slot this row adds takes the `desc` member) is `conversion: "identity"` either
  * way its dual resolves — a raw key, never auto-generated — so writing
  * English into it is accepted and
  * silently wrong: no warning, no error, the game shows the literal string.
@@ -88,7 +90,7 @@ export interface SyntheticLocalisation {
  * `pointerMember` closes that: `ContentAuthoring.define` defaults it to the
  * synthesized key whenever the text member is set and the author has not
  * written the pointer themselves. It is not stated here — the collision this
- * row manufactures is what renames the body field, so `emit/content-type.ts`
+ * row manufactures is what renames the body field, so `emit/content/content-type.ts`
  * records the pointer from that rename rather than repeating its spelling.
  */
 export const SYNTHETIC_LOCALISATION = new Map<string, SyntheticLocalisation>([

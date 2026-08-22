@@ -1,30 +1,23 @@
 /**
- * The one authored form a lowered field's member accepts: `scalar`, `list`,
- * `trigger`, `closure`, or `block`.
- *
- * Previously the SDK's own `acceptedForm` (`@pdx-ts/sdk/content`), shared so
- * codegen could ask a dual field's arms the same question the runtime writer
- * asks when dispatching an authored value to one of them. That import was the
- * one edge making the declared sdk↔codegen cycle real. The house pattern for
- * this — data-driven additions to generated descriptors — is to compute the
- * answer once, here, at codegen time, and write it into the descriptor's own
- * `form` property; the runtime then only ever reads `field.form`, never
- * reclassifies a shape into a form itself. See `ContentField.form` in
- * `@pdx-ts/sdk`'s `content/schema.ts` for the consuming side.
+ * Classifies lowered content shapes by their authored runtime form.
+ * Codegen writes the result into field descriptors so the SDK writer does not reclassify shapes.
  */
 import type { ContentShape } from "./content-shape.ts";
 
+/** The runtime form an author passes for one lowered content field. */
 export type AuthoredForm = "scalar" | "list" | "trigger" | "closure" | "block";
 
 /**
- * Structurally typed rather than taking a whole emitted field so this can be
- * asked of a lowering still being built: a dual is only well formed when its
- * arms accept *different* forms, which has to be decided by the same rule the
- * generated descriptor will carry, not a second copy of it.
+ * Classifies a content shape by the form its generated authoring member accepts.
+ * Dual-field lowering uses the result to reject arms that runtime dispatch
+ * cannot distinguish.
  */
 export function formOfShape(field: {
+  /** The generated runtime descriptor shape. */
   readonly shape: ContentShape;
+  /** Whether the PDXScript key may repeat as siblings. */
   readonly repeated?: boolean;
+  /** Whether anonymous repetition occurs inside one outer key. */
   readonly wrapped?: boolean;
 }): AuthoredForm {
   switch (field.shape) {
@@ -41,11 +34,12 @@ export function formOfShape(field: {
     case "triggerStruct":
       return field.repeated === true || field.wrapped === true ? "list" : "block";
     case "value":
+      return field.repeated === true ? "list" : "scalar";
     case "economicResources":
     case "economicResourcesNoProduce":
     case "triggeredModifierBlock":
     case "aliasStruct":
-      return field.repeated === true ? "list" : field.shape === "value" ? "scalar" : "block";
+      return field.repeated === true ? "list" : "block";
     case "economicResourceOperation":
     case "weightBlock":
     case "weightBlockWithLoc":

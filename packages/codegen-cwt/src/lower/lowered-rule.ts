@@ -3,38 +3,61 @@ import type { AliasDecl } from "../cwt/rules.ts";
 import type { Emitter } from "../render/emitter.ts";
 import { canonicalScopeSet, clauseOf, declaredScopes } from "./script-shape.ts";
 
+/** The canonical scopes a lowered script rule supports, or all scopes. */
 export type LoweredRuleScopes = readonly string[] | "universal";
 
+/** The nested clause and argument facts retained from a rule's block body. */
 export interface LoweredRuleBody {
-  readonly splice: { readonly scope: string | null } | null;
+  /** The scope of an unkeyed trigger or effect splice, when present. */
+  readonly splice: {
+    /** The canonical pushed scope, or `null` for the enclosing rule scope. */
+    readonly scope: string | null;
+  } | null;
+  /** Named clause fields and the scope each clause runs in. */
   readonly clauses: ReadonlyMap<string, string | null>;
+  /** Lowercase names of non-clause arguments. */
   readonly args: ReadonlySet<string>;
 }
 
+/** One block-form declaration partitioned into named fields and alias splices. */
 export interface LoweredRuleBlock {
+  /** The original CWT alias declaration. */
   readonly declaration: AliasDecl;
-  readonly type: RuleType & { readonly kind: "block" };
+  /** The declaration's block type, narrowed for downstream consumers. */
+  readonly type: RuleType & {
+    /** Identifies the declaration as the block variant of `RuleType`. */
+    readonly kind: "block";
+  };
+  /** The raw scope inherited by fields without their own scope annotation. */
   readonly inheritedScope: string | null;
+  /** All fields that are not unkeyed alias splices. */
   readonly named: readonly RuleField[];
+  /** Unkeyed alias-splice fields. */
   readonly splices: readonly RuleField[];
 }
 
 /**
- * One normalized view of a CWT trigger or effect rule.
- *
- * Emitters keep their policy differences, but scopes and block membership are
- * decided here once. Scope-facts is a projection of `body`, not another CWT
- * traversal.
+ * Normalized CWT trigger or effect declarations shared by script emitters and scope facts.
+ * It retains canonical scopes, scalar and block forms, and nested clause membership.
  */
 export interface LoweredRule {
+  /** The rule name as declared by CWT. */
   readonly key: string;
+  /** All scalar and block declarations for the rule. */
   readonly declarations: readonly AliasDecl[];
+  /** Raw supported-scope names before canonicalization. */
   readonly supportedScopes: readonly string[];
+  /** Canonical supported scopes, or `null` when no safe set can be derived. */
   readonly scopes: LoweredRuleScopes | null;
+  /** The rendered TypeScript scope type, when scopes are known. */
   readonly scopeType: string | null;
+  /** Whether any declaration uses comparison syntax. */
   readonly comparison: boolean;
+  /** Non-block declarations in their original order. */
   readonly scalars: readonly AliasDecl[];
+  /** Block declarations partitioned for script emitters. */
   readonly blocks: readonly LoweredRuleBlock[];
+  /** Facts about the rule's nested clauses and arguments. */
   readonly body: LoweredRuleBody;
 }
 
@@ -47,10 +70,19 @@ function renderedScopeType(scopes: LoweredRuleScopes | null): string | null {
     : scopes.map((scope) => JSON.stringify(scope)).join(" | ");
 }
 
+/**
+ * Normalizes all declarations of one trigger or effect rule for emitters and
+ * scope-fact consumers. It preserves declaration and field order.
+ */
 export function lowerRule(
   key: string,
   declarations: readonly AliasDecl[],
-  doc: { readonly scopes: readonly string[] } | undefined,
+  doc:
+    | {
+        /** Scope names reported by the Stellaris script documentation dump. */
+        readonly scopes: readonly string[];
+      }
+    | undefined,
   emitter: Emitter,
   scopeIndex: ReadonlyMap<string, string>
 ): LoweredRule {
@@ -111,9 +143,16 @@ export function lowerRule(
   };
 }
 
+/** Lowers every entry in a trigger or effect rule table without changing key order. */
 export function lowerRuleTable(
   table: ReadonlyMap<string, readonly AliasDecl[]>,
-  docs: ReadonlyMap<string, { readonly scopes: readonly string[] }>,
+  docs: ReadonlyMap<
+    string,
+    {
+      /** Scope names reported by the Stellaris script documentation dump. */
+      readonly scopes: readonly string[];
+    }
+  >,
   emitter: Emitter,
   scopeIndex: ReadonlyMap<string, string>
 ): ReadonlyMap<string, LoweredRule> {

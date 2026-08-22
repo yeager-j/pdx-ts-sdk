@@ -14,12 +14,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { SingleAliasTarget } from "@pdx-ts/codegen-cwt/cwt/model";
 import { parseCwt } from "@pdx-ts/codegen-cwt/cwt/parser";
-import {
-  buildRuleSet,
-  readAliases,
-  type AliasDecl,
-  type ParsedRuleFile,
-} from "@pdx-ts/codegen-cwt/cwt/rules";
+import { buildRuleSet, readAliases, type ParsedRuleFile } from "@pdx-ts/codegen-cwt/cwt/rules";
 import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { describe, expect, it } from "vitest";
 
@@ -77,17 +72,14 @@ describe("buildRuleSet order independence", () => {
 
   it("would have failed under the old single pass: readAliases cannot resolve a single_alias it has not read yet", () => {
     // Reproduces exactly what the old single-pass loop did when `consumes.cwt`
-    // was read before `declares.cwt`: `readAliases` — unchanged by this
-    // refactor — is handed an empty single-alias table, because nothing has
-    // read `declares.cwt` yet.
-    const withoutDeclares = new Map<string, AliasDecl[]>();
-    readAliases(
+    // was read before `declares.cwt`: the alias reader is handed an empty
+    // single-alias table because nothing has read `declares.cwt` yet.
+    const withoutDeclares = readAliases(
       consumes.parsed.nodes,
       consumes.file,
       "trigger",
-      new Map<string, SingleAliasTarget>(),
-      withoutDeclares
-    );
+      new Map<string, SingleAliasTarget>()
+    ).aliases;
     expect(withoutDeclares.get("my_trigger")?.[0]?.type.kind).toBe("singleAliasRight");
 
     // `buildRuleSet` never lets that happen: phase 2 reads every file's

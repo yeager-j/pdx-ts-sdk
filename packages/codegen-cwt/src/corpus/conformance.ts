@@ -1,34 +1,43 @@
-/**
- * The corpus verdicts: {@link conformance} asks whether a field is *present*
- * in the emitted interface; {@link shapeConformance} asks whether its lowered
- * type can hold what real definitions put there. The vocabulary lives in
- * `./observations.ts`, the reading engine in `./read.ts`.
- */
-
 import type { EmittedField } from "../lower/fields.ts";
 import type { RuleScopes } from "../lower/scope-facts.ts";
-import type { RegistryCorpus } from "./observations.ts";
+import type { FieldObservation, RegistryCorpus } from "./observations.ts";
 
+/**
+ * Identifies an observed field that the generated interface does not expose.
+ *
+ * Read these rows from {@link ConformanceReport.unexpressed} in descending corpus frequency.
+ */
+export interface UnexpressedField {
+  /** Dotted field path. */
+  readonly field: string;
+  /** Definitions that write the field. */
+  readonly count: number;
+}
+
+/**
+ * Reports whether an emitted registry exposes fields seen in its corpus.
+ *
+ * Obtain this from {@link conformance}; use `unexpressed` to find missing API and `invented` to
+ * review emitted fields that the corpus does not confirm.
+ */
 export interface ConformanceReport {
+  /** Registry that produced the report. */
   readonly registry: string;
+  /** Observed registry definitions. */
   readonly corpus: RegistryCorpus;
-  /** Emitted fields no definition in the corpus writes: likely a misreading. */
+  /** Emitted fields absent from the corpus. */
   readonly invented: readonly string[];
-  /** Observed fields the emitted interface cannot express, most frequent first. */
-  readonly unexpressed: readonly { readonly field: string; readonly count: number }[];
-  /** Share of observed field occurrences the emitted interface covers, 0-1. */
+  /** Observed fields absent from the emitted interface, most frequent first. */
+  readonly unexpressed: readonly UnexpressedField[];
+  /** Fraction of observed field occurrences the emitted interface covers. */
   readonly coverage: number;
 }
 
 /**
- * Measures the emitted interface against the corpus.
+ * Compares emitted field names with the field paths observed in one registry corpus.
  *
- * `spliced` names keys the interface admits without enumerating them: an alias
- * category spliced unkeyed into the definition body (`static_modifier`'s
- * modifier names) is one authoring member covering thousands of legal keys. They
- * count as covered, but never as `invented` — the emitter did not claim each
- * one individually, so "the corpus never writes it" says nothing about whether
- * the shape was read correctly.
+ * Pass the generated top-level and nested field names. Pass `spliced` for keys accepted through an
+ * unkeyed alias splice; they count as covered but are not treated as emitted declarations.
  */
 export function conformance(
   registry: string,
@@ -61,58 +70,35 @@ export function conformance(
 }
 
 /**
- * The four ways a lowered type can disagree with the values behind it.
+ * Classifies a disagreement between a lowered field and corpus evidence.
  *
- * `form` is hard: the corpus writes something no value of the emitted type can
- * express, so the field is unfillable however legal it is. `scope` is hard in
- * one of its two cases only — a pinned scope rejects the rule, and the field is
- * unfillable the same way, but an unpinned trigger clause is widened to
- * `Trigger<never>` (see `contravariantScopeType`), which accepts the rule with
- * nothing checked. What the corpus proves there is that the emitted type
- * carries no claim, not that an author is stuck; both are reported, and the
- * detail says which. `arity` and `literal` are softer — a list where the game
- * happens never to repeat is legal, and a value outside a closed union may be
- * an upstream spelling quirk. Softer is not unreviewed: the gate holds the two
- * of them against a committed baseline of classified rows, so a *new or
- * changed* observation fails until somebody says which kind of legal it is.
+ * Use `form` and `scope` as unfillable contracts; review `arity` and `literal` against their
+ * baseline because the corpus is only evidence of what vanilla writes.
  */
 export type ConformanceMismatchKind = "form" | "arity" | "literal" | "scope";
 
+/**
+ * Describes one lowered-field mismatch found in the corpus.
+ *
+ * Use `kind` and `evidence` as stable comparison data; show `detail` only in reports because it
+ * contains changing counts and samples.
+ */
 export interface ShapeMismatch {
+  /** Dotted field path. */
   readonly field: string;
+  /** Category of mismatch. */
   readonly kind: ConformanceMismatchKind;
-  /**
-   * The finding in prose, for a human reading a failure. Deliberately volatile:
-   * it carries definition counts that move with every game patch and samples
-   * that truncate, so nothing may treat it as an identity.
-   */
+  /** Human-readable description. This value is not a stable identity. */
   readonly detail: string;
-  /**
-   * The values that produced the verdict — every stray for `literal`, and empty
-   * for the kinds whose verdict is its own evidence. This is the half a
-   * baseline compares, as a set: a seventh stray the prose does not show still
-   * has to be reviewed, and a definition count that moved is not a new
-   * observation.
-   *
-   * Untruncated, unlike {@link detail} — but drawn from a value set the reader
-   * caps at `VALUE_SAMPLE`, so "every stray" holds only while the field
-   * stays under that cap. The corpus gate asserts it does.
-   */
+  /** Stable evidence used to compare literal mismatches. */
   readonly evidence: readonly string[];
 }
 
 /**
- * What the writer puts on the right of each runtime shape's key. `both` is a
- * field lowered to a union of a scalar and a block, dispatched at write time by
- * what the author passed.
+ * Maps each emitted shape to the form written at its field key.
  *
- * A shape missing here gets no form verdict rather than a guessed one — which
- * is only sound for a shape whose own top-level `EmittedField` never reaches
- * this lookup in the first place. Every other `CONTENT_SHAPES` member
- * must have a row: the table is string-keyed, so a typo'd or forgotten shape
- * silently exempts a field rather than failing loudly. `written-form.test.ts`
- * pins `CONTENT_SHAPES` against this map's keys plus {@link WRITTEN_FORM_EXEMPT}
- * in both directions, so a fifth gap cannot join either list unreviewed.
+ * Use this table in shape conformance before comparing observed scalar and block values. `both`
+ * accepts either form.
  */
 export const WRITTEN_FORM = new Map<string, "scalar" | "block" | "both">([
   ["value", "scalar"],
@@ -138,9 +124,10 @@ export const WRITTEN_FORM = new Map<string, "scalar" | "block" | "both">([
 ]);
 
 /**
- * `CONTENT_SHAPES` members with no {@link WRITTEN_FORM} row, each with
- * the reason its own top-level occurrence never reaches the lookup — not
- * merely "nobody got to it yet".
+ * Explains emitted shapes that have no top-level field for {@link WRITTEN_FORM} to check.
+ *
+ * Keep this map aligned with the emitted shape inventory; each value states why its shape is
+ * exempt instead of silently missing.
  */
 export const WRITTEN_FORM_EXEMPT = new Map<string, string>([
   [
@@ -159,16 +146,7 @@ export const WRITTEN_FORM_EXEMPT = new Map<string, string>([
   ],
 ]);
 
-/**
- * Whether a rule legal in `rule` can be written into a field typed for `field`.
- *
- * `Trigger<S>` is contravariant in its scope, so the field admits exactly the
- * rules legal in *every* scope it names, and `"any"` — nothing pinned it —
- * names every scope there is, so only a universal rule satisfies it. That is a
- * question about the declared scopes rather than about the emitted type: what a
- * failure costs depends on how the field lowered, which is
- * {@link scopeVerdict}'s job to say.
- */
+/** Whether a field scope admits a rule scope. */
 function fieldAdmits(field: readonly string[] | "any", rule: RuleScopes): boolean {
   if (rule === "universal") {
     return true;
@@ -179,16 +157,6 @@ function fieldAdmits(field: readonly string[] | "any", rule: RuleScopes): boolea
   return field.every((scope) => rule.includes(scope));
 }
 
-/**
- * How a rejected key reads against the type the field really lowered to.
- *
- * A pinned scope rejects the rule, so the field is unfillable. An unpinned one
- * need not: a trigger clause nothing pinned is widened to `Trigger<never>` (see
- * `contravariantScopeType`), which accepts every condition and checks none, so
- * the defect there is a lost check rather than a value no author can write. An
- * unpinned effect keeps `EffectBlock<ScopeName>` — no such widening — and does
- * reject, which is why the two clauses do not read alike.
- */
 function scopeVerdict(scope: readonly string[] | "any", clause: "trigger" | "effect"): string {
   if (scope !== "any") {
     return `typed for scope ${scope.join("/")}, which rejects`;
@@ -198,15 +166,7 @@ function scopeVerdict(scope: readonly string[] | "any", clause: "trigger" | "eff
     : "typed for EffectBlock<ScopeName>, which rejects";
 }
 
-/**
- * The declared scopes under which one definition's writes are all expressible.
- *
- * A parameterised field's scope is chosen once per *definition*, so this is the
- * question the gate has to ask per definition rather than per key: asking
- * whether each key is legal under *some* declared scope would pass a definition
- * that writes a planet-only rule beside a ship-only one, which no single choice
- * of S can express. Keys nothing knows are skipped, as everywhere else.
- */
+/** Returns declared scopes that admit every known key in one definition. */
 function workableScopes(
   declared: readonly string[],
   keys: ReadonlySet<string>,
@@ -219,157 +179,192 @@ function workableScopes(
   return declared.filter((scope) => scoped.every((rule) => fieldAdmits([scope], rule)));
 }
 
+function findFormMismatches(
+  emittedField: EmittedField,
+  observation: FieldObservation,
+  writtenFormOf: (shape: string) => "scalar" | "block" | "both" | undefined
+): ShapeMismatch[] {
+  const mismatches: ShapeMismatch[] = [];
+  const writtenForm = writtenFormOf(emittedField.shape);
+  const definitionSummary = `${observation.definitions} defs`;
+  if (writtenForm === "block" && observation.scalars > 0) {
+    mismatches.push({
+      field: emittedField.field,
+      kind: "form",
+      detail:
+        `lowered as ${emittedField.shape}, but ${observation.scalars}/${definitionSummary} write a scalar ` +
+        `(${[...observation.values].slice(0, 4).join(" ")})`,
+      evidence: [],
+    });
+  }
+  if (writtenForm === "scalar" && observation.blocks > 0) {
+    mismatches.push({
+      field: emittedField.field,
+      kind: "form",
+      detail:
+        `lowered as a scalar, but ${observation.blocks}/${definitionSummary} write a block ` +
+        `(${[...observation.keys].slice(0, 4).join(" ") || "bare values"})`,
+      evidence: [],
+    });
+  }
+  const observedBlockContents: string[] = [];
+  if (observation.keys.size > 0) {
+    observedBlockContents.push(`named keys (${[...observation.keys].slice(0, 4).join(" ")})`);
+  }
+  if (observation.bareValues > 0) {
+    observedBlockContents.push(`bare scalars (${[...observation.values].slice(0, 4).join(" ")})`);
+  }
+  if (observation.bareBlocks > 0) {
+    observedBlockContents.push("bare blocks");
+  }
+  if (observation.blocks === 0 || writtenForm !== "block" || observedBlockContents.length === 0) {
+    return mismatches;
+  }
+  const observedContents = observedBlockContents.join(" and ");
+  if (emittedField.shape === "valueList" && observation.bareValues === 0) {
+    mismatches.push({
+      field: emittedField.field,
+      kind: "form",
+      detail: `lowered as a value list, but its ${observation.blocks} blocks hold ${observedContents}`,
+      evidence: [],
+    });
+  } else if (emittedField.wrapped === true && observation.bareBlocks === 0) {
+    mismatches.push({
+      field: emittedField.field,
+      kind: "form",
+      detail: `lowered as a wrapped struct, but its ${observation.blocks} blocks hold ${observedContents}`,
+      evidence: [],
+    });
+  } else if (
+    emittedField.shape !== "valueList" &&
+    emittedField.wrapped !== true &&
+    observation.keys.size === 0
+  ) {
+    mismatches.push({
+      field: emittedField.field,
+      kind: "form",
+      detail: `lowered as ${emittedField.shape}, but its ${observation.blocks} blocks hold ${observedContents}`,
+      evidence: [],
+    });
+  }
+  return mismatches;
+}
+
+function findArityMismatches(
+  emittedField: EmittedField,
+  observation: FieldObservation
+): ShapeMismatch[] {
+  if (!emittedField.repeated || observation.repeated > 0) {
+    return [];
+  }
+  return [
+    {
+      field: emittedField.field,
+      kind: "arity",
+      detail: `lowered as a list, but no definition writes it twice (${observation.definitions} defs)`,
+      evidence: [],
+    },
+  ];
+}
+
+function findLiteralMismatches(
+  emittedField: EmittedField,
+  observation: FieldObservation
+): ShapeMismatch[] {
+  const cannotAttributeDualLiterals = emittedField.shape === "dual" && observation.bareValues > 0;
+  if (emittedField.literals === undefined || cannotAttributeDualLiterals) {
+    return [];
+  }
+  const literalSet = new Set(emittedField.literals);
+  const unlistedValues = [...observation.values].filter((value) => !literalSet.has(value));
+  if (unlistedValues.length === 0) {
+    return [];
+  }
+  return [
+    {
+      field: emittedField.field,
+      kind: "literal",
+      detail: `outside the emitted union: ${unlistedValues.slice(0, 6).join(" ")}`,
+      evidence: unlistedValues,
+    },
+  ];
+}
+
+function findScopeMismatches(
+  emittedField: EmittedField,
+  observation: FieldObservation,
+  scopesOf: (clause: "trigger" | "effect", key: string) => RuleScopes | null
+): ShapeMismatch[] {
+  if (emittedField.clause === undefined || emittedField.scope === undefined) {
+    return [];
+  }
+  const clause = emittedField.clause;
+  const fieldScope = emittedField.scope;
+  const ruleScopesOf = (key: string): RuleScopes | null => scopesOf(clause, key);
+  if (typeof fieldScope === "object" && "parameter" in fieldScope) {
+    const declared = fieldScope.parameter;
+    const unworkableKeySets = observation.keysByDefinition.filter(
+      (keys) => workableScopes(declared, keys, ruleScopesOf).length === 0
+    );
+    if (unworkableKeySets.length === 0) {
+      return [];
+    }
+    const unworkableKeys = unworkableKeySets[0]!;
+    return [
+      {
+        field: emittedField.field,
+        kind: "scope",
+        detail:
+          `no single scope of ${declared.join("/")} expresses one definition's ` +
+          `own conditions here (${[...unworkableKeys].slice(0, 6).join(" ")})`,
+        evidence: [],
+      },
+    ];
+  }
+  const rejectedKeys = [...observation.keys].filter((key) => {
+    const scopes = ruleScopesOf(key);
+    return scopes !== null && !fieldAdmits(fieldScope, scopes);
+  });
+  if (rejectedKeys.length === 0) {
+    return [];
+  }
+  return [
+    {
+      field: emittedField.field,
+      kind: "scope",
+      detail:
+        `${scopeVerdict(fieldScope, clause)} ` +
+        rejectedKeys.slice(0, 6).join(" ") +
+        (rejectedKeys.length > 6 ? ` +${rejectedKeys.length - 6}` : ""),
+      evidence: [],
+    },
+  ];
+}
+
 /**
- * Measures each lowered type against the values the corpus writes under it.
+ * Checks whether each emitted field shape can represent values observed in the corpus.
  *
- * The other half of {@link conformance}, which only asks whether a field is
- * present. Fields the corpus never writes are silent here: the corpus is a
- * lower bound, so absence proves nothing about shape either.
- *
- * `scopesOf` resolves one trigger or effect key to the scopes it is legal in,
- * or `null` when nothing knows it — a vanilla scripted trigger, a scope link, a
- * rule the emitter skipped. Unknown keys are skipped rather than counted
- * against the field, since they are a coverage gap in the rules rather than
- * evidence about this field's scope.
+ * Pass the emitted field metadata and a resolver for known trigger or effect scopes. Unknown
+ * clause keys return `null` and are skipped because they are rule coverage, not shape evidence.
+ * Pass `writtenFormOf` to replace the default form lookup in focused tests.
  */
 export function shapeConformance(
   corpus: RegistryCorpus,
   emitted: readonly EmittedField[],
-  scopesOf: (clause: "trigger" | "effect", key: string) => RuleScopes | null
+  scopesOf: (clause: "trigger" | "effect", key: string) => RuleScopes | null,
+  writtenFormOf: (shape: string) => "scalar" | "block" | "both" | undefined = (shape) =>
+    WRITTEN_FORM.get(shape)
 ): readonly ShapeMismatch[] {
-  const mismatches: ShapeMismatch[] = [];
-  for (const field of emitted) {
-    const observation = corpus.occurrences.get(field.field);
+  return emitted.flatMap((emittedField) => {
+    const observation = corpus.occurrences.get(emittedField.field);
     if (observation === undefined) {
-      continue;
+      return [];
     }
-    const report = (
-      kind: ConformanceMismatchKind,
-      detail: string,
-      evidence: readonly string[] = []
-    ): void => {
-      mismatches.push({ field: field.field, kind, detail, evidence });
-    };
-    const form = WRITTEN_FORM.get(field.shape);
-    const seen = `${observation.definitions} defs`;
-    if (form === "block" && observation.scalars > 0) {
-      report(
-        "form",
-        `lowered as ${field.shape}, but ${observation.scalars}/${seen} write a scalar ` +
-          `(${[...observation.values].slice(0, 4).join(" ")})`
-      );
-    }
-    if (form === "scalar" && observation.blocks > 0) {
-      report(
-        "form",
-        `lowered as a scalar, but ${observation.blocks}/${seen} write a block ` +
-          `(${[...observation.keys].slice(0, 4).join(" ") || "bare values"})`
-      );
-    }
-    // A block whose interior form is wrong is the same defect one level in: a
-    // list type against `{ trigger = { … } }`, or a struct against `{ a b c }`.
-    // A dual is exempt: admitting two interiors is the whole point of it, and
-    // the arms were each checked against the rules that produced them.
-    //
-    // Three interiors, one per lowering, and each is what the other two being
-    // wrong looks like: a value list holds bare scalars, a wrapped struct holds
-    // bare sub-blocks, every other block shape holds named keys. The three are
-    // asked separately — one "is it bare" flag passed a wrapped struct against
-    // a corpus of bare scalars — and none is asked when every block is empty,
-    // since `resources = { }` written 16 times is compatible with all three and
-    // is absence of interior evidence rather than evidence of a defect.
-    const interior = [
-      ...(observation.keys.size > 0
-        ? [`named keys (${[...observation.keys].slice(0, 4).join(" ")})`]
-        : []),
-      ...(observation.bareValues > 0
-        ? [`bare scalars (${[...observation.values].slice(0, 4).join(" ")})`]
-        : []),
-      ...(observation.bareBlocks > 0 ? ["bare blocks"] : []),
+    return [
+      ...findFormMismatches(emittedField, observation, writtenFormOf),
+      ...findArityMismatches(emittedField, observation),
+      ...findLiteralMismatches(emittedField, observation),
+      ...findScopeMismatches(emittedField, observation, scopesOf),
     ];
-    if (observation.blocks > 0 && form === "block" && interior.length > 0) {
-      const found = interior.join(" and ");
-      if (field.shape === "valueList") {
-        if (observation.bareValues === 0) {
-          report(
-            "form",
-            `lowered as a value list, but its ${observation.blocks} blocks hold ${found}`
-          );
-        }
-      } else if (field.wrapped === true) {
-        if (observation.bareBlocks === 0) {
-          report(
-            "form",
-            `lowered as a wrapped struct, but its ${observation.blocks} blocks hold ${found}`
-          );
-        }
-      } else if (observation.keys.size === 0) {
-        report(
-          "form",
-          `lowered as ${field.shape}, but its ${observation.blocks} blocks hold ${found}`
-        );
-      }
-    }
-    if (field.repeated && observation.repeated === 0) {
-      // No evidence beyond the verdict: the definition count is context a reader
-      // wants and a baseline must not key on, since it moves with every patch
-      // while the finding — this list is never repeated — does not.
-      report("arity", `lowered as a list, but no definition writes it twice (${seen})`);
-    }
-    // A dual carries its *scalar* arm's literals (see `lowerDual`), while
-    // `values` merges every scalar the field wrote — the scalar arm's, and the
-    // bare values inside the block arm's blocks. Nothing in the observation says
-    // which position a value came from, so a closed scalar union cannot judge
-    // them: `ship_size.graphical_culture` is `bool` beside
-    // `{ <graphical_culture> }`, and reading its 25 culture ids as strays
-    // outside `yes`/`no` measured one arm against the other. Same exemption, and
-    // the same reason, as the interior form check's.
-    const unattributable = field.shape === "dual" && observation.bareValues > 0;
-    if (field.literals !== undefined && !unattributable) {
-      const closed = new Set(field.literals);
-      const stray = [...observation.values].filter((value) => !closed.has(value));
-      if (stray.length > 0) {
-        // The prose truncates and the evidence does not: a seventh stray is a
-        // value nobody has classified, and hiding it behind the sample would let
-        // it ride along under a row written for the first six.
-        report("literal", `outside the emitted union: ${stray.slice(0, 6).join(" ")}`, stray);
-      }
-    }
-    if (field.clause !== undefined && field.scope !== undefined) {
-      const clause = field.clause;
-      const rules = (key: string): RuleScopes | null => scopesOf(clause, key);
-      if (typeof field.scope === "object" && "parameter" in field.scope) {
-        // Per definition, not per key: the author picks one scope for the whole
-        // definition, so a definition whose writes have no scope in common is
-        // unfillable even though each rule alone is fine under some choice.
-        const declared = field.scope.parameter;
-        const stranded = observation.keysByDefinition.filter(
-          (keys) => workableScopes(declared, keys, rules).length === 0
-        );
-        if (stranded.length > 0) {
-          const worst = stranded[0]!;
-          report(
-            "scope",
-            `no single scope of ${declared.join("/")} expresses one definition's ` +
-              `own conditions here (${[...worst].slice(0, 6).join(" ")})`
-          );
-        }
-      } else {
-        const scope = field.scope;
-        const rejected = [...observation.keys].filter((key) => {
-          const scopes = rules(key);
-          return scopes !== null && !fieldAdmits(scope, scopes);
-        });
-        if (rejected.length > 0) {
-          report(
-            "scope",
-            `${scopeVerdict(scope, clause)} ` +
-              rejected.slice(0, 6).join(" ") +
-              (rejected.length > 6 ? ` +${rejected.length - 6}` : "")
-          );
-        }
-      }
-    }
-  }
-  return mismatches;
+  });
 }

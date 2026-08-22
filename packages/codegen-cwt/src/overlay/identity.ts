@@ -15,9 +15,9 @@
  *
  * `scripted_modifier`'s `category` is already a real, narrow enum member, so
  * `wraps` only needs to intersect the def with `{ readonly [member]: W }`:
- * `ScriptedModifierSelector` (`emit/modifiers.ts`) reads the author's literal
- * category back off `item.def.category` to check it against the scope a
- * `raw()`/typed setter call is made from, which the def's own declared
+ * `ScriptedModifierSelector` (`emit/script/modifiers.ts`) reads the author's
+ * literal category back off `item.def.category` to check it against the scope
+ * a `raw()`/typed setter call is made from, which the def's own declared
  * `ScriptedModifierCategory` union cannot supply.
  *
  * `economic_category`'s seven generated-key fields (`modifierCategory`,
@@ -32,14 +32,16 @@
  * stay closed against misspelled fields, so the literal rides the item and
  * definer input/result instead of the widened mechanical field.
  *
- * `omit` is the one list both consumers read: `contentDefiners`
- * (`emit/definers.ts`) spells it as the `Omit<...>` member union, and `emit/modifiers.ts`'s
+ * `omit` is the one list both consumers read: `planRegistryDefiner`
+ * (`emit/content/definer-plan.ts`) spells it as the `Omit<...>` member union, and
+ * `emit/script/modifiers.ts`'s
  * `EconomicWitnessOf` reads each row's own `inferAs` to name the per-member
  * `infer` variable in its structural extraction type. Before SDK-260 the same
  * seven names were hand-spelled in both places and could drift silently.
  */
 export type ContentWitness =
   | {
+      /** Narrows one existing def member by intersecting its authored literal type. */
       readonly mode: "wraps";
       /** Witness type name, e.g. `ScriptedModifierCategory`. */
       readonly type: string;
@@ -47,9 +49,11 @@ export type ContentWitness =
       readonly module: string;
       /** The def member the witness narrows. */
       readonly member: string;
+      /** Audited reason the def must retain this literal witness. */
       readonly reason: string;
     }
   | {
+      /** Replaces selected mechanical members with a const-inferred witness intersection. */
       readonly mode: "intersects";
       /** Witness type name, e.g. `EconomicCategoryWitness`. */
       readonly type: string;
@@ -60,15 +64,22 @@ export type ContentWitness =
        * emission order, each with the per-member `infer` variable
        * `EconomicWitnessOf` gives it.
        */
-      readonly omit: readonly { readonly member: string; readonly inferAs: string }[];
+      readonly omit: readonly {
+        /** Mechanical def member replaced by the witness. */
+        readonly member: string;
+        /** Local type variable used when extracting this member from the witness. */
+        readonly inferAs: string;
+      }[];
+      /** Audited reason the def must retain these literal witness members. */
       readonly reason: string;
     };
 
 /**
  * Registries whose item type and definer carry a `W` witness beside the def,
  * rather than the mechanical, unparameterised signature every other registry
- * gets. A row here is expensive: it is read by both `contentDefiners`
- * (`emit/definers.ts`) and `emit/modifiers.ts`, so a new mode needs evidence from a
+ * gets. A row here is expensive: it is read by both definer planning
+ * (`emit/content/definer-plan.ts`) and modifier emission
+ * (`emit/script/modifiers.ts`), so a new mode needs evidence from a
  * second registry before this schema grows to fit it.
  */
 export const CONTENT_WITNESSES = new Map<string, ContentWitness>([
@@ -111,6 +122,10 @@ export const CONTENT_WITNESSES = new Map<string, ContentWitness>([
   ],
 ]);
 
+/**
+ * Preserves a qualified CWT subtype reference when a definition selects that subtype.
+ * The refined capability result remains assignable to fields that require the qualified reference.
+ */
 export interface ContentSubtypeReferenceRefinement {
   /** Authored boolean member that selects the CWT subtype. */
   readonly member: string;

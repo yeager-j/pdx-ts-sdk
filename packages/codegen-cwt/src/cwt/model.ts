@@ -8,11 +8,15 @@
 
 import type { CwtBlock, CwtDiagnostic, CwtNode, CwtOption, CwtScalar, CwtValue } from "./parser.ts";
 
+/** Inclusive numeric bounds; `null` represents an open bound. */
 export interface Range {
+  /** The minimum value, or `null` when unbounded. */
   readonly min: number | null;
+  /** The maximum value, or `null` when unbounded. */
   readonly max: number | null;
 }
 
+/** The semantic type of a parsed CWT value. */
 export type RuleType =
   | { readonly kind: "bool" }
   | { readonly kind: "int"; readonly range: Range | null }
@@ -41,10 +45,7 @@ export type RuleType =
       readonly bare: readonly RuleBareValue[];
       /**
        * The `single_alias` name this block expanded from, when it was written
-       * as `single_alias_right[x]` rather than spelled out inline. Expansion is
-       * otherwise lossy: `modifier = single_alias_right[modifier_clause]` and a
-       * block that happens to hold the same fields become indistinguishable,
-       * and the name is the only thing that says which clause the rules meant.
+       * as `single_alias_right[x]` rather than spelled out inline.
        */
       readonly via?: string;
     }
@@ -53,12 +54,21 @@ export type RuleType =
   /** Anything else: a bare word standing for itself, such as `yes` or `country`. */
   | { readonly kind: "literal"; readonly text: string };
 
+type BlockRuleType = Extract<RuleType, { readonly kind: "block" }>;
+
+/** An unsupported bracketed keyword found while classifying a parsed value. */
 export interface ClassificationDiagnostic extends Omit<CwtDiagnostic, "file" | "kind"> {
+  /** Identifies an unsupported bracketed keyword. */
   readonly kind: "unknown-keyword";
 }
 
-export type ClassificationReporter = (diagnostic: ClassificationDiagnostic) => void;
+/** Receives recoverable diagnostics produced during CWT classification. */
+export type ClassificationReporter = (
+  diagnostic: ClassificationDiagnostic,
+  sourceFile?: string
+) => void;
 
+/** A literal, computed, alias-splice, or subtype field key. */
 export type FieldKey =
   | { readonly kind: "name"; readonly name: string }
   /** A computed key, such as `enum[prereq_for_categories] = { ... }`. */
@@ -68,12 +78,15 @@ export type FieldKey =
   /** `subtype[repeatable] = { ... }` — fields that exist only for that subtype. */
   | { readonly kind: "subtype"; readonly name: string; readonly negated: boolean };
 
+/** The permitted occurrence count for a CWT field or bare value. */
 export interface Cardinality {
+  /** The minimum permitted occurrences. */
   readonly min: number;
   /** `null` means unbounded (`inf`). */
   readonly max: number | null;
 }
 
+/** Cardinality for a value that must occur exactly once. */
 export const REQUIRED: Cardinality = { min: 1, max: 1 };
 
 /**
@@ -86,8 +99,11 @@ export const REQUIRED: Cardinality = { min: 1, max: 1 };
  * `push_scope` leaves FROM alone, so it contributes `this` only.
  */
 export interface ScopeContext {
+  /** The nested block's `THIS` scope, or `null` when not stated. */
   readonly this: string | null;
+  /** The nested block's `ROOT` scope, or `null` when not stated. */
   readonly root: string | null;
+  /** The nested block's `FROM` scope, or `null` when not stated. */
   readonly from: string | null;
   /**
    * True for `replace_scope(s)`, which states the whole context — a scope it
@@ -97,22 +113,35 @@ export interface ScopeContext {
   readonly replaces: boolean;
 }
 
+/** A classified keyed CWT field. */
 export interface RuleField {
+  /** The field's literal or computed key. */
   readonly key: FieldKey;
+  /** The accepted value type. */
   readonly type: RuleType;
+  /** The permitted occurrence count. */
   readonly cardinality: Cardinality;
+  /** Documentation comments bound to the field. */
   readonly docs: readonly string[];
+  /** The nested scope annotation, or `null` when inherited. */
   readonly scope: ScopeContext | null;
+  /** The one-based source line containing the field. */
   readonly line: number;
   /** `==` marks a comparison field, written in script as `count > 4`. */
   readonly comparison: boolean;
 }
 
+/** A classified anonymous value within a CWT block. */
 export interface RuleBareValue {
+  /** The accepted value type. */
   readonly type: RuleType;
+  /** The permitted occurrence count. */
   readonly cardinality: Cardinality;
+  /** Documentation comments bound to the value. */
   readonly docs: readonly string[];
+  /** The nested scope annotation, or `null` when inherited. */
   readonly scope: ScopeContext | null;
+  /** The one-based source line containing the value. */
   readonly line: number;
 }
 
@@ -229,13 +258,16 @@ function classifyScalar(text: string, line: number, report?: ClassificationRepor
 
 /** A `single_alias_right[x]` target and the diagnostic destination of its declaration. */
 export interface SingleAliasTarget {
+  /** The parsed value declared for the alias. */
   readonly value: CwtValue;
-  readonly report?: ClassificationReporter;
+  /** The source file used for diagnostics from the expanded declaration. */
+  readonly sourceFile?: string;
 }
 
 /** Expands `single_alias_right[x]` to the block `aliases.cwt` defines for it. */
 export type SingleAliasResolver = (name: string) => SingleAliasTarget | undefined;
 
+/** Classifies a parsed CWT value and expands known single aliases. */
 export function classify(
   value: CwtValue,
   resolve?: SingleAliasResolver,
@@ -254,18 +286,24 @@ export function classify(
   if (target === undefined) {
     return type;
   }
-  const expanded = classify(target.value, resolve, target.report ?? report);
+  const targetReport =
+    report === undefined || target.sourceFile === undefined
+      ? report
+      : (diagnostic: ClassificationDiagnostic, sourceFile?: string) =>
+          report(diagnostic, sourceFile ?? target.sourceFile);
+  const expanded = classify(target.value, resolve, targetReport);
   // A chain of aliases keeps the outermost name: the spread runs after the
   // recursion, so an inner `via` is overwritten by the name the consumer
   // actually wrote. Non-block expansions carry nothing to hang a name on.
   return expanded.kind === "block" ? { ...expanded, via: type.name } : expanded;
 }
 
+/** Classifies every keyed field and anonymous value in a parsed CWT block. */
 export function classifyBlock(
   block: CwtBlock,
   resolve?: SingleAliasResolver,
   report?: ClassificationReporter
-): RuleType {
+): BlockRuleType {
   const fields: RuleField[] = [];
   const bare: RuleBareValue[] = [];
   for (const node of block.nodes) {
@@ -325,10 +363,12 @@ function toField(
   };
 }
 
+/** Finds the first option with the requested name. */
 export function findOption(options: readonly CwtOption[], name: string): CwtOption | undefined {
   return options.find((option) => option.name === name);
 }
 
+/** Reads field cardinality options, including the legacy `optional` flag. */
 export function cardinalityOf(options: readonly CwtOption[]): Cardinality {
   const option = findOption(options, "cardinality");
   const text = option?.value?.kind === "scalar" ? option.value.text : null;
@@ -383,10 +423,12 @@ export function supportedScopesOf(options: readonly CwtOption[]): string[] | nul
   );
 }
 
+/** Reports whether a cardinality permits zero occurrences. */
 export function isOptional(cardinality: Cardinality): boolean {
   return cardinality.min === 0;
 }
 
+/** Reports whether a cardinality permits more than one occurrence. */
 export function isRepeated(cardinality: Cardinality): boolean {
   return cardinality.max === null || cardinality.max > 1;
 }

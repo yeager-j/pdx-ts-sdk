@@ -4,39 +4,62 @@ import type {
   SkippedRule,
 } from "../lower/script-shape.ts";
 
+/** The generated script surface on which a skipped CWT rule was declared. */
 export type ScriptRuleKind = "trigger" | "effect";
 
+/** Intentional skip categories owned by hand-written SDK policy. */
 export type PolicySkipCategory = "handwritten-trigger" | "structural-effect" | "event-fire-effect";
 
+/** Generator limitations that must have an issue and rationale in the gap ledger. */
 export type GenerationGapCategory = ScriptGenerationSkipCategory;
 
+/** One acknowledged trigger or effect that the current generator cannot preserve. */
 export interface ScriptGenerationGap {
+  /** The script surface that declares the rule. */
   readonly kind: ScriptRuleKind;
+  /** The original CWT rule key. */
   readonly key: string;
+  /** The stable generator limitation that prevents emission. */
   readonly category: GenerationGapCategory;
+  /** Why the rule remains unsupported. */
   readonly rationale: string;
+  /** The Linear issue that owns closing the gap. */
   readonly issue: string;
 }
 
+/** A generator skip paired with its trigger or effect surface. */
 export interface ClassifiedScriptSkip extends SkippedRule {
+  /** The script surface that produced the skip. */
   readonly kind: ScriptRuleKind;
 }
 
+/** A current generator skip reconciled with its ledger rationale and issue. */
 export interface TrackedScriptGap extends ClassifiedScriptSkip {
+  /** The reconciled generator limitation. */
   readonly category: GenerationGapCategory;
+  /** Why the limitation is accepted temporarily. */
   readonly rationale: string;
+  /** The Linear issue that owns closing the gap. */
   readonly issue: string;
 }
 
+/** Current script skips separated by intentional policy, placeholders, and tracked gaps. */
 export interface ScriptGapReport {
+  /** Rules intentionally implemented or excluded by hand-written policy. */
   readonly policyOwned: readonly ClassifiedScriptSkip[];
+  /** Abstract CWT placeholders that do not represent callable rules. */
   readonly abstractPlaceholders: readonly ClassifiedScriptSkip[];
+  /** Generator limitations that match a current ledger row. */
   readonly trackedGaps: readonly TrackedScriptGap[];
 }
 
+/** Human-readable report lines grouped by the same categories as {@link ScriptGapReport}. */
 export interface ScriptGapReportLines {
+  /** Formatted policy-owned skips. */
   readonly policyOwned: readonly string[];
+  /** Formatted abstract placeholders. */
   readonly abstractPlaceholders: readonly string[];
+  /** Formatted tracked gaps, including their issue and rationale. */
   readonly trackedGaps: readonly string[];
 }
 
@@ -44,9 +67,13 @@ const POLICY_CATEGORIES = new Set<ScriptSkipCategory>([
   "handwritten-trigger",
   "structural-effect",
   "event-fire-effect",
-]);
+] satisfies readonly PolicySkipCategory[]);
 
-function acknowledged(
+function isIntentionalExclusion(category: ScriptSkipCategory): boolean {
+  return POLICY_CATEGORIES.has(category) || category === "abstract-placeholder";
+}
+
+function trackedGapRows(
   kind: ScriptRuleKind,
   category: GenerationGapCategory,
   issue: string,
@@ -56,22 +83,23 @@ function acknowledged(
   return keys.map((key) => ({ kind, key, category, rationale, issue }));
 }
 
+/** The reviewed ledger of current trigger and effect generation gaps. */
 export const SCRIPT_GENERATION_GAPS: readonly ScriptGenerationGap[] = [
-  ...acknowledged(
+  ...trackedGapRows(
     "trigger",
     "unknown-scope",
     "SDK-243",
     "The declared legacy pop scope has no canonical SDK scope mapping.",
     ["has_pop_flag", "pop_has_ethic"]
   ),
-  ...acknowledged(
+  ...trackedGapRows(
     "effect",
     "unknown-scope",
     "SDK-243",
     "The declared legacy pop scope has no canonical SDK scope mapping.",
     ["pop_event", "remove_pop_flag", "set_pop_flag", "set_timed_pop_flag"]
   ),
-  ...acknowledged(
+  ...trackedGapRows(
     "trigger",
     "missing-push-scope",
     "SDK-245",
@@ -88,14 +116,14 @@ export const SCRIPT_GENERATION_GAPS: readonly ScriptGenerationGap[] = [
       "simple_progress",
     ]
   ),
-  ...acknowledged(
+  ...trackedGapRows(
     "trigger",
     "repeated-nested-field",
     "SDK-246",
     "The script argument model has no array form for repeated nested fields.",
     ["check_economic_production_modifier_for_job"]
   ),
-  ...acknowledged(
+  ...trackedGapRows(
     "effect",
     "repeated-nested-field",
     "SDK-246",
@@ -112,28 +140,28 @@ export const SCRIPT_GENERATION_GAPS: readonly ScriptGenerationGap[] = [
       "start_colony",
     ]
   ),
-  ...acknowledged(
+  ...trackedGapRows(
     "effect",
     "repeated-structured-scalar-arms",
     "SDK-246",
     "The script argument model cannot preserve repetition across scalar and structured arms.",
     ["create_message", "create_species", "set_fleet_formation"]
   ),
-  ...acknowledged(
+  ...trackedGapRows(
     "trigger",
     "scalar-block-overload",
     "SDK-248",
     "The trigger emitter has no sound discriminator for non-localisation scalar and block arms.",
     ["has_resource", "intel_level", "is_war_participant"]
   ),
-  ...acknowledged(
+  ...trackedGapRows(
     "trigger",
     "computed-field-key",
     "SDK-249",
     "The trigger argument model cannot represent computed switch keys.",
     ["inverted_switch", "switch"]
   ),
-  ...acknowledged(
+  ...trackedGapRows(
     "effect",
     "computed-field-key",
     "SDK-250",
@@ -147,14 +175,14 @@ export const SCRIPT_GENERATION_GAPS: readonly ScriptGenerationGap[] = [
       "set_trade_conversions",
     ]
   ),
-  ...acknowledged(
+  ...trackedGapRows(
     "effect",
     "unsupported-field-value",
     "SDK-253",
     "The create_fleet parent field uses the malformed CWT keyword sceop[fleet].",
     ["create_fleet"]
   ),
-  ...acknowledged(
+  ...trackedGapRows(
     "effect",
     "unsupported-alias-splice",
     "SDK-252",
@@ -163,11 +191,11 @@ export const SCRIPT_GENERATION_GAPS: readonly ScriptGenerationGap[] = [
   ),
 ];
 
-function identity(row: { readonly kind: ScriptRuleKind; readonly key: string }): string {
+function scriptGapIdentity(row: { readonly kind: ScriptRuleKind; readonly key: string }): string {
   return `${row.kind}:${row.key}`;
 }
 
-function classified(
+function classifyScriptSkips(
   triggers: readonly SkippedRule[],
   effects: readonly SkippedRule[]
 ): ClassifiedScriptSkip[] {
@@ -177,9 +205,15 @@ function classified(
   ].sort((left, right) => `${left.kind}:${left.name}`.localeCompare(`${right.kind}:${right.name}`));
 }
 
+/**
+ * Reconciles current generator skips with the acknowledged gap ledger.
+ * It rejects duplicate, stale, malformed, reclassified, and unacknowledged ledger entries.
+ */
 export function reconcileScriptGaps(
   skips: {
+    /** Trigger rules omitted by the current generation pass. */
     readonly triggers: readonly SkippedRule[];
+    /** Effect rules omitted by the current generation pass. */
     readonly effects: readonly SkippedRule[];
   },
   ledger: readonly ScriptGenerationGap[] = SCRIPT_GENERATION_GAPS
@@ -188,7 +222,7 @@ export function reconcileScriptGaps(
   const ledgerByIdentity = new Map<string, ScriptGenerationGap>();
 
   for (const row of ledger) {
-    const id = identity(row);
+    const id = scriptGapIdentity(row);
     if (ledgerByIdentity.has(id)) {
       errors.push(`${id}: duplicate ledger row`);
       continue;
@@ -200,15 +234,14 @@ export function reconcileScriptGaps(
     if (row.rationale.trim() === "") {
       errors.push(`${id}: rationale must explain the tracked gap`);
     }
-    const category = row.category as ScriptSkipCategory;
-    if (POLICY_CATEGORIES.has(category) || category === "abstract-placeholder") {
+    if (isIntentionalExclusion(row.category)) {
       errors.push(`${id}: intentional exclusions do not belong in the gap ledger`);
     }
   }
 
-  const actual = classified(skips.triggers, skips.effects);
+  const actual = classifyScriptSkips(skips.triggers, skips.effects);
   const actualByIdentity = new Map(
-    actual.map((skip) => [identity({ kind: skip.kind, key: skip.name }), skip])
+    actual.map((skip) => [scriptGapIdentity({ kind: skip.kind, key: skip.name }), skip])
   );
   const policyOwned: ClassifiedScriptSkip[] = [];
   const abstractPlaceholders: ClassifiedScriptSkip[] = [];
@@ -223,7 +256,7 @@ export function reconcileScriptGaps(
       abstractPlaceholders.push(skip);
       continue;
     }
-    const id = identity({ kind: skip.kind, key: skip.name });
+    const id = scriptGapIdentity({ kind: skip.kind, key: skip.name });
     const row = ledgerByIdentity.get(id);
     if (row === undefined) {
       errors.push(`${id}: unacknowledged ${skip.category} gap`);
@@ -244,11 +277,11 @@ export function reconcileScriptGaps(
   }
 
   for (const row of ledger) {
-    const id = identity(row);
+    const id = scriptGapIdentity(row);
     const skip = actualByIdentity.get(id);
     if (skip === undefined) {
       errors.push(`${id}: stale ledger row; the rule now emits or no longer exists`);
-    } else if (POLICY_CATEGORIES.has(skip.category) || skip.category === "abstract-placeholder") {
+    } else if (isIntentionalExclusion(skip.category)) {
       errors.push(`${id}: stale ledger row; current category is ${skip.category}`);
     }
   }
@@ -265,6 +298,7 @@ export function reconcileScriptGaps(
   return { policyOwned, abstractPlaceholders, trackedGaps };
 }
 
+/** Formats a reconciled gap report for deterministic generator diagnostics. */
 export function formatScriptGapReport(report: ScriptGapReport): ScriptGapReportLines {
   const ordinary = (entry: ClassifiedScriptSkip): string =>
     `${entry.kind} ${entry.name} [${entry.category}] — ${entry.detail}`;

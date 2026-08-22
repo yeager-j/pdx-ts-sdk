@@ -1,54 +1,47 @@
-/**
- * The report-row shapes shared by every field-lowering emitter: what one
- * omitted, documented, or tabulated field looks like as data.
- *
- * `fields.ts` produces these, `content-field-docs.ts` renders them into the
- * generated field-docs ledger, and the alias emitters (`alias-struct.ts`,
- * `alias-splice.ts`) bubble their own rows up in the same shapes — kept here
- * so all of them describe an omitted or documented field identically instead
- * of drifting into per-emitter formats.
- */
+/** Shared render-ready shapes for omitted fields and generated field documentation. */
 
 /**
- * A field the rules declare that the authoring surface leaves out, as one
- * structured row. The codegen report and the generated ledger are both
- * projections of these rows — see {@link omissionLine} for the report's.
+ * A CWT field omitted from the generated authoring surface.
+ * The kind and reason support both the codegen report and the generated field ledger.
  */
 export interface FieldOmissionRow {
   /** The path exactly as the codegen report prints it. */
   readonly path: string;
+  /** Why the field is absent or represented by another emitted member. */
   readonly kind: "declined" | "unsupported" | "collapsed";
+  /** The human-readable explanation appended to the report path. */
   readonly reason: string;
 }
 
 /**
- * One authoring member's human-readable half, for the generated field-docs
- * ledger: what the emitted interface says about the member, as data a docs
- * build can render — the same doc lines that become the JSDoc, the same
- * optionality that becomes the `?`, the same type text intellisense shows.
+ * Documentation facts for one generated authoring member.
+ * The field-docs ledger uses the same optionality, prose, type text, and literals as its interface.
  */
 export interface MemberDocRow {
+  /** Whether the emitted interface permits the member to be absent. */
   readonly optional: boolean;
+  /** The human-readable lines used for the emitted member's JSDoc. */
   readonly docs: readonly string[];
+  /** The TypeScript type text shown for the emitted member. */
   readonly memberType: string;
   /** Every scalar the member admits, when the lowering closed the set. */
   readonly literals?: readonly string[];
 }
 
 /**
- * One emitted field table's documentation rows, named by the constant the
- * table is emitted as (`TECHNOLOGY_FIELDS`) so the ledger can key its map by
- * the very same runtime array the descriptors reference.
+ * Documentation rows for one generated field-table constant.
+ * The constant name is the stable key shared with runtime content descriptors.
  */
 export interface DocTable {
+  /** The generated field-table constant that owns these documentation rows. */
   readonly constant: string;
+  /** Documentation keyed by the author-facing member name. */
   readonly members: Readonly<Record<string, MemberDocRow>>;
 }
 
 /**
- * The report line a row has always printed as, per kind — declined rows use
- * an em dash, unsupported rows parenthesize, collapsed rows carry their own
- * leading `(pattern)`. Changing a format here changes the codegen report.
+ * Formats one omission for the codegen report.
+ * Declined, unsupported, and collapsed rows intentionally use distinct report syntax.
  */
 export function omissionLine(row: FieldOmissionRow): string {
   switch (row.kind) {

@@ -13,6 +13,11 @@ import type { RegistryDefinerPlan } from "./definer-plan.ts";
 
 /** The complete `content-capability.ts` text: imports, then the surface. */
 export function contentCapabilityModule(plans: readonly RegistryDefinerPlan[]): string {
+  const facts = contentCapabilityFacts(plans);
+  return contentCapabilityImports(plans, facts) + "\n" + contentCapabilityDeclarations(facts);
+}
+
+function contentCapabilityFacts(plans: readonly RegistryDefinerPlan[]) {
   const wrapsWitnesses = plans.flatMap((plan) =>
     plan.witness !== null && plan.witness.mode === "wraps" ? [plan.witness] : []
   );
@@ -28,7 +33,37 @@ export function contentCapabilityModule(plans: readonly RegistryDefinerPlan[]): 
   const nestedDefinitionTables = plans.flatMap((plan) => plan.nestedDefinitionTable ?? []);
   const capabilityPatchTypes = plans.filter((plan) => plan.patchable).map((plan) => plan.content);
 
-  const capabilityImports =
+  return {
+    wrapsWitnesses,
+    profileMembers,
+    defaultProfileMembers,
+    mintShapeRows,
+    exactNameRows,
+    shapeMintTypes,
+    shapeMintRefTypes,
+    capabilityMembers,
+    capabilityBindings,
+    capabilityRuntimeDefiners,
+    nestedDefinitionTables,
+    capabilityPatchTypes,
+  };
+}
+
+type ContentCapabilityFacts = ReturnType<typeof contentCapabilityFacts>;
+
+function contentCapabilityImports(
+  plans: readonly RegistryDefinerPlan[],
+  facts: ContentCapabilityFacts
+): string {
+  const {
+    wrapsWitnesses,
+    exactNameRows,
+    shapeMintTypes,
+    shapeMintRefTypes,
+    capabilityRuntimeDefiners,
+    capabilityPatchTypes,
+  } = facts;
+  return (
     'import type { ContentItem, EconomicCategoryWitness, ExactEconomicCategoryWitness } from "../content/types.ts";\n' +
     wrapsWitnesses
       .map(
@@ -93,8 +128,22 @@ export function contentCapabilityModule(plans: readonly RegistryDefinerPlan[]): 
             : [content.emission.scopeParameter.parameterType]
         )
       ),
-    ]);
-  const capability =
+    ])
+  );
+}
+
+function contentCapabilityDeclarations(facts: ContentCapabilityFacts): string {
+  const {
+    profileMembers,
+    defaultProfileMembers,
+    mintShapeRows,
+    exactNameRows,
+    shapeMintTypes,
+    capabilityMembers,
+    capabilityBindings,
+    nestedDefinitionTables,
+  } = facts;
+  return (
     nestedDefinitionTables.join("\n") +
     "type NestedDefinitionIdAsserter = (id: string) => void;\n\n" +
     (nestedDefinitionTables.length === 0
@@ -276,7 +325,6 @@ export function contentCapabilityModule(plans: readonly RegistryDefinerPlan[]): 
     "  return Object.freeze({\n" +
     capabilityBindings.join("\n") +
     "\n  }) as ContentCapabilityMethods<P, I>;\n" +
-    "}\n";
-
-  return capabilityImports + "\n" + capability;
+    "}\n"
+  );
 }

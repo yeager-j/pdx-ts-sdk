@@ -20,134 +20,99 @@ import {
   type SingleAliasResolver,
   type SingleAliasTarget,
 } from "./model.ts";
-import type { CwtAssignment, CwtBlock, CwtDiagnostic, CwtNode, CwtParseResult } from "./parser.ts";
+import type {
+  CwtAssignment,
+  CwtBlock,
+  CwtDiagnostic,
+  CwtNode,
+  CwtOption,
+  CwtParseResult,
+} from "./parser.ts";
 
 /** One `alias[trigger:has_edict] = <edict>` declaration. A name may have several. */
 export interface AliasDecl {
+  /** The alias member name. */
   readonly name: string;
+  /** The value type accepted by the alias. */
   readonly type: RuleType;
+  /** Documentation comments bound to the declaration. */
   readonly docs: readonly string[];
   /** The scope this rule pushes onto its nested block, from `## push_scope`. */
   readonly scope: ScopeContext | null;
   /** Scopes the rule declares itself valid in, from `## scopes`; `null` when unannotated. */
   readonly supportedScopes: readonly string[] | null;
+  /** The source file containing the declaration. */
   readonly file: string;
+  /** The one-based source line containing the declaration. */
   readonly line: number;
   /** `==` marks a comparison, written in script as `num_moons < 4`. */
   readonly comparison: boolean;
 }
 
-/**
- * One `subtype[...]` declaration with the options that ride on it. For the
- * event type these carry the whole event-kind table: `## group = event_type`,
- * `## type_key_filter = country_event`, `## push_scope = country`.
- */
+/** Alias declarations and recoverable diagnostics read from one CWT source. */
+export interface AliasReadResult {
+  /** Alias member names and their declarations. */
+  readonly aliases: ReadonlyMap<string, readonly AliasDecl[]>;
+  /** Recoverable classification diagnostics from the declarations. */
+  readonly diagnostics: readonly CwtDiagnostic[];
+}
+
+/** One `subtype[...]` declaration and its supported selector metadata. */
 export interface ContentSubtype {
+  /** The subtype name inside the brackets. */
   readonly name: string;
+  /** The subtype group from `## group`, when declared. */
   readonly group: string | null;
-  /**
-   * `## type_key_filter`, keeping which way round it was written — the same
-   * shape {@link ContentType.keyFilter} carries, and for the same reason.
-   * `asset_selectors.cwt` writes `## type_key_filter <> room_selector` on
-   * `subtype[asset]`, so a reader that dropped the negation would take
-   * `room_selector` for the key that subtype's definitions *are* written under,
-   * when it is the one key they are not.
-   */
+  /** The subtype's positive or negative `## type_key_filter`. */
   readonly keyFilter: { readonly key: string; readonly negated: boolean } | null;
+  /** The scope pushed for subtype members, when declared. */
   readonly pushScope: string | null;
+  /** The subtype display name from `## display_name`, when declared. */
   readonly displayName: string | null;
-  /**
-   * The body field whose *absence* selects this subtype, from the one
-   * discriminator shape this reader models: a body of exactly one
-   * `## cardinality = 0..0` field asserting `X = yes`. Zero-cardinality is
-   * CWT's way of writing "and this key must not appear", so
-   * `subtype[not_inheriting_name] = { ## cardinality = 0..0  inherit_name = yes }`
-   * says the subtype applies to every definition that does not write
-   * `inherit_name`.
-   *
-   * `null` for every other subtype body — the rest of a subtype's fields are
-   * still discarded, and a discriminator this reader cannot state is left
-   * unstated rather than approximated. Widening it means a predicate model,
-   * which nothing yet needs.
-   */
+  /** The field whose absence selects the supported zero-cardinality subtype shape. */
   readonly absentUnless: string | null;
 }
 
+/** A CWT `type[...]` declaration and its file-layout metadata. */
 export interface ContentType {
+  /** The declared type name. */
   readonly name: string;
   /** Another type this declaration swaps for, from CWT's `base_type`. */
   readonly baseType?: string | null;
+  /** The directory containing definitions of this type. */
   readonly path: string | null;
-  /**
-   * The body field carrying the definition's id, when the top-level key is a
-   * repeated keyword instead — `utility_component_template = { key = "..." }`
-   * rather than `my_id = { ... }`.
-   *
-   * The keyword itself is NOT recoverable from here. Some types declare it as
-   * `## type_key_filter`, but `section_template` and `ambient_object` declare
-   * nothing while vanilla writes `ship_section_template` and `ambient_object`,
-   * so it comes from the overlay.
-   */
+  /** The body field that carries identity when definitions are not keyed by id. */
   readonly nameField: string | null;
-  /**
-   * `path_extension`, normalized to include the leading dot. Registries whose
-   * files are not `.txt` declare it — sounds are `.asset`, sprites `.gfx`.
-   * Absent means the rules say nothing and `.txt` is the game's default.
-   *
-   * Optional rather than `| null` alone so a synthetic `ContentType` built by
-   * an emitter — one standing in for a type the rules never declared, and so
-   * having no file layout at all — needs no placeholder for it.
-   */
+  /** The normalized file extension, or `null` when CWT uses the `.txt` default. */
   readonly pathExtension?: string | null;
-  /**
-   * `skip_root_key`: the definitions live one level inside a root block with
-   * this key rather than at the top level. Sprites sit inside `spriteTypes`.
-   */
+  /** The single enclosing root key, or `null` when none or several are declared. */
   readonly skipRootKey?: string | null;
   /** Every scalar in `skip_root_key`, including its block form. */
   readonly skipRootKeys?: readonly string[];
-  /**
-   * `path_strict = yes`: definitions live directly in `path`, never in a
-   * subdirectory of it. `technology` declares it because
-   * `common/technology/tier` and `common/technology/category` hold
-   * `technology_tier` and `technology_category` definitions — different types
-   * that a recursive walk would otherwise read as technologies.
-   *
-   * Optional for the same reason as `pathExtension`: a synthetic `ContentType`
-   * has no file layout to describe.
-   */
+  /** Whether definitions must live directly in {@link path}. */
   readonly pathStrict?: boolean;
-  /**
-   * Type-level `## type_key_filter`, when the type declares exactly one.
-   *
-   * Carries the negation because CWT writes it both ways and the two mean
-   * opposite things: `## type_key_filter = random_list` says the type's entries
-   * are *only* the `random_list` ones, while `## type_key_filter <> random_list`
-   * says they are everything *but*. Storing the bare key would read the second
-   * as the first — so a consumer matching a keyword against it has to check
-   * `negated` before believing the key names what the entries are written under.
-   */
+  /** The type's positive or negative `## type_key_filter`. */
   readonly keyFilter: { readonly key: string; readonly negated: boolean } | null;
+  /** The type's declared subtypes. */
   readonly subtypes: readonly ContentSubtype[];
-  /**
-   * The declared localisation slots, each keeping which `subtype[...]` block it
-   * was written inside.
-   *
-   * `required` and `optional` are two independent CWT annotations rather than
-   * complements: a slot may carry `## required`, carry `## optional`, or carry
-   * neither. Neither means "required exactly where its enclosing subtype
-   * applies" — which is only a statement at all for a slot with a `subtype`.
-   */
+  /** The declared localization slots with their subtype provenance. */
   readonly localisation: readonly {
+    /** The localization slot name. */
     key: string;
+    /** The localization key pattern. */
     pattern: string;
+    /** Whether the slot carries `## required`. */
     required: boolean;
+    /** Whether the slot carries `## optional`. */
     optional: boolean;
+    /** The enclosing subtype, or `null` for a type-level slot. */
     subtype: string | null;
   }[];
 }
 
+/** The classified rule body for one content type. */
 export interface ContentBody {
+  /** The body's keyed fields. */
   readonly fields: readonly RuleField[];
   /** Scope inherited by fields without their own replace/push annotation. */
   readonly scope: ScopeContext | null;
@@ -160,7 +125,9 @@ export interface ContentBody {
  * `from_data = yes` entries take a data-driven second half (`parameter:x`).
  */
 export interface LinkDecl {
+  /** The link name. */
   readonly name: string;
+  /** Documentation comments bound to the link. */
   readonly docs: readonly string[];
   /** Raw scope tokens; `all` means valid everywhere. */
   readonly inputScopes: readonly string[];
@@ -168,23 +135,37 @@ export interface LinkDecl {
   readonly outputScope: string | null;
   /** Absent `type` in the rules means `scope`. */
   readonly type: "scope" | "value";
+  /** Whether the link accepts a data-driven suffix. */
   readonly fromData: boolean;
+  /** The data-driven link prefix, when declared. */
   readonly prefix: string | null;
+  /** The source file containing the link. */
   readonly file: string;
+  /** The one-based source line containing the link. */
   readonly line: number;
 }
 
+/** One on-action name and its declared event scope context. */
 export interface OnActionDecl {
+  /** The on-action name. */
   readonly name: string;
+  /** The declared event type, when present. */
   readonly eventType: string | null;
+  /** The replacement scope names keyed by normalized context name. */
   readonly scopes: ReadonlyMap<string, string>;
+  /** Documentation comments bound to the on-action. */
   readonly docs: readonly string[];
+  /** The source file containing the on-action. */
   readonly file: string;
+  /** The one-based source line containing the on-action. */
   readonly line: number;
 }
 
+/** The complete classified projection of the loaded CWT rule files. */
 export interface RuleSet {
+  /** Simple enum names and their literal members. */
   readonly enums: ReadonlyMap<string, readonly string[]>;
+  /** Complex enums that derive members from game files. */
   readonly complexEnums: ReadonlyMap<string, ComplexEnum>;
   /** Canonical scope name -> every alias the game answers to. */
   readonly scopes: ReadonlyMap<string, readonly string[]>;
@@ -198,8 +179,9 @@ export interface RuleSet {
    * are countries.
    */
   readonly scopeGroups: ReadonlyMap<string, readonly string[]>;
+  /** Trigger names and all declarations for each name. */
   readonly triggers: ReadonlyMap<string, readonly AliasDecl[]>;
-  /** Loaded only so the drift gate covers effects too; nothing emits them yet. */
+  /** Effect names and all declarations for each name. */
   readonly effects: ReadonlyMap<string, readonly AliasDecl[]>;
   /**
    * Alias families other than triggers and effects, category -> member -> its
@@ -213,9 +195,11 @@ export interface RuleSet {
   readonly aliasCategories: ReadonlyMap<string, ReadonlyMap<string, readonly AliasDecl[]>>;
   /** Scope links from `links.cwt`, the `owner = { ... }` navigation table. */
   readonly links: ReadonlyMap<string, LinkDecl>;
+  /** Content type declarations keyed by type name. */
   readonly contentTypes: ReadonlyMap<string, ContentType>;
   /** Top-level rule bodies keyed by content type, e.g. `technology = { ... }`. */
   readonly bodies: ReadonlyMap<string, ContentBody>;
+  /** Declared on-actions in source order. */
   readonly onActions: readonly OnActionDecl[];
   /** Modifier category -> raw `supported_scopes` tokens (`any` means every scope). */
   readonly modifierCategories: ReadonlyMap<string, readonly string[]>;
@@ -223,23 +207,37 @@ export interface RuleSet {
   readonly modifierDecls: ReadonlyMap<string, readonly string[]>;
   /** Templated `modifiers.cwt` rows (`<ship_size>_…`) the game expands from content. */
   readonly modifierTemplates: readonly ModifierTemplate[];
+  /** Recoverable parser and classifier diagnostics. */
   readonly diagnostics: readonly CwtDiagnostic[];
 }
 
+/** A templated modifier name and the categories it expands into. */
 export interface ModifierTemplate {
+  /** The raw templated modifier name. */
   readonly name: string;
+  /** The modifier categories declared for the template. */
   readonly categories: readonly string[];
 }
 
+/** A complex enum that derives names from a configured game-file selector. */
 export interface ComplexEnum {
+  /** The complex enum name. */
   readonly name: string;
+  /** The CWT source file containing the declaration. */
   readonly source: string;
+  /** The game directory searched for enum values. */
   readonly path: string;
+  /** The file extension included in the search. */
   readonly extension: string;
+  /** Whether the search starts at the game root. */
   readonly startFromRoot: boolean;
+  /** The nested location and form of each derived enum name. */
   readonly selector: {
+    /** Assignment keys traversed before reading a name. */
     readonly path: readonly string[];
+    /** Whether the name comes from an assignment key or scalar value. */
     readonly kind: "key" | "scalar";
+    /** The assignment key whose scalar value contains the name. */
     readonly key?: string;
   };
 }
@@ -254,15 +252,16 @@ const BRACKET_KEY = /^([a-z_]+)\[(.+)\]$/;
  */
 function readSingleAliases(
   nodes: readonly CwtNode[],
-  report: ClassificationReporter,
-  into: Map<string, SingleAliasTarget>
-): void {
+  file: string
+): ReadonlyMap<string, SingleAliasTarget> {
+  const aliases = new Map<string, SingleAliasTarget>();
   for (const entry of assignments(nodes)) {
     const match = BRACKET_KEY.exec(entry.key.text);
     if (match !== null && match[1] === "single_alias") {
-      into.set(match[2]!, { value: entry.value, report });
+      aliases.set(match[2]!, { value: entry.value, sourceFile: file });
     }
   }
+  return aliases;
 }
 
 function resolverFor(singleAliases: ReadonlyMap<string, SingleAliasTarget>): SingleAliasResolver {
@@ -285,28 +284,40 @@ function keyedTableEntries(
   nodes: readonly CwtNode[],
   outerKey: string
 ): { name: string; block: CwtBlock; entry: CwtAssignment }[] {
-  return assignments(nodes).flatMap((outer) =>
-    outer.key.text !== outerKey || outer.value.kind !== "block"
-      ? []
-      : assignments(outer.value.nodes).flatMap((entry) =>
-          entry.value.kind !== "block" ? [] : [{ name: entry.key.text, block: entry.value, entry }]
-        )
-  );
+  const entries: { name: string; block: CwtBlock; entry: CwtAssignment }[] = [];
+  for (const outer of assignments(nodes)) {
+    if (outer.key.text !== outerKey || outer.value.kind !== "block") {
+      continue;
+    }
+    for (const entry of assignments(outer.value.nodes)) {
+      if (entry.value.kind !== "block") {
+        continue;
+      }
+      entries.push({ name: entry.key.text, block: entry.value, entry });
+    }
+  }
+  return entries;
 }
 
 /** Every bare scalar standing alone in a block, e.g. `{ planet ship fleet }`. */
 function scalarItems(block: CwtBlock): string[] {
-  return block.nodes.flatMap((node) =>
-    node.kind === "value" && node.value.kind === "scalar" ? [node.value.text] : []
-  );
+  const values: string[] = [];
+  for (const node of block.nodes) {
+    if (node.kind === "value" && node.value.kind === "scalar") {
+      values.push(node.value.text);
+    }
+  }
+  return values;
 }
 
-function readEnums(
-  nodes: readonly CwtNode[],
-  file: string,
-  into: Map<string, string[]>,
-  complexInto: Map<string, ComplexEnum>
-): void {
+interface EnumTables {
+  readonly enums: ReadonlyMap<string, readonly string[]>;
+  readonly complexEnums: ReadonlyMap<string, ComplexEnum>;
+}
+
+function readEnums(nodes: readonly CwtNode[], file: string): EnumTables {
+  const enums = new Map<string, string[]>();
+  const complexEnums = new Map<string, ComplexEnum>();
   for (const { name: key, block } of keyedTableEntries(nodes, "enums")) {
     const match = BRACKET_KEY.exec(key);
     if (match === null) {
@@ -315,33 +326,30 @@ function readEnums(
     if (match[1] === "complex_enum") {
       const complex = readComplexEnum(match[2]!, file, block);
       if (complex !== null) {
-        complexInto.set(complex.name, complex);
+        complexEnums.set(complex.name, complex);
       }
     }
-    into.set(match[2]!, scalarItems(block));
+    enums.set(match[2]!, scalarItems(block));
   }
+  return { enums, complexEnums };
 }
 
 function readComplexEnums(
   nodes: readonly CwtNode[],
-  file: string,
-  into: Map<string, ComplexEnum>
-): void {
-  for (const outer of assignments(nodes)) {
-    if (outer.key.text !== "enums" || outer.value.kind !== "block") {
+  file: string
+): ReadonlyMap<string, ComplexEnum> {
+  const enums = new Map<string, ComplexEnum>();
+  for (const { name, block } of keyedTableEntries(nodes, "enums")) {
+    const match = BRACKET_KEY.exec(name);
+    if (match?.[1] !== "complex_enum") {
       continue;
     }
-    for (const entry of assignments(outer.value.nodes)) {
-      const match = BRACKET_KEY.exec(entry.key.text);
-      if (match?.[1] !== "complex_enum" || entry.value.kind !== "block") {
-        continue;
-      }
-      const complex = readComplexEnum(match[2]!, file, entry.value);
-      if (complex !== null) {
-        into.set(complex.name, complex);
-      }
+    const complex = readComplexEnum(match[2]!, file, block);
+    if (complex !== null) {
+      enums.set(complex.name, complex);
     }
   }
+  return enums;
 }
 
 function scalar(block: CwtBlock, key: string): string | null {
@@ -393,13 +401,15 @@ function readComplexEnum(name: string, source: string, block: CwtBlock): Complex
   };
 }
 
-function readScopes(nodes: readonly CwtNode[], into: Map<string, string[]>): void {
+function readScopes(nodes: readonly CwtNode[]): ReadonlyMap<string, readonly string[]> {
+  const scopes = new Map<string, string[]>();
   for (const { name, block } of keyedTableEntries(nodes, "scopes")) {
     const aliases = assignments(block.nodes).flatMap((node) =>
       node.key.text === "aliases" && node.value.kind === "block" ? scalarItems(node.value) : []
     );
-    into.set(name, aliases);
+    scopes.set(name, aliases);
   }
+  return scopes;
 }
 
 /**
@@ -411,18 +421,21 @@ function readScopes(nodes: readonly CwtNode[], into: Map<string, string[]>): voi
  * a scope may share a name — `carrier` is both — and collapsing the two would
  * silently answer one question with the other.
  */
-function readScopeGroups(nodes: readonly CwtNode[], into: Map<string, string[]>): void {
+function readScopeGroups(nodes: readonly CwtNode[]): ReadonlyMap<string, readonly string[]> {
+  const groups = new Map<string, string[]>();
   for (const { name, block } of keyedTableEntries(nodes, "scope_groups")) {
-    into.set(name, [...new Set(scalarItems(block))]);
+    groups.set(name, [...new Set(scalarItems(block))]);
   }
+  return groups;
 }
 
-function readLinks(nodes: readonly CwtNode[], file: string, into: Map<string, LinkDecl>): void {
+function readLinks(nodes: readonly CwtNode[], file: string): ReadonlyMap<string, LinkDecl> {
+  const links = new Map<string, LinkDecl>();
   for (const { name, block, entry } of keyedTableEntries(nodes, "links")) {
     const inputScopes = assignments(block.nodes).flatMap((node) =>
       node.key.text === "input_scopes" && node.value.kind === "block" ? scalarItems(node.value) : []
     );
-    into.set(name, {
+    links.set(name, {
       name,
       docs: entry.docs,
       inputScopes,
@@ -434,61 +447,75 @@ function readLinks(nodes: readonly CwtNode[], file: string, into: Map<string, Li
       line: entry.line,
     });
   }
+  return links;
 }
 
-function readModifierCategories(nodes: readonly CwtNode[], into: Map<string, string[]>): void {
+function readModifierCategories(nodes: readonly CwtNode[]): ReadonlyMap<string, readonly string[]> {
+  const categories = new Map<string, string[]>();
   for (const { name, block } of keyedTableEntries(nodes, "modifier_categories")) {
     const scopes = assignments(block.nodes).flatMap((node) =>
       node.key.text === "supported_scopes" && node.value.kind === "block"
         ? scalarItems(node.value)
         : []
     );
-    into.set(name, scopes);
+    categories.set(name, scopes);
   }
+  return categories;
 }
 
-function readModifierDecls(
-  nodes: readonly CwtNode[],
-  into: Map<string, string[]>,
-  templates: ModifierTemplate[]
-): void {
+interface ModifierTables {
+  readonly declarations: ReadonlyMap<string, readonly string[]>;
+  readonly templates: readonly ModifierTemplate[];
+}
+
+function readModifierDecls(nodes: readonly CwtNode[]): ModifierTables {
+  const declarations = new Map<string, string[]>();
+  const templates: ModifierTemplate[] = [];
   for (const { name, block } of keyedTableEntries(nodes, "modifiers")) {
     const categories = scalarItems(block);
     if (name.includes("<") || name.includes("[")) {
       templates.push({ name, categories });
       continue;
     }
-    into.set(name, categories);
+    declarations.set(name, categories);
   }
+  return { declarations, templates };
 }
 
-/**
- * Reads every `alias[<category>:<name>] = ...` declaration in one file into a
- * member table.
- *
- * Exported because a category can be read from a rule file that `loadRules`
- * deliberately does not load — `common/governments.cwt` carries malformed
- * option comments that the drift gate rejects, so `government_trigger` is
- * parsed on its own in tests until that file is clean.
- */
+interface ClassificationCollector {
+  readonly diagnostics: CwtDiagnostic[];
+  readonly report: ClassificationReporter;
+}
+
+function createClassificationCollector(file: string): ClassificationCollector {
+  const diagnostics: CwtDiagnostic[] = [];
+  return {
+    diagnostics,
+    report: (diagnostic, sourceFile) => {
+      diagnostics.push({ ...diagnostic, file: sourceFile ?? file });
+    },
+  };
+}
+
+/** Reads one alias category's declarations and diagnostics from CWT nodes. */
 export function readAliases(
   nodes: readonly CwtNode[],
   file: string,
   category: string,
-  singleAliases: ReadonlyMap<string, SingleAliasTarget>,
-  into: Map<string, AliasDecl[]>,
-  report?: ClassificationReporter
-): void {
+  singleAliases: ReadonlyMap<string, SingleAliasTarget>
+): AliasReadResult {
+  const aliases = new Map<string, AliasDecl[]>();
+  const collector = createClassificationCollector(file);
   for (const entry of assignments(nodes)) {
     const match = ALIAS_KEY.exec(entry.key.text);
     if (match === null || match[1] !== category) {
       continue;
     }
     const name = match[2]!.trim();
-    const declarations = into.get(name) ?? [];
+    const declarations = aliases.get(name) ?? [];
     declarations.push({
       name,
-      type: classify(entry.value, resolverFor(singleAliases), report),
+      type: classify(entry.value, resolverFor(singleAliases), collector.report),
       docs: entry.docs,
       scope: scopeOf(entry.options),
       supportedScopes: supportedScopesOf(entry.options),
@@ -496,8 +523,9 @@ export function readAliases(
       line: entry.line,
       comparison: entry.op === "==",
     });
-    into.set(name, declarations);
+    aliases.set(name, declarations);
   }
+  return { aliases, diagnostics: collector.diagnostics };
 }
 
 /**
@@ -582,108 +610,117 @@ function dotted(extension: string): string {
   return extension.startsWith(".") ? extension : `.${extension}`;
 }
 
-/**
- * Reads every `types = { type[...] = { ... } }` declaration in one file.
- *
- * Exported for `cwt/load.ts`'s `loadContentTypesFrom`, the narrower entry
- * point that reads type declarations from files outside the main rule list.
- */
-export function readContentTypes(nodes: readonly CwtNode[], into: Map<string, ContentType>): void {
-  for (const outer of assignments(nodes)) {
-    if (outer.key.text !== "types" || outer.value.kind !== "block") {
+function scalarValue(entry: CwtAssignment | undefined): string | null {
+  return entry?.value.kind === "scalar" ? entry.value.text : null;
+}
+
+function scalarOption(options: readonly CwtOption[], name: string): string | null {
+  const option = findOption(options, name);
+  return option?.value?.kind === "scalar" ? option.value.text : null;
+}
+
+function keyFilterOf(
+  options: readonly CwtOption[]
+): { readonly key: string; readonly negated: boolean } | null {
+  const option = findOption(options, "type_key_filter");
+  return option?.value?.kind === "scalar"
+    ? { key: option.value.text, negated: option.negated }
+    : null;
+}
+
+function skipRootKeysOf(entry: CwtAssignment | undefined): string[] {
+  if (entry?.value.kind === "scalar") {
+    return [entry.value.text];
+  }
+  return entry?.value.kind === "block" ? scalarItems(entry.value) : [];
+}
+
+function readSubtypes(block: CwtBlock): ContentSubtype[] {
+  const subtypes: ContentSubtype[] = [];
+  for (const entry of assignments(block.nodes)) {
+    const match = BRACKET_KEY.exec(entry.key.text);
+    if (match === null || match[1] !== "subtype") {
       continue;
     }
-    for (const entry of assignments(outer.value.nodes)) {
-      const match = BRACKET_KEY.exec(entry.key.text);
-      if (match === null || match[1] !== "type" || entry.value.kind !== "block") {
-        continue;
-      }
-      const inner = assignments(entry.value.nodes);
-      const pathNode = inner.find((node) => node.key.text === "path");
-      const baseTypeNode = inner.find((node) => node.key.text === "base_type");
-      const localisation = inner.find((node) => node.key.text === "localisation");
-      // Written both quoted and bare across the rule files: `name_field = "key"`
-      // in components.cwt, `name_field = name` in global_ship_designs.cwt.
-      const nameFieldNode = inner.find((node) => node.key.text === "name_field");
-      const extensionNode = inner.find((node) => node.key.text === "path_extension");
-      const skipRootKeyNode = inner.find((node) => node.key.text === "skip_root_key");
-      const pathStrictNode = inner.find((node) => node.key.text === "path_strict");
-      const typeKeyFilter = findOption(entry.options, "type_key_filter");
-      const nameField = nameFieldNode?.value.kind === "scalar" ? nameFieldNode.value.text : null;
-      const skipRootKeys =
-        skipRootKeyNode?.value.kind === "scalar"
-          ? [skipRootKeyNode.value.text]
-          : skipRootKeyNode?.value.kind === "block"
-            ? skipRootKeyNode.value.nodes.flatMap((node) =>
-                node.kind === "value" && node.value.kind === "scalar" ? [node.value.text] : []
-              )
-            : [];
-      into.set(match[2]!, {
-        name: match[2]!,
-        baseType: baseTypeNode?.value.kind === "scalar" ? baseTypeNode.value.text : null,
-        path: pathNode?.value.kind === "scalar" ? pathNode.value.text : null,
-        nameField,
-        pathExtension:
-          extensionNode?.value.kind === "scalar" ? dotted(extensionNode.value.text) : null,
-        skipRootKey: skipRootKeys.length === 1 ? skipRootKeys[0]! : null,
-        skipRootKeys,
-        pathStrict: pathStrictNode?.value.kind === "scalar" && pathStrictNode.value.text === "yes",
-        keyFilter:
-          typeKeyFilter?.value?.kind === "scalar"
-            ? { key: typeKeyFilter.value.text, negated: typeKeyFilter.negated }
-            : null,
-        subtypes: inner.flatMap((node) => {
-          const subtype = BRACKET_KEY.exec(node.key.text);
-          if (subtype === null || subtype[1] !== "subtype") {
-            return [];
-          }
-          const scalarOption = (name: string): string | null => {
-            const option = findOption(node.options, name);
-            return option?.value?.kind === "scalar" ? option.value.text : null;
-          };
-          const subtypeKeyFilter = findOption(node.options, "type_key_filter");
-          return [
-            {
-              name: subtype[2]!,
-              group: scalarOption("group"),
-              keyFilter:
-                subtypeKeyFilter?.value?.kind === "scalar"
-                  ? { key: subtypeKeyFilter.value.text, negated: subtypeKeyFilter.negated }
-                  : null,
-              pushScope: scopeOf(node.options)?.this ?? null,
-              displayName: scalarOption("display_name"),
-              absentUnless: absentUnlessOf(node),
-            },
-          ];
-        }),
-        localisation: localisation === undefined ? [] : readLocalisation(localisation, nameField),
-      });
-    }
+    subtypes.push({
+      name: match[2]!,
+      group: scalarOption(entry.options, "group"),
+      keyFilter: keyFilterOf(entry.options),
+      pushScope: scopeOf(entry.options)?.this ?? null,
+      displayName: scalarOption(entry.options, "display_name"),
+      absentUnless: absentUnlessOf(entry),
+    });
   }
+  return subtypes;
+}
+
+function readContentType(
+  name: string,
+  block: CwtBlock,
+  options: readonly CwtOption[]
+): ContentType {
+  const entries = new Map(assignments(block.nodes).map((entry) => [entry.key.text, entry]));
+  const nameField = scalarValue(entries.get("name_field"));
+  const localisation = entries.get("localisation");
+  const pathExtension = scalarValue(entries.get("path_extension"));
+  const skipRootKeys = skipRootKeysOf(entries.get("skip_root_key"));
+
+  return {
+    name,
+    baseType: scalarValue(entries.get("base_type")),
+    path: scalarValue(entries.get("path")),
+    nameField,
+    pathExtension: pathExtension === null ? null : dotted(pathExtension),
+    skipRootKey: skipRootKeys.length === 1 ? skipRootKeys[0]! : null,
+    skipRootKeys,
+    pathStrict: scalarValue(entries.get("path_strict")) === "yes",
+    keyFilter: keyFilterOf(options),
+    subtypes: readSubtypes(block),
+    localisation: localisation === undefined ? [] : readLocalisation(localisation, nameField),
+  };
+}
+
+/** Reads every `type[...]` declaration in the supplied CWT nodes. */
+export function readContentTypes(nodes: readonly CwtNode[]): ReadonlyMap<string, ContentType> {
+  const contentTypes = new Map<string, ContentType>();
+  for (const { name: key, block, entry } of keyedTableEntries(nodes, "types")) {
+    const match = BRACKET_KEY.exec(key);
+    if (match === null || match[1] !== "type") {
+      continue;
+    }
+    contentTypes.set(match[2]!, readContentType(match[2]!, block, entry.options));
+  }
+  return contentTypes;
+}
+
+interface BodyReadResult {
+  readonly bodies: ReadonlyMap<string, ContentBody>;
+  readonly diagnostics: readonly CwtDiagnostic[];
 }
 
 function readBodies(
   nodes: readonly CwtNode[],
+  file: string,
   known: ReadonlyMap<string, ContentType>,
-  singleAliases: ReadonlyMap<string, SingleAliasTarget>,
-  into: Map<string, ContentBody>,
-  report?: ClassificationReporter
-): void {
+  singleAliases: ReadonlyMap<string, SingleAliasTarget>
+): BodyReadResult {
+  const bodies = new Map<string, ContentBody>();
+  const collector = createClassificationCollector(file);
   for (const entry of assignments(nodes)) {
     if (!known.has(entry.key.text) || entry.value.kind !== "block") {
       continue;
     }
-    const block = classifyBlock(entry.value, resolverFor(singleAliases), report);
-    if (block.kind === "block") {
-      into.set(entry.key.text, {
-        fields: block.fields,
-        scope: scopeOf(entry.options),
-      });
-    }
+    const block = classifyBlock(entry.value, resolverFor(singleAliases), collector.report);
+    bodies.set(entry.key.text, {
+      fields: block.fields,
+      scope: scopeOf(entry.options),
+    });
   }
+  return { bodies, diagnostics: collector.diagnostics };
 }
 
-function readOnActions(nodes: readonly CwtNode[], file: string, into: OnActionDecl[]): void {
+function readOnActions(nodes: readonly CwtNode[], file: string): readonly OnActionDecl[] {
+  const onActions: OnActionDecl[] = [];
   for (const outer of assignments(nodes)) {
     if (outer.key.text !== "on_actions" || outer.value.kind !== "block") {
       continue;
@@ -702,7 +739,7 @@ function readOnActions(nodes: readonly CwtNode[], file: string, into: OnActionDe
           }
         }
       }
-      into.push({
+      onActions.push({
         name: node.value.text,
         eventType: eventType?.value?.kind === "scalar" ? eventType.value.text : null,
         scopes,
@@ -712,127 +749,162 @@ function readOnActions(nodes: readonly CwtNode[], file: string, into: OnActionDe
       });
     }
   }
+  return onActions;
 }
 
 /** One rule file, already parsed — the unit {@link buildRuleSet} reads. */
 export interface ParsedRuleFile {
+  /** The source file name used for diagnostics and provenance. */
   readonly file: string;
+  /** The parsed source and its recoverable diagnostics. */
   readonly parsed: CwtParseResult;
 }
 
-/**
- * Builds a {@link RuleSet} from already-parsed rule files, in three passes
- * rather than one, because two symbol tables are cross-referenced by files
- * anywhere else in `parsedFiles`: a `single_alias[x] = { ... }` declared in
- * one file can be consumed as `single_alias_right[x]` by a rule in a file
- * loaded earlier (`readAliases`, `readBodies`), and a
- * `types = { type[x] = { ... } }` declaration in one file can have its body
- * (`x = { ... }`) in another (`readBodies`). A single pass made both
- * resolutions see only what had already loaded, so file order silently
- * doubled as a dependency order. Building the two tables to completion before
- * anything consumes them removes that constraint: `parsedFiles`' order no
- * longer changes the result.
- *
- * `extraComplexEnumFiles` covers {@link loadRules}' second, independent sweep
- * for `enum[complex_enum]` declarations in `.cwt` files outside its main list
- * — unrelated to the phase-ordering fix, but folded in here so the whole
- * build stays inside one function with plain, non-`readonly` locals.
- *
- * `extraAliasCategories` names the alias families beyond triggers and effects
- * to read into {@link RuleSet.aliasCategories}. The pipeline supplies the
- * overlay's `EXTRA_ALIAS_CATEGORIES` keys through `src/load-rules.ts`.
- *
- * Exported (alongside {@link loadRules}) so a test can prove the order
- * independence directly, against synthetic sources, without going through
- * disk I/O or `RULE_FILES`.
- */
+interface RuleSetAccumulator extends RuleSet {
+  readonly enums: Map<string, readonly string[]>;
+  readonly complexEnums: Map<string, ComplexEnum>;
+  readonly scopes: Map<string, readonly string[]>;
+  readonly scopeGroups: Map<string, readonly string[]>;
+  readonly triggers: Map<string, AliasDecl[]>;
+  readonly effects: Map<string, AliasDecl[]>;
+  readonly aliasCategories: Map<string, Map<string, AliasDecl[]>>;
+  readonly links: Map<string, LinkDecl>;
+  readonly contentTypes: Map<string, ContentType>;
+  readonly bodies: Map<string, ContentBody>;
+  readonly onActions: OnActionDecl[];
+  readonly modifierCategories: Map<string, readonly string[]>;
+  readonly modifierDecls: Map<string, readonly string[]>;
+  readonly modifierTemplates: ModifierTemplate[];
+  readonly singleAliases: Map<string, SingleAliasTarget>;
+  readonly diagnostics: CwtDiagnostic[];
+  readonly classificationDiagnosticKeys: Set<string>;
+}
+
+function createRuleSetAccumulator(extraAliasCategories: readonly string[]): RuleSetAccumulator {
+  return {
+    enums: new Map(),
+    complexEnums: new Map(),
+    scopes: new Map(),
+    scopeGroups: new Map(),
+    triggers: new Map(),
+    effects: new Map(),
+    aliasCategories: new Map(extraAliasCategories.map((category) => [category, new Map()])),
+    links: new Map(),
+    contentTypes: new Map(),
+    bodies: new Map(),
+    onActions: [],
+    modifierCategories: new Map(),
+    modifierDecls: new Map(),
+    modifierTemplates: [],
+    singleAliases: new Map(),
+    diagnostics: [],
+    classificationDiagnosticKeys: new Set(),
+  };
+}
+
+function mergeLatestEntries<Key, Value>(
+  target: Map<Key, Value>,
+  source: ReadonlyMap<Key, Value>
+): void {
+  for (const [key, value] of source) {
+    target.set(key, value);
+  }
+}
+
+function appendEntries<Key, Value>(
+  target: Map<Key, Value[]>,
+  source: ReadonlyMap<Key, readonly Value[]>
+): void {
+  for (const [key, values] of source) {
+    const existing = target.get(key) ?? [];
+    existing.push(...values);
+    target.set(key, existing);
+  }
+}
+
+function mergeClassificationDiagnostics(
+  state: RuleSetAccumulator,
+  diagnostics: readonly CwtDiagnostic[]
+): void {
+  for (const diagnostic of diagnostics) {
+    const key = `${diagnostic.file}:${diagnostic.line}:${diagnostic.text}`;
+    if (state.classificationDiagnosticKeys.has(key)) {
+      continue;
+    }
+    state.classificationDiagnosticKeys.add(key);
+    state.diagnostics.push(diagnostic);
+  }
+}
+
+function mergeParserDiagnostics(files: readonly ParsedRuleFile[], state: RuleSetAccumulator): void {
+  for (const { parsed } of files) {
+    state.diagnostics.push(...parsed.diagnostics);
+  }
+}
+
+function mergeReferencedDeclarations(
+  files: readonly ParsedRuleFile[],
+  state: RuleSetAccumulator
+): void {
+  for (const { file, parsed } of files) {
+    mergeLatestEntries(state.singleAliases, readSingleAliases(parsed.nodes, file));
+    mergeLatestEntries(state.contentTypes, readContentTypes(parsed.nodes));
+  }
+}
+
+function mergeResolvedRules(files: readonly ParsedRuleFile[], state: RuleSetAccumulator): void {
+  for (const { file, parsed } of files) {
+    const enums = readEnums(parsed.nodes, file);
+    mergeLatestEntries(state.enums, enums.enums);
+    mergeLatestEntries(state.complexEnums, enums.complexEnums);
+    mergeLatestEntries(state.scopes, readScopes(parsed.nodes));
+    mergeLatestEntries(state.scopeGroups, readScopeGroups(parsed.nodes));
+    mergeLatestEntries(state.links, readLinks(parsed.nodes, file));
+
+    const triggers = readAliases(parsed.nodes, file, "trigger", state.singleAliases);
+    appendEntries(state.triggers, triggers.aliases);
+    mergeClassificationDiagnostics(state, triggers.diagnostics);
+
+    const effects = readAliases(parsed.nodes, file, "effect", state.singleAliases);
+    appendEntries(state.effects, effects.aliases);
+    mergeClassificationDiagnostics(state, effects.diagnostics);
+
+    for (const [category, members] of state.aliasCategories) {
+      const aliases = readAliases(parsed.nodes, file, category, state.singleAliases);
+      appendEntries(members, aliases.aliases);
+      mergeClassificationDiagnostics(state, aliases.diagnostics);
+    }
+
+    const bodies = readBodies(parsed.nodes, file, state.contentTypes, state.singleAliases);
+    mergeLatestEntries(state.bodies, bodies.bodies);
+    mergeClassificationDiagnostics(state, bodies.diagnostics);
+
+    state.onActions.push(...readOnActions(parsed.nodes, file));
+    mergeLatestEntries(state.modifierCategories, readModifierCategories(parsed.nodes));
+    const modifiers = readModifierDecls(parsed.nodes);
+    mergeLatestEntries(state.modifierDecls, modifiers.declarations);
+    state.modifierTemplates.push(...modifiers.templates);
+  }
+}
+
+function mergeExtraComplexEnums(files: readonly ParsedRuleFile[], state: RuleSetAccumulator): void {
+  for (const { file, parsed } of files) {
+    mergeLatestEntries(state.complexEnums, readComplexEnums(parsed.nodes, file));
+  }
+}
+
+/** Builds an order-independent rule set from already-parsed CWT files. */
 export function buildRuleSet(
   parsedFiles: readonly ParsedRuleFile[],
   extraComplexEnumFiles: readonly ParsedRuleFile[] = [],
   extraAliasCategories: readonly string[] = []
 ): RuleSet {
-  const enums = new Map<string, string[]>();
-  const complexEnums = new Map<string, ComplexEnum>();
-  const scopes = new Map<string, string[]>();
-  const scopeGroups = new Map<string, string[]>();
-  const triggers = new Map<string, AliasDecl[]>();
-  const effects = new Map<string, AliasDecl[]>();
-  const aliasCategories = new Map<string, Map<string, AliasDecl[]>>(
-    extraAliasCategories.map((category) => [category, new Map()])
-  );
-  const links = new Map<string, LinkDecl>();
-  const contentTypes = new Map<string, ContentType>();
-  const bodies = new Map<string, ContentBody>();
-  const onActions: OnActionDecl[] = [];
-  const modifierCategories = new Map<string, string[]>();
-  const modifierDecls = new Map<string, string[]>();
-  const modifierTemplates: ModifierTemplate[] = [];
-  const singleAliases = new Map<string, SingleAliasTarget>();
-  const diagnostics: CwtDiagnostic[] = [];
-  const classificationDiagnostics = new Set<string>();
-
-  const reporterFor =
-    (file: string): ClassificationReporter =>
-    (diagnostic) => {
-      const key = `${file}:${diagnostic.line}:${diagnostic.text}`;
-      if (classificationDiagnostics.has(key)) {
-        return;
-      }
-      classificationDiagnostics.add(key);
-      diagnostics.push({ ...diagnostic, file });
-    };
-
-  for (const { parsed } of parsedFiles) {
-    diagnostics.push(...parsed.diagnostics);
-  }
-
-  // Phase 2: build the two tables other files' rules can reference — single
-  // aliases and content types — from every parsed file, before anything
-  // resolves against them.
-  for (const { file, parsed } of parsedFiles) {
-    readSingleAliases(parsed.nodes, reporterFor(file), singleAliases);
-    readContentTypes(parsed.nodes, contentTypes);
-  }
-
-  // Phase 3: read everything else against the now-complete tables.
-  for (const { file, parsed } of parsedFiles) {
-    const report = reporterFor(file);
-    readEnums(parsed.nodes, file, enums, complexEnums);
-    readScopes(parsed.nodes, scopes);
-    readScopeGroups(parsed.nodes, scopeGroups);
-    readLinks(parsed.nodes, file, links);
-    readAliases(parsed.nodes, file, "trigger", singleAliases, triggers, report);
-    readAliases(parsed.nodes, file, "effect", singleAliases, effects, report);
-    for (const [category, members] of aliasCategories) {
-      readAliases(parsed.nodes, file, category, singleAliases, members, report);
-    }
-    readBodies(parsed.nodes, contentTypes, singleAliases, bodies, report);
-    readOnActions(parsed.nodes, file, onActions);
-    readModifierCategories(parsed.nodes, modifierCategories);
-    readModifierDecls(parsed.nodes, modifierDecls, modifierTemplates);
-  }
-
-  for (const { file, parsed } of extraComplexEnumFiles) {
-    readComplexEnums(parsed.nodes, file, complexEnums);
-  }
-
-  return {
-    enums,
-    complexEnums,
-    scopes,
-    scopeGroups,
-    triggers,
-    effects,
-    aliasCategories,
-    links,
-    contentTypes,
-    bodies,
-    onActions,
-    modifierCategories,
-    modifierDecls,
-    modifierTemplates,
-    diagnostics,
-  };
+  const state = createRuleSetAccumulator(extraAliasCategories);
+  mergeParserDiagnostics(parsedFiles, state);
+  mergeReferencedDeclarations(parsedFiles, state);
+  mergeResolvedRules(parsedFiles, state);
+  mergeExtraComplexEnums(extraComplexEnumFiles, state);
+  return state;
 }
 
 /**

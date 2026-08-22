@@ -1,46 +1,35 @@
-/**
- * Reads the game's modifier dump.
- *
- * This is the only source that lists the *generated* modifier names — the
- * economic-category products like `country_unity_produces_mult` and the
- * per-ship-size stats — which the curated `modifiers.cwt` can only describe as
- * templates. Lines look like:
- *
- *     - pop_happiness, Category: Pops
- *     - country_unity_produces_mult, Category: Economic Units, AI Economy
- */
+const MODIFIER_ENTRY_PATTERN = /^- ([A-Za-z0-9_.@]+), Category: (.+?)\s*$/;
+const MODIFIER_LOG_FILE = "modifiers.log";
 
-const ENTRY = /^- ([A-Za-z0-9_.@]+), Category: (.+?)\s*$/;
-
+/** Parsed modifier documentation and candidate entries that the parser could not read. */
 export interface ModifierDocs {
-  /** Modifier name -> the categories the game filed it under. */
+  /** Maps each modifier name to the categories assigned by the game. */
   readonly modifiers: ReadonlyMap<string, readonly string[]>;
-  /**
-   * `- `-prefixed lines the entry pattern could not read, as
-   * `modifiers.log:<line> <text>` — the same `<file>:<line> <text>` identity
-   * `reconcile.ts`'s `unknownKeywords` carries, so a line that starts parsing
-   * cleanly and later breaks is a reviewable diff instead of a bare count
-   * moving.
-   */
+  /** Candidate entries that could not be parsed, identified by file, line, and text. */
   readonly malformed: readonly string[];
 }
 
-const FILE = "modifiers.log";
-
-export function parseModifierDocs(log: string): ModifierDocs {
+/**
+ * Parses the game's modifier documentation dump. Candidate entry lines that do not match the dump
+ * format remain available in {@link ModifierDocs.malformed} for reconciliation.
+ */
+export function parseModifierDocs(source: string): ModifierDocs {
   const modifiers = new Map<string, readonly string[]>();
   const malformed: string[] = [];
-  const lines = log.split("\n");
-  for (const [index, line] of lines.entries()) {
+
+  for (const [index, line] of source.split("\n").entries()) {
     if (!line.startsWith("- ")) {
       continue;
     }
-    const match = ENTRY.exec(line);
+
+    const match = MODIFIER_ENTRY_PATTERN.exec(line);
     if (match === null) {
-      malformed.push(`${FILE}:${index + 1} ${line.trim().slice(0, 80)}`);
+      malformed.push(`${MODIFIER_LOG_FILE}:${index + 1} ${line.trim().slice(0, 80)}`);
       continue;
     }
+
     modifiers.set(match[1]!, match[2]!.split(", "));
   }
+
   return { modifiers, malformed };
 }

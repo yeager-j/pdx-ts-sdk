@@ -15,50 +15,44 @@ import type { LoweredField } from "./fields.ts";
 
 /**
  * Applies an overlay arity assertion by correcting the declared cardinality.
- *
- * Everything downstream — the member type, the field metadata's `repeated`, the
- * shape descriptor — already reads the cardinality, so correcting it once here
- * is what keeps the three from disagreeing about whether the key repeats. The
- * minimum is left alone in both directions: how often a key may be written is a
- * different claim from whether it must be.
+ * It preserves the declared minimum because requiredness and repetition are
+ * separate claims.
  */
 export function assertedArity(
   group: readonly RuleField[],
   override: ContentFieldOverride | undefined
 ): readonly RuleField[] {
-  const max = override?.arity === "single" ? 1 : override?.arity === "repeated" ? null : undefined;
-  if (max === undefined) {
+  if (override?.arity === undefined) {
     return group;
   }
+  const max = override.arity === "single" ? 1 : null;
   return group.map((field) => ({ ...field, cardinality: { ...field.cardinality, max } }));
 }
 
 /**
- * Applies `uncheckedString` by rewriting the declaration itself: a `<type>`
- * reference becomes a plain `scalar`, which is already how CWT spells "any
- * string" and which every emitter below already knows how to lower.
- *
- * Rewriting the rule rather than patching the lowered result is what keeps the
- * member type, the metadata's `conversion`, the absent `refTypes` and the
- * corpus gate's view of the field from having to be corrected one by one. The
- * doc line rides on the same field, so it reaches the generated comment through
- * the ordinary path.
- *
- * The guard is the point of the lever being narrow: every declaration in the
- * group must be a bare `<type>` reference and the row must request no shape.
- * Anything else and this would be erasing a check nobody asked it to.
+ * Applies `uncheckedString` by replacing plain type references with scalar
+ * declarations. It rejects shape overrides and other declaration kinds so the
+ * assertion cannot erase unrelated validation.
  */
 export function assertedUncheckedString(
   emitter: Emitter,
   group: readonly RuleField[],
   override: ContentFieldOverride | undefined,
   path: string
-): { readonly group: readonly RuleField[]; readonly docs: readonly string[] } {
+): {
+  /** Declarations after applying the unchecked-string assertion. */
+  readonly group: readonly RuleField[];
+  /** Author-facing documentation contributed by the assertion. */
+  readonly docs: readonly string[];
+} {
   if (override?.uncheckedString !== true) {
     return { group, docs: [] };
   }
   const targets = group.map((field) => field.type);
-  if (override.shape !== undefined || targets.some((type) => type.kind !== "typeRef")) {
+  const allTypeReferences = targets.every(
+    (type): type is Extract<RuleType, { readonly kind: "typeRef" }> => type.kind === "typeRef"
+  );
+  if (override.shape !== undefined || !allTypeReferences) {
     const spelled = targets.map((type) => type.kind).join(", ");
     throw new Error(
       `The overlay marks ${path} uncheckedString, but its lowering is not a plain type ` +
@@ -67,16 +61,16 @@ export function assertedUncheckedString(
     );
   }
   const docs = targets.flatMap((type) => {
-    const name = (type as Extract<RuleType, { kind: "typeRef" }>).name;
+    const name = type.name;
     const target = emitter.rules.contentTypes.get(name);
-    const where =
+    const location =
       target?.path == null
         ? "outside the SDK's typed registries"
         : `in \`${target.pathExtension ?? ".txt"}\` files under ` +
           `\`${target.path.replace(/^game\//, "")}\``;
     return [
       "Not checked: any string is accepted here.",
-      `The \`<${name}>\` ids this names live ${where},`,
+      `The \`<${name}>\` ids this names live ${location},`,
       "which the SDK carries as opaque Assets rather than as a typed registry,",
       "so there is no id set to check a spelling against.",
     ];
@@ -85,26 +79,9 @@ export function assertedUncheckedString(
 }
 
 /**
- * Applies an `ASSET_PATH_FIELDS` row: the member accepts a captured Asset as
- * well as a string, and the metadata says so, so the writer unwraps the Item to
- * its declared logical path and the fold checks whichever form arrived.
- *
- * Applied to the lowered result rather than by rewriting the rule, because
- * unlike `uncheckedString` there is no CWT spelling that already means this —
- * the rules type the field `filepath` and are right to; what the row adds is
- * the SDK's own knowledge that this particular path is one a mod can ship.
- *
- * The guards are what keep the row honest. A `filepath` declaration is required
- * because the row asserts the value is a path; a `value` shape is required
- * because an Item is one scalar; and a widening is refused because the union
- * arms would then be unclear about which of them an Item satisfies.
- *
- * Presence — every `ASSET_PATH_FIELDS` row reaching a real consumption site —
- * is tracked through `emitter.overlayAudit`, the same SDK-255 mechanism every
- * other path-keyed overlay table uses (`index.ts`'s `assertAllApplied("ASSET_PATH_FIELDS",
- * ...)` closes the loop); this function's own throw above is the *shape* check
- * beyond presence, that a row marked here actually lowers as one mod-root path
- * scalar, which `OverlayAudit` cannot express and stays here.
+ * Widens an asserted asset-path scalar to accept a captured asset item or a
+ * string, and marks its runtime conversion as `assetPath`. It rejects non-path,
+ * non-scalar, or separately widened fields before changing the lowering.
  */
 export function assertedAssetPath(
   emitter: Emitter,

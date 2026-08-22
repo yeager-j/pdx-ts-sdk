@@ -260,22 +260,21 @@ describe("rule types", () => {
   it("reports diagnostics from a resolved alias against its declaration", () => {
     const clause = only("single_alias[trigger_clause] = { gateway = scope2[fleet] }");
     const rule = only("alias[trigger:any_country] = single_alias_right[trigger_clause]");
-    const declarationDiagnostics: unknown[] = [];
-    const consumerDiagnostics: unknown[] = [];
+    const diagnostics: unknown[] = [];
 
     classify(
       rule.value,
       () => ({
         value: clause.value,
-        report: (diagnostic) => declarationDiagnostics.push(diagnostic),
+        sourceFile: "aliases.cwt",
       }),
-      (diagnostic) => consumerDiagnostics.push(diagnostic)
+      (diagnostic, sourceFile) =>
+        diagnostics.push({ ...diagnostic, file: sourceFile ?? "consumer.cwt" })
     );
 
-    expect(declarationDiagnostics).toEqual([
-      { kind: "unknown-keyword", line: 1, text: "scope2[fleet]" },
+    expect(diagnostics).toEqual([
+      { kind: "unknown-keyword", file: "aliases.cwt", line: 1, text: "scope2[fleet]" },
     ]);
-    expect(consumerDiagnostics).toEqual([]);
   });
 
   it("reads the scope list a rule declares", () => {

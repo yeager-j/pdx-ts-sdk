@@ -1,10 +1,4 @@
-/**
- * The struct machinery: every shape whose value is an anonymous block of named
- * members. `structShape` builds one block's interface and runtime field table,
- * recursing through `pickOrdinary` so nesting falls out of the ordinary
- * pipeline, and the `lowerStruct*` family differ only in how they find that
- * block and what they wrap the resulting type in.
- */
+/** Lowers CWT block fields into generated struct declarations and metadata. */
 
 import type { DescentNode } from "../corpus/observations.ts";
 import { isRepeated, type RuleField } from "../cwt/model.ts";
@@ -71,34 +65,19 @@ interface StructShape {
   readonly children: readonly DescentNode[];
 }
 
-/** The same interior, re-rooted under one of the keys that shares it. */
-function reroot(fields: readonly EmittedField[], from: string, to: string): EmittedField[] {
-  return fields.map((field) => ({ ...field, field: to + field.field.slice(from.length) }));
+/** Re-roots nested field paths under the generated member that owns them. */
+function rerootFields(
+  fields: readonly EmittedField[],
+  sourcePath: string,
+  targetPath: string
+): EmittedField[] {
+  return fields.map((field) => ({
+    ...field,
+    field: targetPath + field.field.slice(sourcePath.length),
+  }));
 }
 
-/**
- * Expands an enum-keyed block declaration into one authoring member per enum
- * value, all sharing a single entry interface.
- *
- * A `Record` keyed by the enum would be the obvious lowering and is the wrong
- * one: every other key in the SDK reaches its member in camelCase (`inherit_icon`
- * is `inheritIcon`), and a record's keys would be the game's spelling —
- * `diplo_action` beside `hidePrereqForDesc` in the same object literal. Naming
- * the members instead invents nothing, since every name comes from the enum, and
- * leaves the block's ordinary named siblings (`hide_prereq_for_desc`) exactly
- * where the rules put them rather than displacing them into a wrapper.
- *
- * One interface, not one per key: the rules declare one shape, and emitting six
- * structurally identical `…Ship`/`…Custom` interfaces would put that duplication
- * in the public API. The corpus reader still records each key's interior at its
- * own path, so the shared interior is {@link reroot}ed once per key.
- *
- * Every member is optional and each carries the declaration's own repetition:
- * `## cardinality = 0..4` bounds how many entries the block may hold in total,
- * not how often one key may be written, so it can neither require a key nor
- * cap one — and vanilla does write `custom` three times inside a single
- * `prereqfor_desc`.
- */
+/** The generated members and evidence for one enum-keyed block declaration. */
 interface EnumKeyedMembers extends Pick<
   StructShape,
   "code" | "unsupported" | "nested" | "children" | "docTables"
@@ -135,6 +114,7 @@ function enumKeyedMembers(
   const memberDocs: Record<string, MemberDocRow> = {};
   for (const value of keyed.values) {
     const memberPath = `${path}.${value}`;
+    const member = camelCase(value);
     const field: RuleField = {
       ...keyed.declaration,
       key: { kind: "name", name: value },
@@ -144,17 +124,17 @@ function enumKeyedMembers(
     const memberType = repeated ? arrayType(entry.typeName) : entry.typeName;
     members.push(
       renderMember({
-        name: camelCase(value),
+        name: member,
         type: memberType,
         optional: true,
         docs: keyed.declaration.docs,
       })
     );
-    memberDocs[camelCase(value)] = { optional: true, docs: keyed.declaration.docs, memberType };
+    memberDocs[member] = { optional: true, docs: keyed.declaration.docs, memberType };
     fieldMetadata.push(metadata(field, value, "struct", [`fields: ${entry.fieldsConstant}`]));
     nested.push(
       { field: memberPath, shape: "struct", repeated },
-      ...reroot(entry.nested, entryPath, memberPath)
+      ...rerootFields(entry.nested, entryPath, memberPath)
     );
     children.push({ field: value, mode: "struct", children: entry.children });
   }
@@ -168,6 +148,110 @@ function enumKeyedMembers(
     children,
     docTables: entry.docTables,
   };
+}
+
+/** The generated artifacts accumulated while lowering one struct block. */
+interface StructDraft {
+  readonly members: string[];
+  readonly fieldMetadata: string[];
+  readonly extraCode: string[];
+  readonly unsupported: FieldOmissionRow[];
+  readonly nested: EmittedField[];
+  readonly children: DescentNode[];
+  readonly memberDocs: Record<string, MemberDocRow>;
+  readonly docTables: DocTable[];
+}
+
+function lowerNamedStructMembers(
+  emitter: Emitter,
+  grouped: ReadonlyMap<string, readonly RuleField[]>,
+  path: string,
+  ctx: FieldContext
+): StructDraft {
+  const members: string[] = [];
+  const fieldMetadata: string[] = [];
+  const extraCode: string[] = [];
+  const unsupported: FieldOmissionRow[] = [];
+  const nested: EmittedField[] = [];
+  const children: DescentNode[] = [];
+  const memberDocs: Record<string, MemberDocRow> = {};
+  const docTables: DocTable[] = [];
+
+  for (const [fieldName, group] of grouped) {
+    const fieldPath = `${path}.${fieldName}`;
+    const member = camelCase(fieldName);
+    const override = CONTENT_FIELD_OVERRIDES.get(fieldPath);
+    if (override !== undefined) {
+      emitter.overlayAudit.applied("CONTENT_FIELD_OVERRIDES", fieldPath);
+    }
+    const widening = FIELD_WIDENINGS.get(fieldPath);
+    if (widening !== undefined) {
+      emitter.overlayAudit.applied("FIELD_WIDENINGS", fieldPath);
+      useWideningSymbols(emitter, widening);
+    }
+    const lowered = pickOrdinary(
+      emitter,
+      group,
+      fieldName,
+      ctx,
+      override,
+      widening?.extraType,
+      fieldPath
+    );
+    if (lowered === null) {
+      unsupported.push({
+        path: fieldPath,
+        kind: "unsupported",
+        reason: "no declaration the emitter can lower",
+      });
+      continue;
+    }
+    const optional = memberOptional(group, override);
+    const docs = [...new Set([...group.flatMap((field) => field.docs), ...(lowered.docs ?? [])])];
+    members.push(renderMember({ name: member, type: lowered.memberType, optional, docs }));
+    memberDocs[member] = {
+      optional,
+      docs,
+      memberType: lowered.memberType,
+      ...authoredLiterals(lowered.admits.literals),
+    };
+    docTables.push(...(lowered.docTables ?? []));
+    fieldMetadata.push(lowered.metadata);
+    if (lowered.code !== undefined) {
+      extraCode.push(lowered.code);
+    }
+    if (lowered.unsupported !== undefined) {
+      unsupported.push(...lowered.unsupported);
+    }
+    nested.push(
+      { field: fieldPath, authoredPath: [member], ...lowered.admits },
+      ...(lowered.nested ?? []).map((field) => ({
+        ...field,
+        authoredPath: [member, ...(field.authoredPath ?? [])],
+      }))
+    );
+    children.push(...(lowered.descents ?? []));
+  }
+
+  return {
+    members,
+    fieldMetadata,
+    extraCode,
+    unsupported,
+    nested,
+    children,
+    memberDocs,
+    docTables,
+  };
+}
+
+/** Rejects enum-keyed declarations that would collide with an ordinary member or nested type. */
+function enumKeysCollideWithMembers(
+  grouped: ReadonlyMap<string, readonly RuleField[]>,
+  keyed: EnumKeyedEntry
+): boolean {
+  const memberNames = new Set([...grouped.keys()].map(camelCase));
+  return grouped.has("entry") || keyed.values.some((value) => memberNames.has(camelCase(value)));
 }
 
 /**
@@ -205,100 +289,22 @@ function structShape(
     return null;
   }
   const typeName = typeNameOverride ?? pascalCase(path);
-  const members: string[] = [];
-  const fieldMetadata: string[] = [];
-  const extraCode: string[] = [];
-  const unsupported: FieldOmissionRow[] = [];
-  const nested: EmittedField[] = [];
-  const children: DescentNode[] = [];
-  const memberDocs: Record<string, MemberDocRow> = {};
-  const docTables: DocTable[] = [];
-  for (const [fieldName, group] of grouped) {
-    const fieldPath = `${path}.${fieldName}`;
-    const override = CONTENT_FIELD_OVERRIDES.get(fieldPath);
-    if (override !== undefined) {
-      emitter.overlayAudit.applied("CONTENT_FIELD_OVERRIDES", fieldPath);
-    }
-    const widening = FIELD_WIDENINGS.get(fieldPath);
-    if (widening !== undefined) {
-      emitter.overlayAudit.applied("FIELD_WIDENINGS", fieldPath);
-      useWideningSymbols(emitter, widening);
-    }
-    const lowered = pickOrdinary(
-      emitter,
-      group,
-      fieldName,
-      ctx,
-      override,
-      widening?.extraType,
-      fieldPath
-    );
-    if (lowered === null) {
-      unsupported.push({
-        path: fieldPath,
-        kind: "unsupported",
-        reason: "no declaration the emitter can lower",
-      });
-      continue;
-    }
-    const optional = memberOptional(group, override);
-    const docLines = [
-      ...new Set([...group.flatMap((inner) => inner.docs), ...(lowered.docs ?? [])]),
-    ];
-    members.push(
-      renderMember({
-        name: camelCase(fieldName),
-        type: lowered.memberType,
-        optional,
-        docs: docLines,
-      })
-    );
-    memberDocs[camelCase(fieldName)] = {
-      optional,
-      docs: docLines,
-      memberType: lowered.memberType,
-      ...authoredLiterals(lowered.admits.literals),
-    };
-    docTables.push(...(lowered.docTables ?? []));
-    fieldMetadata.push(lowered.metadata);
-    if (lowered.code !== undefined) {
-      extraCode.push(lowered.code);
-    }
-    if (lowered.unsupported !== undefined) {
-      unsupported.push(...lowered.unsupported);
-    }
-    const member = camelCase(fieldName);
-    nested.push(
-      { field: fieldPath, authoredPath: [member], ...lowered.admits },
-      ...(lowered.nested ?? []).map((field) => ({
-        ...field,
-        authoredPath: [member, ...(field.authoredPath ?? [])],
-      }))
-    );
-    children.push(...(lowered.descents ?? []));
-  }
+  const draft = lowerNamedStructMembers(emitter, grouped, path, ctx);
   if (keyed !== null) {
-    // Two ways the expansion could collide with the block's own named fields,
-    // both declining rather than emitting a duplicate: a sibling that is also
-    // an enum value would author as one member holding two shapes, and a
-    // sibling named `entry` would take the interface name the shared entry
-    // shape claims. Neither occurs in the vendored rules; the point is that
-    // hitting one reports the block instead of generating a broken file.
-    const taken = new Set([...grouped.keys()].map(camelCase));
-    const collides =
-      grouped.has("entry") || keyed.values.some((value) => taken.has(camelCase(value)));
-    const expanded = collides ? null : enumKeyedMembers(emitter, keyed, name, path, ctx);
+    const expanded = enumKeysCollideWithMembers(grouped, keyed)
+      ? null
+      : enumKeyedMembers(emitter, keyed, name, path, ctx);
     if (expanded === null) {
       return null;
     }
-    members.push(...expanded.members);
-    fieldMetadata.push(...expanded.fieldMetadata);
-    Object.assign(memberDocs, expanded.memberDocs);
-    extraCode.push(expanded.code);
-    unsupported.push(...expanded.unsupported);
-    nested.push(...expanded.nested);
-    children.push(...expanded.children);
-    docTables.push(...expanded.docTables);
+    draft.members.push(...expanded.members);
+    draft.fieldMetadata.push(...expanded.fieldMetadata);
+    Object.assign(draft.memberDocs, expanded.memberDocs);
+    draft.extraCode.push(expanded.code);
+    draft.unsupported.push(...expanded.unsupported);
+    draft.nested.push(...expanded.nested);
+    draft.children.push(...expanded.children);
+    draft.docTables.push(...expanded.docTables);
   }
   if (inlineTrigger !== undefined) {
     const whenType = withFrom(
@@ -306,10 +312,10 @@ function structShape(
       `${emitter.use("Trigger")}<${scopeArg(emitter, inlineTrigger)}>`,
       inlineTrigger
     );
-    members.push(`  when?: ${whenType};\n`);
-    memberDocs.when = { optional: true, docs: [], memberType: whenType };
-    fieldMetadata.push('{ member: "when", shape: "inlineTrigger" }');
-    nested.push({
+    draft.members.push(`  when?: ${whenType};\n`);
+    draft.memberDocs.when = { optional: true, docs: [], memberType: whenType };
+    draft.fieldMetadata.push('{ member: "when", shape: "inlineTrigger" }');
+    draft.nested.push({
       field: `${path}.when`,
       shape: "trigger",
       repeated: false,
@@ -317,7 +323,7 @@ function structShape(
       scope: inlineTrigger.scopes,
     });
   }
-  if (members.length === 0) {
+  if (draft.members.length === 0) {
     return null;
   }
   const fieldsConstant = `${constantCase(typeName)}_FIELDS`;
@@ -326,31 +332,27 @@ function structShape(
     typeName,
     memberType: generic === undefined ? typeName : `${typeName}<${generic.argument}>`,
     fieldsConstant,
-    nested,
-    children,
-    docTables: [{ constant: fieldsConstant, members: memberDocs }, ...docTables],
+    nested: draft.nested,
+    children: draft.children,
+    docTables: [{ constant: fieldsConstant, members: draft.memberDocs }, ...draft.docTables],
     code:
-      extraCode.join("") +
+      draft.extraCode.join("") +
       `export interface ${typeName}${generic?.declaration ?? ""} {\n` +
-      members.join("") +
+      draft.members.join("") +
       "}\n\n" +
       constArray(
         fieldsConstant,
         emitter.use("ContentField"),
-        fieldMetadata.map((entry) => `  ${entry},\n`).join("")
+        draft.fieldMetadata.map((entry) => `  ${entry},\n`).join("")
       ),
-    unsupported,
+    unsupported: draft.unsupported,
   };
 }
 
 /**
- * Lowers a map whose keys are engine names rather than ids the mod invents:
- * `section_slots = { mid = { locator = ... } }`.
- *
- * The CWT shape is the wildcard-keyed block `repeatedStruct`'s "container"
- * keying also matches, and the rules carry nothing that tells them apart — so
- * this is requested by the overlay, never inferred. See the `structMap` doc
- * there for why the identity rules must not apply to these keys.
+ * Lowers a wildcard-keyed block whose keys are engine-defined names.
+ * Callers must select this shape explicitly because CWT cannot distinguish it from
+ * an id-keyed repeated struct.
  */
 export function lowerStructMap(
   emitter: Emitter,
@@ -391,11 +393,8 @@ export function lowerStructMap(
 }
 
 /**
- * Lowers the scalar-valued form: `min_upgrade_cost = { <resource> = float }`.
- *
- * Keys stay `string` — `TypedRef` is a branded object and cannot type a
- * `Record` key, the same reason an economic block's `amounts` is
- * `Record<string, number>`.
+ * Lowers a block of computed keys and scalar values to a readonly record.
+ * Keys remain strings because branded reference objects cannot be record keys.
  */
 export function lowerScalarMap(
   emitter: Emitter,
@@ -420,6 +419,10 @@ export function lowerScalarMap(
   };
 }
 
+/**
+ * Lowers a fixed-shape anonymous block, including the wrapped anonymous-list
+ * spelling. Returns `null` when the block contains structure this model cannot preserve.
+ */
 export function lowerStruct(
   emitter: Emitter,
   field: RuleField,
@@ -468,6 +471,10 @@ export function lowerStruct(
   };
 }
 
+/**
+ * Lowers a block that combines ordinary struct members with one trigger splice.
+ * The generated interface exposes the splice as its optional `when` member.
+ */
 export function lowerTriggerStruct(
   emitter: Emitter,
   field: RuleField,

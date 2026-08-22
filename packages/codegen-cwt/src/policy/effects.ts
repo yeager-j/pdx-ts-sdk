@@ -2,12 +2,18 @@ import type { RuleSet } from "../cwt/rules.ts";
 import { eventKinds } from "../lower/event-kinds.ts";
 import { camelCase } from "../naming.ts";
 
+/** The implementation surface that owns an effect key and its public method. */
 export type EffectOwner = "generated" | "structural" | "fire";
 
+/** The ownership decision for one CWT effect key. */
 export interface EffectPolicyEntry {
+  /** The normalized CWT effect key. */
   readonly key: string;
+  /** The public SDK method, or `null` when the key has no direct method. */
   readonly method: string | null;
+  /** The implementation surface responsible for the effect. */
   readonly owner: EffectOwner;
+  /** Why a non-generated surface owns the effect. */
   readonly reason?: string;
 }
 
@@ -41,13 +47,22 @@ const STRUCTURAL_EFFECTS = {
 /** SDK-only methods with no CWT effect key. */
 export const SYNTHETIC_STRUCTURAL_EFFECT_METHODS = ["target", "run"] as const;
 
+/** Indexed effect ownership and the method sets consumed by generator validation. */
 export interface EffectPolicy {
+  /** Ownership entries keyed by normalized CWT effect key. */
   readonly byKey: ReadonlyMap<string, EffectPolicyEntry>;
+  /** Methods implemented by the hand-written structural effects surface. */
   readonly structuralMethods: ReadonlySet<string>;
+  /** CWT keys implemented as typed event-fire methods. */
   readonly fireKeys: ReadonlySet<string>;
+  /** Every public method name across generated and hand-written effects. */
   readonly publicMethods: ReadonlySet<string>;
 }
 
+/**
+ * Assigns every declared effect to generated, structural, or event-fire ownership.
+ * Event-fire ownership is limited to event kinds with a receiving scope.
+ */
 export function createEffectPolicy(rules: RuleSet): EffectPolicy {
   const byKey = new Map<string, EffectPolicyEntry>();
   for (const [key, spec] of Object.entries(STRUCTURAL_EFFECTS)) {
@@ -95,17 +110,18 @@ export function createEffectPolicy(rules: RuleSet): EffectPolicy {
   return { byKey, structuralMethods, fireKeys, publicMethods };
 }
 
+/** Emits the generated constants and union types that expose effect ownership to the SDK. */
 export function emitEffectPolicyProtocol(policy: EffectPolicy): string {
   const structural = [...policy.structuralMethods].sort();
   const structuralKeys = [...policy.byKey.values()]
     .flatMap((entry) => (entry.owner === "structural" ? [entry.key] : []))
     .sort();
   const fireKeys = [...policy.fireKeys].sort();
-  const owned = [...policy.byKey.values()]
+  const nonGeneratedEntries = [...policy.byKey.values()]
     .filter((entry) => entry.owner !== "generated")
     .sort((left, right) => left.key.localeCompare(right.key));
   return (
-    `export const EFFECT_OWNERSHIP = ${JSON.stringify(owned)} as const;\n\n` +
+    `export const EFFECT_OWNERSHIP = ${JSON.stringify(nonGeneratedEntries)} as const;\n\n` +
     `export const STRUCTURAL_EFFECT_METHODS = ${JSON.stringify(structural)} as const;\n\n` +
     `export const STRUCTURAL_EFFECT_KEYS = ${JSON.stringify(structuralKeys)} as const;\n\n` +
     `export const FIRE_EFFECT_KEYS = ${JSON.stringify(fireKeys)} as const;\n\n` +

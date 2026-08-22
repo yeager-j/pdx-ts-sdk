@@ -1,13 +1,13 @@
 /**
- * Staleness gates for the overlay tables in `overlay.ts` and
- * `trigger-policy.ts` whose rows are read through a plain `.get()`/`.has()`
+ * Staleness gates for the tables exported from `overlay/index.ts` and
+ * `policy/triggers.ts` whose rows are read through a plain `.get()`/`.has()`
  * lookup rather than through a loop the emitter itself drives.
  *
  * A row naming a key nothing matches is not a type error: the lookup just
  * returns `undefined`, and the emitter silently falls back to its mechanical
- * reading, exactly as if the row had never been written. `emit/effects.ts`
+ * reading, exactly as if the row had never been written. `emit/script/effects.ts`
  * already closes this gap for its own tables (`EFFECT_FIELD_TYPE_OVERRIDES`
- * and its siblings, `emit/effects.ts:636-657`); this module gives every other
+ * and its siblings); this module gives every other
  * overlay table the same treatment.
  *
  * Two shapes of check live here:
@@ -25,7 +25,9 @@ import type { ContentWitness } from "./index.ts";
 
 /** One table to check, so a single call can cover several at once. */
 export interface RegistryKeyedOverlayTable {
+  /** Stable table name used in failures. */
   readonly tableId: string;
+  /** Registry names declared as keys by the table. */
   readonly keys: Iterable<string>;
 }
 
@@ -67,7 +69,8 @@ export function assertOverlayRegistriesKnown(
  * property silently disappears from the emitted `Def` while the witness
  * keeps promising it, and `EconomicWitnessOf` resolves the vanished member to
  * `undefined` with every other gate green. This is that same staleness
- * principle one level deeper, so `contentDefiners` (`emit/definers.ts`) calls it once
+ * principle one level deeper, so `planRegistryDefiner`
+ * (`emit/content/definer-plan.ts`) calls it once
  * per content it finds a row for, with the member names *that content's own
  * emission* actually produced.
  *
@@ -116,8 +119,8 @@ export function assertContentWitnessMembersKnown(
  * `PATCH_WIDENINGS` is keyed `<registry>.<member>` like the path-keyed tables
  * `OverlayAudit` tracks, but its registry half is checkable on its own: a
  * widening only ever reaches a reader inside `emitPatchType`
- * (`emit/content-type.ts`'s `patchMembers`/`PATCH_WIDENINGS` loop, around
- * line 804-822), which runs only for a registry `CONTENT_PATCH_REGISTRIES`
+ * (`emit/content/content-type.ts`'s `patchMembers`/`PATCH_WIDENINGS` loop),
+ * which runs only for a registry `CONTENT_PATCH_REGISTRIES`
  * already admits. A row naming any other registry — one that was never
  * patchable, or lost patchability upstream — is never read by that loop at
  * all, so `OverlayAudit` can never see it applied; this checks the registry
@@ -132,7 +135,7 @@ export function assertPatchWideningsTargetPatchableRegistries(
     const segments = key.split(".");
     // A member name never contains a dot, so a widening key is always exactly
     // one registry segment and one member segment. The consumption site
-    // (`emit/content-type.ts`'s `patchTypes`) reads this table with an exact
+    // (`emit/content/content-type.ts`'s `patchTypes`) reads this table with an exact
     // `${type.name}.${entry.member}` lookup — a three-segment key like
     // `technology.prerequisites.extra` would resolve a registry correctly
     // here while never matching that lookup, leaving the row silently dead.
@@ -165,7 +168,7 @@ export function assertPatchWideningsTargetPatchableRegistries(
  *
  * The enum's own `## modifier_categories` comment metadata is deliberately
  * not this check's source for labels: `RuleSet` does not parse that option
- * (see `overlay.ts`'s doc comment on the table), and it is already known to
+ * (see `script.ts`'s doc comment on the table), and it is already known to
  * disagree with `modifier_categories.cwt` for `pop_group` — the enum's
  * comment says "Pop Group", the categories file says "Pops", and the table
  * intentionally follows the latter.
@@ -196,7 +199,7 @@ export function assertScriptedModifierCategoryMapValid(
 /**
  * Validates `HAND_WRITTEN_TRIGGER_EXPORTS`: every row whose `expectedInRules`
  * is `true` must have a `ruleKey` matching a key the rules actually loaded,
- * checked case-insensitively to match `emit/triggers.ts`'s own lookup
+ * checked case-insensitively to match `emit/script/triggers.ts`'s own lookup
  * (`HAND_WRITTEN_TRIGGER_RULES_BY_KEY.get(key.toLowerCase())`).
  *
  * A row with no `ruleKey` (the bare constructor/link exports) or with
@@ -213,7 +216,7 @@ export function assertHandWrittenTriggerExportsMatchRules(
       continue;
     }
     // Narrowed to the `expectedInRules: true` arm here, so `ruleKey` is a
-    // required `string` — the union in trigger-policy.ts makes the
+    // required `string` — the union in policy/triggers.ts makes the
     // `expectedInRules: true`-with-no-`ruleKey` combination a compile error
     // rather than something this check has to guard against at runtime.
     if (!loadedTriggerRuleKeys.has(entry.ruleKey.toLowerCase())) {
@@ -230,16 +233,16 @@ export function assertHandWrittenTriggerExportsMatchRules(
  * `REQUIRED_LOCALISATION`, `SYNTHETIC_LOCALISATION`, …) were actually read at
  * their consumption site, so a row nothing matches can be caught the same way
  * `EFFECT_FIELD_TYPE_OVERRIDES` and its siblings already are in
- * `emit/effects.ts` — a `.get()`/`.has()` lookup alone cannot tell a matched
+ * `emit/script/effects.ts` — a `.get()`/`.has()` lookup alone cannot tell a matched
  * row from a stale one, since both return the same "nothing here" shape.
  *
  * One instance per pipeline run, owned by the `Emitter` that is already
  * threaded to every site that would call {@link applied}. This deliberately
- * is not module-level mutable state: `emit/fields.ts` used to track
- * `ASSET_PATH_FIELDS` the same way (a module-level `appliedAssetPaths` `Set`,
- * folded into this class by SDK-256) — that shape has no owner, so nothing
- * scopes it to one run or lets two pipeline runs in the same process (as
- * several test files perform) avoid leaking applied-state into each other.
+ * is not module-level mutable state: before SDK-256, asset-field lowering used
+ * a module-level `appliedAssetPaths` `Set`; `lower/field-assertions.ts` now
+ * records `ASSET_PATH_FIELDS` through this class. The old shape had no owner,
+ * so nothing scoped it to one run or let two pipeline runs in the same process
+ * (as several test files perform) avoid leaking applied-state into each other.
  */
 export class OverlayAudit {
   private readonly appliedKeys = new Map<string, Set<string>>();

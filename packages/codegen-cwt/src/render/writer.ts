@@ -1,37 +1,27 @@
-/**
- * Shared render idioms for the emit layer.
- *
- * Every emitter under `emit/` builds the same two textual shapes over and
- * over: an interface member (doc comment, optional marker, type) and a
- * `export const NAME: readonly Type[] = [...]` field-table declaration. Before
- * this module existed, each emitter reimplemented both by hand, so a change
- * to either shape meant finding and updating every site by inspection.
- *
- * `naming.ts` still owns the casing and identifier-safety decisions
- * (`propertyName`, `docComment`); this module only assembles them into the
- * repeated shapes. Every helper here must reproduce its callers' EXACT prior
- * byte output — `codegen:check`'s drift gate is the enforcement, since this
- * module changes how generated text is produced, never what it says.
- */
+/** Shared textual renderers for generated interface members and metadata declarations. */
 
 import { docComment, propertyName } from "../naming.ts";
 import type { TsValue } from "./emitter.ts";
 
+/** The author-facing shape of one generated TypeScript interface member. */
 export interface MemberOptions {
+  /** The member name before identifier-safe quoting. */
   readonly name: string;
+  /** The TypeScript type text written after the member name. */
   readonly type: string;
+  /** Whether the generated member carries an optional marker. */
   readonly optional: boolean;
+  /** The prose lines rendered as the member's JSDoc. */
   readonly docs: readonly string[];
+  /** The whitespace prefixed to both the JSDoc and declaration. */
   readonly indent?: string;
+  /** Whether the generated declaration includes the `readonly` modifier. */
   readonly readonly?: boolean;
 }
 
 /**
- * One interface member: a doc comment followed by its declaration line.
- *
- * The doc comment and the line share one indent, which is what every call
- * site already did by hand — `docComment(docs, indent)` immediately followed
- * by a member line opening with the same `indent`.
+ * Renders one interface member with optional JSDoc and identifier-safe naming.
+ * The configured indent applies to both the documentation and declaration.
  */
 export function member(options: MemberOptions): string {
   const indent = options.indent ?? "  ";
@@ -44,11 +34,8 @@ export function member(options: MemberOptions): string {
 }
 
 /**
- * One `export const NAME: readonly ElementType[] = [...]` field-table
- * declaration. `rows` is the pre-rendered body — typically
- * `entries.map((entry) => \`  ${entry},\n\`).join("")` — since the entry
- * shape (a `ContentField` object literal, a raw string) is a caller concern,
- * not this one.
+ * Wraps pre-rendered rows in an exported readonly array declaration.
+ * Callers retain control of each row's text and indentation.
  */
 export function constArray(name: string, elementType: string, rows: string): string {
   return `export const ${name}: readonly ${elementType}[] = [\n${rows}];\n\n`;
@@ -62,13 +49,15 @@ export function constArray(name: string, elementType: string, rows: string): str
  * format into two different shapes below.
  */
 function refTypesEntry(value: TsValue | undefined): string | undefined {
-  return value?.refTypes === undefined ? undefined : `refTypes: ${JSON.stringify(value.refTypes)}`;
+  if (value?.refTypes === undefined) {
+    return undefined;
+  }
+  return `refTypes: ${JSON.stringify(value.refTypes)}`;
 }
 
 /**
- * `, refTypes: [...]`, ready to splice directly after another metadata
- * member inside an already-open object literal — the shape `effects.ts`'
- * per-field metadata and `alias-struct.ts`'s clause fields both need.
+ * Renders reference metadata for appending to a non-empty object literal.
+ * Returns a comma-prefixed property, or an empty string when the value has no reference types.
  */
 export function refTypesSuffix(value: TsValue | undefined): string {
   const entry = refTypesEntry(value);
@@ -76,18 +65,19 @@ export function refTypesSuffix(value: TsValue | undefined): string {
 }
 
 /**
- * `refTypes: [...]` as a bare metadata-array element (zero or one), for a
- * caller building its member list with `[...others, ...refTypesEntries(v)]`
- * rather than splicing into an object literal already holding other fields —
- * `fields.ts`'s `scalarMetadata` is the one caller, since it puts `refTypes`
- * beside its own `conversion` entry rather than after it in the same string.
+ * Renders reference metadata as zero or one standalone object-member entries.
+ * Use this when composing metadata members as an array rather than an object-literal suffix.
  */
 export function refTypesEntries(value: TsValue | undefined): readonly string[] {
   const entry = refTypesEntry(value);
   return entry === undefined ? [] : [entry];
 }
 
-/** Whether a scalar value's authored form already IS the id, or needs converting to reach it. */
+/**
+ * Classifies whether a scalar value's authored form is already its serialized identity.
+ * Reference-shaped values require their configured conversion before serialization.
+ */
 export function conversionFor(value: TsValue): "identity" | "ref" {
-  return value.toScalar("x") === "x" ? "identity" : "ref";
+  const conversionProbe = "x";
+  return value.toScalar(conversionProbe) === conversionProbe ? "identity" : "ref";
 }

@@ -40,16 +40,23 @@ import type { ContentEmission } from "./content-type.ts";
 
 /** One content registry as the definer emitters receive it. */
 export interface DefinerContent {
+  /** Manifest row that authorizes the registry and supplies its id policy. */
   manifest: ContentManifestEntry;
+  /** Registry name exposed through the SDK capability. */
   registry: string;
+  /** CWT reference brand definitions from this registry satisfy. */
   referenceName: string;
+  /** Content-type emission the definers place and reference. */
   emission: ContentEmission;
 }
 
 /** One row of the capability module's generated `EXACT_NAME_MINTS` table. */
 export interface ExactNameMintRow {
+  /** Capability method that uses the exact-name mint policy. */
   readonly method: string;
+  /** Runtime pattern for an ordinary logical name. */
   readonly namePattern: string;
+  /** Runtime pattern for a complete name supplied with `prefix: false`. */
   readonly exactNamePattern: string;
 }
 
@@ -61,15 +68,28 @@ export interface RegistryDefinerPlan {
   readonly chunk: string;
   /** Runtime item types beyond `ContentItem` this registry's union names. */
   readonly itemTypes: readonly string[];
+  /** Method declarations contributed to `ContentCapabilityMethods`. */
   readonly capabilityMembers: readonly string[];
+  /** Runtime method bindings contributed by the registry. */
   readonly capabilityBindings: readonly string[];
   /** Definer names the capability bindings call into `content-definers.ts`. */
   readonly runtimeDefiners: readonly string[];
+  /** Optional `IdProfile` member for a registry with segmented ids. */
   readonly profileMember: string | null;
+  /** Default value for {@link RegistryDefinerPlan.profileMember}. */
   readonly defaultProfileMember: string | null;
-  readonly mintShapeRow: { readonly method: string; readonly head: string } | null;
+  /** Method and fixed head for a registry whose id has no profile segment. */
+  readonly mintShapeRow: {
+    /** Capability method whose mint uses the fixed head. */
+    readonly method: string;
+    /** Literal prefix placed before the capability prefix and logical name. */
+    readonly head: string;
+  } | null;
+  /** Exact-name runtime policy contributed by this registry. */
   readonly exactNameRow: ExactNameMintRow | null;
+  /** Generated name aliases contributed by sprite shape mints. */
   readonly shapeMintTypes: readonly string[];
+  /** Reference types required by the generated shape-mint signatures. */
   readonly shapeMintRefTypes: readonly string[];
   /** The emitted nested-definition member table, for the capability module. */
   readonly nestedDefinitionTable: string | null;
@@ -79,8 +99,11 @@ export interface RegistryDefinerPlan {
    * rescanning the overlay by registry name.
    */
   readonly witness: ContentWitness | null;
+  /** Hand-written definer graft replacing mechanical generation for this registry. */
   readonly graft: HandWrittenDefiner | null;
+  /** Whether the registry contributes a whole-object vanilla patch surface. */
   readonly patchable: boolean;
+  /** Whether the registry contributes to an id-less additive sink. */
   readonly contributes: boolean;
   /** The report line for a grafted definer. */
   readonly grafted: string | null;
@@ -161,9 +184,10 @@ function registryDefinerFacts(content: DefinerContent): RegistryDefinerFacts {
     .map((field) => camelCase(field.field))
     .sort();
   const nestedDefinitionTable = `${constantCase(emission.typeName)}_NESTED_DEFINITION_MEMBERS`;
-  // CONTENT_WITNESSES (overlay.ts) replaces per-registry branches here: a
-  // registry either has no row (ordinary def, no `W`) or has exactly one of
-  // the two modes the schema carries evidence for (SDK-260).
+  // CONTENT_WITNESSES (packages/codegen-cwt/src/overlay/index.ts) replaces
+  // per-registry branches here: a registry either has no row (ordinary def,
+  // no `W`) or has exactly one of the two modes the schema carries evidence
+  // for (SDK-260).
   const contentWitness = CONTENT_WITNESSES.get(registry);
   if (contentWitness !== undefined) {
     assertContentWitnessMembersKnown(registry, contentWitness, emittedMemberNames(emission));
@@ -895,7 +919,8 @@ function declaredWitness(
 
 /**
  * The top-level `Def` member names a registry's emission actually produced —
- * the universe `assertContentWitnessMembersKnown` (`overlay-audit.ts`) checks
+ * the universe `assertContentWitnessMembersKnown`
+ * (`packages/codegen-cwt/src/overlay/audit.ts`) checks
  * a `CONTENT_WITNESSES` row's member strings against.
  *
  * `authoredPath`'s first segment is the real authored member `emitContentType`

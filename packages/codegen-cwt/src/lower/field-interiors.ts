@@ -1,10 +1,6 @@
 /**
- * The hand-stated interiors of the closure-authored shapes: what a weight
- * block, a triggered modifier, or an economic-resource operation holds inside,
- * as the emitted fields and corpus descents the shape dispatcher attaches to
- * the lowering. These shapes have no CWT fields table to derive an interior
- * from — their authoring shape is an SDK closure — so each interior worth
- * measuring is stated here.
+ * Describes corpus-visible interiors for closure-authored block shapes.
+ * These shapes have no ordinary CWT field table from which to derive their descents.
  */
 
 import type { Emitter } from "../render/emitter.ts";
@@ -36,14 +32,8 @@ function weightRowOperations(emitter: Emitter): ReadonlySet<string> {
 }
 
 /**
- * A weight block's `modifier` rows, as one emitted field and one descent.
- *
- * Every other block shape describes its interior through `structShape`, off a
- * CWT fields table. A weight block has none — `modifier_rule` is an alias
- * category, and the authoring shape is the SDK's own `WeightBlock<S>` — so the
- * one interior worth measuring is stated here instead: the row's gating
- * condition, at the holder's own scope, which is where `Modifier.when`'s
- * `Trigger<S>` is instantiated.
+ * Describes the repeated modifier conditions inside a generated weight block.
+ * The returned field evidence and corpus descent use the holder's scope.
  */
 export function weightInterior(
   emitter: Emitter,

@@ -69,6 +69,7 @@ export const ASSET_PATH_FIELDS = new Map<string, string>([
   ],
 ]);
 
+/** An extra authoring form accepted in addition to a field's mechanically derived type. */
 export interface FieldWidening {
   /** Appended to the mechanically derived type. */
   readonly extraType: string;
@@ -84,6 +85,7 @@ export interface FieldWidening {
    * unused-import check.
    */
   readonly symbols?: readonly string[];
+  /** Audited evidence that the extra form emits the field correctly. */
   readonly reason: string;
 }
 
@@ -179,6 +181,10 @@ export const CONTENT_DECLINED_FIELDS = new Map<string, string>([
   ],
 ]);
 
+/**
+ * Defines a registry-level scope parameter for fields whose scope varies by definition.
+ * The emitter derives the synthetic authoring member and callback scopes from this schema.
+ */
 export interface ContentScopeParameter {
   /** Every scope a definition may declare, canonical names. */
   readonly scopes: readonly string[];
@@ -186,6 +192,7 @@ export interface ContentScopeParameter {
   readonly fallback: string;
   /** A game field that selects the scope instead of a synthetic `scope` member. */
   readonly selector?: {
+    /** Authoring member that carries the game's scope selector. */
     readonly member: string;
     /** Members the selected scope is the `this` of. */
     readonly scopedMembers: readonly string[];
@@ -201,8 +208,11 @@ export interface ContentScopeParameter {
      * definitions read FROM and as what.
      */
     readonly fromMembers?: readonly string[];
+    /** Public type name emitted for the selector values. */
     readonly typeName: string;
+    /** Selector value used when the definition omits the member. */
     readonly fallback: string;
+    /** Maps each admitted selector value to its canonical callback scope. */
     readonly scopes: Readonly<Record<string, string>>;
   };
   /**
@@ -228,7 +238,8 @@ export interface ContentScopeParameter {
    * whose starting effect is called *without* the argument — the scope then
    * defaults to the caller's, which no signature on a universally-valid effect
    * can see. Like `<Registry>Scope` above, the emitted union has to be
-   * re-exported from `src/index.ts` by hand for a consumer to name it.
+   * re-exported from `packages/sdk/src/index.ts` by hand for a consumer to name
+   * it.
    */
   readonly declaredFrom?: {
     /** The synthetic authoring member that names the scope. */
@@ -244,9 +255,12 @@ export interface ContentScopeParameter {
     readonly members: readonly string[];
     /** The effect whose argument the scope actually is, and that argument. */
     readonly effect: string;
+    /** Effect argument that supplies the declared FROM scope. */
     readonly argument: string;
+    /** Audited evidence for exposing the call-site-selected FROM scope. */
     readonly reason: string;
   };
+  /** Audited evidence for the registry's scope choices and fallback. */
   readonly reason: string;
 }
 
@@ -265,10 +279,11 @@ export interface ContentScopeParameter {
  * A row turns every field the registry left unpinned into `Trigger<NoInfer<S>>`
  * and adds one authoring member, `scope`, that names S and emits nothing. It
  * also introduces a public `<Registry>Scope` union, which has to be re-exported
- * from `src/index.ts` by hand — nothing else makes a consumer able to name the
- * type its own helpers need. It needs the same evidence a `scope` assertion does — the scopes listed are the
- * ones real definitions are written against, and shape conformance checks that
- * the set covers what the corpus writes rather than taking the row's word.
+ * from `packages/sdk/src/index.ts` by hand — nothing else makes a consumer able
+ * to name the type its own helpers need. It needs the same evidence a `scope`
+ * assertion does — the scopes listed are the ones real definitions are written
+ * against, and shape conformance checks that the set covers what the corpus
+ * writes rather than taking the row's word.
  */
 export const CONTENT_SCOPE_PARAMETERS = new Map<string, ContentScopeParameter>([
   [
@@ -351,6 +366,10 @@ export const CONTENT_SCOPE_PARAMETERS = new Map<string, ContentScopeParameter>([
   ],
 ]);
 
+/**
+ * Supported writer shapes that an audited field override may select.
+ * Each value names an existing generic lowering; rows must not introduce registry-specific shapes.
+ */
 export type ContentFieldShape = Extract<
   ContentShape,
   | "value"
@@ -442,7 +461,7 @@ export type ContentFieldShape = Extract<
   | "scalarMap"
   /**
    * A field spliced from a non-trigger/effect CWT alias category emitted by
-   * `emit/alias-struct.ts` — `government_trigger` is the only consumer so
+   * `emit/content/alias-struct.ts` — `government_trigger` is the only consumer so
    * far. Unlike the pure-splice categories `spliceCategory` finds on its own
    * (`trigger`, `effect`, `modifier_rule`), the category here sits alongside
    * ordinary named siblings (`potential = { text? always? alias_name[...] }`),
@@ -453,9 +472,14 @@ export type ContentFieldShape = Extract<
   | "aliasStruct"
 >;
 
+/**
+ * An audited correction to the mechanical lowering of one content field.
+ * A row changes only the properties it supplies and records evidence for the departure.
+ */
 export interface ContentFieldOverride {
   /** Omitted when the row only renames the authoring member. */
   readonly shape?: ContentFieldShape;
+  /** Emits scalar values with explicit quotes when the serialized contract requires them. */
   readonly quoted?: boolean;
   /** The alias category to splice in, when `shape` is `"aliasStruct"`. */
   readonly category?: string;
@@ -470,7 +494,7 @@ export interface ContentFieldOverride {
    * category, see `CONTENT_SCOPE_PARAMETERS`) and leaves real checking on the
    * table when the scope is fixed but simply unannotated. A `scope` row here
    * buys that checking back for one field. `ModifierClosure` fields keep the
-   * separate `ScopeName` sentinel `emit/scope-context.ts`'s `contravariantScopeType`
+   * separate `ScopeName` sentinel `lower/scope-context.ts`'s `contravariantScopeType`
    * does not touch, since an unpinned modifier closure already resolves to a
    * real, writable recorder.
    *
@@ -528,6 +552,7 @@ export interface ContentFieldOverride {
    * with it.
    */
   readonly uncheckedString?: true;
+  /** Audited evidence for every correction supplied by the row. */
   readonly reason: string;
 }
 
@@ -541,7 +566,7 @@ export interface ContentFieldOverride {
  * Modifier blocks used to be here too, 85 rows of them. They are not any more:
  * a field that splices `modifier_clause`, a `triggered_modifier*_clause` or an
  * `economic_template` carries the clause's name into the expanded block, and
- * `emit/rule-shapes.ts`'s `CLAUSE_SHAPES` reads the shape off it (SDK-142). A row
+ * `lower/rule-shapes.ts`'s `CLAUSE_SHAPES` reads the shape off it (SDK-142). A row
  * here still wins over that, so this table remains the place to say the
  * derivation is wrong for one field — but restating what the clause already
  * says is no longer one of its jobs.
@@ -843,7 +868,12 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
   ],
 ]);
 
+/**
+ * Names and identifies the nested definition emitted for a repeated-struct field.
+ * The emitter derives keying and localisation from this metadata and the field's CWT declaration.
+ */
 export interface RepeatedStructDefinition {
+  /** Public TypeScript name for one nested definition. */
   readonly typeName: string;
   /**
    * The body field carrying the record key, for a struct whose entries are
@@ -867,6 +897,7 @@ export interface RepeatedStructDefinition {
   readonly localisationType?: string;
 }
 
+/** Repeated-struct fields whose nested definitions need stable public type names. */
 export const REPEATED_STRUCT_DEFINITIONS = new Map<string, RepeatedStructDefinition>([
   [
     "tradition.tradition_swap",
@@ -895,7 +926,7 @@ export const REPEATED_STRUCT_DEFINITIONS = new Map<string, RepeatedStructDefinit
  * Empty, and kept rather than deleted. All twelve rows it held were clause
  * shapes, and every one of them said the same thing its top-level sibling said:
  * this nested field splices `modifier_clause`, or a `triggered_modifier*_clause`,
- * or `economic_template`. `emit/rule-shapes.ts` derives that from the clause name
+ * or `economic_template`. `lower/rule-shapes.ts` derives that from the clause name
  * now (SDK-142), and nesting changes nothing about it — `lowerOrdinary` is the same
  * function at both depths.
  *
