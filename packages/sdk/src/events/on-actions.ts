@@ -2,7 +2,7 @@ import { block, list, scalar, type PdxEntry } from "@pdx-ts/pdxscript";
 
 import type { ScopeName } from "../generated/scopes.ts";
 import { compareUtf8 } from "../ordering.ts";
-import type { DefinedEvent, EventItem, EventItemBase } from "./types.ts";
+import type { EventItem, EventItemBase } from "./types.ts";
 
 export interface OnActionRef<
   S extends ScopeName | null = ScopeName | null,
@@ -29,18 +29,18 @@ export interface OnActionHookItem {
 
 interface HookedEvent {
   readonly hook: OnActionRef;
-  readonly event: DefinedEvent<ScopeName, ScopeName | undefined>;
+  readonly event: EventItemBase;
 }
 
 export class OnActionAuthoring {
   private readonly hooked: HookedEvent[] = [];
-  private readonly ownsEvent: (event: DefinedEvent<ScopeName, ScopeName | undefined>) => boolean;
+  private readonly ownsEvent: (event: EventItemBase) => boolean;
 
-  constructor(ownsEvent: (event: DefinedEvent<ScopeName, ScopeName | undefined>) => boolean) {
+  constructor(ownsEvent: (event: EventItemBase) => boolean) {
     this.ownsEvent = ownsEvent;
   }
 
-  register(hook: OnActionRef, event: DefinedEvent<ScopeName, ScopeName | undefined>): void {
+  register(hook: OnActionRef, event: EventItemBase): void {
     if (hook.scope === null) {
       throw new Error(
         `On-action "${hook.name}" has no scope; scopeless events are not supported by this SDK`
@@ -71,7 +71,7 @@ export class OnActionAuthoring {
   /** The finished hook blocks. `buildMod` keeps this instance to itself and
    * puts only these entries on the mod, so nothing can register after the fold. */
   entries(): PdxEntry[] {
-    const byHook = new Map<string, DefinedEvent<ScopeName, ScopeName | undefined>[]>();
+    const byHook = new Map<string, EventItemBase[]>();
     for (const registration of this.hooked) {
       const events = byHook.get(registration.hook.name) ?? [];
       events.push(registration.event);
@@ -103,5 +103,5 @@ export function on<S extends ScopeName, From extends ScopeName | undefined>(
   hook: OnActionRef<S, From>,
   events: readonly [EventItem<NoInfer<S>, NoInfer<From>>, ...EventItem<NoInfer<S>, NoInfer<From>>[]]
 ): OnActionHookItem {
-  return { itemKind: "on-action", hook, events: events as readonly EventItemBase[] };
+  return { itemKind: "on-action", hook, events };
 }
