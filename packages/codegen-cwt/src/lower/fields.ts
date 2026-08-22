@@ -12,40 +12,41 @@
  */
 
 import type { DescentNode } from "../corpus/observations.ts";
-import { isOptional, isRepeated, type RuleField, type RuleType } from "../cwt/model.ts";
-import { camelCase, constantCase, pascalCase } from "../naming.ts";
-import {
-  ASSET_PATH_FIELDS,
-  CONTENT_FIELD_OVERRIDES,
-  FIELD_WIDENINGS,
-  type ContentFieldOverride,
-  type FieldWidening,
-} from "../overlay/index.ts";
-import { Emitter, type TsValue } from "../render/emitter.ts";
-import type { DocTable, FieldOmissionRow, MemberDocRow } from "../render/field-rows.ts";
-import {
-  constArray,
-  conversionFor,
-  refTypesEntries,
-  member as renderMember,
-} from "../render/writer.ts";
+import { isRepeated, type RuleField, type RuleType } from "../cwt/model.ts";
+import { camelCase, pascalCase } from "../naming.ts";
+import { type ContentFieldOverride, type FieldWidening } from "../overlay/index.ts";
+import { Emitter } from "../render/emitter.ts";
+import type { DocTable, FieldOmissionRow } from "../render/field-rows.ts";
 import { formOfShape } from "./authored-form.ts";
 import { contentShape } from "./content-shape.ts";
+import { assertedArity, assertedAssetPath, assertedUncheckedString } from "./field-assertions.ts";
+import {
+  economicResourceOperationInterior,
+  triggeredModifierInterior,
+  weightInterior,
+} from "./field-interiors.ts";
+import {
+  admitsBlock,
+  admitsScalars,
+  arrayType,
+  metadata,
+  scalarMetadata,
+} from "./field-metadata.ts";
+import {
+  lowerScalarMap,
+  lowerStruct,
+  lowerStructMap,
+  lowerTriggerStruct,
+} from "./field-structs.ts";
 import {
   aliasScalarFields,
   bareValuesOf,
   derivedClauseShape,
   economicResourceOperationParts,
-  enumKeyedEntryOf,
   spliceCategory,
-  structBlockOf,
   structuralSpliceOf,
   triggeredModifierPotential,
-  triggerStructOf,
-  wildcardBlockOf,
   type AliasNameField,
-  type BlockType,
-  type EnumKeyedEntry,
 } from "./rule-shapes.ts";
 import {
   containerContext,
@@ -56,8 +57,9 @@ import {
   splitRootMetadata,
   withFrom,
   type FieldContext,
-  type FieldScope,
 } from "./scope-context.ts";
+
+export { authoredLiterals, memberOptional, metadata, repeatsSiblings } from "./field-metadata.ts";
 
 /**
  * One lowered field, described in the terms a real PDXScript value can be
@@ -106,24 +108,6 @@ export interface EmittedField {
    */
   readonly clause?: "trigger" | "effect";
 }
-/**
- * The literals a doc row may carry: the admitted set, except where lowering
- * changes the authored representation. `admits.literals` speaks the game's
- * tokens because the corpus gate measures shipped files, but boolean fields
- * author as `true`/`false` while admitting `yes`/`no` — printing those tokens
- * in a docs table tells an author to pass strings that do not type-check.
- * Booleans are the only conversion with that mismatch, and their admitted
- * sets are exactly the subsets of `{yes, no}`, so those are omitted; the
- * member type `boolean` already says everything the row would.
- */
-export function authoredLiterals(literals: readonly string[] | undefined): {
-  readonly literals?: readonly string[];
-} {
-  if (literals === undefined || literals.every((token) => token === "yes" || token === "no")) {
-    return {};
-  }
-  return { literals };
-}
 
 export interface LoweredField {
   readonly memberType: string;
@@ -168,109 +152,6 @@ export interface LoweredField {
    * fields without their descent are measured against nothing.
    */
   readonly descents?: readonly DescentNode[];
-}
-
-/**
- * The keys a `modifier` row spends on arithmetic or display rather than on
- * gating: `modifier_rule.cwt`'s two maths enums, plus `desc`.
- *
- * What remains in a row is the spliced `alias_name[trigger]`, so this set is
- * exactly what turns a shipped row into the conditions the emitted `Trigger<S>`
- * has to hold. A missing enum throws rather than degrading to an empty set: the
- * corpus reader would then record `add` and `factor` as trigger keys, and every
- * weight block in the game would report a scope mismatch against them.
- */
-function weightRowOperations(emitter: Emitter): ReadonlySet<string> {
-  const members = (name: string): readonly string[] => {
-    const values = emitter.rules.enums.get(name);
-    if (values === undefined || values.length === 0) {
-      throw new Error(
-        `The rules declare no members for enum[${name}], so a weight block's modifier rows ` +
-          "cannot be stripped down to the conditions that gate them"
-      );
-    }
-    return values;
-  };
-  return new Set([...members("complex_maths_enum"), ...members("simple_maths_enum"), "desc"]);
-}
-
-/**
- * A weight block's `modifier` rows, as one emitted field and one descent.
- *
- * Every other block shape describes its interior through `structShape`, off a
- * CWT fields table. A weight block has none — `modifier_rule` is an alias
- * category, and the authoring shape is the SDK's own `WeightBlock<S>` — so the
- * one interior worth measuring is stated here instead: the row's gating
- * condition, at the holder's own scope, which is where `Modifier.when`'s
- * `Trigger<S>` is instantiated.
- */
-function weightInterior(
-  emitter: Emitter,
-  name: string,
-  path: string,
-  scope: FieldScope
-): Pick<LoweredField, "nested" | "descents"> {
-  return {
-    nested: [
-      {
-        field: `${path}.modifier`,
-        shape: "weightModifier",
-        // `modifiers` is an array and the writer emits one `modifier` block per
-        // row, so the key repeats inside the weight block.
-        repeated: true,
-        clause: "trigger",
-        scope: scope.scopes,
-      },
-    ],
-    descents: [
-      {
-        field: name,
-        mode: "weightModifiers",
-        strippedKeys: weightRowOperations(emitter),
-        children: [],
-      },
-    ],
-  };
-}
-
-/** The potential condition and its emitter-owned corpus descent. */
-function triggeredModifierInterior(
-  name: string,
-  path: string,
-  potentialScope: FieldScope
-): Pick<LoweredField, "nested" | "descents"> {
-  return {
-    nested: [
-      {
-        field: `${path}.potential`,
-        shape: "trigger",
-        repeated: false,
-        clause: "trigger",
-        scope: potentialScope.scopes,
-      },
-    ],
-    descents: [{ field: name, mode: "triggeredModifierPotential", children: [] }],
-  };
-}
-
-/** The direct trigger interior owned by `EconomicResourceOperation<S>`. */
-function economicResourceOperationInterior(
-  name: string,
-  path: string,
-  scope: FieldScope
-): Pick<LoweredField, "nested" | "descents"> {
-  return {
-    nested: [
-      {
-        field: `${path}.trigger`,
-        shape: "trigger",
-        repeated: false,
-        clause: "trigger",
-        scope: scope.scopes,
-      },
-    ],
-    descents: [{ field: name, mode: "economicResourceOperationTrigger", children: [] }],
-  };
 }
 
 /**
@@ -430,58 +311,6 @@ export function lowerTopLevelSplice(
   };
 }
 
-/**
- * The scalar-lowering half of a field's metadata: how to turn the authored
- * value into an id, and — when the rules say every admitted form is a
- * reference — which registries that id must come from. The second half is what
- * lets `buildMod` hold an own-prefixed reference to the registry it names.
- */
-function scalarMetadata(value: TsValue): string[] {
-  return [`conversion: ${JSON.stringify(conversionFor(value))}`, ...refTypesEntries(value)];
-}
-
-function arrayType(type: string): string {
-  return type.includes(" | ") ? `(${type})[]` : `${type}[]`;
-}
-
-/**
- * Whether the key itself may appear more than once in a definition body.
- *
- * A `valueList` is the exception: its member is an array, but the writer emits
- * one key holding a brace list rather than repeated siblings.
- */
-export function repeatsSiblings(field: RuleField, shape: string): boolean {
-  return isRepeated(field.cardinality) && shape !== "valueList";
-}
-
-/** One evidence-backed optionality decision, shared by every generated member. */
-export function memberOptional(
-  group: readonly RuleField[],
-  override: ContentFieldOverride | undefined
-): boolean {
-  return override?.optional === true || group.every((field) => isOptional(field.cardinality));
-}
-
-export function metadata(
-  field: RuleField,
-  name: string,
-  shape: string,
-  extras: readonly string[] = []
-): string {
-  const repeated = repeatsSiblings(field, shape);
-  const members = [
-    `key: ${JSON.stringify(name)}`,
-    `member: ${JSON.stringify(camelCase(name))}`,
-    `shape: ${JSON.stringify(shape)}`,
-    `form: ${JSON.stringify(formOfShape({ shape: contentShape(shape), repeated }))}`,
-    ...extras,
-  ];
-  if (repeated) {
-    members.push("repeated: true");
-  }
-  return `{ ${members.join(", ")} }`;
-}
-
 function lowerValue(
   emitter: Emitter,
   field: RuleField,
@@ -519,34 +348,6 @@ function lowerValue(
   };
 }
 
-/** The descriptor for a shape whose whole value is one scalar the rules type. */
-function admitsScalars(
-  field: RuleField,
-  shape: string,
-  value: TsValue | null
-): Omit<EmittedField, "field"> {
-  return {
-    shape,
-    repeated: repeatsSiblings(field, shape),
-    ...(value?.literals === undefined ? {} : { literals: value.literals }),
-  };
-}
-
-/** The descriptor for a block shape, carrying the scope its closures run in. */
-function admitsBlock(
-  field: RuleField,
-  shape: string,
-  scope?: FieldScope,
-  clause?: "trigger" | "effect"
-): Omit<EmittedField, "field"> {
-  return {
-    shape,
-    repeated: repeatsSiblings(field, shape),
-    ...(scope === undefined ? {} : { scope: scope.scopes }),
-    ...(clause === undefined ? {} : { clause }),
-  };
-}
-
 function lowerValueList(
   emitter: Emitter,
   field: RuleField,
@@ -573,465 +374,207 @@ function lowerValueList(
   };
 }
 
-/**
- * Lowers an anonymous, identity-less block field: the fallback that
- * generalizes shape 3 ("repeated siblings with no id") down to whatever
- * cardinality CWT actually declares, so a singular fixed-shape block like
- * `forbidden_peace_offers` is just the N=0..1 case of the same mechanism.
- *
- * Recurses through the ordinary field pipeline for the struct's own members,
- * so a struct nested inside a struct (`agreement_preset.term_data.discrete_terms`
- * inside `term_data`) falls out for free rather than needing its own case.
- */
-interface StructShape {
-  readonly typeName: string;
-  /** The name authors use, including an enclosing scope parameter where needed. */
-  readonly memberType: string;
-  readonly fieldsConstant: string;
-  /** The interface and field-table declarations, for the caller to prepend. */
-  readonly code: string;
-  readonly unsupported: readonly FieldOmissionRow[];
-  /** Doc rows for the struct's own table and every table nested inside it. */
-  readonly docTables: readonly DocTable[];
-  /** Each member's admits at `${path}.${name}`, plus whatever they nest in turn. */
-  readonly nested: readonly EmittedField[];
-  /** Descent nodes for the members that are themselves blocks worth walking. */
-  readonly children: readonly DescentNode[];
-}
-
-/** The same interior, re-rooted under one of the keys that shares it. */
-function reroot(fields: readonly EmittedField[], from: string, to: string): EmittedField[] {
-  return fields.map((field) => ({ ...field, field: to + field.field.slice(from.length) }));
-}
-
-/**
- * Expands an enum-keyed block declaration into one authoring member per enum
- * value, all sharing a single entry interface.
- *
- * A `Record` keyed by the enum would be the obvious lowering and is the wrong
- * one: every other key in the SDK reaches its member in camelCase (`inherit_icon`
- * is `inheritIcon`), and a record's keys would be the game's spelling —
- * `diplo_action` beside `hidePrereqForDesc` in the same object literal. Naming
- * the members instead invents nothing, since every name comes from the enum, and
- * leaves the block's ordinary named siblings (`hide_prereq_for_desc`) exactly
- * where the rules put them rather than displacing them into a wrapper.
- *
- * One interface, not one per key: the rules declare one shape, and emitting six
- * structurally identical `…Ship`/`…Custom` interfaces would put that duplication
- * in the public API. The corpus reader still records each key's interior at its
- * own path, so the shared interior is {@link reroot}ed once per key.
- *
- * Every member is optional and each carries the declaration's own repetition:
- * `## cardinality = 0..4` bounds how many entries the block may hold in total,
- * not how often one key may be written, so it can neither require a key nor
- * cap one — and vanilla does write `custom` three times inside a single
- * `prereqfor_desc`.
- */
-interface EnumKeyedMembers extends Pick<
-  StructShape,
-  "code" | "unsupported" | "nested" | "children" | "docTables"
-> {
-  /** One interface member per enum value, already indented and documented. */
-  readonly members: readonly string[];
-  readonly fieldMetadata: readonly string[];
-  /** One doc row per enum value, for the owning block's own table. */
-  readonly memberDocs: Readonly<Record<string, MemberDocRow>>;
-}
-
-function enumKeyedMembers(
-  emitter: Emitter,
-  keyed: EnumKeyedEntry,
-  name: string,
-  path: string,
-  ctx: FieldContext
-): EnumKeyedMembers | null {
-  const entryPath = `${path}.entry`;
-  const entry = structShape(
-    emitter,
-    keyed.block,
-    name,
-    entryPath,
-    containerContext(keyed.declaration, ctx)
-  );
-  if (entry === null) {
-    return null;
-  }
-  const members: string[] = [];
-  const fieldMetadata: string[] = [];
-  const nested: EmittedField[] = [];
-  const children: DescentNode[] = [];
-  const memberDocs: Record<string, MemberDocRow> = {};
-  for (const value of keyed.values) {
-    const memberPath = `${path}.${value}`;
-    const field: RuleField = {
-      ...keyed.declaration,
-      key: { kind: "name", name: value },
-      cardinality: { ...keyed.declaration.cardinality, min: 0 },
-    };
-    const repeated = repeatsSiblings(field, "struct");
-    const memberType = repeated ? arrayType(entry.typeName) : entry.typeName;
-    members.push(
-      renderMember({
-        name: camelCase(value),
-        type: memberType,
-        optional: true,
-        docs: keyed.declaration.docs,
-      })
-    );
-    memberDocs[camelCase(value)] = { optional: true, docs: keyed.declaration.docs, memberType };
-    fieldMetadata.push(metadata(field, value, "struct", [`fields: ${entry.fieldsConstant}`]));
-    nested.push(
-      { field: memberPath, shape: "struct", repeated },
-      ...reroot(entry.nested, entryPath, memberPath)
-    );
-    children.push({ field: value, mode: "struct", children: entry.children });
-  }
-  return {
-    members,
-    fieldMetadata,
-    memberDocs,
-    code: entry.code,
-    unsupported: entry.unsupported,
-    nested,
-    children,
-    docTables: entry.docTables,
-  };
-}
-
-/**
- * Builds the interface and runtime field table for one anonymous block's named
- * members, recursing through the ordinary field pipeline so a struct nested
- * inside a struct falls out for free.
- *
- * Declines a block holding a splice (`alias_name`), subtype, or wildcard key:
- * those are invisible to `mergeByName`, so emitting only the ordinary fields
- * would silently drop the rest. The caller reports the path as unsupported. An
- * *enum*-keyed block is the one computed key that does not decline, because its
- * key set is closed and named — see {@link enumKeyedMembers}.
- *
- * Shared by every shape whose value is an anonymous block — `lowerStruct` and
- * `lowerStructMap` differ only in how they find that block and what they wrap
- * the resulting type in.
- */
-function structShape(
-  emitter: Emitter,
-  block: BlockType,
-  name: string,
-  path: string,
-  ctx: FieldContext,
-  inlineTrigger?: FieldScope,
-  typeNameOverride?: string
-): StructShape | null {
-  const keyed = enumKeyedEntryOf(emitter, block);
-  const ordinary =
-    keyed === null ? block.fields : block.fields.filter((inner) => inner !== keyed.declaration);
-  if (ordinary.some((inner) => inner.key.kind !== "name")) {
-    return null;
-  }
-  const grouped = mergeByName(ordinary, pascalCase(name));
-  if (grouped.size === 0 && keyed === null) {
-    return null;
-  }
-  const typeName = typeNameOverride ?? pascalCase(path);
-  const members: string[] = [];
-  const fieldMetadata: string[] = [];
-  const extraCode: string[] = [];
-  const unsupported: FieldOmissionRow[] = [];
-  const nested: EmittedField[] = [];
-  const children: DescentNode[] = [];
-  const memberDocs: Record<string, MemberDocRow> = {};
-  const docTables: DocTable[] = [];
-  for (const [fieldName, group] of grouped) {
-    const fieldPath = `${path}.${fieldName}`;
-    const override = CONTENT_FIELD_OVERRIDES.get(fieldPath);
-    if (override !== undefined) {
-      emitter.overlayAudit.applied("CONTENT_FIELD_OVERRIDES", fieldPath);
-    }
-    const widening = FIELD_WIDENINGS.get(fieldPath);
-    if (widening !== undefined) {
-      emitter.overlayAudit.applied("FIELD_WIDENINGS", fieldPath);
-      useWideningSymbols(emitter, widening);
-    }
-    const lowered = pickOrdinary(
-      emitter,
-      group,
-      fieldName,
-      ctx,
-      override,
-      widening?.extraType,
-      fieldPath
-    );
-    if (lowered === null) {
-      unsupported.push({
-        path: fieldPath,
-        kind: "unsupported",
-        reason: "no declaration the emitter can lower",
-      });
-      continue;
-    }
-    const optional = memberOptional(group, override);
-    const docLines = [
-      ...new Set([...group.flatMap((inner) => inner.docs), ...(lowered.docs ?? [])]),
-    ];
-    members.push(
-      renderMember({
-        name: camelCase(fieldName),
-        type: lowered.memberType,
-        optional,
-        docs: docLines,
-      })
-    );
-    memberDocs[camelCase(fieldName)] = {
-      optional,
-      docs: docLines,
-      memberType: lowered.memberType,
-      ...authoredLiterals(lowered.admits.literals),
-    };
-    docTables.push(...(lowered.docTables ?? []));
-    fieldMetadata.push(lowered.metadata);
-    if (lowered.code !== undefined) {
-      extraCode.push(lowered.code);
-    }
-    if (lowered.unsupported !== undefined) {
-      unsupported.push(...lowered.unsupported);
-    }
-    const member = camelCase(fieldName);
-    nested.push(
-      { field: fieldPath, authoredPath: [member], ...lowered.admits },
-      ...(lowered.nested ?? []).map((field) => ({
-        ...field,
-        authoredPath: [member, ...(field.authoredPath ?? [])],
-      }))
-    );
-    children.push(...(lowered.descents ?? []));
-  }
-  if (keyed !== null) {
-    // Two ways the expansion could collide with the block's own named fields,
-    // both declining rather than emitting a duplicate: a sibling that is also
-    // an enum value would author as one member holding two shapes, and a
-    // sibling named `entry` would take the interface name the shared entry
-    // shape claims. Neither occurs in the vendored rules; the point is that
-    // hitting one reports the block instead of generating a broken file.
-    const taken = new Set([...grouped.keys()].map(camelCase));
-    const collides =
-      grouped.has("entry") || keyed.values.some((value) => taken.has(camelCase(value)));
-    const expanded = collides ? null : enumKeyedMembers(emitter, keyed, name, path, ctx);
-    if (expanded === null) {
-      return null;
-    }
-    members.push(...expanded.members);
-    fieldMetadata.push(...expanded.fieldMetadata);
-    Object.assign(memberDocs, expanded.memberDocs);
-    extraCode.push(expanded.code);
-    unsupported.push(...expanded.unsupported);
-    nested.push(...expanded.nested);
-    children.push(...expanded.children);
-    docTables.push(...expanded.docTables);
-  }
-  if (inlineTrigger !== undefined) {
-    const whenType = withFrom(
-      emitter,
-      `${emitter.use("Trigger")}<${scopeArg(emitter, inlineTrigger)}>`,
-      inlineTrigger
-    );
-    members.push(`  when?: ${whenType};\n`);
-    memberDocs.when = { optional: true, docs: [], memberType: whenType };
-    fieldMetadata.push('{ member: "when", shape: "inlineTrigger" }');
-    nested.push({
-      field: `${path}.when`,
-      shape: "trigger",
-      repeated: false,
-      clause: "trigger",
-      scope: inlineTrigger.scopes,
-    });
-  }
-  if (members.length === 0) {
-    return null;
-  }
-  const fieldsConstant = `${constantCase(typeName)}_FIELDS`;
-  const generic = inlineTrigger === undefined ? undefined : ctx.nestedTypeParameter;
-  return {
-    typeName,
-    memberType: generic === undefined ? typeName : `${typeName}<${generic.argument}>`,
-    fieldsConstant,
-    nested,
-    children,
-    docTables: [{ constant: fieldsConstant, members: memberDocs }, ...docTables],
-    code:
-      extraCode.join("") +
-      `export interface ${typeName}${generic?.declaration ?? ""} {\n` +
-      members.join("") +
-      "}\n\n" +
-      constArray(
-        fieldsConstant,
-        emitter.use("ContentField"),
-        fieldMetadata.map((entry) => `  ${entry},\n`).join("")
-      ),
-    unsupported,
-  };
-}
-
-/**
- * Lowers a map whose keys are engine names rather than ids the mod invents:
- * `section_slots = { mid = { locator = ... } }`.
- *
- * The CWT shape is the wildcard-keyed block `repeatedStruct`'s "container"
- * keying also matches, and the rules carry nothing that tells them apart — so
- * this is requested by the overlay, never inferred. See the `structMap` doc
- * there for why the identity rules must not apply to these keys.
- */
-function lowerStructMap(
+function lowerModifierBlock(
   emitter: Emitter,
   field: RuleField,
   name: string,
-  path: string,
   ctx: FieldContext,
-  typeNameOverride?: string
-): LoweredField | null {
-  const block = wildcardBlockOf(field.type);
-  if (block === null) {
-    return null;
-  }
-  const shape = structShape(
-    emitter,
-    block,
-    name,
-    path,
-    containerContext(field, ctx),
-    undefined,
-    typeNameOverride
-  );
-  if (shape === null) {
-    return null;
-  }
+  override: ContentFieldOverride | undefined
+): LoweredField {
+  const scope = scopeType(emitter, field, ctx, override?.scope);
   return {
-    memberType: `Readonly<Record<string, ${shape.typeName}>>`,
-    metadata: metadata(field, name, "structMap", [`fields: ${shape.fieldsConstant}`]),
-    admits: { shape: "structMap", repeated: repeatsSiblings(field, "structMap") },
-    code: shape.code,
-    unsupported: shape.unsupported,
-    docTables: shape.docTables,
-    nested: shape.nested,
-    // One field table serves every engine key, so the key itself never enters
-    // the path the reader records — see `structMap` in {@link DescentNode}.
-    descents: [{ field: name, mode: "structMap", children: shape.children }],
+    memberType: `${emitter.use("ModifierClosure")}<${scopeArg(emitter, scope)}>`,
+    metadata: metadata(field, name, "modifierBlock"),
+    admits: admitsBlock(field, "modifierBlock", scope),
   };
 }
 
 /**
- * Lowers the scalar-valued form: `min_upgrade_cost = { <resource> = float }`.
- *
- * Keys stay `string` — `TypedRef` is a branded object and cannot type a
- * `Record` key, the same reason an economic block's `amounts` is
- * `Record<string, number>`.
+ * One lowering serves both weight shapes and both routes to them: the overlay
+ * requesting the shape by name, and the field splicing the matching
+ * `modifier_rule` category. The `WithLoc` variant is the same block with a
+ * different closure type.
  */
-function lowerScalarMap(emitter: Emitter, field: RuleField, name: string): LoweredField | null {
+function lowerWeightBlock(
+  emitter: Emitter,
+  field: RuleField,
+  name: string,
+  ctx: FieldContext,
+  override: ContentFieldOverride | undefined,
+  path: string,
+  shape: "weightBlock" | "weightBlockWithLoc"
+): LoweredField {
+  const scope = contravariantScopeType(emitter, field, ctx, override?.scope);
+  const closure = shape === "weightBlock" ? "WeightBlock" : "WeightBlockWithLoc";
+  return {
+    memberType: withFrom(emitter, `${emitter.use(closure)}<${scopeArg(emitter, scope)}>`, scope),
+    metadata: metadata(field, name, shape),
+    admits: admitsBlock(field, shape, scope),
+    ...weightInterior(emitter, name, path, scope),
+  };
+}
+
+function lowerAliasStruct(
+  emitter: Emitter,
+  field: RuleField,
+  name: string,
+  category: string
+): LoweredField {
+  const memberType = emitter.useAliasCategory(category, `${pascalCase(category)}Block`);
+  return {
+    memberType: isRepeated(field.cardinality) ? arrayType(memberType) : memberType,
+    metadata: metadata(field, name, "aliasStruct", [`category: ${JSON.stringify(category)}`]),
+    admits: admitsBlock(field, "aliasStruct"),
+  };
+}
+
+/** A block holding trigger rules, authored as one `Trigger<S>` closure. */
+function lowerTrigger(
+  emitter: Emitter,
+  field: RuleField,
+  name: string,
+  ctx: FieldContext,
+  override: ContentFieldOverride | undefined
+): LoweredField {
+  const scope = contravariantScopeType(emitter, field, ctx, override?.scope);
+  return {
+    memberType: withFrom(emitter, `${emitter.use("Trigger")}<${scopeArg(emitter, scope)}>`, scope),
+    metadata: metadata(field, name, "trigger"),
+    admits: admitsBlock(field, "trigger", scope, "trigger"),
+  };
+}
+
+/** A block holding effect rules, authored as one `EffectBlock` closure. */
+function lowerEffect(
+  emitter: Emitter,
+  field: RuleField,
+  name: string,
+  ctx: FieldContext,
+  override: ContentFieldOverride | undefined
+): LoweredField {
+  const scope = scopeType(emitter, field, ctx, override?.scope);
+  return {
+    memberType: `${emitter.use("EffectBlock")}<${effectBlockArgs(emitter, scope)}>`,
+    metadata: metadata(field, name, "effect", splitRootMetadata(scope)),
+    admits: admitsBlock(field, "effect", scope, "effect"),
+  };
+}
+
+/** One lowering for the economic table, with and without its produce rows. */
+function lowerEconomicResources(
+  emitter: Emitter,
+  field: RuleField,
+  name: string,
+  ctx: FieldContext,
+  override: ContentFieldOverride | undefined,
+  shape: "economicResources" | "economicResourcesNoProduce"
+): LoweredField {
+  const scope = scopeType(emitter, field, ctx, override?.scope);
+  const block =
+    shape === "economicResources" ? "EconomicResourceBlock" : "EconomicResourceBlockNoProduce";
+  const memberType = `${emitter.use(block)}<${scopeArg(emitter, scope)}>`;
+  return {
+    memberType: withFrom(
+      emitter,
+      isRepeated(field.cardinality) ? arrayType(memberType) : memberType,
+      scope
+    ),
+    metadata: metadata(field, name, shape),
+    admits: admitsBlock(field, shape, scope),
+  };
+}
+
+function lowerEconomicResourceOperation(
+  emitter: Emitter,
+  field: RuleField,
+  name: string,
+  ctx: FieldContext,
+  path: string
+): LoweredField {
+  const parts = economicResourceOperationParts(field);
+  const triggerScope = contravariantScopeType(emitter, parts.trigger, containerContext(field, ctx));
+  const memberType =
+    `${emitter.use("EconomicResourceOperation")}` + `<${scopeArg(emitter, triggerScope)}>`;
+  return {
+    memberType: withFrom(
+      emitter,
+      isRepeated(field.cardinality) ? arrayType(memberType) : memberType,
+      triggerScope
+    ),
+    metadata: metadata(field, name, "economicResourceOperation"),
+    admits: admitsBlock(field, "economicResourceOperation", triggerScope),
+    ...economicResourceOperationInterior(name, path, triggerScope),
+  };
+}
+
+/**
+ * A `TriggeredModifier`, taking a second type argument only when its
+ * `potential` runs somewhere other than the modifiers themselves.
+ */
+function lowerTriggeredModifier(
+  emitter: Emitter,
+  field: RuleField,
+  name: string,
+  ctx: FieldContext,
+  override: ContentFieldOverride | undefined,
+  path: string
+): LoweredField {
+  const modifierScope = scopeType(emitter, field, ctx, override?.scope);
+  const potentialScope = scopeType(
+    emitter,
+    triggeredModifierPotential(field),
+    containerContext(field, ctx)
+  );
+  const memberType =
+    modifierScope.type === potentialScope.type
+      ? `${emitter.use("TriggeredModifier")}<${scopeArg(emitter, modifierScope)}>`
+      : `${emitter.use("TriggeredModifier")}<${scopeArg(emitter, modifierScope)}, ` +
+        `${scopeArg(emitter, potentialScope)}>`;
+  return {
+    memberType: withFrom(
+      emitter,
+      isRepeated(field.cardinality) ? arrayType(memberType) : memberType,
+      modifierScope
+    ),
+    metadata: metadata(field, name, "triggeredModifierBlock"),
+    admits: admitsBlock(field, "triggeredModifierBlock", modifierScope),
+    ...triggeredModifierInterior(name, path, potentialScope),
+  };
+}
+
+function lowerWeightedEvents(
+  emitter: Emitter,
+  field: RuleField,
+  name: string
+): LoweredField | null {
   if (field.type.kind !== "block") {
     return null;
   }
-  const values = field.type.fields.filter((inner) => inner.key.kind === "computed");
-  if (values.length === 0 || values.length !== field.type.fields.length) {
-    return null;
-  }
-  const value = emitter.unionFor(values.map((inner) => inner.type));
+  // `int = 0` is the nothing-happens arm, authored by omitting `event`; the
+  // remaining computed-key declarations carry the firable event types.
+  const eventTypes = field.type.fields
+    .filter((inner) => inner.key.kind === "computed" && inner.key.type.kind === "int")
+    .map((inner) => inner.type)
+    .filter((type) => type.kind !== "literal");
+  const value = eventTypes.length === 0 ? null : emitter.unionFor(eventTypes);
   if (value === null) {
     return null;
   }
+  emitter.useValue(value);
   return {
-    memberType: `Readonly<Record<string, ${emitter.useValue(value).type}>>`,
-    metadata: metadata(field, name, "scalarMap"),
-    admits: { shape: "scalarMap", repeated: repeatsSiblings(field, "scalarMap") },
+    memberType: `readonly { weight: number; event?: ${value.type} }[]`,
+    metadata: metadata(field, name, "weightedEvents", scalarMetadata(value)),
+    admits: admitsBlock(field, "weightedEvents"),
   };
 }
 
-function lowerStruct(
-  emitter: Emitter,
-  field: RuleField,
-  name: string,
-  path: string,
-  ctx: FieldContext
-): LoweredField | null {
-  const located = structBlockOf(field.type);
-  if (located === null) {
-    return null;
-  }
-  const { block, wrapped } = located;
-  const shape = structShape(emitter, block, name, path, containerContext(field, ctx));
-  if (shape === null) {
-    return null;
-  }
-  const { typeName, fieldsConstant, code, unsupported } = shape;
-  // `wrapped` nests the repetition inside one key, so the key itself only
-  // repeats when CWT's own cardinality says so — matching `admits.repeated`
-  // below, which the form calculation must agree with.
-  const structRepeated = isRepeated(field.cardinality);
-  const repeated = wrapped || structRepeated;
-  const metadataMembers = [
-    `key: ${JSON.stringify(name)}`,
-    `member: ${JSON.stringify(camelCase(name))}`,
-    `shape: "struct"`,
-    `form: ${JSON.stringify(formOfShape({ shape: "struct", repeated: structRepeated, wrapped }))}`,
-    `fields: ${fieldsConstant}`,
-    ...(wrapped ? ["wrapped: true"] : []),
-    ...(repeated ? ["repeated: true"] : []),
-  ];
-  return {
-    memberType: repeated ? arrayType(typeName) : typeName,
-    metadata: `{ ${metadataMembers.join(", ")} }`,
-    admits: { shape: "struct", repeated: structRepeated, ...(wrapped ? { wrapped } : {}) },
-    wrapped,
-    code,
-    unsupported,
-    docTables: shape.docTables,
-    nested: shape.nested,
-    // `wrapped` is exactly the reader's distinction too: the container holds
-    // bare anonymous blocks rather than being one.
-    descents: [
-      { field: name, mode: wrapped ? "wrappedStruct" : "struct", children: shape.children },
-    ],
-  };
-}
-
-function lowerTriggerStruct(
-  emitter: Emitter,
-  field: RuleField,
-  name: string,
-  path: string,
-  ctx: FieldContext
-): LoweredField | null {
-  const located = triggerStructOf(field.type);
-  if (located === null) {
-    return null;
-  }
-  const container = containerContext(field, ctx);
-  const triggerScope = contravariantScopeType(emitter, located.trigger, container);
-  const shape = structShape(emitter, located.block, name, path, container, triggerScope);
-  if (shape === null) {
-    return null;
-  }
-  const repeated = isRepeated(field.cardinality);
-  return {
-    memberType: repeated ? arrayType(shape.memberType) : shape.memberType,
-    metadata:
-      `{ key: ${JSON.stringify(name)}, member: ${JSON.stringify(camelCase(name))}, ` +
-      `shape: "triggerStruct", form: ${JSON.stringify(formOfShape({ shape: "triggerStruct", repeated }))}, ` +
-      `fields: ${shape.fieldsConstant}${repeated ? ", repeated: true" : ""} }`,
-    admits: { shape: "triggerStruct", repeated },
-    code: shape.code,
-    unsupported: shape.unsupported,
-    docTables: shape.docTables,
-    nested: shape.nested,
-    descents: [
-      {
-        field: name,
-        mode: "triggerStruct",
-        ordinaryKeys: located.ordinaryKeys,
-        children: shape.children,
-      },
-    ],
-  };
-}
-
+/**
+ * The shape ladder for one declaration: the overlay-requested or derived shape
+ * first, then the shapes recognized from the field's own splice category, then
+ * the structural fallbacks. Arm order is load-bearing — an explicit request
+ * skips the recognizers, and a bare block must try the wrapped-struct reading
+ * before the scalar-list one.
+ */
 function lowerOrdinary(
   emitter: Emitter,
   field: RuleField,
@@ -1043,47 +586,13 @@ function lowerOrdinary(
 ): LoweredField | null {
   const requested = override?.shape ?? derivedClauseShape(field);
   if (requested === "modifierBlock") {
-    const scope = scopeType(emitter, field, ctx, override?.scope);
-    return {
-      memberType: `${emitter.use("ModifierClosure")}<${scopeArg(emitter, scope)}>`,
-      metadata: metadata(field, name, "modifierBlock"),
-      admits: admitsBlock(field, "modifierBlock", scope),
-    };
+    return lowerModifierBlock(emitter, field, name, ctx, override);
   }
-  if (requested === "weightBlock") {
-    const scope = contravariantScopeType(emitter, field, ctx, override?.scope);
-    return {
-      memberType: withFrom(
-        emitter,
-        `${emitter.use("WeightBlock")}<${scopeArg(emitter, scope)}>`,
-        scope
-      ),
-      metadata: metadata(field, name, "weightBlock"),
-      admits: admitsBlock(field, "weightBlock", scope),
-      ...weightInterior(emitter, name, path, scope),
-    };
-  }
-  if (requested === "weightBlockWithLoc") {
-    const scope = contravariantScopeType(emitter, field, ctx, override?.scope);
-    return {
-      memberType: withFrom(
-        emitter,
-        `${emitter.use("WeightBlockWithLoc")}<${scopeArg(emitter, scope)}>`,
-        scope
-      ),
-      metadata: metadata(field, name, "weightBlockWithLoc"),
-      admits: admitsBlock(field, "weightBlockWithLoc", scope),
-      ...weightInterior(emitter, name, path, scope),
-    };
+  if (requested === "weightBlock" || requested === "weightBlockWithLoc") {
+    return lowerWeightBlock(emitter, field, name, ctx, override, path, requested);
   }
   if (requested === "aliasStruct") {
-    const category = override!.category!;
-    const memberType = emitter.useAliasCategory(category, `${pascalCase(category)}Block`);
-    return {
-      memberType: isRepeated(field.cardinality) ? arrayType(memberType) : memberType,
-      metadata: metadata(field, name, "aliasStruct", [`category: ${JSON.stringify(category)}`]),
-      admits: admitsBlock(field, "aliasStruct"),
-    };
+    return lowerAliasStruct(emitter, field, name, override!.category!);
   }
   if (requested === "valueList") {
     return lowerValueList(emitter, field, name, widening, override?.quoted ?? false);
@@ -1096,50 +605,16 @@ function lowerOrdinary(
   }
   const category = spliceCategory(field.type);
   if (requested === "trigger" || (requested === undefined && category === "trigger")) {
-    const scope = contravariantScopeType(emitter, field, ctx, override?.scope);
-    return {
-      memberType: withFrom(
-        emitter,
-        `${emitter.use("Trigger")}<${scopeArg(emitter, scope)}>`,
-        scope
-      ),
-      metadata: metadata(field, name, "trigger"),
-      admits: admitsBlock(field, "trigger", scope, "trigger"),
-    };
+    return lowerTrigger(emitter, field, name, ctx, override);
   }
   if (requested === "effect" || (requested === undefined && category === "effect")) {
-    const scope = scopeType(emitter, field, ctx, override?.scope);
-    return {
-      memberType: `${emitter.use("EffectBlock")}<${effectBlockArgs(emitter, scope)}>`,
-      metadata: metadata(field, name, "effect", splitRootMetadata(scope)),
-      admits: admitsBlock(field, "effect", scope, "effect"),
-    };
+    return lowerEffect(emitter, field, name, ctx, override);
   }
   if (requested === undefined && category === "modifier_rule") {
-    const scope = contravariantScopeType(emitter, field, ctx, override?.scope);
-    return {
-      memberType: withFrom(
-        emitter,
-        `${emitter.use("WeightBlock")}<${scopeArg(emitter, scope)}>`,
-        scope
-      ),
-      metadata: metadata(field, name, "weightBlock"),
-      admits: admitsBlock(field, "weightBlock", scope),
-      ...weightInterior(emitter, name, path, scope),
-    };
+    return lowerWeightBlock(emitter, field, name, ctx, override, path, "weightBlock");
   }
   if (requested === undefined && category === "modifier_rule_with_loc") {
-    const scope = contravariantScopeType(emitter, field, ctx, override?.scope);
-    return {
-      memberType: withFrom(
-        emitter,
-        `${emitter.use("WeightBlockWithLoc")}<${scopeArg(emitter, scope)}>`,
-        scope
-      ),
-      metadata: metadata(field, name, "weightBlockWithLoc"),
-      admits: admitsBlock(field, "weightBlockWithLoc", scope),
-      ...weightInterior(emitter, name, path, scope),
-    };
+    return lowerWeightBlock(emitter, field, name, ctx, override, path, "weightBlockWithLoc");
   }
   if (requested === undefined && category !== null) {
     const members = aliasScalarFields(emitter, category);
@@ -1153,75 +628,14 @@ function lowerOrdinary(
       );
     }
   }
-  if (requested === "economicResources") {
-    const scope = scopeType(emitter, field, ctx, override?.scope);
-    const memberType = `${emitter.use("EconomicResourceBlock")}<${scopeArg(emitter, scope)}>`;
-    return {
-      memberType: withFrom(
-        emitter,
-        isRepeated(field.cardinality) ? arrayType(memberType) : memberType,
-        scope
-      ),
-      metadata: metadata(field, name, "economicResources"),
-      admits: admitsBlock(field, "economicResources", scope),
-    };
+  if (requested === "economicResources" || requested === "economicResourcesNoProduce") {
+    return lowerEconomicResources(emitter, field, name, ctx, override, requested);
   }
   if (requested === "economicResourceOperation") {
-    const parts = economicResourceOperationParts(field);
-    const triggerScope = contravariantScopeType(
-      emitter,
-      parts.trigger,
-      containerContext(field, ctx)
-    );
-    const memberType =
-      `${emitter.use("EconomicResourceOperation")}` + `<${scopeArg(emitter, triggerScope)}>`;
-    return {
-      memberType: withFrom(
-        emitter,
-        isRepeated(field.cardinality) ? arrayType(memberType) : memberType,
-        triggerScope
-      ),
-      metadata: metadata(field, name, "economicResourceOperation"),
-      admits: admitsBlock(field, "economicResourceOperation", triggerScope),
-      ...economicResourceOperationInterior(name, path, triggerScope),
-    };
-  }
-  if (requested === "economicResourcesNoProduce") {
-    const scope = scopeType(emitter, field, ctx, override?.scope);
-    const memberType =
-      `${emitter.use("EconomicResourceBlockNoProduce")}` + `<${scopeArg(emitter, scope)}>`;
-    return {
-      memberType: withFrom(
-        emitter,
-        isRepeated(field.cardinality) ? arrayType(memberType) : memberType,
-        scope
-      ),
-      metadata: metadata(field, name, "economicResourcesNoProduce"),
-      admits: admitsBlock(field, "economicResourcesNoProduce", scope),
-    };
+    return lowerEconomicResourceOperation(emitter, field, name, ctx, path);
   }
   if (requested === "triggeredModifierBlock") {
-    const modifierScope = scopeType(emitter, field, ctx, override?.scope);
-    const potentialScope = scopeType(
-      emitter,
-      triggeredModifierPotential(field),
-      containerContext(field, ctx)
-    );
-    const memberType =
-      modifierScope.type === potentialScope.type
-        ? `${emitter.use("TriggeredModifier")}<${scopeArg(emitter, modifierScope)}>`
-        : `${emitter.use("TriggeredModifier")}<${scopeArg(emitter, modifierScope)}, ` +
-          `${scopeArg(emitter, potentialScope)}>`;
-    return {
-      memberType: withFrom(
-        emitter,
-        isRepeated(field.cardinality) ? arrayType(memberType) : memberType,
-        modifierScope
-      ),
-      metadata: metadata(field, name, "triggeredModifierBlock"),
-      admits: admitsBlock(field, "triggeredModifierBlock", modifierScope),
-      ...triggeredModifierInterior(name, path, potentialScope),
-    };
+    return lowerTriggeredModifier(emitter, field, name, ctx, override, path);
   }
   if (requested === "value") {
     return lowerValue(emitter, field, name, widening);
@@ -1236,25 +650,7 @@ function lowerOrdinary(
     return lowerScalarMap(emitter, field, name);
   }
   if (requested === "weightedEvents") {
-    if (field.type.kind !== "block") {
-      return null;
-    }
-    // `int = 0` is the nothing-happens arm, authored by omitting `event`; the
-    // remaining computed-key declarations carry the firable event types.
-    const eventTypes = field.type.fields
-      .filter((inner) => inner.key.kind === "computed" && inner.key.type.kind === "int")
-      .map((inner) => inner.type)
-      .filter((type) => type.kind !== "literal");
-    const value = eventTypes.length === 0 ? null : emitter.unionFor(eventTypes);
-    if (value === null) {
-      return null;
-    }
-    emitter.useValue(value);
-    return {
-      memberType: `readonly { weight: number; event?: ${value.type} }[]`,
-      metadata: metadata(field, name, "weightedEvents", scalarMetadata(value)),
-      admits: admitsBlock(field, "weightedEvents"),
-    };
+    return lowerWeightedEvents(emitter, field, name);
   }
   const bare = bareValuesOf(field.type);
   if (bare !== null) {
@@ -1386,140 +782,6 @@ function lowerScalarUnion(
     memberType: repeated[0]! ? arrayType(base) : base,
     metadata: metadata(group[0]!, name, "value", scalarMetadata(value)),
     admits: admitsScalars(group[0]!, "value", widening === undefined ? value : null),
-  };
-}
-
-/**
- * Applies an overlay arity assertion by correcting the declared cardinality.
- *
- * Everything downstream — the member type, the field metadata's `repeated`, the
- * shape descriptor — already reads the cardinality, so correcting it once here
- * is what keeps the three from disagreeing about whether the key repeats. The
- * minimum is left alone in both directions: how often a key may be written is a
- * different claim from whether it must be.
- */
-function assertedArity(
-  group: readonly RuleField[],
-  override: ContentFieldOverride | undefined
-): readonly RuleField[] {
-  const max = override?.arity === "single" ? 1 : override?.arity === "repeated" ? null : undefined;
-  if (max === undefined) {
-    return group;
-  }
-  return group.map((field) => ({ ...field, cardinality: { ...field.cardinality, max } }));
-}
-
-/**
- * Applies `uncheckedString` by rewriting the declaration itself: a `<type>`
- * reference becomes a plain `scalar`, which is already how CWT spells "any
- * string" and which every emitter below already knows how to lower.
- *
- * Rewriting the rule rather than patching the lowered result is what keeps the
- * member type, the metadata's `conversion`, the absent `refTypes` and the
- * corpus gate's view of the field from having to be corrected one by one. The
- * doc line rides on the same field, so it reaches the generated comment through
- * the ordinary path.
- *
- * The guard is the point of the lever being narrow: every declaration in the
- * group must be a bare `<type>` reference and the row must request no shape.
- * Anything else and this would be erasing a check nobody asked it to.
- */
-function assertedUncheckedString(
-  emitter: Emitter,
-  group: readonly RuleField[],
-  override: ContentFieldOverride | undefined,
-  path: string
-): { readonly group: readonly RuleField[]; readonly docs: readonly string[] } {
-  if (override?.uncheckedString !== true) {
-    return { group, docs: [] };
-  }
-  const targets = group.map((field) => field.type);
-  if (override.shape !== undefined || targets.some((type) => type.kind !== "typeRef")) {
-    const spelled = targets.map((type) => type.kind).join(", ");
-    throw new Error(
-      `The overlay marks ${path} uncheckedString, but its lowering is not a plain type ` +
-        `reference (shape: ${override.shape ?? "none"}, declarations: ${spelled}). The lever ` +
-        "only weakens a reference check; it must not erase any other checking."
-    );
-  }
-  const docs = targets.flatMap((type) => {
-    const name = (type as Extract<RuleType, { kind: "typeRef" }>).name;
-    const target = emitter.rules.contentTypes.get(name);
-    const where =
-      target?.path == null
-        ? "outside the SDK's typed registries"
-        : `in \`${target.pathExtension ?? ".txt"}\` files under ` +
-          `\`${target.path.replace(/^game\//, "")}\``;
-    return [
-      "Not checked: any string is accepted here.",
-      `The \`<${name}>\` ids this names live ${where},`,
-      "which the SDK carries as opaque Assets rather than as a typed registry,",
-      "so there is no id set to check a spelling against.",
-    ];
-  });
-  return { group: group.map((field) => ({ ...field, type: { kind: "scalar" } })), docs };
-}
-
-/**
- * Applies an `ASSET_PATH_FIELDS` row: the member accepts a captured Asset as
- * well as a string, and the metadata says so, so the writer unwraps the Item to
- * its declared logical path and the fold checks whichever form arrived.
- *
- * Applied to the lowered result rather than by rewriting the rule, because
- * unlike `uncheckedString` there is no CWT spelling that already means this —
- * the rules type the field `filepath` and are right to; what the row adds is
- * the SDK's own knowledge that this particular path is one a mod can ship.
- *
- * The guards are what keep the row honest. A `filepath` declaration is required
- * because the row asserts the value is a path; a `value` shape is required
- * because an Item is one scalar; and a widening is refused because the union
- * arms would then be unclear about which of them an Item satisfies.
- *
- * Presence — every `ASSET_PATH_FIELDS` row reaching a real consumption site —
- * is tracked through `emitter.overlayAudit`, the same SDK-255 mechanism every
- * other path-keyed overlay table uses (`index.ts`'s `assertAllApplied("ASSET_PATH_FIELDS",
- * ...)` closes the loop); this function's own throw above is the *shape* check
- * beyond presence, that a row marked here actually lowers as one mod-root path
- * scalar, which `OverlayAudit` cannot express and stays here.
- */
-function assertedAssetPath(
-  emitter: Emitter,
-  lowered: LoweredField | null,
-  group: readonly RuleField[],
-  name: string,
-  widening: string | undefined,
-  path: string
-): LoweredField | null {
-  if (!ASSET_PATH_FIELDS.has(path)) {
-    return lowered;
-  }
-  emitter.overlayAudit.applied("ASSET_PATH_FIELDS", path);
-  const spelled = group.map((field) => field.type.kind).join(", ");
-  if (
-    lowered === null ||
-    lowered.admits.shape !== "value" ||
-    widening !== undefined ||
-    !group.every((field) => field.type.kind === "filepath")
-  ) {
-    throw new Error(
-      `The overlay marks ${path} an asset path, but it does not lower as one (shape: ` +
-        `${lowered?.admits.shape ?? "none"}, declarations: ${spelled}, widening: ` +
-        `${widening ?? "none"}). The row asserts the value is one mod-root path scalar.`
-    );
-  }
-  const base = `${emitter.use("AssetFileItem")} | string`;
-  const field = group[0]!;
-  return {
-    ...lowered,
-    memberType: repeatsSiblings(field, "value") ? arrayType(base) : base,
-    metadata: metadata(field, name, "value", ['conversion: "assetPath"']),
-    docs: [
-      ...(lowered.docs ?? []),
-      "A path from the mod root. An Asset file placed in a Feature lowers to its declared",
-      "logical path; a plain string is written as it stands and checked at build time against",
-      "the paths this mod captures and the vanilla file inventory, as a warning rather than an",
-      "error — a DLC or third-party path is legitimate here.",
-    ],
   };
 }
 

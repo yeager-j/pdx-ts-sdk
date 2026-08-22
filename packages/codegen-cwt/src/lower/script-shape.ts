@@ -452,17 +452,13 @@ export function bareBlockValue(
 }
 
 /**
- * Merges the repeated keys an overloaded rule produces into one typed field
- * each. `inheritedScope` is the raw scope the declaration pushes, if any —
- * clause fields without their own `## push_scope` run there.
+ * One name's declarations grouped per key, with enum-typed key filters already
+ * expanded. Declines a block whose keys the field model cannot name.
  */
-export function mergeFields(
+function groupedByName(
   emitter: Emitter,
-  fields: readonly RuleField[],
-  inheritedScope: string | null,
-  allowedClauses: ReadonlySet<ClauseCategory>,
-  preserveRepeated = false
-): ArgField[] | SkipReason {
+  fields: readonly RuleField[]
+): Map<string, RuleField[]> | SkipReason {
   const grouped = new Map<string, RuleField[]>();
   for (const field of expandEnumKeys(emitter, fields)) {
     if (field.key.kind !== "name") {
@@ -475,186 +471,217 @@ export function mergeFields(
       existing.push(field);
     }
   }
+  return grouped;
+}
 
+/** Merges a group whose every declaration is a clause hole into one typed hole. */
+function mergedClauseValue(
+  emitter: Emitter,
+  name: string,
+  group: readonly RuleField[],
+  inheritedScope: string | null,
+  allowedClauses: ReadonlySet<ClauseCategory>
+): ArgValue | SkipReason {
+  const category = clauseOf(group[0]!.type)!;
+  if (group.some((field) => clauseOf(field.type) !== category)) {
+    return skipReason("mixed-clause-categories", `field "${name}" mixes clause categories`);
+  }
+  if (!allowedClauses.has(category)) {
+    return skipReason(
+      "unsupported-clause",
+      `field "${name}" splices ${category}, which this emitter cannot type`
+    );
+  }
+  const scope = clauseScope(emitter, name, group, inheritedScope);
+  if (typeof scope === "object" && scope !== null) {
+    return scope;
+  }
+  return { kind: "clause", category, scope, splice: false };
+}
+
+/**
+ * Merges a group holding a structured arm: one block of named fields, lowered
+ * by recursion, possibly overloaded with scalar declarations — or one block of
+ * bare values, handed to {@link bareBlockValue}.
+ */
+function mergedStructuredValue(
+  emitter: Emitter,
+  name: string,
+  group: readonly RuleField[],
+  inheritedScope: string | null,
+  allowedClauses: ReadonlySet<ClauseCategory>
+): ArgValue | SkipReason {
+  const structured = group.filter(
+    (
+      field
+    ): field is RuleField & { readonly type: Extract<RuleType, { readonly kind: "block" }> } =>
+      field.type.kind === "block"
+  );
+  const scalarDeclarations = group.filter((field) => field.type.kind !== "block");
+  if (structured.length !== 1) {
+    return skipReason(
+      "multiple-structured-scalar-arms",
+      `field "${name}" has more than one structured/scalar arm`
+    );
+  }
+  if (group.some((field) => isRepeated(field.cardinality))) {
+    return skipReason(
+      "repeated-structured-scalar-arms",
+      `field "${name}" has repeated structured/scalar arms`
+    );
+  }
+  const block = structured[0]!.type;
+  if (block.bare.length > 0) {
+    if (scalarDeclarations.length > 0) {
+      return skipReason(
+        "multiple-structured-scalar-arms",
+        `field "${name}" mixes a bare-value block with a scalar arm`
+      );
+    }
+    const value = bareBlockValue(
+      emitter,
+      block.bare,
+      structured[0]!.scope?.this ?? inheritedScope,
+      allowedClauses
+    );
+    if ("detail" in value) {
+      return { ...value, detail: `field "${name}" structured arm ${value.detail}` };
+    }
+    return value;
+  }
+  const preserveNested = group.some(isAliasExpandedField);
+  if (hasRepeatedNestedField(block.fields) && !preserveNested) {
+    return skipReason(
+      "repeated-nested-field",
+      `field "${name}" structured arm has repeated nested fields`
+    );
+  }
+  const fields = mergeFields(
+    emitter,
+    block.fields,
+    structured[0]!.scope?.this ?? inheritedScope,
+    allowedClauses,
+    preserveNested
+  );
+  if (!Array.isArray(fields)) {
+    return {
+      ...fields,
+      detail: `field "${name}" structured arm ${fields.detail}`,
+    };
+  }
+  if (fields.length === 0) {
+    return skipReason(
+      "empty-structured-arm",
+      `field "${name}" structured arm has no typeable fields`
+    );
+  }
+  if (scalarDeclarations.length === 0) {
+    return { kind: "fields", fields };
+  }
+  const scalar = emitter.unionFor(scalarDeclarations.map((field) => field.type));
+  if (scalar === null) {
+    return skipReason(
+      "unsupported-scalar-arm",
+      `field "${name}" has a scalar arm the emitter cannot express`
+    );
+  }
+  return { kind: "scalarOrFields", scalar, fields };
+}
+
+/** Merges a comparison group: the operand type plus any literal overloads. */
+function mergedComparisonValue(
+  emitter: Emitter,
+  name: string,
+  group: readonly RuleField[]
+): ArgValue | SkipReason {
+  const value = comparisonValue(
+    emitter,
+    group.filter((field) => field.comparison).map((field) => field.type)
+  );
+  if ("category" in value) {
+    return {
+      ...value,
+      detail: `comparison field "${name}" ${value.detail}`,
+    };
+  }
+  const rest = group.filter((field) => !field.comparison).map((field) => field.type);
+  const literals = rest.flatMap((type) => (type.kind === "literal" ? [type.text] : []));
+  if (literals.length !== rest.length) {
+    return skipReason(
+      "comparison-overload",
+      `comparison field "${name}" overloaded with a non-literal declaration`
+    );
+  }
+  return { kind: "comparison", value, literals };
+}
+
+/**
+ * Classifies one name's declarations into their argument kind — clause hole,
+ * structured arm, comparison, plain scalar — and merges them into the one
+ * typed value the field carries.
+ */
+function mergedArgValue(
+  emitter: Emitter,
+  name: string,
+  group: readonly RuleField[],
+  inheritedScope: string | null,
+  allowedClauses: ReadonlySet<ClauseCategory>
+): ArgValue | SkipReason {
+  const clauses = group.filter((field) => clauseOf(field.type) !== null);
+  if (clauses.length === group.length) {
+    return mergedClauseValue(emitter, name, group, inheritedScope, allowedClauses);
+  }
+  if (clauses.length > 0) {
+    return skipReason(
+      "clause-scalar-overload",
+      `field "${name}" overloaded between a clause and a scalar`
+    );
+  }
+  if (group.some((field) => field.type.kind === "block")) {
+    return mergedStructuredValue(emitter, name, group, inheritedScope, allowedClauses);
+  }
+  if (group.some((field) => field.comparison)) {
+    return mergedComparisonValue(emitter, name, group);
+  }
+  const value = emitter.unionFor(group.map((field) => field.type));
+  if (value === null) {
+    return skipReason(
+      "unsupported-field-value",
+      `field "${name}" has a type the emitter cannot express`
+    );
+  }
+  return { kind: "scalar", value };
+}
+
+/**
+ * Merges the repeated keys an overloaded rule produces into one typed field
+ * each. `inheritedScope` is the raw scope the declaration pushes, if any —
+ * clause fields without their own `## push_scope` run there.
+ */
+export function mergeFields(
+  emitter: Emitter,
+  fields: readonly RuleField[],
+  inheritedScope: string | null,
+  allowedClauses: ReadonlySet<ClauseCategory>,
+  preserveRepeated = false
+): ArgField[] | SkipReason {
+  const grouped = groupedByName(emitter, fields);
+  if (!(grouped instanceof Map)) {
+    return grouped;
+  }
   const merged: ArgField[] = [];
   for (const [name, group] of grouped) {
-    const optional = group.some((field) => isOptional(field.cardinality));
+    const value = mergedArgValue(emitter, name, group, inheritedScope, allowedClauses);
+    if ("detail" in value) {
+      return value;
+    }
     const repeated = preserveRepeated && group.some((field) => isRepeated(field.cardinality));
-    const docs = group.flatMap((field) => field.docs);
-    const clauses = group.filter((field) => clauseOf(field.type) !== null);
-
-    if (clauses.length === group.length) {
-      const category = clauseOf(group[0]!.type)!;
-      if (group.some((field) => clauseOf(field.type) !== category)) {
-        return skipReason("mixed-clause-categories", `field "${name}" mixes clause categories`);
-      }
-      if (!allowedClauses.has(category)) {
-        return skipReason(
-          "unsupported-clause",
-          `field "${name}" splices ${category}, which this emitter cannot type`
-        );
-      }
-      const scope = clauseScope(emitter, name, group, inheritedScope);
-      if (typeof scope === "object" && scope !== null) {
-        return scope;
-      }
-      merged.push({
-        name,
-        value: { kind: "clause", category, scope, splice: false },
-        optional,
-        ...(repeated ? { repeated: true } : {}),
-        docs,
-      });
-      continue;
-    }
-    if (clauses.length > 0) {
-      return skipReason(
-        "clause-scalar-overload",
-        `field "${name}" overloaded between a clause and a scalar`
-      );
-    }
-
-    const structured = group.filter(
-      (
-        field
-      ): field is RuleField & { readonly type: Extract<RuleType, { readonly kind: "block" }> } =>
-        field.type.kind === "block"
-    );
-    if (structured.length > 0) {
-      const scalarDeclarations = group.filter((field) => field.type.kind !== "block");
-      if (structured.length !== 1) {
-        return skipReason(
-          "multiple-structured-scalar-arms",
-          `field "${name}" has more than one structured/scalar arm`
-        );
-      }
-      if (group.some((field) => isRepeated(field.cardinality))) {
-        return skipReason(
-          "repeated-structured-scalar-arms",
-          `field "${name}" has repeated structured/scalar arms`
-        );
-      }
-      const block = structured[0]!.type;
-      if (block.bare.length > 0) {
-        if (scalarDeclarations.length > 0) {
-          return skipReason(
-            "multiple-structured-scalar-arms",
-            `field "${name}" mixes a bare-value block with a scalar arm`
-          );
-        }
-        const value = bareBlockValue(
-          emitter,
-          block.bare,
-          structured[0]!.scope?.this ?? inheritedScope,
-          allowedClauses
-        );
-        if ("detail" in value) {
-          return { ...value, detail: `field "${name}" structured arm ${value.detail}` };
-        }
-        merged.push({
-          name,
-          value,
-          optional,
-          ...(repeated ? { repeated: true } : {}),
-          docs,
-        });
-        continue;
-      }
-      const preserveNested = group.some(isAliasExpandedField);
-      if (hasRepeatedNestedField(block.fields) && !preserveNested) {
-        return skipReason(
-          "repeated-nested-field",
-          `field "${name}" structured arm has repeated nested fields`
-        );
-      }
-      const fields = mergeFields(
-        emitter,
-        block.fields,
-        structured[0]!.scope?.this ?? inheritedScope,
-        allowedClauses,
-        preserveNested
-      );
-      if (!Array.isArray(fields)) {
-        return {
-          ...fields,
-          detail: `field "${name}" structured arm ${fields.detail}`,
-        };
-      }
-      if (fields.length === 0) {
-        return skipReason(
-          "empty-structured-arm",
-          `field "${name}" structured arm has no typeable fields`
-        );
-      }
-      if (scalarDeclarations.length === 0) {
-        merged.push({
-          name,
-          value: { kind: "fields", fields },
-          optional,
-          ...(repeated ? { repeated: true } : {}),
-          docs,
-        });
-        continue;
-      }
-      const scalar = emitter.unionFor(scalarDeclarations.map((field) => field.type));
-      if (scalar === null) {
-        return skipReason(
-          "unsupported-scalar-arm",
-          `field "${name}" has a scalar arm the emitter cannot express`
-        );
-      }
-      merged.push({
-        name,
-        value: { kind: "scalarOrFields", scalar, fields },
-        optional,
-        ...(repeated ? { repeated: true } : {}),
-        docs,
-      });
-      continue;
-    }
-
-    if (group.some((field) => field.comparison)) {
-      const value = comparisonValue(
-        emitter,
-        group.filter((field) => field.comparison).map((field) => field.type)
-      );
-      if ("category" in value) {
-        return {
-          ...value,
-          detail: `comparison field "${name}" ${value.detail}`,
-        };
-      }
-      const rest = group.filter((field) => !field.comparison).map((field) => field.type);
-      const literals = rest.flatMap((type) => (type.kind === "literal" ? [type.text] : []));
-      if (literals.length !== rest.length) {
-        return skipReason(
-          "comparison-overload",
-          `comparison field "${name}" overloaded with a non-literal declaration`
-        );
-      }
-      merged.push({
-        name,
-        value: { kind: "comparison", value, literals },
-        optional,
-        ...(repeated ? { repeated: true } : {}),
-        docs,
-      });
-      continue;
-    }
-
-    const value = emitter.unionFor(group.map((field) => field.type));
-    if (value === null) {
-      return skipReason(
-        "unsupported-field-value",
-        `field "${name}" has a type the emitter cannot express`
-      );
-    }
     merged.push({
       name,
-      value: { kind: "scalar", value },
-      optional,
+      value,
+      optional: group.some((field) => isOptional(field.cardinality)),
       ...(repeated ? { repeated: true } : {}),
-      docs,
+      docs: group.flatMap((field) => field.docs),
     });
   }
   return merged;
