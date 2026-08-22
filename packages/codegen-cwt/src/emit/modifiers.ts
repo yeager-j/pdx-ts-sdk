@@ -13,6 +13,7 @@ import type { RuleSet } from "../cwt/rules.ts";
 import type { ModifierDocs } from "../logs/modifier-docs.ts";
 import { compareStrings, docComment, pascalCase, propertyName } from "../naming.ts";
 import {
+  CONTENT_WITNESSES,
   MODIFIER_FAMILY_OVERLAYS,
   SCRIPTED_MODIFIER_CATEGORY_MAP,
   UNIVERSAL_SCOPES,
@@ -463,10 +464,26 @@ export function emitModifiers(join: ModifierJoin): ModifierEmission {
     "export type IsUnion<T, Whole = T> = T extends unknown ? ([Whole] extends [T] ? false : true) : never;\n" +
     'export type ScriptedModifierSelector<S extends ScopeName> = <const T extends import("../generated/content-definers.ts").ScriptedModifierItem>(' +
     'item: T & (IsUnion<T["def"]["category"]> extends true ? never : ModifierCategoryAllowed<S, T["def"]["category"]> extends true ? {} : never)) => { readonly set: ModifierSetter };\n\n';
+  // The seven members EconomicWitnessOf extracts come from the same
+  // CONTENT_WITNESSES "economic_category" row contentDefiners (index.ts)
+  // reads for the Omit<...> union — one list read twice instead of the same
+  // seven names hand-spelled in both places (SDK-260).
+  const economicWitness = CONTENT_WITNESSES.get("economic_category");
+  if (economicWitness === undefined || economicWitness.mode !== "intersects") {
+    throw new Error(
+      'emitModifiers requires an "intersects" CONTENT_WITNESSES row for "economic_category"'
+    );
+  }
+  const economicWitnessMembers = economicWitness.omit
+    .map(
+      (entry) =>
+        `readonly ${entry.member}: D extends { readonly ${entry.member}: infer ${entry.inferAs} } ? ${entry.inferAs} : undefined`
+    )
+    .join("; ");
   code +=
     'export type EconomicCategorySelector<S extends ScopeName> = <const T extends import("../generated/content-definers.ts").EconomicCategoryItem>(' +
     "item: T & (IsUnion<EconomicWitnessOf<T>> extends true ? never : EconomicCategoryAllowed<S, EconomicWitnessOf<T>> extends true ? {} : never)) => EconomicCategoryRecorder<EconomicWitnessOf<T>>;\n" +
-    'export type EconomicWitnessOf<T extends import("../generated/content-definers.ts").EconomicCategoryItem> = T extends { readonly def: infer D } ? { readonly modifierCategory: D extends { readonly modifierCategory: infer M } ? M : undefined; readonly generateAddModifiers: D extends { readonly generateAddModifiers: infer A } ? A : undefined; readonly generateMultModifiers: D extends { readonly generateMultModifiers: infer U } ? U : undefined; readonly triggeredCostModifier: D extends { readonly triggeredCostModifier: infer C } ? C : undefined; readonly triggeredProducesModifier: D extends { readonly triggeredProducesModifier: infer P } ? P : undefined; readonly triggeredUpkeepModifier: D extends { readonly triggeredUpkeepModifier: infer U } ? U : undefined; readonly triggeredLogisticsModifier: D extends { readonly triggeredLogisticsModifier: infer L } ? L : undefined } : never;\n' +
+    `export type EconomicWitnessOf<T extends import("../generated/content-definers.ts").EconomicCategoryItem> = T extends { readonly def: infer D } ? { ${economicWitnessMembers} } : never;\n` +
     'export type EconomicCategoryAllowed<S extends ScopeName, W extends import("../content/types.ts").EconomicCategoryWitness> = ModifierCategoryAllowed<S, W["modifierCategory"] extends string ? W["modifierCategory"] : "economic_unit">;\n' +
     'export type EconomicTriggeredField = "cost" | "produces" | "upkeep" | "logistics";\n' +
     'export type EconomicTriggeredWitnessField<F extends EconomicTriggeredField> = F extends "cost" ? "triggeredCostModifier" : F extends "produces" ? "triggeredProducesModifier" : F extends "upkeep" ? "triggeredUpkeepModifier" : "triggeredLogisticsModifier";\n' +

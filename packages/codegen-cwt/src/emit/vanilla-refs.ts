@@ -19,6 +19,7 @@ import {
   type VanillaRefExtra,
 } from "../content-manifest.ts";
 import { camelCase, docComment, spokenName } from "../naming.ts";
+import { HAND_WRITTEN_VANILLA_REFS } from "../overlay.ts";
 import type { Emitter } from "./types.ts";
 
 export interface VanillaRefsEmission {
@@ -67,13 +68,24 @@ export function emitVanillaRefs(
   ];
 
   const chunks = rows.map((row) => emitRow(emitter, row));
-  chunks.push(emitEventRow());
+  for (const handWritten of HAND_WRITTEN_VANILLA_REFS) {
+    // Every row here is asserted against the one hand-written emission this
+    // function actually has (SDK-260): a renamed or added row with nothing to
+    // emit it fails loudly instead of silently emitting nothing.
+    if (handWritten.registry !== "event") {
+      throw new Error(
+        `HAND_WRITTEN_VANILLA_REFS names "${handWritten.registry}", which emitVanillaRefs has no ` +
+          "hand-written emission for — add one or retire the row"
+      );
+    }
+    chunks.push(emitEventRow());
+  }
 
   return {
     code: chunks.join("\n"),
     refs: [...new Set(rows.map((row) => row.refSource))].sort(),
     checked: rows.filter((row) => !row.oversized).length,
-    tries: rows.filter((row) => row.oversized).length + 1,
+    tries: rows.filter((row) => row.oversized).length + HAND_WRITTEN_VANILLA_REFS.length,
   };
 }
 
