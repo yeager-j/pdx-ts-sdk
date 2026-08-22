@@ -13,25 +13,44 @@
 
 import { contentShape } from "../content-shape.ts";
 import type { DescentNode } from "../corpus.ts";
-import {
-  isOptional,
-  isRepeated,
-  type FieldKey,
-  type RuleField,
-  type RuleType,
-  type ScopeContext,
-} from "../cwt/model.ts";
-import type { AliasDecl } from "../cwt/rules.ts";
-import { camelCase, constantCase, isPlainName, pascalCase } from "../naming.ts";
+import { isOptional, isRepeated, type RuleField, type RuleType } from "../cwt/model.ts";
+import { camelCase, constantCase, pascalCase } from "../naming.ts";
 import {
   ASSET_PATH_FIELDS,
   CONTENT_FIELD_OVERRIDES,
   FIELD_WIDENINGS,
   type ContentFieldOverride,
-  type ContentFieldShape,
   type FieldWidening,
 } from "../overlay.ts";
 import { formOfShape } from "./authored-form.ts";
+import type { DocTable, FieldOmissionRow, MemberDocRow } from "./field-rows.ts";
+import {
+  aliasScalarFields,
+  bareValuesOf,
+  derivedClauseShape,
+  economicResourceOperationParts,
+  enumKeyedEntryOf,
+  spliceCategory,
+  structBlockOf,
+  structuralSpliceOf,
+  triggeredModifierPotential,
+  triggerStructOf,
+  wildcardBlockOf,
+  type AliasNameField,
+  type BlockType,
+  type EnumKeyedEntry,
+} from "./rule-shapes.ts";
+import {
+  containerContext,
+  contravariantScopeType,
+  effectBlockArgs,
+  scopeArg,
+  scopeType,
+  splitRootMetadata,
+  withFrom,
+  type FieldContext,
+  type FieldScope,
+} from "./scope-context.ts";
 import { Emitter, type TsValue } from "./types.ts";
 import { constArray, conversionFor, refTypesEntries, member as renderMember } from "./writer.ts";
 
@@ -83,42 +102,6 @@ export interface EmittedField {
   readonly clause?: "trigger" | "effect";
 }
 /**
- * One authoring member's human-readable half, for the generated field-docs
- * ledger: what the emitted interface says about the member, as data a docs
- * build can render — the same doc lines that become the JSDoc, the same
- * optionality that becomes the `?`, the same type text intellisense shows.
- */
-export interface MemberDocRow {
-  readonly optional: boolean;
-  readonly docs: readonly string[];
-  readonly memberType: string;
-  /** Every scalar the member admits, when the lowering closed the set. */
-  readonly literals?: readonly string[];
-}
-
-/**
- * One emitted field table's documentation rows, named by the constant the
- * table is emitted as (`TECHNOLOGY_FIELDS`) so the ledger can key its map by
- * the very same runtime array the descriptors reference.
- */
-export interface DocTable {
-  readonly constant: string;
-  readonly members: Readonly<Record<string, MemberDocRow>>;
-}
-
-/**
- * A field the rules declare that the authoring surface leaves out, as one
- * structured row. The codegen report and the generated ledger are both
- * projections of these rows — see {@link omissionLine} for the report's.
- */
-export interface FieldOmissionRow {
-  /** The path exactly as the codegen report prints it. */
-  readonly path: string;
-  readonly kind: "declined" | "unsupported" | "collapsed";
-  readonly reason: string;
-}
-
-/**
  * The literals a doc row may carry: the admitted set, except where lowering
  * changes the authored representation. `admits.literals` speaks the game's
  * tokens because the corpus gate measures shipped files, but boolean fields
@@ -135,22 +118,6 @@ export function authoredLiterals(literals: readonly string[] | undefined): {
     return {};
   }
   return { literals };
-}
-
-/**
- * The report line a row has always printed as, per kind — declined rows use
- * an em dash, unsupported rows parenthesize, collapsed rows carry their own
- * leading `(pattern)`. Changing a format here changes the codegen report.
- */
-export function omissionLine(row: FieldOmissionRow): string {
-  switch (row.kind) {
-    case "declined":
-      return `${row.path} — ${row.reason}`;
-    case "unsupported":
-      return `${row.path} (${row.reason})`;
-    case "collapsed":
-      return `${row.path} ${row.reason}`;
-  }
 }
 
 export interface LoweredField {
@@ -196,501 +163,6 @@ export interface LoweredField {
    * fields without their descent are measured against nothing.
    */
   readonly descents?: readonly DescentNode[];
-}
-
-function bareValuesOf(type: RuleType): readonly RuleType[] | null {
-  return type.kind === "block" && type.bare.length > 0
-    ? type.bare.map((value) => value.type)
-    : null;
-}
-
-type BlockType = Extract<RuleType, { kind: "block" }>;
-
-/**
- * Finds the anonymous-block shape behind a repeated-struct field, in either of
- * CWT's two spellings.
- *
- * "Direct": the field's own type is a block of ordinary named fields —
- * `text = { trigger = { ... } }` repeated, or a singular fixed-shape block
- * like `forbidden_peace_offers = { demand_surrender = ... }`.
- *
- * "Wrapped": the field is a singular container whose only content is one bare
- * anonymous block declared repeatable inside it — `discrete_terms = { ##
- * cardinality = 0..inf { key = ... value = ... } }`. The repetition lives on
- * the bare declaration, not on `discrete_terms` itself, so the result is
- * always a list regardless of the outer field's own cardinality — the same
- * convention `lowerValueList` already uses for bare scalar lists.
- */
-function structBlockOf(
-  type: RuleType
-): { readonly block: BlockType; readonly wrapped: boolean } | null {
-  if (type.kind !== "block") {
-    return null;
-  }
-  if (type.fields.length === 0 && type.bare.length === 1 && type.bare[0]!.type.kind === "block") {
-    return { block: type.bare[0]!.type, wrapped: true };
-  }
-  if (type.fields.length > 0) {
-    return { block: type, wrapped: false };
-  }
-  return null;
-}
-
-/** One enum-keyed block declaration, and the key set the rules close it to. */
-interface EnumKeyedEntry {
-  readonly declaration: RuleField;
-  readonly block: BlockType;
-  readonly values: readonly string[];
-}
-
-/**
- * Finds that declaration inside a block type:
- * `enum[prereq_for_category] = { title = localisation … }`.
- *
- * Unlike `scalar = { … }`, which says nothing about which keys are legal, an
- * enum key names its keys exactly — so the declaration is one shape written
- * under each of a known, small set of names, and {@link enumKeyedMembers}
- * lowers it that way without an overlay row to disambiguate it.
- *
- * Declines a block with more than one such declaration, and an enum the rules
- * name but never populate (`valueFor` already reads that as an open `string`,
- * which is not a key set anything could expand).
- */
-function enumKeyedEntryOf(emitter: Emitter, block: BlockType): EnumKeyedEntry | null {
-  const candidates = block.fields.flatMap((field) =>
-    field.key.kind === "computed" && field.key.type.kind === "enum" && field.type.kind === "block"
-      ? [{ declaration: field, block: field.type, enumName: field.key.type.name }]
-      : []
-  );
-  if (candidates.length !== 1) {
-    return null;
-  }
-  const { declaration, block: entry, enumName } = candidates[0]!;
-  const values = emitter.rules.enums.get(enumName);
-  if (values === undefined || values.length === 0 || !values.every(isPlainName)) {
-    return null;
-  }
-  return { declaration, block: entry, values };
-}
-
-/**
- * Finds the single wildcard-keyed block declaration inside a block type, the
- * shape CWT uses for a keyed collection: `stages = { scalar = { icon = ... } }`
- * says "any scalar key maps to this block", not a field literally named
- * `scalar` — `classifyKey` reads that as a `computed` key rather than a `name`
- * one, so `mergeByName` (which only keeps `name` keys) sees nothing there.
- *
- * Ambiguous input — no such declaration, or more than one — declines rather
- * than guessing which one is the record's real shape.
- */
-export function wildcardBlockOf(type: RuleType): BlockType | null {
-  if (type.kind !== "block") {
-    return null;
-  }
-  const candidates = type.fields.filter(
-    (field): field is RuleField & { readonly type: BlockType } =>
-      field.key.kind === "computed" && field.type.kind === "block"
-  );
-  return candidates.length === 1 ? candidates[0]!.type : null;
-}
-
-function spliceCategory(type: RuleType): string | null {
-  if (type.kind !== "block") {
-    return null;
-  }
-  const categories = type.fields.flatMap((field) =>
-    field.key.kind === "aliasName" ? [field.key.category] : []
-  );
-  if (categories.length === 0 || categories.length !== type.fields.length) {
-    return null;
-  }
-  const unique = new Set(categories);
-  return unique.size === 1 ? [...unique][0]! : null;
-}
-
-/**
- * The `single_alias` clauses whose expansion already names its runtime shape.
- *
- * A clause is a rule the vendored config writes once and splices everywhere; a
- * field that splices one is not "a block that happens to look like a modifier
- * map", it *is* the clause, and `RuleType.via` carries the name that says so.
- * That is the whole content of the 85 overlay `shape` rows this table replaced:
- * every one of them restated, per field, that `modifier`/`triggered_*_modifier`
- * splices `modifier_clause`/`triggered_modifier*_clause` — an open
- * modifier-name map (`alias_name[modifier]`) that the ordinary field model
- * cannot see, because an alias splice has no named key to lower.
- *
- * The `by_*` variants differ from plain `triggered_modifier_clause` only in the
- * scope their `potential` pushes (`## push_scope = pop_group|planet|starbase|
- * situation|leader`, aliases.cwt) and, for by_pop_group, one extra
- * `divide_over_pop_groups` key `TriggeredModifier` does not model. They share
- * this shape because `lowerOrdinary` reads that push_scope off the expanded
- * `potential` field rather than off the field's own container scope — the split
- * a bug bash caught on the by_planet rows, where the field's
- * `## replace_scopes = { this = country }` and the clause's planet-scoped
- * `potential` disagree and collapsing them typed the trigger against the wrong
- * scope. Deriving the shape does not derive that scope; `triggeredModifierPotential`
- * still validates it and still fails loudly when the clause has no `potential`.
- *
- * Deliberately absent:
- *
- * - `trigger_clause` / `effect_clause` — pure single-category splices, which
- *   `spliceCategory` already recognises structurally; adding them here would be
- *   a second authority for the same decision.
- * - `triggered_desc_clause` — `trigger` + `text`, ordinary named fields that
- *   `triggerStructOf` lowers as a `triggerStruct`.
- * - `leader_traits`, and any other clause `aliases.cwt` declares: no runtime
- *   shape claims them, so they stay reported as unsupported rather than being
- *   quietly bent into one that nearly fits.
- */
-const CLAUSE_SHAPES = new Map<string, ContentFieldShape>([
-  ["modifier_clause", "modifierBlock"],
-  ["triggered_modifier_clause", "triggeredModifierBlock"],
-  ["triggered_modifier_by_pop_group_clause", "triggeredModifierBlock"],
-  ["triggered_modifier_by_planet_clause", "triggeredModifierBlock"],
-  ["triggered_modifier_by_starbase_clause", "triggeredModifierBlock"],
-  ["triggered_modifier_by_situation_clause", "triggeredModifierBlock"],
-  ["triggered_modifier_by_leader_clause", "triggeredModifierBlock"],
-]);
-
-/**
- * The economic-template splice, which has no `single_alias` name to read.
- *
- * `resources = { category? alias_name[economic_template] }` is written out at
- * every site rather than aliased, so the fingerprint is the body: exactly one
- * `economic_template` or `economic_template_no_produce` splice, optionally a
- * named `category`, and nothing else. Anything further — a bare value, another
- * key — means the site is not the plain resource block the runtime shape models,
- * so this declines rather than lowering a field whose extra keys would vanish.
- *
- * `economic_template_only_produces` (crisis.cwt) is deliberately unmapped:
- * there is no `EconomicResourceBlockOnlyProduces` to lower it to, and mapping it
- * onto either neighbour would admit `cost`/`upkeep` the category refuses.
- */
-function economicSpliceShape(type: RuleType): ContentFieldShape | null {
-  if (type.kind !== "block" || type.bare.length > 0) {
-    return null;
-  }
-  const splices = type.fields.flatMap((field) =>
-    field.key.kind === "aliasName" ? [field.key.category] : []
-  );
-  const others = type.fields.filter(
-    (field) => field.key.kind === "name" && field.key.name === "category"
-  );
-  if (splices.length !== 1 || splices.length + others.length !== type.fields.length) {
-    return null;
-  }
-  switch (splices[0]!) {
-    case "economic_template":
-      return "economicResources";
-    case "economic_template_no_produce":
-      return "economicResourcesNoProduce";
-    default:
-      return null;
-  }
-}
-
-/**
- * The runtime shape a field's own declaration names, or `null` when it names
- * none. Read only where the overlay states nothing, so an explicit row still
- * wins over the derivation.
- */
-function derivedClauseShape(field: RuleField): ContentFieldShape | undefined {
-  if (field.type.kind !== "block") {
-    return undefined;
-  }
-  const clause = field.type.via === undefined ? undefined : CLAUSE_SHAPES.get(field.type.via);
-  return clause ?? economicSpliceShape(field.type) ?? undefined;
-}
-
-/**
- * Rewrites an all-scalar alias category as ordinary named fields.
- *
- * `possible_pre_triggers = { alias_name[pop_pre_trigger] = ... }` is a struct
- * wearing a splice's clothes: the category admits exactly seven members and
- * every one of them is a plain `bool`, so naming them turns the field into
- * something `lowerStruct` already knows how to emit — no new runtime shape, no
- * `Trigger` that would let an author write conditions the game will not read.
- *
- * Returns `null` for any category with a member the struct pipeline cannot
- * express (`government_trigger`'s clause blocks and self-recursive
- * combinators), leaving the field to be reported as unsupported rather than
- * half-lowered. One `RuleField` per declaration, so a member declared twice
- * merges through `mergeByName` exactly like an ordinary repeated key.
- */
-function aliasScalarFields(emitter: Emitter, category: string): RuleField[] | null {
-  const members = emitter.rules.aliasCategories.get(category);
-  if (members === undefined || members.size === 0) {
-    return null;
-  }
-  const fields: RuleField[] = [];
-  for (const [name, declarations] of members) {
-    if (!isPlainName(name)) {
-      return null;
-    }
-    for (const declaration of declarations) {
-      if (declaration.type.kind === "block" || emitter.valueFor(declaration.type) === null) {
-        return null;
-      }
-      fields.push({
-        key: { kind: "name", name },
-        type: declaration.type,
-        // A splice never requires any particular member: the block is legal
-        // empty, so every synthesized field is optional regardless of what the
-        // declaration itself says.
-        cardinality: { min: 0, max: 1 },
-        docs: declaration.docs,
-        scope: declaration.scope,
-        line: declaration.line,
-        comparison: declaration.comparison,
-      });
-    }
-  }
-  return fields;
-}
-
-/**
- * The scope a field's closures run in.
- *
- * `asserted` is an overlay row's declared scope, which wins over the rules —
- * see `ContentFieldOverride.scope` for when that is legitimate. A bad scope
- * name there throws rather than falling back to `ScopeName`: silently widening
- * would turn a typo into a field that accepts nothing useful, which is the very
- * failure the row exists to fix.
- */
-/**
- * What a field's lowering needs to know about the definition enclosing it.
- *
- * `unpinned` is the type an unannotated scope lowers to. Normally `ScopeName`,
- * which admits only rules legal in every scope; for a registry whose scope is a
- * parameter of the definition (see `CONTENT_SCOPE_PARAMETERS`) it is that
- * parameter instead, so the clauses follow whatever the definition declared.
- *
- * `scope` is the effective `ScopeContext` in force at this point in the
- * recursion — the type's own top-level scope at the root, and, beneath a
- * struct field that itself carries a `field.scope` (`## replace_scopes`/
- * `## push_scope` on the struct field, not on the leaf), that field's scope
- * merged onto whatever was in force above it. `containerContext` builds that
- * merge and `structShape` recurses with the result, so a leaf with no
- * annotation of its own (`governments.cwt`'s `modification.add`/`remove`,
- * scoped only by the enclosing `modification` container) still resolves the
- * container's scope through the same `field.scope?.this ?? ctx.scope?.this`
- * fallback `scopeType`/`fromType` use for a leaf's own annotation.
- */
-export interface FieldContext {
-  readonly scope: ScopeContext | null;
-  readonly unpinned: string;
-  /**
-   * The SDK symbol {@link FieldContext.unpinned} names, where it names one
-   * rather than a type parameter of the enclosing definition. Carried so a field
-   * that actually lands on the unpinned type declares the import at the site
-   * that writes it — a registry whose fields are all scope-annotated imports
-   * nothing, and a contravariant field widens to `never` and imports nothing
-   * either.
-   */
-  readonly unpinnedSymbol?: string;
-  /**
-   * The type FROM lowers to in this field's block, where the overlay asserts a
-   * FROM the rules leave unstated (`ContentScopeParameter.selector.fromMembers`).
-   * A TS type rather than a scope name, because the scope it names is the
-   * definition's own parameter and not a constant any rule could state.
-   */
-  readonly assertedFrom?: string;
-  /** The enclosing registry's authoring parameter, for nested typed blocks. */
-  readonly nestedTypeParameter?: { readonly declaration: string; readonly argument: string };
-}
-
-interface FieldScope {
-  /** The TS type parameter: one canonical scope literal, or the unpinned type. */
-  readonly type: string;
-  /** {@link FieldContext.unpinnedSymbol}, where {@link FieldScope.type} is it. */
-  readonly unpinned?: string;
-  /** The same thing as data, `"any"` where nothing pinned it. */
-  readonly scopes: readonly string[] | "any";
-  /**
-   * The scope FROM holds inside this block, as a TS literal type, when the
-   * rules name one. `null` where they do not — including their `from = any`,
-   * which names no scope and must stay unreadable rather than lower to
-   * something an author could navigate through.
-   *
-   * Read from the rules even when `asserted` overrides `this`: an overlay row
-   * corrects the scope a block *runs* in, which says nothing about what the
-   * game hands it as FROM.
-   */
-  readonly from: string | null;
-  /**
-   * The scope ROOT holds inside this block, on the same terms as {@link
-   * FieldScope.from} — and independent of `type`, which is the whole reason it
-   * is carried separately. `## replace_scopes = { this = planet root = country
-   * ... }` on a solar system initializer's `init_effect` means the block runs
-   * in planet scope while `root = { ... }` runs in country scope.
-   */
-  readonly root: string | null;
-}
-
-/**
- * The scope FROM holds inside one field's block.
- *
- * A field's own `replace_scopes` states the whole context, so a FROM it leaves
- * out is cleared rather than inherited — unlike `this`, which every annotation
- * names. Only a `push_scope` (or no annotation at all) leaves the enclosing
- * definition's FROM standing.
- */
-function fromType(emitter: Emitter, field: RuleField, ctx: FieldContext): string | null {
-  return ambientType(emitter, field, ctx, "from");
-}
-
-/**
- * The scope ROOT holds inside one field's block, on {@link fromType}'s terms.
- *
- * Separate from the field's own scope rather than derived from it: a
- * `replace_scopes` names THIS and ROOT independently and the two often differ,
- * so ROOT is only ever what the rules say it is. Where they say nothing it
- * stays `null` — a `push_scope` never states ROOT, and neither does an
- * unannotated field, so inheriting or guessing one would put a scope on the
- * ref that nothing in the rules backs.
- */
-function rootType(emitter: Emitter, field: RuleField, ctx: FieldContext): string | null {
-  return ambientType(emitter, field, ctx, "root");
-}
-
-function ambientType(
-  emitter: Emitter,
-  field: RuleField,
-  ctx: FieldContext,
-  ambient: "from" | "root"
-): string | null {
-  const declared =
-    field.scope?.replaces === true
-      ? field.scope[ambient]
-      : (field.scope?.[ambient] ?? ctx.scope?.[ambient]);
-  if (declared === undefined || declared === null) {
-    return null;
-  }
-  const canonical = emitter.canonicalScope(declared);
-  return canonical === null ? null : JSON.stringify(canonical);
-}
-
-function scopeType(
-  emitter: Emitter,
-  field: RuleField,
-  ctx: FieldContext,
-  asserted?: string
-): FieldScope {
-  // An asserted FROM wins over the rules, on `ContentFieldOverride.scope`'s
-  // terms: it is there because the rules state no FROM at all, and a rule that
-  // later states one is a disagreement to review rather than to average.
-  const from = ctx.assertedFrom ?? fromType(emitter, field, ctx);
-  const root = rootType(emitter, field, ctx);
-  if (asserted !== undefined) {
-    const canonical = emitter.canonicalScope(asserted);
-    if (canonical === null) {
-      throw new Error(`Overlay asserts unknown scope "${asserted}"`);
-    }
-    return { type: JSON.stringify(canonical), scopes: [canonical], from, root };
-  }
-  const unpinned: FieldScope = {
-    type: ctx.unpinned,
-    scopes: "any",
-    from,
-    root,
-    ...(ctx.unpinnedSymbol === undefined ? {} : { unpinned: ctx.unpinnedSymbol }),
-  };
-  const declared = field.scope?.this ?? ctx.scope?.this;
-  if (declared === undefined || declared === null) {
-    return unpinned;
-  }
-  const canonical = emitter.canonicalScope(declared);
-  return canonical === null
-    ? unpinned
-    : { type: JSON.stringify(canonical), scopes: [canonical], from, root };
-}
-
-/**
- * `EffectBlock`'s type arguments: the block's own scope, plus the scopes its
- * closure's `ctx.from` and `ctx.root` hold where the rules declare them. Each
- * trailing argument is emitted only as far as it says something — a block with
- * neither emits the one-argument form — so the defaults keep an undeclared
- * ambient scope unreadable rather than admitting a ref the game will not
- * honour. A declared ROOT with no FROM still has to spell the FROM slot, and
- * `undefined` is exactly the sentinel the default already means.
- */
-function effectBlockArgs(emitter: Emitter, scope: FieldScope): string {
-  const own = scopeArg(emitter, scope);
-  if (scope.root !== null) {
-    return `${own}, ${scope.from ?? "undefined"}, ${scope.root}`;
-  }
-  return scope.from === null ? own : `${own}, ${scope.from}`;
-}
-
-/** Runtime evidence that natural event FROM cannot be witnessed by this block's `this`. */
-function splitRootMetadata(scope: FieldScope): readonly string[] {
-  if (scope.root === null || scope.scopes === "any" || scope.scopes.length !== 1) {
-    return [];
-  }
-  return JSON.stringify(scope.scopes[0]) === scope.root ? [] : ["splitRoot: true"];
-}
-
-/**
- * Wraps a declarative member type in `WithFrom` where the rules give the block
- * a FROM, adding the closure form that can reach it.
- *
- * A trigger and a weight block are values rather than closures, so unlike an
- * effect field there is no argument list to hand FROM to — the closure form is
- * that argument list. Only fields with a FROM get it: the plain form stays the
- * only way to write a condition that has no FROM to name.
- *
- * FROM alone decides whether the wrapper appears; a declared ROOT rides along
- * on the closure the FROM already earned. A field that declares ROOT and no
- * FROM therefore keeps the plain form and cannot reach either — a known gap
- * rather than a judgement about that field, since the wrapper's whole reason
- * to exist is the missing argument list.
- */
-function withFrom(emitter: Emitter, inner: string, scope: FieldScope): string {
-  if (scope.from === null) {
-    return inner;
-  }
-  const root = scope.root === null ? "" : `, ${scope.root}`;
-  return `${emitter.use("WithFrom")}<${inner}, ${scopeArg(emitter, scope)}, ${scope.from}${root}>`;
-}
-
-/**
- * The `ScopeContext` a struct field's own children run in, given the field's
- * own annotation (if any) and whatever scope was already in force above it.
- *
- * `## replace_scope(s)` states the whole context, so `root`/`from` it leaves
- * out are cleared rather than inherited — `scopeOf` already returns them as
- * `null` in that case, which is what `replaces: true` here passes through
- * unchanged. `## push_scope` states only `this` (`scopeOf` always reports its
- * `root`/`from` as `null`, `replaces: false`), so those two carry over from
- * the parent instead of clearing.
- */
-function pushedScope(fieldScope: ScopeContext, parentScope: ScopeContext | null): ScopeContext {
-  return fieldScope.replaces
-    ? fieldScope
-    : {
-        this: fieldScope.this,
-        root: parentScope?.root ?? null,
-        from: parentScope?.from ?? null,
-        replaces: false,
-      };
-}
-
-/**
- * The `ctx` a struct field's own body recurses with.
- *
- * `structShape` types every one of a container's fields against the `ctx`
- * built here: a container that itself carries a `field.scope`
- * (`governments.cwt`'s `modification`, `## replace_scopes = { this = country
- * root = country }`) folds that annotation into `ctx.scope` via
- * {@link pushedScope}, so `add`/`remove` beneath it — themselves unannotated —
- * resolve "country" through the same fallback an annotated leaf uses. A field
- * with no `field.scope` passes `ctx` through unchanged, leaving whatever scope
- * was already in force (including one folded in by an enclosing container)
- * standing.
- */
-function containerContext(field: RuleField, ctx: FieldContext): FieldContext {
-  return field.scope === null ? ctx : { ...ctx, scope: pushedScope(field.scope, ctx.scope) };
 }
 
 /**
@@ -756,28 +228,6 @@ function weightInterior(
   };
 }
 
-/** Finds the one condition declaration a triggered-modifier block promises. */
-function triggeredModifierPotential(field: RuleField): RuleField {
-  if (field.type.kind !== "block") {
-    throw new Error(
-      "A triggered-modifier field must expand to a block with a potential declaration"
-    );
-  }
-  const potentials = field.type.fields.filter(
-    (
-      inner
-    ): inner is RuleField & {
-      readonly key: { readonly kind: "name"; readonly name: "potential" };
-    } => inner.key.kind === "name" && inner.key.name === "potential"
-  );
-  if (potentials.length !== 1) {
-    throw new Error(
-      "A triggered-modifier block must expand to exactly one named potential declaration"
-    );
-  }
-  return potentials[0]!;
-}
-
 /** The potential condition and its emitter-owned corpus descent. */
 function triggeredModifierInterior(
   name: string,
@@ -798,62 +248,6 @@ function triggeredModifierInterior(
   };
 }
 
-interface EconomicResourceOperationParts {
-  readonly trigger: RuleField;
-}
-
-/**
- * Confirms the mixed CWT block the reusable economic-operation contract owns.
- *
- * A resource map alone is not this shape: `when` must correspond to exactly
- * one direct trigger clause and every complex maths sibling must remain
- * writable through `mult`/`multiplier`. Keeping this structural check beside
- * the lowering means an overlay cannot accidentally apply the shape to a
- * superficially similar block and silently discard one of its declared arms.
- */
-function economicResourceOperationParts(field: RuleField): EconomicResourceOperationParts {
-  if (field.type.kind !== "block" || field.type.bare.length !== 0) {
-    throw new Error(
-      "An economic-resource operation field must be a named block with resource, trigger, and complex-maths declarations"
-    );
-  }
-  const resources = field.type.fields.filter(
-    (inner) =>
-      inner.key.kind === "computed" &&
-      inner.key.type.kind === "typeRef" &&
-      inner.key.type.name === "resource" &&
-      (inner.type.kind === "int" || inner.type.kind === "float")
-  );
-  const triggers = field.type.fields.filter(
-    (inner) =>
-      inner.key.kind === "name" &&
-      inner.key.name === "trigger" &&
-      spliceCategory(inner.type) === "trigger" &&
-      inner.cardinality.min === 0 &&
-      inner.cardinality.max === 1
-  );
-  const maths = field.type.fields.filter(
-    (inner) =>
-      inner.key.kind === "computed" &&
-      inner.key.type.kind === "enum" &&
-      inner.key.type.name === "complex_maths_enum" &&
-      inner.type.kind === "valueField" &&
-      inner.cardinality.min === 0 &&
-      inner.cardinality.max === null
-  );
-  if (
-    resources.length !== 1 ||
-    triggers.length !== 1 ||
-    maths.length !== 1 ||
-    field.type.fields.length !== 3
-  ) {
-    throw new Error(
-      "An economic-resource operation field must declare exactly one open <resource> numeric arm, one 0..1 pure trigger alias, and complex_maths_enum value-field arm"
-    );
-  }
-  return { trigger: triggers[0]! };
-}
-
 /** The direct trigger interior owned by `EconomicResourceOperation<S>`. */
 function economicResourceOperationInterior(
   name: string,
@@ -872,54 +266,6 @@ function economicResourceOperationInterior(
     ],
     descents: [{ field: name, mode: "economicResourceOperationTrigger", children: [] }],
   };
-}
-
-/**
- * As {@link scopeType}, for shapes whose scope parameter reaches a
- * `Trigger<S>` contravariantly — a trigger field itself, and a weight block,
- * whose rows carry `when: Trigger<S>`.
- *
- * `Trigger<in S>` is contravariant, so the unpinned literal `ScopeName`
- * ("valid in every scope") types the field as accepting only conditions
- * legal in every scope — for most fields none, which makes the field
- * unwritable rather than unchecked. `never` is the top of that lattice:
- * substituting it is what "the rules did not say" should mean, the same way
- * an unknown reference target lowers to `| string` rather than to something
- * nothing can satisfy. Only the truly-unpinned case changes — a field a
- * `CONTENT_SCOPE_PARAMETERS` row threads through as `NoInfer<S>`, or one an
- * override, the rules themselves, or an enclosing container (see
- * {@link containerContext}) pin to a real scope, is untouched: any of those
- * already leave `scope.type` at something other than `ScopeName`, so the
- * widen below never fires for them.
- */
-function contravariantScopeType(
-  emitter: Emitter,
-  field: RuleField,
-  ctx: FieldContext,
-  asserted?: string
-): FieldScope {
-  const scope = scopeType(emitter, field, ctx, asserted);
-  if (scope.type !== "ScopeName") {
-    return scope;
-  }
-  // `never` spells no SDK symbol, so the widened scope drops the import the
-  // unpinned one would have declared.
-  const { unpinned, ...rest } = scope;
-  return { ...rest, type: "never" };
-}
-
-/**
- * The scope argument a member type spells, declaring the import it needs.
- *
- * Every site that writes `scope.type` into the output goes through here: the
- * unpinned type is `ScopeName` for an ordinary registry and a type parameter for
- * a scope-parameterised one, and only the first is a symbol to import.
- */
-function scopeArg(emitter: Emitter, scope: FieldScope): string {
-  if (scope.unpinned !== undefined) {
-    emitter.use(scope.unpinned);
-  }
-  return scope.type;
 }
 
 /**
@@ -967,8 +313,6 @@ export function mergeByName(
   return grouped;
 }
 
-export type AliasNameField = RuleField & { readonly key: Extract<FieldKey, { kind: "aliasName" }> };
-
 /**
  * The alias categories a definition body splices unkeyed at its own top level.
  *
@@ -1002,37 +346,10 @@ export interface LoweredSplice {
 }
 
 /**
- * A *structural* alias category: one whose single member is a block, so the
- * category names a nested body rather than a vocabulary of rules.
- *
- * `alias[planet_initializer:planet]` is the case. Splicing that category into a
- * body means "a `planet = { ... }` block may appear here", and since `planet`'s
- * own body splices `planet_initializer` and `moon_initializer` back into itself,
- * the grammar is recursive and the nesting unbounded.
- *
- * The single-member invariant is enforced rather than worked around: a category
- * with two block members would need a naming scheme for the interfaces, and no
- * such category exists. Declining reports the gap instead of inventing one.
- */
-export function structuralSpliceOf(
-  emitter: Emitter,
-  category: string
-): { readonly memberKey: string; readonly declaration: AliasDecl } | null {
-  const members = emitter.rules.aliasCategories.get(category);
-  if (members === undefined || members.size !== 1) {
-    return null;
-  }
-  const [memberKey, declarations] = [...members][0]!;
-  if (!isPlainName(memberKey) || declarations.length !== 1) {
-    return null;
-  }
-  const declaration = declarations[0]!;
-  return declaration.type.kind === "block" ? { memberKey, declaration } : null;
-}
-
-/**
  * Lowers a structural splice to one authoring member holding an ordered array
- * of that category's blocks.
+ * of that category's blocks. `structuralSpliceOf` (`rule-shapes.ts`) is the
+ * recognizer that confirms a category is this shape; this is its one
+ * lowering.
  *
  * The array is unconditional, and so is its optionality: the cardinality on the
  * `alias_name` line is ignored. A splice is a grammar production rather than a
@@ -1275,48 +592,6 @@ interface StructShape {
   readonly nested: readonly EmittedField[];
   /** Descent nodes for the members that are themselves blocks worth walking. */
   readonly children: readonly DescentNode[];
-}
-
-interface TriggerStruct {
-  readonly block: BlockType;
-  readonly trigger: RuleField;
-  readonly ordinaryKeys: readonly string[];
-}
-
-/**
- * The one mixed block shape a normal struct cannot lower without losing its
- * splice: direct trigger entries plus ordinary named siblings.  It is narrow
- * on purpose; every other splice/computed/subtype/bare combination remains
- * unsupported rather than being partially emitted.
- */
-function triggerStructOf(type: RuleType): TriggerStruct | null {
-  if (type.kind !== "block" || type.bare.length !== 0) {
-    return null;
-  }
-  const triggers = type.fields.filter(
-    (field): field is AliasNameField =>
-      field.key.kind === "aliasName" && field.key.category === "trigger"
-  );
-  const ordinary = type.fields.filter(
-    (field): field is RuleField & { readonly key: Extract<FieldKey, { readonly kind: "name" }> } =>
-      field.key.kind === "name"
-  );
-  if (
-    triggers.length !== 1 ||
-    ordinary.length === 0 ||
-    triggers.length + ordinary.length !== type.fields.length
-  ) {
-    return null;
-  }
-  const ordinaryKeys = ordinary.map((field) => field.key.name);
-  if (ordinaryKeys.some((key) => camelCase(key) === "when")) {
-    return null;
-  }
-  return {
-    block: { kind: "block", fields: ordinary, bare: [] },
-    trigger: triggers[0]!,
-    ordinaryKeys,
-  };
 }
 
 /** The same interior, re-rooted under one of the keys that shares it. */

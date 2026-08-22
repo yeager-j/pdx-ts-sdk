@@ -48,7 +48,12 @@ import type { RuleField, RuleType } from "../cwt/model.ts";
 import type { AliasDecl } from "../cwt/rules.ts";
 import { camelCase, docComment, isPlainName, pascalCase } from "../naming.ts";
 import { formOfShape } from "./authored-form.ts";
-import { omissionLine, type DocTable, type FieldOmissionRow, type MemberDocRow } from "./fields.ts";
+import {
+  omissionLine,
+  type DocTable,
+  type FieldOmissionRow,
+  type MemberDocRow,
+} from "./field-rows.ts";
 import type { Emitter, TsValue } from "./types.ts";
 import { constArray, conversionFor, refTypesSuffix, member as renderMember } from "./writer.ts";
 

@@ -113,8 +113,8 @@ const byRegistry = new Map(reports.map((report) => [report.registry, report]));
  * recording nothing there is correct, not a hole. Eleven such blocks exist
  * across the fixture today. `economicResourceOperationTrigger` is the same
  * shape of selective: the operation's `trigger` declaration is `0..1`
- * (`economicResourceOperationParts` in codegen-cwt's `emit/fields.ts`), so an
- * operation with no trigger row is legal and records nothing under
+ * (`economicResourceOperationParts` in codegen-cwt's `emit/rule-shapes.ts`),
+ * so an operation with no trigger row is legal and records nothing under
  * `<field>.trigger`.
  */
 const SELECTIVE_DESCENT_MODES = new Set([

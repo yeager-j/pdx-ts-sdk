@@ -19,7 +19,7 @@ import { loadRules } from "@pdx-ts/codegen-cwt/cwt/rules";
 import { emitAliasSplice } from "@pdx-ts/codegen-cwt/emit/alias-splice";
 import { emitAliasStruct } from "@pdx-ts/codegen-cwt/emit/alias-struct";
 import { emitContentType } from "@pdx-ts/codegen-cwt/emit/content-type";
-import { structuralSpliceOf } from "@pdx-ts/codegen-cwt/emit/fields";
+import { structuralSpliceOf } from "@pdx-ts/codegen-cwt/emit/rule-shapes";
 import { Emitter } from "@pdx-ts/codegen-cwt/emit/types";
 import { camelCase } from "@pdx-ts/codegen-cwt/naming";
 import {
@@ -114,7 +114,7 @@ describe("assertOverlayRegistriesKnown", () => {
 
   it("rejects a CONTENT_WITNESSES row keyed to a renamed or mistyped registry (SDK-260)", () => {
     // CONTENT_WITNESSES is consumed only via `CONTENT_WITNESSES.get(registry)`
-    // inside contentDefiners' per-content loop (index.ts) and emit/modifiers.ts's
+    // inside contentDefiners' per-content loop (emit/definers.ts) and emit/modifiers.ts's
     // fixed "economic_category" lookup — a row keyed to a registry nothing
     // resolves to (a rename or typo) is never looked up by either site, so it
     // would rot silently without joining the Group A registry-keyed check.

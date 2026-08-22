@@ -31,20 +31,22 @@ import { isOptional } from "../cwt/model.ts";
 import { camelCase, capitalizedArticle, docComment } from "../naming.ts";
 import { CONTENT_DECLINED_FIELDS, CONTENT_FIELD_OVERRIDES, FIELD_WIDENINGS } from "../overlay.ts";
 import {
+  omissionLine,
+  type DocTable,
+  type FieldOmissionRow,
+  type MemberDocRow,
+} from "./field-rows.ts";
+import {
   authoredLiterals,
   lowerStructuralSplice,
   mergeByName,
-  omissionLine,
   pickOrdinary,
   spliceTypeName,
-  structuralSpliceOf,
   topLevelSplices,
   useWideningSymbols,
-  type DocTable,
   type EmittedField,
-  type FieldOmissionRow,
-  type MemberDocRow,
 } from "./fields.ts";
+import { structuralSpliceOf } from "./rule-shapes.ts";
 import type { Emitter } from "./types.ts";
 import { constArray, member as renderMember } from "./writer.ts";
 
