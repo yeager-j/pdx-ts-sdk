@@ -80,7 +80,7 @@ const SYMBOL_MODULES: readonly ModuleSymbols[] = [
     module: "../stellaris/vanilla/patch.ts",
     types: ["ContentPatchItem", "PatchInput", "PatchedContent"],
   },
-  { module: "../stellaris/vanilla/view.ts", types: ["AnyOf"] },
+  { module: "../stellaris/vanilla/parsed-definitions.ts", types: ["AnyOf"] },
   { module: "./scopes.ts", types: ["ScopeName"] },
 ];
 

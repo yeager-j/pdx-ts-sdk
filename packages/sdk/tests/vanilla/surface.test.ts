@@ -19,15 +19,15 @@ import {
 import type { MegastructurePatch } from "../../src/generated/megastructure.ts";
 import type { TechnologyPatch } from "../../src/generated/technology.ts";
 import { always } from "../../src/index.ts";
-import { patchContent } from "../../src/stellaris/vanilla/patch.ts";
+import { sha256Hex } from "../../src/stellaris/vanilla/parse.ts";
 import {
   anyOf,
-  sha256Hex,
-  viewFromFiles,
   type ParsedBuilding,
   type ParsedMegastructure,
   type ParsedTechnology,
-} from "../../src/stellaris/vanilla/view.ts";
+} from "../../src/stellaris/vanilla/parsed-definitions.ts";
+import { patchContent } from "../../src/stellaris/vanilla/patch.ts";
+import { viewFromFiles } from "../../src/stellaris/vanilla/view.ts";
 import {
   BUILDING_FILE,
   MEGASTRUCTURE_FILE,

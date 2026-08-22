@@ -40,13 +40,13 @@ evidence.
    generate a `patchX` whose every call throws. Record what would settle the
    cell (its `settledBy`) and stop — `ship-components` is the standing example
    of a row that deliberately carries no permission.
-2. **Parse row**: add the registry to `PARSED_REGISTRIES` and the
-   `ParsedRegistries` interface in
-   `packages/sdk/src/stellaris/vanilla/view.ts`, and export a `ParsedX` alias
-   (or class) from `view.ts`, using that name in `ParsedRegistries` — the
-   generated modules import `Parsed<TypeName>` from `view.ts` unconditionally,
-   so an inline `ParsedDefinition<"x">` type strands regeneration on a missing
-   import. Verify `knownSubdirs`
+2. **Parse row**: add the registry to `PARSED_REGISTRIES` in
+   `packages/sdk/src/stellaris/vanilla/parse.ts`, and export a `ParsedX` alias
+   (or class) from `packages/sdk/src/stellaris/vanilla/parsed-definitions.ts`,
+   using that name in the `ParsedRegistries` interface there — the generated
+   modules import `Parsed<TypeName>` from `parsed-definitions.ts`
+   unconditionally, so an inline `ParsedDefinition<"x">` type strands
+   regeneration on a missing import. Verify `knownSubdirs`
    against a real install — an unknown subdirectory is a loud load error, not
    a guess. If the registry carries nested swap identities, they are a
    `SWAP_IDENTITIES` row in `packages/sdk/src/content/swaps.ts`. Add fixture

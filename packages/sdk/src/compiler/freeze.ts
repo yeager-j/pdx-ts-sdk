@@ -1,4 +1,4 @@
-import type { PdxItem } from "@pdx-ts/pdxscript";
+import { itemChildren, type PdxItem } from "@pdx-ts/pdxscript";
 
 class ImmutableSet<T> implements ReadonlySet<T> {
   readonly #values: Set<T>;
@@ -55,20 +55,15 @@ export function freezeItems(items: readonly PdxItem[]): void {
   }
 }
 
+/**
+ * Regions stay unentered: reading one parses fresh nodes that are not part of
+ * this tree. An entry's child arrives in a fresh one-element array, so
+ * freezing that array reaches nothing but the array itself.
+ */
 function freezeNode(node: PdxItem): void {
   if (Object.isFrozen(node)) {
     return;
   }
   Object.freeze(node);
-  switch (node.kind) {
-    case "entry":
-      freezeNode(node.value);
-      break;
-    case "container":
-    case "param":
-      freezeItems(node.items);
-      break;
-    default:
-      break;
-  }
+  freezeItems(itemChildren(node, "skip"));
 }

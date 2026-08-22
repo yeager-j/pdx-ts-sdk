@@ -68,6 +68,7 @@ src/
 ├── lexer.ts      tokenization; quoting/classification symmetric with serialize
 ├── parser.ts     items + same-line-only repair rules, diagnostics
 ├── serialize.ts  the one serializer; @refs pass bare
+├── walk.ts       what one item holds, and the pre-order walk over it
 └── normalize.ts  tree normalizations shared with the differential tests
 tests/            per-claim suite, full-vanilla fixpoint, jomini differential,
                   fast-check properties

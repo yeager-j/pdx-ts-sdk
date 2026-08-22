@@ -200,8 +200,6 @@ export {
   anyOf,
   ParsedDefinition,
   ParsedTechnology,
-  VanillaView,
-  viewFromFiles,
   type AnyOf,
   type ParsedBuilding,
   type ParsedMegastructure,
@@ -210,7 +208,8 @@ export {
   type ParsedRegistryName,
   type Prerequisite,
   type VanillaFile,
-} from "./stellaris/vanilla/view.ts";
+} from "./stellaris/vanilla/parsed-definitions.ts";
+export { VanillaView, viewFromFiles } from "./stellaris/vanilla/view.ts";
 export type {
   CheckedVanillaId,
   InvalidVanillaId,
