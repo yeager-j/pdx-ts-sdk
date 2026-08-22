@@ -16,10 +16,11 @@ subagent when moving on to the next task.
   architecture, or acceptance.
 - Use a smaller model for exploration and implementation. Select a model named by the user first;
   otherwise select the strongest available coding model below the coordinator's tier. Never invent a
-  model identifier or silently delegate to a coordinator-equivalent model.
+  model identifier or silently delegate to a coordinator-equivalent model. Never spawn Claude Fable or OpenAI Sol agents.
   - Defaults:
-    - Claude: Sonnet for low/medium difficulty tasks, Opus for medium/high difficulty tasks. Use Haiku for exploration.
-    - Codex: The `coder` subagent for low/medium difficulty tasks or the `pro-coder` subagent for medium/high difficulty tasks. Use `researcher` for exploration.
+    - Global: The `coder` subagent for low/medium-difficulty tasks, or the `pro-coder` subagent for medium/high-difficulty tasks.
+    - Claude: Use the built-in `explorer` for exploration.
+    - Codex: Use `researcher` for exploration.
 - Create one implementation agent and record its handle immediately. Resume that agent for every
   implementation follow-up and fault repair; do not replace it while it remains available.
 - Review the finished work yourself. Never delegate final review or accept the implementation
@@ -59,7 +60,8 @@ Write the plan before launching the implementation agent. Include:
 - decisions the implementation agent must return to the coordinator instead of making alone.
 
 Make the plan specific enough that the implementation agent executes rather than redesigns. Update
-the plan yourself when new evidence invalidates it; never outsource plan repair.
+the plan yourself when new evidence invalidates it; never outsource plan repair. The `coder`/`pro-coder`
+subagents are told to refuse vague or missing technical designs.
 
 ### 4. Delegate Implementation Once
 
@@ -74,7 +76,7 @@ Launch one smaller-model implementation agent. Give it:
 - an instruction to stop and report if the plan conflicts with source evidence or requires broader
   scope.
 
-Tell the agent to run the `/engineering-principles` Skill before writing any code. Require it
+The implementing subagents are instructed to run the `/code-style` Skill before implementing. Require it
 to implement, run the assigned checks, inspect its diff, and report changed files, verification
 results, and remaining concerns. Require it to commit its work on the feature branch before
 finishing — never push or open a pull request. An uncommitted worktree is the only copy of the work,
@@ -91,7 +93,7 @@ After the implementation agent finishes:
 1. Inspect the complete diff and every changed file.
 2. Compare the result against the user contract, repository instructions, and the written plan.
 3. Hunt for correctness faults, missed edge cases, accidental scope, weak tests, and misleading
-   names or comments. Use the `/engineering-principles` Skill to find faults.
+   names or comments. Use the `/engineering-principles` and `/code-style` Skills to find faults.
 4. Run the checks that observe each changed contract. Treat the agent's reported results as context,
    not proof.
 5. If the changed behavior has an executable user interface in the current environment, verify it

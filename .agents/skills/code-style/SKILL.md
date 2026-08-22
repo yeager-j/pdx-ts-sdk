@@ -99,13 +99,18 @@ workaround. A normative comment should become proportionate enforcement when pos
 
 ## 5. Document the public surface
 
-Every exported declaration and public member has a concise JSDoc description of its purpose. Add
-parameter and return documentation only when meaning, units, constraints, mutation, or failure
+Every exported declaration and public member has a concise JSDoc description of its purpose. The
+JSDocs should explain what the member is, what it does, and how to use it. Add parameter and
+return documentation only when meaning, units, constraints, mutation, or failure
 behavior is not evident from the signature. Do not repeat type information in prose.
 
 Add an `@example` when correct use requires non-obvious setup, ordering, composition, callbacks,
 structured input, or interpretation of a result. The example must teach something the signature and
 description do not.
+
+Do NOT narrativize in the JSDocs. Do NOT explain the inner workings of a function. Do NOT drop
+project lore or factoids. The consumer doesn't need to know the member's life story. Treat JSDocs
+as public documentation, not a novel.
 
 ## 6. Apply DRY to knowledge, not text
 
