@@ -182,6 +182,23 @@ describe("scope safety", () => {
       void 0;
     }
   });
+
+  it("calling a trigger yields a value nothing accepts", () => {
+    const t = hasGlobalFlag("x");
+    // @ts-expect-error — TriggerNotCalled is not a boolean
+    const asBoolean: boolean = t();
+    void asBoolean;
+  });
+
+  it("a trigger does not pass as a closure returning one", () => {
+    // The reason `TriggerNotCalled` is not `never`: `never` is assignable
+    // everywhere, so `Trigger<"planet">` would satisfy `() => Trigger<"country">`
+    // and a wrong-scope condition would slip through every closure-taking field.
+    const planetCondition = hasPlanetFlag("ideal_world");
+    // @ts-expect-error — the trigger itself is not the closure the field wants
+    const asClosure: () => Trigger<"country"> = planetCondition;
+    void asClosure;
+  });
 });
 
 describe("content ids", () => {

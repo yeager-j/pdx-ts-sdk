@@ -38,18 +38,16 @@
 import { container, quoted, scalar, type PdxEntry, type PdxItem } from "@pdx-ts/pdxscript";
 
 import { localisationKey, type LocalisationEntry } from "../../content/authoring.ts";
-import { isComplexTriggerModifier } from "../../content/blocks.ts";
+import { isComplexTriggerModifier, modifierRowWithLoc } from "../../content/blocks.ts";
 import { fieldEntries } from "../../content/lower.ts";
 import type { ContentField, ContentLocalisation } from "../../content/schema.ts";
 import type { ModWarning } from "../../diagnostics.ts";
-import type { ScopeName } from "../../generated/scopes.ts";
 import type { ContentRefSink, ContentRefUse } from "../../references.ts";
 import {
   modifierDescKey,
   registerComplexTriggerModifierDescKey,
   registerModifierDescKey,
 } from "../../script/effects/modifiers.ts";
-import type { ModifierWithLoc } from "../../script/effects/types.ts";
 import { refId } from "../../script/scalar.ts";
 import type { AnyOf, ParsedDefinition, ParsedNumber } from "./view.ts";
 
@@ -312,7 +310,7 @@ function mintModifierDescs(
     if (!isAuthoredRecord(row) || row["desc"] === undefined) {
       return;
     }
-    const typed = row as unknown as ModifierWithLoc<ScopeName>;
+    const typed = modifierRowWithLoc(row, `"${ctx.ownerId}" (${fieldPath})`);
     if (isComplexTriggerModifier(typed)) {
       const key = `${ctx.ownerId}_${fieldPath}_${index}`;
       ctx.into.push([key, typed.desc]);

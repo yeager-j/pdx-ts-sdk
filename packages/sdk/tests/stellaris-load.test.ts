@@ -196,6 +196,32 @@ describe("load", () => {
     }
   });
 
+  it("a cache entry of the wrong shape is a silent miss that regenerates", () => {
+    // Valid JSON, so nothing throws on the way in: the sources are checked
+    // down to the members the view reads, or the entry is not used at all.
+    const cache = tempDir();
+    load({ installPath: FIXTURE, cache });
+    const [entryName] = readdirSync(cache).filter((name) => name.startsWith("vanilla-"));
+    const entryPath = join(cache, entryName!);
+    writeFileSync(
+      entryPath,
+      JSON.stringify({ formatVersion: 1, sources: [{ path: "common/technology/x.txt" }] })
+    );
+
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      const view = load({ installPath: FIXTURE, cache });
+      expect(view.fromCache).toBe(false);
+      expect(view.definition("technology", "tech_fake_farming").cost?.value).toBe(100);
+      expect(warn).not.toHaveBeenCalled();
+      expect(error).not.toHaveBeenCalled();
+    } finally {
+      warn.mockRestore();
+      error.mockRestore();
+    }
+  });
+
   it("refuses a subdirectory under a flat-parsed dir", () => {
     const install = tempDir();
     cpSync(FIXTURE, install, { recursive: true });

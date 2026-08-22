@@ -262,12 +262,37 @@ function triggerBinding(name: string) {
     trigger([typeof args === "boolean" ? kv(name, args) : scriptedEntry(name, args)]);
 }
 
+/**
+ * Mints a {@link ScriptedEffectCall} from the entries it lowers to.
+ *
+ * `[scriptedCallBrand]` is a phantom member with no runtime counterpart, so no
+ * expression is structurally a `ScriptedEffectCall` and this cast is the only
+ * way to produce one. `kind` and `entries` are the value's real members, so
+ * the cast adds the brand and nothing else.
+ */
+function scriptedEffectCall(entries: readonly PdxEntry[]): ScriptedEffectCall {
+  return { kind: "scripted_effect_call", entries } as unknown as ScriptedEffectCall;
+}
+
 function effectBinding(name: string) {
   return (args?: ScriptedParams): ScriptedEffectCall =>
-    ({
-      kind: "scripted_effect_call",
-      entries: [scriptedEntry(name, args)],
-    }) as unknown as ScriptedEffectCall;
+    scriptedEffectCall([scriptedEntry(name, args)]);
+}
+
+/**
+ * Publishes one binding factory under both the checked call signature and the
+ * `unchecked` member, which are the same function at runtime.
+ *
+ * The cast is needed because the two forms differ only in the type: the
+ * checked signature is generic over a name drawn from `@pdx-ts/stellaris-ids`
+ * and a claimed scope, and `unchecked` takes any name. Both erase to the same
+ * plain `(name: string)` factory, and a plain function expression cannot be
+ * checked against a generic overload set whose type arguments the runtime
+ * never sees. `Surface` comes from the declared type of the constant this
+ * result is assigned to.
+ */
+function withUncheckedForm<Surface>(binding: (name: string) => unknown): Surface {
+  return Object.assign(binding, { unchecked: binding }) as unknown as Surface;
 }
 
 /**
@@ -292,7 +317,7 @@ export const scriptedTrigger: {
     name: string,
     scope: A
   ): (args?: ScriptedParams | boolean) => Trigger<AssertedScope<A>>;
-} = Object.assign(triggerBinding as never, { unchecked: triggerBinding as never });
+} = withUncheckedForm(triggerBinding);
 
 /**
  * Binds a vanilla or third-party scripted effect under an asserted scope.
@@ -310,4 +335,4 @@ export const scriptedEffect: {
     name: string,
     scope: A
   ): (args?: ScriptedParams) => ScriptedEffectCall<AssertedScope<A>>;
-} = Object.assign(effectBinding as never, { unchecked: effectBinding as never });
+} = withUncheckedForm(effectBinding);

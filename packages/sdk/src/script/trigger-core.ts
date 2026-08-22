@@ -105,6 +105,27 @@ const POISON_MESSAGE =
   "scope.if(trigger, (s) => ...).elseIf(...).else(...).";
 
 /**
+ * Mints the branded value from the members a trigger actually carries.
+ *
+ * This holds the only unchecked cast in the module. Two members of `Trigger`
+ * exist for the type checker alone and so have nothing to assign: the call
+ * signature returns {@link TriggerNotCalled}, which nothing constructs, and
+ * `[scopeBrand]` is phantom. No expression can be structurally a `Trigger`,
+ * which is why the cast cannot be removed — every member that does exist at
+ * runtime is a parameter here, so the cast adds those two and nothing else.
+ */
+function brandTrigger<S extends ScopeName>(members: {
+  readonly kind: "trigger";
+  readonly entries: readonly PdxEntry[];
+  readonly refs: readonly ContentRefUse[];
+  readonly and: Trigger<S>["and"];
+}): Trigger<S> {
+  return Object.assign(() => {
+    throw new Error(POISON_MESSAGE);
+  }, members) as unknown as Trigger<S>;
+}
+
+/**
  * The flat-conjunction tree every `and`-shaped combinator builds: operands'
  * entries and refs concatenate in argument order with no wrapper block,
  * matching the implicit AND every PDXScript block already is. `./triggers.ts`
@@ -118,21 +139,24 @@ export function conjoin<S extends ScopeName>(operands: readonly Trigger<S>[]): T
   );
 }
 
+/**
+ * Builds a {@link Trigger} over already-lowered PDXScript entries, in the
+ * scope `S` the caller claims. `refs` is the content the entries reference,
+ * which travels with the value so a splice site does not rediscover it.
+ *
+ * Generated leaf conditions call this; author code should compose the
+ * generated builders and the combinators in `./triggers.ts` instead.
+ */
 export function trigger<S extends ScopeName>(
   entries: PdxEntry[],
   refs: readonly ContentRefUse[] = []
 ): Trigger<S> {
-  return Object.assign(
-    () => {
-      throw new Error(POISON_MESSAGE);
+  return brandTrigger<S>({
+    kind: "trigger",
+    entries,
+    refs,
+    and<T extends ScopeName>(this: Trigger<T>, ...others: readonly Trigger<T>[]): Trigger<T> {
+      return conjoin([this, ...others]);
     },
-    {
-      kind: "trigger",
-      entries,
-      refs,
-      and<T extends ScopeName>(this: Trigger<T>, ...others: readonly Trigger<T>[]): Trigger<T> {
-        return conjoin([this, ...others]);
-      },
-    } as const
-  ) as unknown as Trigger<S>;
+  });
 }

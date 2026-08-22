@@ -8,9 +8,8 @@ import {
   registerComplexTriggerModifierDescKey,
   registerModifierDescKey,
 } from "../script/effects/modifiers.ts";
-import type { ModifierWithLoc } from "../script/effects/types.ts";
 import type { TypedRef } from "../script/scalar.ts";
-import { isComplexTriggerModifier } from "./blocks.ts";
+import { isComplexTriggerModifier, modifierRowWithLoc } from "./blocks.ts";
 import { dualArm, fieldEntries, resolveFromClosures } from "./lower.ts";
 import type { ShapeMint } from "./mint-provenance.ts";
 import {
@@ -484,16 +483,13 @@ export class ContentAuthoring {
         registerComplexTriggerModifierDescKey(row, ownerKey, key);
         return;
       }
-      const { key, unstableWarning } = modifierDescKey(
-        ownerId,
-        fieldPath,
-        row as ModifierWithLoc<ScopeName>
-      );
+      const typed = modifierRowWithLoc(row, `"${ownerId}" (${fieldPath})`);
+      const { key, unstableWarning } = modifierDescKey(ownerId, fieldPath, typed);
       if (unstableWarning !== undefined) {
         this.onUnstableDescKey(unstableWarning);
       }
-      into.push([key, row.desc]);
-      registerModifierDescKey(row, ownerKey, key);
+      into.push([key, typed.desc]);
+      registerModifierDescKey(typed, ownerKey, key);
     });
   }
 }

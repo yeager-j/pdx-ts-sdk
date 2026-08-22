@@ -206,5 +206,16 @@ describe("the public authoring surface", () => {
     void sdk.addShipOfSizeLimits;
     // @ts-expect-error — installing reports, so the bare result type is gone.
     expectTypeOf<sdk.InstallResult>().toBeObject();
+    // @ts-expect-error — the unknown-accepting resolver is SDK-internal.
+    void sdk.refIdOf;
+  });
+
+  it("keeps refId narrow, so a value that is not a reference cannot reach it", () => {
+    // refId is public, and its result is written straight into the output. An
+    // arbitrary object resolves to `undefined` there, which serializes as the
+    // word "undefined" — so the compiler refuses it rather than the build.
+    expectTypeOf(sdk.refId).toBeFunction();
+    // @ts-expect-error — an object with no `id` is not a reference.
+    sdk.refId({ bogus: true });
   });
 });

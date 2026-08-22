@@ -453,6 +453,15 @@ describe("descriptor-derived patching", () => {
     expect(serialize([patched.toEntries()])).toContain(`\t\tdesc = ${entry![0]}\n`);
   });
 
+  it("refuses a modifiers row whose desc is not display text", () => {
+    // The exported types already forbid this, so reaching the check needs a
+    // row built outside them — which is exactly the case the check is for.
+    const row = { factor: 2, desc: 5 } as unknown as { factor: number; desc: string };
+    expect(() =>
+      patchTechnology(geneForging, () => ({ weightModifier: { modifiers: [row] } }))
+    ).toThrow(/Modifier\.desc on "pp_tech_gene_forging" \(weight_modifier\)/);
+  });
+
   it("pins the minted key to an author-supplied descKey, through the same owner", () => {
     const patched = patchTechnology(geneForging, () => ({
       weightModifier: {
