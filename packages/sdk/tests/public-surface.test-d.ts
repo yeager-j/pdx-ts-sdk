@@ -60,11 +60,10 @@ describe("the public authoring surface", () => {
   });
 
   it("lets a consumer name each patchable registry's item type, and place it", () => {
-    // The text guard in `tests/codegen/content-snapshot.test.ts` proves the
-    // export lines exist for every overlay row; this proves the names are
-    // usable — the package publishes no generated-module subpath, so a patch
-    // item a consumer cannot annotate is a patch item they cannot hold in a
-    // typed variable on the way to `mod.feature`.
+    // The generated barrel carries the export line for every overlay row; this
+    // proves the names are usable — the package publishes no generated-module
+    // subpath, so a patch item a consumer cannot annotate is a patch item they
+    // cannot hold in a typed variable on the way to `mod.feature`.
     const mod = createMod({
       name: "Public surface",
       prefix: "public_surface",
@@ -93,6 +92,73 @@ describe("the public authoring surface", () => {
     expectTypeOf(building).toExtend<BuildingItem>();
     expectTypeOf(megastructure).toExtend<MegastructureItem>();
     expectTypeOf(mod.feature(undefined, [technology, building, megastructure])).toBeObject();
+  });
+
+  it("lets a consumer name the generated content types", () => {
+    // The consumer end of `generated/content-public.ts`. Each group below is
+    // one table's contribution to that barrel: a name missing here cannot be
+    // written down at all, since the package publishes no generated-module
+    // subpath.
+    expectTypeOf<sdk.TechnologyDef["id"]>().toEqualTypeOf<string>();
+    expectTypeOf<sdk.TechnologyFields>().toBeObject();
+    expectTypeOf<sdk.DefinedTechnology>().toBeObject();
+    expectTypeOf<sdk.SpriteTypeDef>().toBeObject();
+    expectTypeOf<sdk.PdxmeshFields>().toBeObject();
+    expectTypeOf<sdk.DefinedSolarSystemInitializer>().toBeObject();
+
+    // Every patch registry's whole vocabulary, not just the item type above.
+    expectTypeOf<sdk.TechnologyPatch>().toBeObject();
+    expectTypeOf<sdk.PatchedTechnology>().toBeObject();
+    expectTypeOf<sdk.BuildingPatch>().toBeObject();
+    expectTypeOf<sdk.PatchedBuilding>().toBeObject();
+    expectTypeOf<sdk.MegastructurePatch>().toBeObject();
+    expectTypeOf<sdk.PatchedMegastructure>().toBeObject();
+
+    // The repeated-struct interfaces an author fills by key.
+    expectTypeOf<sdk.TraditionSwapFields>().toBeObject();
+    expectTypeOf<sdk.AscensionPerkSwapFields>().toBeObject();
+    expectTypeOf<sdk.SituationStageFields>().toBeObject();
+    expectTypeOf<sdk.SituationApproachFields>().toBeObject();
+
+    // The scope unions a scope-parameterised registry declares.
+    expectTypeOf<sdk.DecisionScope>().toEqualTypeOf<"planet" | "ship">();
+    expectTypeOf<sdk.SpecialProjectScope>().toEqualTypeOf<
+      "country" | "planet" | "ship" | "carrier"
+    >();
+    expectTypeOf<"planet">().toExtend<sdk.SpecialProjectLocationScope>();
+
+    // The name a shape mint builds, which is not `MintedContentId`-shaped.
+    expectTypeOf<
+      sdk.SpriteTextIconName<"prefix", "icon">
+    >().toEqualTypeOf<"GFX_text_prefix_icon">();
+    expectTypeOf<
+      sdk.SpriteFleetOrderButtonGroundSupportName<"stance", true>
+    >().toEqualTypeOf<"GFX_fleet_order_button_ground_support_stance_selected">();
+
+    // The curated nested types, each the type of a member an author fills.
+    expectTypeOf<sdk.EventChainCounterDefinition>().toBeObject();
+    expectTypeOf<sdk.GovernmentTriggerBlock>().toBeObject();
+    expectTypeOf<sdk.GovernmentTriggerClause<string>>().toBeObject();
+    expectTypeOf<sdk.GovernmentTriggerClauseGroup<string>>().toBeObject();
+    expectTypeOf<sdk.MoonInitializerFields>().toBeObject();
+    expectTypeOf<sdk.PlanetInitializerFields>().toBeObject();
+    expectTypeOf<sdk.PdxmeshAnimation>().toBeObject();
+    expectTypeOf<sdk.PdxmeshMeshsettings>().toBeObject();
+    expectTypeOf<sdk.ShipSizeSectionSlots>().toBeObject();
+    expectTypeOf<sdk.SpecialProjectRequirements>().toBeObject();
+    expectTypeOf<sdk.SpecialProjectTriggeredRequirement>().toBeObject();
+    expectTypeOf<sdk.SpriteTypeAnimation>().toBeObject();
+  });
+
+  it("keeps generated lowering machinery out of the content barrel", () => {
+    // @ts-expect-error — the runtime field table is lowering machinery.
+    void sdk.TECHNOLOGY_FIELDS;
+    // @ts-expect-error — so is the localisation descriptor table.
+    void sdk.TECHNOLOGY_LOCALISATION;
+    // @ts-expect-error — the base interface a selector resolves through is internal.
+    expectTypeOf<sdk.SpecialProjectFieldsBase>().toBeObject();
+    // @ts-expect-error — a nested struct authored inline needs no name of its own.
+    expectTypeOf<sdk.TechnologyPrereqforDesc>().toBeObject();
   });
 
   it("returns one report shape from every materialization sink", () => {

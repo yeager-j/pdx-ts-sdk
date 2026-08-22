@@ -89,6 +89,8 @@ export interface RegistryDefinerPlan {
   readonly exactNameRow: ExactNameMintRow | null;
   /** Generated name aliases contributed by sprite shape mints. */
   readonly shapeMintTypes: readonly string[];
+  /** The names those aliases bind, which an author names to type a minted definition. */
+  readonly shapeMintTypeNames: readonly string[];
   /** Reference types required by the generated shape-mint signatures. */
   readonly shapeMintRefTypes: readonly string[];
   /** The emitted nested-definition member table, for the capability module. */
@@ -656,6 +658,7 @@ export function planRegistryDefiner(
   const capabilityBindings: string[] = [];
   const runtimeDefiners: string[] = [];
   const shapeMintTypes: string[] = [];
+  const shapeMintTypeNames: string[] = [];
   const shapeMintRefTypes: string[] = [];
   let exactNameRow: ExactNameMintRow | null = null;
 
@@ -691,6 +694,7 @@ export function planRegistryDefiner(
       }
       const emitted = shapeMintMethod(shape, name, contents);
       shapeMintTypes.push(emitted.type);
+      shapeMintTypeNames.push(emitted.typeName);
       capabilityMembers.push(emitted.member);
       capabilityBindings.push(emitted.binding);
       shapeMintRefTypes.push(...emitted.refTypes);
@@ -750,6 +754,7 @@ export function planRegistryDefiner(
     mintShapeRow,
     exactNameRow,
     shapeMintTypes,
+    shapeMintTypeNames,
     shapeMintRefTypes,
     nestedDefinitionTable:
       nestedDefinitionMembers.length > 0 && graft === undefined
@@ -788,6 +793,7 @@ function shapeMintMethod(
   contents: readonly { readonly registry: string; readonly referenceName: string }[]
 ): {
   readonly type: string;
+  readonly typeName: string;
   readonly member: string;
   readonly binding: string;
   readonly refTypes: readonly string[];
@@ -856,6 +862,7 @@ function shapeMintMethod(
     type:
       docComment([`The name a \`${shape.method}\` mints.`, "", `Seed: ${shape.seed}.`]) +
       `export type ${alias}<\n  ${aliasParameters.join(",\n  ")},\n> = ${aliasBody};\n`,
+    typeName: alias,
     member:
       docComment(
         [
