@@ -54,7 +54,8 @@ import {
   type ModifierClosure,
   type ScopeObjOf,
 } from "../src/index.ts";
-import { anyOf, viewFromFiles } from "../src/stellaris/vanilla/view.ts";
+import { anyOf } from "../src/stellaris/vanilla/parsed-definitions.ts";
+import { viewFromFiles } from "../src/stellaris/vanilla/view.ts";
 import { resonancePack } from "./fixtures/resonance-pack.ts";
 import { BUILDING_FILE, TECH_FILE, VARS_FILE } from "./fixtures/vanilla-fixture.ts";
 

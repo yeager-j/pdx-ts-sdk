@@ -15,8 +15,9 @@ import {
   type PatchPlan,
 } from "../stellaris/vanilla/override-plan.ts";
 import { registryRule, SUPPORTED_STELLARIS_BUILD } from "../stellaris/vanilla/override-rules.ts";
+import { sha256Hex } from "../stellaris/vanilla/parse.ts";
+import type { VanillaFile } from "../stellaris/vanilla/parsed-definitions.ts";
 import type { PatchedContent } from "../stellaris/vanilla/patch.ts";
-import { sha256Hex, type VanillaFile } from "../stellaris/vanilla/view.ts";
 import type { BuildOptions, ResolvedModConfig } from "./config.ts";
 import type { ContentFile } from "./model.ts";
 import type { ReferenceUse } from "./references.ts";

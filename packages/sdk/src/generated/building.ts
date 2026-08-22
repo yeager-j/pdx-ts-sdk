@@ -13,8 +13,8 @@ import type {
   WeightBlock,
 } from "../content/types.ts";
 import type { Trigger } from "../script/trigger-core.ts";
+import type { ParsedBuilding } from "../stellaris/vanilla/parsed-definitions.ts";
 import type { ContentPatchItem, PatchedContent, PatchInput } from "../stellaris/vanilla/patch.ts";
-import type { ParsedBuilding } from "../stellaris/vanilla/view.ts";
 import type { BuildingCategory } from "./enums.ts";
 import type { BuildingRef, SpriteRef, TechnologyRef } from "./refs.ts";
 import type { BuildingSet } from "./value-sets.ts";

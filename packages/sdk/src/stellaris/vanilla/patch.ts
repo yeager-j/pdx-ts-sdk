@@ -51,7 +51,7 @@ import {
 } from "../../script/effects/modifiers.ts";
 import type { ModifierWithLoc } from "../../script/effects/types.ts";
 import { refId } from "../../script/scalar.ts";
-import type { AnyOf, ParsedDefinition, ParsedNumber } from "./view.ts";
+import type { AnyOf, ParsedDefinition, ParsedNumber } from "./parsed-definitions.ts";
 
 /** What the shared lowering reads; the same shape `fieldEntries` is handed. */
 interface LoweringContext {

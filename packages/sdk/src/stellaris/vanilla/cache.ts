@@ -23,7 +23,7 @@ import {
 } from "node:fs";
 import { join } from "node:path";
 
-import { sha256Hex, type ParsedSource } from "./view.ts";
+import { sha256Hex, type ParsedSource } from "./parse.ts";
 
 /** Bump when the cached shape changes; old entries just miss. */
 const CACHE_FORMAT_VERSION = 1;

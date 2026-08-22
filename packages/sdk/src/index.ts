@@ -411,8 +411,6 @@ export {
   anyOf,
   ParsedDefinition,
   ParsedTechnology,
-  VanillaView,
-  viewFromFiles,
   type AnyOf,
   type ParsedBuilding,
   type ParsedMegastructure,
@@ -421,7 +419,8 @@ export {
   type ParsedRegistryName,
   type Prerequisite,
   type VanillaFile,
-} from "./stellaris/vanilla/view.ts";
+} from "./stellaris/vanilla/parsed-definitions.ts";
+export { VanillaView, viewFromFiles } from "./stellaris/vanilla/view.ts";
 export type { BuildingPatch, PatchedBuilding } from "./generated/building.ts";
 export type { MegastructurePatch, PatchedMegastructure } from "./generated/megastructure.ts";
 export type { PatchedTechnology, TechnologyPatch } from "./generated/technology.ts";
