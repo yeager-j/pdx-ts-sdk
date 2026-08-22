@@ -20,6 +20,7 @@ function rangeSignature(range: {
   return `${range.min ?? "-inf"}..${range.max ?? "inf"}`;
 }
 
+/** Serializes a field's nested scope context for inclusion in a fingerprint. */
 export function scopeSignature(field: RuleField): string {
   const scope = field.scope;
   return scope === null
@@ -43,6 +44,7 @@ function keySignature(field: RuleField): string {
   }
 }
 
+/** Serializes a rule type into a deterministic, order-independent fingerprint. */
 export function ruleTypeSignature(type: RuleType): string {
   switch (type.kind) {
     case "bool":
@@ -86,26 +88,38 @@ export function ruleTypeSignature(type: RuleType): string {
   }
 }
 
+/** Serializes a keyed rule field into a deterministic fingerprint. */
 export function fieldSignature(field: RuleField): string {
   const cardinality = `${field.cardinality.min}..${field.cardinality.max ?? "inf"}`;
   return `${keySignature(field)}:${cardinality}:${field.comparison ? "comparison" : "assignment"}:${scopeSignature(field)}:${ruleTypeSignature(field.type)}`;
 }
 
 function memberNames(type: RuleType): string[] {
-  if (type.kind !== "block") return [];
-  return type.fields.flatMap((field) =>
-    field.key.kind === "subtype"
-      ? memberNames(field.type)
-      : field.key.kind === "name"
-        ? [field.key.name]
-        : field.key.kind === "aliasName"
-          ? [`alias_name[${field.key.category}]`]
-          : []
-  );
+  if (type.kind !== "block") {
+    return [];
+  }
+  const names: string[] = [];
+  for (const field of type.fields) {
+    if (field.key.kind === "subtype") {
+      names.push(...memberNames(field.type));
+      continue;
+    }
+    if (field.key.kind === "name") {
+      names.push(field.key.name);
+      continue;
+    }
+    if (field.key.kind === "aliasName") {
+      names.push(`alias_name[${field.key.category}]`);
+    }
+  }
+  return names;
 }
 
+/** Describes whether a field is scalar or block-shaped and names its block members. */
 export function armShape(field: RuleField): string {
   const cardinality = `${field.cardinality.min}..${field.cardinality.max ?? "inf"}`;
-  if (field.type.kind !== "block") return `scalar ${cardinality}`;
+  if (field.type.kind !== "block") {
+    return `scalar ${cardinality}`;
+  }
   return `block ${cardinality} {${[...new Set(memberNames(field.type))].sort().join(", ")}}`;
 }

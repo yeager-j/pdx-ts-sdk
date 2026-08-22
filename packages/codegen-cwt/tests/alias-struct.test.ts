@@ -25,11 +25,9 @@ const GOVERNMENTS = "common/governments.cwt";
 
 const rules = loadRules(CONFIG);
 
-function categoryOf(file: string, category: string): Map<string, AliasDecl[]> {
+function categoryOf(file: string, category: string): ReadonlyMap<string, readonly AliasDecl[]> {
   const parsed = parseCwt(readFileSync(`${CONFIG}/${file}`, "utf8"), file);
-  const members = new Map<string, AliasDecl[]>();
-  readAliases(parsed.nodes, file, category, new Map(), members);
-  return members;
+  return readAliases(parsed.nodes, file, category, new Map()).aliases;
 }
 
 const governmentTrigger = categoryOf(GOVERNMENTS, "government_trigger");
@@ -182,13 +180,18 @@ describe("government_trigger emission", () => {
   it("declines an unknown-shaped member by name, with a reason", () => {
     // Gaps stay visible: a member the emitter has no shape for must never be
     // dropped into a silently smaller interface.
-    const members = new Map(governmentTrigger);
     const unknown = parseCwt(
       "alias[government_trigger:has_country_flag] = { count = int flag = scalar }\n" +
         "alias[government_trigger:weird] = alias_match_left[modifier_rule]\n",
       "synthetic.cwt"
     );
-    readAliases(unknown.nodes, "synthetic.cwt", "government_trigger", new Map(), members);
+    const unknownAliases = readAliases(
+      unknown.nodes,
+      "synthetic.cwt",
+      "government_trigger",
+      new Map()
+    ).aliases;
+    const members = new Map([...governmentTrigger, ...unknownAliases]);
     const declined = emitAliasStruct(new Emitter(rules), "government_trigger", members);
     expect(declined.declinedMembers).toEqual([
       "government_trigger:has_country_flag — a block matching neither the " +

@@ -48,29 +48,22 @@ const BASE_RULE_FILES = [
 
 function cwtFiles(root: string, relative = ""): string[] {
   const directory = path.join(root, relative);
-  return readdirSync(directory)
-    .sort()
-    .flatMap((name) => {
-      const file = path.join(directory, name);
-      const child = path.join(relative, name);
-      return statSync(file).isDirectory()
-        ? cwtFiles(root, child)
-        : name.endsWith(".cwt")
-          ? [child]
-          : [];
-    });
+  const files: string[] = [];
+  for (const name of readdirSync(directory).sort()) {
+    const file = path.join(directory, name);
+    const child = path.join(relative, name);
+    if (statSync(file).isDirectory()) {
+      files.push(...cwtFiles(root, child));
+      continue;
+    }
+    if (name.endsWith(".cwt")) {
+      files.push(child);
+    }
+  }
+  return files;
 }
 
-/**
- * Reads just the `type[...]` declarations out of an arbitrary set of `.cwt`
- * files.
- *
- * {@link loadRules} deliberately loads a fixed file list, and its drift gate is
- * calibrated against exactly that list. Sounds and sprites are declared in
- * files outside it, and the vanilla-identifier generator needs their paths,
- * keywords, and extensions without widening what the main pipeline reads —
- * hence a second, narrower entry point over the same reader.
- */
+/** Loads only content type declarations from an explicit list of CWT files. */
 export function loadContentTypesFrom(
   root: string,
   files: readonly string[]
@@ -78,7 +71,9 @@ export function loadContentTypesFrom(
   const contentTypes = new Map<string, ContentType>();
   for (const relative of files) {
     const parsed = parseCwt(readFileSync(path.join(root, relative), "utf8"), relative);
-    readContentTypes(parsed.nodes, contentTypes);
+    for (const [name, contentType] of readContentTypes(parsed.nodes)) {
+      contentTypes.set(name, contentType);
+    }
   }
   return contentTypes;
 }
@@ -90,14 +85,13 @@ function parseFile(root: string, relative: string): ParsedRuleFile {
   };
 }
 
+/** Loads the configured CWT sources and builds their complete classified rule set. */
 export function loadRules(
   root: string,
   extraSourceFiles: readonly string[],
   extraAliasCategories: readonly string[]
 ): RuleSet {
-  const ruleFiles = [...BASE_RULE_FILES, ...extraSourceFiles].filter(
-    (file, index, files) => files.indexOf(file) === index
-  );
+  const ruleFiles = [...new Set([...BASE_RULE_FILES, ...extraSourceFiles])];
   const parsedFiles = ruleFiles.map((relative) => parseFile(root, relative));
   const loaded = new Set(ruleFiles);
   const extraComplexEnumFiles = cwtFiles(root)
