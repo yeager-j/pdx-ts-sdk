@@ -26,7 +26,7 @@
  * same `fields.ts` loop `content-type.ts` runs, one level in.
  */
 
-import type { DescentNode } from "../../corpus/corpus.ts";
+import type { DescentNode } from "../../corpus/observations.ts";
 import { isOptional } from "../../cwt/model.ts";
 import {
   authoredLiterals,

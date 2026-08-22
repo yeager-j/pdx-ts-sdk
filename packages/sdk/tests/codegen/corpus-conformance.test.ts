@@ -1193,7 +1193,7 @@ describe("shape conformance, list arity", () => {
 
   it("stays silent for a single-valued lowering", () => {
     // The check is one-directional by construction — a field CWT declares
-    // `0..1` and the game writes twice is unauthorable, and `corpus.ts` cannot
+    // `0..1` and the game writes twice is unauthorable, and `corpus/` cannot
     // see it. `CONTENT_FIELD_OVERRIDES`' `arity: "repeated"` is that fix, read
     // off the fixture's own `repeated` count.
     expect(shapeConformance(observationOf({ definitions: 3 }), [single], noScopesOf)).toEqual([]);

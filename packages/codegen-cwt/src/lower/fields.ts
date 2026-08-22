@@ -11,7 +11,7 @@
  * of growing parallel ones that disagree.
  */
 
-import type { DescentNode } from "../corpus/corpus.ts";
+import type { DescentNode } from "../corpus/observations.ts";
 import { isOptional, isRepeated, type RuleField, type RuleType } from "../cwt/model.ts";
 import { camelCase, constantCase, pascalCase } from "../naming.ts";
 import {

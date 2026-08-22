@@ -2,7 +2,7 @@
  * Which files of an install belong to one registry.
  *
  * The two readers that ask this want different things out of the files —
- * `corpus.ts` counts the *fields* definitions write, `@pdx-ts/codegen-vanilla`'s
+ * `corpus/` counts the *fields* definitions write, `@pdx-ts/codegen-vanilla`'s
  * `read-ids.ts` collects their *ids* — but "which files" is one question with
  * one answer, and the two used to answer it differently. The corpus reader read
  * a single directory flat, so every registry whose files nest measured as a

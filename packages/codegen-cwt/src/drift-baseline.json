@@ -1,33 +1,14 @@
 {
   "triggers": {
-    "rulesOnly": [
-      "<scripted_trigger>",
-      "has_automation_setting",
-      "situation_progress_percent"
-    ],
-    "docsOnly": [
-      "and",
-      "hidden_trigger",
-      "nand",
-      "nor",
-      "not",
-      "or"
-    ]
+    "rulesOnly": ["<scripted_trigger>", "has_automation_setting", "situation_progress_percent"],
+    "docsOnly": ["and", "hidden_trigger", "nand", "nor", "not", "or"]
   },
   "effects": {
-    "rulesOnly": [
-      "<scripted_effect>",
-      "ai_trade_facility",
-      "run_in_ai_mode"
-    ],
-    "docsOnly": [
-      "hidden_effect"
-    ]
+    "rulesOnly": ["<scripted_effect>", "ai_trade_facility", "run_in_ai_mode"],
+    "docsOnly": ["hidden_effect"]
   },
   "links": {
-    "rulesOnly": [
-      "pop_group"
-    ],
+    "rulesOnly": ["pop_group"],
     "docsOnly": []
   },
   "modifiers": {
@@ -42,14 +23,10 @@
   "unknownModifierCategories": [],
   "unscopedModifierNames": [],
   "malformedOptions": [],
-  "unknownKeywords": [
-    "effects.cwt:2902 sceop[fleet]"
-  ],
+  "unknownKeywords": ["effects.cwt:2902 sceop[fleet]"],
   "malformedDocBlocks": [],
   "malformedModifierBlocks": [],
-  "unknownScopes": [
-    "pop — effects.log:52, triggers.log:73"
-  ],
+  "unknownScopes": ["pop — effects.log:52, triggers.log:73"],
   "scopeResolutions": [
     {
       "id": "stale-v4-scope-names",
@@ -553,11 +530,7 @@
         "effects": []
       },
       "unscopedRules": {
-        "triggers": [
-          "cosmic_storm_influence_value",
-          "has_pop_flag",
-          "pop_has_ethic"
-        ],
+        "triggers": ["cosmic_storm_influence_value", "has_pop_flag", "pop_has_ethic"],
         "effects": [
           "cancel_contract",
           "create_random_fleet",
@@ -581,9 +554,7 @@
       },
       "unscopedRules": {
         "triggers": [],
-        "effects": [
-          "<scripted_effect>"
-        ]
+        "effects": ["<scripted_effect>"]
       }
     }
   ]

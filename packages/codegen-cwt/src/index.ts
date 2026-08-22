@@ -5,16 +5,16 @@
  * as a reviewable diff on the SDK's public API.
  */
 
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { scopeIndex, type ContentType } from "./cwt/rules.ts";
-import { emitAliasSplice, type AliasSpliceEmission } from "./emit/content/alias-splice.ts";
-import { emitAliasStruct } from "./emit/content/alias-struct.ts";
+import { emitAliasCategories } from "./emit/content/alias-categories.ts";
 import { emitContentType, type ContentEmission } from "./emit/content/content-type.ts";
 import { contentDefiners } from "./emit/content/definers.ts";
 import { emitContentFieldDocs, type FieldDocsModule } from "./emit/content/field-docs.ts";
+import { contentRegistry } from "./emit/content/registry.ts";
 import { emitVanillaRefs } from "./emit/content/vanilla-refs.ts";
 import { emitEffects } from "./emit/script/effects.ts";
 import { emitEvents } from "./emit/script/events.ts";
@@ -35,12 +35,10 @@ import { loadRules } from "./load-rules.ts";
 import { parseModifierDocs } from "./logs/modifier-docs.ts";
 import { parseScopeLinks } from "./logs/scopes.ts";
 import { parseTriggerDocs } from "./logs/trigger-docs.ts";
-import { contentFileLayout } from "./lower/content-layout.ts";
 import { referenceNameOf, typesReferencedBySubtype } from "./lower/content-reference.ts";
 import { emitContentShapeProtocol } from "./lower/content-shape.ts";
 import { lowerRuleTable } from "./lower/lowered-rule.ts";
-import { structuralSpliceOf } from "./lower/rule-shapes.ts";
-import { docComment, kebabCase } from "./naming.ts";
+import { kebabCase } from "./naming.ts";
 import {
   assertHandWrittenTriggerExportsMatchRules,
   assertOverlayRegistriesKnown,
@@ -72,7 +70,9 @@ import { deriveContentSwapIdentities, emitContentSwapProtocol } from "./policy/c
 import { createEffectPolicy, emitEffectPolicyProtocol } from "./policy/effects.ts";
 import { createEventFieldPolicy, emitEventFieldProtocol } from "./policy/event-fields.ts";
 import {
+  assertRegistryName,
   CONTENT_MANIFEST,
+  effectiveKeyFilter,
   registryNameOf,
   VANILLA_REF_EXTRAS,
   type ContentManifestEntry,
@@ -83,17 +83,12 @@ import {
 } from "./policy/modifiers.ts";
 import { formatScriptGapReport, reconcileScriptGaps } from "./policy/script-gaps.ts";
 import { HAND_WRITTEN_TRIGGER_EXPORTS, RESERVED_TRIGGER_EXPORT_NAMES } from "./policy/triggers.ts";
-import {
-  compareToBaseline,
-  reconcile,
-  updatedBaseline,
-  type DriftBaseline,
-  type DriftReport,
-} from "./reconcile/reconcile.ts";
-import { Emitter, type Usage } from "./render/emitter.ts";
-import type { DocTable, FieldOmissionRow } from "./render/field-rows.ts";
+import { checkDrift } from "./reconcile/baseline.ts";
+import { reconcile } from "./reconcile/reconcile.ts";
+import { Emitter } from "./render/emitter.ts";
 import { header, write, writeModule } from "./render/generated-file.ts";
 import { importList } from "./render/symbols.ts";
+import { printReport, reportSection } from "./report.ts";
 
 /**
  * Every path this script touches is anchored to the module, not the process:
@@ -106,7 +101,6 @@ const VENDOR = path.join(ROOT, "vendor/cwtools-stellaris-config");
 const CONFIG = path.join(VENDOR, "config");
 /** The dump directory matching the game version these rules target. */
 const DOCS = path.join(VENDOR, "script-docs/v4.4.1");
-const BASELINE = fileURLToPath(new URL("./drift-baseline.json", import.meta.url));
 
 function upstreamCommit(): string {
   const version = readFileSync(`${VENDOR}/VERSION.md`, "utf8");
@@ -124,64 +118,6 @@ function fieldCount(emission: ContentEmission): string {
   return (
     `${emission.emittedFields.length} fields emitted` + (nested === 0 ? "" : ` (+${nested} nested)`)
   );
-}
-
-function reportSection(report: string[], title: string, lines: readonly string[]): void {
-  if (lines.length === 0) {
-    return;
-  }
-  report.push(`\n${title} (${lines.length}):`);
-  for (const line of lines) {
-    report.push(`  ${line}`);
-  }
-}
-
-/**
- * Prints the codegen report, in the order its lines were collected.
- *
- * The one place `main()`'s report reaches `console.log`: every per-registry
- * and per-category line above is data by the time it gets here, pushed onto
- * {@link report} as `main()` computed it rather than printed where it was
- * computed — so what the report says and how it reaches stdout are two
- * separate concerns instead of one interleaved with the pipeline itself.
- */
-function printReport(report: readonly string[]): void {
-  for (const line of report) {
-    console.log(line);
-  }
-}
-
-function checkDrift(report: DriftReport, rebaseline: boolean): void {
-  // A baseline written before a join existed reads as that join being empty,
-  // so adding a join reports its entire current state as drift to review
-  // instead of crashing on the missing field.
-  const baseline = {
-    links: { rulesOnly: [], docsOnly: [] },
-    malformedDocBlocks: [],
-    malformedModifierBlocks: [],
-    ...(JSON.parse(readFileSync(BASELINE, "utf8")) as Partial<DriftBaseline>),
-  } as DriftBaseline;
-  if (rebaseline) {
-    writeFileSync(
-      BASELINE,
-      `${JSON.stringify(updatedBaseline(report, baseline), null, 2)}\n`,
-      "utf8"
-    );
-    console.log(`Rebaselined drift: ${BASELINE}`);
-    return;
-  }
-  const differences = compareToBaseline(report, baseline);
-  if (differences.length === 0) {
-    return;
-  }
-  console.error("\nThe two rule sources drifted since the recorded baseline:\n");
-  console.error(differences.join("\n"));
-  console.error(
-    "\nEach line is a trigger, effect, or annotation that exists in one source and not\n" +
-      "the other, which means codegen would emit a wrong signature or silently skip it.\n" +
-      "Review the change, then re-run with --rebaseline to accept it."
-  );
-  process.exit(1);
 }
 
 async function main(): Promise<void> {
@@ -296,86 +232,11 @@ async function main(): Promise<void> {
     });
   }
 
-  // An alias category emitted as its own shared module, from either of the two
-  // reasons a category needs one: an overlay row lowering a *keyed* field onto
-  // it (`civic_or_origin.potential` -> `government_trigger`), or a body
-  // splicing it unkeyed (`solar_system_initializer` -> `planet_initializer`).
-  // Both produce a named interface plus a `registerAliasStructFields` call, so
-  // they share a write loop and a report line.
-  //
-  // A worklist rather than a flat list, because a spliced category can splice
-  // further categories: `planet_initializer` reaches `moon_initializer`, which
-  // reaches itself. Runs after the content loop so the splice seeds exist.
-  const aliasCategories = new Map<
-    string,
-    {
-      readonly code: string;
-      readonly typeName: string;
-      readonly usage: Usage;
-      readonly emittedMembers: readonly string[];
-      readonly declinedMembers: readonly string[];
-      readonly omissions: readonly FieldOmissionRow[];
-      readonly docTables: readonly DocTable[];
-    }
-  >();
-  const aliasSplices = new Map<string, AliasSpliceEmission>();
-  const emitCategory = (category: string, kind: "struct" | "splice"): void => {
-    if (aliasCategories.has(category)) {
-      return;
-    }
-    if (kind === "struct") {
-      // An overlay row naming a category the rules do not declare is a
-      // mistake in the row, so this throws rather than emitting nothing.
-      const members = rules.aliasCategories.get(category);
-      if (members === undefined || members.size === 0) {
-        throw new Error(
-          `overlay requests aliasStruct category "${category}" but the rules declare no ` +
-            `alias[${category}:...] members — add it to EXTRA_ALIAS_CATEGORIES`
-        );
-      }
-      emitter.beginFile(category);
-      const emission = emitAliasStruct(emitter, category, members);
-      aliasCategories.set(category, { ...emission, usage: emitter.endFile() });
-      return;
-    }
-    // A splice seed is different: not every spliced category is structural, and
-    // a non-structural one is not an error. `static_modifier` splices
-    // `modifier`, whose authoring member is the `ModifierClosure` the runtime
-    // already knows and whose members the rules keep outside `aliasCategories`
-    // entirely — so there is no interface and no field table to emit.
-    if (structuralSpliceOf(emitter, category) === null) {
-      return;
-    }
-    emitter.beginFile(category);
-    const emission = emitAliasSplice(emitter, category)!;
-    const usage = emitter.endFile();
-    aliasSplices.set(category, emission);
-    aliasCategories.set(category, {
-      code: emission.code,
-      typeName: emission.typeName,
-      usage,
-      emittedMembers: emission.emittedFields.map((field) => field.field),
-      declinedMembers: [...emission.declinedFields, ...emission.unsupported],
-      omissions: emission.omissions,
-      docTables: emission.docTables,
-    });
-    for (const nested of emission.spliceCategories) {
-      emitCategory(nested, "splice");
-    }
-  };
-  for (const override of [
-    ...CONTENT_FIELD_OVERRIDES.values(),
-    ...REPEATED_STRUCT_FIELD_OVERRIDES.values(),
-  ]) {
-    if (override.shape === "aliasStruct") {
-      emitCategory(override.category!, "struct");
-    }
-  }
-  for (const content of contents) {
-    for (const category of content.emission.inlineSplices) {
-      emitCategory(category, "splice");
-    }
-  }
+  const { aliasCategories, aliasSplices } = emitAliasCategories(
+    emitter,
+    rules,
+    contents.flatMap((content) => content.emission.inlineSplices)
+  );
 
   // Overlay-table staleness. Every table below is consulted through a plain
   // `.get()`/`.has()` lookup, so a row nothing matches would otherwise fail
@@ -795,149 +656,6 @@ async function main(): Promise<void> {
     );
   }
   printReport(report);
-}
-
-const REGISTRY_NAME = /^[A-Za-z][A-Za-z0-9_]*$/;
-
-/**
- * Checks one row's resolved registry name before anything derives from it.
- *
- * The name reaches an exported symbol, a capability method, a generated file
- * stem and a fixture stem, so a name that is not an identifier stem fails the
- * build somewhere far from the row that caused it. A `name` that merely
- * restates what `as ?? type` already yields is dead weight that would drift,
- * and two rows resolving to one name would silently overwrite each other's
- * generated file.
- */
-function assertRegistryName(
-  entry: ContentManifestEntry,
-  registry: string,
-  seen: Set<string>
-): void {
-  if (!REGISTRY_NAME.test(registry)) {
-    throw new Error(
-      `The manifest resolves type[${entry.type}] to registry name "${registry}", which is not ` +
-        "a legal identifier stem"
-    );
-  }
-  if (entry.name !== undefined && entry.name === (entry.as ?? entry.type)) {
-    throw new Error(
-      `The manifest's name "${entry.name}" for type[${entry.type}] is what the row already ` +
-        "resolves to, so the rename says nothing — drop it"
-    );
-  }
-  if (seen.has(registry)) {
-    throw new Error(
-      `Two manifest rows resolve to the registry name "${registry}", so they would generate ` +
-        "over each other"
-    );
-  }
-  seen.add(registry);
-}
-
-/**
- * The `## type_key_filter` that constrains one manifest row's keyword.
- *
- * A type-level filter constrains every row reading that type. Where the type
- * declares none, an `as` row is one subtype of it, and it is that subtype's own
- * filter that says which key its definitions are written under — which is what
- * lets the three `component_template` keywords and `sprite`'s `spriteType` be
- * checked rather than trusted.
- *
- * A negated filter (`<> random_list`) names a key the entries are *not*
- * written under, so it constrains nothing about the keyword and is dropped
- * here rather than compared against.
- */
-function effectiveKeyFilter(
-  type: ContentType,
-  as: string | undefined
-): { readonly key: string; readonly source: string } | null {
-  if (type.keyFilter !== null) {
-    return type.keyFilter.negated
-      ? null
-      : { key: type.keyFilter.key, source: `type[${type.name}]` };
-  }
-  if (as === undefined) {
-    return null;
-  }
-  const subtype = type.subtypes.find((candidate) => candidate.name === as);
-  if (subtype?.keyFilter == null || subtype.keyFilter.negated) {
-    return null;
-  }
-  return { key: subtype.keyFilter.key, source: `type[${type.name}] subtype[${as}]` };
-}
-
-function contentRegistry(
-  contents: readonly {
-    manifest: (typeof CONTENT_MANIFEST)[number];
-    registry: string;
-    referenceName: string;
-    keyword: string | undefined;
-    type: ContentType;
-    emission: ContentEmission;
-  }[]
-): string {
-  const imports = contents
-    .map((content) => {
-      const file = `./${kebabCase(content.registry)}.ts`;
-      const values = [content.emission.fieldsConstant, content.emission.localisationConstant];
-      return `import { ${values.join(", ")} } from ${JSON.stringify(file)};\n`;
-    })
-    .join("");
-  const descriptors = contents
-    .map((content) => {
-      const sourcePath = content.type.path;
-      if (sourcePath === null || !sourcePath.startsWith("game/")) {
-        throw new Error(`type[${content.registry}] has unusable path ${sourcePath}`);
-      }
-      const outputDir = sourcePath.slice("game/".length);
-      // The directory's own last component, unless SDK-121 fixed a canonical
-      // stem for this registry — see `FILE_STEM_OVERLAYS`.
-      const fileStem = FILE_STEM_OVERLAYS.get(content.registry) ?? path.posix.basename(outputDir);
-      const layout = contentFileLayout(content.registry, content.type);
-      const mintHead = MINT_SHAPE_OVERLAYS.get(content.registry)?.head;
-      return (
-        "  {\n" +
-        `    type: ${JSON.stringify(content.registry)},\n` +
-        `    referenceName: ${JSON.stringify(content.referenceName)},\n` +
-        `    outputDir: ${JSON.stringify(outputDir)},\n` +
-        `    fileStem: ${JSON.stringify(fileStem)},\n` +
-        `    fileExtension: ${JSON.stringify(layout.fileExtension)},\n` +
-        (mintHead === undefined ? "" : `    mintHead: ${JSON.stringify(mintHead)},\n`) +
-        (EXACT_NAME_MINTS.has(content.registry) ? "    exactNames: true,\n" : "") +
-        (layout.rootEnvelope === undefined
-          ? ""
-          : `    rootEnvelope: ${JSON.stringify(layout.rootEnvelope)},\n`) +
-        `    fields: ${content.emission.fieldsConstant},\n` +
-        `    localisation: ${content.emission.localisationConstant},\n` +
-        (content.keyword === undefined
-          ? ""
-          : `    keyedBy: { keyword: ${JSON.stringify(content.keyword)}, ` +
-            `nameField: ${JSON.stringify(content.type.nameField)} },\n`) +
-        "  },\n"
-      );
-    })
-    .join("");
-  return (
-    'import type { ContentRegistryDescriptor } from "../content/schema.ts";\n' +
-    imports +
-    "\n" +
-    "export const CONTENT_REGISTRIES = [\n" +
-    descriptors +
-    "] as const satisfies readonly ContentRegistryDescriptor[];\n\n" +
-    'export type ContentTypeName = (typeof CONTENT_REGISTRIES)[number]["type"];\n\n' +
-    docComment([
-      "The CWT reference a registry's definitions satisfy, as a type.",
-      "",
-      "The same thing `referenceName` carries as data, and the brand a",
-      "`ContentItem` for that registry wears — which is what makes a defined",
-      "component template reach a field holding `<component_template>`.",
-    ]) +
-    "export type ContentReferenceName<K extends ContentTypeName> = Extract<\n" +
-    "  (typeof CONTENT_REGISTRIES)[number],\n" +
-    "  { type: K }\n" +
-    '>["referenceName"];\n'
-  );
 }
 
 await main();

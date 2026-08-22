@@ -47,22 +47,40 @@ rules win — they track scope renames the game's own dump lags behind.
 
 ```
 src/
-├── index.ts             the pipeline: load, join, emit, report, drift-check
-├── content-manifest.ts  the registry allowlist (adding one is a public-API decision)
-├── overlay.ts           barrel for overlay/; every audited departure from a mechanical rules reading
-├── overlay/             the rows themselves, split by domain: content.ts (content-type
-│                        fields, localisation, patches, registry identity), script.ts
-│                        (trigger/effect/modifier lowering), mints.ts (identity-mint shapes)
-├── corpus.ts            reads a registry directory of a real install (conformance tests)
+├── index.ts             thin wiring: load, drift-gate, run the stages, write files
+├── report.ts            report accumulation and printing
+├── load-rules.ts        the one-call rule loader (manifest sources + overlay categories)
 ├── naming.ts            snake_case → PascalCase/camelCase, doc-comment helpers
-├── reconcile.ts         the two-source join and drift comparison
 ├── drift-baseline.json  committed record of accepted source disagreements
-├── cwt/                 lexer, parser, and rule model for .cwt files
+├── cwt/                 lexer, parser, and rule model for .cwt files; rules.ts is
+│                        pure over parsed nodes, load.ts the fs shell over it
 ├── logs/                parsers for the game's dumps (triggers, modifiers, scopes)
-└── emit/                one emitter per output family; shared shape lowering in
-                         shape.ts/types.ts; authored-form.ts decides the form
-                         each field arm admits (emitted into descriptors, so the
-                         SDK runtime reads it instead of recomputing)
+├── reconcile/           reconcile.ts joins the two sources; baseline.ts compares
+│                        against and updates the committed baseline
+├── policy/              manifest.ts, the registry allowlist (adding one is a
+│                        public-API decision), and the hand-reviewed policies:
+│                        triggers, effects, modifiers, content-swaps, event-fields
+│                        (+ event-field-signatures), script-gaps
+├── overlay/             every audited departure from a mechanical rules reading,
+│                        split by domain: fields, localisation, patches, identity,
+│                        grafts, script, mints; index.ts is the barrel every
+│                        importer uses, audit.ts the staleness asserts
+├── lower/               rule-to-shape lowering shared by the emitters — fields,
+│                        script-shape, rule-shapes, scope-context, content-shape,
+│                        content-layout, content-reference, event-kinds, scope-facts;
+│                        authored-form.ts decides the form each field arm admits
+│                        (emitted into descriptors, so the SDK runtime reads it
+│                        instead of recomputing)
+├── render/              the emitter core (emitter.ts), symbol/import tracking,
+│                        the code writer, field-row tables, generated-file protocol
+├── emit/                one emitter per output family: content/ (content types,
+│                        alias structs/splices/categories, definers, registry,
+│                        field docs, vanilla refs), script/ (triggers, effects,
+│                        links, events, modifiers, on-actions, script-reference),
+│                        and shared support.ts
+└── corpus/              reads a registry directory of a real install (conformance
+                         tests): observations.ts the vocabulary, read.ts the
+                         reading engine, conformance.ts the verdicts
 tests/                   emitter unit tests that re-run the pipeline in-process
 ```
 
@@ -70,7 +88,7 @@ Two design rules keep the emitters honest. Additions should be data-driven —
 a new registry is a manifest row, not a new emitter or a
 `if (type === "...")` branch in the generic writer. And exceptions are
 centralized: anything that departs from what the rules mechanically say lives
-as a reviewed row in `overlay.ts` (required localization, ergonomic field
+as a reviewed row in `overlay/` (required localization, ergonomic field
 widenings, shape/scope corrections with evidence), never inline in an
 emitter.
 

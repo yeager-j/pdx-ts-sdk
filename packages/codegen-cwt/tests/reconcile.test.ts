@@ -5,10 +5,9 @@ import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { parseModifierDocs } from "@pdx-ts/codegen-cwt/logs/modifier-docs";
 import { parseScopeLinks } from "@pdx-ts/codegen-cwt/logs/scopes";
 import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
+import { compareToBaseline, updatedBaseline } from "@pdx-ts/codegen-cwt/reconcile/baseline";
 import {
-  compareToBaseline,
   reconcile,
-  updatedBaseline,
   type DriftBaseline,
   type ScopeConflict,
 } from "@pdx-ts/codegen-cwt/reconcile/reconcile";

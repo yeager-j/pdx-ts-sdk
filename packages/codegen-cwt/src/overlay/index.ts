@@ -12,12 +12,20 @@
  * Each entry states what it changes and why. Adding one should feel expensive.
  *
  * The rows live in `overlay/`, split by the domain that reads them:
- * `overlay/content.ts` (content-type fields, localisation, patches, and
- * registry identity), `overlay/script.ts` (trigger, effect, and modifier
- * lowering), and `overlay/mints.ts` (identity-mint shapes). This file is
- * their index — every importer keeps importing from here, unchanged.
+ * `overlay/fields.ts` (content-type field lowering), `overlay/localisation.ts`
+ * (required and synthetic localisation slots), `overlay/patches.ts` (patch
+ * registries and widenings), `overlay/identity.ts` (witnesses, subtype
+ * reference refinements, file stems), `overlay/grafts.ts` (hand-written
+ * definers, hand-written vanilla refs, contribution sinks),
+ * `overlay/script.ts` (trigger, effect, and modifier lowering), and
+ * `overlay/mints.ts` (identity-mint shapes). This file is their index —
+ * every importer keeps importing from here, unchanged.
  */
 
-export * from "./content.ts";
-export * from "./script.ts";
+export * from "./fields.ts";
+export * from "./grafts.ts";
+export * from "./identity.ts";
+export * from "./localisation.ts";
 export * from "./mints.ts";
+export * from "./patches.ts";
+export * from "./script.ts";

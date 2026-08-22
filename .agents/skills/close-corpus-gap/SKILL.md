@@ -38,7 +38,7 @@ generated diff as public API, commit generated output with its source change).
    by a count you ran.
 
 3. **Choose the lowering.** Start from the `ContentFieldShape` union in
-   `packages/codegen-cwt/src/overlay.ts`: it is the catalogue, every arm
+   `packages/codegen-cwt/src/overlay/index.ts`: it is the catalogue, every arm
    documented with what it lowers and why, and a gap is sometimes a shape that
    already exists and was never requested. Past it, a new runtime shape brings
    a writer case in `packages/sdk/src/content/lower.ts` and a `DescentNode`

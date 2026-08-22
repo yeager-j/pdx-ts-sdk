@@ -6,7 +6,7 @@
  * lowering itself lives in `fields.ts`, shared with the alias emitters.
  */
 
-import type { DescentNode } from "../../corpus/corpus.ts";
+import type { DescentNode } from "../../corpus/observations.ts";
 import { isOptional, type RuleField } from "../../cwt/model.ts";
 import type { ContentBody, ContentType } from "../../cwt/rules.ts";
 import {

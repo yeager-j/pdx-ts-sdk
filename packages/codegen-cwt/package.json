@@ -7,7 +7,7 @@
   "exports": {
     "./drift-baseline.json": "./src/drift-baseline.json",
     "./overlay": "./src/overlay/index.ts",
-    "./corpus": "./src/corpus/corpus.ts",
+    "./corpus": "./src/corpus/index.ts",
     "./*": "./src/*.ts"
   },
   "dependencies": {

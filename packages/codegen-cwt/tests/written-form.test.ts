@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { WRITTEN_FORM, WRITTEN_FORM_EXEMPT } from "../src/corpus/corpus.ts";
+import { WRITTEN_FORM, WRITTEN_FORM_EXEMPT } from "../src/corpus/conformance.ts";
 import { CONTENT_SHAPES } from "../src/lower/content-shape.ts";
 
 describe("the written-form table covers every content shape", () => {

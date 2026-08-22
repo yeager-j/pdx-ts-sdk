@@ -5,6 +5,9 @@
  * public-interface decision and must bring reviewed field overlays and
  * goldens with it.
  */
+
+import type { ContentType } from "../cwt/rules.ts";
+
 export interface ContentManifestEntry {
   readonly type: string;
   readonly source: string;
@@ -257,3 +260,73 @@ export const VANILLA_REF_EXTRAS = [
   { type: "planet_modifier", source: "common/modifiers.cwt" },
   { type: "asteroid_belt_type", source: "common/asteroid_belts.cwt" },
 ] as const satisfies readonly VanillaRefExtra[];
+
+const REGISTRY_NAME = /^[A-Za-z][A-Za-z0-9_]*$/;
+
+/**
+ * Checks one row's resolved registry name before anything derives from it.
+ *
+ * The name reaches an exported symbol, a capability method, a generated file
+ * stem and a fixture stem, so a name that is not an identifier stem fails the
+ * build somewhere far from the row that caused it. A `name` that merely
+ * restates what `as ?? type` already yields is dead weight that would drift,
+ * and two rows resolving to one name would silently overwrite each other's
+ * generated file.
+ */
+export function assertRegistryName(
+  entry: ContentManifestEntry,
+  registry: string,
+  seen: Set<string>
+): void {
+  if (!REGISTRY_NAME.test(registry)) {
+    throw new Error(
+      `The manifest resolves type[${entry.type}] to registry name "${registry}", which is not ` +
+        "a legal identifier stem"
+    );
+  }
+  if (entry.name !== undefined && entry.name === (entry.as ?? entry.type)) {
+    throw new Error(
+      `The manifest's name "${entry.name}" for type[${entry.type}] is what the row already ` +
+        "resolves to, so the rename says nothing — drop it"
+    );
+  }
+  if (seen.has(registry)) {
+    throw new Error(
+      `Two manifest rows resolve to the registry name "${registry}", so they would generate ` +
+        "over each other"
+    );
+  }
+  seen.add(registry);
+}
+
+/**
+ * The `## type_key_filter` that constrains one manifest row's keyword.
+ *
+ * A type-level filter constrains every row reading that type. Where the type
+ * declares none, an `as` row is one subtype of it, and it is that subtype's own
+ * filter that says which key its definitions are written under — which is what
+ * lets the three `component_template` keywords and `sprite`'s `spriteType` be
+ * checked rather than trusted.
+ *
+ * A negated filter (`<> random_list`) names a key the entries are *not*
+ * written under, so it constrains nothing about the keyword and is dropped
+ * here rather than compared against.
+ */
+export function effectiveKeyFilter(
+  type: ContentType,
+  as: string | undefined
+): { readonly key: string; readonly source: string } | null {
+  if (type.keyFilter !== null) {
+    return type.keyFilter.negated
+      ? null
+      : { key: type.keyFilter.key, source: `type[${type.name}]` };
+  }
+  if (as === undefined) {
+    return null;
+  }
+  const subtype = type.subtypes.find((candidate) => candidate.name === as);
+  if (subtype?.keyFilter == null || subtype.keyFilter.negated) {
+    return null;
+  }
+  return { key: subtype.keyFilter.key, source: `type[${type.name}] subtype[${as}]` };
+}
