@@ -16,14 +16,7 @@
  * that claim needs playset enumeration, not a bigger filename.
  */
 
-import {
-  kv,
-  serialize,
-  skipChildren,
-  walkItems,
-  type PdxEntry,
-  type PdxItem,
-} from "@pdx-ts/pdxscript";
+import { kv, serialize, stopWalk, walkItems, type PdxEntry, type PdxItem } from "@pdx-ts/pdxscript";
 
 import { NoWinningFilenameError, PdxSdkError, VanillaPathCollisionError } from "../../errors.ts";
 import { compareLogicalPaths, normalizeLogicalPath, type LogicalPath } from "../../ordering.ts";
@@ -70,22 +63,15 @@ export function collectVarRefs(item: PdxItem): string[] {
   return names;
 }
 
-/** True when the item tree contains an `@[ ... ]` inline-math scalar. */
+/**
+ * True when the item tree contains an `@[ ... ]` inline-math scalar. The walk
+ * ends at the first one, so a later region this SDK cannot read flat does not
+ * turn the answer into an error.
+ */
 export function containsInlineMath(item: PdxItem): boolean {
-  let found = false;
-  walkItems(
-    [item],
-    undefined,
-    (node) => {
-      if (node.kind !== "math") {
-        return undefined;
-      }
-      found = true;
-      return skipChildren;
-    },
-    { read: true }
-  );
-  return found;
+  return walkItems([item], undefined, (node) => (node.kind === "math" ? stopWalk : undefined), {
+    read: true,
+  });
 }
 
 /** One provable claim: this emission beats every named file for this key. */
