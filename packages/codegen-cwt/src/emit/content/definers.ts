@@ -29,6 +29,8 @@ export function contentDefiners(contents: readonly DefinerContent[]): {
   code: string;
   /** Complete generated `content-capability.ts` module text. */
   capabilityCode: string;
+  /** Capability type names an author can name: one minted-name alias per shape mint. */
+  capabilityPublicTypes: string[];
   /** Number of manifest registries represented by the modules. */
   definers: number;
   /** Report rows for registries served by hand-written definer grafts. */
@@ -38,6 +40,7 @@ export function contentDefiners(contents: readonly DefinerContent[]): {
   return {
     code: contentDefinersModule(plans),
     capabilityCode: contentCapabilityModule(plans),
+    capabilityPublicTypes: plans.flatMap((plan) => plan.shapeMintTypeNames),
     definers: contents.length,
     grafted: plans.flatMap((plan) => (plan.grafted === null ? [] : [plan.grafted])),
   };

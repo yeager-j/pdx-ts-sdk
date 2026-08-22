@@ -18,6 +18,7 @@ import type { AliasSpliceEmission } from "./emit/content/alias-splice.ts";
 import { emitContentType, type ContentEmission } from "./emit/content/content-type.ts";
 import { contentDefiners } from "./emit/content/definers.ts";
 import { emitContentFieldDocs, type FieldDocsModule } from "./emit/content/field-docs.ts";
+import { contentPublicBarrel } from "./emit/content/public-barrel.ts";
 import { contentRegistry } from "./emit/content/registry.ts";
 import { emitVanillaRefs } from "./emit/content/vanilla-refs.ts";
 import { emitEffects } from "./emit/script/effects.ts";
@@ -665,6 +666,30 @@ async function writeContentModules(
   await write(
     "content-capability.ts",
     header(commit, [...contentSources, "content-manifest.ts"]) + definers.capabilityCode
+  );
+  // An alias category publishes nothing of its own: the types an author names
+  // inside one are curated by `PUBLIC_NESTED_TYPES`.
+  const publicModules = [
+    ...contents.map((content) => ({
+      file: `${kebabCase(content.registry)}.ts`,
+      code: content.emission.code,
+      publicTypes: content.emission.publicTypes,
+    })),
+    ...[...aliasCategories].map(([category, emission]) => ({
+      file: `${category.replaceAll("_", "-")}.ts`,
+      code: emission.code,
+      publicTypes: [],
+    })),
+    {
+      file: "content-capability.ts",
+      code: definers.capabilityCode,
+      publicTypes: definers.capabilityPublicTypes,
+    },
+  ];
+  await write(
+    "content-public.ts",
+    header(commit, [...contentSources, "codegen-cwt public-surface policy"]) +
+      contentPublicBarrel(publicModules)
   );
   await write(
     "vanilla-refs.ts",

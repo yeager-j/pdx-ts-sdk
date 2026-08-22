@@ -51,208 +51,10 @@ export {
 } from "./generated/event-fields.ts";
 export { onActions } from "./generated/on-actions.ts";
 export type { OnActionRef } from "./events/on-actions.ts";
-export type { AgendaDef, AgendaFields, DefinedAgenda } from "./generated/agenda.ts";
-export type {
-  AgreementPresetDef,
-  AgreementPresetFields,
-  DefinedAgreementPreset,
-} from "./generated/agreement-preset.ts";
-export type {
-  AmbientObjectDef,
-  AmbientObjectFields,
-  DefinedAmbientObject,
-} from "./generated/ambient-object.ts";
-export type {
-  ArchaeologicalSiteTypeDef,
-  ArchaeologicalSiteTypeFields,
-  DefinedArchaeologicalSiteType,
-} from "./generated/archaeological-site-type.ts";
-export type {
-  AscensionPerkDef,
-  AscensionPerkFields,
-  AscensionPerkSwapFields,
-  DefinedAscensionPerk,
-} from "./generated/ascension-perk.ts";
-export type {
-  BombardmentStanceDef,
-  BombardmentStanceFields,
-  DefinedBombardmentStance,
-} from "./generated/bombardment-stance.ts";
-export type { BuildingDef, BuildingFields, DefinedBuilding } from "./generated/building.ts";
-export type {
-  CasusBelliDef,
-  CasusBelliFields,
-  DefinedCasusBelli,
-} from "./generated/casus-belli.ts";
-export type {
-  CivicOrOriginDef,
-  CivicOrOriginFields,
-  DefinedCivicOrOrigin,
-} from "./generated/civic-or-origin.ts";
-export type {
-  ComponentSetDef,
-  ComponentSetFields,
-  DefinedComponentSet,
-} from "./generated/component-set.ts";
-export type { CouncilorDef, CouncilorFields, DefinedCouncilor } from "./generated/councilor.ts";
-export type {
-  CountryShipOfSizeLimitDef,
-  CountryShipOfSizeLimitFields,
-  DefinedCountryShipOfSizeLimit,
-} from "./generated/country-ship-of-size-limit.ts";
-export type {
-  DecisionDef,
-  DecisionFields,
-  DecisionScope,
-  DefinedDecision,
-} from "./generated/decision.ts";
-export type { DefinedEdict, EdictDef, EdictFields } from "./generated/edict.ts";
-export type {
-  DefinedEventChain,
-  EventChainCounterDefinition,
-  EventChainDef,
-  EventChainFields,
-} from "./generated/event-chain.ts";
+// Every content type an author can name. Derived from the generation tables;
+// `codegen-cwt/src/policy/public-surface.ts` is the only door for the rest.
+export type * from "./generated/content-public.ts";
 export type { EventChainCounterOf } from "./content/event-chains.ts";
-export type {
-  DefinedEconomicCategory,
-  EconomicCategoryDef,
-  EconomicCategoryFields,
-} from "./generated/economic-category.ts";
-export type {
-  GovernmentTriggerBlock,
-  GovernmentTriggerClause,
-  GovernmentTriggerClauseGroup,
-} from "./generated/government-trigger.ts";
-export type {
-  DefinedGraphicalCulture,
-  GraphicalCultureDef,
-  GraphicalCultureFields,
-} from "./generated/graphical-culture.ts";
-export type {
-  DefinedGlobalShipDesign,
-  GlobalShipDesignDef,
-  GlobalShipDesignFields,
-} from "./generated/global-ship-design.ts";
-export type { DefinedJob, JobDef, JobFields } from "./generated/job.ts";
-export type {
-  DefinedMegastructure,
-  MegastructureDef,
-  MegastructureFields,
-} from "./generated/megastructure.ts";
-export type {
-  DefinedOpinionModifier,
-  OpinionModifierDef,
-  OpinionModifierFields,
-} from "./generated/opinion-modifier.ts";
-export type {
-  DefinedPdxmesh,
-  PdxmeshAnimation,
-  PdxmeshDef,
-  PdxmeshFields,
-  PdxmeshMeshsettings,
-} from "./generated/pdxmesh.ts";
-export type {
-  DefinedPdxparticle,
-  PdxparticleDef,
-  PdxparticleFields,
-} from "./generated/pdxparticle.ts";
-export type {
-  DefinedSpriteType,
-  SpriteTypeAnimation,
-  SpriteTypeDef,
-  SpriteTypeFields,
-} from "./generated/sprite-type.ts";
-export type {
-  DefinedScriptedLoc,
-  ScriptedLocDef,
-  ScriptedLocFields,
-} from "./generated/scripted-loc.ts";
-export type {
-  DefinedShipSize,
-  ShipSizeDef,
-  ShipSizeFields,
-  ShipSizeSectionSlots,
-} from "./generated/ship-size.ts";
-export type {
-  DefinedScriptedModifier,
-  ScriptedModifierDef,
-  ScriptedModifierFields,
-} from "./generated/scripted-modifier.ts";
-export type {
-  DefinedSectionTemplate,
-  SectionTemplateDef,
-  SectionTemplateFields,
-} from "./generated/section-template.ts";
-export type {
-  DefinedSituationType,
-  SituationApproachFields,
-  SituationStageFields,
-  SituationTypeDef,
-  SituationTypeFields,
-} from "./generated/situation-type.ts";
-// The planet/moon grammar a solar system initializer splices into itself. Both
-// interfaces are mutually recursive and neither has a definer of its own: they
-// are authored as arrays inside `defineSolarSystemInitializer`.
-export type { MoonInitializerFields } from "./generated/moon-initializer.ts";
-export type { PlanetInitializerFields } from "./generated/planet-initializer.ts";
-export type {
-  DefinedSolarSystemInitializer,
-  SolarSystemInitializerDef,
-  SolarSystemInitializerFields,
-} from "./generated/solar-system-initializer.ts";
-export type {
-  DefinedSpecialProject,
-  SpecialProjectDef,
-  SpecialProjectFields,
-  SpecialProjectLocationScope,
-  SpecialProjectRequirements,
-  SpecialProjectScope,
-  SpecialProjectTriggeredRequirement,
-} from "./generated/special-project.ts";
-export type {
-  DefinedSpeciesClass,
-  SpeciesClassDef,
-  SpeciesClassFields,
-} from "./generated/species-class.ts";
-export type {
-  DefinedStrikeCraftComponentTemplate,
-  StrikeCraftComponentTemplateDef,
-  StrikeCraftComponentTemplateFields,
-} from "./generated/strike-craft-component-template.ts";
-export type {
-  DefinedUtilityComponentTemplate,
-  UtilityComponentTemplateDef,
-  UtilityComponentTemplateFields,
-} from "./generated/utility-component-template.ts";
-export type {
-  DefinedWeaponComponentTemplate,
-  WeaponComponentTemplateDef,
-  WeaponComponentTemplateFields,
-} from "./generated/weapon-component-template.ts";
-export type {
-  DefinedStarbaseLevel,
-  StarbaseLevelDef,
-  StarbaseLevelFields,
-} from "./generated/starbase-level.ts";
-export type {
-  DefinedStaticModifier,
-  StaticModifierDef,
-  StaticModifierFields,
-} from "./generated/static-modifier.ts";
-export type { DefinedTechnology, TechnologyDef, TechnologyFields } from "./generated/technology.ts";
-export type {
-  DefinedTraditionCategory,
-  TraditionCategoryDef,
-  TraditionCategoryFields,
-} from "./generated/tradition-category.ts";
-export type {
-  DefinedTradition,
-  TraditionDef,
-  TraditionFields,
-  TraditionSwapFields,
-} from "./generated/tradition.ts";
-export type { DefinedWarGoal, WarGoalDef, WarGoalFields } from "./generated/war-goal.ts";
 export type {
   DefinedEvent,
   EventDef,
@@ -345,24 +147,11 @@ export {
 // Generated item unions remain public; their raw constructors are internal
 // lowering machinery used by capability methods.
 export type * from "./generated/content-definers.ts";
-// One name type per `SPRITE_SHAPE_MINTS` row. A shape mint's name is not
-// `MintedContentId`-shaped, so without these a consumer cannot write down the
-// type of a definition they just authored. Listed by hand because this barrel
-// is the hand-written step, and `export type *` from the capability module
-// would publish its internals; `content-snapshot.test.ts` fails if a row is
-// added and its alias is not listed here.
-export type {
-  SpriteFleetOrderButtonGroundSupportName,
-  SpriteTextIconName,
-} from "./generated/content-capability.ts";
 export type { Feature, ModItem, ModItemInput, PlacedItem } from "./authoring/feature.ts";
 export type { ContentItem, ContributionItem, MintProvenance } from "./content/types.ts";
 export type { ModWarning } from "./diagnostics.ts";
 export type { OnActionHookItem } from "./events/on-actions.ts";
 export type { EventItem, EventItemBase } from "./events/types.ts";
-export type { BuildingPatchItem } from "./generated/building.ts";
-export type { MegastructurePatchItem } from "./generated/megastructure.ts";
-export type { TechnologyPatchItem } from "./generated/technology.ts";
 export * as stellaris from "./stellaris/index.ts";
 export {
   GameVersionError,
@@ -422,9 +211,6 @@ export {
   type Prerequisite,
   type VanillaFile,
 } from "./stellaris/vanilla/view.ts";
-export type { BuildingPatch, PatchedBuilding } from "./generated/building.ts";
-export type { MegastructurePatch, PatchedMegastructure } from "./generated/megastructure.ts";
-export type { PatchedTechnology, TechnologyPatch } from "./generated/technology.ts";
 export type {
   CheckedVanillaId,
   InvalidVanillaId,

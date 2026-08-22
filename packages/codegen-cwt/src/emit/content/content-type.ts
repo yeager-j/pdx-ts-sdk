@@ -77,6 +77,13 @@ export interface ContentEmission {
   readonly code: string;
   /** Pascal-cased base name shared by the registry's generated declarations. */
   readonly typeName: string;
+  /**
+   * The type names an author can name, for the generated public barrel: the
+   * authoring and definition types, the scope unions the registry declares,
+   * its patch vocabulary, and its repeated-struct interfaces. Everything else
+   * the module exports is lowering machinery.
+   */
+  readonly publicTypes: readonly string[];
   /** Name of the registry's generated runtime field table. */
   readonly fieldsConstant: string;
   /** Name of the registry's generated localisation descriptor table. */
@@ -304,6 +311,8 @@ interface ContentTypeDraft {
   readonly patchMembers: PatchMember[];
   readonly patchExclusions: string[];
   readonly emittedMembers: Set<string>;
+  /** Interfaces emitted for `REPEATED_STRUCT_DEFINITIONS` fields, which authors name. */
+  readonly repeatedStructTypes: string[];
 }
 
 function contentTypeDraft(): ContentTypeDraft {
@@ -325,6 +334,7 @@ function contentTypeDraft(): ContentTypeDraft {
     patchMembers: [],
     patchExclusions: [],
     emittedMembers: new Set(),
+    repeatedStructTypes: [],
   };
 }
 
@@ -490,6 +500,7 @@ function declareRepeatedStruct(
   draft.docTables.push(...nested.docTables);
   draft.patchMembers.push({ member, docs: docLines, memberType: nested.memberType });
   draft.extraCode.push(nested.code);
+  draft.repeatedStructTypes.push(`${config.typeName}Fields`);
   draft.fieldMetadata.push(nested.metadata);
   draft.declinedFields.push(...nested.declinedFields);
   draft.unsupported.push(...nested.unsupported);
@@ -744,6 +755,24 @@ function contentTypeNames(type: ContentType, parameter: ScopeParameter | null): 
   };
 }
 
+/** The registry's share of the generated public barrel, from the names it just emitted. */
+function contentPublicTypes(
+  typeName: string,
+  parameter: ScopeParameter | null,
+  patchable: boolean,
+  repeatedStructTypes: readonly string[]
+): string[] {
+  return [
+    `${typeName}Def`,
+    `${typeName}Fields`,
+    `Defined${typeName}`,
+    ...(parameter === null ? [] : [parameter.typeName]),
+    ...(parameter?.declaredFrom === undefined ? [] : [parameter.declaredFrom.typeName]),
+    ...(patchable ? [`${typeName}Patch`, `Patched${typeName}`, `${typeName}PatchItem`] : []),
+    ...repeatedStructTypes,
+  ];
+}
+
 /** The emitted text a scope-parameterised registry adds to its interfaces. */
 interface ScopeParameterSurface {
   /** The interfaces' type-parameter list, empty for an unparameterised registry. */
@@ -993,6 +1022,12 @@ export function emitContentType(
   return {
     code,
     typeName: names.typeName,
+    publicTypes: contentPublicTypes(
+      names.typeName,
+      parameter,
+      patchable,
+      draft.repeatedStructTypes
+    ),
     fieldsConstant: names.fieldsConstant,
     localisationConstant: names.localisationConstant,
     emittedFields: draft.emittedFields,
