@@ -374,6 +374,207 @@ function lowerValueList(
   };
 }
 
+function lowerModifierBlock(
+  emitter: Emitter,
+  field: RuleField,
+  name: string,
+  ctx: FieldContext,
+  override: ContentFieldOverride | undefined
+): LoweredField {
+  const scope = scopeType(emitter, field, ctx, override?.scope);
+  return {
+    memberType: `${emitter.use("ModifierClosure")}<${scopeArg(emitter, scope)}>`,
+    metadata: metadata(field, name, "modifierBlock"),
+    admits: admitsBlock(field, "modifierBlock", scope),
+  };
+}
+
+/**
+ * One lowering serves both weight shapes and both routes to them: the overlay
+ * requesting the shape by name, and the field splicing the matching
+ * `modifier_rule` category. The `WithLoc` variant is the same block with a
+ * different closure type.
+ */
+function lowerWeightBlock(
+  emitter: Emitter,
+  field: RuleField,
+  name: string,
+  ctx: FieldContext,
+  override: ContentFieldOverride | undefined,
+  path: string,
+  shape: "weightBlock" | "weightBlockWithLoc"
+): LoweredField {
+  const scope = contravariantScopeType(emitter, field, ctx, override?.scope);
+  const closure = shape === "weightBlock" ? "WeightBlock" : "WeightBlockWithLoc";
+  return {
+    memberType: withFrom(emitter, `${emitter.use(closure)}<${scopeArg(emitter, scope)}>`, scope),
+    metadata: metadata(field, name, shape),
+    admits: admitsBlock(field, shape, scope),
+    ...weightInterior(emitter, name, path, scope),
+  };
+}
+
+function lowerAliasStruct(
+  emitter: Emitter,
+  field: RuleField,
+  name: string,
+  category: string
+): LoweredField {
+  const memberType = emitter.useAliasCategory(category, `${pascalCase(category)}Block`);
+  return {
+    memberType: isRepeated(field.cardinality) ? arrayType(memberType) : memberType,
+    metadata: metadata(field, name, "aliasStruct", [`category: ${JSON.stringify(category)}`]),
+    admits: admitsBlock(field, "aliasStruct"),
+  };
+}
+
+/** A block holding trigger rules, authored as one `Trigger<S>` closure. */
+function lowerTrigger(
+  emitter: Emitter,
+  field: RuleField,
+  name: string,
+  ctx: FieldContext,
+  override: ContentFieldOverride | undefined
+): LoweredField {
+  const scope = contravariantScopeType(emitter, field, ctx, override?.scope);
+  return {
+    memberType: withFrom(emitter, `${emitter.use("Trigger")}<${scopeArg(emitter, scope)}>`, scope),
+    metadata: metadata(field, name, "trigger"),
+    admits: admitsBlock(field, "trigger", scope, "trigger"),
+  };
+}
+
+/** A block holding effect rules, authored as one `EffectBlock` closure. */
+function lowerEffect(
+  emitter: Emitter,
+  field: RuleField,
+  name: string,
+  ctx: FieldContext,
+  override: ContentFieldOverride | undefined
+): LoweredField {
+  const scope = scopeType(emitter, field, ctx, override?.scope);
+  return {
+    memberType: `${emitter.use("EffectBlock")}<${effectBlockArgs(emitter, scope)}>`,
+    metadata: metadata(field, name, "effect", splitRootMetadata(scope)),
+    admits: admitsBlock(field, "effect", scope, "effect"),
+  };
+}
+
+/** One lowering for the economic table, with and without its produce rows. */
+function lowerEconomicResources(
+  emitter: Emitter,
+  field: RuleField,
+  name: string,
+  ctx: FieldContext,
+  override: ContentFieldOverride | undefined,
+  shape: "economicResources" | "economicResourcesNoProduce"
+): LoweredField {
+  const scope = scopeType(emitter, field, ctx, override?.scope);
+  const block =
+    shape === "economicResources" ? "EconomicResourceBlock" : "EconomicResourceBlockNoProduce";
+  const memberType = `${emitter.use(block)}<${scopeArg(emitter, scope)}>`;
+  return {
+    memberType: withFrom(
+      emitter,
+      isRepeated(field.cardinality) ? arrayType(memberType) : memberType,
+      scope
+    ),
+    metadata: metadata(field, name, shape),
+    admits: admitsBlock(field, shape, scope),
+  };
+}
+
+function lowerEconomicResourceOperation(
+  emitter: Emitter,
+  field: RuleField,
+  name: string,
+  ctx: FieldContext,
+  path: string
+): LoweredField {
+  const parts = economicResourceOperationParts(field);
+  const triggerScope = contravariantScopeType(emitter, parts.trigger, containerContext(field, ctx));
+  const memberType =
+    `${emitter.use("EconomicResourceOperation")}` + `<${scopeArg(emitter, triggerScope)}>`;
+  return {
+    memberType: withFrom(
+      emitter,
+      isRepeated(field.cardinality) ? arrayType(memberType) : memberType,
+      triggerScope
+    ),
+    metadata: metadata(field, name, "economicResourceOperation"),
+    admits: admitsBlock(field, "economicResourceOperation", triggerScope),
+    ...economicResourceOperationInterior(name, path, triggerScope),
+  };
+}
+
+/**
+ * A `TriggeredModifier`, taking a second type argument only when its
+ * `potential` runs somewhere other than the modifiers themselves.
+ */
+function lowerTriggeredModifier(
+  emitter: Emitter,
+  field: RuleField,
+  name: string,
+  ctx: FieldContext,
+  override: ContentFieldOverride | undefined,
+  path: string
+): LoweredField {
+  const modifierScope = scopeType(emitter, field, ctx, override?.scope);
+  const potentialScope = scopeType(
+    emitter,
+    triggeredModifierPotential(field),
+    containerContext(field, ctx)
+  );
+  const memberType =
+    modifierScope.type === potentialScope.type
+      ? `${emitter.use("TriggeredModifier")}<${scopeArg(emitter, modifierScope)}>`
+      : `${emitter.use("TriggeredModifier")}<${scopeArg(emitter, modifierScope)}, ` +
+        `${scopeArg(emitter, potentialScope)}>`;
+  return {
+    memberType: withFrom(
+      emitter,
+      isRepeated(field.cardinality) ? arrayType(memberType) : memberType,
+      modifierScope
+    ),
+    metadata: metadata(field, name, "triggeredModifierBlock"),
+    admits: admitsBlock(field, "triggeredModifierBlock", modifierScope),
+    ...triggeredModifierInterior(name, path, potentialScope),
+  };
+}
+
+function lowerWeightedEvents(
+  emitter: Emitter,
+  field: RuleField,
+  name: string
+): LoweredField | null {
+  if (field.type.kind !== "block") {
+    return null;
+  }
+  // `int = 0` is the nothing-happens arm, authored by omitting `event`; the
+  // remaining computed-key declarations carry the firable event types.
+  const eventTypes = field.type.fields
+    .filter((inner) => inner.key.kind === "computed" && inner.key.type.kind === "int")
+    .map((inner) => inner.type)
+    .filter((type) => type.kind !== "literal");
+  const value = eventTypes.length === 0 ? null : emitter.unionFor(eventTypes);
+  if (value === null) {
+    return null;
+  }
+  emitter.useValue(value);
+  return {
+    memberType: `readonly { weight: number; event?: ${value.type} }[]`,
+    metadata: metadata(field, name, "weightedEvents", scalarMetadata(value)),
+    admits: admitsBlock(field, "weightedEvents"),
+  };
+}
+
+/**
+ * The shape ladder for one declaration: the overlay-requested or derived shape
+ * first, then the shapes recognized from the field's own splice category, then
+ * the structural fallbacks. Arm order is load-bearing — an explicit request
+ * skips the recognizers, and a bare block must try the wrapped-struct reading
+ * before the scalar-list one.
+ */
 function lowerOrdinary(
   emitter: Emitter,
   field: RuleField,
@@ -385,47 +586,13 @@ function lowerOrdinary(
 ): LoweredField | null {
   const requested = override?.shape ?? derivedClauseShape(field);
   if (requested === "modifierBlock") {
-    const scope = scopeType(emitter, field, ctx, override?.scope);
-    return {
-      memberType: `${emitter.use("ModifierClosure")}<${scopeArg(emitter, scope)}>`,
-      metadata: metadata(field, name, "modifierBlock"),
-      admits: admitsBlock(field, "modifierBlock", scope),
-    };
+    return lowerModifierBlock(emitter, field, name, ctx, override);
   }
-  if (requested === "weightBlock") {
-    const scope = contravariantScopeType(emitter, field, ctx, override?.scope);
-    return {
-      memberType: withFrom(
-        emitter,
-        `${emitter.use("WeightBlock")}<${scopeArg(emitter, scope)}>`,
-        scope
-      ),
-      metadata: metadata(field, name, "weightBlock"),
-      admits: admitsBlock(field, "weightBlock", scope),
-      ...weightInterior(emitter, name, path, scope),
-    };
-  }
-  if (requested === "weightBlockWithLoc") {
-    const scope = contravariantScopeType(emitter, field, ctx, override?.scope);
-    return {
-      memberType: withFrom(
-        emitter,
-        `${emitter.use("WeightBlockWithLoc")}<${scopeArg(emitter, scope)}>`,
-        scope
-      ),
-      metadata: metadata(field, name, "weightBlockWithLoc"),
-      admits: admitsBlock(field, "weightBlockWithLoc", scope),
-      ...weightInterior(emitter, name, path, scope),
-    };
+  if (requested === "weightBlock" || requested === "weightBlockWithLoc") {
+    return lowerWeightBlock(emitter, field, name, ctx, override, path, requested);
   }
   if (requested === "aliasStruct") {
-    const category = override!.category!;
-    const memberType = emitter.useAliasCategory(category, `${pascalCase(category)}Block`);
-    return {
-      memberType: isRepeated(field.cardinality) ? arrayType(memberType) : memberType,
-      metadata: metadata(field, name, "aliasStruct", [`category: ${JSON.stringify(category)}`]),
-      admits: admitsBlock(field, "aliasStruct"),
-    };
+    return lowerAliasStruct(emitter, field, name, override!.category!);
   }
   if (requested === "valueList") {
     return lowerValueList(emitter, field, name, widening, override?.quoted ?? false);
@@ -438,50 +605,16 @@ function lowerOrdinary(
   }
   const category = spliceCategory(field.type);
   if (requested === "trigger" || (requested === undefined && category === "trigger")) {
-    const scope = contravariantScopeType(emitter, field, ctx, override?.scope);
-    return {
-      memberType: withFrom(
-        emitter,
-        `${emitter.use("Trigger")}<${scopeArg(emitter, scope)}>`,
-        scope
-      ),
-      metadata: metadata(field, name, "trigger"),
-      admits: admitsBlock(field, "trigger", scope, "trigger"),
-    };
+    return lowerTrigger(emitter, field, name, ctx, override);
   }
   if (requested === "effect" || (requested === undefined && category === "effect")) {
-    const scope = scopeType(emitter, field, ctx, override?.scope);
-    return {
-      memberType: `${emitter.use("EffectBlock")}<${effectBlockArgs(emitter, scope)}>`,
-      metadata: metadata(field, name, "effect", splitRootMetadata(scope)),
-      admits: admitsBlock(field, "effect", scope, "effect"),
-    };
+    return lowerEffect(emitter, field, name, ctx, override);
   }
   if (requested === undefined && category === "modifier_rule") {
-    const scope = contravariantScopeType(emitter, field, ctx, override?.scope);
-    return {
-      memberType: withFrom(
-        emitter,
-        `${emitter.use("WeightBlock")}<${scopeArg(emitter, scope)}>`,
-        scope
-      ),
-      metadata: metadata(field, name, "weightBlock"),
-      admits: admitsBlock(field, "weightBlock", scope),
-      ...weightInterior(emitter, name, path, scope),
-    };
+    return lowerWeightBlock(emitter, field, name, ctx, override, path, "weightBlock");
   }
   if (requested === undefined && category === "modifier_rule_with_loc") {
-    const scope = contravariantScopeType(emitter, field, ctx, override?.scope);
-    return {
-      memberType: withFrom(
-        emitter,
-        `${emitter.use("WeightBlockWithLoc")}<${scopeArg(emitter, scope)}>`,
-        scope
-      ),
-      metadata: metadata(field, name, "weightBlockWithLoc"),
-      admits: admitsBlock(field, "weightBlockWithLoc", scope),
-      ...weightInterior(emitter, name, path, scope),
-    };
+    return lowerWeightBlock(emitter, field, name, ctx, override, path, "weightBlockWithLoc");
   }
   if (requested === undefined && category !== null) {
     const members = aliasScalarFields(emitter, category);
@@ -495,75 +628,14 @@ function lowerOrdinary(
       );
     }
   }
-  if (requested === "economicResources") {
-    const scope = scopeType(emitter, field, ctx, override?.scope);
-    const memberType = `${emitter.use("EconomicResourceBlock")}<${scopeArg(emitter, scope)}>`;
-    return {
-      memberType: withFrom(
-        emitter,
-        isRepeated(field.cardinality) ? arrayType(memberType) : memberType,
-        scope
-      ),
-      metadata: metadata(field, name, "economicResources"),
-      admits: admitsBlock(field, "economicResources", scope),
-    };
+  if (requested === "economicResources" || requested === "economicResourcesNoProduce") {
+    return lowerEconomicResources(emitter, field, name, ctx, override, requested);
   }
   if (requested === "economicResourceOperation") {
-    const parts = economicResourceOperationParts(field);
-    const triggerScope = contravariantScopeType(
-      emitter,
-      parts.trigger,
-      containerContext(field, ctx)
-    );
-    const memberType =
-      `${emitter.use("EconomicResourceOperation")}` + `<${scopeArg(emitter, triggerScope)}>`;
-    return {
-      memberType: withFrom(
-        emitter,
-        isRepeated(field.cardinality) ? arrayType(memberType) : memberType,
-        triggerScope
-      ),
-      metadata: metadata(field, name, "economicResourceOperation"),
-      admits: admitsBlock(field, "economicResourceOperation", triggerScope),
-      ...economicResourceOperationInterior(name, path, triggerScope),
-    };
-  }
-  if (requested === "economicResourcesNoProduce") {
-    const scope = scopeType(emitter, field, ctx, override?.scope);
-    const memberType =
-      `${emitter.use("EconomicResourceBlockNoProduce")}` + `<${scopeArg(emitter, scope)}>`;
-    return {
-      memberType: withFrom(
-        emitter,
-        isRepeated(field.cardinality) ? arrayType(memberType) : memberType,
-        scope
-      ),
-      metadata: metadata(field, name, "economicResourcesNoProduce"),
-      admits: admitsBlock(field, "economicResourcesNoProduce", scope),
-    };
+    return lowerEconomicResourceOperation(emitter, field, name, ctx, path);
   }
   if (requested === "triggeredModifierBlock") {
-    const modifierScope = scopeType(emitter, field, ctx, override?.scope);
-    const potentialScope = scopeType(
-      emitter,
-      triggeredModifierPotential(field),
-      containerContext(field, ctx)
-    );
-    const memberType =
-      modifierScope.type === potentialScope.type
-        ? `${emitter.use("TriggeredModifier")}<${scopeArg(emitter, modifierScope)}>`
-        : `${emitter.use("TriggeredModifier")}<${scopeArg(emitter, modifierScope)}, ` +
-          `${scopeArg(emitter, potentialScope)}>`;
-    return {
-      memberType: withFrom(
-        emitter,
-        isRepeated(field.cardinality) ? arrayType(memberType) : memberType,
-        modifierScope
-      ),
-      metadata: metadata(field, name, "triggeredModifierBlock"),
-      admits: admitsBlock(field, "triggeredModifierBlock", modifierScope),
-      ...triggeredModifierInterior(name, path, potentialScope),
-    };
+    return lowerTriggeredModifier(emitter, field, name, ctx, override, path);
   }
   if (requested === "value") {
     return lowerValue(emitter, field, name, widening);
@@ -578,25 +650,7 @@ function lowerOrdinary(
     return lowerScalarMap(emitter, field, name);
   }
   if (requested === "weightedEvents") {
-    if (field.type.kind !== "block") {
-      return null;
-    }
-    // `int = 0` is the nothing-happens arm, authored by omitting `event`; the
-    // remaining computed-key declarations carry the firable event types.
-    const eventTypes = field.type.fields
-      .filter((inner) => inner.key.kind === "computed" && inner.key.type.kind === "int")
-      .map((inner) => inner.type)
-      .filter((type) => type.kind !== "literal");
-    const value = eventTypes.length === 0 ? null : emitter.unionFor(eventTypes);
-    if (value === null) {
-      return null;
-    }
-    emitter.useValue(value);
-    return {
-      memberType: `readonly { weight: number; event?: ${value.type} }[]`,
-      metadata: metadata(field, name, "weightedEvents", scalarMetadata(value)),
-      admits: admitsBlock(field, "weightedEvents"),
-    };
+    return lowerWeightedEvents(emitter, field, name);
   }
   const bare = bareValuesOf(field.type);
   if (bare !== null) {
