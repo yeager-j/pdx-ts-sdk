@@ -1,7 +1,7 @@
 /**
  * Enumerates the ids one registry defines in an install.
  *
- * `@pdx-ts/codegen-cwt`'s `corpus.ts` reads the same files for a different
+ * `@pdx-ts/codegen-cwt`'s `corpus/` reads the same files for a different
  * question — which *fields* definitions write — and throws the ids away. Which
  * files those are is one question with one answer, so both call
  * `walkRegistryFiles`: recursive and extension-aware, except where the rules
@@ -17,8 +17,8 @@
 
 import { readFileSync, statSync } from "node:fs";
 import path from "node:path";
-import { auditedSpellings } from "@pdx-ts/codegen-cwt/casing";
-import { relativeRegistryPath, walkRegistryFiles } from "@pdx-ts/codegen-cwt/registry-files";
+import { auditedSpellings } from "@pdx-ts/codegen-cwt/corpus/casing";
+import { relativeRegistryPath, walkRegistryFiles } from "@pdx-ts/codegen-cwt/corpus/registry-files";
 import { parse, type PdxItem } from "@pdx-ts/pdxscript";
 
 import { compareIdentifiers } from "./emit.ts";

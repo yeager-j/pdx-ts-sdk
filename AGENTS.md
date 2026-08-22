@@ -60,9 +60,9 @@ in prose is a review smell: it is the part no gate can hold to the code.
 The main inputs are:
 
 - `vendor/cwtools-stellaris-config/` for vendored CWT rules and Stellaris documentation dumps
-- `packages/codegen-cwt/src/content-manifest.ts` for the content registries intentionally exposed by
+- `packages/codegen-cwt/src/policy/manifest.ts` for the content registries intentionally exposed by
   the SDK
-- `packages/codegen-cwt/src/overlay.ts` for reviewed departures from a mechanical reading of the rules
+- `packages/codegen-cwt/src/overlay/` for reviewed departures from a mechanical reading of the rules
 - emitters and parsers under `packages/codegen-cwt/src/`
 
 Use:
@@ -107,7 +107,7 @@ project's to choose; projects supply the range below, which `create-stellaris-mo
 
 The SDK's own `vanilla.*` namespace (`src/generated/vanilla-refs.ts`, exported as
 `export * as vanilla`) is emitted by the existing `@pdx-ts/codegen-cwt`, from `CONTENT_MANIFEST` plus
-`VANILLA_REF_EXTRAS` (`packages/codegen-cwt/src/content-manifest.ts`) — it is glue over the separate
+`VANILLA_REF_EXTRAS` (`packages/codegen-cwt/src/policy/manifest.ts`) — it is glue over the separate
 package,
 not the package itself, and never reads an install.
 

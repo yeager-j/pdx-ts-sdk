@@ -1,23 +1,24 @@
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { parseCwt, type CwtNode } from "@pdx-ts/codegen-cwt/cwt/parser";
+import { scopeIndex } from "@pdx-ts/codegen-cwt/cwt/rules";
+import { emitEffects } from "@pdx-ts/codegen-cwt/emit/script/effects";
+import { emitEvents } from "@pdx-ts/codegen-cwt/emit/script/events";
+import { emitScopeLinks } from "@pdx-ts/codegen-cwt/emit/script/links";
+import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
+import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
+import { lowerRuleTable } from "@pdx-ts/codegen-cwt/lower/lowered-rule";
+import { mergeFields } from "@pdx-ts/codegen-cwt/lower/script-shape";
 import {
   deriveContentSwapIdentities,
   type ContentSwapSource,
-} from "@pdx-ts/codegen-cwt/content-swap-policy";
-import { parseCwt, type CwtNode } from "@pdx-ts/codegen-cwt/cwt/parser";
-import { loadRules, scopeIndex } from "@pdx-ts/codegen-cwt/cwt/rules";
-import { createEffectPolicy } from "@pdx-ts/codegen-cwt/effect-policy";
-import { emitEffects } from "@pdx-ts/codegen-cwt/emit/effects";
-import { emitEvents } from "@pdx-ts/codegen-cwt/emit/events";
-import { emitScopeLinks } from "@pdx-ts/codegen-cwt/emit/links";
-import { mergeFields } from "@pdx-ts/codegen-cwt/emit/shape";
-import { Emitter } from "@pdx-ts/codegen-cwt/emit/types";
-import { createEventFieldPolicy } from "@pdx-ts/codegen-cwt/event-field-policy";
-import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
-import { lowerRuleTable } from "@pdx-ts/codegen-cwt/lowered-rule";
-import { createModifierOperationPolicy } from "@pdx-ts/codegen-cwt/modifier-policy";
-import { RESERVED_TRIGGER_EXPORT_NAMES } from "@pdx-ts/codegen-cwt/trigger-policy";
+} from "@pdx-ts/codegen-cwt/policy/content-swaps";
+import { createEffectPolicy } from "@pdx-ts/codegen-cwt/policy/effects";
+import { createEventFieldPolicy } from "@pdx-ts/codegen-cwt/policy/event-fields";
+import { createModifierOperationPolicy } from "@pdx-ts/codegen-cwt/policy/modifiers";
+import { RESERVED_TRIGGER_EXPORT_NAMES } from "@pdx-ts/codegen-cwt/policy/triggers";
+import { Emitter } from "@pdx-ts/codegen-cwt/render/emitter";
 import { describe, expect, it } from "vitest";
 
 const ROOT = fileURLToPath(new URL("../../../", import.meta.url));

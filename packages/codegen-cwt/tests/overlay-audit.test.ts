@@ -10,17 +10,11 @@
 
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import {
-  CONTENT_MANIFEST,
-  registryNameOf,
-  type ContentManifestEntry,
-} from "@pdx-ts/codegen-cwt/content-manifest";
-import { loadRules } from "@pdx-ts/codegen-cwt/cwt/rules";
-import { emitAliasSplice } from "@pdx-ts/codegen-cwt/emit/alias-splice";
-import { emitAliasStruct } from "@pdx-ts/codegen-cwt/emit/alias-struct";
-import { emitContentType } from "@pdx-ts/codegen-cwt/emit/content-type";
-import { structuralSpliceOf } from "@pdx-ts/codegen-cwt/emit/rule-shapes";
-import { Emitter } from "@pdx-ts/codegen-cwt/emit/types";
+import { emitAliasSplice } from "@pdx-ts/codegen-cwt/emit/content/alias-splice";
+import { emitAliasStruct } from "@pdx-ts/codegen-cwt/emit/content/alias-struct";
+import { emitContentType } from "@pdx-ts/codegen-cwt/emit/content/content-type";
+import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
+import { structuralSpliceOf } from "@pdx-ts/codegen-cwt/lower/rule-shapes";
 import { camelCase } from "@pdx-ts/codegen-cwt/naming";
 import {
   ASSET_PATH_FIELDS,
@@ -50,12 +44,18 @@ import {
   assertPatchWideningsTargetPatchableRegistries,
   assertScriptedModifierCategoryMapValid,
   OverlayAudit,
-} from "@pdx-ts/codegen-cwt/overlay-audit";
+} from "@pdx-ts/codegen-cwt/overlay/audit";
+import {
+  CONTENT_MANIFEST,
+  registryNameOf,
+  type ContentManifestEntry,
+} from "@pdx-ts/codegen-cwt/policy/manifest";
 import {
   HAND_WRITTEN_TRIGGER_EXPORTS,
   handWrittenTriggerRulesByKey,
   type HandWrittenTriggerExport,
-} from "@pdx-ts/codegen-cwt/trigger-policy";
+} from "@pdx-ts/codegen-cwt/policy/triggers";
+import { Emitter } from "@pdx-ts/codegen-cwt/render/emitter";
 import { describe, expect, it } from "vitest";
 
 const ROOT = fileURLToPath(new URL("../../../", import.meta.url));

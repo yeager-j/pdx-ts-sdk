@@ -1,20 +1,21 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { loadRules, scopeIndex } from "@pdx-ts/codegen-cwt/cwt/rules";
-import { createEffectPolicy } from "@pdx-ts/codegen-cwt/effect-policy";
-import { emitEffects } from "@pdx-ts/codegen-cwt/emit/effects";
-import { skippedRule } from "@pdx-ts/codegen-cwt/emit/shape";
-import { emitTriggers } from "@pdx-ts/codegen-cwt/emit/triggers";
-import { Emitter } from "@pdx-ts/codegen-cwt/emit/types";
+import { scopeIndex } from "@pdx-ts/codegen-cwt/cwt/rules";
+import { emitEffects } from "@pdx-ts/codegen-cwt/emit/script/effects";
+import { emitTriggers } from "@pdx-ts/codegen-cwt/emit/script/triggers";
+import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
-import { lowerRuleTable } from "@pdx-ts/codegen-cwt/lowered-rule";
+import { lowerRuleTable } from "@pdx-ts/codegen-cwt/lower/lowered-rule";
+import { skippedRule } from "@pdx-ts/codegen-cwt/lower/script-shape";
+import { createEffectPolicy } from "@pdx-ts/codegen-cwt/policy/effects";
 import {
   formatScriptGapReport,
   reconcileScriptGaps,
   SCRIPT_GENERATION_GAPS,
   type ScriptGenerationGap,
-} from "@pdx-ts/codegen-cwt/script-gaps";
+} from "@pdx-ts/codegen-cwt/policy/script-gaps";
+import { Emitter } from "@pdx-ts/codegen-cwt/render/emitter";
 import { describe, expect, it } from "vitest";
 
 const ROOT = fileURLToPath(new URL("../../../", import.meta.url));

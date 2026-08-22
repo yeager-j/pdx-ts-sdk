@@ -8,7 +8,7 @@
  * either cluster gains the union of both clusters' methods.
  */
 
-import { clusterName, registerClusterName } from "@pdx-ts/codegen-cwt/emit/effects";
+import { clusterName, registerClusterName } from "@pdx-ts/codegen-cwt/emit/script/effects";
 import { describe, expect, it } from "vitest";
 
 /**

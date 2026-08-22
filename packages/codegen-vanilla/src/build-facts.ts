@@ -1,9 +1,9 @@
 import { createHash } from "node:crypto";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
-import { loadRules } from "@pdx-ts/codegen-cwt/cwt/rules";
-import { eventKinds, type EventKindSpec } from "@pdx-ts/codegen-cwt/event-kinds";
-import { loadScopeFacts } from "@pdx-ts/codegen-cwt/scope-facts";
+import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
+import { eventKinds, type EventKindSpec } from "@pdx-ts/codegen-cwt/lower/event-kinds";
+import { loadScopeFacts } from "@pdx-ts/codegen-cwt/lower/scope-facts";
 import { scanInstallPaths, type VanillaPathScan } from "@pdx-ts/sdk/stellaris";
 
 import { compareIdentifiers } from "./emit.ts";

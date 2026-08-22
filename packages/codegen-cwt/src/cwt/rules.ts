@@ -1,15 +1,12 @@
 /**
- * Loads the `.cwt` files codegen consumes into a single rule set.
+ * Reads parsed `.cwt` files into a single rule set.
  *
- * Trigger/effect infrastructure is fixed; content registry sources come from
- * the explicit public-interface manifest.
+ * Pure over parsed nodes: no file system access lives here. The fs shell that
+ * finds, reads, and parses the rule files is `cwt/load.ts`, and the composing
+ * entry point that supplies the manifest sources and overlay categories is
+ * `src/load-rules.ts`.
  */
 
-import { readdirSync, readFileSync, statSync } from "node:fs";
-import path from "node:path";
-
-import { CONTENT_MANIFEST } from "../content-manifest.ts";
-import { EXTRA_ALIAS_CATEGORIES } from "../overlay.ts";
 import {
   classify,
   classifyBlock,
@@ -23,14 +20,7 @@ import {
   type SingleAliasResolver,
   type SingleAliasTarget,
 } from "./model.ts";
-import {
-  parseCwt,
-  type CwtAssignment,
-  type CwtBlock,
-  type CwtDiagnostic,
-  type CwtNode,
-  type CwtParseResult,
-} from "./parser.ts";
+import type { CwtAssignment, CwtBlock, CwtDiagnostic, CwtNode, CwtParseResult } from "./parser.ts";
 
 /** One `alias[trigger:has_edict] = <edict>` declaration. A name may have several. */
 export interface AliasDecl {
@@ -213,8 +203,9 @@ export interface RuleSet {
   readonly effects: ReadonlyMap<string, readonly AliasDecl[]>;
   /**
    * Alias families other than triggers and effects, category -> member -> its
-   * declarations. Populated only for the categories `EXTRA_ALIAS_CATEGORIES`
-   * names, so the ~20 GUI and graphics grammar categories stay out.
+   * declarations. Populated only for the extra categories the caller names
+   * (the overlay's `EXTRA_ALIAS_CATEGORIES`), so the ~20 GUI and graphics
+   * grammar categories stay out.
    *
    * `triggers` and `effects` keep their own fields: they are read by every
    * emitter and their absence from a category table would be a silent hole.
@@ -252,33 +243,6 @@ export interface ComplexEnum {
     readonly key?: string;
   };
 }
-
-const RULE_FILES = [
-  "aliases.cwt",
-  "enums.cwt",
-  "scopes.cwt",
-  "links.cwt",
-  "triggers.cwt",
-  "effects.cwt",
-  "pre_triggers.cwt",
-  "dlc_list.cwt",
-  "events/events.cwt",
-  "events/event_namespaces.cwt",
-  "on_actions.cwt",
-  "modifiers.cwt",
-  "modifier_categories.cwt",
-  // For `enum[complex_maths_enum]` and `enum[simple_maths_enum]`, which the
-  // weight-block lowering strips out of a `modifier` row to leave the trigger
-  // that gates it. They are declared here rather than in enums.cwt, and no
-  // registry's own source pulls this file in.
-  "modifier_rule.cwt",
-  // Sources for the councilor, economic_category, and civic_or_origin alias
-  // categories. Loading governments.cwt here also feeds the
-  // government_trigger alias category through loadRules proper.
-  "common/governments.cwt",
-  "common/economic_categories.cwt",
-  ...CONTENT_MANIFEST.map((entry) => entry.source),
-].filter((file, index, files) => files.indexOf(file) === index);
 
 const ALIAS_KEY = /^alias\[([a-z_]+):(.+)\]$/;
 const BRACKET_KEY = /^([a-z_]+)\[(.+)\]$/;
@@ -427,21 +391,6 @@ function readComplexEnum(name: string, source: string, block: CwtBlock): Complex
     startFromRoot: scalar(block, "start_from_root") === "yes",
     selector,
   };
-}
-
-function cwtFiles(root: string, relative = ""): string[] {
-  const directory = path.join(root, relative);
-  return readdirSync(directory)
-    .sort()
-    .flatMap((name) => {
-      const file = path.join(directory, name);
-      const child = path.join(relative, name);
-      return statSync(file).isDirectory()
-        ? cwtFiles(root, child)
-        : name.endsWith(".cwt")
-          ? [child]
-          : [];
-    });
 }
 
 function readScopes(nodes: readonly CwtNode[], into: Map<string, string[]>): void {
@@ -633,7 +582,13 @@ function dotted(extension: string): string {
   return extension.startsWith(".") ? extension : `.${extension}`;
 }
 
-function readContentTypes(nodes: readonly CwtNode[], into: Map<string, ContentType>): void {
+/**
+ * Reads every `types = { type[...] = { ... } }` declaration in one file.
+ *
+ * Exported for `cwt/load.ts`'s `loadContentTypesFrom`, the narrower entry
+ * point that reads type declarations from files outside the main rule list.
+ */
+export function readContentTypes(nodes: readonly CwtNode[], into: Map<string, ContentType>): void {
   for (const outer of assignments(nodes)) {
     if (outer.key.text !== "types" || outer.value.kind !== "block") {
       continue;
@@ -759,28 +714,6 @@ function readOnActions(nodes: readonly CwtNode[], file: string, into: OnActionDe
   }
 }
 
-/**
- * Reads just the `type[...]` declarations out of an arbitrary set of `.cwt`
- * files.
- *
- * {@link loadRules} deliberately loads a fixed file list, and its drift gate is
- * calibrated against exactly that list. Sounds and sprites are declared in
- * files outside it, and the vanilla-identifier generator needs their paths,
- * keywords, and extensions without widening what the main pipeline reads —
- * hence a second, narrower entry point over the same reader.
- */
-export function loadContentTypesFrom(
-  root: string,
-  files: readonly string[]
-): ReadonlyMap<string, ContentType> {
-  const contentTypes = new Map<string, ContentType>();
-  for (const relative of files) {
-    const parsed = parseCwt(readFileSync(path.join(root, relative), "utf8"), relative);
-    readContentTypes(parsed.nodes, contentTypes);
-  }
-  return contentTypes;
-}
-
 /** One rule file, already parsed — the unit {@link buildRuleSet} reads. */
 export interface ParsedRuleFile {
   readonly file: string;
@@ -805,13 +738,18 @@ export interface ParsedRuleFile {
  * — unrelated to the phase-ordering fix, but folded in here so the whole
  * build stays inside one function with plain, non-`readonly` locals.
  *
+ * `extraAliasCategories` names the alias families beyond triggers and effects
+ * to read into {@link RuleSet.aliasCategories}. The pipeline supplies the
+ * overlay's `EXTRA_ALIAS_CATEGORIES` keys through `src/load-rules.ts`.
+ *
  * Exported (alongside {@link loadRules}) so a test can prove the order
  * independence directly, against synthetic sources, without going through
  * disk I/O or `RULE_FILES`.
  */
 export function buildRuleSet(
   parsedFiles: readonly ParsedRuleFile[],
-  extraComplexEnumFiles: readonly ParsedRuleFile[] = []
+  extraComplexEnumFiles: readonly ParsedRuleFile[] = [],
+  extraAliasCategories: readonly string[] = []
 ): RuleSet {
   const enums = new Map<string, string[]>();
   const complexEnums = new Map<string, ComplexEnum>();
@@ -820,7 +758,7 @@ export function buildRuleSet(
   const triggers = new Map<string, AliasDecl[]>();
   const effects = new Map<string, AliasDecl[]>();
   const aliasCategories = new Map<string, Map<string, AliasDecl[]>>(
-    [...EXTRA_ALIAS_CATEGORIES.keys()].map((category) => [category, new Map()])
+    extraAliasCategories.map((category) => [category, new Map()])
   );
   const links = new Map<string, LinkDecl>();
   const contentTypes = new Map<string, ContentType>();
@@ -895,22 +833,6 @@ export function buildRuleSet(
     modifierTemplates,
     diagnostics,
   };
-}
-
-function parseFile(root: string, relative: string): ParsedRuleFile {
-  return {
-    file: relative,
-    parsed: parseCwt(readFileSync(path.join(root, relative), "utf8"), relative),
-  };
-}
-
-export function loadRules(root: string): RuleSet {
-  const parsedFiles = RULE_FILES.map((relative) => parseFile(root, relative));
-  const loaded = new Set(RULE_FILES);
-  const extraComplexEnumFiles = cwtFiles(root)
-    .filter((relative) => !loaded.has(relative))
-    .map((relative) => parseFile(root, relative));
-  return buildRuleSet(parsedFiles, extraComplexEnumFiles);
 }
 
 /**

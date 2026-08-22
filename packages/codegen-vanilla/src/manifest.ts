@@ -2,7 +2,7 @@
  * What the vanilla identifier package covers.
  *
  * The content registries are not restated here: they come from
- * `@pdx-ts/codegen-cwt`'s `content-manifest.ts`, which is already the one authority on
+ * `@pdx-ts/codegen-cwt`'s `policy/manifest.ts`, which is already the one authority on
  * which registries the SDK exposes. A registry added there gains vanilla
  * identifiers automatically, which is the point — the two lists cannot drift.
  *
@@ -13,13 +13,13 @@
  * from the rules rather than written down twice.
  */
 
+import { MINT_SHAPE_OVERLAYS } from "@pdx-ts/codegen-cwt/overlay";
 import {
   CONTENT_MANIFEST,
   registryNameOf,
   VANILLA_REF_EXTRAS,
   type VanillaRefExtra,
-} from "@pdx-ts/codegen-cwt/content-manifest";
-import { MINT_SHAPE_OVERLAYS } from "@pdx-ts/codegen-cwt/overlay";
+} from "@pdx-ts/codegen-cwt/policy/manifest";
 
 import type { BucketLayout } from "./trie.ts";
 
@@ -73,7 +73,7 @@ export type VanillaManifestRow = VanillaIdRow | VanillaScriptedRow;
  * Bucket layouts for the content registries whose files are laid out unlike
  * `common/`, keyed by the *registry* name.
  *
- * Which registries exist is `content-manifest.ts`'s to say; how the install
+ * Which registries exist is `policy/manifest.ts`'s to say; how the install
  * arranges their files is this generator's, so the table sits here beside
  * {@link EXTRA_BUCKETS} rather than in the manifest.
  *

@@ -1,8 +1,9 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { loadContentTypesFrom } from "@pdx-ts/codegen-cwt/cwt/load";
 import { classify, supportedScopesOf } from "@pdx-ts/codegen-cwt/cwt/model";
 import { parseCwt, type CwtAssignment } from "@pdx-ts/codegen-cwt/cwt/parser";
-import { loadContentTypesFrom, loadRules } from "@pdx-ts/codegen-cwt/cwt/rules";
+import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { describe, expect, it } from "vitest";
 
 const CONFIG = fileURLToPath(

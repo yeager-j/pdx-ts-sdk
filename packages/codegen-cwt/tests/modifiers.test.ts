@@ -1,8 +1,9 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { loadRules, scopeIndex } from "@pdx-ts/codegen-cwt/cwt/rules";
-import { emitModifiers, joinModifierScopes } from "@pdx-ts/codegen-cwt/emit/modifiers";
+import { scopeIndex } from "@pdx-ts/codegen-cwt/cwt/rules";
+import { emitModifiers, joinModifierScopes } from "@pdx-ts/codegen-cwt/emit/script/modifiers";
+import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { parseModifierDocs } from "@pdx-ts/codegen-cwt/logs/modifier-docs";
 import { describe, expect, it } from "vitest";
 

@@ -26,7 +26,7 @@ source change).
    rather than by id; work out that keyword (checking any `type_key_filter`
    the rules declare) — you will need it in the next step.
 2. Add the type and source file to the allowlist in
-   `packages/codegen-cwt/src/content-manifest.ts`, with a `keyword` for
+   `packages/codegen-cwt/src/policy/manifest.ts`, with a `keyword` for
    `name_field` registries. The capability method's name follows from the type
    name; the entry carries no plural or placement metadata — nothing about the
    registry is spelled twice.

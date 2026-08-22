@@ -11,8 +11,13 @@
  * quietly ignores.
  */
 
-import { referenceNameOf, typesReferencedBySubtype } from "@pdx-ts/codegen-cwt/content-reference";
-import { loadContentTypesFrom, loadRules, type ContentType } from "@pdx-ts/codegen-cwt/cwt/rules";
+import { loadContentTypesFrom } from "@pdx-ts/codegen-cwt/cwt/load";
+import type { ContentType } from "@pdx-ts/codegen-cwt/cwt/rules";
+import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
+import {
+  referenceNameOf,
+  typesReferencedBySubtype,
+} from "@pdx-ts/codegen-cwt/lower/content-reference";
 
 import type { VanillaIdRow } from "./manifest.ts";
 import type { BucketLayout } from "./trie.ts";

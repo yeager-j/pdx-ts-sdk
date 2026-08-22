@@ -20,13 +20,13 @@
  * text, and the report's "identifiers checked" counts what went through both.
  */
 
+import type { RuleScopes } from "@pdx-ts/codegen-cwt/lower/scope-facts";
 import {
   camelCase,
   pascalCase,
   kebabCase as registryStem,
   safeIdentifier,
 } from "@pdx-ts/codegen-cwt/naming";
-import type { RuleScopes } from "@pdx-ts/codegen-cwt/scope-facts";
 import { compareUtf8 } from "@pdx-ts/sdk";
 
 import type { ScriptedDefinition } from "./read-scripted.ts";

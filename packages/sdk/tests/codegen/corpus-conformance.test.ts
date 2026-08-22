@@ -39,7 +39,6 @@
  * game must notice.
  */
 
-import { OBSERVED_CASINGS } from "@pdx-ts/codegen-cwt/casing";
 import {
   conformance,
   DESCENT_MODES,
@@ -48,7 +47,8 @@ import {
   type DescentNode,
   type RuleScopes,
 } from "@pdx-ts/codegen-cwt/corpus";
-import type { EmittedField } from "@pdx-ts/codegen-cwt/emit/fields";
+import { OBSERVED_CASINGS } from "@pdx-ts/codegen-cwt/corpus/casing";
+import type { EmittedField } from "@pdx-ts/codegen-cwt/lower/fields";
 import { describe, expect, it } from "vitest";
 
 import { InstallNotFoundError } from "../../src/errors.ts";
@@ -1193,7 +1193,7 @@ describe("shape conformance, list arity", () => {
 
   it("stays silent for a single-valued lowering", () => {
     // The check is one-directional by construction — a field CWT declares
-    // `0..1` and the game writes twice is unauthorable, and `corpus.ts` cannot
+    // `0..1` and the game writes twice is unauthorable, and `corpus/` cannot
     // see it. `CONTENT_FIELD_OVERRIDES`' `arity: "repeated"` is that fix, read
     // off the fixture's own `repeated` count.
     expect(shapeConformance(observationOf({ definitions: 3 }), [single], noScopesOf)).toEqual([]);

@@ -10,8 +10,8 @@
  * unread without one here.
  */
 
-import { contentFileLayout } from "@pdx-ts/codegen-cwt/content-layout";
 import type { ContentType } from "@pdx-ts/codegen-cwt/cwt/rules";
+import { contentFileLayout } from "@pdx-ts/codegen-cwt/lower/content-layout";
 import { describe, expect, it } from "vitest";
 
 function syntheticType(layout: Partial<ContentType>): ContentType {

@@ -23,10 +23,10 @@ import {
   type RegistryLayout,
   type SpliceMember,
 } from "@pdx-ts/codegen-cwt/corpus";
-import { loadRules } from "@pdx-ts/codegen-cwt/cwt/rules";
-import { emitAliasSplice } from "@pdx-ts/codegen-cwt/emit/alias-splice";
-import { emitContentType } from "@pdx-ts/codegen-cwt/emit/content-type";
-import { Emitter } from "@pdx-ts/codegen-cwt/emit/types";
+import { emitAliasSplice } from "@pdx-ts/codegen-cwt/emit/content/alias-splice";
+import { emitContentType } from "@pdx-ts/codegen-cwt/emit/content/content-type";
+import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
+import { Emitter } from "@pdx-ts/codegen-cwt/render/emitter";
 import { describe, expect, it } from "vitest";
 
 /** `planet` holds `planet` and `moon`; `moon` holds `moon`. The real shape. */

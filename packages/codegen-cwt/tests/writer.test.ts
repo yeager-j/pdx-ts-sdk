@@ -9,14 +9,14 @@
  * against.
  */
 
-import type { TsValue } from "@pdx-ts/codegen-cwt/emit/types";
+import type { TsValue } from "@pdx-ts/codegen-cwt/render/emitter";
 import {
   constArray,
   conversionFor,
   member,
   refTypesEntries,
   refTypesSuffix,
-} from "@pdx-ts/codegen-cwt/emit/writer";
+} from "@pdx-ts/codegen-cwt/render/writer";
 import { describe, expect, it } from "vitest";
 
 /** A minimal `TsValue`: only `type` and `toScalar` are required by the interface. */
