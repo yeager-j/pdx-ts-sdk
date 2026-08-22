@@ -27,8 +27,8 @@
 import { createHash } from "node:crypto";
 import {
   parse,
-  regionItems,
   tryNumberValue,
+  walkItems,
   type PdxContainer,
   type PdxEntry,
   type PdxItem,
@@ -528,31 +528,27 @@ function fileVariables(source: ParsedSource): ReadonlyMap<string, number> {
   return variables;
 }
 
+/**
+ * Resolves every `@variable` the items mention, reporting a failure at the
+ * line of the nearest enclosing entry.
+ */
 function validateVariables(
   items: readonly PdxItem[],
   file: string,
   line: number | undefined,
   vars: VarTable
 ): void {
-  for (const item of items) {
-    switch (item.kind) {
-      case "entry":
-        validateVariables([item.value], file, item.line ?? line, vars);
-        break;
-      case "container":
-      case "param":
-        validateVariables(item.items, file, line, vars);
-        break;
-      case "param-text":
-        validateVariables(regionItems(item, file), file, line, vars);
-        break;
-      case "var":
-        vars.resolve(item.name, file, line);
-        break;
-      default:
-        break;
-    }
-  }
+  walkItems(
+    items,
+    line,
+    (item, enclosingLine) => {
+      if (item.kind === "var") {
+        vars.resolve(item.name, file, enclosingLine);
+      }
+      return item.kind === "entry" ? (item.line ?? enclosingLine) : enclosingLine;
+    },
+    { read: true, fileName: file }
+  );
 }
 
 function entryLine(entry: PdxEntry): number | undefined {
