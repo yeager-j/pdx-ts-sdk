@@ -41,6 +41,12 @@ import {
   emitValueSets,
   valuelessEnums,
 } from "./emit/support.ts";
+import {
+  assertRecordedImportsAreUsed,
+  ImportRecorder,
+  knownSymbol,
+  renderImports,
+} from "./emit/symbols.ts";
 import { emitTriggers } from "./emit/triggers.ts";
 import { Emitter, type Usage } from "./emit/types.ts";
 import { emitVanillaRefs } from "./emit/vanilla-refs.ts";
@@ -141,6 +147,48 @@ async function write(file: string, contents: string): Promise<void> {
   const options = await resolveConfig(target);
   mkdirSync(OUT, { recursive: true });
   writeFileSync(target, await format(contents, { ...options, filepath: target }), "utf8");
+}
+
+/**
+ * Writes one generated module whose imports are computed rather than scanned.
+ *
+ * Two sources, both recorded while the module was emitted: the SDK symbols its
+ * emitters declared a use of (`Emitter.use`), and the enum, reference and
+ * value-set aliases the emitter's own per-file tracking already resolves. What
+ * the module needs is therefore a fact the emission produced, not one read back
+ * out of the emitted text.
+ *
+ * The recorded set is checked one way before it is written — see
+ * {@link assertRecordedImportsAreUsed}.
+ */
+async function writeModule(
+  file: string,
+  commit: string,
+  sources: readonly string[],
+  emitter: Emitter,
+  usage: Usage,
+  body: string
+): Promise<void> {
+  assertRecordedImportsAreUsed(file, body, usage.imports, referencesIdentifier);
+  await write(
+    file,
+    header(commit, sources) +
+      importList(
+        "./enums.ts",
+        usage.enums.map((name) => emitter.enumTypeName(name))
+      ) +
+      importList(
+        "./refs.ts",
+        usage.refs.map((name) => emitter.refTypeName(name))
+      ) +
+      importList(
+        "./value-sets.ts",
+        usage.valueSets.map((name) => emitter.valueSetTypeName(name))
+      ) +
+      renderImports(usage.imports) +
+      "\n" +
+      body
+  );
 }
 
 /**
@@ -348,7 +396,7 @@ async function main(): Promise<void> {
             `alias[${category}:...] members — add it to EXTRA_ALIAS_CATEGORIES`
         );
       }
-      emitter.beginFile();
+      emitter.beginFile(category);
       const emission = emitAliasStruct(emitter, category, members);
       aliasCategories.set(category, { ...emission, usage: emitter.endFile() });
       return;
@@ -361,7 +409,7 @@ async function main(): Promise<void> {
     if (structuralSpliceOf(emitter, category) === null) {
       return;
     }
-    emitter.beginFile();
+    emitter.beginFile(category);
     const emission = emitAliasSplice(emitter, category)!;
     const usage = emitter.endFile();
     aliasSplices.set(category, emission);
@@ -491,145 +539,24 @@ async function main(): Promise<void> {
     "modifier-policy.ts",
     header(commit, ["modifier_rule.cwt"]) + emitModifierOperationProtocol(modifierOperationPolicy)
   );
-  // `Trigger` and `ScriptValue` both live in `trigger-core.ts`, so one clause
-  // covers both — `Trigger<` stays a substring match (already precise; see
-  // `GovernmentTriggerBlock`, which a bare "Trigger" match would false-hit),
-  // `ScriptValue` a word-boundary one since it has no such collision.
-  const triggerCoreImports = (code: string): string => {
-    const names = [
-      ...(code.includes("Trigger<") ? ["Trigger"] : []),
-      ...(referencesIdentifier(code, "ScriptValue") ? ["ScriptValue"] : []),
-    ];
-    return names.length === 0
-      ? ""
-      : `import type { ${names.join(", ")} } from "../script/trigger-core.ts";\n`;
-  };
-  // A module referencing another alias category's interface needs both a type
-  // import and a bare side-effect import: the type import is erased at build
-  // time, and only the side effect guarantees that category's
-  // `registerAliasStructFields` call has run before anything is serialized.
-  // Categories reference each other (`planet_initializer` holds
-  // `MoonInitializerFields`) and registries reference categories, so both write
-  // loops resolve it the same way.
-  const aliasCategoryImports = (code: string, self?: string): string =>
-    [...aliasCategories]
-      .filter(
-        ([category, emission]) => category !== self && referencesIdentifier(code, emission.typeName)
-      )
-      .map(([category, emission]) => {
-        const file = `./${category.replaceAll("_", "-")}.ts`;
-        return (
-          `import type { ${emission.typeName} } from ${JSON.stringify(file)};\n` +
-          `import ${JSON.stringify(file)};\n`
-        );
-      })
-      .join("");
   for (const [category, emission] of aliasCategories) {
-    // `ContentField` is always used — every category emits a field table — and
-    // the rest only when the category's own members reach for them. Matched on
-    // `EffectBlock<`/`Trigger<` rather than the bare name, since `Trigger`
-    // is a substring of `GovernmentTriggerBlock`.
-    const runtimeTypes: string[] = ["ContentField", "EffectBlock<", "ModifierClosure"]
-      .filter((name) =>
-        name.endsWith("<")
-          ? emission.code.includes(name)
-          : referencesIdentifier(emission.code, name)
-      )
-      .map((name) => name.replace("<", ""));
-    const schemaTypes = runtimeTypes.filter((name) => name === "ContentField");
-    const typeTypes = runtimeTypes.filter((name) => name !== "ContentField");
-    await write(
+    await writeModule(
       `${category.replaceAll("_", "-")}.ts`,
-      header(commit, [`alias[${category}:...] across the rule files`]) +
-        'import { registerAliasStructFields } from "../content/schema.ts";\n' +
-        importList("../content/schema.ts", schemaTypes) +
-        importList("../content/types.ts", typeTypes) +
-        triggerCoreImports(emission.code) +
-        (emission.code.includes("ScopeName")
-          ? 'import type { ScopeName } from "./scopes.ts";\n'
-          : "") +
-        importList(
-          "./enums.ts",
-          emission.usage.enums.map((name) => emitter.enumTypeName(name))
-        ) +
-        importList(
-          "./refs.ts",
-          emission.usage.refs.map((name) => emitter.refTypeName(name))
-        ) +
-        importList(
-          "./value-sets.ts",
-          emission.usage.valueSets.map((name) => emitter.valueSetTypeName(name))
-        ) +
-        // A category whose own interface is self-recursive imports nothing for
-        // itself; `self` keeps it from importing its own module.
-        aliasCategoryImports(emission.code, category) +
-        "\n" +
-        emission.code
+      commit,
+      [`alias[${category}:...] across the rule files`],
+      emitter,
+      emission.usage,
+      emission.code
     );
   }
   for (const content of contents) {
-    const runtimeTypes: string[] = [
-      "ContentField",
-      "ContentLocalisation",
-      "DefinedContent",
-      "EconomicResourceBlock",
-      "EconomicResourceBlockNoProduce",
-      "EconomicResourceOperation",
-      "EffectBlock",
-      "ModifierBlock",
-      "ModifierClosure",
-      "TriggeredModifier",
-      "WeightBlock",
-      "WeightBlockWithLoc",
-      "WithFrom",
-    ].filter((name) => referencesIdentifier(content.emission.code, name));
-    const schemaTypes: string[] = runtimeTypes.filter(
-      (name) => name === "ContentField" || name === "ContentLocalisation"
-    );
-    const authoringTypes: string[] = runtimeTypes.filter((name) => name === "DefinedContent");
-    const typeTypes: string[] = runtimeTypes.filter(
-      (name) => !schemaTypes.includes(name) && !authoringTypes.includes(name)
-    );
-    const aliasStructImports = aliasCategoryImports(content.emission.code);
-    // The patch surface a `CONTENT_PATCH_REGISTRIES` row generates: the generic
-    // transform's types, and the parsed definition it transforms.
-    const patchTypes = ["ContentPatchItem", "PatchInput", "PatchedContent"].filter((name) =>
-      referencesIdentifier(content.emission.code, name)
-    );
-    const parsedTypes = ["AnyOf", `Parsed${content.emission.typeName}`].filter((name) =>
-      referencesIdentifier(content.emission.code, name)
-    );
-    await write(
+    await writeModule(
       `${kebabCase(content.registry)}.ts`,
-      header(commit, [content.manifest.source]) +
-        importList(
-          "../authoring/assets.ts",
-          ["AssetFileItem"].filter((name) => referencesIdentifier(content.emission.code, name))
-        ) +
-        importList("../content/schema.ts", schemaTypes) +
-        importList("../content/authoring.ts", authoringTypes) +
-        importList("../content/types.ts", typeTypes) +
-        importList("../stellaris/vanilla/patch.ts", patchTypes) +
-        importList("../stellaris/vanilla/view.ts", parsedTypes) +
-        triggerCoreImports(content.emission.code) +
-        (content.emission.code.includes("ScopeName")
-          ? 'import type { ScopeName } from "./scopes.ts";\n'
-          : "") +
-        importList(
-          "./enums.ts",
-          content.usage.enums.map((name) => emitter.enumTypeName(name))
-        ) +
-        importList(
-          "./refs.ts",
-          content.usage.refs.map((name) => emitter.refTypeName(name))
-        ) +
-        importList(
-          "./value-sets.ts",
-          content.usage.valueSets.map((name) => emitter.valueSetTypeName(name))
-        ) +
-        aliasStructImports +
-        "\n" +
-        content.emission.code
+      commit,
+      [content.manifest.source],
+      emitter,
+      content.usage,
+      content.emission.code
     );
   }
   const contentSources = CONTENT_MANIFEST.map((entry) => entry.source).filter(
@@ -682,33 +609,13 @@ async function main(): Promise<void> {
       "\n" +
       vanillaRefs.code
   );
-  await write(
+  await writeModule(
     "triggers.ts",
-    header(commit, ["triggers.cwt", "aliases.cwt", "script-docs/v4.4.1/triggers.log"]) +
-      'import { block, cmp, container, kv, scalar, type PdxEntry, type PdxItem, type PdxOp } from "@pdx-ts/pdxscript";\n' +
-      'import type { ContentRefUse } from "../references.ts";\n' +
-      (referencesIdentifier(triggers.code, "ScopeValue")
-        ? 'import type { ScopeValue } from "../script/effects/types.ts";\n'
-        : "") +
-      `import { trigger, type Trigger${referencesIdentifier(triggers.code, "ScriptValue") ? ", type ScriptValue" : ""}` +
-      `${referencesIdentifier(triggers.code, "scriptValueScalar") ? ", scriptValueScalar" : ""} } ` +
-      'from "../script/trigger-core.ts";\n' +
-      `import { refId${referencesIdentifier(triggers.code, "isStructuredValue") ? ", isStructuredValue" : ""} } from "../script/scalar.ts";\n` +
-      'import type { ScopeName } from "./scopes.ts";\n' +
-      importList(
-        "./enums.ts",
-        triggerUsage.enums.map((name) => emitter.enumTypeName(name))
-      ) +
-      importList(
-        "./refs.ts",
-        triggerUsage.refs.map((name) => emitter.refTypeName(name))
-      ) +
-      importList(
-        "./value-sets.ts",
-        triggerUsage.valueSets.map((name) => emitter.valueSetTypeName(name))
-      ) +
-      "\n" +
-      triggers.code
+    commit,
+    ["triggers.cwt", "aliases.cwt", "script-docs/v4.4.1/triggers.log"],
+    emitter,
+    triggerUsage,
+    triggers.code
   );
   await write(
     "links.ts",
@@ -726,34 +633,19 @@ async function main(): Promise<void> {
       'import type { ScopeName } from "./scopes.ts";\n\n' +
       emitScopeLinkNavigation(classifiedLinks.navigation)
   );
-  await write(
+  await writeModule(
     "effects.ts",
-    header(commit, [
+    commit,
+    [
       "effects.cwt",
       "aliases.cwt",
       "links.cwt",
       "script-docs/v4.4.1/effects.log",
       "script-docs/v4.4.1/scopes.log",
-    ]) +
-      'import type { PdxOp } from "@pdx-ts/pdxscript";\n' +
-      `import type { EffectPath, Modifier, ${referencesIdentifier(effects.interfaces, "ScopeValue") ? "ScopeValue, " : ""}StructuralEffects } from "../script/effects/types.ts";\n` +
-      `import type { Trigger${referencesIdentifier(effects.interfaces, "ScriptValue") ? ", ScriptValue" : ""} } ` +
-      'from "../script/trigger-core.ts";\n' +
-      'import type { ScopeName } from "./scopes.ts";\n' +
-      importList(
-        "./enums.ts",
-        effectUsage.enums.map((name) => emitter.enumTypeName(name))
-      ) +
-      importList(
-        "./refs.ts",
-        effectUsage.refs.map((name) => emitter.refTypeName(name))
-      ) +
-      importList(
-        "./value-sets.ts",
-        effectUsage.valueSets.map((name) => emitter.valueSetTypeName(name))
-      ) +
-      "\n" +
-      effects.interfaces
+    ],
+    emitter,
+    effectUsage,
+    effects.interfaces
   );
   await write(
     "effect-meta.ts",
@@ -1504,16 +1396,23 @@ function contentDefiners(
   for (const intersectsWitness of intersectsWitnesses) {
     contentItemTypes.push(intersectsWitness.type, intersectsWitness.exactType);
   }
-  // A hand-written definer's declared witness is spelled in the overlay, so
-  // the type it names has to be imported on its word rather than derived —
-  // `ScopeName` is the only one so far, and it is the only scope type this
-  // module could need.
-  const witnessScopeName = contents.some((content) =>
-    HAND_WRITTEN_CONTENT_DEFINERS.get(content.registry)?.witness?.type.includes("ScopeName")
-  );
+  // A hand-written definer's declared witness type is overlay text this module
+  // only splices, so the row states which SDK symbols it spells rather than
+  // this reading them back out of it.
+  const witnessImports = new ImportRecorder();
+  for (const content of contents) {
+    for (const symbol of HAND_WRITTEN_CONTENT_DEFINERS.get(content.registry)?.witness?.symbols ??
+      []) {
+      const known = knownSymbol(
+        symbol,
+        `Named by the HAND_WRITTEN_CONTENT_DEFINERS row "${content.registry}".`
+      );
+      witnessImports.add(known.module, symbol, known.kind);
+    }
+  }
   const imports =
     importList("../content/types.ts", contentItemTypes) +
-    (witnessScopeName ? 'import type { ScopeName } from "./scopes.ts";\n' : "") +
+    renderImports(witnessImports.snapshot()) +
     (refImports ? 'import { refId, type TypedRef } from "../script/scalar.ts";\n' : "") +
     // One generic transform, called with the registry's own field descriptors:
     // the patch surface is descriptor-derived the whole way down, so nothing

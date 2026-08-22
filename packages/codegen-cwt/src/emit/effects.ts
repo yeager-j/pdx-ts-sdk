@@ -311,7 +311,7 @@ function shapeOf(
  * `owner` is the effect key the field belongs to, so an override row can name
  * one field of one effect rather than every field spelled that way.
  */
-function memberType(field: ArgField, outerScope: string, owner: string): string {
+function memberType(emitter: Emitter, field: ArgField, outerScope: string, owner: string): string {
   const override = EFFECT_FIELD_TYPE_OVERRIDES.get(`${owner}.${field.name}`);
   if (override !== undefined) {
     return override.type;
@@ -320,15 +320,18 @@ function memberType(field: ArgField, outerScope: string, owner: string): string 
   const type = (() => {
     switch (value.kind) {
       case "scalar":
-        return value.value.type;
+        return emitter.useValue(value.value).type;
       case "fields":
-        return argsType(value.fields, outerScope, owner);
+        return argsType(emitter, value.fields, outerScope, owner);
       case "scalarOrFields":
-        return `${value.scalar.type} | ${argsType(value.fields, outerScope, owner)}`;
+        return (
+          `${emitter.useValue(value.scalar).type} | ` +
+          `${argsType(emitter, value.fields, outerScope, owner)}`
+        );
       case "valueList": {
         const arms = [
-          value.scalar?.type,
-          value.fields === null ? null : argsType(value.fields, outerScope, owner),
+          value.scalar === null ? undefined : emitter.useValue(value.scalar).type,
+          value.fields === null ? null : argsType(emitter, value.fields, outerScope, owner),
         ].filter((arm): arm is string => arm !== null && arm !== undefined);
         const item =
           arms.length === 1 && !arms[0]!.includes(" | ") ? arms[0]! : `(${arms.join(" | ")})`;
@@ -337,10 +340,10 @@ function memberType(field: ArgField, outerScope: string, owner: string): string 
       case "clause": {
         const scope = value.scope === null ? outerScope : JSON.stringify(value.scope);
         if (value.category === "trigger") {
-          return `Trigger<${scope}>`;
+          return `${emitter.use("Trigger")}<${scope}>`;
         }
         if (value.category === "modifier_rule") {
-          return `readonly Modifier<${scope}>[]`;
+          return `readonly ${emitter.use("Modifier")}<${scope}>[]`;
         }
         return value.scope === null
           ? `(scope: ScopeObjOf<${scope}>) => void`
@@ -348,7 +351,8 @@ function memberType(field: ArgField, outerScope: string, owner: string): string 
       }
       case "comparison": {
         const literals = value.literals.map((literal) => JSON.stringify(literal));
-        return [value.value.type, `readonly [PdxOp, ${value.value.type}]`, ...literals].join(" | ");
+        const scalar = emitter.useValue(value.value).type;
+        return [scalar, `readonly [${emitter.use("PdxOp")}, ${scalar}]`, ...literals].join(" | ");
       }
     }
   })();
@@ -362,34 +366,38 @@ function scopeInterfaceName(scope: string | null): string {
   return scope === null ? "this" : `${pascalCase(scope)}Scope`;
 }
 
-function argsType(fields: readonly ArgField[], outerScope: string, owner: string): string {
+function argsType(
+  emitter: Emitter,
+  fields: readonly ArgField[],
+  outerScope: string,
+  owner: string
+): string {
   const members = fields.map(
     (field) =>
-      `${camelCase(field.name)}${field.optional ? "?" : ""}: ${memberType(field, outerScope, owner)}`
+      `${camelCase(field.name)}${field.optional ? "?" : ""}: ${memberType(emitter, field, outerScope, owner)}`
   );
   return `{ ${members.join("; ")} }`;
 }
 
-function methodSignature(effect: EmittedEffect, outerScope: string): string {
-  const { method, key, shape } = effect;
+function methodSignature(emitter: Emitter, effect: EmittedEffect, outerScope: string): string {
   const doc = docComment(effect.docs, "  ");
-  return doc + methodSignatureText(effect, outerScope);
+  return doc + methodSignatureText(emitter, effect, outerScope);
 }
 
-function methodSignatureText(effect: EmittedEffect, outerScope: string): string {
+function methodSignatureText(emitter: Emitter, effect: EmittedEffect, outerScope: string): string {
   const { method, key, shape } = effect;
   switch (shape.kind) {
     case "bool":
       return `  ${method}(value?: boolean): void;\n`;
     case "value":
-      return `  ${method}(value: ${shape.value.type}): void;\n`;
+      return `  ${method}(value: ${emitter.useValue(shape.value).type}): void;\n`;
     case "fields":
-      return `  ${method}(args: ${argsType(shape.fields, outerScope, key)}): void;\n`;
+      return `  ${method}(args: ${argsType(emitter, shape.fields, outerScope, key)}): void;\n`;
     case "wrapper": {
       const body = `body: (scope: ${scopeInterfaceName(shape.scope)}) => void`;
       return shape.fields === null
         ? `  ${method}(${body}): void;\n`
-        : `  ${method}(args: ${argsType(shape.fields, outerScope, key)}, ${body}): void;\n`;
+        : `  ${method}(args: ${argsType(emitter, shape.fields, outerScope, key)}, ${body}): void;\n`;
     }
   }
 }
@@ -398,19 +406,26 @@ function extensionArgsName(effect: EmittedEffect): string {
   return `${pascalCase(camelCase(effect.key))}Args`;
 }
 
-function extensionFallbackSignature(effect: EmittedEffect, outerScope: string): string {
+function extensionFallbackSignature(
+  emitter: Emitter,
+  effect: EmittedEffect,
+  outerScope: string
+): string {
   if (effect.shape.kind === "fields") {
     return `  ${effect.method}(args: ${extensionArgsName(effect)}): void;\n`;
   }
-  return methodSignatureText(effect, outerScope);
+  return methodSignatureText(emitter, effect, outerScope);
 }
 
-function referenceSignature(effect: EmittedEffect, outerScope: string): string {
+function referenceSignature(emitter: Emitter, effect: EmittedEffect, outerScope: string): string {
   const seam = EFFECT_EXTENSION_SEAMS.get(effect.key);
   if (seam === undefined) {
-    return methodSignatureText(effect, outerScope).trim();
+    return methodSignatureText(emitter, effect, outerScope).trim();
   }
-  return `${seam.referenceSignature}\n${extensionFallbackSignature(effect, outerScope).trim()}`;
+  return (
+    `${seam.referenceSignature}\n` +
+    `${extensionFallbackSignature(emitter, effect, outerScope).trim()}`
+  );
 }
 
 function booleanLiteralsMeta(value: TsValue | undefined): string {
@@ -763,12 +778,14 @@ export function emitEffects(
     const args =
       effect.shape.kind === "fields"
         ? docComment([`The arguments \`${camelCase(key)}\` takes, as the rules declare them.`]) +
-          `export type ${argsName} = ${argsType(effect.shape.fields, clusterScope(owner), key)};\n`
+          `export type ${argsName} = ` +
+          `${argsType(emitter, effect.shape.fields, clusterScope(owner), key)};\n`
         : "";
     const signature =
       effect.shape.kind === "fields"
-        ? `${docComment(effect.docs, "  ")}${extensionFallbackSignature(effect, clusterScope(owner))}`
-        : methodSignature(effect, clusterScope(owner));
+        ? `${docComment(effect.docs, "  ")}` +
+          `${extensionFallbackSignature(emitter, effect, clusterScope(owner))}`
+        : methodSignature(emitter, effect, clusterScope(owner));
     interfaceChunks.push(
       args +
         docComment([
@@ -789,7 +806,7 @@ export function emitEffects(
         : [`Effects valid in: ${cluster.scopes.join(", ")}.`];
     const methods = cluster.effects
       .filter((effect) => !EFFECT_EXTENSION_SEAMS.has(effect.key))
-      .map((effect) => methodSignature(effect, outerScope))
+      .map((effect) => methodSignature(emitter, effect, outerScope))
       .join("\n");
     const seams = cluster.effects
       .flatMap((effect) => {
@@ -818,7 +835,7 @@ export function emitEffects(
   const allScopes = canonicalScopes(emitter.rules.scopes);
   const scopeChunks = allScopes.map((scope) => {
     const parents = [
-      `StructuralEffects<${JSON.stringify(scope)}>`,
+      `${emitter.use("StructuralEffects")}<${JSON.stringify(scope)}>`,
       ...sortedClusters
         .filter((cluster) => cluster.scopes === "universal" || cluster.scopes.includes(scope))
         .map((cluster) => clusterName(cluster.scopes)),
@@ -834,7 +851,7 @@ export function emitEffects(
 
   const pathChunks = allScopes.map((scope) => {
     const parents = [
-      `EffectPath<${JSON.stringify(scope)}>`,
+      `${emitter.use("EffectPath")}<${JSON.stringify(scope)}>`,
       ...sortedLinkClusters
         .filter((cluster) => cluster.scopes === "universal" || cluster.scopes.includes(scope))
         .map((cluster) => pathClusterName(cluster.scopes)),
@@ -850,14 +867,14 @@ export function emitEffects(
     `export interface ScopeMap {\n` +
     allScopes.map((scope) => `  ${JSON.stringify(scope)}: ${pascalCase(scope)}Scope;\n`).join("") +
     `}\n\n` +
-    `export type ScopeObjOf<S extends ScopeName> = ScopeMap[S];\n\n` +
+    `export type ScopeObjOf<S extends ${emitter.use("ScopeName")}> = ScopeMap[S];\n\n` +
     docComment(["Scope name -> a composable effect-block path at that scope."]) +
     `export interface EffectPathMap {\n` +
     allScopes
       .map((scope) => `  ${JSON.stringify(scope)}: ${pascalCase(scope)}EffectPath;\n`)
       .join("") +
     `}\n\n` +
-    `export type EffectPathOf<S extends ScopeName> = EffectPathMap[S];\n`;
+    `export type EffectPathOf<S extends ${emitter.use("ScopeName")}> = EffectPathMap[S];\n`;
 
   const interfaces =
     interfaceChunks.join("\n") +
@@ -939,7 +956,7 @@ export function emitEffects(
         availability === "universal"
           ? { kind: "universal" }
           : { kind: "scopes", scopes: availability },
-      signature: referenceSignature(effect, outerScope),
+      signature: referenceSignature(emitter, effect, outerScope),
       docs: effect.docs,
     }));
   });

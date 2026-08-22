@@ -29,6 +29,7 @@ import {
   FIELD_WIDENINGS,
   type ContentFieldOverride,
   type ContentFieldShape,
+  type FieldWidening,
 } from "../overlay.ts";
 import { formOfShape } from "./authored-form.ts";
 import { Emitter, type TsValue } from "./types.ts";
@@ -480,6 +481,15 @@ export interface FieldContext {
   readonly scope: ScopeContext | null;
   readonly unpinned: string;
   /**
+   * The SDK symbol {@link FieldContext.unpinned} names, where it names one
+   * rather than a type parameter of the enclosing definition. Carried so a field
+   * that actually lands on the unpinned type declares the import at the site
+   * that writes it — a registry whose fields are all scope-annotated imports
+   * nothing, and a contravariant field widens to `never` and imports nothing
+   * either.
+   */
+  readonly unpinnedSymbol?: string;
+  /**
    * The type FROM lowers to in this field's block, where the overlay asserts a
    * FROM the rules leave unstated (`ContentScopeParameter.selector.fromMembers`).
    * A TS type rather than a scope name, because the scope it names is the
@@ -493,6 +503,8 @@ export interface FieldContext {
 interface FieldScope {
   /** The TS type parameter: one canonical scope literal, or the unpinned type. */
   readonly type: string;
+  /** {@link FieldContext.unpinnedSymbol}, where {@link FieldScope.type} is it. */
+  readonly unpinned?: string;
   /** The same thing as data, `"any"` where nothing pinned it. */
   readonly scopes: readonly string[] | "any";
   /**
@@ -577,7 +589,13 @@ function scopeType(
     }
     return { type: JSON.stringify(canonical), scopes: [canonical], from, root };
   }
-  const unpinned: FieldScope = { type: ctx.unpinned, scopes: "any", from, root };
+  const unpinned: FieldScope = {
+    type: ctx.unpinned,
+    scopes: "any",
+    from,
+    root,
+    ...(ctx.unpinnedSymbol === undefined ? {} : { unpinned: ctx.unpinnedSymbol }),
+  };
   const declared = field.scope?.this ?? ctx.scope?.this;
   if (declared === undefined || declared === null) {
     return unpinned;
@@ -597,11 +615,12 @@ function scopeType(
  * honour. A declared ROOT with no FROM still has to spell the FROM slot, and
  * `undefined` is exactly the sentinel the default already means.
  */
-function effectBlockArgs(scope: FieldScope): string {
+function effectBlockArgs(emitter: Emitter, scope: FieldScope): string {
+  const own = scopeArg(emitter, scope);
   if (scope.root !== null) {
-    return `${scope.type}, ${scope.from ?? "undefined"}, ${scope.root}`;
+    return `${own}, ${scope.from ?? "undefined"}, ${scope.root}`;
   }
-  return scope.from === null ? scope.type : `${scope.type}, ${scope.from}`;
+  return scope.from === null ? own : `${own}, ${scope.from}`;
 }
 
 /** Runtime evidence that natural event FROM cannot be witnessed by this block's `this`. */
@@ -627,12 +646,12 @@ function splitRootMetadata(scope: FieldScope): readonly string[] {
  * rather than a judgement about that field, since the wrapper's whole reason
  * to exist is the missing argument list.
  */
-function withFrom(inner: string, scope: FieldScope): string {
+function withFrom(emitter: Emitter, inner: string, scope: FieldScope): string {
   if (scope.from === null) {
     return inner;
   }
   const root = scope.root === null ? "" : `, ${scope.root}`;
-  return `WithFrom<${inner}, ${scope.type}, ${scope.from}${root}>`;
+  return `${emitter.use("WithFrom")}<${inner}, ${scopeArg(emitter, scope)}, ${scope.from}${root}>`;
 }
 
 /**
@@ -880,7 +899,41 @@ function contravariantScopeType(
   asserted?: string
 ): FieldScope {
   const scope = scopeType(emitter, field, ctx, asserted);
-  return scope.type === "ScopeName" ? { ...scope, type: "never" } : scope;
+  if (scope.type !== "ScopeName") {
+    return scope;
+  }
+  // `never` spells no SDK symbol, so the widened scope drops the import the
+  // unpinned one would have declared.
+  const { unpinned, ...rest } = scope;
+  return { ...rest, type: "never" };
+}
+
+/**
+ * The scope argument a member type spells, declaring the import it needs.
+ *
+ * Every site that writes `scope.type` into the output goes through here: the
+ * unpinned type is `ScopeName` for an ordinary registry and a type parameter for
+ * a scope-parameterised one, and only the first is a symbol to import.
+ */
+function scopeArg(emitter: Emitter, scope: FieldScope): string {
+  if (scope.unpinned !== undefined) {
+    emitter.use(scope.unpinned);
+  }
+  return scope.type;
+}
+
+/**
+ * Declares the imports one overlay widening's `extraType` needs.
+ *
+ * The row states its own symbols ({@link FieldWidening.symbols}) because the
+ * text is free-form TypeScript the overlay writes and the emitter only splices.
+ * Applied where the row is read, which is the point the widening joins the
+ * member's admitted forms.
+ */
+export function useWideningSymbols(emitter: Emitter, widening: FieldWidening | undefined): void {
+  for (const symbol of widening?.symbols ?? []) {
+    emitter.use(symbol);
+  }
 }
 
 export function flatten(fields: readonly RuleField[], typeName: string): RuleField[] {
@@ -1004,7 +1057,7 @@ export function lowerStructuralSplice(
   return {
     member,
     key: splice.memberKey,
-    memberType: arrayType(spliceTypeName(category)),
+    memberType: arrayType(emitter.useAliasCategory(category, spliceTypeName(category))),
     metadata:
       `{ key: ${JSON.stringify(splice.memberKey)}, member: ${JSON.stringify(member)}, ` +
       `shape: "aliasStruct", form: ${JSON.stringify(formOfShape(shape))}, ` +
@@ -1046,7 +1099,7 @@ export function lowerTopLevelSplice(
   const scope = scopeType(emitter, field, ctx);
   return {
     member: "modifiers",
-    memberType: `ModifierClosure<${scope.type}>`,
+    memberType: `${emitter.use("ModifierClosure")}<${scopeArg(emitter, scope)}>`,
     metadata: `{ member: "modifiers", shape: "inlineModifiers" }`,
     docs: [
       "Modifiers written directly into the definition body, with no enclosing key.",
@@ -1134,6 +1187,7 @@ function lowerValue(
   // `locKey: true` is that signal, consumed by the runtime's
   // `onLocKeyLooksLikeText` check (SDK-50).
   const locKeyExtra = field.type.kind === "localisation" ? ["locKey: true"] : [];
+  emitter.useValue(value);
   return {
     memberType: repeated ? arrayType(base) : base,
     metadata: metadata(field, name, "value", [...scalarMetadata(value), ...locKeyExtra]),
@@ -1186,7 +1240,7 @@ function lowerValueList(
   if (value === null) {
     return null;
   }
-  const listType = arrayType(value.type);
+  const listType = arrayType(emitter.useValue(value).type);
   return {
     memberType: listType + (widening === undefined ? "" : ` | ${widening}`),
     metadata: metadata(field, name, "valueList", [
@@ -1416,6 +1470,7 @@ function structShape(
     const widening = FIELD_WIDENINGS.get(fieldPath);
     if (widening !== undefined) {
       emitter.overlayAudit.applied("FIELD_WIDENINGS", fieldPath);
+      useWideningSymbols(emitter, widening);
     }
     const lowered = pickOrdinary(
       emitter,
@@ -1494,7 +1549,11 @@ function structShape(
     docTables.push(...expanded.docTables);
   }
   if (inlineTrigger !== undefined) {
-    const whenType = withFrom(`Trigger<${inlineTrigger.type}>`, inlineTrigger);
+    const whenType = withFrom(
+      emitter,
+      `${emitter.use("Trigger")}<${scopeArg(emitter, inlineTrigger)}>`,
+      inlineTrigger
+    );
     members.push(`  when?: ${whenType};\n`);
     memberDocs.when = { optional: true, docs: [], memberType: whenType };
     fieldMetadata.push('{ member: "when", shape: "inlineTrigger" }');
@@ -1525,7 +1584,7 @@ function structShape(
       "}\n\n" +
       constArray(
         fieldsConstant,
-        "ContentField",
+        emitter.use("ContentField"),
         fieldMetadata.map((entry) => `  ${entry},\n`).join("")
       ),
     unsupported,
@@ -1599,7 +1658,7 @@ function lowerScalarMap(emitter: Emitter, field: RuleField, name: string): Lower
     return null;
   }
   return {
-    memberType: `Readonly<Record<string, ${value.type}>>`,
+    memberType: `Readonly<Record<string, ${emitter.useValue(value).type}>>`,
     metadata: metadata(field, name, "scalarMap"),
     admits: { shape: "scalarMap", repeated: repeatsSiblings(field, "scalarMap") },
   };
@@ -1706,7 +1765,7 @@ function lowerOrdinary(
   if (requested === "modifierBlock") {
     const scope = scopeType(emitter, field, ctx, override?.scope);
     return {
-      memberType: `ModifierClosure<${scope.type}>`,
+      memberType: `${emitter.use("ModifierClosure")}<${scopeArg(emitter, scope)}>`,
       metadata: metadata(field, name, "modifierBlock"),
       admits: admitsBlock(field, "modifierBlock", scope),
     };
@@ -1714,7 +1773,11 @@ function lowerOrdinary(
   if (requested === "weightBlock") {
     const scope = contravariantScopeType(emitter, field, ctx, override?.scope);
     return {
-      memberType: withFrom(`WeightBlock<${scope.type}>`, scope),
+      memberType: withFrom(
+        emitter,
+        `${emitter.use("WeightBlock")}<${scopeArg(emitter, scope)}>`,
+        scope
+      ),
       metadata: metadata(field, name, "weightBlock"),
       admits: admitsBlock(field, "weightBlock", scope),
       ...weightInterior(emitter, name, path, scope),
@@ -1723,7 +1786,11 @@ function lowerOrdinary(
   if (requested === "weightBlockWithLoc") {
     const scope = contravariantScopeType(emitter, field, ctx, override?.scope);
     return {
-      memberType: withFrom(`WeightBlockWithLoc<${scope.type}>`, scope),
+      memberType: withFrom(
+        emitter,
+        `${emitter.use("WeightBlockWithLoc")}<${scopeArg(emitter, scope)}>`,
+        scope
+      ),
       metadata: metadata(field, name, "weightBlockWithLoc"),
       admits: admitsBlock(field, "weightBlockWithLoc", scope),
       ...weightInterior(emitter, name, path, scope),
@@ -1731,7 +1798,7 @@ function lowerOrdinary(
   }
   if (requested === "aliasStruct") {
     const category = override!.category!;
-    const memberType = `${pascalCase(category)}Block`;
+    const memberType = emitter.useAliasCategory(category, `${pascalCase(category)}Block`);
     return {
       memberType: isRepeated(field.cardinality) ? arrayType(memberType) : memberType,
       metadata: metadata(field, name, "aliasStruct", [`category: ${JSON.stringify(category)}`]),
@@ -1751,7 +1818,11 @@ function lowerOrdinary(
   if (requested === "trigger" || (requested === undefined && category === "trigger")) {
     const scope = contravariantScopeType(emitter, field, ctx, override?.scope);
     return {
-      memberType: withFrom(`Trigger<${scope.type}>`, scope),
+      memberType: withFrom(
+        emitter,
+        `${emitter.use("Trigger")}<${scopeArg(emitter, scope)}>`,
+        scope
+      ),
       metadata: metadata(field, name, "trigger"),
       admits: admitsBlock(field, "trigger", scope, "trigger"),
     };
@@ -1759,7 +1830,7 @@ function lowerOrdinary(
   if (requested === "effect" || (requested === undefined && category === "effect")) {
     const scope = scopeType(emitter, field, ctx, override?.scope);
     return {
-      memberType: `EffectBlock<${effectBlockArgs(scope)}>`,
+      memberType: `${emitter.use("EffectBlock")}<${effectBlockArgs(emitter, scope)}>`,
       metadata: metadata(field, name, "effect", splitRootMetadata(scope)),
       admits: admitsBlock(field, "effect", scope, "effect"),
     };
@@ -1767,7 +1838,11 @@ function lowerOrdinary(
   if (requested === undefined && category === "modifier_rule") {
     const scope = contravariantScopeType(emitter, field, ctx, override?.scope);
     return {
-      memberType: withFrom(`WeightBlock<${scope.type}>`, scope),
+      memberType: withFrom(
+        emitter,
+        `${emitter.use("WeightBlock")}<${scopeArg(emitter, scope)}>`,
+        scope
+      ),
       metadata: metadata(field, name, "weightBlock"),
       admits: admitsBlock(field, "weightBlock", scope),
       ...weightInterior(emitter, name, path, scope),
@@ -1776,7 +1851,11 @@ function lowerOrdinary(
   if (requested === undefined && category === "modifier_rule_with_loc") {
     const scope = contravariantScopeType(emitter, field, ctx, override?.scope);
     return {
-      memberType: withFrom(`WeightBlockWithLoc<${scope.type}>`, scope),
+      memberType: withFrom(
+        emitter,
+        `${emitter.use("WeightBlockWithLoc")}<${scopeArg(emitter, scope)}>`,
+        scope
+      ),
       metadata: metadata(field, name, "weightBlockWithLoc"),
       admits: admitsBlock(field, "weightBlockWithLoc", scope),
       ...weightInterior(emitter, name, path, scope),
@@ -1796,9 +1875,10 @@ function lowerOrdinary(
   }
   if (requested === "economicResources") {
     const scope = scopeType(emitter, field, ctx, override?.scope);
-    const memberType = `EconomicResourceBlock<${scope.type}>`;
+    const memberType = `${emitter.use("EconomicResourceBlock")}<${scopeArg(emitter, scope)}>`;
     return {
       memberType: withFrom(
+        emitter,
         isRepeated(field.cardinality) ? arrayType(memberType) : memberType,
         scope
       ),
@@ -1813,9 +1893,11 @@ function lowerOrdinary(
       parts.trigger,
       containerContext(field, ctx)
     );
-    const memberType = `EconomicResourceOperation<${triggerScope.type}>`;
+    const memberType =
+      `${emitter.use("EconomicResourceOperation")}` + `<${scopeArg(emitter, triggerScope)}>`;
     return {
       memberType: withFrom(
+        emitter,
         isRepeated(field.cardinality) ? arrayType(memberType) : memberType,
         triggerScope
       ),
@@ -1826,9 +1908,11 @@ function lowerOrdinary(
   }
   if (requested === "economicResourcesNoProduce") {
     const scope = scopeType(emitter, field, ctx, override?.scope);
-    const memberType = `EconomicResourceBlockNoProduce<${scope.type}>`;
+    const memberType =
+      `${emitter.use("EconomicResourceBlockNoProduce")}` + `<${scopeArg(emitter, scope)}>`;
     return {
       memberType: withFrom(
+        emitter,
         isRepeated(field.cardinality) ? arrayType(memberType) : memberType,
         scope
       ),
@@ -1845,10 +1929,12 @@ function lowerOrdinary(
     );
     const memberType =
       modifierScope.type === potentialScope.type
-        ? `TriggeredModifier<${modifierScope.type}>`
-        : `TriggeredModifier<${modifierScope.type}, ${potentialScope.type}>`;
+        ? `${emitter.use("TriggeredModifier")}<${scopeArg(emitter, modifierScope)}>`
+        : `${emitter.use("TriggeredModifier")}<${scopeArg(emitter, modifierScope)}, ` +
+          `${scopeArg(emitter, potentialScope)}>`;
     return {
       memberType: withFrom(
+        emitter,
         isRepeated(field.cardinality) ? arrayType(memberType) : memberType,
         modifierScope
       ),
@@ -1883,6 +1969,7 @@ function lowerOrdinary(
     if (value === null) {
       return null;
     }
+    emitter.useValue(value);
     return {
       memberType: `readonly { weight: number; event?: ${value.type} }[]`,
       metadata: metadata(field, name, "weightedEvents", scalarMetadata(value)),
@@ -2014,7 +2101,7 @@ function lowerScalarUnion(
   if (value === null) {
     return null;
   }
-  const base = value.type + (widening === undefined ? "" : ` | ${widening}`);
+  const base = emitter.useValue(value).type + (widening === undefined ? "" : ` | ${widening}`);
   return {
     memberType: repeated[0]! ? arrayType(base) : base,
     metadata: metadata(group[0]!, name, "value", scalarMetadata(value)),
@@ -2140,7 +2227,7 @@ function assertedAssetPath(
         `${widening ?? "none"}). The row asserts the value is one mod-root path scalar.`
     );
   }
-  const base = "AssetFileItem | string";
+  const base = `${emitter.use("AssetFileItem")} | string`;
   const field = group[0]!;
   return {
     ...lowered,
