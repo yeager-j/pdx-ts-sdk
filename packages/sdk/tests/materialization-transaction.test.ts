@@ -619,6 +619,11 @@ describe("the journal decoder fails closed", () => {
   }
 
   const CLAIM = { pid: 1, hostname: "h", token: "a" };
+  const SECOND_CLAIM = { pid: 2, hostname: "h", token: "b" };
+
+  /** The records before a tail, and the write a kill cut in half. */
+  const STAGED = [headerRecord(), stagingRecord(), phaseRecord("staged")];
+  const TORN_APPEND = '{"record":"phase","phase":"content-deac';
 
   /** Each fabricated journal, the record it breaks on, and the rule broken. */
   const REJECTED: readonly [string, string, number, RegExp][] = [
@@ -820,10 +825,22 @@ describe("the journal decoder fails closed", () => {
       /only a "recovering" claim/,
     ],
     [
-      "a whole record where only a claim can follow a torn one",
+      "a torn record a whole one, rather than a claim, terminated",
       journalText(headerRecord(), '{"record":"phase","phase":"content-deac', phaseRecord("staged")),
+      2,
+      /not a whole JSON record/,
+    ],
+    [
+      "a malformed last line the writer terminated itself",
+      journalText(headerRecord(), stagingRecord(), "garbage"),
       3,
-      /torn record 2/,
+      /not a whole JSON record/,
+    ],
+    [
+      "a null last line the writer terminated itself",
+      journalText(headerRecord(), stagingRecord(), "null"),
+      3,
+      /not a whole JSON record/,
     ],
   ];
 
@@ -844,13 +861,59 @@ describe("the journal decoder fails closed", () => {
         headerRecord(),
         stagingRecord(),
         phaseRecord("staged"),
-        '{"record":"phase","phase":"content-deac',
+        TORN_APPEND,
         phaseRecord("recovering", CLAIM),
-        phaseRecord("recovering", { pid: 2, hostname: "h", token: "b" })
+        phaseRecord("recovering", SECOND_CLAIM)
       )
     );
 
     expect(journal.records).toHaveLength(5);
+    expect(journal.lastPhase).toBe("staged");
+  });
+
+  /**
+   * Each claim writes its own leading newline without reading what is
+   * already there, so where the record before it was terminated the claim
+   * leaves an empty line behind, and where it was torn the claim ends it.
+   */
+  const TAILS: readonly [string, string, number][] = [
+    [
+      "a claim separated from a terminated record",
+      journalText(...STAGED, "", phaseRecord("recovering", CLAIM)),
+      4,
+    ],
+    [
+      "two claims, each with its own separator",
+      journalText(
+        ...STAGED,
+        "",
+        phaseRecord("recovering", CLAIM),
+        "",
+        phaseRecord("recovering", SECOND_CLAIM)
+      ),
+      5,
+    ],
+    [
+      "a claim that terminated a torn record",
+      journalText(...STAGED, TORN_APPEND, phaseRecord("recovering", CLAIM)),
+      4,
+    ],
+    [
+      "a claim separated from a torn record",
+      journalText(...STAGED, TORN_APPEND, "", phaseRecord("recovering", CLAIM)),
+      4,
+    ],
+    [
+      "a claim a kill tore off after another claim",
+      `${journalText(...STAGED, "", phaseRecord("recovering", CLAIM))}\n${TORN_APPEND}`,
+      4,
+    ],
+  ];
+
+  it.each(TAILS)("reads %s", (_label, text, records) => {
+    const journal = parseJournal("/lock", text);
+
+    expect(journal.records).toHaveLength(records);
     expect(journal.lastPhase).toBe("staged");
   });
 });
@@ -1307,6 +1370,32 @@ describe("recovery reads the journal and nothing else", () => {
     expect(claims).toHaveLength(1);
   });
 
+  it("leaves the journal readable when a claim follows a claim", async () => {
+    // Each claim writes its own separator without reading what is already
+    // there, because two recoveries can both read before either appends. The
+    // blank line that leaves behind is the shape the reader must accept.
+    const parent = tempDir();
+    const out = join(parent, "out");
+    mkdirSync(out);
+    const lockPath = writeJournal({
+      target: out,
+      rendered: genOne,
+      paths: stagingPaths(out),
+      phases: ["staged"],
+    });
+    const journal = await readJournal(lockPath);
+    const identity = { pid: journal!.header!.pid, startedAt: journal!.header!.startedAt };
+
+    expect(await claimRecovery(out, lockPath, identity)).toBe("won");
+    expect(await claimRecovery(out, lockPath, identity)).toBe("won");
+
+    const after = parseJournal(lockPath, readFileSync(lockPath, "utf8"));
+    expect(
+      after.records.filter((record) => record.record === "phase" && record.phase === "recovering")
+    ).toHaveLength(2);
+    expect(after.lastPhase).toBe("staged");
+  });
+
   it.skipIf(process.platform === "win32")(
     "gives no verdict about a lock file the path has stopped naming",
     async () => {
@@ -1671,6 +1760,43 @@ describe("an illegal history refuses before recovery touches anything", () => {
     expect(existsSync(join(out, GEN_TWO_ONLY))).toBe(false);
     expect(readdirSync(parent)).toEqual(["out"]);
   });
+
+  it("refuses a done journal over a target that never took the new tree", async () => {
+    // The suffix the phase table cannot see through. Append
+    // "content-activating", "committed" and "done" to the same pre-commit
+    // state and every transition is one a writer makes — but the target is
+    // still absent, so nothing was published and the set-aside copy is not
+    // residue. "done" is checked against the tree rather than believed.
+    const parent = tempDir();
+    const out = join(parent, "out");
+    await write(out, genOne);
+    const previousSha = manifestSha(out);
+    const { paths } = await stageBuild(out, genTwo);
+    const lockPath = writeJournal({
+      target: out,
+      rendered: genTwo,
+      paths,
+      previousManifestSha256: previousSha,
+      phases: ["staged", "content-deactivating", "content-activating", "committed", "done"],
+    });
+    renameSync(out, paths.previous);
+
+    const error = await refusal(recoverMaterialization(out));
+
+    expect(error.reason).toBe("recovery-required");
+    if (error.failure.reason !== "recovery-required") {
+      throw new Error("unreachable");
+    }
+    expect(error.failure.evidence?.map((row) => row.path)).toContain(out);
+    expect(existsSync(out)).toBe(false);
+    expect(manifestSha(paths.previous)).toBe(previousSha);
+    expect(existsSync(join(paths.staging, MANIFEST))).toBe(true);
+    // The claim this recovery appended is the only mark it left, and the
+    // journal still reads as the transaction it was.
+    const after = parseJournal(lockPath, readFileSync(lockPath, "utf8"));
+    expect(after.header?.target).toBe(out);
+    expect(after.lastPhase).toBe("done");
+  });
 });
 
 describe("a journal only has authority over its own siblings", () => {
@@ -1852,10 +1978,13 @@ describe("a finished transaction's residue is still its own", () => {
   it("removes journal-named leftovers at the done phase", async () => {
     // "done" means the commit and the cleanup both happened, so anything the
     // journal names that is still here is residue a cleanup could not remove.
-    // It is journal-named, so recovery has the authority to finish the job.
+    // It is journal-named, and the target holds what the journal published, so
+    // recovery has the authority to finish the job.
     const parent = tempDir();
     const out = join(parent, "out");
     await write(out, genOne);
+    const previousSha = manifestSha(out);
+    await write(out, genTwo);
     const paths = stagingPaths(out);
     mkdirSync(paths.previous);
     writeFileSync(join(paths.previous, "leftover.txt"), "old", "utf8");
@@ -1863,7 +1992,7 @@ describe("a finished transaction's residue is still its own", () => {
       target: out,
       rendered: genTwo,
       paths,
-      previousManifestSha256: manifestSha(out),
+      previousManifestSha256: previousSha,
       phases: ["staged", "content-activating", "committed", "done"],
     });
 

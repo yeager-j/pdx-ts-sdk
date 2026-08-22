@@ -235,6 +235,22 @@ async function appendRecord(handle: FileHandle, record: JournalRecord): Promise<
 }
 
 /**
+ * A recovery claim, always with a newline in front of it.
+ *
+ * A claim is the record that lands on a dead writer's torn tail, which has no
+ * newline of its own, so one is written here. It is unconditional rather than
+ * written only when the file appears to need it: two recoveries can both read
+ * the file before either appends, so a separator chosen from what was read is
+ * a race that leaves the journal unreadable for everybody. One byte that is
+ * always there is a rule the reader can state instead.
+ */
+async function appendClaim(handle: FileHandle, claim: JournalPhase): Promise<void> {
+  await writeWholly(handle, Buffer.from(`\n${JSON.stringify(claim)}\n`, "utf8"));
+  await handle.sync();
+  await announce(claim);
+}
+
+/**
  * Every byte, however many writes it takes.
  *
  * `write` is allowed to write fewer bytes than it was given, and a journal is
@@ -542,8 +558,8 @@ export type RecoveryClaim = "won" | "lost" | "gone";
  * case; comparing the header against the transaction the caller read catches
  * the second, before anything is appended to a stranger's journal.
  *
- * A claim is the record that lands on a dead writer's torn tail, so it starts
- * a line of its own rather than being spliced onto the half-written one.
+ * A claim always starts a line of its own, so it is never spliced onto the
+ * half-written tail a killed writer leaves.
  */
 export async function claimRecovery(
   target: string,
@@ -573,10 +589,7 @@ export async function claimRecovery(
       hostname: hostname(),
       token,
     };
-    if (before !== "" && !before.endsWith("\n")) {
-      await writeWholly(handle, Buffer.from("\n", "utf8"));
-    }
-    await appendRecord(handle, claim);
+    await appendClaim(handle, claim);
 
     const journal = readClaimedJournal(target, lockPath, await readWholeFile(handle));
     if (!isTransaction(journal, expected) || !(await pathStillNames(handle, lockPath))) {

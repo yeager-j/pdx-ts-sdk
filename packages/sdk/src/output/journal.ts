@@ -9,10 +9,11 @@
  * once, their order, and which phase may follow which are checked here, and
  * anything else is a `JournalFormatError` naming the record and the rule.
  *
- * The one tolerated malformation is a torn tail: a writer killed mid-append
+ * The one tolerated malformation is a torn write: a process killed mid-append
  * leaves a partial line, and refusing that would make every killed build
- * unrecoverable. It is tolerated only where a kill can produce it — at the
- * end, with nothing after it but the claims a later recovery appends.
+ * unrecoverable. It is tolerated only where a kill can produce it — as the
+ * unterminated last line, or terminated by the leading newline of a claim a
+ * recovery appended after it.
  */
 
 import type { DescriptorSnapshot } from "./receipt.ts";
@@ -198,45 +199,102 @@ function lastPhaseOf(records: readonly JournalRecord[]): { lastPhase?: Materiali
 }
 
 /**
- * One record per line, plus the torn-tail rule.
+ * One record per line, plus the rules for the two lines a record does not
+ * account for.
  *
- * A line that is not a JSON object is the record a kill interrupted
- * mid-append, which can only be the writer's last write. So the only thing
- * that may follow it is a claim from the recovery that came along afterwards;
- * anything else after a torn line is a file two writers, or a person, have
- * been editing.
+ * A line that is not a whole JSON object is a write a kill interrupted. The
+ * newline goes on after the object, so an unparseable line can only be one if
+ * nothing terminated it — the last line of the file — or if what terminated it
+ * is the leading newline of a claim a recovery appended afterwards. That
+ * leading newline is also why a claim can be preceded by an empty line: it is
+ * written unconditionally, so a file whose last record was already terminated
+ * gets a blank line between the two. Everything after either kind of line is
+ * therefore the tail recoveries append, and nothing else.
  */
 function decodeLines(lockPath: string, text: string): PlacedRecord[] {
-  const lines = text.split("\n");
-  if (lines[lines.length - 1] === "") {
-    lines.pop();
-  }
+  const { lines, terminated } = readLines(text);
   const placed: PlacedRecord[] = [];
   let mode: MaterializationMode | undefined;
-  let tornAt: number | undefined;
-  for (const [index, line] of lines.entries()) {
-    const site: RecordSite = { path: lockPath, line: index + 1, within: "" };
-    if (line === "") {
-      fail(site, "is an empty line, and every record is one line of JSON.");
-    }
-    const fields = asFields(line);
-    if (fields === undefined) {
-      if (tornAt !== undefined) {
-        fail(site, `follows the torn record ${tornAt}, and only a recovery claim may.`);
+  for (const line of lines) {
+    const site: RecordSite = { path: lockPath, line: line.number, within: "" };
+    if (line.text === "") {
+      if (!opensClaimTail(lines, line.number, terminated)) {
+        fail(site, "is an empty line, and only the separator before a claim is one.");
       }
-      tornAt = site.line;
       continue;
     }
-    const record = decodeRecord(site, fields, mode);
-    if (tornAt !== undefined && !isRecoveryClaim(record)) {
-      fail(site, `follows the torn record ${tornAt}, and only a recovery claim may.`);
+    if (line.fields === undefined) {
+      const interruptedMidAppend = line.number === lines.length && !terminated;
+      if (!interruptedMidAppend && !opensClaimTail(lines, line.number, terminated)) {
+        fail(site, "is not a whole JSON record, and only an interrupted write is not.");
+      }
+      continue;
     }
+    const record = decodeRecord(site, line.fields, mode);
     if (record.record === "header") {
       mode = record.mode;
     }
-    placed.push({ record, line: site.line });
+    placed.push({ record, line: line.number });
   }
   return placed;
+}
+
+/** One line of a lock file, with the number a refusal names it by. */
+interface JournalLine {
+  /** 1-based, as a person counts lines in the file. */
+  readonly number: number;
+  readonly text: string;
+  /** The line's JSON object, or undefined when the line is not one. */
+  readonly fields: Fields | undefined;
+}
+
+/**
+ * The file's lines, and whether its last one was terminated. An unterminated
+ * last line is the only line a kill can have left half written, so the two
+ * facts are read together.
+ */
+function readLines(text: string): { lines: JournalLine[]; terminated: boolean } {
+  if (text === "") {
+    return { lines: [], terminated: true };
+  }
+  const terminated = text.endsWith("\n");
+  const texts = text.split("\n");
+  if (terminated) {
+    texts.pop();
+  }
+  const lines = texts.map((line, index) => ({
+    number: index + 1,
+    text: line,
+    fields: asFields(line),
+  }));
+  return { lines, terminated };
+}
+
+/**
+ * Whether everything after line `from` is the tail recoveries append: claims,
+ * the empty separator each claim carries, and at most a final claim a kill
+ * tore off. Nothing after the line at all is not a tail — there is then no
+ * appended claim to have terminated it.
+ */
+function opensClaimTail(lines: readonly JournalLine[], from: number, terminated: boolean): boolean {
+  const tail = lines.slice(from);
+  return (
+    tail.length > 0 &&
+    tail.every((line, index) => {
+      if (line.text === "" || isClaimFields(line.fields)) {
+        return true;
+      }
+      return line.fields === undefined && index === tail.length - 1 && !terminated;
+    })
+  );
+}
+
+/**
+ * Whether a line is shaped like a recovery claim. Only the shape: the claim
+ * itself is decoded and validated with every other record.
+ */
+function isClaimFields(fields: Fields | undefined): boolean {
+  return fields?.["record"] === "phase" && fields["phase"] === "recovering";
 }
 
 function isRecoveryClaim(record: JournalRecord): boolean {
