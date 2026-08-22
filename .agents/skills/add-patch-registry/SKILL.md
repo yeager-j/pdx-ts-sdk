@@ -55,7 +55,7 @@ evidence.
    (duals, repeated blocks, triggers). Done when the install-gated load tests
    parse the registry from a real install.
 3. **The permission**: add the registry to `CONTENT_PATCH_REGISTRIES`
-   (`packages/codegen-cwt/src/overlay/index.ts`) with a reason citing the rule
+   (`packages/codegen-cwt/src/overlay/patches.ts`) with a reason citing the rule
    row's evidence, then `npm run codegen`. Done when the row alone produced
    the whole *generated* surface — an emitter change means the generic model
    is wrong; fix the model, never fork it per registry. Read the report's

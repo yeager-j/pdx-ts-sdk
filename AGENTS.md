@@ -62,7 +62,7 @@ The main inputs are:
 - `vendor/cwtools-stellaris-config/` for vendored CWT rules and Stellaris documentation dumps
 - `packages/codegen-cwt/src/policy/manifest.ts` for the content registries intentionally exposed by
   the SDK
-- `packages/codegen-cwt/src/overlay/index.ts` for reviewed departures from a mechanical reading of the rules
+- `packages/codegen-cwt/src/overlay/` for reviewed departures from a mechanical reading of the rules
 - emitters and parsers under `packages/codegen-cwt/src/`
 
 Use:

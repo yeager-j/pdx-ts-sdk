@@ -473,7 +473,7 @@ collapsed fields are always named rather than silently dropped. Disagreements
 between the two sources are compared against a committed drift baseline and
 fail codegen when either set moves. Deliberate departures from a mechanical
 reading of the rules live in the audited
-`packages/codegen-cwt/src/overlay/index.ts`. Read every report and generated diff.
+`packages/codegen-cwt/src/overlay/`. Read every report and generated diff.
 
 The separate
 [@pdx-ts/codegen-vanilla](../codegen-vanilla/) generator reads a pinned local
