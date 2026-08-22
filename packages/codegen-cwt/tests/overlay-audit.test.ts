@@ -114,7 +114,7 @@ describe("assertOverlayRegistriesKnown", () => {
 
   it("rejects a CONTENT_WITNESSES row keyed to a renamed or mistyped registry (SDK-260)", () => {
     // CONTENT_WITNESSES is consumed only via `CONTENT_WITNESSES.get(registry)`
-    // inside contentDefiners' per-content loop (index.ts) and emit/modifiers.ts's
+    // inside contentDefiners' per-content loop (emit/definers.ts) and emit/modifiers.ts's
     // fixed "economic_category" lookup — a row keyed to a registry nothing
     // resolves to (a rename or typo) is never looked up by either site, so it
     // would rot silently without joining the Group A registry-keyed check.

@@ -156,8 +156,8 @@ export const HAND_WRITTEN_VANILLA_REFS: readonly HandWrittenVanillaRef[] = [
  * stay closed against misspelled fields, so the literal rides the item and
  * definer input/result instead of the widened mechanical field.
  *
- * `omit` is the one list both consumers read: `contentDefiners` (`index.ts`)
- * spells it as the `Omit<...>` member union, and `emit/modifiers.ts`'s
+ * `omit` is the one list both consumers read: `contentDefiners`
+ * (`emit/definers.ts`) spells it as the `Omit<...>` member union, and `emit/modifiers.ts`'s
  * `EconomicWitnessOf` reads each row's own `inferAs` to name the per-member
  * `infer` variable in its structural extraction type. Before SDK-260 the same
  * seven names were hand-spelled in both places and could drift silently.
@@ -192,7 +192,7 @@ export type ContentWitness =
  * Registries whose item type and definer carry a `W` witness beside the def,
  * rather than the mechanical, unparameterised signature every other registry
  * gets. A row here is expensive: it is read by both `contentDefiners`
- * (`index.ts`) and `emit/modifiers.ts`, so a new mode needs evidence from a
+ * (`emit/definers.ts`) and `emit/modifiers.ts`, so a new mode needs evidence from a
  * second registry before this schema grows to fit it.
  */
 export const CONTENT_WITNESSES = new Map<string, ContentWitness>([

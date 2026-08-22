@@ -465,7 +465,7 @@ export function emitModifiers(join: ModifierJoin): ModifierEmission {
     'export type ScriptedModifierSelector<S extends ScopeName> = <const T extends import("../generated/content-definers.ts").ScriptedModifierItem>(' +
     'item: T & (IsUnion<T["def"]["category"]> extends true ? never : ModifierCategoryAllowed<S, T["def"]["category"]> extends true ? {} : never)) => { readonly set: ModifierSetter };\n\n';
   // The seven members EconomicWitnessOf extracts come from the same
-  // CONTENT_WITNESSES "economic_category" row contentDefiners (index.ts)
+  // CONTENT_WITNESSES "economic_category" row contentDefiners (emit/definers.ts)
   // reads for the Omit<...> union — one list read twice instead of the same
   // seven names hand-spelled in both places (SDK-260).
   const economicWitness = CONTENT_WITNESSES.get("economic_category");

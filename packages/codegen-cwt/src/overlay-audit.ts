@@ -67,7 +67,7 @@ export function assertOverlayRegistriesKnown(
  * property silently disappears from the emitted `Def` while the witness
  * keeps promising it, and `EconomicWitnessOf` resolves the vanished member to
  * `undefined` with every other gate green. This is that same staleness
- * principle one level deeper, so `contentDefiners` (`index.ts`) calls it once
+ * principle one level deeper, so `contentDefiners` (`emit/definers.ts`) calls it once
  * per content it finds a row for, with the member names *that content's own
  * emission* actually produced.
  *

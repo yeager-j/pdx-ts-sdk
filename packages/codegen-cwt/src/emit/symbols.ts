@@ -203,6 +203,19 @@ export function renderImports(imports: FileImports): string {
 }
 
 /**
+ * A static `import type { ... } from "module"` statement for a fixed list of
+ * names, deduplicated and sorted — the counterpart to {@link renderImports}
+ * for a caller that already knows exactly which names it needs rather than
+ * recording uses as it emits.
+ */
+export function importList(from: string, names: readonly string[]): string {
+  if (names.length === 0) {
+    return "";
+  }
+  return `import type { ${[...new Set(names)].sort().join(", ")} } from ${JSON.stringify(from)};\n`;
+}
+
+/**
  * Fails codegen when a file imports a symbol its body never mentions.
  *
  * One-way on purpose. The recorded set is the authority for what gets imported,
