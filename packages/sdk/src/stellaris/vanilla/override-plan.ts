@@ -16,7 +16,14 @@
  * that claim needs playset enumeration, not a bigger filename.
  */
 
-import { kv, regionItems, serialize, type PdxEntry, type PdxItem } from "@pdx-ts/pdxscript";
+import {
+  kv,
+  serialize,
+  skipChildren,
+  walkItems,
+  type PdxEntry,
+  type PdxItem,
+} from "@pdx-ts/pdxscript";
 
 import { NoWinningFilenameError, PdxSdkError, VanillaPathCollisionError } from "../../errors.ts";
 import { compareLogicalPaths, normalizeLogicalPath, type LogicalPath } from "../../ordering.ts";
@@ -48,36 +55,37 @@ export interface PatchInput {
  * silent corruption in the emitted patch.
  */
 export function collectVarRefs(item: PdxItem): string[] {
-  switch (item.kind) {
-    case "var":
-      return [item.name];
-    case "entry":
-      return collectVarRefs(item.value);
-    case "container":
-    case "param":
-      return item.items.flatMap(collectVarRefs);
-    case "param-text":
-      return regionItems(item).flatMap(collectVarRefs);
-    default:
-      return [];
-  }
+  const names: string[] = [];
+  walkItems(
+    [item],
+    undefined,
+    (node) => {
+      if (node.kind === "var") {
+        names.push(node.name);
+      }
+      return undefined;
+    },
+    { read: true }
+  );
+  return names;
 }
 
 /** True when the item tree contains an `@[ ... ]` inline-math scalar. */
 export function containsInlineMath(item: PdxItem): boolean {
-  switch (item.kind) {
-    case "math":
-      return true;
-    case "entry":
-      return containsInlineMath(item.value);
-    case "container":
-    case "param":
-      return item.items.some(containsInlineMath);
-    case "param-text":
-      return regionItems(item).some(containsInlineMath);
-    default:
-      return false;
-  }
+  let found = false;
+  walkItems(
+    [item],
+    undefined,
+    (node) => {
+      if (node.kind !== "math") {
+        return undefined;
+      }
+      found = true;
+      return skipChildren;
+    },
+    { read: true }
+  );
+  return found;
 }
 
 /** One provable claim: this emission beats every named file for this key. */

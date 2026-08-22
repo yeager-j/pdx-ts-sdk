@@ -1,4 +1,4 @@
-import { regionItems, type PdxItem } from "@pdx-ts/pdxscript";
+import { walkItems, type PdxItem } from "@pdx-ts/pdxscript";
 
 import { contentDescriptor } from "../content/descriptors.ts";
 import { SWAP_IDENTITIES, type SwapIdentity } from "../content/swaps.ts";
@@ -68,30 +68,19 @@ function swapIds(value: unknown, keying: SwapIdentity["keying"]): readonly strin
   return ids;
 }
 
+/** Every `str` scalar anywhere in the tree, regions included, in source order. */
 function scanStrings(nodes: readonly PdxItem[], strings: string[]): void {
-  for (const node of nodes) {
-    switch (node.kind) {
-      case "entry":
-        if (node.value.kind === "str") {
-          strings.push(node.value.value);
-        } else if (node.value.kind === "container") {
-          scanStrings(node.value.items, strings);
-        }
-        break;
-      case "str":
+  walkItems(
+    nodes,
+    undefined,
+    (node) => {
+      if (node.kind === "str") {
         strings.push(node.value);
-        break;
-      case "container":
-      case "param":
-        scanStrings(node.items, strings);
-        break;
-      case "param-text":
-        scanStrings(regionItems(node), strings);
-        break;
-      default:
-        break;
-    }
-  }
+      }
+      return undefined;
+    },
+    { read: true }
+  );
 }
 
 function assertOwnEventReferencesExist(
