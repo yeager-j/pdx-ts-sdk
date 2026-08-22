@@ -27,6 +27,7 @@ const referencesByMethod = {
     docs: [
       "In-game branching: `if = { limit = { ... } ... }`.",
       "Chain `.elseIf(...)` and `.else(...)` before recording any further effects.",
+      "`.else(...)` ends the chain: a further link on it throws.",
     ],
   },
   hiddenEffect: {

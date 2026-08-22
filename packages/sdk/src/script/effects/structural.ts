@@ -39,6 +39,7 @@ export class IfChainRecorder {
   private readonly recordEffects: RecordEffects;
   private readonly assertLive: AssertLive;
   private mark: number;
+  private closed = false;
 
   constructor(
     sink: PdxEntry[],
@@ -57,6 +58,13 @@ export class IfChainRecorder {
 
   private guard(link: string): void {
     this.assertLive(this.recording, link);
+    if (this.closed) {
+      throw new Error(
+        `'${link}' was called after this if() chain's 'else', which ends the chain. The game ` +
+          `attaches 'else_if' and 'else' to the preceding 'if' by position, so a link written ` +
+          `after 'else' would be attached to nothing. Start a new if() for further branches.`
+      );
+    }
     if (this.sink.length !== this.mark) {
       throw new Error(
         `Effects were recorded between an if() chain's links; the game associates ` +
@@ -76,6 +84,6 @@ export class IfChainRecorder {
   else(body: (scope: unknown) => void): void {
     this.guard("else");
     this.sink.push(block("else", this.recordEffects(this.refs, body)));
-    this.mark = this.sink.length;
+    this.closed = true;
   }
 }

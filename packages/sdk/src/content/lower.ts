@@ -19,7 +19,7 @@ import {
   type ContentRefSink,
   type ContentRefUse,
 } from "../references.ts";
-import { recordEffects, scriptCtx } from "../script/effects/recorder.ts";
+import { recordEffects, withScriptCtx } from "../script/effects/recorder.ts";
 import type { ScriptCtx } from "../script/effects/types.ts";
 import { refId, type TypedRef } from "../script/scalar.ts";
 import { scriptValueScalar, type ScriptValue, type Trigger } from "../script/trigger-core.ts";
@@ -143,8 +143,8 @@ function resolveFromClosure(field: ContentField, value: unknown): unknown {
   if ((value as { readonly kind?: unknown }).kind === "trigger") {
     return value;
   }
-  return (value as (ctx: ScriptCtx<ScopeName, ScopeName, ScopeName>) => unknown)(
-    scriptCtx<ScopeName, ScopeName, ScopeName>()
+  return withScriptCtx<ScopeName, ScopeName, ScopeName, unknown>({}, (scriptCtx) =>
+    (value as (ctx: ScriptCtx<ScopeName, ScopeName, ScopeName>) => unknown)(scriptCtx)
   );
 }
 
@@ -411,15 +411,16 @@ export function fieldEntries(
         // other; the recorder reports them here so they face the same
         // integrity check as the declarative fields around them.
         const recorded: ContentRefUse[] = [];
-        // Every effect block gets the same ctx object: `this`, `root` and
-        // `from` are fixed script paths, and which of them the block may
-        // *read* is the generated signature's business, settled before this
-        // runs.
-        const child = recordEffects(recorded, (scope) =>
-          (value as EffectBlock<ScopeName, ScopeName, ScopeName>)(
-            scope,
-            scriptCtx<ScopeName, ScopeName, ScopeName>({ splitRoot: field.splitRoot === true })
-          )
+        // The ctx is leased to this field's lowering, so the recording it
+        // wraps has to be opened inside it. `this`, `root` and `from` are
+        // fixed script paths, and which of them the block may *read* is the
+        // generated signature's business, settled before this runs.
+        const child = withScriptCtx<ScopeName, ScopeName, ScopeName, PdxEntry[]>(
+          { splitRoot: field.splitRoot === true },
+          (scriptCtx) =>
+            recordEffects(recorded, (scope) =>
+              (value as EffectBlock<ScopeName, ScopeName, ScopeName>)(scope, scriptCtx)
+            )
         );
         entries.push(block(field.key, child));
         collectRefs(ctx, recorded, field.key);

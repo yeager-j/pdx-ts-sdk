@@ -15,8 +15,10 @@ import {
   recordEffects,
   scopeRef,
   scopeValue,
+  withScriptCtx,
 } from "../src/script/effects/recorder.ts";
-import { hasOwner, isAtWar } from "../src/script/triggers.ts";
+import type { ScriptCtx } from "../src/script/effects/types.ts";
+import { hasCountryFlag, hasOwner, isAtWar, owner } from "../src/script/triggers.ts";
 
 const flags = countryFlags("effects_test_flag");
 const stormWorld = eventTarget<"planet">("effects_test_target");
@@ -674,6 +676,132 @@ every_owned_planet = {
 `);
   });
 
+  it("opens a ctx ref in every recording of the authoring call that made it", () => {
+    // A ctx serves one definition's closures, however many recordings that
+    // definition opens, and its refs land where they are written just like
+    // any other absolute ref.
+    const sink = withScriptCtx({}, (ctx: ScriptCtx<"country", "planet">) =>
+      recordEffects<"country">([], (country) => {
+        ctx.from.effects((planet) => planet.log("outer"));
+        country.everyOwnedPlanet({ limit: hasOwner() }, () => {
+          ctx.from.effects((planet) => planet.log("inner"));
+        });
+      })
+    );
+
+    expect(serialize(sink)).toBe(`from = {
+	log = outer
+}
+
+every_owned_planet = {
+	limit = {
+		has_owner = yes
+	}
+	from = {
+		log = inner
+	}
+}
+`);
+  });
+
+  it("throws when a ctx ref is opened in another authoring call's recording", () => {
+    // The ctx of one definition names that definition's FROM and ROOT. Opened
+    // in another definition's recording it would write a real block there,
+    // under whatever scopes the game supplies that definition instead.
+    const escaped = withScriptCtx({}, (ctx: ScriptCtx<"country", "planet">) => ctx);
+
+    expect(() =>
+      recordEffects<"country">([], () => {
+        escaped.from.effects((planet) => planet.log("wrong definition"));
+      })
+    ).toThrow(/escaped the closure it was handed to/);
+    expect(() =>
+      recordEffects<"country">([], () => {
+        escaped.root.effects((country) => country.log("wrong definition"));
+      })
+    ).toThrow(/escaped the closure it was handed to/);
+    expect(() =>
+      recordEffects<"country">([], () => {
+        owner(escaped.from).effects((country) => country.log("wrong definition"));
+      })
+    ).toThrow(/escaped the closure it was handed to/);
+  });
+
+  it("throws when an escaped ctx witnesses an event fire", () => {
+    // The other place a ctx path reaches output: the witness writes
+    // `scopes = { from = from }`, and the game supplies the FROM of whatever
+    // definition the fire site is in.
+    const escaped = withScriptCtx({}, (ctx: ScriptCtx<"country", "planet">) => ctx);
+
+    expect(() =>
+      recordEffects<"country">([], (country) => {
+        country.countryEvent<"planet">({ id: "effects_test.1", from: escaped.from });
+      })
+    ).toThrow(/escaped the closure it was handed to/);
+  });
+
+  it("writes the FROM override when the witness belongs to the fire site's own ctx", () => {
+    const sink = withScriptCtx({}, (ctx: ScriptCtx<"country", "planet">) =>
+      recordEffects<"country">([], (country) => {
+        country.countryEvent<"planet">({ id: "effects_test.1", from: ctx.from });
+      })
+    );
+
+    expect(serialize(sink)).toBe(`country_event = {
+	id = effects_test.1
+	scopes = {
+		from = from
+	}
+}
+`);
+  });
+
+  it("keeps a nested block under the lease of the recording that owns its sink", () => {
+    // Definition B can be authored inside definition A's live closure, since
+    // this is ordinary TypeScript. A method kept from A's scope object still
+    // opens blocks in A's tree while B's call runs, so B's ctx must not pass
+    // the check there and A's must.
+    const sink = withScriptCtx({}, (ctxA: ScriptCtx<"country", "planet">) =>
+      recordEffects<"country">([], (a) => {
+        withScriptCtx({}, (ctxB: ScriptCtx<"country", "planet">) => {
+          recordEffects<"country">([], () => {
+            expect(() =>
+              a.everyOwnedPlanet({ limit: hasOwner() }, () => {
+                ctxB.from.effects((planet) => planet.log("B"));
+              })
+            ).toThrow(/escaped the closure it was handed to/);
+
+            a.everyOwnedPlanet({ limit: hasOwner() }, () => {
+              ctxA.from.effects((planet) => planet.log("A"));
+            });
+          });
+        });
+      })
+    );
+
+    expect(serialize(sink)).toBe(`every_owned_planet = {
+	limit = {
+		has_owner = yes
+	}
+	from = {
+		log = A
+	}
+}
+`);
+  });
+
+  it("leaves an escaped ctx usable as a value and as a condition", () => {
+    // Only opening a block is bound to the authoring call: a path is a word,
+    // and a trigger is a value with nothing to record.
+    const escaped = withScriptCtx({}, (ctx: ScriptCtx<"country", "planet">) => ctx);
+
+    expect(escaped.from.path).toBe("from");
+    expect(serialize([...escaped.from.trigger(hasOwner()).entries])).toBe(`from = {
+	has_owner = yes
+}
+`);
+  });
+
   it("throws when a ref is opened with no block to record into", () => {
     // Escaping the closure is the one way to reach this: nothing outside a
     // recording has a sink, and guessing one would silently drop the entries.
@@ -726,6 +854,45 @@ every_owned_planet = {
     const chain = country.if(isAtWar(), () => {});
     country.log("interleaved");
     expect(() => chain.else(() => {})).toThrow(/between an if\(\) chain/);
+  });
+
+  it("writes a full if/else_if/else chain adjacently", () => {
+    const sink: PdxEntry[] = [];
+    const country = makeScope<"country">(sink);
+
+    country
+      .if(isAtWar(), (c) => c.log("war"))
+      .elseIf(hasCountryFlag("effects_test_flag"), (c) => c.log("flagged"))
+      .else((c) => c.log("peace"));
+
+    expect(serialize(sink)).toBe(`if = {
+	limit = {
+		is_at_war = yes
+	}
+	log = war
+}
+
+else_if = {
+	limit = {
+		has_country_flag = effects_test_flag
+	}
+	log = flagged
+}
+
+else = {
+	log = peace
+}
+`);
+  });
+
+  it("throws when a chain is continued after its else, which the game would attach to nothing", () => {
+    const sink: PdxEntry[] = [];
+    const country = makeScope<"country">(sink);
+    const chain = country.if(isAtWar(), () => {});
+    chain.else(() => {});
+
+    expect(() => chain.elseIf(isAtWar(), () => {})).toThrow(/after this if\(\) chain's 'else'/);
+    expect(() => chain.else(() => {})).toThrow(/after this if\(\) chain's 'else'/);
   });
 
   it("throws on an effect name missing from the meta table", () => {
