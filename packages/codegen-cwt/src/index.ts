@@ -19,7 +19,7 @@ import {
 import { referenceNameOf, typesReferencedBySubtype } from "./content-reference.ts";
 import { emitContentShapeProtocol } from "./content-shape.ts";
 import { deriveContentSwapIdentities, emitContentSwapProtocol } from "./content-swap-policy.ts";
-import { loadRules, scopeIndex, type ContentType } from "./cwt/rules.ts";
+import { scopeIndex, type ContentType } from "./cwt/rules.ts";
 import { createEffectPolicy, emitEffectPolicyProtocol } from "./effect-policy.ts";
 import { emitAliasSplice, type AliasSpliceEmission } from "./emit/alias-splice.ts";
 import { emitAliasStruct } from "./emit/alias-struct.ts";
@@ -48,6 +48,7 @@ import { Emitter, type Usage } from "./emit/types.ts";
 import { emitVanillaRefs } from "./emit/vanilla-refs.ts";
 import { createEventFieldPolicy, emitEventFieldProtocol } from "./event-field-policy.ts";
 import { header, write, writeModule } from "./generated-file.ts";
+import { loadRules } from "./load-rules.ts";
 import { parseModifierDocs } from "./logs/modifier-docs.ts";
 import { parseScopeLinks } from "./logs/scopes.ts";
 import { parseTriggerDocs } from "./logs/trigger-docs.ts";

@@ -16,11 +16,11 @@ import type { SingleAliasTarget } from "@pdx-ts/codegen-cwt/cwt/model";
 import { parseCwt } from "@pdx-ts/codegen-cwt/cwt/parser";
 import {
   buildRuleSet,
-  loadRules,
   readAliases,
   type AliasDecl,
   type ParsedRuleFile,
 } from "@pdx-ts/codegen-cwt/cwt/rules";
+import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { describe, expect, it } from "vitest";
 
 /** The repo root, from this module — never the directory vitest was started in. */

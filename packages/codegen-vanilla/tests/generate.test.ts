@@ -18,7 +18,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { auditedSpellings } from "@pdx-ts/codegen-cwt/casing";
 import { VANILLA_REF_EXTRAS } from "@pdx-ts/codegen-cwt/content-manifest";
-import { loadRules } from "@pdx-ts/codegen-cwt/cwt/rules";
+import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { describe, expect, it } from "vitest";
 
 import { buildVanillaFacts } from "../src/build-facts.ts";

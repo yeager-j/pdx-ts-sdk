@@ -1,7 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { loadRules } from "@pdx-ts/codegen-cwt/cwt/rules";
 import { emitOnActions } from "@pdx-ts/codegen-cwt/emit/on-actions";
+import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { describe, expect, it } from "vitest";
 
 /** The repo root, from this module — never the directory vitest was started in. */

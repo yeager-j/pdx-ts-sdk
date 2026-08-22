@@ -1,9 +1,10 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { loadRules, scopeIndex } from "@pdx-ts/codegen-cwt/cwt/rules";
+import { scopeIndex } from "@pdx-ts/codegen-cwt/cwt/rules";
 import { emitTriggers } from "@pdx-ts/codegen-cwt/emit/triggers";
 import { Emitter } from "@pdx-ts/codegen-cwt/emit/types";
+import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
 import { lowerRuleTable } from "@pdx-ts/codegen-cwt/lowered-rule";
 import { describe, expect, it } from "vitest";

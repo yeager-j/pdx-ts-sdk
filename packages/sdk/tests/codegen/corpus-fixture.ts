@@ -44,13 +44,14 @@ import {
   type RuleScopes,
   type SpliceMember,
 } from "@pdx-ts/codegen-cwt/corpus";
-import { loadRules, scopeIndex } from "@pdx-ts/codegen-cwt/cwt/rules";
+import { scopeIndex } from "@pdx-ts/codegen-cwt/cwt/rules";
 import { emitAliasSplice } from "@pdx-ts/codegen-cwt/emit/alias-splice";
 import { emitContentType } from "@pdx-ts/codegen-cwt/emit/content-type";
 import type { EmittedField } from "@pdx-ts/codegen-cwt/emit/fields";
 import { joinModifierScopes } from "@pdx-ts/codegen-cwt/emit/modifiers";
 import { canonicalScopeSet, declaredScopes } from "@pdx-ts/codegen-cwt/emit/shape";
 import { Emitter } from "@pdx-ts/codegen-cwt/emit/types";
+import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { parseModifierDocs } from "@pdx-ts/codegen-cwt/logs/modifier-docs";
 import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
 import { CONTENT_DECLINED_FIELDS } from "@pdx-ts/codegen-cwt/overlay";

@@ -5,12 +5,12 @@ import {
   type ContentManifestEntry,
 } from "@pdx-ts/codegen-cwt/content-manifest";
 import type { RuleField } from "@pdx-ts/codegen-cwt/cwt/model";
-import { loadRules } from "@pdx-ts/codegen-cwt/cwt/rules";
 import { emitAliasSplice } from "@pdx-ts/codegen-cwt/emit/alias-splice";
 import { emitContentType } from "@pdx-ts/codegen-cwt/emit/content-type";
 import { pickOrdinary, type EmittedField } from "@pdx-ts/codegen-cwt/emit/fields";
 import type { FieldContext } from "@pdx-ts/codegen-cwt/emit/scope-context";
 import { Emitter } from "@pdx-ts/codegen-cwt/emit/types";
+import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { constantCase, pascalCase } from "@pdx-ts/codegen-cwt/naming";
 import {
   CONTENT_DECLINED_FIELDS,

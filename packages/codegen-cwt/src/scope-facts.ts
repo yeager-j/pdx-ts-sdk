@@ -25,10 +25,11 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
-import { loadRules, scopeIndex } from "./cwt/rules.ts";
+import { scopeIndex } from "./cwt/rules.ts";
 import { classifyLinks } from "./emit/links.ts";
 import { canonicalScopeSet } from "./emit/shape.ts";
 import { Emitter } from "./emit/types.ts";
+import { loadRules } from "./load-rules.ts";
 import { parseScopeLinks } from "./logs/scopes.ts";
 import { parseTriggerDocs } from "./logs/trigger-docs.ts";
 import { lowerRuleTable, type LoweredRule } from "./lowered-rule.ts";

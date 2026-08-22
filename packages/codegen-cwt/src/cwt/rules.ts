@@ -1,15 +1,15 @@
 /**
  * Loads the `.cwt` files codegen consumes into a single rule set.
  *
- * Trigger/effect infrastructure is fixed; content registry sources come from
- * the explicit public-interface manifest.
+ * Trigger/effect infrastructure is fixed; the caller supplies the content
+ * registry source files and the extra alias categories to read. The composing
+ * entry point that supplies both from the manifest and the overlay is
+ * `src/load-rules.ts` — this module stays pure over the rule files themselves.
  */
 
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 
-import { CONTENT_MANIFEST } from "../content-manifest.ts";
-import { EXTRA_ALIAS_CATEGORIES } from "../overlay.ts";
 import {
   classify,
   classifyBlock,
@@ -213,8 +213,9 @@ export interface RuleSet {
   readonly effects: ReadonlyMap<string, readonly AliasDecl[]>;
   /**
    * Alias families other than triggers and effects, category -> member -> its
-   * declarations. Populated only for the categories `EXTRA_ALIAS_CATEGORIES`
-   * names, so the ~20 GUI and graphics grammar categories stay out.
+   * declarations. Populated only for the extra categories the caller names
+   * (the overlay's `EXTRA_ALIAS_CATEGORIES`), so the ~20 GUI and graphics
+   * grammar categories stay out.
    *
    * `triggers` and `effects` keep their own fields: they are read by every
    * emitter and their absence from a category table would be a silent hole.
@@ -253,7 +254,7 @@ export interface ComplexEnum {
   };
 }
 
-const RULE_FILES = [
+const BASE_RULE_FILES = [
   "aliases.cwt",
   "enums.cwt",
   "scopes.cwt",
@@ -277,8 +278,7 @@ const RULE_FILES = [
   // government_trigger alias category through loadRules proper.
   "common/governments.cwt",
   "common/economic_categories.cwt",
-  ...CONTENT_MANIFEST.map((entry) => entry.source),
-].filter((file, index, files) => files.indexOf(file) === index);
+];
 
 const ALIAS_KEY = /^alias\[([a-z_]+):(.+)\]$/;
 const BRACKET_KEY = /^([a-z_]+)\[(.+)\]$/;
@@ -805,13 +805,18 @@ export interface ParsedRuleFile {
  * — unrelated to the phase-ordering fix, but folded in here so the whole
  * build stays inside one function with plain, non-`readonly` locals.
  *
+ * `extraAliasCategories` names the alias families beyond triggers and effects
+ * to read into {@link RuleSet.aliasCategories}. The pipeline supplies the
+ * overlay's `EXTRA_ALIAS_CATEGORIES` keys through `src/load-rules.ts`.
+ *
  * Exported (alongside {@link loadRules}) so a test can prove the order
  * independence directly, against synthetic sources, without going through
  * disk I/O or `RULE_FILES`.
  */
 export function buildRuleSet(
   parsedFiles: readonly ParsedRuleFile[],
-  extraComplexEnumFiles: readonly ParsedRuleFile[] = []
+  extraComplexEnumFiles: readonly ParsedRuleFile[] = [],
+  extraAliasCategories: readonly string[] = []
 ): RuleSet {
   const enums = new Map<string, string[]>();
   const complexEnums = new Map<string, ComplexEnum>();
@@ -820,7 +825,7 @@ export function buildRuleSet(
   const triggers = new Map<string, AliasDecl[]>();
   const effects = new Map<string, AliasDecl[]>();
   const aliasCategories = new Map<string, Map<string, AliasDecl[]>>(
-    [...EXTRA_ALIAS_CATEGORIES.keys()].map((category) => [category, new Map()])
+    extraAliasCategories.map((category) => [category, new Map()])
   );
   const links = new Map<string, LinkDecl>();
   const contentTypes = new Map<string, ContentType>();
@@ -904,13 +909,20 @@ function parseFile(root: string, relative: string): ParsedRuleFile {
   };
 }
 
-export function loadRules(root: string): RuleSet {
-  const parsedFiles = RULE_FILES.map((relative) => parseFile(root, relative));
-  const loaded = new Set(RULE_FILES);
+export function loadRules(
+  root: string,
+  extraSourceFiles: readonly string[],
+  extraAliasCategories: readonly string[]
+): RuleSet {
+  const ruleFiles = [...BASE_RULE_FILES, ...extraSourceFiles].filter(
+    (file, index, files) => files.indexOf(file) === index
+  );
+  const parsedFiles = ruleFiles.map((relative) => parseFile(root, relative));
+  const loaded = new Set(ruleFiles);
   const extraComplexEnumFiles = cwtFiles(root)
     .filter((relative) => !loaded.has(relative))
     .map((relative) => parseFile(root, relative));
-  return buildRuleSet(parsedFiles, extraComplexEnumFiles);
+  return buildRuleSet(parsedFiles, extraComplexEnumFiles, extraAliasCategories);
 }
 
 /**

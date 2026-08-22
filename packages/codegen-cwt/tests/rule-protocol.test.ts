@@ -6,7 +6,7 @@ import {
   type ContentSwapSource,
 } from "@pdx-ts/codegen-cwt/content-swap-policy";
 import { parseCwt, type CwtNode } from "@pdx-ts/codegen-cwt/cwt/parser";
-import { loadRules, scopeIndex } from "@pdx-ts/codegen-cwt/cwt/rules";
+import { scopeIndex } from "@pdx-ts/codegen-cwt/cwt/rules";
 import { createEffectPolicy } from "@pdx-ts/codegen-cwt/effect-policy";
 import { emitEffects } from "@pdx-ts/codegen-cwt/emit/effects";
 import { emitEvents } from "@pdx-ts/codegen-cwt/emit/events";
@@ -14,6 +14,7 @@ import { emitScopeLinks } from "@pdx-ts/codegen-cwt/emit/links";
 import { mergeFields } from "@pdx-ts/codegen-cwt/emit/shape";
 import { Emitter } from "@pdx-ts/codegen-cwt/emit/types";
 import { createEventFieldPolicy } from "@pdx-ts/codegen-cwt/event-field-policy";
+import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
 import { lowerRuleTable } from "@pdx-ts/codegen-cwt/lowered-rule";
 import { createModifierOperationPolicy } from "@pdx-ts/codegen-cwt/modifier-policy";

@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
-import { loadRules } from "@pdx-ts/codegen-cwt/cwt/rules";
 import { eventKinds, type EventKindSpec } from "@pdx-ts/codegen-cwt/event-kinds";
+import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { parse, type PdxValue } from "@pdx-ts/pdxscript";
 
 import { compareIdentifiers } from "./emit.ts";

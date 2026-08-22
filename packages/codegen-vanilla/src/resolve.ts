@@ -12,7 +12,8 @@
  */
 
 import { referenceNameOf, typesReferencedBySubtype } from "@pdx-ts/codegen-cwt/content-reference";
-import { loadContentTypesFrom, loadRules, type ContentType } from "@pdx-ts/codegen-cwt/cwt/rules";
+import { loadContentTypesFrom, type ContentType } from "@pdx-ts/codegen-cwt/cwt/rules";
+import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 
 import type { VanillaIdRow } from "./manifest.ts";
 import type { BucketLayout } from "./trie.ts";
