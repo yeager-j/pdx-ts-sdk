@@ -36,6 +36,7 @@ import {
   type SkipReason,
 } from "./shape.ts";
 import { Emitter, type TsValue } from "./types.ts";
+import { member as renderMember } from "./writer.ts";
 
 const TRIGGER_CLAUSES = new Set<ClauseCategory>(["trigger"]);
 
@@ -190,7 +191,7 @@ function stringOrFields(
   return { kind: "stringOrFields", fields: shape.fields };
 }
 
-function tsDoc(declarations: readonly AliasDecl[], doc: DocEntry | undefined): string[] {
+export function tsDoc(declarations: readonly AliasDecl[], doc: DocEntry | undefined): string[] {
   const summary = declarations.flatMap((declaration) => declaration.docs)[0] ?? doc?.summary ?? "";
   const lines = [summary];
   if (doc !== undefined && doc.usage !== "") {
@@ -486,10 +487,13 @@ function emitFields(
 ): string {
   const name = `${pascalCase(key)}Args`;
   const members = fields
-    .map(
-      (field) =>
-        docComment(field.docs, "  ") +
-        `  ${propertyName(camelCase(field.name))}${field.optional ? "?" : ""}: ${memberType(field, scope)};\n`
+    .map((field) =>
+      renderMember({
+        name: camelCase(field.name),
+        type: memberType(field, scope),
+        optional: field.optional,
+        docs: field.docs,
+      })
     )
     .join("");
   const pushes = fields
@@ -526,10 +530,13 @@ function emitStringOrFields(
   const argsType = `${name}${preservesEnclosingScope ? "<S>" : ""}`;
   const returnScope = preservesEnclosingScope ? "S" : scope;
   const members = fields
-    .map(
-      (field) =>
-        docComment(field.docs, "  ") +
-        `  ${propertyName(camelCase(field.name))}${field.optional ? "?" : ""}: ${memberType(field, returnScope)};\n`
+    .map((field) =>
+      renderMember({
+        name: camelCase(field.name),
+        type: memberType(field, returnScope),
+        optional: field.optional,
+        docs: field.docs,
+      })
     )
     .join("");
   const pushes = fields

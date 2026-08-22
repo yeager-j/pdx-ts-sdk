@@ -154,6 +154,16 @@ export function safeIdentifier(name: string): string {
   return RESERVED.has(name) ? `${name}_` : name;
 }
 
+/** A generated field-table constant's name: `ascensionPerk` -> `ASCENSION_PERK`. */
+export function constantCase(name: string): string {
+  return name.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toUpperCase();
+}
+
+/** {@link indefiniteArticle}'s sentence-initial form: "A", "An". */
+export function capitalizedArticle(name: string): "A" | "An" {
+  return indefiniteArticle(name) === "an" ? "An" : "A";
+}
+
 export function quoteLiteral(value: string): string {
   return JSON.stringify(value);
 }

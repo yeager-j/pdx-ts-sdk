@@ -22,14 +22,7 @@ import {
   type ScopeContext,
 } from "../cwt/model.ts";
 import type { AliasDecl } from "../cwt/rules.ts";
-import {
-  camelCase,
-  docComment,
-  indefiniteArticle,
-  isPlainName,
-  pascalCase,
-  propertyName,
-} from "../naming.ts";
+import { camelCase, constantCase, isPlainName, pascalCase } from "../naming.ts";
 import {
   ASSET_PATH_FIELDS,
   CONTENT_FIELD_OVERRIDES,
@@ -39,6 +32,7 @@ import {
 } from "../overlay.ts";
 import { formOfShape } from "./authored-form.ts";
 import { Emitter, type TsValue } from "./types.ts";
+import { constArray, conversionFor, refTypesEntries, member as renderMember } from "./writer.ts";
 
 /**
  * One lowered field, described in the terms a real PDXScript value can be
@@ -1061,19 +1055,6 @@ export function lowerTopLevelSplice(
   };
 }
 
-export function constantCase(name: string): string {
-  return name.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toUpperCase();
-}
-
-/** The sentence-initial form; the rule itself lives in naming.ts. */
-export function capitalizedArticle(name: string): "A" | "An" {
-  return indefiniteArticle(name) === "an" ? "An" : "A";
-}
-
-function conversionFor(value: TsValue): "identity" | "ref" {
-  return value.toScalar("x") === "x" ? "identity" : "ref";
-}
-
 /**
  * The scalar-lowering half of a field's metadata: how to turn the authored
  * value into an id, and — when the rules say every admitted form is a
@@ -1081,10 +1062,7 @@ function conversionFor(value: TsValue): "identity" | "ref" {
  * lets `buildMod` hold an own-prefixed reference to the registry it names.
  */
 function scalarMetadata(value: TsValue): string[] {
-  return [
-    `conversion: ${JSON.stringify(conversionFor(value))}`,
-    ...(value.refTypes === undefined ? [] : [`refTypes: ${JSON.stringify(value.refTypes)}`]),
-  ];
+  return [`conversion: ${JSON.stringify(conversionFor(value))}`, ...refTypesEntries(value)];
 }
 
 function arrayType(type: string): string {
@@ -1349,7 +1327,6 @@ function enumKeyedMembers(
   const nested: EmittedField[] = [];
   const children: DescentNode[] = [];
   const memberDocs: Record<string, MemberDocRow> = {};
-  const docs = docComment(keyed.declaration.docs, "  ");
   for (const value of keyed.values) {
     const memberPath = `${path}.${value}`;
     const field: RuleField = {
@@ -1359,7 +1336,14 @@ function enumKeyedMembers(
     };
     const repeated = repeatsSiblings(field, "struct");
     const memberType = repeated ? arrayType(entry.typeName) : entry.typeName;
-    members.push(docs + `  ${propertyName(camelCase(value))}?: ${memberType};\n`);
+    members.push(
+      renderMember({
+        name: camelCase(value),
+        type: memberType,
+        optional: true,
+        docs: keyed.declaration.docs,
+      })
+    );
     memberDocs[camelCase(value)] = { optional: true, docs: keyed.declaration.docs, memberType };
     fieldMetadata.push(metadata(field, value, "struct", [`fields: ${entry.fieldsConstant}`]));
     nested.push(
@@ -1455,8 +1439,12 @@ function structShape(
       ...new Set([...group.flatMap((inner) => inner.docs), ...(lowered.docs ?? [])]),
     ];
     members.push(
-      docComment(docLines, "  ") +
-        `  ${propertyName(camelCase(fieldName))}${optional ? "?" : ""}: ${lowered.memberType};\n`
+      renderMember({
+        name: camelCase(fieldName),
+        type: lowered.memberType,
+        optional,
+        docs: docLines,
+      })
     );
     memberDocs[camelCase(fieldName)] = {
       optional,
@@ -1535,9 +1523,11 @@ function structShape(
       `export interface ${typeName}${generic?.declaration ?? ""} {\n` +
       members.join("") +
       "}\n\n" +
-      `export const ${fieldsConstant}: readonly ContentField[] = [\n` +
-      fieldMetadata.map((entry) => `  ${entry},\n`).join("") +
-      "];\n\n",
+      constArray(
+        fieldsConstant,
+        "ContentField",
+        fieldMetadata.map((entry) => `  ${entry},\n`).join("")
+      ),
     unsupported,
   };
 }

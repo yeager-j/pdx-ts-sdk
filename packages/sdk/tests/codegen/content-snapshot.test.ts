@@ -9,13 +9,12 @@ import { loadRules } from "@pdx-ts/codegen-cwt/cwt/rules";
 import { emitAliasSplice } from "@pdx-ts/codegen-cwt/emit/alias-splice";
 import { emitContentType } from "@pdx-ts/codegen-cwt/emit/content-type";
 import {
-  constantCase,
   pickOrdinary,
   type EmittedField,
   type FieldContext,
 } from "@pdx-ts/codegen-cwt/emit/fields";
 import { Emitter } from "@pdx-ts/codegen-cwt/emit/types";
-import { pascalCase } from "@pdx-ts/codegen-cwt/naming";
+import { constantCase, pascalCase } from "@pdx-ts/codegen-cwt/naming";
 import {
   CONTENT_DECLINED_FIELDS,
   CONTENT_PATCH_REGISTRIES,

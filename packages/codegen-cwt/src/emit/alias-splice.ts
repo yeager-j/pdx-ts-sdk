@@ -28,7 +28,7 @@
 
 import type { DescentNode } from "../corpus.ts";
 import { isOptional } from "../cwt/model.ts";
-import { camelCase, docComment, indefiniteArticle, propertyName } from "../naming.ts";
+import { camelCase, capitalizedArticle, docComment } from "../naming.ts";
 import { CONTENT_DECLINED_FIELDS, CONTENT_FIELD_OVERRIDES, FIELD_WIDENINGS } from "../overlay.ts";
 import {
   authoredLiterals,
@@ -45,6 +45,7 @@ import {
   type MemberDocRow,
 } from "./fields.ts";
 import type { Emitter } from "./types.ts";
+import { constArray, member as renderMember } from "./writer.ts";
 
 export interface AliasSpliceEmission {
   readonly code: string;
@@ -162,8 +163,7 @@ export function emitAliasSplice(emitter: Emitter, category: string): AliasSplice
     const optional = group.every((field) => isOptional(field.cardinality));
     const docLines = [...new Set(group.flatMap((field) => field.docs))];
     members.push(
-      docComment(docLines, "  ") +
-        `  ${propertyName(camelCase(name))}${optional ? "?" : ""}: ${lowering.memberType};\n`
+      renderMember({ name: camelCase(name), type: lowering.memberType, optional, docs: docLines })
     );
     memberDocs[camelCase(name)] = {
       optional,
@@ -204,8 +204,12 @@ export function emitAliasSplice(emitter: Emitter, category: string): AliasSplice
       continue;
     }
     members.push(
-      docComment(lowered.docs, "  ") +
-        `  ${propertyName(lowered.member)}?: ${lowered.memberType};\n`
+      renderMember({
+        name: lowered.member,
+        type: lowered.memberType,
+        optional: true,
+        docs: lowered.docs,
+      })
     );
     memberDocs[lowered.member] = {
       optional: true,
@@ -223,7 +227,7 @@ export function emitAliasSplice(emitter: Emitter, category: string): AliasSplice
   const code =
     extraCode.join("") +
     docComment([
-      `${indefiniteArticle(splice.memberKey) === "an" ? "An" : "A"} \`${splice.memberKey}\` ` +
+      `${capitalizedArticle(splice.memberKey)} \`${splice.memberKey}\` ` +
         "block, as the game's rules describe it.",
       "",
       "Anonymous and ordered: these are written as repeated sibling blocks, so",
@@ -233,9 +237,11 @@ export function emitAliasSplice(emitter: Emitter, category: string): AliasSplice
     `export interface ${typeName} {\n` +
     members.join("") +
     "}\n\n" +
-    `export const ${fieldsConstant}: readonly ContentField[] = [\n` +
-    fieldMetadata.map((entry) => `  ${entry},\n`).join("") +
-    "];\n\n" +
+    constArray(
+      fieldsConstant,
+      "ContentField",
+      fieldMetadata.map((entry) => `  ${entry},\n`).join("")
+    ) +
     `registerAliasStructFields(${JSON.stringify(category)}, ${fieldsConstant});\n`;
 
   return {

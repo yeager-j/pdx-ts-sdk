@@ -9,7 +9,14 @@
 import type { DescentNode } from "../corpus.ts";
 import { isOptional, type RuleField } from "../cwt/model.ts";
 import type { ContentBody, ContentType } from "../cwt/rules.ts";
-import { camelCase, docComment, indefiniteArticle, pascalCase, propertyName } from "../naming.ts";
+import {
+  camelCase,
+  capitalizedArticle,
+  constantCase,
+  docComment,
+  indefiniteArticle,
+  pascalCase,
+} from "../naming.ts";
 import {
   CONTENT_DECLINED_FIELDS,
   CONTENT_FIELD_OVERRIDES,
@@ -26,8 +33,6 @@ import {
 } from "../overlay.ts";
 import {
   authoredLiterals,
-  capitalizedArticle,
-  constantCase,
   flatten,
   lowerTopLevelSplice,
   memberOptional,
@@ -45,6 +50,7 @@ import {
 } from "./fields.ts";
 import { partitionSubtypeFields } from "./subtype-partition.ts";
 import { Emitter } from "./types.ts";
+import { constArray, member as renderMember } from "./writer.ts";
 
 export interface ContentEmission {
   readonly code: string;
@@ -123,7 +129,7 @@ export interface ContentEmission {
 /** One member of the emitted patch type, in the rules' declaration order. */
 interface PatchMember {
   readonly member: string;
-  readonly docs: string;
+  readonly docs: readonly string[];
   readonly memberType: string;
 }
 interface LocalisationPlan {
@@ -279,10 +285,12 @@ function localisationMembers(
       }
       const required = entry.required || overlayRequired;
       const pattern = entry.pattern.replace("$", "<id>");
-      return (
-        docComment([`English text emitted to localization under \`${pattern}\`.`], "  ") +
-        `  ${propertyName(field)}${required ? "" : "?"}: string;\n`
-      );
+      return renderMember({
+        name: field,
+        type: "string",
+        optional: !required,
+        docs: [`English text emitted to localization under \`${pattern}\`.`],
+      });
     })
     .join("");
 }
@@ -490,8 +498,7 @@ function repeatedStructEmission(
       ...new Set([...group.flatMap((field) => field.docs), ...(lowering.docs ?? [])]),
     ];
     members.push(
-      docComment(docLines, "  ") +
-        `  ${propertyName(camelCase(name))}${optional ? "?" : ""}: ${lowering.memberType};\n`
+      renderMember({ name: camelCase(name), type: lowering.memberType, optional, docs: docLines })
     );
     memberDocs[camelCase(name)] = {
       optional,
@@ -546,9 +553,11 @@ function repeatedStructEmission(
     locMembers +
     members.join("") +
     "}\n\n" +
-    `export const ${fieldsConstant}: readonly ContentField[] = [\n` +
-    fieldMetadata.map((entry) => `  ${entry},\n`).join("") +
-    "];\n\n" +
+    constArray(
+      fieldsConstant,
+      "ContentField",
+      fieldMetadata.map((entry) => `  ${entry},\n`).join("")
+    ) +
     `export const ${localisationConstant}: readonly ContentLocalisation[] = ${locMetadata};\n\n`;
 
   const metadataValue = metadata(
@@ -811,17 +820,18 @@ function patchTypes(
     const member = camelCase(entry.key);
     const pattern = entry.pattern.replace("$", "<vanilla id>");
     patchLocMembers.push(`${type.name}.${member} — replacement text under \`${pattern}\``);
-    return (
-      docComment(
-        [
-          `Replacement English text for vanilla's own \`${pattern}\` key.`,
-          "",
-          "Emitted to `localisation/replace/`, the layer the game resolves ahead",
-          "of the ordinary one — a rename, not a new key.",
-        ],
-        "  "
-      ) + `  readonly ${propertyName(member)}?: string;\n`
-    );
+    return renderMember({
+      name: member,
+      type: "string",
+      optional: true,
+      readonly: true,
+      docs: [
+        `Replacement English text for vanilla's own \`${pattern}\` key.`,
+        "",
+        "Emitted to `localisation/replace/`, the layer the game resolves ahead",
+        "of the ordinary one — a rename, not a new key.",
+      ],
+    });
   });
   const members = patchMembers.map((entry) => {
     const widening = PATCH_WIDENINGS.get(`${type.name}.${entry.member}`);
@@ -831,7 +841,13 @@ function patchTypes(
       );
     }
     const extra = widening === undefined ? "" : `, ${widening.extraType}`;
-    return `${entry.docs}  readonly ${propertyName(entry.member)}?: PatchInput<${entry.memberType}${extra}>;\n`;
+    return renderMember({
+      name: entry.member,
+      type: `PatchInput<${entry.memberType}${extra}>`,
+      optional: true,
+      readonly: true,
+      docs: entry.docs,
+    });
   });
   for (const [path, widening] of PATCH_WIDENINGS) {
     const [registry, member] = path.split(".");
@@ -1055,8 +1071,12 @@ export function emitContentType(
         continue;
       }
       members.push(
-        docComment(lowered.docs, "  ") +
-          `  ${propertyName(lowered.member)}?: ${lowered.memberType};\n`
+        renderMember({
+          name: lowered.member,
+          type: lowered.memberType,
+          optional: true,
+          docs: lowered.docs,
+        })
       );
       memberDocs[lowered.member] = {
         optional: true,
@@ -1076,7 +1096,7 @@ export function emitContentType(
       } else {
         patchMembers.push({
           member: lowered.member,
-          docs: docComment(lowered.docs, "  "),
+          docs: lowered.docs,
           memberType: lowered.memberType,
         });
       }
@@ -1136,13 +1156,12 @@ export function emitContentType(
       }
       const optional = memberOptional(group, override);
       const docLines = [...new Set(group.flatMap((field) => field.docs))];
-      const docs = docComment(docLines, "  ");
       members.push(
-        `${docs}  ${propertyName(member)}${optional ? "?" : ""}: ${nested.memberType};\n`
+        renderMember({ name: member, type: nested.memberType, optional, docs: docLines })
       );
       memberDocs[member] = { optional, docs: docLines, memberType: nested.memberType };
       docTables.push(...nested.docTables);
-      patchMembers.push({ member, docs, memberType: nested.memberType });
+      patchMembers.push({ member, docs: docLines, memberType: nested.memberType });
       extraCode.push(nested.code);
       fieldMetadata.push(nested.metadata);
       declinedFields.push(...nested.declinedFields);
@@ -1199,10 +1218,9 @@ export function emitContentType(
     const docLines = [
       ...new Set([...group.flatMap((field) => field.docs), ...(lowered.docs ?? [])]),
     ];
-    const docs = docComment(docLines, "  ");
     const memberType =
       parameter?.selector?.member === member ? parameter.parameterName : lowered.memberType;
-    members.push(`${docs}  ${propertyName(member)}${optional ? "?" : ""}: ${memberType};\n`);
+    members.push(renderMember({ name: member, type: memberType, optional, docs: docLines }));
     memberDocs[member] = {
       optional,
       docs: docLines,
@@ -1210,7 +1228,7 @@ export function emitContentType(
       ...authoredLiterals(lowered.admits.literals),
     };
     docTables.push(...(lowered.docTables ?? []));
-    patchMembers.push({ member, docs, memberType });
+    patchMembers.push({ member, docs: docLines, memberType });
     fieldMetadata.push(
       member === camelCase(name)
         ? lowered.metadata
@@ -1372,9 +1390,11 @@ export function emitContentType(
     `  ${typeName}Def<Id>\n` +
     ">;\n\n" +
     patchCode +
-    `export const ${fieldsConstant}: readonly ContentField[] = [\n` +
-    fieldMetadata.map((entry) => `  ${entry},\n`).join("") +
-    "];\n\n" +
+    constArray(
+      fieldsConstant,
+      "ContentField",
+      fieldMetadata.map((entry) => `  ${entry},\n`).join("")
+    ) +
     `export const ${localisationConstant}: readonly ContentLocalisation[] = ` +
     `${localisationMetadata(emitter, type, localisationPlan, localisationPointers)};\n`;
 
