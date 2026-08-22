@@ -22,10 +22,6 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      # Keep this in a checkout isolated from the build job: build refreshes
-      # the generated module, whereas this proves package.json's version was
-      # committed into the source tree.
-      - run: npm run codegen:scaffolder-version:check
       - run: npm run typecheck
       - run: npm run codegen:verified-build:check
       # The CI-style codegen drift gate: regenerates from vendored inputs and

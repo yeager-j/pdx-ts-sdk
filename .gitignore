@@ -11,6 +11,11 @@ packages/docs-site/.examples/
 next-env.d.ts
 *.tsbuildinfo
 
+# Generated on install/typecheck/test/build by generate-version.mjs, so every
+# SDK-touching PR does not conflict on a derived hash.
+packages/create-stellaris-mod/src/generated/package-version.ts
+packages/docs-site/lib/generated/sdk-docs-revision.ts
+
 # Unanchored: a workspace member whose dependency cannot hoist (a second major
 # of something the root already has) gets its own nested node_modules.
 node_modules/
