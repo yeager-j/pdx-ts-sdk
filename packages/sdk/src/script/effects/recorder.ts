@@ -24,7 +24,12 @@ import { modifierEntry } from "./modifiers.ts";
 
 import "./event-chains.ts";
 
-import { conditionalBlock, IfChainRecorder, type RecordingState } from "./structural.ts";
+import {
+  conditionalBlock,
+  IfChainRecorder,
+  type RecordEffects,
+  type RecordingState,
+} from "./structural.ts";
 import type {
   EventTarget,
   Modifier,
@@ -85,8 +90,10 @@ export function scopeRef<S extends ScopeName>(path: string, lease?: ScriptLease)
     effects(body) {
       const recording = activeRecording(path);
       assertOwnedBy(recording, lease, path);
-      recording.sink.push(block(path, recordEffects(recording.refs, body)));
+      recording.sink.push(block(path, recordBlock(recording, recording.refs, body)));
     },
+    // No lease check: a trigger is a value built with nothing recording, so it
+    // reaches output only where its holder writes it.
     trigger(condition) {
       return trigger([block(path, [...condition.entries])], [...condition.refs]);
     },
@@ -186,18 +193,24 @@ function activeRecording(path: string): Recording {
 }
 
 /**
- * Refuses to open a ctx ref inside another authoring call's recording.
+ * Whether `lease` came from an authoring call other than the one `recording`
+ * belongs to.
  *
  * A ctx is handed to one definition's closures, and `root` and `from` mean
- * whatever that definition's rules say they hold. Opening one of its refs
- * somewhere else still writes the block: the entries would land in the other
- * definition's recording, under a scope the game supplies there from its own
- * rules, while the closure kept the types of the definition the ctx came from.
- * A ref with no lease is reusable by contract — an event target names its
- * scope absolutely — and is left alone.
+ * whatever that definition's rules say they hold; used against another
+ * definition's recording, they still write, under scopes the game supplies
+ * from that definition's rules instead. A value with no lease is reusable by
+ * contract — an event target names its scope absolutely — and is never an
+ * escape. Each site states its own harm, since what a ctx path writes differs
+ * between opening a block and witnessing an event fire.
  */
+function hasEscaped(recording: Recording, lease: ScriptLease | undefined): boolean {
+  return lease !== undefined && recording.lease !== lease;
+}
+
+/** Refuses to open a ctx ref inside another authoring call's recording. */
 function assertOwnedBy(recording: Recording, lease: ScriptLease | undefined, path: string): void {
-  if (lease === undefined || recording.lease === lease) {
+  if (!hasEscaped(recording, lease)) {
     return;
   }
   throw new Error(
@@ -206,6 +219,31 @@ function assertOwnedBy(recording: Recording, lease: ScriptLease | undefined, pat
       `land in this recording as a '${path}' block while keeping the FROM and ROOT scopes ` +
       "of the definition the context came from — scopes the game does not supply here. Use " +
       "the ctx the closure being written receives, rather than one kept from an earlier one."
+  );
+}
+
+/**
+ * Refuses a ctx ref that witnesses an event fire in another call's recording.
+ * `undefined` is the {@link makeScope} seam, which has no authoring call to
+ * escape from.
+ */
+function assertWitnessOwnedBy(
+  recording: Recording | undefined,
+  witness: FireCallArgs["from"],
+  key: string
+): void {
+  if (recording === undefined || witness === undefined) {
+    return;
+  }
+  if (!hasEscaped(recording, witness[scopeLease])) {
+    return;
+  }
+  throw new Error(
+    `'${witness.path}' was passed as the FROM witness of '${key}' from a ScriptCtx belonging ` +
+      "to a different definition, so the context escaped the closure it was handed to. The " +
+      "fire site would write it as this definition's FROM override while the scope it names " +
+      "is the one the earlier definition's rules supply. Use the ctx the closure being " +
+      "written receives, rather than one kept from an earlier one."
   );
 }
 
@@ -270,7 +308,8 @@ function fieldEntries(
   fields: readonly EffectFieldMeta[],
   args: Record<string, unknown>,
   path: string,
-  refs: ContentRefUse[]
+  refs: ContentRefUse[],
+  owner: Recording | undefined
 ): PdxEntry[] {
   const entries: PdxEntry[] = [];
   for (const field of fields) {
@@ -296,7 +335,8 @@ function fieldEntries(
                   field.fields ?? [],
                   value as Record<string, unknown>,
                   `${path}.${field.key}`,
-                  refs
+                  refs,
+                  owner
                 )
               )
             );
@@ -314,7 +354,8 @@ function fieldEntries(
                 field.fields ?? [],
                 value as Record<string, unknown>,
                 `${path}.${field.key}`,
-                refs
+                refs,
+                owner
               )
             )
           );
@@ -333,7 +374,8 @@ function fieldEntries(
                     field.fields,
                     item as Record<string, unknown>,
                     `${path}.${field.key}`,
-                    refs
+                    refs,
+                    owner
                   )
                 )
               );
@@ -360,7 +402,9 @@ function fieldEntries(
           refs.push(...(value as Trigger).refs);
           break;
         case "effect":
-          entries.push(block(field.key, recordEffects(refs, value as (scope: unknown) => void)));
+          entries.push(
+            block(field.key, recordBlock(owner, refs, value as (scope: unknown) => void))
+          );
           break;
         case "modifiers":
           entries.push(
@@ -378,22 +422,28 @@ function fieldEntries(
   return entries;
 }
 
-function weightedList(key: string, sink: PdxEntry[], refs: ContentRefUse[]) {
+function weightedList(
+  key: string,
+  sink: PdxEntry[],
+  refs: ContentRefUse[],
+  owner: Recording | undefined
+) {
   return (arms: ReadonlyArray<RandomListArm<ScopeName>>): void => {
     const armBlocks = arms.map((arm) => {
       const child: PdxEntry[] = (arm.modifiers ?? []).map((modifier) =>
         modifierEntry(modifier, refs)
       );
-      recordEffects(refs, arm.do as (scope: unknown) => void, child);
+      recordBlock(owner, refs, arm.do as (scope: unknown) => void, child);
       return block(String(arm.weight), child);
     });
     sink.push(block(key, armBlocks));
   };
 }
 
-// `recording` is the third parameter only `if` reads — the chain it returns
-// outlives the call that made it, so it has to carry the liveness the scope
-// object checks. Every other entry ignores it.
+// `recording` is the third parameter: the recording that owns `sink`. Entries
+// that open a block need it so the block inherits its owner's lease, and `if`
+// also passes it to the chain it returns, which outlives the call that made it
+// and has to carry the liveness the scope object checks.
 type StructuralFactory = (
   sink: PdxEntry[],
   refs: ContentRefUse[],
@@ -403,33 +453,35 @@ type StructuralFactory = (
 const STRUCTURAL_BASE = {
   if:
     (sink, refs, recording) => (condition: Trigger<ScopeName>, body: (scope: unknown) => void) => {
-      sink.push(conditionalBlock("if", condition, body, refs, recordEffects));
-      return new IfChainRecorder(sink, refs, recording, recordEffects, assertLive);
+      const record = nestedRecorder(recording);
+      sink.push(conditionalBlock("if", condition, body, refs, record));
+      return new IfChainRecorder(sink, refs, recording, record, assertLive);
     },
 
-  target: (sink, refs) => (body: (scope: unknown) => void) => {
-    sink.push(block("target", recordEffects(refs, body)));
+  target: (sink, refs, recording) => (body: (scope: unknown) => void) => {
+    sink.push(block("target", recordBlock(recording, refs, body)));
   },
 
   hiddenEffect: (sink, refs, recording) => makeEffectPath(sink, refs, recording, ["hidden_effect"]),
 
-  randomList: (sink, refs) => weightedList("random_list", sink, refs),
-  lockedRandomList: (sink, refs) => weightedList("locked_random_list", sink, refs),
+  randomList: (sink, refs, recording) => weightedList("random_list", sink, refs, recording),
+  lockedRandomList: (sink, refs, recording) =>
+    weightedList("locked_random_list", sink, refs, recording),
 
   random:
-    (sink, refs) =>
+    (sink, refs, recording) =>
     (
       args: { chance: number; modifiers?: readonly Modifier<ScopeName>[] },
       body: (scope: unknown) => void
     ) => {
       const child: PdxEntry[] = [kv("chance", args.chance)];
       child.push(...(args.modifiers ?? []).map((modifier) => modifierEntry(modifier, refs)));
-      recordEffects(refs, body, child);
+      recordBlock(recording, refs, body, child);
       sink.push(block("random", child));
     },
 
   whileLoop:
-    (sink, refs) =>
+    (sink, refs, recording) =>
     (args: { count?: number; limit?: Trigger<ScopeName> }, body: (scope: unknown) => void) => {
       const child: PdxEntry[] = [];
       if (args.count !== undefined) {
@@ -439,7 +491,7 @@ const STRUCTURAL_BASE = {
         child.push(block("limit", [...args.limit.entries]));
         refs.push(...args.limit.refs);
       }
-      recordEffects(refs, body, child);
+      recordBlock(recording, refs, body, child);
       sink.push(block("while", child));
     },
 
@@ -527,7 +579,7 @@ function eventChainCounterEffect(key: string, needsAmount: boolean) {
 }
 
 function fireEffect(key: string) {
-  return (sink: PdxEntry[]) =>
+  return (sink: PdxEntry[], _refs: ContentRefUse[], recording: Recording | undefined) =>
     (args: FireCallArgs): void => {
       const entries: PdxEntry[] = [kv("id", refId(args.id))];
       for (const field of ["days", "months", "years", "random"] as const) {
@@ -543,6 +595,9 @@ function fireEffect(key: string) {
             "when the event expects ROOT, or an absolute scope reference for an explicit override."
         );
       }
+      // The witness is the other place a ctx path reaches output, so it
+      // carries the same lease rule opening a block does.
+      assertWitnessOwnedBy(recording, args.from, key);
       // Natural FROM is the firing execution's ROOT. `ctx.self` can witness
       // that omission only where SELF and ROOT are not known to differ; any
       // other ref uses the game's explicit override mechanism.
@@ -551,6 +606,15 @@ function fireEffect(key: string) {
       }
       sink.push(block(key, entries));
     };
+}
+
+/**
+ * A recorder bound to the recording that owns `sink`, for the seam that hands
+ * one to {@link IfChainRecorder}: blocks the chain opens are inside that sink,
+ * so they inherit its lease rather than the ambient one.
+ */
+function nestedRecorder(owner: Recording | undefined): RecordEffects {
+  return (refs, body, into) => recordBlock(owner, refs, body, into);
 }
 
 function methodName(key: string): string {
@@ -600,7 +664,7 @@ function makeEffectPath(
   const dispatch = (prop: string): unknown => {
     if (prop === "effects") {
       return (body: (scope: unknown) => void): void => {
-        let nested = recordEffects(refs, body);
+        let nested = recordBlock(recording, refs, body);
         for (let index = keys.length - 1; index >= 0; index -= 1) {
           nested = [block(keys[index]!, nested)];
         }
@@ -663,16 +727,24 @@ function makeAnyScope(sink: PdxEntry[], refs: ContentRefUse[], recording?: Recor
         };
       case "fields":
         return (args: Record<string, unknown>) =>
-          sink.push(block(meta.key, fieldEntries(shape.fields ?? [], args, meta.key, refs)));
+          sink.push(
+            block(meta.key, fieldEntries(shape.fields ?? [], args, meta.key, refs, recording))
+          );
       case "wrapper":
         if (shape.fields === null) {
           return (body: (scope: unknown) => void) => {
-            sink.push(block(meta.key, recordEffects(refs, body)));
+            sink.push(block(meta.key, recordBlock(recording, refs, body)));
           };
         }
         return (args: Record<string, unknown>, body: (scope: unknown) => void) => {
-          const child: PdxEntry[] = fieldEntries(shape.fields ?? [], args, meta.key, refs);
-          recordEffects(refs, body, child);
+          const child: PdxEntry[] = fieldEntries(
+            shape.fields ?? [],
+            args,
+            meta.key,
+            refs,
+            recording
+          );
+          recordBlock(recording, refs, body, child);
           sink.push(block(meta.key, child));
         };
       case "scope-link":
@@ -753,11 +825,12 @@ export function makeScope<S extends ScopeName>(
 /**
  * Runs one effect closure against a fresh block, and returns its entries.
  *
- * The single entry point for "record effects into a new block", used by the
- * recorder's own nested blocks and by every caller that starts one — an
- * event's `immediate`, a content definition's effect field. Going through here
- * is what keeps {@link ScopeRef.effects} writing into the innermost block: the
- * recording is on the stack for exactly as long as the body runs.
+ * The entry point for "start a block nothing else is inside" — an event's
+ * `immediate`, a content definition's effect field. The recorder's own nested
+ * blocks go through {@link recordBlock} with the recording that owns their
+ * sink. Going through either is what keeps {@link ScopeRef.effects} writing
+ * into the innermost block: the recording is on the stack for exactly as long
+ * as the body runs.
  *
  * The scope object the body receives is tied to *this* recording, so nesting
  * works out on its own: a transition's closure gets a scope object of its own
@@ -769,7 +842,34 @@ export function recordEffects<S extends ScopeName>(
   body: (scope: ScopeObjOf<S>) => void,
   into: PdxEntry[] = []
 ): PdxEntry[] {
-  const recording: Recording = { sink: into, refs, live: true, lease: LEASES.at(-1) };
+  return recordBlock(undefined, refs, body, into);
+}
+
+/**
+ * {@link recordEffects}, told which recording owns the sink the new block is
+ * being written into.
+ *
+ * The owner settles the lease, because a block belongs to the tree its sink is
+ * in rather than to whatever authoring call happens to be running. Definition
+ * B can be authored inside definition A's live closure — the SDK is ordinary
+ * TypeScript — and a method kept from A's scope object still opens blocks in
+ * A's tree while B's call is on the stack. Inheriting the owner's lease is
+ * what keeps B's ctx out of A's tree in that case. An owner is absent for a
+ * root block and for the {@link makeScope} seam, and both belong to the
+ * authoring call now running.
+ */
+function recordBlock<S extends ScopeName>(
+  owner: Recording | undefined,
+  refs: ContentRefUse[],
+  body: (scope: ScopeObjOf<S>) => void,
+  into: PdxEntry[] = []
+): PdxEntry[] {
+  const recording: Recording = {
+    sink: into,
+    refs,
+    live: true,
+    lease: owner === undefined ? LEASES.at(-1) : owner.lease,
+  };
   RECORDINGS.push(recording);
   let result: unknown;
   try {

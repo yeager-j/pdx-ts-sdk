@@ -727,6 +727,69 @@ every_owned_planet = {
     ).toThrow(/escaped the closure it was handed to/);
   });
 
+  it("throws when an escaped ctx witnesses an event fire", () => {
+    // The other place a ctx path reaches output: the witness writes
+    // `scopes = { from = from }`, and the game supplies the FROM of whatever
+    // definition the fire site is in.
+    const escaped = withScriptCtx({}, (ctx: ScriptCtx<"country", "planet">) => ctx);
+
+    expect(() =>
+      recordEffects<"country">([], (country) => {
+        country.countryEvent<"planet">({ id: "effects_test.1", from: escaped.from });
+      })
+    ).toThrow(/escaped the closure it was handed to/);
+  });
+
+  it("writes the FROM override when the witness belongs to the fire site's own ctx", () => {
+    const sink = withScriptCtx({}, (ctx: ScriptCtx<"country", "planet">) =>
+      recordEffects<"country">([], (country) => {
+        country.countryEvent<"planet">({ id: "effects_test.1", from: ctx.from });
+      })
+    );
+
+    expect(serialize(sink)).toBe(`country_event = {
+	id = effects_test.1
+	scopes = {
+		from = from
+	}
+}
+`);
+  });
+
+  it("keeps a nested block under the lease of the recording that owns its sink", () => {
+    // Definition B can be authored inside definition A's live closure, since
+    // this is ordinary TypeScript. A method kept from A's scope object still
+    // opens blocks in A's tree while B's call runs, so B's ctx must not pass
+    // the check there and A's must.
+    const sink = withScriptCtx({}, (ctxA: ScriptCtx<"country", "planet">) =>
+      recordEffects<"country">([], (a) => {
+        withScriptCtx({}, (ctxB: ScriptCtx<"country", "planet">) => {
+          recordEffects<"country">([], () => {
+            expect(() =>
+              a.everyOwnedPlanet({ limit: hasOwner() }, () => {
+                ctxB.from.effects((planet) => planet.log("B"));
+              })
+            ).toThrow(/escaped the closure it was handed to/);
+
+            a.everyOwnedPlanet({ limit: hasOwner() }, () => {
+              ctxA.from.effects((planet) => planet.log("A"));
+            });
+          });
+        });
+      })
+    );
+
+    expect(serialize(sink)).toBe(`every_owned_planet = {
+	limit = {
+		has_owner = yes
+	}
+	from = {
+		log = A
+	}
+}
+`);
+  });
+
   it("leaves an escaped ctx usable as a value and as a condition", () => {
     // Only opening a block is bound to the authoring call: a path is a word,
     // and a trigger is a value with nothing to record.
