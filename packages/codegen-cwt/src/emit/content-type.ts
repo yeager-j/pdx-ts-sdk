@@ -32,23 +32,25 @@ import {
   type RepeatedStructDefinition,
 } from "../overlay.ts";
 import {
+  omissionLine,
+  type DocTable,
+  type FieldOmissionRow,
+  type MemberDocRow,
+} from "./field-rows.ts";
+import {
   authoredLiterals,
   flatten,
   lowerTopLevelSplice,
   memberOptional,
   mergeByName,
   metadata,
-  omissionLine,
   pickOrdinary,
   repeatsSiblings,
   useWideningSymbols,
-  wildcardBlockOf,
-  type DocTable,
   type EmittedField,
-  type FieldContext,
-  type FieldOmissionRow,
-  type MemberDocRow,
 } from "./fields.ts";
+import { wildcardBlockOf } from "./rule-shapes.ts";
+import type { FieldContext } from "./scope-context.ts";
 import { partitionSubtypeFields } from "./subtype-partition.ts";
 import { Emitter } from "./types.ts";
 import { constArray, member as renderMember } from "./writer.ts";

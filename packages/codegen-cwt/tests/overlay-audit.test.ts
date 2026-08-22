@@ -19,7 +19,7 @@ import { loadRules } from "@pdx-ts/codegen-cwt/cwt/rules";
 import { emitAliasSplice } from "@pdx-ts/codegen-cwt/emit/alias-splice";
 import { emitAliasStruct } from "@pdx-ts/codegen-cwt/emit/alias-struct";
 import { emitContentType } from "@pdx-ts/codegen-cwt/emit/content-type";
-import { structuralSpliceOf } from "@pdx-ts/codegen-cwt/emit/fields";
+import { structuralSpliceOf } from "@pdx-ts/codegen-cwt/emit/rule-shapes";
 import { Emitter } from "@pdx-ts/codegen-cwt/emit/types";
 import { camelCase } from "@pdx-ts/codegen-cwt/naming";
 import {

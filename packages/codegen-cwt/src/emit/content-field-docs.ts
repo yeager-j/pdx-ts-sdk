@@ -22,7 +22,7 @@
  * accidental hole.
  */
 
-import type { DocTable, FieldOmissionRow, MemberDocRow } from "./fields.ts";
+import type { DocTable, FieldOmissionRow, MemberDocRow } from "./field-rows.ts";
 
 export interface FieldDocsModule {
   /** Generated-module specifier the tables are imported from, e.g. `./technology.ts`. */

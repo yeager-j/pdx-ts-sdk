@@ -1501,7 +1501,7 @@ export interface ContentFieldOverride {
    * category, see `CONTENT_SCOPE_PARAMETERS`) and leaves real checking on the
    * table when the scope is fixed but simply unannotated. A `scope` row here
    * buys that checking back for one field. `ModifierClosure` fields keep the
-   * separate `ScopeName` sentinel `emit/fields.ts`'s `contravariantScopeType`
+   * separate `ScopeName` sentinel `emit/scope-context.ts`'s `contravariantScopeType`
    * does not touch, since an unpinned modifier closure already resolves to a
    * real, writable recorder.
    *
@@ -1572,7 +1572,7 @@ export interface ContentFieldOverride {
  * Modifier blocks used to be here too, 85 rows of them. They are not any more:
  * a field that splices `modifier_clause`, a `triggered_modifier*_clause` or an
  * `economic_template` carries the clause's name into the expanded block, and
- * `emit/fields.ts`'s `CLAUSE_SHAPES` reads the shape off it (SDK-142). A row
+ * `emit/rule-shapes.ts`'s `CLAUSE_SHAPES` reads the shape off it (SDK-142). A row
  * here still wins over that, so this table remains the place to say the
  * derivation is wrong for one field — but restating what the clause already
  * says is no longer one of its jobs.
@@ -1926,8 +1926,8 @@ export const REPEATED_STRUCT_DEFINITIONS = new Map<string, RepeatedStructDefinit
  * Empty, and kept rather than deleted. All twelve rows it held were clause
  * shapes, and every one of them said the same thing its top-level sibling said:
  * this nested field splices `modifier_clause`, or a `triggered_modifier*_clause`,
- * or `economic_template`. `emit/fields.ts` derives that from the clause name now
- * (SDK-142), and nesting changes nothing about it — `lowerOrdinary` is the same
+ * or `economic_template`. `emit/rule-shapes.ts` derives that from the clause name
+ * now (SDK-142), and nesting changes nothing about it — `lowerOrdinary` is the same
  * function at both depths.
  *
  * A future row here would have to be something the *nesting* makes true: a

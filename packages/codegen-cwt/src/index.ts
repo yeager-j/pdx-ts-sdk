@@ -28,10 +28,11 @@ import { emitContentFieldDocs, type FieldDocsModule } from "./emit/content-field
 import { emitContentType, type ContentEmission } from "./emit/content-type.ts";
 import { emitEffects } from "./emit/effects.ts";
 import { emitEvents } from "./emit/events.ts";
-import { structuralSpliceOf, type DocTable, type FieldOmissionRow } from "./emit/fields.ts";
+import type { DocTable, FieldOmissionRow } from "./emit/field-rows.ts";
 import { classifyLinks, emitScopeLinkNavigation, emitScopeLinks } from "./emit/links.ts";
 import { emitModifiers, joinModifierScopes } from "./emit/modifiers.ts";
 import { emitOnActions } from "./emit/on-actions.ts";
+import { structuralSpliceOf } from "./emit/rule-shapes.ts";
 import { emitScriptReferences } from "./emit/script-reference.ts";
 import {
   canonicalScopes,
