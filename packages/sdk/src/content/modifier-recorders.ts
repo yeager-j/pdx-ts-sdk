@@ -15,7 +15,7 @@ import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
 import { MODIFIER_REFERENCE_FAMILIES } from "../generated/modifiers.ts";
 import { isVanillaRef } from "../identifiers/trie.ts";
 import type { ContentRefSink } from "../references.ts";
-import { assertSynchronousClosure } from "../script/effects/recorder.ts";
+import { assertSynchronousClosure } from "../script/effects/recording.ts";
 import { refId, type TypedRef } from "../script/scalar.ts";
 import type { ModifierClosure } from "./types.ts";
 
