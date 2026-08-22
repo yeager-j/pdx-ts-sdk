@@ -10,6 +10,8 @@
  * - `effect-meta.ts` — DATA. One entry per method telling the runtime
  *   recorder (`src/script/effects/recorder.ts`, a single scope-agnostic Proxy) how to
  *   serialize the call. The Proxy throws on names missing from this table.
+ *   Serialized by the sibling `effect-meta.ts` emitter over the clusters this
+ *   file builds.
  *
  * Scopes come from the rules' `## scopes` with the game dump as fallback,
  * exactly like triggers. Nothing is dropped silently: every effect the
@@ -47,8 +49,9 @@ import {
 } from "../../overlay/index.ts";
 import type { EffectPolicy } from "../../policy/effects.ts";
 import { Emitter, type TsValue } from "../../render/emitter.ts";
-import { refTypesSuffix, member as renderMember } from "../../render/writer.ts";
+import { member as renderMember } from "../../render/writer.ts";
 import { canonicalScopes } from "../support.ts";
+import { effectMetaCode } from "./effect-meta.ts";
 import type { ClassifiedLink } from "./links.ts";
 import type { ScriptEffectReferenceRow, ScriptScopeLinkReferenceRow } from "./script-reference.ts";
 import { tsDoc } from "./triggers.ts";
@@ -78,7 +81,7 @@ export interface EffectEmission {
   readonly scopeLinkReferences: readonly ScriptScopeLinkReferenceRow[];
 }
 
-type EffectShape =
+export type EffectShape =
   | { readonly kind: "bool" }
   | { readonly kind: "value"; readonly value: TsValue }
   /** Effect-splice block: closure body, pushed scope (null = same scope). */
@@ -198,18 +201,30 @@ function applyFieldOverlays(emitter: Emitter, key: string, shape: EffectShape): 
   };
 }
 
-interface EmittedEffect {
+export interface EmittedEffect {
   readonly method: string;
   readonly key: string;
   readonly shape: EffectShape;
   readonly docs: readonly string[];
 }
 
-interface EmittedScopeLink {
+export interface EmittedScopeLink {
   readonly method: string;
   readonly key: string;
   readonly outputScope: string;
   readonly docs: readonly string[];
+}
+
+/** Effects sharing one exact scope set, emitted as one interface. */
+export interface EffectCluster {
+  readonly scopes: readonly string[] | "universal";
+  readonly effects: EmittedEffect[];
+}
+
+/** Scope-link paths sharing one exact scope set, emitted as one interface. */
+export interface ScopeLinkCluster {
+  readonly scopes: readonly string[] | "universal";
+  readonly links: EmittedScopeLink[];
 }
 
 function shapeOf(
@@ -428,73 +443,6 @@ function referenceSignature(emitter: Emitter, effect: EmittedEffect, outerScope:
   );
 }
 
-function booleanLiteralsMeta(value: TsValue | undefined): string {
-  return value?.booleanLiterals === undefined
-    ? ""
-    : `, booleanLiterals: ${JSON.stringify(value.booleanLiterals)}`;
-}
-
-function scalarMeta(value: TsValue): string {
-  const members = [
-    value.refTypes === undefined ? null : `refTypes: ${JSON.stringify(value.refTypes)}`,
-    value.booleanLiterals === undefined
-      ? null
-      : `booleanLiterals: ${JSON.stringify(value.booleanLiterals)}`,
-    value.objectKinds === undefined ? null : `objectKinds: ${JSON.stringify(value.objectKinds)}`,
-  ].filter((member): member is string => member !== null);
-  return members.length === 0 ? "{}" : `{ ${members.join(", ")} }`;
-}
-
-function fieldMeta(field: ArgField): string {
-  const repeated = field.repeated === true ? ", repeated: true" : "";
-  if (field.value.kind === "fields") {
-    return `{ prop: ${JSON.stringify(camelCase(field.name))}, key: ${JSON.stringify(field.name)}, kind: "fields", fields: [${field.value.fields.map(fieldMeta).join(", ")}]${repeated} }`;
-  }
-  if (field.value.kind === "scalarOrFields") {
-    return `{ prop: ${JSON.stringify(camelCase(field.name))}, key: ${JSON.stringify(field.name)}, kind: "scalar-or-fields", scalar: ${scalarMeta(field.value.scalar)}, fields: [${field.value.fields.map(fieldMeta).join(", ")}]${repeated} }`;
-  }
-  if (field.value.kind === "valueList") {
-    const scalar = field.value.scalar;
-    const fields = field.value.fields;
-    return `{ prop: ${JSON.stringify(camelCase(field.name))}, key: ${JSON.stringify(field.name)}, kind: "value-list"${scalar === null ? "" : `, scalar: ${scalarMeta(scalar)}`}${fields === null ? "" : `, fields: [${fields.map(fieldMeta).join(", ")}]`}${repeated} }`;
-  }
-  const kind =
-    field.value.kind === "scalar"
-      ? "value"
-      : field.value.kind === "comparison"
-        ? "comparison"
-        : field.value.category === "trigger"
-          ? "trigger"
-          : field.value.category === "modifier_rule"
-            ? "modifiers"
-            : "effect";
-  const refTypes = refTypesSuffix(field.value.kind === "scalar" ? field.value.value : undefined);
-  const booleanLiterals = booleanLiteralsMeta(
-    field.value.kind === "scalar" ? field.value.value : undefined
-  );
-  return `{ prop: ${JSON.stringify(camelCase(field.name))}, key: ${JSON.stringify(field.name)}, kind: ${JSON.stringify(kind)}${refTypes}${booleanLiterals}${repeated} }`;
-}
-
-function metaEntry(effect: EmittedEffect): string {
-  const { method, key, shape } = effect;
-  const fieldsOf = (fields: readonly ArgField[] | null): string =>
-    fields === null ? "null" : `[${fields.map(fieldMeta).join(", ")}]`;
-  switch (shape.kind) {
-    case "bool":
-      return `  ${method}: { key: ${JSON.stringify(key)}, shape: { kind: "bool" } },\n`;
-    case "value":
-      return `  ${method}: { key: ${JSON.stringify(key)}, shape: { kind: "value"${refTypesSuffix(shape.value)}${booleanLiteralsMeta(shape.value)} } },\n`;
-    case "fields":
-      return `  ${method}: { key: ${JSON.stringify(key)}, shape: { kind: "fields", fields: ${fieldsOf(shape.fields)} } },\n`;
-    case "wrapper":
-      return `  ${method}: { key: ${JSON.stringify(key)}, shape: { kind: "wrapper", fields: ${fieldsOf(shape.fields)} } },\n`;
-  }
-}
-
-function scopeLinkMetaEntry(link: EmittedScopeLink): string {
-  return `  ${link.method}: { key: ${JSON.stringify(link.key)}, shape: { kind: "scope-link" } },\n`;
-}
-
 /**
  * Deterministic short tag for long scope sets, stable across runs.
  *
@@ -566,29 +514,35 @@ function pathProperty(link: EmittedScopeLink): string {
   });
 }
 
-export function emitEffects(
+/** The type text of a cluster's outer scope: a literal union, or every scope. */
+function outerScopeText(scopes: readonly string[] | "universal"): string {
+  return scopes === "universal"
+    ? "ScopeName"
+    : scopes.map((scope) => JSON.stringify(scope)).join(" | ");
+}
+
+interface ClusteredEffects {
+  readonly clusters: Map<string, EffectCluster>;
+  readonly skipped: SkippedRule[];
+  readonly scalarOnly: string[];
+  readonly byShape: Map<string, number>;
+  readonly appliedFieldAdditions: ReadonlySet<string>;
+  readonly appliedFieldCardinalityOverrides: ReadonlySet<string>;
+}
+
+/** The rule loop: lowers each generated-owned effect and clusters it by scope set. */
+function clusterEffects(
   emitter: Emitter,
   docs: ReadonlyMap<string, DocEntry>,
-  scopeIndex: ReadonlyMap<string, string>,
   rules: ReadonlyMap<string, LoweredRule>,
-  policy: EffectPolicy,
-  links: readonly ClassifiedLink[]
-): EffectEmission {
+  policy: EffectPolicy
+): ClusteredEffects {
   const skipped: SkippedRule[] = [];
   const scalarOnly: string[] = [];
   const appliedFieldAdditions = new Set<string>();
   const appliedFieldCardinalityOverrides = new Set<string>();
   const byShape = new Map<string, number>();
-  interface Cluster {
-    readonly scopes: readonly string[] | "universal";
-    readonly effects: EmittedEffect[];
-  }
-  interface LinkCluster {
-    readonly scopes: readonly string[] | "universal";
-    readonly links: EmittedScopeLink[];
-  }
-  const clusters = new Map<string, Cluster>();
-  const linkClusters = new Map<string, LinkCluster>();
+  const clusters = new Map<string, EffectCluster>();
 
   for (const key of [...rules.keys()].sort()) {
     const rule = rules.get(key)!;
@@ -668,12 +622,25 @@ export function emitEffects(
     byShape.set(resolved.kind, (byShape.get(resolved.kind) ?? 0) + 1);
   }
 
-  // An override row naming a field no emitted effect has is a lie the emitted
-  // types would not show: it would read as an audited departure while changing
-  // nothing. A rules bump that renames or drops the field has to be noticed
-  // here rather than quietly turning the row into decoration.
+  return {
+    clusters,
+    skipped,
+    scalarOnly,
+    byShape,
+    appliedFieldAdditions,
+    appliedFieldCardinalityOverrides,
+  };
+}
+
+/**
+ * An override row naming a field no emitted effect has is a lie the emitted
+ * types would not show: it would read as an audited departure while changing
+ * nothing. A rules bump that renames or drops the field has to be noticed
+ * here rather than quietly turning the row into decoration.
+ */
+function assertFieldOverlayRowsMatched(clustered: ClusteredEffects): void {
   const fieldKeys = new Set(
-    [...clusters.values()].flatMap((cluster) =>
+    [...clustered.clusters.values()].flatMap((cluster) =>
       cluster.effects.flatMap((effect) =>
         effect.shape.kind === "fields" || effect.shape.kind === "wrapper"
           ? (effect.shape.fields ?? []).map((field) => `${effect.key}.${field.name}`)
@@ -690,7 +657,7 @@ export function emitEffects(
     }
   }
   for (const key of EFFECT_FIELD_ADDITIONS.keys()) {
-    if (!appliedFieldAdditions.has(key)) {
+    if (!clustered.appliedFieldAdditions.has(key)) {
       throw new Error(
         `EFFECT_FIELD_ADDITIONS names "${key}", which no emitted effect matches — ` +
           "retire the overlay row or fix its key"
@@ -698,28 +665,26 @@ export function emitEffects(
     }
   }
   for (const key of EFFECT_FIELD_CARDINALITY_OVERRIDES.keys()) {
-    if (!appliedFieldCardinalityOverrides.has(key)) {
+    if (!clustered.appliedFieldCardinalityOverrides.has(key)) {
       throw new Error(
         `EFFECT_FIELD_CARDINALITY_OVERRIDES names "${key}", which no emitted effect ` +
           "matches — retire the overlay row or fix its key"
       );
     }
   }
+}
 
-  // Scope links use their own recursive property clusters. A name collision is
-  // a hard error, not a skip: the property would merge with an effect method,
-  // and the Proxy would have no unambiguous dispatch for that authoring name.
-  const effectCount = [...clusters.values()].reduce(
-    (sum, cluster) => sum + cluster.effects.length,
-    0
-  );
-
-  const takenMethods = new Set([
-    "effects",
-    "then",
-    ...policy.publicMethods,
-    ...[...clusters.values()].flatMap((cluster) => cluster.effects.map((effect) => effect.method)),
-  ]);
+/**
+ * Scope links use their own recursive property clusters. A name collision is
+ * a hard error, not a skip: the property would merge with an effect method,
+ * and the Proxy would have no unambiguous dispatch for that authoring name.
+ */
+function clusterScopeLinks(
+  links: readonly ClassifiedLink[],
+  scopeIndex: ReadonlyMap<string, string>,
+  takenMethods: ReadonlySet<string>
+): Map<string, ScopeLinkCluster> {
+  const linkClusters = new Map<string, ScopeLinkCluster>();
   for (const link of links) {
     if (takenMethods.has(link.method)) {
       throw new Error(
@@ -742,31 +707,19 @@ export function emitEffects(
     cluster.links.push(emitted);
     linkClusters.set(clusterKey, cluster);
   }
+  return linkClusters;
+}
 
-  const sortedClusters = [...clusters.values()].sort((left, right) =>
-    compareStrings(clusterName(left.scopes), clusterName(right.scopes))
-  );
-  const sortedLinkClusters = [...linkClusters.values()].sort((left, right) =>
-    compareStrings(pathClusterName(left.scopes), pathClusterName(right.scopes))
-  );
-
-  const interfaceChunks: string[] = [];
-  // Local to this pass, not module state: see registerClusterName's doc
-  // comment for why. Shared between the two cluster-emission loops below
-  // because both mint into the same file's export namespace.
-  const mintedClusterNames = new Map<string, string>();
-  const clusterScope = (cluster: Cluster): string =>
-    cluster.scopes === "universal"
-      ? "ScopeName"
-      : cluster.scopes.map((scope) => JSON.stringify(scope)).join(" | ");
-  // Each seam is emitted as its own interface before the cluster that owns the
-  // effect, so the hand-written overload merges onto a name the rules cannot
-  // rename. An effect that leaves the rules fails here rather than silently
-  // detaching its overload.
+/**
+ * Each seam is emitted as its own interface before the cluster that owns the
+ * effect, so the hand-written overload merges onto a name the rules cannot
+ * rename. An effect that leaves the rules fails here rather than silently
+ * detaching its overload.
+ */
+function extensionSeamInterfaces(emitter: Emitter, clusters: readonly EffectCluster[]): string[] {
+  const chunks: string[] = [];
   for (const [key, seam] of EFFECT_EXTENSION_SEAMS) {
-    const owner = sortedClusters.find((cluster) =>
-      cluster.effects.some((effect) => effect.key === key)
-    );
+    const owner = clusters.find((cluster) => cluster.effects.some((effect) => effect.key === key));
     const effect = owner?.effects.find((candidate) => candidate.key === key);
     if (owner === undefined || effect === undefined) {
       throw new Error(`effects.cwt no longer emits ${key}`);
@@ -779,14 +732,14 @@ export function emitEffects(
       effect.shape.kind === "fields"
         ? docComment([`The arguments \`${camelCase(key)}\` takes, as the rules declare them.`]) +
           `export type ${argsName} = ` +
-          `${argsType(emitter, effect.shape.fields, clusterScope(owner), key)};\n`
+          `${argsType(emitter, effect.shape.fields, outerScopeText(owner.scopes), key)};\n`
         : "";
     const signature =
       effect.shape.kind === "fields"
         ? `${docComment(effect.docs, "  ")}` +
-          `${extensionFallbackSignature(emitter, effect, clusterScope(owner))}`
-        : methodSignature(emitter, effect, clusterScope(owner));
-    interfaceChunks.push(
+          `${extensionFallbackSignature(emitter, effect, outerScopeText(owner.scopes))}`
+        : methodSignature(emitter, effect, outerScopeText(owner.scopes));
+    chunks.push(
       args +
         docComment([
           `Stable extension seam for the hand-written ${camelCase(key)} overload.`,
@@ -796,10 +749,19 @@ export function emitEffects(
         `export interface ${seam.interfaceName} {\n${signature}}\n`
     );
   }
-  for (const cluster of sortedClusters) {
+  return chunks;
+}
+
+/** One interface per cluster, its methods declared once for its exact scope set. */
+function clusterInterfaces(
+  emitter: Emitter,
+  clusters: readonly EffectCluster[],
+  minted: Map<string, string>
+): string[] {
+  return clusters.map((cluster) => {
     const name = clusterName(cluster.scopes);
-    registerClusterName(mintedClusterNames, name, cluster.scopes);
-    const outerScope = clusterScope(cluster);
+    registerClusterName(minted, name, cluster.scopes);
+    const outerScope = outerScopeText(cluster.scopes);
     const heading =
       cluster.scopes === "universal"
         ? ["Effects valid in every scope."]
@@ -815,31 +777,40 @@ export function emitEffects(
       })
       .sort();
     const parents = seams.length === 0 ? "" : ` extends ${seams.join(", ")}`;
-    interfaceChunks.push(
-      `${docComment(heading)}export interface ${name}${parents} {\n${methods}}\n`
-    );
-  }
+    return `${docComment(heading)}export interface ${name}${parents} {\n${methods}}\n`;
+  });
+}
 
-  for (const cluster of sortedLinkClusters) {
+/** One interface per link cluster, carrying its scope-link path properties. */
+function pathClusterInterfaces(
+  clusters: readonly ScopeLinkCluster[],
+  minted: Map<string, string>
+): string[] {
+  return clusters.map((cluster) => {
     const name = pathClusterName(cluster.scopes);
-    registerClusterName(mintedClusterNames, name, cluster.scopes);
+    registerClusterName(minted, name, cluster.scopes);
     const heading =
       cluster.scopes === "universal"
         ? ["Effect scope paths valid in every scope."]
         : [`Effect scope paths valid in: ${cluster.scopes.join(", ")}.`];
-    interfaceChunks.push(
-      `${docComment(heading)}export interface ${name} {\n${cluster.links.map(pathProperty).join("\n")}}\n`
-    );
-  }
+    return `${docComment(heading)}export interface ${name} {\n${cluster.links.map(pathProperty).join("\n")}}\n`;
+  });
+}
 
-  const allScopes = canonicalScopes(emitter.rules.scopes);
-  const scopeChunks = allScopes.map((scope) => {
+/** The per-scope `XScope` interfaces composing every cluster valid there. */
+function scopeInterfaces(
+  emitter: Emitter,
+  allScopes: readonly string[],
+  clusters: readonly EffectCluster[],
+  linkClusters: readonly ScopeLinkCluster[]
+): string[] {
+  return allScopes.map((scope) => {
     const parents = [
       `${emitter.use("StructuralEffects")}<${JSON.stringify(scope)}>`,
-      ...sortedClusters
+      ...clusters
         .filter((cluster) => cluster.scopes === "universal" || cluster.scopes.includes(scope))
         .map((cluster) => clusterName(cluster.scopes)),
-      ...sortedLinkClusters
+      ...linkClusters
         .filter((cluster) => cluster.scopes === "universal" || cluster.scopes.includes(scope))
         .map((cluster) => pathClusterName(cluster.scopes)),
     ];
@@ -848,11 +819,18 @@ export function emitEffects(
       `export interface ${pascalCase(scope)}Scope extends ${parents.join(", ")} {}\n`
     );
   });
+}
 
-  const pathChunks = allScopes.map((scope) => {
+/** The per-scope `XEffectPath` interfaces composing the link clusters valid there. */
+function effectPathInterfaces(
+  emitter: Emitter,
+  allScopes: readonly string[],
+  linkClusters: readonly ScopeLinkCluster[]
+): string[] {
+  return allScopes.map((scope) => {
     const parents = [
       `${emitter.use("EffectPath")}<${JSON.stringify(scope)}>`,
-      ...sortedLinkClusters
+      ...linkClusters
         .filter((cluster) => cluster.scopes === "universal" || cluster.scopes.includes(scope))
         .map((cluster) => pathClusterName(cluster.scopes)),
     ];
@@ -861,8 +839,11 @@ export function emitEffects(
       `export interface ${pascalCase(scope)}EffectPath extends ${parents.join(", ")} {}\n`
     );
   });
+}
 
-  const scopeMap =
+/** The `ScopeMap`/`EffectPathMap` indices from scope name to those interfaces. */
+function scopeMapCode(emitter: Emitter, allScopes: readonly string[]): string {
+  return (
     docComment(["Scope name -> the interface of effects recordable there."]) +
     `export interface ScopeMap {\n` +
     allScopes.map((scope) => `  ${JSON.stringify(scope)}: ${pascalCase(scope)}Scope;\n`).join("") +
@@ -874,80 +855,17 @@ export function emitEffects(
       .map((scope) => `  ${JSON.stringify(scope)}: ${pascalCase(scope)}EffectPath;\n`)
       .join("") +
     `}\n\n` +
-    `export type EffectPathOf<S extends ${emitter.use("ScopeName")}> = EffectPathMap[S];\n`;
+    `export type EffectPathOf<S extends ${emitter.use("ScopeName")}> = EffectPathMap[S];\n`
+  );
+}
 
-  const interfaces =
-    interfaceChunks.join("\n") +
-    "\n" +
-    scopeChunks.join("\n") +
-    "\n" +
-    pathChunks.join("\n") +
-    "\n" +
-    scopeMap;
-
-  const metaEntries = [
-    ...sortedClusters
-      .flatMap((cluster) => cluster.effects)
-      .map((effect) => ({ method: effect.method, entry: metaEntry(effect) })),
-    ...sortedLinkClusters
-      .flatMap((cluster) => cluster.links)
-      .map((link) => ({ method: link.method, entry: scopeLinkMetaEntry(link) })),
-  ]
-    .sort((left, right) => compareStrings(left.method, right.method))
-    .map(({ entry }) => entry)
-    .join("");
-  const meta =
-    "export type EffectFieldKind = " +
-    '"value" | "comparison" | "trigger" | "effect" | "modifiers" | "fields" | "scalar-or-fields" | "value-list";\n\n' +
-    "export interface EffectFieldMeta {\n" +
-    "  readonly prop: string;\n" +
-    "  readonly key: string;\n" +
-    "  readonly kind: EffectFieldKind;\n" +
-    docComment(
-      [
-        "The registries an id in this field may name, when every form the",
-        "field admits is a `<type>` reference. Undefined the moment one arm is",
-        "not — an id-shaped value would then prove nothing about any registry.",
-        "`buildMod` resolves what the recorder reports against the built ids.",
-      ],
-      "  "
-    ) +
-    "  readonly refTypes?: readonly string[];\n" +
-    "  /** Literal yes/no arms that lower to PDXScript booleans rather than strings. */\n" +
-    '  readonly booleanLiterals?: readonly ("yes" | "no")[];\n' +
-    "  /** Object-backed scalar forms accepted by a mixed scalar/block field. */\n" +
-    '  readonly objectKinds?: readonly ("scope-ref" | "typed-ref")[];\n' +
-    "  /** Whether the field accepts repeated entries under the same script key. */\n" +
-    "  readonly repeated?: boolean;\n" +
-    "  /** Scalar and structured-block arms for an overloaded field. */\n" +
-    '  readonly scalar?: Pick<EffectFieldMeta, "refTypes" | "booleanLiterals" | "objectKinds">;\n' +
-    "  readonly fields?: readonly EffectFieldMeta[];\n" +
-    "}\n\n" +
-    "export type EffectShapeMeta =\n" +
-    '  | { readonly kind: "bool" }\n' +
-    '  | { readonly kind: "value"; readonly refTypes?: readonly string[]; readonly booleanLiterals?: readonly ("yes" | "no")[] }\n' +
-    '  | { readonly kind: "fields"; readonly fields: readonly EffectFieldMeta[] | null }\n' +
-    '  | { readonly kind: "wrapper"; readonly fields: readonly EffectFieldMeta[] | null }\n' +
-    '  | { readonly kind: "scope-link" };\n\n' +
-    "export interface EffectMeta {\n" +
-    "  readonly key: string;\n" +
-    "  readonly shape: EffectShapeMeta;\n" +
-    "}\n\n" +
-    docComment([
-      "How the recorder serializes each effect method. The Proxy in",
-      "`src/script/effects/recorder.ts` throws on names missing from this table, so a",
-      "typo in an untyped position fails loudly instead of recording garbage.",
-    ]) +
-    "export const EFFECT_META: Record<string, EffectMeta | undefined> = {\n" +
-    metaEntries +
-    "};\n";
-
-  const references = sortedClusters.flatMap((cluster) => {
+function effectReferenceRows(
+  emitter: Emitter,
+  clusters: readonly EffectCluster[]
+): ScriptEffectReferenceRow[] {
+  return clusters.flatMap((cluster) => {
     const availability = cluster.scopes;
-    const outerScope =
-      availability === "universal"
-        ? "ScopeName"
-        : availability.map((scope) => JSON.stringify(scope)).join(" | ");
+    const outerScope = outerScopeText(availability);
     return cluster.effects.map((effect): ScriptEffectReferenceRow => ({
       method: effect.method,
       key: effect.key,
@@ -960,7 +878,13 @@ export function emitEffects(
       docs: effect.docs,
     }));
   });
-  const scopeLinkReferences = sortedLinkClusters.flatMap((cluster): ScriptScopeLinkReferenceRow[] =>
+}
+
+function scopeLinkReferenceRows(
+  emitter: Emitter,
+  clusters: readonly ScopeLinkCluster[]
+): ScriptScopeLinkReferenceRow[] {
+  return clusters.flatMap((cluster): ScriptScopeLinkReferenceRow[] =>
     cluster.links.map((link) => ({
       member: link.method,
       fromScopes:
@@ -969,37 +893,95 @@ export function emitEffects(
       docs: link.docs,
     }))
   );
+}
+
+function fieldTypeOverrideReport(): string[] {
+  return [...EFFECT_FIELD_TYPE_OVERRIDES].map(
+    ([key, override]) => `${key} → ${override.type} — ${override.reason}`
+  );
+}
+
+function fieldAdditionReport(): string[] {
+  return [...EFFECT_FIELD_ADDITIONS].flatMap(([key, additions]) =>
+    additions.map((addition) => `${key}.${addition.name} ← ${addition.source} — ${addition.reason}`)
+  );
+}
+
+function fieldCardinalityOverrideReport(): string[] {
+  return [...EFFECT_FIELD_CARDINALITY_OVERRIDES].flatMap(([key, overrides]) =>
+    overrides.map((override) => {
+      const changes = [
+        override.optional === undefined ? null : override.optional ? "optional" : "required",
+        override.repeated === undefined ? null : override.repeated ? "repeated" : "singular",
+        override.valueList === undefined
+          ? null
+          : `value-list ${override.valueList.min}..${override.valueList.max ?? "inf"}`,
+      ].filter((change): change is string => change !== null);
+      return `${key}.${override.name} → ${changes.join(", ")} ← ${override.source} — ${override.reason}`;
+    })
+  );
+}
+
+export function emitEffects(
+  emitter: Emitter,
+  docs: ReadonlyMap<string, DocEntry>,
+  scopeIndex: ReadonlyMap<string, string>,
+  rules: ReadonlyMap<string, LoweredRule>,
+  policy: EffectPolicy,
+  links: readonly ClassifiedLink[]
+): EffectEmission {
+  const clustered = clusterEffects(emitter, docs, rules, policy);
+  assertFieldOverlayRowsMatched(clustered);
+
+  const effects = [...clustered.clusters.values()];
+  const takenMethods = new Set([
+    "effects",
+    "then",
+    ...policy.publicMethods,
+    ...effects.flatMap((cluster) => cluster.effects.map((effect) => effect.method)),
+  ]);
+  const linkClusters = clusterScopeLinks(links, scopeIndex, takenMethods);
+
+  const sortedClusters = effects.sort((left, right) =>
+    compareStrings(clusterName(left.scopes), clusterName(right.scopes))
+  );
+  const sortedLinkClusters = [...linkClusters.values()].sort((left, right) =>
+    compareStrings(pathClusterName(left.scopes), pathClusterName(right.scopes))
+  );
+
+  // Local to this pass, not module state: see registerClusterName's doc
+  // comment for why. Shared between the two cluster-emission folds below
+  // because both mint into the same file's export namespace.
+  const mintedClusterNames = new Map<string, string>();
+  const interfaceChunks = [
+    ...extensionSeamInterfaces(emitter, sortedClusters),
+    ...clusterInterfaces(emitter, sortedClusters, mintedClusterNames),
+    ...pathClusterInterfaces(sortedLinkClusters, mintedClusterNames),
+  ];
+
+  const allScopes = canonicalScopes(emitter.rules.scopes);
+  const interfaces =
+    interfaceChunks.join("\n") +
+    "\n" +
+    scopeInterfaces(emitter, allScopes, sortedClusters, sortedLinkClusters).join("\n") +
+    "\n" +
+    effectPathInterfaces(emitter, allScopes, sortedLinkClusters).join("\n") +
+    "\n" +
+    scopeMapCode(emitter, allScopes);
 
   return {
     interfaces,
-    meta,
-    emitted: effectCount,
-    byShape,
-    skipped,
+    meta: effectMetaCode(sortedClusters, sortedLinkClusters),
+    emitted: sortedClusters.reduce((sum, cluster) => sum + cluster.effects.length, 0),
+    byShape: clustered.byShape,
+    skipped: clustered.skipped,
     clusterCount: sortedClusters.length,
-    scalarOnly,
-    fieldTypeOverrides: [...EFFECT_FIELD_TYPE_OVERRIDES].map(
-      ([key, override]) => `${key} → ${override.type} — ${override.reason}`
-    ),
-    fieldAdditions: [...EFFECT_FIELD_ADDITIONS].flatMap(([key, additions]) =>
-      additions.map(
-        (addition) => `${key}.${addition.name} ← ${addition.source} — ${addition.reason}`
-      )
-    ),
-    fieldCardinalityOverrides: [...EFFECT_FIELD_CARDINALITY_OVERRIDES].flatMap(([key, overrides]) =>
-      overrides.map((override) => {
-        const changes = [
-          override.optional === undefined ? null : override.optional ? "optional" : "required",
-          override.repeated === undefined ? null : override.repeated ? "repeated" : "singular",
-          override.valueList === undefined
-            ? null
-            : `value-list ${override.valueList.min}..${override.valueList.max ?? "inf"}`,
-        ].filter((change): change is string => change !== null);
-        return `${key}.${override.name} → ${changes.join(", ")} ← ${override.source} — ${override.reason}`;
-      })
-    ),
+    scalarOnly: clustered.scalarOnly,
+    fieldTypeOverrides: fieldTypeOverrideReport(),
+    fieldAdditions: fieldAdditionReport(),
+    fieldCardinalityOverrides: fieldCardinalityOverrideReport(),
     linkEmitted: links.length,
-    references,
-    scopeLinkReferences,
+    references: effectReferenceRows(emitter, sortedClusters),
+    scopeLinkReferences: scopeLinkReferenceRows(emitter, sortedLinkClusters),
   };
 }
