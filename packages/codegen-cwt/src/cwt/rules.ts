@@ -29,6 +29,7 @@ import {
   type CwtBlock,
   type CwtDiagnostic,
   type CwtNode,
+  type CwtParseResult,
 } from "./parser.ts";
 
 /** One `alias[trigger:has_edict] = <edict>` declaration. A name may have several. */
@@ -271,8 +272,8 @@ const RULE_FILES = [
   // that gates it. They are declared here rather than in enums.cwt, and no
   // registry's own source pulls this file in.
   "modifier_rule.cwt",
-  // Loaded ahead of their registries (councilor, economic_category,
-  // civic_or_origin). Loading governments.cwt here also feeds the
+  // Sources for the councilor, economic_category, and civic_or_origin alias
+  // categories. Loading governments.cwt here also feeds the
   // government_trigger alias category through loadRules proper.
   "common/governments.cwt",
   "common/economic_categories.cwt",
@@ -308,32 +309,52 @@ function assignments(nodes: readonly CwtNode[]): CwtAssignment[] {
   return nodes.filter((node): node is CwtAssignment => node.kind === "assignment");
 }
 
+/**
+ * The shape six readers share: find the top-level `outerKey = { ... }`
+ * assignment(s) and yield each of its inner assignments that itself has a
+ * block value — `{name, block, entry}`, where `name` is the raw (possibly
+ * bracketed) inner key text, `block` is that inner assignment's value, and
+ * `entry` is the assignment itself for callers that need its docs, line, or
+ * options.
+ */
+function keyedTableEntries(
+  nodes: readonly CwtNode[],
+  outerKey: string
+): { name: string; block: CwtBlock; entry: CwtAssignment }[] {
+  return assignments(nodes).flatMap((outer) =>
+    outer.key.text !== outerKey || outer.value.kind !== "block"
+      ? []
+      : assignments(outer.value.nodes).flatMap((entry) =>
+          entry.value.kind !== "block" ? [] : [{ name: entry.key.text, block: entry.value, entry }]
+        )
+  );
+}
+
+/** Every bare scalar standing alone in a block, e.g. `{ planet ship fleet }`. */
+function scalarItems(block: CwtBlock): string[] {
+  return block.nodes.flatMap((node) =>
+    node.kind === "value" && node.value.kind === "scalar" ? [node.value.text] : []
+  );
+}
+
 function readEnums(
   nodes: readonly CwtNode[],
   file: string,
   into: Map<string, string[]>,
   complexInto: Map<string, ComplexEnum>
 ): void {
-  for (const outer of assignments(nodes)) {
-    if (outer.key.text !== "enums" || outer.value.kind !== "block") {
+  for (const { name: key, block } of keyedTableEntries(nodes, "enums")) {
+    const match = BRACKET_KEY.exec(key);
+    if (match === null) {
       continue;
     }
-    for (const entry of assignments(outer.value.nodes)) {
-      const match = BRACKET_KEY.exec(entry.key.text);
-      if (match === null || entry.value.kind !== "block") {
-        continue;
+    if (match[1] === "complex_enum") {
+      const complex = readComplexEnum(match[2]!, file, block);
+      if (complex !== null) {
+        complexInto.set(complex.name, complex);
       }
-      if (match[1] === "complex_enum") {
-        const complex = readComplexEnum(match[2]!, file, entry.value);
-        if (complex !== null) {
-          complexInto.set(complex.name, complex);
-        }
-      }
-      const values = entry.value.nodes.flatMap((node) =>
-        node.kind === "value" && node.value.kind === "scalar" ? [node.value.text] : []
-      );
-      into.set(match[2]!, values);
     }
+    into.set(match[2]!, scalarItems(block));
   }
 }
 
@@ -424,23 +445,11 @@ function cwtFiles(root: string, relative = ""): string[] {
 }
 
 function readScopes(nodes: readonly CwtNode[], into: Map<string, string[]>): void {
-  for (const outer of assignments(nodes)) {
-    if (outer.key.text !== "scopes" || outer.value.kind !== "block") {
-      continue;
-    }
-    for (const entry of assignments(outer.value.nodes)) {
-      if (entry.value.kind !== "block") {
-        continue;
-      }
-      const aliases = assignments(entry.value.nodes).flatMap((node) =>
-        node.key.text === "aliases" && node.value.kind === "block"
-          ? node.value.nodes.flatMap((item) =>
-              item.kind === "value" && item.value.kind === "scalar" ? [item.value.text] : []
-            )
-          : []
-      );
-      into.set(entry.key.text, aliases);
-    }
+  for (const { name, block } of keyedTableEntries(nodes, "scopes")) {
+    const aliases = assignments(block.nodes).flatMap((node) =>
+      node.key.text === "aliases" && node.value.kind === "block" ? scalarItems(node.value) : []
+    );
+    into.set(name, aliases);
   }
 }
 
@@ -454,76 +463,38 @@ function readScopes(nodes: readonly CwtNode[], into: Map<string, string[]>): voi
  * silently answer one question with the other.
  */
 function readScopeGroups(nodes: readonly CwtNode[], into: Map<string, string[]>): void {
-  for (const outer of assignments(nodes)) {
-    if (outer.key.text !== "scope_groups" || outer.value.kind !== "block") {
-      continue;
-    }
-    for (const entry of assignments(outer.value.nodes)) {
-      if (entry.value.kind !== "block") {
-        continue;
-      }
-      const members = entry.value.nodes.flatMap((node) =>
-        node.kind === "value" && node.value.kind === "scalar" ? [node.value.text] : []
-      );
-      into.set(entry.key.text, [...new Set(members)]);
-    }
+  for (const { name, block } of keyedTableEntries(nodes, "scope_groups")) {
+    into.set(name, [...new Set(scalarItems(block))]);
   }
 }
 
 function readLinks(nodes: readonly CwtNode[], file: string, into: Map<string, LinkDecl>): void {
-  for (const outer of assignments(nodes)) {
-    if (outer.key.text !== "links" || outer.value.kind !== "block") {
-      continue;
-    }
-    for (const entry of assignments(outer.value.nodes)) {
-      if (entry.value.kind !== "block") {
-        continue;
-      }
-      const fields = assignments(entry.value.nodes);
-      const scalar = (name: string): string | null => {
-        const field = fields.find((node) => node.key.text === name);
-        return field?.value.kind === "scalar" ? field.value.text : null;
-      };
-      const inputScopes = fields.flatMap((node) =>
-        node.key.text === "input_scopes" && node.value.kind === "block"
-          ? node.value.nodes.flatMap((item) =>
-              item.kind === "value" && item.value.kind === "scalar" ? [item.value.text] : []
-            )
-          : []
-      );
-      into.set(entry.key.text, {
-        name: entry.key.text,
-        docs: entry.docs,
-        inputScopes,
-        outputScope: scalar("output_scope"),
-        type: scalar("type") === "value" ? "value" : "scope",
-        fromData: scalar("from_data") === "yes",
-        prefix: scalar("prefix"),
-        file,
-        line: entry.line,
-      });
-    }
+  for (const { name, block, entry } of keyedTableEntries(nodes, "links")) {
+    const inputScopes = assignments(block.nodes).flatMap((node) =>
+      node.key.text === "input_scopes" && node.value.kind === "block" ? scalarItems(node.value) : []
+    );
+    into.set(name, {
+      name,
+      docs: entry.docs,
+      inputScopes,
+      outputScope: scalar(block, "output_scope"),
+      type: scalar(block, "type") === "value" ? "value" : "scope",
+      fromData: scalar(block, "from_data") === "yes",
+      prefix: scalar(block, "prefix"),
+      file,
+      line: entry.line,
+    });
   }
 }
 
 function readModifierCategories(nodes: readonly CwtNode[], into: Map<string, string[]>): void {
-  for (const outer of assignments(nodes)) {
-    if (outer.key.text !== "modifier_categories" || outer.value.kind !== "block") {
-      continue;
-    }
-    for (const entry of assignments(outer.value.nodes)) {
-      if (entry.value.kind !== "block") {
-        continue;
-      }
-      const scopes = assignments(entry.value.nodes).flatMap((node) =>
-        node.key.text === "supported_scopes" && node.value.kind === "block"
-          ? node.value.nodes.flatMap((item) =>
-              item.kind === "value" && item.value.kind === "scalar" ? [item.value.text] : []
-            )
-          : []
-      );
-      into.set(entry.key.text, scopes);
-    }
+  for (const { name, block } of keyedTableEntries(nodes, "modifier_categories")) {
+    const scopes = assignments(block.nodes).flatMap((node) =>
+      node.key.text === "supported_scopes" && node.value.kind === "block"
+        ? scalarItems(node.value)
+        : []
+    );
+    into.set(name, scopes);
   }
 }
 
@@ -532,26 +503,13 @@ function readModifierDecls(
   into: Map<string, string[]>,
   templates: ModifierTemplate[]
 ): void {
-  for (const outer of assignments(nodes)) {
-    if (outer.key.text !== "modifiers" || outer.value.kind !== "block") {
+  for (const { name, block } of keyedTableEntries(nodes, "modifiers")) {
+    const categories = scalarItems(block);
+    if (name.includes("<") || name.includes("[")) {
+      templates.push({ name, categories });
       continue;
     }
-    for (const entry of assignments(outer.value.nodes)) {
-      if (entry.value.kind !== "block") {
-        continue;
-      }
-      if (entry.key.text.includes("<") || entry.key.text.includes("[")) {
-        const categories = entry.value.nodes.flatMap((item) =>
-          item.kind === "value" && item.value.kind === "scalar" ? [item.value.text] : []
-        );
-        templates.push({ name: entry.key.text, categories });
-        continue;
-      }
-      const categories = entry.value.nodes.flatMap((item) =>
-        item.kind === "value" && item.value.kind === "scalar" ? [item.value.text] : []
-      );
-      into.set(entry.key.text, categories);
-    }
+    into.set(name, categories);
   }
 }
 
@@ -823,7 +781,38 @@ export function loadContentTypesFrom(
   return contentTypes;
 }
 
-export function loadRules(root: string): RuleSet {
+/** One rule file, already parsed — the unit {@link buildRuleSet} reads. */
+export interface ParsedRuleFile {
+  readonly file: string;
+  readonly parsed: CwtParseResult;
+}
+
+/**
+ * Builds a {@link RuleSet} from already-parsed rule files, in three passes
+ * rather than one, because two symbol tables are cross-referenced by files
+ * anywhere else in `parsedFiles`: a `single_alias[x] = { ... }` declared in
+ * one file can be consumed as `single_alias_right[x]` by a rule in a file
+ * loaded earlier (`readAliases`, `readBodies`), and a
+ * `types = { type[x] = { ... } }` declaration in one file can have its body
+ * (`x = { ... }`) in another (`readBodies`). A single pass made both
+ * resolutions see only what had already loaded, so file order silently
+ * doubled as a dependency order. Building the two tables to completion before
+ * anything consumes them removes that constraint: `parsedFiles`' order no
+ * longer changes the result.
+ *
+ * `extraComplexEnumFiles` covers {@link loadRules}' second, independent sweep
+ * for `enum[complex_enum]` declarations in `.cwt` files outside its main list
+ * — unrelated to the phase-ordering fix, but folded in here so the whole
+ * build stays inside one function with plain, non-`readonly` locals.
+ *
+ * Exported (alongside {@link loadRules}) so a test can prove the order
+ * independence directly, against synthetic sources, without going through
+ * disk I/O or `RULE_FILES`.
+ */
+export function buildRuleSet(
+  parsedFiles: readonly ParsedRuleFile[],
+  extraComplexEnumFiles: readonly ParsedRuleFile[] = []
+): RuleSet {
   const enums = new Map<string, string[]>();
   const complexEnums = new Map<string, ComplexEnum>();
   const scopes = new Map<string, string[]>();
@@ -844,42 +833,49 @@ export function loadRules(root: string): RuleSet {
   const diagnostics: CwtDiagnostic[] = [];
   const classificationDiagnostics = new Set<string>();
 
-  for (const relative of RULE_FILES) {
-    const source = readFileSync(path.join(root, relative), "utf8");
-    const parsed = parseCwt(source, relative);
-    diagnostics.push(...parsed.diagnostics);
-    const report: ClassificationReporter = (diagnostic) => {
-      const key = `${relative}:${diagnostic.line}:${diagnostic.text}`;
+  const reporterFor =
+    (file: string): ClassificationReporter =>
+    (diagnostic) => {
+      const key = `${file}:${diagnostic.line}:${diagnostic.text}`;
       if (classificationDiagnostics.has(key)) {
         return;
       }
       classificationDiagnostics.add(key);
-      diagnostics.push({ ...diagnostic, file: relative });
+      diagnostics.push({ ...diagnostic, file });
     };
-    readSingleAliases(parsed.nodes, report, singleAliases);
-    readEnums(parsed.nodes, relative, enums, complexEnums);
+
+  for (const { parsed } of parsedFiles) {
+    diagnostics.push(...parsed.diagnostics);
+  }
+
+  // Phase 2: build the two tables other files' rules can reference — single
+  // aliases and content types — from every parsed file, before anything
+  // resolves against them.
+  for (const { file, parsed } of parsedFiles) {
+    readSingleAliases(parsed.nodes, reporterFor(file), singleAliases);
+    readContentTypes(parsed.nodes, contentTypes);
+  }
+
+  // Phase 3: read everything else against the now-complete tables.
+  for (const { file, parsed } of parsedFiles) {
+    const report = reporterFor(file);
+    readEnums(parsed.nodes, file, enums, complexEnums);
     readScopes(parsed.nodes, scopes);
     readScopeGroups(parsed.nodes, scopeGroups);
-    readLinks(parsed.nodes, relative, links);
-    readAliases(parsed.nodes, relative, "trigger", singleAliases, triggers, report);
-    readAliases(parsed.nodes, relative, "effect", singleAliases, effects, report);
+    readLinks(parsed.nodes, file, links);
+    readAliases(parsed.nodes, file, "trigger", singleAliases, triggers, report);
+    readAliases(parsed.nodes, file, "effect", singleAliases, effects, report);
     for (const [category, members] of aliasCategories) {
-      readAliases(parsed.nodes, relative, category, singleAliases, members, report);
+      readAliases(parsed.nodes, file, category, singleAliases, members, report);
     }
-    readContentTypes(parsed.nodes, contentTypes);
     readBodies(parsed.nodes, contentTypes, singleAliases, bodies, report);
-    readOnActions(parsed.nodes, relative, onActions);
+    readOnActions(parsed.nodes, file, onActions);
     readModifierCategories(parsed.nodes, modifierCategories);
     readModifierDecls(parsed.nodes, modifierDecls, modifierTemplates);
   }
 
-  const loaded = new Set(RULE_FILES);
-  for (const relative of cwtFiles(root)) {
-    if (loaded.has(relative)) {
-      continue;
-    }
-    const parsed = parseCwt(readFileSync(path.join(root, relative), "utf8"), relative);
-    readComplexEnums(parsed.nodes, relative, complexEnums);
+  for (const { file, parsed } of extraComplexEnumFiles) {
+    readComplexEnums(parsed.nodes, file, complexEnums);
   }
 
   return {
@@ -899,6 +895,22 @@ export function loadRules(root: string): RuleSet {
     modifierTemplates,
     diagnostics,
   };
+}
+
+function parseFile(root: string, relative: string): ParsedRuleFile {
+  return {
+    file: relative,
+    parsed: parseCwt(readFileSync(path.join(root, relative), "utf8"), relative),
+  };
+}
+
+export function loadRules(root: string): RuleSet {
+  const parsedFiles = RULE_FILES.map((relative) => parseFile(root, relative));
+  const loaded = new Set(RULE_FILES);
+  const extraComplexEnumFiles = cwtFiles(root)
+    .filter((relative) => !loaded.has(relative))
+    .map((relative) => parseFile(root, relative));
+  return buildRuleSet(parsedFiles, extraComplexEnumFiles);
 }
 
 /**
