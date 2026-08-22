@@ -37,6 +37,7 @@
 
 import { container, quoted, scalar, type PdxEntry, type PdxItem } from "@pdx-ts/pdxscript";
 
+import { assertNever } from "../../assert-never.ts";
 import { localisationKey, type LocalisationEntry } from "../../content/authoring.ts";
 import { isComplexTriggerModifier } from "../../content/blocks.ts";
 import { fieldEntries } from "../../content/lower.ts";
@@ -401,8 +402,26 @@ function mintLocalisation(
       });
       return;
     }
-    default:
+    // The shapes that mint nothing, named one by one so that a new shape
+    // reaches the compiler here rather than joining them by default.
+    case "value":
+    case "valueList":
+    case "trigger":
+    case "effect":
+    case "economicResources":
+    case "economicResourcesNoProduce":
+    case "economicResourceOperation":
+    case "triggeredModifierBlock":
+    case "modifierBlock":
+    case "inlineModifiers":
+    case "inlineTrigger":
+    case "weightedEvents":
+    case "aliasStruct":
+    case "structMap":
+    case "scalarMap":
       return;
+    default:
+      assertNever(field, "content field");
   }
 }
 

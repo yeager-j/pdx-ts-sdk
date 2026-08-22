@@ -12,6 +12,7 @@ import {
   type PdxScalar,
 } from "@pdx-ts/pdxscript";
 
+import { assertNever } from "../../assert-never.ts";
 import { EFFECT_META, type EffectFieldMeta } from "../../generated/effect-meta.ts";
 import { FIRE_EFFECT_KEYS, type StructuralEffectMethod } from "../../generated/effect-policy.ts";
 import type { ScopeObjOf } from "../../generated/effects.ts";
@@ -327,12 +328,12 @@ function fieldEntries(
           break;
         }
         case "scalar-or-fields":
-          if (isStructuredValue(value, field.scalar?.objectKinds ?? [])) {
+          if (isStructuredValue(value, field.scalar.objectKinds ?? [])) {
             entries.push(
               block(
                 field.key,
                 fieldEntries(
-                  field.fields ?? [],
+                  field.fields,
                   value as Record<string, unknown>,
                   `${path}.${field.key}`,
                   refs,
@@ -341,8 +342,8 @@ function fieldEntries(
               )
             );
           } else {
-            const scalar = toScalar(value, field.scalar?.booleanLiterals);
-            recordRef(refs, field.scalar?.refTypes, `${path}.${field.key}`, scalar);
+            const scalar = toScalar(value, field.scalar.booleanLiterals);
+            recordRef(refs, field.scalar.refTypes, `${path}.${field.key}`, scalar);
             entries.push(kv(field.key, scalar));
           }
           break;
@@ -351,7 +352,7 @@ function fieldEntries(
             block(
               field.key,
               fieldEntries(
-                field.fields ?? [],
+                field.fields,
                 value as Record<string, unknown>,
                 `${path}.${field.key}`,
                 refs,
@@ -416,6 +417,8 @@ function fieldEntries(
             )
           );
           break;
+        default:
+          assertNever(field, "effect field");
       }
     }
   }
@@ -725,30 +728,35 @@ function makeAnyScope(sink: PdxEntry[], refs: ContentRefUse[], recording?: Recor
           recordRef(refs, shape.refTypes, meta.key, scalar);
           sink.push(kv(meta.key, scalar));
         };
-      case "fields":
+      case "fields": {
+        // `null` is the rules naming no fields at all, which writes an empty
+        // block. Codegen's own `fields` shape cannot be null, so this branch
+        // exists because the generated type admits the state, not because a
+        // row uses it.
+        const fields = shape.fields;
+        if (fields === null) {
+          return () => sink.push(block(meta.key, []));
+        }
         return (args: Record<string, unknown>) =>
-          sink.push(
-            block(meta.key, fieldEntries(shape.fields ?? [], args, meta.key, refs, recording))
-          );
-      case "wrapper":
-        if (shape.fields === null) {
+          sink.push(block(meta.key, fieldEntries(fields, args, meta.key, refs, recording)));
+      }
+      case "wrapper": {
+        const fields = shape.fields;
+        if (fields === null) {
           return (body: (scope: unknown) => void) => {
             sink.push(block(meta.key, recordBlock(recording, refs, body)));
           };
         }
         return (args: Record<string, unknown>, body: (scope: unknown) => void) => {
-          const child: PdxEntry[] = fieldEntries(
-            shape.fields ?? [],
-            args,
-            meta.key,
-            refs,
-            recording
-          );
+          const child: PdxEntry[] = fieldEntries(fields, args, meta.key, refs, recording);
           recordBlock(recording, refs, body, child);
           sink.push(block(meta.key, child));
         };
+      }
       case "scope-link":
         return makeEffectPath(sink, refs, recording, [meta.key]);
+      default:
+        return assertNever(shape, "effect shape");
     }
   };
 

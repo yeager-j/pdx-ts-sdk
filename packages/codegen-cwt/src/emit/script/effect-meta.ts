@@ -6,7 +6,7 @@
  * typed interfaces over the same per-effect record.
  */
 
-import type { ArgField } from "../../lower/script-shape.ts";
+import type { ArgField, ClauseCategory } from "../../lower/script-shape.ts";
 import { camelCase, compareStrings, docComment } from "../../naming.ts";
 import type { TsValue } from "../../render/emitter.ts";
 import { refTypesSuffix } from "../../render/writer.ts";
@@ -34,6 +34,23 @@ function scalarMeta(value: TsValue): string {
   return members.length === 0 ? "{}" : `{ ${members.join(", ")} }`;
 }
 
+/**
+ * The metadata kind each nested clause category records. A `Record` rather than
+ * a switch so a new {@link ClauseCategory} fails this file's typecheck.
+ */
+const CLAUSE_FIELD_KINDS: Record<ClauseCategory, string> = {
+  trigger: "trigger",
+  effect: "effect",
+  modifier_rule: "modifiers",
+};
+
+/**
+ * The `kind` of the field rows {@link fieldMeta} writes as one member.
+ *
+ * The three structured kinds — `fields`, `scalarOrFields` and `valueList` —
+ * carry arms of their own and are written by `fieldMeta` itself, so reaching
+ * here with one is a bug rather than a kind to name.
+ */
 function fieldKind(field: ArgField): string {
   const value = field.value;
   switch (value.kind) {
@@ -41,17 +58,8 @@ function fieldKind(field: ArgField): string {
       return "value";
     case "comparison":
       return "comparison";
-    case "scalarOrFields":
-      return "effect";
     case "clause":
-      switch (value.category) {
-        case "trigger":
-          return "trigger";
-        case "modifier_rule":
-          return "modifiers";
-        case "effect":
-          return "effect";
-      }
+      return CLAUSE_FIELD_KINDS[value.category];
     default:
       throw new Error(`Field ${field.name} has no scalar metadata kind`);
   }
@@ -115,16 +123,12 @@ export function effectMetaCode(
     .map(({ entry }) => entry)
     .join("");
   return (
-    "export type EffectFieldKind = " +
-    '"value" | "comparison" | "trigger" | "effect" | "modifiers" | "fields" | "scalar-or-fields" | "value-list";\n\n' +
-    "export interface EffectFieldMeta {\n" +
-    "  readonly prop: string;\n" +
-    "  readonly key: string;\n" +
-    "  readonly kind: EffectFieldKind;\n" +
+    docComment(["One scalar arm: what an id in it may name, and which literal forms it takes."]) +
+    "export interface EffectScalarArm {\n" +
     docComment(
       [
-        "The registries an id in this field may name, when every form the",
-        "field admits is a `<type>` reference. Undefined the moment one arm is",
+        "The registries an id in this arm may name, when every form the",
+        "arm admits is a `<type>` reference. Undefined the moment one form is",
         "not — an id-shaped value would then prove nothing about any registry.",
         "`buildMod` resolves what the recorder reports against the built ids.",
       ],
@@ -135,15 +139,36 @@ export function effectMetaCode(
     '  readonly booleanLiterals?: readonly ("yes" | "no")[];\n' +
     "  /** Object-backed scalar forms accepted by a mixed scalar/block field. */\n" +
     '  readonly objectKinds?: readonly ("scope-ref" | "typed-ref")[];\n' +
+    "}\n\n" +
+    "/** What every field row carries, whatever kind of value it takes. */\n" +
+    "interface EffectFieldBase {\n" +
+    "  readonly prop: string;\n" +
+    "  readonly key: string;\n" +
     "  /** Whether the field accepts repeated entries under the same script key. */\n" +
     "  readonly repeated?: boolean;\n" +
-    "  /** Scalar and structured-block arms for an overloaded field. */\n" +
-    '  readonly scalar?: Pick<EffectFieldMeta, "refTypes" | "booleanLiterals" | "objectKinds">;\n' +
-    "  readonly fields?: readonly EffectFieldMeta[];\n" +
     "}\n\n" +
+    docComment([
+      "One field of an effect's arguments, by the kind of value it takes. Each",
+      "arm carries exactly the data its kind needs, so the recorder reads that",
+      "data without a fallback and a row missing it fails to compile. A",
+      "`value-list` admits scalar items, structured items, or both, and never",
+      "neither — the two arms are what makes an empty one unrepresentable.",
+    ]) +
+    "export type EffectFieldMeta =\n" +
+    '  | (EffectFieldBase & { readonly kind: "value" } & Pick<EffectScalarArm, "refTypes" | "booleanLiterals">)\n' +
+    '  | (EffectFieldBase & { readonly kind: "comparison" } & Pick<EffectScalarArm, "refTypes" | "booleanLiterals">)\n' +
+    '  | (EffectFieldBase & { readonly kind: "trigger" })\n' +
+    '  | (EffectFieldBase & { readonly kind: "effect" })\n' +
+    '  | (EffectFieldBase & { readonly kind: "modifiers" })\n' +
+    '  | (EffectFieldBase & { readonly kind: "fields"; readonly fields: readonly EffectFieldMeta[] })\n' +
+    '  | (EffectFieldBase & { readonly kind: "scalar-or-fields"; readonly scalar: EffectScalarArm; readonly fields: readonly EffectFieldMeta[] })\n' +
+    '  | (EffectFieldBase & { readonly kind: "value-list"; readonly scalar: EffectScalarArm; readonly fields?: readonly EffectFieldMeta[] })\n' +
+    '  | (EffectFieldBase & { readonly kind: "value-list"; readonly scalar?: EffectScalarArm; readonly fields: readonly EffectFieldMeta[] });\n\n' +
+    "/** The kinds a field row can be, read off the arms above. */\n" +
+    'export type EffectFieldKind = EffectFieldMeta["kind"];\n\n' +
     "export type EffectShapeMeta =\n" +
     '  | { readonly kind: "bool" }\n' +
-    '  | { readonly kind: "value"; readonly refTypes?: readonly string[]; readonly booleanLiterals?: readonly ("yes" | "no")[] }\n' +
+    '  | ({ readonly kind: "value" } & Pick<EffectScalarArm, "refTypes" | "booleanLiterals">)\n' +
     '  | { readonly kind: "fields"; readonly fields: readonly EffectFieldMeta[] | null }\n' +
     '  | { readonly kind: "wrapper"; readonly fields: readonly EffectFieldMeta[] | null }\n' +
     '  | { readonly kind: "scope-link" };\n\n' +
