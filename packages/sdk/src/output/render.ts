@@ -18,14 +18,18 @@ import {
   type RenderedMod,
 } from "./rendered.ts";
 
-const renderedAssets = new WeakMap<PureMod, RenderedMod>();
+/**
+ * Rendering is pure over a frozen `PureMod`, so its result is a function of
+ * identity: caching every mod, not only asset-bearing ones, keeps repeated
+ * `render` calls identical whether or not captured bytes (single-use) are
+ * involved.
+ */
+const renderedMods = new WeakMap<PureMod, RenderedMod>();
 
 export function render(mod: PureMod): RenderedMod {
-  if (mod.assets.length > 0) {
-    const cached = renderedAssets.get(mod);
-    if (cached !== undefined) {
-      return cached;
-    }
+  const cached = renderedMods.get(mod);
+  if (cached !== undefined) {
+    return cached;
   }
   const { prefix } = mod.config;
   const files: RenderedClaim[] = [];
@@ -76,9 +80,7 @@ export function render(mod: PureMod): RenderedMod {
   }
   assertSerializesTheLedger(mod, files);
   const rendered = createRenderedMod(prefix, renderDescriptor(mod), files);
-  if (mod.assets.length > 0) {
-    renderedAssets.set(mod, rendered);
-  }
+  renderedMods.set(mod, rendered);
   return rendered;
 }
 

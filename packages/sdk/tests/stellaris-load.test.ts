@@ -5,10 +5,18 @@
  * runs cannot see each other.
  */
 
-import { cpSync, existsSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import {
+  cpSync,
+  existsSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { GameVersionError, InstallNotFoundError } from "../src/errors.ts";
 import {
@@ -137,6 +145,55 @@ describe("load", () => {
     load({ installPath: FIXTURE, cache: false });
     expect(existsSync(join(cache, "vanilla"))).toBe(false);
     expect(readdirSync(cache)).toEqual([]);
+  });
+
+  it("an unusable cache directory is a silent miss", () => {
+    const parent = tempDir();
+    const regularFile = join(parent, "not-a-directory");
+    writeFileSync(regularFile, "");
+    const cache = join(regularFile, "cache"); // mkdirSync(cache) fails with ENOTDIR
+
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      const uncached = load({ installPath: FIXTURE, cache: false });
+      const first = load({ installPath: FIXTURE, cache });
+      const second = load({ installPath: FIXTURE, cache });
+
+      for (const view of [first, second]) {
+        expect(view.fromCache).toBe(false);
+        expect(view.gameVersion).toBe(uncached.gameVersion);
+        expect(view.files.map((file) => file.path)).toEqual(
+          uncached.files.map((file) => file.path)
+        );
+      }
+      expect(warn).not.toHaveBeenCalled();
+      expect(error).not.toHaveBeenCalled();
+    } finally {
+      warn.mockRestore();
+      error.mockRestore();
+    }
+  });
+
+  it("a corrupt cache entry is a silent miss that regenerates", () => {
+    const cache = tempDir();
+    load({ installPath: FIXTURE, cache });
+    const [entryName] = readdirSync(cache).filter((name) => name.startsWith("vanilla-"));
+    const entryPath = join(cache, entryName!);
+    writeFileSync(entryPath, "not json");
+
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      const view = load({ installPath: FIXTURE, cache });
+      expect(view.fromCache).toBe(false);
+      expect(() => JSON.parse(readFileSync(entryPath, "utf8"))).not.toThrow();
+      expect(warn).not.toHaveBeenCalled();
+      expect(error).not.toHaveBeenCalled();
+    } finally {
+      warn.mockRestore();
+      error.mockRestore();
+    }
   });
 
   it("refuses a subdirectory under a flat-parsed dir", () => {

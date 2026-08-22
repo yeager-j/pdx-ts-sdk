@@ -61,6 +61,20 @@ describe("RenderedMod", () => {
     // than as an error.
     const forged = { ...compiled, paths: compiled.paths.slice(1) } as PureMod;
     expect(() => render(forged)).toThrow(PdxSdkError);
+    // A throw caches nothing: the same forged mod throws again, and a valid
+    // mod renders as if the failed attempt never happened.
+    expect(() => render(forged)).toThrow(PdxSdkError);
+    expect(() => render(compiled)).not.toThrow();
+  });
+
+  it("returns the same RenderedMod for repeated renders of an assetless mod", () => {
+    const first = render(compiled);
+    const second = render(compiled);
+    expect(second).toBe(first);
+    expect(second.sha256).toBe(first.sha256);
+    expect([...second.values()].map((file) => file.path)).toEqual(
+      [...first.values()].map((file) => file.path)
+    );
   });
 });
 
