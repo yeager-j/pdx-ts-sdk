@@ -30,6 +30,7 @@ import { MATERIALIZATION_MANIFEST_PATH } from "../compiler/paths.ts";
 import { MaterializationError, type MaterializationEvidence } from "../errors.ts";
 import { modDir } from "../stellaris/launcher/mod-directory.ts";
 import { assertInstallDirName } from "./install.ts";
+import type { Journal, JournalHeader, JournalStaging, MaterializationPhase } from "./journal.ts";
 import type { DescriptorSnapshot } from "./receipt.ts";
 import {
   claimRecovery,
@@ -39,10 +40,6 @@ import {
   processIsAlive,
   recoveryRequired,
   tryReadJournal,
-  type Journal,
-  type JournalHeader,
-  type JournalStaging,
-  type MaterializationPhase,
 } from "./transaction.ts";
 import {
   observeDescriptor,
@@ -178,7 +175,7 @@ async function recoverUnlocked(
   const lastPhase = journal.lastPhase ?? "inspecting";
   assertJournalDescribes(target, journal, header);
   assertNotHeld(target, journal, header, lastPhase);
-  const claim = await claimRecovery(journal.path, {
+  const claim = await claimRecovery(target, journal.path, {
     pid: header.pid,
     startedAt: header.startedAt,
   });
@@ -473,8 +470,12 @@ async function planRecovery(journal: Journal, header: JournalHeader): Promise<Re
   ].filter((candidate): candidate is string => candidate !== undefined);
 
   if (goal === "none") {
-    // The transaction committed and finished; only its own residue can still
-    // be here, and it is journal-named, so removing it needs no other proof.
+    // "done" says the commit and the cleanup both happened, so what the
+    // journal names is this transaction's own residue. What proves that is
+    // the target, not the record: over a target that never took the new tree,
+    // the same record would have recovery delete the set-aside copy of the
+    // only output there is.
+    await assertLanded(journal, header, phase);
     return { outcome: "cleaned", actions: await plannedRemovals(leftovers) };
   }
 
