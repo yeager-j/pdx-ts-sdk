@@ -361,6 +361,36 @@ describe("event definitions in a namespace", () => {
     expect(rendered).toContain("country_event = {\n\t\t\tid = third_party.5\n\t\t\tdays = 30");
   });
 
+  it("opens the event's FROM from more than one of its blocks", () => {
+    // One ctx serves the whole event, and its blocks record separately: the
+    // immediate and the option are two recordings of the same lowering.
+    const events = makeEvents();
+    const withFrom = events.country(15, {
+      from: "planet",
+      isTriggeredOnly: true,
+      immediate: (country, ctx) => {
+        country.setCountryFlag(flags.event_test_flag);
+        ctx.from.effects((planet) => planet.log("immediate"));
+      },
+      options: [
+        {
+          name: "Open FROM here too.",
+          key: "from_option",
+          effects: (country, ctx) => {
+            ctx.from.effects((planet) => planet.log("option"));
+          },
+        },
+      ],
+    });
+    const rendered = render(mod.compile([mod.feature("events", [withFrom])])).get(
+      "events/event_test_events.txt"
+    )!;
+
+    expect(rendered).toContain("immediate = {\n\t\tset_country_flag = event_test_flag");
+    expect(rendered).toContain("from = {\n\t\t\tlog = immediate");
+    expect(rendered).toContain("from = {\n\t\t\tlog = option");
+  });
+
   it("exposes observer_event's fire method in every scope", () => {
     // The observer_event fire effect declares `## scopes = any`, so its typed
     // signature rides UniversalEffects rather than one scope interface.

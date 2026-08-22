@@ -1,7 +1,7 @@
 import { describe, expectTypeOf, it } from "vitest";
 
-import { scriptCtx } from "../src/script/effects/recorder.ts";
-import type { ScopeRef, ScopeValue } from "../src/script/effects/types.ts";
+import { withScriptCtx } from "../src/script/effects/recorder.ts";
+import type { ScopeRef, ScopeValue, ScriptCtx } from "../src/script/effects/types.ts";
 import {
   capitalScope,
   exists,
@@ -12,8 +12,8 @@ import {
   type Trigger,
 } from "../src/script/triggers.ts";
 
-const country = scriptCtx<"country", "country">();
-const planet = scriptCtx<"planet", undefined>();
+const country = withScriptCtx({}, (ctx: ScriptCtx<"country", "country">) => ctx);
+const planet = withScriptCtx({}, (ctx: ScriptCtx<"planet", undefined>) => ctx);
 
 describe("scope links in value position", () => {
   it("hands ROOT over as an openable ref at the block's own scope", () => {

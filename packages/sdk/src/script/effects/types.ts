@@ -356,6 +356,7 @@ export type ComplexTriggerModifierWithLoc<S extends ScopeName> = Omit<
  */
 export interface IfChain<S extends ScopeName> {
   elseIf(condition: Trigger<S>, body: (scope: ScopeObjOf<S>) => void): IfChain<S>;
+  /** Ends the chain: a further `elseIf` or `else` on it throws. */
   else(body: (scope: ScopeObjOf<S>) => void): void;
 }
 

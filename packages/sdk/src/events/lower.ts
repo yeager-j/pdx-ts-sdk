@@ -12,7 +12,7 @@ import {
   modifierEntry,
   registerModifierDescKey,
 } from "../script/effects/modifiers.ts";
-import { recordEffects, scriptCtx } from "../script/effects/recorder.ts";
+import { recordEffects, withScriptCtx } from "../script/effects/recorder.ts";
 import type { Modifier, ModifierWithLoc, ScriptCtx } from "../script/effects/types.ts";
 import { refId } from "../script/scalar.ts";
 import type { DefinedEvent, EventDef, LocSink } from "./types.ts";
@@ -116,8 +116,22 @@ export function buildEvent<S extends ScopeName, From extends ScopeName | undefin
   loc: LocSink
 ): DefinedEvent<S, From> {
   assertEventNumber(def.id);
+  // One ctx for the whole event: its `immediate`, `after`, `abort_effect` and
+  // every option record separately, and all of them are this one lowering.
+  return withScriptCtx<S, From, S, DefinedEvent<S, From>>({}, (ctx) =>
+    lowerEvent(kind, scope, namespace, def, loc, ctx)
+  );
+}
+
+function lowerEvent<S extends ScopeName, From extends ScopeName | undefined>(
+  kind: EventKindKey,
+  scope: S,
+  namespace: string,
+  def: EventDef<S, From>,
+  loc: LocSink,
+  ctx: ScriptCtx<S, From>
+): DefinedEvent<S, From> {
   const id = `${namespace}.${def.id}`;
-  const ctx = scriptCtx<S, From>();
   const flags = windowFlags(def);
   const warnings: ModWarning[] = [];
   const refs: ContentRefUse[] = [];

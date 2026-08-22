@@ -35,9 +35,24 @@ import type {
 } from "./types.ts";
 
 const cannotWitnessNaturalFrom = Symbol("cannotWitnessNaturalFrom");
+const scopeLease = Symbol("scopeLease");
 interface RuntimeScopeValue {
   readonly [cannotWitnessNaturalFrom]?: true;
+  readonly [scopeLease]?: ScriptLease;
 }
+
+/**
+ * One authoring call's identity — one {@link withScriptCtx} body, which is one
+ * definition's or event's lowering.
+ *
+ * The ctx that call hands out carries its lease, and so does every recording
+ * opened while it runs. Comparing the two is how {@link assertOwnedBy} tells a
+ * ctx used where it was given from one that escaped into another definition.
+ */
+type ScriptLease = symbol;
+
+/** The authoring calls currently running, innermost last. */
+const LEASES: ScriptLease[] = [];
 
 export function eventTarget<S extends ScopeName>(name: string): EventTarget<S> {
   return { ...scopeRef<S>(`event_target:${name}`), name };
@@ -55,12 +70,21 @@ export function scopeValue<S extends ScopeName>(
   };
 }
 
-/** SDK-internal: an unchecked openable ref for absolute paths (`from`). */
-export function scopeRef<S extends ScopeName>(path: string): ScopeRef<S> {
+/**
+ * SDK-internal: an unchecked openable ref for absolute paths (`from`).
+ *
+ * A ref made with a lease can only be opened inside a recording of the
+ * authoring call that holds that lease; one made without a lease — an event
+ * target, a bare path — is openable in any recording, which is what makes a
+ * declared target reusable across definitions.
+ */
+export function scopeRef<S extends ScopeName>(path: string, lease?: ScriptLease): ScopeRef<S> {
   return {
     ...scopeValue<S>(path),
+    ...(lease === undefined ? {} : { [scopeLease]: lease }),
     effects(body) {
       const recording = activeRecording(path);
+      assertOwnedBy(recording, lease, path);
       recording.sink.push(block(path, recordEffects(recording.refs, body)));
     },
     trigger(condition) {
@@ -84,7 +108,11 @@ export function scopeRef<S extends ScopeName>(path: string): ScopeRef<S> {
  */
 export function navigateScope<S extends ScopeName>(base: ScopeValue, key: string): ScopeValue<S> {
   const path = base.path === "this" ? key : `${base.path}.${key}`;
-  return "effects" in base && base.path !== "this" ? scopeRef<S>(path) : scopeValue<S>(path);
+  return "effects" in base && base.path !== "this"
+    ? // Navigation carries the base's lease too: `owner(ctx.from)` opens a
+      // block of the same authoring call `ctx.from` came from.
+      scopeRef<S>(path, (base as RuntimeScopeValue)[scopeLease])
+    : scopeValue<S>(path);
 }
 
 /**
@@ -109,6 +137,12 @@ interface Recording extends RecordingState {
    * reaches {@link assertLive} instead of the sink.
    */
   live: boolean;
+  /**
+   * The authoring call this recording was opened under, or `undefined` for a
+   * recording started outside one. A leased ctx ref may only be opened here
+   * when the two leases match.
+   */
+  readonly lease: ScriptLease | undefined;
 }
 
 const RECORDINGS: Recording[] = [];
@@ -152,24 +186,64 @@ function activeRecording(path: string): Recording {
 }
 
 /**
- * The three ambient scopes, as the fixed script paths they always are.
+ * Refuses to open a ctx ref inside another authoring call's recording.
  *
- * `Root` defaults to `Self` on {@link ScriptCtx}'s terms — an event's blocks
- * are the top level, so ROOT is the event's own scope — and a caller whose
- * rules say otherwise names it. Which of the three a given closure may *read*
- * is the type argument's business; the object handed over carries all three
- * either way, since they are the same three words in the output regardless.
+ * A ctx is handed to one definition's closures, and `root` and `from` mean
+ * whatever that definition's rules say they hold. Opening one of its refs
+ * somewhere else still writes the block: the entries would land in the other
+ * definition's recording, under a scope the game supplies there from its own
+ * rules, while the closure kept the types of the definition the ctx came from.
+ * A ref with no lease is reusable by contract — an event target names its
+ * scope absolutely — and is left alone.
  */
-export function scriptCtx<
+function assertOwnedBy(recording: Recording, lease: ScriptLease | undefined, path: string): void {
+  if (lease === undefined || recording.lease === lease) {
+    return;
+  }
+  throw new Error(
+    `'${path}' was opened with .effects() from a ScriptCtx belonging to a different ` +
+      "definition, so the context escaped the closure it was handed to. Its entries would " +
+      `land in this recording as a '${path}' block while keeping the FROM and ROOT scopes ` +
+      "of the definition the context came from — scopes the game does not supply here. Use " +
+      "the ctx the closure being written receives, rather than one kept from an earlier one."
+  );
+}
+
+/**
+ * Runs one authoring call's body with the three ambient scopes.
+ *
+ * The three are the fixed script paths they always are. `Root` defaults to
+ * `Self` on {@link ScriptCtx}'s terms — an event's blocks are the top level,
+ * so ROOT is the event's own scope — and a caller whose rules say otherwise
+ * names it. Which of the three a given closure may *read* is the type
+ * argument's business; the object handed over carries all three either way,
+ * since they are the same three words in the output regardless.
+ *
+ * The ctx lives for this call: `root` and `from` may be opened as blocks in
+ * any recording started while the body runs — one event's ctx serves its
+ * `immediate`, its `after` and every option — and nowhere else. Opening one
+ * later reaches {@link assertOwnedBy}, which is why the ctx is built here
+ * rather than handed out as a value the caller keeps.
+ */
+export function withScriptCtx<
   Self extends ScopeName,
   From extends ScopeName | undefined,
   Root extends ScopeName | undefined = Self,
->(options: { readonly splitRoot?: boolean } = {}): ScriptCtx<Self, From, Root> {
-  return {
+  T = void,
+>(options: { readonly splitRoot?: boolean }, body: (ctx: ScriptCtx<Self, From, Root>) => T): T {
+  const lease: ScriptLease = Symbol("scriptCtx");
+  const ctx = {
     self: scopeValue("this", options.splitRoot !== true),
-    root: scopeRef("root"),
-    from: scopeRef("from"),
+    root: scopeRef("root", lease),
+    from: scopeRef("from", lease),
   } as ScriptCtx<Self, From, Root>;
+
+  LEASES.push(lease);
+  try {
+    return body(ctx);
+  } finally {
+    LEASES.pop();
+  }
 }
 
 /**
@@ -695,7 +769,7 @@ export function recordEffects<S extends ScopeName>(
   body: (scope: ScopeObjOf<S>) => void,
   into: PdxEntry[] = []
 ): PdxEntry[] {
-  const recording: Recording = { sink: into, refs, live: true };
+  const recording: Recording = { sink: into, refs, live: true, lease: LEASES.at(-1) };
   RECORDINGS.push(recording);
   let result: unknown;
   try {
