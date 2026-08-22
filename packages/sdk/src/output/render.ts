@@ -18,14 +18,18 @@ import {
   type RenderedMod,
 } from "./rendered.ts";
 
-/**
- * Rendering is pure over a frozen `PureMod`, so its result is a function of
- * identity: caching every mod, not only asset-bearing ones, keeps repeated
- * `render` calls identical whether or not captured bytes (single-use) are
- * involved.
- */
 const renderedMods = new WeakMap<PureMod, RenderedMod>();
 
+/**
+ * Serializes a compiled mod into the files a materialization writes.
+ *
+ * Rendering is pure over a frozen `PureMod`, so the result is a function of
+ * the mod's identity: every call with the same `PureMod` returns the same
+ * `RenderedMod` instance, whether or not the mod carries assets. The first
+ * call does the work and captures any asset bytes (which are single-use);
+ * later calls return that snapshot. A render that throws caches nothing, so
+ * the same mod throws again on the next call.
+ */
 export function render(mod: PureMod): RenderedMod {
   const cached = renderedMods.get(mod);
   if (cached !== undefined) {
