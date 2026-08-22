@@ -1,6 +1,6 @@
 ---
 name: code-style-review
-description: Use the `code-style` Skill to find issues with a section of code.
+description: Use the `code-style` Skill to find and fix issues with a section of code.
 ---
 
 # Code Style Review
