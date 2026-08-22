@@ -20,6 +20,7 @@
  *   consumption site, which is what {@link OverlayAudit} tracks.
  */
 
+import type { ContentWitness } from "./overlay.ts";
 import type { HandWrittenTriggerExport } from "./trigger-policy.ts";
 
 /** One table to check, so a single call can cover several at once. */
@@ -50,6 +51,63 @@ export function assertOverlayRegistriesKnown(
             "retire the row or fix the key"
         );
       }
+    }
+  }
+}
+
+/**
+ * Fails when a `CONTENT_WITNESSES` row names a def member its own registry's
+ * emission did not actually produce, or repeats a member within one row's
+ * `omit` list.
+ *
+ * `assertOverlayRegistriesKnown` above only proves the row's registry key is
+ * real; it says nothing about the member names written by hand inside the
+ * row. A CWT rename that moves or drops that property leaves `Omit<Def,
+ * "goneMember">` and the `wraps` intersection both legal TypeScript — the
+ * property silently disappears from the emitted `Def` while the witness
+ * keeps promising it, and `EconomicWitnessOf` resolves the vanished member to
+ * `undefined` with every other gate green. This is that same staleness
+ * principle one level deeper, so `contentDefiners` (`index.ts`) calls it once
+ * per content it finds a row for, with the member names *that content's own
+ * emission* actually produced.
+ *
+ * `inferAs` is checked only for non-emptiness: reuse across members (two
+ * `omit` entries sharing a letter) is legitimate, because each member's own
+ * `D extends { ... } ? infer X : undefined` conditional scopes its `infer`
+ * to itself.
+ */
+export function assertContentWitnessMembersKnown(
+  registry: string,
+  contentWitness: ContentWitness,
+  emittedMembers: ReadonlySet<string>
+): void {
+  const assertKnown = (member: string): void => {
+    if (!emittedMembers.has(member)) {
+      throw new Error(
+        `CONTENT_WITNESSES's "${registry}" row names member "${member}", which ${registry}'s ` +
+          "emission does not produce — retire the row or fix the member"
+      );
+    }
+  };
+  if (contentWitness.mode === "wraps") {
+    assertKnown(contentWitness.member);
+    return;
+  }
+  const seen = new Set<string>();
+  for (const entry of contentWitness.omit) {
+    if (seen.has(entry.member)) {
+      throw new Error(
+        `CONTENT_WITNESSES's "${registry}" row names member "${entry.member}" twice in one omit ` +
+          "list — retire the duplicate or fix the member"
+      );
+    }
+    seen.add(entry.member);
+    assertKnown(entry.member);
+    if (entry.inferAs.length === 0) {
+      throw new Error(
+        `CONTENT_WITNESSES's "${registry}" row's "${entry.member}" omit entry has an empty ` +
+          "inferAs — fix the row"
+      );
     }
   }
 }

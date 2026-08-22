@@ -61,6 +61,7 @@ import {
   spokenName,
 } from "./naming.ts";
 import {
+  assertContentWitnessMembersKnown,
   assertHandWrittenTriggerExportsMatchRules,
   assertOverlayRegistriesKnown,
   assertPatchWideningsTargetPatchableRegistries,
@@ -1078,6 +1079,7 @@ function contentDefiners(
     // the two modes the schema carries evidence for (SDK-260).
     const contentWitness = CONTENT_WITNESSES.get(registry);
     if (contentWitness !== undefined) {
+      assertContentWitnessMembersKnown(registry, contentWitness, emittedMemberNames(emission));
       contentWitnesses.push(contentWitness);
     }
     const modifierWitness = contentWitness?.type ?? null;
@@ -1977,6 +1979,27 @@ function declaredWitness(
   return declaredFrom === undefined
     ? null
     : { member: declaredFrom.member, type: `${declaredFrom.typeName} | undefined` };
+}
+
+/**
+ * The top-level `Def` member names a registry's emission actually produced —
+ * the universe `assertContentWitnessMembersKnown` (`overlay-audit.ts`) checks
+ * a `CONTENT_WITNESSES` row's member strings against.
+ *
+ * `authoredPath`'s first segment is the real authored member `emitContentType`
+ * pushed for that field, which is not always `camelCase(field.field)`:
+ * `renamedOffLocalisation` moves a field off a colliding localisation slot
+ * (`building.desc` -> `conditionalDesc`), and every top-level `emittedFields`
+ * push already records that rename in `authoredPath`. Falling back to
+ * `camelCase(field.field)` only covers a field with no recorded path, which
+ * none of today's top-level pushes leave unset. Localisation members are
+ * deliberately excluded — a witness wraps or omits a live `Def` property, and
+ * only `emittedFields` enumerates those.
+ */
+function emittedMemberNames(emission: ContentEmission): ReadonlySet<string> {
+  return new Set(
+    emission.emittedFields.map((field) => field.authoredPath?.[0] ?? camelCase(field.field))
+  );
 }
 
 function capabilityBinding(

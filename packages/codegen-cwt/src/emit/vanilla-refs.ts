@@ -14,12 +14,12 @@
  */
 
 import {
-  HAND_WRITTEN_VANILLA_REFS,
   registryNameOf,
   type ContentManifestEntry,
   type VanillaRefExtra,
 } from "../content-manifest.ts";
 import { camelCase, docComment, spokenName } from "../naming.ts";
+import { HAND_WRITTEN_VANILLA_REFS } from "../overlay.ts";
 import type { Emitter } from "./types.ts";
 
 export interface VanillaRefsEmission {

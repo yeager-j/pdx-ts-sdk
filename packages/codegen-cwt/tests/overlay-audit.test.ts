@@ -21,6 +21,7 @@ import { emitAliasStruct } from "@pdx-ts/codegen-cwt/emit/alias-struct";
 import { emitContentType } from "@pdx-ts/codegen-cwt/emit/content-type";
 import { structuralSpliceOf } from "@pdx-ts/codegen-cwt/emit/fields";
 import { Emitter } from "@pdx-ts/codegen-cwt/emit/types";
+import { camelCase } from "@pdx-ts/codegen-cwt/naming";
 import {
   ASSET_PATH_FIELDS,
   CONTENT_CONTRIBUTION_SINKS,
@@ -43,6 +44,7 @@ import {
   SYNTHETIC_LOCALISATION,
 } from "@pdx-ts/codegen-cwt/overlay";
 import {
+  assertContentWitnessMembersKnown,
   assertHandWrittenTriggerExportsMatchRules,
   assertOverlayRegistriesKnown,
   assertPatchWideningsTargetPatchableRegistries,
@@ -122,6 +124,131 @@ describe("assertOverlayRegistriesKnown", () => {
         realRegistryNames
       )
     ).toThrow('CONTENT_WITNESSES names "scripted_modifierr", which is not a known registry');
+  });
+});
+
+describe("assertContentWitnessMembersKnown", () => {
+  /** The real top-level Def member names one registry's own emission produces. */
+  function emittedMemberNamesFor(registryName: string): Set<string> {
+    const type = rules.contentTypes.get(registryName)!;
+    const body = rules.bodies.get(registryName)!;
+    const emitter = new Emitter(rules);
+    emitter.beginFile();
+    const emission = emitContentType(emitter, type, body, registryName);
+    emitter.endFile();
+    return new Set(
+      emission.emittedFields.map((field) => field.authoredPath?.[0] ?? camelCase(field.field))
+    );
+  }
+
+  it("passes every real CONTENT_WITNESSES row against its own registry's emitted members", () => {
+    for (const [registry, contentWitness] of CONTENT_WITNESSES) {
+      expect(() =>
+        assertContentWitnessMembersKnown(registry, contentWitness, emittedMemberNamesFor(registry))
+      ).not.toThrow();
+    }
+  });
+
+  it("rejects a wraps row naming a member the registry's emission does not produce (SDK-260)", () => {
+    expect(() =>
+      assertContentWitnessMembersKnown(
+        "scripted_modifier",
+        {
+          mode: "wraps",
+          type: "ScriptedModifierCategory",
+          module: "./enums.ts",
+          member: "not_a_real_member",
+          reason: "test",
+        },
+        emittedMemberNamesFor("scripted_modifier")
+      )
+    ).toThrow(
+      'CONTENT_WITNESSES\'s "scripted_modifier" row names member "not_a_real_member", which ' +
+        "scripted_modifier's emission does not produce"
+    );
+  });
+
+  it("rejects an intersects row with a misspelled omit member (SDK-260)", () => {
+    expect(() =>
+      assertContentWitnessMembersKnown(
+        "economic_category",
+        {
+          mode: "intersects",
+          type: "EconomicCategoryWitness",
+          exactType: "ExactEconomicCategoryWitness",
+          omit: [{ member: "modifierCategoryTypo", inferAs: "M" }],
+          reason: "test",
+        },
+        emittedMemberNamesFor("economic_category")
+      )
+    ).toThrow(
+      'CONTENT_WITNESSES\'s "economic_category" row names member "modifierCategoryTypo", which ' +
+        "economic_category's emission does not produce"
+    );
+  });
+
+  it("rejects a member repeated within one omit list", () => {
+    expect(() =>
+      assertContentWitnessMembersKnown(
+        "economic_category",
+        {
+          mode: "intersects",
+          type: "EconomicCategoryWitness",
+          exactType: "ExactEconomicCategoryWitness",
+          omit: [
+            { member: "modifierCategory", inferAs: "M" },
+            { member: "modifierCategory", inferAs: "N" },
+          ],
+          reason: "test",
+        },
+        emittedMemberNamesFor("economic_category")
+      )
+    ).toThrow(
+      'CONTENT_WITNESSES\'s "economic_category" row names member "modifierCategory" twice in one ' +
+        "omit list"
+    );
+  });
+
+  it("rejects an omit entry with an empty inferAs", () => {
+    expect(() =>
+      assertContentWitnessMembersKnown(
+        "economic_category",
+        {
+          mode: "intersects",
+          type: "EconomicCategoryWitness",
+          exactType: "ExactEconomicCategoryWitness",
+          omit: [{ member: "modifierCategory", inferAs: "" }],
+          reason: "test",
+        },
+        emittedMemberNamesFor("economic_category")
+      )
+    ).toThrow(
+      'CONTENT_WITNESSES\'s "economic_category" row\'s "modifierCategory" omit entry has an empty ' +
+        "inferAs"
+    );
+  });
+
+  it("does not reject inferAs letters reused across different members", () => {
+    // Two real omit entries (generateMultModifiers, triggeredUpkeepModifier)
+    // legitimately share "U" — each member's own `D extends {...} ? infer X :
+    // undefined` conditional scopes its `infer` to itself, so reuse across
+    // members is not a collision this validator should reject.
+    expect(() =>
+      assertContentWitnessMembersKnown(
+        "economic_category",
+        {
+          mode: "intersects",
+          type: "EconomicCategoryWitness",
+          exactType: "ExactEconomicCategoryWitness",
+          omit: [
+            { member: "generateMultModifiers", inferAs: "U" },
+            { member: "triggeredUpkeepModifier", inferAs: "U" },
+          ],
+          reason: "test",
+        },
+        emittedMemberNamesFor("economic_category")
+      )
+    ).not.toThrow();
   });
 });
 

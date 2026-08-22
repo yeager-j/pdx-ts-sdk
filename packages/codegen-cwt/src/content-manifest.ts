@@ -257,29 +257,3 @@ export const VANILLA_REF_EXTRAS = [
   { type: "planet_modifier", source: "common/modifiers.cwt" },
   { type: "asteroid_belt_type", source: "common/asteroid_belts.cwt" },
 ] as const satisfies readonly VanillaRefExtra[];
-
-export interface HandWrittenVanillaRef {
-  readonly registry: string;
-  readonly reason: string;
-}
-
-/**
- * `vanilla.*` registries whose reference is hand-written rather than the
- * mechanical checked-id/trie pair `emit/vanilla-refs.ts`'s `emitRow` builds
- * from a `CONTENT_MANIFEST` or `VANILLA_REF_EXTRAS` row.
- *
- * `event` is the only one: an event id is two-part (namespace plus local id),
- * which the ordinary flat-id trie every other oversized registry gets does
- * not model. `makeEventTrie` (`identifiers/trie.ts`) is a distinct
- * hand-written constructor for that shape, not a parameterisation of
- * `makeIdTrie` — so it needs a row here rather than a `VanillaRefRow` this
- * generator could derive a call to `makeIdTrie`/`makeVanillaRef` from.
- */
-export const HAND_WRITTEN_VANILLA_REFS: readonly HandWrittenVanillaRef[] = [
-  {
-    registry: "event",
-    reason:
-      "Event ids navigate by namespace and local id, not a flat id set; makeEventTrie() is a " +
-      "distinct hand-written constructor for that shape.",
-  },
-];
