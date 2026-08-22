@@ -52,6 +52,80 @@ export interface ModifierJoin {
   readonly categoryScopes: ReadonlyMap<string, "any" | readonly string[]>;
 }
 
+/** One family's placeholder templates parsed into operation paths, per scope. */
+function dynamicModifierFamilies(
+  rules: RuleSet,
+  categoryScopes: ReadonlyMap<string, "any" | ReadonlySet<string>>
+): DynamicModifierFamily[] {
+  return MODIFIER_FAMILY_OVERLAYS.flatMap((family) => {
+    const placeholder = `<${family.family}>`;
+    const operations: DynamicModifierOperation[] = [];
+    const seenPaths = new Set<string>();
+    for (const template of rules.modifierTemplates) {
+      const placeholderIndex = template.name.indexOf(placeholder);
+      if (placeholderIndex < 0) {
+        continue;
+      }
+      if (template.name.indexOf(placeholder, placeholderIndex + placeholder.length) >= 0) {
+        throw new Error(`Dynamic modifier template has multiple placeholders: "${template.name}"`);
+      }
+      const suffix = template.name.slice(placeholderIndex + placeholder.length);
+      if (!suffix.startsWith("_")) {
+        throw new Error(`Dynamic modifier template suffix must start with _: "${template.name}"`);
+      }
+      const operationSuffix = suffix.slice(1);
+      const segments = operationSuffix.split("_");
+      if (operationSuffix.length === 0 || segments.some((token) => token.length === 0)) {
+        throw new Error(`Unsupported dynamic modifier template shape "${template.name}"`);
+      }
+      const path = segments.join(".");
+      if (seenPaths.has(path)) {
+        throw new Error(`Duplicate dynamic modifier operation path "${path}"`);
+      }
+      seenPaths.add(path);
+      operations.push({
+        path,
+        segments,
+        template: template.name,
+        categories: template.categories,
+      });
+    }
+    if (operations.length === 0) {
+      return [];
+    }
+    const scopeOperations = new Map<string, string[][]>();
+    const operationTemplates = new Map<string, string>();
+    for (const operation of operations) {
+      operationTemplates.set(operation.path, operation.template);
+      for (const category of operation.categories) {
+        const scopes = categoryScopes.get(category);
+        if (scopes === undefined || scopes === "any") {
+          continue;
+        }
+        for (const scope of scopes) {
+          const existing = scopeOperations.get(scope) ?? [];
+          existing.push([...operation.segments]);
+          scopeOperations.set(scope, existing);
+        }
+      }
+    }
+    scopeOperations.set(
+      "any",
+      operations.map((operation) => [...operation.segments])
+    );
+    return [
+      {
+        family: family.family,
+        reference: family.reference,
+        target: family.target,
+        placeholder,
+        scopeOperations,
+        operationTemplates,
+      },
+    ];
+  });
+}
+
 export function joinModifierScopes(
   rules: RuleSet,
   docs: ModifierDocs,
@@ -121,75 +195,7 @@ export function joinModifierScopes(
     universal: universal.sort(),
     groups,
     unscoped: unscoped.sort(),
-    dynamicFamilies: MODIFIER_FAMILY_OVERLAYS.flatMap((family) => {
-      const placeholder = `<${family.family}>`;
-      const operations: DynamicModifierOperation[] = [];
-      const seenPaths = new Set<string>();
-      for (const template of rules.modifierTemplates) {
-        const placeholderIndex = template.name.indexOf(placeholder);
-        if (placeholderIndex < 0) {
-          continue;
-        }
-        if (template.name.indexOf(placeholder, placeholderIndex + placeholder.length) >= 0) {
-          throw new Error(
-            `Dynamic modifier template has multiple placeholders: "${template.name}"`
-          );
-        }
-        const suffix = template.name.slice(placeholderIndex + placeholder.length);
-        if (!suffix.startsWith("_")) {
-          throw new Error(`Dynamic modifier template suffix must start with _: "${template.name}"`);
-        }
-        const operationSuffix = suffix.slice(1);
-        const segments = operationSuffix.split("_");
-        if (operationSuffix.length === 0 || segments.some((token) => token.length === 0)) {
-          throw new Error(`Unsupported dynamic modifier template shape "${template.name}"`);
-        }
-        const path = segments.join(".");
-        if (seenPaths.has(path)) {
-          throw new Error(`Duplicate dynamic modifier operation path "${path}"`);
-        }
-        seenPaths.add(path);
-        operations.push({
-          path,
-          segments,
-          template: template.name,
-          categories: template.categories,
-        });
-      }
-      if (operations.length === 0) {
-        return [];
-      }
-      const scopeOperations = new Map<string, string[][]>();
-      const operationTemplates = new Map<string, string>();
-      for (const operation of operations) {
-        operationTemplates.set(operation.path, operation.template);
-        for (const category of operation.categories) {
-          const scopes = categoryScopes.get(category);
-          if (scopes === undefined || scopes === "any") {
-            continue;
-          }
-          for (const scope of scopes) {
-            const existing = scopeOperations.get(scope) ?? [];
-            existing.push([...operation.segments]);
-            scopeOperations.set(scope, existing);
-          }
-        }
-      }
-      scopeOperations.set(
-        "any",
-        operations.map((operation) => [...operation.segments])
-      );
-      return [
-        {
-          family: family.family,
-          reference: family.reference,
-          target: family.target,
-          placeholder,
-          scopeOperations,
-          operationTemplates,
-        },
-      ];
-    }),
+    dynamicFamilies: dynamicModifierFamilies(rules, categoryScopes),
     unknownCategories: [...unknownCategories].sort(),
     categoryScopes: new Map(
       [...categoryScopes].map(([category, scopes]) => [
@@ -353,7 +359,8 @@ class TrieEmitter {
   }
 }
 
-export function emitModifiers(join: ModifierJoin): ModifierEmission {
+/** The flat by-name interfaces: one per scope-set group, composed per scope. */
+function flatNameInterfacesCode(join: ModifierJoin, scopes: readonly string[]): string {
   const groupNames = new Map<string, string>();
   for (const key of [...join.groups.keys()].sort()) {
     groupNames.set(key, `Modifiers_${key.split(" ").map(pascalCase).join("_")}`);
@@ -371,7 +378,6 @@ export function emitModifiers(join: ModifierJoin): ModifierEmission {
       `interface ${groupName} ${memberBlock(join.groups.get(key)!)}\n`;
   }
 
-  const scopes = [...new Set([...join.groups.keys()].flatMap((key) => key.split(" ")))].sort();
   for (const scope of scopes) {
     const parents = [
       "UniversalModifiers",
@@ -416,7 +422,23 @@ export function emitModifiers(join: ModifierJoin): ModifierEmission {
     "    ? ModifierBlockByScope[S]\n" +
     "    : Readonly<Record<string, number>>;\n\n";
 
-  code +=
+  return code;
+}
+
+/** The path-trie roots and their deduplicated node interfaces. */
+interface ModifierPathTries {
+  readonly code: string;
+  readonly trie: TrieEmitter;
+  /** Scope -> the emitted interface name of its trie root. */
+  readonly rootNames: ReadonlyMap<string, string>;
+  /** Scope (plus `"any"`) -> its trie root node, for dynamic-family grafting. */
+  readonly rootNodes: ReadonlyMap<string, TrieNode>;
+  /** The emitted interface name of the every-name root. */
+  readonly anyScopeRoot: string;
+}
+
+function emitPathTries(join: ModifierJoin, scopes: readonly string[]): ModifierPathTries {
+  let code =
     docComment(["Records one modifier assignment; the traversed path spells the flat name."]) +
     "export interface ModifierSetter {\n  (value: number): void;\n}\n\n";
 
@@ -441,13 +463,19 @@ export function emitModifiers(join: ModifierJoin): ModifierEmission {
   const anyScopeRoot = trie.emit(anyRoot);
   rootNodes.set("any", anyRoot);
   code += trie.lines.join("\n") + "\n\n";
+
+  return { code, trie, rootNames, rootNodes, anyScopeRoot };
+}
+
+/** The category-to-scope tables and the scripted-modifier selector types. */
+function categoryScopeMapsCode(join: ModifierJoin): string {
   const categoryScopeEntries = [...join.categoryScopes]
     .sort(([a], [b]) => compareStrings(a, b))
     .map(([category, scopes]) => {
       const value = scopes === "any" ? '"any"' : JSON.stringify(scopes);
       return `  readonly ${JSON.stringify(category)}: ${value};`;
     });
-  code +=
+  let code =
     "export interface ModifierCategoryScopes {\n" + categoryScopeEntries.join("\n") + "\n}\n\n";
   const scriptedCategoryMap = Object.entries(SCRIPTED_MODIFIER_CATEGORY_MAP)
     .map(
@@ -464,10 +492,15 @@ export function emitModifiers(join: ModifierJoin): ModifierEmission {
     "export type IsUnion<T, Whole = T> = T extends unknown ? ([Whole] extends [T] ? false : true) : never;\n" +
     'export type ScriptedModifierSelector<S extends ScopeName> = <const T extends import("../generated/content-definers.ts").ScriptedModifierItem>(' +
     'item: T & (IsUnion<T["def"]["category"]> extends true ? never : ModifierCategoryAllowed<S, T["def"]["category"]> extends true ? {} : never)) => { readonly set: ModifierSetter };\n\n';
+  return code;
+}
+
+/** The economic-category selector types, from the witness the definers share. */
+function economicSelectorCode(): string {
   // The seven members EconomicWitnessOf extracts come from the same
-  // CONTENT_WITNESSES "economic_category" row contentDefiners (emit/definers.ts)
-  // reads for the Omit<...> union — one list read twice instead of the same
-  // seven names hand-spelled in both places (SDK-260).
+  // CONTENT_WITNESSES "economic_category" row contentDefiners
+  // (emit/content/definers.ts) reads for the Omit<...> union — one list read
+  // twice instead of the same seven names hand-spelled in both places (SDK-260).
   const economicWitness = CONTENT_WITNESSES.get("economic_category");
   if (economicWitness === undefined || economicWitness.mode !== "intersects") {
     throw new Error(
@@ -480,7 +513,7 @@ export function emitModifiers(join: ModifierJoin): ModifierEmission {
         `readonly ${entry.member}: D extends { readonly ${entry.member}: infer ${entry.inferAs} } ? ${entry.inferAs} : undefined`
     )
     .join("; ");
-  code +=
+  return (
     'export type EconomicCategorySelector<S extends ScopeName> = <const T extends import("../generated/content-definers.ts").EconomicCategoryItem>(' +
     "item: T & (IsUnion<EconomicWitnessOf<T>> extends true ? never : EconomicCategoryAllowed<S, EconomicWitnessOf<T>> extends true ? {} : never)) => EconomicCategoryRecorder<EconomicWitnessOf<T>>;\n" +
     `export type EconomicWitnessOf<T extends import("../generated/content-definers.ts").EconomicCategoryItem> = T extends { readonly def: infer D } ? { ${economicWitnessMembers} } : never;\n` +
@@ -502,9 +535,13 @@ export function emitModifiers(join: ModifierJoin): ModifierEmission {
     'export type EconomicTriggeredRecorder<W extends import("../content/types.ts").EconomicCategoryWitness, K extends string> = { readonly resource: (resource: import("../generated/refs.ts").ResourceRef | string) => EconomicTriggeredResourceRecorder<W, K> } & { [F in EconomicTriggeredField as "mult" extends EconomicTriggeredTypes<W, F, K> ? F : never]: { readonly mult: ModifierSetter } };\n' +
     'export type EconomicTriggeredSelector<W extends import("../content/types.ts").EconomicCategoryWitness> = <const K extends import("../generated/refs.ts").EconomicCategoryRef | string>(key: K & (EconomicTriggeredKeyGuard<W, K> extends never ? never : unknown)) => EconomicTriggeredRecorder<W, EconomicTriggeredKeyId<K> & string>;\n' +
     'export type EconomicCategoryRecorder<W extends import("../content/types.ts").EconomicCategoryWitness> = { readonly resource: (resource: import("../generated/refs.ts").ResourceRef | string) => EconomicResourceRecorder<W>; readonly triggered: EconomicTriggeredSelector<W> } & { [K in W["generateMultModifiers"] extends readonly (infer M)[] ? M & string : never]: { readonly mult: ModifierSetter } };\n' +
-    'export type EconomicResourceRecorder<W extends import("../content/types.ts").EconomicCategoryWitness> = { [K in W["generateAddModifiers"] extends readonly (infer A)[] ? A & string : never]: { readonly add: ModifierSetter } } & { [K in W["generateMultModifiers"] extends readonly (infer M)[] ? M & string : never]: { readonly mult: ModifierSetter } };\n\n';
+    'export type EconomicResourceRecorder<W extends import("../content/types.ts").EconomicCategoryWitness> = { [K in W["generateAddModifiers"] extends readonly (infer A)[] ? A & string : never]: { readonly add: ModifierSetter } } & { [K in W["generateMultModifiers"] extends readonly (infer M)[] ? M & string : never]: { readonly mult: ModifierSetter } };\n\n'
+  );
+}
 
-  code += `export const MODIFIER_REFERENCE_FAMILIES = ${JSON.stringify(
+/** The dynamic-family reference table and per-scope path/operation types. */
+function dynamicFamilyPathCode(join: ModifierJoin, tries: ModifierPathTries): string {
+  let code = `export const MODIFIER_REFERENCE_FAMILIES = ${JSON.stringify(
     Object.fromEntries(
       join.dynamicFamilies.map((family) => [
         family.family,
@@ -521,25 +558,34 @@ export function emitModifiers(join: ModifierJoin): ModifierEmission {
     for (const [name, operations] of family.scopeOperations) {
       const typeName = `${pascalCase(family.family)}ModifierPath_${pascalCase(name)}`;
       const operationsType = `${pascalCase(family.family)}ModifierOperations_${pascalCase(name)}`;
-      const root = rootNodes.get(name);
+      const root = tries.rootNodes.get(name);
       const staticJob = root?.children.get(family.family);
       code += `export type ${operationsType} = {\n`;
       code += operationMembers(operations);
       code += "};\n\n";
       const selector = `(value: import("./refs.ts").${family.reference}) => ${operationsType}`;
       const pathType =
-        staticJob === undefined ? selector : `${trie.emit(staticJob)} & (${selector})`;
+        staticJob === undefined ? selector : `${tries.trie.emit(staticJob)} & (${selector})`;
       code += `export type ${typeName} = ${pathType};\n\n`;
     }
   }
+  return code;
+}
 
+/** The per-scope recorder interfaces and the scope-indexed recorder types. */
+function recorderInterfacesCode(
+  join: ModifierJoin,
+  scopes: readonly string[],
+  tries: ModifierPathTries
+): string {
+  let code = "";
   for (const scope of scopes) {
     code +=
       docComment([
         `Records modifiers valid in \`${scope}\` scope: each path segment completes`,
         "from a small menu, and the joined path is the game's flat modifier name.",
       ]) +
-      `export interface ${pascalCase(scope)}ModifierRecorder extends ${rootNames.get(scope)} {\n` +
+      `export interface ${pascalCase(scope)}ModifierRecorder extends ${tries.rootNames.get(scope)} {\n` +
       `  readonly scripted: ScriptedModifierSelector<${JSON.stringify(scope)}>;\n` +
       `  readonly economic: EconomicCategorySelector<${JSON.stringify(scope)}>;\n` +
       join.dynamicFamilies
@@ -581,7 +627,7 @@ export function emitModifiers(join: ModifierJoin): ModifierEmission {
       "The paths of every scope at once — `m.country.unity.produces.mult(0.15)`",
       "and `m.planet.jobs.alloys.produces.mult(0.1)` both resolve here.",
     ]) +
-    `export interface AnyScopeModifierRecorder extends ${anyScopeRoot} {\n` +
+    `export interface AnyScopeModifierRecorder extends ${tries.anyScopeRoot} {\n` +
     "  readonly scripted: ScriptedModifierSelector<ScopeName>;\n" +
     "  readonly economic: EconomicCategorySelector<ScopeName>;\n" +
     join.dynamicFamilies
@@ -610,12 +656,27 @@ export function emitModifiers(join: ModifierJoin): ModifierEmission {
     "    ? ModifierRecorderByScope[S]\n" +
     "    : UnscopedModifierRecorder;\n";
 
+  return code;
+}
+
+export function emitModifiers(join: ModifierJoin): ModifierEmission {
+  const scopes = [...new Set([...join.groups.keys()].flatMap((key) => key.split(" ")))].sort();
+  const tries = emitPathTries(join, scopes);
+
+  const code =
+    flatNameInterfacesCode(join, scopes) +
+    tries.code +
+    categoryScopeMapsCode(join) +
+    economicSelectorCode() +
+    dynamicFamilyPathCode(join, tries) +
+    recorderInterfacesCode(join, scopes, tries);
+
   return {
     code,
     names: join.universal.length + [...join.groups.values()].reduce((n, g) => n + g.length, 0),
     universal: join.universal.length,
     groups: join.groups.size,
     scopes: scopes.length,
-    trieTypes: trie.uniqueTypes,
+    trieTypes: tries.trie.uniqueTypes,
   };
 }

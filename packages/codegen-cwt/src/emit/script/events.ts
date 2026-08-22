@@ -163,10 +163,8 @@ function fireSignature(kind: EmittedKind & { scope: string }): string {
   );
 }
 
-export function emitEvents(emitter: Emitter, policy: EffectPolicy): EventsEmission {
-  const skipped: SkippedRule[] = [];
-  const kinds = eventKinds(emitter.rules);
-
+/** The `events.ts` output: the `EVENT_KINDS` data table. */
+function eventKindTableCode(kinds: readonly EmittedKind[]): string {
   const entries = kinds
     .map(
       (kind) =>
@@ -174,7 +172,7 @@ export function emitEvents(emitter: Emitter, policy: EffectPolicy): EventsEmissi
     )
     .join("");
 
-  const code =
+  return (
     "export interface EventKind {\n" +
     "  readonly key: string;\n" +
     "  readonly subtype: string;\n" +
@@ -188,8 +186,16 @@ export function emitEvents(emitter: Emitter, policy: EffectPolicy): EventsEmissi
     "export const EVENT_KINDS = {\n" +
     entries +
     "} as const satisfies Record<string, EventKind>;\n\n" +
-    "export type EventKindKey = keyof typeof EVENT_KINDS;\n";
+    "export type EventKindKey = keyof typeof EVENT_KINDS;\n"
+  );
+}
 
+/** The kinds whose closures can be typed; the scopeless rest become skip rows. */
+function scopedEventKinds(kinds: readonly EmittedKind[]): {
+  readonly scoped: readonly (EmittedKind & { scope: string })[];
+  readonly skipped: readonly SkippedRule[];
+} {
+  const skipped: SkippedRule[] = [];
   const scoped = kinds.filter((kind): kind is EmittedKind & { scope: string } => {
     if (kind.scope !== null) {
       return true;
@@ -203,6 +209,12 @@ export function emitEvents(emitter: Emitter, policy: EffectPolicy): EventsEmissi
     );
     return false;
   });
+  return { scoped, skipped };
+}
+
+function assertCapabilityMethodsCollisionFree(
+  scoped: readonly (EmittedKind & { scope: string })[]
+): void {
   const capabilityNames = new Set<string>();
   for (const kind of scoped) {
     const method = capabilityMethod(kind);
@@ -213,8 +225,11 @@ export function emitEvents(emitter: Emitter, policy: EffectPolicy): EventsEmissi
       capabilityNames.add(name);
     }
   }
+}
 
-  const definerCode =
+/** The `event-definers.ts` output: `namespace(ns)` and the capability surface. */
+function eventDefinersCode(scoped: readonly (EmittedKind & { scope: string })[]): string {
+  return (
     docComment([
       "An internal event namespace handle used by capability lowering.",
       "One `defineXEvent` per scoped event kind, each returning an `EventItem`",
@@ -325,11 +340,30 @@ export function emitEvents(emitter: Emitter, policy: EffectPolicy): EventsEmissi
     "    namespace: minter.namespace,\n" +
     scoped.map(capabilityBinding).join("") +
     "  }) as CapabilityEvents<P, N>;\n" +
-    "}\n";
+    "}\n"
+  );
+}
 
-  // The receiving scopes come from the fire effect's own `## scopes`; a kind
-  // whose rule the effects file no longer declares gets no typed fire method
-  // and is reported rather than guessed at.
+interface EventFires {
+  readonly firesCode: string;
+  readonly fireMethods: number;
+  readonly fireReferences: readonly ScriptEffectReferenceRow[];
+  readonly skipped: readonly SkippedRule[];
+}
+
+/**
+ * The `event-fires.ts` output: the witness-overload pair per fire effect.
+ *
+ * The receiving scopes come from the fire effect's own `## scopes`; a kind
+ * whose rule the effects file no longer declares gets no typed fire method
+ * and is reported rather than guessed at.
+ */
+function eventFires(
+  emitter: Emitter,
+  policy: EffectPolicy,
+  scoped: readonly (EmittedKind & { scope: string })[]
+): EventFires {
+  const skipped: SkippedRule[] = [];
   const byInterface = new Map<string, (EmittedKind & { scope: string })[]>();
   const fireReferences = new Map<string, ScriptEffectReferenceRow>();
   const index = scopeIndex(emitter.rules);
@@ -395,14 +429,23 @@ export function emitEvents(emitter: Emitter, policy: EffectPolicy): EventsEmissi
     "// consumers can side-effect import.\n" +
     "export {};\n";
 
+  return { firesCode, fireMethods, fireReferences: [...fireReferences.values()], skipped };
+}
+
+export function emitEvents(emitter: Emitter, policy: EffectPolicy): EventsEmission {
+  const kinds = eventKinds(emitter.rules);
+  const { scoped, skipped } = scopedEventKinds(kinds);
+  assertCapabilityMethodsCollisionFree(scoped);
+  const fires = eventFires(emitter, policy, scoped);
+
   return {
-    code,
-    definerCode,
-    firesCode,
+    code: eventKindTableCode(kinds),
+    definerCode: eventDefinersCode(scoped),
+    firesCode: fires.firesCode,
     kinds: kinds.length,
     definers: scoped.length,
-    fireMethods,
-    skipped,
-    fireReferences: [...fireReferences.values()],
+    fireMethods: fires.fireMethods,
+    skipped: [...skipped, ...fires.skipped],
+    fireReferences: fires.fireReferences,
   };
 }
