@@ -46,6 +46,53 @@ function entryPath(dir: string, key: string): string {
   return join(dir, `vanilla-${key}.json`);
 }
 
+function isParsedSource(value: unknown): value is ParsedSource {
+  if (value === null || typeof value !== "object") {
+    return false;
+  }
+  const source = value as {
+    readonly path?: unknown;
+    readonly sha256?: unknown;
+    readonly items?: unknown;
+  };
+  return (
+    typeof source.path === "string" &&
+    typeof source.sha256 === "string" &&
+    Array.isArray(source.items)
+  );
+}
+
+/**
+ * Recovers a cache entry from its parsed JSON, or `undefined` when the value is
+ * not an entry this build can use.
+ *
+ * The entry is a file on disk, so its shape is evidence rather than a
+ * compile-time fact: an older format version, a half-written file, or an
+ * unrelated file under the same name all arrive here as valid JSON. Each is a
+ * miss, and a miss regenerates — so this returns `undefined` instead of
+ * throwing.
+ *
+ * Every source is checked down to the members `VanillaView` reads. The `items`
+ * inside a source are not walked: the parser owns that shape, and the view
+ * already refuses a document it cannot read.
+ */
+function decodeCacheFile(value: unknown): CacheFile | undefined {
+  if (value === null || typeof value !== "object") {
+    return undefined;
+  }
+  const { formatVersion, sources } = value as {
+    readonly formatVersion?: unknown;
+    readonly sources?: unknown;
+  };
+  if (formatVersion !== CACHE_FORMAT_VERSION || !Array.isArray(sources)) {
+    return undefined;
+  }
+  if (!sources.every(isParsedSource)) {
+    return undefined;
+  }
+  return { formatVersion: CACHE_FORMAT_VERSION, sources };
+}
+
 export function readCache(dir: string, key: string): readonly ParsedSource[] | undefined {
   let raw: string;
   try {
@@ -54,11 +101,7 @@ export function readCache(dir: string, key: string): readonly ParsedSource[] | u
     return undefined;
   }
   try {
-    const parsed = JSON.parse(raw) as CacheFile;
-    if (parsed.formatVersion !== CACHE_FORMAT_VERSION) {
-      return undefined;
-    }
-    return parsed.sources;
+    return decodeCacheFile(JSON.parse(raw))?.sources;
   } catch {
     // A torn or corrupt entry is a miss, not a failure.
     return undefined;

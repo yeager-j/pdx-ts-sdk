@@ -118,6 +118,20 @@ describe("lowering", () => {
     });
     expect(asTrigger).toBe(asEffect);
   });
+
+  it("emits the same bytes through the checked and the unchecked binding", () => {
+    // The two are one factory published under two call signatures, so only
+    // what the compiler accepts differs — never what is written.
+    const args = { VALUE: 5 };
+    const checked = recorded((scope) => {
+      scope.run(scriptedEffect("add_advanced_resources_effect", "country")(args));
+    });
+    const unchecked = recorded((scope) => {
+      scope.run(scriptedEffect.unchecked("add_advanced_resources_effect", "country")(args));
+    });
+    expect(checked).toBe(unchecked);
+    expect(checked).toBe("add_advanced_resources_effect = {\n\tVALUE = 5\n}\n");
+  });
 });
 
 describe("emission order", () => {

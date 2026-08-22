@@ -50,7 +50,17 @@ export interface TypedRef<T extends string> {
  * presence of a `path` property. A content reference is structurally open, so
  * an object that is genuinely a `<planet_class>` may carry a path of its own
  * and must still serialize the id the game requires.
+ *
+ * The `unknown` overload serves the runtime-checked call sites — a proxied
+ * builder's argument, a row read out of an authored object — where the static
+ * type is not a reference to begin with. It returns `unknown` because that is
+ * the truth for an arbitrary input, so the caller must still prove the result
+ * is the id string it wants.
  */
+export function refId<T extends string | number | boolean>(
+  value: TypedRef<string> | ScopeValue | T
+): string | T;
+export function refId(value: unknown): unknown;
 export function refId<T extends string | number | boolean>(
   value: TypedRef<string> | ScopeValue | T
 ): string | T {
@@ -95,7 +105,7 @@ export function toScalar(
   booleanLiterals: readonly ("yes" | "no")[] = []
 ): string | number | boolean | PdxScalar {
   if ((typeof value === "object" && value !== null) || typeof value === "function") {
-    const lowered = refId(value as TypedRef<string> | ScopeValue);
+    const lowered = refId(value);
     if (typeof lowered === "string") {
       return lowered;
     }

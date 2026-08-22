@@ -11,7 +11,7 @@ import {
   weightOperationEntries,
 } from "../script/effects/modifiers.ts";
 import { assertSynchronousClosure } from "../script/effects/recorder.ts";
-import type { ComplexTriggerModifier, Modifier } from "../script/effects/types.ts";
+import type { ComplexTriggerModifier, Modifier, ModifierWithLoc } from "../script/effects/types.ts";
 import { refId, type TypedRef } from "../script/scalar.ts";
 import { scriptValueScalar, type ScriptValue } from "../script/trigger-core.ts";
 import type {
@@ -106,7 +106,7 @@ function economicTriggeredRows(id: string, def: Record<string, unknown>): Map<st
           `Economic category "${id}" has malformed ${member}; each row must be an object`
         );
       }
-      const key = refId((row as { readonly key?: unknown }).key as never);
+      const key = refId((row as { readonly key?: unknown }).key);
       if (typeof key !== "string" || key.length === 0) {
         throw new Error(
           `Economic category "${id}" has malformed ${member}; each row requires a key`
@@ -144,7 +144,7 @@ function economicTriggeredRecorder(
 ): (selected: unknown) => unknown {
   return (selected: unknown) => {
     assertLive("economic.triggered");
-    const selectedId = refId(selected as never);
+    const selectedId = refId(selected);
     if (typeof selectedId !== "string" || selectedId.length === 0) {
       throw new Error(`modifier.economic.triggered requires an economic category reference or id`);
     }
@@ -172,7 +172,7 @@ function economicTriggeredRecorder(
           if (operation === "resource") {
             return (resource: unknown) => {
               assertLive(`economic.triggered(${selectedId}).resource`);
-              const resourceId = typeof resource === "string" ? resource : refId(resource as never);
+              const resourceId = typeof resource === "string" ? resource : refId(resource);
               if (typeof resourceId !== "string") {
                 throw new Error(
                   "modifier.economic.triggered.resource requires a resource reference"
@@ -289,7 +289,7 @@ function modifierRecorder(record: ModifierRecord, live: { value: boolean }): unk
             if (item.type !== "scripted_modifier") {
               throw new Error("modifier.scripted requires a scripted modifier item");
             }
-            const id = refId(item as never);
+            const id = refId(item);
             if (typeof id !== "string") {
               throw new Error("modifier.scripted requires a content reference");
             }
@@ -315,7 +315,7 @@ function modifierRecorder(record: ModifierRecord, live: { value: boolean }): unk
             if (item.type !== "economic_category") {
               throw new Error("modifier.economic requires an economic category item");
             }
-            const id = refId(item as never);
+            const id = refId(item);
             if (typeof id !== "string") {
               throw new Error("modifier.economic requires a content reference");
             }
@@ -340,8 +340,7 @@ function modifierRecorder(record: ModifierRecord, live: { value: boolean }): unk
                   if (key === "resource") {
                     return (resource: unknown) => {
                       assertLive("economic.resource");
-                      const resourceId =
-                        typeof resource === "string" ? resource : refId(resource as never);
+                      const resourceId = typeof resource === "string" ? resource : refId(resource);
                       if (typeof resourceId !== "string") {
                         throw new Error("modifier.economic.resource requires a resource reference");
                       }
@@ -517,6 +516,34 @@ export function isComplexTriggerModifier(
     );
   }
   return hasTrigger;
+}
+
+/**
+ * Checks that a `WeightBlock` row really carries the `desc` display text a
+ * localization pass is about to mint a key for, and returns that same row.
+ *
+ * Returning the row itself is the contract, not an implementation detail:
+ * `registerModifierDescKey` keys the minted key by the row object, and
+ * `modifierEntry` throws when a `desc` reaches lowering with no key registered
+ * for that exact row (`script/effects/modifiers.ts`). A copy would register a
+ * key the lowered row could never find.
+ *
+ * `where` names the owner and field the row belongs to, so the thrown message
+ * points at one authored position. Both minting walks — `define`'s and the
+ * vanilla patch path's — reach rows whose static type has already been widened
+ * by the walk, so `desc` being a string is checked here rather than assumed.
+ */
+export function modifierRowWithLoc(row: unknown, where: string): ModifierWithLoc<ScopeName> {
+  if (row === null || typeof row !== "object") {
+    throw new Error(`A modifiers row on ${where} must be an object`);
+  }
+  const desc = (row as { readonly desc?: unknown }).desc;
+  if (typeof desc !== "string") {
+    throw new Error(
+      `Modifier.desc on ${where} must be display text; this row has a ${typeof desc}`
+    );
+  }
+  return row as ModifierWithLoc<ScopeName>;
 }
 
 export function weightBlock(

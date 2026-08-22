@@ -56,6 +56,20 @@ export type SituationTrigger<
 };
 
 /**
+ * Attaches the phantom approach and stage brands to a `Trigger<"situation">`.
+ *
+ * Both brands are declared-only symbol members with no runtime counterpart,
+ * so the value a builder returns is already complete and the cast only names
+ * the literal ids the SDK carries in the type. It lives here so the three
+ * builders below state that once rather than each spelling its own cast.
+ */
+function situationTrigger<Approach extends string, Stage extends string>(
+  entries: PdxEntry[]
+): SituationTrigger<Approach, Stage> {
+  return trigger<"situation">(entries) as SituationTrigger<Approach, Stage>;
+}
+
+/**
  * Checks if the specified approach has been picked on the scoped situation.
  *
  * Hand-written over the generated `current_situation_approach` leaf so the
@@ -67,7 +81,7 @@ export type SituationTrigger<
 export function currentSituationApproach<const Approach extends string>(
   value: Approach
 ): SituationTrigger<Approach, never> {
-  return trigger([kv("current_situation_approach", value)]) as SituationTrigger<Approach, never>;
+  return situationTrigger<Approach, never>([kv("current_situation_approach", value)]);
 }
 
 /**
@@ -81,7 +95,7 @@ export function currentSituationApproach<const Approach extends string>(
 export function currentStage<const Stage extends string>(
   value: Stage
 ): SituationTrigger<never, Stage> {
-  return trigger([kv("current_stage", value)]) as SituationTrigger<never, Stage>;
+  return situationTrigger<never, Stage>([kv("current_stage", value)]);
 }
 
 /**
@@ -96,7 +110,7 @@ export function currentStage<const Stage extends string>(
 export function canSetSituationApproach<const Approach extends string>(
   value: Approach
 ): SituationTrigger<Approach, never> {
-  return trigger([kv("can_set_situation_approach", value)]) as SituationTrigger<Approach, never>;
+  return situationTrigger<Approach, never>([kv("can_set_situation_approach", value)]);
 }
 
 type DefinedEventChainCounterArgs<Chain extends EventChainItem> = {

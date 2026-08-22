@@ -17,7 +17,7 @@ import { FIRE_EFFECT_KEYS, type StructuralEffectMethod } from "../../generated/e
 import type { ScopeObjOf } from "../../generated/effects.ts";
 import type { ScopeName } from "../../generated/scopes.ts";
 import type { ContentRefUse } from "../../references.ts";
-import { isStructuredValue, refId, toScalar } from "../scalar.ts";
+import { isStructuredValue, refId, toScalar, type TypedRef } from "../scalar.ts";
 import type { ScriptedEffectCall } from "../scripted.ts";
 import { trigger, type Trigger } from "../trigger-core.ts";
 import { modifierEntry } from "./modifiers.ts";
@@ -425,7 +425,7 @@ declare module "../../generated/effects.ts" {
 // ---------------------------------------------------------------------------
 
 interface FireCallArgs {
-  readonly id: { readonly id: string } | string;
+  readonly id: TypedRef<string> | string;
   readonly days?: number;
   readonly months?: number;
   readonly years?: number;
@@ -434,7 +434,7 @@ interface FireCallArgs {
 }
 
 interface EventChainCounterCallArgs {
-  readonly eventChain: { readonly id: string } | string;
+  readonly eventChain: TypedRef<string> | string;
   readonly counter: string;
   readonly amount?: unknown;
 }
