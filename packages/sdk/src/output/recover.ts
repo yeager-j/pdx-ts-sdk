@@ -387,19 +387,22 @@ interface RecoveryPlan {
  * dry means a refusal is always about the tree exactly as it was found.
  */
 async function planRecovery(journal: Journal, header: JournalHeader): Promise<RecoveryPlan> {
-  const phase = progressPhase(journal);
   const staging = journal.staging;
+  if (staging === undefined) {
+    // Nothing was ever named, so nothing may be deleted — and nothing about
+    // the target is this recovery's to judge either: a transaction that never
+    // named a sibling never had authority over anything here, so a target it
+    // only looked at is not evidence it has to be able to read. The lock
+    // goes, and the target is exactly as the interrupted writer found it.
+    return { outcome: "cleaned", actions: [] };
+  }
+  const phase = progressPhase(journal);
   const goal = recoveryGoal(phase, header.mode, {
     targetIsNew:
       (await ownershipManifest(journal, phase, header.target))?.sha256 === header.renderedSha256,
     descriptorIsNew: await descriptorIsNew(header),
-    staging: staging !== undefined && (await present(staging.staging)),
+    staging: await present(staging.staging),
   });
-  if (staging === undefined) {
-    // Nothing was ever named, so nothing may be deleted; the lock goes and
-    // the target is exactly as the interrupted writer found it.
-    return { outcome: "cleaned", actions: [] };
-  }
   const leftovers = journaledSiblings(staging);
 
   if (goal === "none") {

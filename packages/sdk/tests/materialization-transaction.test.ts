@@ -1999,6 +1999,27 @@ describe("recovery refuses evidence it cannot read in full", () => {
     expect(existsSync(join(out, GEN_TWO_ONLY))).toBe(true);
     expect(manifestSha(paths.previous)).toBe(previousSha);
   });
+
+  it("leaves a target alone when the transaction never named a sibling", async () => {
+    // A writer killed while inspecting had no authority over anything: it
+    // created nothing, so there is nothing to undo, and whatever state the
+    // target's own manifest is in is not this recovery's to have an opinion
+    // about. Reading it here would turn a lock somebody has to clear into a
+    // refusal they cannot.
+    const parent = tempDir();
+    const out = join(parent, "out");
+    await write(out, genOne);
+    patchManifest(out, (manifest) => (manifest["version"] = 2));
+    const manifestBefore = readFileSync(join(out, MANIFEST), "utf8");
+    const lockPath = writeJournal({ target: out, rendered: genTwo });
+
+    const report = await recoverMaterialization(out);
+
+    expect(report.outcome).toBe("cleaned");
+    expect(report.actions).toEqual([{ kind: "released-lock", path: lockPath }]);
+    expect(readFileSync(join(out, MANIFEST), "utf8")).toBe(manifestBefore);
+    expect(readdirSync(parent)).toEqual(["out"]);
+  });
 });
 
 describe.skipIf(!posix)("recovery refuses a tree it cannot walk", () => {
