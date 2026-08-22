@@ -32,3 +32,30 @@ export function _setMaterializationTestHook(next?: MaterializationTestHook): voi
 export function _materializationTestPoint(point: string): void | Promise<void> {
   return hook?.(point);
 }
+
+/**
+ * The points that are not a journal phase, named here so that the writer and
+ * the tests that drive it cannot spell them differently. A phase is announced
+ * by `transaction.ts` under its own name; everything below is announced by the
+ * step it belongs to. Each rename point means the rename has landed.
+ */
+export const RENAME_CONTENT_DEACTIVATE = "rename:content-deactivate";
+export const RENAME_CONTENT_ACTIVATE = "rename:content-activate";
+export const RENAME_DESCRIPTOR_DEACTIVATE = "rename:descriptor-deactivate";
+export const RENAME_DESCRIPTOR_ACTIVATE = "rename:descriptor-activate";
+
+/** Announced before a classification walk descends into a directory. */
+export const TRAVERSAL_DESCEND_PREFIX = "traversal:descend:";
+
+/** Announced before a foreign file is carried into the staged tree. */
+export const PRESERVE_PREFIX = "preserve:";
+
+/** The descent point for one target-relative directory path. */
+export function traversalDescend(relPath: string): string {
+  return `${TRAVERSAL_DESCEND_PREFIX}${relPath}`;
+}
+
+/** The carry point for one target-relative foreign file. */
+export function preserveEntry(relPath: string): string {
+  return `${PRESERVE_PREFIX}${relPath}`;
+}

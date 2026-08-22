@@ -20,6 +20,7 @@
 import { randomUUID } from "node:crypto";
 import {
   appendFileSync,
+  chmodSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
@@ -52,22 +53,23 @@ import {
   parseJournal,
   type MaterializationPhase,
 } from "../src/output/journal.ts";
+import {
+  installPaths,
+  isMintedSibling,
+  lockPathFor,
+  stagingPaths,
+  type MaterializationPaths,
+  type SiblingRole,
+} from "../src/output/layout.ts";
 import { assertRepresentableMaterialization } from "../src/output/preflight.ts";
 import { createRenderedMod, type RenderedMod } from "../src/output/rendered.ts";
-import {
-  claimRecovery,
-  lockPathFor,
-  pathStillNames,
-  processIsAlive,
-  readJournal,
-} from "../src/output/transaction.ts";
+import { claimRecovery, processIsAlive, readJournal } from "../src/output/transaction.ts";
+import { pathStillNames } from "../src/output/tree.ts";
 import {
   descriptorRecord,
   observeDescriptor,
   stageMaterialization,
-  stagingPaths,
   validateExistingMaterialization,
-  type MaterializationPaths,
 } from "../src/output/write.ts";
 
 const capability = createMod({
@@ -103,6 +105,9 @@ const genTwo = render(
 
 const GEN_TWO_ONLY = "common/technology/tx_probe_extra.txt";
 const MANIFEST = ".pdx-sdk-manifest.json";
+
+/** An unreadable directory is not unreadable to root, which ignores the bits. */
+const posix = process.platform !== "win32" && process.getuid?.() !== 0;
 
 const temps: string[] = [];
 /** Physical from the start; the system temp directory is a symlink on macOS. */
@@ -349,6 +354,24 @@ async function stageInstall(root: string) {
   });
   writeFileSync(descriptor.staging, contents, "utf8");
   return { contentDir, descriptorPath, paths, descriptor, contents };
+}
+
+/** An install crash with the content swapped and the descriptor not yet. */
+async function halfSwappedInstall(root: string) {
+  const first = await install(genOne, { modDir: root });
+  const previousSha = manifestSha(first.contentDir);
+  const staged = await stageInstall(root);
+  writeJournal({
+    target: staged.contentDir,
+    rendered: genTwo,
+    paths: staged.paths,
+    previousManifestSha256: previousSha,
+    descriptor: staged.descriptor,
+    phases: ["staged", "content-deactivating", "content-activating"],
+  });
+  renameSync(staged.contentDir, staged.paths.previous);
+  renameSync(staged.paths.staging, staged.contentDir);
+  return { ...staged, previousSha };
 }
 
 function siblings(parent: string): string[] {
@@ -1871,24 +1894,6 @@ describe("a journal only has authority over its own siblings", () => {
 });
 
 describe("recovery never deletes what it cannot account for", () => {
-  /** An install crash with the content swapped and the descriptor not yet. */
-  async function halfSwappedInstall(root: string) {
-    const first = await install(genOne, { modDir: root });
-    const previousSha = manifestSha(first.contentDir);
-    const staged = await stageInstall(root);
-    writeJournal({
-      target: staged.contentDir,
-      rendered: genTwo,
-      paths: staged.paths,
-      previousManifestSha256: previousSha,
-      descriptor: staged.descriptor,
-      phases: ["staged", "content-deactivating", "content-activating"],
-    });
-    renameSync(staged.contentDir, staged.paths.previous);
-    renameSync(staged.paths.staging, staged.contentDir);
-    return { ...staged, previousSha };
-  }
-
   it("refuses to delete a new target somebody edited after the crash", async () => {
     // The manifest's own hash says which render was staged; it says nothing
     // about what happened to the tree afterwards. An edit made to the
@@ -1937,6 +1942,164 @@ describe("recovery never deletes what it cannot account for", () => {
     expect(readFileSync(join(first.contentDir, "notes.txt"), "utf8")).toBe("mine\n");
     expect(existsSync(join(first.contentDir, GEN_TWO_ONLY))).toBe(false);
     expect(readdirSync(root).sort()).toEqual(["tx_probe", "tx_probe.mod"]);
+  });
+});
+
+describe("recovery refuses evidence it cannot read in full", () => {
+  /** Rewrite a materialized tree's ownership manifest through `patch`. */
+  function patchManifest(target: string, patch: (manifest: Record<string, unknown>) => void): void {
+    const manifestPath = join(target, MANIFEST);
+    const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as Record<string, unknown>;
+    patch(manifest);
+    writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), "utf8");
+  }
+
+  /** A build whose activation rename landed, which recovery would complete. */
+  async function swappedBuild(parent: string) {
+    const out = join(parent, "out");
+    await write(out, genOne);
+    const previousSha = manifestSha(out);
+    const { paths } = await stageBuild(out, genTwo);
+    writeJournal({
+      target: out,
+      rendered: genTwo,
+      paths,
+      previousManifestSha256: previousSha,
+      phases: ["staged", "content-deactivating", "content-activating"],
+    });
+    renameSync(out, paths.previous);
+    renameSync(paths.staging, out);
+    return { out, paths, previousSha };
+  }
+
+  it.each([
+    ["a version this build does not write", (m: Record<string, unknown>) => (m["version"] = 2)],
+    [
+      "a file record with no byteLength",
+      (m: Record<string, unknown>) => {
+        delete (m["files"] as Record<string, unknown>[])[0]!["byteLength"];
+      },
+    ],
+    ["no prefix at all", (m: Record<string, unknown>) => delete m["prefix"]],
+  ])("refuses a target whose ownership manifest has %s", async (_label, patch) => {
+    // The manifest is what says the tree in front of recovery is the one the
+    // transaction staged. Reading a manifest it cannot decode as "no manifest
+    // here" would let a hand-edited file decide a delete.
+    const parent = tempDir();
+    const { out, paths, previousSha } = await swappedBuild(parent);
+    patchManifest(out, patch);
+
+    const error = await refusal(recoverMaterialization(out));
+
+    expect(error.reason).toBe("recovery-required");
+    if (error.failure.reason !== "recovery-required") {
+      throw new Error("unreachable");
+    }
+    expect(error.failure.evidence?.map((row) => row.path)).toContain(join(out, MANIFEST));
+    expect(existsSync(join(out, GEN_TWO_ONLY))).toBe(true);
+    expect(manifestSha(paths.previous)).toBe(previousSha);
+  });
+});
+
+describe.skipIf(!posix)("recovery refuses a tree it cannot walk", () => {
+  /** Modes to put back, or the temp directory cannot be removed afterwards. */
+  const unreadable: string[] = [];
+
+  afterEach(() => {
+    for (const dir of unreadable.splice(0)) {
+      chmodSync(dir, 0o755);
+    }
+  });
+
+  it("refuses when a directory in the target will not open", async () => {
+    // The tree is about to be deleted to put the previous output back, and a
+    // directory that will not open may hold the only copy of something. An
+    // unreadable directory is therefore missing evidence, not an empty one.
+    const root = tempDir();
+    const first = await install(genOne, { modDir: root });
+    const notes = join(first.contentDir, "notes");
+    mkdirSync(notes);
+    writeFileSync(join(notes, "kept.txt"), "mine\n", "utf8");
+    const staged = await halfSwappedInstall(root);
+    writeFileSync(join(staged.contentDir, "notes/after-the-crash.txt"), "written after\n", "utf8");
+    chmodSync(join(staged.contentDir, "notes"), 0);
+    unreadable.push(join(staged.contentDir, "notes"));
+
+    const error = await refusal(recoverInstallation({ modDir: root, dirName: "tx_probe" }));
+
+    expect(error.reason).toBe("recovery-required");
+    if (error.failure.reason !== "recovery-required") {
+      throw new Error("unreachable");
+    }
+    expect(error.failure.evidence?.map((row) => row.path)).toContain(
+      join(staged.contentDir, "notes")
+    );
+    expect(manifestSha(staged.contentDir)).toBe(genTwo.sha256);
+    expect(manifestSha(staged.paths.previous)).toBe(staged.previousSha);
+  });
+});
+
+describe("a preserved entry is only preserved while it is the same file", () => {
+  it("refuses when a preserved file was replaced by a symlink after the crash", async () => {
+    // A symlink where the carried file was is not that file: removing it
+    // removes the only record of where it pointed, and following it would
+    // decide a delete from somebody else's inode.
+    const root = tempDir();
+    const first = await install(genOne, { modDir: root });
+    writeFileSync(join(first.contentDir, "notes.txt"), "mine\n", "utf8");
+    const staged = await halfSwappedInstall(root);
+    const carried = join(staged.contentDir, "notes.txt");
+    rmSync(carried);
+    symlinkSync(join(staged.paths.previous, "notes.txt"), carried);
+
+    const error = await refusal(recoverInstallation({ modDir: root, dirName: "tx_probe" }));
+
+    expect(error.reason).toBe("recovery-required");
+    if (error.failure.reason !== "recovery-required") {
+      throw new Error("unreachable");
+    }
+    expect(error.failure.evidence?.map((row) => row.path)).toContain(carried);
+    expect(existsSync(carried)).toBe(true);
+  });
+
+  it("refuses when a preserved file is no longer the inode it was carried as", async () => {
+    // Same name, same place, different file: the link to the previous
+    // generation is what makes deleting this one lossless, and it is gone.
+    const root = tempDir();
+    const first = await install(genOne, { modDir: root });
+    writeFileSync(join(first.contentDir, "notes.txt"), "mine\n", "utf8");
+    const staged = await halfSwappedInstall(root);
+    const carried = join(staged.contentDir, "notes.txt");
+    rmSync(carried);
+    writeFileSync(carried, "written after the crash\n", "utf8");
+
+    const error = await refusal(recoverInstallation({ modDir: root, dirName: "tx_probe" }));
+
+    expect(error.reason).toBe("recovery-required");
+    expect(readFileSync(carried, "utf8")).toBe("written after the crash\n");
+  });
+});
+
+describe("the siblings a materialization mints are the ones a journal may name", () => {
+  it("mints all four install siblings beside the target", () => {
+    const parent = tempDir();
+    const paths = installPaths(join(parent, "out"));
+
+    for (const [role, candidate] of Object.entries(paths)) {
+      expect(dirname(candidate)).toBe(parent);
+      expect(isMintedSibling(candidate, parent, role as SiblingRole)).toBe(true);
+    }
+    expect(new Set(Object.values(paths)).size).toBe(4);
+  });
+
+  it.each([
+    ["another directory", (parent: string) => join(dirname(parent), ".pdx-staging-", randomUUID())],
+    ["another role's prefix", (parent: string) => join(parent, `.pdx-previous-${randomUUID()}`)],
+    ["a suffix that is not a UUID", (parent: string) => join(parent, ".pdx-staging-not-a-uuid")],
+  ])("rejects a staging name in %s", (_label, mint) => {
+    const parent = tempDir();
+
+    expect(isMintedSibling(mint(parent), parent, "staging")).toBe(false);
   });
 });
 

@@ -28,7 +28,7 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { install, renderLauncherDescriptor } from "../src/index.ts";
-import { lockPathFor } from "../src/output/transaction.ts";
+import { lockPathFor } from "../src/output/layout.ts";
 import { renderGeneration } from "./helpers/crash-mod.ts";
 import {
   caseInsensitiveDir,
