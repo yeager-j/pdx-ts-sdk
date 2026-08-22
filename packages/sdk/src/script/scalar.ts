@@ -11,8 +11,9 @@
  * The navigable `vanilla.*` tries (`src/identifiers/trie.ts`) are Proxies
  * built over a bare function so the same value stays both callable and
  * navigable — `typeof` on such a Proxy reflects the function target, so a
- * gate on `typeof value === "object"` alone silently skips them. `refId` is
- * the one place that owns that representation and gate.
+ * gate on `typeof value === "object"` alone silently skips them. `refIdOf`
+ * is the one place that owns that representation and gate, and `refId` is the
+ * typed entry point over it.
  */
 
 import type { PdxScalar } from "@pdx-ts/pdxscript";
@@ -50,25 +51,30 @@ export interface TypedRef<T extends string> {
  * presence of a `path` property. A content reference is structurally open, so
  * an object that is genuinely a `<planet_class>` may carry a path of its own
  * and must still serialize the id the game requires.
- *
- * The `unknown` overload serves the runtime-checked call sites — a proxied
- * builder's argument, a row read out of an authored object — where the static
- * type is not a reference to begin with. It returns `unknown` because that is
- * the truth for an arbitrary input, so the caller must still prove the result
- * is the id string it wants.
  */
 export function refId<T extends string | number | boolean>(
   value: TypedRef<string> | ScopeValue | T
-): string | T;
-export function refId(value: unknown): unknown;
-export function refId<T extends string | number | boolean>(
-  value: TypedRef<string> | ScopeValue | T
 ): string | T {
+  // Narrowing `refIdOf`'s `unknown` result back: inside this parameter type a
+  // reference always lowers to a string, and any other value is the `T` that
+  // passed through untouched.
+  return refIdOf(value) as string | T;
+}
+
+/**
+ * Resolves a value whose static type is not a reference to begin with — a
+ * proxied builder's argument, a row read out of an authored object.
+ *
+ * SDK-internal, and deliberately not part of the package's public surface.
+ * The result is `unknown` because that is the truth for an arbitrary input:
+ * a caller must prove it is the id string it wants before writing it.
+ */
+export function refIdOf(value: unknown): unknown {
   if ((typeof value === "object" && value !== null) || typeof value === "function") {
     if ("kind" in value && value.kind === "scope-ref") {
-      return value.path;
+      return "path" in value ? value.path : undefined;
     }
-    return (value as TypedRef<string>).id;
+    return "id" in value ? value.id : undefined;
   }
   return value;
 }
@@ -105,7 +111,7 @@ export function toScalar(
   booleanLiterals: readonly ("yes" | "no")[] = []
 ): string | number | boolean | PdxScalar {
   if ((typeof value === "object" && value !== null) || typeof value === "function") {
-    const lowered = refId(value);
+    const lowered = refIdOf(value);
     if (typeof lowered === "string") {
       return lowered;
     }

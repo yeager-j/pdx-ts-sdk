@@ -12,7 +12,7 @@ import {
 } from "../script/effects/modifiers.ts";
 import { assertSynchronousClosure } from "../script/effects/recorder.ts";
 import type { ComplexTriggerModifier, Modifier, ModifierWithLoc } from "../script/effects/types.ts";
-import { refId, type TypedRef } from "../script/scalar.ts";
+import { refId, refIdOf, type TypedRef } from "../script/scalar.ts";
 import { scriptValueScalar, type ScriptValue } from "../script/trigger-core.ts";
 import type {
   EconomicResourceBlock,
@@ -106,7 +106,7 @@ function economicTriggeredRows(id: string, def: Record<string, unknown>): Map<st
           `Economic category "${id}" has malformed ${member}; each row must be an object`
         );
       }
-      const key = refId((row as { readonly key?: unknown }).key);
+      const key = refIdOf((row as { readonly key?: unknown }).key);
       if (typeof key !== "string" || key.length === 0) {
         throw new Error(
           `Economic category "${id}" has malformed ${member}; each row requires a key`
@@ -144,7 +144,7 @@ function economicTriggeredRecorder(
 ): (selected: unknown) => unknown {
   return (selected: unknown) => {
     assertLive("economic.triggered");
-    const selectedId = refId(selected);
+    const selectedId = refIdOf(selected);
     if (typeof selectedId !== "string" || selectedId.length === 0) {
       throw new Error(`modifier.economic.triggered requires an economic category reference or id`);
     }
@@ -172,7 +172,7 @@ function economicTriggeredRecorder(
           if (operation === "resource") {
             return (resource: unknown) => {
               assertLive(`economic.triggered(${selectedId}).resource`);
-              const resourceId = typeof resource === "string" ? resource : refId(resource);
+              const resourceId = typeof resource === "string" ? resource : refIdOf(resource);
               if (typeof resourceId !== "string") {
                 throw new Error(
                   "modifier.economic.triggered.resource requires a resource reference"
@@ -289,7 +289,7 @@ function modifierRecorder(record: ModifierRecord, live: { value: boolean }): unk
             if (item.type !== "scripted_modifier") {
               throw new Error("modifier.scripted requires a scripted modifier item");
             }
-            const id = refId(item);
+            const id = refIdOf(item);
             if (typeof id !== "string") {
               throw new Error("modifier.scripted requires a content reference");
             }
@@ -315,7 +315,7 @@ function modifierRecorder(record: ModifierRecord, live: { value: boolean }): unk
             if (item.type !== "economic_category") {
               throw new Error("modifier.economic requires an economic category item");
             }
-            const id = refId(item);
+            const id = refIdOf(item);
             if (typeof id !== "string") {
               throw new Error("modifier.economic requires a content reference");
             }
@@ -340,7 +340,8 @@ function modifierRecorder(record: ModifierRecord, live: { value: boolean }): unk
                   if (key === "resource") {
                     return (resource: unknown) => {
                       assertLive("economic.resource");
-                      const resourceId = typeof resource === "string" ? resource : refId(resource);
+                      const resourceId =
+                        typeof resource === "string" ? resource : refIdOf(resource);
                       if (typeof resourceId !== "string") {
                         throw new Error("modifier.economic.resource requires a resource reference");
                       }
