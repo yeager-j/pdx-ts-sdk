@@ -42,23 +42,6 @@ type ContentDef = { readonly id: string };
 export type LocalisationEntry = readonly [key: string, text: string];
 type RegisterLoc = (entries: readonly LocalisationEntry[]) => void;
 
-/**
- * Accumulates the reference sink, the dotted path to the current level (for
- * ref diagnostics), and the nearest enclosing identity (for desc-key
- * disambiguation — see {@link descOwnerKey}).
- *
- * `collect` is the part that is genuinely optional — a caller not collecting
- * dangling references simply skips it — but `ownerId` is not: `def.id` is
- * always known at `toEntry`, so the context itself is always constructed,
- * and desc-key resolution (unlike ref collection) is not an optional
- * diagnostic a caller can decline. `ownerId` starts as the top-level
- * definition's own id and rebinds to a repeated-struct entry's own id on the
- * way down, mirroring `ContentAuthoring.collectRepeatedStructs`'s identical
- * rebind for the same reason: a nested entry (a tradition swap, a situation
- * stage) is itself a stable identity a `WeightBlock` inside it can key desc
- * localisation against.
- */
-
 function toEntry(
   def: ContentDef,
   descriptor: ContentRegistryDescriptor,
