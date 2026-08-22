@@ -5,6 +5,9 @@
  * item kind stops compiling here instead of being silently skipped by every
  * consumer that walks a tree. Traversal is shape, not meaning: nothing here
  * reads a key, resolves a value, or interprets a region.
+ *
+ * A visit narrows the walk with two signals: `skipChildren` leaves one item's
+ * children unvisited, and `stopWalk` ends the walk at once.
  */
 
 import type { PdxItem } from "./ast.ts";
@@ -21,6 +24,9 @@ export type RegionPolicy = "skip" | { readonly read: true; readonly fileName?: s
 
 /** Returned from a `walkItems` visit to leave that item's children unvisited. */
 export const skipChildren: unique symbol = Symbol("skipChildren");
+
+/** Returned from a `walkItems` visit to end the walk, siblings included. */
+export const stopWalk: unique symbol = Symbol("stopWalk");
 
 /**
  * The items structurally inside one item, in source order: an entry's value,
@@ -58,8 +64,11 @@ export function itemChildren(item: PdxItem, regions: RegionPolicy): readonly Pdx
  * children and siblings in source order.
  *
  * `visit` receives each item with the context its parent returned; what it
- * returns becomes the context for that item's children, and `skipChildren`
- * leaves them unvisited. Keys and container headers are never visited.
+ * returns becomes the context for that item's children, `skipChildren` leaves
+ * them unvisited, and `stopWalk` ends the walk with no further item visited at
+ * any level. Keys and container headers are never visited.
+ *
+ * @returns whether a visit stopped the walk.
  *
  * @example
  * ```ts
@@ -75,13 +84,20 @@ export function itemChildren(item: PdxItem, regions: RegionPolicy): readonly Pdx
 export function walkItems<C>(
   items: readonly PdxItem[],
   context: C,
-  visit: (item: PdxItem, context: C) => C | typeof skipChildren,
+  visit: (item: PdxItem, context: C) => C | typeof skipChildren | typeof stopWalk,
   regions: RegionPolicy
-): void {
+): boolean {
   for (const item of items) {
     const childContext = visit(item, context);
-    if (childContext !== skipChildren) {
-      walkItems(itemChildren(item, regions), childContext, visit, regions);
+    if (childContext === stopWalk) {
+      return true;
+    }
+    if (childContext === skipChildren) {
+      continue;
+    }
+    if (walkItems(itemChildren(item, regions), childContext, visit, regions)) {
+      return true;
     }
   }
+  return false;
 }

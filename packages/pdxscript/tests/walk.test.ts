@@ -9,6 +9,7 @@ import {
   itemChildren,
   parse,
   skipChildren,
+  stopWalk,
   walkItems,
   type PdxItem,
   type RegionPolicy,
@@ -143,6 +144,31 @@ describe("walkItems", () => {
       "skip"
     );
     expect(visited).toEqual(["entry a", "entry c", "num 2"]);
+  });
+
+  it("ends the walk at every level when a visit returns stopWalk", () => {
+    const visited: string[] = [];
+    const stopped = walkItems(
+      parse("a = { b = { c } d = 2 }\ne = 3", "walk.txt").items,
+      undefined,
+      (item) => {
+        visited.push(describeItem(item));
+        return item.kind === "str" && item.value === "c" ? stopWalk : undefined;
+      },
+      "skip"
+    );
+    expect(visited).toEqual(["entry a", "container", "entry b", "container", "str c"]);
+    expect(stopped).toBe(true);
+  });
+
+  it("reports a walk that nothing stopped", () => {
+    const stopped = walkItems(
+      parse("a = { b = 1 }", "walk.txt").items,
+      undefined,
+      () => skipChildren,
+      "skip"
+    );
+    expect(stopped).toBe(false);
   });
 
   it("passes the context a visit returns to that item's children, not to its siblings", () => {

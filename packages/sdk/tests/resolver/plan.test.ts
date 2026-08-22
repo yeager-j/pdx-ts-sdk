@@ -5,13 +5,17 @@
  * rule table, and the stem-append lemma as a property rather than a belief.
  */
 
-import { block, kv } from "@pdx-ts/pdxscript";
+import { block, container, kv } from "@pdx-ts/pdxscript";
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 
 import { NoWinningFilenameError, PdxSdkError, UnverifiedRegistryError } from "../../src/errors.ts";
 import { compareLogicalPaths, normalizeLogicalPath } from "../../src/ordering.ts";
-import { planPatchEmission, type PatchInput } from "../../src/stellaris/vanilla/override-plan.ts";
+import {
+  containsInlineMath,
+  planPatchEmission,
+  type PatchInput,
+} from "../../src/stellaris/vanilla/override-plan.ts";
 import type { VanillaFile } from "../../src/stellaris/vanilla/view.ts";
 
 function file(path: string, ...keys: string[]): VanillaFile {
@@ -226,6 +230,18 @@ describe("planPatchEmission", () => {
       locals: new Map(),
     };
     expect(() => plan({ patches: [withMath] })).toThrow(/inline-math/);
+  });
+
+  it("sees inline math ahead of a region body that does not lex, and does not read on", () => {
+    const withMathThenRegion = kv(
+      "tech_gene_tailoring",
+      container([
+        { kind: "entry", key: "cost", op: "=", value: { kind: "math", source: "@[ x + 1 ]" } },
+        // `?=` is an operator this parser refuses, so reading this body throws.
+        { kind: "param-text", name: "X", negated: false, text: "a ?= 1" },
+      ])
+    );
+    expect(containsInlineMath(withMathThenRegion)).toBe(true);
   });
 
   it("hard-errors when no surviving file defines a patched key", () => {
