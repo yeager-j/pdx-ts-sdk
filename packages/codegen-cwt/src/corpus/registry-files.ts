@@ -1,32 +1,11 @@
-/**
- * Which files of an install belong to one registry.
- *
- * The two readers that ask this want different things out of the files —
- * `corpus/` counts the *fields* definitions write, `@pdx-ts/codegen-vanilla`'s
- * `read-ids.ts` collects their *ids* — but "which files" is one question with
- * one answer, and the two used to answer it differently. The corpus reader read
- * a single directory flat, so every registry whose files nest measured as a
- * subset of itself or as nothing at all: sprites nest under `interface/`, meshes
- * under `gfx/models/`.
- */
-
 import { readdirSync, statSync } from "node:fs";
 import path from "node:path";
 
 /**
- * Every file under `dir` carrying `extension`, in a stable sorted walk order.
+ * Lists files with a given extension under a registry directory in stable order.
  *
- * Sorted because filesystem order is not: both readers cap a sample and keep
- * whichever values arrive first, and both commit their result, so an unstable
- * order would diff on every re-read of an unchanged install.
- *
- * `recurse` is what the rules' `path_strict` decides: subdirectories of a strict
- * path hold *other* CWT types (`common/technology/tier`,
- * `common/technology/category`), and descending into them would attribute their
- * definitions to this registry.
- *
- * A missing directory yields nothing rather than throwing — it is how a path
- * that went stale across a game version announces itself to the reports.
+ * Set `recurse` from the registry's `path_strict` rule. A missing directory returns an empty
+ * list so callers can report an empty corpus without handling a filesystem error.
  */
 export function walkRegistryFiles(
   dir: string,
@@ -55,7 +34,11 @@ export function walkRegistryFiles(
   return found;
 }
 
-/** Always `/`-separated, so a path does not depend on the platform. */
+/**
+ * Converts a registry file path to a portable slash-separated relative path.
+ *
+ * Use the returned path in reports and diagnostics that must be stable across platforms.
+ */
 export function relativeRegistryPath(dir: string, file: string): string {
   return path.relative(dir, file).split(path.sep).join("/");
 }

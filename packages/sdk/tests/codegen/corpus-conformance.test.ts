@@ -1165,6 +1165,21 @@ function observationOf(observed: {
 
 const noScopesOf = (): null => null;
 
+describe("shape conformance, written forms", () => {
+  const scalar = { field: "field", shape: "value", repeated: false } as const;
+
+  it("uses an injected written-form lookup", () => {
+    const mismatches = shapeConformance(
+      observationOf({ scalars: 1 }),
+      [scalar],
+      noScopesOf,
+      () => "block"
+    );
+
+    expect(mismatches.map((mismatch) => mismatch.kind)).toEqual(["form"]);
+  });
+});
+
 /**
  * The arity branch, which had no control of its own until the baseline started
  * failing on it.
