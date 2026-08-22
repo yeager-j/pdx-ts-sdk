@@ -27,10 +27,8 @@ export const ALIAS_STRUCT_CATALOG: Readonly<Record<AliasStructCategory, readonly
  * Throws when no generated category carries the name.
  */
 export function aliasStructFieldsOf(category: string): readonly ContentField[] {
-  const fields: readonly ContentField[] | undefined =
-    ALIAS_STRUCT_CATALOG[category as AliasStructCategory];
-  if (fields === undefined) {
+  if (!Object.hasOwn(ALIAS_STRUCT_CATALOG, category)) {
     throw new Error(`No field table for alias category "${category}"`);
   }
-  return fields;
+  return ALIAS_STRUCT_CATALOG[category as AliasStructCategory];
 }

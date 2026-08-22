@@ -8,6 +8,7 @@ import { ContentAuthoring } from "../src/content/authoring.ts";
 import { resolveFromClosures } from "../src/content/lower.ts";
 import type { ContentField, ContentRegistryDescriptor } from "../src/content/schema.ts";
 import { defineSituationType } from "../src/content/situations.ts";
+import { aliasStructFieldsOf } from "../src/generated/content-alias-catalog.ts";
 import {
   defineShipSize,
   defineTradition,
@@ -3076,6 +3077,17 @@ describe("alias-struct serialization", () => {
     expect(() => authoring.entries("civic_or_origin")).toThrow(
       'No field table for alias category "species_trigger"'
     );
+  });
+
+  it("throws for a name the catalog inherits from Object.prototype", () => {
+    // A plain object answers "constructor" and "__proto__" with an inherited
+    // value, which would leave the lookup returning something that is not a
+    // field table at all.
+    for (const inherited of ["constructor", "toString", "__proto__"]) {
+      expect(() => aliasStructFieldsOf(inherited), inherited).toThrow(
+        `No field table for alias category "${inherited}"`
+      );
+    }
   });
 });
 

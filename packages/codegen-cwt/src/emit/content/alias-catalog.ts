@@ -103,12 +103,10 @@ export function aliasCatalogCode(
       "Throws when no generated category carries the name.",
     ]) +
     "export function aliasStructFieldsOf(category: string): readonly ContentField[] {\n" +
-    "  const fields: readonly ContentField[] | undefined =\n" +
-    "    ALIAS_STRUCT_CATALOG[category as AliasStructCategory];\n" +
-    "  if (fields === undefined) {\n" +
+    "  if (!Object.hasOwn(ALIAS_STRUCT_CATALOG, category)) {\n" +
     '    throw new Error(`No field table for alias category "${category}"`);\n' +
     "  }\n" +
-    "  return fields;\n" +
+    "  return ALIAS_STRUCT_CATALOG[category as AliasStructCategory];\n" +
     "}\n"
   );
 }

@@ -49,6 +49,10 @@ describe("the generated alias catalog", () => {
     );
   });
 
+  it("looks a category up as an own property, so no inherited name resolves", () => {
+    expect(catalog).toContain("if (!Object.hasOwn(ALIAS_STRUCT_CATALOG, category)) {");
+  });
+
   it("imports the tables by value, since the docs ledger is keyed by their identity", () => {
     expect(catalog).not.toContain("import type { GOVERNMENT_TRIGGER_FIELDS }");
   });
