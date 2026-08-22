@@ -139,9 +139,6 @@ describe("government_trigger emission", () => {
           'shape: "aliasStruct", form: "list", category: "government_trigger", repeated: true }'
       );
     }
-    expect(emission.code).toContain(
-      'registerAliasStructFields("government_trigger", GOVERNMENT_TRIGGER_FIELDS);'
-    );
   });
 
   it("carries the block-level text and always fields the consumers write", () => {

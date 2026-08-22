@@ -2,7 +2,7 @@
 // Source: cwtools-stellaris-config @ a4ee61a099b8
 // From: alias[government_trigger:...] across the rule files
 
-import { registerAliasStructFields, type ContentField } from "../content/schema.ts";
+import type { ContentField } from "../content/schema.ts";
 import type { Dlc } from "./enums.ts";
 import type {
   AuthorityRef,
@@ -663,5 +663,3 @@ export const GOVERNMENT_TRIGGER_FIELDS: readonly ContentField[] = [
     conversion: "identity",
   },
 ];
-
-registerAliasStructFields("government_trigger", GOVERNMENT_TRIGGER_FIELDS);

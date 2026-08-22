@@ -595,9 +595,7 @@ export function emitAliasStruct(
     `export interface ${typeName} {\n` +
     blockMembers.join("") +
     "}\n\n" +
-    constArray(fieldsConstant, emitter.use("ContentField"), metadata.join("")) +
-    `${emitter.use("registerAliasStructFields")}(${JSON.stringify(category)}, ` +
-    `${fieldsConstant});\n`;
+    constArray(fieldsConstant, emitter.use("ContentField"), metadata.join(""));
 
   return {
     code,

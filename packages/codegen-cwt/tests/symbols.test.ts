@@ -103,13 +103,12 @@ describe("Emitter.use", () => {
 });
 
 describe("Emitter.useAliasCategory", () => {
-  it("records the type import and the bare import that orders registration", () => {
+  it("records only the type import, since the catalog carries the field table", () => {
     const generator = emitter();
     generator.beginFile();
     generator.useAliasCategory("moon_initializer", "MoonInitializerFields");
     expect(renderImports(generator.endFile().imports)).toBe(
-      'import type { MoonInitializerFields } from "./moon-initializer.ts";\n' +
-        'import "./moon-initializer.ts";\n'
+      'import type { MoonInitializerFields } from "./moon-initializer.ts";\n'
     );
   });
 
@@ -129,20 +128,6 @@ describe("renderImports", () => {
     recorder.add("../a.ts", "Alpha", "type");
     expect(renderImports(recorder.snapshot())).toBe(
       'import type { Alpha, Beta } from "../a.ts";\n' + 'import type { Zed } from "./z.ts";\n'
-    );
-  });
-
-  it("writes every bare side-effect import last", () => {
-    // The Prettier import plugin treats a side-effect import as a reordering
-    // barrier, so one written in the middle would split the sorted block.
-    const recorder = new ImportRecorder();
-    recorder.add("./a.ts", "Alpha", "type");
-    recorder.addSideEffect("./a.ts");
-    recorder.add("./z.ts", "Zed", "type");
-    expect(renderImports(recorder.snapshot())).toBe(
-      'import type { Alpha } from "./a.ts";\n' +
-        'import type { Zed } from "./z.ts";\n' +
-        'import "./a.ts";\n'
     );
   });
 

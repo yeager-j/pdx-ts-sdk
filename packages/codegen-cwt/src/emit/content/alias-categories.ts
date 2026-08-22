@@ -4,8 +4,8 @@
  * row lowering a *keyed* field onto it (`civic_or_origin.potential` ->
  * `government_trigger`), or a body splicing it unkeyed
  * (`solar_system_initializer` -> `planet_initializer`). Both produce a named
- * interface plus a `registerAliasStructFields` call, so they share a write
- * loop and a report line in `index.ts`.
+ * interface plus a catalog row, so they share a write loop and a report line
+ * in `index.ts`.
  *
  * A worklist rather than a flat list, because a spliced category can splice
  * further categories: `planet_initializer` reaches `moon_initializer`, which
@@ -26,6 +26,8 @@ export interface AliasCategoryEmission {
   readonly code: string;
   /** Name of the generated authoring interface. */
   readonly typeName: string;
+  /** Name of the generated field-table constant the catalog imports. */
+  readonly fieldsConstant: string;
   /** Imports and referenced symbols collected while generating the module. */
   readonly usage: Usage;
   /** Category member names represented by the authoring interface. */
@@ -85,6 +87,7 @@ function emitAliasCategory(
   state.aliasCategories.set(category, {
     code: emission.code,
     typeName: emission.typeName,
+    fieldsConstant: emission.fieldsConstant,
     usage,
     emittedMembers: emission.emittedFields.map((field) => field.field),
     declinedMembers: [...emission.declinedFields, ...emission.unsupported],

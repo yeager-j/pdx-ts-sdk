@@ -16,8 +16,6 @@ import type {
 } from "./refs.ts";
 import type { CustomStarNames, StarFlag } from "./value-sets.ts";
 
-import "./planet-initializer.ts";
-
 export interface SolarSystemInitializerAsteroidBeltRadius {
   min: number;
   max: number;

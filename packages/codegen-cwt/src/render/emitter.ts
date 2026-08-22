@@ -218,13 +218,11 @@ export class Emitter {
 
   /**
    * Records a reference to another alias category's generated interface.
-   * It adds both the type import and registration side-effect import; self-references add neither.
+   * It adds the type import only; a self-reference adds nothing.
    */
   useAliasCategory(category: string, typeName: string): string {
     if (category !== this.selfAliasCategory) {
-      const module = `./${category.replaceAll("_", "-")}.ts`;
-      this.scopedImports.add(module, typeName, "type");
-      this.scopedImports.addSideEffect(module);
+      this.scopedImports.add(`./${category.replaceAll("_", "-")}.ts`, typeName, "type");
     }
     return typeName;
   }

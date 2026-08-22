@@ -30,7 +30,7 @@ export type {
   ContentLocalisation,
   ContentRegistryDescriptor,
 } from "./content/schema.ts";
-export { aliasStructFieldsOf } from "./content/schema.ts";
+export { aliasStructFieldsOf } from "./generated/content-alias-catalog.ts";
 export {
   ALIAS_STRUCT_FIELD_OMISSIONS,
   CONTENT_FIELD_MEMBER_DOCS,

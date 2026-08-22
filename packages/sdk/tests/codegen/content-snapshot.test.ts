@@ -1561,12 +1561,10 @@ describe("content-type codegen", () => {
     expect(planet?.memberKey).toBe("planet");
     expect(planet?.spliceCategories).toEqual(["planet_initializer", "moon_initializer"]);
     // The interface refers to itself and to the moon's; the *table* cannot, so
-    // it is registered under the category name and resolved at write time.
+    // a field names the category and the catalog resolves it at write time.
     expect(planet?.code).toContain("planet?: PlanetInitializerFields[];");
     expect(planet?.code).toContain("moon?: MoonInitializerFields[];");
-    expect(planet?.code).toContain(
-      'registerAliasStructFields("planet_initializer", PLANET_INITIALIZER_FIELDS)'
-    );
+    expect(planet?.fieldsConstant).toBe("PLANET_INITIALIZER_FIELDS");
     // A moon carries moons and never planets, which is what makes the two
     // categories worth keeping separate.
     expect(moon?.code).toContain("moon?: MoonInitializerFields[];");

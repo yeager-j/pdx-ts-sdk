@@ -1,16 +1,12 @@
 import { createHash } from "node:crypto";
 import { serialize } from "@pdx-ts/pdxscript";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { createFeature as createFeatureInternal, type ModItem } from "../src/authoring/feature.ts";
 import { buildMod as buildInternal } from "../src/compiler/compile.ts";
 import { ContentAuthoring } from "../src/content/authoring.ts";
 import { resolveFromClosures } from "../src/content/lower.ts";
-import {
-  registerAliasStructFields,
-  type ContentField,
-  type ContentRegistryDescriptor,
-} from "../src/content/schema.ts";
+import type { ContentField, ContentRegistryDescriptor } from "../src/content/schema.ts";
 import { defineSituationType } from "../src/content/situations.ts";
 import {
   defineShipSize,
@@ -1397,7 +1393,7 @@ describe("generated content registries", () => {
     const home = rendered.slice(0, rendered.indexOf("content_test_system_outpost = {"));
     expect(home.match(/^\tplanet = \{$/gm)).toHaveLength(3);
     // A moon inside a planet, and a moon inside that moon — the recursion is
-    // resolved through registerAliasStructFields at write time, since the
+    // resolved through the generated alias catalog at write time, since the
     // field table cannot reference itself.
     expect(rendered).toContain("\t\tmoon = {\n\t\t\tclass = pc_frozen");
     expect(rendered).toContain("\t\t\tmoon = {\n\t\t\t\tclass = pc_barren");
@@ -2545,24 +2541,29 @@ describe("generated content registries", () => {
     // SDK-42's corrected form: one array element, two clause members inside
     // it — a genuine disjunction ("corporate authority or the sovereign
     // civic"), unlike a two-element array, which the game ANDs.
+    // The disjunction's second operand has to be a civic this build defines,
+    // since the guard checks every prefixed reference. Its id is written
+    // rather than the item, because a clause takes a `civic_or_origin.civic`
+    // and `civicOrOrigin` returns the bare `civic_or_origin` brand.
+    const sovereign = cap.civicOrOrigin("sovereign", { name: "Sdk42 Sovereign Civic" });
     const civic = cap.civicOrOrigin("or_groups", {
       name: "Sdk42 Civic",
       possible: {
         orGroups: [
           {
             authority: { value: "auth_corporate" },
-            civics: { value: "sdk42_sovereign_civic" },
+            civics: { value: sovereign.id },
           },
         ],
       },
     });
-    const rendered = render(cap.compile([cap.feature(undefined, [civic])])).get(
+    const rendered = render(cap.compile([cap.feature(undefined, [sovereign, civic])])).get(
       "common/governments/civics/sdk42_civics.txt"
     )!;
     // One OR block, both members inside it — not two sibling OR blocks.
     expect(rendered).toContain(
       "possible = {\n\t\tOR = {\n\t\t\tauthority = {\n\t\t\t\tvalue = auth_corporate\n\t\t\t}\n" +
-        "\t\t\tcivics = {\n\t\t\t\tvalue = sdk42_sovereign_civic\n\t\t\t}\n\t\t}\n\t}"
+        "\t\t\tcivics = {\n\t\t\t\tvalue = sdk42_civic_sovereign\n\t\t\t}\n\t\t}\n\t}"
     );
     expect(rendered.match(/OR = \{/g)).toHaveLength(1);
   });
@@ -2916,87 +2917,13 @@ describe("widenedLowering: unpinned scope and value_field widening", () => {
 /**
  * The `aliasStruct` writer arm, exercised through a descriptor built by hand.
  *
- * `government_trigger`'s consumer registry (`civic_or_origin`) is not generated
- * yet, so the field tables here are transcribed from what
- * `packages/codegen-cwt/src/emit/content/alias-struct.ts` emits for the real category — the
- * codegen side is asserted in `tests/codegen/alias-struct.test.ts`. The
- * expected output is pinned against real vanilla civics: `civic_corvee_system`
- * and `civic_corporate_dominion` in
- * `common/governments/civics/00_civics.txt`.
+ * The category's own field table is the generated one, resolved by name
+ * through `generated/content-alias-catalog.ts` the way the writer resolves it;
+ * only the consuming registry descriptor is synthetic. The expected output is
+ * pinned against real vanilla civics: `civic_corvee_system` and
+ * `civic_corporate_dominion` in `common/governments/civics/00_civics.txt`.
  */
 describe("alias-struct serialization", () => {
-  const GROUP_FIELDS: readonly ContentField[] = [
-    { key: "text", member: "text", shape: "value", form: "scalar", conversion: "identity" },
-    {
-      key: "value",
-      member: "values",
-      shape: "value",
-      form: "list",
-      conversion: "ref",
-      repeated: true,
-    },
-  ];
-  const CLAUSE_FIELDS: readonly ContentField[] = [
-    { key: "value", member: "value", shape: "value", form: "scalar", conversion: "ref" },
-    {
-      key: "OR",
-      member: "or",
-      shape: "struct",
-      form: "list",
-      fields: GROUP_FIELDS,
-      repeated: true,
-    },
-    {
-      key: "NOT",
-      member: "not",
-      shape: "struct",
-      form: "list",
-      fields: GROUP_FIELDS,
-      repeated: true,
-    },
-    {
-      key: "NOR",
-      member: "nor",
-      shape: "struct",
-      form: "list",
-      fields: GROUP_FIELDS,
-      repeated: true,
-    },
-  ];
-  const GOVERNMENT_TRIGGER_FIELDS: readonly ContentField[] = [
-    { key: "text", member: "text", shape: "value", form: "scalar", conversion: "identity" },
-    { key: "always", member: "always", shape: "value", form: "scalar", conversion: "identity" },
-    {
-      key: "authority",
-      member: "authority",
-      shape: "struct",
-      form: "block",
-      fields: CLAUSE_FIELDS,
-    },
-    { key: "ethics", member: "ethics", shape: "struct", form: "block", fields: CLAUSE_FIELDS },
-    { key: "civics", member: "civics", shape: "struct", form: "block", fields: CLAUSE_FIELDS },
-    {
-      // SDK-42: the block-level combinator's member is "orGroups", not "or"
-      // — repeated `OR` keys here are ANDed by the game, unlike the
-      // clause-level `or` above (CLAUSE_FIELDS), which is a genuine
-      // disjunction. Same CWT key, deliberately different member name.
-      key: "OR",
-      member: "orGroups",
-      shape: "aliasStruct",
-      form: "list",
-      category: "government_trigger",
-      repeated: true,
-    },
-    {
-      key: "host_has_dlc",
-      member: "hostHasDlc",
-      shape: "value",
-      form: "scalar",
-      conversion: "identity",
-    },
-  ];
-  registerAliasStructFields("government_trigger", GOVERNMENT_TRIGGER_FIELDS);
-
   const descriptor: ContentRegistryDescriptor = {
     type: "civic_or_origin",
     referenceName: "civic_or_origin",
@@ -3105,7 +3032,26 @@ describe("alias-struct serialization", () => {
     );
   });
 
-  it("refuses to render an alias category nothing registered", () => {
+  it("resolves the category with no import order to arrange it (SDK-267)", async () => {
+    vi.resetModules();
+    // A module graph that never imports government-trigger.ts: one consumer
+    // that names the category, then the writer. The table reaches the writer
+    // through the generated catalog, so no module has to be imported first.
+    await import("../src/generated/species-class.ts");
+    const { fieldEntries } = await import("../src/content/lower.ts");
+    const possible = descriptor.fields.find((field) => field.member === "possible")!;
+
+    expect(
+      serialize(
+        fieldEntries({ possible: { authority: { value: "auth_oligarchic" } } }, [possible], {
+          path: "civic_or_origin",
+          ownerId: "gt_test_civic_fresh_graph",
+        })
+      )
+    ).toBe("possible = {\n\tauthority = {\n\t\tvalue = auth_oligarchic\n\t}\n}\n");
+  });
+
+  it("throws for a category the catalog does not contain", () => {
     // Silence here would emit an empty block the game reads as "no
     // requirements", quietly making a civic available to everyone.
     const authoring = new ContentAuthoring(
@@ -3126,9 +3072,9 @@ describe("alias-struct serialization", () => {
       ],
       () => {}
     );
-    authoring.define("civic_or_origin", { id: "gt_test_civic_unregistered", potential: {} });
+    authoring.define("civic_or_origin", { id: "gt_test_civic_uncatalogued", potential: {} });
     expect(() => authoring.entries("civic_or_origin")).toThrow(
-      'No field table registered for alias category "species_trigger"'
+      'No field table for alias category "species_trigger"'
     );
   });
 });

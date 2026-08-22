@@ -223,9 +223,9 @@ interface ContentTriggerStructField extends ContentFieldBase {
  * `government_trigger`'s `OR`/`AND`/`limit` members each contain the whole
  * category again, so their field table cannot be written inline the way
  * {@link ContentStructField} writes its members — the constant would reference
- * itself before it is initialised. Naming the category instead and resolving it
- * through {@link registerAliasStructFields} at write time is what breaks the
- * cycle; a generated module registers its table once at import.
+ * itself before it is initialised. Naming the category instead breaks the
+ * cycle: the writer resolves the name through the generated catalog
+ * (`generated/content-alias-catalog.ts`) at write time.
  */
 interface ContentAliasStructField extends ContentFieldBase {
   readonly shape: "aliasStruct";
@@ -372,31 +372,6 @@ export function authoredForm(value: unknown): AuthoredForm {
     return "trigger";
   }
   return typeof value === "function" ? "closure" : "block";
-}
-
-const ALIAS_STRUCT_FIELDS = new Map<string, readonly ContentField[]>();
-
-/**
- * Publishes one alias category's field table under its CWT category name.
- *
- * Generated modules call this at import time. Keeping the table in a
- * module-level map rather than on the descriptor is deliberate: a
- * self-recursive category (`government_trigger`) has no non-circular inline
- * spelling, and a name resolved on write is the only lookup that terminates.
- */
-export function registerAliasStructFields(category: string, fields: readonly ContentField[]): void {
-  ALIAS_STRUCT_FIELDS.set(category, fields);
-}
-
-export function aliasStructFieldsOf(category: string): readonly ContentField[] {
-  const fields = ALIAS_STRUCT_FIELDS.get(category);
-  if (fields === undefined) {
-    throw new Error(
-      `No field table registered for alias category "${category}" — the generated ` +
-        "module that declares it must be imported before rendering"
-    );
-  }
-  return fields;
 }
 
 /**
