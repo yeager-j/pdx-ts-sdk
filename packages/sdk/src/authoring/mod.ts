@@ -175,12 +175,6 @@ function assertLogicalName(name: string): void {
 
 type ExactNameRules = (typeof EXACT_NAME_MINTS)[ExactNameRegistry];
 
-/**
- * The logical-name rule for one registry: the global lowercase stem rule,
- * unless the generated `EXACT_NAME_MINTS` table widens it. The table, not the
- * registry name, is what decides — a new exact-name registry is a codegen
- * change alone.
- */
 function assertMintedName(registry: string, name: string): void {
   const rules = EXACT_NAME_MINTS[registry as ExactNameRegistry] as ExactNameRules | undefined;
   if (rules === undefined) {
@@ -195,12 +189,6 @@ function assertMintedName(registry: string, name: string): void {
   }
 }
 
-/**
- * The `prefix: false` rule: the name is the complete definition id, one bare
- * word, and the mod prefix must appear in it as a `_`-delimited segment. The
- * generated method overloads already enforce both, so these are the runtime
- * halves of the same contract for values that reach the mint another way.
- */
 function assertExactName(registry: string, name: string, prefix: string): void {
   const rules = EXACT_NAME_MINTS[registry as ExactNameRegistry] as ExactNameRules | undefined;
   if (rules === undefined) {
@@ -226,14 +214,7 @@ function assertExactName(registry: string, name: string, prefix: string): void {
   }
 }
 
-/**
- * A registry either carries an id segment an author may override, or a fixed
- * mint head the game requires — never both, and the generated `MINT_SHAPES`
- * table says which. Reading the table here rather than branching on registry
- * names is what keeps a new segmentless registry a codegen change alone. The
- * generated `EXACT_NAME_MINTS` table is read the same way for the per-registry
- * name charset and the `prefix: false` opt-out.
- */
+/** Generated tables keep registry-specific mint policy out of the shared authoring layer. */
 function mintContentId<P extends string, I extends IdProfile>(
   prefix: P,
   ids: I
@@ -245,8 +226,6 @@ function mintContentId<P extends string, I extends IdProfile>(
   ): MintedIdOf<P, I, K, Name> => {
     if (options?.prefix === false) {
       assertExactName(registry as string, name, prefix);
-      // The name is the complete id: the option opted out of the prepend, and
-      // the assertion above held it to the prefix-segment rule instead.
       return name as string as MintedIdOf<P, I, K, Name>;
     }
     assertMintedName(registry as string, name);
@@ -259,7 +238,7 @@ function mintContentId<P extends string, I extends IdProfile>(
   };
 }
 
-function assertNestedDefinitionId(prefix: string): (id: string) => void {
+function createNestedDefinitionIdAssertion(prefix: string): (id: string) => void {
   return (id) => {
     if (!FILE_STEM_PATTERN.test(id)) {
       throw new Error(
@@ -279,7 +258,7 @@ function mintNamespace<P extends string, N extends string>(
   return (name === "" ? prefix : `${prefix}_${name}`) as MintedNamespace<P, N>;
 }
 
-function makeEventHandle<
+function createEventHandle<
   P extends string,
   N extends string,
   Id extends number,
@@ -295,40 +274,47 @@ function makeEventHandle<
   from: From
 ): CapabilityEventHandle<P, N, Id, S, From, Kind> {
   assertEventNumber(id);
-  const fullId = `${namespace}.${id}` as MintedEventId<P, N, Id>;
+  const eventId = `${namespace}.${id}` as MintedEventId<P, N, Id>;
   const define = (
-    def: Omit<EventDef<S, From>, "id" | "from">
+    definition: Omit<EventDef<S, From>, "id" | "from">
   ): GeneratedCapabilityEventItem<P, N, Id, S, From, Kind> => {
-    const locEntries: (readonly [string, string])[] = [];
-    const built = buildEvent(kind, scope, namespace, { ...def, id, from } as EventDef<S, From>, {
-      register: (key, text) => locEntries.push([key, text]),
-    });
+    const localizationEntries: (readonly [string, string])[] = [];
+    const event = buildEvent(
+      kind,
+      scope,
+      namespace,
+      { ...definition, id, from } as EventDef<S, From>,
+      { register: (key, text) => localizationEntries.push([key, text]) }
+    );
     return {
-      ...built,
-      id: fullId,
+      ...event,
+      id: eventId,
       itemKind: "event",
       namespace,
-      locEntries,
+      locEntries: localizationEntries,
     } as GeneratedCapabilityEventItem<P, N, Id, S, From, Kind>;
   };
   return Object.freeze({
     kind: "event-ref",
     scope,
     from,
-    id: fullId,
+    id: eventId,
     define,
   }) as CapabilityEventHandle<P, N, Id, S, From, Kind>;
 }
 
-function eventsFor<P extends string, N extends string>(prefix: P, name: N): CapabilityEvents<P, N> {
+function createCapabilityEvents<P extends string, N extends string>(
+  prefix: P,
+  name: N
+): CapabilityEvents<P, N> {
   const namespace = mintNamespace(prefix, name);
   assertNamespace(namespace);
-  const minter: CapabilityEventMinter<P, N> = {
+  const eventMinter: CapabilityEventMinter<P, N> = {
     namespace,
     handle: (id, kind, scope, subtype, from) =>
-      makeEventHandle(namespace, id, kind, scope, subtype, from),
+      createEventHandle(namespace, id, kind, scope, subtype, from),
   };
-  return capabilityEvents(minter);
+  return capabilityEvents(eventMinter);
 }
 
 function belongsToPrefix(value: string, prefix: string): boolean {
@@ -339,74 +325,75 @@ function namespaceBelongsToPrefix(namespace: string, prefix: string): boolean {
   return namespace === prefix || belongsToPrefix(namespace, prefix);
 }
 
-function assertEventNamespace(namespace: string, prefix: string, where: string): void {
+function assertEventNamespace(namespace: string, prefix: string, itemDescription: string): void {
   if (!namespaceBelongsToPrefix(namespace, prefix)) {
-    throw new Error(`${where} namespace "${namespace}" does not belong to mod prefix "${prefix}"`);
+    throw new Error(
+      `${itemDescription} namespace "${namespace}" does not belong to mod prefix "${prefix}"`
+    );
+  }
+}
+
+function assertContentOwner(
+  item: Extract<ModItem, { readonly itemKind: "content" }>,
+  capabilityOwner: CapabilityFeatureOwner<string>
+): void {
+  const { prefix } = capabilityOwner;
+  const shapeMintProvenance = shapeMintOf(item);
+
+  // Shape-minted ids may not contain the prefix, so module-private provenance
+  // is the ownership evidence. Public item properties are forgeable.
+  if (shapeMintProvenance !== undefined) {
+    if (shapeMintProvenance.owner !== capabilityOwner) {
+      throw new Error(
+        `The ${shapeMintProvenance.shape} sprite "${item.id}" was minted by a different ` +
+          `capability — the one for mod prefix "${shapeMintProvenance.owner.prefix}", not ` +
+          `this one for "${prefix}". Mint it with the same capability that places it.`
+      );
+    }
+    return;
+  }
+
+  // Prefix containment is ambiguous when a name contains several mod prefixes.
+  const exactNameOwner = exactNameMintOf(item);
+  if (exactNameOwner !== undefined) {
+    if (exactNameOwner !== capabilityOwner) {
+      throw new Error(
+        `The exact-name ${item.type} "${item.id}" was minted by a different capability — ` +
+          `the one for mod prefix "${exactNameOwner.prefix}", not this one for "${prefix}". ` +
+          "Mint it with the same capability that places it."
+      );
+    }
+    return;
+  }
+
+  if (acceptsExactNames(item.type)) {
+    if (!carriesPrefixSegment(item.id, prefix)) {
+      throw new Error(
+        `Content id "${item.id}" does not belong to mod prefix "${prefix}" ` +
+          `(a ${item.type} name carries the prefix as a "_"-delimited segment)`
+      );
+    }
+    return;
+  }
+
+  const head = mintHeadOf(item.type);
+  if (!item.id.startsWith(`${head}${prefix}_`)) {
+    throw new Error(
+      `Content id "${item.id}" does not belong to mod prefix "${prefix}"` +
+        (head === "" ? "" : ` (a ${item.type} name is "${head}${prefix}_"-led)`)
+    );
   }
 }
 
 function assertCapabilityItem(
   item: ModItem,
-  owner: CapabilityFeatureOwner<string>,
-  prefix: string
+  capabilityOwner: CapabilityFeatureOwner<string>
 ): void {
+  const { prefix } = capabilityOwner;
   switch (item.itemKind) {
-    case "content": {
-      // A shape-minted name is built from another definition's id and may carry
-      // no prefix at all, so ownership was recorded when it was minted. The
-      // record is read from the module-private table, never from `item.minted`
-      // — that property is a public object any caller can attach to any item,
-      // so trusting it would let a foreign definition place itself here. Where
-      // there is no record the name itself is the evidence, measured against
-      // the registry's own mint head.
-      const shapeMint = shapeMintOf(item);
-      if (shapeMint !== undefined) {
-        if (shapeMint.owner !== owner) {
-          throw new Error(
-            `The ${shapeMint.shape} sprite "${item.id}" was minted by a different capability — ` +
-              `the one for mod prefix "${shapeMint.owner.prefix}", not this one for "${prefix}". ` +
-              "Mint it with the same capability that places it."
-          );
-        }
-        return;
-      }
-      // An exact-name mint (`prefix: false`, SDK-183) recorded its capability
-      // the way a shape mint does, and the record is the ownership evidence:
-      // a name can carry two mods' prefixes as segments, so containment alone
-      // would let either capability claim the item.
-      const exactMint = exactNameMintOf(item);
-      if (exactMint !== undefined) {
-        if (exactMint !== owner) {
-          throw new Error(
-            `The exact-name ${item.type} "${item.id}" was minted by a different capability — ` +
-              `the one for mod prefix "${exactMint.prefix}", not this one for "${prefix}". ` +
-              "Mint it with the same capability that places it."
-          );
-        }
-        return;
-      }
-      // An exact-name registry's own names may carry the prefix at the head,
-      // the tail, or inside, so `startsWith` would refuse legitimate names.
-      // Segment containment is the string evidence for an item that carries
-      // no record — one built outside the capability mint, or a spread copy.
-      if (acceptsExactNames(item.type)) {
-        if (!carriesPrefixSegment(item.id, prefix)) {
-          throw new Error(
-            `Content id "${item.id}" does not belong to mod prefix "${prefix}" ` +
-              `(a ${item.type} name carries the prefix as a "_"-delimited segment)`
-          );
-        }
-        return;
-      }
-      const head = mintHeadOf(item.type);
-      if (!item.id.startsWith(`${head}${prefix}_`)) {
-        throw new Error(
-          `Content id "${item.id}" does not belong to mod prefix "${prefix}"` +
-            (head === "" ? "" : ` (a ${item.type} name is "${head}${prefix}_"-led)`)
-        );
-      }
+    case "content":
+      assertContentOwner(item, capabilityOwner);
       return;
-    }
     case "event":
       assertEventNamespace(item.namespace, prefix, "Event");
       return;
@@ -416,13 +403,6 @@ function assertCapabilityItem(
       );
       return;
     case "patch":
-      // A patch keeps vanilla's id, so there is no id to hold to the prefix —
-      // that half of the old blanket exemption still stands. The other half
-      // does not: the capability binds its prefix into `patchX`, and every
-      // localisation key the patch mints is built from it, so an item minted
-      // by one capability and placed in another's feature would write the
-      // first's keys into the second's output. The baked prefix is what makes
-      // that ownership checkable at all.
       if (item.patched.prefix !== prefix) {
         throw new Error(
           `The ${item.patched.registry} patch of "${item.patched.id}" was created by the ` +
@@ -433,10 +413,7 @@ function assertCapabilityItem(
       }
       return;
     case "contribution":
-      // Nothing prefix-bound: `addShipOfSizeLimits` is a free function that
-      // binds no prefix, and the ids it lists are held to the fold's own
-      // dangling-reference guard against the definitions this build actually
-      // contains. There is no capability identity baked in to disagree with.
+      // Contributions bind no capability; the fold checks their referenced definitions.
       return;
     case "localization":
       if (item.prefix !== prefix) {
@@ -446,20 +423,19 @@ function assertCapabilityItem(
       }
       return;
     case "asset":
-      assertAssetOwner(item, owner);
+      assertAssetOwner(item, capabilityOwner);
       return;
   }
 }
 
 function assertCapabilityFeature<P extends string>(
   feature: CapabilityFeature<P>,
-  owner: CapabilityFeatureOwner<P>,
-  prefix: P
+  capabilityOwner: CapabilityFeatureOwner<P>
 ): void {
-  if (feature[capabilityFeatureOwner] !== owner) {
-    throw new Error(`Feature does not belong to mod prefix "${prefix}"`);
+  if (feature[capabilityFeatureOwner] !== capabilityOwner) {
+    throw new Error(`Feature does not belong to mod prefix "${capabilityOwner.prefix}"`);
   }
-  feature.items.forEach((item) => assertCapabilityItem(item, owner, prefix));
+  feature.items.forEach((item) => assertCapabilityItem(item, capabilityOwner));
 }
 
 function resolveIdProfile<I extends IdProfile>(profile: I): Readonly<I> {
@@ -500,45 +476,44 @@ export function createMod<const P extends string, const I extends IdProfile>(
 ): ModCapability<P, I | typeof DEFAULT_ID_PROFILE> {
   const config = resolveConfig(configInput);
   const ids = resolveIdProfile(options?.ids ?? DEFAULT_ID_PROFILE);
-  const owner: CapabilityFeatureOwner<P> = Object.freeze({
+  const capabilityOwner: CapabilityFeatureOwner<P> = Object.freeze({
     prefix: config.prefix,
     assetCapability: Symbol("asset capability"),
   });
-  const content = contentCapabilityMethods<P, I | typeof DEFAULT_ID_PROFILE>(
-    mintContentId(config.prefix, ids),
-    assertNestedDefinitionId(config.prefix),
+  const mintId = mintContentId(config.prefix, ids);
+  const assertNestedDefinitionId = createNestedDefinitionIdAssertion(config.prefix);
+  const contentMethods = contentCapabilityMethods<P, I | typeof DEFAULT_ID_PROFILE>(
+    mintId,
+    assertNestedDefinitionId,
     config.prefix,
     assertLogicalName,
-    // The identity a shape mint is recorded against, so a mint can be traced to
-    // one capability rather than merely to a prefix string.
-    owner
+    capabilityOwner
   );
-  const situationTypes = situationTypeCapabilityMethods<P, I | typeof DEFAULT_ID_PROFILE>(
-    mintContentId(config.prefix, ids),
-    assertNestedDefinitionId(config.prefix)
+  const situationTypeMethods = situationTypeCapabilityMethods<P, I | typeof DEFAULT_ID_PROFILE>(
+    mintId,
+    assertNestedDefinitionId
   );
-  const eventChains = eventChainCapabilityMethods<P, I | typeof DEFAULT_ID_PROFILE>(
-    mintContentId(config.prefix, ids)
-  );
+  const eventChainMethods = eventChainCapabilityMethods<P, I | typeof DEFAULT_ID_PROFILE>(mintId);
 
   return Object.freeze({
     config,
     ids,
-    ...content,
-    ...situationTypes,
-    ...eventChains,
-    namespace: <const N extends string>(name: N = "" as N) => eventsFor(config.prefix, name),
-    assetFile: (input: AssetFileInput) => captureAssetFile(owner, input),
-    assetTree: (input: AssetTreeInput) => captureAssetTree(owner, input),
+    ...contentMethods,
+    ...situationTypeMethods,
+    ...eventChainMethods,
+    namespace: <const N extends string>(name: N = "" as N) =>
+      createCapabilityEvents(config.prefix, name),
+    assetFile: (input: AssetFileInput) => captureAssetFile(capabilityOwner, input),
+    assetTree: (input: AssetTreeInput) => captureAssetTree(capabilityOwner, input),
     feature: <T extends ModItem>(stem: string | undefined, items: readonly T[]) => {
-      items.forEach((item) => assertCapabilityItem(item, owner, config.prefix));
+      items.forEach((item) => assertCapabilityItem(item, capabilityOwner));
       return Object.freeze({
         ...createFeature(stem, items),
-        [capabilityFeatureOwner]: owner,
+        [capabilityFeatureOwner]: capabilityOwner,
       }) as CapabilityFeature<P, T>;
     },
     compile: (features: readonly CapabilityFeature<P>[], buildOptions: BuildOptions = {}) => {
-      features.forEach((feature) => assertCapabilityFeature(feature, owner, config.prefix));
+      features.forEach((feature) => assertCapabilityFeature(feature, capabilityOwner));
       return buildMod(config, features, buildOptions);
     },
     on,

@@ -6,9 +6,7 @@ description: Apply clear local code style when writing, refactoring, or reviewin
 # Code Style
 
 This skill governs how implementation communicates intent at the expression, statement, function,
-and file level. Use [Engineering Principles](../engineering-principles/SKILL.md) for authority,
-module boundaries, interface design, test strategy, and verification. Let project conventions and
-observed local evidence override these portable defaults.
+and file level. 
 
 ## Strength
 

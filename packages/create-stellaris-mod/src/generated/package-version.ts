@@ -1,3 +1,3 @@
 /** This file is generated from package.json and SDK source by scripts/generate-version.mjs. */
 export const VERSION = "0.2.0";
-export const SDK_DOCS_REVISION = "45c1eb1093230727d5d59d0133033074dd51f8ec0f6349492af1b768e372f8ea";
+export const SDK_DOCS_REVISION = "ba0431b4d7bc1d2e96a753edbd83ccb818a6acb0982c9d3ecad5820bdc556b6e";
