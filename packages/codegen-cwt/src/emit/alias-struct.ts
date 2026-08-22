@@ -317,6 +317,7 @@ function clauseDocTables(
 }
 
 function clauseFieldsCode(
+  emitter: Emitter,
   ref: TsValue,
   clauseFieldsConstant: string,
   groupFieldsConstant: string
@@ -341,8 +342,8 @@ function clauseFieldsCode(
       )
       .join("");
   return (
-    constArray(groupFieldsConstant, "ContentField", groupRows) +
-    constArray(clauseFieldsConstant, "ContentField", clauseRows)
+    constArray(groupFieldsConstant, emitter.use("ContentField"), groupRows) +
+    constArray(clauseFieldsConstant, emitter.use("ContentField"), clauseRows)
   );
 }
 
@@ -403,7 +404,12 @@ export function emitAliasStruct(
   const docTables: DocTable[] = [];
   for (const [key, value] of scalars) {
     blockMembers.push(
-      renderMember({ name: memberName(key), type: value.type, optional: true, docs: [] })
+      renderMember({
+        name: memberName(key),
+        type: emitter.useValue(value).type,
+        optional: true,
+        docs: [],
+      })
     );
     memberDocs[memberName(key)] = { optional: true, docs: [], memberType: value.type };
     metadata.push(valueField(key, value));
@@ -418,7 +424,7 @@ export function emitAliasStruct(
       blockMembers.push(
         renderMember({
           name: memberName(name),
-          type: shape.value.type,
+          type: emitter.useValue(shape.value).type,
           optional: true,
           docs: docLines,
         })
@@ -433,7 +439,7 @@ export function emitAliasStruct(
       const memberConstant = `${constant}_${name.toUpperCase()}`;
       const memberClauseFieldsConstant = `${memberConstant}_CLAUSE_FIELDS`;
       const memberGroupFieldsConstant = `${memberConstant}_CLAUSE_GROUP_FIELDS`;
-      const memberType = `${clauseName}<${shape.ref.type}>`;
+      const memberType = `${clauseName}<${emitter.useValue(shape.ref).type}>`;
       blockMembers.push(
         renderMember({ name: memberName(name), type: memberType, optional: true, docs: docLines })
       );
@@ -444,7 +450,7 @@ export function emitAliasStruct(
           `fields: ${memberClauseFieldsConstant} },\n`
       );
       clauseTables.push(
-        clauseFieldsCode(shape.ref, memberClauseFieldsConstant, memberGroupFieldsConstant)
+        clauseFieldsCode(emitter, shape.ref, memberClauseFieldsConstant, memberGroupFieldsConstant)
       );
       docTables.push(
         ...clauseDocTables(
@@ -521,8 +527,9 @@ export function emitAliasStruct(
     `export interface ${typeName} {\n` +
     blockMembers.join("") +
     "}\n\n" +
-    constArray(fieldsConstant, "ContentField", metadata.join("")) +
-    `registerAliasStructFields(${JSON.stringify(category)}, ${fieldsConstant});\n`;
+    constArray(fieldsConstant, emitter.use("ContentField"), metadata.join("")) +
+    `${emitter.use("registerAliasStructFields")}(${JSON.stringify(category)}, ` +
+    `${fieldsConstant});\n`;
 
   return {
     code,

@@ -41,6 +41,7 @@ import {
   omissionLine,
   pickOrdinary,
   repeatsSiblings,
+  useWideningSymbols,
   wildcardBlockOf,
   type DocTable,
   type EmittedField,
@@ -51,6 +52,13 @@ import {
 import { partitionSubtypeFields } from "./subtype-partition.ts";
 import { Emitter } from "./types.ts";
 import { constArray, member as renderMember } from "./writer.ts";
+
+/**
+ * Where the parsed view of a shipped definition lives. Not a `KNOWN_SYMBOLS`
+ * row because the name is per registry (`ParsedTechnology`), so only the module
+ * is a constant.
+ */
+const PARSED_CONTENT_MODULE = "../stellaris/vanilla/view.ts";
 
 export interface ContentEmission {
   readonly code: string;
@@ -555,10 +563,11 @@ function repeatedStructEmission(
     "}\n\n" +
     constArray(
       fieldsConstant,
-      "ContentField",
+      emitter.use("ContentField"),
       fieldMetadata.map((entry) => `  ${entry},\n`).join("")
     ) +
-    `export const ${localisationConstant}: readonly ContentLocalisation[] = ${locMetadata};\n\n`;
+    `export const ${localisationConstant}: readonly ${emitter.use("ContentLocalisation")}[] = ` +
+    `${locMetadata};\n\n`;
 
   const metadataValue = metadata(
     ownerField,
@@ -807,6 +816,7 @@ interface ScopeParameter {
  * they are not body fields and never reach the splice.
  */
 function patchTypes(
+  emitter: Emitter,
   type: ContentType,
   typeName: string,
   generic: string,
@@ -815,7 +825,7 @@ function patchTypes(
   patchWidenings: string[],
   patchLocMembers: string[]
 ): string {
-  const parsed = `Parsed${typeName}`;
+  const parsed = emitter.useFrom(PARSED_CONTENT_MODULE, `Parsed${typeName}`, "type");
   const locMembers = localisationPlan.entries.map((entry) => {
     const member = camelCase(entry.key);
     const pattern = entry.pattern.replace("$", "<vanilla id>");
@@ -840,10 +850,13 @@ function patchTypes(
         `${type.name}.${entry.member} also admits ${widening.extraType} — ${widening.reason}`
       );
     }
+    for (const symbol of widening?.symbols ?? []) {
+      emitter.use(symbol);
+    }
     const extra = widening === undefined ? "" : `, ${widening.extraType}`;
     return renderMember({
       name: entry.member,
-      type: `PatchInput<${entry.memberType}${extra}>`,
+      type: `${emitter.use("PatchInput")}<${entry.memberType}${extra}>`,
       optional: true,
       readonly: true,
       docs: entry.docs,
@@ -872,9 +885,9 @@ function patchTypes(
     members.join("") +
     "}\n\n" +
     docComment([`A patched vanilla ${type.name}, ready for the win engine.`]) +
-    `export type Patched${typeName} = PatchedContent<${parsed}>;\n\n` +
+    `export type Patched${typeName} = ${emitter.use("PatchedContent")}<${parsed}>;\n\n` +
     docComment([`A patched vanilla ${type.name} placed into a capability feature.`]) +
-    `export type ${typeName}PatchItem = ContentPatchItem<${parsed}>;\n\n`
+    `export type ${typeName}PatchItem = ${emitter.use("ContentPatchItem")}<${parsed}>;\n\n`
   );
 }
 
@@ -947,6 +960,9 @@ export function emitContentType(
         : parameter.selector === undefined
           ? "NoInfer<S>"
           : `NoInfer<${pascalCase(type.name)}ScopeOf<E>>`,
+    // A parameterised registry's unpinned type is the definition's own type
+    // parameter, which is declared in this file and imports nothing.
+    ...(parameter === null ? { unpinnedSymbol: "ScopeName" } : {}),
     ...(parameter === null
       ? {}
       : {
@@ -1195,6 +1211,7 @@ export function emitContentType(
     const widening = FIELD_WIDENINGS.get(path);
     if (widening !== undefined) {
       emitter.overlayAudit.applied("FIELD_WIDENINGS", path);
+      useWideningSymbols(emitter, widening);
     }
     const loweredContext = selectedContext(fieldContext, parameter, member);
     const lowered = pickOrdinary(
@@ -1343,6 +1360,7 @@ export function emitContentType(
             `${declaredFrom.scopes.map((scope) => JSON.stringify(scope)).join(" | ")};\n\n`);
   const patchCode = CONTENT_PATCH_REGISTRIES.has(type.name)
     ? patchTypes(
+        emitter,
         type,
         typeName,
         generic,
@@ -1385,17 +1403,18 @@ export function emitContentType(
     "  /** Full content id, including the mod prefix. */\n" +
     "  id: Id;\n" +
     "}\n\n" +
-    `export type Defined${typeName}<Id extends string = string> = DefinedContent<\n` +
+    `export type Defined${typeName}<Id extends string = string> = ` +
+    `${emitter.use("DefinedContent")}<\n` +
     `  ${JSON.stringify(type.name)},\n` +
     `  ${typeName}Def<Id>\n` +
     ">;\n\n" +
     patchCode +
     constArray(
       fieldsConstant,
-      "ContentField",
+      emitter.use("ContentField"),
       fieldMetadata.map((entry) => `  ${entry},\n`).join("")
     ) +
-    `export const ${localisationConstant}: readonly ContentLocalisation[] = ` +
+    `export const ${localisationConstant}: readonly ${emitter.use("ContentLocalisation")}[] = ` +
     `${localisationMetadata(emitter, type, localisationPlan, localisationPointers)};\n`;
 
   // The prose lists are projections of the same rows the ledger carries, so

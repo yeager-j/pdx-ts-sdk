@@ -200,15 +200,23 @@ export function tsDoc(declarations: readonly AliasDecl[], doc: DocEntry | undefi
   return lines;
 }
 
-function emitBoolean(fn: string, key: string, scope: string, docs: string[]): string {
+function emitBoolean(
+  emitter: Emitter,
+  fn: string,
+  key: string,
+  scope: string,
+  docs: string[]
+): string {
   return (
     docComment(docs) +
-    `export function ${fn}(value: boolean = true): Trigger<${scope}> {\n` +
-    `  return trigger([kv(${JSON.stringify(key)}, value)]);\n}\n`
+    `export function ${fn}(value: boolean = true): ${emitter.use("Trigger")}<${scope}> {\n` +
+    `  return ${emitter.use("trigger")}([${emitter.use("kv")}(${JSON.stringify(key)}, ` +
+    `value)]);\n}\n`
   );
 }
 
 function emitComparison(
+  emitter: Emitter,
   fn: string,
   key: string,
   scope: string,
@@ -217,8 +225,10 @@ function emitComparison(
 ): string {
   return (
     docComment(docs) +
-    `export function ${fn}(op: PdxOp, value: ${value.type}): Trigger<${scope}> {\n` +
-    `  return trigger([cmp(${JSON.stringify(key)}, op, ${pushExpr(value, "value")})]);\n}\n`
+    `export function ${fn}(op: ${emitter.use("PdxOp")}, ` +
+    `value: ${emitter.useValue(value).type}): ${emitter.use("Trigger")}<${scope}> {\n` +
+    `  return ${emitter.use("trigger")}([${emitter.use("cmp")}(${JSON.stringify(key)}, op, ` +
+    `${pushExpr(emitter, value, "value")})]);\n}\n`
   );
 }
 
@@ -227,74 +237,94 @@ function emitComparison(
  * wrapped when the value is a `ScriptValue` (see `TsValue.scriptValue`) so a
  * `@name` input becomes a `var` node rather than a defensively-quoted string.
  */
-function pushExpr(value: TsValue, expr: string): string {
+function pushExpr(emitter: Emitter, value: TsValue, expr: string): string {
+  if (value.scalarSymbol !== undefined) {
+    emitter.use(value.scalarSymbol);
+  }
   const scalar = value.toScalar(expr);
-  return value.scriptValue === true ? `scriptValueScalar(${scalar})` : scalar;
+  return value.scriptValue === true ? `${emitter.use("scriptValueScalar")}(${scalar})` : scalar;
 }
 
-function emitValue(fn: string, key: string, scope: string, docs: string[], value: TsValue): string {
+function emitValue(
+  emitter: Emitter,
+  fn: string,
+  key: string,
+  scope: string,
+  docs: string[],
+  value: TsValue
+): string {
   const signature =
-    docComment(docs) + `export function ${fn}(value: ${value.type}): Trigger<${scope}> {\n`;
+    docComment(docs) +
+    `export function ${fn}(value: ${emitter.useValue(value).type}): ` +
+    `${emitter.use("Trigger")}<${scope}> {\n`;
   if (value.refTypes === undefined) {
     return (
       signature +
-      `  return trigger([kv(${JSON.stringify(key)}, ${pushExpr(value, "value")})]);\n}\n`
+      `  return ${emitter.use("trigger")}([${emitter.use("kv")}(${JSON.stringify(key)}, ` +
+      `${pushExpr(emitter, value, "value")})]);\n}\n`
     );
   }
   // The id is bound once and both written and recorded, so the emitted entry
   // and the reference the build checks can never drift apart.
+  if (value.scalarSymbol !== undefined) {
+    emitter.use(value.scalarSymbol);
+  }
   return (
     signature +
     `  const id = ${value.toScalar("value")};\n` +
-    `  return trigger([kv(${JSON.stringify(key)}, id)], ` +
+    `  return ${emitter.use("trigger")}([${emitter.use("kv")}(${JSON.stringify(key)}, id)], ` +
     `[{ targets: ${JSON.stringify(value.refTypes)}, id, field: ${JSON.stringify(key)} }]);\n}\n`
   );
 }
 
 function emitWrapper(
+  emitter: Emitter,
   fn: string,
   key: string,
   scope: string,
   docs: string[],
   inner: string
 ): string {
+  const type = emitter.use("Trigger");
   return (
     docComment(docs) +
-    `export function ${fn}(condition: Trigger<${JSON.stringify(inner)}>): Trigger<${scope}> {\n` +
-    `  return trigger([block(${JSON.stringify(key)}, [...condition.entries])], ` +
-    `[...condition.refs]);\n}\n`
+    `export function ${fn}(condition: ${type}<${JSON.stringify(inner)}>): ${type}<${scope}> {\n` +
+    `  return ${emitter.use("trigger")}([${emitter.use("block")}(${JSON.stringify(key)}, ` +
+    `[...condition.entries])], [...condition.refs]);\n}\n`
   );
 }
 
-function memberType(field: ArgField, outerScope: string): string {
+function memberType(emitter: Emitter, field: ArgField, outerScope: string): string {
   const value = field.value;
   switch (value.kind) {
     case "scalar":
-      return value.value.type;
+      return emitter.useValue(value.value).type;
     case "fields":
-      return `{ ${value.fields.map((nested) => `${camelCase(nested.name)}${nested.optional ? "?" : ""}: ${memberType(nested, outerScope)}`).join("; ")} }`;
+      return `{ ${value.fields.map((nested) => `${camelCase(nested.name)}${nested.optional ? "?" : ""}: ${memberType(emitter, nested, outerScope)}`).join("; ")} }`;
     case "scalarOrFields":
-      return `${value.scalar.type} | { ${value.fields.map((nested) => `${camelCase(nested.name)}${nested.optional ? "?" : ""}: ${memberType(nested, outerScope)}`).join("; ")} }`;
+      return `${emitter.useValue(value.scalar).type} | { ${value.fields.map((nested) => `${camelCase(nested.name)}${nested.optional ? "?" : ""}: ${memberType(emitter, nested, outerScope)}`).join("; ")} }`;
     case "valueList":
-      return valueListType(value, outerScope);
+      return valueListType(emitter, value, outerScope);
     case "clause":
-      return `Trigger<${value.scope === null ? outerScope : JSON.stringify(value.scope)}>`;
+      return `${emitter.use("Trigger")}<${value.scope === null ? outerScope : JSON.stringify(value.scope)}>`;
     case "comparison": {
       const literals = value.literals.map((literal) => JSON.stringify(literal));
-      return [value.value.type, `readonly [PdxOp, ${value.value.type}]`, ...literals].join(" | ");
+      const scalar = emitter.useValue(value.value).type;
+      return [scalar, `readonly [${emitter.use("PdxOp")}, ${scalar}]`, ...literals].join(" | ");
     }
   }
 }
 
 function valueListType(
+  emitter: Emitter,
   value: Extract<ArgValue, { readonly kind: "valueList" }>,
   outerScope: string
 ): string {
   const arms = [
-    value.scalar?.type,
+    value.scalar === null ? undefined : emitter.useValue(value.scalar).type,
     value.fields === null
       ? null
-      : `{ ${value.fields.map((field) => `${propertyName(camelCase(field.name))}${field.optional ? "?" : ""}: ${memberType(field, outerScope)}`).join("; ")} }`,
+      : `{ ${value.fields.map((field) => `${propertyName(camelCase(field.name))}${field.optional ? "?" : ""}: ${memberType(emitter, field, outerScope)}`).join("; ")} }`,
   ].filter((arm): arm is string => arm !== null && arm !== undefined);
   const item = arms.length === 1 && !arms[0]!.includes(" | ") ? arms[0]! : `(${arms.join(" | ")})`;
   return cardinalityArrayType(item, value.cardinality);
@@ -322,6 +352,7 @@ function contributesRefs(field: ArgField): boolean {
 }
 
 function pushCode(
+  emitter: Emitter,
   field: ArgField,
   access: string,
   owner: string,
@@ -333,15 +364,21 @@ function pushCode(
     case "scalar": {
       const { refTypes } = field.value.value;
       if (refTypes === undefined) {
-        return `${sink}.push(kv(${key}, ${pushExpr(field.value.value, access)}));`;
+        return (
+          `${sink}.push(${emitter.use("kv")}(${key}, ` +
+          `${pushExpr(emitter, field.value.value, access)}));`
+        );
       }
       // Indexed rather than named after the field, so the local can never
       // collide with `args`, `entries`, `refs`, or a sibling field's name.
       const local = `id${index}`;
       const field_ = JSON.stringify(`${owner}.${field.name}`);
+      if (field.value.value.scalarSymbol !== undefined) {
+        emitter.use(field.value.value.scalarSymbol);
+      }
       return (
         `const ${local} = ${field.value.value.toScalar(access)};\n` +
-        `    ${sink}.push(kv(${key}, ${local}));\n` +
+        `    ${sink}.push(${emitter.use("kv")}(${key}, ${local}));\n` +
         `    refs.push({ targets: ${JSON.stringify(refTypes)}, id: ${local}, field: ${field_} });`
       );
     }
@@ -350,6 +387,7 @@ function pushCode(
         .map((nestedField, nestedIndex) => {
           const nestedAccess = propertyAccess(access, camelCase(nestedField.name));
           const code = pushCode(
+            emitter,
             nestedField,
             nestedAccess,
             `${owner}.${field.name}`,
@@ -360,12 +398,12 @@ function pushCode(
         })
         .join("\n");
       return (
-        `if (isStructuredValue(${access}, ${JSON.stringify(field.value.scalar.objectKinds ?? [])})) {\n` +
-        `  const nestedEntries: PdxEntry[] = [];\n` +
+        `if (${emitter.use("isStructuredValue")}(${access}, ${JSON.stringify(field.value.scalar.objectKinds ?? [])})) {\n` +
+        `  const nestedEntries: ${emitter.use("PdxEntry")}[] = [];\n` +
         `${nested}\n` +
-        `  ${sink}.push(block(${key}, nestedEntries));\n` +
+        `  ${sink}.push(${emitter.use("block")}(${key}, nestedEntries));\n` +
         `} else {\n` +
-        `  ${sink}.push(kv(${key}, ${pushExpr(field.value.scalar, access)}));\n` +
+        `  ${sink}.push(${emitter.use("kv")}(${key}, ${pushExpr(emitter, field.value.scalar, access)}));\n` +
         `}`
       );
     }
@@ -374,6 +412,7 @@ function pushCode(
         .map((nestedField, nestedIndex) => {
           const nestedAccess = propertyAccess(access, camelCase(nestedField.name));
           const code = pushCode(
+            emitter,
             nestedField,
             nestedAccess,
             `${owner}.${field.name}`,
@@ -384,13 +423,21 @@ function pushCode(
         })
         .join("\n");
       return (
-        `const nestedEntries: PdxEntry[] = [];\n` +
+        `const nestedEntries: ${emitter.use("PdxEntry")}[] = [];\n` +
         `${nested}\n` +
-        `${sink}.push(block(${key}, nestedEntries));`
+        `${sink}.push(${emitter.use("block")}(${key}, nestedEntries));`
       );
     }
     case "valueList":
-      return pushValueListCode(field.value, access, `${owner}.${field.name}`, index, key, sink);
+      return pushValueListCode(
+        emitter,
+        field.value,
+        access,
+        `${owner}.${field.name}`,
+        index,
+        key,
+        sink
+      );
     case "clause":
       return (
         (field.value.splice
@@ -401,13 +448,15 @@ function pushCode(
     case "comparison":
       return (
         `${sink}.push(typeof ${access} === "object" ` +
-        `? cmp(${key}, ${access}[0], ${pushExpr(field.value.value, `${access}[1]`)}) : ` +
-        `kv(${key}, ${pushExpr(field.value.value, access)}));`
+        `? ${emitter.use("cmp")}(${key}, ${access}[0], ` +
+        `${pushExpr(emitter, field.value.value, `${access}[1]`)}) : ` +
+        `${emitter.use("kv")}(${key}, ${pushExpr(emitter, field.value.value, access)}));`
       );
   }
 }
 
 function pushValueListCode(
+  emitter: Emitter,
   value: Extract<ArgValue, { readonly kind: "valueList" }>,
   access: string,
   owner: string,
@@ -423,15 +472,19 @@ function pushValueListCode(
     if (scalar === null) {
       return "";
     }
-    const expression = pushExpr(scalar, item);
-    const pdxScalar = scalar.scriptValue === true ? expression : `scalar(${expression})`;
+    const expression = pushExpr(emitter, scalar, item);
+    const pdxScalar =
+      scalar.scriptValue === true ? expression : `${emitter.use("scalar")}(${expression})`;
     if (scalar.refTypes === undefined) {
       return `${items}.push(${pdxScalar});`;
     }
     const id = `id${index}`;
+    if (scalar.scalarSymbol !== undefined) {
+      emitter.use(scalar.scalarSymbol);
+    }
     return (
       `const ${id} = ${scalar.toScalar(item)};\n` +
-      `${items}.push(scalar(${id}));\n` +
+      `${items}.push(${emitter.use("scalar")}(${id}));\n` +
       `refs.push({ targets: ${JSON.stringify(scalar.refTypes)}, id: ${id}, field: ${JSON.stringify(owner)} });`
     );
   })();
@@ -442,24 +495,28 @@ function pushValueListCode(
     const nested = structured
       .map((field, nestedIndex) => {
         const nestedAccess = propertyAccess(item, camelCase(field.name));
-        const code = pushCode(field, nestedAccess, owner, nestedIndex, "nestedEntries");
+        const code = pushCode(emitter, field, nestedAccess, owner, nestedIndex, "nestedEntries");
         return field.optional ? `if (${nestedAccess} !== undefined) {\n  ${code}\n}` : code;
       })
       .join("\n");
-    return `const nestedEntries: PdxEntry[] = [];\n${nested}\n${items}.push(container(nestedEntries));`;
+    return (
+      `const nestedEntries: ${emitter.use("PdxEntry")}[] = [];\n${nested}\n` +
+      `${items}.push(${emitter.use("container")}(nestedEntries));`
+    );
   })();
   const body =
     scalar !== null && structured !== null
-      ? `if (isStructuredValue(${item}, ${JSON.stringify(scalar.objectKinds ?? [])})) {\n${structuredPush}\n} else {\n${scalarPush}\n}`
+      ? `if (${emitter.use("isStructuredValue")}(${item}, ${JSON.stringify(scalar.objectKinds ?? [])})) {\n${structuredPush}\n} else {\n${scalarPush}\n}`
       : structuredPush || scalarPush;
   return (
-    `const ${items}: PdxItem[] = [];\n` +
+    `const ${items}: ${emitter.use("PdxItem")}[] = [];\n` +
     `for (const ${item} of ${access}) {\n${body}\n}\n` +
-    `${sink}.push(kv(${key}, container(${items})));`
+    `${sink}.push(${emitter.use("kv")}(${key}, ${emitter.use("container")}(${items})));`
   );
 }
 
 function emitValueList(
+  emitter: Emitter,
   fn: string,
   key: string,
   scope: string,
@@ -470,15 +527,17 @@ function emitValueList(
   const withRefs = contributesRefs(field);
   return (
     docComment(docs) +
-    `export function ${fn}(values: ${valueListType(value, scope)}): Trigger<${scope}> {\n` +
-    `  const entries: PdxEntry[] = [];\n` +
-    (withRefs ? `  const refs: ContentRefUse[] = [];\n` : "") +
-    `  ${pushValueListCode(value, "values", key, 0, JSON.stringify(key), "entries")}\n` +
-    `  return trigger(entries${withRefs ? ", refs" : ""});\n}\n`
+    `export function ${fn}(values: ${valueListType(emitter, value, scope)}): ` +
+    `${emitter.use("Trigger")}<${scope}> {\n` +
+    `  const entries: ${emitter.use("PdxEntry")}[] = [];\n` +
+    (withRefs ? `  const refs: ${emitter.use("ContentRefUse")}[] = [];\n` : "") +
+    `  ${pushValueListCode(emitter, value, "values", key, 0, JSON.stringify(key), "entries")}\n` +
+    `  return ${emitter.use("trigger")}(entries${withRefs ? ", refs" : ""});\n}\n`
   );
 }
 
 function emitFields(
+  emitter: Emitter,
   fn: string,
   key: string,
   scope: string,
@@ -490,7 +549,7 @@ function emitFields(
     .map((field) =>
       renderMember({
         name: camelCase(field.name),
-        type: memberType(field, scope),
+        type: memberType(emitter, field, scope),
         optional: field.optional,
         docs: field.docs,
       })
@@ -499,7 +558,7 @@ function emitFields(
   const pushes = fields
     .map((field, index) => {
       const access = propertyAccess("args", camelCase(field.name));
-      const push = `    ${pushCode(field, access, key, index)}\n`;
+      const push = `    ${pushCode(emitter, field, access, key, index)}\n`;
       return field.optional ? `  if (${access} !== undefined) {\n${push}  }\n` : push.slice(2);
     })
     .join("");
@@ -507,15 +566,17 @@ function emitFields(
   return (
     `export interface ${name} {\n${members}}\n\n` +
     docComment(docs) +
-    `export function ${fn}(args: ${name}): Trigger<${scope}> {\n` +
-    `  const entries: PdxEntry[] = [];\n` +
-    (withRefs ? `  const refs: ContentRefUse[] = [];\n` : "") +
+    `export function ${fn}(args: ${name}): ${emitter.use("Trigger")}<${scope}> {\n` +
+    `  const entries: ${emitter.use("PdxEntry")}[] = [];\n` +
+    (withRefs ? `  const refs: ${emitter.use("ContentRefUse")}[] = [];\n` : "") +
     pushes +
-    `  return trigger([block(${JSON.stringify(key)}, entries)]${withRefs ? ", refs" : ""});\n}\n`
+    `  return ${emitter.use("trigger")}([${emitter.use("block")}(${JSON.stringify(key)}, ` +
+    `entries)]${withRefs ? ", refs" : ""});\n}\n`
   );
 }
 
 function emitStringOrFields(
+  emitter: Emitter,
   fn: string,
   key: string,
   scope: string,
@@ -533,7 +594,7 @@ function emitStringOrFields(
     .map((field) =>
       renderMember({
         name: camelCase(field.name),
-        type: memberType(field, returnScope),
+        type: memberType(emitter, field, returnScope),
         optional: field.optional,
         docs: field.docs,
       })
@@ -542,45 +603,54 @@ function emitStringOrFields(
   const pushes = fields
     .map((field, index) => {
       const access = propertyAccess("args", camelCase(field.name));
-      const push = `    ${pushCode(field, access, key, index)}\n`;
+      const push = `    ${pushCode(emitter, field, access, key, index)}\n`;
       return field.optional ? `  if (${access} !== undefined) {\n${push}  }\n` : push.slice(2);
     })
     .join("");
   const withRefs = fields.some(contributesRefs);
+  const condition = emitter.use("Trigger");
   return (
     `export interface ${name}${typeParameter} {\n${members}}\n\n` +
     docComment(docs) +
-    `export function ${fn}(value: string): Trigger<${scope}>;\n` +
-    `export function ${fn}${typeParameter}(args: ${argsType}): Trigger<${returnScope}>;\n` +
-    `export function ${fn}${preservesEnclosingScope ? `<S extends ${scope}>` : ""}(value: string | ${argsType}): Trigger<${scope}> {\n` +
+    `export function ${fn}(value: string): ${condition}<${scope}>;\n` +
+    `export function ${fn}${typeParameter}(args: ${argsType}): ${condition}<${returnScope}>;\n` +
+    `export function ${fn}${preservesEnclosingScope ? `<S extends ${scope}>` : ""}(value: string | ${argsType}): ${condition}<${scope}> {\n` +
     `  if (typeof value === "string") {\n` +
-    `    return trigger([kv(${JSON.stringify(key)}, value)]);\n` +
+    `    return ${emitter.use("trigger")}([${emitter.use("kv")}(${JSON.stringify(key)}, ` +
+    `value)]);\n` +
     `  }\n` +
     `  const args = value;\n` +
-    `  const entries: PdxEntry[] = [];\n` +
-    (withRefs ? `  const refs: ContentRefUse[] = [];\n` : "") +
+    `  const entries: ${emitter.use("PdxEntry")}[] = [];\n` +
+    (withRefs ? `  const refs: ${emitter.use("ContentRefUse")}[] = [];\n` : "") +
     pushes +
-    `  return trigger([block(${JSON.stringify(key)}, entries)]${withRefs ? ", refs" : ""});\n}\n`
+    `  return ${emitter.use("trigger")}([${emitter.use("block")}(${JSON.stringify(key)}, ` +
+    `entries)]${withRefs ? ", refs" : ""});\n}\n`
   );
 }
 
-function emitOne(key: string, shape: Shape, scope: string, docs: string[]): string {
+function emitOne(
+  emitter: Emitter,
+  key: string,
+  shape: Shape,
+  scope: string,
+  docs: string[]
+): string {
   const fn = safeIdentifier(camelCase(key));
   switch (shape.kind) {
     case "bool":
-      return emitBoolean(fn, key, scope, docs);
+      return emitBoolean(emitter, fn, key, scope, docs);
     case "comparison":
-      return emitComparison(fn, key, scope, docs, shape.value);
+      return emitComparison(emitter, fn, key, scope, docs, shape.value);
     case "value":
-      return emitValue(fn, key, scope, docs, shape.value);
+      return emitValue(emitter, fn, key, scope, docs, shape.value);
     case "valueList":
-      return emitValueList(fn, key, scope, docs, shape.value);
+      return emitValueList(emitter, fn, key, scope, docs, shape.value);
     case "stringOrFields":
-      return emitStringOrFields(fn, key, scope, docs, shape.fields);
+      return emitStringOrFields(emitter, fn, key, scope, docs, shape.fields);
     case "wrapper":
-      return emitWrapper(fn, key, scope, docs, shape.scope);
+      return emitWrapper(emitter, fn, key, scope, docs, shape.scope);
     case "fields":
-      return emitFields(fn, key, scope, docs, shape.fields);
+      return emitFields(emitter, fn, key, scope, docs, shape.fields);
   }
 }
 
@@ -657,7 +727,14 @@ export function emitTriggers(
       docsForRule[0] = docOverride.summary;
       appliedDocOverrides.add(key);
     }
-    chunks.push(emitOne(key, shape, scope, docsForRule));
+    // The rule's own scope reaches the emitted signature as `Trigger<...>`: a
+    // universal rule spells the SDK's `ScopeName`, a scoped one a literal union
+    // that imports nothing. Declared here, where the chunk is committed, rather
+    // than where the token was computed — a skipped rule computes one too.
+    if (rule.scopes === "universal") {
+      emitter.use("ScopeName");
+    }
+    chunks.push(emitOne(emitter, key, shape, scope, docsForRule));
     names.add(safeIdentifier(camelCase(key)));
     byShape.set(shape.kind, (byShape.get(shape.kind) ?? 0) + 1);
     emitted += 1;

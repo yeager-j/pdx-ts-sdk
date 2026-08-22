@@ -39,6 +39,7 @@ import {
   spliceTypeName,
   structuralSpliceOf,
   topLevelSplices,
+  useWideningSymbols,
   type DocTable,
   type EmittedField,
   type FieldOmissionRow,
@@ -105,7 +106,11 @@ export function emitAliasSplice(emitter: Emitter, category: string): AliasSplice
   // type here; a field the rules do scope (`init_effect` carries
   // `## replace_scopes = { this = planet }`) still pins itself through
   // `field.scope`, which is where every scope in these bodies comes from.
-  const ctx = { scope: splice.declaration.scope, unpinned: "ScopeName" };
+  const ctx = {
+    scope: splice.declaration.scope,
+    unpinned: "ScopeName",
+    unpinnedSymbol: "ScopeName",
+  };
 
   const members: string[] = [];
   const fieldMetadata: string[] = [];
@@ -142,6 +147,7 @@ export function emitAliasSplice(emitter: Emitter, category: string): AliasSplice
     const widening = FIELD_WIDENINGS.get(fieldPath);
     if (widening !== undefined) {
       emitter.overlayAudit.applied("FIELD_WIDENINGS", fieldPath);
+      useWideningSymbols(emitter, widening);
     }
     const lowering = pickOrdinary(
       emitter,
@@ -239,10 +245,11 @@ export function emitAliasSplice(emitter: Emitter, category: string): AliasSplice
     "}\n\n" +
     constArray(
       fieldsConstant,
-      "ContentField",
+      emitter.use("ContentField"),
       fieldMetadata.map((entry) => `  ${entry},\n`).join("")
     ) +
-    `registerAliasStructFields(${JSON.stringify(category)}, ${fieldsConstant});\n`;
+    `${emitter.use("registerAliasStructFields")}(${JSON.stringify(category)}, ` +
+    `${fieldsConstant});\n`;
 
   return {
     code,

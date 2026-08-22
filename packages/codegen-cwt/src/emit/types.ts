@@ -7,6 +7,7 @@ import type { RuleType } from "../cwt/model.ts";
 import { scopeIndex, type RuleSet } from "../cwt/rules.ts";
 import { pascalCase } from "../naming.ts";
 import { OverlayAudit } from "../overlay-audit.ts";
+import { ImportRecorder, knownSymbol, type FileImports, type SymbolKind } from "./symbols.ts";
 
 export interface TsValue {
   readonly type: string;
@@ -64,6 +65,19 @@ export interface TsValue {
    * from `typeof value === "object"`.
    */
   readonly objectKinds?: readonly ScalarObjectKind[];
+  /**
+   * SDK symbols {@link TsValue.type} spells, for the file that writes it to
+   * import. Carried on the value rather than recovered from the text, so the
+   * emitter that splices the type declares the use with `Emitter.useValue`.
+   */
+  readonly typeSymbols?: readonly string[];
+  /**
+   * The SDK symbol {@link TsValue.toScalar}'s expression calls, where it calls
+   * one. Separate from {@link TsValue.typeSymbols} because the two reach
+   * different files: only `emit/triggers.ts` writes a conversion expression into
+   * its output, while every emitter writes types.
+   */
+  readonly scalarSymbol?: string;
 }
 
 export type ScalarObjectKind = "scope-ref" | "typed-ref";
@@ -72,6 +86,8 @@ export interface Usage {
   readonly enums: string[];
   readonly refs: string[];
   readonly valueSets: string[];
+  /** Every SDK symbol the file's emitters declared a use of, by module. */
+  readonly imports: FileImports;
 }
 
 /**
@@ -139,6 +155,8 @@ export class Emitter {
   private scopedEnums = new Set<string>();
   private scopedRefs = new Set<string>();
   private scopedValueSets = new Set<string>();
+  private scopedImports = new ImportRecorder();
+  private selfAliasCategory: string | undefined;
   private readonly scopes: ReadonlyMap<string, string>;
 
   constructor(rules: RuleSet) {
@@ -156,11 +174,19 @@ export class Emitter {
     return this.scopes.get(name.toLowerCase()) ?? null;
   }
 
-  /** Starts recording what a single output file references, so it can import it. */
-  beginFile(): void {
+  /**
+   * Starts recording what a single output file references, so it can import it.
+   *
+   * `aliasCategory` names the alias category this file *is*, where it is one: a
+   * structural category splices itself (`planet_initializer` holds further
+   * planets), and a module must not import its own name.
+   */
+  beginFile(aliasCategory?: string): void {
     this.scopedEnums = new Set();
     this.scopedRefs = new Set();
     this.scopedValueSets = new Set();
+    this.scopedImports = new ImportRecorder();
+    this.selfAliasCategory = aliasCategory;
   }
 
   endFile(): Usage {
@@ -168,7 +194,57 @@ export class Emitter {
       enums: [...this.scopedEnums],
       refs: [...this.scopedRefs],
       valueSets: [...this.scopedValueSets],
+      imports: this.scopedImports.snapshot(),
     };
+  }
+
+  /**
+   * Declares that the file being emitted writes `name`, and returns it so the
+   * declaration sits at the spell site: `` `${emitter.use("Trigger")}<S>` ``.
+   *
+   * A name the table does not know throws. An emitter that mistypes a symbol has
+   * to fail codegen, because the alternative — importing nothing — surfaces far
+   * away as a generated file that does not compile.
+   */
+  use(name: string): string {
+    const symbol = knownSymbol(
+      name,
+      "Add it there, or use `useFrom` for a name the generator computes."
+    );
+    this.scopedImports.add(symbol.module, name, symbol.kind);
+    return name;
+  }
+
+  /** {@link Emitter.use} for a name the generator computes, e.g. `ParsedTechnology`. */
+  useFrom(module: string, name: string, kind: SymbolKind): string {
+    this.scopedImports.add(module, name, kind);
+    return name;
+  }
+
+  /** Records every symbol a lowered scalar value's type spells. */
+  useValue(value: TsValue): TsValue {
+    for (const name of value.typeSymbols ?? []) {
+      this.use(name);
+    }
+    return value;
+  }
+
+  /**
+   * Records a reference to another alias category's generated interface.
+   *
+   * Both halves of the pair, because both are needed: the type import is erased
+   * at build time, and only the bare import guarantees that category's
+   * `registerAliasStructFields` call has run before anything is serialized. A
+   * category referencing itself records neither — a module cannot import its own
+   * exports.
+   */
+  useAliasCategory(category: string, typeName: string): string {
+    if (category !== this.selfAliasCategory) {
+      const module = `./${category.replaceAll("_", "-")}.ts`;
+      this.scopedImports.add(module, typeName, "type");
+      this.scopedImports.addSideEffect(module);
+    }
+    return typeName;
   }
 
   absorb(other: Emitter): void {
@@ -227,6 +303,7 @@ export class Emitter {
           type: "ScriptValue",
           toScalar: (e) => e,
           scriptValue: true,
+          typeSymbols: ["ScriptValue"],
         };
       case "scalar":
       case "localisation":
@@ -251,6 +328,7 @@ export class Emitter {
             type: "ScopeValue",
             toScalar: (e) => `${e}.path`,
             objectKinds: ["scope-ref"],
+            typeSymbols: ["ScopeValue"],
           };
         }
         const canonical = this.canonicalScope(type.name);
@@ -262,6 +340,7 @@ export class Emitter {
           type: scopeValueType([canonical]),
           toScalar: (e) => `${e}.path`,
           objectKinds: ["scope-ref"],
+          typeSymbols: ["ScopeValue"],
         };
       }
       case "scopeGroup": {
@@ -286,6 +365,7 @@ export class Emitter {
           type: scopeValueType(scopes),
           toScalar: (e) => `${e}.path`,
           objectKinds: ["scope-ref"],
+          typeSymbols: ["ScopeValue"],
         };
       }
       case "literal":
@@ -319,6 +399,7 @@ export class Emitter {
           toScalar: (e) => `refId(${e})`,
           refTypes: [type.name],
           objectKinds: ["typed-ref"],
+          scalarSymbol: "refId",
         };
       }
       default:
@@ -348,6 +429,10 @@ export class Emitter {
       : undefined;
     const booleanLiterals = [...new Set(values.flatMap((value) => value!.booleanLiterals ?? []))];
     const objectKinds = [...new Set(values.flatMap((value) => value!.objectKinds ?? []))];
+    // Every arm's type survives into `parts` — `mergeScopeArms` collapses scope
+    // arms into another scope arm and the `Set` only drops exact duplicates — so
+    // the union of the arms' symbols is exactly what the joined type spells.
+    const typeSymbols = [...new Set(values.flatMap((value) => value!.typeSymbols ?? []))];
     if (converts.size > 1) {
       return {
         type: parts.join(" | "),
@@ -356,6 +441,8 @@ export class Emitter {
         literals,
         ...(booleanLiterals.length === 0 ? {} : { booleanLiterals }),
         ...(objectKinds.length === 0 ? {} : { objectKinds }),
+        ...(typeSymbols.length === 0 ? {} : { typeSymbols }),
+        scalarSymbol: "refId",
       };
     }
     // Propagated only on this branch: `refId(e)` above is not `scriptValueScalar`-
@@ -370,6 +457,8 @@ export class Emitter {
       ...(booleanLiterals.length === 0 ? {} : { booleanLiterals }),
       ...(scriptValue === undefined ? {} : { scriptValue }),
       ...(objectKinds.length === 0 ? {} : { objectKinds }),
+      ...(typeSymbols.length === 0 ? {} : { typeSymbols }),
+      ...(values[0]!.scalarSymbol === undefined ? {} : { scalarSymbol: values[0]!.scalarSymbol }),
     };
   }
 }

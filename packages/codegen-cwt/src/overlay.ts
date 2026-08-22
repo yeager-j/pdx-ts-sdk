@@ -109,7 +109,17 @@ export interface HandWrittenDefiner {
    * check (SDK-181). The generated definers learn the same thing from
    * `ContentScopeParameter.declaredFrom`.
    */
-  readonly witness?: { readonly member: string; readonly type: string };
+  readonly witness?: {
+    readonly member: string;
+    readonly type: string;
+    /**
+     * `KNOWN_SYMBOLS` names {@link HandWrittenDefiner.witness}'s `type` spells,
+     * so `content-definers.ts` imports them. Stated by the row for the same
+     * reason {@link FieldWidening.symbols} is: the type is free-form TypeScript
+     * this table writes and the emitter only splices.
+     */
+    readonly symbols?: readonly string[];
+  };
 }
 
 /**
@@ -134,7 +144,7 @@ export const HAND_WRITTEN_CONTENT_DEFINERS = new Map<string, HandWrittenDefiner>
         "can produce it.",
       module: "../content/situations.ts",
       definer: "defineSituationType",
-      witness: { member: "targetScope", type: "ScopeName | undefined" },
+      witness: { member: "targetScope", type: "ScopeName | undefined", symbols: ["ScopeName"] },
     },
   ],
   [
@@ -721,6 +731,18 @@ export const TRIGGER_DOC_SUMMARY_OVERRIDES = new Map<string, TriggerDocSummaryOv
 export interface FieldWidening {
   /** Appended to the mechanically derived type. */
   readonly extraType: string;
+  /**
+   * `KNOWN_SYMBOLS` names {@link FieldWidening.extraType} spells that the
+   * field's own lowering does not already bring in, so the generated module
+   * imports them.
+   *
+   * The row states them rather than the emitter reading them out of the text:
+   * `extraType` is free-form TypeScript this table writes, and the emitter that
+   * splices it has no other way to know what it names. A name the emitter
+   * cannot resolve fails codegen; a name nothing needs fails the emitted file's
+   * unused-import check.
+   */
+  readonly symbols?: readonly string[];
   readonly reason: string;
 }
 
@@ -1027,6 +1049,9 @@ export const PATCH_WIDENINGS = new Map<string, FieldWidening>([
     "technology.prerequisites",
     {
       extraType: "AnyOf<TechnologyRef>",
+      // `TechnologyRef` is the member's own reference type and already imported;
+      // `AnyOf` arrives with this row alone.
+      symbols: ["AnyOf"],
       reason:
         "Vanilla writes `OR = { ... }` alternation groups in five technology files, and the " +
         "parsed surface hands them back as `AnyOf` values, so `[...t.prerequisites, mine]` has " +

@@ -6,8 +6,6 @@
 // From: script-docs/v4.4.1/effects.log
 // From: script-docs/v4.4.1/scopes.log
 
-import type { PdxOp } from "@pdx-ts/pdxscript";
-
 import type {
   EffectPath,
   Modifier,
