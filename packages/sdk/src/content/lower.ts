@@ -11,6 +11,7 @@ import {
   type PdxScalar,
 } from "@pdx-ts/pdxscript";
 
+import { assertNever } from "../assert-never.ts";
 import type { AssetFileItem } from "../authoring/assets.ts";
 import type { ScopeName } from "../generated/scopes.ts";
 import {
@@ -124,8 +125,21 @@ function acceptsFromClosure(field: ContentField): boolean {
       return true;
     case "dual":
       return field.arms.some(acceptsFromClosure);
-    default:
+    case "value":
+    case "valueList":
+    case "effect":
+    case "modifierBlock":
+    case "inlineModifiers":
+    case "weightedEvents":
+    case "struct":
+    case "triggerStruct":
+    case "aliasStruct":
+    case "structMap":
+    case "scalarMap":
+    case "repeatedStruct":
       return false;
+    default:
+      return assertNever(field, "content field");
   }
 }
 
@@ -172,32 +186,59 @@ export function resolveFromClosures(
     if (value === undefined) {
       continue;
     }
-    if (field.shape === "dual") {
-      const arm = dualArm(field, value);
-      const nested = resolveFromClosures({ [arm.member]: value }, [arm]);
-      resolved[field.member] = nested[arm.member];
-      continue;
-    }
-    if (acceptsFromClosure(field)) {
-      resolved[field.member] = resolveFromClosure(field, value);
-      continue;
-    }
-    if (field.shape === "struct" || field.shape === "triggerStruct") {
-      resolved[field.member] = field.repeated
-        ? (value as readonly Readonly<Record<string, unknown>>[]).map((item) =>
-            resolveFromClosures(item, field.fields)
-          )
-        : resolveFromClosures(value as Readonly<Record<string, unknown>>, field.fields);
-      continue;
-    }
-    if (field.shape === "repeatedStruct") {
-      const record = value as Readonly<Record<string, Readonly<Record<string, unknown>>>>;
-      resolved[field.member] = Object.fromEntries(
-        Object.entries(record).map(([id, nested]) => [
-          id,
-          resolveFromClosures(nested, field.fields),
-        ])
-      );
+    switch (field.shape) {
+      case "dual": {
+        const arm = dualArm(field, value);
+        const nested = resolveFromClosures({ [arm.member]: value }, [arm]);
+        resolved[field.member] = nested[arm.member];
+        break;
+      }
+      // The shapes `acceptsFromClosure` admits, named again so a shape added
+      // there has to be placed here too rather than falling into the
+      // pass-through arm below and losing its closure.
+      case "trigger":
+      case "inlineTrigger":
+      case "weightBlock":
+      case "weightBlockWithLoc":
+      case "economicResources":
+      case "economicResourcesNoProduce":
+      case "economicResourceOperation":
+      case "triggeredModifierBlock":
+        resolved[field.member] = resolveFromClosure(field, value);
+        break;
+      case "struct":
+      case "triggerStruct":
+        resolved[field.member] = field.repeated
+          ? (value as readonly Readonly<Record<string, unknown>>[]).map((item) =>
+              resolveFromClosures(item, field.fields)
+            )
+          : resolveFromClosures(value as Readonly<Record<string, unknown>>, field.fields);
+        break;
+      case "repeatedStruct": {
+        const record = value as Readonly<Record<string, Readonly<Record<string, unknown>>>>;
+        resolved[field.member] = Object.fromEntries(
+          Object.entries(record).map(([id, nested]) => [
+            id,
+            resolveFromClosures(nested, field.fields),
+          ])
+        );
+        break;
+      }
+      // Nothing for this walk to do: no closure form, and no nested field
+      // table it descends — an `aliasStruct` names its table rather than
+      // carrying it, and the definition walk does not follow it either.
+      case "value":
+      case "valueList":
+      case "effect":
+      case "modifierBlock":
+      case "inlineModifiers":
+      case "weightedEvents":
+      case "aliasStruct":
+      case "structMap":
+      case "scalarMap":
+        break;
+      default:
+        assertNever(field, "content field");
     }
   }
   return resolved;
@@ -607,6 +648,8 @@ export function fieldEntries(
         }
         break;
       }
+      default:
+        assertNever(field, "content field");
     }
   }
   return entries;
