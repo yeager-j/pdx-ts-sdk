@@ -1,5 +1,5 @@
 /**
- * Emits `src/generated/vanilla-refs.ts`: the checked constructors behind the
+ * Emits `packages/sdk/src/generated/vanilla-refs.ts`: the checked constructors behind the
  * `vanilla.*` namespace (SDK-12), one per registry `CONTENT_MANIFEST` and
  * `VANILLA_REF_EXTRAS` together expose.
  *
@@ -22,11 +22,15 @@ import {
 } from "../../policy/manifest.ts";
 import type { Emitter } from "../../render/emitter.ts";
 
+/** Generated vanilla-reference module text and its report totals. */
 export interface VanillaRefsEmission {
+  /** Complete generated `vanilla-refs.ts` module text. */
   readonly code: string;
   /** Ref type names (raw CWT `<type>` names) this emission used. */
   readonly refs: readonly string[];
+  /** Number of registries emitted as checked constructor functions. */
   readonly checked: number;
+  /** Number of registries emitted as navigable identifier tries. */
   readonly tries: number;
 }
 
@@ -45,6 +49,10 @@ interface VanillaRefRow {
   readonly oversized: boolean;
 }
 
+/**
+ * Emits checked vanilla-reference constructors and tries for manifest and extra registries.
+ * Every emitted reference brand is registered with the shared emitter for `refs.ts` generation.
+ */
 export function emitVanillaRefs(
   emitter: Emitter,
   manifest: readonly ContentManifestEntry[],

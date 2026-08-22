@@ -8,8 +8,8 @@
  *   becomes one interface carrying its members once, and the per-scope
  *   interfaces are `extends` compositions.
  * - `effect-meta.ts` — DATA. One entry per method telling the runtime
- *   recorder (`src/script/effects/recorder.ts`, a single scope-agnostic Proxy) how to
- *   serialize the call. The Proxy throws on names missing from this table.
+ *   recorder (`packages/sdk/src/script/effects/recorder.ts`, a single scope-agnostic
+ *   Proxy) how to serialize the call. The Proxy throws on names missing from this table.
  *   Serialized by the sibling `effect-meta.ts` emitter over the clusters this
  *   file builds.
  *
@@ -46,6 +46,8 @@ import {
   EFFECT_FIELD_ADDITIONS,
   EFFECT_FIELD_CARDINALITY_OVERRIDES,
   EFFECT_FIELD_TYPE_OVERRIDES,
+  type EffectFieldAddition,
+  type EffectFieldCardinalityOverride,
 } from "../../overlay/index.ts";
 import type { EffectPolicy } from "../../policy/effects.ts";
 import { Emitter, type TsValue } from "../../render/emitter.ts";
@@ -58,12 +60,19 @@ import { tsDoc } from "./triggers.ts";
 
 const EFFECT_CLAUSES = new Set<ClauseCategory>(["trigger", "effect", "modifier_rule"]);
 
+/** Generated effect modules, report totals, and script-reference projections. */
 export interface EffectEmission {
+  /** Complete generated `effects.ts` interface text. */
   readonly interfaces: string;
+  /** Complete generated `effect-meta.ts` module text. */
   readonly meta: string;
+  /** Number of effect rules represented by generated methods. */
   readonly emitted: number;
+  /** Emitted effect count grouped by lowered argument shape. */
   readonly byShape: ReadonlyMap<string, number>;
+  /** Effect rules excluded from generation, with stable reasons. */
   readonly skipped: readonly SkippedRule[];
+  /** Number of distinct generated effect scope clusters. */
   readonly clusterCount: number;
   /** Rules overloaded between a block and a scalar, emitted scalar-only. */
   readonly scalarOnly: readonly string[];
@@ -81,88 +90,119 @@ export interface EffectEmission {
   readonly scopeLinkReferences: readonly ScriptScopeLinkReferenceRow[];
 }
 
+/**
+ * Serializable argument shape shared by an effect's type and recorder metadata.
+ * Each variant determines the generated method parameters and the runtime encoding contract.
+ */
 export type EffectShape =
-  | { readonly kind: "bool" }
-  | { readonly kind: "value"; readonly value: TsValue }
-  /** Effect-splice block: closure body, pushed scope (null = same scope). */
   | {
+      /** Identifies an optional boolean-toggle argument. */
+      readonly kind: "bool";
+    }
+  | {
+      /** Identifies one required scalar argument. */
+      readonly kind: "value";
+      /** Scalar type and conversion used by the signature and recorder. */
+      readonly value: TsValue;
+    }
+  | {
+      /** Identifies an effect-splice closure, optionally preceded by named arguments. */
       readonly kind: "wrapper";
+      /** Canonical closure scope, or `null` when it preserves the receiving scope. */
       readonly scope: string | null;
+      /** Named arguments before the closure, or `null` when the closure is the only argument. */
       readonly fields: readonly ArgField[] | null;
     }
-  | { readonly kind: "fields"; readonly fields: readonly ArgField[] };
+  | {
+      /** Identifies one object argument composed from named rule fields. */
+      readonly kind: "fields";
+      /** Named fields represented by the generated argument object. */
+      readonly fields: readonly ArgField[];
+    };
 
-function applyFieldOverlays(emitter: Emitter, key: string, shape: EffectShape): EffectShape {
-  const additions = EFFECT_FIELD_ADDITIONS.get(key) ?? [];
-  const cardinalityOverrides = EFFECT_FIELD_CARDINALITY_OVERRIDES.get(key) ?? [];
-  if (additions.length === 0 && cardinalityOverrides.length === 0) {
-    return shape;
-  }
+type FieldEffectShape = Extract<EffectShape, { readonly kind: "fields" | "wrapper" }>;
+
+function fieldShapeForOverlays(key: string, shape: EffectShape): FieldEffectShape {
   if (shape.kind !== "fields" && shape.kind !== "wrapper") {
     throw new Error(
       `Effect field overlay names "${key}", but that effect does not emit an args block`
     );
   }
-  let fields = shape.fields ?? [];
+  return shape;
+}
+
+function applyCardinalityOverride(
+  key: string,
+  field: ArgField,
+  override: EffectFieldCardinalityOverride
+): ArgField {
+  if (
+    override.optional === undefined &&
+    override.repeated === undefined &&
+    override.valueList === undefined
+  ) {
+    throw new Error(
+      `EFFECT_FIELD_CARDINALITY_OVERRIDES names "${key}.${field.name}" without a change`
+    );
+  }
+  let resolved = field;
+  if (override.optional !== undefined) {
+    if (field.optional === override.optional) {
+      throw new Error(
+        `EFFECT_FIELD_CARDINALITY_OVERRIDES names "${key}.${field.name}", but CWT already ` +
+          `makes it ${override.optional ? "optional" : "required"} — retire that override`
+      );
+    }
+    resolved = { ...resolved, optional: override.optional };
+  }
+  if (override.repeated !== undefined) {
+    if (field.repeated === override.repeated) {
+      throw new Error(
+        `EFFECT_FIELD_CARDINALITY_OVERRIDES names "${key}.${field.name}", but lowering already ` +
+          `makes it ${override.repeated ? "repeated" : "singular"} — retire that override`
+      );
+    }
+    resolved = { ...resolved, repeated: override.repeated };
+  }
+  if (override.valueList !== undefined) {
+    if (field.value.kind !== "valueList") {
+      throw new Error(
+        `EFFECT_FIELD_CARDINALITY_OVERRIDES names "${key}.${field.name}" as a value list, ` +
+          "but the field does not lower to one"
+      );
+    }
+    if (
+      field.value.cardinality.min === override.valueList.min &&
+      field.value.cardinality.max === override.valueList.max
+    ) {
+      throw new Error(
+        `EFFECT_FIELD_CARDINALITY_OVERRIDES names "${key}.${field.name}", but CWT already ` +
+          "declares that value-list cardinality — retire that override"
+      );
+    }
+    resolved = {
+      ...resolved,
+      value: { ...field.value, cardinality: override.valueList },
+    };
+  }
+  return resolved;
+}
+
+function applyCardinalityOverrides(
+  key: string,
+  fields: readonly ArgField[],
+  overrides: readonly EffectFieldCardinalityOverride[]
+): ArgField[] {
   const appliedCardinality = new Set<string>();
-  fields = fields.map((field) => {
-    const override = cardinalityOverrides.find((candidate) => candidate.name === field.name);
+  const resolved = fields.map((field) => {
+    const override = overrides.find((candidate) => candidate.name === field.name);
     if (override === undefined) {
       return field;
     }
-    if (
-      override.optional === undefined &&
-      override.repeated === undefined &&
-      override.valueList === undefined
-    ) {
-      throw new Error(
-        `EFFECT_FIELD_CARDINALITY_OVERRIDES names "${key}.${field.name}" without a change`
-      );
-    }
-    let resolved = field;
-    if (override.optional !== undefined) {
-      if (field.optional === override.optional) {
-        throw new Error(
-          `EFFECT_FIELD_CARDINALITY_OVERRIDES names "${key}.${field.name}", but CWT already ` +
-            `makes it ${override.optional ? "optional" : "required"} — retire that override`
-        );
-      }
-      resolved = { ...resolved, optional: override.optional };
-    }
-    if (override.repeated !== undefined) {
-      if (field.repeated === override.repeated) {
-        throw new Error(
-          `EFFECT_FIELD_CARDINALITY_OVERRIDES names "${key}.${field.name}", but lowering already ` +
-            `makes it ${override.repeated ? "repeated" : "singular"} — retire that override`
-        );
-      }
-      resolved = { ...resolved, repeated: override.repeated };
-    }
-    if (override.valueList !== undefined) {
-      if (field.value.kind !== "valueList") {
-        throw new Error(
-          `EFFECT_FIELD_CARDINALITY_OVERRIDES names "${key}.${field.name}" as a value list, ` +
-            "but the field does not lower to one"
-        );
-      }
-      if (
-        field.value.cardinality.min === override.valueList.min &&
-        field.value.cardinality.max === override.valueList.max
-      ) {
-        throw new Error(
-          `EFFECT_FIELD_CARDINALITY_OVERRIDES names "${key}.${field.name}", but CWT already ` +
-            "declares that value-list cardinality — retire that override"
-        );
-      }
-      resolved = {
-        ...resolved,
-        value: { ...field.value, cardinality: override.valueList },
-      };
-    }
     appliedCardinality.add(field.name);
-    return resolved;
+    return applyCardinalityOverride(key, field, override);
   });
-  for (const override of cardinalityOverrides) {
+  for (const override of overrides) {
     if (!appliedCardinality.has(override.name)) {
       throw new Error(
         `EFFECT_FIELD_CARDINALITY_OVERRIDES names "${key}.${override.name}", which no ` +
@@ -170,8 +210,17 @@ function applyFieldOverlays(emitter: Emitter, key: string, shape: EffectShape): 
       );
     }
   }
+  return resolved;
+}
+
+function addedFields(
+  emitter: Emitter,
+  key: string,
+  fields: readonly ArgField[],
+  additions: readonly EffectFieldAddition[]
+): ArgField[] {
   const names = new Set(fields.map((field) => field.name));
-  const added = additions.map((addition): ArgField => {
+  return additions.map((addition): ArgField => {
     if (names.has(addition.name)) {
       throw new Error(
         `EFFECT_FIELD_ADDITIONS names "${key}.${addition.name}", which CWT now declares — ` +
@@ -193,91 +242,98 @@ function applyFieldOverlays(emitter: Emitter, key: string, shape: EffectShape): 
       docs: [],
     };
   });
+}
+
+function insertFieldsBeforeClauses(
+  fields: readonly ArgField[],
+  additions: readonly ArgField[]
+): ArgField[] {
   const firstClause = fields.findIndex((field) => field.value.kind === "clause");
   const insertion = firstClause === -1 ? fields.length : firstClause;
+  return [...fields.slice(0, insertion), ...additions, ...fields.slice(insertion)];
+}
+
+function applyFieldOverlays(emitter: Emitter, key: string, shape: EffectShape): EffectShape {
+  const additions = EFFECT_FIELD_ADDITIONS.get(key) ?? [];
+  const cardinalityOverrides = EFFECT_FIELD_CARDINALITY_OVERRIDES.get(key) ?? [];
+  if (additions.length === 0 && cardinalityOverrides.length === 0) {
+    return shape;
+  }
+  const fieldShape = fieldShapeForOverlays(key, shape);
+  const fields = applyCardinalityOverrides(key, fieldShape.fields ?? [], cardinalityOverrides);
+  const added = addedFields(emitter, key, fields, additions);
   return {
-    ...shape,
-    fields: [...fields.slice(0, insertion), ...added, ...fields.slice(insertion)],
+    ...fieldShape,
+    fields: insertFieldsBeforeClauses(fields, added),
   };
 }
 
+/** One generated effect method after rule lowering and overlay application. */
 export interface EmittedEffect {
+  /** TypeScript method name exposed on effect scope interfaces. */
   readonly method: string;
+  /** PDXScript key recorded by the method. */
   readonly key: string;
+  /** Post-overlay argument shape used by both emitted modules. */
   readonly shape: EffectShape;
+  /** Documentation lines attached to the generated method. */
   readonly docs: readonly string[];
 }
 
+/** One scope-navigation property represented on the effect recorder. */
 export interface EmittedScopeLink {
+  /** TypeScript property name exposed on effect paths. */
   readonly method: string;
+  /** PDXScript navigation key recorded by the path. */
   readonly key: string;
+  /** Canonical scope reached by the navigation. */
   readonly outputScope: string;
+  /** Documentation lines attached to the generated property. */
   readonly docs: readonly string[];
 }
 
 /** Effects sharing one exact scope set, emitted as one interface. */
 export interface EffectCluster {
+  /** Exact receiving scope set shared by every method in the cluster. */
   readonly scopes: readonly string[] | "universal";
+  /** Methods emitted on the cluster interface. */
   readonly effects: EmittedEffect[];
 }
 
 /** Scope-link paths sharing one exact scope set, emitted as one interface. */
 export interface ScopeLinkCluster {
+  /** Exact source scope set shared by every path in the cluster. */
   readonly scopes: readonly string[] | "universal";
+  /** Navigation properties emitted on the cluster interface. */
   readonly links: EmittedScopeLink[];
 }
 
-function shapeOf(
-  emitter: Emitter,
-  rule: LoweredRule
-): EffectShape | SkipReason | { readonly scalarOnly: EffectShape } {
-  if (rule.comparison) {
-    return skipReason("comparison-effect", "declared with a comparison operator");
-  }
-  const blocks = rule.blocks;
+function isBooleanToggle(type: RuleType): boolean {
+  return type.kind === "bool" || (type.kind === "literal" && type.text === "yes");
+}
+
+function scalarShapeOf(emitter: Emitter, rule: LoweredRule): EffectShape | SkipReason {
   const scalars = rule.scalars;
-
-  if (blocks.length === 0) {
-    if (scalars.some((s) => s.type.kind === "literal" && s.type.text.startsWith("$"))) {
-      return skipReason("parameterised-placeholder", "parameterised placeholder rule");
-    }
-    // Effects spell booleans `destroy_colony = yes`, which classifies as the
-    // literal `yes` rather than a bool — both mean the same toggle.
-    const boolish = (type: RuleType): boolean =>
-      type.kind === "bool" || (type.kind === "literal" && type.text === "yes");
-    if (scalars.every((declaration) => boolish(declaration.type))) {
-      return { kind: "bool" };
-    }
-    const value = emitter.unionFor(scalars.map((declaration) => declaration.type));
-    if (value === null) {
-      return skipReason(
-        "unsupported-value",
-        `unsupported value type (${scalars.map((s) => s.type.kind).join(", ")})`
-      );
-    }
-    return { kind: "value", value };
+  if (
+    scalars.some((scalar) => scalar.type.kind === "literal" && scalar.type.text.startsWith("$"))
+  ) {
+    return skipReason("parameterised-placeholder", "parameterised placeholder rule");
   }
-
-  if (scalars.length > 0) {
-    // Overloaded between a block and a scalar (`log` is both an effect clause
-    // and a message). Emit the scalar form so the common case survives; the
-    // dropped block form is counted, not silent.
-    const fallback = shapeOf(emitter, {
-      ...rule,
-      declarations: scalars,
-      comparison: false,
-      blocks: [],
-    });
-    if ("kind" in fallback) {
-      return { scalarOnly: fallback };
-    }
-    return skipReason("scalar-block-overload", "overloaded between a block and a scalar");
+  if (scalars.every((declaration) => isBooleanToggle(declaration.type))) {
+    return { kind: "bool" };
   }
-  if (blocks.length > 1) {
-    return skipReason("multiple-block-forms", "multiple block declarations");
+  const value = emitter.unionFor(scalars.map((declaration) => declaration.type));
+  if (value === null) {
+    return skipReason(
+      "unsupported-value",
+      `unsupported value type (${scalars.map((scalar) => scalar.type.kind).join(", ")})`
+    );
   }
+  return { kind: "value", value };
+}
 
-  const block = blocks[0]!;
+function blockShapeOf(emitter: Emitter, rule: LoweredRule): EffectShape | SkipReason {
+  const block = rule.blocks[0]!;
   const body = block.type;
   if (body.bare.length > 0) {
     return skipReason("bare-value-block", "block with bare values");
@@ -320,57 +376,98 @@ function shapeOf(
   return { kind: "fields", fields: merged };
 }
 
+function shapeOf(
+  emitter: Emitter,
+  rule: LoweredRule
+): EffectShape | SkipReason | { readonly scalarOnly: EffectShape } {
+  if (rule.comparison) {
+    return skipReason("comparison-effect", "declared with a comparison operator");
+  }
+  if (rule.blocks.length === 0) {
+    return scalarShapeOf(emitter, rule);
+  }
+  if (rule.scalars.length > 0) {
+    // Overloaded between a block and a scalar (`log` is both an effect clause
+    // and a message). Emit the scalar form so the common case survives; the
+    // dropped block form is counted, not silent.
+    const fallback = scalarShapeOf(emitter, {
+      ...rule,
+      declarations: rule.scalars,
+      comparison: false,
+      blocks: [],
+    });
+    if ("kind" in fallback) {
+      return { scalarOnly: fallback };
+    }
+    return skipReason("scalar-block-overload", "overloaded between a block and a scalar");
+  }
+  if (rule.blocks.length > 1) {
+    return skipReason("multiple-block-forms", "multiple block declarations");
+  }
+  return blockShapeOf(emitter, rule);
+}
+
+/** The type text a lowered value contributes before field-level wrapping or overrides. */
+function baseMemberType(
+  emitter: Emitter,
+  value: ArgField["value"],
+  outerScope: string,
+  effectKey: string
+): string {
+  switch (value.kind) {
+    case "scalar":
+      return emitter.useValue(value.value).type;
+    case "fields":
+      return argsType(emitter, value.fields, outerScope, effectKey);
+    case "scalarOrFields":
+      return (
+        `${emitter.useValue(value.scalar).type} | ` +
+        `${argsType(emitter, value.fields, outerScope, effectKey)}`
+      );
+    case "valueList": {
+      const arms = [
+        value.scalar === null ? undefined : emitter.useValue(value.scalar).type,
+        value.fields === null ? null : argsType(emitter, value.fields, outerScope, effectKey),
+      ].filter((arm): arm is string => arm !== null && arm !== undefined);
+      const item =
+        arms.length === 1 && !arms[0]!.includes(" | ") ? arms[0]! : `(${arms.join(" | ")})`;
+      return cardinalityArrayType(item, value.cardinality);
+    }
+    case "clause": {
+      const scope = value.scope === null ? outerScope : JSON.stringify(value.scope);
+      if (value.category === "trigger") {
+        return `${emitter.use("Trigger")}<${scope}>`;
+      }
+      if (value.category === "modifier_rule") {
+        return `readonly ${emitter.use("Modifier")}<${scope}>[]`;
+      }
+      return value.scope === null
+        ? `(scope: ScopeObjOf<${scope}>) => void`
+        : `(scope: ${scopeInterfaceName(value.scope)}) => void`;
+    }
+    case "comparison": {
+      const literals = value.literals.map((literal) => JSON.stringify(literal));
+      const scalar = emitter.useValue(value.value).type;
+      return [scalar, `readonly [${emitter.use("PdxOp")}, ${scalar}]`, ...literals].join(" | ");
+    }
+  }
+}
+
 /**
- * The type text one args member emits, after the overlay has had its say.
- *
- * `owner` is the effect key the field belongs to, so an override row can name
- * one field of one effect rather than every field spelled that way.
+ * The type text one args member emits, after the overlay and repetition policy apply.
+ * `effectKey` lets an override target one effect field rather than every same-named field.
  */
-function memberType(emitter: Emitter, field: ArgField, outerScope: string, owner: string): string {
-  const override = EFFECT_FIELD_TYPE_OVERRIDES.get(`${owner}.${field.name}`);
+function memberType(
+  emitter: Emitter,
+  field: ArgField,
+  outerScope: string,
+  effectKey: string
+): string {
+  const override = EFFECT_FIELD_TYPE_OVERRIDES.get(`${effectKey}.${field.name}`);
   if (override !== undefined) {
     return override.type;
   }
-  const value = field.value;
-  const type = (() => {
-    switch (value.kind) {
-      case "scalar":
-        return emitter.useValue(value.value).type;
-      case "fields":
-        return argsType(emitter, value.fields, outerScope, owner);
-      case "scalarOrFields":
-        return (
-          `${emitter.useValue(value.scalar).type} | ` +
-          `${argsType(emitter, value.fields, outerScope, owner)}`
-        );
-      case "valueList": {
-        const arms = [
-          value.scalar === null ? undefined : emitter.useValue(value.scalar).type,
-          value.fields === null ? null : argsType(emitter, value.fields, outerScope, owner),
-        ].filter((arm): arm is string => arm !== null && arm !== undefined);
-        const item =
-          arms.length === 1 && !arms[0]!.includes(" | ") ? arms[0]! : `(${arms.join(" | ")})`;
-        return cardinalityArrayType(item, value.cardinality);
-      }
-      case "clause": {
-        const scope = value.scope === null ? outerScope : JSON.stringify(value.scope);
-        if (value.category === "trigger") {
-          return `${emitter.use("Trigger")}<${scope}>`;
-        }
-        if (value.category === "modifier_rule") {
-          return `readonly ${emitter.use("Modifier")}<${scope}>[]`;
-        }
-        return value.scope === null
-          ? `(scope: ScopeObjOf<${scope}>) => void`
-          : `(scope: ${scopeInterfaceName(value.scope)}) => void`;
-      }
-      case "comparison": {
-        const literals = value.literals.map((literal) => JSON.stringify(literal));
-        const scalar = emitter.useValue(value.value).type;
-        return [scalar, `readonly [${emitter.use("PdxOp")}, ${scalar}]`, ...literals].join(" | ");
-      }
-    }
-  })();
+  const type = baseMemberType(emitter, field.value, outerScope, effectKey);
   if (field.repeated !== true) {
     return type;
   }
@@ -385,11 +482,11 @@ function argsType(
   emitter: Emitter,
   fields: readonly ArgField[],
   outerScope: string,
-  owner: string
+  effectKey: string
 ): string {
   const members = fields.map(
     (field) =>
-      `${camelCase(field.name)}${field.optional ? "?" : ""}: ${memberType(emitter, field, outerScope, owner)}`
+      `${camelCase(field.name)}${field.optional ? "?" : ""}: ${memberType(emitter, field, outerScope, effectKey)}`
   );
   return `{ ${members.join("; ")} }`;
 }
@@ -459,7 +556,10 @@ export function hashTag(text: string): string {
   return (hash >>> 0).toString(16).padStart(8, "0").slice(0, 4);
 }
 
-/** Exported alongside {@link hashTag} so a collision test can mint real cluster names. */
+/**
+ * Returns the stable interface name for one exact effect scope set.
+ * Long sets use {@link hashTag}; callers must register the result to detect truncated-hash collisions.
+ */
 export function clusterName(scopes: readonly string[] | "universal"): string {
   if (scopes === "universal") {
     return "UniversalEffects";
@@ -530,6 +630,99 @@ interface ClusteredEffects {
   readonly appliedFieldCardinalityOverrides: ReadonlySet<string>;
 }
 
+interface GeneratedEffectRule {
+  readonly key: string;
+  readonly rule: LoweredRule;
+  readonly scopes: readonly string[] | "universal";
+}
+
+interface LoweredEffect {
+  readonly effect: EmittedEffect;
+  readonly scalarOnly: boolean;
+  readonly appliesFieldAdditions: boolean;
+  readonly appliesFieldCardinalityOverrides: boolean;
+}
+
+function generatedEffectRule(
+  key: string,
+  rule: LoweredRule,
+  policy: EffectPolicy
+): GeneratedEffectRule | SkippedRule {
+  const ownership = policy.byKey.get(key.toLowerCase());
+  if (ownership?.owner !== "generated") {
+    return skippedRule(
+      key,
+      ownership?.owner === "fire" ? "event-fire-effect" : "structural-effect",
+      ownership?.owner === "fire"
+        ? "typed by the event-fire emitter"
+        : `hand-written structural effect${ownership?.reason === undefined ? "" : `: ${ownership.reason}`}`
+    );
+  }
+  if (key === "<scripted_effect>") {
+    return skippedRule(key, "abstract-placeholder", "abstract scripted-effect placeholder");
+  }
+  if (!isPlainName(key)) {
+    return skippedRule(key, "invalid-rule-name", "not a plain rule name");
+  }
+  if (rule.supportedScopes.length === 0) {
+    return skippedRule(
+      key,
+      "missing-rule-scope",
+      "no scopes in either the rules or the game's dump"
+    );
+  }
+  if (rule.scopes === null || rule.scopeType === null) {
+    return skippedRule(key, "unknown-scope", `unknown scope in ${rule.supportedScopes.join(" ")}`);
+  }
+  return { key, rule, scopes: rule.scopes };
+}
+
+function lowersNameAliasUsage(rule: LoweredRule): boolean {
+  return rule.blocks.some((block) =>
+    block.splices.some((field) => field.key.kind === "aliasName" && field.key.category === "name")
+  );
+}
+
+function lowerEffect(
+  emitter: Emitter,
+  docs: ReadonlyMap<string, DocEntry>,
+  candidate: GeneratedEffectRule
+): LoweredEffect | SkipReason {
+  const { key, rule } = candidate;
+  const isolatesNameAliasUsage = lowersNameAliasUsage(rule);
+  const ruleEmitter = isolatesNameAliasUsage ? new Emitter(emitter.rules) : emitter;
+  const shape = shapeOf(ruleEmitter, rule);
+  if ("category" in shape) {
+    return shape;
+  }
+  if (isolatesNameAliasUsage) {
+    emitter.absorb(ruleEmitter);
+  }
+  const base = "scalarOnly" in shape ? shape.scalarOnly : shape;
+  return {
+    effect: {
+      method: safeIdentifier(camelCase(key)),
+      key,
+      shape: applyFieldOverlays(emitter, key, base),
+      docs: tsDoc(rule.declarations, docs.get(key)),
+    },
+    scalarOnly: "scalarOnly" in shape,
+    appliesFieldAdditions: EFFECT_FIELD_ADDITIONS.has(key),
+    appliesFieldCardinalityOverrides: EFFECT_FIELD_CARDINALITY_OVERRIDES.has(key),
+  };
+}
+
+function addEffectToCluster(
+  clusters: Map<string, EffectCluster>,
+  scopes: readonly string[] | "universal",
+  effect: EmittedEffect
+): void {
+  const clusterKey = scopes === "universal" ? "universal" : scopes.join("|");
+  const cluster = clusters.get(clusterKey) ?? { scopes, effects: [] };
+  cluster.effects.push(effect);
+  clusters.set(clusterKey, cluster);
+}
+
 /** The rule loop: lowers each generated-owned effect and clusters it by scope set. */
 function clusterEffects(
   emitter: Emitter,
@@ -546,80 +739,27 @@ function clusterEffects(
 
   for (const key of [...rules.keys()].sort()) {
     const rule = rules.get(key)!;
-    const declarations = rule.declarations;
-    const ownership = policy.byKey.get(key.toLowerCase());
-    if (ownership?.owner !== "generated") {
-      skipped.push(
-        skippedRule(
-          key,
-          ownership?.owner === "fire" ? "event-fire-effect" : "structural-effect",
-          ownership?.owner === "fire"
-            ? "typed by the event-fire emitter"
-            : `hand-written structural effect${ownership?.reason === undefined ? "" : `: ${ownership.reason}`}`
-        )
-      );
+    const candidate = generatedEffectRule(key, rule, policy);
+    if ("category" in candidate) {
+      skipped.push(candidate);
       continue;
     }
-    if (key === "<scripted_effect>") {
-      skipped.push(
-        skippedRule(key, "abstract-placeholder", "abstract scripted-effect placeholder")
-      );
+    const lowered = lowerEffect(emitter, docs, candidate);
+    if ("category" in lowered) {
+      skipped.push({ name: key, ...lowered });
       continue;
     }
-    if (!isPlainName(key)) {
-      skipped.push(skippedRule(key, "invalid-rule-name", "not a plain rule name"));
-      continue;
-    }
-    const doc = docs.get(key);
-    if (rule.supportedScopes.length === 0) {
-      skipped.push(
-        skippedRule(key, "missing-rule-scope", "no scopes in either the rules or the game's dump")
-      );
-      continue;
-    }
-    const scopes = rule.scopes;
-    const outerScope = rule.scopeType;
-    if (scopes === null || outerScope === null) {
-      skipped.push(
-        skippedRule(key, "unknown-scope", `unknown scope in ${rule.supportedScopes.join(" ")}`)
-      );
-      continue;
-    }
-    const isolatesNameAliasUsage = rule.blocks.some((block) =>
-      block.splices.some((field) => field.key.kind === "aliasName" && field.key.category === "name")
-    );
-    const ruleEmitter = isolatesNameAliasUsage ? new Emitter(emitter.rules) : emitter;
-    const shape = shapeOf(ruleEmitter, rule);
-    if ("category" in shape) {
-      skipped.push({ name: key, ...shape });
-      continue;
-    }
-    if (isolatesNameAliasUsage) {
-      emitter.absorb(ruleEmitter);
-    }
-    const base = "scalarOnly" in shape ? shape.scalarOnly : shape;
-    const resolved = applyFieldOverlays(emitter, key, base);
-    if (EFFECT_FIELD_ADDITIONS.has(key)) {
+    if (lowered.appliesFieldAdditions) {
       appliedFieldAdditions.add(key);
     }
-    if (EFFECT_FIELD_CARDINALITY_OVERRIDES.has(key)) {
+    if (lowered.appliesFieldCardinalityOverrides) {
       appliedFieldCardinalityOverrides.add(key);
     }
-    if ("scalarOnly" in shape) {
+    if (lowered.scalarOnly) {
       scalarOnly.push(key);
     }
-
-    const effect: EmittedEffect = {
-      method: safeIdentifier(camelCase(key)),
-      key,
-      shape: resolved,
-      docs: tsDoc(declarations, doc),
-    };
-    const clusterKey = scopes === "universal" ? "universal" : scopes.join("|");
-    const cluster = clusters.get(clusterKey) ?? { scopes, effects: [] };
-    cluster.effects.push(effect);
-    clusters.set(clusterKey, cluster);
-    byShape.set(resolved.kind, (byShape.get(resolved.kind) ?? 0) + 1);
+    addEffectToCluster(clusters, candidate.scopes, lowered.effect);
+    byShape.set(lowered.effect.shape.kind, (byShape.get(lowered.effect.shape.kind) ?? 0) + 1);
   }
 
   return {
@@ -719,9 +859,11 @@ function clusterScopeLinks(
 function extensionSeamInterfaces(emitter: Emitter, clusters: readonly EffectCluster[]): string[] {
   const chunks: string[] = [];
   for (const [key, seam] of EFFECT_EXTENSION_SEAMS) {
-    const owner = clusters.find((cluster) => cluster.effects.some((effect) => effect.key === key));
-    const effect = owner?.effects.find((candidate) => candidate.key === key);
-    if (owner === undefined || effect === undefined) {
+    const cluster = clusters.find((candidate) =>
+      candidate.effects.some((effect) => effect.key === key)
+    );
+    const effect = cluster?.effects.find((candidate) => candidate.key === key);
+    if (cluster === undefined || effect === undefined) {
       throw new Error(`effects.cwt no longer emits ${key}`);
     }
     // The args go out under their own name as well: the hand-written overload
@@ -732,13 +874,13 @@ function extensionSeamInterfaces(emitter: Emitter, clusters: readonly EffectClus
       effect.shape.kind === "fields"
         ? docComment([`The arguments \`${camelCase(key)}\` takes, as the rules declare them.`]) +
           `export type ${argsName} = ` +
-          `${argsType(emitter, effect.shape.fields, outerScopeText(owner.scopes), key)};\n`
+          `${argsType(emitter, effect.shape.fields, outerScopeText(cluster.scopes), key)};\n`
         : "";
     const signature =
       effect.shape.kind === "fields"
         ? `${docComment(effect.docs, "  ")}` +
-          `${extensionFallbackSignature(emitter, effect, outerScopeText(owner.scopes))}`
-        : methodSignature(emitter, effect, outerScopeText(owner.scopes));
+          `${extensionFallbackSignature(emitter, effect, outerScopeText(cluster.scopes))}`
+        : methodSignature(emitter, effect, outerScopeText(cluster.scopes));
     chunks.push(
       args +
         docComment([
@@ -922,6 +1064,10 @@ function fieldCardinalityOverrideReport(): string[] {
   );
 }
 
+/**
+ * Emits the typed effect interfaces, recorder metadata, and reference rows from lowered rules.
+ * Unsupported rules and overlay mismatches remain explicit report entries or generation errors.
+ */
 export function emitEffects(
   emitter: Emitter,
   docs: ReadonlyMap<string, DocEntry>,

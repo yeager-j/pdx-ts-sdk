@@ -2,30 +2,60 @@
 
 import { compareStrings } from "../../naming.ts";
 
+/**
+ * Describes whether a generated script member is universal or belongs to an exact scope set.
+ * Scoped rows must carry a non-empty, duplicate-free list of known canonical scopes.
+ */
 export type ScriptReferenceAvailability =
-  { readonly kind: "universal" } | { readonly kind: "scopes"; readonly scopes: readonly string[] };
+  | {
+      /** Identifies a member available in every script scope. */
+      readonly kind: "universal";
+    }
+  | {
+      /** Identifies a member available only in the accompanying scopes. */
+      readonly kind: "scopes";
+      /** Exact canonical scopes on which the member is present. */
+      readonly scopes: readonly string[];
+    };
 
+/** Ownership class of a public effect-like method in the script reference. */
 export type ScriptEffectReferenceKind = "effect" | "structural" | "event-fire";
 
+/** Machine-readable reference data for one public effect-like method. */
 export interface ScriptEffectReferenceRow {
+  /** Public TypeScript method name. */
   readonly method: string;
+  /** Fixed PDXScript key, when the method always records one key. */
   readonly key?: string;
+  /** Emitter family that owns the method. */
   readonly kind: ScriptEffectReferenceKind;
+  /** Scopes on which the method is present. */
   readonly availability: ScriptReferenceAvailability;
+  /** Public call signature without its documentation comment. */
   readonly signature: string;
+  /** Documentation lines attached to the public method. */
   readonly docs: readonly string[];
 }
 
+/** Machine-readable reference data for one effect scope-navigation property. */
 export interface ScriptScopeLinkReferenceRow {
+  /** Public path property name. */
   readonly member: string;
+  /** Canonical scopes from which the navigation is valid. */
   readonly fromScopes: readonly string[];
+  /** Canonical scope reached by the navigation. */
   readonly toScope: string;
+  /** Documentation lines attached to the public property. */
   readonly docs: readonly string[];
 }
 
+/** Generated script-reference module text and its row counts. */
 export interface ScriptReferenceEmission {
+  /** Complete generated `script-reference.ts` module text. */
   readonly code: string;
+  /** Number of generated effect-like rows before structural rows are appended. */
   readonly effects: number;
+  /** Number of generated scope-link rows. */
   readonly scopeLinks: number;
 }
 
@@ -167,6 +197,10 @@ function linkCode(link: ScriptScopeLinkReferenceRow): string {
   );
 }
 
+/**
+ * Validates, sorts, and emits the public script-reference catalog.
+ * Duplicate members, fixed keys, or invalid scope sets fail before committed module text is returned.
+ */
 export function emitScriptReferences(
   scopes: readonly string[],
   effects: readonly ScriptEffectReferenceRow[],

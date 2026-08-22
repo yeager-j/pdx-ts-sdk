@@ -12,6 +12,10 @@ import { EXACT_NAME_MINTS, FILE_STEM_OVERLAYS, MINT_SHAPE_OVERLAYS } from "../..
 import type { CONTENT_MANIFEST } from "../../policy/manifest.ts";
 import type { ContentEmission } from "./content-type.ts";
 
+/**
+ * Renders the generated content-registry descriptor module for all manifest registries.
+ * File layout, mint policy, and field-table bindings stay derived from the same content rows.
+ */
 export function contentRegistry(
   contents: readonly {
     manifest: (typeof CONTENT_MANIFEST)[number];

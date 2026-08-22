@@ -1,17 +1,7 @@
-/**
- * Joins the two sources and refuses to generate when they disagree in a new way.
- *
- * The `.cwt` rules are hand-maintained; the doc dumps come out of the game. They
- * drift, in both directions: the rules track scope renames the dump has not
- * caught up with (`carrier`, and `pop` becoming `pop_group`), while the dump
- * catches triggers the rules have not added yet. Either way, a name or a scope
- * present in only one source means codegen is about to emit a wrong signature or
- * silently omit a trigger, so both joins are compared against a checked-in
- * baseline and any movement fails the build.
- */
+/** Reconciles CWT rules with independent game documentation into a deterministic drift report. */
 
 import type { CwtDiagnostic } from "../cwt/parser.ts";
-import { scopeIndex, type RuleSet } from "../cwt/rules.ts";
+import { scopeIndex, type AliasDecl, type LinkDecl, type RuleSet } from "../cwt/rules.ts";
 import { joinModifierScopes } from "../emit/script/modifiers.ts";
 import type { ModifierDocs } from "../logs/modifier-docs.ts";
 import type { ScopeLink } from "../logs/scopes.ts";
@@ -19,6 +9,7 @@ import type { DocDump } from "../logs/trigger-docs.ts";
 import { UNIVERSAL_SCOPES } from "../overlay/index.ts";
 import { SPECIAL_SCOPE_PATHS } from "../special-scope-paths.ts";
 
+/** Names present in only one side of a rules-and-documentation comparison. */
 export interface NameDrift {
   /** Declared in the `.cwt` rules but absent from the game's doc dump. */
   readonly rulesOnly: readonly string[];
@@ -26,105 +17,107 @@ export interface NameDrift {
   readonly docsOnly: readonly string[];
 }
 
+/** Canonical scope names, or `"any"` when a declaration admits every scope. */
 export type ScopeSet = readonly string[] | "any";
 
+/** A named rule whose CWT and game documentation declare different scopes. */
 export interface ScopeConflict {
+  /** The trigger or effect name. */
   readonly name: string;
+  /** Scopes declared by the CWT rules. */
   readonly rules: ScopeSet;
+  /** Scopes declared by the game documentation. */
   readonly docs: ScopeSet;
 }
 
+/** Reviewed evidence that accepts a defined set of scope discrepancies. */
 export interface ScopeResolution {
+  /** Stable identifier for this reviewed resolution. */
   readonly id: string;
+  /** Evidence source recorded as authoritative for this resolution. */
   readonly selectedAuthority: "rules" | "docs" | "mixed" | "none";
+  /** Reason the listed discrepancies are accepted. */
   readonly reason: string;
+  /** Versions of the evidence reviewed for this resolution. */
   readonly evidenceVersion: string;
+  /** Condition under which the resolution should be reviewed again. */
   readonly expectedLifetime: string;
+  /** Scope conflicts accepted by this resolution. */
   readonly conflicts: {
     /** Stable conflict identities, including both normalized scope sets. */
     readonly triggers: readonly string[];
     /** Stable conflict identities, including both normalized scope sets. */
     readonly effects: readonly string[];
   };
+  /** Rules without scope annotations accepted by this resolution. */
   readonly unscopedRules: {
+    /** Accepted trigger rules without scope annotations. */
     readonly triggers: readonly string[];
+    /** Accepted effect rules without scope annotations. */
     readonly effects: readonly string[];
   };
 }
 
+/** All deterministic differences between the CWT rules and game documentation. */
 export interface DriftReport {
+  /** Trigger names present in only one source. */
   readonly triggers: NameDrift;
+  /** Effect names present in only one source. */
   readonly effects: NameDrift;
   /**
-   * Static scope links only. Value and `from_data` links are excluded by their
-   * own declared markers (the game never dumps them), and the dump's special
-   * scope references (`root`, `prev`, …) are excluded from the other side.
+   * Static scope-link names present in only one source. Value links, data-driven links,
+   * and contextual scope paths are outside this comparison.
    */
   readonly links: NameDrift;
   /**
-   * Concrete `modifiers.cwt` names the game's dump does not list. There is no
-   * `docsOnly` counterpart: the dump legitimately holds tens of thousands of
-   * generated names the curated file only describes as templates.
+   * Concrete modifier names declared only by CWT. Generated names in the game documentation are
+   * excluded because CWT represents them as templates.
    */
-  readonly modifiers: { readonly rulesOnly: readonly string[] };
-  /** Categories either modifier source names that `modifier_categories.cwt` lacks. */
+  readonly modifiers: {
+    /** Concrete modifier names declared only by the CWT rules. */
+    readonly rulesOnly: readonly string[];
+  };
+  /** Modifier categories referenced by either source but absent from `modifier_categories.cwt`. */
   readonly unknownModifierCategories: readonly string[];
   /** Dumped modifier names the category join left without a single scope. */
   readonly unscopedModifierNames: readonly string[];
-  /** `## …` annotations upstream wrote in a shape the parser cannot read. */
+  /** Parser and classifier diagnostics other than unknown CWT value keywords. */
   readonly malformedOptions: readonly string[];
   /** Bracketed CWT value keywords the classifier does not understand. */
   readonly unknownKeywords: readonly string[];
-  /**
-   * Dump blocks `logs/trigger-docs.ts` could not read — no name line or no
-   * `Supported Scopes:` line — as `<file>:<line> <text>`. A vendored-dump
-   * bump that breaks block parsing moved these silently before: `npm test`
-   * pinned {@link DocDump.malformed}'s count, but `npm run codegen` never saw
-   * it, so a parser regression could ship without failing the drift gate.
-   */
+  /** Trigger or effect documentation blocks without a name or supported-scope line. */
   readonly malformedDocBlocks: readonly string[];
-  /** `modifiers.log` lines `logs/modifier-docs.ts` could not read, the same way. */
+  /** Modifier documentation lines that do not match the supported entry shape. */
   readonly malformedModifierBlocks: readonly string[];
   /**
-   * Scopes named by either source that `scopes.cwt` does not define, each as
-   * `<scope> — <token>, <token>, ...` with sorted tokens summarizing *where*
-   * the scope is referenced, so an accepted name cannot silently cover a
-   * later reference from somewhere new — the exact case a bare accepted-name
-   * list missed. A token is `<file>:<count>` — the number of references to
-   * this scope counted in that one file, not a line number, so a dump-line
-   * shift from an unrelated edit does not move the baseline — for every
-   * source that groups into files (doc dumps, rule declarations, scope
-   * links); a modifier-category reference instead contributes one
-   * `modifier_categories.cwt category:<name>` token per referencing category,
-   * since `RuleSet.modifierCategories` keeps no node location and the
-   * category name is itself the finer identity there.
-   *
-   * Accepted gap: a reference removed from a file and a new one added to the
-   * *same* file, in the same regeneration, can leave that file's count
-   * unchanged and so go unreported — `compareToBaseline` sees counts, not
-   * identities, within one file. Widening this further would mean carrying
-   * line numbers again, which is the exact churn counting was chosen to
-   * avoid; a swap this narrow is judged unlikely enough to accept.
+   * Undefined scope names and stable summaries of their references. File-backed references use
+   * `<file>:<count>` tokens; modifier categories use `modifier_categories.cwt category:<name>`.
+   * Replacing one reference with another in the same file can leave its count unchanged.
    */
   readonly unknownScopes: readonly string[];
   /** Rules whose `## scopes` disagree with the game's own dump. */
   readonly scopeConflicts: {
+    /** Trigger rules whose normalized scope sets disagree. */
     readonly triggers: readonly ScopeConflict[];
+    /** Effect rules whose normalized scope sets disagree. */
     readonly effects: readonly ScopeConflict[];
   };
   /** Rules with no `## scopes` annotation, even when the dump supplies a fallback. */
   readonly unscopedRules: {
+    /** Trigger rules without a scope annotation. */
     readonly triggers: readonly string[];
+    /** Effect rules without a scope annotation. */
     readonly effects: readonly string[];
   };
 }
 
+/** A reviewed drift report with scope discrepancies grouped by their accepted resolution. */
 export interface DriftBaseline extends Omit<DriftReport, "scopeConflicts" | "unscopedRules"> {
   /** Audited explanations for every accepted scope disagreement or missing annotation. */
   readonly scopeResolutions: readonly ScopeResolution[];
 }
 
-/** Sorted set difference; exported for the baseline compare in `./baseline.ts`. */
+/** Returns the sorted values present in `left` and absent from `right`. */
 export function diff(left: Iterable<string>, right: ReadonlySet<string>): string[] {
   return [...left].filter((name) => !right.has(name)).sort();
 }
@@ -139,15 +132,30 @@ function describeDiagnostic(diagnostic: CwtDiagnostic): string {
   return `${diagnostic.file}:${diagnostic.line} ${diagnostic.text}`;
 }
 
-/** Normalises a scope list to canonical names, or to `null` for "every scope". */
+function classifyDiagnostics(diagnostics: readonly CwtDiagnostic[]): {
+  malformedOptions: string[];
+  unknownKeywords: string[];
+} {
+  const malformedOptions: string[] = [];
+  const unknownKeywords: string[] = [];
+  for (const diagnostic of diagnostics) {
+    const destination = diagnostic.kind === "unknown-keyword" ? unknownKeywords : malformedOptions;
+    destination.push(describeDiagnostic(diagnostic));
+  }
+  malformedOptions.sort();
+  unknownKeywords.sort();
+  return { malformedOptions, unknownKeywords };
+}
+
+/** Normalizes aliases in a scope list to canonical names. Returns `null` for every scope. */
 export function normaliseScopes(
   scopes: readonly string[],
-  index: ReadonlyMap<string, string>
+  canonicalScopes: ReadonlyMap<string, string>
 ): Set<string> | null {
   if (scopes.some((scope) => UNIVERSAL_SCOPES.has(scope))) {
     return null;
   }
-  return new Set(scopes.map((scope) => index.get(scope) ?? scope));
+  return new Set(scopes.map((scope) => canonicalScopes.get(scope) ?? scope));
 }
 
 function sameScopes(left: Set<string> | null, right: Set<string> | null): boolean {
@@ -162,41 +170,25 @@ function scopeSet(scopes: Set<string> | null): ScopeSet {
 }
 
 function compareScopes(
-  table: ReadonlyMap<
-    string,
-    readonly {
-      readonly supportedScopes: readonly string[] | null;
-      readonly file: string;
-    }[]
-  >,
-  documented: ReadonlyMap<string, { readonly scopes: readonly string[] }>,
-  index: ReadonlyMap<string, string>,
-  note: (scopes: readonly string[], file: string) => void
+  ruleDeclarations: ReadonlyMap<string, readonly AliasDecl[]>,
+  documentedScopes: ReadonlyMap<string, { readonly scopes: readonly string[] }>,
+  canonicalScopes: ReadonlyMap<string, string>
 ): { conflicts: ScopeConflict[]; unscoped: string[] } {
   const conflicts: ScopeConflict[] = [];
   const unscoped: string[] = [];
 
-  for (const [name, declarations] of table) {
-    const declared = declarations.flatMap((declaration) => declaration.supportedScopes ?? []);
+  for (const [name, declarations] of ruleDeclarations) {
     if (declarations.every((declaration) => declaration.supportedScopes === null)) {
       unscoped.push(name);
       continue;
     }
-    // Per declaration, not the flattened `declared`: a name with several
-    // `alias[...]` declarations (an overload) would otherwise lose which one
-    // actually wrote a given scope token, and `note` needs that rule's own
-    // file to count against.
-    for (const declaration of declarations) {
-      if (declaration.supportedScopes !== null) {
-        note(declaration.supportedScopes, declaration.file);
-      }
-    }
-    const docs = documented.get(name);
+    const docs = documentedScopes.get(name);
     if (docs === undefined) {
       continue;
     }
-    const fromRules = normaliseScopes(declared, index);
-    const fromDocs = normaliseScopes(docs.scopes, index);
+    const declared = declarations.flatMap((declaration) => declaration.supportedScopes ?? []);
+    const fromRules = normaliseScopes(declared, canonicalScopes);
+    const fromDocs = normaliseScopes(docs.scopes, canonicalScopes);
     if (!sameScopes(fromRules, fromDocs)) {
       conflicts.push({ name, rules: scopeSet(fromRules), docs: scopeSet(fromDocs) });
     }
@@ -208,98 +200,105 @@ function compareScopes(
   };
 }
 
+function describeUnknownScopeReferences(
+  rules: RuleSet,
+  docs: DocDump,
+  staticLinks: readonly LinkDecl[],
+  canonicalScopes: ReadonlyMap<string, string>
+): string[] {
+  const fileCounts = new Map<string, Map<string, number>>();
+  const categoryTokens = new Map<string, Set<string>>();
+  const isUnknownScope = (scope: string): boolean =>
+    !canonicalScopes.has(scope) && !UNIVERSAL_SCOPES.has(scope);
+
+  const recordFileReferences = (scopes: readonly string[], file: string): void => {
+    for (const scope of scopes) {
+      if (!isUnknownScope(scope)) {
+        continue;
+      }
+      const countsForScope = fileCounts.get(scope) ?? new Map<string, number>();
+      countsForScope.set(file, (countsForScope.get(file) ?? 0) + 1);
+      fileCounts.set(scope, countsForScope);
+    }
+  };
+
+  const recordCategoryReference = (scopes: readonly string[], token: string): void => {
+    for (const scope of scopes) {
+      if (!isUnknownScope(scope)) {
+        continue;
+      }
+      const tokensForScope = categoryTokens.get(scope) ?? new Set<string>();
+      tokensForScope.add(token);
+      categoryTokens.set(scope, tokensForScope);
+    }
+  };
+
+  for (const entry of docs.triggers.values()) {
+    recordFileReferences(entry.scopes, "triggers.log");
+  }
+  for (const entry of docs.effects.values()) {
+    recordFileReferences(entry.scopes, "effects.log");
+  }
+  for (const ruleTable of [rules.triggers, rules.effects]) {
+    for (const declarations of ruleTable.values()) {
+      for (const declaration of declarations) {
+        if (declaration.supportedScopes !== null) {
+          recordFileReferences(declaration.supportedScopes, declaration.file);
+        }
+      }
+    }
+  }
+
+  // Modifier categories do not retain source locations, so their names provide stable identities.
+  for (const [category, scopes] of rules.modifierCategories) {
+    recordCategoryReference(
+      scopes.map((scope) => scope.toLowerCase()),
+      `modifier_categories.cwt category:${category}`
+    );
+  }
+
+  for (const link of staticLinks) {
+    recordFileReferences(
+      link.inputScopes.map((scope) => scope.toLowerCase()),
+      link.file
+    );
+    if (link.outputScope !== null) {
+      recordFileReferences([link.outputScope.toLowerCase()], link.file);
+    }
+  }
+
+  const unknownScopeNames = new Set([...fileCounts.keys(), ...categoryTokens.keys()]);
+  return [...unknownScopeNames].sort().map((scope) => {
+    const fileTokens = [...(fileCounts.get(scope) ?? new Map<string, number>())].map(
+      ([file, count]) => `${file}:${count}`
+    );
+    const tokens = [...fileTokens, ...(categoryTokens.get(scope) ?? [])].sort();
+    return `${scope} — ${tokens.join(", ")}`;
+  });
+}
+
+/**
+ * Compares classified CWT rules with the game documentation used as independent evidence.
+ * The returned report is sorted where order has no semantic meaning and is safe to baseline.
+ */
 export function reconcile(
   rules: RuleSet,
   docs: DocDump,
   modifierDocs: ModifierDocs,
   dumpLinks: readonly ScopeLink[]
 ): DriftReport {
-  const index = scopeIndex(rules);
-  // Scope name -> file -> how many references to it were counted in that
-  // file, and scope name -> the literal tokens contributed by sources with no
-  // file to count against (modifier categories). Counts rather than
-  // locations: the same retired scope name (`pop`) is referenced by hundreds
-  // of doc-dump entries, and recording each one's line would churn the
-  // baseline on every unrelated dump edit that shifts a line number. See the
-  // field doc on `DriftReport.unknownScopes` for the exact shape and its one
-  // accepted gap.
-  const unknownFileCounts = new Map<string, Map<string, number>>();
-  const unknownTokens = new Map<string, Set<string>>();
-
-  const noteCount = (scopes: readonly string[], file: string): void => {
-    for (const scope of scopes) {
-      if (index.has(scope) || UNIVERSAL_SCOPES.has(scope)) {
-        continue;
-      }
-      const perFile = unknownFileCounts.get(scope) ?? new Map<string, number>();
-      perFile.set(file, (perFile.get(file) ?? 0) + 1);
-      unknownFileCounts.set(scope, perFile);
-    }
-  };
-  const noteToken = (scopes: readonly string[], token: string): void => {
-    for (const scope of scopes) {
-      if (index.has(scope) || UNIVERSAL_SCOPES.has(scope)) {
-        continue;
-      }
-      const tokens = unknownTokens.get(scope) ?? new Set<string>();
-      tokens.add(token);
-      unknownTokens.set(scope, tokens);
-    }
-  };
-  // Two loops rather than one over the merged values: each dump file is its
-  // own counting bucket, and a merged loop would have needed to recover which
-  // file an entry came from.
-  for (const entry of docs.triggers.values()) {
-    noteCount(entry.scopes, "triggers.log");
-  }
-  for (const entry of docs.effects.values()) {
-    noteCount(entry.scopes, "effects.log");
-  }
-  // Modifier categories are the one source with no file-scoped count to give:
-  // CWT node position is discarded while `readModifierCategories`
-  // (cwt/rules.ts) builds `RuleSet.modifierCategories`, and widening that
-  // map's type to carry it is a bigger change than this drift gate warrants.
-  // `modifier_categories.cwt` is a single file and a category name is a
-  // unique key inside it, so one token per referencing category re-finds the
-  // reference just as reliably as a count would.
-  for (const [category, tokens] of rules.modifierCategories) {
-    noteToken(
-      tokens.map((token) => token.toLowerCase()),
-      `modifier_categories.cwt category:${category}`
-    );
-  }
-
+  const canonicalScopes = scopeIndex(rules);
   const staticLinks = [...rules.links.values()].filter(
     (link) => link.type === "scope" && !link.fromData
   );
-  for (const link of staticLinks) {
-    noteCount(
-      link.inputScopes.map((scope) => scope.toLowerCase()),
-      link.file
-    );
-    if (link.outputScope !== null) {
-      noteCount([link.outputScope.toLowerCase()], link.file);
-    }
-  }
-
   const modifierJoin = joinModifierScopes(
     rules,
     modifierDocs,
-    (token) => index.get(token.toLowerCase()) ?? null
+    (token) => canonicalScopes.get(token.toLowerCase()) ?? null
   );
-
-  const triggerScopes = compareScopes(rules.triggers, docs.triggers, index, noteCount);
-  const effectScopes = compareScopes(rules.effects, docs.effects, index, noteCount);
-
-  const unknownScopeNames = new Set([...unknownFileCounts.keys(), ...unknownTokens.keys()]);
-  const unknownScopes = [...unknownScopeNames].sort().map((scope) => {
-    const fileTokens = [...(unknownFileCounts.get(scope) ?? new Map<string, number>())].map(
-      ([file, count]) => `${file}:${count}`
-    );
-    const literalTokens = [...(unknownTokens.get(scope) ?? new Set<string>())];
-    const tokens = [...fileTokens, ...literalTokens].sort();
-    return `${scope} — ${tokens.join(", ")}`;
-  });
+  const diagnostics = classifyDiagnostics(rules.diagnostics);
+  const triggerScopes = compareScopes(rules.triggers, docs.triggers, canonicalScopes);
+  const effectScopes = compareScopes(rules.effects, docs.effects, canonicalScopes);
 
   return {
     triggers: driftBetween(rules.triggers.keys(), docs.triggers.keys()),
@@ -313,17 +312,11 @@ export function reconcile(
     },
     unknownModifierCategories: modifierJoin.unknownCategories,
     unscopedModifierNames: modifierJoin.unscoped,
-    malformedOptions: rules.diagnostics
-      .filter((diagnostic) => diagnostic.kind !== "unknown-keyword")
-      .map(describeDiagnostic)
-      .sort(),
-    unknownKeywords: rules.diagnostics
-      .filter((diagnostic) => diagnostic.kind === "unknown-keyword")
-      .map(describeDiagnostic)
-      .sort(),
+    malformedOptions: diagnostics.malformedOptions,
+    unknownKeywords: diagnostics.unknownKeywords,
     malformedDocBlocks: [...docs.malformed].sort(),
     malformedModifierBlocks: [...modifierDocs.malformed].sort(),
-    unknownScopes,
+    unknownScopes: describeUnknownScopeReferences(rules, docs, staticLinks, canonicalScopes),
     scopeConflicts: {
       triggers: triggerScopes.conflicts,
       effects: effectScopes.conflicts,

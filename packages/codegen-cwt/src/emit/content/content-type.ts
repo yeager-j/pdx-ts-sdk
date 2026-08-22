@@ -71,11 +71,17 @@ import {
  */
 const PARSED_CONTENT_MODULE = "../stellaris/vanilla/view.ts";
 
+/** Generated module text and coverage evidence for one content registry. */
 export interface ContentEmission {
+  /** Complete generated module text for the registry. */
   readonly code: string;
+  /** Pascal-cased base name shared by the registry's generated declarations. */
   readonly typeName: string;
+  /** Name of the registry's generated runtime field table. */
   readonly fieldsConstant: string;
+  /** Name of the registry's generated localisation descriptor table. */
   readonly localisationConstant: string;
+  /** Top-level fields represented by the authoring interface. */
   readonly emittedFields: readonly EmittedField[];
   /**
    * Fields lowered inside a block-valued field, e.g. `tradition_swap.on_enabled`
@@ -118,6 +124,7 @@ export interface ContentEmission {
    * absent from the authoring surface other than `declinedFields`.
    */
   readonly unsupported: readonly string[];
+  /** Localisation slots collapsed onto an earlier canonical slot. */
   readonly localisationAliases: readonly string[];
   /**
    * Body fields whose mechanical member name was already a localization slot,
@@ -893,6 +900,10 @@ function contentTypeCode(
   );
 }
 
+/**
+ * Emits one manifest registry's authoring declarations, runtime metadata, and coverage report.
+ * A shared CWT type can be narrowed to a manifest subtype without admitting sibling subtype fields.
+ */
 export function emitContentType(
   emitter: Emitter,
   cwtType: ContentType,
@@ -945,7 +956,8 @@ export function emitContentType(
   const surface = scopeParameterDeclarations(type, parameter);
   const patchWidenings: string[] = [];
   const patchLocMembers: string[] = [];
-  const patchCode = CONTENT_PATCH_REGISTRIES.has(type.name)
+  const patchable = CONTENT_PATCH_REGISTRIES.has(type.name);
+  const patchCode = patchable
     ? patchTypes(
         emitter,
         type,
@@ -994,8 +1006,8 @@ export function emitContentType(
     scopeParameter: parameter,
     localisationAliases: collapsedRows.map(omissionLine),
     localisationRenames: draft.localisationRenames,
-    patchExclusions: patchCode === "" ? [] : draft.patchExclusions,
-    patchWidenings: patchCode === "" ? [] : patchWidenings,
-    patchLocMembers: patchCode === "" ? [] : patchLocMembers,
+    patchExclusions: patchable ? draft.patchExclusions : [],
+    patchWidenings: patchable ? patchWidenings : [],
+    patchLocMembers: patchable ? patchLocMembers : [],
   };
 }

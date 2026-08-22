@@ -17,16 +17,11 @@ import type { EmittedField } from "./fields.ts";
 import type { FieldScope } from "./scope-context.ts";
 
 /**
- * The literals a doc row may carry: the admitted set, except where lowering
- * changes the authored representation. `admits.literals` speaks the game's
- * tokens because the corpus gate measures shipped files, but boolean fields
- * author as `true`/`false` while admitting `yes`/`no` — printing those tokens
- * in a docs table tells an author to pass strings that do not type-check.
- * Booleans are the only conversion with that mismatch, and their admitted
- * sets are exactly the subsets of `{yes, no}`, so those are omitted; the
- * member type `boolean` already says everything the row would.
+ * Selects literal tokens suitable for generated authoring documentation.
+ * It omits `yes`/`no`-only sets because those tokens author as booleans instead of strings.
  */
 export function authoredLiterals(literals: readonly string[] | undefined): {
+  /** Literal strings suitable for the generated authoring documentation. */
   readonly literals?: readonly string[];
 } {
   if (literals === undefined || literals.every((token) => token === "yes" || token === "no")) {
@@ -36,15 +31,14 @@ export function authoredLiterals(literals: readonly string[] | undefined): {
 }
 
 /**
- * The scalar-lowering half of a field's metadata: how to turn the authored
- * value into an id, and — when the rules say every admitted form is a
- * reference — which registries that id must come from. The second half is what
- * lets `buildMod` hold an own-prefixed reference to the registry it names.
+ * Renders the conversion metadata for an authored scalar.
+ * Closed reference values also include the registry names their ids must satisfy.
  */
 export function scalarMetadata(value: TsValue): string[] {
   return [`conversion: ${JSON.stringify(conversionFor(value))}`, ...refTypesEntries(value)];
 }
 
+/** Renders an array type and preserves the grouping of union element types. */
 export function arrayType(type: string): string {
   return type.includes(" | ") ? `(${type})[]` : `${type}[]`;
 }
@@ -67,6 +61,10 @@ export function memberOptional(
   return override?.optional === true || group.every((field) => isOptional(field.cardinality));
 }
 
+/**
+ * Renders the runtime descriptor for one generated content field.
+ * Shape-specific entries can be appended through `extras`.
+ */
 export function metadata(
   field: RuleField,
   name: string,

@@ -7,19 +7,29 @@ import { docComment } from "../naming.ts";
 import { EVENT_RULE_SIGNATURES, OPTION_RULE_SIGNATURES } from "./event-field-signatures.ts";
 
 interface EventFieldMember {
+  /** The property name on the generated TypeScript authoring interface. */
   readonly member: string;
+  /** The emitted TypeScript type expression. */
   readonly type: string;
+  /** Whether authors must provide the member. */
   readonly required?: true;
 }
 
+/** One reviewed event or option field and its generated authoring disposition. */
 export interface EventFieldPolicyEntry {
+  /** The key written in the event or option PDXScript block. */
   readonly scriptKey: string;
+  /** The complete normalized set of CWT forms for the key. */
   readonly shape: string;
+  /** Whether SDK authoring preserves all, some, or none of those forms. */
   readonly disposition: "supported" | "partial" | "unsupported";
+  /** The supported meaning or the reason for exclusion. */
   readonly reason: string;
+  /** CWT forms deliberately omitted from a partially supported field. */
   readonly unsupportedForms?: readonly string[];
   /** Complete canonical CWT arm signature, attached after validation. */
   readonly ruleSignature?: string;
+  /** Generated authoring members that represent the supported forms. */
   readonly members?: readonly EventFieldMember[];
   /** An alias splice rather than a named field in the CWT block. */
   readonly synthetic?: true;
@@ -54,7 +64,7 @@ const partial = (
   unsupportedForms,
 });
 
-const EVENT_FIELDS: readonly EventFieldPolicyEntry[] = [
+const EVENT_FIELD_POLICY: readonly EventFieldPolicyEntry[] = [
   supported("id", "scalar 1..1", "id", "number", "numeric id within the event namespace", true),
   supported("title", "scalar 0..1 | scalar 1..1", "title", "string", "localized title"),
   {
@@ -144,20 +154,22 @@ const EVENT_FIELDS: readonly EventFieldPolicyEntry[] = [
     "EventLocation<S, From>",
     "event window location"
   ),
-  ...[
-    ["hide_window", "hideWindow"],
-    ["diplomatic", "diplomatic"],
-    ["force_open", "forceOpen"],
-    ["major", "major"],
-    ["trackable", "trackable"],
-    ["is_advisor_event", "isAdvisorEvent"],
-    ["auto_select", "autoSelect"],
-    ["auto_opens", "autoOpens"],
-    ["is_test_event", "isTestEvent"],
-    ["is_triggered_only", "isTriggeredOnly"],
-    ["fire_only_once", "fireOnlyOnce"],
-  ].map(([key, member]) =>
-    supported(key!, "scalar 0..1", member!, "boolean", "CWT boolean event field")
+  ...(
+    [
+      ["hide_window", "hideWindow"],
+      ["diplomatic", "diplomatic"],
+      ["force_open", "forceOpen"],
+      ["major", "major"],
+      ["trackable", "trackable"],
+      ["is_advisor_event", "isAdvisorEvent"],
+      ["auto_select", "autoSelect"],
+      ["auto_opens", "autoOpens"],
+      ["is_test_event", "isTestEvent"],
+      ["is_triggered_only", "isTriggeredOnly"],
+      ["fire_only_once", "fireOnlyOnce"],
+    ] as const
+  ).map(([key, member]) =>
+    supported(key, "scalar 0..1", member, "boolean", "CWT boolean event field")
   ),
   /**
    * `subtype[major]` is an attribute subtype driven by `major`, not the event
@@ -269,18 +281,20 @@ const EVENT_FIELDS: readonly EventFieldPolicyEntry[] = [
     "ReadonlyArray<EventOption<S, From>>",
     "repeated event options"
   ),
-  ...[
-    ["base", "event inheritance is deliberately replaced by TypeScript composition"],
-    ["desc_clear", "unreachable without event inheritance"],
-    ["option_clear", "unreachable without event inheritance"],
-    ["picture_clear", "unreachable without event inheritance"],
-    ["show_sound_clear", "unreachable without event inheritance"],
-    ["trigger_clear", "unreachable without event inheritance"],
-  ].map(([scriptKey, reason]) => ({
-    scriptKey: scriptKey!,
+  ...(
+    [
+      ["base", "event inheritance is deliberately replaced by TypeScript composition"],
+      ["desc_clear", "unreachable without event inheritance"],
+      ["option_clear", "unreachable without event inheritance"],
+      ["picture_clear", "unreachable without event inheritance"],
+      ["show_sound_clear", "unreachable without event inheritance"],
+      ["trigger_clear", "unreachable without event inheritance"],
+    ] as const
+  ).map(([scriptKey, reason]) => ({
+    scriptKey,
     shape: scriptKey === "base" ? "scalar 1..1" : "scalar 0..1",
     disposition: "unsupported" as const,
-    reason: reason!,
+    reason,
   })),
   {
     scriptKey: "picture_event_data",
@@ -310,7 +324,7 @@ const EVENT_FIELDS: readonly EventFieldPolicyEntry[] = [
   },
 ];
 
-const OPTION_FIELDS: readonly EventFieldPolicyEntry[] = [
+const OPTION_FIELD_POLICY: readonly EventFieldPolicyEntry[] = [
   partial(
     "name",
     "block 1..inf {exclusive_trigger, text} | block 1..inf {text, trigger} | scalar 1..inf",
@@ -383,42 +397,48 @@ function armSignature(field: RuleField): string {
   return `${cardinality}:${field.comparison ? "comparison" : "assignment"}:${scopeSignature(field)}:${ruleTypeSignature(field.type)}`;
 }
 
-function fieldShapes(fields: readonly RuleField[]): Map<string, string> {
-  const arms = new Map<string, Set<string>>();
+function namedFieldArmValues(
+  fields: readonly RuleField[],
+  valueOf: (field: RuleField) => string
+): Map<string, string> {
+  const valuesByKey = new Map<string, Set<string>>();
   const visit = (items: readonly RuleField[]): void => {
     for (const field of items) {
       if (field.key.kind === "subtype") {
         if (field.type.kind === "block") visit(field.type.fields);
-      } else if (field.key.kind === "name") {
-        arms.set(field.key.name, (arms.get(field.key.name) ?? new Set()).add(armShape(field)));
+        continue;
       }
+      if (field.key.kind !== "name") continue;
+      valuesByKey.set(
+        field.key.name,
+        (valuesByKey.get(field.key.name) ?? new Set()).add(valueOf(field))
+      );
     }
   };
   visit(fields);
-  return new Map([...arms].map(([key, values]) => [key, [...values].sort().join(" | ")]));
+  return new Map([...valuesByKey].map(([key, values]) => [key, [...values].sort().join(" | ")]));
+}
+
+function fieldShapes(fields: readonly RuleField[]): Map<string, string> {
+  return namedFieldArmValues(fields, armShape);
 }
 
 function fieldSignatures(fields: readonly RuleField[]): Map<string, string> {
-  const arms = new Map<string, Set<string>>();
-  const visit = (items: readonly RuleField[]): void => {
-    for (const field of items) {
-      if (field.key.kind === "subtype") {
-        if (field.type.kind === "block") visit(field.type.fields);
-      } else if (field.key.kind === "name") {
-        arms.set(field.key.name, (arms.get(field.key.name) ?? new Set()).add(armSignature(field)));
-      }
-    }
-  };
-  visit(fields);
-  return new Map([...arms].map(([key, values]) => [key, [...values].sort().join(" | ")]));
+  return namedFieldArmValues(fields, armSignature);
 }
 
 function signatureHash(signature: string): string {
   return createHash("sha256").update(signature).digest("hex");
 }
 
+/**
+ * Computes canonical rule signatures for named event and option fields.
+ * Subtype fields are flattened so each script key has one sorted union of its declared arms.
+ */
 export function eventFieldRuleSignatures(rules: RuleSet): {
+  /** Canonical signatures keyed by event-body field name. */
   event: ReadonlyMap<string, string>;
+  /** Canonical signatures keyed by event-option field name. */
   option: ReadonlyMap<string, string>;
 } {
   const body = rules.bodies.get("event");
@@ -444,7 +464,7 @@ function blockFields(fields: readonly RuleField[], name: string): readonly RuleF
   return [];
 }
 
-function validate(
+function assertFieldPolicyMatchesRules(
   what: string,
   declaredSignatures: ReadonlyMap<string, string>,
   declaredShapes: ReadonlyMap<string, string>,
@@ -499,18 +519,24 @@ function validate(
   }
 }
 
+/**
+ * Validates the reviewed event-field tables against loaded CWT rules and attaches their signatures.
+ * Any added, removed, or reshaped event or option field fails generation pending policy review.
+ */
 export function createEventFieldPolicy(rules: RuleSet): {
+  /** Reviewed policy entries for fields on an event definition. */
   event: readonly EventFieldPolicyEntry[];
+  /** Reviewed policy entries for fields inside an event option. */
   option: readonly EventFieldPolicyEntry[];
 } {
   const body = rules.bodies.get("event");
   if (body === undefined) throw new Error("events.cwt declares no event body");
   const signatures = eventFieldRuleSignatures(rules);
-  validate(
+  assertFieldPolicyMatchesRules(
     "event",
     signatures.event,
     fieldShapes(body.fields),
-    EVENT_FIELDS,
+    EVENT_FIELD_POLICY,
     EVENT_RULE_SIGNATURES
   );
   const option = blockFields(body.fields, "option");
@@ -518,27 +544,27 @@ export function createEventFieldPolicy(rules: RuleSet): {
   if (!option.some((field) => field.key.kind === "aliasName" && field.key.category === "effect")) {
     throw new Error("events.cwt option block no longer splices alias_name[effect]");
   }
-  validate(
+  assertFieldPolicyMatchesRules(
     "event option",
     signatures.option,
     fieldShapes(option),
-    OPTION_FIELDS,
+    OPTION_FIELD_POLICY,
     OPTION_RULE_SIGNATURES
   );
-  const attachSignature = (
+  const attachRuleSignature = (
     entry: EventFieldPolicyEntry,
     declared: ReadonlyMap<string, string>
-  ) => ({
+  ): EventFieldPolicyEntry => ({
     ...entry,
     ruleSignature: entry.synthetic ? entry.shape : declared.get(entry.scriptKey)!,
   });
   return {
-    event: EVENT_FIELDS.map((entry) => attachSignature(entry, signatures.event)),
-    option: OPTION_FIELDS.map((entry) => attachSignature(entry, signatures.option)),
+    event: EVENT_FIELD_POLICY.map((entry) => attachRuleSignature(entry, signatures.event)),
+    option: OPTION_FIELD_POLICY.map((entry) => attachRuleSignature(entry, signatures.option)),
   };
 }
 
-function interfaceMembers(policy: readonly EventFieldPolicyEntry[]): string {
+function emitInterfaceMembers(policy: readonly EventFieldPolicyEntry[]): string {
   return policy
     .filter((entry) => entry.disposition !== "unsupported")
     .flatMap((entry) =>
@@ -551,7 +577,7 @@ function interfaceMembers(policy: readonly EventFieldPolicyEntry[]): string {
     .join("");
 }
 
-function ledger(name: string, policy: readonly EventFieldPolicyEntry[]): string {
+function emitSupportLedger(name: string, policy: readonly EventFieldPolicyEntry[]): string {
   return (
     `export const ${name} = [\n` +
     policy
@@ -564,6 +590,7 @@ function ledger(name: string, policy: readonly EventFieldPolicyEntry[]): string 
   );
 }
 
+/** Emits generated event and option authoring interfaces plus their reviewed support ledgers. */
 export function emitEventFieldProtocol(policy: ReturnType<typeof createEventFieldPolicy>): string {
   return (
     'import type { ScopeObjOf } from "./effects.ts";\n' +
@@ -575,14 +602,14 @@ export function emitEventFieldProtocol(policy: ReturnType<typeof createEventFiel
     "type EventEffect<S extends ScopeName, From extends ScopeName | undefined> = (scope: ScopeObjOf<S>, ctx: ScriptCtx<S, From>) => void;\n\n" +
     docComment(["Event authoring fields projected from the reviewed CWT support policy."]) +
     "export interface GeneratedEventFields<S extends ScopeName, From extends ScopeName | undefined> {\n" +
-    interfaceMembers(policy.event) +
+    emitInterfaceMembers(policy.event) +
     "}\n\n" +
     docComment(["Event option authoring fields projected from the reviewed CWT support policy."]) +
     "export interface GeneratedEventOptionFields<S extends ScopeName, From extends ScopeName | undefined> {\n" +
-    interfaceMembers(policy.option) +
+    emitInterfaceMembers(policy.option) +
     "}\n\n" +
-    ledger("EVENT_FIELD_SUPPORT", policy.event) +
+    emitSupportLedger("EVENT_FIELD_SUPPORT", policy.event) +
     "\n" +
-    ledger("EVENT_OPTION_FIELD_SUPPORT", policy.option)
+    emitSupportLedger("EVENT_OPTION_FIELD_SUPPORT", policy.option)
   );
 }

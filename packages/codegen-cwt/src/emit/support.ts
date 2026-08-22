@@ -3,11 +3,16 @@
 import { camelCase, docComment, pascalCase, pluralize } from "../naming.ts";
 import type { Emitter } from "../render/emitter.ts";
 
+/**
+ * Returns the sorted SDK scope names derived from the CWT scope table.
+ * Names that normalize to the same lowercase, underscore-separated spelling are emitted once.
+ */
 export function canonicalScopes(scopes: ReadonlyMap<string, readonly string[]>): string[] {
   const names = [...scopes.keys()].map((name) => name.toLowerCase().replaceAll(" ", "_"));
   return [...new Set(names)].sort();
 }
 
+/** Renders the generated `ScopeName` union from canonical scope names. */
 export function emitScopes(names: readonly string[]): string {
   const members = names.map((name) => `  | ${JSON.stringify(name)}`).join("\n");
   return (
@@ -20,6 +25,10 @@ export function emitScopes(names: readonly string[]): string {
   );
 }
 
+/**
+ * Renders the generated enum aliases used during this emission pass.
+ * Empty declared enums stay visible as widened types instead of becoming unusable `never` aliases.
+ */
 export function emitEnums(emitter: Emitter): string {
   const chunks: string[] = [];
   for (const name of [...emitter.usedEnums].sort()) {
@@ -138,6 +147,7 @@ function refBrandType(name: string): string {
     : `${JSON.stringify(name)} | \`${name}.\${string}\``;
 }
 
+/** Renders the generated branded reference aliases used during this emission pass. */
 export function emitRefs(emitter: Emitter): string {
   const aliases = [...emitter.usedRefs]
     .sort()

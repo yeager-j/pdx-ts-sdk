@@ -22,12 +22,19 @@ import {
 /** Resolves a raw scope token to its canonical name, or `null` if unknown. */
 export type CanonicalScope = (token: string) => string | null;
 
+/** One overlay-authorized dynamic modifier family and its per-scope operation paths. */
 export interface DynamicModifierFamily {
+  /** Placeholder family name used as the generated recorder property. */
   readonly family: string;
+  /** Generated reference type accepted by the family selector. */
   readonly reference: string;
+  /** Registry whose definitions supply selector values. */
   readonly target: string;
+  /** Placeholder token replaced inside CWT modifier templates. */
   readonly placeholder: string;
+  /** Canonical scope to the operation paths valid there. */
   readonly scopeOperations: ReadonlyMap<string, readonly string[][]>;
+  /** Dotted operation path to its original CWT template. */
   readonly operationTemplates: ReadonlyMap<string, string>;
 }
 
@@ -38,6 +45,7 @@ interface DynamicModifierOperation {
   readonly categories: readonly string[];
 }
 
+/** Modifier names joined with canonical scope evidence and dynamic-family policy. */
 export interface ModifierJoin {
   /** Names in an `any`-scoped category (`All`, `Economic Units`): valid everywhere. */
   readonly universal: readonly string[];
@@ -47,6 +55,7 @@ export interface ModifierJoin {
   readonly unscoped: readonly string[];
   /** Categories the dump or `modifiers.cwt` name that the category table lacks. */
   readonly unknownCategories: readonly string[];
+  /** Dynamic modifier families resolved from templates and audited overlays. */
   readonly dynamicFamilies: readonly DynamicModifierFamily[];
   /** Sound scope evidence for modifier categories, used by owned selectors. */
   readonly categoryScopes: ReadonlyMap<string, "any" | readonly string[]>;
@@ -126,6 +135,10 @@ function dynamicModifierFamilies(
   });
 }
 
+/**
+ * Joins modifier documentation with CWT category scopes into exact scope-set groups.
+ * Unknown categories and names with no scope evidence remain visible in the returned report data.
+ */
 export function joinModifierScopes(
   rules: RuleSet,
   docs: ModifierDocs,
@@ -206,11 +219,17 @@ export function joinModifierScopes(
   };
 }
 
+/** Generated modifier module text and its size report. */
 export interface ModifierEmission {
+  /** Complete generated modifier authoring module text. */
   readonly code: string;
+  /** Total modifier names represented by universal and scoped groups. */
   readonly names: number;
+  /** Number of modifier names valid in every scope. */
   readonly universal: number;
+  /** Number of distinct exact scope-set groups. */
   readonly groups: number;
+  /** Number of canonical scopes represented by recorder interfaces. */
   readonly scopes: number;
   /** Unique path-node interfaces after the trie DAG dedup. */
   readonly trieTypes: number;
@@ -298,6 +317,7 @@ class TrieEmitter {
   private readonly nodeIds = new WeakMap<TrieNode, number>();
   private readonly nodeShapes = new WeakMap<TrieNode, string>();
   private readonly emittedIds = new Set<number>();
+  /** Interface declarations accumulated in dependency-first order. */
   readonly lines: string[] = [];
 
   /** Assigns bottom-up structural ids so identical subtrees share one type. */
@@ -329,6 +349,7 @@ class TrieEmitter {
     return id;
   }
 
+  /** Number of structurally unique non-leaf trie interfaces discovered so far. */
   get uniqueTypes(): number {
     return this.shapeIds.size;
   }
@@ -499,8 +520,9 @@ function categoryScopeMapsCode(join: ModifierJoin): string {
 function economicSelectorCode(): string {
   // The seven members EconomicWitnessOf extracts come from the same
   // CONTENT_WITNESSES "economic_category" row contentDefiners
-  // (emit/content/definers.ts) reads for the Omit<...> union — one list read
-  // twice instead of the same seven names hand-spelled in both places (SDK-260).
+  // (packages/codegen-cwt/src/emit/content/definers.ts) reads for the Omit<...>
+  // union — one list read twice instead of the same seven names hand-spelled
+  // in both places (SDK-260).
   const economicWitness = CONTENT_WITNESSES.get("economic_category");
   if (economicWitness === undefined || economicWitness.mode !== "intersects") {
     throw new Error(
@@ -659,6 +681,10 @@ function recorderInterfacesCode(
   return code;
 }
 
+/**
+ * Emits flat modifier-key types and completion-friendly recorder tries from a scope join.
+ * Structurally identical trie nodes share one generated interface without changing valid paths.
+ */
 export function emitModifiers(join: ModifierJoin): ModifierEmission {
   const scopes = [...new Set([...join.groups.keys()].flatMap((key) => key.split(" ")))].sort();
   const tries = emitPathTries(join, scopes);
@@ -673,7 +699,9 @@ export function emitModifiers(join: ModifierJoin): ModifierEmission {
 
   return {
     code,
-    names: join.universal.length + [...join.groups.values()].reduce((n, g) => n + g.length, 0),
+    names:
+      join.universal.length +
+      [...join.groups.values()].reduce((count, names) => count + names.length, 0),
     universal: join.universal.length,
     groups: join.groups.size,
     scopes: scopes.length,

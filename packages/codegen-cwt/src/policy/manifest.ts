@@ -8,85 +8,56 @@
 
 import type { ContentType } from "../cwt/rules.ts";
 
+/**
+ * One content registry selected for SDK generation.
+ * The row identifies its CWT source and any deliberate registry naming or layout policy.
+ */
 export interface ContentManifestEntry {
+  /** The CWT `type[...]` declaration that defines the registry. */
   readonly type: string;
+  /** Path, relative to the vendored CWT config root, of the file that declares the type. */
   readonly source: string;
   /**
-   * Conventional id segment the mod capability mints between its prefix and
-   * a logical definition name. Omit it when the registry name is already the
-   * established spelling.
+   * Segment inserted between the mod prefix and a logical definition name.
+   * Omit it when the registry name is already the established id segment.
    */
   readonly idSegment?: string;
   /**
-   * The literal top-level key, for registries CWT marks with `name_field` —
-   * where the key is a repeated keyword and the id lives in a body field.
-   *
-   * Declared here rather than derived because CWT does not reliably carry it.
-   * `global_ship_design` states `## type_key_filter = ship_design`, but
-   * `section_template` and `ambient_object` state nothing at all while vanilla
-   * writes `ship_section_template` and `ambient_object` — so a rule like
-   * "fall back to the type name" would be right for one and silently wrong for
-   * the other. Codegen verifies whatever is written here against any filter the
-   * rules do declare.
+   * Literal top-level definition key when the id lives in a body field.
+   * It is explicit because CWT does not consistently declare a reliable type-key filter.
+   * Any positive filter that CWT does declare must match this key.
    */
   readonly keyword?: string;
   /**
-   * Generated name, when one CWT type backs several registries. Three keywords
-   * share `type[component_template]`, and a weapon slot should not accept a
-   * utility template, so each gets its own branded type and `defineX`.
-   *
-   * It must name a subtype the CWT type declares, and codegen fails if it does
-   * not: the split is by subtype, and the subtype is what the rules call the
-   * registry in a reference (`<component_template.utility_component_template>`).
-   * A name of our own invention here would brand definitions with a reference
-   * no field asks for, leaving them unable to reach any of them.
+   * CWT subtype used when one type backs several distinct SDK registries.
+   * It must name a declared subtype so generated definitions satisfy the matching reference brand.
    */
   readonly as?: string;
   /**
-   * Generated name, when the SDK's name for a registry is the game's own
-   * definition keyword rather than the CWT type name. `type[sprite]`'s entries
-   * are written `spriteType = { ... }` and every modder calls them sprite
-   * types, so `mod.spriteType` is the name that reads as the game's.
-   *
-   * Unlike {@link as} this asserts nothing about the rules — it does not select
-   * a subtype, does not change which body is emitted, and does not change the
-   * reference the definitions satisfy. It only renames, so the one thing
-   * codegen checks is that the new name is a legal identifier stem, that it
-   * differs from the name it replaces, and that no two registries end up
-   * sharing one. Read it through {@link registryNameOf}, never by hand.
+   * SDK registry name override when the game's established name differs from the CWT type name.
+   * It renames generated symbols and files without selecting a subtype or changing references.
+   * The name must be a distinct, unique identifier stem; resolve it through {@link registryNameOf}.
    */
   readonly name?: string;
   /**
-   * Marks a registry whose vanilla id count blows out a completion menu, so
-   * the generated `vanilla.*` namespace gives it the navigable trie plus
-   * checked-call form instead of a flat literal-union parameter — the same
-   * two-tier split `VANILLA_REF_EXTRAS` declares below.
-   *
-   * Only the yes-or-no belongs here. How the trie is arranged is a fact about
-   * the *install's* directories, so it lives with the generator that reads
-   * them (`@pdx-ts/codegen-vanilla`'s `BucketLayout`) and never reaches the
-   * SDK: every trie navigates buckets to a leaf spelling the id verbatim, so
-   * the runtime behaviour is the same for all of them. The two sides are
-   * pinned together by a type test over `keyof VanillaTries`.
+   * Uses a navigable trie and checked-call form for a registry too large for a flat completion union.
+   * Trie layout remains the responsibility of the install-derived vanilla generator.
    */
   readonly oversized?: true;
 }
 
 /**
- * The generated registry name of one manifest row.
- *
- * Five derivations need this answer — the codegen content loop, the
- * `vanilla.*` namespace, the corpus measurements, the vanilla identifier
- * package's rows, and the fixture file stems — and a registry that spelled
- * itself differently in any of them would silently measure, check, or emit
- * against a registry that does not exist. So the precedence is written once:
- * an outright {@link ContentManifestEntry.name} wins, then the
- * {@link ContentManifestEntry.as} subtype rename, then the CWT type name.
+ * Resolves the canonical generated registry name used by every manifest consumer.
+ * An explicit name overrides the subtype name, which overrides the CWT type name.
  */
 export function registryNameOf(entry: ContentManifestEntry): string {
   return entry.name ?? entry.as ?? entry.type;
 }
 
+/**
+ * The complete allowlist of content registries exposed through SDK authoring.
+ * Each row selects one reviewed CWT type or subtype for generation.
+ */
 export const CONTENT_MANIFEST = [
   { type: "technology", source: "common/technologies_consolidated.cwt", idSegment: "tech" },
   { type: "building", source: "common/buildings.cwt" },
@@ -223,26 +194,19 @@ export const CONTENT_MANIFEST = [
   },
 ] as const satisfies readonly ContentManifestEntry[];
 
-/**
- * Ref-only registries the generated `vanilla.*` namespace (SDK-12) covers
- * beyond `CONTENT_MANIFEST`: CWT `<type>` references with real vanilla-defined
- * ids, but not content types the SDK writes a `defineX` for — the SDK only
- * ever refers to a sound or a planet class, never authors one.
- *
- * `oversized` marks the two-tier editor-perf split: a navigable trie plus a checked-call
- * form instead of a flat literal-union parameter, because these registries'
- * real id counts (~5.9k sound names, ~3.6k deposits) blow out a completion menu
- * the way `resource`'s handful do not.
- */
+/** A vanilla reference registry exposed by the SDK but not available as authored content. */
 export interface VanillaRefExtra {
+  /** The CWT reference type exposed in the generated `vanilla.*` namespace. */
   readonly type: string;
-  /** The CWT file that declares the referenced type. */
+  /** Path, relative to the vendored CWT config root, of the declaring file. */
   readonly source: string;
   /** Top-level install keyword for types whose id lives in a name field. */
   readonly keyword?: string;
+  /** Uses a navigable trie because a flat completion union is too large for editors. */
   readonly oversized?: true;
 }
 
+/** Reference-only vanilla registries that have no SDK content-definition capability. */
 export const VANILLA_REF_EXTRAS = [
   { type: "sound", source: "sound/sound.cwt", keyword: "sound", oversized: true },
   {
@@ -264,16 +228,10 @@ export const VANILLA_REF_EXTRAS = [
 const REGISTRY_NAME = /^[A-Za-z][A-Za-z0-9_]*$/;
 
 /**
- * Checks one row's resolved registry name before anything derives from it.
- *
- * The name reaches an exported symbol, a capability method, a generated file
- * stem and a fixture stem, so a name that is not an identifier stem fails the
- * build somewhere far from the row that caused it. A `name` that merely
- * restates what `as ?? type` already yields is dead weight that would drift,
- * and two rows resolving to one name would silently overwrite each other's
- * generated file.
+ * Validates a resolved registry name and records it for duplicate detection.
+ * It rejects illegal identifier stems, redundant explicit names, and names already in `seen`.
  */
-export function assertRegistryName(
+export function assertAndRecordRegistryName(
   entry: ContentManifestEntry,
   registry: string,
   seen: Set<string>
@@ -300,33 +258,33 @@ export function assertRegistryName(
 }
 
 /**
- * The `## type_key_filter` that constrains one manifest row's keyword.
- *
- * A type-level filter constrains every row reading that type. Where the type
- * declares none, an `as` row is one subtype of it, and it is that subtype's own
- * filter that says which key its definitions are written under — which is what
- * lets the three `component_template` keywords and `sprite`'s `spriteType` be
- * checked rather than trusted.
- *
- * A negated filter (`<> random_list`) names a key the entries are *not*
- * written under, so it constrains nothing about the keyword and is dropped
- * here rather than compared against.
+ * Resolves the positive CWT key filter that constrains a manifest keyword.
+ * The type-level filter takes precedence over the selected subtype; absent and negated filters
+ * impose no positive keyword constraint and return `null`.
  */
 export function effectiveKeyFilter(
   type: ContentType,
-  as: string | undefined
-): { readonly key: string; readonly source: string } | null {
+  subtypeName: string | undefined
+): {
+  /** Positive top-level definition key required by the filter. */
+  readonly key: string;
+  /** CWT declaration that supplied the filter, for validation diagnostics. */
+  readonly source: string;
+} | null {
   if (type.keyFilter !== null) {
     return type.keyFilter.negated
       ? null
       : { key: type.keyFilter.key, source: `type[${type.name}]` };
   }
-  if (as === undefined) {
+  if (subtypeName === undefined) {
     return null;
   }
-  const subtype = type.subtypes.find((candidate) => candidate.name === as);
+  const subtype = type.subtypes.find((candidate) => candidate.name === subtypeName);
   if (subtype?.keyFilter == null || subtype.keyFilter.negated) {
     return null;
   }
-  return { key: subtype.keyFilter.key, source: `type[${type.name}] subtype[${as}]` };
+  return {
+    key: subtype.keyFilter.key,
+    source: `type[${type.name}] subtype[${subtypeName}]`,
+  };
 }

@@ -6,9 +6,10 @@
  * event kind, each carrying `## type_key_filter = country_event` and
  * `## push_scope = country` — so which kinds exist and which scope each runs
  * in falls out of the rules rather than a hand-maintained table. The runtime
- * (`src/script/effects/recorder.ts`) registers fire-effect encoders from the
- * effect policy's event-kind/effect-rule join, and `src/events/types.ts` plus
- * `src/events/lower.ts` build the typed definition surface over this table.
+ * (`packages/sdk/src/script/effects/recorder.ts`) registers fire-effect encoders
+ * from the effect policy's event-kind/effect-rule join, and
+ * `packages/sdk/src/events/types.ts` plus `packages/sdk/src/events/lower.ts`
+ * build the typed definition surface over this table.
  *
  * Three outputs:
  *
@@ -42,14 +43,23 @@ import type { EffectPolicy } from "../../policy/effects.ts";
 import { Emitter } from "../../render/emitter.ts";
 import type { ScriptEffectReferenceRow } from "./script-reference.ts";
 
+/** Generated event modules, report totals, and fire-effect reference rows. */
 export interface EventsEmission {
+  /** Complete generated `events.ts` kind-table module text. */
   readonly code: string;
+  /** Complete generated event-definer and capability module text. */
   readonly definerCode: string;
+  /** Complete generated event-fire augmentation module text. */
   readonly firesCode: string;
+  /** Number of event kinds declared by the rules. */
   readonly kinds: number;
+  /** Number of scoped event kinds with generated definers. */
   readonly definers: number;
+  /** Number of fire methods emitted across receiving-scope interfaces. */
   readonly fireMethods: number;
+  /** Event kinds excluded from definers or fire methods, with stable reasons. */
   readonly skipped: readonly SkippedRule[];
+  /** Machine-readable reference rows for generated event-fire methods. */
   readonly fireReferences: readonly ScriptEffectReferenceRow[];
 }
 
@@ -432,6 +442,10 @@ function eventFires(
   return { firesCode, fireMethods, fireReferences: [...fireReferences.values()], skipped };
 }
 
+/**
+ * Emits event kinds, scoped definers, capability methods, and typed fire-effect augmentations.
+ * Scopeless or policy-rejected kinds remain explicit skip rows instead of receiving guessed types.
+ */
 export function emitEvents(emitter: Emitter, policy: EffectPolicy): EventsEmission {
   const kinds = eventKinds(emitter.rules);
   const { scoped, skipped } = scopedEventKinds(kinds);

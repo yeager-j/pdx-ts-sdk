@@ -20,29 +20,18 @@ import {
 } from "./definer-plan.ts";
 
 /**
- * One raw definer per registry: package-internal lowering for the capability
- * surface. A definition remains a pure value, but public authors create it
- * through a capability method and place it with `mod.feature(...)`.
- *
- * The definers are literal-preserving (`<const Id extends string>`), so a
- * definition's id survives as its literal type all the way into the item the
- * definer returns — the property the deleted class methods, generic only in
- * the mod prefix, widened away.
- *
- * Three kinds of registry-specific member, each an overlay row rather than a
- * conditional in this emitter: `CONTENT_PATCH_REGISTRIES` adds a free `patchX`,
- * `CONTENT_CONTRIBUTION_SINKS` a free `addX` for the id-less sink, and
- * `HAND_WRITTEN_CONTENT_DEFINERS` replaces the mechanical `defineX` with a
- * re-export from `src/content/situations.ts`, so the internal lowering surface remains
- * centralized in this module.
- *
- * The `XItem` union types are emitted here too. They remain public as type-only
- * exports even though their raw constructors are internal.
+ * Emits the internal content definers and the capability surface from the same registry plans.
+ * Generated definers preserve literal ids; audited overlay rows select patch, contribution, and
+ * hand-written graft behavior without registry-specific branches in this emitter.
  */
 export function contentDefiners(contents: readonly DefinerContent[]): {
+  /** Complete generated `content-definers.ts` module text. */
   code: string;
+  /** Complete generated `content-capability.ts` module text. */
   capabilityCode: string;
+  /** Number of manifest registries represented by the modules. */
   definers: number;
+  /** Report rows for registries served by hand-written definer grafts. */
   grafted: string[];
 } {
   const plans = contents.map((content) => planRegistryDefiner(content, contents));

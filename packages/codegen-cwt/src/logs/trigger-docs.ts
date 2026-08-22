@@ -1,132 +1,124 @@
-/**
- * Reads Paradox's own trigger and effect documentation dumps.
- *
- * The rules carry `## scopes` themselves, so this is no longer the only source
- * of scope information — it is the independent second opinion that the drift
- * gate checks them against. The dumps are also the only source of the usage
- * examples that become TSDoc.
- *
- * Blocks look like:
- *
- *     has_edict - Checks if the country has a specific edict enabled
- *     has_edict = crystal_sonar
- *     Supported Scopes: country
- */
-
+/** A documented trigger or effect from the game's script documentation dumps. */
 export interface DocEntry {
+  /** Script name of the trigger or effect. */
   readonly name: string;
+  /** Human-readable description supplied by the game. */
   readonly summary: string;
-  /** The usage example, verbatim, or "" when the dump omits one. */
+  /** Nonblank usage lines after the heading, or an empty string when the dump provides none. */
   readonly usage: string;
+  /** Scopes from which the trigger or effect is available. */
   readonly scopes: readonly string[];
-  /** The dump file and line this block starts on, e.g. `"triggers.log:42"`. */
+  /** Dump file and first meaningful block line, formatted as `<file>:<line>`. */
   readonly location: string;
 }
 
+/** Parsed trigger and effect documentation indexed by script name. */
 export interface DocDump {
+  /** Trigger documentation indexed by trigger name. */
   readonly triggers: ReadonlyMap<string, DocEntry>;
+  /** Effect documentation indexed by effect name. */
   readonly effects: ReadonlyMap<string, DocEntry>;
-  /**
-   * Blocks that had no name line or no `Supported Scopes:` line, as
-   * `<log file>:<line> <text>` — the block's own starting line and its first
-   * 80 characters, the same identity shape `reconcile.ts`'s `unknownKeywords`
-   * carries, so a block that starts parsing cleanly and later breaks is a
-   * reviewable diff instead of a bare count moving.
-   */
+  /** Candidate blocks that could not be parsed, identified by file, line, and text. */
   readonly malformed: readonly string[];
 }
 
-const HEADING = /^([A-Za-z_][A-Za-z0-9_]*) - (.*)$/;
-const SCOPES = /^Supported Scopes:\s*(.*)$/;
+interface ParsedSection {
+  readonly entries: ReadonlyMap<string, DocEntry>;
+  readonly malformed: readonly string[];
+}
 
-const NOISE = /^=+$/;
+const DOC_HEADING_PATTERN = /^([A-Za-z_][A-Za-z0-9_]*) - (.*)$/;
+const SUPPORTED_SCOPES_PATTERN = /^Supported Scopes:\s*(.*)$/;
+const SEPARATOR_PATTERN = /^=+$/;
 
-function parseBlock(
+function isMeaningful(line: string): boolean {
+  const trimmedLine = line.trim();
+  return trimmedLine !== "" && !SEPARATOR_PATTERN.test(trimmedLine);
+}
+
+function parseDocBlock(
   lines: readonly string[],
-  scopeLine: string,
+  supportedScopes: string,
   location: string
 ): DocEntry | null {
-  const meaningful = lines.filter((line) => line.trim() !== "" && !NOISE.test(line.trim()));
-  const headingIndex = meaningful.findIndex((line) => HEADING.test(line));
-  if (headingIndex === -1) {
-    return null;
-  }
-  const heading = HEADING.exec(meaningful[headingIndex]!)!;
-  return {
-    name: heading[1]!,
-    summary: heading[2]!.trim(),
-    usage: meaningful.slice(headingIndex + 1).join("\n"),
-    scopes: SCOPES.exec(scopeLine)![1]!
-      .split(/\s+/)
-      .filter((scope) => scope !== ""),
-    location,
-  };
-}
+  const meaningfulLines = lines.filter(isMeaningful);
 
-/** As {@link parseBlock}'s own `meaningful` filter — blank and `====` noise lines carry no content. */
-function isMeaningful(line: string): boolean {
-  return line.trim() !== "" && !NOISE.test(line.trim());
-}
-
-/**
- * Blocks are delimited by their trailing `Supported Scopes:` line, not by blank
- * lines: `kill_leader`'s usage example contains one, and splitting on blanks
- * silently drops it.
- *
- * `file` names the dump this body came from (`"triggers.log"` /
- * `"effects.log"`) purely for identity: both `malformed` entries and every
- * parsed {@link DocEntry} carry `<file>:<line>` back to the block that
- * produced them — the line of its first meaningful content, so the location
- * lands on the heading (or, for a malformed block, whatever line the reader
- * can point at) rather than a blank line the file happens to pad it with.
- * Falls back to the buffer's first line for the pathological case of a block
- * with no meaningful content at all.
- */
-function parseSection(file: string, body: string, malformed: string[]): Map<string, DocEntry> {
-  const entries = new Map<string, DocEntry>();
-  let buffer: string[] = [];
-  let bufferStart = 1;
-  let meaningfulStart: number | null = null;
-  let lineNumber = 0;
-  for (const line of body.split("\n")) {
-    lineNumber += 1;
-    if (!SCOPES.test(line)) {
-      if (buffer.length === 0) {
-        bufferStart = lineNumber;
-      }
-      if (meaningfulStart === null && isMeaningful(line)) {
-        meaningfulStart = lineNumber;
-      }
-      buffer.push(line);
+  for (const [headingIndex, line] of meaningfulLines.entries()) {
+    const heading = DOC_HEADING_PATTERN.exec(line);
+    if (heading === null) {
       continue;
     }
-    const location = `${file}:${meaningfulStart ?? bufferStart}`;
-    const entry = parseBlock(buffer, line, location);
+
+    return {
+      name: heading[1]!,
+      summary: heading[2]!.trim(),
+      usage: meaningfulLines.slice(headingIndex + 1).join("\n"),
+      scopes: supportedScopes.split(/\s+/).filter((scope) => scope !== ""),
+      location,
+    };
+  }
+
+  return null;
+}
+
+function formatMalformedBlock(location: string, lines: readonly string[]): string {
+  return `${location} ${lines.join(" ").trim().slice(0, 80)}`;
+}
+
+/** Ends blocks at `Supported Scopes:` because usage examples can contain blank lines. */
+function parseSection(file: string, source: string): ParsedSection {
+  const entries = new Map<string, DocEntry>();
+  const malformed: string[] = [];
+  let blockLines: string[] = [];
+  let blockStartLine = 1;
+  let meaningfulStartLine: number | null = null;
+  let lineNumber = 0;
+
+  for (const line of source.split("\n")) {
+    lineNumber += 1;
+    const supportedScopes = SUPPORTED_SCOPES_PATTERN.exec(line);
+    if (supportedScopes === null) {
+      if (blockLines.length === 0) {
+        blockStartLine = lineNumber;
+      }
+      if (meaningfulStartLine === null && isMeaningful(line)) {
+        meaningfulStartLine = lineNumber;
+      }
+      blockLines.push(line);
+      continue;
+    }
+
+    const location = `${file}:${meaningfulStartLine ?? blockStartLine}`;
+    const entry = parseDocBlock(blockLines, supportedScopes[1]!, location);
     if (entry === null) {
-      malformed.push(`${location} ${buffer.join(" ").trim().slice(0, 80)}`);
+      malformed.push(formatMalformedBlock(location, blockLines));
     } else {
       entries.set(entry.name, entry);
     }
-    buffer = [];
-    meaningfulStart = null;
+
+    blockLines = [];
+    meaningfulStartLine = null;
   }
-  // A block with no trailing `Supported Scopes:` line never reaches the loop
-  // body above, so without this it silently vanishes at EOF instead of
-  // surfacing as either an entry or a malformed block — exactly the shape a
-  // truncated dump takes. `meaningfulStart` is the same guard the loop uses:
-  // trailing blank/noise-only lines (there are some in the real dumps) leave
-  // it `null` and are correctly dropped rather than reported.
-  if (meaningfulStart !== null) {
-    malformed.push(`${file}:${meaningfulStart} ${buffer.join(" ").trim().slice(0, 80)}`);
+
+  if (meaningfulStartLine !== null) {
+    const location = `${file}:${meaningfulStartLine}`;
+    malformed.push(formatMalformedBlock(location, blockLines));
   }
-  return entries;
+
+  return { entries, malformed };
 }
 
+/**
+ * Parses the game's trigger and effect documentation dumps into name-indexed maps. Blocks without
+ * a readable heading or terminating supported-scope field remain available for reconciliation.
+ */
 export function parseTriggerDocs(triggerLog: string, effectLog: string): DocDump {
-  const malformed: string[] = [];
+  const triggerSection = parseSection("triggers.log", triggerLog);
+  const effectSection = parseSection("effects.log", effectLog);
+
   return {
-    triggers: parseSection("triggers.log", triggerLog, malformed),
-    effects: parseSection("effects.log", effectLog, malformed),
-    malformed,
+    triggers: triggerSection.entries,
+    effects: effectSection.entries,
+    malformed: [...triggerSection.malformed, ...effectSection.malformed],
   };
 }

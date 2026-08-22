@@ -1,10 +1,15 @@
 import { scopeIndex, type OnActionDecl, type RuleSet } from "../../cwt/rules.ts";
 import { camelCase, docComment, isPlainName } from "../../naming.ts";
 
+/** Generated on-action reference module text and its lowering report. */
 export interface OnActionsEmission {
+  /** Complete generated on-action reference module text. */
   readonly code: string;
+  /** Number of on-actions represented by generated references. */
   readonly emitted: number;
+  /** On-action declarations excluded from generation, with stable reasons. */
   readonly skipped: readonly string[];
+  /** Number of emitted hooks whose rules explicitly declare no main scope. */
   readonly noScope: number;
 }
 
@@ -16,6 +21,10 @@ interface LoweredOnAction {
   readonly docs: readonly string[];
 }
 
+/**
+ * Emits on-action references after reconciling event-type and replacement-scope metadata.
+ * Invalid or contradictory hooks remain explicit skip rows rather than receiving inferred scopes.
+ */
 export function emitOnActions(rules: RuleSet): OnActionsEmission {
   const scopes = scopeIndex(rules);
   const lowered: LoweredOnAction[] = [];

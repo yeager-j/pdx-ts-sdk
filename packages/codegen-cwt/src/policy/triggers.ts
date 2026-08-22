@@ -7,40 +7,35 @@
  * with a generated export merely because its rule key lives elsewhere.
  */
 interface HandWrittenTriggerExportBase {
+  /** The exported SDK symbol reserved from generated triggers and scope links. */
   readonly exportName: string;
+  /** The hand-written capability that supplies the export. */
   readonly kind:
     "trigger-constructor" | "structural-trigger" | "typed-leaf-trigger" | "polymorphic-scope-link";
+  /** Why generated code must yield ownership to the hand-written capability. */
   readonly reason: string;
 }
 
 /**
- * A row decides both whether trigger generation skips a CWT key and whether
- * scope-link generation reserves the public TypeScript export.
- *
- * `expectedInRules` and `ruleKey` are a discriminated pair rather than two
- * independent optional fields: `expectedInRules: true` with no `ruleKey`
- * would reserve the export name while never entering
- * `HAND_WRITTEN_TRIGGER_RULES_BY_KEY`, so `emit/triggers.ts` would generate
- * the trigger from the rules AND the hand-written export would shadow it —
- * a silent collision no runtime check would catch, so the union makes the
- * combination impossible to write instead.
- *
- * `expectedInRules: true` says `ruleKey` must match a key the rules actually
- * loaded (`overlay-audit.ts`'s `assertHandWrittenTriggerExportsMatchRules`).
- * `expectedInRules: false` covers a row with no `ruleKey` at all (nothing to
- * check) and `and`/`or`/`not`/`nand`/`nor`/`hidden_trigger`: all six are
- * declared only as `alias[trigger:AND]` and kin in `scope_links.cwt`
- * (vendor/cwtools-stellaris-config/config/scope_links.cwt:5-16), which this
- * generator does not load — see `overlay.ts`'s doc comment on
- * `HandWrittenDefiner`/`hidden_trigger` for why. Their `ruleKey` still names
- * what `emit/triggers.ts` skips generating; `expectedInRules: false` only
- * says the loaded rules will never actually declare it, not that the row is
- * unused.
+ * A trigger or scope-link export supplied by hand-written SDK code.
+ * The discriminator requires loaded CWT rules to have a key while permitting unloaded aliases and
+ * name-only reservations.
  */
 export type HandWrittenTriggerExport =
-  | (HandWrittenTriggerExportBase & { readonly expectedInRules: true; readonly ruleKey: string })
-  | (HandWrittenTriggerExportBase & { readonly expectedInRules: false; readonly ruleKey?: string });
+  | (HandWrittenTriggerExportBase & {
+      /** Requires the audit to find this export's rule key in the loaded CWT rules. */
+      readonly expectedInRules: true;
+      /** Loaded CWT trigger key that normal generation must yield to the hand-written export. */
+      readonly ruleKey: string;
+    })
+  | (HandWrittenTriggerExportBase & {
+      /** Indicates that this export has no key in the loaded CWT rule table. */
+      readonly expectedInRules: false;
+      /** Optional unloaded alias key that normal generation must reserve. */
+      readonly ruleKey?: string;
+    });
 
+/** The complete ownership table for hand-written trigger and scope-link exports. */
 export const HAND_WRITTEN_TRIGGER_EXPORTS: readonly HandWrittenTriggerExport[] = [
   {
     exportName: "trigger",
@@ -62,14 +57,16 @@ export const HAND_WRITTEN_TRIGGER_EXPORTS: readonly HandWrittenTriggerExport[] =
     expectedInRules: false,
     reason: "the SDK models the flat hidden_trigger splice beside the other combinators",
   },
-  ...[
-    ["currentSituationApproach", "current_situation_approach"],
-    ["currentStage", "current_stage"],
-    ["canSetSituationApproach", "can_set_situation_approach"],
-    ["hasCompletedEventChainCounter", "has_completed_event_chain_counter"],
-  ].map(([exportName, ruleKey]): HandWrittenTriggerExport => ({
-    exportName: exportName!,
-    ruleKey: ruleKey!,
+  ...(
+    [
+      ["currentSituationApproach", "current_situation_approach"],
+      ["currentStage", "current_stage"],
+      ["canSetSituationApproach", "can_set_situation_approach"],
+      ["hasCompletedEventChainCounter", "has_completed_event_chain_counter"],
+    ] as const
+  ).map(([exportName, ruleKey]): HandWrittenTriggerExport => ({
+    exportName,
+    ruleKey,
     kind: "typed-leaf-trigger",
     expectedInRules: true,
     reason: "the hand-written signature carries a content-defined literal-key contract",
@@ -82,29 +79,23 @@ export const HAND_WRITTEN_TRIGGER_EXPORTS: readonly HandWrittenTriggerExport[] =
   },
 ];
 
-/**
- * Keyed lowercase, matching the only consumption site's own lookup
- * (`emit/triggers.ts`'s `.get(key.toLowerCase())`) — normalized once here
- * rather than trusting every `ruleKey` in the table above to already be
- * lowercase, so a row spelled with different casing still resolves. A
- * standalone function, not just the constant below, so a test can prove this
- * directly against a synthetic mixed-case row instead of re-deriving the
- * same expression.
- */
+/** Indexes hand-written exports by normalized CWT rule key, omitting name-only reservations. */
 export function handWrittenTriggerRulesByKey(
-  exports: readonly HandWrittenTriggerExport[]
+  entries: readonly HandWrittenTriggerExport[]
 ): ReadonlyMap<string, HandWrittenTriggerExport> {
   return new Map(
-    exports.flatMap((entry) =>
+    entries.flatMap((entry) =>
       entry.ruleKey === undefined ? [] : [[entry.ruleKey.toLowerCase(), entry] as const]
     )
   );
 }
 
+/** Hand-written trigger ownership indexed by lowercase CWT rule key. */
 export const HAND_WRITTEN_TRIGGER_RULES_BY_KEY = handWrittenTriggerRulesByKey(
   HAND_WRITTEN_TRIGGER_EXPORTS
 );
 
+/** Public TypeScript names that scope-link generation must not emit. */
 export const RESERVED_TRIGGER_EXPORT_NAMES = new Set(
   HAND_WRITTEN_TRIGGER_EXPORTS.map((entry) => entry.exportName)
 );

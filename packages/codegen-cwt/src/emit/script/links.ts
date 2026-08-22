@@ -35,11 +35,15 @@ export interface ClassifiedLink {
   readonly inputScopes: readonly string[];
   /** Canonical output scope. */
   readonly outputScope: string;
+  /** Documentation lines attached to each generated link overload. */
   readonly docs: readonly string[];
 }
 
+/** Classified scope links, skip evidence, and the wider navigation vocabulary. */
 export interface LinkClassification {
+  /** Static links whose input and output scopes can both be typed. */
   readonly links: readonly ClassifiedLink[];
+  /** Link declarations excluded from typed wrappers, with stable reasons. */
   readonly skipped: readonly SkippedRule[];
   /**
    * Every link that is scope navigation at all, mapped to where it lands —
@@ -58,6 +62,10 @@ export interface LinkClassification {
   readonly navigation: ReadonlyMap<string, string>;
 }
 
+/**
+ * Classifies CWT links into typed static navigation and explicit skip rows.
+ * The navigation map also retains runtime-polymorphic scope links that typed wrappers cannot expose.
+ */
 export function classifyLinks(
   emitter: Emitter,
   dumpLinks: ReadonlyMap<string, ScopeLink>,
@@ -122,8 +130,11 @@ export function classifyLinks(
   return { links, skipped, navigation };
 }
 
+/** Generated scope-link wrapper module text and its method count. */
 export interface ScopeLinkEmission {
+  /** Complete generated scope-link wrapper module text. */
   readonly code: string;
+  /** Number of classified links represented by overload sets. */
   readonly emitted: number;
 }
 
@@ -136,10 +147,10 @@ export interface ScopeLinkEmission {
  * symbol — a tool interpreting recorded entries (`@pdx-ts/sdk-testing`) needs
  * to tell `owner` (a link it has not modeled) from a scripted trigger it can
  * never model, and those want opposite responses from the reader. It lands in
- * its own generated file so `src/script/triggers.ts`'s `export *` keeps
- * exporting link functions and nothing else; the SDK's narrow accessor over it
- * is the public surface, the same split `EFFECT_META`/`isEffectKey` already
- * uses.
+ * its own generated file so `packages/sdk/src/script/triggers.ts`'s `export *`
+ * keeps exporting link functions and nothing else; the SDK's narrow accessor
+ * over it is the public surface, the same split `EFFECT_META`/`isEffectKey`
+ * already uses.
  */
 export function emitScopeLinkNavigation(navigation: ReadonlyMap<string, string>): string {
   const rows = [...navigation]
@@ -179,8 +190,9 @@ export function emitScopeLinkNavigation(navigation: ReadonlyMap<string, string>)
  * absoluteness, and `owner(ctx.from)` has to stay openable.
  *
  * A link whose name collides with an existing trigger export is a hard error,
- * not a skip: the file is star-re-exported through `src/script/triggers.ts`, and two
- * `export *` sources sharing a name silently drop the symbol for consumers.
+ * not a skip: the file is star-re-exported through
+ * `packages/sdk/src/script/triggers.ts`, and two `export *` sources sharing a
+ * name silently drop the symbol for consumers.
  */
 export function emitScopeLinks(
   classified: Pick<LinkClassification, "links">,
@@ -191,7 +203,8 @@ export function emitScopeLinks(
   for (const link of classified.links) {
     if (takenNames.has(link.method)) {
       throw new Error(
-        `scope link "${link.key}" would emit "${link.method}", which src/script/triggers.ts ` +
+        `scope link "${link.key}" would emit "${link.method}", which ` +
+          "packages/sdk/src/script/triggers.ts " +
           "already exports — rename via the overlay before generating"
       );
     }

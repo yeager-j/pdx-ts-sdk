@@ -1,11 +1,6 @@
 /**
- * The file layout a registry's CWT type declares: which extension its files
- * carry and how deep inside them its definitions sit.
- *
- * Both come off the type as the rules wrote them, so the answer is derived
- * rather than tabulated. It lives apart from the emitter that writes the
- * descriptor row because it is the one part of that row a test can measure
- * against a synthetic type.
+ * Derives a registry's file extension and root envelope from its CWT type.
+ * This keeps file layout policy independent from descriptor rendering.
  */
 
 import type { ContentType } from "../cwt/rules.ts";
@@ -19,20 +14,9 @@ export interface ContentFileLayout {
 }
 
 /**
- * Reads one registry's file layout off its type.
- *
- * `skip_root_key`'s block form is a descent *path*, not a set of alternative
- * keys: `swapped_job` declares `{ any swappable_data }`, meaning any job id at
- * the first level and that job's `swappable_data` block at the second, with the
- * swap definitions inside it. Only a path of exactly one concrete segment names
- * a file-level envelope, because only then is the wrapper something the fold can
- * write.
- *
- * Everything else throws rather than resolving to something. A lone `any` says
- * the wrapper is whatever key happens to be there, and a deeper path says the
- * definitions sit inside another definition — neither is a block the fold could
- * put around a whole emitted file. A manifest row in either shape needs an
- * overlay decision.
+ * Resolves the file extension and optional root envelope declared by a registry's CWT type.
+ * It defaults to `.txt` and throws when `skip_root_key` does not name one concrete,
+ * file-level envelope.
  */
 export function contentFileLayout(registry: string, type: ContentType): ContentFileLayout {
   const fileExtension = type.pathExtension ?? ".txt";

@@ -23,6 +23,7 @@ import {
 import { UNIVERSAL_SCOPES } from "../overlay/index.ts";
 import type { Emitter, TsValue } from "../render/emitter.ts";
 
+/** Stable reasons the shared trigger/effect generator can reject a CWT rule. */
 export type ScriptGenerationSkipCategory =
   | "invalid-rule-name"
   | "missing-rule-scope"
@@ -52,6 +53,7 @@ export type ScriptGenerationSkipCategory =
   | "comparison-overload"
   | "unsupported-field-value";
 
+/** All stable skip reasons reported by script and scope-link generation. */
 export type ScriptSkipCategory =
   | ScriptGenerationSkipCategory
   | "abstract-placeholder"
@@ -68,19 +70,26 @@ export type ScriptSkipCategory =
   | "unknown-output-scope"
   | "unknown-input-scope";
 
+/** A classified reason that script generation cannot preserve a declaration. */
 export interface SkipReason {
+  /** The stable category used by reports and tests. */
   readonly category: ScriptSkipCategory;
+  /** The declaration-specific explanation shown in the report. */
   readonly detail: string;
 }
 
+/** A skipped rule paired with its original CWT name. */
 export interface SkippedRule extends SkipReason {
+  /** The CWT rule name. */
   readonly name: string;
 }
 
+/** Creates a classified script-generation skip reason. */
 export function skipReason(category: ScriptSkipCategory, detail: string): SkipReason {
   return { category, detail };
 }
 
+/** Creates a classified skip record for one named rule. */
 export function skippedRule(
   name: string,
   category: ScriptSkipCategory,
@@ -97,17 +106,14 @@ export function scopeType(
   scopes: readonly string[],
   index: ReadonlyMap<string, string>
 ): string | null {
-  if (scopes.some((scope) => UNIVERSAL_SCOPES.has(scope))) {
+  const canonical = canonicalScopeSet(scopes, index);
+  if (canonical === "universal") {
     return "ScopeName";
   }
-  const canonical = scopes.map((scope) => index.get(scope));
-  if (canonical.some((scope) => scope === undefined)) {
+  if (canonical === null) {
     return null;
   }
-  return [...new Set(canonical as string[])]
-    .sort()
-    .map((scope) => JSON.stringify(scope))
-    .join(" | ");
+  return canonical.map((scope) => JSON.stringify(scope)).join(" | ");
 }
 
 /** The canonical scope set behind `scopeType`, or "universal", or null. */
@@ -133,18 +139,32 @@ export function canonicalScopeSet(
  */
 export function declaredScopes(
   declarations: readonly { readonly supportedScopes: readonly string[] | null }[],
-  doc: { readonly scopes: readonly string[] } | undefined
+  doc:
+    | {
+        /** Scope names reported by the Stellaris script documentation dump. */
+        readonly scopes: readonly string[];
+      }
+    | undefined
 ): readonly string[] {
   const declared = declarations.flatMap((declaration) => declaration.supportedScopes ?? []);
   return declared.length > 0 ? declared : (doc?.scopes ?? []);
 }
 
+/** A nested script clause category supported by the shared block model. */
 export type ClauseCategory = "trigger" | "effect" | "modifier_rule";
 
+/** The authored value shape of one generated trigger or effect argument. */
 export type ArgValue =
-  | { readonly kind: "scalar"; readonly value: TsValue }
   | {
+      /** Selects a plain scalar argument. */
+      readonly kind: "scalar";
+      /** The scalar TypeScript and runtime representation. */
+      readonly value: TsValue;
+    }
+  | {
+      /** Selects a structured object argument. */
       readonly kind: "fields";
+      /** The named members of the structured object. */
       readonly fields: readonly ArgField[];
     }
   /**
@@ -153,15 +173,22 @@ export type ArgValue =
    * code can distinguish SDK scalar values from the structured block.
    */
   | {
+      /** Selects an overload between a scalar and a structured object. */
       readonly kind: "scalarOrFields";
+      /** The scalar arm of the overload. */
       readonly scalar: TsValue;
+      /** The named members of the structured arm. */
       readonly fields: readonly ArgField[];
     }
   /** One braced value containing anonymous scalar or structured items. */
   | {
+      /** Selects one braced list of anonymous values. */
       readonly kind: "valueList";
+      /** The scalar item arm, when the list admits scalar items. */
       readonly scalar: TsValue | null;
+      /** The structured item arm, when the list admits object items. */
       readonly fields: readonly ArgField[] | null;
+      /** The combined item count admitted by the anonymous declarations. */
       readonly cardinality: Cardinality;
     }
   /**
@@ -171,23 +198,36 @@ export type ArgValue =
    * under the field's key.
    */
   | {
+      /** Selects a nested trigger, effect, or modifier-rule clause. */
       readonly kind: "clause";
+      /** The kind of script rules accepted inside the clause. */
       readonly category: ClauseCategory;
+      /** The canonical pushed scope, or `null` for the enclosing scope. */
       readonly scope: string | null;
+      /** Whether clause entries are emitted without a named wrapper. */
       readonly splice: boolean;
     }
   /** `count == int_value_field`, plus any literal overloads (`count = all`). */
   | {
+      /** Selects a comparison operand with optional literal overloads. */
       readonly kind: "comparison";
+      /** The supported numeric or boolean comparison operand. */
       readonly value: TsValue;
+      /** Literal tokens accepted in place of the comparison operand. */
       readonly literals: readonly string[];
     };
 
+/** One generated argument field after overloaded CWT declarations are merged. */
 export interface ArgField {
+  /** The original PDXScript field name. */
   readonly name: string;
+  /** The authored value shape shared by the field's declarations. */
   readonly value: ArgValue;
+  /** Whether authors may omit the field. */
   readonly optional: boolean;
+  /** Whether authors may repeat the field as sibling keys. */
   readonly repeated?: boolean;
+  /** Documentation retained from every merged declaration. */
   readonly docs: readonly string[];
 }
 
@@ -197,6 +237,10 @@ function isAliasExpandedField(field: RuleField): field is AliasExpandedField {
   return "aliasCategory" in field;
 }
 
+/**
+ * Replaces unkeyed alias splices with the category's concrete named fields.
+ * Returns a skip reason when the category has no declaration table.
+ */
 export function expandAliasFields(
   emitter: Emitter,
   fields: readonly RuleField[]
@@ -349,6 +393,10 @@ function combinedCardinality(values: readonly RuleBareValue[]): Cardinality {
   };
 }
 
+/**
+ * Renders the readonly tuple or array type admitted by an item cardinality.
+ * Finite ranges become tuple unions; unbounded ranges preserve their minimum prefix.
+ */
 export function cardinalityArrayType(item: string, cardinality: Cardinality): string {
   const tuple = (length: number): string =>
     `readonly [${Array.from({ length }, () => item).join(", ")}]`;
@@ -369,7 +417,10 @@ export function bareBlockValue(
   inheritedScope: string | null,
   allowedClauses: ReadonlySet<ClauseCategory>
 ): ArgValue | SkipReason {
-  const clauses = bare.filter((value) => clauseOf(value.type) !== null);
+  const clauses = bare.flatMap((value) => {
+    const category = clauseOf(value.type);
+    return category === null ? [] : [{ value, category }];
+  });
   if (clauses.length > 0) {
     if (clauses.length !== bare.length || clauses.length !== 1) {
       return skipReason(
@@ -377,8 +428,7 @@ export function bareBlockValue(
         "bare block mixes a clause with other anonymous values"
       );
     }
-    const value = clauses[0]!;
-    const category = clauseOf(value.type)!;
+    const { value, category } = clauses[0]!;
     if (!allowedClauses.has(category)) {
       return skipReason(
         "unsupported-clause",

@@ -41,39 +41,45 @@ import { canonicalScopeSet } from "./script-shape.ts";
  */
 export type RuleScopes = readonly string[] | "universal";
 
+/** Scope and nested-body facts for one trigger or effect rule. */
 export interface RuleFact {
   /** Scopes the key itself is legal in. */
   readonly scopes: RuleScopes;
   /**
-   * Set when the rule's block body is nothing but spliced clauses — the
-   * `any_owned_planet = { <triggers> }` shape. `scope` is where those clauses
-   * run: a pushed scope, or `null` for the enclosing one (`custom_tooltip`).
+   * The scope of an unkeyed clause splice, when the rule body exposes one.
+   * `null` inside the value means the splice runs in the enclosing rule scope.
    */
-  readonly splice: { readonly scope: string | null } | null;
+  readonly splice: {
+    /** The canonical pushed scope, or `null` for the enclosing rule scope. */
+    readonly scope: string | null;
+  } | null;
   /**
-   * Named fields holding a nested clause, and the scope that clause runs in
-   * (`null` for the enclosing scope). `count_owned_planet`'s `limit` is planet
-   * even though the rule itself pushes nothing — the push sits on the field.
+   * Named nested-clause fields and their canonical pushed scopes.
+   * A `null` value means the clause runs in the enclosing rule scope.
    */
   readonly clauses: ReadonlyMap<string, string | null>;
   /**
-   * The rule's named non-clause fields — `while`'s `count`, `random`'s
-   * `chance`. A rule can have both these and a splice (`while = { count = 5
-   * <effects> }`), so "not a clause field" is not enough to tell an argument
-   * from a spliced condition; this is.
+   * Lowercase names of the rule's non-clause arguments.
+   * Use this set to distinguish arguments from unkeyed clause entries.
    */
   readonly args: ReadonlySet<string>;
 }
 
+/** The legal input scopes and fixed output scope of one scope link. */
 export interface LinkFact {
+  /** Canonical scopes from which the link can be used. */
   readonly inputScopes: RuleScopes;
+  /** The canonical scope reached through the link. */
   readonly outputScope: string;
 }
 
+/** Build-time scope facts keyed by lowercase PDXScript names. */
 export interface ScopeFacts {
-  /** Keyed lowercase, matching how script writes them. */
+  /** Trigger facts keyed lowercase, matching how script writes them. */
   readonly triggers: ReadonlyMap<string, RuleFact>;
+  /** Effect facts keyed lowercase, matching how script writes them. */
   readonly effects: ReadonlyMap<string, RuleFact>;
+  /** Scope-link facts keyed lowercase, matching how script writes them. */
   readonly links: ReadonlyMap<string, LinkFact>;
 }
 
@@ -93,6 +99,28 @@ function factsOf(table: ReadonlyMap<string, LoweredRule>): Map<string, RuleFact>
   return out;
 }
 
+function linkFactsOf(
+  links: readonly {
+    readonly key: string;
+    readonly inputScopes: readonly string[];
+    readonly outputScope: string;
+  }[],
+  index: ReadonlyMap<string, string>
+): Map<string, LinkFact> {
+  const facts = new Map<string, LinkFact>();
+  for (const link of links) {
+    const inputScopes = canonicalScopeSet(link.inputScopes, index);
+    if (inputScopes !== null) {
+      facts.set(link.key.toLowerCase(), { inputScopes, outputScope: link.outputScope });
+    }
+  }
+  return facts;
+}
+
+/**
+ * Loads CWT rules and documentation dumps and returns their canonical scope facts.
+ * Missing or unknown scope declarations are omitted instead of being narrowed by guesswork.
+ */
 export function loadScopeFacts(configRoot: string, docsRoot: string): ScopeFacts {
   const rules = loadRules(configRoot);
   const emitter = new Emitter(rules);
@@ -110,14 +138,7 @@ export function loadScopeFacts(configRoot: string, docsRoot: string): ScopeFacts
     ])
   );
 
-  const links = new Map<string, LinkFact>();
-  for (const link of classifyLinks(emitter, dumpLinks, index).links) {
-    const inputScopes = canonicalScopeSet(link.inputScopes, index);
-    if (inputScopes === null) {
-      continue;
-    }
-    links.set(link.key.toLowerCase(), { inputScopes, outputScope: link.outputScope });
-  }
+  const links = linkFactsOf(classifyLinks(emitter, dumpLinks, index).links, index);
 
   return {
     triggers: factsOf(triggers),

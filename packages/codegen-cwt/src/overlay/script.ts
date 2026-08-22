@@ -4,7 +4,7 @@
  * category mappings, and the hand-maintained trigger/effect exceptions the
  * emitters under `emit/` read.
  *
- * See `../overlay.ts` for what this directory is and how a row here earns
+ * See `./index.ts` for what this directory is and how a row here earns
  * its place.
  */
 
@@ -91,7 +91,8 @@ export const EXTRA_ALIAS_CATEGORIES = new Map<string, string>([
     "government_trigger",
     "The requirements DSL behind civic/origin `potential` and `possible`. Not a " +
       "`Trigger` — its members are a fixed value/OR/NOT/NOR clause template plus " +
-      "self-recursive OR/AND/limit combinators, emitted by emit/alias-struct.ts.",
+      "self-recursive OR/AND/limit combinators, emitted by " +
+      "emit/content/alias-struct.ts.",
   ],
   [
     "planet_initializer",
@@ -99,8 +100,8 @@ export const EXTRA_ALIAS_CATEGORIES = new Map<string, string>([
       "level. One member, `planet`, whose declaration is a block that splices " +
       "`planet_initializer` and `moon_initializer` back into itself — so a system's " +
       "planets are anonymous, ordered and repeated, and nest without bound. Emitted " +
-      "by emit/alias-splice.ts as `PlanetInitializerFields`, whose field table has to " +
-      "be resolved through `registerAliasStructFields` at write time because it " +
+      "by emit/content/alias-splice.ts as `PlanetInitializerFields`, whose field table " +
+      "has to be resolved through `registerAliasStructFields` at write time because it " +
       "refers to itself.",
   ],
   [
@@ -112,9 +113,13 @@ export const EXTRA_ALIAS_CATEGORIES = new Map<string, string>([
   ],
 ]);
 
+/** Replaces a trigger's incorrect CWT summary with text from an authoritative source. */
 export interface TriggerDocSummaryOverride {
+  /** Replacement summary emitted in generated API documentation. */
   readonly summary: string;
+  /** Repository-relative source and line range that supports the replacement. */
   readonly source: string;
+  /** Audited explanation of the conflict between CWT and the source. */
   readonly reason: string;
 }
 
@@ -132,26 +137,41 @@ export const TRIGGER_DOC_SUMMARY_OVERRIDES = new Map<string, TriggerDocSummaryOv
   ],
 ]);
 
+/** Replaces the generated TypeScript input type for one effect field. */
 export interface EffectFieldTypeOverride {
   /** Replaces the mechanically derived type outright. */
   readonly type: string;
+  /** Audited reason the mechanical type admits an unsafe call. */
   readonly reason: string;
 }
 
+/** Adds one documented field that CWT omits from an existing effect argument block. */
 export interface EffectFieldAddition {
+  /** Effect argument key as written in PDXScript. */
   readonly name: string;
+  /** CWT rule type used by the ordinary effect-field lowering. */
   readonly type: RuleType;
+  /** Whether callers may omit the added argument. */
   readonly optional: boolean;
+  /** Repository-relative source and line range that declares the field. */
   readonly source: string;
+  /** Audited explanation of the omission and chosen authoring contract. */
   readonly reason: string;
 }
 
+/** Corrects the optionality, repetition, or bare-value cardinality of one effect field. */
 export interface EffectFieldCardinalityOverride {
+  /** Effect argument key whose cardinality is corrected. */
   readonly name: string;
+  /** Overrides whether callers may omit the argument. */
   readonly optional?: boolean;
+  /** Overrides whether the named key may occur more than once. */
   readonly repeated?: boolean;
+  /** Overrides cardinality for anonymous values inside the argument block. */
   readonly valueList?: Cardinality;
+  /** Repository-relative source and line range that supports the correction. */
   readonly source: string;
+  /** Audited explanation of the mechanical cardinality error. */
   readonly reason: string;
 }
 
@@ -329,11 +349,13 @@ export const EFFECT_FIELD_TYPE_OVERRIDES = new Map<string, EffectFieldTypeOverri
   ],
 ]);
 
+/** Defines a stable generated interface for a hand-written effect overload to augment. */
 export interface EffectExtensionSeam {
   /** The emitted interface the hand-written overload augments. */
   readonly interfaceName: string;
   /** The hand-written overload's display signature for script references. */
   readonly referenceSignature: string;
+  /** Audited contract that requires the hand-written overload. */
   readonly reason: string;
 }
 

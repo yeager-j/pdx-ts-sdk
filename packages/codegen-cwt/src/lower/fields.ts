@@ -4,7 +4,7 @@
  *
  * This is the half of content emission that knows nothing about registries.
  * Given a field's declarations, an overlay row and a scope context, it picks a
- * shape and returns the three things every caller needs. `content-type.ts`
+ * shape and returns the three things every caller needs. `emit/content/content-type.ts`
  * drives it over a `type[...]` body and over each repeated-struct field one
  * level down; the alias emitters drive it over an alias category's members.
  * Keeping the loop here is what lets those callers share one lowering instead
@@ -14,7 +14,11 @@
 import type { DescentNode } from "../corpus/observations.ts";
 import { isRepeated, type RuleField, type RuleType } from "../cwt/model.ts";
 import { camelCase, pascalCase } from "../naming.ts";
-import { type ContentFieldOverride, type FieldWidening } from "../overlay/index.ts";
+import {
+  type ContentFieldOverride,
+  type ContentFieldShape,
+  type FieldWidening,
+} from "../overlay/index.ts";
 import { Emitter } from "../render/emitter.ts";
 import type { DocTable, FieldOmissionRow } from "../render/field-rows.ts";
 import { formOfShape } from "./authored-form.ts";
@@ -62,13 +66,8 @@ import {
 export { authoredLiterals, memberOptional, metadata, repeatsSiblings } from "./field-metadata.ts";
 
 /**
- * One lowered field, described in the terms a real PDXScript value can be
- * measured against: block or scalar, repeatable or not, which scalars it
- * admits, which scope its closures run in.
- *
- * The corpus gate used to see field *names* only, which is what limited it to
- * presence checking — `stages.end` could be block-typed against 254 scalar
- * writes and still report full coverage.
+ * Describes one lowered field in the terms used by corpus conformance checks.
+ * Consumers use it to compare shape, repetition, scalar values, and closure scope.
  */
 export interface EmittedField {
   /** The game's own key, or a dotted path for one lowered inside a struct. */
@@ -80,53 +79,53 @@ export interface EmittedField {
   /** True when the authoring member lets the key repeat at the sibling level. */
   readonly repeated: boolean;
   /**
-   * A `struct` whose repetition is nested inside the key, so its block holds
-   * bare anonymous blocks rather than named entries. The interior form check
-   * needs it for the same reason `valueList` is exempt there: "no named keys"
-   * is what this shape writes, not evidence that the lowering is wrong.
+   * Marks a struct whose repetition occurs as anonymous blocks inside one key.
+   * The corpus checker uses this to distinguish wrapped lists from repeated sibling keys.
    */
   readonly wrapped?: boolean;
   /** Every scalar the member admits, when the lowering closed the set. */
   readonly literals?: readonly string[];
   /**
-   * What scope this field's closures run in:
-   *
-   * - a list of canonical scopes — the rules or an overlay row pinned it
-   * - `"any"` — nothing pinned it. A contravariant lowering widens that to
-   *   `Trigger<never>`, which admits every rule and checks none; any other
-   *   lowering keeps `ScopeName`, which admits only rules legal in *every*
-   *   scope, which is almost none
-   * - `{ parameter }` — the definition declares which of these it is, so a rule
-   *   legal in any one of them is writable by some definition
+   * The canonical scopes in which this field's closures run.
+   * `"any"` is unpinned; `{ parameter }` means the enclosing definition selects
+   * one of the listed scopes.
    */
-  readonly scope?: readonly string[] | "any" | { readonly parameter: readonly string[] };
+  readonly scope?:
+    | readonly string[]
+    | "any"
+    | {
+        /** Scopes allowed for the enclosing definition's scope parameter. */
+        readonly parameter: readonly string[];
+      };
   /**
-   * Set when the field's block holds trigger or effect rules, so a consumer
-   * knows the keys inside it are scoped rules rather than struct members or
-   * modifier names. The emitter knows this from the splice category it lowered;
-   * nothing downstream should try to re-derive it from a shape name.
+   * The script clause kind held by this block, when it contains scoped rules.
+   * Consumers must use this value instead of inferring a clause from the shape name.
    */
   readonly clause?: "trigger" | "effect";
 }
 
+/**
+ * The generated member type, runtime descriptor, and conformance evidence for
+ * one lowered CWT field. Optional code and descent data describe nested blocks.
+ */
 export interface LoweredField {
+  /** The TypeScript type exposed on the generated authoring member. */
   readonly memberType: string;
+  /** The rendered runtime `ContentField` descriptor. */
   readonly metadata: string;
   /**
-   * What the lowering admits, for the corpus gate. Carries the same `shape` and
-   * `repeated` the metadata does, so the two cannot describe different things.
+   * The field forms admitted by corpus conformance checks.
+   * Its shape and repetition must match {@link metadata}.
    */
   readonly admits: Omit<EmittedField, "field">;
   /**
-   * A `struct` whose repetition is nested inside one key. Decides whether the
-   * authoring member is an array — which is what tells two dual arms apart —
-   * and rides into `admits` so the gate knows the block holds bare blocks.
+   * Marks a struct whose anonymous repetition is nested inside one key.
+   * Dual lowering uses this to distinguish the member's authored form.
    */
   readonly wrapped?: boolean;
   /**
-   * Doc lines the lowering itself contributes, beyond the rules' own `###`
-   * comments — how an overlay decision that weakens a type explains itself on
-   * the member a modder hovers.
+   * Documentation contributed by lowering in addition to the CWT declaration.
+   * Use it for author-facing constraints introduced by an overlay.
    */
   readonly docs?: readonly string[];
   /** Extra top-level declarations a nested struct level needed, prepended by the caller. */
@@ -134,33 +133,25 @@ export interface LoweredField {
   /** Rows bubbled up from a nested struct level, their paths already prefixed. */
   readonly unsupported?: readonly FieldOmissionRow[];
   /**
-   * Documentation rows for every field table {@link code} declares, one
-   * {@link DocTable} per emitted `..._FIELDS` constant, bubbled unchanged —
-   * the table constant names the rows, so no path arithmetic rides along.
+   * Documentation rows for every field table declared by {@link code}.
+   * Each table identifies its generated field constant directly.
    */
   readonly docTables?: readonly DocTable[];
   /**
-   * What the block's own members admit, at their dotted paths and at every
-   * level below — the interior the corpus gate would otherwise measure nothing
-   * against, since `admits` describes only the outer key.
+   * Admitted forms for members inside this field's nested block.
+   * Paths are rooted at the outer field and include every generated level.
    */
   readonly nested?: readonly EmittedField[];
   /**
-   * How the corpus reader reaches that interior. Produced beside {@link nested}
-   * from one lowering so the two cannot describe different trees: a descent
-   * without its emitted fields manufactures unexpressed paths, and emitted
-   * fields without their descent are measured against nothing.
+   * Corpus-reader descents that reach the fields in {@link nested}.
+   * Keep both collections paired so every described interior is measurable.
    */
   readonly descents?: readonly DescentNode[];
 }
 
 /**
- * Declares the imports one overlay widening's `extraType` needs.
- *
- * The row states its own symbols ({@link FieldWidening.symbols}) because the
- * text is free-form TypeScript the overlay writes and the emitter only splices.
- * Applied where the row is read, which is the point the widening joins the
- * member's admitted forms.
+ * Registers the SDK imports required by an overlay widening's free-form type.
+ * Call it when the widening joins a generated member type.
  */
 export function useWideningSymbols(emitter: Emitter, widening: FieldWidening | undefined): void {
   for (const symbol of widening?.symbols ?? []) {
@@ -168,6 +159,10 @@ export function useWideningSymbols(emitter: Emitter, widening: FieldWidening | u
   }
 }
 
+/**
+ * Inlines subtype arms into an ordinary field list while preserving declaration order.
+ * Inlined fields become optional because the subtype predicate may not apply.
+ */
 export function flatten(fields: readonly RuleField[], typeName: string): RuleField[] {
   return fields.flatMap((field) => {
     if (field.key.kind !== "subtype") {
@@ -185,6 +180,7 @@ export function flatten(fields: readonly RuleField[], typeName: string): RuleFie
   });
 }
 
+/** Groups ordinary named fields after subtype arms have been flattened. */
 export function mergeByName(
   fields: readonly RuleField[],
   typeName: string
@@ -200,14 +196,8 @@ export function mergeByName(
 }
 
 /**
- * The alias categories a definition body splices unkeyed at its own top level.
- *
- * `static_modifier` is declared `{ alias_name[modifier] = alias_match_left[modifier]
- * icon = filepath … }` — the modifier grammar *is* the body, so vanilla writes
- * `empire_base = { max_rivalries = 3 }` with the modifier names at the block
- * root, beside the metadata keys. {@link mergeByName} keeps only `name` keys,
- * so without this the splice is invisible to the field model and the registry
- * would emit a definition that can set an icon but never a modifier.
+ * Returns unkeyed alias splices declared at the definition body's top level.
+ * The result preserves the order established by subtype flattening.
  */
 export function topLevelSplices(fields: readonly RuleField[], typeName: string): AliasNameField[] {
   return flatten(fields, typeName).filter(
@@ -215,16 +205,19 @@ export function topLevelSplices(fields: readonly RuleField[], typeName: string):
   );
 }
 
+/** One top-level alias splice lowered to a generated authoring member. */
 export interface LoweredSplice {
+  /** The camel-cased authoring member name. */
   readonly member: string;
+  /** The TypeScript type exposed on the generated authoring member. */
   readonly memberType: string;
+  /** The rendered runtime field descriptor. */
   readonly metadata: string;
+  /** Documentation inherited from the splice and its structural declaration. */
   readonly docs: readonly string[];
   /**
-   * The block key the writer emits each entry under, for a splice whose entries
-   * are keyed blocks rather than bare rows. Absent for `inlineModifiers`, whose
-   * whole point is that its rows carry no enclosing key — which is also why
-   * that one contributes no {@link EmittedField}.
+   * The block key used for keyed splice entries.
+   * It is absent when entries are emitted directly into the definition body.
    */
   readonly key?: string;
   /** What the lowering admits, for the corpus gate. Set whenever `key` is. */
@@ -232,19 +225,9 @@ export interface LoweredSplice {
 }
 
 /**
- * Lowers a structural splice to one authoring member holding an ordered array
- * of that category's blocks. `structuralSpliceOf` (`rule-shapes.ts`) is the
- * recognizer that confirms a category is this shape; this is its one
- * lowering.
- *
- * The array is unconditional, and so is its optionality: the cardinality on the
- * `alias_name` line is ignored. A splice is a grammar production rather than a
- * field — the block is legal absent and legal repeated wherever the category is
- * spliced — and CWT annotates the two ends inconsistently anyway. The top-level
- * `alias_name[planet_initializer]` carries `0..inf`, but the recursive ones
- * inside `planet` and `moon` carry nothing at all, which `cardinalityOf` reads
- * as required — and would make every planet demand a sub-planet, forever.
- * {@link aliasScalarFields} already reasons this way for the scalar case.
+ * Lowers a structural alias splice to an optional authoring member containing ordered blocks.
+ * Splices always use a repeated array because their declaration cardinality does not govern
+ * individual block members.
  */
 export function lowerStructuralSplice(
   emitter: Emitter,
@@ -276,20 +259,9 @@ export function spliceTypeName(category: string): string {
 }
 
 /**
- * Lowers one top-level splice to a single authoring member whose entries the
- * writer emits at the block root rather than under a key.
- *
- * Two kinds lower. `modifier` becomes `ModifierClosure` — the same closure every
- * keyed `modifier = { ... }` field already authors, spliced instead of wrapped,
- * exactly as `TriggeredModifier.modifiers` already does one level down. A
- * *structural* category (see {@link lowerStructuralSplice}) becomes an ordered
- * array of its own block interface.
- *
- * Everything else returns `null` and is reported: the remaining categories a
- * body splices this way (`game_rule`'s `trigger`, `script_value`'s
- * `modifier_rule`, `deposit`'s `resources_template_optional`) belong to types
- * the manifest does not expose, and naming a member for one would be inventing
- * an authoring surface rather than lowering a declared one.
+ * Lowers a top-level alias splice to a member emitted directly into the definition body.
+ * Modifier splices become a closure; recognized structural categories become ordered arrays;
+ * unsupported categories return `null`.
  */
 export function lowerTopLevelSplice(
   emitter: Emitter,
@@ -311,6 +283,16 @@ export function lowerTopLevelSplice(
   };
 }
 
+function authoredScalarType(type: RuleType, fallback: string): string {
+  if (type.kind !== "literal") {
+    return fallback;
+  }
+  if (type.text === "yes") {
+    return "true";
+  }
+  return type.text === "no" ? "false" : fallback;
+}
+
 function lowerValue(
   emitter: Emitter,
   field: RuleField,
@@ -322,18 +304,13 @@ function lowerValue(
     return null;
   }
   const repeated = isRepeated(field.cardinality);
-  const literalType =
-    field.type.kind === "literal" && field.type.text === "yes"
-      ? "true"
-      : field.type.kind === "literal" && field.type.text === "no"
-        ? "false"
-        : value.type;
+  const literalType = authoredScalarType(field.type, value.type);
   const base = literalType + (widening === undefined ? "" : ` | ${widening}`);
   // `field.type.kind === "localisation"` is CWT's own way of typing a plain
   // body field as "this value is a localisation key, not free text" — the
   // same RuleType `job.condition_string` and `global_ship_design`'s name_field
   // pointer both use. It lowers to the same `string`, `conversion: "identity"`
-  // shape ordinary scalars do (`emit/types.ts`'s `valueFor`), so nothing
+  // shape ordinary scalars do (`render/emitter.ts`'s `valueFor`), so nothing
   // downstream can otherwise tell "raw key" from "any other string field" —
   // `locKey: true` is that signal, consumed by the runtime's
   // `onLocKeyLooksLikeText` check (SDK-50).
@@ -568,90 +545,64 @@ function lowerWeightedEvents(
   };
 }
 
-/**
- * The shape ladder for one declaration: the overlay-requested or derived shape
- * first, then the shapes recognized from the field's own splice category, then
- * the structural fallbacks. Arm order is load-bearing — an explicit request
- * skips the recognizers, and a bare block must try the wrapped-struct reading
- * before the scalar-list one.
- */
-function lowerOrdinary(
+type OrdinaryFieldShape = Exclude<ContentFieldShape, "repeatedStruct">;
+
+function lowerSelectedShape(
   emitter: Emitter,
   field: RuleField,
   name: string,
   ctx: FieldContext,
   override: ContentFieldOverride | undefined,
   widening: string | undefined,
+  path: string,
+  shape: OrdinaryFieldShape
+): LoweredField | null {
+  switch (shape) {
+    case "value":
+      return lowerValue(emitter, field, name, widening);
+    case "valueList":
+      return lowerValueList(emitter, field, name, widening, override?.quoted ?? false);
+    case "trigger":
+      return lowerTrigger(emitter, field, name, ctx, override);
+    case "effect":
+      return lowerEffect(emitter, field, name, ctx, override);
+    case "economicResources":
+    case "economicResourcesNoProduce":
+      return lowerEconomicResources(emitter, field, name, ctx, override, shape);
+    case "economicResourceOperation":
+      return lowerEconomicResourceOperation(emitter, field, name, ctx, path);
+    case "triggeredModifierBlock":
+      return lowerTriggeredModifier(emitter, field, name, ctx, override, path);
+    case "modifierBlock":
+      return lowerModifierBlock(emitter, field, name, ctx, override);
+    case "weightBlock":
+    case "weightBlockWithLoc":
+      return lowerWeightBlock(emitter, field, name, ctx, override, path, shape);
+    case "struct":
+      return lowerStruct(emitter, field, name, path, ctx);
+    case "weightedEvents":
+      return lowerWeightedEvents(emitter, field, name);
+    case "structMap":
+      return lowerStructMap(emitter, field, name, path, ctx, override?.nestedTypeName);
+    case "scalarMap":
+      return lowerScalarMap(emitter, field, name);
+    case "aliasStruct":
+      return lowerAliasStruct(emitter, field, name, override!.category!);
+    default: {
+      const unreachable: never = shape;
+      return unreachable;
+    }
+  }
+}
+
+function lowerFallbackShape(
+  emitter: Emitter,
+  field: RuleField,
+  name: string,
+  ctx: FieldContext,
+  widening: string | undefined,
   path: string
 ): LoweredField | null {
-  const requested = override?.shape ?? derivedClauseShape(field);
-  if (requested === "modifierBlock") {
-    return lowerModifierBlock(emitter, field, name, ctx, override);
-  }
-  if (requested === "weightBlock" || requested === "weightBlockWithLoc") {
-    return lowerWeightBlock(emitter, field, name, ctx, override, path, requested);
-  }
-  if (requested === "aliasStruct") {
-    return lowerAliasStruct(emitter, field, name, override!.category!);
-  }
-  if (requested === "valueList") {
-    return lowerValueList(emitter, field, name, widening, override?.quoted ?? false);
-  }
-  if (requested === undefined) {
-    const triggerStruct = lowerTriggerStruct(emitter, field, name, path, ctx);
-    if (triggerStruct !== null) {
-      return triggerStruct;
-    }
-  }
-  const category = spliceCategory(field.type);
-  if (requested === "trigger" || (requested === undefined && category === "trigger")) {
-    return lowerTrigger(emitter, field, name, ctx, override);
-  }
-  if (requested === "effect" || (requested === undefined && category === "effect")) {
-    return lowerEffect(emitter, field, name, ctx, override);
-  }
-  if (requested === undefined && category === "modifier_rule") {
-    return lowerWeightBlock(emitter, field, name, ctx, override, path, "weightBlock");
-  }
-  if (requested === undefined && category === "modifier_rule_with_loc") {
-    return lowerWeightBlock(emitter, field, name, ctx, override, path, "weightBlockWithLoc");
-  }
-  if (requested === undefined && category !== null) {
-    const members = aliasScalarFields(emitter, category);
-    if (members !== null) {
-      return lowerStruct(
-        emitter,
-        { ...field, type: { kind: "block", fields: members, bare: [] } },
-        name,
-        path,
-        ctx
-      );
-    }
-  }
-  if (requested === "economicResources" || requested === "economicResourcesNoProduce") {
-    return lowerEconomicResources(emitter, field, name, ctx, override, requested);
-  }
-  if (requested === "economicResourceOperation") {
-    return lowerEconomicResourceOperation(emitter, field, name, ctx, path);
-  }
-  if (requested === "triggeredModifierBlock") {
-    return lowerTriggeredModifier(emitter, field, name, ctx, override, path);
-  }
-  if (requested === "value") {
-    return lowerValue(emitter, field, name, widening);
-  }
-  if (requested === "struct") {
-    return lowerStruct(emitter, field, name, path, ctx);
-  }
-  if (requested === "structMap") {
-    return lowerStructMap(emitter, field, name, path, ctx, override?.nestedTypeName);
-  }
-  if (requested === "scalarMap") {
-    return lowerScalarMap(emitter, field, name);
-  }
-  if (requested === "weightedEvents") {
-    return lowerWeightedEvents(emitter, field, name);
-  }
   const bare = bareValuesOf(field.type);
   if (bare !== null) {
     // A single bare block, rather than a bare scalar, is the "wrapped" spelling
@@ -671,6 +622,73 @@ function lowerOrdinary(
     return struct;
   }
   return lowerValue(emitter, field, name, widening);
+}
+
+function lowerInferredShape(
+  emitter: Emitter,
+  field: RuleField,
+  name: string,
+  ctx: FieldContext,
+  override: ContentFieldOverride | undefined,
+  widening: string | undefined,
+  path: string
+): LoweredField | null {
+  const triggerStruct = lowerTriggerStruct(emitter, field, name, path, ctx);
+  if (triggerStruct !== null) {
+    return triggerStruct;
+  }
+  const category = spliceCategory(field.type);
+  if (category === "trigger") {
+    return lowerTrigger(emitter, field, name, ctx, override);
+  }
+  if (category === "effect") {
+    return lowerEffect(emitter, field, name, ctx, override);
+  }
+  if (category === "modifier_rule") {
+    return lowerWeightBlock(emitter, field, name, ctx, override, path, "weightBlock");
+  }
+  if (category === "modifier_rule_with_loc") {
+    return lowerWeightBlock(emitter, field, name, ctx, override, path, "weightBlockWithLoc");
+  }
+  if (category !== null) {
+    const members = aliasScalarFields(emitter, category);
+    if (members !== null) {
+      return lowerStruct(
+        emitter,
+        { ...field, type: { kind: "block", fields: members, bare: [] } },
+        name,
+        path,
+        ctx
+      );
+    }
+  }
+  return lowerFallbackShape(emitter, field, name, ctx, widening, path);
+}
+
+/**
+ * The shape ladder for one declaration: the overlay-requested or derived shape
+ * first, then the shapes recognized from the field's own splice category, then
+ * the structural fallbacks. Arm order is load-bearing — a selected shape skips
+ * the recognizers, and a bare block must try the wrapped-struct reading before
+ * the scalar-list one.
+ */
+function lowerOrdinary(
+  emitter: Emitter,
+  field: RuleField,
+  name: string,
+  ctx: FieldContext,
+  override: ContentFieldOverride | undefined,
+  widening: string | undefined,
+  path: string
+): LoweredField | null {
+  const selectedShape = override?.shape ?? derivedClauseShape(field);
+  if (selectedShape === undefined) {
+    return lowerInferredShape(emitter, field, name, ctx, override, widening, path);
+  }
+  if (selectedShape === "repeatedStruct") {
+    return lowerFallbackShape(emitter, field, name, ctx, widening, path);
+  }
+  return lowerSelectedShape(emitter, field, name, ctx, override, widening, path, selectedShape);
 }
 
 /**
@@ -698,8 +716,15 @@ function lowerDual(
   widening: string | undefined,
   path: string
 ): LoweredField | null {
-  const scalarArms = group.filter((field) => field.type.kind !== "block");
-  const blockArms = group.filter((field) => field.type.kind === "block");
+  const scalarArms: RuleField[] = [];
+  const blockArms: RuleField[] = [];
+  for (const field of group) {
+    if (field.type.kind === "block") {
+      blockArms.push(field);
+    } else {
+      scalarArms.push(field);
+    }
+  }
   if (scalarArms.length === 0 || blockArms.length === 0) {
     return null;
   }
@@ -785,6 +810,10 @@ function lowerScalarUnion(
   };
 }
 
+/**
+ * Lowers one named field group through overlay assertions and ordinary shape
+ * selection. Asset-path assertions are applied only after a shape is selected.
+ */
 export function pickOrdinary(
   emitter: Emitter,
   declared: readonly RuleField[],

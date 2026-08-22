@@ -17,7 +17,8 @@
  *  - the *field tables* cannot, since a `const` cannot reference itself before
  *    it is initialised — so each category registers its table under its own name
  *    via `registerAliasStructFields`, and the writer resolves it at write time.
- *    That is the same indirection `emit/alias-struct.ts` needs for
+ *    That is the same indirection
+ *    `packages/codegen-cwt/src/emit/content/alias-struct.ts` needs for
  *    `government_trigger`'s combinators, reused rather than reinvented.
  *
  * What is *not* shared with alias-struct.ts is the body: that module matches a
@@ -27,7 +28,7 @@
  */
 
 import type { DescentNode } from "../../corpus/observations.ts";
-import { isOptional } from "../../cwt/model.ts";
+import { isOptional, type RuleField, type ScopeContext } from "../../cwt/model.ts";
 import {
   authoredLiterals,
   lowerStructuralSplice,
@@ -39,6 +40,7 @@ import {
   type EmittedField,
 } from "../../lower/fields.ts";
 import { structuralSpliceOf } from "../../lower/rule-shapes.ts";
+import type { FieldContext } from "../../lower/scope-context.ts";
 import { camelCase, capitalizedArticle, docComment } from "../../naming.ts";
 import {
   CONTENT_DECLINED_FIELDS,
@@ -54,7 +56,9 @@ import {
 } from "../../render/field-rows.ts";
 import { constArray, member as renderMember } from "../../render/writer.ts";
 
+/** Generated authoring code and coverage evidence for one structural alias splice. */
 export interface AliasSpliceEmission {
+  /** Complete generated module text for the category. */
   readonly code: string;
   /** The block interface, e.g. `PlanetInitializerFields`. */
   readonly typeName: string;
@@ -92,58 +96,97 @@ export interface AliasSpliceEmission {
   readonly docTables: readonly DocTable[];
 }
 
-/**
- * Emits one structural alias category, or returns `null` when the category is
- * not structural — which the caller reports rather than working around. See
- * {@link structuralSpliceOf} for the invariant.
- */
-export function emitAliasSplice(emitter: Emitter, category: string): AliasSpliceEmission | null {
-  const splice = structuralSpliceOf(emitter, category);
-  if (splice === null) {
-    return null;
-  }
-  const typeName = spliceTypeName(category);
-  const body = splice.declaration.type;
-  if (body.kind !== "block") {
-    return null;
-  }
-  // The category module is shared by every registry that splices it, so it has
-  // no registry's scope parameter to thread. `ScopeName` is the honest unpinned
-  // type here; a field the rules do scope (`init_effect` carries
-  // `## replace_scopes = { this = planet }`) still pins itself through
-  // `field.scope`, which is where every scope in these bodies comes from.
-  const ctx = {
-    scope: splice.declaration.scope,
+interface AliasSpliceContext {
+  readonly category: string;
+  readonly memberKey: string;
+  readonly typeName: string;
+  readonly fieldsConstant: string;
+  readonly fields: readonly RuleField[];
+  readonly fieldContext: FieldContext;
+}
+
+interface AliasSpliceDraft {
+  readonly members: string[];
+  readonly fieldMetadata: string[];
+  readonly declinedFields: FieldOmissionRow[];
+  readonly unsupported: FieldOmissionRow[];
+  readonly emittedFields: EmittedField[];
+  readonly corpusDescents: DescentNode[];
+  readonly extraCode: string[];
+  readonly spliceCategories: string[];
+  readonly memberDocs: Record<string, MemberDocRow>;
+  readonly docTables: DocTable[];
+}
+
+/** Returns the unpinned scope context for an alias category shared by many registries. */
+function aliasSpliceFieldContext(scope: ScopeContext | null): FieldContext {
+  return {
+    scope,
     unpinned: "ScopeName",
     unpinnedSymbol: "ScopeName",
   };
+}
 
-  const members: string[] = [];
-  const fieldMetadata: string[] = [];
-  const declinedFields: FieldOmissionRow[] = [];
-  const unsupported: FieldOmissionRow[] = [];
-  const emittedFields: EmittedField[] = [];
-  const corpusDescents: DescentNode[] = [];
-  const extraCode: string[] = [];
-  const spliceCategories: string[] = [];
-  const memberDocs: Record<string, MemberDocRow> = {};
-  const docTables: DocTable[] = [];
-  // A member's own interior comes back rooted at the category, since that is
-  // the path its overlay rows are keyed by; the corpus reader knows only the
-  // member key. Re-rooting here is the one place the two spellings meet, the
-  // same swap `declinedPathsOf` makes on the test side.
-  const atMemberKey = (field: string): string =>
-    `${splice.memberKey}${field.slice(category.length)}`;
+/** Returns the declaration details needed to emit one structural splice category. */
+function aliasSpliceContextOf(emitter: Emitter, category: string): AliasSpliceContext | null {
+  const splice = structuralSpliceOf(emitter, category);
+  if (splice === null || splice.declaration.type.kind !== "block") {
+    return null;
+  }
+  return {
+    category,
+    memberKey: splice.memberKey,
+    typeName: spliceTypeName(category),
+    fieldsConstant: `${category.toUpperCase()}_FIELDS`,
+    fields: splice.declaration.type.fields,
+    fieldContext: aliasSpliceFieldContext(splice.declaration.scope),
+  };
+}
 
-  // Overlay rows are keyed by the category, not by the registry that splices
-  // it: one lowering serves every consumer and every depth, so pinning a shape
-  // per registry would be pinning it in only some of the places it appears.
-  for (const [name, group] of mergeByName(body.fields, typeName)) {
-    const fieldPath = `${category}.${name}`;
+function emptyAliasSpliceDraft(): AliasSpliceDraft {
+  return {
+    members: [],
+    fieldMetadata: [],
+    declinedFields: [],
+    unsupported: [],
+    emittedFields: [],
+    corpusDescents: [],
+    extraCode: [],
+    spliceCategories: [],
+    memberDocs: {},
+    docTables: [],
+  };
+}
+
+/** Combines independently lowered member groups in their emitted order. */
+function combineAliasSpliceDrafts(...drafts: readonly AliasSpliceDraft[]): AliasSpliceDraft {
+  return {
+    members: drafts.flatMap((draft) => draft.members),
+    fieldMetadata: drafts.flatMap((draft) => draft.fieldMetadata),
+    declinedFields: drafts.flatMap((draft) => draft.declinedFields),
+    unsupported: drafts.flatMap((draft) => draft.unsupported),
+    emittedFields: drafts.flatMap((draft) => draft.emittedFields),
+    corpusDescents: drafts.flatMap((draft) => draft.corpusDescents),
+    extraCode: drafts.flatMap((draft) => draft.extraCode),
+    spliceCategories: drafts.flatMap((draft) => draft.spliceCategories),
+    memberDocs: Object.assign({}, ...drafts.map((draft) => draft.memberDocs)),
+    docTables: drafts.flatMap((draft) => draft.docTables),
+  };
+}
+
+function rootAtMemberKey(context: AliasSpliceContext, field: string): string {
+  return `${context.memberKey}${field.slice(context.category.length)}`;
+}
+
+/** Lowers the category's ordinary named fields and records their emitter effects. */
+function lowerNamedMembers(emitter: Emitter, context: AliasSpliceContext): AliasSpliceDraft {
+  const draft = emptyAliasSpliceDraft();
+  for (const [name, group] of mergeByName(context.fields, context.typeName)) {
+    const fieldPath = `${context.category}.${name}`;
     const declined = CONTENT_DECLINED_FIELDS.get(fieldPath);
     if (declined !== undefined) {
       emitter.overlayAudit.applied("CONTENT_DECLINED_FIELDS", fieldPath);
-      declinedFields.push({ path: fieldPath, kind: "declined", reason: declined });
+      draft.declinedFields.push({ path: fieldPath, kind: "declined", reason: declined });
       continue;
     }
     const override = CONTENT_FIELD_OVERRIDES.get(fieldPath);
@@ -159,13 +202,13 @@ export function emitAliasSplice(emitter: Emitter, category: string): AliasSplice
       emitter,
       group,
       name,
-      ctx,
+      context.fieldContext,
       override,
       widening?.extraType,
       fieldPath
     );
     if (lowering === null) {
-      unsupported.push({
+      draft.unsupported.push({
         path: fieldPath,
         kind: "unsupported",
         reason: "no declaration the emitter can lower",
@@ -173,49 +216,53 @@ export function emitAliasSplice(emitter: Emitter, category: string): AliasSplice
       continue;
     }
     const optional = group.every((field) => isOptional(field.cardinality));
-    const docLines = [...new Set(group.flatMap((field) => field.docs))];
-    members.push(
-      renderMember({ name: camelCase(name), type: lowering.memberType, optional, docs: docLines })
-    );
-    memberDocs[camelCase(name)] = {
+    const docs = [...new Set(group.flatMap((field) => field.docs))];
+    const member = camelCase(name);
+    draft.members.push(renderMember({ name: member, type: lowering.memberType, optional, docs }));
+    draft.memberDocs[member] = {
       optional,
-      docs: docLines,
+      docs,
       memberType: lowering.memberType,
       ...authoredLiterals(lowering.admits.literals),
     };
-    docTables.push(...(lowering.docTables ?? []));
-    fieldMetadata.push(lowering.metadata);
+    draft.docTables.push(...(lowering.docTables ?? []));
+    draft.fieldMetadata.push(lowering.metadata);
     if (lowering.code !== undefined) {
-      extraCode.push(lowering.code);
+      draft.extraCode.push(lowering.code);
     }
     if (lowering.unsupported !== undefined) {
-      unsupported.push(...lowering.unsupported);
+      draft.unsupported.push(...lowering.unsupported);
     }
-    emittedFields.push(
-      { field: `${splice.memberKey}.${name}`, ...lowering.admits },
-      ...(lowering.nested ?? []).map((field) => ({ ...field, field: atMemberKey(field.field) }))
+    draft.emittedFields.push(
+      { field: `${context.memberKey}.${name}`, ...lowering.admits },
+      ...(lowering.nested ?? []).map((field) => ({
+        ...field,
+        field: rootAtMemberKey(context, field.field),
+      }))
     );
-    corpusDescents.push(...(lowering.descents ?? []));
+    draft.corpusDescents.push(...(lowering.descents ?? []));
   }
+  return draft;
+}
 
-  // Emitted after the named fields, matching the rules' declaration order and
-  // the geometry vanilla writes: inside a `planet`, `change_orbit` advances the
-  // orbit cursor and has to precede the `moon` blocks it applies to.
-  for (const nested of topLevelSplices(body.fields, typeName)) {
+/** Lowers the category's unkeyed structural splices after its ordinary fields. */
+function lowerNestedSplices(emitter: Emitter, context: AliasSpliceContext): AliasSpliceDraft {
+  const draft = emptyAliasSpliceDraft();
+  for (const nested of topLevelSplices(context.fields, context.typeName)) {
     const nestedCategory = nested.key.category;
-    if (spliceCategories.includes(nestedCategory)) {
+    if (draft.spliceCategories.includes(nestedCategory)) {
       continue;
     }
     const lowered = lowerStructuralSplice(emitter, nestedCategory, nested.docs);
     if (lowered === null) {
-      unsupported.push({
-        path: `${category}.alias_name[${nestedCategory}]`,
+      draft.unsupported.push({
+        path: `${context.category}.alias_name[${nestedCategory}]`,
         kind: "unsupported",
         reason: "spliced unkeyed; that category has no authoring member",
       });
       continue;
     }
-    members.push(
+    draft.members.push(
       renderMember({
         name: lowered.member,
         type: lowered.memberType,
@@ -223,51 +270,85 @@ export function emitAliasSplice(emitter: Emitter, category: string): AliasSplice
         docs: lowered.docs,
       })
     );
-    memberDocs[lowered.member] = {
+    draft.memberDocs[lowered.member] = {
       optional: true,
       docs: lowered.docs,
       memberType: lowered.memberType,
     };
-    fieldMetadata.push(lowered.metadata);
-    emittedFields.push({ field: `${splice.memberKey}.${lowered.key!}`, ...lowered.admits! });
-    spliceCategories.push(nestedCategory);
+    draft.fieldMetadata.push(lowered.metadata);
+    draft.emittedFields.push({
+      field: `${context.memberKey}.${lowered.key!}`,
+      ...lowered.admits!,
+    });
+    draft.spliceCategories.push(nestedCategory);
   }
+  return draft;
+}
 
-  // From the category, not from `typeName`: the interface already ends in
-  // "Fields", so constant-casing it would spell `..._FIELDS_FIELDS`.
-  const fieldsConstant = `${category.toUpperCase()}_FIELDS`;
+/** Builds the generated source and coverage evidence from a completed splice draft. */
+function aliasSpliceEmission(
+  context: AliasSpliceContext,
+  draft: AliasSpliceDraft,
+  contentField: string,
+  registerAliasStructFields: string
+): AliasSpliceEmission {
   const code =
-    extraCode.join("") +
+    draft.extraCode.join("") +
     docComment([
-      `${capitalizedArticle(splice.memberKey)} \`${splice.memberKey}\` ` +
+      `${capitalizedArticle(context.memberKey)} \`${context.memberKey}\` ` +
         "block, as the game's rules describe it.",
       "",
       "Anonymous and ordered: these are written as repeated sibling blocks, so",
       "the array's order is the order the game reads them in, and an entry has",
       "no id of its own.",
     ]) +
-    `export interface ${typeName} {\n` +
-    members.join("") +
+    `export interface ${context.typeName} {\n` +
+    draft.members.join("") +
     "}\n\n" +
     constArray(
-      fieldsConstant,
-      emitter.use("ContentField"),
-      fieldMetadata.map((entry) => `  ${entry},\n`).join("")
+      context.fieldsConstant,
+      contentField,
+      draft.fieldMetadata.map((entry) => `  ${entry},\n`).join("")
     ) +
-    `${emitter.use("registerAliasStructFields")}(${JSON.stringify(category)}, ` +
-    `${fieldsConstant});\n`;
+    `${registerAliasStructFields}(${JSON.stringify(context.category)}, ` +
+    `${context.fieldsConstant});\n`;
 
   return {
     code,
-    typeName,
-    fieldsConstant,
-    memberKey: splice.memberKey,
-    spliceCategories,
-    emittedFields,
-    corpusDescents,
-    declinedFields: declinedFields.map(omissionLine),
-    unsupported: unsupported.map(omissionLine),
-    omissions: [...declinedFields, ...unsupported],
-    docTables: [{ constant: fieldsConstant, members: memberDocs }, ...docTables],
+    typeName: context.typeName,
+    fieldsConstant: context.fieldsConstant,
+    memberKey: context.memberKey,
+    spliceCategories: draft.spliceCategories,
+    emittedFields: draft.emittedFields,
+    corpusDescents: draft.corpusDescents,
+    declinedFields: draft.declinedFields.map(omissionLine),
+    unsupported: draft.unsupported.map(omissionLine),
+    omissions: [...draft.declinedFields, ...draft.unsupported],
+    docTables: [
+      { constant: context.fieldsConstant, members: draft.memberDocs },
+      ...draft.docTables,
+    ],
   };
+}
+
+/**
+ * Emits one structural alias category, or returns `null` when the category is
+ * not structural — which the caller reports rather than working around. See
+ * {@link structuralSpliceOf} for the invariant.
+ */
+export function emitAliasSplice(emitter: Emitter, category: string): AliasSpliceEmission | null {
+  const context = aliasSpliceContextOf(emitter, category);
+  if (context === null) {
+    return null;
+  }
+  const draft = combineAliasSpliceDrafts(
+    lowerNamedMembers(emitter, context),
+    lowerNestedSplices(emitter, context)
+  );
+  return aliasSpliceEmission(
+    context,
+    draft,
+    emitter.use("ContentField"),
+    emitter.use("registerAliasStructFields")
+  );
 }

@@ -15,56 +15,38 @@ import type { RuleField, ScopeContext } from "../cwt/model.ts";
 import type { Emitter } from "../render/emitter.ts";
 
 /**
- * The scope a field's closures run in.
- *
- * `asserted` is an overlay row's declared scope, which wins over the rules —
- * see `ContentFieldOverride.scope` for when that is legitimate. A bad scope
- * name there throws rather than falling back to `ScopeName`: silently widening
- * would turn a typo into a field that accepts nothing useful, which is the very
- * failure the row exists to fix.
- */
-/**
- * What a field's lowering needs to know about the definition enclosing it.
- *
- * `unpinned` is the type an unannotated scope lowers to. Normally `ScopeName`,
- * which admits only rules legal in every scope; for a registry whose scope is a
- * parameter of the definition (see `CONTENT_SCOPE_PARAMETERS`) it is that
- * parameter instead, so the clauses follow whatever the definition declared.
- *
- * `scope` is the effective `ScopeContext` in force at this point in the
- * recursion — the type's own top-level scope at the root, and, beneath a
- * struct field that itself carries a `field.scope` (`## replace_scopes`/
- * `## push_scope` on the struct field, not on the leaf), that field's scope
- * merged onto whatever was in force above it. `containerContext` builds that
- * merge and `structShape` recurses with the result, so a leaf with no
- * annotation of its own (`governments.cwt`'s `modification.add`/`remove`,
- * scoped only by the enclosing `modification` container) still resolves the
- * container's scope through the same `field.scope?.this ?? ctx.scope?.this`
- * fallback `scopeType`/`fromType` use for a leaf's own annotation.
+ * Carries the ambient scope and fallback TypeScript types used while lowering a field.
+ * Pass the context returned by {@link containerContext} when recursively lowering
+ * a nested struct.
  */
 export interface FieldContext {
+  /** The effective CWT scope context at this point in nested lowering. */
   readonly scope: ScopeContext | null;
+  /** The TypeScript scope used when no rule or overlay pins the field. */
   readonly unpinned: string;
   /**
-   * The SDK symbol {@link FieldContext.unpinned} names, where it names one
-   * rather than a type parameter of the enclosing definition. Carried so a field
-   * that actually lands on the unpinned type declares the import at the site
-   * that writes it — a registry whose fields are all scope-annotated imports
-   * nothing, and a contravariant field widens to `never` and imports nothing
-   * either.
+   * The SDK symbol named by {@link FieldContext.unpinned}, when it is an import.
+   * Omit this for enclosing-definition type parameters.
    */
   readonly unpinnedSymbol?: string;
   /**
-   * The type FROM lowers to in this field's block, where the overlay asserts a
-   * FROM the rules leave unstated (`ContentScopeParameter.selector.fromMembers`).
-   * A TS type rather than a scope name, because the scope it names is the
-   * definition's own parameter and not a constant any rule could state.
+   * An overlay-provided TypeScript type for FROM when CWT leaves it unstated.
+   * This value takes precedence over the ambient rule context.
    */
   readonly assertedFrom?: string;
   /** The enclosing registry's authoring parameter, for nested typed blocks. */
-  readonly nestedTypeParameter?: { readonly declaration: string; readonly argument: string };
+  readonly nestedTypeParameter?: {
+    /** The generic parameter declaration appended to the nested interface name. */
+    readonly declaration: string;
+    /** The generic argument used when referring to the nested interface. */
+    readonly argument: string;
+  };
 }
 
+/**
+ * Resolved TypeScript and runtime scope facts for one lowered field.
+ * Use these values when rendering generic arguments and conformance metadata.
+ */
 export interface FieldScope {
   /** The TS type parameter: one canonical scope literal, or the unpinned type. */
   readonly type: string;
@@ -73,22 +55,13 @@ export interface FieldScope {
   /** The same thing as data, `"any"` where nothing pinned it. */
   readonly scopes: readonly string[] | "any";
   /**
-   * The scope FROM holds inside this block, as a TS literal type, when the
-   * rules name one. `null` where they do not — including their `from = any`,
-   * which names no scope and must stay unreadable rather than lower to
-   * something an author could navigate through.
-   *
-   * Read from the rules even when `asserted` overrides `this`: an overlay row
-   * corrects the scope a block *runs* in, which says nothing about what the
-   * game hands it as FROM.
+   * The TypeScript literal scope held by FROM inside the block.
+   * `null` keeps an undeclared or `any` FROM inaccessible to authors.
    */
   readonly from: string | null;
   /**
-   * The scope ROOT holds inside this block, on the same terms as {@link
-   * FieldScope.from} — and independent of `type`, which is the whole reason it
-   * is carried separately. `## replace_scopes = { this = planet root = country
-   * ... }` on a solar system initializer's `init_effect` means the block runs
-   * in planet scope while `root = { ... }` runs in country scope.
+   * The TypeScript literal scope held by ROOT inside the block.
+   * It is independent of the block's own scope and `null` when undeclared.
    */
   readonly root: string | null;
 }
@@ -136,6 +109,10 @@ function ambientType(
   return canonical === null ? null : JSON.stringify(canonical);
 }
 
+/**
+ * Resolves the scope a field's closures run in, including FROM and ROOT.
+ * An asserted scope overrides THIS and throws when the overlay names an unknown scope.
+ */
 export function scopeType(
   emitter: Emitter,
   field: RuleField,
@@ -172,13 +149,9 @@ export function scopeType(
 }
 
 /**
- * `EffectBlock`'s type arguments: the block's own scope, plus the scopes its
- * closure's `ctx.from` and `ctx.root` hold where the rules declare them. Each
- * trailing argument is emitted only as far as it says something — a block with
- * neither emits the one-argument form — so the defaults keep an undeclared
- * ambient scope unreadable rather than admitting a ref the game will not
- * honour. A declared ROOT with no FROM still has to spell the FROM slot, and
- * `undefined` is exactly the sentinel the default already means.
+ * Renders `EffectBlock` generic arguments for the block's own scope, FROM, and ROOT.
+ * Trailing arguments are omitted when absent; ROOT without FROM uses `undefined`
+ * for the required middle slot.
  */
 export function effectBlockArgs(emitter: Emitter, scope: FieldScope): string {
   const own = scopeArg(emitter, scope);
@@ -188,7 +161,10 @@ export function effectBlockArgs(emitter: Emitter, scope: FieldScope): string {
   return scope.from === null ? own : `${own}, ${scope.from}`;
 }
 
-/** Runtime evidence that natural event FROM cannot be witnessed by this block's `this`. */
+/**
+ * Emits runtime metadata when a block's single THIS scope differs from ROOT.
+ * Unpinned, multi-scope, and rootless blocks need no split-root marker.
+ */
 export function splitRootMetadata(scope: FieldScope): readonly string[] {
   if (scope.root === null || scope.scopes === "any" || scope.scopes.length !== 1) {
     return [];
@@ -197,19 +173,8 @@ export function splitRootMetadata(scope: FieldScope): readonly string[] {
 }
 
 /**
- * Wraps a declarative member type in `WithFrom` where the rules give the block
- * a FROM, adding the closure form that can reach it.
- *
- * A trigger and a weight block are values rather than closures, so unlike an
- * effect field there is no argument list to hand FROM to — the closure form is
- * that argument list. Only fields with a FROM get it: the plain form stays the
- * only way to write a condition that has no FROM to name.
- *
- * FROM alone decides whether the wrapper appears; a declared ROOT rides along
- * on the closure the FROM already earned. A field that declares ROOT and no
- * FROM therefore keeps the plain form and cannot reach either — a known gap
- * rather than a judgement about that field, since the wrapper's whole reason
- * to exist is the missing argument list.
+ * Wraps a declarative member type in `WithFrom` when the block exposes FROM.
+ * ROOT is included only with that wrapper; a block with no FROM keeps the original type.
  */
 export function withFrom(emitter: Emitter, inner: string, scope: FieldScope): string {
   if (scope.from === null) {
@@ -242,39 +207,18 @@ function pushedScope(fieldScope: ScopeContext, parentScope: ScopeContext | null)
 }
 
 /**
- * The `ctx` a struct field's own body recurses with.
- *
- * `structShape` types every one of a container's fields against the `ctx`
- * built here: a container that itself carries a `field.scope`
- * (`governments.cwt`'s `modification`, `## replace_scopes = { this = country
- * root = country }`) folds that annotation into `ctx.scope` via
- * {@link pushedScope}, so `add`/`remove` beneath it — themselves unannotated —
- * resolve "country" through the same fallback an annotated leaf uses. A field
- * with no `field.scope` passes `ctx` through unchanged, leaving whatever scope
- * was already in force (including one folded in by an enclosing container)
- * standing.
+ * Resolves the context inherited by a struct field's nested members.
+ * Fields without a scope annotation reuse the existing context; annotated fields merge
+ * their push or replacement through the CWT scope rules.
  */
 export function containerContext(field: RuleField, ctx: FieldContext): FieldContext {
   return field.scope === null ? ctx : { ...ctx, scope: pushedScope(field.scope, ctx.scope) };
 }
 
 /**
- * As {@link scopeType}, for shapes whose scope parameter reaches a
- * `Trigger<S>` contravariantly — a trigger field itself, and a weight block,
- * whose rows carry `when: Trigger<S>`.
- *
- * `Trigger<in S>` is contravariant, so the unpinned literal `ScopeName`
- * ("valid in every scope") types the field as accepting only conditions
- * legal in every scope — for most fields none, which makes the field
- * unwritable rather than unchecked. `never` is the top of that lattice:
- * substituting it is what "the rules did not say" should mean, the same way
- * an unknown reference target lowers to `| string` rather than to something
- * nothing can satisfy. Only the truly-unpinned case changes — a field a
- * `CONTENT_SCOPE_PARAMETERS` row threads through as `NoInfer<S>`, or one an
- * override, the rules themselves, or an enclosing container (see
- * {@link containerContext}) pin to a real scope, is untouched: any of those
- * already leave `scope.type` at something other than `ScopeName`, so the
- * widen below never fires for them.
+ * Resolves scope arguments for contravariant trigger-bearing shapes.
+ * An unpinned `ScopeName` becomes `never`, while explicit, parameterized, and
+ * container-inherited scopes remain unchanged.
  */
 export function contravariantScopeType(
   emitter: Emitter,
@@ -293,11 +237,8 @@ export function contravariantScopeType(
 }
 
 /**
- * The scope argument a member type spells, declaring the import it needs.
- *
- * Every site that writes `scope.type` into the output goes through here: the
- * unpinned type is `ScopeName` for an ordinary registry and a type parameter for
- * a scope-parameterised one, and only the first is a symbol to import.
+ * Returns the rendered scope argument and registers its SDK import when needed.
+ * Type parameters have no import and pass through unchanged.
  */
 export function scopeArg(emitter: Emitter, scope: FieldScope): string {
   if (scope.unpinned !== undefined) {

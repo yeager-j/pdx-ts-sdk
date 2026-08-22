@@ -41,11 +41,17 @@ import { contributesRefs, pushCode, pushExpr, pushValueListCode } from "./trigge
 
 const TRIGGER_CLAUSES = new Set<ClauseCategory>(["trigger"]);
 
+/** Generated trigger module text and its lowering report. */
 export interface TriggerEmission {
+  /** Complete generated trigger builder module text. */
   readonly code: string;
+  /** Number of trigger rules represented by generated builders. */
   readonly emitted: number;
+  /** Emitted trigger count grouped by lowered argument shape. */
   readonly byShape: ReadonlyMap<string, number>;
+  /** Trigger rules excluded from generation, with stable reasons. */
   readonly skipped: readonly SkippedRule[];
+  /** Applied documentation override rows for the codegen report. */
   readonly docOverrides: readonly string[];
   /** Every emitted function name, for the scope-link collision guard. */
   readonly names: ReadonlySet<string>;
@@ -192,6 +198,10 @@ function stringOrFields(
   return { kind: "stringOrFields", fields: shape.fields };
 }
 
+/**
+ * Builds generated JSDoc lines from CWT declarations and the game documentation fallback.
+ * CWT supplies the first available summary; a non-empty usage example is appended as a code block.
+ */
 export function tsDoc(declarations: readonly AliasDecl[], doc: DocEntry | undefined): string[] {
   const summary = declarations.flatMap((declaration) => declaration.docs)[0] ?? doc?.summary ?? "";
   const lines = [summary];
@@ -303,6 +313,33 @@ function memberType(emitter: Emitter, field: ArgField, outerScope: string): stri
   }
 }
 
+function argumentMembers(
+  emitter: Emitter,
+  fields: readonly ArgField[],
+  outerScope: string
+): string {
+  return fields
+    .map((field) =>
+      renderMember({
+        name: camelCase(field.name),
+        type: memberType(emitter, field, outerScope),
+        optional: field.optional,
+        docs: field.docs,
+      })
+    )
+    .join("");
+}
+
+function pushStatements(emitter: Emitter, fields: readonly ArgField[], triggerKey: string): string {
+  return fields
+    .map((field, index) => {
+      const access = propertyAccess("args", camelCase(field.name));
+      const push = `    ${pushCode(emitter, field, access, triggerKey, index)}\n`;
+      return field.optional ? `  if (${access} !== undefined) {\n${push}  }\n` : push.slice(2);
+    })
+    .join("");
+}
+
 function valueListType(
   emitter: Emitter,
   value: Extract<ArgValue, { readonly kind: "valueList" }>,
@@ -348,23 +385,8 @@ function emitFields(
   fields: readonly ArgField[]
 ): string {
   const name = `${pascalCase(key)}Args`;
-  const members = fields
-    .map((field) =>
-      renderMember({
-        name: camelCase(field.name),
-        type: memberType(emitter, field, scope),
-        optional: field.optional,
-        docs: field.docs,
-      })
-    )
-    .join("");
-  const pushes = fields
-    .map((field, index) => {
-      const access = propertyAccess("args", camelCase(field.name));
-      const push = `    ${pushCode(emitter, field, access, key, index)}\n`;
-      return field.optional ? `  if (${access} !== undefined) {\n${push}  }\n` : push.slice(2);
-    })
-    .join("");
+  const members = argumentMembers(emitter, fields, scope);
+  const pushes = pushStatements(emitter, fields, key);
   const withRefs = fields.some(contributesRefs);
   return (
     `export interface ${name} {\n${members}}\n\n` +
@@ -393,23 +415,8 @@ function emitStringOrFields(
   const typeParameter = preservesEnclosingScope ? `<S extends ${scope} = ${scope}>` : "";
   const argsType = `${name}${preservesEnclosingScope ? "<S>" : ""}`;
   const returnScope = preservesEnclosingScope ? "S" : scope;
-  const members = fields
-    .map((field) =>
-      renderMember({
-        name: camelCase(field.name),
-        type: memberType(emitter, field, returnScope),
-        optional: field.optional,
-        docs: field.docs,
-      })
-    )
-    .join("");
-  const pushes = fields
-    .map((field, index) => {
-      const access = propertyAccess("args", camelCase(field.name));
-      const push = `    ${pushCode(emitter, field, access, key, index)}\n`;
-      return field.optional ? `  if (${access} !== undefined) {\n${push}  }\n` : push.slice(2);
-    })
-    .join("");
+  const members = argumentMembers(emitter, fields, returnScope);
+  const pushes = pushStatements(emitter, fields, key);
   const withRefs = fields.some(contributesRefs);
   const condition = emitter.use("Trigger");
   return (
@@ -457,6 +464,10 @@ function emitOne(
   }
 }
 
+/**
+ * Emits trigger builders from generated-owned rules and reports every excluded rule.
+ * Rule scopes and documentation fallbacks are resolved before any builder text is committed.
+ */
 export function emitTriggers(
   emitter: Emitter,
   docs: ReadonlyMap<string, DocEntry>,

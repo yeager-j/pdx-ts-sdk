@@ -4,16 +4,18 @@
  * engine label, or a name the game assembles itself from another
  * definition's id.
  *
- * See `../overlay.ts` for what this directory is and how a row here earns
+ * See `./index.ts` for what this directory is and how a row here earns
  * its place.
  */
 
+/** Describes a registry-specific shape for names minted from a logical name. */
 export interface MintShape {
   /**
    * The literal every minted name of this registry carries *before* the mod
    * prefix. Omitted where there is none.
    */
   readonly head?: string;
+  /** Audited evidence for departing from the ordinary segmented mint. */
   readonly reason: string;
 }
 
@@ -66,6 +68,7 @@ export const MINT_SHAPE_OVERLAYS = new Map<string, MintShape>([
   ],
 ]);
 
+/** Defines the name constraints for a registry that can accept complete engine-facing names. */
 export interface ExactNameMint {
   /**
    * The charset a logical name may use under the ordinary prefixed mint, as a
@@ -75,6 +78,7 @@ export interface ExactNameMint {
   readonly namePattern: string;
   /** The charset a complete `prefix: false` name may use, as a regex source. */
   readonly exactNamePattern: string;
+  /** Audited evidence for accepting exact names in this registry. */
   readonly reason: string;
 }
 
@@ -131,23 +135,39 @@ export const EXACT_NAME_MINTS = new Map<string, ExactNameMint>([
  * which is why a shape-minted item records the capability that minted it
  * instead of being held to a string prefix.
  */
-export type ShapeMintHole = "name" | { readonly targetRegistry: string };
+export type ShapeMintHole =
+  | "name"
+  | {
+      /** Registry whose referenced definition id fills the pattern. */
+      readonly targetRegistry: string;
+    };
 
+/** Describes one capability that mints a sprite name from a fixed engine pattern. */
 export interface SpriteShapeMint {
   /** The capability method this row generates. */
   readonly method: string;
   /** The literal the minted name opens with, before the hole. */
   readonly head: string;
+  /** Value that fills the pattern's single variable segment. */
   readonly hole: ShapeMintHole;
   /**
    * Optional boolean options, each appending its own literal to the minted
    * name. The game reads a separate sprite per variant.
    */
-  readonly variants?: readonly { readonly option: string; readonly suffix: string }[];
+  readonly variants?: readonly {
+    /** Boolean authoring option that enables the variant. */
+    readonly option: string;
+    /** Literal appended to the minted name when the option is enabled. */
+    readonly suffix: string;
+  }[];
   /** Where in the rules this pattern is written, verbatim enough to re-find. */
   readonly seed: string;
+  /** Audited evidence that the engine constructs and reads this pattern. */
   readonly reason: string;
 }
+
+/** Registry whose definitions every shape-mint capability creates. */
+export const SHAPE_MINT_REGISTRY = "spriteType";
 
 /**
  * The closed set of sprite names the game generates from something other than
@@ -164,12 +184,9 @@ export interface SpriteShapeMint {
  * rest are audited in SDK-121 and deliberately absent, because a method whose
  * hole no typed value can supply is a raw-string trap wearing a name.
  *
- * {@link SHAPE_MINT_REGISTRY} is the registry every row below defines — stated
- * rather than assumed, so the emitter matches on data instead of carrying a
- * registry name of its own.
+ * {@link SHAPE_MINT_REGISTRY} states the registry every row below defines, so
+ * the emitter matches on data instead of carrying a registry name of its own.
  */
-export const SHAPE_MINT_REGISTRY = "spriteType";
-
 export const SPRITE_SHAPE_MINTS: readonly SpriteShapeMint[] = [
   {
     method: "spriteTextIcon",

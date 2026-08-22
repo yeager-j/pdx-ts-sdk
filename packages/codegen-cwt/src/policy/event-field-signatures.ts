@@ -1,12 +1,3 @@
-/**
- * The expected-signature hashes for every field of the vendored event and
- * option rule bodies: SHA-256 of each field's normalized rule signature, as
- * `eventFieldRuleSignatures` computes it. `policy/event-fields.ts` compares
- * the live rules against these at generation time, so a vendored-rules bump
- * that reshapes an event field fails codegen until the policy row is
- * re-reviewed.
- */
-
 const OPTIONAL_BOOL = "7f458999f754f7024a8ca2dcab499c90d84c7380a56425a7eecdcf36573a817c";
 const OPTIONAL_SCALAR = "4991372805db6e602783d6cac77b45415a1b47c9c4cf5078a1701c89f2ed17e6";
 const OPTIONAL_LOCALISATION = "6df6f11a721885f478d9cb30bfe7daeda0ece00112f3616972f9a7b9f114aa49";
@@ -15,7 +6,11 @@ const OPTIONAL_EFFECT = "08b78ef314d08ef49d64c0522831dd9cef5d533dfd56019b8ff1dc9
 const OPTIONAL_YES = "a42175346a2df11d5251a341011a1809f99ee5874ac775f1ca6f16369e60bbfa";
 const OPTIONAL_SPRITE = "a816d16885a7f6b32c56472017e84070c48450cacd401afa6dbd5b7c5b897349";
 
-export const EVENT_RULE_SIGNATURES: Readonly<Record<string, string>> = {
+/**
+ * Reviewed SHA-256 signatures for every field in the vendored event rule body.
+ * A rule-shape change fails policy validation until its field is reviewed and this table is updated.
+ */
+export const EVENT_RULE_SIGNATURES = {
   abort_effect: OPTIONAL_EFFECT,
   abort_trigger: OPTIONAL_TRIGGER,
   after: OPTIONAL_EFFECT,
@@ -68,7 +63,11 @@ export const EVENT_RULE_SIGNATURES: Readonly<Record<string, string>> = {
   weight_multiplier: "b6493dbb3e6a1a80c5d27050ab7e5212702ecf88ef70f29e5a92e7bba2789a4a",
 };
 
-export const OPTION_RULE_SIGNATURES: Readonly<Record<string, string>> = {
+/**
+ * Reviewed SHA-256 signatures for every field in the vendored event-option rule body.
+ * Hashes use the normalized signatures produced by `eventFieldRuleSignatures`.
+ */
+export const OPTION_RULE_SIGNATURES = {
   ai_chance: "045b9a1b5f1ea6a005b99230a12929da046ceb84b00684f209282ec2af2aaacb",
   allow: OPTIONAL_TRIGGER,
   custom_gui: OPTIONAL_SCALAR,

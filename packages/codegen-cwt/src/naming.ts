@@ -1,16 +1,4 @@
-/**
- * Name mangling is public API: these rules decide what modders type.
- *
- * They must be deterministic and stable, because changing one renames an
- * exported symbol for everyone.
- */
-
-/**
- * Reserved words that cannot be a `function` declaration name in a strict-mode
- * module. `and`, `or`, and `not` are deliberately absent — they are legal
- * identifiers, and the SDK uses them for its combinators.
- */
-const RESERVED = new Set([
+const RESERVED_BINDING_NAMES = new Set([
   "break",
   "case",
   "catch",
@@ -59,192 +47,143 @@ const RESERVED = new Set([
   "await",
 ]);
 
-const IDENTIFIER = /^[a-z][a-z0-9_]*$/;
+const PLAIN_NAME = /^[a-z][a-z0-9_]*$/;
+const PROPERTY_IDENTIFIER = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
 
-/** Rejects rule keys that are not plain names, such as `<scripted_trigger>`. */
+/** Returns whether a CWT rule key uses lowercase letters, digits, and underscores. */
 export function isPlainName(name: string): boolean {
-  return IDENTIFIER.test(name);
+  return PLAIN_NAME.test(name);
 }
 
-/**
- * Splits on every non-alphanumeric run, not just underscores: rule names are
- * also dotted (`building.corporate`) and spaced (`Pop Group`).
- */
-function words(name: string): string[] {
+function splitWords(name: string): string[] {
   return name.split(/[^A-Za-z0-9]+/).filter((part) => part !== "");
 }
 
-/**
- * The same split, plus camel humps: `spriteType` is two words, not one.
- *
- * Registry names are mostly the rules' own snake_case, where the two splits
- * agree. A `name` rename in the content manifest is the exception — it carries
- * the game's own spelling of a definition keyword, and those are camelCase
- * (`spriteType`). Splitting them keeps the file name and the prose spelling
- * readable rather than emitting `spritetype.ts` and "a spriteType".
- */
-function humpWords(name: string): string[] {
-  return words(name.replace(/([a-z0-9])([A-Z])/g, "$1 $2"));
+function splitNameWords(name: string): string[] {
+  return splitWords(name.replace(/([a-z0-9])([A-Z])/g, "$1 $2"));
 }
 
-/**
- * A registry's generated file stem: `ascension_perk` -> `ascension-perk`,
- * `spriteType` -> `sprite-type`.
- */
+function capitalizeInitial(word: string): string {
+  return word[0]!.toUpperCase() + word.slice(1);
+}
+
+/** Converts a snake_case or camelCase name to a lowercase kebab-case file stem. */
 export function kebabCase(name: string): string {
-  return humpWords(name)
+  return splitNameWords(name)
     .map((part) => part.toLowerCase())
     .join("-");
 }
 
-/**
- * A registry's name as prose, for the generated doc comments a modder reads on
- * hover: "an ascension perk", "a sprite type".
- */
+/** Converts a snake_case or camelCase registry name to lowercase prose. */
 export function spokenName(name: string): string {
-  return humpWords(name)
+  return splitNameWords(name)
     .map((part) => part.toLowerCase())
     .join(" ");
 }
 
+/** Converts a separated name to a lower-camel-case TypeScript name. */
 export function camelCase(name: string): string {
-  const [head = "", ...rest] = words(name);
-  const start = head === "" ? "" : head[0]!.toLowerCase() + head.slice(1);
-  return start + rest.map((part) => part[0]!.toUpperCase() + part.slice(1)).join("");
+  const [head = "", ...tail] = splitWords(name);
+  const lowerCamelHead = head === "" ? "" : head[0]!.toLowerCase() + head.slice(1);
+  return lowerCamelHead + tail.map(capitalizeInitial).join("");
 }
 
+/** Converts a separated name to a PascalCase TypeScript name. */
 export function pascalCase(name: string): string {
-  return words(name)
-    .map((part) => part[0]!.toUpperCase() + part.slice(1))
-    .join("");
+  return splitWords(name).map(capitalizeInitial).join("");
 }
 
 /**
- * The article for a generated doc comment's display name — "a technology", "an
- * ascension perk", "an observer event".
- *
- * Generated docs are what a modder reads on hover, so "a agreement event" is a
- * visible defect in the public API. A leading-vowel test is the whole rule: the
- * names this is called with are registry and rule keys, and none of the
- * spelling-versus-sound exceptions ("a unique...", "an hour") appears among
- * them — checked against the full manifest and the event-kind table, and it
- * degrades to the merely-inelegant rather than the wrong if one ever does.
+ * Selects the lowercase indefinite article for a generated display name.
+ * This uses the first letter because callers provide registry and rule names without phonetic exceptions.
  */
 export function indefiniteArticle(name: string): "a" | "an" {
   return /^[aeiou]/i.test(name) ? "an" : "a";
 }
 
 /**
- * The plural of a generated collection name — `starFlags`, `customStarNames`.
- *
- * Appending `s` unconditionally is right for every name that does not already
- * end in one, and `custom_star_names` / `custom_planet_names` are the first that
- * do: they arrived with the solar system initializer registry and spelled
- * themselves `customStarNamess`. Only the doubling is worth fixing — these are
- * snake_case rule keys, so there are no `-y`/`-ch` cases to pluralize and no
- * irregulars, and a name already ending in `s` is already the plural the caller
- * wants.
+ * Forms a generated collection name by appending `s` unless the name already ends in `s`.
+ * It does not implement general English pluralization because callers provide CWT rule keys.
  */
 export function pluralize(name: string): string {
   return name.endsWith("s") ? name : `${name}s`;
 }
 
-/** A reserved word gets a trailing underscore: `if` becomes `if_`. */
+/** Suffixes a reserved TypeScript binding name with an underscore. Other names are unchanged. */
 export function safeIdentifier(name: string): string {
-  return RESERVED.has(name) ? `${name}_` : name;
+  return RESERVED_BINDING_NAMES.has(name) ? `${name}_` : name;
 }
 
-/** A generated field-table constant's name: `ascensionPerk` -> `ASCENSION_PERK`. */
+/** Converts a camelCase name to the uppercase snake case used by generated constants. */
 export function constantCase(name: string): string {
   return name.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toUpperCase();
 }
 
-/** {@link indefiniteArticle}'s sentence-initial form: "A", "An". */
+/** Selects the sentence-initial form of {@link indefiniteArticle}. */
 export function capitalizedArticle(name: string): "A" | "An" {
   return indefiniteArticle(name) === "an" ? "An" : "A";
 }
 
+/** Serializes a string as a quoted JavaScript and TypeScript literal. */
 export function quoteLiteral(value: string): string {
   return JSON.stringify(value);
 }
 
 /**
- * A member name (reserved words included — `interface { for: number }` is
- * legal, since a property key is never evaluated as a binding) fit to
- * interpolate bare into an interface member or object-literal key position.
- *
- * Every `camelCase`/`pascalCase` output the emitters mint from CWT names is
- * one of these today, so nothing currently exercises the quoted arm; it
- * exists for the CWT or enum name that eventually is not — `90_day`,
- * `some-dashed-key` — which would otherwise interpolate into invalid
- * TypeScript that Prettier fails on with no indication of which generated
- * name caused it.
+ * Formats a name for an interface member or object-literal key.
+ * Valid property identifiers stay bare; all other names become quoted literals.
  */
 export function propertyName(name: string): string {
-  return PROPERTY_IDENTIFIER.test(name) ? name : JSON.stringify(name);
+  return PROPERTY_IDENTIFIER.test(name) ? name : quoteLiteral(name);
 }
 
 /**
- * {@link propertyName}'s companion for the read side: `objectExpression.name`
- * when `name` is a bare identifier, `objectExpression[JSON.stringify(name)]`
- * otherwise — the same `PROPERTY_IDENTIFIER` test, so declaration and access
- * agree on what counts as an identifier. The reserved-word nuance in
- * `propertyName`'s doc holds here too: `x.for` is legal member access, since
- * a property name is never evaluated as a binding.
+ * Formats property access against an emitted object expression.
+ * Valid property identifiers use dot access; all other names use bracket access.
  */
 export function propertyAccess(objectExpression: string, name: string): string {
   return PROPERTY_IDENTIFIER.test(name)
     ? `${objectExpression}.${name}`
-    : `${objectExpression}[${JSON.stringify(name)}]`;
+    : `${objectExpression}[${quoteLiteral(name)}]`;
 }
 
-const PROPERTY_IDENTIFIER = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
-
 /**
- * Plain codepoint order for generated output, where `Array.prototype.sort`'s
- * default coercion is wrong (it stringifies and still sorts lexically, so it
- * is fine for strings but a trap for anything else) and `localeCompare` is
- * wrong for a different reason: it depends on the running locale and on
- * whether the Node build has full ICU data, and it disagrees with codepoint
- * order on mixed-case input (`"Z".localeCompare("a")` is negative under the
- * common default locale, positive under codepoint order). Committed output
- * has to sort the same on every machine that runs codegen.
+ * Compares strings by codepoint for deterministic generated output.
+ * Unlike `localeCompare`, the result does not depend on the host locale or ICU data.
  */
-export function compareStrings(a: string, b: string): number {
-  return a < b ? -1 : a > b ? 1 : 0;
+export function compareStrings(left: string, right: string): number {
+  if (left < right) {
+    return -1;
+  }
+  if (left > right) {
+    return 1;
+  }
+  return 0;
 }
 
 /**
- * Whether generated `code` names `identifier` as a whole word, not merely as a
- * substring.
- *
- * Deciding which types a generated file needs to import reads emitted source
- * back with this check. A bare `code.includes(identifier)` false-matches
- * whenever `identifier` occurs inside a longer identifier or string literal —
- * `ModifierBlock` inside `shape: "triggeredModifierBlock"`, or
- * `EconomicResourceBlock` inside `EconomicResourceBlockNoProduce` — which pulls
- * in an unused `import type`. Every candidate this is called with is a plain
- * identifier, so a literal `\b` regex is exact; no escaping is needed.
+ * Returns whether generated source contains a complete TypeScript identifier.
+ * The `identifier` argument must contain only ASCII word characters.
  */
 export function referencesIdentifier(code: string, identifier: string): boolean {
   return new RegExp(`\\b${identifier}\\b`).test(code);
 }
 
+/**
+ * Renders non-empty lines as an emitted JSDoc block with optional indentation.
+ * Returns an empty string when no content remains and rejects a closing JSDoc delimiter.
+ */
 export function docComment(lines: readonly string[], indent = ""): string {
-  const body = lines.filter((line) => line.trim() !== "");
-  // A `*/` inside the body closes the comment early, so the rest of the line
-  // becomes code and the whole generated file stops parsing — which surfaces as
-  // a Prettier stack trace naming neither the file nor the doc line. One glob
-  // in a derived doc (`gfx/particles/**/*.asset`) is all it takes.
-  const closed = body.find((line) => line.includes("*/"));
-  if (closed !== undefined) {
-    throw new Error(`Doc line closes its own comment with "*/": ${closed}`);
+  const contentLines = lines.filter((line) => line.trim() !== "");
+  const closingDelimiterLine = contentLines.find((line) => line.includes("*/"));
+  if (closingDelimiterLine !== undefined) {
+    throw new Error(`Doc line closes its own comment with "*/": ${closingDelimiterLine}`);
   }
-  if (body.length === 0) {
+  if (contentLines.length === 0) {
     return "";
   }
-  if (body.length === 1) {
-    return `${indent}/** ${body[0]} */\n`;
+  if (contentLines.length === 1) {
+    return `${indent}/** ${contentLines[0]} */\n`;
   }
-  return `${indent}/**\n${body.map((line) => `${indent} * ${line}`).join("\n")}\n${indent} */\n`;
+  return `${indent}/**\n${contentLines.map((line) => `${indent} * ${line}`).join("\n")}\n${indent} */\n`;
 }

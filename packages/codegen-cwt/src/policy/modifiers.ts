@@ -1,14 +1,19 @@
 import type { RuleSet } from "../cwt/rules.ts";
 import { docComment } from "../naming.ts";
 
+/** The reviewed SDK disposition for one CWT complex-maths operation. */
 export interface ModifierOperationPolicyEntry {
+  /** The operation key written to PDXScript. */
   readonly scriptKey: string;
+  /** The authored SDK member, or `null` when the operation is unsupported. */
   readonly member: string | null;
+  /** Whether SDK authoring admits the operation. */
   readonly disposition: "supported" | "unsupported";
+  /** The evidence or limitation behind the disposition. */
   readonly reason: string;
 }
 
-const POLICY: readonly ModifierOperationPolicyEntry[] = [
+const MODIFIER_OPERATION_POLICY: readonly ModifierOperationPolicyEntry[] = [
   {
     scriptKey: "factor",
     member: "factor",
@@ -71,6 +76,10 @@ const POLICY: readonly ModifierOperationPolicyEntry[] = [
   })),
 ];
 
+/**
+ * Returns the reviewed modifier-operation policy after reconciling it with `complex_maths_enum`.
+ * Generation fails when the vendored enum adds or removes an operation without a policy decision.
+ */
 export function createModifierOperationPolicy(
   rules: RuleSet
 ): readonly ModifierOperationPolicyEntry[] {
@@ -78,7 +87,7 @@ export function createModifierOperationPolicy(
   if (declared.size === 0) {
     throw new Error("modifier_rule.cwt declares no complex_maths_enum members");
   }
-  const owned = new Set(POLICY.map((entry) => entry.scriptKey));
+  const owned = new Set(MODIFIER_OPERATION_POLICY.map((entry) => entry.scriptKey));
   const missing = [...declared].filter((key) => !owned.has(key));
   const stale = [...owned].filter((key) => !declared.has(key));
   if (missing.length > 0 || stale.length > 0) {
@@ -88,9 +97,10 @@ export function createModifierOperationPolicy(
         (stale.length === 0 ? "" : `; no longer declared: ${stale.join(", ")}`)
     );
   }
-  return POLICY;
+  return MODIFIER_OPERATION_POLICY;
 }
 
+/** Emits the supported authoring fields and complete modifier-operation policy for the SDK. */
 export function emitModifierOperationProtocol(
   policy: readonly ModifierOperationPolicyEntry[]
 ): string {

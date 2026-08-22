@@ -9,82 +9,60 @@ import { pascalCase } from "../naming.ts";
 import { OverlayAudit } from "../overlay/audit.ts";
 import { ImportRecorder, knownSymbol, type FileImports, type SymbolKind } from "./symbols.ts";
 
+/**
+ * A lowered TypeScript value shape and the metadata needed to serialize it.
+ * Emitters use this contract to write both author-facing types and runtime conversion metadata.
+ */
 export interface TsValue {
+  /** The TypeScript type text written into generated declarations. */
   readonly type: string;
-  /** Given an expression of that type, yields an expression the AST accepts. */
+  /** Converts an expression of {@link TsValue.type} into a PDXScript scalar expression. */
   readonly toScalar: (expression: string) => string;
   /**
-   * The content types a value of this shape references, when *every* form it
-   * admits is a `<type>` reference. Carried into the emitted field metadata so
-   * the runtime knows which registry an id belongs to, not merely that it is an
-   * id — a technology named as a prerequisite has to be a built technology.
-   *
-   * Undefined the moment one arm is not a reference: `<technology_tier> | int`
-   * admits plain numbers and scalars, so an id-shaped value in it proves
-   * nothing about any registry.
+   * Content registries referenced when every admitted form is a typed reference.
+   * Mixed or open forms leave this undefined so runtime validation does not infer false ownership.
    */
   readonly refTypes?: readonly string[];
   /**
-   * Every scalar this shape admits, spelled as the game writes it, when the
-   * rules close the set: a literal, a bool, or an enum with members. Undefined
-   * for open shapes (`scalar`, `int`, a `<type>` reference, an enum CWT
-   * declares without listing its values).
-   *
-   * Spelled in game rather than TypeScript terms — `yes`/`no`, not
-   * `true`/`false` — because the only thing that reads it compares against
-   * values parsed out of the shipped game files.
+   * Every admitted scalar token when the CWT rule defines a closed set.
+   * Tokens use game spelling, including `yes` and `no`; open forms leave this undefined.
    */
   readonly literals?: readonly string[];
   /**
-   * Literal boolean tokens this shape admits, including when another arm makes
-   * the overall value domain open. Effect metadata uses this at runtime to
-   * distinguish a rule-declared `yes`/`no` token from an arbitrary string
-   * whose spelling happens to match one.
+   * Rule-declared boolean tokens, retained even when another arm makes the value domain open.
+   * Effect recording uses them to distinguish booleans from arbitrary strings with the same text.
    */
   readonly booleanLiterals?: readonly ("yes" | "no")[];
   /**
-   * True for `value_field`/`int_value_field` only: the emitted expression is
-   * a `ScriptValue`, not a plain scalar, so a `@name` scripted-variable input
-   * needs `scriptValueScalar` (`trigger-core.ts`) around it before it reaches
-   * `kv()` — passed through unchanged, pdxscript's serializer quotes it
-   * defensively (round-trip safety for a `str` node), which the game would
-   * read as a literal string rather than evaluating the variable.
-   *
-   * Kept separate from `toScalar` deliberately: `toScalar` stays the
-   * identity function for `valueField` (`(e) => e`) so `conversionFor`
-   * elsewhere, which reads `toScalar("x") === "x"` to tell an "identity"
-   * field from a "ref" one, keeps classifying it correctly. Wrapping the
-   * *emitted expression* in a codegen-time template here would corrupt that
-   * unrelated signal.
+   * Marks `value_field` and `int_value_field` values that need `scriptValueScalar` before AST
+   * serialization. Their scalar conversion remains the identity so conversion metadata stays
+   * accurate.
    */
   readonly scriptValue?: true;
   /**
-   * Runtime-discriminated object forms this scalar admits. A mixed scalar and
-   * structured field carries these into generated metadata so the recorder can
-   * select the scalar arm from an SDK value's own contract instead of guessing
-   * from `typeof value === "object"`.
+   * Structured SDK value forms accepted by this scalar shape.
+   * Runtime recording uses these tags to select an object arm without guessing from JavaScript type.
    */
   readonly objectKinds?: readonly ScalarObjectKind[];
-  /**
-   * SDK symbols {@link TsValue.type} spells, for the file that writes it to
-   * import. Carried on the value rather than recovered from the text, so the
-   * emitter that splices the type declares the use with `Emitter.useValue`.
-   */
+  /** SDK symbols spelled by {@link TsValue.type} that the output file must import. */
   readonly typeSymbols?: readonly string[];
   /**
-   * The SDK symbol {@link TsValue.toScalar}'s expression calls, where it calls
-   * one. Separate from {@link TsValue.typeSymbols} because the two reach
-   * different files: only `emit/triggers.ts` writes a conversion expression into
-   * its output, while every emitter writes types.
+   * SDK symbol called by {@link TsValue.toScalar}, when one is required.
+   * This import is used by `emit/script/triggers.ts`, which writes conversion expressions.
    */
   readonly scalarSymbol?: string;
 }
 
+/** A runtime-discriminated object form accepted by a scalar field. */
 export type ScalarObjectKind = "scope-ref" | "typed-ref";
 
+/** The symbols and generated aliases referenced while emitting one output file. */
 export interface Usage {
+  /** CWT enum aliases referenced by the file. */
   readonly enums: string[];
+  /** CWT content-reference aliases referenced by the file. */
   readonly refs: string[];
+  /** CWT value-set aliases referenced by the file. */
   readonly valueSets: string[];
   /** Every SDK symbol the file's emitters declared a use of, by module. */
   readonly imports: FileImports;
@@ -114,41 +92,54 @@ function scopeValueType(scopes: readonly string[]): string {
  * so it swallows the rest.
  */
 function mergeScopeArms(parts: readonly string[]): string[] {
-  const arms = parts.filter((part) => SCOPE_ARM.test(part));
-  if (arms.length <= 1) {
+  const scopeArms = parts.flatMap((part, index) => {
+    const match = SCOPE_ARM.exec(part);
+    return match === null ? [] : [{ index, typeArgument: match[1] }];
+  });
+  const firstScopeArm = scopeArms[0];
+  if (firstScopeArm === undefined || scopeArms.length === 1) {
     return [...parts];
   }
-  const members = arms.map((arm) => SCOPE_ARM.exec(arm)![1]);
-  const merged = members.includes(undefined)
+  const typeArguments = scopeArms.map((arm) => arm.typeArgument);
+  const hasUnrestrictedScopeArm = typeArguments.includes(undefined);
+  const scopeMembers = typeArguments.flatMap((argument) => argument?.split("|") ?? []);
+  const mergedScopeArm = hasUnrestrictedScopeArm
     ? "ScopeValue"
-    : `ScopeValue<${[...new Set(members.flatMap((member) => member!.split("|")))].sort().join("|")}>`;
-  const first = parts.findIndex((part) => SCOPE_ARM.test(part));
-  return parts.flatMap((part, index) =>
-    !SCOPE_ARM.test(part) ? [part] : index === first ? [merged] : []
-  );
+    : `ScopeValue<${[...new Set(scopeMembers)].sort().join("|")}>`;
+  const scopeArmIndexes = new Set(scopeArms.map((arm) => arm.index));
+  return parts.flatMap((part, index) => {
+    if (index === firstScopeArm.index) {
+      return [mergedScopeArm];
+    }
+    return scopeArmIndexes.has(index) ? [] : [part];
+  });
 }
 
+/**
+ * Lowers CWT value types and records every generated symbol used by each output file.
+ * Create one emitter per codegen run, and bracket each file with {@link Emitter.beginFile} and
+ * {@link Emitter.endFile}.
+ */
 export class Emitter {
+  /** The parsed CWT rules that provide enum, reference, and scope definitions. */
   readonly rules: RuleSet;
   /**
-   * Tracks which path-keyed overlay rows (`CONTENT_FIELD_OVERRIDES` and its
-   * siblings) were actually read at their consumption site, for the
-   * end-of-run staleness assertions in `index.ts`'s `main()`. One instance
-   * per pipeline run — see `overlay-audit.ts`'s doc comment for why this
-   * lives here rather than as module-level state.
+   * Overlay rows consumed during this codegen run.
+   * The entrypoint checks this audit for stale rows; see `overlay/audit.ts` for its run-local contract.
    */
   readonly overlayAudit = new OverlayAudit();
-  /** Everything referenced anywhere, so `enums.ts` and `refs.ts` declare it. */
+  /** Enum aliases used anywhere in the current codegen run. */
   readonly usedEnums = new Set<string>();
+  /** Content-reference aliases used anywhere in the current codegen run. */
   readonly usedRefs = new Set<string>();
+  /** Value-set aliases used anywhere in the current codegen run. */
   readonly usedValueSets = new Set<string>();
   /**
-   * `scope[X]` and `scope_group[G]` arguments the rules name and `scopes.cwt`
-   * does not declare. Each one keeps its field at `string` rather than
-   * guessing a scope, and the codegen report prints them so the widening is
-   * never silent.
+   * Scope names used by rules but absent from `scopes.cwt`.
+   * Their fields widen to `string`, and the codegen report exposes each fallback.
    */
   readonly unknownScopes = new Set<string>();
+  /** Scope groups that are absent or contain a scope the parsed rules do not declare. */
   readonly unknownScopeGroups = new Set<string>();
   /** Scope groups actually lowered into a signature, for the report. */
   readonly usedScopeGroups = new Set<string>();
@@ -159,27 +150,23 @@ export class Emitter {
   private selfAliasCategory: string | undefined;
   private readonly scopes: ReadonlyMap<string, string>;
 
+  /** Creates a run-scoped emitter over one parsed CWT rule set. */
   constructor(rules: RuleSet) {
     this.rules = rules;
     this.scopes = scopeIndex(rules);
   }
 
   /**
-   * Resolves a scope name to its canonical form, or `null` when no scope by that
-   * name exists. Rules write whichever alias reads best — `## push_scope = trait`
-   * for the scope `scopes.cwt` calls `"Species trait"` — so nothing may reach the
-   * emitted types without going through here.
+   * Resolves a case-insensitive CWT scope alias to its canonical name.
+   * Returns `null` when the parsed scope table has no matching declaration.
    */
   canonicalScope(name: string): string | null {
     return this.scopes.get(name.toLowerCase()) ?? null;
   }
 
   /**
-   * Starts recording what a single output file references, so it can import it.
-   *
-   * `aliasCategory` names the alias category this file *is*, where it is one: a
-   * structural category splices itself (`planet_initializer` holds further
-   * planets), and a module must not import its own name.
+   * Resets per-file usage recording before an output module is emitted.
+   * Pass the module's alias category so self-references do not create self-imports.
    */
   beginFile(aliasCategory?: string): void {
     this.scopedEnums = new Set();
@@ -189,6 +176,7 @@ export class Emitter {
     this.selfAliasCategory = aliasCategory;
   }
 
+  /** Returns a detached snapshot of the imports and aliases recorded for the current file. */
   endFile(): Usage {
     return {
       enums: [...this.scopedEnums],
@@ -199,12 +187,8 @@ export class Emitter {
   }
 
   /**
-   * Declares that the file being emitted writes `name`, and returns it so the
-   * declaration sits at the spell site: `` `${emitter.use("Trigger")}<S>` ``.
-   *
-   * A name the table does not know throws. An emitter that mistypes a symbol has
-   * to fail codegen, because the alternative — importing nothing — surfaces far
-   * away as a generated file that does not compile.
+   * Records a fixed SDK symbol for the current output file and returns its spelling.
+   * Throws for unknown names; use {@link Emitter.useFrom} for computed symbols.
    */
   use(name: string): string {
     const symbol = knownSymbol(
@@ -215,13 +199,16 @@ export class Emitter {
     return name;
   }
 
-  /** {@link Emitter.use} for a name the generator computes, e.g. `ParsedTechnology`. */
+  /**
+   * Records and returns a computed symbol whose source module the caller knows.
+   * Use this for generated names such as `ParsedTechnology` that are not in the fixed symbol table.
+   */
   useFrom(module: string, name: string, kind: SymbolKind): string {
     this.scopedImports.add(module, name, kind);
     return name;
   }
 
-  /** Records every symbol a lowered scalar value's type spells. */
+  /** Records every symbol a lowered value's type spells, then returns the same value for emission. */
   useValue(value: TsValue): TsValue {
     for (const name of value.typeSymbols ?? []) {
       this.use(name);
@@ -231,12 +218,7 @@ export class Emitter {
 
   /**
    * Records a reference to another alias category's generated interface.
-   *
-   * Both halves of the pair, because both are needed: the type import is erased
-   * at build time, and only the bare import guarantees that category's
-   * `registerAliasStructFields` call has run before anything is serialized. A
-   * category referencing itself records neither — a module cannot import its own
-   * exports.
+   * It adds both the type import and registration side-effect import; self-references add neither.
    */
   useAliasCategory(category: string, typeName: string): string {
     if (category !== this.selfAliasCategory) {
@@ -247,6 +229,10 @@ export class Emitter {
     return typeName;
   }
 
+  /**
+   * Merges run-wide symbol and scope usage from an isolated child emitter.
+   * Per-file imports stay local to the emitter that writes the corresponding file.
+   */
   absorb(other: Emitter): void {
     for (const name of other.usedEnums) {
       this.usedEnums.add(name);
@@ -271,26 +257,36 @@ export class Emitter {
     }
   }
 
+  /** Returns the generated TypeScript type name for a CWT enum. */
   enumTypeName(name: string): string {
     return pascalCase(name);
   }
 
+  /** Returns the generated branded-reference type name for a CWT content type. */
   refTypeName(name: string): string {
     return `${pascalCase(name)}Ref`;
   }
 
+  /** Returns the generated TypeScript type name for a CWT value set. */
   valueSetTypeName(name: string): string {
     return pascalCase(name);
   }
 
-  /** Returns `null` for rule types that have no sensible scalar representation. */
+  /**
+   * Lowers one rule type and records any enum, reference, value-set, or scope usage it introduces.
+   * Returns `null` when the rule has no sensible scalar representation.
+   */
   valueFor(type: RuleType): TsValue | null {
     switch (type.kind) {
       case "bool":
-        return { type: "boolean", toScalar: (e) => e, literals: ["yes", "no"] };
+        return {
+          type: "boolean",
+          toScalar: (expression) => expression,
+          literals: ["yes", "no"],
+        };
       case "int":
       case "float":
-        return { type: "number", toScalar: (e) => e };
+        return { type: "number", toScalar: (expression) => expression };
       case "valueField":
         // CWT's `value_field`/`int_value_field` admit a literal number, a
         // scripted variable, a `scope.variable` path, `value:<script_value>`,
@@ -301,7 +297,7 @@ export class Emitter {
         // typechecking unchanged; only the non-numeric forms are new.
         return {
           type: "ScriptValue",
-          toScalar: (e) => e,
+          toScalar: (expression) => expression,
           scriptValue: true,
           typeSymbols: ["ScriptValue"],
         };
@@ -310,11 +306,14 @@ export class Emitter {
       case "filepath":
       case "icon":
       case "colour":
-        return { type: "string", toScalar: (e) => e };
+        return { type: "string", toScalar: (expression) => expression };
       case "valueSet": {
         this.usedValueSets.add(type.name);
         this.scopedValueSets.add(type.name);
-        return { type: this.valueSetTypeName(type.name), toScalar: (e) => e };
+        return {
+          type: this.valueSetTypeName(type.name),
+          toScalar: (expression) => expression,
+        };
       }
       // `scope[X]` and `scope_group[G]` both name a scope the author has to
       // reach by a path the game can follow — `this`, `from`, an event target
@@ -326,7 +325,7 @@ export class Emitter {
         if (argument === "any" || argument === "all") {
           return {
             type: "ScopeValue",
-            toScalar: (e) => `${e}.path`,
+            toScalar: (expression) => `${expression}.path`,
             objectKinds: ["scope-ref"],
             typeSymbols: ["ScopeValue"],
           };
@@ -334,11 +333,11 @@ export class Emitter {
         const canonical = this.canonicalScope(type.name);
         if (canonical === null) {
           this.unknownScopes.add(type.name);
-          return { type: "string", toScalar: (e) => e };
+          return { type: "string", toScalar: (expression) => expression };
         }
         return {
           type: scopeValueType([canonical]),
-          toScalar: (e) => `${e}.path`,
+          toScalar: (expression) => `${expression}.path`,
           objectKinds: ["scope-ref"],
           typeSymbols: ["ScopeValue"],
         };
@@ -347,7 +346,7 @@ export class Emitter {
         const members = this.rules.scopeGroups.get(type.name);
         if (members === undefined) {
           this.unknownScopeGroups.add(type.name);
-          return { type: "string", toScalar: (e) => e };
+          return { type: "string", toScalar: (expression) => expression };
         }
         const canonical = members.map((member) => this.canonicalScope(member));
         if (canonical.includes(null)) {
@@ -357,13 +356,15 @@ export class Emitter {
             }
           }
           this.unknownScopeGroups.add(type.name);
-          return { type: "string", toScalar: (e) => e };
+          return { type: "string", toScalar: (expression) => expression };
         }
         this.usedScopeGroups.add(type.name);
-        const scopes = [...new Set(canonical as string[])].sort();
+        const scopes = [
+          ...new Set(canonical.filter((scope): scope is string => scope !== null)),
+        ].sort();
         return {
           type: scopeValueType(scopes),
-          toScalar: (e) => `${e}.path`,
+          toScalar: (expression) => `${expression}.path`,
           objectKinds: ["scope-ref"],
           typeSymbols: ["ScopeValue"],
         };
@@ -371,20 +372,20 @@ export class Emitter {
       case "literal":
         return {
           type: JSON.stringify(type.text),
-          toScalar: (e) => e,
+          toScalar: (expression) => expression,
           literals: [type.text],
           ...(type.text === "yes" || type.text === "no" ? { booleanLiterals: [type.text] } : {}),
         };
       case "enum": {
         const members = this.rules.enums.get(type.name);
         if (members === undefined) {
-          return { type: "string", toScalar: (e) => e };
+          return { type: "string", toScalar: (expression) => expression };
         }
         this.usedEnums.add(type.name);
         this.scopedEnums.add(type.name);
         return {
           type: this.enumTypeName(type.name),
-          toScalar: (e) => e,
+          toScalar: (expression) => expression,
           // An enum CWT names but never populates emits as bare `string`, so
           // its set is open however the rules spell it.
           ...(members.length > 0 ? { literals: members } : {}),
@@ -396,7 +397,7 @@ export class Emitter {
         const name = this.refTypeName(type.name);
         return {
           type: `${name} | string`,
-          toScalar: (e) => `refId(${e})`,
+          toScalar: (expression) => `refId(${expression})`,
           refTypes: [type.name],
           objectKinds: ["typed-ref"],
           scalarSymbol: "refId",
@@ -407,58 +408,54 @@ export class Emitter {
     }
   }
 
-  /** Collapses an overloaded rule into one signature, or `null` if it cannot. */
+  /**
+   * Lowers an overloaded rule into one signature while recording every arm's usage.
+   * Returns `null` when any arm has no sensible scalar representation.
+   */
   unionFor(types: readonly RuleType[]): TsValue | null {
     const values = types.map((type) => this.valueFor(type));
-    if (values.some((value) => value === null)) {
+    if (!values.every((value): value is TsValue => value !== null)) {
       return null;
     }
     // Split compound members (`XRef | string`) so `string` dedupes across
     // arms instead of repeating in the joined union.
-    const parts = mergeScopeArms([...new Set(values.flatMap((value) => value!.type.split(" | ")))]);
-    const converts = new Set(values.map((value) => value!.toScalar("x")));
+    const parts = mergeScopeArms([...new Set(values.flatMap((value) => value.type.split(" | ")))]);
+    const conversionProbe = "x";
+    const conversionExpressions = new Set(values.map((value) => value.toScalar(conversionProbe)));
     // Only an all-reference overload keeps its target types: one non-reference
     // arm makes an id-shaped value legal for reasons the registries cannot see.
-    const refTypes = values.every((value) => value!.refTypes !== undefined)
-      ? [...new Set(values.flatMap((value) => [...value!.refTypes!]))]
+    const refTypes = values.every((value) => value.refTypes !== undefined)
+      ? [...new Set(values.flatMap((value) => [...value.refTypes!]))]
       : undefined;
     // One open arm opens the whole union, the same rule `refTypes` follows: a
     // scalar arm makes every value legal, so the closed arms prove nothing.
-    const literals = values.every((value) => value!.literals !== undefined)
-      ? [...new Set(values.flatMap((value) => [...value!.literals!]))]
+    const literals = values.every((value) => value.literals !== undefined)
+      ? [...new Set(values.flatMap((value) => [...value.literals!]))]
       : undefined;
-    const booleanLiterals = [...new Set(values.flatMap((value) => value!.booleanLiterals ?? []))];
-    const objectKinds = [...new Set(values.flatMap((value) => value!.objectKinds ?? []))];
+    const booleanLiterals = [...new Set(values.flatMap((value) => value.booleanLiterals ?? []))];
+    const objectKinds = [...new Set(values.flatMap((value) => value.objectKinds ?? []))];
     // Every arm's type survives into `parts` — `mergeScopeArms` collapses scope
     // arms into another scope arm and the `Set` only drops exact duplicates — so
     // the union of the arms' symbols is exactly what the joined type spells.
-    const typeSymbols = [...new Set(values.flatMap((value) => value!.typeSymbols ?? []))];
-    if (converts.size > 1) {
-      return {
-        type: parts.join(" | "),
-        toScalar: (e) => `refId(${e})`,
-        refTypes,
-        literals,
-        ...(booleanLiterals.length === 0 ? {} : { booleanLiterals }),
-        ...(objectKinds.length === 0 ? {} : { objectKinds }),
-        ...(typeSymbols.length === 0 ? {} : { typeSymbols }),
-        scalarSymbol: "refId",
-      };
-    }
-    // Propagated only on this branch: `refId(e)` above is not `scriptValueScalar`-
-    // wrappable, and a value_field arm overloaded alongside a typeRef is not a
-    // shape the real rules exercise.
-    const scriptValue = values.every((value) => value!.scriptValue === true) ? true : undefined;
+    const typeSymbols = [...new Set(values.flatMap((value) => value.typeSymbols ?? []))];
+    const firstValue = values[0]!;
+    const conversionsDiffer = conversionExpressions.size > 1;
+    // Propagated only when every conversion agrees: a mixed union uses `refId`,
+    // which cannot be wrapped by `scriptValueScalar`. The real rules do not
+    // overload a value_field arm alongside a typeRef.
+    const scriptValue =
+      !conversionsDiffer && values.every((value) => value.scriptValue === true) ? true : undefined;
+    const scalarSymbol = conversionsDiffer ? "refId" : firstValue.scalarSymbol;
     return {
       type: parts.join(" | "),
-      toScalar: values[0]!.toScalar,
+      toScalar: conversionsDiffer ? (expression) => `refId(${expression})` : firstValue.toScalar,
       refTypes,
       literals,
       ...(booleanLiterals.length === 0 ? {} : { booleanLiterals }),
       ...(scriptValue === undefined ? {} : { scriptValue }),
       ...(objectKinds.length === 0 ? {} : { objectKinds }),
       ...(typeSymbols.length === 0 ? {} : { typeSymbols }),
-      ...(values[0]!.scalarSymbol === undefined ? {} : { scalarSymbol: values[0]!.scalarSymbol }),
+      ...(scalarSymbol === undefined ? {} : { scalarSymbol }),
     };
   }
 }

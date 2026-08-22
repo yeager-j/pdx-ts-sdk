@@ -62,7 +62,9 @@ import {
   member as renderMember,
 } from "../../render/writer.ts";
 
+/** Generated authoring code and coverage evidence for one fixed-shape alias category. */
 export interface AliasStructEmission {
+  /** Complete generated module text for the category. */
   readonly code: string;
   /** The block interface, e.g. `GovernmentTriggerBlock`. */
   readonly typeName: string;
@@ -140,6 +142,28 @@ interface CombinatorShape {
 }
 
 type MemberShape = ClauseShape | ScalarShape | CombinatorShape;
+
+interface ShapedAliasMember {
+  readonly name: string;
+  readonly declaration: AliasDecl;
+  readonly shape: MemberShape;
+}
+
+interface AliasStructPlan {
+  readonly members: readonly ShapedAliasMember[];
+  readonly scalars: ReadonlyMap<string, TsValue>;
+  readonly omissions: readonly FieldOmissionRow[];
+  readonly hasClauseMember: boolean;
+}
+
+interface AliasMemberEmission {
+  readonly propertyName: string;
+  readonly blockMember: string;
+  readonly metadata: string;
+  readonly docs: MemberDocRow;
+  readonly clauseTables: readonly string[];
+  readonly docTables: readonly DocTable[];
+}
 
 /**
  * Matches the uniform domain template: an optional `value`, plus repeatable
@@ -261,19 +285,88 @@ function valueField(key: string, value: TsValue): string {
   );
 }
 
-/**
- * One clause member's own field tables (group plus clause), keyed by its own
- * `ref` rather than a category-wide one. `authority`, `civics`, `origin` and
- * the rest of `government_trigger`'s domain clauses share one template but
- * each names a different `<type>` — `clauseShape` already tracks that per
- * member (it is what parameterizes `GovernmentTriggerClause<R>`), so the
- * runtime table has to be per member too, or every clause after the first one
- * `shapes` yields would silently carry someone else's `refTypes`.
- */
+function planAliasStruct(
+  emitter: Emitter,
+  category: string,
+  members: ReadonlyMap<string, readonly AliasDecl[]>
+): AliasStructPlan {
+  const shapedMembers: ShapedAliasMember[] = [];
+  const omissions: FieldOmissionRow[] = [];
+  const decline = (name: string, reason: string): void => {
+    omissions.push({ path: `${category}:${name}`, kind: "declined", reason });
+  };
+  for (const [name, declarations] of members) {
+    if (!isPlainName(name.toLowerCase())) {
+      decline(name, "not a plain name");
+      continue;
+    }
+    if (declarations.length !== 1) {
+      decline(
+        name,
+        `declared ${declarations.length} times, and the ` +
+          "emitter has no rule for merging alias-struct members"
+      );
+      continue;
+    }
+    const declaration = declarations[0]!;
+    const shape = shapeOf(emitter, declaration.type, category);
+    if (typeof shape === "string") {
+      decline(name, shape);
+      continue;
+    }
+    shapedMembers.push({ name, declaration, shape });
+  }
+
+  const combinators = shapedMembers.flatMap((member) =>
+    member.shape.kind === "combinator" ? [member.shape] : []
+  );
+  const scalars = blockScalars(emitter, combinators);
+  if (typeof scalars === "string") {
+    throw new Error(`alias category ${category}: ${scalars}`);
+  }
+
+  const emittedMembers = shapedMembers.filter((member) => {
+    if (!scalars.has(member.name)) {
+      return true;
+    }
+    decline(member.name, `collides with the block's own "${memberName(member.name)}" field`);
+    return false;
+  });
+  return {
+    members: emittedMembers,
+    scalars,
+    omissions,
+    hasClauseMember: shapedMembers.some((member) => member.shape.kind === "clause"),
+  };
+}
+
+function valueMemberEmission(
+  emitter: Emitter,
+  key: string,
+  value: TsValue,
+  docs: readonly string[]
+): AliasMemberEmission {
+  const propertyName = memberName(key);
+  return {
+    propertyName,
+    blockMember: renderMember({
+      name: propertyName,
+      type: emitter.useValue(value).type,
+      optional: true,
+      docs,
+    }),
+    metadata: valueField(key, value),
+    docs: { optional: true, docs, memberType: value.type },
+    clauseTables: [],
+    docTables: [],
+  };
+}
+
 /**
  * The doc rows matching {@link clauseFieldsCode}'s two tables, with the
- * clause's own `R` substituted — the same prose the shared generic interfaces
- * carry as JSDoc, restated per member table so the ledger's join stays total.
+ * clause's own `R` substituted. Each clause member has its own table pair
+ * because its values may reference a different content type; a category-wide
+ * table would silently reuse the first member's `refTypes` for the rest.
  */
 function clauseDocTables(
   ref: TsValue,
@@ -357,6 +450,71 @@ function clauseFieldsCode(
   );
 }
 
+function memberEmission(
+  emitter: Emitter,
+  category: string,
+  typeName: string,
+  clauseName: string,
+  groupName: string,
+  constant: string,
+  member: ShapedAliasMember
+): AliasMemberEmission {
+  const { name, declaration, shape } = member;
+  if (shape.kind === "scalar") {
+    return valueMemberEmission(emitter, name, shape.value, declaration.docs);
+  }
+  if (shape.kind === "clause") {
+    const propertyName = memberName(name);
+    const memberConstant = `${constant}_${name.toUpperCase()}`;
+    const clauseFieldsConstant = `${memberConstant}_CLAUSE_FIELDS`;
+    const groupFieldsConstant = `${memberConstant}_CLAUSE_GROUP_FIELDS`;
+    const memberType = `${clauseName}<${emitter.useValue(shape.ref).type}>`;
+    return {
+      propertyName,
+      blockMember: renderMember({
+        name: propertyName,
+        type: memberType,
+        optional: true,
+        docs: declaration.docs,
+      }),
+      metadata:
+        `  { key: ${JSON.stringify(name)}, member: ${JSON.stringify(propertyName)}, ` +
+        `shape: "struct", form: ${JSON.stringify(formOfShape({ shape: "struct" }))}, ` +
+        `fields: ${clauseFieldsConstant} },\n`,
+      docs: { optional: true, docs: declaration.docs, memberType },
+      clauseTables: [
+        clauseFieldsCode(emitter, shape.ref, clauseFieldsConstant, groupFieldsConstant),
+      ],
+      docTables: [
+        ...clauseDocTables(shape.ref, clauseFieldsConstant, groupFieldsConstant, groupName),
+      ],
+    };
+  }
+
+  const propertyName = combinatorMemberName(name);
+  const memberType = `readonly ${typeName}[]`;
+  return {
+    propertyName,
+    blockMember: renderMember({
+      name: propertyName,
+      type: memberType,
+      optional: true,
+      docs: declaration.docs,
+    }),
+    metadata:
+      `  { key: ${JSON.stringify(name)}, member: ${JSON.stringify(propertyName)}, ` +
+      `shape: "aliasStruct", form: ${JSON.stringify(formOfShape({ shape: "aliasStruct", repeated: true }))}, ` +
+      `category: ${JSON.stringify(category)}, repeated: true },\n`,
+    docs: { optional: true, docs: declaration.docs, memberType },
+    clauseTables: [],
+    docTables: [],
+  };
+}
+
+/**
+ * Emits a fixed-shape alias category as a requirements interface and runtime field tables.
+ * Members that match no supported clause, scalar, or combinator shape remain explicit omissions.
+ */
 export function emitAliasStruct(
   emitter: Emitter,
   category: string,
@@ -367,44 +525,10 @@ export function emitAliasStruct(
   const groupName = `${clauseName}Group`;
   const constant = category.toUpperCase();
   const fieldsConstant = `${constant}_FIELDS`;
-
-  const shapes = new Map<string, MemberShape>();
-  const declinedMembers: FieldOmissionRow[] = [];
-  const declined = (name: string, reason: string): void => {
-    declinedMembers.push({ path: `${category}:${name}`, kind: "declined", reason });
-  };
-  for (const [name, declarations] of members) {
-    if (!isPlainName(name.toLowerCase())) {
-      declined(name, "not a plain name");
-      continue;
-    }
-    if (declarations.length !== 1) {
-      declined(
-        name,
-        `declared ${declarations.length} times, and the ` +
-          "emitter has no rule for merging alias-struct members"
-      );
-      continue;
-    }
-    const shape = shapeOf(emitter, declarations[0]!.type, category);
-    if (typeof shape === "string") {
-      declined(name, shape);
-      continue;
-    }
-    shapes.set(name, shape);
-  }
-
-  const combinators = [...shapes.values()].filter(
-    (shape): shape is CombinatorShape => shape.kind === "combinator"
-  );
-  const scalars = blockScalars(emitter, combinators);
-  if (typeof scalars === "string") {
-    throw new Error(`alias category ${category}: ${scalars}`);
-  }
+  const plan = planAliasStruct(emitter, category, members);
 
   const blockMembers: string[] = [];
   const metadata: string[] = [];
-  const emittedMembers: string[] = [];
   const memberDocs: Record<string, MemberDocRow> = {};
   // One field-table pair per clause member (SDK-37), keyed by that member's
   // own `ref` — `authority`, `civics`, `origin`, ... each name a different
@@ -412,89 +536,23 @@ export function emitAliasStruct(
   // member's `refTypes` and leave the guard unable to resolve the rest.
   const clauseTables: string[] = [];
   const docTables: DocTable[] = [];
-  for (const [key, value] of scalars) {
-    blockMembers.push(
-      renderMember({
-        name: memberName(key),
-        type: emitter.useValue(value).type,
-        optional: true,
-        docs: [],
-      })
-    );
-    memberDocs[memberName(key)] = { optional: true, docs: [], memberType: value.type };
-    metadata.push(valueField(key, value));
+  const emissions = [
+    ...[...plan.scalars].map(([key, value]) => valueMemberEmission(emitter, key, value, [])),
+    ...plan.members.map((member) =>
+      memberEmission(emitter, category, typeName, clauseName, groupName, constant, member)
+    ),
+  ];
+  for (const emission of emissions) {
+    blockMembers.push(emission.blockMember);
+    metadata.push(emission.metadata);
+    memberDocs[emission.propertyName] = emission.docs;
+    clauseTables.push(...emission.clauseTables);
+    docTables.push(...emission.docTables);
   }
-  for (const [name, shape] of shapes) {
-    if (scalars.has(name)) {
-      declined(name, `collides with the block's own "${memberName(name)}" field`);
-      continue;
-    }
-    const docLines = members.get(name)![0]!.docs;
-    if (shape.kind === "scalar") {
-      blockMembers.push(
-        renderMember({
-          name: memberName(name),
-          type: emitter.useValue(shape.value).type,
-          optional: true,
-          docs: docLines,
-        })
-      );
-      memberDocs[memberName(name)] = {
-        optional: true,
-        docs: docLines,
-        memberType: shape.value.type,
-      };
-      metadata.push(valueField(name, shape.value));
-    } else if (shape.kind === "clause") {
-      const memberConstant = `${constant}_${name.toUpperCase()}`;
-      const memberClauseFieldsConstant = `${memberConstant}_CLAUSE_FIELDS`;
-      const memberGroupFieldsConstant = `${memberConstant}_CLAUSE_GROUP_FIELDS`;
-      const memberType = `${clauseName}<${emitter.useValue(shape.ref).type}>`;
-      blockMembers.push(
-        renderMember({ name: memberName(name), type: memberType, optional: true, docs: docLines })
-      );
-      memberDocs[memberName(name)] = { optional: true, docs: docLines, memberType };
-      metadata.push(
-        `  { key: ${JSON.stringify(name)}, member: ${JSON.stringify(memberName(name))}, ` +
-          `shape: "struct", form: ${JSON.stringify(formOfShape({ shape: "struct" }))}, ` +
-          `fields: ${memberClauseFieldsConstant} },\n`
-      );
-      clauseTables.push(
-        clauseFieldsCode(emitter, shape.ref, memberClauseFieldsConstant, memberGroupFieldsConstant)
-      );
-      docTables.push(
-        ...clauseDocTables(
-          shape.ref,
-          memberClauseFieldsConstant,
-          memberGroupFieldsConstant,
-          groupName
-        )
-      );
-    } else {
-      const memberType = `readonly ${typeName}[]`;
-      blockMembers.push(
-        renderMember({
-          name: combinatorMemberName(name),
-          type: memberType,
-          optional: true,
-          docs: docLines,
-        })
-      );
-      memberDocs[combinatorMemberName(name)] = { optional: true, docs: docLines, memberType };
-      metadata.push(
-        `  { key: ${JSON.stringify(name)}, member: ${JSON.stringify(combinatorMemberName(name))}, ` +
-          `shape: "aliasStruct", form: ${JSON.stringify(formOfShape({ shape: "aliasStruct", repeated: true }))}, ` +
-          `category: ${JSON.stringify(category)}, repeated: true },\n`
-      );
-    }
-    emittedMembers.push(name);
-  }
-
-  const hasClauseMember = [...shapes.values()].some((shape) => shape.kind === "clause");
   // The clause and group interfaces stay generic and category-wide — only
   // their runtime field tables (above) need to be per member, since the
   // interfaces carry no `refTypes` of their own.
-  const clauseInterfaces = !hasClauseMember
+  const clauseInterfaces = !plan.hasClauseMember
     ? ""
     : docComment([
         `One \`OR\`/\`NOT\`/\`NOR\` group inside a ${category} clause.`,
@@ -545,9 +603,9 @@ export function emitAliasStruct(
     code,
     typeName,
     fieldsConstant,
-    emittedMembers,
-    declinedMembers: declinedMembers.map(omissionLine),
-    omissions: declinedMembers,
+    emittedMembers: plan.members.map((member) => member.name),
+    declinedMembers: plan.omissions.map(omissionLine),
+    omissions: plan.omissions,
     docTables: [{ constant: fieldsConstant, members: memberDocs }, ...docTables],
   };
 }

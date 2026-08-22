@@ -21,7 +21,9 @@ export const CONTENT_PATCH_REGISTRIES = new Map<string, string>([
   [
     "technology",
     "the first registry the vanilla loader parses and the patch resolver plans emission for " +
-      "(packages/sdk/src/stellaris/vanilla/, src/compiler/patches.ts) — verified in-game by the patches-that-provably-win calibration",
+      "(packages/sdk/src/stellaris/vanilla/, " +
+      "packages/sdk/src/compiler/patches.ts) — verified in-game by the " +
+      "patches-that-provably-win calibration",
   ],
   [
     "building",
