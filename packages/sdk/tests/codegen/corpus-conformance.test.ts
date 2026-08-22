@@ -52,7 +52,7 @@ import type { EmittedField } from "@pdx-ts/codegen-cwt/lower/fields";
 import { describe, expect, it } from "vitest";
 
 import { InstallNotFoundError } from "../../src/errors.ts";
-import { isEffectKey } from "../../src/script/effects/recorder.ts";
+import { isEffectKey } from "../../src/script/effects/field-encoding.ts";
 import {
   corpusOfFixture,
   FIXTURE_PATH,

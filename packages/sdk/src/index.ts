@@ -15,9 +15,9 @@ export {
 export { STRUCTURAL_EFFECT_KEYS, type StructuralEffectKey } from "./generated/effect-policy.ts";
 export * from "./script/triggers.ts";
 export { scopeLinkOutput } from "./script/links.ts";
+export { isEffectKey } from "./script/effects/field-encoding.ts";
 export {
   eventTarget,
-  isEffectKey,
   isEventFireKey,
   makeScope,
   recordEffects,
