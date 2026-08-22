@@ -1,28 +1,39 @@
 /**
  * The instants a materialization can be interrupted at, as the tests name them.
  *
- * This table is the matrix's half of the fault-injection seam, and the
- * production call sites in `src/output/` are the other half.
- * `materialization-crash.test.ts` compares the two, so a point renamed or added
- * on one side and not the other fails a test rather than quietly turning a
- * crash row into a run that is never interrupted.
- *
- * The vocabulary is the phase names (announced when a journal record is on the
- * disk and the action it announces has not happened yet), four rename points
- * (announced when a rename has landed), and two prefixed families that carry a
- * target-relative path.
+ * The names themselves belong to the production seam and are re-exported from
+ * it, so a test and the writer it drives cannot spell one differently. What is
+ * this file's own is the vocabulary the crash matrix asserts over:
+ * `materialization-crash.test.ts` compares these lists against the call sites
+ * in `src/output/`, so a point added on one side and not the other fails a test
+ * rather than quietly turning a crash row into a run that is never interrupted.
  */
 
 import { MATERIALIZATION_PHASES } from "../../src/output/journal.ts";
+import {
+  PRESERVE_PREFIX,
+  RENAME_CONTENT_ACTIVATE,
+  RENAME_CONTENT_DEACTIVATE,
+  RENAME_DESCRIPTOR_ACTIVATE,
+  RENAME_DESCRIPTOR_DEACTIVATE,
+  TRAVERSAL_DESCEND_PREFIX,
+} from "../../src/output/test-hooks.ts";
+
+export {
+  PRESERVE_PREFIX,
+  preserveEntry,
+  RENAME_CONTENT_ACTIVATE,
+  RENAME_CONTENT_DEACTIVATE,
+  RENAME_DESCRIPTOR_ACTIVATE,
+  RENAME_DESCRIPTOR_DEACTIVATE,
+  TRAVERSAL_DESCEND_PREFIX,
+  traversalDescend,
+} from "../../src/output/test-hooks.ts";
 
 /** One point per journal phase; the name is the phase itself. */
 export const JOURNAL_POINTS: readonly string[] = [...MATERIALIZATION_PHASES];
 
-export const RENAME_CONTENT_DEACTIVATE = "rename:content-deactivate";
-export const RENAME_CONTENT_ACTIVATE = "rename:content-activate";
-export const RENAME_DESCRIPTOR_DEACTIVATE = "rename:descriptor-deactivate";
-export const RENAME_DESCRIPTOR_ACTIVATE = "rename:descriptor-activate";
-
+/** The points announced when a rename has landed. */
 export const RENAME_POINTS: readonly string[] = [
   RENAME_CONTENT_DEACTIVATE,
   RENAME_CONTENT_ACTIVATE,
@@ -30,18 +41,5 @@ export const RENAME_POINTS: readonly string[] = [
   RENAME_DESCRIPTOR_ACTIVATE,
 ];
 
-/** Announced before a classification walk descends into a directory. */
-export const TRAVERSAL_DESCEND_PREFIX = "traversal:descend:";
-
-/** Announced before a foreign file is carried into the staged tree. */
-export const PRESERVE_PREFIX = "preserve:";
-
+/** The two families whose points carry a target-relative path. */
 export const POINT_PREFIXES: readonly string[] = [TRAVERSAL_DESCEND_PREFIX, PRESERVE_PREFIX];
-
-export function traversalDescend(relPath: string): string {
-  return `${TRAVERSAL_DESCEND_PREFIX}${relPath}`;
-}
-
-export function preserveEntry(relPath: string): string {
-  return `${PRESERVE_PREFIX}${relPath}`;
-}

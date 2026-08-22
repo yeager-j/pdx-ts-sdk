@@ -1,5 +1,6 @@
 /**
- * What a materialization journal is, and how one is read back.
+ * What a materialization journal is, how one is read back, and what a phase
+ * means for the recovery that reads it.
  *
  * The journal is the only account of what an interrupted writer left on disk,
  * and recovery acts on it: it renames trees back and deletes the paths it
@@ -187,15 +188,83 @@ interface PlacedRecord {
 }
 
 function lastPhaseOf(records: readonly JournalRecord[]): { lastPhase?: MaterializationPhase } {
-  let lastPhase: MaterializationPhase | undefined;
+  const lastPhase = lastAnnouncedPhase(records, ["recovering"]);
+  return lastPhase === undefined ? {} : { lastPhase };
+}
+
+/**
+ * The row of the recovery table that applies, which is the last phase the
+ * writer itself announced.
+ *
+ * `lastPhase` is the same reading with one fewer exclusion, and the difference
+ * is what each is for: `lastPhase` reports how far the transaction got, so a
+ * writer that gave up says `failed`, while this decides what to do about it,
+ * where `failed` is not progress and must not change which row a later
+ * recovery reads.
+ */
+export function progressPhase(journal: Journal): MaterializationPhase {
+  return lastAnnouncedPhase(journal.records, ["recovering", "failed"]) ?? "inspecting";
+}
+
+function lastAnnouncedPhase(
+  records: readonly JournalRecord[],
+  ignored: readonly MaterializationPhase[]
+): MaterializationPhase | undefined {
+  let last: MaterializationPhase | undefined;
   for (const record of records) {
     if (record.record === "header" || record.record === "staging") {
-      lastPhase = record.phase;
-    } else if (record.record === "phase" && record.phase !== "recovering") {
-      lastPhase = record.phase;
+      last = record.phase;
+    } else if (record.record === "phase" && !ignored.includes(record.phase)) {
+      last = record.phase;
     }
   }
-  return lastPhase === undefined ? {} : { lastPhase };
+  return last;
+}
+
+/** What a recovery intends to do about the transaction it found. */
+export type RecoveryGoal = "none" | "clean" | "restore" | "complete";
+
+/** What is on disk now, as far as the goal depends on it. */
+export interface LandedState {
+  /** The target holds the tree this transaction staged. */
+  readonly targetIsNew: boolean;
+  /** The launcher descriptor holds the one this transaction wrote. */
+  readonly descriptorIsNew: boolean;
+  /** The staging sibling is still there, so its rename never happened. */
+  readonly staging: boolean;
+}
+
+/**
+ * What a transaction stopped at `phase` leaves to be done.
+ *
+ * Before the commit point the answer is `restore`: the rename that did not
+ * happen may have failed for a reason that is still true, and the previous
+ * output is the state somebody already had. Only an activation that fully
+ * landed is completed.
+ */
+export function recoveryGoal(
+  phase: MaterializationPhase,
+  mode: MaterializationMode,
+  landed: LandedState
+): RecoveryGoal {
+  switch (phase) {
+    case "done":
+      return "none";
+    case "inspecting":
+    case "staging":
+    case "staged":
+      return "clean";
+    case "content-activating":
+      // For a build this rename is the commit; for an install it is not, and
+      // the pair is only consistent again once the descriptor follows it.
+      return mode === "build" && !landed.staging && landed.targetIsNew ? "complete" : "restore";
+    case "descriptor-activating":
+      return landed.targetIsNew && landed.descriptorIsNew ? "complete" : "restore";
+    case "committed":
+      return "complete";
+    default:
+      return "restore";
+  }
 }
 
 /**

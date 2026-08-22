@@ -1,21 +1,18 @@
-import { createHash, randomUUID } from "node:crypto";
-import { constants, type Dir, type Dirent, type Stats } from "node:fs";
+import { createHash } from "node:crypto";
+import { constants, type Stats } from "node:fs";
 import {
   chmod,
   copyFile,
   link,
   lstat,
   mkdir,
-  opendir,
   readdir,
   readFile,
-  realpath,
   rename,
   rm,
   writeFile,
 } from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
 import { MATERIALIZATION_MANIFEST_PATH } from "../compiler/paths.ts";
 import {
@@ -25,6 +22,21 @@ import {
   type MaterializationDrift,
 } from "../errors.ts";
 import { compareUtf8, portableIdentity } from "../ordering.ts";
+import {
+  canonicalTarget,
+  journaledSiblings,
+  lockPathFor,
+  nearestPhysicalForm,
+  stagingPaths,
+  type MaterializationPaths,
+} from "./layout.ts";
+import {
+  encodeManifest,
+  MANIFEST_VERSION,
+  readOwnershipManifest,
+  type LauncherDescriptorRecord,
+  type MaterializationManifest,
+} from "./manifest.ts";
 import { assertRepresentableMaterialization } from "./preflight.ts";
 import {
   issueReceipt,
@@ -38,61 +50,36 @@ import {
   type OwnedSnapshotEntry,
 } from "./receipt.ts";
 import { renderedFileBytes, type RenderedMod } from "./rendered.ts";
-import { _materializationTestPoint } from "./test-hooks.ts";
+import {
+  _materializationTestPoint,
+  preserveEntry,
+  RENAME_CONTENT_ACTIVATE,
+  RENAME_CONTENT_DEACTIVATE,
+  traversalDescend,
+} from "./test-hooks.ts";
 import {
   acquireTransaction,
-  lockPathFor,
   type MaterializationJournal,
   type MaterializationTransaction,
 } from "./transaction.ts";
-
-const MANIFEST_VERSION = 1;
-
-/**
- * Basenames the operating system creates behind the author's back. They are
- * ordinary foreign entries — preserved like any other — with one consequence:
- * a target holding nothing else is still a first materialization, because a
- * Finder visit must not be what blocks a first build.
- */
-const OS_METADATA_BASENAMES = new Set([".DS_Store", "Thumbs.db", "desktop.ini"]);
+import {
+  entryMoved,
+  identityOf,
+  lstatOrUndefined,
+  OS_METADATA_BASENAMES,
+  readVerifiedDir,
+  sameIdentity,
+  sameInode,
+  specialKind,
+  walkVerified,
+  type DirectoryIdentity,
+  type ForeignIdentity,
+} from "./tree.ts";
 
 /** Link failures that mean "different filesystem or no link support", not "broken". */
 const LINK_FALLBACK_CODES = new Set(["EXDEV", "EPERM", "ENOTSUP", "EOPNOTSUPP", "EMLINK"]);
 
 export type MaterializationMode = "build" | "install";
-
-export interface LauncherDescriptorRecord {
-  readonly basename: string;
-  readonly byteLength: number;
-  readonly sha256: string;
-}
-
-export interface MaterializationManifest {
-  readonly version: 1;
-  readonly prefix: string;
-  readonly mode: MaterializationMode;
-  readonly sha256: string;
-  readonly files: readonly {
-    readonly path: string;
-    readonly byteLength: number;
-    readonly sha256: string;
-  }[];
-  readonly launcherDescriptor?: LauncherDescriptorRecord;
-}
-
-/** The two numbers that say a directory is still the one that was read. */
-interface DirectoryIdentity {
-  readonly dev: number;
-  readonly ino: number;
-}
-
-/** What a fresh `lstat` must still say about a preserved entry at commit time. */
-export interface ForeignIdentity {
-  readonly dev: number;
-  readonly ino: number;
-  readonly size: number;
-  readonly mtimeMs: number;
-}
 
 /** An entry present in the target that the ownership manifest does not own. */
 export interface ForeignEntry {
@@ -219,52 +206,6 @@ export async function withMaterializationLocks<T>(
 }
 
 /**
- * The physical target, resolved once at the entry point: the parent through
- * every symlink, joined to the basename exactly as the caller spelled it. The
- * basename stays verbatim on purpose — the lock name derives from it, so two
- * aliases of one directory must produce one lock name and not a sanitized
- * form that collapses unrelated names together.
- */
-export async function canonicalTarget(target: string | URL): Promise<string> {
-  const resolved = resolveTarget(target);
-  const parent = path.dirname(resolved);
-  await mkdir(parent, { recursive: true });
-  return path.join(await realpath(parent), path.basename(resolved));
-}
-
-/**
- * The physical form as far as it can be known without creating anything: the
- * nearest ancestor that exists, resolved, with the components that do not
- * exist yet joined back on lexically.
- *
- * The representability check has to run before the parent directories are
- * made, or a refused materialization leaves a directory chain behind that the
- * caller never asked for and nothing will clean up. Resolving what exists is
- * enough for that check, because the components still to be created cannot be
- * symlinks — nothing has created them.
- */
-export async function nearestPhysicalForm(target: string | URL): Promise<string> {
-  const resolved = resolveTarget(target);
-  const pending: string[] = [];
-  let ancestor = resolved;
-  for (;;) {
-    const parent = path.dirname(ancestor);
-    pending.unshift(path.basename(ancestor));
-    if (parent === ancestor) {
-      return resolved;
-    }
-    try {
-      return path.join(await realpath(parent), ...pending);
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
-        throw error;
-      }
-      ancestor = parent;
-    }
-  }
-}
-
-/**
  * Which lock disposition a failed transaction earns. Residue the journal
  * named and that is still on disk is the whole reason to keep a journal: the
  * next writer reads it and refuses with `"recovery-required"` instead of
@@ -373,7 +314,7 @@ async function materialize(
       await transaction.releaseClean();
       return freezeReport({ status: "written", outDir: target, ...common, warnings });
     } catch (error) {
-      await disposeAfterFailure(transaction, [paths.staging, paths.previous], error);
+      await disposeAfterFailure(transaction, journaledSiblings(paths), error);
       throw error;
     }
   });
@@ -411,26 +352,6 @@ export function freezeReport<T extends MaterializationReport>(report: T): T {
     foreignEntries: Object.freeze([...report.foreignEntries]),
     warnings: Object.freeze(report.warnings.map((warning) => Object.freeze({ ...warning }))),
   });
-}
-
-/** The two sibling paths one activation moves through. */
-export interface MaterializationPaths {
-  readonly staging: string;
-  readonly previous: string;
-}
-
-/**
- * Name the siblings before anything creates them, so the caller can journal
- * the names first. Recovery may only delete a path the journal named, and a
- * name written down after the directory exists proves nothing about a
- * transaction that died in between.
- */
-export function stagingPaths(target: string): MaterializationPaths {
-  const parent = path.dirname(target);
-  return {
-    staging: path.join(parent, `.pdx-staging-${randomUUID()}`),
-    previous: path.join(parent, `.pdx-previous-${randomUUID()}`),
-  };
 }
 
 export interface StageOptions {
@@ -505,7 +426,7 @@ export async function activateMaterialization(
     }
     // Outside the catch on purpose: a fault injected here is a failure of what
     // comes next, and must not be reported as the rename that already landed.
-    await _materializationTestPoint("rename:content-deactivate");
+    await _materializationTestPoint(RENAME_CONTENT_DEACTIVATE);
   }
   await journal?.record("content-activating");
   try {
@@ -530,7 +451,7 @@ export async function activateMaterialization(
       { cause: error }
     );
   }
-  await _materializationTestPoint("rename:content-activate");
+  await _materializationTestPoint(RENAME_CONTENT_ACTIVATE);
 }
 
 export async function rollbackMaterialization(staged: StagedMaterialization): Promise<void> {
@@ -623,7 +544,7 @@ export async function validateExistingMaterialization(
       `Refusing to replace nonempty ${target}: it has no regular ${MATERIALIZATION_MANIFEST_PATH} ownership manifest.`
     );
   }
-  const manifest = await readManifest(manifestPath, target);
+  const manifest = await readManifest(target);
   if (
     manifest.prefix !== rendered.prefix ||
     manifest.mode !== mode ||
@@ -737,7 +658,7 @@ async function classifyTarget(
       known.add(relPath);
       foreignSnapshot.push({ path: relPath, kind: observedKind(stats), ...identityOf(stats) });
       if (stats.isDirectory()) {
-        await _materializationTestPoint(`traversal:descend:${relPath}`);
+        await _materializationTestPoint(traversalDescend(relPath));
         await record(relPath, stats);
       }
     }
@@ -771,7 +692,7 @@ async function classifyTarget(
         } else if (stats.isDirectory()) {
           drift.push({ path: relPath, kind: "type-changed" });
           owned.push({ path: relPath, kind: "directory", byteLength: 0, sha256: "" });
-          await _materializationTestPoint(`traversal:descend:${relPath}`);
+          await _materializationTestPoint(traversalDescend(relPath));
           await record(relPath, stats);
         } else {
           drift.push({ path: relPath, kind: "type-changed" });
@@ -785,7 +706,7 @@ async function classifyTarget(
           drift.push({ path: relPath, kind: "symlink" });
           owned.push({ path: relPath, kind: "symlink", byteLength: 0, sha256: "" });
         } else if (stats.isDirectory()) {
-          await _materializationTestPoint(`traversal:descend:${relPath}`);
+          await _materializationTestPoint(traversalDescend(relPath));
           await walk(relPath, stats);
         } else {
           drift.push({ path: relPath, kind: "type-changed" });
@@ -802,7 +723,7 @@ async function classifyTarget(
         foreign.push({ path: relPath, kind, identity, permissions: stats.mode & 0o7777 });
         foreignSnapshot.push({ path: relPath, kind, ...identity });
         if (kind === "directory") {
-          await _materializationTestPoint(`traversal:descend:${relPath}`);
+          await _materializationTestPoint(traversalDescend(relPath));
           await walk(relPath, stats);
         }
       } else {
@@ -831,82 +752,6 @@ async function classifyTarget(
       ...(descriptor === undefined ? {} : { descriptor }),
     },
   };
-}
-
-/**
- * Read a directory through a handle, having proved it is the one that was
- * classified.
- *
- * `readdir` takes a path, and a path is re-resolved every time it is used. A
- * foreign directory swapped for a symlink between the `lstat` that classified
- * it and the read that descends into it is followed, and the walk leaves the
- * target — with `preserveForeign` then hardlinking somebody else's files into
- * the staged tree. Opening first and verifying after closes that: the handle
- * reads one directory whatever happens to the name, and a name that a moment
- * later points at a symlink, or at a different inode, is refused rather than
- * read.
- *
- * The entries are drained and the handle closed before the caller descends into
- * any of them. Holding it open across the recursion would cost one descriptor
- * per level of the tree, so a deep enough directory would fail at the process's
- * descriptor limit rather than materialize — and the identity guarantee does
- * not depend on holding it: these entries came through the verified handle,
- * whatever the name means by the time the caller uses them.
- *
- * It is not a full closure. Node exposes no `openat`, and no `fstat` on an open
- * `Dir`, so identity can only be checked through the path — which leaves a
- * window in which a swap put back before the `lstat` reads the substitute
- * through the handle. What remains is a double swap inside microseconds
- * instead of a single swap at leisure, and `revalidateTarget` is still the
- * commit-time backstop: a target whose membership or preserved entries moved
- * during the build refuses at the activation point regardless.
- */
-async function readVerifiedDir(
-  target: string,
-  absolute: string,
-  expected: DirectoryIdentity
-): Promise<Dirent[]> {
-  let dir: Dir;
-  try {
-    dir = await opendir(absolute);
-  } catch (error) {
-    const code = (error as NodeJS.ErrnoException).code;
-    if (code === "ENOENT" || code === "ENOTDIR" || code === "ELOOP") {
-      throw entryMoved(target, absolute, "it is no longer the directory that was read");
-    }
-    throw error;
-  }
-  const stats = await lstatOrUndefined(absolute);
-  if (stats === undefined || stats.isSymbolicLink() || !sameInode(stats, expected)) {
-    await dir.close();
-    throw entryMoved(
-      target,
-      absolute,
-      stats?.isSymbolicLink() === true
-        ? "it is now a symlink, which a materialization never follows"
-        : "it is not the directory that was read a moment earlier"
-    );
-  }
-  // Exhausting the iterator closes the handle, which is why nothing here needs
-  // to unwind it: the read is over before the caller sees an entry.
-  const entries: Dirent[] = [];
-  for await (const entry of dir) {
-    entries.push(entry);
-  }
-  return entries;
-}
-
-/** Something under the target changed identity while it was being read. */
-function entryMoved(target: string, absolute: string, detail: string): MaterializationError {
-  return new MaterializationError(target, {
-    reason: "busy",
-    detail: `${absolute} changed while the target was being read: ${detail}.`,
-  });
-}
-
-/** One inode, by the only two numbers that name one: device and number. */
-function sameInode(observed: DirectoryIdentity, expected: DirectoryIdentity): boolean {
-  return observed.dev === expected.dev && observed.ino === expected.ino;
 }
 
 /** What a pass through `refuse` leaves the inspection to carry. */
@@ -1067,7 +912,7 @@ async function preserveForeign(
       await mkdir(destination, { recursive: true });
     } else {
       await mkdir(path.dirname(destination), { recursive: true });
-      await _materializationTestPoint(`preserve:${entry.path}`);
+      await _materializationTestPoint(preserveEntry(entry.path));
       await carryFile(target, entry, source, destination);
     }
     preserved.push({ path: entry.path, source, identity: entry.identity });
@@ -1163,34 +1008,13 @@ async function revalidateTarget(staged: StagedMaterialization): Promise<void> {
 }
 
 /**
- * Every target-relative path present right now, by kind only — no hashing,
- * since this runs on the way into every activation. Each directory is opened
- * against the identity its own `lstat` just gave, for the same reason
- * classification is: this walk decides what is inside the target, and a
- * substitute directory would answer for one that is not.
+ * Every target-relative path present right now, by name only — no hashing,
+ * since this runs on the way into every activation. The walk is the verified
+ * one for the same reason classification is: it decides what is inside the
+ * target, and a substitute directory would answer for one that is not.
  */
 async function membership(target: string): Promise<string[]> {
-  const found: string[] = [];
-  const walk = async (relative: string, identity: DirectoryIdentity): Promise<void> => {
-    const dir = relative === "" ? target : path.join(target, ...relative.split("/"));
-    for (const entry of await readVerifiedDir(target, dir, identity)) {
-      const relPath = relative === "" ? entry.name : `${relative}/${entry.name}`;
-      found.push(relPath);
-      // `readdir` never follows, so a symlink to a directory is not one here.
-      if (entry.isDirectory()) {
-        const stats = await lstatOrUndefined(path.join(dir, entry.name));
-        if (stats !== undefined && stats.isDirectory() && !stats.isSymbolicLink()) {
-          await walk(relPath, stats);
-        }
-      }
-    }
-  };
-  const root = await lstatOrUndefined(target);
-  if (root === undefined) {
-    return found;
-  }
-  await walk("", root);
-  return found;
+  return (await walkVerified(target)).map((entry) => entry.relPath);
 }
 
 /**
@@ -1207,19 +1031,6 @@ async function removeQuietly(target: string): Promise<void> {
   }
 }
 
-function sameIdentity(observed: ForeignIdentity, expected: ForeignIdentity): boolean {
-  return (
-    observed.dev === expected.dev &&
-    observed.ino === expected.ino &&
-    observed.size === expected.size &&
-    observed.mtimeMs === expected.mtimeMs
-  );
-}
-
-function identityOf(stats: Stats): ForeignIdentity {
-  return { dev: stats.dev, ino: stats.ino, size: stats.size, mtimeMs: stats.mtimeMs };
-}
-
 function observedKind(stats: Stats): ForeignSnapshotEntry["kind"] {
   if (stats.isSymbolicLink()) {
     return "symlink";
@@ -1228,19 +1039,6 @@ function observedKind(stats: Stats): ForeignSnapshotEntry["kind"] {
     return "directory";
   }
   return stats.isFile() ? "file" : "other";
-}
-
-function specialKind(stats: Stats): ForeignRefusedEntry["kind"] {
-  if (stats.isFIFO()) {
-    return "fifo";
-  }
-  if (stats.isSocket()) {
-    return "socket";
-  }
-  if (stats.isCharacterDevice() || stats.isBlockDevice()) {
-    return "device";
-  }
-  return "unknown";
 }
 
 function unowned(target: string, detail: string): MaterializationError {
@@ -1286,70 +1084,23 @@ async function writeRenderedTree(
   };
   await writeFile(
     path.join(staging, MATERIALIZATION_MANIFEST_PATH),
-    `${JSON.stringify(manifest, null, 2)}\n`,
+    encodeManifest(manifest),
     "utf8"
   );
 }
 
-async function readManifest(source: string, target: string): Promise<MaterializationManifest> {
-  try {
-    const parsed = JSON.parse(await readFile(source, "utf8")) as unknown;
-    if (!isManifest(parsed)) {
-      throw new Error("invalid manifest shape");
-    }
-    return parsed;
-  } catch (error) {
-    throw unowned(
-      target,
-      `Refusing to replace ${target}: ${MATERIALIZATION_MANIFEST_PATH} is invalid (${error instanceof Error ? error.message : String(error)}).`
-    );
+/**
+ * The target's ownership claim. Anything short of a manifest this build can
+ * read is the same answer: this is not a tree the SDK may replace.
+ */
+async function readManifest(target: string): Promise<MaterializationManifest> {
+  const read = await readOwnershipManifest(target);
+  if (read.state === "manifest") {
+    return read.manifest;
   }
-}
-
-function isManifest(value: unknown): value is MaterializationManifest {
-  if (typeof value !== "object" || value === null) {
-    return false;
-  }
-  const record = value as Record<string, unknown>;
-  if (
-    record["version"] !== MANIFEST_VERSION ||
-    typeof record["prefix"] !== "string" ||
-    (record["mode"] !== "build" && record["mode"] !== "install") ||
-    typeof record["sha256"] !== "string" ||
-    !Array.isArray(record["files"])
-  ) {
-    return false;
-  }
-  const filesValid = record["files"].every(
-    (file) =>
-      typeof file === "object" &&
-      file !== null &&
-      typeof (file as Record<string, unknown>)["path"] === "string" &&
-      typeof (file as Record<string, unknown>)["byteLength"] === "number" &&
-      typeof (file as Record<string, unknown>)["sha256"] === "string"
+  const problem = read.state === "absent" ? "it is not there" : read.problem;
+  throw unowned(
+    target,
+    `Refusing to replace ${target}: ${MATERIALIZATION_MANIFEST_PATH} is invalid (${problem}).`
   );
-  const descriptor = record["launcherDescriptor"];
-  const descriptorValid =
-    descriptor === undefined ||
-    (typeof descriptor === "object" &&
-      descriptor !== null &&
-      typeof (descriptor as Record<string, unknown>)["basename"] === "string" &&
-      typeof (descriptor as Record<string, unknown>)["byteLength"] === "number" &&
-      typeof (descriptor as Record<string, unknown>)["sha256"] === "string");
-  return filesValid && descriptorValid;
-}
-
-function resolveTarget(target: string | URL): string {
-  return path.resolve(target instanceof URL ? fileURLToPath(target) : target);
-}
-
-async function lstatOrUndefined(target: string): Promise<Stats | undefined> {
-  try {
-    return await lstat(target);
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-      return undefined;
-    }
-    throw error;
-  }
 }

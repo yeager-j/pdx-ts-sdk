@@ -39,8 +39,8 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { MaterializationError, write } from "../src/index.ts";
+import { lockPathFor } from "../src/output/layout.ts";
 import { _setMaterializationTestHook } from "../src/output/test-hooks.ts";
-import { lockPathFor } from "../src/output/transaction.ts";
 import { renderGeneration } from "./helpers/crash-mod.ts";
 import { preserveEntry, traversalDescend } from "./helpers/crash-points.ts";
 import { symlinksAvailable } from "./helpers/fs-caps.ts";

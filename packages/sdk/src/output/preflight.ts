@@ -16,12 +16,8 @@
 import path from "node:path";
 
 import { MaterializationError } from "../errors.ts";
+import { LOCK_BASENAME_PREFIX, LONGEST_SIBLING_PREFIX, UUID_LENGTH } from "./layout.ts";
 import type { RenderedMod } from "./rendered.ts";
-import { LOCK_BASENAME_PREFIX } from "./transaction.ts";
-
-/** The longest sibling basename materialization derives, `<prefix><uuid>`. */
-const LONGEST_SIBLING_PREFIX = ".pdx-descriptor-previous-";
-const UUID_LENGTH = 36;
 
 /** POSIX `NAME_MAX` on every filesystem the SDK targets. */
 const NAME_MAX_BYTES = 255;

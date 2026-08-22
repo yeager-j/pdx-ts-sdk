@@ -18,7 +18,7 @@
 
 import { randomUUID } from "node:crypto";
 import { constants } from "node:fs";
-import { lstat, open, readFile, unlink, type FileHandle } from "node:fs/promises";
+import { open, readFile, unlink, type FileHandle } from "node:fs/promises";
 import { hostname } from "node:os";
 import path from "node:path";
 
@@ -36,15 +36,10 @@ import {
   type JournalStaging,
   type MaterializationPhase,
 } from "./journal.ts";
+import { lockPathFor } from "./layout.ts";
 import { _materializationTestPoint } from "./test-hooks.ts";
+import { pathStillNames } from "./tree.ts";
 import type { MaterializationMode } from "./write.ts";
-
-/** The lock file's basename prefix, a sibling like `.pdx-staging-*` is. */
-export const LOCK_BASENAME_PREFIX = ".pdx-lock-";
-
-export function lockPathFor(target: string): string {
-  return path.join(path.dirname(target), LOCK_BASENAME_PREFIX + path.basename(target));
-}
 
 /** Whether a pid names a running process, counting "not mine" as running. */
 export function processIsAlive(pid: number): boolean {
@@ -610,31 +605,6 @@ export async function claimRecovery(
   } finally {
     await handle.close();
   }
-}
-
-/**
- * Whether `lockPath` still names the file behind `handle`.
- *
- * Everything a claim reads goes through the handle, which keeps it reading
- * one file rather than one name — but the winner then acts on the *name*: the
- * recovery that wins unlinks the lock by path when it finishes. A handle can
- * outlive its directory entry, so a claim that verified only through the
- * handle can win on an inode nothing points at any more, and go on to unlink
- * whatever a fresh writer has since created at that path. The verdict has to
- * be about the file the path names, so it is checked here before one is given.
- */
-export async function pathStillNames(handle: FileHandle, lockPath: string): Promise<boolean> {
-  let named;
-  try {
-    named = await lstat(lockPath);
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-      return false;
-    }
-    throw error;
-  }
-  const held = await handle.stat();
-  return named.dev === held.dev && named.ino === held.ino;
 }
 
 /**

@@ -1,10 +1,17 @@
-import { randomUUID } from "node:crypto";
 import { rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import { MATERIALIZATION_MANIFEST_PATH } from "../compiler/paths.ts";
 import { MaterializationError, type MaterializationDriftKind } from "../errors.ts";
 import { modDir } from "../stellaris/launcher/mod-directory.ts";
+import {
+  canonicalTarget,
+  installPaths,
+  journaledSiblings,
+  nearestPhysicalForm,
+  type InstallPaths,
+} from "./layout.ts";
+import type { LauncherDescriptorRecord } from "./manifest.ts";
 import { assertRepresentableMaterialization } from "./preflight.ts";
 import {
   issueReceipt,
@@ -15,29 +22,29 @@ import {
 } from "./receipt.ts";
 import { renderLauncherDescriptor } from "./render.ts";
 import type { RenderedMod } from "./rendered.ts";
-import { _materializationTestPoint } from "./test-hooks.ts";
+import {
+  _materializationTestPoint,
+  RENAME_DESCRIPTOR_ACTIVATE,
+  RENAME_DESCRIPTOR_DEACTIVATE,
+} from "./test-hooks.ts";
 import { acquireTransaction, type MaterializationTransaction } from "./transaction.ts";
 import {
   activateMaterialization,
-  canonicalTarget,
   descriptorRecord,
   discardLeftover,
   discardPrevious,
   discardStaging,
   disposeAfterFailure,
   freezeReport,
-  nearestPhysicalForm,
   observeDescriptor,
   ownedSetMatches,
   reportForeign,
   rollbackMaterialization,
   stageMaterialization,
-  stagingPaths,
   validateExistingMaterialization,
   withMaterializationLocks,
   type CleanupWarning,
   type InstallReport,
-  type LauncherDescriptorRecord,
   type MaterializationInspection,
 } from "./write.ts";
 
@@ -158,11 +165,7 @@ async function installUnlocked(
   receipt: OpenedReceipt | undefined,
   transaction: MaterializationTransaction
 ): Promise<InstallReport> {
-  const root = path.dirname(contentDir);
-  const paths = stagingPaths(contentDir);
-  const descriptorStaging = path.join(root, `.pdx-descriptor-staging-${randomUUID()}`);
-  const descriptorPrevious = path.join(root, `.pdx-descriptor-previous-${randomUUID()}`);
-  const journaled = [paths.staging, paths.previous, descriptorStaging, descriptorPrevious];
+  const paths = installPaths(contentDir);
   try {
     return await installJournaled(
       rendered,
@@ -172,20 +175,12 @@ async function installUnlocked(
       nextDescriptor,
       receipt,
       transaction,
-      { ...paths, descriptorStaging, descriptorPrevious }
+      paths
     );
   } catch (error) {
-    await disposeAfterFailure(transaction, journaled, error);
+    await disposeAfterFailure(transaction, journaledSiblings(paths), error);
     throw error;
   }
-}
-
-/** The four sibling paths one install moves through, journaled before use. */
-interface InstallPaths {
-  readonly staging: string;
-  readonly previous: string;
-  readonly descriptorStaging: string;
-  readonly descriptorPrevious: string;
 }
 
 async function installJournaled(
@@ -225,14 +220,11 @@ async function installJournaled(
 
   const { descriptorStaging, descriptorPrevious } = paths;
   await transaction.journalStaging({
-    staging: paths.staging,
-    previous: paths.previous,
+    ...paths,
     hadPrevious: inspection.kind !== "absent",
     ...(inspection.manifest === undefined
       ? {}
       : { previousManifestSha256: inspection.manifest.sha256 }),
-    descriptorStaging,
-    descriptorPrevious,
     descriptorObserved: descriptor,
   });
   const staged = await stageMaterialization(contentDir, rendered, "install", inspection, {
@@ -261,11 +253,11 @@ async function installJournaled(
       await transaction.record("descriptor-deactivating");
       await rename(descriptorPath, descriptorPrevious);
       descriptorMovedAside = true;
-      await _materializationTestPoint("rename:descriptor-deactivate");
+      await _materializationTestPoint(RENAME_DESCRIPTOR_DEACTIVATE);
     }
     await transaction.record("descriptor-activating");
     await rename(descriptorStaging, descriptorPath);
-    await _materializationTestPoint("rename:descriptor-activate");
+    await _materializationTestPoint(RENAME_DESCRIPTOR_ACTIVATE);
   } catch (error) {
     await transaction.record("rolling-back");
     if (descriptorMovedAside) {

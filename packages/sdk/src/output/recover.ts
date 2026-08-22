@@ -19,49 +19,51 @@
  * is no age heuristic anywhere: an old transaction is not a dead one.
  */
 
-import { createHash } from "node:crypto";
 import type { Stats } from "node:fs";
-import { lstat, readdir, readFile, readlink, realpath, rename, rm, unlink } from "node:fs/promises";
+import { readdir, readlink, rename, rm, unlink } from "node:fs/promises";
 import { hostname } from "node:os";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
 import { MATERIALIZATION_MANIFEST_PATH } from "../compiler/paths.ts";
 import { MaterializationError, type MaterializationEvidence } from "../errors.ts";
 import { modDir } from "../stellaris/launcher/mod-directory.ts";
 import { assertInstallDirName } from "./install.ts";
-import type { Journal, JournalHeader, JournalStaging, MaterializationPhase } from "./journal.ts";
+import {
+  progressPhase,
+  recoveryGoal,
+  type Journal,
+  type JournalHeader,
+  type JournalStaging,
+  type MaterializationPhase,
+} from "./journal.ts";
+import {
+  isLockSibling,
+  isMintedSibling,
+  journaledSiblings,
+  LOCK_BASENAME_PREFIX,
+  lockPathFor,
+  physicalTarget,
+  SIBLING_PREFIXES,
+  type SiblingRole,
+} from "./layout.ts";
+import { readOwnershipManifest, type MaterializationManifest } from "./manifest.ts";
 import type { DescriptorSnapshot } from "./receipt.ts";
 import {
   claimRecovery,
   describeReadFailure,
-  LOCK_BASENAME_PREFIX,
-  lockPathFor,
   processIsAlive,
   recoveryRequired,
   tryReadJournal,
 } from "./transaction.ts";
 import {
-  observeDescriptor,
-  withMaterializationLocks,
-  type CleanupWarning,
-  type MaterializationManifest,
-  type MaterializationMode,
-} from "./write.ts";
-
-/** Sibling basename prefixes a materialization mints and then journals. */
-const SIBLING_PREFIXES = [".pdx-staging-", ".pdx-previous-", ".pdx-descriptor-"];
-
-/** The UUID a sibling name ends in, so a name cannot be anything at all. */
-const UUID_SUFFIX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-/**
- * Basenames the operating system writes on its own. They are foreign entries
- * like any other, and the one place recovery has to name them is here: a
- * `.DS_Store` a Finder window dropped into a half-activated tree must not be
- * what makes that tree unaccountable.
- */
-const OS_METADATA_BASENAMES = new Set([".DS_Store", "Thumbs.db", "desktop.ini"]);
+  fileSha256,
+  lstatOrUndefined,
+  OS_METADATA_BASENAMES,
+  present,
+  walkVerified,
+  type TreeEntry,
+} from "./tree.ts";
+import { observeDescriptor, withMaterializationLocks, type CleanupWarning } from "./write.ts";
 
 export interface RecoveryAction {
   readonly kind: "removed" | "renamed" | "released-lock";
@@ -106,19 +108,6 @@ export async function recoverInstallation(
   const target = await physicalTarget(path.join(root, options.dirName));
   const descriptorPath = path.join(path.dirname(target), `${options.dirName}.mod`);
   return recoverTarget(target, [lockPathFor(descriptorPath)]);
-}
-
-/** The physical target, without creating a parent recovery may not need. */
-async function physicalTarget(target: string | URL): Promise<string> {
-  const resolved = path.resolve(target instanceof URL ? fileURLToPath(target) : target);
-  try {
-    return path.join(await realpath(path.dirname(resolved)), path.basename(resolved));
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-      return resolved;
-    }
-    throw error;
-  }
 }
 
 /**
@@ -207,15 +196,13 @@ async function recoverUnlocked(
       actions.push({ kind: "released-lock", path: lockPath });
     }
   }
+  const journaled = journal.staging === undefined ? [] : journaledSiblings(journal.staging);
   return freezeRecovery({
     target: header.target,
     outcome,
     phase: lastPhase,
     actions,
-    warnings: [
-      ...warnings,
-      ...(await orphanWarnings(header.target, journaledPaths(journal.staging))),
-    ],
+    warnings: [...warnings, ...(await orphanWarnings(header.target, new Set(journaled)))],
   });
 }
 
@@ -288,27 +275,29 @@ function assertJournalDescribes(target: string, journal: Journal, header: Journa
     });
   }
   const parent = path.dirname(target);
-  const sibling = (candidate: string | undefined, prefix: string, uuid: boolean): void => {
-    if (candidate === undefined) {
+  const minted = (candidate: string | undefined, role: SiblingRole): void => {
+    if (candidate === undefined || isMintedSibling(candidate, parent, role)) {
       return;
     }
-    const basename = path.basename(candidate);
-    const suffix = basename.slice(prefix.length);
-    const legal =
-      path.dirname(candidate) === parent &&
-      basename.startsWith(prefix) &&
-      (!uuid || UUID_SUFFIX.test(suffix));
-    if (!legal) {
-      evidence.push({
-        path: candidate,
-        expected: `${parent}/${prefix}${uuid ? "<uuid>" : "…"}`,
-        observed: candidate,
-      });
+    evidence.push({
+      path: candidate,
+      expected: `${parent}/${SIBLING_PREFIXES[role]}<uuid>`,
+      observed: candidate,
+    });
+  };
+  const lock = (candidate: string | undefined): void => {
+    if (candidate === undefined || isLockSibling(candidate, parent)) {
+      return;
     }
+    evidence.push({
+      path: candidate,
+      expected: `${parent}/${LOCK_BASENAME_PREFIX}…`,
+      observed: candidate,
+    });
   };
 
-  sibling(journal.path, LOCK_BASENAME_PREFIX, false);
-  sibling(header.secondaryLockPath, LOCK_BASENAME_PREFIX, false);
+  lock(journal.path);
+  lock(header.secondaryLockPath);
   if (header.descriptorPath !== undefined && path.dirname(header.descriptorPath) !== parent) {
     evidence.push({
       path: header.descriptorPath,
@@ -318,10 +307,10 @@ function assertJournalDescribes(target: string, journal: Journal, header: Journa
   }
   const staging = journal.staging;
   if (staging !== undefined) {
-    sibling(staging.staging, ".pdx-staging-", true);
-    sibling(staging.previous, ".pdx-previous-", true);
-    sibling(staging.descriptorStaging, ".pdx-descriptor-staging-", true);
-    sibling(staging.descriptorPrevious, ".pdx-descriptor-previous-", true);
+    minted(staging.staging, "staging");
+    minted(staging.previous, "previous");
+    minted(staging.descriptorStaging, "descriptorStaging");
+    minted(staging.descriptorPrevious, "descriptorPrevious");
   }
 
   if (evidence.length > 0) {
@@ -370,58 +359,6 @@ function assertNotHeld(
   }
 }
 
-type Goal = "none" | "clean" | "restore" | "complete";
-
-/**
- * The row that applies, from the last phase the writer itself announced —
- * `failed` and `recovering` are excluded, because neither is progress and a
- * recovery that died must not change which row a later one reads.
- */
-function progressPhase(journal: Journal): MaterializationPhase {
-  let phase: MaterializationPhase = "inspecting";
-  for (const record of journal.records) {
-    if (record.record === "header" || record.record === "staging") {
-      phase = record.phase;
-    } else if (
-      record.record === "phase" &&
-      record.phase !== "recovering" &&
-      record.phase !== "failed"
-    ) {
-      phase = record.phase;
-    }
-  }
-  return phase;
-}
-
-function goalFor(
-  phase: MaterializationPhase,
-  mode: MaterializationMode,
-  landed: {
-    readonly targetIsNew: boolean;
-    readonly descriptorIsNew: boolean;
-    readonly staging: boolean;
-  }
-): Goal {
-  switch (phase) {
-    case "done":
-      return "none";
-    case "inspecting":
-    case "staging":
-    case "staged":
-      return "clean";
-    case "content-activating":
-      // For a build this rename is the commit; for an install it is not, and
-      // the pair is only consistent again once the descriptor follows it.
-      return mode === "build" && !landed.staging && landed.targetIsNew ? "complete" : "restore";
-    case "descriptor-activating":
-      return landed.targetIsNew && landed.descriptorIsNew ? "complete" : "restore";
-    case "committed":
-      return "complete";
-    default:
-      return "restore";
-  }
-}
-
 /**
  * What recovery intends to do, decided before it does any of it.
  *
@@ -450,24 +387,23 @@ interface RecoveryPlan {
  * dry means a refusal is always about the tree exactly as it was found.
  */
 async function planRecovery(journal: Journal, header: JournalHeader): Promise<RecoveryPlan> {
-  const phase = progressPhase(journal);
   const staging = journal.staging;
-  const goal = goalFor(phase, header.mode, {
-    targetIsNew: (await manifestSha256(header.target)) === header.renderedSha256,
-    descriptorIsNew: await descriptorIsNew(header),
-    staging: staging !== undefined && (await present(staging.staging)),
-  });
   if (staging === undefined) {
-    // Nothing was ever named, so nothing may be deleted; the lock goes and
-    // the target is exactly as the interrupted writer found it.
+    // Nothing was ever named, so nothing may be deleted — and nothing about
+    // the target is this recovery's to judge either: a transaction that never
+    // named a sibling never had authority over anything here, so a target it
+    // only looked at is not evidence it has to be able to read. The lock
+    // goes, and the target is exactly as the interrupted writer found it.
     return { outcome: "cleaned", actions: [] };
   }
-  const leftovers = [
-    staging.staging,
-    staging.previous,
-    staging.descriptorStaging,
-    staging.descriptorPrevious,
-  ].filter((candidate): candidate is string => candidate !== undefined);
+  const phase = progressPhase(journal);
+  const goal = recoveryGoal(phase, header.mode, {
+    targetIsNew:
+      (await ownershipManifest(journal, phase, header.target))?.sha256 === header.renderedSha256,
+    descriptorIsNew: await descriptorIsNew(header),
+    staging: await present(staging.staging),
+  });
+  const leftovers = journaledSiblings(staging);
 
   if (goal === "none") {
     // "done" says the commit and the cleanup both happened, so what the
@@ -572,7 +508,9 @@ async function planContentRestore(
   const target = header.target;
   const targetPresent = await present(target);
   const previousPresent = await present(staging.previous);
-  const targetSha = targetPresent ? await manifestSha256(target) : undefined;
+  const targetSha = targetPresent
+    ? (await ownershipManifest(journal, phase, target))?.sha256
+    : undefined;
   const targetIsNew = targetSha === header.renderedSha256;
   const notStaged = (): MaterializationError =>
     refuse(journal, phase, `${target} is not the tree this transaction staged.`, [
@@ -655,7 +593,7 @@ async function assertOnlyStagedContent(
   previous: string | undefined
 ): Promise<void> {
   const target = header.target;
-  const manifest = await readOwnershipManifest(target);
+  const manifest = await ownershipManifest(journal, phase, target);
   if (manifest === undefined) {
     throw refuse(journal, phase, `${target} has no readable ownership manifest to check against.`, [
       {
@@ -680,28 +618,9 @@ async function assertOnlyStagedContent(
     }
   }
 
-  for (const entry of await walkTree(target)) {
-    if (entry.relPath === MATERIALIZATION_MANIFEST_PATH || owned.has(entry.relPath)) {
-      continue;
-    }
-    if (OS_METADATA_BASENAMES.has(entry.relPath.slice(entry.relPath.lastIndexOf("/") + 1))) {
-      continue;
-    }
-    if (
-      entry.directory &&
-      [...owned.keys()].some((relPath) => relPath.startsWith(`${entry.relPath}/`))
-    ) {
-      continue;
-    }
-    if (previous !== undefined && (await isPreservedCounterpart(entry, previous))) {
-      continue;
-    }
-    evidence.push({
-      path: path.join(target, ...entry.relPath.split("/")),
-      expected: "an entry this transaction staged, or one preserved from the previous output",
-      observed: "an entry that exists nowhere else, so deleting it would lose it",
-    });
-  }
+  evidence.push(
+    ...(await unaccountedEntries(journal, phase, target, new Set(owned.keys()), previous))
+  );
 
   if (evidence.length > 0) {
     throw refuse(
@@ -714,19 +633,96 @@ async function assertOnlyStagedContent(
   }
 }
 
+/**
+ * Every entry in the target that the transaction did not put there, as the
+ * evidence a refusal carries.
+ *
+ * The tree is about to be deleted, so a traversal that cannot finish is a
+ * refusal of its own: a directory that would not open may hold the only copy
+ * of something, and an empty answer would read as a tree with nothing in it.
+ */
+async function unaccountedEntries(
+  journal: Journal,
+  phase: MaterializationPhase,
+  target: string,
+  ownedPaths: ReadonlySet<string>,
+  previous: string | undefined
+): Promise<MaterializationEvidence[]> {
+  const evidence: MaterializationEvidence[] = [];
+  try {
+    for (const entry of await walkVerified(target)) {
+      const stats = entry.stats;
+      // Read from its directory and gone by the time it was stat'd: there is
+      // nothing left at that name for the delete to lose.
+      if (stats === undefined) {
+        continue;
+      }
+      if (entry.relPath === MATERIALIZATION_MANIFEST_PATH || ownedPaths.has(entry.relPath)) {
+        continue;
+      }
+      if (OS_METADATA_BASENAMES.has(entry.relPath.slice(entry.relPath.lastIndexOf("/") + 1))) {
+        continue;
+      }
+      if (
+        stats.isDirectory() &&
+        [...ownedPaths].some((relPath) => relPath.startsWith(`${entry.relPath}/`))
+      ) {
+        continue;
+      }
+      if (previous !== undefined && (await isPreservedCounterpart(entry, stats, previous))) {
+        continue;
+      }
+      evidence.push({
+        path: entry.absolute,
+        expected: "an entry this transaction staged, or one preserved from the previous output",
+        observed: "an entry that exists nowhere else, so deleting it would lose it",
+      });
+    }
+  } catch (error) {
+    if (!isFilesystemFailure(error)) {
+      throw error;
+    }
+    throw refuse(
+      journal,
+      phase,
+      `${target} could not be read in full, so what it holds cannot be told.`,
+      [
+        {
+          path: (error as NodeJS.ErrnoException).path ?? target,
+          expected: "a readable tree",
+          observed: error instanceof Error ? error.message : String(error),
+        },
+      ]
+    );
+  }
+  return evidence;
+}
+
+/** A refusal or an errno from the filesystem, rather than a fault in this code. */
+function isFilesystemFailure(error: unknown): boolean {
+  return (
+    error instanceof MaterializationError ||
+    (error instanceof Error && typeof (error as NodeJS.ErrnoException).code === "string")
+  );
+}
+
 /** Whether an entry is the same file as its counterpart in the previous tree. */
-async function isPreservedCounterpart(entry: TreeEntry, previous: string): Promise<boolean> {
+async function isPreservedCounterpart(
+  entry: TreeEntry,
+  stats: Stats,
+  previous: string
+): Promise<boolean> {
   const counterpart = path.join(previous, ...entry.relPath.split("/"));
-  const stats = await lstatOrUndefined(counterpart);
-  if (stats === undefined) {
+  const found = await lstatOrUndefined(counterpart);
+  if (found === undefined) {
     return false;
   }
-  if (entry.directory) {
+  if (stats.isDirectory()) {
     // Directories are recreated in staging rather than linked, so identity
     // cannot be the test; that the previous tree has one here is.
-    return stats.isDirectory();
+    return found.isDirectory();
   }
-  return stats.dev === entry.dev && stats.ino === entry.ino;
+  return found.dev === stats.dev && found.ino === stats.ino;
 }
 
 /** Put the launcher descriptor back the way the transaction found it. */
@@ -850,7 +846,7 @@ async function assertLanded(
   header: JournalHeader,
   phase: MaterializationPhase
 ): Promise<void> {
-  const targetSha = await manifestSha256(header.target);
+  const targetSha = (await ownershipManifest(journal, phase, header.target))?.sha256;
   if (targetSha !== header.renderedSha256) {
     throw refuse(
       journal,
@@ -921,104 +917,29 @@ function refuse(
   );
 }
 
-/** The ownership manifest's own hash, or nothing readable at all. */
-async function manifestSha256(target: string): Promise<string | undefined> {
-  return (await readOwnershipManifest(target))?.sha256;
-}
-
-/** One target's ownership manifest, if it has a well-formed one. */
-async function readOwnershipManifest(target: string): Promise<MaterializationManifest | undefined> {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(await readFile(path.join(target, MATERIALIZATION_MANIFEST_PATH), "utf8"));
-  } catch {
-    return undefined;
+/**
+ * The ownership manifest of the tree at `target`, or nothing when it has none.
+ *
+ * A manifest that is there and cannot be decoded refuses instead. Recovery
+ * decides what to delete from this file, so "no claim on this tree" and "the
+ * claim could not be read" must not arrive as the same answer.
+ */
+async function ownershipManifest(
+  journal: Journal,
+  phase: MaterializationPhase,
+  target: string
+): Promise<MaterializationManifest | undefined> {
+  const read = await readOwnershipManifest(target);
+  if (read.state === "unreadable") {
+    throw refuse(journal, phase, `${target} holds an ownership manifest that cannot be read.`, [
+      {
+        path: path.join(target, MATERIALIZATION_MANIFEST_PATH),
+        expected: "the ownership manifest this transaction wrote",
+        observed: read.problem,
+      },
+    ]);
   }
-  if (typeof parsed !== "object" || parsed === null) {
-    return undefined;
-  }
-  const manifest = parsed as Record<string, unknown>;
-  if (typeof manifest["sha256"] !== "string" || !Array.isArray(manifest["files"])) {
-    return undefined;
-  }
-  const wellFormed = manifest["files"].every(
-    (file) =>
-      typeof file === "object" &&
-      file !== null &&
-      typeof (file as Record<string, unknown>)["path"] === "string" &&
-      typeof (file as Record<string, unknown>)["sha256"] === "string"
-  );
-  return wellFormed ? (parsed as MaterializationManifest) : undefined;
-}
-
-async function fileSha256(target: string): Promise<string | undefined> {
-  try {
-    const stats = await lstat(target);
-    if (!stats.isFile() || stats.isSymbolicLink()) {
-      return undefined;
-    }
-    return createHash("sha256")
-      .update(await readFile(target))
-      .digest("hex");
-  } catch {
-    return undefined;
-  }
-}
-
-/** One entry of a target tree, by relative path and stat identity. */
-interface TreeEntry {
-  readonly relPath: string;
-  readonly directory: boolean;
-  readonly dev: number;
-  readonly ino: number;
-}
-
-/** Every entry under `target`, no-follow, ordered parents before children. */
-async function walkTree(target: string): Promise<TreeEntry[]> {
-  const found: TreeEntry[] = [];
-  const walk = async (relative: string): Promise<void> => {
-    const dir = relative === "" ? target : path.join(target, ...relative.split("/"));
-    let entries;
-    try {
-      entries = await readdir(dir, { withFileTypes: true });
-    } catch {
-      return;
-    }
-    for (const entry of entries) {
-      const relPath = relative === "" ? entry.name : `${relative}/${entry.name}`;
-      const stats = await lstatOrUndefined(path.join(dir, entry.name));
-      if (stats === undefined) {
-        continue;
-      }
-      const directory = stats.isDirectory();
-      found.push({ relPath, directory, dev: stats.dev, ino: stats.ino });
-      if (directory) {
-        await walk(relPath);
-      }
-    }
-  };
-  await walk("");
-  return found;
-}
-
-async function lstatOrUndefined(target: string): Promise<Stats | undefined> {
-  try {
-    return await lstat(target);
-  } catch {
-    return undefined;
-  }
-}
-
-async function present(target: string): Promise<boolean> {
-  try {
-    await lstat(target);
-    return true;
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-      return false;
-    }
-    throw error;
-  }
+  return read.state === "manifest" ? read.manifest : undefined;
 }
 
 async function removeIfPresent(target: string): Promise<boolean> {
@@ -1027,20 +948,6 @@ async function removeIfPresent(target: string): Promise<boolean> {
   }
   await rm(target, { recursive: true, force: true });
   return true;
-}
-
-function journaledPaths(staging: JournalStaging | undefined): ReadonlySet<string> {
-  if (staging === undefined) {
-    return new Set();
-  }
-  return new Set(
-    [
-      staging.staging,
-      staging.previous,
-      staging.descriptorStaging,
-      staging.descriptorPrevious,
-    ].filter((value): value is string => value !== undefined)
-  );
 }
 
 /**
@@ -1057,11 +964,15 @@ async function orphanWarnings(
   try {
     entries = await readdir(parent);
   } catch {
+    // The only thing lost is a report about paths recovery may not touch
+    // anyway, so a parent that will not open is not worth failing a recovery
+    // that has already put the target right.
     return [];
   }
+  const prefixes = Object.values(SIBLING_PREFIXES);
   const warnings: CleanupWarning[] = [];
   for (const name of entries.sort()) {
-    if (!SIBLING_PREFIXES.some((prefix) => name.startsWith(prefix))) {
+    if (!prefixes.some((prefix) => name.startsWith(prefix))) {
       continue;
     }
     const absolute = path.join(parent, name);

@@ -39,8 +39,9 @@ import {
   type RecoveryReport,
 } from "../src/index.ts";
 import { MATERIALIZATION_PHASES } from "../src/output/journal.ts";
+import { lockPathFor } from "../src/output/layout.ts";
+import * as testHooks from "../src/output/test-hooks.ts";
 import { _setMaterializationTestHook } from "../src/output/test-hooks.ts";
-import { lockPathFor } from "../src/output/transaction.ts";
 import { renderGeneration, type Generation } from "./helpers/crash-mod.ts";
 import {
   JOURNAL_POINTS,
@@ -109,16 +110,23 @@ function siblings(parent: string): string[] {
 
 describe("the injection points are the ones the matrix names", () => {
   /**
-   * The matrix is a list of strings, and a string that no longer matches a
-   * call site is a row that runs to completion and asserts the crash it never
-   * caused. So the table and the production call sites are compared directly:
-   * a point renamed on one side fails here instead of passing there.
+   * The matrix is a list of strings, and a row whose point no longer has a
+   * call site runs to completion and asserts the crash it never caused. So the
+   * table and the production call sites are compared directly: a point that
+   * stops being announced fails here instead of passing there.
+   *
+   * Every call site names its point through `test-hooks.ts` — an exported
+   * constant, or a helper that builds one of the prefixed families — so the
+   * scanned identifier is resolved through that module rather than against a
+   * second list of strings kept here.
    */
-  const CALL_SITE = /_materializationTestPoint\(([^)]*)\)/g;
+  const CALL_SITE = /_materializationTestPoint\(\s*([A-Za-z][\w.]*)\s*(\(([^)]*)\))?\s*\)/g;
   const SOURCES = ["transaction.ts", "write.ts", "install.ts"];
 
-  /** Point expressions that are not literals, and what each one can produce. */
+  /** Point expressions the seam does not name, and what each one can produce. */
   const DYNAMIC = new Map<string, readonly string[]>([["record.phase", MATERIALIZATION_PHASES]]);
+
+  const announced = testHooks as unknown as Record<string, unknown>;
 
   function announcedPoints(): {
     literals: Set<string>;
@@ -133,15 +141,15 @@ describe("the injection points are the ones the matrix names", () => {
         fileURLToPath(new URL(`../src/output/${name}`, import.meta.url)),
         "utf8"
       );
-      for (const [, argument] of source.matchAll(CALL_SITE)) {
-        const literal = /^"([^"]*)"$/.exec(argument!.trim());
-        const template = /^`([^`$]*)\$\{[^}]*\}`$/.exec(argument!.trim());
-        if (literal !== null) {
-          literals.add(literal[1]!);
-        } else if (template !== null) {
-          prefixes.add(template[1]!);
+      for (const [, expression, call] of source.matchAll(CALL_SITE)) {
+        const named = announced[expression!];
+        if (typeof named === "string") {
+          literals.add(named);
+        } else if (typeof named === "function" && call !== undefined) {
+          // The helper's own output with an empty path is the family's prefix.
+          prefixes.add((named as (relPath: string) => string)(""));
         } else {
-          dynamic.add(argument!.trim());
+          dynamic.add(`${expression!}${call ?? ""}`);
         }
       }
     }
