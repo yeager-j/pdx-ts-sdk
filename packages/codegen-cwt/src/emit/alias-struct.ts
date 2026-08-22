@@ -46,10 +46,11 @@
 
 import type { RuleField, RuleType } from "../cwt/model.ts";
 import type { AliasDecl } from "../cwt/rules.ts";
-import { camelCase, docComment, isPlainName, pascalCase, propertyName } from "../naming.ts";
+import { camelCase, docComment, isPlainName, pascalCase } from "../naming.ts";
 import { formOfShape } from "./authored-form.ts";
 import { omissionLine, type DocTable, type FieldOmissionRow, type MemberDocRow } from "./fields.ts";
 import type { Emitter, TsValue } from "./types.ts";
+import { constArray, conversionFor, refTypesSuffix, member as renderMember } from "./writer.ts";
 
 export interface AliasStructEmission {
   readonly code: string;
@@ -242,27 +243,11 @@ function blockScalars(
   return merged;
 }
 
-function conversionOf(value: TsValue): "identity" | "ref" {
-  return value.toScalar("x") === "x" ? "identity" : "ref";
-}
-
-/**
- * `, refTypes: [...]` when every form the value admits is a `<type>`
- * reference, else `""` — the same convention `emit/fields.ts`'
- * `scalarMetadata` and `emit/effects.ts`' `refTypesMeta` use for ordinary
- * fields. Without this, a clause's `value` field records "this looks like a
- * reference" but never says to *what*, and `buildMod`'s dangling-reference
- * guard cannot resolve a target it was never told.
- */
-function refTypesSuffix(value: TsValue): string {
-  return value.refTypes === undefined ? "" : `, refTypes: ${JSON.stringify(value.refTypes)}`;
-}
-
 function valueField(key: string, value: TsValue): string {
   return (
     `  { key: ${JSON.stringify(key)}, member: ${JSON.stringify(memberName(key))}, ` +
     `shape: "value", form: ${JSON.stringify(formOfShape({ shape: "value" }))}, ` +
-    `conversion: ${JSON.stringify(conversionOf(value))}${refTypesSuffix(value)} },\n`
+    `conversion: ${JSON.stringify(conversionFor(value))}${refTypesSuffix(value)} },\n`
   );
 }
 
@@ -337,18 +322,16 @@ function clauseFieldsCode(
   groupFieldsConstant: string
 ): string {
   const suffix = refTypesSuffix(ref);
-  return (
-    `export const ${groupFieldsConstant}: readonly ContentField[] = [\n` +
+  const groupRows =
     `  { key: "text", member: "text", shape: "value", ` +
     `form: ${JSON.stringify(formOfShape({ shape: "value" }))}, conversion: "identity" },\n` +
     `  { key: "value", member: "values", shape: "value", ` +
     `form: ${JSON.stringify(formOfShape({ shape: "value", repeated: true }))}, ` +
-    `conversion: ${JSON.stringify(conversionOf(ref))}${suffix}, repeated: true },\n` +
-    "];\n\n" +
-    `export const ${clauseFieldsConstant}: readonly ContentField[] = [\n` +
+    `conversion: ${JSON.stringify(conversionFor(ref))}${suffix}, repeated: true },\n`;
+  const clauseRows =
     `  { key: "value", member: "value", shape: "value", ` +
     `form: ${JSON.stringify(formOfShape({ shape: "value" }))}, ` +
-    `conversion: ${JSON.stringify(conversionOf(ref))}${suffix} },\n` +
+    `conversion: ${JSON.stringify(conversionFor(ref))}${suffix} },\n` +
     [...GROUP_KEYS]
       .map(
         (key) =>
@@ -356,8 +339,10 @@ function clauseFieldsCode(
           `shape: "struct", form: ${JSON.stringify(formOfShape({ shape: "struct", repeated: true }))}, ` +
           `fields: ${groupFieldsConstant}, repeated: true },\n`
       )
-      .join("") +
-    "];\n\n"
+      .join("");
+  return (
+    constArray(groupFieldsConstant, "ContentField", groupRows) +
+    constArray(clauseFieldsConstant, "ContentField", clauseRows)
   );
 }
 
@@ -417,7 +402,9 @@ export function emitAliasStruct(
   const clauseTables: string[] = [];
   const docTables: DocTable[] = [];
   for (const [key, value] of scalars) {
-    blockMembers.push(`  ${propertyName(memberName(key))}?: ${value.type};\n`);
+    blockMembers.push(
+      renderMember({ name: memberName(key), type: value.type, optional: true, docs: [] })
+    );
     memberDocs[memberName(key)] = { optional: true, docs: [], memberType: value.type };
     metadata.push(valueField(key, value));
   }
@@ -427,9 +414,15 @@ export function emitAliasStruct(
       continue;
     }
     const docLines = members.get(name)![0]!.docs;
-    const docs = docComment(docLines, "  ");
     if (shape.kind === "scalar") {
-      blockMembers.push(`${docs}  ${propertyName(memberName(name))}?: ${shape.value.type};\n`);
+      blockMembers.push(
+        renderMember({
+          name: memberName(name),
+          type: shape.value.type,
+          optional: true,
+          docs: docLines,
+        })
+      );
       memberDocs[memberName(name)] = {
         optional: true,
         docs: docLines,
@@ -441,7 +434,9 @@ export function emitAliasStruct(
       const memberClauseFieldsConstant = `${memberConstant}_CLAUSE_FIELDS`;
       const memberGroupFieldsConstant = `${memberConstant}_CLAUSE_GROUP_FIELDS`;
       const memberType = `${clauseName}<${shape.ref.type}>`;
-      blockMembers.push(`${docs}  ${propertyName(memberName(name))}?: ${memberType};\n`);
+      blockMembers.push(
+        renderMember({ name: memberName(name), type: memberType, optional: true, docs: docLines })
+      );
       memberDocs[memberName(name)] = { optional: true, docs: docLines, memberType };
       metadata.push(
         `  { key: ${JSON.stringify(name)}, member: ${JSON.stringify(memberName(name))}, ` +
@@ -461,7 +456,14 @@ export function emitAliasStruct(
       );
     } else {
       const memberType = `readonly ${typeName}[]`;
-      blockMembers.push(`${docs}  ${propertyName(combinatorMemberName(name))}?: ${memberType};\n`);
+      blockMembers.push(
+        renderMember({
+          name: combinatorMemberName(name),
+          type: memberType,
+          optional: true,
+          docs: docLines,
+        })
+      );
       memberDocs[combinatorMemberName(name)] = { optional: true, docs: docLines, memberType };
       metadata.push(
         `  { key: ${JSON.stringify(name)}, member: ${JSON.stringify(combinatorMemberName(name))}, ` +
@@ -519,9 +521,7 @@ export function emitAliasStruct(
     `export interface ${typeName} {\n` +
     blockMembers.join("") +
     "}\n\n" +
-    `export const ${fieldsConstant}: readonly ContentField[] = [\n` +
-    metadata.join("") +
-    "];\n\n" +
+    constArray(fieldsConstant, "ContentField", metadata.join("")) +
     `registerAliasStructFields(${JSON.stringify(category)}, ${fieldsConstant});\n`;
 
   return {

@@ -17,7 +17,6 @@
  */
 
 import type { RuleType } from "../cwt/model.ts";
-import type { AliasDecl } from "../cwt/rules.ts";
 import type { EffectPolicy } from "../effect-policy.ts";
 import type { DocEntry } from "../logs/trigger-docs.ts";
 import type { LoweredRule } from "../lowered-rule.ts";
@@ -50,7 +49,9 @@ import {
   type SkipReason,
 } from "./shape.ts";
 import { canonicalScopes } from "./support.ts";
+import { tsDoc } from "./triggers.ts";
 import { Emitter, type TsValue } from "./types.ts";
+import { refTypesSuffix, member as renderMember } from "./writer.ts";
 
 const EFFECT_CLAUSES = new Set<ClauseCategory>(["trigger", "effect", "modifier_rule"]);
 
@@ -412,13 +413,6 @@ function referenceSignature(effect: EmittedEffect, outerScope: string): string {
   return `${seam.referenceSignature}\n${extensionFallbackSignature(effect, outerScope).trim()}`;
 }
 
-/** `refTypes: [...]`, when every form the value admits is a `<type>` reference.
- * One non-reference arm and it is omitted: an id-shaped value would then be
- * legal for reasons no registry can see. */
-function refTypesMeta(value: TsValue | undefined): string {
-  return value?.refTypes === undefined ? "" : `, refTypes: ${JSON.stringify(value.refTypes)}`;
-}
-
 function booleanLiteralsMeta(value: TsValue | undefined): string {
   return value?.booleanLiterals === undefined
     ? ""
@@ -459,7 +453,7 @@ function fieldMeta(field: ArgField): string {
           : field.value.category === "modifier_rule"
             ? "modifiers"
             : "effect";
-  const refTypes = refTypesMeta(field.value.kind === "scalar" ? field.value.value : undefined);
+  const refTypes = refTypesSuffix(field.value.kind === "scalar" ? field.value.value : undefined);
   const booleanLiterals = booleanLiteralsMeta(
     field.value.kind === "scalar" ? field.value.value : undefined
   );
@@ -474,7 +468,7 @@ function metaEntry(effect: EmittedEffect): string {
     case "bool":
       return `  ${method}: { key: ${JSON.stringify(key)}, shape: { kind: "bool" } },\n`;
     case "value":
-      return `  ${method}: { key: ${JSON.stringify(key)}, shape: { kind: "value"${refTypesMeta(shape.value)}${booleanLiteralsMeta(shape.value)} } },\n`;
+      return `  ${method}: { key: ${JSON.stringify(key)}, shape: { kind: "value"${refTypesSuffix(shape.value)}${booleanLiteralsMeta(shape.value)} } },\n`;
     case "fields":
       return `  ${method}: { key: ${JSON.stringify(key)}, shape: { kind: "fields", fields: ${fieldsOf(shape.fields)} } },\n`;
     case "wrapper":
@@ -548,19 +542,13 @@ export function registerClusterName(
 }
 
 function pathProperty(link: EmittedScopeLink): string {
-  return (
-    docComment(link.docs, "  ") +
-    `  readonly ${link.method}: EffectPathOf<${JSON.stringify(link.outputScope)}>;\n`
-  );
-}
-
-function tsDoc(declarations: readonly AliasDecl[], doc: DocEntry | undefined): string[] {
-  const summary = declarations.flatMap((declaration) => declaration.docs)[0] ?? doc?.summary ?? "";
-  const lines = [summary];
-  if (doc !== undefined && doc.usage !== "") {
-    lines.push("", "```", ...doc.usage.split("\n"), "```");
-  }
-  return lines;
+  return renderMember({
+    name: link.method,
+    type: `EffectPathOf<${JSON.stringify(link.outputScope)}>`,
+    optional: false,
+    readonly: true,
+    docs: link.docs,
+  });
 }
 
 export function emitEffects(

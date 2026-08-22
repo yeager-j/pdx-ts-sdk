@@ -28,12 +28,7 @@ import { emitContentFieldDocs, type FieldDocsModule } from "./emit/content-field
 import { emitContentType, type ContentEmission } from "./emit/content-type.ts";
 import { emitEffects } from "./emit/effects.ts";
 import { emitEvents } from "./emit/events.ts";
-import {
-  constantCase,
-  structuralSpliceOf,
-  type DocTable,
-  type FieldOmissionRow,
-} from "./emit/fields.ts";
+import { structuralSpliceOf, type DocTable, type FieldOmissionRow } from "./emit/fields.ts";
 import { classifyLinks, emitScopeLinkNavigation, emitScopeLinks } from "./emit/links.ts";
 import { emitModifiers, joinModifierScopes } from "./emit/modifiers.ts";
 import { emitOnActions } from "./emit/on-actions.ts";
@@ -57,6 +52,7 @@ import { lowerRuleTable } from "./lowered-rule.ts";
 import { createModifierOperationPolicy, emitModifierOperationProtocol } from "./modifier-policy.ts";
 import {
   camelCase,
+  constantCase,
   docComment,
   indefiniteArticle,
   kebabCase,
