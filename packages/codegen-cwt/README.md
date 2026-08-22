@@ -49,7 +49,10 @@ rules win — they track scope renames the game's own dump lags behind.
 src/
 ├── index.ts             the pipeline: load, join, emit, report, drift-check
 ├── content-manifest.ts  the registry allowlist (adding one is a public-API decision)
-├── overlay.ts           every audited departure from a mechanical rules reading
+├── overlay.ts           barrel for overlay/; every audited departure from a mechanical rules reading
+├── overlay/             the rows themselves, split by domain: content.ts (content-type
+│                        fields, localisation, patches, registry identity), script.ts
+│                        (trigger/effect/modifier lowering), mints.ts (identity-mint shapes)
 ├── corpus.ts            reads a registry directory of a real install (conformance tests)
 ├── naming.ts            snake_case → PascalCase/camelCase, doc-comment helpers
 ├── reconcile.ts         the two-source join and drift comparison
