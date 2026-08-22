@@ -1,7 +1,8 @@
 import { serialize } from "@pdx-ts/pdxscript";
 import { describe, expect, it } from "vitest";
 
-import { modifierEntries, triggeredModifierBlock } from "../src/content/blocks.ts";
+import { triggeredModifierBlock } from "../src/content/blocks.ts";
+import { modifierEntries } from "../src/content/modifier-recorders.ts";
 import type { JobRef } from "../src/generated/refs.ts";
 
 describe("job-derived modifier recorder", () => {

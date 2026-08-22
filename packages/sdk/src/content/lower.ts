@@ -14,12 +14,7 @@ import {
 import { assertNever } from "../assert-never.ts";
 import type { AssetFileItem } from "../authoring/assets.ts";
 import type { ScopeName } from "../generated/scopes.ts";
-import {
-  underField,
-  type AssetPathSink,
-  type ContentRefSink,
-  type ContentRefUse,
-} from "../references.ts";
+import type { ContentRefUse } from "../references.ts";
 import { recordEffects, withScriptCtx } from "../script/effects/recorder.ts";
 import type { ScriptCtx } from "../script/effects/types.ts";
 import { refId, type TypedRef } from "../script/scalar.ts";
@@ -29,11 +24,11 @@ import {
   ECONOMIC_RESOURCE_OPERATIONS_NO_PRODUCE,
   economicOperation,
   economicResourceBlock,
-  modifierBlock,
-  modifierEntries,
   triggeredModifierBlock,
   weightBlock,
 } from "./blocks.ts";
+import { childContext, collectRefs, joinPath, type LoweringContext } from "./lowering-context.ts";
+import { modifierBlock, modifierEntries } from "./modifier-recorders.ts";
 import {
   aliasStructFieldsOf,
   authoredForm,
@@ -244,52 +239,6 @@ export function resolveFromClosures(
   return resolved;
 }
 
-interface LoweringContext {
-  readonly collect?: ContentRefSink;
-  readonly collectPath?: AssetPathSink;
-  readonly path: string;
-  readonly ownerId: string;
-}
-
-function childContext(ctx: LoweringContext, segment: string, ownerId?: string): LoweringContext {
-  return {
-    collect: ctx.collect,
-    collectPath: ctx.collectPath,
-    path: joinPath(ctx.path, segment),
-    ownerId: ownerId ?? ctx.ownerId,
-  };
-}
-
-/**
- * The token a `WeightBlock` field's desc-bearing rows register and resolve
- * their localisation key under: the nearest enclosing identity plus the
- * field's own key, so a row shared across two definitions — or across two
- * `WeightBlock` fields of one definition — resolves its own occurrence's key
- * rather than whichever registration happened to run last (PR #16 review
- * finding 3).
- */
-function descOwnerKey(ctx: LoweringContext, key: string): string {
-  return `${ctx.ownerId}::${key}`;
-}
-
-function joinPath(path: string, segment: string): string {
-  if (segment === "") {
-    return path;
-  }
-  return path === "" ? segment : `${path}.${segment}`;
-}
-
-/** Reports references a spliced trigger or effect closure recorded, re-rooted
- * under the field that holds them so the diagnostic names the whole path. */
-function collectRefs(ctx: LoweringContext, refs: readonly ContentRefUse[], segment: string): void {
-  if (ctx.collect === undefined) {
-    return;
-  }
-  for (const use of underField(refs, joinPath(ctx.path, segment))) {
-    ctx.collect(use);
-  }
-}
-
 /**
  * Whether a value is already a PDXScript node, and so is spliced rather than
  * lowered.
@@ -372,13 +321,100 @@ function contentScalar(
   return scalar(converted as number | boolean);
 }
 
-/**
- * The recorder behind {@link ModifierClosure}: property access extends the
- * path, a call joins it with `_` into the flat name the game reads. One proxy
- * shape serves every scope — the generated recorder interfaces are the only
- * thing keeping paths honest, exactly like the effect recorder.
- */
+/** The rows a field was authored with: the array itself when it repeats, the lone value otherwise. */
+function rowsOf<T>(field: ContentFieldBase, value: unknown): readonly T[] {
+  return field.repeated ? (value as readonly T[]) : [value as T];
+}
 
+/**
+ * Emits a repeated member whose array mixes parsed occurrences with fresh
+ * inputs, one element at a time in the author's order: the parsed ones splice
+ * in as they stand, and each fresh one lowers through this same field.
+ *
+ * Returns undefined when the member is not that mixture, which a list-shaped
+ * field never is — its elements are items inside one container, handled where
+ * that container is built.
+ */
+function spliceParsedOccurrences(
+  field: ContentField,
+  value: unknown,
+  ctx: LoweringContext
+): PdxEntry[] | undefined {
+  if (
+    !Array.isArray(value) ||
+    field.shape === "valueList" ||
+    !value.some((item) => passthroughEntry(item) !== undefined)
+  ) {
+    return undefined;
+  }
+  const key = "key" in field ? field.key : undefined;
+  const entries: PdxEntry[] = [];
+  for (const item of value as readonly unknown[]) {
+    const parsed = passthroughEntry(item);
+    if (parsed !== undefined && parsed.key !== key) {
+      // The splice writes the parsed entry as it stands, key and all, so an
+      // entry from a different field would replace this member's occurrences
+      // with something the game reads as another key entirely.
+      throw new Error(
+        `"${field.member}" was given a parsed "${parsed.key}" entry, and this member ` +
+          `writes "${key}": a passthrough carries its own key, so only an occurrence of ` +
+          "this member's own key can ride through it"
+      );
+    }
+    entries.push(
+      ...(parsed !== undefined ? [parsed] : fieldEntries({ [field.member]: [item] }, [field], ctx))
+    );
+  }
+  return entries;
+}
+
+/** Writes one block per authored row of a struct-shaped field, each body lowered against `fields`. */
+function structEntries(
+  field: ContentFieldBase,
+  fields: readonly ContentField[],
+  value: unknown,
+  ctx: LoweringContext
+): PdxEntry[] {
+  return rowsOf<Readonly<Record<string, unknown>>>(field, value).map((item) =>
+    block(field.key, fieldEntries(item, fields, childContext(ctx, field.key)))
+  );
+}
+
+type RepeatedStructField = Extract<ContentField, { readonly shape: "repeatedStruct" }>;
+
+/**
+ * Writes a repeated struct in the keying its field declares: one wrapping
+ * block of individually keyed entries, or one block per entry carrying its id
+ * in `identityKey`.
+ *
+ * An entry's own id becomes the nearest enclosing identity for anything nested
+ * inside it (a WeightBlock's desc keys among them) — the render-side mirror of
+ * `collectRepeatedStructs`'s identical rebind.
+ */
+function repeatedStructEntries(
+  field: RepeatedStructField,
+  record: Readonly<Record<string, Readonly<Record<string, unknown>>>>,
+  ctx: LoweringContext
+): PdxEntry[] {
+  const rows = Object.entries(record).map(([id, item]) => ({
+    id,
+    body: fieldEntries(item, field.fields, childContext(ctx, field.key, id)),
+  }));
+  if (field.keying === "container") {
+    return [
+      block(
+        field.key,
+        rows.map(({ id, body }) => block(id, body))
+      ),
+    ];
+  }
+  return rows.map(({ id, body }) => block(field.key, [kv(field.identityKey!, id), ...body]));
+}
+
+/**
+ * Lowers a definition's members into PDXScript entries, in the order the
+ * generated field table declares them.
+ */
 export function fieldEntries(
   def: Readonly<Record<string, unknown>>,
   fields: readonly ContentField[],
@@ -390,45 +426,19 @@ export function fieldEntries(
     if (value === undefined) {
       continue;
     }
-    // A repeated member whose array mixes parsed occurrences with fresh inputs
-    // is emitted one element at a time, in the author's order: the parsed ones
-    // splice in as they stand, and each fresh one lowers through this same
-    // field. A list-shaped field is not this case — its elements are items
-    // inside one container, handled where that container is built.
-    if (
-      Array.isArray(value) &&
-      field.shape !== "valueList" &&
-      value.some((item) => passthroughEntry(item) !== undefined)
-    ) {
-      const key = "key" in field ? field.key : undefined;
-      for (const item of value as readonly unknown[]) {
-        const parsed = passthroughEntry(item);
-        if (parsed !== undefined && parsed.key !== key) {
-          // The splice writes the parsed entry as it stands, key and all, so an
-          // entry from a different field would replace this member's
-          // occurrences with something the game reads as another key entirely.
-          throw new Error(
-            `"${field.member}" was given a parsed "${parsed.key}" entry, and this member ` +
-              `writes "${key}": a passthrough carries its own key, so only an occurrence of ` +
-              "this member's own key can ride through it"
-          );
-        }
-        entries.push(
-          ...(parsed !== undefined
-            ? [parsed]
-            : fieldEntries({ [field.member]: [item] }, [field], ctx))
-        );
-      }
+    // Asked before the shape switch, because a mixed array is emitted element
+    // by element and each fresh element reaches the switch on its own.
+    const spliced = spliceParsedOccurrences(field, value, ctx);
+    if (spliced !== undefined) {
+      entries.push(...spliced);
       continue;
     }
     switch (field.shape) {
-      case "value": {
-        const values = field.repeated ? (value as readonly unknown[]) : [value];
-        for (const item of values) {
+      case "value":
+        for (const item of rowsOf<unknown>(field, value)) {
           entries.push(kv(field.key, contentScalar(item, field, false, ctx)));
         }
         break;
-      }
       case "valueList": {
         const values = Array.isArray(value) ? value : [value];
         if (values.length > 0) {
@@ -467,23 +477,16 @@ export function fieldEntries(
         collectRefs(ctx, recorded, field.key);
         break;
       }
-      case "economicResources": {
-        const values = field.repeated
-          ? (value as readonly EconomicResourceBlock<ScopeName>[])
-          : [value as EconomicResourceBlock<ScopeName>];
+      case "economicResources":
         entries.push(
-          ...values.map((item) =>
+          ...rowsOf<EconomicResourceBlock<ScopeName>>(field, value).map((item) =>
             economicResourceBlock(field.key, item, ECONOMIC_RESOURCE_OPERATIONS, ctx)
           )
         );
         break;
-      }
-      case "economicResourcesNoProduce": {
-        const values = field.repeated
-          ? (value as readonly EconomicResourceBlockNoProduce<ScopeName>[])
-          : [value as EconomicResourceBlockNoProduce<ScopeName>];
+      case "economicResourcesNoProduce":
         entries.push(
-          ...values.map((item) =>
+          ...rowsOf<EconomicResourceBlockNoProduce<ScopeName>>(field, value).map((item) =>
             economicResourceBlock(
               field.key,
               item as EconomicResourceBlock<ScopeName>,
@@ -493,21 +496,20 @@ export function fieldEntries(
           )
         );
         break;
-      }
-      case "economicResourceOperation": {
-        const values = field.repeated
-          ? (value as readonly EconomicResourceOperation<ScopeName>[])
-          : [value as EconomicResourceOperation<ScopeName>];
-        entries.push(...values.map((item) => economicOperation(field.key, item, ctx)));
+      case "economicResourceOperation":
+        entries.push(
+          ...rowsOf<EconomicResourceOperation<ScopeName>>(field, value).map((item) =>
+            economicOperation(field.key, item, ctx)
+          )
+        );
         break;
-      }
-      case "triggeredModifierBlock": {
-        const values = field.repeated
-          ? (value as readonly TriggeredModifier<ScopeName>[])
-          : [value as TriggeredModifier<ScopeName>];
-        entries.push(...values.map((item) => triggeredModifierBlock(field.key, item, ctx)));
+      case "triggeredModifierBlock":
+        entries.push(
+          ...rowsOf<TriggeredModifier<ScopeName>>(field, value).map((item) =>
+            triggeredModifierBlock(field.key, item, ctx)
+          )
+        );
         break;
-      }
       case "modifierBlock":
         entries.push(
           modifierBlock(field.key, value as ModifierClosure, (use) =>
@@ -566,39 +568,15 @@ export function fieldEntries(
           );
           break;
         }
-        const values = field.repeated
-          ? (value as readonly Readonly<Record<string, unknown>>[])
-          : [value as Readonly<Record<string, unknown>>];
-        entries.push(
-          ...values.map((item) =>
-            block(field.key, fieldEntries(item, field.fields, childContext(ctx, field.key)))
-          )
-        );
+        entries.push(...structEntries(field, field.fields, value, ctx));
         break;
       }
-      case "triggerStruct": {
-        const values = field.repeated
-          ? (value as readonly Readonly<Record<string, unknown>>[])
-          : [value as Readonly<Record<string, unknown>>];
-        entries.push(
-          ...values.map((item) =>
-            block(field.key, fieldEntries(item, field.fields, childContext(ctx, field.key)))
-          )
-        );
+      case "triggerStruct":
+        entries.push(...structEntries(field, field.fields, value, ctx));
         break;
-      }
-      case "aliasStruct": {
-        const nested = aliasStructFieldsOf(field.category);
-        const values = field.repeated
-          ? (value as readonly Readonly<Record<string, unknown>>[])
-          : [value as Readonly<Record<string, unknown>>];
-        entries.push(
-          ...values.map((item) =>
-            block(field.key, fieldEntries(item, nested, childContext(ctx, field.key)))
-          )
-        );
+      case "aliasStruct":
+        entries.push(...structEntries(field, aliasStructFieldsOf(field.category), value, ctx));
         break;
-      }
       case "structMap": {
         const record = value as Readonly<Record<string, Readonly<Record<string, unknown>>>>;
         entries.push(
@@ -621,33 +599,15 @@ export function fieldEntries(
         );
         break;
       }
-      case "repeatedStruct": {
-        const record = value as Readonly<Record<string, Readonly<Record<string, unknown>>>>;
-        if (field.keying === "container") {
-          entries.push(
-            block(
-              field.key,
-              // The entry's own id becomes the nearest enclosing identity for
-              // anything nested inside it (a WeightBlock's desc keys among
-              // them) — the render-side mirror of
-              // `collectRepeatedStructs`'s identical rebind.
-              Object.entries(record).map(([id, item]) =>
-                block(id, fieldEntries(item, field.fields, childContext(ctx, field.key, id)))
-              )
-            )
-          );
-          break;
-        }
-        for (const [id, item] of Object.entries(record)) {
-          entries.push(
-            block(field.key, [
-              kv(field.identityKey!, id),
-              ...fieldEntries(item, field.fields, childContext(ctx, field.key, id)),
-            ])
-          );
-        }
+      case "repeatedStruct":
+        entries.push(
+          ...repeatedStructEntries(
+            field,
+            value as Readonly<Record<string, Readonly<Record<string, unknown>>>>,
+            ctx
+          )
+        );
         break;
-      }
       default:
         assertNever(field, "content field");
     }
