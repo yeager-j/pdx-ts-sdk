@@ -152,6 +152,12 @@ export class VarTable {
   private readonly global: ReadonlyMap<string, number>;
   private readonly locals: ReadonlyMap<string, ReadonlyMap<string, number>>;
 
+  /**
+   * @param global The cross-file constants `common/scripted_variables` defines,
+   * by name.
+   * @param locals Each file's own `@variable` definitions, keyed by logical
+   * path and then by name. A local shadows a global of the same name.
+   */
   constructor(
     global: ReadonlyMap<string, number>,
     locals: ReadonlyMap<string, ReadonlyMap<string, number>>
@@ -160,6 +166,15 @@ export class VarTable {
     this.locals = locals;
   }
 
+  /**
+   * The value `@name` has inside `file`: the file's own definition first, then
+   * the global one.
+   *
+   * @param line The line the reference sits on, for the error; `undefined`
+   * when the parser did not record one.
+   * @throws Error naming the file, line, and every name that is defined,
+   * when neither scope defines `name`. Nothing resolves silently.
+   */
   resolve(name: string, file: string, line: number | undefined): number {
     const local = this.locals.get(file)?.get(name);
     if (local !== undefined) {
