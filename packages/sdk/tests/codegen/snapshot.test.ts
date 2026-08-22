@@ -1,9 +1,11 @@
 import { readFileSync } from "node:fs";
+import { CONTENT_WITNESSES } from "@pdx-ts/codegen-cwt/overlay";
 import { describe, expect, it } from "vitest";
 
 const source = readFileSync("packages/sdk/src/generated/triggers.ts", "utf8");
 const refs = readFileSync("packages/sdk/src/generated/refs.ts", "utf8");
 const contentDefiners = readFileSync("packages/sdk/src/generated/content-definers.ts", "utf8");
+const modifiers = readFileSync("packages/sdk/src/generated/modifiers.ts", "utf8");
 
 /** Slices one generated declaration out so signature changes show up in the diff. */
 function declaration(name: string): string {
@@ -260,5 +262,38 @@ describe("scalar lowering ownership", () => {
     expect(contentDefiners).toContain(
       'import { refId, type TypedRef } from "../script/scalar.ts";'
     );
+  });
+});
+
+describe("CONTENT_WITNESSES drives both economic_category witness sites (SDK-260)", () => {
+  // Byte-equality (codegen:check) proves the committed output matches what
+  // the generator produces today; it cannot tell whether that output still
+  // traces back to CONTENT_WITNESSES's one `omit` list or to two
+  // independently hand-spelled copies that happen to agree right now. These
+  // checks read the row and assert both generated files actually contain the
+  // text each member ought to produce, so a member added, renamed, or
+  // reordered in the overlay row and forgotten in one consumer's derivation
+  // shows up here even when nothing else in the suite touches that consumer.
+  // Both files are normalised to single-space runs first: Prettier wraps the
+  // union and the object type across lines (and adds a trailing `;` inside a
+  // wrapped member) in ways this check should not depend on.
+  const witness = CONTENT_WITNESSES.get("economic_category");
+  if (witness === undefined || witness.mode !== "intersects") {
+    throw new Error('expected an "intersects"-mode CONTENT_WITNESSES row for "economic_category"');
+  }
+  const normalizedContentDefiners = contentDefiners.replace(/\s+/g, " ");
+  const normalizedModifiers = modifiers.replace(/\s+/g, " ");
+
+  it("spells content-definers.ts's Omit<...> union from the row's member list, in row order", () => {
+    const omitUnion = witness.omit.map((entry) => `"${entry.member}"`).join(" | ");
+    expect(normalizedContentDefiners).toContain(omitUnion);
+  });
+
+  it("spells modifiers.ts's EconomicWitnessOf from the row's (member, inferAs) pairs", () => {
+    for (const entry of witness.omit) {
+      expect(normalizedModifiers).toContain(
+        `readonly ${entry.member}: D extends { readonly ${entry.member}: infer ${entry.inferAs}`
+      );
+    }
   });
 });

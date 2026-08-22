@@ -29,6 +29,7 @@ import {
   CONTENT_PATCH_REGISTRIES,
   CONTENT_SCOPE_PARAMETERS,
   CONTENT_SUBTYPE_REFERENCE_REFINEMENTS,
+  CONTENT_WITNESSES,
   EXACT_NAME_MINTS,
   FIELD_WIDENINGS,
   FILE_STEM_OVERLAYS,
@@ -78,6 +79,7 @@ describe("assertOverlayRegistriesKnown", () => {
           },
           { tableId: "CONTENT_PATCH_REGISTRIES", keys: CONTENT_PATCH_REGISTRIES.keys() },
           { tableId: "CONTENT_SCOPE_PARAMETERS", keys: CONTENT_SCOPE_PARAMETERS.keys() },
+          { tableId: "CONTENT_WITNESSES", keys: CONTENT_WITNESSES.keys() },
         ],
         realRegistryNames
       )
@@ -106,6 +108,20 @@ describe("assertOverlayRegistriesKnown", () => {
         realRegistryNames
       )
     ).toThrow('CONTENT_SCOPE_PARAMETERS names "decisionn", which is not a known registry');
+  });
+
+  it("rejects a CONTENT_WITNESSES row keyed to a renamed or mistyped registry (SDK-260)", () => {
+    // CONTENT_WITNESSES is consumed only via `CONTENT_WITNESSES.get(registry)`
+    // inside contentDefiners' per-content loop (index.ts) and emit/modifiers.ts's
+    // fixed "economic_category" lookup — a row keyed to a registry nothing
+    // resolves to (a rename or typo) is never looked up by either site, so it
+    // would rot silently without joining the Group A registry-keyed check.
+    expect(() =>
+      assertOverlayRegistriesKnown(
+        [{ tableId: "CONTENT_WITNESSES", keys: ["scripted_modifierr"] }],
+        realRegistryNames
+      )
+    ).toThrow('CONTENT_WITNESSES names "scripted_modifierr", which is not a known registry');
   });
 });
 
@@ -394,6 +410,7 @@ describe("the real pipeline's overlay tables", () => {
           },
           { tableId: "CONTENT_PATCH_REGISTRIES", keys: CONTENT_PATCH_REGISTRIES.keys() },
           { tableId: "CONTENT_SCOPE_PARAMETERS", keys: CONTENT_SCOPE_PARAMETERS.keys() },
+          { tableId: "CONTENT_WITNESSES", keys: CONTENT_WITNESSES.keys() },
         ],
         registryNames
       )

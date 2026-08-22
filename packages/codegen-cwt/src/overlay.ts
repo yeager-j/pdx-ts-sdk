@@ -149,6 +149,110 @@ export const HAND_WRITTEN_CONTENT_DEFINERS = new Map<string, HandWrittenDefiner>
   ],
 ]);
 
+/**
+ * The `W` witness a registry's item type and definer carry beside its def —
+ * SDK-181's "rides beside the def" rule applied to the two registries whose
+ * generated `Def` field is mechanically typed too wide for the recorder logic
+ * that reads it back.
+ *
+ * `scripted_modifier`'s `category` is already a real, narrow enum member, so
+ * `wraps` only needs to intersect the def with `{ readonly [member]: W }`:
+ * `ScriptedModifierSelector` (`emit/modifiers.ts`) reads the author's literal
+ * category back off `item.def.category` to check it against the scope a
+ * `raw()`/typed setter call is made from, which the def's own declared
+ * `ScriptedModifierCategory` union cannot supply.
+ *
+ * `economic_category`'s seven generated-key fields (`modifierCategory`,
+ * `generateAddModifiers`, `generateMultModifiers`, and the four
+ * `triggered*Modifier` rows, SDK-233) are declared on the ordinary def too,
+ * but a mechanical field can only ever carry its CWT shape, never the
+ * specific literal array or category an author writes — and
+ * `EconomicCategoryRecorder`/`EconomicWitnessOf` need exactly that literal to
+ * know which modifier-setter methods a given category may call. `intersects`
+ * strips the mechanical members with `Omit` and re-admits them through a
+ * `const`-inferred `W`, guarded by `exactType` so the nested triggered rows
+ * stay closed against misspelled fields, so the literal rides the item and
+ * definer input/result instead of the widened mechanical field.
+ *
+ * `omit` is the one list both consumers read: `contentDefiners` (`index.ts`)
+ * spells it as the `Omit<...>` member union, and `emit/modifiers.ts`'s
+ * `EconomicWitnessOf` reads each row's own `inferAs` to name the per-member
+ * `infer` variable in its structural extraction type. Before SDK-260 the same
+ * seven names were hand-spelled in both places and could drift silently.
+ */
+export type ContentWitness =
+  | {
+      readonly mode: "wraps";
+      /** Witness type name, e.g. `ScriptedModifierCategory`. */
+      readonly type: string;
+      /** Module the witness type imports from. */
+      readonly module: string;
+      /** The def member the witness narrows. */
+      readonly member: string;
+      readonly reason: string;
+    }
+  | {
+      readonly mode: "intersects";
+      /** Witness type name, e.g. `EconomicCategoryWitness`. */
+      readonly type: string;
+      /** The `Exact<W>` guard type applied at every definer/capability input position. */
+      readonly exactType: string;
+      /**
+       * The def members `Omit` strips before intersecting with `W`, in
+       * emission order, each with the per-member `infer` variable
+       * `EconomicWitnessOf` gives it.
+       */
+      readonly omit: readonly { readonly member: string; readonly inferAs: string }[];
+      readonly reason: string;
+    };
+
+/**
+ * Registries whose item type and definer carry a `W` witness beside the def,
+ * rather than the mechanical, unparameterised signature every other registry
+ * gets. A row here is expensive: it is read by both `contentDefiners`
+ * (`index.ts`) and `emit/modifiers.ts`, so a new mode needs evidence from a
+ * second registry before this schema grows to fit it.
+ */
+export const CONTENT_WITNESSES = new Map<string, ContentWitness>([
+  [
+    "scripted_modifier",
+    {
+      mode: "wraps",
+      type: "ScriptedModifierCategory",
+      module: "./enums.ts",
+      member: "category",
+      reason:
+        "SDK-230: category selects which scopes this modifier is legal in " +
+        "(SCRIPTED_MODIFIER_CATEGORY_MAP), and ScriptedModifierSelector checks that against the " +
+        "scope a raw()/typed setter call is made from — a check that needs the author's literal " +
+        "category, not ScriptedModifierCategory's full union.",
+    },
+  ],
+  [
+    "economic_category",
+    {
+      mode: "intersects",
+      type: "EconomicCategoryWitness",
+      exactType: "ExactEconomicCategoryWitness",
+      omit: [
+        { member: "modifierCategory", inferAs: "M" },
+        { member: "generateAddModifiers", inferAs: "A" },
+        { member: "generateMultModifiers", inferAs: "U" },
+        { member: "triggeredCostModifier", inferAs: "C" },
+        { member: "triggeredProducesModifier", inferAs: "P" },
+        { member: "triggeredUpkeepModifier", inferAs: "U" },
+        { member: "triggeredLogisticsModifier", inferAs: "L" },
+      ],
+      reason:
+        "SDK-230/SDK-233: EconomicCategoryRecorder and the triggered-modifier selectors decide " +
+        "which modifier-setter methods a category may call from the literal arrays and category " +
+        "the author writes for these seven fields, which a mechanically-typed Def field cannot " +
+        "carry. defineEconomicCategory Omits the mechanical members and re-admits them through a " +
+        "const-inferred W instead.",
+    },
+  ],
+]);
+
 export interface ContentSubtypeReferenceRefinement {
   /** Authored boolean member that selects the CWT subtype. */
   readonly member: string;

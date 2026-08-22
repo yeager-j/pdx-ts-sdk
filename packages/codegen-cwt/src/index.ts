@@ -74,6 +74,7 @@ import {
   CONTENT_PATCH_REGISTRIES,
   CONTENT_SCOPE_PARAMETERS,
   CONTENT_SUBTYPE_REFERENCE_REFINEMENTS,
+  CONTENT_WITNESSES,
   EXACT_NAME_MINTS,
   FIELD_WIDENINGS,
   FILE_STEM_OVERLAYS,
@@ -87,6 +88,7 @@ import {
   SHAPE_MINT_REGISTRY,
   SPRITE_SHAPE_MINTS,
   SYNTHETIC_LOCALISATION,
+  type ContentWitness,
   type HandWrittenDefiner,
   type SpriteShapeMint,
 } from "./overlay.ts";
@@ -408,6 +410,7 @@ async function main(): Promise<void> {
       },
       { tableId: "CONTENT_PATCH_REGISTRIES", keys: CONTENT_PATCH_REGISTRIES.keys() },
       { tableId: "CONTENT_SCOPE_PARAMETERS", keys: CONTENT_SCOPE_PARAMETERS.keys() },
+      { tableId: "CONTENT_WITNESSES", keys: CONTENT_WITNESSES.keys() },
     ],
     registryNames
   );
@@ -984,6 +987,10 @@ function contentDefiners(
   const capabilityRuntimeDefiners = new Set<string>();
   const nestedDefinitionTables: string[] = [];
   const capabilityPatchTypes: { registry: string; emission: ContentEmission }[] = [];
+  // CONTENT_WITNESSES rows this pass actually used, gathered here so the
+  // import blocks built after the loop (below) can ask "which witness type
+  // names need importing" without rescanning `contents` by registry name.
+  const contentWitnesses: ContentWitness[] = [];
 
   for (const content of contents) {
     const { registry, emission } = content;
@@ -1065,30 +1072,25 @@ function contentDefiners(
     // value widened to that union is ambiguous at the call site rather than
     // unchecked.
     const witness = declaredWitness(content, graft);
-    const modifierWitness =
-      registry === "scripted_modifier"
-        ? "ScriptedModifierCategory"
-        : registry === "economic_category"
-          ? "EconomicCategoryWitness"
-          : null;
-    const economicWitnessMembers = [
-      "modifierCategory",
-      "generateAddModifiers",
-      "generateMultModifiers",
-      "triggeredCostModifier",
-      "triggeredProducesModifier",
-      "triggeredUpkeepModifier",
-      "triggeredLogisticsModifier",
-    ] as const;
-    const economicWitnessOmit = economicWitnessMembers
-      .map((member) => JSON.stringify(member))
-      .join(" | ");
+    // CONTENT_WITNESSES (overlay.ts) replaces this loop's former
+    // `registry === "scripted_modifier"`/`"economic_category"` branches: a
+    // registry either has no row (ordinary def, no `W`) or has exactly one of
+    // the two modes the schema carries evidence for (SDK-260).
+    const contentWitness = CONTENT_WITNESSES.get(registry);
+    if (contentWitness !== undefined) {
+      contentWitnesses.push(contentWitness);
+    }
+    const modifierWitness = contentWitness?.type ?? null;
+    const economicWitnessOmit =
+      contentWitness?.mode === "intersects"
+        ? contentWitness.omit.map((entry) => JSON.stringify(entry.member)).join(" | ")
+        : "";
     const itemArms = [
-      modifierWitness === null
+      contentWitness === undefined
         ? `ContentItem<${key}, ${name}Def${erased}>` +
           (witness === null ? "" : ` & { readonly ${witness.member}: W }`)
-        : registry === "scripted_modifier"
-          ? `ContentItem<${key}, ${name}Def${erased}> & { readonly def: ${name}Def${erased} & { readonly category: W } }`
+        : contentWitness.mode === "wraps"
+          ? `ContentItem<${key}, ${name}Def${erased}> & { readonly def: ${name}Def${erased} & { readonly ${contentWitness.member}: W } }`
           : `ContentItem<${key}, Omit<${name}Def${erased}, ${economicWitnessOmit}> & W>`,
     ];
     if (patchable !== undefined) {
@@ -1114,11 +1116,11 @@ function contentDefiners(
         declaredFrom === undefined ? "" : ` & { readonly ${declaredFrom.member}: L }`;
       const parameters =
         scoped === null
-          ? registry === "scripted_modifier"
-            ? "<const Name extends string, W extends ScriptedModifierCategory>"
-            : registry === "economic_category"
-              ? "<const Name extends string, const W extends EconomicCategoryWitness>"
-              : "<const Name extends string>"
+          ? contentWitness === undefined
+            ? "<const Name extends string>"
+            : contentWitness.mode === "wraps"
+              ? `<const Name extends string, W extends ${contentWitness.type}>`
+              : `<const Name extends string, const W extends ${contentWitness.type}>`
           : `<\n    const Name extends string,\n    ${scoped.parameterName} extends ` +
             `${scoped.parameterType} = ${JSON.stringify(scoped.parameterFallback)},` +
             `${declaredFromParameter}\n  >`;
@@ -1126,27 +1128,27 @@ function contentDefiners(
         `${name}Def<${minted}${scoped === null ? "" : `, ${scoped.parameterName}`}` +
         `${declaredFrom === undefined ? "" : ", L"}>`;
       const economicInputBase =
-        registry === "economic_category"
+        contentWitness?.mode === "intersects"
           ? `Omit<${def}, "id" | ${economicWitnessOmit}>`
           : `Omit<${def}, "id">`;
       const economicResultBase =
-        registry === "economic_category"
+        contentWitness?.mode === "intersects"
           ? `Omit<${name}Def<${minted}>, ${economicWitnessOmit}>`
           : `${name}Def<${minted}>`;
       const input =
         scoped?.selector === undefined
-          ? registry === "scripted_modifier"
-            ? `Omit<${def}, "id"> & { readonly category: W }`
-            : registry === "economic_category"
-              ? `${economicInputBase} & W & ExactEconomicCategoryWitness<W>`
-              : `Omit<${def}, "id">`
+          ? contentWitness === undefined
+            ? `Omit<${def}, "id">`
+            : contentWitness.mode === "wraps"
+              ? `Omit<${def}, "id"> & { readonly ${contentWitness.member}: W }`
+              : `${economicInputBase} & W & ${contentWitness.exactType}<W>`
           : `${name}Fields<${scoped.parameterName}${declaredFrom === undefined ? "" : ", L"}>`;
       const result =
-        registry === "scripted_modifier"
-          ? `${name}Def<${minted}> & { readonly category: W }`
-          : registry === "economic_category"
-            ? `${economicResultBase} & W`
-            : `${name}Def<${minted}${scoped === null ? "" : ", never"}>`;
+        contentWitness === undefined
+          ? `${name}Def<${minted}${scoped === null ? "" : ", never"}>`
+          : contentWitness.mode === "wraps"
+            ? `${name}Def<${minted}> & { readonly ${contentWitness.member}: W }`
+            : `${economicResultBase} & W`;
       const signatures =
         scoped?.selector === undefined
           ? (referenceRefinement === undefined
@@ -1339,16 +1341,16 @@ function contentDefiners(
             `${scoped.parameterType} = ${JSON.stringify(scoped.parameterFallback)},\n` +
             `${declaredFromParameter}>`;
       const definerParameters =
-        registry === "economic_category"
-          ? "<const Id extends string, const W extends EconomicCategoryWitness>"
+        contentWitness?.mode === "intersects"
+          ? `<const Id extends string, const W extends ${contentWitness.type}>`
           : parameters;
       const definerInput =
-        registry === "economic_category"
-          ? `Omit<${name}Def<Id>, ${economicWitnessOmit}> & W & ExactEconomicCategoryWitness<W>`
+        contentWitness?.mode === "intersects"
+          ? `Omit<${name}Def<Id>, ${economicWitnessOmit}> & W & ${contentWitness.exactType}<W>`
           : `${name}Def<Id${scoped === null ? "" : `, ${scoped.parameterName}`}` +
             `${declaredFrom === undefined ? "" : ", L"}>`;
       const definerResult =
-        registry === "economic_category"
+        contentWitness?.mode === "intersects"
           ? `ContentItem<${key}, Omit<${name}Def<Id>, ${economicWitnessOmit}> & W>`
           : `ContentItem<${key}, ${name}Def<Id${scoped === null ? "" : ", never"}>>`;
       const stripped = [
@@ -1357,7 +1359,7 @@ function contentDefiners(
       ];
       const body =
         scoped === null
-          ? registry === "economic_category"
+          ? contentWitness?.mode === "intersects"
             ? `  return { itemKind: "content", type: ${key}, id: def.id, def } as ${definerResult};\n`
             : `  return { itemKind: "content", type: ${key}, id: def.id, def };\n`
           : stripped.length === 0
@@ -1483,13 +1485,22 @@ function contentDefiners(
     );
   }
 
+  const wrapsWitnesses = contentWitnesses.filter(
+    (contentWitness): contentWitness is Extract<ContentWitness, { mode: "wraps" }> =>
+      contentWitness.mode === "wraps"
+  );
+  const intersectsWitnesses = contentWitnesses.filter(
+    (contentWitness): contentWitness is Extract<ContentWitness, { mode: "intersects" }> =>
+      contentWitness.mode === "intersects"
+  );
+
   const patchContents = contents.filter((content) =>
     CONTENT_PATCH_REGISTRIES.has(content.registry)
   );
   const refImports = contents.some((content) => CONTENT_CONTRIBUTION_SINKS.has(content.registry));
   const contentItemTypes = [...runtimeItemTypes].filter((name) => !name.endsWith("PatchItem"));
-  if (contents.some((content) => content.registry === "economic_category")) {
-    contentItemTypes.push("EconomicCategoryWitness", "ExactEconomicCategoryWitness");
+  for (const intersectsWitness of intersectsWitnesses) {
+    contentItemTypes.push(intersectsWitness.type, intersectsWitness.exactType);
   }
   // A hand-written definer's declared witness is spelled in the overlay, so
   // the type it names has to be imported on its word rather than derived —
@@ -1547,9 +1558,7 @@ function contentDefiners(
       })
       .join("") +
     importList("./enums.ts", [
-      ...(contents.some((content) => content.registry === "scripted_modifier")
-        ? ["ScriptedModifierCategory"]
-        : []),
+      ...wrapsWitnesses.map((wrapsWitness) => wrapsWitness.type),
       ...new Set(
         contents.flatMap((content) =>
           content.emission.scopeParameter?.selector === undefined
@@ -1560,9 +1569,12 @@ function contentDefiners(
     ]);
   const capabilityImports =
     'import type { ContentItem, EconomicCategoryWitness, ExactEconomicCategoryWitness } from "../content/types.ts";\n' +
-    (contents.some((content) => content.registry === "scripted_modifier")
-      ? 'import type { ScriptedModifierCategory } from "./enums.ts";\n'
-      : "") +
+    wrapsWitnesses
+      .map(
+        (wrapsWitness) =>
+          `import type { ${wrapsWitness.type} } from ${JSON.stringify(wrapsWitness.module)};\n`
+      )
+      .join("") +
     importList(
       "./refs.ts",
       [...CONTENT_SUBTYPE_REFERENCE_REFINEMENTS.values()].map(
