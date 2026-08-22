@@ -16,7 +16,7 @@ import {
   planPatchEmission,
   type PatchInput,
 } from "../../src/stellaris/vanilla/override-plan.ts";
-import type { VanillaFile } from "../../src/stellaris/vanilla/view.ts";
+import type { VanillaFile } from "../../src/stellaris/vanilla/parsed-definitions.ts";
 
 function file(path: string, ...keys: string[]): VanillaFile {
   return { path: normalizeLogicalPath(path), sha256: "ab".repeat(32), keys };

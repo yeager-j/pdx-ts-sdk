@@ -51,7 +51,7 @@ import type {
   ParsedBuilding,
   ParsedMegastructure,
   ParsedTechnology,
-} from "../stellaris/vanilla/view.ts";
+} from "../stellaris/vanilla/parsed-definitions.ts";
 import type { AgendaDef } from "./agenda.ts";
 import type { AgreementPresetDef } from "./agreement-preset.ts";
 import type { AmbientObjectDef } from "./ambient-object.ts";

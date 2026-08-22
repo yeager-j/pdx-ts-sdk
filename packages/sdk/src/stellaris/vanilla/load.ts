@@ -30,10 +30,10 @@ import {
   parsedRegistryDir,
   parseStrict,
   sha256Hex,
-  VanillaView,
   VARIABLES_DIR,
   type ParsedSource,
-} from "./view.ts";
+} from "./parse.ts";
+import { VanillaView } from "./view.ts";
 
 export interface LoadOptions {
   /** Game root; wins over STELLARIS_PATH and the platform defaults. */

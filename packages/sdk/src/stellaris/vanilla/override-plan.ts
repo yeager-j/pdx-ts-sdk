@@ -21,7 +21,7 @@ import { kv, serialize, stopWalk, walkItems, type PdxEntry, type PdxItem } from 
 import { NoWinningFilenameError, PdxSdkError, VanillaPathCollisionError } from "../../errors.ts";
 import { compareLogicalPaths, normalizeLogicalPath, type LogicalPath } from "../../ordering.ts";
 import { registryRule, unverifiedCellError, type RepeatRule } from "./override-rules.ts";
-import type { VanillaFile } from "./view.ts";
+import type { VanillaFile } from "./parsed-definitions.ts";
 
 export interface PatchInput {
   readonly key: string;

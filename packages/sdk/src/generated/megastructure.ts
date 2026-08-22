@@ -13,8 +13,8 @@ import type {
   WithFrom,
 } from "../content/types.ts";
 import type { ScriptValue, Trigger } from "../script/trigger-core.ts";
+import type { ParsedMegastructure } from "../stellaris/vanilla/parsed-definitions.ts";
 import type { ContentPatchItem, PatchedContent, PatchInput } from "../stellaris/vanilla/patch.ts";
-import type { ParsedMegastructure } from "../stellaris/vanilla/view.ts";
 import type { MegaBuildType, MegastructureBlockType } from "./enums.ts";
 import type {
   BypassRef,
