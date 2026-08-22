@@ -12,25 +12,35 @@
  */
 
 import type { DescentNode } from "../corpus/observations.ts";
-import { isOptional, isRepeated, type RuleField, type RuleType } from "../cwt/model.ts";
+import { isRepeated, type RuleField, type RuleType } from "../cwt/model.ts";
 import { camelCase, constantCase, pascalCase } from "../naming.ts";
 import {
-  ASSET_PATH_FIELDS,
   CONTENT_FIELD_OVERRIDES,
   FIELD_WIDENINGS,
   type ContentFieldOverride,
   type FieldWidening,
 } from "../overlay/index.ts";
-import { Emitter, type TsValue } from "../render/emitter.ts";
+import { Emitter } from "../render/emitter.ts";
 import type { DocTable, FieldOmissionRow, MemberDocRow } from "../render/field-rows.ts";
-import {
-  constArray,
-  conversionFor,
-  refTypesEntries,
-  member as renderMember,
-} from "../render/writer.ts";
+import { constArray, member as renderMember } from "../render/writer.ts";
 import { formOfShape } from "./authored-form.ts";
 import { contentShape } from "./content-shape.ts";
+import { assertedArity, assertedAssetPath, assertedUncheckedString } from "./field-assertions.ts";
+import {
+  economicResourceOperationInterior,
+  triggeredModifierInterior,
+  weightInterior,
+} from "./field-interiors.ts";
+import {
+  admitsBlock,
+  admitsScalars,
+  arrayType,
+  authoredLiterals,
+  memberOptional,
+  metadata,
+  repeatsSiblings,
+  scalarMetadata,
+} from "./field-metadata.ts";
 import {
   aliasScalarFields,
   bareValuesOf,
@@ -58,6 +68,8 @@ import {
   type FieldContext,
   type FieldScope,
 } from "./scope-context.ts";
+
+export { authoredLiterals, memberOptional, metadata, repeatsSiblings } from "./field-metadata.ts";
 
 /**
  * One lowered field, described in the terms a real PDXScript value can be
@@ -106,24 +118,6 @@ export interface EmittedField {
    */
   readonly clause?: "trigger" | "effect";
 }
-/**
- * The literals a doc row may carry: the admitted set, except where lowering
- * changes the authored representation. `admits.literals` speaks the game's
- * tokens because the corpus gate measures shipped files, but boolean fields
- * author as `true`/`false` while admitting `yes`/`no` — printing those tokens
- * in a docs table tells an author to pass strings that do not type-check.
- * Booleans are the only conversion with that mismatch, and their admitted
- * sets are exactly the subsets of `{yes, no}`, so those are omitted; the
- * member type `boolean` already says everything the row would.
- */
-export function authoredLiterals(literals: readonly string[] | undefined): {
-  readonly literals?: readonly string[];
-} {
-  if (literals === undefined || literals.every((token) => token === "yes" || token === "no")) {
-    return {};
-  }
-  return { literals };
-}
 
 export interface LoweredField {
   readonly memberType: string;
@@ -168,109 +162,6 @@ export interface LoweredField {
    * fields without their descent are measured against nothing.
    */
   readonly descents?: readonly DescentNode[];
-}
-
-/**
- * The keys a `modifier` row spends on arithmetic or display rather than on
- * gating: `modifier_rule.cwt`'s two maths enums, plus `desc`.
- *
- * What remains in a row is the spliced `alias_name[trigger]`, so this set is
- * exactly what turns a shipped row into the conditions the emitted `Trigger<S>`
- * has to hold. A missing enum throws rather than degrading to an empty set: the
- * corpus reader would then record `add` and `factor` as trigger keys, and every
- * weight block in the game would report a scope mismatch against them.
- */
-function weightRowOperations(emitter: Emitter): ReadonlySet<string> {
-  const members = (name: string): readonly string[] => {
-    const values = emitter.rules.enums.get(name);
-    if (values === undefined || values.length === 0) {
-      throw new Error(
-        `The rules declare no members for enum[${name}], so a weight block's modifier rows ` +
-          "cannot be stripped down to the conditions that gate them"
-      );
-    }
-    return values;
-  };
-  return new Set([...members("complex_maths_enum"), ...members("simple_maths_enum"), "desc"]);
-}
-
-/**
- * A weight block's `modifier` rows, as one emitted field and one descent.
- *
- * Every other block shape describes its interior through `structShape`, off a
- * CWT fields table. A weight block has none — `modifier_rule` is an alias
- * category, and the authoring shape is the SDK's own `WeightBlock<S>` — so the
- * one interior worth measuring is stated here instead: the row's gating
- * condition, at the holder's own scope, which is where `Modifier.when`'s
- * `Trigger<S>` is instantiated.
- */
-function weightInterior(
-  emitter: Emitter,
-  name: string,
-  path: string,
-  scope: FieldScope
-): Pick<LoweredField, "nested" | "descents"> {
-  return {
-    nested: [
-      {
-        field: `${path}.modifier`,
-        shape: "weightModifier",
-        // `modifiers` is an array and the writer emits one `modifier` block per
-        // row, so the key repeats inside the weight block.
-        repeated: true,
-        clause: "trigger",
-        scope: scope.scopes,
-      },
-    ],
-    descents: [
-      {
-        field: name,
-        mode: "weightModifiers",
-        strippedKeys: weightRowOperations(emitter),
-        children: [],
-      },
-    ],
-  };
-}
-
-/** The potential condition and its emitter-owned corpus descent. */
-function triggeredModifierInterior(
-  name: string,
-  path: string,
-  potentialScope: FieldScope
-): Pick<LoweredField, "nested" | "descents"> {
-  return {
-    nested: [
-      {
-        field: `${path}.potential`,
-        shape: "trigger",
-        repeated: false,
-        clause: "trigger",
-        scope: potentialScope.scopes,
-      },
-    ],
-    descents: [{ field: name, mode: "triggeredModifierPotential", children: [] }],
-  };
-}
-
-/** The direct trigger interior owned by `EconomicResourceOperation<S>`. */
-function economicResourceOperationInterior(
-  name: string,
-  path: string,
-  scope: FieldScope
-): Pick<LoweredField, "nested" | "descents"> {
-  return {
-    nested: [
-      {
-        field: `${path}.trigger`,
-        shape: "trigger",
-        repeated: false,
-        clause: "trigger",
-        scope: scope.scopes,
-      },
-    ],
-    descents: [{ field: name, mode: "economicResourceOperationTrigger", children: [] }],
-  };
 }
 
 /**
@@ -430,58 +321,6 @@ export function lowerTopLevelSplice(
   };
 }
 
-/**
- * The scalar-lowering half of a field's metadata: how to turn the authored
- * value into an id, and — when the rules say every admitted form is a
- * reference — which registries that id must come from. The second half is what
- * lets `buildMod` hold an own-prefixed reference to the registry it names.
- */
-function scalarMetadata(value: TsValue): string[] {
-  return [`conversion: ${JSON.stringify(conversionFor(value))}`, ...refTypesEntries(value)];
-}
-
-function arrayType(type: string): string {
-  return type.includes(" | ") ? `(${type})[]` : `${type}[]`;
-}
-
-/**
- * Whether the key itself may appear more than once in a definition body.
- *
- * A `valueList` is the exception: its member is an array, but the writer emits
- * one key holding a brace list rather than repeated siblings.
- */
-export function repeatsSiblings(field: RuleField, shape: string): boolean {
-  return isRepeated(field.cardinality) && shape !== "valueList";
-}
-
-/** One evidence-backed optionality decision, shared by every generated member. */
-export function memberOptional(
-  group: readonly RuleField[],
-  override: ContentFieldOverride | undefined
-): boolean {
-  return override?.optional === true || group.every((field) => isOptional(field.cardinality));
-}
-
-export function metadata(
-  field: RuleField,
-  name: string,
-  shape: string,
-  extras: readonly string[] = []
-): string {
-  const repeated = repeatsSiblings(field, shape);
-  const members = [
-    `key: ${JSON.stringify(name)}`,
-    `member: ${JSON.stringify(camelCase(name))}`,
-    `shape: ${JSON.stringify(shape)}`,
-    `form: ${JSON.stringify(formOfShape({ shape: contentShape(shape), repeated }))}`,
-    ...extras,
-  ];
-  if (repeated) {
-    members.push("repeated: true");
-  }
-  return `{ ${members.join(", ")} }`;
-}
-
 function lowerValue(
   emitter: Emitter,
   field: RuleField,
@@ -516,34 +355,6 @@ function lowerValue(
     // A widening opens the set: it exists precisely to admit forms the rules do
     // not name, so the closed arm no longer describes everything legal.
     admits: admitsScalars(field, "value", widening === undefined ? value : null),
-  };
-}
-
-/** The descriptor for a shape whose whole value is one scalar the rules type. */
-function admitsScalars(
-  field: RuleField,
-  shape: string,
-  value: TsValue | null
-): Omit<EmittedField, "field"> {
-  return {
-    shape,
-    repeated: repeatsSiblings(field, shape),
-    ...(value?.literals === undefined ? {} : { literals: value.literals }),
-  };
-}
-
-/** The descriptor for a block shape, carrying the scope its closures run in. */
-function admitsBlock(
-  field: RuleField,
-  shape: string,
-  scope?: FieldScope,
-  clause?: "trigger" | "effect"
-): Omit<EmittedField, "field"> {
-  return {
-    shape,
-    repeated: repeatsSiblings(field, shape),
-    ...(scope === undefined ? {} : { scope: scope.scopes }),
-    ...(clause === undefined ? {} : { clause }),
   };
 }
 
@@ -1386,140 +1197,6 @@ function lowerScalarUnion(
     memberType: repeated[0]! ? arrayType(base) : base,
     metadata: metadata(group[0]!, name, "value", scalarMetadata(value)),
     admits: admitsScalars(group[0]!, "value", widening === undefined ? value : null),
-  };
-}
-
-/**
- * Applies an overlay arity assertion by correcting the declared cardinality.
- *
- * Everything downstream — the member type, the field metadata's `repeated`, the
- * shape descriptor — already reads the cardinality, so correcting it once here
- * is what keeps the three from disagreeing about whether the key repeats. The
- * minimum is left alone in both directions: how often a key may be written is a
- * different claim from whether it must be.
- */
-function assertedArity(
-  group: readonly RuleField[],
-  override: ContentFieldOverride | undefined
-): readonly RuleField[] {
-  const max = override?.arity === "single" ? 1 : override?.arity === "repeated" ? null : undefined;
-  if (max === undefined) {
-    return group;
-  }
-  return group.map((field) => ({ ...field, cardinality: { ...field.cardinality, max } }));
-}
-
-/**
- * Applies `uncheckedString` by rewriting the declaration itself: a `<type>`
- * reference becomes a plain `scalar`, which is already how CWT spells "any
- * string" and which every emitter below already knows how to lower.
- *
- * Rewriting the rule rather than patching the lowered result is what keeps the
- * member type, the metadata's `conversion`, the absent `refTypes` and the
- * corpus gate's view of the field from having to be corrected one by one. The
- * doc line rides on the same field, so it reaches the generated comment through
- * the ordinary path.
- *
- * The guard is the point of the lever being narrow: every declaration in the
- * group must be a bare `<type>` reference and the row must request no shape.
- * Anything else and this would be erasing a check nobody asked it to.
- */
-function assertedUncheckedString(
-  emitter: Emitter,
-  group: readonly RuleField[],
-  override: ContentFieldOverride | undefined,
-  path: string
-): { readonly group: readonly RuleField[]; readonly docs: readonly string[] } {
-  if (override?.uncheckedString !== true) {
-    return { group, docs: [] };
-  }
-  const targets = group.map((field) => field.type);
-  if (override.shape !== undefined || targets.some((type) => type.kind !== "typeRef")) {
-    const spelled = targets.map((type) => type.kind).join(", ");
-    throw new Error(
-      `The overlay marks ${path} uncheckedString, but its lowering is not a plain type ` +
-        `reference (shape: ${override.shape ?? "none"}, declarations: ${spelled}). The lever ` +
-        "only weakens a reference check; it must not erase any other checking."
-    );
-  }
-  const docs = targets.flatMap((type) => {
-    const name = (type as Extract<RuleType, { kind: "typeRef" }>).name;
-    const target = emitter.rules.contentTypes.get(name);
-    const where =
-      target?.path == null
-        ? "outside the SDK's typed registries"
-        : `in \`${target.pathExtension ?? ".txt"}\` files under ` +
-          `\`${target.path.replace(/^game\//, "")}\``;
-    return [
-      "Not checked: any string is accepted here.",
-      `The \`<${name}>\` ids this names live ${where},`,
-      "which the SDK carries as opaque Assets rather than as a typed registry,",
-      "so there is no id set to check a spelling against.",
-    ];
-  });
-  return { group: group.map((field) => ({ ...field, type: { kind: "scalar" } })), docs };
-}
-
-/**
- * Applies an `ASSET_PATH_FIELDS` row: the member accepts a captured Asset as
- * well as a string, and the metadata says so, so the writer unwraps the Item to
- * its declared logical path and the fold checks whichever form arrived.
- *
- * Applied to the lowered result rather than by rewriting the rule, because
- * unlike `uncheckedString` there is no CWT spelling that already means this —
- * the rules type the field `filepath` and are right to; what the row adds is
- * the SDK's own knowledge that this particular path is one a mod can ship.
- *
- * The guards are what keep the row honest. A `filepath` declaration is required
- * because the row asserts the value is a path; a `value` shape is required
- * because an Item is one scalar; and a widening is refused because the union
- * arms would then be unclear about which of them an Item satisfies.
- *
- * Presence — every `ASSET_PATH_FIELDS` row reaching a real consumption site —
- * is tracked through `emitter.overlayAudit`, the same SDK-255 mechanism every
- * other path-keyed overlay table uses (`index.ts`'s `assertAllApplied("ASSET_PATH_FIELDS",
- * ...)` closes the loop); this function's own throw above is the *shape* check
- * beyond presence, that a row marked here actually lowers as one mod-root path
- * scalar, which `OverlayAudit` cannot express and stays here.
- */
-function assertedAssetPath(
-  emitter: Emitter,
-  lowered: LoweredField | null,
-  group: readonly RuleField[],
-  name: string,
-  widening: string | undefined,
-  path: string
-): LoweredField | null {
-  if (!ASSET_PATH_FIELDS.has(path)) {
-    return lowered;
-  }
-  emitter.overlayAudit.applied("ASSET_PATH_FIELDS", path);
-  const spelled = group.map((field) => field.type.kind).join(", ");
-  if (
-    lowered === null ||
-    lowered.admits.shape !== "value" ||
-    widening !== undefined ||
-    !group.every((field) => field.type.kind === "filepath")
-  ) {
-    throw new Error(
-      `The overlay marks ${path} an asset path, but it does not lower as one (shape: ` +
-        `${lowered?.admits.shape ?? "none"}, declarations: ${spelled}, widening: ` +
-        `${widening ?? "none"}). The row asserts the value is one mod-root path scalar.`
-    );
-  }
-  const base = `${emitter.use("AssetFileItem")} | string`;
-  const field = group[0]!;
-  return {
-    ...lowered,
-    memberType: repeatsSiblings(field, "value") ? arrayType(base) : base,
-    metadata: metadata(field, name, "value", ['conversion: "assetPath"']),
-    docs: [
-      ...(lowered.docs ?? []),
-      "A path from the mod root. An Asset file placed in a Feature lowers to its declared",
-      "logical path; a plain string is written as it stands and checked at build time against",
-      "the paths this mod captures and the vanilla file inventory, as a warning rather than an",
-      "error — a DLC or third-party path is legitimate here.",
-    ],
   };
 }
 
