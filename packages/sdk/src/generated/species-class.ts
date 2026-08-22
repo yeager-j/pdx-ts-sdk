@@ -21,8 +21,6 @@ import type {
 } from "./refs.ts";
 import type { ScopeName } from "./scopes.ts";
 
-import "./government-trigger.ts";
-
 export interface SpeciesClassCustomPortraits {
   randomized?: Trigger<"no_scope">;
   playable?: Trigger<"no_scope">;

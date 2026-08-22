@@ -101,7 +101,7 @@ export const EXTRA_ALIAS_CATEGORIES = new Map<string, string>([
       "`planet_initializer` and `moon_initializer` back into itself — so a system's " +
       "planets are anonymous, ordered and repeated, and nest without bound. Emitted " +
       "by emit/content/alias-splice.ts as `PlanetInitializerFields`, whose field table " +
-      "has to be resolved through `registerAliasStructFields` at write time because it " +
+      "has to be resolved through the generated alias catalog at write time because it " +
       "refers to itself.",
   ],
   [

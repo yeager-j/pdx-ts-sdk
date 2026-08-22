@@ -10,6 +10,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { scopeIndex, type ContentType, type RuleSet } from "./cwt/rules.ts";
+import { aliasCatalogCode } from "./emit/content/alias-catalog.ts";
 import {
   emitAliasCategories,
   type AliasCategoryEmission,
@@ -630,6 +631,27 @@ async function writeContentModules(
       content.emission.code
     );
   }
+  await write(
+    "content-alias-catalog.ts",
+    header(commit, ["alias[...] categories across the rule files"]) +
+      aliasCatalogCode(
+        [...aliasCategories].map(([category, emission]) => ({
+          category,
+          fieldsConstant: emission.fieldsConstant,
+          module: `./${category.replaceAll("_", "-")}.ts`,
+        })),
+        [
+          ...[...aliasCategories].map(([category, emission]) => ({
+            file: `${category.replaceAll("_", "-")}.ts`,
+            code: emission.code,
+          })),
+          ...contents.map((content) => ({
+            file: `${kebabCase(content.registry)}.ts`,
+            code: content.emission.code,
+          })),
+        ]
+      )
+  );
 
   const contentSources = [...new Set(CONTENT_MANIFEST.map((entry) => entry.source))];
   await write("content-registry.ts", header(commit, contentSources) + contentRegistry(contents));

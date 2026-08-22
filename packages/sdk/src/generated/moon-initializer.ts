@@ -2,7 +2,7 @@
 // Source: cwtools-stellaris-config @ a4ee61a099b8
 // From: alias[moon_initializer:...] across the rule files
 
-import { registerAliasStructFields, type ContentField } from "../content/schema.ts";
+import type { ContentField } from "../content/schema.ts";
 import type { EffectBlock } from "../content/types.ts";
 import type { ScriptValue } from "../script/trigger-core.ts";
 import type { SolarSysInitPlanetClass } from "./enums.ts";
@@ -293,5 +293,3 @@ export const MOON_INITIALIZER_FIELDS: readonly ContentField[] = [
     repeated: true,
   },
 ];
-
-registerAliasStructFields("moon_initializer", MOON_INITIALIZER_FIELDS);

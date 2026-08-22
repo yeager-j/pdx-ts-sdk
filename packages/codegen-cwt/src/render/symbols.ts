@@ -46,11 +46,7 @@ const SYMBOL_MODULES: readonly ModuleSymbols[] = [
   },
   { module: "../authoring/assets.ts", types: ["AssetFileItem"] },
   { module: "../content/authoring.ts", types: ["DefinedContent"] },
-  {
-    module: "../content/schema.ts",
-    types: ["ContentField", "ContentLocalisation"],
-    values: ["registerAliasStructFields"],
-  },
+  { module: "../content/schema.ts", types: ["ContentField", "ContentLocalisation"] },
   {
     module: "../content/types.ts",
     types: [
@@ -129,12 +125,11 @@ export function knownSymbol(name: string, hint: string): KnownSymbol {
 }
 
 /**
- * Collects named and side-effect imports while one generated file is emitted.
+ * Collects the named imports one generated file needs while it is emitted.
  * Repeated named imports are idempotent, while conflicting type/value uses fail immediately.
  */
 export class ImportRecorder {
   private readonly named = new Map<string, Map<string, SymbolKind>>();
-  private readonly sideEffect = new Set<string>();
 
   /**
    * Records one named import, combining repeated uses of the same symbol.
@@ -152,36 +147,25 @@ export class ImportRecorder {
     this.named.set(module, moduleImports);
   }
 
-  /** Records a bare import needed for module initialization or registration. */
-  addSideEffect(module: string): void {
-    this.sideEffect.add(module);
-  }
-
   /** Returns a detached snapshot that later recordings cannot mutate. */
   snapshot(): FileImports {
     const named = new Map<string, Map<string, SymbolKind>>();
     for (const [module, imports] of this.named) {
       named.set(module, new Map(imports));
     }
-    return {
-      named,
-      sideEffect: new Set(this.sideEffect),
-    };
+    return { named };
   }
 }
 
-/** The named and side-effect imports required by one generated file. */
+/** The named imports required by one generated file. */
 export interface FileImports {
   /** Named imports grouped by module specifier and symbol name. */
   readonly named: ReadonlyMap<string, ReadonlyMap<string, SymbolKind>>;
-  /** Modules that must also be imported for their initialization effects. */
-  readonly sideEffect: ReadonlySet<string>;
 }
 
 /**
  * Renders a deterministic import block for one generated file.
- * Modules and names are sorted, type/value imports stay distinct, and side-effect imports come
- * last so Prettier does not split the named-import block at a reordering barrier.
+ * Modules and names are sorted, and type and value imports stay distinct.
  */
 export function renderImports(imports: FileImports): string {
   const statements: string[] = [];
@@ -209,9 +193,6 @@ export function renderImports(imports: FileImports): string {
     if (values.length > 0) {
       statements.push(`import { ${values.join(", ")} } from ${JSON.stringify(module)};\n`);
     }
-  }
-  for (const module of [...imports.sideEffect].sort()) {
-    statements.push(`import ${JSON.stringify(module)};\n`);
   }
   return statements.join("");
 }

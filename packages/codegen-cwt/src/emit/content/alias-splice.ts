@@ -15,8 +15,9 @@
  *  - the interfaces refer to each other by name, which TypeScript allows
  *    directly;
  *  - the *field tables* cannot, since a `const` cannot reference itself before
- *    it is initialised — so each category registers its table under its own name
- *    via `registerAliasStructFields`, and the writer resolves it at write time.
+ *    it is initialised — so a field names its category, and the writer resolves
+ *    the name through the generated catalog
+ *    (`packages/codegen-cwt/src/emit/content/alias-catalog.ts`) at write time.
  *    That is the same indirection
  *    `packages/codegen-cwt/src/emit/content/alias-struct.ts` needs for
  *    `government_trigger`'s combinators, reused rather than reinvented.
@@ -289,8 +290,7 @@ function lowerNestedSplices(emitter: Emitter, context: AliasSpliceContext): Alia
 function aliasSpliceEmission(
   context: AliasSpliceContext,
   draft: AliasSpliceDraft,
-  contentField: string,
-  registerAliasStructFields: string
+  contentField: string
 ): AliasSpliceEmission {
   const code =
     draft.extraCode.join("") +
@@ -309,9 +309,7 @@ function aliasSpliceEmission(
       context.fieldsConstant,
       contentField,
       draft.fieldMetadata.map((entry) => `  ${entry},\n`).join("")
-    ) +
-    `${registerAliasStructFields}(${JSON.stringify(context.category)}, ` +
-    `${context.fieldsConstant});\n`;
+    );
 
   return {
     code,
@@ -345,10 +343,5 @@ export function emitAliasSplice(emitter: Emitter, category: string): AliasSplice
     lowerNamedMembers(emitter, context),
     lowerNestedSplices(emitter, context)
   );
-  return aliasSpliceEmission(
-    context,
-    draft,
-    emitter.use("ContentField"),
-    emitter.use("registerAliasStructFields")
-  );
+  return aliasSpliceEmission(context, draft, emitter.use("ContentField"));
 }

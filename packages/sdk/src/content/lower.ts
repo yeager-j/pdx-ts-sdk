@@ -12,6 +12,7 @@ import {
 } from "@pdx-ts/pdxscript";
 
 import type { AssetFileItem } from "../authoring/assets.ts";
+import { aliasStructFieldsOf } from "../generated/content-alias-catalog.ts";
 import type { ScopeName } from "../generated/scopes.ts";
 import {
   underField,
@@ -34,7 +35,6 @@ import {
   weightBlock,
 } from "./blocks.ts";
 import {
-  aliasStructFieldsOf,
   authoredForm,
   type ContentDualArm,
   type ContentDualField,

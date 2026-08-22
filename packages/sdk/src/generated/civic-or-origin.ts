@@ -21,8 +21,6 @@ import type {
 import type { ScopeName } from "./scopes.ts";
 import type { CountryFlag } from "./value-sets.ts";
 
-import "./government-trigger.ts";
-
 export interface CivicOrOriginSwapType {
   name?: string;
   description?: string;

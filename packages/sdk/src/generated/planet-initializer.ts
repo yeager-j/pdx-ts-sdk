@@ -2,7 +2,7 @@
 // Source: cwtools-stellaris-config @ a4ee61a099b8
 // From: alias[planet_initializer:...] across the rule files
 
-import { registerAliasStructFields, type ContentField } from "../content/schema.ts";
+import type { ContentField } from "../content/schema.ts";
 import type { EffectBlock } from "../content/types.ts";
 import type { ScriptValue } from "../script/trigger-core.ts";
 import type { SatelliteNamingPolicy, SolarSysInitPlanetClass } from "./enums.ts";
@@ -17,8 +17,6 @@ import type {
   ResourceRef,
 } from "./refs.ts";
 import type { CustomPlanetNames, PlanetFlag } from "./value-sets.ts";
-
-import "./moon-initializer.ts";
 
 export interface PlanetInitializerCount {
   min?: number;
@@ -307,5 +305,3 @@ export const PLANET_INITIALIZER_FIELDS: readonly ContentField[] = [
     repeated: true,
   },
 ];
-
-registerAliasStructFields("planet_initializer", PLANET_INITIALIZER_FIELDS);
