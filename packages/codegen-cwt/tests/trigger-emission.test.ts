@@ -249,7 +249,6 @@ describe("trigger emission", () => {
     );
   });
 
-  it("authors a repeated trigger field as an array and writes one sibling key per item", () => {
   it("authors a repeated comparison as one value, one pair, or a list of pairs", () => {
     expect(emission.code).toContain(
       "value: ScriptValue | readonly [PdxOp, ScriptValue] | " +
