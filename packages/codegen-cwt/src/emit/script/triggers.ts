@@ -393,6 +393,11 @@ function emitValueList(
   );
 }
 
+/** The doc line every generated argument object carries. */
+function argsDoc(fn: string): string {
+  return docComment([`The arguments \`${fn}\` takes, as the rules declare them.`]);
+}
+
 function emitFields(
   emitter: Emitter,
   fn: string,
@@ -406,6 +411,7 @@ function emitFields(
   const pushes = pushStatements(emitter, fields, key);
   const withRefs = fields.some(contributesRefs);
   return (
+    argsDoc(fn) +
     `export interface ${name} {\n${members}}\n\n` +
     docComment(docs) +
     `export function ${fn}(args: ${name}): ${emitter.use("Trigger")}<${scope}> {\n` +
@@ -448,6 +454,7 @@ function emitScalarOrFields(
   const condition = emitter.use("Trigger");
   const scalarType = emitter.useValue(scalar).type;
   return (
+    argsDoc(fn) +
     `export type ${name}${typeParameter} = {\n${members}};\n\n` +
     docComment(docs) +
     `export function ${fn}(value: ${scalarType}): ${condition}<${scope}>;\n` +

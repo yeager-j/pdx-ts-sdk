@@ -1415,6 +1415,7 @@ export function bioshipCanGrow(value: boolean = true): Trigger<"ship"> {
   return trigger([kv("bioship_can_grow", value)]);
 }
 
+/** The arguments `branchOfficeValue` takes, as the rules declare them. */
 export interface BranchOfficeValueArgs {
   who: ScopeValue<
     | "agreement"
@@ -1470,6 +1471,7 @@ export function builtOnPlanet(value: boolean = true): Trigger<"megastructure"> {
   return trigger([kv("built_on_planet", value)]);
 }
 
+/** The arguments `calcTrueIf` takes, as the rules declare them. */
 export interface CalcTrueIfArgs {
   amount: ScriptValue | readonly [PdxOp, ScriptValue];
   conditions: Trigger<ScopeName>;
@@ -1504,6 +1506,7 @@ export function canAccessSystem(value: ScopeValue<"system">): Trigger<"fleet"> {
   return trigger([kv("can_access_system", value.path)]);
 }
 
+/** The arguments `canAffordSpecialOffer` takes, as the rules declare them. */
 export interface CanAffordSpecialOfferArgs {
   target: ScopeValue<
     | "agreement"
@@ -1603,6 +1606,7 @@ export function canChangePolicy(value: PolicyRef | string): Trigger<"country"> {
   );
 }
 
+/** The arguments `canColonize` takes, as the rules declare them. */
 export interface CanColonizeArgs {
   who: ScopeValue<
     | "agreement"
@@ -1675,6 +1679,7 @@ export function canControlAccessFor(
   return trigger([kv("can_control_access_for", value.path)]);
 }
 
+/** The arguments `canCopyRandomTechFrom` takes, as the rules declare them. */
 export interface CanCopyRandomTechFromArgs {
   who: ScopeValue<
     | "agreement"
@@ -1731,6 +1736,7 @@ export function canCopyRandomTechFrom(args: CanCopyRandomTechFromArgs): Trigger<
   return trigger([block("can_copy_random_tech_from", entries)], refs);
 }
 
+/** The arguments `canDeclareWar` takes, as the rules declare them. */
 export interface CanDeclareWarArgs {
   target: ScopeValue<
     | "agreement"
@@ -1884,6 +1890,7 @@ export function canResearchTechnology(value: TechnologyRef | string): Trigger<"c
   );
 }
 
+/** The arguments `canResearchTier` takes, as the rules declare them. */
 export interface CanResearchTierArgs {
   area: TechnologyArea;
   tier: number | readonly [PdxOp, number];
@@ -1904,6 +1911,7 @@ export function canResearchTier(args: CanResearchTierArgs): Trigger<"country"> {
   return trigger([block("can_research_tier", entries)]);
 }
 
+/** The arguments `canSetPolicy` takes, as the rules declare them. */
 export interface CanSetPolicyArgs {
   policy: PolicyRef | string;
   option: string;
@@ -1985,6 +1993,7 @@ export function categoryLastPickedTradition(
   );
 }
 
+/** The arguments `checkGalaxySetupValue` takes, as the rules declare them. */
 export interface CheckGalaxySetupValueArgs {
   setting: GalaxySetupValue;
   value: ScriptValue | readonly [PdxOp, ScriptValue];
@@ -2008,6 +2017,7 @@ export function checkGalaxySetupValue(args: CheckGalaxySetupValueArgs): Trigger<
   return trigger([block("check_galaxy_setup_value", entries)]);
 }
 
+/** The arguments `checkModifierValue` takes, as the rules declare them. */
 export interface CheckModifierValueArgs {
   modifier: string;
   value: ScriptValue | readonly [PdxOp, ScriptValue];
@@ -2049,6 +2059,7 @@ export function checkModifierValue(
   return trigger([block("check_modifier_value", entries)]);
 }
 
+/** The arguments `checkPopFactionParameter` takes, as the rules declare them. */
 export interface CheckPopFactionParameterArgs {
   which: string;
   value: ScopeValue;
@@ -2069,6 +2080,7 @@ export function checkPopFactionParameter(
   return trigger([block("check_pop_faction_parameter", entries)]);
 }
 
+/** The arguments `checkVariable` takes, as the rules declare them. */
 export interface CheckVariableArgs {
   which: Variable;
   value: ScriptValue | readonly [PdxOp, ScriptValue];
@@ -2123,6 +2135,7 @@ export function checkVariable(
   return trigger([block("check_variable", entries)]);
 }
 
+/** The arguments `checkVariableArithmetic` takes, as the rules declare them. */
 export interface CheckVariableArithmeticArgs {
   which: ScriptValue | readonly [PdxOp, ScriptValue];
   add?: ScriptValue | readonly [PdxOp, ScriptValue];
@@ -2251,6 +2264,7 @@ export function civicsCount(op: PdxOp, value: ScriptValue): Trigger<"country"> {
   return trigger([cmp("civics_count", op, scriptValueScalar(value))]);
 }
 
+/** The arguments `closestSystem` takes, as the rules declare them. */
 export interface ClosestSystemArgs {
   minSteps?: number | readonly [PdxOp, number];
   maxSteps?: number | readonly [PdxOp, number];
@@ -2361,6 +2375,7 @@ export function commandLimit(op: PdxOp, value: ScriptValue): Trigger<"country"> 
   return trigger([cmp("command_limit", op, scriptValueScalar(value))]);
 }
 
+/** The arguments `compareDistance` takes, as the rules declare them. */
 export interface CompareDistanceArgs {
   closerObject: ScopeValue<
     | "ambient_object"
@@ -2432,6 +2447,7 @@ export function compareDistance(
   return trigger([block("compare_distance", entries)]);
 }
 
+/** The arguments `conditionalTooltip` takes, as the rules declare them. */
 export interface ConditionalTooltipArgs {
   trigger: Trigger<ScopeName>;
   conditions: Trigger<ScopeName>;
@@ -2508,6 +2524,7 @@ export function councilLegitimacy(op: PdxOp, value: ScriptValue): Trigger<"count
   return trigger([cmp("council_legitimacy", op, scriptValueScalar(value))]);
 }
 
+/** The arguments `countActiveFirstContact` takes, as the rules declare them. */
 export interface CountActiveFirstContactArgs {
   limit?: Trigger<"first_contact">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -2537,6 +2554,7 @@ export function countActiveFirstContact(args: CountActiveFirstContactArgs): Trig
   return trigger([block("count_active_first_contact", entries)], refs);
 }
 
+/** The arguments `countAgreement` takes, as the rules declare them. */
 export interface CountAgreementArgs {
   limit?: Trigger<"agreement">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -2566,6 +2584,7 @@ export function countAgreement(args: CountAgreementArgs): Trigger<"country" | "n
   return trigger([block("count_agreement", entries)], refs);
 }
 
+/** The arguments `countAmbientObject` takes, as the rules declare them. */
 export interface CountAmbientObjectArgs {
   limit?: Trigger<"ambient_object">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -2595,6 +2614,7 @@ export function countAmbientObject(args: CountAmbientObjectArgs): Trigger<ScopeN
   return trigger([block("count_ambient_object", entries)], refs);
 }
 
+/** The arguments `countArchaeologicalSite` takes, as the rules declare them. */
 export interface CountArchaeologicalSiteArgs {
   limit?: Trigger<"archaeological_site">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -2624,6 +2644,7 @@ export function countArchaeologicalSite(args: CountArchaeologicalSiteArgs): Trig
   return trigger([block("count_archaeological_site", entries)], refs);
 }
 
+/** The arguments `countAssociate` takes, as the rules declare them. */
 export interface CountAssociateArgs {
   limit?: Trigger<"country">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -2653,6 +2674,7 @@ export function countAssociate(args: CountAssociateArgs): Trigger<"federation"> 
   return trigger([block("count_associate", entries)], refs);
 }
 
+/** The arguments `countAstralRift` takes, as the rules declare them. */
 export interface CountAstralRiftArgs {
   limit?: Trigger<"astral_rift">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -2682,6 +2704,7 @@ export function countAstralRift(args: CountAstralRiftArgs): Trigger<ScopeName> {
   return trigger([block("count_astral_rift", entries)], refs);
 }
 
+/** The arguments `countAttacker` takes, as the rules declare them. */
 export interface CountAttackerArgs {
   limit?: Trigger<"country">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -2721,6 +2744,7 @@ export function countAvailableContracts(op: PdxOp, value: number): Trigger<"coun
   return trigger([cmp("count_available_contracts", op, value)]);
 }
 
+/** The arguments `countAvailableDebris` takes, as the rules declare them. */
 export interface CountAvailableDebrisArgs {
   limit?: Trigger<"debris">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -2750,6 +2774,7 @@ export function countAvailableDebris(args: CountAvailableDebrisArgs): Trigger<"c
   return trigger([block("count_available_debris", entries)], refs);
 }
 
+/** The arguments `countBypass` takes, as the rules declare them. */
 export interface CountBypassArgs {
   limit?: Trigger<"bypass">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -2779,6 +2804,7 @@ export function countBypass(args: CountBypassArgs): Trigger<ScopeName> {
   return trigger([block("count_bypass", entries)], refs);
 }
 
+/** The arguments `countBypassInSystem` takes, as the rules declare them. */
 export interface CountBypassInSystemArgs {
   limit?: Trigger<"bypass">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -2808,6 +2834,7 @@ export function countBypassInSystem(args: CountBypassInSystemArgs): Trigger<"sys
   return trigger([block("count_bypass_in_system", entries)], refs);
 }
 
+/** The arguments `countCombatantFleet` takes, as the rules declare them. */
 export interface CountCombatantFleetArgs {
   limit?: Trigger<"fleet">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -2848,6 +2875,7 @@ export function countContractsInProgress(op: PdxOp, value: number): Trigger<"cou
   return trigger([cmp("count_contracts_in_progress", op, value)]);
 }
 
+/** The arguments `countControlledColony` takes, as the rules declare them. */
 export interface CountControlledColonyArgs {
   limit?: Trigger<"colony">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -2877,6 +2905,7 @@ export function countControlledColony(args: CountControlledColonyArgs): Trigger<
   return trigger([block("count_controlled_colony", entries)], refs);
 }
 
+/** The arguments `countControlledFleet` takes, as the rules declare them. */
 export interface CountControlledFleetArgs {
   limit?: Trigger<"fleet">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -2906,6 +2935,7 @@ export function countControlledFleet(args: CountControlledFleetArgs): Trigger<"c
   return trigger([block("count_controlled_fleet", entries)], refs);
 }
 
+/** The arguments `countControlledPlanet` takes, as the rules declare them. */
 export interface CountControlledPlanetArgs {
   limit?: Trigger<"planet">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -2935,6 +2965,7 @@ export function countControlledPlanet(args: CountControlledPlanetArgs): Trigger<
   return trigger([block("count_controlled_planet", entries)], refs);
 }
 
+/** The arguments `countControlledShip` takes, as the rules declare them. */
 export interface CountControlledShipArgs {
   limit?: Trigger<"ship">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -2964,6 +2995,7 @@ export function countControlledShip(args: CountControlledShipArgs): Trigger<"cou
   return trigger([block("count_controlled_ship", entries)], refs);
 }
 
+/** The arguments `countCosmicStorm` takes, as the rules declare them. */
 export interface CountCosmicStormArgs {
   limit?: Trigger<"storm">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -2993,6 +3025,7 @@ export function countCosmicStorm(args: CountCosmicStormArgs): Trigger<ScopeName>
   return trigger([block("count_cosmic_storm", entries)], refs);
 }
 
+/** The arguments `countCosmicStormEndPosition` takes, as the rules declare them. */
 export interface CountCosmicStormEndPositionArgs {
   limit?: Trigger<"system">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -3024,6 +3057,7 @@ export function countCosmicStormEndPosition(
   return trigger([block("count_cosmic_storm_end_position", entries)], refs);
 }
 
+/** The arguments `countCosmicStormStartPosition` takes, as the rules declare them. */
 export interface CountCosmicStormStartPositionArgs {
   limit?: Trigger<"system">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -3055,6 +3089,7 @@ export function countCosmicStormStartPosition(
   return trigger([block("count_cosmic_storm_start_position", entries)], refs);
 }
 
+/** The arguments `countCouncilMember` takes, as the rules declare them. */
 export interface CountCouncilMemberArgs {
   limit?: Trigger<"country">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -3084,6 +3119,7 @@ export function countCouncilMember(args: CountCouncilMemberArgs): Trigger<ScopeN
   return trigger([block("count_council_member", entries)], refs);
 }
 
+/** The arguments `countCountry` takes, as the rules declare them. */
 export interface CountCountryArgs {
   limit?: Trigger<"country">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -3113,6 +3149,7 @@ export function countCountry(args: CountCountryArgs): Trigger<ScopeName> {
   return trigger([block("count_country", entries)], refs);
 }
 
+/** The arguments `countCountryNeighborToSystem` takes, as the rules declare them. */
 export interface CountCountryNeighborToSystemArgs {
   limit?: Trigger<"country">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -3144,6 +3181,7 @@ export function countCountryNeighborToSystem(
   return trigger([block("count_country_neighbor_to_system", entries)], refs);
 }
 
+/** The arguments `countDefender` takes, as the rules declare them. */
 export interface CountDefenderArgs {
   limit?: Trigger<"country">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -3173,6 +3211,7 @@ export function countDefender(args: CountDefenderArgs): Trigger<"war"> {
   return trigger([block("count_defender", entries)], refs);
 }
 
+/** The arguments `countDeposit` takes, as the rules declare them. */
 export interface CountDepositArgs {
   limit?: Trigger<"deposit">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -3204,6 +3243,7 @@ export function countDeposit(
   return trigger([block("count_deposit", entries)], refs);
 }
 
+/** The arguments `countDeposits` takes, as the rules declare them. */
 export interface CountDepositsArgs {
   type?: DepositRef | string;
   category?: DepositCategoryRef | string;
@@ -3250,6 +3290,7 @@ export function countEndCycleSystems(op: PdxOp, value: ScriptValue): Trigger<Sco
   return trigger([cmp("count_end_cycle_systems", op, scriptValueScalar(value))]);
 }
 
+/** The arguments `countEnslavedSpecies` takes, as the rules declare them. */
 export interface CountEnslavedSpeciesArgs {
   limit?: Trigger<"species">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -3281,6 +3322,7 @@ export function countEnslavedSpecies(
   return trigger([block("count_enslaved_species", entries)], refs);
 }
 
+/** The arguments `countEnvoy` takes, as the rules declare them. */
 export interface CountEnvoyArgs {
   limit?: Trigger<"leader">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -3310,6 +3352,7 @@ export function countEnvoy(args: CountEnvoyArgs): Trigger<"country"> {
   return trigger([block("count_envoy", entries)], refs);
 }
 
+/** The arguments `countEspionageAsset` takes, as the rules declare them. */
 export interface CountEspionageAssetArgs {
   limit?: Trigger<"espionage_asset">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -3341,6 +3384,7 @@ export function countEspionageAsset(
   return trigger([block("count_espionage_asset", entries)], refs);
 }
 
+/** The arguments `countEspionageOperation` takes, as the rules declare them. */
 export interface CountEspionageOperationArgs {
   limit?: Trigger<"espionage_operation">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -3372,6 +3416,7 @@ export function countEspionageOperation(
   return trigger([block("count_espionage_operation", entries)], refs);
 }
 
+/** The arguments `countExactSpecies` takes, as the rules declare them. */
 export interface CountExactSpeciesArgs {
   limit?: Trigger<"species">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -3400,6 +3445,7 @@ export function countExactSpecies(
   return trigger([block("count_exact_species", entries)], refs);
 }
 
+/** The arguments `countExhibit` takes, as the rules declare them. */
 export interface CountExhibitArgs {
   limit?: Trigger<"exhibit">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -3429,6 +3475,7 @@ export function countExhibit(args: CountExhibitArgs): Trigger<"country"> {
   return trigger([block("count_exhibit", entries)], refs);
 }
 
+/** The arguments `countExistingSpeciesTraits` takes, as the rules declare them. */
 export interface CountExistingSpeciesTraitsArgs {
   limit?: Trigger<"species_trait">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -3460,6 +3507,7 @@ export function countExistingSpeciesTraits(
   return trigger([block("count_existing_species_traits", entries)], refs);
 }
 
+/** The arguments `countFederation` takes, as the rules declare them. */
 export interface CountFederationArgs {
   limit?: Trigger<"federation">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -3489,6 +3537,7 @@ export function countFederation(args: CountFederationArgs): Trigger<ScopeName> {
   return trigger([block("count_federation", entries)], refs);
 }
 
+/** The arguments `countFederationAlly` takes, as the rules declare them. */
 export interface CountFederationAllyArgs {
   limit?: Trigger<"country">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -3518,6 +3567,7 @@ export function countFederationAlly(args: CountFederationAllyArgs): Trigger<"cou
   return trigger([block("count_federation_ally", entries)], refs);
 }
 
+/** The arguments `countFirstContact` takes, as the rules declare them. */
 export interface CountFirstContactArgs {
   limit?: Trigger<"first_contact">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -3547,6 +3597,7 @@ export function countFirstContact(args: CountFirstContactArgs): Trigger<"country
   return trigger([block("count_first_contact", entries)], refs);
 }
 
+/** The arguments `countFleetInOrbit` takes, as the rules declare them. */
 export interface CountFleetInOrbitArgs {
   limit?: Trigger<"fleet">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -3578,6 +3629,7 @@ export function countFleetInOrbit(
   return trigger([block("count_fleet_in_orbit", entries)], refs);
 }
 
+/** The arguments `countFleetInSystem` takes, as the rules declare them. */
 export interface CountFleetInSystemArgs {
   limit?: Trigger<"fleet">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -3607,6 +3659,7 @@ export function countFleetInSystem(args: CountFleetInSystemArgs): Trigger<"syste
   return trigger([block("count_fleet_in_system", entries)], refs);
 }
 
+/** The arguments `countGalaxyFleet` takes, as the rules declare them. */
 export interface CountGalaxyFleetArgs {
   limit?: Trigger<"fleet">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -3636,6 +3689,7 @@ export function countGalaxyFleet(args: CountGalaxyFleetArgs): Trigger<ScopeName>
   return trigger([block("count_galaxy_fleet", entries)], refs);
 }
 
+/** The arguments `countGalaxyPlanet` takes, as the rules declare them. */
 export interface CountGalaxyPlanetArgs {
   limit?: Trigger<"planet">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -3665,6 +3719,7 @@ export function countGalaxyPlanet(args: CountGalaxyPlanetArgs): Trigger<ScopeNam
   return trigger([block("count_galaxy_planet", entries)], refs);
 }
 
+/** The arguments `countGalaxySector` takes, as the rules declare them. */
 export interface CountGalaxySectorArgs {
   limit?: Trigger<"sector">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -3694,6 +3749,7 @@ export function countGalaxySector(args: CountGalaxySectorArgs): Trigger<ScopeNam
   return trigger([block("count_galaxy_sector", entries)], refs);
 }
 
+/** The arguments `countGalaxySpecies` takes, as the rules declare them. */
 export interface CountGalaxySpeciesArgs {
   limit?: Trigger<"species">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -3723,6 +3779,7 @@ export function countGalaxySpecies(args: CountGalaxySpeciesArgs): Trigger<ScopeN
   return trigger([block("count_galaxy_species", entries)], refs);
 }
 
+/** The arguments `countGalcomMember` takes, as the rules declare them. */
 export interface CountGalcomMemberArgs {
   limit?: Trigger<"country">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -3752,6 +3809,7 @@ export function countGalcomMember(args: CountGalcomMemberArgs): Trigger<ScopeNam
   return trigger([block("count_galcom_member", entries)], refs);
 }
 
+/** The arguments `countGroundCombatAttacker` takes, as the rules declare them. */
 export interface CountGroundCombatAttackerArgs {
   limit?: Trigger<"army">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -3783,6 +3841,7 @@ export function countGroundCombatAttacker(
   return trigger([block("count_ground_combat_attacker", entries)], refs);
 }
 
+/** The arguments `countGroundCombatDefender` takes, as the rules declare them. */
 export interface CountGroundCombatDefenderArgs {
   limit?: Trigger<"army">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -3824,6 +3883,7 @@ export function countIssuedContracts(op: PdxOp, value: number): Trigger<"country
   return trigger([cmp("count_issued_contracts", op, value)]);
 }
 
+/** The arguments `countIssuedMission` takes, as the rules declare them. */
 export interface CountIssuedMissionArgs {
   limit?: Trigger<"mission">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -3853,6 +3913,7 @@ export function countIssuedMission(args: CountIssuedMissionArgs): Trigger<"count
   return trigger([block("count_issued_mission", entries)], refs);
 }
 
+/** The arguments `countJobPopGroup` takes, as the rules declare them. */
 export interface CountJobPopGroupArgs {
   limit?: Trigger<"pop_group">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -3882,6 +3943,7 @@ export function countJobPopGroup(args: CountJobPopGroupArgs): Trigger<"pop_job">
   return trigger([block("count_job_pop_group", entries)], refs);
 }
 
+/** The arguments `countMegastructure` takes, as the rules declare them. */
 export interface CountMegastructureArgs {
   limit?: Trigger<"megastructure">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -3911,6 +3973,7 @@ export function countMegastructure(args: CountMegastructureArgs): Trigger<ScopeN
   return trigger([block("count_megastructure", entries)], refs);
 }
 
+/** The arguments `countMember` takes, as the rules declare them. */
 export interface CountMemberArgs {
   limit?: Trigger<"country">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -3940,6 +4003,7 @@ export function countMember(args: CountMemberArgs): Trigger<"federation"> {
   return trigger([block("count_member", entries)], refs);
 }
 
+/** The arguments `countMoon` takes, as the rules declare them. */
 export interface CountMoonArgs {
   limit?: Trigger<"planet">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -3969,6 +4033,7 @@ export function countMoon(args: CountMoonArgs): Trigger<"carrier" | "colony" | "
   return trigger([block("count_moon", entries)], refs);
 }
 
+/** The arguments `countNeighborCountry` takes, as the rules declare them. */
 export interface CountNeighborCountryArgs {
   limit?: Trigger<"country">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -3998,6 +4063,7 @@ export function countNeighborCountry(args: CountNeighborCountryArgs): Trigger<"c
   return trigger([block("count_neighbor_country", entries)], refs);
 }
 
+/** The arguments `countNeighborSystem` takes, as the rules declare them. */
 export interface CountNeighborSystemArgs {
   limit?: Trigger<"system">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -4027,6 +4093,7 @@ export function countNeighborSystem(args: CountNeighborSystemArgs): Trigger<"sys
   return trigger([block("count_neighbor_system", entries)], refs);
 }
 
+/** The arguments `countNeighborSystemEuclidean` takes, as the rules declare them. */
 export interface CountNeighborSystemEuclideanArgs {
   limit?: Trigger<"system">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -4058,6 +4125,7 @@ export function countNeighborSystemEuclidean(
   return trigger([block("count_neighbor_system_euclidean", entries)], refs);
 }
 
+/** The arguments `countObservedPreFtlWithinBorder` takes, as the rules declare them. */
 export interface CountObservedPreFtlWithinBorderArgs {
   limit?: Trigger<"country">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -4089,6 +4157,7 @@ export function countObservedPreFtlWithinBorder(
   return trigger([block("count_observed_pre_ftl_within_border", entries)], refs);
 }
 
+/** The arguments `countOrbitalStation` takes, as the rules declare them. */
 export interface CountOrbitalStationArgs {
   limit?: Trigger<"fleet">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -4118,6 +4187,7 @@ export function countOrbitalStation(args: CountOrbitalStationArgs): Trigger<"cou
   return trigger([block("count_orbital_station", entries)], refs);
 }
 
+/** The arguments `countOwnedArmy` takes, as the rules declare them. */
 export interface CountOwnedArmyArgs {
   limit?: Trigger<"army">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -4147,6 +4217,7 @@ export function countOwnedArmy(args: CountOwnedArmyArgs): Trigger<"country"> {
   return trigger([block("count_owned_army", entries)], refs);
 }
 
+/** The arguments `countOwnedColony` takes, as the rules declare them. */
 export interface CountOwnedColonyArgs {
   limit?: Trigger<"colony">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -4176,6 +4247,7 @@ export function countOwnedColony(args: CountOwnedColonyArgs): Trigger<"country" 
   return trigger([block("count_owned_colony", entries)], refs);
 }
 
+/** The arguments `countOwnedContract` takes, as the rules declare them. */
 export interface CountOwnedContractArgs {
   limit?: Trigger<"mission">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -4205,6 +4277,7 @@ export function countOwnedContract(args: CountOwnedContractArgs): Trigger<"count
   return trigger([block("count_owned_contract", entries)], refs);
 }
 
+/** The arguments `countOwnedDesign` takes, as the rules declare them. */
 export interface CountOwnedDesignArgs {
   limit?: Trigger<"design">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -4234,6 +4307,7 @@ export function countOwnedDesign(args: CountOwnedDesignArgs): Trigger<"country">
   return trigger([block("count_owned_design", entries)], refs);
 }
 
+/** The arguments `countOwnedFleet` takes, as the rules declare them. */
 export interface CountOwnedFleetArgs {
   limit?: Trigger<"fleet">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -4263,6 +4337,7 @@ export function countOwnedFleet(args: CountOwnedFleetArgs): Trigger<"country"> {
   return trigger([block("count_owned_fleet", entries)], refs);
 }
 
+/** The arguments `countOwnedLeader` takes, as the rules declare them. */
 export interface CountOwnedLeaderArgs {
   limit?: Trigger<"leader">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -4292,6 +4367,7 @@ export function countOwnedLeader(args: CountOwnedLeaderArgs): Trigger<"country">
   return trigger([block("count_owned_leader", entries)], refs);
 }
 
+/** The arguments `countOwnedMegastructure` takes, as the rules declare them. */
 export interface CountOwnedMegastructureArgs {
   limit?: Trigger<"megastructure">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -4321,6 +4397,7 @@ export function countOwnedMegastructure(args: CountOwnedMegastructureArgs): Trig
   return trigger([block("count_owned_megastructure", entries)], refs);
 }
 
+/** The arguments `countOwnedMission` takes, as the rules declare them. */
 export interface CountOwnedMissionArgs {
   limit?: Trigger<"mission">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -4350,6 +4427,7 @@ export function countOwnedMission(args: CountOwnedMissionArgs): Trigger<"country
   return trigger([block("count_owned_mission", entries)], refs);
 }
 
+/** The arguments `countOwnedNonprimaryStarbase` takes, as the rules declare them. */
 export interface CountOwnedNonprimaryStarbaseArgs {
   limit?: Trigger<"starbase">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -4381,6 +4459,7 @@ export function countOwnedNonprimaryStarbase(
   return trigger([block("count_owned_nonprimary_starbase", entries)], refs);
 }
 
+/** The arguments `countOwnedPlanet` takes, as the rules declare them. */
 export interface CountOwnedPlanetArgs {
   limit?: Trigger<"planet">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -4410,6 +4489,7 @@ export function countOwnedPlanet(args: CountOwnedPlanetArgs): Trigger<"country" 
   return trigger([block("count_owned_planet", entries)], refs);
 }
 
+/** The arguments `countOwnedPopAmount` takes, as the rules declare them. */
 export interface CountOwnedPopAmountArgs {
   limit?: Trigger<"pop_group">;
   count: ScriptValue | readonly [PdxOp, ScriptValue];
@@ -4443,6 +4523,7 @@ export function countOwnedPopAmount(
   return trigger([block("count_owned_pop_amount", entries)], refs);
 }
 
+/** The arguments `countOwnedPopGroup` takes, as the rules declare them. */
 export interface CountOwnedPopGroupArgs {
   limit?: Trigger<"pop_group">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -4476,6 +4557,7 @@ export function countOwnedPopGroup(
   return trigger([block("count_owned_pop_group", entries)], refs);
 }
 
+/** The arguments `countOwnedPopJob` takes, as the rules declare them. */
 export interface CountOwnedPopJobArgs {
   limit?: Trigger<"pop_job">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -4507,6 +4589,7 @@ export function countOwnedPopJob(
   return trigger([block("count_owned_pop_job", entries)], refs);
 }
 
+/** The arguments `countOwnedPopSpecies` takes, as the rules declare them. */
 export interface CountOwnedPopSpeciesArgs {
   limit?: Trigger<"species">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -4536,6 +4619,7 @@ export function countOwnedPopSpecies(args: CountOwnedPopSpeciesArgs): Trigger<"c
   return trigger([block("count_owned_pop_species", entries)], refs);
 }
 
+/** The arguments `countOwnedSector` takes, as the rules declare them. */
 export interface CountOwnedSectorArgs {
   limit?: Trigger<"sector">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -4565,6 +4649,7 @@ export function countOwnedSector(args: CountOwnedSectorArgs): Trigger<"country">
   return trigger([block("count_owned_sector", entries)], refs);
 }
 
+/** The arguments `countOwnedShip` takes, as the rules declare them. */
 export interface CountOwnedShipArgs {
   limit?: Trigger<"ship">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -4594,6 +4679,7 @@ export function countOwnedShip(args: CountOwnedShipArgs): Trigger<"country" | "f
   return trigger([block("count_owned_ship", entries)], refs);
 }
 
+/** The arguments `countOwnedSpecies` takes, as the rules declare them. */
 export interface CountOwnedSpeciesArgs {
   limit?: Trigger<"species">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -4625,6 +4711,7 @@ export function countOwnedSpecies(
   return trigger([block("count_owned_species", entries)], refs);
 }
 
+/** The arguments `countOwnedStarbase` takes, as the rules declare them. */
 export interface CountOwnedStarbaseArgs {
   limit?: Trigger<"starbase">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -4654,6 +4741,7 @@ export function countOwnedStarbase(args: CountOwnedStarbaseArgs): Trigger<"count
   return trigger([block("count_owned_starbase", entries)], refs);
 }
 
+/** The arguments `countOwnedStormInfluenceField` takes, as the rules declare them. */
 export interface CountOwnedStormInfluenceFieldArgs {
   limit?: Trigger<"cosmic_storm_influence_field">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -4685,6 +4773,7 @@ export function countOwnedStormInfluenceField(
   return trigger([block("count_owned_storm_influence_field", entries)], refs);
 }
 
+/** The arguments `countOwnedWorkforce` takes, as the rules declare them. */
 export interface CountOwnedWorkforceArgs {
   limit?: Trigger<"pop_job">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -4716,6 +4805,7 @@ export function countOwnedWorkforce(
   return trigger([block("count_owned_workforce", entries)], refs);
 }
 
+/** The arguments `countPlanetArmy` takes, as the rules declare them. */
 export interface CountPlanetArmyArgs {
   limit?: Trigger<"army">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -4747,6 +4837,7 @@ export function countPlanetArmy(
   return trigger([block("count_planet_army", entries)], refs);
 }
 
+/** The arguments `countPlanetWithinBorder` takes, as the rules declare them. */
 export interface CountPlanetWithinBorderArgs {
   limit?: Trigger<"planet">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -4776,6 +4867,7 @@ export function countPlanetWithinBorder(args: CountPlanetWithinBorderArgs): Trig
   return trigger([block("count_planet_within_border", entries)], refs);
 }
 
+/** The arguments `countPlayableCountry` takes, as the rules declare them. */
 export interface CountPlayableCountryArgs {
   limit?: Trigger<"country">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -4805,6 +4897,7 @@ export function countPlayableCountry(args: CountPlayableCountryArgs): Trigger<Sc
   return trigger([block("count_playable_country", entries)], refs);
 }
 
+/** The arguments `countPoolLeader` takes, as the rules declare them. */
 export interface CountPoolLeaderArgs {
   limit?: Trigger<"leader">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -4834,6 +4927,7 @@ export function countPoolLeader(args: CountPoolLeaderArgs): Trigger<"country"> {
   return trigger([block("count_pool_leader", entries)], refs);
 }
 
+/** The arguments `countPopFaction` takes, as the rules declare them. */
 export interface CountPopFactionArgs {
   limit?: Trigger<"pop_faction">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -4863,6 +4957,7 @@ export function countPopFaction(args: CountPopFactionArgs): Trigger<"country"> {
   return trigger([block("count_pop_faction", entries)], refs);
 }
 
+/** The arguments `countPotentialWarParticipants` takes, as the rules declare them. */
 export interface CountPotentialWarParticipantsArgs {
   limit?: Trigger<"country">;
   attacker: ScopeValue<"country">;
@@ -4897,6 +4992,7 @@ export function countPotentialWarParticipants(
   return trigger([block("count_potential_war_participants", entries)], refs);
 }
 
+/** The arguments `countPreFtlWithinBorder` takes, as the rules declare them. */
 export interface CountPreFtlWithinBorderArgs {
   limit?: Trigger<"country">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -4928,6 +5024,7 @@ export function countPreFtlWithinBorder(
   return trigger([block("count_pre_ftl_within_border", entries)], refs);
 }
 
+/** The arguments `countRelation` takes, as the rules declare them. */
 export interface CountRelationArgs {
   limit?: Trigger<"country">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -4957,6 +5054,7 @@ export function countRelation(args: CountRelationArgs): Trigger<"country"> {
   return trigger([block("count_relation", entries)], refs);
 }
 
+/** The arguments `countRimSystem` takes, as the rules declare them. */
 export interface CountRimSystemArgs {
   limit?: Trigger<"system">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -4986,6 +5084,7 @@ export function countRimSystem(args: CountRimSystemArgs): Trigger<ScopeName> {
   return trigger([block("count_rim_system", entries)], refs);
 }
 
+/** The arguments `countRivalCountry` takes, as the rules declare them. */
 export interface CountRivalCountryArgs {
   limit?: Trigger<"country">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -5015,6 +5114,7 @@ export function countRivalCountry(args: CountRivalCountryArgs): Trigger<"country
   return trigger([block("count_rival_country", entries)], refs);
 }
 
+/** The arguments `countShipInSystem` takes, as the rules declare them. */
 export interface CountShipInSystemArgs {
   limit?: Trigger<"ship">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -5044,6 +5144,7 @@ export function countShipInSystem(args: CountShipInSystemArgs): Trigger<"system"
   return trigger([block("count_ship_in_system", entries)], refs);
 }
 
+/** The arguments `countShipSizeInSystem` takes, as the rules declare them. */
 export interface CountShipSizeInSystemArgs {
   limit?: Trigger<"ship">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -5074,6 +5175,7 @@ export function countShipSizeInSystem(args: CountShipSizeInSystemArgs): Trigger<
   return trigger([block("count_ship_size_in_system", entries)], refs);
 }
 
+/** The arguments `countSituation` takes, as the rules declare them. */
 export interface CountSituationArgs {
   limit?: Trigger<"situation">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -5103,6 +5205,7 @@ export function countSituation(args: CountSituationArgs): Trigger<"country"> {
   return trigger([block("count_situation", entries)], refs);
 }
 
+/** The arguments `countSpecies` takes, as the rules declare them. */
 export interface CountSpeciesArgs {
   limit?: Trigger<"species">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -5131,6 +5234,7 @@ export function countSpecies(
   return trigger([block("count_species", entries)], refs);
 }
 
+/** The arguments `countSpeciesPopGroup` takes, as the rules declare them. */
 export interface CountSpeciesPopGroupArgs {
   limit?: Trigger<"pop_group">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -5160,6 +5264,7 @@ export function countSpeciesPopGroup(args: CountSpeciesPopGroupArgs): Trigger<"s
   return trigger([block("count_species_pop_group", entries)], refs);
 }
 
+/** The arguments `countSpeciesTraits` takes, as the rules declare them. */
 export interface CountSpeciesTraitsArgs {
   limit?: Trigger<"species_trait">;
   category?: string;
@@ -5198,6 +5303,7 @@ export function countSpeciesTraits(args: CountSpeciesTraitsArgs): Trigger<"pop_g
   return trigger([block("count_species_traits", entries)], refs);
 }
 
+/** The arguments `countSpynetwork` takes, as the rules declare them. */
 export interface CountSpynetworkArgs {
   limit?: Trigger<"spy_network">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -5227,6 +5333,7 @@ export function countSpynetwork(args: CountSpynetworkArgs): Trigger<"country" | 
   return trigger([block("count_spynetwork", entries)], refs);
 }
 
+/** The arguments `countStarbaseBuildings` takes, as the rules declare them. */
 export interface CountStarbaseBuildingsArgs {
   count: ScriptValue | readonly [PdxOp, ScriptValue];
   type?: StarbaseBuildingRef | string;
@@ -5260,6 +5367,7 @@ export function countStarbaseBuildings(
   return trigger([block("count_starbase_buildings", entries)], refs);
 }
 
+/** The arguments `countStarbaseInNetwork` takes, as the rules declare them. */
 export interface CountStarbaseInNetworkArgs {
   limit?: Trigger<"starbase">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -5289,6 +5397,7 @@ export function countStarbaseInNetwork(args: CountStarbaseInNetworkArgs): Trigge
   return trigger([block("count_starbase_in_network", entries)], refs);
 }
 
+/** The arguments `countStarbaseInSystem` takes, as the rules declare them. */
 export interface CountStarbaseInSystemArgs {
   limit?: Trigger<"starbase">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -5318,6 +5427,7 @@ export function countStarbaseInSystem(args: CountStarbaseInSystemArgs): Trigger<
   return trigger([block("count_starbase_in_system", entries)], refs);
 }
 
+/** The arguments `countStarbaseModules` takes, as the rules declare them. */
 export interface CountStarbaseModulesArgs {
   count: ScriptValue | readonly [PdxOp, ScriptValue];
   type?: StarbaseModuleRef | string;
@@ -5351,6 +5461,7 @@ export function countStarbaseModules(
   return trigger([block("count_starbase_modules", entries)], refs);
 }
 
+/** The arguments `countStarbaseSizes` takes, as the rules declare them. */
 export interface CountStarbaseSizesArgs {
   count: ScriptValue | readonly [PdxOp, ScriptValue];
   starbaseSize: ShipSizeStarbaseRef | string;
@@ -5383,6 +5494,7 @@ export function countStarbaseSizes(args: CountStarbaseSizesArgs): Trigger<"count
   return trigger([block("count_starbase_sizes", entries)], refs);
 }
 
+/** The arguments `countSubject` takes, as the rules declare them. */
 export interface CountSubjectArgs {
   limit?: Trigger<"country">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -5412,6 +5524,7 @@ export function countSubject(args: CountSubjectArgs): Trigger<"country"> {
   return trigger([block("count_subject", entries)], refs);
 }
 
+/** The arguments `countSystem` takes, as the rules declare them. */
 export interface CountSystemArgs {
   limit?: Trigger<"system">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -5441,6 +5554,7 @@ export function countSystem(args: CountSystemArgs): Trigger<ScopeName> {
   return trigger([block("count_system", entries)], refs);
 }
 
+/** The arguments `countSystemAddedToStorm` takes, as the rules declare them. */
 export interface CountSystemAddedToStormArgs {
   limit?: Trigger<"system">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -5470,6 +5584,7 @@ export function countSystemAddedToStorm(args: CountSystemAddedToStormArgs): Trig
   return trigger([block("count_system_added_to_storm", entries)], refs);
 }
 
+/** The arguments `countSystemAmbientObject` takes, as the rules declare them. */
 export interface CountSystemAmbientObjectArgs {
   limit?: Trigger<"ambient_object">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -5499,6 +5614,7 @@ export function countSystemAmbientObject(args: CountSystemAmbientObjectArgs): Tr
   return trigger([block("count_system_ambient_object", entries)], refs);
 }
 
+/** The arguments `countSystemInCosmicStormInfluenceField` takes, as the rules declare them. */
 export interface CountSystemInCosmicStormInfluenceFieldArgs {
   limit?: Trigger<"system">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -5530,6 +5646,7 @@ export function countSystemInCosmicStormInfluenceField(
   return trigger([block("count_system_in_cosmic_storm_influence_field", entries)], refs);
 }
 
+/** The arguments `countSystemMegastructure` takes, as the rules declare them. */
 export interface CountSystemMegastructureArgs {
   limit?: Trigger<"megastructure">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -5559,6 +5676,7 @@ export function countSystemMegastructure(args: CountSystemMegastructureArgs): Tr
   return trigger([block("count_system_megastructure", entries)], refs);
 }
 
+/** The arguments `countSystemPlanet` takes, as the rules declare them. */
 export interface CountSystemPlanetArgs {
   limit?: Trigger<"planet">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -5588,6 +5706,7 @@ export function countSystemPlanet(args: CountSystemPlanetArgs): Trigger<"system"
   return trigger([block("count_system_planet", entries)], refs);
 }
 
+/** The arguments `countSystemPlanetColony` takes, as the rules declare them. */
 export interface CountSystemPlanetColonyArgs {
   limit?: Trigger<"colony">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -5617,6 +5736,7 @@ export function countSystemPlanetColony(args: CountSystemPlanetColonyArgs): Trig
   return trigger([block("count_system_planet_colony", entries)], refs);
 }
 
+/** The arguments `countSystemRemovedFromStorm` takes, as the rules declare them. */
 export interface CountSystemRemovedFromStormArgs {
   limit?: Trigger<"system">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -5648,6 +5768,7 @@ export function countSystemRemovedFromStorm(
   return trigger([block("count_system_removed_from_storm", entries)], refs);
 }
 
+/** The arguments `countSystemShipColony` takes, as the rules declare them. */
 export interface CountSystemShipColonyArgs {
   limit?: Trigger<"colony">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -5677,6 +5798,7 @@ export function countSystemShipColony(args: CountSystemShipColonyArgs): Trigger<
   return trigger([block("count_system_ship_colony", entries)], refs);
 }
 
+/** The arguments `countSystemWithAura` takes, as the rules declare them. */
 export interface CountSystemWithAuraArgs {
   limit?: Trigger<"system">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -5706,6 +5828,7 @@ export function countSystemWithAura(args: CountSystemWithAuraArgs): Trigger<"cou
   return trigger([block("count_system_with_aura", entries)], refs);
 }
 
+/** The arguments `countSystemWithinBorder` takes, as the rules declare them. */
 export interface CountSystemWithinBorderArgs {
   limit?: Trigger<"system">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -5737,6 +5860,7 @@ export function countSystemWithinBorder(
   return trigger([block("count_system_within_border", entries)], refs);
 }
 
+/** The arguments `countSystemWithinStorm` takes, as the rules declare them. */
 export interface CountSystemWithinStormArgs {
   limit?: Trigger<"system">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -5776,6 +5900,7 @@ export function countSystemsWithAura(op: PdxOp, value: ScriptValue): Trigger<"co
   return trigger([cmp("count_systems_with_aura", op, scriptValueScalar(value))]);
 }
 
+/** The arguments `countTargetingSituation` takes, as the rules declare them. */
 export interface CountTargetingSituationArgs {
   limit?: Trigger<"situation">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -5807,6 +5932,7 @@ export function countTargetingSituation(
   return trigger([block("count_targeting_situation", entries)], refs);
 }
 
+/** The arguments `countTechOptions` takes, as the rules declare them. */
 export interface CountTechOptionsArgs {
   area: ResearchArea;
   count: ScriptValue | readonly [PdxOp, ScriptValue];
@@ -5829,6 +5955,7 @@ export function countTechOptions(args: CountTechOptionsArgs): Trigger<"country">
   return trigger([block("count_tech_options", entries)]);
 }
 
+/** The arguments `countTraitAvailableForSpecies` takes, as the rules declare them. */
 export interface CountTraitAvailableForSpeciesArgs {
   limit?: Trigger<"species_trait">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -5861,6 +5988,7 @@ export function countTraitAvailableForSpecies(
   return trigger([block("count_trait_available_for_species", entries)], refs);
 }
 
+/** The arguments `countTraitOfSpecies` takes, as the rules declare them. */
 export interface CountTraitOfSpeciesArgs {
   limit?: Trigger<"species_trait">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -5903,6 +6031,7 @@ export function countUnlockedActiveAccords(op: PdxOp, value: ScriptValue): Trigg
   return trigger([cmp("count_unlocked_active_accords", op, scriptValueScalar(value))]);
 }
 
+/** The arguments `countUsedNavalCap` takes, as the rules declare them. */
 export interface CountUsedNavalCapArgs {
   limit?: Trigger<"fleet">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -5941,6 +6070,7 @@ export function countVisibleContracts(op: PdxOp, value: number): Trigger<"countr
   return trigger([cmp("count_visible_contracts", op, value)]);
 }
 
+/** The arguments `countWar` takes, as the rules declare them. */
 export interface CountWarArgs {
   limit?: Trigger<"war">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -5970,6 +6100,7 @@ export function countWar(args: CountWarArgs): Trigger<"country"> {
   return trigger([block("count_war", entries)], refs);
 }
 
+/** The arguments `countWarParticipant` takes, as the rules declare them. */
 export interface CountWarParticipantArgs {
   limit?: Trigger<"country">;
   count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -5999,6 +6130,7 @@ export function countWarParticipant(args: CountWarParticipantArgs): Trigger<"war
   return trigger([block("count_war_participant", entries)], refs);
 }
 
+/** The arguments `countWarParticipants` takes, as the rules declare them. */
 export interface CountWarParticipantsArgs {
   limit?: Trigger<"country">;
   side: ScopeValue<"country">;
@@ -6037,6 +6169,7 @@ export function currentAwarenessLevel(value: AwarenessLevel): Trigger<"country">
   return trigger([kv("current_awareness_level", value)]);
 }
 
+/** The arguments `customProgress` takes, as the rules declare them. */
 export interface CustomProgressArgs {
   currentValCoeff?: ScriptValue | readonly [PdxOp, ScriptValue];
   finalValCoeff?: ScriptValue | readonly [PdxOp, ScriptValue];
@@ -6084,6 +6217,7 @@ export function customProgress(args: CustomProgressArgs): Trigger<ScopeName> {
   return trigger([block("custom_progress", entries)], refs);
 }
 
+/** The arguments `customTooltip` takes, as the rules declare them. */
 export type CustomTooltipArgs<S extends ScopeName = ScopeName> = {
   text?: "" | string;
   failText?: "default" | string;
@@ -6129,6 +6263,7 @@ export function customTooltip<S extends ScopeName>(
   return trigger([kv("custom_tooltip", value)]);
 }
 
+/** The arguments `customTooltipFail` takes, as the rules declare them. */
 export interface CustomTooltipFailArgs {
   text: string;
   conditions: Trigger<ScopeName>;
@@ -6152,6 +6287,7 @@ export function customTooltipFail(args: CustomTooltipFailArgs): Trigger<ScopeNam
   return trigger([block("custom_tooltip_fail", entries)], refs);
 }
 
+/** The arguments `customTooltipSuccess` takes, as the rules declare them. */
 export interface CustomTooltipSuccessArgs {
   text: string;
   conditions: Trigger<ScopeName>;
@@ -6230,6 +6366,7 @@ export function diplomacyWeight(op: PdxOp, value: ScriptValue): Trigger<"country
   return trigger([cmp("diplomacy_weight", op, scriptValueScalar(value))]);
 }
 
+/** The arguments `distance` takes, as the rules declare them. */
 export interface DistanceArgs {
   source?:
     | "no_scope"
@@ -6391,6 +6528,7 @@ export function distanceToCorePercent(op: PdxOp, value: ScriptValue): Trigger<Sc
   return trigger([cmp("distance_to_core_percent", op, scriptValueScalar(value))]);
 }
 
+/** The arguments `distanceToEmpire` takes, as the rules declare them. */
 export interface DistanceToEmpireArgs {
   who: ScopeValue<
     | "agreement"
@@ -6449,6 +6587,7 @@ export function distanceToEmpire(
   return trigger([block("distance_to_empire", entries)]);
 }
 
+/** The arguments `else_` takes, as the rules declare them. */
 export interface ElseArgs {
   limit?: Trigger<ScopeName>;
   conditions: Trigger<ScopeName>;
@@ -6473,6 +6612,7 @@ export function else_(args: ElseArgs): Trigger<ScopeName> {
   return trigger([block("else", entries)], refs);
 }
 
+/** The arguments `elseIf` takes, as the rules declare them. */
 export interface ElseIfArgs {
   limit: Trigger<ScopeName>;
   conditions: Trigger<ScopeName>;
@@ -6555,6 +6695,7 @@ export function endGameYearsPassed(op: PdxOp, value: ScriptValue): Trigger<Scope
   return trigger([cmp("end_game_years_passed", op, scriptValueScalar(value))]);
 }
 
+/** The arguments `envoyOpinionChange` takes, as the rules declare them. */
 export interface EnvoyOpinionChangeArgs {
   who: ScopeValue<
     | "agreement"
@@ -6651,6 +6792,7 @@ export function factionApproval(op: PdxOp, value: ScriptValue): Trigger<"pop_fac
   return trigger([cmp("faction_approval", op, scriptValueScalar(value))]);
 }
 
+/** The arguments `failText` takes, as the rules declare them. */
 export type FailTextArgs<S extends ScopeName = ScopeName> = {
   text: string;
   conditions: Trigger<S>;
@@ -6956,6 +7098,7 @@ export function freeJobs(
   return trigger([cmp("free_jobs", op, scriptValueScalar(value))]);
 }
 
+/** The arguments `freeJobsOfType` takes, as the rules declare them. */
 export interface FreeJobsOfTypeArgs {
   job?: JobRef | string;
   category?: PopCategoryRef | string;
@@ -7081,6 +7224,7 @@ export function gender(value: GendersNotSet): Trigger<"leader"> {
   return trigger([kv("gender", value)]);
 }
 
+/** The arguments `getAttunementPointsFor` takes, as the rules declare them. */
 export interface GetAttunementPointsForArgs {
   patron: PatronTypeRef | string;
   value: ScriptValue | readonly [PdxOp, ScriptValue];
@@ -7115,6 +7259,7 @@ export function getAttunementPointsFor(args: GetAttunementPointsForArgs): Trigge
   return trigger([block("get_attunement_points_for", entries)], refs);
 }
 
+/** The arguments `getCouncilorLevel` takes, as the rules declare them. */
 export interface GetCouncilorLevelArgs {
   type: CouncilorRef | string;
 }
@@ -7157,6 +7302,7 @@ export function graphicalCulture(
   return trigger([kv("graphical_culture", refId(value))]);
 }
 
+/** The arguments `habitability` takes, as the rules declare them. */
 export interface HabitabilityArgs {
   who: ScopeValue<
     | "army"
@@ -7611,6 +7757,7 @@ export function hasAstralRiftFlag(value: AstralRiftFlag): Trigger<"astral_rift">
   return trigger([kv("has_astral_rift_flag", value)]);
 }
 
+/** The arguments `hasAttitudeBehavior` takes, as the rules declare them. */
 export interface HasAttitudeBehaviorArgs {
   target: ScopeValue<
     | "agreement"
@@ -7823,6 +7970,7 @@ export function hasCarrierFlag(
   return trigger([kv("has_carrier_flag", value)]);
 }
 
+/** The arguments `hasCasusBelli` takes, as the rules declare them. */
 export interface HasCasusBelliArgs {
   target: ScopeValue<"country">;
   type?: CasusBelliRef | string;
@@ -7861,6 +8009,7 @@ export function hasCitizenshipRights(
   return trigger([kv("has_citizenship_rights", value)]);
 }
 
+/** The arguments `hasCitizenshipType` takes, as the rules declare them. */
 export interface HasCitizenshipTypeArgs {
   country?: ScopeValue<
     | "agreement"
@@ -7923,6 +8072,7 @@ export function hasCivic(
   );
 }
 
+/** The arguments `hasCivicInSlot` takes, as the rules declare them. */
 export interface HasCivicInSlotArgs {
   civic: CivicOrOriginCivicRef | string;
   index: number | readonly [PdxOp, number];
@@ -8057,6 +8207,7 @@ export function hasClosedBorders(
   return trigger([kv("has_closed_borders", value.path)]);
 }
 
+/** The arguments `hasColonizationControl` takes, as the rules declare them. */
 export interface HasColonizationControlArgs {
   type: boolean | ColonizationControlRef | string;
   country?: ScopeValue<
@@ -8264,6 +8415,7 @@ export function hasCountryFlag(value: CountryFlag): Trigger<"country"> {
   return trigger([kv("has_country_flag", value)]);
 }
 
+/** The arguments `hasCountryResource` takes, as the rules declare them. */
 export interface HasCountryResourceArgs {
   type: ResourceRef | string;
   amount: ScriptValue | readonly [PdxOp, ScriptValue];
@@ -8512,6 +8664,7 @@ export function hasDistrict(
   return trigger([kv("has_district", refId(value))]);
 }
 
+/** The arguments `hasDna` takes, as the rules declare them. */
 export interface HasDnaArgs {
   shipCategory: ShipCategoriesRef | string;
   rarity?: ShipRarity;
@@ -8604,6 +8757,7 @@ export function hasEnvoyCooldown(value: boolean = true): Trigger<"leader"> {
   return trigger([kv("has_envoy_cooldown", value)]);
 }
 
+/** The arguments `hasEnvoyTask` takes, as the rules declare them. */
 export interface HasEnvoyTaskArgs {
   target?: ScopeValue<"country">;
   task: EnvoyTask;
@@ -9003,6 +9157,7 @@ export function hasHighestTechnologyScore(value: boolean = true): Trigger<"count
   return trigger([kv("has_highest_technology_score", value)]);
 }
 
+/** The arguments `hasHolding` takes, as the rules declare them. */
 export interface HasHoldingArgs {
   holding: "any" | "none" | BuildingCorporateRef | string | BuildingHoldingRef;
   owner: ScopeValue<
@@ -9097,6 +9252,7 @@ export function hasHyperlaneTo(
   return trigger([kv("has_hyperlane_to", value.path)]);
 }
 
+/** The arguments `hasIntel` takes, as the rules declare them. */
 export interface HasIntelArgs {
   who: ScopeValue<
     | "agreement"
@@ -9136,6 +9292,7 @@ export function hasIntel(args: HasIntelArgs): Trigger<"country"> {
   return trigger([block("has_intel", entries)]);
 }
 
+/** The arguments `hasIntelLevel` takes, as the rules declare them. */
 export interface HasIntelLevelArgs {
   who: ScopeValue<
     | "agreement"
@@ -9184,6 +9341,7 @@ export function hasIntelLevel(args: HasIntelLevelArgs): Trigger<"country"> {
   return trigger([block("has_intel_level", entries)], refs);
 }
 
+/** The arguments `hasIntelReport` takes, as the rules declare them. */
 export interface HasIntelReportArgs {
   who: ScopeValue<
     | "agreement"
@@ -9281,6 +9439,7 @@ export function hasLeaderFlag(value: LeaderFlag): Trigger<"leader"> {
   return trigger([kv("has_leader_flag", value)]);
 }
 
+/** The arguments `hasLivingStandard` takes, as the rules declare them. */
 export interface HasLivingStandardArgs {
   country?: ScopeValue<
     | "agreement"
@@ -9438,6 +9597,7 @@ export function hasMigrationAccess(
   return trigger([kv("has_migration_access", value.path)]);
 }
 
+/** The arguments `hasMigrationControl` takes, as the rules declare them. */
 export interface HasMigrationControlArgs {
   type: boolean | MigrationControlRef | string;
   country?: ScopeValue<
@@ -9481,6 +9641,7 @@ export function hasMigrationControl(
   return trigger([block("has_migration_control", entries)]);
 }
 
+/** The arguments `hasMilitaryServiceType` takes, as the rules declare them. */
 export interface HasMilitaryServiceTypeArgs {
   country?: ScopeValue<
     | "agreement"
@@ -9598,6 +9759,7 @@ export function hasModifier(
   );
 }
 
+/** The arguments `hasMonthlyIncome` takes, as the rules declare them. */
 export interface HasMonthlyIncomeArgs {
   resource?: ResourceRef | string;
   type?: ResourceRef | string;
@@ -9746,6 +9908,7 @@ export function hasObservationOutpost(
   return trigger([kv("has_observation_outpost", value)]);
 }
 
+/** The arguments `hasOpinionModifier` takes, as the rules declare them. */
 export interface HasOpinionModifierArgs {
   who: ScopeValue<
     | "agreement"
@@ -9891,6 +10054,7 @@ export function hasOwner(
   return trigger([kv("has_owner", value)]);
 }
 
+/** The arguments `hasPassedResolution` takes, as the rules declare them. */
 export interface HasPassedResolutionArgs {
   days?: ScriptValue | readonly [PdxOp, ScriptValue];
   months?: ScriptValue | readonly [PdxOp, ScriptValue];
@@ -9953,6 +10117,7 @@ export function hasPatronCounter(value: string): Trigger<"country"> {
   return trigger([kv("has_patron_counter", value)]);
 }
 
+/** The arguments `hasPatronRelation` takes, as the rules declare them. */
 export interface HasPatronRelationArgs {
   patron: PatronTypeRef | string | "any";
   /** default:completed */
@@ -10049,6 +10214,7 @@ export function hasPlanetaryAscensionTier(
   return trigger([cmp("has_planetary_ascension_tier", op, scriptValueScalar(value))]);
 }
 
+/** The arguments `hasPointOfInterest` takes, as the rules declare them. */
 export interface HasPointOfInterestArgs {
   poi: PointOfInterest;
 }
@@ -10097,6 +10263,7 @@ export function hasPopGroupFlag(value: PopGroupFlag): Trigger<"pop_group"> {
   return trigger([kv("has_pop_group_flag", value)]);
 }
 
+/** The arguments `hasPopulationControl` takes, as the rules declare them. */
 export interface HasPopulationControlArgs {
   type: boolean | PopulationControlRef | string;
   country?: ScopeValue<
@@ -10194,6 +10361,7 @@ export function hasPsionicAura(value: boolean | PsionicAuraRef | string): Trigge
   return trigger([kv("has_psionic_aura", refId(value))]);
 }
 
+/** The arguments `hasPurgeType` takes, as the rules declare them. */
 export interface HasPurgeTypeArgs {
   country?: ScopeValue<
     | "agreement"
@@ -10238,6 +10406,7 @@ export function hasPurgeType(args: HasPurgeTypeArgs): Trigger<"leader" | "pop_gr
   return trigger([block("has_purge_type", entries)], refs);
 }
 
+/** The arguments `hasRelationFlag` takes, as the rules declare them. */
 export interface HasRelationFlagArgs {
   who: ScopeValue<
     | "agreement"
@@ -10334,6 +10503,7 @@ export function hasResearchStation(value: boolean = true): Trigger<"carrier" | "
   return trigger([kv("has_research_station", value)]);
 }
 
+/** The arguments `hasResource` takes, as the rules declare them. */
 export type HasResourceArgs = {
   type: ResourceRef | string;
   amount: ScriptValue | readonly [PdxOp, ScriptValue];
@@ -10648,6 +10818,7 @@ export function hasSituationFlag(value: SituationFlag): Trigger<"situation"> {
   return trigger([kv("has_situation_flag", value)]);
 }
 
+/** The arguments `hasSlaveryType` takes, as the rules declare them. */
 export interface HasSlaveryTypeArgs {
   country?: ScopeValue<
     | "agreement"
@@ -10800,6 +10971,7 @@ export function hasStageModifier(
   );
 }
 
+/** The arguments `hasStaleIntel` takes, as the rules declare them. */
 export interface HasStaleIntelArgs {
   who: ScopeValue<
     | "agreement"
@@ -11010,6 +11182,7 @@ export function hasTechnology(value: TechnologyRef | string): Trigger<"country">
   );
 }
 
+/** The arguments `hasTermValue` takes, as the rules declare them. */
 export interface HasTermValueArgs {
   term: AgreementTermRef | string;
   value: AgreementTermValueRef | string;
@@ -11212,6 +11385,7 @@ export function hostHasDlc(value: Dlc): Trigger<ScopeName> {
   return trigger([kv("host_has_dlc", value)]);
 }
 
+/** The arguments `hostileMilitaryPower` takes, as the rules declare them. */
 export interface HostileMilitaryPowerArgs {
   who: ScopeValue<"country">;
   safetyBuffer?: boolean;
@@ -11264,6 +11438,7 @@ export function idealPlanetClass(
   return trigger([kv("ideal_planet_class", refId(value))]);
 }
 
+/** The arguments `if_` takes, as the rules declare them. */
 export interface IfArgs {
   limit: Trigger<ScopeName>;
   conditions: Trigger<ScopeName>;
@@ -11339,6 +11514,7 @@ export function innerRadius(op: PdxOp, value: ScriptValue): Trigger<"system"> {
   return trigger([cmp("inner_radius", op, scriptValueScalar(value))]);
 }
 
+/** The arguments `intel` takes, as the rules declare them. */
 export interface IntelArgs {
   who: ScopeValue<
     | "agreement"
@@ -11382,6 +11558,7 @@ export function intel(args: IntelArgs): Trigger<"country"> {
   return trigger([block("intel", entries)]);
 }
 
+/** The arguments `intelLevel` takes, as the rules declare them. */
 export type IntelLevelArgs = {
   level: IntelLevel;
   system: ScopeValue<"system">;
@@ -11406,6 +11583,7 @@ export function intelLevel(value: IntelLevel | IntelLevelArgs): Trigger<"country
   return trigger([kv("intel_level", value)]);
 }
 
+/** The arguments `isActionActive` takes, as the rules declare them. */
 export interface IsActionActiveArgs {
   action: TradableActionRef | string;
   withCountry:
@@ -11747,6 +11925,7 @@ export function isBeingRepaired(value: boolean = true): Trigger<"fleet" | "ship"
   return trigger([kv("is_being_repaired", value)]);
 }
 
+/** The arguments `isBeingSurveyed` takes, as the rules declare them. */
 export interface IsBeingSurveyedArgs {
   who: ScopeValue<"fleet">;
 }
@@ -13006,6 +13185,7 @@ export function isIdeal(value: boolean = true): Trigger<"carrier" | "colony" | "
   return trigger([kv("is_ideal", value)]);
 }
 
+/** The arguments `isIdealPlanetClass` takes, as the rules declare them. */
 export interface IsIdealPlanetClassArgs {
   who: ScopeValue<
     | "army"
@@ -13352,6 +13532,7 @@ export function isIronman(value: boolean = true): Trigger<ScopeName> {
   return trigger([kv("is_ironman", value)]);
 }
 
+/** The arguments `isJobOfPopCategory` takes, as the rules declare them. */
 export interface IsJobOfPopCategoryArgs {
   job: JobRef | string;
   category: PopCategoryRef | string;
@@ -13721,6 +13902,7 @@ export function isOccupiedFlag(
   return trigger([kv("is_occupied_flag", value)]);
 }
 
+/** The arguments `isOfferTermsActual` takes, as the rules declare them. */
 export interface IsOfferTermsActualArgs {
   target: ScopeValue<
     | "agreement"
@@ -14044,6 +14226,7 @@ export function isPlanetClass(
   return trigger([kv("is_planet_class", refId(value))]);
 }
 
+/** The arguments `isPointOfInterest` takes, as the rules declare them. */
 export interface IsPointOfInterestArgs {
   id: PointOfInterest;
   eventChain: EventChainRef | string;
@@ -14934,6 +15117,7 @@ export function isSubspecies(
   return trigger([kv("is_subspecies", value.path)]);
 }
 
+/** The arguments `isSurveyed` takes, as the rules declare them. */
 export interface IsSurveyedArgs {
   who: ScopeValue<
     | "agreement"
@@ -15243,6 +15427,7 @@ export function isWarLeader(value: boolean = true): Trigger<"country" | "pop_fac
   return trigger([kv("is_war_leader", value)]);
 }
 
+/** The arguments `isWarParticipant` takes, as the rules declare them. */
 export type IsWarParticipantArgs = {
   who?: ScopeValue<
     | "agreement"
@@ -15660,6 +15845,7 @@ export function loggedInToPdxAccount(value: boolean = true): Trigger<ScopeName> 
   return trigger([kv("logged_in_to_pdx_account", value)]);
 }
 
+/** The arguments `marketResourcePrice` takes, as the rules declare them. */
 export interface MarketResourcePriceArgs {
   resource: ResourceRef | string;
   /** Default = 1; basically a mult factor */
@@ -15791,6 +15977,7 @@ export function nameListCategory(value: string): Trigger<"dlc_recommendation"> {
   return trigger([kv("name_list_category", value)]);
 }
 
+/** The arguments `nbPopExactSpecies` takes, as the rules declare them. */
 export interface NbPopExactSpeciesArgs {
   species: ScopeValue<
     | "army"
@@ -15882,6 +16069,7 @@ export function numAscensionPerks(op: PdxOp, value: ScriptValue): Trigger<"count
   return trigger([cmp("num_ascension_perks", op, scriptValueScalar(value))]);
 }
 
+/** The arguments `numAssignedJobs` takes, as the rules declare them. */
 export interface NumAssignedJobsArgs {
   job: JobRef | string | "unemployed";
   value: ScriptValue | readonly [PdxOp, ScriptValue];
@@ -15931,6 +16119,7 @@ export function numAsteroidBelts(op: PdxOp, value: ScriptValue): Trigger<"system
   return trigger([cmp("num_asteroid_belts", op, scriptValueScalar(value))]);
 }
 
+/** The arguments `numBuildings` takes, as the rules declare them. */
 export interface NumBuildingsArgs {
   type: "any" | BuildingRef | string;
   value: ScriptValue | readonly [PdxOp, ScriptValue];
@@ -15981,6 +16170,7 @@ export function numCandidateSupported(op: PdxOp, value: ScriptValue): Trigger<"l
   return trigger([cmp("num_candidate_supported", op, scriptValueScalar(value))]);
 }
 
+/** The arguments `numClaimsOnSystem` takes, as the rules declare them. */
 export interface NumClaimsOnSystemArgs {
   target: ScopeValue<"system">;
   count: ScriptValue | readonly [PdxOp, ScriptValue];
@@ -16183,6 +16373,7 @@ export function numDeposits(op: PdxOp, value: ScriptValue): Trigger<"carrier" | 
   return trigger([cmp("num_deposits", op, scriptValueScalar(value))]);
 }
 
+/** The arguments `numDistricts` takes, as the rules declare them. */
 export interface NumDistrictsArgs {
   type: "any" | DistrictRef | string;
   value: ScriptValue | readonly [PdxOp, ScriptValue];
@@ -16306,6 +16497,7 @@ export function numFallenEmpiresSetting(op: PdxOp, value: ScriptValue): Trigger<
   return trigger([cmp("num_fallen_empires_setting", op, scriptValueScalar(value))]);
 }
 
+/** The arguments `numFavors` takes, as the rules declare them. */
 export interface NumFavorsArgs {
   target: ScopeValue<
     | "agreement"
@@ -16362,6 +16554,7 @@ export function numFleets(op: PdxOp, value: ScriptValue): Trigger<"country"> {
   return trigger([cmp("num_fleets", op, scriptValueScalar(value))]);
 }
 
+/** The arguments `numFreeDistricts` takes, as the rules declare them. */
 export interface NumFreeDistrictsArgs {
   type: "any" | DistrictRef | string;
   value: ScriptValue | readonly [PdxOp, ScriptValue];
@@ -16439,6 +16632,7 @@ export function numInsightTechs(op: PdxOp, value: ScriptValue): Trigger<"country
   return trigger([cmp("num_insight_techs", op, scriptValueScalar(value))]);
 }
 
+/** The arguments `numKilledShips` takes, as the rules declare them. */
 export interface NumKilledShipsArgs {
   target: ScopeValue<
     | "agreement"
@@ -16482,6 +16676,7 @@ export function numKilledShips(args: NumKilledShipsArgs): Trigger<"country"> {
   return trigger([block("num_killed_ships", entries)]);
 }
 
+/** The arguments `numLeaderTraits` takes, as the rules declare them. */
 export interface NumLeaderTraitsArgs {
   value: ScriptValue | readonly [PdxOp, ScriptValue];
   /** default: any */
@@ -16610,6 +16805,7 @@ export function numNegativeTraits(
   return trigger([cmp("num_negative_traits", op, value)]);
 }
 
+/** The arguments `numNeighborSystems` takes, as the rules declare them. */
 export interface NumNeighborSystemsArgs {
   limit?: Trigger<"system">;
   minDistance?: ScriptValue | readonly [PdxOp, ScriptValue];
@@ -16743,6 +16939,7 @@ export function numPlanetsInSystem(op: PdxOp, value: ScriptValue): Trigger<"syst
   return trigger([cmp("num_planets_in_system", op, scriptValueScalar(value))]);
 }
 
+/** The arguments `numPopsAssignedToJob` takes, as the rules declare them. */
 export interface NumPopsAssignedToJobArgs {
   /** (if not specified, check total number) */
   popGroup: ScopeValue<"pop_group">;
@@ -16832,6 +17029,7 @@ export function numResearchedTechs(op: PdxOp, value: ScriptValue): Trigger<"coun
   return trigger([cmp("num_researched_techs", op, scriptValueScalar(value))]);
 }
 
+/** The arguments `numResearchedTechsOfTier` takes, as the rules declare them. */
 export interface NumResearchedTechsOfTierArgs {
   value: ScriptValue | readonly [PdxOp, ScriptValue];
   tier: number | readonly [PdxOp, number];
@@ -16886,6 +17084,7 @@ export function numShips(op: PdxOp, value: ScriptValue): Trigger<"country" | "fl
   return trigger([cmp("num_ships", op, scriptValueScalar(value))]);
 }
 
+/** The arguments `numShipsInDebris` takes, as the rules declare them. */
 export interface NumShipsInDebrisArgs {
   shipSize: ShipSizeRef | string;
   value: ScriptValue | readonly [PdxOp, ScriptValue];
@@ -16965,6 +17164,7 @@ export function numSupportIndependence(op: PdxOp, value: ScriptValue): Trigger<"
   return trigger([cmp("num_support_independence", op, scriptValueScalar(value))]);
 }
 
+/** The arguments `numTakenPlanets` takes, as the rules declare them. */
 export interface NumTakenPlanetsArgs {
   target: ScopeValue<
     | "agreement"
@@ -17121,6 +17321,7 @@ export function numWaystationPacts(op: PdxOp, value: ScriptValue): Trigger<"coun
   return trigger([cmp("num_waystation_pacts", op, scriptValueScalar(value))]);
 }
 
+/** The arguments `numZones` takes, as the rules declare them. */
 export interface NumZonesArgs {
   type: "any" | ZoneRef | string;
   value: ScriptValue | readonly [PdxOp, ScriptValue];
@@ -17155,6 +17356,7 @@ export function offWarExhaustionSum(op: PdxOp, value: ScriptValue): Trigger<"cou
   return trigger([cmp("off_war_exhaustion_sum", op, scriptValueScalar(value))]);
 }
 
+/** The arguments `opinion` takes, as the rules declare them. */
 export interface OpinionArgs {
   who: ScopeValue<
     | "agreement"
@@ -17198,6 +17400,7 @@ export function opinion(args: OpinionArgs): Trigger<"country"> {
   return trigger([block("opinion", entries)]);
 }
 
+/** The arguments `opinionLevel` takes, as the rules declare them. */
 export interface OpinionLevelArgs {
   who: ScopeValue<
     | "agreement"
@@ -17237,6 +17440,7 @@ export function opinionLevel(args: OpinionLevelArgs): Trigger<"country"> {
   return trigger([block("opinion_level", entries)]);
 }
 
+/** The arguments `opposingEthicsDivergence` takes, as the rules declare them. */
 export interface OpposingEthicsDivergenceArgs {
   steps: ScriptValue | readonly [PdxOp, ScriptValue];
   who: ScopeValue<
@@ -17384,6 +17588,7 @@ export function planetGarrisonStrength(
   return trigger([cmp("planet_garrison_strength", op, scriptValueScalar(value))]);
 }
 
+/** The arguments `planetHappinessAboveThreshold` takes, as the rules declare them. */
 export interface PlanetHappinessAboveThresholdArgs {
   limit?: Trigger<"planet">;
   threshold: ScriptValue | readonly [PdxOp, ScriptValue];
@@ -17418,6 +17623,7 @@ export function planetHappinessAboveThreshold(
   return trigger([block("planet_happiness_above_threshold", entries)], refs);
 }
 
+/** The arguments `planetResourceCompare` takes, as the rules declare them. */
 export interface PlanetResourceCompareArgs {
   /** Default: Balance */
   type?: PlanetResourceCompareType;
@@ -17480,6 +17686,7 @@ export function planetStability(
   return trigger([cmp("planet_stability", op, scriptValueScalar(value))]);
 }
 
+/** The arguments `popAmountPercentage` takes, as the rules declare them. */
 export interface PopAmountPercentageArgs {
   limit: Trigger<"pop_group">;
   /** (optional: specifies pops to exclude from the calculation) */
@@ -17584,6 +17791,7 @@ export function popHasHappiness(value: boolean = true): Trigger<"pop_group"> {
   return trigger([kv("pop_has_happiness", value)]);
 }
 
+/** The arguments `popMaintenanceCost` takes, as the rules declare them. */
 export interface PopMaintenanceCostArgs {
   resource: ResourceRef | string;
   value: ScriptValue | readonly [PdxOp, ScriptValue];
@@ -17639,6 +17847,7 @@ export function recentlyLostWar(value: boolean = true): Trigger<"country"> {
   return trigger([kv("recently_lost_war", value)]);
 }
 
+/** The arguments `relativeEncryptionDecryption` takes, as the rules declare them. */
 export interface RelativeEncryptionDecryptionArgs {
   target?: ScopeValue<
     | "agreement"
@@ -17689,6 +17898,7 @@ export function relativeEncryptionDecryption(
   return trigger([block("relative_encryption_decryption", entries)]);
 }
 
+/** The arguments `relativePower` takes, as the rules declare them. */
 export interface RelativePowerArgs {
   who: ScopeValue<
     | "agreement"
@@ -17728,6 +17938,7 @@ export function relativePower(args: RelativePowerArgs): Trigger<"country" | "fed
   return trigger([block("relative_power", entries)]);
 }
 
+/** The arguments `resourceExpensesCompare` takes, as the rules declare them. */
 export interface ResourceExpensesCompareArgs {
   resource: ResourceRef | string;
   /** Optional; if not provided, will use sum for all Categories */
@@ -17768,6 +17979,7 @@ export function resourceExpensesCompare(args: ResourceExpensesCompareArgs): Trig
   return trigger([block("resource_expenses_compare", entries)], refs);
 }
 
+/** The arguments `resourceIncomeCompare` takes, as the rules declare them. */
 export interface ResourceIncomeCompareArgs {
   resource: ResourceRef | string;
   value: ScriptValue | readonly [PdxOp, ScriptValue];
@@ -17796,6 +18008,7 @@ export function resourceIncomeCompare(args: ResourceIncomeCompareArgs): Trigger<
   return trigger([block("resource_income_compare", entries)], refs);
 }
 
+/** The arguments `resourceIncomeToExpenditureBalanceRatio` takes, as the rules declare them. */
 export interface ResourceIncomeToExpenditureBalanceRatioArgs {
   resource?: ResourceRef | string;
   /** Optional; if not provided, will use sum for all Categories */
@@ -17838,6 +18051,7 @@ export function resourceIncomeToExpenditureBalanceRatio(
   return trigger([block("resource_income_to_expenditure_balance_ratio", entries)], refs);
 }
 
+/** The arguments `resourceRevenueCompare` takes, as the rules declare them. */
 export interface ResourceRevenueCompareArgs {
   /** Optional; if not provided, will use sum for all Categories */
   category?: EconomicCategoryRef | string;
@@ -17878,6 +18092,7 @@ export function resourceRevenueCompare(args: ResourceRevenueCompareArgs): Trigge
   return trigger([block("resource_revenue_compare", entries)], refs);
 }
 
+/** The arguments `resourceStockpileCompare` takes, as the rules declare them. */
 export interface ResourceStockpileCompareArgs {
   resource: ResourceRef | string;
   value: ScriptValue | readonly [PdxOp, ScriptValue];
@@ -17925,6 +18140,7 @@ export function resourceStockpileCompare(
   return trigger([block("resource_stockpile_compare", entries)], refs);
 }
 
+/** The arguments `resourceStockpilePercent` takes, as the rules declare them. */
 export interface ResourceStockpilePercentArgs {
   resource: ResourceRef | string;
   value: ScriptValue;
@@ -17950,6 +18166,7 @@ export function resourceStockpilePercent(args: ResourceStockpilePercentArgs): Tr
   return trigger([block("resource_stockpile_percent", entries)], refs);
 }
 
+/** The arguments `reverseHasRelationFlag` takes, as the rules declare them. */
 export interface ReverseHasRelationFlagArgs {
   who: ScopeValue<
     | "agreement"
@@ -18012,6 +18229,7 @@ export function scientistCount(op: PdxOp, value: ScriptValue): Trigger<"country"
   return trigger([cmp("scientist_count", op, scriptValueScalar(value))]);
 }
 
+/** The arguments `shipSizeCostResourcePercent` takes, as the rules declare them. */
 export interface ShipSizeCostResourcePercentArgs {
   resource: ResourceRef | string;
 }
@@ -18141,6 +18359,7 @@ export function speciesPortrait(
   );
 }
 
+/** The arguments `starbaseBuildableIsInQueueBefore` takes, as the rules declare them. */
 export interface StarbaseBuildableIsInQueueBeforeArgs {
   first: StarbaseModuleRef | string | StarbaseBuildingRef;
   second: StarbaseModuleRef | string | StarbaseBuildingRef;
@@ -18268,6 +18487,7 @@ export function subjects(op: PdxOp, value: ScriptValue): Trigger<"country"> {
   return trigger([cmp("subjects", op, scriptValueScalar(value))]);
 }
 
+/** The arguments `successText` takes, as the rules declare them. */
 export type SuccessTextArgs<S extends ScopeName = ScopeName> = {
   text: string;
   conditions?: Trigger<S>;
@@ -18311,6 +18531,7 @@ export function support(op: PdxOp, value: ScriptValue): Trigger<"leader" | "pop_
   return trigger([cmp("support", op, scriptValueScalar(value))]);
 }
 
+/** The arguments `techUnlockedRatio` takes, as the rules declare them. */
 export interface TechUnlockedRatioArgs {
   who: ScopeValue<
     | "agreement"
@@ -18397,6 +18618,7 @@ export function text(value: string): Trigger<ScopeName> {
   return trigger([kv("text", value)]);
 }
 
+/** The arguments `theirOpinion` takes, as the rules declare them. */
 export interface TheirOpinionArgs {
   who: ScopeValue<
     | "agreement"
@@ -18440,6 +18662,7 @@ export function theirOpinion(args: TheirOpinionArgs): Trigger<"country"> {
   return trigger([block("their_opinion", entries)]);
 }
 
+/** The arguments `timedFlagDaysLeft` takes, as the rules declare them. */
 export interface TimedFlagDaysLeftArgs {
   flag:
     | MegastructureFlag
@@ -18520,6 +18743,7 @@ export function timedFlagDaysLeft(
   return trigger([block("timed_flag_days_left", entries)]);
 }
 
+/** The arguments `totalCountryWorkforceWithJobTag` takes, as the rules declare them. */
 export interface TotalCountryWorkforceWithJobTagArgs {
   tags: readonly string[];
   value: ScriptValue | readonly [PdxOp, ScriptValue];
@@ -18548,6 +18772,7 @@ export function totalCountryWorkforceWithJobTag(
   return trigger([block("total_country_workforce_with_job_tag", entries)]);
 }
 
+/** The arguments `totalSystemWorkforceWithJobTag` takes, as the rules declare them. */
 export interface TotalSystemWorkforceWithJobTagArgs {
   limit?: Trigger<"pop_job">;
   tags: readonly string[];
@@ -18582,6 +18807,7 @@ export function totalSystemWorkforceWithJobTag(
   return trigger([block("total_system_workforce_with_job_tag", entries)], refs);
 }
 
+/** The arguments `totalWorkforceWithJobTag` takes, as the rules declare them. */
 export interface TotalWorkforceWithJobTagArgs {
   tags: readonly string[];
   value: ScriptValue | readonly [PdxOp, ScriptValue];
@@ -18652,6 +18878,7 @@ export function triumphDaysLeft(op: PdxOp, value: ScriptValue): Trigger<"country
   return trigger([cmp("triumph_days_left", op, scriptValueScalar(value))]);
 }
 
+/** The arguments `trust` takes, as the rules declare them. */
 export interface TrustArgs {
   who: ScopeValue<
     | "agreement"
@@ -18820,6 +19047,7 @@ export function usesShipCategory(value: ShipCategoriesRef | string): Trigger<"co
   );
 }
 
+/** The arguments `usingWarGoal` takes, as the rules declare them. */
 export interface UsingWarGoalArgs {
   type: WarGoalRef | string;
   owner: ScopeValue<
@@ -18899,6 +19127,7 @@ export function voidwormsScaling(op: PdxOp, value: ScriptValue): Trigger<ScopeNa
   return trigger([cmp("voidworms_scaling", op, scriptValueScalar(value))]);
 }
 
+/** The arguments `warBegunNumFleetsGoneMia` takes, as the rules declare them. */
 export interface WarBegunNumFleetsGoneMiaArgs {
   who: ScopeValue<
     | "agreement"
@@ -18982,6 +19211,7 @@ export function wonTheGame(value: boolean = true): Trigger<"country"> {
   return trigger([kv("won_the_game", value)]);
 }
 
+/** The arguments `wouldJoinWar` takes, as the rules declare them. */
 export interface WouldJoinWarArgs {
   attacker: ScopeValue<
     | "agreement"
@@ -19065,6 +19295,7 @@ export function wouldJoinWar(args: WouldJoinWarArgs): Trigger<"country"> {
   return trigger([block("would_join_war", entries)]);
 }
 
+/** The arguments `yearsOfPeace` takes, as the rules declare them. */
 export interface YearsOfPeaceArgs {
   delay?: number | readonly [PdxOp, number];
   value: ScriptValue | readonly [PdxOp, ScriptValue];

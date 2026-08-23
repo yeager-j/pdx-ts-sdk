@@ -120,6 +120,17 @@ describe("trigger emission", () => {
     expect(emission.code).toContain('return trigger([kv("is_war_participant", value.path)]);');
   });
 
+  it("documents every generated argument object, whichever form it takes", () => {
+    expect(emission.code).toContain(
+      "/** The arguments `calcTrueIf` takes, as the rules declare them. */\n" +
+        "export interface CalcTrueIfArgs {"
+    );
+    expect(emission.code).toContain(
+      "/** The arguments `hasResource` takes, as the rules declare them. */\n" +
+        "export type HasResourceArgs = {"
+    );
+  });
+
   it("uses the audited game-doc summary when CWT prose is wrong", () => {
     const fn = emission.code.indexOf("export function traitHasAnyTag");
     const summary = emission.code.indexOf("Checks if a trait has at least one tag from the list");
