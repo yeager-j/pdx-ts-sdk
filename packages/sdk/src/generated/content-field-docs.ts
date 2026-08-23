@@ -2581,7 +2581,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       modifiers: {
         optional: true,
         docs: ["Modifiers written directly into the definition body, with no enclosing key."],
-        memberType: "ModifierClosure<ScopeName>",
+        memberType: "ModifierClosure<NoInfer<S>>",
       },
       iconFrame: {
         optional: true,

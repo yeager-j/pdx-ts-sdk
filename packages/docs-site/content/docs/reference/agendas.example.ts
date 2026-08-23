@@ -7,6 +7,7 @@ const mod = createMod({
 });
 
 const frontierMandate = mod.staticModifier("frontier_mandate", {
+  hostScope: "country",
   name: "Frontier Mandate",
   modifiers: (modifier) => modifier.country.unity.produces.mult(0.1),
 });

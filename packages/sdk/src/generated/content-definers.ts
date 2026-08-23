@@ -99,7 +99,7 @@ import type {
 import type { SpeciesClassDef } from "./species-class.ts";
 import type { SpriteTypeDef } from "./sprite-type.ts";
 import type { StarbaseLevelDef } from "./starbase-level.ts";
-import type { StaticModifierDef } from "./static-modifier.ts";
+import type { StaticModifierDef, StaticModifierScope } from "./static-modifier.ts";
 import type { StrikeCraftComponentTemplateDef } from "./strike-craft-component-template.ts";
 import {
   TECHNOLOGY_FIELDS,
@@ -397,18 +397,41 @@ export function defineOpinionModifier<const Id extends string>(
   return { itemKind: "content", type: "opinion_modifier", id: def.id, def };
 }
 
-/** What a static modifier feature can contain. */
-export type StaticModifierItem = ContentItem<"static_modifier", StaticModifierDef>;
+/**
+ * What a static modifier feature can contain.
+ * Parameterised by the declared `hostScope`, which the item carries
+ * and the effect consuming it is checked against: naming this type without
+ * the parameter widens the declaration to every scope the registry admits,
+ * which is checkable as none of them.
+ */
+export type StaticModifierItem<W extends StaticModifierScope = StaticModifierScope> = ContentItem<
+  "static_modifier",
+  Omit<StaticModifierDef<string, never>, "hostScope">
+> & { readonly hostScope: W };
 
 /**
  * Internal lowering primitive for a static modifier. Public authors call
  * `mod.staticModifier(name, def)`, then place the returned item with
  * `mod.feature(...)` before compiling the same capability.
+ * `hostScope` names this definition's scope and emits
+ * nothing; every definition must declare it.
  */
-export function defineStaticModifier<const Id extends string>(
-  def: StaticModifierDef<Id>
-): ContentItem<"static_modifier", StaticModifierDef<Id>> {
-  return { itemKind: "content", type: "static_modifier", id: def.id, def };
+export function defineStaticModifier<
+  const Id extends string,
+  S extends StaticModifierScope = StaticModifierScope,
+>(
+  def: StaticModifierDef<Id, S>
+): ContentItem<"static_modifier", Omit<StaticModifierDef<Id, never>, "hostScope">> & {
+  readonly hostScope: S;
+} {
+  const { hostScope, ...rest } = def;
+  return {
+    itemKind: "content",
+    type: "static_modifier",
+    id: def.id,
+    def: rest as unknown as Omit<StaticModifierDef<Id, never>, "hostScope">,
+    hostScope: hostScope as S,
+  };
 }
 
 /** What a scripted modifier feature can contain. */

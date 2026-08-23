@@ -106,6 +106,7 @@ export const STRUCTURAL_EFFECT_METHODS = [
   "hiddenEffect",
   "if",
   "lockedRandomList",
+  "previewModifier",
   "random",
   "randomList",
   "resetEventChainCounter",

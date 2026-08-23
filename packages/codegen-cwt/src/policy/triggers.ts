@@ -63,6 +63,8 @@ export const HAND_WRITTEN_TRIGGER_EXPORTS: readonly HandWrittenTriggerExport[] =
       ["currentStage", "current_stage"],
       ["canSetSituationApproach", "can_set_situation_approach"],
       ["hasCompletedEventChainCounter", "has_completed_event_chain_counter"],
+      ["hasModifier", "has_modifier"],
+      ["hasStageModifier", "has_stage_modifier"],
     ] as const
   ).map(([exportName, ruleKey]): HandWrittenTriggerExport => ({
     exportName,

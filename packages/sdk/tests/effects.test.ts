@@ -20,6 +20,7 @@ import {
   scopeValue,
   withScriptCtx,
 } from "../src/script/effects/recorder.ts";
+import type { StaticModifierHostContract } from "../src/script/effects/static-modifiers.ts";
 import type { ScriptCtx } from "../src/script/effects/types.ts";
 import { hasCountryFlag, hasOwner, isAtWar, owner } from "../src/script/triggers.ts";
 
@@ -554,6 +555,10 @@ create_message = {
       .if(isAtWar(), (c) => c.setCountryFlag(flags.effects_test_flag))
       .else((c) => c.log("peace held"));
     country.addResource({ resource: "influence", amount: 50 });
+    country.previewModifier({
+      id: "effects_test_country_modifier",
+      hostScope: "country",
+    } as StaticModifierHostContract<"country">);
 
     expect(serialize(sink)).toBe(`every_owned_planet = {
 	limit = {
@@ -580,6 +585,12 @@ else = {
 
 add_resource = {
 	influence = 50
+}
+
+tooltip = {
+	add_modifier = {
+		modifier = effects_test_country_modifier
+	}
 }
 `);
   });

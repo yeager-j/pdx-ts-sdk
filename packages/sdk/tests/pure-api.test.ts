@@ -659,6 +659,7 @@ describe("content reference integrity", () => {
 
     const inlineStaticModifier = defineStaticModifierInternal({
       id: "pp_mod_static_modifier_job_ref",
+      hostScope: "country",
       name: "Inline Job Modifier",
       modifiers: (modifier) => modifier.job(job).add(3),
     });

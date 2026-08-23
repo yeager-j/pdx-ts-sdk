@@ -31,14 +31,25 @@ export interface ScopeParameter {
   readonly typeName: string;
   /** Canonical scopes the definition may declare. */
   readonly scopes: readonly string[];
-  /** Scope used when the author omits the declaration. */
-  readonly fallback: string;
+  /** Scope used when the author omits the declaration, or null when it is required. */
+  readonly fallback: string | null;
   /** Generic parameter name used by the generated definition. */
   readonly parameterName: "S" | "E";
   /** Constraint applied to the generated scope parameter. */
   readonly parameterType: string;
-  /** Default type argument for the generated scope parameter. */
-  readonly parameterFallback: string;
+  /** Rendered default type argument for the generated scope parameter. */
+  readonly parameterDefault: string;
+  /** Synthetic authoring member that declares the definition's scope. */
+  readonly authoringMember: {
+    /** Authoring member that names the definition's scope. */
+    readonly member: string;
+    /** Whether every authored definition must state the member. */
+    readonly required: boolean;
+    /** Whether the returned item carries the declaration beside its erased def. */
+    readonly carriesWitness: boolean;
+    /** Consumer-facing description of the declared scope. */
+    readonly docs: readonly string[];
+  } | null;
   /** Optional discriminator that selects a definition's callback scope. */
   readonly selector?: NonNullable<ContentScopeParameter["selector"]>;
   /** Optional declaration tying callback FROM to a starting effect argument. */
@@ -109,9 +120,29 @@ export function scopeParameterOf(emitter: Emitter, registry: string): ScopeParam
     }
     return scope;
   };
-  const scopes = row.scopes.map(canonical);
-  const fallback = canonical(row.fallback);
-  if (!scopes.includes(fallback)) {
+  const scopeNames =
+    "effect" in row.scopes
+      ? effectReceivingScopes(emitter, registry, row.scopes.effect)
+      : row.scopes;
+  const scopes = scopeNames.map(canonical);
+  const authoringMember = row.authoringMember ?? {
+    member: "scope",
+    required: false,
+    carriesWitness: false,
+    docs: [
+      "The scope this definition's own clauses run in.",
+      "",
+      "Emits nothing — it names a fact the game already knows and the rules",
+      "decline to state (`this = any`).",
+    ],
+  };
+  const fallback = row.fallback === undefined ? null : canonical(row.fallback);
+  if (fallback === null && !authoringMember.required) {
+    throw new Error(
+      `Overlay scope parameter for ${registry} has no fallback for an optional declaration`
+    );
+  }
+  if (fallback !== null && !scopes.includes(fallback)) {
     throw new Error(`Overlay scope parameter for ${registry} defaults outside its own scope list`);
   }
   const selector = row.selector;
@@ -125,7 +156,8 @@ export function scopeParameterOf(emitter: Emitter, registry: string): ScopeParam
       fallback,
       parameterName: "E",
       parameterType: selector.typeName,
-      parameterFallback: selector.fallback,
+      parameterDefault: JSON.stringify(selector.fallback),
+      authoringMember: null,
       selector,
       ...(row.declaredFrom === undefined
         ? {}
@@ -138,8 +170,24 @@ export function scopeParameterOf(emitter: Emitter, registry: string): ScopeParam
     fallback,
     parameterName: "S",
     parameterType: `${pascalCase(registry)}Scope`,
-    parameterFallback: fallback,
+    parameterDefault: fallback === null ? `${pascalCase(registry)}Scope` : JSON.stringify(fallback),
+    authoringMember,
   };
+}
+
+/** Receiving scopes of the effect that defines a declaration's supported universe. */
+function effectReceivingScopes(emitter: Emitter, registry: string, effect: string): string[] {
+  const declarations = emitter.rules.effects.get(effect);
+  if (declarations === undefined) {
+    throw new Error(`Overlay scope parameter for ${registry} names unknown effect "${effect}"`);
+  }
+  const scopes = declarations.flatMap((declaration) => declaration.supportedScopes ?? []);
+  if (scopes.length === 0) {
+    throw new Error(
+      `Overlay scope parameter for ${registry} names effect "${effect}" with no scopes`
+    );
+  }
+  return [...new Set(scopes)];
 }
 
 /**

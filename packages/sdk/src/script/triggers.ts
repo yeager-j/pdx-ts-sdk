@@ -15,8 +15,12 @@ import type {
   EventChainItem,
   ExternalEventChainRef,
 } from "../content/event-chains.ts";
+import type { StaticModifierRef } from "../generated/refs.ts";
 import type { ScopeName } from "../generated/scopes.ts";
+import type { StaticModifierScope } from "../generated/static-modifier.ts";
+import type { Unambiguous } from "./effects/contracts.ts";
 import { scopeValue } from "./effects/recorder.ts";
+import type { StaticModifierHostContract } from "./effects/static-modifiers.ts";
 import type { ScopeValue } from "./effects/types.ts";
 import { refId } from "./scalar.ts";
 import { conjoin, trigger, type Trigger } from "./trigger-core.ts";
@@ -135,6 +139,46 @@ export function hasCompletedEventChainCounter(
         field: "has_completed_event_chain_counter.event_chain",
       },
     ]
+  );
+}
+
+/** A scope where the game exposes `has_modifier` for a static modifier host. */
+export type StaticModifierCheckScope = Exclude<StaticModifierScope, "cosmic_storm_influence_field">;
+
+/** Checks an authored modifier only on an object of its declared host scope. */
+export function hasModifier<S extends StaticModifierCheckScope>(
+  value: Unambiguous<S, StaticModifierHostContract<S>>
+): Trigger<S>;
+/** Checks a vanilla, third-party, or raw modifier id without an authored host witness. */
+export function hasModifier(
+  value: (StaticModifierRef & { readonly hostScope?: never }) | string
+): Trigger<StaticModifierCheckScope>;
+export function hasModifier(
+  value: StaticModifierHostContract<StaticModifierCheckScope> | StaticModifierRef | string
+): Trigger<StaticModifierCheckScope> {
+  const id = String(refId(value));
+  return trigger(
+    [kv("has_modifier", id)],
+    [{ targets: ["static_modifier"], id, field: "has_modifier" }]
+  );
+}
+
+/** Checks an authored stage modifier only on an object of its declared host scope. */
+export function hasStageModifier<S extends "astral_rift" | "espionage_operation">(
+  value: Unambiguous<S, StaticModifierHostContract<S>>
+): Trigger<S>;
+/** Checks a vanilla, third-party, or raw stage modifier id without an authored host witness. */
+export function hasStageModifier(
+  value: (StaticModifierRef & { readonly hostScope?: never }) | string
+): Trigger<"astral_rift" | "espionage_operation">;
+export function hasStageModifier(
+  value:
+    StaticModifierHostContract<"astral_rift" | "espionage_operation"> | StaticModifierRef | string
+): Trigger<"astral_rift" | "espionage_operation"> {
+  const id = String(refId(value));
+  return trigger(
+    [kv("has_stage_modifier", id)],
+    [{ targets: ["static_modifier"], id, field: "has_stage_modifier" }]
   );
 }
 

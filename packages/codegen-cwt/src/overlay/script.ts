@@ -188,6 +188,14 @@ export interface EffectFieldTypeOverride {
   readonly reason: string;
 }
 
+/** Replaces the public input type of one scalar effect without changing its runtime lowering. */
+export interface EffectValueTypeOverride {
+  /** TypeScript input type emitted for the effect value. */
+  readonly type: string;
+  /** Audited reason the generated fallback must reject a contract-bearing value. */
+  readonly reason: string;
+}
+
 /** Adds one documented field that CWT omits from an existing effect argument block. */
 export interface EffectFieldAddition {
   /** Effect argument key as written in PDXScript. */
@@ -348,6 +356,34 @@ export const EFFECT_FIELD_CARDINALITY_OVERRIDES = new Map<
  */
 export const EFFECT_FIELD_TYPE_OVERRIDES = new Map<string, EffectFieldTypeOverride>([
   [
+    "add_modifier.modifier",
+    {
+      type: "(StaticModifierRef & { hostScope?: never }) | string",
+      reason:
+        "SDK-229: an authored static modifier carries hostScope and must reach the hand-written " +
+        "overload that checks it against the receiving scope. Excluding hostScope here prevents " +
+        "a mismatch from falling through, while plain refs and strings remain unchecked.",
+    },
+  ],
+  [
+    "add_stage_modifier.modifier",
+    {
+      type: "(StaticModifierRef & { hostScope?: never }) | string",
+      reason:
+        "SDK-229: an authored stage modifier must reach the hand-written overload that checks " +
+        "its hostScope against the astral-rift or espionage-operation receiver.",
+    },
+  ],
+  [
+    "export_modifier_duration_to_variable.modifier",
+    {
+      type: "ModifierRef | (StaticModifierRef & { hostScope?: never }) | string",
+      reason:
+        "SDK-229: querying an authored static modifier's duration executes against the current " +
+        "host, so contract-bearing values must reach the checked overload.",
+    },
+  ],
+  [
     "start_situation.type",
     {
       type: "(SituationTypeRef & { targetScope?: never }) | string",
@@ -379,12 +415,44 @@ export const EFFECT_FIELD_TYPE_OVERRIDES = new Map<string, EffectFieldTypeOverri
   ],
 ]);
 
+/** Scalar effects whose generated fallback must not accept a contract-bearing authored ref. */
+export const EFFECT_VALUE_TYPE_OVERRIDES = new Map<string, EffectValueTypeOverride>([
+  [
+    "remove_modifier",
+    {
+      type: "(StaticModifierRef & { hostScope?: never }) | string",
+      reason:
+        "SDK-229: removeModifier uses the same host contract and unchecked fallback as " +
+        "addModifier; excluding hostScope here prevents a mismatched authored item from " +
+        "matching the generated scalar signature.",
+    },
+  ],
+  [
+    "remove_stage_modifier",
+    {
+      type: "(StaticModifierRef & { hostScope?: never }) | string",
+      reason:
+        "SDK-229: removing an authored stage modifier must check its declared host against the " +
+        "astral-rift or espionage-operation receiver.",
+    },
+  ],
+]);
+
 /** Defines a stable generated interface for a hand-written effect overload to augment. */
 export interface EffectExtensionSeam {
   /** The emitted interface the hand-written overload augments. */
   readonly interfaceName: string;
   /** The hand-written overload's display signature for script references. */
   readonly referenceSignature: string;
+  /** Whether the extension overload is parameterized by the scope receiving the effect. */
+  readonly receivingScope?: boolean;
+  /** Named receiving-scope union used by both generated and hand-written interface declarations. */
+  readonly receivingScopeType?: {
+    /** Exported receiving-scope union name. */
+    readonly type: string;
+    /** Module that exports the receiving-scope union. */
+    readonly module: string;
+  };
   /** Audited contract that requires the hand-written overload. */
   readonly reason: string;
 }
@@ -405,6 +473,69 @@ export interface EffectExtensionSeam {
  * the effect leaves the rules.
  */
 export const EFFECT_EXTENSION_SEAMS = new Map<string, EffectExtensionSeam>([
+  [
+    "add_modifier",
+    {
+      interfaceName: "AddModifierEffectsExtension",
+      referenceSignature:
+        'addModifier(args: Omit<AddModifierArgs, "modifier"> & { modifier: StaticModifierHostContract<S> }): void;',
+      receivingScope: true,
+      receivingScopeType: { type: "StaticModifierScope", module: "./static-modifier.ts" },
+      reason:
+        "`addModifier` checks an SDK-authored static modifier's declared hostScope against the " +
+        "scope receiving the effect (src/script/effects/static-modifiers.ts).",
+    },
+  ],
+  [
+    "add_stage_modifier",
+    {
+      interfaceName: "AddStageModifierEffectsExtension",
+      referenceSignature:
+        'addStageModifier(args: Omit<AddStageModifierArgs, "modifier"> & { modifier: StaticModifierHostContract<S> }): void;',
+      receivingScope: true,
+      receivingScopeType: { type: "StaticModifierScope", module: "./static-modifier.ts" },
+      reason:
+        "`addStageModifier` checks an SDK-authored static modifier's declared hostScope against " +
+        "the scope receiving the effect (src/script/effects/static-modifiers.ts).",
+    },
+  ],
+  [
+    "export_modifier_duration_to_variable",
+    {
+      interfaceName: "ExportModifierDurationToVariableEffectsExtension",
+      referenceSignature:
+        'exportModifierDurationToVariable(args: Omit<ExportModifierDurationToVariableArgs, "modifier"> & { modifier: StaticModifierHostContract<S> }): void;',
+      receivingScope: true,
+      receivingScopeType: { type: "StaticModifierScope", module: "./static-modifier.ts" },
+      reason:
+        "`exportModifierDurationToVariable` checks an SDK-authored static modifier's declared " +
+        "hostScope against the scope receiving the effect (src/script/effects/static-modifiers.ts).",
+    },
+  ],
+  [
+    "remove_modifier",
+    {
+      interfaceName: "RemoveModifierEffectsExtension",
+      referenceSignature: "removeModifier(value: StaticModifierHostContract<S>): void;",
+      receivingScope: true,
+      receivingScopeType: { type: "StaticModifierScope", module: "./static-modifier.ts" },
+      reason:
+        "`removeModifier` checks an SDK-authored static modifier's declared hostScope against " +
+        "the scope receiving the effect (src/script/effects/static-modifiers.ts).",
+    },
+  ],
+  [
+    "remove_stage_modifier",
+    {
+      interfaceName: "RemoveStageModifierEffectsExtension",
+      referenceSignature: "removeStageModifier(value: StaticModifierHostContract<S>): void;",
+      receivingScope: true,
+      receivingScopeType: { type: "StaticModifierScope", module: "./static-modifier.ts" },
+      reason:
+        "`removeStageModifier` checks an SDK-authored static modifier's declared hostScope " +
+        "against the scope receiving the effect (src/script/effects/static-modifiers.ts).",
+    },
+  ],
   [
     "start_situation",
     {

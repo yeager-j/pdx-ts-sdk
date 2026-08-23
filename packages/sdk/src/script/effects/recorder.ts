@@ -536,6 +536,12 @@ const STRUCTURAL_BASE = {
     sink.push(...effect.entries);
   },
 
+  previewModifier: (sink, refs) => (modifier: { readonly id: string } | string) => {
+    const id = String(refId(modifier));
+    refs.push({ targets: ["static_modifier"], id, field: "tooltip.add_modifier.modifier" });
+    sink.push(block("tooltip", [block("add_modifier", [kv("modifier", id)])]));
+  },
+
   addResource: (sink) => (args: { resource: string; amount: number; mult?: number }) => {
     const entries: PdxEntry[] = [kv(args.resource, args.amount)];
     if (args.mult !== undefined) {

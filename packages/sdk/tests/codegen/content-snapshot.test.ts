@@ -882,7 +882,8 @@ describe("content-type codegen", () => {
     // modifier, which is the whole point of a static modifier.
     const staticModifier = emissions.get("static_modifier");
     expect(staticModifier?.inlineSplices).toEqual(["modifier"]);
-    expect(staticModifier?.code).toContain("modifiers?: ModifierClosure<ScopeName>;");
+    expect(staticModifier?.code).toContain("hostScope: S;");
+    expect(staticModifier?.code).toContain("modifiers?: ModifierClosure<NoInfer<S>>;");
     expect(staticModifier?.code).toContain('{ member: "modifiers", shape: "inlineModifiers" }');
     // No `key`: the game reads none, and the writer splices the rows at the
     // block root next to the metadata keys, the way vanilla writes them.

@@ -7,6 +7,7 @@ const mod = createMod({
 });
 
 const researchSurge = mod.staticModifier("research_surge", {
+  hostScope: "country",
   name: "Research Surge",
   desc: "A coordinated research drive increases national unity and alloy output.",
   modifiers: (modifier) => {

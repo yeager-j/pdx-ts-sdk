@@ -12,8 +12,10 @@ import {
   hasAuthority,
   hasCompletedEventChainCounter,
   hasCountryFlag,
+  hasModifier,
   hasPlanetFlag,
   hasShipFlag,
+  hasStageModifier,
   isAtWar,
   isCapital,
   isSiteLocked,
@@ -63,6 +65,7 @@ import {
   type SituationTypeFields,
   type SpecialProjectRef,
   type SpriteRef,
+  type StaticModifierItem,
   type StrikeCraftComponentTemplateFields,
   type TechnologyFields,
   type TechnologyPatch,
@@ -452,33 +455,86 @@ describe("generated content authoring types", () => {
     });
   });
 
-  it("records any scope's modifier path in a static modifier's unkeyed splice", () => {
-    // static_modifier's body is the modifier grammar itself and CWT pins no
-    // scope to it, so the recorder has to admit every scope's paths. The
-    // distributed reading would be a union of every per-scope recorder with no
-    // member in common — not even `raw`, whose name parameter would intersect
-    // to `never`.
-    contentMod.staticModifier("any_scope", {
+  it("carries one static modifier host into authored consumers", () => {
+    const countryHosted = contentMod.staticModifier("country_hosted", {
+      hostScope: "country",
       name: "X",
       modifiers: (m) => {
         m.country.unity.produces.mult(0.1);
-        m.planet.jobs.alloys.produces.mult(0.1);
+        m.planet.jobs.engineering.research.produces.mult(-0.15);
         m.raw("ship_weapon_damage", 0.1);
         m.unchecked("othermod_invented_mult", 0.1);
       },
     });
-    contentMod.staticModifier("bad_path", {
+    const shipHosted = contentMod.staticModifier("ship_hosted", {
+      hostScope: "ship",
       name: "X",
-      // @ts-expect-error — a typo in any path segment is still a compile error
+      modifiers: (m) => m.ship.tracking.add(10),
+    });
+    const country = makeScope<"country">([]);
+    const ship = makeScope<"ship">([]);
+    const rift = makeScope<"astral_rift">([]);
+    const operation = makeScope<"espionage_operation">([]);
+    const riftHosted = contentMod.staticModifier("rift_hosted", {
+      hostScope: "astral_rift",
+      name: "X",
+    });
+
+    expectTypeOf(countryHosted.hostScope).toEqualTypeOf<"country">();
+    // @ts-expect-error — the non-emitting host witness is carried beside the serialized def
+    countryHosted.def.hostScope;
+    country.addModifier({ modifier: countryHosted });
+    country.removeModifier(countryHosted);
+    country.if(hasModifier(countryHosted), () => {});
+    country.exportModifierDurationToVariable({ modifier: countryHosted, variable: "remaining" });
+    // @ts-expect-error — an authored country modifier cannot execute on a ship
+    ship.addModifier({ modifier: countryHosted });
+    // @ts-expect-error — removing it from a ship contradicts the same host witness
+    ship.removeModifier(countryHosted);
+    // @ts-expect-error — hasModifier returns the authored definition's host scope
+    ship.if(hasModifier(countryHosted), () => {});
+    // @ts-expect-error — duration queries run against the current modifier host
+    ship.exportModifierDurationToVariable({ modifier: countryHosted, variable: "remaining" });
+
+    rift.addStageModifier({ modifier: riftHosted });
+    rift.removeStageModifier(riftHosted);
+    rift.if(hasStageModifier(riftHosted), () => {});
+    // @ts-expect-error — an astral-rift stage modifier cannot execute on an operation
+    operation.addStageModifier({ modifier: riftHosted });
+    // @ts-expect-error — stage removal checks the same receiver contract
+    operation.removeStageModifier(riftHosted);
+    // @ts-expect-error — stage checks preserve the authored host contract
+    operation.if(hasStageModifier(riftHosted), () => {});
+
+    ship.previewModifier(countryHosted);
+    ship.addModifier({ modifier: "third_party_modifier" });
+    ship.removeModifier("third_party_modifier");
+    ship.if(hasModifier("third_party_modifier"), () => {});
+    country.addModifier({ modifier: vanilla.staticModifier("food_deficit") });
+    country.removeModifier(vanilla.staticModifier("food_deficit"));
+    country.if(hasModifier(vanilla.staticModifier("food_deficit")), () => {});
+
+    const either: StaticModifierItem<"country" | "ship"> =
+      Math.random() > 0.5 ? countryHosted : shipHosted;
+    // @ts-expect-error — a union-valued definition has no single host contract to execute
+    country.addModifier({ modifier: either });
+
+    // @ts-expect-error — SDK-authored static modifiers must declare one host scope
+    contentMod.staticModifier("missing_host", {
+      name: "X",
+    });
+    contentMod.staticModifier("bad_path", {
+      hostScope: "country",
+      name: "X",
+      // @ts-expect-error — a typo in a host-valid path segment is a compile error
       modifiers: (m) => m.country.unity.produses.mult(0.1),
     });
     contentMod.staticModifier("bad_raw", {
+      hostScope: "country",
       name: "X",
-      // @ts-expect-error — raw() is checked against every known modifier name
+      // @ts-expect-error — raw() is checked against known country-valid modifier names
       modifiers: (m) => m.raw("not_a_real_modifier_name", 0.1),
     });
-    // A scoped modifier field keeps its own narrower recorder: widening the
-    // unconstrained case must not widen the constrained ones with it.
     contentMod.tradition("scoped_modifier", {
       name: "X",
       // @ts-expect-error — cohesion applies in federation scope, not country

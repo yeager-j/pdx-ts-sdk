@@ -172,22 +172,21 @@ describe("emitted effect signatures", () => {
     );
   });
 
-  it("fields: enum-expanded keys become named optional fields", () => {
+  it("fields: addModifier preserves generated args beneath its host-contract seam", () => {
     // mult/multiplier/timeMultiplier are `effects.cwt`'s `value_field`, not
     // `float`, so they lower to the widened `ScriptValue` (widenedLowering)
     // rather than plain `number` — a number still assigns unchanged.
-    expect(signature("addModifier")).toMatchInlineSnapshot(`
-      "addModifier(args: {
-          modifier: StaticModifierRef | string;
-          days?: number;
-          months?: number;
-          years?: number;
-          mult?: ScriptValue;
-          multiplier?: ScriptValue;
-          timeMultiplier?: ScriptValue;
-          clearOnOwnerChange?: "yes";
-        }): void;"
-    `);
+    expect(signature("addModifier")).toBe("addModifier(args: AddModifierArgs): void;");
+    expect(interfaces).toContain(
+      "modifier: (StaticModifierRef & { hostScope?: never }) | string;\n" +
+        "  days?: number;\n" +
+        "  months?: number;\n" +
+        "  years?: number;\n" +
+        "  mult?: ScriptValue;\n" +
+        "  multiplier?: ScriptValue;\n" +
+        "  timeMultiplier?: ScriptValue;\n" +
+        '  clearOnOwnerChange?: "yes";'
+    );
   });
 
   it("wrapper: limit args plus a closure typed to the pushed scope", () => {

@@ -249,10 +249,11 @@ function itemUnionType(facts: RegistryDefinerFacts): string {
   // value widened to that union is ambiguous at the call site rather than
   // unchecked.
   const witness = declaredWitness(facts, graft);
+  const erasedDef = storedDefType(`${name}Def${erased}`, emission);
   const modifierWitness = contentWitness?.type ?? null;
   const itemArms = [
     contentWitness === undefined
-      ? `ContentItem<${key}, ${name}Def${erased}>` +
+      ? `ContentItem<${key}, ${erasedDef}>` +
         (witness === null ? "" : ` & { readonly ${witness.member}: W }`)
       : contentWitness.mode === "wraps"
         ? `ContentItem<${key}, ${name}Def${erased}> & { readonly def: ${name}Def${erased} & { readonly ${contentWitness.member}: W } }`
@@ -313,11 +314,15 @@ function capabilityDefineMember(facts: RegistryDefinerFacts): {
   // contract the starting effect's call sites are checked against, so it
   // rides on the item beside the erased def rather than inside it.
   const declaredFrom = scoped?.declaredFrom;
+  const declaredContract = declaredWitness(facts, facts.graft);
   const declaredFromParameter =
     declaredFrom === undefined
       ? ""
       : `\n    L extends ${declaredFrom.typeName} | undefined = undefined,`;
-  const declaration = declaredFrom === undefined ? "" : ` & { readonly ${declaredFrom.member}: L }`;
+  const declaration =
+    declaredContract?.parameter === undefined
+      ? ""
+      : ` & { readonly ${declaredContract.member}: ${declaredContract.parameter} }`;
   const parameters =
     scoped === null
       ? contentWitness === undefined
@@ -326,7 +331,7 @@ function capabilityDefineMember(facts: RegistryDefinerFacts): {
           ? `<const Name extends string, W extends ${contentWitness.type}>`
           : `<const Name extends string, const W extends ${contentWitness.type}>`
       : `<\n    const Name extends string,\n    ${scoped.parameterName} extends ` +
-        `${scoped.parameterType} = ${JSON.stringify(scoped.parameterFallback)},` +
+        `${scoped.parameterType} = ${scoped.parameterDefault},` +
         `${declaredFromParameter}\n  >`;
   const def =
     `${name}Def<${minted}${scoped === null ? "" : `, ${scoped.parameterName}`}` +
@@ -349,7 +354,7 @@ function capabilityDefineMember(facts: RegistryDefinerFacts): {
       : `${name}Fields<${scoped.parameterName}${declaredFrom === undefined ? "" : ", L"}>`;
   const result =
     contentWitness === undefined
-      ? `${name}Def<${minted}${scoped === null ? "" : ", never"}>`
+      ? storedDefType(`${name}Def<${minted}${scoped === null ? "" : ", never"}>`, emission)
       : contentWitness.mode === "wraps"
         ? `${name}Def<${minted}> & { readonly ${contentWitness.member}: W }`
         : `${economicResultBase} & W`;
@@ -492,23 +497,27 @@ function definerFunctions(facts: RegistryDefinerFacts): {
     // erases S so a `"ship"` definition still belongs to this registry's item
     // union — `Trigger<S>` is contravariant, so a leaked S would make it not.
     const scoped = emission.scopeParameter;
-    // A declared FROM is stripped like `scope` and, unlike it, kept: the
-    // starting effect's call sites are checked against the declaration, so
-    // the item carries it beside the def whose own parameter is erased.
+    // A declared contract is stripped like `scope` and, unlike an ordinary
+    // scope parameter, kept beside the erased def so its consumers can check it.
     const declaredFrom = scoped?.declaredFrom;
+    const declaredContract = declaredWitness(facts, graft);
     const declaredFromParameter =
       declaredFrom === undefined
         ? ""
         : `  L extends ${declaredFrom.typeName} | undefined = undefined,\n`;
     const declaration =
-      declaredFrom === undefined ? "" : ` & { readonly ${declaredFrom.member}: L }`;
+      declaredContract?.parameter === undefined
+        ? ""
+        : ` & { readonly ${declaredContract.member}: ${declaredContract.parameter} }`;
     const carried =
-      declaredFrom === undefined ? "" : `, ${declaredFrom.member}: ${declaredFrom.member} as L`;
+      declaredContract?.parameter === undefined
+        ? ""
+        : `, ${declaredContract.member}: ${declaredContract.member} as ${declaredContract.parameter}`;
     const parameters =
       scoped === null
         ? "<const Id extends string>"
         : `<\n  const Id extends string,\n  ${scoped.parameterName} extends ` +
-          `${scoped.parameterType} = ${JSON.stringify(scoped.parameterFallback)},\n` +
+          `${scoped.parameterType} = ${scoped.parameterDefault},\n` +
           `${declaredFromParameter}>`;
     const definerParameters =
       contentWitness?.mode === "intersects"
@@ -522,9 +531,14 @@ function definerFunctions(facts: RegistryDefinerFacts): {
     const definerResult =
       contentWitness?.mode === "intersects"
         ? `ContentItem<${key}, Omit<${name}Def<Id>, ${economicWitnessOmit}> & W>`
-        : `ContentItem<${key}, ${name}Def<Id${scoped === null ? "" : ", never"}>>`;
+        : `ContentItem<${key}, ${storedDefType(
+            `${name}Def<Id${scoped === null ? "" : ", never"}>`,
+            emission
+          )}>`;
     const stripped = [
-      ...(scoped !== null && scoped.selector === undefined ? ["scope"] : []),
+      ...(scoped?.authoringMember === null || scoped?.authoringMember === undefined
+        ? []
+        : [scoped.authoringMember.member]),
       ...(declaredFrom === undefined ? [] : [declaredFrom.member]),
     ];
     const body =
@@ -534,10 +548,10 @@ function definerFunctions(facts: RegistryDefinerFacts): {
           : `  return { itemKind: "content", type: ${key}, id: def.id, def };\n`
         : stripped.length === 0
           ? `  return { itemKind: "content", type: ${key}, id: def.id, ` +
-            `def: def as unknown as ${name}Def<Id, never> };\n`
+            `def: def as unknown as ${storedDefType(`${name}Def<Id, never>`, emission)} };\n`
           : `  const { ${stripped.join(", ")}, ...rest } = def;\n` +
             `  return { itemKind: "content", type: ${key}, id: def.id, ` +
-            `def: rest as unknown as ${name}Def<Id, never>${carried} };\n`;
+            `def: rest as unknown as ${storedDefType(`${name}Def<Id, never>`, emission)}${carried} };\n`;
     definitions.push(
       docComment([
         `Internal lowering primitive for ${article} ${spoken}. Public authors call`,
@@ -547,14 +561,20 @@ function definerFunctions(facts: RegistryDefinerFacts): {
           ? []
           : [
               "",
-              ...(scoped.selector === undefined
+              ...(scoped.authoringMember !== null
                 ? [
-                    "`scope` names which scope this definition's clauses run in and emits",
-                    `nothing; it defaults to \`${scoped.fallback}\`.`,
+                    scoped.authoringMember.member === "scope"
+                      ? "`scope` names which scope this definition's clauses run in and emits"
+                      : `\`${scoped.authoringMember.member}\` names this definition's scope and emits`,
+                    scoped.fallback === null
+                      ? "nothing; every definition must declare it."
+                      : `nothing; it defaults to \`${scoped.fallback}\`.`,
                   ]
-                : [
-                    `\`${scoped.selector.member}\` selects which scope this definition's callbacks run in.`,
-                  ]),
+                : scoped.selector === undefined
+                  ? []
+                  : [
+                      `\`${scoped.selector.member}\` selects which scope this definition's callbacks run in.`,
+                    ]),
               ...(declaredFrom === undefined
                 ? []
                 : [
@@ -906,22 +926,42 @@ function shapeMintMethod(
  * The declared contract a registry's item carries beside its def, from
  * whichever side owns the definer.
  *
- * Generated definers learn it from the overlay's `declaredFrom` row; a
- * hand-written one has to say so itself, since nothing in the rules mentions
+ * Generated definers learn it from a carried scope member or `declaredFrom`;
+ * a hand-written one has to say so itself, since nothing in the rules mentions
  * the property it returns. Either way the item type has to match what the
  * definer actually returns, which is what this keeps in one place.
  */
 function declaredWitness(
   content: { readonly emission: ContentEmission },
   graft: HandWrittenDefiner | undefined
-): { readonly member: string; readonly type: string } | null {
+): { readonly member: string; readonly type: string; readonly parameter?: string } | null {
   if (graft?.witness !== undefined) {
     return graft.witness;
   }
-  const declaredFrom = content.emission.scopeParameter?.declaredFrom;
+  const scoped = content.emission.scopeParameter;
+  if (scoped === null) {
+    return null;
+  }
+  const scopeMember = scoped.authoringMember;
+  if (scopeMember?.carriesWitness === true) {
+    return {
+      member: scopeMember.member,
+      type: scoped.typeName,
+      parameter: scoped.parameterName,
+    };
+  }
+  const declaredFrom = scoped.declaredFrom;
   return declaredFrom === undefined
     ? null
-    : { member: declaredFrom.member, type: `${declaredFrom.typeName} | undefined` };
+    : { member: declaredFrom.member, type: `${declaredFrom.typeName} | undefined`, parameter: "L" };
+}
+
+/** Removes a carried synthetic scope declaration from the stored definition type. */
+function storedDefType(def: string, emission: ContentEmission): string {
+  const scopeMember = emission.scopeParameter?.authoringMember;
+  return scopeMember?.carriesWitness === true
+    ? `Omit<${def}, ${JSON.stringify(scopeMember.member)}>`
+    : def;
 }
 
 /**

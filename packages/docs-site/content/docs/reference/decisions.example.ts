@@ -7,6 +7,7 @@ const mod = createMod({
 });
 
 const surveyUnderway = mod.staticModifier("survey_underway", {
+  hostScope: "planet",
   name: "Frontier Survey Underway",
   modifiers: (modifier) => modifier.planet.jobs.engineering.research.produces.mult(0.1),
 });

@@ -45,6 +45,7 @@ const surveyProtocols = mod.edict("survey_protocols", {
 });
 
 const routeDisruption = mod.staticModifier("route_disruption", {
+  hostScope: "country",
   name: "Route Disruption",
   modifiers: (modifier) => {
     modifier.economic(expeditions).resource("energy").upkeep.mult(0.5);

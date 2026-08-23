@@ -179,8 +179,9 @@ long-lived definition already owns the modifier block.
   Modifier values live on game objects and may propagate down the object hierarchy. The economic
   category's `modifierCategory` and a scripted modifier's `category` classify where generated or
   registered values can be read; they do not apply a value to an object. The caller that owns or
-  applies a modifier still decides its host. The SDK checks known modifier names and many scoped
-  modifier fields, but it does not currently prove the host scope of a static modifier.
+  applies a modifier still decides its host. An SDK-authored static modifier declares that one host
+  with `hostScope`; executing add, remove, and check operations preserve and enforce the witness.
+  Propagation to owned planets, ships, or jobs does not create another host.
 </Callout>
 
 ## Choose the smallest authoring surface

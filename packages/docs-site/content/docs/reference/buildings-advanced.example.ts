@@ -43,11 +43,13 @@ const atmosphericModeling = mod.technology("atmospheric_modeling", {
 });
 
 const queuedStatus = mod.staticModifier("storm_center_queued", {
+  hostScope: "colony",
   name: "Storm Analysis Center Queued",
   desc: "A Storm Analysis Center is waiting in this colony's construction queue.",
 });
 
 const onlineStatus = mod.staticModifier("storm_center_online", {
+  hostScope: "colony",
   name: "Storm Analysis Center Online",
   desc: "This colony's Storm Analysis Center is operational.",
 });
