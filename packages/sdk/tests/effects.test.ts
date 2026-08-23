@@ -1297,6 +1297,25 @@ custom_tooltip_with_params = {
     ]);
   });
 
+  it("writes a number-keyed map with its keys unquoted", () => {
+    const sink: PdxEntry[] = [];
+    const country = makeScope<"country">(sink);
+
+    country.createLeader({
+      class: "commander",
+      traits: { entries: { 1: "leader_trait_eager" }, trait: ["random_trait"] },
+    });
+
+    expect(serialize(sink)).toBe(`create_leader = {
+\tclass = commander
+\ttraits = {
+\t\t1 = leader_trait_eager
+\t\ttrait = random_trait
+\t}
+}
+`);
+  });
+
   it("writes either arm of a field overloaded between a scalar and a value list", () => {
     const sink: PdxEntry[] = [];
     const country = makeScope<"country">(sink);

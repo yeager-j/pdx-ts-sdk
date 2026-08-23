@@ -514,6 +514,44 @@ describe("LoweredRule", () => {
     });
   });
 
+  it("keys an int-filtered map on number and a reference-filtered one on string", () => {
+    const map = (overrides: Partial<MapValue>): MapValue => ({
+      keyName: "int",
+      indexType: "number",
+      value: { type: "TraitRef | string", toScalar: (expression) => expression },
+      cardinality: { min: 0, max: null },
+      splice: false,
+      ...overrides,
+    });
+
+    expect(mapType(new Emitter(rules), map({}))).toBe(
+      "{ readonly [int: number]: TraitRef | string }"
+    );
+    expect(mapType(new Emitter(rules), map({ keyName: "resource", indexType: "string" }))).toBe(
+      "{ readonly [resource: string]: TraitRef | string }"
+    );
+  });
+
+  it("lowers the int key filter of leader traits to a number-keyed member", () => {
+    const traitsDeclarations = effects
+      .get("create_leader")!
+      .blocks[0]!.named.filter((field) => field.key.kind === "name" && field.key.name === "traits");
+    const merged = mergedFields(new Emitter(rules), traitsDeclarations);
+
+    expect(Array.isArray(merged)).toBe(true);
+    if (!Array.isArray(merged)) {
+      throw new Error(merged.detail);
+    }
+    const traits = merged.find((field) => field.name === "traits");
+    if (traits?.value.kind !== "fields") {
+      throw new Error("create_leader.traits no longer lowers to a block of named members");
+    }
+    expect(traits.value.fields.find((field) => field.name === "entries")?.value).toMatchObject({
+      kind: "map",
+      map: { keyName: "int", indexType: "number", splice: true },
+    });
+  });
+
   it("declines a mixed block whose open keys come from two key filters", () => {
     const debris = effects.get("add_resource_from_debris")!.blocks[0]!.named;
     const patron = effects.get("add_attunement")!.blocks[0]!.named[0]!;

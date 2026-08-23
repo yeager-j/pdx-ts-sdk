@@ -171,6 +171,8 @@ export type ClauseCategory = "trigger" | "effect" | "modifier_rule";
 export interface MapValue {
   /** The index-signature label naming what one key is, such as `resource`. */
   readonly keyName: string;
+  /** The TypeScript type the index signature keys on. */
+  readonly indexType: "string" | "number";
   /** The registries a key may name, when every key form is a content reference. */
   readonly keyRefTypes?: readonly string[];
   /** The value one entry holds. */
@@ -489,13 +491,15 @@ function widestCardinality(fields: readonly RuleField[]): Cardinality {
 
 /**
  * Renders the index-signature type an open-keyed block admits.
- * Keys stay `string` because a branded reference is an object and cannot key one.
+ *
+ * A reference-keyed map keys on `string` rather than the branded reference:
+ * the brand is an object, and an object cannot key one.
  */
 export function mapType(emitter: Emitter, map: MapValue): string {
   const value = emitter.useValue(map.value).type;
   const entry =
     map.comparison === true ? `${value} | readonly [${emitter.use("PdxOp")}, ${value}]` : value;
-  return `{ readonly [${map.keyName}: string]: ${entry} }`;
+  return `{ readonly [${map.keyName}: ${map.indexType}]: ${entry} }`;
 }
 
 /**
@@ -682,6 +686,11 @@ function mapKeyFamily(type: MapKeyType): string {
     : type.kind;
 }
 
+/** Whether a key filter admits only numbers, so the index signature keys on one. */
+function isNumericKey(type: MapKeyType): boolean {
+  return type.kind === "int" || type.kind === "float";
+}
+
 /** The index-signature label a key type reads as. */
 function mapKeyName(type: MapKeyType): string {
   switch (type.kind) {
@@ -758,8 +767,14 @@ function openMapValue(
   declarations: readonly OpenKeyDeclaration[],
   splice: boolean
 ): MapValue | SkipReason {
-  // Not `unionFor`: the key is never spelled as a type, only as `string`.
-  const keyRefTypes = referenceTargetsOf(declarations.map((declaration) => declaration.keyType));
+  const keyTypes = declarations.map((declaration) => declaration.keyType);
+  // Not `unionFor`: the key is never spelled as a branded type, only as the
+  // index signature's `string` or `number`.
+  const keyRefTypes = referenceTargetsOf(keyTypes);
+  // A map-only block merges every key family it declares, so one family that
+  // admits names the game does not read as a number keeps the whole map on
+  // `string`.
+  const indexType = keyTypes.every(isNumericKey) ? "number" : "string";
   const fields = declarations.map((declaration) => declaration.field);
   const comparisons = fields.filter((field) => field.comparison);
   if (comparisons.length > 0 && comparisons.length !== fields.length) {
@@ -782,6 +797,7 @@ function openMapValue(
   }
   return {
     keyName: mapKeyName(declarations[0]!.keyType),
+    indexType,
     ...(keyRefTypes === undefined ? {} : { keyRefTypes }),
     value,
     ...(comparisons.length === 0 ? {} : { comparison: true as const }),

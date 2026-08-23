@@ -274,11 +274,19 @@ describe("emitted effect signatures", () => {
     );
   });
 
-  it("int-keyed block: the map member is named entries beside its siblings", () => {
+  it("int-keyed block: entries keys on number beside its named siblings", () => {
     expect(signature("createLeader")).toContain(
-      "traits?: {\n      entries?: {\n        readonly [int: string]: " +
+      "traits?: {\n      entries?: {\n        readonly [int: number]: " +
         'TraitLeaderTraitRef | string | "random_trait" | "random_common";\n      };'
     );
+  });
+
+  it("reference-keyed and value-set-keyed blocks keep keying on string", () => {
+    expect(signature("setTradeConversions")).toContain("readonly [resource: string]");
+    expect(signature("setCountryCodeFlags")).toContain("readonly [countryFlag: string]");
+    expect(signature("customTooltipWithParams")).toContain("readonly [parameter: string]");
+    // Five reference families merged into one map, so no family is numeric.
+    expect(signature("setAgreementTerms")).toContain("readonly [agreementTermDiscrete: string]");
   });
 
   it("map meta: keys, values, minimum entry count, and placement", () => {

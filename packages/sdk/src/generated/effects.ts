@@ -4392,7 +4392,7 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
     /** The traits of the leader, e.g. "1 = leader_trait_bureaucrat". If <level> is a positive int and randomize_traits = yes, the trait is added if the leader's level is at least <level>. */
     traits?: {
       entries?: {
-        readonly [int: string]: TraitLeaderTraitRef | string | "random_trait" | "random_common";
+        readonly [int: number]: TraitLeaderTraitRef | string | "random_trait" | "random_common";
       };
       trait?: readonly (TraitLeaderTraitRef | string | "random_trait" | "random_common")[];
     };
@@ -4720,7 +4720,7 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
     /** The traits of the leader, e.g. "1 = leader_trait_bureaucrat". If <level> is a positive int and randomize_traits = yes, the trait is added if the leader's level is at least <level>. */
     traits?: {
       entries?: {
-        readonly [int: string]: TraitLeaderTraitRef | string | "random_trait" | "random_common";
+        readonly [int: number]: TraitLeaderTraitRef | string | "random_trait" | "random_common";
       };
       trait?: readonly (TraitLeaderTraitRef | string | "random_trait" | "random_common")[];
     };
@@ -4853,7 +4853,7 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
     skill?: "random" | number;
     traits?: {
       entries?: {
-        readonly [int: string]: TraitLeaderTraitRef | string | "random_trait" | "random_common";
+        readonly [int: number]: TraitLeaderTraitRef | string | "random_trait" | "random_common";
       };
       trait?: readonly (TraitLeaderTraitRef | string | "random_trait" | "random_common")[];
     };

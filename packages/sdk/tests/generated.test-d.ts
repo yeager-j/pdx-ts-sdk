@@ -300,6 +300,19 @@ describe("open-keyed argument blocks", () => {
     country.addResourceFromDebris({ minerals: 1 });
   });
 
+  it("keys an int-filtered map on numbers", () => {
+    country.createLeader({
+      class: "commander",
+      traits: { entries: { 1: "leader_trait_eager", 2: "random_trait" } },
+    });
+    country.createLeader({
+      class: "commander",
+      // @ts-expect-error — `int = <trait.leader_trait>` is a numeric key filter,
+      // and the game reads a word here as no level at all
+      traits: { entries: { first: "random_trait" } },
+    });
+  });
+
   it("takes either arm of a scalar-or-map trigger field", () => {
     checkEconomicProductionModifierForJob({
       job: "researcher",
