@@ -110,7 +110,7 @@ export function scopeRef<S extends ScopeName>(path: string, lease?: ScriptLease)
     effects(body) {
       const recording = activeRecording(path);
       assertOwnedBy(recording, lease, path);
-      recording.sink.push(block(path, recordBlock(recording, recording.refs, body)));
+      recording.sink.push(block(path, recordBlock(recording, recording.refs, body, [], "push")));
     },
     // No lease check: a trigger is a value built with nothing recording, so it
     // reaches output only where its holder writes it.
@@ -176,30 +176,39 @@ interface Recording extends RecordingState {
   readonly ancestors: readonly ScopeIdentity[];
   /** Ancestors a replacement made unavailable to PREV routing. */
   readonly blockedAncestors: readonly ScopeIdentity[];
+  /** An outer effect sequence that a routed structural chain must remain adjacent within. */
+  readonly adjacencyWitness?: {
+    readonly sink: readonly PdxEntry[];
+    readonly mark: number;
+  };
 }
 
 const RECORDINGS: Recording[] = [];
 
-interface EffectReceiver {
+interface EffectDestination {
   readonly sink: PdxEntry[];
   readonly refs: ContentRefUse[];
   readonly owner: Recording | undefined;
+}
+
+interface EffectReceiver extends EffectDestination {
+  readonly commit: () => void;
 }
 
 function prevKey(depth: number): string {
   return depth === 1 ? "prev" : `prev${"prev".repeat(depth - 1)}`;
 }
 
-function routedSink(active: Recording, depth: number): PdxEntry[] {
-  const sink: PdxEntry[] = [];
-  active.sink.push(block(prevKey(depth), sink));
-  return sink;
-}
-
-function routedRecording(active: Recording, target: Recording, sink: PdxEntry[]): Recording {
+function routedRecording(
+  active: Recording,
+  target: Recording,
+  sink: PdxEntry[],
+  refs: ContentRefUse[],
+  adjacencyWitness: NonNullable<Recording["adjacencyWitness"]>
+): Recording {
   return {
     sink,
-    refs: active.refs,
+    refs,
     get live() {
       return active.live && target.live;
     },
@@ -207,23 +216,28 @@ function routedRecording(active: Recording, target: Recording, sink: PdxEntry[])
     scope: target.scope,
     ancestors: [active.scope, ...active.ancestors],
     blockedAncestors: active.blockedAncestors,
+    adjacencyWitness,
   };
 }
 
 /** Selects the live lexical receiver for one captured scope proxy. */
 function effectReceiver(
   recording: Recording | undefined,
-  fallback: EffectReceiver
+  fallback: EffectDestination
 ): EffectReceiver {
+  const direct = (destination: EffectDestination): EffectReceiver => ({
+    ...destination,
+    commit: () => undefined,
+  });
   if (recording === undefined) {
-    return fallback;
+    return direct(fallback);
   }
   const active = RECORDINGS.at(-1);
   if (active === undefined) {
-    return fallback;
+    return direct(fallback);
   }
   if (active.scope === recording.scope) {
-    return { sink: active.sink, refs: active.refs, owner: active };
+    return direct({ sink: active.sink, refs: active.refs, owner: active });
   }
   const ancestorIndex = active.ancestors.indexOf(recording.scope);
   if (ancestorIndex === -1) {
@@ -234,7 +248,7 @@ function effectReceiver(
           "or a saved target reference instead."
       );
     }
-    return fallback;
+    return direct(fallback);
   }
   const depth = ancestorIndex + 1;
   if (depth > 4) {
@@ -244,8 +258,21 @@ function effectReceiver(
         "scope pushes or open an explicit saved scope reference."
     );
   }
-  const sink = routedSink(active, depth);
-  return { sink, refs: active.refs, owner: routedRecording(active, recording, sink) };
+  const sink: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
+  const adjacencyWitness = { sink: active.sink, mark: active.sink.length + 1 };
+  return {
+    sink,
+    refs,
+    owner: routedRecording(active, recording, sink, refs, adjacencyWitness),
+    commit: () => {
+      if (sink.length === 0) {
+        return;
+      }
+      active.sink.push(block(prevKey(depth), sink));
+      active.refs.push(...refs);
+    },
+  };
 }
 
 /**
@@ -850,7 +877,15 @@ const STRUCTURAL_BASE = {
     (sink, refs, recording) => (condition: Trigger<ScopeName>, body: (scope: unknown) => void) => {
       const record = nestedRecorder(recording);
       sink.push(conditionalBlock("if", condition, body, refs, record));
-      return new IfChainRecorder(sink, refs, recording, record, assertLive);
+      return new IfChainRecorder(
+        sink,
+        refs,
+        recording,
+        record,
+        assertLive,
+        recording?.adjacencyWitness?.sink,
+        recording?.adjacencyWitness?.mark
+      );
     },
 
   target: (sink, refs, recording) => (body: (scope: unknown) => void) => {
@@ -1072,6 +1107,7 @@ function makeEffectPath(
           nested = [block(keys[index]!, nested)];
         }
         receiver.sink.push(...nested);
+        receiver.commit();
       };
     }
     if (prop === "hiddenEffect") {
@@ -1212,6 +1248,14 @@ function makeAnyScope(sink: PdxEntry[], refs: ContentRefUse[], recording?: Recor
     }
   };
 
+  const invoke = (prop: string, args: readonly unknown[]): unknown => {
+    const receiver = effectReceiver(recording, { sink, refs, owner: recording });
+    const method = dispatch(prop, receiver) as (...parameters: unknown[]) => unknown;
+    const result = method(...args);
+    receiver.commit();
+    return result;
+  };
+
   return new Proxy(Object.create(null) as object, {
     get(_target, prop) {
       if (typeof prop !== "string") {
@@ -1224,21 +1268,13 @@ function makeAnyScope(sink: PdxEntry[], refs: ContentRefUse[], recording?: Recor
         return makeEffectPath(sink, refs, recording, ["hidden_effect"], ["same"]);
       }
       if (STRUCTURAL[prop] !== undefined) {
-        return guarded(recording, prop, (...args: unknown[]) => {
-          const receiver = effectReceiver(recording, { sink, refs, owner: recording });
-          const method = dispatch(prop, receiver);
-          return (method as (...parameters: unknown[]) => unknown)(...args);
-        });
+        return guarded(recording, prop, (...args: unknown[]) => invoke(prop, args));
       }
       const meta = EFFECT_META[prop];
       if (meta?.shape.kind === "scope-link") {
         return makeEffectPath(sink, refs, recording, [meta.key], [meta.shape.transition]);
       }
-      return guarded(recording, prop, (...args: unknown[]) => {
-        const receiver = effectReceiver(recording, { sink, refs, owner: recording });
-        const method = dispatch(prop, receiver);
-        return (method as (...parameters: unknown[]) => unknown)(...args);
-      });
+      return guarded(recording, prop, (...args: unknown[]) => invoke(prop, args));
     },
   });
 }

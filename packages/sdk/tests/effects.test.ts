@@ -946,6 +946,18 @@ tooltip = {
 `);
   });
 
+  it("discards a routed block when its effect is rejected", () => {
+    const sink = recordEffects<"country">([], (country) => {
+      country.everyOwnedPlanet({}, () => {
+        expect(() => country.setCountryCodeFlags({})).toThrow(
+          '"set_country_code_flags" was given 0 entries, but the rules require at least 1'
+        );
+      });
+    });
+
+    expect(serialize(sink)).toBe("every_owned_planet = {}\n");
+  });
+
   it("routes a captured ancestor proxy through PREVPREV", () => {
     const sink = recordEffects<"country">([], (country) => {
       country.everyOwnedPlanet({}, (planet) => {
@@ -1272,6 +1284,31 @@ hidden_effect = {
 `);
   });
 
+  it("rejects effects between routed if-chain links", () => {
+    const sink = recordEffects<"country">([], (country) => {
+      country.everyOwnedPlanet({}, (planet) => {
+        const chain = country.if(isAtWar(), () => country.log("war"));
+        planet.log("between");
+        expect(() => chain.else(() => country.log("peace"))).toThrow(
+          /Effects were recorded between an if\(\) chain's links/
+        );
+      });
+    });
+
+    expect(serialize(sink)).toBe(`every_owned_planet = {
+	prev = {
+		if = {
+			limit = {
+				is_at_war = yes
+			}
+			log = war
+		}
+	}
+	log = between
+}
+`);
+  });
+
   it("rejects a routed if chain that outlives its descendant recording", () => {
     let chain: IfChain<"country"> | undefined;
     const sink = recordEffects<"country">([], (country) => {
@@ -1420,10 +1457,8 @@ hidden_effect = {
   });
 
   it("keeps a hidden_effect's entries inside it, at the enclosing scope", () => {
-    // `hidden_effect` changes no scope, so the closure gets the same scope
-    // back. It takes one at all because the entries have to land inside the
-    // block: the enclosing scope object writes to the enclosing block, which
-    // is the whole difference between hiding an effect and not.
+    // The captured country still writes inside the same-scope hidden block;
+    // the separate absolute ref opens its own nested block there.
     const from = scopeRef<"planet">("from");
     const sink = recordEffects<"country">([], (country) => {
       country.log("shown");
@@ -1468,6 +1503,20 @@ every_owned_planet = {
 	}
 	from = {
 		log = inner
+	}
+}
+`);
+  });
+
+  it("treats an opened scope ref as a pushed scope for captured routing", () => {
+    const from = scopeRef<"planet">("from");
+    const sink = recordEffects<"country">([], (country) => {
+      from.effects(() => country.log("outer country"));
+    });
+
+    expect(serialize(sink)).toBe(`from = {
+	prev = {
+		log = "outer country"
 	}
 }
 `);

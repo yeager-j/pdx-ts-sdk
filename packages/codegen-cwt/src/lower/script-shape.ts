@@ -434,6 +434,12 @@ export interface ClauseScope {
   readonly transition: ScopeTransition;
 }
 
+/**
+ * Classifies a CWT scope context by runtime identity behavior.
+ *
+ * A missing context preserves the current identity. A context without `THIS`
+ * is unknown; otherwise `replaces` distinguishes replacement from a push.
+ */
 export function scopeTransition(scope: ScopeContext | null): ScopeTransition {
   if (scope === null) {
     return "same";
