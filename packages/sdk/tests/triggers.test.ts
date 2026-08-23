@@ -7,6 +7,7 @@ import { isStructuredValue, toScalar } from "../src/script/scalar.ts";
 import {
   aiArmorRatio,
   and,
+  anyCosmicStorm,
   anyCountry,
   canAccessSystem,
   countOwnedPopGroup,
@@ -19,10 +20,12 @@ import {
   hasGlobalFlag,
   hasResource,
   hasTechnology,
+  hiddenProgress,
   hiddenTrigger,
   intelLevel,
   isAi,
   isPlanetClass,
+  isStormType,
   isWarParticipant,
   nand,
   nor,
@@ -40,6 +43,26 @@ import {
 } from "../src/script/triggers.ts";
 
 describe("trigger builders", () => {
+  it("wraps a nested trigger in an iterator block", () => {
+    const condition = anyCosmicStorm(isStormType("gravity_storm"));
+    expect(serialize([...condition.entries])).toMatchInlineSnapshot(`
+      "any_cosmic_storm = {
+      	is_storm_type = gravity_storm
+      }
+      "
+    `);
+  });
+
+  it("wraps a nested trigger that stays in the enclosing scope", () => {
+    const condition = hiddenProgress(isAi());
+    expect(serialize([...condition.entries])).toMatchInlineSnapshot(`
+      "hidden_progress = {
+      	is_ai = yes
+      }
+      "
+    `);
+  });
+
   it("emits nested combinator blocks", () => {
     const condition = not(or(hasGlobalFlag("crisis_active"), anyCountry(isAi())));
     expect(serialize([...condition.entries])).toMatchInlineSnapshot(`

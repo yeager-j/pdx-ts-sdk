@@ -28,7 +28,6 @@ export type ScriptGenerationSkipCategory =
   | "invalid-rule-name"
   | "missing-rule-scope"
   | "unknown-scope"
-  | "missing-push-scope"
   | "comparison-effect"
   | "parameterised-placeholder"
   | "unsupported-value"

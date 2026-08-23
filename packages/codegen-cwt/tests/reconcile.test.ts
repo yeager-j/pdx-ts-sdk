@@ -98,8 +98,14 @@ describe("the scope-link join", () => {
 describe("the drift gate", () => {
   const report = reconcile(rules, docs, modifierDocs, dumpLinks);
 
-  it("records the vendored typo as an unknown keyword", () => {
-    expect(report.unknownKeywords).toEqual(["effects.cwt:2902 sceop[fleet]"]);
+  it("finds no unknown CWT keyword in the vendored rules", () => {
+    expect(report.unknownKeywords).toEqual([]);
+  });
+
+  it("catches an unknown CWT keyword the baseline does not expect", () => {
+    expect(
+      compareToBaseline(report, { ...baseline, unknownKeywords: ["effects.cwt:1 sceop[fleet]"] })
+    ).toEqual(["  - unknown CWT keyword: effects.cwt:1 sceop[fleet]"]);
   });
 
   it("carries a per-file reference-count signature on the one accepted unknown scope", () => {

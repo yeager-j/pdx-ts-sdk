@@ -247,7 +247,7 @@ export const alloyCandidate = /*#__PURE__*/ scriptedTrigger("alloy_candidate", [
 ]);
 export const anyAvailableRandomTraitByTag = /*#__PURE__*/ scriptedTrigger(
   "any_available_random_trait_by_tag",
-  "any"
+  ["leader", "pop_group", "species"]
 );
 export const anyAvailableRandomTraitByTagEvopred = /*#__PURE__*/ scriptedTrigger(
   "any_available_random_trait_by_tag_evopred",

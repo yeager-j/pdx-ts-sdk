@@ -71,8 +71,12 @@ type Shape =
       readonly scalar: TsValue;
       readonly fields: readonly ArgField[];
     }
-  /** A block whose entire content is a nested trigger, i.e. a scope change. */
-  | { readonly kind: "wrapper"; readonly scope: string }
+  /**
+   * A block whose entire content is a nested trigger. `scope` is the scope the
+   * rule pushes, or `null` when it pushes none and the nested trigger stays in
+   * the enclosing scope.
+   */
+  | { readonly kind: "wrapper"; readonly scope: string | null }
   | { readonly kind: "fields"; readonly fields: readonly ArgField[] };
 
 function shapeOf(emitter: Emitter, rule: LoweredRule): Shape | SkipReason {
@@ -130,7 +134,7 @@ function shapeOf(emitter: Emitter, rule: LoweredRule): Shape | SkipReason {
     }
     if (named.length === 0) {
       if (pushedRaw === null) {
-        return skipReason("missing-push-scope", "scope change with no push_scope annotation");
+        return { kind: "wrapper", scope: null };
       }
       const scope = emitter.canonicalScope(pushedRaw);
       return scope === null
@@ -292,18 +296,27 @@ function emitValue(
   );
 }
 
+/**
+ * A `null` inner scope means the rule pushes no scope, so the nested trigger
+ * runs in whatever scope encloses the wrapper. That is generic over the
+ * enclosing scope rather than fixed to the rule's own scope type.
+ */
 function emitWrapper(
   emitter: Emitter,
   fn: string,
   key: string,
   scope: string,
   docs: string[],
-  inner: string
+  inner: string | null
 ): string {
   const type = emitter.use("Trigger");
+  const signature =
+    inner === null
+      ? `export function ${fn}<S extends ${scope}>(condition: ${type}<S>): ${type}<S>`
+      : `export function ${fn}(condition: ${type}<${JSON.stringify(inner)}>): ${type}<${scope}>`;
   return (
     docComment(docs) +
-    `export function ${fn}(condition: ${type}<${JSON.stringify(inner)}>): ${type}<${scope}> {\n` +
+    `${signature} {\n` +
     `  return ${emitter.use("trigger")}([${emitter.use("block")}(${JSON.stringify(key)}, ` +
     `[...condition.entries])], [...condition.refs]);\n}\n`
   );

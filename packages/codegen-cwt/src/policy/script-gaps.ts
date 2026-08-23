@@ -92,23 +92,6 @@ function trackedGapRows(
 export const SCRIPT_GENERATION_GAPS: readonly ScriptGenerationGap[] = [
   ...trackedGapRows(
     "trigger",
-    "missing-push-scope",
-    "SDK-245",
-    "The scope-changing wrapper has no evidence-backed nested scope annotation.",
-    [
-      "any_cosmic_storm",
-      "any_cosmic_storm_end_position",
-      "any_cosmic_storm_start_position",
-      "any_system_added_to_storm",
-      "any_system_removed_from_storm",
-      "any_system_within_storm",
-      "any_trait_available_for_species",
-      "hidden_progress",
-      "simple_progress",
-    ]
-  ),
-  ...trackedGapRows(
-    "trigger",
     "repeated-nested-field",
     "SDK-246",
     "The script argument model has no array form for repeated nested fields.",
@@ -136,7 +119,7 @@ export const SCRIPT_GENERATION_GAPS: readonly ScriptGenerationGap[] = [
     "repeated-structured-scalar-arms",
     "SDK-246",
     "The script argument model cannot preserve repetition across scalar and structured arms.",
-    ["create_message", "create_species", "set_fleet_formation"]
+    ["create_fleet", "create_message", "create_species", "set_fleet_formation"]
   ),
   ...trackedGapRows(
     "trigger",
@@ -158,13 +141,6 @@ export const SCRIPT_GENERATION_GAPS: readonly ScriptGenerationGap[] = [
       "set_country_code_flags",
       "set_trade_conversions",
     ]
-  ),
-  ...trackedGapRows(
-    "effect",
-    "unsupported-field-value",
-    "SDK-253",
-    "The create_fleet parent field uses the malformed CWT keyword sceop[fleet].",
-    ["create_fleet"]
   ),
   ...trackedGapRows(
     "effect",

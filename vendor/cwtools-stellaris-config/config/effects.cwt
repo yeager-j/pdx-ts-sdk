@@ -2899,7 +2899,7 @@ alias[effect:create_fleet] = {
 	## cardinality = 0..1
 	name = scope[fleet]
 	## cardinality = 0..1
-	parent = sceop[fleet]
+	parent = scope[fleet]
 	## cardinality = 0..1
 	parent = none
 	## cardinality = 0..1
@@ -9435,7 +9435,7 @@ alias[effect:every_system_within_storm] = {
 
 ### Iterate through all systems valid to be a storms start position - executes the enclosed effects on one of them for which the limit triggers return true. Picks the specific object randomly.
 ## scopes = any
-## push_scope = cosmic_storm
+## push_scope = system
 alias[effect:random_cosmic_storm_start_position] = {
 	## cardinality = 0..1
 	limit = single_alias_right[trigger_clause]
@@ -9451,7 +9451,7 @@ alias[effect:random_cosmic_storm_start_position] = {
 
 ### Iterate through all systems valid to be a storms start position - executes the enclosed effects on one of them for which the limit triggers return true. Picks the specific object according to the order specified (position 0, order_by = trigger:num_pops would run the effects on the X with the most pops)
 ## scopes = any
-## push_scope = cosmic_storm
+## push_scope = system
 alias[effect:ordered_cosmic_storm_start_position] = {
 	## cardinality = 0..1
 	limit = single_alias_right[trigger_clause]
@@ -9473,7 +9473,7 @@ alias[effect:ordered_cosmic_storm_start_position] = {
 
 ### Iterate through all systems valid to be a storms start position - executes the enclosed effects on all of them for which the limit triggers return true
 ## scopes = any
-## push_scope = cosmic_storm
+## push_scope = system
 alias[effect:every_cosmic_storm_start_position] = {
 	## cardinality = 0..1
 	limit = single_alias_right[trigger_clause]
@@ -9482,7 +9482,7 @@ alias[effect:every_cosmic_storm_start_position] = {
 
 ### Iterate through all systems valid to be a storms end position - executes the enclosed effects on one of them for which the limit triggers return true. Picks the specific object randomly.
 ## scopes = any
-## push_scope = cosmic_storm
+## push_scope = system
 alias[effect:random_cosmic_storm_end_position] = {
 	## cardinality = 0..1
 	limit = single_alias_right[trigger_clause]
@@ -9498,7 +9498,7 @@ alias[effect:random_cosmic_storm_end_position] = {
 
 ### Iterate through all systems valid to be a storms end position - executes the enclosed effects on one of them for which the limit triggers return true. Picks the specific object according to the order specified (position 0, order_by = trigger:num_pops would run the effects on the X with the most pops)
 ## scopes = any
-## push_scope = cosmic_storm
+## push_scope = system
 alias[effect:ordered_cosmic_storm_end_position] = {
 	## cardinality = 0..1
 	limit = single_alias_right[trigger_clause]
@@ -9520,7 +9520,7 @@ alias[effect:ordered_cosmic_storm_end_position] = {
 
 ### Iterate through all systems valid to be a storms end position - executes the enclosed effects on all of them for which the limit triggers return true
 ## scopes = any
-## push_scope = cosmic_storm
+## push_scope = system
 alias[effect:every_cosmic_storm_end_position] = {
 	## cardinality = 0..1
 	limit = single_alias_right[trigger_clause]

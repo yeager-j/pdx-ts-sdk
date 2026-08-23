@@ -131,6 +131,28 @@ describe("trigger emission", () => {
     );
   });
 
+  /**
+   * The nested scope of an iterator wrapper comes from the CWT siblings alone.
+   * The game's documentation dump states a trigger's own supported scopes and
+   * never the scope it pushes, so it cannot corroborate these signatures.
+   */
+  it("gives each iterator wrapper the nested scope its rule pushes", () => {
+    expect(emission.code).toContain(
+      'export function anyCosmicStorm(condition: Trigger<"storm">): Trigger<ScopeName> {'
+    );
+    expect(emission.code).toContain(
+      'export function anySystemWithinStorm(condition: Trigger<"system">): Trigger<"storm"> {'
+    );
+  });
+
+  it("makes a wrapper that pushes no scope generic over the enclosing scope", () => {
+    for (const fn of ["hiddenProgress", "simpleProgress"]) {
+      expect(emission.code).toContain(
+        `export function ${fn}<S extends ScopeName>(condition: Trigger<S>): Trigger<S> {`
+      );
+    }
+  });
+
   it("uses the audited game-doc summary when CWT prose is wrong", () => {
     const fn = emission.code.indexOf("export function traitHasAnyTag");
     const summary = emission.code.indexOf("Checks if a trait has at least one tag from the list");

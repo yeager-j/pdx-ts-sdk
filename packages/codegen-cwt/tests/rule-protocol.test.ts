@@ -262,7 +262,7 @@ describe("LoweredRule", () => {
     ).toEqual([
       ["clone_leader", "repeated-nested-field"],
       ["create_country", "repeated-nested-field"],
-      ["create_fleet", "unsupported-field-value"],
+      ["create_fleet", "repeated-structured-scalar-arms"],
       ["create_leader", "repeated-nested-field"],
       ["create_rebels", "repeated-nested-field"],
       ["create_saved_leader", "repeated-nested-field"],
@@ -397,6 +397,44 @@ describe("LoweredRule", () => {
     expect(merged[0]?.value).toMatchObject({
       kind: "scalarOrFields",
       scalar: { objectKinds: ["typed-ref"] },
+    });
+  });
+
+  it("lowers a scope-typed field to its scope value and literal arms", () => {
+    const parent = effects
+      .get("create_fleet")!
+      .blocks[0]!.named.filter((field) => field.key.kind === "name" && field.key.name === "parent");
+    const merged = mergeFields(new Emitter(rules), parent, null, new Set());
+    expect(Array.isArray(merged)).toBe(true);
+    if (!Array.isArray(merged)) {
+      throw new Error(merged.detail);
+    }
+    expect(merged[0]?.value).toMatchObject({
+      kind: "scalar",
+      value: { type: 'ScopeValue<"fleet"> | "none"' },
+    });
+  });
+
+  /**
+   * A misspelled bracketed keyword must stay a visible skip. Treating it as a
+   * literal would type the field as the string `sceop2[fleet]`.
+   */
+  it("skips a field whose bracketed CWT keyword the classifier does not know", () => {
+    const parent = effects
+      .get("create_fleet")!
+      .blocks[0]!.named.filter((field) => field.key.kind === "name" && field.key.name === "parent");
+    const merged = mergeFields(
+      new Emitter(rules),
+      parent.map((field) => ({
+        ...field,
+        type: { kind: "unknownKeyword", text: "sceop2[fleet]" } as const,
+      })),
+      null,
+      new Set()
+    );
+    expect(merged).toEqual({
+      category: "unsupported-field-value",
+      detail: 'field "parent" has a type the emitter cannot express',
     });
   });
 

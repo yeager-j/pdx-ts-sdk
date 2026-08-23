@@ -12,11 +12,13 @@ import {
 import type { ScopeValue } from "../src/script/effects/types.ts";
 import {
   and,
+  anySystemWithinStorm,
   canAccessSystem,
   hasCommunications,
   hasCountryFlag,
   hasGlobalFlag,
   hasPlanetFlag,
+  hiddenProgress,
   hiddenTrigger,
   isAtWar,
   nand,
@@ -272,6 +274,16 @@ describe("scope safety for scripted bindings", () => {
     expectTypeOf(
       and(scriptedTrigger.unchecked("some_trigger", "any")(), hasCountryFlag("x"))
     ).toEqualTypeOf<Trigger<"country">>();
+  });
+
+  it("carries the enclosing scope through a wrapper that pushes no scope", () => {
+    expectTypeOf(hiddenProgress(hasCountryFlag("x"))).toEqualTypeOf<Trigger<"country">>();
+    expectTypeOf(hiddenProgress(hasPlanetFlag("ideal_world"))).toEqualTypeOf<Trigger<"planet">>();
+  });
+
+  it("rejects a wrong-scope trigger inside an iterator wrapper", () => {
+    // @ts-expect-error — any_system_within_storm iterates systems, not countries
+    anySystemWithinStorm(hasCountryFlag("x"));
   });
 
   it("rejects a wrong-scope effect call at `run`", () => {
