@@ -1007,33 +1007,49 @@ tooltip = {
     expect(sink).toEqual([]);
   });
 
-  it("rejects a captured ancestor proxy across replacement and unknown transitions", () => {
-    const testMethod = "sdk215ScopeReset";
+  it("rejects a captured ancestor proxy across a generated replacement transition", () => {
+    const sink: PdxEntry[] = [];
+
+    expect(() =>
+      recordEffects<"megastructure">(
+        [],
+        (megastructure) => {
+          megastructure.createBypass({
+            owner: scopeValue("this"),
+            type: "effects_test_bypass",
+            effect: () => {
+              megastructure.log("outside replacement");
+            },
+          });
+        },
+        sink
+      )
+    ).toThrow(/replacement or unknown scope transition/);
+    expect(sink).toEqual([]);
+  });
+
+  it("rejects a captured ancestor proxy across an unknown transition", () => {
+    const testMethod = "sdk215Unknown";
     const meta = EFFECT_META as Record<string, unknown>;
     try {
-      for (const transition of ["replace", "unknown"] as const) {
-        meta[testMethod] = {
-          key: `sdk215_${transition}`,
-          transition,
-          shape: { kind: "wrapper", fields: null },
-        };
-        const sink: PdxEntry[] = [];
+      meta[testMethod] = {
+        key: "sdk215_unknown",
+        shape: { kind: "wrapper", transition: "unknown", fields: null },
+      };
+      const sink: PdxEntry[] = [];
 
-        expect(() =>
-          recordEffects<"country">(
-            [],
-            (country) => {
-              (country as unknown as Record<string, (body: () => void) => void>)[testMethod]!(
-                () => {
-                  country.setCountryFlag(flags.effects_test_flag);
-                }
-              );
-            },
-            sink
-          )
-        ).toThrow(/replacement or unknown scope transition/);
-        expect(sink).toEqual([]);
-      }
+      expect(() =>
+        recordEffects<"country">(
+          [],
+          (country) => {
+            (country as unknown as Record<string, (body: () => void) => void>)[testMethod]!(() => {
+              country.setCountryFlag(flags.effects_test_flag);
+            });
+          },
+          sink
+        )
+      ).toThrow(/replacement or unknown scope transition/);
+      expect(sink).toEqual([]);
     } finally {
       delete meta[testMethod];
     }
@@ -1116,6 +1132,171 @@ reset_event_chain_counter = {
     expect(serialize(sink)).toBe(`hidden_effect = {
 	owner = {
 		set_country_flag = effects_test_flag
+	}
+}
+`);
+  });
+
+  it("keeps repeated hidden effects same-scope before and after a pushed link", () => {
+    const sink = recordEffects<"planet">([], (planet) => {
+      planet.hiddenEffect.hiddenEffect.effects(() => {
+        planet.log("hidden twice");
+      });
+      planet.hiddenEffect.owner.hiddenEffect.effects((country) => {
+        country.setCountryFlag(flags.effects_test_flag);
+      });
+    });
+
+    expect(serialize(sink)).toBe(`hidden_effect = {
+	hidden_effect = {
+		log = "hidden twice"
+	}
+}
+
+hidden_effect = {
+	owner = {
+		hidden_effect = {
+			set_country_flag = effects_test_flag
+		}
+	}
+}
+`);
+  });
+
+  it("keeps a captured hidden-effect path tied to the proxy that opened it", () => {
+    const sink = recordEffects<"country">([], (country) => {
+      const hidden = country.hiddenEffect;
+      country.everyOwnedPlanet({}, () => {
+        hidden.effects(() => {
+          country.log("still country");
+        });
+      });
+    });
+
+    expect(serialize(sink)).toBe(`every_owned_planet = {
+	prev = {
+		hidden_effect = {
+			log = "still country"
+		}
+	}
+}
+`);
+  });
+
+  it("does not record unused or plucked structural members and paths", () => {
+    const sink = recordEffects<"country">([], (country) => {
+      country.everyOwnedPlanet({}, () => {
+        void country.if;
+        void country.hiddenEffect;
+        void country.hiddenEffect.owner;
+      });
+    });
+
+    expect(serialize(sink)).toBe("every_owned_planet = {}\n");
+  });
+
+  it("keeps independently routed effects in author order", () => {
+    const sink = recordEffects<"country">([], (country) => {
+      country.everyOwnedPlanet({}, (planet) => {
+        country.log("a");
+        planet.log("p");
+        country.log("b");
+      });
+    });
+
+    expect(serialize(sink)).toBe(`every_owned_planet = {
+	prev = {
+		log = a
+	}
+	log = p
+	prev = {
+		log = b
+	}
+}
+`);
+  });
+
+  it("keeps a routed if chain adjacent inside its own PREV block", () => {
+    const sink = recordEffects<"country">([], (country) => {
+      country.everyOwnedPlanet({}, () => {
+        country.if(isAtWar(), () => country.log("war")).else(() => country.log("peace"));
+      });
+    });
+
+    expect(serialize(sink)).toBe(`every_owned_planet = {
+	prev = {
+		if = {
+			limit = {
+				is_at_war = yes
+			}
+			log = war
+		}
+		else = {
+			log = peace
+		}
+	}
+}
+`);
+  });
+
+  it("records routed structural callbacks from the captured scope", () => {
+    const sink = recordEffects<"country">([], (country) => {
+      country.everyOwnedPlanet({}, (planet) => {
+        country.everyOwnedPlanet({}, () => {
+          country.log("inner country");
+          planet.log("outer planet");
+        });
+      });
+    });
+
+    expect(serialize(sink)).toBe(`every_owned_planet = {
+	prev = {
+		every_owned_planet = {
+			prev = {
+				log = "inner country"
+			}
+			prevprev = {
+				log = "outer planet"
+			}
+		}
+	}
+}
+`);
+  });
+
+  it("preserves every pushed segment of a scope path for captured routing", () => {
+    const sink = recordEffects<"planet">([], (planet) => {
+      planet.owner.capitalScope.effects((colony) => {
+        planet.log("two links back");
+        colony.owner.effects(() => {
+          planet.log("three links back");
+        });
+      });
+      planet.hiddenEffect.owner.hiddenEffect.effects(() => {
+        planet.log("mixed path back");
+      });
+    });
+
+    expect(serialize(sink)).toBe(`owner = {
+	capital_scope = {
+		prevprev = {
+			log = "two links back"
+		}
+		owner = {
+			prevprevprev = {
+				log = "three links back"
+			}
+		}
+	}
+}
+
+hidden_effect = {
+	owner = {
+		hidden_effect = {
+			prev = {
+				log = "mixed path back"
+			}
+		}
 	}
 }
 `);

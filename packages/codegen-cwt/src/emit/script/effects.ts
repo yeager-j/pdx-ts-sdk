@@ -25,6 +25,7 @@ import {
   aliasListMembers,
   canonicalScopeSet,
   cardinalityArrayType,
+  clauseScopeContext,
   expandAliasFields,
   mapType,
   mergeBlock,
@@ -170,7 +171,7 @@ type BlockEffectShape =
       /** Canonical closure scope, or `null` when it preserves the receiving scope. */
       readonly scope: string | null;
       /** Runtime identity transition for the callback body. */
-      readonly transition: "same" | "push" | "replace";
+      readonly transition: "same" | "push" | "replace" | "unknown";
       /** Named arguments before the closure, or `null` when the closure is the only argument. */
       readonly fields: readonly ArgField[] | null;
     }
@@ -451,8 +452,12 @@ function blockShapeOf(emitter: Emitter, block: LoweredRuleBlock): BlockEffectSha
     return skipReason("bare-value-block", "block with bare values");
   }
   const spliced = pureSpliceCategory(body);
+  const inherited = clauseScopeContext(block.declaration.scope);
+  if (inherited.transition === "unknown") {
+    return skipReason("unknown-push-scope", "push_scope does not state THIS");
+  }
   if (spliced !== null && EXTRA_ALIAS_CATEGORIES.get(spliced)?.scriptList !== undefined) {
-    const pushed = block.inheritedScope;
+    const pushed = inherited.scope;
     const scope = pushed === null ? null : emitter.canonicalScope(pushed);
     return scope === null && pushed !== null
       ? skipReason("unknown-push-scope", `push_scope names no known scope (${pushed})`)
@@ -474,11 +479,11 @@ function blockShapeOf(emitter: Emitter, block: LoweredRuleBlock): BlockEffectSha
   if (!Array.isArray(named)) {
     return named;
   }
-  const pushedRaw = block.inheritedScope;
+  const pushedRaw = inherited.scope;
   const merged =
     named.length === 0
       ? ({ kind: "fields", fields: [] } as const)
-      : mergeBlock(emitter, named, pushedRaw, EFFECT_SPLICES);
+      : mergeBlock(emitter, named, inherited, EFFECT_SPLICES);
   if ("detail" in merged) {
     return merged;
   }
@@ -506,8 +511,7 @@ function blockShapeOf(emitter: Emitter, block: LoweredRuleBlock): BlockEffectSha
     return {
       kind: "wrapper",
       scope,
-      transition:
-        block.declaration.scope?.replaces === true ? "replace" : scope === null ? "same" : "push",
+      transition: inherited.transition,
       fields: merged.fields.length === 0 ? null : merged.fields,
     };
   }
@@ -933,7 +937,7 @@ export function registerClusterName(
 function pathProperty(link: EmittedScopeLink): string {
   return renderMember({
     name: link.method,
-    type: `EffectPathOf<${JSON.stringify(link.outputScope)}>`,
+    type: `EffectPathOf<${JSON.stringify(link.outputScope)}, "push">`,
     optional: false,
     readonly: true,
     docs: link.docs,
@@ -1431,14 +1435,14 @@ function effectPathInterfaces(
 ): string[] {
   return allScopes.map((scope) => {
     const parents = [
-      `${emitter.use("EffectPath")}<${JSON.stringify(scope)}, "push">`,
+      `${emitter.use("EffectPath")}<${JSON.stringify(scope)}, Transition>`,
       ...linkClusters
         .filter((cluster) => cluster.scopes === "universal" || cluster.scopes.includes(scope))
         .map((cluster) => pathClusterName(cluster.scopes)),
     ];
     return (
       docComment([`An effect-block path whose current scope is ${scope}.`]) +
-      `export interface ${pascalCase(scope)}EffectPath extends ${parents.join(", ")} {}\n`
+      `export interface ${pascalCase(scope)}EffectPath<Transition extends ${emitter.use("EffectPathTransition")} = "push"> extends ${parents.join(", ")} {}\n`
     );
   });
 }
@@ -1452,12 +1456,12 @@ function scopeMapCode(emitter: Emitter, allScopes: readonly string[]): string {
     `}\n\n` +
     `export type ScopeObjOf<S extends ${emitter.use("ScopeName")}> = ScopeMap[S];\n\n` +
     docComment(["Scope name -> a composable effect-block path at that scope."]) +
-    `export interface EffectPathMap {\n` +
+    `export interface EffectPathMap<Transition extends ${emitter.use("EffectPathTransition")}> {\n` +
     allScopes
-      .map((scope) => `  ${JSON.stringify(scope)}: ${pascalCase(scope)}EffectPath;\n`)
+      .map((scope) => `  ${JSON.stringify(scope)}: ${pascalCase(scope)}EffectPath<Transition>;\n`)
       .join("") +
     `}\n\n` +
-    `export type EffectPathOf<S extends ${emitter.use("ScopeName")}> = EffectPathMap[S];\n`
+    `export type EffectPathOf<S extends ${emitter.use("ScopeName")}, Transition extends ${emitter.use("EffectPathTransition")} = "push"> = EffectPathMap<Transition>[S];\n`
   );
 }
 

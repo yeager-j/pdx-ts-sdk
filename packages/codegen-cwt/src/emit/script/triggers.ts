@@ -13,6 +13,7 @@ import type { LoweredRule } from "../../lower/lowered-rule.ts";
 import {
   bareBlockValue,
   cardinalityArrayType,
+  clauseScopeContext,
   comparisonValue,
   mapType,
   mergeBlock,
@@ -122,7 +123,12 @@ function shapeOf(emitter: Emitter, key: string, rule: LoweredRule): Shape | Skip
     if (body.fields.length > 0) {
       return skipReason("bare-value-block", "block mixes bare values with named fields");
     }
-    const value = bareBlockValue(emitter, body.bare, block.inheritedScope, TRIGGER_CLAUSES);
+    const value = bareBlockValue(
+      emitter,
+      body.bare,
+      clauseScopeContext(block.declaration.scope),
+      TRIGGER_CLAUSES
+    );
     if ("detail" in value) {
       return value;
     }
@@ -159,7 +165,12 @@ function shapeOf(emitter: Emitter, key: string, rule: LoweredRule): Shape | Skip
 
   // A splice alongside named fields (`calc_true_if = { amount == int ... }`)
   // becomes one more argument, which `mergeBlock` names for what it splices.
-  const lowered = mergeBlock(emitter, body.fields, pushedRaw, TRIGGER_CLAUSES);
+  const lowered = mergeBlock(
+    emitter,
+    body.fields,
+    clauseScopeContext(block.declaration.scope),
+    TRIGGER_CLAUSES
+  );
   if ("detail" in lowered) {
     return lowered;
   }

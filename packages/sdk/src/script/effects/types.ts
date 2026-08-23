@@ -83,18 +83,16 @@ export interface ScopeRef<S extends ScopeName = ScopeName> extends ScopeValue<S>
  * same-scope structural node, so it composes with generated navigation while
  * still allowing sibling effects when terminated on its own.
  */
-export interface EffectPath<
-  S extends ScopeName,
-  Transition extends "same" | "push" | "replace" = "push",
-> {
-  readonly hiddenEffect: EffectPathOf<S>;
+export interface EffectPath<S extends ScopeName, Transition extends EffectPathTransition = "push"> {
+  readonly hiddenEffect: EffectPathOf<S, Transition>;
   effects(body: Transition extends "same" ? () => void : (scope: ScopeObjOf<S>) => void): void;
 }
 
+/** How the path's final block relates to the scope that opened it. */
+export type EffectPathTransition = "same" | "push" | "replace" | "unknown";
+
 /** A path node that keeps the receiver's game scope. */
-export type SameScopeEffectPath<S extends ScopeName> = Omit<EffectPathOf<S>, "effects"> & {
-  effects(body: () => void): void;
-};
+export type SameScopeEffectPath<S extends ScopeName> = EffectPathOf<S, "same">;
 
 /**
  * A saved event target. Declaring one names its scope once, explicitly; every

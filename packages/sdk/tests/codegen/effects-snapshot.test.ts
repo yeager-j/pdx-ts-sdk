@@ -199,7 +199,7 @@ describe("emitted effect signatures", () => {
     // No `refTypes` — a scope names no registry — so `toScalar`'s `path`
     // unwrapping in `src/script/scalar.ts` is the whole runtime contract.
     expect(metaEntry("setOwner")).toMatchInlineSnapshot(
-      `"setOwner: { key: "set_owner", transition: "same", shape: { kind: "value", objectKinds: ["scope-ref"] } },"`
+      `"setOwner: { key: "set_owner", shape: { kind: "value", objectKinds: ["scope-ref"] } },"`
     );
   });
 
@@ -251,22 +251,27 @@ describe("emitted effect signatures", () => {
     expect(metaEntry("everyOwnedPlanet")).toMatchInlineSnapshot(`
       "everyOwnedPlanet: {
           key: "every_owned_planet",
-          transition: "push",
-          shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },"
+          shape: {
+            kind: "wrapper",
+            transition: "push",
+            fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+          },"
     `);
   });
 
   it("scope links: readonly paths typed to each link's output scope", () => {
     expect(pathProperty("owner")).toMatchInlineSnapshot(
-      `"readonly owner: EffectPathOf<\"country\">;"`
+      `"readonly owner: EffectPathOf<"country", "push">;"`
     );
     expect(pathProperty("capitalScope")).toMatchInlineSnapshot(
-      `"readonly capitalScope: EffectPathOf<\"colony\">;"`
+      `"readonly capitalScope: EffectPathOf<"colony", "push">;"`
     );
     expect(interfaces).toMatch(
-      /export interface CountryEffectPath\s+extends\s+EffectPath<"country", "push">/
+      /export interface CountryEffectPath<Transition extends EffectPathTransition = "push">\s+extends\s+EffectPath<"country", Transition>/
     );
-    expect(interfaces).toContain("export interface EffectPathMap {");
+    expect(interfaces).toContain(
+      "export interface EffectPathMap<Transition extends EffectPathTransition> {"
+    );
   });
 
   it("open-keyed block: the whole argument is a map of its key filter", () => {
@@ -333,13 +338,11 @@ describe("emitted effect signatures", () => {
     expect(metaEntry("setCountryCodeFlags")).toMatchInlineSnapshot(`
       "setCountryCodeFlags: {
           key: "set_country_code_flags",
-          transition: "same",
           shape: { kind: "map", map: { value: {}, min: 1 } },"
     `);
     expect(structuredMetaEntry("addResourceFromDebris")).toMatchInlineSnapshot(`
       "addResourceFromDebris: {
           key: "add_resource_from_debris",
-          transition: "same",
           shape: {
             kind: "fields",
             fields: [
@@ -377,7 +380,7 @@ describe("emitted effect signatures", () => {
 
   it("scope link meta: a distinct lazy path node", () => {
     expect(metaEntry("owner")).toMatchInlineSnapshot(
-      `"owner: { key: "owner", transition: "push", shape: { kind: "scope-link" } },"`
+      `"owner: { key: "owner", shape: { kind: "scope-link", transition: "push" } },"`
     );
   });
 });

@@ -151,7 +151,7 @@ function blockShapeMeta(
     case "map":
       return `{ kind: "map", map: ${mapMeta(shape.map)} }`;
     case "wrapper":
-      return `{ kind: "wrapper", fields: ${shape.fields === null ? "null" : `[${shape.fields.map(fieldMeta).join(", ")}]`} }`;
+      return `{ kind: "wrapper", transition: ${JSON.stringify(shape.transition)}, fields: ${shape.fields === null ? "null" : `[${shape.fields.map(fieldMeta).join(", ")}]`} }`;
     case "aliasList":
       return `{ kind: "alias-list", category: ${JSON.stringify(shape.category)} }`;
   }
@@ -163,24 +163,24 @@ function metaEntry(effect: EmittedEffect): string {
     fields === null ? "null" : `[${fields.map(fieldMeta).join(", ")}]`;
   switch (shape.kind) {
     case "bool":
-      return `  ${method}: { key: ${JSON.stringify(key)}, transition: "same", shape: { kind: "bool" } },\n`;
+      return `  ${method}: { key: ${JSON.stringify(key)}, shape: { kind: "bool" } },\n`;
     case "value":
-      return `  ${method}: { key: ${JSON.stringify(key)}, transition: "same", shape: ${scalarShapeMeta(shape)} },\n`;
+      return `  ${method}: { key: ${JSON.stringify(key)}, shape: ${scalarShapeMeta(shape)} },\n`;
     case "fields":
-      return `  ${method}: { key: ${JSON.stringify(key)}, transition: "same", shape: { kind: "fields", fields: ${fieldsOf(shape.fields)} } },\n`;
+      return `  ${method}: { key: ${JSON.stringify(key)}, shape: { kind: "fields", fields: ${fieldsOf(shape.fields)} } },\n`;
     case "map":
-      return `  ${method}: { key: ${JSON.stringify(key)}, transition: "same", shape: { kind: "map", map: ${mapMeta(shape.map)} } },\n`;
+      return `  ${method}: { key: ${JSON.stringify(key)}, shape: { kind: "map", map: ${mapMeta(shape.map)} } },\n`;
     case "wrapper":
-      return `  ${method}: { key: ${JSON.stringify(key)}, transition: ${JSON.stringify(shape.transition)}, shape: { kind: "wrapper", fields: ${fieldsOf(shape.fields)} } },\n`;
+      return `  ${method}: { key: ${JSON.stringify(key)}, shape: { kind: "wrapper", transition: ${JSON.stringify(shape.transition)}, fields: ${fieldsOf(shape.fields)} } },\n`;
     case "aliasList":
-      return `  ${method}: { key: ${JSON.stringify(key)}, transition: "same", shape: { kind: "alias-list", category: ${JSON.stringify(shape.category)} } },\n`;
+      return `  ${method}: { key: ${JSON.stringify(key)}, shape: { kind: "alias-list", category: ${JSON.stringify(shape.category)} } },\n`;
     case "scalarOrBlock":
-      return `  ${method}: { key: ${JSON.stringify(key)}, transition: "same", shape: { kind: "scalar-or-block", scalar: ${scalarShapeMeta(shape.scalar)}, block: ${blockShapeMeta(shape.block)} } },\n`;
+      return `  ${method}: { key: ${JSON.stringify(key)}, shape: { kind: "scalar-or-block", scalar: ${scalarShapeMeta(shape.scalar)}, block: ${blockShapeMeta(shape.block)} } },\n`;
   }
 }
 
 function scopeLinkMetaEntry(link: EmittedScopeLink): string {
-  return `  ${link.method}: { key: ${JSON.stringify(link.key)}, transition: "push", shape: { kind: "scope-link" } },\n`;
+  return `  ${link.method}: { key: ${JSON.stringify(link.key)}, shape: { kind: "scope-link", transition: "push" } },\n`;
 }
 
 /** One spliced alias category's member table, as the recorder reads it. */
@@ -292,20 +292,18 @@ export function effectMetaCode(
     "export type EffectBlockShapeMeta =\n" +
     '  | { readonly kind: "fields"; readonly fields: readonly EffectFieldMeta[] }\n' +
     '  | { readonly kind: "map"; readonly map: EffectMapMeta }\n' +
-    '  | { readonly kind: "wrapper"; readonly fields: readonly EffectFieldMeta[] | null }\n' +
+    '  | { readonly kind: "wrapper"; readonly transition: "same" | "push" | "replace" | "unknown"; readonly fields: readonly EffectFieldMeta[] | null }\n' +
     '  | { readonly kind: "alias-list"; readonly category: string };\n\n' +
     "export type EffectShapeMeta =\n" +
     "  | EffectScalarShapeMeta\n" +
     '  | { readonly kind: "fields"; readonly fields: readonly EffectFieldMeta[] | null }\n' +
     '  | { readonly kind: "map"; readonly map: EffectMapMeta }\n' +
-    '  | { readonly kind: "wrapper"; readonly fields: readonly EffectFieldMeta[] | null }\n' +
+    '  | { readonly kind: "wrapper"; readonly transition: "same" | "push" | "replace" | "unknown"; readonly fields: readonly EffectFieldMeta[] | null }\n' +
     '  | { readonly kind: "alias-list"; readonly category: string }\n' +
     '  | { readonly kind: "scalar-or-block"; readonly scalar: EffectScalarShapeMeta; readonly block: EffectBlockShapeMeta }\n' +
-    '  | { readonly kind: "scope-link" };\n\n' +
+    '  | { readonly kind: "scope-link"; readonly transition: "push" | "replace" | "unknown" };\n\n' +
     "export interface EffectMeta {\n" +
     "  readonly key: string;\n" +
-    "  /** How this member's callback changes the live game scope identity. */\n" +
-    '  readonly transition: "same" | "push" | "replace" | "unknown";\n' +
     "  readonly shape: EffectShapeMeta;\n" +
     "}\n\n" +
     docComment([

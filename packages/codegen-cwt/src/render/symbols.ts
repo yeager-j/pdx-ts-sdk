@@ -68,7 +68,7 @@ const SYMBOL_MODULES: readonly ModuleSymbols[] = [
   { module: "../references.ts", types: ["ContentRefUse"] },
   {
     module: "../script/effects/types.ts",
-    types: ["EffectPath", "Modifier", "ScopeValue", "StructuralEffects"],
+    types: ["EffectPath", "EffectPathTransition", "Modifier", "ScopeValue", "StructuralEffects"],
   },
   {
     module: "../script/scalar.ts",

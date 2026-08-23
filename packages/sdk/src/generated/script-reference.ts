@@ -16818,7 +16818,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
       ],
     },
     signature:
-      'spawnSystem(args: { minDistance?: ScriptValue; maxDistance?: ScriptValue; direction?: SystemDirection; minJumps?: ScriptValue; maxJumps?: ScriptValue; initializer: SolarSystemInitializerRef | string | "random"; hyperlane?: boolean; isDiscovered?: boolean; minOrientationAngle?: number; maxOrientationAngle?: number; effect?: () => void; authorizeSpawnOnGalacticCore?: boolean }): void;',
+      'spawnSystem(args: { minDistance?: ScriptValue; maxDistance?: ScriptValue; direction?: SystemDirection; minJumps?: ScriptValue; maxJumps?: ScriptValue; initializer: SolarSystemInitializerRef | string | "random"; hyperlane?: boolean; isDiscovered?: boolean; minOrientationAngle?: number; maxOrientationAngle?: number; effect?: (scope: SystemScope) => void; authorizeSpawnOnGalacticCore?: boolean }): void;',
     docs: [
       "Spawns a new system at a position relative to the scoped object.",
       "",

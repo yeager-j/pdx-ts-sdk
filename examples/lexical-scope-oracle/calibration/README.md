@@ -6,11 +6,21 @@ This raw PDXScript fixture validates the game behavior needed by SDK-215. It
 does not constitute a completed calibration until a clean game run records the
 markers below and confirms no related parser or scope errors.
 
-## Run
+## Install
 
-Copy `mod/` and `pdx_lexical_scope_oracle.mod` into the local Stellaris mod
-directory, enable only **PDX Lexical Scope Oracle**, load a non-Ironman country
-with a capital planet, and run:
+From the repository root, install the fixture at the descriptor's declared
+path:
+
+```sh
+mkdir -p "$HOME/Documents/Paradox Interactive/Stellaris/mod/pdx_lexical_scope_oracle"
+cp -R examples/lexical-scope-oracle/mod/. \
+  "$HOME/Documents/Paradox Interactive/Stellaris/mod/pdx_lexical_scope_oracle/"
+cp examples/lexical-scope-oracle/pdx_lexical_scope_oracle.mod \
+  "$HOME/Documents/Paradox Interactive/Stellaris/mod/pdx_lexical_scope_oracle.mod"
+```
+
+Enable only **PDX Lexical Scope Oracle**, load a non-Ironman country with a
+capital planet, and run:
 
 ```text
 event pdx_lexical_scope_oracle.1
@@ -23,9 +33,11 @@ run succeeds.
 ## Required observations
 
 - `IF_SAME_COUNTRY` and `HIDDEN_SAME_COUNTRY` prove structural blocks preserve
-  the current identity.
-- `PREV_COUNTRY` proves one pushed iterator can reach its lexical country.
-- `PREVPREV_COUNTRY` proves a second pushed block reaches that same country.
+  the exact root country identity (`is_same_value = root`).
+- `PREV_COUNTRY` proves one pushed iterator can reach that exact lexical
+  country identity.
+- `PREVPREV_COUNTRY` proves a second pushed block reaches that same exact
+  country identity.
 - `ITERATOR_THIS_COLONY` records the iterator's runtime colony behavior
   independently of the CWT `planet` landing type.
 - `SPLIT_THIS_PLANET` and `SPLIT_ROOT_COUNTRY` calibrate the split-root

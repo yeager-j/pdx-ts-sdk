@@ -374,9 +374,21 @@ describe("generated effect scope safety", () => {
     const planet = makeScope<"planet">(sink);
     expectTypeOf(planet.owner).toExtend<EffectPath<"country">>();
     expectTypeOf(planet.owner).toExtend<EffectPathOf<"country">>();
-    expectTypeOf(planet.hiddenEffect).toExtend<EffectPath<"planet">>();
+    expectTypeOf(planet.hiddenEffect).toExtend<EffectPath<"planet", "same">>();
     planet.owner.effects((country) => {
       country.everyOwnedPlanet({}, (owned) => owned.destroyColony());
+    });
+  });
+
+  it("keeps repeated hidden paths same-scope until a generated link pushes", () => {
+    const planet = makeScope<"planet">(sink);
+    planet.hiddenEffect.hiddenEffect.effects(() => {
+      planet.log("hidden twice");
+    });
+    // @ts-expect-error — repeated same-scope hidden paths do not receive a scope parameter
+    planet.hiddenEffect.hiddenEffect.effects((same) => same.log("redundant"));
+    planet.hiddenEffect.owner.hiddenEffect.effects((country) => {
+      country.log("owner path pushed");
     });
   });
 
