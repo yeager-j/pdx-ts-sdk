@@ -925,6 +925,27 @@ tooltip = {
 `);
   });
 
+  it("routes both scalar-or-block forms through a captured ancestor", () => {
+    const sink = recordEffects<"planet">([], (planet) => {
+      planet.owner.effects(() => {
+        planet.addBuilding("effects_test_building");
+        planet.addBuilding({ building: "effects_test_building" });
+      });
+    });
+
+    expect(serialize(sink)).toBe(`owner = {
+	prev = {
+		add_building = effects_test_building
+	}
+	prev = {
+		add_building = {
+			building = effects_test_building
+		}
+	}
+}
+`);
+  });
+
   it("routes a captured ancestor proxy through PREVPREV", () => {
     const sink = recordEffects<"country">([], (country) => {
       country.everyOwnedPlanet({}, (planet) => {
