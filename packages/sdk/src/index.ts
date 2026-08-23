@@ -150,7 +150,12 @@ export type * from "./generated/content-definers.ts";
 export type { Feature, ModItem, ModItemInput, PlacedItem } from "./authoring/feature.ts";
 export type { ContentItem, ContributionItem, MintProvenance } from "./content/types.ts";
 export type { ModWarning } from "./diagnostics.ts";
-export type { OnActionHookItem } from "./events/on-actions.ts";
+export type {
+  OnActionEvents,
+  OnActionHookItem,
+  OnActionRandomEvent,
+  ScopelessOnActionEvents,
+} from "./events/on-actions.ts";
 export type { EventItem, EventItemBase } from "./events/types.ts";
 export * as stellaris from "./stellaris/index.ts";
 export {

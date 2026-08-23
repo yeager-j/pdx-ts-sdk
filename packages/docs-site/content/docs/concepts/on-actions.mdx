@@ -11,7 +11,7 @@ engine-defined transition occurs. Your mod contributes event ids to that hook;
 the game calls those events when it reaches the hook.
 
 This complete example attaches one country event to the game-start country
-hook:
+hook and adds weighted choices to the scopeless five-year pulse:
 
 <PairedExample name="on-actions" />
 
@@ -23,7 +23,18 @@ registration under `common/on_actions/`.
 
 Import the generated hook table, choose a hook, and pass one or more event
 values. The example's `mod.on(onActions.onGameStartCountry, [firstSignal])`
-is the whole registration.
+is the ordinary-list shorthand. Use the object form when the hook needs
+`randomEvents`, or both lists:
+
+```ts
+mod.on(onActions.onGameStartCountry, {
+  events: [firstSignal],
+  randomEvents: [{ weight: 80, event: firstSignal }, { weight: 20 }],
+});
+```
+
+Each present list must contain at least one entry, and the object must contain
+at least one list.
 
 `mod.on` returns a contribution; it does not register anything on its own.
 Place the returned value in a Feature and include that Feature in
@@ -55,10 +66,10 @@ name. Three examples of that mapping:
 `mod.on` accepts an `OnActionRef`, so a misspelling or a hook absent from the
 supported Stellaris version fails in TypeScript.
 
-Some game hooks are scopeless, such as `onActions.onGameStart`. They remain
-visible because they exist in Stellaris, but the SDK cannot attach an event to
-them until it supports a scopeless event kind. Use a scoped counterpart when
-one exists; for game start, that is `onActions.onGameStartCountry`.
+Some game hooks are scopeless, such as `onActions.onFiveYearPulse`. They accept
+checked scopeless references such as `vanilla.event.situation.$2000` in
+`randomEvents`. The SDK cannot define a scopeless event body, so ordinary
+authored event values still require a scoped hook.
 
 Thirteen hooks the game defines are absent from `onActions` because their
 declarations do not map to the SDK's scope model — most declare an
@@ -191,8 +202,37 @@ to different compatible hooks, and one hook can collect events from several
 Features. The Fold merges all valid contributions, rejects duplicates, and
 writes the shared file only when the build contains at least one on-action.
 
-A hook block in the game's own files can also carry a weighted
-`random_events` list, which fires one weighted pick instead of every event.
-`mod.on` writes only the flat `events` list; the SDK cannot author
-`random_events` yet. To pick one outcome at random, attach a single event and
-branch inside it with the `randomList` effect.
+## Add weighted random events
+
+`randomEvents` emits the game's `random_events` block. Each row has a numeric
+`weight` and an optional `event`. Omit `event` to emit the literal `0` no-op
+arm:
+
+```ts
+mod.on(onActions.onFiveYearPulse, {
+  randomEvents: [{ weight: 150 }, { weight: 50, event: vanilla.event.situation.$2000 }],
+});
+```
+
+This emits:
+
+```pdxscript
+on_five_year_pulse = {
+  random_events = {
+    150 = 0
+    50 = situation.2000
+  }
+}
+```
+
+On scoped hooks, authored and checked vanilla references must match the hook's
+exact `THIS` and `FROM` contract. An authored event must also be present in a
+selected Feature. A raw string remains the explicit escape hatch for an event
+owned by another mod.
+
+Rows keep their order within one call. Duplicate weights and repeated event
+arms are legal because they carry probability rather than ordinary duplicate
+registration. When several Features contribute weighted rows to one hook, the
+Fold orders whole contributions by their content, so Feature order does not
+change the output. If both lists are present, `events` emits before
+`random_events`.

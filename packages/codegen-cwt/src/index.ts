@@ -470,7 +470,7 @@ function buildCodegenReport(input: CodegenReportInput): string[] {
       `${scriptReferences.scopeLinks} scope links`
   );
   report.push(
-    `on-actions: ${onActions.emitted} emitted (${onActions.noScope} scopeless and currently rejected)`
+    `on-actions: ${onActions.emitted} emitted (${onActions.noScope} scopeless with weighted-reference support)`
   );
   for (const [category, emission] of aliasCategories) {
     report.push(describeAliasCategory(category, emission, aliasSplices.get(category), rules));

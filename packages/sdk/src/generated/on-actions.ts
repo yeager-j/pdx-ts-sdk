@@ -6,7 +6,7 @@ import type { OnActionRef } from "../events/on-actions.ts";
 
 /**
  * Named Stellaris on-actions generated from `config/on_actions.cwt`.
- * Scopeless hooks are present but cannot be registered until the SDK has a scopeless event kind.
+ * Scopeless hooks accept checked scopeless event references in weighted contributions.
  */
 export const onActions = {
   /** Triggers when the game starts */
