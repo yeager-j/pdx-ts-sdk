@@ -13929,7 +13929,7 @@ export interface UniversalEffects<
           | "starbase"
           | "system"
         >;
-    removeInvalidCivics: boolean;
+    removeInvalidCivics?: boolean;
   }): void;
 
   /**

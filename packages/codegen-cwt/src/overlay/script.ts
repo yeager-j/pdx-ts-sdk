@@ -423,6 +423,20 @@ export const EFFECT_FIELD_CARDINALITY_OVERRIDES = new Map<
       },
     ],
   ],
+  [
+    "create_country",
+    [
+      {
+        name: "remove_invalid_civics",
+        optional: true,
+        source: "vendor/cwtools-stellaris-config/script-docs/v4.4.1/effects.log:274-298",
+        reason:
+          "The game documentation gives the field a default of `no`, so an author who copies " +
+          "no civics has nothing to say about it. It is the one field of the CWT block with " +
+          "no cardinality annotation, which makes it required.",
+      },
+    ],
+  ],
 ]);
 
 /**

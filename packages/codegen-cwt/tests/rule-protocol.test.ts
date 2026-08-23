@@ -283,7 +283,11 @@ describe("LoweredRule", () => {
       expect.stringContaining("copy_traditions_from.exceptions → value-list 0..inf"),
       expect.stringContaining("create_balanced_fleet.ship_designs → optional"),
       expect.stringContaining("storm_apply_aftermath_modifier.severity → repeated"),
+      expect.stringContaining("create_country.remove_invalid_civics → optional"),
     ]);
+    // The one field of `create_country` CWT leaves unannotated, which the game
+    // documents as defaulting to `no`.
+    expect(emitted.interfaces).toContain("removeInvalidCivics?: boolean");
     expect(emitted.meta).toContain(
       '{ prop: "variableString", key: "variable_string", kind: "value", repeated: true }'
     );

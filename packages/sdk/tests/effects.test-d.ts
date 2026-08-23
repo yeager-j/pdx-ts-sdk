@@ -359,3 +359,12 @@ describe("a spliced alias category's authoring type", () => {
     ]);
   });
 });
+
+describe("an effect field the game documents as optional", () => {
+  it("lets createCountry omit removeInvalidCivics", () => {
+    const country = makeScope<"country">(sink);
+    country.createCountry({ type: "effects_type_test_country_type", nameList: "random" });
+    // @ts-expect-error — the overlay corrects the field's cardinality, not its type
+    country.createCountry({ type: "effects_type_test_country_type", removeInvalidCivics: "no" });
+  });
+});
