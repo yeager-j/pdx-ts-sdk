@@ -2107,13 +2107,13 @@ export function checkEconomicProductionModifierForJob(
   entries.push(kv("job", id0));
   refs.push({ targets: ["job"], id: id0, field: "check_economic_production_modifier_for_job.job" });
   if (isStructuredValue(args.resource, ["typed-ref"])) {
-    const nestedEntries: PdxEntry[] = [];
+    const nestedEntries1: PdxEntry[] = [];
     for (const [key1, value1] of mapEntries(
       args.resource,
       "check_economic_production_modifier_for_job.resource",
       1
     )) {
-      nestedEntries.push(
+      nestedEntries1.push(
         typeof value1 === "object" ? cmp(key1, value1[0], value1[1]) : kv(key1, value1)
       );
       refs.push({
@@ -2122,7 +2122,7 @@ export function checkEconomicProductionModifierForJob(
         field: "check_economic_production_modifier_for_job.resource",
       });
     }
-    entries.push(block("resource", nestedEntries));
+    entries.push(block("resource", nestedEntries1));
   } else {
     const id1 = refId(args.resource);
     entries.push(kv("resource", id1));
@@ -16884,11 +16884,11 @@ export function numLeaderTraits(args: NumLeaderTraitsArgs): Trigger<"leader"> {
     entries.push(kv("count_tiers", args.countTiers));
   }
   if (args.containsModifier !== undefined) {
-    const nestedEntries: PdxEntry[] = [];
-    nestedEntries.push(kv("string", args.containsModifier.string));
-    nestedEntries.push(kv("type", args.containsModifier.type));
-    nestedEntries.push(kv("is_subclass", args.containsModifier.isSubclass));
-    entries.push(block("contains_modifier", nestedEntries));
+    const nestedEntries5: PdxEntry[] = [];
+    nestedEntries5.push(kv("string", args.containsModifier.string));
+    nestedEntries5.push(kv("type", args.containsModifier.type));
+    nestedEntries5.push(kv("is_subclass", args.containsModifier.isSubclass));
+    entries.push(block("contains_modifier", nestedEntries5));
   }
   return trigger([block("num_leader_traits", entries)]);
 }

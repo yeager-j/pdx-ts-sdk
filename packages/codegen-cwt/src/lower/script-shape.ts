@@ -29,7 +29,7 @@ import {
   SCRIPT_ALIAS_CATEGORIES,
   UNIVERSAL_SCOPES,
 } from "../overlay/index.ts";
-import type { Emitter, TsValue } from "../render/emitter.ts";
+import { referenceTargetsOf, type Emitter, type TsValue } from "../render/emitter.ts";
 
 /** Stable reasons the shared trigger/effect generator can reject a CWT rule. */
 export type ScriptGenerationSkipCategory =
@@ -696,21 +696,6 @@ function mapKeyName(type: MapKeyType): string {
   }
 }
 
-/**
- * The registries a key may name, when every key form is a content reference.
- * One open form leaves it undefined, the rule every reference-bearing value
- * follows.
- *
- * Read from the key types rather than through {@link Emitter.unionFor}
- * because a map key never becomes a TypeScript type: an index signature keys
- * on `string`, so recording a use of the branded reference would import a
- * name the generated file never spells.
- */
-function mapKeyRefTypes(types: readonly MapKeyType[]): readonly string[] | undefined {
-  const referenced = types.flatMap((type) => (type.kind === "typeRef" ? [type.name] : []));
-  return referenced.length === types.length ? [...new Set(referenced)] : undefined;
-}
-
 /** The member name a map takes when it shares its block with named fields. */
 function mapMemberName(type: MapKeyType): string {
   return type.kind === "typeRef" || type.kind === "valueSet"
@@ -773,7 +758,8 @@ function openMapValue(
   declarations: readonly OpenKeyDeclaration[],
   splice: boolean
 ): MapValue | SkipReason {
-  const keyRefTypes = mapKeyRefTypes(declarations.map((declaration) => declaration.keyType));
+  // Not `unionFor`: the key is never spelled as a type, only as `string`.
+  const keyRefTypes = referenceTargetsOf(declarations.map((declaration) => declaration.keyType));
   const fields = declarations.map((declaration) => declaration.field);
   const comparisons = fields.filter((field) => field.comparison);
   if (comparisons.length > 0 && comparisons.length !== fields.length) {

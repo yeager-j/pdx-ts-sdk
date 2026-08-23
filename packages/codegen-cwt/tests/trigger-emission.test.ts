@@ -265,6 +265,34 @@ describe("trigger emission", () => {
     );
   });
 
+  it("gives each nested block sibling its own entry array", () => {
+    // Both members are required, so their statements land side by side in the
+    // builder body rather than inside an `if`, which is the one arrangement
+    // that would redeclare a shared local.
+    const emitted = emitInlineTriggers(
+      [
+        BOTH_WRAPPER_ROWS,
+        "## scopes = any",
+        "alias[trigger:two_nested_blocks] = {",
+        "\tfirst = {",
+        "\t\tvalue = int",
+        "\t}",
+        "\tsecond = {",
+        "\t\tvalue = int",
+        "\t}",
+        "}",
+      ].join("\n")
+    );
+
+    expect(emitted.names).toContain("twoNestedBlocks");
+    const declarations = [
+      ...emitted.code.matchAll(/const (nestedEntries\d+): PdxEntry\[\] = \[\]/g),
+    ];
+    expect(declarations.map((match) => match[1])).toEqual(["nestedEntries0", "nestedEntries1"]);
+    expect(emitted.code).toContain('entries.push(block("first", nestedEntries0));');
+    expect(emitted.code).toContain('entries.push(block("second", nestedEntries1));');
+  });
+
   it("records one content reference per item of a repeated reference-bearing field", () => {
     const repeatedTrait: ArgField = {
       name: "trait",

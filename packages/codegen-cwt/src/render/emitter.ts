@@ -121,6 +121,24 @@ export function aliasCategoryModule(category: string): string {
 }
 
 /**
+ * The content registries an overloaded value's ids may name.
+ *
+ * Only an all-reference overload keeps its target types: one non-reference arm
+ * makes an id-shaped value legal for reasons the registries cannot see, so the
+ * result is `undefined`. Names stay as the rules spell them, subtype qualifier
+ * included (`agreement_term.discrete`).
+ *
+ * Separate from {@link Emitter.unionFor} because a position can carry the
+ * registries without spelling the branded type — a map key lowers to `string`
+ * — and asking this question must not record a use of a name the generated
+ * file never writes.
+ */
+export function referenceTargetsOf(types: readonly RuleType[]): readonly string[] | undefined {
+  const referenced = types.flatMap((type) => (type.kind === "typeRef" ? [type.name] : []));
+  return referenced.length === types.length ? [...new Set(referenced)] : undefined;
+}
+
+/**
  * Lowers CWT value types and records every generated symbol used by each output file.
  * Create one emitter per codegen run, and bracket each file with {@link Emitter.beginFile} and
  * {@link Emitter.endFile}.
@@ -427,11 +445,7 @@ export class Emitter {
     const parts = mergeScopeArms([...new Set(values.flatMap((value) => value.type.split(" | ")))]);
     const conversionProbe = "x";
     const conversionExpressions = new Set(values.map((value) => value.toScalar(conversionProbe)));
-    // Only an all-reference overload keeps its target types: one non-reference
-    // arm makes an id-shaped value legal for reasons the registries cannot see.
-    const refTypes = values.every((value) => value.refTypes !== undefined)
-      ? [...new Set(values.flatMap((value) => [...value.refTypes!]))]
-      : undefined;
+    const refTypes = referenceTargetsOf(types);
     // One open arm opens the whole union, the same rule `refTypes` follows: a
     // scalar arm makes every value legal, so the closed arms prove nothing.
     const literals = values.every((value) => value.literals !== undefined)
