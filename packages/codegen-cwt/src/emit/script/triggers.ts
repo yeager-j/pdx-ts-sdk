@@ -467,6 +467,7 @@ function emitOne(
 /**
  * Emits trigger builders from generated-owned rules and reports every excluded rule.
  * Rule scopes and documentation fallbacks are resolved before any builder text is committed.
+ * Throws when hand-written policy owns a rule the rules declare removed.
  */
 export function emitTriggers(
   emitter: Emitter,
@@ -485,6 +486,12 @@ export function emitTriggers(
     const declarations = rule.declarations;
     const handWritten = HAND_WRITTEN_TRIGGER_RULES_BY_KEY.get(key.toLowerCase());
     if (handWritten !== undefined) {
+      if (rule.removed) {
+        throw new Error(
+          `${key}: the rules declare the trigger removed (## api_status = removed), ` +
+            `but hand-written ${handWritten.kind} policy still owns it`
+        );
+      }
       skipped.push(
         skippedRule(
           key,
@@ -502,6 +509,12 @@ export function emitTriggers(
     }
     if (!isPlainName(key)) {
       skipped.push(skippedRule(key, "invalid-rule-name", "not a plain rule name"));
+      continue;
+    }
+    if (rule.removed) {
+      skipped.push(
+        skippedRule(key, "removed-api", "declared removed by the rules (## api_status = removed)")
+      );
       continue;
     }
     const doc = docs.get(key);

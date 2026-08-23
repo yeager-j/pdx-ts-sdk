@@ -60,6 +60,7 @@ export type ScriptSkipCategory =
   | "handwritten-trigger"
   | "structural-effect"
   | "event-fire-effect"
+  | "removed-api"
   | "scopeless-event-kind"
   | "missing-fire-rule-scope"
   | "event-policy-rejected"

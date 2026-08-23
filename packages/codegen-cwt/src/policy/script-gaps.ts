@@ -7,8 +7,12 @@ import type {
 /** The generated script surface on which a skipped CWT rule was declared. */
 export type ScriptRuleKind = "trigger" | "effect";
 
-/** Intentional skip categories owned by hand-written SDK policy. */
-export type PolicySkipCategory = "handwritten-trigger" | "structural-effect" | "event-fire-effect";
+/**
+ * Intentional skip categories owned by policy rather than by a generator
+ * limitation: hand-written, structural, event-fire, or removed by the rules.
+ */
+export type PolicySkipCategory =
+  "handwritten-trigger" | "structural-effect" | "event-fire-effect" | "removed-api";
 
 /** Generator limitations that must have an issue and rationale in the gap ledger. */
 export type GenerationGapCategory = ScriptGenerationSkipCategory;
@@ -67,6 +71,7 @@ const POLICY_CATEGORIES = new Set<ScriptSkipCategory>([
   "handwritten-trigger",
   "structural-effect",
   "event-fire-effect",
+  "removed-api",
 ] satisfies readonly PolicySkipCategory[]);
 
 function isIntentionalExclusion(category: ScriptSkipCategory): boolean {
@@ -85,20 +90,6 @@ function trackedGapRows(
 
 /** The reviewed ledger of current trigger and effect generation gaps. */
 export const SCRIPT_GENERATION_GAPS: readonly ScriptGenerationGap[] = [
-  ...trackedGapRows(
-    "trigger",
-    "unknown-scope",
-    "SDK-243",
-    "The declared legacy pop scope has no canonical SDK scope mapping.",
-    ["has_pop_flag", "pop_has_ethic"]
-  ),
-  ...trackedGapRows(
-    "effect",
-    "unknown-scope",
-    "SDK-243",
-    "The declared legacy pop scope has no canonical SDK scope mapping.",
-    ["pop_event", "remove_pop_flag", "set_pop_flag", "set_timed_pop_flag"]
-  ),
   ...trackedGapRows(
     "trigger",
     "missing-push-scope",

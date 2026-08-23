@@ -1,12 +1,13 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { scopeIndex } from "@pdx-ts/codegen-cwt/cwt/rules";
+import { parseCwt } from "@pdx-ts/codegen-cwt/cwt/parser";
+import { readAliases, scopeIndex, type AliasDecl } from "@pdx-ts/codegen-cwt/cwt/rules";
 import { emitEffects } from "@pdx-ts/codegen-cwt/emit/script/effects";
 import { emitTriggers } from "@pdx-ts/codegen-cwt/emit/script/triggers";
 import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
-import { lowerRuleTable } from "@pdx-ts/codegen-cwt/lower/lowered-rule";
+import { lowerRuleTable, type LoweredRule } from "@pdx-ts/codegen-cwt/lower/lowered-rule";
 import { skippedRule } from "@pdx-ts/codegen-cwt/lower/script-shape";
 import { createEffectPolicy } from "@pdx-ts/codegen-cwt/policy/effects";
 import {
@@ -14,6 +15,7 @@ import {
   reconcileScriptGaps,
   SCRIPT_GENERATION_GAPS,
   type ScriptGenerationGap,
+  type ScriptRuleKind,
 } from "@pdx-ts/codegen-cwt/policy/script-gaps";
 import { Emitter } from "@pdx-ts/codegen-cwt/render/emitter";
 import { describe, expect, it } from "vitest";
@@ -43,6 +45,24 @@ const effects = emitEffects(
   []
 );
 
+/** The declarations of one synthetic rule the rules mark `## api_status = removed`. */
+function removedDeclarations(category: ScriptRuleKind, key: string): readonly AliasDecl[] {
+  const source = ["## api_status = removed", `alias[${category}:${key}] = $any`].join("\n");
+  const parsed = parseCwt(source, "removed.cwt");
+  return readAliases(parsed.nodes, "removed.cwt", category, new Map()).aliases.get(key)!;
+}
+
+/** A one-entry rule table holding that synthetic removed rule, ready for an emitter. */
+function removedRuleTable(
+  emitter: Emitter,
+  category: ScriptRuleKind,
+  key: string
+): ReadonlyMap<string, LoweredRule> {
+  const declarations = new Map([[key, removedDeclarations(category, key)]]);
+  const ruleDocs = category === "trigger" ? docs.triggers : docs.effects;
+  return lowerRuleTable(declarations, ruleDocs, emitter, scopes);
+}
+
 function row(overrides: Partial<ScriptGenerationGap> = {}): ScriptGenerationGap {
   return {
     kind: "trigger",
@@ -61,10 +81,10 @@ describe("the script-generation gap ledger", () => {
       effects: effects.skipped,
     });
 
-    expect(SCRIPT_GENERATION_GAPS).toHaveLength(41);
-    expect(report.policyOwned).toHaveLength(38);
+    expect(SCRIPT_GENERATION_GAPS).toHaveLength(35);
+    expect(report.policyOwned).toHaveLength(44);
     expect(report.abstractPlaceholders).toHaveLength(2);
-    expect(report.trackedGaps).toHaveLength(41);
+    expect(report.trackedGaps).toHaveLength(35);
     expect(report.abstractPlaceholders.map((entry) => entry.name)).toEqual([
       "<scripted_effect>",
       "<scripted_trigger>",
@@ -78,7 +98,7 @@ describe("the script-generation gap ledger", () => {
     });
     const lines = formatScriptGapReport(report);
 
-    expect(lines.trackedGaps).toHaveLength(41);
+    expect(lines.trackedGaps).toHaveLength(35);
     expect(lines.trackedGaps).toContain(
       "effect create_fleet [unsupported-field-value] — SDK-253: " +
         "The create_fleet parent field uses the malformed CWT keyword sceop[fleet]. " +
@@ -89,6 +109,72 @@ describe("the script-generation gap ledger", () => {
     expect(lines.trackedGaps.every((line) => !line.includes("SDK-247"))).toBe(true);
     expect(lines.trackedGaps.every((line) => /SDK-[0-9]+/.test(line))).toBe(true);
     expect(lines.trackedGaps.every((line) => !line.includes("e.g."))).toBe(true);
+  });
+
+  it("owns the rules declared removed by CWT as an intentional exclusion", () => {
+    const report = reconcileScriptGaps({
+      triggers: triggers.skipped,
+      effects: effects.skipped,
+    });
+    const removed = report.policyOwned
+      .filter((entry) => entry.category === "removed-api")
+      .map((entry) => `${entry.kind}:${entry.name}`);
+
+    expect(removed).toEqual([
+      "effect:pop_event",
+      "effect:remove_pop_flag",
+      "effect:set_pop_flag",
+      "effect:set_timed_pop_flag",
+      "trigger:has_pop_flag",
+      "trigger:pop_has_ethic",
+    ]);
+  });
+
+  it("keeps emitting the effects the rules mark api_status = kept", () => {
+    expect(effects.interfaces).toContain("aiTradeFacility(args:");
+    expect(effects.interfaces).toContain("runInAiMode(value?: boolean): void;");
+  });
+
+  it("refuses a hand-written trigger the rules later declare removed", () => {
+    const emitter = new Emitter(rules);
+
+    expect(() =>
+      emitTriggers(emitter, docs.triggers, removedRuleTable(emitter, "trigger", "hidden_trigger"))
+    ).toThrow(
+      "hidden_trigger: the rules declare the trigger removed (## api_status = removed), " +
+        "but hand-written structural-trigger policy still owns it"
+    );
+  });
+
+  it("refuses a structural effect the rules later declare removed", () => {
+    const emitter = new Emitter(rules);
+
+    expect(() =>
+      emitEffects(
+        emitter,
+        docs.effects,
+        scopes,
+        removedRuleTable(emitter, "effect", "switch"),
+        createEffectPolicy(rules),
+        []
+      )
+    ).toThrow(
+      "switch: the rules declare the effect removed (## api_status = removed), " +
+        "but hand-written structural effect policy still owns it"
+    );
+  });
+
+  it("rejects a removed-api row in the gap ledger", () => {
+    const removedRow = row({ key: "has_pop_flag", category: "removed-api" as never });
+    expect(() =>
+      reconcileScriptGaps(
+        {
+          triggers: [skippedRule("has_pop_flag", "removed-api", "declared removed by the rules")],
+          effects: [],
+        },
+        [removedRow]
+      )
+    ).toThrow("trigger:has_pop_flag: intentional exclusions do not belong in the gap ledger");
   });
 
   it("rejects a newly skipped generator-owned rule", () => {

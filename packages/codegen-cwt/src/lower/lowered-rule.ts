@@ -53,12 +53,33 @@ export interface LoweredRule {
   readonly scopeType: string | null;
   /** Whether any declaration uses comparison syntax. */
   readonly comparison: boolean;
+  /** Whether the rules declare the rule removed from the game's script API. */
+  readonly removed: boolean;
   /** Non-block declarations in their original order. */
   readonly scalars: readonly AliasDecl[];
   /** Block declarations partitioned for script emitters. */
   readonly blocks: readonly LoweredRuleBlock[];
   /** Facts about the rule's nested clauses and arguments. */
   readonly body: LoweredRuleBody;
+}
+
+/**
+ * Reports whether every declaration carries `## api_status = removed`.
+ *
+ * A name whose declarations disagree is a defect in the rules rather than a
+ * shape to guess, so it throws instead of choosing one side.
+ */
+function declaredRemoved(key: string, declarations: readonly AliasDecl[]): boolean {
+  const removed = declarations.filter((declaration) => declaration.apiStatus === "removed");
+  if (removed.length === 0) {
+    return false;
+  }
+  if (removed.length !== declarations.length) {
+    throw new Error(
+      `${key}: some declarations are marked "## api_status = removed" and some are not`
+    );
+  }
+  return true;
 }
 
 function renderedScopeType(scopes: LoweredRuleScopes | null): string | null {
@@ -137,6 +158,7 @@ export function lowerRule(
     scopes,
     scopeType: renderedScopeType(scopes),
     comparison: declarations.some((declaration) => declaration.comparison),
+    removed: declaredRemoved(key, declarations),
     scalars,
     blocks,
     body: { splice, clauses, args },
