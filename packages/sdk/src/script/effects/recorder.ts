@@ -21,6 +21,7 @@ import {
   type EffectFieldMeta,
   type EffectMapMeta,
   type EffectScalarMeta,
+  type EffectShapeMeta,
 } from "../../generated/effect-meta.ts";
 import { FIRE_EFFECT_KEYS, type StructuralEffectMethod } from "../../generated/effect-policy.ts";
 import type { ScopeObjOf } from "../../generated/effects.ts";
@@ -28,6 +29,7 @@ import type { ScopeName } from "../../generated/scopes.ts";
 import type { ContentRefUse } from "../../references.ts";
 import {
   isComparisonList,
+  isEffectBlockValue,
   isStructuredValue,
   mapEntries,
   refId,
@@ -428,6 +430,74 @@ function blockEntry(
         key,
         container(valueListItems(arm, value as readonly unknown[], path, refs, owner))
       );
+  }
+}
+
+function scalarEffectEntry(
+  key: string,
+  scalar: Extract<EffectShapeMeta, { readonly kind: "bool" | "value" }>,
+  value: unknown,
+  refs: ContentRefUse[]
+): PdxEntry {
+  if (scalar.kind === "bool") {
+    return kv(key, (value as boolean | undefined) ?? true);
+  }
+  const lowered = toScalar(value, scalar.booleanLiterals);
+  recordRef(refs, scalar.refTypes, key, lowered);
+  return kv(key, lowered);
+}
+
+function scalarOrBlockEffect(
+  key: string,
+  shape: Extract<EffectShapeMeta, { readonly kind: "scalar-or-block" }>,
+  args: readonly unknown[],
+  sink: PdxEntry[],
+  refs: ContentRefUse[],
+  recording: Recording | undefined
+): void {
+  const [value, body] = args;
+  const objectKinds = shape.scalar.kind === "value" ? (shape.scalar.objectKinds ?? []) : [];
+  if (!isEffectBlockValue(value, objectKinds, shape.block)) {
+    sink.push(scalarEffectEntry(key, shape.scalar, value, refs));
+    return;
+  }
+  switch (shape.block.kind) {
+    case "fields":
+      sink.push(
+        block(
+          key,
+          fieldEntries(shape.block.fields, value as Record<string, unknown>, key, refs, recording)
+        )
+      );
+      return;
+    case "map":
+      sink.push(
+        block(key, mapValueEntries(shape.block.map, value as Record<string, unknown>, key, refs))
+      );
+      return;
+    case "alias-list":
+      sink.push(
+        block(
+          key,
+          aliasListEntries(shape.block.category, value as readonly unknown[], key, refs, recording)
+        )
+      );
+      return;
+    case "wrapper": {
+      if (shape.block.fields === null) {
+        sink.push(block(key, recordBlock(recording, refs, value as (scope: unknown) => void)));
+        return;
+      }
+      const child = fieldEntries(
+        shape.block.fields,
+        value as Record<string, unknown>,
+        key,
+        refs,
+        recording
+      );
+      recordBlock(recording, refs, body as (scope: unknown) => void, child);
+      sink.push(block(key, child));
+    }
   }
 }
 
@@ -944,11 +1014,7 @@ function makeAnyScope(sink: PdxEntry[], refs: ContentRefUse[], recording?: Recor
       case "bool":
         return (value: boolean = true) => sink.push(kv(meta.key, value));
       case "value":
-        return (value: unknown) => {
-          const scalar = toScalar(value, shape.booleanLiterals);
-          recordRef(refs, shape.refTypes, meta.key, scalar);
-          sink.push(kv(meta.key, scalar));
-        };
+        return (value: unknown) => sink.push(scalarEffectEntry(meta.key, shape, value, refs));
       case "fields":
         return (args: Record<string, unknown>) =>
           sink.push(
@@ -980,6 +1046,9 @@ function makeAnyScope(sink: PdxEntry[], refs: ContentRefUse[], recording?: Recor
             block(meta.key, aliasListEntries(shape.category, items, meta.key, refs, recording))
           );
         };
+      case "scalar-or-block":
+        return (...args: unknown[]) =>
+          scalarOrBlockEffect(meta.key, shape, args, sink, refs, recording);
       case "scope-link":
         return makeEffectPath(sink, refs, recording, [meta.key]);
     }

@@ -105,6 +105,20 @@ function baseTypeDeclarations(file: string): readonly {
   return declarations;
 }
 
+function syntheticEffectInput(source: string, emitter: Emitter) {
+  const aliases = readAliases(
+    parseCwt(source, "synthetic-effects.cwt").nodes,
+    "synthetic-effects.cwt",
+    "effect",
+    new Map()
+  ).aliases;
+  const effects = new Map([...rules.effects, ...aliases]);
+  return {
+    policy: createEffectPolicy({ ...rules, effects }),
+    rules: lowerRuleTable(effects, docs.effects, emitter, scopes),
+  };
+}
+
 describe("LoweredRule", () => {
   const triggers = lowerRuleTable(rules.triggers, docs.triggers, emitter, scopes);
   const effects = lowerRuleTable(rules.effects, docs.effects, emitter, scopes);
@@ -234,6 +248,45 @@ describe("LoweredRule", () => {
     expect(emitted.skipped).not.toContainEqual(
       expect.objectContaining({ name: "create_pop_group" })
     );
+  });
+
+  it("emits scalar/block overloads and merges equivalent block declaration leaves", () => {
+    const effectEmitter = new Emitter(rules);
+    const input = syntheticEffectInput(
+      [
+        "## scopes = { planet }",
+        "alias[effect:synthetic_terraform] = <planet_class>",
+        "alias[effect:synthetic_terraform] = { class = <planet_class> inherit_entity = bool }",
+        "alias[effect:synthetic_terraform] = { class = <planet_class_random_list> inherit_entity = bool }",
+      ].join("\n"),
+      effectEmitter
+    );
+    const emitted = emitEffects(effectEmitter, docs.effects, scopes, input.rules, input.policy, []);
+
+    expect(emitted.interfaces).toContain(
+      "syntheticTerraform(value: PlanetClassRef | string): void;\n" +
+        "  syntheticTerraform(args: { class: PlanetClassRef | string | PlanetClassRandomListRef; inheritEntity: boolean }): void;"
+    );
+    expect(emitted.meta).toContain('kind: "scalar-or-block"');
+  });
+
+  it("refuses multiple block declarations whose layouts differ", () => {
+    const effectEmitter = new Emitter(rules);
+    const input = syntheticEffectInput(
+      [
+        "## scopes = { planet }",
+        "alias[effect:synthetic_multiple_blocks] = { class = <planet_class> }",
+        "alias[effect:synthetic_multiple_blocks] = { inherit_entity = bool }",
+      ].join("\n"),
+      effectEmitter
+    );
+    const emitted = emitEffects(effectEmitter, docs.effects, scopes, input.rules, input.policy, []);
+
+    expect(emitted.skipped).toContainEqual({
+      name: "synthetic_multiple_blocks",
+      category: "multiple-block-forms",
+      detail: "multiple block declarations",
+    });
   });
 
   it("expands the name alias category into effect argument fields", () => {

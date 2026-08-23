@@ -491,7 +491,6 @@ function buildCodegenReport(input: CodegenReportInput): string[] {
     "Scope links not emitted",
     classifiedLinks.skipped.map((entry) => `${entry.name} — ${entry.detail}`)
   );
-  reportSection(report, "Effects emitted scalar-only (block overload dropped)", effects.scalarOnly);
   reportSection(report, "Effect field types replaced by the overlay", effects.fieldTypeOverrides);
   reportSection(
     report,

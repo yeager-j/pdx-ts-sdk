@@ -43,6 +43,33 @@ function structuredMetaEntry(name: string): string {
   return meta.slice(start, end + 5).trim();
 }
 
+const SCALAR_OR_BLOCK_EFFECTS = [
+  "addBuilding",
+  "addDistrict",
+  "addPopAmount",
+  "addRelic",
+  "addTrait",
+  "autoFollowFleet",
+  "changeCountryFlag",
+  "changeGovernment",
+  "changePc",
+  "createFleetFromNavalCap",
+  "damageShip",
+  "deleteDimensionalFleet",
+  "deleteFleet",
+  "destroyFleet",
+  "endFleetContract",
+  "guaranteeCountry",
+  "log",
+  "playSound",
+  "refuseCovenant",
+  "removePopAmount",
+  "setLocation",
+  "setName",
+  "startTerraformProcess",
+  "startTerraformProgress",
+] as const;
+
 describe("emitted effect signatures", () => {
   it("createAmbientObject exposes its scalar/block offsets and pushed scope", () => {
     const create = signature("createAmbientObject");
@@ -168,8 +195,16 @@ describe("emitted effect signatures", () => {
     // No `refTypes` — a scope names no registry — so `toScalar`'s `path`
     // unwrapping in `src/script/scalar.ts` is the whole runtime contract.
     expect(metaEntry("setOwner")).toMatchInlineSnapshot(
-      `"setOwner: { key: "set_owner", shape: { kind: "value" } },"`
+      `"setOwner: { key: "set_owner", shape: { kind: "value", objectKinds: ["scope-ref"] } },"`
     );
+  });
+
+  it("emits every formerly scalar-only effect as a scalar and block overload", () => {
+    for (const method of SCALAR_OR_BLOCK_EFFECTS) {
+      const overloads = interfaces.match(new RegExp(`^  ${method}\\(`, "gm")) ?? [];
+      expect(overloads, method).toHaveLength(2);
+      expect(structuredMetaEntry(method), method).toContain('kind: "scalar-or-block"');
+    }
   });
 
   it("fields: addModifier preserves generated args beneath its host-contract seam", () => {

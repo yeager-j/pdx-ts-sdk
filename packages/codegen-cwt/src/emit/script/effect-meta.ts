@@ -12,6 +12,7 @@ import { aliasCategoryModule, type TsValue } from "../../render/emitter.ts";
 import { refTypesSuffix } from "../../render/writer.ts";
 import type {
   EffectCluster,
+  EffectShape,
   EmittedEffect,
   EmittedScopeLink,
   ScopeLinkCluster,
@@ -23,15 +24,24 @@ function booleanLiteralsMeta(value: TsValue | undefined): string {
     : `, booleanLiterals: ${JSON.stringify(value.booleanLiterals)}`;
 }
 
-function scalarMeta(value: TsValue): string {
-  const members = [
+function scalarMetaMembers(value: TsValue): string[] {
+  return [
     value.refTypes === undefined ? null : `refTypes: ${JSON.stringify(value.refTypes)}`,
     value.booleanLiterals === undefined
       ? null
       : `booleanLiterals: ${JSON.stringify(value.booleanLiterals)}`,
     value.objectKinds === undefined ? null : `objectKinds: ${JSON.stringify(value.objectKinds)}`,
   ].filter((member): member is string => member !== null);
+}
+
+function scalarMeta(value: TsValue): string {
+  const members = scalarMetaMembers(value);
   return members.length === 0 ? "{}" : `{ ${members.join(", ")} }`;
+}
+
+function scalarMetaSuffix(value: TsValue): string {
+  const members = scalarMetaMembers(value);
+  return members.length === 0 ? "" : `, ${members.join(", ")}`;
 }
 
 function fieldKind(field: ArgField): string {
@@ -82,7 +92,7 @@ function mapMeta(map: MapValue): string {
 }
 
 /** The metadata for the block half of a field overloaded with a scalar. */
-function blockMeta(block: BlockValue): string {
+function fieldBlockMeta(block: BlockValue): string {
   switch (block.kind) {
     case "fields":
       return `{ kind: "fields", fields: [${block.fields.map(fieldMeta).join(", ")}] }`;
@@ -107,7 +117,7 @@ function fieldMeta(field: ArgField): string {
     return `{ ${identity}, kind: "map", map: ${mapMeta(field.value.map)}${repeated} }`;
   }
   if (field.value.kind === "scalarOrBlock") {
-    return `{ ${identity}, kind: "scalar-or-block", scalar: ${scalarMeta(field.value.scalar)}, block: ${blockMeta(field.value.block)}${repeated} }`;
+    return `{ ${identity}, kind: "scalar-or-block", scalar: ${scalarMeta(field.value.scalar)}, block: ${fieldBlockMeta(field.value.block)}${repeated} }`;
   }
   if (field.value.kind === "valueList") {
     const scalar = field.value.scalar;
@@ -122,6 +132,27 @@ function fieldMeta(field: ArgField): string {
   return `{ ${identity}, kind: ${JSON.stringify(kind)}${refTypes}${booleanLiterals}${spliceMeta(field.value)}${repeated} }`;
 }
 
+function scalarShapeMeta(shape: Extract<EffectShape, { readonly kind: "bool" | "value" }>): string {
+  return shape.kind === "bool"
+    ? '{ kind: "bool" }'
+    : `{ kind: "value"${scalarMetaSuffix(shape.value)} }`;
+}
+
+function blockShapeMeta(
+  shape: Exclude<EffectShape, { readonly kind: "bool" | "value" | "scalarOrBlock" }>
+): string {
+  switch (shape.kind) {
+    case "fields":
+      return `{ kind: "fields", fields: [${shape.fields.map(fieldMeta).join(", ")}] }`;
+    case "map":
+      return `{ kind: "map", map: ${mapMeta(shape.map)} }`;
+    case "wrapper":
+      return `{ kind: "wrapper", fields: ${shape.fields === null ? "null" : `[${shape.fields.map(fieldMeta).join(", ")}]`} }`;
+    case "aliasList":
+      return `{ kind: "alias-list", category: ${JSON.stringify(shape.category)} }`;
+  }
+}
+
 function metaEntry(effect: EmittedEffect): string {
   const { method, key, shape } = effect;
   const fieldsOf = (fields: readonly ArgField[] | null): string =>
@@ -130,7 +161,7 @@ function metaEntry(effect: EmittedEffect): string {
     case "bool":
       return `  ${method}: { key: ${JSON.stringify(key)}, shape: { kind: "bool" } },\n`;
     case "value":
-      return `  ${method}: { key: ${JSON.stringify(key)}, shape: { kind: "value"${refTypesSuffix(shape.value)}${booleanLiteralsMeta(shape.value)} } },\n`;
+      return `  ${method}: { key: ${JSON.stringify(key)}, shape: ${scalarShapeMeta(shape)} },\n`;
     case "fields":
       return `  ${method}: { key: ${JSON.stringify(key)}, shape: { kind: "fields", fields: ${fieldsOf(shape.fields)} } },\n`;
     case "map":
@@ -139,6 +170,8 @@ function metaEntry(effect: EmittedEffect): string {
       return `  ${method}: { key: ${JSON.stringify(key)}, shape: { kind: "wrapper", fields: ${fieldsOf(shape.fields)} } },\n`;
     case "aliasList":
       return `  ${method}: { key: ${JSON.stringify(key)}, shape: { kind: "alias-list", category: ${JSON.stringify(shape.category)} } },\n`;
+    case "scalarOrBlock":
+      return `  ${method}: { key: ${JSON.stringify(key)}, shape: { kind: "scalar-or-block", scalar: ${scalarShapeMeta(shape.scalar)}, block: ${blockShapeMeta(shape.block)} } },\n`;
   }
 }
 
@@ -245,13 +278,23 @@ export function effectMetaCode(
     "  /** The block arm of a field overloaded between a scalar and a block. */\n" +
     "  readonly block?: EffectBlockMeta;\n" +
     "}\n\n" +
-    "export type EffectShapeMeta =\n" +
+    "/** One scalar call form of an effect. */\n" +
+    "export type EffectScalarShapeMeta =\n" +
     '  | { readonly kind: "bool" }\n' +
-    '  | { readonly kind: "value"; readonly refTypes?: readonly string[]; readonly booleanLiterals?: readonly ("yes" | "no")[] }\n' +
+    '  | { readonly kind: "value"; readonly refTypes?: readonly string[]; readonly booleanLiterals?: readonly ("yes" | "no")[]; readonly objectKinds?: readonly ("scope-ref" | "typed-ref")[] };\n\n' +
+    "/** One block call form of an effect. */\n" +
+    "export type EffectBlockShapeMeta =\n" +
+    '  | { readonly kind: "fields"; readonly fields: readonly EffectFieldMeta[] }\n' +
+    '  | { readonly kind: "map"; readonly map: EffectMapMeta }\n' +
+    '  | { readonly kind: "wrapper"; readonly fields: readonly EffectFieldMeta[] | null }\n' +
+    '  | { readonly kind: "alias-list"; readonly category: string };\n\n' +
+    "export type EffectShapeMeta =\n" +
+    "  | EffectScalarShapeMeta\n" +
     '  | { readonly kind: "fields"; readonly fields: readonly EffectFieldMeta[] | null }\n' +
     '  | { readonly kind: "map"; readonly map: EffectMapMeta }\n' +
     '  | { readonly kind: "wrapper"; readonly fields: readonly EffectFieldMeta[] | null }\n' +
     '  | { readonly kind: "alias-list"; readonly category: string }\n' +
+    '  | { readonly kind: "scalar-or-block"; readonly scalar: EffectScalarShapeMeta; readonly block: EffectBlockShapeMeta }\n' +
     '  | { readonly kind: "scope-link" };\n\n' +
     "export interface EffectMeta {\n" +
     "  readonly key: string;\n" +

@@ -574,6 +574,12 @@ export interface EffectsIn15Scopesee16 {
    * ```
    */
   setName(value: "random" | ScopeValue | string): void;
+  setName(args: {
+    /** string in localisation (which contains one or more bracket commands) */
+    key: string;
+    /** one of the bracket commands contained in the localisation referenced above, brackets optional (there should be 1 variable_string per unique bracket command) */
+    variableString?: readonly string[];
+  }): void;
 }
 
 /** Effects valid in: astral_rift, carrier, colony, cosmic_storm_influence_field, country, espionage_operation, federation, fleet, megastructure, planet, pop_faction, pop_group, ship, spy_network, starbase, system. */
@@ -787,6 +793,11 @@ export interface EffectsIn4Scopes2b24 {
    * ```
    */
   addBuilding(value: BuildingRef | string): void;
+  addBuilding(args: {
+    district?: DistrictRef | string;
+    zone?: ZoneRef | string;
+    building: BuildingRef | string;
+  }): void;
 
   /**
    * Begins construction of a specific district on the scoped planet
@@ -801,6 +812,11 @@ export interface EffectsIn4Scopes2b24 {
    * ```
    */
   addDistrict(value: DistrictRef | string): void;
+  addDistrict(args: {
+    districtType: DistrictRef | string;
+    ignoreCap?: "yes";
+    typeConversion?: "yes";
+  }): void;
 
   /**
    * Begins construction of a specific holding on the scoped planet
@@ -885,6 +901,25 @@ export interface EffectsIn4Scopes2b24 {
           | "species"
         >
   ): void;
+  changePc(args: {
+    class:
+      | PlanetClassRef
+      | string
+      | PlanetClassRandomListRef
+      | ScopeValue<
+          | "army"
+          | "carrier"
+          | "country"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "planet"
+          | "pop_group"
+          | "ship"
+          | "species"
+        >;
+    inheritEntity: boolean;
+  }): void;
 
   /**
    * Increases or reduces the size of the scoped planet by a specified amount
@@ -1895,6 +1930,10 @@ export interface EffectsIn4Scopes2b24 {
    * ```
    */
   startTerraformProcess(value: PlanetClassRef | string | PlanetClassRandomListRef): void;
+  startTerraformProcess(args: {
+    class: PlanetClassRef | string | PlanetClassRandomListRef;
+    inheritEntity: boolean;
+  }): void;
 
   /**
    * Starts terraforming progress of scoped planet
@@ -1904,6 +1943,11 @@ export interface EffectsIn4Scopes2b24 {
    * ```
    */
   startTerraformProgress(value: PlanetClassRef | string | PlanetClassRandomListRef): void;
+  startTerraformProgress(args: {
+    class: PlanetClassRef | string | PlanetClassRandomListRef;
+    inheritEntity?: boolean;
+    requiredProgress?: ScriptValue;
+  }): void;
 
   /** Stops terraforming process of scoped planet */
   stopTerraformProcess(value: string): void;
@@ -2898,6 +2942,27 @@ export interface EffectsInAmbientObjectFleet {
       | "system"
     >
   ): void;
+  setLocation(args: {
+    target: ScopeValue<
+      | "ambient_object"
+      | "archaeological_site"
+      | "astral_rift"
+      | "bypass"
+      | "carrier"
+      | "colony"
+      | "debris"
+      | "fleet"
+      | "megastructure"
+      | "planet"
+      | "ship"
+      | "situation"
+      | "starbase"
+      | "system"
+    >;
+    distance?: number | { min: number; max: number };
+    angle?: number | "random";
+    direction?: "in_system" | "out_system";
+  }): void;
 }
 
 /** Effects valid in: archaeological_site. */
@@ -3940,6 +4005,7 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   addRelic(value: RelicRef | string): void;
+  addRelic(args: { key: RelicRef | string; fullDescription?: boolean }): void;
 
   /**
    * Adds a tech research option to the scoped country's tech view list, permanent until researched
@@ -4206,6 +4272,59 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   changeCountryFlag(value: "random"): void;
+  changeCountryFlag(args: {
+    icon: { category: string; file: string };
+    background: { category: string; file: string };
+    colors:
+      | readonly []
+      | readonly [ColorDefineRef | string | "null"]
+      | readonly [ColorDefineRef | string | "null", ColorDefineRef | string | "null"]
+      | readonly [
+          ColorDefineRef | string | "null",
+          ColorDefineRef | string | "null",
+          ColorDefineRef | string | "null",
+        ]
+      | readonly [
+          ColorDefineRef | string | "null",
+          ColorDefineRef | string | "null",
+          ColorDefineRef | string | "null",
+          ColorDefineRef | string | "null",
+        ]
+      | readonly [
+          ColorDefineRef | string | "null",
+          ColorDefineRef | string | "null",
+          ColorDefineRef | string | "null",
+          ColorDefineRef | string | "null",
+          ColorDefineRef | string | "null",
+        ]
+      | readonly [
+          ColorDefineRef | string | "null",
+          ColorDefineRef | string | "null",
+          ColorDefineRef | string | "null",
+          ColorDefineRef | string | "null",
+          ColorDefineRef | string | "null",
+          ColorDefineRef | string | "null",
+        ]
+      | readonly [
+          ColorDefineRef | string | "null",
+          ColorDefineRef | string | "null",
+          ColorDefineRef | string | "null",
+          ColorDefineRef | string | "null",
+          ColorDefineRef | string | "null",
+          ColorDefineRef | string | "null",
+          ColorDefineRef | string | "null",
+        ]
+      | readonly [
+          ColorDefineRef | string | "null",
+          ColorDefineRef | string | "null",
+          ColorDefineRef | string | "null",
+          ColorDefineRef | string | "null",
+          ColorDefineRef | string | "null",
+          ColorDefineRef | string | "null",
+          ColorDefineRef | string | "null",
+          ColorDefineRef | string | "null",
+        ];
+  }): void;
 
   /**
    * Changes the dominant species of the current Country, change_all also changes all usage of that species (Pops etc) in the empire
@@ -4245,6 +4364,13 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   changeGovernment(value: "random" | AuthorityRef | string): void;
+  changeGovernment(args: {
+    authority?: "random" | AuthorityRef | string;
+    /** random includes starting civics */
+    civics?: "random" | { civic?: readonly (CivicOrOriginCivicRef | string | "random")[] };
+    cooldown?: boolean;
+    removeInvalidCivics?: "yes";
+  }): void;
 
   /**
    * Re-evaluate the specified casus belli type with given target country
@@ -4667,6 +4793,11 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   createFleetFromNavalCap(value: ScriptValue): void;
+  createFleetFromNavalCap(args: {
+    fraction: ScriptValue;
+    shipOwnerType: "country" | "federation" | "galactic_community";
+    canOverflow?: readonly boolean[];
+  }): void;
 
   /**
    * Creates a new leader for the scoped country
@@ -5712,6 +5843,31 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
       | "system"
     >
   ): void;
+  guaranteeCountry(args: {
+    /** free_guarantee_days is deprecated, does nothing */
+    target: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+  }): void;
 
   /**
    * Triggers the sub-species integration step for a country.
@@ -7442,6 +7598,7 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   refuseCovenant(value: PatronTypeRef | string): void;
+  refuseCovenant(args: { patron: PatronTypeRef | string; resetAttunement?: boolean }): void;
 
   /** Releases into the wild space fauna contained in the scoped country's Vivarium, from all or given ship category.	Resulting fleet owner can be specified.	Space Fauna can be culled for resources instead by specifying 'cull_vivarium_critter = yes'. */
   releaseVivariumFauna(args: {
@@ -10140,6 +10297,10 @@ export interface EffectsInFleet {
    * ```
    */
   endFleetContract(value?: boolean): void;
+  endFleetContract(args: {
+    initiator: ScopeValue<"country">;
+    reason: "broken" | "cancelled";
+  }): void;
 
   /**
    * Iterate through each fleet this fleet is in combat with - executes the enclosed effects on all of them for which the limit triggers return true
@@ -10503,6 +10664,7 @@ export interface EffectsInFleetShip {
    * ```
    */
   autoFollowFleet(value: ScopeValue<"fleet">): void;
+  autoFollowFleet(args: { target: ScopeValue<"fleet">; attackFleet?: boolean }): void;
 
   /**
    * Makes a fleet or ship auto-move to target planet
@@ -10526,6 +10688,7 @@ export interface EffectsInFleetShip {
    * ```
    */
   damageShip(value: ScriptValue): void;
+  damageShip(args: { amount: ScriptValue; attacker: ScopeValue<"country" | "fleet"> }): void;
 
   /**
    * Sets the current ship or fleet to be destroyed and spawn a debris project for the specified country.
@@ -10840,6 +11003,11 @@ export interface EffectsInLeader {
    * ```
    */
   addTrait(value: TraitLeaderTraitRef | string | "random_common" | "random_negative"): void;
+  addTrait(args: {
+    trait: TraitLeaderTraitRef | string | "random_common" | "random_negative";
+    consumeSelection?: boolean;
+    showMessage?: boolean;
+  }): void;
 
   /**
    * Changes the background ethic of a leader
@@ -11810,6 +11978,12 @@ export interface EffectsInPopGroup {
    * ```
    */
   addPopAmount(value: ScriptValue): void;
+  addPopAmount(args: {
+    amount: ScriptValue;
+    random?: ScriptValue;
+    /** default: 'GROWTH_CAT_OTHER' */
+    growthCategory?: string;
+  }): void;
 
   /**
    * Raises on_pop_displaced on_action
@@ -11898,6 +12072,12 @@ export interface EffectsInPopGroup {
    * ```
    */
   removePopAmount(value: ScriptValue): void;
+  removePopAmount(args: {
+    amount: ScriptValue;
+    random?: ScriptValue;
+    /** default: 'GROWTH_CAT_OTHER' */
+    growthCategory?: string;
+  }): void;
 
   /**
    * Removes a flag from the scoped pop_group
@@ -15390,6 +15570,7 @@ export interface UniversalEffects<
    * ```
    */
   deleteDimensionalFleet(value: ScopeValue): void;
+  deleteDimensionalFleet(args: { target: ScopeValue }): void;
 
   /**
    * Deletes the target fleet (no death graphics)
@@ -15403,6 +15584,11 @@ export interface UniversalEffects<
    * ```
    */
   deleteFleet(value: ScopeValue<"fleet">): void;
+  deleteFleet(args: {
+    target: ScopeValue<"fleet">;
+    killLeader?: boolean;
+    destroyTemplate?: boolean;
+  }): void;
 
   /**
    * Deletes up to naval_cap worth of ships in the target fleet (no death graphics)
@@ -15482,6 +15668,11 @@ export interface UniversalEffects<
    * ```
    */
   destroyFleet(value: ScopeValue<"fleet">): void;
+  destroyFleet(args: {
+    target: ScopeValue<"fleet">;
+    killLeader?: boolean;
+    destroyTemplate?: boolean;
+  }): void;
 
   /**
    * Destroys up to navel_cap worth of ships in the target fleet (with death graphics)
@@ -15815,6 +16006,7 @@ export interface UniversalEffects<
 
   /** Prints a message to game.log for debugging purposes. */
   log(value: string): void;
+  log(body: (scope: this) => void): void;
 
   /** Prints a custom error to the error log */
   logError(value: string): void;
@@ -16250,6 +16442,7 @@ export interface UniversalEffects<
    * ```
    */
   playSound(value: SoundEffectRef | string): void;
+  playSound(args: { sound: SoundEffectRef | string; location: ScopeValue }): void;
 
   /**
    * Iterate through every ambient object in the game - executes the enclosed effects on one of them for which the limit triggers return true. Picks the specific object randomly.

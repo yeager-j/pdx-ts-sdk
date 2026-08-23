@@ -327,7 +327,8 @@ export const SCRIPT_EFFECT_REFERENCES = [
     key: "add_building",
     kind: "effect",
     availability: { kind: "scopes", scopes: ["carrier", "colony", "planet", "ship"] },
-    signature: "addBuilding(value: BuildingRef | string): void;",
+    signature:
+      "addBuilding(value: BuildingRef | string): void;\n  addBuilding(args: { district?: DistrictRef | string; zone?: ZoneRef | string; building: BuildingRef | string }): void;",
     docs: [
       "Begins construction of a specific building on the scoped planet",
       "",
@@ -472,7 +473,8 @@ export const SCRIPT_EFFECT_REFERENCES = [
     key: "add_district",
     kind: "effect",
     availability: { kind: "scopes", scopes: ["carrier", "colony", "planet", "ship"] },
-    signature: "addDistrict(value: DistrictRef | string): void;",
+    signature:
+      'addDistrict(value: DistrictRef | string): void;\n  addDistrict(args: { districtType: DistrictRef | string; ignoreCap?: "yes"; typeConversion?: "yes" }): void;',
     docs: [
       "Begins construction of a specific district on the scoped planet",
       "",
@@ -867,7 +869,8 @@ export const SCRIPT_EFFECT_REFERENCES = [
     key: "add_pop_amount",
     kind: "effect",
     availability: { kind: "scopes", scopes: ["pop_group"] },
-    signature: "addPopAmount(value: ScriptValue): void;",
+    signature:
+      "addPopAmount(value: ScriptValue): void;\n  addPopAmount(args: { amount: ScriptValue; random?: ScriptValue; growthCategory?: string }): void;",
     docs: [
       "Adds the amount of pops to the scope pop group.",
       "",
@@ -926,7 +929,8 @@ export const SCRIPT_EFFECT_REFERENCES = [
     key: "add_relic",
     kind: "effect",
     availability: { kind: "scopes", scopes: ["country"] },
-    signature: "addRelic(value: RelicRef | string): void;",
+    signature:
+      "addRelic(value: RelicRef | string): void;\n  addRelic(args: { key: RelicRef | string; fullDescription?: boolean }): void;",
     docs: [
       "Adds the specified relic to the scoped country. add_relic = <relic_key>",
       "",
@@ -1314,7 +1318,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["leader"] },
     signature:
-      'addTrait(value: TraitLeaderTraitRef | string | "random_common" | "random_negative"): void;',
+      'addTrait(value: TraitLeaderTraitRef | string | "random_common" | "random_negative"): void;\n  addTrait(args: { trait: TraitLeaderTraitRef | string | "random_common" | "random_negative"; consumeSelection?: boolean; showMessage?: boolean }): void;',
     docs: [
       "Adds a specific trait to the scoped leader",
       "",
@@ -1503,7 +1507,8 @@ export const SCRIPT_EFFECT_REFERENCES = [
     key: "auto_follow_fleet",
     kind: "effect",
     availability: { kind: "scopes", scopes: ["fleet", "ship"] },
-    signature: 'autoFollowFleet(value: ScopeValue<"fleet">): void;',
+    signature:
+      'autoFollowFleet(value: ScopeValue<"fleet">): void;\n  autoFollowFleet(args: { target: ScopeValue<"fleet">; attackFleet?: boolean }): void;',
     docs: [
       "Makes a fleet or ship auto-move to target fleet and potentially attack it",
       "",
@@ -1728,7 +1733,8 @@ export const SCRIPT_EFFECT_REFERENCES = [
     key: "change_country_flag",
     kind: "effect",
     availability: { kind: "scopes", scopes: ["country"] },
-    signature: 'changeCountryFlag(value: "random"): void;',
+    signature:
+      'changeCountryFlag(value: "random"): void;\n  changeCountryFlag(args: { icon: { category: string; file: string }; background: { category: string; file: string }; colors: readonly [] | readonly [ColorDefineRef | string | "null"] | readonly [ColorDefineRef | string | "null", ColorDefineRef | string | "null"] | readonly [ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null"] | readonly [ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null"] | readonly [ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null"] | readonly [ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null"] | readonly [ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null"] | readonly [ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null"] }): void;',
     docs: [
       "Changes the scoped country's flag",
       "",
@@ -1758,7 +1764,8 @@ export const SCRIPT_EFFECT_REFERENCES = [
     key: "change_government",
     kind: "effect",
     availability: { kind: "scopes", scopes: ["country"] },
-    signature: 'changeGovernment(value: "random" | AuthorityRef | string): void;',
+    signature:
+      'changeGovernment(value: "random" | AuthorityRef | string): void;\n  changeGovernment(args: { authority?: "random" | AuthorityRef | string; civics?: "random" | { civic?: readonly (CivicOrOriginCivicRef | string | "random")[] }; cooldown?: boolean; removeInvalidCivics?: "yes" }): void;',
     docs: [
       "Change the scoped country's government authority and/or civics",
       "",
@@ -1809,7 +1816,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["carrier", "colony", "planet", "ship"] },
     signature:
-      'changePc(value: PlanetClassRef | string | PlanetClassRandomListRef | ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species">): void;',
+      'changePc(value: PlanetClassRef | string | PlanetClassRandomListRef | ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species">): void;\n  changePc(args: { class: PlanetClassRef | string | PlanetClassRandomListRef | ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species">; inheritEntity: boolean }): void;',
     docs: [
       "Changes the class of the scoped planet",
       "",
@@ -2825,7 +2832,8 @@ export const SCRIPT_EFFECT_REFERENCES = [
     key: "create_fleet_from_naval_cap",
     kind: "effect",
     availability: { kind: "scopes", scopes: ["country"] },
-    signature: "createFleetFromNavalCap(value: ScriptValue): void;",
+    signature:
+      'createFleetFromNavalCap(value: ScriptValue): void;\n  createFleetFromNavalCap(args: { fraction: ScriptValue; shipOwnerType: "country" | "federation" | "galactic_community"; canOverflow?: readonly boolean[] }): void;',
     docs: [
       "Creates a new fleet from empire designs up to specified fraction of naval cap",
       "",
@@ -3248,7 +3256,8 @@ export const SCRIPT_EFFECT_REFERENCES = [
     key: "damage_ship",
     kind: "effect",
     availability: { kind: "scopes", scopes: ["fleet", "ship"] },
-    signature: "damageShip(value: ScriptValue): void;",
+    signature:
+      'damageShip(value: ScriptValue): void;\n  damageShip(args: { amount: ScriptValue; attacker: ScopeValue<"country"|"fleet"> }): void;',
     docs: [
       "Damages ship (or all ships in scoped fleet) by a specific amount Can also specify attacker (ship or country) for on-action attribution",
       "",
@@ -3333,7 +3342,8 @@ export const SCRIPT_EFFECT_REFERENCES = [
     key: "delete_dimensional_fleet",
     kind: "effect",
     availability: { kind: "universal" },
-    signature: "deleteDimensionalFleet(value: ScopeValue): void;",
+    signature:
+      "deleteDimensionalFleet(value: ScopeValue): void;\n  deleteDimensionalFleet(args: { target: ScopeValue }): void;",
     docs: [
       "Deletes the target dimensional fleet",
       "",
@@ -3350,7 +3360,8 @@ export const SCRIPT_EFFECT_REFERENCES = [
     key: "delete_fleet",
     kind: "effect",
     availability: { kind: "universal" },
-    signature: 'deleteFleet(value: ScopeValue<"fleet">): void;',
+    signature:
+      'deleteFleet(value: ScopeValue<"fleet">): void;\n  deleteFleet(args: { target: ScopeValue<"fleet">; killLeader?: boolean; destroyTemplate?: boolean }): void;',
     docs: [
       "Deletes the target fleet (no death graphics)",
       "",
@@ -3521,7 +3532,8 @@ export const SCRIPT_EFFECT_REFERENCES = [
     key: "destroy_fleet",
     kind: "effect",
     availability: { kind: "universal" },
-    signature: 'destroyFleet(value: ScopeValue<"fleet">): void;',
+    signature:
+      'destroyFleet(value: ScopeValue<"fleet">): void;\n  destroyFleet(args: { target: ScopeValue<"fleet">; killLeader?: boolean; destroyTemplate?: boolean }): void;',
     docs: [
       "Destroys the target fleet (with death graphics)",
       "",
@@ -3862,7 +3874,8 @@ export const SCRIPT_EFFECT_REFERENCES = [
     key: "end_fleet_contract",
     kind: "effect",
     availability: { kind: "scopes", scopes: ["fleet"] },
-    signature: "endFleetContract(value?: boolean): void;",
+    signature:
+      'endFleetContract(value?: boolean): void;\n  endFleetContract(args: { initiator: ScopeValue<"country">; reason: "broken" | "cancelled" }): void;',
     docs: ["Breaks fleet lease contract", "", "```", "end_fleet_contract = yes", "```"],
   },
   {
@@ -6143,7 +6156,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["country"] },
     signature:
-      'guaranteeCountry(value: ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system">): void;',
+      'guaranteeCountry(value: ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system">): void;\n  guaranteeCountry(args: { target: ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system"> }): void;',
     docs: [
       "Makes a country guarantee another country",
       "",
@@ -6414,7 +6427,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     key: "log",
     kind: "effect",
     availability: { kind: "universal" },
-    signature: "log(value: string): void;",
+    signature: "log(value: string): void;\n  log(body: (scope: this) => void): void;",
     docs: ["Prints a message to game.log for debugging purposes."],
   },
   {
@@ -8963,7 +8976,8 @@ export const SCRIPT_EFFECT_REFERENCES = [
     key: "play_sound",
     kind: "effect",
     availability: { kind: "universal" },
-    signature: "playSound(value: SoundEffectRef | string): void;",
+    signature:
+      "playSound(value: SoundEffectRef | string): void;\n  playSound(args: { sound: SoundEffectRef | string; location: ScopeValue }): void;",
     docs: ["Play the defined sound effect", "", "```", "play_sound = myfirstsoundeffect", "```"],
   },
   {
@@ -11534,7 +11548,8 @@ export const SCRIPT_EFFECT_REFERENCES = [
     key: "refuse_covenant",
     kind: "effect",
     availability: { kind: "scopes", scopes: ["country"] },
-    signature: "refuseCovenant(value: PatronTypeRef | string): void;",
+    signature:
+      "refuseCovenant(value: PatronTypeRef | string): void;\n  refuseCovenant(args: { patron: PatronTypeRef | string; resetAttunement?: boolean }): void;",
     docs: [
       "Refuses covenant proposition with Shroud Patron.",
       "",
@@ -12298,7 +12313,8 @@ export const SCRIPT_EFFECT_REFERENCES = [
     key: "remove_pop_amount",
     kind: "effect",
     availability: { kind: "scopes", scopes: ["pop_group"] },
-    signature: "removePopAmount(value: ScriptValue): void;",
+    signature:
+      "removePopAmount(value: ScriptValue): void;\n  removePopAmount(args: { amount: ScriptValue; random?: ScriptValue; growthCategory?: string }): void;",
     docs: [
       "Removes the amount of pops from the scope pop group.",
       "",
@@ -14740,7 +14756,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["ambient_object", "fleet"] },
     signature:
-      'setLocation(value: ScopeValue<"ambient_object"|"archaeological_site"|"astral_rift"|"bypass"|"carrier"|"colony"|"debris"|"fleet"|"megastructure"|"planet"|"ship"|"situation"|"starbase"|"system">): void;',
+      'setLocation(value: ScopeValue<"ambient_object"|"archaeological_site"|"astral_rift"|"bypass"|"carrier"|"colony"|"debris"|"fleet"|"megastructure"|"planet"|"ship"|"situation"|"starbase"|"system">): void;\n  setLocation(args: { target: ScopeValue<"ambient_object"|"archaeological_site"|"astral_rift"|"bypass"|"carrier"|"colony"|"debris"|"fleet"|"megastructure"|"planet"|"ship"|"situation"|"starbase"|"system">; distance?: number | { min: number; max: number }; angle?: number | "random"; direction?: "in_system" | "out_system" }): void;',
     docs: [
       "Sets the fleet/ambient object's location, can be fine-tuned",
       "",
@@ -14936,7 +14952,8 @@ export const SCRIPT_EFFECT_REFERENCES = [
         "war",
       ],
     },
-    signature: 'setName(value: "random" | ScopeValue | string): void;',
+    signature:
+      'setName(value: "random" | ScopeValue | string): void;\n  setName(args: { key: string; variableString?: readonly string[] }): void;',
     docs: ["Sets the name of the scoped object", "", "```", "set_name = <string>/<target>", "```"],
   },
   {
@@ -16883,7 +16900,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["carrier", "colony", "planet", "ship"] },
     signature:
-      "startTerraformProcess(value: PlanetClassRef | string | PlanetClassRandomListRef): void;",
+      "startTerraformProcess(value: PlanetClassRef | string | PlanetClassRandomListRef): void;\n  startTerraformProcess(args: { class: PlanetClassRef | string | PlanetClassRandomListRef; inheritEntity: boolean }): void;",
     docs: [
       "Starts terraforming process of scoped planet",
       "",
@@ -16899,7 +16916,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["carrier", "colony", "planet", "ship"] },
     signature:
-      "startTerraformProgress(value: PlanetClassRef | string | PlanetClassRandomListRef): void;",
+      "startTerraformProgress(value: PlanetClassRef | string | PlanetClassRandomListRef): void;\n  startTerraformProgress(args: { class: PlanetClassRef | string | PlanetClassRandomListRef; inheritEntity?: boolean; requiredProgress?: ScriptValue }): void;",
     docs: [
       "Starts terraforming progress of scoped planet",
       "",

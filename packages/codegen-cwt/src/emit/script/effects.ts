@@ -18,9 +18,9 @@
  * emitter cannot type is skipped with a named reason and reported.
  */
 
-import type { Cardinality, RuleType } from "../../cwt/model.ts";
+import type { Cardinality, RuleField, RuleType } from "../../cwt/model.ts";
 import type { DocEntry } from "../../logs/trigger-docs.ts";
-import type { LoweredRule } from "../../lower/lowered-rule.ts";
+import type { LoweredRule, LoweredRuleBlock } from "../../lower/lowered-rule.ts";
 import {
   aliasListMembers,
   canonicalScopeSet,
@@ -133,8 +133,6 @@ export interface EffectEmission {
    * exactly, so it reads them here rather than restating the rule.
    */
   readonly universalParameters: string;
-  /** Rules overloaded between a block and a scalar, emitted scalar-only. */
-  readonly scalarOnly: readonly string[];
   /** `EFFECT_FIELD_TYPE_OVERRIDES` rows applied, with the reason each states. */
   readonly fieldTypeOverrides: readonly string[];
   /** `EFFECT_FIELD_ADDITIONS` rows applied, with their evidence and rationale. */
@@ -153,7 +151,7 @@ export interface EffectEmission {
  * Serializable argument shape shared by an effect's type and recorder metadata.
  * Each variant determines the generated method parameters and the runtime encoding contract.
  */
-export type EffectShape =
+type ScalarEffectShape =
   | {
       /** Identifies an optional boolean-toggle argument. */
       readonly kind: "bool";
@@ -163,7 +161,9 @@ export type EffectShape =
       readonly kind: "value";
       /** Scalar type and conversion used by the signature and recorder. */
       readonly value: TsValue;
-    }
+    };
+
+type BlockEffectShape =
   | {
       /** Identifies an effect-splice closure, optionally preceded by named arguments. */
       readonly kind: "wrapper";
@@ -191,6 +191,18 @@ export type EffectShape =
       readonly kind: "map";
       /** Keys and values represented by the generated map argument. */
       readonly map: MapValue;
+    };
+
+export type EffectShape =
+  | ScalarEffectShape
+  | BlockEffectShape
+  | {
+      /** Identifies one effect with independent scalar and block call forms. */
+      readonly kind: "scalarOrBlock";
+      /** The scalar call form, retained without widening. */
+      readonly scalar: ScalarEffectShape;
+      /** The block call form. */
+      readonly block: BlockEffectShape;
     };
 
 type FieldEffectShape = Extract<EffectShape, { readonly kind: "fields" | "wrapper" }>;
@@ -334,13 +346,15 @@ function applyFieldOverlays(emitter: Emitter, key: string, shape: EffectShape): 
   if (additions.length === 0 && cardinalityOverrides.length === 0) {
     return shape;
   }
-  const fieldShape = fieldShapeForOverlays(key, shape);
+  const target = shape.kind === "scalarOrBlock" ? shape.block : shape;
+  const fieldShape = fieldShapeForOverlays(key, target);
   const fields = applyCardinalityOverrides(key, fieldShape.fields ?? [], cardinalityOverrides);
   const added = addedFields(emitter, key, fields, additions);
-  return {
+  const resolved = {
     ...fieldShape,
     fields: insertFieldsBeforeClauses(fields, added),
   };
+  return shape.kind === "scalarOrBlock" ? { ...shape, block: resolved } : resolved;
 }
 
 /** One generated effect method after rule lowering and overlay application. */
@@ -387,7 +401,7 @@ function isBooleanToggle(type: RuleType): boolean {
   return type.kind === "bool" || (type.kind === "literal" && type.text === "yes");
 }
 
-function scalarShapeOf(emitter: Emitter, rule: LoweredRule): EffectShape | SkipReason {
+function scalarShapeOf(emitter: Emitter, rule: LoweredRule): ScalarEffectShape | SkipReason {
   const scalars = rule.scalars;
   if (
     scalars.some((scalar) => scalar.type.kind === "literal" && scalar.type.text.startsWith("$"))
@@ -427,8 +441,7 @@ function holdsKeyedClauses(value: ArgValue): boolean {
   }
 }
 
-function blockShapeOf(emitter: Emitter, rule: LoweredRule): EffectShape | SkipReason {
-  const block = rule.blocks[0]!;
+function blockShapeOf(emitter: Emitter, block: LoweredRuleBlock): BlockEffectShape | SkipReason {
   const body = block.type;
   if (body.bare.length > 0) {
     return skipReason("bare-value-block", "block with bare values");
@@ -497,35 +510,90 @@ function blockShapeOf(emitter: Emitter, rule: LoweredRule): EffectShape | SkipRe
   return { kind: "fields", fields: merged.fields };
 }
 
-function shapeOf(
+function equivalentBlockShapeOf(
   emitter: Emitter,
-  rule: LoweredRule
-): EffectShape | SkipReason | { readonly scalarOnly: EffectShape } {
+  blocks: readonly LoweredRuleBlock[]
+): BlockEffectShape | SkipReason {
+  const [first, ...rest] = blocks;
+  if (first === undefined) {
+    throw new Error("equivalentBlockShapeOf requires at least one block declaration");
+  }
+  const contract = blockContract(first);
+  if (rest.some((block) => JSON.stringify(blockContract(block)) !== JSON.stringify(contract))) {
+    return skipReason("multiple-block-forms", "multiple block declarations");
+  }
+  return blockShapeOf(emitter, {
+    ...first,
+    type: {
+      ...first.type,
+      fields: first.type.fields.flatMap((_, index) =>
+        blocks.map((block) => block.type.fields[index]!)
+      ),
+    },
+  });
+}
+
+/** The non-scalar structure two block declarations must share before their leaf types may union. */
+function blockContract(block: LoweredRuleBlock): unknown {
+  return {
+    inheritedScope: block.inheritedScope,
+    fields: block.type.fields.map(fieldContract),
+    bare: block.type.bare.map((value) => ({
+      cardinality: value.cardinality,
+      scope: value.scope,
+      type: valueContract(value.type),
+    })),
+  };
+}
+
+function fieldContract(field: RuleField): unknown {
+  return {
+    key: field.key,
+    cardinality: field.cardinality,
+    scope: field.scope,
+    comparison: field.comparison,
+    type: valueContract(field.type),
+  };
+}
+
+function valueContract(type: RuleType): unknown {
+  return type.kind === "block"
+    ? {
+        kind: type.kind,
+        fields: type.fields.map(fieldContract),
+        bare: type.bare.map((value) => ({
+          cardinality: value.cardinality,
+          scope: value.scope,
+          type: valueContract(value.type),
+        })),
+      }
+    : { kind: type.kind };
+}
+
+function shapeOf(emitter: Emitter, rule: LoweredRule): EffectShape | SkipReason {
   if (rule.comparison) {
     return skipReason("comparison-effect", "declared with a comparison operator");
   }
   if (rule.blocks.length === 0) {
     return scalarShapeOf(emitter, rule);
   }
+  const block = equivalentBlockShapeOf(emitter, rule.blocks);
+  if ("detail" in block) {
+    return block;
+  }
   if (rule.scalars.length > 0) {
-    // Overloaded between a block and a scalar (`log` is both an effect clause
-    // and a message). Emit the scalar form so the common case survives; the
-    // dropped block form is counted, not silent.
-    const fallback = scalarShapeOf(emitter, {
+    const scalar = scalarShapeOf(emitter, {
       ...rule,
       declarations: rule.scalars,
       comparison: false,
       blocks: [],
     });
-    if ("kind" in fallback) {
-      return { scalarOnly: fallback };
+    if ("detail" in scalar) {
+      return scalar;
     }
-    return skipReason("scalar-block-overload", "overloaded between a block and a scalar");
+    return { kind: "scalarOrBlock", scalar, block };
   }
-  if (rule.blocks.length > 1) {
-    return skipReason("multiple-block-forms", "multiple block declarations");
-  }
-  return blockShapeOf(emitter, rule);
+  return block;
 }
 
 /** The overlay row that permits one category to be authored as an ordered list. */
@@ -655,7 +723,7 @@ function takesReceivingScope(effect: EmittedEffect): boolean {
   if (EFFECT_EXTENSION_SEAMS.get(effect.key)?.receivingScope === true) {
     return true;
   }
-  const { shape } = effect;
+  const shape = effect.shape.kind === "scalarOrBlock" ? effect.shape.block : effect.shape;
   if (shape.kind === "aliasList") {
     return shape.scope === null;
   }
@@ -740,6 +808,11 @@ function methodSignatureText(emitter: Emitter, effect: EmittedEffect, outerScope
     case "aliasList": {
       const list = aliasListType(shape.category, shape.scope, outerScope);
       return `  ${method}(${scriptListOf(shape.category).memberName}: ${list}): void;\n`;
+    }
+    case "scalarOrBlock": {
+      const scalar = methodSignatureText(emitter, { ...effect, shape: shape.scalar }, outerScope);
+      const block = methodSignatureText(emitter, { ...effect, shape: shape.block }, outerScope);
+      return scalar + block;
     }
   }
 }
@@ -863,7 +936,6 @@ function outerScopeText(scopes: readonly string[] | "universal"): string {
 interface ClusteredEffects {
   readonly clusters: Map<string, EffectCluster>;
   readonly skipped: SkippedRule[];
-  readonly scalarOnly: string[];
   readonly byShape: Map<string, number>;
   readonly appliedFieldAdditions: ReadonlySet<string>;
   readonly appliedFieldCardinalityOverrides: ReadonlySet<string>;
@@ -877,7 +949,6 @@ interface GeneratedEffectRule {
 
 interface LoweredEffect {
   readonly effect: EmittedEffect;
-  readonly scalarOnly: boolean;
   readonly appliesFieldAdditions: boolean;
   readonly appliesFieldCardinalityOverrides: boolean;
 }
@@ -954,15 +1025,13 @@ function lowerEffect(
   if (isolatesNameAliasUsage) {
     emitter.absorb(ruleEmitter);
   }
-  const base = "scalarOnly" in shape ? shape.scalarOnly : shape;
   return {
     effect: {
       method: safeIdentifier(camelCase(key)),
       key,
-      shape: applyFieldOverlays(emitter, key, base),
+      shape: applyFieldOverlays(emitter, key, shape),
       docs: tsDoc(rule.declarations, docs.get(key)),
     },
-    scalarOnly: "scalarOnly" in shape,
     appliesFieldAdditions: EFFECT_FIELD_ADDITIONS.has(key),
     appliesFieldCardinalityOverrides: EFFECT_FIELD_CARDINALITY_OVERRIDES.has(key),
   };
@@ -987,7 +1056,6 @@ function clusterEffects(
   policy: EffectPolicy
 ): ClusteredEffects {
   const skipped: SkippedRule[] = [];
-  const scalarOnly: string[] = [];
   const appliedFieldAdditions = new Set<string>();
   const appliedFieldCardinalityOverrides = new Set<string>();
   const byShape = new Map<string, number>();
@@ -1011,9 +1079,6 @@ function clusterEffects(
     if (lowered.appliesFieldCardinalityOverrides) {
       appliedFieldCardinalityOverrides.add(key);
     }
-    if (lowered.scalarOnly) {
-      scalarOnly.push(key);
-    }
     addEffectToCluster(clusters, candidate.scopes, lowered.effect);
     byShape.set(lowered.effect.shape.kind, (byShape.get(lowered.effect.shape.kind) ?? 0) + 1);
   }
@@ -1021,7 +1086,6 @@ function clusterEffects(
   return {
     clusters,
     skipped,
-    scalarOnly,
     byShape,
     appliedFieldAdditions,
     appliedFieldCardinalityOverrides,
@@ -1038,9 +1102,7 @@ function assertFieldOverlayRowsMatched(clustered: ClusteredEffects): void {
   const fieldKeys = new Set(
     [...clustered.clusters.values()].flatMap((cluster) =>
       cluster.effects.flatMap((effect) =>
-        effect.shape.kind === "fields" || effect.shape.kind === "wrapper"
-          ? (effect.shape.fields ?? []).map((field) => `${effect.key}.${field.name}`)
-          : []
+        effectFields(effect.shape).map((field) => `${effect.key}.${field.name}`)
       )
     )
   );
@@ -1055,7 +1117,7 @@ function assertFieldOverlayRowsMatched(clustered: ClusteredEffects): void {
   const effects = [...clustered.clusters.values()].flatMap((cluster) => cluster.effects);
   for (const key of EFFECT_VALUE_TYPE_OVERRIDES.keys()) {
     const effect = effects.find((candidate) => candidate.key === key);
-    if (effect?.shape.kind !== "value") {
+    if (effect === undefined || scalarShapeOfEffect(effect.shape)?.kind !== "value") {
       throw new Error(
         `EFFECT_VALUE_TYPE_OVERRIDES names "${key}", which is not an emitted scalar effect — ` +
           "retire the overlay row or fix its key"
@@ -1078,6 +1140,20 @@ function assertFieldOverlayRowsMatched(clustered: ClusteredEffects): void {
       );
     }
   }
+}
+
+/** The named fields an effect shape exposes, including a scalar/block block arm. */
+function effectFields(shape: EffectShape): readonly ArgField[] {
+  const target = shape.kind === "scalarOrBlock" ? shape.block : shape;
+  return target.kind === "fields" || target.kind === "wrapper" ? (target.fields ?? []) : [];
+}
+
+/** The scalar arm of a shape, when the effect exposes one. */
+function scalarShapeOfEffect(shape: EffectShape): ScalarEffectShape | undefined {
+  if (shape.kind === "bool" || shape.kind === "value") {
+    return shape;
+  }
+  return shape.kind === "scalarOrBlock" ? shape.scalar : undefined;
 }
 
 /**
@@ -1228,6 +1304,12 @@ function authoredAliasCategories(clusters: readonly EffectCluster[]): Set<string
       }
       if (shape.kind === "fields" || shape.kind === "wrapper") {
         (shape.fields ?? []).forEach((field) => walk(field.value));
+      } else if (shape.kind === "scalarOrBlock") {
+        if (shape.block.kind === "aliasList") {
+          categories.add(shape.block.category);
+        } else if (shape.block.kind === "fields" || shape.block.kind === "wrapper") {
+          (shape.block.fields ?? []).forEach((field) => walk(field.value));
+        }
       }
     }
   }
@@ -1494,7 +1576,6 @@ export function emitEffects(
     skipped: clustered.skipped,
     clusterCount: sortedClusters.length,
     universalParameters: universalCluster === undefined ? "" : clusterParameters(universalCluster),
-    scalarOnly: clustered.scalarOnly,
     fieldTypeOverrides: fieldTypeOverrideReport(),
     fieldAdditions: fieldAdditionReport(),
     fieldCardinalityOverrides: fieldCardinalityOverrideReport(),
