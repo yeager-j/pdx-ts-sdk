@@ -200,8 +200,9 @@ involved, because filename order never decides a localisation winner.
 _Avoid_: loc override, retitle
 
 **On-action hook**:
-A named engine callback a feature binds events to. Only scoped hooks are
-supported; a scopeless one throws rather than being guessed at.
+A named engine callback a feature binds ordinary or weighted event lists to.
+Scoped authored events must match its `THIS` and `FROM`; a scopeless hook uses
+checked scopeless event references.
 _Avoid_: binding, contribution, registration
 
 **Namespace**:

@@ -59,6 +59,13 @@ export interface EventItemBase {
   readonly warnings: readonly ModWarning[];
 }
 
+/** Whether an authored value is a complete event item rather than a bare event reference. */
+export function isAuthoredEvent(value: unknown): value is EventItemBase {
+  return (
+    typeof value === "object" && value !== null && "itemKind" in value && value.itemKind === "event"
+  );
+}
+
 /**
  * What an event definer returns, preserving its scope, FROM, and event-kind
  * contracts for fire sites and on-action bindings.

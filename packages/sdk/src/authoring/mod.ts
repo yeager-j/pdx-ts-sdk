@@ -19,7 +19,7 @@ import {
 } from "../content/situations.ts";
 import { assertEventNumber, buildEvent } from "../events/lower.ts";
 import { on } from "../events/on-actions.ts";
-import type { EventDef } from "../events/types.ts";
+import { isAuthoredEvent, type EventDef } from "../events/types.ts";
 import {
   contentCapabilityMethods,
   DEFAULT_ID_PROFILE,
@@ -398,9 +398,14 @@ function assertCapabilityItem(
       assertEventNamespace(item.namespace, prefix, "Event");
       return;
     case "on-action":
-      item.events.forEach((event) =>
+      item.events?.forEach((event) =>
         assertEventNamespace(event.namespace, prefix, "On-action event")
       );
+      item.randomEvents?.forEach(({ event }) => {
+        if (isAuthoredEvent(event)) {
+          assertEventNamespace(event.namespace, prefix, "On-action random event");
+        }
+      });
       return;
     case "patch":
       if (item.patched.prefix !== prefix) {

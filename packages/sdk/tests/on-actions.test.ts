@@ -4,7 +4,7 @@ import { createFeature } from "../src/authoring/feature.ts";
 import { buildMod } from "../src/compiler/compile.ts";
 import { on } from "../src/events/on-actions.ts";
 import { namespace } from "../src/generated/event-definers.ts";
-import { createMod, onActions, render } from "../src/index.ts";
+import { createMod, onActions, render, vanilla } from "../src/index.ts";
 
 const CONFIG = {
   name: "On-action runtime tests",
@@ -73,6 +73,79 @@ describe("on-action authoring", () => {
     `);
   });
 
+  it("renders weighted scopeless events and the literal no-op arm", () => {
+    const pulse = mod.feature(undefined, [
+      mod.on(onActions.onFiveYearPulse, {
+        randomEvents: [{ weight: 150 }, { weight: 50, event: vanilla.event.situation.$2000 }],
+      }),
+    ]);
+
+    expect(render(mod.compile([pulse])).get("common/on_actions/on_action_test_on_actions.txt"))
+      .toMatchInlineSnapshot(`
+      "on_five_year_pulse = {
+      \trandom_events = {
+      \t\t150 = 0
+      \t\t50 = situation.2000
+      \t}
+      }
+      "
+    `);
+  });
+
+  it("emits ordinary events before weighted events and preserves duplicate weighted rows", () => {
+    const events = mod.namespace();
+    const first = events.country(8, { isTriggeredOnly: true });
+    const second = events.country(9, { isTriggeredOnly: true });
+    const feature = mod.feature("mixed", [
+      first,
+      second,
+      mod.on(onActions.onGameStartCountry, {
+        events: [first, second],
+        randomEvents: [
+          { weight: 25, event: second },
+          { weight: 25, event: second },
+          { weight: 50 },
+        ],
+      }),
+    ]);
+
+    expect(render(mod.compile([feature])).get("common/on_actions/on_action_test_on_actions.txt"))
+      .toMatchInlineSnapshot(`
+        "on_game_start_country = {
+        \tevents = { on_action_test.8 on_action_test.9 }
+        \trandom_events = {
+        \t\t25 = on_action_test.9
+        \t\t25 = on_action_test.9
+        \t\t50 = 0
+        \t}
+        }
+        "
+      `);
+  });
+
+  it("orders separate weighted contributions by content, not Feature order", () => {
+    const build = (reversed: boolean) => {
+      const first = mod.feature(undefined, [
+        mod.on(onActions.onFiveYearPulse, {
+          randomEvents: [{ weight: 20, event: vanilla.event.origin.$1334 }, { weight: 20 }],
+        }),
+      ]);
+      const second = mod.feature(undefined, [
+        mod.on(onActions.onFiveYearPulse, {
+          randomEvents: [{ weight: 10, event: "third_party.1" }],
+        }),
+      ]);
+      return render(mod.compile(reversed ? [second, first] : [first, second])).get(
+        "common/on_actions/on_action_test_on_actions.txt"
+      );
+    };
+
+    expect(build(false)).toBe(build(true));
+    expect(build(false)).toContain(
+      "random_events = {\n\t\t10 = third_party.1\n\t\t20 = origin.1334\n\t\t20 = 0\n\t}"
+    );
+  });
+
   it("rejects duplicate registrations of one event on one hook", () => {
     const events = mod.namespace();
     const event = events.country(4, { isTriggeredOnly: true });
@@ -92,5 +165,101 @@ describe("on-action authoring", () => {
     const hooks = createFeature(undefined, [on(onActions.onGameStartCountry, [event])]);
 
     expect(() => buildMod(CONFIG, [hooks])).toThrow(/is not among the features passed to buildMod/);
+  });
+
+  it("rejects authored weighted events from a feature outside the build", () => {
+    const events = mod.namespace();
+    const omitted = events.country(10, { isTriggeredOnly: true });
+    const hooks = mod.feature(undefined, [
+      mod.on(onActions.onGameStartCountry, {
+        randomEvents: [{ weight: 100, event: omitted }],
+      }),
+    ]);
+
+    expect(() => mod.compile([hooks])).toThrow(/is not among the features passed to buildMod/);
+  });
+
+  it("resolves weighted event handles against selected definitions", () => {
+    const events = mod.namespace("handles");
+    const selectedHandle = events.countryHandle(11);
+    const selectedEvent = selectedHandle.define({ isTriggeredOnly: true });
+    const selected = mod.feature("selected_handle", [
+      selectedEvent,
+      mod.on(onActions.onGameStartCountry, {
+        randomEvents: [{ weight: 100, event: selectedHandle }],
+      }),
+    ]);
+    expect(
+      render(mod.compile([selected])).get("common/on_actions/on_action_test_on_actions.txt")
+    ).toContain("100 = on_action_test_handles.11");
+
+    const omittedHandle = events.countryHandle(12);
+    const omitted = mod.feature(undefined, [
+      mod.on(onActions.onGameStartCountry, {
+        randomEvents: [{ weight: 100, event: omittedHandle }],
+      }),
+    ]);
+    expect(() => mod.compile([omitted])).toThrow(/is not among the features passed to buildMod/);
+
+    const wrongScopeHandle = events.planetHandle(13);
+    const wrongScopeEvent = wrongScopeHandle.define({ isTriggeredOnly: true });
+    const wrongScope = mod.feature("wrong_scope_handle", [
+      wrongScopeEvent,
+      mod.on(onActions.onGameStartCountry, {
+        randomEvents: [{ weight: 100, event: wrongScopeHandle as never }],
+      }),
+    ]);
+    expect(() => mod.compile([wrongScope])).toThrow(
+      /supplies country scope with no FROM, but event "on_action_test_handles.13" declares planet scope/
+    );
+
+    const otherMod = createMod({
+      name: "Other capability",
+      prefix: "other_on_action",
+      supportedVersion: "4.4.*",
+    });
+    const foreignHandle = otherMod.namespace().countryHandle(1);
+    const foreign = mod.feature(undefined, [
+      mod.on(onActions.onGameStartCountry, {
+        randomEvents: [{ weight: 100, event: foreignHandle }],
+      }),
+    ]);
+    expect(() => mod.compile([foreign])).toThrow(/is not among the features passed to buildMod/);
+  });
+
+  it("rejects raw weighted ids that claim this mod's namespace but are omitted", () => {
+    const hooks = mod.feature(undefined, [
+      mod.on(onActions.onGameStartCountry, {
+        randomEvents: [{ weight: 100, event: "on_action_test.404" }],
+      }),
+    ]);
+
+    expect(() => mod.compile([hooks])).toThrow(/is not among the features passed to buildMod/);
+  });
+
+  it("validates the selected definition behind a raw own event id", () => {
+    const events = mod.namespace();
+    const planetEvent = events.planet(13, { isTriggeredOnly: true });
+    const feature = mod.feature("raw_own_event", [
+      planetEvent,
+      mod.on(onActions.onGameStartCountry, {
+        randomEvents: [{ weight: 100, event: "on_action_test.13" }],
+      }),
+    ]);
+
+    expect(() => mod.compile([feature])).toThrow(
+      /supplies country scope with no FROM, but event "on_action_test.13" declares planet scope/
+    );
+  });
+
+  it("rejects empty object-form lists at runtime", () => {
+    expect(() =>
+      mod.on(onActions.onGameStartCountry, {
+        randomEvents: [],
+      } as never)
+    ).toThrow(/randomEvents must contain at least one row/);
+    expect(() => mod.on(onActions.onGameStartCountry, {} as never)).toThrow(
+      /must define events, randomEvents, or both/
+    );
   });
 });

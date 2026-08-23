@@ -12,6 +12,7 @@ import {
 } from "@pdx-ts/pdxscript";
 
 import type { AssetFileItem } from "../authoring/assets.ts";
+import { weightedEventBlock } from "../events/weighted-events.ts";
 import type { ScopeName } from "../generated/scopes.ts";
 import {
   underField,
@@ -498,15 +499,7 @@ export function fieldEntries(
       case "weightedEvents": {
         const arms = value as readonly { weight: number; event?: unknown }[];
         entries.push(
-          block(
-            field.key,
-            arms.map((arm) =>
-              kv(
-                String(arm.weight),
-                arm.event === undefined ? 0 : contentScalar(arm.event, field, false, ctx)
-              )
-            )
-          )
+          weightedEventBlock(field.key, arms, (event) => contentScalar(event, field, false, ctx))
         );
         break;
       }

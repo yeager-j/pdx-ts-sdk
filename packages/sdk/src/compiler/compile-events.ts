@@ -1,6 +1,6 @@
 import { kv, type PdxEntry } from "@pdx-ts/pdxscript";
 
-import { OnActionAuthoring, type OnActionHookItem } from "../events/on-actions.ts";
+import { OnActionAuthoring, onActionContributionKey } from "../events/on-actions.ts";
 import type { EventItemBase } from "../events/types.ts";
 import { compareUtf8, type LogicalPath } from "../ordering.ts";
 import { emissionPath } from "./compile-content.ts";
@@ -158,8 +158,10 @@ function compileOnActions(
   session: BuildSession,
   placedEvents: readonly { item: EventItemBase; stem: string | undefined }[]
 ): { onActions: PdxEntry[]; onActionStems: ReadonlySet<string> } {
-  const includedEvents = new Set(placedEvents.map(({ item }) => item));
-  const onActionAuthoring = new OnActionAuthoring((event) => includedEvents.has(event));
+  const onActionAuthoring = new OnActionAuthoring(
+    session.config.prefix,
+    placedEvents.map(({ item }) => item)
+  );
   const onActionStems = new Set<string>();
   const bindings = session.flat.flatMap(({ item, stem }) => {
     if (item.itemKind !== "on-action") {
@@ -170,14 +172,17 @@ function compileOnActions(
     }
     return [item];
   });
-  const bindingOrder = (item: OnActionHookItem): string =>
-    item.events.map((event) => event.id).join("\u0000");
   const orderedBindings = [...bindings].sort(
-    (a, b) => compareUtf8(a.hook.name, b.hook.name) || compareUtf8(bindingOrder(a), bindingOrder(b))
+    (a, b) =>
+      compareUtf8(a.hook.name, b.hook.name) ||
+      compareUtf8(onActionContributionKey(a), onActionContributionKey(b))
   );
   for (const item of orderedBindings) {
-    for (const event of item.events) {
+    for (const event of item.events ?? []) {
       onActionAuthoring.register(item.hook, event);
+    }
+    for (const row of item.randomEvents ?? []) {
+      onActionAuthoring.registerRandom(item.hook, row);
     }
   }
   return { onActions: onActionAuthoring.entries(), onActionStems };
