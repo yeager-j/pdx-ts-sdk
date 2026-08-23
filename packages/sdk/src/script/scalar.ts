@@ -68,6 +68,13 @@ export type ScalarArg = string | number | boolean | TypedRef<string> | ScopeValu
 
 export type ScalarObjectKind = "scope-ref" | "typed-ref";
 
+/** The generated block contract needed to distinguish an effect's call forms. */
+export type EffectBlockDiscriminator =
+  | { readonly kind: "fields" }
+  | { readonly kind: "map" }
+  | { readonly kind: "alias-list" }
+  | { readonly kind: "wrapper"; readonly fields: readonly unknown[] | null };
+
 function isDeclaredScalarObject(
   value: unknown,
   scalarObjectKinds: readonly ScalarObjectKind[]
@@ -108,13 +115,15 @@ export function isStructuredValue(
 export function isEffectBlockValue(
   value: unknown,
   scalarObjectKinds: readonly ScalarObjectKind[],
-  blockKind: "fields" | "map" | "wrapper" | "alias-list"
+  block: EffectBlockDiscriminator
 ): boolean {
-  if (blockKind === "alias-list") {
+  if (block.kind === "alias-list") {
     return Array.isArray(value);
   }
-  if (blockKind === "wrapper") {
-    return typeof value === "function" && !isDeclaredScalarObject(value, scalarObjectKinds);
+  if (block.kind === "wrapper") {
+    return block.fields === null
+      ? typeof value === "function" && !isDeclaredScalarObject(value, scalarObjectKinds)
+      : isStructuredValue(value, scalarObjectKinds);
   }
   return isStructuredValue(value, scalarObjectKinds);
 }

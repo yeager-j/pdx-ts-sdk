@@ -228,7 +228,6 @@ describe("LoweredRule", () => {
     );
     expect(emitted.skipped).not.toContainEqual(expect.objectContaining({ name: "create_colony" }));
     expect(emitted.skipped).not.toContainEqual(expect.objectContaining({ name: "start_colony" }));
-    expect(emitted.scalarOnly).toEqual([]);
   });
 
   it("emits create_pop_group from its mixed ethos rule and keeps it out of the skip report", () => {
@@ -269,7 +268,6 @@ describe("LoweredRule", () => {
         "  syntheticTerraform(args: { class: PlanetClassRef | string | PlanetClassRandomListRef; inheritEntity: boolean }): void;"
     );
     expect(emitted.meta).toContain('kind: "scalar-or-block"');
-    expect(emitted.scalarOnly).toEqual([]);
   });
 
   it("refuses multiple block declarations whose layouts differ", () => {

@@ -41,10 +41,17 @@ describe("the effect recorder over generated meta", () => {
   it("dispatches top-level block arms by their declared scalar object kinds", () => {
     const typedRef = Object.assign(() => undefined, { id: "typed_ref" });
 
-    expect(isEffectBlockValue({ required: true }, ["typed-ref"], "fields")).toBe(true);
-    expect(isEffectBlockValue(scopeValue("country"), ["scope-ref"], "fields")).toBe(false);
-    expect(isEffectBlockValue(typedRef, ["typed-ref"], "wrapper")).toBe(false);
-    expect(isEffectBlockValue(() => undefined, ["typed-ref"], "wrapper")).toBe(true);
+    expect(isEffectBlockValue({ required: true }, ["typed-ref"], { kind: "fields" })).toBe(true);
+    expect(isEffectBlockValue(scopeValue("country"), ["scope-ref"], { kind: "fields" })).toBe(
+      false
+    );
+    expect(isEffectBlockValue({ required: true }, [], { kind: "wrapper", fields: [] })).toBe(true);
+    expect(isEffectBlockValue(typedRef, ["typed-ref"], { kind: "wrapper", fields: null })).toBe(
+      false
+    );
+    expect(
+      isEffectBlockValue(() => undefined, ["typed-ref"], { kind: "wrapper", fields: null })
+    ).toBe(true);
   });
 
   it("serializes every scalar-or-block effect in each declared form", () => {

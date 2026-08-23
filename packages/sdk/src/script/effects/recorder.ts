@@ -457,7 +457,7 @@ function scalarOrBlockEffect(
 ): void {
   const [value, body] = args;
   const objectKinds = shape.scalar.kind === "value" ? (shape.scalar.objectKinds ?? []) : [];
-  if (!isEffectBlockValue(value, objectKinds, shape.block.kind)) {
+  if (!isEffectBlockValue(value, objectKinds, shape.block)) {
     sink.push(scalarEffectEntry(key, shape.scalar, value, refs));
     return;
   }

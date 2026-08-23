@@ -133,8 +133,6 @@ export interface EffectEmission {
    * exactly, so it reads them here rather than restating the rule.
    */
   readonly universalParameters: string;
-  /** Rules overloaded between a block and a scalar, emitted scalar-only. */
-  readonly scalarOnly: readonly string[];
   /** `EFFECT_FIELD_TYPE_OVERRIDES` rows applied, with the reason each states. */
   readonly fieldTypeOverrides: readonly string[];
   /** `EFFECT_FIELD_ADDITIONS` rows applied, with their evidence and rationale. */
@@ -938,7 +936,6 @@ function outerScopeText(scopes: readonly string[] | "universal"): string {
 interface ClusteredEffects {
   readonly clusters: Map<string, EffectCluster>;
   readonly skipped: SkippedRule[];
-  readonly scalarOnly: string[];
   readonly byShape: Map<string, number>;
   readonly appliedFieldAdditions: ReadonlySet<string>;
   readonly appliedFieldCardinalityOverrides: ReadonlySet<string>;
@@ -1059,7 +1056,6 @@ function clusterEffects(
   policy: EffectPolicy
 ): ClusteredEffects {
   const skipped: SkippedRule[] = [];
-  const scalarOnly: string[] = [];
   const appliedFieldAdditions = new Set<string>();
   const appliedFieldCardinalityOverrides = new Set<string>();
   const byShape = new Map<string, number>();
@@ -1090,7 +1086,6 @@ function clusterEffects(
   return {
     clusters,
     skipped,
-    scalarOnly,
     byShape,
     appliedFieldAdditions,
     appliedFieldCardinalityOverrides,
@@ -1581,7 +1576,6 @@ export function emitEffects(
     skipped: clustered.skipped,
     clusterCount: sortedClusters.length,
     universalParameters: universalCluster === undefined ? "" : clusterParameters(universalCluster),
-    scalarOnly: clustered.scalarOnly,
     fieldTypeOverrides: fieldTypeOverrideReport(),
     fieldAdditions: fieldAdditionReport(),
     fieldCardinalityOverrides: fieldCardinalityOverrideReport(),
