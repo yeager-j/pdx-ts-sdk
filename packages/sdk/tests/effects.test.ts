@@ -22,6 +22,7 @@ import {
 } from "../src/script/effects/recorder.ts";
 import type { StaticModifierHostContract } from "../src/script/effects/static-modifiers.ts";
 import type { ScriptCtx } from "../src/script/effects/types.ts";
+import { mapEntries } from "../src/script/scalar.ts";
 import {
   hasCountryFlag,
   hasOwner,
@@ -1194,6 +1195,125 @@ else = {
         "\t}\n" +
         "}\n"
     );
+  });
+
+  it("writes an open-keyed effect block as its own map argument", () => {
+    const sink: PdxEntry[] = [];
+    const country = makeScope<"country">(sink);
+
+    country.setTradeConversions({ trade: 0.5, energy: 0.5 });
+    country.setTradeConversions({});
+    country.setCountryCodeFlags({ colonizer: true });
+
+    expect(serialize(sink)).toBe(`set_trade_conversions = {
+\ttrade = 0.5
+\tenergy = 0.5
+}
+
+set_trade_conversions = {}
+
+set_country_code_flags = {
+\tcolonizer = yes
+}
+`);
+  });
+
+  it("refuses an open-keyed block with fewer entries than the rules admit", () => {
+    const country = makeScope<"country">([]);
+
+    expect(() => country.setCountryCodeFlags({})).toThrow(
+      '"set_country_code_flags" was given 0 entries, but the rules require at least 1'
+    );
+  });
+
+  it("skips an entry whose value an untyped caller left undefined", () => {
+    // The emitted index signature rejects an explicit `undefined`, so the
+    // skip is measured where an untyped object can still reach the recorder.
+    expect(mapEntries({ minerals: 1000, alloys: undefined }, "map_test", 1)).toEqual([
+      ["minerals", 1000],
+    ]);
+  });
+
+  it("writes a spliced map beside the named keys declared after it", () => {
+    const sink: PdxEntry[] = [];
+    const country = makeScope<"country">(sink);
+
+    country.addResourceFromDebris({
+      resources: { minerals: 1000 },
+      system: scopeValue<"system">("root.fromfrom"),
+    });
+
+    expect(serialize(sink)).toBe(`add_resource_from_debris = {
+\tminerals = 1000
+\tsystem = root.fromfrom
+}
+`);
+  });
+
+  it("writes a nested open-keyed block under its own field key", () => {
+    const sink: PdxEntry[] = [];
+    const country = makeScope<"country">(sink);
+
+    country.releaseVivariumFaunaCount({
+      count: 2,
+      location: scopeValue("this"),
+      owners: { space_amoeba: eventTarget<"country">("effects_test_amoeba_country") },
+    });
+    country.customTooltipWithParams({
+      description: "EFFECTS_TEST_TOOLTIP",
+      // A numeric-looking value stays quoted: the rules type it as a string,
+      // and a bare 1 would re-parse as a number.
+      descriptionParameters: { MIN: "1", MAX: "high" },
+    });
+
+    expect(serialize(sink)).toBe(`release_vivarium_fauna_count = {
+\tcount = 2
+\tlocation = this
+\towners = {
+\t\tspace_amoeba = event_target:effects_test_amoeba_country
+\t}
+}
+
+custom_tooltip_with_params = {
+\tdescription = EFFECTS_TEST_TOOLTIP
+\tdescription_parameters = {
+\t\tMIN = "1"
+\t\tMAX = high
+\t}
+}
+`);
+  });
+
+  it("records a content reference for every reference-typed map key", () => {
+    const sink: PdxEntry[] = [];
+    const refs: ContentRefUse[] = [];
+    const country = makeScope<"country">(sink, refs);
+
+    country.setTradeConversions({ trade: 0.5, effects_test_resource: 0.5 });
+
+    expect(refs).toEqual([
+      { targets: ["resource"], id: "trade", field: "set_trade_conversions" },
+      { targets: ["resource"], id: "effects_test_resource", field: "set_trade_conversions" },
+    ]);
+  });
+
+  it("writes either arm of a field overloaded between a scalar and a value list", () => {
+    const sink: PdxEntry[] = [];
+    const country = makeScope<"country">(sink);
+
+    country.createSpecies({ class: "PC_BARREN", popEthics: "random" });
+    country.createSpecies({ class: "PC_BARREN", popEthics: ["ethic_pacifist", "random"] });
+
+    expect(serialize(sink)).toBe(`create_species = {
+\tclass = PC_BARREN
+\tpop_ethics = random
+}
+
+create_species = {
+\tclass = PC_BARREN
+\tpop_ethics = { ethic_pacifist random }
+}
+`);
   });
 
   it("lowers rule-declared yes/no literal arms to booleans", () => {

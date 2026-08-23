@@ -120,6 +120,34 @@ export function isComparisonList(
   return Array.isArray(value) && Array.isArray(value[0]);
 }
 
+/**
+ * The entries of an open-keyed argument, in authoring order, with omitted
+ * values dropped.
+ *
+ * The rules say how few entries a block may hold and the type system cannot:
+ * an index signature has no minimum. `field` names the argument in the error
+ * thrown when `minimum` is not met.
+ *
+ * @example
+ * ```ts
+ * mapEntries({ minerals: 1000 }, "add_resource_from_debris.resources", 0);
+ * // [["minerals", 1000]]
+ * ```
+ */
+export function mapEntries<T>(
+  values: { readonly [key: string]: T },
+  field: string,
+  minimum: number
+): readonly (readonly [string, T])[] {
+  const entries = Object.entries(values).filter(([, value]) => value !== undefined);
+  if (entries.length < minimum) {
+    throw new Error(
+      `"${field}" was given ${entries.length} entries, but the rules require at least ${minimum}`
+    );
+  }
+  return entries;
+}
+
 export function toScalar(
   value: unknown,
   booleanLiterals: readonly ("yes" | "no")[] = []

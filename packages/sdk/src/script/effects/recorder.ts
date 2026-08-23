@@ -14,7 +14,14 @@ import {
 
 import { fieldEntries as contentFieldEntries } from "../../content/lower.ts";
 import { aliasStructFieldsOf } from "../../content/schema.ts";
-import { ALIAS_LIST_META, EFFECT_META, type EffectFieldMeta } from "../../generated/effect-meta.ts";
+import {
+  ALIAS_LIST_META,
+  EFFECT_META,
+  type EffectBlockMeta,
+  type EffectFieldMeta,
+  type EffectMapMeta,
+  type EffectScalarMeta,
+} from "../../generated/effect-meta.ts";
 import { FIRE_EFFECT_KEYS, type StructuralEffectMethod } from "../../generated/effect-policy.ts";
 import type { ScopeObjOf } from "../../generated/effects.ts";
 import type { ScopeName } from "../../generated/scopes.ts";
@@ -22,6 +29,7 @@ import type { ContentRefUse } from "../../references.ts";
 import {
   isComparisonList,
   isStructuredValue,
+  mapEntries,
   refId,
   toScalar,
   type ComparisonArg,
@@ -331,6 +339,98 @@ function fieldOccurrences(
   return field.repeated === true ? (value as readonly unknown[]) : [value];
 }
 
+/** The map table a `map` field carries; generated meta always supplies one. */
+function mapMetaOf(field: EffectFieldMeta): EffectMapMeta {
+  if (field.map === undefined) {
+    throw new Error(`Effect field "${field.key}" is an open-keyed block with no map metadata`);
+  }
+  return field.map;
+}
+
+/** The block arm a `scalar-or-block` field carries; generated meta always supplies one. */
+function blockArmOf(field: EffectFieldMeta): EffectBlockMeta {
+  if (field.block === undefined) {
+    throw new Error(`Effect field "${field.key}" is overloaded with a block but names no arm`);
+  }
+  return field.block;
+}
+
+/**
+ * The entries one open-keyed argument writes, in authoring order. Both the
+ * key and the value are recorded as references when the generated meta says
+ * every form they admit is one.
+ */
+function mapValueEntries(
+  map: EffectMapMeta,
+  values: Record<string, unknown>,
+  path: string,
+  refs: ContentRefUse[]
+): PdxEntry[] {
+  return mapEntries(values, path, map.min).map(([key, value]) => {
+    recordRef(refs, map.keyRefTypes, path, key);
+    if (map.comparison === true && Array.isArray(value)) {
+      return cmp(key, value[0] as PdxOp, toScalar(value[1]));
+    }
+    const scalar = toScalar(value, map.value.booleanLiterals);
+    recordRef(refs, map.value.refTypes, path, scalar);
+    return kv(key, scalar);
+  });
+}
+
+/**
+ * The items one braced list of anonymous values writes, in authoring order.
+ * A mixed list picks each item's arm from the scalar arm's object kinds.
+ */
+function valueListItems(
+  arm: { readonly scalar?: EffectScalarMeta; readonly fields?: readonly EffectFieldMeta[] },
+  values: readonly unknown[],
+  path: string,
+  refs: ContentRefUse[],
+  owner: Recording | undefined
+): PdxItem[] {
+  return values.map((item) => {
+    if (
+      arm.fields !== undefined &&
+      (arm.scalar === undefined || isStructuredValue(item, arm.scalar.objectKinds ?? []))
+    ) {
+      return container(
+        fieldEntries(arm.fields, item as Record<string, unknown>, path, refs, owner)
+      );
+    }
+    const scalar = toScalar(item, arm.scalar?.booleanLiterals);
+    recordRef(refs, arm.scalar?.refTypes, path, scalar);
+    return typeof scalar === "object" ? scalar : pdxScalar(scalar);
+  });
+}
+
+/**
+ * The entry the block half of an overloaded field writes under its key.
+ * The three arms are the three shapes the generator lowers a braced arm to.
+ */
+function blockEntry(
+  arm: EffectBlockMeta,
+  value: unknown,
+  key: string,
+  path: string,
+  refs: ContentRefUse[],
+  owner: Recording | undefined
+): PdxEntry {
+  switch (arm.kind) {
+    case "map":
+      return block(key, mapValueEntries(arm.map, value as Record<string, unknown>, path, refs));
+    case "fields":
+      return block(
+        key,
+        fieldEntries(arm.fields, value as Record<string, unknown>, path, refs, owner)
+      );
+    case "value-list":
+      return kv(
+        key,
+        container(valueListItems(arm, value as readonly unknown[], path, refs, owner))
+      );
+  }
+}
+
 /**
  * The entries one field contributes to its block: under the field's key, or
  * bare when the rules splice the field's content into the block itself.
@@ -414,26 +514,21 @@ export function fieldEntries(
           entries.push(kv(field.key, scalar));
           break;
         }
-        case "scalar-or-fields":
-          if (isStructuredValue(value, field.scalar?.objectKinds ?? [])) {
-            entries.push(
-              block(
-                field.key,
-                fieldEntries(
-                  field.fields ?? [],
-                  value as Record<string, unknown>,
-                  `${path}.${field.key}`,
-                  refs,
-                  owner
-                )
-              )
-            );
-          } else {
-            const scalar = toScalar(value, field.scalar?.booleanLiterals);
-            recordRef(refs, field.scalar?.refTypes, `${path}.${field.key}`, scalar);
-            entries.push(kv(field.key, scalar));
+        case "scalar-or-block": {
+          const arm = blockArmOf(field);
+          const takesBlock =
+            arm.kind === "value-list"
+              ? Array.isArray(value)
+              : isStructuredValue(value, field.scalar?.objectKinds ?? []);
+          if (takesBlock) {
+            entries.push(blockEntry(arm, value, field.key, `${path}.${field.key}`, refs, owner));
+            break;
           }
+          const scalar = toScalar(value, field.scalar?.booleanLiterals);
+          recordRef(refs, field.scalar?.refTypes, `${path}.${field.key}`, scalar);
+          entries.push(kv(field.key, scalar));
           break;
+        }
         case "fields":
           entries.push(
             block(
@@ -448,34 +543,33 @@ export function fieldEntries(
             )
           );
           break;
-        case "value-list": {
-          const items: PdxItem[] = [];
-          for (const item of value as readonly unknown[]) {
-            if (
-              field.fields !== undefined &&
-              (field.scalar === undefined ||
-                isStructuredValue(item, field.scalar.objectKinds ?? []))
-            ) {
-              items.push(
-                container(
-                  fieldEntries(
-                    field.fields,
-                    item as Record<string, unknown>,
-                    `${path}.${field.key}`,
-                    refs,
-                    owner
-                  )
-                )
-              );
-              continue;
-            }
-            const scalar = toScalar(item, field.scalar?.booleanLiterals);
-            recordRef(refs, field.scalar?.refTypes, `${path}.${field.key}`, scalar);
-            items.push(typeof scalar === "object" ? scalar : pdxScalar(scalar));
-          }
-          entries.push(kv(field.key, container(items)));
+        case "map": {
+          const map = mapMetaOf(field);
+          const written = mapValueEntries(
+            map,
+            value as Record<string, unknown>,
+            `${path}.${field.key}`,
+            refs
+          );
+          entries.push(...(map.splice === true ? written : [block(field.key, written)]));
           break;
         }
+        case "value-list":
+          entries.push(
+            kv(
+              field.key,
+              container(
+                valueListItems(
+                  field,
+                  value as readonly unknown[],
+                  `${path}.${field.key}`,
+                  refs,
+                  owner
+                )
+              )
+            )
+          );
+          break;
         case "comparison":
           if (Array.isArray(value)) {
             entries.push(cmp(field.key, value[0] as PdxOp, toScalar(value[1])));
@@ -860,6 +954,9 @@ function makeAnyScope(sink: PdxEntry[], refs: ContentRefUse[], recording?: Recor
           sink.push(
             block(meta.key, fieldEntries(shape.fields ?? [], args, meta.key, refs, recording))
           );
+      case "map":
+        return (values: Record<string, unknown>) =>
+          sink.push(block(meta.key, mapValueEntries(shape.map, values, meta.key, refs)));
       case "wrapper":
         if (shape.fields === null) {
           return (body: (scope: unknown) => void) => {

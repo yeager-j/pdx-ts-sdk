@@ -6,7 +6,7 @@
  * builder it emits.
  */
 
-import type { ArgField, ArgValue } from "../../lower/script-shape.ts";
+import type { ArgField, ArgValue, BlockValue, MapValue } from "../../lower/script-shape.ts";
 import { camelCase, propertyAccess } from "../../naming.ts";
 import { Emitter, type TsValue } from "../../render/emitter.ts";
 
@@ -26,22 +26,29 @@ export function pushExpr(emitter: Emitter, value: TsValue, expr: string): string
 /** Whether this field can put a content reference into the emitted tree: a
  * whole-reference scalar directly, a nested condition through its own refs. */
 export function contributesRefs(field: ArgField): boolean {
-  if (field.value.kind === "clause") {
-    return true;
+  return valueContributesRefs(field.value);
+}
+
+function valueContributesRefs(value: ArgValue): boolean {
+  switch (value.kind) {
+    case "clause":
+      return true;
+    case "scalar":
+      return value.value.refTypes !== undefined;
+    case "comparison":
+      return false;
+    case "map":
+      return value.map.keyRefTypes !== undefined || value.map.value.refTypes !== undefined;
+    case "fields":
+      return value.fields.some(contributesRefs);
+    case "scalarOrBlock":
+      return value.scalar.refTypes !== undefined || valueContributesRefs(value.block);
+    case "valueList":
+      return value.scalar?.refTypes !== undefined || (value.fields?.some(contributesRefs) ?? false);
+    case "aliasList":
+    case "aliasStruct":
+      return unauthorableAliasValue(value);
   }
-  if (field.value.kind === "scalar") {
-    return field.value.value.refTypes !== undefined;
-  }
-  if (field.value.kind === "valueList") {
-    return (
-      field.value.scalar?.refTypes !== undefined ||
-      (field.value.fields?.some(contributesRefs) ?? false)
-    );
-  }
-  return (
-    (field.value.kind === "fields" || field.value.kind === "scalarOrFields") &&
-    field.value.fields.some(contributesRefs)
-  );
 }
 
 /** The `cmp()` arguments one comparison occurrence supplies. */
@@ -101,6 +108,97 @@ export function unauthorableAliasValue(
   );
 }
 
+/**
+ * Renders the statement that writes one whole-value entry under `key`, also
+ * recording a content reference when every form the value admits is one.
+ */
+function scalarPushCode(
+  emitter: Emitter,
+  value: TsValue,
+  access: string,
+  key: string,
+  fieldPath: string,
+  index: number,
+  sink: string
+): string {
+  const { refTypes } = value;
+  if (refTypes === undefined) {
+    return `${sink}.push(${emitter.use("kv")}(${key}, ${pushExpr(emitter, value, access)}));`;
+  }
+  // Indexed rather than named after the field, so the local can never
+  // collide with `args`, `entries`, `refs`, or a sibling field's name.
+  const local = `id${index}`;
+  if (value.scalarSymbol !== undefined) {
+    emitter.use(value.scalarSymbol);
+  }
+  return (
+    `const ${local} = ${value.toScalar(access)};\n` +
+    `    ${sink}.push(${emitter.use("kv")}(${key}, ${local}));\n` +
+    `    refs.push({ targets: ${JSON.stringify(refTypes)}, id: ${local}, ` +
+    `field: ${JSON.stringify(fieldPath)} });`
+  );
+}
+
+/** Renders the statements that write one open-keyed map's entries into a sink. */
+function mapEntriesCode(
+  emitter: Emitter,
+  map: MapValue,
+  access: string,
+  fieldPath: string,
+  index: number,
+  sink: string
+): string {
+  const entryKey = `key${index}`;
+  const entryValue = `value${index}`;
+  const path = JSON.stringify(fieldPath);
+  const keyRef =
+    map.keyRefTypes === undefined
+      ? ""
+      : `\nrefs.push({ targets: ${JSON.stringify(map.keyRefTypes)}, id: ${entryKey}, field: ${path} });`;
+  const write =
+    map.comparison === true
+      ? `${sink}.push(typeof ${entryValue} === "object" ` +
+        `? ${emitter.use("cmp")}(${entryKey}, ${entryValue}[0], ` +
+        `${pushExpr(emitter, map.value, `${entryValue}[1]`)}) ` +
+        `: ${emitter.use("kv")}(${entryKey}, ${pushExpr(emitter, map.value, entryValue)}));`
+      : scalarPushCode(emitter, map.value, entryValue, entryKey, fieldPath, index, sink);
+  return (
+    `for (const [${entryKey}, ${entryValue}] of ` +
+    `${emitter.use("mapEntries")}(${access}, ${path}, ${map.cardinality.min})) {\n` +
+    `${write}${keyRef}\n}`
+  );
+}
+
+/** Renders the statements that write one block-valued argument under its own key. */
+function blockPushCode(
+  emitter: Emitter,
+  value: BlockValue,
+  access: string,
+  fieldPath: string,
+  index: number,
+  key: string,
+  sink: string
+): string {
+  if (value.kind === "valueList") {
+    return pushValueListCode(emitter, value, access, fieldPath, index, key, sink);
+  }
+  const nested = "nestedEntries";
+  const body =
+    value.kind === "map"
+      ? mapEntriesCode(emitter, value.map, access, fieldPath, index, nested)
+      : value.fields
+          .map((field, nestedIndex) => {
+            const nestedAccess = propertyAccess(access, camelCase(field.name));
+            const code = pushCode(emitter, field, nestedAccess, fieldPath, nestedIndex, nested);
+            return field.optional ? `if (${nestedAccess} !== undefined) {\n  ${code}\n}` : code;
+          })
+          .join("\n");
+  return (
+    `const ${nested}: ${emitter.use("PdxEntry")}[] = [];\n${body}\n` +
+    `${sink}.push(${emitter.use("block")}(${key}, ${nested}));`
+  );
+}
+
 /** Renders the statements that serialize one occurrence of a lowered argument. */
 function pushValueCode(
   emitter: Emitter,
@@ -111,84 +209,36 @@ function pushValueCode(
   sink: string
 ): string {
   const key = JSON.stringify(field.name);
+  const fieldPath = `${parentFieldPath}.${field.name}`;
   switch (field.value.kind) {
-    case "scalar": {
-      const { refTypes } = field.value.value;
-      if (refTypes === undefined) {
-        return (
-          `${sink}.push(${emitter.use("kv")}(${key}, ` +
-          `${pushExpr(emitter, field.value.value, access)}));`
-        );
-      }
-      // Indexed rather than named after the field, so the local can never
-      // collide with `args`, `entries`, `refs`, or a sibling field's name.
-      const local = `id${index}`;
-      const fieldPath = JSON.stringify(`${parentFieldPath}.${field.name}`);
-      if (field.value.value.scalarSymbol !== undefined) {
-        emitter.use(field.value.value.scalarSymbol);
-      }
-      return (
-        `const ${local} = ${field.value.value.toScalar(access)};\n` +
-        `    ${sink}.push(${emitter.use("kv")}(${key}, ${local}));\n` +
-        `    refs.push({ targets: ${JSON.stringify(refTypes)}, id: ${local}, field: ${fieldPath} });`
-      );
-    }
-    case "scalarOrFields": {
-      const nested = field.value.fields
-        .map((nestedField, nestedIndex) => {
-          const nestedAccess = propertyAccess(access, camelCase(nestedField.name));
-          const code = pushCode(
-            emitter,
-            nestedField,
-            nestedAccess,
-            `${parentFieldPath}.${field.name}`,
-            nestedIndex,
-            "nestedEntries"
-          );
-          return nestedField.optional ? `if (${nestedAccess} !== undefined) {\n  ${code}\n}` : code;
-        })
-        .join("\n");
-      return (
-        `if (${emitter.use("isStructuredValue")}(${access}, ${JSON.stringify(field.value.scalar.objectKinds ?? [])})) {\n` +
-        `  const nestedEntries: ${emitter.use("PdxEntry")}[] = [];\n` +
-        `${nested}\n` +
-        `  ${sink}.push(${emitter.use("block")}(${key}, nestedEntries));\n` +
-        `} else {\n` +
-        `  ${sink}.push(${emitter.use("kv")}(${key}, ${pushExpr(emitter, field.value.scalar, access)}));\n` +
-        `}`
-      );
-    }
-    case "fields": {
-      const nested = field.value.fields
-        .map((nestedField, nestedIndex) => {
-          const nestedAccess = propertyAccess(access, camelCase(nestedField.name));
-          const code = pushCode(
-            emitter,
-            nestedField,
-            nestedAccess,
-            `${parentFieldPath}.${field.name}`,
-            nestedIndex,
-            "nestedEntries"
-          );
-          return nestedField.optional ? `if (${nestedAccess} !== undefined) {\n  ${code}\n}` : code;
-        })
-        .join("\n");
-      return (
-        `const nestedEntries: ${emitter.use("PdxEntry")}[] = [];\n` +
-        `${nested}\n` +
-        `${sink}.push(${emitter.use("block")}(${key}, nestedEntries));`
-      );
-    }
-    case "valueList":
-      return pushValueListCode(
+    case "scalar":
+      return scalarPushCode(emitter, field.value.value, access, key, fieldPath, index, sink);
+    case "scalarOrBlock": {
+      const takesBlock =
+        field.value.block.kind === "valueList"
+          ? `Array.isArray(${access})`
+          : `${emitter.use("isStructuredValue")}(${access}, ${JSON.stringify(field.value.scalar.objectKinds ?? [])})`;
+      const blockCode = blockPushCode(
         emitter,
-        field.value,
+        field.value.block,
         access,
-        `${parentFieldPath}.${field.name}`,
+        fieldPath,
         index,
         key,
         sink
       );
+      return (
+        `if (${takesBlock}) {\n${blockCode}\n} else {\n` +
+        `${scalarPushCode(emitter, field.value.scalar, access, key, fieldPath, index, sink)}\n}`
+      );
+    }
+    case "fields":
+    case "valueList":
+      return blockPushCode(emitter, field.value, access, fieldPath, index, key, sink);
+    case "map":
+      return field.value.map.splice
+        ? mapEntriesCode(emitter, field.value.map, access, fieldPath, index, sink)
+        : blockPushCode(emitter, field.value, access, fieldPath, index, key, sink);
     case "clause":
       return (
         (field.value.splice

@@ -10,6 +10,7 @@ import {
   anyCosmicStorm,
   anyCountry,
   canAccessSystem,
+  checkEconomicProductionModifierForJob,
   checkVariable,
   countOwnedPopGroup,
   currentSituationApproach,
@@ -492,6 +493,56 @@ describe("trigger builders", () => {
         "pop_group_size > trigger:has_minimum_pop_group_size\n" +
         "\n" +
         "ai_armor_ratio > 0.5\n"
+    );
+  });
+
+  it("writes either arm of a field overloaded between a scalar and a map", () => {
+    const weighted = checkEconomicProductionModifierForJob({
+      job: "researcher",
+      resource: { physics_research: 0.33, society_research: 0.67 },
+      value: [">", 1.25],
+    });
+    const single = checkEconomicProductionModifierForJob({
+      job: "researcher",
+      resource: "minerals",
+      value: 1,
+    });
+
+    expect(serialize([...weighted.entries])).toBe(
+      "check_economic_production_modifier_for_job = {\n" +
+        "\tjob = researcher\n" +
+        "\tresource = {\n\t\tphysics_research = 0.33\n\t\tsociety_research = 0.67\n\t}\n" +
+        "\tvalue > 1.25\n}\n"
+    );
+    expect(weighted.refs).toEqual([
+      {
+        targets: ["job"],
+        id: "researcher",
+        field: "check_economic_production_modifier_for_job.job",
+      },
+      {
+        targets: ["resource"],
+        id: "physics_research",
+        field: "check_economic_production_modifier_for_job.resource",
+      },
+      {
+        targets: ["resource"],
+        id: "society_research",
+        field: "check_economic_production_modifier_for_job.resource",
+      },
+    ]);
+    expect(serialize([...single.entries])).toBe(
+      "check_economic_production_modifier_for_job = {\n" +
+        "\tjob = researcher\n\tresource = minerals\n\tvalue = 1\n}\n"
+    );
+  });
+
+  it("refuses a scalar-or-map arm with fewer entries than the rules admit", () => {
+    expect(() =>
+      checkEconomicProductionModifierForJob({ job: "researcher", resource: {}, value: 1 })
+    ).toThrow(
+      '"check_economic_production_modifier_for_job.resource" was given 0 entries, ' +
+        "but the rules require at least 1"
     );
   });
 

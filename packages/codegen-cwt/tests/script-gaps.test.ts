@@ -81,10 +81,10 @@ describe("the script-generation gap ledger", () => {
       effects: effects.skipped,
     });
 
-    expect(SCRIPT_GENERATION_GAPS).toHaveLength(15);
+    expect(SCRIPT_GENERATION_GAPS).toHaveLength(2);
     expect(report.policyOwned).toHaveLength(46);
     expect(report.abstractPlaceholders).toHaveLength(2);
-    expect(report.trackedGaps).toHaveLength(15);
+    expect(report.trackedGaps).toHaveLength(2);
     expect(report.abstractPlaceholders.map((entry) => entry.name)).toEqual([
       "<scripted_effect>",
       "<scripted_trigger>",
@@ -98,15 +98,9 @@ describe("the script-generation gap ledger", () => {
     });
     const lines = formatScriptGapReport(report);
 
-    expect(lines.trackedGaps).toHaveLength(15);
+    expect(lines.trackedGaps).toHaveLength(2);
     expect(lines.trackedGaps.every((line) => !line.includes("unsupported-alias-splice"))).toBe(
       true
-    );
-    expect(lines.trackedGaps).toContain(
-      "effect create_species [multiple-structured-scalar-arms] — SDK-281: " +
-        "The effect argument model has no discriminator between a scalar arm and an anonymous " +
-        'value list under the same field key. (field "pop_ethics" mixes a bare-value block ' +
-        "with a scalar arm)"
     );
     expect(lines.trackedGaps.every((line) => !line.includes("SDK-244"))).toBe(true);
     expect(lines.trackedGaps.every((line) => !line.includes("SDK-251"))).toBe(true);
