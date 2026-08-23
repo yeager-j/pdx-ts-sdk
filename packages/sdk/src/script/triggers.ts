@@ -145,10 +145,13 @@ export function hasCompletedEventChainCounter(
 /** A scope where the game exposes `has_modifier` for a static modifier host. */
 export type StaticModifierCheckScope = Exclude<StaticModifierScope, "cosmic_storm_influence_field">;
 
-/** Checks an authored modifier only on an object of its declared host scope. */
+/**
+ * Checks an authored modifier on its declared host.
+ * A carrier-hosted modifier may also be checked from its colony.
+ */
 export function hasModifier<S extends StaticModifierCheckScope>(
   value: Unambiguous<S, StaticModifierHostContract<S>>
-): Trigger<S>;
+): Trigger<S extends "carrier" ? "carrier" | "colony" : S>;
 /** Checks a vanilla, third-party, or raw modifier id without an authored host witness. */
 export function hasModifier(
   value: (StaticModifierRef & { readonly hostScope?: never }) | string

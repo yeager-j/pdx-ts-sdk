@@ -190,6 +190,8 @@ describe("content-type codegen", () => {
     const agenda = emissions.get("agenda");
     expect(agenda?.code).toContain('initEffect?: EffectBlock<"country", undefined, "country">;');
     expect(agenda?.code).toContain('effect?: EffectBlock<"country", undefined, "country">;');
+    expect(agenda?.code).toContain('StaticModifierHostContract<"country">');
+    expect(agenda?.code).toContain("StaticModifierRef & { readonly hostScope?: never }");
     expect(agenda?.code).toContain('shape: "effect"');
     expect(emissions.get("ascension_perk")?.code).toContain(
       'onEnabled?: EffectBlock<"country", undefined, "country">;'

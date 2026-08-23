@@ -478,7 +478,7 @@ export const EFFECT_EXTENSION_SEAMS = new Map<string, EffectExtensionSeam>([
     {
       interfaceName: "AddModifierEffectsExtension",
       referenceSignature:
-        'addModifier(args: Omit<AddModifierArgs, "modifier"> & { modifier: StaticModifierHostContract<S> }): void;',
+        'addModifier<S extends StaticModifierScope>(args: Omit<AddModifierArgs, "modifier"> & { modifier: Unambiguous<S, StaticModifierHostContract<S>> }): void;',
       receivingScope: true,
       receivingScopeType: { type: "StaticModifierScope", module: "./static-modifier.ts" },
       reason:
@@ -491,7 +491,7 @@ export const EFFECT_EXTENSION_SEAMS = new Map<string, EffectExtensionSeam>([
     {
       interfaceName: "AddStageModifierEffectsExtension",
       referenceSignature:
-        'addStageModifier(args: Omit<AddStageModifierArgs, "modifier"> & { modifier: StaticModifierHostContract<S> }): void;',
+        'addStageModifier<S extends StaticModifierScope>(args: Omit<AddStageModifierArgs, "modifier"> & { modifier: Unambiguous<S, StaticModifierHostContract<S>> }): void;',
       receivingScope: true,
       receivingScopeType: { type: "StaticModifierScope", module: "./static-modifier.ts" },
       reason:
@@ -504,7 +504,7 @@ export const EFFECT_EXTENSION_SEAMS = new Map<string, EffectExtensionSeam>([
     {
       interfaceName: "ExportModifierDurationToVariableEffectsExtension",
       referenceSignature:
-        'exportModifierDurationToVariable(args: Omit<ExportModifierDurationToVariableArgs, "modifier"> & { modifier: StaticModifierHostContract<S> }): void;',
+        'exportModifierDurationToVariable<S extends StaticModifierScope>(args: Omit<ExportModifierDurationToVariableArgs, "modifier"> & { modifier: Unambiguous<S, StaticModifierHostContract<S>> }): void;',
       receivingScope: true,
       receivingScopeType: { type: "StaticModifierScope", module: "./static-modifier.ts" },
       reason:
@@ -516,7 +516,8 @@ export const EFFECT_EXTENSION_SEAMS = new Map<string, EffectExtensionSeam>([
     "remove_modifier",
     {
       interfaceName: "RemoveModifierEffectsExtension",
-      referenceSignature: "removeModifier(value: StaticModifierHostContract<S>): void;",
+      referenceSignature:
+        "removeModifier<S extends StaticModifierScope>(value: Unambiguous<S, StaticModifierHostContract<S>>): void;",
       receivingScope: true,
       receivingScopeType: { type: "StaticModifierScope", module: "./static-modifier.ts" },
       reason:
@@ -528,7 +529,8 @@ export const EFFECT_EXTENSION_SEAMS = new Map<string, EffectExtensionSeam>([
     "remove_stage_modifier",
     {
       interfaceName: "RemoveStageModifierEffectsExtension",
-      referenceSignature: "removeStageModifier(value: StaticModifierHostContract<S>): void;",
+      referenceSignature:
+        "removeStageModifier<S extends StaticModifierScope>(value: Unambiguous<S, StaticModifierHostContract<S>>): void;",
       receivingScope: true,
       receivingScopeType: { type: "StaticModifierScope", module: "./static-modifier.ts" },
       reason:

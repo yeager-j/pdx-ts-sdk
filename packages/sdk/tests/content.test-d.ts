@@ -475,8 +475,18 @@ describe("generated content authoring types", () => {
     const ship = makeScope<"ship">([]);
     const rift = makeScope<"astral_rift">([]);
     const operation = makeScope<"espionage_operation">([]);
+    const colony = makeScope<"colony">([]);
+    const carrier = makeScope<"carrier">([]);
     const riftHosted = contentMod.staticModifier("rift_hosted", {
       hostScope: "astral_rift",
+      name: "X",
+    });
+    const carrierHosted = contentMod.staticModifier("carrier_hosted", {
+      hostScope: "carrier",
+      name: "X",
+    });
+    const planetHosted = contentMod.staticModifier("planet_hosted", {
+      hostScope: "planet",
       name: "X",
     });
 
@@ -487,6 +497,10 @@ describe("generated content authoring types", () => {
     country.removeModifier(countryHosted);
     country.if(hasModifier(countryHosted), () => {});
     country.exportModifierDurationToVariable({ modifier: countryHosted, variable: "remaining" });
+    carrier.if(hasModifier(carrierHosted), () => {});
+    colony.if(hasModifier(carrierHosted), () => {});
+    // @ts-expect-error — only a colony may proxy a carrier modifier check
+    ship.if(hasModifier(carrierHosted), () => {});
     // @ts-expect-error — an authored country modifier cannot execute on a ship
     ship.addModifier({ modifier: countryHosted });
     // @ts-expect-error — removing it from a ship contradicts the same host witness
@@ -513,6 +527,23 @@ describe("generated content authoring types", () => {
     country.addModifier({ modifier: vanilla.staticModifier("food_deficit") });
     country.removeModifier(vanilla.staticModifier("food_deficit"));
     country.if(hasModifier(vanilla.staticModifier("food_deficit")), () => {});
+
+    contentMod.agenda("country_finish", {
+      name: "X",
+      agendaCost: 1,
+      finishModifier: countryHosted,
+    });
+    contentMod.agenda("wrong_finish", {
+      name: "X",
+      agendaCost: 1,
+      // @ts-expect-error — agenda finish modifiers execute on their country
+      finishModifier: planetHosted,
+    });
+    contentMod.agenda("unchecked_finish", {
+      name: "X",
+      agendaCost: 1,
+      finishModifier: "third_party_modifier",
+    });
 
     const either: StaticModifierItem<"country" | "ship"> =
       Math.random() > 0.5 ? countryHosted : shipHosted;

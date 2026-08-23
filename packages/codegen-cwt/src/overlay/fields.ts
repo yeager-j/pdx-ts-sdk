@@ -566,6 +566,18 @@ export interface ContentFieldOverride {
   readonly optional?: true;
   /** Public name for a nested struct the mechanical path-derived name misstates. */
   readonly nestedTypeName?: string;
+  /** Replaces the public authoring type without changing the field's runtime lowering. */
+  readonly authoringType?: {
+    /** TypeScript type emitted for the authoring member. */
+    readonly type: string;
+    /** Extra type-only imports required by {@link type}. */
+    readonly imports: readonly {
+      /** Module path written into the generated file. */
+      readonly module: string;
+      /** Exported type name referenced by {@link type}. */
+      readonly name: string;
+    }[];
+  };
   /**
    * Lowers a `<type>` reference to a bare, unchecked `string`.
    *
@@ -605,6 +617,23 @@ export interface ContentFieldOverride {
  * says is no longer one of its jobs.
  */
 export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
+  [
+    "agenda.finish_modifier",
+    {
+      authoringType: {
+        type: '(StaticModifierRef & { readonly hostScope?: never }) | StaticModifierHostContract<"country"> | string',
+        imports: [
+          {
+            module: "../script/effects/static-modifiers.ts",
+            name: "StaticModifierHostContract",
+          },
+        ],
+      },
+      reason:
+        "SDK-229: council agendas execute in country scope, so an SDK-authored finish modifier " +
+        "must carry a country host witness. Plain refs and strings remain unchecked fallbacks.",
+    },
+  ],
   [
     "decision.custom_tooltip",
     {

@@ -31,9 +31,11 @@ must be hosted on a different kind of object.
 The returned item carries this declaration. Executing consumers reject an
 authored item used from a different scope. These include `addModifier`,
 `removeModifier`, `hasModifier`, their stage-modifier variants, and
-`exportModifierDurationToVariable`. A raw string or a plain vanilla or
-third-party reference has no authored witness, so those forms remain explicit
-unchecked fallbacks.
+`exportModifierDurationToVariable`. Agenda `finishModifier` fields require a
+country-hosted authored modifier. In colony scope, `hasModifier` may check a
+carrier-hosted modifier because the game redirects that check to the carrier.
+A raw string or a plain vanilla or third-party reference has no authored
+witness, so those forms remain explicit unchecked fallbacks.
 
 ## Write modifier values directly into the definition
 

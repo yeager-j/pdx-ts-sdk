@@ -54,6 +54,21 @@ describe("script reference metadata", () => {
     const projectSignature = project?.signature ?? "";
     expect(projectSignature).toBe(`${projectOverload}\n${projectFallback}`);
     expect(projectSignature).not.toContain("enableSpecialProject(args: {");
+
+    const modifierMethods = [
+      "addModifier",
+      "addStageModifier",
+      "exportModifierDurationToVariable",
+      "removeModifier",
+      "removeStageModifier",
+    ];
+    for (const method of modifierMethods) {
+      const signature = SCRIPT_EFFECT_REFERENCES.find(
+        (reference) => reference.method === method
+      )?.signature;
+      expect(signature).toContain(`<S extends StaticModifierScope>`);
+      expect(signature).toContain("Unambiguous<S, StaticModifierHostContract<S>>");
+    }
   });
 
   it("joins event-fire rows to receiving scopes and overload signatures", () => {

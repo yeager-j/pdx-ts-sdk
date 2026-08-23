@@ -891,7 +891,12 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         memberType: 'EffectBlock<"country", undefined, "country">',
       },
       modifier: { optional: true, docs: [], memberType: 'ModifierClosure<"country">' },
-      finishModifier: { optional: true, docs: [], memberType: "StaticModifierRef | string" },
+      finishModifier: {
+        optional: true,
+        docs: [],
+        memberType:
+          '(StaticModifierRef & { readonly hostScope?: never }) | StaticModifierHostContract<"country"> | string',
+      },
       effect: {
         optional: true,
         docs: [],
