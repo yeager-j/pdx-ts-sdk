@@ -82,6 +82,66 @@ asteroid-belt type and a radius from the system center. A belt also does not
 place asteroid planets; add those as ordered planet entries when the system
 needs interactable asteroid objects.
 
+### Write absolute orbit coordinates with helpers
+
+The generated fields remain the raw authoring surface: `orbitDistance` and
+`orbitAngle` are deltas from the previous sibling. For a layout that is easier
+to read as absolute coordinates, `absoluteOrbits` lowers a top-level planet
+list for the normal `planet` field. Its `radius` is the initializer's orbit
+cursor coordinate, not a promise about rendered center-to-center spacing; the
+game also applies body-size spacing, and it has no reliable author-facing
+formula for that distance.
+
+```ts
+import { absoluteOrbits } from "@pdx-ts/sdk";
+
+const planet = absoluteOrbits([
+  { class: "star", radius: 0, angle: 0 },
+  {
+    class: "pc_continental",
+    radius: 60,
+    angle: 90,
+    moon: [{ class: "pc_barren", radius: 8, angle: 180 }],
+  },
+]);
+
+mod.solarSystemInitializer("haven", { class: "sc_g", planet });
+```
+
+Each sibling list starts with radius and angle zero: the top-level planets,
+nested planets, moons, and nested moons are independent lists. Radii must be
+finite, nonnegative, and nondecreasing within their own list. Angles must be
+finite. The helper throws `RangeError` with the failing nested array path when
+an input breaks those rules.
+
+It writes each angle as the signed shortest delta in `(-180, 180]`. Thus
+`350` to `10` writes `20`, `10` to `350` writes `-20`, and an exact 180-degree
+tie writes `180`.
+
+`asteroidBelt` keeps a belt and its asteroid planets at the same absolute
+radius. It does not infer an asteroid `class`; supply one when the game needs
+one. Put its `belt` in `asteroidBelt` and splice its `orbits` into the one
+surrounding `absoluteOrbits` call, so all planet radii are checked together:
+
+```ts
+import { absoluteOrbits, asteroidBelt } from "@pdx-ts/sdk";
+
+const rubble = asteroidBelt({
+  type: "rocky_asteroid_belt",
+  radius: 80,
+  asteroids: [
+    { class: "pc_asteroid", angle: 0, size: 3 },
+    { class: "pc_asteroid", angle: 120, size: 4 },
+  ],
+});
+
+mod.solarSystemInitializer("rubble", {
+  class: "sc_g",
+  asteroidBelt: [rubble.belt],
+  planet: absoluteOrbits([{ class: "star", radius: 0, angle: 0 }, ...rubble.orbits]),
+});
+```
+
 ## Only the top-level initializer has an id
 
 `mod.solarSystemInitializer("haven", definition)` mints the full id
