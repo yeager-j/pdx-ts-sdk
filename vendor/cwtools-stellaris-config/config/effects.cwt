@@ -2966,7 +2966,7 @@ alias[effect:create_message] = {
 		## cardinality = 0..1
 		varname = value_field
 		## cardinality = 0..1
-		type = enum[mesage_variable_type]
+		type = enum[message_variable_type]
 		## cardinality = 0..1
 		key = scalar
 		## cardinality = 0..1
@@ -2981,7 +2981,7 @@ alias[effect:create_message] = {
 }
 
 enums = {
-	enum[mesage_variable_type] = {
+	enum[message_variable_type] = {
 		key
 		name
 		variable

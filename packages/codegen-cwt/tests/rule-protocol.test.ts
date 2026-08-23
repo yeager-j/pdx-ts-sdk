@@ -308,7 +308,7 @@ describe("LoweredRule", () => {
       "setFleetFormation(args: { position?: readonly { x: number; y: number }[] }): void;"
     );
     expect(emitted.interfaces).toContain(
-      "variable?: readonly { varname?: ScriptValue; type?: MesageVariableType; key?: string; " +
+      "variable?: readonly { varname?: ScriptValue; type?: MessageVariableType; key?: string; " +
         "value?: string; localization?: string; scope?: ScopeValue; trigger?: Trigger<S> }[]"
     );
     expect(emitted.meta).toContain(
