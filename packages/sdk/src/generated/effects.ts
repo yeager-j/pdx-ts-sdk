@@ -229,6 +229,7 @@ export type FleetAction<S extends ScopeName> =
         while?: {
           /** TODO: ID seems to have to be in quotes (Vanilla also does that). Also, I think they are meant to be unique ideas, but I'm not sure about that. -Caligula */
           id: string;
+          /** The nested conditions, written bare inside the block beside its named keys. */
           conditions: Trigger<S>;
         };
         actions: readonly FleetAction<S>[];
@@ -248,6 +249,7 @@ export type FleetAction<S extends ScopeName> =
         trigger?: {
           /** TODO: ID seems to have to be in quotes (Vanilla also does that). Also, I think they are meant to be unique ideas, but I'm not sure about that. -Caligula */
           id: string;
+          /** The nested conditions, written bare inside the block beside its named keys. */
           conditions: Trigger<"system">;
         };
         foundSystem: readonly FleetAction<"system">[];
@@ -259,6 +261,7 @@ export type FleetAction<S extends ScopeName> =
         trigger?: {
           /** TODO: ID seems to have to be in quotes (Vanilla also does that). Also, I think they are meant to be unique ideas, but I'm not sure about that. -Caligula */
           id: string;
+          /** The nested conditions, written bare inside the block beside its named keys. */
           conditions: Trigger<"planet">;
         };
         foundPlanet: readonly FleetAction<"planet">[];
@@ -270,6 +273,7 @@ export type FleetAction<S extends ScopeName> =
         trigger?: {
           /** TODO: ID seems to have to be in quotes (Vanilla also does that). Also, I think they are meant to be unique ideas, but I'm not sure about that. -Caligula */
           id: string;
+          /** The nested conditions, written bare inside the block beside its named keys. */
           conditions: Trigger<"fleet">;
         };
         foundFleet: readonly FleetAction<"fleet">[];
@@ -282,6 +286,7 @@ export type FleetAction<S extends ScopeName> =
         trigger?: {
           /** TODO: ID seems to have to be in quotes (Vanilla also does that). Also, I think they are meant to be unique ideas, but I'm not sure about that. -Caligula */
           id: string;
+          /** The nested conditions, written bare inside the block beside its named keys. */
           conditions: Trigger<"system">;
         };
         foundSystem: readonly FleetAction<"system">[];
@@ -293,6 +298,7 @@ export type FleetAction<S extends ScopeName> =
         trigger?: {
           /** TODO: ID seems to have to be in quotes (Vanilla also does that). Also, I think they are meant to be unique ideas, but I'm not sure about that. -Caligula */
           id: string;
+          /** The nested conditions, written bare inside the block beside its named keys. */
           conditions: Trigger<"planet">;
         };
         foundPlanet: readonly FleetAction<"planet">[];
@@ -304,6 +310,7 @@ export type FleetAction<S extends ScopeName> =
         trigger?: {
           /** TODO: ID seems to have to be in quotes (Vanilla also does that). Also, I think they are meant to be unique ideas, but I'm not sure about that. -Caligula */
           id: string;
+          /** The nested conditions, written bare inside the block beside its named keys. */
           conditions: Trigger<"fleet">;
         };
         foundFleet: readonly FleetAction<"fleet">[];
@@ -315,6 +322,7 @@ export type FleetAction<S extends ScopeName> =
       effect: {
         /** TODO: ID seems to have to be in quotes (Vanilla also does that). Also, I think they are meant to be unique ideas, but I'm not sure about that. -Caligula */
         id: string;
+        /** The nested effects, written bare inside the block beside its named keys. */
         effects: (scope: ScopeObjOf<S>) => void;
       };
     }

@@ -1060,9 +1060,19 @@ const CLAUSE_SPLICE_MEMBERS: readonly {
   readonly category: ClauseCategory;
   /** The member the block's author writes the clause under. */
   readonly member: string;
+  /** What the member holds, since the rules name no field to document. */
+  readonly summary: string;
 }[] = [
-  { category: "trigger", member: "conditions" },
-  { category: "effect", member: "effects" },
+  {
+    category: "trigger",
+    member: "conditions",
+    summary: "The nested conditions, written bare inside the block beside its named keys.",
+  },
+  {
+    category: "effect",
+    member: "effects",
+    summary: "The nested effects, written bare inside the block beside its named keys.",
+  },
 ];
 
 /**
@@ -1107,7 +1117,10 @@ function splicedMember(
         ? { kind: "aliasList", category, scope, splice: true }
         : { kind: "clause", category: clause.category, scope, splice: true },
     optional: splices.every((field) => isOptional(field.cardinality)),
-    docs: splices.flatMap((field) => field.docs),
+    docs: [
+      ...(clause === undefined ? [] : [clause.summary]),
+      ...splices.flatMap((field) => field.docs),
+    ],
   };
 }
 
@@ -1187,6 +1200,26 @@ export function aliasListMembers(
 /** The member name a block's clause-valued computed keys take. */
 const KEYED_CLAUSE_MEMBER = "cases";
 
+/**
+ * The documentation a synthesized case list carries. The rules document the
+ * rule, never the key filter the cases come from, so the member states its own
+ * contract: what one case is, how many the rules admit, and which keys it
+ * refuses.
+ */
+function keyedClauseDocs(cardinality: Cardinality, reservedKeys: readonly string[]): string[] {
+  const minimum =
+    cardinality.min === 1 ? "At least one case." : `At least ${cardinality.min} cases.`;
+  const reserved = reservedKeys.map((key) => `\`${key}\``).join(", ");
+  return [
+    "One case per key the selector may equal, in the order the game tests them; " +
+      "the first match wins.",
+    ...(isOptional(cardinality) ? [] : [minimum]),
+    ...(reservedKeys.length === 0
+      ? []
+      : [`Keys the block writes itself (${reserved}) are rejected.`]),
+  ];
+}
+
 /** Merges the clause-valued computed keys of one block into the member they describe. */
 function keyedClausesField(
   emitter: Emitter,
@@ -1210,7 +1243,10 @@ function keyedClausesField(
     name: KEYED_CLAUSE_MEMBER,
     value: { kind: "keyedClauses", ...clause, cardinality, reservedKeys },
     optional: isOptional(cardinality),
-    docs: declarations.flatMap((declaration) => declaration.docs),
+    docs: [
+      ...keyedClauseDocs(cardinality, reservedKeys),
+      ...declarations.flatMap((declaration) => declaration.docs),
+    ],
   };
 }
 

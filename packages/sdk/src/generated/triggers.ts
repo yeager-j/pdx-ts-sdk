@@ -1564,6 +1564,7 @@ export function builtOnPlanet(value: boolean = true): Trigger<"megastructure"> {
 /** The arguments `calcTrueIf` takes, as the rules declare them. */
 export interface CalcTrueIfArgs<S extends ScopeName = ScopeName> {
   amount: ScriptValue | readonly [PdxOp, ScriptValue];
+  /** The nested conditions, written bare inside the block beside its named keys. */
   conditions: Trigger<S>;
 }
 
@@ -2480,6 +2481,7 @@ export interface ClosestSystemArgs {
   maxSteps?: number | readonly [PdxOp, number];
   useBypasses?: boolean;
   limit?: Trigger<"system">;
+  /** The nested conditions, written bare inside the block beside its named keys. */
   conditions: Trigger<"system">;
 }
 
@@ -2660,6 +2662,7 @@ export function compareDistance(
 /** The arguments `conditionalTooltip` takes, as the rules declare them. */
 export interface ConditionalTooltipArgs<S extends ScopeName = ScopeName> {
   trigger: Trigger<S>;
+  /** The nested conditions, written bare inside the block beside its named keys. */
   conditions: Trigger<S>;
 }
 
@@ -6386,6 +6389,7 @@ export interface CustomProgressArgs<S extends ScopeName = ScopeName> {
   currentValCoeff?: ScriptValue | readonly [PdxOp, ScriptValue];
   finalValCoeff?: ScriptValue | readonly [PdxOp, ScriptValue];
   mode?: TriggerCustomProgress;
+  /** The nested conditions, written bare inside the block beside its named keys. */
   conditions: Trigger<S>;
 }
 
@@ -6436,6 +6440,7 @@ export type CustomTooltipArgs<S extends ScopeName = ScopeName> = {
   text?: "" | string;
   failText?: "default" | string;
   successText?: string;
+  /** The nested conditions, written bare inside the block beside its named keys. */
   conditions: Trigger<S>;
 };
 
@@ -6480,6 +6485,7 @@ export function customTooltip<S extends ScopeName>(
 /** The arguments `customTooltipFail` takes, as the rules declare them. */
 export interface CustomTooltipFailArgs<S extends ScopeName = ScopeName> {
   text: string;
+  /** The nested conditions, written bare inside the block beside its named keys. */
   conditions: Trigger<S>;
 }
 
@@ -6506,6 +6512,7 @@ export function customTooltipFail<S extends ScopeName = ScopeName>(
 /** The arguments `customTooltipSuccess` takes, as the rules declare them. */
 export interface CustomTooltipSuccessArgs<S extends ScopeName = ScopeName> {
   text: string;
+  /** The nested conditions, written bare inside the block beside its named keys. */
   conditions: Trigger<S>;
 }
 
@@ -6808,6 +6815,7 @@ export function distanceToEmpire(
 /** The arguments `else_` takes, as the rules declare them. */
 export interface ElseArgs<S extends ScopeName = ScopeName> {
   limit?: Trigger<S>;
+  /** The nested conditions, written bare inside the block beside its named keys. */
   conditions: Trigger<S>;
 }
 
@@ -6833,6 +6841,7 @@ export function else_<S extends ScopeName = ScopeName>(args: ElseArgs<S>): Trigg
 /** The arguments `elseIf` takes, as the rules declare them. */
 export interface ElseIfArgs<S extends ScopeName = ScopeName> {
   limit: Trigger<S>;
+  /** The nested conditions, written bare inside the block beside its named keys. */
   conditions: Trigger<S>;
 }
 
@@ -7013,6 +7022,7 @@ export function factionApproval(op: PdxOp, value: ScriptValue): Trigger<"pop_fac
 /** The arguments `failText` takes, as the rules declare them. */
 export type FailTextArgs<S extends ScopeName = ScopeName> = {
   text: string;
+  /** The nested conditions, written bare inside the block beside its named keys. */
   conditions: Trigger<S>;
 };
 
@@ -11622,6 +11632,7 @@ export function idealPlanetClass(
 /** The arguments `if_` takes, as the rules declare them. */
 export interface IfArgs<S extends ScopeName = ScopeName> {
   limit: Trigger<S>;
+  /** The nested conditions, written bare inside the block beside its named keys. */
   conditions: Trigger<S>;
 }
 
@@ -11767,6 +11778,11 @@ export function intelLevel(value: IntelLevel | IntelLevelArgs): Trigger<"country
 /** The arguments `invertedSwitch` takes, as the rules declare them. */
 export interface InvertedSwitchArgs<S extends ScopeName = ScopeName> {
   trigger: string;
+  /**
+   * One case per key the selector may equal, in the order the game tests them; the first match wins.
+   * At least one case.
+   * Keys the block writes itself (`trigger`, `default`) are rejected.
+   */
   cases: readonly [readonly [string, Trigger<S>], ...(readonly [string, Trigger<S>])[]];
   default: Trigger<S>;
 }
@@ -18719,6 +18735,7 @@ export function subjects(op: PdxOp, value: ScriptValue): Trigger<"country"> {
 /** The arguments `successText` takes, as the rules declare them. */
 export type SuccessTextArgs<S extends ScopeName = ScopeName> = {
   text: string;
+  /** The nested conditions, written bare inside the block beside its named keys. */
   conditions?: Trigger<S>;
 };
 
@@ -18763,6 +18780,11 @@ export function support(op: PdxOp, value: ScriptValue): Trigger<"leader" | "pop_
 /** The arguments `switch_` takes, as the rules declare them. */
 export interface SwitchArgs<S extends ScopeName = ScopeName> {
   trigger: string;
+  /**
+   * One case per key the selector may equal, in the order the game tests them; the first match wins.
+   * At least one case.
+   * Keys the block writes itself (`trigger`, `default`) are rejected.
+   */
   cases: readonly [readonly [string, Trigger<S>], ...(readonly [string, Trigger<S>])[]];
   default?: Trigger<S>;
 }

@@ -189,6 +189,12 @@ describe("trigger emission", () => {
     expect(emission.code).toContain(
       "export interface SwitchArgs<S extends ScopeName = ScopeName> {\n" +
         "  trigger: string;\n" +
+        "  /**\n" +
+        "   * One case per key the selector may equal, in the order the game tests them; " +
+        "the first match wins.\n" +
+        "   * At least one case.\n" +
+        "   * Keys the block writes itself (`trigger`, `default`) are rejected.\n" +
+        "   */\n" +
         "  cases: readonly [(readonly [string, Trigger<S>]), ...(readonly [string, Trigger<S>])[]];\n" +
         "  default?: Trigger<S>;\n" +
         "}"
@@ -209,6 +215,12 @@ describe("trigger emission", () => {
     expect(emission.code).toContain(
       "export interface InvertedSwitchArgs<S extends ScopeName = ScopeName> {\n" +
         "  trigger: string;\n" +
+        "  /**\n" +
+        "   * One case per key the selector may equal, in the order the game tests them; " +
+        "the first match wins.\n" +
+        "   * At least one case.\n" +
+        "   * Keys the block writes itself (`trigger`, `default`) are rejected.\n" +
+        "   */\n" +
         "  cases: readonly [(readonly [string, Trigger<S>]), ...(readonly [string, Trigger<S>])[]];\n" +
         "  default: Trigger<S>;\n" +
         "}"

@@ -110,6 +110,7 @@ describe("emitted trigger signatures", () => {
     expect(argsDeclaration("CalcTrueIfArgs")).toMatchInlineSnapshot(`
       "export interface CalcTrueIfArgs<S extends ScopeName = ScopeName> {
         amount: ScriptValue | readonly [PdxOp, ScriptValue];
+        /** The nested conditions, written bare inside the block beside its named keys. */
         conditions: Trigger<S>;
       }"
     `);
@@ -221,6 +222,7 @@ describe("emitted trigger signatures", () => {
         text?: "" | string;
         failText?: "default" | string;
         successText?: string;
+        /** The nested conditions, written bare inside the block beside its named keys. */
         conditions: Trigger<S>;
       };"
     `);
