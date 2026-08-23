@@ -137,19 +137,19 @@ export function defineHardening(vanilla: VanillaView) {
     hideWindow: true,
     isTriggeredOnly: true,
     immediate: (country) => {
-      country.if(numOwnedPlanets(">=", 1), (scopedCountry) => {
-        scopedCountry.log("PDX_HARDENING_ENTRY");
-        scopedCountry.setCountryFlag(hardeningFlags.pdx_hardening_entry_fired);
-        scopedCountry.everyOwnedPlanet({}, (planet) => {
+      country.if(numOwnedPlanets(">=", 1), () => {
+        country.log("PDX_HARDENING_ENTRY");
+        country.setCountryFlag(hardeningFlags.pdx_hardening_entry_fired);
+        country.everyOwnedPlanet({}, (planet) => {
           planet.saveEventTargetAs(hardeningTarget);
         });
         hardeningTarget.effects((planet) => planet.log("PDX_HARDENING_TARGET_AVAILABLE_IN_ENTRY"));
-        scopedCountry.countryEvent({
+        country.countryEvent({
           id: delayedA,
           from: hardeningTarget,
           days: 1,
         });
-        scopedCountry.countryEvent({ id: delayedB, days: 1 });
+        country.countryEvent({ id: delayedB, days: 1 });
       });
     },
   });

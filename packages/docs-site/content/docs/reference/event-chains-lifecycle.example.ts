@@ -61,7 +61,7 @@ const secondSignal = events.country(2, {
             eventChain: crystalMystery,
             counter: signalsDecoded.key,
           }),
-          (owner) => owner.countryEvent({ id: signalCompleted })
+          () => country.countryEvent({ id: signalCompleted })
         );
       },
     },

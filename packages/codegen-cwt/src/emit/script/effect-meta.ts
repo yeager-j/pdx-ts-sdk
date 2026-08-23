@@ -125,11 +125,15 @@ function fieldMeta(field: ArgField): string {
     return `{ ${identity}, kind: "value-list"${scalar === null ? "" : `, scalar: ${scalarMeta(scalar)}`}${fields === null ? "" : `, fields: [${fields.map(fieldMeta).join(", ")}]`}${repeated} }`;
   }
   const kind = fieldKind(field);
+  const transition =
+    field.value.kind === "clause" && field.value.category === "effect"
+      ? `, transition: ${JSON.stringify(field.value.transition)}`
+      : "";
   const refTypes = refTypesSuffix(field.value.kind === "scalar" ? field.value.value : undefined);
   const booleanLiterals = booleanLiteralsMeta(
     field.value.kind === "scalar" ? field.value.value : undefined
   );
-  return `{ ${identity}, kind: ${JSON.stringify(kind)}${refTypes}${booleanLiterals}${spliceMeta(field.value)}${repeated} }`;
+  return `{ ${identity}, kind: ${JSON.stringify(kind)}${transition}${refTypes}${booleanLiterals}${spliceMeta(field.value)}${repeated} }`;
 }
 
 function scalarShapeMeta(shape: Extract<EffectShape, { readonly kind: "bool" | "value" }>): string {
@@ -147,7 +151,7 @@ function blockShapeMeta(
     case "map":
       return `{ kind: "map", map: ${mapMeta(shape.map)} }`;
     case "wrapper":
-      return `{ kind: "wrapper", fields: ${shape.fields === null ? "null" : `[${shape.fields.map(fieldMeta).join(", ")}]`} }`;
+      return `{ kind: "wrapper", transition: ${JSON.stringify(shape.transition)}, fields: ${shape.fields === null ? "null" : `[${shape.fields.map(fieldMeta).join(", ")}]`} }`;
     case "aliasList":
       return `{ kind: "alias-list", category: ${JSON.stringify(shape.category)} }`;
   }
@@ -167,7 +171,7 @@ function metaEntry(effect: EmittedEffect): string {
     case "map":
       return `  ${method}: { key: ${JSON.stringify(key)}, shape: { kind: "map", map: ${mapMeta(shape.map)} } },\n`;
     case "wrapper":
-      return `  ${method}: { key: ${JSON.stringify(key)}, shape: { kind: "wrapper", fields: ${fieldsOf(shape.fields)} } },\n`;
+      return `  ${method}: { key: ${JSON.stringify(key)}, shape: { kind: "wrapper", transition: ${JSON.stringify(shape.transition)}, fields: ${fieldsOf(shape.fields)} } },\n`;
     case "aliasList":
       return `  ${method}: { key: ${JSON.stringify(key)}, shape: { kind: "alias-list", category: ${JSON.stringify(shape.category)} } },\n`;
     case "scalarOrBlock":
@@ -176,7 +180,7 @@ function metaEntry(effect: EmittedEffect): string {
 }
 
 function scopeLinkMetaEntry(link: EmittedScopeLink): string {
-  return `  ${link.method}: { key: ${JSON.stringify(link.key)}, shape: { kind: "scope-link" } },\n`;
+  return `  ${link.method}: { key: ${JSON.stringify(link.key)}, shape: { kind: "scope-link", transition: "push" } },\n`;
 }
 
 /** One spliced alias category's member table, as the recorder reads it. */
@@ -242,6 +246,8 @@ export function effectMetaCode(
     "  readonly prop: string;\n" +
     "  readonly key: string;\n" +
     "  readonly kind: EffectFieldKind;\n" +
+    "  /** How a nested effect closure changes scope identity. */\n" +
+    '  readonly transition?: "same" | "push" | "replace" | "unknown";\n' +
     docComment(
       [
         "The registries an id in this field may name, when every form the",
@@ -286,16 +292,16 @@ export function effectMetaCode(
     "export type EffectBlockShapeMeta =\n" +
     '  | { readonly kind: "fields"; readonly fields: readonly EffectFieldMeta[] }\n' +
     '  | { readonly kind: "map"; readonly map: EffectMapMeta }\n' +
-    '  | { readonly kind: "wrapper"; readonly fields: readonly EffectFieldMeta[] | null }\n' +
+    '  | { readonly kind: "wrapper"; readonly transition: "same" | "push" | "replace" | "unknown"; readonly fields: readonly EffectFieldMeta[] | null }\n' +
     '  | { readonly kind: "alias-list"; readonly category: string };\n\n' +
     "export type EffectShapeMeta =\n" +
     "  | EffectScalarShapeMeta\n" +
     '  | { readonly kind: "fields"; readonly fields: readonly EffectFieldMeta[] | null }\n' +
     '  | { readonly kind: "map"; readonly map: EffectMapMeta }\n' +
-    '  | { readonly kind: "wrapper"; readonly fields: readonly EffectFieldMeta[] | null }\n' +
+    '  | { readonly kind: "wrapper"; readonly transition: "same" | "push" | "replace" | "unknown"; readonly fields: readonly EffectFieldMeta[] | null }\n' +
     '  | { readonly kind: "alias-list"; readonly category: string }\n' +
     '  | { readonly kind: "scalar-or-block"; readonly scalar: EffectScalarShapeMeta; readonly block: EffectBlockShapeMeta }\n' +
-    '  | { readonly kind: "scope-link" };\n\n' +
+    '  | { readonly kind: "scope-link"; readonly transition: "push" | "replace" | "unknown" };\n\n' +
     "export interface EffectMeta {\n" +
     "  readonly key: string;\n" +
     "  readonly shape: EffectShapeMeta;\n" +

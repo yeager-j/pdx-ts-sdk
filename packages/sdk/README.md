@@ -247,7 +247,7 @@ inside are what they are outside:
 ```ts
 allow: and(isShipClass("shipclass_science_ship"), hiddenTrigger(exists(stormWorld))),
 effect: (country) => {
-  country.hiddenEffect.effects((country) => country.setCountryFlag("mymod_quietly"));
+  country.hiddenEffect.effects(() => country.setCountryFlag("mymod_quietly"));
 },
 ```
 
@@ -266,7 +266,7 @@ intentional: indentation carries the scope transition, while `ctx` remains
 available for explicit `self`, `root`, and `from` references.
 
 ```ts
-planet.hiddenEffect.effects((planet) => {
+planet.hiddenEffect.effects(() => {
   planet.log("also inside hidden_effect");
   planet.owner.effects((country) => country.setCountryFlag("mymod_quietly"));
 });

@@ -23,6 +23,7 @@ import {
   type RuleBareValue,
   type RuleField,
   type RuleType,
+  type ScopeContext,
 } from "../cwt/model.ts";
 import { camelCase, pluralize } from "../naming.ts";
 import {
@@ -47,6 +48,7 @@ export type ScriptGenerationSkipCategory =
   | "unsupported-alias-splice"
   | "unsupported-clause"
   | "unknown-push-scope"
+  | "conflicting-clause-scope"
   | "empty-block"
   | "reserved-field-collision"
   | "computed-field-key"
@@ -162,6 +164,9 @@ export function declaredScopes(
 /** A nested script clause category supported by the shared block model. */
 export type ClauseCategory = "trigger" | "effect" | "modifier_rule";
 
+/** How a nested clause changes the callback's game-scope identity. */
+export type ScopeTransition = "same" | "push" | "replace" | "unknown";
+
 /**
  * A block whose keys the script itself supplies, lowered to one typed map.
  *
@@ -250,6 +255,8 @@ export type ArgValue =
       readonly category: ClauseCategory;
       /** The canonical pushed scope, or `null` for the enclosing scope. */
       readonly scope: string | null;
+      /** How entering this clause changes the live game scope identity. */
+      readonly transition: ScopeTransition;
       /** Whether clause entries are emitted without a named wrapper. */
       readonly splice: boolean;
     }
@@ -422,36 +429,97 @@ function expandEnumKeys(emitter: Emitter, fields: readonly RuleField[]): RuleFie
  * else the declaration's, else the enclosing rule's scope (`null`).
  * A `SkipReason` return is the classified skip reason.
  */
+export interface ClauseScope {
+  readonly scope: string | null;
+  readonly transition: ScopeTransition;
+}
+
+/**
+ * Classifies a CWT scope context by runtime identity behavior.
+ *
+ * A missing context preserves the current identity. A context without `THIS`
+ * is unknown; otherwise `replaces` distinguishes replacement from a push.
+ */
+export function scopeTransition(scope: ScopeContext | null): ScopeTransition {
+  if (scope === null) {
+    return "same";
+  }
+  if (scope.this === null) {
+    return "unknown";
+  }
+  return scope.replaces ? "replace" : "push";
+}
+
+/** Preserves a declaration's complete scope transition for nested fields. */
+export function clauseScopeContext(scope: ScopeContext | null): ClauseScope {
+  return {
+    scope: scope?.this ?? null,
+    transition: scopeTransition(scope),
+  };
+}
+
+function inheritedClauseScope(scope: ClauseScope | string | null): ClauseScope {
+  return typeof scope === "object" && scope !== null && "transition" in scope
+    ? scope
+    : { scope, transition: scope === null ? "same" : "push" };
+}
+
 function clauseScope(
   emitter: Emitter,
   name: string,
   fields: readonly RuleField[],
-  inherited: string | null
-): string | null | SkipReason {
-  const pushed =
-    fields.map((field) => field.scope?.this).find((scope) => scope != null) ?? inherited;
-  if (pushed == null) {
-    return null;
+  inherited: ClauseScope
+): ClauseScope | SkipReason {
+  const candidates = fields.map((field) =>
+    field.scope === null
+      ? inherited
+      : { scope: field.scope.this, transition: scopeTransition(field.scope) }
+  );
+  const [first] = candidates;
+  if (first === undefined) {
+    return inherited;
   }
-  const canonical = emitter.canonicalScope(pushed);
+  if (
+    candidates.some(
+      (candidate) => candidate.scope !== first.scope || candidate.transition !== first.transition
+    )
+  ) {
+    return skipReason(
+      "conflicting-clause-scope",
+      `field "${name}" has incompatible scope transitions across its declarations`
+    );
+  }
+  if (first.transition === "unknown") {
+    return skipReason("unknown-push-scope", `field "${name}" does not state a THIS scope`);
+  }
+  if (first.scope === null) {
+    return first;
+  }
+  const canonical = emitter.canonicalScope(first.scope);
   return canonical === null
-    ? skipReason("unknown-push-scope", `field "${name}" pushes an unknown scope (${pushed})`)
-    : canonical;
+    ? skipReason("unknown-push-scope", `field "${name}" pushes an unknown scope (${first.scope})`)
+    : { ...first, scope: canonical };
 }
 
 function bareClauseScope(
   emitter: Emitter,
   value: RuleBareValue,
-  inherited: string | null
-): string | null | SkipReason {
-  const pushed = value.scope?.this ?? inherited;
-  if (pushed == null) {
-    return null;
+  inherited: ClauseScope
+): ClauseScope | SkipReason {
+  const candidate =
+    value.scope === null
+      ? inherited
+      : { scope: value.scope.this, transition: scopeTransition(value.scope) };
+  if (candidate.transition === "unknown") {
+    return skipReason("unknown-push-scope", "bare clause does not state a THIS scope");
   }
-  const canonical = emitter.canonicalScope(pushed);
+  if (candidate.scope === null) {
+    return candidate;
+  }
+  const canonical = emitter.canonicalScope(candidate.scope);
   return canonical === null
-    ? skipReason("unknown-push-scope", `bare clause pushes an unknown scope (${pushed})`)
-    : canonical;
+    ? skipReason("unknown-push-scope", `bare clause pushes an unknown scope (${candidate.scope})`)
+    : { ...candidate, scope: canonical };
 }
 
 /** The authored operand type for a CWT comparison, or its skip reason. */
@@ -578,9 +646,10 @@ export function repeatedMemberType(
 export function bareBlockValue(
   emitter: Emitter,
   bare: readonly RuleBareValue[],
-  inheritedScope: string | null,
+  inheritedScope: ClauseScope | string | null,
   allowedSplices: ReadonlySet<string>
 ): Extract<ArgValue, { readonly kind: "clause" | "valueList" }> | SkipReason {
+  const inherited = inheritedClauseScope(inheritedScope);
   const clauses = bare.flatMap((value) => {
     const category = clauseOf(value.type);
     return category === null ? [] : [{ value, category }];
@@ -602,10 +671,8 @@ export function bareBlockValue(
     if (isRepeated(value.cardinality)) {
       return skipReason("repeated-nested-field", "bare block contains a repeated clause");
     }
-    const scope = bareClauseScope(emitter, value, inheritedScope);
-    return typeof scope === "object" && scope !== null
-      ? scope
-      : { kind: "clause", category, scope, splice: false };
+    const scope = bareClauseScope(emitter, value, inherited);
+    return "detail" in scope ? scope : { kind: "clause", category, ...scope, splice: false };
   }
 
   const structured = bare.filter(
@@ -631,7 +698,7 @@ export function bareBlockValue(
     const lowered = mergeBlock(
       emitter,
       block.fields,
-      structured[0]!.scope?.this ?? inheritedScope,
+      structured[0]!.scope === null ? inherited : clauseScopeContext(structured[0]!.scope),
       allowedSplices
     );
     if ("detail" in lowered) {
@@ -840,7 +907,7 @@ function mergedClause(
   emitter: Emitter,
   name: string,
   group: readonly RuleField[],
-  inheritedScope: string | null,
+  inheritedScope: ClauseScope,
   allowedSplices: ReadonlySet<string>
 ):
   | {
@@ -848,6 +915,8 @@ function mergedClause(
       readonly category: ClauseCategory;
       /** The canonical pushed scope, or `null` for the enclosing scope. */
       readonly scope: string | null;
+      /** How entering the clause changes the live game scope identity. */
+      readonly transition: ScopeTransition;
     }
   | SkipReason {
   const category = clauseOf(group[0]!.type)!;
@@ -861,7 +930,7 @@ function mergedClause(
     );
   }
   const scope = clauseScope(emitter, name, group, inheritedScope);
-  return typeof scope === "object" && scope !== null ? scope : { category, scope };
+  return "detail" in scope ? scope : { category, ...scope };
 }
 
 /** Merges a group whose every declaration is a clause hole into one typed hole. */
@@ -869,7 +938,7 @@ function mergedClauseValue(
   emitter: Emitter,
   name: string,
   group: readonly RuleField[],
-  inheritedScope: string | null,
+  inheritedScope: ClauseScope,
   allowedSplices: ReadonlySet<string>
 ): ArgValue | SkipReason {
   const clause = mergedClause(emitter, name, group, inheritedScope, allowedSplices);
@@ -885,11 +954,11 @@ function structuredArmValue(
   emitter: Emitter,
   name: string,
   declaration: RuleField & { readonly type: Extract<RuleType, { readonly kind: "block" }> },
-  inheritedScope: string | null,
+  inheritedScope: ClauseScope,
   allowedSplices: ReadonlySet<string>
 ): BlockValue | Extract<ArgValue, { readonly kind: "clause" }> | SkipReason {
   const block = declaration.type;
-  const scope = declaration.scope?.this ?? inheritedScope;
+  const scope = declaration.scope === null ? inheritedScope : clauseScopeContext(declaration.scope);
   const inArm = (detail: string): string => `field "${name}" structured arm ${detail}`;
   if (block.bare.length > 0) {
     const value = bareBlockValue(emitter, block.bare, scope, allowedSplices);
@@ -913,7 +982,7 @@ function mergedStructuredValue(
   emitter: Emitter,
   name: string,
   group: readonly RuleField[],
-  inheritedScope: string | null,
+  inheritedScope: ClauseScope,
   allowedSplices: ReadonlySet<string>
 ): ArgValue | SkipReason {
   const structured = group.filter(
@@ -985,7 +1054,7 @@ function mergedAliasValue(
   emitter: Emitter,
   name: string,
   group: readonly RuleField[],
-  inheritedScope: string | null,
+  inheritedScope: ClauseScope,
   allowedSplices: ReadonlySet<string>
 ): ArgValue | SkipReason | null {
   const categories = new Set(group.map((field) => pureSpliceCategory(field.type)));
@@ -1006,10 +1075,10 @@ function mergedAliasValue(
     return { kind: "aliasStruct", category };
   }
   const scope = clauseScope(emitter, name, group, inheritedScope);
-  if (typeof scope === "object" && scope !== null) {
+  if ("detail" in scope) {
     return scope;
   }
-  return { kind: "aliasList", category, scope, splice: false };
+  return { kind: "aliasList", category, scope: scope.scope, splice: false };
 }
 
 /**
@@ -1021,7 +1090,7 @@ function mergedArgValue(
   emitter: Emitter,
   name: string,
   group: readonly RuleField[],
-  inheritedScope: string | null,
+  inheritedScope: ClauseScope,
   allowedSplices: ReadonlySet<string>
 ): ArgValue | SkipReason {
   const clauses = group.filter((field) => clauseOf(field.type) !== null);
@@ -1084,7 +1153,7 @@ const CLAUSE_SPLICE_MEMBERS: readonly {
 function splicedMember(
   emitter: Emitter,
   splices: readonly RuleField[],
-  inheritedScope: string | null,
+  inheritedScope: ClauseScope,
   allowedSplices: ReadonlySet<string>
 ): ArgField | SkipReason {
   const categories = new Set(
@@ -1107,15 +1176,20 @@ function splicedMember(
     );
   }
   const scope = clauseScope(emitter, member, splices, inheritedScope);
-  if (typeof scope === "object" && scope !== null) {
+  if ("detail" in scope) {
     return scope;
   }
   return {
     name: member,
     value:
       clause === undefined
-        ? { kind: "aliasList", category, scope, splice: true }
-        : { kind: "clause", category: clause.category, scope, splice: true },
+        ? { kind: "aliasList", category, scope: scope.scope, splice: true }
+        : {
+            kind: "clause",
+            category: clause.category,
+            ...scope,
+            splice: true,
+          },
     optional: splices.every((field) => isOptional(field.cardinality)),
     docs: [
       ...(clause === undefined ? [] : [clause.summary]),
@@ -1132,7 +1206,7 @@ function splicedMember(
 function mergeNamedGroups(
   emitter: Emitter,
   grouped: ReadonlyMap<string, RuleField[]>,
-  inheritedScope: string | null,
+  inheritedScope: ClauseScope,
   allowedSplices: ReadonlySet<string>
 ): ArgField[] | SkipReason {
   const merged: ArgField[] = [];
@@ -1224,7 +1298,7 @@ function keyedClauseDocs(cardinality: Cardinality, reservedKeys: readonly string
 function keyedClausesField(
   emitter: Emitter,
   declarations: readonly RuleField[],
-  inheritedScope: string | null,
+  inheritedScope: ClauseScope,
   allowedSplices: ReadonlySet<string>,
   reservedKeys: readonly string[]
 ): ArgField | SkipReason {
@@ -1276,15 +1350,16 @@ function withComputedMember(
  * A block declaring computed keys beside named ones gets them as one extra
  * member — a map, or a case list when the computed keys hold clauses — placed
  * where its first declaration stands so the emitted key order matches the
- * shipped files. `inheritedScope` is the raw scope the declaration pushes, if
- * any — clause fields without their own `## push_scope` run there.
+ * shipped files. `inheritedScope` retains the declaration's scope transition,
+ * so clause fields without their own annotation run in that exact context.
  */
 export function mergeBlock(
   emitter: Emitter,
   fields: readonly RuleField[],
-  inheritedScope: string | null,
+  inheritedScope: ClauseScope | string | null,
   allowedSplices: ReadonlySet<string>
 ): KeyedBlockValue | SkipReason {
+  const inherited = inheritedClauseScope(inheritedScope);
   const splices = fields.filter((field) => field.key.kind === "aliasName");
   const partition = partitionBlock(
     emitter,
@@ -1304,11 +1379,11 @@ export function mergeBlock(
   if (partition.keyed.length > 0 && (splices.length > 0 || partition.open.length > 0)) {
     return skipReason("computed-field-key", "keyed clauses beside an alias splice or an open map");
   }
-  const merged = mergeNamedGroups(emitter, partition.named, inheritedScope, allowedSplices);
+  const merged = mergeNamedGroups(emitter, partition.named, inherited, allowedSplices);
   if (!Array.isArray(merged)) {
     return merged;
   }
-  const members = appendSplicedMember(emitter, merged, splices, inheritedScope, allowedSplices);
+  const members = appendSplicedMember(emitter, merged, splices, inherited, allowedSplices);
   if (!Array.isArray(members)) {
     return members;
   }
@@ -1316,7 +1391,7 @@ export function mergeBlock(
     const cases = keyedClausesField(
       emitter,
       partition.keyed,
-      inheritedScope,
+      inherited,
       allowedSplices,
       members.map((field) => field.name)
     );
@@ -1356,7 +1431,7 @@ function appendSplicedMember(
   emitter: Emitter,
   merged: readonly ArgField[],
   splices: readonly RuleField[],
-  inheritedScope: string | null,
+  inheritedScope: ClauseScope,
   allowedSplices: ReadonlySet<string>
 ): ArgField[] | SkipReason {
   if (splices.length === 0) {

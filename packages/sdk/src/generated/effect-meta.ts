@@ -57,6 +57,8 @@ export interface EffectFieldMeta {
   readonly prop: string;
   readonly key: string;
   readonly kind: EffectFieldKind;
+  /** How a nested effect closure changes scope identity. */
+  readonly transition?: "same" | "push" | "replace" | "unknown";
   /**
    * The registries an id in this field may name, when every form the
    * field admits is a `<type>` reference. Undefined the moment one arm is
@@ -102,21 +104,29 @@ export type EffectScalarShapeMeta =
 export type EffectBlockShapeMeta =
   | { readonly kind: "fields"; readonly fields: readonly EffectFieldMeta[] }
   | { readonly kind: "map"; readonly map: EffectMapMeta }
-  | { readonly kind: "wrapper"; readonly fields: readonly EffectFieldMeta[] | null }
+  | {
+      readonly kind: "wrapper";
+      readonly transition: "same" | "push" | "replace" | "unknown";
+      readonly fields: readonly EffectFieldMeta[] | null;
+    }
   | { readonly kind: "alias-list"; readonly category: string };
 
 export type EffectShapeMeta =
   | EffectScalarShapeMeta
   | { readonly kind: "fields"; readonly fields: readonly EffectFieldMeta[] | null }
   | { readonly kind: "map"; readonly map: EffectMapMeta }
-  | { readonly kind: "wrapper"; readonly fields: readonly EffectFieldMeta[] | null }
+  | {
+      readonly kind: "wrapper";
+      readonly transition: "same" | "push" | "replace" | "unknown";
+      readonly fields: readonly EffectFieldMeta[] | null;
+    }
   | { readonly kind: "alias-list"; readonly category: string }
   | {
       readonly kind: "scalar-or-block";
       readonly scalar: EffectScalarShapeMeta;
       readonly block: EffectBlockShapeMeta;
     }
-  | { readonly kind: "scope-link" };
+  | { readonly kind: "scope-link"; readonly transition: "push" | "replace" | "unknown" };
 
 export interface EffectMeta {
   readonly key: string;
@@ -281,7 +291,7 @@ export const ALIAS_LIST_META: Record<string, readonly EffectFieldMeta[] | undefi
       kind: "fields",
       fields: [
         { prop: "id", key: "id", kind: "value" },
-        { prop: "effects", key: "effects", kind: "effect", splice: true },
+        { prop: "effects", key: "effects", kind: "effect", transition: "same", splice: true },
       ],
     },
     {
@@ -370,7 +380,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       fields: [
         { prop: "key", key: "key", kind: "value" },
         { prop: "addToOwned", key: "add_to_owned", kind: "value" },
-        { prop: "effect", key: "effect", kind: "effect" },
+        { prop: "effect", key: "effect", kind: "effect", transition: "push" },
       ],
     },
   },
@@ -684,7 +694,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         { prop: "area", key: "area", kind: "value" },
         { prop: "tier", key: "tier", kind: "value", refTypes: ["technology_tier"] },
         { prop: "addProgress", key: "add_progress", kind: "value" },
-        { prop: "failEffects", key: "fail_effects", kind: "effect" },
+        { prop: "failEffects", key: "fail_effects", kind: "effect", transition: "same" },
         { prop: "ignorePrereqs", key: "ignore_prereqs", kind: "value" },
         { prop: "onlyRare", key: "only_rare", kind: "value" },
         { prop: "ignoreInsight", key: "ignore_insight", kind: "value" },
@@ -933,28 +943,38 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ai_trade_facility",
     shape: {
       kind: "wrapper",
+      transition: "same",
       fields: [
         { prop: "offerHireMercenaryFleet", key: "offer_hire_mercenary_fleet", kind: "value" },
         { prop: "offerProlongFleetContract", key: "offer_prolong_fleet_contract", kind: "value" },
-        { prop: "infoGathering", key: "info_gathering", kind: "effect" },
-        { prop: "optionSelection", key: "option_selection", kind: "effect" },
+        { prop: "infoGathering", key: "info_gathering", kind: "effect", transition: "same" },
+        { prop: "optionSelection", key: "option_selection", kind: "effect", transition: "same" },
         { prop: "allow", key: "allow", kind: "trigger" },
       ],
     },
   },
-  alliance: { key: "alliance", shape: { kind: "scope-link" } },
-  archaeologicalSite: { key: "archaeological_site", shape: { kind: "scope-link" } },
-  armyLeader: { key: "army_leader", shape: { kind: "scope-link" } },
-  assemblingSpecies: { key: "assembling_species", shape: { kind: "scope-link" } },
+  alliance: { key: "alliance", shape: { kind: "scope-link", transition: "push" } },
+  archaeologicalSite: {
+    key: "archaeological_site",
+    shape: { kind: "scope-link", transition: "push" },
+  },
+  armyLeader: { key: "army_leader", shape: { kind: "scope-link", transition: "push" } },
+  assemblingSpecies: {
+    key: "assembling_species",
+    shape: { kind: "scope-link", transition: "push" },
+  },
   assignEspionageAsset: {
     key: "assign_espionage_asset",
     shape: { kind: "value", refTypes: ["espionage_asset"], objectKinds: ["typed-ref"] },
   },
   assignLeader: { key: "assign_leader", shape: { kind: "value", objectKinds: ["scope-ref"] } },
-  associatedFederation: { key: "associated_federation", shape: { kind: "scope-link" } },
-  astralRift: { key: "astral_rift", shape: { kind: "scope-link" } },
-  attacker: { key: "attacker", shape: { kind: "scope-link" } },
-  auraOwner: { key: "aura_owner", shape: { kind: "scope-link" } },
+  associatedFederation: {
+    key: "associated_federation",
+    shape: { kind: "scope-link", transition: "push" },
+  },
+  astralRift: { key: "astral_rift", shape: { kind: "scope-link", transition: "push" } },
+  attacker: { key: "attacker", shape: { kind: "scope-link", transition: "push" } },
+  auraOwner: { key: "aura_owner", shape: { kind: "scope-link", transition: "push" } },
   autoFollowFleet: {
     key: "auto_follow_fleet",
     shape: {
@@ -986,7 +1006,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
-  backgroundPlanet: { key: "background_planet", shape: { kind: "scope-link" } },
+  backgroundPlanet: { key: "background_planet", shape: { kind: "scope-link", transition: "push" } },
   beginEventChain: {
     key: "begin_event_chain",
     shape: {
@@ -997,9 +1017,12 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
-  branchOfficeOwner: { key: "branch_office_owner", shape: { kind: "scope-link" } },
+  branchOfficeOwner: {
+    key: "branch_office_owner",
+    shape: { kind: "scope-link", transition: "push" },
+  },
   break_: { key: "break", shape: { kind: "bool" } },
-  builtSpecies: { key: "built_species", shape: { kind: "scope-link" } },
+  builtSpecies: { key: "built_species", shape: { kind: "scope-link", transition: "push" } },
   calculateModifier: { key: "calculate_modifier", shape: { kind: "bool" } },
   cancelContract: {
     key: "cancel_contract",
@@ -1016,9 +1039,9 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: { kind: "value", refTypes: ["resolution"], objectKinds: ["typed-ref"] },
   },
   cancelTerraformation: { key: "cancel_terraformation", shape: { kind: "bool" } },
-  capitalScope: { key: "capital_scope", shape: { kind: "scope-link" } },
-  capitalStar: { key: "capital_star", shape: { kind: "scope-link" } },
-  carrier: { key: "carrier", shape: { kind: "scope-link" } },
+  capitalScope: { key: "capital_scope", shape: { kind: "scope-link", transition: "push" } },
+  capitalStar: { key: "capital_star", shape: { kind: "scope-link", transition: "push" } },
+  carrier: { key: "carrier", shape: { kind: "scope-link", transition: "push" } },
   ceilingVariable: { key: "ceiling_variable", shape: { kind: "value" } },
   changeBackgroundEthic: {
     key: "change_background_ethic",
@@ -1279,7 +1302,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         { prop: "randomizeTraits", key: "randomize_traits", kind: "value" },
         { prop: "leaderAgeMin", key: "leader_age_min", kind: "value" },
         { prop: "leaderAgeMax", key: "leader_age_max", kind: "value" },
-        { prop: "effect", key: "effect", kind: "effect" },
+        { prop: "effect", key: "effect", kind: "effect", transition: "push" },
         { prop: "customDescription", key: "custom_description", kind: "value" },
         { prop: "customCatchPhrase", key: "custom_catch_phrase", kind: "value" },
         { prop: "skipBackgroundGeneration", key: "skip_background_generation", kind: "value" },
@@ -1294,6 +1317,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "closest_system",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "minSteps", key: "min_steps", kind: "value" },
         { prop: "maxSteps", key: "max_steps", kind: "value" },
@@ -1302,7 +1326,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
-  colony: { key: "colony", shape: { kind: "scope-link" } },
+  colony: { key: "colony", shape: { kind: "scope-link", transition: "push" } },
   completeCrisisObjective: {
     key: "complete_crisis_objective",
     shape: { kind: "value", refTypes: ["crisis_objective"], objectKinds: ["typed-ref"] },
@@ -1323,8 +1347,8 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   },
   completeTutorialStep: { key: "complete_tutorial_step", shape: { kind: "value" } },
   conquer: { key: "conquer", shape: { kind: "value", objectKinds: ["scope-ref"] } },
-  contactCountry: { key: "contact_country", shape: { kind: "scope-link" } },
-  controller: { key: "controller", shape: { kind: "scope-link" } },
+  contactCountry: { key: "contact_country", shape: { kind: "scope-link", transition: "push" } },
+  controller: { key: "controller", shape: { kind: "scope-link", transition: "push" } },
   convertToSpecialist: {
     key: "convert_to_specialist",
     shape: { kind: "value", objectKinds: ["typed-ref"] },
@@ -1462,7 +1486,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         { prop: "duration", key: "duration", kind: "value" },
         { prop: "isWreck", key: "is_wreck", kind: "value" },
         { prop: "target", key: "target", kind: "value" },
-        { prop: "effect", key: "effect", kind: "effect" },
+        { prop: "effect", key: "effect", kind: "effect", transition: "push" },
       ],
     },
   },
@@ -1492,7 +1516,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         { prop: "type", key: "type", kind: "value", refTypes: ["army"] },
         { prop: "species", key: "species", kind: "value" },
         { prop: "leader", key: "leader", kind: "value" },
-        { prop: "effect", key: "effect", kind: "effect" },
+        { prop: "effect", key: "effect", kind: "effect", transition: "push" },
       ],
     },
   },
@@ -1511,7 +1535,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         { prop: "shipName", key: "ship_name", kind: "value" },
         { prop: "armyName", key: "army_name", kind: "value" },
         { prop: "species", key: "species", kind: "value" },
-        { prop: "effect", key: "effect", kind: "effect" },
+        { prop: "effect", key: "effect", kind: "effect", transition: "push" },
       ],
     },
   },
@@ -1536,7 +1560,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         { prop: "size", key: "size", kind: "value" },
         { prop: "canOverflow", key: "can_overflow", kind: "value" },
         { prop: "shipDesigns", key: "ship_designs", kind: "value-list", scalar: {} },
-        { prop: "effect", key: "effect", kind: "effect" },
+        { prop: "effect", key: "effect", kind: "effect", transition: "push" },
       ],
     },
   },
@@ -1547,7 +1571,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       fields: [
         { prop: "owner", key: "owner", kind: "value" },
         { prop: "type", key: "type", kind: "value", refTypes: ["bypass"] },
-        { prop: "effect", key: "effect", kind: "effect" },
+        { prop: "effect", key: "effect", kind: "effect", transition: "replace" },
       ],
     },
   },
@@ -1666,7 +1690,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
             fields: [{ prop: "ethic", key: "ethic", kind: "value", repeated: true }],
           },
         },
-        { prop: "effect", key: "effect", kind: "effect" },
+        { prop: "effect", key: "effect", kind: "effect", transition: "push" },
         {
           prop: "graphicalCulture",
           key: "graphical_culture",
@@ -1743,7 +1767,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       kind: "fields",
       fields: [
         { prop: "type", key: "type", kind: "value", refTypes: ["espionage_asset"] },
-        { prop: "effect", key: "effect", kind: "effect" },
+        { prop: "effect", key: "effect", kind: "effect", transition: "push" },
       ],
     },
   },
@@ -1785,7 +1809,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           ],
           repeated: true,
         },
-        { prop: "effect", key: "effect", kind: "effect" },
+        { prop: "effect", key: "effect", kind: "effect", transition: "push" },
         { prop: "growthStage", key: "growth_stage", kind: "value" },
         { prop: "createColony", key: "create_colony", kind: "value" },
       ],
@@ -1855,7 +1879,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         { prop: "leaderAgeMin", key: "leader_age_min", kind: "value" },
         { prop: "leaderAgeMax", key: "leader_age_max", kind: "value" },
         { prop: "useRegnalName", key: "use_regnal_name", kind: "value" },
-        { prop: "effect", key: "effect", kind: "effect" },
+        { prop: "effect", key: "effect", kind: "effect", transition: "push" },
         { prop: "customDescription", key: "custom_description", kind: "value" },
         { prop: "customCatchPhrase", key: "custom_catch_phrase", kind: "value" },
         { prop: "skipBackgroundGeneration", key: "skip_background_generation", kind: "value" },
@@ -1902,7 +1926,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       fields: [
         { prop: "owner", key: "owner", kind: "value" },
         { prop: "scaledSize", key: "scaled_size", kind: "modifiers" },
-        { prop: "effect", key: "effect", kind: "effect" },
+        { prop: "effect", key: "effect", kind: "effect", transition: "same" },
       ],
     },
   },
@@ -1912,7 +1936,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       kind: "fields",
       fields: [
         { prop: "owner", key: "owner", kind: "value" },
-        { prop: "effect", key: "effect", kind: "effect" },
+        { prop: "effect", key: "effect", kind: "effect", transition: "push" },
       ],
     },
   },
@@ -1923,7 +1947,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       fields: [
         { prop: "name", key: "name", kind: "value" },
         { prop: "radius", key: "radius", kind: "value" },
-        { prop: "effect", key: "effect", kind: "effect" },
+        { prop: "effect", key: "effect", kind: "effect", transition: "push" },
       ],
     },
   },
@@ -1964,7 +1988,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         { prop: "size", key: "size", kind: "value" },
         { prop: "random", key: "random", kind: "value" },
         { prop: "growthCategory", key: "growth_category", kind: "value" },
-        { prop: "effect", key: "effect", kind: "effect" },
+        { prop: "effect", key: "effect", kind: "effect", transition: "push" },
       ],
     },
   },
@@ -2000,7 +2024,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
             { prop: "max", key: "max", kind: "value" },
           ],
         },
-        { prop: "effect", key: "effect", kind: "effect" },
+        { prop: "effect", key: "effect", kind: "effect", transition: "push" },
       ],
     },
   },
@@ -2085,7 +2109,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         { prop: "nameList", key: "name_list", kind: "value" },
         { prop: "shipPrefix", key: "ship_prefix", kind: "value" },
         { prop: "releasedFromCountry", key: "released_from_country", kind: "value" },
-        { prop: "effect", key: "effect", kind: "effect" },
+        { prop: "effect", key: "effect", kind: "effect", transition: "push" },
       ],
     },
   },
@@ -2095,7 +2119,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       kind: "fields",
       fields: [
         { prop: "owner", key: "owner", kind: "value" },
-        { prop: "effect", key: "effect", kind: "effect" },
+        { prop: "effect", key: "effect", kind: "effect", transition: "push" },
       ],
     },
   },
@@ -2139,7 +2163,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
             { prop: "trait", key: "trait", kind: "value", repeated: true },
           ],
         },
-        { prop: "effect", key: "effect", kind: "effect" },
+        { prop: "effect", key: "effect", kind: "effect", transition: "push" },
       ],
     },
   },
@@ -2178,7 +2202,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         { prop: "age", key: "age", kind: "value" },
         { prop: "rarity", key: "rarity", kind: "value" },
         { prop: "createColony", key: "create_colony", kind: "value" },
-        { prop: "effect", key: "effect", kind: "effect" },
+        { prop: "effect", key: "effect", kind: "effect", transition: "push" },
         { prop: "growthStage", key: "growth_stage", kind: "value" },
       ],
     },
@@ -2193,7 +2217,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       kind: "fields",
       fields: [
         { prop: "count", key: "count", kind: "value" },
-        { prop: "effect", key: "effect", kind: "effect" },
+        { prop: "effect", key: "effect", kind: "effect", transition: "same" },
       ],
     },
   },
@@ -2280,7 +2304,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           scalar: { booleanLiterals: ["no"], objectKinds: ["typed-ref"] },
           block: { kind: "value-list", scalar: { objectKinds: ["typed-ref"] } },
         },
-        { prop: "effect", key: "effect", kind: "effect" },
+        { prop: "effect", key: "effect", kind: "effect", transition: "push" },
         {
           prop: "blockedArchetypes",
           key: "blocked_archetypes",
@@ -2312,11 +2336,11 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           refTypes: ["starbase_building"],
           repeated: true,
         },
-        { prop: "effect", key: "effect", kind: "effect" },
+        { prop: "effect", key: "effect", kind: "effect", transition: "push" },
       ],
     },
   },
-  creator: { key: "creator", shape: { kind: "scope-link" } },
+  creator: { key: "creator", shape: { kind: "scope-link", transition: "push" } },
   customTooltip: { key: "custom_tooltip", shape: { kind: "value" } },
   customTooltipWithParams: {
     key: "custom_tooltip_with_params",
@@ -2376,13 +2400,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
             ],
           },
         },
-        { prop: "effect", key: "effect", kind: "effect" },
+        { prop: "effect", key: "effect", kind: "effect", transition: "push" },
       ],
     },
   },
-  decliningSpecies: { key: "declining_species", shape: { kind: "scope-link" } },
+  decliningSpecies: { key: "declining_species", shape: { kind: "scope-link", transition: "push" } },
   decreaseCouncilSize: { key: "decrease_council_size", shape: { kind: "bool" } },
-  defender: { key: "defender", shape: { kind: "scope-link" } },
+  defender: { key: "defender", shape: { kind: "scope-link", transition: "push" } },
   deleteDimensionalFleet: {
     key: "delete_dimensional_fleet",
     shape: {
@@ -2422,7 +2446,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: { kind: "value", objectKinds: ["scope-ref"] },
   },
   deleteShip: { key: "delete_ship", shape: { kind: "value", objectKinds: ["scope-ref"] } },
-  design: { key: "design", shape: { kind: "scope-link" } },
+  design: { key: "design", shape: { kind: "scope-link", transition: "push" } },
   destroyAmbientObject: {
     key: "destroy_ambient_object",
     shape: { kind: "value", objectKinds: ["scope-ref"] },
@@ -2526,7 +2550,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         { prop: "center", key: "center", kind: "value" },
         { prop: "ownedPlanetsPercentage", key: "owned_planets_percentage", kind: "value" },
         { prop: "planetLimit", key: "planet_limit", kind: "trigger" },
-        { prop: "effect", key: "effect", kind: "effect" },
+        { prop: "effect", key: "effect", kind: "effect", transition: "push" },
       ],
     },
   },
@@ -2597,7 +2621,10 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   endRivalry: { key: "end_rivalry", shape: { kind: "value", objectKinds: ["scope-ref"] } },
   endTruce: { key: "end_truce", shape: { kind: "value", objectKinds: ["scope-ref"] } },
   endgameTelemetry: { key: "endgame_telemetry", shape: { kind: "value" } },
-  envoyLocationCountry: { key: "envoy_location_country", shape: { kind: "scope-link" } },
+  envoyLocationCountry: {
+    key: "envoy_location_country",
+    shape: { kind: "scope-link", transition: "push" },
+  },
   establishBranchOffice: {
     key: "establish_branch_office",
     shape: { kind: "value", objectKinds: ["scope-ref"] },
@@ -2622,423 +2649,835 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   },
   everyActiveFirstContact: {
     key: "every_active_first_contact",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyAgreement: {
     key: "every_agreement",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyAmbientObject: {
     key: "every_ambient_object",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyArchaeologicalSite: {
     key: "every_archaeological_site",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyAssociate: {
     key: "every_associate",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyAstralRift: {
     key: "every_astral_rift",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyAttacker: {
     key: "every_attacker",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyAvailableDebris: {
     key: "every_available_debris",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyBypass: {
     key: "every_bypass",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyBypassInSystem: {
     key: "every_bypass_in_system",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyCombatantFleet: {
     key: "every_combatant_fleet",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyControlledColony: {
     key: "every_controlled_colony",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyControlledFleet: {
     key: "every_controlled_fleet",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyControlledPlanet: {
     key: "every_controlled_planet",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyControlledShip: {
     key: "every_controlled_ship",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyCosmicStorm: {
     key: "every_cosmic_storm",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyCosmicStormEndPosition: {
     key: "every_cosmic_storm_end_position",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyCosmicStormStartPosition: {
     key: "every_cosmic_storm_start_position",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyCouncilMember: {
     key: "every_council_member",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyCountry: {
     key: "every_country",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyCountryNeighborToSystem: {
     key: "every_country_neighbor_to_system",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyDefender: {
     key: "every_defender",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyDeposit: {
     key: "every_deposit",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyEnslavedSpecies: {
     key: "every_enslaved_species",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyEnvoy: {
     key: "every_envoy",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyEspionageAsset: {
     key: "every_espionage_asset",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyEspionageOperation: {
     key: "every_espionage_operation",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyExhibit: {
     key: "every_exhibit",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyExistingSpeciesTraits: {
     key: "every_existing_species_traits",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyFederation: {
     key: "every_federation",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyFederationAlly: {
     key: "every_federation_ally",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyFirstContact: {
     key: "every_first_contact",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyFleetInOrbit: {
     key: "every_fleet_in_orbit",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyFleetInSystem: {
     key: "every_fleet_in_system",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyGalaxyFleet: {
     key: "every_galaxy_fleet",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyGalaxyPlanet: {
     key: "every_galaxy_planet",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyGalaxySector: {
     key: "every_galaxy_sector",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyGalaxySpecies: {
     key: "every_galaxy_species",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyGalcomMember: {
     key: "every_galcom_member",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyGroundCombatAttacker: {
     key: "every_ground_combat_attacker",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyGroundCombatDefender: {
     key: "every_ground_combat_defender",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyIssuedMission: {
     key: "every_issued_mission",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyJobPopGroup: {
     key: "every_job_pop_group",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyMegastructure: {
     key: "every_megastructure",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyMember: {
     key: "every_member",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyMoon: {
     key: "every_moon",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyNeighborCountry: {
     key: "every_neighbor_country",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyNeighborSystem: {
     key: "every_neighbor_system",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyNeighborSystemEuclidean: {
     key: "every_neighbor_system_euclidean",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyObservedPreFtlWithinBorder: {
     key: "every_observed_pre_ftl_within_border",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyOrbitalStation: {
     key: "every_orbital_station",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyOwnedArmy: {
     key: "every_owned_army",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyOwnedColony: {
     key: "every_owned_colony",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyOwnedContract: {
     key: "every_owned_contract",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyOwnedDesign: {
     key: "every_owned_design",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyOwnedFleet: {
     key: "every_owned_fleet",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyOwnedLeader: {
     key: "every_owned_leader",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyOwnedMegastructure: {
     key: "every_owned_megastructure",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyOwnedMission: {
     key: "every_owned_mission",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyOwnedNonprimaryStarbase: {
     key: "every_owned_nonprimary_starbase",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyOwnedPlanet: {
     key: "every_owned_planet",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyOwnedPopGroup: {
     key: "every_owned_pop_group",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyOwnedPopJob: {
     key: "every_owned_pop_job",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyOwnedPopSpecies: {
     key: "every_owned_pop_species",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyOwnedSector: {
     key: "every_owned_sector",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyOwnedShip: {
     key: "every_owned_ship",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyOwnedSpecies: {
     key: "every_owned_species",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyOwnedStarbase: {
     key: "every_owned_starbase",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyOwnedStormInfluenceField: {
     key: "every_owned_storm_influence_field",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyPlanetArmy: {
     key: "every_planet_army",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyPlanetWithinBorder: {
     key: "every_planet_within_border",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyPlayableCountry: {
     key: "every_playable_country",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyPoolLeader: {
     key: "every_pool_leader",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyPopFaction: {
     key: "every_pop_faction",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyPreFtlWithinBorder: {
     key: "every_pre_ftl_within_border",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyRelation: {
     key: "every_relation",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyRimSystem: {
     key: "every_rim_system",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyRivalCountry: {
     key: "every_rival_country",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyShipInSystem: {
     key: "every_ship_in_system",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everySituation: {
     key: "every_situation",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everySpeciesPopGroup: {
     key: "every_species_pop_group",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everySpynetwork: {
     key: "every_spynetwork",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyStarbaseInNetwork: {
     key: "every_starbase_in_network",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyStarbaseInSystem: {
     key: "every_starbase_in_system",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everySubject: {
     key: "every_subject",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everySystem: {
     key: "every_system",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everySystemAddedToStorm: {
     key: "every_system_added_to_storm",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everySystemAmbientObject: {
     key: "every_system_ambient_object",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everySystemInCluster: {
     key: "every_system_in_cluster",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everySystemInCosmicStormInfluenceField: {
     key: "every_system_in_cosmic_storm_influence_field",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everySystemMegastructure: {
     key: "every_system_megastructure",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everySystemPlanet: {
     key: "every_system_planet",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everySystemPlanetColony: {
     key: "every_system_planet_colony",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everySystemRemovedFromStorm: {
     key: "every_system_removed_from_storm",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everySystemShipColony: {
     key: "every_system_ship_colony",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everySystemWithAura: {
     key: "every_system_with_aura",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everySystemWithinBorder: {
     key: "every_system_within_border",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everySystemWithinStorm: {
     key: "every_system_within_storm",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyTargetingSituation: {
     key: "every_targeting_situation",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyTraitAvailableForSpecies: {
     key: "every_trait_available_for_species",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyTraitOfSpecies: {
     key: "every_trait_of_species",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyWar: {
     key: "every_war",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
   everyWarParticipant: {
     key: "every_war_participant",
-    shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
+    shape: {
+      kind: "wrapper",
+      transition: "push",
+      fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+    },
   },
-  excavatorFleet: { key: "excavator_fleet", shape: { kind: "scope-link" } },
+  excavatorFleet: { key: "excavator_fleet", shape: { kind: "scope-link", transition: "push" } },
   exileLeaderAs: { key: "exile_leader_as", shape: { kind: "value" } },
   expireSiteEvent: {
     key: "expire_site_event",
     shape: { kind: "value", refTypes: ["event.fleet"], objectKinds: ["typed-ref"] },
   },
-  explorer: { key: "explorer", shape: { kind: "scope-link" } },
+  explorer: { key: "explorer", shape: { kind: "scope-link", transition: "push" } },
   exportModifierDurationToVariable: {
     key: "export_modifier_duration_to_variable",
     shape: {
@@ -3106,8 +3545,8 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
-  federation: { key: "federation", shape: { kind: "scope-link" } },
-  federationLeader: { key: "federation_leader", shape: { kind: "scope-link" } },
+  federation: { key: "federation", shape: { kind: "scope-link", transition: "push" } },
+  federationLeader: { key: "federation_leader", shape: { kind: "scope-link", transition: "push" } },
   fillAstralRiftEventPool: { key: "fill_astral_rift_event_pool", shape: { kind: "bool" } },
   finishAllResearches: { key: "finish_all_researches", shape: { kind: "bool" } },
   finishAstralRift: { key: "finish_astral_rift", shape: { kind: "bool" } },
@@ -3138,8 +3577,11 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
-  firstDamagingCountry: { key: "first_damaging_country", shape: { kind: "scope-link" } },
-  fleet: { key: "fleet", shape: { kind: "scope-link" } },
+  firstDamagingCountry: {
+    key: "first_damaging_country",
+    shape: { kind: "scope-link", transition: "push" },
+  },
+  fleet: { key: "fleet", shape: { kind: "scope-link", transition: "push" } },
   fleetActionResearchSpecialProject: {
     key: "fleet_action_research_special_project",
     shape: {
@@ -3174,10 +3616,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "force_show_espionage",
     shape: { kind: "value", objectKinds: ["scope-ref"] },
   },
-  founderSpecies: { key: "founder_species", shape: { kind: "scope-link" } },
+  founderSpecies: { key: "founder_species", shape: { kind: "scope-link", transition: "push" } },
   freezeLeaderAge: { key: "freeze_leader_age", shape: { kind: "bool" } },
-  galacticCustodian: { key: "galactic_custodian", shape: { kind: "scope-link" } },
-  galacticEmperor: { key: "galactic_emperor", shape: { kind: "scope-link" } },
+  galacticCustodian: {
+    key: "galactic_custodian",
+    shape: { kind: "scope-link", transition: "push" },
+  },
+  galacticEmperor: { key: "galactic_emperor", shape: { kind: "scope-link", transition: "push" } },
   getGalaxySetupValue: {
     key: "get_galaxy_setup_value",
     shape: {
@@ -3255,7 +3700,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     },
   },
   goToNextPreFtlAge: { key: "go_to_next_pre_ftl_age", shape: { kind: "bool" } },
-  growingSpecies: { key: "growing_species", shape: { kind: "scope-link" } },
+  growingSpecies: { key: "growing_species", shape: { kind: "scope-link", transition: "push" } },
   guaranteeCountry: {
     key: "guarantee_country",
     shape: {
@@ -3264,10 +3709,10 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       block: { kind: "fields", fields: [{ prop: "target", key: "target", kind: "value" }] },
     },
   },
-  heir: { key: "heir", shape: { kind: "scope-link" } },
-  homePlanet: { key: "home_planet", shape: { kind: "scope-link" } },
+  heir: { key: "heir", shape: { kind: "scope-link", transition: "push" } },
+  homePlanet: { key: "home_planet", shape: { kind: "scope-link", transition: "push" } },
   increaseCouncilSize: { key: "increase_council_size", shape: { kind: "bool" } },
-  instigator: { key: "instigator", shape: { kind: "scope-link" } },
+  instigator: { key: "instigator", shape: { kind: "scope-link", transition: "push" } },
   integrateSpecies: { key: "integrate_species", shape: { kind: "bool" } },
   issueContract: {
     key: "issue_contract",
@@ -3280,7 +3725,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
-  issuer: { key: "issuer", shape: { kind: "scope-link" } },
+  issuer: { key: "issuer", shape: { kind: "scope-link", transition: "push" } },
   joinAlliance: {
     key: "join_alliance",
     shape: {
@@ -3357,23 +3802,53 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
-  lastAddedDeposit: { key: "last_added_deposit", shape: { kind: "scope-link" } },
-  lastCreatedAmbientObject: { key: "last_created_ambient_object", shape: { kind: "scope-link" } },
-  lastCreatedArmy: { key: "last_created_army", shape: { kind: "scope-link" } },
-  lastCreatedCosmicStorm: { key: "last_created_cosmic_storm", shape: { kind: "scope-link" } },
+  lastAddedDeposit: {
+    key: "last_added_deposit",
+    shape: { kind: "scope-link", transition: "push" },
+  },
+  lastCreatedAmbientObject: {
+    key: "last_created_ambient_object",
+    shape: { kind: "scope-link", transition: "push" },
+  },
+  lastCreatedArmy: { key: "last_created_army", shape: { kind: "scope-link", transition: "push" } },
+  lastCreatedCosmicStorm: {
+    key: "last_created_cosmic_storm",
+    shape: { kind: "scope-link", transition: "push" },
+  },
   lastCreatedCosmicStormInfluenceField: {
     key: "last_created_cosmic_storm_influence_field",
-    shape: { kind: "scope-link" },
+    shape: { kind: "scope-link", transition: "push" },
   },
-  lastCreatedCountry: { key: "last_created_country", shape: { kind: "scope-link" } },
-  lastCreatedDesign: { key: "last_created_design", shape: { kind: "scope-link" } },
-  lastCreatedFleet: { key: "last_created_fleet", shape: { kind: "scope-link" } },
-  lastCreatedLeader: { key: "last_created_leader", shape: { kind: "scope-link" } },
-  lastCreatedPopFaction: { key: "last_created_pop_faction", shape: { kind: "scope-link" } },
-  lastCreatedShip: { key: "last_created_ship", shape: { kind: "scope-link" } },
-  lastCreatedSpecies: { key: "last_created_species", shape: { kind: "scope-link" } },
-  lastCreatedSystem: { key: "last_created_system", shape: { kind: "scope-link" } },
-  leader: { key: "leader", shape: { kind: "scope-link" } },
+  lastCreatedCountry: {
+    key: "last_created_country",
+    shape: { kind: "scope-link", transition: "push" },
+  },
+  lastCreatedDesign: {
+    key: "last_created_design",
+    shape: { kind: "scope-link", transition: "push" },
+  },
+  lastCreatedFleet: {
+    key: "last_created_fleet",
+    shape: { kind: "scope-link", transition: "push" },
+  },
+  lastCreatedLeader: {
+    key: "last_created_leader",
+    shape: { kind: "scope-link", transition: "push" },
+  },
+  lastCreatedPopFaction: {
+    key: "last_created_pop_faction",
+    shape: { kind: "scope-link", transition: "push" },
+  },
+  lastCreatedShip: { key: "last_created_ship", shape: { kind: "scope-link", transition: "push" } },
+  lastCreatedSpecies: {
+    key: "last_created_species",
+    shape: { kind: "scope-link", transition: "push" },
+  },
+  lastCreatedSystem: {
+    key: "last_created_system",
+    shape: { kind: "scope-link", transition: "push" },
+  },
+  leader: { key: "leader", shape: { kind: "scope-link", transition: "push" } },
   leaveAlliance: {
     key: "leave_alliance",
     shape: {
@@ -3397,14 +3872,14 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
-  lockCountry: { key: "lock_country", shape: { kind: "scope-link" } },
+  lockCountry: { key: "lock_country", shape: { kind: "scope-link", transition: "push" } },
   lockStormInPlace: { key: "lock_storm_in_place", shape: { kind: "bool" } },
   log: {
     key: "log",
     shape: {
       kind: "scalar-or-block",
       scalar: { kind: "value" },
-      block: { kind: "wrapper", fields: null },
+      block: { kind: "wrapper", transition: "same", fields: null },
     },
   },
   logError: { key: "log_error", shape: { kind: "value" } },
@@ -3413,7 +3888,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: { kind: "fields", fields: [{ prop: "target", key: "target", kind: "value" }] },
   },
   mergeSpecies: { key: "merge_species", shape: { kind: "bool" } },
-  miningStation: { key: "mining_station", shape: { kind: "scope-link" } },
+  miningStation: { key: "mining_station", shape: { kind: "scope-link", transition: "push" } },
   modifyArmy: {
     key: "modify_army",
     shape: {
@@ -3458,10 +3933,15 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         { prop: "changeScopedSpecies", key: "change_scoped_species", kind: "value" },
         { prop: "portrait", key: "portrait", kind: "value" },
         { prop: "addRandomSpeciesTrait", key: "add_random_species_trait", kind: "trigger" },
-        { prop: "onRandomTraitAdded", key: "on_random_trait_added", kind: "effect" },
+        {
+          prop: "onRandomTraitAdded",
+          key: "on_random_trait_added",
+          kind: "effect",
+          transition: "same",
+        },
         { prop: "inheritParentRights", key: "inherit_parent_rights", kind: "value" },
         { prop: "sapient", key: "sapient", kind: "value" },
-        { prop: "effect", key: "effect", kind: "effect" },
+        { prop: "effect", key: "effect", kind: "effect", transition: "push" },
       ],
     },
   },
@@ -3503,18 +3983,25 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     },
   },
   mutateSpecies: { key: "mutate_species", shape: { kind: "bool" } },
-  noScope: { key: "no_scope", shape: { kind: "scope-link" } },
-  observationOutpost: { key: "observation_outpost", shape: { kind: "scope-link" } },
-  observationOutpostOwner: { key: "observation_outpost_owner", shape: { kind: "scope-link" } },
+  noScope: { key: "no_scope", shape: { kind: "scope-link", transition: "push" } },
+  observationOutpost: {
+    key: "observation_outpost",
+    shape: { kind: "scope-link", transition: "push" },
+  },
+  observationOutpostOwner: {
+    key: "observation_outpost_owner",
+    shape: { kind: "scope-link", transition: "push" },
+  },
   openShroudTab: { key: "open_shroud_tab", shape: { kind: "bool" } },
-  orbit: { key: "orbit", shape: { kind: "scope-link" } },
-  orbitalDefence: { key: "orbital_defence", shape: { kind: "scope-link" } },
-  orbitalStation: { key: "orbital_station", shape: { kind: "scope-link" } },
+  orbit: { key: "orbit", shape: { kind: "scope-link", transition: "push" } },
+  orbitalDefence: { key: "orbital_defence", shape: { kind: "scope-link", transition: "push" } },
+  orbitalStation: { key: "orbital_station", shape: { kind: "scope-link", transition: "push" } },
   orderForcedReturn: { key: "order_forced_return", shape: { kind: "bool" } },
   orderedActiveFirstContact: {
     key: "ordered_active_first_contact",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -3527,6 +4014,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_agreement",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -3539,6 +4027,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_ambient_object",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -3551,6 +4040,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_archaeological_site",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -3563,6 +4053,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_associate",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -3575,6 +4066,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_astral_rift",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -3587,6 +4079,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_attacker",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -3599,6 +4092,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_available_debris",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -3611,6 +4105,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_bypass",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -3623,6 +4118,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_bypass_in_system",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -3635,6 +4131,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_combatant_fleet",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -3647,6 +4144,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_controlled_colony",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "position", key: "position", kind: "value" },
@@ -3659,6 +4157,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_controlled_fleet",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -3671,6 +4170,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_controlled_planet",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -3683,6 +4183,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_controlled_ship",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -3695,6 +4196,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_cosmic_storm",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "position", key: "position", kind: "value" },
@@ -3707,6 +4209,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_cosmic_storm_end_position",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "position", key: "position", kind: "value" },
@@ -3719,6 +4222,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_cosmic_storm_start_position",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "position", key: "position", kind: "value" },
@@ -3731,6 +4235,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_council_member",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -3743,6 +4248,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_country",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -3755,6 +4261,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_country_neighbor_to_system",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -3767,6 +4274,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_defender",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -3779,6 +4287,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_deposit",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -3791,6 +4300,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_enslaved_species",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -3803,6 +4313,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_envoy",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -3815,6 +4326,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_espionage_asset",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -3827,6 +4339,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_espionage_operation",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -3839,6 +4352,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_exhibit",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "position", key: "position", kind: "value" },
@@ -3851,6 +4365,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_existing_species_traits",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "position", key: "position", kind: "value" },
@@ -3863,6 +4378,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_federation",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -3875,6 +4391,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_federation_ally",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -3887,6 +4404,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_first_contact",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -3899,6 +4417,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_fleet_in_orbit",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -3911,6 +4430,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_fleet_in_system",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -3923,6 +4443,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_galaxy_fleet",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -3935,6 +4456,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_galaxy_planet",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -3947,6 +4469,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_galaxy_sector",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -3959,6 +4482,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_galaxy_species",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -3971,6 +4495,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_galcom_member",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -3983,6 +4508,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_ground_combat_attacker",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -3995,6 +4521,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_ground_combat_defender",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4007,6 +4534,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_issued_mission",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "position", key: "position", kind: "value" },
@@ -4019,6 +4547,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_job_pop_group",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4031,6 +4560,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_megastructure",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4043,6 +4573,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_member",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4055,6 +4586,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_moon",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4067,6 +4599,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_neighbor_country",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4079,6 +4612,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_neighbor_system",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4091,6 +4625,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_neighbor_system_euclidean",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4103,6 +4638,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_observed_pre_ftl_within_border",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4115,6 +4651,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_orbital_station",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4127,6 +4664,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_owned_army",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4139,6 +4677,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_owned_colony",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "position", key: "position", kind: "value" },
@@ -4151,6 +4690,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_owned_contract",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "position", key: "position", kind: "value" },
@@ -4163,6 +4703,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_owned_design",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4175,6 +4716,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_owned_fleet",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4187,6 +4729,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_owned_leader",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4199,6 +4742,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_owned_megastructure",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4211,6 +4755,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_owned_mission",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "position", key: "position", kind: "value" },
@@ -4223,6 +4768,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_owned_nonprimary_starbase",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4235,6 +4781,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_owned_planet",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4247,6 +4794,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_owned_pop_group",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4259,6 +4807,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_owned_pop_job",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4271,6 +4820,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_owned_pop_species",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4283,6 +4833,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_owned_sector",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4295,6 +4846,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_owned_ship",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4307,6 +4859,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_owned_species",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4319,6 +4872,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_owned_starbase",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4331,6 +4885,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_owned_storm_influence_field",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "position", key: "position", kind: "value" },
@@ -4343,6 +4898,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_planet_army",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4355,6 +4911,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_planet_within_border",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4367,6 +4924,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_playable_country",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4379,6 +4937,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_pool_leader",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4391,6 +4950,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_pop_faction",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4403,6 +4963,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_pre_ftl_within_border",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4415,6 +4976,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_relation",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4427,6 +4989,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_rim_system",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4439,6 +5002,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_rival_country",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4451,6 +5015,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_ship_in_system",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4463,6 +5028,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_situation",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4475,6 +5041,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_species_pop_group",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4487,6 +5054,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_spynetwork",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4499,6 +5067,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_starbase_in_network",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "position", key: "position", kind: "value" },
@@ -4511,6 +5080,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_starbase_in_system",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4523,6 +5093,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_subject",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4535,6 +5106,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_system",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4547,6 +5119,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_system_added_to_storm",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "position", key: "position", kind: "value" },
@@ -4559,6 +5132,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_system_ambient_object",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4571,6 +5145,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_system_in_cosmic_storm_influence_field",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "position", key: "position", kind: "value" },
@@ -4583,6 +5158,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_system_megastructure",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4595,6 +5171,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_system_planet",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4607,6 +5184,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_system_planet_colony",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "position", key: "position", kind: "value" },
@@ -4619,6 +5197,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_system_removed_from_storm",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "position", key: "position", kind: "value" },
@@ -4631,6 +5210,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_system_ship_colony",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "position", key: "position", kind: "value" },
@@ -4643,6 +5223,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_system_with_aura",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4655,6 +5236,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_system_within_border",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4667,6 +5249,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_system_within_storm",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "position", key: "position", kind: "value" },
@@ -4679,6 +5262,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_targeting_situation",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4691,6 +5275,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_trait_available_for_species",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "position", key: "position", kind: "value" },
@@ -4703,6 +5288,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_trait_of_species",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "position", key: "position", kind: "value" },
@@ -4715,6 +5301,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_war",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4727,6 +5314,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "ordered_war_participant",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "position", key: "position", kind: "value" },
         { prop: "orderBy", key: "order_by", kind: "value" },
@@ -4735,7 +5323,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
-  overlord: { key: "overlord", shape: { kind: "scope-link" } },
+  overlord: { key: "overlord", shape: { kind: "scope-link", transition: "push" } },
   ownedFleetListTooltip: {
     key: "owned_fleet_list_tooltip",
     shape: { kind: "fields", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
@@ -4752,10 +5340,16 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "owned_pop_faction_list_tooltip",
     shape: { kind: "fields", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },
   },
-  owner: { key: "owner", shape: { kind: "scope-link" } },
-  ownerMainSpecies: { key: "owner_main_species", shape: { kind: "scope-link" } },
-  ownerOrSpaceOwner: { key: "owner_or_space_owner", shape: { kind: "scope-link" } },
-  ownerSpecies: { key: "owner_species", shape: { kind: "scope-link" } },
+  owner: { key: "owner", shape: { kind: "scope-link", transition: "push" } },
+  ownerMainSpecies: {
+    key: "owner_main_species",
+    shape: { kind: "scope-link", transition: "push" },
+  },
+  ownerOrSpaceOwner: {
+    key: "owner_or_space_owner",
+    shape: { kind: "scope-link", transition: "push" },
+  },
+  ownerSpecies: { key: "owner_species", shape: { kind: "scope-link", transition: "push" } },
   passDebrisOwnership: {
     key: "pass_debris_ownership",
     shape: { kind: "fields", fields: [{ prop: "owner", key: "owner", kind: "value" }] },
@@ -4782,8 +5376,8 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "perform_astral_action_unlock_check",
     shape: { kind: "bool" },
   },
-  planet: { key: "planet", shape: { kind: "scope-link" } },
-  planetOwner: { key: "planet_owner", shape: { kind: "scope-link" } },
+  planet: { key: "planet", shape: { kind: "scope-link", transition: "push" } },
+  planetOwner: { key: "planet_owner", shape: { kind: "scope-link", transition: "push" } },
   playSound: {
     key: "play_sound",
     shape: {
@@ -4810,7 +5404,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
-  popFaction: { key: "pop_faction", shape: { kind: "scope-link" } },
+  popFaction: { key: "pop_faction", shape: { kind: "scope-link", transition: "push" } },
   popForceAddEthic: {
     key: "pop_force_add_ethic",
     shape: {
@@ -4823,7 +5417,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
-  popGroup: { key: "pop_group", shape: { kind: "scope-link" } },
+  popGroup: { key: "pop_group", shape: { kind: "scope-link", transition: "push" } },
   popRemoveEthic: {
     key: "pop_remove_ethic",
     shape: {
@@ -4857,6 +5451,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_active_first_contact",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -4867,6 +5462,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_agreement",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -4877,6 +5473,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_ambient_object",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -4887,6 +5484,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_archaeological_site",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -4897,6 +5495,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_associate",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -4907,6 +5506,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_astral_rift",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -4917,6 +5517,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_attacker",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -4927,6 +5528,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_available_debris",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -4937,6 +5539,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_bypass",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -4947,6 +5550,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_bypass_in_system",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -4957,6 +5561,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_combatant_fleet",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -4967,6 +5572,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_controlled_colony",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -4977,6 +5583,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_controlled_fleet",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -4987,6 +5594,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_controlled_planet",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -4997,6 +5605,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_controlled_ship",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5007,6 +5616,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_cosmic_storm",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5017,6 +5627,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_cosmic_storm_end_position",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5027,6 +5638,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_cosmic_storm_start_position",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5037,6 +5649,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_council_member",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5047,6 +5660,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_country",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5057,6 +5671,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_country_neighbor_to_system",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5067,6 +5682,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_defender",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5077,6 +5693,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_deposit",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5087,6 +5704,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_enslaved_species",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5097,6 +5715,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_envoy",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5107,6 +5726,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_espionage_asset",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5117,6 +5737,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_espionage_operation",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5127,6 +5748,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_exhibit",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5137,6 +5759,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_existing_species_traits",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5147,6 +5770,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_federation",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5157,6 +5781,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_federation_ally",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5167,6 +5792,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_first_contact",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5177,6 +5803,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_fleet_in_orbit",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5187,6 +5814,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_fleet_in_system",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5197,6 +5825,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_galaxy_fleet",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5207,6 +5836,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_galaxy_planet",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5217,6 +5847,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_galaxy_sector",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5227,6 +5858,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_galaxy_species",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5237,6 +5869,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_galcom_member",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5247,6 +5880,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_ground_combat_attacker",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5257,6 +5891,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_ground_combat_defender",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5267,6 +5902,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_issued_mission",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5277,6 +5913,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_job_pop_group",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5287,6 +5924,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_megastructure",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5297,6 +5935,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_member",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5307,6 +5946,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_moon",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5317,6 +5957,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_neighbor_country",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5327,6 +5968,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_neighbor_system",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5337,6 +5979,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_neighbor_system_euclidean",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5347,6 +5990,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_observed_pre_ftl_within_border",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5357,6 +6001,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_orbital_station",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5367,6 +6012,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_owned_army",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5377,6 +6023,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_owned_colony",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5387,6 +6034,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_owned_contract",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5397,6 +6045,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_owned_design",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5407,6 +6056,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_owned_fleet",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5417,6 +6067,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_owned_leader",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5427,6 +6078,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_owned_megastructure",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5437,6 +6089,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_owned_mission",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5447,6 +6100,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_owned_nonprimary_starbase",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5457,6 +6111,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_owned_planet",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5467,6 +6122,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_owned_pop_group",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5477,6 +6133,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_owned_pop_job",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5487,6 +6144,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_owned_pop_species",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5497,6 +6155,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_owned_sector",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5507,6 +6166,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_owned_ship",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5517,6 +6177,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_owned_species",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5527,6 +6188,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_owned_starbase",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5537,6 +6199,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_owned_storm_influence_field",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5547,6 +6210,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_planet_army",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5557,6 +6221,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_planet_within_border",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5567,6 +6232,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_playable_country",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5577,6 +6243,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_pool_leader",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5587,6 +6254,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_pop_faction",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5597,6 +6265,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_pre_ftl_within_border",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5607,6 +6276,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_relation",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5617,6 +6287,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_rim_system",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5627,6 +6298,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_rival_country",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5637,6 +6309,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_ship_in_system",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5647,6 +6320,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_situation",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5657,6 +6331,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_species_pop_group",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5667,6 +6342,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_spynetwork",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5677,6 +6353,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_starbase_in_network",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5687,6 +6364,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_starbase_in_system",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5697,6 +6375,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_subject",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5707,6 +6386,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_system",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5717,6 +6397,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_system_added_to_storm",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5727,6 +6408,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_system_ambient_object",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5737,6 +6419,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_system_in_cosmic_storm_influence_field",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5747,6 +6430,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_system_megastructure",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5757,6 +6441,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_system_planet",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5767,6 +6452,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_system_planet_colony",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5777,6 +6463,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_system_removed_from_storm",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5787,6 +6474,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_system_ship_colony",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5797,6 +6485,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_system_with_aura",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5807,6 +6496,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_system_within_border",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5817,6 +6507,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_system_within_storm",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5827,6 +6518,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_targeting_situation",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5837,6 +6529,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_trait_available_for_species",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5847,6 +6540,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_trait_of_species",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5857,6 +6551,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_war",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -5867,6 +6562,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "random_war_participant",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },
@@ -6255,7 +6951,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   rerollDeposits: { key: "reroll_deposits", shape: { kind: "bool" } },
   rerollPlanetModifiers: { key: "reroll_planet_modifiers", shape: { kind: "bool" } },
   rerollRandom: { key: "reroll_random", shape: { kind: "bool" } },
-  researchStation: { key: "research_station", shape: { kind: "scope-link" } },
+  researchStation: { key: "research_station", shape: { kind: "scope-link", transition: "push" } },
   resetCurrentStage: { key: "reset_current_stage", shape: { kind: "bool" } },
   resetGrowth: { key: "reset_growth", shape: { kind: "bool" } },
   resetPolicyCooldowns: { key: "reset_policy_cooldowns", shape: { kind: "bool" } },
@@ -6263,7 +6959,10 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   restoreCountryBackupData: { key: "restore_country_backup_data", shape: { kind: "bool" } },
   returnFromMia: { key: "return_from_mia", shape: { kind: "value", objectKinds: ["scope-ref"] } },
   returnLeaderFromExile: { key: "return_leader_from_exile", shape: { kind: "value" } },
-  reverseFirstContact: { key: "reverse_first_contact", shape: { kind: "scope-link" } },
+  reverseFirstContact: {
+    key: "reverse_first_contact",
+    shape: { kind: "scope-link", transition: "push" },
+  },
   revertAccords: {
     key: "revert_accords",
     shape: { kind: "value", refTypes: ["patron_type"], objectKinds: ["typed-ref"] },
@@ -6285,7 +6984,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     },
   },
   ruinBuilding: { key: "ruin_building", shape: { kind: "value", objectKinds: ["typed-ref"] } },
-  ruler: { key: "ruler", shape: { kind: "scope-link" } },
+  ruler: { key: "ruler", shape: { kind: "scope-link", transition: "push" } },
   runAiStrategicData: { key: "run_ai_strategic_data", shape: { kind: "bool" } },
   runAiStrategicWarData: { key: "run_ai_strategic_war_data", shape: { kind: "bool" } },
   runInAiMode: { key: "run_in_ai_mode", shape: { kind: "bool" } },
@@ -6312,9 +7011,12 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     },
   },
   scalePopAmount: { key: "scale_pop_amount", shape: { kind: "value" } },
-  secondDamagingCountry: { key: "second_damaging_country", shape: { kind: "scope-link" } },
-  sector: { key: "sector", shape: { kind: "scope-link" } },
-  sectorCapital: { key: "sector_capital", shape: { kind: "scope-link" } },
+  secondDamagingCountry: {
+    key: "second_damaging_country",
+    shape: { kind: "scope-link", transition: "push" },
+  },
+  sector: { key: "sector", shape: { kind: "scope-link", transition: "push" } },
+  sectorCapital: { key: "sector_capital", shape: { kind: "scope-link", transition: "push" } },
   selectDecision: {
     key: "select_decision",
     shape: {
@@ -7431,10 +8133,10 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "shift_ethic",
     shape: { kind: "value", refTypes: ["ethic"], objectKinds: ["typed-ref"] },
   },
-  ship: { key: "ship", shape: { kind: "scope-link" } },
-  shipGrowthStage: { key: "ship_growth_stage", shape: { kind: "scope-link" } },
-  solarSystem: { key: "solar_system", shape: { kind: "scope-link" } },
-  spaceOwner: { key: "space_owner", shape: { kind: "scope-link" } },
+  ship: { key: "ship", shape: { kind: "scope-link", transition: "push" } },
+  shipGrowthStage: { key: "ship_growth_stage", shape: { kind: "scope-link", transition: "push" } },
+  solarSystem: { key: "solar_system", shape: { kind: "scope-link", transition: "push" } },
+  spaceOwner: { key: "space_owner", shape: { kind: "scope-link", transition: "push" } },
   spawnAstralRift: {
     key: "spawn_astral_rift",
     shape: {
@@ -7466,7 +8168,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           refTypes: ["model_entity"],
         },
         { prop: "spawnSound", key: "spawn_sound", kind: "value" },
-        { prop: "initEffect", key: "init_effect", kind: "effect" },
+        { prop: "initEffect", key: "init_effect", kind: "effect", transition: "push" },
       ],
     },
   },
@@ -7535,7 +8237,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         { prop: "owner", key: "owner", kind: "value" },
         { prop: "graphicalCulture", key: "graphical_culture", kind: "value" },
         { prop: "randomPos", key: "random_pos", kind: "value" },
-        { prop: "initEffect", key: "init_effect", kind: "effect" },
+        { prop: "initEffect", key: "init_effect", kind: "effect", transition: "push" },
       ],
     },
   },
@@ -7579,7 +8281,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           kind: "value",
           refTypes: ["model_entity"],
         },
-        { prop: "initEffect", key: "init_effect", kind: "effect" },
+        { prop: "initEffect", key: "init_effect", kind: "effect", transition: "push" },
       ],
     },
   },
@@ -7636,7 +8338,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           },
         },
         { prop: "orbitAngleOffset", key: "orbit_angle_offset", kind: "value" },
-        { prop: "initEffect", key: "init_effect", kind: "effect" },
+        { prop: "initEffect", key: "init_effect", kind: "effect", transition: "push" },
       ],
     },
   },
@@ -7681,7 +8383,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         { prop: "isDiscovered", key: "is_discovered", kind: "value" },
         { prop: "minOrientationAngle", key: "min_orientation_angle", kind: "value" },
         { prop: "maxOrientationAngle", key: "max_orientation_angle", kind: "value" },
-        { prop: "effect", key: "effect", kind: "effect" },
+        { prop: "effect", key: "effect", kind: "effect", transition: "push" },
         {
           prop: "authorizeSpawnOnGalacticCore",
           key: "authorize_spawn_on_galactic_core",
@@ -7690,11 +8392,11 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
-  spawnerPlanet: { key: "spawner_planet", shape: { kind: "scope-link" } },
-  species: { key: "species", shape: { kind: "scope-link" } },
-  spynetwork: { key: "spynetwork", shape: { kind: "scope-link" } },
-  star: { key: "star", shape: { kind: "scope-link" } },
-  starbase: { key: "starbase", shape: { kind: "scope-link" } },
+  spawnerPlanet: { key: "spawner_planet", shape: { kind: "scope-link", transition: "push" } },
+  species: { key: "species", shape: { kind: "scope-link", transition: "push" } },
+  spynetwork: { key: "spynetwork", shape: { kind: "scope-link", transition: "push" } },
+  star: { key: "star", shape: { kind: "scope-link", transition: "push" } },
+  starbase: { key: "starbase", shape: { kind: "scope-link", transition: "push" } },
   startAstralActionCooldown: {
     key: "start_astral_action_cooldown",
     shape: {
@@ -7732,7 +8434,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       fields: [
         { prop: "type", key: "type", kind: "value", refTypes: ["situation_type"] },
         { prop: "target", key: "target", kind: "value" },
-        { prop: "effect", key: "effect", kind: "effect" },
+        { prop: "effect", key: "effect", kind: "effect", transition: "push" },
       ],
     },
   },
@@ -7751,8 +8453,8 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         { prop: "immediate", key: "immediate", kind: "value", booleanLiterals: ["yes"] },
         { prop: "reticleRadius", key: "reticle_radius", kind: "modifiers" },
         { prop: "maxRange", key: "max_range", kind: "modifiers" },
-        { prop: "onConfirm", key: "on_confirm", kind: "effect" },
-        { prop: "onCancel", key: "on_cancel", kind: "effect" },
+        { prop: "onConfirm", key: "on_confirm", kind: "effect", transition: "same" },
+        { prop: "onCancel", key: "on_cancel", kind: "effect", transition: "same" },
       ],
     },
   },
@@ -7883,14 +8585,17 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
             { prop: "modifier", key: "modifier", kind: "value", refTypes: ["static_modifier"] },
             { prop: "days", key: "days", kind: "value" },
             { prop: "chance", key: "chance", kind: "modifiers" },
-            { prop: "effect", key: "effect", kind: "effect" },
+            { prop: "effect", key: "effect", kind: "effect", transition: "same" },
           ],
           repeated: true,
         },
       ],
     },
   },
-  stormInfluenceField: { key: "storm_influence_field", shape: { kind: "scope-link" } },
+  stormInfluenceField: {
+    key: "storm_influence_field",
+    shape: { kind: "scope-link", transition: "push" },
+  },
   subtractVariable: {
     key: "subtract_variable",
     shape: {
@@ -7901,10 +8606,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
-  systemStar: { key: "system_star", shape: { kind: "scope-link" } },
-  targetSystem: { key: "target_system", shape: { kind: "scope-link" } },
-  thirdDamagingCountry: { key: "third_damaging_country", shape: { kind: "scope-link" } },
-  tooltip: { key: "tooltip", shape: { kind: "wrapper", fields: null } },
+  systemStar: { key: "system_star", shape: { kind: "scope-link", transition: "push" } },
+  targetSystem: { key: "target_system", shape: { kind: "scope-link", transition: "push" } },
+  thirdDamagingCountry: {
+    key: "third_damaging_country",
+    shape: { kind: "scope-link", transition: "push" },
+  },
+  tooltip: { key: "tooltip", shape: { kind: "wrapper", transition: "same", fields: null } },
   transferCarrier: {
     key: "transfer_carrier",
     shape: {
@@ -7953,7 +8661,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: { kind: "value", refTypes: ["espionage_asset"], objectKinds: ["typed-ref"] },
   },
   unassignLeader: { key: "unassign_leader", shape: { kind: "value", objectKinds: ["scope-ref"] } },
-  unhappiestPop: { key: "unhappiest_pop", shape: { kind: "scope-link" } },
+  unhappiestPop: { key: "unhappiest_pop", shape: { kind: "scope-link", transition: "push" } },
   unlockCouncilSelection: { key: "unlock_council_selection", shape: { kind: "bool" } },
   unlockCouncilSlots: { key: "unlock_council_slots", shape: { kind: "value" } },
   unlockExhibit: { key: "unlock_exhibit", shape: { kind: "value" } },
@@ -7974,6 +8682,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "weighted_random_owned_pop_group",
     shape: {
       kind: "wrapper",
+      transition: "push",
       fields: [
         { prop: "limit", key: "limit", kind: "trigger" },
         { prop: "weights", key: "weights", kind: "modifiers" },

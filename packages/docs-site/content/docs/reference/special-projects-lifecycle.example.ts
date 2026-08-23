@@ -69,8 +69,8 @@ const signalDetected = events.country(1, {
         country.randomOwnedPlanet({ limit: hasOwner() }, (planet) => {
           planet.saveEventTargetAs(signalWorld);
         });
-        country.if(exists(signalWorld), (owner) => {
-          owner.enableSpecialProject({
+        country.if(exists(signalWorld), () => {
+          country.enableSpecialProject({
             name: analyzeSignal,
             owner: ctx.self,
             location: signalWorld,

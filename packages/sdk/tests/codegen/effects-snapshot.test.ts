@@ -91,7 +91,9 @@ describe("emitted effect signatures", () => {
     expect(entry).toContain('key: "entity_offset"');
     expect(entry).toContain('key: "entity_offset_angle"');
     expect(entry).toContain('key: "entity_offset_height"');
-    expect(entry).toContain('{ prop: "effect", key: "effect", kind: "effect" }');
+    expect(entry).toContain(
+      '{ prop: "effect", key: "effect", kind: "effect", transition: "push" }'
+    );
   });
 
   it("createPopGroup exposes every CWT field and its pushed pop-group effect", () => {
@@ -113,7 +115,9 @@ describe("emitted effect signatures", () => {
     expect(entry).toContain('prop: "ethos"');
     expect(entry).toContain('kind: "scalar-or-block"');
     expect(entry).toContain('scalar: { objectKinds: ["scope-ref"] }');
-    expect(entry).toContain('{ prop: "effect", key: "effect", kind: "effect" }');
+    expect(entry).toContain(
+      '{ prop: "effect", key: "effect", kind: "effect", transition: "push" }'
+    );
   });
 
   it("emits structured-only field types and metadata", () => {
@@ -247,21 +251,27 @@ describe("emitted effect signatures", () => {
     expect(metaEntry("everyOwnedPlanet")).toMatchInlineSnapshot(`
       "everyOwnedPlanet: {
           key: "every_owned_planet",
-          shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },"
+          shape: {
+            kind: "wrapper",
+            transition: "push",
+            fields: [{ prop: "limit", key: "limit", kind: "trigger" }],
+          },"
     `);
   });
 
   it("scope links: readonly paths typed to each link's output scope", () => {
     expect(pathProperty("owner")).toMatchInlineSnapshot(
-      `"readonly owner: EffectPathOf<\"country\">;"`
+      `"readonly owner: EffectPathOf<"country", "push">;"`
     );
     expect(pathProperty("capitalScope")).toMatchInlineSnapshot(
-      `"readonly capitalScope: EffectPathOf<\"colony\">;"`
+      `"readonly capitalScope: EffectPathOf<"colony", "push">;"`
     );
     expect(interfaces).toMatch(
-      /export interface CountryEffectPath\s+extends\s+EffectPath<"country">/
+      /export interface CountryEffectPath<Transition extends EffectPathTransition = "push">\s+extends\s+EffectPath<"country", Transition>/
     );
-    expect(interfaces).toContain("export interface EffectPathMap {");
+    expect(interfaces).toContain(
+      "export interface EffectPathMap<Transition extends EffectPathTransition> {"
+    );
   });
 
   it("open-keyed block: the whole argument is a map of its key filter", () => {
@@ -370,7 +380,7 @@ describe("emitted effect signatures", () => {
 
   it("scope link meta: a distinct lazy path node", () => {
     expect(metaEntry("owner")).toMatchInlineSnapshot(
-      `"owner: { key: "owner", shape: { kind: "scope-link" } },"`
+      `"owner: { key: "owner", shape: { kind: "scope-link", transition: "push" } },"`
     );
   });
 });

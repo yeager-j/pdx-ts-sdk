@@ -1,0 +1,52 @@
+namespace = pdx_lexical_scope_oracle
+
+country_event = {
+	id = pdx_lexical_scope_oracle.1
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		log = "PDX_LEXICAL_SCOPE_ORACLE_ENTRY"
+		if = {
+			limit = { is_same_value = root }
+			log = "PDX_LEXICAL_SCOPE_ORACLE_IF_SAME_COUNTRY"
+		}
+		hidden_effect = {
+			if = {
+				limit = { is_same_value = root }
+				log = "PDX_LEXICAL_SCOPE_ORACLE_HIDDEN_SAME_COUNTRY"
+			}
+		}
+		every_owned_planet = {
+			limit = { is_capital = yes }
+			if = {
+				limit = { is_scope_type = colony }
+				log = "PDX_LEXICAL_SCOPE_ORACLE_ITERATOR_THIS_COLONY"
+			}
+			prev = {
+				if = {
+					limit = { is_same_value = root }
+					log = "PDX_LEXICAL_SCOPE_ORACLE_PREV_COUNTRY"
+				}
+			}
+			owner = {
+				prevprev = {
+					if = {
+						limit = { is_same_value = root }
+						log = "PDX_LEXICAL_SCOPE_ORACLE_PREVPREV_COUNTRY"
+					}
+				}
+			}
+		}
+		capital_scope.solar_system = {
+			spawn_system = {
+				min_distance = 10
+				max_distance = 30
+				min_jumps = 1
+				max_jumps = 2
+				hyperlane = no
+				initializer = pdx_lexical_scope_oracle_split_root
+			}
+		}
+	}
+}

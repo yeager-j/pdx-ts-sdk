@@ -69,8 +69,8 @@ const spawnLostReach = events.system(1, {
       maxDistance: 50,
       hyperlane: true,
       isDiscovered: false,
-      effect: (newSystem) => {
-        newSystem.setStarFlag("frontier_cartography_spawned_lost_reach");
+      effect: () => {
+        system.setStarFlag("frontier_cartography_spawned_lost_reach");
       },
     });
   },

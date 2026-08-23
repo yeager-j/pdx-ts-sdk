@@ -32,8 +32,8 @@ Triggers carry the same fact in their type. `hasCountryFlag(...)` returns a
 is valid where the game will evaluate it.
 
 ```ts
-country.if(hasCountryFlag(flags.ready), (c) => {
-  c.addResource({ resource: "influence", amount: 50 });
+country.if(hasCountryFlag(flags.ready), () => {
+  country.addResource({ resource: "influence", amount: 50 });
 });
 ```
 
@@ -71,45 +71,38 @@ This describes an `owner = { has_country_flag = ... }` trigger block. The SDK
 checks both that the enclosing scope can navigate through `owner` and that the
 nested condition is valid in country scope.
 
-## Do not write through the outer recorder by accident
+## Capture an outer scope deliberately
 
-TypeScript keeps outer variables in lexical scope. A nested effect callback
-does not change what an existing recorder variable points at:
+TypeScript keeps outer variables in lexical scope. The SDK preserves that
+relationship in nested effect callbacks:
 
 ```ts
 immediate: (country) => {
   country.everyOwnedPlanet({ limit: hasOwner() }, (candidate) => {
-    country.addResource({ resource: "influence", amount: 10 }); // Wrong block.
+    country.addResource({ resource: "influence", amount: 10 }); // PREV: the outer country
+    candidate.addDeposit("d_minerals_1"); // THIS: the iterated planet
   });
 };
 ```
 
-Inside the callback, `country` still refers to the outer country recorder. The
-call may compile, but it records `add_resource` in the outer event block, not
-inside `every_owned_planet`. Use the callback parameter for effects that belong
-to the nested block.
+The callback parameter exists only for a scope push. A captured ancestor proxy
+records in the nested block through the game's `PREV` path. Up to four verified
+pushes are supported (`PREV` through `PREVPREVPREVPREV`); a replacement or an
+unknown scope transition fails rather than guessing a path.
 
-If you make this mistake often, deliberately shadow one scope-variable name:
+Blocks that keep the same game scope take no parameter:
 
 ```ts
-immediate: (s) => {
-  s.everyOwnedPlanet({ limit: hasOwner() }, (s) => {
-    s.log("owned world");
+immediate: (country) => {
+  country.if(hasCountryFlag("ready"), () => {
+    country.hiddenEffect.effects(() => country.log("still country scope"));
   });
 };
 ```
 
-The inner `s` hides the outer one, so every call in the nested callback starts
-from the nested scope interface. Whether that interface is country, planet,
-colony, or another scope, autocomplete and type errors now describe the block
-you are actually recording.
-
-Distinct names such as `country` and `planet` can be easier to read, but they
-leave the outer recorder callable. When nested PDXScript must refer back to an
-outer game scope, use an absolute reference — `ctx.root` or `ctx.from`,
-described in the next section — not the outer recorder. Reusing `s` is a
-guardrail for code where accidentally reaching for that recorder is the
-recurring problem.
+Use `ctx.root`, `ctx.from`, and saved targets when the script needs their
+absolute game meaning. Captured proxies describe lexical ancestors only; they
+do not infer `ROOT` or `FROM`.
 
 ## Context keeps stable scopes available
 
@@ -215,12 +208,10 @@ Use relative navigation when the relationship should move with the current
 block. Use an absolute reference when the script must keep naming one known
 scope after `THIS` changes.
 
-PDXScript has more scope words than this table. `PREV`, `PREVPREV`, and
-`FROMFROM` appear across thousands of vanilla blocks, and some rules declare
-them for fields the SDK generates. The SDK cannot write or witness them yet:
-`ctx` exposes `self`, `root`, and `from` only, and no escape hatch emits
-`prev` or `fromfrom`. Script that needs one of those scopes cannot be
-authored today.
+PDXScript also has `PREV`, `PREVPREV`, and `FROMFROM`. Capturing a live lexical
+ancestor uses the first two family members automatically, up to four verified
+pushes. `ctx` still exposes only `self`, `root`, and `from`: `PREV*` is not an
+absolute context reference, and `FROMFROM` remains unavailable.
 
 ## Where scope legality is checked
 

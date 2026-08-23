@@ -11,6 +11,7 @@ import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
 import { lowerRule, lowerRuleTable } from "@pdx-ts/codegen-cwt/lower/lowered-rule";
 import {
+  clauseScopeContext,
   mapType,
   mergeBlock,
   repeatedMemberType,
@@ -228,6 +229,70 @@ describe("LoweredRule", () => {
     );
     expect(emitted.skipped).not.toContainEqual(expect.objectContaining({ name: "create_colony" }));
     expect(emitted.skipped).not.toContainEqual(expect.objectContaining({ name: "start_colony" }));
+  });
+
+  it("inherits push and replacement transitions for nested effect fields", () => {
+    const effect = effects
+      .get("create_bypass")!
+      .blocks[0]!.named.find((field) => field.key.kind === "name" && field.key.name === "effect")!;
+    const inherited = { ...effect, scope: null };
+    const push = mergeBlock(
+      new Emitter(rules),
+      [inherited],
+      clauseScopeContext({ this: "bypass", root: null, from: null, replaces: false }),
+      new Set(["effect"])
+    );
+    const replacement = mergeBlock(
+      new Emitter(rules),
+      [inherited],
+      clauseScopeContext({ this: "bypass", root: null, from: null, replaces: true }),
+      new Set(["effect"])
+    );
+
+    expect(push).toMatchObject({
+      kind: "fields",
+      fields: [{ value: { kind: "clause", scope: "bypass", transition: "push" } }],
+    });
+    expect(replacement).toMatchObject({
+      kind: "fields",
+      fields: [{ value: { kind: "clause", scope: "bypass", transition: "replace" } }],
+    });
+  });
+
+  it("emits a replacement field's callback type and recorder metadata", () => {
+    const emitted = emitEffects(
+      new Emitter(rules),
+      docs.effects,
+      scopes,
+      effects,
+      createEffectPolicy(rules),
+      []
+    );
+
+    expect(emitted.interfaces).toContain("effect?: (scope: BypassScope) => void");
+    expect(emitted.meta).toContain(
+      '{ prop: "effect", key: "effect", kind: "effect", transition: "replace" }'
+    );
+  });
+
+  it("rejects declarations that disagree about their nested scope transition", () => {
+    const effect = effects
+      .get("create_bypass")!
+      .blocks[0]!.named.find((field) => field.key.kind === "name" && field.key.name === "effect")!;
+    const conflicting = mergeBlock(
+      new Emitter(rules),
+      [
+        { ...effect, scope: { this: "bypass", root: null, from: null, replaces: false } },
+        { ...effect, scope: { this: "bypass", root: null, from: null, replaces: true } },
+      ],
+      null,
+      new Set(["effect"])
+    );
+
+    expect(conflicting).toEqual({
+      category: "conflicting-clause-scope",
+      detail: 'field "effect" has incompatible scope transitions across its declarations',
+    });
   });
 
   it("emits create_pop_group from its mixed ethos rule and keeps it out of the skip report", () => {
@@ -684,7 +749,7 @@ describe("a spliced alias category with a script authoring surface", () => {
     );
     expect(emitted.interfaces).toContain(
       "id: string; \n/** The nested effects, written bare inside the block beside its " +
-        "named keys. */\neffects: (scope: ScopeObjOf<S>) => void }"
+        "named keys. */\neffects: () => void }"
     );
   });
 

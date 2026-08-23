@@ -23,7 +23,7 @@ const referencesByMethod = {
     key: "if",
     kind: "structural",
     availability: { kind: "universal" },
-    signature: "if(condition: Trigger<S>, body: (scope: ScopeObjOf<S>) => void): IfChain<S>;",
+    signature: "if(condition: Trigger<S>, body: () => void): IfChain<S>;",
     docs: [
       "In-game branching: `if = { limit = { ... } ... }`.",
       "Chain `.elseIf(...)` and `.else(...)` before recording any further effects.",
@@ -35,7 +35,7 @@ const referencesByMethod = {
     key: "hidden_effect",
     kind: "structural",
     availability: { kind: "universal" },
-    signature: "readonly hiddenEffect: EffectPathOf<S>;",
+    signature: "readonly hiddenEffect: SameScopeEffectPath<S>;",
     docs: [
       "Begins a same-scope `hidden_effect = { ... }` path.",
       "Terminate it with `.effects(...)`, or continue through generated scope-link properties.",
@@ -63,7 +63,7 @@ const referencesByMethod = {
     kind: "structural",
     availability: { kind: "universal" },
     signature:
-      "random(args: { chance: number; modifiers?: readonly Modifier<S>[] }, body: (scope: ScopeObjOf<S>) => void): void;",
+      "random(args: { chance: number; modifiers?: readonly Modifier<S>[] }, body: () => void): void;",
     docs: ["Runs the body with the given percent chance, in-game."],
   },
   whileLoop: {
@@ -71,8 +71,7 @@ const referencesByMethod = {
     key: "while",
     kind: "structural",
     availability: { kind: "universal" },
-    signature:
-      "whileLoop(args: { count?: number; limit?: Trigger<S> }, body: (scope: ScopeObjOf<S>) => void): void;",
+    signature: "whileLoop(args: { count?: number; limit?: Trigger<S> }, body: () => void): void;",
     docs: ["`while = { count/limit ... }` — in-game iteration."],
   },
   saveEventTargetAs: {

@@ -295,9 +295,9 @@ export const welcome = events.country(1, {
   immediate: (country) => {
     // The closure receives a country scope object, so only country-legal
     // effects exist on it — a planet effect here would not compile.
-    country.if(not(hasCountryFlag(flags.${p}_welcomed)), (scoped) => {
-      scoped.setCountryFlag(flags.${p}_welcomed);
-      scoped.addResource({ resource: "influence", amount: 50 });
+    country.if(not(hasCountryFlag(flags.${p}_welcomed)), () => {
+      country.setCountryFlag(flags.${p}_welcomed);
+      country.addResource({ resource: "influence", amount: 50 });
     });
   },
   options: [{ name: "Interesting.", key: "interesting" }],

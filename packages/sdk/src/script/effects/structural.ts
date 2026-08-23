@@ -38,6 +38,8 @@ export class IfChainRecorder {
   private readonly recording: RecordingState | undefined;
   private readonly recordEffects: RecordEffects;
   private readonly assertLive: AssertLive;
+  private readonly outerSink: readonly PdxEntry[] | undefined;
+  private readonly outerMark: number | undefined;
   private mark: number;
   private closed = false;
 
@@ -46,13 +48,17 @@ export class IfChainRecorder {
     refs: ContentRefUse[],
     recording: RecordingState | undefined,
     recordEffects: RecordEffects,
-    assertLive: AssertLive
+    assertLive: AssertLive,
+    outerSink?: readonly PdxEntry[],
+    outerMark?: number
   ) {
     this.sink = sink;
     this.refs = refs;
     this.recording = recording;
     this.recordEffects = recordEffects;
     this.assertLive = assertLive;
+    this.outerSink = outerSink;
+    this.outerMark = outerMark;
     this.mark = sink.length;
   }
 
@@ -65,7 +71,10 @@ export class IfChainRecorder {
           `after 'else' would be attached to nothing. Start a new if() for further branches.`
       );
     }
-    if (this.sink.length !== this.mark) {
+    const localSequenceChanged = this.sink.length !== this.mark;
+    const outerSequenceChanged =
+      this.outerSink !== undefined && this.outerSink.length !== this.outerMark;
+    if (localSequenceChanged || outerSequenceChanged) {
       throw new Error(
         `Effects were recorded between an if() chain's links; the game associates ` +
           `'${link}' with the preceding 'if' by position, so this would silently detach it. ` +
