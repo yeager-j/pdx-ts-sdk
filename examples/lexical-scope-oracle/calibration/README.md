@@ -1,10 +1,9 @@
 # Lexical scope oracle
 
-Status: **pending live calibration** on Stellaris Pegasus 4.4.6 (`fdde`).
+Status: complete on Stellaris Pegasus 4.4.6 (`fdde`).
 
 This raw PDXScript fixture validates the game behavior needed by SDK-215. It
-does not constitute a completed calibration until a clean game run records the
-markers below and confirms no related parser or scope errors.
+measures the game's scope behavior independently of the SDK recorder.
 
 ## Install
 
@@ -27,8 +26,7 @@ event pdx_lexical_scope_oracle.1
 ```
 
 Inspect `game.log` for each `PDX_LEXICAL_SCOPE_ORACLE_` marker and `error.log`
-for parser or wrong-scope errors. Do not add normalized logs until that clean
-run succeeds.
+for parser or wrong-scope errors.
 
 ## Required observations
 
@@ -46,3 +44,19 @@ run succeeds.
 The SDK runtime fails closed for replacements, unknown transitions, and depths
 greater than four. This fixture is intentionally separate from the natural
 FROM oracle: lexical `PREV*` routing must not be inferred from event FROM.
+
+## Observations
+
+- **Exact game build:** `Pegasus v4.4.6 (fdde)`.
+- `IF_SAME_COUNTRY` and `HIDDEN_SAME_COUNTRY` both matched the exact root
+  country, confirming that these structural blocks preserve scope identity.
+- `PREV_COUNTRY` and `PREVPREV_COUNTRY` both matched the exact root country,
+  confirming one-hop and two-hop lexical ancestor routing.
+- `ITERATOR_THIS_COLONY` confirmed the runtime iterator scope independently
+  of its CWT landing type.
+- `SPLIT_THIS_PLANET` and `SPLIT_ROOT_COUNTRY` confirmed the initializer's
+  split THIS/root context.
+
+Every required marker appeared in one clean run. `error.log` contained no
+oracle parser, missing-event, or wrong-scope errors. Normalized excerpts from
+that run are checked in as `game.log` and `error.log`.
