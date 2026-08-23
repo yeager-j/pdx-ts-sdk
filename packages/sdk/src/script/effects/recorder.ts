@@ -59,6 +59,8 @@ import type {
 
 const cannotWitnessNaturalFrom = Symbol("cannotWitnessNaturalFrom");
 const scopeLease = Symbol("scopeLease");
+type ScopeTransition = "same" | "push" | "replace";
+type ScopeIdentity = symbol;
 interface RuntimeScopeValue {
   readonly [cannotWitnessNaturalFrom]?: true;
   readonly [scopeLease]?: ScriptLease;
@@ -168,9 +170,75 @@ interface Recording extends RecordingState {
    * when the two leases match.
    */
   readonly lease: ScriptLease | undefined;
+  /** The game scope this closure-facing proxy represents. */
+  readonly scope: ScopeIdentity;
+  /** Lexically reachable game scopes, nearest first. */
+  readonly ancestors: readonly ScopeIdentity[];
+  /** Ancestors a replacement made unavailable to PREV routing. */
+  readonly blockedAncestors: readonly ScopeIdentity[];
+  /** One shared PREV wrapper per captured scope in this recording. */
+  readonly routedSinks: Map<ScopeIdentity, PdxEntry[]>;
 }
 
 const RECORDINGS: Recording[] = [];
+
+interface EffectReceiver {
+  readonly sink: PdxEntry[];
+  readonly refs: ContentRefUse[];
+  readonly owner: Recording | undefined;
+}
+
+function prevKey(depth: number): string {
+  return depth === 1 ? "prev" : `prev${"prev".repeat(depth - 1)}`;
+}
+
+function routedSink(active: Recording, target: Recording, depth: number): PdxEntry[] {
+  const existing = active.routedSinks.get(target.scope);
+  if (existing !== undefined) {
+    return existing;
+  }
+  const sink: PdxEntry[] = [];
+  active.sink.push(block(prevKey(depth), sink));
+  active.routedSinks.set(target.scope, sink);
+  return sink;
+}
+
+/** Selects the live lexical receiver for one captured scope proxy. */
+function effectReceiver(
+  recording: Recording | undefined,
+  fallback: EffectReceiver
+): EffectReceiver {
+  if (recording === undefined) {
+    return fallback;
+  }
+  const active = RECORDINGS.at(-1);
+  if (active === undefined) {
+    return fallback;
+  }
+  if (active.scope === recording.scope) {
+    return { sink: active.sink, refs: active.refs, owner: active };
+  }
+  const ancestorIndex = active.ancestors.indexOf(recording.scope);
+  if (ancestorIndex === -1) {
+    if (active.blockedAncestors.includes(recording.scope)) {
+      throw new Error(
+        "A captured scope proxy crosses a replacement or unknown scope transition. " +
+          "The game does not provide a verified PREV path across that boundary; use ROOT, FROM, " +
+          "or a saved target reference instead."
+      );
+    }
+    return fallback;
+  }
+  const depth = ancestorIndex + 1;
+  if (depth > 4) {
+    throw new Error(
+      `A captured scope proxy is ${depth} pushed scopes away from the active block. ` +
+        "Stellaris exposes only PREV through PREVPREVPREVPREV; keep the effect within four " +
+        "scope pushes or open an explicit saved scope reference."
+    );
+  }
+  return { sink: routedSink(active, recording, depth), refs: active.refs, owner: active };
+}
 
 /**
  * Refuses a call on a scope object whose closure has already returned.
@@ -657,7 +725,16 @@ export function fieldEntries(
         }
         case "effect":
           entries.push(
-            ...spliced(field, recordBlock(owner, refs, value as (scope: unknown) => void))
+            ...spliced(
+              field,
+              recordBlock(
+                owner,
+                refs,
+                value as (scope: unknown) => void,
+                [],
+                field.transition ?? "same"
+              )
+            )
           );
           break;
         case "alias-list":
@@ -747,7 +824,7 @@ const STRUCTURAL_BASE = {
     },
 
   target: (sink, refs, recording) => (body: (scope: unknown) => void) => {
-    sink.push(block("target", recordBlock(recording, refs, body)));
+    sink.push(block("target", recordBlock(recording, refs, body, [], "push")));
   },
 
   hiddenEffect: (sink, refs, recording) => makeEffectPath(sink, refs, recording, ["hidden_effect"]),
@@ -952,21 +1029,30 @@ function makeEffectPath(
   sink: PdxEntry[],
   refs: ContentRefUse[],
   recording: Recording | undefined,
-  keys: readonly string[]
+  keys: readonly string[],
+  transitions: readonly ScopeTransition[] = []
 ): unknown {
   const label = keys.join(".");
   const dispatch = (prop: string): unknown => {
     if (prop === "effects") {
       return (body: (scope: unknown) => void): void => {
-        let nested = recordBlock(recording, refs, body);
+        const receiver = effectReceiver(recording, { sink, refs, owner: recording });
+        const transition = transitions.findLast((candidate) => candidate !== "same") ?? "same";
+        let nested = recordBlock(receiver.owner, receiver.refs, body, [], transition);
         for (let index = keys.length - 1; index >= 0; index -= 1) {
           nested = [block(keys[index]!, nested)];
         }
-        sink.push(...nested);
+        receiver.sink.push(...nested);
       };
     }
     if (prop === "hiddenEffect") {
-      return makeEffectPath(sink, refs, recording, [...keys, "hidden_effect"]);
+      return makeEffectPath(
+        sink,
+        refs,
+        recording,
+        [...keys, "hidden_effect"],
+        [...transitions, "same"]
+      );
     }
     const meta = EFFECT_META[prop];
     if (meta?.shape.kind !== "scope-link") {
@@ -975,7 +1061,13 @@ function makeEffectPath(
           "Only hiddenEffect, generated scope links, and the effects() terminal compose."
       );
     }
-    return makeEffectPath(sink, refs, recording, [...keys, meta.key]);
+    return makeEffectPath(
+      sink,
+      refs,
+      recording,
+      [...keys, meta.key],
+      [...transitions, meta.transition]
+    );
   };
 
   return new Proxy(Object.create(null) as object, {
@@ -997,10 +1089,10 @@ function makeEffectPath(
 }
 
 function makeAnyScope(sink: PdxEntry[], refs: ContentRefUse[], recording?: Recording): unknown {
-  const dispatch = (prop: string): unknown => {
+  const dispatch = (prop: string, receiver: EffectReceiver): unknown => {
     const structural = STRUCTURAL[prop];
     if (structural !== undefined) {
-      return structural(sink, refs, recording);
+      return structural(receiver.sink, receiver.refs, receiver.owner);
     }
     const meta = EFFECT_META[prop];
     if (meta === undefined) {
@@ -1012,21 +1104,29 @@ function makeAnyScope(sink: PdxEntry[], refs: ContentRefUse[], recording?: Recor
     const shape = meta.shape;
     switch (shape.kind) {
       case "bool":
-        return (value: boolean = true) => sink.push(kv(meta.key, value));
+        return (value: boolean = true) => receiver.sink.push(kv(meta.key, value));
       case "value":
-        return (value: unknown) => sink.push(scalarEffectEntry(meta.key, shape, value, refs));
+        return (value: unknown) =>
+          receiver.sink.push(scalarEffectEntry(meta.key, shape, value, receiver.refs));
       case "fields":
         return (args: Record<string, unknown>) =>
-          sink.push(
-            block(meta.key, fieldEntries(shape.fields ?? [], args, meta.key, refs, recording))
+          receiver.sink.push(
+            block(
+              meta.key,
+              fieldEntries(shape.fields ?? [], args, meta.key, receiver.refs, receiver.owner)
+            )
           );
       case "map":
         return (values: Record<string, unknown>) =>
-          sink.push(block(meta.key, mapValueEntries(shape.map, values, meta.key, refs)));
+          receiver.sink.push(
+            block(meta.key, mapValueEntries(shape.map, values, meta.key, receiver.refs))
+          );
       case "wrapper":
         if (shape.fields === null) {
           return (body: (scope: unknown) => void) => {
-            sink.push(block(meta.key, recordBlock(recording, refs, body)));
+            receiver.sink.push(
+              block(meta.key, recordBlock(receiver.owner, receiver.refs, body, [], meta.transition))
+            );
           };
         }
         return (args: Record<string, unknown>, body: (scope: unknown) => void) => {
@@ -1034,23 +1134,33 @@ function makeAnyScope(sink: PdxEntry[], refs: ContentRefUse[], recording?: Recor
             shape.fields ?? [],
             args,
             meta.key,
-            refs,
-            recording
+            receiver.refs,
+            receiver.owner
           );
-          recordBlock(recording, refs, body, child);
-          sink.push(block(meta.key, child));
+          recordBlock(receiver.owner, receiver.refs, body, child, meta.transition);
+          receiver.sink.push(block(meta.key, child));
         };
       case "alias-list":
         return (items: readonly unknown[]) => {
-          sink.push(
-            block(meta.key, aliasListEntries(shape.category, items, meta.key, refs, recording))
+          receiver.sink.push(
+            block(
+              meta.key,
+              aliasListEntries(shape.category, items, meta.key, receiver.refs, receiver.owner)
+            )
           );
         };
       case "scalar-or-block":
         return (...args: unknown[]) =>
-          scalarOrBlockEffect(meta.key, shape, args, sink, refs, recording);
+          scalarOrBlockEffect(
+            meta.key,
+            shape,
+            args,
+            receiver.sink,
+            receiver.refs,
+            receiver.owner
+          );
       case "scope-link":
-        return makeEffectPath(sink, refs, recording, [meta.key]);
+        return makeEffectPath(sink, refs, recording, [meta.key], [meta.transition]);
     }
   };
 
@@ -1062,7 +1172,19 @@ function makeAnyScope(sink: PdxEntry[], refs: ContentRefUse[], recording?: Recor
       // Access-time as well as call-time (see `guarded`): a dead scope object
       // fails on the property read, before the dispatcher builds anything.
       assertLive(recording, prop);
-      return guarded(recording, prop, dispatch(prop));
+      if (STRUCTURAL[prop] !== undefined) {
+        const receiver = effectReceiver(recording, { sink, refs, owner: recording });
+        return guarded(recording, prop, dispatch(prop, receiver));
+      }
+      const meta = EFFECT_META[prop];
+      if (meta?.shape.kind === "scope-link") {
+        return makeEffectPath(sink, refs, recording, [meta.key], [meta.transition]);
+      }
+      return guarded(recording, prop, (...args: unknown[]) => {
+        const receiver = effectReceiver(recording, { sink, refs, owner: recording });
+        const method = dispatch(prop, receiver);
+        return (method as (...parameters: unknown[]) => unknown)(...args);
+      });
     },
   });
 }
@@ -1121,7 +1243,17 @@ export function makeScope<S extends ScopeName>(
   sink: PdxEntry[],
   refs: ContentRefUse[] = []
 ): ScopeObjOf<S> {
-  return makeAnyScope(sink, refs) as ScopeObjOf<S>;
+  const recording: Recording = {
+    sink,
+    refs,
+    live: true,
+    lease: undefined,
+    scope: Symbol("effectScope"),
+    ancestors: [],
+    blockedAncestors: [],
+    routedSinks: new Map(),
+  };
+  return makeAnyScope(sink, refs, recording) as ScopeObjOf<S>;
 }
 
 /**
@@ -1164,13 +1296,31 @@ function recordBlock<S extends ScopeName>(
   owner: Recording | undefined,
   refs: ContentRefUse[],
   body: (scope: ScopeObjOf<S>) => void,
-  into: PdxEntry[] = []
+  into: PdxEntry[] = [],
+  transition: ScopeTransition = "same"
 ): PdxEntry[] {
+  const scope = transition === "same" && owner !== undefined ? owner.scope : Symbol("effectScope");
+  const ancestors =
+    owner === undefined || transition === "replace"
+      ? []
+      : transition === "same"
+        ? owner.ancestors
+        : [owner.scope, ...owner.ancestors];
+  const blockedAncestors =
+    owner === undefined
+      ? []
+      : transition === "replace"
+        ? [owner.scope, ...owner.ancestors, ...owner.blockedAncestors]
+        : owner.blockedAncestors;
   const recording: Recording = {
     sink: into,
     refs,
     live: true,
     lease: owner === undefined ? LEASES.at(-1) : owner.lease,
+    scope,
+    ancestors,
+    blockedAncestors,
+    routedSinks: new Map(),
   };
   RECORDINGS.push(recording);
   let result: unknown;

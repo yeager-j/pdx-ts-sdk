@@ -684,7 +684,7 @@ describe("a spliced alias category with a script authoring surface", () => {
     );
     expect(emitted.interfaces).toContain(
       "id: string; \n/** The nested effects, written bare inside the block beside its " +
-        "named keys. */\neffects: (scope: ScopeObjOf<S>) => void }"
+        "named keys. */\neffects: () => void }"
     );
   });
 
@@ -705,7 +705,7 @@ describe("a spliced alias category with a script authoring surface", () => {
 
   it("gives the recorder one member table per listed category", () => {
     expect(emitted.meta).toContain(
-      'queueActions: { key: "queue_actions", shape: { kind: "alias-list", category: "fleet_action" } }'
+      'queueActions: { key: "queue_actions", transition: "same", shape: { kind: "alias-list", category: "fleet_action" } }'
     );
     expect(emitted.meta).toContain("export const ALIAS_LIST_META");
     expect(emitted.meta).toContain(

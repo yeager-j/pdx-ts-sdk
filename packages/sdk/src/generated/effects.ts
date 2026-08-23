@@ -323,7 +323,7 @@ export type FleetAction<S extends ScopeName> =
         /** TODO: ID seems to have to be in quotes (Vanilla also does that). Also, I think they are meant to be unique ideas, but I'm not sure about that. -Caligula */
         id: string;
         /** The nested effects, written bare inside the block beside its named keys. */
-        effects: (scope: ScopeObjOf<S>) => void;
+        effects: () => void;
       };
     }
   | { wait: number | { duration: number; random?: number } }
@@ -2573,7 +2573,7 @@ export interface EffectsIn8Scopes39a9<
     /** adds a random trait filtered by the given trigger, the Scope is the trait token, and the original scope is in Prev */
     addRandomSpeciesTrait?: Trigger<S>;
     /** effect is fired for randomly selected trait, the Scope is the trait, the original scope is in Prev, and From contains Species */
-    onRandomTraitAdded?: (scope: ScopeObjOf<S>) => void;
+    onRandomTraitAdded?: () => void;
     /** default: yes? */
     inheritParentRights?: boolean;
     /**
@@ -3987,7 +3987,7 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
     area?: TechnologyArea;
     tier?: TechnologyTierRef | string;
     addProgress?: ScriptValue;
-    failEffects?: (scope: ScopeObjOf<"country">) => void;
+    failEffects?: () => void;
     /** default no */
     ignorePrereqs?: boolean;
     /** default no */
@@ -4249,11 +4249,11 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
       offerHireMercenaryFleet?: boolean;
       /** default: no */
       offerProlongFleetContract?: boolean;
-      infoGathering?: (scope: ScopeObjOf<"country">) => void;
-      optionSelection?: (scope: ScopeObjOf<"country">) => void;
+      infoGathering?: () => void;
+      optionSelection?: () => void;
       allow?: Trigger<"country">;
     },
-    body: (scope: this) => void
+    body: () => void
   ): void;
 
   /**
@@ -12281,10 +12281,7 @@ export interface EffectsInShip {
    * create_smaller_size_creature_in_fleet = <value>
    * ```
    */
-  createSmallerSizeCreatureInFleet(args: {
-    count: ScriptValue;
-    effect?: (scope: ScopeObjOf<"ship">) => void;
-  }): void;
+  createSmallerSizeCreatureInFleet(args: { count: ScriptValue; effect?: () => void }): void;
 
   /**
    * Reduces the hull points of the scoped ship by a specific amount
@@ -15163,7 +15160,7 @@ export interface UniversalEffects<
       | "system"
     >;
     scaledSize: readonly Modifier<S>[];
-    effect: (scope: ScopeObjOf<S>) => void;
+    effect: () => void;
   }): void;
 
   /**
@@ -16006,7 +16003,7 @@ export interface UniversalEffects<
 
   /** Prints a message to game.log for debugging purposes. */
   log(value: string): void;
-  log(body: (scope: this) => void): void;
+  log(body: () => void): void;
 
   /** Prints a custom error to the error log */
   logError(value: string): void;
@@ -17088,8 +17085,8 @@ export interface UniversalEffects<
     immediate?: "yes";
     reticleRadius: readonly Modifier<S>[];
     maxRange: readonly Modifier<S>[];
-    onConfirm?: (scope: ScopeObjOf<S>) => void;
-    onCancel?: (scope: ScopeObjOf<S>) => void;
+    onConfirm?: () => void;
+    onCancel?: () => void;
   }): void;
 
   /**
@@ -17111,12 +17108,12 @@ export interface UniversalEffects<
       modifier: StaticModifierRef | string;
       days: number;
       chance?: readonly Modifier<S>[];
-      effect?: (scope: ScopeObjOf<S>) => void;
+      effect?: () => void;
     }[];
   }): void;
 
   /** Just a tooltip (shows the effect but does not run it) */
-  tooltip(body: (scope: this) => void): void;
+  tooltip(body: () => void): void;
 
   /**
    * Transfer the colony to another carrier
@@ -18418,19 +18415,19 @@ export interface WarScope
 /** An effect-block path whose current scope is agreement. */
 export interface AgreementEffectPath
   extends
-    EffectPath<"agreement">,
+    EffectPath<"agreement", "push">,
     EffectPathsIn24Scopes1dab,
     EffectPathsIn25Scopesf4df,
     EffectPathsIn26Scopesc5a2,
     UniversalEffectPaths {}
 
 /** An effect-block path whose current scope is alliance. */
-export interface AllianceEffectPath extends EffectPath<"alliance">, UniversalEffectPaths {}
+export interface AllianceEffectPath extends EffectPath<"alliance", "push">, UniversalEffectPaths {}
 
 /** An effect-block path whose current scope is ambient_object. */
 export interface AmbientObjectEffectPath
   extends
-    EffectPath<"ambient_object">,
+    EffectPath<"ambient_object", "push">,
     EffectPathsIn11Scopes2089,
     EffectPathsIn14Scopes86f5,
     EffectPathsIn14Scopesed72,
@@ -18441,7 +18438,7 @@ export interface AmbientObjectEffectPath
 /** An effect-block path whose current scope is archaeological_site. */
 export interface ArchaeologicalSiteEffectPath
   extends
-    EffectPath<"archaeological_site">,
+    EffectPath<"archaeological_site", "push">,
     EffectPathsIn11Scopes2089,
     EffectPathsIn12Scopes9dad,
     EffectPathsIn13Scopesa2e3,
@@ -18459,7 +18456,7 @@ export interface ArchaeologicalSiteEffectPath
 /** An effect-block path whose current scope is army. */
 export interface ArmyEffectPath
   extends
-    EffectPath<"army">,
+    EffectPath<"army", "push">,
     EffectPathsIn12Scopes9dad,
     EffectPathsIn13Scopesa2e3,
     EffectPathsIn14Scopes86f5,
@@ -18479,7 +18476,7 @@ export interface ArmyEffectPath
 /** An effect-block path whose current scope is astral_rift. */
 export interface AstralRiftEffectPath
   extends
-    EffectPath<"astral_rift">,
+    EffectPath<"astral_rift", "push">,
     EffectPathsIn14Scopesed72,
     EffectPathsIn15Scopesa620,
     EffectPathsIn19Scopesf9f7,
@@ -18492,7 +18489,7 @@ export interface AstralRiftEffectPath
 /** An effect-block path whose current scope is bypass. */
 export interface BypassEffectPath
   extends
-    EffectPath<"bypass">,
+    EffectPath<"bypass", "push">,
     EffectPathsIn14Scopesed72,
     EffectPathsIn18Scopes5ba6,
     EffectPathsIn19Scopesf9f7,
@@ -18504,7 +18501,7 @@ export interface BypassEffectPath
 /** An effect-block path whose current scope is carrier. */
 export interface CarrierEffectPath
   extends
-    EffectPath<"carrier">,
+    EffectPath<"carrier", "push">,
     EffectPathsIn11Scopes2089,
     EffectPathsIn12Scopes9dad,
     EffectPathsIn13Scopesa2e3,
@@ -18527,7 +18524,7 @@ export interface CarrierEffectPath
 /** An effect-block path whose current scope is colony. */
 export interface ColonyEffectPath
   extends
-    EffectPath<"colony">,
+    EffectPath<"colony", "push">,
     EffectPathsIn11Scopes2089,
     EffectPathsIn12Scopes9dad,
     EffectPathsIn13Scopesa2e3,
@@ -18551,12 +18548,12 @@ export interface ColonyEffectPath
 
 /** An effect-block path whose current scope is cosmic_storm_influence_field. */
 export interface CosmicStormInfluenceFieldEffectPath
-  extends EffectPath<"cosmic_storm_influence_field">, UniversalEffectPaths {}
+  extends EffectPath<"cosmic_storm_influence_field", "push">, UniversalEffectPaths {}
 
 /** An effect-block path whose current scope is country. */
 export interface CountryEffectPath
   extends
-    EffectPath<"country">,
+    EffectPath<"country", "push">,
     EffectPathsIn13Scopesa2e3,
     EffectPathsIn14Scopes86f5,
     EffectPathsIn15Scopesa620,
@@ -18573,7 +18570,7 @@ export interface CountryEffectPath
 /** An effect-block path whose current scope is debris. */
 export interface DebrisEffectPath
   extends
-    EffectPath<"debris">,
+    EffectPath<"debris", "push">,
     EffectPathsIn11Scopes2089,
     EffectPathsIn13Scopesa2e3,
     EffectPathsIn14Scopes86f5,
@@ -18589,7 +18586,7 @@ export interface DebrisEffectPath
 /** An effect-block path whose current scope is deposit. */
 export interface DepositEffectPath
   extends
-    EffectPath<"deposit">,
+    EffectPath<"deposit", "push">,
     EffectPathsIn12Scopes9dad,
     EffectPathsIn18Scopes5ba6,
     EffectPathsIn19Scopesf9f7,
@@ -18599,20 +18596,20 @@ export interface DepositEffectPath
     UniversalEffectPaths {}
 
 /** An effect-block path whose current scope is design. */
-export interface DesignEffectPath extends EffectPath<"design">, UniversalEffectPaths {}
+export interface DesignEffectPath extends EffectPath<"design", "push">, UniversalEffectPaths {}
 
 /** An effect-block path whose current scope is dlc_recommendation. */
 export interface DlcRecommendationEffectPath
-  extends EffectPath<"dlc_recommendation">, UniversalEffectPaths {}
+  extends EffectPath<"dlc_recommendation", "push">, UniversalEffectPaths {}
 
 /** An effect-block path whose current scope is espionage_asset. */
 export interface EspionageAssetEffectPath
-  extends EffectPath<"espionage_asset">, UniversalEffectPaths {}
+  extends EffectPath<"espionage_asset", "push">, UniversalEffectPaths {}
 
 /** An effect-block path whose current scope is espionage_operation. */
 export interface EspionageOperationEffectPath
   extends
-    EffectPath<"espionage_operation">,
+    EffectPath<"espionage_operation", "push">,
     EffectPathsIn15Scopesa620,
     EffectPathsIn24Scopes1dab,
     EffectPathsIn25Scopesf4df,
@@ -18621,12 +18618,12 @@ export interface EspionageOperationEffectPath
     UniversalEffectPaths {}
 
 /** An effect-block path whose current scope is exhibit. */
-export interface ExhibitEffectPath extends EffectPath<"exhibit">, UniversalEffectPaths {}
+export interface ExhibitEffectPath extends EffectPath<"exhibit", "push">, UniversalEffectPaths {}
 
 /** An effect-block path whose current scope is federation. */
 export interface FederationEffectPath
   extends
-    EffectPath<"federation">,
+    EffectPath<"federation", "push">,
     EffectPathsIn15Scopesa620,
     EffectPathsInFederation,
     UniversalEffectPaths {}
@@ -18634,7 +18631,7 @@ export interface FederationEffectPath
 /** An effect-block path whose current scope is first_contact. */
 export interface FirstContactEffectPath
   extends
-    EffectPath<"first_contact">,
+    EffectPath<"first_contact", "push">,
     EffectPathsIn14Scopesed72,
     EffectPathsIn15Scopesa620,
     EffectPathsIn18Scopes5ba6,
@@ -18648,7 +18645,7 @@ export interface FirstContactEffectPath
 /** An effect-block path whose current scope is fleet. */
 export interface FleetEffectPath
   extends
-    EffectPath<"fleet">,
+    EffectPath<"fleet", "push">,
     EffectPathsIn11Scopes2089,
     EffectPathsIn13Scopesa2e3,
     EffectPathsIn14Scopes86f5,
@@ -18668,12 +18665,12 @@ export interface FleetEffectPath
 
 /** An effect-block path whose current scope is galactic_community. */
 export interface GalacticCommunityEffectPath
-  extends EffectPath<"galactic_community">, UniversalEffectPaths {}
+  extends EffectPath<"galactic_community", "push">, UniversalEffectPaths {}
 
 /** An effect-block path whose current scope is leader. */
 export interface LeaderEffectPath
   extends
-    EffectPath<"leader">,
+    EffectPath<"leader", "push">,
     EffectPathsIn12Scopes9dad,
     EffectPathsIn15Scopesa620,
     EffectPathsIn18Scopes5ba6,
@@ -18693,7 +18690,7 @@ export interface LeaderEffectPath
 /** An effect-block path whose current scope is megastructure. */
 export interface MegastructureEffectPath
   extends
-    EffectPath<"megastructure">,
+    EffectPath<"megastructure", "push">,
     EffectPathsIn11Scopes2089,
     EffectPathsIn12Scopes9dad,
     EffectPathsIn13Scopesa2e3,
@@ -18709,7 +18706,7 @@ export interface MegastructureEffectPath
 /** An effect-block path whose current scope is mission. */
 export interface MissionEffectPath
   extends
-    EffectPath<"mission">,
+    EffectPath<"mission", "push">,
     EffectPathsIn24Scopes1dab,
     EffectPathsIn25Scopesf4df,
     EffectPathsIn26Scopesc5a2,
@@ -18717,12 +18714,12 @@ export interface MissionEffectPath
     UniversalEffectPaths {}
 
 /** An effect-block path whose current scope is no_scope. */
-export interface NoScopeEffectPath extends EffectPath<"no_scope">, UniversalEffectPaths {}
+export interface NoScopeEffectPath extends EffectPath<"no_scope", "push">, UniversalEffectPaths {}
 
 /** An effect-block path whose current scope is planet. */
 export interface PlanetEffectPath
   extends
-    EffectPath<"planet">,
+    EffectPath<"planet", "push">,
     EffectPathsIn11Scopes2089,
     EffectPathsIn12Scopes9dad,
     EffectPathsIn13Scopesa2e3,
@@ -18746,7 +18743,7 @@ export interface PlanetEffectPath
 /** An effect-block path whose current scope is pop_faction. */
 export interface PopFactionEffectPath
   extends
-    EffectPath<"pop_faction">,
+    EffectPath<"pop_faction", "push">,
     EffectPathsIn15Scopesa620,
     EffectPathsIn24Scopes1dab,
     EffectPathsIn25Scopesf4df,
@@ -18757,7 +18754,7 @@ export interface PopFactionEffectPath
 /** An effect-block path whose current scope is pop_group. */
 export interface PopGroupEffectPath
   extends
-    EffectPath<"pop_group">,
+    EffectPath<"pop_group", "push">,
     EffectPathsIn12Scopes9dad,
     EffectPathsIn18Scopes5ba6,
     EffectPathsIn19Scopesf9f7,
@@ -18772,12 +18769,12 @@ export interface PopGroupEffectPath
 
 /** An effect-block path whose current scope is pop_job. */
 export interface PopJobEffectPath
-  extends EffectPath<"pop_job">, EffectPathsIn12Scopes9dad, UniversalEffectPaths {}
+  extends EffectPath<"pop_job", "push">, EffectPathsIn12Scopes9dad, UniversalEffectPaths {}
 
 /** An effect-block path whose current scope is sector. */
 export interface SectorEffectPath
   extends
-    EffectPath<"sector">,
+    EffectPath<"sector", "push">,
     EffectPathsIn18Scopes5ba6,
     EffectPathsIn24Scopes1dab,
     EffectPathsIn25Scopesf4df,
@@ -18788,7 +18785,7 @@ export interface SectorEffectPath
 /** An effect-block path whose current scope is ship. */
 export interface ShipEffectPath
   extends
-    EffectPath<"ship">,
+    EffectPath<"ship", "push">,
     EffectPathsIn11Scopes2089,
     EffectPathsIn12Scopes9dad,
     EffectPathsIn13Scopesa2e3,
@@ -18813,12 +18810,12 @@ export interface ShipEffectPath
 
 /** An effect-block path whose current scope is ship_growth_stage. */
 export interface ShipGrowthStageEffectPath
-  extends EffectPath<"ship_growth_stage">, UniversalEffectPaths {}
+  extends EffectPath<"ship_growth_stage", "push">, UniversalEffectPaths {}
 
 /** An effect-block path whose current scope is situation. */
 export interface SituationEffectPath
   extends
-    EffectPath<"situation">,
+    EffectPath<"situation", "push">,
     EffectPathsIn24Scopes1dab,
     EffectPathsIn25Scopesf4df,
     EffectPathsIn26Scopesc5a2,
@@ -18827,7 +18824,7 @@ export interface SituationEffectPath
 /** An effect-block path whose current scope is species. */
 export interface SpeciesEffectPath
   extends
-    EffectPath<"species">,
+    EffectPath<"species", "push">,
     EffectPathsIn24Scopes1dab,
     EffectPathsIn26Scopesc5a2,
     EffectPathsIn4Scopes50ac,
@@ -18835,12 +18832,13 @@ export interface SpeciesEffectPath
     UniversalEffectPaths {}
 
 /** An effect-block path whose current scope is species_trait. */
-export interface SpeciesTraitEffectPath extends EffectPath<"species_trait">, UniversalEffectPaths {}
+export interface SpeciesTraitEffectPath
+  extends EffectPath<"species_trait", "push">, UniversalEffectPaths {}
 
 /** An effect-block path whose current scope is spy_network. */
 export interface SpyNetworkEffectPath
   extends
-    EffectPath<"spy_network">,
+    EffectPath<"spy_network", "push">,
     EffectPathsIn13Scopesa2e3,
     EffectPathsIn14Scopes86f5,
     EffectPathsIn15Scopesa620,
@@ -18850,12 +18848,12 @@ export interface SpyNetworkEffectPath
     UniversalEffectPaths {}
 
 /** An effect-block path whose current scope is star. */
-export interface StarEffectPath extends EffectPath<"star">, UniversalEffectPaths {}
+export interface StarEffectPath extends EffectPath<"star", "push">, UniversalEffectPaths {}
 
 /** An effect-block path whose current scope is starbase. */
 export interface StarbaseEffectPath
   extends
-    EffectPath<"starbase">,
+    EffectPath<"starbase", "push">,
     EffectPathsIn11Scopes2089,
     EffectPathsIn12Scopes9dad,
     EffectPathsIn13Scopesa2e3,
@@ -18875,12 +18873,12 @@ export interface StarbaseEffectPath
 
 /** An effect-block path whose current scope is storm. */
 export interface StormEffectPath
-  extends EffectPath<"storm">, EffectPathsInStorm, UniversalEffectPaths {}
+  extends EffectPath<"storm", "push">, EffectPathsInStorm, UniversalEffectPaths {}
 
 /** An effect-block path whose current scope is system. */
 export interface SystemEffectPath
   extends
-    EffectPath<"system">,
+    EffectPath<"system", "push">,
     EffectPathsIn11Scopes2089,
     EffectPathsIn13Scopesa2e3,
     EffectPathsIn14Scopes86f5,
@@ -18896,7 +18894,8 @@ export interface SystemEffectPath
     UniversalEffectPaths {}
 
 /** An effect-block path whose current scope is war. */
-export interface WarEffectPath extends EffectPath<"war">, EffectPathsInWar, UniversalEffectPaths {}
+export interface WarEffectPath
+  extends EffectPath<"war", "push">, EffectPathsInWar, UniversalEffectPaths {}
 
 /** Scope name -> the interface of effects recordable there. */
 export interface ScopeMap {

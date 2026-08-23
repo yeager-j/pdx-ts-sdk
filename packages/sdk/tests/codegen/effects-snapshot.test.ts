@@ -91,7 +91,9 @@ describe("emitted effect signatures", () => {
     expect(entry).toContain('key: "entity_offset"');
     expect(entry).toContain('key: "entity_offset_angle"');
     expect(entry).toContain('key: "entity_offset_height"');
-    expect(entry).toContain('{ prop: "effect", key: "effect", kind: "effect" }');
+    expect(entry).toContain(
+      '{ prop: "effect", key: "effect", kind: "effect", transition: "push" }'
+    );
   });
 
   it("createPopGroup exposes every CWT field and its pushed pop-group effect", () => {
@@ -113,7 +115,9 @@ describe("emitted effect signatures", () => {
     expect(entry).toContain('prop: "ethos"');
     expect(entry).toContain('kind: "scalar-or-block"');
     expect(entry).toContain('scalar: { objectKinds: ["scope-ref"] }');
-    expect(entry).toContain('{ prop: "effect", key: "effect", kind: "effect" }');
+    expect(entry).toContain(
+      '{ prop: "effect", key: "effect", kind: "effect", transition: "push" }'
+    );
   });
 
   it("emits structured-only field types and metadata", () => {
@@ -195,7 +199,7 @@ describe("emitted effect signatures", () => {
     // No `refTypes` — a scope names no registry — so `toScalar`'s `path`
     // unwrapping in `src/script/scalar.ts` is the whole runtime contract.
     expect(metaEntry("setOwner")).toMatchInlineSnapshot(
-      `"setOwner: { key: "set_owner", shape: { kind: "value", objectKinds: ["scope-ref"] } },"`
+      `"setOwner: { key: "set_owner", transition: "same", shape: { kind: "value", objectKinds: ["scope-ref"] } },"`
     );
   });
 
@@ -247,6 +251,7 @@ describe("emitted effect signatures", () => {
     expect(metaEntry("everyOwnedPlanet")).toMatchInlineSnapshot(`
       "everyOwnedPlanet: {
           key: "every_owned_planet",
+          transition: "push",
           shape: { kind: "wrapper", fields: [{ prop: "limit", key: "limit", kind: "trigger" }] },"
     `);
   });
@@ -259,7 +264,7 @@ describe("emitted effect signatures", () => {
       `"readonly capitalScope: EffectPathOf<\"colony\">;"`
     );
     expect(interfaces).toMatch(
-      /export interface CountryEffectPath\s+extends\s+EffectPath<"country">/
+      /export interface CountryEffectPath\s+extends\s+EffectPath<"country", "push">/
     );
     expect(interfaces).toContain("export interface EffectPathMap {");
   });
@@ -328,11 +333,13 @@ describe("emitted effect signatures", () => {
     expect(metaEntry("setCountryCodeFlags")).toMatchInlineSnapshot(`
       "setCountryCodeFlags: {
           key: "set_country_code_flags",
+          transition: "same",
           shape: { kind: "map", map: { value: {}, min: 1 } },"
     `);
     expect(structuredMetaEntry("addResourceFromDebris")).toMatchInlineSnapshot(`
       "addResourceFromDebris: {
           key: "add_resource_from_debris",
+          transition: "same",
           shape: {
             kind: "fields",
             fields: [
@@ -370,7 +377,7 @@ describe("emitted effect signatures", () => {
 
   it("scope link meta: a distinct lazy path node", () => {
     expect(metaEntry("owner")).toMatchInlineSnapshot(
-      `"owner: { key: "owner", shape: { kind: "scope-link" } },"`
+      `"owner: { key: "owner", transition: "push", shape: { kind: "scope-link" } },"`
     );
   });
 });

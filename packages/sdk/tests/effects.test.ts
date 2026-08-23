@@ -1,7 +1,7 @@
 import { serialize, type PdxEntry } from "@pdx-ts/pdxscript";
 import { describe, expect, it } from "vitest";
 
-import type { EffectFieldMeta } from "../src/generated/effect-meta.ts";
+import { EFFECT_META, type EffectFieldMeta } from "../src/generated/effect-meta.ts";
 import type { EffectPathOf } from "../src/generated/effects.ts";
 import {
   ambientObjectFlags,
@@ -384,7 +384,7 @@ set_diplomacy_action_setting = {
       cosmicStorm: "effects_test_storm",
       reticleRadius: [],
       maxRange: [],
-      onConfirm: (scope) => scope.log("effects_test_confirmed"),
+      onConfirm: () => country.log("effects_test_confirmed"),
     });
 
     expect(serialize(sink)).toBe(`copy_techs_from = {
@@ -855,8 +855,8 @@ create_message = {
       planet.addModifier({ modifier: "terraforming_candidate", days: 360 });
     });
     country
-      .if(isAtWar(), (c) => c.setCountryFlag(flags.effects_test_flag))
-      .else((c) => c.log("peace held"));
+      .if(isAtWar(), () => country.setCountryFlag(flags.effects_test_flag))
+      .else(() => country.log("peace held"));
     country.addResource({ resource: "influence", amount: 50 });
     country.previewModifier({
       id: "effects_test_country_modifier",
@@ -896,6 +896,110 @@ tooltip = {
 	}
 }
 `);
+  });
+
+  it("routes a captured ancestor proxy through PREV", () => {
+    const sink = recordEffects<"country">([], (country) => {
+      country.everyOwnedPlanet({}, () => {
+        country.setCountryFlag(flags.effects_test_flag);
+      });
+    });
+
+    expect(serialize(sink)).toBe(`every_owned_planet = {
+	prev = {
+		set_country_flag = effects_test_flag
+	}
+}
+`);
+  });
+
+  it("routes a captured ancestor proxy through PREVPREV", () => {
+    const sink = recordEffects<"country">([], (country) => {
+      country.everyOwnedPlanet({}, (planet) => {
+        planet.owner.effects(() => {
+          country.setCountryFlag(flags.effects_test_flag);
+        });
+      });
+    });
+
+    expect(serialize(sink)).toBe(`every_owned_planet = {
+	owner = {
+		prevprev = {
+			set_country_flag = effects_test_flag
+		}
+	}
+}
+`);
+  });
+
+  it("routes a captured ancestor proxy through four pushed scopes", () => {
+    const sink = recordEffects<"country">([], (country) => {
+      country.everyOwnedPlanet({}, (planet) => {
+        planet.owner.effects((owner) => {
+          owner.everyOwnedPlanet({}, (nestedPlanet) => {
+            nestedPlanet.owner.effects(() => {
+              country.setCountryFlag(flags.effects_test_flag);
+            });
+          });
+        });
+      });
+    });
+
+    expect(serialize(sink)).toContain("prevprevprevprev = {");
+    expect(serialize(sink)).toContain("set_country_flag = effects_test_flag");
+  });
+
+  it("rejects a captured ancestor proxy more than four pushed scopes away", () => {
+    const sink: PdxEntry[] = [];
+
+    expect(() =>
+      recordEffects<"country">(
+        [],
+        (country) => {
+          country.everyOwnedPlanet({}, (planet) => {
+            planet.owner.effects((owner) => {
+              owner.everyOwnedPlanet({}, (nestedPlanet) => {
+                nestedPlanet.owner.effects((nestedOwner) => {
+                  nestedOwner.everyOwnedPlanet({}, () => {
+                    country.setCountryFlag(flags.effects_test_flag);
+                  });
+                });
+              });
+            });
+          });
+        },
+        sink
+      )
+    ).toThrow(/only PREV through PREVPREVPREVPREV/);
+    expect(sink).toEqual([]);
+  });
+
+  it("rejects a captured ancestor proxy across a replacement transition", () => {
+    const testMethod = "sdk215Replacement";
+    const meta = EFFECT_META as Record<string, unknown>;
+    meta[testMethod] = {
+      key: "sdk215_replacement",
+      transition: "replace",
+      shape: { kind: "wrapper", fields: null },
+    };
+    const sink: PdxEntry[] = [];
+
+    try {
+      expect(() =>
+        recordEffects<"country">(
+          [],
+          (country) => {
+            (country as unknown as Record<string, (body: () => void) => void>)[testMethod]!(() => {
+              country.setCountryFlag(flags.effects_test_flag);
+            });
+          },
+          sink
+        )
+      ).toThrow(/replacement or unknown scope transition/);
+      expect(sink).toEqual([]);
+    } finally {
+      delete meta[testMethod];
+    }
   });
 
   it("records the author-asserted target link", () => {
@@ -982,7 +1086,7 @@ reset_event_chain_counter = {
 
   it("opens an intermediate block for sibling effects before continuing a path", () => {
     const sink = recordEffects<"planet">([], (planet) => {
-      planet.hiddenEffect.effects((planet) => {
+      planet.hiddenEffect.effects(() => {
         planet.log("also hidden");
         planet.owner.effects((country) => {
           country.setCountryFlag(flags.effects_test_flag);
@@ -1015,11 +1119,11 @@ reset_event_chain_counter = {
     const sink: PdxEntry[] = [];
     const country = makeScope<"country">(sink);
     country.randomList([
-      { weight: 60, do: (c) => c.setCountryFlag(flags.effects_test_flag) },
+      { weight: 60, do: () => country.setCountryFlag(flags.effects_test_flag) },
       {
         weight: 40,
         modifiers: [{ factor: 2, when: isAtWar() }],
-        do: (c) => c.log("war doubles this arm"),
+        do: () => country.log("war doubles this arm"),
       },
     ]);
 
@@ -1046,7 +1150,7 @@ reset_event_chain_counter = {
     const from = scopeRef<"planet">("from");
     const sink = recordEffects<"country">([], (country) => {
       country.log("shown");
-      country.hiddenEffect.effects((country) => {
+      country.hiddenEffect.effects(() => {
         country.log("not shown");
         from.effects((planet) => planet.log("nested"));
       });
@@ -1277,9 +1381,9 @@ every_owned_planet = {
     const country = makeScope<"country">(sink);
 
     country
-      .if(isAtWar(), (c) => c.log("war"))
-      .elseIf(hasCountryFlag("effects_test_flag"), (c) => c.log("flagged"))
-      .else((c) => c.log("peace"));
+      .if(isAtWar(), () => country.log("war"))
+      .elseIf(hasCountryFlag("effects_test_flag"), () => country.log("flagged"))
+      .else(() => country.log("peace"));
 
     expect(serialize(sink)).toBe(`if = {
 	limit = {
@@ -1758,8 +1862,8 @@ queue_actions = {
       {
         effect: {
           id: "effects_test_action",
-          effects: (scope) => {
-            scope.setFleetFlag("effects_test_queued_flag");
+          effects: () => {
+            fleet.setFleetFlag("effects_test_queued_flag");
           },
         },
       },

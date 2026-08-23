@@ -94,14 +94,14 @@ export const humReturns = events.country(1, {
     country.randomList([
       {
         weight: 60,
-        do: (c) => {
-          c.setCountryFlag(flags.hello_galaxy_heard_the_hum);
+        do: () => {
+          country.setCountryFlag(flags.hello_galaxy_heard_the_hum);
           // A vanilla scripted *effect*, invoked through `run` — effects record
           // into a sink the scope object closes over, so a binding hands back a
           // call rather than recording itself. Its `TECH` parameter takes this
           // mod's own technology: the package types parameters as bare scalars,
           // and the SDK widens that to the references it already models.
-          c.run(giveTechOptionOrProgressEffect({ TECH: resonanceTheory }));
+          country.run(giveTechOptionOrProgressEffect({ TECH: resonanceTheory }));
         },
       },
       {
@@ -113,10 +113,10 @@ export const humReturns = events.country(1, {
           // that is silently never true.
           { factor: 3, when: hasActualDeficit({ RESOURCE: vanilla.resource("minerals") }) },
         ],
-        do: (c) => {
+        do: () => {
           // Natural event FROM is the execution ROOT, so the country witness
           // remains true even after THIS transitions to each owned planet.
-          c.everyOwnedPlanet({ limit: hasOwner() }, (planet) => {
+          country.everyOwnedPlanet({ limit: hasOwner() }, (planet) => {
             planet.saveEventTargetAs(stormWorld);
             planet.planetEvent({ id: aftershock, from: ctx.self, days: 30 });
           });
@@ -124,10 +124,10 @@ export const humReturns = events.country(1, {
       },
     ]);
     country
-      .if(hasCountryFlag(flags.hello_galaxy_heard_the_hum), (c) => {
+      .if(hasCountryFlag(flags.hello_galaxy_heard_the_hum), () => {
         stormWorld.effects((planet) => planet.addDeposit("d_minerals_1"));
       })
-      .else((c) => c.log("the hum went unheard"));
+      .else(() => country.log("the hum went unheard"));
   },
   options: [{ name: "Fascinating.", key: "fascinating" }],
 });

@@ -168,7 +168,7 @@ describe("generated effect scope safety", () => {
       cosmicStorm: "storm_test",
       reticleRadius: [],
       maxRange: [],
-      onConfirm: (scope) => scope.log("confirmed"),
+      onConfirm: () => country.log("confirmed"),
     });
     country.stormApplyAftermathModifier({
       severity: [
@@ -362,6 +362,12 @@ describe("generated effect scope safety", () => {
     country.everyOwnedPlanet({}, (planet) => {
       planet.destroyColony();
     });
+  });
+
+  it("rejects a redundant same-scope callback parameter", () => {
+    const country = makeScope<"country">(sink);
+    // @ts-expect-error — if preserves country scope; capture country instead
+    country.if(hasCountryFlag("ready"), (same) => same.log("redundant"));
   });
 
   it("types a scope path's terminal body to the final link's output scope", () => {

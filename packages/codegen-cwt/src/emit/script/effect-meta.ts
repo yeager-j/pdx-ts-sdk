@@ -125,11 +125,15 @@ function fieldMeta(field: ArgField): string {
     return `{ ${identity}, kind: "value-list"${scalar === null ? "" : `, scalar: ${scalarMeta(scalar)}`}${fields === null ? "" : `, fields: [${fields.map(fieldMeta).join(", ")}]`}${repeated} }`;
   }
   const kind = fieldKind(field);
+  const transition =
+    field.value.kind === "clause" && field.value.category === "effect"
+      ? `, transition: ${field.value.scope === null ? '"same"' : '"push"'}`
+      : "";
   const refTypes = refTypesSuffix(field.value.kind === "scalar" ? field.value.value : undefined);
   const booleanLiterals = booleanLiteralsMeta(
     field.value.kind === "scalar" ? field.value.value : undefined
   );
-  return `{ ${identity}, kind: ${JSON.stringify(kind)}${refTypes}${booleanLiterals}${spliceMeta(field.value)}${repeated} }`;
+  return `{ ${identity}, kind: ${JSON.stringify(kind)}${transition}${refTypes}${booleanLiterals}${spliceMeta(field.value)}${repeated} }`;
 }
 
 function scalarShapeMeta(shape: Extract<EffectShape, { readonly kind: "bool" | "value" }>): string {
@@ -159,24 +163,24 @@ function metaEntry(effect: EmittedEffect): string {
     fields === null ? "null" : `[${fields.map(fieldMeta).join(", ")}]`;
   switch (shape.kind) {
     case "bool":
-      return `  ${method}: { key: ${JSON.stringify(key)}, shape: { kind: "bool" } },\n`;
+      return `  ${method}: { key: ${JSON.stringify(key)}, transition: "same", shape: { kind: "bool" } },\n`;
     case "value":
-      return `  ${method}: { key: ${JSON.stringify(key)}, shape: ${scalarShapeMeta(shape)} },\n`;
+      return `  ${method}: { key: ${JSON.stringify(key)}, transition: "same", shape: ${scalarShapeMeta(shape)} },\n`;
     case "fields":
-      return `  ${method}: { key: ${JSON.stringify(key)}, shape: { kind: "fields", fields: ${fieldsOf(shape.fields)} } },\n`;
+      return `  ${method}: { key: ${JSON.stringify(key)}, transition: "same", shape: { kind: "fields", fields: ${fieldsOf(shape.fields)} } },\n`;
     case "map":
-      return `  ${method}: { key: ${JSON.stringify(key)}, shape: { kind: "map", map: ${mapMeta(shape.map)} } },\n`;
+      return `  ${method}: { key: ${JSON.stringify(key)}, transition: "same", shape: { kind: "map", map: ${mapMeta(shape.map)} } },\n`;
     case "wrapper":
-      return `  ${method}: { key: ${JSON.stringify(key)}, shape: { kind: "wrapper", fields: ${fieldsOf(shape.fields)} } },\n`;
+      return `  ${method}: { key: ${JSON.stringify(key)}, transition: ${JSON.stringify(shape.transition)}, shape: { kind: "wrapper", fields: ${fieldsOf(shape.fields)} } },\n`;
     case "aliasList":
-      return `  ${method}: { key: ${JSON.stringify(key)}, shape: { kind: "alias-list", category: ${JSON.stringify(shape.category)} } },\n`;
+      return `  ${method}: { key: ${JSON.stringify(key)}, transition: "same", shape: { kind: "alias-list", category: ${JSON.stringify(shape.category)} } },\n`;
     case "scalarOrBlock":
-      return `  ${method}: { key: ${JSON.stringify(key)}, shape: { kind: "scalar-or-block", scalar: ${scalarShapeMeta(shape.scalar)}, block: ${blockShapeMeta(shape.block)} } },\n`;
+      return `  ${method}: { key: ${JSON.stringify(key)}, transition: "same", shape: { kind: "scalar-or-block", scalar: ${scalarShapeMeta(shape.scalar)}, block: ${blockShapeMeta(shape.block)} } },\n`;
   }
 }
 
 function scopeLinkMetaEntry(link: EmittedScopeLink): string {
-  return `  ${link.method}: { key: ${JSON.stringify(link.key)}, shape: { kind: "scope-link" } },\n`;
+  return `  ${link.method}: { key: ${JSON.stringify(link.key)}, transition: "push", shape: { kind: "scope-link" } },\n`;
 }
 
 /** One spliced alias category's member table, as the recorder reads it. */
@@ -242,6 +246,8 @@ export function effectMetaCode(
     "  readonly prop: string;\n" +
     "  readonly key: string;\n" +
     "  readonly kind: EffectFieldKind;\n" +
+    "  /** How a nested effect closure changes scope identity. */\n" +
+    '  readonly transition?: "same" | "push" | "replace";\n' +
     docComment(
       [
         "The registries an id in this field may name, when every form the",
@@ -298,6 +304,8 @@ export function effectMetaCode(
     '  | { readonly kind: "scope-link" };\n\n' +
     "export interface EffectMeta {\n" +
     "  readonly key: string;\n" +
+    "  /** How this member's callback changes the live game scope identity. */\n" +
+    '  readonly transition: "same" | "push" | "replace";\n' +
     "  readonly shape: EffectShapeMeta;\n" +
     "}\n\n" +
     docComment([

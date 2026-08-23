@@ -905,7 +905,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["country"] },
     signature:
-      'addRandomResearchOption(args: { category?: TechnologyCategoryRef | string; area?: TechnologyArea; tier?: TechnologyTierRef | string; addProgress?: ScriptValue; failEffects?: (scope: ScopeObjOf<"country">) => void; ignorePrereqs?: boolean; onlyRare?: boolean; ignoreInsight?: boolean; ignoreRare?: boolean }): void;',
+      "addRandomResearchOption(args: { category?: TechnologyCategoryRef | string; area?: TechnologyArea; tier?: TechnologyTierRef | string; addProgress?: ScriptValue; failEffects?: () => void; ignorePrereqs?: boolean; onlyRare?: boolean; ignoreInsight?: boolean; ignoreRare?: boolean }): void;",
     docs: [
       "Adds s random tech research option to the scoped country's tech view list, permanent until researched. if none applicable it runs fail_effects",
       "",
@@ -1458,7 +1458,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["country"] },
     signature:
-      'aiTradeFacility(args: { offerHireMercenaryFleet?: boolean; offerProlongFleetContract?: boolean; infoGathering?: (scope: ScopeObjOf<"country">) => void; optionSelection?: (scope: ScopeObjOf<"country">) => void; allow?: Trigger<"country"> }, body: (scope: this) => void): void;',
+      'aiTradeFacility(args: { offerHireMercenaryFleet?: boolean; offerProlongFleetContract?: boolean; infoGathering?: () => void; optionSelection?: () => void; allow?: Trigger<"country"> }, body: () => void): void;',
     docs: [""],
   },
   {
@@ -2915,7 +2915,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "universal" },
     signature:
-      'createMilitaryFleet(args: { owner: ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system">; scaledSize: readonly Modifier<ScopeName>[]; effect: (scope: ScopeObjOf<ScopeName>) => void }): void;',
+      'createMilitaryFleet(args: { owner: ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system">; scaledSize: readonly Modifier<ScopeName>[]; effect: () => void }): void;',
     docs: [
       "Creates a military fleet with the designs of a specified country.",
       "",
@@ -3146,7 +3146,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["ship"] },
     signature:
-      'createSmallerSizeCreatureInFleet(args: { count: ScriptValue; effect?: (scope: ScopeObjOf<"ship">) => void }): void;',
+      "createSmallerSizeCreatureInFleet(args: { count: ScriptValue; effect?: () => void }): void;",
     docs: [
       "Creates new creatures of the smaller ship size in the same fleet",
       "",
@@ -6427,7 +6427,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     key: "log",
     kind: "effect",
     availability: { kind: "universal" },
-    signature: "log(value: string): void;\n  log(body: (scope: this) => void): void;",
+    signature: "log(value: string): void;\n  log(body: () => void): void;",
     docs: ["Prints a message to game.log for debugging purposes."],
   },
   {
@@ -6497,7 +6497,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
       scopes: ["carrier", "colony", "country", "leader", "planet", "pop_group", "ship", "species"],
     },
     signature:
-      'modifySpecies(args: { species?: ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species"> | string; base?: ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species"> | "auto" | "none"; addTrait?: readonly (TraitRef | string)[]; addTraitsAtStartOfList?: boolean; removeTrait?: readonly (TraitRef | string)[]; idealPlanetClass?: ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species"> | PlanetClassHabitablePlanetRef | string; changeScopedSpecies?: boolean; portrait?: ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species"> | PortraitRef | string | PortraitGroupRef | "random"; addRandomSpeciesTrait?: Trigger<"carrier" | "colony" | "country" | "leader" | "planet" | "pop_group" | "ship" | "species">; onRandomTraitAdded?: (scope: ScopeObjOf<"carrier" | "colony" | "country" | "leader" | "planet" | "pop_group" | "ship" | "species">) => void; inheritParentRights?: boolean; sapient?: boolean; effect?: (scope: SpeciesScope) => void }): void;',
+      'modifySpecies(args: { species?: ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species"> | string; base?: ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species"> | "auto" | "none"; addTrait?: readonly (TraitRef | string)[]; addTraitsAtStartOfList?: boolean; removeTrait?: readonly (TraitRef | string)[]; idealPlanetClass?: ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species"> | PlanetClassHabitablePlanetRef | string; changeScopedSpecies?: boolean; portrait?: ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species"> | PortraitRef | string | PortraitGroupRef | "random"; addRandomSpeciesTrait?: Trigger<"carrier" | "colony" | "country" | "leader" | "planet" | "pop_group" | "ship" | "species">; onRandomTraitAdded?: () => void; inheritParentRights?: boolean; sapient?: boolean; effect?: (scope: SpeciesScope) => void }): void;',
     docs: [
       "Creates a new, modified species based on an already-extant species",
       "",
@@ -16891,7 +16891,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "universal" },
     signature:
-      'startStormAreaPlacing(args: { sacrificeLeaderWithUi?: "yes"; cosmicStorm: StormTypesRef | string; immediate?: "yes"; reticleRadius: readonly Modifier<ScopeName>[]; maxRange: readonly Modifier<ScopeName>[]; onConfirm?: (scope: ScopeObjOf<ScopeName>) => void; onCancel?: (scope: ScopeObjOf<ScopeName>) => void }): void;',
+      'startStormAreaPlacing(args: { sacrificeLeaderWithUi?: "yes"; cosmicStorm: StormTypesRef | string; immediate?: "yes"; reticleRadius: readonly Modifier<ScopeName>[]; maxRange: readonly Modifier<ScopeName>[]; onConfirm?: () => void; onCancel?: () => void }): void;',
     docs: ["Starts the storm placing mode with radius", "", "```", "radius = <float> ", "```"],
   },
   {
@@ -17029,7 +17029,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "universal" },
     signature:
-      "stormApplyAftermathModifier(args: { severity: readonly ({ modifier: StaticModifierRef | string; days: number; chance?: readonly Modifier<ScopeName>[]; effect?: (scope: ScopeObjOf<ScopeName>) => void })[] }): void;",
+      "stormApplyAftermathModifier(args: { severity: readonly ({ modifier: StaticModifierRef | string; days: number; chance?: readonly Modifier<ScopeName>[]; effect?: () => void })[] }): void;",
     docs: [
       "Applies Cosmic Storm Aftermath Modifiers. You can specify up to a max of 10 Severities and each one will be chosen based on it's chance.",
       "",
@@ -17099,7 +17099,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     key: "tooltip",
     kind: "effect",
     availability: { kind: "universal" },
-    signature: "tooltip(body: (scope: this) => void): void;",
+    signature: "tooltip(body: () => void): void;",
     docs: ["Just a tooltip (shows the effect but does not run it)"],
   },
   {

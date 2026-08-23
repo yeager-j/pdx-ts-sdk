@@ -122,8 +122,8 @@ describe("random-list choice identity", () => {
       isTriggeredOnly: true,
       immediate: (country) => {
         country.randomList([
-          { weight: 50, do: (chosen) => chosen.setCountryFlag(flags.sdk149_first) },
-          { weight: 50, do: (chosen) => chosen.setCountryFlag(flags.sdk149_second) },
+          { weight: 50, do: () => country.setCountryFlag(flags.sdk149_first) },
+          { weight: 50, do: () => country.setCountryFlag(flags.sdk149_second) },
         ]);
       },
     });
@@ -140,9 +140,7 @@ describe("random-list choice identity", () => {
     const event = mod.namespace().country(1, {
       isTriggeredOnly: true,
       immediate: (country) => {
-        country.randomList([
-          { weight: 1, do: (chosen) => chosen.setCountryFlag(flags.sdk149_first) },
-        ]);
+        country.randomList([{ weight: 1, do: () => country.setCountryFlag(flags.sdk149_first) }]);
       },
     });
     const world = fixture({ countries: [{}] }, { events: [event] });
@@ -159,8 +157,8 @@ describe("random-list choice identity", () => {
       isTriggeredOnly: true,
       immediate: (country) => {
         country.randomList([
-          { weight: 7, do: (chosen) => chosen.setCountryFlag(flags.sdk149_first) },
-          { weight: 7, do: (chosen) => chosen.setCountryFlag(flags.sdk149_second) },
+          { weight: 7, do: () => country.setCountryFlag(flags.sdk149_first) },
+          { weight: 7, do: () => country.setCountryFlag(flags.sdk149_second) },
         ]);
       },
     });
@@ -229,22 +227,22 @@ describe("structural semantics audit", () => {
     const random = events.country(1, {
       isTriggeredOnly: true,
       immediate: (country) => {
-        country.random({ chance: 100 }, (chosen) => chosen.setCountryFlag(flags.sdk149_first));
+        country.random({ chance: 100 }, () => country.setCountryFlag(flags.sdk149_first));
       },
     });
     const lockedList = events.country(2, {
       isTriggeredOnly: true,
       immediate: (country) => {
         country.lockedRandomList([
-          { weight: 1, do: (chosen) => chosen.setCountryFlag(flags.sdk149_first) },
+          { weight: 1, do: () => country.setCountryFlag(flags.sdk149_first) },
         ]);
       },
     });
     const loop = events.country(3, {
       isTriggeredOnly: true,
       immediate: (country) => {
-        country.whileLoop({ count: 1 }, (iteration) => {
-          iteration.setCountryFlag(flags.sdk149_first);
+        country.whileLoop({ count: 1 }, () => {
+          country.setCountryFlag(flags.sdk149_first);
         });
       },
     });
@@ -292,8 +290,8 @@ describe("event and link semantics", () => {
       isTriggeredOnly: true,
       immediate: (country) => {
         country.everyOwnedPlanet({}, (planet) => planet.saveEventTargetAs(target));
-        country.if(target.trigger(hasOwner()), (matched) => {
-          matched.setCountryFlag(flags.sdk149_target_seen);
+        country.if(target.trigger(hasOwner()), () => {
+          country.setCountryFlag(flags.sdk149_target_seen);
         });
       },
     });

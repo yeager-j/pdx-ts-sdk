@@ -165,8 +165,8 @@ const beginBloom = events.country(1, {
     country.randomOwnedPlanet({ limit: hasOwner() }, (planet) => {
       planet.saveEventTargetAs(bloomWorld);
     });
-    country.if(exists(bloomWorld), (owner) => {
-      owner.startSituation({
+    country.if(exists(bloomWorld), () => {
+      country.startSituation({
         type: crystalBloom,
         target: bloomWorld,
         effect: (situation) => {

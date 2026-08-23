@@ -921,8 +921,8 @@ describe("content reference integrity", () => {
         isTriggeredOnly: true,
         hideWindow: true,
         immediate: (country) => {
-          country.if(and(hasTechnology(orphan)), (owner) => {
-            owner.addResource({ resource: "energy", amount: 1 });
+          country.if(and(hasTechnology(orphan)), () => {
+            country.addResource({ resource: "energy", amount: 1 });
           });
         },
       }),

@@ -153,8 +153,8 @@ describe("effects", () => {
     const setup = scriptedEffect.unchecked("prepare_home_system_effect", "country");
     expect(
       recorded((scope) => {
-        scope.if(scriptedTrigger("is_fallen_empire", "country")(), (inner) => {
-          inner.run(setup());
+        scope.if(scriptedTrigger("is_fallen_empire", "country")(), () => {
+          scope.run(setup());
         });
       })
     ).toBe(

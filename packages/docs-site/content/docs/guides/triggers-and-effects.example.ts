@@ -32,10 +32,10 @@ const humReturns = events.country(1, {
   isTriggeredOnly: true,
   immediate: (country) => {
     country
-      .if(resonanceReady, (c) => {
-        c.addResource({ resource: "influence", amount: 50 });
+      .if(resonanceReady, () => {
+        country.addResource({ resource: "influence", amount: 50 });
       })
-      .else((c) => c.log("the hum went unheard"));
+      .else(() => country.log("the hum went unheard"));
   },
   options: [{ name: "Fascinating.", key: "fascinating" }],
 });

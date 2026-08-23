@@ -169,6 +169,8 @@ type BlockEffectShape =
       readonly kind: "wrapper";
       /** Canonical closure scope, or `null` when it preserves the receiving scope. */
       readonly scope: string | null;
+      /** Runtime identity transition for the callback body. */
+      readonly transition: "same" | "push" | "replace";
       /** Named arguments before the closure, or `null` when the closure is the only argument. */
       readonly fields: readonly ArgField[] | null;
     }
@@ -377,6 +379,8 @@ export interface EmittedScopeLink {
   readonly key: string;
   /** Canonical scope reached by the navigation. */
   readonly outputScope: string;
+  /** Generated navigation always enters a new game scope. */
+  readonly transition: "push";
   /** Documentation lines attached to the generated property. */
   readonly docs: readonly string[];
 }
@@ -499,7 +503,13 @@ function blockShapeOf(emitter: Emitter, block: LoweredRuleBlock): BlockEffectSha
         return skipReason("unknown-push-scope", `push_scope names no known scope (${pushedRaw})`);
       }
     }
-    return { kind: "wrapper", scope, fields: merged.fields.length === 0 ? null : merged.fields };
+    return {
+      kind: "wrapper",
+      scope,
+      transition:
+        block.declaration.scope?.replaces === true ? "replace" : scope === null ? "same" : "push",
+      fields: merged.fields.length === 0 ? null : merged.fields,
+    };
   }
   if (merged.kind === "map") {
     return { kind: "map", map: merged.map };
@@ -652,7 +662,7 @@ function baseMemberType(
         return `readonly ${emitter.use("Modifier")}<${scope}>[]`;
       }
       return value.scope === null
-        ? `(scope: ScopeObjOf<${scope}>) => void`
+        ? `() => void`
         : `(scope: ${scopeInterfaceName(value.scope)}) => void`;
     }
     case "keyedClauses":
@@ -800,7 +810,10 @@ function methodSignatureText(emitter: Emitter, effect: EmittedEffect, outerScope
     case "map":
       return `  ${method}(values: ${mapType(emitter, shape.map)}): void;\n`;
     case "wrapper": {
-      const body = `body: (scope: ${scopeInterfaceName(shape.scope)}) => void`;
+      const body =
+        shape.transition === "same"
+          ? "body: () => void"
+          : `body: (scope: ${scopeInterfaceName(shape.scope)}) => void`;
       return shape.fields === null
         ? `  ${method}(${body}): void;\n`
         : `  ${method}(args: ${argsType(emitter, shape.fields, outerScope, key)}, ${body}): void;\n`;
@@ -1182,6 +1195,7 @@ function clusterScopeLinks(
       method: link.method,
       key: link.key,
       outputScope: link.outputScope,
+      transition: "push",
       docs: link.docs,
     };
     const clusterKey = scopes === "universal" ? "universal" : scopes.join("|");
@@ -1416,7 +1430,7 @@ function effectPathInterfaces(
 ): string[] {
   return allScopes.map((scope) => {
     const parents = [
-      `${emitter.use("EffectPath")}<${JSON.stringify(scope)}>`,
+      `${emitter.use("EffectPath")}<${JSON.stringify(scope)}, "push">`,
       ...linkClusters
         .filter((cluster) => cluster.scopes === "universal" || cluster.scopes.includes(scope))
         .map((cluster) => pathClusterName(cluster.scopes)),

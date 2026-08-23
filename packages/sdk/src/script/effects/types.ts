@@ -83,10 +83,18 @@ export interface ScopeRef<S extends ScopeName = ScopeName> extends ScopeValue<S>
  * same-scope structural node, so it composes with generated navigation while
  * still allowing sibling effects when terminated on its own.
  */
-export interface EffectPath<S extends ScopeName> {
+export interface EffectPath<
+  S extends ScopeName,
+  Transition extends "same" | "push" | "replace" = "push",
+> {
   readonly hiddenEffect: EffectPathOf<S>;
-  effects(body: (scope: ScopeObjOf<S>) => void): void;
+  effects(body: Transition extends "same" ? () => void : (scope: ScopeObjOf<S>) => void): void;
 }
+
+/** A path node that keeps the receiver's game scope. */
+export type SameScopeEffectPath<S extends ScopeName> = Omit<EffectPathOf<S>, "effects"> & {
+  effects(body: () => void): void;
+};
 
 /**
  * A saved event target. Declaring one names its scope once, explicitly; every
@@ -356,16 +364,16 @@ export type ComplexTriggerModifierWithLoc<S extends ScopeName> = Omit<
  * being recorded between its links — that would silently detach the `else`.
  */
 export interface IfChain<S extends ScopeName> {
-  elseIf(condition: Trigger<S>, body: (scope: ScopeObjOf<S>) => void): IfChain<S>;
+  elseIf(condition: Trigger<S>, body: () => void): IfChain<S>;
   /** Ends the chain: a further `elseIf` or `else` on it throws. */
-  else(body: (scope: ScopeObjOf<S>) => void): void;
+  else(body: () => void): void;
 }
 
 /** One arm of a `random_list`: trigger-ish parts as data, effects as a closure. */
 export interface RandomListArm<S extends ScopeName> {
   readonly weight: number;
   readonly modifiers?: readonly Modifier<S>[];
-  readonly do: (scope: ScopeObjOf<S>) => void;
+  readonly do: () => void;
 }
 
 /**
@@ -382,13 +390,13 @@ export interface StructuralEffects<S extends ScopeName> {
    * counterpart of a TypeScript `if`, which branches at build time. Chain
    * `.elseIf(...)` and `.else(...)` before recording any further effects.
    */
-  if(condition: Trigger<S>, body: (scope: ScopeObjOf<S>) => void): IfChain<S>;
+  if(condition: Trigger<S>, body: () => void): IfChain<S>;
 
   /**
    * Begins a same-scope `hidden_effect = { ... }` path. Terminate it with
    * `.effects(...)`, or continue through generated scope-link properties.
    */
-  readonly hiddenEffect: EffectPathOf<S>;
+  readonly hiddenEffect: SameScopeEffectPath<S>;
 
   /** Picks one arm at random, weighted; modifiers adjust weights in-game. */
   randomList(arms: ReadonlyArray<RandomListArm<S>>): void;
@@ -397,16 +405,10 @@ export interface StructuralEffects<S extends ScopeName> {
   lockedRandomList(arms: ReadonlyArray<RandomListArm<S>>): void;
 
   /** Runs the body with the given percent chance, in-game. */
-  random(
-    args: { chance: number; modifiers?: readonly Modifier<S>[] },
-    body: (scope: ScopeObjOf<S>) => void
-  ): void;
+  random(args: { chance: number; modifiers?: readonly Modifier<S>[] }, body: () => void): void;
 
   /** `while = { count/limit ... }` — in-game iteration. */
-  whileLoop(
-    args: { count?: number; limit?: Trigger<S> },
-    body: (scope: ScopeObjOf<S>) => void
-  ): void;
+  whileLoop(args: { count?: number; limit?: Trigger<S> }, body: () => void): void;
 
   /**
    * Saves the current scope under the target's name. The target's declared
