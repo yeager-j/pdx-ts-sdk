@@ -16,7 +16,7 @@ import {
 } from "../src/generated/value-sets.ts";
 import type { EffectPath, EffectPathOf } from "../src/index.ts";
 import { eventTarget, makeScope, scopeValue } from "../src/script/effects/recorder.ts";
-import { hasPlanetFlag, isAtWar } from "../src/script/triggers.ts";
+import { hasPlanetFlag, hasStarFlag, isAtWar } from "../src/script/triggers.ts";
 
 const sink: PdxEntry[] = [];
 const flags = planetFlags("effects_type_test_flag");
@@ -316,5 +316,46 @@ describe("generated effect scope safety", () => {
     const planet = makeScope<"planet">(sink);
     // @ts-expect-error — planets have no target link; it exists on situation/spy_network/espionage_operation/agreement
     planet.target<"country">(() => {});
+  });
+});
+
+describe("a spliced alias category's authoring type", () => {
+  it("types each action by the one member the item names", () => {
+    const fleet = makeScope<"fleet">(sink);
+    fleet.queueActions([
+      { wait: 10 },
+      { wait: { duration: 10, random: 2 } },
+      { moveTo: scopeValue<"planet">("this") },
+      { orbitPlanet: "random" },
+    ]);
+    // @ts-expect-error — move_to takes a scope, not a number
+    fleet.queueActions([{ moveTo: 5 }]);
+    // @ts-expect-error — the queue holds fleet actions, and there is no `warp`
+    fleet.queueActions([{ warp: 5 }]);
+    // An item naming two actions is a union member's excess property to
+    // TypeScript and no error at all, so the recorder refuses it instead
+    // (effects.test.ts).
+    fleet.queueActions([{ wait: 10, orbitPlanet: "random" }]);
+  });
+
+  it("types a nested action list by the scope its search pushes", () => {
+    const fleet = makeScope<"fleet">(sink);
+    fleet.queueActions([
+      {
+        findRandomSystem: {
+          trigger: { id: "effects_type_test.1", conditions: hasStarFlag("effects_type_test_flag") },
+          foundSystem: [{ wait: 5 }],
+        },
+      },
+    ]);
+    fleet.queueActions([
+      {
+        findRandomSystem: {
+          // @ts-expect-error — the search pushes system scope, so a planet trigger is not one of its conditions
+          trigger: { id: "effects_type_test.2", conditions: hasPlanetFlag(flags) },
+          foundSystem: [],
+        },
+      },
+    ]);
   });
 });

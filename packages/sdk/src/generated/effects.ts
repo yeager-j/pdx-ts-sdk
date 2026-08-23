@@ -19,6 +19,7 @@ import type {
   AggroRangeMeasureFrom,
   AgreementSubjectExpand,
   AgreementWar,
+  ContactRule,
   CountryRelation,
   FederationSuccessionTerm,
   FederationSuccessionType,
@@ -47,6 +48,7 @@ import type {
   VoteType,
   WarSide,
 } from "./enums.ts";
+import type { GovernmentTriggerBlock } from "./government-trigger.ts";
 import type {
   AgendaRef,
   AgreementPresetRef,
@@ -209,6 +211,102 @@ import type {
   Variable,
   WarFlag,
 } from "./value-sets.ts";
+
+import "./government-trigger.ts";
+
+/**
+ * One member of the `fleet_action` alias category, as the `actions`
+ * list holds it. Each item names exactly one member.
+ */
+export type FleetAction<S extends ScopeName> =
+  | {
+      repeat: {
+        maxIterations?: number;
+        while?: { id: string; conditions: Trigger<S> };
+        actions: readonly FleetAction<S>[];
+      };
+    }
+  /** This requires the fleet to be a planet destroyer */
+  | {
+      destroyPlanet: {
+        target: ScopeValue<"planet">;
+        skipRules?: boolean;
+        skipFirePhase?: boolean;
+        skipWindupPhase?: boolean;
+      };
+    }
+  | {
+      findRandomSystem: {
+        trigger?: { id: string; conditions: Trigger<"system"> };
+        foundSystem: readonly FleetAction<"system">[];
+        failed?: readonly FleetAction<S>[];
+      };
+    }
+  | {
+      findRandomPlanet: {
+        trigger?: { id: string; conditions: Trigger<"planet"> };
+        foundPlanet: readonly FleetAction<"planet">[];
+        failed?: readonly FleetAction<S>[];
+      };
+    }
+  | {
+      findRandomFleet: {
+        trigger?: { id: string; conditions: Trigger<"fleet"> };
+        foundFleet: readonly FleetAction<"fleet">[];
+        failed?: readonly FleetAction<S>[];
+        systemOnly?: boolean;
+      };
+    }
+  | {
+      findClosestSystem: {
+        trigger?: { id: string; conditions: Trigger<"system"> };
+        foundSystem: readonly FleetAction<"system">[];
+        failed?: readonly FleetAction<S>[];
+      };
+    }
+  | {
+      findClosestPlanet: {
+        trigger?: { id: string; conditions: Trigger<"planet"> };
+        foundPlanet: readonly FleetAction<"planet">[];
+        failed?: readonly FleetAction<S>[];
+      };
+    }
+  | {
+      findClosestFleet: {
+        trigger?: { id: string; conditions: Trigger<"fleet"> };
+        foundFleet: readonly FleetAction<"fleet">[];
+        failed?: readonly FleetAction<S>[];
+        systemOnly?: boolean;
+      };
+    }
+  | { effect: { id: string; effects: (scope: ScopeObjOf<S>) => void } }
+  | { wait: number | { duration: number; random?: number } }
+  | { mergeFleet: { target: ScopeValue<"fleet">; allowFtl?: boolean } }
+  | { attackFleet: { target: ScopeValue<"fleet">; allowFtl?: boolean } }
+  | {
+      moveTo: ScopeValue<
+        | "ambient_object"
+        | "archaeological_site"
+        | "army"
+        | "carrier"
+        | "colony"
+        | "country"
+        | "debris"
+        | "deposit"
+        | "first_contact"
+        | "fleet"
+        | "leader"
+        | "megastructure"
+        | "planet"
+        | "pop_group"
+        | "ship"
+        | "starbase"
+        | "system"
+      >;
+    }
+  | { orbitPlanet: ScopeValue<"planet"> | "random" }
+  | { terraformFleet: ScopeValue<"planet"> }
+  | { changeStance: { stance: FleetStance; days?: number } };
 
 /** The arguments `addModifier` takes, as the rules declare them. */
 export type AddModifierArgs = {
@@ -9380,6 +9478,14 @@ export interface EffectsInFleet {
   prolongFleetContract(args: { days: ScriptValue }): void;
 
   /**
+   * Adds actions to the scoped fleet's action queue
+   * ```
+   * queue_actions = { repeat = { <fleet actions> } }
+   * ```
+   */
+  queueActions(actions: readonly FleetAction<"fleet">[]): void;
+
+  /**
    * Iterate through each fleet this fleet is in combat with - executes the enclosed effects on one of them for which the limit triggers return true. Picks the specific object randomly.
    * ```
    * random_combatant_fleet = {
@@ -13446,6 +13552,384 @@ export interface UniversalEffects<
     type?: StormTypesRef | string;
     immediate?: boolean;
     cosmicStormStartPosition?: ScopeValue<"system"> | "random";
+  }): void;
+
+  /**
+   * Creates a new country
+   * ```
+   * create_country = {
+   * 	name = <string/random>
+   * 	adjective = <string>
+   * 	contact_rule = <string>
+   *  type = <key>
+   * 	auto_delete = <bool>
+   * 	name_list = <key>
+   * 	ship_prefix = <string>
+   * 	authority = <key>
+   * 	civics = random / { civic = <key> civic = random }
+   * 	species = <target>
+   * 	flag = <random / { icon = { category = <key> file = <filename.dds> } background = { category = <key> file = <filename.dds> } colors = { <key> <key> } }
+   * 	ethos = <random / { ethic = <key> ethic = <key> }>
+   * 	restrictions = { <restrictions, see "common\governments\readme_requirements.txt"> }
+   * 	set_capital_from_species = yes/no
+   * 	effect = { <effects executed on country> }
+   * 	graphical_culture = <culture_key>
+   * 	city_graphical_culture = <culture_key>
+   * 	ship_kinds = { <ship_category_keys> }
+   * 	room = <room_texture_key>
+   * 	nomadic = yes/no/<country_event_target> # default: no
+   * 	remove_invalid_civics = yes/no # (default: no) drop copied civics that are not possible for the new empire
+   * }
+   * ```
+   */
+  createCountry(args: {
+    name?: ScopeValue | "random" | string | { key: string; variableString?: readonly string[] };
+    adjective?: ScopeValue | "random" | string;
+    type?: CountryTypeRef | string;
+    contactRule?: ContactRule;
+    autoDelete?: boolean;
+    nameList?:
+      | NameListRef
+      | string
+      | "random"
+      | ScopeValue<
+          | "agreement"
+          | "archaeological_site"
+          | "army"
+          | "carrier"
+          | "country"
+          | "debris"
+          | "deposit"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "megastructure"
+          | "planet"
+          | "pop_faction"
+          | "pop_group"
+          | "sector"
+          | "ship"
+          | "situation"
+          | "spy_network"
+          | "starbase"
+          | "system"
+        >;
+    shipPrefix?: string;
+    authority?:
+      | "random"
+      | AuthorityRef
+      | string
+      | ScopeValue<
+          | "agreement"
+          | "archaeological_site"
+          | "army"
+          | "carrier"
+          | "country"
+          | "debris"
+          | "deposit"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "megastructure"
+          | "planet"
+          | "pop_faction"
+          | "pop_group"
+          | "sector"
+          | "ship"
+          | "situation"
+          | "spy_network"
+          | "starbase"
+          | "system"
+        >;
+    civics?:
+      | ScopeValue<
+          | "agreement"
+          | "archaeological_site"
+          | "army"
+          | "carrier"
+          | "country"
+          | "debris"
+          | "deposit"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "megastructure"
+          | "planet"
+          | "pop_faction"
+          | "pop_group"
+          | "sector"
+          | "ship"
+          | "situation"
+          | "spy_network"
+          | "starbase"
+          | "system"
+        >
+      | "random"
+      | { civic?: readonly (CivicOrOriginCivicRef | string | "random")[] };
+    origin?:
+      | CivicOrOriginOriginRef
+      | string
+      | ScopeValue<
+          | "agreement"
+          | "archaeological_site"
+          | "army"
+          | "carrier"
+          | "country"
+          | "debris"
+          | "deposit"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "megastructure"
+          | "planet"
+          | "pop_faction"
+          | "pop_group"
+          | "sector"
+          | "ship"
+          | "situation"
+          | "spy_network"
+          | "starbase"
+          | "system"
+        >;
+    species?:
+      | "random"
+      | ScopeValue<
+          | "army"
+          | "carrier"
+          | "country"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "planet"
+          | "pop_group"
+          | "ship"
+          | "species"
+        >;
+    setCapitalFromSpecies?: boolean;
+    randomizeEthos?: "yes";
+    useHostilitiesFrom?: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+    ethos?:
+      | "random"
+      | ScopeValue<
+          | "agreement"
+          | "archaeological_site"
+          | "army"
+          | "carrier"
+          | "country"
+          | "debris"
+          | "deposit"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "megastructure"
+          | "planet"
+          | "pop_faction"
+          | "pop_group"
+          | "sector"
+          | "ship"
+          | "situation"
+          | "spy_network"
+          | "starbase"
+          | "system"
+        >
+      | { ethic: readonly (EthicRef | string | "random")[] };
+    effect?: (scope: CountryScope) => void;
+    graphicalCulture?: GraphicalCultureRef | string;
+    cityGraphicalCulture?: GraphicalCultureRef | string;
+    shipKinds?: readonly (ShipCategoriesRef | string)[];
+    room?: string;
+    flag?:
+      | ScopeValue<
+          | "agreement"
+          | "archaeological_site"
+          | "army"
+          | "carrier"
+          | "country"
+          | "debris"
+          | "deposit"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "megastructure"
+          | "planet"
+          | "pop_faction"
+          | "pop_group"
+          | "sector"
+          | "ship"
+          | "situation"
+          | "spy_network"
+          | "starbase"
+          | "system"
+        >
+      | "random"
+      | {
+          icon?: { category: string; file: string };
+          background: { category: string; file: string };
+          colors:
+            | readonly []
+            | readonly [ColorDefineRef | string | "null"]
+            | readonly [ColorDefineRef | string | "null", ColorDefineRef | string | "null"]
+            | readonly [
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+              ]
+            | readonly [
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+              ]
+            | readonly [
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+              ]
+            | readonly [
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+              ]
+            | readonly [
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+              ]
+            | readonly [
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+              ];
+        };
+    dayZeroContact?: boolean;
+    excludeDayZeroContact?: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+    releasedByCountry?: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+    releasedFromCountry?: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+    ignoreInitialColonyError?: boolean;
+    governmentRestrictions?: GovernmentTriggerBlock;
+    nomadic?:
+      | boolean
+      | ScopeValue<
+          | "agreement"
+          | "archaeological_site"
+          | "army"
+          | "carrier"
+          | "country"
+          | "debris"
+          | "deposit"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "megastructure"
+          | "planet"
+          | "pop_faction"
+          | "pop_group"
+          | "sector"
+          | "ship"
+          | "situation"
+          | "spy_network"
+          | "starbase"
+          | "system"
+        >;
+    removeInvalidCivics: boolean;
   }): void;
 
   /**

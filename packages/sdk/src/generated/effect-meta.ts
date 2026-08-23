@@ -4,6 +4,8 @@
 // From: aliases.cwt
 // From: links.cwt
 
+import "./government-trigger.ts";
+
 export type EffectFieldKind =
   | "value"
   | "comparison"
@@ -12,7 +14,9 @@ export type EffectFieldKind =
   | "modifiers"
   | "fields"
   | "scalar-or-fields"
-  | "value-list";
+  | "value-list"
+  | "alias-list"
+  | "alias-struct";
 
 export interface EffectFieldMeta {
   readonly prop: string;
@@ -31,6 +35,14 @@ export interface EffectFieldMeta {
   readonly objectKinds?: readonly ("scope-ref" | "typed-ref")[];
   /** Whether the field accepts repeated entries under the same script key. */
   readonly repeated?: boolean;
+  /** The spliced alias category an alias-list or alias-struct field authors. */
+  readonly category?: string;
+  /**
+   * Whether the field's entries are written bare into the enclosing block
+   * rather than under `key`. An unkeyed CWT splice is the block's own
+   * content, so the key exists only to name the authoring member.
+   */
+  readonly splice?: boolean;
   /** Scalar and structured-block arms for an overloaded field. */
   readonly scalar?: Pick<EffectFieldMeta, "refTypes" | "booleanLiterals" | "objectKinds">;
   readonly fields?: readonly EffectFieldMeta[];
@@ -45,12 +57,217 @@ export type EffectShapeMeta =
     }
   | { readonly kind: "fields"; readonly fields: readonly EffectFieldMeta[] | null }
   | { readonly kind: "wrapper"; readonly fields: readonly EffectFieldMeta[] | null }
+  | { readonly kind: "alias-list"; readonly category: string }
   | { readonly kind: "scope-link" };
 
 export interface EffectMeta {
   readonly key: string;
   readonly shape: EffectShapeMeta;
 }
+
+/**
+ * The members of each spliced alias category, by category name. An item of
+ * an alias list names exactly one of them, and the recorder writes it as it
+ * writes any other field.
+ */
+export const ALIAS_LIST_META: Record<string, readonly EffectFieldMeta[] | undefined> = {
+  fleet_action: [
+    {
+      prop: "repeat",
+      key: "repeat",
+      kind: "fields",
+      fields: [
+        { prop: "maxIterations", key: "max_iterations", kind: "value" },
+        {
+          prop: "while",
+          key: "while",
+          kind: "fields",
+          fields: [
+            { prop: "id", key: "id", kind: "value" },
+            { prop: "conditions", key: "conditions", kind: "trigger", splice: true },
+          ],
+        },
+        {
+          prop: "actions",
+          key: "actions",
+          kind: "alias-list",
+          category: "fleet_action",
+          splice: true,
+        },
+      ],
+    },
+    {
+      prop: "destroyPlanet",
+      key: "destroy_planet",
+      kind: "fields",
+      fields: [
+        { prop: "target", key: "target", kind: "value" },
+        { prop: "skipRules", key: "skip_rules", kind: "value" },
+        { prop: "skipFirePhase", key: "skip_fire_phase", kind: "value" },
+        { prop: "skipWindupPhase", key: "skip_windup_phase", kind: "value" },
+      ],
+    },
+    {
+      prop: "findRandomSystem",
+      key: "find_random_system",
+      kind: "fields",
+      fields: [
+        {
+          prop: "trigger",
+          key: "trigger",
+          kind: "fields",
+          fields: [
+            { prop: "id", key: "id", kind: "value" },
+            { prop: "conditions", key: "conditions", kind: "trigger", splice: true },
+          ],
+        },
+        { prop: "foundSystem", key: "found_system", kind: "alias-list", category: "fleet_action" },
+        { prop: "failed", key: "failed", kind: "alias-list", category: "fleet_action" },
+      ],
+    },
+    {
+      prop: "findRandomPlanet",
+      key: "find_random_planet",
+      kind: "fields",
+      fields: [
+        {
+          prop: "trigger",
+          key: "trigger",
+          kind: "fields",
+          fields: [
+            { prop: "id", key: "id", kind: "value" },
+            { prop: "conditions", key: "conditions", kind: "trigger", splice: true },
+          ],
+        },
+        { prop: "foundPlanet", key: "found_planet", kind: "alias-list", category: "fleet_action" },
+        { prop: "failed", key: "failed", kind: "alias-list", category: "fleet_action" },
+      ],
+    },
+    {
+      prop: "findRandomFleet",
+      key: "find_random_fleet",
+      kind: "fields",
+      fields: [
+        {
+          prop: "trigger",
+          key: "trigger",
+          kind: "fields",
+          fields: [
+            { prop: "id", key: "id", kind: "value" },
+            { prop: "conditions", key: "conditions", kind: "trigger", splice: true },
+          ],
+        },
+        { prop: "foundFleet", key: "found_fleet", kind: "alias-list", category: "fleet_action" },
+        { prop: "failed", key: "failed", kind: "alias-list", category: "fleet_action" },
+        { prop: "systemOnly", key: "system_only", kind: "value" },
+      ],
+    },
+    {
+      prop: "findClosestSystem",
+      key: "find_closest_system",
+      kind: "fields",
+      fields: [
+        {
+          prop: "trigger",
+          key: "trigger",
+          kind: "fields",
+          fields: [
+            { prop: "id", key: "id", kind: "value" },
+            { prop: "conditions", key: "conditions", kind: "trigger", splice: true },
+          ],
+        },
+        { prop: "foundSystem", key: "found_system", kind: "alias-list", category: "fleet_action" },
+        { prop: "failed", key: "failed", kind: "alias-list", category: "fleet_action" },
+      ],
+    },
+    {
+      prop: "findClosestPlanet",
+      key: "find_closest_planet",
+      kind: "fields",
+      fields: [
+        {
+          prop: "trigger",
+          key: "trigger",
+          kind: "fields",
+          fields: [
+            { prop: "id", key: "id", kind: "value" },
+            { prop: "conditions", key: "conditions", kind: "trigger", splice: true },
+          ],
+        },
+        { prop: "foundPlanet", key: "found_planet", kind: "alias-list", category: "fleet_action" },
+        { prop: "failed", key: "failed", kind: "alias-list", category: "fleet_action" },
+      ],
+    },
+    {
+      prop: "findClosestFleet",
+      key: "find_closest_fleet",
+      kind: "fields",
+      fields: [
+        {
+          prop: "trigger",
+          key: "trigger",
+          kind: "fields",
+          fields: [
+            { prop: "id", key: "id", kind: "value" },
+            { prop: "conditions", key: "conditions", kind: "trigger", splice: true },
+          ],
+        },
+        { prop: "foundFleet", key: "found_fleet", kind: "alias-list", category: "fleet_action" },
+        { prop: "failed", key: "failed", kind: "alias-list", category: "fleet_action" },
+        { prop: "systemOnly", key: "system_only", kind: "value" },
+      ],
+    },
+    {
+      prop: "effect",
+      key: "effect",
+      kind: "fields",
+      fields: [
+        { prop: "id", key: "id", kind: "value" },
+        { prop: "effects", key: "effects", kind: "effect", splice: true },
+      ],
+    },
+    {
+      prop: "wait",
+      key: "wait",
+      kind: "scalar-or-fields",
+      scalar: {},
+      fields: [
+        { prop: "duration", key: "duration", kind: "value" },
+        { prop: "random", key: "random", kind: "value" },
+      ],
+    },
+    {
+      prop: "mergeFleet",
+      key: "merge_fleet",
+      kind: "fields",
+      fields: [
+        { prop: "target", key: "target", kind: "value" },
+        { prop: "allowFtl", key: "allow_ftl", kind: "value" },
+      ],
+    },
+    {
+      prop: "attackFleet",
+      key: "attack_fleet",
+      kind: "fields",
+      fields: [
+        { prop: "target", key: "target", kind: "value" },
+        { prop: "allowFtl", key: "allow_ftl", kind: "value" },
+      ],
+    },
+    { prop: "moveTo", key: "move_to", kind: "value" },
+    { prop: "orbitPlanet", key: "orbit_planet", kind: "value" },
+    { prop: "terraformFleet", key: "terraform_fleet", kind: "value" },
+    {
+      prop: "changeStance",
+      key: "change_stance",
+      kind: "fields",
+      fields: [
+        { prop: "stance", key: "stance", kind: "value" },
+        { prop: "days", key: "days", kind: "value" },
+      ],
+    },
+  ],
+};
 
 /**
  * How the recorder serializes each effect method. The Proxy in
@@ -1011,6 +1228,115 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           kind: "value",
           booleanLiterals: ["yes"],
         },
+      ],
+    },
+  },
+  createCountry: {
+    key: "create_country",
+    shape: {
+      kind: "fields",
+      fields: [
+        {
+          prop: "name",
+          key: "name",
+          kind: "scalar-or-fields",
+          scalar: { objectKinds: ["scope-ref"] },
+          fields: [
+            { prop: "key", key: "key", kind: "value" },
+            { prop: "variableString", key: "variable_string", kind: "value", repeated: true },
+          ],
+        },
+        { prop: "adjective", key: "adjective", kind: "value" },
+        { prop: "type", key: "type", kind: "value", refTypes: ["country_type"] },
+        { prop: "contactRule", key: "contact_rule", kind: "value" },
+        { prop: "autoDelete", key: "auto_delete", kind: "value" },
+        { prop: "nameList", key: "name_list", kind: "value" },
+        { prop: "shipPrefix", key: "ship_prefix", kind: "value" },
+        { prop: "authority", key: "authority", kind: "value" },
+        {
+          prop: "civics",
+          key: "civics",
+          kind: "scalar-or-fields",
+          scalar: { objectKinds: ["scope-ref"] },
+          fields: [{ prop: "civic", key: "civic", kind: "value", repeated: true }],
+        },
+        { prop: "origin", key: "origin", kind: "value" },
+        { prop: "species", key: "species", kind: "value" },
+        { prop: "setCapitalFromSpecies", key: "set_capital_from_species", kind: "value" },
+        { prop: "randomizeEthos", key: "randomize_ethos", kind: "value", booleanLiterals: ["yes"] },
+        { prop: "useHostilitiesFrom", key: "use_hostilities_from", kind: "value" },
+        {
+          prop: "ethos",
+          key: "ethos",
+          kind: "scalar-or-fields",
+          scalar: { objectKinds: ["scope-ref"] },
+          fields: [{ prop: "ethic", key: "ethic", kind: "value", repeated: true }],
+        },
+        { prop: "effect", key: "effect", kind: "effect" },
+        {
+          prop: "graphicalCulture",
+          key: "graphical_culture",
+          kind: "value",
+          refTypes: ["graphical_culture"],
+        },
+        {
+          prop: "cityGraphicalCulture",
+          key: "city_graphical_culture",
+          kind: "value",
+          refTypes: ["graphical_culture"],
+        },
+        {
+          prop: "shipKinds",
+          key: "ship_kinds",
+          kind: "value-list",
+          scalar: { refTypes: ["ship_categories"], objectKinds: ["typed-ref"] },
+        },
+        { prop: "room", key: "room", kind: "value" },
+        {
+          prop: "flag",
+          key: "flag",
+          kind: "scalar-or-fields",
+          scalar: { objectKinds: ["scope-ref"] },
+          fields: [
+            {
+              prop: "icon",
+              key: "icon",
+              kind: "fields",
+              fields: [
+                { prop: "category", key: "category", kind: "value" },
+                { prop: "file", key: "file", kind: "value" },
+              ],
+            },
+            {
+              prop: "background",
+              key: "background",
+              kind: "fields",
+              fields: [
+                { prop: "category", key: "category", kind: "value" },
+                { prop: "file", key: "file", kind: "value" },
+              ],
+            },
+            {
+              prop: "colors",
+              key: "colors",
+              kind: "value-list",
+              scalar: { objectKinds: ["typed-ref"] },
+            },
+          ],
+        },
+        { prop: "dayZeroContact", key: "day_zero_contact", kind: "value" },
+        { prop: "excludeDayZeroContact", key: "exclude_day_zero_contact", kind: "value" },
+        { prop: "releasedByCountry", key: "released_by_country", kind: "value" },
+        { prop: "releasedFromCountry", key: "released_from_country", kind: "value" },
+        { prop: "ignoreInitialColonyError", key: "ignore_initial_colony_error", kind: "value" },
+        {
+          prop: "governmentRestrictions",
+          key: "government_restrictions",
+          kind: "alias-struct",
+          category: "government_trigger",
+        },
+        { prop: "nomadic", key: "nomadic", kind: "value" },
+        { prop: "removeInvalidCivics", key: "remove_invalid_civics", kind: "value" },
       ],
     },
   },
@@ -3732,6 +4058,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
+  queueActions: { key: "queue_actions", shape: { kind: "alias-list", category: "fleet_action" } },
   randomActiveFirstContact: {
     key: "random_active_first_contact",
     shape: {

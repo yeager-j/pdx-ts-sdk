@@ -61,6 +61,39 @@ export const SCRIPTED_MODIFIER_CATEGORY_MAP = {
 } as const;
 
 /**
+ * Permits one loaded alias category to be authored as an ordered list of its
+ * members inside a script argument block.
+ */
+export interface AliasCategoryScriptList {
+  /** The generated union type naming one member of the category. */
+  readonly typeName: string;
+  /** The authoring member the list is written under. */
+  readonly memberName: string;
+  /** Audited reason the category is an ordered list rather than a struct. */
+  readonly reason: string;
+}
+
+/**
+ * Permits one loaded alias category to be authored inside a script argument
+ * block through the block interface its content-side emission already
+ * publishes.
+ */
+export interface AliasCategoryScriptBlock {
+  /** Audited reason the script splice reuses the content-side surface. */
+  readonly reason: string;
+}
+
+/** One alias family the rule loader reads, and the surfaces it authorises. */
+export interface AliasCategoryRow {
+  /** Which consumer needs the category loaded, and what its members look like. */
+  readonly reason: string;
+  /** Set when a script argument block may author the category as a list. */
+  readonly scriptList?: AliasCategoryScriptList;
+  /** Set when a script argument block may author the category as a block. */
+  readonly scriptBlock?: AliasCategoryScriptBlock;
+}
+
+/**
  * Alias families the rule loader reads into a table beyond `trigger` and
  * `effect`.
  *
@@ -69,49 +102,103 @@ export const SCRIPTED_MODIFIER_CATEGORY_MAP = {
  * Sweeping them all in would cost parse time and, worse, invite the emitters to
  * guess at shapes nobody has read. So the loader reads a category only when a
  * content registry actually consumes it, and each row says which consumer.
+ *
+ * A `scriptList` or `scriptBlock` member is the second permission: a trigger or
+ * effect block that splices the category unkeyed lowers to that surface, and a
+ * splice of any other category stays an `unsupported-alias-splice` skip.
  */
-export const EXTRA_ALIAS_CATEGORIES = new Map<string, string>([
+export const EXTRA_ALIAS_CATEGORIES = new Map<string, AliasCategoryRow>([
   [
     "name",
-    "The shared name field grammar spliced into creation and mutation effects. Its one member " +
-      "accepts a localisation/scalar value or a structured key with repeated variable strings.",
+    {
+      reason:
+        "The shared name field grammar spliced into creation and mutation effects. Its one " +
+        "member accepts a localisation/scalar value or a structured key with repeated variable " +
+        "strings.",
+    },
   ],
   [
     "pop_pre_trigger",
-    "Seven plain bools consumed by `job.possible_pre_triggers` (and " +
-      "pop_faction_type's can_join_pre_triggers). Every member is `bool`, so the " +
-      "splice lowers as an ordinary struct.",
+    {
+      reason:
+        "Seven plain bools consumed by `job.possible_pre_triggers` (and " +
+        "pop_faction_type's can_join_pre_triggers). Every member is `bool`, so the " +
+        "splice lowers as an ordinary struct.",
+    },
   ],
   [
     "colony_pre_trigger",
-    "The colony-scoped twin of pop_pre_trigger, seven plain bools, consumed by " +
-      "the planet/colony event `pre_triggers` blocks.",
+    {
+      reason:
+        "The colony-scoped twin of pop_pre_trigger, seven plain bools, consumed by " +
+        "the planet/colony event `pre_triggers` blocks.",
+    },
   ],
   [
     "government_trigger",
-    "The requirements DSL behind civic/origin `potential` and `possible`. Not a " +
-      "`Trigger` — its members are a fixed value/OR/NOT/NOR clause template plus " +
-      "self-recursive OR/AND/limit combinators, emitted by " +
-      "emit/content/alias-struct.ts.",
+    {
+      reason:
+        "The requirements DSL behind civic/origin `potential` and `possible`. Not a " +
+        "`Trigger` — its members are a fixed value/OR/NOT/NOR clause template plus " +
+        "self-recursive OR/AND/limit combinators, emitted by " +
+        "emit/content/alias-struct.ts.",
+      scriptBlock: {
+        reason:
+          "`create_country.government_restrictions` splices the same category the civic and " +
+          "origin registries author. One grammar, one authoring surface: the effect argument " +
+          "reuses the emitted block interface and the content writer that serialises it, " +
+          "rather than a second type saying the same thing.",
+      },
+    },
+  ],
+  [
+    "fleet_action",
+    {
+      reason:
+        "The fleet action queue `queue_actions` splices unkeyed. Eighteen members, from plain " +
+        "scalars (`move_to`, `wait`) to blocks that splice the category back into themselves " +
+        "(`repeat`, the six `find_*` searches).",
+      scriptList: {
+        typeName: "FleetAction",
+        memberName: "actions",
+        reason:
+          "The queue is ordered and a member may repeat, so the members cannot be one struct " +
+          "of optional keys: `wait` twice means wait twice. Each action is authored as an " +
+          "object carrying exactly the one member it names.",
+      },
+    },
   ],
   [
     "planet_initializer",
-    "The planet grammar `solar_system_initializer` splices unkeyed at its own top " +
-      "level. One member, `planet`, whose declaration is a block that splices " +
-      "`planet_initializer` and `moon_initializer` back into itself — so a system's " +
-      "planets are anonymous, ordered and repeated, and nest without bound. Emitted " +
-      "by emit/content/alias-splice.ts as `PlanetInitializerFields`, whose field table " +
-      "has to be resolved through `registerAliasStructFields` at write time because it " +
-      "refers to itself.",
+    {
+      reason:
+        "The planet grammar `solar_system_initializer` splices unkeyed at its own top " +
+        "level. One member, `planet`, whose declaration is a block that splices " +
+        "`planet_initializer` and `moon_initializer` back into itself — so a system's " +
+        "planets are anonymous, ordered and repeated, and nest without bound. Emitted " +
+        "by emit/content/alias-splice.ts as `PlanetInitializerFields`, whose field table " +
+        "has to be resolved through `registerAliasStructFields` at write time because it " +
+        "refers to itself.",
+    },
   ],
   [
     "moon_initializer",
-    "The moon half of the same grammar, spliced from inside `planet` and from inside " +
-      "itself. One member, `moon`. Kept separate because CWT declares it separately, " +
-      "and because a moon admits a strictly smaller body — no `namelist`, no " +
-      "`satellite_naming_policy`, and no nested `planet`.",
+    {
+      reason:
+        "The moon half of the same grammar, spliced from inside `planet` and from inside " +
+        "itself. One member, `moon`. Kept separate because CWT declares it separately, " +
+        "and because a moon admits a strictly smaller body — no `namelist`, no " +
+        "`satellite_naming_policy`, and no nested `planet`.",
+    },
   ],
 ]);
+
+/** Loaded alias categories a script argument block may author, by category name. */
+export const SCRIPT_ALIAS_CATEGORIES: ReadonlySet<string> = new Set(
+  [...EXTRA_ALIAS_CATEGORIES]
+    .filter(([, row]) => row.scriptList !== undefined || row.scriptBlock !== undefined)
+    .map(([category]) => category)
+);
 
 /** Replaces a trigger's incorrect CWT summary with text from an authoritative source. */
 export interface TriggerDocSummaryOverride {

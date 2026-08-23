@@ -22,7 +22,14 @@ import {
 } from "../src/script/effects/recorder.ts";
 import type { StaticModifierHostContract } from "../src/script/effects/static-modifiers.ts";
 import type { ScriptCtx } from "../src/script/effects/types.ts";
-import { hasCountryFlag, hasOwner, isAtWar, owner } from "../src/script/triggers.ts";
+import {
+  hasCountryFlag,
+  hasOwner,
+  hasStarFlag,
+  isAtWar,
+  isPlanetClass,
+  owner,
+} from "../src/script/triggers.ts";
 
 const flags = countryFlags("effects_test_flag");
 const stormWorld = eventTarget<"planet">("effects_test_target");
@@ -1216,5 +1223,185 @@ change_dominant_species = {
 
 log = "yes"
 `);
+  });
+});
+
+describe("an effect that splices a whole alias category", () => {
+  it("writes a fleet action queue the way vanilla writes one", () => {
+    // common/scripted_effects/gray_goo_effects.txt:46. Vanilla quotes the
+    // trigger ids and spells the scope THIS; both are the same file to the
+    // game as the unquoted id and `this` the recorder writes everywhere else.
+    const sink: PdxEntry[] = [];
+    const fleet = makeScope<"fleet">(sink);
+
+    fleet.queueActions([
+      {
+        repeat: {
+          actions: [
+            {
+              findRandomSystem: {
+                trigger: {
+                  id: "graygoo_roamers_1.trigger.1",
+                  conditions: hasStarFlag("lcluster"),
+                },
+                foundSystem: [{ moveTo: scopeValue<"system">("this") }],
+              },
+            },
+            {
+              findClosestPlanet: {
+                trigger: {
+                  id: "graygoo_roamers_1.trigger.2",
+                  conditions: isPlanetClass("pc_gray_goo"),
+                },
+                foundPlanet: [
+                  { orbitPlanet: scopeValue<"planet">("this") },
+                  { wait: { duration: 50, random: 25 } },
+                ],
+              },
+            },
+          ],
+        },
+      },
+    ]);
+
+    expect(serialize(sink)).toBe(`queue_actions = {
+\trepeat = {
+\t\tfind_random_system = {
+\t\t\ttrigger = {
+\t\t\t\tid = graygoo_roamers_1.trigger.1
+\t\t\t\thas_star_flag = lcluster
+\t\t\t}
+\t\t\tfound_system = {
+\t\t\t\tmove_to = this
+\t\t\t}
+\t\t}
+\t\tfind_closest_planet = {
+\t\t\ttrigger = {
+\t\t\t\tid = graygoo_roamers_1.trigger.2
+\t\t\t\tis_planet_class = pc_gray_goo
+\t\t\t}
+\t\t\tfound_planet = {
+\t\t\t\torbit_planet = this
+\t\t\t\twait = {
+\t\t\t\t\tduration = 50
+\t\t\t\t\trandom = 25
+\t\t\t\t}
+\t\t\t}
+\t\t}
+\t}
+}
+`);
+  });
+
+  it("keeps the authored order and both arms of an overloaded member", () => {
+    // common/missions/missions/02_contracts.txt:2425 writes the block form.
+    // The queue is ordered, so `wait` before `move_to` has to stay that way.
+    const sink: PdxEntry[] = [];
+    const fleet = makeScope<"fleet">(sink);
+
+    fleet.queueActions([{ wait: { duration: 999999 } }]);
+    fleet.queueActions([{ wait: 10 }, { moveTo: scopeValue<"planet">("this") }, { wait: 5 }]);
+
+    expect(serialize(sink)).toBe(`queue_actions = {
+\twait = {
+\t\tduration = 999999
+\t}
+}
+
+queue_actions = {
+\twait = 10
+\tmove_to = this
+\twait = 5
+}
+`);
+  });
+
+  it("records the effects an action's own effect block holds", () => {
+    const sink: PdxEntry[] = [];
+    const fleet = makeScope<"fleet">(sink);
+
+    fleet.queueActions([
+      {
+        effect: {
+          id: "effects_test_action",
+          effects: (scope) => {
+            scope.setFleetFlag("effects_test_queued_flag");
+          },
+        },
+      },
+    ]);
+
+    expect(serialize(sink)).toBe(`queue_actions = {
+\teffect = {
+\t\tid = effects_test_action
+\t\tset_fleet_flag = effects_test_queued_flag
+\t}
+}
+`);
+  });
+
+  it("refuses an item that names no action or more than one", () => {
+    const sink: PdxEntry[] = [];
+    const fleet = makeScope<"fleet">(sink) as unknown as {
+      queueActions(items: readonly unknown[]): void;
+    };
+
+    expect(() => fleet.queueActions([{ wait: 10, moveTo: "this" }])).toThrow(
+      /Item 0 of 'queue_actions' must be an object naming exactly one fleet_action/
+    );
+    expect(() => fleet.queueActions([{ wait: 10 }, {}])).toThrow(
+      /Item 1 of 'queue_actions' must be an object naming exactly one fleet_action/
+    );
+    expect(() => fleet.queueActions([{ warp: 10 }])).toThrow(
+      /Item 0 of 'queue_actions' names "warp", which is not a fleet_action/
+    );
+  });
+
+  it("writes a government_trigger block through the content writer that owns it", () => {
+    // `create_country.government_restrictions` is the same grammar a civic
+    // authors as `potential`, so it has to serialize identically — including
+    // the repeated `value` keys inside an OR group — and report its ids.
+    const sink: PdxEntry[] = [];
+    const refs: ContentRefUse[] = [];
+    const country = makeScope<"country">(sink, refs);
+
+    country.createCountry({
+      name: "effects_test_country",
+      type: "faction",
+      removeInvalidCivics: false,
+      governmentRestrictions: {
+        authority: { value: "auth_democratic" },
+        civics: { or: [{ text: "CIVIC_TIP", values: ["civic_a", "effects_test_missing_civic"] }] },
+      },
+    });
+
+    expect(serialize(sink)).toBe(`create_country = {
+\tname = effects_test_country
+\ttype = faction
+\tgovernment_restrictions = {
+\t\tauthority = {
+\t\t\tvalue = auth_democratic
+\t\t}
+\t\tcivics = {
+\t\t\tOR = {
+\t\t\t\ttext = CIVIC_TIP
+\t\t\t\tvalue = civic_a
+\t\t\t\tvalue = effects_test_missing_civic
+\t\t\t}
+\t\t}
+\t}
+\tremove_invalid_civics = no
+}
+`);
+    expect(refs).toContainEqual({
+      targets: ["authority"],
+      id: "auth_democratic",
+      field: "create_country.government_restrictions.authority.value",
+    });
+    expect(refs).toContainEqual({
+      targets: ["civic_or_origin.civic"],
+      id: "effects_test_missing_civic",
+      field: "create_country.government_restrictions.civics.OR.value",
+    });
   });
 });

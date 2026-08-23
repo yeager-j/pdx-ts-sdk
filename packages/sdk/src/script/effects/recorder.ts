@@ -12,7 +12,9 @@ import {
   type PdxScalar,
 } from "@pdx-ts/pdxscript";
 
-import { EFFECT_META, type EffectFieldMeta } from "../../generated/effect-meta.ts";
+import { fieldEntries as contentFieldEntries } from "../../content/lower.ts";
+import { aliasStructFieldsOf } from "../../content/schema.ts";
+import { ALIAS_LIST_META, EFFECT_META, type EffectFieldMeta } from "../../generated/effect-meta.ts";
 import { FIRE_EFFECT_KEYS, type StructuralEffectMethod } from "../../generated/effect-policy.ts";
 import type { ScopeObjOf } from "../../generated/effects.ts";
 import type { ScopeName } from "../../generated/scopes.ts";
@@ -330,6 +332,63 @@ function fieldOccurrences(
 }
 
 /**
+ * The entries one field contributes to its block: under the field's key, or
+ * bare when the rules splice the field's content into the block itself.
+ */
+function spliced(field: EffectFieldMeta, entries: readonly PdxEntry[]): PdxEntry[] {
+  return field.splice === true ? [...entries] : [block(field.key, entries)];
+}
+
+/** The members of one spliced alias category, by the name the meta gives it. */
+function aliasMembers(category: string | undefined, where: string): readonly EffectFieldMeta[] {
+  const members = category === undefined ? undefined : ALIAS_LIST_META[category];
+  if (members === undefined) {
+    throw new Error(
+      `The generated metadata for '${where}' names no alias-category member table, so its ` +
+        "items cannot be written. This is a codegen fault, not an authoring one."
+    );
+  }
+  return members;
+}
+
+/**
+ * The entries an alias list writes, in the authored order.
+ *
+ * Each item is an object naming exactly one member of the category, which is
+ * what keeps the list ordered and lets one member repeat; the member itself is
+ * then written exactly as a field of that shape is written anywhere else.
+ */
+function aliasListEntries(
+  category: string | undefined,
+  items: readonly unknown[],
+  where: string,
+  refs: ContentRefUse[],
+  owner: Recording | undefined
+): PdxEntry[] {
+  const members = aliasMembers(category, where);
+  return items.flatMap((item, index) => {
+    const props =
+      typeof item !== "object" || item === null || Array.isArray(item) ? [] : Object.keys(item);
+    if (props.length !== 1) {
+      throw new Error(
+        `Item ${index} of '${where}' must be an object naming exactly one ${category}, such as ` +
+          `{ ${members[0]!.prop}: ... }, and it names ${props.length}. The list is ordered and a ` +
+          "member may repeat, so each one is written as its own item."
+      );
+    }
+    const prop = props[0]!;
+    const member = members.find((candidate) => candidate.prop === prop);
+    if (member === undefined) {
+      throw new Error(
+        `Item ${index} of '${where}' names "${prop}", which is not a ${category}. The members ` +
+          `are: ${members.map((candidate) => candidate.prop).join(", ")}.`
+      );
+    }
+    return fieldEntries([member], item as Record<string, unknown>, where, refs, owner);
+  });
+}
+
+/**
  * The entries one args object writes for a generated field table, in table
  * order. Reference-bearing ids are appended to `refs` as they are written.
  */
@@ -426,13 +485,49 @@ export function fieldEntries(
             entries.push(kv(field.key, scalar));
           }
           break;
-        case "trigger":
-          entries.push(block(field.key, [...(value as Trigger).entries]));
-          refs.push(...(value as Trigger).refs);
+        case "trigger": {
+          const condition = value as Trigger;
+          entries.push(...spliced(field, [...condition.entries]));
+          refs.push(...condition.refs);
           break;
+        }
         case "effect":
           entries.push(
-            block(field.key, recordBlock(owner, refs, value as (scope: unknown) => void))
+            ...spliced(field, recordBlock(owner, refs, value as (scope: unknown) => void))
+          );
+          break;
+        case "alias-list":
+          entries.push(
+            ...spliced(
+              field,
+              aliasListEntries(
+                field.category,
+                value as readonly unknown[],
+                `${path}.${field.key}`,
+                refs,
+                owner
+              )
+            )
+          );
+          break;
+        case "alias-struct":
+          entries.push(
+            block(
+              field.key,
+              contentFieldEntries(
+                value as Record<string, unknown>,
+                aliasStructFieldsOf(field.category!),
+                {
+                  path: `${path}.${field.key}`,
+                  collect: (use) => refs.push(use),
+                  // The nearest enclosing identity a `WeightBlock` row would
+                  // register its localisation token under. An effect block has no
+                  // definition id, so its field path stands in; no member of a
+                  // spliced alias block carries such a row today.
+                  ownerId: `${path}.${field.key}`,
+                }
+              )
+            )
           );
           break;
         case "modifiers":
@@ -781,6 +876,12 @@ function makeAnyScope(sink: PdxEntry[], refs: ContentRefUse[], recording?: Recor
           );
           recordBlock(recording, refs, body, child);
           sink.push(block(meta.key, child));
+        };
+      case "alias-list":
+        return (items: readonly unknown[]) => {
+          sink.push(
+            block(meta.key, aliasListEntries(shape.category, items, meta.key, refs, recording))
+          );
         };
       case "scope-link":
         return makeEffectPath(sink, refs, recording, [meta.key]);

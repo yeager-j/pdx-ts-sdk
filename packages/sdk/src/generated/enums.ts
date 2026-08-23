@@ -77,6 +77,10 @@ export type ComponentSlot = VanillaEnumMember<"component_slot"> | (string & {});
  */
 export type ComponentTag = VanillaEnumMember<"component_tag"> | (string & {});
 
+/** `enum[contact_rule]`. */
+export type ContactRule =
+  "always" | "never" | "on_action_only" | "does_first_contact_sites" | "auto";
+
 /** `enum[country_relation]`. */
 export type CountryRelation =
   | "commercial_pact"

@@ -7,7 +7,6 @@
  * with no scope in either source is skipped and reported, never guessed at.
  */
 
-import { isOptional } from "../../cwt/model.ts";
 import type { AliasDecl } from "../../cwt/rules.ts";
 import type { DocEntry } from "../../logs/trigger-docs.ts";
 import type { LoweredRule } from "../../lower/lowered-rule.ts";
@@ -41,7 +40,13 @@ import {
 import { HAND_WRITTEN_TRIGGER_RULES_BY_KEY } from "../../policy/triggers.ts";
 import { Emitter, type TsValue } from "../../render/emitter.ts";
 import { member as renderMember } from "../../render/writer.ts";
-import { contributesRefs, pushCode, pushExpr, pushValueListCode } from "./trigger-push-code.ts";
+import {
+  contributesRefs,
+  pushCode,
+  pushExpr,
+  pushValueListCode,
+  unauthorableAliasValue,
+} from "./trigger-push-code.ts";
 
 const TRIGGER_CLAUSES = new Set<ClauseCategory>(["trigger"]);
 
@@ -149,38 +154,11 @@ function shapeOf(emitter: Emitter, key: string, rule: LoweredRule): Shape | Skip
         ? skipReason("unknown-push-scope", `push_scope names no known scope (${pushedRaw})`)
         : { kind: "wrapper", scope };
     }
-    // A splice alongside named fields (`calc_true_if = { amount == int ... }`):
-    // the splice becomes an implicit `conditions` clause argument.
-    const fields = mergeFields(emitter, named, pushedRaw, TRIGGER_CLAUSES);
-    if (!Array.isArray(fields)) {
-      return fields;
-    }
-    if (fields.some((field) => field.name === "conditions")) {
-      return skipReason("reserved-field-collision", 'a rule field is already named "conditions"');
-    }
-    let scope: string | null = null;
-    if (pushedRaw !== null) {
-      scope = emitter.canonicalScope(pushedRaw);
-      if (scope === null) {
-        return skipReason("unknown-push-scope", `push_scope names no known scope (${pushedRaw})`);
-      }
-    }
-    const shape: Shape = {
-      kind: "fields",
-      fields: [
-        ...fields,
-        {
-          name: "conditions",
-          value: { kind: "clause", category: "trigger", scope, splice: true },
-          optional: splices.every((splice) => isOptional(splice.cardinality)),
-          docs: [],
-        },
-      ],
-    };
-    return scalarOrFields(emitter, rule, shape);
   }
 
-  const fields = mergeFields(emitter, named, pushedRaw, TRIGGER_CLAUSES);
+  // A splice alongside named fields (`calc_true_if = { amount == int ... }`)
+  // becomes one more argument, which `mergeFields` names for what it splices.
+  const fields = mergeFields(emitter, body.fields, pushedRaw, TRIGGER_CLAUSES);
   if (!Array.isArray(fields)) {
     return fields;
   }
@@ -360,6 +338,9 @@ function baseMemberType(emitter: Emitter, value: ArgValue, outerScope: string): 
       return valueListType(emitter, value, outerScope);
     case "clause":
       return `${emitter.use("Trigger")}<${value.scope === null ? outerScope : JSON.stringify(value.scope)}>`;
+    case "aliasList":
+    case "aliasStruct":
+      return unauthorableAliasValue(value);
     case "comparison": {
       const literals = value.literals.map((literal) => JSON.stringify(literal));
       const scalar = emitter.useValue(value.value).type;

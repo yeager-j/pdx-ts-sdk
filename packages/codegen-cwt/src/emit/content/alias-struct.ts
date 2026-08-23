@@ -511,6 +511,11 @@ function memberEmission(
   };
 }
 
+/** The interface name this emitter publishes for one fixed-shape alias category. */
+export function aliasStructTypeName(category: string): string {
+  return `${pascalCase(category)}Block`;
+}
+
 /**
  * Emits a fixed-shape alias category as a requirements interface and runtime field tables.
  * Members that match no supported clause, scalar, or combinator shape remain explicit omissions.
@@ -520,7 +525,7 @@ export function emitAliasStruct(
   category: string,
   members: ReadonlyMap<string, readonly AliasDecl[]>
 ): AliasStructEmission {
-  const typeName = `${pascalCase(category)}Block`;
+  const typeName = aliasStructTypeName(category);
   const clauseName = `${pascalCase(category)}Clause`;
   const groupName = `${clauseName}Group`;
   const constant = category.toUpperCase();

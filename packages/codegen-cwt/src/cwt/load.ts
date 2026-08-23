@@ -44,6 +44,9 @@ const BASE_RULE_FILES = [
   // government_trigger alias category through loadRules proper.
   "common/governments.cwt",
   "common/economic_categories.cwt",
+  // The only source of the fleet_action alias category, which `queue_actions`
+  // splices. No content registry names this file, so nothing else pulls it in.
+  "common/fleet_actions.cwt",
 ];
 
 function cwtFiles(root: string, relative = ""): string[] {
