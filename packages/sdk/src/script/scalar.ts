@@ -148,6 +148,46 @@ export function mapEntries<T>(
   return entries;
 }
 
+/**
+ * The cases of a key/clause argument, in authoring order.
+ *
+ * Each case writes its key as a script key of the enclosing block, so a key
+ * the block already writes itself would silently replace that argument.
+ * `field` names the argument, and `reservedKeys` the keys the block writes,
+ * in the error thrown for an empty key, a reserved key, or fewer cases than
+ * the rules admit.
+ *
+ * @example
+ * ```ts
+ * caseEntries([["ethic_pacifist", isAi()]], "switch.cases", 1, ["trigger", "default"]);
+ * // [["ethic_pacifist", <trigger>]]
+ * ```
+ */
+export function caseEntries<T>(
+  cases: readonly (readonly [string, T])[],
+  field: string,
+  minimum: number,
+  reservedKeys: readonly string[]
+): readonly (readonly [string, T])[] {
+  if (cases.length < minimum) {
+    throw new Error(
+      `"${field}" was given ${cases.length} cases, but the rules require at least ${minimum}`
+    );
+  }
+  for (const [key] of cases) {
+    if (key === "") {
+      throw new Error(`"${field}" was given a case with no key`);
+    }
+    if (reservedKeys.includes(key)) {
+      throw new Error(
+        `"${field}" was given the case key "${key}", which is one of the block's own ` +
+          `keys (${reservedKeys.join(", ")}) — name the case after a value the selector matches`
+      );
+    }
+  }
+  return cases;
+}
+
 export function toScalar(
   value: unknown,
   booleanLiterals: readonly ("yes" | "no")[] = []

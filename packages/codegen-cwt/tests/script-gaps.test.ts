@@ -81,34 +81,37 @@ describe("the script-generation gap ledger", () => {
       effects: effects.skipped,
     });
 
-    expect(SCRIPT_GENERATION_GAPS).toHaveLength(2);
+    expect(SCRIPT_GENERATION_GAPS).toHaveLength(0);
     expect(report.policyOwned).toHaveLength(46);
     expect(report.abstractPlaceholders).toHaveLength(2);
-    expect(report.trackedGaps).toHaveLength(2);
+    expect(report.trackedGaps).toHaveLength(0);
     expect(report.abstractPlaceholders.map((entry) => entry.name)).toEqual([
       "<scripted_effect>",
       "<scripted_trigger>",
     ]);
   });
 
-  it("reports every tracked rule with its category and Linear issue", () => {
+  it("reports no tracked gap, because every rule the generator declines is policy-owned", () => {
     const report = reconcileScriptGaps({
       triggers: triggers.skipped,
       effects: effects.skipped,
     });
-    const lines = formatScriptGapReport(report);
 
-    expect(lines.trackedGaps).toHaveLength(2);
-    expect(lines.trackedGaps.every((line) => !line.includes("unsupported-alias-splice"))).toBe(
-      true
+    expect(formatScriptGapReport(report).trackedGaps).toEqual([]);
+  });
+
+  it("reports a tracked rule with its category, Linear issue, and current detail", () => {
+    const report = reconcileScriptGaps(
+      {
+        triggers: [skippedRule("sample_rule", "unsupported-value", "a shape it cannot type")],
+        effects: [],
+      },
+      [row()]
     );
-    expect(lines.trackedGaps.every((line) => !line.includes("SDK-244"))).toBe(true);
-    expect(lines.trackedGaps.every((line) => !line.includes("SDK-251"))).toBe(true);
-    expect(lines.trackedGaps.every((line) => !line.includes("SDK-247"))).toBe(true);
-    expect(lines.trackedGaps.every((line) => !line.includes("SDK-252"))).toBe(true);
-    expect(lines.trackedGaps.every((line) => !line.includes("SDK-280"))).toBe(true);
-    expect(lines.trackedGaps.every((line) => /SDK-[0-9]+/.test(line))).toBe(true);
-    expect(lines.trackedGaps.every((line) => !line.includes("e.g."))).toBe(true);
+
+    expect(formatScriptGapReport(report).trackedGaps).toEqual([
+      "trigger sample_rule [unsupported-value] — SDK-999: Test gap. (a shape it cannot type)",
+    ]);
   });
 
   it("owns the rules declared removed by CWT as an intentional exclusion", () => {

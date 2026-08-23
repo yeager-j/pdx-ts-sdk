@@ -6,6 +6,7 @@ import { eventTarget } from "../src/script/effects/recorder.ts";
 import { isStructuredValue, toScalar } from "../src/script/scalar.ts";
 import {
   aiArmorRatio,
+  always,
   and,
   anyCosmicStorm,
   anyCountry,
@@ -26,6 +27,7 @@ import {
   hiddenProgress,
   hiddenTrigger,
   intelLevel,
+  invertedSwitch,
   isAi,
   isPlanetClass,
   isStormType,
@@ -38,6 +40,7 @@ import {
   owner,
   popGroupSize,
   resourceStockpilePercent,
+  switch_,
   target,
   totalWorkforceWithJobTag,
   traitHasAllTags,
@@ -551,6 +554,119 @@ describe("trigger builders", () => {
 
     expect(serialize([...condition.entries])).toBe(
       "count_owned_pop_group = {\n\tcount = @wanted\n}\n"
+    );
+  });
+
+  /**
+   * `common/inline_scripts/pop_faction_types/global_faction_demands.txt`
+   * writes this switch, one case block per ethic, with no default.
+   */
+  it("writes a switch selector and its cases in authoring order", () => {
+    const condition = switch_({
+      trigger: "has_ethic",
+      cases: [
+        ["ethic_pacifist", owner(hasCountryFlag("pacifist"))],
+        ["ethic_militarist", owner(hasCountryFlag("militarist"))],
+      ],
+    });
+
+    expect(serialize([...condition.entries])).toBe(
+      "switch = {\n" +
+        "\ttrigger = has_ethic\n" +
+        "\tethic_pacifist = {\n\t\towner = {\n\t\t\thas_country_flag = pacifist\n\t\t}\n\t}\n" +
+        "\tethic_militarist = {\n\t\towner = {\n\t\t\thas_country_flag = militarist\n\t\t}\n\t}\n" +
+        "}\n"
+    );
+  });
+
+  /** `common/scripted_triggers/00_scripted_triggers.txt` writes this one with a default. */
+  it("writes the switch default last, after every case", () => {
+    const condition = switch_({
+      trigger: "is_pop_faction_type",
+      cases: [
+        ["prosperity", hasCountryFlag("pacifist")],
+        ["progressive", hasCountryFlag("egalitarian")],
+      ],
+      default: always(true),
+    });
+
+    expect(serialize([...condition.entries])).toBe(
+      "switch = {\n" +
+        "\ttrigger = is_pop_faction_type\n" +
+        "\tprosperity = {\n\t\thas_country_flag = pacifist\n\t}\n" +
+        "\tprogressive = {\n\t\thas_country_flag = egalitarian\n\t}\n" +
+        "\tdefault = {\n\t\talways = yes\n\t}\n" +
+        "}\n"
+    );
+  });
+
+  /**
+   * `common/tradable_actions/00_tradable_actions.txt` writes this case list.
+   * The rules declare `inverted_switch`'s own default `~1..1`, so the builder
+   * requires it where that shipped block leaves it out.
+   */
+  it("writes an inverted switch with the same case order", () => {
+    const condition = invertedSwitch({
+      trigger: "has_technology",
+      cases: [
+        ["tech_ftl_inhibitor", hasTechnology("tech_ftl_inhibitor")],
+        ["tech_starbase_3", hasTechnology("tech_starbase_3")],
+      ],
+      default: always(true),
+    });
+
+    expect(serialize([...condition.entries])).toBe(
+      "inverted_switch = {\n" +
+        "\ttrigger = has_technology\n" +
+        "\ttech_ftl_inhibitor = {\n\t\thas_technology = tech_ftl_inhibitor\n\t}\n" +
+        "\ttech_starbase_3 = {\n\t\thas_technology = tech_starbase_3\n\t}\n" +
+        "\tdefault = {\n\t\talways = yes\n\t}\n" +
+        "}\n"
+    );
+    expect(condition.refs).toEqual([
+      { targets: ["technology"], id: "tech_ftl_inhibitor", field: "has_technology" },
+      { targets: ["technology"], id: "tech_starbase_3", field: "has_technology" },
+    ]);
+  });
+
+  /**
+   * The game reads the first case whose key matches the selector, so a
+   * repeated key is the author's own dead branch rather than a key clash the
+   * builder should collapse or reorder.
+   */
+  it("writes a repeated case key twice, in authoring order", () => {
+    const condition = switch_({
+      trigger: "has_ethic",
+      cases: [
+        ["ethic_pacifist", hasCountryFlag("first")],
+        ["ethic_pacifist", hasCountryFlag("second")],
+      ],
+    });
+
+    expect(serialize([...condition.entries])).toBe(
+      "switch = {\n" +
+        "\ttrigger = has_ethic\n" +
+        "\tethic_pacifist = {\n\t\thas_country_flag = first\n\t}\n" +
+        "\tethic_pacifist = {\n\t\thas_country_flag = second\n\t}\n" +
+        "}\n"
+    );
+  });
+
+  it("refuses a case key the switch block writes itself", () => {
+    expect(() => switch_({ trigger: "has_ethic", cases: [["default", always(true)]] })).toThrow(
+      '"switch.cases" was given the case key "default"'
+    );
+    expect(() => switch_({ trigger: "has_ethic", cases: [["trigger", always(true)]] })).toThrow(
+      '"switch.cases" was given the case key "trigger"'
+    );
+  });
+
+  it("refuses a case with no key and a switch with no cases", () => {
+    expect(() => switch_({ trigger: "has_ethic", cases: [["", always(true)]] })).toThrow(
+      '"switch.cases" was given a case with no key'
+    );
+    expect(() => switch_({ trigger: "has_ethic", cases: [] })).toThrow(
+      '"switch.cases" was given 0 cases, but the rules require at least 1'
     );
   });
 });

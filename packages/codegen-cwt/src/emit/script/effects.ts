@@ -407,6 +407,26 @@ function scalarShapeOf(emitter: Emitter, rule: LoweredRule): EffectShape | SkipR
   return { kind: "value", value };
 }
 
+/**
+ * Whether one lowered value keys nested clauses. Only trigger builders render
+ * that shape today: an effect's clauses are recorded closures, which
+ * `EFFECT_META` and the recorder have no key/clause pair form for.
+ */
+function holdsKeyedClauses(value: ArgValue): boolean {
+  switch (value.kind) {
+    case "keyedClauses":
+      return true;
+    case "fields":
+      return value.fields.some((field) => holdsKeyedClauses(field.value));
+    case "scalarOrBlock":
+      return holdsKeyedClauses(value.block);
+    case "valueList":
+      return value.fields?.some((field) => holdsKeyedClauses(field.value)) ?? false;
+    default:
+      return false;
+  }
+}
+
 function blockShapeOf(emitter: Emitter, rule: LoweredRule): EffectShape | SkipReason {
   const block = rule.blocks[0]!;
   const body = block.type;
@@ -444,6 +464,12 @@ function blockShapeOf(emitter: Emitter, rule: LoweredRule): EffectShape | SkipRe
       : mergeBlock(emitter, named, pushedRaw, EFFECT_SPLICES);
   if ("detail" in merged) {
     return merged;
+  }
+  if (merged.kind === "fields" && merged.fields.some((field) => holdsKeyedClauses(field.value))) {
+    return skipReason(
+      "computed-field-key",
+      "block keys nested clauses, which the effect recorder cannot serialize"
+    );
   }
 
   if (categories.has("effect")) {
@@ -561,6 +587,11 @@ function baseMemberType(
         ? `(scope: ScopeObjOf<${scope}>) => void`
         : `(scope: ${scopeInterfaceName(value.scope)}) => void`;
     }
+    case "keyedClauses":
+      throw new Error(
+        `Effect "${effectKey}" keys nested clauses, which the shape pass skips before ` +
+          "any signature is rendered"
+      );
     case "aliasList":
       return aliasListType(value.category, value.scope, outerScope);
     case "aliasStruct":
