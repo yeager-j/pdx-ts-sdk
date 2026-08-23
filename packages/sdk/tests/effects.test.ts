@@ -1,6 +1,7 @@
 import { serialize, type PdxEntry } from "@pdx-ts/pdxscript";
 import { describe, expect, it } from "vitest";
 
+import type { EffectFieldMeta } from "../src/generated/effect-meta.ts";
 import type { EffectPathOf } from "../src/generated/effects.ts";
 import {
   ambientObjectFlags,
@@ -8,8 +9,10 @@ import {
   countryFlags,
   megastructureFlags,
 } from "../src/generated/value-sets.ts";
+import type { ContentRefUse } from "../src/references.ts";
 import {
   eventTarget,
+  fieldEntries,
   isEventFireKey,
   makeScope,
   recordEffects,
@@ -241,6 +244,26 @@ create_message = {
 \t}
 }
 `);
+  });
+
+  it("writes each form a repeated comparison field admits", () => {
+    // No CWT effect field lowers to a comparison today, so the recorder's
+    // comparison arm is measured against the meta the emitter would write.
+    const fields: readonly EffectFieldMeta[] = [
+      { prop: "value", key: "value", kind: "comparison", repeated: true },
+    ];
+    const refs: ContentRefUse[] = [];
+    const entriesFor = (value: unknown): string =>
+      serialize(fieldEntries(fields, { value }, "effects_test_comparison", refs, undefined));
+
+    expect(entriesFor(5)).toBe("value = 5\n");
+    expect(entriesFor([">", 2])).toBe("value > 2\n");
+    expect(
+      entriesFor([
+        [">", 2],
+        ["<", 10],
+      ])
+    ).toBe("value > 2\n\nvalue < 10\n");
   });
 
   it("serializes a minimal ambient-object placement", () => {

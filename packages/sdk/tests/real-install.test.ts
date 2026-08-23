@@ -360,7 +360,7 @@ describe.skipIf(installPath === undefined)(
           {
             when: and(
               hasInfertileCloneSoldierTrait(),
-              planet(checkVariable({ which: "clone_pops_missing_per_vat", value: [[">", 2200]] }))
+              planet(checkVariable({ which: "clone_pops_missing_per_vat", value: [">", 2200] }))
             ),
             modifiers: (m) => m.raw("bonus_pop_growth", 20),
           },

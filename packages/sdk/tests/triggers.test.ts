@@ -10,6 +10,7 @@ import {
   anyCosmicStorm,
   anyCountry,
   canAccessSystem,
+  checkVariable,
   countOwnedPopGroup,
   currentSituationApproach,
   currentStage,
@@ -314,6 +315,26 @@ describe("trigger builders", () => {
   it("accepts tech references by object", () => {
     const condition = hasTechnology({ id: "tech_lasers_1" });
     expect(serialize([...condition.entries])).toBe("has_technology = tech_lasers_1\n");
+  });
+
+  it("writes each form a repeated comparison admits: one value, one pair, a list of pairs", () => {
+    expect(serialize([...checkVariable({ which: "var_unrest", value: 5 }).entries])).toBe(
+      "check_variable = {\n\twhich = var_unrest\n\tvalue = 5\n}\n"
+    );
+    expect(serialize([...checkVariable({ which: "var_unrest", value: [">", 2] }).entries])).toBe(
+      "check_variable = {\n\twhich = var_unrest\n\tvalue > 2\n}\n"
+    );
+    expect(
+      serialize([
+        ...checkVariable({
+          which: "var_unrest",
+          value: [
+            [">", 2],
+            ["<", 10],
+          ],
+        }).entries,
+      ])
+    ).toBe("check_variable = {\n\twhich = var_unrest\n\tvalue > 2\n\tvalue < 10\n}\n");
   });
 
   it("writes an event-chain counter check with its chain reference", () => {

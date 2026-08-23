@@ -15,10 +15,10 @@
  * the one place that owns that representation and gate.
  */
 
-import type { PdxScalar } from "@pdx-ts/pdxscript";
+import type { PdxOp, PdxScalar } from "@pdx-ts/pdxscript";
 
 import type { ScopeValue } from "./effects/types.ts";
-import { scriptValueScalar } from "./trigger-core.ts";
+import { scriptValueScalar, type ScriptValue } from "./trigger-core.ts";
 
 declare const refBrand: unique symbol;
 
@@ -88,6 +88,26 @@ export function isStructuredValue(
     return false;
   }
   return true;
+}
+
+/** An operand a comparison argument compares against. */
+export type ComparisonOperand = ScriptValue | boolean;
+
+/** One authored comparison: a bare operand, or an operator paired with one. */
+export type ComparisonArg = ComparisonOperand | readonly [PdxOp, ComparisonOperand];
+
+/**
+ * Whether a comparison argument holds several comparisons rather than one.
+ *
+ * A field the rules let recur authors its repetitions as a list of
+ * operator/operand pairs. A list of bare operands is not offered and is not
+ * read as one: `[">", 2]` is the single comparison `> 2`, so the repeated form
+ * has to nest — `[[">", 2], ["<", 10]]`.
+ */
+export function isComparisonList(
+  value: ComparisonArg | readonly (readonly [PdxOp, ComparisonOperand])[]
+): value is readonly (readonly [PdxOp, ComparisonOperand])[] {
+  return Array.isArray(value) && Array.isArray(value[0]);
 }
 
 export function toScalar(

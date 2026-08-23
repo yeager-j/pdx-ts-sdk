@@ -250,13 +250,19 @@ describe("trigger emission", () => {
   });
 
   it("authors a repeated trigger field as an array and writes one sibling key per item", () => {
+  it("authors a repeated comparison as one value, one pair, or a list of pairs", () => {
     expect(emission.code).toContain(
-      "value: readonly (ScriptValue | readonly [PdxOp, ScriptValue])[];"
+      "value: ScriptValue | readonly [PdxOp, ScriptValue] | " +
+        "readonly (readonly [PdxOp, ScriptValue])[];"
     );
+    expect(emission.code).toContain("if (isComparisonList(args.value)) {");
     expect(emission.code).toContain("for (const entry1 of args.value) {");
     expect(emission.code).toContain(
-      'entries.push(typeof entry1 === "object" ? cmp("value", entry1[0], ' +
-        'scriptValueScalar(entry1[1])) : kv("value", scriptValueScalar(entry1)));'
+      'entries.push(cmp("value", entry1[0], scriptValueScalar(entry1[1])));'
+    );
+    expect(emission.code).toContain(
+      'entries.push(typeof args.value === "object" ? cmp("value", args.value[0], ' +
+        'scriptValueScalar(args.value[1])) : kv("value", scriptValueScalar(args.value)));'
     );
   });
 

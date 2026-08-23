@@ -17,7 +17,7 @@ import {
 
 import type { ContentRefUse } from "../references.ts";
 import type { ScopeValue } from "../script/effects/types.ts";
-import { isStructuredValue, refId } from "../script/scalar.ts";
+import { isComparisonList, isStructuredValue, refId } from "../script/scalar.ts";
 import {
   scriptValueScalar,
   trigger,
@@ -2168,7 +2168,7 @@ export function checkPopFactionParameter(
 /** The arguments `checkVariable` takes, as the rules declare them. */
 export interface CheckVariableArgs {
   which: Variable;
-  value: readonly (ScriptValue | readonly [PdxOp, ScriptValue])[];
+  value: ScriptValue | readonly [PdxOp, ScriptValue] | readonly (readonly [PdxOp, ScriptValue])[];
 }
 
 /**
@@ -2212,11 +2212,15 @@ export function checkVariable(
 > {
   const entries: PdxEntry[] = [];
   entries.push(kv("which", args.which));
-  for (const entry1 of args.value) {
+  if (isComparisonList(args.value)) {
+    for (const entry1 of args.value) {
+      entries.push(cmp("value", entry1[0], scriptValueScalar(entry1[1])));
+    }
+  } else {
     entries.push(
-      typeof entry1 === "object"
-        ? cmp("value", entry1[0], scriptValueScalar(entry1[1]))
-        : kv("value", scriptValueScalar(entry1))
+      typeof args.value === "object"
+        ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
+        : kv("value", scriptValueScalar(args.value))
     );
   }
   return trigger([block("check_variable", entries)]);
@@ -2225,11 +2229,13 @@ export function checkVariable(
 /** The arguments `checkVariableArithmetic` takes, as the rules declare them. */
 export interface CheckVariableArithmeticArgs {
   which: ScriptValue | readonly [PdxOp, ScriptValue];
-  add?: readonly (ScriptValue | readonly [PdxOp, ScriptValue])[];
-  subtract?: readonly (ScriptValue | readonly [PdxOp, ScriptValue])[];
-  multiply?: readonly (ScriptValue | readonly [PdxOp, ScriptValue])[];
-  divide?: readonly (ScriptValue | readonly [PdxOp, ScriptValue])[];
-  modulo?: readonly (ScriptValue | readonly [PdxOp, ScriptValue])[];
+  add?: ScriptValue | readonly [PdxOp, ScriptValue] | readonly (readonly [PdxOp, ScriptValue])[];
+  subtract?:
+    ScriptValue | readonly [PdxOp, ScriptValue] | readonly (readonly [PdxOp, ScriptValue])[];
+  multiply?:
+    ScriptValue | readonly [PdxOp, ScriptValue] | readonly (readonly [PdxOp, ScriptValue])[];
+  divide?: ScriptValue | readonly [PdxOp, ScriptValue] | readonly (readonly [PdxOp, ScriptValue])[];
+  modulo?: ScriptValue | readonly [PdxOp, ScriptValue] | readonly (readonly [PdxOp, ScriptValue])[];
   /** Specify >/< on the value or variable fields */
   value: ScriptValue | readonly [PdxOp, ScriptValue];
 }
@@ -2284,47 +2290,67 @@ export function checkVariableArithmetic(
       : kv("which", scriptValueScalar(args.which))
   );
   if (args.add !== undefined) {
-    for (const entry1 of args.add) {
+    if (isComparisonList(args.add)) {
+      for (const entry1 of args.add) {
+        entries.push(cmp("add", entry1[0], scriptValueScalar(entry1[1])));
+      }
+    } else {
       entries.push(
-        typeof entry1 === "object"
-          ? cmp("add", entry1[0], scriptValueScalar(entry1[1]))
-          : kv("add", scriptValueScalar(entry1))
+        typeof args.add === "object"
+          ? cmp("add", args.add[0], scriptValueScalar(args.add[1]))
+          : kv("add", scriptValueScalar(args.add))
       );
     }
   }
   if (args.subtract !== undefined) {
-    for (const entry2 of args.subtract) {
+    if (isComparisonList(args.subtract)) {
+      for (const entry2 of args.subtract) {
+        entries.push(cmp("subtract", entry2[0], scriptValueScalar(entry2[1])));
+      }
+    } else {
       entries.push(
-        typeof entry2 === "object"
-          ? cmp("subtract", entry2[0], scriptValueScalar(entry2[1]))
-          : kv("subtract", scriptValueScalar(entry2))
+        typeof args.subtract === "object"
+          ? cmp("subtract", args.subtract[0], scriptValueScalar(args.subtract[1]))
+          : kv("subtract", scriptValueScalar(args.subtract))
       );
     }
   }
   if (args.multiply !== undefined) {
-    for (const entry3 of args.multiply) {
+    if (isComparisonList(args.multiply)) {
+      for (const entry3 of args.multiply) {
+        entries.push(cmp("multiply", entry3[0], scriptValueScalar(entry3[1])));
+      }
+    } else {
       entries.push(
-        typeof entry3 === "object"
-          ? cmp("multiply", entry3[0], scriptValueScalar(entry3[1]))
-          : kv("multiply", scriptValueScalar(entry3))
+        typeof args.multiply === "object"
+          ? cmp("multiply", args.multiply[0], scriptValueScalar(args.multiply[1]))
+          : kv("multiply", scriptValueScalar(args.multiply))
       );
     }
   }
   if (args.divide !== undefined) {
-    for (const entry4 of args.divide) {
+    if (isComparisonList(args.divide)) {
+      for (const entry4 of args.divide) {
+        entries.push(cmp("divide", entry4[0], scriptValueScalar(entry4[1])));
+      }
+    } else {
       entries.push(
-        typeof entry4 === "object"
-          ? cmp("divide", entry4[0], scriptValueScalar(entry4[1]))
-          : kv("divide", scriptValueScalar(entry4))
+        typeof args.divide === "object"
+          ? cmp("divide", args.divide[0], scriptValueScalar(args.divide[1]))
+          : kv("divide", scriptValueScalar(args.divide))
       );
     }
   }
   if (args.modulo !== undefined) {
-    for (const entry5 of args.modulo) {
+    if (isComparisonList(args.modulo)) {
+      for (const entry5 of args.modulo) {
+        entries.push(cmp("modulo", entry5[0], scriptValueScalar(entry5[1])));
+      }
+    } else {
       entries.push(
-        typeof entry5 === "object"
-          ? cmp("modulo", entry5[0], scriptValueScalar(entry5[1]))
-          : kv("modulo", scriptValueScalar(entry5))
+        typeof args.modulo === "object"
+          ? cmp("modulo", args.modulo[0], scriptValueScalar(args.modulo[1]))
+          : kv("modulo", scriptValueScalar(args.modulo))
       );
     }
   }

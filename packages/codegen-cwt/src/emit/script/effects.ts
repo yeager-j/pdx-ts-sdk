@@ -26,6 +26,7 @@ import {
   cardinalityArrayType,
   expandAliasFields,
   mergeFields,
+  repeatedMemberType,
   skippedRule,
   skipReason,
   type ArgField,
@@ -467,11 +468,8 @@ function memberType(
   if (override !== undefined) {
     return override.type;
   }
-  const type = baseMemberType(emitter, field.value, outerScope, effectKey);
-  if (field.repeated !== true) {
-    return type;
-  }
-  return `readonly ${type.includes(" | ") ? `(${type})` : type}[]`;
+  const single = baseMemberType(emitter, field.value, outerScope, effectKey);
+  return field.repeated === true ? repeatedMemberType(emitter, field.value, single) : single;
 }
 
 function scopeInterfaceName(scope: string | null): string {

@@ -16,6 +16,7 @@ import {
   cardinalityArrayType,
   comparisonValue,
   mergeFields,
+  repeatedMemberType,
   skippedRule,
   skipReason,
   type ArgField,
@@ -367,13 +368,10 @@ function baseMemberType(emitter: Emitter, value: ArgValue, outerScope: string): 
   }
 }
 
-/** The type text one argument member emits, as an array when the field repeats. */
+/** The type text one argument member emits, widened when the field repeats. */
 function memberType(emitter: Emitter, field: ArgField, outerScope: string): string {
-  const type = baseMemberType(emitter, field.value, outerScope);
-  if (field.repeated !== true) {
-    return type;
-  }
-  return `readonly ${type.includes(" | ") ? `(${type})` : type}[]`;
+  const single = baseMemberType(emitter, field.value, outerScope);
+  return field.repeated === true ? repeatedMemberType(emitter, field.value, single) : single;
 }
 
 function argumentMembers(
