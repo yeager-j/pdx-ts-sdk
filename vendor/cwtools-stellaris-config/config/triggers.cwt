@@ -4807,7 +4807,7 @@ alias[trigger:count_enslaved_species] = {
 
 ### Iterate through all existing species traits in the game - checks whether the enclosed triggers return true for any of them
 ## scopes = any
-## push_scope = country
+## push_scope = trait
 alias[trigger:any_existing_species_traits] = single_alias_right[trigger_clause]
 
 ### Iterate through all existing species traits in the game - checks whether the enclosed triggers return true for X/all of them
@@ -4837,6 +4837,7 @@ alias[trigger:count_trait_of_species] = {
 
 ### Iterate through all species traits and check if scope species doesn't have this trait. checks whether the enclosed triggers return true for any of them
 ## scopes = { pop_group leader species }
+## push_scope = trait
 alias[trigger:any_trait_available_for_species] = single_alias_right[trigger_clause]
 
 ### Iterate through all species traits and check if scope species doesn't have this trait. checks whether the enclosed triggers return true for X/all of them
@@ -5237,6 +5238,7 @@ alias[trigger:ship_size_multiplier] == value_field
 
 ### Iterate through all cosmic storms in the galaxy - checks whether the enclosed triggers return true for any of them
 ## scopes = any
+## push_scope = cosmic_storm
 alias[trigger:any_cosmic_storm] = single_alias_right[trigger_clause]
 
 ### Iterate through all cosmic storms in the galaxy - checks whether the enclosed triggers return true for X/all of them
@@ -5251,6 +5253,7 @@ alias[trigger:count_cosmic_storm] = {
 
 ### Iterate through all systems within the storm - checks whether the enclosed triggers return true for any of them
 ## scopes = { cosmic_storm }
+## push_scope = system
 alias[trigger:any_system_within_storm] = single_alias_right[trigger_clause]
 
 ### Iterate through all systems within the storm - checks whether the enclosed triggers return true for X/all of them
@@ -5265,6 +5268,7 @@ alias[trigger:count_system_within_storm] = {
 
 ### Iterate through all systems valid to be a storms start position - checks whether the enclosed triggers return true for any of them
 ## scopes = any
+## push_scope = system
 alias[trigger:any_cosmic_storm_start_position] = single_alias_right[trigger_clause]
 
 ### Iterate through all systems valid to be a storms start position - checks whether the enclosed triggers return true for X/all of them
@@ -5279,6 +5283,7 @@ alias[trigger:count_cosmic_storm_start_position] = {
 
 ### Iterate through all systems valid to be a storms end position - checks whether the enclosed triggers return true for any of them
 ## scopes = any
+## push_scope = system
 alias[trigger:any_cosmic_storm_end_position] = single_alias_right[trigger_clause]
 
 ### Iterate through all systems valid to be a storms end position - checks whether the enclosed triggers return true for X/all of them
@@ -5293,6 +5298,7 @@ alias[trigger:count_cosmic_storm_end_position] = {
 
 ### Iterate through all systems added to the storm - checks whether the enclosed triggers return true for any of them
 ## scopes = { cosmic_storm }
+## push_scope = system
 alias[trigger:any_system_added_to_storm] = single_alias_right[trigger_clause]
 
 ### Iterate through all systems added to the storm - checks whether the enclosed triggers return true for X/all of them
@@ -5307,6 +5313,7 @@ alias[trigger:count_system_added_to_storm] = {
 
 ### Iterate through all systems removed from storm - checks whether the enclosed triggers return true for any of them
 ## scopes = { cosmic_storm }
+## push_scope = system
 alias[trigger:any_system_removed_from_storm] = single_alias_right[trigger_clause]
 
 ### Iterate through all systems removed from storm - checks whether the enclosed triggers return true for X/all of them

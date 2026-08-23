@@ -4,9 +4,9 @@ Upstream: https://github.com/yeager-j/cwtools-stellaris-config
 
 | | |
 | --- | --- |
-| Commit | `a4ee61a099b8b20122362aabd250fb4bef971ce0` |
-| Committed | 2026-08-15 |
-| Fetched | 2026-08-15 |
+| Commit | `0bd81db21401350dd93852604ef86e17268c1f0d` |
+| Committed | 2026-08-22 |
+| Fetched | 2026-08-22 |
 
 Licensed under the upstream MIT license, reproduced in `LICENSE`.
 
@@ -42,7 +42,7 @@ this snapshot can carry a fix before upstream merges it.
 
 ### Fixes this snapshot carries ahead of upstream
 
-Nine commits carried on our fork ahead of DragonKnightOfBreeze's `master`.
+Twelve commits carried on our fork ahead of DragonKnightOfBreeze's `master`.
 The earlier rule corrections each delete a row from
 `packages/codegen-cwt/src/overlay.ts` or a special case in the loader rather
 than adding one; the GFX corrections supply the upstream-true rules needed by
@@ -81,6 +81,26 @@ the GFX codegen work:
   `particle = { name subsystem … }` in the 1089 `*.asset` files (1108
   definitions), which is `type[particle_type]`. So `pdxparticle` moves onto
   `type[particle]` and `type[particle_type]` gains `## type_key_filter = particle`.
+- `74492cc` `effects.cwt` `create_fleet.parent` declared `sceop[fleet]`, a typo
+  for `scope[fleet]` and the only `sceop` in the config. Retires `create_fleet`'s
+  `unsupported-field-value` row from the script-gap ledger.
+- `e053fef` seven `alias[trigger:any_*]` iterators — `any_cosmic_storm`,
+  `any_system_within_storm`, `any_cosmic_storm_start_position`,
+  `any_cosmic_storm_end_position`, `any_system_added_to_storm`,
+  `any_system_removed_from_storm` and `any_trait_available_for_species` — spliced
+  the trigger clause with no `## push_scope`, so the nested triggers read as
+  running in the enclosing scope. Their `count_*` siblings name the iterated
+  object on `limit`, and those scopes are now declared. The same commit settles a
+  contradiction it exposed: the six `random_/ordered_/every_cosmic_storm_{start,end}_position`
+  effects pushed `cosmic_storm` while all twelve rules describe iterating
+  "all systems valid to be a storms start/end position", so they now push
+  `system`. Retires seven `missing-push-scope` ledger rows and changes the nested
+  scope of six published effect wrappers.
+- `0bd81db` `any_existing_species_traits` declared `## push_scope = country`
+  while its four siblings and all five descriptions say the iterated object is
+  a trait. Found by `packages/codegen-cwt/tests/iterator-push-scope.test.ts`,
+  which the commit above made possible. Changes the nested scope of one
+  published trigger wrapper.
 
 `country_ship_of_size_limit.show` deliberately stays an overlay row rather
 than becoming a sixth annotation: its scope is inferred from the corpus

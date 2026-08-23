@@ -125,7 +125,7 @@ describe("rule types", () => {
     });
   });
 
-  it.each(["quantum_range[0..3]", "scope2[fleet]", "Scope[fleet]"])(
+  it.each(["quantum_range[0..3]", "scope2[fleet]", "Scope[fleet]", "sceop2[fleet]"])(
     "reports the unsupported bracketed keyword %s instead of treating it as a literal",
     (text) => {
       const diagnostics: unknown[] = [];
