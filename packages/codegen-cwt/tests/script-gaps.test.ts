@@ -105,6 +105,18 @@ describe("the script-generation gap ledger", () => {
         'value list under the same field key. (field "pop_ethics" mixes a bare-value block ' +
         "with a scalar arm)"
     );
+    expect(lines.trackedGaps).toContain(
+      "effect create_country [unsupported-alias-splice] — SDK-280: " +
+        "The field model cannot splice a loaded alias category inside a nested effect block. " +
+        '(field "government_restrictions" structured arm splices a category the field model ' +
+        "cannot type (government_trigger))"
+    );
+    expect(lines.trackedGaps).toContain(
+      "effect create_species [multiple-structured-scalar-arms] — SDK-281: " +
+        "The effect argument model has no discriminator between a scalar arm and an anonymous " +
+        'value list under the same field key. (field "pop_ethics" mixes a bare-value block ' +
+        "with a scalar arm)"
+    );
     expect(lines.trackedGaps.every((line) => !line.includes("SDK-244"))).toBe(true);
     expect(lines.trackedGaps.every((line) => !line.includes("SDK-251"))).toBe(true);
     expect(lines.trackedGaps.every((line) => !line.includes("SDK-247"))).toBe(true);

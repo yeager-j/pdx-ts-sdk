@@ -93,7 +93,7 @@ export const SCRIPT_GENERATION_GAPS: readonly ScriptGenerationGap[] = [
   ...trackedGapRows(
     "effect",
     "multiple-structured-scalar-arms",
-    "SDK-248",
+    "SDK-281",
     "The effect argument model has no discriminator between a scalar arm and an " +
       "anonymous value list under the same field key.",
     ["create_species"]
@@ -135,8 +135,8 @@ export const SCRIPT_GENERATION_GAPS: readonly ScriptGenerationGap[] = [
   ...trackedGapRows(
     "effect",
     "unsupported-alias-splice",
-    "SDK-252",
-    "The effect emitter cannot type an alias category spliced inside a nested block.",
+    "SDK-280",
+    "The field model cannot splice a loaded alias category inside a nested effect block.",
     ["create_country"]
   ),
   ...trackedGapRows(
