@@ -29,6 +29,16 @@ describe("solar-system layout public types", () => {
     void moon;
   });
 
+  it("does not accept repeated absolute orbit templates", () => {
+    const orbit: AbsolutePlanetOrbit = {
+      radius: 10,
+      angle: 0,
+      // @ts-expect-error — one absolute coordinate cannot describe repeated copies.
+      count: 2,
+    };
+    void orbit;
+  });
+
   it("returns generated belt data and mutable absolute planet inputs", () => {
     const layout = asteroidBelt({
       type: "rocky_asteroid_belt",

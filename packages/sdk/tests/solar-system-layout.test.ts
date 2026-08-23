@@ -160,6 +160,18 @@ describe("absoluteOrbits", () => {
       ],
       path: "planet[0].moon[1].radius",
     },
+    {
+      input: [{ radius: 0, angle: 22.5 }],
+      path: "planet[0].angle",
+    },
+    {
+      input: [{ radius: 0, angle: 0, count: 2 }],
+      path: "planet[0].count",
+    },
+    {
+      input: [{ radius: 0, angle: 0, count: { min: 1, max: 2 } }],
+      path: "planet[0].count",
+    },
   ])("rejects invalid orbit coordinates at $path", ({ input, path }) => {
     expect(() => absoluteOrbits(input)).toThrow(RangeError);
     expect(() => absoluteOrbits(input)).toThrow(path);
@@ -197,11 +209,21 @@ describe("asteroidBelt", () => {
     expect(() => asteroidBelt({ type: "rocky_asteroid_belt", radius: -1, asteroids: [] })).toThrow(
       "asteroidBelt.radius"
     );
+    expect(() => asteroidBelt({ type: "rocky_asteroid_belt", radius: 1.5, asteroids: [] })).toThrow(
+      "asteroidBelt.radius"
+    );
     expect(() =>
       asteroidBelt({
         type: "rocky_asteroid_belt",
         radius: 1,
         asteroids: [{ angle: Number.POSITIVE_INFINITY }],
+      })
+    ).toThrow("asteroidBelt.asteroids[0].angle");
+    expect(() =>
+      asteroidBelt({
+        type: "rocky_asteroid_belt",
+        radius: 1,
+        asteroids: [{ angle: 22.5 }],
       })
     ).toThrow("asteroidBelt.asteroids[0].angle");
   });

@@ -111,17 +111,21 @@ mod.solarSystemInitializer("haven", { class: "sc_g", planet });
 Each sibling list starts with radius and angle zero: the top-level planets,
 nested planets, moons, and nested moons are independent lists. Radii must be
 finite, nonnegative, and nondecreasing within their own list. Angles must be
-finite. The helper throws `RangeError` with the failing nested array path when
-an input breaks those rules.
+finite integers. Each entry describes one object: `count` is not accepted,
+because one absolute coordinate cannot describe every copy of a repeated or
+ranged template. Use raw generated fields when repetition is required. The
+helper throws `RangeError` with the failing nested array path when an input
+breaks those rules.
 
 It writes each angle as the signed shortest delta in `(-180, 180]`. Thus
 `350` to `10` writes `20`, `10` to `350` writes `-20`, and an exact 180-degree
 tie writes `180`.
 
 `asteroidBelt` keeps a belt and its asteroid planets at the same absolute
-radius. It does not infer an asteroid `class`; supply one when the game needs
-one. Put its `belt` in `asteroidBelt` and splice its `orbits` into the one
-surrounding `absoluteOrbits` call, so all planet radii are checked together:
+integer radius, as required by the belt field. It does not infer an asteroid
+`class`; supply one when the game needs one. Put its `belt` in `asteroidBelt`
+and splice its `orbits` into the one surrounding `absoluteOrbits` call, so all
+planet radii are checked together:
 
 ```ts
 import { absoluteOrbits, asteroidBelt } from "@pdx-ts/sdk";

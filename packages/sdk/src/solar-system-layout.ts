@@ -8,11 +8,11 @@ import type { SolarSystemInitializerAsteroidBelt } from "./generated/solar-syste
  */
 export type AbsolutePlanetOrbit = Omit<
   PlanetInitializerFields,
-  "orbitDistance" | "orbitAngle" | "planet" | "moon"
+  "count" | "orbitDistance" | "orbitAngle" | "planet" | "moon"
 > & {
   /** Absolute orbit-cursor radius. Must be finite, nonnegative, and ordered among siblings. */
   radius: number;
-  /** Absolute bearing in degrees. Must be finite. */
+  /** Absolute bearing in whole degrees. Must be finite. */
   angle: number;
   /** Planet children expressed with their own absolute orbit cursor. */
   planet?: readonly AbsolutePlanetOrbit[];
@@ -26,11 +26,11 @@ export type AbsolutePlanetOrbit = Omit<
  */
 export type AbsoluteMoonOrbit = Omit<
   MoonInitializerFields,
-  "orbitDistance" | "orbitAngle" | "moon"
+  "count" | "orbitDistance" | "orbitAngle" | "moon"
 > & {
   /** Absolute orbit-cursor radius. Must be finite, nonnegative, and ordered among siblings. */
   radius: number;
-  /** Absolute bearing in degrees. Must be finite. */
+  /** Absolute bearing in whole degrees. Must be finite. */
   angle: number;
   /** Moon children expressed with their own absolute orbit cursor. */
   moon?: readonly AbsoluteMoonOrbit[];
@@ -48,9 +48,9 @@ export interface AsteroidBelt {
 export interface AsteroidBeltInput {
   /** The asteroid-belt type emitted in the generated belt value. */
   type: SolarSystemInitializerAsteroidBelt["type"];
-  /** Shared absolute orbit-cursor radius. Must be finite and nonnegative. */
+  /** Shared absolute orbit-cursor radius. Must be a finite nonnegative integer. */
   radius: number;
-  /** Asteroid planet inputs that share `radius`; their angles must be finite. */
+  /** Asteroid planet inputs that share `radius`; their angles must be finite integers. */
   asteroids: readonly Omit<AbsolutePlanetOrbit, "radius">[];
 }
 
@@ -58,10 +58,12 @@ export interface AsteroidBeltInput {
  * Lowers absolute orbit-cursor coordinates to Stellaris's relative initializer fields.
  *
  * Each sibling list starts at radius and angle zero. Radii must be finite,
- * nonnegative, and nondecreasing. Angles are lowered to `(-180, 180]`: an
- * exact 180-degree difference becomes `+180`. `radius` is the initializer
- * orbit cursor, not a rendered center-to-center distance. Throws `RangeError`
- * for invalid coordinates and does not mutate `orbits`.
+ * nonnegative, and nondecreasing. Angles must be finite integers and are
+ * lowered to `(-180, 180]`: an exact 180-degree difference becomes `+180`.
+ * Repeated templates are not accepted because one absolute coordinate cannot
+ * describe every generated copy. `radius` is the initializer orbit cursor,
+ * not a rendered center-to-center distance. Throws `RangeError` for invalid
+ * input and does not mutate `orbits`.
  */
 export function absoluteOrbits(orbits: readonly AbsolutePlanetOrbit[]): PlanetInitializerFields[] {
   return lowerPlanets(orbits, "planet");
@@ -74,9 +76,27 @@ export function absoluteOrbits(orbits: readonly AbsolutePlanetOrbit[]): PlanetIn
  * planets so their shared radius is checked in that complete sibling list.
  * Throws `RangeError` for an invalid radius or asteroid angle and does not
  * mutate `asteroids`.
+ *
+ * @example
+ * ```ts
+ * const rubble = asteroidBelt({
+ *   type: "rocky_asteroid_belt",
+ *   radius: 80,
+ *   asteroids: [{ class: "pc_asteroid", angle: 0 }],
+ * });
+ *
+ * mod.solarSystemInitializer("rubble", {
+ *   class: "sc_g",
+ *   asteroidBelt: [rubble.belt],
+ *   planet: absoluteOrbits([
+ *     { class: "star", radius: 0, angle: 0 },
+ *     ...rubble.orbits,
+ *   ]),
+ * });
+ * ```
  */
 export function asteroidBelt({ type, radius, asteroids }: AsteroidBeltInput): AsteroidBelt {
-  assertRadius(radius, "asteroidBelt");
+  assertBeltRadius(radius);
   const orbits = asteroids.map((asteroid, index) => {
     assertAngle(asteroid.angle, `asteroidBelt.asteroids[${index}]`);
     return { ...asteroid, radius };
@@ -93,6 +113,7 @@ function lowerPlanets(
 
   return orbits.map((orbit, index) => {
     const path = `${listPath}[${index}]`;
+    assertSingleTemplate(orbit, path);
     const { orbitDistance, orbitAngle } = lowerCoordinates(orbit.radius, orbit.angle, cursor, path);
 
     const { radius: _radius, angle: _angle, planet, moon, ...fields } = orbit;
@@ -115,6 +136,7 @@ function lowerMoons(
 
   return orbits.map((orbit, index) => {
     const path = `${listPath}[${index}]`;
+    assertSingleTemplate(orbit, path);
     const { orbitDistance, orbitAngle } = lowerCoordinates(orbit.radius, orbit.angle, cursor, path);
 
     const { radius: _radius, angle: _angle, moon, ...fields } = orbit;
@@ -149,6 +171,18 @@ function assertRadius(radius: number, path: string): void {
   }
 }
 
+function assertBeltRadius(radius: number): void {
+  if (!Number.isInteger(radius) || radius < 0) {
+    throw new RangeError("asteroidBelt.radius must be a finite nonnegative integer");
+  }
+}
+
+function assertSingleTemplate(orbit: object, path: string): void {
+  if ("count" in orbit) {
+    throw new RangeError(`${path}.count is not supported in an absolute orbit`);
+  }
+}
+
 function assertNondecreasingRadius(radius: number, previousRadius: number, path: string): void {
   if (radius < previousRadius) {
     throw new RangeError(`${path}.radius must not be less than the previous sibling radius`);
@@ -156,8 +190,8 @@ function assertNondecreasingRadius(radius: number, previousRadius: number, path:
 }
 
 function assertAngle(angle: number, path: string): void {
-  if (!Number.isFinite(angle)) {
-    throw new RangeError(`${path}.angle must be a finite number`);
+  if (!Number.isInteger(angle)) {
+    throw new RangeError(`${path}.angle must be a finite integer`);
   }
 }
 
