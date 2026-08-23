@@ -182,7 +182,9 @@ function blockPushCode(
   if (value.kind === "valueList") {
     return pushValueListCode(emitter, value, access, fieldPath, index, key, sink);
   }
-  const nested = `nestedEntries${index}`;
+  // Named after the array it nests under, so the local stays distinct from
+  // both its siblings and every array it is declared inside.
+  const nested = `${sink}Nested${index}`;
   const body =
     value.kind === "map"
       ? mapEntriesCode(emitter, value.map, access, fieldPath, index, nested)

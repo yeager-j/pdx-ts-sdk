@@ -265,11 +265,17 @@ describe("trigger emission", () => {
     );
   });
 
-  it("gives each nested block sibling its own entry array", () => {
-    // Both members are required, so their statements land side by side in the
-    // builder body rather than inside an `if`, which is the one arrangement
-    // that would redeclare a shared local.
-    const emitted = emitInlineTriggers(
+  it("gives every nested block its own entry array", () => {
+    // Every member here is required, so its statements land beside its
+    // siblings rather than inside an `if`. That is the one arrangement in
+    // which two nested blocks share a scope and a reused local would be a
+    // redeclaration the emitted module could not compile.
+    const entryArrays = (code: string): string[] =>
+      [...code.matchAll(/const (entriesNested\w*): PdxEntry\[\] = \[\]/g)].map(
+        (match) => match[1]!
+      );
+
+    const siblings = emitInlineTriggers(
       [
         BOTH_WRAPPER_ROWS,
         "## scopes = any",
@@ -284,13 +290,32 @@ describe("trigger emission", () => {
       ].join("\n")
     );
 
-    expect(emitted.names).toContain("twoNestedBlocks");
-    const declarations = [
-      ...emitted.code.matchAll(/const (nestedEntries\d+): PdxEntry\[\] = \[\]/g),
-    ];
-    expect(declarations.map((match) => match[1])).toEqual(["nestedEntries0", "nestedEntries1"]);
-    expect(emitted.code).toContain('entries.push(block("first", nestedEntries0));');
-    expect(emitted.code).toContain('entries.push(block("second", nestedEntries1));');
+    expect(siblings.names).toContain("twoNestedBlocks");
+    expect(entryArrays(siblings.code)).toEqual(["entriesNested0", "entriesNested1"]);
+    expect(siblings.code).toContain('entries.push(block("first", entriesNested0));');
+    expect(siblings.code).toContain('entries.push(block("second", entriesNested1));');
+
+    // Both blocks sit at index 0 of their own table, so an index-only suffix
+    // would name them both `nestedEntries0` — the inner one declared inside
+    // the outer one's scope.
+    const depth = emitInlineTriggers(
+      [
+        BOTH_WRAPPER_ROWS,
+        "## scopes = any",
+        "alias[trigger:two_block_levels] = {",
+        "\touter = {",
+        "\t\tinner = {",
+        "\t\t\tvalue = int",
+        "\t\t}",
+        "\t}",
+        "}",
+      ].join("\n")
+    );
+
+    expect(depth.names).toContain("twoBlockLevels");
+    expect(entryArrays(depth.code)).toEqual(["entriesNested0", "entriesNested0Nested0"]);
+    expect(depth.code).toContain('entriesNested0.push(block("inner", entriesNested0Nested0));');
+    expect(depth.code).toContain('entries.push(block("outer", entriesNested0));');
   });
 
   it("records one content reference per item of a repeated reference-bearing field", () => {
