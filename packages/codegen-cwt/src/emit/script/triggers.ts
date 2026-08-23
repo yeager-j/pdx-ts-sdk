@@ -346,8 +346,8 @@ function emitWrapper(
   );
 }
 
-function memberType(emitter: Emitter, field: ArgField, outerScope: string): string {
-  const value = field.value;
+/** The type text one lowered argument contributes before repetition applies. */
+function baseMemberType(emitter: Emitter, value: ArgValue, outerScope: string): string {
   switch (value.kind) {
     case "scalar":
       return emitter.useValue(value.value).type;
@@ -365,6 +365,15 @@ function memberType(emitter: Emitter, field: ArgField, outerScope: string): stri
       return [scalar, `readonly [${emitter.use("PdxOp")}, ${scalar}]`, ...literals].join(" | ");
     }
   }
+}
+
+/** The type text one argument member emits, as an array when the field repeats. */
+function memberType(emitter: Emitter, field: ArgField, outerScope: string): string {
+  const type = baseMemberType(emitter, field.value, outerScope);
+  if (field.repeated !== true) {
+    return type;
+  }
+  return `readonly ${type.includes(" | ") ? `(${type})` : type}[]`;
 }
 
 function argumentMembers(

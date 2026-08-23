@@ -257,6 +257,9 @@ export type MegaBuildType = "inside_gravity_well" | "outside_gravity_well" | "ar
 /** `enum[megastructure_block_type]`. */
 export type MegastructureBlockType = "none" | "self_type" | "multi_stage_type";
 
+/** `enum[mesage_variable_type]`. */
+export type MesageVariableType = "key" | "name" | "variable";
+
 /** `enum[mia_type]`. */
 export type MiaType = "mia_return_home" | "mia_emergency_ftl" | "mia_fleet_eaten";
 

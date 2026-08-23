@@ -327,6 +327,12 @@ function classifyKey(key: CwtScalar, report?: ClassificationReporter): FieldKey 
   if (key.quoted) {
     return { kind: "name", name: text };
   }
+  // `$localisation_parameter = scalar` is CWT's placeholder for a key the
+  // script itself invents, so the block is an open map. Read as a name it
+  // would become a field literally called `$localisation_parameter`.
+  if (text.startsWith("$")) {
+    return { kind: "computed", type: { kind: "scalar" } };
+  }
   const bracketed = BRACKETED.exec(text);
   if (bracketed === null) {
     // A key spelled `int`, `scalar`, or `<resource>` is a key FILTER — it

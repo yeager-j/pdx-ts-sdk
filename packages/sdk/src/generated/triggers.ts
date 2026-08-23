@@ -2168,7 +2168,7 @@ export function checkPopFactionParameter(
 /** The arguments `checkVariable` takes, as the rules declare them. */
 export interface CheckVariableArgs {
   which: Variable;
-  value: ScriptValue | readonly [PdxOp, ScriptValue];
+  value: readonly (ScriptValue | readonly [PdxOp, ScriptValue])[];
 }
 
 /**
@@ -2212,22 +2212,24 @@ export function checkVariable(
 > {
   const entries: PdxEntry[] = [];
   entries.push(kv("which", args.which));
-  entries.push(
-    typeof args.value === "object"
-      ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
-      : kv("value", scriptValueScalar(args.value))
-  );
+  for (const entry1 of args.value) {
+    entries.push(
+      typeof entry1 === "object"
+        ? cmp("value", entry1[0], scriptValueScalar(entry1[1]))
+        : kv("value", scriptValueScalar(entry1))
+    );
+  }
   return trigger([block("check_variable", entries)]);
 }
 
 /** The arguments `checkVariableArithmetic` takes, as the rules declare them. */
 export interface CheckVariableArithmeticArgs {
   which: ScriptValue | readonly [PdxOp, ScriptValue];
-  add?: ScriptValue | readonly [PdxOp, ScriptValue];
-  subtract?: ScriptValue | readonly [PdxOp, ScriptValue];
-  multiply?: ScriptValue | readonly [PdxOp, ScriptValue];
-  divide?: ScriptValue | readonly [PdxOp, ScriptValue];
-  modulo?: ScriptValue | readonly [PdxOp, ScriptValue];
+  add?: readonly (ScriptValue | readonly [PdxOp, ScriptValue])[];
+  subtract?: readonly (ScriptValue | readonly [PdxOp, ScriptValue])[];
+  multiply?: readonly (ScriptValue | readonly [PdxOp, ScriptValue])[];
+  divide?: readonly (ScriptValue | readonly [PdxOp, ScriptValue])[];
+  modulo?: readonly (ScriptValue | readonly [PdxOp, ScriptValue])[];
   /** Specify >/< on the value or variable fields */
   value: ScriptValue | readonly [PdxOp, ScriptValue];
 }
@@ -2282,39 +2284,49 @@ export function checkVariableArithmetic(
       : kv("which", scriptValueScalar(args.which))
   );
   if (args.add !== undefined) {
-    entries.push(
-      typeof args.add === "object"
-        ? cmp("add", args.add[0], scriptValueScalar(args.add[1]))
-        : kv("add", scriptValueScalar(args.add))
-    );
+    for (const entry1 of args.add) {
+      entries.push(
+        typeof entry1 === "object"
+          ? cmp("add", entry1[0], scriptValueScalar(entry1[1]))
+          : kv("add", scriptValueScalar(entry1))
+      );
+    }
   }
   if (args.subtract !== undefined) {
-    entries.push(
-      typeof args.subtract === "object"
-        ? cmp("subtract", args.subtract[0], scriptValueScalar(args.subtract[1]))
-        : kv("subtract", scriptValueScalar(args.subtract))
-    );
+    for (const entry2 of args.subtract) {
+      entries.push(
+        typeof entry2 === "object"
+          ? cmp("subtract", entry2[0], scriptValueScalar(entry2[1]))
+          : kv("subtract", scriptValueScalar(entry2))
+      );
+    }
   }
   if (args.multiply !== undefined) {
-    entries.push(
-      typeof args.multiply === "object"
-        ? cmp("multiply", args.multiply[0], scriptValueScalar(args.multiply[1]))
-        : kv("multiply", scriptValueScalar(args.multiply))
-    );
+    for (const entry3 of args.multiply) {
+      entries.push(
+        typeof entry3 === "object"
+          ? cmp("multiply", entry3[0], scriptValueScalar(entry3[1]))
+          : kv("multiply", scriptValueScalar(entry3))
+      );
+    }
   }
   if (args.divide !== undefined) {
-    entries.push(
-      typeof args.divide === "object"
-        ? cmp("divide", args.divide[0], scriptValueScalar(args.divide[1]))
-        : kv("divide", scriptValueScalar(args.divide))
-    );
+    for (const entry4 of args.divide) {
+      entries.push(
+        typeof entry4 === "object"
+          ? cmp("divide", entry4[0], scriptValueScalar(entry4[1]))
+          : kv("divide", scriptValueScalar(entry4))
+      );
+    }
   }
   if (args.modulo !== undefined) {
-    entries.push(
-      typeof args.modulo === "object"
-        ? cmp("modulo", args.modulo[0], scriptValueScalar(args.modulo[1]))
-        : kv("modulo", scriptValueScalar(args.modulo))
-    );
+    for (const entry5 of args.modulo) {
+      entries.push(
+        typeof entry5 === "object"
+          ? cmp("modulo", entry5[0], scriptValueScalar(entry5[1]))
+          : kv("modulo", scriptValueScalar(entry5))
+      );
+    }
   }
   entries.push(
     typeof args.value === "object"

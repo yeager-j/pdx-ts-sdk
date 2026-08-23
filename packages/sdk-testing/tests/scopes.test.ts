@@ -144,7 +144,7 @@ describe("situation scope", () => {
             {
               desc: "Unrest accelerant",
               mult: 1.5,
-              when: checkVariable({ which: "var_recent_unrest", value: [">", 2] }),
+              when: checkVariable({ which: "var_recent_unrest", value: [[">", 2]] }),
             },
             {
               desc: "The approach amplifies momentum",
@@ -242,7 +242,7 @@ describe("situation scope", () => {
             {
               desc: "unset read",
               add: 1,
-              when: checkVariable({ which: "var_never_set", value: 0 }),
+              when: checkVariable({ which: "var_never_set", value: [0] }),
             },
           ],
         },

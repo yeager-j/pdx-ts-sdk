@@ -117,6 +117,34 @@ describe("generated effect scope safety", () => {
     });
   });
 
+  it("types repeated nested fields as arrays and rejects single values", () => {
+    const planet = makeScope<"planet">(sink);
+    const fleet = makeScope<"fleet">(sink);
+    const country = makeScope<"country">(sink);
+
+    planet.createColony({
+      owner: scopeValue<"country">("root"),
+      ethos: { ethic: ["ethic_militarist", "ethic_xenophobe"] },
+    });
+    fleet.setFleetFormation({ position: [{ x: 1.5, y: -2.5 }] });
+    country.createMessage({
+      type: "effects_type_test_message_type",
+      variable: [{ type: "name", localization: "EFFECTS_TYPE_TEST_PLANET" }],
+    });
+
+    planet.createColony({
+      owner: scopeValue<"country">("root"),
+      // @ts-expect-error — repeated ethic entries author as an array
+      ethos: { ethic: "ethic_militarist" },
+    });
+    planet.createColony({
+      // @ts-expect-error — a single-occurrence field does not accept an array
+      owner: [scopeValue<"country">("root")],
+    });
+    // @ts-expect-error — repeated position blocks author as an array
+    fleet.setFleetFormation({ position: { x: 1.5, y: -2.5 } });
+  });
+
   it("types ambient-object placement refs, locations, and scalar/range offsets", () => {
     const system = makeScope<"system">(sink);
     system.createAmbientObject({

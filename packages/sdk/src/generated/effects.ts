@@ -27,6 +27,7 @@ import type {
   Gender,
   GendersNotSet,
   GrowthStance,
+  MesageVariableType,
   MiaType,
   MissionStatus,
   ModelState,
@@ -72,6 +73,7 @@ import type {
   CivicOrOriginOriginRef,
   ColonizationControlRef,
   ColonyTypeRef,
+  ColorDefineRef,
   ComponentTemplateRef,
   CouncilorRef,
   CountryCardCategoriesRef,
@@ -109,6 +111,7 @@ import type {
   MissionRef,
   ModelEntityRef,
   ModifierRef,
+  NameListRef,
   NotificationModifierRef,
   ObservationStationMissionRef,
   OnActionRef,
@@ -820,6 +823,215 @@ export interface EffectsIn4Scopes2b24 {
     random?: ScriptValue;
     growthCategory?: string;
     effect?: (scope: PopGroupScope) => void;
+  }): void;
+
+  /**
+   * Creates a rebellion
+   * ```
+   * create_rebels = {
+   * 	name = <random / string>
+   * 	authority = <random / key>
+   * 	civics = random / { civic = <key> civic = random }
+   * 	species = <target>
+   * 	ethos = <random / { ethic = <key> ethic = <key> }
+   * }
+   * ```
+   */
+  createRebels(args: {
+    name?: string | ScopeValue | "random" | { key: string; variableString?: readonly string[] };
+    authority:
+      | "random"
+      | AuthorityRef
+      | string
+      | ScopeValue<
+          | "agreement"
+          | "archaeological_site"
+          | "army"
+          | "carrier"
+          | "country"
+          | "debris"
+          | "deposit"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "megastructure"
+          | "planet"
+          | "pop_faction"
+          | "pop_group"
+          | "sector"
+          | "ship"
+          | "situation"
+          | "spy_network"
+          | "starbase"
+          | "system"
+        >;
+    origin?: CivicOrOriginOriginRef | string;
+    civics?:
+      | ScopeValue<
+          | "agreement"
+          | "archaeological_site"
+          | "army"
+          | "carrier"
+          | "country"
+          | "debris"
+          | "deposit"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "megastructure"
+          | "planet"
+          | "pop_faction"
+          | "pop_group"
+          | "sector"
+          | "ship"
+          | "situation"
+          | "spy_network"
+          | "starbase"
+          | "system"
+        >
+      | "random"
+      | { civic?: readonly (CivicOrOriginCivicRef | string | "random")[] };
+    species:
+      | ScopeValue<
+          | "army"
+          | "carrier"
+          | "country"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "planet"
+          | "pop_group"
+          | "ship"
+          | "species"
+        >
+      | string;
+    ethos?:
+      | "random"
+      | ScopeValue<
+          | "agreement"
+          | "archaeological_site"
+          | "army"
+          | "carrier"
+          | "country"
+          | "debris"
+          | "deposit"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "megastructure"
+          | "planet"
+          | "pop_faction"
+          | "pop_group"
+          | "sector"
+          | "ship"
+          | "situation"
+          | "spy_network"
+          | "starbase"
+          | "system"
+        >
+      | { ethic: readonly (EthicRef | string)[] };
+    flag?:
+      | ScopeValue<
+          | "agreement"
+          | "archaeological_site"
+          | "army"
+          | "carrier"
+          | "country"
+          | "debris"
+          | "deposit"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "megastructure"
+          | "planet"
+          | "pop_faction"
+          | "pop_group"
+          | "sector"
+          | "ship"
+          | "situation"
+          | "spy_network"
+          | "starbase"
+          | "system"
+        >
+      | "random"
+      | {
+          icon?: { category: string; file: string };
+          background: { category: string; file: string };
+          colors:
+            | readonly []
+            | readonly [ColorDefineRef | string | "null"]
+            | readonly [ColorDefineRef | string | "null", ColorDefineRef | string | "null"]
+            | readonly [
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+              ]
+            | readonly [
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+              ]
+            | readonly [
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+              ]
+            | readonly [
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+              ]
+            | readonly [
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+              ]
+            | readonly [
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+                ColorDefineRef | string | "null",
+              ];
+        };
+    nameList?: NameListRef | string | "random";
+    shipPrefix?: string;
+    releasedFromCountry?: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+    effect: (scope: CountryScope) => void;
   }): void;
 
   /**
@@ -1970,9 +2182,9 @@ export interface EffectsIn8Scopes39a9 {
         >
       | "auto"
       | "none";
-    addTrait?: TraitRef | string;
+    addTrait?: readonly (TraitRef | string)[];
     addTraitsAtStartOfList?: boolean;
-    removeTrait?: TraitRef | string;
+    removeTrait?: readonly (TraitRef | string)[];
     idealPlanetClass?:
       | ScopeValue<
           | "army"
@@ -2775,6 +2987,56 @@ export interface EffectsInCarrierPlanetShip {
   cancelTerraformation(value?: boolean): void;
 
   /**
+   * Creates a colony on the scoped planet
+   * ```
+   * create_colony = {
+   * 	owner = <target>
+   * 	species = <target / key>
+   * 	ethos = <random / target / { ethic = <key> ethic = <key> }>
+   * }
+   * ```
+   */
+  createColony(args: {
+    owner: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+    species?:
+      | ScopeValue<
+          | "army"
+          | "carrier"
+          | "country"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "planet"
+          | "pop_group"
+          | "ship"
+          | "species"
+        >
+      | string;
+    ethos?: "random" | "owner" | { ethic: readonly (EthicRef | string)[] };
+  }): void;
+
+  /**
    * Finishes the current terraforming process on the planet
    * ```
    * finish_terraformation = yes
@@ -2839,6 +3101,56 @@ export interface EffectsInCarrierPlanetShip {
 
   /** Sets terraforming progress to scoped planet, finishes the terraformation, if enough progress is reached */
   setTerraformProgress(value: ScriptValue): void;
+
+  /**
+   * Starts colonization of the scoped planet
+   * ```
+   * start_colony = {
+   * 	owner = <target>
+   * 	species = <target / key>
+   * 	ethos = <random / target / { ethic = <key> ethic = <key> }>
+   * }
+   * ```
+   */
+  startColony(args: {
+    owner: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+    species?:
+      | ScopeValue<
+          | "army"
+          | "carrier"
+          | "country"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "planet"
+          | "pop_group"
+          | "ship"
+          | "species"
+        >
+      | string;
+    ethos?: "owner" | "random" | { ethic: readonly (EthicRef | string)[] };
+  }): void;
 }
 
 /** Effects valid in: cosmic_storm_influence_field. */
@@ -9069,6 +9381,14 @@ export interface EffectsInFleet {
   setFleetFlag(value: FleetFlag): void;
 
   /**
+   * Sets a custom fleet formation on a fleet.
+   * ```
+   * set_fleet_formation = { position = { x = 1 y = 1 } position = { x = 2 y = 1 } }
+   * ```
+   */
+  setFleetFormation(args: { position?: readonly { x: number; y: number }[] }): void;
+
+  /**
    * Set fleet's settings, any unspecified setting will set to default value.
    * ```
    * set_fleet_settings = { can_upgrade = no can_change_leader = no ... }
@@ -10466,8 +10786,8 @@ export interface EffectsInPlanetSystem {
     >;
     size: ShipSizeStarbaseRef | string;
     design?: GlobalShipDesignRef | string;
-    module?: StarbaseModuleRef | string;
-    building?: StarbaseBuildingRef | string;
+    module?: readonly (StarbaseModuleRef | string)[];
+    building?: readonly (StarbaseBuildingRef | string)[];
     effect?: (scope: StarbaseScope) => void;
   }): void;
 }
@@ -11007,9 +11327,9 @@ export interface EffectsInSpecies {
       | string
       | PortraitGroupRef
       | "random";
-    addTrait?: TraitSpeciesTraitRef | string;
+    addTrait?: readonly (TraitSpeciesTraitRef | string)[];
     addTraitsAtStartOfList?: boolean;
-    removeTrait?: TraitSpeciesTraitRef | string;
+    removeTrait?: readonly (TraitSpeciesTraitRef | string)[];
     gender?:
       | GendersNotSet
       | "any"
@@ -11168,7 +11488,7 @@ export interface EffectsInSpecies {
    * set_habitability_trait = { trait = <trait> }
    * ```
    */
-  setHabitabilityTrait(args: { trait?: TraitSpeciesTraitRef | string }): void;
+  setHabitabilityTrait(args: { trait?: readonly (TraitSpeciesTraitRef | string)[] }): void;
 
   /**
    * Sets an arbitrarily-named flag on the scoped species
@@ -13059,6 +13379,65 @@ export interface UniversalEffects extends EnableSpecialProjectEffectsExtension {
     type?: StormTypesRef | string;
     immediate?: boolean;
     cosmicStormStartPosition?: ScopeValue<"system"> | "random";
+  }): void;
+
+  /**
+   * Creates a new fleet
+   * ```
+   * create_fleet = { name = <string> effect = { <create_ship, set_owner, set_location etc effects go here> } }
+   * ```
+   */
+  createFleet(args: {
+    name?: string | ScopeValue<"fleet"> | { key: string; variableString?: readonly string[] };
+    parent?: ScopeValue<"fleet"> | "none";
+    setTakePoint?: boolean;
+    settings?: readonly {
+      spawnDebris?: boolean;
+      garrison?: boolean;
+      canUpgrade?: boolean;
+      canDisband?: boolean;
+      canChangeComposition?: boolean;
+      canChangeLeader?: boolean;
+      usesNavalCapacity?: boolean;
+      isBoss?: boolean;
+      aiIgnoreStrength?: boolean;
+      isUltraBoss?: boolean;
+    }[];
+    effect?: (scope: FleetScope) => void;
+    growthStage?: number;
+    createColony?: boolean;
+  }): void;
+
+  /**
+   * Creates a message, can take multiple variables
+   * ```
+   * create_message = {
+   *   type = BYPASS_EXPLORED
+   *   localization = BYPASS_EXPLORED_MESSAGE
+   *   days = 30 (-1 is infinite)
+   *   target = root
+   *   variable = { type = name localization = SYSTEM1 scope = from }
+   *   variable = { type = name localization = SYSTEM2 scope = fromfrom }
+   * }
+   * ```
+   */
+  createMessage(args: {
+    type: MessageTypeRef | string;
+    localization?: string;
+    customMessageText?: string;
+    days?: number;
+    customToastIcon?: SpriteRef | string;
+    target?: ScopeValue;
+    recipient?: ScopeValue;
+    variable?: readonly {
+      varname?: ScriptValue;
+      type?: MesageVariableType;
+      key?: string;
+      value?: string;
+      localization?: string;
+      scope?: ScopeValue;
+      trigger?: Trigger<ScopeName>;
+    }[];
   }): void;
 
   /**

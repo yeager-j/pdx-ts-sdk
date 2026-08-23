@@ -47,6 +47,7 @@ export function contributesRefs(field: ArgField): boolean {
 /**
  * Renders the statements that serialize one lowered trigger argument.
  * Nested fields recurse into their own entry arrays while reference-bearing values also record uses.
+ * A repeated field loops over its array and writes one sibling key per item.
  */
 export function pushCode(
   emitter: Emitter,
@@ -55,6 +56,27 @@ export function pushCode(
   parentFieldPath: string,
   index: number,
   sink = "entries"
+): string {
+  if (field.repeated !== true) {
+    return pushValueCode(emitter, field, access, parentFieldPath, index, sink);
+  }
+  // Named apart from `pushValueListCode`'s own `item<index>` so a repeated
+  // value-list field does not read its loop variable while declaring it.
+  const entry = `entry${index}`;
+  return (
+    `for (const ${entry} of ${access}) {\n` +
+    `${pushValueCode(emitter, field, entry, parentFieldPath, index, sink)}\n}`
+  );
+}
+
+/** Renders the statements that serialize one occurrence of a lowered argument. */
+function pushValueCode(
+  emitter: Emitter,
+  field: ArgField,
+  access: string,
+  parentFieldPath: string,
+  index: number,
+  sink: string
 ): string {
   const key = JSON.stringify(field.name);
   switch (field.value.kind) {

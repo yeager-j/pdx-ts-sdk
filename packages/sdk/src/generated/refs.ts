@@ -112,6 +112,9 @@ export type ColonizationControlRef = TypedRef<
 /** A reference to a `<colony_type>`. */
 export type ColonyTypeRef = TypedRef<"colony_type" | `colony_type.${string}`>;
 
+/** A reference to a `<color_define>`. */
+export type ColorDefineRef = TypedRef<"color_define" | `color_define.${string}`>;
+
 /** A reference to a `<component_set>`. */
 export type ComponentSetRef = TypedRef<"component_set" | `component_set.${string}`>;
 
@@ -315,6 +318,9 @@ export type ModelMeshRef = TypedRef<"model_mesh" | `model_mesh.${string}`>;
 
 /** A reference to a `<modifier>`. */
 export type ModifierRef = TypedRef<"modifier" | `modifier.${string}`>;
+
+/** A reference to a `<name_list>`. */
+export type NameListRef = TypedRef<"name_list" | `name_list.${string}`>;
 
 /** A reference to a `<named_color>`. */
 export type NamedColorRef = TypedRef<"named_color" | `named_color.${string}`>;

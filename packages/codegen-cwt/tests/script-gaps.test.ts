@@ -81,10 +81,10 @@ describe("the script-generation gap ledger", () => {
       effects: effects.skipped,
     });
 
-    expect(SCRIPT_GENERATION_GAPS).toHaveLength(23);
+    expect(SCRIPT_GENERATION_GAPS).toHaveLength(17);
     expect(report.policyOwned).toHaveLength(44);
     expect(report.abstractPlaceholders).toHaveLength(2);
-    expect(report.trackedGaps).toHaveLength(23);
+    expect(report.trackedGaps).toHaveLength(17);
     expect(report.abstractPlaceholders.map((entry) => entry.name)).toEqual([
       "<scripted_effect>",
       "<scripted_trigger>",
@@ -98,11 +98,12 @@ describe("the script-generation gap ledger", () => {
     });
     const lines = formatScriptGapReport(report);
 
-    expect(lines.trackedGaps).toHaveLength(23);
+    expect(lines.trackedGaps).toHaveLength(17);
     expect(lines.trackedGaps).toContain(
-      "effect create_fleet [repeated-structured-scalar-arms] — SDK-246: " +
-        "The script argument model cannot preserve repetition across scalar and structured arms. " +
-        '(field "settings" has repeated structured/scalar arms)'
+      "effect create_species [multiple-structured-scalar-arms] — SDK-248: " +
+        "The effect argument model has no discriminator between a scalar arm and an anonymous " +
+        'value list under the same field key. (field "pop_ethics" mixes a bare-value block ' +
+        "with a scalar arm)"
     );
     expect(lines.trackedGaps.every((line) => !line.includes("SDK-244"))).toBe(true);
     expect(lines.trackedGaps.every((line) => !line.includes("SDK-251"))).toBe(true);

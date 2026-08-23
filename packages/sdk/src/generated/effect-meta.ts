@@ -644,13 +644,20 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         { prop: "immortal", key: "immortal", kind: "value" },
         { prop: "canBeModified", key: "can_be_modified", kind: "value" },
         { prop: "portrait", key: "portrait", kind: "value" },
-        { prop: "addTrait", key: "add_trait", kind: "value", refTypes: ["trait.species_trait"] },
+        {
+          prop: "addTrait",
+          key: "add_trait",
+          kind: "value",
+          refTypes: ["trait.species_trait"],
+          repeated: true,
+        },
         { prop: "addTraitsAtStartOfList", key: "add_traits_at_start_of_list", kind: "value" },
         {
           prop: "removeTrait",
           key: "remove_trait",
           kind: "value",
           refTypes: ["trait.species_trait"],
+          repeated: true,
         },
         { prop: "gender", key: "gender", kind: "value" },
         { prop: "canChangeLeader", key: "can_change_leader", kind: "value" },
@@ -956,6 +963,25 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
+  createColony: {
+    key: "create_colony",
+    shape: {
+      kind: "fields",
+      fields: [
+        { prop: "owner", key: "owner", kind: "value" },
+        { prop: "species", key: "species", kind: "value" },
+        {
+          prop: "ethos",
+          key: "ethos",
+          kind: "scalar-or-fields",
+          scalar: {},
+          fields: [
+            { prop: "ethic", key: "ethic", kind: "value", refTypes: ["ethic"], repeated: true },
+          ],
+        },
+      ],
+    },
+  },
   createCosmicStorm: {
     key: "create_cosmic_storm",
     shape: {
@@ -998,7 +1024,78 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
+  createFleet: {
+    key: "create_fleet",
+    shape: {
+      kind: "fields",
+      fields: [
+        {
+          prop: "name",
+          key: "name",
+          kind: "scalar-or-fields",
+          scalar: { objectKinds: ["scope-ref"] },
+          fields: [
+            { prop: "key", key: "key", kind: "value" },
+            { prop: "variableString", key: "variable_string", kind: "value", repeated: true },
+          ],
+        },
+        { prop: "parent", key: "parent", kind: "value" },
+        { prop: "setTakePoint", key: "set_take_point", kind: "value" },
+        {
+          prop: "settings",
+          key: "settings",
+          kind: "fields",
+          fields: [
+            { prop: "spawnDebris", key: "spawn_debris", kind: "value" },
+            { prop: "garrison", key: "garrison", kind: "value" },
+            { prop: "canUpgrade", key: "can_upgrade", kind: "value" },
+            { prop: "canDisband", key: "can_disband", kind: "value" },
+            { prop: "canChangeComposition", key: "can_change_composition", kind: "value" },
+            { prop: "canChangeLeader", key: "can_change_leader", kind: "value" },
+            { prop: "usesNavalCapacity", key: "uses_naval_capacity", kind: "value" },
+            { prop: "isBoss", key: "is_boss", kind: "value" },
+            { prop: "aiIgnoreStrength", key: "ai_ignore_strength", kind: "value" },
+            { prop: "isUltraBoss", key: "is_ultra_boss", kind: "value" },
+          ],
+          repeated: true,
+        },
+        { prop: "effect", key: "effect", kind: "effect" },
+        { prop: "growthStage", key: "growth_stage", kind: "value" },
+        { prop: "createColony", key: "create_colony", kind: "value" },
+      ],
+    },
+  },
   createFleetFromNavalCap: { key: "create_fleet_from_naval_cap", shape: { kind: "value" } },
+  createMessage: {
+    key: "create_message",
+    shape: {
+      kind: "fields",
+      fields: [
+        { prop: "type", key: "type", kind: "value", refTypes: ["message_type"] },
+        { prop: "localization", key: "localization", kind: "value" },
+        { prop: "customMessageText", key: "custom_message_text", kind: "value" },
+        { prop: "days", key: "days", kind: "value" },
+        { prop: "customToastIcon", key: "custom_toast_icon", kind: "value", refTypes: ["sprite"] },
+        { prop: "target", key: "target", kind: "value" },
+        { prop: "recipient", key: "recipient", kind: "value" },
+        {
+          prop: "variable",
+          key: "variable",
+          kind: "fields",
+          fields: [
+            { prop: "varname", key: "varname", kind: "value" },
+            { prop: "type", key: "type", kind: "value" },
+            { prop: "key", key: "key", kind: "value" },
+            { prop: "value", key: "value", kind: "value" },
+            { prop: "localization", key: "localization", kind: "value" },
+            { prop: "scope", key: "scope", kind: "value" },
+            { prop: "trigger", key: "trigger", kind: "trigger" },
+          ],
+          repeated: true,
+        },
+      ],
+    },
+  },
   createMilitaryFleet: {
     key: "create_military_fleet",
     shape: {
@@ -1102,6 +1199,79 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       ],
     },
   },
+  createRebels: {
+    key: "create_rebels",
+    shape: {
+      kind: "fields",
+      fields: [
+        {
+          prop: "name",
+          key: "name",
+          kind: "scalar-or-fields",
+          scalar: { objectKinds: ["scope-ref"] },
+          fields: [
+            { prop: "key", key: "key", kind: "value" },
+            { prop: "variableString", key: "variable_string", kind: "value", repeated: true },
+          ],
+        },
+        { prop: "authority", key: "authority", kind: "value" },
+        { prop: "origin", key: "origin", kind: "value", refTypes: ["civic_or_origin.origin"] },
+        {
+          prop: "civics",
+          key: "civics",
+          kind: "scalar-or-fields",
+          scalar: { objectKinds: ["scope-ref"] },
+          fields: [{ prop: "civic", key: "civic", kind: "value", repeated: true }],
+        },
+        { prop: "species", key: "species", kind: "value" },
+        {
+          prop: "ethos",
+          key: "ethos",
+          kind: "scalar-or-fields",
+          scalar: { objectKinds: ["scope-ref"] },
+          fields: [
+            { prop: "ethic", key: "ethic", kind: "value", refTypes: ["ethic"], repeated: true },
+          ],
+        },
+        {
+          prop: "flag",
+          key: "flag",
+          kind: "scalar-or-fields",
+          scalar: { objectKinds: ["scope-ref"] },
+          fields: [
+            {
+              prop: "icon",
+              key: "icon",
+              kind: "fields",
+              fields: [
+                { prop: "category", key: "category", kind: "value" },
+                { prop: "file", key: "file", kind: "value" },
+              ],
+            },
+            {
+              prop: "background",
+              key: "background",
+              kind: "fields",
+              fields: [
+                { prop: "category", key: "category", kind: "value" },
+                { prop: "file", key: "file", kind: "value" },
+              ],
+            },
+            {
+              prop: "colors",
+              key: "colors",
+              kind: "value-list",
+              scalar: { objectKinds: ["typed-ref"] },
+            },
+          ],
+        },
+        { prop: "nameList", key: "name_list", kind: "value" },
+        { prop: "shipPrefix", key: "ship_prefix", kind: "value" },
+        { prop: "releasedFromCountry", key: "released_from_country", kind: "value" },
+        { prop: "effect", key: "effect", kind: "effect" },
+      ],
+    },
+  },
   createResearchStation: {
     key: "create_research_station",
     shape: {
@@ -1171,8 +1341,20 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         { prop: "owner", key: "owner", kind: "value" },
         { prop: "size", key: "size", kind: "value", refTypes: ["ship_size.starbase"] },
         { prop: "design", key: "design", kind: "value", refTypes: ["global_ship_design"] },
-        { prop: "module", key: "module", kind: "value", refTypes: ["starbase_module"] },
-        { prop: "building", key: "building", kind: "value", refTypes: ["starbase_building"] },
+        {
+          prop: "module",
+          key: "module",
+          kind: "value",
+          refTypes: ["starbase_module"],
+          repeated: true,
+        },
+        {
+          prop: "building",
+          key: "building",
+          kind: "value",
+          refTypes: ["starbase_building"],
+          repeated: true,
+        },
         { prop: "effect", key: "effect", kind: "effect" },
       ],
     },
@@ -2159,9 +2341,15 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       fields: [
         { prop: "species", key: "species", kind: "value" },
         { prop: "base", key: "base", kind: "value" },
-        { prop: "addTrait", key: "add_trait", kind: "value", refTypes: ["trait"] },
+        { prop: "addTrait", key: "add_trait", kind: "value", refTypes: ["trait"], repeated: true },
         { prop: "addTraitsAtStartOfList", key: "add_traits_at_start_of_list", kind: "value" },
-        { prop: "removeTrait", key: "remove_trait", kind: "value", refTypes: ["trait"] },
+        {
+          prop: "removeTrait",
+          key: "remove_trait",
+          kind: "value",
+          refTypes: ["trait"],
+          repeated: true,
+        },
         { prop: "idealPlanetClass", key: "ideal_planet_class", kind: "value" },
         { prop: "changeScopedSpecies", key: "change_scoped_species", kind: "value" },
         { prop: "portrait", key: "portrait", kind: "value" },
@@ -5180,6 +5368,24 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: { kind: "value", refTypes: ["bombardment_stance"] },
   },
   setFleetFlag: { key: "set_fleet_flag", shape: { kind: "value" } },
+  setFleetFormation: {
+    key: "set_fleet_formation",
+    shape: {
+      kind: "fields",
+      fields: [
+        {
+          prop: "position",
+          key: "position",
+          kind: "fields",
+          fields: [
+            { prop: "x", key: "x", kind: "value" },
+            { prop: "y", key: "y", kind: "value" },
+          ],
+          repeated: true,
+        },
+      ],
+    },
+  },
   setFleetSettings: {
     key: "set_fleet_settings",
     shape: {
@@ -5215,7 +5421,15 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "set_habitability_trait",
     shape: {
       kind: "fields",
-      fields: [{ prop: "trait", key: "trait", kind: "value", refTypes: ["trait.species_trait"] }],
+      fields: [
+        {
+          prop: "trait",
+          key: "trait",
+          kind: "value",
+          refTypes: ["trait.species_trait"],
+          repeated: true,
+        },
+      ],
     },
   },
   setHalted: { key: "set_halted", shape: { kind: "value" } },
@@ -6129,6 +6343,25 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   startAstralActionCooldown: {
     key: "start_astral_action_cooldown",
     shape: { kind: "value", refTypes: ["astral_action.uses_custom_cooldown"] },
+  },
+  startColony: {
+    key: "start_colony",
+    shape: {
+      kind: "fields",
+      fields: [
+        { prop: "owner", key: "owner", kind: "value" },
+        { prop: "species", key: "species", kind: "value" },
+        {
+          prop: "ethos",
+          key: "ethos",
+          kind: "scalar-or-fields",
+          scalar: {},
+          fields: [
+            { prop: "ethic", key: "ethic", kind: "value", refTypes: ["ethic"], repeated: true },
+          ],
+        },
+      ],
+    },
   },
   startSituation: {
     key: "start_situation",

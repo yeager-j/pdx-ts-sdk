@@ -167,6 +167,82 @@ storm_apply_aftermath_modifier = {
 `);
   });
 
+  it("serializes repeated nested fields as sibling keys, in author order", () => {
+    const sink: PdxEntry[] = [];
+    const planet = makeScope<"planet">(sink);
+    const fleet = makeScope<"fleet">(sink);
+    const country = makeScope<"country">(sink);
+
+    planet.createColony({
+      owner: scopeValue<"country">("root"),
+      species: "effects_test_species",
+      ethos: { ethic: ["ethic_militarist", "ethic_xenophobe"] },
+    });
+    fleet.setFleetFormation({
+      position: [
+        { x: -10.5, y: 8.5 },
+        { x: -1.6, y: 15.5 },
+        { x: 0.5, y: -3.5 },
+      ],
+    });
+    country.createMessage({
+      type: "effects_test_message_type",
+      localization: "EFFECTS_TEST_MESSAGE",
+      days: 30,
+      target: scopeValue<"planet">("this"),
+      variable: [
+        { type: "name", localization: "EFFECTS_TEST_PLANET", scope: scopeValue<"planet">("this") },
+        {
+          type: "name",
+          localization: "EFFECTS_TEST_DEPOSIT",
+          scope: scopeValue<"deposit">("last_added_deposit"),
+        },
+      ],
+    });
+
+    expect(serialize(sink)).toBe(`create_colony = {
+\towner = root
+\tspecies = effects_test_species
+\tethos = {
+\t\tethic = ethic_militarist
+\t\tethic = ethic_xenophobe
+\t}
+}
+
+set_fleet_formation = {
+\tposition = {
+\t\tx = -10.5
+\t\ty = 8.5
+\t}
+\tposition = {
+\t\tx = -1.6
+\t\ty = 15.5
+\t}
+\tposition = {
+\t\tx = 0.5
+\t\ty = -3.5
+\t}
+}
+
+create_message = {
+\ttype = effects_test_message_type
+\tlocalization = EFFECTS_TEST_MESSAGE
+\tdays = 30
+\ttarget = this
+\tvariable = {
+\t\ttype = name
+\t\tlocalization = EFFECTS_TEST_PLANET
+\t\tscope = this
+\t}
+\tvariable = {
+\t\ttype = name
+\t\tlocalization = EFFECTS_TEST_DEPOSIT
+\t\tscope = last_added_deposit
+\t}
+}
+`);
+  });
+
   it("serializes a minimal ambient-object placement", () => {
     const sink: PdxEntry[] = [];
     const system = makeScope<"system">(sink);

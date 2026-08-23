@@ -91,35 +91,12 @@ function trackedGapRows(
 /** The reviewed ledger of current trigger and effect generation gaps. */
 export const SCRIPT_GENERATION_GAPS: readonly ScriptGenerationGap[] = [
   ...trackedGapRows(
-    "trigger",
-    "repeated-nested-field",
-    "SDK-246",
-    "The script argument model has no array form for repeated nested fields.",
-    ["check_economic_production_modifier_for_job"]
-  ),
-  ...trackedGapRows(
     "effect",
-    "repeated-nested-field",
-    "SDK-246",
-    "The script argument model has no array form for repeated nested fields.",
-    [
-      "clone_leader",
-      "create_colony",
-      "create_country",
-      "create_leader",
-      "create_rebels",
-      "create_saved_leader",
-      "custom_tooltip_with_params",
-      "release_vivarium_fauna_count",
-      "start_colony",
-    ]
-  ),
-  ...trackedGapRows(
-    "effect",
-    "repeated-structured-scalar-arms",
-    "SDK-246",
-    "The script argument model cannot preserve repetition across scalar and structured arms.",
-    ["create_fleet", "create_message", "create_species", "set_fleet_formation"]
+    "multiple-structured-scalar-arms",
+    "SDK-248",
+    "The effect argument model has no discriminator between a scalar arm and an " +
+      "anonymous value list under the same field key.",
+    ["create_species"]
   ),
   ...trackedGapRows(
     "trigger",
@@ -137,10 +114,30 @@ export const SCRIPT_GENERATION_GAPS: readonly ScriptGenerationGap[] = [
       "add_attunement",
       "add_resource_from_debris",
       "add_resource_to_local_stockpile",
+      "clone_leader",
+      "create_leader",
+      "create_saved_leader",
+      "custom_tooltip_with_params",
+      "release_vivarium_fauna_count",
       "set_agreement_terms",
       "set_country_code_flags",
       "set_trade_conversions",
     ]
+  ),
+  ...trackedGapRows(
+    "trigger",
+    "computed-field-key",
+    "SDK-250",
+    "The trigger argument model cannot represent a nested block keyed by a computed " +
+      "content reference.",
+    ["check_economic_production_modifier_for_job"]
+  ),
+  ...trackedGapRows(
+    "effect",
+    "unsupported-alias-splice",
+    "SDK-252",
+    "The effect emitter cannot type an alias category spliced inside a nested block.",
+    ["create_country"]
   ),
   ...trackedGapRows(
     "effect",
