@@ -650,10 +650,20 @@ function generatedEffectRule(
 ): GeneratedEffectRule | SkippedRule {
   const ownership = policy.byKey.get(key.toLowerCase());
   if (ownership?.owner !== "generated") {
+    const firedByEvents = ownership?.owner === "fire";
+    const owningPolicy = firedByEvents
+      ? "the event-fire emitter"
+      : "hand-written structural effect policy";
+    if (rule.removed) {
+      throw new Error(
+        `${key}: the rules declare the effect removed (## api_status = removed), ` +
+          `but ${owningPolicy} still owns it`
+      );
+    }
     return skippedRule(
       key,
-      ownership?.owner === "fire" ? "event-fire-effect" : "structural-effect",
-      ownership?.owner === "fire"
+      firedByEvents ? "event-fire-effect" : "structural-effect",
+      firedByEvents
         ? "typed by the event-fire emitter"
         : `hand-written structural effect${ownership?.reason === undefined ? "" : `: ${ownership.reason}`}`
     );
@@ -1074,6 +1084,7 @@ function fieldCardinalityOverrideReport(): string[] {
 /**
  * Emits the typed effect interfaces, recorder metadata, and reference rows from lowered rules.
  * Unsupported rules and overlay mismatches remain explicit report entries or generation errors.
+ * Throws when hand-written or event-fire policy owns a rule the rules declare removed.
  */
 export function emitEffects(
   emitter: Emitter,

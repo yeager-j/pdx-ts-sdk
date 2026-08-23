@@ -121,3 +121,16 @@ describe("loadRules against the real rules", () => {
     expect(statusOf(rules.triggers, "has_country_flag")).toEqual([null]);
   });
 });
+
+describe("the ## api_status annotation", () => {
+  it("rejects a value outside the closed kept/removed set", () => {
+    const unknown = file(
+      "unknown-status.cwt",
+      ["## api_status = deprecated", "alias[trigger:legacy_rule] = $any"].join("\n")
+    );
+
+    expect(() => readAliases(unknown.parsed.nodes, unknown.file, "trigger", new Map())).toThrow(
+      'unknown-status.cwt:2: unknown ## api_status value "deprecated"; expected "kept" or "removed"'
+    );
+  });
+});

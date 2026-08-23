@@ -1,12 +1,13 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { scopeIndex } from "@pdx-ts/codegen-cwt/cwt/rules";
+import { parseCwt } from "@pdx-ts/codegen-cwt/cwt/parser";
+import { readAliases, scopeIndex, type AliasDecl } from "@pdx-ts/codegen-cwt/cwt/rules";
 import { emitEffects } from "@pdx-ts/codegen-cwt/emit/script/effects";
 import { emitTriggers } from "@pdx-ts/codegen-cwt/emit/script/triggers";
 import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
-import { lowerRuleTable } from "@pdx-ts/codegen-cwt/lower/lowered-rule";
+import { lowerRuleTable, type LoweredRule } from "@pdx-ts/codegen-cwt/lower/lowered-rule";
 import { skippedRule } from "@pdx-ts/codegen-cwt/lower/script-shape";
 import { createEffectPolicy } from "@pdx-ts/codegen-cwt/policy/effects";
 import {
@@ -14,6 +15,7 @@ import {
   reconcileScriptGaps,
   SCRIPT_GENERATION_GAPS,
   type ScriptGenerationGap,
+  type ScriptRuleKind,
 } from "@pdx-ts/codegen-cwt/policy/script-gaps";
 import { Emitter } from "@pdx-ts/codegen-cwt/render/emitter";
 import { describe, expect, it } from "vitest";
@@ -42,6 +44,24 @@ const effects = emitEffects(
   createEffectPolicy(rules),
   []
 );
+
+/** The declarations of one synthetic rule the rules mark `## api_status = removed`. */
+function removedDeclarations(category: ScriptRuleKind, key: string): readonly AliasDecl[] {
+  const source = ["## api_status = removed", `alias[${category}:${key}] = $any`].join("\n");
+  const parsed = parseCwt(source, "removed.cwt");
+  return readAliases(parsed.nodes, "removed.cwt", category, new Map()).aliases.get(key)!;
+}
+
+/** A one-entry rule table holding that synthetic removed rule, ready for an emitter. */
+function removedRuleTable(
+  emitter: Emitter,
+  category: ScriptRuleKind,
+  key: string
+): ReadonlyMap<string, LoweredRule> {
+  const declarations = new Map([[key, removedDeclarations(category, key)]]);
+  const ruleDocs = category === "trigger" ? docs.triggers : docs.effects;
+  return lowerRuleTable(declarations, ruleDocs, emitter, scopes);
+}
 
 function row(overrides: Partial<ScriptGenerationGap> = {}): ScriptGenerationGap {
   return {
@@ -113,6 +133,35 @@ describe("the script-generation gap ledger", () => {
   it("keeps emitting the effects the rules mark api_status = kept", () => {
     expect(effects.interfaces).toContain("aiTradeFacility(args:");
     expect(effects.interfaces).toContain("runInAiMode(value?: boolean): void;");
+  });
+
+  it("refuses a hand-written trigger the rules later declare removed", () => {
+    const emitter = new Emitter(rules);
+
+    expect(() =>
+      emitTriggers(emitter, docs.triggers, removedRuleTable(emitter, "trigger", "hidden_trigger"))
+    ).toThrow(
+      "hidden_trigger: the rules declare the trigger removed (## api_status = removed), " +
+        "but hand-written structural-trigger policy still owns it"
+    );
+  });
+
+  it("refuses a structural effect the rules later declare removed", () => {
+    const emitter = new Emitter(rules);
+
+    expect(() =>
+      emitEffects(
+        emitter,
+        docs.effects,
+        scopes,
+        removedRuleTable(emitter, "effect", "switch"),
+        createEffectPolicy(rules),
+        []
+      )
+    ).toThrow(
+      "switch: the rules declare the effect removed (## api_status = removed), " +
+        "but hand-written structural effect policy still owns it"
+    );
   });
 
   it("rejects a removed-api row in the gap ledger", () => {

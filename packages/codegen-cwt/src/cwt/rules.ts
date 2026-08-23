@@ -29,6 +29,13 @@ import type {
   CwtParseResult,
 } from "./parser.ts";
 
+/**
+ * A rule's `## api_status` annotation. `"removed"` marks a rule the game no
+ * longer accepts; `"kept"` marks one the game's documentation dump omits but
+ * still accepts.
+ */
+export type ApiStatus = "kept" | "removed";
+
 /** One `alias[trigger:has_edict] = <edict>` declaration. A name may have several. */
 export interface AliasDecl {
   /** The alias member name. */
@@ -47,11 +54,8 @@ export interface AliasDecl {
   readonly line: number;
   /** `==` marks a comparison, written in script as `num_moons < 4`. */
   readonly comparison: boolean;
-  /**
-   * The `## api_status` annotation, or `null` when unannotated. `"removed"`
-   * marks a rule the game no longer accepts.
-   */
-  readonly apiStatus: string | null;
+  /** The declared `## api_status`, or `null` when unannotated. */
+  readonly apiStatus: ApiStatus | null;
 }
 
 /** Alias declarations and recoverable diagnostics read from one CWT source. */
@@ -502,6 +506,26 @@ function createClassificationCollector(file: string): ClassificationCollector {
   };
 }
 
+/**
+ * Reads the `## api_status` annotation as a closed set.
+ *
+ * An unrecognized value throws rather than being carried through as live: a
+ * typo in a vendored rules update must stop the build instead of publishing an
+ * API status the generator does not understand.
+ */
+function apiStatusOf(entry: CwtAssignment, file: string): ApiStatus | null {
+  const status = scalarOption(entry.options, "api_status");
+  if (status === null) {
+    return null;
+  }
+  if (status !== "kept" && status !== "removed") {
+    throw new Error(
+      `${file}:${entry.line}: unknown ## api_status value "${status}"; expected "kept" or "removed"`
+    );
+  }
+  return status;
+}
+
 /** Reads one alias category's declarations and diagnostics from CWT nodes. */
 export function readAliases(
   nodes: readonly CwtNode[],
@@ -527,7 +551,7 @@ export function readAliases(
       file,
       line: entry.line,
       comparison: entry.op === "==",
-      apiStatus: scalarOption(entry.options, "api_status"),
+      apiStatus: apiStatusOf(entry, file),
     });
     aliases.set(name, declarations);
   }
