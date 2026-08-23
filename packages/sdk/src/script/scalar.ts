@@ -154,8 +154,9 @@ export function mapEntries<T>(
  * Each case writes its key as a script key of the enclosing block, so a key
  * the block already writes itself would silently replace that argument.
  * `field` names the argument, and `reservedKeys` the keys the block writes,
- * in the error thrown for an empty key, a reserved key, or fewer cases than
- * the rules admit.
+ * in the error thrown for an empty key or a reserved key. `minimum` is the
+ * case count the authoring type already states, checked again here for a
+ * caller who reached the builder without it.
  *
  * @example
  * ```ts

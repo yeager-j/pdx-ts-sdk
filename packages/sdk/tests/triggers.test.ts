@@ -47,6 +47,7 @@ import {
   trigger,
   yearsPassed,
   type ScriptValue,
+  type SwitchArgs,
 } from "../src/script/triggers.ts";
 
 describe("trigger builders", () => {
@@ -665,8 +666,10 @@ describe("trigger builders", () => {
     expect(() => switch_({ trigger: "has_ethic", cases: [["", always(true)]] })).toThrow(
       '"switch.cases" was given a case with no key'
     );
-    expect(() => switch_({ trigger: "has_ethic", cases: [] })).toThrow(
-      '"switch.cases" was given 0 cases, but the rules require at least 1'
-    );
+    // The authoring type rejects an empty case list; this is the runtime half
+    // of that claim, for a caller who reached the builder without it.
+    expect(() =>
+      switch_({ trigger: "has_ethic", cases: [] as unknown as SwitchArgs["cases"] })
+    ).toThrow('"switch.cases" was given 0 cases, but the rules require at least 1');
   });
 });

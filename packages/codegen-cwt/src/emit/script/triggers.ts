@@ -349,8 +349,12 @@ function baseMemberType(emitter: Emitter, value: ArgValue, outerScope: string): 
       return valueListType(emitter, value, outerScope);
     case "clause":
       return clauseType(emitter, value.scope, outerScope);
-    case "keyedClauses":
-      return `readonly (readonly [string, ${clauseType(emitter, value.scope, outerScope)}])[]`;
+    case "keyedClauses": {
+      // Parenthesized so the tuple reads as one item wherever the cardinality
+      // wraps it, the way a union arm is.
+      const oneCase = `(readonly [string, ${clauseType(emitter, value.scope, outerScope)}])`;
+      return cardinalityArrayType(oneCase, value.cardinality);
+    }
     case "aliasList":
     case "aliasStruct":
       return unauthorableAliasValue(value);

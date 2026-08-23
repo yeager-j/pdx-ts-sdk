@@ -11767,7 +11767,7 @@ export function intelLevel(value: IntelLevel | IntelLevelArgs): Trigger<"country
 /** The arguments `invertedSwitch` takes, as the rules declare them. */
 export interface InvertedSwitchArgs<S extends ScopeName = ScopeName> {
   trigger: string;
-  cases: readonly (readonly [string, Trigger<S>])[];
+  cases: readonly [readonly [string, Trigger<S>], ...(readonly [string, Trigger<S>])[]];
   default: Trigger<S>;
 }
 
@@ -18763,7 +18763,7 @@ export function support(op: PdxOp, value: ScriptValue): Trigger<"leader" | "pop_
 /** The arguments `switch_` takes, as the rules declare them. */
 export interface SwitchArgs<S extends ScopeName = ScopeName> {
   trigger: string;
-  cases: readonly (readonly [string, Trigger<S>])[];
+  cases: readonly [readonly [string, Trigger<S>], ...(readonly [string, Trigger<S>])[]];
   default?: Trigger<S>;
 }
 

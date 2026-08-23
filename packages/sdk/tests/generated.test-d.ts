@@ -181,6 +181,14 @@ describe("shapes the rules give a signature", () => {
     });
   });
 
+  it("takes the case count the rules declare, so an empty case list is a type error", () => {
+    switch_({
+      trigger: "has_ethic",
+      // @ts-expect-error — `## cardinality = ~1..inf`, so a switch names at least one case
+      cases: [],
+    });
+  });
+
   it("keeps the switch default optional and the inverted switch's own required", () => {
     switch_({ trigger: "has_ethic", cases: [["ethic_pacifist", hasCountryFlag("pacifist")]] });
     // @ts-expect-error — inverted_switch declares its default `## cardinality = ~1..1`

@@ -189,7 +189,7 @@ describe("trigger emission", () => {
     expect(emission.code).toContain(
       "export interface SwitchArgs<S extends ScopeName = ScopeName> {\n" +
         "  trigger: string;\n" +
-        "  cases: readonly (readonly [string, Trigger<S>])[];\n" +
+        "  cases: readonly [(readonly [string, Trigger<S>]), ...(readonly [string, Trigger<S>])[]];\n" +
         "  default?: Trigger<S>;\n" +
         "}"
     );
@@ -209,7 +209,7 @@ describe("trigger emission", () => {
     expect(emission.code).toContain(
       "export interface InvertedSwitchArgs<S extends ScopeName = ScopeName> {\n" +
         "  trigger: string;\n" +
-        "  cases: readonly (readonly [string, Trigger<S>])[];\n" +
+        "  cases: readonly [(readonly [string, Trigger<S>]), ...(readonly [string, Trigger<S>])[]];\n" +
         "  default: Trigger<S>;\n" +
         "}"
     );
