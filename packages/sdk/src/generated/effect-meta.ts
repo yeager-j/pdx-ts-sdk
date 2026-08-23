@@ -58,7 +58,7 @@ export interface EffectFieldMeta {
   readonly key: string;
   readonly kind: EffectFieldKind;
   /** How a nested effect closure changes scope identity. */
-  readonly transition?: "same" | "push" | "replace";
+  readonly transition?: "same" | "push" | "replace" | "unknown";
   /**
    * The registries an id in this field may name, when every form the
    * field admits is a `<type>` reference. Undefined the moment one arm is
@@ -123,7 +123,7 @@ export type EffectShapeMeta =
 export interface EffectMeta {
   readonly key: string;
   /** How this member's callback changes the live game scope identity. */
-  readonly transition: "same" | "push" | "replace";
+  readonly transition: "same" | "push" | "replace" | "unknown";
   readonly shape: EffectShapeMeta;
 }
 
@@ -1783,7 +1783,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       fields: [
         { prop: "owner", key: "owner", kind: "value" },
         { prop: "type", key: "type", kind: "value", refTypes: ["bypass"] },
-        { prop: "effect", key: "effect", kind: "effect", transition: "push" },
+        { prop: "effect", key: "effect", kind: "effect", transition: "replace" },
       ],
     },
   },
@@ -9016,7 +9016,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         { prop: "isDiscovered", key: "is_discovered", kind: "value" },
         { prop: "minOrientationAngle", key: "min_orientation_angle", kind: "value" },
         { prop: "maxOrientationAngle", key: "max_orientation_angle", kind: "value" },
-        { prop: "effect", key: "effect", kind: "effect", transition: "push" },
+        { prop: "effect", key: "effect", kind: "effect", transition: "same" },
         {
           prop: "authorizeSpawnOnGalacticCore",
           key: "authorize_spawn_on_galactic_core",

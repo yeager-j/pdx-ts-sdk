@@ -26,9 +26,10 @@ run succeeds.
   the current identity.
 - `PREV_COUNTRY` proves one pushed iterator can reach its lexical country.
 - `PREVPREV_COUNTRY` proves a second pushed block reaches that same country.
-- The iterator must report the runtime colony behavior independently of the
-  CWT `planet` landing type. Add that marker and the split-root probe before
-  marking this calibration complete.
+- `ITERATOR_THIS_COLONY` records the iterator's runtime colony behavior
+  independently of the CWT `planet` landing type.
+- `SPLIT_THIS_PLANET` and `SPLIT_ROOT_COUNTRY` calibrate the split-root
+  initializer context used by generated content fields.
 
 The SDK runtime fails closed for replacements, unknown transitions, and depths
 greater than four. This fixture is intentionally separate from the natural

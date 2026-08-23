@@ -127,7 +127,7 @@ function fieldMeta(field: ArgField): string {
   const kind = fieldKind(field);
   const transition =
     field.value.kind === "clause" && field.value.category === "effect"
-      ? `, transition: ${field.value.scope === null ? '"same"' : '"push"'}`
+      ? `, transition: ${JSON.stringify(field.value.transition)}`
       : "";
   const refTypes = refTypesSuffix(field.value.kind === "scalar" ? field.value.value : undefined);
   const booleanLiterals = booleanLiteralsMeta(
@@ -247,7 +247,7 @@ export function effectMetaCode(
     "  readonly key: string;\n" +
     "  readonly kind: EffectFieldKind;\n" +
     "  /** How a nested effect closure changes scope identity. */\n" +
-    '  readonly transition?: "same" | "push" | "replace";\n' +
+    '  readonly transition?: "same" | "push" | "replace" | "unknown";\n' +
     docComment(
       [
         "The registries an id in this field may name, when every form the",
@@ -305,7 +305,7 @@ export function effectMetaCode(
     "export interface EffectMeta {\n" +
     "  readonly key: string;\n" +
     "  /** How this member's callback changes the live game scope identity. */\n" +
-    '  readonly transition: "same" | "push" | "replace";\n' +
+    '  readonly transition: "same" | "push" | "replace" | "unknown";\n' +
     "  readonly shape: EffectShapeMeta;\n" +
     "}\n\n" +
     docComment([

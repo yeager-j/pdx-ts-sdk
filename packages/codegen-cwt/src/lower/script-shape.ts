@@ -162,6 +162,9 @@ export function declaredScopes(
 /** A nested script clause category supported by the shared block model. */
 export type ClauseCategory = "trigger" | "effect" | "modifier_rule";
 
+/** How a nested clause changes the callback's game-scope identity. */
+export type ScopeTransition = "same" | "push" | "replace";
+
 /**
  * A block whose keys the script itself supplies, lowered to one typed map.
  *
@@ -250,6 +253,8 @@ export type ArgValue =
       readonly category: ClauseCategory;
       /** The canonical pushed scope, or `null` for the enclosing scope. */
       readonly scope: string | null;
+      /** How entering this clause changes the live game scope identity. */
+      readonly transition: ScopeTransition;
       /** Whether clause entries are emitted without a named wrapper. */
       readonly splice: boolean;
     }
@@ -439,6 +444,14 @@ function clauseScope(
     : canonical;
 }
 
+function clauseTransition(fields: readonly RuleField[]): ScopeTransition {
+  const scope = fields.find((field) => field.scope !== null)?.scope;
+  if (scope === undefined || scope === null) {
+    return "same";
+  }
+  return scope.replaces ? "replace" : "push";
+}
+
 function bareClauseScope(
   emitter: Emitter,
   value: RuleBareValue,
@@ -452,6 +465,13 @@ function bareClauseScope(
   return canonical === null
     ? skipReason("unknown-push-scope", `bare clause pushes an unknown scope (${pushed})`)
     : canonical;
+}
+
+function bareClauseTransition(value: RuleBareValue): ScopeTransition {
+  if (value.scope === null) {
+    return "same";
+  }
+  return value.scope.replaces ? "replace" : "push";
 }
 
 /** The authored operand type for a CWT comparison, or its skip reason. */
@@ -605,7 +625,7 @@ export function bareBlockValue(
     const scope = bareClauseScope(emitter, value, inheritedScope);
     return typeof scope === "object" && scope !== null
       ? scope
-      : { kind: "clause", category, scope, splice: false };
+      : { kind: "clause", category, scope, transition: bareClauseTransition(value), splice: false };
   }
 
   const structured = bare.filter(
@@ -848,6 +868,8 @@ function mergedClause(
       readonly category: ClauseCategory;
       /** The canonical pushed scope, or `null` for the enclosing scope. */
       readonly scope: string | null;
+      /** How entering the clause changes the live game scope identity. */
+      readonly transition: ScopeTransition;
     }
   | SkipReason {
   const category = clauseOf(group[0]!.type)!;
@@ -861,7 +883,9 @@ function mergedClause(
     );
   }
   const scope = clauseScope(emitter, name, group, inheritedScope);
-  return typeof scope === "object" && scope !== null ? scope : { category, scope };
+  return typeof scope === "object" && scope !== null
+    ? scope
+    : { category, scope, transition: clauseTransition(group) };
 }
 
 /** Merges a group whose every declaration is a clause hole into one typed hole. */
@@ -1115,7 +1139,13 @@ function splicedMember(
     value:
       clause === undefined
         ? { kind: "aliasList", category, scope, splice: true }
-        : { kind: "clause", category: clause.category, scope, splice: true },
+        : {
+            kind: "clause",
+            category: clause.category,
+            scope,
+            transition: clauseTransition(splices),
+            splice: true,
+          },
     optional: splices.every((field) => isOptional(field.cardinality)),
     docs: [
       ...(clause === undefined ? [] : [clause.summary]),

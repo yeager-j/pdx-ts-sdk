@@ -945,8 +945,41 @@ tooltip = {
       });
     });
 
-    expect(serialize(sink)).toContain("prevprevprevprev = {");
-    expect(serialize(sink)).toContain("set_country_flag = effects_test_flag");
+    expect(serialize(sink)).toBe(`every_owned_planet = {
+	owner = {
+		every_owned_planet = {
+			owner = {
+				prevprevprevprev = {
+					set_country_flag = effects_test_flag
+				}
+			}
+		}
+	}
+}
+`);
+  });
+
+  it("routes a captured ancestor proxy through three pushed scopes", () => {
+    const sink = recordEffects<"country">([], (country) => {
+      country.everyOwnedPlanet({}, (planet) => {
+        planet.owner.effects((owner) => {
+          owner.everyOwnedPlanet({}, () => {
+            country.setCountryFlag(flags.effects_test_flag);
+          });
+        });
+      });
+    });
+
+    expect(serialize(sink)).toBe(`every_owned_planet = {
+	owner = {
+		every_owned_planet = {
+			prevprevprev = {
+				set_country_flag = effects_test_flag
+			}
+		}
+	}
+}
+`);
   });
 
   it("rejects a captured ancestor proxy more than four pushed scopes away", () => {
@@ -974,29 +1007,33 @@ tooltip = {
     expect(sink).toEqual([]);
   });
 
-  it("rejects a captured ancestor proxy across a replacement transition", () => {
-    const testMethod = "sdk215Replacement";
+  it("rejects a captured ancestor proxy across replacement and unknown transitions", () => {
+    const testMethod = "sdk215ScopeReset";
     const meta = EFFECT_META as Record<string, unknown>;
-    meta[testMethod] = {
-      key: "sdk215_replacement",
-      transition: "replace",
-      shape: { kind: "wrapper", fields: null },
-    };
-    const sink: PdxEntry[] = [];
-
     try {
-      expect(() =>
-        recordEffects<"country">(
-          [],
-          (country) => {
-            (country as unknown as Record<string, (body: () => void) => void>)[testMethod]!(() => {
-              country.setCountryFlag(flags.effects_test_flag);
-            });
-          },
-          sink
-        )
-      ).toThrow(/replacement or unknown scope transition/);
-      expect(sink).toEqual([]);
+      for (const transition of ["replace", "unknown"] as const) {
+        meta[testMethod] = {
+          key: `sdk215_${transition}`,
+          transition,
+          shape: { kind: "wrapper", fields: null },
+        };
+        const sink: PdxEntry[] = [];
+
+        expect(() =>
+          recordEffects<"country">(
+            [],
+            (country) => {
+              (country as unknown as Record<string, (body: () => void) => void>)[testMethod]!(
+                () => {
+                  country.setCountryFlag(flags.effects_test_flag);
+                }
+              );
+            },
+            sink
+          )
+        ).toThrow(/replacement or unknown scope transition/);
+        expect(sink).toEqual([]);
+      }
     } finally {
       delete meta[testMethod];
     }

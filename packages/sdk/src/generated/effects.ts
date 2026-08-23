@@ -764,7 +764,7 @@ export interface EffectsIn4Scopes023a<
 > extends ExportModifierDurationToVariableEffectsExtension<S> {}
 
 /** Effects valid in: carrier, colony, planet, ship. */
-export interface EffectsIn4Scopes2b24 {
+export interface EffectsIn4Scopes2b24<S extends "carrier" | "colony" | "planet" | "ship"> {
   /**
    * Adds a blocker to a colony carrier, with some control over what it is set to block (add_deposit will add a random planetary deposit to block)
    * ```
@@ -2004,7 +2004,9 @@ export interface EffectsIn4Scopes7e34 {
 }
 
 /** Effects valid in: carrier, colony, country, planet, ship. */
-export interface EffectsIn5Scopes3588 {
+export interface EffectsIn5Scopes3588<
+  S extends "carrier" | "colony" | "country" | "planet" | "ship",
+> {
   /**
    * Check if any of the species with enslaved pops <on the planet/in the country> meet the specified criteria - executes the enclosed effects on all of them for which the limit triggers return true
    * ```
@@ -2107,7 +2109,9 @@ export interface EffectsIn5Scopes3588 {
 }
 
 /** Effects valid in: carrier, megastructure, planet, ship, starbase. */
-export interface EffectsIn5Scopes5d7d {
+export interface EffectsIn5Scopes5d7d<
+  S extends "carrier" | "megastructure" | "planet" | "ship" | "starbase",
+> {
   /**
    * Iterate through each fleet orbiting the current planet/starbase/megastructure - executes the enclosed effects on all of them for which the limit triggers return true
    * ```
@@ -2425,7 +2429,9 @@ export interface EffectsIn7Scopes04e0 {
 }
 
 /** Effects valid in: carrier, colony, country, planet, sector, ship, system. */
-export interface EffectsIn7Scopesdd2e {
+export interface EffectsIn7Scopesdd2e<
+  S extends "carrier" | "colony" | "country" | "planet" | "sector" | "ship" | "system",
+> {
   /**
    * Iterate through all owned pop jobs - executes the enclosed effects on all of them for which the limit triggers return true
    * ```
@@ -2586,7 +2592,10 @@ export interface EffectsIn8Scopes39a9<
 }
 
 /** Effects valid in: carrier, colony, country, planet, pop_faction, sector, ship, system. */
-export interface EffectsIn8Scopes75eb {
+export interface EffectsIn8Scopes75eb<
+  S extends
+    "carrier" | "colony" | "country" | "planet" | "pop_faction" | "sector" | "ship" | "system",
+> {
   /**
    * Iterate through all owned pops - executes the enclosed effects on all of them for which the limit triggers return true
    * ```
@@ -2684,7 +2693,18 @@ export interface EffectsIn8Scopescb47 {
 }
 
 /** Effects valid in: carrier, colony, fleet, megastructure, no_scope, planet, ship, starbase, system. */
-export interface EffectsIn9Scopes5f8a {
+export interface EffectsIn9Scopes5f8a<
+  S extends
+    | "carrier"
+    | "colony"
+    | "fleet"
+    | "megastructure"
+    | "no_scope"
+    | "planet"
+    | "ship"
+    | "starbase"
+    | "system",
+> {
   /**
    * Spawns a new system at a position relative to the scoped object.
    * ```
@@ -2702,7 +2722,7 @@ export interface EffectsIn9Scopes5f8a {
     isDiscovered?: boolean;
     minOrientationAngle?: number;
     maxOrientationAngle?: number;
-    effect?: (scope: SystemScope) => void;
+    effect?: () => void;
     authorizeSpawnOnGalacticCore?: boolean;
   }): void;
 }
@@ -8847,7 +8867,7 @@ export interface EffectsInCountryFederation {
 }
 
 /** Effects valid in: country, fleet. */
-export interface EffectsInCountryFleet {
+export interface EffectsInCountryFleet<S extends "country" | "fleet"> {
   /**
    * Iterate through each ship in the fleet or controlled by the country - executes the enclosed effects on all of them for which the limit triggers return true
    * ```
@@ -8987,7 +9007,7 @@ export interface EffectsInCountryMission {
 }
 
 /** Effects valid in: country, no_scope. */
-export interface EffectsInCountryNoScope {
+export interface EffectsInCountryNoScope<S extends "country" | "no_scope"> {
   /**
    * Iterate through each agreement - executes the enclosed effects on all of them for which the limit triggers return true
    * ```
@@ -9100,7 +9120,9 @@ export interface EffectsInCountryNoScope {
 }
 
 /** Effects valid in: country, no_scope, spy_network. */
-export interface EffectsInCountryNoScopeSpyNetwork {
+export interface EffectsInCountryNoScopeSpyNetwork<
+  S extends "country" | "no_scope" | "spy_network",
+> {
   /**
    * Iterate through each espionage operation - executes the enclosed effects on all of them for which the limit triggers return true
    * ```
@@ -9204,7 +9226,7 @@ export interface EffectsInCountryPopGroup {
 }
 
 /** Effects valid in: country, sector. */
-export interface EffectsInCountrySector {
+export interface EffectsInCountrySector<S extends "country" | "sector"> {
   /**
    * Iterate through all pre-ftl countries with an observation post around their capital within the country's or sector's borders - executes the enclosed effects on all of them for which the limit triggers return true
    * ```
@@ -9459,7 +9481,7 @@ export interface EffectsInCountrySector {
 }
 
 /** Effects valid in: country, system. */
-export interface EffectsInCountrySystem {
+export interface EffectsInCountrySystem<S extends "country" | "system"> {
   /**
    * Iterate through each orbital station owned by the current country or in the current system - executes the enclosed effects on all of them for which the limit triggers return true
    * ```
@@ -9795,7 +9817,9 @@ export interface EffectsInEspionageOperation {
 }
 
 /** Effects valid in: espionage_operation, no_scope, spy_network. */
-export interface EffectsInEspionageOperationNoScopeSpyNetwork {
+export interface EffectsInEspionageOperationNoScopeSpyNetwork<
+  S extends "espionage_operation" | "no_scope" | "spy_network",
+> {
   /**
    * Iterate through each espionage asset - executes the enclosed effects on all of them for which the limit triggers return true
    * ```
@@ -11204,7 +11228,7 @@ export interface EffectsInLeader {
 }
 
 /** Effects valid in: leader, pop_group, species. */
-export interface EffectsInLeaderPopGroupSpecies {
+export interface EffectsInLeaderPopGroupSpecies<S extends "leader" | "pop_group" | "species"> {
   /**
    * Iterate through all species traits and check if scope species doesn't have this trait
    * ```
@@ -17687,9 +17711,9 @@ export interface CarrierScope
     EffectsIn15Scopesee16,
     EffectsIn16Scopes674a<"carrier">,
     EffectsIn29Scopes878c,
-    EffectsIn4Scopes2b24,
-    EffectsIn5Scopes3588,
-    EffectsIn5Scopes5d7d,
+    EffectsIn4Scopes2b24<"carrier">,
+    EffectsIn5Scopes3588<"carrier">,
+    EffectsIn5Scopes5d7d<"carrier">,
     EffectsIn5Scopes9031,
     EffectsIn5Scopes92b5<"carrier">,
     EffectsIn5Scopes9550,
@@ -17698,11 +17722,11 @@ export interface CarrierScope
     EffectsIn6Scopes6eb9,
     EffectsIn6Scopescfa2,
     EffectsIn7Scopes04e0,
-    EffectsIn7Scopesdd2e,
+    EffectsIn7Scopesdd2e<"carrier">,
     EffectsIn8Scopes39a9<"carrier">,
-    EffectsIn8Scopes75eb,
+    EffectsIn8Scopes75eb<"carrier">,
     EffectsIn8Scopescb47,
-    EffectsIn9Scopes5f8a,
+    EffectsIn9Scopes5f8a<"carrier">,
     EffectsIn9Scopesd3d6,
     EffectsInCarrierPlanetShip,
     UniversalEffects<"carrier">,
@@ -17733,19 +17757,19 @@ export interface ColonyScope
     EffectsIn15Scopesee16,
     EffectsIn16Scopes674a<"colony">,
     EffectsIn29Scopes878c,
-    EffectsIn4Scopes2b24,
-    EffectsIn5Scopes3588,
+    EffectsIn4Scopes2b24<"colony">,
+    EffectsIn5Scopes3588<"colony">,
     EffectsIn5Scopes9031,
     EffectsIn5Scopes92b5<"colony">,
     EffectsIn5Scopes9550,
     EffectsIn6Scopes6eb9,
     EffectsIn6Scopescfa2,
     EffectsIn7Scopes04e0,
-    EffectsIn7Scopesdd2e,
+    EffectsIn7Scopesdd2e<"colony">,
     EffectsIn8Scopes39a9<"colony">,
-    EffectsIn8Scopes75eb,
+    EffectsIn8Scopes75eb<"colony">,
     EffectsIn8Scopescb47,
-    EffectsIn9Scopes5f8a,
+    EffectsIn9Scopes5f8a<"colony">,
     EffectsIn9Scopesd3d6,
     UniversalEffects<"colony">,
     EffectPathsIn11Scopes2089,
@@ -17788,27 +17812,27 @@ export interface CountryScope
     EffectsIn29Scopes878c,
     EffectsIn4Scopes023a<"country">,
     EffectsIn4Scopes7e34,
-    EffectsIn5Scopes3588,
+    EffectsIn5Scopes3588<"country">,
     EffectsIn5Scopes6c98,
     EffectsIn5Scopes979f,
     EffectsIn5Scopesb6d1,
     EffectsIn6Scopes6eb9,
     EffectsIn7Scopes04e0,
-    EffectsIn7Scopesdd2e,
+    EffectsIn7Scopesdd2e<"country">,
     EffectsIn8Scopes39a9<"country">,
-    EffectsIn8Scopes75eb,
+    EffectsIn8Scopes75eb<"country">,
     EffectsIn8Scopescb47,
     EffectsInArmyCountryFleet,
     EffectsInCountry,
     EffectsInCountryFederation,
-    EffectsInCountryFleet,
+    EffectsInCountryFleet<"country">,
     EffectsInCountryMission,
-    EffectsInCountryNoScope,
-    EffectsInCountryNoScopeSpyNetwork,
+    EffectsInCountryNoScope<"country">,
+    EffectsInCountryNoScopeSpyNetwork<"country">,
     EffectsInCountryPlanet,
     EffectsInCountryPopGroup,
-    EffectsInCountrySector,
-    EffectsInCountrySystem,
+    EffectsInCountrySector<"country">,
+    EffectsInCountrySystem<"country">,
     EffectsInCountryWar,
     UniversalEffects<"country">,
     EffectPathsIn13Scopesa2e3,
@@ -17892,7 +17916,7 @@ export interface EspionageOperationScope
     EffectsIn29Scopes878c,
     EffectsInAstralRiftEspionageOperation<"espionage_operation">,
     EffectsInEspionageOperation,
-    EffectsInEspionageOperationNoScopeSpyNetwork,
+    EffectsInEspionageOperationNoScopeSpyNetwork<"espionage_operation">,
     EffectsInEspionageOperationSpyNetwork,
     UniversalEffects<"espionage_operation">,
     EffectPathsIn15Scopesa620,
@@ -17956,11 +17980,11 @@ export interface FleetScope
     EffectsIn5Scopesb6d1,
     EffectsIn7Scopes04e0,
     EffectsIn8Scopescb47,
-    EffectsIn9Scopes5f8a,
+    EffectsIn9Scopes5f8a<"fleet">,
     EffectsIn9Scopesd3d6,
     EffectsInAmbientObjectFleet,
     EffectsInArmyCountryFleet,
-    EffectsInCountryFleet,
+    EffectsInCountryFleet<"fleet">,
     EffectsInFleet,
     EffectsInFleetMegastructureShip,
     EffectsInFleetShip,
@@ -18004,7 +18028,7 @@ export interface LeaderScope
     EffectsIn8Scopescb47,
     EffectsIn9Scopesd3d6,
     EffectsInLeader,
-    EffectsInLeaderPopGroupSpecies,
+    EffectsInLeaderPopGroupSpecies<"leader">,
     UniversalEffects<"leader">,
     EffectPathsIn12Scopes9dad,
     EffectPathsIn15Scopesa620,
@@ -18031,9 +18055,9 @@ export interface MegastructureScope
     EffectsIn15Scopesee16,
     EffectsIn16Scopes674a<"megastructure">,
     EffectsIn29Scopes878c,
-    EffectsIn5Scopes5d7d,
+    EffectsIn5Scopes5d7d<"megastructure">,
     EffectsIn5Scopesb6d1,
-    EffectsIn9Scopes5f8a,
+    EffectsIn9Scopes5f8a<"megastructure">,
     EffectsIn9Scopesd3d6,
     EffectsInFleetMegastructureShip,
     EffectsInMegastructure,
@@ -18067,10 +18091,10 @@ export interface MissionScope
 export interface NoScopeScope
   extends
     StructuralEffects<"no_scope">,
-    EffectsIn9Scopes5f8a,
-    EffectsInCountryNoScope,
-    EffectsInCountryNoScopeSpyNetwork,
-    EffectsInEspionageOperationNoScopeSpyNetwork,
+    EffectsIn9Scopes5f8a<"no_scope">,
+    EffectsInCountryNoScope<"no_scope">,
+    EffectsInCountryNoScopeSpyNetwork<"no_scope">,
+    EffectsInEspionageOperationNoScopeSpyNetwork<"no_scope">,
     UniversalEffects<"no_scope">,
     UniversalEffectPaths {}
 
@@ -18084,9 +18108,9 @@ export interface PlanetScope
     EffectsIn16Scopes674a<"planet">,
     EffectsIn29Scopes878c,
     EffectsIn4Scopes023a<"planet">,
-    EffectsIn4Scopes2b24,
-    EffectsIn5Scopes3588,
-    EffectsIn5Scopes5d7d,
+    EffectsIn4Scopes2b24<"planet">,
+    EffectsIn5Scopes3588<"planet">,
+    EffectsIn5Scopes5d7d<"planet">,
     EffectsIn5Scopes9031,
     EffectsIn5Scopes92b5<"planet">,
     EffectsIn5Scopes9550,
@@ -18095,11 +18119,11 @@ export interface PlanetScope
     EffectsIn6Scopes6eb9,
     EffectsIn6Scopescfa2,
     EffectsIn7Scopes04e0,
-    EffectsIn7Scopesdd2e,
+    EffectsIn7Scopesdd2e<"planet">,
     EffectsIn8Scopes39a9<"planet">,
-    EffectsIn8Scopes75eb,
+    EffectsIn8Scopes75eb<"planet">,
     EffectsIn8Scopescb47,
-    EffectsIn9Scopes5f8a,
+    EffectsIn9Scopes5f8a<"planet">,
     EffectsIn9Scopesd3d6,
     EffectsInAstralRiftPlanet,
     EffectsInCarrierPlanetShip,
@@ -18136,7 +18160,7 @@ export interface PopFactionScope
     EffectsIn15Scopesee16,
     EffectsIn16Scopes674a<"pop_faction">,
     EffectsIn29Scopes878c,
-    EffectsIn8Scopes75eb,
+    EffectsIn8Scopes75eb<"pop_faction">,
     EffectsInPopFaction,
     EffectsInPopFactionPopGroup,
     UniversalEffects<"pop_faction">,
@@ -18159,7 +18183,7 @@ export interface PopGroupScope
     EffectsIn5Scopes979f,
     EffectsIn8Scopes39a9<"pop_group">,
     EffectsInCountryPopGroup,
-    EffectsInLeaderPopGroupSpecies,
+    EffectsInLeaderPopGroupSpecies<"pop_group">,
     EffectsInPopFactionPopGroup,
     EffectsInPopGroup,
     UniversalEffects<"pop_group">,
@@ -18190,9 +18214,9 @@ export interface SectorScope
     StructuralEffects<"sector">,
     EffectsIn15Scopesee16,
     EffectsIn29Scopes878c,
-    EffectsIn7Scopesdd2e,
-    EffectsIn8Scopes75eb,
-    EffectsInCountrySector,
+    EffectsIn7Scopesdd2e<"sector">,
+    EffectsIn8Scopes75eb<"sector">,
+    EffectsInCountrySector<"sector">,
     EffectsInSector,
     UniversalEffects<"sector">,
     EffectPathsIn18Scopes5ba6,
@@ -18211,10 +18235,10 @@ export interface ShipScope
     EffectsIn15Scopesee16,
     EffectsIn16Scopes674a<"ship">,
     EffectsIn29Scopes878c,
-    EffectsIn4Scopes2b24,
+    EffectsIn4Scopes2b24<"ship">,
     EffectsIn4Scopes4fbd,
-    EffectsIn5Scopes3588,
-    EffectsIn5Scopes5d7d,
+    EffectsIn5Scopes3588<"ship">,
+    EffectsIn5Scopes5d7d<"ship">,
     EffectsIn5Scopes6c98,
     EffectsIn5Scopes9031,
     EffectsIn5Scopes92b5<"ship">,
@@ -18225,11 +18249,11 @@ export interface ShipScope
     EffectsIn6Scopes6eb9,
     EffectsIn6Scopescfa2,
     EffectsIn7Scopes04e0,
-    EffectsIn7Scopesdd2e,
+    EffectsIn7Scopesdd2e<"ship">,
     EffectsIn8Scopes39a9<"ship">,
-    EffectsIn8Scopes75eb,
+    EffectsIn8Scopes75eb<"ship">,
     EffectsIn8Scopescb47,
-    EffectsIn9Scopes5f8a,
+    EffectsIn9Scopes5f8a<"ship">,
     EffectsIn9Scopesd3d6,
     EffectsInCarrierPlanetShip,
     EffectsInDebrisShip,
@@ -18286,7 +18310,7 @@ export interface SpeciesScope
     EffectsIn12Scopes3d16,
     EffectsIn29Scopes878c,
     EffectsIn8Scopes39a9<"species">,
-    EffectsInLeaderPopGroupSpecies,
+    EffectsInLeaderPopGroupSpecies<"species">,
     EffectsInSpecies,
     UniversalEffects<"species">,
     EffectPathsIn24Scopes1dab,
@@ -18308,8 +18332,8 @@ export interface SpyNetworkScope
     StructuralEffects<"spy_network">,
     EffectsIn16Scopes674a<"spy_network">,
     EffectsIn29Scopes878c,
-    EffectsInCountryNoScopeSpyNetwork,
-    EffectsInEspionageOperationNoScopeSpyNetwork,
+    EffectsInCountryNoScopeSpyNetwork<"spy_network">,
+    EffectsInEspionageOperationNoScopeSpyNetwork<"spy_network">,
     EffectsInEspionageOperationSpyNetwork,
     EffectsInSpyNetwork,
     UniversalEffects<"spy_network">,
@@ -18332,10 +18356,10 @@ export interface StarbaseScope
     EffectsIn11Scopes5713,
     EffectsIn16Scopes674a<"starbase">,
     EffectsIn29Scopes878c,
-    EffectsIn5Scopes5d7d,
+    EffectsIn5Scopes5d7d<"starbase">,
     EffectsIn5Scopes92b5<"starbase">,
     EffectsIn5Scopesb6d1,
-    EffectsIn9Scopes5f8a,
+    EffectsIn9Scopes5f8a<"starbase">,
     EffectsIn9Scopesd3d6,
     EffectsInFleetStarbase,
     EffectsInPlanetStarbase,
@@ -18378,11 +18402,11 @@ export interface SystemScope
     EffectsIn29Scopes878c,
     EffectsIn5Scopese102,
     EffectsIn6Scopes6eb9,
-    EffectsIn7Scopesdd2e,
-    EffectsIn8Scopes75eb,
-    EffectsIn9Scopes5f8a,
+    EffectsIn7Scopesdd2e<"system">,
+    EffectsIn8Scopes75eb<"system">,
+    EffectsIn9Scopes5f8a<"system">,
     EffectsInBypassSystem,
-    EffectsInCountrySystem,
+    EffectsInCountrySystem<"system">,
     EffectsInPlanetSystem,
     EffectsInSystem,
     UniversalEffects<"system">,

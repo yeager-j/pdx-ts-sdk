@@ -59,7 +59,7 @@ import type {
 
 const cannotWitnessNaturalFrom = Symbol("cannotWitnessNaturalFrom");
 const scopeLease = Symbol("scopeLease");
-type ScopeTransition = "same" | "push" | "replace";
+type ScopeTransition = "same" | "push" | "replace" | "unknown";
 type ScopeIdentity = symbol;
 interface RuntimeScopeValue {
   readonly [cannotWitnessNaturalFrom]?: true;
@@ -1300,8 +1300,9 @@ function recordBlock<S extends ScopeName>(
   transition: ScopeTransition = "same"
 ): PdxEntry[] {
   const scope = transition === "same" && owner !== undefined ? owner.scope : Symbol("effectScope");
+  const resetsScope = transition === "replace" || transition === "unknown";
   const ancestors =
-    owner === undefined || transition === "replace"
+    owner === undefined || resetsScope
       ? []
       : transition === "same"
         ? owner.ancestors
@@ -1309,7 +1310,7 @@ function recordBlock<S extends ScopeName>(
   const blockedAncestors =
     owner === undefined
       ? []
-      : transition === "replace"
+      : resetsScope
         ? [owner.scope, ...owner.ancestors, ...owner.blockedAncestors]
         : owner.blockedAncestors;
   const recording: Recording = {

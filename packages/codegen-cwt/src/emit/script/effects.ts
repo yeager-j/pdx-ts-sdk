@@ -661,7 +661,7 @@ function baseMemberType(
       if (value.category === "modifier_rule") {
         return `readonly ${emitter.use("Modifier")}<${scope}>[]`;
       }
-      return value.scope === null
+      return value.transition === "same"
         ? `() => void`
         : `(scope: ${scopeInterfaceName(value.scope)}) => void`;
     }
@@ -711,6 +711,7 @@ const RECEIVING_SCOPE = "S";
 function clauseRunsInReceivingScope(value: ArgValue): boolean {
   switch (value.kind) {
     case "clause":
+      return value.transition === "same";
     case "aliasList":
       return value.scope === null;
     case "fields":
