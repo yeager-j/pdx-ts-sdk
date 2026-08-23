@@ -141,7 +141,7 @@ import type {
 import type { SpeciesClassDef } from "./species-class.ts";
 import type { SpriteTypeDef } from "./sprite-type.ts";
 import type { StarbaseLevelDef } from "./starbase-level.ts";
-import type { StaticModifierDef } from "./static-modifier.ts";
+import type { StaticModifierDef, StaticModifierScope } from "./static-modifier.ts";
 import type { StrikeCraftComponentTemplateDef } from "./strike-craft-component-template.ts";
 import type { TechnologyDef, TechnologyPatch, TechnologyPatchItem } from "./technology.ts";
 import type { TraditionCategoryDef } from "./tradition-category.ts";
@@ -743,13 +743,13 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
    * The capability mints and owns the full id; the returned branded reference
    * flows into matching content-reference fields.
    */
-  staticModifier<const Name extends string>(
+  staticModifier<const Name extends string, S extends StaticModifierScope = StaticModifierScope>(
     name: Name,
-    def: Omit<StaticModifierDef<MintedContentId<P, I, "staticModifier", Name>>, "id">
+    def: Omit<StaticModifierDef<MintedContentId<P, I, "staticModifier", Name>, S>, "id">
   ): ContentItem<
     "static_modifier",
-    StaticModifierDef<MintedContentId<P, I, "staticModifier", Name>>
-  >;
+    Omit<StaticModifierDef<MintedContentId<P, I, "staticModifier", Name>, never>, "hostScope">
+  > & { readonly hostScope: S };
   /**
    * Defines a scripted modifier from its logical name.
    * The capability mints and owns the full id; the returned branded reference
@@ -1260,12 +1260,16 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
       defineOpinionModifier({ ...def, id: mint("opinionModifier", name) } as OpinionModifierDef<
         MintedContentId<P, I, "opinionModifier", Name>
       >),
-    staticModifier: <const Name extends string>(
+    staticModifier: <
+      const Name extends string,
+      S extends StaticModifierScope = StaticModifierScope,
+    >(
       name: Name,
-      def: Omit<StaticModifierDef<MintedContentId<P, I, "staticModifier", Name>>, "id">
+      def: Omit<StaticModifierDef<MintedContentId<P, I, "staticModifier", Name>, S>, "id">
     ) =>
       defineStaticModifier({ ...def, id: mint("staticModifier", name) } as StaticModifierDef<
-        MintedContentId<P, I, "staticModifier", Name>
+        MintedContentId<P, I, "staticModifier", Name>,
+        S
       >),
     scriptedModifier: <const Name extends string, W extends ScriptedModifierCategory>(
       name: Name,

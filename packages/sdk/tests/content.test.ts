@@ -427,6 +427,7 @@ function defineContentExample(): PureMod {
   // The modifier rows land at the block root, next to the metadata keys —
   // static_modifier splices `alias_name[modifier]` unkeyed at its top level.
   const staticModifier = mod.staticModifier("synthetic_surge", {
+    hostScope: "country",
     name: "Synthetic Surge",
     desc: "Machine empires push their production past its rated limits.",
     modifiers: (m) => {
@@ -2336,6 +2337,7 @@ describe("generated content registries", () => {
     // a static modifier with no effect at all.
     const staticModifiers = cap.feature(undefined, [
       cap.staticModifier("surge", {
+        hostScope: "country",
         name: "Surge",
         modifiers: (m) => {
           m.country.unity.produces.mult(0.15);
@@ -2354,6 +2356,8 @@ describe("generated content registries", () => {
     );
     expect(rendered).not.toContain("modifier = {");
     expect(rendered).not.toContain("modifiers = {");
+    expect(rendered).not.toContain("hostScope");
+    expect(rendered).not.toContain("host_scope");
   });
 
   it("emits a static modifier with no modifiers as an empty body", () => {
@@ -2362,6 +2366,7 @@ describe("generated content registries", () => {
     // registry's other fields must not depend on the splice being present.
     const staticModifiers = cap.feature(undefined, [
       cap.staticModifier("marker", {
+        hostScope: "country",
         name: "Marker",
       }),
     ]);

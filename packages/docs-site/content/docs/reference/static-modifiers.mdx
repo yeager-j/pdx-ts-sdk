@@ -16,6 +16,27 @@ one unit. The SDK writes definitions under `common/static_modifiers/`.
 See [Economic modifiers](/concepts/economic-modifiers/) for how a static bundle
 can supply values to generated economic keys and scripted-modifier keys.
 
+## Declare one host scope
+
+Every SDK-authored static modifier requires `hostScope`. This is the kind of
+game object that may hold the modifier, not every object whose statistics the
+modifier can affect. The declaration emits no PDXScript.
+
+For example, a country-hosted modifier can contain
+`planet_jobs_engineering_research_produces_mult`. Stellaris propagates that
+economic row from the country to its planets. The propagation does not make a
+planet a second valid host. Define a separate modifier when the same values
+must be hosted on a different kind of object.
+
+The returned item carries this declaration. Executing consumers reject an
+authored item used from a different scope. These include `addModifier`,
+`removeModifier`, `hasModifier`, their stage-modifier variants, and
+`exportModifierDurationToVariable`. Agenda `finishModifier` fields require a
+country-hosted authored modifier. In colony scope, `hasModifier` may check a
+carrier-hosted modifier because the game redirects that check to the carrier.
+A raw string or a plain vanilla or third-party reference has no authored
+witness, so those forms remain explicit unchecked fallbacks.
+
 ## Write modifier values directly into the definition
 
 The `modifiers` callback uses the SDK's modifier builder. Its rows are written
@@ -28,10 +49,15 @@ emitted PDXScript. Stellaris expects keys such as
 `country_unity_produces_mult` directly beside the definition's metadata. Use
 the returned item wherever an SDK field accepts a static-modifier reference.
 
-The callback accepts modifier keys from several scopes because the definition
-can be applied by different game systems. Type checking proves that a modifier
-key exists; it does not prove that the object receiving this static modifier
-can use every value in the bundle.
+The callback is narrowed by `hostScope`. It accepts rows valid for that host,
+including economic rows that the game propagates to owned objects.
+
+## Preview without applying
+
+Use `scope.previewModifier(modifier)` inside an effect closure when a tooltip
+must display a modifier that is actually applied elsewhere. It emits
+`tooltip = { add_modifier = { modifier = ... } }` as a non-executing preview.
+The surrounding scope is not treated as the modifier's host.
 
 ## Display metadata must match the application path
 
@@ -61,10 +87,9 @@ Define both modifiers, pass the returned target item to
 planet creation, and save/load. A checked reference confirms the target id, but
 the SDK does not enforce any lifetime requirement.
 
-<Callout type="warn" title="Application semantics come from the caller">
-  A static modifier only defines the bundle. The event, situation, planet feature, or other caller
-  decides the target, duration, stacking, and removal behavior. Test that complete path in
-  Stellaris.
+<Callout type="warn" title="Host scope is not full game simulation">
+  The host witness checks authored executing call sites. Stellaris still decides duration, stacking,
+  propagation, display, and removal behavior. Test that complete path in the game.
 </Callout>
 
 See [Testing your mod](/guides/testing-your-mod/) for the live-game checks that
@@ -74,6 +99,8 @@ the build cannot perform.
 
 - [`StaticModifierDef`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/static-modifier.ts)
   is the generated definition used by `mod.staticModifier`.
+- `StaticModifierScope` names the supported host scopes, derived from the
+  scopes where the game exposes `add_modifier`.
 - [`vanilla.staticModifier`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
   provides checked references to vanilla static-modifier ids.
 

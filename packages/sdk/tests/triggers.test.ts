@@ -19,6 +19,7 @@ import {
   hasCompletedEventChainCounter,
   hasCountryFlag,
   hasGlobalFlag,
+  hasModifier,
   hasResource,
   hasTechnology,
   hiddenProgress,
@@ -231,6 +232,18 @@ describe("trigger builders", () => {
         "\thas_technology = tech_ascension_theory\n" +
         "}\n"
     );
+  });
+
+  it("records a static modifier reference from hasModifier", () => {
+    const condition = hasModifier("triggers_test_modifier");
+    expect(serialize([...condition.entries])).toBe("has_modifier = triggers_test_modifier\n");
+    expect(condition.refs).toEqual([
+      {
+        targets: ["static_modifier"],
+        id: "triggers_test_modifier",
+        field: "has_modifier",
+      },
+    ]);
   });
 
   it("writes has_resource as either its resource scalar or its typed block", () => {

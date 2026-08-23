@@ -167,6 +167,7 @@ import type {
   ZoneSlotsRef,
 } from "./refs.ts";
 import type { ScopeName } from "./scopes.ts";
+import type { StaticModifierScope } from "./static-modifier.ts";
 import type {
   AgreementFlag,
   AmbientObjectFlag,
@@ -208,6 +209,111 @@ import type {
   Variable,
   WarFlag,
 } from "./value-sets.ts";
+
+/** The arguments `addModifier` takes, as the rules declare them. */
+export type AddModifierArgs = {
+  modifier: (StaticModifierRef & { hostScope?: never }) | string;
+  days?: number;
+  months?: number;
+  years?: number;
+  mult?: ScriptValue;
+  multiplier?: ScriptValue;
+  timeMultiplier?: ScriptValue;
+  clearOnOwnerChange?: "yes";
+};
+/**
+ * Stable extension seam for the hand-written addModifier overload.
+ * The generated cluster containing add_modifier inherits this interface.
+ * `addModifier` checks an SDK-authored static modifier's declared hostScope against the scope receiving the effect (src/script/effects/static-modifiers.ts).
+ */
+export interface AddModifierEffectsExtension<S extends StaticModifierScope> {
+  /**
+   * Adds a specific modifier to the scoped object for a set duration
+   * ```
+   * add_modifier = {
+   * 	modifier = <key>
+   * 	days/months/years = <int, -1 (default) means it never expires>
+   * 	multiplier = <float>/<variable> (optional)
+   * 	time_multiplier = <variable> (optional: days/months/years value is multiplied by the value of this variable)
+   * 	clear_on_owner_change = yes (optional: default no; clears modifier if planet/system/megastructure's owner changes)
+   * }
+   * ```
+   */
+  addModifier(args: AddModifierArgs): void;
+}
+
+/** The arguments `addStageModifier` takes, as the rules declare them. */
+export type AddStageModifierArgs = {
+  modifier: (StaticModifierRef & { hostScope?: never }) | string;
+  days?: number;
+  months?: number;
+  years?: number;
+  multiplier?: number;
+};
+/**
+ * Stable extension seam for the hand-written addStageModifier overload.
+ * The generated cluster containing add_stage_modifier inherits this interface.
+ * `addStageModifier` checks an SDK-authored static modifier's declared hostScope against the scope receiving the effect (src/script/effects/static-modifiers.ts).
+ */
+export interface AddStageModifierEffectsExtension<S extends StaticModifierScope> {
+  /**
+   * Adds a specific modifier to the current espionage operation stage for a set duration or until stage is changed
+   * ```
+   * add_stage_modifier = { modifier = <key> days = <int>, -1 means it never expires> }
+   * ```
+   */
+  addStageModifier(args: AddStageModifierArgs): void;
+}
+
+/** The arguments `exportModifierDurationToVariable` takes, as the rules declare them. */
+export type ExportModifierDurationToVariableArgs = {
+  modifier: ModifierRef | (StaticModifierRef & { hostScope?: never }) | string;
+  variable: Variable;
+};
+/**
+ * Stable extension seam for the hand-written exportModifierDurationToVariable overload.
+ * The generated cluster containing export_modifier_duration_to_variable inherits this interface.
+ * `exportModifierDurationToVariable` checks an SDK-authored static modifier's declared hostScope against the scope receiving the effect (src/script/effects/static-modifiers.ts).
+ */
+export interface ExportModifierDurationToVariableEffectsExtension<S extends StaticModifierScope> {
+  /**
+   * Exports the remaining duration of a specified modifier in the current scope to a specified variable.
+   * ```
+   * export_modifier_duration_to_variable = { modifier = modifier_name variable = <string> }
+   * ```
+   */
+  exportModifierDurationToVariable(args: ExportModifierDurationToVariableArgs): void;
+}
+
+/**
+ * Stable extension seam for the hand-written removeModifier overload.
+ * The generated cluster containing remove_modifier inherits this interface.
+ * `removeModifier` checks an SDK-authored static modifier's declared hostScope against the scope receiving the effect (src/script/effects/static-modifiers.ts).
+ */
+export interface RemoveModifierEffectsExtension<S extends StaticModifierScope> {
+  /**
+   * Removes a specific modifier from the scope object
+   * ```
+   * remove_modifier = <key>
+   * ```
+   */
+  removeModifier(value: (StaticModifierRef & { hostScope?: never }) | string): void;
+}
+
+/**
+ * Stable extension seam for the hand-written removeStageModifier overload.
+ * The generated cluster containing remove_stage_modifier inherits this interface.
+ * `removeStageModifier` checks an SDK-authored static modifier's declared hostScope against the scope receiving the effect (src/script/effects/static-modifiers.ts).
+ */
+export interface RemoveStageModifierEffectsExtension<S extends StaticModifierScope> {
+  /**
+   * Removes a specific modifier from the espionage operation current stage
+   * ```
+   * remove_stage_modifier = <key>
+   * ```
+   */
+  removeStageModifier(value: (StaticModifierRef & { hostScope?: never }) | string): void;
+}
 
 /** The arguments `startSituation` takes, as the rules declare them. */
 export type StartSituationArgs = {
@@ -321,38 +427,26 @@ export interface EffectsIn15Scopesee16 {
 }
 
 /** Effects valid in: astral_rift, carrier, colony, cosmic_storm_influence_field, country, espionage_operation, federation, fleet, megastructure, planet, pop_faction, pop_group, ship, spy_network, starbase, system. */
-export interface EffectsIn16Scopes674a {
-  /**
-   * Adds a specific modifier to the scoped object for a set duration
-   * ```
-   * add_modifier = {
-   * 	modifier = <key>
-   * 	days/months/years = <int, -1 (default) means it never expires>
-   * 	multiplier = <float>/<variable> (optional)
-   * 	time_multiplier = <variable> (optional: days/months/years value is multiplied by the value of this variable)
-   * 	clear_on_owner_change = yes (optional: default no; clears modifier if planet/system/megastructure's owner changes)
-   * }
-   * ```
-   */
-  addModifier(args: {
-    modifier: StaticModifierRef | string;
-    days?: number;
-    months?: number;
-    years?: number;
-    mult?: ScriptValue;
-    multiplier?: ScriptValue;
-    timeMultiplier?: ScriptValue;
-    clearOnOwnerChange?: "yes";
-  }): void;
-
-  /**
-   * Removes a specific modifier from the scope object
-   * ```
-   * remove_modifier = <key>
-   * ```
-   */
-  removeModifier(value: StaticModifierRef | string): void;
-}
+export interface EffectsIn16Scopes674a<
+  S extends
+    | "astral_rift"
+    | "carrier"
+    | "colony"
+    | "cosmic_storm_influence_field"
+    | "country"
+    | "espionage_operation"
+    | "federation"
+    | "fleet"
+    | "megastructure"
+    | "planet"
+    | "pop_faction"
+    | "pop_group"
+    | "ship"
+    | "spy_network"
+    | "starbase"
+    | "system",
+>
+  extends AddModifierEffectsExtension<S>, RemoveModifierEffectsExtension<S> {}
 
 /** Effects valid in: agreement, ambient_object, archaeological_site, army, astral_rift, bypass, carrier, colony, country, deposit, espionage_asset, espionage_operation, federation, first_contact, fleet, leader, megastructure, planet, pop_faction, pop_group, sector, ship, ship_growth_stage, situation, species, spy_network, starbase, system, war. */
 export interface EffectsIn29Scopes878c {
@@ -501,18 +595,9 @@ export interface EffectsIn29Scopes878c {
 }
 
 /** Effects valid in: country, fleet, planet, pop_group. */
-export interface EffectsIn4Scopes023a {
-  /**
-   * Exports the remaining duration of a specified modifier in the current scope to a specified variable.
-   * ```
-   * export_modifier_duration_to_variable = { modifier = modifier_name variable = <string> }
-   * ```
-   */
-  exportModifierDurationToVariable(args: {
-    modifier: ModifierRef | string | StaticModifierRef;
-    variable: Variable;
-  }): void;
-}
+export interface EffectsIn4Scopes023a<
+  S extends "country" | "fleet" | "planet" | "pop_group",
+> extends ExportModifierDurationToVariableEffectsExtension<S> {}
 
 /** Effects valid in: carrier, colony, planet, ship. */
 export interface EffectsIn4Scopes2b24 {
@@ -2843,29 +2928,10 @@ export interface EffectsInAstralRift {
 }
 
 /** Effects valid in: astral_rift, espionage_operation. */
-export interface EffectsInAstralRiftEspionageOperation {
-  /**
-   * Adds a specific modifier to the current espionage operation stage for a set duration or until stage is changed
-   * ```
-   * add_stage_modifier = { modifier = <key> days = <int>, -1 means it never expires> }
-   * ```
-   */
-  addStageModifier(args: {
-    modifier: StaticModifierRef | string;
-    days?: number;
-    months?: number;
-    years?: number;
-    multiplier?: number;
-  }): void;
-
-  /**
-   * Removes a specific modifier from the espionage operation current stage
-   * ```
-   * remove_stage_modifier = <key>
-   * ```
-   */
-  removeStageModifier(value: StaticModifierRef | string): void;
-}
+export interface EffectsInAstralRiftEspionageOperation<
+  S extends "astral_rift" | "espionage_operation",
+>
+  extends AddStageModifierEffectsExtension<S>, RemoveStageModifierEffectsExtension<S> {}
 
 /** Effects valid in: astral_rift, planet. */
 export interface EffectsInAstralRiftPlanet {
@@ -15475,14 +15541,14 @@ export interface AstralRiftScope
   extends
     StructuralEffects<"astral_rift">,
     EffectsIn11Scopes5713,
-    EffectsIn16Scopes674a,
+    EffectsIn16Scopes674a<"astral_rift">,
     EffectsIn29Scopes878c,
     EffectsIn5Scopes9031,
     EffectsIn5Scopese102,
     EffectsIn6Scopescfa2,
     EffectsInArchaeologicalSiteAstralRiftFirstContact,
     EffectsInAstralRift,
-    EffectsInAstralRiftEspionageOperation,
+    EffectsInAstralRiftEspionageOperation<"astral_rift">,
     EffectsInAstralRiftPlanet,
     UniversalEffects<"astral_rift">,
     EffectPathsIn14Scopesed72,
@@ -15517,7 +15583,7 @@ export interface CarrierScope
     EffectsIn11Scopes5713,
     EffectsIn12Scopes3d16,
     EffectsIn15Scopesee16,
-    EffectsIn16Scopes674a,
+    EffectsIn16Scopes674a<"carrier">,
     EffectsIn29Scopes878c,
     EffectsIn4Scopes2b24,
     EffectsIn5Scopes3588,
@@ -15563,7 +15629,7 @@ export interface ColonyScope
     StructuralEffects<"colony">,
     EffectsIn11Scopes5713,
     EffectsIn15Scopesee16,
-    EffectsIn16Scopes674a,
+    EffectsIn16Scopes674a<"colony">,
     EffectsIn29Scopes878c,
     EffectsIn4Scopes2b24,
     EffectsIn5Scopes3588,
@@ -15605,7 +15671,7 @@ export interface ColonyScope
 export interface CosmicStormInfluenceFieldScope
   extends
     StructuralEffects<"cosmic_storm_influence_field">,
-    EffectsIn16Scopes674a,
+    EffectsIn16Scopes674a<"cosmic_storm_influence_field">,
     EffectsInCosmicStormInfluenceField,
     UniversalEffects<"cosmic_storm_influence_field">,
     UniversalEffectPaths {}
@@ -15616,9 +15682,9 @@ export interface CountryScope
     StructuralEffects<"country">,
     EffectsIn12Scopes3d16,
     EffectsIn15Scopesee16,
-    EffectsIn16Scopes674a,
+    EffectsIn16Scopes674a<"country">,
     EffectsIn29Scopes878c,
-    EffectsIn4Scopes023a,
+    EffectsIn4Scopes023a<"country">,
     EffectsIn4Scopes7e34,
     EffectsIn5Scopes3588,
     EffectsIn5Scopes6c98,
@@ -15720,9 +15786,9 @@ export interface EspionageAssetScope
 export interface EspionageOperationScope
   extends
     StructuralEffects<"espionage_operation">,
-    EffectsIn16Scopes674a,
+    EffectsIn16Scopes674a<"espionage_operation">,
     EffectsIn29Scopes878c,
-    EffectsInAstralRiftEspionageOperation,
+    EffectsInAstralRiftEspionageOperation<"espionage_operation">,
     EffectsInEspionageOperation,
     EffectsInEspionageOperationNoScopeSpyNetwork,
     EffectsInEspionageOperationSpyNetwork,
@@ -15743,7 +15809,7 @@ export interface FederationScope
   extends
     StructuralEffects<"federation">,
     EffectsIn15Scopesee16,
-    EffectsIn16Scopes674a,
+    EffectsIn16Scopes674a<"federation">,
     EffectsIn29Scopes878c,
     EffectsInCountryFederation,
     EffectsInFederation,
@@ -15779,9 +15845,9 @@ export interface FleetScope
     EffectsIn11Scopes5713,
     EffectsIn12Scopes3d16,
     EffectsIn15Scopesee16,
-    EffectsIn16Scopes674a,
+    EffectsIn16Scopes674a<"fleet">,
     EffectsIn29Scopes878c,
-    EffectsIn4Scopes023a,
+    EffectsIn4Scopes023a<"fleet">,
     EffectsIn4Scopes4fbd,
     EffectsIn4Scopes7e34,
     EffectsIn5Scopes9550,
@@ -15861,7 +15927,7 @@ export interface MegastructureScope
     EffectsIn11Scopes5713,
     EffectsIn12Scopes3d16,
     EffectsIn15Scopesee16,
-    EffectsIn16Scopes674a,
+    EffectsIn16Scopes674a<"megastructure">,
     EffectsIn29Scopes878c,
     EffectsIn5Scopes5d7d,
     EffectsIn5Scopesb6d1,
@@ -15913,9 +15979,9 @@ export interface PlanetScope
     EffectsIn11Scopes5713,
     EffectsIn12Scopes3d16,
     EffectsIn15Scopesee16,
-    EffectsIn16Scopes674a,
+    EffectsIn16Scopes674a<"planet">,
     EffectsIn29Scopes878c,
-    EffectsIn4Scopes023a,
+    EffectsIn4Scopes023a<"planet">,
     EffectsIn4Scopes2b24,
     EffectsIn5Scopes3588,
     EffectsIn5Scopes5d7d,
@@ -15966,7 +16032,7 @@ export interface PopFactionScope
     StructuralEffects<"pop_faction">,
     EffectsIn12Scopes3d16,
     EffectsIn15Scopesee16,
-    EffectsIn16Scopes674a,
+    EffectsIn16Scopes674a<"pop_faction">,
     EffectsIn29Scopes878c,
     EffectsIn8Scopes75eb,
     EffectsInPopFaction,
@@ -15984,9 +16050,9 @@ export interface PopGroupScope
   extends
     StructuralEffects<"pop_group">,
     EffectsIn12Scopes3d16,
-    EffectsIn16Scopes674a,
+    EffectsIn16Scopes674a<"pop_group">,
     EffectsIn29Scopes878c,
-    EffectsIn4Scopes023a,
+    EffectsIn4Scopes023a<"pop_group">,
     EffectsIn5Scopes6c98,
     EffectsIn5Scopes979f,
     EffectsIn8Scopes39a9<"pop_group">,
@@ -16041,7 +16107,7 @@ export interface ShipScope
     EffectsIn11Scopes5713,
     EffectsIn12Scopes3d16,
     EffectsIn15Scopesee16,
-    EffectsIn16Scopes674a,
+    EffectsIn16Scopes674a<"ship">,
     EffectsIn29Scopes878c,
     EffectsIn4Scopes2b24,
     EffectsIn4Scopes4fbd,
@@ -16138,7 +16204,7 @@ export interface SpeciesTraitScope
 export interface SpyNetworkScope
   extends
     StructuralEffects<"spy_network">,
-    EffectsIn16Scopes674a,
+    EffectsIn16Scopes674a<"spy_network">,
     EffectsIn29Scopes878c,
     EffectsInCountryNoScopeSpyNetwork,
     EffectsInEspionageOperationNoScopeSpyNetwork,
@@ -16162,7 +16228,7 @@ export interface StarbaseScope
   extends
     StructuralEffects<"starbase">,
     EffectsIn11Scopes5713,
-    EffectsIn16Scopes674a,
+    EffectsIn16Scopes674a<"starbase">,
     EffectsIn29Scopes878c,
     EffectsIn5Scopes5d7d,
     EffectsIn5Scopes92b5<"starbase">,
@@ -16206,7 +16272,7 @@ export interface SystemScope
     EffectsIn11Scopes5713,
     EffectsIn12Scopes3d16,
     EffectsIn15Scopesee16,
-    EffectsIn16Scopes674a,
+    EffectsIn16Scopes674a<"system">,
     EffectsIn29Scopes878c,
     EffectsIn5Scopese102,
     EffectsIn6Scopes6eb9,

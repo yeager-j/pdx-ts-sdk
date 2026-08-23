@@ -735,7 +735,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
       ],
     },
     signature:
-      'addModifier(args: { modifier: StaticModifierRef | string; days?: number; months?: number; years?: number; mult?: ScriptValue; multiplier?: ScriptValue; timeMultiplier?: ScriptValue; clearOnOwnerChange?: "yes" }): void;',
+      'addModifier<S extends StaticModifierScope>(args: Omit<AddModifierArgs, "modifier"> & { modifier: Unambiguous<S, StaticModifierHostContract<S>> }): void;\naddModifier(args: AddModifierArgs): void;',
     docs: [
       "Adds a specific modifier to the scoped object for a set duration",
       "",
@@ -1040,7 +1040,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["astral_rift", "espionage_operation"] },
     signature:
-      "addStageModifier(args: { modifier: StaticModifierRef | string; days?: number; months?: number; years?: number; multiplier?: number }): void;",
+      'addStageModifier<S extends StaticModifierScope>(args: Omit<AddStageModifierArgs, "modifier"> & { modifier: Unambiguous<S, StaticModifierHostContract<S>> }): void;\naddStageModifier(args: AddStageModifierArgs): void;',
     docs: [
       "Adds a specific modifier to the current espionage operation stage for a set duration or until stage is changed",
       "",
@@ -5319,7 +5319,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["country", "fleet", "planet", "pop_group"] },
     signature:
-      "exportModifierDurationToVariable(args: { modifier: ModifierRef | string | StaticModifierRef; variable: Variable }): void;",
+      'exportModifierDurationToVariable<S extends StaticModifierScope>(args: Omit<ExportModifierDurationToVariableArgs, "modifier"> & { modifier: Unambiguous<S, StaticModifierHostContract<S>> }): void;\nexportModifierDurationToVariable(args: ExportModifierDurationToVariableArgs): void;',
     docs: [
       "Exports the remaining duration of a specified modifier in the current scope to a specified variable.",
       "",
@@ -11933,7 +11933,8 @@ export const SCRIPT_EFFECT_REFERENCES = [
         "system",
       ],
     },
-    signature: "removeModifier(value: StaticModifierRef | string): void;",
+    signature:
+      "removeModifier<S extends StaticModifierScope>(value: Unambiguous<S, StaticModifierHostContract<S>>): void;\nremoveModifier(value: (StaticModifierRef & { hostScope?: never }) | string): void;",
     docs: [
       "Removes a specific modifier from the scope object",
       "",
@@ -12312,7 +12313,8 @@ export const SCRIPT_EFFECT_REFERENCES = [
     key: "remove_stage_modifier",
     kind: "effect",
     availability: { kind: "scopes", scopes: ["astral_rift", "espionage_operation"] },
-    signature: "removeStageModifier(value: StaticModifierRef | string): void;",
+    signature:
+      "removeStageModifier<S extends StaticModifierScope>(value: Unambiguous<S, StaticModifierHostContract<S>>): void;\nremoveStageModifier(value: (StaticModifierRef & { hostScope?: never }) | string): void;",
     docs: [
       "Removes a specific modifier from the espionage operation current stage",
       "",

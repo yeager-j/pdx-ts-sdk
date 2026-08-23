@@ -45,7 +45,7 @@ const STRUCTURAL_EFFECTS = {
 } as const satisfies Record<string, { readonly method: string | null; readonly reason: string }>;
 
 /** SDK-only methods with no CWT effect key. */
-export const SYNTHETIC_STRUCTURAL_EFFECT_METHODS = ["target", "run"] as const;
+export const SYNTHETIC_STRUCTURAL_EFFECT_METHODS = ["previewModifier", "target", "run"] as const;
 
 /** Indexed effect ownership and the method sets consumed by generator validation. */
 export interface EffectPolicy {

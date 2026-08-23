@@ -364,7 +364,7 @@ function scopeFieldContext(
           nestedTypeParameter: {
             declaration:
               `<${parameter.parameterName} extends ${parameter.parameterType} = ` +
-              `${JSON.stringify(parameter.parameterFallback)}>`,
+              `${parameter.parameterDefault}>`,
             argument: parameter.parameterName,
           },
         }),
@@ -779,7 +779,7 @@ interface ScopeParameterSurface {
   readonly generic: string;
   /** The declared-FROM `L` parameter, appended wherever the generic rides. */
   readonly declaredFromParameter: string;
-  /** The `scope?: S` authoring member, where the registry declares one. */
+  /** The synthetic scope authoring member, where the registry declares one. */
   readonly scopeMember: string;
   /** The declared-FROM authoring member, where the registry declares one. */
   readonly declaredFromMember: string;
@@ -809,19 +809,25 @@ function scopeParameterDeclarations(
     parameter === null
       ? ""
       : `<${parameter.parameterName} extends ${parameter.parameterType} = ` +
-        `${JSON.stringify(parameter.parameterFallback)}${declaredFromParameter}>`;
+        `${parameter.parameterDefault}${declaredFromParameter}>`;
   const scopeMember =
-    parameter === null || parameter.selector !== undefined
+    parameter?.authoringMember === null || parameter?.authoringMember === undefined
       ? ""
       : docComment(
-          [
-            "The scope this definition's own clauses run in.",
-            "",
-            "Emits nothing — it names a fact the game already knows and the rules",
-            `decline to state (\`this = any\`). Defaults to \`${parameter.fallback}\`.`,
-          ],
+          parameter.authoringMember.member === "scope" && parameter.fallback !== null
+            ? [
+                "The scope this definition's own clauses run in.",
+                "",
+                "Emits nothing — it names a fact the game already knows and the rules",
+                `decline to state (\`this = any\`). Defaults to \`${parameter.fallback}\`.`,
+              ]
+            : [
+                ...parameter.authoringMember.docs,
+                ...(parameter.fallback === null ? [] : [`Defaults to \`${parameter.fallback}\`.`]),
+              ],
           "  "
-        ) + "  scope?: S;\n";
+        ) +
+        `  ${parameter.authoringMember.member}${parameter.authoringMember.required ? "" : "?"}: S;\n`;
   const declaredFromMember =
     declaredFrom === undefined
       ? ""
@@ -904,7 +910,7 @@ function contentTypeCode(
       ? `export interface ${typeName}Def<Id extends string = string> extends ${typeName}Fields {\n`
       : `export interface ${typeName}Def<\n  Id extends string = string,\n` +
         `  ${parameter.parameterName} extends ${parameter.parameterType} = ` +
-        `${JSON.stringify(parameter.parameterFallback)},\n` +
+        `${parameter.parameterDefault},\n` +
         (declaredFrom === undefined
           ? ""
           : `  L extends ${declaredFrom.typeName} | undefined = undefined,\n`) +

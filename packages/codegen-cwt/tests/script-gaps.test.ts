@@ -82,7 +82,7 @@ describe("the script-generation gap ledger", () => {
     });
 
     expect(SCRIPT_GENERATION_GAPS).toHaveLength(17);
-    expect(report.policyOwned).toHaveLength(44);
+    expect(report.policyOwned).toHaveLength(46);
     expect(report.abstractPlaceholders).toHaveLength(2);
     expect(report.trackedGaps).toHaveLength(17);
     expect(report.abstractPlaceholders.map((entry) => entry.name)).toEqual([

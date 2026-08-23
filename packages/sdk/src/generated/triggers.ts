@@ -158,7 +158,6 @@ import type {
   StarbaseModuleRef,
   StarbaseTypeRef,
   StarClassRef,
-  StaticModifierRef,
   StormTypesRef,
   TechnologyCategoryRef,
   TechnologyRef,
@@ -9865,39 +9864,6 @@ export function hasMissionFlag(value: MissionFlag): Trigger<"mission"> {
   return trigger([kv("has_mission_flag", value)]);
 }
 
-/**
- * Checks if the scope object has a certain modifier
- * ```
- * has_modifier = <modifier>
- * For colony scope, it will check the carrier modifiers.
- * ```
- */
-export function hasModifier(
-  value: StaticModifierRef | string
-): Trigger<
-  | "astral_rift"
-  | "carrier"
-  | "colony"
-  | "country"
-  | "espionage_operation"
-  | "federation"
-  | "fleet"
-  | "megastructure"
-  | "planet"
-  | "pop_faction"
-  | "pop_group"
-  | "ship"
-  | "spy_network"
-  | "starbase"
-  | "system"
-> {
-  const id = refId(value);
-  return trigger(
-    [kv("has_modifier", id)],
-    [{ targets: ["static_modifier"], id, field: "has_modifier" }]
-  );
-}
-
 /** The arguments `hasMonthlyIncome` takes, as the rules declare them. */
 export interface HasMonthlyIncomeArgs {
   resource?: ResourceRef | string;
@@ -11092,22 +11058,6 @@ export function hasSpynetworkFlag(value: SpynetworkFlag): Trigger<"spy_network">
  */
 export function hasSpynetworkValue(op: PdxOp, value: ScriptValue): Trigger<"spy_network"> {
   return trigger([cmp("has_spynetwork_value", op, scriptValueScalar(value))]);
-}
-
-/**
- * Checks if the espionage operation has a certain modifier specific for the current stage
- * ```
- * has_stage_modifier = <modifier>
- * ```
- */
-export function hasStageModifier(
-  value: StaticModifierRef | string
-): Trigger<"astral_rift" | "espionage_operation"> {
-  const id = refId(value);
-  return trigger(
-    [kv("has_stage_modifier", id)],
-    [{ targets: ["static_modifier"], id, field: "has_stage_modifier" }]
-  );
 }
 
 /** The arguments `hasStaleIntel` takes, as the rules declare them. */

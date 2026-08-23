@@ -200,6 +200,7 @@ export type {
   DefinedStaticModifier,
   StaticModifierDef,
   StaticModifierFields,
+  StaticModifierScope,
 } from "./static-modifier.ts";
 export type {
   DefinedStrikeCraftComponentTemplate,

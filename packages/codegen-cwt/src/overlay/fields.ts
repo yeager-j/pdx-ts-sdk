@@ -186,10 +186,21 @@ export const CONTENT_DECLINED_FIELDS = new Map<string, string>([
  * The emitter derives the synthetic authoring member and callback scopes from this schema.
  */
 export interface ContentScopeParameter {
-  /** Every scope a definition may declare, canonical names. */
-  readonly scopes: readonly string[];
-  /** The scope a definition that declares none runs in. */
-  readonly fallback: string;
+  /** Every scope a definition may declare, or the effect whose receiving scopes are authoritative. */
+  readonly scopes: readonly string[] | { readonly effect: string };
+  /** The scope a definition that declares none runs in. Required unless the declaration is required. */
+  readonly fallback?: string;
+  /** Customizes the synthetic scope declaration and optionally preserves it as a contract witness. */
+  readonly authoringMember?: {
+    /** Authoring member that names the definition's scope. */
+    readonly member: string;
+    /** Whether every authored definition must state the member. */
+    readonly required: boolean;
+    /** Whether the returned item carries the declaration beside its erased def. */
+    readonly carriesWitness: boolean;
+    /** Consumer-facing description of the declared scope. */
+    readonly docs: readonly string[];
+  };
   /** A game field that selects the scope instead of a synthetic `scope` member. */
   readonly selector?: {
     /** Authoring member that carries the game's scope selector. */
@@ -297,6 +308,28 @@ export const CONTENT_SCOPE_PARAMETERS = new Map<string, ContentScopeParameter>([
         "condition across all 111 shipped decisions is planet-valid — none writes a country-only " +
         "condition directly, they navigate through `owner` — so `planet` is the fallback and " +
         "`ship` the case that has to be declared.",
+    },
+  ],
+  [
+    "static_modifier",
+    {
+      scopes: { effect: "add_modifier" },
+      authoringMember: {
+        member: "hostScope",
+        required: true,
+        carriesWitness: true,
+        docs: [
+          "The one scope whose objects may hold this modifier.",
+          "",
+          "Emits nothing. Propagated rows may affect objects below this host without",
+          "making those objects valid hosts themselves.",
+        ],
+      },
+      reason:
+        "SDK-229: a static modifier's host is author intent that CWT does not state. The " +
+        "add_modifier receiving scopes define the supported host universe, while the required " +
+        "hostScope declaration selects one host, narrows the modifier recorder, and rides on the " +
+        "returned item so executing consumers can check it.",
     },
   ],
   [
@@ -533,6 +566,18 @@ export interface ContentFieldOverride {
   readonly optional?: true;
   /** Public name for a nested struct the mechanical path-derived name misstates. */
   readonly nestedTypeName?: string;
+  /** Replaces the public authoring type without changing the field's runtime lowering. */
+  readonly authoringType?: {
+    /** TypeScript type emitted for the authoring member. */
+    readonly type: string;
+    /** Extra type-only imports required by {@link type}. */
+    readonly imports: readonly {
+      /** Module path written into the generated file. */
+      readonly module: string;
+      /** Exported type name referenced by {@link type}. */
+      readonly name: string;
+    }[];
+  };
   /**
    * Lowers a `<type>` reference to a bare, unchecked `string`.
    *
@@ -572,6 +617,23 @@ export interface ContentFieldOverride {
  * says is no longer one of its jobs.
  */
 export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
+  [
+    "agenda.finish_modifier",
+    {
+      authoringType: {
+        type: '(StaticModifierRef & { readonly hostScope?: never }) | StaticModifierHostContract<"country"> | string',
+        imports: [
+          {
+            module: "../script/effects/static-modifiers.ts",
+            name: "StaticModifierHostContract",
+          },
+        ],
+      },
+      reason:
+        "SDK-229: council agendas execute in country scope, so an SDK-authored finish modifier " +
+        "must carry a country host witness. Plain refs and strings remain unchecked fallbacks.",
+    },
+  ],
   [
     "decision.custom_tooltip",
     {

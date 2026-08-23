@@ -6,19 +6,43 @@ import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { ModifierClosure } from "../content/types.ts";
 import type { StaticModifierRef } from "./refs.ts";
-import type { ScopeName } from "./scopes.ts";
+
+/** The scopes a static_modifier may declare. */
+export type StaticModifierScope =
+  | "megastructure"
+  | "country"
+  | "pop_group"
+  | "fleet"
+  | "system"
+  | "pop_faction"
+  | "federation"
+  | "starbase"
+  | "spy_network"
+  | "espionage_operation"
+  | "astral_rift"
+  | "cosmic_storm_influence_field"
+  | "colony"
+  | "planet"
+  | "ship"
+  | "carrier";
 
 /**
  * A static_modifier, as the game's rules describe it.
  * Generated from `type[static_modifier]` at `game/common/static_modifiers`.
  */
-export interface StaticModifierFields {
+export interface StaticModifierFields<S extends StaticModifierScope = StaticModifierScope> {
+  /**
+   * The one scope whose objects may hold this modifier.
+   * Emits nothing. Propagated rows may affect objects below this host without
+   * making those objects valid hosts themselves.
+   */
+  hostScope: S;
   /** English text emitted to localization under `<id>`. */
   name: string;
   /** English text emitted to localization under `<id>_desc`. */
   desc?: string;
   /** Modifiers written directly into the definition body, with no enclosing key. */
-  modifiers?: ModifierClosure<ScopeName>;
+  modifiers?: ModifierClosure<NoInfer<S>>;
   /** Only when static_modifier subtype `planet` applies. */
   iconFrame?: number;
   /** Only when static_modifier subtype `planet` applies. */
@@ -31,7 +55,10 @@ export interface StaticModifierFields {
   hideFromCountryList?: true;
 }
 
-export interface StaticModifierDef<Id extends string = string> extends StaticModifierFields {
+export interface StaticModifierDef<
+  Id extends string = string,
+  S extends StaticModifierScope = StaticModifierScope,
+> extends StaticModifierFields<S> {
   /** Full content id, including the mod prefix. */
   id: Id;
 }

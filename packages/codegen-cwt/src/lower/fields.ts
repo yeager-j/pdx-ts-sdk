@@ -823,7 +823,7 @@ export function pickOrdinary(
   widening: string | undefined,
   path: string
 ): LoweredField | null {
-  return assertedAssetPath(
+  const lowered = assertedAssetPath(
     emitter,
     pickLowering(emitter, declared, name, ctx, override, widening, path),
     declared,
@@ -831,6 +831,14 @@ export function pickOrdinary(
     widening,
     path
   );
+  const authoringType = override?.authoringType;
+  if (lowered === null || authoringType === undefined) {
+    return lowered;
+  }
+  for (const imported of authoringType.imports) {
+    emitter.useFrom(imported.module, imported.name, "type");
+  }
+  return { ...lowered, memberType: authoringType.type };
 }
 
 function pickLowering(

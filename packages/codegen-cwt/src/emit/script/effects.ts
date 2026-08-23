@@ -47,6 +47,7 @@ import {
   EFFECT_FIELD_ADDITIONS,
   EFFECT_FIELD_CARDINALITY_OVERRIDES,
   EFFECT_FIELD_TYPE_OVERRIDES,
+  EFFECT_VALUE_TYPE_OVERRIDES,
   type EffectFieldAddition,
   type EffectFieldCardinalityOverride,
 } from "../../overlay/index.ts";
@@ -500,6 +501,9 @@ function clauseRunsInReceivingScope(value: ArgField["value"]): boolean {
 
 /** Whether one effect's arguments hold a clause typed by the scope it is called in. */
 function takesReceivingScope(effect: EmittedEffect): boolean {
+  if (EFFECT_EXTENSION_SEAMS.get(effect.key)?.receivingScope === true) {
+    return true;
+  }
   const { shape } = effect;
   if (shape.kind !== "fields" && shape.kind !== "wrapper") {
     return false;
@@ -555,7 +559,7 @@ function methodSignatureText(emitter: Emitter, effect: EmittedEffect, outerScope
     case "bool":
       return `  ${method}(value?: boolean): void;\n`;
     case "value":
-      return `  ${method}(value: ${emitter.useValue(shape.value).type}): void;\n`;
+      return `  ${method}(value: ${EFFECT_VALUE_TYPE_OVERRIDES.get(key)?.type ?? emitter.useValue(shape.value).type}): void;\n`;
     case "fields":
       return `  ${method}(args: ${argsType(emitter, shape.fields, outerScope, key)}): void;\n`;
     case "wrapper": {
@@ -866,6 +870,16 @@ function assertFieldOverlayRowsMatched(clustered: ClusteredEffects): void {
       );
     }
   }
+  const effects = [...clustered.clusters.values()].flatMap((cluster) => cluster.effects);
+  for (const key of EFFECT_VALUE_TYPE_OVERRIDES.keys()) {
+    const effect = effects.find((candidate) => candidate.key === key);
+    if (effect?.shape.kind !== "value") {
+      throw new Error(
+        `EFFECT_VALUE_TYPE_OVERRIDES names "${key}", which is not an emitted scalar effect — ` +
+          "retire the overlay row or fix its key"
+      );
+    }
+  }
   for (const key of EFFECT_FIELD_ADDITIONS.keys()) {
     if (!clustered.appliedFieldAdditions.has(key)) {
       throw new Error(
@@ -936,7 +950,7 @@ function extensionSeamInterfaces(emitter: Emitter, clusters: readonly EffectClus
     if (cluster === undefined || effect === undefined) {
       throw new Error(`effects.cwt no longer emits ${key}`);
     }
-    if (takesReceivingScope(effect)) {
+    if (takesReceivingScope(effect) && seam.receivingScope !== true) {
       throw new Error(
         `${key} now takes a clause in its receiving scope, which its hand-written ` +
           `${seam.interfaceName} overload has to declare before the seam can carry it`
@@ -945,18 +959,25 @@ function extensionSeamInterfaces(emitter: Emitter, clusters: readonly EffectClus
     // The args go out under their own name as well: the hand-written overload
     // narrows two members of this object and has no business restating the
     // rest, which are the rules' to change.
+    const receivingScopeType =
+      seam.receivingScopeType === undefined
+        ? outerScopeText(cluster.scopes)
+        : emitter.useFrom(seam.receivingScopeType.module, seam.receivingScopeType.type, "type");
+    const scopeParameter = seam.receivingScope === true ? `<S extends ${receivingScopeType}>` : "";
+    const signatureScope =
+      seam.receivingScope === true ? RECEIVING_SCOPE : outerScopeText(cluster.scopes);
     const argsName = extensionArgsName(effect);
     const args =
       effect.shape.kind === "fields"
         ? docComment([`The arguments \`${camelCase(key)}\` takes, as the rules declare them.`]) +
           `export type ${argsName} = ` +
-          `${argsType(emitter, effect.shape.fields, outerScopeText(cluster.scopes), key)};\n`
+          `${argsType(emitter, effect.shape.fields, signatureScope, key)};\n`
         : "";
     const signature =
       effect.shape.kind === "fields"
         ? `${docComment(effect.docs, "  ")}` +
-          `${extensionFallbackSignature(emitter, effect, outerScopeText(cluster.scopes))}`
-        : methodSignature(emitter, effect, outerScopeText(cluster.scopes));
+          `${extensionFallbackSignature(emitter, effect, signatureScope)}`
+        : methodSignature(emitter, effect, signatureScope);
     chunks.push(
       args +
         docComment([
@@ -964,7 +985,7 @@ function extensionSeamInterfaces(emitter: Emitter, clusters: readonly EffectClus
           `The generated cluster containing ${key} inherits this interface.`,
           seam.reason,
         ]) +
-        `export interface ${seam.interfaceName} {\n${signature}}\n`
+        `export interface ${seam.interfaceName}${scopeParameter} {\n${signature}}\n`
     );
   }
   return chunks;
@@ -992,7 +1013,9 @@ function clusterInterfaces(
     const seams = cluster.effects
       .flatMap((effect) => {
         const seam = EFFECT_EXTENSION_SEAMS.get(effect.key);
-        return seam === undefined ? [] : [seam.interfaceName];
+        return seam === undefined
+          ? []
+          : [seam.interfaceName + (seam.receivingScope === true ? `<${outerScope}>` : "")];
       })
       .sort();
     const parents = seams.length === 0 ? "" : ` extends ${seams.join(", ")}`;
@@ -1119,7 +1142,7 @@ function scopeLinkReferenceRows(
 }
 
 function fieldTypeOverrideReport(): string[] {
-  return [...EFFECT_FIELD_TYPE_OVERRIDES].map(
+  return [...EFFECT_FIELD_TYPE_OVERRIDES, ...EFFECT_VALUE_TYPE_OVERRIDES].map(
     ([key, override]) => `${key} → ${override.type} — ${override.reason}`
   );
 }

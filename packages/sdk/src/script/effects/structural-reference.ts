@@ -120,6 +120,15 @@ const referencesByMethod = {
       "resetEventChainCounter<Chain extends EventChainItem>(args: DefinedCounterArgs<Chain>): void;\nresetEventChainCounter(args: ExternalCounterArgs): void;",
     docs: ["Resets an event-chain counter."],
   },
+  previewModifier: {
+    method: "previewModifier",
+    kind: "structural",
+    availability: { kind: "universal" },
+    signature: "previewModifier(modifier: StaticModifierRef | string): void;",
+    docs: [
+      "Displays a static modifier in a non-executing tooltip without treating this scope as its host.",
+    ],
+  },
   target: {
     method: "target",
     key: "target",

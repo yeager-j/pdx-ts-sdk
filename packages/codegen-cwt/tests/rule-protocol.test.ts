@@ -564,6 +564,7 @@ describe("the effect ownership policy", () => {
         "hiddenEffect",
         "addEventChainCounter",
         "resetEventChainCounter",
+        "previewModifier",
         "target",
         "run",
       ])

@@ -2,6 +2,7 @@
 
 import type { EffectPathOf, ScopeObjOf } from "../../generated/effects.ts";
 import type { ModifierOperationFields } from "../../generated/modifier-policy.ts";
+import type { StaticModifierRef } from "../../generated/refs.ts";
 import type { ScopeName } from "../../generated/scopes.ts";
 import type { ScriptedEffectCall, ScriptedParamValue } from "../scripted.ts";
 import type { ScriptValue, Trigger } from "../trigger-core.ts";
@@ -373,6 +374,9 @@ export interface RandomListArm<S extends ScopeName> {
  * scope interface extends this.
  */
 export interface StructuralEffects<S extends ScopeName> {
+  /** Displays a static modifier in a non-executing tooltip without treating this scope as its host. */
+  previewModifier(modifier: StaticModifierRef | string): void;
+
   /**
    * In-game branching: `if = { limit = { ... } ... }`. This is the in-game
    * counterpart of a TypeScript `if`, which branches at build time. Chain

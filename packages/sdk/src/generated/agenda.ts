@@ -5,6 +5,7 @@
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { EffectBlock, ModifierClosure, WeightBlock } from "../content/types.ts";
+import type { StaticModifierHostContract } from "../script/effects/static-modifiers.ts";
 import type { ScriptValue, Trigger } from "../script/trigger-core.ts";
 import type { StaticModifierRef } from "./refs.ts";
 
@@ -24,7 +25,10 @@ export interface AgendaFields {
   initialEffectCustomLoc?: string;
   initEffect?: EffectBlock<"country", undefined, "country">;
   modifier?: ModifierClosure<"country">;
-  finishModifier?: StaticModifierRef | string;
+  finishModifier?:
+    | (StaticModifierRef & { readonly hostScope?: never })
+    | StaticModifierHostContract<"country">
+    | string;
   effect?: EffectBlock<"country", undefined, "country">;
   aiWeight?: WeightBlock<"country">;
 }
