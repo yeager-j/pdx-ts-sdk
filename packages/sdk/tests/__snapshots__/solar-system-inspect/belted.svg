@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="-129.6 -129.6 259.2 259.2" role="img" aria-label="inspect_solar_system_initializer_belted" style="--hair:0.42;--halo:0.96;--dash:1.68 1.26;--dot:0.42 0.84">
+<title>inspect_solar_system_initializer_belted</title>
+<desc>Cursor-space schematic of inspect_solar_system_initializer_belted (class sc_g): 4 bodies, 1 belts, 1 findings. Distances and disc sizes are the documented approximation, not game rendering.</desc>
+<style>
+  .bg { fill: #0b0e1a; }
+  .orbit { fill: none; stroke: #2c3654; stroke-width: var(--hair); }
+  .orbit-band { fill: none; stroke: #26304b; stroke-opacity: 0.55; }
+  .orbit-uncertain { fill: none; stroke: #45507a; stroke-width: var(--hair); stroke-dasharray: var(--dash); }
+  .belt { fill: none; stroke: #6b5d47; stroke-opacity: 0.35; }
+  .belt-edge { fill: none; stroke: #8a7a5e; stroke-width: var(--hair); stroke-dasharray: var(--dash); }
+  .line { fill: none; stroke: #3d4a6e; stroke-width: var(--hair); stroke-dasharray: var(--dash); }
+  .body-star { fill: #ffd27f; }
+  .body-planet { fill: #cfd8ff; }
+  .body-moon { fill: #9fb4c8; }
+  .body-asteroid { fill: #b0a08a; }
+  .ghost { fill: none; stroke: #7f8cb0; stroke-width: var(--hair); stroke-dasharray: var(--dash); }
+  .maybe { opacity: 0.5; }
+  .unresolved { fill: none; stroke: #7f8cb0; stroke-width: var(--hair); stroke-dasharray: var(--dot); }
+  .halo-definite { fill: none; stroke: #ff5f56; stroke-width: var(--halo); }
+  .halo-possible { fill: none; stroke: #ffb454; stroke-width: var(--halo); }
+  text { fill: #aab4d4; font-family: ui-sans-serif, system-ui, sans-serif; }
+  .leader { stroke: #4a5578; stroke-width: var(--hair); }
+</style>
+<rect class="bg" x="-129.6" y="-129.6" width="259.2" height="259.2"/>
+<circle class="belt" cx="0" cy="0" r="80" stroke-width="20"/>
+<circle class="line" cx="0" cy="0" r="120"/>
+<circle class="orbit" cx="0" cy="0" r="80"/>
+<circle class="orbit" cx="0" cy="0" r="80"/>
+<circle class="orbit" cx="0" cy="0" r="82"/>
+<circle class="body-star" cx="0" cy="0" r="7"/>
+<circle class="body-asteroid" cx="80" cy="0" r="0.96"/>
+<circle class="body-asteroid" cx="-51.42" cy="61.28" r="1"/>
+<circle class="body-planet" cx="80.75" cy="14.24" r="4.5"/>
+<circle class="halo-possible" cx="80.75" cy="14.24" r="6.42"/>
+<line class="leader" x1="4.95" y1="-4.95" x2="7.77" y2="-7.77"/>
+<text x="8.7" y="-7.77" font-size="3.12">star · 28</text>
+<line class="leader" x1="80.68" y1="-0.68" x2="81.73" y2="-1.73"/>
+<text x="82.66" y="-1.73" font-size="3.12">pc_asteroid · 3</text>
+<line class="leader" x1="-50.72" y1="60.58" x2="-49.66" y2="59.52"/>
+<text x="-48.72" y="59.52" font-size="3.12">pc_asteroid · 4</text>
+<line class="leader" x1="83.94" y1="11.06" x2="86.02" y2="8.97"/>
+<text x="86.96" y="8.97" font-size="3.12">pc_continental · 18</text>
+<g font-size="3.12">
+<g transform="translate(0 -123.6)"><circle class="body-planet" cx="-126" cy="0" r="1.44"/><text x="-122.4" y="1.09">fixed body</text></g>
+<g transform="translate(0 -118.92)"><circle class="ghost" cx="-126" cy="0" r="1.44"/><text x="-122.4" y="1.09">range or random position</text></g>
+<g transform="translate(0 -114.24)"><circle class="unresolved" cx="-126" cy="0" r="1.44"/><text x="-122.4" y="1.09">unresolvable position</text></g>
+<g transform="translate(0 -109.56)"><circle class="halo-definite" cx="-126" cy="0" r="1.44"/><text x="-122.4" y="1.09">definite overlap risk</text></g>
+<g transform="translate(0 -104.88)"><circle class="halo-possible" cx="-126" cy="0" r="1.44"/><text x="-122.4" y="1.09">possible overlap risk</text></g>
+</g>
+</svg>

@@ -9,6 +9,13 @@ export {
   type AsteroidBelt,
   type AsteroidBeltInput,
 } from "./solar-system-layout.ts";
+export {
+  inspectSolarSystem,
+  type InspectSolarSystemOptions,
+  type SolarSystemDiagnostic,
+  type SolarSystemDiagnosticCode,
+  type SolarSystemInspection,
+} from "./solar-system-inspect/inspect.ts";
 export type { ScopeName } from "./generated/scopes.ts";
 export * from "./generated/enums.ts";
 export { refId, type TypedRef } from "./script/scalar.ts";
