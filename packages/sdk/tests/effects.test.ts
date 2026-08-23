@@ -22,7 +22,7 @@ import {
 } from "../src/script/effects/recorder.ts";
 import type { StaticModifierHostContract } from "../src/script/effects/static-modifiers.ts";
 import type { ScriptCtx } from "../src/script/effects/types.ts";
-import { mapEntries } from "../src/script/scalar.ts";
+import { isEffectBlockValue, mapEntries } from "../src/script/scalar.ts";
 import {
   hasCountryFlag,
   hasOwner,
@@ -38,6 +38,294 @@ const createdArmyFlags = armyFlags("effects_test_created_army");
 const createdMegastructureFlags = megastructureFlags("effects_test_created_megastructure");
 
 describe("the effect recorder over generated meta", () => {
+  it("dispatches top-level block arms by their declared scalar object kinds", () => {
+    const typedRef = Object.assign(() => undefined, { id: "typed_ref" });
+
+    expect(isEffectBlockValue({ required: true }, ["typed-ref"], "fields")).toBe(true);
+    expect(isEffectBlockValue(scopeValue("country"), ["scope-ref"], "fields")).toBe(false);
+    expect(isEffectBlockValue(typedRef, ["typed-ref"], "wrapper")).toBe(false);
+    expect(isEffectBlockValue(() => undefined, ["typed-ref"], "wrapper")).toBe(true);
+  });
+
+  it("serializes every scalar-or-block effect in each declared form", () => {
+    type ScalarOrBlockMethod =
+      | "addBuilding"
+      | "addDistrict"
+      | "addPopAmount"
+      | "addRelic"
+      | "addTrait"
+      | "autoFollowFleet"
+      | "changeCountryFlag"
+      | "changeGovernment"
+      | "changePc"
+      | "createFleetFromNavalCap"
+      | "damageShip"
+      | "deleteDimensionalFleet"
+      | "deleteFleet"
+      | "destroyFleet"
+      | "endFleetContract"
+      | "guaranteeCountry"
+      | "log"
+      | "playSound"
+      | "refuseCovenant"
+      | "removePopAmount"
+      | "setLocation"
+      | "setName"
+      | "startTerraformProcess"
+      | "startTerraformProgress";
+    type UntypedScope = Record<ScalarOrBlockMethod, (...args: any[]) => void>;
+    const scalarCases: readonly {
+      readonly name: string;
+      readonly call: (scope: UntypedScope) => void;
+      readonly output: string;
+    }[] = [
+      {
+        name: "addBuilding",
+        call: (scope) => scope.addBuilding("building"),
+        output: "add_building = building\n",
+      },
+      {
+        name: "addDistrict",
+        call: (scope) => scope.addDistrict("district"),
+        output: "add_district = district\n",
+      },
+      {
+        name: "addPopAmount",
+        call: (scope) => scope.addPopAmount(2),
+        output: "add_pop_amount = 2\n",
+      },
+      { name: "addRelic", call: (scope) => scope.addRelic("relic"), output: "add_relic = relic\n" },
+      { name: "addTrait", call: (scope) => scope.addTrait("trait"), output: "add_trait = trait\n" },
+      {
+        name: "autoFollowFleet",
+        call: (scope) => scope.autoFollowFleet(scopeValue("fleet")),
+        output: "auto_follow_fleet = fleet\n",
+      },
+      {
+        name: "changeCountryFlag",
+        call: (scope) => scope.changeCountryFlag("random"),
+        output: "change_country_flag = random\n",
+      },
+      {
+        name: "changeGovernment",
+        call: (scope) => scope.changeGovernment("random"),
+        output: "change_government = random\n",
+      },
+      {
+        name: "changePc",
+        call: (scope) => scope.changePc("pc_continental"),
+        output: "change_pc = pc_continental\n",
+      },
+      {
+        name: "createFleetFromNavalCap",
+        call: (scope) => scope.createFleetFromNavalCap(1),
+        output: "create_fleet_from_naval_cap = 1\n",
+      },
+      { name: "damageShip", call: (scope) => scope.damageShip(1), output: "damage_ship = 1\n" },
+      {
+        name: "deleteDimensionalFleet",
+        call: (scope) => scope.deleteDimensionalFleet(scopeValue("fleet")),
+        output: "delete_dimensional_fleet = fleet\n",
+      },
+      {
+        name: "deleteFleet",
+        call: (scope) => scope.deleteFleet(scopeValue("fleet")),
+        output: "delete_fleet = fleet\n",
+      },
+      {
+        name: "destroyFleet",
+        call: (scope) => scope.destroyFleet(scopeValue("fleet")),
+        output: "destroy_fleet = fleet\n",
+      },
+      {
+        name: "endFleetContract",
+        call: (scope) => scope.endFleetContract(),
+        output: "end_fleet_contract = yes\n",
+      },
+      {
+        name: "guaranteeCountry",
+        call: (scope) => scope.guaranteeCountry(scopeValue("country")),
+        output: "guarantee_country = country\n",
+      },
+      { name: "log", call: (scope) => scope.log("message"), output: "log = message\n" },
+      {
+        name: "playSound",
+        call: (scope) => scope.playSound("sound"),
+        output: "play_sound = sound\n",
+      },
+      {
+        name: "refuseCovenant",
+        call: (scope) => scope.refuseCovenant("patron"),
+        output: "refuse_covenant = patron\n",
+      },
+      {
+        name: "removePopAmount",
+        call: (scope) => scope.removePopAmount(2),
+        output: "remove_pop_amount = 2\n",
+      },
+      {
+        name: "setLocation",
+        call: (scope) => scope.setLocation(scopeValue("planet")),
+        output: "set_location = planet\n",
+      },
+      { name: "setName", call: (scope) => scope.setName("random"), output: "set_name = random\n" },
+      {
+        name: "startTerraformProcess",
+        call: (scope) => scope.startTerraformProcess("pc_arid"),
+        output: "start_terraform_process = pc_arid\n",
+      },
+      {
+        name: "startTerraformProgress",
+        call: (scope) => scope.startTerraformProgress("pc_arid"),
+        output: "start_terraform_progress = pc_arid\n",
+      },
+    ];
+    const blockCases: readonly {
+      readonly name: string;
+      readonly call: (scope: UntypedScope) => void;
+      readonly output: string;
+    }[] = [
+      {
+        name: "addBuilding",
+        call: (scope) => scope.addBuilding({ building: "building" }),
+        output: "add_building = {\n\tbuilding = building\n}\n",
+      },
+      {
+        name: "addDistrict",
+        call: (scope) => scope.addDistrict({ districtType: "district" }),
+        output: "add_district = {\n\tdistrict_type = district\n}\n",
+      },
+      {
+        name: "addPopAmount",
+        call: (scope) => scope.addPopAmount({ amount: 2 }),
+        output: "add_pop_amount = {\n\tamount = 2\n}\n",
+      },
+      {
+        name: "addRelic",
+        call: (scope) => scope.addRelic({ key: "relic" }),
+        output: "add_relic = {\n\tkey = relic\n}\n",
+      },
+      {
+        name: "addTrait",
+        call: (scope) => scope.addTrait({ trait: "trait" }),
+        output: "add_trait = {\n\ttrait = trait\n}\n",
+      },
+      {
+        name: "autoFollowFleet",
+        call: (scope) => scope.autoFollowFleet({ target: scopeValue("fleet") }),
+        output: "auto_follow_fleet = {\n\ttarget = fleet\n}\n",
+      },
+      {
+        name: "changeCountryFlag",
+        call: (scope) =>
+          scope.changeCountryFlag({
+            icon: { category: "flag", file: "icon" },
+            background: { category: "flag", file: "background" },
+            colors: [],
+          }),
+        output:
+          "change_country_flag = {\n\ticon = {\n\t\tcategory = flag\n\t\tfile = icon\n\t}\n\tbackground = {\n\t\tcategory = flag\n\t\tfile = background\n\t}\n\tcolors = {}\n}\n",
+      },
+      {
+        name: "changeGovernment",
+        call: (scope) => scope.changeGovernment({ authority: "random" }),
+        output: "change_government = {\n\tauthority = random\n}\n",
+      },
+      {
+        name: "changePc",
+        call: (scope) => scope.changePc({ class: "pc_continental", inheritEntity: true }),
+        output: "change_pc = {\n\tclass = pc_continental\n\tinherit_entity = yes\n}\n",
+      },
+      {
+        name: "createFleetFromNavalCap",
+        call: (scope) => scope.createFleetFromNavalCap({ fraction: 1, shipOwnerType: "country" }),
+        output: "create_fleet_from_naval_cap = {\n\tfraction = 1\n\tship_owner_type = country\n}\n",
+      },
+      {
+        name: "damageShip",
+        call: (scope) => scope.damageShip({ amount: 1, attacker: scopeValue("country") }),
+        output: "damage_ship = {\n\tamount = 1\n\tattacker = country\n}\n",
+      },
+      {
+        name: "deleteDimensionalFleet",
+        call: (scope) => scope.deleteDimensionalFleet({ target: scopeValue("fleet") }),
+        output: "delete_dimensional_fleet = {\n\ttarget = fleet\n}\n",
+      },
+      {
+        name: "deleteFleet",
+        call: (scope) => scope.deleteFleet({ target: scopeValue("fleet") }),
+        output: "delete_fleet = {\n\ttarget = fleet\n}\n",
+      },
+      {
+        name: "destroyFleet",
+        call: (scope) => scope.destroyFleet({ target: scopeValue("fleet") }),
+        output: "destroy_fleet = {\n\ttarget = fleet\n}\n",
+      },
+      {
+        name: "endFleetContract",
+        call: (scope) =>
+          scope.endFleetContract({ initiator: scopeValue("country"), reason: "broken" }),
+        output: "end_fleet_contract = {\n\tinitiator = country\n\treason = broken\n}\n",
+      },
+      {
+        name: "guaranteeCountry",
+        call: (scope) => scope.guaranteeCountry({ target: scopeValue("country") }),
+        output: "guarantee_country = {\n\ttarget = country\n}\n",
+      },
+      {
+        name: "log",
+        call: (scope) => scope.log((inner: UntypedScope) => inner.log("message")),
+        output: "log = {\n\tlog = message\n}\n",
+      },
+      {
+        name: "playSound",
+        call: (scope) => scope.playSound({ sound: "sound", location: scopeValue("planet") }),
+        output: "play_sound = {\n\tsound = sound\n\tlocation = planet\n}\n",
+      },
+      {
+        name: "refuseCovenant",
+        call: (scope) => scope.refuseCovenant({ patron: "patron" }),
+        output: "refuse_covenant = {\n\tpatron = patron\n}\n",
+      },
+      {
+        name: "removePopAmount",
+        call: (scope) => scope.removePopAmount({ amount: 2 }),
+        output: "remove_pop_amount = {\n\tamount = 2\n}\n",
+      },
+      {
+        name: "setLocation",
+        call: (scope) => scope.setLocation({ target: scopeValue("planet") }),
+        output: "set_location = {\n\ttarget = planet\n}\n",
+      },
+      {
+        name: "setName",
+        call: (scope) => scope.setName({ key: "NAME" }),
+        output: "set_name = {\n\tkey = NAME\n}\n",
+      },
+      {
+        name: "startTerraformProcess",
+        call: (scope) => scope.startTerraformProcess({ class: "pc_arid", inheritEntity: true }),
+        output: "start_terraform_process = {\n\tclass = pc_arid\n\tinherit_entity = yes\n}\n",
+      },
+      {
+        name: "startTerraformProgress",
+        call: (scope) => scope.startTerraformProgress({ class: "pc_arid" }),
+        output: "start_terraform_progress = {\n\tclass = pc_arid\n}\n",
+      },
+    ];
+
+    for (const testCase of scalarCases) {
+      const sink: PdxEntry[] = [];
+      testCase.call(makeScope<"country">(sink) as unknown as UntypedScope);
+      expect(serialize(sink), `${testCase.name} scalar`).toBe(testCase.output);
+    }
+    for (const testCase of blockCases) {
+      const sink: PdxEntry[] = [];
+      testCase.call(makeScope<"country">(sink) as unknown as UntypedScope);
+      expect(serialize(sink), `${testCase.name} block`).toBe(testCase.output);
+    }
+  });
+
   it("serializes generated structured-only effect fields", () => {
     const sink: PdxEntry[] = [];
     const country = makeScope<"country">(sink);

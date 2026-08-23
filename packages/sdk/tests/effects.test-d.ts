@@ -7,7 +7,9 @@
 import type { PdxEntry } from "@pdx-ts/pdxscript";
 import { describe, expectTypeOf, it } from "vitest";
 
+import type { ScopeObjOf } from "../src/generated/effects.ts";
 import type { AmbientObjectRef, BuildingRef, MegastructureRef } from "../src/generated/refs.ts";
+import type { ScopeName } from "../src/generated/scopes.ts";
 import {
   ambientObjectFlags,
   countryFlags,
@@ -27,6 +29,93 @@ const megastructureRef = { id: "effects_type_test_megastructure" } as Megastruct
 const megastructureFlag = megastructureFlags(
   "effects_type_test_megastructure_flag"
 ).effects_type_test_megastructure_flag;
+
+type MethodBlockArgument<T, Name extends string> =
+  T extends Record<Name, (...args: any[]) => unknown> ? Parameters<T[Name]>[0] : never;
+
+type EffectBlockArgument<Name extends string> = {
+  [Scope in ScopeName]: MethodBlockArgument<ScopeObjOf<Scope>, Name>;
+}[ScopeName];
+
+describe("generated scalar-or-block effect forms", () => {
+  it("requires each block form's required members", () => {
+    // @ts-expect-error — add_building's block requires building
+    const addBuilding: EffectBlockArgument<"addBuilding"> = {};
+    // @ts-expect-error — add_district's block requires districtType
+    const addDistrict: EffectBlockArgument<"addDistrict"> = {};
+    // @ts-expect-error — add_pop_amount's block requires amount
+    const addPopAmount: EffectBlockArgument<"addPopAmount"> = {};
+    // @ts-expect-error — add_relic's block requires key
+    const addRelic: EffectBlockArgument<"addRelic"> = {};
+    // @ts-expect-error — add_trait's block requires trait
+    const addTrait: EffectBlockArgument<"addTrait"> = {};
+    // @ts-expect-error — auto_follow_fleet's block requires target
+    const autoFollowFleet: EffectBlockArgument<"autoFollowFleet"> = {};
+    // @ts-expect-error — change_country_flag's block requires icon, background, and colors
+    const changeCountryFlag: EffectBlockArgument<"changeCountryFlag"> = {};
+    // @ts-expect-error — change_government's optional authority is not numeric
+    const changeGovernment: EffectBlockArgument<"changeGovernment"> = { authority: 1 };
+    // @ts-expect-error — change_pc's block requires class and inheritEntity
+    const changePc: EffectBlockArgument<"changePc"> = {};
+    // @ts-expect-error — create_fleet_from_naval_cap's block requires fraction and shipOwnerType
+    const createFleetFromNavalCap: EffectBlockArgument<"createFleetFromNavalCap"> = {};
+    // @ts-expect-error — damage_ship's block requires amount and attacker
+    const damageShip: EffectBlockArgument<"damageShip"> = {};
+    // @ts-expect-error — delete_dimensional_fleet's block requires target
+    const deleteDimensionalFleet: EffectBlockArgument<"deleteDimensionalFleet"> = {};
+    // @ts-expect-error — delete_fleet's block requires target
+    const deleteFleet: EffectBlockArgument<"deleteFleet"> = {};
+    // @ts-expect-error — destroy_fleet's block requires target
+    const destroyFleet: EffectBlockArgument<"destroyFleet"> = {};
+    // @ts-expect-error — end_fleet_contract's block requires initiator and reason
+    const endFleetContract: EffectBlockArgument<"endFleetContract"> = {};
+    // @ts-expect-error — guarantee_country's block requires target
+    const guaranteeCountry: EffectBlockArgument<"guaranteeCountry"> = {};
+    // @ts-expect-error — log's block form is a closure, not an object
+    const log: EffectBlockArgument<"log"> = {};
+    // @ts-expect-error — play_sound's block requires sound and location
+    const playSound: EffectBlockArgument<"playSound"> = {};
+    // @ts-expect-error — refuse_covenant's block requires patron
+    const refuseCovenant: EffectBlockArgument<"refuseCovenant"> = {};
+    // @ts-expect-error — remove_pop_amount's block requires amount
+    const removePopAmount: EffectBlockArgument<"removePopAmount"> = {};
+    // @ts-expect-error — set_location's block requires target
+    const setLocation: EffectBlockArgument<"setLocation"> = {};
+    // @ts-expect-error — set_name's block requires key
+    const setName: EffectBlockArgument<"setName"> = {};
+    // @ts-expect-error — start_terraform_process's block requires class and inheritEntity
+    const startTerraformProcess: EffectBlockArgument<"startTerraformProcess"> = {};
+    // @ts-expect-error — start_terraform_progress's block requires class
+    const startTerraformProgress: EffectBlockArgument<"startTerraformProgress"> = {};
+
+    void [
+      addBuilding,
+      addDistrict,
+      addPopAmount,
+      addRelic,
+      addTrait,
+      autoFollowFleet,
+      changeCountryFlag,
+      changeGovernment,
+      changePc,
+      createFleetFromNavalCap,
+      damageShip,
+      deleteDimensionalFleet,
+      deleteFleet,
+      destroyFleet,
+      endFleetContract,
+      guaranteeCountry,
+      log,
+      playSound,
+      refuseCovenant,
+      removePopAmount,
+      setLocation,
+      setName,
+      startTerraformProcess,
+      startTerraformProgress,
+    ];
+  });
+});
 
 describe("generated effect scope safety", () => {
   it("types structured-only effect fields and rejects scalar substitutes", () => {

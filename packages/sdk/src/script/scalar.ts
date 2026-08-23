@@ -68,6 +68,22 @@ export type ScalarArg = string | number | boolean | TypedRef<string> | ScopeValu
 
 export type ScalarObjectKind = "scope-ref" | "typed-ref";
 
+function isDeclaredScalarObject(
+  value: unknown,
+  scalarObjectKinds: readonly ScalarObjectKind[]
+): boolean {
+  if (
+    ((typeof value !== "object" || value === null) && typeof value !== "function") ||
+    Array.isArray(value)
+  ) {
+    return false;
+  }
+  if (scalarObjectKinds.includes("scope-ref") && "kind" in value && value.kind === "scope-ref") {
+    return true;
+  }
+  return scalarObjectKinds.includes("typed-ref") && "id" in value && typeof value.id === "string";
+}
+
 /**
  * Whether an object-shaped authored value belongs to a structured block arm.
  * Generated mixed-field metadata names every SDK scalar object kind the scalar
@@ -81,13 +97,26 @@ export function isStructuredValue(
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
     return false;
   }
-  if (scalarObjectKinds.includes("scope-ref") && "kind" in value && value.kind === "scope-ref") {
-    return false;
+  return !isDeclaredScalarObject(value, scalarObjectKinds);
+}
+
+/**
+ * Whether an effect's top-level scalar-or-block call receives its block arm.
+ * The scalar arm's declared object kinds take precedence over the block's
+ * authoring shape, so callable typed-reference proxies remain scalar values.
+ */
+export function isEffectBlockValue(
+  value: unknown,
+  scalarObjectKinds: readonly ScalarObjectKind[],
+  blockKind: "fields" | "map" | "wrapper" | "alias-list"
+): boolean {
+  if (blockKind === "alias-list") {
+    return Array.isArray(value);
   }
-  if (scalarObjectKinds.includes("typed-ref") && "id" in value && typeof value.id === "string") {
-    return false;
+  if (blockKind === "wrapper") {
+    return typeof value === "function" && !isDeclaredScalarObject(value, scalarObjectKinds);
   }
-  return true;
+  return isStructuredValue(value, scalarObjectKinds);
 }
 
 /** An operand a comparison argument compares against. */
