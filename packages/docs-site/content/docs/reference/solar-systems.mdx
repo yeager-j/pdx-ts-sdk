@@ -146,6 +146,62 @@ mod.solarSystemInitializer("rubble", {
 });
 ```
 
+### Inspect a layout before you ship it
+
+A definition can typecheck and serialize correctly while bodies overlap or
+orbit the wrong place. `inspectSolarSystem` reads an ordinary defined
+initializer and returns structured layout findings plus a standalone SVG
+preview. It is advisory only: nothing it finds reaches `mod.warnings` or
+fails a compile.
+
+```ts
+import { writeFile } from "node:fs/promises";
+import { inspectSolarSystem } from "@pdx-ts/sdk";
+
+const haven = mod.solarSystemInitializer("haven", definition);
+const { diagnostics, svg } = inspectSolarSystem(haven);
+
+for (const finding of diagnostics) {
+  console.log(finding.severity, finding.code, finding.message);
+}
+await writeFile("haven.svg", svg);
+```
+
+Each finding carries a stable `code`, a `severity`, a `certainty`, the source
+`paths` (for example `planet[1].moon[0]`), and a message. `warning` findings
+are visual-overlap risks or unusable field values; `info` findings record
+idioms and modeling limits. `certainty` speaks about authored ranges:
+
+- `definite` — the finding holds for every value the ranges allow.
+- `possible` — the finding holds for some values: a range, a `count`
+  template, a random angle, or an assumed body size is involved.
+- `unresolved` — the geometry cannot be computed faithfully, for example a
+  scripted-variable `orbitDistance` such as `"@belt_radius"`. The inspector
+  reports these instead of guessing.
+
+The preview auto-fits the system, draws orbit paths, asteroid-belt annuli,
+and body labels, and renders uncertainty distinctly: ranged positions become
+translucent bands, random angles become dashed rings with a ghost marker, and
+unresolvable positions become a dotted `?` marker. Bodies named in overlap
+findings get a red (definite) or amber (possible) halo. Open the written
+`.svg` file in a browser.
+
+<Callout type="warn" title="The preview is a schematic of cursor space">
+  The game separates bodies with size-based spacing that has no author-facing formula, and it
+  renders sprites from entity assets, not from `size`. The preview draws each body as a disc with
+  radius `size` times a fixed calibration constant, and assumes a per-kind radius when the size is
+  missing or the class is random. Overlap findings are therefore visual-overlap risks, not exact
+  sprite collisions. Exact stacking at one cursor point is the game's own idiom (vanilla fans
+  asteroids this way) and reports as info, never as an overlap.
+</Callout>
+
+The model follows the game's three coordinate conventions: cursor deltas for
+`orbitDistance` and `orbitAngle`, absolute-from-owner radii for orbital
+lines, and absolute-from-center radii for asteroid belts. Every shipped
+vanilla initializer inspects without a definite overlap finding; that
+calibration gate runs against the installed game in
+`solar-system-inspect-vanilla.test.ts`.
+
 ## Only the top-level initializer has an id
 
 `mod.solarSystemInitializer("haven", definition)` mints the full id
@@ -303,15 +359,17 @@ manual `spawnSystem` call work; explicit calls do not need it.
 - There is no `inlineScript` field. A shared planet tree or weight block has
   to be written out in TypeScript rather than pulled from a script file.
 - The SDK checks types, effect-callback scopes, owned references, prefixes,
-  output paths, and serialization. It does not simulate galaxy generation,
-  placement attempts, initializer selection, random planet-class validity, or
-  hyperlane topology.
+  output paths, and serialization, and `inspectSolarSystem` adds advisory
+  static layout inspection. It does not simulate galaxy generation, placement
+  attempts, initializer selection, random planet-class validity, or hyperlane
+  topology.
 
 Test the initializer in a fresh galaxy and through every scripted spawn path.
 Check three groups:
 
-- Geometry: object order and names in system view, asteroid-belt radii, nested
-  moon orbits.
+- Geometry: run `inspectSolarSystem` first for a pre-game pass, then confirm
+  object order and names in system view, asteroid-belt radii, and nested moon
+  orbits.
 - Scripting: flags and effects, repeated spawning, save and load.
 - Placement: required neighbors, hyperlanes, discovery state, and a crowded
   galaxy with no valid position.
@@ -332,6 +390,8 @@ system, and how an initializer tree continued into its neighbors. See
 - [`vanilla.solarSystemInitializer`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
   provides checked references to initializer ids in the selected
   `@pdx-ts/stellaris-ids` game version.
+- [`inspectSolarSystem`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/solar-system-inspect/inspect.ts)
+  returns the layout diagnostics and the SVG preview described above.
 
 ## Field reference
 
