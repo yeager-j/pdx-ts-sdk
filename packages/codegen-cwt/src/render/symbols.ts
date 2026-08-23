@@ -70,7 +70,10 @@ const SYMBOL_MODULES: readonly ModuleSymbols[] = [
     module: "../script/effects/types.ts",
     types: ["EffectPath", "Modifier", "ScopeValue", "StructuralEffects"],
   },
-  { module: "../script/scalar.ts", values: ["isComparisonList", "isStructuredValue", "refId"] },
+  {
+    module: "../script/scalar.ts",
+    values: ["isComparisonList", "isStructuredValue", "mapEntries", "refId"],
+  },
   {
     module: "../script/trigger-core.ts",
     types: ["ScriptValue", "Trigger"],

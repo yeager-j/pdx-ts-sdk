@@ -5,9 +5,11 @@ import type { ScopeName } from "../src/generated/scopes.ts";
 import type { TechnologyDef } from "../src/generated/technology.ts";
 import { countryFlags, planetFlags, type CountryFlag } from "../src/generated/value-sets.ts";
 import { eventTarget } from "../src/index.ts";
+import { makeScope } from "../src/script/effects/recorder.ts";
 import {
   aiArmorRatio,
   anyTraitOfSpecies,
+  checkEconomicProductionModifierForJob,
   checkVariable,
   customTooltip,
   hasActiveEvent,
@@ -276,5 +278,57 @@ describe("scalar-or-block trigger overloads", () => {
     isWarParticipant({ war, side: "attackers" });
     // @ts-expect-error — the scalar arm is a scope value, never a bare word
     isWarParticipant("attackers");
+  });
+});
+
+describe("open-keyed argument blocks", () => {
+  const country = makeScope<"country">([]);
+
+  it("takes any key the script invents, with the rules' value type", () => {
+    country.setTradeConversions({ trade: 0.5, mymod_resource: "@share" });
+    country.setCountryCodeFlags({ colonizer: true });
+    country.addResourceFromDebris({ resources: { minerals: 1000 } });
+  });
+
+  it("keeps the map's value type", () => {
+    // @ts-expect-error — value_set[country_flag] = bool takes a boolean, not "yes"
+    country.setCountryCodeFlags({ colonizer: "yes" });
+  });
+
+  it("keeps a spliced map under its own member", () => {
+    // @ts-expect-error — the resource map lives under `resources`, not at the top level
+    country.addResourceFromDebris({ minerals: 1 });
+  });
+
+  it("keys an int-filtered map on numbers", () => {
+    country.createLeader({
+      class: "commander",
+      traits: { entries: { 1: "leader_trait_eager", 2: "random_trait" } },
+    });
+    country.createLeader({
+      class: "commander",
+      // @ts-expect-error — `int = <trait.leader_trait>` is a numeric key filter,
+      // and the game reads a word here as no level at all
+      traits: { entries: { first: "random_trait" } },
+    });
+  });
+
+  it("takes either arm of a scalar-or-map trigger field", () => {
+    checkEconomicProductionModifierForJob({
+      job: "researcher",
+      resource: "minerals",
+      value: 1,
+    });
+    checkEconomicProductionModifierForJob({
+      job: "researcher",
+      resource: { physics_research: [">", 0.5] },
+      value: 1,
+    });
+    checkEconomicProductionModifierForJob({
+      job: "researcher",
+      // @ts-expect-error — the map's values are numbers, not words
+      resource: { physics_research: "most" },
+      value: 1,
+    });
   });
 });

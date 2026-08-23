@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import type { RuleField } from "@pdx-ts/codegen-cwt/cwt/model";
 import { parseCwt, type CwtNode } from "@pdx-ts/codegen-cwt/cwt/parser";
 import { readAliases, scopeIndex } from "@pdx-ts/codegen-cwt/cwt/rules";
 import { emitEffects } from "@pdx-ts/codegen-cwt/emit/script/effects";
@@ -10,9 +11,13 @@ import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
 import { lowerRule, lowerRuleTable } from "@pdx-ts/codegen-cwt/lower/lowered-rule";
 import {
-  mergeFields,
+  mapType,
+  mergeBlock,
   repeatedMemberType,
+  type ArgField,
   type ArgValue,
+  type MapValue,
+  type SkipReason,
 } from "@pdx-ts/codegen-cwt/lower/script-shape";
 import {
   deriveContentSwapIdentities,
@@ -35,6 +40,25 @@ const docs = parseTriggerDocs(
 );
 const emitter = new Emitter(rules);
 const scopes = scopeIndex(rules);
+
+/**
+ * The named members one block of declarations lowers to. A block that lowers
+ * to an open map instead is a fault in the case under test, not a result
+ * these assertions can read.
+ */
+function mergedFields(
+  blockEmitter: Emitter,
+  fields: readonly RuleField[]
+): ArgField[] | SkipReason {
+  const block = mergeBlock(blockEmitter, fields, null, new Set<string>());
+  if ("detail" in block) {
+    return block;
+  }
+  if (block.kind === "map") {
+    throw new Error("the declarations lowered to an open map, not named fields");
+  }
+  return [...block.fields];
+}
 
 function cwtFilesUnder(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
@@ -171,7 +195,7 @@ describe("LoweredRule", () => {
     );
     expect(ambientSignature).toContain("target?: ScopeValue");
     expect(emitted.interfaces).toContain("entityOffset?: number | { min: number; max: number }");
-    expect(emitted.meta).toContain('kind: "scalar-or-fields"');
+    expect(emitted.meta).toContain('kind: "scalar-or-block"');
     expect(emitted.interfaces).toContain("effect?: (scope: AmbientObjectScope) => void");
     expect(emitted.fieldAdditions).toEqual([
       expect.stringContaining("create_ambient_object.target"),
@@ -264,12 +288,7 @@ describe("LoweredRule", () => {
       emitted.skipped
         .filter((skip) => nameEffects.includes(skip.name))
         .map(({ name, category }) => [name, category])
-    ).toEqual([
-      ["clone_leader", "computed-field-key"],
-      ["create_leader", "computed-field-key"],
-      ["create_saved_leader", "computed-field-key"],
-      ["create_species", "multiple-structured-scalar-arms"],
-    ]);
+    ).toEqual([]);
     expect(emitted.interfaces).toContain('civics?: ScopeValue<"agreement"');
     expect(emitted.interfaces).toContain(
       '| { civic?: readonly (CivicOrOriginCivicRef | string | "random")[] }'
@@ -302,11 +321,11 @@ describe("LoweredRule", () => {
     );
     const usage = effectEmitter.endFile();
     expect(usage.refs).toContain("name_list");
-    // Only an emitted rule contributes imports: `create_country` now emits, so
-    // the enum behind its `contact_rule` field is one of this file's; the
-    // still-skipped `create_species` contributes nothing.
+    // Only an emitted rule contributes imports, and every name-aliasing rule
+    // now emits: `create_country` brings the enum behind its `contact_rule`
+    // field, `create_species` the class behind its `class` field.
     expect(usage.enums).toContain("contact_rule");
-    expect(usage.refs).not.toContain("species_class");
+    expect(usage.refs).toContain("species_class");
   });
 
   it("authors a repeated effect field as an array and marks it repeated in the meta", () => {
@@ -441,25 +460,20 @@ describe("LoweredRule", () => {
     const fields = block.named.filter(
       (field) => field.key.kind === "name" && field.key.name === "entity_offset"
     );
-    const merged = mergeFields(
-      new Emitter(rules),
-      [
-        ...fields,
-        {
-          ...scalarOffset,
-          type: { kind: "typeRef", name: "ambient_object" },
-        },
-      ],
-      null,
-      new Set()
-    );
+    const merged = mergedFields(new Emitter(rules), [
+      ...fields,
+      {
+        ...scalarOffset,
+        type: { kind: "typeRef", name: "ambient_object" },
+      },
+    ]);
     expect(Array.isArray(merged)).toBe(true);
     if (!Array.isArray(merged)) {
       throw new Error(merged.detail);
     }
     expect(merged).toHaveLength(1);
     expect(merged[0]?.value).toMatchObject({
-      kind: "scalarOrFields",
+      kind: "scalarOrBlock",
       scalar: { objectKinds: ["typed-ref"] },
     });
   });
@@ -468,7 +482,7 @@ describe("LoweredRule", () => {
     const parent = effects
       .get("create_fleet")!
       .blocks[0]!.named.filter((field) => field.key.kind === "name" && field.key.name === "parent");
-    const merged = mergeFields(new Emitter(rules), parent, null, new Set());
+    const merged = mergedFields(new Emitter(rules), parent);
     expect(Array.isArray(merged)).toBe(true);
     if (!Array.isArray(merged)) {
       throw new Error(merged.detail);
@@ -487,14 +501,12 @@ describe("LoweredRule", () => {
     const parent = effects
       .get("create_fleet")!
       .blocks[0]!.named.filter((field) => field.key.kind === "name" && field.key.name === "parent");
-    const merged = mergeFields(
+    const merged = mergedFields(
       new Emitter(rules),
       parent.map((field) => ({
         ...field,
         type: { kind: "unknownKeyword", text: "sceop2[fleet]" } as const,
-      })),
-      null,
-      new Set()
+      }))
     );
     expect(merged).toEqual({
       category: "unsupported-field-value",
@@ -502,9 +514,70 @@ describe("LoweredRule", () => {
     });
   });
 
+  it("keys an int-filtered map on number and a reference-filtered one on string", () => {
+    const map = (overrides: Partial<MapValue>): MapValue => ({
+      keyName: "int",
+      indexType: "number",
+      value: { type: "TraitRef | string", toScalar: (expression) => expression },
+      cardinality: { min: 0, max: null },
+      splice: false,
+      ...overrides,
+    });
+
+    expect(mapType(new Emitter(rules), map({}))).toBe(
+      "{ readonly [int: number]: TraitRef | string }"
+    );
+    expect(mapType(new Emitter(rules), map({ keyName: "resource", indexType: "string" }))).toBe(
+      "{ readonly [resource: string]: TraitRef | string }"
+    );
+  });
+
+  it("lowers the int key filter of leader traits to a number-keyed member", () => {
+    const traitsDeclarations = effects
+      .get("create_leader")!
+      .blocks[0]!.named.filter((field) => field.key.kind === "name" && field.key.name === "traits");
+    const merged = mergedFields(new Emitter(rules), traitsDeclarations);
+
+    expect(Array.isArray(merged)).toBe(true);
+    if (!Array.isArray(merged)) {
+      throw new Error(merged.detail);
+    }
+    const traits = merged.find((field) => field.name === "traits");
+    if (traits?.value.kind !== "fields") {
+      throw new Error("create_leader.traits no longer lowers to a block of named members");
+    }
+    expect(traits.value.fields.find((field) => field.name === "entries")?.value).toMatchObject({
+      kind: "map",
+      map: { keyName: "int", indexType: "number", splice: true },
+    });
+  });
+
+  it("declines a mixed block whose open keys come from two key filters", () => {
+    const debris = effects.get("add_resource_from_debris")!.blocks[0]!.named;
+    const patron = effects.get("add_attunement")!.blocks[0]!.named[0]!;
+    const block = mergeBlock(new Emitter(rules), [...debris, patron], null, new Set<string>());
+
+    expect(block).toEqual({
+      category: "computed-field-key",
+      detail: "mixed block with more than one computed key family",
+    });
+  });
+
+  it("keeps expanding an enum-typed key filter into named members", () => {
+    const merged = mergedFields(new Emitter(rules), effects.get("add_modifier")!.blocks[0]!.named);
+
+    expect(Array.isArray(merged)).toBe(true);
+    if (!Array.isArray(merged)) {
+      throw new Error(merged.detail);
+    }
+    expect(merged.map((field) => field.name)).toContain("days");
+    expect(merged.map((field) => field.name)).toContain("years");
+    expect(merged.every((field) => field.value.kind !== "map")).toBe(true);
+  });
+
   it("preserves a structured-only field without inventing a scalar arm", () => {
     const settings = effects.get("set_diplomacy_action_setting")!;
-    const merged = mergeFields(new Emitter(rules), settings.blocks[0]!.named, null, new Set());
+    const merged = mergedFields(new Emitter(rules), settings.blocks[0]!.named);
     expect(Array.isArray(merged)).toBe(true);
     if (!Array.isArray(merged)) {
       throw new Error(merged.detail);
@@ -611,7 +684,7 @@ describe("a spliced alias category with a script authoring surface", () => {
     const restrictions = block.named.find(
       (field) => field.key.kind === "name" && field.key.name === "government_restrictions"
     )!;
-    const merged = mergeFields(
+    const merged = mergeBlock(
       new Emitter(rules),
       [
         {

@@ -60,7 +60,7 @@ describe("emitted effect signatures", () => {
   it("createAmbientObject metadata preserves nested scalar/block arms", () => {
     const entry = structuredMetaEntry("createAmbientObject");
     expect(entry).toContain('key: "create_ambient_object"');
-    expect(entry.match(/kind: "scalar-or-fields"/g)).toHaveLength(3);
+    expect(entry.match(/kind: "scalar-or-block"/g)).toHaveLength(3);
     expect(entry).toContain('key: "entity_offset"');
     expect(entry).toContain('key: "entity_offset_angle"');
     expect(entry).toContain('key: "entity_offset_height"');
@@ -84,7 +84,7 @@ describe("emitted effect signatures", () => {
     const entry = structuredMetaEntry("createPopGroup");
     expect(entry).toContain('key: "create_pop_group"');
     expect(entry).toContain('prop: "ethos"');
-    expect(entry).toContain('kind: "scalar-or-fields"');
+    expect(entry).toContain('kind: "scalar-or-block"');
     expect(entry).toContain('scalar: { objectKinds: ["scope-ref"] }');
     expect(entry).toContain('{ prop: "effect", key: "effect", kind: "effect" }');
   });
@@ -227,6 +227,110 @@ describe("emitted effect signatures", () => {
       /export interface CountryEffectPath\s+extends\s+EffectPath<"country">/
     );
     expect(interfaces).toContain("export interface EffectPathMap {");
+  });
+
+  it("open-keyed block: the whole argument is a map of its key filter", () => {
+    expect(signature("setTradeConversions")).toMatchInlineSnapshot(
+      `"setTradeConversions(values: { readonly [resource: string]: ScriptValue }): void;"`
+    );
+    expect(signature("setCountryCodeFlags")).toMatchInlineSnapshot(
+      `"setCountryCodeFlags(values: { readonly [countryFlag: string]: boolean }): void;"`
+    );
+    expect(signature("addAttunement")).toMatchInlineSnapshot(
+      `"addAttunement(values: { readonly [patronType: string]: ScriptValue }): void;"`
+    );
+  });
+
+  it("open-keyed block: several key families merge into one map", () => {
+    expect(signature("setAgreementTerms")).toMatchInlineSnapshot(`
+      "setAgreementTerms(values: {
+          readonly [agreementTermDiscrete: string]:
+            | AgreementTermValueDiscreteRef
+            | string
+            | AgreementTermValueDiscreteNumberRef
+            | AgreementTermValueSpecialistTypeRef
+            | ScriptValue;
+        }): void;"
+    `);
+  });
+
+  it("mixed block: the map becomes a member where its declaration stands", () => {
+    expect(signature("addResourceFromDebris")).toMatchInlineSnapshot(`
+      "addResourceFromDebris(args: {
+          resources?: { readonly [resource: string]: ScriptValue };
+          system?: ScopeValue<"system">;
+          /** optional: multiplies all gained resources by a variable) */
+          mult?: ScriptValue;
+        }): void;"
+    `);
+  });
+
+  it("nested open-keyed block: the field's value is the map", () => {
+    expect(signature("releaseVivariumFaunaCount")).toContain(
+      'owners: { readonly [shipCategories: string]: ScopeValue<"country"> };'
+    );
+    expect(signature("customTooltipWithParams")).toContain(
+      "descriptionParameters?: { readonly [parameter: string]: string };"
+    );
+  });
+
+  it("int-keyed block: entries keys on number beside its named siblings", () => {
+    expect(signature("createLeader")).toContain(
+      "traits?: {\n      entries?: {\n        readonly [int: number]: " +
+        'TraitLeaderTraitRef | string | "random_trait" | "random_common";\n      };'
+    );
+  });
+
+  it("reference-keyed and value-set-keyed blocks keep keying on string", () => {
+    expect(signature("setTradeConversions")).toContain("readonly [resource: string]");
+    expect(signature("setCountryCodeFlags")).toContain("readonly [countryFlag: string]");
+    expect(signature("customTooltipWithParams")).toContain("readonly [parameter: string]");
+    // Five reference families merged into one map, so no family is numeric.
+    expect(signature("setAgreementTerms")).toContain("readonly [agreementTermDiscrete: string]");
+  });
+
+  it("map meta: keys, values, minimum entry count, and placement", () => {
+    expect(metaEntry("setCountryCodeFlags")).toMatchInlineSnapshot(`
+      "setCountryCodeFlags: {
+          key: "set_country_code_flags",
+          shape: { kind: "map", map: { value: {}, min: 1 } },"
+    `);
+    expect(structuredMetaEntry("addResourceFromDebris")).toMatchInlineSnapshot(`
+      "addResourceFromDebris: {
+          key: "add_resource_from_debris",
+          shape: {
+            kind: "fields",
+            fields: [
+              {
+                prop: "resources",
+                key: "resources",
+                kind: "map",
+                map: { keyRefTypes: ["resource"], value: {}, min: 0, splice: true },
+              },
+              { prop: "system", key: "system", kind: "value" },
+              { prop: "mult", key: "mult", kind: "value" },
+            ],
+          },
+        },"
+    `);
+  });
+
+  it("value-list block beside a scalar arm records both arms", () => {
+    expect(signature("createSpecies")).toContain(
+      'popEthics?:\n      | "no"\n      | "random"\n      | EthicRef\n      | string\n' +
+        '      | readonly [EthicRef | string | "random"]'
+    );
+    expect(structuredMetaEntry("createSpecies")).toContain(
+      [
+        "        {",
+        '          prop: "popEthics",',
+        '          key: "pop_ethics",',
+        '          kind: "scalar-or-block",',
+        '          scalar: { booleanLiterals: ["no"], objectKinds: ["typed-ref"] },',
+        '          block: { kind: "value-list", scalar: { objectKinds: ["typed-ref"] } },',
+        "        },",
+      ].join("\n")
+    );
   });
 
   it("scope link meta: a distinct lazy path node", () => {

@@ -14,7 +14,8 @@ import {
   bareBlockValue,
   cardinalityArrayType,
   comparisonValue,
-  mergeFields,
+  mapType,
+  mergeBlock,
   repeatedMemberType,
   skippedRule,
   skipReason,
@@ -157,15 +158,18 @@ function shapeOf(emitter: Emitter, key: string, rule: LoweredRule): Shape | Skip
   }
 
   // A splice alongside named fields (`calc_true_if = { amount == int ... }`)
-  // becomes one more argument, which `mergeFields` names for what it splices.
-  const fields = mergeFields(emitter, body.fields, pushedRaw, TRIGGER_CLAUSES);
-  if (!Array.isArray(fields)) {
-    return fields;
+  // becomes one more argument, which `mergeBlock` names for what it splices.
+  const lowered = mergeBlock(emitter, body.fields, pushedRaw, TRIGGER_CLAUSES);
+  if ("detail" in lowered) {
+    return lowered;
   }
-  if (fields.length === 0) {
+  if (lowered.kind === "map") {
+    return skipReason("computed-field-key", "top-level open-keyed block");
+  }
+  if (lowered.fields.length === 0) {
     return skipReason("empty-block", "block with no typeable fields");
   }
-  return scalarOrFields(emitter, rule, { kind: "fields", fields });
+  return scalarOrFields(emitter, rule, { kind: "fields", fields: lowered.fields });
 }
 
 /**
@@ -332,8 +336,10 @@ function baseMemberType(emitter: Emitter, value: ArgValue, outerScope: string): 
       return emitter.useValue(value.value).type;
     case "fields":
       return `{ ${value.fields.map((nested) => `${camelCase(nested.name)}${nested.optional ? "?" : ""}: ${memberType(emitter, nested, outerScope)}`).join("; ")} }`;
-    case "scalarOrFields":
-      return `${emitter.useValue(value.scalar).type} | { ${value.fields.map((nested) => `${camelCase(nested.name)}${nested.optional ? "?" : ""}: ${memberType(emitter, nested, outerScope)}`).join("; ")} }`;
+    case "map":
+      return mapType(emitter, value.map);
+    case "scalarOrBlock":
+      return `${emitter.useValue(value.scalar).type} | ${baseMemberType(emitter, value.block, outerScope)}`;
     case "valueList":
       return valueListType(emitter, value, outerScope);
     case "clause":

@@ -1,11 +1,12 @@
 /**
  * Shared field-shape classification for block rules.
  *
- * A block rule's fields fall into three argument kinds: plain scalars, nested
+ * A block rule's fields fall into four argument kinds: plain scalars, nested
  * clause holes (`limit = single_alias_right[trigger_clause]` — an opaque,
  * already-built `Trigger`, so recursion terminates at depth one by
- * construction), and comparison fields (`count == int_value_field`, sometimes
- * overloaded with literals like `count = all`).
+ * construction), comparison fields (`count == int_value_field`, sometimes
+ * overloaded with literals like `count = all`), and open maps, where the key
+ * is a filter the script fills in (`<resource> = value_field`).
  *
  * Classification is shared between the trigger and effect emitters; rendering
  * stays with each emitter. A `SkipReason` return carries the stable category
@@ -17,16 +18,18 @@ import {
   isRepeated,
   REQUIRED,
   type Cardinality,
+  type FieldKey,
   type RuleBareValue,
   type RuleField,
   type RuleType,
 } from "../cwt/model.ts";
+import { camelCase, pluralize } from "../naming.ts";
 import {
   EXTRA_ALIAS_CATEGORIES,
   SCRIPT_ALIAS_CATEGORIES,
   UNIVERSAL_SCOPES,
 } from "../overlay/index.ts";
-import type { Emitter, TsValue } from "../render/emitter.ts";
+import { referenceTargetsOf, type Emitter, type TsValue } from "../render/emitter.ts";
 
 /** Stable reasons the shared trigger/effect generator can reject a CWT rule. */
 export type ScriptGenerationSkipCategory =
@@ -158,32 +161,43 @@ export function declaredScopes(
 /** A nested script clause category supported by the shared block model. */
 export type ClauseCategory = "trigger" | "effect" | "modifier_rule";
 
-/** The authored value shape of one generated trigger or effect argument. */
-export type ArgValue =
-  | {
-      /** Selects a plain scalar argument. */
-      readonly kind: "scalar";
-      /** The scalar TypeScript and runtime representation. */
-      readonly value: TsValue;
-    }
+/**
+ * A block whose keys the script itself supplies, lowered to one typed map.
+ *
+ * `<resource> = value_field` and `value_set[country_flag] = bool` declare a
+ * key filter rather than a key, so the block is open and its entries are
+ * authored as an object rather than as named members.
+ */
+export interface MapValue {
+  /** The index-signature label naming what one key is, such as `resource`. */
+  readonly keyName: string;
+  /** The TypeScript type the index signature keys on. */
+  readonly indexType: "string" | "number";
+  /** The registries a key may name, when every key form is a content reference. */
+  readonly keyRefTypes?: readonly string[];
+  /** The value one entry holds. */
+  readonly value: TsValue;
+  /** Whether entries are written as comparisons rather than assignments. */
+  readonly comparison?: true;
+  /** The entry count the declarations admit together. */
+  readonly cardinality: Cardinality;
+  /** Whether entries are written beside the enclosing block's own keys. */
+  readonly splice: boolean;
+}
+
+/** The block shapes one generated argument admits. */
+export type BlockValue =
   | {
       /** Selects a structured object argument. */
       readonly kind: "fields";
       /** The named members of the structured object. */
       readonly fields: readonly ArgField[];
     }
-  /**
-   * A field that accepts either one scalar value or a structured block. The
-   * scalar arm's runtime object kinds are carried by `TsValue`, so generated
-   * code can distinguish SDK scalar values from the structured block.
-   */
   | {
-      /** Selects an overload between a scalar and a structured object. */
-      readonly kind: "scalarOrFields";
-      /** The scalar arm of the overload. */
-      readonly scalar: TsValue;
-      /** The named members of the structured arm. */
-      readonly fields: readonly ArgField[];
+      /** Selects an open-keyed map argument. */
+      readonly kind: "map";
+      /** The keys, values, and placement the map admits. */
+      readonly map: MapValue;
     }
   /** One braced value containing anonymous scalar or structured items. */
   | {
@@ -195,6 +209,32 @@ export type ArgValue =
       readonly fields: readonly ArgField[] | null;
       /** The combined item count admitted by the anonymous declarations. */
       readonly cardinality: Cardinality;
+    };
+
+/** The lowering of one CWT block of keyed fields: named members, or one open map. */
+export type KeyedBlockValue = Extract<BlockValue, { readonly kind: "fields" | "map" }>;
+
+/** The authored value shape of one generated trigger or effect argument. */
+export type ArgValue =
+  | BlockValue
+  | {
+      /** Selects a plain scalar argument. */
+      readonly kind: "scalar";
+      /** The scalar TypeScript and runtime representation. */
+      readonly value: TsValue;
+    }
+  /**
+   * A field that accepts either one scalar value or a block. The scalar arm's
+   * runtime object kinds are carried by `TsValue`, so generated code can
+   * distinguish SDK scalar values from the block.
+   */
+  | {
+      /** Selects an overload between a scalar and a block. */
+      readonly kind: "scalarOrBlock";
+      /** The scalar arm of the overload. */
+      readonly scalar: TsValue;
+      /** The block arm of the overload. */
+      readonly block: BlockValue;
     }
   /**
    * A typed hole for a nested clause. `scope` is the canonical scope the
@@ -246,7 +286,11 @@ export type ArgValue =
 
 /** One generated argument field after overloaded CWT declarations are merged. */
 export interface ArgField {
-  /** The original PDXScript field name. */
+  /**
+   * The PDXScript key the field writes, which is also its authoring member
+   * name. A spliced {@link MapValue} writes its entries beside that key
+   * instead of under it, so its name is the authoring member only.
+   */
   readonly name: string;
   /** The authored value shape shared by the field's declarations. */
   readonly value: ArgValue;
@@ -414,9 +458,9 @@ export function comparisonValue(
 /**
  * The item count a braced block admits, summed: each anonymous declaration is
  * another slot in the same block, so `<color_define>` 0..4 beside `"null"`
- * 0..4 admits up to eight items.
+ * 0..4 admits up to eight items. An open block's key filters sum the same way.
  */
-function totalCardinality(values: readonly RuleBareValue[]): Cardinality {
+function totalCardinality(values: readonly { readonly cardinality: Cardinality }[]): Cardinality {
   return {
     min: values.reduce((sum, value) => sum + value.cardinality.min, 0),
     max: values.some((value) => value.cardinality.max === null)
@@ -441,6 +485,19 @@ function widestCardinality(fields: readonly RuleField[]): Cardinality {
       ? null
       : Math.max(...fields.map((field) => field.cardinality.max!)),
   };
+}
+
+/**
+ * Renders the index-signature type an open-keyed block admits.
+ *
+ * A reference-keyed map keys on `string` rather than the branded reference:
+ * the brand is an object, and an object cannot key one.
+ */
+export function mapType(emitter: Emitter, map: MapValue): string {
+  const value = emitter.useValue(map.value).type;
+  const entry =
+    map.comparison === true ? `${value} | readonly [${emitter.use("PdxOp")}, ${value}]` : value;
+  return `{ readonly [${map.keyName}: ${map.indexType}]: ${entry} }`;
 }
 
 /**
@@ -504,7 +561,7 @@ export function bareBlockValue(
   bare: readonly RuleBareValue[],
   inheritedScope: string | null,
   allowedSplices: ReadonlySet<string>
-): ArgValue | SkipReason {
+): Extract<ArgValue, { readonly kind: "clause" | "valueList" }> | SkipReason {
   const clauses = bare.flatMap((value) => {
     const category = clauseOf(value.type);
     return category === null ? [] : [{ value, category }];
@@ -552,19 +609,22 @@ export function bareBlockValue(
     if (block.bare.length > 0) {
       return skipReason("structured-bare-values", "bare structured arm nests bare values");
     }
-    const lowered = mergeFields(
+    const lowered = mergeBlock(
       emitter,
       block.fields,
       structured[0]!.scope?.this ?? inheritedScope,
       allowedSplices
     );
-    if (!Array.isArray(lowered)) {
+    if ("detail" in lowered) {
       return lowered;
     }
-    if (lowered.length === 0) {
+    if (lowered.kind === "map") {
+      return skipReason("computed-field-key", "bare structured arm is an open-keyed block");
+    }
+    if (lowered.fields.length === 0) {
       return skipReason("empty-structured-arm", "bare structured arm has no typeable fields");
     }
-    fields = lowered;
+    fields = lowered.fields;
   }
 
   const scalarDeclarations = bare.filter((value) => value.type.kind !== "block");
@@ -586,27 +646,162 @@ export function bareBlockValue(
   };
 }
 
+/** The computed key types the map model can carry as index-signature keys. */
+type MapKeyType = Extract<
+  RuleType,
+  { readonly kind: "typeRef" | "valueSet" | "scalar" | "int" | "float" }
+>;
+
+/** One computed-key declaration, with the key type the map model read from it. */
+interface OpenKeyDeclaration {
+  /** The declaration the open key was written on. */
+  readonly field: RuleField;
+  /** The key filter every key of this declaration matches. */
+  readonly keyType: MapKeyType;
+}
+
+/** The key type a computed key contributes to an open map, or `null` when it cannot. */
+function mapKeyType(key: FieldKey): MapKeyType | null {
+  if (key.kind !== "computed") {
+    return null;
+  }
+  switch (key.type.kind) {
+    case "typeRef":
+    case "valueSet":
+    case "scalar":
+    case "int":
+    case "float":
+      return key.type;
+    default:
+      return null;
+  }
+}
+
+/** The family a key type belongs to; two declarations share a member name only if they agree. */
+function mapKeyFamily(type: MapKeyType): string {
+  return type.kind === "typeRef" || type.kind === "valueSet"
+    ? `${type.kind}[${type.name}]`
+    : type.kind;
+}
+
+/** Whether a key filter admits only numbers, so the index signature keys on one. */
+function isNumericKey(type: MapKeyType): boolean {
+  return type.kind === "int" || type.kind === "float";
+}
+
+/** The index-signature label a key type reads as. */
+function mapKeyName(type: MapKeyType): string {
+  switch (type.kind) {
+    case "typeRef":
+    case "valueSet":
+      return camelCase(type.name);
+    case "scalar":
+      return "parameter";
+    case "int":
+    case "float":
+      return type.kind;
+  }
+}
+
+/** The member name a map takes when it shares its block with named fields. */
+function mapMemberName(type: MapKeyType): string {
+  return type.kind === "typeRef" || type.kind === "valueSet"
+    ? pluralize(camelCase(type.name))
+    : "entries";
+}
+
+/** One block's declarations split into its named keys and its one open key filter. */
+interface PartitionedBlock {
+  /** Declarations grouped per literal key, in first-declaration order. */
+  readonly named: ReadonlyMap<string, RuleField[]>;
+  /** The computed-key declarations the block's open map is built from. */
+  readonly open: readonly OpenKeyDeclaration[];
+  /** How many named keys are declared before the first computed key. */
+  readonly openPosition: number;
+}
+
 /**
- * One name's declarations grouped per key, with enum-typed key filters already
- * expanded. Declines a block whose keys the field model cannot name.
+ * Splits one block's declarations, with enum-typed key filters already
+ * expanded, into named groups and open-key declarations. Declines a block
+ * whose keys neither model can name.
  */
-function groupedByName(
+function partitionBlock(
   emitter: Emitter,
   fields: readonly RuleField[]
-): Map<string, RuleField[]> | SkipReason {
-  const grouped = new Map<string, RuleField[]>();
+): PartitionedBlock | SkipReason {
+  const named = new Map<string, RuleField[]>();
+  const open: OpenKeyDeclaration[] = [];
+  let openPosition = 0;
   for (const field of expandEnumKeys(emitter, fields)) {
-    if (field.key.kind !== "name") {
+    if (field.key.kind === "name") {
+      const existing = named.get(field.key.name);
+      if (existing === undefined) {
+        named.set(field.key.name, [field]);
+      } else {
+        existing.push(field);
+      }
+      continue;
+    }
+    // A computed key holding a block would need a map of blocks, which no
+    // rule declares and the map model deliberately does not carry.
+    const keyType = field.type.kind === "block" ? null : mapKeyType(field.key);
+    if (keyType === null) {
       return skipReason("computed-field-key", "block with computed or subtype field keys");
     }
-    const existing = grouped.get(field.key.name);
-    if (existing === undefined) {
-      grouped.set(field.key.name, [field]);
-    } else {
-      existing.push(field);
+    if (open.length === 0) {
+      openPosition = named.size;
     }
+    open.push({ field, keyType });
   }
-  return grouped;
+  return { named, open, openPosition };
+}
+
+/**
+ * Merges the open-key declarations of one block into the map they describe.
+ * `splice` states whether its entries are written beside the block's named keys.
+ */
+function openMapValue(
+  emitter: Emitter,
+  declarations: readonly OpenKeyDeclaration[],
+  splice: boolean
+): MapValue | SkipReason {
+  const keyTypes = declarations.map((declaration) => declaration.keyType);
+  // Not `unionFor`: the key is never spelled as a branded type, only as the
+  // index signature's `string` or `number`.
+  const keyRefTypes = referenceTargetsOf(keyTypes);
+  // A map-only block merges every key family it declares, so one family that
+  // admits names the game does not read as a number keeps the whole map on
+  // `string`.
+  const indexType = keyTypes.every(isNumericKey) ? "number" : "string";
+  const fields = declarations.map((declaration) => declaration.field);
+  const comparisons = fields.filter((field) => field.comparison);
+  if (comparisons.length > 0 && comparisons.length !== fields.length) {
+    return skipReason(
+      "comparison-overload",
+      "open block mixes comparison and assignment declarations"
+    );
+  }
+  const types = fields.map((field) => field.type);
+  const value =
+    comparisons.length === 0 ? emitter.unionFor(types) : comparisonValue(emitter, types);
+  if (value === null) {
+    return skipReason(
+      "unsupported-field-value",
+      "open block values have a type the emitter cannot express"
+    );
+  }
+  if ("category" in value) {
+    return value;
+  }
+  return {
+    keyName: mapKeyName(declarations[0]!.keyType),
+    indexType,
+    ...(keyRefTypes === undefined ? {} : { keyRefTypes }),
+    value,
+    ...(comparisons.length === 0 ? {} : { comparison: true as const }),
+    cardinality: totalCardinality(fields),
+    splice,
+  };
 }
 
 /** Merges a group whose every declaration is a clause hole into one typed hole. */
@@ -635,9 +830,37 @@ function mergedClauseValue(
 }
 
 /**
- * Merges a group holding a structured arm: one block of named fields, lowered
- * by recursion, possibly overloaded with scalar declarations — or one block of
- * bare values, handed to {@link bareBlockValue}.
+ * Lowers one field's braced arm: a block of named fields or an open map,
+ * lowered by recursion, or a block of bare values handed to
+ * {@link bareBlockValue}.
+ */
+function structuredArmValue(
+  emitter: Emitter,
+  name: string,
+  declaration: RuleField & { readonly type: Extract<RuleType, { readonly kind: "block" }> },
+  inheritedScope: string | null,
+  allowedSplices: ReadonlySet<string>
+): BlockValue | Extract<ArgValue, { readonly kind: "clause" }> | SkipReason {
+  const block = declaration.type;
+  const scope = declaration.scope?.this ?? inheritedScope;
+  const inArm = (detail: string): string => `field "${name}" structured arm ${detail}`;
+  if (block.bare.length > 0) {
+    const value = bareBlockValue(emitter, block.bare, scope, allowedSplices);
+    return "detail" in value ? { ...value, detail: inArm(value.detail) } : value;
+  }
+  const lowered = mergeBlock(emitter, block.fields, scope, allowedSplices);
+  if ("detail" in lowered) {
+    return { ...lowered, detail: inArm(lowered.detail) };
+  }
+  return lowered.kind === "fields" && lowered.fields.length === 0
+    ? skipReason("empty-structured-arm", inArm("has no typeable fields"))
+    : lowered;
+}
+
+/**
+ * Merges a group holding a braced arm, possibly overloaded with scalar
+ * declarations. The arms stay separable at runtime because the block's own
+ * kind says which authored shapes belong to it.
  */
 function mergedStructuredValue(
   emitter: Emitter,
@@ -659,45 +882,15 @@ function mergedStructuredValue(
       `field "${name}" has more than one structured/scalar arm`
     );
   }
-  const block = structured[0]!.type;
-  if (block.bare.length > 0) {
-    if (scalarDeclarations.length > 0) {
-      return skipReason(
-        "multiple-structured-scalar-arms",
-        `field "${name}" mixes a bare-value block with a scalar arm`
-      );
-    }
-    const value = bareBlockValue(
-      emitter,
-      block.bare,
-      structured[0]!.scope?.this ?? inheritedScope,
-      allowedSplices
-    );
-    if ("detail" in value) {
-      return { ...value, detail: `field "${name}" structured arm ${value.detail}` };
-    }
-    return value;
+  const arm = structuredArmValue(emitter, name, structured[0]!, inheritedScope, allowedSplices);
+  if ("detail" in arm || scalarDeclarations.length === 0) {
+    return arm;
   }
-  const fields = mergeFields(
-    emitter,
-    block.fields,
-    structured[0]!.scope?.this ?? inheritedScope,
-    allowedSplices
-  );
-  if (!Array.isArray(fields)) {
-    return {
-      ...fields,
-      detail: `field "${name}" structured arm ${fields.detail}`,
-    };
-  }
-  if (fields.length === 0) {
+  if (arm.kind === "clause") {
     return skipReason(
-      "empty-structured-arm",
-      `field "${name}" structured arm has no typeable fields`
+      "clause-scalar-overload",
+      `field "${name}" overloaded between a clause and a scalar`
     );
-  }
-  if (scalarDeclarations.length === 0) {
-    return { kind: "fields", fields };
   }
   const scalar = emitter.unionFor(scalarDeclarations.map((field) => field.type));
   if (scalar === null) {
@@ -706,7 +899,7 @@ function mergedStructuredValue(
       `field "${name}" has a scalar arm the emitter cannot express`
     );
   }
-  return { kind: "scalarOrFields", scalar, fields };
+  return { kind: "scalarOrBlock", scalar, block: arm };
 }
 
 /** Merges a comparison group: the operand type plus any literal overloads. */
@@ -872,27 +1065,16 @@ function splicedMember(
 }
 
 /**
- * Merges the repeated keys an overloaded rule produces into one typed field
- * each, preserving the declared cardinality: a key any declaration permits
- * more than once becomes a repeated field. An unkeyed alias splice becomes one
- * more field, named for what it splices. `inheritedScope` is the raw scope the
- * declaration pushes, if any — clause fields without their own `## push_scope`
- * run there.
+ * Merges the declarations of each named key into one typed field, preserving
+ * the declared cardinality: a key any declaration permits more than once
+ * becomes a repeated field.
  */
-export function mergeFields(
+function mergeNamedGroups(
   emitter: Emitter,
-  fields: readonly RuleField[],
+  grouped: ReadonlyMap<string, RuleField[]>,
   inheritedScope: string | null,
   allowedSplices: ReadonlySet<string>
 ): ArgField[] | SkipReason {
-  const splices = fields.filter((field) => field.key.kind === "aliasName");
-  const grouped = groupedByName(
-    emitter,
-    fields.filter((field) => field.key.kind !== "aliasName")
-  );
-  if (!(grouped instanceof Map)) {
-    return grouped;
-  }
   const merged: ArgField[] = [];
   for (const [name, group] of grouped) {
     const value = mergedArgValue(emitter, name, group, inheritedScope, allowedSplices);
@@ -910,20 +1092,7 @@ export function mergeFields(
       docs: [...new Set(group.flatMap((field) => field.docs))],
     });
   }
-  if (splices.length === 0) {
-    return merged;
-  }
-  const spliced = splicedMember(emitter, splices, inheritedScope, allowedSplices);
-  if ("detail" in spliced) {
-    return spliced;
-  }
-  if (merged.some((field) => field.name === spliced.name)) {
-    return skipReason(
-      "reserved-field-collision",
-      `a rule field is already named "${spliced.name}"`
-    );
-  }
-  return [...merged, spliced];
+  return merged;
 }
 
 /**
@@ -944,9 +1113,8 @@ export function aliasListMembers(
       `the rules declare no alias[${category}:...] members`
     );
   }
-  const lowered: ArgField[] = [];
-  for (const [name, declarations] of members) {
-    const group = declarations.map((declaration): RuleField => ({
+  const fields = [...members].flatMap(([name, declarations]) =>
+    declarations.map((declaration): RuleField => ({
       key: { kind: "name", name },
       type: declaration.type,
       cardinality: REQUIRED,
@@ -954,12 +1122,117 @@ export function aliasListMembers(
       scope: declaration.scope,
       line: declaration.line,
       comparison: declaration.comparison,
-    }));
-    const value = mergedArgValue(emitter, name, group, null, allowedSplices);
-    if ("detail" in value) {
-      return value;
-    }
-    lowered.push({ name, value, optional: false, docs: group.flatMap((field) => field.docs) });
+    }))
+  );
+  const block = mergeBlock(emitter, fields, null, allowedSplices);
+  if ("detail" in block) {
+    return block;
   }
-  return lowered;
+  if (block.kind === "map") {
+    return skipReason(
+      "computed-field-key",
+      `alias[${category}:...] members are an open-keyed block`
+    );
+  }
+  return [...block.fields];
+}
+
+/**
+ * Lowers one CWT block of keyed fields into the argument it emits: named
+ * members, or one map when every key is a key filter.
+ *
+ * An unkeyed alias splice becomes one more member, named for what it splices.
+ * A block declaring both named keys and key filters gets the map as one extra
+ * member, placed where its first declaration stands so the emitted key order
+ * matches the shipped files. `inheritedScope` is the raw scope the declaration
+ * pushes, if any — clause fields without their own `## push_scope` run there.
+ */
+export function mergeBlock(
+  emitter: Emitter,
+  fields: readonly RuleField[],
+  inheritedScope: string | null,
+  allowedSplices: ReadonlySet<string>
+): KeyedBlockValue | SkipReason {
+  const splices = fields.filter((field) => field.key.kind === "aliasName");
+  const partition = partitionBlock(
+    emitter,
+    fields.filter((field) => field.key.kind !== "aliasName")
+  );
+  if ("detail" in partition) {
+    return partition;
+  }
+  // A splice writes entries the block's own keys sit beside, and so does an
+  // open map. Which of the two a shipped key belongs to is not recoverable
+  // from the key alone, so the pair is declined rather than guessed at.
+  if (splices.length > 0 && partition.open.length > 0) {
+    return skipReason("computed-field-key", "open-keyed block beside an alias splice");
+  }
+  const merged = mergeNamedGroups(emitter, partition.named, inheritedScope, allowedSplices);
+  if (!Array.isArray(merged)) {
+    return merged;
+  }
+  const members = appendSplicedMember(emitter, merged, splices, inheritedScope, allowedSplices);
+  if (!Array.isArray(members)) {
+    return members;
+  }
+  if (partition.open.length === 0) {
+    return { kind: "fields", fields: members };
+  }
+  if (members.length === 0) {
+    const map = openMapValue(emitter, partition.open, false);
+    return "category" in map ? map : { kind: "map", map };
+  }
+  const families = new Set(partition.open.map((declaration) => mapKeyFamily(declaration.keyType)));
+  if (families.size > 1) {
+    return skipReason("computed-field-key", "mixed block with more than one computed key family");
+  }
+  const map = openMapValue(emitter, partition.open, true);
+  if ("category" in map) {
+    return map;
+  }
+  const name = mapMemberName(partition.open[0]!.keyType);
+  if (members.some((field) => field.name === name)) {
+    return skipReason("reserved-field-collision", `a rule field is already named "${name}"`);
+  }
+  const member: ArgField = {
+    name,
+    value: { kind: "map", map },
+    optional: map.cardinality.min === 0,
+    docs: partition.open.flatMap((declaration) => declaration.field.docs),
+  };
+  return {
+    kind: "fields",
+    fields: [
+      ...members.slice(0, partition.openPosition),
+      member,
+      ...members.slice(partition.openPosition),
+    ],
+  };
+}
+
+/**
+ * Adds the member an unkeyed splice contributes, or returns the named members
+ * unchanged when the block splices nothing.
+ */
+function appendSplicedMember(
+  emitter: Emitter,
+  merged: readonly ArgField[],
+  splices: readonly RuleField[],
+  inheritedScope: string | null,
+  allowedSplices: ReadonlySet<string>
+): ArgField[] | SkipReason {
+  if (splices.length === 0) {
+    return [...merged];
+  }
+  const spliced = splicedMember(emitter, splices, inheritedScope, allowedSplices);
+  if ("detail" in spliced) {
+    return spliced;
+  }
+  if (merged.some((field) => field.name === spliced.name)) {
+    return skipReason(
+      "reserved-field-collision",
+      `a rule field is already named "${spliced.name}"`
+    );
+  }
+  return [...merged, spliced];
 }

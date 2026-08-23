@@ -17,7 +17,7 @@ import {
 
 import type { ContentRefUse } from "../references.ts";
 import type { ScopeValue } from "../script/effects/types.ts";
-import { isComparisonList, isStructuredValue, refId } from "../script/scalar.ts";
+import { isComparisonList, isStructuredValue, mapEntries, refId } from "../script/scalar.ts";
 import {
   scriptValueScalar,
   trigger,
@@ -2075,6 +2075,72 @@ export function categoryLastPickedTradition(
     [kv("category_last_picked_tradition", id)],
     [{ targets: ["tradition_category"], id, field: "category_last_picked_tradition" }]
   );
+}
+
+/** The arguments `checkEconomicProductionModifierForJob` takes, as the rules declare them. */
+export interface CheckEconomicProductionModifierForJobArgs {
+  job: JobRef | string;
+  resource:
+    ResourceRef | string | { readonly [resource: string]: number | readonly [PdxOp, number] };
+  speciesModifiersOnly?: boolean;
+  value: ScriptValue | readonly [PdxOp, ScriptValue];
+}
+
+/**
+ * Checks the value of economic production modifiers a pop_group has for producing a certain resource via a certain job. Can specify checking all modifiers or just those from traits. WARNING: expensive trigger
+ * ```
+ * check_economic_production_modifier_for_job = {
+ * 	job = miner
+ * 	resource = minerals
+ * 	resource = { minerals = 0.5 energy = 0.5 } (for evaluating the bonuses to multiple resources, with weights)
+ * 	species_modifiers_only = no (default: yes - only checks trait modifiers, trait triggered pop modifiers, and species habitability)
+ * 	value > 1.25
+ * }
+ * ```
+ */
+export function checkEconomicProductionModifierForJob(
+  args: CheckEconomicProductionModifierForJobArgs
+): Trigger<"carrier" | "colony" | "planet" | "pop_group" | "ship"> {
+  const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
+  const id0 = refId(args.job);
+  entries.push(kv("job", id0));
+  refs.push({ targets: ["job"], id: id0, field: "check_economic_production_modifier_for_job.job" });
+  if (isStructuredValue(args.resource, ["typed-ref"])) {
+    const entriesNested1: PdxEntry[] = [];
+    for (const [key1, value1] of mapEntries(
+      args.resource,
+      "check_economic_production_modifier_for_job.resource",
+      1
+    )) {
+      entriesNested1.push(
+        typeof value1 === "object" ? cmp(key1, value1[0], value1[1]) : kv(key1, value1)
+      );
+      refs.push({
+        targets: ["resource"],
+        id: key1,
+        field: "check_economic_production_modifier_for_job.resource",
+      });
+    }
+    entries.push(block("resource", entriesNested1));
+  } else {
+    const id1 = refId(args.resource);
+    entries.push(kv("resource", id1));
+    refs.push({
+      targets: ["resource"],
+      id: id1,
+      field: "check_economic_production_modifier_for_job.resource",
+    });
+  }
+  if (args.speciesModifiersOnly !== undefined) {
+    entries.push(kv("species_modifiers_only", args.speciesModifiersOnly));
+  }
+  entries.push(
+    typeof args.value === "object"
+      ? cmp("value", args.value[0], scriptValueScalar(args.value[1]))
+      : kv("value", scriptValueScalar(args.value))
+  );
+  return trigger([block("check_economic_production_modifier_for_job", entries)], refs);
 }
 
 /** The arguments `checkGalaxySetupValue` takes, as the rules declare them. */
@@ -16818,11 +16884,11 @@ export function numLeaderTraits(args: NumLeaderTraitsArgs): Trigger<"leader"> {
     entries.push(kv("count_tiers", args.countTiers));
   }
   if (args.containsModifier !== undefined) {
-    const nestedEntries: PdxEntry[] = [];
-    nestedEntries.push(kv("string", args.containsModifier.string));
-    nestedEntries.push(kv("type", args.containsModifier.type));
-    nestedEntries.push(kv("is_subclass", args.containsModifier.isSubclass));
-    entries.push(block("contains_modifier", nestedEntries));
+    const entriesNested5: PdxEntry[] = [];
+    entriesNested5.push(kv("string", args.containsModifier.string));
+    entriesNested5.push(kv("type", args.containsModifier.type));
+    entriesNested5.push(kv("is_subclass", args.containsModifier.isSubclass));
+    entries.push(block("contains_modifier", entriesNested5));
   }
   return trigger([block("num_leader_traits", entries)]);
 }

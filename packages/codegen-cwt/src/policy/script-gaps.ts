@@ -91,46 +91,11 @@ function trackedGapRows(
 /** The reviewed ledger of current trigger and effect generation gaps. */
 export const SCRIPT_GENERATION_GAPS: readonly ScriptGenerationGap[] = [
   ...trackedGapRows(
-    "effect",
-    "multiple-structured-scalar-arms",
-    "SDK-281",
-    "The effect argument model has no discriminator between a scalar arm and an " +
-      "anonymous value list under the same field key.",
-    ["create_species"]
-  ),
-  ...trackedGapRows(
     "trigger",
     "computed-field-key",
     "SDK-249",
     "The trigger argument model cannot represent computed switch keys.",
     ["inverted_switch", "switch"]
-  ),
-  ...trackedGapRows(
-    "effect",
-    "computed-field-key",
-    "SDK-250",
-    "The effect argument model cannot represent computed or subtype field keys.",
-    [
-      "add_attunement",
-      "add_resource_from_debris",
-      "add_resource_to_local_stockpile",
-      "clone_leader",
-      "create_leader",
-      "create_saved_leader",
-      "custom_tooltip_with_params",
-      "release_vivarium_fauna_count",
-      "set_agreement_terms",
-      "set_country_code_flags",
-      "set_trade_conversions",
-    ]
-  ),
-  ...trackedGapRows(
-    "trigger",
-    "computed-field-key",
-    "SDK-250",
-    "The trigger argument model cannot represent a nested block keyed by a computed " +
-      "content reference.",
-    ["check_economic_production_modifier_for_job"]
   ),
 ];
 

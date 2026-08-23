@@ -52,6 +52,8 @@ import type { GovernmentTriggerBlock } from "./government-trigger.ts";
 import type {
   AgendaRef,
   AgreementPresetRef,
+  AgreementTermValueDiscreteNumberRef,
+  AgreementTermValueDiscreteRef,
   AgreementTermValueSpecialistTypeRef,
   AiPersonalityRef,
   AmbientObjectRef,
@@ -146,6 +148,8 @@ import type {
   SolarSystemInitializerRef,
   SoundEffectRef,
   SpecialProjectRef,
+  SpeciesArchetypeRef,
+  SpeciesClassRef,
   SpeciesNamedListRef,
   SpecimenRef,
   SpriteRef,
@@ -2736,6 +2740,25 @@ export interface EffectsInAgreement {
   }): void;
 
   /**
+   * Sets agreement terms of the agreement. Can be used to set multiple terms at once, including resource subsidies.
+   * ```
+   * set_agreement_terms = {
+   * 	subject_diplomacy = subject_can_not_do_diplomacy
+   * 	subject_integration = subject_can_be_integrated
+   * 	resource_subsidies_alloys = 0.5
+   * }
+   * ```
+   */
+  setAgreementTerms(values: {
+    readonly [agreementTermDiscrete: string]:
+      | AgreementTermValueDiscreteRef
+      | string
+      | AgreementTermValueDiscreteNumberRef
+      | AgreementTermValueSpecialistTypeRef
+      | ScriptValue;
+  }): void;
+
+  /**
    * Changes the agreement term for whether the Subject can be integrated
    * ```
    * set_rule_can_subject_be_integrated = <yes/no>
@@ -3601,6 +3624,21 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
   addAscensionPerk(value: AscensionPerkRef | string): void;
 
   /**
+   * Adds attunement towards specified patron(s).This effect can be displayed if necessary, but you'll need to place it at the end of all displayed effects.The displayed text will depend on the contactstate with the patron(s).
+   * ```
+   * This effect can be displayed if necessary, but you'll need to place it at the end of all displayed effects.
+   * The displayed text will depend on the contactstate with the patron(s).
+   * add_attunement = {
+   * 	<patron 1> = <value 1>
+   * 	<patron 2> = <value 2>
+   * 	<...>
+   * 	}
+   * }
+   * ```
+   */
+  addAttunement(values: { readonly [patronType: string]: ScriptValue }): void;
+
+  /**
    * Sets awareness for the scoped (pre-FTL) country
    * ```
    * add_awareness = 12.3
@@ -3902,6 +3940,25 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   addResearchOption(value: TechnologyRef | string): void;
+
+  /**
+   * Adds specific resource to the stockpile for the country scope and creates a debris notification:
+   * ```
+   * add_resource = {
+   * 	<resource_name_1> = <value_1>
+   * 	<resource_name_2> = <value_2>
+   * 	...
+   * 	system = <system>
+   * 	mult = <variable> (optional: multiplies all gained resources by a variable)
+   * }
+   * ```
+   */
+  addResourceFromDebris(args: {
+    resources?: { readonly [resource: string]: ScriptValue };
+    system?: ScopeValue<"system">;
+    /** optional: multiplies all gained resources by a variable) */
+    mult?: ScriptValue;
+  }): void;
 
   /**
    * Makes the scoped country remember that it has encountered the bypass
@@ -4287,6 +4344,100 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
   clearUnchartedSpace(value: ScopeValue<"country" | "system">): void;
 
   /**
+   * Clones the last created leader for the scoped country
+   * ```
+   * clone_leader = {
+   * 	target = <event target>
+   * 	#Properties to override, see create_leader
+   * 	#traits is only overridden if the override is not empty
+   * 	#randomize_traits is only used if traits is overridden
+   * 	#If traits is not overridden, trait picks are also copied
+   * 	effect = { ... }
+   * }
+   * ```
+   */
+  cloneLeader(args: {
+    target: ScopeValue<
+      | "archaeological_site"
+      | "army"
+      | "country"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "pop_faction"
+      | "sector"
+      | "ship"
+    >;
+    name?: string | "random" | { key: string; variableString?: readonly string[] };
+    /** Other scopes will simply default to this.owner_main_species */
+    species?:
+      | ScopeValue<
+          | "army"
+          | "carrier"
+          | "country"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "planet"
+          | "pop_group"
+          | "ship"
+          | "species"
+        >
+      | string;
+    class?: LeaderClassRef | string | "random" | "random_ruler";
+    tier?: LeaderTierRef | string;
+    /** The leader skill level, minimum LEADER_SKILL_MIN and maximum LEADER_MAX_SKILL_CAP. */
+    skill?: number | "random";
+    setAge?: ScriptValue;
+    /** The traits of the leader, e.g. "1 = leader_trait_bureaucrat". If <level> is a positive int and randomize_traits = yes, the trait is added if the leader's level is at least <level>. */
+    traits?: {
+      entries?: {
+        readonly [int: number]: TraitLeaderTraitRef | string | "random_trait" | "random_common";
+      };
+      trait?: readonly (TraitLeaderTraitRef | string | "random_trait" | "random_common")[];
+    };
+    /** Optional, default = random. */
+    gender?: Gender;
+    /**
+     * Optional, default = no. Sets if this is a event leader or not. Is checked through is_event_leader.
+     * default: no
+     */
+    eventLeader?: boolean;
+    /** Optional, default = no. */
+    immortal?: boolean;
+    /** Optional, default = no. */
+    hideAge?: boolean;
+    /** Optional. Used for scientist subtypes. */
+    subType?: "survey";
+    /** Optional, default = yes. */
+    canManuallyChangeLocation?: boolean;
+    /** Optional, default = yes. */
+    canAssignToCouncil?: boolean;
+    /** Optional, default = no. Hides the leader from the player's list of leaders, and doesn't count them towards the leader cap. */
+    hideLeader?: boolean;
+    /** Optional, default = yes. Does not randomize for levels that are specified in traits. */
+    randomizeTraits?: boolean;
+    /** Optional, but requires leader_age_max if used. Used to randomize leader age within the age span between this and leader_age_max. */
+    leaderAgeMin?: number;
+    /** Optional, but requires leader_age_min if used. Used to randomize leader age within the age span between this and leader_age_min. */
+    leaderAgeMax?: number;
+    /** Optional. Scripted effect(s) that are run on the leader after it has been created. */
+    effect?: (scope: LeaderScope) => void;
+    /** Optional. */
+    customDescription?: string;
+    /** Optional. */
+    customCatchPhrase?: string;
+    /** Optional, default = no. Disables random generation of a background. */
+    skipBackgroundGeneration?: boolean;
+    /** Optional. Used as the home planet of the leader. */
+    backgroundPlanet?: ScopeValue<"planet">;
+    /** Optional. */
+    backgroundJob?: JobRef | string;
+    /** Optional. */
+    backgroundEthic?: EthicRef | string;
+  }): void;
+
+  /**
    * Gives the player the reward for the specified crisis objective
    * ```
    * complete_crisis_objective = <objective>
@@ -4510,6 +4661,113 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
   createFleetFromNavalCap(value: ScriptValue): void;
 
   /**
+   * Creates a new leader for the scoped country
+   * ```
+   * create_leader = {
+   * 	name = random / <string>
+   * 	species = last_created / <target>
+   * 	class = random_ruler / <key>
+   * 	skill = <int> # The leader skill level, minimum LEADER_SKILL_MIN and maximum LEADER_MAX_SKILL_CAP.
+   * 	set_age = <int>
+   * 	traits = { <level> = <key> <level> = <key> } # The traits of the leader, e.g. "1 = leader_trait_bureaucrat".
+   * 		If <level> is a positive int, the trait is added if the leader's level is at least <level>.
+   * 		If the leader would have gained a trait selection on <level>, this trait consumes it (but only once per level).
+   * 		If <level> is 0 or non-int, the trait is added regardless of level and doesn't consume trait selections.
+   * 		Supports the same special keys as add_trait.
+   * 	gender = <gender> # Optional, default = random.
+   * 	event_leader = yes / no # Optional, default = no. Sets if this is a event leader or not. Is checked through is_event_leader.
+   * 	immortal = yes / no # Optional, default = no.
+   * 	hide_age = yes / no # Optional, default = no.
+   * 	sub_type = <key> # Optional. Used for scientist subtypes.
+   * 	can_manually_change_location = yes / no # Optional, default = yes.
+   * 	can_assign_to_council = yes/no # Optional, default = yes.
+   * 	hide_leader = yes / no # Optional, default = no. Hides the leader from the player's list of leaders, and doesn't count them towards the leader cap.
+   * 	randomize_traits = yes / no # Optional, default = yes. Does not randomize for levels that are specified in traits.
+   * 	leader_age_min = <int> # Optional, but requires leader_age_max if used. Used to randomize leader age within the age span between this and leader_age_max.
+   * 	leader_age_max = <int> # Optional, but requires leader_age_min if used. Used to randomize leader age within the age span between this and leader_age_min.
+   * 	use_regnal_name = yes/no # Optional, default = no. If generating a random name, use regnal names if the name list has them.	effect = { <effect> } # Optional. Scripted effect(s) that are run on the leader after it has been created.
+   * 	custom_description = <key> # Optional.
+   * 	custom_catch_phrase = <string> # Optional.
+   * 	skip_background_generation = yes / no # Optional, default = no. Disables random generation of a background.
+   * 	background_planet = <target> # Optional. Used as the home planet of the leader.
+   * 	background_job = <key> # Optional.
+   * 	background_ethic = <key> # Optional.
+   * }
+   * ```
+   */
+  createLeader(args: {
+    name?: string | "random" | { key: string; variableString?: readonly string[] };
+    /** Other scopes will simply default to this.owner_main_species */
+    species?:
+      | ScopeValue<
+          | "army"
+          | "carrier"
+          | "country"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "planet"
+          | "pop_group"
+          | "ship"
+          | "species"
+        >
+      | string;
+    class: LeaderClassRef | string | "random" | "random_ruler";
+    tier?: LeaderTierRef | string;
+    /** The leader skill level, minimum LEADER_SKILL_MIN and maximum LEADER_MAX_SKILL_CAP. */
+    skill?: number | "random";
+    setAge?: ScriptValue;
+    /** The traits of the leader, e.g. "1 = leader_trait_bureaucrat". If <level> is a positive int and randomize_traits = yes, the trait is added if the leader's level is at least <level>. */
+    traits?: {
+      entries?: {
+        readonly [int: number]: TraitLeaderTraitRef | string | "random_trait" | "random_common";
+      };
+      trait?: readonly (TraitLeaderTraitRef | string | "random_trait" | "random_common")[];
+    };
+    /** Optional, default = random. */
+    gender?: Gender;
+    /**
+     * Optional, default = no. Sets if this is a event leader or not. Is checked through is_event_leader.
+     * default: no
+     */
+    eventLeader?: boolean;
+    /** Optional, default = no. */
+    immortal?: boolean;
+    /** Optional, default = no. */
+    hideAge?: boolean;
+    /** Optional. Used for scientist subtypes. */
+    subType?: "survey";
+    /** Optional, default = yes. */
+    canManuallyChangeLocation?: boolean;
+    /** Optional, default = yes. */
+    canAssignToCouncil?: boolean;
+    /** Optional, default = no. Hides the leader from the player's list of leaders, and doesn't count them towards the leader cap. */
+    hideLeader?: boolean;
+    /** Optional, default = yes. Does not randomize for levels that are specified in traits. */
+    randomizeTraits?: boolean;
+    /** Optional, but requires leader_age_max if used. Used to randomize leader age within the age span between this and leader_age_max. */
+    leaderAgeMin?: number;
+    /** Optional, but requires leader_age_min if used. Used to randomize leader age within the age span between this and leader_age_min. */
+    leaderAgeMax?: number;
+    /** Optional, default = no. If generating a random name, use regnal names if the name list has them. */
+    useRegnalName?: boolean;
+    /** Optional. Scripted effect(s) that are run on the leader after it has been created. */
+    effect?: (scope: LeaderScope) => void;
+    /** Optional. */
+    customDescription?: string;
+    /** Optional. */
+    customCatchPhrase?: string;
+    /** Optional, default = no. Disables random generation of a background. */
+    skipBackgroundGeneration?: boolean;
+    /** Optional. Used as the home planet of the leader. */
+    backgroundPlanet?: ScopeValue<"carrier" | "colony" | "planet" | "ship">;
+    /** Optional. */
+    backgroundJob?: JobRef | string;
+    /** Optional. */
+    backgroundEthic?: EthicRef | string;
+  }): void;
+
+  /**
    * Creates a relation with Shroud patron
    * ```
    * create_patron_relation = <patron_name>
@@ -4541,6 +4799,65 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
       string | { design: string; weight?: number; min?: number; max?: number }
     )[];
     effect?: (scope: FleetScope) => void;
+  }): void;
+
+  /**
+   * Creates a new saved leader for the scoped country with a lookup key
+   * ```
+   * create_saved_leader = {  }
+   * ```
+   */
+  createSavedLeader(args: {
+    key: SavedLeader;
+    creator?: ScopeValue<
+      | "agreement"
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "country"
+      | "debris"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_faction"
+      | "pop_group"
+      | "sector"
+      | "ship"
+      | "situation"
+      | "spy_network"
+      | "starbase"
+      | "system"
+    >;
+    name?: string | "random" | { key: string; variableString?: readonly string[] };
+    gender?: Gender;
+    class?: "random" | LeaderClassRef | string;
+    species:
+      | ScopeValue<
+          | "army"
+          | "carrier"
+          | "country"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "planet"
+          | "pop_group"
+          | "ship"
+          | "species"
+        >
+      | string;
+    eventLeader?: boolean;
+    setAge?: ScriptValue;
+    skill?: "random" | number;
+    traits?: {
+      entries?: {
+        readonly [int: number]: TraitLeaderTraitRef | string | "random_trait" | "random_common";
+      };
+      trait?: readonly (TraitLeaderTraitRef | string | "random_trait" | "random_common")[];
+    };
+    effect?: (scope: LeaderScope) => void;
   }): void;
 
   /**
@@ -7126,6 +7443,13 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
     cullVivariumCritter?: boolean;
   }): void;
 
+  /** Releases into the wild a specific amount of space fauna contained in the scoped country's Vivarium.Rarest fauna is released in priority.	Resulting fleet owners can be specified. */
+  releaseVivariumFaunaCount(args: {
+    count?: ScriptValue;
+    location: ScopeValue;
+    owners: { readonly [shipCategories: string]: ScopeValue<"country"> };
+  }): void;
+
   /**
    * Remove communications between scoped country and target country
    * ```
@@ -7611,6 +7935,15 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   setCouncilPositionToCouncil(value: CouncilorRef | string): void;
+
+  /**
+   * Sets bool flags as used by code, not defined in script: Supported flags: colonizer rebel track_all_situations custom_name is_in_breach_of_any has_advisor autopick_leader_traits crisis_fighter is_under_crisis_attack initialized is_affected_by_war_exhaustion is_nomadic killed
+   * ```
+   * set_country_code_flags = { some_flag_1 = yes some_flag_2 = no }
+   * Supported flags: colonizer rebel track_all_situations custom_name is_in_breach_of_any has_advisor autopick_leader_traits crisis_fighter is_under_crisis_attack initialized is_affected_by_war_exhaustion is_nomadic killed
+   * ```
+   */
+  setCountryCodeFlags(values: { readonly [countryFlag: string]: boolean }): void;
 
   /**
    * Sets an arbitrarily-named flag on the scoped country
@@ -8126,6 +8459,14 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
     months?: ScriptValue;
     years?: ScriptValue;
   }): void;
+
+  /**
+   * Sets the trade conversions for the scoped Country. If they do not add up to 1.0 any remaining trade the country keeps as income
+   * ```
+   * set_trade_conversion = { energy = 0.5 minerals = 0.2 }
+   * ```
+   */
+  setTradeConversions(values: { readonly [resource: string]: ScriptValue }): void;
 
   /**
    * Force a truce with target country of a specified type, or a war
@@ -11730,6 +12071,23 @@ export interface EffectsInSector {
 /** Effects valid in: ship. */
 export interface EffectsInShip {
   /**
+   * Adds specific resources to a ship's stockpile (ship must be able to collect resources; will not add resources above capacity):
+   * ```
+   * add_resource_to_local_stockpile = {
+   * 	<resource_name_1> = <value_1>
+   * 	<resource_name_2> = <value_2>
+   * 	...
+   * 	mult = <variable> (optional: multiplies all gained resources by a variable)
+   * }
+   * ```
+   */
+  addResourceToLocalStockpile(args: {
+    resources?: { readonly [resource: string]: ScriptValue };
+    /** (optional: multiplies all gained resources by a variable) */
+    mult?: ScriptValue;
+  }): void;
+
+  /**
    * Creates new creatures of the smaller ship size in the same fleet
    * ```
    * create_smaller_size_creature_in_fleet = <value>
@@ -14629,12 +14987,366 @@ export interface UniversalEffects<
   createShipDesign(args: { design: string }): void;
 
   /**
+   * Creates a new species. The habitability trait is determined by homeworld, traits = random, traits = { ideal_planet_class = <pc_XYZ> }, traits = <trait_pc_XYZ_preference>, or else is assigned randomly.
+   * ```
+   * create_species = {
+   * 	name = <string>/random/scope
+   * 	plural = <string>/this
+   * 	class = <species class key>/random/random_non_machine/random_pre_ftl/scope
+   * 	portrait = <random/portrait id>/this
+   * 	homeworld = <target>
+   * 	traits = { <traits> }/random/this
+   * 	sapient = yes/no, determines if species is sapient (default: yes)
+   * 	is_mod = yes/no, determines if species is a modification of another (default: no)
+   * 	immortal = yes/no, determines if species leaders are immortal (default: no)
+   * 	can_be_modified = yes/no/this (default: yes)
+   * 	gender = <species/leader>/male/female/indeterminate/not_set
+   * 	clear_parent_species_link = yes/no (default: no)
+   * 	extra_trait_points = <int>
+   * 	allow_negative_traits = yes/no (default: yes)
+   * 	namelist = random/random_class/scope
+   * 	effect = {}
+   * }
+   * ```
+   */
+  createSpecies(args: {
+    name?: ScopeValue | "random" | string | { key: string; variableString?: readonly string[] };
+    namelist?:
+      | NameListRef
+      | string
+      | ScopeValue<
+          | "agreement"
+          | "archaeological_site"
+          | "army"
+          | "carrier"
+          | "country"
+          | "debris"
+          | "deposit"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "megastructure"
+          | "planet"
+          | "pop_faction"
+          | "pop_group"
+          | "sector"
+          | "ship"
+          | "situation"
+          | "species"
+          | "spy_network"
+          | "starbase"
+          | "system"
+        >
+      | "random"
+      | "random_class";
+    nameList?:
+      | NameListRef
+      | string
+      | ScopeValue<
+          | "agreement"
+          | "archaeological_site"
+          | "army"
+          | "carrier"
+          | "country"
+          | "debris"
+          | "deposit"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "megastructure"
+          | "planet"
+          | "pop_faction"
+          | "pop_group"
+          | "sector"
+          | "ship"
+          | "situation"
+          | "species"
+          | "spy_network"
+          | "starbase"
+          | "system"
+        >
+      | "random"
+      | "random_class";
+    plural?: ScopeValue | "random" | string;
+    speciesBio?: string;
+    adjective?: string;
+    class:
+      | SpeciesClassRef
+      | string
+      | ScopeValue<
+          | "army"
+          | "carrier"
+          | "country"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "planet"
+          | "pop_group"
+          | "ship"
+          | "species"
+        >
+      | "random"
+      | "random_non_machine"
+      | "random_pre_ftl";
+    portrait?:
+      | ScopeValue<
+          | "army"
+          | "carrier"
+          | "country"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "planet"
+          | "pop_group"
+          | "ship"
+          | "species"
+        >
+      | PortraitRef
+      | string
+      | PortraitGroupRef
+      | "random"
+      | "this";
+    /**
+     * Limits species to this gender
+     * Limits leader to this gender
+     */
+    gender?:
+      | GendersNotSet
+      | ScopeValue<
+          | "archaeological_site"
+          | "army"
+          | "carrier"
+          | "country"
+          | "first_contact"
+          | "fleet"
+          | "leader"
+          | "planet"
+          | "pop_faction"
+          | "pop_group"
+          | "sector"
+          | "ship"
+          | "species"
+        >;
+    homeworld?: ScopeValue<
+      | "archaeological_site"
+      | "army"
+      | "carrier"
+      | "colony"
+      | "country"
+      | "deposit"
+      | "first_contact"
+      | "fleet"
+      | "leader"
+      | "megastructure"
+      | "planet"
+      | "pop_group"
+      | "ship"
+      | "species"
+    >;
+    traits?:
+      | readonly []
+      | readonly [
+          | ScopeValue<
+              | "army"
+              | "carrier"
+              | "country"
+              | "first_contact"
+              | "fleet"
+              | "leader"
+              | "planet"
+              | "pop_group"
+              | "ship"
+              | "species"
+            >
+          | "random"
+          | "this"
+          | {
+              idealPlanetClass?:
+                | ScopeValue<
+                    | "army"
+                    | "carrier"
+                    | "country"
+                    | "first_contact"
+                    | "fleet"
+                    | "leader"
+                    | "planet"
+                    | "pop_group"
+                    | "ship"
+                    | "species"
+                  >
+                | PlanetClassHabitablePlanetRef
+                | string;
+              trait?: readonly (
+                TraitSpeciesTraitRef | string | "random_traits" | "random_presapient_trait"
+              )[];
+              addTrait?: readonly (TraitSpeciesTraitRef | string)[];
+              /** default: yes? */
+              addTraitsAtStartOfList?: boolean;
+            },
+        ]
+      | readonly [
+          (
+            | ScopeValue<
+                | "army"
+                | "carrier"
+                | "country"
+                | "first_contact"
+                | "fleet"
+                | "leader"
+                | "planet"
+                | "pop_group"
+                | "ship"
+                | "species"
+              >
+            | "random"
+            | "this"
+            | {
+                idealPlanetClass?:
+                  | ScopeValue<
+                      | "army"
+                      | "carrier"
+                      | "country"
+                      | "first_contact"
+                      | "fleet"
+                      | "leader"
+                      | "planet"
+                      | "pop_group"
+                      | "ship"
+                      | "species"
+                    >
+                  | PlanetClassHabitablePlanetRef
+                  | string;
+                trait?: readonly (
+                  TraitSpeciesTraitRef | string | "random_traits" | "random_presapient_trait"
+                )[];
+                addTrait?: readonly (TraitSpeciesTraitRef | string)[];
+                /** default: yes? */
+                addTraitsAtStartOfList?: boolean;
+              }
+          ),
+          (
+            | ScopeValue<
+                | "army"
+                | "carrier"
+                | "country"
+                | "first_contact"
+                | "fleet"
+                | "leader"
+                | "planet"
+                | "pop_group"
+                | "ship"
+                | "species"
+              >
+            | "random"
+            | "this"
+            | {
+                idealPlanetClass?:
+                  | ScopeValue<
+                      | "army"
+                      | "carrier"
+                      | "country"
+                      | "first_contact"
+                      | "fleet"
+                      | "leader"
+                      | "planet"
+                      | "pop_group"
+                      | "ship"
+                      | "species"
+                    >
+                  | PlanetClassHabitablePlanetRef
+                  | string;
+                trait?: readonly (
+                  TraitSpeciesTraitRef | string | "random_traits" | "random_presapient_trait"
+                )[];
+                addTrait?: readonly (TraitSpeciesTraitRef | string)[];
+                /** default: yes? */
+                addTraitsAtStartOfList?: boolean;
+              }
+          ),
+        ];
+    /** determines if species is sapient (default: yes) */
+    sapient?: boolean;
+    /** determines if species is a modification of another (default: no) */
+    isMod?: boolean;
+    modNameAffix?: string;
+    /** determines if species leaders are immortal (default: no) */
+    immortal?: boolean;
+    /** determines if pops of that species can colonize */
+    popsCanBeColonizers?: boolean;
+    /** determines if pops of that species can migrate */
+    popsCanMigrate?: boolean;
+    /** determines if pops of that species can reproduce */
+    popsCanReproduce?: boolean;
+    /** determines if pops of that species can join factions */
+    popsCanJoinFactions?: boolean;
+    /** determines if that species can generate leaders */
+    canGenerateLeaders?: boolean;
+    /** determines if pops from that species can become slaves */
+    popsCanBeSlaves?: boolean;
+    /** determines if pops from that species have happiness */
+    popsHaveHappiness?: boolean;
+    /** determines if pops from need consumer goods */
+    consumerGoods?: boolean;
+    /** determines if the species can be modified (default: yes) */
+    canBeModified?: boolean | ScopeValue;
+    /** speed at which the pops from that species grow automatically */
+    popsAutoGrowth?: number;
+    /** amount of energy each pop_group of that species consume monthly */
+    popMaintenance?: number;
+    newPopResourceRequirement?: { type: ResourceRef | string | "robot_food"; value: number };
+    /** (default: no) */
+    clearParentSpeciesLink?: boolean;
+    /** (default: yes) */
+    allowNegativeTraits?: boolean;
+    extraTraitPoints?: number;
+    popEthics?:
+      | "no"
+      | "random"
+      | EthicRef
+      | string
+      | readonly [EthicRef | string | "random"]
+      | readonly [EthicRef | string | "random", EthicRef | string | "random"]
+      | readonly [
+          EthicRef | string | "random",
+          EthicRef | string | "random",
+          EthicRef | string | "random",
+        ]
+      | readonly [
+          EthicRef | string | "random",
+          EthicRef | string | "random",
+          EthicRef | string | "random",
+          EthicRef | string | "random",
+        ];
+    effect?: (scope: SpeciesScope) => void;
+    blockedArchetypes?: readonly [
+      SpeciesArchetypeRef | string,
+      ...(SpeciesArchetypeRef | string)[],
+    ];
+  }): void;
+
+  /**
    * Displays a specific localization string in tooltip
    * ```
    * custom_tooltip = <string>
    * ```
    */
   customTooltip(value: string): void;
+
+  /**
+   * Displays a specific localization string with parameters in tooltip
+   * ```
+   * custom_tooltip_with_params = {
+   * 	description = <loc key>
+   * 	description_parameters = {
+   * 		<value key> = <string/int/num/bool>
+   * 	}
+   * }
+   * ```
+   */
+  customTooltipWithParams(args: {
+    description: string;
+    descriptionParameters?: { readonly [parameter: string]: string };
+  }): void;
 
   /**
    * Enables or disables the date distortion effect

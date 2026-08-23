@@ -26,7 +26,8 @@ import {
   canonicalScopeSet,
   cardinalityArrayType,
   expandAliasFields,
-  mergeFields,
+  mapType,
+  mergeBlock,
   pureSpliceCategory,
   repeatedMemberType,
   skippedRule,
@@ -34,6 +35,7 @@ import {
   type ArgField,
   type ArgValue,
   type ClauseCategory,
+  type MapValue,
   type SkippedRule,
   type SkipReason,
 } from "../../lower/script-shape.ts";
@@ -183,6 +185,12 @@ export type EffectShape =
       readonly category: string;
       /** Canonical scope the members run in, or `null` for the receiving scope. */
       readonly scope: string | null;
+    }
+  | {
+      /** Identifies one object argument whose keys the script itself supplies. */
+      readonly kind: "map";
+      /** Keys and values represented by the generated map argument. */
+      readonly map: MapValue;
     };
 
 type FieldEffectShape = Extract<EffectShape, { readonly kind: "fields" | "wrapper" }>;
@@ -430,12 +438,21 @@ function blockShapeOf(emitter: Emitter, rule: LoweredRule): EffectShape | SkipRe
     return named;
   }
   const pushedRaw = block.inheritedScope;
-  const merged = named.length === 0 ? [] : mergeFields(emitter, named, pushedRaw, EFFECT_SPLICES);
-  if (!Array.isArray(merged)) {
+  const merged =
+    named.length === 0
+      ? ({ kind: "fields", fields: [] } as const)
+      : mergeBlock(emitter, named, pushedRaw, EFFECT_SPLICES);
+  if ("detail" in merged) {
     return merged;
   }
 
   if (categories.has("effect")) {
+    if (merged.kind === "map") {
+      return skipReason(
+        "computed-field-key",
+        "effect wrapper whose named arguments are an open-keyed block"
+      );
+    }
     let scope: string | null = null;
     if (pushedRaw !== null) {
       scope = emitter.canonicalScope(pushedRaw);
@@ -443,12 +460,15 @@ function blockShapeOf(emitter: Emitter, rule: LoweredRule): EffectShape | SkipRe
         return skipReason("unknown-push-scope", `push_scope names no known scope (${pushedRaw})`);
       }
     }
-    return { kind: "wrapper", scope, fields: merged.length === 0 ? null : merged };
+    return { kind: "wrapper", scope, fields: merged.fields.length === 0 ? null : merged.fields };
   }
-  if (merged.length === 0) {
+  if (merged.kind === "map") {
+    return { kind: "map", map: merged.map };
+  }
+  if (merged.fields.length === 0) {
     return skipReason("empty-block", "block with no typeable fields");
   }
-  return { kind: "fields", fields: merged };
+  return { kind: "fields", fields: merged.fields };
 }
 
 function shapeOf(
@@ -506,7 +526,7 @@ function aliasListType(category: string, scope: string | null, outerScope: strin
 /** The type text a lowered value contributes before field-level wrapping or overrides. */
 function baseMemberType(
   emitter: Emitter,
-  value: ArgField["value"],
+  value: ArgValue,
   outerScope: string,
   effectKey: string
 ): string {
@@ -515,10 +535,12 @@ function baseMemberType(
       return emitter.useValue(value.value).type;
     case "fields":
       return argsType(emitter, value.fields, outerScope, effectKey);
-    case "scalarOrFields":
+    case "map":
+      return mapType(emitter, value.map);
+    case "scalarOrBlock":
       return (
         `${emitter.useValue(value.scalar).type} | ` +
-        `${argsType(emitter, value.fields, outerScope, effectKey)}`
+        `${baseMemberType(emitter, value.block, outerScope, effectKey)}`
       );
     case "valueList": {
       const arms = [
@@ -577,14 +599,15 @@ function memberType(
  */
 const RECEIVING_SCOPE = "S";
 
-function clauseRunsInReceivingScope(value: ArgField["value"]): boolean {
+function clauseRunsInReceivingScope(value: ArgValue): boolean {
   switch (value.kind) {
     case "clause":
     case "aliasList":
       return value.scope === null;
     case "fields":
-    case "scalarOrFields":
       return value.fields.some((field) => clauseRunsInReceivingScope(field.value));
+    case "scalarOrBlock":
+      return clauseRunsInReceivingScope(value.block);
     case "valueList":
       return value.fields?.some((field) => clauseRunsInReceivingScope(field.value)) ?? false;
     default:
@@ -675,6 +698,8 @@ function methodSignatureText(emitter: Emitter, effect: EmittedEffect, outerScope
       return `  ${method}(value: ${EFFECT_VALUE_TYPE_OVERRIDES.get(key)?.type ?? emitter.useValue(shape.value).type}): void;\n`;
     case "fields":
       return `  ${method}(args: ${argsType(emitter, shape.fields, outerScope, key)}): void;\n`;
+    case "map":
+      return `  ${method}(values: ${mapType(emitter, shape.map)}): void;\n`;
     case "wrapper": {
       const body = `body: (scope: ${scopeInterfaceName(shape.scope)}) => void`;
       return shape.fields === null
@@ -1152,8 +1177,10 @@ function authoredAliasCategories(clusters: readonly EffectCluster[]): Set<string
         categories.add(value.category);
         return;
       case "fields":
-      case "scalarOrFields":
         value.fields.forEach((field) => walk(field.value));
+        return;
+      case "scalarOrBlock":
+        walk(value.block);
         return;
       case "valueList":
         value.fields?.forEach((field) => walk(field.value));
