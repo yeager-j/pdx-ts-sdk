@@ -16,7 +16,6 @@ import { refId } from "../script/scalar.ts";
 import type { ScriptValue } from "../script/trigger-core.ts";
 import {
   absInterval,
-  add,
   addSpans,
   angleRange,
   fixedAngle,
@@ -96,7 +95,7 @@ export interface ResolvedBody {
   readonly visualRadius: Interval;
   /** True when the visual radius is assumed rather than derived from `size`. */
   readonly visualAssumed: boolean;
-  /** `possible` for copies beyond the guaranteed `count` minimum. */
+  /** `possible` for copies beyond the guaranteed `count` minimum, inherited by descendants. */
   readonly exists: "definite" | "possible";
   /** Authored size for labels, e.g. `"25"` or `"10-30"`. */
   readonly sizeLabel: string | undefined;
@@ -249,26 +248,26 @@ function resolveEntry(
   const radialDelta = resolveDelta(entry.orbitDistance, path, "orbitDistance", walk);
   const { angleDelta, angleAuthored } = resolveAngle(entry.orbitAngle, path, walk);
   const visual = resolveVisual(entry, className, kind, path, walk);
+  const startRadius = cursor.radius;
+  const startAngle = cursor.angle;
 
   for (let copy = 0; copy < count.copies; copy += 1) {
     const optional = copy >= count.guaranteed;
     let bodyRadius: Interval | undefined;
-    const bodyAngle = addSpans(cursor.angle, angleDelta);
+    let bodyAngle: AngleSpan;
     if (radialDelta === undefined) {
       // An unresolvable advance starts a new relative-geometry segment.
       cursor.chainId += 1;
       cursor.radius = undefined;
+      bodyAngle = addSpans(cursor.angle, angleDelta);
       cursor.angle = bodyAngle;
     } else {
-      // An optional copy may not spawn, so the cursor it leaves behind is the
-      // hull of the advanced and unadvanced positions; the copy itself sits at
-      // the advanced position in the scenarios where it exists.
-      bodyRadius = cursor.radius === undefined ? undefined : add(cursor.radius, radialDelta);
-      cursor.radius =
-        optional && bodyRadius !== undefined && cursor.radius !== undefined
-          ? hull(cursor.radius, bodyRadius)
-          : bodyRadius;
-      cursor.angle = optional ? hullSpans(cursor.angle, bodyAngle) : bodyAngle;
+      // Copy k exists only when its whole prefix does, so its position uses
+      // exactly k + 1 fresh advances from the template start; the maybe-fewer
+      // scenarios only widen the cursor left for later siblings.
+      bodyRadius =
+        startRadius === undefined ? undefined : addScaled(startRadius, radialDelta, copy + 1);
+      bodyAngle = spanAfter(startAngle, angleDelta, copy + 1);
     }
 
     const body: ResolvedBody = {
@@ -290,41 +289,74 @@ function resolveEntry(
       angle: bodyAngle,
       visualRadius: visual.radius,
       visualAssumed: visual.assumed,
-      exists: optional ? "possible" : "definite",
+      exists: optional || parent?.exists === "possible" ? "possible" : "definite",
       sizeLabel: visual.sizeLabel,
       ...positions(parent, bodyRadius, bodyAngle),
     };
     walk.bodies.push(body);
 
-    if (copy === 0) {
-      if (visual.assumed && kind !== "cursor") {
-        const reason =
-          visual.sizeLabel === undefined
-            ? "has no usable size"
-            : "has a random or asset-dependent appearance";
-        note(
-          walk,
-          "unresolved-visual",
-          [path],
-          `${path} ${reason}; the preview uses an approximate visual radius of ${visual.radius.max}.`
-        );
-      }
-      resolveChildren(entry, path, body, walk);
+    if (copy === 0 && visual.assumed && kind !== "cursor") {
+      const reason =
+        visual.sizeLabel === undefined
+          ? "has no usable size"
+          : "has a random or asset-dependent appearance";
+      note(
+        walk,
+        "unresolved-visual",
+        [path],
+        `${path} ${reason}; the preview uses an approximate visual radius of ${visual.radius.max}.`
+      );
     }
+    // Every spawned copy carries the nested layout.
+    resolveChildren(entry, path, body, walk);
   }
 
-  if (count.openEnded) {
-    // Copies beyond the guaranteed minimum are unmodeled: the next sibling
-    // starts a new relative-geometry segment.
-    cursor.chainId += 1;
-    cursor.radius = undefined;
-    note(
-      walk,
-      "unresolved-geometry",
-      [path],
-      `${path}.count has no upper bound; positions after this template are unresolvable.`
+  if (radialDelta !== undefined) {
+    // Later siblings continue from anywhere between the guaranteed-count and
+    // expanded-count positions.
+    const atGuaranteed =
+      startRadius === undefined ? undefined : addScaled(startRadius, radialDelta, count.guaranteed);
+    const atExpanded =
+      startRadius === undefined ? undefined : addScaled(startRadius, radialDelta, count.copies);
+    cursor.radius =
+      atGuaranteed === undefined || atExpanded === undefined
+        ? undefined
+        : hull(atGuaranteed, atExpanded);
+    cursor.angle = hullSpans(
+      spanAfter(startAngle, angleDelta, count.guaranteed),
+      spanAfter(startAngle, angleDelta, count.copies)
     );
   }
+
+  if (count.openEnded || count.truncated) {
+    // Copies beyond the expansion are unmodeled: the next sibling starts a
+    // new relative-geometry segment.
+    cursor.chainId += 1;
+    cursor.radius = undefined;
+    if (count.openEnded) {
+      note(
+        walk,
+        "unresolved-geometry",
+        [path],
+        `${path}.count has no upper bound; positions after this template are unresolvable.`
+      );
+    }
+  }
+}
+
+function addScaled(base: Interval, delta: Interval, copies: number): Interval {
+  return { min: base.min + delta.min * copies, max: base.max + delta.max * copies };
+}
+
+function spanAfter(base: AngleSpan, delta: AngleSpan, copies: number): AngleSpan {
+  let span = base;
+  for (let i = 0; i < copies; i += 1) {
+    span = addSpans(span, delta);
+    if (span.kind === "full") {
+      return span;
+    }
+  }
+  return span;
 }
 
 function resolveChildren(
@@ -428,6 +460,8 @@ interface ResolvedCount {
   readonly copies: number;
   readonly guaranteed: number;
   readonly openEnded: boolean;
+  /** True when the authored count exceeds the expansion ceiling. */
+  readonly truncated: boolean;
 }
 
 function resolveCount(
@@ -435,15 +469,16 @@ function resolveCount(
   path: string,
   walk: Walk
 ): ResolvedCount {
+  const single: ResolvedCount = { copies: 1, guaranteed: 1, openEnded: false, truncated: false };
   if (value === undefined) {
-    return { copies: 1, guaranteed: 1, openEnded: false };
+    return single;
   }
   if (typeof value === "number") {
     if (!Number.isInteger(value) || value < 0) {
       note(walk, "unusable-range", [path], `${path}.count must be a nonnegative integer.`);
-      return { copies: 1, guaranteed: 1, openEnded: false };
+      return single;
     }
-    return { copies: cap(value, path, walk), guaranteed: value, openEnded: false };
+    return capped(value, value, false, path, walk);
   }
   const min = value.min ?? 1;
   const max = value.max;
@@ -458,25 +493,36 @@ function resolveCount(
       [path],
       `${path}.count must use nonnegative integers with min <= max.`
     );
-    return { copies: 1, guaranteed: 1, openEnded: false };
+    return single;
   }
   if (max === undefined) {
-    return { copies: cap(min, path, walk), guaranteed: min, openEnded: true };
+    return capped(min, min, true, path, walk);
   }
-  return { copies: cap(max, path, walk), guaranteed: min, openEnded: false };
+  return capped(max, min, false, path, walk);
 }
 
-function cap(copies: number, path: string, walk: Walk): number {
+function capped(
+  copies: number,
+  guaranteed: number,
+  openEnded: boolean,
+  path: string,
+  walk: Walk
+): ResolvedCount {
   if (copies <= MAX_EXPANDED_COPIES) {
-    return copies;
+    return { copies, guaranteed, openEnded, truncated: false };
   }
   note(
     walk,
     "unresolved-geometry",
     [path],
-    `${path}.count exceeds ${MAX_EXPANDED_COPIES}; further copies are not modeled.`
+    `${path}.count exceeds ${MAX_EXPANDED_COPIES}; further copies and later sibling positions are not modeled.`
   );
-  return MAX_EXPANDED_COPIES;
+  return {
+    copies: MAX_EXPANDED_COPIES,
+    guaranteed: Math.min(guaranteed, MAX_EXPANDED_COPIES),
+    openEnded,
+    truncated: true,
+  };
 }
 
 function resolveNumberOrRange(

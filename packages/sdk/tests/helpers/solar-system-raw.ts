@@ -195,7 +195,7 @@ function readBody(container: PdxContainer): PlanetInitializerFields {
         body.entity = String(scalarish(value) ?? "");
         break;
       case "count":
-        body.count = rangeOrScalar(value) as PlanetInitializerFields["count"];
+        body.count = countValue(value) as PlanetInitializerFields["count"];
         break;
       case "orbit_distance":
         body.orbitDistance = rangeOrScalar(value) as PlanetInitializerFields["orbitDistance"];
@@ -263,6 +263,29 @@ function flushPending(
       orbitDistance: jump as PlanetInitializerFields["orbitDistance"],
     });
   }
+}
+
+// The generated count block allows either bound to be omitted, and vanilla
+// ships min-only counts, so this keeps one-sided blocks intact.
+function countValue(value: PdxValue): number | { min?: number; max?: number } | undefined {
+  if (value.kind !== "container") {
+    const scalar = scalarValue(value);
+    return typeof scalar === "number" ? scalar : undefined;
+  }
+  const range: { min?: number; max?: number } = {};
+  for (const entry of entries(value)) {
+    const scalar = scalarish(entry.value);
+    if (typeof scalar !== "number") {
+      continue;
+    }
+    if (entry.key === "min") {
+      range.min = scalar;
+    }
+    if (entry.key === "max") {
+      range.max = scalar;
+    }
+  }
+  return range.min !== undefined || range.max !== undefined ? range : undefined;
 }
 
 function scalarEntry(container: PdxContainer, key: string): Scalarish | undefined {

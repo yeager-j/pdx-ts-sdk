@@ -151,8 +151,13 @@ function boundsFromCandidates(
   let minSq = Infinity;
   let maxSq = 0;
   for (const [r1, r2] of radiusPairs) {
-    minSq = Math.min(minSq, squaredDistance(r1, r2, separation.min));
-    maxSq = Math.max(maxSq, squaredDistance(r1, r2, separation.max));
+    // With a negative radius product the distance shrinks as separation
+    // grows, so both separation endpoints are candidates for either bound.
+    for (const deg of [separation.min, separation.max]) {
+      const sq = squaredDistance(r1, r2, deg);
+      minSq = Math.min(minSq, sq);
+      maxSq = Math.max(maxSq, sq);
+    }
   }
   return {
     min: Math.sqrt(Math.max(0, minSq)),
@@ -173,9 +178,9 @@ export function correlatedDistance(
   angleDiff: AngleSpan
 ): DistanceBounds {
   const separation = circularAbs(angleDiff);
-  const c = 2 * (1 - Math.cos((separation.min * Math.PI) / 180));
-  // d^2 = delta^2 + c * r1 * (r1 + delta) is jointly convex in (r1, delta),
-  // so the exact minimum lies at a corner or a clamped stationary point.
+  // d^2 = delta^2 + c * r1 * (r1 + delta) is jointly convex in (r1, delta) at
+  // each separation, so the exact minimum lies at a corner or a clamped
+  // stationary point; both separation endpoints supply stationary candidates.
   const r1Candidates = new Set([r1.min, r1.max]);
   const deltaCandidates = new Set([delta.min, delta.max]);
   if (contains(delta, 0)) {
@@ -184,8 +189,11 @@ export function correlatedDistance(
   for (const d of [delta.min, delta.max]) {
     r1Candidates.add(clamp(r1, -d / 2));
   }
-  for (const r of [r1.min, r1.max]) {
-    deltaCandidates.add(clamp(delta, (-c * r) / 2));
+  for (const deg of [separation.min, separation.max]) {
+    const c = 2 * (1 - Math.cos((deg * Math.PI) / 180));
+    for (const r of [r1.min, r1.max]) {
+      deltaCandidates.add(clamp(delta, (-c * r) / 2));
+    }
   }
   r1Candidates.add(clamp(r1, 0));
   const pairs: (readonly [number, number])[] = [];
@@ -209,18 +217,24 @@ export function independentDistance(
   angleDiff: AngleSpan
 ): DistanceBounds {
   const separation = circularAbs(angleDiff);
-  const cosMin = Math.cos((separation.min * Math.PI) / 180);
-  // d^2 = r1^2 + r2^2 - 2 r1 r2 cos(sep) is jointly convex, so corners plus
-  // the clamped projections r2 = r1 cos(sep) cover the exact minimum on the box.
+  // d^2 = r1^2 + r2^2 - 2 r1 r2 cos(sep) is jointly convex at each
+  // separation, so corners plus the clamped projections r2 = r1 cos(sep)
+  // cover the exact minimum on the box; both separation endpoints supply
+  // projection candidates.
   const pairs: (readonly [number, number])[] = [];
   for (const a of [r1.min, r1.max]) {
     for (const b of [r2.min, r2.max]) {
       pairs.push([a, b]);
     }
-    pairs.push([a, clamp(r2, a * cosMin)]);
   }
-  for (const b of [r2.min, r2.max]) {
-    pairs.push([clamp(r1, b * cosMin), b]);
+  for (const deg of [separation.min, separation.max]) {
+    const cos = Math.cos((deg * Math.PI) / 180);
+    for (const a of [r1.min, r1.max]) {
+      pairs.push([a, clamp(r2, a * cos)]);
+    }
+    for (const b of [r2.min, r2.max]) {
+      pairs.push([clamp(r1, b * cos), b]);
+    }
   }
   const soundMax = r1.min >= 0 && r2.min >= 0;
   return boundsFromCandidates(pairs, separation, soundMax);

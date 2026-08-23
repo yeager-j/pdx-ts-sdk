@@ -48,11 +48,19 @@ export type SolarSystemDiagnosticCode =
  * geometry the resolver cannot compute faithfully.
  */
 export interface SolarSystemDiagnostic {
+  /** Stable machine-readable identity, safe to match on across versions. */
   readonly code: SolarSystemDiagnosticCode;
+  /** `warning` for overlap risks and unusable values; `info` for idioms and limits. */
   readonly severity: "warning" | "info";
+  /**
+   * How the finding relates to authored ranges: `definite` holds for every
+   * admissible value, `possible` for some, `unresolved` marks geometry that
+   * cannot be computed faithfully.
+   */
   readonly certainty: "definite" | "possible" | "unresolved";
   /** Stable source paths, e.g. `planet[1].moon[0]`. */
   readonly paths: readonly string[];
+  /** Human-readable description with the measured values. */
   readonly message: string;
 }
 
@@ -209,6 +217,19 @@ function checkCrossListPairs(frame: readonly ResolvedBody[], findings: Finding[]
       }
       const angleDiff = addSpans(b.angle, negateSpan(a.angle));
       const bounds = independentDistance(a.orbitRadius, b.orbitRadius, angleDiff);
+      if (bounds.max === 0) {
+        // Exact coincidence across two child lists is the same stack-then-space
+        // idiom the sibling pass groups, so it informs rather than warns.
+        findings.push({
+          code: "zero-advance-stack",
+          severity: "info",
+          certainty: "possible",
+          paths: [a.path, b.path],
+          message: `${label(a)} and ${label(b)} share one position in their parent's frame; the game separates them with size-based spacing that has no author-facing formula.`,
+          ordinal: Math.min(a.ordinal, b.ordinal),
+        });
+        continue;
+      }
       reportOverlap(a, b, bounds, findings);
     }
   }

@@ -334,6 +334,86 @@ describe("counts and ranges", () => {
     });
   });
 
+  it("places optional copies at their exact prefix-conditioned positions", () => {
+    const clear = inspect("exact_copies", {
+      class: "sc_g",
+      planet: [
+        {
+          class: "pc_continental",
+          size: 20,
+          orbitDistance: 60,
+          orbitAngle: 0,
+          planet: [
+            {
+              class: "pc_barren",
+              size: 20,
+              count: { min: 0, max: 2 },
+              orbitDistance: 100,
+              orbitAngle: 0,
+            },
+          ],
+          moon: [{ class: "pc_molten", size: 20, orbitDistance: 150, orbitAngle: 0 }],
+        },
+      ],
+    });
+    expect(warnings(clear.diagnostics)).toEqual([]);
+  });
+
+  it("resolves nested layouts for every counted copy", () => {
+    const { diagnostics } = inspect("copies_with_moons", {
+      class: "sc_g",
+      planet: [
+        {
+          class: "pc_continental",
+          size: 40,
+          count: 2,
+          orbitDistance: 60,
+          orbitAngle: 0,
+          moon: [{ class: "pc_barren", size: 4, orbitDistance: 3, orbitAngle: 0 }],
+        },
+      ],
+    });
+    const bounds = diagnostics.filter((d) => d.code === "parent-bound-intersection");
+    expect(bounds).toHaveLength(2);
+  });
+
+  it("invalidates positions after a truncated finite count", () => {
+    const { diagnostics, svg } = inspect("truncated_count", {
+      class: "sc_g",
+      planet: [
+        { class: "pc_barren", size: 10, count: 100, orbitDistance: 2, orbitAngle: 0 },
+        { class: "pc_desert", size: 10, orbitDistance: 1, orbitAngle: 0 },
+      ],
+    });
+    expect(diagnostics.find((d) => d.code === "unresolved-geometry")).toMatchObject({
+      paths: ["planet[0]"],
+    });
+    expect(svg).toContain(">?<");
+  });
+
+  it("caps descendant certainty under an optional parent", () => {
+    const { diagnostics } = inspect("optional_parent", {
+      class: "sc_g",
+      planet: [
+        {
+          class: "pc_continental",
+          size: 20,
+          count: { min: 0, max: 1 },
+          orbitDistance: 60,
+          orbitAngle: 0,
+          moon: [
+            { class: "pc_barren", size: 20, orbitDistance: 5, orbitAngle: 0 },
+            { class: "pc_molten", size: 20, orbitDistance: 1, orbitAngle: 0 },
+          ],
+        },
+      ],
+    });
+    const overlap = diagnostics.find(
+      (d) => d.code === "body-overlap" && d.paths.includes("planet[0].moon[0]")
+    );
+    expect(overlap).toMatchObject({ certainty: "possible" });
+  });
+
   it("reports the vanilla stacking idiom as info only", () => {
     const inspection = inspect("stack_idiom", {
       class: "sc_g",
@@ -727,6 +807,12 @@ describe("sector distance bounds", () => {
       r1: { min: -10, max: 20 },
       delta: { min: 5, max: 15 },
       angle: fixedAngle(90),
+    },
+    {
+      title: "opposed signed radii coinciding at half turn",
+      r1: { min: -10, max: -10 },
+      delta: { min: 20, max: 20 },
+      angle: angleRange(0, 180),
     },
   ];
 

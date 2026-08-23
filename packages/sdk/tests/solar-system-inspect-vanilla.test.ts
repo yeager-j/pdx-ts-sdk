@@ -30,7 +30,8 @@ function item(initializer: VanillaInitializer): SolarSystemInitializerItem {
 }
 
 describe.skipIf(installPath === undefined)("vanilla solar-system calibration (non-gating)", () => {
-  const initializers = readVanillaInitializers(installPath!);
+  // Collection still runs when the suite is skipped, so guard the read.
+  const initializers = installPath === undefined ? [] : readVanillaInitializers(installPath);
 
   it("reads the full shipped corpus", () => {
     expect(initializers.length).toBeGreaterThan(300);

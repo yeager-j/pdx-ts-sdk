@@ -54,7 +54,10 @@ const DEFAULT_SVG_SIZE = 800;
  * for random or asset-dependent bodies); overlap findings are visual-overlap
  * risks, not exact sprite collisions. Ranged and random values resolve to
  * position sets, and script-value strings such as `"@var"` are reported as
- * unresolvable rather than guessed.
+ * unresolvable rather than guessed. Overlap checks between different nesting
+ * frames apply only where both bodies have fully fixed positions; random
+ * bearings are the vanilla norm, so a conservative cross-frame pass would
+ * flag nearly every system.
  *
  * Throws `TypeError` when `initializer` is not a defined solar-system
  * initializer and `RangeError` for an invalid `svgSize`.

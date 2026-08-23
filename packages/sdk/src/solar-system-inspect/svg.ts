@@ -8,6 +8,7 @@
  */
 
 import type { SolarSystemDiagnostic } from "./diagnose.ts";
+import { absInterval } from "./interval.ts";
 import { BELT_HALF_WIDTH, type ResolvedBody, type ResolvedSystem } from "./resolve.ts";
 
 interface Placed {
@@ -85,9 +86,10 @@ export function renderSvg(
     const width = 2 * BELT_HALF_WIDTH + (belt.radius.max - belt.radius.min);
     parts.push(`<circle class="belt" cx="0" cy="0" r="${fmt(mid)}" stroke-width="${fmt(width)}"/>`);
     if (belt.radius.min !== belt.radius.max) {
-      parts.push(
-        `<circle class="belt-edge" cx="0" cy="0" r="${fmt(belt.radius.min - BELT_HALF_WIDTH)}"/>`
-      );
+      const inner = belt.radius.min - BELT_HALF_WIDTH;
+      if (inner > 0) {
+        parts.push(`<circle class="belt-edge" cx="0" cy="0" r="${fmt(inner)}"/>`);
+      }
       parts.push(
         `<circle class="belt-edge" cx="0" cy="0" r="${fmt(belt.radius.max + BELT_HALF_WIDTH)}"/>`
       );
@@ -114,10 +116,11 @@ export function renderSvg(
       continue;
     }
     if (r.min !== r.max) {
-      const mid = Math.abs((r.min + r.max) / 2);
-      const width = Math.abs(r.max) - Math.abs(r.min);
+      const reach = absInterval(r);
+      const mid = (reach.min + reach.max) / 2;
+      const width = reach.max - reach.min;
       parts.push(
-        `<circle class="orbit-band" cx="${fmt(p.cx)}" cy="${fmt(p.cy)}" r="${fmt(mid)}" stroke-width="${fmt(Math.max(Math.abs(width), hair))}"/>`
+        `<circle class="orbit-band" cx="${fmt(p.cx)}" cy="${fmt(p.cy)}" r="${fmt(mid)}" stroke-width="${fmt(Math.max(width, hair))}"/>`
       );
     }
     parts.push(
@@ -201,8 +204,13 @@ function place(system: ResolvedSystem): Placed[] {
       body.angle.kind === "fixed" &&
       body.orbitRadius !== undefined &&
       body.orbitRadius.min === body.orbitRadius.max;
+    const parentFixed = parent === undefined || parent.placement === "fixed";
     const placement =
-      unresolved || parent?.placement === "unresolved" ? "unresolved" : fixed ? "fixed" : "ranged";
+      unresolved || parent?.placement === "unresolved"
+        ? "unresolved"
+        : fixed && parentFixed
+          ? "fixed"
+          : "ranged";
     const entry: Placed = {
       body,
       x: cx + radius * Math.cos(rad),
