@@ -65,8 +65,12 @@ type Shape =
       readonly kind: "valueList";
       readonly value: Extract<ArgValue, { readonly kind: "valueList" }>;
     }
-  /** A localisation scalar or a typed trigger block, dispatched by `typeof`. */
-  | { readonly kind: "stringOrFields"; readonly fields: readonly ArgField[] }
+  /** A scalar or a typed trigger block, dispatched by the scalar arm's object kinds. */
+  | {
+      readonly kind: "scalarOrFields";
+      readonly scalar: TsValue;
+      readonly fields: readonly ArgField[];
+    }
   /** A block whose entire content is a nested trigger, i.e. a scope change. */
   | { readonly kind: "wrapper"; readonly scope: string }
   | { readonly kind: "fields"; readonly fields: readonly ArgField[] };
@@ -95,15 +99,6 @@ function shapeOf(emitter: Emitter, rule: LoweredRule): Shape | SkipReason {
   }
   if (rule.blocks.length > 1) {
     return skipReason("multiple-block-forms", "overloaded between multiple block forms");
-  }
-  if (
-    rule.scalars.length > 0 &&
-    !rule.scalars.every((declaration) => declaration.type.kind === "localisation")
-  ) {
-    return skipReason(
-      "scalar-block-overload",
-      "overloaded between a block and a non-localisation scalar"
-    );
   }
   const block = rule.blocks[0]!;
   const body = block.type;
@@ -170,7 +165,7 @@ function shapeOf(emitter: Emitter, rule: LoweredRule): Shape | SkipReason {
         },
       ],
     };
-    return stringOrFields(rule, shape);
+    return scalarOrFields(emitter, rule, shape);
   }
 
   const fields = mergeFields(emitter, named, pushedRaw, TRIGGER_CLAUSES);
@@ -180,22 +175,30 @@ function shapeOf(emitter: Emitter, rule: LoweredRule): Shape | SkipReason {
   if (fields.length === 0) {
     return skipReason("empty-block", "block with no typeable fields");
   }
-  return stringOrFields(rule, { kind: "fields", fields });
+  return scalarOrFields(emitter, rule, { kind: "fields", fields });
 }
 
 /**
- * Localisation scalars and blocks can share one export because `typeof`
- * separates their authored forms at runtime. Other scalar/block combinations
- * remain visible skips rather than receiving an unsound object dispatch.
+ * Pairs a rule's block shape with its scalar declarations as one overload.
+ * The arms stay separable at runtime because the scalar type says which SDK
+ * object forms it admits, so nothing has to guess from the authored shape.
  */
-function stringOrFields(
+function scalarOrFields(
+  emitter: Emitter,
   rule: LoweredRule,
   shape: Extract<Shape, { readonly kind: "fields" }>
-): Shape {
+): Shape | SkipReason {
   if (rule.scalars.length === 0) {
     return shape;
   }
-  return { kind: "stringOrFields", fields: shape.fields };
+  const scalar = emitter.unionFor(rule.scalars.map((declaration) => declaration.type));
+  if (scalar === null) {
+    return skipReason(
+      "unsupported-scalar-arm",
+      "overloaded with a scalar arm the emitter cannot express"
+    );
+  }
+  return { kind: "scalarOrFields", scalar, fields: shape.fields };
 }
 
 /**
@@ -243,23 +246,21 @@ function emitComparison(
   );
 }
 
-function emitValue(
+/**
+ * The `return` statement that writes one whole-value trigger entry, also
+ * recording a content reference when every form the value admits is one.
+ */
+function scalarEntryReturn(
   emitter: Emitter,
-  fn: string,
   key: string,
-  scope: string,
-  docs: string[],
-  value: TsValue
+  value: TsValue,
+  access: string,
+  indent: string
 ): string {
-  const signature =
-    docComment(docs) +
-    `export function ${fn}(value: ${emitter.useValue(value).type}): ` +
-    `${emitter.use("Trigger")}<${scope}> {\n`;
   if (value.refTypes === undefined) {
     return (
-      signature +
-      `  return ${emitter.use("trigger")}([${emitter.use("kv")}(${JSON.stringify(key)}, ` +
-      `${pushExpr(emitter, value, "value")})]);\n}\n`
+      `${indent}return ${emitter.use("trigger")}([${emitter.use("kv")}(${JSON.stringify(key)}, ` +
+      `${pushExpr(emitter, value, access)})]);\n`
     );
   }
   // The id is bound once and both written and recorded, so the emitted entry
@@ -268,10 +269,26 @@ function emitValue(
     emitter.use(value.scalarSymbol);
   }
   return (
-    signature +
-    `  const id = ${value.toScalar("value")};\n` +
-    `  return ${emitter.use("trigger")}([${emitter.use("kv")}(${JSON.stringify(key)}, id)], ` +
-    `[{ targets: ${JSON.stringify(value.refTypes)}, id, field: ${JSON.stringify(key)} }]);\n}\n`
+    `${indent}const id = ${value.toScalar(access)};\n` +
+    `${indent}return ${emitter.use("trigger")}([${emitter.use("kv")}(${JSON.stringify(key)}, id)], ` +
+    `[{ targets: ${JSON.stringify(value.refTypes)}, id, field: ${JSON.stringify(key)} }]);\n`
+  );
+}
+
+function emitValue(
+  emitter: Emitter,
+  fn: string,
+  key: string,
+  scope: string,
+  docs: string[],
+  value: TsValue
+): string {
+  return (
+    docComment(docs) +
+    `export function ${fn}(value: ${emitter.useValue(value).type}): ` +
+    `${emitter.use("Trigger")}<${scope}> {\n` +
+    scalarEntryReturn(emitter, key, value, "value", "  ") +
+    "}\n"
   );
 }
 
@@ -400,12 +417,22 @@ function emitFields(
   );
 }
 
-function emitStringOrFields(
+/**
+ * Emits a rule overloaded between one scalar and one block as two signatures
+ * over a runtime dispatch on the scalar arm's admitted object kinds.
+ *
+ * The argument type is emitted as a type alias rather than an interface
+ * because only an anonymous object type is removed from the implementation
+ * parameter's union when `isStructuredValue` narrows it, which is what keeps
+ * both arms of the body typed without a cast.
+ */
+function emitScalarOrFields(
   emitter: Emitter,
   fn: string,
   key: string,
   scope: string,
   docs: string[],
+  scalar: TsValue,
   fields: readonly ArgField[]
 ): string {
   const name = `${pascalCase(key)}Args`;
@@ -419,22 +446,24 @@ function emitStringOrFields(
   const pushes = pushStatements(emitter, fields, key);
   const withRefs = fields.some(contributesRefs);
   const condition = emitter.use("Trigger");
+  const scalarType = emitter.useValue(scalar).type;
   return (
-    `export interface ${name}${typeParameter} {\n${members}}\n\n` +
+    `export type ${name}${typeParameter} = {\n${members}};\n\n` +
     docComment(docs) +
-    `export function ${fn}(value: string): ${condition}<${scope}>;\n` +
+    `export function ${fn}(value: ${scalarType}): ${condition}<${scope}>;\n` +
     `export function ${fn}${typeParameter}(args: ${argsType}): ${condition}<${returnScope}>;\n` +
-    `export function ${fn}${preservesEnclosingScope ? `<S extends ${scope}>` : ""}(value: string | ${argsType}): ${condition}<${scope}> {\n` +
-    `  if (typeof value === "string") {\n` +
-    `    return ${emitter.use("trigger")}([${emitter.use("kv")}(${JSON.stringify(key)}, ` +
-    `value)]);\n` +
-    `  }\n` +
-    `  const args = value;\n` +
-    `  const entries: ${emitter.use("PdxEntry")}[] = [];\n` +
-    (withRefs ? `  const refs: ${emitter.use("ContentRefUse")}[] = [];\n` : "") +
+    `export function ${fn}${preservesEnclosingScope ? `<S extends ${scope}>` : ""}(value: ${scalarType} | ${argsType}): ${condition}<${scope}> {\n` +
+    `  if (${emitter.use("isStructuredValue")}(value, ` +
+    `${JSON.stringify(scalar.objectKinds ?? [])})) {\n` +
+    `    const args = value;\n` +
+    `    const entries: ${emitter.use("PdxEntry")}[] = [];\n` +
+    (withRefs ? `    const refs: ${emitter.use("ContentRefUse")}[] = [];\n` : "") +
     pushes +
-    `  return ${emitter.use("trigger")}([${emitter.use("block")}(${JSON.stringify(key)}, ` +
-    `entries)]${withRefs ? ", refs" : ""});\n}\n`
+    `    return ${emitter.use("trigger")}([${emitter.use("block")}(${JSON.stringify(key)}, ` +
+    `entries)]${withRefs ? ", refs" : ""});\n` +
+    `  }\n` +
+    scalarEntryReturn(emitter, key, scalar, "value", "  ") +
+    "}\n"
   );
 }
 
@@ -455,8 +484,8 @@ function emitOne(
       return emitValue(emitter, fn, key, scope, docs, shape.value);
     case "valueList":
       return emitValueList(emitter, fn, key, scope, docs, shape.value);
-    case "stringOrFields":
-      return emitStringOrFields(emitter, fn, key, scope, docs, shape.fields);
+    case "scalarOrFields":
+      return emitScalarOrFields(emitter, fn, key, scope, docs, shape.scalar, shape.fields);
     case "wrapper":
       return emitWrapper(emitter, fn, key, scope, docs, shape.scope);
     case "fields":

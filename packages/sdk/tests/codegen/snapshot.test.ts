@@ -17,13 +17,14 @@ function declaration(name: string): string {
   return source.slice(start, end + 2);
 }
 
-function argsInterface(name: string): string {
-  const start = source.indexOf(`export interface ${name}`);
+/** Slices one generated argument type out, interface or type alias. */
+function argsDeclaration(name: string): string {
+  const start = source.search(new RegExp(`export (?:interface|type) ${name}\\b`));
   if (start === -1) {
     throw new Error(`${name} is not in the generated triggers`);
   }
-  const end = source.indexOf("\n}\n", start);
-  return source.slice(start, end + 2);
+  const close = source.indexOf("\n}", start);
+  return source.slice(start, source.startsWith("\n};", close) ? close + 3 : close + 2);
 }
 
 describe("emitted trigger signatures", () => {
@@ -77,7 +78,7 @@ describe("emitted trigger signatures", () => {
   });
 
   it("clause + comparison fields: a nested trigger hole and an operator-or-literal count", () => {
-    expect(argsInterface("CountOwnedPopGroupArgs")).toMatchInlineSnapshot(`
+    expect(argsDeclaration("CountOwnedPopGroupArgs")).toMatchInlineSnapshot(`
       "export interface CountOwnedPopGroupArgs {
         limit?: Trigger<"pop_group">;
         count: ScriptValue | readonly [PdxOp, ScriptValue] | "all";
@@ -106,7 +107,7 @@ describe("emitted trigger signatures", () => {
   });
 
   it("splice + fields: the trigger splice becomes an implicit conditions argument", () => {
-    expect(argsInterface("CalcTrueIfArgs")).toMatchInlineSnapshot(`
+    expect(argsDeclaration("CalcTrueIfArgs")).toMatchInlineSnapshot(`
       "export interface CalcTrueIfArgs {
         amount: ScriptValue | readonly [PdxOp, ScriptValue];
         conditions: Trigger<ScopeName>;
@@ -129,10 +130,10 @@ describe("emitted trigger signatures", () => {
   });
 
   it("plain numeric comparison fields stay numeric", () => {
-    expect(argsInterface("DistanceArgs")).toContain(
+    expect(argsDeclaration("DistanceArgs")).toContain(
       "minDistance?: number | readonly [PdxOp, number];"
     );
-    expect(argsInterface("DistanceArgs")).toContain(
+    expect(argsDeclaration("DistanceArgs")).toContain(
       "maxDistance?: number | readonly [PdxOp, number];"
     );
   });
@@ -146,7 +147,7 @@ describe("emitted trigger signatures", () => {
   });
 
   it("alias_keys_field: an open alias-key name", () => {
-    expect(argsInterface("CheckModifierValueArgs")).toMatchInlineSnapshot(`
+    expect(argsDeclaration("CheckModifierValueArgs")).toMatchInlineSnapshot(`
       "export interface CheckModifierValueArgs {
         modifier: string;
         value: ScriptValue | readonly [PdxOp, ScriptValue];
@@ -215,13 +216,13 @@ describe("emitted trigger signatures", () => {
   });
 
   it("scalar plus block: preserves both custom_tooltip forms as overloads", () => {
-    expect(argsInterface("CustomTooltipArgs")).toMatchInlineSnapshot(`
-      "export interface CustomTooltipArgs<S extends ScopeName = ScopeName> {
-        text?: \"\" | string;
-        failText?: \"default\" | string;
+    expect(argsDeclaration("CustomTooltipArgs")).toMatchInlineSnapshot(`
+      "export type CustomTooltipArgs<S extends ScopeName = ScopeName> = {
+        text?: "" | string;
+        failText?: "default" | string;
         successText?: string;
         conditions: Trigger<S>;
-      }"
+      };"
     `);
     expect(declaration("customTooltip")).toMatchInlineSnapshot(`
       "export function customTooltip(value: string): Trigger<ScopeName>;
@@ -231,24 +232,60 @@ describe("emitted trigger signatures", () => {
       export function customTooltip<S extends ScopeName>(
         value: string | CustomTooltipArgs<S>
       ): Trigger<ScopeName> {
-        if (typeof value === \"string\") {
-          return trigger([kv(\"custom_tooltip\", value)]);
+        if (isStructuredValue(value, [])) {
+          const args = value;
+          const entries: PdxEntry[] = [];
+          const refs: ContentRefUse[] = [];
+          if (args.text !== undefined) {
+            entries.push(kv("text", args.text));
+          }
+          if (args.failText !== undefined) {
+            entries.push(kv("fail_text", args.failText));
+          }
+          if (args.successText !== undefined) {
+            entries.push(kv("success_text", args.successText));
+          }
+          entries.push(...args.conditions.entries);
+          refs.push(...args.conditions.refs);
+          return trigger([block("custom_tooltip", entries)], refs);
         }
-        const args = value;
-        const entries: PdxEntry[] = [];
-        const refs: ContentRefUse[] = [];
-        if (args.text !== undefined) {
-          entries.push(kv(\"text\", args.text));
+        return trigger([kv("custom_tooltip", value)]);
+      }"
+    `);
+  });
+
+  it("scalar plus block: dispatches a reference scalar on the object kinds it admits", () => {
+    expect(argsDeclaration("HasResourceArgs")).toMatchInlineSnapshot(`
+      "export type HasResourceArgs = {
+        type: ResourceRef | string;
+        amount: ScriptValue | readonly [PdxOp, ScriptValue];
+      };"
+    `);
+    expect(declaration("hasResource")).toMatchInlineSnapshot(`
+      "export function hasResource(
+        value: ResourceRef | string | boolean
+      ): Trigger<"astral_rift" | "carrier" | "country" | "deposit" | "planet" | "ship">;
+      export function hasResource(
+        args: HasResourceArgs
+      ): Trigger<"astral_rift" | "carrier" | "country" | "deposit" | "planet" | "ship">;
+      export function hasResource(
+        value: ResourceRef | string | boolean | HasResourceArgs
+      ): Trigger<"astral_rift" | "carrier" | "country" | "deposit" | "planet" | "ship"> {
+        if (isStructuredValue(value, ["typed-ref"])) {
+          const args = value;
+          const entries: PdxEntry[] = [];
+          const refs: ContentRefUse[] = [];
+          const id0 = refId(args.type);
+          entries.push(kv("type", id0));
+          refs.push({ targets: ["resource"], id: id0, field: "has_resource.type" });
+          entries.push(
+            typeof args.amount === "object"
+              ? cmp("amount", args.amount[0], scriptValueScalar(args.amount[1]))
+              : kv("amount", scriptValueScalar(args.amount))
+          );
+          return trigger([block("has_resource", entries)], refs);
         }
-        if (args.failText !== undefined) {
-          entries.push(kv(\"fail_text\", args.failText));
-        }
-        if (args.successText !== undefined) {
-          entries.push(kv(\"success_text\", args.successText));
-        }
-        entries.push(...args.conditions.entries);
-        refs.push(...args.conditions.refs);
-        return trigger([block(\"custom_tooltip\", entries)], refs);
+        return trigger([kv("has_resource", refId(value))]);
       }"
     `);
   });
@@ -258,7 +295,7 @@ describe("scalar lowering ownership", () => {
   it("keeps generated refs rules-derived and imports the handwritten runtime", () => {
     expect(refs).toContain('import type { TypedRef } from "../script/scalar.ts";');
     expect(refs).not.toContain("function refId");
-    expect(source).toContain('import { refId } from "../script/scalar.ts";');
+    expect(source).toContain('import { isStructuredValue, refId } from "../script/scalar.ts";');
     expect(contentDefiners).toContain(
       'import { refId, type TypedRef } from "../script/scalar.ts";'
     );

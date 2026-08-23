@@ -51,21 +51,6 @@ describe("trigger emission", () => {
         category: "abstract-placeholder",
         detail: "abstract scripted-trigger placeholder",
       },
-      {
-        name: "has_resource",
-        category: "scalar-block-overload",
-        detail: "overloaded between a block and a non-localisation scalar",
-      },
-      {
-        name: "intel_level",
-        category: "scalar-block-overload",
-        detail: "overloaded between a block and a non-localisation scalar",
-      },
-      {
-        name: "is_war_participant",
-        category: "scalar-block-overload",
-        detail: "overloaded between a block and a non-localisation scalar",
-      },
     ]);
   });
 
@@ -74,15 +59,65 @@ describe("trigger emission", () => {
       expect.arrayContaining(["customTooltip", "failText", "successText"])
     );
     expect(emission.code).toContain(
-      "export interface CustomTooltipArgs<S extends ScopeName = ScopeName>"
+      "export type CustomTooltipArgs<S extends ScopeName = ScopeName> = {"
     );
     expect(emission.code).toContain('failText?: "default" | string;');
     expect(emission.code).toContain("conditions: Trigger<S>;");
-    expect(emission.code).toContain(
-      "export function customTooltip(value: string): Trigger<ScopeName>;"
-    );
+    for (const fn of ["customTooltip", "failText", "successText"]) {
+      expect(emission.code).toContain(`export function ${fn}(value: string): Trigger<ScopeName>;`);
+    }
     expect(emission.code).toContain('return trigger([kv("custom_tooltip", value)]);');
     expect(emission.code).toContain('return trigger([block("custom_tooltip", entries)], refs);');
+  });
+
+  it("dispatches a non-localisation scalar arm on the object kinds it admits", () => {
+    expect([...emission.names]).toEqual(
+      expect.arrayContaining(["hasResource", "intelLevel", "isWarParticipant"])
+    );
+
+    const resourceScope =
+      'Trigger<"astral_rift" | "carrier" | "country" | "deposit" | "planet" | "ship">';
+    expect(emission.code).toContain(
+      "export type HasResourceArgs = {\n" +
+        "  type: ResourceRef | string;\n" +
+        "  amount: ScriptValue | readonly [PdxOp, ScriptValue];\n" +
+        "};"
+    );
+    expect(emission.code).toContain(
+      `export function hasResource(value: ResourceRef | string | boolean): ${resourceScope};`
+    );
+    expect(emission.code).toContain(
+      `export function hasResource(args: HasResourceArgs): ${resourceScope};`
+    );
+    // A branded resource reference is the scalar arm; any other object is the block.
+    expect(emission.code).toContain('if (isStructuredValue(value, ["typed-ref"])) {');
+    expect(emission.code).toContain('return trigger([kv("has_resource", refId(value))]);');
+
+    expect(emission.code).toContain(
+      'export type IntelLevelArgs = {\n  level: IntelLevel;\n  system: ScopeValue<"system">;\n};'
+    );
+    expect(emission.code).toContain(
+      'export function intelLevel(value: IntelLevel): Trigger<"country">;'
+    );
+    expect(emission.code).toContain(
+      'export function intelLevel(args: IntelLevelArgs): Trigger<"country">;'
+    );
+    expect(emission.code).toContain('return trigger([kv("intel_level", value)]);');
+
+    const warParticipantScalar =
+      'ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"' +
+      '|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"' +
+      '|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system"|"war">';
+    expect(emission.code).toContain(
+      `export function isWarParticipant(value: ${warParticipantScalar}): ` +
+        'Trigger<"country" | "war">;'
+    );
+    expect(emission.code).toContain(
+      'export function isWarParticipant(args: IsWarParticipantArgs): Trigger<"country" | "war">;'
+    );
+    expect(emission.code).toContain('  war?: ScopeValue<"war">;');
+    expect(emission.code).toContain('if (isStructuredValue(value, ["scope-ref"])) {');
+    expect(emission.code).toContain('return trigger([kv("is_war_participant", value.path)]);');
   });
 
   it("uses the audited game-doc summary when CWT prose is wrong", () => {

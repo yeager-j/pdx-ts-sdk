@@ -17,7 +17,7 @@ import {
 
 import type { ContentRefUse } from "../references.ts";
 import type { ScopeValue } from "../script/effects/types.ts";
-import { refId } from "../script/scalar.ts";
+import { isStructuredValue, refId } from "../script/scalar.ts";
 import {
   scriptValueScalar,
   trigger,
@@ -42,6 +42,7 @@ import type {
   GalaxySetupValue,
   GendersNotSet,
   HyperlaneEuclidean,
+  IntelLevel,
   OpinionLevel,
   PatronContactState,
   PlanetResourceCompareType,
@@ -59,6 +60,7 @@ import type {
   TechnologyArea,
   TradeType,
   TriggerCustomProgress,
+  WarSide,
 } from "./enums.ts";
 import type {
   AgendaRef,
@@ -6082,12 +6084,12 @@ export function customProgress(args: CustomProgressArgs): Trigger<ScopeName> {
   return trigger([block("custom_progress", entries)], refs);
 }
 
-export interface CustomTooltipArgs<S extends ScopeName = ScopeName> {
+export type CustomTooltipArgs<S extends ScopeName = ScopeName> = {
   text?: "" | string;
   failText?: "default" | string;
   successText?: string;
   conditions: Trigger<S>;
-}
+};
 
 /**
  * Replaces the tooltips for the enclosed triggers with a custom text
@@ -6107,24 +6109,24 @@ export function customTooltip<S extends ScopeName = ScopeName>(
 export function customTooltip<S extends ScopeName>(
   value: string | CustomTooltipArgs<S>
 ): Trigger<ScopeName> {
-  if (typeof value === "string") {
-    return trigger([kv("custom_tooltip", value)]);
+  if (isStructuredValue(value, [])) {
+    const args = value;
+    const entries: PdxEntry[] = [];
+    const refs: ContentRefUse[] = [];
+    if (args.text !== undefined) {
+      entries.push(kv("text", args.text));
+    }
+    if (args.failText !== undefined) {
+      entries.push(kv("fail_text", args.failText));
+    }
+    if (args.successText !== undefined) {
+      entries.push(kv("success_text", args.successText));
+    }
+    entries.push(...args.conditions.entries);
+    refs.push(...args.conditions.refs);
+    return trigger([block("custom_tooltip", entries)], refs);
   }
-  const args = value;
-  const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
-  if (args.text !== undefined) {
-    entries.push(kv("text", args.text));
-  }
-  if (args.failText !== undefined) {
-    entries.push(kv("fail_text", args.failText));
-  }
-  if (args.successText !== undefined) {
-    entries.push(kv("success_text", args.successText));
-  }
-  entries.push(...args.conditions.entries);
-  refs.push(...args.conditions.refs);
-  return trigger([block("custom_tooltip", entries)], refs);
+  return trigger([kv("custom_tooltip", value)]);
 }
 
 export interface CustomTooltipFailArgs {
@@ -6649,10 +6651,10 @@ export function factionApproval(op: PdxOp, value: ScriptValue): Trigger<"pop_fac
   return trigger([cmp("faction_approval", op, scriptValueScalar(value))]);
 }
 
-export interface FailTextArgs<S extends ScopeName = ScopeName> {
+export type FailTextArgs<S extends ScopeName = ScopeName> = {
   text: string;
   conditions: Trigger<S>;
-}
+};
 
 /**
  * For 'desc={trigger={' use. Shows custom text when the associated trigger fails.
@@ -6666,16 +6668,16 @@ export interface FailTextArgs<S extends ScopeName = ScopeName> {
 export function failText(value: string): Trigger<ScopeName>;
 export function failText<S extends ScopeName = ScopeName>(args: FailTextArgs<S>): Trigger<S>;
 export function failText<S extends ScopeName>(value: string | FailTextArgs<S>): Trigger<ScopeName> {
-  if (typeof value === "string") {
-    return trigger([kv("fail_text", value)]);
+  if (isStructuredValue(value, [])) {
+    const args = value;
+    const entries: PdxEntry[] = [];
+    const refs: ContentRefUse[] = [];
+    entries.push(kv("text", args.text));
+    entries.push(...args.conditions.entries);
+    refs.push(...args.conditions.refs);
+    return trigger([block("fail_text", entries)], refs);
   }
-  const args = value;
-  const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
-  entries.push(kv("text", args.text));
-  entries.push(...args.conditions.entries);
-  refs.push(...args.conditions.refs);
-  return trigger([block("fail_text", entries)], refs);
+  return trigger([kv("fail_text", value)]);
 }
 
 /** Checks Fallen / Awakened Empire strength scaling in game setup */
@@ -10332,6 +10334,44 @@ export function hasResearchStation(value: boolean = true): Trigger<"carrier" | "
   return trigger([kv("has_research_station", value)]);
 }
 
+export type HasResourceArgs = {
+  type: ResourceRef | string;
+  amount: ScriptValue | readonly [PdxOp, ScriptValue];
+};
+
+/**
+ * Checks if the planet has a specific amount of a specific resource
+ * ```
+ * has_resource = { type = minerals amount < 5 }
+ * has_resource = no
+ * ```
+ */
+export function hasResource(
+  value: ResourceRef | string | boolean
+): Trigger<"astral_rift" | "carrier" | "country" | "deposit" | "planet" | "ship">;
+export function hasResource(
+  args: HasResourceArgs
+): Trigger<"astral_rift" | "carrier" | "country" | "deposit" | "planet" | "ship">;
+export function hasResource(
+  value: ResourceRef | string | boolean | HasResourceArgs
+): Trigger<"astral_rift" | "carrier" | "country" | "deposit" | "planet" | "ship"> {
+  if (isStructuredValue(value, ["typed-ref"])) {
+    const args = value;
+    const entries: PdxEntry[] = [];
+    const refs: ContentRefUse[] = [];
+    const id0 = refId(args.type);
+    entries.push(kv("type", id0));
+    refs.push({ targets: ["resource"], id: id0, field: "has_resource.type" });
+    entries.push(
+      typeof args.amount === "object"
+        ? cmp("amount", args.amount[0], scriptValueScalar(args.amount[1]))
+        : kv("amount", scriptValueScalar(args.amount))
+    );
+    return trigger([block("has_resource", entries)], refs);
+  }
+  return trigger([kv("has_resource", refId(value))]);
+}
+
 /**
  * Checks if the planet has a planetary ring
  * ```
@@ -11340,6 +11380,30 @@ export function intel(args: IntelArgs): Trigger<"country"> {
       : kv("value", scriptValueScalar(args.value))
   );
   return trigger([block("intel", entries)]);
+}
+
+export type IntelLevelArgs = {
+  level: IntelLevel;
+  system: ScopeValue<"system">;
+};
+
+/**
+ * Checks the country's intel level of target system
+ * ```
+ * intel_level = { level > low system = <target> }
+ * ```
+ */
+export function intelLevel(value: IntelLevel): Trigger<"country">;
+export function intelLevel(args: IntelLevelArgs): Trigger<"country">;
+export function intelLevel(value: IntelLevel | IntelLevelArgs): Trigger<"country"> {
+  if (isStructuredValue(value, [])) {
+    const args = value;
+    const entries: PdxEntry[] = [];
+    entries.push(kv("level", args.level));
+    entries.push(kv("system", args.system.path));
+    return trigger([block("intel_level", entries)]);
+  }
+  return trigger([kv("intel_level", value)]);
 }
 
 export interface IsActionActiveArgs {
@@ -15179,6 +15243,132 @@ export function isWarLeader(value: boolean = true): Trigger<"country" | "pop_fac
   return trigger([kv("is_war_leader", value)]);
 }
 
+export type IsWarParticipantArgs = {
+  who?: ScopeValue<
+    | "agreement"
+    | "archaeological_site"
+    | "army"
+    | "carrier"
+    | "country"
+    | "debris"
+    | "deposit"
+    | "first_contact"
+    | "fleet"
+    | "leader"
+    | "megastructure"
+    | "planet"
+    | "pop_faction"
+    | "pop_group"
+    | "sector"
+    | "ship"
+    | "situation"
+    | "spy_network"
+    | "starbase"
+    | "system"
+  >;
+  war?: ScopeValue<"war">;
+  side?:
+    | ScopeValue<
+        | "agreement"
+        | "archaeological_site"
+        | "army"
+        | "carrier"
+        | "country"
+        | "debris"
+        | "deposit"
+        | "first_contact"
+        | "fleet"
+        | "leader"
+        | "megastructure"
+        | "planet"
+        | "pop_faction"
+        | "pop_group"
+        | "sector"
+        | "ship"
+        | "situation"
+        | "spy_network"
+        | "starbase"
+        | "system"
+      >
+    | WarSide;
+};
+
+/**
+ * Checks if target country is participating in the war on the specified side
+ * ```
+ * is_war_participant = { who = <target>/war = <target> side = attackers/defenders/<target> }
+ * ```
+ */
+export function isWarParticipant(
+  value: ScopeValue<
+    | "agreement"
+    | "archaeological_site"
+    | "army"
+    | "carrier"
+    | "country"
+    | "debris"
+    | "deposit"
+    | "first_contact"
+    | "fleet"
+    | "leader"
+    | "megastructure"
+    | "planet"
+    | "pop_faction"
+    | "pop_group"
+    | "sector"
+    | "ship"
+    | "situation"
+    | "spy_network"
+    | "starbase"
+    | "system"
+    | "war"
+  >
+): Trigger<"country" | "war">;
+export function isWarParticipant(args: IsWarParticipantArgs): Trigger<"country" | "war">;
+export function isWarParticipant(
+  value:
+    | ScopeValue<
+        | "agreement"
+        | "archaeological_site"
+        | "army"
+        | "carrier"
+        | "country"
+        | "debris"
+        | "deposit"
+        | "first_contact"
+        | "fleet"
+        | "leader"
+        | "megastructure"
+        | "planet"
+        | "pop_faction"
+        | "pop_group"
+        | "sector"
+        | "ship"
+        | "situation"
+        | "spy_network"
+        | "starbase"
+        | "system"
+        | "war"
+      >
+    | IsWarParticipantArgs
+): Trigger<"country" | "war"> {
+  if (isStructuredValue(value, ["scope-ref"])) {
+    const args = value;
+    const entries: PdxEntry[] = [];
+    if (args.who !== undefined) {
+      entries.push(kv("who", args.who.path));
+    }
+    if (args.war !== undefined) {
+      entries.push(kv("war", args.war.path));
+    }
+    if (args.side !== undefined) {
+      entries.push(kv("side", refId(args.side)));
+    }
+    return trigger([block("is_war_participant", entries)]);
+  }
+  return trigger([kv("is_war_participant", value.path)]);
+}
+
 /**
  * Checks if the planet/system/fleet/ship is within the borders of the target country
  * ```
@@ -18078,10 +18268,10 @@ export function subjects(op: PdxOp, value: ScriptValue): Trigger<"country"> {
   return trigger([cmp("subjects", op, scriptValueScalar(value))]);
 }
 
-export interface SuccessTextArgs<S extends ScopeName = ScopeName> {
+export type SuccessTextArgs<S extends ScopeName = ScopeName> = {
   text: string;
   conditions?: Trigger<S>;
-}
+};
 
 /**
  * For 'desc={trigger={' use. Shows custom text when the associated trigger passes.
@@ -18097,18 +18287,18 @@ export function successText<S extends ScopeName = ScopeName>(args: SuccessTextAr
 export function successText<S extends ScopeName>(
   value: string | SuccessTextArgs<S>
 ): Trigger<ScopeName> {
-  if (typeof value === "string") {
-    return trigger([kv("success_text", value)]);
+  if (isStructuredValue(value, [])) {
+    const args = value;
+    const entries: PdxEntry[] = [];
+    const refs: ContentRefUse[] = [];
+    entries.push(kv("text", args.text));
+    if (args.conditions !== undefined) {
+      entries.push(...args.conditions.entries);
+      refs.push(...args.conditions.refs);
+    }
+    return trigger([block("success_text", entries)], refs);
   }
-  const args = value;
-  const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
-  entries.push(kv("text", args.text));
-  if (args.conditions !== undefined) {
-    entries.push(...args.conditions.entries);
-    refs.push(...args.conditions.refs);
-  }
-  return trigger([block("success_text", entries)], refs);
+  return trigger([kv("success_text", value)]);
 }
 
 /**

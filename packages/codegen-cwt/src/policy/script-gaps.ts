@@ -140,13 +140,6 @@ export const SCRIPT_GENERATION_GAPS: readonly ScriptGenerationGap[] = [
   ),
   ...trackedGapRows(
     "trigger",
-    "scalar-block-overload",
-    "SDK-248",
-    "The trigger emitter has no sound discriminator for non-localisation scalar and block arms.",
-    ["has_resource", "intel_level", "is_war_participant"]
-  ),
-  ...trackedGapRows(
-    "trigger",
     "computed-field-key",
     "SDK-249",
     "The trigger argument model cannot represent computed switch keys.",

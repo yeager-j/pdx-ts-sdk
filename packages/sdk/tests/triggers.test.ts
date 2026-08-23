@@ -17,10 +17,13 @@ import {
   hasCompletedEventChainCounter,
   hasCountryFlag,
   hasGlobalFlag,
+  hasResource,
   hasTechnology,
   hiddenTrigger,
+  intelLevel,
   isAi,
   isPlanetClass,
+  isWarParticipant,
   nand,
   nor,
   not,
@@ -201,6 +204,46 @@ describe("trigger builders", () => {
         "\tfail_text = default\n" +
         "\tsuccess_text = ascension_theory_ready\n" +
         "\thas_technology = tech_ascension_theory\n" +
+        "}\n"
+    );
+  });
+
+  it("writes has_resource as either its resource scalar or its typed block", () => {
+    // Both arms are shipped spellings: `has_resource = sr_zro`
+    // (common/scripted_triggers/00_scripted_triggers.txt) and
+    // `has_resource = { type = minor_artifacts amount >= 1000 }`
+    // (common/achievements.txt).
+    expect(serialize([...hasResource(true).entries])).toBe("has_resource = yes\n");
+    expect(serialize([...hasResource("sr_zro").entries])).toBe("has_resource = sr_zro\n");
+    expect(serialize([...hasResource({ id: "sr_zro" }).entries])).toBe("has_resource = sr_zro\n");
+    expect(
+      serialize([...hasResource({ type: "minor_artifacts", amount: [">=", 1000] }).entries])
+    ).toBe("has_resource = {\n\ttype = minor_artifacts\n\tamount >= 1000\n}\n");
+  });
+
+  it("writes intel_level as either its level scalar or its level-and-system block", () => {
+    const system = eventTarget<"system">("triggers_test_system");
+
+    expect(serialize([...intelLevel("high").entries])).toBe("intel_level = high\n");
+    expect(serialize([...intelLevel({ level: "none", system }).entries])).toBe(
+      "intel_level = {\n\tlevel = none\n\tsystem = event_target:triggers_test_system\n}\n"
+    );
+  });
+
+  it("sends a scope value to the scalar arm and a plain object to the block arm", () => {
+    // is_war_participant overloads a bare war or country scope against a
+    // block of the same scopes, so the arms can only be told apart by the
+    // authored value's kind — a scope value carries `kind: "scope-ref"`.
+    const war = eventTarget<"war">("triggers_test_war");
+    const attacker = eventTarget<"country">("triggers_test_attacker");
+
+    expect(serialize([...isWarParticipant(war).entries])).toBe(
+      "is_war_participant = event_target:triggers_test_war\n"
+    );
+    expect(serialize([...isWarParticipant({ who: attacker, side: "attackers" }).entries])).toBe(
+      "is_war_participant = {\n" +
+        "\twho = event_target:triggers_test_attacker\n" +
+        "\tside = attackers\n" +
         "}\n"
     );
   });
