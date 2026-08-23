@@ -81,10 +81,10 @@ describe("the script-generation gap ledger", () => {
       effects: effects.skipped,
     });
 
-    expect(SCRIPT_GENERATION_GAPS).toHaveLength(35);
+    expect(SCRIPT_GENERATION_GAPS).toHaveLength(32);
     expect(report.policyOwned).toHaveLength(44);
     expect(report.abstractPlaceholders).toHaveLength(2);
-    expect(report.trackedGaps).toHaveLength(35);
+    expect(report.trackedGaps).toHaveLength(32);
     expect(report.abstractPlaceholders.map((entry) => entry.name)).toEqual([
       "<scripted_effect>",
       "<scripted_trigger>",
@@ -98,7 +98,7 @@ describe("the script-generation gap ledger", () => {
     });
     const lines = formatScriptGapReport(report);
 
-    expect(lines.trackedGaps).toHaveLength(35);
+    expect(lines.trackedGaps).toHaveLength(32);
     expect(lines.trackedGaps).toContain(
       "effect create_fleet [unsupported-field-value] — SDK-253: " +
         "The create_fleet parent field uses the malformed CWT keyword sceop[fleet]. " +

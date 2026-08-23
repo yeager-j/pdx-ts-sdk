@@ -240,6 +240,9 @@ export type GrowthStance = "controlled" | "excessive" | "none";
 /** `enum[hyperlane_euclidean]`. */
 export type HyperlaneEuclidean = "hyperlane" | "euclidean";
 
+/** `enum[intel_level]`. */
+export type IntelLevel = "none" | "low" | "medium" | "high" | "full";
+
 /** `enum[job_trigger]`. */
 export type JobTrigger =
   | "can_fill_ruler_job"

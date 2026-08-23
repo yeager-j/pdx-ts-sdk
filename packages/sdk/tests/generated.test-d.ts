@@ -14,6 +14,9 @@ import {
   hasEdict,
   hasElectionType,
   hasPlanetFlag,
+  hasResource,
+  intelLevel,
+  isWarParticipant,
   numMoons,
   popGroupSize,
   relativePower,
@@ -209,5 +212,40 @@ describe("technology field widenings", () => {
     const many: TechnologyDef = { ...base, area: "physics", category: ["particles", "voidcraft"] };
     void one;
     void many;
+  });
+});
+
+describe("scalar-or-block trigger overloads", () => {
+  const war = eventTarget<"war">("mymod_war");
+
+  it("takes either arm of has_resource", () => {
+    hasResource(true);
+    hasResource("sr_zro");
+    hasResource({ id: "sr_zro" });
+    hasResource({ type: "minor_artifacts", amount: [">=", 1000] });
+  });
+
+  it("rejects a block missing a required field", () => {
+    // @ts-expect-error — the block arm needs an amount, and `{ type }` is no resource reference
+    hasResource({ type: "minor_artifacts" });
+  });
+
+  it("rejects a value belonging to neither arm", () => {
+    // @ts-expect-error — has_resource takes a resource, a bool, or its block
+    hasResource(5);
+  });
+
+  it("keeps the intel_level enum closed on both arms", () => {
+    intelLevel("high");
+    intelLevel({ level: "high", system: eventTarget<"system">("mymod_system") });
+    // @ts-expect-error — enum[intel_level] has five members and this is not one
+    intelLevel("not_a_level");
+  });
+
+  it("keeps is_war_participant's scalar arm to scopes", () => {
+    isWarParticipant(war);
+    isWarParticipant({ war, side: "attackers" });
+    // @ts-expect-error — the scalar arm is a scope value, never a bare word
+    isWarParticipant("attackers");
   });
 });
