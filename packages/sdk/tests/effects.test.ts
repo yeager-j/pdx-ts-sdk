@@ -21,7 +21,7 @@ import {
   withScriptCtx,
 } from "../src/script/effects/recorder.ts";
 import type { StaticModifierHostContract } from "../src/script/effects/static-modifiers.ts";
-import type { ScriptCtx } from "../src/script/effects/types.ts";
+import type { IfChain, ScriptCtx } from "../src/script/effects/types.ts";
 import { isEffectBlockValue, mapEntries } from "../src/script/scalar.ts";
 import {
   hasCountryFlag,
@@ -366,6 +366,18 @@ set_diplomacy_action_setting = {
 \t}
 }
 `);
+  });
+
+  it("rejects effect metadata without an explicit scope transition", () => {
+    const malformed: EffectFieldMeta = {
+      prop: "effect",
+      key: "effect",
+      kind: "effect",
+    };
+
+    expect(() =>
+      fieldEntries([malformed], { effect: () => undefined }, "malformed", [], undefined)
+    ).toThrow(/has no scope transition metadata/);
   });
 
   it("serializes scalar, mixed, and clause-valued bare blocks in author order", () => {
@@ -1233,6 +1245,32 @@ hidden_effect = {
 		}
 		else = {
 			log = peace
+		}
+	}
+}
+`);
+  });
+
+  it("rejects a routed if chain that outlives its descendant recording", () => {
+    let chain: IfChain<"country"> | undefined;
+    const sink = recordEffects<"country">([], (country) => {
+      country.everyOwnedPlanet({}, () => {
+        chain = country.if(isAtWar(), () => country.log("war"));
+      });
+
+      expect(() => chain!.elseIf(isAtWar(), () => country.log("more war"))).toThrow(
+        /already returned/
+      );
+      expect(() => chain!.else(() => country.log("peace"))).toThrow(/already returned/);
+    });
+
+    expect(serialize(sink)).toBe(`every_owned_planet = {
+	prev = {
+		if = {
+			limit = {
+				is_at_war = yes
+			}
+			log = war
 		}
 	}
 }

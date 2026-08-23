@@ -200,7 +200,9 @@ function routedRecording(active: Recording, target: Recording, sink: PdxEntry[])
   return {
     sink,
     refs: active.refs,
-    live: target.live,
+    get live() {
+      return active.live && target.live;
+    },
     lease: target.lease,
     scope: target.scope,
     ancestors: [active.scope, ...active.ancestors],
@@ -429,6 +431,17 @@ function blockArmOf(field: EffectFieldMeta): EffectBlockMeta {
     throw new Error(`Effect field "${field.key}" is overloaded with a block but names no arm`);
   }
   return field.block;
+}
+
+/** Reads the generated identity transition for a nested effect closure. */
+function effectFieldTransition(field: EffectFieldMeta): ScopeTransition {
+  if (field.transition === undefined) {
+    throw new Error(
+      `Effect field "${field.key}" has no scope transition metadata. Regenerate the SDK output; ` +
+        "the recorder cannot safely infer whether its callback preserves or changes scope."
+    );
+  }
+  return field.transition;
 }
 
 /**
@@ -743,7 +756,7 @@ export function fieldEntries(
                 refs,
                 value as (scope: unknown) => void,
                 [],
-                field.transition ?? "same"
+                effectFieldTransition(field)
               )
             )
           );

@@ -35,7 +35,7 @@ const referencesByMethod = {
     key: "hidden_effect",
     kind: "structural",
     availability: { kind: "universal" },
-    signature: "readonly hiddenEffect: EffectPathOf<S>;",
+    signature: "readonly hiddenEffect: SameScopeEffectPath<S>;",
     docs: [
       "Begins a same-scope `hidden_effect = { ... }` path.",
       "Terminate it with `.effects(...)`, or continue through generated scope-link properties.",

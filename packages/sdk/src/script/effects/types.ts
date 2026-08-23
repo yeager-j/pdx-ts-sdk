@@ -79,12 +79,16 @@ export interface ScopeRef<S extends ScopeName = ScopeName> extends ScopeValue<S>
  *
  * Reading a generated scope-link property adds one nested block without
  * recording anything. {@link effects} terminates the path, records one leaf
- * closure, and writes the complete nested structure. `hiddenEffect` is the
+ * closure, and writes the complete nested structure. `Transition` records
+ * whether the final block preserves, pushes, replaces, or has an unknown
+ * scope identity. `hiddenEffect` is the
  * same-scope structural node, so it composes with generated navigation while
  * still allowing sibling effects when terminated on its own.
  */
 export interface EffectPath<S extends ScopeName, Transition extends EffectPathTransition = "push"> {
+  /** Continues through `hidden_effect` without changing scope identity. */
   readonly hiddenEffect: EffectPathOf<S, Transition>;
+  /** Ends the path; same-scope paths take no argument, changed scopes receive their destination. */
   effects(body: Transition extends "same" ? () => void : (scope: ScopeObjOf<S>) => void): void;
 }
 
@@ -362,6 +366,7 @@ export type ComplexTriggerModifierWithLoc<S extends ScopeName> = Omit<
  * being recorded between its links — that would silently detach the `else`.
  */
 export interface IfChain<S extends ScopeName> {
+  /** Adds an adjacent `else_if` branch before any other effect is recorded. */
   elseIf(condition: Trigger<S>, body: () => void): IfChain<S>;
   /** Ends the chain: a further `elseIf` or `else` on it throws. */
   else(body: () => void): void;
@@ -371,6 +376,7 @@ export interface IfChain<S extends ScopeName> {
 export interface RandomListArm<S extends ScopeName> {
   readonly weight: number;
   readonly modifiers?: readonly Modifier<S>[];
+  /** Effects run when this arm is selected, in the list's receiving scope. */
   readonly do: () => void;
 }
 
