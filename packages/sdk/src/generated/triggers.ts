@@ -17,7 +17,13 @@ import {
 
 import type { ContentRefUse } from "../references.ts";
 import type { ScopeValue } from "../script/effects/types.ts";
-import { isComparisonList, isStructuredValue, mapEntries, refId } from "../script/scalar.ts";
+import {
+  caseEntries,
+  isComparisonList,
+  isStructuredValue,
+  mapEntries,
+  refId,
+} from "../script/scalar.ts";
 import {
   scriptValueScalar,
   trigger,
@@ -1556,9 +1562,10 @@ export function builtOnPlanet(value: boolean = true): Trigger<"megastructure"> {
 }
 
 /** The arguments `calcTrueIf` takes, as the rules declare them. */
-export interface CalcTrueIfArgs {
+export interface CalcTrueIfArgs<S extends ScopeName = ScopeName> {
   amount: ScriptValue | readonly [PdxOp, ScriptValue];
-  conditions: Trigger<ScopeName>;
+  /** The nested conditions, written bare inside the block beside its named keys. */
+  conditions: Trigger<S>;
 }
 
 /**
@@ -1567,7 +1574,7 @@ export interface CalcTrueIfArgs {
  * calc_true_if = { amount = 2/variable <trigger> <trigger> <trigger> }
  * ```
  */
-export function calcTrueIf(args: CalcTrueIfArgs): Trigger<ScopeName> {
+export function calcTrueIf<S extends ScopeName = ScopeName>(args: CalcTrueIfArgs<S>): Trigger<S> {
   const entries: PdxEntry[] = [];
   const refs: ContentRefUse[] = [];
   entries.push(
@@ -2474,6 +2481,7 @@ export interface ClosestSystemArgs {
   maxSteps?: number | readonly [PdxOp, number];
   useBypasses?: boolean;
   limit?: Trigger<"system">;
+  /** The nested conditions, written bare inside the block beside its named keys. */
   conditions: Trigger<"system">;
 }
 
@@ -2652,13 +2660,16 @@ export function compareDistance(
 }
 
 /** The arguments `conditionalTooltip` takes, as the rules declare them. */
-export interface ConditionalTooltipArgs {
-  trigger: Trigger<ScopeName>;
-  conditions: Trigger<ScopeName>;
+export interface ConditionalTooltipArgs<S extends ScopeName = ScopeName> {
+  trigger: Trigger<S>;
+  /** The nested conditions, written bare inside the block beside its named keys. */
+  conditions: Trigger<S>;
 }
 
 /** The enclosed trigger will be completely ignored if the condition in "trigger" isn't true. Useful to hide part of tooltips that are not relevant. */
-export function conditionalTooltip(args: ConditionalTooltipArgs): Trigger<ScopeName> {
+export function conditionalTooltip<S extends ScopeName = ScopeName>(
+  args: ConditionalTooltipArgs<S>
+): Trigger<S> {
   const entries: PdxEntry[] = [];
   const refs: ContentRefUse[] = [];
   entries.push(block("trigger", [...args.trigger.entries]));
@@ -6374,11 +6385,12 @@ export function currentAwarenessLevel(value: AwarenessLevel): Trigger<"country">
 }
 
 /** The arguments `customProgress` takes, as the rules declare them. */
-export interface CustomProgressArgs {
+export interface CustomProgressArgs<S extends ScopeName = ScopeName> {
   currentValCoeff?: ScriptValue | readonly [PdxOp, ScriptValue];
   finalValCoeff?: ScriptValue | readonly [PdxOp, ScriptValue];
   mode?: TriggerCustomProgress;
-  conditions: Trigger<ScopeName>;
+  /** The nested conditions, written bare inside the block beside its named keys. */
+  conditions: Trigger<S>;
 }
 
 /**
@@ -6392,7 +6404,9 @@ export interface CustomProgressArgs {
  * }
  * ```
  */
-export function customProgress(args: CustomProgressArgs): Trigger<ScopeName> {
+export function customProgress<S extends ScopeName = ScopeName>(
+  args: CustomProgressArgs<S>
+): Trigger<S> {
   const entries: PdxEntry[] = [];
   const refs: ContentRefUse[] = [];
   if (args.currentValCoeff !== undefined) {
@@ -6426,6 +6440,7 @@ export type CustomTooltipArgs<S extends ScopeName = ScopeName> = {
   text?: "" | string;
   failText?: "default" | string;
   successText?: string;
+  /** The nested conditions, written bare inside the block beside its named keys. */
   conditions: Trigger<S>;
 };
 
@@ -6468,9 +6483,10 @@ export function customTooltip<S extends ScopeName>(
 }
 
 /** The arguments `customTooltipFail` takes, as the rules declare them. */
-export interface CustomTooltipFailArgs {
+export interface CustomTooltipFailArgs<S extends ScopeName = ScopeName> {
   text: string;
-  conditions: Trigger<ScopeName>;
+  /** The nested conditions, written bare inside the block beside its named keys. */
+  conditions: Trigger<S>;
 }
 
 /**
@@ -6482,7 +6498,9 @@ export interface CustomTooltipFailArgs {
  * }
  * ```
  */
-export function customTooltipFail(args: CustomTooltipFailArgs): Trigger<ScopeName> {
+export function customTooltipFail<S extends ScopeName = ScopeName>(
+  args: CustomTooltipFailArgs<S>
+): Trigger<S> {
   const entries: PdxEntry[] = [];
   const refs: ContentRefUse[] = [];
   entries.push(kv("text", args.text));
@@ -6492,9 +6510,10 @@ export function customTooltipFail(args: CustomTooltipFailArgs): Trigger<ScopeNam
 }
 
 /** The arguments `customTooltipSuccess` takes, as the rules declare them. */
-export interface CustomTooltipSuccessArgs {
+export interface CustomTooltipSuccessArgs<S extends ScopeName = ScopeName> {
   text: string;
-  conditions: Trigger<ScopeName>;
+  /** The nested conditions, written bare inside the block beside its named keys. */
+  conditions: Trigger<S>;
 }
 
 /**
@@ -6506,7 +6525,9 @@ export interface CustomTooltipSuccessArgs {
  * }
  * ```
  */
-export function customTooltipSuccess(args: CustomTooltipSuccessArgs): Trigger<ScopeName> {
+export function customTooltipSuccess<S extends ScopeName = ScopeName>(
+  args: CustomTooltipSuccessArgs<S>
+): Trigger<S> {
   const entries: PdxEntry[] = [];
   const refs: ContentRefUse[] = [];
   entries.push(kv("text", args.text));
@@ -6792,9 +6813,10 @@ export function distanceToEmpire(
 }
 
 /** The arguments `else_` takes, as the rules declare them. */
-export interface ElseArgs {
-  limit?: Trigger<ScopeName>;
-  conditions: Trigger<ScopeName>;
+export interface ElseArgs<S extends ScopeName = ScopeName> {
+  limit?: Trigger<S>;
+  /** The nested conditions, written bare inside the block beside its named keys. */
+  conditions: Trigger<S>;
 }
 
 /**
@@ -6804,7 +6826,7 @@ export interface ElseArgs {
  *  else = { <triggers> }
  * ```
  */
-export function else_(args: ElseArgs): Trigger<ScopeName> {
+export function else_<S extends ScopeName = ScopeName>(args: ElseArgs<S>): Trigger<S> {
   const entries: PdxEntry[] = [];
   const refs: ContentRefUse[] = [];
   if (args.limit !== undefined) {
@@ -6817,9 +6839,10 @@ export function else_(args: ElseArgs): Trigger<ScopeName> {
 }
 
 /** The arguments `elseIf` takes, as the rules declare them. */
-export interface ElseIfArgs {
-  limit: Trigger<ScopeName>;
-  conditions: Trigger<ScopeName>;
+export interface ElseIfArgs<S extends ScopeName = ScopeName> {
+  limit: Trigger<S>;
+  /** The nested conditions, written bare inside the block beside its named keys. */
+  conditions: Trigger<S>;
 }
 
 /**
@@ -6829,7 +6852,7 @@ export interface ElseIfArgs {
  * else_if = { limit = { <display_triggers> } <triggers> }
  * ```
  */
-export function elseIf(args: ElseIfArgs): Trigger<ScopeName> {
+export function elseIf<S extends ScopeName = ScopeName>(args: ElseIfArgs<S>): Trigger<S> {
   const entries: PdxEntry[] = [];
   const refs: ContentRefUse[] = [];
   entries.push(block("limit", [...args.limit.entries]));
@@ -6999,6 +7022,7 @@ export function factionApproval(op: PdxOp, value: ScriptValue): Trigger<"pop_fac
 /** The arguments `failText` takes, as the rules declare them. */
 export type FailTextArgs<S extends ScopeName = ScopeName> = {
   text: string;
+  /** The nested conditions, written bare inside the block beside its named keys. */
   conditions: Trigger<S>;
 };
 
@@ -11606,9 +11630,10 @@ export function idealPlanetClass(
 }
 
 /** The arguments `if_` takes, as the rules declare them. */
-export interface IfArgs {
-  limit: Trigger<ScopeName>;
-  conditions: Trigger<ScopeName>;
+export interface IfArgs<S extends ScopeName = ScopeName> {
+  limit: Trigger<S>;
+  /** The nested conditions, written bare inside the block beside its named keys. */
+  conditions: Trigger<S>;
 }
 
 /**
@@ -11617,7 +11642,7 @@ export interface IfArgs {
  * if = { limit = { <display_triggers> } <triggers> }
  * ```
  */
-export function if_(args: IfArgs): Trigger<ScopeName> {
+export function if_<S extends ScopeName = ScopeName>(args: IfArgs<S>): Trigger<S> {
   const entries: PdxEntry[] = [];
   const refs: ContentRefUse[] = [];
   entries.push(block("limit", [...args.limit.entries]));
@@ -11748,6 +11773,47 @@ export function intelLevel(value: IntelLevel | IntelLevelArgs): Trigger<"country
     return trigger([block("intel_level", entries)]);
   }
   return trigger([kv("intel_level", value)]);
+}
+
+/** The arguments `invertedSwitch` takes, as the rules declare them. */
+export interface InvertedSwitchArgs<S extends ScopeName = ScopeName> {
+  trigger: string;
+  /**
+   * One case per key the selector may equal, in the order the game tests them; the first match wins.
+   * At least one case.
+   * Keys the block writes itself (`trigger`, `default`) are rejected.
+   */
+  cases: readonly [readonly [string, Trigger<S>], ...(readonly [string, Trigger<S>])[]];
+  default: Trigger<S>;
+}
+
+/**
+ * Switch case for a trigger treated as NOT.
+ * ```
+ * inverted_switch = {
+ * 	trigger = pop_has_ethic
+ * 	ethic_xenophile = { <trigger> }
+ * 	ethic_xenophobe = { <trigger> }
+ * 	default = { <trigger> }
+ * }
+ * ```
+ */
+export function invertedSwitch<S extends ScopeName = ScopeName>(
+  args: InvertedSwitchArgs<S>
+): Trigger<S> {
+  const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
+  entries.push(kv("trigger", args.trigger));
+  for (const [key1, condition1] of caseEntries(args.cases, "inverted_switch.cases", 1, [
+    "trigger",
+    "default",
+  ])) {
+    entries.push(block(key1, [...condition1.entries]));
+    refs.push(...condition1.refs);
+  }
+  entries.push(block("default", [...args.default.entries]));
+  refs.push(...args.default.refs);
+  return trigger([block("inverted_switch", entries)], refs);
 }
 
 /** The arguments `isActionActive` takes, as the rules declare them. */
@@ -18669,6 +18735,7 @@ export function subjects(op: PdxOp, value: ScriptValue): Trigger<"country"> {
 /** The arguments `successText` takes, as the rules declare them. */
 export type SuccessTextArgs<S extends ScopeName = ScopeName> = {
   text: string;
+  /** The nested conditions, written bare inside the block beside its named keys. */
   conditions?: Trigger<S>;
 };
 
@@ -18708,6 +18775,47 @@ export function successText<S extends ScopeName>(
  */
 export function support(op: PdxOp, value: ScriptValue): Trigger<"leader" | "pop_faction"> {
   return trigger([cmp("support", op, scriptValueScalar(value))]);
+}
+
+/** The arguments `switch_` takes, as the rules declare them. */
+export interface SwitchArgs<S extends ScopeName = ScopeName> {
+  trigger: string;
+  /**
+   * One case per key the selector may equal, in the order the game tests them; the first match wins.
+   * At least one case.
+   * Keys the block writes itself (`trigger`, `default`) are rejected.
+   */
+  cases: readonly [readonly [string, Trigger<S>], ...(readonly [string, Trigger<S>])[]];
+  default?: Trigger<S>;
+}
+
+/**
+ * Switch case for a trigger
+ * ```
+ * switch = {
+ * 	trigger = pop_has_ethic
+ * 	ethic_xenophile = { <trigger> }
+ * 	ethic_xenophobe = { <trigger> }
+ * 	default = { <trigger> }
+ * }
+ * ```
+ */
+export function switch_<S extends ScopeName = ScopeName>(args: SwitchArgs<S>): Trigger<S> {
+  const entries: PdxEntry[] = [];
+  const refs: ContentRefUse[] = [];
+  entries.push(kv("trigger", args.trigger));
+  for (const [key1, condition1] of caseEntries(args.cases, "switch.cases", 1, [
+    "trigger",
+    "default",
+  ])) {
+    entries.push(block(key1, [...condition1.entries]));
+    refs.push(...condition1.refs);
+  }
+  if (args.default !== undefined) {
+    entries.push(block("default", [...args.default.entries]));
+    refs.push(...args.default.refs);
+  }
+  return trigger([block("switch", entries)], refs);
 }
 
 /** The arguments `techUnlockedRatio` takes, as the rules declare them. */

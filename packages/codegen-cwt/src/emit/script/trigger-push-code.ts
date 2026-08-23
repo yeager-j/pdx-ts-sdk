@@ -32,6 +32,7 @@ export function contributesRefs(field: ArgField): boolean {
 function valueContributesRefs(value: ArgValue): boolean {
   switch (value.kind) {
     case "clause":
+    case "keyedClauses":
       return true;
     case "scalar":
       return value.value.refTypes !== undefined;
@@ -169,6 +170,30 @@ function mapEntriesCode(
   );
 }
 
+/**
+ * Renders the loop that writes one ordered case list: one block per case, in
+ * authoring order, carrying each case's own references up with it.
+ */
+function keyedClausesCode(
+  emitter: Emitter,
+  value: Extract<ArgValue, { readonly kind: "keyedClauses" }>,
+  access: string,
+  fieldPath: string,
+  index: number,
+  sink: string
+): string {
+  const caseKey = `key${index}`;
+  const condition = `condition${index}`;
+  const checked =
+    `${emitter.use("caseEntries")}(${access}, ${JSON.stringify(fieldPath)}, ` +
+    `${value.cardinality.min}, ${JSON.stringify(value.reservedKeys)})`;
+  return (
+    `for (const [${caseKey}, ${condition}] of ${checked}) {\n` +
+    `${sink}.push(${emitter.use("block")}(${caseKey}, [...${condition}.entries]));\n` +
+    `refs.push(...${condition}.refs);\n}`
+  );
+}
+
 /** Renders the statements that write one block-valued argument under its own key. */
 function blockPushCode(
   emitter: Emitter,
@@ -248,6 +273,8 @@ function pushValueCode(
           : `${sink}.push(block(${key}, [...${access}.entries]));\n`) +
         `    refs.push(...${access}.refs);`
       );
+    case "keyedClauses":
+      return keyedClausesCode(emitter, field.value, access, fieldPath, index, sink);
     case "aliasList":
     case "aliasStruct":
       return unauthorableAliasValue(field.value);

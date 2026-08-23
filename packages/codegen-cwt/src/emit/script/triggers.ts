@@ -329,6 +329,11 @@ function emitWrapper(
   );
 }
 
+/** The `Trigger` type text a nested clause takes in a builder's arguments. */
+function clauseType(emitter: Emitter, scope: string | null, outerScope: string): string {
+  return `${emitter.use("Trigger")}<${scope === null ? outerScope : JSON.stringify(scope)}>`;
+}
+
 /** The type text one lowered argument contributes before repetition applies. */
 function baseMemberType(emitter: Emitter, value: ArgValue, outerScope: string): string {
   switch (value.kind) {
@@ -343,7 +348,13 @@ function baseMemberType(emitter: Emitter, value: ArgValue, outerScope: string): 
     case "valueList":
       return valueListType(emitter, value, outerScope);
     case "clause":
-      return `${emitter.use("Trigger")}<${value.scope === null ? outerScope : JSON.stringify(value.scope)}>`;
+      return clauseType(emitter, value.scope, outerScope);
+    case "keyedClauses": {
+      // Parenthesized so the tuple reads as one item wherever the cardinality
+      // wraps it, the way a union arm is.
+      const oneCase = `(readonly [string, ${clauseType(emitter, value.scope, outerScope)}])`;
+      return cardinalityArrayType(oneCase, value.cardinality);
+    }
     case "aliasList":
     case "aliasStruct":
       return unauthorableAliasValue(value);
@@ -430,6 +441,32 @@ function argsDoc(fn: string): string {
   return docComment([`The arguments \`${fn}\` takes, as the rules declare them.`]);
 }
 
+/** Whether one lowered value holds a clause that runs in the enclosing scope. */
+function runsInEnclosingScope(value: ArgValue): boolean {
+  switch (value.kind) {
+    case "clause":
+    case "keyedClauses":
+      return value.scope === null;
+    case "fields":
+      return value.fields.some((field) => runsInEnclosingScope(field.value));
+    case "scalarOrBlock":
+      return runsInEnclosingScope(value.block);
+    case "valueList":
+      return value.fields?.some((field) => runsInEnclosingScope(field.value)) ?? false;
+    default:
+      return false;
+  }
+}
+
+/**
+ * Whether a builder's arguments hold a clause typed by the scope the builder
+ * is called in. Such a builder is generic over that scope rather than fixed to
+ * the rule's own scope type, which would reject every narrower caller.
+ */
+function takesEnclosingScope(fields: readonly ArgField[]): boolean {
+  return fields.some((field) => runsInEnclosingScope(field.value));
+}
+
 function emitFields(
   emitter: Emitter,
   fn: string,
@@ -439,14 +476,18 @@ function emitFields(
   fields: readonly ArgField[]
 ): string {
   const name = `${pascalCase(key)}Args`;
-  const members = argumentMembers(emitter, fields, scope);
+  const enclosingScope = takesEnclosingScope(fields);
+  const typeParameter = enclosingScope ? `<S extends ${scope} = ${scope}>` : "";
+  const returnScope = enclosingScope ? "S" : scope;
+  const members = argumentMembers(emitter, fields, returnScope);
   const pushes = pushStatements(emitter, fields, key);
   const withRefs = fields.some(contributesRefs);
   return (
     argsDoc(fn) +
-    `export interface ${name} {\n${members}}\n\n` +
+    `export interface ${name}${typeParameter} {\n${members}}\n\n` +
     docComment(docs) +
-    `export function ${fn}(args: ${name}): ${emitter.use("Trigger")}<${scope}> {\n` +
+    `export function ${fn}${typeParameter}(args: ${name}${enclosingScope ? "<S>" : ""}): ` +
+    `${emitter.use("Trigger")}<${returnScope}> {\n` +
     `  const entries: ${emitter.use("PdxEntry")}[] = [];\n` +
     (withRefs ? `  const refs: ${emitter.use("ContentRefUse")}[] = [];\n` : "") +
     pushes +
@@ -474,9 +515,7 @@ function emitScalarOrFields(
   fields: readonly ArgField[]
 ): string {
   const name = `${pascalCase(key)}Args`;
-  const preservesEnclosingScope = fields.some(
-    (field) => field.value.kind === "clause" && field.value.splice && field.value.scope === null
-  );
+  const preservesEnclosingScope = takesEnclosingScope(fields);
   const typeParameter = preservesEnclosingScope ? `<S extends ${scope} = ${scope}>` : "";
   const argsType = `${name}${preservesEnclosingScope ? "<S>" : ""}`;
   const returnScope = preservesEnclosingScope ? "S" : scope;

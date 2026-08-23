@@ -172,12 +172,110 @@ describe("trigger emission", () => {
   it("documents every generated argument object, whichever form it takes", () => {
     expect(emission.code).toContain(
       "/** The arguments `calcTrueIf` takes, as the rules declare them. */\n" +
-        "export interface CalcTrueIfArgs {"
+        "export interface CalcTrueIfArgs<S extends ScopeName = ScopeName> {"
     );
     expect(emission.code).toContain(
       "/** The arguments `hasResource` takes, as the rules declare them. */\n" +
         "export type HasResourceArgs = {"
     );
+  });
+
+  /**
+   * `switch`'s cases are computed keys holding a clause each: the selector
+   * says which key the game reads and the first matching case wins, so the
+   * cases keep authoring order and the block's own keys stay reserved.
+   */
+  it("emits a computed clause key as an ordered case list", () => {
+    expect(emission.code).toContain(
+      "export interface SwitchArgs<S extends ScopeName = ScopeName> {\n" +
+        "  trigger: string;\n" +
+        "  /**\n" +
+        "   * One case per key the selector may equal, in the order the game tests them; " +
+        "the first match wins.\n" +
+        "   * At least one case.\n" +
+        "   * Keys the block writes itself (`trigger`, `default`) are rejected.\n" +
+        "   */\n" +
+        "  cases: readonly [(readonly [string, Trigger<S>]), ...(readonly [string, Trigger<S>])[]];\n" +
+        "  default?: Trigger<S>;\n" +
+        "}"
+    );
+    expect(emission.code).toContain(
+      "export function switch_<S extends ScopeName = ScopeName>(args: SwitchArgs<S>): Trigger<S> {"
+    );
+    expect(emission.code).toContain(
+      'for (const [key1, condition1] of caseEntries(args.cases, "switch.cases", 1, ' +
+        '["trigger","default"])) {\n' +
+        "entries.push(block(key1, [...condition1.entries]));\n" +
+        "refs.push(...condition1.refs);\n" +
+        "}"
+    );
+  });
+
+  it("keeps the case count and the required default each rule declares", () => {
+    expect(emission.code).toContain(
+      "export interface InvertedSwitchArgs<S extends ScopeName = ScopeName> {\n" +
+        "  trigger: string;\n" +
+        "  /**\n" +
+        "   * One case per key the selector may equal, in the order the game tests them; " +
+        "the first match wins.\n" +
+        "   * At least one case.\n" +
+        "   * Keys the block writes itself (`trigger`, `default`) are rejected.\n" +
+        "   */\n" +
+        "  cases: readonly [(readonly [string, Trigger<S>]), ...(readonly [string, Trigger<S>])[]];\n" +
+        "  default: Trigger<S>;\n" +
+        "}"
+    );
+    expect(emission.code).toContain(
+      'caseEntries(args.cases, "inverted_switch.cases", 1, ["trigger","default"])'
+    );
+  });
+
+  it("declines a computed clause key whose block already names a cases field", () => {
+    const emitted = emitInlineTriggers(
+      [
+        BOTH_WRAPPER_ROWS,
+        [
+          "## scopes = any",
+          "alias[trigger:pretend_switch] = {",
+          "\tcases = scalar",
+          "\t## cardinality = ~1..inf",
+          "\tscalar = { alias_name[trigger] = alias_match_left[trigger] }",
+          "}",
+        ].join("\n"),
+      ].join("\n\n")
+    );
+
+    expect(emitted.skipped).toContainEqual({
+      name: "pretend_switch",
+      category: "reserved-field-collision",
+      detail: 'a rule field is already named "cases"',
+    });
+  });
+
+  /**
+   * A clause with no `push_scope` runs in whatever scope encloses the call,
+   * so the builder is generic over that scope. Naming the rule's own scope
+   * union instead would reject every caller narrower than the union.
+   */
+  it("makes each builder holding an enclosing-scope clause generic over it", () => {
+    const generic = [
+      ["calcTrueIf", "CalcTrueIf"],
+      ["conditionalTooltip", "ConditionalTooltip"],
+      ["customProgress", "CustomProgress"],
+      ["customTooltipFail", "CustomTooltipFail"],
+      ["customTooltipSuccess", "CustomTooltipSuccess"],
+      ["else_", "Else"],
+      ["elseIf", "ElseIf"],
+      ["if_", "If"],
+      ["invertedSwitch", "InvertedSwitch"],
+      ["switch_", "Switch"],
+    ];
+
+    for (const [fn, args] of generic) {
+      expect(emission.code).toContain(
+        `export function ${fn}<S extends ScopeName = ScopeName>(args: ${args}Args<S>): Trigger<S> {`
+      );
+    }
   });
 
   /**

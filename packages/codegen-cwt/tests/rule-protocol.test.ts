@@ -625,8 +625,14 @@ describe("a spliced alias category with a script authoring surface", () => {
     // `trigger = { id = scalar alias_name[trigger] }` pushes system scope, so
     // its conditions are typed there; `effect = { id = scalar
     // alias_name[effect] }` pushes none and runs in the list's own scope.
-    expect(emitted.interfaces).toContain('id: string; conditions: Trigger<"system"> };');
-    expect(emitted.interfaces).toContain("id: string; effects: (scope: ScopeObjOf<S>) => void }");
+    expect(emitted.interfaces).toContain(
+      "id: string; \n/** The nested conditions, written bare inside the block beside its " +
+        'named keys. */\nconditions: Trigger<"system"> };'
+    );
+    expect(emitted.interfaces).toContain(
+      "id: string; \n/** The nested effects, written bare inside the block beside its " +
+        "named keys. */\neffects: (scope: ScopeObjOf<S>) => void }"
+    );
   });
 
   it("keeps each member's own CWT documentation on the member", () => {

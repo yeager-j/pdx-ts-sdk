@@ -1,12 +1,13 @@
 /**
  * Shared field-shape classification for block rules.
  *
- * A block rule's fields fall into four argument kinds: plain scalars, nested
+ * A block rule's fields fall into five argument kinds: plain scalars, nested
  * clause holes (`limit = single_alias_right[trigger_clause]` — an opaque,
  * already-built `Trigger`, so recursion terminates at depth one by
  * construction), comparison fields (`count == int_value_field`, sometimes
- * overloaded with literals like `count = all`), and open maps, where the key
- * is a filter the script fills in (`<resource> = value_field`).
+ * overloaded with literals like `count = all`), open maps, where the key is a
+ * filter the script fills in (`<resource> = value_field`), and keyed clauses,
+ * where such a key holds a clause instead (`switch`'s cases).
  *
  * Classification is shared between the trigger and effect emitters; rendering
  * stays with each emitter. A `SkipReason` return carries the stable category
@@ -251,6 +252,24 @@ export type ArgValue =
       readonly scope: string | null;
       /** Whether clause entries are emitted without a named wrapper. */
       readonly splice: boolean;
+    }
+  /**
+   * A block whose keys the script supplies and whose values are nested
+   * clauses: `switch = { trigger = has_ethic ethic_pacifist = { ... } }`.
+   * The game takes the first case whose key matches, so the cases are
+   * authored as an ordered list of key/clause pairs rather than an object.
+   */
+  | {
+      /** Selects an ordered list of script-keyed nested clauses. */
+      readonly kind: "keyedClauses";
+      /** The kind of script rules accepted inside one case. */
+      readonly category: ClauseCategory;
+      /** The canonical pushed scope, or `null` for the enclosing scope. */
+      readonly scope: string | null;
+      /** The case count the declarations admit together. */
+      readonly cardinality: Cardinality;
+      /** The block's own keys, which a case key may not repeat. */
+      readonly reservedKeys: readonly string[];
     }
   /**
    * An ordered list of tagged members of one spliced alias category, each item
@@ -710,20 +729,27 @@ function mapMemberName(type: MapKeyType): string {
     : "entries";
 }
 
-/** One block's declarations split into its named keys and its one open key filter. */
+/** One block's declarations split into its named keys and its computed keys. */
 interface PartitionedBlock {
   /** Declarations grouped per literal key, in first-declaration order. */
   readonly named: ReadonlyMap<string, RuleField[]>;
   /** The computed-key declarations the block's open map is built from. */
   readonly open: readonly OpenKeyDeclaration[];
+  /** The computed-key declarations whose values are nested clauses. */
+  readonly keyed: readonly RuleField[];
   /** How many named keys are declared before the first computed key. */
-  readonly openPosition: number;
+  readonly computedPosition: number;
+}
+
+/** The clause category a computed key holds one of per case, else `null`. */
+function keyedClauseCategory(key: FieldKey, type: RuleType): ClauseCategory | null {
+  return key.kind === "computed" && key.type.kind === "scalar" ? clauseOf(type) : null;
 }
 
 /**
  * Splits one block's declarations, with enum-typed key filters already
- * expanded, into named groups and open-key declarations. Declines a block
- * whose keys neither model can name.
+ * expanded, into named groups, open-key declarations, and clause-valued
+ * computed keys. Declines a block whose keys no model can name.
  */
 function partitionBlock(
   emitter: Emitter,
@@ -731,7 +757,8 @@ function partitionBlock(
 ): PartitionedBlock | SkipReason {
   const named = new Map<string, RuleField[]>();
   const open: OpenKeyDeclaration[] = [];
-  let openPosition = 0;
+  const keyed: RuleField[] = [];
+  let computedPosition = 0;
   for (const field of expandEnumKeys(emitter, fields)) {
     if (field.key.kind === "name") {
       const existing = named.get(field.key.name);
@@ -742,18 +769,22 @@ function partitionBlock(
       }
       continue;
     }
-    // A computed key holding a block would need a map of blocks, which no
-    // rule declares and the map model deliberately does not carry.
+    if (open.length === 0 && keyed.length === 0) {
+      computedPosition = named.size;
+    }
+    if (keyedClauseCategory(field.key, field.type) !== null) {
+      keyed.push(field);
+      continue;
+    }
+    // A computed key holding any other block would need a map of blocks, which
+    // no rule declares and the map model deliberately does not carry.
     const keyType = field.type.kind === "block" ? null : mapKeyType(field.key);
     if (keyType === null) {
       return skipReason("computed-field-key", "block with computed or subtype field keys");
     }
-    if (open.length === 0) {
-      openPosition = named.size;
-    }
     open.push({ field, keyType });
   }
-  return { named, open, openPosition };
+  return { named, open, keyed, computedPosition };
 }
 
 /**
@@ -804,6 +835,35 @@ function openMapValue(
   };
 }
 
+/** The one clause category and scope a group of clause declarations agrees on. */
+function mergedClause(
+  emitter: Emitter,
+  name: string,
+  group: readonly RuleField[],
+  inheritedScope: string | null,
+  allowedSplices: ReadonlySet<string>
+):
+  | {
+      /** The kind of script rules the clause accepts. */
+      readonly category: ClauseCategory;
+      /** The canonical pushed scope, or `null` for the enclosing scope. */
+      readonly scope: string | null;
+    }
+  | SkipReason {
+  const category = clauseOf(group[0]!.type)!;
+  if (group.some((field) => clauseOf(field.type) !== category)) {
+    return skipReason("mixed-clause-categories", `field "${name}" mixes clause categories`);
+  }
+  if (!allowedSplices.has(category)) {
+    return skipReason(
+      "unsupported-clause",
+      `field "${name}" holds ${category} rules, which this emitter cannot type`
+    );
+  }
+  const scope = clauseScope(emitter, name, group, inheritedScope);
+  return typeof scope === "object" && scope !== null ? scope : { category, scope };
+}
+
 /** Merges a group whose every declaration is a clause hole into one typed hole. */
 function mergedClauseValue(
   emitter: Emitter,
@@ -812,21 +872,8 @@ function mergedClauseValue(
   inheritedScope: string | null,
   allowedSplices: ReadonlySet<string>
 ): ArgValue | SkipReason {
-  const category = clauseOf(group[0]!.type)!;
-  if (group.some((field) => clauseOf(field.type) !== category)) {
-    return skipReason("mixed-clause-categories", `field "${name}" mixes clause categories`);
-  }
-  if (!allowedSplices.has(category)) {
-    return skipReason(
-      "unsupported-clause",
-      `field "${name}" splices ${category}, which this emitter cannot type`
-    );
-  }
-  const scope = clauseScope(emitter, name, group, inheritedScope);
-  if (typeof scope === "object" && scope !== null) {
-    return scope;
-  }
-  return { kind: "clause", category, scope, splice: false };
+  const clause = mergedClause(emitter, name, group, inheritedScope, allowedSplices);
+  return "detail" in clause ? clause : { kind: "clause", ...clause, splice: false };
 }
 
 /**
@@ -1013,9 +1060,19 @@ const CLAUSE_SPLICE_MEMBERS: readonly {
   readonly category: ClauseCategory;
   /** The member the block's author writes the clause under. */
   readonly member: string;
+  /** What the member holds, since the rules name no field to document. */
+  readonly summary: string;
 }[] = [
-  { category: "trigger", member: "conditions" },
-  { category: "effect", member: "effects" },
+  {
+    category: "trigger",
+    member: "conditions",
+    summary: "The nested conditions, written bare inside the block beside its named keys.",
+  },
+  {
+    category: "effect",
+    member: "effects",
+    summary: "The nested effects, written bare inside the block beside its named keys.",
+  },
 ];
 
 /**
@@ -1060,7 +1117,10 @@ function splicedMember(
         ? { kind: "aliasList", category, scope, splice: true }
         : { kind: "clause", category: clause.category, scope, splice: true },
     optional: splices.every((field) => isOptional(field.cardinality)),
-    docs: splices.flatMap((field) => field.docs),
+    docs: [
+      ...(clause === undefined ? [] : [clause.summary]),
+      ...splices.flatMap((field) => field.docs),
+    ],
   };
 }
 
@@ -1137,15 +1197,87 @@ export function aliasListMembers(
   return [...block.fields];
 }
 
+/** The member name a block's clause-valued computed keys take. */
+const KEYED_CLAUSE_MEMBER = "cases";
+
+/**
+ * The documentation a synthesized case list carries. The rules document the
+ * rule, never the key filter the cases come from, so the member states its own
+ * contract: what one case is, how many the rules admit, and which keys it
+ * refuses.
+ */
+function keyedClauseDocs(cardinality: Cardinality, reservedKeys: readonly string[]): string[] {
+  const minimum =
+    cardinality.min === 1 ? "At least one case." : `At least ${cardinality.min} cases.`;
+  const reserved = reservedKeys.map((key) => `\`${key}\``).join(", ");
+  return [
+    "One case per key the selector may equal, in the order the game tests them; " +
+      "the first match wins.",
+    ...(isOptional(cardinality) ? [] : [minimum]),
+    ...(reservedKeys.length === 0
+      ? []
+      : [`Keys the block writes itself (${reserved}) are rejected.`]),
+  ];
+}
+
+/** Merges the clause-valued computed keys of one block into the member they describe. */
+function keyedClausesField(
+  emitter: Emitter,
+  declarations: readonly RuleField[],
+  inheritedScope: string | null,
+  allowedSplices: ReadonlySet<string>,
+  reservedKeys: readonly string[]
+): ArgField | SkipReason {
+  const clause = mergedClause(
+    emitter,
+    KEYED_CLAUSE_MEMBER,
+    declarations,
+    inheritedScope,
+    allowedSplices
+  );
+  if ("detail" in clause) {
+    return clause;
+  }
+  const cardinality = totalCardinality(declarations);
+  return {
+    name: KEYED_CLAUSE_MEMBER,
+    value: { kind: "keyedClauses", ...clause, cardinality, reservedKeys },
+    optional: isOptional(cardinality),
+    docs: [
+      ...keyedClauseDocs(cardinality, reservedKeys),
+      ...declarations.flatMap((declaration) => declaration.docs),
+    ],
+  };
+}
+
+/**
+ * Places the member a block's computed keys lower to among its named members,
+ * where the first computed declaration stands.
+ */
+function withComputedMember(
+  members: readonly ArgField[],
+  member: ArgField,
+  position: number
+): KeyedBlockValue | SkipReason {
+  if (members.some((field) => field.name === member.name)) {
+    return skipReason("reserved-field-collision", `a rule field is already named "${member.name}"`);
+  }
+  return {
+    kind: "fields",
+    fields: [...members.slice(0, position), member, ...members.slice(position)],
+  };
+}
+
 /**
  * Lowers one CWT block of keyed fields into the argument it emits: named
  * members, or one map when every key is a key filter.
  *
  * An unkeyed alias splice becomes one more member, named for what it splices.
- * A block declaring both named keys and key filters gets the map as one extra
- * member, placed where its first declaration stands so the emitted key order
- * matches the shipped files. `inheritedScope` is the raw scope the declaration
- * pushes, if any — clause fields without their own `## push_scope` run there.
+ * A block declaring computed keys beside named ones gets them as one extra
+ * member — a map, or a case list when the computed keys hold clauses — placed
+ * where its first declaration stands so the emitted key order matches the
+ * shipped files. `inheritedScope` is the raw scope the declaration pushes, if
+ * any — clause fields without their own `## push_scope` run there.
  */
 export function mergeBlock(
   emitter: Emitter,
@@ -1167,6 +1299,11 @@ export function mergeBlock(
   if (splices.length > 0 && partition.open.length > 0) {
     return skipReason("computed-field-key", "open-keyed block beside an alias splice");
   }
+  // A case writes its key as a block, and so do a splice's own entries and an
+  // open map's, so the same key would belong to two members at once.
+  if (partition.keyed.length > 0 && (splices.length > 0 || partition.open.length > 0)) {
+    return skipReason("computed-field-key", "keyed clauses beside an alias splice or an open map");
+  }
   const merged = mergeNamedGroups(emitter, partition.named, inheritedScope, allowedSplices);
   if (!Array.isArray(merged)) {
     return merged;
@@ -1174,6 +1311,18 @@ export function mergeBlock(
   const members = appendSplicedMember(emitter, merged, splices, inheritedScope, allowedSplices);
   if (!Array.isArray(members)) {
     return members;
+  }
+  if (partition.keyed.length > 0) {
+    const cases = keyedClausesField(
+      emitter,
+      partition.keyed,
+      inheritedScope,
+      allowedSplices,
+      members.map((field) => field.name)
+    );
+    return "detail" in cases
+      ? cases
+      : withComputedMember(members, cases, partition.computedPosition);
   }
   if (partition.open.length === 0) {
     return { kind: "fields", fields: members };
@@ -1190,24 +1339,13 @@ export function mergeBlock(
   if ("category" in map) {
     return map;
   }
-  const name = mapMemberName(partition.open[0]!.keyType);
-  if (members.some((field) => field.name === name)) {
-    return skipReason("reserved-field-collision", `a rule field is already named "${name}"`);
-  }
   const member: ArgField = {
-    name,
+    name: mapMemberName(partition.open[0]!.keyType),
     value: { kind: "map", map },
-    optional: map.cardinality.min === 0,
+    optional: isOptional(map.cardinality),
     docs: partition.open.flatMap((declaration) => declaration.field.docs),
   };
-  return {
-    kind: "fields",
-    fields: [
-      ...members.slice(0, partition.openPosition),
-      member,
-      ...members.slice(partition.openPosition),
-    ],
-  };
+  return withComputedMember(members, member, partition.computedPosition);
 }
 
 /**

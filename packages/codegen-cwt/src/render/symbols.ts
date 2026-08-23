@@ -72,7 +72,7 @@ const SYMBOL_MODULES: readonly ModuleSymbols[] = [
   },
   {
     module: "../script/scalar.ts",
-    values: ["isComparisonList", "isStructuredValue", "mapEntries", "refId"],
+    values: ["caseEntries", "isComparisonList", "isStructuredValue", "mapEntries", "refId"],
   },
   {
     module: "../script/trigger-core.ts",

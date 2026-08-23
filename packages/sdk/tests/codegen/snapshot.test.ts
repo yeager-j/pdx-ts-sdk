@@ -9,7 +9,7 @@ const modifiers = readFileSync("packages/sdk/src/generated/modifiers.ts", "utf8"
 
 /** Slices one generated declaration out so signature changes show up in the diff. */
 function declaration(name: string): string {
-  const start = source.indexOf(`export function ${name}(`);
+  const start = source.search(new RegExp(`export function ${name}[(<]`));
   if (start === -1) {
     throw new Error(`${name} is not in the generated triggers`);
   }
@@ -108,13 +108,14 @@ describe("emitted trigger signatures", () => {
 
   it("splice + fields: the trigger splice becomes an implicit conditions argument", () => {
     expect(argsDeclaration("CalcTrueIfArgs")).toMatchInlineSnapshot(`
-      "export interface CalcTrueIfArgs {
+      "export interface CalcTrueIfArgs<S extends ScopeName = ScopeName> {
         amount: ScriptValue | readonly [PdxOp, ScriptValue];
-        conditions: Trigger<ScopeName>;
+        /** The nested conditions, written bare inside the block beside its named keys. */
+        conditions: Trigger<S>;
       }"
     `);
     expect(declaration("calcTrueIf")).toMatchInlineSnapshot(`
-      "export function calcTrueIf(args: CalcTrueIfArgs): Trigger<ScopeName> {
+      "export function calcTrueIf<S extends ScopeName = ScopeName>(args: CalcTrueIfArgs<S>): Trigger<S> {
         const entries: PdxEntry[] = [];
         const refs: ContentRefUse[] = [];
         entries.push(
@@ -221,6 +222,7 @@ describe("emitted trigger signatures", () => {
         text?: "" | string;
         failText?: "default" | string;
         successText?: string;
+        /** The nested conditions, written bare inside the block beside its named keys. */
         conditions: Trigger<S>;
       };"
     `);
@@ -296,7 +298,9 @@ describe("scalar lowering ownership", () => {
     expect(refs).toContain('import type { TypedRef } from "../script/scalar.ts";');
     expect(refs).not.toContain("function refId");
     expect(source).toContain(
-      'import { isComparisonList, isStructuredValue, mapEntries, refId } from "../script/scalar.ts";'
+      "import {\n" +
+        "  caseEntries,\n  isComparisonList,\n  isStructuredValue,\n  mapEntries,\n  refId,\n" +
+        '} from "../script/scalar.ts";'
     );
     expect(contentDefiners).toContain(
       'import { refId, type TypedRef } from "../script/scalar.ts";'

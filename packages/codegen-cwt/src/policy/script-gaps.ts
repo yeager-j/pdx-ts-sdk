@@ -89,15 +89,7 @@ function trackedGapRows(
 }
 
 /** The reviewed ledger of current trigger and effect generation gaps. */
-export const SCRIPT_GENERATION_GAPS: readonly ScriptGenerationGap[] = [
-  ...trackedGapRows(
-    "trigger",
-    "computed-field-key",
-    "SDK-249",
-    "The trigger argument model cannot represent computed switch keys.",
-    ["inverted_switch", "switch"]
-  ),
-];
+export const SCRIPT_GENERATION_GAPS: readonly ScriptGenerationGap[] = [];
 
 function scriptGapIdentity(row: { readonly kind: ScriptRuleKind; readonly key: string }): string {
   return `${row.kind}:${row.key}`;

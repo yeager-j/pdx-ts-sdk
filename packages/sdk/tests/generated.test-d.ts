@@ -19,10 +19,12 @@ import {
   hasPlanetFlag,
   hasResource,
   intelLevel,
+  invertedSwitch,
   isWarParticipant,
   numMoons,
   popGroupSize,
   relativePower,
+  switch_,
   totalWorkforceWithJobTag,
   traitHasAllTags,
   type Trigger,
@@ -146,6 +148,54 @@ describe("shapes the rules give a signature", () => {
     hasActiveEvent("mymod.1");
     // @ts-expect-error — nested bare values stay inside their enclosing list block
     totalWorkforceWithJobTag({ tags: "farmer", value: 100 });
+  });
+
+  it("types a switch selector as the word the game switches on", () => {
+    switch_({ trigger: "has_ethic", cases: [["ethic_pacifist", hasCountryFlag("pacifist")]] });
+    switch_({
+      // @ts-expect-error — the selector names a trigger; it is not one already built
+      trigger: hasCountryFlag("pacifist"),
+      cases: [["ethic_pacifist", hasCountryFlag("pacifist")]],
+    });
+  });
+
+  it("takes the scope of a switch from its cases and its default", () => {
+    const country: Trigger<"country"> = switch_({
+      trigger: "has_ethic",
+      cases: [["ethic_pacifist", hasCountryFlag("pacifist")]],
+    });
+    void country;
+
+    // @ts-expect-error — every case is a country condition, so this switch is not a planet one
+    const planet: Trigger<"planet"> = switch_({
+      trigger: "has_ethic",
+      cases: [["ethic_pacifist", hasCountryFlag("pacifist")]],
+    });
+    void planet;
+
+    switch_({
+      trigger: "has_ethic",
+      cases: [["ethic_pacifist", hasCountryFlag("pacifist")]],
+      // @ts-expect-error — the default runs in the same scope as the cases
+      default: hasPlanetFlag("colonized"),
+    });
+  });
+
+  it("takes the case count the rules declare, so an empty case list is a type error", () => {
+    switch_({
+      trigger: "has_ethic",
+      // @ts-expect-error — `## cardinality = ~1..inf`, so a switch names at least one case
+      cases: [],
+    });
+  });
+
+  it("keeps the switch default optional and the inverted switch's own required", () => {
+    switch_({ trigger: "has_ethic", cases: [["ethic_pacifist", hasCountryFlag("pacifist")]] });
+    // @ts-expect-error — inverted_switch declares its default `## cardinality = ~1..1`
+    invertedSwitch({
+      trigger: "has_technology",
+      cases: [["tech_starbase_3", hasCountryFlag("ascended")]],
+    });
   });
 });
 
