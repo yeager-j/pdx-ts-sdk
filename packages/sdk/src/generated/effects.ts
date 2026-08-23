@@ -1856,7 +1856,9 @@ export interface EffectsIn5Scopes9031 {
 }
 
 /** Effects valid in: carrier, colony, planet, ship, starbase. */
-export interface EffectsIn5Scopes92b5 {
+export interface EffectsIn5Scopes92b5<
+  S extends "carrier" | "colony" | "planet" | "ship" | "starbase",
+> {
   /**
    * Creates a storm influence field in a certain radius
    * ```
@@ -1865,7 +1867,7 @@ export interface EffectsIn5Scopes92b5 {
    */
   createCosmicStormInfluenceField(args: {
     center: ScopeValue<"system">;
-    radius: readonly Modifier<"carrier" | "colony" | "planet" | "ship" | "starbase">[];
+    radius: readonly Modifier<S>[];
     isTimedInfluenceField?: "yes";
   }): void;
 }
@@ -2132,7 +2134,10 @@ export interface EffectsIn7Scopesdd2e {
 }
 
 /** Effects valid in: carrier, colony, country, leader, planet, pop_group, ship, species. */
-export interface EffectsIn8Scopes39a9 {
+export interface EffectsIn8Scopes39a9<
+  S extends
+    "carrier" | "colony" | "country" | "leader" | "planet" | "pop_group" | "ship" | "species",
+> {
   /**
    * Creates a new, modified species based on an already-extant species
    * ```
@@ -2218,14 +2223,8 @@ export interface EffectsIn8Scopes39a9 {
       | string
       | PortraitGroupRef
       | "random";
-    addRandomSpeciesTrait?: Trigger<
-      "carrier" | "colony" | "country" | "leader" | "planet" | "pop_group" | "ship" | "species"
-    >;
-    onRandomTraitAdded?: (
-      scope: ScopeObjOf<
-        "carrier" | "colony" | "country" | "leader" | "planet" | "pop_group" | "ship" | "species"
-      >
-    ) => void;
+    addRandomSpeciesTrait?: Trigger<S>;
+    onRandomTraitAdded?: (scope: ScopeObjOf<S>) => void;
     inheritParentRights?: boolean;
     sapient?: boolean;
     effect?: (scope: SpeciesScope) => void;
@@ -13062,7 +13061,9 @@ export interface EffectsInWar {
 }
 
 /** Effects valid in every scope. */
-export interface UniversalEffects extends EnableSpecialProjectEffectsExtension {
+export interface UniversalEffects<
+  S extends ScopeName,
+> extends EnableSpecialProjectEffectsExtension {
   /**
    * Destroys a situation in right hand side event target, firing on_abort (use to cancel and fire that effect)
    * ```
@@ -13436,7 +13437,7 @@ export interface UniversalEffects extends EnableSpecialProjectEffectsExtension {
       value?: string;
       localization?: string;
       scope?: ScopeValue;
-      trigger?: Trigger<ScopeName>;
+      trigger?: Trigger<S>;
     }[];
   }): void;
 
@@ -13469,8 +13470,8 @@ export interface UniversalEffects extends EnableSpecialProjectEffectsExtension {
       | "starbase"
       | "system"
     >;
-    scaledSize: readonly Modifier<ScopeName>[];
-    effect: (scope: ScopeObjOf<ScopeName>) => void;
+    scaledSize: readonly Modifier<S>[];
+    effect: (scope: ScopeObjOf<S>) => void;
   }): void;
 
   /**
@@ -14919,10 +14920,10 @@ export interface UniversalEffects extends EnableSpecialProjectEffectsExtension {
     sacrificeLeaderWithUi?: "yes";
     cosmicStorm: StormTypesRef | string;
     immediate?: "yes";
-    reticleRadius: readonly Modifier<ScopeName>[];
-    maxRange: readonly Modifier<ScopeName>[];
-    onConfirm?: (scope: ScopeObjOf<ScopeName>) => void;
-    onCancel?: (scope: ScopeObjOf<ScopeName>) => void;
+    reticleRadius: readonly Modifier<S>[];
+    maxRange: readonly Modifier<S>[];
+    onConfirm?: (scope: ScopeObjOf<S>) => void;
+    onCancel?: (scope: ScopeObjOf<S>) => void;
   }): void;
 
   /**
@@ -14943,8 +14944,8 @@ export interface UniversalEffects extends EnableSpecialProjectEffectsExtension {
     severity: readonly {
       modifier: StaticModifierRef | string;
       days: number;
-      chance?: readonly Modifier<ScopeName>[];
-      effect?: (scope: ScopeObjOf<ScopeName>) => void;
+      chance?: readonly Modifier<S>[];
+      effect?: (scope: ScopeObjOf<S>) => void;
     }[];
   }): void;
 
@@ -15388,7 +15389,7 @@ export interface AgreementScope
     StructuralEffects<"agreement">,
     EffectsIn29Scopes878c,
     EffectsInAgreement,
-    UniversalEffects,
+    UniversalEffects<"agreement">,
     EffectPathsIn24Scopes1dab,
     EffectPathsIn25Scopesf4df,
     EffectPathsIn26Scopesc5a2,
@@ -15396,7 +15397,7 @@ export interface AgreementScope
 
 /** The effects recordable in alliance scope. */
 export interface AllianceScope
-  extends StructuralEffects<"alliance">, UniversalEffects, UniversalEffectPaths {}
+  extends StructuralEffects<"alliance">, UniversalEffects<"alliance">, UniversalEffectPaths {}
 
 /** The effects recordable in ambient_object scope. */
 export interface AmbientObjectScope
@@ -15406,7 +15407,7 @@ export interface AmbientObjectScope
     EffectsIn29Scopes878c,
     EffectsInAmbientObject,
     EffectsInAmbientObjectFleet,
-    UniversalEffects,
+    UniversalEffects<"ambient_object">,
     EffectPathsIn11Scopes2089,
     EffectPathsIn14Scopes86f5,
     EffectPathsIn14Scopesed72,
@@ -15422,7 +15423,7 @@ export interface ArchaeologicalSiteScope
     EffectsInArchaeologicalSite,
     EffectsInArchaeologicalSiteAstralRiftFirstContact,
     EffectsInArchaeologicalSiteFirstContact,
-    UniversalEffects,
+    UniversalEffects<"archaeological_site">,
     EffectPathsIn11Scopes2089,
     EffectPathsIn12Scopes9dad,
     EffectPathsIn13Scopesa2e3,
@@ -15452,7 +15453,7 @@ export interface ArmyScope
     EffectsIn9Scopesd3d6,
     EffectsInArmy,
     EffectsInArmyCountryFleet,
-    UniversalEffects,
+    UniversalEffects<"army">,
     EffectPathsIn12Scopes9dad,
     EffectPathsIn13Scopesa2e3,
     EffectPathsIn14Scopes86f5,
@@ -15483,7 +15484,7 @@ export interface AstralRiftScope
     EffectsInAstralRift,
     EffectsInAstralRiftEspionageOperation,
     EffectsInAstralRiftPlanet,
-    UniversalEffects,
+    UniversalEffects<"astral_rift">,
     EffectPathsIn14Scopesed72,
     EffectPathsIn15Scopesa620,
     EffectPathsIn19Scopesf9f7,
@@ -15500,7 +15501,7 @@ export interface BypassScope
     EffectsIn29Scopes878c,
     EffectsInBypass,
     EffectsInBypassSystem,
-    UniversalEffects,
+    UniversalEffects<"bypass">,
     EffectPathsIn14Scopesed72,
     EffectPathsIn18Scopes5ba6,
     EffectPathsIn19Scopesf9f7,
@@ -15522,7 +15523,7 @@ export interface CarrierScope
     EffectsIn5Scopes3588,
     EffectsIn5Scopes5d7d,
     EffectsIn5Scopes9031,
-    EffectsIn5Scopes92b5,
+    EffectsIn5Scopes92b5<"carrier">,
     EffectsIn5Scopes9550,
     EffectsIn5Scopes979f,
     EffectsIn5Scopese102,
@@ -15530,13 +15531,13 @@ export interface CarrierScope
     EffectsIn6Scopescfa2,
     EffectsIn7Scopes04e0,
     EffectsIn7Scopesdd2e,
-    EffectsIn8Scopes39a9,
+    EffectsIn8Scopes39a9<"carrier">,
     EffectsIn8Scopes75eb,
     EffectsIn8Scopescb47,
     EffectsIn9Scopes5f8a,
     EffectsIn9Scopesd3d6,
     EffectsInCarrierPlanetShip,
-    UniversalEffects,
+    UniversalEffects<"carrier">,
     EffectPathsIn11Scopes2089,
     EffectPathsIn12Scopes9dad,
     EffectPathsIn13Scopesa2e3,
@@ -15567,18 +15568,18 @@ export interface ColonyScope
     EffectsIn4Scopes2b24,
     EffectsIn5Scopes3588,
     EffectsIn5Scopes9031,
-    EffectsIn5Scopes92b5,
+    EffectsIn5Scopes92b5<"colony">,
     EffectsIn5Scopes9550,
     EffectsIn6Scopes6eb9,
     EffectsIn6Scopescfa2,
     EffectsIn7Scopes04e0,
     EffectsIn7Scopesdd2e,
-    EffectsIn8Scopes39a9,
+    EffectsIn8Scopes39a9<"colony">,
     EffectsIn8Scopes75eb,
     EffectsIn8Scopescb47,
     EffectsIn9Scopes5f8a,
     EffectsIn9Scopesd3d6,
-    UniversalEffects,
+    UniversalEffects<"colony">,
     EffectPathsIn11Scopes2089,
     EffectPathsIn12Scopes9dad,
     EffectPathsIn13Scopesa2e3,
@@ -15606,7 +15607,7 @@ export interface CosmicStormInfluenceFieldScope
     StructuralEffects<"cosmic_storm_influence_field">,
     EffectsIn16Scopes674a,
     EffectsInCosmicStormInfluenceField,
-    UniversalEffects,
+    UniversalEffects<"cosmic_storm_influence_field">,
     UniversalEffectPaths {}
 
 /** The effects recordable in country scope. */
@@ -15626,7 +15627,7 @@ export interface CountryScope
     EffectsIn6Scopes6eb9,
     EffectsIn7Scopes04e0,
     EffectsIn7Scopesdd2e,
-    EffectsIn8Scopes39a9,
+    EffectsIn8Scopes39a9<"country">,
     EffectsIn8Scopes75eb,
     EffectsIn8Scopescb47,
     EffectsInArmyCountryFleet,
@@ -15641,7 +15642,7 @@ export interface CountryScope
     EffectsInCountrySector,
     EffectsInCountrySystem,
     EffectsInCountryWar,
-    UniversalEffects,
+    UniversalEffects<"country">,
     EffectPathsIn13Scopesa2e3,
     EffectPathsIn14Scopes86f5,
     EffectPathsIn15Scopesa620,
@@ -15662,7 +15663,7 @@ export interface DebrisScope
     EffectsIn11Scopes5713,
     EffectsInDebris,
     EffectsInDebrisShip,
-    UniversalEffects,
+    UniversalEffects<"debris">,
     EffectPathsIn11Scopes2089,
     EffectPathsIn13Scopesa2e3,
     EffectPathsIn14Scopes86f5,
@@ -15682,7 +15683,7 @@ export interface DepositScope
     EffectsIn29Scopes878c,
     EffectsIn6Scopescfa2,
     EffectsInDeposit,
-    UniversalEffects,
+    UniversalEffects<"deposit">,
     EffectPathsIn12Scopes9dad,
     EffectPathsIn18Scopes5ba6,
     EffectPathsIn19Scopesf9f7,
@@ -15693,11 +15694,18 @@ export interface DepositScope
 
 /** The effects recordable in design scope. */
 export interface DesignScope
-  extends StructuralEffects<"design">, EffectsInDesign, UniversalEffects, UniversalEffectPaths {}
+  extends
+    StructuralEffects<"design">,
+    EffectsInDesign,
+    UniversalEffects<"design">,
+    UniversalEffectPaths {}
 
 /** The effects recordable in dlc_recommendation scope. */
 export interface DlcRecommendationScope
-  extends StructuralEffects<"dlc_recommendation">, UniversalEffects, UniversalEffectPaths {}
+  extends
+    StructuralEffects<"dlc_recommendation">,
+    UniversalEffects<"dlc_recommendation">,
+    UniversalEffectPaths {}
 
 /** The effects recordable in espionage_asset scope. */
 export interface EspionageAssetScope
@@ -15705,7 +15713,7 @@ export interface EspionageAssetScope
     StructuralEffects<"espionage_asset">,
     EffectsIn29Scopes878c,
     EffectsInEspionageAsset,
-    UniversalEffects,
+    UniversalEffects<"espionage_asset">,
     UniversalEffectPaths {}
 
 /** The effects recordable in espionage_operation scope. */
@@ -15718,7 +15726,7 @@ export interface EspionageOperationScope
     EffectsInEspionageOperation,
     EffectsInEspionageOperationNoScopeSpyNetwork,
     EffectsInEspionageOperationSpyNetwork,
-    UniversalEffects,
+    UniversalEffects<"espionage_operation">,
     EffectPathsIn15Scopesa620,
     EffectPathsIn24Scopes1dab,
     EffectPathsIn25Scopesf4df,
@@ -15728,7 +15736,7 @@ export interface EspionageOperationScope
 
 /** The effects recordable in exhibit scope. */
 export interface ExhibitScope
-  extends StructuralEffects<"exhibit">, UniversalEffects, UniversalEffectPaths {}
+  extends StructuralEffects<"exhibit">, UniversalEffects<"exhibit">, UniversalEffectPaths {}
 
 /** The effects recordable in federation scope. */
 export interface FederationScope
@@ -15739,7 +15747,7 @@ export interface FederationScope
     EffectsIn29Scopes878c,
     EffectsInCountryFederation,
     EffectsInFederation,
-    UniversalEffects,
+    UniversalEffects<"federation">,
     EffectPathsIn15Scopesa620,
     EffectPathsInFederation,
     UniversalEffectPaths {}
@@ -15753,7 +15761,7 @@ export interface FirstContactScope
     EffectsInArchaeologicalSiteAstralRiftFirstContact,
     EffectsInArchaeologicalSiteFirstContact,
     EffectsInFirstContact,
-    UniversalEffects,
+    UniversalEffects<"first_contact">,
     EffectPathsIn14Scopesed72,
     EffectPathsIn15Scopesa620,
     EffectPathsIn18Scopes5ba6,
@@ -15789,7 +15797,7 @@ export interface FleetScope
     EffectsInFleetMegastructureShip,
     EffectsInFleetShip,
     EffectsInFleetStarbase,
-    UniversalEffects,
+    UniversalEffects<"fleet">,
     EffectPathsIn11Scopes2089,
     EffectPathsIn13Scopesa2e3,
     EffectPathsIn14Scopes86f5,
@@ -15809,7 +15817,10 @@ export interface FleetScope
 
 /** The effects recordable in galactic_community scope. */
 export interface GalacticCommunityScope
-  extends StructuralEffects<"galactic_community">, UniversalEffects, UniversalEffectPaths {}
+  extends
+    StructuralEffects<"galactic_community">,
+    UniversalEffects<"galactic_community">,
+    UniversalEffectPaths {}
 
 /** The effects recordable in leader scope. */
 export interface LeaderScope
@@ -15821,12 +15832,12 @@ export interface LeaderScope
     EffectsIn4Scopes4fbd,
     EffectsIn4Scopes7e34,
     EffectsIn5Scopes6c98,
-    EffectsIn8Scopes39a9,
+    EffectsIn8Scopes39a9<"leader">,
     EffectsIn8Scopescb47,
     EffectsIn9Scopesd3d6,
     EffectsInLeader,
     EffectsInLeaderPopGroupSpecies,
-    UniversalEffects,
+    UniversalEffects<"leader">,
     EffectPathsIn12Scopes9dad,
     EffectPathsIn15Scopesa620,
     EffectPathsIn18Scopes5ba6,
@@ -15858,7 +15869,7 @@ export interface MegastructureScope
     EffectsIn9Scopesd3d6,
     EffectsInFleetMegastructureShip,
     EffectsInMegastructure,
-    UniversalEffects,
+    UniversalEffects<"megastructure">,
     EffectPathsIn11Scopes2089,
     EffectPathsIn12Scopes9dad,
     EffectPathsIn13Scopesa2e3,
@@ -15877,7 +15888,7 @@ export interface MissionScope
     StructuralEffects<"mission">,
     EffectsInCountryMission,
     EffectsInMission,
-    UniversalEffects,
+    UniversalEffects<"mission">,
     EffectPathsIn24Scopes1dab,
     EffectPathsIn25Scopesf4df,
     EffectPathsIn26Scopesc5a2,
@@ -15892,7 +15903,7 @@ export interface NoScopeScope
     EffectsInCountryNoScope,
     EffectsInCountryNoScopeSpyNetwork,
     EffectsInEspionageOperationNoScopeSpyNetwork,
-    UniversalEffects,
+    UniversalEffects<"no_scope">,
     UniversalEffectPaths {}
 
 /** The effects recordable in planet scope. */
@@ -15909,7 +15920,7 @@ export interface PlanetScope
     EffectsIn5Scopes3588,
     EffectsIn5Scopes5d7d,
     EffectsIn5Scopes9031,
-    EffectsIn5Scopes92b5,
+    EffectsIn5Scopes92b5<"planet">,
     EffectsIn5Scopes9550,
     EffectsIn5Scopes979f,
     EffectsIn5Scopese102,
@@ -15917,7 +15928,7 @@ export interface PlanetScope
     EffectsIn6Scopescfa2,
     EffectsIn7Scopes04e0,
     EffectsIn7Scopesdd2e,
-    EffectsIn8Scopes39a9,
+    EffectsIn8Scopes39a9<"planet">,
     EffectsIn8Scopes75eb,
     EffectsIn8Scopescb47,
     EffectsIn9Scopes5f8a,
@@ -15928,7 +15939,7 @@ export interface PlanetScope
     EffectsInPlanet,
     EffectsInPlanetStarbase,
     EffectsInPlanetSystem,
-    UniversalEffects,
+    UniversalEffects<"planet">,
     EffectPathsIn11Scopes2089,
     EffectPathsIn12Scopes9dad,
     EffectPathsIn13Scopesa2e3,
@@ -15960,7 +15971,7 @@ export interface PopFactionScope
     EffectsIn8Scopes75eb,
     EffectsInPopFaction,
     EffectsInPopFactionPopGroup,
-    UniversalEffects,
+    UniversalEffects<"pop_faction">,
     EffectPathsIn15Scopesa620,
     EffectPathsIn24Scopes1dab,
     EffectPathsIn25Scopesf4df,
@@ -15978,12 +15989,12 @@ export interface PopGroupScope
     EffectsIn4Scopes023a,
     EffectsIn5Scopes6c98,
     EffectsIn5Scopes979f,
-    EffectsIn8Scopes39a9,
+    EffectsIn8Scopes39a9<"pop_group">,
     EffectsInCountryPopGroup,
     EffectsInLeaderPopGroupSpecies,
     EffectsInPopFactionPopGroup,
     EffectsInPopGroup,
-    UniversalEffects,
+    UniversalEffects<"pop_group">,
     EffectPathsIn12Scopes9dad,
     EffectPathsIn18Scopes5ba6,
     EffectPathsIn19Scopesf9f7,
@@ -16001,7 +16012,7 @@ export interface PopJobScope
   extends
     StructuralEffects<"pop_job">,
     EffectsInPopJob,
-    UniversalEffects,
+    UniversalEffects<"pop_job">,
     EffectPathsIn12Scopes9dad,
     UniversalEffectPaths {}
 
@@ -16015,7 +16026,7 @@ export interface SectorScope
     EffectsIn8Scopes75eb,
     EffectsInCountrySector,
     EffectsInSector,
-    UniversalEffects,
+    UniversalEffects<"sector">,
     EffectPathsIn18Scopes5ba6,
     EffectPathsIn24Scopes1dab,
     EffectPathsIn25Scopesf4df,
@@ -16038,7 +16049,7 @@ export interface ShipScope
     EffectsIn5Scopes5d7d,
     EffectsIn5Scopes6c98,
     EffectsIn5Scopes9031,
-    EffectsIn5Scopes92b5,
+    EffectsIn5Scopes92b5<"ship">,
     EffectsIn5Scopes9550,
     EffectsIn5Scopes979f,
     EffectsIn5Scopesb6d1,
@@ -16047,7 +16058,7 @@ export interface ShipScope
     EffectsIn6Scopescfa2,
     EffectsIn7Scopes04e0,
     EffectsIn7Scopesdd2e,
-    EffectsIn8Scopes39a9,
+    EffectsIn8Scopes39a9<"ship">,
     EffectsIn8Scopes75eb,
     EffectsIn8Scopescb47,
     EffectsIn9Scopes5f8a,
@@ -16057,7 +16068,7 @@ export interface ShipScope
     EffectsInFleetMegastructureShip,
     EffectsInFleetShip,
     EffectsInShip,
-    UniversalEffects,
+    UniversalEffects<"ship">,
     EffectPathsIn11Scopes2089,
     EffectPathsIn12Scopes9dad,
     EffectPathsIn13Scopesa2e3,
@@ -16085,7 +16096,7 @@ export interface ShipGrowthStageScope
   extends
     StructuralEffects<"ship_growth_stage">,
     EffectsIn29Scopes878c,
-    UniversalEffects,
+    UniversalEffects<"ship_growth_stage">,
     UniversalEffectPaths {}
 
 /** The effects recordable in situation scope. */
@@ -16094,7 +16105,7 @@ export interface SituationScope
     StructuralEffects<"situation">,
     EffectsIn29Scopes878c,
     EffectsInSituation,
-    UniversalEffects,
+    UniversalEffects<"situation">,
     EffectPathsIn24Scopes1dab,
     EffectPathsIn25Scopesf4df,
     EffectPathsIn26Scopesc5a2,
@@ -16106,10 +16117,10 @@ export interface SpeciesScope
     StructuralEffects<"species">,
     EffectsIn12Scopes3d16,
     EffectsIn29Scopes878c,
-    EffectsIn8Scopes39a9,
+    EffectsIn8Scopes39a9<"species">,
     EffectsInLeaderPopGroupSpecies,
     EffectsInSpecies,
-    UniversalEffects,
+    UniversalEffects<"species">,
     EffectPathsIn24Scopes1dab,
     EffectPathsIn26Scopesc5a2,
     EffectPathsIn4Scopes50ac,
@@ -16118,7 +16129,10 @@ export interface SpeciesScope
 
 /** The effects recordable in species_trait scope. */
 export interface SpeciesTraitScope
-  extends StructuralEffects<"species_trait">, UniversalEffects, UniversalEffectPaths {}
+  extends
+    StructuralEffects<"species_trait">,
+    UniversalEffects<"species_trait">,
+    UniversalEffectPaths {}
 
 /** The effects recordable in spy_network scope. */
 export interface SpyNetworkScope
@@ -16130,7 +16144,7 @@ export interface SpyNetworkScope
     EffectsInEspionageOperationNoScopeSpyNetwork,
     EffectsInEspionageOperationSpyNetwork,
     EffectsInSpyNetwork,
-    UniversalEffects,
+    UniversalEffects<"spy_network">,
     EffectPathsIn13Scopesa2e3,
     EffectPathsIn14Scopes86f5,
     EffectPathsIn15Scopesa620,
@@ -16141,7 +16155,7 @@ export interface SpyNetworkScope
 
 /** The effects recordable in star scope. */
 export interface StarScope
-  extends StructuralEffects<"star">, UniversalEffects, UniversalEffectPaths {}
+  extends StructuralEffects<"star">, UniversalEffects<"star">, UniversalEffectPaths {}
 
 /** The effects recordable in starbase scope. */
 export interface StarbaseScope
@@ -16151,14 +16165,14 @@ export interface StarbaseScope
     EffectsIn16Scopes674a,
     EffectsIn29Scopes878c,
     EffectsIn5Scopes5d7d,
-    EffectsIn5Scopes92b5,
+    EffectsIn5Scopes92b5<"starbase">,
     EffectsIn5Scopesb6d1,
     EffectsIn9Scopes5f8a,
     EffectsIn9Scopesd3d6,
     EffectsInFleetStarbase,
     EffectsInPlanetStarbase,
     EffectsInStarbase,
-    UniversalEffects,
+    UniversalEffects<"starbase">,
     EffectPathsIn11Scopes2089,
     EffectPathsIn12Scopes9dad,
     EffectPathsIn13Scopesa2e3,
@@ -16181,7 +16195,7 @@ export interface StormScope
   extends
     StructuralEffects<"storm">,
     EffectsInStorm,
-    UniversalEffects,
+    UniversalEffects<"storm">,
     EffectPathsInStorm,
     UniversalEffectPaths {}
 
@@ -16203,7 +16217,7 @@ export interface SystemScope
     EffectsInCountrySystem,
     EffectsInPlanetSystem,
     EffectsInSystem,
-    UniversalEffects,
+    UniversalEffects<"system">,
     EffectPathsIn11Scopes2089,
     EffectPathsIn13Scopesa2e3,
     EffectPathsIn14Scopes86f5,
@@ -16226,7 +16240,7 @@ export interface WarScope
     EffectsIn29Scopes878c,
     EffectsInCountryWar,
     EffectsInWar,
-    UniversalEffects,
+    UniversalEffects<"war">,
     EffectPathsInWar,
     UniversalEffectPaths {}
 

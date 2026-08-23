@@ -2168,7 +2168,10 @@ export function checkPopFactionParameter(
 /** The arguments `checkVariable` takes, as the rules declare them. */
 export interface CheckVariableArgs {
   which: Variable;
-  value: ScriptValue | readonly [PdxOp, ScriptValue] | readonly (readonly [PdxOp, ScriptValue])[];
+  value:
+    | ScriptValue
+    | readonly [PdxOp, ScriptValue]
+    | readonly [readonly [PdxOp, ScriptValue], ...(readonly [PdxOp, ScriptValue])[]];
 }
 
 /**
@@ -2212,7 +2215,7 @@ export function checkVariable(
 > {
   const entries: PdxEntry[] = [];
   entries.push(kv("which", args.which));
-  if (isComparisonList(args.value)) {
+  if (isComparisonList(args.value, "check_variable.value")) {
     for (const entry1 of args.value) {
       entries.push(cmp("value", entry1[0], scriptValueScalar(entry1[1])));
     }
@@ -2229,13 +2232,26 @@ export function checkVariable(
 /** The arguments `checkVariableArithmetic` takes, as the rules declare them. */
 export interface CheckVariableArithmeticArgs {
   which: ScriptValue | readonly [PdxOp, ScriptValue];
-  add?: ScriptValue | readonly [PdxOp, ScriptValue] | readonly (readonly [PdxOp, ScriptValue])[];
+  add?:
+    | ScriptValue
+    | readonly [PdxOp, ScriptValue]
+    | readonly [readonly [PdxOp, ScriptValue], ...(readonly [PdxOp, ScriptValue])[]];
   subtract?:
-    ScriptValue | readonly [PdxOp, ScriptValue] | readonly (readonly [PdxOp, ScriptValue])[];
+    | ScriptValue
+    | readonly [PdxOp, ScriptValue]
+    | readonly [readonly [PdxOp, ScriptValue], ...(readonly [PdxOp, ScriptValue])[]];
   multiply?:
-    ScriptValue | readonly [PdxOp, ScriptValue] | readonly (readonly [PdxOp, ScriptValue])[];
-  divide?: ScriptValue | readonly [PdxOp, ScriptValue] | readonly (readonly [PdxOp, ScriptValue])[];
-  modulo?: ScriptValue | readonly [PdxOp, ScriptValue] | readonly (readonly [PdxOp, ScriptValue])[];
+    | ScriptValue
+    | readonly [PdxOp, ScriptValue]
+    | readonly [readonly [PdxOp, ScriptValue], ...(readonly [PdxOp, ScriptValue])[]];
+  divide?:
+    | ScriptValue
+    | readonly [PdxOp, ScriptValue]
+    | readonly [readonly [PdxOp, ScriptValue], ...(readonly [PdxOp, ScriptValue])[]];
+  modulo?:
+    | ScriptValue
+    | readonly [PdxOp, ScriptValue]
+    | readonly [readonly [PdxOp, ScriptValue], ...(readonly [PdxOp, ScriptValue])[]];
   /** Specify >/< on the value or variable fields */
   value: ScriptValue | readonly [PdxOp, ScriptValue];
 }
@@ -2290,7 +2306,7 @@ export function checkVariableArithmetic(
       : kv("which", scriptValueScalar(args.which))
   );
   if (args.add !== undefined) {
-    if (isComparisonList(args.add)) {
+    if (isComparisonList(args.add, "check_variable_arithmetic.add")) {
       for (const entry1 of args.add) {
         entries.push(cmp("add", entry1[0], scriptValueScalar(entry1[1])));
       }
@@ -2303,7 +2319,7 @@ export function checkVariableArithmetic(
     }
   }
   if (args.subtract !== undefined) {
-    if (isComparisonList(args.subtract)) {
+    if (isComparisonList(args.subtract, "check_variable_arithmetic.subtract")) {
       for (const entry2 of args.subtract) {
         entries.push(cmp("subtract", entry2[0], scriptValueScalar(entry2[1])));
       }
@@ -2316,7 +2332,7 @@ export function checkVariableArithmetic(
     }
   }
   if (args.multiply !== undefined) {
-    if (isComparisonList(args.multiply)) {
+    if (isComparisonList(args.multiply, "check_variable_arithmetic.multiply")) {
       for (const entry3 of args.multiply) {
         entries.push(cmp("multiply", entry3[0], scriptValueScalar(entry3[1])));
       }
@@ -2329,7 +2345,7 @@ export function checkVariableArithmetic(
     }
   }
   if (args.divide !== undefined) {
-    if (isComparisonList(args.divide)) {
+    if (isComparisonList(args.divide, "check_variable_arithmetic.divide")) {
       for (const entry4 of args.divide) {
         entries.push(cmp("divide", entry4[0], scriptValueScalar(entry4[1])));
       }
@@ -2342,7 +2358,7 @@ export function checkVariableArithmetic(
     }
   }
   if (args.modulo !== undefined) {
-    if (isComparisonList(args.modulo)) {
+    if (isComparisonList(args.modulo, "check_variable_arithmetic.modulo")) {
       for (const entry5 of args.modulo) {
         entries.push(cmp("modulo", entry5[0], scriptValueScalar(entry5[1])));
       }

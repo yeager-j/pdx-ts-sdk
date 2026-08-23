@@ -111,6 +111,11 @@ describe("shapes the rules give a signature", () => {
       // @ts-expect-error — repeated comparisons nest their pairs; bare operands carry no operator
       value: [5, 6],
     });
+    checkVariable({
+      which: "var_unrest",
+      // @ts-expect-error — a list of comparisons names at least one
+      value: [],
+    });
   });
 
   it("closes the enum on a block trigger's field", () => {

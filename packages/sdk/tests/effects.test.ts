@@ -264,6 +264,9 @@ create_message = {
         ["<", 10],
       ])
     ).toBe("value > 2\n\nvalue < 10\n");
+    expect(() => entriesFor([])).toThrow(
+      '"effects_test_comparison.value" was given an empty comparison list'
+    );
   });
 
   it("serializes a minimal ambient-object placement", () => {

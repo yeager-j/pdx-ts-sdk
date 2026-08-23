@@ -776,7 +776,7 @@ async function writeScriptModules(input: ScriptModuleInput): Promise<void> {
 async function writeEventModules(input: EventModuleInput): Promise<EventModuleEmission> {
   const { commit, effectPolicy, effects, emitter, eventFieldPolicy, rules } = input;
 
-  const events = emitEvents(emitter, effectPolicy);
+  const events = emitEvents(emitter, effectPolicy, effects.universalParameters);
   await write(
     "events.ts",
     header(commit, ["events/events.cwt"]) +

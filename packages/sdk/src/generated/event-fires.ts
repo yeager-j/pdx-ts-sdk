@@ -167,7 +167,7 @@ declare module "./effects.ts" {
     systemEvent<F extends ScopeName>(args: WitnessedFireEventArgs<"system", F, "system">): void;
   }
 
-  interface UniversalEffects {
+  interface UniversalEffects<S extends ScopeName> {
     /** Fires an observer event for the scoped country, after any delay. */
     observerEvent(args: FireEventArgs<"country", undefined, "observer">): void;
     observerEvent<F extends ScopeName>(

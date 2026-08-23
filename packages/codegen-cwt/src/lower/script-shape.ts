@@ -397,15 +397,17 @@ export function cardinalityArrayType(item: string, cardinality: Cardinality): st
  * The type text a repeated member emits, given the type text one occurrence
  * admits.
  *
- * A repeated comparison keeps its single forms and gains a list of
+ * A repeated comparison keeps its single forms and gains a non-empty list of
  * operator/operand pairs instead of a plain array: `readonly (ScriptValue |
  * readonly [PdxOp, ScriptValue])[]` would accept `[">", 2]` as two bare
- * operands and silently write two keys where the author meant one comparison.
+ * operands and silently write two keys where the author meant one comparison,
+ * and an empty list would name an operator the author never wrote.
  */
 export function repeatedMemberType(emitter: Emitter, value: ArgValue, single: string): string {
   if (value.kind === "comparison") {
     const operand = emitter.useValue(value.value).type;
-    return `${single} | readonly (readonly [${emitter.use("PdxOp")}, ${operand}])[]`;
+    const pair = `readonly [${emitter.use("PdxOp")}, ${operand}]`;
+    return `${single} | readonly [${pair}, ...(${pair})[]]`;
   }
   return `readonly ${single.includes(" | ") ? `(${single})` : single}[]`;
 }

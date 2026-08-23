@@ -75,6 +75,12 @@ export interface EffectEmission {
   readonly skipped: readonly SkippedRule[];
   /** Number of distinct generated effect scope clusters. */
   readonly clusterCount: number;
+  /**
+   * Type parameters declared by the universal effect cluster, empty when it
+   * declares none. A module augmentation of that interface has to repeat them
+   * exactly, so it reads them here rather than restating the rule.
+   */
+  readonly universalParameters: string;
   /** Rules overloaded between a block and a scalar, emitted scalar-only. */
   readonly scalarOnly: readonly string[];
   /** `EFFECT_FIELD_TYPE_OVERRIDES` rows applied, with the reason each states. */
@@ -470,6 +476,55 @@ function memberType(
   }
   const single = baseMemberType(emitter, field.value, outerScope, effectKey);
   return field.repeated === true ? repeatedMemberType(emitter, field.value, single) : single;
+}
+
+/**
+ * The type parameter a cluster generic over its receiving scope declares. The
+ * member types name it wherever a clause runs in that scope.
+ */
+const RECEIVING_SCOPE = "S";
+
+function clauseRunsInReceivingScope(value: ArgField["value"]): boolean {
+  switch (value.kind) {
+    case "clause":
+      return value.scope === null;
+    case "fields":
+    case "scalarOrFields":
+      return value.fields.some((field) => clauseRunsInReceivingScope(field.value));
+    case "valueList":
+      return value.fields?.some((field) => clauseRunsInReceivingScope(field.value)) ?? false;
+    default:
+      return false;
+  }
+}
+
+/** Whether one effect's arguments hold a clause typed by the scope it is called in. */
+function takesReceivingScope(effect: EmittedEffect): boolean {
+  const { shape } = effect;
+  if (shape.kind !== "fields" && shape.kind !== "wrapper") {
+    return false;
+  }
+  return (shape.fields ?? []).some((field) => clauseRunsInReceivingScope(field.value));
+}
+
+/**
+ * Whether a cluster's methods must be generic over the scope receiving them.
+ *
+ * A clause that runs in the enclosing scope is typed by the scope the method
+ * is called in. A one-scope cluster names that scope directly; a wider one
+ * would name every scope it covers, and `Trigger` and the closure parameter
+ * are contravariant, so each caller's own scope would then be rejected.
+ */
+function clusterTakesReceivingScope(cluster: EffectCluster): boolean {
+  const spansOneScope = cluster.scopes !== "universal" && cluster.scopes.length === 1;
+  return !spansOneScope && cluster.effects.some(takesReceivingScope);
+}
+
+/** The type parameter list a cluster interface declares, empty when it takes none. */
+function clusterParameters(cluster: EffectCluster): string {
+  return clusterTakesReceivingScope(cluster)
+    ? `<${RECEIVING_SCOPE} extends ${outerScopeText(cluster.scopes)}>`
+    : "";
 }
 
 function scopeInterfaceName(scope: string | null): string {
@@ -881,6 +936,12 @@ function extensionSeamInterfaces(emitter: Emitter, clusters: readonly EffectClus
     if (cluster === undefined || effect === undefined) {
       throw new Error(`effects.cwt no longer emits ${key}`);
     }
+    if (takesReceivingScope(effect)) {
+      throw new Error(
+        `${key} now takes a clause in its receiving scope, which its hand-written ` +
+          `${seam.interfaceName} overload has to declare before the seam can carry it`
+      );
+    }
     // The args go out under their own name as well: the hand-written overload
     // narrows two members of this object and has no business restating the
     // rest, which are the rules' to change.
@@ -918,7 +979,8 @@ function clusterInterfaces(
   return clusters.map((cluster) => {
     const name = clusterName(cluster.scopes);
     registerClusterName(minted, name, cluster.scopes);
-    const outerScope = outerScopeText(cluster.scopes);
+    const parameter = clusterParameters(cluster);
+    const outerScope = parameter === "" ? outerScopeText(cluster.scopes) : RECEIVING_SCOPE;
     const heading =
       cluster.scopes === "universal"
         ? ["Effects valid in every scope."]
@@ -934,7 +996,7 @@ function clusterInterfaces(
       })
       .sort();
     const parents = seams.length === 0 ? "" : ` extends ${seams.join(", ")}`;
-    return `${docComment(heading)}export interface ${name}${parents} {\n${methods}}\n`;
+    return `${docComment(heading)}export interface ${name}${parameter}${parents} {\n${methods}}\n`;
   });
 }
 
@@ -966,7 +1028,11 @@ function scopeInterfaces(
       `${emitter.use("StructuralEffects")}<${JSON.stringify(scope)}>`,
       ...clusters
         .filter((cluster) => cluster.scopes === "universal" || cluster.scopes.includes(scope))
-        .map((cluster) => clusterName(cluster.scopes)),
+        .map((cluster) =>
+          clusterTakesReceivingScope(cluster)
+            ? `${clusterName(cluster.scopes)}<${JSON.stringify(scope)}>`
+            : clusterName(cluster.scopes)
+        ),
       ...linkClusters
         .filter((cluster) => cluster.scopes === "universal" || cluster.scopes.includes(scope))
         .map((cluster) => pathClusterName(cluster.scopes)),
@@ -1121,6 +1187,7 @@ export function emitEffects(
     ...pathClusterInterfaces(sortedLinkClusters, mintedClusterNames),
   ];
 
+  const universalCluster = sortedClusters.find((cluster) => cluster.scopes === "universal");
   const allScopes = canonicalScopes(emitter.rules.scopes);
   const interfaces =
     interfaceChunks.join("\n") +
@@ -1138,6 +1205,7 @@ export function emitEffects(
     byShape: clustered.byShape,
     skipped: clustered.skipped,
     clusterCount: sortedClusters.length,
+    universalParameters: universalCluster === undefined ? "" : clusterParameters(universalCluster),
     scalarOnly: clustered.scalarOnly,
     fieldTypeOverrides: fieldTypeOverrideReport(),
     fieldAdditions: fieldAdditionReport(),

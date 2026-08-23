@@ -317,10 +317,14 @@ function recordRef(
  * its repetition as a list of operator/operand pairs, since an array of bare
  * operands cannot be told from the single pair `[">", 2]`.
  */
-function fieldOccurrences(field: EffectFieldMeta, value: unknown): readonly unknown[] {
+function fieldOccurrences(
+  field: EffectFieldMeta,
+  value: unknown,
+  path: string
+): readonly unknown[] {
   if (field.kind === "comparison") {
     const comparison = value as ComparisonArg;
-    return isComparisonList(comparison) ? comparison : [comparison];
+    return isComparisonList(comparison, `${path}.${field.key}`) ? comparison : [comparison];
   }
   return field.repeated === true ? (value as readonly unknown[]) : [value];
 }
@@ -342,7 +346,7 @@ export function fieldEntries(
     if (value === undefined) {
       continue;
     }
-    const occurrences = fieldOccurrences(field, value);
+    const occurrences = fieldOccurrences(field, value, path);
     for (const value of occurrences) {
       switch (field.kind) {
         case "value": {

@@ -41,6 +41,7 @@ import {
   traitHasAllTags,
   trigger,
   yearsPassed,
+  type ScriptValue,
 } from "../src/script/triggers.ts";
 
 describe("trigger builders", () => {
@@ -335,6 +336,14 @@ describe("trigger builders", () => {
         }).entries,
       ])
     ).toBe("check_variable = {\n\twhich = var_unrest\n\tvalue > 2\n\tvalue < 10\n}\n");
+  });
+
+  it("throws on an empty comparison list rather than writing a comparison nobody wrote", () => {
+    // The authoring type rejects `[]`; this is the runtime half of that claim,
+    // for a caller who reached the builder without it.
+    expect(() =>
+      checkVariable({ which: "var_unrest", value: [] as unknown as ScriptValue })
+    ).toThrow('"check_variable.value" was given an empty comparison list');
   });
 
   it("writes an event-chain counter check with its chain reference", () => {

@@ -16,7 +16,7 @@ import {
 } from "../src/generated/value-sets.ts";
 import type { EffectPath, EffectPathOf } from "../src/index.ts";
 import { eventTarget, makeScope, scopeValue } from "../src/script/effects/recorder.ts";
-import { isAtWar } from "../src/script/triggers.ts";
+import { hasPlanetFlag, isAtWar } from "../src/script/triggers.ts";
 
 const sink: PdxEntry[] = [];
 const flags = planetFlags("effects_type_test_flag");
@@ -143,6 +143,19 @@ describe("generated effect scope safety", () => {
     });
     // @ts-expect-error — repeated position blocks author as an array
     fleet.setFleetFormation({ position: { x: 1.5, y: -2.5 } });
+  });
+
+  it("types an enclosing-scope clause by the scope the effect is recorded in", () => {
+    const country = makeScope<"country">(sink);
+    country.createMessage({
+      type: "effects_type_test_message_type",
+      variable: [{ type: "name", scope: scopeValue<"planet">("this"), trigger: isAtWar() }],
+    });
+    country.createMessage({
+      type: "effects_type_test_message_type",
+      // @ts-expect-error — has_planet_flag is planet-scoped and this message is recorded in country
+      variable: [{ type: "name", trigger: hasPlanetFlag(flags.effects_type_test_flag) }],
+    });
   });
 
   it("types ambient-object placement refs, locations, and scalar/range offsets", () => {

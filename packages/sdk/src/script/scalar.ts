@@ -103,10 +103,20 @@ export type ComparisonArg = ComparisonOperand | readonly [PdxOp, ComparisonOpera
  * operator/operand pairs. A list of bare operands is not offered and is not
  * read as one: `[">", 2]` is the single comparison `> 2`, so the repeated form
  * has to nest — `[[">", 2], ["<", 10]]`.
+ *
+ * `field` names the argument in the error thrown for an empty list, which the
+ * authoring types already reject and which writes no comparison at all.
  */
 export function isComparisonList(
-  value: ComparisonArg | readonly (readonly [PdxOp, ComparisonOperand])[]
+  value: ComparisonArg | readonly (readonly [PdxOp, ComparisonOperand])[],
+  field: string
 ): value is readonly (readonly [PdxOp, ComparisonOperand])[] {
+  if (Array.isArray(value) && value.length === 0) {
+    throw new Error(
+      `"${field}" was given an empty comparison list — write at least one ` +
+        "[operator, value] pair, or omit the field"
+    );
+  }
   return Array.isArray(value) && Array.isArray(value[0]);
 }
 

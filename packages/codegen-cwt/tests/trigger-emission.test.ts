@@ -252,9 +252,9 @@ describe("trigger emission", () => {
   it("authors a repeated comparison as one value, one pair, or a list of pairs", () => {
     expect(emission.code).toContain(
       "value: ScriptValue | readonly [PdxOp, ScriptValue] | " +
-        "readonly (readonly [PdxOp, ScriptValue])[];"
+        "readonly [readonly [PdxOp, ScriptValue], ...(readonly [PdxOp, ScriptValue])[]];"
     );
-    expect(emission.code).toContain("if (isComparisonList(args.value)) {");
+    expect(emission.code).toContain('if (isComparisonList(args.value, "check_variable.value")) {');
     expect(emission.code).toContain("for (const entry1 of args.value) {");
     expect(emission.code).toContain(
       'entries.push(cmp("value", entry1[0], scriptValueScalar(entry1[1])));'

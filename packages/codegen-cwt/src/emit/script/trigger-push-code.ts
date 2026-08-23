@@ -71,8 +71,9 @@ export function pushCode(
   const entry = `entry${index}`;
   if (field.value.kind === "comparison") {
     const args = comparisonArgs(emitter, field.value.value, JSON.stringify(field.name), entry);
+    const fieldPath = JSON.stringify(`${parentFieldPath}.${field.name}`);
     return (
-      `if (${emitter.use("isComparisonList")}(${access})) {\n` +
+      `if (${emitter.use("isComparisonList")}(${access}, ${fieldPath})) {\n` +
       `for (const ${entry} of ${access}) {\n` +
       `${sink}.push(${emitter.use("cmp")}(${args}));\n}\n` +
       `} else {\n` +

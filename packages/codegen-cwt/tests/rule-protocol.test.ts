@@ -309,8 +309,7 @@ describe("LoweredRule", () => {
     );
     expect(emitted.interfaces).toContain(
       "variable?: readonly { varname?: ScriptValue; type?: MesageVariableType; key?: string; " +
-        "value?: string; localization?: string; scope?: ScopeValue; " +
-        "trigger?: Trigger<ScopeName> }[]"
+        "value?: string; localization?: string; scope?: ScopeValue; trigger?: Trigger<S> }[]"
     );
     expect(emitted.meta).toContain(
       '{ prop: "position", key: "position", kind: "fields", fields: ' +
@@ -320,6 +319,31 @@ describe("LoweredRule", () => {
     expect(emitted.meta).toContain(
       '{ prop: "ethic", key: "ethic", kind: "value", refTypes: ["ethic"], repeated: true }'
     );
+  });
+
+  it("makes a cluster generic over its receiving scope when a clause runs there", () => {
+    const emitted = emitEffects(
+      new Emitter(rules),
+      docs.effects,
+      scopes,
+      effects,
+      createEffectPolicy(rules),
+      []
+    );
+
+    expect(emitted.interfaces).toContain(
+      "export interface UniversalEffects<S extends ScopeName> extends " +
+        "EnableSpecialProjectEffectsExtension {"
+    );
+    expect(emitted.universalParameters).toBe("<S extends ScopeName>");
+    expect(emitted.interfaces).toContain("trigger?: Trigger<S> }[] }): void;");
+    expect(emitted.interfaces).toContain(
+      'export interface CountryScope extends StructuralEffects<"country">,'
+    );
+    expect(emitted.interfaces).toContain('EffectsIn8Scopes39a9<"country">,');
+    // A cluster valid in one scope names that scope directly: there is no
+    // second caller for its clause types to disagree with.
+    expect(emitted.interfaces).toContain("export interface EffectsInFleet {");
   });
 
   it("rejects a stale effect-field cardinality override", () => {
@@ -495,7 +519,7 @@ describe("the effect ownership policy", () => {
     effects.delete("country_event");
     const changedRules = { ...rules, effects };
     const changedPolicy = createEffectPolicy(changedRules);
-    const events = emitEvents(new Emitter(changedRules), changedPolicy);
+    const events = emitEvents(new Emitter(changedRules), changedPolicy, "<S extends ScopeName>");
 
     expect(events.skipped).toContainEqual({
       name: "country_event",
@@ -515,7 +539,7 @@ describe("the effect ownership policy", () => {
     );
     const changedRules = { ...rules, effects };
     const changedPolicy = createEffectPolicy(changedRules);
-    const events = emitEvents(new Emitter(changedRules), changedPolicy);
+    const events = emitEvents(new Emitter(changedRules), changedPolicy, "<S extends ScopeName>");
 
     expect(changedPolicy.fireKeys.has("country_event")).toBe(false);
     expect(changedPolicy.byKey.get("country_event")).toMatchObject({ owner: "generated" });
