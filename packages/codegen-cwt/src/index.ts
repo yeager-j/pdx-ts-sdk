@@ -483,6 +483,11 @@ function buildCodegenReport(input: CodegenReportInput): string[] {
   reportSection(report, "Trigger summaries replaced by the overlay", triggers.docOverrides);
   reportSection(
     report,
+    "Trigger wrappers held in the enclosing scope by the overlay",
+    triggers.enclosingScopeWrappers
+  );
+  reportSection(
+    report,
     "Scope links not emitted",
     classifiedLinks.skipped.map((entry) => `${entry.name} — ${entry.detail}`)
   );

@@ -1,8 +1,9 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { scopeIndex } from "@pdx-ts/codegen-cwt/cwt/rules";
-import { emitTriggers } from "@pdx-ts/codegen-cwt/emit/script/triggers";
+import { parseCwt } from "@pdx-ts/codegen-cwt/cwt/parser";
+import { readAliases, scopeIndex } from "@pdx-ts/codegen-cwt/cwt/rules";
+import { emitTriggers, type TriggerEmission } from "@pdx-ts/codegen-cwt/emit/script/triggers";
 import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
 import { lowerRuleTable } from "@pdx-ts/codegen-cwt/lower/lowered-rule";
@@ -22,6 +23,52 @@ const emission = emitTriggers(
   emitter,
   docs.triggers,
   lowerRuleTable(rules.triggers, docs.triggers, emitter, scopeIndex(rules))
+);
+
+/**
+ * `emitTriggers` audits every overlay row against the table it is given, so an
+ * inline table must declare the rule each row names. `TRIGGER_DOC_SUMMARY_OVERRIDES`
+ * covers `trait_has_any_tag` and is not what these tests vary, so the helper
+ * supplies it; the `ENCLOSING_SCOPE_TRIGGER_WRAPPERS` rows are spelled per test.
+ */
+const DOC_OVERRIDE_ROW = [
+  "### CWT prose the overlay replaces",
+  "## scopes = any",
+  "alias[trigger:trait_has_any_tag] = bool",
+].join("\n");
+
+/**
+ * Emits a trigger table written inline rather than the vendored one, so a rule
+ * shape can be posed to the emitter without a rules change.
+ */
+function emitInlineTriggers(source: string): TriggerEmission {
+  const inlineEmitter = new Emitter(rules);
+  const { aliases } = readAliases(
+    parseCwt([DOC_OVERRIDE_ROW, source].join("\n\n"), "triggers.cwt").nodes,
+    "triggers.cwt",
+    "trigger",
+    new Map()
+  );
+  return emitTriggers(
+    inlineEmitter,
+    docs.triggers,
+    lowerRuleTable(aliases, docs.triggers, inlineEmitter, scopeIndex(rules))
+  );
+}
+
+/** A pure trigger splice, the shape an `ENCLOSING_SCOPE_TRIGGER_WRAPPERS` row claims. */
+function pureSplice(key: string, options: readonly string[] = []): string {
+  return [
+    "## scopes = any",
+    ...options,
+    `alias[trigger:${key}] = {`,
+    "\talias_name[trigger] = alias_match_left[trigger]",
+    "}",
+  ].join("\n");
+}
+
+const BOTH_WRAPPER_ROWS = [pureSplice("hidden_progress"), pureSplice("simple_progress")].join(
+  "\n\n"
 );
 
 describe("trigger emission", () => {
@@ -151,6 +198,53 @@ describe("trigger emission", () => {
         `export function ${fn}<S extends ScopeName>(condition: Trigger<S>): Trigger<S> {`
       );
     }
+  });
+
+  it("skips a wrapper that pushes no scope and has no overlay row", () => {
+    const emitted = emitInlineTriggers(
+      [BOTH_WRAPPER_ROWS, pureSplice("pretend_progress")].join("\n\n")
+    );
+
+    expect(emitted.skipped).toContainEqual({
+      name: "pretend_progress",
+      category: "missing-push-scope",
+      detail: "scope change with no push_scope annotation",
+    });
+    expect(emitted.names).toContain("hiddenProgress");
+  });
+
+  it("rejects an overlay row whose rule now declares a push scope", () => {
+    expect(() =>
+      emitInlineTriggers(
+        [
+          pureSplice("hidden_progress", ["## push_scope = country"]),
+          pureSplice("simple_progress"),
+        ].join("\n\n")
+      )
+    ).toThrow(
+      'ENCLOSING_SCOPE_TRIGGER_WRAPPERS names "hidden_progress", which now declares push_scope country'
+    );
+  });
+
+  it("rejects an overlay row whose rule is no longer a pure trigger splice", () => {
+    expect(() =>
+      emitInlineTriggers(
+        [
+          "## scopes = any",
+          "alias[trigger:hidden_progress] = bool",
+          "",
+          pureSplice("simple_progress"),
+        ].join("\n")
+      )
+    ).toThrow(
+      'ENCLOSING_SCOPE_TRIGGER_WRAPPERS names "hidden_progress", which is not a pure trigger splice (bool)'
+    );
+  });
+
+  it("rejects an overlay row whose rule no longer exists", () => {
+    expect(() => emitInlineTriggers(pureSplice("simple_progress"))).toThrow(
+      'ENCLOSING_SCOPE_TRIGGER_WRAPPERS names "hidden_progress", which no trigger rule declares'
+    );
   });
 
   it("uses the audited game-doc summary when CWT prose is wrong", () => {

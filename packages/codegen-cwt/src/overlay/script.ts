@@ -137,6 +137,49 @@ export const TRIGGER_DOC_SUMMARY_OVERRIDES = new Map<string, TriggerDocSummaryOv
   ],
 ]);
 
+/** Permits one trigger wrapper to keep its nested trigger in the enclosing scope. */
+export interface EnclosingScopeTriggerWrapper {
+  /** Repository-relative sources and line ranges that support the reading. */
+  readonly source: string;
+  /** Audited reason the omitted `push_scope` states the scope rather than omitting it. */
+  readonly reason: string;
+}
+
+/**
+ * Trigger wrappers whose nested trigger runs in the scope enclosing the wrapper.
+ *
+ * A pure trigger splice with no `## push_scope` is otherwise a
+ * `missing-push-scope` skip, because an omitted annotation cannot be told from
+ * a missing one — most such rules turned out to be defective. A row here is the
+ * audited claim that the omission is the rule's meaning.
+ */
+export const ENCLOSING_SCOPE_TRIGGER_WRAPPERS = new Map<string, EnclosingScopeTriggerWrapper>([
+  [
+    "hidden_progress",
+    {
+      source:
+        "vendor/cwtools-stellaris-config/config/triggers.cwt:1293-1301, " +
+        "vendor/cwtools-stellaris-config/script-docs/v4.4.1/triggers.log:1741-1751",
+      reason:
+        "The body is an inline `{ alias_name[trigger] }` that iterates nothing, and the " +
+        "dump describes a progress-display wrapper that nullifies the progress of the " +
+        "triggers inside it. Its nested triggers evaluate on the same object.",
+    },
+  ],
+  [
+    "simple_progress",
+    {
+      source:
+        "vendor/cwtools-stellaris-config/config/triggers.cwt:1293-1301, " +
+        "vendor/cwtools-stellaris-config/script-docs/v4.4.1/triggers.log:1741-1751",
+      reason:
+        "The body is an inline `{ alias_name[trigger] }` that iterates nothing, and the " +
+        "dump describes a progress-display wrapper that hides the progress of the " +
+        "triggers inside it. Its nested triggers evaluate on the same object.",
+    },
+  ],
+]);
+
 /** Replaces the generated TypeScript input type for one effect field. */
 export interface EffectFieldTypeOverride {
   /** Replaces the mechanically derived type outright. */

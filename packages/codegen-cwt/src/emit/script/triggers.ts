@@ -33,7 +33,10 @@ import {
   propertyName,
   safeIdentifier,
 } from "../../naming.ts";
-import { TRIGGER_DOC_SUMMARY_OVERRIDES } from "../../overlay/index.ts";
+import {
+  ENCLOSING_SCOPE_TRIGGER_WRAPPERS,
+  TRIGGER_DOC_SUMMARY_OVERRIDES,
+} from "../../overlay/index.ts";
 import { HAND_WRITTEN_TRIGGER_RULES_BY_KEY } from "../../policy/triggers.ts";
 import { Emitter, type TsValue } from "../../render/emitter.ts";
 import { member as renderMember } from "../../render/writer.ts";
@@ -53,6 +56,8 @@ export interface TriggerEmission {
   readonly skipped: readonly SkippedRule[];
   /** Applied documentation override rows for the codegen report. */
   readonly docOverrides: readonly string[];
+  /** Applied enclosing-scope wrapper override rows for the codegen report. */
+  readonly enclosingScopeWrappers: readonly string[];
   /** Every emitted function name, for the scope-link collision guard. */
   readonly names: ReadonlySet<string>;
 }
@@ -73,13 +78,13 @@ type Shape =
     }
   /**
    * A block whose entire content is a nested trigger. `scope` is the scope the
-   * rule pushes, or `null` when it pushes none and the nested trigger stays in
-   * the enclosing scope.
+   * rule pushes; `null` means the nested trigger stays in the enclosing scope,
+   * which only an `ENCLOSING_SCOPE_TRIGGER_WRAPPERS` row permits.
    */
   | { readonly kind: "wrapper"; readonly scope: string | null }
   | { readonly kind: "fields"; readonly fields: readonly ArgField[] };
 
-function shapeOf(emitter: Emitter, rule: LoweredRule): Shape | SkipReason {
+function shapeOf(emitter: Emitter, key: string, rule: LoweredRule): Shape | SkipReason {
   if (rule.comparison) {
     const value = comparisonValue(
       emitter,
@@ -134,7 +139,9 @@ function shapeOf(emitter: Emitter, rule: LoweredRule): Shape | SkipReason {
     }
     if (named.length === 0) {
       if (pushedRaw === null) {
-        return { kind: "wrapper", scope: null };
+        return ENCLOSING_SCOPE_TRIGGER_WRAPPERS.has(key)
+          ? { kind: "wrapper", scope: null }
+          : skipReason("missing-push-scope", "scope change with no push_scope annotation");
       }
       const scope = emitter.canonicalScope(pushedRaw);
       return scope === null
@@ -203,6 +210,23 @@ function scalarOrFields(
     );
   }
   return { kind: "scalarOrFields", scalar, fields: shape.fields };
+}
+
+/**
+ * The audit failure an `ENCLOSING_SCOPE_TRIGGER_WRAPPERS` row causes, or `null`
+ * when the row still describes its rule. The row claims the rule is a trigger
+ * splice whose omitted `push_scope` means the enclosing scope, so any other
+ * lowering makes it stale and its generated signature a false claim.
+ */
+function staleEnclosingScopeWrapper(key: string, shape: Shape | SkipReason): string | null {
+  const row = `ENCLOSING_SCOPE_TRIGGER_WRAPPERS names "${key}"`;
+  if ("category" in shape) {
+    return `${row}, which no longer generates (${shape.detail})`;
+  }
+  if (shape.kind !== "wrapper") {
+    return `${row}, which is not a pure trigger splice (${shape.kind})`;
+  }
+  return shape.scope === null ? null : `${row}, which now declares push_scope ${shape.scope}`;
 }
 
 /**
@@ -528,6 +552,7 @@ export function emitTriggers(
   const chunks: string[] = [];
   const names = new Set<string>();
   const appliedDocOverrides = new Set<string>();
+  const appliedWrapperRows = new Set<string>();
   let emitted = 0;
 
   for (const key of [...rules.keys()].sort()) {
@@ -582,7 +607,14 @@ export function emitTriggers(
       );
       continue;
     }
-    const shape = shapeOf(emitter, rule);
+    const shape = shapeOf(emitter, key, rule);
+    if (ENCLOSING_SCOPE_TRIGGER_WRAPPERS.has(key)) {
+      const stale = staleEnclosingScopeWrapper(key, shape);
+      if (stale !== null) {
+        throw new Error(stale);
+      }
+      appliedWrapperRows.add(key);
+    }
     if ("category" in shape) {
       skipped.push({ name: key, ...shape });
       continue;
@@ -624,6 +656,14 @@ export function emitTriggers(
     }
   }
 
+  for (const key of ENCLOSING_SCOPE_TRIGGER_WRAPPERS.keys()) {
+    if (!appliedWrapperRows.has(key)) {
+      throw new Error(
+        `ENCLOSING_SCOPE_TRIGGER_WRAPPERS names "${key}", which no trigger rule declares`
+      );
+    }
+  }
+
   return {
     code: chunks.join("\n"),
     emitted,
@@ -631,6 +671,9 @@ export function emitTriggers(
     skipped,
     names,
     docOverrides: [...TRIGGER_DOC_SUMMARY_OVERRIDES].map(
+      ([key, override]) => `${key} ← ${override.source} — ${override.reason}`
+    ),
+    enclosingScopeWrappers: [...ENCLOSING_SCOPE_TRIGGER_WRAPPERS].map(
       ([key, override]) => `${key} ← ${override.source} — ${override.reason}`
     ),
   };
