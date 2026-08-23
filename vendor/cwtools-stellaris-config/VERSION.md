@@ -4,7 +4,7 @@ Upstream: https://github.com/yeager-j/cwtools-stellaris-config
 
 | | |
 | --- | --- |
-| Commit | `0bd81db21401350dd93852604ef86e17268c1f0d` |
+| Commit | `97ff2fcd60980f32ec040b5dbecdbe5955a7ce6e` |
 | Committed | 2026-08-22 |
 | Fetched | 2026-08-22 |
 
@@ -42,7 +42,7 @@ this snapshot can carry a fix before upstream merges it.
 
 ### Fixes this snapshot carries ahead of upstream
 
-Twelve commits carried on our fork ahead of DragonKnightOfBreeze's `master`.
+Thirteen commits carried on our fork ahead of DragonKnightOfBreeze's `master`.
 The earlier rule corrections each delete a row from
 `packages/codegen-cwt/src/overlay.ts` or a special case in the loader rather
 than adding one; the GFX corrections supply the upstream-true rules needed by
@@ -101,6 +101,10 @@ the GFX codegen work:
   a trait. Found by `packages/codegen-cwt/tests/iterator-push-scope.test.ts`,
   which the commit above made possible. Changes the nested scope of one
   published trigger wrapper.
+- `97ff2fc` `effects.cwt` spelled `create_message`'s variable-type enum
+  `mesage_variable_type`, at its declaration and its one reference. The name is
+  projected into the SDK's public surface, so the typo shipped as the exported
+  type `MesageVariableType`; it is now `MessageVariableType`.
 
 `country_ship_of_size_limit.show` deliberately stays an overlay row rather
 than becoming a sixth annotation: its scope is inferred from the corpus

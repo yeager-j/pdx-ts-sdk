@@ -8,6 +8,7 @@ import { eventTarget } from "../src/index.ts";
 import {
   aiArmorRatio,
   anyTraitOfSpecies,
+  checkVariable,
   customTooltip,
   hasActiveEvent,
   hasCountryFlag,
@@ -87,6 +88,34 @@ describe("shapes the rules give a signature", () => {
     aiArmorRatio(">", 0.5);
     // @ts-expect-error — ai_armor_ratio is a plain CWT float comparison
     aiArmorRatio(">", "local_spent_biomass");
+  });
+
+  it("types a repeated comparison as one value, one pair, or a list of pairs", () => {
+    checkVariable({ which: "var_unrest", value: 5 });
+    checkVariable({ which: "var_unrest", value: [">", 2] });
+    checkVariable({
+      which: "var_unrest",
+      value: [
+        [">", 2],
+        ["<", 10],
+      ],
+    });
+
+    checkVariable({
+      which: "var_unrest",
+      // @ts-expect-error — a comparison pairs one operator with one operand
+      value: [">", 2, 3],
+    });
+    checkVariable({
+      which: "var_unrest",
+      // @ts-expect-error — repeated comparisons nest their pairs; bare operands carry no operator
+      value: [5, 6],
+    });
+    checkVariable({
+      which: "var_unrest",
+      // @ts-expect-error — a list of comparisons names at least one
+      value: [],
+    });
   });
 
   it("closes the enum on a block trigger's field", () => {

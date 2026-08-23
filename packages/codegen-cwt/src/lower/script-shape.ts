@@ -44,7 +44,6 @@ export type ScriptGenerationSkipCategory =
   | "mixed-clause-categories"
   | "clause-scalar-overload"
   | "multiple-structured-scalar-arms"
-  | "repeated-structured-scalar-arms"
   | "unsupported-scalar-arm"
   | "structured-bare-values"
   | "repeated-nested-field"
@@ -232,12 +231,6 @@ export interface ArgField {
   readonly docs: readonly string[];
 }
 
-type AliasExpandedField = RuleField & { readonly aliasCategory: string };
-
-function isAliasExpandedField(field: RuleField): field is AliasExpandedField {
-  return "aliasCategory" in field;
-}
-
 /**
  * Replaces unkeyed alias splices with the category's concrete named fields.
  * Returns a skip reason when the category has no declaration table.
@@ -261,7 +254,7 @@ export function expandAliasFields(
     }
     for (const [name, declarations] of members) {
       for (const declaration of declarations) {
-        const expandedField: AliasExpandedField = {
+        expanded.push({
           key: { kind: "name", name },
           type: declaration.type,
           cardinality: field.cardinality,
@@ -269,9 +262,7 @@ export function expandAliasFields(
           scope: field.scope ?? declaration.scope,
           line: field.line,
           comparison: field.comparison || declaration.comparison,
-          aliasCategory: field.key.category,
-        };
-        expanded.push(expandedField);
+        });
       }
     }
   }
@@ -376,15 +367,6 @@ export function comparisonValue(
   return value;
 }
 
-/** Nested repeated members need arrays, which an ArgField does not model. */
-function hasRepeatedNestedField(fields: readonly RuleField[]): boolean {
-  return fields.some(
-    (field) =>
-      isRepeated(field.cardinality) ||
-      (field.type.kind === "block" && hasRepeatedNestedField(field.type.fields))
-  );
-}
-
 function combinedCardinality(values: readonly RuleBareValue[]): Cardinality {
   return {
     min: values.reduce((sum, value) => sum + value.cardinality.min, 0),
@@ -409,6 +391,25 @@ export function cardinalityArrayType(item: string, cardinality: Cardinality): st
   return cardinality.min === 0
     ? `readonly ${item}[]`
     : `readonly [${Array.from({ length: cardinality.min }, () => item).join(", ")}, ...${item}[]]`;
+}
+
+/**
+ * The type text a repeated member emits, given the type text one occurrence
+ * admits.
+ *
+ * A repeated comparison keeps its single forms and gains a non-empty list of
+ * operator/operand pairs instead of a plain array: `readonly (ScriptValue |
+ * readonly [PdxOp, ScriptValue])[]` would accept `[">", 2]` as two bare
+ * operands and silently write two keys where the author meant one comparison,
+ * and an empty list would name an operator the author never wrote.
+ */
+export function repeatedMemberType(emitter: Emitter, value: ArgValue, single: string): string {
+  if (value.kind === "comparison") {
+    const operand = emitter.useValue(value.value).type;
+    const pair = `readonly [${emitter.use("PdxOp")}, ${operand}]`;
+    return `${single} | readonly [${pair}, ...(${pair})[]]`;
+  }
+  return `readonly ${single.includes(" | ") ? `(${single})` : single}[]`;
 }
 
 /** Lowers the anonymous contents of one braced field. */
@@ -465,9 +466,6 @@ export function bareBlockValue(
     if (block.bare.length > 0) {
       return skipReason("structured-bare-values", "bare structured arm nests bare values");
     }
-    if (hasRepeatedNestedField(block.fields)) {
-      return skipReason("repeated-nested-field", "bare structured arm has repeated fields");
-    }
     const lowered = mergeFields(
       emitter,
       block.fields,
@@ -512,6 +510,12 @@ function groupedByName(
 ): Map<string, RuleField[]> | SkipReason {
   const grouped = new Map<string, RuleField[]>();
   for (const field of expandEnumKeys(emitter, fields)) {
+    if (field.key.kind === "aliasName") {
+      return skipReason(
+        "unsupported-alias-splice",
+        `splices a category the field model cannot type (${field.key.category})`
+      );
+    }
     if (field.key.kind !== "name") {
       return skipReason("computed-field-key", "block with computed or subtype field keys");
     }
@@ -575,12 +579,6 @@ function mergedStructuredValue(
       `field "${name}" has more than one structured/scalar arm`
     );
   }
-  if (group.some((field) => isRepeated(field.cardinality))) {
-    return skipReason(
-      "repeated-structured-scalar-arms",
-      `field "${name}" has repeated structured/scalar arms`
-    );
-  }
   const block = structured[0]!.type;
   if (block.bare.length > 0) {
     if (scalarDeclarations.length > 0) {
@@ -600,19 +598,11 @@ function mergedStructuredValue(
     }
     return value;
   }
-  const preserveNested = group.some(isAliasExpandedField);
-  if (hasRepeatedNestedField(block.fields) && !preserveNested) {
-    return skipReason(
-      "repeated-nested-field",
-      `field "${name}" structured arm has repeated nested fields`
-    );
-  }
   const fields = mergeFields(
     emitter,
     block.fields,
     structured[0]!.scope?.this ?? inheritedScope,
-    allowedClauses,
-    preserveNested
+    allowedClauses
   );
   if (!Array.isArray(fields)) {
     return {
@@ -706,15 +696,16 @@ function mergedArgValue(
 
 /**
  * Merges the repeated keys an overloaded rule produces into one typed field
- * each. `inheritedScope` is the raw scope the declaration pushes, if any —
- * clause fields without their own `## push_scope` run there.
+ * each, preserving the declared cardinality: a key any declaration permits
+ * more than once becomes a repeated field. `inheritedScope` is the raw scope
+ * the declaration pushes, if any — clause fields without their own
+ * `## push_scope` run there.
  */
 export function mergeFields(
   emitter: Emitter,
   fields: readonly RuleField[],
   inheritedScope: string | null,
-  allowedClauses: ReadonlySet<ClauseCategory>,
-  preserveRepeated = false
+  allowedClauses: ReadonlySet<ClauseCategory>
 ): ArgField[] | SkipReason {
   const grouped = groupedByName(emitter, fields);
   if (!(grouped instanceof Map)) {
@@ -726,7 +717,7 @@ export function mergeFields(
     if ("detail" in value) {
       return value;
     }
-    const repeated = preserveRepeated && group.some((field) => isRepeated(field.cardinality));
+    const repeated = group.some((field) => isRepeated(field.cardinality));
     merged.push({
       name,
       value,

@@ -173,22 +173,14 @@ describe("LoweredRule", () => {
       expect.stringContaining("create_ambient_object.target"),
       expect.stringContaining("create_ship.create_colony"),
     ]);
-    expect(emitted.interfaces).not.toContain("createColony(args:");
-    expect(emitted.interfaces).not.toContain("startColony(args:");
-    expect(emitted.skipped).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          name: "create_colony",
-          category: "repeated-nested-field",
-          detail: expect.stringContaining("repeated nested fields"),
-        }),
-        expect.objectContaining({
-          name: "start_colony",
-          category: "repeated-nested-field",
-          detail: expect.stringContaining("repeated nested fields"),
-        }),
-      ])
+    expect(emitted.interfaces).toContain(
+      'ethos?: "random" | "owner" | { ethic: readonly (EthicRef | string)[] }'
     );
+    expect(emitted.interfaces).toContain(
+      'ethos?: "owner" | "random" | { ethic: readonly (EthicRef | string)[] }'
+    );
+    expect(emitted.skipped).not.toContainEqual(expect.objectContaining({ name: "create_colony" }));
+    expect(emitted.skipped).not.toContainEqual(expect.objectContaining({ name: "start_colony" }));
   });
 
   it("emits create_pop_group from its mixed ethos rule and keeps it out of the skip report", () => {
@@ -242,7 +234,11 @@ describe("LoweredRule", () => {
 
     for (const name of nameEffects) {
       expect(emitted.skipped).not.toContainEqual(
-        expect.objectContaining({ name, category: "unsupported-alias-splice" })
+        expect.objectContaining({
+          name,
+          category: "unsupported-alias-splice",
+          detail: expect.stringContaining("(name)"),
+        })
       );
     }
     for (const name of [
@@ -260,14 +256,16 @@ describe("LoweredRule", () => {
         .filter((skip) => nameEffects.includes(skip.name))
         .map(({ name, category }) => [name, category])
     ).toEqual([
-      ["clone_leader", "repeated-nested-field"],
-      ["create_country", "repeated-nested-field"],
-      ["create_fleet", "repeated-structured-scalar-arms"],
-      ["create_leader", "repeated-nested-field"],
-      ["create_rebels", "repeated-nested-field"],
-      ["create_saved_leader", "repeated-nested-field"],
-      ["create_species", "repeated-structured-scalar-arms"],
+      ["clone_leader", "computed-field-key"],
+      ["create_country", "unsupported-alias-splice"],
+      ["create_leader", "computed-field-key"],
+      ["create_saved_leader", "computed-field-key"],
+      ["create_species", "multiple-structured-scalar-arms"],
     ]);
+    expect(emitted.interfaces).toContain('civics?: ScopeValue<"agreement"');
+    expect(emitted.interfaces).toContain(
+      '| { civic?: readonly (CivicOrOriginCivicRef | string | "random")[] }'
+    );
     expect(emitted.interfaces).toContain("variableString?: readonly string[]");
     expect(emitted.interfaces).toContain("spawnMegastructure(args:");
     expect(emitted.interfaces).toContain("type: MegastructureRef | string");
@@ -285,16 +283,67 @@ describe("LoweredRule", () => {
       expect.stringContaining("copy_ascension_perks_from.exceptions → value-list 0..inf"),
       expect.stringContaining("copy_traditions_from.exceptions → value-list 0..inf"),
       expect.stringContaining("create_balanced_fleet.ship_designs → optional"),
-      expect.stringContaining("spawn_planet.modifier → repeated"),
       expect.stringContaining("storm_apply_aftermath_modifier.severity → repeated"),
     ]);
     expect(emitted.meta).toContain(
       '{ prop: "variableString", key: "variable_string", kind: "value", repeated: true }'
     );
     const usage = effectEmitter.endFile();
+    expect(usage.refs).toContain("name_list");
     expect(usage.enums).not.toContain("contact_rule");
-    expect(usage.refs).not.toContain("name_list");
     expect(usage.refs).not.toContain("species_class");
+  });
+
+  it("authors a repeated effect field as an array and marks it repeated in the meta", () => {
+    const emitted = emitEffects(
+      new Emitter(rules),
+      docs.effects,
+      scopes,
+      effects,
+      createEffectPolicy(rules),
+      []
+    );
+
+    expect(emitted.interfaces).toContain(
+      "setFleetFormation(args: { position?: readonly { x: number; y: number }[] }): void;"
+    );
+    expect(emitted.interfaces).toContain(
+      "variable?: readonly { varname?: ScriptValue; type?: MessageVariableType; key?: string; " +
+        "value?: string; localization?: string; scope?: ScopeValue; trigger?: Trigger<S> }[]"
+    );
+    expect(emitted.meta).toContain(
+      '{ prop: "position", key: "position", kind: "fields", fields: ' +
+        '[{ prop: "x", key: "x", kind: "value" }, { prop: "y", key: "y", kind: "value" }], ' +
+        "repeated: true }"
+    );
+    expect(emitted.meta).toContain(
+      '{ prop: "ethic", key: "ethic", kind: "value", refTypes: ["ethic"], repeated: true }'
+    );
+  });
+
+  it("makes a cluster generic over its receiving scope when a clause runs there", () => {
+    const emitted = emitEffects(
+      new Emitter(rules),
+      docs.effects,
+      scopes,
+      effects,
+      createEffectPolicy(rules),
+      []
+    );
+
+    expect(emitted.interfaces).toContain(
+      "export interface UniversalEffects<S extends ScopeName> extends " +
+        "EnableSpecialProjectEffectsExtension {"
+    );
+    expect(emitted.universalParameters).toBe("<S extends ScopeName>");
+    expect(emitted.interfaces).toContain("trigger?: Trigger<S> }[] }): void;");
+    expect(emitted.interfaces).toContain(
+      'export interface CountryScope extends StructuralEffects<"country">,'
+    );
+    expect(emitted.interfaces).toContain('EffectsIn8Scopes39a9<"country">,');
+    // A cluster valid in one scope names that scope directly: there is no
+    // second caller for its clause types to disagree with.
+    expect(emitted.interfaces).toContain("export interface EffectsInFleet {");
   });
 
   it("rejects a stale effect-field cardinality override", () => {
@@ -470,7 +519,7 @@ describe("the effect ownership policy", () => {
     effects.delete("country_event");
     const changedRules = { ...rules, effects };
     const changedPolicy = createEffectPolicy(changedRules);
-    const events = emitEvents(new Emitter(changedRules), changedPolicy);
+    const events = emitEvents(new Emitter(changedRules), changedPolicy, "<S extends ScopeName>");
 
     expect(events.skipped).toContainEqual({
       name: "country_event",
@@ -490,7 +539,7 @@ describe("the effect ownership policy", () => {
     );
     const changedRules = { ...rules, effects };
     const changedPolicy = createEffectPolicy(changedRules);
-    const events = emitEvents(new Emitter(changedRules), changedPolicy);
+    const events = emitEvents(new Emitter(changedRules), changedPolicy, "<S extends ScopeName>");
 
     expect(changedPolicy.fireKeys.has("country_event")).toBe(false);
     expect(changedPolicy.byKey.get("country_event")).toMatchObject({ owner: "generated" });

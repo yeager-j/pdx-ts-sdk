@@ -98,8 +98,10 @@ describe("generated event surface", () => {
   });
 
   it("puts observer_event on UniversalEffects, per its `## scopes = any`", () => {
-    expect(fires).toContain("interface UniversalEffects {");
-    const universal = fires.slice(fires.indexOf("interface UniversalEffects {"));
+    expect(fires).toContain("interface UniversalEffects<S extends ScopeName> {");
+    const universal = fires.slice(
+      fires.indexOf("interface UniversalEffects<S extends ScopeName> {")
+    );
     // Pinned with its subtype: firing an ordinary country event through
     // `observer_event = { ... }` is a different event type to the game.
     expect(universal).toContain(
@@ -127,7 +129,9 @@ describe("generated event surface", () => {
         )
       );
       expect(effects).toMatch(
-        new RegExp(`export interface \\w+ extends [\\w, ]*${seam}EffectsExtension`)
+        // The cluster may be generic over the scope receiving its effects, and
+        // prettier wraps a long parameter list onto its own lines.
+        new RegExp(`export interface \\w+(<[^>]*>)?\\s*extends [\\w, ]*${seam}EffectsExtension`)
       );
     }
   });

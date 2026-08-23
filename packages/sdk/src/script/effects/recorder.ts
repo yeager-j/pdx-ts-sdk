@@ -17,7 +17,13 @@ import { FIRE_EFFECT_KEYS, type StructuralEffectMethod } from "../../generated/e
 import type { ScopeObjOf } from "../../generated/effects.ts";
 import type { ScopeName } from "../../generated/scopes.ts";
 import type { ContentRefUse } from "../../references.ts";
-import { isStructuredValue, refId, toScalar } from "../scalar.ts";
+import {
+  isComparisonList,
+  isStructuredValue,
+  refId,
+  toScalar,
+  type ComparisonArg,
+} from "../scalar.ts";
 import type { ScriptedEffectCall } from "../scripted.ts";
 import { trigger, type Trigger } from "../trigger-core.ts";
 import { modifierEntry } from "./modifiers.ts";
@@ -304,7 +310,30 @@ function recordRef(
   }
 }
 
-function fieldEntries(
+/**
+ * The occurrences one authored argument writes, one entry per script key.
+ *
+ * A repeated field authors an array of values. A comparison instead carries
+ * its repetition as a list of operator/operand pairs, since an array of bare
+ * operands cannot be told from the single pair `[">", 2]`.
+ */
+function fieldOccurrences(
+  field: EffectFieldMeta,
+  value: unknown,
+  path: string
+): readonly unknown[] {
+  if (field.kind === "comparison") {
+    const comparison = value as ComparisonArg;
+    return isComparisonList(comparison, `${path}.${field.key}`) ? comparison : [comparison];
+  }
+  return field.repeated === true ? (value as readonly unknown[]) : [value];
+}
+
+/**
+ * The entries one args object writes for a generated field table, in table
+ * order. Reference-bearing ids are appended to `refs` as they are written.
+ */
+export function fieldEntries(
   fields: readonly EffectFieldMeta[],
   args: Record<string, unknown>,
   path: string,
@@ -317,8 +346,8 @@ function fieldEntries(
     if (value === undefined) {
       continue;
     }
-    const values = field.repeated === true ? (value as readonly unknown[]) : [value];
-    for (const value of values) {
+    const occurrences = fieldOccurrences(field, value, path);
+    for (const value of occurrences) {
       switch (field.kind) {
         case "value": {
           const scalar = toScalar(value, field.booleanLiterals);

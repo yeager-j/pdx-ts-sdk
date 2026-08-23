@@ -10,6 +10,7 @@ import {
   anyCosmicStorm,
   anyCountry,
   canAccessSystem,
+  checkVariable,
   countOwnedPopGroup,
   currentSituationApproach,
   currentStage,
@@ -40,6 +41,7 @@ import {
   traitHasAllTags,
   trigger,
   yearsPassed,
+  type ScriptValue,
 } from "../src/script/triggers.ts";
 
 describe("trigger builders", () => {
@@ -314,6 +316,34 @@ describe("trigger builders", () => {
   it("accepts tech references by object", () => {
     const condition = hasTechnology({ id: "tech_lasers_1" });
     expect(serialize([...condition.entries])).toBe("has_technology = tech_lasers_1\n");
+  });
+
+  it("writes each form a repeated comparison admits: one value, one pair, a list of pairs", () => {
+    expect(serialize([...checkVariable({ which: "var_unrest", value: 5 }).entries])).toBe(
+      "check_variable = {\n\twhich = var_unrest\n\tvalue = 5\n}\n"
+    );
+    expect(serialize([...checkVariable({ which: "var_unrest", value: [">", 2] }).entries])).toBe(
+      "check_variable = {\n\twhich = var_unrest\n\tvalue > 2\n}\n"
+    );
+    expect(
+      serialize([
+        ...checkVariable({
+          which: "var_unrest",
+          value: [
+            [">", 2],
+            ["<", 10],
+          ],
+        }).entries,
+      ])
+    ).toBe("check_variable = {\n\twhich = var_unrest\n\tvalue > 2\n\tvalue < 10\n}\n");
+  });
+
+  it("throws on an empty comparison list rather than writing a comparison nobody wrote", () => {
+    // The authoring type rejects `[]`; this is the runtime half of that claim,
+    // for a caller who reached the builder without it.
+    expect(() =>
+      checkVariable({ which: "var_unrest", value: [] as unknown as ScriptValue })
+    ).toThrow('"check_variable.value" was given an empty comparison list');
   });
 
   it("writes an event-chain counter check with its chain reference", () => {

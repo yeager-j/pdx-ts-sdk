@@ -371,7 +371,8 @@ interface EventFires {
 function eventFires(
   emitter: Emitter,
   policy: EffectPolicy,
-  scoped: readonly (EmittedKind & { scope: string })[]
+  scoped: readonly (EmittedKind & { scope: string })[],
+  universalParameters: string
 ): EventFires {
   const skipped: SkippedRule[] = [];
   const byInterface = new Map<string, (EmittedKind & { scope: string })[]>();
@@ -402,7 +403,7 @@ function eventFires(
     }
     const targets =
       receiving === "universal"
-        ? ["UniversalEffects"]
+        ? [`UniversalEffects${universalParameters}`]
         : receiving.map((scope) => `${pascalCase(scope)}Scope`);
     for (const target of targets) {
       byInterface.set(target, [...(byInterface.get(target) ?? []), kind]);
@@ -446,11 +447,16 @@ function eventFires(
  * Emits event kinds, scoped definers, capability methods, and typed fire-effect augmentations.
  * Scopeless or policy-rejected kinds remain explicit skip rows instead of receiving guessed types.
  */
-export function emitEvents(emitter: Emitter, policy: EffectPolicy): EventsEmission {
+export function emitEvents(
+  emitter: Emitter,
+  policy: EffectPolicy,
+  /** Type parameters the universal effect cluster declares, repeated by the augmentation. */
+  universalParameters: string
+): EventsEmission {
   const kinds = eventKinds(emitter.rules);
   const { scoped, skipped } = scopedEventKinds(kinds);
   assertCapabilityMethodsCollisionFree(scoped);
-  const fires = eventFires(emitter, policy, scoped);
+  const fires = eventFires(emitter, policy, scoped, universalParameters);
 
   return {
     code: eventKindTableCode(kinds),

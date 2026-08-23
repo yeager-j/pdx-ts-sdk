@@ -295,7 +295,7 @@ describe("scalar lowering ownership", () => {
   it("keeps generated refs rules-derived and imports the handwritten runtime", () => {
     expect(refs).toContain('import type { TypedRef } from "../script/scalar.ts";');
     expect(refs).not.toContain("function refId");
-    expect(source).toContain('import { isStructuredValue, refId } from "../script/scalar.ts";');
+    expect(source).toContain('import { isComparisonList, isStructuredValue, refId } from "../script/scalar.ts";');
     expect(contentDefiners).toContain(
       'import { refId, type TypedRef } from "../script/scalar.ts";'
     );

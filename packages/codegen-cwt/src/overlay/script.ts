@@ -316,19 +316,6 @@ export const EFFECT_FIELD_CARDINALITY_OVERRIDES = new Map<
     ],
   ],
   [
-    "spawn_planet",
-    [
-      {
-        name: "modifier",
-        repeated: true,
-        source: "vendor/cwtools-stellaris-config/config/effects.cwt:3716-3717",
-        reason:
-          "CWT explicitly allows repeated modifier entries, which the shared field merge " +
-          "otherwise collapses to one scalar member.",
-      },
-    ],
-  ],
-  [
     "storm_apply_aftermath_modifier",
     [
       {

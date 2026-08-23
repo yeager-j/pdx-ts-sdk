@@ -44,9 +44,16 @@ export function contributesRefs(field: ArgField): boolean {
   );
 }
 
+/** The `cmp()` arguments one comparison occurrence supplies. */
+function comparisonArgs(emitter: Emitter, operand: TsValue, key: string, access: string): string {
+  return `${key}, ${access}[0], ${pushExpr(emitter, operand, `${access}[1]`)}`;
+}
+
 /**
  * Renders the statements that serialize one lowered trigger argument.
  * Nested fields recurse into their own entry arrays while reference-bearing values also record uses.
+ * A repeated field loops over its array and writes one sibling key per item; a repeated
+ * comparison loops only when the argument carries a list of operator/operand pairs.
  */
 export function pushCode(
   emitter: Emitter,
@@ -55,6 +62,38 @@ export function pushCode(
   parentFieldPath: string,
   index: number,
   sink = "entries"
+): string {
+  if (field.repeated !== true) {
+    return pushValueCode(emitter, field, access, parentFieldPath, index, sink);
+  }
+  // Named apart from `pushValueListCode`'s own `item<index>` so a repeated
+  // value-list field does not read its loop variable while declaring it.
+  const entry = `entry${index}`;
+  if (field.value.kind === "comparison") {
+    const args = comparisonArgs(emitter, field.value.value, JSON.stringify(field.name), entry);
+    const fieldPath = JSON.stringify(`${parentFieldPath}.${field.name}`);
+    return (
+      `if (${emitter.use("isComparisonList")}(${access}, ${fieldPath})) {\n` +
+      `for (const ${entry} of ${access}) {\n` +
+      `${sink}.push(${emitter.use("cmp")}(${args}));\n}\n` +
+      `} else {\n` +
+      `${pushValueCode(emitter, field, access, parentFieldPath, index, sink)}\n}`
+    );
+  }
+  return (
+    `for (const ${entry} of ${access}) {\n` +
+    `${pushValueCode(emitter, field, entry, parentFieldPath, index, sink)}\n}`
+  );
+}
+
+/** Renders the statements that serialize one occurrence of a lowered argument. */
+function pushValueCode(
+  emitter: Emitter,
+  field: ArgField,
+  access: string,
+  parentFieldPath: string,
+  index: number,
+  sink: string
 ): string {
   const key = JSON.stringify(field.name);
   switch (field.value.kind) {
@@ -145,8 +184,7 @@ export function pushCode(
     case "comparison":
       return (
         `${sink}.push(typeof ${access} === "object" ` +
-        `? ${emitter.use("cmp")}(${key}, ${access}[0], ` +
-        `${pushExpr(emitter, field.value.value, `${access}[1]`)}) : ` +
+        `? ${emitter.use("cmp")}(${comparisonArgs(emitter, field.value.value, key, access)}) : ` +
         `${emitter.use("kv")}(${key}, ${pushExpr(emitter, field.value.value, access)}));`
       );
   }

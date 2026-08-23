@@ -3,10 +3,12 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseCwt } from "@pdx-ts/codegen-cwt/cwt/parser";
 import { readAliases, scopeIndex } from "@pdx-ts/codegen-cwt/cwt/rules";
+import { pushCode } from "@pdx-ts/codegen-cwt/emit/script/trigger-push-code";
 import { emitTriggers, type TriggerEmission } from "@pdx-ts/codegen-cwt/emit/script/triggers";
 import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
 import { lowerRuleTable } from "@pdx-ts/codegen-cwt/lower/lowered-rule";
+import type { ArgField } from "@pdx-ts/codegen-cwt/lower/script-shape";
 import { Emitter } from "@pdx-ts/codegen-cwt/render/emitter";
 import { describe, expect, it } from "vitest";
 
@@ -245,6 +247,46 @@ describe("trigger emission", () => {
     expect(() => emitInlineTriggers(pureSplice("simple_progress"))).toThrow(
       'ENCLOSING_SCOPE_TRIGGER_WRAPPERS names "hidden_progress", which no trigger rule declares'
     );
+  });
+
+  it("authors a repeated comparison as one value, one pair, or a list of pairs", () => {
+    expect(emission.code).toContain(
+      "value: ScriptValue | readonly [PdxOp, ScriptValue] | " +
+        "readonly [readonly [PdxOp, ScriptValue], ...(readonly [PdxOp, ScriptValue])[]];"
+    );
+    expect(emission.code).toContain('if (isComparisonList(args.value, "check_variable.value")) {');
+    expect(emission.code).toContain("for (const entry1 of args.value) {");
+    expect(emission.code).toContain(
+      'entries.push(cmp("value", entry1[0], scriptValueScalar(entry1[1])));'
+    );
+    expect(emission.code).toContain(
+      'entries.push(typeof args.value === "object" ? cmp("value", args.value[0], ' +
+        'scriptValueScalar(args.value[1])) : kv("value", scriptValueScalar(args.value)));'
+    );
+  });
+
+  it("records one content reference per item of a repeated reference-bearing field", () => {
+    const repeatedTrait: ArgField = {
+      name: "trait",
+      value: {
+        kind: "scalar",
+        value: { type: "TraitRef | string", toScalar: (expr) => expr, refTypes: ["trait"] },
+      },
+      optional: false,
+      repeated: true,
+      docs: [],
+    };
+    const pushEmitter = new Emitter(rules);
+    pushEmitter.beginFile();
+
+    const code = pushCode(pushEmitter, repeatedTrait, "args.trait", "has_trait", 0);
+
+    expect(code).toContain("for (const entry0 of args.trait) {");
+    expect(code).toContain("const id0 = entry0;");
+    expect(code).toContain('entries.push(kv("trait", id0));');
+    expect(code).toContain('refs.push({ targets: ["trait"], id: id0, field: "has_trait.trait" });');
+    expect(code.indexOf("for (const entry0")).toBeLessThan(code.indexOf("refs.push"));
+    expect(code.trimEnd().endsWith("}")).toBe(true);
   });
 
   it("uses the audited game-doc summary when CWT prose is wrong", () => {
