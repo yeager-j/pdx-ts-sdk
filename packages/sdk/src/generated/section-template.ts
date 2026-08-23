@@ -147,7 +147,14 @@ export const SECTION_TEMPLATE_FIELDS: readonly ContentField[] = [
     form: "scalar",
     conversion: "identity",
   },
-  { key: "ai_tags", member: "aiTags", shape: "valueList", form: "list", conversion: "ref" },
+  {
+    key: "ai_tags",
+    member: "aiTags",
+    shape: "valueList",
+    form: "list",
+    conversion: "ref",
+    refTypes: ["component_tag"],
+  },
   {
     key: "should_draw_components",
     member: "shouldDrawComponents",

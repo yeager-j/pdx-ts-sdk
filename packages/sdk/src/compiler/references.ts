@@ -35,6 +35,7 @@ function indexRegistriesByReferenceTarget(): ReadonlyMap<string, readonly string
       registriesByTarget.set(target, [...(registriesByTarget.get(target) ?? []), descriptor.type]);
     }
   }
+  registriesByTarget.set("component_tag", ["component_tag"]);
   return registriesByTarget;
 }
 
@@ -154,9 +155,7 @@ function collectBuiltIds(
     }
     builtIds.set(registryType, ids);
   }
-  if (componentTagIds.size > 0) {
-    builtIds.set("component_tag", new Set(componentTagIds));
-  }
+  builtIds.set("component_tag", new Set(componentTagIds));
   return builtIds;
 }
 
@@ -170,9 +169,6 @@ function resolveTargetRegistries(target: string): readonly string[] | undefined 
 }
 
 function registriesFor(use: ContentRefUse): readonly string[] | undefined {
-  if (use.targets.length === 1 && use.targets[0] === "component_tag") {
-    return ["component_tag"];
-  }
   if (use.targets.length === 0) {
     return undefined;
   }
@@ -194,16 +190,6 @@ function assertContentReferenceExists(
   builtIds: ReadonlyMap<string, ReadonlySet<string>>,
   vanillaIdsOf: ReferenceValidationInput["vanillaIdsOf"]
 ): void {
-  if (use.targets.length === 1 && use.targets[0] === "component_tag") {
-    if (!use.id.startsWith(`${prefix}_`) || builtIds.get("component_tag")?.has(use.id)) {
-      return;
-    }
-    throw new Error(
-      `${owner} references component_tag "${use.id}" in "${use.field}", but no such component_tag is ` +
-        `among the features passed to buildMod — the id carries this mod's prefix "${prefix}_", so this build has to define it; ` +
-        "was its feature passed to buildMod?"
-    );
-  }
   const registries = registriesFor(use);
   if (registries === undefined || use.verifiedVanilla === true) {
     return;

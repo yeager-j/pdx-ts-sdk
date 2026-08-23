@@ -746,7 +746,14 @@ export const SHIP_SIZE_FIELDS: readonly ContentField[] = [
     conversion: "ref",
     refTypes: ["ship_behavior"],
   },
-  { key: "ship_roles", member: "shipRoles", shape: "valueList", form: "list", conversion: "ref" },
+  {
+    key: "ship_roles",
+    member: "shipRoles",
+    shape: "valueList",
+    form: "list",
+    conversion: "ref",
+    refTypes: ["component_tag"],
+  },
   {
     key: "triggered_ship_roles",
     member: "triggeredShipRoles",

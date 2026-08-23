@@ -124,10 +124,12 @@ export function aliasCategoryModule(category: string): string {
 /**
  * The content registries an overloaded value's ids may name.
  *
- * Only an all-reference overload keeps its target types: one non-reference arm
- * makes an id-shaped value legal for reasons the registries cannot see, so the
- * result is `undefined`. Names stay as the rules spell them, subtype qualifier
- * included (`agreement_term.discrete`).
+ * An all-reference overload keeps its target types. A complex-enum overlay can
+ * also retain its target beside exact literals, which are a closed spelling
+ * exception rather than an open alternative. Other non-reference arms make an
+ * id-shaped value legal for reasons the registries cannot see, so the result is
+ * `undefined`. Names stay as the rules spell them, subtype qualifier included
+ * (`agreement_term.discrete`).
  *
  * Separate from {@link Emitter.unionFor} because a position can carry the
  * registries without spelling the branded type — a map key lowers to `string`
@@ -135,17 +137,32 @@ export function aliasCategoryModule(category: string): string {
  * file never writes.
  */
 export function referenceTargetsOf(types: readonly RuleType[]): readonly string[] | undefined {
-  const referenced = types.flatMap((type) => {
+  const targetOf = (type: RuleType): string | undefined => {
     if (type.kind === "typeRef") {
-      return [type.name];
+      return type.name;
     }
     if (type.kind === "enum") {
       const overlay = COMPLEX_ENUM_REFERENCE_OVERLAYS.get(type.name);
-      return overlay === undefined ? [] : [overlay.target];
+      return overlay?.target;
     }
-    return [];
+    return undefined;
+  };
+  const referenced = types.flatMap((type) => {
+    const target = targetOf(type);
+    return target === undefined ? [] : [target];
   });
-  return referenced.length === types.length ? [...new Set(referenced)] : undefined;
+  if (referenced.length === types.length) {
+    return [...new Set(referenced)];
+  }
+  const isLiteralComplexEnumUnion =
+    referenced.length > 0 &&
+    types.some((type) => type.kind === "enum" && COMPLEX_ENUM_REFERENCE_OVERLAYS.has(type.name)) &&
+    types.every(
+      (type) =>
+        type.kind === "literal" ||
+        (type.kind === "enum" && COMPLEX_ENUM_REFERENCE_OVERLAYS.has(type.name))
+    );
+  return isLiteralComplexEnumUnion ? [...new Set(referenced)] : undefined;
 }
 
 /**
