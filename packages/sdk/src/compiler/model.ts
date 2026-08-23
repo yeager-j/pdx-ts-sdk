@@ -1,4 +1,4 @@
-import type { PdxEntry } from "@pdx-ts/pdxscript";
+import type { PdxEntry, PdxItem } from "@pdx-ts/pdxscript";
 
 import type { AssetFileItem } from "../authoring/assets.ts";
 import type { LocalizationLanguage } from "../authoring/localization.ts";
@@ -12,16 +12,22 @@ import type { ResolvedModConfig } from "./config.ts";
 import type { PathClaim } from "./paths.ts";
 
 /** One emitted file: path plus the entries serialized into it, in order. */
-export interface EmittedFile {
+export interface EmittedFile<T extends PdxItem = PdxEntry> {
   /** The minted path relative to the mod root. */
   readonly relPath: LogicalPath;
   /** The ordered PDXScript entries written to the file. */
-  readonly entries: readonly PdxEntry[];
+  readonly entries: readonly T[];
 }
 
 /** A content file plus the registry metadata needed by compiler leaves. */
 export interface ContentFile extends EmittedFile {
   readonly types: readonly ContentTypeName[];
+  readonly ids: readonly string[];
+}
+
+/** One bare-scalar component-tag file. */
+export interface ComponentTagFile extends EmittedFile<PdxItem> {
+  /** Every tag id this file declares. */
   readonly ids: readonly string[];
 }
 
@@ -58,6 +64,8 @@ export interface PureMod {
   readonly assets: readonly AssetFileItem[];
   /** Content emission, grouped by registry and collection file. */
   readonly contentFiles: readonly ContentFile[];
+  /** Component-tag emission, one bare-scalar file per feature stem. */
+  readonly componentTagFiles: readonly ComponentTagFile[];
   /** Event emission: one file per stem and namespace. */
   readonly eventFiles: readonly EmittedFile[];
   /** Events in canonical emission order. */

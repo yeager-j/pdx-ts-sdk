@@ -27,6 +27,7 @@ import {
   emitScriptedParams,
   emitTables,
   emitTrie,
+  emitVanillaEnumMembers,
   emitVanillaGfxIds,
   emitVanillaPaths,
   enumFile,
@@ -40,6 +41,7 @@ import {
 } from "./emit.ts";
 import type { InferredScope, ScriptedKind } from "./infer-scopes.ts";
 import {
+  RUNTIME_ENUM_SET_NAMES,
   RUNTIME_ID_SET_REGISTRIES,
   VANILLA_MANIFEST,
   type VanillaScriptedRow,
@@ -340,6 +342,20 @@ export function generateVanillaPackage(options: GenerateOptions): {
           );
         }
         return { registry, ids: read.read.ids };
+      }),
+      gate,
+      gameVersion
+    )
+  );
+  files.set(
+    "enum-members.ts",
+    emitVanillaEnumMembers(
+      RUNTIME_ENUM_SET_NAMES.map((name) => {
+        const read = facts.complexEnums.find((one) => one.name === name);
+        if (read === undefined) {
+          throw new Error(`"${name}" needs a runtime enum set but no enum of that name was read`);
+        }
+        return { name, members: read.members };
       }),
       gate,
       gameVersion

@@ -18,6 +18,7 @@ import { structuralSpliceOf } from "@pdx-ts/codegen-cwt/lower/rule-shapes";
 import { camelCase } from "@pdx-ts/codegen-cwt/naming";
 import {
   ASSET_PATH_FIELDS,
+  COMPLEX_ENUM_REFERENCE_OVERLAYS,
   CONTENT_CONTRIBUTION_SINKS,
   CONTENT_DECLINED_FIELDS,
   CONTENT_FIELD_OVERRIDES,
@@ -38,6 +39,7 @@ import {
   SYNTHETIC_LOCALISATION,
 } from "@pdx-ts/codegen-cwt/overlay";
 import {
+  assertComplexEnumReferenceOverlaysValid,
   assertContentWitnessMembersKnown,
   assertHandWrittenTriggerExportsMatchRules,
   assertOverlayRegistriesKnown,
@@ -64,6 +66,45 @@ const rules = loadRules(CONFIG);
 
 /** The registry names the real manifest resolves to, without running codegen. */
 const realRegistryNames = new Set(CONTENT_MANIFEST.map((entry) => registryNameOf(entry)));
+
+describe("assertComplexEnumReferenceOverlaysValid", () => {
+  it("passes the real complex-enum reference overlay", () => {
+    expect(() =>
+      assertComplexEnumReferenceOverlaysValid(
+        "COMPLEX_ENUM_REFERENCE_OVERLAYS",
+        COMPLEX_ENUM_REFERENCE_OVERLAYS.keys(),
+        rules.complexEnums,
+        rules.enums
+      )
+    ).not.toThrow();
+  });
+
+  it("rejects a stale complex-enum reference overlay key", () => {
+    expect(() =>
+      assertComplexEnumReferenceOverlaysValid(
+        "COMPLEX_ENUM_REFERENCE_OVERLAYS",
+        ["component_tagg"],
+        rules.complexEnums,
+        rules.enums
+      )
+    ).toThrow(
+      'COMPLEX_ENUM_REFERENCE_OVERLAYS names "component_tagg", which is not a loaded complex enum'
+    );
+  });
+
+  it("rejects a populated enum shape that item widening cannot safely extend", () => {
+    expect(() =>
+      assertComplexEnumReferenceOverlaysValid(
+        "COMPLEX_ENUM_REFERENCE_OVERLAYS",
+        ["fake_complex_enum"],
+        new Map([["fake_complex_enum", {}]]),
+        new Map([["fake_complex_enum", ["fixed_member"]]])
+      )
+    ).toThrow(
+      'COMPLEX_ENUM_REFERENCE_OVERLAYS names "fake_complex_enum", whose enum has declared members'
+    );
+  });
+});
 
 describe("assertOverlayRegistriesKnown", () => {
   it("passes every real registry-keyed overlay table", () => {

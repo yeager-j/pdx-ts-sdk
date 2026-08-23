@@ -68099,6 +68099,15 @@ export const MODIFIER_REFERENCE_FAMILIES = {
       "bonus.workforce.mult": "pop_<job>_bonus_workforce_mult",
     },
   },
+  componentTag: {
+    target: "component_tag",
+    placeholder: "enum[component_tag]",
+    operations: {
+      "weapon.damage.mult": "enum[component_tag]_weapon_damage_mult",
+      "weapon.fire.rate.mult": "enum[component_tag]_weapon_fire_rate_mult",
+      "speed.mult": "enum[component_tag]_speed_mult",
+    },
+  },
 } as const;
 
 export type JobModifierOperations_Planet = {
@@ -68227,6 +68236,132 @@ export type JobModifierOperations_Any = {
 export type JobModifierPath_Any = ModifierPath693 &
   ((value: import("./refs.ts").JobRef) => JobModifierOperations_Any);
 
+export type ComponentTagModifierOperations_Ship = {
+  readonly weapon: {
+    readonly damage: { readonly mult: ModifierSetter };
+    readonly fire: { readonly rate: { readonly mult: ModifierSetter } };
+  };
+  readonly speed: { readonly mult: ModifierSetter };
+};
+
+export type ComponentTagModifierPath_Ship = (
+  value:
+    | import("../authoring/component-tags.ts").ComponentTagItem
+    | import("@pdx-ts/stellaris-ids").VanillaComponentTagMember
+) => ComponentTagModifierOperations_Ship;
+
+export type ComponentTagModifierOperations_Starbase = {
+  readonly weapon: {
+    readonly damage: { readonly mult: ModifierSetter };
+    readonly fire: { readonly rate: { readonly mult: ModifierSetter } };
+  };
+  readonly speed: { readonly mult: ModifierSetter };
+};
+
+export type ComponentTagModifierPath_Starbase = (
+  value:
+    | import("../authoring/component-tags.ts").ComponentTagItem
+    | import("@pdx-ts/stellaris-ids").VanillaComponentTagMember
+) => ComponentTagModifierOperations_Starbase;
+
+export type ComponentTagModifierOperations_Fleet = {
+  readonly weapon: {
+    readonly damage: { readonly mult: ModifierSetter };
+    readonly fire: { readonly rate: { readonly mult: ModifierSetter } };
+  };
+  readonly speed: { readonly mult: ModifierSetter };
+};
+
+export type ComponentTagModifierPath_Fleet = (
+  value:
+    | import("../authoring/component-tags.ts").ComponentTagItem
+    | import("@pdx-ts/stellaris-ids").VanillaComponentTagMember
+) => ComponentTagModifierOperations_Fleet;
+
+export type ComponentTagModifierOperations_Planet = {
+  readonly weapon: {
+    readonly damage: { readonly mult: ModifierSetter };
+    readonly fire: { readonly rate: { readonly mult: ModifierSetter } };
+  };
+  readonly speed: { readonly mult: ModifierSetter };
+};
+
+export type ComponentTagModifierPath_Planet = (
+  value:
+    | import("../authoring/component-tags.ts").ComponentTagItem
+    | import("@pdx-ts/stellaris-ids").VanillaComponentTagMember
+) => ComponentTagModifierOperations_Planet;
+
+export type ComponentTagModifierOperations_Sector = {
+  readonly weapon: {
+    readonly damage: { readonly mult: ModifierSetter };
+    readonly fire: { readonly rate: { readonly mult: ModifierSetter } };
+  };
+  readonly speed: { readonly mult: ModifierSetter };
+};
+
+export type ComponentTagModifierPath_Sector = (
+  value:
+    | import("../authoring/component-tags.ts").ComponentTagItem
+    | import("@pdx-ts/stellaris-ids").VanillaComponentTagMember
+) => ComponentTagModifierOperations_Sector;
+
+export type ComponentTagModifierOperations_System = {
+  readonly weapon: {
+    readonly damage: { readonly mult: ModifierSetter };
+    readonly fire: { readonly rate: { readonly mult: ModifierSetter } };
+  };
+  readonly speed: { readonly mult: ModifierSetter };
+};
+
+export type ComponentTagModifierPath_System = (
+  value:
+    | import("../authoring/component-tags.ts").ComponentTagItem
+    | import("@pdx-ts/stellaris-ids").VanillaComponentTagMember
+) => ComponentTagModifierOperations_System;
+
+export type ComponentTagModifierOperations_Country = {
+  readonly weapon: {
+    readonly damage: { readonly mult: ModifierSetter };
+    readonly fire: { readonly rate: { readonly mult: ModifierSetter } };
+  };
+  readonly speed: { readonly mult: ModifierSetter };
+};
+
+export type ComponentTagModifierPath_Country = (
+  value:
+    | import("../authoring/component-tags.ts").ComponentTagItem
+    | import("@pdx-ts/stellaris-ids").VanillaComponentTagMember
+) => ComponentTagModifierOperations_Country;
+
+export type ComponentTagModifierOperations_Leader = {
+  readonly weapon: {
+    readonly damage: { readonly mult: ModifierSetter };
+    readonly fire: { readonly rate: { readonly mult: ModifierSetter } };
+  };
+  readonly speed: { readonly mult: ModifierSetter };
+};
+
+export type ComponentTagModifierPath_Leader = (
+  value:
+    | import("../authoring/component-tags.ts").ComponentTagItem
+    | import("@pdx-ts/stellaris-ids").VanillaComponentTagMember
+) => ComponentTagModifierOperations_Leader;
+
+export type ComponentTagModifierOperations_Any = {
+  readonly weapon: {
+    readonly damage: { readonly mult: ModifierSetter };
+    readonly fire: { readonly rate: { readonly mult: ModifierSetter } };
+  };
+  readonly speed: { readonly mult: ModifierSetter };
+};
+
+export type ComponentTagModifierPath_Any = (
+  value:
+    | import("../authoring/component-tags.ts").ComponentTagItem
+    | import("@pdx-ts/stellaris-ids").VanillaComponentTagMember
+) => ComponentTagModifierOperations_Any;
+
 /**
  * Records modifiers valid in `army` scope: each path segment completes
  * from a small menu, and the joined path is the game's flat modifier name.
@@ -68260,6 +68395,7 @@ export interface AstralRiftModifierRecorder extends ModifierPath238 {
 export interface ColonyModifierRecorder extends ModifierPath1724 {
   readonly scripted: ScriptedModifierSelector<"colony">;
   readonly economic: EconomicCategorySelector<"colony">;
+  /** Selects modifiers generated from a typed job reference. */
   readonly job: JobModifierPath_Colony;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof ColonyModifierBlock & string, value: number): void;
@@ -68274,7 +68410,13 @@ export interface ColonyModifierRecorder extends ModifierPath1724 {
 export interface CountryModifierRecorder extends ModifierPath2576 {
   readonly scripted: ScriptedModifierSelector<"country">;
   readonly economic: EconomicCategorySelector<"country">;
+  /** Selects modifiers generated from a typed job reference. */
   readonly job: JobModifierPath_Country;
+  /**
+   * Selects modifiers generated from an owned or packaged vanilla component tag.
+   * Use `unchecked()` with the complete flat key for a deliberate third-party tag.
+   */
+  readonly componentTag: ComponentTagModifierPath_Country;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof CountryModifierBlock & string, value: number): void;
   /** Sets a modifier by an arbitrary, unchecked name. */
@@ -68327,6 +68469,11 @@ export interface FederationModifierRecorder extends ModifierPath2751 {
 export interface FleetModifierRecorder extends ModifierPath2932 {
   readonly scripted: ScriptedModifierSelector<"fleet">;
   readonly economic: EconomicCategorySelector<"fleet">;
+  /**
+   * Selects modifiers generated from an owned or packaged vanilla component tag.
+   * Use `unchecked()` with the complete flat key for a deliberate third-party tag.
+   */
+  readonly componentTag: ComponentTagModifierPath_Fleet;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof FleetModifierBlock & string, value: number): void;
   /** Sets a modifier by an arbitrary, unchecked name. */
@@ -68340,6 +68487,11 @@ export interface FleetModifierRecorder extends ModifierPath2932 {
 export interface LeaderModifierRecorder extends ModifierPath3097 {
   readonly scripted: ScriptedModifierSelector<"leader">;
   readonly economic: EconomicCategorySelector<"leader">;
+  /**
+   * Selects modifiers generated from an owned or packaged vanilla component tag.
+   * Use `unchecked()` with the complete flat key for a deliberate third-party tag.
+   */
+  readonly componentTag: ComponentTagModifierPath_Leader;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof LeaderModifierBlock & string, value: number): void;
   /** Sets a modifier by an arbitrary, unchecked name. */
@@ -68366,7 +68518,13 @@ export interface MegastructureModifierRecorder extends ModifierPath3239 {
 export interface PlanetModifierRecorder extends ModifierPath3394 {
   readonly scripted: ScriptedModifierSelector<"planet">;
   readonly economic: EconomicCategorySelector<"planet">;
+  /** Selects modifiers generated from a typed job reference. */
   readonly job: JobModifierPath_Planet;
+  /**
+   * Selects modifiers generated from an owned or packaged vanilla component tag.
+   * Use `unchecked()` with the complete flat key for a deliberate third-party tag.
+   */
+  readonly componentTag: ComponentTagModifierPath_Planet;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof PlanetModifierBlock & string, value: number): void;
   /** Sets a modifier by an arbitrary, unchecked name. */
@@ -68393,6 +68551,7 @@ export interface PopFactionModifierRecorder extends ModifierPath3395 {
 export interface PopGroupModifierRecorder extends ModifierPath3399 {
   readonly scripted: ScriptedModifierSelector<"pop_group">;
   readonly economic: EconomicCategorySelector<"pop_group">;
+  /** Selects modifiers generated from a typed job reference. */
   readonly job: JobModifierPath_PopGroup;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof PopGroupModifierBlock & string, value: number): void;
@@ -68407,7 +68566,13 @@ export interface PopGroupModifierRecorder extends ModifierPath3399 {
 export interface SectorModifierRecorder extends ModifierPath3402 {
   readonly scripted: ScriptedModifierSelector<"sector">;
   readonly economic: EconomicCategorySelector<"sector">;
+  /** Selects modifiers generated from a typed job reference. */
   readonly job: JobModifierPath_Sector;
+  /**
+   * Selects modifiers generated from an owned or packaged vanilla component tag.
+   * Use `unchecked()` with the complete flat key for a deliberate third-party tag.
+   */
+  readonly componentTag: ComponentTagModifierPath_Sector;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof SectorModifierBlock & string, value: number): void;
   /** Sets a modifier by an arbitrary, unchecked name. */
@@ -68421,7 +68586,13 @@ export interface SectorModifierRecorder extends ModifierPath3402 {
 export interface ShipModifierRecorder extends ModifierPath3426 {
   readonly scripted: ScriptedModifierSelector<"ship">;
   readonly economic: EconomicCategorySelector<"ship">;
+  /** Selects modifiers generated from a typed job reference. */
   readonly job: JobModifierPath_Ship;
+  /**
+   * Selects modifiers generated from an owned or packaged vanilla component tag.
+   * Use `unchecked()` with the complete flat key for a deliberate third-party tag.
+   */
+  readonly componentTag: ComponentTagModifierPath_Ship;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof ShipModifierBlock & string, value: number): void;
   /** Sets a modifier by an arbitrary, unchecked name. */
@@ -68435,6 +68606,7 @@ export interface ShipModifierRecorder extends ModifierPath3426 {
 export interface SpeciesModifierRecorder extends ModifierPath3449 {
   readonly scripted: ScriptedModifierSelector<"species">;
   readonly economic: EconomicCategorySelector<"species">;
+  /** Selects modifiers generated from a typed job reference. */
   readonly job: JobModifierPath_Species;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof SpeciesModifierBlock & string, value: number): void;
@@ -68462,7 +68634,13 @@ export interface SpyNetworkModifierRecorder extends ModifierPath3451 {
 export interface StarbaseModifierRecorder extends ModifierPath3453 {
   readonly scripted: ScriptedModifierSelector<"starbase">;
   readonly economic: EconomicCategorySelector<"starbase">;
+  /** Selects modifiers generated from a typed job reference. */
   readonly job: JobModifierPath_Starbase;
+  /**
+   * Selects modifiers generated from an owned or packaged vanilla component tag.
+   * Use `unchecked()` with the complete flat key for a deliberate third-party tag.
+   */
+  readonly componentTag: ComponentTagModifierPath_Starbase;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof StarbaseModifierBlock & string, value: number): void;
   /** Sets a modifier by an arbitrary, unchecked name. */
@@ -68476,7 +68654,13 @@ export interface StarbaseModifierRecorder extends ModifierPath3453 {
 export interface SystemModifierRecorder extends ModifierPath3455 {
   readonly scripted: ScriptedModifierSelector<"system">;
   readonly economic: EconomicCategorySelector<"system">;
+  /** Selects modifiers generated from a typed job reference. */
   readonly job: JobModifierPath_System;
+  /**
+   * Selects modifiers generated from an owned or packaged vanilla component tag.
+   * Use `unchecked()` with the complete flat key for a deliberate third-party tag.
+   */
+  readonly componentTag: ComponentTagModifierPath_System;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof SystemModifierBlock & string, value: number): void;
   /** Sets a modifier by an arbitrary, unchecked name. */
@@ -68524,7 +68708,13 @@ export interface UnscopedModifierRecorder {
 export interface AnyScopeModifierRecorder extends ModifierPath3456 {
   readonly scripted: ScriptedModifierSelector<ScopeName>;
   readonly economic: EconomicCategorySelector<ScopeName>;
+  /** Selects modifiers generated from a typed job reference. */
   readonly job: JobModifierPath_Any;
+  /**
+   * Selects modifiers generated from an owned or packaged vanilla component tag.
+   * Use `unchecked()` with the complete flat key for a deliberate third-party tag.
+   */
+  readonly componentTag: ComponentTagModifierPath_Any;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof AnyScopeModifierBlock & string, value: number): void;
   /** Sets a modifier by an arbitrary, unchecked name. */

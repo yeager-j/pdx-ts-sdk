@@ -550,6 +550,32 @@ export function emitVanillaGfxIds(
   );
 }
 
+/** The selected complex-enum members the SDK must identify exactly at runtime. */
+export function emitVanillaEnumMembers(
+  sets: readonly { readonly name: string; readonly members: readonly string[] }[],
+  gate: Chokepoint,
+  gameVersion: string
+): string {
+  const entries = sets
+    .map(({ name, members }) => {
+      const lines = [...members]
+        .sort(compareUtf8)
+        .map((member) => `    ${gate.literal(member, `${name} member`)},\n`)
+        .join("");
+      return (
+        `  ${gate.literal(name, "enum name")}: /*#__PURE__*/ Object.freeze([\n` + `${lines}  ]),\n`
+      );
+    })
+    .join("");
+  return (
+    header(gameVersion) +
+    `export const VANILLA_ENUM_MEMBER_GAME_VERSION = ${gate.literal(gameVersion, "game version")};\n\n` +
+    "export const VANILLA_ENUM_MEMBERS: Readonly<Record<string, readonly string[]>> = " +
+    "/*#__PURE__*/ Object.freeze({\n" +
+    `${entries}});\n`
+  );
+}
+
 export interface TablesPlan {
   /** Registry name -> its id union type and the file it lives in. */
   readonly ids: readonly { readonly registry: string; readonly file: string }[];

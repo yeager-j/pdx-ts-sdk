@@ -21,10 +21,37 @@ export const UNIVERSAL_SCOPES = new Set(["all", "any"]);
 export const MODIFIER_FAMILY_OVERLAYS = [
   {
     family: "job",
-    reference: "JobRef",
     target: "job",
+    placeholder: "<job>",
+    selector: 'import("./refs.ts").JobRef',
+    docs: ["Selects modifiers generated from a typed job reference."],
+  },
+  {
+    family: "componentTag",
+    target: "component_tag",
+    placeholder: "enum[component_tag]",
+    selector:
+      'import("../authoring/component-tags.ts").ComponentTagItem | import("@pdx-ts/stellaris-ids").VanillaComponentTagMember',
+    docs: [
+      "Selects modifiers generated from an owned or packaged vanilla component tag.",
+      "Use `unchecked()` with the complete flat key for a deliberate third-party tag.",
+    ],
   },
 ] as const;
+
+/** Complex enums that also admit an owned SDK declaration and record a typed reference. */
+export const COMPLEX_ENUM_REFERENCE_OVERLAYS: ReadonlyMap<
+  string,
+  { readonly itemType: string; readonly target: string }
+> = new Map([
+  [
+    "component_tag",
+    {
+      itemType: 'import("../authoring/component-tags.ts").ComponentTagItem',
+      target: "component_tag",
+    },
+  ],
+] as const);
 
 /**
  * Scripted modifier categories mapped to the modifier_categories.cwt labels.

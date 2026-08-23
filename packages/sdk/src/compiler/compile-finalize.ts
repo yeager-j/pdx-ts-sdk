@@ -4,6 +4,7 @@ import {
   installedVanillaPackageVersion,
   vanillaIdsCheckWarning,
 } from "../identifiers/package-pin.ts";
+import { PACKAGED_ENUM_EVIDENCE } from "../identifiers/vanilla-enum-members.ts";
 import { PACKAGED_ID_EVIDENCE } from "../identifiers/vanilla-gfx-ids.ts";
 import {
   checkVanillaPathInventoryConsistency,
@@ -16,7 +17,7 @@ import type { CompiledContent } from "./compile-content.ts";
 import type { CompiledEvents } from "./compile-events.ts";
 import { stemsOf, type BuildSession } from "./compile-session.ts";
 import { freezeItems, immutableSet } from "./freeze.ts";
-import type { PureMod } from "./model.ts";
+import type { ComponentTagFile, PureMod } from "./model.ts";
 import { collectPatches, planPatches } from "./patches.ts";
 import {
   adjudicatePaths,
@@ -32,6 +33,7 @@ import { validateReferences } from "./references.ts";
 export function finalizeMod(
   session: BuildSession,
   content: CompiledContent,
+  componentTagFiles: readonly ComponentTagFile[],
   events: CompiledEvents
 ): PureMod {
   const { config, flat, localization, options, refUses, warnings } = session;
@@ -54,15 +56,17 @@ export function finalizeMod(
   validateReferences({
     prefix: config.prefix,
     contentFiles,
+    componentTagIds: new Set(componentTagFiles.flatMap((file) => file.ids)),
     eventFiles,
     eventIds,
     definedGroups,
     patched: patches,
     refUses,
-    vanillaIdsOf: (registry) => PACKAGED_ID_EVIDENCE.get(registry)?.(),
+    vanillaIdsOf: (registry) =>
+      (PACKAGED_ID_EVIDENCE.get(registry) ?? PACKAGED_ENUM_EVIDENCE.get(registry))?.(),
   });
 
-  const claims = collectInitialClaims(session, contentFiles, eventFiles);
+  const claims = collectInitialClaims(session, contentFiles, componentTagFiles, eventFiles);
   const resolvedShipOfSizeLimitsPath =
     shipOfSizeLimits.size > 0 ? shipOfSizeLimitsPath(config.prefix) : undefined;
   if (resolvedShipOfSizeLimitsPath !== undefined) {
@@ -107,6 +111,9 @@ export function finalizeMod(
   for (const file of eventFiles) {
     freezeItems(file.entries);
   }
+  for (const file of componentTagFiles) {
+    freezeItems(file.entries);
+  }
   freezeItems(onActions);
 
   return Object.freeze({
@@ -121,6 +128,9 @@ export function finalizeMod(
           ids: Object.freeze([...file.ids]),
         })
       )
+    ),
+    componentTagFiles: Object.freeze(
+      componentTagFiles.map((file) => Object.freeze({ ...file, ids: Object.freeze([...file.ids]) }))
     ),
     eventFiles: Object.freeze(eventFiles.map((file) => Object.freeze({ ...file }))),
     events: freezeEvents(orderedEvents),
@@ -183,6 +193,7 @@ function registerFinalLocalization(
 function collectInitialClaims(
   session: BuildSession,
   contentFiles: CompiledContent["contentFiles"],
+  componentTagFiles: readonly ComponentTagFile[],
   eventFiles: CompiledEvents["eventFiles"]
 ): PathClaim[] {
   const claims: PathClaim[] = [
@@ -208,6 +219,16 @@ function collectInitialClaims(
         kind: "content",
         stems: stemsOf(session, file.relPath),
         detail: `content ${file.ids.join(", ")}`,
+      },
+    });
+  }
+  for (const file of componentTagFiles) {
+    claims.push({
+      path: file.relPath,
+      producer: {
+        kind: "component-tags",
+        stems: stemsOf(session, file.relPath),
+        detail: `component tags ${file.ids.join(", ")}`,
       },
     });
   }

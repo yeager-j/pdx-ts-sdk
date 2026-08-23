@@ -374,6 +374,7 @@ describe("complex enum readers", () => {
     expect(generated.report.complexEnums).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ name: "component_slot", files: 1, members: 2, missing: false }),
+        expect.objectContaining({ name: "component_tag", files: 1, members: 1, missing: false }),
         expect.objectContaining({ name: "policy_option", files: 0, members: 0, missing: true }),
       ])
     );

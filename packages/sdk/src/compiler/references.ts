@@ -9,6 +9,7 @@ import type { ContentFile, DefinedGroup, EmittedFile } from "./model.ts";
 type ReferenceValidationInput = {
   readonly prefix: string;
   readonly contentFiles: readonly ContentFile[];
+  readonly componentTagIds: ReadonlySet<string>;
   readonly eventFiles: readonly EmittedFile[];
   readonly eventIds: ReadonlySet<string>;
   readonly definedGroups: readonly DefinedGroup[];
@@ -34,6 +35,7 @@ function indexRegistriesByReferenceTarget(): ReadonlyMap<string, readonly string
       registriesByTarget.set(target, [...(registriesByTarget.get(target) ?? []), descriptor.type]);
     }
   }
+  registriesByTarget.set("component_tag", ["component_tag"]);
   return registriesByTarget;
 }
 
@@ -123,7 +125,8 @@ function indexDefinitionsByType(
 
 function collectBuiltIds(
   definedGroups: readonly DefinedGroup[],
-  patched: ReferenceValidationInput["patched"]
+  patched: ReferenceValidationInput["patched"],
+  componentTagIds: ReadonlySet<string>
 ): ReadonlyMap<string, ReadonlySet<string>> {
   const builtIds = new Map<string, Set<string>>();
   for (const group of definedGroups) {
@@ -152,6 +155,7 @@ function collectBuiltIds(
     }
     builtIds.set(registryType, ids);
   }
+  builtIds.set("component_tag", new Set(componentTagIds));
   return builtIds;
 }
 
@@ -193,8 +197,7 @@ function assertContentReferenceExists(
 
   const minted = registries.some((registry) => contentDescriptor(registry)?.mintHead !== undefined);
   // Exact vanilla identity takes precedence over ownership inferred from its spelling (ADR-0006).
-  const isVanilla =
-    minted && registries.some((registry) => vanillaIdsOf(registry)?.has(use.id) === true);
+  const isVanilla = registries.some((registry) => vanillaIdsOf(registry)?.has(use.id) === true);
   if (isVanilla || !isOwnedReference(use.id, prefix, minted)) {
     return;
   }
@@ -228,7 +231,7 @@ export interface ReferenceUse {
  */
 export function validateReferences(args: ReferenceValidationInput): void {
   assertOwnEventReferencesExist(args.prefix, args.contentFiles, args.eventFiles, args.eventIds);
-  const builtIds = collectBuiltIds(args.definedGroups, args.patched);
+  const builtIds = collectBuiltIds(args.definedGroups, args.patched, args.componentTagIds);
   for (const { owner, use } of args.refUses) {
     assertContentReferenceExists(owner, use, args.prefix, builtIds, args.vanillaIdsOf);
   }

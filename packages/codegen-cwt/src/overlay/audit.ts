@@ -58,6 +58,38 @@ export function assertOverlayRegistriesKnown(
 }
 
 /**
+ * Fails when a complex-enum reference overlay cannot widen the loaded enum's
+ * empty, install-derived member shape.
+ *
+ * Complex enum reference overlays add an SDK-owned item type to enums whose
+ * values the CWT rules intentionally leave empty for vanilla extraction. A
+ * stale key is otherwise a silent `.get()` miss; a populated enum would make
+ * that widening change a closed CWT union instead of its install-derived form.
+ */
+export function assertComplexEnumReferenceOverlaysValid(
+  tableId: string,
+  keys: Iterable<string>,
+  complexEnums: ReadonlyMap<string, unknown>,
+  enums: ReadonlyMap<string, readonly string[]>
+): void {
+  for (const key of keys) {
+    if (!complexEnums.has(key)) {
+      throw new Error(
+        `${tableId} names "${key}", which is not a loaded complex enum — ` +
+          "retire the row or fix the key"
+      );
+    }
+    const members = enums.get(key);
+    if (members === undefined || members.length !== 0) {
+      throw new Error(
+        `${tableId} names "${key}", whose enum has declared members — ` +
+          "item widening requires a valueless install-derived enum"
+      );
+    }
+  }
+}
+
+/**
  * Fails when a `CONTENT_WITNESSES` row names a def member its own registry's
  * emission did not actually produce, or repeats a member within one row's
  * `omit` list.

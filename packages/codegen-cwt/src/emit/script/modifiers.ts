@@ -26,8 +26,10 @@ export type CanonicalScope = (token: string) => string | null;
 export interface DynamicModifierFamily {
   /** Placeholder family name used as the generated recorder property. */
   readonly family: string;
-  /** Generated reference type accepted by the family selector. */
-  readonly reference: string;
+  /** Exact TypeScript selector expression accepted by this family. */
+  readonly selector: string;
+  /** Documentation emitted above the generated recorder property. */
+  readonly docs: readonly string[];
   /** Registry whose definitions supply selector values. */
   readonly target: string;
   /** Placeholder token replaced inside CWT modifier templates. */
@@ -67,7 +69,7 @@ function dynamicModifierFamilies(
   categoryScopes: ReadonlyMap<string, "any" | ReadonlySet<string>>
 ): DynamicModifierFamily[] {
   return MODIFIER_FAMILY_OVERLAYS.flatMap((family) => {
-    const placeholder = `<${family.family}>`;
+    const placeholder = family.placeholder;
     const operations: DynamicModifierOperation[] = [];
     const seenPaths = new Set<string>();
     for (const template of rules.modifierTemplates) {
@@ -125,7 +127,8 @@ function dynamicModifierFamilies(
     return [
       {
         family: family.family,
-        reference: family.reference,
+        selector: family.selector,
+        docs: family.docs,
         target: family.target,
         placeholder,
         scopeOperations,
@@ -585,7 +588,7 @@ function dynamicFamilyPathCode(join: ModifierJoin, tries: ModifierPathTries): st
       code += `export type ${operationsType} = {\n`;
       code += operationMembers(operations);
       code += "};\n\n";
-      const selector = `(value: import("./refs.ts").${family.reference}) => ${operationsType}`;
+      const selector = `(value: ${family.selector}) => ${operationsType}`;
       const pathType =
         staticJob === undefined ? selector : `${tries.trie.emit(staticJob)} & (${selector})`;
       code += `export type ${typeName} = ${pathType};\n\n`;
@@ -615,7 +618,9 @@ function recorderInterfacesCode(
           const type = family.scopeOperations.has(scope)
             ? `${pascalCase(family.family)}ModifierPath_${pascalCase(scope)}`
             : undefined;
-          return type === undefined ? "" : `  readonly ${family.family}: ${type};\n`;
+          return type === undefined
+            ? ""
+            : docComment(family.docs, "  ") + `  readonly ${family.family}: ${type};\n`;
         })
         .join("") +
       "  /** Sets a modifier by its flat name, checked against every known name. */\n" +
@@ -654,7 +659,9 @@ function recorderInterfacesCode(
     "  readonly economic: EconomicCategorySelector<ScopeName>;\n" +
     join.dynamicFamilies
       .map(
-        (family) => `  readonly ${family.family}: ${pascalCase(family.family)}ModifierPath_Any;\n`
+        (family) =>
+          docComment(family.docs, "  ") +
+          `  readonly ${family.family}: ${pascalCase(family.family)}ModifierPath_Any;\n`
       )
       .join("") +
     "  /** Sets a modifier by its flat name, checked against every known name. */\n" +

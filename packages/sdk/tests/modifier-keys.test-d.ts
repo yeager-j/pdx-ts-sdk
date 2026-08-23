@@ -22,6 +22,7 @@ function colonyModifiers(_m: ModifierClosure<"colony">): void {}
 function popGroupModifiers(_m: ModifierClosure<"pop_group">): void {}
 function federationModifiers(_m: ModifierClosure<"federation">): void {}
 function leaderModifiers(_m: ModifierClosure<"leader">): void {}
+function shipModifiers(_m: ModifierClosure<"ship">): void {}
 
 const ownedModifierMod = createMod({ name: "Owned", prefix: "mymod", supportedVersion: "v4.4.*" });
 const ownedScripted = ownedModifierMod.scriptedModifier("efficiency", { category: "country" });
@@ -36,6 +37,7 @@ const ownedEconomic = ownedModifierMod.economicCategory("operations", {
   generateAddModifiers: ["cost"],
   generateMultModifiers: ["upkeep"],
 });
+const ownedComponentTag = ownedModifierMod.componentTag("artillery_role");
 const secondOwnedEconomic = ownedModifierMod.economicCategory("second_operations", {
   modifierCategory: "country",
   generateAddModifiers: ["cost"],
@@ -225,6 +227,21 @@ countryModifiers((m) => m.scripted(unsupportedComponent).set(1));
 countryModifiers((m) => m.scripted(unsupportedPopJob).set(1));
 
 describe("modifier path safety", () => {
+  it("types component-tag modifier families only where Ships permits them", () => {
+    shipModifiers((m) => {
+      m.componentTag(ownedComponentTag).weapon.damage.mult(0.1);
+      m.componentTag(ownedComponentTag).weapon.fire.rate.mult(0.1);
+      m.componentTag(ownedComponentTag).speed.mult(0.1);
+      m.componentTag("gunship").speed.mult(0.1);
+      // @ts-expect-error — generated families accept no unchecked tag string
+      m.componentTag("unknown_component_tag").speed.mult(0.1);
+      // @ts-expect-error — content references from another registry are not component tags
+      m.componentTag(vanilla.technology("tech_lasers_1")).speed.mult(0.1);
+    });
+    // @ts-expect-error — component-tag modifiers do not apply to pop groups
+    popGroupModifiers((m) => m.componentTag(ownedComponentTag).speed.mult(0.1));
+  });
+
   it("supports all job-derived colony operations and static paths", () => {
     const job: JobRef = { id: "mymod_job" };
     colonyModifiers((m) => {

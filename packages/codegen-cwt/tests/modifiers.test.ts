@@ -53,6 +53,17 @@ describe("the modifier scope join", () => {
       readFileSync(path.join(ROOT, "packages/sdk/src/generated/modifiers.ts"), "utf8")
     ).toContain("// From: modifiers.cwt");
   });
+
+  it("derives the closed component-tag family from the three Ships templates", () => {
+    const family = join.dynamicFamilies.find((entry) => entry.family === "componentTag");
+    expect(Object.fromEntries(family?.operationTemplates ?? [])).toEqual({
+      "weapon.damage.mult": "enum[component_tag]_weapon_damage_mult",
+      "weapon.fire.rate.mult": "enum[component_tag]_weapon_fire_rate_mult",
+      "speed.mult": "enum[component_tag]_speed_mult",
+    });
+    expect(family?.scopeOperations.get("ship")).toHaveLength(3);
+    expect(family?.scopeOperations.has("pop_group")).toBe(false);
+  });
   it("files the generated economic modifiers the curated rules cannot list", () => {
     expect(rules.modifierDecls.has("country_unity_produces_mult")).toBe(false);
     expect(join.universal).toContain("country_unity_produces_mult");

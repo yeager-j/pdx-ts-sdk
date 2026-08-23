@@ -7,9 +7,10 @@
  * cross-check, which is worthless unless it has been seen to fail.
  */
 
+import type { RuleType } from "@pdx-ts/codegen-cwt/cwt/model";
 import { emitScopes } from "@pdx-ts/codegen-cwt/emit/support";
 import { referencesIdentifier } from "@pdx-ts/codegen-cwt/naming";
-import { Emitter } from "@pdx-ts/codegen-cwt/render/emitter";
+import { Emitter, referenceTargetsOf } from "@pdx-ts/codegen-cwt/render/emitter";
 import {
   assertRecordedImportsAreUsed,
   ImportRecorder,
@@ -35,6 +36,26 @@ function emitter(): Emitter {
     modifierTemplates: [],
   } as unknown as Emitter["rules"]);
 }
+
+describe("referenceTargetsOf", () => {
+  it("keeps a complex-enum target beside exact literal alternatives", () => {
+    const types: readonly RuleType[] = [
+      { kind: "enum", name: "component_tag" },
+      { kind: "literal", text: "citadel" },
+    ];
+
+    expect(referenceTargetsOf(types)).toEqual(["component_tag"]);
+  });
+
+  it("does not treat an open mixed union as a content reference", () => {
+    const types: readonly RuleType[] = [
+      { kind: "enum", name: "component_tag" },
+      { kind: "scalar" },
+    ];
+
+    expect(referenceTargetsOf(types)).toBeUndefined();
+  });
+});
 
 describe("KNOWN_SYMBOLS", () => {
   it("gives every name exactly one source module", () => {

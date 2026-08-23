@@ -47,8 +47,10 @@ import {
   eventTarget,
   hasOwner,
   hasTechnology,
+  isPreferredWeapons,
   isScopeValid,
   onActions,
+  PathOwnershipError,
   render,
   type ModConfig,
   type ModifierClosure,
@@ -72,6 +74,126 @@ const CONFIG = {
 } as const;
 
 const vanilla = viewFromFiles(FILES, { gameVersion: "4.4.6" });
+
+describe("component-tag capability", () => {
+  it("mints, validates, and emits immutable bare-scalar tag files", () => {
+    const mod = createMod({
+      name: "Component Tags",
+      prefix: "ct_probe",
+      supportedVersion: "4.4.*",
+    });
+    const alpha = mod.componentTag("alpha_role");
+    const zeta = mod.componentTag("zeta_role");
+    const built = mod.compile([mod.feature("roles", [zeta, alpha])]);
+
+    expect(alpha.id).toBe("ct_probe_alpha_role");
+    expect(Object.isFrozen(alpha)).toBe(true);
+    expect(Object.isFrozen(built.componentTagFiles)).toBe(true);
+    expect(built.componentTagFiles).toHaveLength(1);
+    expect(
+      built.paths.some((claim) => claim.path === "common/component_tags/ct_probe_roles.txt")
+    ).toBe(true);
+    expect(render(built).get("common/component_tags/ct_probe_roles.txt")).toBe(
+      "ct_probe_alpha_role\n\nct_probe_zeta_role\n"
+    );
+    expect(() => mod.componentTag("Not_Snake_Case")).toThrow("lowercase snake_case");
+  });
+
+  it("uses the unnamed-feature fallback path and reserves it against assets", () => {
+    const mod = createMod({
+      name: "Component Tag Fallback",
+      prefix: "ct_fallback",
+      supportedVersion: "4.4.*",
+    });
+    const tag = mod.componentTag("role");
+    const path = "common/component_tags/ct_fallback_component_tags.txt";
+    const built = mod.compile([mod.feature(undefined, [tag])]);
+
+    expect(render(built).get(path)).toBe("ct_fallback_role\n");
+
+    const asset = mod.assetFile({
+      source: new URL("./fixtures/vanilla-fixture.ts", import.meta.url),
+      path,
+    });
+    expect(() => mod.compile([mod.feature(undefined, [tag, asset])])).toThrow(PathOwnershipError);
+  });
+
+  it("rejects duplicate ids and tags owned by another capability", () => {
+    const first = createMod({ name: "First", prefix: "ct_first", supportedVersion: "4.4.*" });
+    const second = createMod({ name: "Second", prefix: "ct_second", supportedVersion: "4.4.*" });
+    const tag = first.componentTag("role");
+
+    expect(() => first.compile([first.feature(undefined, [tag, tag])])).toThrow("more than once");
+    expect(() => second.feature(undefined, [tag])).toThrow("different capability");
+  });
+
+  it("requires an owned tag used only in a mixed generated field to be placed", () => {
+    const mod = createMod({ name: "References", prefix: "ct_refs", supportedVersion: "4.4.*" });
+    const role = mod.componentTag("artillery_role");
+    const ship = mod.shipSize("test_ship", {
+      class: "military",
+      shipRoles: [role],
+    });
+
+    expect(() => mod.compile([mod.feature("ships", [ship])])).toThrow("no such component_tag");
+    expect(() =>
+      mod.compile([mod.feature("roles", [role]), mod.feature("ships", [ship])])
+    ).not.toThrow();
+  });
+
+  it("recognizes an exact packaged vanilla tag before prefix-based ownership", () => {
+    const mod = createMod({ name: "Vanilla Tag", prefix: "weapon", supportedVersion: "4.4.*" });
+    const ship = mod.shipSize("test_ship", {
+      class: "military",
+      shipModifier: (modifier) => {
+        modifier.componentTag("weapon_type_energy").speed.mult(0.1);
+      },
+    });
+
+    expect(() => mod.compile([mod.feature("ships", [ship])])).not.toThrow();
+  });
+
+  it("writes every component-tag modifier operation as an exact flat key", () => {
+    const mod = createMod({ name: "Modifiers", prefix: "ct_modifiers", supportedVersion: "4.4.*" });
+    const role = mod.componentTag("artillery_role");
+    const ship = mod.shipSize("test_ship", {
+      class: "military",
+      shipModifier: (modifier) => {
+        modifier.componentTag(role).weapon.damage.mult(0.1);
+        modifier.componentTag(role).weapon.fire.rate.mult(0.2);
+        modifier.componentTag(role).speed.mult(0.3);
+      },
+    });
+    const built = mod.compile([mod.feature("roles", [role]), mod.feature("ships", [ship])]);
+    const emitted = render(built).get("common/ship_sizes/ct_modifiers_ships.txt");
+
+    expect(emitted).toContain(`${role.id}_weapon_damage_mult = 0.1`);
+    expect(emitted).toContain(`${role.id}_weapon_fire_rate_mult = 0.2`);
+    expect(emitted).toContain(`${role.id}_speed_mult = 0.3`);
+  });
+
+  it("lowers owned tags through component fields and generated trigger arguments", () => {
+    const mod = createMod({
+      name: "Tag References",
+      prefix: "ct_fields",
+      supportedVersion: "4.4.*",
+    });
+    const tag = mod.componentTag("energy_role");
+    const weapon = mod.weaponComponentTemplate("energy_lance", {
+      icon: "GFX_weapon_energy_lance",
+      tags: [tag, "third_party_component_tag"],
+      aiTags: [tag],
+      validForCountry: isPreferredWeapons(tag),
+    });
+    const emitted = render(
+      mod.compile([mod.feature("tags", [tag]), mod.feature("components", [weapon])])
+    ).get("common/component_templates/ct_fields_components.txt");
+
+    expect(emitted).toContain("tags = { ct_fields_energy_role third_party_component_tag }");
+    expect(emitted).toContain("ai_tags = { ct_fields_energy_role }");
+    expect(emitted).toContain("is_preferred_weapons = ct_fields_energy_role");
+  });
+});
 
 /**
  * The representative capability fixture: every definition is a value, and an

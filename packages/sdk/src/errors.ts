@@ -33,6 +33,7 @@ export class LogicalPathError extends PdxSdkError {}
 export type PathProducerKind =
   | "descriptor"
   | "content"
+  | "component-tags"
   | "events"
   | "on-actions"
   | "ship-of-size-limits"
