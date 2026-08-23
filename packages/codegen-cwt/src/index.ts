@@ -45,6 +45,7 @@ import { emitContentShapeProtocol } from "./lower/content-shape.ts";
 import { lowerRuleTable } from "./lower/lowered-rule.ts";
 import { kebabCase } from "./naming.ts";
 import {
+  assertComplexEnumReferenceOverlaysValid,
   assertHandWrittenTriggerExportsMatchRules,
   assertOverlayRegistriesKnown,
   assertPatchWideningsTargetPatchableRegistries,
@@ -52,6 +53,7 @@ import {
 } from "./overlay/audit.ts";
 import {
   ASSET_PATH_FIELDS,
+  COMPLEX_ENUM_REFERENCE_OVERLAYS,
   CONTENT_CONTRIBUTION_SINKS,
   CONTENT_DECLINED_FIELDS,
   CONTENT_FIELD_OVERRIDES,
@@ -347,6 +349,12 @@ function assertGenerationPolicies(
       { tableId: "CONTENT_WITNESSES", keys: CONTENT_WITNESSES.keys() },
     ],
     registryNames
+  );
+  assertComplexEnumReferenceOverlaysValid(
+    "COMPLEX_ENUM_REFERENCE_OVERLAYS",
+    COMPLEX_ENUM_REFERENCE_OVERLAYS.keys(),
+    rules.complexEnums,
+    rules.enums
   );
   assertPatchWideningsTargetPatchableRegistries(
     "PATCH_WIDENINGS",

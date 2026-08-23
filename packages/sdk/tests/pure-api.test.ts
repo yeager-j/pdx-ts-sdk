@@ -47,6 +47,7 @@ import {
   eventTarget,
   hasOwner,
   hasTechnology,
+  isPreferredWeapons,
   isScopeValid,
   onActions,
   PathOwnershipError,
@@ -157,6 +158,28 @@ describe("component-tag capability", () => {
     expect(emitted).toContain(`${role.id}_weapon_damage_mult = 0.1`);
     expect(emitted).toContain(`${role.id}_weapon_fire_rate_mult = 0.2`);
     expect(emitted).toContain(`${role.id}_speed_mult = 0.3`);
+  });
+
+  it("lowers owned tags through component fields and generated trigger arguments", () => {
+    const mod = createMod({
+      name: "Tag References",
+      prefix: "ct_fields",
+      supportedVersion: "4.4.*",
+    });
+    const tag = mod.componentTag("energy_role");
+    const weapon = mod.weaponComponentTemplate("energy_lance", {
+      icon: "GFX_weapon_energy_lance",
+      tags: [tag, "third_party_component_tag"],
+      aiTags: [tag],
+      validForCountry: isPreferredWeapons(tag),
+    });
+    const emitted = render(
+      mod.compile([mod.feature("tags", [tag]), mod.feature("components", [weapon])])
+    ).get("common/component_templates/ct_fields_components.txt");
+
+    expect(emitted).toContain("tags = { ct_fields_energy_role third_party_component_tag }");
+    expect(emitted).toContain("ai_tags = { ct_fields_energy_role }");
+    expect(emitted).toContain("is_preferred_weapons = ct_fields_energy_role");
   });
 });
 
