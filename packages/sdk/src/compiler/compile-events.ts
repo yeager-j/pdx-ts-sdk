@@ -158,12 +158,9 @@ function compileOnActions(
   session: BuildSession,
   placedEvents: readonly { item: EventItemBase; stem: string | undefined }[]
 ): { onActions: PdxEntry[]; onActionStems: ReadonlySet<string> } {
-  const includedEvents = new Set(placedEvents.map(({ item }) => item));
-  const includedEventIds = new Set(placedEvents.map(({ item }) => item.id));
   const onActionAuthoring = new OnActionAuthoring(
     session.config.prefix,
-    (event) => includedEvents.has(event),
-    (id) => includedEventIds.has(id)
+    placedEvents.map(({ item }) => item)
   );
   const onActionStems = new Set<string>();
   const bindings = session.flat.flatMap(({ item, stem }) => {

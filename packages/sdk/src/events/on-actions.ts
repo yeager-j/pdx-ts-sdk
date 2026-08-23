@@ -2,6 +2,7 @@ import { block, list, scalar, type PdxEntry } from "@pdx-ts/pdxscript";
 
 import type { EventScopelessRef } from "../generated/refs.ts";
 import type { ScopeName } from "../generated/scopes.ts";
+import { isVanillaRef } from "../identifiers/trie.ts";
 import { compareUtf8 } from "../ordering.ts";
 import { refId } from "../script/scalar.ts";
 import { isAuthoredEvent, type EventItem, type EventItemBase, type EventRef } from "./types.ts";
@@ -12,7 +13,9 @@ export interface OnActionRef<
   S extends ScopeName | null = ScopeName | null,
   From extends ScopeName | undefined = ScopeName | undefined,
 > {
+  /** Discriminates generated hook references from other authored values. */
   readonly kind: "on-action-ref";
+  /** Exact hook name emitted to PDXScript. */
   readonly name: string;
   /** The event scope supplied by the hook; null means the hook is scopeless. */
   readonly scope: S;
@@ -21,7 +24,9 @@ export interface OnActionRef<
 }
 
 interface OnActionHookItemBase {
+  /** Discriminates on-action contributions during Feature folding. */
   readonly itemKind: "on-action";
+  /** Generated game hook that receives the contribution. */
   readonly hook: OnActionRef;
 }
 
@@ -45,7 +50,7 @@ export type OnActionHookItem = OnActionHookItemBase &
 type OnActionEventReference<
   S extends ScopeName | null,
   From extends ScopeName | undefined,
-> = S extends null ? EventScopelessRef : EventRef<Extract<S, ScopeName>, From>;
+> = S extends null ? EventScopelessRef : EventRef<Extract<S, ScopeName>, From, string>;
 
 /** One weighted on-action choice; omit `event` for the literal `0` no-op arm. */
 export type OnActionRandomEvent<
@@ -55,20 +60,36 @@ export type OnActionRandomEvent<
 
 type NonEmpty<T> = readonly [T, ...T[]];
 
-/** The object form of a scoped on-action contribution, with at least one non-empty list. */
+/**
+ * The object form of a scoped on-action contribution, with at least one non-empty list.
+ *
+ * @example
+ * ```ts
+ * mod.on(onActions.onGameStartCountry, {
+ *   events: [firstSignal],
+ *   randomEvents: [{ weight: 80, event: firstSignal }, { weight: 20 }],
+ * });
+ * ```
+ */
 export type OnActionEvents<S extends ScopeName, From extends ScopeName | undefined> =
   | {
+      /** Ordered events that all fire; every value must be placed in the compiled Features. */
       readonly events: NonEmpty<EventItem<NoInfer<S>, NoInfer<From>>>;
+      /** Weighted choices in author order; duplicate weights and event arms are preserved. */
       readonly randomEvents?: NonEmpty<OnActionRandomEvent<NoInfer<S>, NoInfer<From>>>;
     }
   | {
+      /** Ordered events that all fire; every value must be placed in the compiled Features. */
       readonly events?: NonEmpty<EventItem<NoInfer<S>, NoInfer<From>>>;
+      /** Weighted choices in author order; duplicate weights and event arms are preserved. */
       readonly randomEvents: NonEmpty<OnActionRandomEvent<NoInfer<S>, NoInfer<From>>>;
     };
 
 /** The object form for a scopeless hook, which accepts checked or raw event references. */
 export interface ScopelessOnActionEvents {
+  /** Scopeless hooks cannot receive an ordinary authored event list. */
   readonly events?: never;
+  /** Weighted checked references in author order; omit a row's event for a no-op arm. */
   readonly randomEvents: NonEmpty<OnActionRandomEvent<null, undefined>>;
 }
 
@@ -86,19 +107,15 @@ interface HookedRandomEvent {
 export class OnActionAuthoring {
   private readonly hooked: HookedEvent[] = [];
   private readonly hookedRandom: HookedRandomEvent[] = [];
-  private readonly ownsEvent: (event: EventItemBase) => boolean;
-  private readonly eventExists: (id: string) => boolean;
-  private readonly prefix: string;
+  private readonly selectedEvents: ReadonlySet<EventItemBase>;
+  private readonly selectedEventsById: ReadonlyMap<string, EventItemBase>;
+  private readonly ownEventId: RegExp;
 
   /** Creates an accumulator with the selected Feature set as its ownership authority. */
-  constructor(
-    prefix: string,
-    ownsEvent: (event: EventItemBase) => boolean,
-    eventExists: (id: string) => boolean
-  ) {
-    this.prefix = prefix;
-    this.ownsEvent = ownsEvent;
-    this.eventExists = eventExists;
+  constructor(prefix: string, selectedEvents: readonly EventItemBase[]) {
+    this.selectedEvents = new Set(selectedEvents);
+    this.selectedEventsById = new Map(selectedEvents.map((event) => [event.id, event]));
+    this.ownEventId = new RegExp(`^${prefix}(_[a-z0-9_]*)?\\.\\d+$`);
   }
 
   /** Adds one ordinary event after validating ownership and the hook contract. */
@@ -121,21 +138,21 @@ export class OnActionAuthoring {
 
   /** Adds one weighted row, validating authored values without deduplicating probability arms. */
   registerRandom(hook: OnActionRef, row: OnActionRandomEvent): void {
-    if (isAuthoredEvent(row.event)) {
-      this.assertOwnedEvent(hook, row.event);
-    } else if (typeof row.event === "string") {
-      this.assertRawEventExists(row.event, hook);
-    }
+    this.validateRandomEvent(hook, row.event);
     this.hookedRandom.push({ hook, row });
   }
 
   private assertOwnedEvent(hook: OnActionRef, event: EventItemBase): void {
-    if (!this.ownsEvent(event)) {
+    if (!this.selectedEvents.has(event)) {
       throw new Error(
         `Event "${event.id}" is not among the features passed to buildMod; on-action ` +
           `"${hook.name}" can only fire this mod's own authored events`
       );
     }
+    this.assertHookContract(hook, event);
+  }
+
+  private assertHookContract(hook: OnActionRef, event: EventItemBase): void {
     if (hook.scope !== event.scope || hook.from !== event.from) {
       throw new Error(
         `On-action "${hook.name}" supplies ${contract(hook.scope, hook.from)}, but event ` +
@@ -144,14 +161,33 @@ export class OnActionAuthoring {
     }
   }
 
-  private assertRawEventExists(id: string, hook: OnActionRef): void {
-    const ownEventId = new RegExp(`^${this.prefix}(_[a-z0-9_]*)?\\.\\d+$`);
-    if (ownEventId.test(id) && !this.eventExists(id)) {
+  private assertSelectedReference(hook: OnActionRef, id: string): void {
+    const event = this.selectedEventsById.get(id);
+    if (event === undefined) {
       throw new Error(
-        `On-action "${hook.name}" references event "${id}", which looks like one of this ` +
-          `mod's event ids but is not among the features passed to buildMod`
+        `Event "${id}" is not among the features passed to buildMod; on-action ` +
+          `"${hook.name}" can only use an event handle or mod-owned id that resolves to a ` +
+          `selected definition`
       );
     }
+    this.assertHookContract(hook, event);
+  }
+
+  private validateRandomEvent(hook: OnActionRef, event: OnActionRandomEvent["event"]): void {
+    if (event === undefined || isVanillaRef(event)) {
+      return;
+    }
+    if (isAuthoredEvent(event)) {
+      this.assertOwnedEvent(hook, event);
+      return;
+    }
+    if (typeof event === "string") {
+      if (this.ownEventId.test(event)) {
+        this.assertSelectedReference(hook, event);
+      }
+      return;
+    }
+    this.assertSelectedReference(hook, eventId(event));
   }
 
   /** The finished hook blocks, with no mutable authoring state exposed. */

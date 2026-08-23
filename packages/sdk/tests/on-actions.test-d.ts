@@ -32,6 +32,13 @@ describe("typed on-action registration", () => {
     mod.on(onActions.onFiveYearPulse, {
       randomEvents: [{ weight: 50, event: vanilla.event.situation.$2000 }, { weight: 50 }],
     });
+    mod.on(onActions.onGameStartCountry, {
+      randomEvents: [{ weight: 100, event: vanilla.event.observer.$1 }],
+    });
+    const observerHandle = events.observerHandle(8);
+    mod.on(onActions.onGameStartCountry, {
+      randomEvents: [{ weight: 100, event: observerHandle }],
+    });
   });
 
   it("rejects a wrong event scope", () => {

@@ -179,6 +179,54 @@ describe("on-action authoring", () => {
     expect(() => mod.compile([hooks])).toThrow(/is not among the features passed to buildMod/);
   });
 
+  it("resolves weighted event handles against selected definitions", () => {
+    const events = mod.namespace("handles");
+    const selectedHandle = events.countryHandle(11);
+    const selectedEvent = selectedHandle.define({ isTriggeredOnly: true });
+    const selected = mod.feature("selected_handle", [
+      selectedEvent,
+      mod.on(onActions.onGameStartCountry, {
+        randomEvents: [{ weight: 100, event: selectedHandle }],
+      }),
+    ]);
+    expect(
+      render(mod.compile([selected])).get("common/on_actions/on_action_test_on_actions.txt")
+    ).toContain("100 = on_action_test_handles.11");
+
+    const omittedHandle = events.countryHandle(12);
+    const omitted = mod.feature(undefined, [
+      mod.on(onActions.onGameStartCountry, {
+        randomEvents: [{ weight: 100, event: omittedHandle }],
+      }),
+    ]);
+    expect(() => mod.compile([omitted])).toThrow(/is not among the features passed to buildMod/);
+
+    const wrongScopeHandle = events.planetHandle(13);
+    const wrongScopeEvent = wrongScopeHandle.define({ isTriggeredOnly: true });
+    const wrongScope = mod.feature("wrong_scope_handle", [
+      wrongScopeEvent,
+      mod.on(onActions.onGameStartCountry, {
+        randomEvents: [{ weight: 100, event: wrongScopeHandle as never }],
+      }),
+    ]);
+    expect(() => mod.compile([wrongScope])).toThrow(
+      /supplies country scope with no FROM, but event "on_action_test_handles.13" declares planet scope/
+    );
+
+    const otherMod = createMod({
+      name: "Other capability",
+      prefix: "other_on_action",
+      supportedVersion: "4.4.*",
+    });
+    const foreignHandle = otherMod.namespace().countryHandle(1);
+    const foreign = mod.feature(undefined, [
+      mod.on(onActions.onGameStartCountry, {
+        randomEvents: [{ weight: 100, event: foreignHandle }],
+      }),
+    ]);
+    expect(() => mod.compile([foreign])).toThrow(/is not among the features passed to buildMod/);
+  });
+
   it("rejects raw weighted ids that claim this mod's namespace but are omitted", () => {
     const hooks = mod.feature(undefined, [
       mod.on(onActions.onGameStartCountry, {
@@ -186,7 +234,22 @@ describe("on-action authoring", () => {
       }),
     ]);
 
-    expect(() => mod.compile([hooks])).toThrow(/looks like one of this mod's event ids/);
+    expect(() => mod.compile([hooks])).toThrow(/is not among the features passed to buildMod/);
+  });
+
+  it("validates the selected definition behind a raw own event id", () => {
+    const events = mod.namespace();
+    const planetEvent = events.planet(13, { isTriggeredOnly: true });
+    const feature = mod.feature("raw_own_event", [
+      planetEvent,
+      mod.on(onActions.onGameStartCountry, {
+        randomEvents: [{ weight: 100, event: "on_action_test.13" }],
+      }),
+    ]);
+
+    expect(() => mod.compile([feature])).toThrow(
+      /supplies country scope with no FROM, but event "on_action_test.13" declares planet scope/
+    );
   });
 
   it("rejects empty object-form lists at runtime", () => {
