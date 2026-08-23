@@ -111,7 +111,7 @@ export type {
   UnscopedModifierRecorder,
 } from "./generated/modifiers.ts";
 export type { BuildOptions, ModConfig } from "./compiler/config.ts";
-export type { EmittedFile, LocalizationFile, PureMod } from "./compiler/model.ts";
+export type { ComponentTagFile, EmittedFile, LocalizationFile, PureMod } from "./compiler/model.ts";
 export {
   createMod,
   type CapabilityEventHandle,
@@ -123,6 +123,7 @@ export {
   type ModCapability,
 } from "./authoring/mod.ts";
 export type { AssetFileInput, AssetFileItem, AssetTreeInput } from "./authoring/assets.ts";
+export type { ComponentTagItem } from "./authoring/component-tags.ts";
 export {
   LOCALIZATION_LANGUAGES,
   type LocalizationItem,

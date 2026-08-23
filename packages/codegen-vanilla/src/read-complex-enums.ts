@@ -66,6 +66,12 @@ function collect(items: readonly PdxItem[], spec: ComplexEnum, add: (name: strin
         if (item.kind === "entry") {
           add(item.key);
         }
+        if (item.kind === "str") {
+          add(item.value);
+        }
+        if (item.kind === "num") {
+          add(item.lexeme);
+        }
       }
       continue;
     }

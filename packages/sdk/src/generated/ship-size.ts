@@ -47,7 +47,14 @@ export interface ShipSizeTriggeredShipRoles {
 }
 
 export const SHIP_SIZE_TRIGGERED_SHIP_ROLES_FIELDS: readonly ContentField[] = [
-  { key: "name", member: "name", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "name",
+    member: "name",
+    shape: "value",
+    form: "scalar",
+    conversion: "ref",
+    refTypes: ["component_tag"],
+  },
   { key: "trigger", member: "trigger", shape: "trigger", form: "trigger" },
 ];
 
@@ -739,13 +746,7 @@ export const SHIP_SIZE_FIELDS: readonly ContentField[] = [
     conversion: "ref",
     refTypes: ["ship_behavior"],
   },
-  {
-    key: "ship_roles",
-    member: "shipRoles",
-    shape: "valueList",
-    form: "list",
-    conversion: "identity",
-  },
+  { key: "ship_roles", member: "shipRoles", shape: "valueList", form: "list", conversion: "ref" },
   {
     key: "triggered_ship_roles",
     member: "triggeredShipRoles",

@@ -75,7 +75,10 @@ export type ComponentSlot = VanillaEnumMember<"component_slot"> | (string & {});
  * `enum[component_tag]`.
  * Its members come from game content, and are narrowed by @pdx-ts/stellaris-ids.
  */
-export type ComponentTag = VanillaEnumMember<"component_tag"> | (string & {});
+export type ComponentTag =
+  | VanillaEnumMember<"component_tag">
+  | (string & {})
+  | import("../authoring/component-tags.ts").ComponentTagItem;
 
 /** `enum[contact_rule]`. */
 export type ContactRule =

@@ -68099,6 +68099,15 @@ export const MODIFIER_REFERENCE_FAMILIES = {
       "bonus.workforce.mult": "pop_<job>_bonus_workforce_mult",
     },
   },
+  componentTag: {
+    target: "component_tag",
+    placeholder: "enum[component_tag]",
+    operations: {
+      "weapon.damage.mult": "enum[component_tag]_weapon_damage_mult",
+      "weapon.fire.rate.mult": "enum[component_tag]_weapon_fire_rate_mult",
+      "speed.mult": "enum[component_tag]_speed_mult",
+    },
+  },
 } as const;
 
 export type JobModifierOperations_Planet = {
@@ -68227,6 +68236,132 @@ export type JobModifierOperations_Any = {
 export type JobModifierPath_Any = ModifierPath693 &
   ((value: import("./refs.ts").JobRef) => JobModifierOperations_Any);
 
+export type ComponentTagModifierOperations_Ship = {
+  readonly weapon: {
+    readonly damage: { readonly mult: ModifierSetter };
+    readonly fire: { readonly rate: { readonly mult: ModifierSetter } };
+  };
+  readonly speed: { readonly mult: ModifierSetter };
+};
+
+export type ComponentTagModifierPath_Ship = (
+  value:
+    | import("../authoring/component-tags.ts").ComponentTagItem
+    | import("@pdx-ts/stellaris-ids").VanillaComponentTagMember
+) => ComponentTagModifierOperations_Ship;
+
+export type ComponentTagModifierOperations_Starbase = {
+  readonly weapon: {
+    readonly damage: { readonly mult: ModifierSetter };
+    readonly fire: { readonly rate: { readonly mult: ModifierSetter } };
+  };
+  readonly speed: { readonly mult: ModifierSetter };
+};
+
+export type ComponentTagModifierPath_Starbase = (
+  value:
+    | import("../authoring/component-tags.ts").ComponentTagItem
+    | import("@pdx-ts/stellaris-ids").VanillaComponentTagMember
+) => ComponentTagModifierOperations_Starbase;
+
+export type ComponentTagModifierOperations_Fleet = {
+  readonly weapon: {
+    readonly damage: { readonly mult: ModifierSetter };
+    readonly fire: { readonly rate: { readonly mult: ModifierSetter } };
+  };
+  readonly speed: { readonly mult: ModifierSetter };
+};
+
+export type ComponentTagModifierPath_Fleet = (
+  value:
+    | import("../authoring/component-tags.ts").ComponentTagItem
+    | import("@pdx-ts/stellaris-ids").VanillaComponentTagMember
+) => ComponentTagModifierOperations_Fleet;
+
+export type ComponentTagModifierOperations_Planet = {
+  readonly weapon: {
+    readonly damage: { readonly mult: ModifierSetter };
+    readonly fire: { readonly rate: { readonly mult: ModifierSetter } };
+  };
+  readonly speed: { readonly mult: ModifierSetter };
+};
+
+export type ComponentTagModifierPath_Planet = (
+  value:
+    | import("../authoring/component-tags.ts").ComponentTagItem
+    | import("@pdx-ts/stellaris-ids").VanillaComponentTagMember
+) => ComponentTagModifierOperations_Planet;
+
+export type ComponentTagModifierOperations_Sector = {
+  readonly weapon: {
+    readonly damage: { readonly mult: ModifierSetter };
+    readonly fire: { readonly rate: { readonly mult: ModifierSetter } };
+  };
+  readonly speed: { readonly mult: ModifierSetter };
+};
+
+export type ComponentTagModifierPath_Sector = (
+  value:
+    | import("../authoring/component-tags.ts").ComponentTagItem
+    | import("@pdx-ts/stellaris-ids").VanillaComponentTagMember
+) => ComponentTagModifierOperations_Sector;
+
+export type ComponentTagModifierOperations_System = {
+  readonly weapon: {
+    readonly damage: { readonly mult: ModifierSetter };
+    readonly fire: { readonly rate: { readonly mult: ModifierSetter } };
+  };
+  readonly speed: { readonly mult: ModifierSetter };
+};
+
+export type ComponentTagModifierPath_System = (
+  value:
+    | import("../authoring/component-tags.ts").ComponentTagItem
+    | import("@pdx-ts/stellaris-ids").VanillaComponentTagMember
+) => ComponentTagModifierOperations_System;
+
+export type ComponentTagModifierOperations_Country = {
+  readonly weapon: {
+    readonly damage: { readonly mult: ModifierSetter };
+    readonly fire: { readonly rate: { readonly mult: ModifierSetter } };
+  };
+  readonly speed: { readonly mult: ModifierSetter };
+};
+
+export type ComponentTagModifierPath_Country = (
+  value:
+    | import("../authoring/component-tags.ts").ComponentTagItem
+    | import("@pdx-ts/stellaris-ids").VanillaComponentTagMember
+) => ComponentTagModifierOperations_Country;
+
+export type ComponentTagModifierOperations_Leader = {
+  readonly weapon: {
+    readonly damage: { readonly mult: ModifierSetter };
+    readonly fire: { readonly rate: { readonly mult: ModifierSetter } };
+  };
+  readonly speed: { readonly mult: ModifierSetter };
+};
+
+export type ComponentTagModifierPath_Leader = (
+  value:
+    | import("../authoring/component-tags.ts").ComponentTagItem
+    | import("@pdx-ts/stellaris-ids").VanillaComponentTagMember
+) => ComponentTagModifierOperations_Leader;
+
+export type ComponentTagModifierOperations_Any = {
+  readonly weapon: {
+    readonly damage: { readonly mult: ModifierSetter };
+    readonly fire: { readonly rate: { readonly mult: ModifierSetter } };
+  };
+  readonly speed: { readonly mult: ModifierSetter };
+};
+
+export type ComponentTagModifierPath_Any = (
+  value:
+    | import("../authoring/component-tags.ts").ComponentTagItem
+    | import("@pdx-ts/stellaris-ids").VanillaComponentTagMember
+) => ComponentTagModifierOperations_Any;
+
 /**
  * Records modifiers valid in `army` scope: each path segment completes
  * from a small menu, and the joined path is the game's flat modifier name.
@@ -68275,6 +68410,7 @@ export interface CountryModifierRecorder extends ModifierPath2576 {
   readonly scripted: ScriptedModifierSelector<"country">;
   readonly economic: EconomicCategorySelector<"country">;
   readonly job: JobModifierPath_Country;
+  readonly componentTag: ComponentTagModifierPath_Country;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof CountryModifierBlock & string, value: number): void;
   /** Sets a modifier by an arbitrary, unchecked name. */
@@ -68327,6 +68463,7 @@ export interface FederationModifierRecorder extends ModifierPath2751 {
 export interface FleetModifierRecorder extends ModifierPath2932 {
   readonly scripted: ScriptedModifierSelector<"fleet">;
   readonly economic: EconomicCategorySelector<"fleet">;
+  readonly componentTag: ComponentTagModifierPath_Fleet;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof FleetModifierBlock & string, value: number): void;
   /** Sets a modifier by an arbitrary, unchecked name. */
@@ -68340,6 +68477,7 @@ export interface FleetModifierRecorder extends ModifierPath2932 {
 export interface LeaderModifierRecorder extends ModifierPath3097 {
   readonly scripted: ScriptedModifierSelector<"leader">;
   readonly economic: EconomicCategorySelector<"leader">;
+  readonly componentTag: ComponentTagModifierPath_Leader;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof LeaderModifierBlock & string, value: number): void;
   /** Sets a modifier by an arbitrary, unchecked name. */
@@ -68367,6 +68505,7 @@ export interface PlanetModifierRecorder extends ModifierPath3394 {
   readonly scripted: ScriptedModifierSelector<"planet">;
   readonly economic: EconomicCategorySelector<"planet">;
   readonly job: JobModifierPath_Planet;
+  readonly componentTag: ComponentTagModifierPath_Planet;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof PlanetModifierBlock & string, value: number): void;
   /** Sets a modifier by an arbitrary, unchecked name. */
@@ -68408,6 +68547,7 @@ export interface SectorModifierRecorder extends ModifierPath3402 {
   readonly scripted: ScriptedModifierSelector<"sector">;
   readonly economic: EconomicCategorySelector<"sector">;
   readonly job: JobModifierPath_Sector;
+  readonly componentTag: ComponentTagModifierPath_Sector;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof SectorModifierBlock & string, value: number): void;
   /** Sets a modifier by an arbitrary, unchecked name. */
@@ -68422,6 +68562,7 @@ export interface ShipModifierRecorder extends ModifierPath3426 {
   readonly scripted: ScriptedModifierSelector<"ship">;
   readonly economic: EconomicCategorySelector<"ship">;
   readonly job: JobModifierPath_Ship;
+  readonly componentTag: ComponentTagModifierPath_Ship;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof ShipModifierBlock & string, value: number): void;
   /** Sets a modifier by an arbitrary, unchecked name. */
@@ -68463,6 +68604,7 @@ export interface StarbaseModifierRecorder extends ModifierPath3453 {
   readonly scripted: ScriptedModifierSelector<"starbase">;
   readonly economic: EconomicCategorySelector<"starbase">;
   readonly job: JobModifierPath_Starbase;
+  readonly componentTag: ComponentTagModifierPath_Starbase;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof StarbaseModifierBlock & string, value: number): void;
   /** Sets a modifier by an arbitrary, unchecked name. */
@@ -68477,6 +68619,7 @@ export interface SystemModifierRecorder extends ModifierPath3455 {
   readonly scripted: ScriptedModifierSelector<"system">;
   readonly economic: EconomicCategorySelector<"system">;
   readonly job: JobModifierPath_System;
+  readonly componentTag: ComponentTagModifierPath_System;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof SystemModifierBlock & string, value: number): void;
   /** Sets a modifier by an arbitrary, unchecked name. */
@@ -68525,6 +68668,7 @@ export interface AnyScopeModifierRecorder extends ModifierPath3456 {
   readonly scripted: ScriptedModifierSelector<ScopeName>;
   readonly economic: EconomicCategorySelector<ScopeName>;
   readonly job: JobModifierPath_Any;
+  readonly componentTag: ComponentTagModifierPath_Any;
   /** Sets a modifier by its flat name, checked against every known name. */
   raw(name: keyof AnyScopeModifierBlock & string, value: number): void;
   /** Sets a modifier by an arbitrary, unchecked name. */

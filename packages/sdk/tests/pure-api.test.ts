@@ -73,6 +73,55 @@ const CONFIG = {
 
 const vanilla = viewFromFiles(FILES, { gameVersion: "4.4.6" });
 
+describe("component-tag capability", () => {
+  it("mints, validates, and emits immutable bare-scalar tag files", () => {
+    const mod = createMod({
+      name: "Component Tags",
+      prefix: "ct_probe",
+      supportedVersion: "4.4.*",
+    });
+    const alpha = mod.componentTag("alpha_role");
+    const zeta = mod.componentTag("zeta_role");
+    const built = mod.compile([mod.feature("roles", [zeta, alpha])]);
+
+    expect(alpha.id).toBe("ct_probe_alpha_role");
+    expect(Object.isFrozen(alpha)).toBe(true);
+    expect(Object.isFrozen(built.componentTagFiles)).toBe(true);
+    expect(built.componentTagFiles).toHaveLength(1);
+    expect(
+      built.paths.some((claim) => claim.path === "common/component_tags/ct_probe_roles.txt")
+    ).toBe(true);
+    expect(render(built).get("common/component_tags/ct_probe_roles.txt")).toBe(
+      "ct_probe_alpha_role\n\nct_probe_zeta_role\n"
+    );
+    expect(() => mod.componentTag("Not_Snake_Case")).toThrow("lowercase snake_case");
+  });
+
+  it("rejects duplicate ids and tags owned by another capability", () => {
+    const first = createMod({ name: "First", prefix: "ct_first", supportedVersion: "4.4.*" });
+    const second = createMod({ name: "Second", prefix: "ct_second", supportedVersion: "4.4.*" });
+    const tag = first.componentTag("role");
+
+    expect(() => first.compile([first.feature(undefined, [tag, tag])])).toThrow("more than once");
+    expect(() => second.feature(undefined, [tag])).toThrow("different capability");
+  });
+
+  it("requires a referenced owned tag to be placed in the compiled features", () => {
+    const mod = createMod({ name: "References", prefix: "ct_refs", supportedVersion: "4.4.*" });
+    const role = mod.componentTag("artillery_role");
+    const ship = mod.shipSize("test_ship", {
+      class: "military",
+      shipRoles: [role],
+      shipModifier: (modifier) => modifier.componentTag(role).weapon.damage.mult(0.1),
+    });
+
+    expect(() => mod.compile([mod.feature("ships", [ship])])).toThrow("no such component_tag");
+    expect(() =>
+      mod.compile([mod.feature("roles", [role]), mod.feature("ships", [ship])])
+    ).not.toThrow();
+  });
+});
+
 /**
  * The representative capability fixture: every definition is a value, and an
  * explicit feature places it. It exercises every channel the mod has — content with

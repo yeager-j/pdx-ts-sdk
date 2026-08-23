@@ -10787,7 +10787,8 @@ export function hasRival(
  * ```
  */
 export function hasRole(value: ComponentTag): Trigger<"design" | "ship_growth_stage"> {
-  return trigger([kv("has_role", value)]);
+  const id = String(refId(value));
+  return trigger([kv("has_role", id)], [{ targets: ["component_tag"], id, field: "has_role" }]);
 }
 
 /**
@@ -14555,7 +14556,11 @@ export function isPreferredPatron(value: PatronTypeRef | string): Trigger<"count
  * ```
  */
 export function isPreferredWeapons(value: ComponentTag): Trigger<"country"> {
-  return trigger([kv("is_preferred_weapons", value)]);
+  const id = String(refId(value));
+  return trigger(
+    [kv("is_preferred_weapons", id)],
+    [{ targets: ["component_tag"], id, field: "is_preferred_weapons" }]
+  );
 }
 
 /**

@@ -1,1 +1,1 @@
-fake_component_tag = {}
+fake_component_tag

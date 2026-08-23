@@ -9,6 +9,7 @@ import type { ContentFile, DefinedGroup, EmittedFile } from "./model.ts";
 type ReferenceValidationInput = {
   readonly prefix: string;
   readonly contentFiles: readonly ContentFile[];
+  readonly componentTagIds: ReadonlySet<string>;
   readonly eventFiles: readonly EmittedFile[];
   readonly eventIds: ReadonlySet<string>;
   readonly definedGroups: readonly DefinedGroup[];
@@ -123,7 +124,8 @@ function indexDefinitionsByType(
 
 function collectBuiltIds(
   definedGroups: readonly DefinedGroup[],
-  patched: ReferenceValidationInput["patched"]
+  patched: ReferenceValidationInput["patched"],
+  componentTagIds: ReadonlySet<string>
 ): ReadonlyMap<string, ReadonlySet<string>> {
   const builtIds = new Map<string, Set<string>>();
   for (const group of definedGroups) {
@@ -152,6 +154,9 @@ function collectBuiltIds(
     }
     builtIds.set(registryType, ids);
   }
+  if (componentTagIds.size > 0) {
+    builtIds.set("component_tag", new Set(componentTagIds));
+  }
   return builtIds;
 }
 
@@ -165,6 +170,9 @@ function resolveTargetRegistries(target: string): readonly string[] | undefined 
 }
 
 function registriesFor(use: ContentRefUse): readonly string[] | undefined {
+  if (use.targets.length === 1 && use.targets[0] === "component_tag") {
+    return ["component_tag"];
+  }
   if (use.targets.length === 0) {
     return undefined;
   }
@@ -186,6 +194,16 @@ function assertContentReferenceExists(
   builtIds: ReadonlyMap<string, ReadonlySet<string>>,
   vanillaIdsOf: ReferenceValidationInput["vanillaIdsOf"]
 ): void {
+  if (use.targets.length === 1 && use.targets[0] === "component_tag") {
+    if (!use.id.startsWith(`${prefix}_`) || builtIds.get("component_tag")?.has(use.id)) {
+      return;
+    }
+    throw new Error(
+      `${owner} references component_tag "${use.id}" in "${use.field}", but no such component_tag is ` +
+        `among the features passed to buildMod — the id carries this mod's prefix "${prefix}_", so this build has to define it; ` +
+        "was its feature passed to buildMod?"
+    );
+  }
   const registries = registriesFor(use);
   if (registries === undefined || use.verifiedVanilla === true) {
     return;
@@ -228,7 +246,7 @@ export interface ReferenceUse {
  */
 export function validateReferences(args: ReferenceValidationInput): void {
   assertOwnEventReferencesExist(args.prefix, args.contentFiles, args.eventFiles, args.eventIds);
-  const builtIds = collectBuiltIds(args.definedGroups, args.patched);
+  const builtIds = collectBuiltIds(args.definedGroups, args.patched, args.componentTagIds);
   for (const { owner, use } of args.refUses) {
     assertContentReferenceExists(owner, use, args.prefix, builtIds, args.vanillaIdsOf);
   }

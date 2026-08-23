@@ -47,6 +47,12 @@ export function render(mod: PureMod): RenderedMod {
       text: serialize(file.entries),
     });
   }
+  for (const file of mod.componentTagFiles) {
+    files.push({
+      path: file.relPath,
+      text: serialize(file.entries),
+    });
+  }
   for (const file of mod.eventFiles) {
     files.push({
       path: file.relPath,

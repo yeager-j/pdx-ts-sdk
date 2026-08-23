@@ -7,6 +7,7 @@ import type { RuleType } from "../cwt/model.ts";
 import { scopeIndex, type RuleSet } from "../cwt/rules.ts";
 import { pascalCase } from "../naming.ts";
 import { OverlayAudit } from "../overlay/audit.ts";
+import { COMPLEX_ENUM_REFERENCE_OVERLAYS } from "../overlay/index.ts";
 import { ImportRecorder, knownSymbol, type FileImports, type SymbolKind } from "./symbols.ts";
 
 /**
@@ -134,7 +135,16 @@ export function aliasCategoryModule(category: string): string {
  * file never writes.
  */
 export function referenceTargetsOf(types: readonly RuleType[]): readonly string[] | undefined {
-  const referenced = types.flatMap((type) => (type.kind === "typeRef" ? [type.name] : []));
+  const referenced = types.flatMap((type) => {
+    if (type.kind === "typeRef") {
+      return [type.name];
+    }
+    if (type.kind === "enum") {
+      const overlay = COMPLEX_ENUM_REFERENCE_OVERLAYS.get(type.name);
+      return overlay === undefined ? [] : [overlay.target];
+    }
+    return [];
+  });
   return referenced.length === types.length ? [...new Set(referenced)] : undefined;
 }
 
@@ -406,9 +416,20 @@ export class Emitter {
         }
         this.usedEnums.add(type.name);
         this.scopedEnums.add(type.name);
+        const reference = COMPLEX_ENUM_REFERENCE_OVERLAYS.get(type.name);
         return {
           type: this.enumTypeName(type.name),
-          toScalar: (expression) => expression,
+          toScalar:
+            reference === undefined
+              ? (expression) => expression
+              : (expression) => `String(refId(${expression}))`,
+          ...(reference === undefined
+            ? {}
+            : {
+                refTypes: [reference.target],
+                objectKinds: ["typed-ref" as const],
+                scalarSymbol: "refId",
+              }),
           // An enum CWT names but never populates emits as bare `string`, so
           // its set is open however the rules spell it.
           ...(members.length > 0 ? { literals: members } : {}),

@@ -55,6 +55,11 @@ import {
   type AssetTreeInput,
 } from "./assets.ts";
 import {
+  assertComponentTagOwner,
+  createComponentTagItem,
+  type ComponentTagItem,
+} from "./component-tags.ts";
+import {
   assertNamespace,
   createFeature,
   FILE_STEM_PATTERN,
@@ -140,6 +145,13 @@ export type ModCapability<P extends string, I extends IdProfile> = {
   compile(features: readonly CapabilityFeature<P>[], options?: BuildOptions): PureMod;
   /** Creates a pure on-action contribution; place its returned value in a feature. */
   readonly on: typeof on;
+  /**
+   * Declares a component tag owned by this mod.
+   *
+   * Generated modifiers using this tag need matching `mod_<modifier_key>` localization and
+   * `gfx/interface/icons/modifiers/<modifier_key>.dds`; add both through the existing APIs.
+   */
+  componentTag<const Name extends string>(name: Name): ComponentTagItem<P, Name>;
   /**
    * Creates standalone localization under a key owned by this mod.
    *
@@ -430,6 +442,9 @@ function assertCapabilityItem(
     case "asset":
       assertAssetOwner(item, capabilityOwner);
       return;
+    case "component-tag":
+      assertComponentTagOwner(item, capabilityOwner, prefix);
+      return;
   }
 }
 
@@ -522,6 +537,10 @@ export function createMod<const P extends string, const I extends IdProfile>(
       return buildMod(config, features, buildOptions);
     },
     on,
+    componentTag: <const Name extends string>(name: Name) => {
+      assertLogicalName(name);
+      return createComponentTagItem(capabilityOwner, config.prefix, name);
+    },
     localization: localizationFor(config.prefix),
     replaceLocalization: <const Key extends string>(key: Key, text: LocalizationText) =>
       createReplacementLocalizationItem(config.prefix, key, text),

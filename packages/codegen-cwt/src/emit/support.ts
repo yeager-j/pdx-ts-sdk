@@ -1,6 +1,7 @@
 /** Emitters for the small supporting modules: scopes, enums, and references. */
 
 import { camelCase, docComment, pascalCase, pluralize } from "../naming.ts";
+import { COMPLEX_ENUM_REFERENCE_OVERLAYS } from "../overlay/index.ts";
 import type { Emitter } from "../render/emitter.ts";
 
 /**
@@ -35,6 +36,7 @@ export function emitEnums(emitter: Emitter): string {
     const values = emitter.rules.enums.get(name) ?? [];
     if (values.length === 0) {
       const complex = emitter.rules.complexEnums.has(name);
+      const reference = COMPLEX_ENUM_REFERENCE_OVERLAYS.get(name);
       // `enum[component_tag]` is declared with no members: the values come from
       // the game's own content files, not the rules. A union of nothing is
       // `never`, which would make every field of this type unsatisfiable, and
@@ -49,7 +51,9 @@ export function emitEnums(emitter: Emitter): string {
             : "The rules declare this enum with no values — its members come from content files rather than from `enums.cwt` — so it cannot narrow beyond `string`.",
         ]) +
           `export type ${pascalCase(name)} = ${
-            complex ? `VanillaEnumMember<${JSON.stringify(name)}> | (string & {})` : "string"
+            complex
+              ? `VanillaEnumMember<${JSON.stringify(name)}> | (string & {})${reference === undefined ? "" : ` | ${reference.itemType}`}`
+              : "string"
           };\n`
       );
       continue;
