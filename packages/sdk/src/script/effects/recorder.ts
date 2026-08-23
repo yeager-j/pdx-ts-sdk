@@ -575,7 +575,13 @@ function scalarOrBlockEffect(
         sink.push(
           block(
             key,
-            recordBlock(recording, refs, value as (scope: unknown) => void, [], shape.block.transition)
+            recordBlock(
+              recording,
+              refs,
+              value as (scope: unknown) => void,
+              [],
+              shape.block.transition
+            )
           )
         );
         return;
@@ -1200,14 +1206,7 @@ function makeAnyScope(sink: PdxEntry[], refs: ContentRefUse[], recording?: Recor
         };
       case "scalar-or-block":
         return (...args: unknown[]) =>
-          scalarOrBlockEffect(
-            meta.key,
-            shape,
-            args,
-            receiver.sink,
-            receiver.refs,
-            receiver.owner
-          );
+          scalarOrBlockEffect(meta.key, shape, args, receiver.sink, receiver.refs, receiver.owner);
       case "scope-link":
         return makeEffectPath(sink, refs, recording, [meta.key], [shape.transition]);
     }
