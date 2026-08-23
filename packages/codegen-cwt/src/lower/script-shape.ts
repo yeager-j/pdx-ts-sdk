@@ -252,8 +252,11 @@ export interface ArgField {
   readonly value: ArgValue;
   /** Whether authors may omit the field. */
   readonly optional: boolean;
-  /** Whether authors may repeat the field as sibling keys. */
-  readonly repeated?: boolean;
+  /**
+   * How often authors may repeat the field as sibling keys, absent when the
+   * rules permit it at most once.
+   */
+  readonly repeated?: Cardinality;
   /** Documentation retained from every merged declaration. */
   readonly docs: readonly string[];
 }
@@ -408,7 +411,12 @@ export function comparisonValue(
   return value;
 }
 
-function combinedCardinality(values: readonly RuleBareValue[]): Cardinality {
+/**
+ * The item count a braced block admits, summed: each anonymous declaration is
+ * another slot in the same block, so `<color_define>` 0..4 beside `"null"`
+ * 0..4 admits up to eight items.
+ */
+function totalCardinality(values: readonly RuleBareValue[]): Cardinality {
   return {
     min: values.reduce((sum, value) => sum + value.cardinality.min, 0),
     max: values.some((value) => value.cardinality.max === null)
@@ -418,20 +426,52 @@ function combinedCardinality(values: readonly RuleBareValue[]): Cardinality {
 }
 
 /**
+ * The occurrence count one named key admits, as an envelope over its
+ * declarations rather than a sum: each declaration is another *form* the one
+ * key accepts, not another key. `ethic = <ethic>` 1..3 beside `ethic = random`
+ * 1..3 is three ethics that may each take either form, not six.
+ *
+ * This is the reading {@link ArgField.optional} already takes, where any
+ * declaration permitting absence makes the whole field optional.
+ */
+function widestCardinality(fields: readonly RuleField[]): Cardinality {
+  return {
+    min: Math.min(...fields.map((field) => field.cardinality.min)),
+    max: fields.some((field) => field.cardinality.max === null)
+      ? null
+      : Math.max(...fields.map((field) => field.cardinality.max!)),
+  };
+}
+
+/**
  * Renders the readonly tuple or array type admitted by an item cardinality.
  * Finite ranges become tuple unions; unbounded ranges preserve their minimum prefix.
  */
+/**
+ * The widest maximum still worth spelling as a tuple union.
+ *
+ * Each permitted length is its own arm, so `0..100` — how `effects.cwt` writes
+ * "as many as you like" for starbase modules and message variables — would be
+ * 101 arms of up to 100 members each, which states the bound far less clearly
+ * than an array does. Eight is the widest union the rules already produce
+ * (`create_country.flag.colors`, two 0..4 declarations of one block).
+ */
+const TUPLE_UNION_LIMIT = 8;
+
 export function cardinalityArrayType(item: string, cardinality: Cardinality): string {
   const tuple = (length: number): string =>
     `readonly [${Array.from({ length }, () => item).join(", ")}]`;
-  if (cardinality.max !== null) {
+  if (cardinality.max !== null && cardinality.max <= TUPLE_UNION_LIMIT) {
     return Array.from({ length: cardinality.max - cardinality.min + 1 }, (_, index) =>
       tuple(cardinality.min + index)
     ).join(" | ");
   }
+  // `A | B[]` is an array of B beside an A, so only the array forms bracket a
+  // union item. A tuple element already ends at its comma.
+  const element = item.includes(" | ") ? `(${item})` : item;
   return cardinality.min === 0
-    ? `readonly ${item}[]`
-    : `readonly [${Array.from({ length: cardinality.min }, () => item).join(", ")}, ...${item}[]]`;
+    ? `readonly ${element}[]`
+    : `readonly [${Array.from({ length: cardinality.min }, () => item).join(", ")}, ...${element}[]]`;
 }
 
 /**
@@ -444,13 +484,18 @@ export function cardinalityArrayType(item: string, cardinality: Cardinality): st
  * operands and silently write two keys where the author meant one comparison,
  * and an empty list would name an operator the author never wrote.
  */
-export function repeatedMemberType(emitter: Emitter, value: ArgValue, single: string): string {
+export function repeatedMemberType(
+  emitter: Emitter,
+  value: ArgValue,
+  single: string,
+  cardinality: Cardinality
+): string {
   if (value.kind === "comparison") {
     const operand = emitter.useValue(value.value).type;
     const pair = `readonly [${emitter.use("PdxOp")}, ${operand}]`;
     return `${single} | readonly [${pair}, ...(${pair})[]]`;
   }
-  return `readonly ${single.includes(" | ") ? `(${single})` : single}[]`;
+  return cardinalityArrayType(single, cardinality);
 }
 
 /** Lowers the anonymous contents of one braced field. */
@@ -537,7 +582,7 @@ export function bareBlockValue(
     kind: "valueList",
     scalar,
     fields,
-    cardinality: combinedCardinality(bare),
+    cardinality: totalCardinality(bare),
   };
 }
 
@@ -854,13 +899,15 @@ export function mergeFields(
     if ("detail" in value) {
       return value;
     }
-    const repeated = group.some((field) => isRepeated(field.cardinality));
+    const occurrences = widestCardinality(group);
     merged.push({
       name,
       value,
-      optional: group.some((field) => isOptional(field.cardinality)),
-      ...(repeated ? { repeated: true } : {}),
-      docs: group.flatMap((field) => field.docs),
+      optional: isOptional(occurrences),
+      ...(isRepeated(occurrences) ? { repeated: occurrences } : {}),
+      // One key's declarations are its forms, and CWT documents each form
+      // separately, so the same sentence usually arrives once per form.
+      docs: [...new Set(group.flatMap((field) => field.docs))],
     });
   }
   if (splices.length === 0) {

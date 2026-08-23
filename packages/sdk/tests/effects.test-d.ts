@@ -360,6 +360,26 @@ describe("a spliced alias category's authoring type", () => {
   });
 });
 
+describe("a repeated argument the rules bound", () => {
+  it("admits the lengths CWT declares and no others", () => {
+    const country = makeScope<"country">(sink);
+    country.createCountry({
+      type: "effects_type_test_country_type",
+      ethos: { ethic: ["ethic_a", "ethic_b", "ethic_c"] },
+    });
+    country.createCountry({
+      type: "effects_type_test_country_type",
+      // @ts-expect-error — the rules declare 1..3 ethics, so an empty list is none
+      ethos: { ethic: [] },
+    });
+    country.createCountry({
+      type: "effects_type_test_country_type",
+      // @ts-expect-error — the rules declare 1..3 ethics, and this is four
+      ethos: { ethic: ["ethic_a", "ethic_b", "ethic_c", "ethic_d"] },
+    });
+  });
+});
+
 describe("an effect field the game documents as optional", () => {
   it("lets createCountry omit removeInvalidCivics", () => {
     const country = makeScope<"country">(sink);

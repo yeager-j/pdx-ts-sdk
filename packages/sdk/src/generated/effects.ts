@@ -222,12 +222,16 @@ export type FleetAction<S extends ScopeName> =
   | {
       repeat: {
         maxIterations?: number;
-        while?: { id: string; conditions: Trigger<S> };
+        while?: {
+          /** TODO: ID seems to have to be in quotes (Vanilla also does that). Also, I think they are meant to be unique ideas, but I'm not sure about that. -Caligula */
+          id: string;
+          conditions: Trigger<S>;
+        };
         actions: readonly FleetAction<S>[];
       };
     }
-  /** This requires the fleet to be a planet destroyer */
   | {
+      /** This requires the fleet to be a planet destroyer */
       destroyPlanet: {
         target: ScopeValue<"planet">;
         skipRules?: boolean;
@@ -237,21 +241,33 @@ export type FleetAction<S extends ScopeName> =
     }
   | {
       findRandomSystem: {
-        trigger?: { id: string; conditions: Trigger<"system"> };
+        trigger?: {
+          /** TODO: ID seems to have to be in quotes (Vanilla also does that). Also, I think they are meant to be unique ideas, but I'm not sure about that. -Caligula */
+          id: string;
+          conditions: Trigger<"system">;
+        };
         foundSystem: readonly FleetAction<"system">[];
         failed?: readonly FleetAction<S>[];
       };
     }
   | {
       findRandomPlanet: {
-        trigger?: { id: string; conditions: Trigger<"planet"> };
+        trigger?: {
+          /** TODO: ID seems to have to be in quotes (Vanilla also does that). Also, I think they are meant to be unique ideas, but I'm not sure about that. -Caligula */
+          id: string;
+          conditions: Trigger<"planet">;
+        };
         foundPlanet: readonly FleetAction<"planet">[];
         failed?: readonly FleetAction<S>[];
       };
     }
   | {
       findRandomFleet: {
-        trigger?: { id: string; conditions: Trigger<"fleet"> };
+        trigger?: {
+          /** TODO: ID seems to have to be in quotes (Vanilla also does that). Also, I think they are meant to be unique ideas, but I'm not sure about that. -Caligula */
+          id: string;
+          conditions: Trigger<"fleet">;
+        };
         foundFleet: readonly FleetAction<"fleet">[];
         failed?: readonly FleetAction<S>[];
         systemOnly?: boolean;
@@ -259,27 +275,45 @@ export type FleetAction<S extends ScopeName> =
     }
   | {
       findClosestSystem: {
-        trigger?: { id: string; conditions: Trigger<"system"> };
+        trigger?: {
+          /** TODO: ID seems to have to be in quotes (Vanilla also does that). Also, I think they are meant to be unique ideas, but I'm not sure about that. -Caligula */
+          id: string;
+          conditions: Trigger<"system">;
+        };
         foundSystem: readonly FleetAction<"system">[];
         failed?: readonly FleetAction<S>[];
       };
     }
   | {
       findClosestPlanet: {
-        trigger?: { id: string; conditions: Trigger<"planet"> };
+        trigger?: {
+          /** TODO: ID seems to have to be in quotes (Vanilla also does that). Also, I think they are meant to be unique ideas, but I'm not sure about that. -Caligula */
+          id: string;
+          conditions: Trigger<"planet">;
+        };
         foundPlanet: readonly FleetAction<"planet">[];
         failed?: readonly FleetAction<S>[];
       };
     }
   | {
       findClosestFleet: {
-        trigger?: { id: string; conditions: Trigger<"fleet"> };
+        trigger?: {
+          /** TODO: ID seems to have to be in quotes (Vanilla also does that). Also, I think they are meant to be unique ideas, but I'm not sure about that. -Caligula */
+          id: string;
+          conditions: Trigger<"fleet">;
+        };
         foundFleet: readonly FleetAction<"fleet">[];
         failed?: readonly FleetAction<S>[];
         systemOnly?: boolean;
       };
     }
-  | { effect: { id: string; effects: (scope: ScopeObjOf<S>) => void } }
+  | {
+      effect: {
+        /** TODO: ID seems to have to be in quotes (Vanilla also does that). Also, I think they are meant to be unique ideas, but I'm not sure about that. -Caligula */
+        id: string;
+        effects: (scope: ScopeObjOf<S>) => void;
+      };
+    }
   | { wait: number | { duration: number; random?: number } }
   | { mergeFleet: { target: ScopeValue<"fleet">; allowFtl?: boolean } }
   | { attackFleet: { target: ScopeValue<"fleet">; allowFtl?: boolean } }
@@ -306,7 +340,13 @@ export type FleetAction<S extends ScopeName> =
     }
   | { orbitPlanet: ScopeValue<"planet"> | "random" }
   | { terraformFleet: ScopeValue<"planet"> }
-  | { changeStance: { stance: FleetStance; days?: number } };
+  | {
+      changeStance: {
+        stance: FleetStance;
+        /** days to wait */
+        days?: number;
+      };
+    };
 
 /** The arguments `addModifier` takes, as the rules declare them. */
 export type AddModifierArgs = {
@@ -603,6 +643,7 @@ export interface EffectsIn29Scopes878c {
     trigger: string;
     parameters?: "$any";
     variable: Variable;
+    /** default: no */
     rounded?: "yes";
   }): void;
 
@@ -659,7 +700,14 @@ export interface EffectsIn29Scopes878c {
    * }
    * ```
    */
-  setSavedDate(args: { key: Variable; daysFromPresent?: ScriptValue; expires?: ScriptValue }): void;
+  setSavedDate(args: {
+    /** Refer to this in locs; note: this is actually a <country/whatever>_flag */
+    key: Variable;
+    /** Time until the date you wish to save. Default is present */
+    daysFromPresent?: ScriptValue;
+    /** Time until the saved date is cleared, default is never */
+    expires?: ScriptValue;
+  }): void;
 
   /**
    * Sets or creates an arbitrarily-named variable with a specific value in the current scope (Note: Colony doesn't store variables. Using any of the variable effects/triggers in colony scope will access variables in the colony carrier instead.)
@@ -710,6 +758,7 @@ export interface EffectsIn4Scopes2b24 {
    */
   addBlocker(args: {
     type: DepositBlockerRef | string;
+    /** none is default, if you specify a scope or random then it copies the type to the blocked deposit but any flags or variables are lost */
     blockedDeposit?: "random" | "none" | ScopeValue<"deposit">;
   }): void;
 
@@ -1001,9 +1050,13 @@ export interface EffectsIn4Scopes2b24 {
           | "system"
         >
       | { ethic: EthicRef | string };
+    /** (optional; if omitted and no base group is defined, use lowest rank pop category) */
     category?: PopCategoryRef | string;
+    /** (optional, default: POP_BULK_UNIT_SIZE) */
     size?: ScriptValue;
+    /** If set, the amount will be randomized in [size - random, size + random]. The minimum value is 0 if size is 0, and 1 otherwise. */
     random?: ScriptValue;
+    /** default: 'GROWTH_CAT_OTHER' */
     growthCategory?: string;
     effect?: (scope: PopGroupScope) => void;
   }): void;
@@ -1049,6 +1102,7 @@ export interface EffectsIn4Scopes2b24 {
           | "system"
         >;
     origin?: CivicOrOriginOriginRef | string;
+    /** random includes starting civics */
     civics?:
       | ScopeValue<
           | "agreement"
@@ -1112,7 +1166,12 @@ export interface EffectsIn4Scopes2b24 {
           | "starbase"
           | "system"
         >
-      | { ethic: readonly (EthicRef | string)[] };
+      | {
+          ethic:
+            | readonly [EthicRef | string]
+            | readonly [EthicRef | string, EthicRef | string]
+            | readonly [EthicRef | string, EthicRef | string, EthicRef | string];
+        };
     flag?:
       | ScopeValue<
           | "agreement"
@@ -1191,6 +1250,7 @@ export interface EffectsIn4Scopes2b24 {
               ];
         };
     nameList?: NameListRef | string | "random";
+    /** This presumably works (report if not) */
     shipPrefix?: string;
     releasedFromCountry?: ScopeValue<
       | "agreement"
@@ -1214,6 +1274,7 @@ export interface EffectsIn4Scopes2b24 {
       | "starbase"
       | "system"
     >;
+    /** this is required to spawn rebels for the rebellion to work in the first place */
     effect: (scope: CountryScope) => void;
   }): void;
 
@@ -1450,7 +1511,11 @@ export interface EffectsIn4Scopes2b24 {
    * ```
    */
   randomDeposit(
-    args: { limit?: Trigger<"deposit">; weights?: readonly Modifier<"deposit">[] },
+    args: {
+      limit?: Trigger<"deposit">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"deposit">[];
+    },
     body: (scope: DepositScope) => void
   ): void;
 
@@ -1468,7 +1533,11 @@ export interface EffectsIn4Scopes2b24 {
    * ```
    */
   randomGroundCombatAttacker(
-    args: { limit?: Trigger<"army">; weights?: readonly Modifier<"army">[] },
+    args: {
+      limit?: Trigger<"army">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"army">[];
+    },
     body: (scope: ArmyScope) => void
   ): void;
 
@@ -1486,7 +1555,11 @@ export interface EffectsIn4Scopes2b24 {
    * ```
    */
   randomGroundCombatDefender(
-    args: { limit?: Trigger<"army">; weights?: readonly Modifier<"army">[] },
+    args: {
+      limit?: Trigger<"army">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"army">[];
+    },
     body: (scope: ArmyScope) => void
   ): void;
 
@@ -1504,7 +1577,11 @@ export interface EffectsIn4Scopes2b24 {
    * ```
    */
   randomMoon(
-    args: { limit?: Trigger<"planet">; weights?: readonly Modifier<"planet">[] },
+    args: {
+      limit?: Trigger<"planet">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"planet">[];
+    },
     body: (scope: PlanetScope) => void
   ): void;
 
@@ -1522,7 +1599,11 @@ export interface EffectsIn4Scopes2b24 {
    * ```
    */
   randomPlanetArmy(
-    args: { limit?: Trigger<"army">; weights?: readonly Modifier<"army">[] },
+    args: {
+      limit?: Trigger<"army">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"army">[];
+    },
     body: (scope: ArmyScope) => void
   ): void;
 
@@ -1540,7 +1621,11 @@ export interface EffectsIn4Scopes2b24 {
    * ```
    */
   randomTargetingSituation(
-    args: { limit?: Trigger<"situation">; weights?: readonly Modifier<"situation">[] },
+    args: {
+      limit?: Trigger<"situation">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"situation">[];
+    },
     body: (scope: SituationScope) => void
   ): void;
 
@@ -1934,7 +2019,11 @@ export interface EffectsIn5Scopes3588 {
    * ```
    */
   randomEnslavedSpecies(
-    args: { limit?: Trigger<"species">; weights?: readonly Modifier<"species">[] },
+    args: {
+      limit?: Trigger<"species">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"species">[];
+    },
     body: (scope: SpeciesScope) => void
   ): void;
 
@@ -1952,7 +2041,11 @@ export interface EffectsIn5Scopes3588 {
    * ```
    */
   randomOwnedSpecies(
-    args: { limit?: Trigger<"species">; weights?: readonly Modifier<"species">[] },
+    args: {
+      limit?: Trigger<"species">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"species">[];
+    },
     body: (scope: SpeciesScope) => void
   ): void;
 }
@@ -1998,7 +2091,11 @@ export interface EffectsIn5Scopes5d7d {
    * ```
    */
   randomFleetInOrbit(
-    args: { limit?: Trigger<"fleet">; weights?: readonly Modifier<"fleet">[] },
+    args: {
+      limit?: Trigger<"fleet">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"fleet">[];
+    },
     body: (scope: FleetScope) => void
   ): void;
 }
@@ -2099,6 +2196,7 @@ export interface EffectsIn5Scopes979f {
    */
   createPointOfInterest(args: {
     id: PointOfInterest;
+    /** Leaving out "name" gives a blank button that looks really terrible and unprofessional. Don't do it :P */
     name: string;
     desc?: string;
     eventChain: EventChainRef | string;
@@ -2311,7 +2409,11 @@ export interface EffectsIn7Scopesdd2e {
    * ```
    */
   randomOwnedPopJob(
-    args: { limit?: Trigger<"pop_job">; weights?: readonly Modifier<"pop_job">[] },
+    args: {
+      limit?: Trigger<"pop_job">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"pop_job">[];
+    },
     body: (scope: PopJobScope) => void
   ): void;
 }
@@ -2355,6 +2457,7 @@ export interface EffectsIn8Scopes39a9<
           | "species"
         >
       | string;
+    /** new base species; default: auto (uses species) */
     base?:
       | ScopeValue<
           | "army"
@@ -2371,6 +2474,7 @@ export interface EffectsIn8Scopes39a9<
       | "auto"
       | "none";
     addTrait?: readonly (TraitRef | string)[];
+    /** optional, pushes out other traits if needed */
     addTraitsAtStartOfList?: boolean;
     removeTrait?: readonly (TraitRef | string)[];
     idealPlanetClass?:
@@ -2388,6 +2492,10 @@ export interface EffectsIn8Scopes39a9<
         >
       | PlanetClassHabitablePlanetRef
       | string;
+    /**
+     * modify scoped pop_group/planet/leader/country; default: yes
+     * modify scoped pops/planet/leader/country; default: yes
+     */
     changeScopedSpecies?: boolean;
     portrait?:
       | ScopeValue<
@@ -2406,9 +2514,16 @@ export interface EffectsIn8Scopes39a9<
       | string
       | PortraitGroupRef
       | "random";
+    /** adds a random trait filtered by the given trigger, the Scope is the trait token, and the original scope is in Prev */
     addRandomSpeciesTrait?: Trigger<S>;
+    /** effect is fired for randomly selected trait, the Scope is the trait, the original scope is in Prev, and From contains Species */
     onRandomTraitAdded?: (scope: ScopeObjOf<S>) => void;
+    /** default: yes? */
     inheritParentRights?: boolean;
+    /**
+     * <Y/N, determines if species is pre-sapient>
+     * default: yes?
+     */
     sapient?: boolean;
     effect?: (scope: SpeciesScope) => void;
   }): void;
@@ -2463,13 +2578,21 @@ export interface EffectsIn8Scopes75eb {
    * ```
    */
   randomOwnedPopGroup(
-    args: { limit?: Trigger<"pop_group">; weights?: readonly Modifier<"pop_group">[] },
+    args: {
+      limit?: Trigger<"pop_group">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"pop_group">[];
+    },
     body: (scope: PopGroupScope) => void
   ): void;
 
   /** Weighted random on owned popgroups based on the popgroup size. Supports the same scopes as the owned_pop_group script list */
   weightedRandomOwnedPopGroup(
-    args: { limit?: Trigger<"pop_group">; weights?: readonly Modifier<"pop_group">[] },
+    args: {
+      limit?: Trigger<"pop_group">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"pop_group">[];
+    },
     body: (scope: PopGroupScope) => void
   ): void;
 }
@@ -2489,12 +2612,17 @@ export interface EffectsIn8Scopescb47 {
    * ```
    */
   killLeader(args: {
+    /** if left out will kill scoped leader, can be used multiple times */
     class?: LeaderClassRef | string | "random" | "random_ruler";
+    /** see leader class for list of abilities, will kill leader that has this ability, can be used multiple times */
     ability?: string;
     showNotification?: boolean;
+    /** default: no? */
     executed?: boolean;
     ruler?: boolean;
+    /** if added to type = ruler, will kill heir instead */
     heir?: boolean;
+    /** default: no; if yes, fires on_leader_fired instead of on_leader_death */
     fire?: boolean;
   }): void;
 }
@@ -2601,7 +2729,11 @@ export interface EffectsInAgreement {
    * }
    * ```
    */
-  setAgreementPreset(args: { preset: AgreementPresetRef | string; applyTerms?: boolean }): void;
+  setAgreementPreset(args: {
+    preset: AgreementPresetRef | string;
+    /** Defaults to 'yes' */
+    applyTerms?: boolean;
+  }): void;
 
   /**
    * Changes the agreement term for whether the Subject can be integrated
@@ -3020,6 +3152,10 @@ export interface EffectsInAstralRift {
    */
   setNextAstralRiftEvent(args: {
     id: EventRef | string;
+    /**
+     * optional: specify astral rift event set when a roll fails
+     * optional: specify astral rift event probability to trigger on a failed roll
+     */
     onRollFailed?: EventRef | string;
     failProbability?: number;
   }): void;
@@ -3196,7 +3332,15 @@ export interface EffectsInCarrierPlanetShip {
           | "species"
         >
       | string;
-    ethos?: "random" | "owner" | { ethic: readonly (EthicRef | string)[] };
+    ethos?:
+      | "random"
+      | "owner"
+      | {
+          ethic:
+            | readonly [EthicRef | string]
+            | readonly [EthicRef | string, EthicRef | string]
+            | readonly [EthicRef | string, EthicRef | string, EthicRef | string];
+        };
   }): void;
 
   /**
@@ -3312,7 +3456,7 @@ export interface EffectsInCarrierPlanetShip {
           | "species"
         >
       | string;
-    ethos?: "owner" | "random" | { ethic: readonly (EthicRef | string)[] };
+    ethos?: "owner" | "random" | { ethic: readonly [EthicRef | string, ...(EthicRef | string)[]] };
   }): void;
 }
 
@@ -3342,7 +3486,15 @@ export interface EffectsInCosmicStormInfluenceField {
    * ```
    */
   orderedSystemInCosmicStormInfluenceField(
-    args: { limit?: Trigger<"system">; position: number; orderBy: ScriptValue; inverse?: boolean },
+    args: {
+      limit?: Trigger<"system">;
+      /** integer, starting with 0 */
+      position: number;
+      /** <variable>/trigger:<trigger> */
+      orderBy: ScriptValue;
+      /** default: no - if yes, then 0 is lowest rather than highest */
+      inverse?: boolean;
+    },
     body: (scope: SystemScope) => void
   ): void;
 
@@ -3360,7 +3512,11 @@ export interface EffectsInCosmicStormInfluenceField {
    * ```
    */
   randomSystemInCosmicStormInfluenceField(
-    args: { limit?: Trigger<"system">; weights?: readonly Modifier<"system">[] },
+    args: {
+      limit?: Trigger<"system">;
+      /** optional - adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"system">[];
+    },
     body: (scope: SystemScope) => void
   ): void;
 
@@ -3721,9 +3877,13 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
     tier?: TechnologyTierRef | string;
     addProgress?: ScriptValue;
     failEffects?: (scope: ScopeObjOf<"country">) => void;
+    /** default no */
     ignorePrereqs?: boolean;
+    /** default no */
     onlyRare?: boolean;
+    /** default yes */
     ignoreInsight?: boolean;
+    /** default yes */
     ignoreRare?: boolean;
   }): void;
 
@@ -3845,13 +4005,18 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    */
   addTimelineEvent(args: {
     type: TimelineEventsRef | string;
+    /** 2300.1.1 (optional - if not present, current date is used) */
     date?: string;
+    /** (There is also overrides that can be used to override settings on the database entries. The Id is required, and the others are optional) */
     overrideId?: TimelineEventId;
+    /** override_tooltip */
     overrideTooltip?: string;
     overrideTypes?: readonly ScopeTypeToken[];
     overrideText?: readonly string[];
     overrideTexture?: readonly string[];
+    /** (optional - array of event targets. This depends on localization and what event targets the type requires) */
     targets?: readonly ScopeValue[];
+    /** loc_delayed_tooltip */
     overrideTooltipDelayed?: string;
   }): void;
 
@@ -3949,7 +4114,9 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
 
   aiTradeFacility(
     args: {
+      /** default: no */
       offerHireMercenaryFleet?: boolean;
+      /** default: no */
       offerProlongFleetContract?: boolean;
       infoGathering?: (scope: ScopeObjOf<"country">) => void;
       optionSelection?: (scope: ScopeObjOf<"country">) => void;
@@ -4242,6 +4409,7 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
     >;
     category?: TechnologyCategoryRef | string;
     area?: ResearchArea;
+    /** Optional: this makes it grant the tech option rather than the whole tech */
     progress?: ScriptValue;
   }): void;
 
@@ -4325,7 +4493,9 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
   createBalancedFleet(args: {
     name?: string | ScopeValue<"fleet"> | { key: string; variableString?: readonly string[] };
     size: ScriptValue;
+    /** optional; default yes */
     canOverflow?: boolean;
+    /** optional; if omitted, uses the country's own designs */
     shipDesigns?: readonly string[];
     effect?: (scope: FleetScope) => void;
   }): void;
@@ -5141,6 +5311,7 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    */
   giveCullingRewards(args: {
     design?: GlobalShipDesignRef | string | ScopeValue<"design"> | "last_created_design";
+    /** (optional, default: 1) */
     mult?: ScriptValue;
   }): void;
 
@@ -5150,7 +5321,11 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * give_dna = { ship_category = <key> rarity = <key> (optional) }
    * ```
    */
-  giveDna(args: { shipCategory: ShipCategoriesRef | string; rarity?: SpecimensRarity }): void;
+  giveDna(args: {
+    shipCategory: ShipCategoriesRef | string;
+    /** (optional) */
+    rarity?: SpecimensRarity;
+  }): void;
 
   /**
    * Gives a given specimen to the target country.
@@ -5161,6 +5336,7 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
   giveSpecimen(args: {
     key: SpecimenRef | string;
     origin?: string;
+    /** EVENT_TARGET_# Indexed event targets for localisation */
     targets?: readonly [ScopeValue];
   }): void;
 
@@ -5469,7 +5645,15 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   orderedControlledColony(
-    args: { limit?: Trigger<"colony">; position: number; orderBy: ScriptValue; inverse?: boolean },
+    args: {
+      limit?: Trigger<"colony">;
+      /** integer, starting with 0 */
+      position: number;
+      /** <variable>/trigger:<trigger> */
+      orderBy: ScriptValue;
+      /** default: no - if yes, then 0 is lowest rather than highest */
+      inverse?: boolean;
+    },
     body: (scope: ColonyScope) => void
   ): void;
 
@@ -5537,7 +5721,15 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   orderedExhibit(
-    args: { limit?: Trigger<"exhibit">; position: number; orderBy: ScriptValue; inverse?: boolean },
+    args: {
+      limit?: Trigger<"exhibit">;
+      /** integer, starting with 0 */
+      position: number;
+      /** <variable>/trigger:<trigger> */
+      orderBy: ScriptValue;
+      /** default: no - if yes, then 0 is lowest rather than highest */
+      inverse?: boolean;
+    },
     body: (scope: ExhibitScope) => void
   ): void;
 
@@ -5593,7 +5785,15 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   orderedIssuedMission(
-    args: { limit?: Trigger<"mission">; position: number; orderBy: ScriptValue; inverse?: boolean },
+    args: {
+      limit?: Trigger<"mission">;
+      /** integer, starting with 0 */
+      position: number;
+      /** <variable>/trigger:<trigger> */
+      orderBy: ScriptValue;
+      /** default: no - if yes, then 0 is lowest rather than highest */
+      inverse?: boolean;
+    },
     body: (scope: MissionScope) => void
   ): void;
 
@@ -5644,7 +5844,15 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   orderedOwnedContract(
-    args: { limit?: Trigger<"mission">; position: number; orderBy: ScriptValue; inverse?: boolean },
+    args: {
+      limit?: Trigger<"mission">;
+      /** integer, starting with 0 */
+      position: number;
+      /** <variable>/trigger:<trigger> */
+      orderBy: ScriptValue;
+      /** default: no - if yes, then 0 is lowest rather than highest */
+      inverse?: boolean;
+    },
     body: (scope: MissionScope) => void
   ): void;
 
@@ -5734,7 +5942,15 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   orderedOwnedMission(
-    args: { limit?: Trigger<"mission">; position: number; orderBy: ScriptValue; inverse?: boolean },
+    args: {
+      limit?: Trigger<"mission">;
+      /** integer, starting with 0 */
+      position: number;
+      /** <variable>/trigger:<trigger> */
+      orderBy: ScriptValue;
+      /** default: no - if yes, then 0 is lowest rather than highest */
+      inverse?: boolean;
+    },
     body: (scope: MissionScope) => void
   ): void;
 
@@ -5831,8 +6047,11 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
   orderedOwnedStormInfluenceField(
     args: {
       limit?: Trigger<"cosmic_storm_influence_field">;
+      /** integer, starting with 0 */
       position: number;
+      /** <variable>/trigger:<trigger> */
       orderBy: ScriptValue;
+      /** default: no - if yes, then 0 is lowest rather than highest */
       inverse?: boolean;
     },
     body: (scope: CosmicStormInfluenceFieldScope) => void
@@ -6145,7 +6364,11 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   randomActiveFirstContact(
-    args: { limit?: Trigger<"first_contact">; weights?: readonly Modifier<"first_contact">[] },
+    args: {
+      limit?: Trigger<"first_contact">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"first_contact">[];
+    },
     body: (scope: FirstContactScope) => void
   ): void;
 
@@ -6163,7 +6386,11 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   randomAvailableDebris(
-    args: { limit?: Trigger<"debris">; weights?: readonly Modifier<"debris">[] },
+    args: {
+      limit?: Trigger<"debris">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"debris">[];
+    },
     body: (scope: DebrisScope) => void
   ): void;
 
@@ -6181,7 +6408,11 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   randomControlledColony(
-    args: { limit?: Trigger<"colony">; weights?: readonly Modifier<"colony">[] },
+    args: {
+      limit?: Trigger<"colony">;
+      /** optional - adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"colony">[];
+    },
     body: (scope: ColonyScope) => void
   ): void;
 
@@ -6199,7 +6430,11 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   randomControlledFleet(
-    args: { limit?: Trigger<"fleet">; weights?: readonly Modifier<"fleet">[] },
+    args: {
+      limit?: Trigger<"fleet">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"fleet">[];
+    },
     body: (scope: FleetScope) => void
   ): void;
 
@@ -6217,7 +6452,11 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   randomControlledPlanet(
-    args: { limit?: Trigger<"planet">; weights?: readonly Modifier<"planet">[] },
+    args: {
+      limit?: Trigger<"planet">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"planet">[];
+    },
     body: (scope: PlanetScope) => void
   ): void;
 
@@ -6235,7 +6474,11 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   randomEnvoy(
-    args: { limit?: Trigger<"leader">; weights?: readonly Modifier<"leader">[] },
+    args: {
+      limit?: Trigger<"leader">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"leader">[];
+    },
     body: (scope: LeaderScope) => void
   ): void;
 
@@ -6253,7 +6496,11 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   randomExhibit(
-    args: { limit?: Trigger<"exhibit">; weights?: readonly Modifier<"exhibit">[] },
+    args: {
+      limit?: Trigger<"exhibit">;
+      /** optional - adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"exhibit">[];
+    },
     body: (scope: ExhibitScope) => void
   ): void;
 
@@ -6271,7 +6518,11 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   randomFederationAlly(
-    args: { limit?: Trigger<"country">; weights?: readonly Modifier<"country">[] },
+    args: {
+      limit?: Trigger<"country">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"country">[];
+    },
     body: (scope: CountryScope) => void
   ): void;
 
@@ -6289,7 +6540,11 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   randomFirstContact(
-    args: { limit?: Trigger<"first_contact">; weights?: readonly Modifier<"first_contact">[] },
+    args: {
+      limit?: Trigger<"first_contact">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"first_contact">[];
+    },
     body: (scope: FirstContactScope) => void
   ): void;
 
@@ -6307,7 +6562,11 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   randomIssuedMission(
-    args: { limit?: Trigger<"mission">; weights?: readonly Modifier<"mission">[] },
+    args: {
+      limit?: Trigger<"mission">;
+      /** optional - adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"mission">[];
+    },
     body: (scope: MissionScope) => void
   ): void;
 
@@ -6325,7 +6584,11 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   randomNeighborCountry(
-    args: { limit?: Trigger<"country">; weights?: readonly Modifier<"country">[] },
+    args: {
+      limit?: Trigger<"country">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"country">[];
+    },
     body: (scope: CountryScope) => void
   ): void;
 
@@ -6343,7 +6606,11 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   randomOwnedArmy(
-    args: { limit?: Trigger<"army">; weights?: readonly Modifier<"army">[] },
+    args: {
+      limit?: Trigger<"army">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"army">[];
+    },
     body: (scope: ArmyScope) => void
   ): void;
 
@@ -6361,7 +6628,11 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   randomOwnedContract(
-    args: { limit?: Trigger<"mission">; weights?: readonly Modifier<"mission">[] },
+    args: {
+      limit?: Trigger<"mission">;
+      /** optional - adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"mission">[];
+    },
     body: (scope: MissionScope) => void
   ): void;
 
@@ -6379,7 +6650,11 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   randomOwnedDesign(
-    args: { limit?: Trigger<"design">; weights?: readonly Modifier<"design">[] },
+    args: {
+      limit?: Trigger<"design">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"design">[];
+    },
     body: (scope: DesignScope) => void
   ): void;
 
@@ -6397,7 +6672,11 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   randomOwnedFleet(
-    args: { limit?: Trigger<"fleet">; weights?: readonly Modifier<"fleet">[] },
+    args: {
+      limit?: Trigger<"fleet">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"fleet">[];
+    },
     body: (scope: FleetScope) => void
   ): void;
 
@@ -6415,7 +6694,11 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   randomOwnedLeader(
-    args: { limit?: Trigger<"leader">; weights?: readonly Modifier<"leader">[] },
+    args: {
+      limit?: Trigger<"leader">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"leader">[];
+    },
     body: (scope: LeaderScope) => void
   ): void;
 
@@ -6433,7 +6716,11 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   randomOwnedMegastructure(
-    args: { limit?: Trigger<"megastructure">; weights?: readonly Modifier<"megastructure">[] },
+    args: {
+      limit?: Trigger<"megastructure">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"megastructure">[];
+    },
     body: (scope: MegastructureScope) => void
   ): void;
 
@@ -6451,7 +6738,11 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   randomOwnedMission(
-    args: { limit?: Trigger<"mission">; weights?: readonly Modifier<"mission">[] },
+    args: {
+      limit?: Trigger<"mission">;
+      /** optional - adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"mission">[];
+    },
     body: (scope: MissionScope) => void
   ): void;
 
@@ -6469,7 +6760,11 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   randomOwnedNonprimaryStarbase(
-    args: { limit?: Trigger<"starbase">; weights?: readonly Modifier<"starbase">[] },
+    args: {
+      limit?: Trigger<"starbase">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"starbase">[];
+    },
     body: (scope: StarbaseScope) => void
   ): void;
 
@@ -6487,7 +6782,11 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   randomOwnedPopSpecies(
-    args: { limit?: Trigger<"species">; weights?: readonly Modifier<"species">[] },
+    args: {
+      limit?: Trigger<"species">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"species">[];
+    },
     body: (scope: SpeciesScope) => void
   ): void;
 
@@ -6505,7 +6804,11 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   randomOwnedSector(
-    args: { limit?: Trigger<"sector">; weights?: readonly Modifier<"sector">[] },
+    args: {
+      limit?: Trigger<"sector">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"sector">[];
+    },
     body: (scope: SectorScope) => void
   ): void;
 
@@ -6523,7 +6826,11 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   randomOwnedStarbase(
-    args: { limit?: Trigger<"starbase">; weights?: readonly Modifier<"starbase">[] },
+    args: {
+      limit?: Trigger<"starbase">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"starbase">[];
+    },
     body: (scope: StarbaseScope) => void
   ): void;
 
@@ -6543,6 +6850,7 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
   randomOwnedStormInfluenceField(
     args: {
       limit?: Trigger<"cosmic_storm_influence_field">;
+      /** optional - adds weights to affect the chance a specific object is selected */
       weights?: readonly Modifier<"cosmic_storm_influence_field">[];
     },
     body: (scope: CosmicStormInfluenceFieldScope) => void
@@ -6562,7 +6870,11 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   randomPlanetWithinBorder(
-    args: { limit?: Trigger<"planet">; weights?: readonly Modifier<"planet">[] },
+    args: {
+      limit?: Trigger<"planet">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"planet">[];
+    },
     body: (scope: PlanetScope) => void
   ): void;
 
@@ -6580,7 +6892,11 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   randomPoolLeader(
-    args: { limit?: Trigger<"leader">; weights?: readonly Modifier<"leader">[] },
+    args: {
+      limit?: Trigger<"leader">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"leader">[];
+    },
     body: (scope: LeaderScope) => void
   ): void;
 
@@ -6598,7 +6914,11 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   randomPopFaction(
-    args: { limit?: Trigger<"pop_faction">; weights?: readonly Modifier<"pop_faction">[] },
+    args: {
+      limit?: Trigger<"pop_faction">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"pop_faction">[];
+    },
     body: (scope: PopFactionScope) => void
   ): void;
 
@@ -6616,7 +6936,11 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   randomRelation(
-    args: { limit?: Trigger<"country">; weights?: readonly Modifier<"country">[] },
+    args: {
+      limit?: Trigger<"country">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"country">[];
+    },
     body: (scope: CountryScope) => void
   ): void;
 
@@ -6634,7 +6958,11 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   randomRivalCountry(
-    args: { limit?: Trigger<"country">; weights?: readonly Modifier<"country">[] },
+    args: {
+      limit?: Trigger<"country">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"country">[];
+    },
     body: (scope: CountryScope) => void
   ): void;
 
@@ -6652,7 +6980,11 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   randomSituation(
-    args: { limit?: Trigger<"situation">; weights?: readonly Modifier<"situation">[] },
+    args: {
+      limit?: Trigger<"situation">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"situation">[];
+    },
     body: (scope: SituationScope) => void
   ): void;
 
@@ -6670,7 +7002,11 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   randomSubject(
-    args: { limit?: Trigger<"country">; weights?: readonly Modifier<"country">[] },
+    args: {
+      limit?: Trigger<"country">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"country">[];
+    },
     body: (scope: CountryScope) => void
   ): void;
 
@@ -6688,7 +7024,11 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   randomSystemWithAura(
-    args: { limit?: Trigger<"system">; weights?: readonly Modifier<"system">[] },
+    args: {
+      limit?: Trigger<"system">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"system">[];
+    },
     body: (scope: SystemScope) => void
   ): void;
 
@@ -6706,7 +7046,11 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   randomWar(
-    args: { limit?: Trigger<"war">; weights?: readonly Modifier<"war">[] },
+    args: {
+      limit?: Trigger<"war">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"war">[];
+    },
     body: (scope: WarScope) => void
   ): void;
 
@@ -7366,19 +7710,31 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    * ```
    */
   setFactionProperties(args: {
+    /** if yes, fleets will never attack anything and will never be attacked */
     neutral?: boolean;
+    /** if yes, fleets will attack everything on sight ( except neutral fleets ) */
     hostile?: boolean;
+    /** if yes, fleets will follow the fleets of allies */
     follow?: boolean;
+    /** if yes, country will be automatically be deleted when considered dead ( usually when out of colonies and colony ships ). Should be yes in most cases but can be useful to turn off for some countries that are created by events. */
     autoDelete?: boolean;
+    /** decides if a country needs to have explicit border access from another country to enter its borders */
     needsBorderAccess?: boolean;
+    /** decides if a country generates borders or not */
     generateBorders?: boolean;
+    /** decides if a country needs a colony ( or a colony ship ) to be considered alive */
     needsColony?: boolean;
+    /** primitive countries can have observation stations build by others in orbit of their planets */
     primitive?: boolean;
+    /** if primitive = yes, localization string. Remember that these values are dynamic and this value will most likely be overwritten instantly by the same event that created the country. This field can probably be left empty */
     primitiveAge?: string;
+    /** toggles if country turns hostile against attacker */
     hostileWhenAttacked?: boolean;
+    /** if no, borders for countries of this type will not be shown if in uncharted space */
     showBordersInUs?: boolean;
     pirate?: boolean;
     spaceCreatures?: boolean;
+    /** toggle if the intel system is allowed to change any surveyed planets to unsurveyed depending on intel level with this country */
     intelEffectsSurveyed?: boolean;
   }): void;
 
@@ -8050,7 +8406,11 @@ export interface EffectsInCountryFleet {
    * ```
    */
   randomControlledShip(
-    args: { limit?: Trigger<"ship">; weights?: readonly Modifier<"ship">[] },
+    args: {
+      limit?: Trigger<"ship">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"ship">[];
+    },
     body: (scope: ShipScope) => void
   ): void;
 
@@ -8068,7 +8428,11 @@ export interface EffectsInCountryFleet {
    * ```
    */
   randomOwnedShip(
-    args: { limit?: Trigger<"ship">; weights?: readonly Modifier<"ship">[] },
+    args: {
+      limit?: Trigger<"ship">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"ship">[];
+    },
     body: (scope: ShipScope) => void
   ): void;
 
@@ -8198,7 +8562,11 @@ export interface EffectsInCountryNoScope {
    * ```
    */
   randomAgreement(
-    args: { limit?: Trigger<"agreement">; weights?: readonly Modifier<"agreement">[] },
+    args: {
+      limit?: Trigger<"agreement">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"agreement">[];
+    },
     body: (scope: AgreementScope) => void
   ): void;
 
@@ -8216,7 +8584,11 @@ export interface EffectsInCountryNoScope {
    * ```
    */
   randomSpynetwork(
-    args: { limit?: Trigger<"spy_network">; weights?: readonly Modifier<"spy_network">[] },
+    args: {
+      limit?: Trigger<"spy_network">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"spy_network">[];
+    },
     body: (scope: SpyNetworkScope) => void
   ): void;
 }
@@ -8272,6 +8644,7 @@ export interface EffectsInCountryNoScopeSpyNetwork {
   randomEspionageOperation(
     args: {
       limit?: Trigger<"espionage_operation">;
+      /** adds weights to affect the chance a specific object is selected */
       weights?: readonly Modifier<"espionage_operation">[];
     },
     body: (scope: EspionageOperationScope) => void
@@ -8405,7 +8778,15 @@ export interface EffectsInCountrySector {
    * ```
    */
   orderedOwnedColony(
-    args: { limit?: Trigger<"colony">; position: number; orderBy: ScriptValue; inverse?: boolean },
+    args: {
+      limit?: Trigger<"colony">;
+      /** integer, starting with 0 */
+      position: number;
+      /** <variable>/trigger:<trigger> */
+      orderBy: ScriptValue;
+      /** default: no - if yes, then 0 is lowest rather than highest */
+      inverse?: boolean;
+    },
     body: (scope: ColonyScope) => void
   ): void;
 
@@ -8474,7 +8855,11 @@ export interface EffectsInCountrySector {
    * ```
    */
   randomObservedPreFtlWithinBorder(
-    args: { limit?: Trigger<"country">; weights?: readonly Modifier<"country">[] },
+    args: {
+      limit?: Trigger<"country">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"country">[];
+    },
     body: (scope: CountryScope) => void
   ): void;
 
@@ -8492,7 +8877,11 @@ export interface EffectsInCountrySector {
    * ```
    */
   randomOwnedColony(
-    args: { limit?: Trigger<"colony">; weights?: readonly Modifier<"colony">[] },
+    args: {
+      limit?: Trigger<"colony">;
+      /** optional - adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"colony">[];
+    },
     body: (scope: ColonyScope) => void
   ): void;
 
@@ -8510,7 +8899,11 @@ export interface EffectsInCountrySector {
    * ```
    */
   randomOwnedPlanet(
-    args: { limit?: Trigger<"planet">; weights?: readonly Modifier<"planet">[] },
+    args: {
+      limit?: Trigger<"planet">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"planet">[];
+    },
     body: (scope: PlanetScope) => void
   ): void;
 
@@ -8528,7 +8921,11 @@ export interface EffectsInCountrySector {
    * ```
    */
   randomPreFtlWithinBorder(
-    args: { limit?: Trigger<"country">; weights?: readonly Modifier<"country">[] },
+    args: {
+      limit?: Trigger<"country">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"country">[];
+    },
     body: (scope: CountryScope) => void
   ): void;
 
@@ -8546,7 +8943,11 @@ export interface EffectsInCountrySector {
    * ```
    */
   randomSystemWithinBorder(
-    args: { limit?: Trigger<"system">; weights?: readonly Modifier<"system">[] },
+    args: {
+      limit?: Trigger<"system">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"system">[];
+    },
     body: (scope: SystemScope) => void
   ): void;
 }
@@ -8592,7 +8993,11 @@ export interface EffectsInCountrySystem {
    * ```
    */
   randomOrbitalStation(
-    args: { limit?: Trigger<"fleet">; weights?: readonly Modifier<"fleet">[] },
+    args: {
+      limit?: Trigger<"fleet">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"fleet">[];
+    },
     body: (scope: FleetScope) => void
   ): void;
 }
@@ -8932,7 +9337,11 @@ export interface EffectsInEspionageOperationNoScopeSpyNetwork {
    * ```
    */
   randomEspionageAsset(
-    args: { limit?: Trigger<"espionage_asset">; weights?: readonly Modifier<"espionage_asset">[] },
+    args: {
+      limit?: Trigger<"espionage_asset">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"espionage_asset">[];
+    },
     body: (scope: EspionageAssetScope) => void
   ): void;
 }
@@ -9070,7 +9479,11 @@ export interface EffectsInFederation {
    * ```
    */
   randomAssociate(
-    args: { limit?: Trigger<"country">; weights?: readonly Modifier<"country">[] },
+    args: {
+      limit?: Trigger<"country">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"country">[];
+    },
     body: (scope: CountryScope) => void
   ): void;
 
@@ -9088,7 +9501,11 @@ export interface EffectsInFederation {
    * ```
    */
   randomMember(
-    args: { limit?: Trigger<"country">; weights?: readonly Modifier<"country">[] },
+    args: {
+      limit?: Trigger<"country">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"country">[];
+    },
     body: (scope: CountryScope) => void
   ): void;
 
@@ -9499,7 +9916,11 @@ export interface EffectsInFleet {
    * ```
    */
   randomCombatantFleet(
-    args: { limit?: Trigger<"fleet">; weights?: readonly Modifier<"fleet">[] },
+    args: {
+      limit?: Trigger<"fleet">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"fleet">[];
+    },
     body: (scope: FleetScope) => void
   ): void;
 
@@ -9692,10 +10113,14 @@ export interface EffectsInFleet {
       | "starbase"
       | "system"
     >;
+    /** (optional) used to check if the ship must be added to the debris. */
     shouldAddShipToDebris?: Trigger<"fleet">;
+    /** (default no) used to specify and override country behaviour towards this debris. */
     mustScavenge?: boolean;
+    /** (default no) used to specify and override country behaviour towards this debris. */
     mustResearch?: boolean;
     mustReanimate?: boolean;
+    /** (default no) used to force the fleet to reset its killed ships designs. */
     resetKilledShipDesigns?: boolean;
     resetKilledShipStockpile?: boolean;
   }): void;
@@ -9982,6 +10407,7 @@ export interface EffectsInFleetStarbase {
           | "system"
         >;
     upgradable?: boolean;
+    /** Used if the created ship is a colony ship */
     colonizerSpecies?: ScopeValue<
       | "army"
       | "carrier"
@@ -9994,10 +10420,13 @@ export interface EffectsInFleetStarbase {
       | "ship"
       | "species"
     >;
+    /** (optional) */
     age?: number | "min" | "random";
+    /** <common/rare/epic/exceptional, used only if ship is space fauna> (optional, fallbacks to highest owned genetic material if applicable but not set) */
     rarity?: ShipRarity;
     createColony?: boolean;
     effect?: (scope: ShipScope) => void;
+    /** <integer value between 1 and the amount of growth stages in the design> (optional, use the first growth stage by default) */
     growthStage?: number;
   }): void;
 }
@@ -10744,7 +11173,12 @@ export interface EffectsInMission {
    * }
    * ```
    */
-  cancelContract(args: { refund?: boolean; showMessage?: boolean }): void;
+  cancelContract(args: {
+    /** (optional - default: yes) */
+    refund?: boolean;
+    /** (optional - default: yes) */
+    showMessage?: boolean;
+  }): void;
 
   /**
    * Removes a flag from the scoped astral rift
@@ -10897,8 +11331,11 @@ export interface EffectsInPlanet {
     resource?: ResourceRef | string | "all";
     maxAmount?: ScriptValue;
     percentage?: ScriptValue;
+    /** default: steal */
     mode?: "steal" | "duplicate";
+    /** default: thief_only */
     notificationMode?: "none" | "thief_only" | "both";
+    /** default: thief_only */
     showInMonthlyResourcesMode?: "none" | "thief_only" | "both";
   }): void;
 
@@ -11191,6 +11628,7 @@ export interface EffectsInPopJob {
     amount?: ScriptValue;
     random?: ScriptValue;
     percentage?: ScriptValue;
+    /** default: 'GROWTH_CAT_OTHER' */
     growthCategory?: string;
   }): void;
 
@@ -11230,7 +11668,11 @@ export interface EffectsInPopJob {
    * ```
    */
   randomJobPopGroup(
-    args: { limit?: Trigger<"pop_group">; weights?: readonly Modifier<"pop_group">[] },
+    args: {
+      limit?: Trigger<"pop_group">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"pop_group">[];
+    },
     body: (scope: PopGroupScope) => void
   ): void;
 
@@ -11381,6 +11823,7 @@ export interface EffectsInShip {
    */
   transferResourceStockpile(args: {
     target: ScopeValue<"country" | "ship">;
+    /** optional: multiplies all transferred resources by a variable if this is less than 1, all resources are removed from the ship but the target only receives a fraction, e.g.mult = 0.5 would give the target 50 % of the ship's stockpile with the remainder disappearing */
     mult?: VariableRef | string;
   }): void;
 }
@@ -11478,8 +11921,11 @@ export interface EffectsInSpecies {
    * ```
    */
   changeSpeciesCharacteristics(args: {
+    /** determines if species is pre-sapient */
     sapient?: boolean;
+    /** determines if species leaders are immortal */
     immortal?: boolean;
+    /** determines if the species can be modified */
     canBeModified?: boolean | ScopeValue;
     portrait?:
       | ScopeValue<
@@ -11499,8 +11945,13 @@ export interface EffectsInSpecies {
       | PortraitGroupRef
       | "random";
     addTrait?: readonly (TraitSpeciesTraitRef | string)[];
+    /** default: yes? */
     addTraitsAtStartOfList?: boolean;
     removeTrait?: readonly (TraitSpeciesTraitRef | string)[];
+    /**
+     * Limits species to this gender
+     * Removes species gender restrictions
+     */
     gender?:
       | GendersNotSet
       | "any"
@@ -11519,6 +11970,7 @@ export interface EffectsInSpecies {
           | "ship"
           | "species"
         >;
+    /** Apply portrait and gender (randomizes new name) changes to existing leaders */
     canChangeLeader?: boolean;
   }): void;
 
@@ -11603,7 +12055,11 @@ export interface EffectsInSpecies {
    * ```
    */
   randomSpeciesPopGroup(
-    args: { limit?: Trigger<"pop_group">; weights?: readonly Modifier<"pop_group">[] },
+    args: {
+      limit?: Trigger<"pop_group">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"pop_group">[];
+    },
     body: (scope: PopGroupScope) => void
   ): void;
 
@@ -11650,6 +12106,7 @@ export interface EffectsInSpecies {
       | "system"
     >;
     name?: string | "random";
+    /** Name lists defined in the name_lists folder might not work (where would it get the name from?). Rather, Vanilla uses ones defined in species_names. Let Dayshine and Caligula know if ones in name_lists work. (Same with name_list = random and name_list = country). */
     nameList?: SpeciesNamedListRef | string;
   }): void;
 
@@ -11820,8 +12277,11 @@ export interface EffectsInStarbase {
   orderedStarbaseInNetwork(
     args: {
       limit?: Trigger<"starbase">;
+      /** integer, starting with 0 */
       position: number;
+      /** <variable>/trigger:<trigger> */
       orderBy: ScriptValue;
+      /** default: no - if yes, then 0 is lowest rather than highest */
       inverse?: boolean;
     },
     body: (scope: StarbaseScope) => void
@@ -11841,7 +12301,11 @@ export interface EffectsInStarbase {
    * ```
    */
   randomStarbaseInNetwork(
-    args: { limit?: Trigger<"starbase">; weights?: readonly Modifier<"starbase">[] },
+    args: {
+      limit?: Trigger<"starbase">;
+      /** optional - adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"starbase">[];
+    },
     body: (scope: StarbaseScope) => void
   ): void;
 
@@ -11874,6 +12338,7 @@ export interface EffectsInStarbase {
    * ```
    */
   removeStarbaseBuilding(args: {
+    /** Optional, default = all */
     slot?: number | "all";
     building?: StarbaseBuildingRef | string | "all";
   }): void;
@@ -11901,6 +12366,7 @@ export interface EffectsInStarbase {
    * ```
    */
   removeStarbaseModule(args: {
+    /** Optional, default = all */
     slot?: number | "all";
     module?: StarbaseModuleRef | string | "all";
   }): void;
@@ -12016,7 +12482,15 @@ export interface EffectsInStorm {
    * ```
    */
   orderedSystemAddedToStorm(
-    args: { limit?: Trigger<"system">; position: number; orderBy: ScriptValue; inverse?: boolean },
+    args: {
+      limit?: Trigger<"system">;
+      /** integer, starting with 0 */
+      position: number;
+      /** <variable>/trigger:<trigger> */
+      orderBy: ScriptValue;
+      /** default: no - if yes, then 0 is lowest rather than highest */
+      inverse?: boolean;
+    },
     body: (scope: SystemScope) => void
   ): void;
 
@@ -12033,7 +12507,15 @@ export interface EffectsInStorm {
    * ```
    */
   orderedSystemRemovedFromStorm(
-    args: { limit?: Trigger<"system">; position: number; orderBy: ScriptValue; inverse?: boolean },
+    args: {
+      limit?: Trigger<"system">;
+      /** integer, starting with 0 */
+      position: number;
+      /** <variable>/trigger:<trigger> */
+      orderBy: ScriptValue;
+      /** default: no - if yes, then 0 is lowest rather than highest */
+      inverse?: boolean;
+    },
     body: (scope: SystemScope) => void
   ): void;
 
@@ -12050,7 +12532,15 @@ export interface EffectsInStorm {
    * ```
    */
   orderedSystemWithinStorm(
-    args: { limit?: Trigger<"system">; position: number; orderBy: ScriptValue; inverse: boolean },
+    args: {
+      limit?: Trigger<"system">;
+      /** integer, starting with 0 */
+      position: number;
+      /** <variable>/trigger:<trigger> */
+      orderBy: ScriptValue;
+      /** default: no - if yes, then 0 is lowest rather than highest	## cardinality = 0..1 */
+      inverse: boolean;
+    },
     body: (scope: SystemScope) => void
   ): void;
 
@@ -12068,7 +12558,11 @@ export interface EffectsInStorm {
    * ```
    */
   randomSystemAddedToStorm(
-    args: { limit?: Trigger<"system">; weights?: readonly Modifier<"system">[] },
+    args: {
+      limit?: Trigger<"system">;
+      /** optional - adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"system">[];
+    },
     body: (scope: SystemScope) => void
   ): void;
 
@@ -12086,7 +12580,11 @@ export interface EffectsInStorm {
    * ```
    */
   randomSystemRemovedFromStorm(
-    args: { limit?: Trigger<"system">; weights?: readonly Modifier<"system">[] },
+    args: {
+      limit?: Trigger<"system">;
+      /** optional - adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"system">[];
+    },
     body: (scope: SystemScope) => void
   ): void;
 
@@ -12104,7 +12602,11 @@ export interface EffectsInStorm {
    * ```
    */
   randomSystemWithinStorm(
-    args: { limit?: Trigger<"system">; weights?: readonly Modifier<"system">[] },
+    args: {
+      limit?: Trigger<"system">;
+      /** optional - adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"system">[];
+    },
     body: (scope: SystemScope) => void
   ): void;
 
@@ -12182,8 +12684,10 @@ export interface EffectsInSystem {
    * ```
    */
   createNebula(args: {
+    /** (loc, optional - default is random) */
     name?: string;
     radius: ScriptValue;
+    /** effects on every system in the new nebula */
     effect?: (scope: SystemScope) => void;
   }): void;
 
@@ -12515,7 +13019,15 @@ export interface EffectsInSystem {
    * ```
    */
   orderedSystemPlanetColony(
-    args: { limit?: Trigger<"colony">; position: number; orderBy: ScriptValue; inverse?: boolean },
+    args: {
+      limit?: Trigger<"colony">;
+      /** integer, starting with 0 */
+      position: number;
+      /** <variable>/trigger:<trigger> */
+      orderBy: ScriptValue;
+      /** default: no - if yes, then 0 is lowest rather than highest */
+      inverse?: boolean;
+    },
     body: (scope: ColonyScope) => void
   ): void;
 
@@ -12532,7 +13044,15 @@ export interface EffectsInSystem {
    * ```
    */
   orderedSystemShipColony(
-    args: { limit?: Trigger<"colony">; position: number; orderBy: ScriptValue; inverse?: boolean },
+    args: {
+      limit?: Trigger<"colony">;
+      /** integer, starting with 0 */
+      position: number;
+      /** <variable>/trigger:<trigger> */
+      orderBy: ScriptValue;
+      /** default: no - if yes, then 0 is lowest rather than highest */
+      inverse?: boolean;
+    },
     body: (scope: ColonyScope) => void
   ): void;
 
@@ -12568,7 +13088,11 @@ export interface EffectsInSystem {
    * ```
    */
   randomCountryNeighborToSystem(
-    args: { limit?: Trigger<"country">; weights?: readonly Modifier<"country">[] },
+    args: {
+      limit?: Trigger<"country">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"country">[];
+    },
     body: (scope: CountryScope) => void
   ): void;
 
@@ -12586,7 +13110,11 @@ export interface EffectsInSystem {
    * ```
    */
   randomFleetInSystem(
-    args: { limit?: Trigger<"fleet">; weights?: readonly Modifier<"fleet">[] },
+    args: {
+      limit?: Trigger<"fleet">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"fleet">[];
+    },
     body: (scope: FleetScope) => void
   ): void;
 
@@ -12604,7 +13132,11 @@ export interface EffectsInSystem {
    * ```
    */
   randomNeighborSystem(
-    args: { limit?: Trigger<"system">; weights?: readonly Modifier<"system">[] },
+    args: {
+      limit?: Trigger<"system">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"system">[];
+    },
     body: (scope: SystemScope) => void
   ): void;
 
@@ -12622,7 +13154,11 @@ export interface EffectsInSystem {
    * ```
    */
   randomNeighborSystemEuclidean(
-    args: { limit?: Trigger<"system">; weights?: readonly Modifier<"system">[] },
+    args: {
+      limit?: Trigger<"system">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"system">[];
+    },
     body: (scope: SystemScope) => void
   ): void;
 
@@ -12640,7 +13176,11 @@ export interface EffectsInSystem {
    * ```
    */
   randomShipInSystem(
-    args: { limit?: Trigger<"ship">; weights?: readonly Modifier<"ship">[] },
+    args: {
+      limit?: Trigger<"ship">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"ship">[];
+    },
     body: (scope: ShipScope) => void
   ): void;
 
@@ -12658,7 +13198,11 @@ export interface EffectsInSystem {
    * ```
    */
   randomStarbaseInSystem(
-    args: { limit?: Trigger<"starbase">; weights?: readonly Modifier<"starbase">[] },
+    args: {
+      limit?: Trigger<"starbase">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"starbase">[];
+    },
     body: (scope: StarbaseScope) => void
   ): void;
 
@@ -12676,7 +13220,11 @@ export interface EffectsInSystem {
    * ```
    */
   randomSystemAmbientObject(
-    args: { limit?: Trigger<"ambient_object">; weights?: readonly Modifier<"ambient_object">[] },
+    args: {
+      limit?: Trigger<"ambient_object">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"ambient_object">[];
+    },
     body: (scope: AmbientObjectScope) => void
   ): void;
 
@@ -12694,7 +13242,11 @@ export interface EffectsInSystem {
    * ```
    */
   randomSystemPlanet(
-    args: { limit?: Trigger<"planet">; weights?: readonly Modifier<"planet">[] },
+    args: {
+      limit?: Trigger<"planet">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"planet">[];
+    },
     body: (scope: PlanetScope) => void
   ): void;
 
@@ -12712,7 +13264,11 @@ export interface EffectsInSystem {
    * ```
    */
   randomSystemPlanetColony(
-    args: { limit?: Trigger<"colony">; weights?: readonly Modifier<"colony">[] },
+    args: {
+      limit?: Trigger<"colony">;
+      /** optional - adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"colony">[];
+    },
     body: (scope: ColonyScope) => void
   ): void;
 
@@ -12730,7 +13286,11 @@ export interface EffectsInSystem {
    * ```
    */
   randomSystemShipColony(
-    args: { limit?: Trigger<"colony">; weights?: readonly Modifier<"colony">[] },
+    args: {
+      limit?: Trigger<"colony">;
+      /** optional - adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"colony">[];
+    },
     body: (scope: ColonyScope) => void
   ): void;
 
@@ -12857,6 +13417,7 @@ export interface EffectsInSystem {
       | "starbase"
       | "system"
     >;
+    /** default = no, exclusive with relative_to and in_place_of */
     randomPos?: boolean;
     orbitDistance?: ScriptValue | { min: ScriptValue; max: ScriptValue };
     orbitAngle?: number;
@@ -12864,6 +13425,7 @@ export interface EffectsInSystem {
     id?: AstralRiftRef | string | "none";
     relativeTo?: ScopeValue;
     graphicsEntityName?: ModelEntityRef | string;
+    /** default = yes */
     spawnSound?: boolean;
     initEffect?: (scope: AstralRiftScope) => void;
   }): void;
@@ -12979,6 +13541,7 @@ export interface EffectsInSystem {
   spawnPlanet(args: {
     class: PlanetClassRef | string | PlanetClassRandomListRef | "random" | "random_colonizable";
     generateRandomName?: boolean;
+    /** default: no? */
     checkOverlap?: boolean;
     name?: string;
     location?:
@@ -13012,6 +13575,7 @@ export interface EffectsInSystem {
     flags?: readonly PlanetFlag[];
     size?: number | "random";
     hasRing?: boolean;
+    /** default: no */
     spawnBeyondGravityWell?: boolean;
     orbitAngle?: "random" | number | { min: number; max: number };
     orbitAngleOffset?: number;
@@ -13128,7 +13692,11 @@ export interface EffectsInWar {
    * ```
    */
   randomAttacker(
-    args: { limit?: Trigger<"country">; weights?: readonly Modifier<"country">[] },
+    args: {
+      limit?: Trigger<"country">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"country">[];
+    },
     body: (scope: CountryScope) => void
   ): void;
 
@@ -13146,7 +13714,11 @@ export interface EffectsInWar {
    * ```
    */
   randomDefender(
-    args: { limit?: Trigger<"country">; weights?: readonly Modifier<"country">[] },
+    args: {
+      limit?: Trigger<"country">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"country">[];
+    },
     body: (scope: CountryScope) => void
   ): void;
 
@@ -13164,7 +13736,11 @@ export interface EffectsInWar {
    * ```
    */
   randomWarParticipant(
-    args: { limit?: Trigger<"country">; weights?: readonly Modifier<"country">[] },
+    args: {
+      limit?: Trigger<"country">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"country">[];
+    },
     body: (scope: CountryScope) => void
   ): void;
 
@@ -13584,6 +14160,7 @@ export interface UniversalEffects<
    */
   createCountry(args: {
     name?: ScopeValue | "random" | string | { key: string; variableString?: readonly string[] };
+    /** Sets country adjective. Allowed values are <string in localisation>/<string written in quotes e.g. "Korean"> */
     adjective?: ScopeValue | "random" | string;
     type?: CountryTypeRef | string;
     contactRule?: ContactRule;
@@ -13641,6 +14218,7 @@ export interface UniversalEffects<
           | "starbase"
           | "system"
         >;
+    /** random includes starting civics */
     civics?:
       | ScopeValue<
           | "agreement"
@@ -13705,8 +14283,10 @@ export interface UniversalEffects<
           | "ship"
           | "species"
         >;
+    /** default: no */
     setCapitalFromSpecies?: boolean;
     randomizeEthos?: "yes";
+    /** Copies friendliness and hostility data from specified country. */
     useHostilitiesFrom?: ScopeValue<
       | "agreement"
       | "archaeological_site"
@@ -13753,7 +14333,16 @@ export interface UniversalEffects<
           | "starbase"
           | "system"
         >
-      | { ethic: readonly (EthicRef | string | "random")[] };
+      | {
+          ethic:
+            | readonly [EthicRef | string | "random"]
+            | readonly [EthicRef | string | "random", EthicRef | string | "random"]
+            | readonly [
+                EthicRef | string | "random",
+                EthicRef | string | "random",
+                EthicRef | string | "random",
+              ];
+        };
     effect?: (scope: CountryScope) => void;
     graphicalCulture?: GraphicalCultureRef | string;
     cityGraphicalCulture?: GraphicalCultureRef | string;
@@ -13836,7 +14425,9 @@ export interface UniversalEffects<
                 ColorDefineRef | string | "null",
               ];
         };
+    /** Establishing contact on_action (on_first_contact) will not fire for any countries (ever) if this is set to no */
     dayZeroContact?: boolean;
+    /** Establishing contact on_action (on_first_contact) will not fire for this country or its federation allies */
     excludeDayZeroContact?: ScopeValue<
       | "agreement"
       | "archaeological_site"
@@ -13905,6 +14496,7 @@ export interface UniversalEffects<
     >;
     ignoreInitialColonyError?: boolean;
     governmentRestrictions?: GovernmentTriggerBlock;
+    /** default: no */
     nomadic?:
       | boolean
       | ScopeValue<
@@ -13929,6 +14521,7 @@ export interface UniversalEffects<
           | "starbase"
           | "system"
         >;
+    /** (default: no) drop copied civics that are not possible for the new empire */
     removeInvalidCivics?: boolean;
   }): void;
 
@@ -13954,8 +14547,11 @@ export interface UniversalEffects<
       aiIgnoreStrength?: boolean;
       isUltraBoss?: boolean;
     }[];
+    /** Must include set_owner, set_location and create_ship (here or in last_created_country). Todo: Check this somehow */
     effect?: (scope: FleetScope) => void;
+    /** <integer value between 1 and the amount of growth stages in the design> (optional, use the first growth stage by default) */
     growthStage?: number;
+    /** (default: yes; if yes, will also create the carrier colony,only when ship_size is marked to carry a colony. WARNING: carrier ships with no colony are killed on a daily basis) */
     createColony?: boolean;
   }): void;
 
@@ -14100,7 +14696,9 @@ export interface UniversalEffects<
    */
   deleteFleetNavalCap(args: {
     target: ScopeValue<"fleet">;
+    /** default 1 */
     navalCap?: ScriptValue;
+    /** default yes */
     killLeader?: boolean;
   }): void;
 
@@ -14177,7 +14775,9 @@ export interface UniversalEffects<
    */
   destroyFleetNavalCap(args: {
     target: ScopeValue<"fleet">;
+    /** default 1 */
     navalCap?: ScriptValue;
+    /** default yes */
     killLeader?: boolean;
   }): void;
 
@@ -14487,7 +15087,9 @@ export interface UniversalEffects<
     popGroup: ScopeValue<"pop_group">;
     amount?: ScriptValue;
     percentage?: ScriptValue;
+    /** If set, the amount will be randomized in [max(0, size - random), size + random] */
     random?: ScriptValue;
+    /** default: 'GROWTH_CAT_OTHER' */
     growthCategory?: string;
   }): void;
 
@@ -14601,7 +15203,15 @@ export interface UniversalEffects<
    * ```
    */
   orderedCosmicStorm(
-    args: { limit?: Trigger<"storm">; position: number; orderBy: ScriptValue; inverse: boolean },
+    args: {
+      limit?: Trigger<"storm">;
+      /** integer, starting with 0 */
+      position: number;
+      /** <variable>/trigger:<trigger> */
+      orderBy: ScriptValue;
+      /** default: no - if yes, then 0 is lowest rather than highest	## cardinality = 0..1 */
+      inverse: boolean;
+    },
     body: (scope: StormScope) => void
   ): void;
 
@@ -14618,7 +15228,15 @@ export interface UniversalEffects<
    * ```
    */
   orderedCosmicStormEndPosition(
-    args: { limit?: Trigger<"system">; position: number; orderBy: ScriptValue; inverse?: boolean },
+    args: {
+      limit?: Trigger<"system">;
+      /** integer, starting with 0 */
+      position: number;
+      /** <variable>/trigger:<trigger> */
+      orderBy: ScriptValue;
+      /** default: no - if yes, then 0 is lowest rather than highest */
+      inverse?: boolean;
+    },
     body: (scope: SystemScope) => void
   ): void;
 
@@ -14635,7 +15253,15 @@ export interface UniversalEffects<
    * ```
    */
   orderedCosmicStormStartPosition(
-    args: { limit?: Trigger<"system">; position: number; orderBy: ScriptValue; inverse?: boolean },
+    args: {
+      limit?: Trigger<"system">;
+      /** integer, starting with 0 */
+      position: number;
+      /** <variable>/trigger:<trigger> */
+      orderBy: ScriptValue;
+      /** default: no - if yes, then 0 is lowest rather than highest */
+      inverse?: boolean;
+    },
     body: (scope: SystemScope) => void
   ): void;
 
@@ -14919,7 +15545,11 @@ export interface UniversalEffects<
    * ```
    */
   randomAmbientObject(
-    args: { limit?: Trigger<"ambient_object">; weights?: readonly Modifier<"ambient_object">[] },
+    args: {
+      limit?: Trigger<"ambient_object">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"ambient_object">[];
+    },
     body: (scope: AmbientObjectScope) => void
   ): void;
 
@@ -14939,6 +15569,7 @@ export interface UniversalEffects<
   randomArchaeologicalSite(
     args: {
       limit?: Trigger<"archaeological_site">;
+      /** adds weights to affect the chance a specific object is selected */
       weights?: readonly Modifier<"archaeological_site">[];
     },
     body: (scope: ArchaeologicalSiteScope) => void
@@ -14958,7 +15589,11 @@ export interface UniversalEffects<
    * ```
    */
   randomAstralRift(
-    args: { limit?: Trigger<"astral_rift">; weights?: readonly Modifier<"astral_rift">[] },
+    args: {
+      limit?: Trigger<"astral_rift">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"astral_rift">[];
+    },
     body: (scope: AstralRiftScope) => void
   ): void;
 
@@ -14976,7 +15611,11 @@ export interface UniversalEffects<
    * ```
    */
   randomBypass(
-    args: { limit?: Trigger<"bypass">; weights?: readonly Modifier<"bypass">[] },
+    args: {
+      limit?: Trigger<"bypass">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"bypass">[];
+    },
     body: (scope: BypassScope) => void
   ): void;
 
@@ -14994,7 +15633,11 @@ export interface UniversalEffects<
    * ```
    */
   randomCosmicStorm(
-    args: { limit?: Trigger<"storm">; weights?: readonly Modifier<"storm">[] },
+    args: {
+      limit?: Trigger<"storm">;
+      /** optional - adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"storm">[];
+    },
     body: (scope: StormScope) => void
   ): void;
 
@@ -15012,7 +15655,11 @@ export interface UniversalEffects<
    * ```
    */
   randomCosmicStormEndPosition(
-    args: { limit?: Trigger<"system">; weights?: readonly Modifier<"system">[] },
+    args: {
+      limit?: Trigger<"system">;
+      /** optional - adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"system">[];
+    },
     body: (scope: SystemScope) => void
   ): void;
 
@@ -15030,7 +15677,11 @@ export interface UniversalEffects<
    * ```
    */
   randomCosmicStormStartPosition(
-    args: { limit?: Trigger<"system">; weights?: readonly Modifier<"system">[] },
+    args: {
+      limit?: Trigger<"system">;
+      /** optional - adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"system">[];
+    },
     body: (scope: SystemScope) => void
   ): void;
 
@@ -15048,7 +15699,11 @@ export interface UniversalEffects<
    * ```
    */
   randomCouncilMember(
-    args: { limit?: Trigger<"country">; weights?: readonly Modifier<"country">[] },
+    args: {
+      limit?: Trigger<"country">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"country">[];
+    },
     body: (scope: CountryScope) => void
   ): void;
 
@@ -15066,7 +15721,11 @@ export interface UniversalEffects<
    * ```
    */
   randomCountry(
-    args: { limit?: Trigger<"country">; weights?: readonly Modifier<"country">[] },
+    args: {
+      limit?: Trigger<"country">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"country">[];
+    },
     body: (scope: CountryScope) => void
   ): void;
 
@@ -15102,7 +15761,11 @@ export interface UniversalEffects<
    * ```
    */
   randomFederation(
-    args: { limit?: Trigger<"federation">; weights?: readonly Modifier<"federation">[] },
+    args: {
+      limit?: Trigger<"federation">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"federation">[];
+    },
     body: (scope: FederationScope) => void
   ): void;
 
@@ -15120,7 +15783,11 @@ export interface UniversalEffects<
    * ```
    */
   randomGalaxyFleet(
-    args: { limit?: Trigger<"fleet">; weights?: readonly Modifier<"fleet">[] },
+    args: {
+      limit?: Trigger<"fleet">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"fleet">[];
+    },
     body: (scope: FleetScope) => void
   ): void;
 
@@ -15138,7 +15805,11 @@ export interface UniversalEffects<
    * ```
    */
   randomGalaxyPlanet(
-    args: { limit?: Trigger<"planet">; weights?: readonly Modifier<"planet">[] },
+    args: {
+      limit?: Trigger<"planet">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"planet">[];
+    },
     body: (scope: PlanetScope) => void
   ): void;
 
@@ -15156,7 +15827,11 @@ export interface UniversalEffects<
    * ```
    */
   randomGalaxySector(
-    args: { limit?: Trigger<"sector">; weights?: readonly Modifier<"sector">[] },
+    args: {
+      limit?: Trigger<"sector">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"sector">[];
+    },
     body: (scope: SectorScope) => void
   ): void;
 
@@ -15174,7 +15849,11 @@ export interface UniversalEffects<
    * ```
    */
   randomGalaxySpecies(
-    args: { limit?: Trigger<"species">; weights?: readonly Modifier<"species">[] },
+    args: {
+      limit?: Trigger<"species">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"species">[];
+    },
     body: (scope: SpeciesScope) => void
   ): void;
 
@@ -15192,7 +15871,11 @@ export interface UniversalEffects<
    * ```
    */
   randomGalcomMember(
-    args: { limit?: Trigger<"country">; weights?: readonly Modifier<"country">[] },
+    args: {
+      limit?: Trigger<"country">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"country">[];
+    },
     body: (scope: CountryScope) => void
   ): void;
 
@@ -15210,7 +15893,11 @@ export interface UniversalEffects<
    * ```
    */
   randomMegastructure(
-    args: { limit?: Trigger<"megastructure">; weights?: readonly Modifier<"megastructure">[] },
+    args: {
+      limit?: Trigger<"megastructure">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"megastructure">[];
+    },
     body: (scope: MegastructureScope) => void
   ): void;
 
@@ -15228,7 +15915,11 @@ export interface UniversalEffects<
    * ```
    */
   randomPlayableCountry(
-    args: { limit?: Trigger<"country">; weights?: readonly Modifier<"country">[] },
+    args: {
+      limit?: Trigger<"country">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"country">[];
+    },
     body: (scope: CountryScope) => void
   ): void;
 
@@ -15246,7 +15937,11 @@ export interface UniversalEffects<
    * ```
    */
   randomRimSystem(
-    args: { limit?: Trigger<"system">; weights?: readonly Modifier<"system">[] },
+    args: {
+      limit?: Trigger<"system">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"system">[];
+    },
     body: (scope: SystemScope) => void
   ): void;
 
@@ -15264,7 +15959,11 @@ export interface UniversalEffects<
    * ```
    */
   randomSystem(
-    args: { limit?: Trigger<"system">; weights?: readonly Modifier<"system">[] },
+    args: {
+      limit?: Trigger<"system">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"system">[];
+    },
     body: (scope: SystemScope) => void
   ): void;
 
@@ -15282,7 +15981,11 @@ export interface UniversalEffects<
    * ```
    */
   randomSystemMegastructure(
-    args: { limit?: Trigger<"megastructure">; weights?: readonly Modifier<"megastructure">[] },
+    args: {
+      limit?: Trigger<"megastructure">;
+      /** adds weights to affect the chance a specific object is selected */
+      weights?: readonly Modifier<"megastructure">[];
+    },
     body: (scope: MegastructureScope) => void
   ): void;
 
@@ -15518,9 +16221,13 @@ export interface UniversalEffects<
   transferCarrier(args: {
     source: ScopeValue<"carrier" | "colony" | "planet" | "ship">;
     target: ScopeValue<"carrier" | "colony" | "planet" | "ship">;
+    /** default: no */
     transferOwnership?: boolean;
+    /** default: no */
     transferController?: boolean;
+    /** default: no */
     mergePops?: boolean;
+    /** default: no */
     destroyColony?: boolean;
   }): void;
 
@@ -15542,6 +16249,7 @@ export interface UniversalEffects<
     amount?: ScriptValue;
     percentage?: ScriptValue;
     random?: ScriptValue;
+    /** default: 'GROWTH_CAT_OTHER' */
     growthCategory?: string;
   }): void;
 }

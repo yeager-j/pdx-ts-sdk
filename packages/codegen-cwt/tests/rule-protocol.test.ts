@@ -9,7 +9,11 @@ import { emitScopeLinks } from "@pdx-ts/codegen-cwt/emit/script/links";
 import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
 import { lowerRule, lowerRuleTable } from "@pdx-ts/codegen-cwt/lower/lowered-rule";
-import { mergeFields } from "@pdx-ts/codegen-cwt/lower/script-shape";
+import {
+  mergeFields,
+  repeatedMemberType,
+  type ArgValue,
+} from "@pdx-ts/codegen-cwt/lower/script-shape";
 import {
   deriveContentSwapIdentities,
   type ContentSwapSource,
@@ -173,11 +177,16 @@ describe("LoweredRule", () => {
       expect.stringContaining("create_ambient_object.target"),
       expect.stringContaining("create_ship.create_colony"),
     ]);
+    // `create_colony` bounds its ethics at three, `start_colony` at ten —
+    // past the width a union of lengths still reads as a bound.
     expect(emitted.interfaces).toContain(
-      'ethos?: "random" | "owner" | { ethic: readonly (EthicRef | string)[] }'
+      'ethos?: "random" | "owner" | { ethic: readonly [EthicRef | string] | ' +
+        "readonly [EthicRef | string, EthicRef | string] | " +
+        "readonly [EthicRef | string, EthicRef | string, EthicRef | string] }"
     );
     expect(emitted.interfaces).toContain(
-      'ethos?: "owner" | "random" | { ethic: readonly (EthicRef | string)[] }'
+      'ethos?: "owner" | "random" | ' +
+        "{ ethic: readonly [EthicRef | string, ...(EthicRef | string)[]] }"
     );
     expect(emitted.skipped).not.toContainEqual(expect.objectContaining({ name: "create_colony" }));
     expect(emitted.skipped).not.toContainEqual(expect.objectContaining({ name: "start_colony" }));
@@ -543,11 +552,16 @@ describe("a spliced alias category with a script authoring surface", () => {
     // `trigger = { id = scalar alias_name[trigger] }` pushes system scope, so
     // its conditions are typed there; `effect = { id = scalar
     // alias_name[effect] }` pushes none and runs in the list's own scope.
+    expect(emitted.interfaces).toContain('id: string; conditions: Trigger<"system"> };');
+    expect(emitted.interfaces).toContain("id: string; effects: (scope: ScopeObjOf<S>) => void }");
+  });
+
+  it("keeps each member's own CWT documentation on the member", () => {
     expect(emitted.interfaces).toContain(
-      'trigger?: { id: string; conditions: Trigger<"system"> };'
+      "| { \n/** This requires the fleet to be a planet destroyer */\ndestroyPlanet: {"
     );
     expect(emitted.interfaces).toContain(
-      "| { effect: { id: string; effects: (scope: ScopeObjOf<S>) => void } }"
+      "stance: FleetStance; \n/** days to wait */\ndays?: number }"
     );
   });
 
@@ -621,6 +635,58 @@ describe("a spliced alias category with a script authoring surface", () => {
         'field "government_restrictions" structured arm splices a category the field model ' +
         "cannot type (pop_pre_trigger)",
     });
+  });
+});
+
+describe("a repeated argument's declared bound", () => {
+  const item: ArgValue = {
+    kind: "scalar",
+    value: { type: "EthicRef", toScalar: (expression) => expression },
+  };
+
+  it("spells a bounded repetition as the lengths it admits", () => {
+    expect(repeatedMemberType(new Emitter(rules), item, "EthicRef", { min: 1, max: 3 })).toBe(
+      "readonly [EthicRef] | readonly [EthicRef, EthicRef] | " +
+        "readonly [EthicRef, EthicRef, EthicRef]"
+    );
+  });
+
+  it("spells an unbounded repetition as an array, keeping any minimum", () => {
+    expect(repeatedMemberType(new Emitter(rules), item, "EthicRef", { min: 0, max: null })).toBe(
+      "readonly EthicRef[]"
+    );
+    expect(repeatedMemberType(new Emitter(rules), item, "EthicRef", { min: 1, max: null })).toBe(
+      "readonly [EthicRef, ...EthicRef[]]"
+    );
+  });
+
+  it("carries the bound into the emitted argument, widest form across the declarations", () => {
+    // `ethic = <ethic>` and `ethic = random` are both 1..3: one key of three
+    // occurrences, each taking either form, not six occurrences.
+    const emitted = emitEffects(
+      new Emitter(rules),
+      docs.effects,
+      scopes,
+      lowerRuleTable(rules.effects, docs.effects, emitter, scopes),
+      createEffectPolicy(rules),
+      []
+    );
+
+    expect(emitted.interfaces).toContain(
+      'ethic: readonly [EthicRef | string | "random"] | ' +
+        'readonly [EthicRef | string | "random", EthicRef | string | "random"] | ' +
+        'readonly [EthicRef | string | "random", EthicRef | string | "random", ' +
+        'EthicRef | string | "random"]'
+    );
+    // 1..10 is past the width a union of lengths still reads as a bound, so it
+    // keeps the minimum and stays an array.
+    expect(emitted.interfaces).toContain(
+      "ethic: readonly [EthicRef | string, ...(EthicRef | string)[]]"
+    );
+    // The recorder needs the fact, not the bound.
+    expect(emitted.meta).toContain(
+      '{ prop: "ethic", key: "ethic", kind: "value", refTypes: ["ethic"], repeated: true }'
+    );
   });
 });
 

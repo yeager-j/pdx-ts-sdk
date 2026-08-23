@@ -352,7 +352,9 @@ function baseMemberType(emitter: Emitter, value: ArgValue, outerScope: string): 
 /** The type text one argument member emits, widened when the field repeats. */
 function memberType(emitter: Emitter, field: ArgField, outerScope: string): string {
   const single = baseMemberType(emitter, field.value, outerScope);
-  return field.repeated === true ? repeatedMemberType(emitter, field.value, single) : single;
+  return field.repeated === undefined
+    ? single
+    : repeatedMemberType(emitter, field.value, single, field.repeated);
 }
 
 function argumentMembers(
@@ -393,8 +395,7 @@ function valueListType(
       ? null
       : `{ ${value.fields.map((field) => `${propertyName(camelCase(field.name))}${field.optional ? "?" : ""}: ${memberType(emitter, field, outerScope)}`).join("; ")} }`,
   ].filter((arm): arm is string => arm !== null && arm !== undefined);
-  const item = arms.length === 1 && !arms[0]!.includes(" | ") ? arms[0]! : `(${arms.join(" | ")})`;
-  return cardinalityArrayType(item, value.cardinality);
+  return cardinalityArrayType(arms.join(" | "), value.cardinality);
 }
 
 function emitValueList(

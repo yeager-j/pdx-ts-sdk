@@ -18,7 +18,7 @@
  * emitter cannot type is skipped with a named reason and reported.
  */
 
-import type { RuleType } from "../../cwt/model.ts";
+import type { Cardinality, RuleType } from "../../cwt/model.ts";
 import type { DocEntry } from "../../logs/trigger-docs.ts";
 import type { LoweredRule } from "../../lower/lowered-rule.ts";
 import {
@@ -68,6 +68,9 @@ import type { ScriptEffectReferenceRow, ScriptScopeLinkReferenceRow } from "./sc
 import { tsDoc } from "./triggers.ts";
 
 const EFFECT_CLAUSES = new Set<ClauseCategory>(["trigger", "effect", "modifier_rule"]);
+
+/** The occurrence count an overlay row asserts when it says a field repeats. */
+const UNBOUNDED: Cardinality = { min: 0, max: null };
 
 /**
  * What an effect argument block may splice: the nested clause categories, plus
@@ -218,13 +221,15 @@ function applyCardinalityOverride(
     resolved = { ...resolved, optional: override.optional };
   }
   if (override.repeated !== undefined) {
-    if (field.repeated === override.repeated) {
+    if ((field.repeated !== undefined) === override.repeated) {
       throw new Error(
         `EFFECT_FIELD_CARDINALITY_OVERRIDES names "${key}.${field.name}", but lowering already ` +
           `makes it ${override.repeated ? "repeated" : "singular"} — retire that override`
       );
     }
-    resolved = { ...resolved, repeated: override.repeated };
+    // The row states that the key repeats, not how often: a field CWT leaves
+    // unannotated has no documented maximum to carry over.
+    resolved = { ...resolved, repeated: override.repeated ? UNBOUNDED : undefined };
   }
   if (override.valueList !== undefined) {
     if (field.value.kind !== "valueList") {
@@ -520,9 +525,7 @@ function baseMemberType(
         value.scalar === null ? undefined : emitter.useValue(value.scalar).type,
         value.fields === null ? null : argsType(emitter, value.fields, outerScope, effectKey),
       ].filter((arm): arm is string => arm !== null && arm !== undefined);
-      const item =
-        arms.length === 1 && !arms[0]!.includes(" | ") ? arms[0]! : `(${arms.join(" | ")})`;
-      return cardinalityArrayType(item, value.cardinality);
+      return cardinalityArrayType(arms.join(" | "), value.cardinality);
     }
     case "clause": {
       const scope = value.scope === null ? outerScope : JSON.stringify(value.scope);
@@ -563,7 +566,9 @@ function memberType(
     return override.type;
   }
   const single = baseMemberType(emitter, field.value, outerScope, effectKey);
-  return field.repeated === true ? repeatedMemberType(emitter, field.value, single) : single;
+  return field.repeated === undefined
+    ? single
+    : repeatedMemberType(emitter, field.value, single, field.repeated);
 }
 
 /**
@@ -630,15 +635,28 @@ function scopeInterfaceName(scope: string | null): string {
   return scope === null ? "this" : `${pascalCase(scope)}Scope`;
 }
 
+/**
+ * One member of an inline object type, carrying whatever the rules document
+ * about it. The doc comment goes on the property rather than beside the object,
+ * so an editor shows it where the member is written.
+ */
+function inlineMember(field: ArgField, type: string): string {
+  const member = `${camelCase(field.name)}${field.optional ? "?" : ""}: ${type}`;
+  const doc = docComment(field.docs);
+  // The doc has to open its own line. Left at the end of the previous member's
+  // line it is a trailing comment, which the formatter keeps attached to that
+  // member instead of this one.
+  return doc === "" ? member : `\n${doc}${member}`;
+}
+
 function argsType(
   emitter: Emitter,
   fields: readonly ArgField[],
   outerScope: string,
   effectKey: string
 ): string {
-  const members = fields.map(
-    (field) =>
-      `${camelCase(field.name)}${field.optional ? "?" : ""}: ${memberType(emitter, field, outerScope, effectKey)}`
+  const members = fields.map((field) =>
+    inlineMember(field, memberType(emitter, field, outerScope, effectKey))
   );
   return `{ ${members.join("; ")} }`;
 }
@@ -685,14 +703,23 @@ function extensionFallbackSignature(
   return methodSignatureText(emitter, effect, outerScope);
 }
 
+/**
+ * Drops the member doc comments {@link inlineMember} writes into an args
+ * object. A reference row's signature is one line of display text, and the row
+ * carries the documentation it needs in its own `docs`.
+ */
+function withoutMemberDocs(signature: string): string {
+  return signature.replaceAll(/\n\/\*\*[\s\S]*?\*\/\n/g, "");
+}
+
 function referenceSignature(emitter: Emitter, effect: EmittedEffect, outerScope: string): string {
   const seam = EFFECT_EXTENSION_SEAMS.get(effect.key);
   if (seam === undefined) {
-    return methodSignatureText(emitter, effect, outerScope).trim();
+    return withoutMemberDocs(methodSignatureText(emitter, effect, outerScope)).trim();
   }
   return (
     `${seam.referenceSignature}\n` +
-    `${extensionFallbackSignature(emitter, effect, outerScope).trim()}`
+    `${withoutMemberDocs(extensionFallbackSignature(emitter, effect, outerScope)).trim()}`
   );
 }
 
@@ -1102,8 +1129,7 @@ function aliasListTypes(
   return [...surfaces].map(([category, surface]) => {
     const arms = surface.members.map(
       (member) =>
-        docComment(member.docs, "  ") +
-        `  | { ${camelCase(member.name)}: ${memberType(emitter, member, RECEIVING_SCOPE, category)} }`
+        `  | { ${inlineMember(member, memberType(emitter, member, RECEIVING_SCOPE, category))} }`
     );
     return (
       docComment([

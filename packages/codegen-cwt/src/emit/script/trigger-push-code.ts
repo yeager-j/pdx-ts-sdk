@@ -63,7 +63,7 @@ export function pushCode(
   index: number,
   sink = "entries"
 ): string {
-  if (field.repeated !== true) {
+  if (field.repeated === undefined) {
     return pushValueCode(emitter, field, access, parentFieldPath, index, sink);
   }
   // Named apart from `pushValueListCode`'s own `item<index>` so a repeated

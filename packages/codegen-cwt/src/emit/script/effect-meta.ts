@@ -73,7 +73,7 @@ function spliceMeta(value: ArgField["value"]): string {
 }
 
 function fieldMeta(field: ArgField): string {
-  const repeated = field.repeated === true ? ", repeated: true" : "";
+  const repeated = field.repeated === undefined ? "" : ", repeated: true";
   if (field.value.kind === "fields") {
     return `{ prop: ${JSON.stringify(camelCase(field.name))}, key: ${JSON.stringify(field.name)}, kind: "fields", fields: [${field.value.fields.map(fieldMeta).join(", ")}]${repeated} }`;
   }
