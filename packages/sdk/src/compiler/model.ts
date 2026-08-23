@@ -12,11 +12,11 @@ import type { ResolvedModConfig } from "./config.ts";
 import type { PathClaim } from "./paths.ts";
 
 /** One emitted file: path plus the entries serialized into it, in order. */
-export interface EmittedFile {
+export interface EmittedFile<T extends PdxItem = PdxEntry> {
   /** The minted path relative to the mod root. */
   readonly relPath: LogicalPath;
   /** The ordered PDXScript entries written to the file. */
-  readonly entries: readonly PdxItem[];
+  readonly entries: readonly T[];
 }
 
 /** A content file plus the registry metadata needed by compiler leaves. */
@@ -26,7 +26,7 @@ export interface ContentFile extends EmittedFile {
 }
 
 /** One bare-scalar component-tag file. */
-export interface ComponentTagFile extends EmittedFile {
+export interface ComponentTagFile extends EmittedFile<PdxItem> {
   /** Every tag id this file declares. */
   readonly ids: readonly string[];
 }

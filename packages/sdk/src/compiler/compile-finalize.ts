@@ -4,6 +4,7 @@ import {
   installedVanillaPackageVersion,
   vanillaIdsCheckWarning,
 } from "../identifiers/package-pin.ts";
+import { PACKAGED_ENUM_EVIDENCE } from "../identifiers/vanilla-enum-members.ts";
 import { PACKAGED_ID_EVIDENCE } from "../identifiers/vanilla-gfx-ids.ts";
 import {
   checkVanillaPathInventoryConsistency,
@@ -61,7 +62,8 @@ export function finalizeMod(
     definedGroups,
     patched: patches,
     refUses,
-    vanillaIdsOf: (registry) => PACKAGED_ID_EVIDENCE.get(registry)?.(),
+    vanillaIdsOf: (registry) =>
+      (PACKAGED_ID_EVIDENCE.get(registry) ?? PACKAGED_ENUM_EVIDENCE.get(registry))?.(),
   });
 
   const claims = collectInitialClaims(session, contentFiles, componentTagFiles, eventFiles);

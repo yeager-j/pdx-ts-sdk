@@ -44,7 +44,7 @@ const OPTIONS = {
 const generated = generateVanillaPackage(OPTIONS);
 
 /**
- * The four files that carry runtime, and the only four. Everything else the
+ * The five files that carry runtime, and the only five. Everything else the
  * generator emits is types with zero payload. `triggers.ts` and `effects.ts`
  * hold one bound call per scripted definition (SDK-13); `paths.ts` holds the
  * install's path inventory, which is data because the SDK looks paths up at
@@ -52,10 +52,11 @@ const generated = generateVanillaPackage(OPTIONS);
  * thousands of strings (SDK-173); `gfx-ids.ts` holds the mint-shaped
  * registries' ids, for the same reason one step over — a minted GFX name is
  * only known at build time, so the collision refusal is a lookup rather than a
- * type (SDK-121).
+ * type (SDK-121); `enum-members.ts` holds the selected complex-enum members
+ * whose exact identity must take precedence over prefix-based ownership.
  */
 const BINDING_FILES = new Set(["triggers.ts", "effects.ts"]);
-const RUNTIME_FILES = new Set([...BINDING_FILES, "paths.ts", "gfx-ids.ts"]);
+const RUNTIME_FILES = new Set([...BINDING_FILES, "paths.ts", "gfx-ids.ts", "enum-members.ts"]);
 
 describe("assertVanillaIdentifier", () => {
   it("passes the names the game actually defines", () => {
@@ -316,6 +317,17 @@ describe("generated output", () => {
     const text = generated.files.get("gfx-ids.ts")!;
     const registries = [...text.matchAll(/^ {2}"([^"]+)":/gm)].map((match) => match[1]!);
     expect(registries).toEqual([...RUNTIME_ID_SET_REGISTRIES]);
+  });
+
+  it("keeps selected enum evidence to one quoted member per line", () => {
+    const text = generated.files.get("enum-members.ts");
+    expect(text, "enum-members.ts was not emitted").toBeDefined();
+    const body = text!.split("\n").filter((line) => line !== "" && !line.startsWith("//"));
+    expect(body[0]).toMatch(/^export const VANILLA_ENUM_MEMBER_GAME_VERSION = "4\.4\.6";$/);
+    expect(body[1]).toContain("export const VANILLA_ENUM_MEMBERS:");
+    expect(body).toContain('  "component_tag": /*#__PURE__*/ Object.freeze([');
+    expect(body).toContain('    "fake_component_tag",');
+    expect(body[body.length - 1]).toBe("});");
   });
 
   it("carries the fixture's walked files and archive entries, and none of its junk", () => {

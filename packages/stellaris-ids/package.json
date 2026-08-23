@@ -30,6 +30,11 @@
       "types": "./dist/gfx-ids.d.ts",
       "default": "./dist/gfx-ids.js"
     },
+    "./enum-members": {
+      "pdx-source": "./src/enum-members.ts",
+      "types": "./dist/enum-members.d.ts",
+      "default": "./dist/enum-members.js"
+    },
     "./package.json": "./package.json"
   },
   "publishConfig": {

@@ -168,3 +168,6 @@ export const VANILLA_MANIFEST: readonly VanillaManifestRow[] = [
 export const RUNTIME_ID_SET_REGISTRIES: readonly string[] = CONTENT_ROWS.filter((row) =>
   MINT_SHAPE_OVERLAYS.has(row.registry)
 ).map((row) => row.registry);
+
+/** Complex enums whose exact vanilla membership the SDK checks at build time. */
+export const RUNTIME_ENUM_SET_NAMES = ["component_tag"] as const;

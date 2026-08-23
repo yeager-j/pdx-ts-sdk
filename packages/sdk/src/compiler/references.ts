@@ -197,8 +197,7 @@ function assertContentReferenceExists(
 
   const minted = registries.some((registry) => contentDescriptor(registry)?.mintHead !== undefined);
   // Exact vanilla identity takes precedence over ownership inferred from its spelling (ADR-0006).
-  const isVanilla =
-    minted && registries.some((registry) => vanillaIdsOf(registry)?.has(use.id) === true);
+  const isVanilla = registries.some((registry) => vanillaIdsOf(registry)?.has(use.id) === true);
   if (isVanilla || !isOwnedReference(use.id, prefix, minted)) {
     return;
   }

@@ -24,6 +24,7 @@ export const MODIFIER_FAMILY_OVERLAYS = [
     target: "job",
     placeholder: "<job>",
     selector: 'import("./refs.ts").JobRef',
+    docs: ["Selects modifiers generated from a typed job reference."],
   },
   {
     family: "componentTag",
@@ -31,6 +32,10 @@ export const MODIFIER_FAMILY_OVERLAYS = [
     placeholder: "enum[component_tag]",
     selector:
       'import("../authoring/component-tags.ts").ComponentTagItem | import("@pdx-ts/stellaris-ids").VanillaComponentTagMember',
+    docs: [
+      "Selects modifiers generated from an owned or packaged vanilla component tag.",
+      "Use `unchecked()` with the complete flat key for a deliberate third-party tag.",
+    ],
   },
 ] as const;
 

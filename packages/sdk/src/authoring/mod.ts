@@ -148,8 +148,19 @@ export type ModCapability<P extends string, I extends IdProfile> = {
   /**
    * Declares a component tag owned by this mod.
    *
+   * Place the returned item in a Feature before compiling content that uses it.
+   *
    * Generated modifiers using this tag need matching `mod_<modifier_key>` localization and
    * `gfx/interface/icons/modifiers/<modifier_key>.dds`; add both through the existing APIs.
+   *
+   * @example
+   * const artillery = mod.componentTag("artillery");
+   * const tags = mod.feature("component_tags", [artillery]);
+   * const weapon = mod.weaponComponentTemplate("artillery_laser", {
+   *   icon: "GFX_weapon_artillery_laser",
+   *   tags: [artillery],
+   * });
+   * mod.compile([tags, mod.feature("components", [weapon])]);
    */
   componentTag<const Name extends string>(name: Name): ComponentTagItem<P, Name>;
   /**

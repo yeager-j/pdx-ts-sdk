@@ -141,6 +141,18 @@ describe("component-tag capability", () => {
     ).not.toThrow();
   });
 
+  it("recognizes an exact packaged vanilla tag before prefix-based ownership", () => {
+    const mod = createMod({ name: "Vanilla Tag", prefix: "weapon", supportedVersion: "4.4.*" });
+    const ship = mod.shipSize("test_ship", {
+      class: "military",
+      shipModifier: (modifier) => {
+        modifier.componentTag("weapon_type_energy").speed.mult(0.1);
+      },
+    });
+
+    expect(() => mod.compile([mod.feature("ships", [ship])])).not.toThrow();
+  });
+
   it("writes every component-tag modifier operation as an exact flat key", () => {
     const mod = createMod({ name: "Modifiers", prefix: "ct_modifiers", supportedVersion: "4.4.*" });
     const role = mod.componentTag("artillery_role");

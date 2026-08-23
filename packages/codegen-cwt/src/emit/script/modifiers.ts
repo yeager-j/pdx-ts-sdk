@@ -28,6 +28,8 @@ export interface DynamicModifierFamily {
   readonly family: string;
   /** Exact TypeScript selector expression accepted by this family. */
   readonly selector: string;
+  /** Documentation emitted above the generated recorder property. */
+  readonly docs: readonly string[];
   /** Registry whose definitions supply selector values. */
   readonly target: string;
   /** Placeholder token replaced inside CWT modifier templates. */
@@ -126,6 +128,7 @@ function dynamicModifierFamilies(
       {
         family: family.family,
         selector: family.selector,
+        docs: family.docs,
         target: family.target,
         placeholder,
         scopeOperations,
@@ -615,7 +618,9 @@ function recorderInterfacesCode(
           const type = family.scopeOperations.has(scope)
             ? `${pascalCase(family.family)}ModifierPath_${pascalCase(scope)}`
             : undefined;
-          return type === undefined ? "" : `  readonly ${family.family}: ${type};\n`;
+          return type === undefined
+            ? ""
+            : docComment(family.docs, "  ") + `  readonly ${family.family}: ${type};\n`;
         })
         .join("") +
       "  /** Sets a modifier by its flat name, checked against every known name. */\n" +
@@ -654,7 +659,9 @@ function recorderInterfacesCode(
     "  readonly economic: EconomicCategorySelector<ScopeName>;\n" +
     join.dynamicFamilies
       .map(
-        (family) => `  readonly ${family.family}: ${pascalCase(family.family)}ModifierPath_Any;\n`
+        (family) =>
+          docComment(family.docs, "  ") +
+          `  readonly ${family.family}: ${pascalCase(family.family)}ModifierPath_Any;\n`
       )
       .join("") +
     "  /** Sets a modifier by its flat name, checked against every known name. */\n" +
