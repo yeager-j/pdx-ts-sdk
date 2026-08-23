@@ -82,13 +82,13 @@ export const humReturns = events.country(1, {
     country.randomList([
       {
         weight: 60,
-        do: (c) => c.setCountryFlag(flags.hello_galaxy_heard_the_hum),
+        do: () => country.setCountryFlag(flags.hello_galaxy_heard_the_hum),
       },
       {
         weight: 40,
         modifiers: [{ factor: 2, when: isAtWar() }],
-        do: (c) => {
-          c.everyOwnedPlanet({ limit: hasOwner() }, (planet) => {
+        do: () => {
+          country.everyOwnedPlanet({ limit: hasOwner() }, (planet) => {
             planet.saveEventTargetAs(stormWorld);
             planet.planetEvent({ id: aftershock, from: ctx.self, days: 30 });
           });
@@ -99,7 +99,7 @@ export const humReturns = events.country(1, {
       .if(hasCountryFlag(flags.hello_galaxy_heard_the_hum), () => {
         stormWorld.effects((planet) => planet.addDeposit("d_minerals_1"));
       })
-      .else((c) => c.log("the hum went unheard"));
+      .else(() => country.log("the hum went unheard"));
   },
   options: [{ name: "Fascinating.", key: "fascinating" }],
 });

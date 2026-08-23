@@ -32,8 +32,8 @@ Triggers carry the same fact in their type. `hasCountryFlag(...)` returns a
 is valid where the game will evaluate it.
 
 ```ts
-country.if(hasCountryFlag(flags.ready), (c) => {
-  c.addResource({ resource: "influence", amount: 50 });
+country.if(hasCountryFlag(flags.ready), () => {
+  country.addResource({ resource: "influence", amount: 50 });
 });
 ```
 

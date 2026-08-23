@@ -102,7 +102,7 @@ const POISON_MESSAGE =
   "A plain TypeScript 'if' branches at BUILD time and cannot see game state. " +
   "Use the trigger where a condition block is expected (a technology's 'potential', " +
   "an effect's 'limit'), or for in-game branching inside an effect closure use " +
-  "scope.if(trigger, (s) => ...).elseIf(...).else(...).";
+  "scope.if(trigger, () => ...).elseIf(...).else(...).";
 
 /**
  * The flat-conjunction tree every `and`-shaped combinator builds: operands'
