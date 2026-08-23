@@ -504,6 +504,12 @@ export function emitTriggers(
       skipped.push(skippedRule(key, "invalid-rule-name", "not a plain rule name"));
       continue;
     }
+    if (rule.removed) {
+      skipped.push(
+        skippedRule(key, "removed-api", "declared removed by the rules (## api_status = removed)")
+      );
+      continue;
+    }
     const doc = docs.get(key);
     // The rules are authoritative where they carry `## scopes`; the dump is the
     // fallback for the handful of rules that do not, and stays the cross-check.

@@ -2,13 +2,13 @@ import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseCwt, type CwtNode } from "@pdx-ts/codegen-cwt/cwt/parser";
-import { scopeIndex } from "@pdx-ts/codegen-cwt/cwt/rules";
+import { readAliases, scopeIndex } from "@pdx-ts/codegen-cwt/cwt/rules";
 import { emitEffects } from "@pdx-ts/codegen-cwt/emit/script/effects";
 import { emitEvents } from "@pdx-ts/codegen-cwt/emit/script/events";
 import { emitScopeLinks } from "@pdx-ts/codegen-cwt/emit/script/links";
 import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
-import { lowerRuleTable } from "@pdx-ts/codegen-cwt/lower/lowered-rule";
+import { lowerRule, lowerRuleTable } from "@pdx-ts/codegen-cwt/lower/lowered-rule";
 import { mergeFields } from "@pdx-ts/codegen-cwt/lower/script-shape";
 import {
   deriveContentSwapIdentities,
@@ -89,6 +89,33 @@ describe("LoweredRule", () => {
     expect(rule.body.splice).toBeNull();
     expect([...rule.body.clauses]).toEqual([["limit", "planet"]]);
     expect([...rule.body.args]).toEqual(["count"]);
+  });
+
+  it("marks a rule removed only when every declaration says so", () => {
+    expect(triggers.get("has_pop_flag")!.removed).toBe(true);
+    expect(effects.get("pop_event")!.removed).toBe(true);
+    expect(effects.get("run_in_ai_mode")!.removed).toBe(false);
+    expect(triggers.get("count_owned_planet")!.removed).toBe(false);
+  });
+
+  it("rejects a rule whose declarations disagree about api_status", () => {
+    const source = [
+      "## api_status = removed",
+      "alias[trigger:mixed_status] = $any",
+      "## scopes = { country }",
+      "alias[trigger:mixed_status] = bool",
+    ].join("\n");
+    const declarations = readAliases(
+      parseCwt(source, "mixed.cwt").nodes,
+      "mixed.cwt",
+      "trigger",
+      new Map()
+    ).aliases.get("mixed_status")!;
+
+    expect(declarations).toHaveLength(2);
+    expect(() => lowerRule("mixed_status", declarations, undefined, emitter, scopes)).toThrow(
+      'mixed_status: some declarations are marked "## api_status = removed" and some are not'
+    );
   });
 
   it("retains mixed named arguments and effect splices", () => {

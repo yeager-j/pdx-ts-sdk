@@ -47,6 +47,11 @@ export interface AliasDecl {
   readonly line: number;
   /** `==` marks a comparison, written in script as `num_moons < 4`. */
   readonly comparison: boolean;
+  /**
+   * The `## api_status` annotation, or `null` when unannotated. `"removed"`
+   * marks a rule the game no longer accepts.
+   */
+  readonly apiStatus: string | null;
 }
 
 /** Alias declarations and recoverable diagnostics read from one CWT source. */
@@ -522,6 +527,7 @@ export function readAliases(
       file,
       line: entry.line,
       comparison: entry.op === "==",
+      apiStatus: scalarOption(entry.options, "api_status"),
     });
     aliases.set(name, declarations);
   }

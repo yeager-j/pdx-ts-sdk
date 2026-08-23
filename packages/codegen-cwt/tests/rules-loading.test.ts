@@ -14,7 +14,12 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { SingleAliasTarget } from "@pdx-ts/codegen-cwt/cwt/model";
 import { parseCwt } from "@pdx-ts/codegen-cwt/cwt/parser";
-import { buildRuleSet, readAliases, type ParsedRuleFile } from "@pdx-ts/codegen-cwt/cwt/rules";
+import {
+  buildRuleSet,
+  readAliases,
+  type AliasDecl,
+  type ParsedRuleFile,
+} from "@pdx-ts/codegen-cwt/cwt/rules";
 import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { describe, expect, it } from "vitest";
 
@@ -101,5 +106,18 @@ describe("loadRules against the real rules", () => {
     expect(rules.triggers.size).toBe(1082);
     expect(rules.effects.size).toBe(1058);
     expect([...rules.triggers.values()].flat()).toHaveLength(1133);
+  });
+
+  it("reads the ## api_status annotation onto each declaration", () => {
+    const statusOf = (
+      table: ReadonlyMap<string, readonly AliasDecl[]>,
+      key: string
+    ): (string | null)[] => table.get(key)!.map((declaration) => declaration.apiStatus);
+
+    expect(statusOf(rules.triggers, "has_pop_flag")).toEqual(["removed"]);
+    expect(statusOf(rules.effects, "pop_event")).toEqual(["removed"]);
+    expect(statusOf(rules.effects, "ai_trade_facility")).toEqual(["kept"]);
+    expect(statusOf(rules.effects, "run_in_ai_mode")).toEqual(["kept"]);
+    expect(statusOf(rules.triggers, "has_country_flag")).toEqual([null]);
   });
 });

@@ -664,6 +664,13 @@ function generatedEffectRule(
   if (!isPlainName(key)) {
     return skippedRule(key, "invalid-rule-name", "not a plain rule name");
   }
+  if (rule.removed) {
+    return skippedRule(
+      key,
+      "removed-api",
+      "declared removed by the rules (## api_status = removed)"
+    );
+  }
   if (rule.supportedScopes.length === 0) {
     return skippedRule(
       key,

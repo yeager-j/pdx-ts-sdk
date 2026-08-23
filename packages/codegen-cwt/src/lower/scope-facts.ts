@@ -86,6 +86,11 @@ export interface ScopeFacts {
 function factsOf(table: ReadonlyMap<string, LoweredRule>): Map<string, RuleFact> {
   const out = new Map<string, RuleFact>();
   for (const [key, rule] of table) {
+    if (rule.removed) {
+      // The game no longer accepts the rule, so no consumer should infer a
+      // scope from a body that writes it.
+      continue;
+    }
     if (rule.scopes === null) {
       // Neither source names a scope, or one of them names a scope the index
       // does not know. The rule is dropped WHOLE rather than narrowed to its

@@ -61,10 +61,10 @@ describe("the script-generation gap ledger", () => {
       effects: effects.skipped,
     });
 
-    expect(SCRIPT_GENERATION_GAPS).toHaveLength(41);
-    expect(report.policyOwned).toHaveLength(38);
+    expect(SCRIPT_GENERATION_GAPS).toHaveLength(35);
+    expect(report.policyOwned).toHaveLength(44);
     expect(report.abstractPlaceholders).toHaveLength(2);
-    expect(report.trackedGaps).toHaveLength(41);
+    expect(report.trackedGaps).toHaveLength(35);
     expect(report.abstractPlaceholders.map((entry) => entry.name)).toEqual([
       "<scripted_effect>",
       "<scripted_trigger>",
@@ -78,7 +78,7 @@ describe("the script-generation gap ledger", () => {
     });
     const lines = formatScriptGapReport(report);
 
-    expect(lines.trackedGaps).toHaveLength(41);
+    expect(lines.trackedGaps).toHaveLength(35);
     expect(lines.trackedGaps).toContain(
       "effect create_fleet [unsupported-field-value] — SDK-253: " +
         "The create_fleet parent field uses the malformed CWT keyword sceop[fleet]. " +
@@ -89,6 +89,43 @@ describe("the script-generation gap ledger", () => {
     expect(lines.trackedGaps.every((line) => !line.includes("SDK-247"))).toBe(true);
     expect(lines.trackedGaps.every((line) => /SDK-[0-9]+/.test(line))).toBe(true);
     expect(lines.trackedGaps.every((line) => !line.includes("e.g."))).toBe(true);
+  });
+
+  it("owns the rules declared removed by CWT as an intentional exclusion", () => {
+    const report = reconcileScriptGaps({
+      triggers: triggers.skipped,
+      effects: effects.skipped,
+    });
+    const removed = report.policyOwned
+      .filter((entry) => entry.category === "removed-api")
+      .map((entry) => `${entry.kind}:${entry.name}`);
+
+    expect(removed).toEqual([
+      "effect:pop_event",
+      "effect:remove_pop_flag",
+      "effect:set_pop_flag",
+      "effect:set_timed_pop_flag",
+      "trigger:has_pop_flag",
+      "trigger:pop_has_ethic",
+    ]);
+  });
+
+  it("keeps emitting the effects the rules mark api_status = kept", () => {
+    expect(effects.interfaces).toContain("aiTradeFacility(args:");
+    expect(effects.interfaces).toContain("runInAiMode(value?: boolean): void;");
+  });
+
+  it("rejects a removed-api row in the gap ledger", () => {
+    const removedRow = row({ key: "has_pop_flag", category: "removed-api" as never });
+    expect(() =>
+      reconcileScriptGaps(
+        {
+          triggers: [skippedRule("has_pop_flag", "removed-api", "declared removed by the rules")],
+          effects: [],
+        },
+        [removedRow]
+      )
+    ).toThrow("trigger:has_pop_flag: intentional exclusions do not belong in the gap ledger");
   });
 
   it("rejects a newly skipped generator-owned rule", () => {
