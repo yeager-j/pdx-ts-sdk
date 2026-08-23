@@ -460,9 +460,7 @@ export function comparisonValue(
  * another slot in the same block, so `<color_define>` 0..4 beside `"null"`
  * 0..4 admits up to eight items. An open block's key filters sum the same way.
  */
-function totalCardinality(
-  values: readonly { readonly cardinality: Cardinality }[]
-): Cardinality {
+function totalCardinality(values: readonly { readonly cardinality: Cardinality }[]): Cardinality {
   return {
     min: values.reduce((sum, value) => sum + value.cardinality.min, 0),
     max: values.some((value) => value.cardinality.max === null)
@@ -1115,9 +1113,8 @@ export function aliasListMembers(
       `the rules declare no alias[${category}:...] members`
     );
   }
-  const lowered: ArgField[] = [];
-  for (const [name, declarations] of members) {
-    const group = declarations.map((declaration): RuleField => ({
+  const fields = [...members].flatMap(([name, declarations]) =>
+    declarations.map((declaration): RuleField => ({
       key: { kind: "name", name },
       type: declaration.type,
       cardinality: REQUIRED,
@@ -1125,14 +1122,19 @@ export function aliasListMembers(
       scope: declaration.scope,
       line: declaration.line,
       comparison: declaration.comparison,
-    }));
-    const value = mergedArgValue(emitter, name, group, null, allowedSplices);
-    if ("detail" in value) {
-      return value;
-    }
-    lowered.push({ name, value, optional: false, docs: group.flatMap((field) => field.docs) });
+    }))
+  );
+  const block = mergeBlock(emitter, fields, null, allowedSplices);
+  if ("detail" in block) {
+    return block;
   }
-  return lowered;
+  if (block.kind === "map") {
+    return skipReason(
+      "computed-field-key",
+      `alias[${category}:...] members are an open-keyed block`
+    );
+  }
+  return [...block.fields];
 }
 
 /**

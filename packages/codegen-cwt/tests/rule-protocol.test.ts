@@ -555,12 +555,7 @@ describe("LoweredRule", () => {
   it("declines a mixed block whose open keys come from two key filters", () => {
     const debris = effects.get("add_resource_from_debris")!.blocks[0]!.named;
     const patron = effects.get("add_attunement")!.blocks[0]!.named[0]!;
-    const block = mergeBlock(
-      new Emitter(rules),
-      [...debris, patron],
-      null,
-      new Set<string>()
-    );
+    const block = mergeBlock(new Emitter(rules), [...debris, patron], null, new Set<string>());
 
     expect(block).toEqual({
       category: "computed-field-key",
