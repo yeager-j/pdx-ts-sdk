@@ -1,6 +1,14 @@
 export type { PdxEntry, PdxOp, PdxScalar, PdxValue } from "@pdx-ts/pdxscript";
 export { block, cmp, kv, list, quoted, scalar } from "@pdx-ts/pdxscript";
 export { serialize } from "@pdx-ts/pdxscript";
+export {
+  absoluteOrbits,
+  asteroidBelt,
+  type AbsoluteMoonOrbit,
+  type AbsolutePlanetOrbit,
+  type AsteroidBelt,
+  type AsteroidBeltInput,
+} from "./solar-system-layout.ts";
 export type { ScopeName } from "./generated/scopes.ts";
 export * from "./generated/enums.ts";
 export { refId, type TypedRef } from "./script/scalar.ts";
