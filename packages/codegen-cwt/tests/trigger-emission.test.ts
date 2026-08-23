@@ -273,7 +273,7 @@ describe("trigger emission", () => {
         value: { type: "TraitRef | string", toScalar: (expr) => expr, refTypes: ["trait"] },
       },
       optional: false,
-      repeated: true,
+      repeated: { min: 0, max: null },
       docs: [],
     };
     const pushEmitter = new Emitter(rules);

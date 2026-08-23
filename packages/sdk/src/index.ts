@@ -39,7 +39,13 @@ export type {
   UndeclaredFrom,
   UndeclaredRoot,
 } from "./script/effects/types.ts";
-export type { EffectPathMap, EffectPathOf, ScopeMap, ScopeObjOf } from "./generated/effects.ts";
+export type {
+  EffectPathMap,
+  EffectPathOf,
+  FleetAction,
+  ScopeMap,
+  ScopeObjOf,
+} from "./generated/effects.ts";
 export type { SituationTargetContract } from "./script/effects/situations.ts";
 export type { SpecialProjectLocationContract } from "./script/effects/special-projects.ts";
 export type { StaticModifierHostContract } from "./script/effects/static-modifiers.ts";

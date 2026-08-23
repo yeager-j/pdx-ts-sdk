@@ -198,7 +198,11 @@ describe("emitted effect signatures", () => {
   it("wrapper with weights: modifiers ride as data", () => {
     expect(signature("randomControlledPlanet")).toMatchInlineSnapshot(`
       "randomControlledPlanet(
-          args: { limit?: Trigger<"planet">; weights?: readonly Modifier<"planet">[] },
+          args: {
+            limit?: Trigger<"planet">;
+            /** adds weights to affect the chance a specific object is selected */
+            weights?: readonly Modifier<"planet">[];
+          },
           body: (scope: PlanetScope) => void
         ): void;"
     `);

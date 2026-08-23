@@ -115,6 +115,11 @@ function mergeScopeArms(parts: readonly string[]): string[] {
   });
 }
 
+/** The generated module one alias category's interface and field table live in. */
+export function aliasCategoryModule(category: string): string {
+  return `./${category.replaceAll("_", "-")}.ts`;
+}
+
 /**
  * Lowers CWT value types and records every generated symbol used by each output file.
  * Create one emitter per codegen run, and bracket each file with {@link Emitter.beginFile} and
@@ -222,7 +227,7 @@ export class Emitter {
    */
   useAliasCategory(category: string, typeName: string): string {
     if (category !== this.selfAliasCategory) {
-      const module = `./${category.replaceAll("_", "-")}.ts`;
+      const module = aliasCategoryModule(category);
       this.scopedImports.add(module, typeName, "type");
       this.scopedImports.addSideEffect(module);
     }

@@ -132,20 +132,6 @@ export const SCRIPT_GENERATION_GAPS: readonly ScriptGenerationGap[] = [
       "content reference.",
     ["check_economic_production_modifier_for_job"]
   ),
-  ...trackedGapRows(
-    "effect",
-    "unsupported-alias-splice",
-    "SDK-280",
-    "The field model cannot splice a loaded alias category inside a nested effect block.",
-    ["create_country"]
-  ),
-  ...trackedGapRows(
-    "effect",
-    "unsupported-alias-splice",
-    "SDK-252",
-    "The effect emitter cannot type the fleet_action alias category.",
-    ["queue_actions"]
-  ),
 ];
 
 function scriptGapIdentity(row: { readonly kind: ScriptRuleKind; readonly key: string }): string {

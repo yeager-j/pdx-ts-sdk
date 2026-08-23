@@ -9,7 +9,11 @@ import { emitScopeLinks } from "@pdx-ts/codegen-cwt/emit/script/links";
 import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
 import { lowerRule, lowerRuleTable } from "@pdx-ts/codegen-cwt/lower/lowered-rule";
-import { mergeFields } from "@pdx-ts/codegen-cwt/lower/script-shape";
+import {
+  mergeFields,
+  repeatedMemberType,
+  type ArgValue,
+} from "@pdx-ts/codegen-cwt/lower/script-shape";
 import {
   deriveContentSwapIdentities,
   type ContentSwapSource,
@@ -173,11 +177,16 @@ describe("LoweredRule", () => {
       expect.stringContaining("create_ambient_object.target"),
       expect.stringContaining("create_ship.create_colony"),
     ]);
+    // `create_colony` bounds its ethics at three, `start_colony` at ten —
+    // past the width a union of lengths still reads as a bound.
     expect(emitted.interfaces).toContain(
-      'ethos?: "random" | "owner" | { ethic: readonly (EthicRef | string)[] }'
+      'ethos?: "random" | "owner" | { ethic: readonly [EthicRef | string] | ' +
+        "readonly [EthicRef | string, EthicRef | string] | " +
+        "readonly [EthicRef | string, EthicRef | string, EthicRef | string] }"
     );
     expect(emitted.interfaces).toContain(
-      'ethos?: "owner" | "random" | { ethic: readonly (EthicRef | string)[] }'
+      'ethos?: "owner" | "random" | ' +
+        "{ ethic: readonly [EthicRef | string, ...(EthicRef | string)[]] }"
     );
     expect(emitted.skipped).not.toContainEqual(expect.objectContaining({ name: "create_colony" }));
     expect(emitted.skipped).not.toContainEqual(expect.objectContaining({ name: "start_colony" }));
@@ -257,7 +266,6 @@ describe("LoweredRule", () => {
         .map(({ name, category }) => [name, category])
     ).toEqual([
       ["clone_leader", "computed-field-key"],
-      ["create_country", "unsupported-alias-splice"],
       ["create_leader", "computed-field-key"],
       ["create_saved_leader", "computed-field-key"],
       ["create_species", "multiple-structured-scalar-arms"],
@@ -284,13 +292,20 @@ describe("LoweredRule", () => {
       expect.stringContaining("copy_traditions_from.exceptions → value-list 0..inf"),
       expect.stringContaining("create_balanced_fleet.ship_designs → optional"),
       expect.stringContaining("storm_apply_aftermath_modifier.severity → repeated"),
+      expect.stringContaining("create_country.remove_invalid_civics → optional"),
     ]);
+    // The one field of `create_country` CWT leaves unannotated, which the game
+    // documents as defaulting to `no`.
+    expect(emitted.interfaces).toContain("removeInvalidCivics?: boolean");
     expect(emitted.meta).toContain(
       '{ prop: "variableString", key: "variable_string", kind: "value", repeated: true }'
     );
     const usage = effectEmitter.endFile();
     expect(usage.refs).toContain("name_list");
-    expect(usage.enums).not.toContain("contact_rule");
+    // Only an emitted rule contributes imports: `create_country` now emits, so
+    // the enum behind its `contact_rule` field is one of this file's; the
+    // still-skipped `create_species` contributes nothing.
+    expect(usage.enums).toContain("contact_rule");
     expect(usage.refs).not.toContain("species_class");
   });
 
@@ -501,6 +516,177 @@ describe("LoweredRule", () => {
         expect.objectContaining({ name: "acceptance_type" }),
       ],
     });
+  });
+});
+
+describe("a spliced alias category with a script authoring surface", () => {
+  const effects = lowerRuleTable(rules.effects, docs.effects, emitter, scopes);
+  const emitted = emitEffects(
+    new Emitter(rules),
+    docs.effects,
+    scopes,
+    effects,
+    createEffectPolicy(rules),
+    []
+  );
+
+  it("emits the category as one union of single-member objects", () => {
+    // `queue_actions = { alias_name[fleet_action] }` is an ordered queue in
+    // which a member may repeat, so its members cannot be one struct of
+    // optional keys: `wait` twice has to stay two items.
+    expect(emitted.interfaces).toContain("export type FleetAction<S extends ScopeName> =");
+    expect(emitted.interfaces).toContain(
+      "| { wait: number | { duration: number; random?: number } }"
+    );
+    expect(emitted.interfaces).toContain("| { moveTo: ScopeValue<");
+    expect(emitted.interfaces).toContain('| { orbitPlanet: ScopeValue<"planet"> | "random" }');
+  });
+
+  it("recurses through the category name rather than expanding it", () => {
+    expect(emitted.interfaces).toContain("actions: readonly FleetAction<S>[] }");
+    expect(emitted.interfaces).toContain('foundSystem: readonly FleetAction<"system">[];');
+    expect(emitted.interfaces).toContain("failed?: readonly FleetAction<S>[] }");
+  });
+
+  it("types a member's own splices as the clause each one holds", () => {
+    // `trigger = { id = scalar alias_name[trigger] }` pushes system scope, so
+    // its conditions are typed there; `effect = { id = scalar
+    // alias_name[effect] }` pushes none and runs in the list's own scope.
+    expect(emitted.interfaces).toContain('id: string; conditions: Trigger<"system"> };');
+    expect(emitted.interfaces).toContain("id: string; effects: (scope: ScopeObjOf<S>) => void }");
+  });
+
+  it("keeps each member's own CWT documentation on the member", () => {
+    expect(emitted.interfaces).toContain(
+      "| { \n/** This requires the fleet to be a planet destroyer */\ndestroyPlanet: {"
+    );
+    expect(emitted.interfaces).toContain(
+      "stance: FleetStance; \n/** days to wait */\ndays?: number }"
+    );
+  });
+
+  it("takes the list as the method's one argument, in the fleet cluster's own scope", () => {
+    expect(emitted.interfaces).toContain(
+      'queueActions(actions: readonly FleetAction<"fleet">[]): void;'
+    );
+  });
+
+  it("gives the recorder one member table per listed category", () => {
+    expect(emitted.meta).toContain(
+      'queueActions: { key: "queue_actions", shape: { kind: "alias-list", category: "fleet_action" } }'
+    );
+    expect(emitted.meta).toContain("export const ALIAS_LIST_META");
+    expect(emitted.meta).toContain(
+      '"fleet_action": [{ prop: "repeat", key: "repeat", kind: "fields"'
+    );
+    expect(emitted.meta).toContain(
+      '{ prop: "actions", key: "actions", kind: "alias-list", category: "fleet_action", splice: true }'
+    );
+    expect(emitted.meta).toContain(
+      '{ prop: "conditions", key: "conditions", kind: "trigger", splice: true }'
+    );
+    expect(emitted.meta).toContain(
+      '{ prop: "foundSystem", key: "found_system", kind: "alias-list", category: "fleet_action" }'
+    );
+  });
+
+  it("reuses the content-side block for a category that already has one", () => {
+    // `create_country.government_restrictions` splices the same grammar the
+    // civic and origin registries author, so it takes that emitted interface
+    // rather than a second type saying the same thing.
+    expect(emitted.interfaces).toContain("governmentRestrictions?: GovernmentTriggerBlock;");
+    expect(emitted.interfaces).not.toContain("export type GovernmentTrigger<");
+    expect(emitted.meta).toContain(
+      '{ prop: "governmentRestrictions", key: "government_restrictions", kind: "alias-struct", ' +
+        'category: "government_trigger" }'
+    );
+    // The recorder loads the meta module, so the meta module is what pulls in
+    // the field table that block is written through.
+    expect(emitted.meta).toContain('import "./government-trigger.ts";');
+  });
+
+  it("skips a nested splice of a category with no script authoring surface", () => {
+    const createCountry = effects.get("create_country")!;
+    const block = createCountry.blocks[0]!;
+    const restrictions = block.named.find(
+      (field) => field.key.kind === "name" && field.key.name === "government_restrictions"
+    )!;
+    const merged = mergeFields(
+      new Emitter(rules),
+      [
+        {
+          ...restrictions,
+          type: {
+            kind: "block",
+            bare: [],
+            fields: [
+              { ...restrictions, key: { kind: "aliasName", category: "pop_pre_trigger" } as const },
+            ],
+          },
+        },
+      ],
+      null,
+      new Set(["trigger", "effect", "fleet_action", "government_trigger"])
+    );
+
+    expect(merged).toEqual({
+      category: "unsupported-alias-splice",
+      detail:
+        'field "government_restrictions" structured arm splices a category the field model ' +
+        "cannot type (pop_pre_trigger)",
+    });
+  });
+});
+
+describe("a repeated argument's declared bound", () => {
+  const item: ArgValue = {
+    kind: "scalar",
+    value: { type: "EthicRef", toScalar: (expression) => expression },
+  };
+
+  it("spells a bounded repetition as the lengths it admits", () => {
+    expect(repeatedMemberType(new Emitter(rules), item, "EthicRef", { min: 1, max: 3 })).toBe(
+      "readonly [EthicRef] | readonly [EthicRef, EthicRef] | " +
+        "readonly [EthicRef, EthicRef, EthicRef]"
+    );
+  });
+
+  it("spells an unbounded repetition as an array, keeping any minimum", () => {
+    expect(repeatedMemberType(new Emitter(rules), item, "EthicRef", { min: 0, max: null })).toBe(
+      "readonly EthicRef[]"
+    );
+    expect(repeatedMemberType(new Emitter(rules), item, "EthicRef", { min: 1, max: null })).toBe(
+      "readonly [EthicRef, ...EthicRef[]]"
+    );
+  });
+
+  it("carries the bound into the emitted argument, widest form across the declarations", () => {
+    // `ethic = <ethic>` and `ethic = random` are both 1..3: one key of three
+    // occurrences, each taking either form, not six occurrences.
+    const emitted = emitEffects(
+      new Emitter(rules),
+      docs.effects,
+      scopes,
+      lowerRuleTable(rules.effects, docs.effects, emitter, scopes),
+      createEffectPolicy(rules),
+      []
+    );
+
+    expect(emitted.interfaces).toContain(
+      'ethic: readonly [EthicRef | string | "random"] | ' +
+        'readonly [EthicRef | string | "random", EthicRef | string | "random"] | ' +
+        'readonly [EthicRef | string | "random", EthicRef | string | "random", ' +
+        'EthicRef | string | "random"]'
+    );
+    // 1..10 is past the width a union of lengths still reads as a bound, so it
+    // keeps the minimum and stays an array.
+    expect(emitted.interfaces).toContain(
+      "ethic: readonly [EthicRef | string, ...(EthicRef | string)[]]"
+    );
+    // The recorder needs the fact, not the bound.
+    expect(emitted.meta).toContain(
+      '{ prop: "ethic", key: "ethic", kind: "value", refTypes: ["ethic"], repeated: true }'
+    );
   });
 });
 

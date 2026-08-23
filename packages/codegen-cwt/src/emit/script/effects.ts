@@ -18,18 +18,21 @@
  * emitter cannot type is skipped with a named reason and reported.
  */
 
-import type { RuleType } from "../../cwt/model.ts";
+import type { Cardinality, RuleType } from "../../cwt/model.ts";
 import type { DocEntry } from "../../logs/trigger-docs.ts";
 import type { LoweredRule } from "../../lower/lowered-rule.ts";
 import {
+  aliasListMembers,
   canonicalScopeSet,
   cardinalityArrayType,
   expandAliasFields,
   mergeFields,
+  pureSpliceCategory,
   repeatedMemberType,
   skippedRule,
   skipReason,
   type ArgField,
+  type ArgValue,
   type ClauseCategory,
   type SkippedRule,
   type SkipReason,
@@ -48,12 +51,16 @@ import {
   EFFECT_FIELD_CARDINALITY_OVERRIDES,
   EFFECT_FIELD_TYPE_OVERRIDES,
   EFFECT_VALUE_TYPE_OVERRIDES,
+  EXTRA_ALIAS_CATEGORIES,
+  SCRIPT_ALIAS_CATEGORIES,
+  type AliasCategoryScriptList,
   type EffectFieldAddition,
   type EffectFieldCardinalityOverride,
 } from "../../overlay/index.ts";
 import type { EffectPolicy } from "../../policy/effects.ts";
 import { Emitter, type TsValue } from "../../render/emitter.ts";
 import { member as renderMember } from "../../render/writer.ts";
+import { aliasStructTypeName } from "../content/alias-struct.ts";
 import { canonicalScopes } from "../support.ts";
 import { effectMetaCode } from "./effect-meta.ts";
 import type { ClassifiedLink } from "./links.ts";
@@ -61,6 +68,48 @@ import type { ScriptEffectReferenceRow, ScriptScopeLinkReferenceRow } from "./sc
 import { tsDoc } from "./triggers.ts";
 
 const EFFECT_CLAUSES = new Set<ClauseCategory>(["trigger", "effect", "modifier_rule"]);
+
+/** The occurrence count an overlay row asserts when it says a field repeats. */
+const UNBOUNDED: Cardinality = { min: 0, max: null };
+
+/**
+ * What an effect argument block may splice: the nested clause categories, plus
+ * every loaded alias category the overlay gives a script authoring surface.
+ * Triggers pass their own, narrower set, so an alias list stays out of a
+ * surface that has no way to write one.
+ */
+const EFFECT_SPLICES = new Set<string>([...EFFECT_CLAUSES, ...SCRIPT_ALIAS_CATEGORIES]);
+
+/** One spliced alias category's lowered members and the type they are authored as. */
+interface AliasListSurface extends AliasCategoryScriptList {
+  /** The category's members, lowered as ordinary argument fields. */
+  readonly members: readonly ArgField[];
+}
+
+/**
+ * Lowers every alias category the overlay lists as a script list.
+ *
+ * A row promises an authoring surface, so a member the field model cannot
+ * lower fails generation here rather than silently removing an action from the
+ * emitted union.
+ */
+function aliasListSurfaces(emitter: Emitter): Map<string, AliasListSurface> {
+  const surfaces = new Map<string, AliasListSurface>();
+  for (const [category, row] of EXTRA_ALIAS_CATEGORIES) {
+    if (row.scriptList === undefined) {
+      continue;
+    }
+    const members = aliasListMembers(emitter, category, EFFECT_SPLICES);
+    if (!Array.isArray(members)) {
+      throw new Error(
+        `EXTRA_ALIAS_CATEGORIES gives "${category}" a script list, but its members do not ` +
+          `lower (${members.detail}) — retire the row or fix the lowering`
+      );
+    }
+    surfaces.set(category, { ...row.scriptList, members });
+  }
+  return surfaces;
+}
 
 /** Generated effect modules, report totals, and script-reference projections. */
 export interface EffectEmission {
@@ -126,6 +175,14 @@ export type EffectShape =
       readonly kind: "fields";
       /** Named fields represented by the generated argument object. */
       readonly fields: readonly ArgField[];
+    }
+  | {
+      /** Identifies one ordered list of tagged alias-category members. */
+      readonly kind: "aliasList";
+      /** The spliced CWT alias category. */
+      readonly category: string;
+      /** Canonical scope the members run in, or `null` for the receiving scope. */
+      readonly scope: string | null;
     };
 
 type FieldEffectShape = Extract<EffectShape, { readonly kind: "fields" | "wrapper" }>;
@@ -164,13 +221,15 @@ function applyCardinalityOverride(
     resolved = { ...resolved, optional: override.optional };
   }
   if (override.repeated !== undefined) {
-    if (field.repeated === override.repeated) {
+    if ((field.repeated !== undefined) === override.repeated) {
       throw new Error(
         `EFFECT_FIELD_CARDINALITY_OVERRIDES names "${key}.${field.name}", but lowering already ` +
           `makes it ${override.repeated ? "repeated" : "singular"} — retire that override`
       );
     }
-    resolved = { ...resolved, repeated: override.repeated };
+    // The row states that the key repeats, not how often: a field CWT leaves
+    // unannotated has no documented maximum to carry over.
+    resolved = { ...resolved, repeated: override.repeated ? UNBOUNDED : undefined };
   }
   if (override.valueList !== undefined) {
     if (field.value.kind !== "valueList") {
@@ -346,6 +405,14 @@ function blockShapeOf(emitter: Emitter, rule: LoweredRule): EffectShape | SkipRe
   if (body.bare.length > 0) {
     return skipReason("bare-value-block", "block with bare values");
   }
+  const spliced = pureSpliceCategory(body);
+  if (spliced !== null && EXTRA_ALIAS_CATEGORIES.get(spliced)?.scriptList !== undefined) {
+    const pushed = block.inheritedScope;
+    const scope = pushed === null ? null : emitter.canonicalScope(pushed);
+    return scope === null && pushed !== null
+      ? skipReason("unknown-push-scope", `push_scope names no known scope (${pushed})`)
+      : { kind: "aliasList", category: spliced, scope };
+  }
   const categories = new Set(
     block.splices.flatMap((field) => (field.key.kind === "aliasName" ? [field.key.category] : []))
   );
@@ -363,7 +430,7 @@ function blockShapeOf(emitter: Emitter, rule: LoweredRule): EffectShape | SkipRe
     return named;
   }
   const pushedRaw = block.inheritedScope;
-  const merged = named.length === 0 ? [] : mergeFields(emitter, named, pushedRaw, EFFECT_CLAUSES);
+  const merged = named.length === 0 ? [] : mergeFields(emitter, named, pushedRaw, EFFECT_SPLICES);
   if (!Array.isArray(merged)) {
     return merged;
   }
@@ -415,6 +482,27 @@ function shapeOf(
   return blockShapeOf(emitter, rule);
 }
 
+/** The overlay row that permits one category to be authored as an ordered list. */
+function scriptListOf(category: string): AliasCategoryScriptList {
+  const list = EXTRA_ALIAS_CATEGORIES.get(category)?.scriptList;
+  if (list === undefined) {
+    throw new Error(
+      `"${category}" lowered to an alias list without an EXTRA_ALIAS_CATEGORIES scriptList row`
+    );
+  }
+  return list;
+}
+
+/**
+ * The type text one spliced alias list is authored as. The list's own pushed
+ * scope fixes the type argument; without one the members run in the scope
+ * enclosing the list, which is the scope text the caller is emitting under.
+ */
+function aliasListType(category: string, scope: string | null, outerScope: string): string {
+  const item = scriptListOf(category).typeName;
+  return `readonly ${item}<${scope === null ? outerScope : JSON.stringify(scope)}>[]`;
+}
+
 /** The type text a lowered value contributes before field-level wrapping or overrides. */
 function baseMemberType(
   emitter: Emitter,
@@ -437,9 +525,7 @@ function baseMemberType(
         value.scalar === null ? undefined : emitter.useValue(value.scalar).type,
         value.fields === null ? null : argsType(emitter, value.fields, outerScope, effectKey),
       ].filter((arm): arm is string => arm !== null && arm !== undefined);
-      const item =
-        arms.length === 1 && !arms[0]!.includes(" | ") ? arms[0]! : `(${arms.join(" | ")})`;
-      return cardinalityArrayType(item, value.cardinality);
+      return cardinalityArrayType(arms.join(" | "), value.cardinality);
     }
     case "clause": {
       const scope = value.scope === null ? outerScope : JSON.stringify(value.scope);
@@ -453,6 +539,10 @@ function baseMemberType(
         ? `(scope: ScopeObjOf<${scope}>) => void`
         : `(scope: ${scopeInterfaceName(value.scope)}) => void`;
     }
+    case "aliasList":
+      return aliasListType(value.category, value.scope, outerScope);
+    case "aliasStruct":
+      return emitter.useAliasCategory(value.category, aliasStructTypeName(value.category));
     case "comparison": {
       const literals = value.literals.map((literal) => JSON.stringify(literal));
       const scalar = emitter.useValue(value.value).type;
@@ -476,7 +566,9 @@ function memberType(
     return override.type;
   }
   const single = baseMemberType(emitter, field.value, outerScope, effectKey);
-  return field.repeated === true ? repeatedMemberType(emitter, field.value, single) : single;
+  return field.repeated === undefined
+    ? single
+    : repeatedMemberType(emitter, field.value, single, field.repeated);
 }
 
 /**
@@ -488,6 +580,7 @@ const RECEIVING_SCOPE = "S";
 function clauseRunsInReceivingScope(value: ArgField["value"]): boolean {
   switch (value.kind) {
     case "clause":
+    case "aliasList":
       return value.scope === null;
     case "fields":
     case "scalarOrFields":
@@ -499,12 +592,19 @@ function clauseRunsInReceivingScope(value: ArgField["value"]): boolean {
   }
 }
 
-/** Whether one effect's arguments hold a clause typed by the scope it is called in. */
+/**
+ * Whether one effect's arguments hold a clause typed by the scope it is called
+ * in. An alias list is one: its members' own clauses run in the scope the list
+ * runs in, which without a `## push_scope` is the enclosing one.
+ */
 function takesReceivingScope(effect: EmittedEffect): boolean {
   if (EFFECT_EXTENSION_SEAMS.get(effect.key)?.receivingScope === true) {
     return true;
   }
   const { shape } = effect;
+  if (shape.kind === "aliasList") {
+    return shape.scope === null;
+  }
   if (shape.kind !== "fields" && shape.kind !== "wrapper") {
     return false;
   }
@@ -535,15 +635,28 @@ function scopeInterfaceName(scope: string | null): string {
   return scope === null ? "this" : `${pascalCase(scope)}Scope`;
 }
 
+/**
+ * One member of an inline object type, carrying whatever the rules document
+ * about it. The doc comment goes on the property rather than beside the object,
+ * so an editor shows it where the member is written.
+ */
+function inlineMember(field: ArgField, type: string): string {
+  const member = `${camelCase(field.name)}${field.optional ? "?" : ""}: ${type}`;
+  const doc = docComment(field.docs);
+  // The doc has to open its own line. Left at the end of the previous member's
+  // line it is a trailing comment, which the formatter keeps attached to that
+  // member instead of this one.
+  return doc === "" ? member : `\n${doc}${member}`;
+}
+
 function argsType(
   emitter: Emitter,
   fields: readonly ArgField[],
   outerScope: string,
   effectKey: string
 ): string {
-  const members = fields.map(
-    (field) =>
-      `${camelCase(field.name)}${field.optional ? "?" : ""}: ${memberType(emitter, field, outerScope, effectKey)}`
+  const members = fields.map((field) =>
+    inlineMember(field, memberType(emitter, field, outerScope, effectKey))
   );
   return `{ ${members.join("; ")} }`;
 }
@@ -568,6 +681,10 @@ function methodSignatureText(emitter: Emitter, effect: EmittedEffect, outerScope
         ? `  ${method}(${body}): void;\n`
         : `  ${method}(args: ${argsType(emitter, shape.fields, outerScope, key)}, ${body}): void;\n`;
     }
+    case "aliasList": {
+      const list = aliasListType(shape.category, shape.scope, outerScope);
+      return `  ${method}(${scriptListOf(shape.category).memberName}: ${list}): void;\n`;
+    }
   }
 }
 
@@ -586,14 +703,23 @@ function extensionFallbackSignature(
   return methodSignatureText(emitter, effect, outerScope);
 }
 
+/**
+ * Drops the member doc comments {@link inlineMember} writes into an args
+ * object. A reference row's signature is one line of display text, and the row
+ * carries the documentation it needs in its own `docs`.
+ */
+function withoutMemberDocs(signature: string): string {
+  return signature.replaceAll(/\n\/\*\*[\s\S]*?\*\/\n/g, "");
+}
+
 function referenceSignature(emitter: Emitter, effect: EmittedEffect, outerScope: string): string {
   const seam = EFFECT_EXTENSION_SEAMS.get(effect.key);
   if (seam === undefined) {
-    return methodSignatureText(emitter, effect, outerScope).trim();
+    return withoutMemberDocs(methodSignatureText(emitter, effect, outerScope)).trim();
   }
   return (
     `${seam.referenceSignature}\n` +
-    `${extensionFallbackSignature(emitter, effect, outerScope).trim()}`
+    `${withoutMemberDocs(extensionFallbackSignature(emitter, effect, outerScope)).trim()}`
   );
 }
 
@@ -766,7 +892,7 @@ function lowerEffect(
   const isolatesNameAliasUsage = lowersNameAliasUsage(rule);
   const ruleEmitter = isolatesNameAliasUsage ? new Emitter(emitter.rules) : emitter;
   const shape = shapeOf(ruleEmitter, rule);
-  if ("category" in shape) {
+  if ("detail" in shape) {
     return shape;
   }
   if (isolatesNameAliasUsage) {
@@ -819,7 +945,7 @@ function clusterEffects(
       continue;
     }
     const lowered = lowerEffect(emitter, docs, candidate);
-    if ("category" in lowered) {
+    if ("detail" in lowered) {
       skipped.push({ name: key, ...lowered });
       continue;
     }
@@ -989,6 +1115,81 @@ function extensionSeamInterfaces(emitter: Emitter, clusters: readonly EffectClus
     );
   }
   return chunks;
+}
+
+/**
+ * One exported union per spliced alias list: an item is an object naming
+ * exactly one member of the category, so a member may repeat and the list
+ * keeps the order it is written in.
+ */
+function aliasListTypes(
+  emitter: Emitter,
+  surfaces: ReadonlyMap<string, AliasListSurface>
+): string[] {
+  return [...surfaces].map(([category, surface]) => {
+    const arms = surface.members.map(
+      (member) =>
+        `  | { ${inlineMember(member, memberType(emitter, member, RECEIVING_SCOPE, category))} }`
+    );
+    return (
+      docComment([
+        `One member of the \`${category}\` alias category, as the \`${surface.memberName}\``,
+        "list holds it. Each item names exactly one member.",
+      ]) +
+      `export type ${surface.typeName}<${RECEIVING_SCOPE} extends ${emitter.use("ScopeName")}> =\n` +
+      `${arms.join("\n")};\n`
+    );
+  });
+}
+
+/** Every spliced alias category the emitted effect surface actually authors. */
+function authoredAliasCategories(clusters: readonly EffectCluster[]): Set<string> {
+  const categories = new Set<string>();
+  const walk = (value: ArgValue): void => {
+    switch (value.kind) {
+      case "aliasList":
+      case "aliasStruct":
+        categories.add(value.category);
+        return;
+      case "fields":
+      case "scalarOrFields":
+        value.fields.forEach((field) => walk(field.value));
+        return;
+      case "valueList":
+        value.fields?.forEach((field) => walk(field.value));
+        return;
+      default:
+        return;
+    }
+  };
+  for (const cluster of clusters) {
+    for (const { shape } of cluster.effects) {
+      if (shape.kind === "aliasList") {
+        categories.add(shape.category);
+        continue;
+      }
+      if (shape.kind === "fields" || shape.kind === "wrapper") {
+        (shape.fields ?? []).forEach((field) => walk(field.value));
+      }
+    }
+  }
+  return categories;
+}
+
+/**
+ * A script-surface row nothing splices would publish an authoring type no
+ * emitted method accepts, so it fails generation the same way a stale field
+ * override does.
+ */
+function assertAliasCategoryRowsMatched(authored: ReadonlySet<string>): void {
+  for (const category of SCRIPT_ALIAS_CATEGORIES) {
+    if (!authored.has(category)) {
+      throw new Error(
+        `EXTRA_ALIAS_CATEGORIES gives "${category}" a script authoring surface, which no ` +
+          "emitted effect splices — retire the row or fix the category"
+      );
+    }
+  }
 }
 
 /** One interface per cluster, its methods declared once for its exact scope set. */
@@ -1181,10 +1382,15 @@ export function emitEffects(
   policy: EffectPolicy,
   links: readonly ClassifiedLink[]
 ): EffectEmission {
+  const aliasLists = aliasListSurfaces(emitter);
   const clustered = clusterEffects(emitter, docs, rules, policy);
   assertFieldOverlayRowsMatched(clustered);
-
   const effects = [...clustered.clusters.values()];
+  const authoredCategories = authoredAliasCategories(effects);
+  assertAliasCategoryRowsMatched(authoredCategories);
+  const aliasStructCategories = [...authoredCategories]
+    .filter((category) => EXTRA_ALIAS_CATEGORIES.get(category)?.scriptBlock !== undefined)
+    .sort();
   const takenMethods = new Set([
     "effects",
     "then",
@@ -1205,6 +1411,7 @@ export function emitEffects(
   // because both mint into the same file's export namespace.
   const mintedClusterNames = new Map<string, string>();
   const interfaceChunks = [
+    ...aliasListTypes(emitter, aliasLists),
     ...extensionSeamInterfaces(emitter, sortedClusters),
     ...clusterInterfaces(emitter, sortedClusters, mintedClusterNames),
     ...pathClusterInterfaces(sortedLinkClusters, mintedClusterNames),
@@ -1223,7 +1430,7 @@ export function emitEffects(
 
   return {
     interfaces,
-    meta: effectMetaCode(sortedClusters, sortedLinkClusters),
+    meta: effectMetaCode(sortedClusters, sortedLinkClusters, aliasLists, aliasStructCategories),
     emitted: sortedClusters.reduce((sum, cluster) => sum + cluster.effects.length, 0),
     byShape: clustered.byShape,
     skipped: clustered.skipped,

@@ -15,12 +15,17 @@
 import {
   isOptional,
   isRepeated,
+  REQUIRED,
   type Cardinality,
   type RuleBareValue,
   type RuleField,
   type RuleType,
 } from "../cwt/model.ts";
-import { UNIVERSAL_SCOPES } from "../overlay/index.ts";
+import {
+  EXTRA_ALIAS_CATEGORIES,
+  SCRIPT_ALIAS_CATEGORIES,
+  UNIVERSAL_SCOPES,
+} from "../overlay/index.ts";
 import type { Emitter, TsValue } from "../render/emitter.ts";
 
 /** Stable reasons the shared trigger/effect generator can reject a CWT rule. */
@@ -207,6 +212,28 @@ export type ArgValue =
       /** Whether clause entries are emitted without a named wrapper. */
       readonly splice: boolean;
     }
+  /**
+   * An ordered list of tagged members of one spliced alias category, each item
+   * naming exactly one member. `scope` is the canonical scope the members'
+   * clauses run in, or `null` for the enclosing scope.
+   */
+  | {
+      /** Selects an ordered list of alias-category members. */
+      readonly kind: "aliasList";
+      /** The spliced CWT alias category. */
+      readonly category: string;
+      /** The canonical pushed scope, or `null` for the enclosing scope. */
+      readonly scope: string | null;
+      /** Whether the items are emitted without a named wrapper. */
+      readonly splice: boolean;
+    }
+  /** One block of a spliced alias category, typed by its content-side interface. */
+  | {
+      /** Selects an alias category authored through its emitted block interface. */
+      readonly kind: "aliasStruct";
+      /** The spliced CWT alias category. */
+      readonly category: string;
+    }
   /** `count == int_value_field`, plus any literal overloads (`count = all`). */
   | {
       /** Selects a comparison operand with optional literal overloads. */
@@ -225,15 +252,19 @@ export interface ArgField {
   readonly value: ArgValue;
   /** Whether authors may omit the field. */
   readonly optional: boolean;
-  /** Whether authors may repeat the field as sibling keys. */
-  readonly repeated?: boolean;
+  /**
+   * How often authors may repeat the field as sibling keys, absent when the
+   * rules permit it at most once.
+   */
+  readonly repeated?: Cardinality;
   /** Documentation retained from every merged declaration. */
   readonly docs: readonly string[];
 }
 
 /**
  * Replaces unkeyed alias splices with the category's concrete named fields.
- * Returns a skip reason when the category has no declaration table.
+ * Returns a skip reason when the category has no declaration table, or when it
+ * carries its own script authoring surface and must not be flattened into one.
  */
 export function expandAliasFields(
   emitter: Emitter,
@@ -244,6 +275,13 @@ export function expandAliasFields(
     if (field.key.kind !== "aliasName") {
       expanded.push(field);
       continue;
+    }
+    if (SCRIPT_ALIAS_CATEGORIES.has(field.key.category)) {
+      return skipReason(
+        "unsupported-alias-splice",
+        `splices ${field.key.category} beside named fields, and that category is authored ` +
+          "as a whole rather than as members of the enclosing block"
+      );
     }
     const members = emitter.rules.aliasCategories.get(field.key.category);
     if (members === undefined) {
@@ -269,8 +307,8 @@ export function expandAliasFields(
   return expanded;
 }
 
-/** The category of a block holding nothing but alias splices, else null. */
-export function clauseOf(type: RuleType): ClauseCategory | null {
+/** The one alias category a block holds nothing but splices of, else null. */
+export function pureSpliceCategory(type: RuleType): string | null {
   if (type.kind !== "block" || type.bare.length > 0 || type.fields.length === 0) {
     return null;
   }
@@ -281,6 +319,12 @@ export function clauseOf(type: RuleType): ClauseCategory | null {
     return null;
   }
   const [category] = categories;
+  return category ?? null;
+}
+
+/** The clause category of a block holding nothing but alias splices, else null. */
+export function clauseOf(type: RuleType): ClauseCategory | null {
+  const category = pureSpliceCategory(type);
   return category === "trigger" || category === "effect" || category === "modifier_rule"
     ? category
     : null;
@@ -367,7 +411,12 @@ export function comparisonValue(
   return value;
 }
 
-function combinedCardinality(values: readonly RuleBareValue[]): Cardinality {
+/**
+ * The item count a braced block admits, summed: each anonymous declaration is
+ * another slot in the same block, so `<color_define>` 0..4 beside `"null"`
+ * 0..4 admits up to eight items.
+ */
+function totalCardinality(values: readonly RuleBareValue[]): Cardinality {
   return {
     min: values.reduce((sum, value) => sum + value.cardinality.min, 0),
     max: values.some((value) => value.cardinality.max === null)
@@ -377,20 +426,52 @@ function combinedCardinality(values: readonly RuleBareValue[]): Cardinality {
 }
 
 /**
+ * The occurrence count one named key admits, as an envelope over its
+ * declarations rather than a sum: each declaration is another *form* the one
+ * key accepts, not another key. `ethic = <ethic>` 1..3 beside `ethic = random`
+ * 1..3 is three ethics that may each take either form, not six.
+ *
+ * This is the reading {@link ArgField.optional} already takes, where any
+ * declaration permitting absence makes the whole field optional.
+ */
+function widestCardinality(fields: readonly RuleField[]): Cardinality {
+  return {
+    min: Math.min(...fields.map((field) => field.cardinality.min)),
+    max: fields.some((field) => field.cardinality.max === null)
+      ? null
+      : Math.max(...fields.map((field) => field.cardinality.max!)),
+  };
+}
+
+/**
  * Renders the readonly tuple or array type admitted by an item cardinality.
  * Finite ranges become tuple unions; unbounded ranges preserve their minimum prefix.
  */
+/**
+ * The widest maximum still worth spelling as a tuple union.
+ *
+ * Each permitted length is its own arm, so `0..100` — how `effects.cwt` writes
+ * "as many as you like" for starbase modules and message variables — would be
+ * 101 arms of up to 100 members each, which states the bound far less clearly
+ * than an array does. Eight is the widest union the rules already produce
+ * (`create_country.flag.colors`, two 0..4 declarations of one block).
+ */
+const TUPLE_UNION_LIMIT = 8;
+
 export function cardinalityArrayType(item: string, cardinality: Cardinality): string {
   const tuple = (length: number): string =>
     `readonly [${Array.from({ length }, () => item).join(", ")}]`;
-  if (cardinality.max !== null) {
+  if (cardinality.max !== null && cardinality.max <= TUPLE_UNION_LIMIT) {
     return Array.from({ length: cardinality.max - cardinality.min + 1 }, (_, index) =>
       tuple(cardinality.min + index)
     ).join(" | ");
   }
+  // `A | B[]` is an array of B beside an A, so only the array forms bracket a
+  // union item. A tuple element already ends at its comma.
+  const element = item.includes(" | ") ? `(${item})` : item;
   return cardinality.min === 0
-    ? `readonly ${item}[]`
-    : `readonly [${Array.from({ length: cardinality.min }, () => item).join(", ")}, ...${item}[]]`;
+    ? `readonly ${element}[]`
+    : `readonly [${Array.from({ length: cardinality.min }, () => item).join(", ")}, ...${element}[]]`;
 }
 
 /**
@@ -403,13 +484,18 @@ export function cardinalityArrayType(item: string, cardinality: Cardinality): st
  * operands and silently write two keys where the author meant one comparison,
  * and an empty list would name an operator the author never wrote.
  */
-export function repeatedMemberType(emitter: Emitter, value: ArgValue, single: string): string {
+export function repeatedMemberType(
+  emitter: Emitter,
+  value: ArgValue,
+  single: string,
+  cardinality: Cardinality
+): string {
   if (value.kind === "comparison") {
     const operand = emitter.useValue(value.value).type;
     const pair = `readonly [${emitter.use("PdxOp")}, ${operand}]`;
     return `${single} | readonly [${pair}, ...(${pair})[]]`;
   }
-  return `readonly ${single.includes(" | ") ? `(${single})` : single}[]`;
+  return cardinalityArrayType(single, cardinality);
 }
 
 /** Lowers the anonymous contents of one braced field. */
@@ -417,7 +503,7 @@ export function bareBlockValue(
   emitter: Emitter,
   bare: readonly RuleBareValue[],
   inheritedScope: string | null,
-  allowedClauses: ReadonlySet<ClauseCategory>
+  allowedSplices: ReadonlySet<string>
 ): ArgValue | SkipReason {
   const clauses = bare.flatMap((value) => {
     const category = clauseOf(value.type);
@@ -431,7 +517,7 @@ export function bareBlockValue(
       );
     }
     const { value, category } = clauses[0]!;
-    if (!allowedClauses.has(category)) {
+    if (!allowedSplices.has(category)) {
       return skipReason(
         "unsupported-clause",
         `bare block contains ${category}, which this emitter cannot type`
@@ -470,7 +556,7 @@ export function bareBlockValue(
       emitter,
       block.fields,
       structured[0]!.scope?.this ?? inheritedScope,
-      allowedClauses
+      allowedSplices
     );
     if (!Array.isArray(lowered)) {
       return lowered;
@@ -496,7 +582,7 @@ export function bareBlockValue(
     kind: "valueList",
     scalar,
     fields,
-    cardinality: combinedCardinality(bare),
+    cardinality: totalCardinality(bare),
   };
 }
 
@@ -510,12 +596,6 @@ function groupedByName(
 ): Map<string, RuleField[]> | SkipReason {
   const grouped = new Map<string, RuleField[]>();
   for (const field of expandEnumKeys(emitter, fields)) {
-    if (field.key.kind === "aliasName") {
-      return skipReason(
-        "unsupported-alias-splice",
-        `splices a category the field model cannot type (${field.key.category})`
-      );
-    }
     if (field.key.kind !== "name") {
       return skipReason("computed-field-key", "block with computed or subtype field keys");
     }
@@ -535,13 +615,13 @@ function mergedClauseValue(
   name: string,
   group: readonly RuleField[],
   inheritedScope: string | null,
-  allowedClauses: ReadonlySet<ClauseCategory>
+  allowedSplices: ReadonlySet<string>
 ): ArgValue | SkipReason {
   const category = clauseOf(group[0]!.type)!;
   if (group.some((field) => clauseOf(field.type) !== category)) {
     return skipReason("mixed-clause-categories", `field "${name}" mixes clause categories`);
   }
-  if (!allowedClauses.has(category)) {
+  if (!allowedSplices.has(category)) {
     return skipReason(
       "unsupported-clause",
       `field "${name}" splices ${category}, which this emitter cannot type`
@@ -564,7 +644,7 @@ function mergedStructuredValue(
   name: string,
   group: readonly RuleField[],
   inheritedScope: string | null,
-  allowedClauses: ReadonlySet<ClauseCategory>
+  allowedSplices: ReadonlySet<string>
 ): ArgValue | SkipReason {
   const structured = group.filter(
     (
@@ -591,7 +671,7 @@ function mergedStructuredValue(
       emitter,
       block.bare,
       structured[0]!.scope?.this ?? inheritedScope,
-      allowedClauses
+      allowedSplices
     );
     if ("detail" in value) {
       return { ...value, detail: `field "${name}" structured arm ${value.detail}` };
@@ -602,7 +682,7 @@ function mergedStructuredValue(
     emitter,
     block.fields,
     structured[0]!.scope?.this ?? inheritedScope,
-    allowedClauses
+    allowedSplices
   );
   if (!Array.isArray(fields)) {
     return {
@@ -657,20 +737,56 @@ function mergedComparisonValue(
 }
 
 /**
+ * Merges a group whose every declaration is a block holding nothing but
+ * splices of one alias category with its own authoring surface. Returns `null`
+ * when the group is not that, so the caller can go on classifying it.
+ */
+function mergedAliasValue(
+  emitter: Emitter,
+  name: string,
+  group: readonly RuleField[],
+  inheritedScope: string | null,
+  allowedSplices: ReadonlySet<string>
+): ArgValue | SkipReason | null {
+  const categories = new Set(group.map((field) => pureSpliceCategory(field.type)));
+  if (categories.size !== 1) {
+    return null;
+  }
+  const [category] = categories;
+  if (category == null || !SCRIPT_ALIAS_CATEGORIES.has(category)) {
+    return null;
+  }
+  if (!allowedSplices.has(category)) {
+    return skipReason(
+      "unsupported-alias-splice",
+      `field "${name}" splices ${category}, which this emitter cannot type`
+    );
+  }
+  if (EXTRA_ALIAS_CATEGORIES.get(category)?.scriptList === undefined) {
+    return { kind: "aliasStruct", category };
+  }
+  const scope = clauseScope(emitter, name, group, inheritedScope);
+  if (typeof scope === "object" && scope !== null) {
+    return scope;
+  }
+  return { kind: "aliasList", category, scope, splice: false };
+}
+
+/**
  * Classifies one name's declarations into their argument kind — clause hole,
- * structured arm, comparison, plain scalar — and merges them into the one
- * typed value the field carries.
+ * spliced alias category, structured arm, comparison, plain scalar — and
+ * merges them into the one typed value the field carries.
  */
 function mergedArgValue(
   emitter: Emitter,
   name: string,
   group: readonly RuleField[],
   inheritedScope: string | null,
-  allowedClauses: ReadonlySet<ClauseCategory>
+  allowedSplices: ReadonlySet<string>
 ): ArgValue | SkipReason {
   const clauses = group.filter((field) => clauseOf(field.type) !== null);
   if (clauses.length === group.length) {
-    return mergedClauseValue(emitter, name, group, inheritedScope, allowedClauses);
+    return mergedClauseValue(emitter, name, group, inheritedScope, allowedSplices);
   }
   if (clauses.length > 0) {
     return skipReason(
@@ -678,8 +794,12 @@ function mergedArgValue(
       `field "${name}" overloaded between a clause and a scalar`
     );
   }
+  const alias = mergedAliasValue(emitter, name, group, inheritedScope, allowedSplices);
+  if (alias !== null) {
+    return alias;
+  }
   if (group.some((field) => field.type.kind === "block")) {
-    return mergedStructuredValue(emitter, name, group, inheritedScope, allowedClauses);
+    return mergedStructuredValue(emitter, name, group, inheritedScope, allowedSplices);
   }
   if (group.some((field) => field.comparison)) {
     return mergedComparisonValue(emitter, name, group);
@@ -694,37 +814,152 @@ function mergedArgValue(
   return { kind: "scalar", value };
 }
 
+/** The authoring member each spliced clause category contributes to its block. */
+const CLAUSE_SPLICE_MEMBERS: readonly {
+  /** The spliced clause category. */
+  readonly category: ClauseCategory;
+  /** The member the block's author writes the clause under. */
+  readonly member: string;
+}[] = [
+  { category: "trigger", member: "conditions" },
+  { category: "effect", member: "effects" },
+];
+
+/**
+ * The implicit member an unkeyed splice contributes beside a block's named
+ * fields: `calc_true_if = { amount == int alias_name[trigger] }` takes its
+ * conditions as one more argument, whose entries the writer then spreads bare
+ * into the block.
+ */
+function splicedMember(
+  emitter: Emitter,
+  splices: readonly RuleField[],
+  inheritedScope: string | null,
+  allowedSplices: ReadonlySet<string>
+): ArgField | SkipReason {
+  const categories = new Set(
+    splices.map((field) => (field.key.kind === "aliasName" ? field.key.category : ""))
+  );
+  if (categories.size !== 1) {
+    return skipReason(
+      "unsupported-alias-splice",
+      `block splices more than one category (${[...categories].sort().join(", ")})`
+    );
+  }
+  const category = [...categories][0]!;
+  const clause = CLAUSE_SPLICE_MEMBERS.find((row) => row.category === category);
+  const list = EXTRA_ALIAS_CATEGORIES.get(category)?.scriptList;
+  const member = clause?.member ?? list?.memberName;
+  if (member === undefined || !allowedSplices.has(category)) {
+    return skipReason(
+      "unsupported-alias-splice",
+      `splices a category the field model cannot type (${category})`
+    );
+  }
+  const scope = clauseScope(emitter, member, splices, inheritedScope);
+  if (typeof scope === "object" && scope !== null) {
+    return scope;
+  }
+  return {
+    name: member,
+    value:
+      clause === undefined
+        ? { kind: "aliasList", category, scope, splice: true }
+        : { kind: "clause", category: clause.category, scope, splice: true },
+    optional: splices.every((field) => isOptional(field.cardinality)),
+    docs: splices.flatMap((field) => field.docs),
+  };
+}
+
 /**
  * Merges the repeated keys an overloaded rule produces into one typed field
  * each, preserving the declared cardinality: a key any declaration permits
- * more than once becomes a repeated field. `inheritedScope` is the raw scope
- * the declaration pushes, if any — clause fields without their own
- * `## push_scope` run there.
+ * more than once becomes a repeated field. An unkeyed alias splice becomes one
+ * more field, named for what it splices. `inheritedScope` is the raw scope the
+ * declaration pushes, if any — clause fields without their own `## push_scope`
+ * run there.
  */
 export function mergeFields(
   emitter: Emitter,
   fields: readonly RuleField[],
   inheritedScope: string | null,
-  allowedClauses: ReadonlySet<ClauseCategory>
+  allowedSplices: ReadonlySet<string>
 ): ArgField[] | SkipReason {
-  const grouped = groupedByName(emitter, fields);
+  const splices = fields.filter((field) => field.key.kind === "aliasName");
+  const grouped = groupedByName(
+    emitter,
+    fields.filter((field) => field.key.kind !== "aliasName")
+  );
   if (!(grouped instanceof Map)) {
     return grouped;
   }
   const merged: ArgField[] = [];
   for (const [name, group] of grouped) {
-    const value = mergedArgValue(emitter, name, group, inheritedScope, allowedClauses);
+    const value = mergedArgValue(emitter, name, group, inheritedScope, allowedSplices);
     if ("detail" in value) {
       return value;
     }
-    const repeated = group.some((field) => isRepeated(field.cardinality));
+    const occurrences = widestCardinality(group);
     merged.push({
       name,
       value,
-      optional: group.some((field) => isOptional(field.cardinality)),
-      ...(repeated ? { repeated: true } : {}),
-      docs: group.flatMap((field) => field.docs),
+      optional: isOptional(occurrences),
+      ...(isRepeated(occurrences) ? { repeated: occurrences } : {}),
+      // One key's declarations are its forms, and CWT documents each form
+      // separately, so the same sentence usually arrives once per form.
+      docs: [...new Set(group.flatMap((field) => field.docs))],
     });
   }
-  return merged;
+  if (splices.length === 0) {
+    return merged;
+  }
+  const spliced = splicedMember(emitter, splices, inheritedScope, allowedSplices);
+  if ("detail" in spliced) {
+    return spliced;
+  }
+  if (merged.some((field) => field.name === spliced.name)) {
+    return skipReason(
+      "reserved-field-collision",
+      `a rule field is already named "${spliced.name}"`
+    );
+  }
+  return [...merged, spliced];
+}
+
+/**
+ * Lowers one spliced alias category's members into the fields an author writes,
+ * one per member name. Each member's own value is lowered by the ordinary
+ * field path, so a member that splices its category again terminates at that
+ * category's name rather than expanding it.
+ */
+export function aliasListMembers(
+  emitter: Emitter,
+  category: string,
+  allowedSplices: ReadonlySet<string>
+): ArgField[] | SkipReason {
+  const members = emitter.rules.aliasCategories.get(category);
+  if (members === undefined) {
+    return skipReason(
+      "unsupported-alias-splice",
+      `the rules declare no alias[${category}:...] members`
+    );
+  }
+  const lowered: ArgField[] = [];
+  for (const [name, declarations] of members) {
+    const group = declarations.map((declaration): RuleField => ({
+      key: { kind: "name", name },
+      type: declaration.type,
+      cardinality: REQUIRED,
+      docs: declaration.docs,
+      scope: declaration.scope,
+      line: declaration.line,
+      comparison: declaration.comparison,
+    }));
+    const value = mergedArgValue(emitter, name, group, null, allowedSplices);
+    if ("detail" in value) {
+      return value;
+    }
+    lowered.push({ name, value, optional: false, docs: group.flatMap((field) => field.docs) });
+  }
+  return lowered;
 }

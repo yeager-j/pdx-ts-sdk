@@ -63,7 +63,7 @@ export function pushCode(
   index: number,
   sink = "entries"
 ): string {
-  if (field.repeated !== true) {
+  if (field.repeated === undefined) {
     return pushValueCode(emitter, field, access, parentFieldPath, index, sink);
   }
   // Named apart from `pushValueListCode`'s own `item<index>` so a repeated
@@ -83,6 +83,21 @@ export function pushCode(
   return (
     `for (const ${entry} of ${access}) {\n` +
     `${pushValueCode(emitter, field, entry, parentFieldPath, index, sink)}\n}`
+  );
+}
+
+/**
+ * The generator invariant that keeps spliced alias categories out of the
+ * trigger surface: a trigger block is lowered with `TRIGGER_CLAUSES`, which
+ * admits no category carrying a script list or block, so no trigger argument
+ * can reach the two renderers that have no way to write one.
+ */
+export function unauthorableAliasValue(
+  value: Extract<ArgValue, { readonly kind: "aliasList" | "aliasStruct" }>
+): never {
+  throw new Error(
+    `a trigger argument lowered to the spliced "${value.category}" category, which the ` +
+      "trigger surface does not author"
   );
 }
 
@@ -181,6 +196,9 @@ function pushValueCode(
           : `${sink}.push(block(${key}, [...${access}.entries]));\n`) +
         `    refs.push(...${access}.refs);`
       );
+    case "aliasList":
+    case "aliasStruct":
+      return unauthorableAliasValue(field.value);
     case "comparison":
       return (
         `${sink}.push(typeof ${access} === "object" ` +

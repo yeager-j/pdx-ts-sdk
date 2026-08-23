@@ -8,7 +8,7 @@
 
 import type { ArgField } from "../../lower/script-shape.ts";
 import { camelCase, compareStrings, docComment } from "../../naming.ts";
-import type { TsValue } from "../../render/emitter.ts";
+import { aliasCategoryModule, type TsValue } from "../../render/emitter.ts";
 import { refTypesSuffix } from "../../render/writer.ts";
 import type {
   EffectCluster,
@@ -43,6 +43,10 @@ function fieldKind(field: ArgField): string {
       return "comparison";
     case "scalarOrFields":
       return "effect";
+    case "aliasList":
+      return "alias-list";
+    case "aliasStruct":
+      return "alias-struct";
     case "clause":
       switch (value.category) {
         case "trigger":
@@ -57,8 +61,19 @@ function fieldKind(field: ArgField): string {
   }
 }
 
+/** The alias category and splice flags a spliced field carries into its meta. */
+function spliceMeta(value: ArgField["value"]): string {
+  if (value.kind === "aliasStruct") {
+    return `, category: ${JSON.stringify(value.category)}`;
+  }
+  if (value.kind === "aliasList") {
+    return `, category: ${JSON.stringify(value.category)}${value.splice ? ", splice: true" : ""}`;
+  }
+  return value.kind === "clause" && value.splice ? ", splice: true" : "";
+}
+
 function fieldMeta(field: ArgField): string {
-  const repeated = field.repeated === true ? ", repeated: true" : "";
+  const repeated = field.repeated === undefined ? "" : ", repeated: true";
   if (field.value.kind === "fields") {
     return `{ prop: ${JSON.stringify(camelCase(field.name))}, key: ${JSON.stringify(field.name)}, kind: "fields", fields: [${field.value.fields.map(fieldMeta).join(", ")}]${repeated} }`;
   }
@@ -75,7 +90,7 @@ function fieldMeta(field: ArgField): string {
   const booleanLiterals = booleanLiteralsMeta(
     field.value.kind === "scalar" ? field.value.value : undefined
   );
-  return `{ prop: ${JSON.stringify(camelCase(field.name))}, key: ${JSON.stringify(field.name)}, kind: ${JSON.stringify(kind)}${refTypes}${booleanLiterals}${repeated} }`;
+  return `{ prop: ${JSON.stringify(camelCase(field.name))}, key: ${JSON.stringify(field.name)}, kind: ${JSON.stringify(kind)}${refTypes}${booleanLiterals}${spliceMeta(field.value)}${repeated} }`;
 }
 
 function metaEntry(effect: EmittedEffect): string {
@@ -91,6 +106,8 @@ function metaEntry(effect: EmittedEffect): string {
       return `  ${method}: { key: ${JSON.stringify(key)}, shape: { kind: "fields", fields: ${fieldsOf(shape.fields)} } },\n`;
     case "wrapper":
       return `  ${method}: { key: ${JSON.stringify(key)}, shape: { kind: "wrapper", fields: ${fieldsOf(shape.fields)} } },\n`;
+    case "aliasList":
+      return `  ${method}: { key: ${JSON.stringify(key)}, shape: { kind: "alias-list", category: ${JSON.stringify(shape.category)} } },\n`;
   }
 }
 
@@ -98,10 +115,17 @@ function scopeLinkMetaEntry(link: EmittedScopeLink): string {
   return `  ${link.method}: { key: ${JSON.stringify(link.key)}, shape: { kind: "scope-link" } },\n`;
 }
 
+/** One spliced alias category's member table, as the recorder reads it. */
+function aliasListMetaEntry(category: string, members: readonly ArgField[]): string {
+  return `  ${JSON.stringify(category)}: [${members.map(fieldMeta).join(", ")}],\n`;
+}
+
 /** The whole `effect-meta.ts` module: the meta types and the `EFFECT_META` table. */
 export function effectMetaCode(
   clusters: readonly EffectCluster[],
-  linkClusters: readonly ScopeLinkCluster[]
+  linkClusters: readonly ScopeLinkCluster[],
+  aliasLists: ReadonlyMap<string, { readonly members: readonly ArgField[] }>,
+  aliasStructCategories: readonly string[]
 ): string {
   const metaEntries = [
     ...clusters
@@ -115,8 +139,15 @@ export function effectMetaCode(
     .map(({ entry }) => entry)
     .join("");
   return (
+    // An alias-struct field is written through the content-side field table its
+    // own generated module registers, so this module — the one the recorder
+    // loads — is what has to pull that registration in.
+    aliasStructCategories
+      .map((category) => `import ${JSON.stringify(aliasCategoryModule(category))};\n`)
+      .join("") +
+    (aliasStructCategories.length === 0 ? "" : "\n") +
     "export type EffectFieldKind = " +
-    '"value" | "comparison" | "trigger" | "effect" | "modifiers" | "fields" | "scalar-or-fields" | "value-list";\n\n' +
+    '"value" | "comparison" | "trigger" | "effect" | "modifiers" | "fields" | "scalar-or-fields" | "value-list" | "alias-list" | "alias-struct";\n\n' +
     "export interface EffectFieldMeta {\n" +
     "  readonly prop: string;\n" +
     "  readonly key: string;\n" +
@@ -137,6 +168,17 @@ export function effectMetaCode(
     '  readonly objectKinds?: readonly ("scope-ref" | "typed-ref")[];\n' +
     "  /** Whether the field accepts repeated entries under the same script key. */\n" +
     "  readonly repeated?: boolean;\n" +
+    "  /** The spliced alias category an alias-list or alias-struct field authors. */\n" +
+    "  readonly category?: string;\n" +
+    docComment(
+      [
+        "Whether the field's entries are written bare into the enclosing block",
+        "rather than under `key`. An unkeyed CWT splice is the block's own",
+        "content, so the key exists only to name the authoring member.",
+      ],
+      "  "
+    ) +
+    "  readonly splice?: boolean;\n" +
     "  /** Scalar and structured-block arms for an overloaded field. */\n" +
     '  readonly scalar?: Pick<EffectFieldMeta, "refTypes" | "booleanLiterals" | "objectKinds">;\n' +
     "  readonly fields?: readonly EffectFieldMeta[];\n" +
@@ -146,11 +188,22 @@ export function effectMetaCode(
     '  | { readonly kind: "value"; readonly refTypes?: readonly string[]; readonly booleanLiterals?: readonly ("yes" | "no")[] }\n' +
     '  | { readonly kind: "fields"; readonly fields: readonly EffectFieldMeta[] | null }\n' +
     '  | { readonly kind: "wrapper"; readonly fields: readonly EffectFieldMeta[] | null }\n' +
+    '  | { readonly kind: "alias-list"; readonly category: string }\n' +
     '  | { readonly kind: "scope-link" };\n\n' +
     "export interface EffectMeta {\n" +
     "  readonly key: string;\n" +
     "  readonly shape: EffectShapeMeta;\n" +
     "}\n\n" +
+    docComment([
+      "The members of each spliced alias category, by category name. An item of",
+      "an alias list names exactly one of them, and the recorder writes it as it",
+      "writes any other field.",
+    ]) +
+    "export const ALIAS_LIST_META: Record<string, readonly EffectFieldMeta[] | undefined> = {\n" +
+    [...aliasLists]
+      .map(([category, surface]) => aliasListMetaEntry(category, surface.members))
+      .join("") +
+    "};\n\n" +
     docComment([
       "How the recorder serializes each effect method. The Proxy in",
       "`src/script/effects/recorder.ts` throws on names missing from this table, so a",
