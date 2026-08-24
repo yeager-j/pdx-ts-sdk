@@ -18,15 +18,21 @@
  * applied one level up, where a fired record for an event the game would not
  * have fired is the green test.
  *
- * `fire` carries the FROM contract: the type-level witness pair mirrors the
- * SDK's fire effects (`scopes.from` is required iff the event declares it,
- * forbidden otherwise), and `advance` re-checks the contract at delivery
- * against the registry's declared kinds — the harness restores type safety
- * on the one path production cannot check.
+ * `fire` carries the immediate FROM contract: the type-level witness pair
+ * mirrors the SDK's fire effects (`scopes.from` is required iff the event
+ * declares it, forbidden otherwise), and `advance` re-checks the contract at
+ * delivery against the registry's declared kinds. Registration refuses every
+ * ambient contract the harness cannot execute faithfully.
  */
 
 import type { PdxEntry } from "@pdx-ts/pdxscript";
-import type { AmbientScopeContext, DefinedEvent, EventItemBase, ScopeName } from "@pdx-ts/sdk";
+import {
+  AMBIENT_SCOPE_KEYS,
+  type AmbientScopeContext,
+  type DefinedEvent,
+  type EventItemBase,
+  type ScopeName,
+} from "@pdx-ts/sdk";
 
 import {
   applyEffectEntries,
@@ -144,6 +150,32 @@ function assertDeliverable(event: RegisteredEvent): void {
   }
 }
 
+/** Refuses ambient event contexts that this immediate-FROM interpreter cannot execute. */
+function assertSupportedAmbientContract(event: RegisteredEvent): void {
+  for (const key of AMBIENT_SCOPE_KEYS) {
+    const declared = event.scopes[key];
+    if (declared === undefined) {
+      continue;
+    }
+    if (key === "from") {
+      assertSupportedSimScope(declared, `Registering event "${event.id}"'s declared FROM contract`);
+      continue;
+    }
+    if (key === "root" && declared === event.scope) {
+      continue;
+    }
+    const reason =
+      key === "root"
+        ? `it declares split ROOT (${declared}) for ${event.scope} scope`
+        : `it declares ${key.toUpperCase()} (${declared})`;
+    throw new InterpreterError(
+      `Event "${event.id}" cannot be registered because ${reason}. The fixture models only ` +
+        `its event scope and immediate FROM; use an event without that ambient contract. ` +
+        coverageSummary()
+    );
+  }
+}
+
 /**
  * Whether the event's body says the game fires it only once, read through the
  * same table the rest of delivery reads — the `once` disposition is the flag's
@@ -197,12 +229,7 @@ export class World {
       // unsupported scope reaches this targeted diagnosis instead of failing
       // as an opaque assignability error at the call site.
       assertSupportedSimScope(event.scope, `Registering event "${event.id}"`);
-      if (event.scopes.from !== undefined) {
-        assertSupportedSimScope(
-          event.scopes.from,
-          `Registering event "${event.id}"'s declared FROM contract`
-        );
-      }
+      assertSupportedAmbientContract(event);
       if (this.registry.has(event.id)) {
         throw new InterpreterError(
           `Event "${event.id}" is registered more than once; event IDs must be unique. ` +
@@ -257,7 +284,8 @@ export class World {
 
   /**
    * Fires the event now, running its immediate. `scopes.from` is required iff the
-   * event declares a FROM contract, forbidden otherwise. The whole event
+   * event declares an immediate FROM contract, forbidden otherwise. Registration
+   * refuses deeper FROM, PREV, and split-ROOT contracts. The whole event
    * type is the single inference site — scope and witness kinds are DERIVED
    * from it — so a wrong-kind witness cannot widen the inference and unify
    * (the same failure the SDK's fire effects prevent with `NoInfer`).

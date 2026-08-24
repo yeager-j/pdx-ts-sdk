@@ -43,6 +43,7 @@ export {
   makeScope,
   recordEffects,
 } from "./script/effects/recorder.ts";
+export { AMBIENT_SCOPE_KEYS } from "./script/effects/types.ts";
 export type {
   ComplexTriggerModifier,
   ComplexTriggerModifierMode,

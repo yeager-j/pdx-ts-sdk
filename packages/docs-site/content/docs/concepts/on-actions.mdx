@@ -145,12 +145,12 @@ and `FROM` behave inside the event's triggers and effects.
 Both operations cause the game to run an event, but they enter the game from
 different places:
 
-| Hook with `mod.on`                                | Fire from an effect                                  |
-| ------------------------------------------------- | ---------------------------------------------------- |
-| Adds an event id to an engine-defined hook        | Writes an event-fire effect into authored script     |
-| The hook supplies the target scope and `FROM`     | The effect's current scope selects the target        |
-| Runs when Stellaris reaches that named transition | Runs when the containing effect executes             |
-| Has no per-registration delay                     | Can set `days`, `months`, `years`, or `random` delay |
+| Hook with `mod.on`                                              | Fire from an effect                                  |
+| --------------------------------------------------------------- | ---------------------------------------------------- |
+| Adds an event id to an engine-defined hook                      | Writes an event-fire effect into authored script     |
+| The hook supplies the target scope and declared ambient context | The effect's current scope selects the target        |
+| Runs when Stellaris reaches that named transition               | Runs when the containing effect executes             |
+| Has no per-registration delay                                   | Can set `days`, `months`, `years`, or `random` delay |
 
 Use an on-action when the entry point is a lifecycle event that Stellaris
 already exposes. Use `countryEvent`, `planetEvent`, and the other typed fire

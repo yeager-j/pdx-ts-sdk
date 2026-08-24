@@ -13,6 +13,7 @@
 
 import type { RuleField, ScopeContext } from "../cwt/model.ts";
 import type { Emitter } from "../render/emitter.ts";
+import { AMBIENT_SCOPE_KEYS, type AmbientScopeKey } from "../special-scope-paths.ts";
 
 /**
  * Carries the ambient scope and fallback TypeScript types used while lowering a field.
@@ -65,31 +66,8 @@ export interface FieldScope {
    */
   readonly root: string | null;
   /** Every named ambient slot, in the public map's canonical order. */
-  readonly context: Readonly<Record<AmbientKey, string | null>>;
+  readonly context: Readonly<Record<AmbientScopeKey, string | null>>;
 }
-
-type AmbientKey =
-  | "root"
-  | "from"
-  | "fromfrom"
-  | "fromfromfrom"
-  | "fromfromfromfrom"
-  | "prev"
-  | "prevprev"
-  | "prevprevprev"
-  | "prevprevprevprev";
-
-const AMBIENT_KEYS: readonly AmbientKey[] = [
-  "root",
-  "from",
-  "fromfrom",
-  "fromfromfrom",
-  "fromfromfromfrom",
-  "prev",
-  "prevprev",
-  "prevprevprev",
-  "prevprevprevprev",
-];
 
 /**
  * The scope FROM holds inside one field's block.
@@ -121,7 +99,7 @@ function ambientType(
   emitter: Emitter,
   field: RuleField,
   ctx: FieldContext,
-  ambient: AmbientKey
+  ambient: AmbientScopeKey
 ): string | null {
   const declared =
     field.scope?.replaces === true
@@ -148,8 +126,8 @@ export function scopeType(
   // terms: it is there because the rules state no FROM at all, and a rule that
   // later states one is a disagreement to review rather than to average.
   const context = Object.fromEntries(
-    AMBIENT_KEYS.map((key) => [key, ambientType(emitter, field, ctx, key)])
-  ) as Record<AmbientKey, string | null>;
+    AMBIENT_SCOPE_KEYS.map((key) => [key, ambientType(emitter, field, ctx, key)])
+  ) as Record<AmbientScopeKey, string | null>;
   context.from = ctx.assertedFrom ?? context.from;
   const from = context.from;
   const root = context.root;
@@ -186,7 +164,7 @@ export function effectBlockArgs(emitter: Emitter, scope: FieldScope): string {
 }
 
 function contextLiteral(scope: FieldScope): string {
-  const members = AMBIENT_KEYS.flatMap((key) => {
+  const members = AMBIENT_SCOPE_KEYS.flatMap((key) => {
     const value = scope.context[key];
     return value === null ? [] : [`readonly ${key}: ${value}`];
   });
@@ -209,7 +187,9 @@ export function splitRootMetadata(scope: FieldScope): readonly string[] {
  * scope. The historical name is retained for generated-emitter call sites.
  */
 export function withFrom(emitter: Emitter, inner: string, scope: FieldScope): string {
-  if (AMBIENT_KEYS.filter((key) => key !== "root").every((key) => scope.context[key] === null)) {
+  if (
+    AMBIENT_SCOPE_KEYS.filter((key) => key !== "root").every((key) => scope.context[key] === null)
+  ) {
     return inner;
   }
   return `${emitter.use("WithFrom")}<${inner}, ${scopeArg(emitter, scope)}, ${contextLiteral(scope)}>`;
@@ -227,21 +207,22 @@ export function withFrom(emitter: Emitter, inner: string, scope: FieldScope): st
  * the parent instead of clearing.
  */
 function pushedScope(fieldScope: ScopeContext, parentScope: ScopeContext | null): ScopeContext {
-  return fieldScope.replaces
-    ? fieldScope
-    : {
-        this: fieldScope.this,
-        root: parentScope?.root ?? null,
-        from: parentScope?.from ?? null,
-        fromfrom: parentScope?.fromfrom ?? null,
-        fromfromfrom: parentScope?.fromfromfrom ?? null,
-        fromfromfromfrom: parentScope?.fromfromfromfrom ?? null,
-        prev: parentScope?.prev ?? null,
-        prevprev: parentScope?.prevprev ?? null,
-        prevprevprev: parentScope?.prevprevprev ?? null,
-        prevprevprevprev: parentScope?.prevprevprevprev ?? null,
-        replaces: false,
-      };
+  if (fieldScope.replaces) {
+    return fieldScope;
+  }
+  return {
+    this: fieldScope.this,
+    ...inheritedAmbientScopes(parentScope),
+    replaces: false,
+  };
+}
+
+function inheritedAmbientScopes(
+  parentScope: ScopeContext | null
+): Record<AmbientScopeKey, string | null> {
+  return Object.fromEntries(
+    AMBIENT_SCOPE_KEYS.map((key) => [key, parentScope?.[key] ?? null])
+  ) as Record<AmbientScopeKey, string | null>;
 }
 
 /**

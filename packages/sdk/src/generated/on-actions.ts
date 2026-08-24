@@ -1457,7 +1457,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_army_recruited",
     scope: "carrier",
-    scopes: { from: "army", root: "country" },
+    scopes: { root: "country", from: "army" },
   },
   /**
    * An army has been killed in ground combat
@@ -2858,7 +2858,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_specialist_subject_conversion_started",
     scope: "agreement",
-    scopes: { from: "country", root: "country" },
+    scopes: { root: "country", from: "country" },
   },
   /**
    * Fired when a subject has finished converting to a specialist type
@@ -2870,7 +2870,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_specialist_subject_conversion_finished",
     scope: "agreement",
-    scopes: { from: "country", root: "country" },
+    scopes: { root: "country", from: "country" },
   },
   /**
    * Fired when a subject specialist conversion has been aborted
@@ -2882,7 +2882,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_specialist_subject_conversion_aborted",
     scope: "agreement",
-    scopes: { from: "country", root: "country" },
+    scopes: { root: "country", from: "country" },
   },
   /**
    * Executed when a two capitals get connected through relay network
@@ -2905,19 +2905,19 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_agreement_change_accepted",
     scope: "agreement",
-    scopes: { from: "country", root: "country" },
+    scopes: { root: "country", from: "country" },
   },
   onShroudwalkerDivinationVisitorsSituation: {
     kind: "on-action-ref",
     name: "on_shroudwalker_divination_visitors_situation",
     scope: "situation",
-    scopes: { from: "country", root: "country" },
+    scopes: { root: "country", from: "country" },
   },
   onShroudwalkerDivinationLocusSituation: {
     kind: "on-action-ref",
     name: "on_shroudwalker_divination_locus_situation",
     scope: "situation",
-    scopes: { from: "country", root: "country" },
+    scopes: { root: "country", from: "country" },
   },
   onShroudwalkerInsightSituationFinish: {
     kind: "on-action-ref",

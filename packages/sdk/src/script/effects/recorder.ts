@@ -100,7 +100,7 @@ export function scopeValue<S extends ScopeName>(
 }
 
 /**
- * SDK-internal: an unchecked openable ref for absolute paths (`from`).
+ * SDK-internal: an openable ref for absolute paths and declared PREV paths.
  *
  * A ref made with a lease can only be opened inside a recording of the
  * authoring call that holds that lease; one made without a lease — an event
@@ -124,8 +124,8 @@ export function scopeRef<S extends ScopeName>(
         block(resolvedPath, recordBlock(recording, recording.refs, body, [], "push"))
       );
     },
-    // No lease check: a trigger is a value built with nothing recording, so it
-    // reaches output only where its holder writes it.
+    // Absolute trigger values remain reusable. A declared PREV needs its
+    // owning recording to adjust verified depth and rejects escaped contexts.
     trigger(condition) {
       const recording = RECORDINGS.at(-1);
       const resolvedPath =
@@ -421,18 +421,17 @@ function assertWitnessOwnedBy(
 /**
  * Runs one authoring call's body with the declared ambient scopes.
  *
- * ROOT and FROM are fixed paths. PREV paths stay relative to the declaring
- * block, so a verified nested push increases their emitted PREV depth. `Root` defaults to
- * `Self` on {@link ScriptCtx}'s terms — an event's blocks are the top level,
- * so ROOT is the event's own scope — and a caller whose rules say otherwise
- * names it. Which of the three a given closure may *read* is the type
- * argument's business; the object handed over carries all three either way,
- * since they are the same named slots in the output regardless.
+ * ROOT and FROM paths are fixed. PREV paths stay relative to the declaring
+ * block, so a verified nested push increases their emitted PREV depth. ROOT
+ * defaults to `Self` on {@link ScriptCtx}'s terms — an event's blocks are the
+ * top level, so ROOT is the event's own scope — and a caller whose rules say
+ * otherwise names it. The context map controls which declared ambient slots a
+ * closure may read; the object carries the complete map in its canonical order.
  *
- * The ctx lives for this call: `root` and `from` may be opened as blocks in
- * any recording started while the body runs — one event's ctx serves its
- * `immediate`, its `after` and every option — and nowhere else. Opening one
- * later reaches {@link assertOwnedBy}, which is why the ctx is built here
+ * The ctx lives for this call: every declared ambient ref may be opened as a
+ * block in any recording started while the body runs — one event's ctx serves
+ * its `immediate`, its `after` and every option — and nowhere else. Opening
+ * one later reaches {@link assertOwnedBy}, which is why the ctx is built here
  * rather than handed out as a value the caller keeps.
  */
 export function withScriptCtx<

@@ -184,11 +184,11 @@ type AmbientRef<Context extends AmbientScopeContext, Key extends AmbientScopeKey
  * `on_roll_failed` runs in fleet scope with the archaeological site as FROM, so
  * `ctx.from.effects((site) => ...)` opens the site.
  *
- * `Root` defaults to `Self` because that is true wherever a script block *is*
- * the top level — an event's `immediate` runs in the event's own scope, and
- * ROOT is that scope. A content field is where the two come apart, so its
- * generated type states ROOT explicitly and defaults it to undeclared instead;
- * see {@link EffectBlock}.
+ * The default context declares `root: Self` because that is true wherever a
+ * script block *is* the top level — an event's `immediate` runs in the event's
+ * own scope, and ROOT is that scope. A content field is where the two come
+ * apart, so its generated type states ROOT explicitly and defaults it to
+ * undeclared instead; see {@link EffectBlock}.
  */
 export interface ScriptCtx<
   Self extends ScopeName,

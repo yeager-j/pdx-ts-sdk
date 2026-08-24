@@ -1,5 +1,6 @@
 import { scopeIndex, type OnActionDecl, type RuleSet } from "../../cwt/rules.ts";
 import { camelCase, docComment, isPlainName } from "../../naming.ts";
+import { AMBIENT_SCOPE_KEYS, type AmbientScopeKey } from "../../special-scope-paths.ts";
 
 /** Generated on-action reference module text and its lowering report. */
 export interface OnActionsEmission {
@@ -17,7 +18,7 @@ interface LoweredOnAction {
   readonly name: string;
   readonly member: string;
   readonly scope: string | null;
-  readonly scopes: Readonly<Record<string, string>>;
+  readonly scopes: Readonly<Partial<Record<AmbientScopeKey, string>>>;
   readonly docs: readonly string[];
 }
 
@@ -102,17 +103,8 @@ function lower(hook: OnActionDecl, scopes: ReadonlyMap<string, string>): Lowered
     }
   }
 
-  const ambient: Record<string, string> = {};
-  for (const key of [
-    "from",
-    "fromfrom",
-    "fromfromfrom",
-    "fromfromfromfrom",
-    "prev",
-    "prevprev",
-    "prevprevprev",
-    "prevprevprevprev",
-  ]) {
+  const ambient: Partial<Record<AmbientScopeKey, string>> = {};
+  for (const key of AMBIENT_SCOPE_KEYS) {
     const raw = hook.scopes.get(key);
     if (raw === undefined || raw === "no_scope") {
       continue;
@@ -121,16 +113,8 @@ function lower(hook: OnActionDecl, scopes: ReadonlyMap<string, string>): Lowered
     if (declared === undefined) {
       return `unknown ${key.toUpperCase()} scope ${raw}`;
     }
-    ambient[key] = declared;
-  }
-  const rawRoot = hook.scopes.get("root");
-  if (rawRoot !== undefined && rawRoot !== "no_scope") {
-    const root = scopes.get(normalize(rawRoot));
-    if (root === undefined) {
-      return `unknown ROOT scope ${rawRoot}`;
-    }
-    if (root !== scope) {
-      ambient.root = root;
+    if (key !== "root" || declared !== scope) {
+      ambient[key] = declared;
     }
   }
 

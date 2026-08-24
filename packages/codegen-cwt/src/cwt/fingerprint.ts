@@ -11,6 +11,7 @@
  * future caller that needs to notice a CWT shape changing underneath it.
  */
 
+import { AMBIENT_SCOPE_KEYS } from "../special-scope-paths.ts";
 import type { RuleField, RuleType } from "./model.ts";
 
 function rangeSignature(range: {
@@ -27,15 +28,7 @@ export function scopeSignature(field: RuleField): string {
     ? "inherited"
     : [
         scope.this,
-        scope.root,
-        scope.from,
-        scope.fromfrom,
-        scope.fromfromfrom,
-        scope.fromfromfromfrom,
-        scope.prev,
-        scope.prevprev,
-        scope.prevprevprev,
-        scope.prevprevprevprev,
+        ...AMBIENT_SCOPE_KEYS.map((key) => scope[key]),
         scope.replaces ? "replace" : "push",
       ]
         .map((part) => part ?? "-")

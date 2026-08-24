@@ -212,12 +212,11 @@ function lowerEvent<S extends ScopeName, Context extends AmbientScopeContext>(
     entries.push(kv("specimen", refId(def.specimen)));
   }
   if (def.situation !== undefined) {
-    const situation =
-      typeof def.situation === "function" ? def.situation(ctx as never) : def.situation;
+    const situation = typeof def.situation === "function" ? def.situation(ctx) : def.situation;
     entries.push(kv("situation", situation.path));
   }
   if (def.location !== undefined) {
-    const location = typeof def.location === "function" ? def.location(ctx as never) : def.location;
+    const location = typeof def.location === "function" ? def.location(ctx) : def.location;
     entries.push(kv("location", location.path));
   }
   if (def.hideWindow === true) {
@@ -282,7 +281,7 @@ function lowerEvent<S extends ScopeName, Context extends AmbientScopeContext>(
   }
   if (def.abortEffect !== undefined) {
     const recorded: ContentRefUse[] = [];
-    const sink = recordEffects<S>(recorded, (scope) => def.abortEffect!(scope, ctx as never));
+    const sink = recordEffects<S>(recorded, (scope) => def.abortEffect!(scope, ctx));
     entries.push(block("abort_effect", sink));
     refs.push(...underField(recorded, "abort_effect"));
   }
@@ -327,13 +326,13 @@ function lowerEvent<S extends ScopeName, Context extends AmbientScopeContext>(
   }
   if (def.immediate !== undefined) {
     const recorded: ContentRefUse[] = [];
-    const sink = recordEffects<S>(recorded, (scope) => def.immediate!(scope, ctx as never));
+    const sink = recordEffects<S>(recorded, (scope) => def.immediate!(scope, ctx));
     entries.push(block("immediate", sink));
     refs.push(...underField(recorded, "immediate"));
   }
   if (def.after !== undefined) {
     const recorded: ContentRefUse[] = [];
-    const sink = recordEffects<S>(recorded, (scope) => def.after!(scope, ctx as never));
+    const sink = recordEffects<S>(recorded, (scope) => def.after!(scope, ctx));
     entries.push(block("after", sink));
     refs.push(...underField(recorded, "after"));
   }
@@ -419,7 +418,7 @@ function lowerEvent<S extends ScopeName, Context extends AmbientScopeContext>(
     }
     if (option.effects !== undefined) {
       const recorded: ContentRefUse[] = [];
-      const sink = recordEffects<S>(recorded, (scope) => option.effects!(scope, ctx as never));
+      const sink = recordEffects<S>(recorded, (scope) => option.effects!(scope, ctx));
       optionEntries.push(...sink);
       refs.push(...underField(recorded, where));
     }
