@@ -9,15 +9,9 @@
 import { describe, expect, it } from "vitest";
 
 import { PathOwnershipError, StaleRuleTableError } from "../src/errors.ts";
-import {
-  always,
-  createMod,
-  render,
-  type EconomicResourceOperation,
-  type ModConfig,
-  type TechnologyItem,
-} from "../src/index.ts";
+import { createMod, render, type ModConfig } from "../src/index.ts";
 import { viewFromFiles } from "../src/installation/vanilla/view.ts";
+import { always, type EconomicResourceOperation, type TechnologyItem } from "../src/stellaris.ts";
 import {
   BUILDING_FILE,
   MEGASTRUCTURE_FILE,

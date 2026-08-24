@@ -1,6 +1,7 @@
 import { describe, it } from "vitest";
 
-import { createMod, onActions, vanilla } from "../src/index.ts";
+import { createMod } from "../src/index.ts";
+import { onActions, vanilla } from "../src/stellaris.ts";
 
 describe("typed on-action registration", () => {
   it("accepts matching event scope and FROM contracts", () => {

@@ -18,14 +18,14 @@ import {
   defineTradition as defineTraditionInternal,
 } from "../src/generated/content-definers.ts";
 import { namespace as namespaceInternal } from "../src/generated/event-definers.ts";
+import { createMod } from "../src/index.ts";
 import {
-  createMod,
   onActions,
   type TechnologyDef,
   type TechnologyItem,
   type TechnologyRef,
   type TraditionItem,
-} from "../src/index.ts";
+} from "../src/stellaris.ts";
 
 /**
  * The definers, and what a definition is once no feature is in the way:

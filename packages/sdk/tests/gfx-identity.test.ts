@@ -11,7 +11,8 @@ import { describe, expect, it } from "vitest";
 
 import { createFeature } from "../src/authoring/feature.ts";
 import { buildMod } from "../src/compiler/compile.ts";
-import { always, createMod, render } from "../src/index.ts";
+import { createMod, render } from "../src/index.ts";
+import { always } from "../src/stellaris.ts";
 
 function gfxMod<const P extends string>(prefix: P) {
   return createMod({ name: "GFX identity", prefix, supportedVersion: "4.4.*" });

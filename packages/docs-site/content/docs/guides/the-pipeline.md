@@ -146,6 +146,7 @@ Each report also says whether anything on disk changed and lists the
 SDK-owned output that has drifted since the previous run.
 
 A refusal is not a dead end. A drift refusal carries a receipt; pass it to
-`replaceMaterialization` or `replaceInstallation` to replace the drifted
-output deliberately. An interrupted run leaves a transaction that
-`recoverMaterialization` or `recoverInstallation` completes or rolls back.
+`replaceMaterialization` or `replaceInstallation` (from
+`@pdx-ts/sdk/internals`) to replace the drifted output deliberately. An
+interrupted run leaves a transaction that `recoverMaterialization` or
+`recoverInstallation` (same module) completes or rolls back.

@@ -9,13 +9,13 @@ import { describe, expectTypeOf, it } from "vitest";
 
 import type { SpecialProjectItem } from "../src/generated/content-definers.ts";
 import type { SpecialProjectRef } from "../src/generated/refs.ts";
+import { createMod } from "../src/index.ts";
 import {
-  createMod,
   eventTarget,
   type ScopeRef,
   type SpecialProjectLocationContract,
   type SpecialProjectLocationScope,
-} from "../src/index.ts";
+} from "../src/stellaris.ts";
 
 const CONFIG = { name: "Projects", prefix: "sp_test", supportedVersion: "4.4.*" } as const;
 

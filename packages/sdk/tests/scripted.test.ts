@@ -11,17 +11,9 @@ import { explain, fixture } from "@pdx-ts/sdk-testing";
 import { describe, expect, it } from "vitest";
 
 import { EFFECT_META } from "../src/generated/effect-meta.ts";
-import {
-  and,
-  createMod,
-  eventTarget,
-  makeScope,
-  render,
-  scriptedEffect,
-  scriptedTrigger,
-  vanilla,
-  type ModConfig,
-} from "../src/index.ts";
+import { createMod, render, type ModConfig } from "../src/index.ts";
+import { makeScope } from "../src/internals.ts";
+import { and, eventTarget, scriptedEffect, scriptedTrigger, vanilla } from "../src/stellaris.ts";
 
 const CONFIG: ModConfig = {
   name: "Scripted",

@@ -16,9 +16,9 @@ import {
   megastructureFlags,
   planetFlags,
 } from "../src/generated/value-sets.ts";
-import type { EffectPath, EffectPathOf } from "../src/index.ts";
 import { eventTarget, makeScope, scopeValue } from "../src/script/effects/recorder.ts";
 import { hasPlanetFlag, hasStarFlag, isAtWar } from "../src/script/triggers.ts";
+import type { EffectPath, EffectPathOf } from "../src/stellaris.ts";
 
 const sink: PdxEntry[] = [];
 const flags = planetFlags("effects_type_test_flag");

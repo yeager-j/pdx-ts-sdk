@@ -1,5 +1,6 @@
 /** PROTOTYPE ONLY: the proposed semantic Jobs interface. */
-import { always, and, createMod, hasBuilding, hasModifier, isRobotPop, vanilla } from "@pdx-ts/sdk";
+import { createMod } from "@pdx-ts/sdk";
+import { always, and, hasBuilding, hasModifier, isRobotPop, vanilla } from "@pdx-ts/sdk/stellaris";
 
 import { jobs } from "./jobs.stub.prototype.ts";
 

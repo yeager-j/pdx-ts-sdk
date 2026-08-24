@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { absoluteOrbits, asteroidBelt, createMod, render } from "../src/index.ts";
+import { createMod, render } from "../src/index.ts";
+import { absoluteOrbits, asteroidBelt } from "../src/stellaris.ts";
 
 describe("absoluteOrbits", () => {
   it("lowers an absolute planet tree to the reviewed initializer PDXScript", () => {

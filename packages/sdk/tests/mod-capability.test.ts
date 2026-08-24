@@ -1,15 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  always,
-  createMod,
-  currentSituationApproach,
-  currentStage,
-  render,
-  type IdProfile,
-  type ModCapability,
-} from "../src/index.ts";
+import { createMod, render, type IdProfile, type ModCapability } from "../src/index.ts";
 import { viewFromFiles } from "../src/installation/vanilla/view.ts";
+import { always, currentSituationApproach, currentStage } from "../src/stellaris.ts";
 
 const COMPLETE_PROFILE = {
   technology: "tech",

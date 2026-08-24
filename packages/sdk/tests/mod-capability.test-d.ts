@@ -1,20 +1,22 @@
 import { describe, expectTypeOf, it } from "vitest";
 
 import {
-  always,
   createMod,
-  currentSituationApproach,
-  currentStage,
   type CapabilityEventItem,
-  type ComponentSetRequiredComponentRef,
   type ContentItem,
   type IdProfile,
   type MintedContentId,
   type ModCapability,
+} from "../src/index.ts";
+import {
+  always,
+  currentSituationApproach,
+  currentStage,
+  type ComponentSetRequiredComponentRef,
   type ScopeRef,
   type SituationTypeDef,
   type TraditionDef,
-} from "../src/index.ts";
+} from "../src/stellaris.ts";
 
 const profile = {
   technology: "invention",

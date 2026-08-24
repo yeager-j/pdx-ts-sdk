@@ -38,13 +38,12 @@ import {
   install,
   MaterializationError,
   render,
-  renderLauncherDescriptor,
-  replaceInstallation,
-  replaceMaterialization,
   write,
   type MaterializationReceipt,
 } from "../src/index.ts";
+import { replaceInstallation, replaceMaterialization } from "../src/internals.ts";
 import { issueReceipt, openReceipt, type MaterializationSnapshot } from "../src/output/receipt.ts";
+import { renderLauncherDescriptor } from "../src/output/render.ts";
 import { createRenderedMod, type RenderedMod } from "../src/output/rendered.ts";
 import {
   activateMaterialization,

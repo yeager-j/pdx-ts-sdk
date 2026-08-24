@@ -4,7 +4,8 @@ import { createFeature } from "../src/authoring/feature.ts";
 import { buildMod } from "../src/compiler/compile.ts";
 import { on } from "../src/events/on-actions.ts";
 import { namespace } from "../src/generated/event-definers.ts";
-import { createMod, onActions, render, vanilla } from "../src/index.ts";
+import { createMod, render } from "../src/index.ts";
+import { onActions, vanilla } from "../src/stellaris.ts";
 
 const CONFIG = {
   name: "On-action runtime tests",

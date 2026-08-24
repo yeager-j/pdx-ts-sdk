@@ -37,13 +37,13 @@ import {
   MaterializationError,
   PathOwnershipError,
   render,
-  renderLauncherDescriptor,
-  stellaris,
   write,
   type ModConfig,
   type PureMod,
 } from "../src/index.ts";
+import * as stellaris from "../src/installation/index.ts";
 import { viewFromFiles } from "../src/installation/vanilla/view.ts";
+import { renderLauncherDescriptor } from "../src/output/render.ts";
 
 const config: ModConfig = {
   name: "Launcher Probe",

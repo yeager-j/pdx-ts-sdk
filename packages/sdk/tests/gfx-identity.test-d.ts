@@ -10,15 +10,15 @@
 import { describe, expectTypeOf, it } from "vitest";
 
 import * as sdk from "../src/index.ts";
+import { createMod, type AssetFileItem } from "../src/index.ts";
+import * as stellaris from "../src/stellaris.ts";
 import {
   always,
-  createMod,
-  type AssetFileItem,
   type PdxmeshFields,
   type PdxparticleFields,
   type SpriteRef,
   type SpriteTypeFields,
-} from "../src/index.ts";
+} from "../src/stellaris.ts";
 
 const mod = createMod({ name: "GFX types", prefix: "gfx_types", supportedVersion: "4.4.*" });
 
@@ -177,13 +177,13 @@ describe("shape mint signatures", () => {
     // The point of exporting the aliases: a shape-minted name is not
     // `MintedContentId`-shaped, so without them a consumer holding one of
     // these items has no way to write its type down.
-    const icon: sdk.SpriteTextIconName<"gfx_types", "council"> = "GFX_text_gfx_types_council";
-    const button: sdk.SpriteFleetOrderButtonGroundSupportName<"vanilla_stance", true> =
+    const icon: stellaris.SpriteTextIconName<"gfx_types", "council"> = "GFX_text_gfx_types_council";
+    const button: stellaris.SpriteFleetOrderButtonGroundSupportName<"vanilla_stance", true> =
       "GFX_fleet_order_button_ground_support_vanilla_stance_selected";
     void icon;
     void button;
     expectTypeOf(mod.spriteTextIcon("council", { textureFile: "a" }).id).toEqualTypeOf<
-      sdk.SpriteTextIconName<"gfx_types", "council">
+      stellaris.SpriteTextIconName<"gfx_types", "council">
     >();
   });
 

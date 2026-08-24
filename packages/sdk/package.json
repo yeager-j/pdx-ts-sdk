@@ -19,21 +19,6 @@
       "types": "./dist/installation/index.d.ts",
       "default": "./dist/installation/index.js"
     },
-    "./content-registries": {
-      "pdx-source": "./src/content-registries.ts",
-      "types": "./dist/content-registries.d.ts",
-      "default": "./dist/content-registries.js"
-    },
-    "./script-reference": {
-      "pdx-source": "./src/script-reference.ts",
-      "types": "./dist/script-reference.d.ts",
-      "default": "./dist/script-reference.js"
-    },
-    "./terminal": {
-      "pdx-source": "./src/terminal.ts",
-      "types": "./dist/terminal.d.ts",
-      "default": "./dist/terminal.js"
-    },
     "./reference": {
       "pdx-source": "./src/reference.ts",
       "types": "./dist/reference.d.ts",

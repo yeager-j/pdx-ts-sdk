@@ -3,7 +3,7 @@ import {
   SCRIPT_EFFECT_REFERENCES,
   SCRIPT_REFERENCE_SCOPES,
   SCRIPT_SCOPE_LINK_REFERENCES,
-} from "@pdx-ts/sdk/script-reference";
+} from "@pdx-ts/sdk/reference";
 import { describe, expect, it } from "vitest";
 
 import { STRUCTURAL_EFFECT_METHODS } from "../src/generated/effect-policy.ts";
