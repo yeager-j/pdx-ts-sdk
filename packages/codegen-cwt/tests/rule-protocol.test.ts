@@ -295,13 +295,37 @@ describe("LoweredRule", () => {
     const push = mergeBlock(
       new Emitter(rules),
       [inherited],
-      clauseScopeContext({ this: "bypass", root: null, from: null, replaces: false }),
+      clauseScopeContext({
+        this: "bypass",
+        root: null,
+        from: null,
+        fromfrom: null,
+        fromfromfrom: null,
+        fromfromfromfrom: null,
+        prev: null,
+        prevprev: null,
+        prevprevprev: null,
+        prevprevprevprev: null,
+        replaces: false,
+      }),
       new Set(["effect"])
     );
     const replacement = mergeBlock(
       new Emitter(rules),
       [inherited],
-      clauseScopeContext({ this: "bypass", root: null, from: null, replaces: true }),
+      clauseScopeContext({
+        this: "bypass",
+        root: null,
+        from: null,
+        fromfrom: null,
+        fromfromfrom: null,
+        fromfromfromfrom: null,
+        prev: null,
+        prevprev: null,
+        prevprevprev: null,
+        prevprevprevprev: null,
+        replaces: true,
+      }),
       new Set(["effect"])
     );
 
@@ -338,8 +362,38 @@ describe("LoweredRule", () => {
     const conflicting = mergeBlock(
       new Emitter(rules),
       [
-        { ...effect, scope: { this: "bypass", root: null, from: null, replaces: false } },
-        { ...effect, scope: { this: "bypass", root: null, from: null, replaces: true } },
+        {
+          ...effect,
+          scope: {
+            this: "bypass",
+            root: null,
+            from: null,
+            fromfrom: null,
+            fromfromfrom: null,
+            fromfromfromfrom: null,
+            prev: null,
+            prevprev: null,
+            prevprevprev: null,
+            prevprevprevprev: null,
+            replaces: false,
+          },
+        },
+        {
+          ...effect,
+          scope: {
+            this: "bypass",
+            root: null,
+            from: null,
+            fromfrom: null,
+            fromfromfrom: null,
+            fromfromfromfrom: null,
+            prev: null,
+            prevprev: null,
+            prevprevprev: null,
+            prevprevprevprev: null,
+            replaces: true,
+          },
+        },
       ],
       null,
       new Set(["effect"])

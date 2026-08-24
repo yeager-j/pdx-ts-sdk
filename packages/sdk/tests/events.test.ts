@@ -89,6 +89,40 @@ describe("event definitions in a namespace", () => {
     expect(rendered).toContain("from = root");
   });
 
+  it("serializes a deeper THIS witness at a split-root fire site", () => {
+    const runtimeMod = createMod({
+      name: "Split-root deep witness",
+      prefix: "split_root_deep",
+      supportedVersion: "4.4.*",
+    });
+    const events = runtimeMod.namespace();
+    const chained = events.planet(3, {
+      scopes: { from: "country", fromfrom: "planet" },
+      hideWindow: true,
+      isTriggeredOnly: true,
+    });
+    const initializer = runtimeMod.solarSystemInitializer("deep_witness", {
+      class: "sc_g",
+      planet: [
+        {
+          initEffect: (planet, ctx) => {
+            planet.planetEvent({
+              id: chained,
+              scopes: { from: ctx.root, fromfrom: ctx.self },
+            });
+          },
+        },
+      ],
+    });
+
+    const rendered = render(
+      runtimeMod.compile([runtimeMod.feature("deep_witness", [initializer, chained])])
+    ).get("common/solar_system_initializers/split_root_deep_deep_witness.txt")!;
+
+    expect(rendered).toContain("from = root");
+    expect(rendered).toContain("fromfrom = this");
+  });
+
   it("rejects duplicate event ids within the namespace", () => {
     const events = makeEvents();
     const country = events.country(1, { hideWindow: true, isTriggeredOnly: true });

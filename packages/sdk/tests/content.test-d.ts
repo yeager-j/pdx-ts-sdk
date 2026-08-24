@@ -2385,6 +2385,11 @@ describe("generated content authoring types", () => {
       hideWindow: true,
       isTriggeredOnly: true,
     });
+    const needsCountryThenPlanet = events.planet(42, {
+      scopes: { from: "country", fromfrom: "planet" },
+      hideWindow: true,
+      isTriggeredOnly: true,
+    });
 
     contentMod.solarSystemInitializer("split_root_witness", {
       class: "sc_g",
@@ -2395,6 +2400,10 @@ describe("generated content authoring types", () => {
             // here; ctx.self is the planet this initializer block runs in.
             planet.planetEvent({ id: needsPlanetFrom, scopes: { from: ctx.self } });
             planet.planetEvent({ id: needsCountryFrom, scopes: { from: ctx.root } });
+            planet.planetEvent({
+              id: needsCountryThenPlanet,
+              scopes: { from: ctx.root, fromfrom: ctx.self },
+            });
           },
         },
       ],

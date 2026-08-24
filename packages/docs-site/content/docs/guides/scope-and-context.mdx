@@ -129,7 +129,9 @@ The available context depends on what the field declares:
 - `ctx.from`, `ctx.fromfrom`, `ctx.fromfromfrom`, and
   `ctx.fromfromfromfrom` are the field's declared FROM chain.
 - `ctx.prev`, `ctx.prevprev`, `ctx.prevprevprev`, and
-  `ctx.prevprevprevprev` are the field's declared PREV chain.
+  `ctx.prevprevprevprev` are the field's declared PREV chain. Inside verified
+  pushed callbacks they add that push depth, so they keep naming the same
+  ambient scopes rather than the callback's immediate lexical parent.
 
 Every declared context member is a typed reference. You can open it with
 `.effects(...)`, put a condition on them with `.trigger(...)`, pass them to
@@ -214,9 +216,9 @@ scope after `THIS` changes.
 
 PDXScript also has deeper FROM and PREV chains. When the rules declare them,
 the context map exposes `fromfrom` through `fromfromfromfrom` and `prev`
-through `prevprevprevprev`. Captured lexical proxies remain separate: they
-still route PREV through nested callbacks and do not claim a field-level
-ambient declaration.
+through `prevprevprevprev`. Both declared PREV refs and captured lexical
+proxies route through verified nested callbacks; the former start from a
+field-level ambient declaration, while the latter name a captured scope.
 
 ## Where scope legality is checked
 

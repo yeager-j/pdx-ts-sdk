@@ -485,6 +485,16 @@ export const onActions = {
     scopes: { from: "system" },
   },
   /**
+   * A planet has begun the colonization process.
+   * Scope = Planet
+   */
+  onColonizationStarted: {
+    kind: "on-action-ref",
+    name: "on_colonization_started",
+    scope: "carrier",
+    scopes: { root: "planet" },
+  },
+  /**
    * A planet has been colonized.
    * Scope = Planet
    */
@@ -1439,6 +1449,17 @@ export const onActions = {
     scopes: { from: "system", fromfrom: "system" },
   },
   /**
+   * An army construction has been completed.
+   * This = Planet
+   * From = Army
+   */
+  onArmyRecruited: {
+    kind: "on-action-ref",
+    name: "on_army_recruited",
+    scope: "carrier",
+    scopes: { from: "army", root: "country" },
+  },
+  /**
    * An army has been killed in ground combat
    * This = owner
    * From = army
@@ -1491,6 +1512,16 @@ export const onActions = {
     name: "on_building_unqueued",
     scope: "carrier",
     scopes: {},
+  },
+  /**
+   * A building construction has been completed, which is an upgrade of previous building.
+   * This = Planet
+   */
+  onBuildingUpgraded: {
+    kind: "on-action-ref",
+    name: "on_building_upgraded",
+    scope: "carrier",
+    scopes: { root: "colony" },
   },
   /**
    * A building construction has demolished.
@@ -2818,6 +2849,42 @@ export const onActions = {
     scopes: { from: "planet" },
   },
   /**
+   * Fired when a subject has started converting to a specialist type
+   * This = agreement
+   * owner = overlord
+   * target = subject
+   */
+  onSpecialistSubjectConversionStarted: {
+    kind: "on-action-ref",
+    name: "on_specialist_subject_conversion_started",
+    scope: "agreement",
+    scopes: { from: "country", root: "country" },
+  },
+  /**
+   * Fired when a subject has finished converting to a specialist type
+   * This = agreement
+   * owner = overlord
+   * target = subject
+   */
+  onSpecialistSubjectConversionFinished: {
+    kind: "on-action-ref",
+    name: "on_specialist_subject_conversion_finished",
+    scope: "agreement",
+    scopes: { from: "country", root: "country" },
+  },
+  /**
+   * Fired when a subject specialist conversion has been aborted
+   * This = agreement
+   * owner = overlord
+   * target = subject
+   */
+  onSpecialistSubjectConversionAborted: {
+    kind: "on-action-ref",
+    name: "on_specialist_subject_conversion_aborted",
+    scope: "agreement",
+    scopes: { from: "country", root: "country" },
+  },
+  /**
    * Executed when a two capitals get connected through relay network
    * THIS = Country: Owner
    * FROM = Country: Other
@@ -2827,6 +2894,30 @@ export const onActions = {
     name: "on_capitals_connected",
     scope: "country",
     scopes: { from: "country" },
+  },
+  /**
+   * Fired when a change to an existing subject agreement has been accepted
+   * This = agreement
+   * owner = overlord
+   * target = subject
+   */
+  onAgreementChangeAccepted: {
+    kind: "on-action-ref",
+    name: "on_agreement_change_accepted",
+    scope: "agreement",
+    scopes: { from: "country", root: "country" },
+  },
+  onShroudwalkerDivinationVisitorsSituation: {
+    kind: "on-action-ref",
+    name: "on_shroudwalker_divination_visitors_situation",
+    scope: "situation",
+    scopes: { from: "country", root: "country" },
+  },
+  onShroudwalkerDivinationLocusSituation: {
+    kind: "on-action-ref",
+    name: "on_shroudwalker_divination_locus_situation",
+    scope: "situation",
+    scopes: { from: "country", root: "country" },
   },
   onShroudwalkerInsightSituationFinish: {
     kind: "on-action-ref",

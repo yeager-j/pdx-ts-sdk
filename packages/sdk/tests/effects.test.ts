@@ -15,17 +15,19 @@ import {
   fieldEntries,
   isEventFireKey,
   makeScope,
+  navigateScope,
   recordEffects,
   scopeRef,
   scopeValue,
   withScriptCtx,
 } from "../src/script/effects/recorder.ts";
 import type { StaticModifierHostContract } from "../src/script/effects/static-modifiers.ts";
-import type { IfChain, ScriptCtx } from "../src/script/effects/types.ts";
+import type { IfChain, ScopeRef, ScriptCtx } from "../src/script/effects/types.ts";
 import { isEffectBlockValue, mapEntries } from "../src/script/scalar.ts";
 import {
   hasCountryFlag,
   hasOwner,
+  hasPlanetFlag,
   hasStarFlag,
   isAtWar,
   isPlanetClass,
@@ -1595,6 +1597,72 @@ every_owned_planet = {
         ctx.prevprev.effects((system) => system.log("wrong definition"));
       })
     ).toThrow(/escaped the closure it was handed to/);
+  });
+
+  it("routes context PREV refs through verified nested pushes", () => {
+    const topLevel = withScriptCtx<
+      "country",
+      { readonly prev: "planet" },
+      ReturnType<typeof hasPlanetFlag>
+    >({}, (ctx) => ctx.prev.trigger(hasPlanetFlag("effects_test_top_level_prev")));
+    const entries = withScriptCtx<
+      "country",
+      { readonly root: "country"; readonly prev: "planet"; readonly prevprev: "system" },
+      PdxEntry[]
+    >({}, (ctx) =>
+      recordEffects<"country">([], (country) => {
+        ctx.prev.effects((planet) => planet.log("top"));
+        country.hiddenEffect.effects(() => {
+          ctx.prev.effects((planet) => planet.log("same"));
+        });
+        country.everyOwnedPlanet({}, (planet) => {
+          ctx.prev.effects((previousPlanet) => previousPlanet.log("pushed"));
+          ctx.prevprev.effects((system) => system.log("deeper"));
+          (navigateScope<"country">(ctx.prev, "owner") as ScopeRef<"country">).effects((owner) =>
+            owner.log("navigated")
+          );
+          planet.if(ctx.prev.trigger(hasPlanetFlag("effects_test_prev")), () => {});
+        });
+      })
+    );
+
+    expect(serialize([...topLevel.entries])).toContain("prev = {");
+    expect(serialize(entries)).toContain("prev = {\n\tlog = top");
+    expect(serialize(entries)).toContain("hidden_effect = {\n\tprev = {\n\t\tlog = same");
+    expect(serialize(entries)).toContain("prevprev = {\n\t\tlog = pushed");
+    expect(serialize(entries)).toContain("prevprevprev = {\n\t\tlog = deeper");
+    expect(serialize(entries)).toContain("prevprev.owner = {\n\t\tlog = navigated");
+    expect(serialize(entries)).toContain("limit = {\n\t\t\tprevprev = {");
+  });
+
+  it("rejects context PREV refs across replacement transitions and depth four", () => {
+    expect(() =>
+      withScriptCtx<"megastructure", { readonly prev: "planet" }>({}, (ctx) =>
+        recordEffects<"megastructure">([], (megastructure) => {
+          megastructure.createBypass({
+            owner: scopeValue("this"),
+            type: "effects_test_bypass",
+            effect: () => ctx.prev.effects((planet) => planet.log("blocked")),
+          });
+        })
+      )
+    ).toThrow(/context PREV reference crosses a replacement or unknown scope transition/);
+
+    expect(() =>
+      withScriptCtx<"country", { readonly prev: "planet" }>({}, (ctx) =>
+        recordEffects<"country">([], (country) => {
+          country.everyOwnedPlanet({}, (first) => {
+            first.owner.effects((owner) => {
+              owner.everyOwnedPlanet({}, (second) => {
+                second.owner.effects((nestedOwner) => {
+                  ctx.prev.effects((planet) => planet.log("too deep"));
+                });
+              });
+            });
+          });
+        })
+      )
+    ).toThrow(/context PREV reference is 5 scopes away/);
   });
 
   it("throws when a ctx ref is opened in another authoring call's recording", () => {

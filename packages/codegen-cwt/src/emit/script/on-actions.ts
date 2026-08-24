@@ -130,7 +130,7 @@ function lower(hook: OnActionDecl, scopes: ReadonlyMap<string, string>): Lowered
       return `unknown ROOT scope ${rawRoot}`;
     }
     if (root !== scope) {
-      return `root scope ${root} disagrees with this scope ${String(scope)}`;
+      ambient.root = root;
     }
   }
 

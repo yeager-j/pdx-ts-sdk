@@ -200,6 +200,10 @@ describe("the FROM contract on the real event API", () => {
       scopes: { from: "country", prev: "planet" },
       isTriggeredOnly: true,
     });
+    const splitRoot = events.planet(32, {
+      scopes: { root: "country" },
+      isTriggeredOnly: true,
+    });
     events.country(32, {
       isTriggeredOnly: true,
       immediate: (country, ctx) => {
@@ -212,6 +216,8 @@ describe("the FROM contract on the real event API", () => {
           planet.planetEvent({ id: chained, scopes: { from: ctx.root } });
           // @ts-expect-error — game evidence supports no explicit PREV override.
           planet.planetEvent({ id: prevBound, scopes: { from: ctx.root } });
+          // @ts-expect-error — an explicit fire cannot verify a split ROOT contract.
+          planet.planetEvent({ id: splitRoot });
         });
       },
     });

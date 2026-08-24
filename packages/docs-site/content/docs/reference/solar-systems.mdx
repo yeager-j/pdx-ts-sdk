@@ -273,11 +273,8 @@ layout phase.
 Stellaris can treat an invalid random planet class as `class = none`. Run the
 game with `-script_debug` when testing randomized classes.
 
-Two things the game does in these blocks are not authorable yet:
+One thing the game does in these blocks is not authorable yet:
 
-- The SDK has no PREV, the game's link out to an enclosing scope. A planet or
-  moon callback receives `ctx.self`, `ctx.root`, and `ctx.from` only, so it
-  cannot reach its own system or the previous system in the tree.
 - `ctx.root` in a planet or moon callback is typed as `country`. The rules
   declare that for fallen-empire initializers. In any other initializer the
   game's ROOT there is the first system in the tree, so `ctx.root` names the

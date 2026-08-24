@@ -1040,7 +1040,22 @@ describe("content-type codegen", () => {
       ...body,
       fields: body.fields.map((field) =>
         field.key.kind === "name" && field.key.name === "show"
-          ? { ...field, scope: { this: "planet", root: null, from: null, replaces: false } }
+          ? {
+              ...field,
+              scope: {
+                this: "planet",
+                root: null,
+                from: null,
+                fromfrom: null,
+                fromfromfrom: null,
+                fromfromfromfrom: null,
+                prev: null,
+                prevprev: null,
+                prevprevprev: null,
+                prevprevprevprev: null,
+                replaces: false,
+              },
+            }
           : field
       ),
     };

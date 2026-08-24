@@ -123,8 +123,8 @@ export function buildEvent<S extends ScopeName, Context extends AmbientScopeCont
   assertEventNumber(def.id);
   // One ctx for the whole event: its `immediate`, `after`, `abort_effect` and
   // every option record separately, and all of them are this one lowering.
-  const scopes = eventScopes(scope, def.scopes);
-  const bodyScopes = { ...scopes, root: scope } as { readonly root: S } & typeof scopes;
+  const scopes = eventScopes(def.scopes);
+  const bodyScopes = scopes as EventBodyContext<S, Context>;
   return withScriptCtx<S, typeof bodyScopes, DefinedEvent<S, Context>>({}, (ctx) =>
     lowerEvent<S, Context>(kind, scope, namespace, def, loc, ctx)
   );
@@ -136,7 +136,7 @@ function lowerEvent<S extends ScopeName, Context extends AmbientScopeContext>(
   namespace: string,
   def: EventDef<S, Context>,
   loc: LocSink,
-  ctx: ScriptCtx<S, { readonly root: S } & Context>
+  ctx: ScriptCtx<S, EventBodyContext<S, Context>>
 ): DefinedEvent<S, Context> {
   const id = `${namespace}.${def.id}`;
   const flags = windowFlags(def);
@@ -430,23 +430,13 @@ function lowerEvent<S extends ScopeName, Context extends AmbientScopeContext>(
     kind: "event-ref",
     scope,
     id,
-    scopes: eventScopes(scope, def.scopes),
+    scopes: eventScopes(def.scopes),
     entry: block(kind, entries),
     refs,
     warnings,
   };
 }
 
-function eventScopes<S extends ScopeName, Context extends AmbientScopeContext>(
-  scope: S,
-  scopes: Context | undefined
-): Context {
-  const declared = (scopes ?? {}) as Context;
-  if (declared.root !== undefined && declared.root !== scope) {
-    throw new Error(
-      `Event scope contract declares ROOT ${declared.root}, but this event runs in ${scope} scope`
-    );
-  }
-  const { root: _root, ...ambient } = declared;
-  return ambient as Context;
+function eventScopes<Context extends AmbientScopeContext>(scopes: Context | undefined): Context {
+  return (scopes ?? {}) as Context;
 }

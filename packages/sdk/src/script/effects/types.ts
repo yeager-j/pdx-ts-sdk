@@ -43,12 +43,13 @@ export type FireFromWitness<S extends ScopeName> = ScopeValue<S> & {
 };
 
 /**
- * A {@link ScopeValue} whose path means the same thing wherever it is written,
- * so it can also be *opened* as a block.
+ * A {@link ScopeValue} that can be *opened* as a block.
  *
- * That is the whole distinction. `from` and `event_target:x` name their scope
- * absolutely: nesting inside `every_owned_planet = { ... }` does not change
- * what either resolves to. `this` does not — inside that block it is the
+ * `from` and `event_target:x` name their scope absolutely: nesting inside
+ * `every_owned_planet = { ... }` does not change what either resolves to.
+ * A context PREV ref is different: it preserves the ambient PREV identity
+ * declared for the owning block by adding verified nested pushes to its PREV
+ * depth. `this` does not — inside that block it is the
  * planet — so `ctx.self` is a plain {@link ScopeValue}, and the one thing you
  * cannot do with it is open a block whose contents would run in a scope its
  * type does not describe. As a value it stays exactly as useful: the FROM
@@ -56,7 +57,7 @@ export type FireFromWitness<S extends ScopeName> = ScopeValue<S> & {
  */
 export interface ScopeRef<S extends ScopeName = ScopeName> extends ScopeValue<S> {
   /**
-   * Opens the ref as an effect block: `from = { <effects> }`.
+   * Opens the ref as an effect block, such as `from = { <effects> }`.
    *
    * Records into the block being recorded around the call, so a call inside a
    * loop body lands inside that loop — which is where the game would run it.
@@ -65,7 +66,7 @@ export interface ScopeRef<S extends ScopeName = ScopeName> extends ScopeValue<S>
    */
   effects(body: (scope: ScopeObjOf<S>) => void): void;
   /**
-   * Opens the ref as a condition block: `from = { <condition> }`.
+   * Opens the ref as a condition block, such as `from = { <condition> }`.
    *
    * Takes the condition as a value, like the `target(...)` combinator it sits
    * beside — a trigger is a value, so there is nothing to record and nothing
@@ -106,16 +107,6 @@ export type SameScopeEffectPath<S extends ScopeName> = EffectPathOf<S, "same">;
  */
 export interface EventTarget<S extends ScopeName = ScopeName> extends ScopeRef<S> {
   readonly name: string;
-}
-
-export interface UndeclaredFrom {
-  readonly kind: "undeclared-from";
-  readonly hint: "Nothing declares what FROM holds here; read it only where the rules name a FROM scope.";
-}
-
-export interface UndeclaredRoot {
-  readonly kind: "undeclared-root";
-  readonly hint: "Nothing declares what ROOT holds here; read it only where the rules name a ROOT scope.";
 }
 
 /**
@@ -245,7 +236,7 @@ export interface ScriptCtx<
   readonly fromfromfrom: AmbientRef<Context, "fromfromfrom">;
   /** The fourth declared FROM scope. */
   readonly fromfromfromfrom: AmbientRef<Context, "fromfromfromfrom">;
-  /** The immediate declared PREV scope. */
+  /** The immediate declared PREV scope, relative to this block's verified nesting. */
   readonly prev: AmbientRef<Context, "prev">;
   /** The second declared PREV scope. */
   readonly prevprev: AmbientRef<Context, "prevprev">;

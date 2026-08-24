@@ -57,8 +57,6 @@ export type {
   ScopeValue,
   ScriptCtx,
   StructuralEffects,
-  UndeclaredFrom,
-  UndeclaredRoot,
 } from "./script/effects/types.ts";
 export type {
   EffectPathMap,

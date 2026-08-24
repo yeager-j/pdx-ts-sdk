@@ -9,7 +9,7 @@ import { refId } from "../script/scalar.ts";
 import { isAuthoredEvent, type EventItem, type EventItemBase, type EventRef } from "./types.ts";
 import { weightedEventBlock, type WeightedEventRow } from "./weighted-events.ts";
 
-/** A generated game hook with its event scope and FROM contract. */
+/** A generated game hook with its complete ambient scope contract. */
 export interface OnActionRef<
   S extends ScopeName | null = ScopeName | null,
   Context extends AmbientScopeContext = AmbientScopeContext,
@@ -241,7 +241,7 @@ function emptyContribution(): {
 function contract(scope: ScopeName | null, scopes: AmbientScopeContext): string {
   const describedScope = scope === null ? "no scope" : `${scope} scope`;
   const entries = Object.entries(scopes);
-  return `${describedScope}${entries.length === 0 ? " with no FROM" : ` with ${entries.map(([key, value]) => `${key} ${value}`).join(", ")}`}`;
+  return `${describedScope}${entries.length === 0 ? " with no ambient scopes" : ` with ${entries.map(([key, value]) => `${key} ${value}`).join(", ")}`}`;
 }
 
 function sameScopes(left: AmbientScopeContext, right: AmbientScopeContext): boolean {

@@ -106,19 +106,19 @@ export interface ScopeContext {
   /** The nested block's `FROM` scope, or `null` when not stated. */
   readonly from: string | null;
   /** The second FROM scope, or null when not stated. */
-  readonly fromfrom?: string | null;
+  readonly fromfrom: string | null;
   /** The third FROM scope, or null when not stated. */
-  readonly fromfromfrom?: string | null;
+  readonly fromfromfrom: string | null;
   /** The fourth FROM scope, or null when not stated. */
-  readonly fromfromfromfrom?: string | null;
+  readonly fromfromfromfrom: string | null;
   /** The immediate PREV scope, or null when not stated. */
-  readonly prev?: string | null;
+  readonly prev: string | null;
   /** The second PREV scope, or null when not stated. */
-  readonly prevprev?: string | null;
+  readonly prevprev: string | null;
   /** The third PREV scope, or null when not stated. */
-  readonly prevprevprev?: string | null;
+  readonly prevprevprev: string | null;
   /** The fourth PREV scope, or null when not stated. */
-  readonly prevprevprevprev?: string | null;
+  readonly prevprevprevprev: string | null;
   /**
    * True for `replace_scope(s)`, which states the whole context — a scope it
    * leaves out is cleared, not inherited. `push_scope` states only `this`, so

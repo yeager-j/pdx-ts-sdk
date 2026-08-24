@@ -29,12 +29,15 @@ describe("on-action codegen", () => {
     expect(emission.code).toContain(
       'onModificationComplete: {\n    kind: "on-action-ref",\n    name: "on_modification_complete",\n    scope: "country",\n    scopes: {"from":"species","fromfrom":"species","prev":"planet"},'
     );
+    expect(emission.code).toContain(
+      'onColonizationStarted: {\n    kind: "on-action-ref",\n    name: "on_colonization_started",\n    scope: "carrier",\n    scopes: {"root":"planet"},'
+    );
   });
 
   it("pins the representable and intentionally rejected hook counts", () => {
-    expect(emission.emitted).toBe(363);
+    expect(emission.emitted).toBe(372);
     expect(emission.noScope).toBe(9);
-    expect(emission.skipped).toHaveLength(27);
+    expect(emission.skipped).toHaveLength(18);
   });
 
   it("reports every unrepresentable metadata class instead of guessing", () => {
@@ -45,11 +48,6 @@ describe("on-action codegen", () => {
         "unknown this scope root",
         "unknown this scope any",
         "no_scope metadata disagrees with event_type cosmic_storm",
-        "root scope planet disagrees with this scope carrier",
-        "root scope country disagrees with this scope carrier",
-        "root scope country disagrees with this scope agreement",
-        "root scope country disagrees with this scope situation",
-        "root scope colony disagrees with this scope carrier",
       ])
     );
   });

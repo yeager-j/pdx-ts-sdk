@@ -245,17 +245,17 @@ export interface EventDef<
   Context extends AmbientScopeContext,
 > extends GeneratedEventFields<S, Context> {
   /**
-   * The scope this event expects FROM to be when fired. Emits nothing — it
-   * is the compile-time contract every fire site is checked against.
+   * The ambient scopes this event expects when it runs. Emits nothing — it is
+   * the compile-time contract checked at fire sites and on-action bindings.
    */
   readonly scopes?: Context;
 }
 
-/** The execution context every event body receives: its root is the event scope. */
-export type EventBodyContext<S extends ScopeName, Context extends AmbientScopeContext> = Omit<
-  Context,
-  "root"
-> & { readonly root: S };
+/** The execution context every event body receives. ROOT defaults to the event scope. */
+export type EventBodyContext<
+  S extends ScopeName,
+  Context extends AmbientScopeContext,
+> = Context extends { readonly root: ScopeName } ? Context : Context & { readonly root: S };
 
 export type DefinedEvent<
   S extends ScopeName,
@@ -320,8 +320,9 @@ export interface WitnessedFireEventArgs<
   Kind extends string = S,
 > extends FireEventArgs<S, Context, Kind> {
   /**
-   * Proof the fired event's declared FROM is satisfied: usually `ctx.self`.
-   * Any other ref emits the game's `scopes = { from = ... }` override.
+   * Proof the fired event's declared FROM chain is satisfied: usually
+   * `ctx.self` for immediate FROM. Every deeper FROM slot is an explicit
+   * override, even when its witness serializes as `this`.
    * `NoInfer` keeps the event ref the single inference source, so a
    * wrong-scope witness fails instead of unifying.
    */
@@ -332,10 +333,10 @@ type FireScopeKey = Exclude<AmbientScopeKey, "root" | `prev${string}`>;
 
 /** Explicit scope overrides for fire effects; PREV chains are game-supplied only. */
 export type FireScopeWitnesses<Context extends AmbientScopeContext> = {
-  readonly [Key in FireScopeKey as Key extends keyof Context ? Key : never]: FireFromWitness<
-    Extract<Context[Key], ScopeName>
-  >;
+  readonly [Key in FireScopeKey as Key extends keyof Context ? Key : never]: Key extends "from"
+    ? FireFromWitness<Extract<Context[Key], ScopeName>>
+    : ScopeValue<Extract<Context[Key], ScopeName>>;
 };
 
 type ExplicitFireContext<Context extends AmbientScopeContext> =
-  Extract<keyof Context, `prev${string}`> extends never ? Context : never;
+  Extract<keyof Context, "root" | `prev${string}`> extends never ? Context : never;

@@ -61,11 +61,13 @@ import {
 
 const cannotWitnessNaturalFrom = Symbol("cannotWitnessNaturalFrom");
 const scopeLease = Symbol("scopeLease");
+const contextPrevDepth = Symbol("contextPrevDepth");
 type ScopeTransition = "same" | "push" | "replace" | "unknown";
 type ScopeIdentity = symbol;
 interface RuntimeScopeValue {
   readonly [cannotWitnessNaturalFrom]?: true;
   readonly [scopeLease]?: ScriptLease;
+  readonly [contextPrevDepth]?: number;
 }
 
 /**
@@ -105,19 +107,32 @@ export function scopeValue<S extends ScopeName>(
  * target, a bare path — is openable in any recording, which is what makes a
  * declared target reusable across definitions.
  */
-export function scopeRef<S extends ScopeName>(path: string, lease?: ScriptLease): ScopeRef<S> {
+export function scopeRef<S extends ScopeName>(
+  path: string,
+  lease?: ScriptLease,
+  declaredPrevDepth?: number
+): ScopeRef<S> {
   return {
     ...scopeValue<S>(path),
     ...(lease === undefined ? {} : { [scopeLease]: lease }),
+    ...(declaredPrevDepth === undefined ? {} : { [contextPrevDepth]: declaredPrevDepth }),
     effects(body) {
       const recording = activeRecording(path);
       assertOwnedBy(recording, lease, path);
-      recording.sink.push(block(path, recordBlock(recording, recording.refs, body, [], "push")));
+      const resolvedPath = resolveContextPrevPath(path, declaredPrevDepth, recording, lease);
+      recording.sink.push(
+        block(resolvedPath, recordBlock(recording, recording.refs, body, [], "push"))
+      );
     },
     // No lease check: a trigger is a value built with nothing recording, so it
     // reaches output only where its holder writes it.
     trigger(condition) {
-      return trigger([block(path, [...condition.entries])], [...condition.refs]);
+      const recording = RECORDINGS.at(-1);
+      const resolvedPath =
+        recording === undefined
+          ? path
+          : resolveContextPrevPath(path, declaredPrevDepth, recording, lease);
+      return trigger([block(resolvedPath, [...condition.entries])], [...condition.refs]);
     },
   };
 }
@@ -140,8 +155,41 @@ export function navigateScope<S extends ScopeName>(base: ScopeValue, key: string
   return "effects" in base && base.path !== "this"
     ? // Navigation carries the base's lease too: `owner(ctx.from)` opens a
       // block of the same authoring call `ctx.from` came from.
-      scopeRef<S>(path, (base as RuntimeScopeValue)[scopeLease])
+      scopeRef<S>(
+        path,
+        (base as RuntimeScopeValue)[scopeLease],
+        (base as RuntimeScopeValue)[contextPrevDepth]
+      )
     : scopeValue<S>(path);
+}
+
+function resolveContextPrevPath(
+  path: string,
+  declaredDepth: number | undefined,
+  recording: Recording,
+  lease: ScriptLease | undefined
+): string {
+  if (declaredDepth === undefined) {
+    return path;
+  }
+  assertOwnedBy(recording, lease, path);
+  if (recording.blockedAncestors.length > 0) {
+    throw new Error(
+      "A context PREV reference crosses a replacement or unknown scope transition. " +
+        "The game does not provide a verified PREV path across that boundary; use ROOT, FROM, " +
+        "or a saved target reference instead."
+    );
+  }
+  const depth = declaredDepth + recording.ancestors.length;
+  if (depth > 4) {
+    throw new Error(
+      `A context PREV reference is ${depth} scopes away from its declaring block. ` +
+        "Stellaris exposes only PREV through PREVPREVPREVPREV; keep the effect within four " +
+        "verified scope pushes or open an explicit saved scope reference."
+    );
+  }
+  const declaredPath = prevKey(declaredDepth);
+  return `${prevKey(depth)}${path.slice(declaredPath.length)}`;
 }
 
 /**
@@ -371,14 +419,15 @@ function assertWitnessOwnedBy(
 }
 
 /**
- * Runs one authoring call's body with the three ambient scopes.
+ * Runs one authoring call's body with the declared ambient scopes.
  *
- * The three are the fixed script paths they always are. `Root` defaults to
+ * ROOT and FROM are fixed paths. PREV paths stay relative to the declaring
+ * block, so a verified nested push increases their emitted PREV depth. `Root` defaults to
  * `Self` on {@link ScriptCtx}'s terms — an event's blocks are the top level,
  * so ROOT is the event's own scope — and a caller whose rules say otherwise
  * names it. Which of the three a given closure may *read* is the type
  * argument's business; the object handed over carries all three either way,
- * since they are the same three words in the output regardless.
+ * since they are the same named slots in the output regardless.
  *
  * The ctx lives for this call: `root` and `from` may be opened as blocks in
  * any recording started while the body runs — one event's ctx serves its
@@ -394,7 +443,14 @@ export function withScriptCtx<
   const lease: ScriptLease = Symbol("scriptCtx");
   const ctx = {
     self: scopeValue("this", options.splitRoot !== true),
-    ...Object.fromEntries(AMBIENT_SCOPE_KEYS.map((key) => [key, scopeRef(key, lease)])),
+    ...Object.fromEntries(
+      AMBIENT_SCOPE_KEYS.map((key) => [
+        key,
+        key.startsWith("prev")
+          ? scopeRef(key, lease, key === "prev" ? 1 : key.length / "prev".length)
+          : scopeRef(key, lease),
+      ])
+    ),
   } as ScriptCtx<Self, Context>;
 
   LEASES.push(lease);
@@ -1046,7 +1102,9 @@ function fireEffect(key: string) {
           return [];
         }
         const witness = args.scopes?.[slot];
-        return witness === undefined || witness.path === "this" ? [] : [kv(slot, witness.path)];
+        return witness === undefined || (slot === "from" && witness.path === "this")
+          ? []
+          : [kv(slot, witness.path)];
       });
       if (overrides.length > 0) {
         entries.push(block("scopes", overrides));
