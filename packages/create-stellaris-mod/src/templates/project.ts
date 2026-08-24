@@ -205,7 +205,7 @@ export function tsconfigJson(): string {
 }
 
 export function gitignore(): string {
-  return ["node_modules/", "out/", "*.log", ".DS_Store", ""].join("\n");
+  return ["node_modules/", "out/", "previews/", "*.log", ".DS_Store", ""].join("\n");
 }
 
 export function prettierrc(): string {

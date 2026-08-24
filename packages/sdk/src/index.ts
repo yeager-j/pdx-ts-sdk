@@ -16,6 +16,12 @@ export {
   type SolarSystemDiagnosticCode,
   type SolarSystemInspection,
 } from "./solar-system-inspect/inspect.ts";
+export { inspectSolarSystems } from "./solar-system-inspect/inspect-mod.ts";
+export {
+  writeSystemPreviews,
+  type SystemPreview,
+  type SystemPreviewReport,
+} from "./output/system-previews.ts";
 export type { ScopeName } from "./generated/scopes.ts";
 export * from "./generated/enums.ts";
 export { refId, type TypedRef } from "./script/scalar.ts";

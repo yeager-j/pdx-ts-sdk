@@ -1,7 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="-30.24 -30.24 60.48 60.48" role="img" aria-label="inspect_solar_system_initializer_overlap_showcase" style="--hair:0.1;--halo:0.22;--dash:0.39 0.29;--dot:0.1 0.2">
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="-29.16 -29.16 58.32 58.32" role="img" aria-label="inspect_solar_system_initializer_overlap_showcase" style="--hair:0.09;--halo:0.22;--dash:0.38 0.28;--dot:0.09 0.19">
 <title>inspect_solar_system_initializer_overlap_showcase</title>
-<desc>Cursor-space schematic of inspect_solar_system_initializer_overlap_showcase (class sc_g): 7 bodies, 0 belts, 17 findings. Distances and disc sizes are the documented approximation, not game rendering.</desc>
+<desc>Cursor-space schematic of inspect_solar_system_initializer_overlap_showcase (class sc_g): 7 bodies, 0 belts, 18 findings. Distances and disc sizes are the documented approximation, not game rendering.</desc>
 <style>
+  svg { cursor: grab; background: #0b0e1a; touch-action: none; }
   .bg { fill: #0b0e1a; }
   .orbit { fill: none; stroke: #2c3654; stroke-width: var(--hair); }
   .orbit-band { fill: none; stroke: #26304b; stroke-opacity: 0.55; }
@@ -9,10 +10,10 @@
   .belt { fill: none; stroke: #6b5d47; stroke-opacity: 0.35; }
   .belt-edge { fill: none; stroke: #8a7a5e; stroke-width: var(--hair); stroke-dasharray: var(--dash); }
   .line { fill: none; stroke: #3d4a6e; stroke-width: var(--hair); stroke-dasharray: var(--dash); }
-  .body-star { fill: #ffd27f; }
-  .body-planet { fill: #cfd8ff; }
-  .body-moon { fill: #9fb4c8; }
-  .body-asteroid { fill: #b0a08a; }
+  .body-star { fill: url(#inspect_solar_system_initializer_overlap_showcase-star); }
+  .body-planet { fill: url(#inspect_solar_system_initializer_overlap_showcase-planet); }
+  .body-moon { fill: url(#inspect_solar_system_initializer_overlap_showcase-moon); }
+  .body-asteroid { fill: url(#inspect_solar_system_initializer_overlap_showcase-asteroid); }
   .ghost { fill: none; stroke: #7f8cb0; stroke-width: var(--hair); stroke-dasharray: var(--dash); }
   .maybe { opacity: 0.5; }
   .unresolved { fill: none; stroke: #7f8cb0; stroke-width: var(--hair); stroke-dasharray: var(--dot); }
@@ -20,8 +21,12 @@
   .halo-possible { fill: none; stroke: #ffb454; stroke-width: var(--halo); }
   text { fill: #aab4d4; font-family: ui-sans-serif, system-ui, sans-serif; }
   .leader { stroke: #4a5578; stroke-width: var(--hair); }
+  .hover-target { fill: transparent; }
+  .label .label-body { opacity: 0; transition: opacity 0.15s; }
+  .label:hover .label-body { opacity: 1; }
 </style>
-<rect class="bg" x="-30.24" y="-30.24" width="60.48" height="60.48"/>
+<defs><radialGradient id="inspect_solar_system_initializer_overlap_showcase-star" cx="35%" cy="35%" r="75%"><stop offset="0%" stop-color="#fff3d6"/><stop offset="55%" stop-color="#ffd27f"/><stop offset="100%" stop-color="#d9a54e"/></radialGradient><radialGradient id="inspect_solar_system_initializer_overlap_showcase-planet" cx="35%" cy="35%" r="75%"><stop offset="0%" stop-color="#f2f5ff"/><stop offset="55%" stop-color="#cfd8ff"/><stop offset="100%" stop-color="#8d9bd6"/></radialGradient><radialGradient id="inspect_solar_system_initializer_overlap_showcase-moon" cx="35%" cy="35%" r="75%"><stop offset="0%" stop-color="#d3e0ea"/><stop offset="55%" stop-color="#9fb4c8"/><stop offset="100%" stop-color="#64798d"/></radialGradient><radialGradient id="inspect_solar_system_initializer_overlap_showcase-asteroid" cx="35%" cy="35%" r="75%"><stop offset="0%" stop-color="#d8cbb6"/><stop offset="55%" stop-color="#b0a08a"/><stop offset="100%" stop-color="#776852"/></radialGradient></defs>
+<rect class="bg" x="-29.16" y="-29.16" width="58.32" height="58.32"/>
 <circle class="orbit" cx="0" cy="0" r="12"/>
 <circle class="orbit" cx="12" cy="0" r="4"/>
 <circle class="orbit" cx="0" cy="0" r="15"/>
@@ -31,35 +36,72 @@
 <circle class="orbit-uncertain" cx="0" cy="0" r="15"/>
 <circle class="orbit-band" cx="0" cy="0" r="15" stroke-width="18"/>
 <circle class="orbit-uncertain" cx="0" cy="0" r="15"/>
-<circle class="body-star" cx="0" cy="0" r="10"/>
-<circle class="halo-definite" cx="0" cy="0" r="10.45"/>
-<circle class="body-planet" cx="12" cy="0" r="6.25"/>
-<circle class="halo-definite" cx="12" cy="0" r="6.7"/>
-<circle class="body-moon" cx="16" cy="0" r="1"/>
-<circle class="halo-possible" cx="16" cy="0" r="1.45"/>
-<circle class="body-planet" cx="14.94" cy="1.31" r="6.25"/>
-<circle class="halo-definite" cx="14.94" cy="1.31" r="6.7"/>
-<g><circle class="ghost" cx="14.94" cy="1.31" r="4"/><circle class="body-planet" cx="14.94" cy="1.31" r="1.8"/></g>
-<circle class="halo-definite" cx="14.94" cy="1.31" r="4.45"/>
-<g><circle class="ghost" cx="14.94" cy="1.31" r="4"/><circle class="body-planet" cx="14.94" cy="1.31" r="1.8"/></g>
-<circle class="halo-definite" cx="14.94" cy="1.31" r="4.45"/>
-<g><circle class="ghost" cx="14.94" cy="1.31" r="4"/><circle class="body-planet" cx="14.94" cy="1.31" r="1.8"/></g>
-<circle class="halo-definite" cx="14.94" cy="1.31" r="4.45"/>
-<line class="leader" x1="7.07" y1="-7.07" x2="10.18" y2="-10.18"/>
-<text x="10.4" y="-10.18" font-size="0.73">star · 40</text>
-<line class="leader" x1="16.42" y1="-4.42" x2="18.43" y2="-6.43"/>
-<text x="18.65" y="-6.43" font-size="0.73">pc_continental · 25</text>
-<line class="leader" x1="16.71" y1="-0.71" x2="17.18" y2="-1.18"/>
-<text x="17.4" y="-1.18" font-size="0.73">pc_barren · 4</text>
-<line class="leader" x1="19.36" y1="-3.11" x2="21.37" y2="-5.12"/>
-<text x="21.59" y="-5.12" font-size="0.73">pc_barren · 25</text>
-<line class="leader" x1="17.77" y1="-1.52" x2="19.12" y2="-2.87"/>
-<text x="19.34" y="-2.87" font-size="0.73">pc_desert · 16 ×3</text>
-<g font-size="0.73">
-<g transform="translate(0 -28.84)"><circle class="body-planet" cx="-29.4" cy="0" r="0.34"/><text x="-28.56" y="0.25">fixed body</text></g>
-<g transform="translate(0 -27.75)"><circle class="ghost" cx="-29.4" cy="0" r="0.34"/><text x="-28.56" y="0.25">range or random position</text></g>
-<g transform="translate(0 -26.66)"><circle class="unresolved" cx="-29.4" cy="0" r="0.34"/><text x="-28.56" y="0.25">unresolvable position</text></g>
-<g transform="translate(0 -25.56)"><circle class="halo-definite" cx="-29.4" cy="0" r="0.34"/><text x="-28.56" y="0.25">definite overlap risk</text></g>
-<g transform="translate(0 -24.47)"><circle class="halo-possible" cx="-29.4" cy="0" r="0.34"/><text x="-28.56" y="0.25">possible overlap risk</text></g>
+<circle class="body-star" cx="0" cy="0" r="18.18"/>
+<circle class="halo-definite" cx="0" cy="0" r="18.61"/>
+<circle class="body-planet" cx="12" cy="0" r="4.69"/>
+<circle class="halo-definite" cx="12" cy="0" r="5.12"/>
+<circle class="body-moon" cx="16" cy="0" r="0.52"/>
+<circle class="halo-possible" cx="16" cy="0" r="0.96"/>
+<circle class="body-planet" cx="14.94" cy="-1.31" r="4.69"/>
+<circle class="halo-definite" cx="14.94" cy="-1.31" r="5.12"/>
+<g><circle class="ghost" cx="14.94" cy="-1.31" r="3"/><circle class="body-planet" cx="14.94" cy="-1.31" r="1.35"/></g>
+<circle class="halo-definite" cx="14.94" cy="-1.31" r="3.43"/>
+<g><circle class="ghost" cx="14.94" cy="-1.31" r="3"/><circle class="body-planet" cx="14.94" cy="-1.31" r="1.35"/></g>
+<circle class="halo-definite" cx="14.94" cy="-1.31" r="3.43"/>
+<g><circle class="ghost" cx="14.94" cy="-1.31" r="3"/><circle class="body-planet" cx="14.94" cy="-1.31" r="1.35"/></g>
+<circle class="halo-definite" cx="14.94" cy="-1.31" r="3.43"/>
+<g class="label"><circle class="hover-target" cx="0" cy="0" r="18.4"/><g class="label-body"><line class="leader" x1="12.86" y1="-12.86" x2="18.35" y2="-18.35"/><text x="18.57" y="-18.35" font-size="0.7">star · 40</text></g></g>
+<g class="label"><circle class="hover-target" cx="12" cy="0" r="4.9"/><g class="label-body"><line class="leader" x1="15.31" y1="-3.31" x2="16.86" y2="-4.86"/><text x="17.07" y="-4.86" font-size="0.7">pc_continental · 25</text></g></g>
+<g class="label"><circle class="hover-target" cx="16" cy="0" r="0.74"/><g class="label-body"><line class="leader" x1="16.37" y1="-0.37" x2="16.7" y2="-0.7"/><text x="16.91" y="-0.7" font-size="0.7">pc_barren · 4</text></g></g>
+<g class="label"><circle class="hover-target" cx="14.94" cy="-1.31" r="4.9"/><g class="label-body"><line class="leader" x1="18.26" y1="-4.62" x2="19.8" y2="-6.17"/><text x="20.01" y="-6.17" font-size="0.7">pc_barren · 25</text></g></g>
+<g class="label"><circle class="hover-target" cx="14.94" cy="-1.31" r="3.22"/><g class="label-body"><line class="leader" x1="17.06" y1="-3.43" x2="18.12" y2="-4.48"/><text x="18.33" y="-4.48" font-size="0.7">pc_desert · 16 ×3</text></g></g>
+<g font-size="0.7">
+<g transform="translate(0 -27.81)"><circle class="body-planet" cx="-28.35" cy="0" r="0.32"/><text x="-27.54" y="0.25">fixed body</text></g>
+<g transform="translate(0 -26.76)"><circle class="ghost" cx="-28.35" cy="0" r="0.32"/><text x="-27.54" y="0.25">range or random position</text></g>
+<g transform="translate(0 -25.7)"><circle class="unresolved" cx="-28.35" cy="0" r="0.32"/><text x="-27.54" y="0.25">unresolvable position</text></g>
+<g transform="translate(0 -24.65)"><circle class="halo-definite" cx="-28.35" cy="0" r="0.32"/><text x="-27.54" y="0.25">definite overlap risk</text></g>
+<g transform="translate(0 -23.6)"><circle class="halo-possible" cx="-28.35" cy="0" r="0.32"/><text x="-27.54" y="0.25">possible overlap risk</text></g>
 </g>
+<script><![CDATA[
+(function () {
+  var svg = document.documentElement;
+  if (!svg || svg.tagName !== "svg") return;
+  var vb = svg.viewBox.baseVal;
+  function toSvg(event) {
+    return new DOMPoint(event.clientX, event.clientY).matrixTransform(svg.getScreenCTM().inverse());
+  }
+  svg.addEventListener("wheel", function (event) {
+    if (event.deltaY === 0) return;
+    event.preventDefault();
+    var factor = event.deltaY < 0 ? 0.925 : 1 / 0.925;
+    var pointer = toSvg(event);
+    vb.x = pointer.x - (pointer.x - vb.x) * factor;
+    vb.y = pointer.y - (pointer.y - vb.y) * factor;
+    vb.width *= factor;
+    vb.height *= factor;
+  }, { passive: false });
+  var anchor = null;
+  svg.addEventListener("pointerdown", function (event) {
+    anchor = toSvg(event);
+    svg.setPointerCapture(event.pointerId);
+  });
+  svg.addEventListener("pointermove", function (event) {
+    if (anchor === null) return;
+    var pointer = toSvg(event);
+    vb.x -= pointer.x - anchor.x;
+    vb.y -= pointer.y - anchor.y;
+  });
+  svg.addEventListener("pointerup", function (event) {
+    anchor = null;
+    svg.releasePointerCapture(event.pointerId);
+  });
+  svg.addEventListener("dblclick", function () {
+    var reset = [-29.16, -29.16, 58.32, 58.32];
+    vb.x = reset[0];
+    vb.y = reset[1];
+    vb.width = reset[2];
+    vb.height = reset[3];
+  });
+})();
+]]></script>
 </svg>

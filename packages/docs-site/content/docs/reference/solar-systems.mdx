@@ -179,18 +179,25 @@ idioms and modeling limits. `certainty` speaks about authored ranges:
   scripted-variable `orbitDistance` such as `"@belt_radius"`. The inspector
   reports these instead of guessing.
 
-The preview auto-fits the system, draws orbit paths, asteroid-belt annuli,
-and body labels, and renders uncertainty distinctly: ranged positions become
-translucent bands, random angles become dashed rings with a ghost marker, and
-unresolvable positions become a dotted `?` marker. Bodies named in overlap
-findings get a red (definite) or amber (possible) halo. Open the written
-`.svg` file in a browser.
+The preview auto-fits the system, draws orbit paths and asteroid-belt
+annuli, shades bodies as lit spheres, and renders uncertainty
+distinctly: ranged positions become translucent bands, random angles become
+dashed rings with a ghost marker, and unresolvable positions become a dotted
+`?` marker. Bodies named in overlap findings get a red (definite) or amber
+(possible) halo. Open the written `.svg` file in a browser: scroll to zoom
+about the pointer, drag to pan, double-click to reset the view, and hover a
+body to see its name, class, and size. Labels are hover-only, so a static
+embed of the file shows the geometry without them. The
+interaction comes from an inline script in the file itself, so the document
+stays standalone; embedded as an image it is a static picture.
 
 <Callout type="warn" title="The preview is a schematic of cursor space">
   The game separates bodies with size-based spacing that has no author-facing formula, and it
   renders sprites from entity assets, not from `size`. The preview draws each body as a disc with
-  radius `size` times a fixed calibration constant, and assumes a per-kind radius when the size is
-  missing or the class is random. Overlap findings are therefore visual-overlap risks, not exact
+  radius `size` times a calibration constant, scaled by the class's `entity_scale` from the game's
+  planet-class files, and assumes a per-kind radius when the size is missing or the class is
+  random. Classes with `fixed_entity_scale` render at one size whatever `size` says, so their
+  discs stay assumptions. Overlap findings are therefore visual-overlap risks, not exact
   sprite collisions. Exact stacking at one cursor point is the game's own idiom (vanilla fans
   asteroids this way) and reports as info, never as an overlap.
 </Callout>
@@ -201,6 +208,31 @@ lines, and absolute-from-center radii for asteroid belts. Every shipped
 vanilla initializer inspects without a definite overlap finding; that
 calibration gate runs against the installed game in
 `solar-system-inspect-vanilla.test.ts`.
+
+### Previews for the whole mod, with zero setup
+
+Projects scaffolded by `create-stellaris-mod` get previews on every build:
+the build script calls `writeSystemPreviews`, which writes
+`previews/<id>.svg` for each solar-system initializer plus a
+`previews/index.html` gallery, and prints the layout findings beside
+`mod.warnings` as advisory `layout` lines. Open the gallery in a browser and
+click a card for the interactive preview.
+
+An existing project adds one call to its build script:
+
+```ts
+import { render, write, writeSystemPreviews } from "@pdx-ts/sdk";
+
+const mod = await buildTheMod();
+await write(outDir, render(mod));
+const report = await writeSystemPreviews(new URL("../previews/", import.meta.url), mod);
+```
+
+The pure half is `inspectSolarSystems(mod)`, which returns every system's
+inspection by id; use it directly to apply your own policy — for example,
+failing your build on definite-certainty findings is three lines in your own
+script. Keep `previews/` out of the emitted mod directory and out of version
+control; the SVGs regenerate on every build.
 
 ## Only the top-level initializer has an id
 

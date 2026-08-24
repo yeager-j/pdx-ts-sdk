@@ -15,6 +15,14 @@ import type { SolarSystemInitializerDef } from "../generated/solar-system-initia
 import { refId } from "../script/scalar.ts";
 import type { ScriptValue } from "../script/trigger-core.ts";
 import {
+  classScaleFactor,
+  FIXED_SCALE_CLASSES,
+  MOON_RENDER_SCALE,
+  STAR_CLASSES,
+  starEntryScaleFactor,
+  SYSTEM_VIEW_PLANET_SCALE,
+} from "./class-scales.ts";
+import {
   absInterval,
   addSpans,
   angleRange,
@@ -157,11 +165,24 @@ interface Walk {
   notes: ResolverNote[];
   seq: number;
   nextListId: number;
+  /** The system's star class, for resolving `class: "star"` entries. */
+  starClass: string;
+  /** How many `class: "star"` entries have been seen, in document order. */
+  starEntries: number;
 }
 
 /** Resolves the full geometry model of one initializer definition. */
 export function resolveSystem(def: SolarSystemInitializerDef): ResolvedSystem {
-  const walk: Walk = { bodies: [], belts: [], orbitalLines: [], notes: [], seq: 0, nextListId: 0 };
+  const walk: Walk = {
+    bodies: [],
+    belts: [],
+    orbitalLines: [],
+    notes: [],
+    seq: 0,
+    nextListId: 0,
+    starClass: refId(def.class),
+    starEntries: 0,
+  };
 
   for (const [index, belt] of (def.asteroidBelt ?? []).entries()) {
     const path = `asteroidBelt[${index}]`;
@@ -439,15 +460,17 @@ function bearingOf(body: ResolvedBody): number | undefined {
 }
 
 function polar(origin: Point, radius: number, deg: number): Point {
+  // Bearings increase counterclockwise on screen (verified against a live
+  // overlay of a trinary system), so the y-down SVG frame negates the sine.
   const rad = (deg * Math.PI) / 180;
-  return { x: origin.x + radius * Math.cos(rad), y: origin.y + radius * Math.sin(rad) };
+  return { x: origin.x + radius * Math.cos(rad), y: origin.y - radius * Math.sin(rad) };
 }
 
 function bodyKind(className: string | undefined, isMoonList: boolean): BodyKind {
   if (className === "none") {
     return "cursor";
   }
-  if (className === "star") {
+  if (className === "star" || (className !== undefined && STAR_CLASSES.has(className))) {
     return "star";
   }
   if (className !== undefined && className.includes("asteroid")) {
@@ -661,16 +684,36 @@ function resolveVisual(
     }
   }
 
+  // Star entities keep their size in the system view; everything else is
+  // rescaled per zoom step, pinned here at the zoomed-out step, and moons
+  // carry the extra MOON_SCALE factor. A `class: "star"` entry resolves
+  // through the system's star class, one key per star in document order.
+  const zoom = kind === "star" ? 1 : SYSTEM_VIEW_PLANET_SCALE;
+  const moonScale = kind === "moon" ? MOON_RENDER_SCALE : 1;
+  const classFactor =
+    className === "star"
+      ? starEntryScaleFactor(walk.starClass, walk.starEntries++)
+      : classScaleFactor(className);
+  const factor = classFactor * zoom * moonScale;
   if (sizeInterval === undefined) {
-    return { radius: fallback, assumed: true, sizeLabel };
+    return {
+      radius: { min: fallback.min * factor, max: fallback.max * factor },
+      assumed: true,
+      sizeLabel,
+    };
   }
   const radius = {
-    min: sizeInterval.min * SIZE_TO_VISUAL_RADIUS,
-    max: sizeInterval.max * SIZE_TO_VISUAL_RADIUS,
+    min: sizeInterval.min * SIZE_TO_VISUAL_RADIUS * factor,
+    max: sizeInterval.max * SIZE_TO_VISUAL_RADIUS * factor,
   };
   const randomClass =
     className === undefined || RANDOM_CLASSES.has(className) || className.startsWith("rl_");
-  const assumed = entry.entity !== undefined || randomClass;
+  // A fixed-scale class renders at one size whatever `size` says, so its
+  // disc stays an assumption.
+  const assumed =
+    entry.entity !== undefined ||
+    randomClass ||
+    (className !== undefined && FIXED_SCALE_CLASSES.has(className));
   return { radius, assumed, sizeLabel };
 }
 

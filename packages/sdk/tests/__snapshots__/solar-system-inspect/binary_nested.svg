@@ -1,7 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="-275.46 -275.46 550.92 550.92" role="img" aria-label="inspect_solar_system_initializer_binary_nested" style="--hair:0.89;--halo:2.04;--dash:3.57 2.68;--dot:0.89 1.79">
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="-275.22 -275.22 550.44 550.44" role="img" aria-label="inspect_solar_system_initializer_binary_nested" style="--hair:0.89;--halo:2.04;--dash:3.57 2.68;--dot:0.89 1.78">
 <title>inspect_solar_system_initializer_binary_nested</title>
 <desc>Cursor-space schematic of inspect_solar_system_initializer_binary_nested (class sc_binary_1): 6 bodies, 0 belts, 0 findings. Distances and disc sizes are the documented approximation, not game rendering.</desc>
 <style>
+  svg { cursor: grab; background: #0b0e1a; touch-action: none; }
   .bg { fill: #0b0e1a; }
   .orbit { fill: none; stroke: #2c3654; stroke-width: var(--hair); }
   .orbit-band { fill: none; stroke: #26304b; stroke-opacity: 0.55; }
@@ -9,10 +10,10 @@
   .belt { fill: none; stroke: #6b5d47; stroke-opacity: 0.35; }
   .belt-edge { fill: none; stroke: #8a7a5e; stroke-width: var(--hair); stroke-dasharray: var(--dash); }
   .line { fill: none; stroke: #3d4a6e; stroke-width: var(--hair); stroke-dasharray: var(--dash); }
-  .body-star { fill: #ffd27f; }
-  .body-planet { fill: #cfd8ff; }
-  .body-moon { fill: #9fb4c8; }
-  .body-asteroid { fill: #b0a08a; }
+  .body-star { fill: url(#inspect_solar_system_initializer_binary_nested-star); }
+  .body-planet { fill: url(#inspect_solar_system_initializer_binary_nested-planet); }
+  .body-moon { fill: url(#inspect_solar_system_initializer_binary_nested-moon); }
+  .body-asteroid { fill: url(#inspect_solar_system_initializer_binary_nested-asteroid); }
   .ghost { fill: none; stroke: #7f8cb0; stroke-width: var(--hair); stroke-dasharray: var(--dash); }
   .maybe { opacity: 0.5; }
   .unresolved { fill: none; stroke: #7f8cb0; stroke-width: var(--hair); stroke-dasharray: var(--dot); }
@@ -20,36 +21,76 @@
   .halo-possible { fill: none; stroke: #ffb454; stroke-width: var(--halo); }
   text { fill: #aab4d4; font-family: ui-sans-serif, system-ui, sans-serif; }
   .leader { stroke: #4a5578; stroke-width: var(--hair); }
+  .hover-target { fill: transparent; }
+  .label .label-body { opacity: 0; transition: opacity 0.15s; }
+  .label:hover .label-body { opacity: 1; }
 </style>
-<rect class="bg" x="-275.46" y="-275.46" width="550.92" height="550.92"/>
+<defs><radialGradient id="inspect_solar_system_initializer_binary_nested-star" cx="35%" cy="35%" r="75%"><stop offset="0%" stop-color="#fff3d6"/><stop offset="55%" stop-color="#ffd27f"/><stop offset="100%" stop-color="#d9a54e"/></radialGradient><radialGradient id="inspect_solar_system_initializer_binary_nested-planet" cx="35%" cy="35%" r="75%"><stop offset="0%" stop-color="#f2f5ff"/><stop offset="55%" stop-color="#cfd8ff"/><stop offset="100%" stop-color="#8d9bd6"/></radialGradient><radialGradient id="inspect_solar_system_initializer_binary_nested-moon" cx="35%" cy="35%" r="75%"><stop offset="0%" stop-color="#d3e0ea"/><stop offset="55%" stop-color="#9fb4c8"/><stop offset="100%" stop-color="#64798d"/></radialGradient><radialGradient id="inspect_solar_system_initializer_binary_nested-asteroid" cx="35%" cy="35%" r="75%"><stop offset="0%" stop-color="#d8cbb6"/><stop offset="55%" stop-color="#b0a08a"/><stop offset="100%" stop-color="#776852"/></radialGradient></defs>
+<rect class="bg" x="-275.22" y="-275.22" width="550.44" height="550.44"/>
 <circle class="orbit" cx="0" cy="0" r="220"/>
-<circle class="orbit" cx="168.53" cy="141.41" r="45"/>
-<circle class="orbit" cx="191.03" cy="102.44" r="9"/>
-<circle class="orbit" cx="199.89" cy="104" r="3"/>
+<circle class="orbit" cx="168.53" cy="-141.41" r="45"/>
+<circle class="orbit" cx="191.03" cy="-102.44" r="9"/>
+<circle class="orbit" cx="199.89" cy="-104" r="3"/>
 <circle class="orbit" cx="0" cy="0" r="120"/>
-<circle class="body-star" cx="0" cy="0" r="7.5"/>
-<circle class="body-star" cx="168.53" cy="141.41" r="5.5"/>
-<circle class="body-planet" cx="191.03" cy="102.44" r="4"/>
-<circle class="body-moon" cx="199.89" cy="104" r="2.04"/>
-<circle class="body-asteroid" cx="202.89" cy="104" r="2.04"/>
-<circle class="body-planet" cx="-60" cy="-103.92" r="3.5"/>
-<line class="leader" x1="5.3" y1="-5.3" x2="9.13" y2="-9.13"/>
-<text x="11.12" y="-9.13" font-size="6.63">Primary · 30</text>
-<line class="leader" x1="172.42" y1="137.52" x2="175.66" y2="134.28"/>
-<text x="177.65" y="134.28" font-size="6.63">Companion · 22</text>
-<line class="leader" x1="193.86" y1="99.61" x2="196.66" y2="96.81"/>
-<text x="198.65" y="96.81" font-size="6.63">pc_tundra · 16</text>
-<line class="leader" x1="200.43" y1="105.97" x2="203.57" y2="117.57"/>
-<text x="205.56" y="117.57" font-size="6.63">pc_barren · 3</text>
-<line class="leader" x1="203.13" y1="106.03" x2="206.57" y2="134.82"/>
-<text x="208.56" y="134.82" font-size="6.63">pc_asteroid · 1</text>
-<line class="leader" x1="-57.53" y1="-106.4" x2="-54.87" y2="-109.06"/>
-<text x="-52.88" y="-109.06" font-size="6.63">pc_frozen · 14</text>
+<circle class="body-star" cx="0" cy="0" r="13.64"/>
+<circle class="body-star" cx="168.53" cy="-141.41" r="10"/>
+<circle class="body-planet" cx="191.03" cy="-102.44" r="3"/>
+<circle class="body-moon" cx="199.89" cy="-104" r="0.39"/>
+<circle class="body-asteroid" cx="202.89" cy="-104" r="0.03"/>
+<circle class="body-planet" cx="-60" cy="103.92" r="2.63"/>
+<g class="label"><circle class="hover-target" cx="0" cy="0" r="15.68"/><g class="label-body"><line class="leader" x1="9.64" y1="-9.64" x2="15.27" y2="-15.27"/><text x="17.25" y="-15.27" font-size="6.63">Primary · 30</text></g></g>
+<g class="label"><circle class="hover-target" cx="168.53" cy="-141.41" r="12.04"/><g class="label-body"><line class="leader" x1="175.6" y1="-148.48" x2="180.16" y2="-153.04"/><text x="182.15" y="-153.04" font-size="6.63">Companion · 22</text></g></g>
+<g class="label"><circle class="hover-target" cx="191.03" cy="-102.44" r="5.04"/><g class="label-body"><line class="leader" x1="193.15" y1="-104.56" x2="195.66" y2="-107.07"/><text x="197.65" y="-107.07" font-size="6.63">pc_tundra · 16</text></g></g>
+<g class="label"><circle class="hover-target" cx="199.89" cy="-104" r="4.08"/><g class="label-body"><line class="leader" x1="200.17" y1="-104.28" x2="203.56" y2="-107.67"/><text x="205.55" y="-107.67" font-size="6.63">pc_barren · 3</text></g></g>
+<g class="label"><circle class="hover-target" cx="202.89" cy="-104" r="4.08"/><g class="label-body"><line class="leader" x1="202.91" y1="-104.02" x2="206.56" y2="-107.67"/><text x="208.55" y="-107.67" font-size="6.63">pc_asteroid · 1</text></g></g>
+<g class="label"><circle class="hover-target" cx="-60" cy="103.92" r="4.66"/><g class="label-body"><line class="leader" x1="-58.14" y1="102.07" x2="-55.74" y2="99.67"/><text x="-53.76" y="99.67" font-size="6.63">pc_frozen · 14</text></g></g>
 <g font-size="6.63">
-<g transform="translate(0 -262.71)"><circle class="body-planet" cx="-267.81" cy="0" r="3.06"/><text x="-260.16" y="2.32">fixed body</text></g>
-<g transform="translate(0 -252.76)"><circle class="ghost" cx="-267.81" cy="0" r="3.06"/><text x="-260.16" y="2.32">range or random position</text></g>
-<g transform="translate(0 -242.81)"><circle class="unresolved" cx="-267.81" cy="0" r="3.06"/><text x="-260.16" y="2.32">unresolvable position</text></g>
-<g transform="translate(0 -232.87)"><circle class="halo-definite" cx="-267.81" cy="0" r="3.06"/><text x="-260.16" y="2.32">definite overlap risk</text></g>
-<g transform="translate(0 -222.92)"><circle class="halo-possible" cx="-267.81" cy="0" r="3.06"/><text x="-260.16" y="2.32">possible overlap risk</text></g>
+<g transform="translate(0 -262.48)"><circle class="body-planet" cx="-267.57" cy="0" r="3.06"/><text x="-259.93" y="2.32">fixed body</text></g>
+<g transform="translate(0 -252.54)"><circle class="ghost" cx="-267.57" cy="0" r="3.06"/><text x="-259.93" y="2.32">range or random position</text></g>
+<g transform="translate(0 -242.6)"><circle class="unresolved" cx="-267.57" cy="0" r="3.06"/><text x="-259.93" y="2.32">unresolvable position</text></g>
+<g transform="translate(0 -232.66)"><circle class="halo-definite" cx="-267.57" cy="0" r="3.06"/><text x="-259.93" y="2.32">definite overlap risk</text></g>
+<g transform="translate(0 -222.72)"><circle class="halo-possible" cx="-267.57" cy="0" r="3.06"/><text x="-259.93" y="2.32">possible overlap risk</text></g>
 </g>
+<script><![CDATA[
+(function () {
+  var svg = document.documentElement;
+  if (!svg || svg.tagName !== "svg") return;
+  var vb = svg.viewBox.baseVal;
+  function toSvg(event) {
+    return new DOMPoint(event.clientX, event.clientY).matrixTransform(svg.getScreenCTM().inverse());
+  }
+  svg.addEventListener("wheel", function (event) {
+    if (event.deltaY === 0) return;
+    event.preventDefault();
+    var factor = event.deltaY < 0 ? 0.925 : 1 / 0.925;
+    var pointer = toSvg(event);
+    vb.x = pointer.x - (pointer.x - vb.x) * factor;
+    vb.y = pointer.y - (pointer.y - vb.y) * factor;
+    vb.width *= factor;
+    vb.height *= factor;
+  }, { passive: false });
+  var anchor = null;
+  svg.addEventListener("pointerdown", function (event) {
+    anchor = toSvg(event);
+    svg.setPointerCapture(event.pointerId);
+  });
+  svg.addEventListener("pointermove", function (event) {
+    if (anchor === null) return;
+    var pointer = toSvg(event);
+    vb.x -= pointer.x - anchor.x;
+    vb.y -= pointer.y - anchor.y;
+  });
+  svg.addEventListener("pointerup", function (event) {
+    anchor = null;
+    svg.releasePointerCapture(event.pointerId);
+  });
+  svg.addEventListener("dblclick", function () {
+    var reset = [-275.22, -275.22, 550.44, 550.44];
+    vb.x = reset[0];
+    vb.y = reset[1];
+    vb.width = reset[2];
+    vb.height = reset[3];
+  });
+})();
+]]></script>
 </svg>

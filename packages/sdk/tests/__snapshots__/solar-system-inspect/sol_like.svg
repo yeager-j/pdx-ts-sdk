@@ -1,7 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="-138.24 -138.24 276.48 276.48" role="img" aria-label="inspect_solar_system_initializer_sol_like" style="--hair:0.45;--halo:1.02;--dash:1.79 1.34;--dot:0.45 0.9">
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="-137.85 -137.85 275.69 275.69" role="img" aria-label="inspect_solar_system_initializer_sol_like" style="--hair:0.45;--halo:1.02;--dash:1.79 1.34;--dot:0.45 0.89">
 <title>inspect_solar_system_initializer_sol_like</title>
 <desc>Cursor-space schematic of inspect_solar_system_initializer_sol_like (class sc_g): 5 bodies, 0 belts, 0 findings. Distances and disc sizes are the documented approximation, not game rendering.</desc>
 <style>
+  svg { cursor: grab; background: #0b0e1a; touch-action: none; }
   .bg { fill: #0b0e1a; }
   .orbit { fill: none; stroke: #2c3654; stroke-width: var(--hair); }
   .orbit-band { fill: none; stroke: #26304b; stroke-opacity: 0.55; }
@@ -9,10 +10,10 @@
   .belt { fill: none; stroke: #6b5d47; stroke-opacity: 0.35; }
   .belt-edge { fill: none; stroke: #8a7a5e; stroke-width: var(--hair); stroke-dasharray: var(--dash); }
   .line { fill: none; stroke: #3d4a6e; stroke-width: var(--hair); stroke-dasharray: var(--dash); }
-  .body-star { fill: #ffd27f; }
-  .body-planet { fill: #cfd8ff; }
-  .body-moon { fill: #9fb4c8; }
-  .body-asteroid { fill: #b0a08a; }
+  .body-star { fill: url(#inspect_solar_system_initializer_sol_like-star); }
+  .body-planet { fill: url(#inspect_solar_system_initializer_sol_like-planet); }
+  .body-moon { fill: url(#inspect_solar_system_initializer_sol_like-moon); }
+  .body-asteroid { fill: url(#inspect_solar_system_initializer_sol_like-asteroid); }
   .ghost { fill: none; stroke: #7f8cb0; stroke-width: var(--hair); stroke-dasharray: var(--dash); }
   .maybe { opacity: 0.5; }
   .unresolved { fill: none; stroke: #7f8cb0; stroke-width: var(--hair); stroke-dasharray: var(--dot); }
@@ -20,32 +21,73 @@
   .halo-possible { fill: none; stroke: #ffb454; stroke-width: var(--halo); }
   text { fill: #aab4d4; font-family: ui-sans-serif, system-ui, sans-serif; }
   .leader { stroke: #4a5578; stroke-width: var(--hair); }
+  .hover-target { fill: transparent; }
+  .label .label-body { opacity: 0; transition: opacity 0.15s; }
+  .label:hover .label-body { opacity: 1; }
 </style>
-<rect class="bg" x="-138.24" y="-138.24" width="276.48" height="276.48"/>
+<defs><radialGradient id="inspect_solar_system_initializer_sol_like-star" cx="35%" cy="35%" r="75%"><stop offset="0%" stop-color="#fff3d6"/><stop offset="55%" stop-color="#ffd27f"/><stop offset="100%" stop-color="#d9a54e"/></radialGradient><radialGradient id="inspect_solar_system_initializer_sol_like-planet" cx="35%" cy="35%" r="75%"><stop offset="0%" stop-color="#f2f5ff"/><stop offset="55%" stop-color="#cfd8ff"/><stop offset="100%" stop-color="#8d9bd6"/></radialGradient><radialGradient id="inspect_solar_system_initializer_sol_like-moon" cx="35%" cy="35%" r="75%"><stop offset="0%" stop-color="#d3e0ea"/><stop offset="55%" stop-color="#9fb4c8"/><stop offset="100%" stop-color="#64798d"/></radialGradient><radialGradient id="inspect_solar_system_initializer_sol_like-asteroid" cx="35%" cy="35%" r="75%"><stop offset="0%" stop-color="#d8cbb6"/><stop offset="55%" stop-color="#b0a08a"/><stop offset="100%" stop-color="#776852"/></radialGradient></defs>
+<rect class="bg" x="-137.85" y="-137.85" width="275.69" height="275.69"/>
 <circle class="orbit" cx="0" cy="0" r="40"/>
 <circle class="orbit" cx="0" cy="0" r="65"/>
-<circle class="orbit" cx="-41.78" cy="-49.79" r="10"/>
+<circle class="orbit" cx="-41.78" cy="49.79" r="10"/>
 <circle class="orbit" cx="0" cy="0" r="120"/>
-<circle class="body-star" cx="0" cy="0" r="7.5"/>
-<circle class="body-planet" cx="13.68" cy="37.59" r="2.5"/>
-<circle class="body-planet" cx="-41.78" cy="-49.79" r="5"/>
-<circle class="body-moon" cx="-31.78" cy="-49.79" r="1.02"/>
-<circle class="body-planet" cx="-77.13" cy="91.93" r="8"/>
-<line class="leader" x1="5.3" y1="-5.3" x2="8.32" y2="-8.32"/>
-<text x="9.32" y="-8.32" font-size="3.33">Sun · 30</text>
-<line class="leader" x1="15.45" y1="35.82" x2="17" y2="34.27"/>
-<text x="18" y="34.27" font-size="3.33">Inner · 10</text>
-<line class="leader" x1="-38.25" y1="-53.33" x2="-35.96" y2="-55.61"/>
-<text x="-34.96" y="-55.61" font-size="3.33">Home · 20</text>
-<line class="leader" x1="-31.17" y1="-48.97" x2="-29.94" y2="-47.31"/>
-<text x="-28.94" y="-47.31" font-size="3.33">Luna · 4</text>
-<line class="leader" x1="-71.48" y1="86.27" x2="-68.32" y2="83.11"/>
-<text x="-67.32" y="83.11" font-size="3.33">Giant · 32</text>
-<g font-size="3.33">
-<g transform="translate(0 -131.84)"><circle class="body-planet" cx="-134.4" cy="0" r="1.54"/><text x="-130.56" y="1.16">fixed body</text></g>
-<g transform="translate(0 -126.85)"><circle class="ghost" cx="-134.4" cy="0" r="1.54"/><text x="-130.56" y="1.16">range or random position</text></g>
-<g transform="translate(0 -121.86)"><circle class="unresolved" cx="-134.4" cy="0" r="1.54"/><text x="-130.56" y="1.16">unresolvable position</text></g>
-<g transform="translate(0 -116.86)"><circle class="halo-definite" cx="-134.4" cy="0" r="1.54"/><text x="-130.56" y="1.16">definite overlap risk</text></g>
-<g transform="translate(0 -111.87)"><circle class="halo-possible" cx="-134.4" cy="0" r="1.54"/><text x="-130.56" y="1.16">possible overlap risk</text></g>
+<circle class="body-star" cx="0" cy="0" r="13.64"/>
+<circle class="body-planet" cx="13.68" cy="-37.59" r="1.88"/>
+<circle class="body-planet" cx="-41.78" cy="49.79" r="3.75"/>
+<circle class="body-moon" cx="-31.78" cy="49.79" r="0.52"/>
+<circle class="body-planet" cx="-77.13" cy="-91.93" r="7.64"/>
+<g class="label"><circle class="hover-target" cx="0" cy="0" r="14.66"/><g class="label-body"><line class="leader" x1="9.64" y1="-9.64" x2="14.45" y2="-14.45"/><text x="15.45" y="-14.45" font-size="3.32">Sun · 30</text></g></g>
+<g class="label"><circle class="hover-target" cx="13.68" cy="-37.59" r="2.9"/><g class="label-body"><line class="leader" x1="15.01" y1="-38.91" x2="16.37" y2="-40.28"/><text x="17.37" y="-40.28" font-size="3.32">Inner · 10</text></g></g>
+<g class="label"><circle class="hover-target" cx="-41.78" cy="49.79" r="4.77"/><g class="label-body"><line class="leader" x1="-39.13" y1="47.14" x2="-37.21" y2="45.23"/><text x="-36.22" y="45.23" font-size="3.32">Home · 20</text></g></g>
+<g class="label"><circle class="hover-target" cx="-31.78" cy="49.79" r="2.04"/><g class="label-body"><line class="leader" x1="-31.41" y1="49.42" x2="-29.94" y2="47.95"/><text x="-28.95" y="47.95" font-size="3.32">Luna · 4</text></g></g>
+<g class="label"><circle class="hover-target" cx="-77.13" cy="-91.93" r="8.66"/><g class="label-body"><line class="leader" x1="-71.73" y1="-97.33" x2="-68.68" y2="-100.38"/><text x="-67.69" y="-100.38" font-size="3.32">Giant · 32</text></g></g>
+<g font-size="3.32">
+<g transform="translate(0 -131.47)"><circle class="body-planet" cx="-134.02" cy="0" r="1.53"/><text x="-130.19" y="1.16">fixed body</text></g>
+<g transform="translate(0 -126.49)"><circle class="ghost" cx="-134.02" cy="0" r="1.53"/><text x="-130.19" y="1.16">range or random position</text></g>
+<g transform="translate(0 -121.51)"><circle class="unresolved" cx="-134.02" cy="0" r="1.53"/><text x="-130.19" y="1.16">unresolvable position</text></g>
+<g transform="translate(0 -116.53)"><circle class="halo-definite" cx="-134.02" cy="0" r="1.53"/><text x="-130.19" y="1.16">definite overlap risk</text></g>
+<g transform="translate(0 -111.55)"><circle class="halo-possible" cx="-134.02" cy="0" r="1.53"/><text x="-130.19" y="1.16">possible overlap risk</text></g>
 </g>
+<script><![CDATA[
+(function () {
+  var svg = document.documentElement;
+  if (!svg || svg.tagName !== "svg") return;
+  var vb = svg.viewBox.baseVal;
+  function toSvg(event) {
+    return new DOMPoint(event.clientX, event.clientY).matrixTransform(svg.getScreenCTM().inverse());
+  }
+  svg.addEventListener("wheel", function (event) {
+    if (event.deltaY === 0) return;
+    event.preventDefault();
+    var factor = event.deltaY < 0 ? 0.925 : 1 / 0.925;
+    var pointer = toSvg(event);
+    vb.x = pointer.x - (pointer.x - vb.x) * factor;
+    vb.y = pointer.y - (pointer.y - vb.y) * factor;
+    vb.width *= factor;
+    vb.height *= factor;
+  }, { passive: false });
+  var anchor = null;
+  svg.addEventListener("pointerdown", function (event) {
+    anchor = toSvg(event);
+    svg.setPointerCapture(event.pointerId);
+  });
+  svg.addEventListener("pointermove", function (event) {
+    if (anchor === null) return;
+    var pointer = toSvg(event);
+    vb.x -= pointer.x - anchor.x;
+    vb.y -= pointer.y - anchor.y;
+  });
+  svg.addEventListener("pointerup", function (event) {
+    anchor = null;
+    svg.releasePointerCapture(event.pointerId);
+  });
+  svg.addEventListener("dblclick", function () {
+    var reset = [-137.85, -137.85, 275.69, 275.69];
+    vb.x = reset[0];
+    vb.y = reset[1];
+    vb.width = reset[2];
+    vb.height = reset[3];
+  });
+})();
+]]></script>
 </svg>

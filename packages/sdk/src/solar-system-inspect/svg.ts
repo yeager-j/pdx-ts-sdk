@@ -30,7 +30,17 @@ const FALLBACK_FAN_STEP_DEG = 137.5;
 /** Deterministic radial step for bodies with unresolvable radii. */
 const UNRESOLVED_SHELF_STEP = 20;
 
-const STYLE = `
+/** Sphere-shaded fill per body kind: highlight, base, and limb stops. */
+const BODY_SHADES = {
+  star: ["#fff3d6", "#ffd27f", "#d9a54e"],
+  planet: ["#f2f5ff", "#cfd8ff", "#8d9bd6"],
+  moon: ["#d3e0ea", "#9fb4c8", "#64798d"],
+  asteroid: ["#d8cbb6", "#b0a08a", "#776852"],
+} as const;
+
+function styleFor(prefix: string): string {
+  return `
+  svg { cursor: grab; background: #0b0e1a; touch-action: none; }
   .bg { fill: #0b0e1a; }
   .orbit { fill: none; stroke: #2c3654; stroke-width: var(--hair); }
   .orbit-band { fill: none; stroke: #26304b; stroke-opacity: 0.55; }
@@ -38,10 +48,10 @@ const STYLE = `
   .belt { fill: none; stroke: #6b5d47; stroke-opacity: 0.35; }
   .belt-edge { fill: none; stroke: #8a7a5e; stroke-width: var(--hair); stroke-dasharray: var(--dash); }
   .line { fill: none; stroke: #3d4a6e; stroke-width: var(--hair); stroke-dasharray: var(--dash); }
-  .body-star { fill: #ffd27f; }
-  .body-planet { fill: #cfd8ff; }
-  .body-moon { fill: #9fb4c8; }
-  .body-asteroid { fill: #b0a08a; }
+  .body-star { fill: url(#${prefix}-star); }
+  .body-planet { fill: url(#${prefix}-planet); }
+  .body-moon { fill: url(#${prefix}-moon); }
+  .body-asteroid { fill: url(#${prefix}-asteroid); }
   .ghost { fill: none; stroke: #7f8cb0; stroke-width: var(--hair); stroke-dasharray: var(--dash); }
   .maybe { opacity: 0.5; }
   .unresolved { fill: none; stroke: #7f8cb0; stroke-width: var(--hair); stroke-dasharray: var(--dot); }
@@ -49,7 +59,74 @@ const STYLE = `
   .halo-possible { fill: none; stroke: #ffb454; stroke-width: var(--halo); }
   text { fill: #aab4d4; font-family: ui-sans-serif, system-ui, sans-serif; }
   .leader { stroke: #4a5578; stroke-width: var(--hair); }
+  .hover-target { fill: transparent; }
+  .label .label-body { opacity: 0; transition: opacity 0.15s; }
+  .label:hover .label-body { opacity: 1; }
 `;
+}
+
+function renderDefs(prefix: string): string {
+  const gradients = Object.entries(BODY_SHADES).map(
+    ([kind, [highlight, base, limb]]) =>
+      `<radialGradient id="${prefix}-${kind}" cx="35%" cy="35%" r="75%">` +
+      `<stop offset="0%" stop-color="${highlight}"/>` +
+      `<stop offset="55%" stop-color="${base}"/>` +
+      `<stop offset="100%" stop-color="${limb}"/>` +
+      `</radialGradient>`
+  );
+  return `<defs>${gradients.join("")}</defs>`;
+}
+
+/**
+ * Inline pan/zoom for the standalone document: scroll zooms about the
+ * pointer, dragging pans, and a double click resets the view. Inert when the
+ * SVG is embedded as an image.
+ */
+function renderInteraction(view: number): string {
+  const reset = `${fmt(-view)}, ${fmt(-view)}, ${fmt(2 * view)}, ${fmt(2 * view)}`;
+  return `<script><![CDATA[
+(function () {
+  var svg = document.documentElement;
+  if (!svg || svg.tagName !== "svg") return;
+  var vb = svg.viewBox.baseVal;
+  function toSvg(event) {
+    return new DOMPoint(event.clientX, event.clientY).matrixTransform(svg.getScreenCTM().inverse());
+  }
+  svg.addEventListener("wheel", function (event) {
+    if (event.deltaY === 0) return;
+    event.preventDefault();
+    var factor = event.deltaY < 0 ? 0.925 : 1 / 0.925;
+    var pointer = toSvg(event);
+    vb.x = pointer.x - (pointer.x - vb.x) * factor;
+    vb.y = pointer.y - (pointer.y - vb.y) * factor;
+    vb.width *= factor;
+    vb.height *= factor;
+  }, { passive: false });
+  var anchor = null;
+  svg.addEventListener("pointerdown", function (event) {
+    anchor = toSvg(event);
+    svg.setPointerCapture(event.pointerId);
+  });
+  svg.addEventListener("pointermove", function (event) {
+    if (anchor === null) return;
+    var pointer = toSvg(event);
+    vb.x -= pointer.x - anchor.x;
+    vb.y -= pointer.y - anchor.y;
+  });
+  svg.addEventListener("pointerup", function (event) {
+    anchor = null;
+    svg.releasePointerCapture(event.pointerId);
+  });
+  svg.addEventListener("dblclick", function () {
+    var reset = [${reset}];
+    vb.x = reset[0];
+    vb.y = reset[1];
+    vb.width = reset[2];
+    vb.height = reset[3];
+  });
+})();
+]]></script>`;
+}
 
 /** Renders the standalone SVG preview. `size` sets width/height attributes. */
 export function renderSvg(
@@ -68,6 +145,7 @@ export function renderSvg(
   const highlight = highlightByPath(diagnostics);
   const parts: string[] = [];
   const view = extent * 1.08;
+  const prefix = system.id.replace(/[^A-Za-z0-9_-]/g, "-");
 
   parts.push(
     `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="${fmt(-view)} ${fmt(-view)} ${fmt(2 * view)} ${fmt(2 * view)}" role="img" aria-label="${escape(system.id)}" style="--hair:${fmt(hair)};--halo:${fmt(halo)};--dash:${fmt(4 * hair)} ${fmt(3 * hair)};--dot:${fmt(hair)} ${fmt(2 * hair)}">`
@@ -76,7 +154,8 @@ export function renderSvg(
   parts.push(
     `<desc>Cursor-space schematic of ${escape(system.id)} (class ${escape(system.starClass)}): ${placed.filter((p) => p.body.kind !== "cursor").length} bodies, ${system.belts.length} belts, ${diagnostics.length} findings. Distances and disc sizes are the documented approximation, not game rendering.</desc>`
   );
-  parts.push(`<style>${STYLE}</style>`);
+  parts.push(`<style>${styleFor(prefix)}</style>`);
+  parts.push(renderDefs(prefix));
   parts.push(
     `<rect class="bg" x="${fmt(-view)}" y="${fmt(-view)}" width="${fmt(2 * view)}" height="${fmt(2 * view)}"/>`
   );
@@ -133,14 +212,16 @@ export function renderSvg(
     if (body.kind === "cursor") {
       continue;
     }
-    const marker = Math.max(body.visualRadius.max, minMarker);
+    // Bodies draw at their true modeled radius: pan/zoom replaces any
+    // minimum marker size, so drawn discs never overstate the geometry.
+    const marker = body.visualRadius.max;
     const classes: string[] = [];
     if (body.exists === "possible") {
       classes.push("maybe");
     }
     if (p.placement === "unresolved") {
       parts.push(
-        `<g${classAttr(classes)}><circle class="unresolved" cx="${fmt(p.x)}" cy="${fmt(p.y)}" r="${fmt(marker)}"/><text x="${fmt(p.x)}" y="${fmt(p.y + font * 0.35)}" font-size="${fmt(font)}" text-anchor="middle">?</text></g>`
+        `<g${classAttr(classes)}><circle class="unresolved" cx="${fmt(p.x)}" cy="${fmt(p.y)}" r="${fmt(Math.max(marker, minMarker))}"/><text x="${fmt(p.x)}" y="${fmt(p.y + font * 0.35)}" font-size="${fmt(font)}" text-anchor="middle">?</text></g>`
       );
     } else if (p.placement === "fixed") {
       parts.push(
@@ -159,8 +240,9 @@ export function renderSvg(
     }
   }
 
-  parts.push(...renderLabels(placed, extent, font, minMarker));
+  parts.push(...renderLabels(placed, font, minMarker));
   parts.push(...renderLegend(view, u, font));
+  parts.push(renderInteraction(view));
   parts.push("</svg>");
   return parts.join("\n");
 }
@@ -214,7 +296,8 @@ function place(system: ResolvedSystem): Placed[] {
     const entry: Placed = {
       body,
       x: cx + radius * Math.cos(rad),
-      y: cy + radius * Math.sin(rad),
+      // Bearings increase counterclockwise on screen, so y-down negates sine.
+      y: cy - radius * Math.sin(rad),
       radius,
       cx,
       cy,
@@ -271,12 +354,7 @@ function highlightByPath(
   return map;
 }
 
-function renderLabels(
-  placed: readonly Placed[],
-  extent: number,
-  font: number,
-  minMarker: number
-): string[] {
+function renderLabels(placed: readonly Placed[], font: number, minMarker: number): string[] {
   const parts: string[] = [];
   interface Anchor {
     x: number;
@@ -298,32 +376,25 @@ function renderLabels(
     if (body.copies > 1) {
       text += ` ×${body.copies}`;
     }
-    const marker = Math.max(body.visualRadius.max, minMarker);
+    const marker = body.visualRadius.max;
     anchors.push({ x: p.x, y: p.y, marker, text, ordinal: body.ordinal });
   }
   anchors.sort((a, b) => a.ordinal - b.ordinal);
-  const used: { x: number; y: number }[] = [];
-  const threshold = extent * 0.06;
   for (const anchor of anchors) {
-    const dx = anchor.marker + minMarker * 0.8;
-    let dy = -(anchor.marker + minMarker * 0.8);
-    let tries = 0;
-    while (
-      used.some((u2) => Math.hypot(anchor.x + dx - u2.x, anchor.y + dy - u2.y) < threshold) &&
-      tries < 12
-    ) {
-      dy += font * 1.3;
-      tries += 1;
-    }
+    const offset = Math.max(anchor.marker, minMarker) + minMarker * 0.8;
+    const dx = offset;
+    const dy = -offset;
     const lx = anchor.x + dx;
     const ly = anchor.y + dy;
-    used.push({ x: lx, y: ly });
     const start = discEdgeToward(anchor, dx, dy);
     parts.push(
-      `<line class="leader" x1="${fmt(start.x)}" y1="${fmt(start.y)}" x2="${fmt(lx)}" y2="${fmt(ly)}"/>`
-    );
-    parts.push(
-      `<text x="${fmt(lx + font * 0.3)}" y="${fmt(ly)}" font-size="${fmt(font)}">${escape(anchor.text)}</text>`
+      `<g class="label">` +
+        `<circle class="hover-target" cx="${fmt(anchor.x)}" cy="${fmt(anchor.y)}" r="${fmt(Math.max(anchor.marker, minMarker) + minMarker)}"/>` +
+        `<g class="label-body">` +
+        `<line class="leader" x1="${fmt(start.x)}" y1="${fmt(start.y)}" x2="${fmt(lx)}" y2="${fmt(ly)}"/>` +
+        `<text x="${fmt(lx + font * 0.3)}" y="${fmt(ly)}" font-size="${fmt(font)}">${escape(anchor.text)}</text>` +
+        `</g>` +
+        `</g>`
     );
   }
   return parts;

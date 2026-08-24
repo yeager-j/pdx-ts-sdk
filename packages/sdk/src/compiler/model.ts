@@ -64,6 +64,13 @@ export interface PureMod {
   readonly assets: readonly AssetFileItem[];
   /** Content emission, grouped by registry and collection file. */
   readonly contentFiles: readonly ContentFile[];
+  /**
+   * Every defined content item with its original definition, grouped the way
+   * it emits. For consumers that reason about the mod — inspection and
+   * tooling — rather than serialize it; `contentFiles` carry the lowered
+   * entries `render` writes.
+   */
+  readonly definedGroups: readonly DefinedGroup[];
   /** Component-tag emission, one bare-scalar file per feature stem. */
   readonly componentTagFiles: readonly ComponentTagFile[];
   /** Event emission: one file per stem and namespace. */
