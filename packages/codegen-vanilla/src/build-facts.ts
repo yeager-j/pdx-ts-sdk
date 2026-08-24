@@ -4,7 +4,7 @@ import path from "node:path";
 import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { eventKinds, type EventKindSpec } from "@pdx-ts/codegen-cwt/lower/event-kinds";
 import { loadScopeFacts } from "@pdx-ts/codegen-cwt/lower/scope-facts";
-import { scanInstallPaths, type VanillaPathScan } from "@pdx-ts/sdk/stellaris";
+import { scanInstallPaths, type VanillaPathScan } from "@pdx-ts/sdk/installation";
 
 import { compareIdentifiers } from "./emit.ts";
 import { inferScopes, type InferredScope, type ScriptedKind } from "./infer-scopes.ts";

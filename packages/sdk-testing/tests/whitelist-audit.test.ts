@@ -19,7 +19,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse } from "@pdx-ts/pdxscript";
 import { EVENT_FIELD_SUPPORT, scopeLinkOutput, SUPPORTED_STELLARIS_BUILD } from "@pdx-ts/sdk";
-import { locateInstall } from "@pdx-ts/sdk/stellaris";
+import { locateInstall } from "@pdx-ts/sdk/installation";
 import { describe, expect, it } from "vitest";
 
 import {

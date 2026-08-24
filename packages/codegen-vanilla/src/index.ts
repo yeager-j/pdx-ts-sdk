@@ -14,8 +14,8 @@
 import { mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { stampedVanillaPackageVersion } from "@pdx-ts/sdk";
-import { locateInstall, requireGameVersion } from "@pdx-ts/sdk/stellaris";
+import { locateInstall, requireGameVersion } from "@pdx-ts/sdk/installation";
+import { stampedVanillaPackageVersion } from "@pdx-ts/sdk/internals";
 
 import { formatEmitted } from "./format.ts";
 import { generateVanillaPackage, type VanillaReport } from "./generate.ts";

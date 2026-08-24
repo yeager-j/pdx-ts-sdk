@@ -27,7 +27,7 @@ import {
   kebabCase as registryStem,
   safeIdentifier,
 } from "@pdx-ts/codegen-cwt/naming";
-import { compareUtf8 } from "@pdx-ts/sdk";
+import { compareUtf8 } from "@pdx-ts/sdk/internals";
 
 import type { ScriptedDefinition } from "./read-scripted.ts";
 import type { TrieNode } from "./trie.ts";
@@ -349,7 +349,7 @@ export function emitTrie(
     const stem = unique(kebabCase(key), takenStems);
     files.set(
       `${dir}/${stem}.ts`,
-      `${header(gameVersion)}import type { ${reference} } from "@pdx-ts/sdk";\n\n` +
+      `${header(gameVersion)}import type { ${reference} } from "@pdx-ts/sdk/stellaris";\n\n` +
         `export type ${name} = ${render(node)};\n`
     );
     imports.push(`import type { ${name} } from "./${stem}.ts";\n`);
@@ -359,7 +359,7 @@ export function emitTrie(
   files.set(
     trieIndexFile(registry),
     header(gameVersion) +
-      (rootLeaves ? `import type { ${reference} } from "@pdx-ts/sdk";\n` : "") +
+      (rootLeaves ? `import type { ${reference} } from "@pdx-ts/sdk/stellaris";\n` : "") +
       imports.join("") +
       `\nexport interface ${root} {\n${rootMembers.join("\n")}\n}\n`
   );
@@ -468,7 +468,7 @@ export function emitScriptedBindings(
   return {
     code:
       header(gameVersion) +
-      `import { ${factory} } from "@pdx-ts/sdk";\n\n` +
+      `import { ${factory} } from "@pdx-ts/sdk/stellaris";\n\n` +
       `${lines.join("\n")}\n`,
     renamed,
     bySize,
