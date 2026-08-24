@@ -209,6 +209,31 @@ vanilla initializer inspects without a definite overlap finding; that
 calibration gate runs against the installed game in
 `solar-system-inspect-vanilla.test.ts`.
 
+### Previews for the whole mod, with zero setup
+
+Projects scaffolded by `create-stellaris-mod` get previews on every build:
+the build script calls `writeSystemPreviews`, which writes
+`previews/<id>.svg` for each solar-system initializer plus a
+`previews/index.html` gallery, and prints the layout findings beside
+`mod.warnings` as advisory `layout` lines. Open the gallery in a browser and
+click a card for the interactive preview.
+
+An existing project adds one call to its build script:
+
+```ts
+import { render, write, writeSystemPreviews } from "@pdx-ts/sdk";
+
+const mod = await buildTheMod();
+await write(outDir, render(mod));
+const report = await writeSystemPreviews(new URL("../previews/", import.meta.url), mod);
+```
+
+The pure half is `inspectSolarSystems(mod)`, which returns every system's
+inspection by id; use it directly to apply your own policy — for example,
+failing your build on definite-certainty findings is three lines in your own
+script. Keep `previews/` out of the emitted mod directory and out of version
+control; the SVGs regenerate on every build.
+
 ## Only the top-level initializer has an id
 
 `mod.solarSystemInitializer("haven", definition)` mints the full id

@@ -129,6 +129,11 @@ export function finalizeMod(
         })
       )
     ),
+    definedGroups: Object.freeze(
+      definedGroups.map((group) =>
+        Object.freeze({ ...group, defined: Object.freeze([...group.defined]) })
+      )
+    ),
     componentTagFiles: Object.freeze(
       componentTagFiles.map((file) => Object.freeze({ ...file, ids: Object.freeze([...file.ids]) }))
     ),

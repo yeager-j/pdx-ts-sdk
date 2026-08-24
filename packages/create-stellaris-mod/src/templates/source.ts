@@ -131,25 +131,37 @@ export function indexTs(): string {
  * directly, so nothing stands between this source and the emitted mod.
  *
  * \`render\` serializes the value \`buildTheMod\` (in \`mod.ts\`) folds together, and
- * \`write\` is the only step that touches the disk.
+ * \`write\` and \`writeSystemPreviews\` are the steps that touch the disk. The
+ * previews are authoring aids beside the mod, not part of it: layout findings
+ * print here as advisory lines and never fail the build.
  */
 
-import { render, write } from "@pdx-ts/sdk";
+import { render, write, writeSystemPreviews } from "@pdx-ts/sdk";
 
 import { assetCaptureSummary, buildTheMod } from "./mod.ts";
 
 export const outDir = new URL("../out/", import.meta.url);
+export const previewsDir = new URL("../previews/", import.meta.url);
 
 const mod = await buildTheMod();
 console.log(assetCaptureSummary(mod));
 const files = render(mod);
 await write(outDir, files);
+const previewReport = await writeSystemPreviews(previewsDir, mod);
 
 for (const warning of mod.warnings) {
   console.warn(\`warning (\${warning.code}): \${warning.message}\`);
 }
+for (const preview of previewReport.previews) {
+  for (const finding of preview.diagnostics) {
+    console.log(\`layout \${preview.id} (\${finding.certainty}) \${finding.code}: \${finding.message}\`);
+  }
+}
 for (const relPath of files.keys()) {
   console.log(\`wrote \${relPath}\`);
+}
+if (previewReport.previews.length > 0) {
+  console.log(\`wrote previews/index.html (\${previewReport.previews.length} solar systems)\`);
 }
 `;
 }
