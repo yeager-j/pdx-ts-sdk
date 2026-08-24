@@ -1,5 +1,5 @@
-import { createMod, SUPPORTED_STELLARIS_BUILD } from "@pdx-ts/sdk";
-import { CONTENT_REGISTRIES } from "@pdx-ts/sdk/content-registries";
+import { createMod } from "@pdx-ts/sdk";
+import { CONTENT_REGISTRIES, SUPPORTED_STELLARIS_BUILD } from "@pdx-ts/sdk/reference";
 import { VANILLA_PATH_GAME_VERSION, VANILLA_PATHS } from "@pdx-ts/stellaris-ids/paths";
 
 /**

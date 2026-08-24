@@ -1,4 +1,5 @@
-import { createMod, type TechnologyItem } from "@pdx-ts/sdk";
+import { createMod } from "@pdx-ts/sdk";
+import type { TechnologyItem } from "@pdx-ts/sdk/stellaris";
 
 const mod = createMod({
   name: "Luminous Cartography",

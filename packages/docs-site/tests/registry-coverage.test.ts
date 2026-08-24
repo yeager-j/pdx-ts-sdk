@@ -15,7 +15,7 @@
  * to get right.
  */
 
-import { CONTENT_REGISTRIES } from "@pdx-ts/sdk/content-registries";
+import { CONTENT_REGISTRIES } from "@pdx-ts/sdk/reference";
 import { VANILLA_PATHS } from "@pdx-ts/stellaris-ids/paths";
 import { describe, expect, it } from "vitest";
 

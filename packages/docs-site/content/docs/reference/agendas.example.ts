@@ -1,4 +1,5 @@
-import { createMod, hasAuthority } from "@pdx-ts/sdk";
+import { createMod } from "@pdx-ts/sdk";
+import { hasAuthority } from "@pdx-ts/sdk/stellaris";
 
 const mod = createMod({
   name: "Frontier Council",

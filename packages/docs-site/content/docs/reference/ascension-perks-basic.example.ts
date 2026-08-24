@@ -1,4 +1,5 @@
-import { createMod, hasTechnology, numAscensionPerks, vanilla } from "@pdx-ts/sdk";
+import { createMod } from "@pdx-ts/sdk";
+import { hasTechnology, numAscensionPerks, vanilla } from "@pdx-ts/sdk/stellaris";
 
 const mod = createMod({
   name: "Stellar Stewardship",

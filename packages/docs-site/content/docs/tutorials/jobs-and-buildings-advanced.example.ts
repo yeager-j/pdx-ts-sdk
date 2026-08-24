@@ -1,4 +1,5 @@
-import { always, and, createMod, isCapital, owner, vanilla } from "@pdx-ts/sdk";
+import { createMod } from "@pdx-ts/sdk";
+import { always, and, isCapital, owner, vanilla } from "@pdx-ts/sdk/stellaris";
 import {
   canThink,
   complexSpecialistJobCheckTrigger,

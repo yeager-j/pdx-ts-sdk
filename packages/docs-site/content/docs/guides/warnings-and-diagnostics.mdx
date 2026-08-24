@@ -77,7 +77,7 @@ await write(outDir, rendered);
 ```
 
 `create-stellaris-mod` generates calls to `runBuild` and `runInstall` from
-`@pdx-ts/sdk/terminal`, so the SDK owns the presentation and warnings appear
+`@pdx-ts/sdk`, so the SDK owns the presentation and warnings appear
 whichever command you run. Interactive output shows up to three warnings
 directly and groups larger sets by code; pass `--verbose` to show every warning.
 CI and non-TTY output are verbose by default.

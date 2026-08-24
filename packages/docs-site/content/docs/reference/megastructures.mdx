@@ -246,7 +246,7 @@ SDK models none of its members — so the callback can write new values but
 cannot read old ones, which is why the callback below ignores its argument.
 
 ```ts
-import { stellaris } from "@pdx-ts/sdk";
+import * as stellaris from "@pdx-ts/sdk/installation";
 
 const vanillaView = stellaris.load();
 

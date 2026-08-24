@@ -1,4 +1,5 @@
-import { createMod, hasCivic, isNomadic, vanilla } from "@pdx-ts/sdk";
+import { createMod } from "@pdx-ts/sdk";
+import { hasCivic, isNomadic, vanilla } from "@pdx-ts/sdk/stellaris";
 
 const mod = createMod({
   name: "Adaptive Science",

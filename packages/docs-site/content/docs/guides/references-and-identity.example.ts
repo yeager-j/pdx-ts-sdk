@@ -1,4 +1,5 @@
-import { createMod, vanilla } from "@pdx-ts/sdk";
+import { createMod } from "@pdx-ts/sdk";
+import { vanilla } from "@pdx-ts/sdk/stellaris";
 import { giveTechOptionOrProgressEffect } from "@pdx-ts/stellaris-ids/effects";
 import { isRegularEmpire } from "@pdx-ts/stellaris-ids/triggers";
 

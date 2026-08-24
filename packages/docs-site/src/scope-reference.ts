@@ -1,11 +1,12 @@
-import { EVENT_KINDS, type ScopeName } from "@pdx-ts/sdk";
 import {
+  EVENT_KINDS,
   SCRIPT_EFFECT_REFERENCES,
   SCRIPT_REFERENCE_SCOPES,
   SCRIPT_SCOPE_LINK_REFERENCES,
   type ScriptEffectReference,
   type ScriptScopeLinkReference,
-} from "@pdx-ts/sdk/script-reference";
+} from "@pdx-ts/sdk/reference";
+import type { ScopeName } from "@pdx-ts/sdk/stellaris";
 
 export interface ScriptMethodRow {
   readonly method: string;

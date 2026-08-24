@@ -1,4 +1,4 @@
-import type { ContentLocalisation } from "@pdx-ts/sdk/content-registries";
+import type { ContentLocalisation } from "@pdx-ts/sdk/reference";
 
 /**
  * One localisation-slot table — shared by the registry's own slots and each

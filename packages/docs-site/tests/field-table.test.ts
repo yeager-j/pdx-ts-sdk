@@ -1,4 +1,4 @@
-import { CONTENT_REGISTRIES } from "@pdx-ts/sdk/content-registries";
+import { CONTENT_REGISTRIES } from "@pdx-ts/sdk/reference";
 import { describe, expect, it } from "vitest";
 
 import { buildFieldTable } from "../src/field-table.ts";

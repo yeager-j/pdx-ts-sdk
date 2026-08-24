@@ -1,4 +1,5 @@
-import { and, createMod, hasAuthority, isScopeValid } from "@pdx-ts/sdk";
+import { createMod } from "@pdx-ts/sdk";
+import { and, hasAuthority, isScopeValid } from "@pdx-ts/sdk/stellaris";
 
 const mod = createMod({
   name: "Distributed Scholarship",

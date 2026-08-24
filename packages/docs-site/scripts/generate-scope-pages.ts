@@ -1,6 +1,6 @@
 import { mkdir, readdir, readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { SCRIPT_REFERENCE_SCOPES } from "@pdx-ts/sdk/script-reference";
+import { SCRIPT_REFERENCE_SCOPES } from "@pdx-ts/sdk/reference";
 
 import { parseScopePageSource, type ScopePageSource } from "../src/scope-page-source.ts";
 import { buildScopeReference } from "../src/scope-reference.ts";

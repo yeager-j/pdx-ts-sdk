@@ -1,8 +1,8 @@
+import { createMod } from "@pdx-ts/sdk";
 import {
   always,
   and,
   archaeologicalSite,
-  createMod,
   exists,
   hasGlobalFlag,
   isAi,
@@ -11,7 +11,7 @@ import {
   not,
   onActions,
   vanilla,
-} from "@pdx-ts/sdk";
+} from "@pdx-ts/sdk/stellaris";
 import { defaultSiteVisibleTrigger } from "@pdx-ts/stellaris-ids/triggers";
 
 const mod = createMod({

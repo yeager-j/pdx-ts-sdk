@@ -1,4 +1,4 @@
-import { SCRIPT_REFERENCE_SCOPES } from "@pdx-ts/sdk/script-reference";
+import { SCRIPT_REFERENCE_SCOPES } from "@pdx-ts/sdk/reference";
 
 import { scopePages } from "@/lib/scope-pages";
 import { buildEffectsIndex } from "@/src/effects-index";

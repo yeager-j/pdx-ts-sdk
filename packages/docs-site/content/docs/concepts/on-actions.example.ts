@@ -1,4 +1,5 @@
-import { createMod, onActions, vanilla } from "@pdx-ts/sdk";
+import { createMod } from "@pdx-ts/sdk";
+import { onActions, vanilla } from "@pdx-ts/sdk/stellaris";
 
 const mod = createMod({
   name: "Crystal Resonance",

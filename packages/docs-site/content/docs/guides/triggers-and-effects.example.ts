@@ -1,4 +1,5 @@
-import { and, countryFlags, createMod, hasCountryFlag, not } from "@pdx-ts/sdk";
+import { createMod } from "@pdx-ts/sdk";
+import { and, countryFlags, hasCountryFlag, not } from "@pdx-ts/sdk/stellaris";
 
 const mod = createMod({
   name: "Crystal Resonance",
