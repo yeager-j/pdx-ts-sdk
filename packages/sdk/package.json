@@ -33,6 +33,16 @@
       "pdx-source": "./src/terminal.ts",
       "types": "./dist/terminal.d.ts",
       "default": "./dist/terminal.js"
+    },
+    "./reference": {
+      "pdx-source": "./src/reference.ts",
+      "types": "./dist/reference.d.ts",
+      "default": "./dist/reference.js"
+    },
+    "./internals": {
+      "pdx-source": "./src/internals.ts",
+      "types": "./dist/internals.d.ts",
+      "default": "./dist/internals.js"
     }
   },
   "dependencies": {

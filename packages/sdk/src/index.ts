@@ -178,6 +178,13 @@ export {
   discoverFeatures,
   type DiscoverOptions,
 } from "./authoring/discover.ts";
+export {
+  runBuild,
+  runInstall,
+  type RunBuildOptions,
+  type RunInstallOptions,
+  type TerminalRunOptions,
+} from "./terminal.ts";
 // Generated item unions remain public; their raw constructors are internal
 // lowering machinery used by capability methods.
 export type * from "./generated/content-definers.ts";
