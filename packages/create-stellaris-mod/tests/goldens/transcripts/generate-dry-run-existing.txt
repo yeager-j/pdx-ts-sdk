@@ -24,7 +24,7 @@ out|   cost: 2000,
 out|
 out|   // Technologies that must be researched first. A vanilla technology is a plain
 out|   // string, taken as given — nothing checks a bare literal;
-out|   // `vanilla.technology(...)` from @pdx-ts/sdk is the checked form, against the
+out|   // `vanilla.technology(...)` from @pdx-ts/sdk/stellaris is the checked form, against the
 out|   // real id set when @pdx-ts/stellaris-ids is installed. One of your own is the
 out|   // binding another feature file exports, imported as usual.
 out|   // prerequisites: ["tech_basic_science_lab_1"],

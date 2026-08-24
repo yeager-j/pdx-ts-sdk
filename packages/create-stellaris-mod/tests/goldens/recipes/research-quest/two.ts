@@ -19,7 +19,7 @@
  * bottom is what names the emitted files.
  */
 
-import { onActions } from "@pdx-ts/sdk";
+import { onActions } from "@pdx-ts/sdk/stellaris";
 
 import { mod } from "#mod";
 

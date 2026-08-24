@@ -4,7 +4,7 @@
  */
 
 import { createHash } from "node:crypto";
-import { vanillaPackageInstallRange } from "@pdx-ts/sdk";
+import { vanillaPackageInstallRange } from "@pdx-ts/sdk/internals";
 import semver from "semver";
 import { parse as parseToml } from "smol-toml";
 import { describe, expect, it } from "vitest";
@@ -368,9 +368,9 @@ describe("the Project Manifest", () => {
   it("delegates build and install presentation to the SDK terminal module", () => {
     const build = plan().get("src/index.ts")!;
     const install = plan().get("src/install.ts")!;
-    expect(build).toContain('import { runBuild } from "@pdx-ts/sdk/terminal"');
+    expect(build).toContain('import { runBuild } from "@pdx-ts/sdk"');
     expect(build).toContain("await runBuild(buildTheMod(), { outDir, previewsDir })");
-    expect(install).toContain('import { runInstall } from "@pdx-ts/sdk/terminal"');
+    expect(install).toContain('import { runInstall } from "@pdx-ts/sdk"');
     expect(install).toContain("await runInstall(buildTheMod())");
     expect(build).not.toContain("console.");
     expect(install).not.toContain("console.");

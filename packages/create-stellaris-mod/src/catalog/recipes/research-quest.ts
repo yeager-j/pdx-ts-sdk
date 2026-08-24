@@ -78,7 +78,7 @@ function renderSource(names: DerivedNames, projects: Projects): string {
   return [
     header(projects),
     "",
-    'import { onActions } from "@pdx-ts/sdk";',
+    'import { onActions } from "@pdx-ts/sdk/stellaris";',
     "",
     'import { mod } from "#mod";',
     "",

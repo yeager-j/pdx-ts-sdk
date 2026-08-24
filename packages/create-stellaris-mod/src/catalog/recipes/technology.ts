@@ -114,7 +114,7 @@ function fields(names: DerivedNames): readonly string[] {
     "",
     "// Technologies that must be researched first. A vanilla technology is a plain",
     "// string, taken as given — nothing checks a bare literal;",
-    "// `vanilla.technology(...)` from @pdx-ts/sdk is the checked form, against the",
+    "// `vanilla.technology(...)` from @pdx-ts/sdk/stellaris is the checked form, against the",
     "// real id set when @pdx-ts/stellaris-ids is installed. One of your own is the",
     "// binding another feature file exports, imported as usual.",
     `// prerequisites: [${quoteTs(PREREQUISITE_EXAMPLE)}],`,
