@@ -1,12 +1,12 @@
+import { createMod } from "@pdx-ts/sdk";
+import type { VanillaView } from "@pdx-ts/sdk/installation";
 import {
   countryFlags,
-  createMod,
   eventTarget,
   hasAuthority,
   numOwnedPlanets,
   onActions,
-  type VanillaView,
-} from "@pdx-ts/sdk";
+} from "@pdx-ts/sdk/stellaris";
 
 export const hardeningFlags = countryFlags("pdx_hardening_entry_fired");
 export const hardeningTarget = eventTarget<"planet">("pdx_hardening_chain_planet");

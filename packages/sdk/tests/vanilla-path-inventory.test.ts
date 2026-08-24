@@ -18,9 +18,9 @@ import {
   packagedVanillaPaths,
 } from "../src/identifiers/vanilla-paths.ts";
 import { createMod, PathOwnershipError } from "../src/index.ts";
-import { isOsMetadataPath } from "../src/stellaris/installation/scan-paths.ts";
-import { load } from "../src/stellaris/vanilla/load.ts";
-import { viewFromFiles, type VanillaView } from "../src/stellaris/vanilla/view.ts";
+import { isOsMetadataPath } from "../src/installation/installation/scan-paths.ts";
+import { load } from "../src/installation/vanilla/load.ts";
+import { viewFromFiles, type VanillaView } from "../src/installation/vanilla/view.ts";
 import { TECH_FILE, VARS_FILE } from "./fixtures/vanilla-fixture.ts";
 
 /** The repo root, from this module — never the directory vitest was started in. */

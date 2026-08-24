@@ -22,7 +22,8 @@ in a [Feature](/guides/features-and-discovery/), and pass the same vanilla
 view to `mod.compile`:
 
 ```ts
-import { createMod, stellaris } from "@pdx-ts/sdk";
+import { createMod } from "@pdx-ts/sdk";
+import * as stellaris from "@pdx-ts/sdk/installation";
 
 const mod = createMod({
   name: "Crystal Resonance",

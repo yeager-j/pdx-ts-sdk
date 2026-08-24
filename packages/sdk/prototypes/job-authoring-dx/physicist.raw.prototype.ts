@@ -1,5 +1,6 @@
 /** PROTOTYPE ONLY: the source-complete mod.job version. */
-import { always, and, createMod, hasBuilding, hasModifier, isRobotPop, vanilla } from "@pdx-ts/sdk";
+import { createMod } from "@pdx-ts/sdk";
+import { always, and, hasBuilding, hasModifier, isRobotPop, vanilla } from "@pdx-ts/sdk/stellaris";
 
 const mod = createMod({
   name: "Physicist DX Prototype",

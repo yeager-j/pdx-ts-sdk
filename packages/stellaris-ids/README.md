@@ -29,7 +29,7 @@ is nothing to import: the SDK reads this package's id tables directly, so every
 `vanilla.*` helper it exports checks its argument against the real id set:
 
 ```ts
-import { vanilla } from "@pdx-ts/sdk";
+import { vanilla } from "@pdx-ts/sdk/stellaris";
 
 vanilla.technology("tech_lasers_1"); // ok
 vanilla.technology("tech_lazers_1"); // compile error

@@ -1,11 +1,5 @@
-import {
-  createMod,
-  hasCompletedEventChainCounter,
-  isAi,
-  onActions,
-  vanilla,
-  type CapabilityFeature,
-} from "@pdx-ts/sdk";
+import { createMod, type CapabilityFeature } from "@pdx-ts/sdk";
+import { hasCompletedEventChainCounter, isAi, onActions, vanilla } from "@pdx-ts/sdk/stellaris";
 
 const mod = createMod({
   name: "Crystal Mystery",

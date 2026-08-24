@@ -1,5 +1,5 @@
 import { SUPPORTED_VERSION_PATTERN } from "../generated/verified-build.ts";
-import type { VanillaView } from "../stellaris/vanilla/view.ts";
+import type { VanillaView } from "../installation/vanilla/view.ts";
 
 const PREFIX_PATTERN = /^[a-z][a-z0-9_]*$/;
 

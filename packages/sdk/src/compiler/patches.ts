@@ -4,20 +4,20 @@ import type { PlacedItem } from "../authoring/feature.ts";
 import { StaleRuleTableError } from "../errors.ts";
 import type { ContentTypeName } from "../generated/content-registry.ts";
 import {
+  collectVarRefs,
+  planPatchEmission,
+  type PatchPlan,
+} from "../installation/vanilla/override-plan.ts";
+import { registryRule, SUPPORTED_STELLARIS_BUILD } from "../installation/vanilla/override-rules.ts";
+import { sha256Hex } from "../installation/vanilla/parse.ts";
+import type { VanillaFile } from "../installation/vanilla/parsed-definitions.ts";
+import type { PatchedContent } from "../installation/vanilla/patch.ts";
+import {
   compareLogicalPaths,
   compareUtf8,
   normalizeLogicalPath,
   type LogicalPath,
 } from "../ordering.ts";
-import {
-  collectVarRefs,
-  planPatchEmission,
-  type PatchPlan,
-} from "../stellaris/vanilla/override-plan.ts";
-import { registryRule, SUPPORTED_STELLARIS_BUILD } from "../stellaris/vanilla/override-rules.ts";
-import { sha256Hex } from "../stellaris/vanilla/parse.ts";
-import type { VanillaFile } from "../stellaris/vanilla/parsed-definitions.ts";
-import type { PatchedContent } from "../stellaris/vanilla/patch.ts";
 import type { BuildOptions, ResolvedModConfig } from "./config.ts";
 import type { ContentFile } from "./model.ts";
 import type { ReferenceUse } from "./references.ts";

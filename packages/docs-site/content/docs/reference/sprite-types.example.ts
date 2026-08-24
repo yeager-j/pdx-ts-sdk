@@ -1,4 +1,5 @@
-import { always, createMod } from "@pdx-ts/sdk";
+import { createMod } from "@pdx-ts/sdk";
+import { always } from "@pdx-ts/sdk/stellaris";
 
 const mod = createMod({
   name: "Starfall Interface",

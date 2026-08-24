@@ -59,9 +59,9 @@ import { Emitter } from "@pdx-ts/codegen-cwt/render/emitter";
 import { parse, scalarText, type PdxValue } from "@pdx-ts/pdxscript";
 
 import { InstallNotFoundError } from "../../src/errors.ts";
+import { locateInstall } from "../../src/installation/installation/locate.ts";
+import { readGameVersion } from "../../src/installation/installation/version.ts";
 import { compareUtf8 } from "../../src/ordering.ts";
-import { locateInstall } from "../../src/stellaris/installation/locate.ts";
-import { readGameVersion } from "../../src/stellaris/installation/version.ts";
 
 /**
  * Anchored to the module rather than the process, the same way

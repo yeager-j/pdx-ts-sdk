@@ -19,12 +19,12 @@ import { describe, expect, it } from "vitest";
 import { adjudicatePaths, type PathClaim } from "../src/compiler/paths.ts";
 import {
   createMod,
-  normalizeLogicalPath,
   PathOwnershipError,
   type PathConflictReason,
   type PathOwnershipConflict,
   type PathProducerKind,
 } from "../src/index.ts";
+import { normalizeLogicalPath } from "../src/internals.ts";
 
 function claim(path: string, kind: PathProducerKind = "content", stems: string[] = []): PathClaim {
   return {

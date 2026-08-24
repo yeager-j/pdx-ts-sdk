@@ -29,17 +29,15 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 
+import { install, MaterializationError, write } from "../src/index.ts";
 import {
-  install,
-  MaterializationError,
   recoverInstallation,
   recoverMaterialization,
-  renderLauncherDescriptor,
-  write,
   type RecoveryReport,
-} from "../src/index.ts";
+} from "../src/internals.ts";
 import { MATERIALIZATION_PHASES } from "../src/output/journal.ts";
 import { lockPathFor } from "../src/output/layout.ts";
+import { renderLauncherDescriptor } from "../src/output/render.ts";
 import * as testHooks from "../src/output/test-hooks.ts";
 import { _setMaterializationTestHook } from "../src/output/test-hooks.ts";
 import { renderGeneration, type Generation } from "./helpers/crash-mod.ts";

@@ -29,7 +29,7 @@ import {
   isAtWar,
   not,
   onActions,
-} from "@pdx-ts/sdk";
+} from "@pdx-ts/sdk/stellaris";
 
 import { mod } from "../mod.ts";
 

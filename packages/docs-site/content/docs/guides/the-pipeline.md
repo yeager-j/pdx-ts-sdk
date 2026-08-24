@@ -41,7 +41,7 @@ The scaffolded entry points use the opt-in terminal module instead of spelling
 out this pipeline and its presentation in every project:
 
 ```ts
-import { runBuild } from "@pdx-ts/sdk/terminal";
+import { runBuild } from "@pdx-ts/sdk";
 
 await runBuild(buildTheMod(), {
   outDir: new URL("../out/", import.meta.url),
@@ -130,9 +130,8 @@ The rendered snapshot already contains the mod's own `descriptor.mod`. That
 file lives inside the mod directory and describes the mod. The launcher-side
 `<dirName>.mod` file lives beside the installed content directory and adds a
 `path="..."` line that points to it. `render` cannot create this second file
-because its contents depend on the final install location. To produce one for
-a directory you chose yourself, call
-`renderLauncherDescriptor(rendered, contentDir)`.
+because its contents depend on the final install location. `install` renders it
+from the same snapshot once the content directory is known.
 
 Both functions also write `.pdx-sdk-manifest.json`, which records SDK ownership
 and digests for later drift checks. This is materialization metadata, not a
@@ -147,6 +146,7 @@ Each report also says whether anything on disk changed and lists the
 SDK-owned output that has drifted since the previous run.
 
 A refusal is not a dead end. A drift refusal carries a receipt; pass it to
-`replaceMaterialization` or `replaceInstallation` to replace the drifted
-output deliberately. An interrupted run leaves a transaction that
-`recoverMaterialization` or `recoverInstallation` completes or rolls back.
+`replaceMaterialization` or `replaceInstallation` (from
+`@pdx-ts/sdk/internals`) to replace the drifted output deliberately. An
+interrupted run leaves a transaction that `recoverMaterialization` or
+`recoverInstallation` (same module) completes or rolls back.

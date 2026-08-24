@@ -10,9 +10,9 @@
  */
 
 import type { PdxEntry } from "@pdx-ts/pdxscript";
+import { createMod } from "@pdx-ts/sdk";
+import { makeScope, type VanillaEnumMember } from "@pdx-ts/sdk/internals";
 import {
-  createMod,
-  makeScope,
   scriptedTriggerModifier,
   vanilla,
   type ComponentSlot,
@@ -25,9 +25,8 @@ import {
   type StaticModifierRef,
   type TechnologyRef,
   type Trigger,
-  type VanillaEnumMember,
   type VanillaId,
-} from "@pdx-ts/sdk";
+} from "@pdx-ts/sdk/stellaris";
 import type { VanillaScriptedTriggers, VanillaTries } from "@pdx-ts/stellaris-ids";
 import { describe, expectTypeOf, it } from "vitest";
 

@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import { defineHardening } from "../../../examples/hardening/mod.ts";
 import { render } from "../src/index.ts";
-import { load } from "../src/stellaris/vanilla/load.ts";
+import { load } from "../src/installation/vanilla/load.ts";
 
 const vanilla = load({
   installPath: join(import.meta.dirname, "../../../fixtures/fake-install"),

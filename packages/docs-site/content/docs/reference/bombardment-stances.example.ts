@@ -1,4 +1,5 @@
-import { createMod, hasPolicyFlag, owner } from "@pdx-ts/sdk";
+import { createMod } from "@pdx-ts/sdk";
+import { hasPolicyFlag, owner } from "@pdx-ts/sdk/stellaris";
 
 const mod = createMod({
   name: "Measured Bombardment",

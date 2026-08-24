@@ -1,4 +1,5 @@
-import { and, createMod, hasClaim, isCountryType, isNomadic } from "@pdx-ts/sdk";
+import { createMod } from "@pdx-ts/sdk";
+import { and, hasClaim, isCountryType, isNomadic } from "@pdx-ts/sdk/stellaris";
 
 const mod = createMod({
   name: "Frontier Claims",

@@ -10,9 +10,9 @@ import {
   checkVanillaPathInventoryConsistency,
   packagedVanillaPaths,
 } from "../identifiers/vanilla-paths.ts";
+import type { PatchedContent } from "../installation/vanilla/patch.ts";
+import type { VanillaView } from "../installation/vanilla/view.ts";
 import { compareUtf8, normalizeLogicalPath } from "../ordering.ts";
-import type { PatchedContent } from "../stellaris/vanilla/patch.ts";
-import type { VanillaView } from "../stellaris/vanilla/view.ts";
 import type { CompiledContent } from "./compile-content.ts";
 import type { CompiledEvents } from "./compile-events.ts";
 import { stemsOf, type BuildSession } from "./compile-session.ts";

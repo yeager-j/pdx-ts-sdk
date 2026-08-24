@@ -93,7 +93,7 @@ game also applies body-size spacing, and it has no reliable author-facing
 formula for that distance.
 
 ```ts
-import { absoluteOrbits } from "@pdx-ts/sdk";
+import { absoluteOrbits } from "@pdx-ts/sdk/stellaris";
 
 const planet = absoluteOrbits([
   { class: "star", radius: 0, angle: 0 },
@@ -128,7 +128,7 @@ and splice its `orbits` into the one surrounding `absoluteOrbits` call, so all
 planet radii are checked together:
 
 ```ts
-import { absoluteOrbits, asteroidBelt } from "@pdx-ts/sdk";
+import { absoluteOrbits, asteroidBelt } from "@pdx-ts/sdk/stellaris";
 
 const rubble = asteroidBelt({
   type: "rocky_asteroid_belt",

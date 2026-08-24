@@ -1,4 +1,5 @@
-import { always, createMod, hasBuilding, isRobotPop, vanilla } from "@pdx-ts/sdk";
+import { createMod } from "@pdx-ts/sdk";
+import { always, hasBuilding, isRobotPop, vanilla } from "@pdx-ts/sdk/stellaris";
 
 const mod = createMod({
   name: "Crystal Harmonics",

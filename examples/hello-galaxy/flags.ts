@@ -1,4 +1,4 @@
-import { countryFlags } from "@pdx-ts/sdk";
+import { countryFlags } from "@pdx-ts/sdk/stellaris";
 
 /**
  * Flags this mod sets and reads.

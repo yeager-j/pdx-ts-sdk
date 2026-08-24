@@ -1,4 +1,5 @@
-import { createMod, isScopeValid } from "@pdx-ts/sdk";
+import { createMod } from "@pdx-ts/sdk";
+import { isScopeValid } from "@pdx-ts/sdk/stellaris";
 
 const mod = createMod({
   name: "Dreadnought Doctrine",

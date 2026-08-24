@@ -9,15 +9,15 @@
  * wrong here, and the two answers send a reader in opposite directions.
  */
 
+import { createMod } from "@pdx-ts/sdk";
+import { scopeLinkOutput } from "@pdx-ts/sdk/internals";
 import {
   countryFlags,
-  createMod,
   hasCountryFlag,
   owner,
-  scopeLinkOutput,
   scriptedTrigger,
   spaceOwner,
-} from "@pdx-ts/sdk";
+} from "@pdx-ts/sdk/stellaris";
 import { describe, expect, it } from "vitest";
 
 import { evaluate, explain, fixture, renderExplanation } from "../src/index.ts";

@@ -8,7 +8,8 @@ import { describe, expectTypeOf, it } from "vitest";
 
 import type { SituationTypeItem } from "../src/generated/content-definers.ts";
 import type { SituationTypeRef } from "../src/generated/refs.ts";
-import { createMod, eventTarget } from "../src/index.ts";
+import { createMod } from "../src/index.ts";
+import { eventTarget } from "../src/stellaris.ts";
 
 describe("the declared situation target contract", () => {
   it("carries the declared scope on the defined object", () => {

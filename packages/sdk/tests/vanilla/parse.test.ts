@@ -14,12 +14,12 @@ import {
   readDefinition,
   registryOfPath,
   variableTables,
-} from "../../src/stellaris/vanilla/parse.ts";
+} from "../../src/installation/vanilla/parse.ts";
 import {
   ParsedDefinition,
   ParsedTechnology,
-} from "../../src/stellaris/vanilla/parsed-definitions.ts";
-import { viewFromFiles } from "../../src/stellaris/vanilla/view.ts";
+} from "../../src/installation/vanilla/parsed-definitions.ts";
+import { viewFromFiles } from "../../src/installation/vanilla/view.ts";
 
 const TECH_PATH = "common/technology/pp_tech.txt";
 const VARS_PATH = "common/scripted_variables/pp_vars.txt";

@@ -37,17 +37,12 @@ import { hostname, tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
+import { createMod, install, MaterializationError, render, write } from "../src/index.ts";
 import {
-  createMod,
-  install,
-  MaterializationError,
   recoverInstallation,
   recoverMaterialization,
-  render,
-  renderLauncherDescriptor,
-  write,
   type RecoveryReport,
-} from "../src/index.ts";
+} from "../src/internals.ts";
 import {
   JournalFormatError,
   parseJournal,
@@ -62,6 +57,7 @@ import {
   type SiblingRole,
 } from "../src/output/layout.ts";
 import { assertRepresentableMaterialization } from "../src/output/preflight.ts";
+import { renderLauncherDescriptor } from "../src/output/render.ts";
 import { createRenderedMod, type RenderedMod } from "../src/output/rendered.ts";
 import { claimRecovery, processIsAlive, readJournal } from "../src/output/transaction.ts";
 import { pathStillNames } from "../src/output/tree.ts";

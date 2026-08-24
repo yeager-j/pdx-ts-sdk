@@ -22,7 +22,7 @@ import {
   VanillaPackageMismatchError,
   type ModConfig,
 } from "../src/index.ts";
-import { viewFromFiles } from "../src/stellaris/vanilla/view.ts";
+import { viewFromFiles } from "../src/installation/vanilla/view.ts";
 import { TECH_FILE, VARS_FILE } from "./fixtures/vanilla-fixture.ts";
 
 describe("checkVanillaPackagePin", () => {

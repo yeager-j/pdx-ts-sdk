@@ -14,7 +14,8 @@
  * moving clock is a lie the harness now refuses to tell.
  */
 
-import { countryFlags, createMod, hasCountryFlag } from "@pdx-ts/sdk";
+import { createMod } from "@pdx-ts/sdk";
+import { countryFlags, hasCountryFlag } from "@pdx-ts/sdk/stellaris";
 import { describe, expect, it } from "vitest";
 
 import { fixture } from "../src/index.ts";

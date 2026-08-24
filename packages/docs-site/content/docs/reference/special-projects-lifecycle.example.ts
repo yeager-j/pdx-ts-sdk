@@ -1,4 +1,5 @@
-import { createMod, eventTarget, exists, hasOwner, isAi, onActions, vanilla } from "@pdx-ts/sdk";
+import { createMod } from "@pdx-ts/sdk";
+import { eventTarget, exists, hasOwner, isAi, onActions, vanilla } from "@pdx-ts/sdk/stellaris";
 
 const mod = createMod({
   name: "Crystal Survey",

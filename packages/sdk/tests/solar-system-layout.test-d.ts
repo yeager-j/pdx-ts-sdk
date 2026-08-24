@@ -6,7 +6,7 @@ import {
   type AbsoluteMoonOrbit,
   type AbsolutePlanetOrbit,
   type PlanetInitializerFields,
-} from "../src/index.ts";
+} from "../src/stellaris.ts";
 
 describe("solar-system layout public types", () => {
   it("accepts readonly absolute trees and returns generated planet fields", () => {

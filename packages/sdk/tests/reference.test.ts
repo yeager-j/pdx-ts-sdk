@@ -3,7 +3,7 @@ import {
   SCRIPT_EFFECT_REFERENCES,
   SCRIPT_REFERENCE_SCOPES,
   SCRIPT_SCOPE_LINK_REFERENCES,
-} from "@pdx-ts/sdk/script-reference";
+} from "@pdx-ts/sdk/reference";
 import { describe, expect, it } from "vitest";
 
 import { STRUCTURAL_EFFECT_METHODS } from "../src/generated/effect-policy.ts";
@@ -117,7 +117,9 @@ describe("script reference metadata", () => {
     const packageJson = JSON.parse(readFileSync("packages/sdk/package.json", "utf8")) as {
       exports: Record<string, unknown>;
     };
-    expect(packageJson.exports["./script-reference"]).toBeDefined();
+    expect(packageJson.exports["./reference"]).toBeDefined();
+    expect(packageJson.exports["./script-reference"]).toBeUndefined();
+    expect(packageJson.exports["./content-registries"]).toBeUndefined();
     expect(readFileSync("packages/sdk/src/index.ts", "utf8")).not.toContain("script-reference");
   });
 });

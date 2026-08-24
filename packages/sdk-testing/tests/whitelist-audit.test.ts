@@ -18,8 +18,9 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse } from "@pdx-ts/pdxscript";
-import { EVENT_FIELD_SUPPORT, scopeLinkOutput, SUPPORTED_STELLARIS_BUILD } from "@pdx-ts/sdk";
-import { locateInstall } from "@pdx-ts/sdk/stellaris";
+import { locateInstall } from "@pdx-ts/sdk/installation";
+import { EVENT_FIELD_SUPPORT, scopeLinkOutput } from "@pdx-ts/sdk/internals";
+import { SUPPORTED_STELLARIS_BUILD } from "@pdx-ts/sdk/reference";
 import { describe, expect, it } from "vitest";
 
 import {

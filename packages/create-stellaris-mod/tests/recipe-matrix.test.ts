@@ -15,7 +15,7 @@
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { EVENT_KINDS } from "@pdx-ts/sdk";
+import { EVENT_KINDS } from "@pdx-ts/sdk/reference";
 import { format, resolveConfig, type Options } from "prettier";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 

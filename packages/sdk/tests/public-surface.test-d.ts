@@ -1,21 +1,22 @@
 import { describe, expectTypeOf, it } from "vitest";
 
 import * as sdk from "../src/index.ts";
-import {
-  createMod,
-  DEFAULT_CONTENT_PATTERN,
-  discoverFeatures,
-  type BuildingItem,
-  type BuildingPatchItem,
-  type MegastructureItem,
-  type MegastructurePatchItem,
-  type TechnologyItem,
-  type TechnologyPatchItem,
-} from "../src/index.ts";
-import { viewFromFiles } from "../src/stellaris/vanilla/view.ts";
+import { createMod, DEFAULT_CONTENT_PATTERN, discoverFeatures } from "../src/index.ts";
+import * as installation from "../src/installation/index.ts";
+import * as internals from "../src/internals.ts";
+import * as reference from "../src/reference.ts";
+import * as stellaris from "../src/stellaris.ts";
+import type {
+  BuildingItem,
+  BuildingPatchItem,
+  MegastructureItem,
+  MegastructurePatchItem,
+  TechnologyItem,
+  TechnologyPatchItem,
+} from "../src/stellaris.ts";
 
-describe("the public authoring surface", () => {
-  it("keeps capability entry points and item unions public", () => {
+describe("the pipeline entry point", () => {
+  it("keeps capability entry points public, and item unions on the vocabulary entry", () => {
     const mod = createMod({
       name: "Public surface",
       prefix: "public_surface",
@@ -42,7 +43,7 @@ describe("the public authoring surface", () => {
       supportedVersion: "4.4.*",
     });
     expectTypeOf<sdk.AssetFileItem["itemKind"]>().toEqualTypeOf<"asset">();
-    expectTypeOf<sdk.AssetFileItem["path"]>().toEqualTypeOf<sdk.LogicalPath>();
+    expectTypeOf<sdk.AssetFileItem["path"]>().toEqualTypeOf<internals.LogicalPath>();
     expectTypeOf<sdk.AssetFileItem["byteLength"]>().toEqualTypeOf<number>();
     expectTypeOf<sdk.AssetFileItem["sha256"]>().toEqualTypeOf<string>();
     expectTypeOf<typeof mod.assetFile>().toEqualTypeOf<
@@ -59,119 +60,18 @@ describe("the public authoring surface", () => {
     expectTypeOf<sdk.AssetFileItem["bytes"]>();
   });
 
-  it("lets a consumer name each patchable registry's item type, and place it", () => {
-    // The generated barrel carries the export line for every overlay row; this
-    // proves the names are usable — the package publishes no generated-module
-    // subpath, so a patch item a consumer cannot annotate is a patch item they
-    // cannot hold in a typed variable on the way to `mod.feature`.
-    const mod = createMod({
-      name: "Public surface",
-      prefix: "public_surface",
-      supportedVersion: "4.4.*",
-    });
-    const view = viewFromFiles({
-      "common/technology/vanilla.txt": "tech_ps_forging = {\n\tarea = society\n}\n",
-      "common/buildings/vanilla.txt": "building_ps_refinery = {\n\tplanet_limit = 1\n}\n",
-      "common/megastructures/vanilla.txt": "megastructure_ps_array = {\n\tbuild_time = 1800\n}\n",
-    });
-    const technology: TechnologyPatchItem = mod.patchTechnology(
-      view.definition("technology", "tech_ps_forging"),
-      () => ({ tier: 2 })
-    );
-    const building: BuildingPatchItem = mod.patchBuilding(
-      view.definition("building", "building_ps_refinery"),
-      () => ({ planetLimit: 2 })
-    );
-    const megastructure: MegastructurePatchItem = mod.patchMegastructure(
-      view.definition("megastructure", "megastructure_ps_array"),
-      () => ({ buildTime: 2400 })
-    );
-    // And each is a member of its own registry's item union, so a feature
-    // typed to one registry accepts its patches beside its definitions.
-    expectTypeOf(technology).toExtend<TechnologyItem>();
-    expectTypeOf(building).toExtend<BuildingItem>();
-    expectTypeOf(megastructure).toExtend<MegastructureItem>();
-    expectTypeOf(mod.feature(undefined, [technology, building, megastructure])).toBeObject();
-  });
-
-  it("lets a consumer name the generated content types", () => {
-    // The consumer end of `generated/content-public.ts`. Each group below is
-    // one table's contribution to that barrel: a name missing here cannot be
-    // written down at all, since the package publishes no generated-module
-    // subpath.
-    expectTypeOf<sdk.TechnologyDef["id"]>().toEqualTypeOf<string>();
-    expectTypeOf<sdk.TechnologyFields>().toBeObject();
-    expectTypeOf<sdk.DefinedTechnology>().toBeObject();
-    expectTypeOf<sdk.SpriteTypeDef>().toBeObject();
-    expectTypeOf<sdk.PdxmeshFields>().toBeObject();
-    expectTypeOf<sdk.DefinedSolarSystemInitializer>().toBeObject();
-
-    // Every patch registry's whole vocabulary, not just the item type above.
-    expectTypeOf<sdk.TechnologyPatch>().toBeObject();
-    expectTypeOf<sdk.PatchedTechnology>().toBeObject();
-    expectTypeOf<sdk.BuildingPatch>().toBeObject();
-    expectTypeOf<sdk.PatchedBuilding>().toBeObject();
-    expectTypeOf<sdk.MegastructurePatch>().toBeObject();
-    expectTypeOf<sdk.PatchedMegastructure>().toBeObject();
-
-    // The repeated-struct interfaces an author fills by key.
-    expectTypeOf<sdk.TraditionSwapFields>().toBeObject();
-    expectTypeOf<sdk.AscensionPerkSwapFields>().toBeObject();
-    expectTypeOf<sdk.SituationStageFields>().toBeObject();
-    expectTypeOf<sdk.SituationApproachFields>().toBeObject();
-
-    // The scope unions a scope-parameterised registry declares.
-    expectTypeOf<sdk.DecisionScope>().toEqualTypeOf<"planet" | "ship">();
-    expectTypeOf<sdk.SpecialProjectScope>().toEqualTypeOf<
-      "country" | "planet" | "ship" | "carrier"
-    >();
-    expectTypeOf<"planet">().toExtend<sdk.SpecialProjectLocationScope>();
-
-    // The name a shape mint builds, which is not `MintedContentId`-shaped.
-    expectTypeOf<
-      sdk.SpriteTextIconName<"prefix", "icon">
-    >().toEqualTypeOf<"GFX_text_prefix_icon">();
-    expectTypeOf<
-      sdk.SpriteFleetOrderButtonGroundSupportName<"stance", true>
-    >().toEqualTypeOf<"GFX_fleet_order_button_ground_support_stance_selected">();
-
-    // The curated nested types, each the type of a member an author fills.
-    expectTypeOf<sdk.EventChainCounterDefinition>().toBeObject();
-    expectTypeOf<sdk.GovernmentTriggerBlock>().toBeObject();
-    expectTypeOf<sdk.GovernmentTriggerClause<string>>().toBeObject();
-    expectTypeOf<sdk.GovernmentTriggerClauseGroup<string>>().toBeObject();
-    expectTypeOf<sdk.MoonInitializerFields>().toBeObject();
-    expectTypeOf<sdk.PlanetInitializerFields>().toBeObject();
-    expectTypeOf<sdk.PdxmeshAnimation>().toBeObject();
-    expectTypeOf<sdk.PdxmeshMeshsettings>().toBeObject();
-    expectTypeOf<sdk.ShipSizeSectionSlots>().toBeObject();
-    expectTypeOf<sdk.SpecialProjectRequirements>().toBeObject();
-    expectTypeOf<sdk.SpecialProjectTriggeredRequirement>().toBeObject();
-    expectTypeOf<sdk.SpriteTypeAnimation>().toBeObject();
-  });
-
-  it("keeps generated lowering machinery out of the content barrel", () => {
-    // @ts-expect-error — the runtime field table is lowering machinery.
-    void sdk.TECHNOLOGY_FIELDS;
-    // @ts-expect-error — so is the localisation descriptor table.
-    void sdk.TECHNOLOGY_LOCALISATION;
-    // @ts-expect-error — the base interface a selector resolves through is internal.
-    expectTypeOf<sdk.SpecialProjectFieldsBase>().toBeObject();
-    // @ts-expect-error — a nested struct authored inline needs no name of its own.
-    expectTypeOf<sdk.TechnologyPrereqforDesc>().toBeObject();
-  });
-
   it("returns one report shape from every materialization sink", () => {
     // The sinks are what a build script's last line calls, so the report is
     // the whole answer it gets: where the output went, what was carried, what
-    // could not be cleaned up.
+    // could not be cleaned up. The replace/recover variants live on
+    // `/internals` but return the same shapes.
     expectTypeOf<Awaited<ReturnType<typeof sdk.write>>>().toEqualTypeOf<sdk.WriteReport>();
     expectTypeOf<
-      Awaited<ReturnType<typeof sdk.replaceMaterialization>>
+      Awaited<ReturnType<typeof internals.replaceMaterialization>>
     >().toEqualTypeOf<sdk.WriteReport>();
     expectTypeOf<Awaited<ReturnType<typeof sdk.install>>>().toEqualTypeOf<sdk.InstallReport>();
     expectTypeOf<
-      Awaited<ReturnType<typeof sdk.replaceInstallation>>
+      Awaited<ReturnType<typeof internals.replaceInstallation>>
     >().toEqualTypeOf<sdk.InstallReport>();
 
     expectTypeOf<sdk.WriteReport>().toExtend<sdk.MaterializationReport>();
@@ -208,21 +108,11 @@ describe("the public authoring surface", () => {
     expectTypeOf<sdk.PathClaimant["kind"]>().toEqualTypeOf<sdk.PathProducerKind>();
     expectTypeOf<sdk.PathClaimant["stems"]>().toEqualTypeOf<readonly string[]>();
     expectTypeOf<sdk.PathClaimant["role"]>().toEqualTypeOf<"file" | "directory">();
-    expectTypeOf<sdk.PureMod["paths"]>().toEqualTypeOf<readonly sdk.PathClaim[]>();
-    expectTypeOf<sdk.PathClaim["producer"]>().toEqualTypeOf<sdk.PathProducer>();
-    expectTypeOf<sdk.PathClaim["path"]>().toEqualTypeOf<sdk.LogicalPath>();
+    expectTypeOf<sdk.PureMod["paths"]>().toEqualTypeOf<readonly internals.PathClaim[]>();
+    expectTypeOf<internals.PathClaim["producer"]>().toEqualTypeOf<internals.PathProducer>();
+    expectTypeOf<internals.PathClaim["path"]>().toEqualTypeOf<internals.LogicalPath>();
     // @ts-expect-error — the fold adjudicates, so a PureMod has no raw evidence set.
     expectTypeOf<sdk.PureMod["vanillaPaths"]>();
-  });
-
-  it("publishes the canonical byte comparator, not just its logical-path door", () => {
-    // `compareUtf8` is public on purpose (SDK-173). The canonical order over
-    // plain strings governs more than one artifact — the emission ledger, and
-    // now the vanilla path inventory `@pdx-ts/codegen-vanilla` emits — and a
-    // second implementation of "byte order" is a second authority that drifts.
-    expectTypeOf(sdk.compareUtf8).toBeFunction();
-    expectTypeOf<Parameters<typeof sdk.compareUtf8>>().toEqualTypeOf<[string, string]>();
-    expectTypeOf<ReturnType<typeof sdk.compareUtf8>>().toEqualTypeOf<-1 | 0 | 1>();
   });
 
   it("takes no receipt a caller could have written themselves", () => {
@@ -231,14 +121,73 @@ describe("the public authoring surface", () => {
     // replay call — the place a caller has least reason to expect one.
     expectTypeOf({}).not.toExtend<sdk.MaterializationReceipt>();
     expectTypeOf<
-      Parameters<typeof sdk.replaceMaterialization>[2]
+      Parameters<typeof internals.replaceMaterialization>[2]
     >().toEqualTypeOf<sdk.MaterializationReceipt>();
     expectTypeOf<
-      Parameters<typeof sdk.replaceInstallation>[1]
+      Parameters<typeof internals.replaceInstallation>[1]
     >().toEqualTypeOf<sdk.MaterializationReceipt>();
     const replay = (_receipt: sdk.MaterializationReceipt): void => {};
     // @ts-expect-error — a plain object is not evidence of an observed state.
     replay({});
+  });
+
+  it("carries no game vocabulary, no install access, and no machinery", () => {
+    // ADR-0007: each name has exactly one entry. The vocabulary lives on
+    // `/stellaris`, the install on `/installation`, tables on `/reference`,
+    // machinery on `/internals` — none of it on the pipeline entry.
+    // @ts-expect-error — combinators are vocabulary.
+    void sdk.and;
+    // @ts-expect-error — generated triggers are vocabulary.
+    void sdk.hasCountryFlag;
+    // @ts-expect-error — scope links are vocabulary.
+    void sdk.owner;
+    // @ts-expect-error — value-set factories are vocabulary.
+    void sdk.countryFlags;
+    // @ts-expect-error — event targets are vocabulary.
+    void sdk.eventTarget;
+    // @ts-expect-error — on-action bindings are vocabulary.
+    void sdk.onActions;
+    // @ts-expect-error — the vanilla ref builders are vocabulary.
+    void sdk.vanilla;
+    // @ts-expect-error — scripted bindings are vocabulary.
+    void sdk.scriptedTrigger;
+    // @ts-expect-error — the old root namespace mirror is gone; use /installation.
+    void sdk.stellaris;
+    // @ts-expect-error — install loading lives on /installation.
+    void sdk.viewFromFiles;
+    // @ts-expect-error — the recorder is machinery on /internals.
+    void sdk.recordEffects;
+    // @ts-expect-error — policy tables live on /internals.
+    void sdk.MODIFIER_OPERATIONS;
+    // @ts-expect-error — recovery ops live on /internals.
+    void sdk.recoverInstallation;
+    // @ts-expect-error — comparators live on /internals.
+    void sdk.compareUtf8;
+    // @ts-expect-error — raw PDXScript constructors live on /internals.
+    void sdk.kv;
+    // @ts-expect-error — registry facts live on /reference.
+    void sdk.EVENT_KINDS;
+    // @ts-expect-error — the build pin lives on /reference.
+    void sdk.SUPPORTED_STELLARIS_BUILD;
+  });
+
+  it("no longer exports the zero-consumer names at all", () => {
+    // Dropped in SDK-287 while the package is unreleased; the source modules
+    // keep them, so re-exporting later is one reviewed line.
+    // @ts-expect-error — the override rule table is not public.
+    void sdk.REGISTRY_RULES;
+    // @ts-expect-error — nor is it public as machinery.
+    void internals.REGISTRY_RULES;
+    // @ts-expect-error — the modifier operation policy is not public.
+    void internals.MODIFIER_OPERATION_POLICY;
+    // @ts-expect-error — the launcher descriptor is rendered inside install().
+    void sdk.renderLauncherDescriptor;
+    // @ts-expect-error — and it is not machinery either.
+    void internals.renderLauncherDescriptor;
+    // @ts-expect-error — patch planning stays inside the resolver.
+    expectTypeOf<sdk.PatchPlan>().toBeObject();
+    // @ts-expect-error — as does its win evidence.
+    expectTypeOf<sdk.WinAssertion>().toBeObject();
   });
 
   it("does not re-export legacy authoring values", () => {
@@ -272,5 +221,166 @@ describe("the public authoring surface", () => {
     void sdk.addShipOfSizeLimits;
     // @ts-expect-error — installing reports, so the bare result type is gone.
     expectTypeOf<sdk.InstallResult>().toBeObject();
+  });
+});
+
+describe("the vocabulary entry point", () => {
+  it("lets a consumer name each patchable registry's item type, and place it", () => {
+    // The generated barrel carries the export line for every overlay row; this
+    // proves the names are usable — the package publishes no generated-module
+    // subpath, so a patch item a consumer cannot annotate is a patch item they
+    // cannot hold in a typed variable on the way to `mod.feature`.
+    const mod = createMod({
+      name: "Public surface",
+      prefix: "public_surface",
+      supportedVersion: "4.4.*",
+    });
+    const view = installation.viewFromFiles({
+      "common/technology/vanilla.txt": "tech_ps_forging = {\n\tarea = society\n}\n",
+      "common/buildings/vanilla.txt": "building_ps_refinery = {\n\tplanet_limit = 1\n}\n",
+      "common/megastructures/vanilla.txt": "megastructure_ps_array = {\n\tbuild_time = 1800\n}\n",
+    });
+    const technology: TechnologyPatchItem = mod.patchTechnology(
+      view.definition("technology", "tech_ps_forging"),
+      () => ({ tier: 2 })
+    );
+    const building: BuildingPatchItem = mod.patchBuilding(
+      view.definition("building", "building_ps_refinery"),
+      () => ({ planetLimit: 2 })
+    );
+    const megastructure: MegastructurePatchItem = mod.patchMegastructure(
+      view.definition("megastructure", "megastructure_ps_array"),
+      () => ({ buildTime: 2400 })
+    );
+    // And each is a member of its own registry's item union, so a feature
+    // typed to one registry accepts its patches beside its definitions.
+    expectTypeOf(technology).toExtend<TechnologyItem>();
+    expectTypeOf(building).toExtend<BuildingItem>();
+    expectTypeOf(megastructure).toExtend<MegastructureItem>();
+    expectTypeOf(mod.feature(undefined, [technology, building, megastructure])).toBeObject();
+  });
+
+  it("lets a consumer name the generated content types", () => {
+    // The consumer end of `generated/content-public.ts`. Each group below is
+    // one table's contribution to that barrel: a name missing here cannot be
+    // written down at all, since the package publishes no generated-module
+    // subpath.
+    expectTypeOf<stellaris.TechnologyDef["id"]>().toEqualTypeOf<string>();
+    expectTypeOf<stellaris.TechnologyFields>().toBeObject();
+    expectTypeOf<stellaris.DefinedTechnology>().toBeObject();
+    expectTypeOf<stellaris.SpriteTypeDef>().toBeObject();
+    expectTypeOf<stellaris.PdxmeshFields>().toBeObject();
+    expectTypeOf<stellaris.DefinedSolarSystemInitializer>().toBeObject();
+
+    // Every patch registry's whole vocabulary, not just the item type above.
+    expectTypeOf<stellaris.TechnologyPatch>().toBeObject();
+    expectTypeOf<stellaris.PatchedTechnology>().toBeObject();
+    expectTypeOf<stellaris.BuildingPatch>().toBeObject();
+    expectTypeOf<stellaris.PatchedBuilding>().toBeObject();
+    expectTypeOf<stellaris.MegastructurePatch>().toBeObject();
+    expectTypeOf<stellaris.PatchedMegastructure>().toBeObject();
+
+    // The repeated-struct interfaces an author fills by key.
+    expectTypeOf<stellaris.TraditionSwapFields>().toBeObject();
+    expectTypeOf<stellaris.AscensionPerkSwapFields>().toBeObject();
+    expectTypeOf<stellaris.SituationStageFields>().toBeObject();
+    expectTypeOf<stellaris.SituationApproachFields>().toBeObject();
+
+    // The scope unions a scope-parameterised registry declares.
+    expectTypeOf<stellaris.DecisionScope>().toEqualTypeOf<"planet" | "ship">();
+    expectTypeOf<stellaris.SpecialProjectScope>().toEqualTypeOf<
+      "country" | "planet" | "ship" | "carrier"
+    >();
+    expectTypeOf<"planet">().toExtend<stellaris.SpecialProjectLocationScope>();
+
+    // The name a shape mint builds, which is not `MintedContentId`-shaped.
+    expectTypeOf<
+      stellaris.SpriteTextIconName<"prefix", "icon">
+    >().toEqualTypeOf<"GFX_text_prefix_icon">();
+    expectTypeOf<
+      stellaris.SpriteFleetOrderButtonGroundSupportName<"stance", true>
+    >().toEqualTypeOf<"GFX_fleet_order_button_ground_support_stance_selected">();
+
+    // The curated nested types, each the type of a member an author fills.
+    expectTypeOf<stellaris.EventChainCounterDefinition>().toBeObject();
+    expectTypeOf<stellaris.GovernmentTriggerBlock>().toBeObject();
+    expectTypeOf<stellaris.GovernmentTriggerClause<string>>().toBeObject();
+    expectTypeOf<stellaris.GovernmentTriggerClauseGroup<string>>().toBeObject();
+    expectTypeOf<stellaris.MoonInitializerFields>().toBeObject();
+    expectTypeOf<stellaris.PlanetInitializerFields>().toBeObject();
+    expectTypeOf<stellaris.PdxmeshAnimation>().toBeObject();
+    expectTypeOf<stellaris.PdxmeshMeshsettings>().toBeObject();
+    expectTypeOf<stellaris.ShipSizeSectionSlots>().toBeObject();
+    expectTypeOf<stellaris.SpecialProjectRequirements>().toBeObject();
+    expectTypeOf<stellaris.SpecialProjectTriggeredRequirement>().toBeObject();
+    expectTypeOf<stellaris.SpriteTypeAnimation>().toBeObject();
+  });
+
+  it("keeps generated lowering machinery out of the content barrel", () => {
+    // @ts-expect-error — the runtime field table is lowering machinery.
+    void stellaris.TECHNOLOGY_FIELDS;
+    // @ts-expect-error — so is the localisation descriptor table.
+    void stellaris.TECHNOLOGY_LOCALISATION;
+    // @ts-expect-error — the base interface a selector resolves through is internal.
+    expectTypeOf<stellaris.SpecialProjectFieldsBase>().toBeObject();
+    // @ts-expect-error — a nested struct authored inline needs no name of its own.
+    expectTypeOf<stellaris.TechnologyPrereqforDesc>().toBeObject();
+  });
+
+  it("carries the expression language, and no pipeline", () => {
+    expectTypeOf(stellaris.and).toBeFunction();
+    expectTypeOf(stellaris.hasCountryFlag).toBeFunction();
+    expectTypeOf(stellaris.owner).toBeFunction();
+    expectTypeOf(stellaris.countryFlags).toBeFunction();
+    expectTypeOf(stellaris.eventTarget).toBeFunction();
+    expectTypeOf(stellaris.scriptedTrigger).toBeFunction();
+    expectTypeOf(stellaris.vanilla.technology).toBeFunction();
+    expectTypeOf(stellaris.onActions).toBeObject();
+    expectTypeOf(stellaris.absoluteOrbits).toBeFunction();
+    // @ts-expect-error — the pipeline stays on the root entry.
+    void stellaris.createMod;
+    // @ts-expect-error — so does materialization.
+    void stellaris.write;
+    // @ts-expect-error — the recorder is machinery on /internals.
+    void stellaris.recordEffects;
+  });
+});
+
+describe("the installation, reference, and internals entry points", () => {
+  it("keeps install access on /installation", () => {
+    expectTypeOf(installation.locateInstall).toBeFunction();
+    expectTypeOf(installation.load).toBeFunction();
+    expectTypeOf(installation.modDir).toBeFunction();
+    expectTypeOf(installation.viewFromFiles).toBeFunction();
+    expectTypeOf(installation.anyOf).toBeFunction();
+    expectTypeOf<installation.VanillaView>().toBeObject();
+    expectTypeOf<installation.ParsedTechnology>().toBeObject();
+    // @ts-expect-error — the pipeline stays on the root entry.
+    void installation.install;
+  });
+
+  it("keeps SDK facts on /reference", () => {
+    expectTypeOf(reference.CONTENT_REGISTRIES).toExtend<readonly unknown[]>();
+    expectTypeOf(reference.SCRIPT_REFERENCE_SCOPES).toExtend<readonly unknown[]>();
+    expectTypeOf(reference.EVENT_KINDS).toBeObject();
+    expectTypeOf(reference.SUPPORTED_STELLARIS_BUILD).toBeString();
+    expectTypeOf(reference.aliasStructFieldsOf).toBeFunction();
+  });
+
+  it("keeps the recorder and tables on /internals", () => {
+    expectTypeOf(internals.recordEffects).toBeFunction();
+    expectTypeOf(internals.makeScope).toBeFunction();
+    expectTypeOf(internals.isEffectKey).toBeFunction();
+    expectTypeOf(internals.scopeLinkOutput).toBeFunction();
+    expectTypeOf(internals.MODIFIER_OPERATIONS).toBeObject();
+    expectTypeOf(internals.EVENT_FIELD_SUPPORT).toBeObject();
+    expectTypeOf(internals.AMBIENT_SCOPE_KEYS).toExtend<readonly string[]>();
+    expectTypeOf(internals.compareUtf8).toBeFunction();
+    expectTypeOf<Parameters<typeof internals.compareUtf8>>().toEqualTypeOf<[string, string]>();
+    expectTypeOf<ReturnType<typeof internals.compareUtf8>>().toEqualTypeOf<-1 | 0 | 1>();
+    expectTypeOf(internals.recoverInstallation).toBeFunction();
+    expectTypeOf(internals.stampedVanillaPackageVersion).toBeFunction();
+    expectTypeOf(internals.kv).toBeFunction();
+    expectTypeOf(internals.serialize).toBeFunction();
   });
 });

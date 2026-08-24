@@ -1,4 +1,4 @@
-import type { DefinedEvent } from "@pdx-ts/sdk";
+import type { DefinedEvent } from "@pdx-ts/sdk/stellaris";
 
 type TestingModule = typeof import("@pdx-ts/sdk-testing");
 type MatcherModule = typeof import("@pdx-ts/sdk-testing/matchers");

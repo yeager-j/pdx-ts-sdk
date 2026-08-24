@@ -1,4 +1,5 @@
-import { createMod, eventTarget, hasOwner } from "@pdx-ts/sdk";
+import { createMod } from "@pdx-ts/sdk";
+import { eventTarget, hasOwner } from "@pdx-ts/sdk/stellaris";
 
 const mod = createMod({
   name: "Crystal Resonance",

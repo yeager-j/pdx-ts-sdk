@@ -12,8 +12,9 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { isVanillaRef } from "../src/identifiers/trie.ts";
-import { createMod, refId, render, vanilla } from "../src/index.ts";
+import { createMod, render } from "../src/index.ts";
 import { toScalar } from "../src/script/scalar.ts";
+import { refId, vanilla } from "../src/stellaris.ts";
 
 const CONFIG = {
   name: "Vanilla ref tests",

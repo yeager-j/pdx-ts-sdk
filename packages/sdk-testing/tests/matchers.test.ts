@@ -1,5 +1,5 @@
 import { kv } from "@pdx-ts/pdxscript";
-import { trigger } from "@pdx-ts/sdk";
+import { trigger } from "@pdx-ts/sdk/stellaris";
 import { describe, expect, it } from "vitest";
 
 import { fixture } from "../src/index.ts";

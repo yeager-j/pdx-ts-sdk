@@ -21,20 +21,20 @@ export const CONTENT_PATCH_REGISTRIES = new Map<string, string>([
   [
     "technology",
     "the first registry the vanilla loader parses and the patch resolver plans emission for " +
-      "(packages/sdk/src/stellaris/vanilla/, " +
+      "(packages/sdk/src/installation/vanilla/, " +
       "packages/sdk/src/compiler/patches.ts) — verified in-game by the " +
       "patches-that-provably-win calibration",
   ],
   [
     "building",
     "parsed by the vanilla loader beside technology (PARSED_REGISTRIES in " +
-      "packages/sdk/src/stellaris/vanilla/parse.ts), and its rule-table row is fully verified — " +
+      "packages/sdk/src/installation/vanilla/parse.ts), and its rule-table row is fully verified — " +
       "r8 established last-wins and whole-object replacement from matching diagnostics",
   ],
   [
     "megastructure",
     "parsed by the vanilla loader beside technology and building (PARSED_REGISTRIES in " +
-      "packages/sdk/src/stellaris/vanilla/parse.ts), and its rule-table row carries two " +
+      "packages/sdk/src/installation/vanilla/parse.ts), and its rule-table row carries two " +
       "non-refused cells — r8 verified last-wins, and whole-object replacement is the named " +
       "2026-07-31 judgment r8 could not discriminate. Assumed rather than verified is still a " +
       'rule the engine may act on: every win it backs reports `confidence: "assumed"` and ' +

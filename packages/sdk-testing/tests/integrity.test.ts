@@ -1,4 +1,6 @@
-import { block, countryFlags, createMod, eventTarget, hasOwner, kv } from "@pdx-ts/sdk";
+import { createMod } from "@pdx-ts/sdk";
+import { block, kv } from "@pdx-ts/sdk/internals";
+import { countryFlags, eventTarget, hasOwner } from "@pdx-ts/sdk/stellaris";
 import { describe, expect, it } from "vitest";
 
 import { fixture } from "../src/index.ts";

@@ -32,14 +32,8 @@
  */
 import { describe, expect, it } from "vitest";
 
-import {
-  always,
-  createMod,
-  hasJobType,
-  hasTradition,
-  trigger,
-  type Trigger,
-} from "../src/index.ts";
+import { createMod } from "../src/index.ts";
+import { always, hasJobType, hasTradition, trigger, type Trigger } from "../src/stellaris.ts";
 
 /**
  * `hasJobType` is `Trigger<"pop_job">`, and `Trigger<in S>` is contravariant

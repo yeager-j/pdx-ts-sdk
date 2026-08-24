@@ -23,7 +23,7 @@ import {
   EVENT_FIELD_SUPPORT,
   EVENT_OPTION_FIELD_SUPPORT,
   type StructuralEffectKey,
-} from "@pdx-ts/sdk";
+} from "@pdx-ts/sdk/internals";
 
 import {
   archaeologicalSiteState,

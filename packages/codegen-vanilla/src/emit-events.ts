@@ -60,7 +60,7 @@ export function emitEventTrie(
     const file = `events/${namespace}.ts`;
     files.set(
       file,
-      `${header(gameVersion)}import type { ${imported} } from "@pdx-ts/sdk";\n\n` +
+      `${header(gameVersion)}import type { ${imported} } from "@pdx-ts/sdk/stellaris";\n\n` +
         `export interface ${name} {\n${eventMembers.join("\n")}\n}\n`
     );
     imports.push(`import type { ${name} } from "./${namespace}.ts";\n`);

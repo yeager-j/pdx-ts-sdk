@@ -17,20 +17,19 @@ import { join } from "node:path";
 import { parse, type PdxEntry, type PdxItem, type PdxValue } from "@pdx-ts/pdxscript";
 import { afterAll, describe, expect, it } from "vitest";
 
+import { createMod, render } from "../src/index.ts";
+import { locateInstall } from "../src/installation/installation/locate.ts";
+import { load } from "../src/installation/vanilla/load.ts";
+import { SUPPORTED_STELLARIS_BUILD } from "../src/installation/vanilla/override-rules.ts";
+import { compareLogicalPaths } from "../src/ordering.ts";
 import {
   and,
   checkVariable,
-  createMod,
   hasAscensionPerk,
   owner,
   planet,
-  render,
   scriptedTrigger,
-} from "../src/index.ts";
-import { compareLogicalPaths } from "../src/ordering.ts";
-import { locateInstall } from "../src/stellaris/installation/locate.ts";
-import { load } from "../src/stellaris/vanilla/load.ts";
-import { SUPPORTED_STELLARIS_BUILD } from "../src/stellaris/vanilla/override-rules.ts";
+} from "../src/stellaris.ts";
 
 let installPath: string | undefined;
 try {

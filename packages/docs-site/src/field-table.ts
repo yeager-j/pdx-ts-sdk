@@ -8,7 +8,7 @@ import {
   type ContentFieldOmission,
   type ContentLocalisation,
   type ContentMemberDoc,
-} from "@pdx-ts/sdk/content-registries";
+} from "@pdx-ts/sdk/reference";
 
 /**
  * A registry's field tables, derived rather than written down — and the gate

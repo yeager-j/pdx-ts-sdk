@@ -1,4 +1,5 @@
-import { and, createMod, hasAnomaly, isStar, not } from "@pdx-ts/sdk";
+import { createMod } from "@pdx-ts/sdk";
+import { and, hasAnomaly, isStar, not } from "@pdx-ts/sdk/stellaris";
 
 const mod = createMod({
   name: "Helios Forge",

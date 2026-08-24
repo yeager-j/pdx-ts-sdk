@@ -1,7 +1,7 @@
 import { kv } from "@pdx-ts/pdxscript";
+import { createMod } from "@pdx-ts/sdk";
 import {
   countryFlags,
-  createMod,
   eventTarget,
   globalFlags,
   hasCountryFlag,
@@ -13,7 +13,7 @@ import {
   numOwnedPlanets,
   or,
   trigger,
-} from "@pdx-ts/sdk";
+} from "@pdx-ts/sdk/stellaris";
 import { describe, expect, it } from "vitest";
 
 import { evaluate, explain, fixture, renderExplanation } from "../src/index.ts";

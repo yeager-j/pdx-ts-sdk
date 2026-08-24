@@ -1,9 +1,9 @@
-import { EVENT_KINDS } from "@pdx-ts/sdk";
 import {
+  EVENT_KINDS,
   SCRIPT_EFFECT_REFERENCES,
   SCRIPT_REFERENCE_SCOPES,
   SCRIPT_SCOPE_LINK_REFERENCES,
-} from "@pdx-ts/sdk/script-reference";
+} from "@pdx-ts/sdk/reference";
 import { describe, expect, it } from "vitest";
 
 import {

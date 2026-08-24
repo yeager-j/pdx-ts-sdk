@@ -6,8 +6,8 @@
 
 import { describe, it } from "vitest";
 
+import { createMod } from "../src/index.ts";
 import {
-  createMod,
   eventTarget,
   hasPlanetFlag,
   planetFlags,
@@ -15,7 +15,7 @@ import {
   type EffectBlock,
   type EventTriggeredDescription,
   type TriggeredDescription,
-} from "../src/index.ts";
+} from "../src/stellaris.ts";
 
 describe("the FROM contract on the real event API", () => {
   it("accepts an unchecked third-party id", () => {

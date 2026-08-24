@@ -17,7 +17,7 @@
 
 import { conformance } from "@pdx-ts/codegen-cwt/corpus";
 
-import { locateInstall } from "../../src/stellaris/installation/locate.ts";
+import { locateInstall } from "../../src/installation/installation/locate.ts";
 import {
   corpusOfFixture,
   extractCorpus,

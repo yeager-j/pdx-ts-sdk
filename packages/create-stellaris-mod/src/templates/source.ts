@@ -128,7 +128,7 @@ export function indexTs(): string {
  * into this project.
  */
 
-import { runBuild } from "@pdx-ts/sdk/terminal";
+import { runBuild } from "@pdx-ts/sdk";
 
 import { buildTheMod } from "./mod.ts";
 
@@ -161,7 +161,7 @@ export function installTs(): string {
  * this directory on startup, so restart it if the mod does not appear.
  */
 
-import { runInstall } from "@pdx-ts/sdk/terminal";
+import { runInstall } from "@pdx-ts/sdk";
 
 import { buildTheMod } from "./mod.ts";
 
@@ -183,7 +183,8 @@ export function vanillaTs(resolved: Resolved): string {
  * SDK does not look, or \`PDX_NO_VANILLA=1\` to skip it deliberately.
  */
 
-import { stellaris, type VanillaView } from "@pdx-ts/sdk";
+import * as stellaris from "@pdx-ts/sdk/installation";
+import type { VanillaView } from "@pdx-ts/sdk/installation";
 ${fallbackConst(resolved)}
 export function loadVanilla(): VanillaView | undefined {
   if (process.env["PDX_NO_VANILLA"] === "1") {
@@ -216,7 +217,7 @@ export function flagsTs(resolved: Resolved): string {
  * quietly never true.
  */
 
-import { countryFlags } from "@pdx-ts/sdk";
+import { countryFlags } from "@pdx-ts/sdk/stellaris";
 
 export const flags = countryFlags("${resolved.prefix}_welcomed");
 `;
@@ -242,7 +243,7 @@ export function contentExampleTs(resolved: Resolved): string {
  * \`package.json#imports\`), so moving this module deeper never rewrites it.
  */
 
-import { hasCountryFlag, not, onActions } from "@pdx-ts/sdk";
+import { hasCountryFlag, not, onActions } from "@pdx-ts/sdk/stellaris";
 
 import { mod } from "#mod";
 

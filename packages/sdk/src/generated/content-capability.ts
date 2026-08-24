@@ -46,12 +46,12 @@ import type {
   EconomicCategoryWitness,
   ExactEconomicCategoryWitness,
 } from "../content/types.ts";
-import { refId, type TypedRef } from "../script/scalar.ts";
 import type {
   ParsedBuilding,
   ParsedMegastructure,
   ParsedTechnology,
-} from "../stellaris/vanilla/parsed-definitions.ts";
+} from "../installation/vanilla/parsed-definitions.ts";
+import { refId, type TypedRef } from "../script/scalar.ts";
 import type { AgendaDef } from "./agenda.ts";
 import type { AgreementPresetDef } from "./agreement-preset.ts";
 import type { AmbientObjectDef } from "./ambient-object.ts";

@@ -27,7 +27,8 @@ category for changing only that job's production and upkeep.
     modifiers can target its transactions without changing every specialist job on the colony.
 
     ```ts
-    import { always, createMod, isCapital, owner, vanilla } from "@pdx-ts/sdk";
+    import { createMod } from "@pdx-ts/sdk";
+    import { always, isCapital, owner, vanilla } from "@pdx-ts/sdk/stellaris";
     import { isRegularEmpire } from "@pdx-ts/stellaris-ids/triggers";
 
     const mod = createMod({

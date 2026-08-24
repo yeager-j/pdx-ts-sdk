@@ -1,4 +1,5 @@
-import { and, createMod, type Trigger } from "@pdx-ts/sdk";
+import { createMod } from "@pdx-ts/sdk";
+import { and, type Trigger } from "@pdx-ts/sdk/stellaris";
 import { isHiveEmpire, isMachineEmpire } from "@pdx-ts/stellaris-ids/triggers";
 
 const mod = createMod({

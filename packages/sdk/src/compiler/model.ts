@@ -6,8 +6,8 @@ import type { DefinedContent } from "../content/authoring.ts";
 import type { ModWarning } from "../diagnostics.ts";
 import type { EventItemBase } from "../events/types.ts";
 import type { ContentTypeName } from "../generated/content-registry.ts";
+import type { PatchPlan } from "../installation/vanilla/override-plan.ts";
 import type { LogicalPath } from "../ordering.ts";
-import type { PatchPlan } from "../stellaris/vanilla/override-plan.ts";
 import type { ResolvedModConfig } from "./config.ts";
 import type { PathClaim } from "./paths.ts";
 

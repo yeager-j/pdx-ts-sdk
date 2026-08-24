@@ -11,7 +11,7 @@ import {
   type ScopedModifierRecorder,
   type ScopeName,
   type Trigger,
-} from "@pdx-ts/sdk";
+} from "@pdx-ts/sdk/stellaris";
 
 type JobDisplay = NonNullable<JobFields["swappableData"]>["default"];
 type JobSwap = NonNullable<NonNullable<JobFields["swappableData"]>["swapType"]>[number];

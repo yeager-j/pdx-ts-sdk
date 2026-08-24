@@ -19,7 +19,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { formatEmitted } from "@pdx-ts/codegen-vanilla/format";
 import { generateVanillaPackage } from "@pdx-ts/codegen-vanilla/generate";
-import { locateInstall, requireGameVersion } from "@pdx-ts/sdk/stellaris";
+import { locateInstall, requireGameVersion } from "@pdx-ts/sdk/installation";
 import { describe, expect, it } from "vitest";
 
 /** The repo root, from this module — never the directory vitest was started in. */

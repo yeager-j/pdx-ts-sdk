@@ -69,7 +69,7 @@ import {
  * row because the name is per registry (`ParsedTechnology`), so only the module
  * is a constant.
  */
-const PARSED_CONTENT_MODULE = "../stellaris/vanilla/parsed-definitions.ts";
+const PARSED_CONTENT_MODULE = "../installation/vanilla/parsed-definitions.ts";
 
 /** Generated module text and coverage evidence for one content registry. */
 export interface ContentEmission {

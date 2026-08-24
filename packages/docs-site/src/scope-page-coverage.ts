@@ -1,4 +1,4 @@
-import type { ScopeName } from "@pdx-ts/sdk";
+import type { ScopeName } from "@pdx-ts/sdk/stellaris";
 
 import type { ScopePageLink } from "./effects-index.ts";
 

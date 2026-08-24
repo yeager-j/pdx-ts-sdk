@@ -10,24 +10,24 @@
       "default": "./dist/index.js"
     },
     "./stellaris": {
-      "pdx-source": "./src/stellaris/index.ts",
-      "types": "./dist/stellaris/index.d.ts",
-      "default": "./dist/stellaris/index.js"
+      "pdx-source": "./src/stellaris.ts",
+      "types": "./dist/stellaris.d.ts",
+      "default": "./dist/stellaris.js"
     },
-    "./content-registries": {
-      "pdx-source": "./src/content-registries.ts",
-      "types": "./dist/content-registries.d.ts",
-      "default": "./dist/content-registries.js"
+    "./installation": {
+      "pdx-source": "./src/installation/index.ts",
+      "types": "./dist/installation/index.d.ts",
+      "default": "./dist/installation/index.js"
     },
-    "./script-reference": {
-      "pdx-source": "./src/script-reference.ts",
-      "types": "./dist/script-reference.d.ts",
-      "default": "./dist/script-reference.js"
+    "./reference": {
+      "pdx-source": "./src/reference.ts",
+      "types": "./dist/reference.d.ts",
+      "default": "./dist/reference.js"
     },
-    "./terminal": {
-      "pdx-source": "./src/terminal.ts",
-      "types": "./dist/terminal.d.ts",
-      "default": "./dist/terminal.js"
+    "./internals": {
+      "pdx-source": "./src/internals.ts",
+      "types": "./dist/internals.d.ts",
+      "default": "./dist/internals.js"
     }
   },
   "dependencies": {

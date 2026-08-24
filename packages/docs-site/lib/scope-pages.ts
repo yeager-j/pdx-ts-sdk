@@ -1,4 +1,4 @@
-import { SCRIPT_REFERENCE_SCOPES } from "@pdx-ts/sdk/script-reference";
+import { SCRIPT_REFERENCE_SCOPES } from "@pdx-ts/sdk/reference";
 
 import { source } from "@/lib/source";
 import type { ScopePageLink } from "@/src/effects-index";

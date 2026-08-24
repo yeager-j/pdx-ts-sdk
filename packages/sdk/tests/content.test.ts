@@ -18,12 +18,12 @@ import {
   defineUtilityComponentTemplate,
   defineWeaponComponentTemplate,
 } from "../src/generated/content-definers.ts";
+import { createMod, render, type PureMod } from "../src/index.ts";
 import {
   always,
   and,
   canGoMia,
   canJoinFactions,
-  createMod,
   currentSituationApproach,
   currentStage,
   hasAuthority,
@@ -36,13 +36,11 @@ import {
   isCapital,
   isScopeValid,
   isSiteLocked,
-  render,
   scriptedTriggerModifier,
   type Modifier,
-  type PureMod,
   type ScopeName,
   type SpriteRef,
-} from "../src/index.ts";
+} from "../src/stellaris.ts";
 
 function configFor(name: string, prefix: string) {
   return { name, prefix, supportedVersion: "4.4.*" };

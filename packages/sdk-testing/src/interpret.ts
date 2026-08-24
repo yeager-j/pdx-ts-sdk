@@ -18,12 +18,14 @@ import {
   MODIFIER_OPERATIONS,
   recordEffects,
   scopeLinkOutput,
-  type ComplexTriggerModifier,
-  type Modifier,
-  type ScopeObjOf,
-  type Trigger,
-  type WeightBlockRow,
-} from "@pdx-ts/sdk";
+} from "@pdx-ts/sdk/internals";
+import type {
+  ComplexTriggerModifier,
+  Modifier,
+  ScopeObjOf,
+  Trigger,
+  WeightBlockRow,
+} from "@pdx-ts/sdk/stellaris";
 
 import {
   ArchaeologicalSite,

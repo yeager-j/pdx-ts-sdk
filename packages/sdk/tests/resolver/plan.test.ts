@@ -10,13 +10,13 @@ import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 
 import { NoWinningFilenameError, PdxSdkError, UnverifiedRegistryError } from "../../src/errors.ts";
-import { compareLogicalPaths, normalizeLogicalPath } from "../../src/ordering.ts";
 import {
   containsInlineMath,
   planPatchEmission,
   type PatchInput,
-} from "../../src/stellaris/vanilla/override-plan.ts";
-import type { VanillaFile } from "../../src/stellaris/vanilla/parsed-definitions.ts";
+} from "../../src/installation/vanilla/override-plan.ts";
+import type { VanillaFile } from "../../src/installation/vanilla/parsed-definitions.ts";
+import { compareLogicalPaths, normalizeLogicalPath } from "../../src/ordering.ts";
 
 function file(path: string, ...keys: string[]): VanillaFile {
   return { path: normalizeLogicalPath(path), sha256: "ab".repeat(32), keys };

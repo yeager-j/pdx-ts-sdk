@@ -1,4 +1,5 @@
-import { always, createMod, vanilla } from "@pdx-ts/sdk";
+import { createMod } from "@pdx-ts/sdk";
+import { always, vanilla } from "@pdx-ts/sdk/stellaris";
 
 const mod = createMod({
   name: "Frontier Forms",

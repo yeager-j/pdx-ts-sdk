@@ -4,7 +4,6 @@ import type { EdictRef, TechnologyRef } from "../src/generated/refs.ts";
 import type { ScopeName } from "../src/generated/scopes.ts";
 import type { TechnologyDef } from "../src/generated/technology.ts";
 import { countryFlags, planetFlags, type CountryFlag } from "../src/generated/value-sets.ts";
-import { eventTarget } from "../src/index.ts";
 import { makeScope } from "../src/script/effects/recorder.ts";
 import {
   aiArmorRatio,
@@ -29,6 +28,7 @@ import {
   traitHasAllTags,
   type Trigger,
 } from "../src/script/triggers.ts";
+import { eventTarget } from "../src/stellaris.ts";
 
 const base = {
   id: "mymod_tech_x",

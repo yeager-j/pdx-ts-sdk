@@ -2,6 +2,7 @@
   "title": "Guides",
   "pages": [
     "getting-started",
+    "entry-points",
     "features-and-discovery",
     "the-pipeline",
     "triggers-and-effects",

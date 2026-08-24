@@ -1,5 +1,5 @@
+import { createMod } from "@pdx-ts/sdk";
 import {
-  createMod,
   currentSituationApproach,
   currentStage,
   eventTarget,
@@ -8,7 +8,7 @@ import {
   onActions,
   target,
   vanilla,
-} from "@pdx-ts/sdk";
+} from "@pdx-ts/sdk/stellaris";
 
 const mod = createMod({
   name: "Crystal Bloom",

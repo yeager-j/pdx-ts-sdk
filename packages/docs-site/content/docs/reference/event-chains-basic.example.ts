@@ -1,4 +1,5 @@
-import { createMod, vanilla, type CapabilityFeature } from "@pdx-ts/sdk";
+import { createMod, type CapabilityFeature } from "@pdx-ts/sdk";
+import { vanilla } from "@pdx-ts/sdk/stellaris";
 
 const mod = createMod({
   name: "Crystal Mystery",

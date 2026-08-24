@@ -3,7 +3,7 @@ import path from "node:path";
 
 import { MATERIALIZATION_MANIFEST_PATH } from "../compiler/paths.ts";
 import { MaterializationError, type MaterializationDriftKind } from "../errors.ts";
-import { modDir } from "../stellaris/launcher/mod-directory.ts";
+import { modDir } from "../installation/launcher/mod-directory.ts";
 import {
   canonicalTarget,
   installPaths,

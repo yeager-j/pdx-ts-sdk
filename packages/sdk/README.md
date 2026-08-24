@@ -13,7 +13,8 @@ items in explicit features, and compiles those features into the value that
 `render`, `write`, and `install` consume.
 
 ```ts
-import { createMod, onActions, render, write } from "@pdx-ts/sdk";
+import { createMod, render, write } from "@pdx-ts/sdk";
+import { onActions } from "@pdx-ts/sdk/stellaris";
 
 const mod = createMod({
   name: "My Mod",

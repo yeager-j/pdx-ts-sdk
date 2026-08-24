@@ -2,13 +2,8 @@ import type { PdxEntry } from "@pdx-ts/pdxscript";
 import { describe, expectTypeOf, it } from "vitest";
 
 import type { TechnologyDef } from "../src/generated/technology.ts";
-import {
-  createMod,
-  eventTarget,
-  makeScope,
-  scriptedEffect,
-  scriptedTrigger,
-} from "../src/index.ts";
+import { createMod } from "../src/index.ts";
+import { makeScope } from "../src/internals.ts";
 import type { ScopeValue } from "../src/script/effects/types.ts";
 import {
   and,
@@ -30,6 +25,7 @@ import {
   type ScopeName,
   type Trigger,
 } from "../src/script/triggers.ts";
+import { eventTarget, scriptedEffect, scriptedTrigger } from "../src/stellaris.ts";
 
 function countrySlot(_t: Trigger<"country">): void {}
 function planetSlot(_t: Trigger<"planet">): void {}

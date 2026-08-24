@@ -6,7 +6,8 @@
  * game, and record the result in the verdict doc.
  */
 
-import { createMod, install, render, stellaris } from "@pdx-ts/sdk";
+import { createMod, install, render } from "@pdx-ts/sdk";
+import * as stellaris from "@pdx-ts/sdk/installation";
 
 const vanilla = stellaris.load();
 const mod = createMod({

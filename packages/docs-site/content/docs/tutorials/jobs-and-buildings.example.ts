@@ -1,4 +1,5 @@
-import { always, createMod, isCapital, owner, vanilla } from "@pdx-ts/sdk";
+import { createMod } from "@pdx-ts/sdk";
+import { always, isCapital, owner, vanilla } from "@pdx-ts/sdk/stellaris";
 import { isRegularEmpire } from "@pdx-ts/stellaris-ids/triggers";
 
 const mod = createMod({

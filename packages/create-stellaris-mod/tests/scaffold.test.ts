@@ -43,7 +43,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { locateInstall, readGameVersion } from "../../sdk/src/stellaris/index.ts";
+import { locateInstall, readGameVersion } from "../../sdk/src/installation/index.ts";
 import { main } from "../src/cli.ts";
 import { parseManifest } from "../src/manifest.ts";
 

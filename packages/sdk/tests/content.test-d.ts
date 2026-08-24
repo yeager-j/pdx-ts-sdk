@@ -1,12 +1,18 @@
 import { describe, expectTypeOf, it } from "vitest";
 
 import { defineBuilding } from "../src/generated/content-definers.ts";
+import { createMod, type ContentItem } from "../src/index.ts";
+import { anyOf } from "../src/installation/index.ts";
+// The generated patch members are spelled in terms of `PatchInput`, which the
+// package does not re-export — a consumer never names it, but pinning a member
+// against its exact type does.
+import type { PatchInput } from "../src/installation/vanilla/patch.ts";
+import { viewFromFiles } from "../src/installation/vanilla/view.ts";
+import { makeScope } from "../src/internals.ts";
 import {
   always,
-  anyOf,
   canGoMia,
   canJoinFactions,
-  createMod,
   currentSituationApproach,
   currentStage,
   hasAuthority,
@@ -19,7 +25,6 @@ import {
   isAtWar,
   isCapital,
   isSiteLocked,
-  makeScope,
   or,
   vanilla,
   type AgendaRef,
@@ -35,7 +40,6 @@ import {
   type CasusBelliRef,
   type ComponentTemplateRef,
   type ComponentTemplateUtilityComponentTemplateRef,
-  type ContentItem,
   type DecisionRef,
   type EconomicResourceBlock,
   type EconomicResourceBlockNoProduce,
@@ -78,12 +82,7 @@ import {
   type WarGoalRef,
   type WeaponComponentTemplateFields,
   type WithFrom,
-} from "../src/index.ts";
-// The generated patch members are spelled in terms of `PatchInput`, which the
-// package does not re-export — a consumer never names it, but pinning a member
-// against its exact type does.
-import type { PatchInput } from "../src/stellaris/vanilla/patch.ts";
-import { viewFromFiles } from "../src/stellaris/vanilla/view.ts";
+} from "../src/stellaris.ts";
 
 const CONTENT_TYPES_CONFIG = {
   name: "Content types",

@@ -214,7 +214,7 @@ For a scripted definition supplied by another mod or a newer game version, the
 SDK provides the fully unchecked escape hatch:
 
 ```ts
-import { scriptedEffect, scriptedTrigger } from "@pdx-ts/sdk";
+import { scriptedEffect, scriptedTrigger } from "@pdx-ts/sdk/stellaris";
 
 const hasChartedRift = scriptedTrigger.unchecked("has_charted_rift", "country");
 const chartRift = scriptedEffect.unchecked("chart_rift", "country");

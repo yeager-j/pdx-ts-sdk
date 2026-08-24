@@ -98,7 +98,7 @@ function contentCapabilityImports(
       .map(
         (content) =>
           `import type { Parsed${content.emission.typeName} } ` +
-          'from "../stellaris/vanilla/parsed-definitions.ts";\n'
+          'from "../installation/vanilla/parsed-definitions.ts";\n'
       )
       .join("") +
     plans

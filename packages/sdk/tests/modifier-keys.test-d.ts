@@ -8,7 +8,8 @@ import type {
 } from "../src/generated/content-definers.ts";
 import type { EconomicModifierType } from "../src/generated/enums.ts";
 import type { JobRef } from "../src/generated/refs.ts";
-import { always, createMod, vanilla } from "../src/index.ts";
+import { createMod } from "../src/index.ts";
+import { always, vanilla } from "../src/stellaris.ts";
 
 declare module "../src/content/types.ts" {
   interface CustomModifiers {

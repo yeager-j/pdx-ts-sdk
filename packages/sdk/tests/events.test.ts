@@ -1,17 +1,16 @@
 import { describe, expect, it } from "vitest";
 
 import { countryFlags } from "../src/generated/value-sets.ts";
+import { createMod, render } from "../src/index.ts";
+import { eventTarget } from "../src/script/effects/recorder.ts";
 import {
-  createMod,
   hasAuthority,
   hasTechnology,
   not,
   or,
-  render,
   type ScopeRef,
   type ScopeValue,
-} from "../src/index.ts";
-import { eventTarget } from "../src/script/effects/recorder.ts";
+} from "../src/stellaris.ts";
 
 const flags = countryFlags("event_test_flag");
 

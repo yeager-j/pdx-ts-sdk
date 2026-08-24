@@ -97,7 +97,7 @@ class ContentDefinition<K extends string, D extends ContentDef> implements Defin
 
 /**
  * A localisation slot's key for one identity: the slot's declared pattern with
- * `$` filled in. Shared with the patch path (`stellaris/vanilla/patch.ts`),
+ * `$` filled in. Shared with the patch path (`installation/vanilla/patch.ts`),
  * which applies the very same pattern to the *vanilla* id it is renaming, so
  * the replacement text lands on the key the game already reads.
  */
