@@ -13,6 +13,7 @@ import type { ModWarning } from "./diagnostics.ts";
 import { MaterializationError } from "./errors.ts";
 import { install, type InstallOptions } from "./output/install.ts";
 import { render } from "./output/render.ts";
+import type { RenderedMod } from "./output/rendered.ts";
 import { writeSystemPreviews, type SystemPreviewReport } from "./output/system-previews.ts";
 import {
   write,
@@ -80,11 +81,7 @@ export async function runBuild(
 
     const rendered = render(mod);
     task.message(`Rendered ${rendered.size} files`);
-    if (context.verbose) {
-      for (const relPath of rendered.keys()) {
-        task.message(relPath);
-      }
-    }
+    reportRenderedPaths(rendered, task, context);
 
     const report = await write(options.outDir, rendered);
     task.message(`${report.status === "written" ? "Wrote" : "Checked"} ${report.outDir}`);
@@ -138,6 +135,7 @@ export async function runInstall(
 
     const rendered = render(mod);
     task.message(`Rendered ${rendered.size} files`);
+    reportRenderedPaths(rendered, task, context);
 
     const installOptions: InstallOptions = {
       ...(options.modDir === undefined ? {} : { modDir: options.modDir }),
@@ -197,6 +195,19 @@ function startTask(title: string, context: TerminalContext): TerminalTask {
     success: (message) => task.success(message, { showLog: context.verbose }),
     error: (message) => task.error(message),
   };
+}
+
+function reportRenderedPaths(
+  rendered: RenderedMod,
+  task: TerminalTask,
+  context: TerminalContext
+): void {
+  if (!context.verbose) {
+    return;
+  }
+  for (const relPath of rendered.keys()) {
+    task.message(relPath);
+  }
 }
 
 function buildSummary(mod: PureMod, fileCount: number, report: WriteReport): string {
@@ -272,15 +283,27 @@ function reportPreviewDiagnostics(report: SystemPreviewReport, context: Terminal
     return;
   }
 
-  log.warn(count(diagnostics.length, "solar-system layout finding"), { output: context.output });
-  if (context.verbose) {
-    for (const { preview, diagnostic } of diagnostics) {
-      log.warn(`${preview} (${diagnostic.certainty}) ${diagnostic.code}: ${diagnostic.message}`, {
-        output: context.output,
-      });
-    }
-  } else {
+  const warnings = diagnostics.filter(({ diagnostic }) => diagnostic.severity === "warning");
+  const infos = diagnostics.filter(({ diagnostic }) => diagnostic.severity === "info");
+  if (warnings.length > 0) {
+    log.warn(count(warnings.length, "solar-system layout warning"), { output: context.output });
+  }
+  if (infos.length > 0) {
+    log.info(count(infos.length, "solar-system layout note"), { output: context.output });
+  }
+
+  if (!context.verbose) {
     log.info("Run with --verbose to show every layout finding.", { output: context.output });
+    return;
+  }
+
+  for (const { preview, diagnostic } of diagnostics) {
+    const message = `${preview} (${diagnostic.certainty}) ${diagnostic.code}: ${diagnostic.message}`;
+    if (diagnostic.severity === "warning") {
+      log.warn(message, { output: context.output });
+    } else {
+      log.info(message, { output: context.output });
+    }
   }
 }
 
@@ -292,11 +315,25 @@ function reportFailure(error: unknown, context: TerminalContext): void {
     note(message, "Error", { output: context.output });
   }
 
-  if (context.verbose && error instanceof Error && error.stack !== undefined) {
-    note(error.stack, "Technical details", { output: context.output });
+  if (context.verbose && error instanceof Error) {
+    note(errorStackWithCauses(error), "Technical details", { output: context.output });
   } else if (!context.verbose) {
     log.info("Run with --verbose to show the stack trace.", { output: context.output });
   }
+}
+
+function errorStackWithCauses(error: Error): string {
+  const stacks: string[] = [];
+  const seen = new Set<Error>();
+  let current: Error | undefined = error;
+
+  while (current !== undefined && !seen.has(current)) {
+    seen.add(current);
+    stacks.push(current.stack ?? `${current.name}: ${current.message}`);
+    current = current.cause instanceof Error ? current.cause : undefined;
+  }
+
+  return stacks.join("\nCaused by:\n");
 }
 
 function materializationFailure(error: MaterializationError): string {

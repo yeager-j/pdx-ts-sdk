@@ -4,7 +4,7 @@ import path from "node:path";
 import { Writable } from "node:stream";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { createMod, type ModWarning, type PureMod } from "../src/index.ts";
+import { createMod, MaterializationError, type ModWarning, type PureMod } from "../src/index.ts";
 import { runBuild, runInstall } from "../src/terminal.ts";
 
 const temporaryDirectories: string[] = [];
@@ -51,6 +51,40 @@ describe("terminal build and install runners", () => {
     expect(terminal.text()).toContain("unstable-option-key: second");
   });
 
+  it("shows emitted paths in verbose install output", async () => {
+    const terminal = captureTerminal();
+
+    const report = await runInstall(compiledMod(), {
+      modDir: temporaryDirectory("terminal-verbose-install-"),
+      output: terminal.output,
+      verbose: true,
+    });
+
+    expect(report).toBeDefined();
+    expect(terminal.text()).toContain("descriptor.mod");
+  });
+
+  it("reports informational preview diagnostics as notes", async () => {
+    const terminal = captureTerminal();
+
+    const report = await runBuild(compiledModWithPreviewInfo(), {
+      outDir: temporaryDirectory("terminal-preview-build-"),
+      previewsDir: temporaryDirectory("terminal-previews-"),
+      output: terminal.output,
+      verbose: true,
+    });
+
+    expect(report).toBeDefined();
+    expect(terminal.text()).toContain("solar-system layout note");
+    expect(terminal.text()).not.toContain("solar-system layout warning");
+    const infoLine = terminal
+      .text()
+      .split("\n")
+      .find((line) => line.includes("unresolved-visual"));
+    expect(infoLine).toContain("●");
+    expect(infoLine).not.toContain("▲");
+  });
+
   it("renders installation drift without a second raw stack trace", async () => {
     const modDir = temporaryDirectory("terminal-install-");
     const firstTerminal = captureTerminal();
@@ -94,6 +128,27 @@ describe("terminal build and install runners", () => {
     expect(terminal.text()).toContain("compile exploded");
     expect(terminal.text()).not.toContain("at ");
   });
+
+  it("includes nested error causes in verbose failure details", async () => {
+    const terminal = captureTerminal();
+    const cause = new Error("EACCES: permission denied during rename");
+    const failure = new MaterializationError(
+      "/target/mod",
+      { reason: "activation", rolledBack: true },
+      { cause }
+    );
+
+    const report = await runBuild(Promise.reject(failure), {
+      outDir: temporaryDirectory("terminal-caused-failure-"),
+      output: terminal.output,
+      verbose: true,
+    });
+
+    expect(report).toBeUndefined();
+    expect(terminal.text()).toContain("Technical details");
+    expect(terminal.text()).toContain("Caused by:");
+    expect(terminal.text()).toContain("EACCES: permission denied during rename");
+  });
 });
 
 function compiledMod(): PureMod {
@@ -104,6 +159,20 @@ function compiledMod(): PureMod {
     supportedVersion: "v4.4.*",
   });
   return capability.compile([]);
+}
+
+function compiledModWithPreviewInfo(): PureMod {
+  const capability = createMod({
+    name: "Terminal Preview Probe",
+    prefix: "terminal_preview_probe",
+    version: "0.1.0",
+    supportedVersion: "v4.4.*",
+  });
+  const system = capability.solarSystemInitializer("uncertain", {
+    class: "sc_g",
+    planet: [{ class: "random", orbitDistance: 40, orbitAngle: 0 }],
+  });
+  return capability.compile([capability.feature(undefined, [system])]);
 }
 
 function warning(message: string): ModWarning {
