@@ -10,6 +10,11 @@
  * something wrong.
  */
 export function summarizeSignature(signature: string): string | undefined {
+  const overloadCount = signature.split("\n").filter((line) => line.trim() !== "").length;
+  if (overloadCount > 1) {
+    return `${overloadCount} overloads`;
+  }
+
   const open = signature.indexOf("(");
   if (open === -1) {
     return undefined;

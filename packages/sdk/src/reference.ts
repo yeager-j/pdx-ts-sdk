@@ -38,10 +38,12 @@ export {
   SCRIPT_EFFECT_REFERENCES,
   SCRIPT_REFERENCE_SCOPES,
   SCRIPT_SCOPE_LINK_REFERENCES,
+  SCRIPT_TRIGGER_REFERENCES,
   type ScriptEffectReference,
   type ScriptEffectReferenceKind,
   type ScriptReferenceAvailability,
   type ScriptScopeLinkReference,
+  type ScriptTriggerReference,
 } from "./generated/script-reference.ts";
 export { EVENT_KINDS, type EventKindKey } from "./generated/events.ts";
 export { SUPPORTED_STELLARIS_BUILD } from "./installation/vanilla/override-rules.ts";

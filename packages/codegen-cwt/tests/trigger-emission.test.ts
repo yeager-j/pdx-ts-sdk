@@ -74,6 +74,41 @@ const BOTH_WRAPPER_ROWS = [pureSplice("hidden_progress"), pureSplice("simple_pro
 );
 
 describe("trigger emission", () => {
+  it("emits one reference row for every generated builder", () => {
+    expect(emission.references).toHaveLength(emission.emitted);
+    expect(new Set(emission.references.map((reference) => reference.method))).toEqual(
+      emission.names
+    );
+    expect(new Set(emission.references.map((reference) => reference.key)).size).toBe(
+      emission.references.length
+    );
+  });
+
+  it("preserves representative trigger contracts in reference rows", () => {
+    expect(emission.references.find((reference) => reference.method === "hasCountryFlag")).toEqual(
+      expect.objectContaining({
+        key: "has_country_flag",
+        availability: { kind: "scopes", scopes: ["country"] },
+        signature: 'hasCountryFlag(value: CountryFlag): Trigger<"country">',
+      })
+    );
+    expect(emission.references.find((reference) => reference.method === "isAi")).toEqual(
+      expect.objectContaining({
+        key: "is_ai",
+        availability: { kind: "scopes", scopes: ["country"] },
+        signature: 'isAi(value: boolean = true): Trigger<"country">',
+      })
+    );
+    expect(emission.references.find((reference) => reference.method === "numOwnedPlanets")).toEqual(
+      expect.objectContaining({
+        key: "num_owned_planets",
+        availability: { kind: "scopes", scopes: ["country", "sector"] },
+        signature: 'numOwnedPlanets(op: PdxOp, value: ScriptValue): Trigger<"country" | "sector">',
+      })
+    );
+    expect(emission.references.some((reference) => reference.method === "hasModifier")).toBe(false);
+  });
+
   it("accounts for every scalar-plus-block alias", () => {
     const mixed = [...rules.triggers]
       .filter(([, declarations]) => {

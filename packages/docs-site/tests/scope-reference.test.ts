@@ -3,6 +3,7 @@ import {
   SCRIPT_EFFECT_REFERENCES,
   SCRIPT_REFERENCE_SCOPES,
   SCRIPT_SCOPE_LINK_REFERENCES,
+  SCRIPT_TRIGGER_REFERENCES,
 } from "@pdx-ts/sdk/reference";
 import { describe, expect, it } from "vitest";
 
@@ -14,6 +15,7 @@ import { buildScopeReference, type ScopeReferenceSources } from "../src/scope-re
 const sources = (): ScopeReferenceSources => ({
   scopes: SCRIPT_REFERENCE_SCOPES,
   effects: SCRIPT_EFFECT_REFERENCES,
+  triggers: SCRIPT_TRIGGER_REFERENCES,
   scopeLinks: SCRIPT_SCOPE_LINK_REFERENCES,
   eventKinds: EVENT_KINDS,
 });
@@ -76,6 +78,19 @@ describe("buildScopeReference", () => {
     );
     expect(methodsOf(country.eventFireMethods)).not.toContain("planetEvent");
     expect(methodsOf(planet.eventFireMethods)).toContain("planetEvent");
+  });
+
+  it("lists generated triggers by the scope where their key is legal", () => {
+    const country = buildScopeReference("country");
+    const firstContact = buildScopeReference("first_contact");
+    const sector = buildScopeReference("sector");
+
+    expect(methodsOf(country.universalTriggers)).toContain("always");
+    expect(methodsOf(country.scopeTriggers)).toEqual(
+      expect.arrayContaining(["hasCountryFlag", "isAi", "numOwnedPlanets", "anyActiveFirstContact"])
+    );
+    expect(methodsOf(sector.scopeTriggers)).toContain("numOwnedPlanets");
+    expect(methodsOf(firstContact.scopeTriggers)).not.toContain("anyActiveFirstContact");
   });
 
   it("keeps scope links in transitions and out of method tables", () => {

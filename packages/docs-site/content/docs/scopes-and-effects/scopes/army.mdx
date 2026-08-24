@@ -1,6 +1,6 @@
 ---
 title: "Army"
-description: "Generated methods, event kinds, and transitions for ArmyScope."
+description: "Generated triggers, effects, event kinds, and transitions for ArmyScope."
 scope: army
 generatedBy: scope-reference
 ---
@@ -9,6 +9,7 @@ import { EventFireMethods } from "@/components/EventFireMethods";
 import { EventKinds } from "@/components/EventKinds";
 import { ScopeEffects } from "@/components/ScopeEffects";
 import { ScopeIdentity } from "@/components/ScopeIdentity";
+import { ScopeTriggers } from "@/components/ScopeTriggers";
 import { ScopeTransitions } from "@/components/ScopeTransitions";
 import { StructuralMethods } from "@/components/StructuralMethods";
 import { buildScopeReference } from "@/src/scope-reference";
@@ -28,6 +29,10 @@ Common entry points include army-scoped callbacks and typed contracts that suppl
 ## Event kinds whose bodies run in this scope
 
 <EventKinds rows={model.eventKinds} />
+
+## Triggers
+
+<ScopeTriggers universalCount={model.universalTriggers.length} scopeSpecific={model.scopeTriggers} />
 
 ## Ordinary effects
 

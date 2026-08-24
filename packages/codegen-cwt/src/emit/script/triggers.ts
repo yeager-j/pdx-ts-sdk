@@ -42,6 +42,7 @@ import {
 import { HAND_WRITTEN_TRIGGER_RULES_BY_KEY } from "../../policy/triggers.ts";
 import { Emitter, type TsValue } from "../../render/emitter.ts";
 import { member as renderMember } from "../../render/writer.ts";
+import type { ScriptTriggerReferenceRow } from "./script-reference.ts";
 import {
   contributesRefs,
   pushCode,
@@ -68,6 +69,13 @@ export interface TriggerEmission {
   readonly enclosingScopeWrappers: readonly string[];
   /** Every emitted function name, for the scope-link collision guard. */
   readonly names: ReadonlySet<string>;
+  /** One machine-readable reference row per generated trigger builder. */
+  readonly references: readonly ScriptTriggerReferenceRow[];
+}
+
+interface EmittedTriggerBuilder {
+  readonly code: string;
+  readonly signature: string;
 }
 
 type Shape =
@@ -242,13 +250,16 @@ function emitBoolean(
   key: string,
   scope: string,
   docs: string[]
-): string {
-  return (
-    docComment(docs) +
-    `export function ${fn}(value: boolean = true): ${emitter.use("Trigger")}<${scope}> {\n` +
-    `  return ${emitter.use("trigger")}([${emitter.use("kv")}(${JSON.stringify(key)}, ` +
-    `value)]);\n}\n`
-  );
+): EmittedTriggerBuilder {
+  const signature = `${fn}(value: boolean = true): ${emitter.use("Trigger")}<${scope}>`;
+  return {
+    signature,
+    code:
+      docComment(docs) +
+      `export function ${signature} {\n` +
+      `  return ${emitter.use("trigger")}([${emitter.use("kv")}(${JSON.stringify(key)}, ` +
+      `value)]);\n}\n`,
+  };
 }
 
 function emitComparison(
@@ -258,14 +269,18 @@ function emitComparison(
   scope: string,
   docs: string[],
   value: TsValue
-): string {
-  return (
-    docComment(docs) +
-    `export function ${fn}(op: ${emitter.use("PdxOp")}, ` +
-    `value: ${emitter.useValue(value).type}): ${emitter.use("Trigger")}<${scope}> {\n` +
-    `  return ${emitter.use("trigger")}([${emitter.use("cmp")}(${JSON.stringify(key)}, op, ` +
-    `${pushExpr(emitter, value, "value")})]);\n}\n`
-  );
+): EmittedTriggerBuilder {
+  const signature =
+    `${fn}(op: ${emitter.use("PdxOp")}, value: ${emitter.useValue(value).type}): ` +
+    `${emitter.use("Trigger")}<${scope}>`;
+  return {
+    signature,
+    code:
+      docComment(docs) +
+      `export function ${signature} {\n` +
+      `  return ${emitter.use("trigger")}([${emitter.use("cmp")}(${JSON.stringify(key)}, op, ` +
+      `${pushExpr(emitter, value, "value")})]);\n}\n`,
+  };
 }
 
 /**
@@ -304,14 +319,16 @@ function emitValue(
   scope: string,
   docs: string[],
   value: TsValue
-): string {
-  return (
-    docComment(docs) +
-    `export function ${fn}(value: ${emitter.useValue(value).type}): ` +
-    `${emitter.use("Trigger")}<${scope}> {\n` +
-    scalarEntryReturn(emitter, key, value, "value", "  ") +
-    "}\n"
-  );
+): EmittedTriggerBuilder {
+  const signature = `${fn}(value: ${emitter.useValue(value).type}): ${emitter.use("Trigger")}<${scope}>`;
+  return {
+    signature,
+    code:
+      docComment(docs) +
+      `export function ${signature} {\n` +
+      scalarEntryReturn(emitter, key, value, "value", "  ") +
+      "}\n",
+  };
 }
 
 /**
@@ -326,18 +343,20 @@ function emitWrapper(
   scope: string,
   docs: string[],
   inner: string | null
-): string {
+): EmittedTriggerBuilder {
   const type = emitter.use("Trigger");
   const signature =
     inner === null
-      ? `export function ${fn}<S extends ${scope}>(condition: ${type}<S>): ${type}<S>`
-      : `export function ${fn}(condition: ${type}<${JSON.stringify(inner)}>): ${type}<${scope}>`;
-  return (
-    docComment(docs) +
-    `${signature} {\n` +
-    `  return ${emitter.use("trigger")}([${emitter.use("block")}(${JSON.stringify(key)}, ` +
-    `[...condition.entries])], [...condition.refs]);\n}\n`
-  );
+      ? `${fn}<S extends ${scope}>(condition: ${type}<S>): ${type}<S>`
+      : `${fn}(condition: ${type}<${JSON.stringify(inner)}>): ${type}<${scope}>`;
+  return {
+    signature,
+    code:
+      docComment(docs) +
+      `export function ${signature} {\n` +
+      `  return ${emitter.use("trigger")}([${emitter.use("block")}(${JSON.stringify(key)}, ` +
+      `[...condition.entries])], [...condition.refs]);\n}\n`,
+  };
 }
 
 /** The `Trigger` type text a nested clause takes in a builder's arguments. */
@@ -433,18 +452,22 @@ function emitValueList(
   scope: string,
   docs: string[],
   value: Extract<ArgValue, { readonly kind: "valueList" }>
-): string {
+): EmittedTriggerBuilder {
   const field: ArgField = { name: key, value, optional: false, docs: [] };
   const withRefs = contributesRefs(field);
-  return (
-    docComment(docs) +
-    `export function ${fn}(values: ${valueListType(emitter, value, scope)}): ` +
-    `${emitter.use("Trigger")}<${scope}> {\n` +
-    `  const entries: ${emitter.use("PdxEntry")}[] = [];\n` +
-    (withRefs ? `  const refs: ${emitter.use("ContentRefUse")}[] = [];\n` : "") +
-    `  ${pushValueListCode(emitter, value, "values", key, 0, JSON.stringify(key), "entries")}\n` +
-    `  return ${emitter.use("trigger")}(entries${withRefs ? ", refs" : ""});\n}\n`
-  );
+  const signature =
+    `${fn}(values: ${valueListType(emitter, value, scope)}): ` +
+    `${emitter.use("Trigger")}<${scope}>`;
+  return {
+    signature,
+    code:
+      docComment(docs) +
+      `export function ${signature} {\n` +
+      `  const entries: ${emitter.use("PdxEntry")}[] = [];\n` +
+      (withRefs ? `  const refs: ${emitter.use("ContentRefUse")}[] = [];\n` : "") +
+      `  ${pushValueListCode(emitter, value, "values", key, 0, JSON.stringify(key), "entries")}\n` +
+      `  return ${emitter.use("trigger")}(entries${withRefs ? ", refs" : ""});\n}\n`,
+  };
 }
 
 /** The doc line every generated argument object carries. */
@@ -485,7 +508,7 @@ function emitFields(
   scope: string,
   docs: string[],
   fields: readonly ArgField[]
-): string {
+): EmittedTriggerBuilder {
   const name = `${pascalCase(key)}Args`;
   const enclosingScope = takesEnclosingScope(fields);
   const typeParameter = enclosingScope ? `<S extends ${scope} = ${scope}>` : "";
@@ -493,18 +516,22 @@ function emitFields(
   const members = argumentMembers(emitter, fields, returnScope);
   const pushes = pushStatements(emitter, fields, key);
   const withRefs = fields.some(contributesRefs);
-  return (
-    argsDoc(fn) +
-    `export interface ${name}${typeParameter} {\n${members}}\n\n` +
-    docComment(docs) +
-    `export function ${fn}${typeParameter}(args: ${name}${enclosingScope ? "<S>" : ""}): ` +
-    `${emitter.use("Trigger")}<${returnScope}> {\n` +
-    `  const entries: ${emitter.use("PdxEntry")}[] = [];\n` +
-    (withRefs ? `  const refs: ${emitter.use("ContentRefUse")}[] = [];\n` : "") +
-    pushes +
-    `  return ${emitter.use("trigger")}([${emitter.use("block")}(${JSON.stringify(key)}, ` +
-    `entries)]${withRefs ? ", refs" : ""});\n}\n`
-  );
+  const signature =
+    `${fn}${typeParameter}(args: ${name}${enclosingScope ? "<S>" : ""}): ` +
+    `${emitter.use("Trigger")}<${returnScope}>`;
+  return {
+    signature,
+    code:
+      argsDoc(fn) +
+      `export interface ${name}${typeParameter} {\n${members}}\n\n` +
+      docComment(docs) +
+      `export function ${signature} {\n` +
+      `  const entries: ${emitter.use("PdxEntry")}[] = [];\n` +
+      (withRefs ? `  const refs: ${emitter.use("ContentRefUse")}[] = [];\n` : "") +
+      pushes +
+      `  return ${emitter.use("trigger")}([${emitter.use("block")}(${JSON.stringify(key)}, ` +
+      `entries)]${withRefs ? ", refs" : ""});\n}\n`,
+  };
 }
 
 /**
@@ -524,7 +551,7 @@ function emitScalarOrFields(
   docs: string[],
   scalar: TsValue,
   fields: readonly ArgField[]
-): string {
+): EmittedTriggerBuilder {
   const name = `${pascalCase(key)}Args`;
   const preservesEnclosingScope = takesEnclosingScope(fields);
   const typeParameter = preservesEnclosingScope ? `<S extends ${scope} = ${scope}>` : "";
@@ -535,25 +562,29 @@ function emitScalarOrFields(
   const withRefs = fields.some(contributesRefs);
   const condition = emitter.use("Trigger");
   const scalarType = emitter.useValue(scalar).type;
-  return (
-    argsDoc(fn) +
-    `export type ${name}${typeParameter} = {\n${members}};\n\n` +
-    docComment(docs) +
-    `export function ${fn}(value: ${scalarType}): ${condition}<${scope}>;\n` +
-    `export function ${fn}${typeParameter}(args: ${argsType}): ${condition}<${returnScope}>;\n` +
-    `export function ${fn}${preservesEnclosingScope ? `<S extends ${scope}>` : ""}(value: ${scalarType} | ${argsType}): ${condition}<${scope}> {\n` +
-    `  if (${emitter.use("isStructuredValue")}(value, ` +
-    `${JSON.stringify(scalar.objectKinds ?? [])})) {\n` +
-    `    const args = value;\n` +
-    `    const entries: ${emitter.use("PdxEntry")}[] = [];\n` +
-    (withRefs ? `    const refs: ${emitter.use("ContentRefUse")}[] = [];\n` : "") +
-    pushes +
-    `    return ${emitter.use("trigger")}([${emitter.use("block")}(${JSON.stringify(key)}, ` +
-    `entries)]${withRefs ? ", refs" : ""});\n` +
-    `  }\n` +
-    scalarEntryReturn(emitter, key, scalar, "value", "  ") +
-    "}\n"
-  );
+  const scalarSignature = `${fn}(value: ${scalarType}): ${condition}<${scope}>;`;
+  const argsSignature = `${fn}${typeParameter}(args: ${argsType}): ${condition}<${returnScope}>;`;
+  return {
+    signature: `${scalarSignature}\n${argsSignature}`,
+    code:
+      argsDoc(fn) +
+      `export type ${name}${typeParameter} = {\n${members}};\n\n` +
+      docComment(docs) +
+      `export function ${scalarSignature}\n` +
+      `export function ${argsSignature}\n` +
+      `export function ${fn}${preservesEnclosingScope ? `<S extends ${scope}>` : ""}(value: ${scalarType} | ${argsType}): ${condition}<${scope}> {\n` +
+      `  if (${emitter.use("isStructuredValue")}(value, ` +
+      `${JSON.stringify(scalar.objectKinds ?? [])})) {\n` +
+      `    const args = value;\n` +
+      `    const entries: ${emitter.use("PdxEntry")}[] = [];\n` +
+      (withRefs ? `    const refs: ${emitter.use("ContentRefUse")}[] = [];\n` : "") +
+      pushes +
+      `    return ${emitter.use("trigger")}([${emitter.use("block")}(${JSON.stringify(key)}, ` +
+      `entries)]${withRefs ? ", refs" : ""});\n` +
+      `  }\n` +
+      scalarEntryReturn(emitter, key, scalar, "value", "  ") +
+      "}\n",
+  };
 }
 
 function emitOne(
@@ -562,7 +593,7 @@ function emitOne(
   shape: Shape,
   scope: string,
   docs: string[]
-): string {
+): EmittedTriggerBuilder {
   const fn = safeIdentifier(camelCase(key));
   switch (shape.kind) {
     case "bool":
@@ -596,6 +627,7 @@ export function emitTriggers(
   const byShape = new Map<string, number>();
   const chunks: string[] = [];
   const names = new Set<string>();
+  const references: ScriptTriggerReferenceRow[] = [];
   const appliedDocOverrides = new Set<string>();
   const appliedWrapperRows = new Set<string>();
   let emitted = 0;
@@ -652,6 +684,9 @@ export function emitTriggers(
       );
       continue;
     }
+    if (rule.scopes === null) {
+      throw new Error(`${key}: resolved scope text without canonical scope availability`);
+    }
     const shape = shapeOf(emitter, key, rule);
     if (ENCLOSING_SCOPE_TRIGGER_WRAPPERS.has(key)) {
       const stale = staleEnclosingScopeWrapper(key, shape);
@@ -687,8 +722,20 @@ export function emitTriggers(
     if (rule.scopes === "universal") {
       emitter.use("ScopeName");
     }
-    chunks.push(emitOne(emitter, key, shape, scope, docsForRule));
-    names.add(safeIdentifier(camelCase(key)));
+    const method = safeIdentifier(camelCase(key));
+    const builder = emitOne(emitter, key, shape, scope, docsForRule);
+    chunks.push(builder.code);
+    names.add(method);
+    references.push({
+      method,
+      key,
+      availability:
+        rule.scopes === "universal"
+          ? { kind: "universal" }
+          : { kind: "scopes", scopes: rule.scopes },
+      signature: builder.signature,
+      docs: docsForRule,
+    });
     byShape.set(shape.kind, (byShape.get(shape.kind) ?? 0) + 1);
     emitted += 1;
   }
@@ -715,6 +762,7 @@ export function emitTriggers(
     byShape,
     skipped,
     names,
+    references,
     docOverrides: [...TRIGGER_DOC_SUMMARY_OVERRIDES].map(
       ([key, override]) => `${key} ← ${override.source} — ${override.reason}`
     ),
