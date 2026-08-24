@@ -111,7 +111,7 @@ export const STAR_CLASSES: ReadonlySet<string> = new Set([
  * beyond its `entity_scale`; measured from a live trinary overlay.
  */
 export const RENDER_CORRECTIONS: Readonly<Record<string, number>> = {
-  pc_black_hole: 1.5,
+  pc_black_hole: 1.3,
 };
 
 /**
