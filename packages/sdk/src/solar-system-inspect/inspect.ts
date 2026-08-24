@@ -52,8 +52,9 @@ const DEFAULT_SVG_SIZE = 800;
  *
  * Distances are cursor units. The game separates bodies with size-based
  * spacing and renders sprites from entity assets, so body discs use a
- * documented approximation (`size` scaled by a constant, with assumed radii
- * for random or asset-dependent bodies); overlap findings are visual-overlap
+ * documented approximation (`size` scaled by a constant and the class's
+ * `entity_scale` from the game files, with assumed radii for random or
+ * asset-dependent bodies); overlap findings are visual-overlap
  * risks, not exact sprite collisions. Ranged and random values resolve to
  * position sets, and script-value strings such as `"@var"` are reported as
  * unresolvable rather than guessed. Overlap checks between different nesting

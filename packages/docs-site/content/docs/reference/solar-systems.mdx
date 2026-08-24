@@ -194,8 +194,10 @@ stays standalone; embedded as an image it is a static picture.
 <Callout type="warn" title="The preview is a schematic of cursor space">
   The game separates bodies with size-based spacing that has no author-facing formula, and it
   renders sprites from entity assets, not from `size`. The preview draws each body as a disc with
-  radius `size` times a fixed calibration constant, and assumes a per-kind radius when the size is
-  missing or the class is random. Overlap findings are therefore visual-overlap risks, not exact
+  radius `size` times a calibration constant, scaled by the class's `entity_scale` from the game's
+  planet-class files, and assumes a per-kind radius when the size is missing or the class is
+  random. Classes with `fixed_entity_scale` render at one size whatever `size` says, so their
+  discs stay assumptions. Overlap findings are therefore visual-overlap risks, not exact
   sprite collisions. Exact stacking at one cursor point is the game's own idiom (vanilla fans
   asteroids this way) and reports as info, never as an overlap.
 </Callout>

@@ -10,7 +10,13 @@ import { describe, expect, it } from "vitest";
 
 import type { SolarSystemInitializerItem } from "../src/generated/content-definers.ts";
 import { inspectSolarSystem, type SolarSystemDiagnostic } from "../src/index.ts";
+import {
+  CLASS_ENTITY_SCALES,
+  FIXED_SCALE_CLASSES,
+  STANDARD_ENTITY_SCALE,
+} from "../src/solar-system-inspect/class-scales.ts";
 import { locateInstall } from "../src/stellaris/installation/locate.ts";
+import { readVanillaClassScales } from "./helpers/planet-class-scales.ts";
 import { readVanillaInitializers, type VanillaInitializer } from "./helpers/solar-system-raw.ts";
 
 let installPath: string | undefined;
@@ -88,6 +94,19 @@ describe.skipIf(installPath === undefined)("vanilla solar-system calibration (no
     for (const initializer of belted.slice(0, 5)) {
       expect(inspectSolarSystem(item(initializer)).svg).toContain('class="belt"');
     }
+  });
+
+  it("keeps the baked class scale table in sync with the install", () => {
+    const vanilla = readVanillaClassScales(installPath!);
+    expect(vanilla.scales.size).toBeGreaterThan(50);
+    for (const [className, scale] of vanilla.scales) {
+      const baked = CLASS_ENTITY_SCALES[className] ?? STANDARD_ENTITY_SCALE;
+      expect({ className, scale: baked }).toEqual({ className, scale });
+    }
+    for (const className of Object.keys(CLASS_ENTITY_SCALES)) {
+      expect(vanilla.scales.get(className)).toBeDefined();
+    }
+    expect([...FIXED_SCALE_CLASSES].sort()).toEqual([...vanilla.fixed].sort());
   });
 
   it("renders deterministic SVG for shipped systems", () => {

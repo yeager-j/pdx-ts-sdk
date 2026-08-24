@@ -14,6 +14,7 @@ import type { PlanetInitializerFields } from "../generated/planet-initializer.ts
 import type { SolarSystemInitializerDef } from "../generated/solar-system-initializer.ts";
 import { refId } from "../script/scalar.ts";
 import type { ScriptValue } from "../script/trigger-core.ts";
+import { classScaleFactor, FIXED_SCALE_CLASSES } from "./class-scales.ts";
 import {
   absInterval,
   addSpans,
@@ -661,16 +662,26 @@ function resolveVisual(
     }
   }
 
+  const factor = classScaleFactor(className);
   if (sizeInterval === undefined) {
-    return { radius: fallback, assumed: true, sizeLabel };
+    return {
+      radius: { min: fallback.min * factor, max: fallback.max * factor },
+      assumed: true,
+      sizeLabel,
+    };
   }
   const radius = {
-    min: sizeInterval.min * SIZE_TO_VISUAL_RADIUS,
-    max: sizeInterval.max * SIZE_TO_VISUAL_RADIUS,
+    min: sizeInterval.min * SIZE_TO_VISUAL_RADIUS * factor,
+    max: sizeInterval.max * SIZE_TO_VISUAL_RADIUS * factor,
   };
   const randomClass =
     className === undefined || RANDOM_CLASSES.has(className) || className.startsWith("rl_");
-  const assumed = entry.entity !== undefined || randomClass;
+  // A fixed-scale class renders at one size whatever `size` says, so its
+  // disc stays an assumption.
+  const assumed =
+    entry.entity !== undefined ||
+    randomClass ||
+    (className !== undefined && FIXED_SCALE_CLASSES.has(className));
   return { radius, assumed, sizeLabel };
 }
 
