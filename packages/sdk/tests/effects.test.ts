@@ -1635,6 +1635,23 @@ every_owned_planet = {
     expect(serialize(entries)).toContain("limit = {\n\t\t\tprevprev = {");
   });
 
+  it("resolves a context PREV trigger in the pushed block that receives it", () => {
+    const entries = withScriptCtx<
+      "country",
+      { readonly root: "country"; readonly prev: "planet" },
+      PdxEntry[]
+    >({}, (ctx) =>
+      recordEffects<"country">([], (country) => {
+        country.everyOwnedPlanet(
+          { limit: ctx.prev.trigger(hasPlanetFlag("effects_test_argument_prev")) },
+          () => {}
+        );
+      })
+    );
+
+    expect(serialize(entries)).toContain("limit = {\n\t\tprevprev = {");
+  });
+
   it("rejects context PREV refs across replacement transitions and depth four", () => {
     expect(() =>
       withScriptCtx<"megastructure", { readonly prev: "planet" }>({}, (ctx) =>

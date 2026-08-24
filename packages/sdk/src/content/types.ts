@@ -361,25 +361,27 @@ export interface WeightBlockWithLoc<S extends ScopeName> extends WeightBlockWith
 
 /**
  * A script effect block recorded against the scope declared by the content
- * rules, with the ambient scopes that block runs in as a second argument.
+ * rules. Its second callback argument is a named map of every ambient scope
+ * the rules declare for that block.
  *
- * `From` is the scope the game hands the block as FROM, where the rules name
- * one (`## replace_scopes = { this = fleet from = archaeological_site }`):
+ * Map keys mirror Stellaris scope paths: `root`, `from` through
+ * `fromfromfromfrom`, and `prev` through `prevprevprevprev`. Omitted keys are
+ * unavailable on {@link ScriptCtx}, so a block cannot navigate a scope its
+ * rules do not name.
  *
- *     onRollFailed: (fleet, ctx) => {
- *       ctx.from.effects((site) => { ... });
- *     }
+ * @example
+ * A block with `Context` equal to
+ * `{ root: "fleet"; from: "archaeological_site" }` receives both refs:
  *
- * It defaults to undeclared, and `ctx.from` is then an inert sentinel rather
- * than a ref — a block whose FROM nothing describes must not be navigated.
+ * ```ts
+ * onRollFailed: (fleet, ctx) => {
+ *   ctx.from.effects((site) => { ... });
+ * }
+ * ```
  *
- * `Root` is the same arrangement for ROOT, and defaults to undeclared for the
- * same reason rather than to `S`: `## replace_scopes` states the whole context
- * and clears what it omits, and `## push_scope` never states ROOT at all, so
- * an unstated ROOT here is unknown — not "the block's own scope". Where the
- * rules do state it the two commonly differ, which is the point:
- * `init_effect` on a solar system initializer runs in planet scope with a
- * country as ROOT.
+ * The default empty map declares no ambient scopes. It does not infer ROOT
+ * from `S`: CWT can set THIS and ROOT independently, so generated fields name
+ * ROOT explicitly when it is known.
  */
 export type EffectBlock<S extends ScopeName, Context extends AmbientScopeContext = {}> = (
   scope: ScopeObjOf<S>,

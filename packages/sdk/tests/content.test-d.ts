@@ -2400,9 +2400,13 @@ describe("generated content authoring types", () => {
             // here; ctx.self is the planet this initializer block runs in.
             planet.planetEvent({ id: needsPlanetFrom, scopes: { from: ctx.self } });
             planet.planetEvent({ id: needsCountryFrom, scopes: { from: ctx.root } });
+            // @ts-expect-error — deeper FROM overrides require an absolute ref.
             planet.planetEvent({
               id: needsCountryThenPlanet,
-              scopes: { from: ctx.root, fromfrom: ctx.self },
+              scopes: {
+                from: ctx.root,
+                fromfrom: ctx.self,
+              },
             });
           },
         },

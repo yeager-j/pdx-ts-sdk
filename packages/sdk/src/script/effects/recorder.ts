@@ -6,10 +6,12 @@ import {
   container,
   kv,
   scalar as pdxScalar,
+  type PdxContainer,
   type PdxEntry,
   type PdxItem,
   type PdxOp,
   type PdxScalar,
+  type PdxValue,
 } from "@pdx-ts/pdxscript";
 
 import { fieldEntries as contentFieldEntries } from "../../content/lower.ts";
@@ -62,6 +64,7 @@ import {
 const cannotWitnessNaturalFrom = Symbol("cannotWitnessNaturalFrom");
 const scopeLease = Symbol("scopeLease");
 const contextPrevDepth = Symbol("contextPrevDepth");
+const contextPrevEntry = Symbol("contextPrevEntry");
 type ScopeTransition = "same" | "push" | "replace" | "unknown";
 type ScopeIdentity = symbol;
 interface RuntimeScopeValue {
@@ -79,6 +82,15 @@ interface RuntimeScopeValue {
  * ctx used where it was given from one that escaped into another definition.
  */
 type ScriptLease = symbol;
+
+/** A declared PREV trigger path deferred until its receiving effect block is known. */
+interface ContextPrevEntry {
+  readonly [contextPrevEntry]?: {
+    readonly path: string;
+    readonly declaredDepth: number;
+    readonly lease: ScriptLease | undefined;
+  };
+}
 
 /** The authoring calls currently running, innermost last. */
 const LEASES: ScriptLease[] = [];
@@ -124,15 +136,16 @@ export function scopeRef<S extends ScopeName>(
         block(resolvedPath, recordBlock(recording, recording.refs, body, [], "push"))
       );
     },
-    // Absolute trigger values remain reusable. A declared PREV needs its
-    // owning recording to adjust verified depth and rejects escaped contexts.
     trigger(condition) {
-      const recording = RECORDINGS.at(-1);
-      const resolvedPath =
-        recording === undefined
-          ? path
-          : resolveContextPrevPath(path, declaredPrevDepth, recording, lease);
-      return trigger([block(resolvedPath, [...condition.entries])], [...condition.refs]);
+      const entry = block(path, [...condition.entries]);
+      const contextualEntry =
+        declaredPrevDepth === undefined
+          ? entry
+          : ({
+              ...entry,
+              [contextPrevEntry]: { path, declaredDepth: declaredPrevDepth, lease },
+            } satisfies PdxEntry & ContextPrevEntry);
+      return trigger([contextualEntry], [...condition.refs]);
     },
   };
 }
@@ -231,6 +244,55 @@ interface Recording extends RecordingState {
     readonly sink: readonly PdxEntry[];
     readonly mark: number;
   };
+}
+
+function resolveContextPrevEntries(
+  entries: readonly PdxEntry[],
+  recording: Recording | undefined
+): PdxEntry[] {
+  return recording === undefined
+    ? [...entries]
+    : entries.map((entry) => resolveContextPrevEntry(entry, recording));
+}
+
+function resolveContextPrevEntry(entry: PdxEntry, recording: Recording): PdxEntry {
+  const context = (entry as PdxEntry & ContextPrevEntry)[contextPrevEntry];
+  const key =
+    context === undefined
+      ? entry.key
+      : resolveContextPrevPath(context.path, context.declaredDepth, recording, context.lease);
+  return {
+    kind: "entry",
+    key,
+    op: entry.op,
+    value: resolveContextPrevValue(entry.value, recording),
+    ...(entry.line === undefined ? {} : { line: entry.line }),
+  };
+}
+
+function resolveContextPrevValue(value: PdxValue, recording: Recording): PdxValue {
+  return value.kind === "container" ? resolveContextPrevContainer(value, recording) : value;
+}
+
+function resolveContextPrevContainer(value: PdxContainer, recording: Recording): PdxContainer {
+  return {
+    kind: "container",
+    items: value.items.map((item) => resolveContextPrevItem(item, recording)),
+    ...(value.header === undefined ? {} : { header: value.header }),
+  };
+}
+
+function resolveContextPrevItem(item: PdxItem, recording: Recording): PdxItem {
+  if (item.kind === "entry") {
+    return resolveContextPrevEntry(item, recording);
+  }
+  if (item.kind === "container") {
+    return resolveContextPrevContainer(item, recording);
+  }
+  if (item.kind === "param") {
+    return { ...item, items: item.items.map((child) => resolveContextPrevItem(child, recording)) };
+  }
+  return item;
 }
 
 const RECORDINGS: Recording[] = [];
@@ -1088,6 +1150,16 @@ function fireEffect(key: string) {
             "when the event expects ROOT, or an absolute scope reference for an explicit override."
         );
       }
+      const relativeDeeperFrom = Object.entries(args.scopes ?? {}).find(
+        ([slot, witness]) => slot !== "from" && slot.startsWith("from") && witness.path === "this"
+      );
+      if (relativeDeeperFrom !== undefined) {
+        throw new Error(
+          `Event scope witness "${relativeDeeperFrom[0]}" uses relative THIS. Deeper FROM ` +
+            "overrides must use an absolute scope reference such as ROOT, FROM, or a saved target, " +
+            "because THIS changes inside nested effect callbacks."
+        );
+      }
       // The witness is the other place a ctx path reaches output, so it
       // carries the same lease rule opening a block does.
       Object.values(args.scopes ?? {}).forEach((witness) =>
@@ -1492,6 +1564,9 @@ function recordBlock<S extends ScopeName>(
     recording.live = false;
   }
   assertSynchronousClosure(result, "An effect closure");
+  // Trigger arguments are evaluated before a pushed callback opens. Resolve
+  // declared PREV paths only now, against the block that will contain them.
+  into.splice(0, into.length, ...resolveContextPrevEntries(into, recording));
   return into;
 }
 

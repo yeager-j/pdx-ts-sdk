@@ -52,8 +52,8 @@ export type FireFromWitness<S extends ScopeName> = ScopeValue<S> & {
  * depth. `this` does not — inside that block it is the
  * planet — so `ctx.self` is a plain {@link ScopeValue}, and the one thing you
  * cannot do with it is open a block whose contents would run in a scope its
- * type does not describe. As a value it stays exactly as useful: the FROM
- * witness at a fire site, a situation's target, a scripted effect's argument.
+ * type does not describe. As a value it remains useful as an immediate FROM
+ * witness, a situation target, or a scripted-effect argument.
  */
 export interface ScopeRef<S extends ScopeName = ScopeName> extends ScopeValue<S> {
   /**

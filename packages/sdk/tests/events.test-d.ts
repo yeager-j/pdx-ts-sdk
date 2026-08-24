@@ -12,6 +12,7 @@ import {
   hasPlanetFlag,
   planetFlags,
   vanilla,
+  type EffectBlock,
   type EventTriggeredDescription,
   type TriggeredDescription,
 } from "../src/index.ts";
@@ -28,6 +29,30 @@ describe("the FROM contract on the real event API", () => {
       immediate: (country) => {
         country.countryEvent({ id: "another_mod.5" });
       },
+    });
+  });
+
+  it("infers an ambient event contract only from scopes", () => {
+    const mod = createMod({
+      name: "Context inference",
+      prefix: "context_inference",
+      supportedVersion: "4.4.*",
+    });
+    const events = mod.namespace();
+    const callback: EffectBlock<
+      "country",
+      { readonly root: "country"; readonly from: "planet" }
+    > = (_country, ctx) => ctx.from.effects((planet) => planet.setPlanetFlag("inferred"));
+
+    events.country(1, {
+      isTriggeredOnly: true,
+      // @ts-expect-error — callbacks cannot declare an ambient contract without scopes.
+      immediate: callback,
+    });
+    events.country(2, {
+      scopes: { from: "planet" },
+      isTriggeredOnly: true,
+      immediate: callback,
     });
   });
 

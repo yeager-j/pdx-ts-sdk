@@ -30,6 +30,7 @@ import {
   type AmbientScopeKey,
   type FireFromWitness,
   type Modifier,
+  type ScopeRef,
   type ScopeValue,
   type ScriptCtx,
 } from "../script/effects/types.ts";
@@ -243,7 +244,7 @@ export type EventWindowType =
 export interface EventDef<
   S extends ScopeName,
   Context extends AmbientScopeContext,
-> extends GeneratedEventFields<S, Context> {
+> extends GeneratedEventFields<S, NoInfer<Context>> {
   /**
    * The ambient scopes this event expects when it runs. Emits nothing — it is
    * the compile-time contract checked at fire sites and on-action bindings.
@@ -321,8 +322,8 @@ export interface WitnessedFireEventArgs<
 > extends FireEventArgs<S, Context, Kind> {
   /**
    * Proof the fired event's declared FROM chain is satisfied: usually
-   * `ctx.self` for immediate FROM. Every deeper FROM slot is an explicit
-   * override, even when its witness serializes as `this`.
+   * `ctx.self` for immediate FROM. Every deeper FROM slot requires an absolute
+   * {@link ScopeRef}, because relative `this` can change before the fire runs.
    * `NoInfer` keeps the event ref the single inference source, so a
    * wrong-scope witness fails instead of unifying.
    */
@@ -335,7 +336,7 @@ type FireScopeKey = Exclude<AmbientScopeKey, "root" | `prev${string}`>;
 export type FireScopeWitnesses<Context extends AmbientScopeContext> = {
   readonly [Key in FireScopeKey as Key extends keyof Context ? Key : never]: Key extends "from"
     ? FireFromWitness<Extract<Context[Key], ScopeName>>
-    : ScopeValue<Extract<Context[Key], ScopeName>>;
+    : ScopeRef<Extract<Context[Key], ScopeName>>;
 };
 
 type ExplicitFireContext<Context extends AmbientScopeContext> =

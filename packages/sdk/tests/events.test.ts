@@ -8,6 +8,7 @@ import {
   not,
   or,
   render,
+  type ScopeRef,
   type ScopeValue,
 } from "../src/index.ts";
 import { eventTarget } from "../src/script/effects/recorder.ts";
@@ -89,38 +90,36 @@ describe("event definitions in a namespace", () => {
     expect(rendered).toContain("from = root");
   });
 
-  it("serializes a deeper THIS witness at a split-root fire site", () => {
+  it("rejects a relative THIS witness for a deeper FROM slot", () => {
     const runtimeMod = createMod({
-      name: "Split-root deep witness",
-      prefix: "split_root_deep",
+      name: "Relative deep witness",
+      prefix: "relative_deep",
       supportedVersion: "4.4.*",
     });
     const events = runtimeMod.namespace();
     const chained = events.planet(3, {
-      scopes: { from: "country", fromfrom: "planet" },
+      scopes: { from: "country", fromfrom: "country" },
       hideWindow: true,
       isTriggeredOnly: true,
     });
-    const initializer = runtimeMod.solarSystemInitializer("deep_witness", {
-      class: "sc_g",
-      planet: [
-        {
-          initEffect: (planet, ctx) => {
+    expect(() => {
+      const source = events.country(4, {
+        hideWindow: true,
+        isTriggeredOnly: true,
+        immediate: (country, ctx) => {
+          country.everyOwnedPlanet({}, (planet) => {
             planet.planetEvent({
               id: chained,
-              scopes: { from: ctx.root, fromfrom: ctx.self },
+              scopes: {
+                from: ctx.root,
+                fromfrom: ctx.self as unknown as ScopeRef<"country">,
+              },
             });
-          },
+          });
         },
-      ],
-    });
-
-    const rendered = render(
-      runtimeMod.compile([runtimeMod.feature("deep_witness", [initializer, chained])])
-    ).get("common/solar_system_initializers/split_root_deep_deep_witness.txt")!;
-
-    expect(rendered).toContain("from = root");
-    expect(rendered).toContain("fromfrom = this");
+      });
+      runtimeMod.compile([runtimeMod.feature("relative_deep", [source, chained])]);
+    }).toThrow(/fromfrom.*relative THIS/i);
   });
 
   it("rejects duplicate event ids within the namespace", () => {
