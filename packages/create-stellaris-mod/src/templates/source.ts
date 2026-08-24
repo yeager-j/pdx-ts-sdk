@@ -115,13 +115,6 @@ export async function buildTheMod(): Promise<PureMod> {
 ${vanillaUse}
 }
 
-export function assetCaptureSummary(built: PureMod): string {
-  const fileCount = built.assets.length;
-  const byteCount = built.assets.reduce((total, asset) => total + asset.byteLength, 0);
-  const files = fileCount === 1 ? "file" : "files";
-  const bytes = byteCount === 1 ? "byte" : "bytes";
-  return \`captured \${fileCount} Asset \${files} (\${byteCount} \${bytes})\`;
-}
 `;
 }
 
@@ -130,39 +123,19 @@ export function indexTs(): string {
  * The build. \`npm run build\` runs this file — Node executes TypeScript
  * directly, so nothing stands between this source and the emitted mod.
  *
- * \`render\` serializes the value \`buildTheMod\` (in \`mod.ts\`) folds together, and
- * \`write\` and \`writeSystemPreviews\` are the steps that touch the disk. The
- * previews are authoring aids beside the mod, not part of it: layout findings
- * print here as advisory lines and never fail the build.
+ * The SDK's terminal runner owns rendering, writing, previews, and presentation,
+ * so formatting improvements arrive with SDK upgrades rather than being copied
+ * into this project.
  */
 
-import { render, write, writeSystemPreviews } from "@pdx-ts/sdk";
+import { runBuild } from "@pdx-ts/sdk/terminal";
 
-import { assetCaptureSummary, buildTheMod } from "./mod.ts";
+import { buildTheMod } from "./mod.ts";
 
 export const outDir = new URL("../out/", import.meta.url);
 export const previewsDir = new URL("../previews/", import.meta.url);
 
-const mod = await buildTheMod();
-console.log(assetCaptureSummary(mod));
-const files = render(mod);
-await write(outDir, files);
-const previewReport = await writeSystemPreviews(previewsDir, mod);
-
-for (const warning of mod.warnings) {
-  console.warn(\`warning (\${warning.code}): \${warning.message}\`);
-}
-for (const preview of previewReport.previews) {
-  for (const finding of preview.diagnostics) {
-    console.log(\`layout \${preview.id} (\${finding.certainty}) \${finding.code}: \${finding.message}\`);
-  }
-}
-for (const relPath of files.keys()) {
-  console.log(\`wrote \${relPath}\`);
-}
-if (previewReport.previews.length > 0) {
-  console.log(\`wrote previews/index.html (\${previewReport.previews.length} solar systems)\`);
-}
+await runBuild(buildTheMod(), { outDir, previewsDir });
 `;
 }
 
@@ -180,30 +153,19 @@ export function installTs(): string {
  * This shares \`buildTheMod\` with \`src/index.ts\` rather than folding content a
  * second time, so the mod that gets installed is built with the same vanilla
  * view (id collision checks included) as the one \`npm run build\` writes to
- * \`out/\` — never a second, unchecked build. It also has its own warning
- * loop, for the same reason: nothing here can lean on \`src/index.ts\` printing
- * \`mod.warnings\` for it.
+ * \`out/\` — never a second, unchecked build. The SDK terminal runner owns
+ * installation and presentation so existing projects receive formatting and
+ * diagnostic improvements when they update the SDK.
  *
  * Enable the mod in a launcher playset afterwards; the launcher only rescans
  * this directory on startup, so restart it if the mod does not appear.
  */
 
-import { install, render } from "@pdx-ts/sdk";
+import { runInstall } from "@pdx-ts/sdk/terminal";
 
-import { assetCaptureSummary, buildTheMod, config } from "./mod.ts";
+import { buildTheMod } from "./mod.ts";
 
-const mod = await buildTheMod();
-console.log(assetCaptureSummary(mod));
-
-for (const warning of mod.warnings) {
-  console.warn(\`warning (\${warning.code}): \${warning.message}\`);
-}
-
-const { contentDir, descriptorPath } = await install(render(mod));
-
-console.log(\`Installed \${config.name} for the launcher:\`);
-console.log(\`  content:    \${contentDir}\`);
-console.log(\`  descriptor: \${descriptorPath}\`);
+await runInstall(buildTheMod());
 `;
 }
 

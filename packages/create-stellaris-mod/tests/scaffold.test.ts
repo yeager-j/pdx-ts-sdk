@@ -135,7 +135,18 @@ function installTarballs(dir: string, tarballs: string): void {
     ]);
   }
 
-  for (const dep of ["typescript", "vitest", "@types", "@eslint", "eslint", "typescript-eslint"]) {
+  for (const dep of [
+    "typescript",
+    "vitest",
+    "@types",
+    "@eslint",
+    "eslint",
+    "typescript-eslint",
+    "@clack",
+    "fast-string-width",
+    "fast-wrap-ansi",
+    "sisteransi",
+  ]) {
     symlinkSync(path.join(ROOT_MODULES, dep), path.join(modules, dep), "dir");
   }
   mkdirSync(path.join(modules, ".bin"), { recursive: true });
@@ -145,12 +156,24 @@ function installTarballs(dir: string, tarballs: string): void {
 }
 
 function runIn(dir: string, command: string, args: readonly string[]): string {
-  return execFileSync(command, [...args], {
-    cwd: dir,
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "pipe"],
-    env: { ...process.env, PDX_NO_VANILLA: "1" },
-  });
+  return runInWithEnv(dir, command, args, { ...process.env, PDX_NO_VANILLA: "1" });
+}
+
+function runInWithEnv(
+  dir: string,
+  command: string,
+  args: readonly string[],
+  env: NodeJS.ProcessEnv
+): string {
+  const result = spawnSync(command, [...args], { cwd: dir, encoding: "utf8", env });
+  if (result.error !== undefined) {
+    throw result.error;
+  }
+  const output = `${result.stdout}${result.stderr}`;
+  if (result.status !== 0) {
+    throw new Error(`Command failed (${result.status}): ${command} ${args.join(" ")}\n${output}`);
+  }
+  return output;
 }
 
 beforeAll(async () => {
@@ -326,7 +349,8 @@ describe("a scaffolded project", () => {
 
   it("builds a mod, fanning one feature module across two registries", () => {
     const output = runIn(projectDir, process.execPath, ["src/index.ts"]);
-    expect(output.trimStart().startsWith("captured 0 Asset files (0 bytes)\n")).toBe(true);
+    expect(output).toContain("Built Smoke Mod");
+    expect(output).toContain("0 assets · 0 bytes");
 
     // The claim `src/content/example.ts`'s own docblock makes: one module, one
     // stem, two registry directories.
@@ -352,7 +376,7 @@ describe("a scaffolded project", () => {
         runIn(projectDir, path.join(projectDir, "node_modules/.bin/tsc"), ["--noEmit"])
       ).not.toThrow();
       const output = runIn(projectDir, process.execPath, ["src/index.ts"]);
-      expect(output.trimStart().startsWith("captured 0 Asset files (0 bytes)\n")).toBe(true);
+      expect(output).toContain("0 assets · 0 bytes");
     } finally {
       writeFileSync(manifestPath, original);
     }
@@ -403,35 +427,29 @@ describe("a scaffolded project", () => {
       });
 
       const buildOutput = runIn(projectDir, process.execPath, ["src/index.ts"]);
-      expect(buildOutput.trimStart().startsWith("captured 2 Asset files (11 bytes)\n")).toBe(true);
-      expect(buildOutput.indexOf("captured 2 Asset files (11 bytes)")).toBeLessThan(
-        buildOutput.indexOf("wrote gfx/interface/icon.bin")
-      );
+      expect(buildOutput).toContain("2 assets · 11 bytes");
+      expect(buildOutput).toContain("gfx/interface/icon.bin");
       expect(runIn(projectDir, "cat", ["out/gfx/interface/icon.bin"])).toBe("after");
       expect(runIn(projectDir, "cat", ["out/.hidden/secret.bin"])).toBe("hidden");
 
       rmSync(path.dirname(hidden), { recursive: true });
       writeFileSync(visible, "x");
       const singularOutput = runIn(projectDir, process.execPath, ["src/index.ts"]);
-      expect(singularOutput.trimStart().startsWith("captured 1 Asset file (1 byte)\n")).toBe(true);
+      expect(singularOutput).toContain("1 asset · 1 byte");
       mkdirSync(path.dirname(hidden), { recursive: true });
       writeFileSync(hidden, "hidden");
       writeFileSync(visible, "after");
 
       const modDir = mkdtempSync(path.join(tmpdir(), "create-stellaris-mod-assets-"));
       try {
-        const installOutput = execFileSync(process.execPath, ["src/install.ts"], {
-          cwd: projectDir,
-          encoding: "utf8",
-          stdio: ["ignore", "pipe", "pipe"],
-          env: { ...process.env, PDX_NO_VANILLA: "1", STELLARIS_MOD_DIR: modDir },
+        const installOutput = runInWithEnv(projectDir, process.execPath, ["src/install.ts"], {
+          ...process.env,
+          PDX_NO_VANILLA: "1",
+          STELLARIS_MOD_DIR: modDir,
         });
-        expect(installOutput.trimStart().startsWith("captured 2 Asset files (11 bytes)\n")).toBe(
-          true
-        );
-        expect(installOutput.indexOf("captured 2 Asset files (11 bytes)")).toBeLessThan(
-          installOutput.indexOf("Installed Smoke Mod for the launcher:")
-        );
+        expect(installOutput).toContain("Installed Smoke Mod");
+        expect(installOutput).toContain("2 assets · 11 bytes");
+        expect(installOutput).toContain("Launcher paths");
       } finally {
         rmSync(modDir, { recursive: true, force: true });
       }
@@ -471,14 +489,14 @@ describe("a scaffolded project", () => {
     // works end to end.
     const modDir = mkdtempSync(path.join(tmpdir(), "create-stellaris-mod-launcher-"));
     try {
-      const output = execFileSync(process.execPath, ["src/install.ts"], {
-        cwd: projectDir,
-        encoding: "utf8",
-        stdio: ["ignore", "pipe", "pipe"],
-        env: { ...process.env, PDX_NO_VANILLA: "1", STELLARIS_MOD_DIR: modDir },
+      const output = runInWithEnv(projectDir, process.execPath, ["src/install.ts"], {
+        ...process.env,
+        PDX_NO_VANILLA: "1",
+        STELLARIS_MOD_DIR: modDir,
       });
-      expect(output.trimStart().startsWith("captured 0 Asset files (0 bytes)\n")).toBe(true);
-      expect(output).toContain("Installed Smoke Mod for the launcher:");
+      expect(output).toContain("Installed Smoke Mod");
+      expect(output).toContain("0 assets · 0 bytes");
+      expect(output).toContain("Launcher paths");
       expect(readdirSync(modDir).length).toBeGreaterThan(0);
     } finally {
       rmSync(modDir, { recursive: true, force: true });
@@ -504,16 +522,15 @@ describe("a scaffolded project", () => {
 
     const modDir = mkdtempSync(path.join(tmpdir(), "create-stellaris-mod-warn-"));
     try {
-      // spawnSync, not execFileSync: the warning is nonfatal (exit 0), and
-      // console.warn writes to stderr, which execFileSync's return value
-      // does not include.
+      // The terminal runner writes its presentation to stderr, so inspect both
+      // captured streams while still proving that warnings leave exit code 0.
       const result = spawnSync(process.execPath, ["src/install.ts"], {
         cwd: projectDir,
         encoding: "utf8",
         env: { ...process.env, PDX_NO_VANILLA: "1", STELLARIS_MOD_DIR: modDir },
       });
       expect(result.status, result.stderr).toBe(0);
-      expect(result.stdout + result.stderr).toContain("warning (loc-quote-replaced)");
+      expect(result.stdout + result.stderr).toContain("loc-quote-replaced:");
     } finally {
       writeFileSync(examplePath, original);
       rmSync(modDir, { recursive: true, force: true });
@@ -560,19 +577,18 @@ describe.skipIf(!realVanillaSuiteRunnable)(
     });
 
     function runInstallMod(): string {
-      return execFileSync(process.execPath, ["src/install.ts"], {
-        cwd: checkedProjectDir,
-        encoding: "utf8",
-        stdio: ["ignore", "pipe", "pipe"],
+      return runInWithEnv(checkedProjectDir, process.execPath, ["src/install.ts"], {
         // No PDX_NO_VANILLA here: the whole point is exercising the real
         // vanilla view this machine's Stellaris install provides.
-        env: { ...process.env, STELLARIS_MOD_DIR: launcherModDir },
+        ...process.env,
+        STELLARIS_MOD_DIR: launcherModDir,
       });
     }
 
     it("installs cleanly end to end when nothing collides", () => {
       const output = runInstallMod();
-      expect(output).toContain("Installed Checked Mod for the launcher:");
+      expect(output).toContain("Installed Checked Mod");
+      expect(output).toContain("Launcher paths");
       expect(readdirSync(launcherModDir).length).toBeGreaterThan(0);
     });
   },

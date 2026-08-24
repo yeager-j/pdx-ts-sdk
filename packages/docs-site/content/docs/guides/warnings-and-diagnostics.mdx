@@ -76,12 +76,16 @@ const rendered = render(built);
 await write(outDir, rendered);
 ```
 
-`create-stellaris-mod` generates the same loop in both its write and install
-entry points, so warnings appear whichever command you run.
+`create-stellaris-mod` generates calls to `runBuild` and `runInstall` from
+`@pdx-ts/sdk/terminal`, so the SDK owns the presentation and warnings appear
+whichever command you run. Interactive output shows up to three warnings
+directly and groups larger sets by code; pass `--verbose` to show every warning.
+CI and non-TTY output are verbose by default.
 
-Warnings do not stop rendering, writing, or installing. Display all of them
-in local builds. In CI, choose which codes fail your build: a build that
-throws nothing can still report warnings worth acting on.
+Warnings do not stop rendering, writing, or installing. Keep them visible in
+local builds and inspect the full `--verbose` output before release. In CI,
+choose which codes fail your build: a build that throws nothing can still
+report warnings worth acting on.
 
 `write` and `install` also return a report of their own: its `status` says
 whether anything changed, `foreignEntries` lists preserved files the SDK does

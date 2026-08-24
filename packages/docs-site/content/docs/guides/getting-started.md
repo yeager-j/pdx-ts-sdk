@@ -97,8 +97,9 @@ npm run build
 see [Testing your mod](/guides/testing-your-mod/) — and `npm run build`
 produces the mod.
 
-The build prints every file it writes and creates `out/`. Open that directory
-to see the ordinary Stellaris files: the example produces files under
+The build prints a compact Clack summary and creates `out/`. Run
+`npm run build -- --verbose` to include every emitted path and warning. Open
+`out/` to see the ordinary Stellaris files: the example produces files under
 `common/technology/`, `common/on_actions/`, `events/`, and `localisation/`,
 plus `descriptor.mod` and the SDK's `.pdx-sdk-manifest.json` ownership record
 (see [The pipeline](/guides/the-pipeline/)). The game never loads the
@@ -113,7 +114,8 @@ npm run install-mod
 ```
 
 The command builds the mod, copies it into the launcher mod directory, and
-prints the paths to the installed content and its launcher descriptor. Start
+prints a terminal summary with the installed content and launcher descriptor
+paths. Start
 the launcher, add **My First Mod** to a playset, enable it, and start the game
 with that playset. If the mod does not appear, restart the launcher so it
 rescans the directory. When the launcher's mod directory is not at the

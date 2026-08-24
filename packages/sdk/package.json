@@ -23,9 +23,15 @@
       "pdx-source": "./src/script-reference.ts",
       "types": "./dist/script-reference.d.ts",
       "default": "./dist/script-reference.js"
+    },
+    "./terminal": {
+      "pdx-source": "./src/terminal.ts",
+      "types": "./dist/terminal.d.ts",
+      "default": "./dist/terminal.js"
     }
   },
   "dependencies": {
+    "@clack/prompts": "^1.7.0",
     "@pdx-ts/pdxscript": "^0.2.0"
   },
   "peerDependencies": {

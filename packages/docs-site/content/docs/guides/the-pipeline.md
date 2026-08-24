@@ -37,6 +37,25 @@ await install(rendered);
 A scaffolded project reads the name, prefix, and supported version from
 `stellaris-mod.json`; they are written out here so the snippet stands alone.
 
+The scaffolded entry points use the opt-in terminal module instead of spelling
+out this pipeline and its presentation in every project:
+
+```ts
+import { runBuild } from "@pdx-ts/sdk/terminal";
+
+await runBuild(buildTheMod(), {
+  outDir: new URL("../out/", import.meta.url),
+  previewsDir: new URL("../previews/", import.meta.url),
+});
+```
+
+`runBuild` and `runInstall` accept the `PureMod` or its promise, run the same
+low-level operations shown above, display warnings and structured failures with
+Clack, and return the write or install report on success. They set the command
+exit code and resolve to `undefined` after a reported failure, which prevents
+Node from printing the same raw stack a second time. Advanced build scripts can
+continue to call `render`, `write`, and `install` directly.
+
 ## 1. `createMod`: bind the mod's identity
 
 `createMod` validates the launcher configuration and returns an immutable

@@ -365,17 +365,15 @@ describe("the Project Manifest", () => {
     expect(readme).toContain("missing or empty directory is valid");
   });
 
-  it("reports one whole-mod Asset summary before build and install output", () => {
-    const mod = plan().get("src/mod.ts")!;
+  it("delegates build and install presentation to the SDK terminal module", () => {
     const build = plan().get("src/index.ts")!;
     const install = plan().get("src/install.ts")!;
-    expect(mod).toContain("export function assetCaptureSummary(built: PureMod): string");
-    expect(build.indexOf("console.log(assetCaptureSummary(mod))")).toBeLessThan(
-      build.indexOf("const files = render(mod)")
-    );
-    expect(install.indexOf("console.log(assetCaptureSummary(mod))")).toBeLessThan(
-      install.indexOf("await install(render(mod))")
-    );
+    expect(build).toContain('import { runBuild } from "@pdx-ts/sdk/terminal"');
+    expect(build).toContain("await runBuild(buildTheMod(), { outDir, previewsDir })");
+    expect(install).toContain('import { runInstall } from "@pdx-ts/sdk/terminal"');
+    expect(install).toContain("await runInstall(buildTheMod())");
+    expect(build).not.toContain("console.");
+    expect(install).not.toContain("console.");
   });
 
   it("aliases the mod module, so feature source computes no relative path", () => {
