@@ -52,8 +52,10 @@ describe("compareLogicalPaths", () => {
   it("is antisymmetric and zero exactly on equality", () => {
     fc.assert(
       fc.property(logicalPath, logicalPath, (a, b) => {
-        expect(compareLogicalPaths(a, b)).toBe(-compareLogicalPaths(b, a));
-        expect(compareLogicalPaths(a, b) === 0).toBe(a === b);
+        const forward = compareLogicalPaths(a, b);
+        const reverse = compareLogicalPaths(b, a);
+        expect(forward + reverse).toBe(0);
+        expect(forward === 0).toBe(a === b);
       }),
       { numRuns: 2000 }
     );
