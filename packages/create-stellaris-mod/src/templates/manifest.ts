@@ -2,8 +2,8 @@
  * `stellaris-mod.json` and the JSON schema beside it.
  *
  * The manifest is the project's single author-owned source of truth for mod
- * identity, launcher metadata, and source layout: `src/mod.ts` is wiring from
- * it to `createMod` rather than a second place to state the same facts. The
+ * identity, launcher metadata, and source layout: `src/mod.ts` passes it to
+ * `createModProject` rather than restating the same facts. The
  * sole key under `mod` is the mod prefix, which is what makes
  * `keyof typeof manifest.mod` recover it exactly rather than widening to
  * `string`.
@@ -14,10 +14,10 @@
  * `src/manifest.ts` enforces the same rules at runtime; `manifest.test.ts` runs
  * one corpus through both.
  *
- * The two grammars come from `src/manifest.ts` as `RegExp.source` rather than
- * being written out a third time. JSON Schema's `pattern` is an ECMA-262
- * regular expression, so the adapter's own regex *is* the schema's — a
- * restatement here would be one more thing that can silently disagree.
+ * Mod configuration grammar comes from `src/manifest.ts`; Project Layout
+ * grammar comes from the SDK pipeline that generated builds use. Both reach
+ * JSON Schema as `RegExp.source`, so the runtime rule itself is the schema's
+ * ECMA-262 pattern rather than a restatement that can silently disagree.
  */
 
 import { PREFIX_PATTERN, PROJECT_MOD_FIELDS, projectModFieldSchema } from "../manifest.ts";
@@ -53,7 +53,7 @@ export function manifestSchema(): string {
     title: "Stellaris mod project manifest",
     description:
       "Mod identity, launcher metadata, generated Feature source, and the mirrored Asset tree. " +
-      "src/mod.ts wires this to createMod.",
+      "src/mod.ts passes this to createModProject.",
     type: "object",
     required: [
       "mod",

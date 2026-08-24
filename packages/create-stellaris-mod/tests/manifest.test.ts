@@ -22,6 +22,7 @@ import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { resolveConfig, type ModConfig } from "../../sdk/src/compiler/config.ts";
+import { PROJECT_LAYOUT_FIELDS as SDK_PROJECT_LAYOUT_FIELDS } from "../../sdk/src/reference.ts";
 import {
   findManifest,
   ManifestError,
@@ -364,6 +365,28 @@ describe("parseManifest", () => {
     expect(assetsSchema["pattern"]).toBe(PROJECT_LAYOUT_FIELDS.assetsDirectory.pattern.source);
     expect(accepts(json({ ...MINIMAL, assetsDirectory: "assets" }))).toBe(true);
     expect(accepts(json({ ...MINIMAL, assetsDirectory: "../assets" }))).toBe(false);
+  });
+
+  it("keeps the standalone CLI projection equal to the SDK Project Layout authority", () => {
+    expect(Object.keys(PROJECT_LAYOUT_FIELDS)).toEqual(Object.keys(SDK_PROJECT_LAYOUT_FIELDS));
+
+    for (const fieldName of Object.keys(PROJECT_LAYOUT_FIELDS) as Array<
+      keyof typeof PROJECT_LAYOUT_FIELDS
+    >) {
+      const projected = PROJECT_LAYOUT_FIELDS[fieldName];
+      const authoritative = SDK_PROJECT_LAYOUT_FIELDS[fieldName];
+      expect({
+        required: projected.required,
+        description: projected.description,
+        pattern: projected.pattern.source,
+        error: projected.patternError("../invalid"),
+      }).toEqual({
+        required: authoritative.required,
+        description: authoritative.description,
+        pattern: authoritative.pattern.source,
+        error: authoritative.patternError("../invalid"),
+      });
+    }
   });
 });
 

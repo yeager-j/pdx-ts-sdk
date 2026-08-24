@@ -5,11 +5,11 @@
  * metadata, and where Feature and Asset source goes. `init` writes it; later
  * commands read it and never repair or migrate it.
  *
- * The validation is hand-rolled rather than a schema validator at runtime, for
- * the reason `derive.ts` restates the SDK's prefix pattern: this package has no
- * runtime dependency on the SDK and wants none on a validator either. The
- * emitted `stellaris-mod.schema.json` is the editor's copy of the same rules,
- * and `manifest.test.ts` runs one corpus through both to keep them honest.
+ * The validation is hand-rolled rather than delegated to a schema validator at
+ * runtime because this package has no runtime SDK dependency and wants none on
+ * a validator either. Project Layout is a release-local projection of the SDK
+ * rule used by generated builds; `manifest.test.ts` gates the two descriptors
+ * against each other. The emitted schema is the editor's copy of those rules.
  *
  * Every message names the file and the exact fault, because a manifest is
  * something an author edits by hand and "invalid manifest" is not a repair

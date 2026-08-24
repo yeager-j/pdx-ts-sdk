@@ -2,8 +2,8 @@
 
 `@pdx-ts/sdk` publishes five entry points, one per kind of consumer:
 
-- `.` — the pipeline: configure, discover, build, materialize. `createMod`,
-  `discoverFeatures`, `render`, `write`, `install`, the terminal helpers
+- `.` — the pipeline: configure, discover, build, materialize. `createModProject`,
+  `createMod`, `discoverFeatures`, `render`, `write`, `install`, the terminal helpers
   (`runBuild`, `runInstall`), the error classes, and the mod-level dev tools
   (`inspectSolarSystem`, `writeSystemPreviews`).
 - `./stellaris` — the game vocabulary: what an author types inside defs,
@@ -15,9 +15,9 @@
   `load`, `modDir`, version reading, and the parsed-vanilla surface
   (`VanillaView`, `ParsedDefinition`, `anyOf`).
 - `./reference` — machine-readable facts about the SDK, for tools that reason
-  *about* the surface rather than author with it: the registry descriptors,
-  field-docs ledger, script-reference tables, `EVENT_KINDS`, and
-  `SUPPORTED_STELLARIS_BUILD`.
+  _about_ the surface rather than author with it: the registry descriptors,
+  field-docs ledger, script-reference tables, Project Layout schema fields,
+  `EVENT_KINDS`, and `SUPPORTED_STELLARIS_BUILD`.
 - `./internals` — unstable machinery with no semver guarantee: the effect
   recorder, policy tables, recovery operations, identifier plumbing, ordering
   comparators, and the raw PDXScript constructors. `@pdx-ts/sdk-testing`'s
@@ -55,7 +55,7 @@ reorganization can change emitted mod bytes — entry layout is invisible to
 the game.
 
 The name `./installation` is deliberate: `./install` reads as the verb and
-collides with the root's `install()` (which installs the *built mod* into the
+collides with the root's `install()` (which installs the _built mod_ into the
 launcher directory — the opposite direction), and the old name `./stellaris`
 now means the vocabulary, not the install.
 

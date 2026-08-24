@@ -31,8 +31,9 @@ lifecycle hook with [`mod.on`](/concepts/on-actions/), or fire it from another
 typed effect as this example does.
 
 <Callout type="warn" title="Do not use mean-time-to-happen events">
-  The SDK supports `meanTimeToHappen`, but Stellaris developers recommend against MTTH. Do not use
-  it for new events; use `isTriggeredOnly` and an entry point, as above.
+  The SDK supports `meanTimeToHappen`, but Stellaris developers recommend against MTTH because of
+  its performance cost. Do not use it for new events; use `isTriggeredOnly` with an explicit entry
+  point, as above.
 </Callout>
 
 ## A namespace owns a numbered event series
@@ -44,6 +45,9 @@ const events = mod.namespace("signal");
 
 const detected = events.country(1, {
   title: "A Signal in the Noise",
+  desc: "A repeating harmonic reaches us from one of our worlds.",
+  picture: vanilla.spriteType.eventpictures.GFX_evt_mysterious_signal,
+  showSound: vanilla.soundEffect.gui.gui_sound_effects.event_alien_signal,
   isTriggeredOnly: true,
 });
 ```
@@ -109,6 +113,10 @@ An event body combines display fields, execution rules, and script blocks:
   generated fields control the game's event behavior.
 - `eventChain` stores a typed reference to a separate chain registry; the
   event itself stays in this `events/` channel.
+
+Give every visible event a `picture`; ordinary non-diplomatic event windows
+require one. Add `showSound` unless silence is a deliberate part of the scene.
+Hidden events set `hideWindow: true` and omit all window media.
 
 `picture` and `showSound` accept one flat value each. The game rules also
 permit repeated values and triggered `picture` or `show_sound` blocks, which
@@ -241,11 +249,13 @@ const first = events.countryHandle(1);
 const second = events.countryHandle(2);
 
 const firstEvent = first.define({
+  hideWindow: true,
   isTriggeredOnly: true,
   immediate: (country) => country.countryEvent({ id: second }),
 });
 
 const secondEvent = second.define({
+  hideWindow: true,
   isTriggeredOnly: true,
   immediate: (country) => country.countryEvent({ id: first }),
 });

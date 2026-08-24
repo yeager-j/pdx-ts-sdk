@@ -19,7 +19,7 @@
  * bottom is what names the emitted files.
  */
 
-import { onActions } from "@pdx-ts/sdk/stellaris";
+import { onActions, vanilla } from "@pdx-ts/sdk/stellaris";
 
 import { mod } from "#mod";
 
@@ -71,6 +71,8 @@ export const secondProject = mod.specialProject("resonance_theory_2", {
 export const started = events.country(1, {
   title: "PLACEHOLDER: the sighting that starts the quest.",
   desc: "PLACEHOLDER: what happened, in a paragraph.",
+  picture: vanilla.spriteType.eventpictures.GFX_evt_mysterious_signal,
+  showSound: vanilla.soundEffect.gui.gui_sound_effects.event_alien_signal,
   eventChain: chain,
   isTriggeredOnly: true,
   immediate: (country) => {
@@ -92,6 +94,8 @@ export const started = events.country(1, {
 export const firstCompleted = events.country(2, {
   title: "PLACEHOLDER: the discovery.",
   desc: "PLACEHOLDER: what was found, in a paragraph.",
+  picture: vanilla.spriteType.eventpictures.GFX_evt_mysterious_signal,
+  showSound: vanilla.soundEffect.gui.gui_sound_effects.event_alien_signal,
   eventChain: chain,
   isTriggeredOnly: true,
   immediate: (country) => {
@@ -104,6 +108,8 @@ export const firstCompleted = events.country(2, {
 export const secondCompleted = events.country(3, {
   title: "PLACEHOLDER: the rival discovery.",
   desc: "PLACEHOLDER: what was found, in a paragraph.",
+  picture: vanilla.spriteType.eventpictures.GFX_evt_mysterious_signal,
+  showSound: vanilla.soundEffect.gui.gui_sound_effects.event_alien_signal,
   eventChain: chain,
   isTriggeredOnly: true,
   immediate: (country) => {

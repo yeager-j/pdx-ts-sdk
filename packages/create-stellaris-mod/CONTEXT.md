@@ -17,9 +17,10 @@ state.
 _Avoid_: scaffolding config, mod config file, installation record
 
 **Project Layout**:
-The parsed, normalized placement contract derived from the Project Manifest. Feature source lives
-below `src/`, while the Asset source tree mirrors the mod root; recipe publication, generated build
-wiring, and TypeScript project coverage all consume that same interpretation.
+The parsed, normalized placement contract derived from the Project Manifest. Its validation rules
+live in the SDK project pipeline because generated builds enforce them too. Feature source lives
+below `src/`, while the Asset source tree mirrors the mod root; recipe publication, manifest schema,
+and TypeScript project coverage all consume that same interpretation.
 
 **Recipe Catalog**:
 The built-in, discoverable set of parameterized recipes available to the

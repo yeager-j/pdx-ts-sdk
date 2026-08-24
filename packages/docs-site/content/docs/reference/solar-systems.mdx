@@ -10,10 +10,11 @@ import { FieldTable } from "@/components/FieldTable";
 import { PairedExample } from "@/components/PairedExample";
 
 A **solar system initializer** is a recipe that creates the objects and layout
-inside one system. It selects the star class, places ordered planets and moons,
-adds asteroid belts, runs setup effects, and can continue into neighboring
-initializers. The SDK writes these definitions under
-`common/solar_system_initializers/`.
+inside one system. Its initializer-level `class` selects the galaxy-map star
+class and contributes to some in-system visuals; it does not assign a class to
+every body. The initializer also places ordered bodies, adds asteroid belts,
+runs setup effects, and can continue into neighboring initializers. The SDK
+writes these definitions under `common/solar_system_initializers/`.
 
 This first example defines a star, a named habitable world, its moon, an
 asteroid belt, and setup effects on both the world and system:
@@ -28,29 +29,45 @@ the opt-in.
 ## The initializer is a tree, not a flat list
 
 The top-level definition owns one system. Its `planet` array contains ordered,
-anonymous object templates. A planet can contain more planets and moons; a
-moon can contain more moons. This models systems with several stars as well as
-ordinary planets with satellites.
+anonymous body templates. Despite the field name, these entries represent
+every kind of in-system body: planets, stars, black holes, and other objects.
+A body can contain more `planet` children and moons; a moon can contain more
+moons.
 
-| Level        | What its `class` means                                     | Children                    |
-| ------------ | ---------------------------------------------------------- | --------------------------- |
-| Initializer  | The star class shown on the galaxy map                     | Top-level `planet` entries  |
-| Planet entry | A planet class; `"star"` uses the initializer's star class | `planet` and `moon` entries |
-| Moon entry   | A planet class for an object orbiting its parent           | More `moon` entries         |
+| Level        | What its `class` means                                                                        | Children                    |
+| ------------ | --------------------------------------------------------------------------------------------- | --------------------------- |
+| Initializer  | A star class for the galaxy-map icon and some in-system visuals                               | Top-level `planet` entries  |
+| Planet entry | Its own planet class, including explicit stellar classes; `"star"` uses the initializer class | `planet` and `moon` entries |
+| Moon entry   | Its own planet class for a body orbiting its parent                                           | More `moon` entries         |
 
-The star is also an object, so every system lists it as the first `planet`
-entry with `class: "star"`. The initializer's own `class` only selects which
-star class that entry uses.
+The first top-level body does not have to use `class: "star"`. It can use an
+explicit checked planet-class reference such as
+`vanilla.planetClass("pc_black_hole")` or
+`vanilla.planetClass("pc_g_star")`. `class: "star"` is a convenience for a
+stellar body whose class should resolve through the initializer-level star
+class; it is not the only valid representation of a star.
+
+Stellaris keeps this tree deliberately free-form. Any `planet` body can have
+more `planet` children, so stars, planets, and black holes can orbit one
+another. For example, vanilla's `fallen_hive_control_2` initializer declares
+explicit `pc_g_star`, `pc_k_star`, and `pc_m_star` bodies, each with nested
+planet children.
+
+This SDK example uses an `sc_black_hole` initializer, an explicit central
+`pc_black_hole`, and three orbiting `pc_g_star` bodies. Each star has its own
+planet child:
+
+<PairedExample name="solar-systems-mixed" />
 
 The array order is part of the geometry. Both polar coordinates are relative
 to the previous object at that level: `orbitDistance` advances the radius, and
 `orbitAngle` advances the bearing. An omitted `count` creates one object; a
 number or `{ min, max }` creates a repeated template.
 
-Vanilla writes binary and trinary systems as sibling top-level `planet`
-entries, one `class: "star"` entry per star, each with its own `orbitDistance`
-from the previous entry. A single star usually sits at `orbitDistance: 0`, but
-a binary pair can offset both stars from the system center.
+Vanilla can write binary and trinary systems as sibling top-level `planet`
+entries with explicit stellar planet classes. Each sibling has its own
+`orbitDistance` from the previous entry. Nested stellar bodies use the same
+ordered geometry relative to their parent.
 
 ### Advance an orbit without creating an object
 
@@ -195,11 +212,11 @@ stays standalone; embedded as an image it is a static picture.
   The game separates bodies with size-based spacing that has no author-facing formula, and it
   renders sprites from entity assets, not from `size`. The preview draws each body as a disc with
   radius `size` times a calibration constant, scaled by the class's `entity_scale` from the game's
-  planet-class files, and assumes a per-kind radius when the size is missing or the class is
-  random. Classes with `fixed_entity_scale` render at one size whatever `size` says, so their
-  discs stay assumptions. Overlap findings are therefore visual-overlap risks, not exact
-  sprite collisions. Exact stacking at one cursor point is the game's own idiom (vanilla fans
-  asteroids this way) and reports as info, never as an overlap.
+  planet-class files, and assumes a per-kind radius when the size is missing or the class is random.
+  Classes with `fixed_entity_scale` render at one size whatever `size` says, so their discs stay
+  assumptions. Overlap findings are therefore visual-overlap risks, not exact sprite collisions.
+  Exact stacking at one cursor point is the game's own idiom (vanilla fans asteroids this way) and
+  reports as info, never as an overlap.
 </Callout>
 
 The model follows the game's three coordinate conventions: cursor deltas for

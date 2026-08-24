@@ -62,27 +62,51 @@ them.
 ## Discover a directory of Features
 
 Small builds can import Features directly and pass them to `mod.compile`. For a
-file-per-feature project, `discoverFeatures` reads a content directory and
-returns the Features to compile. This is what the scaffold's `src/mod.ts`
-does in its `buildTheMod` function:
+file-per-Feature project, `createModProject` owns the conventional discovery,
+Asset capture, and compile sequence. This is the scaffold's `src/mod.ts`:
 
 ```ts
-import { createMod, discoverFeatures } from "@pdx-ts/sdk";
+import { createModProject } from "@pdx-ts/sdk";
 
-export const mod = createMod({
-  name: "My First Mod",
-  prefix: "my_mod",
-  supportedVersion: "v4.4.*",
+import manifest from "../stellaris-mod.json" with { type: "json" };
+
+const project = createModProject(manifest, {
+  projectRoot: new URL("../", import.meta.url),
 });
 
-export async function buildTheMod() {
-  const features = await discoverFeatures<typeof mod.config.prefix>(
-    new URL("./content/", import.meta.url)
-  );
+export const { config, mod } = project;
+export const buildTheMod = project.build;
+```
 
-  return mod.compile(features);
+Project creation validates the manifest and its source layout but reads no
+source files. Calling `project.build()` discovers Features under the manifest's
+`contentDirectory`, captures the optional `assetsDirectory`, and performs one
+capability-owned Fold. The bound `build` function can be exported directly.
+
+Use `discover.include` to replace the default discovery pattern:
+
+```ts
+export function buildTheMod() {
+  return project.build({
+    discover: { include: /\.feature\.ts$/ },
+  });
 }
 ```
+
+Use `additionalFeatures` to append capability-owned Features without replacing
+discovered content or captured Assets:
+
+```ts
+export function buildTheMod() {
+  return project.build({
+    additionalFeatures: [extraFeature],
+  });
+}
+```
+
+For a pipeline with different stages, use the lower-level interface directly:
+call `discoverFeatures`, capture Assets through `mod.assetTree`, and finish with
+`mod.compile`. These names remain public customization seams.
 
 `discoverFeatures(dir)` accepts a directory `URL` or an absolute path string.
 It recursively walks the directory, selects feature modules, imports them, and

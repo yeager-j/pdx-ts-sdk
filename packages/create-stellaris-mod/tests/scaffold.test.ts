@@ -252,6 +252,12 @@ describe("a scaffolded project", () => {
     expect(readFileSync(path.join(projectDir, "src/content/example.ts"), "utf8")).toContain(
       'import { mod } from "#mod"'
     );
+    expect(readFileSync(path.join(projectDir, "src/index.ts"), "utf8")).toContain(
+      'import { buildTheMod } from "#mod"'
+    );
+    expect(readFileSync(path.join(projectDir, "src/install.ts"), "utf8")).toContain(
+      'import { buildTheMod } from "#mod"'
+    );
   });
 
   it("does not write to disk merely by importing config (SDK-54)", () => {
@@ -362,6 +368,8 @@ describe("a scaffolded project", () => {
     const events = runIn(projectDir, "cat", ["out/events/smoke_mod_example.txt"]);
     expect(events).toContain("namespace = smoke_mod");
     expect(events).toContain("id = smoke_mod.1");
+    expect(events).toContain("picture = GFX_evt_mysterious_signal");
+    expect(events).toContain("show_sound = event_alien_signal");
   });
 
   it("keeps a legacy manifest without assetsDirectory buildable", () => {

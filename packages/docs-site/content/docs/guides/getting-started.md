@@ -62,13 +62,14 @@ so the scaffold does not create it; add it when you need the first
 [Asset file](/concepts/assets/). Files under `assets/` are copied to the same
 path in the built mod.
 
-`src/mod.ts` creates the mod from the manifest and captures `assets/`.
-`src/vanilla.ts` loads the Stellaris install and passes the view to
-`mod.compile`, which enables vanilla file-collision checks, patching, and the
+`src/mod.ts` passes the manifest to `createModProject`. Its `project.build()`
+function discovers Features, captures `assets/`, and performs one Fold.
+`src/vanilla.ts` loads the Stellaris install and passes the view into that
+build, which enables vanilla file-collision checks, patching, and the
 identifier-package check; the scaffolder writes it only when it found the
-game. Set `STELLARIS_PATH` when the install is somewhere the SDK does not
-look, or `PDX_NO_VANILLA=1` to skip the install deliberately — the mod still
-builds without one. `src/index.ts` is the build entry point,
+game. Set `STELLARIS_PATH` when the install is somewhere the SDK does not look,
+or `PDX_NO_VANILLA=1` to skip the install deliberately — the mod still builds
+without one. `src/index.ts` is the build entry point,
 `src/install.ts` backs `npm run install-mod`, and `src/flags.ts` declares the
 country flags the example event sets.
 

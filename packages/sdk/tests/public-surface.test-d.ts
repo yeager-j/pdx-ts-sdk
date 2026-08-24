@@ -36,6 +36,34 @@ describe("the pipeline entry point", () => {
     expectTypeOf(DEFAULT_CONTENT_PATTERN).toEqualTypeOf<RegExp>();
   });
 
+  it("publishes the conventional project pipeline without widening the manifest prefix", () => {
+    const project = sdk.createModProject(
+      {
+        mod: {
+          public_project: {
+            name: "Public project",
+            supportedVersion: "4.4.*",
+          },
+        },
+        contentDirectory: "src/content",
+      } as const,
+      { projectRoot: "/tmp/public-project" }
+    );
+
+    expectTypeOf(project.config.prefix).toEqualTypeOf<"public_project">();
+    expectTypeOf(project.mod.config.prefix).toEqualTypeOf<"public_project">();
+    expectTypeOf(project.build()).toEqualTypeOf<Promise<sdk.PureMod>>();
+    const extra = project.mod.feature("extra", []);
+    expectTypeOf(project.build({ additionalFeatures: [extra] })).toEqualTypeOf<
+      Promise<sdk.PureMod>
+    >();
+    expectTypeOf(reference.PROJECT_LAYOUT_FIELDS.contentDirectory.pattern).toEqualTypeOf<RegExp>();
+    // @ts-expect-error — Project Layout parsing is an implementation detail.
+    expectTypeOf(sdk.parseProjectLayout);
+    // @ts-expect-error — parser-only types are not part of the root authoring API.
+    expectTypeOf<sdk.ProjectLayout>();
+  });
+
   it("publishes opaque Asset items without exposing their source or bytes", () => {
     const mod = createMod({
       name: "Public assets",

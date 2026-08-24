@@ -42,6 +42,15 @@ import type { DerivedNames } from "../types.ts";
 
 type Projects = "one" | "two";
 
+const EVENT_PICTURE = "GFX_evt_mysterious_signal";
+const EVENT_SOUND = "event_alien_signal";
+
+/** Vanilla media cited by the generated visible events. */
+export const VANILLA_EXAMPLE_IDS = {
+  spriteType: [EVENT_PICTURE],
+  soundEffect: [EVENT_SOUND],
+} as const satisfies Readonly<Record<string, readonly string[]>>;
+
 export const researchQuestRecipe = defineRecipe({
   summary: {
     id: "research-quest",
@@ -78,7 +87,7 @@ function renderSource(names: DerivedNames, projects: Projects): string {
   return [
     header(projects),
     "",
-    'import { onActions } from "@pdx-ts/sdk/stellaris";',
+    'import { onActions, vanilla } from "@pdx-ts/sdk/stellaris";',
     "",
     'import { mod } from "#mod";',
     "",
@@ -237,6 +246,8 @@ function starterCall(names: DerivedNames, projects: Projects): string {
     "export const started = events.country(1, {",
     `  title: ${quoteTs("PLACEHOLDER: the sighting that starts the quest.")},`,
     `  desc: ${quoteTs("PLACEHOLDER: what happened, in a paragraph.")},`,
+    `  picture: vanilla.spriteType.eventpictures.${EVENT_PICTURE},`,
+    `  showSound: vanilla.soundEffect.gui.gui_sound_effects.${EVENT_SOUND},`,
     "  eventChain: chain,",
     "  isTriggeredOnly: true,",
     "  immediate: (country) => {",
@@ -263,6 +274,8 @@ function completionCalls(names: DerivedNames, projects: Projects): readonly stri
       `export const ${binding} = events.country(${id}, {`,
       `  title: ${quoteTs(title)},`,
       `  desc: ${quoteTs("PLACEHOLDER: what was found, in a paragraph.")},`,
+      `  picture: vanilla.spriteType.eventpictures.${EVENT_PICTURE},`,
+      `  showSound: vanilla.soundEffect.gui.gui_sound_effects.${EVENT_SOUND},`,
       "  eventChain: chain,",
       "  isTriggeredOnly: true,",
       "  immediate: (country) => {",

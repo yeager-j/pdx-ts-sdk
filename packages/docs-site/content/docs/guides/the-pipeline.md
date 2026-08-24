@@ -11,6 +11,12 @@ createMod → mod.compile (the Fold) → render → write or install
 
 Each step returns a value for the next step. Only the last step writes to disk.
 
+In a scaffolded file-per-Feature project, `createModProject` provides the
+conventional interface for the first two steps. It creates the immutable
+capability immediately, then `project.build()` discovers Features and performs
+one Fold when called. The lower-level functions remain available for a custom
+pipeline.
+
 ```ts
 import { createMod, install, render, write } from "@pdx-ts/sdk";
 
@@ -34,8 +40,24 @@ await write(new URL("../../out/", import.meta.url), rendered);
 await install(rendered);
 ```
 
-A scaffolded project reads the name, prefix, and supported version from
-`stellaris-mod.json`; they are written out here so the snippet stands alone.
+A scaffolded project reads the name, prefix, source layout, and supported
+version from `stellaris-mod.json`; they are written out here so the snippet
+stands alone.
+
+Its `src/mod.ts` uses the standard project interface:
+
+```ts
+import { createModProject } from "@pdx-ts/sdk";
+
+import manifest from "../stellaris-mod.json" with { type: "json" };
+
+const project = createModProject(manifest, {
+  projectRoot: new URL("../", import.meta.url),
+});
+
+export const { config, mod } = project;
+export const buildTheMod = project.build;
+```
 
 The scaffolded entry points use the opt-in terminal module instead of spelling
 out this pipeline and its presentation in every project:

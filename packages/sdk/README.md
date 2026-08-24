@@ -7,10 +7,12 @@ language.
 
 ## Usage
 
-`createMod(config)` is the only public authoring entry point. The immutable
+`createMod(config)` is the foundational authoring entry point. The immutable
 capability it returns mints prefixed ids, creates events in namespaces, places
 items in explicit features, and compiles those features into the value that
-`render`, `write`, and `install` consume.
+`render`, `write`, and `install` consume. `createModProject` adds the
+conventional Project Manifest, discovery, and Asset pipeline around that same
+capability.
 
 ```ts
 import { createMod, render, write } from "@pdx-ts/sdk";
@@ -77,30 +79,29 @@ with technologies and events writes both a technology file and an event file.
 Feature order and source order never decide emission order: output sorts by
 registry declaration order, emitted path, and id.
 
-For a file-per-feature project, `discoverFeatures` imports selected modules and
-reads only their named `feature` export. Other exports are ordinary TypeScript
-values, not implicit registration, and a filename is never part of content
-identity.
+For a file-per-Feature project, `createModProject` reads the Project Manifest,
+creates the immutable capability, and exposes a bound `build()` function for
+the conventional discovery, Asset capture, and compile sequence.
 
-`src/mod.ts` creates the capability and performs discovery:
+`src/mod.ts` stays a short project declaration:
 
 ```ts
-import { createMod, discoverFeatures } from "@pdx-ts/sdk";
+import { createModProject } from "@pdx-ts/sdk";
 
-export const mod = createMod({
-  name: "My Mod",
-  prefix: "mymod",
-  version: "0.1.0",
-  supportedVersion: "4.4.*",
+import manifest from "../stellaris-mod.json" with { type: "json" };
+
+const project = createModProject(manifest, {
+  projectRoot: new URL("../", import.meta.url),
 });
 
-export async function compileMod() {
-  const features = await discoverFeatures<typeof mod.config.prefix>(
-    new URL("./content/", import.meta.url)
-  );
-  return mod.compile(features);
-}
+export const { config, mod } = project;
+export const buildTheMod = project.build;
 ```
+
+Pass `discover` or `additionalFeatures` to `project.build()` for a pre-compile
+customization. For a different pipeline, compose `discoverFeatures`,
+`mod.assetTree`, and `mod.compile` directly; the convenience interface does not
+replace those lower-level seams.
 
 `src/content/resonance.ts` imports the capability and explicitly exports its
 feature:
@@ -402,6 +403,8 @@ re-emit as references.
 ```
 src/
 ├── index.ts           public capability, discovery, materialization, and types
+├── project.ts         Project Manifest → capability + conventional build
+├── project-layout.ts  shared source-directory validation and schema facts
 ├── authoring/        createMod, feature placement, and named feature discovery
 │   ├── mod.ts        createMod and capability-owned authoring operations
 │   ├── feature.ts    feature item union and placement helpers

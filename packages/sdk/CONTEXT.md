@@ -42,6 +42,11 @@ _Avoid_: factory, constructor
 The deterministic pass from placed features to a `PureMod`. It is where
 duplicate ids, dangling references, and namespace collisions are caught.
 
+**Mod project**:
+The conventional Project Manifest pipeline returned by `createModProject`. It exposes the immutable
+capability immediately; its bound `build` function validates source layout, discovers Features,
+captures Assets, and invokes one Fold. A different pipeline composes the lower-level interfaces.
+
 **PureMod**:
 The assembled mod as a value rather than a builder — the thing `render` consumes.
 
