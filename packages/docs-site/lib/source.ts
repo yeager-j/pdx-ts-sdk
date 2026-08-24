@@ -38,8 +38,10 @@ const docs = defineDocs({
           "ScopeEffects",
           "ScopeIdentity",
           "ScopeTransitions",
+          "ScopeTriggers",
           "StructuralMethods",
           "TraditionTreeTemplates",
+          "TriggersIndex",
         ],
       },
     },
@@ -48,7 +50,7 @@ const docs = defineDocs({
 
 /**
  * The root `content/docs/meta.json` fixes the four independent sidebar sections:
- * Guides, Concepts, Scopes & Effects, and registry Reference. Each section's
+ * Guides, Concepts, Scopes, Effects & Triggers, and registry Reference. Each section's
  * own metadata controls its page order; the generated page tree supplies the
  * labels and routes to Fumadocs.
  *

@@ -174,6 +174,7 @@ interface EventModuleInput {
   readonly rules: RuleSet;
   readonly emitter: Emitter;
   readonly effects: ReturnType<typeof emitEffects>;
+  readonly triggers: ReturnType<typeof emitTriggers>;
   readonly effectPolicy: ReturnType<typeof createEffectPolicy>;
   readonly eventFieldPolicy: ReturnType<typeof createEventFieldPolicy>;
 }
@@ -473,6 +474,7 @@ function buildCodegenReport(input: CodegenReportInput): string[] {
   );
   report.push(
     `script reference metadata: ${effects.references.length} ordinary effects, ` +
+      `${scriptReferences.triggers} generated triggers, ` +
       `${events.fireReferences.length} event fires, ` +
       `${effectPolicy.structuralMethods.size} structural methods, ` +
       `${scriptReferences.scopeLinks} scope links`
@@ -781,7 +783,7 @@ async function writeScriptModules(input: ScriptModuleInput): Promise<void> {
 }
 
 async function writeEventModules(input: EventModuleInput): Promise<EventModuleEmission> {
-  const { commit, effectPolicy, effects, emitter, eventFieldPolicy, rules } = input;
+  const { commit, effectPolicy, effects, emitter, eventFieldPolicy, rules, triggers } = input;
 
   const events = emitEvents(emitter, effectPolicy, effects.universalParameters);
   await write(
@@ -813,6 +815,7 @@ async function writeEventModules(input: EventModuleInput): Promise<EventModuleEm
   const scriptReferences = emitScriptReferences(
     canonicalScopes(rules.scopes),
     [...effects.references, ...events.fireReferences],
+    triggers.references,
     effects.scopeLinkReferences
   );
   await write(
@@ -820,10 +823,12 @@ async function writeEventModules(input: EventModuleInput): Promise<EventModuleEm
     header(commit, [
       "scopes.cwt",
       "effects.cwt",
+      "triggers.cwt",
       "aliases.cwt",
       "links.cwt",
       "events/events.cwt",
       "script-docs/v4.4.1/effects.log",
+      "script-docs/v4.4.1/triggers.log",
       "script-docs/v4.4.1/scopes.log",
     ]) + scriptReferences.code
   );
@@ -902,6 +907,7 @@ async function main(): Promise<void> {
     rules,
     emitter,
     effects: scriptRules.effects,
+    triggers: scriptRules.triggers,
     effectPolicy,
     eventFieldPolicy,
   });

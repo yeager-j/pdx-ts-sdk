@@ -3,6 +3,7 @@ import {
   SCRIPT_EFFECT_REFERENCES,
   SCRIPT_REFERENCE_SCOPES,
   SCRIPT_SCOPE_LINK_REFERENCES,
+  SCRIPT_TRIGGER_REFERENCES,
 } from "@pdx-ts/sdk/reference";
 import { describe, expect, it } from "vitest";
 
@@ -17,6 +18,7 @@ import type { ScopeReferenceSources } from "../src/scope-reference.ts";
 const sources = (): ScopeReferenceSources => ({
   scopes: SCRIPT_REFERENCE_SCOPES,
   effects: SCRIPT_EFFECT_REFERENCES,
+  triggers: SCRIPT_TRIGGER_REFERENCES,
   scopeLinks: SCRIPT_SCOPE_LINK_REFERENCES,
   eventKinds: EVENT_KINDS,
 });

@@ -15,12 +15,15 @@ import {
   scopeEffectsMarkdown,
   scopeIdentityMarkdown,
   scopeTransitionsMarkdown,
+  scopeTriggersMarkdown,
   structuralMethodsMarkdown,
   traditionTemplatesMarkdown,
+  triggersIndexMarkdown,
 } from "@/src/llm-markdown";
 import { pairedExample } from "@/src/paired-examples-manifest";
 import { buildCoverage } from "@/src/registry-coverage";
 import { buildScopeReference, type ScopeReferenceModel } from "@/src/scope-reference";
+import { buildTriggersIndex } from "@/src/triggers-index";
 
 type Page = (typeof source)["$inferPage"];
 
@@ -95,11 +98,13 @@ function renderersFor(page: Page): Parameters<typeof renderPlaceholder>[1] {
     TraditionTreeTemplates: () => traditionTemplatesMarkdown(),
     ScopeIdentity: () => withScopeModel("ScopeIdentity", scopeIdentityMarkdown),
     ScopeEffects: () => withScopeModel("ScopeEffects", scopeEffectsMarkdown),
+    ScopeTriggers: () => withScopeModel("ScopeTriggers", scopeTriggersMarkdown),
     ScopeTransitions: () =>
       withScopeModel("ScopeTransitions", (model) => scopeTransitionsMarkdown(model.transitions)),
     StructuralMethods: () => withScopeModel("StructuralMethods", structuralMethodsMarkdown),
     EventKinds: () => withScopeModel("EventKinds", (model) => eventKindsMarkdown(model.eventKinds)),
     EventFireMethods: () => withScopeModel("EventFireMethods", eventFireMethodsMarkdown),
     EffectsIndex: () => effectsIndexMarkdown(buildEffectsIndex(scopePages())),
+    TriggersIndex: () => triggersIndexMarkdown(buildTriggersIndex(scopePages())),
   };
 }

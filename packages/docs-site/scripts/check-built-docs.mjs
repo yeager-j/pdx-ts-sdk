@@ -45,6 +45,17 @@ const effectsMarkdown = await readFile(
   ),
   "utf8"
 );
+const triggersHtml = await readFile(
+  new URL("../.next/server/app/scopes-and-effects/triggers.html", import.meta.url),
+  "utf8"
+);
+const triggersMarkdown = await readFile(
+  new URL(
+    "../.next/server/app/llms.mdx/scopes-and-effects/triggers/content.md.body",
+    import.meta.url
+  ),
+  "utf8"
+);
 const countryHtml = await readFile(
   new URL("../.next/server/app/scopes-and-effects/scopes/country.html", import.meta.url),
   "utf8"
@@ -56,6 +67,7 @@ const armyHtml = await readFile(
 
 assert.match(overviewHtml, /<h1[^>]*>Overview<\/h1>/);
 assert.match(effectsHtml, /<h1[^>]*>List of Effects<\/h1>/);
+assert.match(triggersHtml, /<h1[^>]*>List of Triggers<\/h1>/);
 
 assert.match(effectsHtml, /id="effects-abortSituation"/);
 assert.doesNotMatch(effectsHtml, /id="effects-win"/);
@@ -70,6 +82,16 @@ assert.match(effectsHtml, /Legal on scope/);
 assert.match(effectsMarkdown, /#effects-addResource/);
 assert.match(effectsMarkdown, /#effects-win/);
 
+assert.match(triggersHtml, /id="triggers-acquiredSpecimenCount"/);
+assert.doesNotMatch(triggersHtml, /id="triggers-numOwnedPlanets"/);
+assert.equal(triggersHtml.match(/Scope pages for universal builders/g)?.length, 1);
+assert.match(triggersHtml, /Method or PDXScript key/);
+assert.match(triggersHtml, /Legal on scope/);
+for (const builder of ["hasCountryFlag", "isAi", "numOwnedPlanets"]) {
+  assert.match(triggersMarkdown, new RegExp(`#triggers-${builder}`));
+}
+
 assert.match(countryHtml, /href="\/scopes-and-effects\/effects\/#effects-countryEvent"/);
+assert.match(countryHtml, /href="\/scopes-and-effects\/triggers\/#triggers-hasCountryFlag"/);
 assert.match(countryHtml, /overflow-x-auto"><table/);
 assert.match(armyHtml, /generates no event kind whose body runs in this scope/);

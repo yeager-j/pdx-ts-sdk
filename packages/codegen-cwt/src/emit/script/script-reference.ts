@@ -37,6 +37,20 @@ export interface ScriptEffectReferenceRow {
   readonly docs: readonly string[];
 }
 
+/** Machine-readable reference data for one generated trigger builder. */
+export interface ScriptTriggerReferenceRow {
+  /** Public TypeScript builder name. */
+  readonly method: string;
+  /** Fixed PDXScript key recorded by the builder. */
+  readonly key: string;
+  /** Scopes where the trigger key is legal. */
+  readonly availability: ScriptReferenceAvailability;
+  /** Public call signature without its documentation comment. */
+  readonly signature: string;
+  /** Documentation lines attached to the public builder. */
+  readonly docs: readonly string[];
+}
+
 /** Machine-readable reference data for one effect scope-navigation property. */
 export interface ScriptScopeLinkReferenceRow {
   /** Public path property name. */
@@ -55,6 +69,8 @@ export interface ScriptReferenceEmission {
   readonly code: string;
   /** Number of generated effect-like rows before structural rows are appended. */
   readonly effects: number;
+  /** Number of generated trigger-builder rows. */
+  readonly triggers: number;
   /** Number of generated scope-link rows. */
   readonly scopeLinks: number;
 }
@@ -121,6 +137,7 @@ function validateScopes(
 export function validateScriptReferences(
   scopes: readonly string[],
   effects: readonly ScriptEffectReferenceRow[],
+  triggers: readonly ScriptTriggerReferenceRow[],
   scopeLinks: readonly ScriptScopeLinkReferenceRow[]
 ): void {
   const knownScopes = new Set(scopes);
@@ -153,6 +170,37 @@ export function validateScriptReferences(
       }
       keys.set(effect.key, effect);
     }
+  }
+
+  const triggerMethods = new Map<string, ScriptTriggerReferenceRow>();
+  const triggerKeys = new Map<string, ScriptTriggerReferenceRow>();
+  for (const trigger of triggers) {
+    validateAvailability(trigger.availability, knownScopes, `trigger ${trigger.method}`);
+    if (trigger.method === "") {
+      throw new Error("trigger reference has an empty method");
+    }
+    if (trigger.key === "") {
+      throw new Error(`trigger ${trigger.method} has an empty key`);
+    }
+    const methodPrior = triggerMethods.get(trigger.method);
+    if (methodPrior !== undefined) {
+      const contradiction =
+        methodPrior.key !== trigger.key ||
+        !sameAvailability(methodPrior.availability, trigger.availability) ||
+        methodPrior.signature !== trigger.signature ||
+        JSON.stringify(methodPrior.docs) !== JSON.stringify(trigger.docs);
+      throw new Error(
+        `${contradiction ? "contradictory" : "duplicate"} trigger method "${trigger.method}"`
+      );
+    }
+    triggerMethods.set(trigger.method, trigger);
+    const keyPrior = triggerKeys.get(trigger.key);
+    if (keyPrior !== undefined) {
+      throw new Error(
+        `duplicate fixed trigger key "${trigger.key}" on ${keyPrior.method} and ${trigger.method}`
+      );
+    }
+    triggerKeys.set(trigger.key, trigger);
   }
 
   const links = new Map<string, ScriptScopeLinkReferenceRow>();
@@ -190,6 +238,14 @@ function effectCode(effect: ScriptEffectReferenceRow): string {
   );
 }
 
+function triggerCode(trigger: ScriptTriggerReferenceRow): string {
+  return (
+    `  { method: ${JSON.stringify(trigger.method)}, key: ${JSON.stringify(trigger.key)}, ` +
+    `availability: ${availabilityCode(trigger.availability)}, ` +
+    `signature: ${JSON.stringify(trigger.signature)}, docs: ${JSON.stringify(trigger.docs)} },\n`
+  );
+}
+
 function linkCode(link: ScriptScopeLinkReferenceRow): string {
   return (
     `  { member: ${JSON.stringify(link.member)}, fromScopes: [${link.fromScopes.map((scope) => JSON.stringify(scope)).join(", ")}], ` +
@@ -204,10 +260,14 @@ function linkCode(link: ScriptScopeLinkReferenceRow): string {
 export function emitScriptReferences(
   scopes: readonly string[],
   effects: readonly ScriptEffectReferenceRow[],
+  triggers: readonly ScriptTriggerReferenceRow[],
   scopeLinks: readonly ScriptScopeLinkReferenceRow[]
 ): ScriptReferenceEmission {
-  validateScriptReferences(scopes, effects, scopeLinks);
+  validateScriptReferences(scopes, effects, triggers, scopeLinks);
   const effectRows = [...effects].sort((left, right) => compareStrings(left.method, right.method));
+  const triggerRows = [...triggers].sort((left, right) =>
+    compareStrings(left.method, right.method)
+  );
   const linkRows = [...scopeLinks].sort((left, right) => compareStrings(left.member, right.member));
   const structuralImport =
     'import { STRUCTURAL_EFFECT_REFERENCES } from "../script/effects/structural-reference.ts";\n';
@@ -227,6 +287,19 @@ export function emitScriptReferences(
     "  readonly signature: string;\n" +
     "  readonly docs: readonly string[];\n" +
     "}\n\n" +
+    "/** Machine-readable reference data for one generated trigger builder. */\n" +
+    "export interface ScriptTriggerReference {\n" +
+    "  /** Public TypeScript builder name. */\n" +
+    "  readonly method: string;\n" +
+    "  /** Fixed PDXScript key recorded by the builder. */\n" +
+    "  readonly key: string;\n" +
+    "  /** Scopes where the trigger key is legal. */\n" +
+    "  readonly availability: ScriptReferenceAvailability;\n" +
+    "  /** Public call signature without its documentation comment. */\n" +
+    "  readonly signature: string;\n" +
+    "  /** Documentation lines attached to the public builder. */\n" +
+    "  readonly docs: readonly string[];\n" +
+    "}\n\n" +
     "export interface ScriptScopeLinkReference {\n" +
     "  readonly member: string;\n" +
     "  readonly fromScopes: readonly ScopeName[];\n" +
@@ -238,8 +311,17 @@ export function emitScriptReferences(
     effectRows.map(effectCode).join("") +
     "  ...STRUCTURAL_EFFECT_REFERENCES,\n" +
     "] as const as readonly ScriptEffectReference[];\n\n" +
+    "/** Generated trigger builders available through the Stellaris authoring entry point. */\n" +
+    "export const SCRIPT_TRIGGER_REFERENCES = [\n" +
+    triggerRows.map(triggerCode).join("") +
+    "] as const satisfies readonly ScriptTriggerReference[];\n\n" +
     "export const SCRIPT_SCOPE_LINK_REFERENCES = [\n" +
     linkRows.map(linkCode).join("") +
     "] as const satisfies readonly ScriptScopeLinkReference[];\n";
-  return { code, effects: effectRows.length, scopeLinks: linkRows.length };
+  return {
+    code,
+    effects: effectRows.length,
+    triggers: triggerRows.length,
+    scopeLinks: linkRows.length,
+  };
 }

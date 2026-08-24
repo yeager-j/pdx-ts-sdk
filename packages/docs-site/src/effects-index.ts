@@ -1,5 +1,11 @@
-import type { ScopeName } from "@pdx-ts/sdk/stellaris";
-
+import {
+  linkedAvailability,
+  scopePagesByScope,
+  scopeTarget,
+  type ReferenceAvailability,
+  type ScopeLinkTarget,
+  type ScopePageLink,
+} from "./reference-index.ts";
 import {
   assertSources,
   DEFAULT_SOURCES,
@@ -20,11 +26,7 @@ import {
 export type EffectCategory = "effect" | "structural" | "event-fire";
 
 /** A scope named by an entry, linked when the site publishes its page. */
-export interface ScopeLinkTarget {
-  readonly scope: ScopeName;
-  readonly href?: string;
-  readonly title?: string;
-}
+export type { ScopeLinkTarget, ScopePageLink } from "./reference-index.ts";
 
 /**
  * Universal and scoped availability are structurally different, not one list
@@ -32,9 +34,7 @@ export interface ScopeLinkTarget {
  * list for universality, and a universal entry never has to be re-checked
  * when a scope is added.
  */
-export type EffectAvailability =
-  | { readonly kind: "universal" }
-  | { readonly kind: "scopes"; readonly scopes: readonly ScopeLinkTarget[] };
+export type EffectAvailability = ReferenceAvailability;
 
 export interface EffectsIndexEntry {
   readonly method: string;
@@ -61,55 +61,8 @@ export interface EffectsIndexModel {
   };
 }
 
-/** A published scope page, as the site's routing knows it. */
-export interface ScopePageLink {
-  readonly scope: string;
-  readonly href: string;
-  readonly title: string;
-}
-
 export function effectAnchor(method: string): string {
   return `effects-${method}`;
-}
-
-function scopePagesByScope(
-  scopePages: readonly ScopePageLink[],
-  sources: ScopeReferenceSources
-): ReadonlyMap<string, ScopePageLink> {
-  const known = new Set<string>(sources.scopes);
-  const byScope = new Map<string, ScopePageLink>();
-  for (const page of scopePages) {
-    if (!known.has(page.scope)) {
-      throw new Error(
-        `Scope page "${page.href}" names missing generated scope "${page.scope}". Use a canonical scope from SCRIPT_REFERENCE_SCOPES.`
-      );
-    }
-    byScope.set(page.scope, page);
-  }
-  return byScope;
-}
-
-function targetOf(scope: ScopeName, pages: ReadonlyMap<string, ScopePageLink>): ScopeLinkTarget {
-  const page = pages.get(scope);
-  return page === undefined ? { scope } : { scope, href: page.href, title: page.title };
-}
-
-/**
- * Scope-specific availability carries its own targets. Universal availability
- * is a semantic fact, so its scope-page links live once on the index model
- * rather than being copied onto every universal entry.
- */
-function availabilityOf(
-  availability: ScopeReferenceSources["effects"][number]["availability"],
-  pages: ReadonlyMap<string, ScopePageLink>
-): EffectAvailability {
-  if (availability.kind === "universal") {
-    return { kind: "universal" };
-  }
-  return {
-    kind: "scopes",
-    scopes: availability.scopes.map((scope) => targetOf(scope, pages)),
-  };
 }
 
 /**
@@ -140,7 +93,7 @@ function eventBodyScopeOf(
       `Event kind "${key}" fired by "${method}" is scopeless, so the index cannot state where its body runs.`
     );
   }
-  return targetOf(eventKind.scope, pages);
+  return scopeTarget(eventKind.scope, pages);
 }
 
 export function buildEffectsIndex(
@@ -148,11 +101,11 @@ export function buildEffectsIndex(
   sources: ScopeReferenceSources = DEFAULT_SOURCES
 ): EffectsIndexModel {
   assertSources(sources);
-  const pages = scopePagesByScope(scopePages, sources);
+  const pages = scopePagesByScope(scopePages, sources.scopes);
 
   const entries = sources.effects
     .map((reference): EffectsIndexEntry => {
-      const availability = availabilityOf(reference.availability, pages);
+      const availability = linkedAvailability(reference.availability, pages);
       return {
         method: reference.method,
         anchor: effectAnchor(reference.method),
@@ -177,7 +130,7 @@ export function buildEffectsIndex(
     entries,
     scopePages: sources.scopes
       .filter((scope) => pages.has(scope))
-      .map((scope) => targetOf(scope, pages)),
+      .map((scope) => scopeTarget(scope, pages)),
     counts: {
       effect: countOf("effect"),
       structural: countOf("structural"),

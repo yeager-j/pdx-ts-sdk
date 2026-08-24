@@ -1,8 +1,9 @@
 {
-  "title": "Scopes & Effects",
+  "title": "Scopes, Effects & Triggers",
   "pages": [
     "index",
     "effects",
+    "triggers",
     "scopes"
   ]
 }

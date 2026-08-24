@@ -17,6 +17,7 @@ import {
   describeTraditionTreeTemplate,
   TRADITION_TREE_TEMPLATES,
 } from "./tradition-tree-templates.ts";
+import { triggerAnchor, type TriggersIndexModel } from "./triggers-index.ts";
 
 /**
  * Markdown renderings of the generated components, for the LLM text export.
@@ -133,11 +134,18 @@ export function pairedExampleMarkdown(name: string, data: PairedExampleData): st
   return sections.join("\n\n");
 }
 
-function methodTable(rows: readonly ScriptMethodRow[]): string {
+function methodTable(
+  rows: readonly ScriptMethodRow[],
+  reference: {
+    readonly path: string;
+    readonly anchor: (method: string) => string;
+    readonly nameHeader?: string;
+  }
+): string {
   return table(
-    ["Method", "Game key", "TypeScript signature", "Notes"],
+    [reference.nameHeader ?? "Method", "Game key", "TypeScript signature", "Notes"],
     rows.map((row) => [
-      `[\`${row.method}\`](/scopes-and-effects/effects/#${effectAnchor(row.method)})`,
+      `[\`${row.method}\`](${reference.path}#${reference.anchor(row.method)})`,
       row.key === undefined ? "none" : `\`${row.key}\``,
       `\`${row.signature}\``,
       row.summary,
@@ -193,6 +201,27 @@ export function effectsIndexMarkdown(model: EffectsIndexModel): string {
   ].join("\n\n");
 }
 
+/** The complete trigger index as one unpaginated Markdown table. */
+export function triggersIndexMarkdown(model: TriggersIndexModel): string {
+  return [
+    `${model.entries.length} generated trigger builders. Availability states where the trigger key itself is legal; nested condition scopes remain part of the TypeScript signature.`,
+    `Universal builders are available on every generated scope interface. Published scope pages: ${model.scopePages.map(scopeTarget).join(", ")}.`,
+    table(
+      ["Builder", "Anchor", "Game key", "Availability", "TypeScript signature", "Description"],
+      model.entries.map((entry) => [
+        `\`${entry.method}\``,
+        `#${entry.anchor}`,
+        `\`${entry.key}\``,
+        entry.availability.kind === "universal"
+          ? "Every scope"
+          : entry.availability.scopes.map(scopeTarget).join(", "),
+        `\`${entry.signature}\``,
+        entry.summary,
+      ])
+    ),
+  ].join("\n\n");
+}
+
 export function scopeIdentityMarkdown(model: ScopeReferenceModel): string {
   return [
     `- Scope literal: \`${model.scope}\``,
@@ -217,20 +246,52 @@ export function scopeEffectsMarkdown(model: ScopeReferenceModel): string {
   if (model.scopeEffects.length === 0) {
     sections.push("This scope adds no scope-specific ordinary effects beyond the universal set.");
   } else {
-    sections.push("**Ordinary effects specific to this scope:**", methodTable(model.scopeEffects));
+    sections.push(
+      "**Ordinary effects specific to this scope:**",
+      methodTable(model.scopeEffects, {
+        path: "/scopes-and-effects/effects/",
+        anchor: effectAnchor,
+      })
+    );
+  }
+  return sections.join("\n\n");
+}
+
+/** Generated trigger availability for one scope page. */
+export function scopeTriggersMarkdown(model: ScopeReferenceModel): string {
+  const sections = [
+    `[${model.universalTriggers.length} universal triggers](/scopes-and-effects/triggers/) are available on every scope and listed once in List of Triggers.`,
+  ];
+  if (model.scopeTriggers.length === 0) {
+    sections.push("This scope adds no scope-specific generated triggers beyond the universal set.");
+  } else {
+    sections.push(
+      "**Generated triggers specific to this scope:**",
+      methodTable(model.scopeTriggers, {
+        path: "/scopes-and-effects/triggers/",
+        anchor: triggerAnchor,
+        nameHeader: "Builder",
+      })
+    );
   }
   return sections.join("\n\n");
 }
 
 export function structuralMethodsMarkdown(model: ScopeReferenceModel): string {
-  return methodTable(model.structuralMethods);
+  return methodTable(model.structuralMethods, {
+    path: "/scopes-and-effects/effects/",
+    anchor: effectAnchor,
+  });
 }
 
 export function eventFireMethodsMarkdown(model: ScopeReferenceModel): string {
   if (model.eventFireMethods.length === 0) {
     return "The generated interface has no legal event-fire method.";
   }
-  return methodTable(model.eventFireMethods);
+  return methodTable(model.eventFireMethods, {
+    path: "/scopes-and-effects/effects/",
+    anchor: effectAnchor,
+  });
 }
 
 export function scopeTransitionsMarkdown(rows: readonly ScopeTransitionRow[]): string {

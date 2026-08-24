@@ -1,18 +1,20 @@
 ---
 title: Overview
-description: Choose a scope-first or effect-first path through the SDK script reference.
+description: Choose a scope-first, effect-first, or trigger-first path through the SDK script reference.
 ---
 
 Use this reference in either direction:
 
 - **Scope first:** open a page under **Scopes** when you know the interface you have and need to
-  see its legal effects, event-fire methods, and outgoing scope transitions.
+  see its legal generated triggers, effects, event-fire methods, and outgoing scope transitions.
 - **Effect first:** open [List of Effects](./effects/) when you know a TypeScript method or
   PDXScript key and need its signature, category, and legal scopes.
+- **Trigger first:** open [List of Triggers](./triggers/) when you know a TypeScript builder or
+  PDXScript key and need its signature, generated description, and legal scopes.
 
-Both views read the same script-reference records. They describe the current SDK-supported
+All three views read the same script-reference records. They describe the current SDK-supported
 authoring surface after its reviewed overlays and handwritten structural methods are applied. They
-do not claim to list every effect or scope behavior available in a live Stellaris build.
+do not claim to list every trigger, effect, or scope behavior available in a live Stellaris build.
 
 ## Read the model before the inventory
 
@@ -24,6 +26,12 @@ do not claim to list every effect or scope behavior available in a live Stellari
 
 **Ordinary effects** are the generated SDK methods that record game effects. Their entries show the
 PDXScript key, exact TypeScript signature, and availability.
+
+**Generated triggers** are builder functions that record conditions. Their entries show the
+PDXScript key, exact TypeScript signature, generated description, and the scopes where that key is
+legal.
+Handwritten trigger combinators and typed leaves remain documented in
+[Triggers and effects](/guides/triggers-and-effects/).
 
 **Structural and control-flow methods** record branching, iteration, targets, and other script
 structure. They are handwritten SDK methods with their own reference records; some have no single

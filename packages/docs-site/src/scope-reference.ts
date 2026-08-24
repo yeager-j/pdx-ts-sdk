@@ -3,8 +3,10 @@ import {
   SCRIPT_EFFECT_REFERENCES,
   SCRIPT_REFERENCE_SCOPES,
   SCRIPT_SCOPE_LINK_REFERENCES,
+  SCRIPT_TRIGGER_REFERENCES,
   type ScriptEffectReference,
   type ScriptScopeLinkReference,
+  type ScriptTriggerReference,
 } from "@pdx-ts/sdk/reference";
 import type { ScopeName } from "@pdx-ts/sdk/stellaris";
 
@@ -35,6 +37,8 @@ export interface ScopeReferenceModel {
   readonly eventKinds: readonly EventKindRow[];
   readonly universalEffects: readonly ScriptMethodRow[];
   readonly scopeEffects: readonly ScriptMethodRow[];
+  readonly universalTriggers: readonly ScriptMethodRow[];
+  readonly scopeTriggers: readonly ScriptMethodRow[];
   readonly structuralMethods: readonly ScriptMethodRow[];
   readonly eventFireMethods: readonly ScriptMethodRow[];
   readonly transitions: readonly ScopeTransitionRow[];
@@ -49,6 +53,7 @@ interface EventKindSource {
 export interface ScopeReferenceSources {
   readonly scopes: readonly ScopeName[];
   readonly effects: readonly ScriptEffectReference[];
+  readonly triggers: readonly ScriptTriggerReference[];
   readonly scopeLinks: readonly ScriptScopeLinkReference[];
   readonly eventKinds: Readonly<Record<string, EventKindSource>>;
 }
@@ -56,6 +61,7 @@ export interface ScopeReferenceSources {
 export const DEFAULT_SOURCES: ScopeReferenceSources = {
   scopes: SCRIPT_REFERENCE_SCOPES,
   effects: SCRIPT_EFFECT_REFERENCES,
+  triggers: SCRIPT_TRIGGER_REFERENCES,
   scopeLinks: SCRIPT_SCOPE_LINK_REFERENCES,
   eventKinds: EVENT_KINDS,
 };
@@ -87,7 +93,20 @@ function methodRowOf(reference: ScriptEffectReference): ScriptMethodRow {
   };
 }
 
-function isLegalOn(reference: ScriptEffectReference, scope: ScopeName): boolean {
+function triggerRowOf(reference: ScriptTriggerReference): ScriptMethodRow {
+  return {
+    method: reference.method,
+    key: reference.key,
+    signature: reference.signature,
+    docs: reference.docs,
+    summary: summaryOf(reference.docs),
+  };
+}
+
+function isLegalOn(
+  reference: ScriptEffectReference | ScriptTriggerReference,
+  scope: ScopeName
+): boolean {
   return (
     reference.availability.kind === "universal" || reference.availability.scopes.includes(scope)
   );
@@ -108,6 +127,25 @@ export function assertSources(sources: ScopeReferenceSources): void {
         if (!knownScopes.has(scope)) {
           throw new Error(
             `Script method "${reference.method}" names missing generated scope "${scope}".`
+          );
+        }
+      }
+    }
+  }
+
+  const triggerMethods = new Set<string>();
+  for (const reference of sources.triggers) {
+    if (triggerMethods.has(reference.method)) {
+      throw new Error(
+        `Duplicate generated trigger builder "${reference.method}". Each builder must have one reference row.`
+      );
+    }
+    triggerMethods.add(reference.method);
+    if (reference.availability.kind === "scopes") {
+      for (const scope of reference.availability.scopes) {
+        if (!knownScopes.has(scope)) {
+          throw new Error(
+            `Trigger builder "${reference.method}" names missing generated scope "${scope}".`
           );
         }
       }
@@ -151,6 +189,7 @@ export function buildScopeReference(
   assertSources(sources);
 
   const legalMethods = sources.effects.filter((reference) => isLegalOn(reference, scope));
+  const legalTriggers = sources.triggers.filter((reference) => isLegalOn(reference, scope));
   const ordinaryEffects = legalMethods.filter((reference) => reference.kind === "effect");
   const structuralMethods = legalMethods.filter((reference) => reference.kind === "structural");
   if (ordinaryEffects.length === 0) {
@@ -173,6 +212,12 @@ export function buildScopeReference(
     scopeEffects: ordinaryEffects
       .filter((reference) => reference.availability.kind === "scopes")
       .map(methodRowOf),
+    universalTriggers: legalTriggers
+      .filter((reference) => reference.availability.kind === "universal")
+      .map(triggerRowOf),
+    scopeTriggers: legalTriggers
+      .filter((reference) => reference.availability.kind === "scopes")
+      .map(triggerRowOf),
     structuralMethods: structuralMethods.map(methodRowOf),
     eventFireMethods: legalMethods
       .filter((reference) => reference.kind === "event-fire")

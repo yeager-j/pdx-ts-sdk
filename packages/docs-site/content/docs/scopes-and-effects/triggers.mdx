@@ -1,0 +1,31 @@
+---
+title: List of Triggers
+description: Every generated trigger builder, with its PDXScript key, signature, generated description, and legal scopes.
+---
+
+import { TriggersIndex } from "@/components/TriggersIndex";
+
+Use this page when you know a TypeScript builder or PDXScript key and need its exact signature and
+legal scopes. For the opposite lookup, open a page under **Scopes** to see the generated triggers
+available in one scope.
+
+The list contains one canonical entry for every trigger builder emitted from the current SDK rules.
+It does not include handwritten combinators such as `and`, `or`, and `not`, or handwritten typed
+leaves. Those APIs are explained in [Triggers and effects](/guides/triggers-and-effects/).
+
+**Availability** states where the trigger's own PDXScript key is legal. A wrapper can evaluate its
+nested condition in a different scope; its exact TypeScript signature keeps that nested scope
+separate. For example, a country trigger can accept a `Trigger<"first_contact">` condition without
+making the wrapper itself legal in first-contact scope.
+
+Each entry has a stable `#triggers-builderName` anchor. For example,
+[`#triggers-hasCountryFlag`](#triggers-hasCountryFlag) opens `hasCountryFlag` even when filtering or
+paging is active. The browser view uses client JavaScript for filtering, paging, and deep-link
+focus. Agents that request the Markdown representation receive the complete inventory as one
+unpaginated table.
+
+This is the SDK-supported generated authoring surface, not an exhaustive list of triggers available
+in a live Stellaris build. Its rows come from the same post-overlay generator records that emit the
+TypeScript builders.
+
+<TriggersIndex />
