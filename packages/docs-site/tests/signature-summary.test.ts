@@ -33,6 +33,14 @@ describe("summarizeSignature", () => {
     expect(summarizeSignature("destroy(): void;")).toBe("() => void");
   });
 
+  it("labels overloaded signatures without combining their return types", () => {
+    expect(
+      summarizeSignature(
+        "customTooltip(value: string): Trigger<ScopeName>;\ncustomTooltip<S extends ScopeName = ScopeName>(args: CustomTooltipArgs<S>): Trigger<S>;"
+      )
+    ).toBe("2 overloads");
+  });
+
   it("refuses a string with no parameter list", () => {
     expect(summarizeSignature("not a signature")).toBeUndefined();
   });

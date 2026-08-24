@@ -37,7 +37,9 @@ export interface ScopeReferenceModel {
   readonly eventKinds: readonly EventKindRow[];
   readonly universalEffects: readonly ScriptMethodRow[];
   readonly scopeEffects: readonly ScriptMethodRow[];
+  /** Trigger builders available on every canonical scope. */
   readonly universalTriggers: readonly ScriptMethodRow[];
+  /** Trigger builders available specifically on this scope. */
   readonly scopeTriggers: readonly ScriptMethodRow[];
   readonly structuralMethods: readonly ScriptMethodRow[];
   readonly eventFireMethods: readonly ScriptMethodRow[];
