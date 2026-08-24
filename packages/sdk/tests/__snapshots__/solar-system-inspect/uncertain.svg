@@ -2,7 +2,7 @@
 <title>inspect_solar_system_initializer_uncertain</title>
 <desc>Cursor-space schematic of inspect_solar_system_initializer_uncertain (class sc_g): 5 bodies, 0 belts, 3 findings. Distances and disc sizes are the documented approximation, not game rendering.</desc>
 <style>
-  svg { cursor: grab; }
+  svg { cursor: grab; background: #0b0e1a; touch-action: none; }
   .bg { fill: #0b0e1a; }
   .orbit { fill: none; stroke: #2c3654; stroke-width: var(--hair); }
   .orbit-band { fill: none; stroke: #26304b; stroke-opacity: 0.55; }
@@ -55,6 +55,7 @@
     return new DOMPoint(event.clientX, event.clientY).matrixTransform(svg.getScreenCTM().inverse());
   }
   svg.addEventListener("wheel", function (event) {
+    if (event.deltaY === 0) return;
     event.preventDefault();
     var factor = event.deltaY < 0 ? 0.85 : 1 / 0.85;
     var pointer = toSvg(event);

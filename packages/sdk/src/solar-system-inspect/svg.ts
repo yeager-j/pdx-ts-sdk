@@ -40,7 +40,7 @@ const BODY_SHADES = {
 
 function styleFor(prefix: string): string {
   return `
-  svg { cursor: grab; }
+  svg { cursor: grab; background: #0b0e1a; touch-action: none; }
   .bg { fill: #0b0e1a; }
   .orbit { fill: none; stroke: #2c3654; stroke-width: var(--hair); }
   .orbit-band { fill: none; stroke: #26304b; stroke-opacity: 0.55; }
@@ -90,6 +90,7 @@ function renderInteraction(view: number): string {
     return new DOMPoint(event.clientX, event.clientY).matrixTransform(svg.getScreenCTM().inverse());
   }
   svg.addEventListener("wheel", function (event) {
+    if (event.deltaY === 0) return;
     event.preventDefault();
     var factor = event.deltaY < 0 ? 0.85 : 1 / 0.85;
     var pointer = toSvg(event);
