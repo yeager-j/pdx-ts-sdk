@@ -15,10 +15,15 @@ import {
   FIXED_SCALE_CLASSES,
   MOON_RENDER_SCALE,
   STANDARD_ENTITY_SCALE,
+  STAR_CLASS_PLANET_CLASSES,
   SYSTEM_VIEW_PLANET_SCALE,
 } from "../src/solar-system-inspect/class-scales.ts";
 import { locateInstall } from "../src/stellaris/installation/locate.ts";
-import { readVanillaClassScales, readVanillaRenderDefines } from "./helpers/planet-class-scales.ts";
+import {
+  readVanillaClassScales,
+  readVanillaRenderDefines,
+  readVanillaStarClassKeys,
+} from "./helpers/planet-class-scales.ts";
 import { readVanillaInitializers, type VanillaInitializer } from "./helpers/solar-system-raw.ts";
 
 let installPath: string | undefined;
@@ -109,6 +114,18 @@ describe.skipIf(installPath === undefined)("vanilla solar-system calibration (no
       expect(vanilla.scales.get(className)).toBeDefined();
     }
     expect([...FIXED_SCALE_CLASSES].sort()).toEqual([...vanilla.fixed].sort());
+  });
+
+  it("keeps the star-class planet keys in sync with the install", () => {
+    const vanilla = readVanillaStarClassKeys(installPath!);
+    for (const [starClass, keys] of Object.entries(STAR_CLASS_PLANET_CLASSES)) {
+      expect({ starClass, keys: vanilla.get(starClass) }).toEqual({ starClass, keys });
+    }
+    for (const [starClass, keys] of vanilla) {
+      if (STAR_CLASS_PLANET_CLASSES[starClass] === undefined) {
+        expect({ starClass, missing: keys }).toEqual({ starClass, missing: undefined });
+      }
+    }
   });
 
   it("keeps the pinned render defines in sync with the install", () => {

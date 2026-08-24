@@ -34,13 +34,13 @@
 <circle class="orbit" cx="0" cy="0" r="82"/>
 <circle class="body-star" cx="0" cy="0" r="12.73"/>
 <circle class="body-asteroid" cx="80" cy="0" r="0.08"/>
-<circle class="body-asteroid" cx="-51.42" cy="61.28" r="0.1"/>
-<circle class="body-planet" cx="80.75" cy="14.24" r="3.38"/>
-<circle class="halo-possible" cx="80.75" cy="14.24" r="5.29"/>
+<circle class="body-asteroid" cx="-51.42" cy="-61.28" r="0.1"/>
+<circle class="body-planet" cx="80.75" cy="-14.24" r="3.38"/>
+<circle class="halo-possible" cx="80.75" cy="-14.24" r="5.29"/>
 <g class="label"><circle class="hover-target" cx="0" cy="0" r="13.69"/><g class="label-body"><line class="leader" x1="9" y1="-9" x2="13.5" y2="-13.5"/><text x="14.43" y="-13.5" font-size="3.12">star · 28</text></g></g>
 <g class="label"><circle class="hover-target" cx="80" cy="0" r="1.92"/><g class="label-body"><line class="leader" x1="80.05" y1="-0.05" x2="81.73" y2="-1.73"/><text x="82.66" y="-1.73" font-size="3.12">pc_asteroid · 3</text></g></g>
-<g class="label"><circle class="hover-target" cx="-51.42" cy="61.28" r="1.92"/><g class="label-body"><line class="leader" x1="-51.35" y1="61.21" x2="-49.7" y2="59.56"/><text x="-48.76" y="59.56" font-size="3.12">pc_asteroid · 4</text></g></g>
-<g class="label"><circle class="hover-target" cx="80.75" cy="14.24" r="4.33"/><g class="label-body"><line class="leader" x1="83.14" y1="11.85" x2="84.9" y2="10.1"/><text x="85.83" y="10.1" font-size="3.12">pc_continental · 18</text></g></g>
+<g class="label"><circle class="hover-target" cx="-51.42" cy="-61.28" r="1.92"/><g class="label-body"><line class="leader" x1="-51.35" y1="-61.36" x2="-49.7" y2="-63.01"/><text x="-48.76" y="-63.01" font-size="3.12">pc_asteroid · 4</text></g></g>
+<g class="label"><circle class="hover-target" cx="80.75" cy="-14.24" r="4.33"/><g class="label-body"><line class="leader" x1="83.14" y1="-16.63" x2="84.9" y2="-18.38"/><text x="85.83" y="-18.38" font-size="3.12">pc_continental · 18</text></g></g>
 <g font-size="3.12">
 <g transform="translate(0 -123.6)"><circle class="body-planet" cx="-126" cy="0" r="1.44"/><text x="-122.4" y="1.09">fixed body</text></g>
 <g transform="translate(0 -118.92)"><circle class="ghost" cx="-126" cy="0" r="1.44"/><text x="-122.4" y="1.09">range or random position</text></g>

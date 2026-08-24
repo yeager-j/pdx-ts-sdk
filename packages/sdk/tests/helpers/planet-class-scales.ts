@@ -63,6 +63,37 @@ function scalarNumber(value: PdxValue, variables: ReadonlyMap<string, number>): 
   return undefined;
 }
 
+/** Reads each star class's ordered `planet = { key }` planet classes. */
+export function readVanillaStarClassKeys(
+  installPath: string
+): ReadonlyMap<string, readonly string[]> {
+  const keys = new Map<string, readonly string[]>();
+  const dir = join(installPath, "common", "star_classes");
+  for (const file of readdirSync(dir).filter((name) => name.endsWith(".txt"))) {
+    const document = parse(readFileSync(join(dir, file), "utf8"), file);
+    for (const item of document.items) {
+      if (item.kind !== "entry" || item.value.kind !== "container") {
+        continue;
+      }
+      const planetKeys: string[] = [];
+      for (const field of item.value.items) {
+        if (field.kind !== "entry" || field.key !== "planet" || field.value.kind !== "container") {
+          continue;
+        }
+        for (const inner of field.value.items) {
+          if (inner.kind === "entry" && inner.key === "key" && inner.value.kind === "str") {
+            planetKeys.push(inner.value.value);
+          }
+        }
+      }
+      if (planetKeys.length > 0) {
+        keys.set(item.key, planetKeys);
+      }
+    }
+  }
+  return keys;
+}
+
 /** Reads every planet class's entity scale from the installed game. */
 export function readVanillaClassScales(installPath: string): VanillaClassScales {
   const variables = new Map<string, number>();

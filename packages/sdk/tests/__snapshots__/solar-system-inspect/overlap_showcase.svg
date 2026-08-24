@@ -42,19 +42,19 @@
 <circle class="halo-definite" cx="12" cy="0" r="5.12"/>
 <circle class="body-moon" cx="16" cy="0" r="0.52"/>
 <circle class="halo-possible" cx="16" cy="0" r="0.96"/>
-<circle class="body-planet" cx="14.94" cy="1.31" r="4.69"/>
-<circle class="halo-definite" cx="14.94" cy="1.31" r="5.12"/>
-<g><circle class="ghost" cx="14.94" cy="1.31" r="3"/><circle class="body-planet" cx="14.94" cy="1.31" r="1.35"/></g>
-<circle class="halo-definite" cx="14.94" cy="1.31" r="3.43"/>
-<g><circle class="ghost" cx="14.94" cy="1.31" r="3"/><circle class="body-planet" cx="14.94" cy="1.31" r="1.35"/></g>
-<circle class="halo-definite" cx="14.94" cy="1.31" r="3.43"/>
-<g><circle class="ghost" cx="14.94" cy="1.31" r="3"/><circle class="body-planet" cx="14.94" cy="1.31" r="1.35"/></g>
-<circle class="halo-definite" cx="14.94" cy="1.31" r="3.43"/>
+<circle class="body-planet" cx="14.94" cy="-1.31" r="4.69"/>
+<circle class="halo-definite" cx="14.94" cy="-1.31" r="5.12"/>
+<g><circle class="ghost" cx="14.94" cy="-1.31" r="3"/><circle class="body-planet" cx="14.94" cy="-1.31" r="1.35"/></g>
+<circle class="halo-definite" cx="14.94" cy="-1.31" r="3.43"/>
+<g><circle class="ghost" cx="14.94" cy="-1.31" r="3"/><circle class="body-planet" cx="14.94" cy="-1.31" r="1.35"/></g>
+<circle class="halo-definite" cx="14.94" cy="-1.31" r="3.43"/>
+<g><circle class="ghost" cx="14.94" cy="-1.31" r="3"/><circle class="body-planet" cx="14.94" cy="-1.31" r="1.35"/></g>
+<circle class="halo-definite" cx="14.94" cy="-1.31" r="3.43"/>
 <g class="label"><circle class="hover-target" cx="0" cy="0" r="18.4"/><g class="label-body"><line class="leader" x1="12.86" y1="-12.86" x2="18.35" y2="-18.35"/><text x="18.57" y="-18.35" font-size="0.7">star · 40</text></g></g>
 <g class="label"><circle class="hover-target" cx="12" cy="0" r="4.9"/><g class="label-body"><line class="leader" x1="15.31" y1="-3.31" x2="16.86" y2="-4.86"/><text x="17.07" y="-4.86" font-size="0.7">pc_continental · 25</text></g></g>
 <g class="label"><circle class="hover-target" cx="16" cy="0" r="0.74"/><g class="label-body"><line class="leader" x1="16.37" y1="-0.37" x2="16.7" y2="-0.7"/><text x="16.91" y="-0.7" font-size="0.7">pc_barren · 4</text></g></g>
-<g class="label"><circle class="hover-target" cx="14.94" cy="1.31" r="4.9"/><g class="label-body"><line class="leader" x1="18.26" y1="-2.01" x2="19.8" y2="-3.55"/><text x="20.01" y="-3.55" font-size="0.7">pc_barren · 25</text></g></g>
-<g class="label"><circle class="hover-target" cx="14.94" cy="1.31" r="3.22"/><g class="label-body"><line class="leader" x1="17.06" y1="-0.81" x2="18.12" y2="-1.87"/><text x="18.33" y="-1.87" font-size="0.7">pc_desert · 16 ×3</text></g></g>
+<g class="label"><circle class="hover-target" cx="14.94" cy="-1.31" r="4.9"/><g class="label-body"><line class="leader" x1="18.26" y1="-4.62" x2="19.8" y2="-6.17"/><text x="20.01" y="-6.17" font-size="0.7">pc_barren · 25</text></g></g>
+<g class="label"><circle class="hover-target" cx="14.94" cy="-1.31" r="3.22"/><g class="label-body"><line class="leader" x1="17.06" y1="-3.43" x2="18.12" y2="-4.48"/><text x="18.33" y="-4.48" font-size="0.7">pc_desert · 16 ×3</text></g></g>
 <g font-size="0.7">
 <g transform="translate(0 -27.81)"><circle class="body-planet" cx="-28.35" cy="0" r="0.32"/><text x="-27.54" y="0.25">fixed body</text></g>
 <g transform="translate(0 -26.76)"><circle class="ghost" cx="-28.35" cy="0" r="0.32"/><text x="-27.54" y="0.25">range or random position</text></g>

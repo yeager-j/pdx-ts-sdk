@@ -296,7 +296,8 @@ function place(system: ResolvedSystem): Placed[] {
     const entry: Placed = {
       body,
       x: cx + radius * Math.cos(rad),
-      y: cy + radius * Math.sin(rad),
+      // Bearings increase counterclockwise on screen, so y-down negates sine.
+      y: cy - radius * Math.sin(rad),
       radius,
       cx,
       cy,

@@ -105,6 +105,60 @@ export const STAR_CLASSES: ReadonlySet<string> = new Set([
   "pc_toxoid_star",
 ]);
 
+/**
+ * Screenshot-measured render corrections for entities whose visual size the
+ * text files do not capture. The black hole's accretion visuals render well
+ * beyond its `entity_scale`; measured from a live trinary overlay.
+ */
+export const RENDER_CORRECTIONS: Readonly<Record<string, number>> = {
+  pc_black_hole: 1.7,
+};
+
+/**
+ * The planet class behind each `class: "star"` entry, per system star class
+ * and star position: binaries and trinaries list one `planet = { key }` per
+ * star, in order, in `common/star_classes`. The n-th star entry of a system
+ * is assumed to take the n-th key.
+ */
+export const STAR_CLASS_PLANET_CLASSES: Readonly<Record<string, readonly string[]>> = {
+  sc_a: ["pc_a_star"],
+  sc_b: ["pc_b_star"],
+  sc_binary_1: ["pc_a_star", "pc_pulsar"],
+  sc_binary_10: ["pc_a_star", "pc_t_star"],
+  sc_binary_2: ["pc_b_star", "pc_neutron_star"],
+  sc_binary_3: ["pc_m_giant_star", "pc_b_star"],
+  sc_binary_4: ["pc_m_giant_star", "pc_f_star"],
+  sc_binary_5: ["pc_b_star", "pc_b_star"],
+  sc_binary_6: ["pc_m_star", "pc_g_star"],
+  sc_binary_7: ["pc_k_star", "pc_f_star"],
+  sc_binary_8: ["pc_g_star", "pc_f_star"],
+  sc_binary_9: ["pc_a_star", "pc_f_star"],
+  sc_black_hole: ["pc_black_hole"],
+  sc_crisis_binary_1: ["pc_m_giant_star", "pc_pulsar"],
+  sc_crisis_binary_10: ["pc_m_star", "pc_t_star"],
+  sc_crisis_binary_2: ["pc_m_giant_star", "pc_neutron_star"],
+  sc_crisis_binary_5: ["pc_m_star", "pc_b_star"],
+  sc_crisis_binary_7_8_9: ["pc_m_star", "pc_f_star"],
+  sc_crisis_trinary_1: ["pc_m_star", "pc_m_star", "pc_k_star"],
+  sc_crisis_trinary_2: ["pc_m_giant_star", "pc_a_star", "pc_f_star"],
+  sc_crisis_trinary_3: ["pc_m_star", "pc_f_star", "pc_g_star"],
+  sc_crisis_trinary_4: ["pc_m_giant_star", "pc_k_star", "pc_t_star"],
+  sc_f: ["pc_f_star"],
+  sc_g: ["pc_g_star"],
+  sc_k: ["pc_k_star"],
+  sc_m: ["pc_m_star"],
+  sc_m_giant: ["pc_m_giant_star"],
+  sc_neutron_star: ["pc_neutron_star"],
+  sc_pulsar: ["pc_pulsar"],
+  sc_rift_star: ["pc_rift_star"],
+  sc_t: ["pc_t_star"],
+  sc_toxoid_star: ["pc_toxoid_star"],
+  sc_trinary_1: ["pc_g_star", "pc_m_star", "pc_k_star"],
+  sc_trinary_2: ["pc_b_star", "pc_a_star", "pc_f_star"],
+  sc_trinary_3: ["pc_k_star", "pc_f_star", "pc_g_star"],
+  sc_trinary_4: ["pc_b_star", "pc_k_star", "pc_t_star"],
+};
+
 /** Every main-sequence `pc_*_star` shares this scale. */
 const STAR_ENTITY_SCALE = 20;
 
@@ -121,5 +175,20 @@ export function classScaleFactor(className: string | undefined): number {
     return STAR_ENTITY_SCALE / STANDARD_ENTITY_SCALE;
   }
   const scale = CLASS_ENTITY_SCALES[className];
-  return scale === undefined ? 1 : scale / STANDARD_ENTITY_SCALE;
+  const correction = RENDER_CORRECTIONS[className] ?? 1;
+  return (scale === undefined ? 1 : scale / STANDARD_ENTITY_SCALE) * correction;
+}
+
+/**
+ * The render scale for the n-th `class: "star"` entry of a system, resolved
+ * through the system's star class. Unknown or random-list star classes use
+ * the ordinary star scale.
+ */
+export function starEntryScaleFactor(starClass: string, starIndex: number): number {
+  const keys = STAR_CLASS_PLANET_CLASSES[starClass];
+  if (keys === undefined || keys.length === 0) {
+    return STAR_ENTITY_SCALE / STANDARD_ENTITY_SCALE;
+  }
+  const planetClass = keys[Math.min(starIndex, keys.length - 1)]!;
+  return classScaleFactor(planetClass);
 }
