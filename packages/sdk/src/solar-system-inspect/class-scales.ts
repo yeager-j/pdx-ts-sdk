@@ -73,6 +73,38 @@ export const FIXED_SCALE_CLASSES: ReadonlySet<string> = new Set([
   "pc_warden_guardian",
 ]);
 
+/**
+ * The system view rescales planet sprites per camera zoom step
+ * (`PLANET_SCALE_SYSTEM` in the defines, 0.325 to 0.75). Star entities keep
+ * their size, so the model pins the zoomed-out step where whole-system
+ * comparisons happen.
+ */
+export const SYSTEM_VIEW_PLANET_SCALE = 0.75;
+
+/** Extra render scale the game applies to moons (`MOON_SCALE` define). */
+export const MOON_RENDER_SCALE = 0.7;
+
+/**
+ * Classes rendered as stellar objects: they use star-kind styling and are
+ * exempt from the per-zoom planet rescale.
+ */
+export const STAR_CLASSES: ReadonlySet<string> = new Set([
+  "pc_a_star",
+  "pc_b_star",
+  "pc_black_hole",
+  "pc_f_star",
+  "pc_g_star",
+  "pc_k_star",
+  "pc_m_giant_star",
+  "pc_m_star",
+  "pc_neutron_star",
+  "pc_protostar",
+  "pc_pulsar",
+  "pc_rift_star",
+  "pc_t_star",
+  "pc_toxoid_star",
+]);
+
 /** Every main-sequence `pc_*_star` shares this scale. */
 const STAR_ENTITY_SCALE = 20;
 

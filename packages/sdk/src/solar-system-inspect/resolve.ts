@@ -14,7 +14,13 @@ import type { PlanetInitializerFields } from "../generated/planet-initializer.ts
 import type { SolarSystemInitializerDef } from "../generated/solar-system-initializer.ts";
 import { refId } from "../script/scalar.ts";
 import type { ScriptValue } from "../script/trigger-core.ts";
-import { classScaleFactor, FIXED_SCALE_CLASSES } from "./class-scales.ts";
+import {
+  classScaleFactor,
+  FIXED_SCALE_CLASSES,
+  MOON_RENDER_SCALE,
+  STAR_CLASSES,
+  SYSTEM_VIEW_PLANET_SCALE,
+} from "./class-scales.ts";
 import {
   absInterval,
   addSpans,
@@ -448,7 +454,7 @@ function bodyKind(className: string | undefined, isMoonList: boolean): BodyKind 
   if (className === "none") {
     return "cursor";
   }
-  if (className === "star") {
+  if (className === "star" || (className !== undefined && STAR_CLASSES.has(className))) {
     return "star";
   }
   if (className !== undefined && className.includes("asteroid")) {
@@ -662,7 +668,12 @@ function resolveVisual(
     }
   }
 
-  const factor = classScaleFactor(className);
+  // Star entities keep their size in the system view; everything else is
+  // rescaled per zoom step, pinned here at the zoomed-out step, and moons
+  // carry the extra MOON_SCALE factor.
+  const zoom = kind === "star" ? 1 : SYSTEM_VIEW_PLANET_SCALE;
+  const moonScale = kind === "moon" ? MOON_RENDER_SCALE : 1;
+  const factor = classScaleFactor(className) * zoom * moonScale;
   if (sizeInterval === undefined) {
     return {
       radius: { min: fallback.min * factor, max: fallback.max * factor },

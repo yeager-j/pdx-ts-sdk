@@ -13,10 +13,12 @@ import { inspectSolarSystem, type SolarSystemDiagnostic } from "../src/index.ts"
 import {
   CLASS_ENTITY_SCALES,
   FIXED_SCALE_CLASSES,
+  MOON_RENDER_SCALE,
   STANDARD_ENTITY_SCALE,
+  SYSTEM_VIEW_PLANET_SCALE,
 } from "../src/solar-system-inspect/class-scales.ts";
 import { locateInstall } from "../src/stellaris/installation/locate.ts";
-import { readVanillaClassScales } from "./helpers/planet-class-scales.ts";
+import { readVanillaClassScales, readVanillaRenderDefines } from "./helpers/planet-class-scales.ts";
 import { readVanillaInitializers, type VanillaInitializer } from "./helpers/solar-system-raw.ts";
 
 let installPath: string | undefined;
@@ -107,6 +109,12 @@ describe.skipIf(installPath === undefined)("vanilla solar-system calibration (no
       expect(vanilla.scales.get(className)).toBeDefined();
     }
     expect([...FIXED_SCALE_CLASSES].sort()).toEqual([...vanilla.fixed].sort());
+  });
+
+  it("keeps the pinned render defines in sync with the install", () => {
+    const defines = readVanillaRenderDefines(installPath!);
+    expect(defines.moonScale).toBe(MOON_RENDER_SCALE);
+    expect(defines.zoomedOutPlanetScale).toBe(SYSTEM_VIEW_PLANET_SCALE);
   });
 
   it("renders deterministic SVG for shipped systems", () => {

@@ -15,6 +15,44 @@ export interface VanillaClassScales {
   readonly fixed: ReadonlySet<string>;
 }
 
+/** Render-scale defines the visual model pins. */
+export interface VanillaRenderDefines {
+  readonly moonScale: number | undefined;
+  /** The outermost `PLANET_SCALE_SYSTEM` zoom step. */
+  readonly zoomedOutPlanetScale: number | undefined;
+}
+
+/** Reads `MOON_SCALE` and `PLANET_SCALE_SYSTEM` from the install's defines. */
+export function readVanillaRenderDefines(installPath: string): VanillaRenderDefines {
+  const document = parse(
+    readFileSync(join(installPath, "common", "defines", "00_defines.txt"), "utf8"),
+    "00_defines.txt"
+  );
+  let moonScale: number | undefined;
+  let zoomedOutPlanetScale: number | undefined;
+  for (const category of document.items) {
+    if (category.kind !== "entry" || category.value.kind !== "container") {
+      continue;
+    }
+    for (const item of category.value.items) {
+      if (item.kind !== "entry") {
+        continue;
+      }
+      if (item.key === "MOON_SCALE" && item.value.kind === "num") {
+        moonScale = tryNumberValue(item.value.lexeme) ?? undefined;
+      }
+      if (item.key === "PLANET_SCALE_SYSTEM" && item.value.kind === "container") {
+        const steps = item.value.items.flatMap((step) =>
+          step.kind === "num" ? [tryNumberValue(step.lexeme)] : []
+        );
+        const last = steps[steps.length - 1];
+        zoomedOutPlanetScale = last ?? undefined;
+      }
+    }
+  }
+  return { moonScale, zoomedOutPlanetScale };
+}
+
 function scalarNumber(value: PdxValue, variables: ReadonlyMap<string, number>): number | undefined {
   if (value.kind === "num") {
     return tryNumberValue(value.lexeme) ?? undefined;
