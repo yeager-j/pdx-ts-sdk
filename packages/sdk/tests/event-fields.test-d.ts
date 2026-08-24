@@ -71,7 +71,7 @@ describe("subtype-conditional EventDef fields (SDK-46)", () => {
   it("requires a declared FROM before location can read ctx.from", () => {
     const eventNamespace = events("event_fields_types_f");
     eventNamespace.fleet(1, {
-      from: "archaeological_site",
+      scopes: { from: "archaeological_site" },
       hideWindow: true,
       location: (ctx) => ctx.from,
     });
@@ -85,7 +85,7 @@ describe("subtype-conditional EventDef fields (SDK-46)", () => {
   it("requires a declared FROM before situation can read ctx.from", () => {
     const eventNamespace = events("event_fields_types_g");
     eventNamespace.fleet(1, {
-      from: "situation",
+      scopes: { from: "situation" },
       hideWindow: true,
       situation: (ctx) => ctx.from,
     });

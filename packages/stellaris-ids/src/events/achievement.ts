@@ -3,11 +3,11 @@
 import type { EventRef } from "@pdx-ts/sdk";
 
 export interface VanillaEventNamespaceAchievement {
-  readonly $1: EventRef<"country", undefined, "country"> & { readonly id: "achievement.1" };
-  readonly $2: EventRef<"country", undefined, "country"> & { readonly id: "achievement.2" };
-  readonly $3: EventRef<"country", undefined, "country"> & { readonly id: "achievement.3" };
-  readonly $4: EventRef<"fleet", undefined, "fleet"> & { readonly id: "achievement.4" };
-  readonly $5: EventRef<"country", undefined, "country"> & { readonly id: "achievement.5" };
-  readonly $6: EventRef<"fleet", undefined, "fleet"> & { readonly id: "achievement.6" };
-  readonly $7: EventRef<"carrier", undefined, "carrier"> & { readonly id: "achievement.7" };
+  readonly $1: EventRef<"country", {}, "country"> & { readonly id: "achievement.1" };
+  readonly $2: EventRef<"country", {}, "country"> & { readonly id: "achievement.2" };
+  readonly $3: EventRef<"country", {}, "country"> & { readonly id: "achievement.3" };
+  readonly $4: EventRef<"fleet", {}, "fleet"> & { readonly id: "achievement.4" };
+  readonly $5: EventRef<"country", {}, "country"> & { readonly id: "achievement.5" };
+  readonly $6: EventRef<"fleet", {}, "fleet"> & { readonly id: "achievement.6" };
+  readonly $7: EventRef<"carrier", {}, "carrier"> & { readonly id: "achievement.7" };
 }

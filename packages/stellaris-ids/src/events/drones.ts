@@ -4,13 +4,13 @@ import type { EventRef, EventScopelessRef } from "@pdx-ts/sdk";
 
 export interface VanillaEventNamespaceDrones {
   readonly $100: EventScopelessRef & { readonly id: "drones.100" };
-  readonly $105: EventRef<"fleet", undefined, "fleet"> & { readonly id: "drones.105" };
-  readonly $106: EventRef<"country", undefined, "country"> & { readonly id: "drones.106" };
+  readonly $105: EventRef<"fleet", {}, "fleet"> & { readonly id: "drones.105" };
+  readonly $106: EventRef<"country", {}, "country"> & { readonly id: "drones.106" };
   readonly $120: EventScopelessRef & { readonly id: "drones.120" };
-  readonly $125: EventRef<"fleet", undefined, "fleet"> & { readonly id: "drones.125" };
-  readonly $126: EventRef<"country", undefined, "country"> & { readonly id: "drones.126" };
-  readonly $130: EventRef<"country", undefined, "country"> & { readonly id: "drones.130" };
+  readonly $125: EventRef<"fleet", {}, "fleet"> & { readonly id: "drones.125" };
+  readonly $126: EventRef<"country", {}, "country"> & { readonly id: "drones.126" };
+  readonly $130: EventRef<"country", {}, "country"> & { readonly id: "drones.130" };
   readonly $200: EventScopelessRef & { readonly id: "drones.200" };
-  readonly $205: EventRef<"fleet", undefined, "fleet"> & { readonly id: "drones.205" };
-  readonly $206: EventRef<"country", undefined, "country"> & { readonly id: "drones.206" };
+  readonly $205: EventRef<"fleet", {}, "fleet"> & { readonly id: "drones.205" };
+  readonly $206: EventRef<"country", {}, "country"> & { readonly id: "drones.206" };
 }

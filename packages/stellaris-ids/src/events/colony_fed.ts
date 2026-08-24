@@ -3,12 +3,12 @@
 import type { EventRef } from "@pdx-ts/sdk";
 
 export interface VanillaEventNamespaceColonyFed {
-  readonly $100: EventRef<"carrier", undefined, "carrier"> & { readonly id: "colony_fed.100" };
-  readonly $105: EventRef<"carrier", undefined, "carrier"> & { readonly id: "colony_fed.105" };
-  readonly $106: EventRef<"carrier", undefined, "carrier"> & { readonly id: "colony_fed.106" };
-  readonly $107: EventRef<"carrier", undefined, "carrier"> & { readonly id: "colony_fed.107" };
-  readonly $110: EventRef<"carrier", undefined, "carrier"> & { readonly id: "colony_fed.110" };
-  readonly $111: EventRef<"carrier", undefined, "carrier"> & { readonly id: "colony_fed.111" };
-  readonly $115: EventRef<"carrier", undefined, "carrier"> & { readonly id: "colony_fed.115" };
-  readonly $120: EventRef<"carrier", undefined, "carrier"> & { readonly id: "colony_fed.120" };
+  readonly $100: EventRef<"carrier", {}, "carrier"> & { readonly id: "colony_fed.100" };
+  readonly $105: EventRef<"carrier", {}, "carrier"> & { readonly id: "colony_fed.105" };
+  readonly $106: EventRef<"carrier", {}, "carrier"> & { readonly id: "colony_fed.106" };
+  readonly $107: EventRef<"carrier", {}, "carrier"> & { readonly id: "colony_fed.107" };
+  readonly $110: EventRef<"carrier", {}, "carrier"> & { readonly id: "colony_fed.110" };
+  readonly $111: EventRef<"carrier", {}, "carrier"> & { readonly id: "colony_fed.111" };
+  readonly $115: EventRef<"carrier", {}, "carrier"> & { readonly id: "colony_fed.115" };
+  readonly $120: EventRef<"carrier", {}, "carrier"> & { readonly id: "colony_fed.120" };
 }

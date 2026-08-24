@@ -12,6 +12,7 @@ import {
   hasPlanetFlag,
   planetFlags,
   vanilla,
+  type EffectBlock,
   type EventTriggeredDescription,
   type TriggeredDescription,
 } from "../src/index.ts";
@@ -28,6 +29,30 @@ describe("the FROM contract on the real event API", () => {
       immediate: (country) => {
         country.countryEvent({ id: "another_mod.5" });
       },
+    });
+  });
+
+  it("infers an ambient event contract only from scopes", () => {
+    const mod = createMod({
+      name: "Context inference",
+      prefix: "context_inference",
+      supportedVersion: "4.4.*",
+    });
+    const events = mod.namespace();
+    const callback: EffectBlock<
+      "country",
+      { readonly root: "country"; readonly from: "planet" }
+    > = (_country, ctx) => ctx.from.effects((planet) => planet.setPlanetFlag("inferred"));
+
+    events.country(1, {
+      isTriggeredOnly: true,
+      // @ts-expect-error — callbacks cannot declare an ambient contract without scopes.
+      immediate: callback,
+    });
+    events.country(2, {
+      scopes: { from: "planet" },
+      isTriggeredOnly: true,
+      immediate: callback,
     });
   });
 
@@ -72,7 +97,7 @@ describe("the FROM contract on the real event API", () => {
     const mod = createMod({ name: "A", prefix: "from_contract_a", supportedVersion: "4.4.*" });
     const events = mod.namespace();
     const needsCountryFrom = events.planet(1, {
-      from: "country",
+      scopes: { from: "country" },
       hideWindow: true,
       isTriggeredOnly: true,
     });
@@ -90,7 +115,7 @@ describe("the FROM contract on the real event API", () => {
     const mod = createMod({ name: "B", prefix: "from_contract_b", supportedVersion: "4.4.*" });
     const events = mod.namespace();
     const needsCountryFrom = events.planet(3, {
-      from: "country",
+      scopes: { from: "country" },
       hideWindow: true,
       isTriggeredOnly: true,
     });
@@ -99,7 +124,7 @@ describe("the FROM contract on the real event API", () => {
       isTriggeredOnly: true,
       immediate: (planet, ctx) => {
         // @ts-expect-error — ctx.self is a planet ref; the target's FROM contract wants a country
-        planet.planetEvent({ id: needsCountryFrom, from: ctx.self, days: 5 });
+        planet.planetEvent({ id: needsCountryFrom, scopes: { from: ctx.self }, days: 5 });
       },
     });
   });
@@ -108,7 +133,7 @@ describe("the FROM contract on the real event API", () => {
     const mod = createMod({ name: "C", prefix: "from_contract_c", supportedVersion: "4.4.*" });
     const events = mod.namespace();
     const needsCountryFrom = events.planet(5, {
-      from: "country",
+      scopes: { from: "country" },
       hideWindow: true,
       isTriggeredOnly: true,
     });
@@ -117,7 +142,7 @@ describe("the FROM contract on the real event API", () => {
       isTriggeredOnly: true,
       immediate: (country, ctx) => {
         country.everyOwnedPlanet({}, (planet) => {
-          planet.planetEvent({ id: needsCountryFrom, from: ctx.self, days: 5 });
+          planet.planetEvent({ id: needsCountryFrom, scopes: { from: ctx.root }, days: 5 });
         });
       },
     });
@@ -127,7 +152,7 @@ describe("the FROM contract on the real event API", () => {
     const mod = createMod({ name: "D", prefix: "from_contract_d", supportedVersion: "4.4.*" });
     const events = mod.namespace();
     const needsCountryFrom = events.situation(20, {
-      from: "country",
+      scopes: { from: "country" },
       hideWindow: true,
       isTriggeredOnly: true,
     });
@@ -136,7 +161,7 @@ describe("the FROM contract on the real event API", () => {
       isTriggeredOnly: true,
       immediate: (situation, ctx) => {
         // @ts-expect-error — the target declared from: "country"; a situation witness does not satisfy it
-        situation.situationEvent({ id: needsCountryFrom, from: ctx.self });
+        situation.situationEvent({ id: needsCountryFrom, scopes: { from: ctx.self } });
       },
     });
     // @ts-expect-error — a situation-scoped definition does not fit country()
@@ -147,12 +172,12 @@ describe("the FROM contract on the real event API", () => {
     const mod = createMod({ name: "Self", prefix: "self_is_a_value", supportedVersion: "4.4.*" });
     const events = mod.namespace();
     const aftershockFrom = events.planet(9, {
-      from: "country",
+      scopes: { from: "country" },
       isTriggeredOnly: true,
     });
     const target = eventTarget<"planet">("self_is_a_value_planet");
     events.country(1, {
-      from: "planet",
+      scopes: { from: "planet" },
       isTriggeredOnly: true,
       immediate: (country, ctx) => {
         // FROM and a saved target name their scope absolutely, so both open.
@@ -164,7 +189,7 @@ describe("the FROM contract on the real event API", () => {
         ctx.self.effects(() => {});
         // It stays exactly as useful as a value, which is all it ever was.
         country.everyOwnedPlanet({}, (planet) => {
-          planet.planetEvent({ id: aftershockFrom, from: ctx.self });
+          planet.planetEvent({ id: aftershockFrom, scopes: { from: ctx.root } });
         });
       },
     });
@@ -179,6 +204,46 @@ describe("the FROM contract on the real event API", () => {
       immediate: (country, ctx) => {
         // @ts-expect-error — this event declared no `from:`; ctx.from is an inert sentinel, not a ScopeRef
         ctx.from.effects(() => {});
+      },
+    });
+  });
+
+  it("requires every declared FROM witness and refuses explicit PREV contracts", () => {
+    const mod = createMod({
+      name: "Chains",
+      prefix: "from_contract_chains",
+      supportedVersion: "4.4.*",
+    });
+    const events = mod.namespace();
+    const fleetTarget = eventTarget<"fleet">("from_contract_chain_fleet");
+    const systemTarget = eventTarget<"system">("from_contract_chain_system");
+    const chained = events.planet(30, {
+      scopes: { from: "country", fromfrom: "fleet", fromfromfrom: "system" },
+      isTriggeredOnly: true,
+    });
+    const prevBound = events.planet(31, {
+      scopes: { from: "country", prev: "planet" },
+      isTriggeredOnly: true,
+    });
+    const splitRoot = events.planet(32, {
+      scopes: { root: "country" },
+      isTriggeredOnly: true,
+    });
+    events.country(32, {
+      isTriggeredOnly: true,
+      immediate: (country, ctx) => {
+        country.everyOwnedPlanet({}, (planet) => {
+          planet.planetEvent({
+            id: chained,
+            scopes: { from: ctx.root, fromfrom: fleetTarget, fromfromfrom: systemTarget },
+          });
+          // @ts-expect-error — every declared FROM slot needs a witness.
+          planet.planetEvent({ id: chained, scopes: { from: ctx.root } });
+          // @ts-expect-error — game evidence supports no explicit PREV override.
+          planet.planetEvent({ id: prevBound, scopes: { from: ctx.root } });
+          // @ts-expect-error — an explicit fire cannot verify a split ROOT contract.
+          planet.planetEvent({ id: splitRoot });
+        });
       },
     });
   });

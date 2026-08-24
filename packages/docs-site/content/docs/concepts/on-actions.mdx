@@ -99,14 +99,14 @@ mod.on(onActions.onGameStartCountry, [firstSignal]);
 ```
 
 A planet event cannot be attached to this hook. A country event that declares
-`from: "country"` cannot be attached either, because the hook supplies no
+`scopes: { from: "country" }` cannot be attached either, because the hook supplies no
 `FROM`.
 
 For a hook that supplies both scopes, declare both on the event:
 
 ```ts
 const arrival = events.ship(2, {
-  from: "system",
+  scopes: { from: "system" },
   isTriggeredOnly: true,
   immediate: (_ship, ctx) => {
     ctx.from.effects((system) => {
@@ -119,12 +119,12 @@ mod.on(onActions.onEnteringSystem, [arrival]);
 ```
 
 `onEnteringSystem` supplies a ship as `THIS` and a system as `FROM`. The event
-method and its `from` declaration preserve those two facts through the event
+method and its `scopes` declaration preserve those two facts through the event
 body. A mismatch is a TypeScript error and is checked again during the Fold.
 
 ```ts
 const badArrival = events.ship(2, {
-  from: "country", // Wrong scope
+  scopes: { from: "country" }, // Wrong scope
   isTriggeredOnly: true,
 });
 
@@ -134,9 +134,8 @@ mod.on(onActions.onEnteringSystem, [badArrival]);
 ```
 
 Some hooks supply more than two scopes: the rules for `on_entering_system`
-also name a country as `FROMFROM`. The SDK's contract covers `THIS` and
-`FROM` only, and effect and trigger callbacks expose no `FROMFROM`, so script
-that needs the third scope cannot be written yet.
+also name a country as `FROMFROM`. Its event body exposes that scope as
+`ctx.fromfrom`, and the full named contract is checked at registration.
 
 [Scope and context](/guides/scope-and-context/) explains how `THIS`, `ROOT`,
 and `FROM` behave inside the event's triggers and effects.
@@ -146,12 +145,12 @@ and `FROM` behave inside the event's triggers and effects.
 Both operations cause the game to run an event, but they enter the game from
 different places:
 
-| Hook with `mod.on`                                | Fire from an effect                                  |
-| ------------------------------------------------- | ---------------------------------------------------- |
-| Adds an event id to an engine-defined hook        | Writes an event-fire effect into authored script     |
-| The hook supplies the target scope and `FROM`     | The effect's current scope selects the target        |
-| Runs when Stellaris reaches that named transition | Runs when the containing effect executes             |
-| Has no per-registration delay                     | Can set `days`, `months`, `years`, or `random` delay |
+| Hook with `mod.on`                                              | Fire from an effect                                  |
+| --------------------------------------------------------------- | ---------------------------------------------------- |
+| Adds an event id to an engine-defined hook                      | Writes an event-fire effect into authored script     |
+| The hook supplies the target scope and declared ambient context | The effect's current scope selects the target        |
+| Runs when Stellaris reaches that named transition               | Runs when the containing effect executes             |
+| Has no per-registration delay                                   | Can set `days`, `months`, `years`, or `random` delay |
 
 Use an on-action when the entry point is a lifecycle event that Stellaris
 already exposes. Use `countryEvent`, `planetEvent`, and the other typed fire

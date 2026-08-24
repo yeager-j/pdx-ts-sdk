@@ -211,7 +211,7 @@ describe("mod capability composition", () => {
     expect(first.id).toBe("cycle_mod_chain.1");
     expect(second.id).toBe("cycle_mod_chain.2");
     expect(first.scope).toBe("country");
-    expect(first.from).toBeUndefined();
+    expect(first.scopes).toEqual({});
     expect(source).toContain("id = cycle_mod_chain.1");
     expect(source).toContain("id = cycle_mod_chain.2");
     expect(source).not.toContain("placeholder");

@@ -1,7 +1,8 @@
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import type { RuleField } from "@pdx-ts/codegen-cwt/cwt/model";
+import { scopeSignature } from "@pdx-ts/codegen-cwt/cwt/fingerprint";
+import { scopeOf, type RuleField } from "@pdx-ts/codegen-cwt/cwt/model";
 import { parseCwt, type CwtNode } from "@pdx-ts/codegen-cwt/cwt/parser";
 import { readAliases, scopeIndex } from "@pdx-ts/codegen-cwt/cwt/rules";
 import { emitEffects } from "@pdx-ts/codegen-cwt/emit/script/effects";
@@ -10,6 +11,7 @@ import { emitScopeLinks } from "@pdx-ts/codegen-cwt/emit/script/links";
 import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { parseTriggerDocs } from "@pdx-ts/codegen-cwt/logs/trigger-docs";
 import { lowerRule, lowerRuleTable } from "@pdx-ts/codegen-cwt/lower/lowered-rule";
+import { containerContext } from "@pdx-ts/codegen-cwt/lower/scope-context";
 import {
   clauseScopeContext,
   mapType,
@@ -121,6 +123,60 @@ function syntheticEffectInput(source: string, emitter: Emitter) {
 }
 
 describe("LoweredRule", () => {
+  it("keeps complete and sparse ambient maps through parsing, fingerprints, and push inheritance", () => {
+    const full = parseCwt(
+      "## replace_scopes = { this = country root = country from = fleet fromfrom = system fromfromfrom = ship fromfromfromfrom = war prev = planet prevprev = country prevprevprev = fleet prevprevprevprev = system }\nfield = bool",
+      "ambient-full.cwt"
+    ).nodes[0]!;
+    const sparse = parseCwt(
+      "## replace_scopes = { this = country fromfromfrom = ship }\nfield = bool",
+      "ambient-sparse.cwt"
+    ).nodes[0]!;
+    const pushed = parseCwt("## push_scope = fleet\nfield = bool", "ambient-push.cwt").nodes[0]!;
+    if (
+      full.kind !== "assignment" ||
+      sparse.kind !== "assignment" ||
+      pushed.kind !== "assignment"
+    ) {
+      throw new Error("synthetic CWT fields must parse as assignments");
+    }
+
+    const fullScope = scopeOf(full.options)!;
+    const sparseScope = scopeOf(sparse.options)!;
+    const pushedScope = scopeOf(pushed.options)!;
+    expect(fullScope).toMatchObject({
+      this: "country",
+      root: "country",
+      from: "fleet",
+      fromfrom: "system",
+      fromfromfrom: "ship",
+      fromfromfromfrom: "war",
+      prev: "planet",
+      prevprev: "country",
+      prevprevprev: "fleet",
+      prevprevprevprev: "system",
+      replaces: true,
+    });
+    expect(sparseScope).toMatchObject({
+      this: "country",
+      root: null,
+      from: null,
+      fromfrom: null,
+      fromfromfrom: "ship",
+      prev: null,
+      replaces: true,
+    });
+    expect(scopeSignature({ scope: fullScope } as RuleField)).toBe(
+      "country/country/fleet/system/ship/war/planet/country/fleet/system/replace"
+    );
+    expect(
+      containerContext({ scope: pushedScope } as RuleField, {
+        scope: fullScope,
+        unpinned: "ScopeName",
+      }).scope
+    ).toMatchObject({ this: "fleet", fromfromfromfrom: "war", prevprev: "country" });
+  });
+
   const triggers = lowerRuleTable(rules.triggers, docs.triggers, emitter, scopes);
   const effects = lowerRuleTable(rules.effects, docs.effects, emitter, scopes);
 
@@ -239,13 +295,37 @@ describe("LoweredRule", () => {
     const push = mergeBlock(
       new Emitter(rules),
       [inherited],
-      clauseScopeContext({ this: "bypass", root: null, from: null, replaces: false }),
+      clauseScopeContext({
+        this: "bypass",
+        root: null,
+        from: null,
+        fromfrom: null,
+        fromfromfrom: null,
+        fromfromfromfrom: null,
+        prev: null,
+        prevprev: null,
+        prevprevprev: null,
+        prevprevprevprev: null,
+        replaces: false,
+      }),
       new Set(["effect"])
     );
     const replacement = mergeBlock(
       new Emitter(rules),
       [inherited],
-      clauseScopeContext({ this: "bypass", root: null, from: null, replaces: true }),
+      clauseScopeContext({
+        this: "bypass",
+        root: null,
+        from: null,
+        fromfrom: null,
+        fromfromfrom: null,
+        fromfromfromfrom: null,
+        prev: null,
+        prevprev: null,
+        prevprevprev: null,
+        prevprevprevprev: null,
+        replaces: true,
+      }),
       new Set(["effect"])
     );
 
@@ -282,8 +362,38 @@ describe("LoweredRule", () => {
     const conflicting = mergeBlock(
       new Emitter(rules),
       [
-        { ...effect, scope: { this: "bypass", root: null, from: null, replaces: false } },
-        { ...effect, scope: { this: "bypass", root: null, from: null, replaces: true } },
+        {
+          ...effect,
+          scope: {
+            this: "bypass",
+            root: null,
+            from: null,
+            fromfrom: null,
+            fromfromfrom: null,
+            fromfromfromfrom: null,
+            prev: null,
+            prevprev: null,
+            prevprevprev: null,
+            prevprevprevprev: null,
+            replaces: false,
+          },
+        },
+        {
+          ...effect,
+          scope: {
+            this: "bypass",
+            root: null,
+            from: null,
+            fromfrom: null,
+            fromfromfrom: null,
+            fromfromfromfrom: null,
+            prev: null,
+            prevprev: null,
+            prevprevprev: null,
+            prevprevprevprev: null,
+            replaces: true,
+          },
+        },
       ],
       null,
       new Set(["effect"])

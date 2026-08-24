@@ -795,6 +795,7 @@ async function writeEventModules(input: EventModuleInput): Promise<EventModuleEm
     header(commit, ["events/events.cwt"]) +
       'import { assertEventNumber, buildEvent } from "../events/lower.ts";\n' +
       'import type { EventDef, EventItem, EventRef } from "../events/types.ts";\n' +
+      'import type { AmbientScopeContext } from "../script/effects/types.ts";\n' +
       'import { assertNamespace } from "../authoring/feature.ts";\n' +
       'import { EVENT_KINDS, type EventKindKey } from "./events.ts";\n' +
       'import type { ScopeName } from "./scopes.ts";\n\n' +
@@ -804,6 +805,7 @@ async function writeEventModules(input: EventModuleInput): Promise<EventModuleEm
     "event-fires.ts",
     header(commit, ["events/events.cwt", "effects.cwt"]) +
       'import type { FireEventArgs, WitnessedFireEventArgs } from "../events/types.ts";\n' +
+      'import type { AmbientScopeContext } from "../script/effects/types.ts";\n' +
       'import type { ScopeName } from "./scopes.ts";\n\n' +
       events.firesCode
   );

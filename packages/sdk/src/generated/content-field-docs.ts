@@ -608,33 +608,33 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       onQueued: {
         optional: true,
         docs: ["an action when queued"],
-        memberType: 'EffectBlock<"colony">',
+        memberType: 'EffectBlock<"colony", {}>',
       },
       onUnqueued: {
         optional: true,
         docs: ["an action when unqueued"],
-        memberType: 'EffectBlock<"colony">',
+        memberType: 'EffectBlock<"colony", {}>',
       },
       onBuilt: {
         optional: true,
         docs: ["an action when built"],
-        memberType: 'EffectBlock<"colony">',
+        memberType: 'EffectBlock<"colony", {}>',
       },
       onEnabled: {
         optional: true,
         docs: ["an action when enabled"],
-        memberType: 'EffectBlock<"colony">',
+        memberType: 'EffectBlock<"colony", {}>',
       },
       customStormAiWeight: { optional: true, docs: [], memberType: 'WeightBlock<"colony">' },
       onDestroy: {
         optional: true,
         docs: ["an action when destroyed"],
-        memberType: 'EffectBlock<"colony">',
+        memberType: 'EffectBlock<"colony", {}>',
       },
       onRepaired: {
         optional: true,
         docs: ["an action when repaired"],
-        memberType: 'EffectBlock<"colony">',
+        memberType: 'EffectBlock<"colony", {}>',
       },
       showInTech: {
         optional: true,
@@ -761,7 +761,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       onEnabled: {
         optional: true,
         docs: [],
-        memberType: 'EffectBlock<"country", undefined, "country">',
+        memberType: 'EffectBlock<"country", { readonly root: "country" }>',
       },
       customTooltip: { optional: true, docs: [], memberType: "string[]" },
       customTooltipWithModifiers: { optional: true, docs: [], memberType: "string[]" },
@@ -796,7 +796,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       onEnabled: {
         optional: true,
         docs: [],
-        memberType: 'EffectBlock<"country", undefined, "country">',
+        memberType: 'EffectBlock<"country", { readonly root: "country" }>',
       },
       weight: {
         optional: true,
@@ -836,7 +836,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       onEnabled: {
         optional: true,
         docs: [],
-        memberType: 'EffectBlock<"country", undefined, "country">',
+        memberType: 'EffectBlock<"country", { readonly root: "country" }>',
       },
       modifier: { optional: true, docs: [], memberType: 'ModifierClosure<"country">' },
       triggeredModifier: { optional: true, docs: [], memberType: 'TriggeredModifier<"country">[]' },
@@ -865,7 +865,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       onEnabled: {
         optional: true,
         docs: [],
-        memberType: 'EffectBlock<"country", undefined, "country">',
+        memberType: 'EffectBlock<"country", { readonly root: "country" }>',
       },
       weight: {
         optional: true,
@@ -888,7 +888,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       initEffect: {
         optional: true,
         docs: [],
-        memberType: 'EffectBlock<"country", undefined, "country">',
+        memberType: 'EffectBlock<"country", { readonly root: "country" }>',
       },
       modifier: { optional: true, docs: [], memberType: 'ModifierClosure<"country">' },
       finishModifier: {
@@ -900,7 +900,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       effect: {
         optional: true,
         docs: [],
-        memberType: 'EffectBlock<"country", undefined, "country">',
+        memberType: 'EffectBlock<"country", { readonly root: "country" }>',
       },
       aiWeight: { optional: true, docs: [], memberType: 'WeightBlock<"country">' },
     },
@@ -956,12 +956,12 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       effect: {
         optional: true,
         docs: ["an effect that is executed when this trigger activates."],
-        memberType: 'EffectBlock<"country", undefined, "country">',
+        memberType: 'EffectBlock<"country", { readonly root: "country" }>',
       },
       onDisabled: {
         optional: true,
         docs: ["an effect that is executed when this trigger activates."],
-        memberType: 'EffectBlock<"country", undefined, "country">',
+        memberType: 'EffectBlock<"country", { readonly root: "country" }>',
       },
     },
   ],
@@ -977,32 +977,49 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       resources: {
         optional: true,
         docs: [],
-        memberType: 'WithFrom<EconomicResourceBlock<NoInfer<S>>[], NoInfer<S>, "country">',
+        memberType:
+          'WithFrom<EconomicResourceBlock<NoInfer<S>>[], NoInfer<S>, { readonly from: "country" }>',
       },
       showTechUnlockIf: { optional: true, docs: [], memberType: 'Trigger<"country">' },
       potential: {
         optional: true,
         docs: [],
-        memberType: 'WithFrom<Trigger<NoInfer<S>>, NoInfer<S>, "country">',
+        memberType: 'WithFrom<Trigger<NoInfer<S>>, NoInfer<S>, { readonly from: "country" }>',
       },
       allow: {
         optional: true,
         docs: [],
-        memberType: 'WithFrom<Trigger<NoInfer<S>>, NoInfer<S>, "country">',
+        memberType: 'WithFrom<Trigger<NoInfer<S>>, NoInfer<S>, { readonly from: "country" }>',
       },
       abortTrigger: {
         optional: true,
         docs: [],
-        memberType: 'WithFrom<Trigger<NoInfer<S>>, NoInfer<S>, "country">',
+        memberType: 'WithFrom<Trigger<NoInfer<S>>, NoInfer<S>, { readonly from: "country" }>',
       },
-      abortEffect: { optional: true, docs: [], memberType: 'EffectBlock<NoInfer<S>, "country">' },
-      onQueued: { optional: true, docs: [], memberType: 'EffectBlock<NoInfer<S>, "country">' },
-      onUnqueued: { optional: true, docs: [], memberType: 'EffectBlock<NoInfer<S>, "country">' },
-      effect: { optional: false, docs: [], memberType: 'EffectBlock<NoInfer<S>, "country">' },
+      abortEffect: {
+        optional: true,
+        docs: [],
+        memberType: 'EffectBlock<NoInfer<S>, { readonly from: "country" }>',
+      },
+      onQueued: {
+        optional: true,
+        docs: [],
+        memberType: 'EffectBlock<NoInfer<S>, { readonly from: "country" }>',
+      },
+      onUnqueued: {
+        optional: true,
+        docs: [],
+        memberType: 'EffectBlock<NoInfer<S>, { readonly from: "country" }>',
+      },
+      effect: {
+        optional: false,
+        docs: [],
+        memberType: 'EffectBlock<NoInfer<S>, { readonly from: "country" }>',
+      },
       aiWeight: {
         optional: true,
         docs: [],
-        memberType: 'WithFrom<WeightBlock<NoInfer<S>>, NoInfer<S>, "country">',
+        memberType: 'WithFrom<WeightBlock<NoInfer<S>>, NoInfer<S>, { readonly from: "country" }>',
       },
       prerequisites: { optional: true, docs: [], memberType: "(TechnologyRef | string)[]" },
     },
@@ -1016,7 +1033,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       when: {
         optional: true,
         docs: [],
-        memberType: 'WithFrom<Trigger<NoInfer<S>>, NoInfer<S>, "country">',
+        memberType: 'WithFrom<Trigger<NoInfer<S>>, NoInfer<S>, { readonly from: "country" }>',
       },
     },
   ],
@@ -1330,12 +1347,12 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       potential: {
         optional: true,
         docs: [],
-        memberType: 'WithFrom<Trigger<"design">, "design", "country">',
+        memberType: 'WithFrom<Trigger<"design">, "design", { readonly from: "country" }>',
       },
       showTechUnlockIf: {
         optional: true,
         docs: [],
-        memberType: 'WithFrom<Trigger<"country">, "country", "country">',
+        memberType: 'WithFrom<Trigger<"country">, "country", { readonly from: "country" }>',
       },
       friendlyAura: {
         optional: true,
@@ -1613,7 +1630,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       possible: {
         optional: true,
         docs: [],
-        memberType: 'WithFrom<Trigger<"design">, "design", "country">',
+        memberType: 'WithFrom<Trigger<"design">, "design", { readonly from: "country" }>',
       },
       staticRotation: { optional: true, docs: [], memberType: "boolean" },
       planetDestructionGfx: { optional: true, docs: [], memberType: "string" },
@@ -1647,17 +1664,17 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       onHit: {
         optional: true,
         docs: ["apply effects to target on hit. Scope = ship (target), from = ship (shooter)"],
-        memberType: 'EffectBlock<"ship", "ship">',
+        memberType: 'EffectBlock<"ship", { readonly from: "ship" }>',
       },
       potential: {
         optional: true,
         docs: [],
-        memberType: 'WithFrom<Trigger<"design">, "design", "country">',
+        memberType: 'WithFrom<Trigger<"design">, "design", { readonly from: "country" }>',
       },
       showTechUnlockIf: {
         optional: true,
         docs: [],
-        memberType: 'WithFrom<Trigger<"country">, "country", "country">',
+        memberType: 'WithFrom<Trigger<"country">, "country", { readonly from: "country" }>',
       },
       friendlyAura: {
         optional: true,
@@ -1972,12 +1989,12 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       potential: {
         optional: true,
         docs: [],
-        memberType: 'WithFrom<Trigger<"design">, "design", "country">',
+        memberType: 'WithFrom<Trigger<"design">, "design", { readonly from: "country" }>',
       },
       showTechUnlockIf: {
         optional: true,
         docs: [],
-        memberType: 'WithFrom<Trigger<"country">, "country", "country">',
+        memberType: 'WithFrom<Trigger<"country">, "country", { readonly from: "country" }>',
       },
       friendlyAura: {
         optional: true,
@@ -2509,17 +2526,20 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       opinion: {
         optional: false,
         docs: [],
-        memberType: 'WithFrom<WeightBlock<"country">, "country", "country", "country"> | number',
+        memberType:
+          'WithFrom<WeightBlock<"country">, "country", { readonly root: "country"; readonly from: "country" }> | number',
       },
       decay: {
         optional: true,
         docs: ["Only when opinion_modifier subtype not `triggered_opinion_modifier` applies."],
-        memberType: 'number | WithFrom<WeightBlock<"country">, "country", "country", "country">',
+        memberType:
+          'number | WithFrom<WeightBlock<"country">, "country", { readonly root: "country"; readonly from: "country" }>',
       },
       growth: {
         optional: true,
         docs: ["Only when opinion_modifier subtype not `triggered_opinion_modifier` applies."],
-        memberType: 'number | WithFrom<WeightBlock<"country">, "country", "country", "country">',
+        memberType:
+          'number | WithFrom<WeightBlock<"country">, "country", { readonly root: "country"; readonly from: "country" }>',
       },
       accumulative: {
         optional: true,
@@ -2576,7 +2596,8 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
           "root = country with the opinion, from = country it has the opinion of",
           "Only when opinion_modifier subtype `triggered_opinion_modifier` applies.",
         ],
-        memberType: 'WithFrom<Trigger<"country">, "country", "country", "country">',
+        memberType:
+          'WithFrom<Trigger<"country">, "country", { readonly root: "country"; readonly from: "country" }>',
       },
     },
   ],
@@ -2706,7 +2727,8 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
           "trigger, evaluated daily to check if CB should be created or destroyed automatically, does not affect CBs granted via script; \\",
           "this = attacker (CB owner), from = defender (target country); default: { always = yes }",
         ],
-        memberType: 'WithFrom<Trigger<"country">, "country", "country", "country">',
+        memberType:
+          'WithFrom<Trigger<"country">, "country", { readonly root: "country"; readonly from: "country" }>',
       },
       destroyIf: {
         optional: true,
@@ -2714,7 +2736,8 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
           "trigger, evaluated daily to destroy CBs that have been granted via script ahead of expiration date; \\",
           "this = attacker (CB owner), from = defender (target country); default: { always = no }",
         ],
-        memberType: 'WithFrom<Trigger<"country">, "country", "country", "country">',
+        memberType:
+          'WithFrom<Trigger<"country">, "country", { readonly root: "country"; readonly from: "country" }>',
       },
       showNotification: {
         optional: false,
@@ -2737,7 +2760,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
           "this = country who casus belli",
           "from = proxy war instigator",
         ],
-        memberType: 'EffectBlock<"country", "country">',
+        memberType: 'EffectBlock<"country", { readonly from: "country" }>',
       },
       showInDiplomacy: { optional: true, docs: [], memberType: "boolean" },
       aggregatedMessageKey: { optional: true, docs: [], memberType: "string" },
@@ -2817,12 +2840,14 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       potential: {
         optional: true,
         docs: ["FROM = The targeted country, THIS = The acting country"],
-        memberType: 'WithFrom<Trigger<"country">, "country", "country", "country">',
+        memberType:
+          'WithFrom<Trigger<"country">, "country", { readonly root: "country"; readonly from: "country" }>',
       },
       possible: {
         optional: true,
         docs: ["FROM = The targeted country, THIS = The acting country"],
-        memberType: 'WithFrom<Trigger<"country">, "country", "country", "country">',
+        memberType:
+          'WithFrom<Trigger<"country">, "country", { readonly root: "country"; readonly from: "country" }>',
       },
       allowedPeaceOffers: {
         optional: true,
@@ -2835,29 +2860,34 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       onStatusQuo: {
         optional: true,
         docs: ["Run when war ends in status quo. The targeted country, THIS = The acting country"],
-        memberType: 'EffectBlock<"country", "country", "country">',
+        memberType:
+          'EffectBlock<"country", { readonly root: "country"; readonly from: "country" }>',
       },
       onWargoalSet: {
         optional: true,
         docs: [],
-        memberType: 'EffectBlock<"country", "country", "country">',
+        memberType:
+          'EffectBlock<"country", { readonly root: "country"; readonly from: "country" }>',
       },
       onAccept: {
         optional: true,
         docs: [
           "Run when target surrenders after claims are ceded. The targeted country, THIS = The acting country",
         ],
-        memberType: 'EffectBlock<"country", "country", "country">',
+        memberType:
+          'EffectBlock<"country", { readonly root: "country"; readonly from: "country" }>',
       },
       aiWeight: {
         optional: true,
         docs: ["FROM = The targeted country, THIS = The acting country"],
-        memberType: 'WithFrom<WeightBlock<"country">, "country", "country", "country">',
+        memberType:
+          'WithFrom<WeightBlock<"country">, "country", { readonly root: "country"; readonly from: "country" }>',
       },
       galacticEmpireJoinsDefender: {
         optional: true,
         docs: [],
-        memberType: 'WithFrom<Trigger<"country">, "country", "country", "country">',
+        memberType:
+          'WithFrom<Trigger<"country">, "country", { readonly root: "country"; readonly from: "country" }>',
       },
       destroyStarbases: {
         optional: true,
@@ -2893,17 +2923,20 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       overlordWeight: {
         optional: true,
         docs: [],
-        memberType: 'WithFrom<WeightBlock<"country">, "country", "country", "country">',
+        memberType:
+          'WithFrom<WeightBlock<"country">, "country", { readonly root: "country"; readonly from: "country" }>',
       },
       subjectWeight: {
         optional: true,
         docs: [],
-        memberType: 'WithFrom<WeightBlock<"country">, "country", "country", "country">',
+        memberType:
+          'WithFrom<WeightBlock<"country">, "country", { readonly root: "country"; readonly from: "country" }>',
       },
       potential: {
         optional: true,
         docs: [],
-        memberType: 'WithFrom<Trigger<"country">, "country", "country", "country">',
+        memberType:
+          'WithFrom<Trigger<"country">, "country", { readonly root: "country"; readonly from: "country" }>',
       },
       hidden: {
         optional: true,
@@ -2997,7 +3030,8 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       planetDamage: {
         optional: true,
         docs: ["General scale of damage to planet, default = 1.0"],
-        memberType: 'number | WithFrom<WeightBlock<"fleet">, "fleet", "planet", "fleet">',
+        memberType:
+          'number | WithFrom<WeightBlock<"fleet">, "fleet", { readonly root: "fleet"; readonly from: "planet" }>',
       },
       armyDamage: {
         optional: true,
@@ -3020,7 +3054,8 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       aiWeight: {
         optional: false,
         docs: [],
-        memberType: 'WithFrom<WeightBlock<"fleet">, "fleet", "planet", "fleet">',
+        memberType:
+          'WithFrom<WeightBlock<"fleet">, "fleet", { readonly root: "fleet"; readonly from: "planet" }>',
       },
     },
   ],
@@ -3074,21 +3109,24 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         docs: [
           "Trigger checking if a scope with this=fleet,from=archaeological site is potential to excavate (this will add/remove this option without giving the player a reason).",
         ],
-        memberType: 'WithFrom<Trigger<"fleet">, "fleet", "archaeological_site", "fleet">',
+        memberType:
+          'WithFrom<Trigger<"fleet">, "fleet", { readonly root: "fleet"; readonly from: "archaeological_site" }>',
       },
       allow: {
         optional: false,
         docs: [
           "Trigger checking if a scope with this=fleet,from=archaeological site is allowed to excavate (this will toggle enable/disabled mode on buttons etc).",
         ],
-        memberType: 'WithFrom<Trigger<"fleet">, "fleet", "archaeological_site", "fleet">',
+        memberType:
+          'WithFrom<Trigger<"fleet">, "fleet", { readonly root: "fleet"; readonly from: "archaeological_site" }>',
       },
       visible: {
         optional: false,
         docs: [
           "Trigger that checks if a scope with this=country can see the from=archaeological site",
         ],
-        memberType: 'WithFrom<Trigger<"country">, "country", "archaeological_site", "country">',
+        memberType:
+          'WithFrom<Trigger<"country">, "country", { readonly root: "country"; readonly from: "archaeological_site" }>',
       },
       stage: {
         optional: true,
@@ -3100,19 +3138,21 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         docs: [
           "Effect to fire when a roll fails, with scope this=fleet, from=archaeological site.",
         ],
-        memberType: 'EffectBlock<"fleet", "archaeological_site", "fleet">',
+        memberType:
+          'EffectBlock<"fleet", { readonly root: "fleet"; readonly from: "archaeological_site" }>',
       },
       onCreate: {
         optional: true,
         docs: ["Effect to fire upon site creation, with scope this=archaeological site."],
-        memberType: 'EffectBlock<"archaeological_site", undefined, "archaeological_site">',
+        memberType: 'EffectBlock<"archaeological_site", { readonly root: "archaeological_site" }>',
       },
       onVisible: {
         optional: true,
         docs: [
           "Effect to fire upon site visible, with scope this=country, from=archaeological site.",
         ],
-        memberType: 'EffectBlock<"country", "archaeological_site", "country">',
+        memberType:
+          'EffectBlock<"country", { readonly root: "country"; readonly from: "archaeological_site" }>',
       },
     },
   ],
@@ -3177,22 +3217,22 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       onStart: {
         optional: true,
         docs: [],
-        memberType: 'EffectBlock<"situation", undefined, "situation">',
+        memberType: 'EffectBlock<"situation", { readonly root: "situation" }>',
       },
       onFail: {
         optional: true,
         docs: [],
-        memberType: 'EffectBlock<"situation", undefined, "situation">',
+        memberType: 'EffectBlock<"situation", { readonly root: "situation" }>',
       },
       onAbort: {
         optional: true,
         docs: [],
-        memberType: 'EffectBlock<"situation", undefined, "situation">',
+        memberType: 'EffectBlock<"situation", { readonly root: "situation" }>',
       },
       onProgressComplete: {
         optional: true,
         docs: [],
-        memberType: 'EffectBlock<"situation", undefined, "situation">',
+        memberType: 'EffectBlock<"situation", { readonly root: "situation" }>',
       },
       triggeredBlockedDesc: {
         optional: true,
@@ -3342,7 +3382,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       onSelect: {
         optional: true,
         docs: [],
-        memberType: 'EffectBlock<"situation", undefined, "situation">',
+        memberType: 'EffectBlock<"situation", { readonly root: "situation" }>',
       },
       aiWeight: { optional: true, docs: [], memberType: 'number | WeightBlock<"situation">' },
     },
@@ -3376,12 +3416,12 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       onFirstEnter: {
         optional: true,
         docs: [],
-        memberType: 'EffectBlock<"situation", undefined, "situation">',
+        memberType: 'EffectBlock<"situation", { readonly root: "situation" }>',
       },
       onEnter: {
         optional: true,
         docs: [],
-        memberType: 'EffectBlock<"situation", undefined, "situation">',
+        memberType: 'EffectBlock<"situation", { readonly root: "situation" }>',
       },
       potential: { optional: true, docs: [], memberType: 'Trigger<"situation">' },
       modifier: { optional: true, docs: [], memberType: 'ModifierClosure<"country">' },
@@ -4027,7 +4067,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         docs: [
           "the scope contains the species this is for. from contains the country this is for. the country's gfx culture is set to this gfx culture for easy access",
         ],
-        memberType: 'WithFrom<WeightBlock<"species">, "species", "country">',
+        memberType: 'WithFrom<WeightBlock<"species">, "species", { readonly from: "country" }>',
       },
     },
   ],
@@ -4079,7 +4119,8 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       aiWeight: {
         optional: true,
         docs: ["Determines which levels are more important to upgrade from"],
-        memberType: 'WithFrom<WeightBlock<"starbase">, "starbase", "country", "starbase">',
+        memberType:
+          'WithFrom<WeightBlock<"starbase">, "starbase", { readonly root: "starbase"; readonly from: "country" }>',
       },
       picture: {
         optional: true,
@@ -4124,7 +4165,8 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       trigger: {
         optional: false,
         docs: [],
-        memberType: 'WithFrom<Trigger<"starbase">, "starbase", "country", "starbase">',
+        memberType:
+          'WithFrom<Trigger<"starbase">, "starbase", { readonly root: "starbase"; readonly from: "country" }>',
       },
       picture: { optional: false, docs: [], memberType: "SpriteRef | string" },
     },
@@ -4296,7 +4338,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
           "Only when solar_system_initializer subtype not `fallen_empire_initializer` applies.",
           "Only when solar_system_initializer subtype `fallen_empire_initializer` applies.",
         ],
-        memberType: 'EffectBlock<"system">',
+        memberType: 'EffectBlock<"system", {}>',
       },
       mandatoryNeighbors: {
         optional: true,
@@ -4449,7 +4491,8 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         docs: [
           "this = country (project owner); from = event scope (planet or ship, MIGHT NOT EXIST); fromfrom = project creation scope (usually equals location)",
         ],
-        memberType: 'WithFrom<Trigger<"country">, "country", NoInfer<SpecialProjectScopeOf<E>>>',
+        memberType:
+          'WithFrom<Trigger<"country">, "country", { readonly from: NoInfer<SpecialProjectScopeOf<E>> }>',
       },
       timelimit: { optional: true, docs: [], memberType: "number" },
       daysToResearch: { optional: true, docs: [], memberType: "number" },
@@ -4468,46 +4511,47 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         docs: [
           "this = country (project owner); from = event scope (planet or ship, MIGHT NOT EXIST); fromfrom = project creation scope (usually equals location)",
         ],
-        memberType: 'WithFrom<Trigger<"country">, "country", NoInfer<SpecialProjectScopeOf<E>>>',
+        memberType:
+          'WithFrom<Trigger<"country">, "country", { readonly from: NoInfer<SpecialProjectScopeOf<E>> }>',
       },
       onSuccess: {
         optional: true,
         docs: [
           "this = event scope (ship or planet); from = project creation scope (usually equals location)",
         ],
-        memberType: "EffectBlock<NoInfer<SpecialProjectScopeOf<E>>, NoInfer<L>>",
+        memberType: "EffectBlock<NoInfer<SpecialProjectScopeOf<E>>, { readonly from: NoInfer<L> }>",
       },
       onProgress25: {
         optional: true,
         docs: [],
-        memberType: "EffectBlock<NoInfer<SpecialProjectScopeOf<E>>, NoInfer<L>>",
+        memberType: "EffectBlock<NoInfer<SpecialProjectScopeOf<E>>, { readonly from: NoInfer<L> }>",
       },
       onProgress50: {
         optional: true,
         docs: [],
-        memberType: "EffectBlock<NoInfer<SpecialProjectScopeOf<E>>, NoInfer<L>>",
+        memberType: "EffectBlock<NoInfer<SpecialProjectScopeOf<E>>, { readonly from: NoInfer<L> }>",
       },
       onProgress75: {
         optional: true,
         docs: [],
-        memberType: "EffectBlock<NoInfer<SpecialProjectScopeOf<E>>, NoInfer<L>>",
+        memberType: "EffectBlock<NoInfer<SpecialProjectScopeOf<E>>, { readonly from: NoInfer<L> }>",
       },
       onStart: {
         optional: true,
         docs: [],
-        memberType: "EffectBlock<NoInfer<SpecialProjectScopeOf<E>>, NoInfer<L>>",
+        memberType: "EffectBlock<NoInfer<SpecialProjectScopeOf<E>>, { readonly from: NoInfer<L> }>",
       },
       onFail: {
         optional: true,
         docs: [
           "this = country (project owner); from = project creation scope (usually equals location)",
         ],
-        memberType: 'EffectBlock<"country", NoInfer<SpecialProjectScopeOf<E>>>',
+        memberType: 'EffectBlock<"country", { readonly from: NoInfer<SpecialProjectScopeOf<E>> }>',
       },
       onCancel: {
         optional: true,
         docs: ["new thing from 2.1.3 patch, have it from?"],
-        memberType: 'EffectBlock<"country", NoInfer<SpecialProjectScopeOf<E>>>',
+        memberType: 'EffectBlock<"country", { readonly from: NoInfer<SpecialProjectScopeOf<E>> }>',
       },
     },
   ],
@@ -4634,7 +4678,8 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       tooltipSystemFilter: {
         optional: true,
         docs: [],
-        memberType: 'WithFrom<Trigger<"system">, "system", "country", "system">',
+        memberType:
+          'WithFrom<Trigger<"system">, "system", { readonly root: "system"; readonly from: "country" }>',
       },
       prerequisites: { optional: true, docs: [], memberType: "(TechnologyRef | string)[]" },
       showPrereqs: {
@@ -4651,19 +4696,22 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       possible: {
         optional: true,
         docs: [],
-        memberType: 'WithFrom<Trigger<"system">, "system", "country", "system">',
+        memberType:
+          'WithFrom<Trigger<"system">, "system", { readonly root: "system"; readonly from: "country" }>',
       },
       contextMenuPotential: {
         optional: true,
         docs: [],
-        memberType: 'WithFrom<Trigger<"system">, "system", "country", "system">',
+        memberType:
+          'WithFrom<Trigger<"system">, "system", { readonly root: "system"; readonly from: "country" }>',
       },
       buildMenuPotential: {
         optional: true,
         docs: [
           "Use for megastructures that have their own dedicated context_menu_potential shortcut and order_icon, so the general picker is redundant.",
         ],
-        memberType: 'WithFrom<Trigger<"fleet">, "fleet", "country", "fleet">',
+        memberType:
+          'WithFrom<Trigger<"fleet">, "fleet", { readonly root: "fleet"; readonly from: "country" }>',
       },
       buildTime: { optional: true, docs: [], memberType: "number" },
       starbase: { optional: true, docs: [], memberType: "StarbaseLevelRef | string" },
@@ -4701,32 +4749,37 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       onBuildQueued: {
         optional: true,
         docs: [],
-        memberType: 'EffectBlock<"system", "country", "system">',
+        memberType:
+          'EffectBlock<"system", { readonly root: "system"; readonly from: "country"; readonly fromfrom: "fleet" }>',
       },
       onBuildUnqueued: {
         optional: true,
         docs: [],
-        memberType: 'EffectBlock<"system", "country", "system">',
+        memberType:
+          'EffectBlock<"system", { readonly root: "system"; readonly from: "country"; readonly fromfrom: "fleet" }>',
       },
       onBuildStart: {
         optional: true,
         docs: [],
-        memberType: 'EffectBlock<"system", "country", "system">',
+        memberType:
+          'EffectBlock<"system", { readonly root: "system"; readonly from: "country"; readonly fromfrom: "megastructure" }>',
       },
       onBuildCancel: {
         optional: true,
         docs: [],
-        memberType: 'EffectBlock<"system", "country", "system">',
+        memberType: 'EffectBlock<"system", { readonly root: "system"; readonly from: "country" }>',
       },
       onBuildComplete: {
         optional: true,
         docs: [],
-        memberType: 'EffectBlock<"system", "country", "system">',
+        memberType:
+          'EffectBlock<"system", { readonly root: "system"; readonly from: "country"; readonly fromfrom: "megastructure" }>',
       },
       aiWeight: {
         optional: true,
         docs: [],
-        memberType: 'WithFrom<WeightBlock<"system">, "system", "country", "system">',
+        memberType:
+          'WithFrom<WeightBlock<"system">, "system", { readonly root: "system"; readonly from: "country"; readonly fromfrom: "megastructure" }>',
       },
       overclockTypes: {
         optional: true,
@@ -4740,7 +4793,8 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       onCycleComplete: {
         optional: true,
         docs: [],
-        memberType: 'EffectBlock<"system", "country", "system">',
+        memberType:
+          'EffectBlock<"system", { readonly root: "system"; readonly from: "country"; readonly fromfrom: "megastructure" }>',
       },
       sensorRange: { optional: true, docs: [], memberType: "number" },
       hyperlaneRange: { optional: true, docs: [], memberType: "number" },
@@ -4760,35 +4814,37 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         optional: true,
         docs: [],
         memberType:
-          'WithFrom<Trigger<"megastructure">, "megastructure", "country", "megastructure">',
+          'WithFrom<Trigger<"megastructure">, "megastructure", { readonly root: "megastructure"; readonly from: "country" }>',
       },
       canBeDismantledByNonOwner: { optional: true, docs: [], memberType: "boolean" },
       dismantlePossible: {
         optional: true,
         docs: [],
         memberType:
-          'WithFrom<Trigger<"megastructure">, "megastructure", "country", "megastructure">',
+          'WithFrom<Trigger<"megastructure">, "megastructure", { readonly root: "megastructure"; readonly from: "country" }>',
       },
       onDismantleStart: {
         optional: true,
         docs: [],
-        memberType: 'EffectBlock<"system", "country", "system">',
+        memberType:
+          'EffectBlock<"system", { readonly root: "system"; readonly from: "country"; readonly fromfrom: "megastructure" }>',
       },
       onDismantleCancel: {
         optional: true,
         docs: [],
-        memberType: 'EffectBlock<"system", "country", "system">',
+        memberType:
+          'EffectBlock<"system", { readonly root: "system"; readonly from: "country"; readonly fromfrom: "megastructure" }>',
       },
       onDismantleComplete: {
         optional: true,
         docs: [],
-        memberType: 'EffectBlock<"system", "country", "system">',
+        memberType: 'EffectBlock<"system", { readonly root: "system"; readonly from: "country" }>',
       },
       shouldAiDismantle: {
         optional: true,
         docs: [],
         memberType:
-          'WithFrom<Trigger<"megastructure">, "megastructure", "country", "megastructure">',
+          'WithFrom<Trigger<"megastructure">, "megastructure", { readonly root: "megastructure"; readonly from: "country" }>',
       },
       scriptedAction: { optional: true, docs: [], memberType: "(ScriptedActionRef | string)[]" },
     },
@@ -5625,7 +5681,8 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         docs: [
           "The scope will be a planet scope, with prev being the system. prevprev will be the system that triggered this system's initialization ( if any ). Root will be the fallen empire.",
         ],
-        memberType: 'EffectBlock<"planet", undefined, "country">',
+        memberType:
+          'EffectBlock<"planet", { readonly root: "country"; readonly prev: "system"; readonly prevprev: "system" }>',
       },
       planet: { optional: true, docs: [], memberType: "PlanetInitializerFields[]" },
       moon: { optional: true, docs: [], memberType: "MoonInitializerFields[]" },
@@ -5711,7 +5768,8 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         docs: [
           "The scope will be a planet scope, with prev being the system. prevprev will be the system that triggered this system's initialization ( if any ). Root will be the first system in this initializer tree",
         ],
-        memberType: 'EffectBlock<"planet", undefined, "country">',
+        memberType:
+          'EffectBlock<"planet", { readonly root: "country"; readonly prev: "system"; readonly prevprev: "system" }>',
       },
       depositBlockers: { optional: true, docs: [], memberType: '"none"', literals: ["none"] },
       moon: { optional: true, docs: [], memberType: "MoonInitializerFields[]" },

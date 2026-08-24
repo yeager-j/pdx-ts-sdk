@@ -3,129 +3,61 @@
 import type { EventRef, EventScopelessRef } from "@pdx-ts/sdk";
 
 export interface VanillaEventNamespaceMachineAge {
-  readonly $100: EventRef<"country", undefined, "country"> & { readonly id: "machine_age.100" };
-  readonly $1000: EventRef<"situation", undefined, "situation"> & {
-    readonly id: "machine_age.1000";
-  };
-  readonly $1010: EventRef<"situation", undefined, "situation"> & {
-    readonly id: "machine_age.1010";
-  };
-  readonly $1020: EventRef<"situation", undefined, "situation"> & {
-    readonly id: "machine_age.1020";
-  };
-  readonly $1030: EventRef<"situation", undefined, "situation"> & {
-    readonly id: "machine_age.1030";
-  };
-  readonly $1040: EventRef<"situation", undefined, "situation"> & {
-    readonly id: "machine_age.1040";
-  };
-  readonly $1050: EventRef<"situation", undefined, "situation"> & {
-    readonly id: "machine_age.1050";
-  };
-  readonly $1060: EventRef<"situation", undefined, "situation"> & {
-    readonly id: "machine_age.1060";
-  };
-  readonly $1070: EventRef<"situation", undefined, "situation"> & {
-    readonly id: "machine_age.1070";
-  };
-  readonly $1075: EventRef<"situation", undefined, "situation"> & {
-    readonly id: "machine_age.1075";
-  };
-  readonly $1090: EventRef<"situation", undefined, "situation"> & {
-    readonly id: "machine_age.1090";
-  };
-  readonly $1100: EventRef<"situation", undefined, "situation"> & {
-    readonly id: "machine_age.1100";
-  };
-  readonly $2000: EventRef<"situation", undefined, "situation"> & {
-    readonly id: "machine_age.2000";
-  };
-  readonly $2150: EventRef<"country", undefined, "country"> & { readonly id: "machine_age.2150" };
+  readonly $100: EventRef<"country", {}, "country"> & { readonly id: "machine_age.100" };
+  readonly $1000: EventRef<"situation", {}, "situation"> & { readonly id: "machine_age.1000" };
+  readonly $1010: EventRef<"situation", {}, "situation"> & { readonly id: "machine_age.1010" };
+  readonly $1020: EventRef<"situation", {}, "situation"> & { readonly id: "machine_age.1020" };
+  readonly $1030: EventRef<"situation", {}, "situation"> & { readonly id: "machine_age.1030" };
+  readonly $1040: EventRef<"situation", {}, "situation"> & { readonly id: "machine_age.1040" };
+  readonly $1050: EventRef<"situation", {}, "situation"> & { readonly id: "machine_age.1050" };
+  readonly $1060: EventRef<"situation", {}, "situation"> & { readonly id: "machine_age.1060" };
+  readonly $1070: EventRef<"situation", {}, "situation"> & { readonly id: "machine_age.1070" };
+  readonly $1075: EventRef<"situation", {}, "situation"> & { readonly id: "machine_age.1075" };
+  readonly $1090: EventRef<"situation", {}, "situation"> & { readonly id: "machine_age.1090" };
+  readonly $1100: EventRef<"situation", {}, "situation"> & { readonly id: "machine_age.1100" };
+  readonly $2000: EventRef<"situation", {}, "situation"> & { readonly id: "machine_age.2000" };
+  readonly $2150: EventRef<"country", {}, "country"> & { readonly id: "machine_age.2150" };
   readonly $2200: EventScopelessRef & { readonly id: "machine_age.2200" };
-  readonly $2201: EventRef<"country", undefined, "country"> & { readonly id: "machine_age.2201" };
-  readonly $2205: EventRef<"country", undefined, "country"> & { readonly id: "machine_age.2205" };
-  readonly $2210: EventRef<"country", undefined, "country"> & { readonly id: "machine_age.2210" };
-  readonly $2215: EventRef<"country", undefined, "country"> & { readonly id: "machine_age.2215" };
-  readonly $2220: EventRef<"country", undefined, "country"> & { readonly id: "machine_age.2220" };
-  readonly $2221: EventRef<"country", undefined, "country"> & { readonly id: "machine_age.2221" };
-  readonly $2225: EventRef<"country", undefined, "country"> & { readonly id: "machine_age.2225" };
-  readonly $2230: EventRef<"country", undefined, "country"> & { readonly id: "machine_age.2230" };
-  readonly $2235: EventRef<"country", undefined, "country"> & { readonly id: "machine_age.2235" };
-  readonly $3100: EventRef<"country", undefined, "country"> & { readonly id: "machine_age.3100" };
-  readonly $3110: EventRef<"country", undefined, "country"> & { readonly id: "machine_age.3110" };
-  readonly $3115: EventRef<"country", undefined, "country"> & { readonly id: "machine_age.3115" };
-  readonly $3120: EventRef<"country", undefined, "country"> & { readonly id: "machine_age.3120" };
-  readonly $3125: EventRef<"country", undefined, "country"> & { readonly id: "machine_age.3125" };
-  readonly $3200: EventRef<"situation", undefined, "situation"> & {
-    readonly id: "machine_age.3200";
-  };
-  readonly $3305: EventRef<"situation", undefined, "situation"> & {
-    readonly id: "machine_age.3305";
-  };
-  readonly $3310: EventRef<"situation", undefined, "situation"> & {
-    readonly id: "machine_age.3310";
-  };
-  readonly $3315: EventRef<"country", undefined, "country"> & { readonly id: "machine_age.3315" };
-  readonly $3320: EventRef<"situation", undefined, "situation"> & {
-    readonly id: "machine_age.3320";
-  };
-  readonly $3325: EventRef<"situation", undefined, "situation"> & {
-    readonly id: "machine_age.3325";
-  };
-  readonly $3326: EventRef<"situation", undefined, "situation"> & {
-    readonly id: "machine_age.3326";
-  };
-  readonly $3400: EventRef<"ship", undefined, "ship"> & { readonly id: "machine_age.3400" };
-  readonly $3405: EventRef<"country", undefined, "country"> & { readonly id: "machine_age.3405" };
-  readonly $3410: EventRef<"country", undefined, "country"> & { readonly id: "machine_age.3410" };
-  readonly $4000: EventRef<"country", undefined, "country"> & { readonly id: "machine_age.4000" };
-  readonly $4005: EventRef<"situation", undefined, "situation"> & {
-    readonly id: "machine_age.4005";
-  };
-  readonly $4100: EventRef<"situation", undefined, "situation"> & {
-    readonly id: "machine_age.4100";
-  };
-  readonly $4110: EventRef<"situation", undefined, "situation"> & {
-    readonly id: "machine_age.4110";
-  };
-  readonly $4130: EventRef<"situation", undefined, "situation"> & {
-    readonly id: "machine_age.4130";
-  };
-  readonly $4140: EventRef<"situation", undefined, "situation"> & {
-    readonly id: "machine_age.4140";
-  };
-  readonly $4150: EventRef<"situation", undefined, "situation"> & {
-    readonly id: "machine_age.4150";
-  };
-  readonly $4210: EventRef<"situation", undefined, "situation"> & {
-    readonly id: "machine_age.4210";
-  };
-  readonly $4230: EventRef<"situation", undefined, "situation"> & {
-    readonly id: "machine_age.4230";
-  };
-  readonly $4240: EventRef<"situation", undefined, "situation"> & {
-    readonly id: "machine_age.4240";
-  };
-  readonly $4250: EventRef<"situation", undefined, "situation"> & {
-    readonly id: "machine_age.4250";
-  };
-  readonly $4310: EventRef<"situation", undefined, "situation"> & {
-    readonly id: "machine_age.4310";
-  };
-  readonly $4330: EventRef<"situation", undefined, "situation"> & {
-    readonly id: "machine_age.4330";
-  };
-  readonly $4340: EventRef<"situation", undefined, "situation"> & {
-    readonly id: "machine_age.4340";
-  };
-  readonly $4350: EventRef<"situation", undefined, "situation"> & {
-    readonly id: "machine_age.4350";
-  };
-  readonly $4400: EventRef<"situation", undefined, "situation"> & {
-    readonly id: "machine_age.4400";
-  };
-  readonly $4490: EventRef<"situation", undefined, "situation"> & {
-    readonly id: "machine_age.4490";
-  };
-  readonly $90: EventRef<"country", undefined, "country"> & { readonly id: "machine_age.90" };
+  readonly $2201: EventRef<"country", {}, "country"> & { readonly id: "machine_age.2201" };
+  readonly $2205: EventRef<"country", {}, "country"> & { readonly id: "machine_age.2205" };
+  readonly $2210: EventRef<"country", {}, "country"> & { readonly id: "machine_age.2210" };
+  readonly $2215: EventRef<"country", {}, "country"> & { readonly id: "machine_age.2215" };
+  readonly $2220: EventRef<"country", {}, "country"> & { readonly id: "machine_age.2220" };
+  readonly $2221: EventRef<"country", {}, "country"> & { readonly id: "machine_age.2221" };
+  readonly $2225: EventRef<"country", {}, "country"> & { readonly id: "machine_age.2225" };
+  readonly $2230: EventRef<"country", {}, "country"> & { readonly id: "machine_age.2230" };
+  readonly $2235: EventRef<"country", {}, "country"> & { readonly id: "machine_age.2235" };
+  readonly $3100: EventRef<"country", {}, "country"> & { readonly id: "machine_age.3100" };
+  readonly $3110: EventRef<"country", {}, "country"> & { readonly id: "machine_age.3110" };
+  readonly $3115: EventRef<"country", {}, "country"> & { readonly id: "machine_age.3115" };
+  readonly $3120: EventRef<"country", {}, "country"> & { readonly id: "machine_age.3120" };
+  readonly $3125: EventRef<"country", {}, "country"> & { readonly id: "machine_age.3125" };
+  readonly $3200: EventRef<"situation", {}, "situation"> & { readonly id: "machine_age.3200" };
+  readonly $3305: EventRef<"situation", {}, "situation"> & { readonly id: "machine_age.3305" };
+  readonly $3310: EventRef<"situation", {}, "situation"> & { readonly id: "machine_age.3310" };
+  readonly $3315: EventRef<"country", {}, "country"> & { readonly id: "machine_age.3315" };
+  readonly $3320: EventRef<"situation", {}, "situation"> & { readonly id: "machine_age.3320" };
+  readonly $3325: EventRef<"situation", {}, "situation"> & { readonly id: "machine_age.3325" };
+  readonly $3326: EventRef<"situation", {}, "situation"> & { readonly id: "machine_age.3326" };
+  readonly $3400: EventRef<"ship", {}, "ship"> & { readonly id: "machine_age.3400" };
+  readonly $3405: EventRef<"country", {}, "country"> & { readonly id: "machine_age.3405" };
+  readonly $3410: EventRef<"country", {}, "country"> & { readonly id: "machine_age.3410" };
+  readonly $4000: EventRef<"country", {}, "country"> & { readonly id: "machine_age.4000" };
+  readonly $4005: EventRef<"situation", {}, "situation"> & { readonly id: "machine_age.4005" };
+  readonly $4100: EventRef<"situation", {}, "situation"> & { readonly id: "machine_age.4100" };
+  readonly $4110: EventRef<"situation", {}, "situation"> & { readonly id: "machine_age.4110" };
+  readonly $4130: EventRef<"situation", {}, "situation"> & { readonly id: "machine_age.4130" };
+  readonly $4140: EventRef<"situation", {}, "situation"> & { readonly id: "machine_age.4140" };
+  readonly $4150: EventRef<"situation", {}, "situation"> & { readonly id: "machine_age.4150" };
+  readonly $4210: EventRef<"situation", {}, "situation"> & { readonly id: "machine_age.4210" };
+  readonly $4230: EventRef<"situation", {}, "situation"> & { readonly id: "machine_age.4230" };
+  readonly $4240: EventRef<"situation", {}, "situation"> & { readonly id: "machine_age.4240" };
+  readonly $4250: EventRef<"situation", {}, "situation"> & { readonly id: "machine_age.4250" };
+  readonly $4310: EventRef<"situation", {}, "situation"> & { readonly id: "machine_age.4310" };
+  readonly $4330: EventRef<"situation", {}, "situation"> & { readonly id: "machine_age.4330" };
+  readonly $4340: EventRef<"situation", {}, "situation"> & { readonly id: "machine_age.4340" };
+  readonly $4350: EventRef<"situation", {}, "situation"> & { readonly id: "machine_age.4350" };
+  readonly $4400: EventRef<"situation", {}, "situation"> & { readonly id: "machine_age.4400" };
+  readonly $4490: EventRef<"situation", {}, "situation"> & { readonly id: "machine_age.4490" };
+  readonly $90: EventRef<"country", {}, "country"> & { readonly id: "machine_age.90" };
 }

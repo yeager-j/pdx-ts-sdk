@@ -115,7 +115,7 @@ describe("the capability on() contract", () => {
     const countryEvent = events.country(50, { isTriggeredOnly: true });
     const alsoCountry = events.country(53, { isTriggeredOnly: true });
     const planetEvent = events.planet(51, { isTriggeredOnly: true });
-    const witnessed = events.country(52, { from: "country", isTriggeredOnly: true });
+    const witnessed = events.country(52, { scopes: { from: "country" }, isTriggeredOnly: true });
     mod.on(onActions.onGameStartCountry, [countryEvent]);
     mod.on(onActions.onGameStartCountry, [countryEvent, alsoCountry]);
     // @ts-expect-error — the hook supplies country scope; a planet event does not satisfy it

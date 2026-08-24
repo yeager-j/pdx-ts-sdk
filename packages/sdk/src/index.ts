@@ -43,6 +43,7 @@ export {
   makeScope,
   recordEffects,
 } from "./script/effects/recorder.ts";
+export { AMBIENT_SCOPE_KEYS } from "./script/effects/types.ts";
 export type {
   ComplexTriggerModifier,
   ComplexTriggerModifierMode,
@@ -57,8 +58,6 @@ export type {
   ScopeValue,
   ScriptCtx,
   StructuralEffects,
-  UndeclaredFrom,
-  UndeclaredRoot,
 } from "./script/effects/types.ts";
 export type {
   EffectPathMap,
@@ -92,6 +91,12 @@ export type {
   FireEventArgs,
   WitnessedFireEventArgs,
 } from "./events/types.ts";
+export type {
+  AmbientScopeAt,
+  AmbientScopeContext,
+  AmbientScopeKey,
+  UndeclaredAmbientScope,
+} from "./script/effects/types.ts";
 export type {
   CustomModifiers,
   EconomicCategoryWitness,

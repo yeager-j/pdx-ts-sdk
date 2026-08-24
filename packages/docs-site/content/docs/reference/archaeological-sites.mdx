@@ -85,7 +85,7 @@ that `FROM` for the window location:
 
 ```ts
 const sealedDoor = events.fleet(1, {
-  from: "archaeological_site",
+  scopes: { from: "archaeological_site" },
   title: "The Sealed Door",
   desc: "The excavation has reached a door with no visible controls.",
   location: (ctx) => ctx.from,

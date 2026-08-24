@@ -3,103 +3,51 @@
 import type { EventRef, EventScopelessRef } from "@pdx-ts/sdk";
 
 export interface VanillaEventNamespaceGalacticFeatures {
-  readonly $101: EventRef<"country", undefined, "country"> & {
-    readonly id: "galactic_features.101";
-  };
-  readonly $102: EventRef<"country", undefined, "country"> & {
-    readonly id: "galactic_features.102";
-  };
-  readonly $103: EventRef<"country", undefined, "country"> & {
-    readonly id: "galactic_features.103";
-  };
-  readonly $104: EventRef<"ship", undefined, "ship"> & { readonly id: "galactic_features.104" };
-  readonly $2: EventRef<"ship", undefined, "ship"> & { readonly id: "galactic_features.2" };
-  readonly $298: EventRef<"country", undefined, "country"> & {
-    readonly id: "galactic_features.298";
-  };
-  readonly $299: EventRef<"carrier", undefined, "carrier"> & {
-    readonly id: "galactic_features.299";
-  };
-  readonly $3: EventRef<"country", undefined, "country"> & { readonly id: "galactic_features.3" };
-  readonly $300: EventRef<"ship", undefined, "ship"> & { readonly id: "galactic_features.300" };
-  readonly $301: EventRef<"ship", undefined, "ship"> & { readonly id: "galactic_features.301" };
-  readonly $302: EventRef<"ship", undefined, "ship"> & { readonly id: "galactic_features.302" };
-  readonly $303: EventRef<"ship", undefined, "ship"> & { readonly id: "galactic_features.303" };
-  readonly $304: EventRef<"country", undefined, "country"> & {
-    readonly id: "galactic_features.304";
-  };
-  readonly $305: EventRef<"ship", undefined, "ship"> & { readonly id: "galactic_features.305" };
-  readonly $350: EventRef<"ship", undefined, "ship"> & { readonly id: "galactic_features.350" };
-  readonly $351: EventRef<"country", undefined, "country"> & {
-    readonly id: "galactic_features.351";
-  };
-  readonly $360: EventRef<"country", undefined, "country"> & {
-    readonly id: "galactic_features.360";
-  };
-  readonly $361: EventRef<"country", undefined, "country"> & {
-    readonly id: "galactic_features.361";
-  };
+  readonly $101: EventRef<"country", {}, "country"> & { readonly id: "galactic_features.101" };
+  readonly $102: EventRef<"country", {}, "country"> & { readonly id: "galactic_features.102" };
+  readonly $103: EventRef<"country", {}, "country"> & { readonly id: "galactic_features.103" };
+  readonly $104: EventRef<"ship", {}, "ship"> & { readonly id: "galactic_features.104" };
+  readonly $2: EventRef<"ship", {}, "ship"> & { readonly id: "galactic_features.2" };
+  readonly $298: EventRef<"country", {}, "country"> & { readonly id: "galactic_features.298" };
+  readonly $299: EventRef<"carrier", {}, "carrier"> & { readonly id: "galactic_features.299" };
+  readonly $3: EventRef<"country", {}, "country"> & { readonly id: "galactic_features.3" };
+  readonly $300: EventRef<"ship", {}, "ship"> & { readonly id: "galactic_features.300" };
+  readonly $301: EventRef<"ship", {}, "ship"> & { readonly id: "galactic_features.301" };
+  readonly $302: EventRef<"ship", {}, "ship"> & { readonly id: "galactic_features.302" };
+  readonly $303: EventRef<"ship", {}, "ship"> & { readonly id: "galactic_features.303" };
+  readonly $304: EventRef<"country", {}, "country"> & { readonly id: "galactic_features.304" };
+  readonly $305: EventRef<"ship", {}, "ship"> & { readonly id: "galactic_features.305" };
+  readonly $350: EventRef<"ship", {}, "ship"> & { readonly id: "galactic_features.350" };
+  readonly $351: EventRef<"country", {}, "country"> & { readonly id: "galactic_features.351" };
+  readonly $360: EventRef<"country", {}, "country"> & { readonly id: "galactic_features.360" };
+  readonly $361: EventRef<"country", {}, "country"> & { readonly id: "galactic_features.361" };
   readonly $362: EventScopelessRef & { readonly id: "galactic_features.362" };
   readonly $365: EventScopelessRef & { readonly id: "galactic_features.365" };
-  readonly $366: EventRef<"country", undefined, "country"> & {
-    readonly id: "galactic_features.366";
-  };
-  readonly $367: EventRef<"country", undefined, "country"> & {
-    readonly id: "galactic_features.367";
-  };
-  readonly $368: EventRef<"ship", undefined, "ship"> & { readonly id: "galactic_features.368" };
-  readonly $369: EventRef<"country", undefined, "country"> & {
-    readonly id: "galactic_features.369";
-  };
-  readonly $370: EventRef<"country", undefined, "country"> & {
-    readonly id: "galactic_features.370";
-  };
-  readonly $371: EventRef<"country", undefined, "country"> & {
-    readonly id: "galactic_features.371";
-  };
-  readonly $380: EventRef<"country", undefined, "country"> & {
-    readonly id: "galactic_features.380";
-  };
-  readonly $381: EventRef<"country", undefined, "country"> & {
-    readonly id: "galactic_features.381";
-  };
-  readonly $384: EventRef<"ship", undefined, "ship"> & { readonly id: "galactic_features.384" };
-  readonly $385: EventRef<"country", undefined, "country"> & {
-    readonly id: "galactic_features.385";
-  };
-  readonly $386: EventRef<"ship", undefined, "ship"> & { readonly id: "galactic_features.386" };
-  readonly $387: EventRef<"country", undefined, "country"> & {
-    readonly id: "galactic_features.387";
-  };
-  readonly $388: EventRef<"country", undefined, "country"> & {
-    readonly id: "galactic_features.388";
-  };
-  readonly $389: EventRef<"country", undefined, "country"> & {
-    readonly id: "galactic_features.389";
-  };
+  readonly $366: EventRef<"country", {}, "country"> & { readonly id: "galactic_features.366" };
+  readonly $367: EventRef<"country", {}, "country"> & { readonly id: "galactic_features.367" };
+  readonly $368: EventRef<"ship", {}, "ship"> & { readonly id: "galactic_features.368" };
+  readonly $369: EventRef<"country", {}, "country"> & { readonly id: "galactic_features.369" };
+  readonly $370: EventRef<"country", {}, "country"> & { readonly id: "galactic_features.370" };
+  readonly $371: EventRef<"country", {}, "country"> & { readonly id: "galactic_features.371" };
+  readonly $380: EventRef<"country", {}, "country"> & { readonly id: "galactic_features.380" };
+  readonly $381: EventRef<"country", {}, "country"> & { readonly id: "galactic_features.381" };
+  readonly $384: EventRef<"ship", {}, "ship"> & { readonly id: "galactic_features.384" };
+  readonly $385: EventRef<"country", {}, "country"> & { readonly id: "galactic_features.385" };
+  readonly $386: EventRef<"ship", {}, "ship"> & { readonly id: "galactic_features.386" };
+  readonly $387: EventRef<"country", {}, "country"> & { readonly id: "galactic_features.387" };
+  readonly $388: EventRef<"country", {}, "country"> & { readonly id: "galactic_features.388" };
+  readonly $389: EventRef<"country", {}, "country"> & { readonly id: "galactic_features.389" };
   readonly $409: EventScopelessRef & { readonly id: "galactic_features.409" };
-  readonly $411: EventRef<"carrier", undefined, "carrier"> & {
-    readonly id: "galactic_features.411";
-  };
+  readonly $411: EventRef<"carrier", {}, "carrier"> & { readonly id: "galactic_features.411" };
   readonly $420: EventScopelessRef & { readonly id: "galactic_features.420" };
-  readonly $421: EventRef<"country", undefined, "country"> & {
-    readonly id: "galactic_features.421";
-  };
-  readonly $422: EventRef<"country", undefined, "country"> & {
-    readonly id: "galactic_features.422";
-  };
-  readonly $423: EventRef<"country", undefined, "country"> & {
-    readonly id: "galactic_features.423";
-  };
-  readonly $425: EventRef<"fleet", undefined, "fleet"> & { readonly id: "galactic_features.425" };
-  readonly $500: EventRef<"ship", undefined, "ship"> & { readonly id: "galactic_features.500" };
-  readonly $501: EventRef<"fleet", undefined, "fleet"> & { readonly id: "galactic_features.501" };
-  readonly $502: EventRef<"country", undefined, "country"> & {
-    readonly id: "galactic_features.502";
-  };
-  readonly $505: EventRef<"country", undefined, "country"> & {
-    readonly id: "galactic_features.505";
-  };
-  readonly $550: EventRef<"fleet", undefined, "fleet"> & { readonly id: "galactic_features.550" };
-  readonly $551: EventRef<"fleet", undefined, "fleet"> & { readonly id: "galactic_features.551" };
+  readonly $421: EventRef<"country", {}, "country"> & { readonly id: "galactic_features.421" };
+  readonly $422: EventRef<"country", {}, "country"> & { readonly id: "galactic_features.422" };
+  readonly $423: EventRef<"country", {}, "country"> & { readonly id: "galactic_features.423" };
+  readonly $425: EventRef<"fleet", {}, "fleet"> & { readonly id: "galactic_features.425" };
+  readonly $500: EventRef<"ship", {}, "ship"> & { readonly id: "galactic_features.500" };
+  readonly $501: EventRef<"fleet", {}, "fleet"> & { readonly id: "galactic_features.501" };
+  readonly $502: EventRef<"country", {}, "country"> & { readonly id: "galactic_features.502" };
+  readonly $505: EventRef<"country", {}, "country"> & { readonly id: "galactic_features.505" };
+  readonly $550: EventRef<"fleet", {}, "fleet"> & { readonly id: "galactic_features.550" };
+  readonly $551: EventRef<"fleet", {}, "fleet"> & { readonly id: "galactic_features.551" };
 }

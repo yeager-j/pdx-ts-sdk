@@ -3,34 +3,18 @@
 import type { EventRef } from "@pdx-ts/sdk";
 
 export interface VanillaEventNamespaceAnomalyFailure {
-  readonly $2670: EventRef<"ship", undefined, "ship"> & { readonly id: "anomaly_failure.2670" };
-  readonly $4011: EventRef<"ship", undefined, "ship"> & { readonly id: "anomaly_failure.4011" };
-  readonly $4012: EventRef<"ship", undefined, "ship"> & { readonly id: "anomaly_failure.4012" };
-  readonly $4031: EventRef<"country", undefined, "country"> & {
-    readonly id: "anomaly_failure.4031";
-  };
-  readonly $4037: EventRef<"ship", undefined, "ship"> & { readonly id: "anomaly_failure.4037" };
-  readonly $4066: EventRef<"country", undefined, "country"> & {
-    readonly id: "anomaly_failure.4066";
-  };
-  readonly $4081: EventRef<"ship", undefined, "ship"> & { readonly id: "anomaly_failure.4081" };
-  readonly $4086: EventRef<"country", undefined, "country"> & {
-    readonly id: "anomaly_failure.4086";
-  };
-  readonly $4116: EventRef<"country", undefined, "country"> & {
-    readonly id: "anomaly_failure.4116";
-  };
-  readonly $4136: EventRef<"country", undefined, "country"> & {
-    readonly id: "anomaly_failure.4136";
-  };
-  readonly $4156: EventRef<"ship", undefined, "ship"> & { readonly id: "anomaly_failure.4156" };
-  readonly $4157: EventRef<"country", undefined, "country"> & {
-    readonly id: "anomaly_failure.4157";
-  };
-  readonly $4158: EventRef<"country", undefined, "country"> & {
-    readonly id: "anomaly_failure.4158";
-  };
-  readonly $4170: EventRef<"carrier", undefined, "carrier"> & {
-    readonly id: "anomaly_failure.4170";
-  };
+  readonly $2670: EventRef<"ship", {}, "ship"> & { readonly id: "anomaly_failure.2670" };
+  readonly $4011: EventRef<"ship", {}, "ship"> & { readonly id: "anomaly_failure.4011" };
+  readonly $4012: EventRef<"ship", {}, "ship"> & { readonly id: "anomaly_failure.4012" };
+  readonly $4031: EventRef<"country", {}, "country"> & { readonly id: "anomaly_failure.4031" };
+  readonly $4037: EventRef<"ship", {}, "ship"> & { readonly id: "anomaly_failure.4037" };
+  readonly $4066: EventRef<"country", {}, "country"> & { readonly id: "anomaly_failure.4066" };
+  readonly $4081: EventRef<"ship", {}, "ship"> & { readonly id: "anomaly_failure.4081" };
+  readonly $4086: EventRef<"country", {}, "country"> & { readonly id: "anomaly_failure.4086" };
+  readonly $4116: EventRef<"country", {}, "country"> & { readonly id: "anomaly_failure.4116" };
+  readonly $4136: EventRef<"country", {}, "country"> & { readonly id: "anomaly_failure.4136" };
+  readonly $4156: EventRef<"ship", {}, "ship"> & { readonly id: "anomaly_failure.4156" };
+  readonly $4157: EventRef<"country", {}, "country"> & { readonly id: "anomaly_failure.4157" };
+  readonly $4158: EventRef<"country", {}, "country"> & { readonly id: "anomaly_failure.4158" };
+  readonly $4170: EventRef<"carrier", {}, "carrier"> & { readonly id: "anomaly_failure.4170" };
 }

@@ -3,5 +3,5 @@
 import type { EventRef } from "@pdx-ts/sdk";
 
 export interface VanillaEventNamespaceCstormsTutorial {
-  readonly $1: EventRef<"country", undefined, "country"> & { readonly id: "cstorms_tutorial.1" };
+  readonly $1: EventRef<"country", {}, "country"> & { readonly id: "cstorms_tutorial.1" };
 }

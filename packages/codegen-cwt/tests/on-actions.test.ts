@@ -16,12 +16,21 @@ describe("on-action codegen", () => {
     );
   });
 
-  it("derives the target hook's scope and FROM contracts from CWT metadata", () => {
+  it("derives complete named scope contracts from CWT metadata", () => {
     expect(emission.code).toContain(
-      'onGameStartCountry: {\n    kind: "on-action-ref",\n    name: "on_game_start_country",\n    scope: "country",\n    from: undefined,'
+      'onGameStartCountry: {\n    kind: "on-action-ref",\n    name: "on_game_start_country",\n    scope: "country",\n    scopes: {},'
     );
     expect(emission.code).toContain(
-      'onCustomDiplomacy: {\n    kind: "on-action-ref",\n    name: "on_custom_diplomacy",\n    scope: "country",\n    from: "country",'
+      'onCustomDiplomacy: {\n    kind: "on-action-ref",\n    name: "on_custom_diplomacy",\n    scope: "country",\n    scopes: {"from":"country"},'
+    );
+    expect(emission.code).toContain(
+      'onStatusQuo: {\n    kind: "on-action-ref",\n    name: "on_status_quo",\n    scope: "country",\n    scopes: {"from":"country","fromfrom":"country","fromfromfrom":"country","fromfromfromfrom":"war"},'
+    );
+    expect(emission.code).toContain(
+      'onModificationComplete: {\n    kind: "on-action-ref",\n    name: "on_modification_complete",\n    scope: "country",\n    scopes: {"from":"species","fromfrom":"species","prev":"planet"},'
+    );
+    expect(emission.code).toContain(
+      'onColonizationStarted: {\n    kind: "on-action-ref",\n    name: "on_colonization_started",\n    scope: "carrier",\n    scopes: {"root":"planet"},'
     );
   });
 

@@ -6,6 +6,7 @@
  * reference into a content type, and `enum[research_area]` names a closed set.
  */
 
+import { AMBIENT_SCOPE_KEYS, type AmbientScopeKey } from "../special-scope-paths.ts";
 import type { CwtBlock, CwtDiagnostic, CwtNode, CwtOption, CwtScalar, CwtValue } from "./parser.ts";
 
 /** Inclusive numeric bounds; `null` represents an open bound. */
@@ -97,21 +98,20 @@ export const REQUIRED: Cardinality = { min: 1, max: 1 };
  * game evaluates read FROM, and the rules say which scope it holds
  * (`## replace_scopes = { this = fleet from = archaeological_site }`).
  * `push_scope` leaves FROM alone, so it contributes `this` only.
+ * Every {@link AmbientScopeKey} is present and uses `null` when omitted.
  */
-export interface ScopeContext {
-  /** The nested block's `THIS` scope, or `null` when not stated. */
-  readonly this: string | null;
-  /** The nested block's `ROOT` scope, or `null` when not stated. */
-  readonly root: string | null;
-  /** The nested block's `FROM` scope, or `null` when not stated. */
-  readonly from: string | null;
-  /**
-   * True for `replace_scope(s)`, which states the whole context — a scope it
-   * leaves out is cleared, not inherited. `push_scope` states only `this`, so
-   * everything else carries over from the enclosing block.
-   */
-  readonly replaces: boolean;
-}
+export type ScopeContext = Readonly<
+  {
+    /** The nested block's `THIS` scope, or `null` when not stated. */
+    this: string | null;
+    /**
+     * True for `replace_scope(s)`, which states the whole context — a scope it
+     * leaves out is cleared, not inherited. `push_scope` states only `this`, so
+     * everything else carries over from the enclosing block.
+     */
+    replaces: boolean;
+  } & Record<AmbientScopeKey, string | null>
+>;
 
 /** A classified keyed CWT field. */
 export interface RuleField {
@@ -392,7 +392,11 @@ export function cardinalityOf(options: readonly CwtOption[]): Cardinality {
 export function scopeOf(options: readonly CwtOption[]): ScopeContext | null {
   const pushed = findOption(options, "push_scope");
   if (pushed?.value?.kind === "scalar") {
-    return { this: pushed.value.text, root: null, from: null, replaces: false };
+    return {
+      this: pushed.value.text,
+      ...ambientScopeContext(() => null),
+      replaces: false,
+    };
   }
   const replaced = findOption(options, "replace_scope") ?? findOption(options, "replace_scopes");
   const block = replaced?.value;
@@ -406,7 +410,20 @@ export function scopeOf(options: readonly CwtOption[]): ScopeContext | null {
     );
     return node !== undefined && node.value.kind === "scalar" ? node.value.text : null;
   };
-  return { this: read("this"), root: read("root"), from: read("from"), replaces: true };
+  return {
+    this: read("this"),
+    ...ambientScopeContext(read),
+    replaces: true,
+  };
+}
+
+function ambientScopeContext(
+  scopeAt: (key: AmbientScopeKey) => string | null
+): Record<AmbientScopeKey, string | null> {
+  return Object.fromEntries(AMBIENT_SCOPE_KEYS.map((key) => [key, scopeAt(key)])) as Record<
+    AmbientScopeKey,
+    string | null
+  >;
 }
 
 /**

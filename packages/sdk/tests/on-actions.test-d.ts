@@ -8,7 +8,7 @@ describe("typed on-action registration", () => {
     const events = mod.namespace();
     const gameStart = events.country(1, { isTriggeredOnly: true });
     const diplomacy = events.country(2, {
-      from: "country",
+      scopes: { from: "country" },
       isTriggeredOnly: true,
     });
 
@@ -59,7 +59,7 @@ describe("typed on-action registration", () => {
       supportedVersion: "4.4.*",
     });
     const events = mod.namespace();
-    const witnessed = events.country(7, { from: "country", isTriggeredOnly: true });
+    const witnessed = events.country(7, { scopes: { from: "country" }, isTriggeredOnly: true });
 
     // @ts-expect-error — on_game_start_country supplies no FROM
     mod.on(onActions.onGameStartCountry, { randomEvents: [{ weight: 100, event: witnessed }] });

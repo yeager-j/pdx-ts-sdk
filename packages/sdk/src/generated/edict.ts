@@ -45,9 +45,9 @@ export interface EdictFields {
   showTechUnlockIf?: Trigger<"country">;
   aiWeight?: WeightBlock<"country">;
   /** an effect that is executed when this trigger activates. */
-  effect?: EffectBlock<"country", undefined, "country">;
+  effect?: EffectBlock<"country", { readonly root: "country" }>;
   /** an effect that is executed when this trigger activates. */
-  onDisabled?: EffectBlock<"country", undefined, "country">;
+  onDisabled?: EffectBlock<"country", { readonly root: "country" }>;
 }
 
 export interface EdictDef<Id extends string = string> extends EdictFields {

@@ -422,8 +422,8 @@ export interface UtilityComponentTemplateFields {
   sensorRange?: number;
   hyperlaneRange?: number;
   scriptedAction?: (ScriptedActionRef | string)[];
-  potential?: WithFrom<Trigger<"design">, "design", "country">;
-  showTechUnlockIf?: WithFrom<Trigger<"country">, "country", "country">;
+  potential?: WithFrom<Trigger<"design">, "design", { readonly from: "country" }>;
+  showTechUnlockIf?: WithFrom<Trigger<"country">, "country", { readonly from: "country" }>;
   friendlyAura?: UtilityComponentTemplateFriendlyAura[];
   hostileAura?: UtilityComponentTemplateHostileAura[];
 }

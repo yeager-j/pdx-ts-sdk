@@ -73,10 +73,11 @@ import {
   type TraditionSwapFields,
   type Trigger,
   type TriggeredModifier,
-  type UndeclaredRoot,
+  type UndeclaredAmbientScope,
   type UtilityComponentTemplateFields,
   type WarGoalRef,
   type WeaponComponentTemplateFields,
+  type WithFrom,
 } from "../src/index.ts";
 // The generated patch members are spelled in terms of `PatchInput`, which the
 // package does not re-export — a consumer never names it, but pinning a member
@@ -116,6 +117,12 @@ const sdk45Mod = createMod(SDK45_CONFIG, {
 });
 
 describe("generated content authoring types", () => {
+  it("keeps root-only declarative fields as plain values", () => {
+    expectTypeOf<
+      WithFrom<Trigger<"country">, "country", { readonly root: "country" }>
+    >().toEqualTypeOf<Trigger<"country">>();
+  });
+
   it("does not invent a category field on traditions", () => {
     contentMod.tradition("without_category", {
       name: "No synthetic membership",
@@ -2227,8 +2234,9 @@ describe("generated content authoring types", () => {
       // country as FROM — megastructures.cwt:161-165.
       potential: hasCountryFlag("country_only"),
       possible: (system) => system.from.trigger(hasCountryFlag("country_only")),
-      onBuildComplete: (system) => {
+      onBuildComplete: (system, ctx) => {
         system.setStarFlag("content_types_flag");
+        expectTypeOf(ctx.fromfrom).toEqualTypeOf<ScopeRef<"megastructure">>();
       },
       // A station modifier applies in megastructure scope, not country.
       stationModifier: (m) => m.unchecked("starbase_shipyard_capacity_add", 5),
@@ -2346,6 +2354,8 @@ describe("generated content authoring types", () => {
           initEffect: (planet, ctx) => {
             planet.setCapital(true);
             expectTypeOf(ctx.root).toEqualTypeOf<ScopeRef<"country">>();
+            expectTypeOf(ctx.prev).toEqualTypeOf<ScopeRef<"system">>();
+            expectTypeOf(ctx.prevprev).toEqualTypeOf<ScopeRef<"system">>();
             ctx.root.effects((country) => country.setCountryFlag("content_types_root_flag"));
             // @ts-expect-error — ROOT is a country here, not the planet the block runs in
             ctx.root.effects((country) => country.setCapital(true));
@@ -2366,12 +2376,17 @@ describe("generated content authoring types", () => {
   it("does not let split-root self witness natural event FROM", () => {
     const events = contentMod.namespace("split_root_witness");
     const needsPlanetFrom = events.planet(40, {
-      from: "planet",
+      scopes: { from: "planet" },
       hideWindow: true,
       isTriggeredOnly: true,
     });
     const needsCountryFrom = events.planet(41, {
-      from: "country",
+      scopes: { from: "country" },
+      hideWindow: true,
+      isTriggeredOnly: true,
+    });
+    const needsCountryThenPlanet = events.planet(42, {
+      scopes: { from: "country", fromfrom: "planet" },
       hideWindow: true,
       isTriggeredOnly: true,
     });
@@ -2383,8 +2398,16 @@ describe("generated content authoring types", () => {
           initEffect: (planet, ctx) => {
             // @ts-expect-error — natural event FROM is ROOT, which is country
             // here; ctx.self is the planet this initializer block runs in.
-            planet.planetEvent({ id: needsPlanetFrom, from: ctx.self });
-            planet.planetEvent({ id: needsCountryFrom, from: ctx.root });
+            planet.planetEvent({ id: needsPlanetFrom, scopes: { from: ctx.self } });
+            planet.planetEvent({ id: needsCountryFrom, scopes: { from: ctx.root } });
+            // @ts-expect-error — deeper FROM overrides require an absolute ref.
+            planet.planetEvent({
+              id: needsCountryThenPlanet,
+              scopes: {
+                from: ctx.root,
+                fromfrom: ctx.self,
+              },
+            });
           },
         },
       ],
@@ -2400,7 +2423,7 @@ describe("generated content authoring types", () => {
       effect: (planet, ctx) => {
         planet.setPlanetFlag("content_types_planet_only");
         expectTypeOf(ctx.from).toEqualTypeOf<ScopeRef<"country">>();
-        expectTypeOf(ctx.root).toEqualTypeOf<UndeclaredRoot>();
+        expectTypeOf(ctx.root).toEqualTypeOf<UndeclaredAmbientScope<"root">>();
         // @ts-expect-error — nothing declares what ROOT holds here
         ctx.root.effects(() => {});
       },

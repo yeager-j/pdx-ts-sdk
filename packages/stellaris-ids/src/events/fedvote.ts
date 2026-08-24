@@ -3,6 +3,6 @@
 import type { EventRef } from "@pdx-ts/sdk";
 
 export interface VanillaEventNamespaceFedvote {
-  readonly $1: EventRef<"country", undefined, "country"> & { readonly id: "fedvote.1" };
-  readonly $2: EventRef<"country", undefined, "country"> & { readonly id: "fedvote.2" };
+  readonly $1: EventRef<"country", {}, "country"> & { readonly id: "fedvote.1" };
+  readonly $2: EventRef<"country", {}, "country"> & { readonly id: "fedvote.2" };
 }

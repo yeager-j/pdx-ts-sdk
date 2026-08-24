@@ -3,9 +3,9 @@
 import type { EventRef } from "@pdx-ts/sdk";
 
 export interface VanillaEventNamespaceFeda {
-  readonly $1: EventRef<"country", undefined, "country"> & { readonly id: "feda.1" };
-  readonly $2: EventRef<"country", undefined, "country"> & { readonly id: "feda.2" };
-  readonly $3: EventRef<"country", undefined, "country"> & { readonly id: "feda.3" };
-  readonly $5: EventRef<"ship", undefined, "ship"> & { readonly id: "feda.5" };
-  readonly $6: EventRef<"country", undefined, "country"> & { readonly id: "feda.6" };
+  readonly $1: EventRef<"country", {}, "country"> & { readonly id: "feda.1" };
+  readonly $2: EventRef<"country", {}, "country"> & { readonly id: "feda.2" };
+  readonly $3: EventRef<"country", {}, "country"> & { readonly id: "feda.3" };
+  readonly $5: EventRef<"ship", {}, "ship"> & { readonly id: "feda.5" };
+  readonly $6: EventRef<"country", {}, "country"> & { readonly id: "feda.6" };
 }

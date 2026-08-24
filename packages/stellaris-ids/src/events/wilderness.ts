@@ -3,24 +3,24 @@
 import type { EventRef } from "@pdx-ts/sdk";
 
 export interface VanillaEventNamespaceWilderness {
-  readonly $10: EventRef<"country", undefined, "country"> & { readonly id: "wilderness.10" };
-  readonly $100: EventRef<"country", undefined, "country"> & { readonly id: "wilderness.100" };
-  readonly $1005: EventRef<"carrier", undefined, "carrier"> & { readonly id: "wilderness.1005" };
-  readonly $1010: EventRef<"country", undefined, "country"> & { readonly id: "wilderness.1010" };
-  readonly $150: EventRef<"country", undefined, "country"> & { readonly id: "wilderness.150" };
-  readonly $1999: EventRef<"carrier", undefined, "carrier"> & { readonly id: "wilderness.1999" };
-  readonly $2000: EventRef<"country", undefined, "country"> & { readonly id: "wilderness.2000" };
-  readonly $300: EventRef<"carrier", undefined, "carrier"> & { readonly id: "wilderness.300" };
-  readonly $310: EventRef<"carrier", undefined, "carrier"> & { readonly id: "wilderness.310" };
-  readonly $4500: EventRef<"espionage_operation", undefined, "espionage_operation"> & {
+  readonly $10: EventRef<"country", {}, "country"> & { readonly id: "wilderness.10" };
+  readonly $100: EventRef<"country", {}, "country"> & { readonly id: "wilderness.100" };
+  readonly $1005: EventRef<"carrier", {}, "carrier"> & { readonly id: "wilderness.1005" };
+  readonly $1010: EventRef<"country", {}, "country"> & { readonly id: "wilderness.1010" };
+  readonly $150: EventRef<"country", {}, "country"> & { readonly id: "wilderness.150" };
+  readonly $1999: EventRef<"carrier", {}, "carrier"> & { readonly id: "wilderness.1999" };
+  readonly $2000: EventRef<"country", {}, "country"> & { readonly id: "wilderness.2000" };
+  readonly $300: EventRef<"carrier", {}, "carrier"> & { readonly id: "wilderness.300" };
+  readonly $310: EventRef<"carrier", {}, "carrier"> & { readonly id: "wilderness.310" };
+  readonly $4500: EventRef<"espionage_operation", {}, "espionage_operation"> & {
     readonly id: "wilderness.4500";
   };
-  readonly $4505: EventRef<"espionage_operation", undefined, "espionage_operation"> & {
+  readonly $4505: EventRef<"espionage_operation", {}, "espionage_operation"> & {
     readonly id: "wilderness.4505";
   };
-  readonly $4510: EventRef<"espionage_operation", undefined, "espionage_operation"> & {
+  readonly $4510: EventRef<"espionage_operation", {}, "espionage_operation"> & {
     readonly id: "wilderness.4510";
   };
-  readonly $5: EventRef<"carrier", undefined, "carrier"> & { readonly id: "wilderness.5" };
-  readonly $500: EventRef<"colony", undefined, "colony"> & { readonly id: "wilderness.500" };
+  readonly $5: EventRef<"carrier", {}, "carrier"> & { readonly id: "wilderness.5" };
+  readonly $500: EventRef<"colony", {}, "colony"> & { readonly id: "wilderness.500" };
 }

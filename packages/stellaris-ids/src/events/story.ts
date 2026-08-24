@@ -3,25 +3,25 @@
 import type { EventRef } from "@pdx-ts/sdk";
 
 export interface VanillaEventNamespaceStory {
-  readonly $1: EventRef<"country", undefined, "country"> & { readonly id: "story.1" };
-  readonly $105: EventRef<"country", undefined, "country"> & { readonly id: "story.105" };
-  readonly $107: EventRef<"country", undefined, "country"> & { readonly id: "story.107" };
-  readonly $109: EventRef<"country", undefined, "country"> & { readonly id: "story.109" };
-  readonly $2: EventRef<"country", undefined, "country"> & { readonly id: "story.2" };
-  readonly $205: EventRef<"country", undefined, "country"> & { readonly id: "story.205" };
-  readonly $207: EventRef<"country", undefined, "country"> & { readonly id: "story.207" };
-  readonly $216: EventRef<"country", undefined, "country"> & { readonly id: "story.216" };
-  readonly $220: EventRef<"fleet", undefined, "fleet"> & { readonly id: "story.220" };
-  readonly $222: EventRef<"country", undefined, "country"> & { readonly id: "story.222" };
-  readonly $3: EventRef<"country", undefined, "country"> & { readonly id: "story.3" };
-  readonly $305: EventRef<"country", undefined, "country"> & { readonly id: "story.305" };
-  readonly $330: EventRef<"fleet", undefined, "fleet"> & { readonly id: "story.330" };
-  readonly $332: EventRef<"country", undefined, "country"> & { readonly id: "story.332" };
-  readonly $335: EventRef<"country", undefined, "country"> & { readonly id: "story.335" };
-  readonly $4: EventRef<"country", undefined, "country"> & { readonly id: "story.4" };
-  readonly $405: EventRef<"country", undefined, "country"> & { readonly id: "story.405" };
-  readonly $5: EventRef<"country", undefined, "country"> & { readonly id: "story.5" };
-  readonly $6: EventRef<"country", undefined, "country"> & { readonly id: "story.6" };
-  readonly $7: EventRef<"country", undefined, "country"> & { readonly id: "story.7" };
-  readonly $8: EventRef<"country", undefined, "country"> & { readonly id: "story.8" };
+  readonly $1: EventRef<"country", {}, "country"> & { readonly id: "story.1" };
+  readonly $105: EventRef<"country", {}, "country"> & { readonly id: "story.105" };
+  readonly $107: EventRef<"country", {}, "country"> & { readonly id: "story.107" };
+  readonly $109: EventRef<"country", {}, "country"> & { readonly id: "story.109" };
+  readonly $2: EventRef<"country", {}, "country"> & { readonly id: "story.2" };
+  readonly $205: EventRef<"country", {}, "country"> & { readonly id: "story.205" };
+  readonly $207: EventRef<"country", {}, "country"> & { readonly id: "story.207" };
+  readonly $216: EventRef<"country", {}, "country"> & { readonly id: "story.216" };
+  readonly $220: EventRef<"fleet", {}, "fleet"> & { readonly id: "story.220" };
+  readonly $222: EventRef<"country", {}, "country"> & { readonly id: "story.222" };
+  readonly $3: EventRef<"country", {}, "country"> & { readonly id: "story.3" };
+  readonly $305: EventRef<"country", {}, "country"> & { readonly id: "story.305" };
+  readonly $330: EventRef<"fleet", {}, "fleet"> & { readonly id: "story.330" };
+  readonly $332: EventRef<"country", {}, "country"> & { readonly id: "story.332" };
+  readonly $335: EventRef<"country", {}, "country"> & { readonly id: "story.335" };
+  readonly $4: EventRef<"country", {}, "country"> & { readonly id: "story.4" };
+  readonly $405: EventRef<"country", {}, "country"> & { readonly id: "story.405" };
+  readonly $5: EventRef<"country", {}, "country"> & { readonly id: "story.5" };
+  readonly $6: EventRef<"country", {}, "country"> & { readonly id: "story.6" };
+  readonly $7: EventRef<"country", {}, "country"> & { readonly id: "story.7" };
+  readonly $8: EventRef<"country", {}, "country"> & { readonly id: "story.8" };
 }

@@ -3,5 +3,5 @@
 import type { EventRef } from "@pdx-ts/sdk";
 
 export interface VanillaEventNamespaceBioship {
-  readonly $1: EventRef<"ship", undefined, "ship"> & { readonly id: "bioship.1" };
+  readonly $1: EventRef<"ship", {}, "ship"> & { readonly id: "bioship.1" };
 }

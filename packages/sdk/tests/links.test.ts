@@ -8,7 +8,7 @@
  * bare `this` — authorable at all.
  */
 
-import { serialize } from "@pdx-ts/pdxscript";
+import { serialize, type PdxEntry } from "@pdx-ts/pdxscript";
 import { describe, expect, it } from "vitest";
 
 import { createMod, render } from "../src/index.ts";
@@ -18,7 +18,11 @@ import { capitalScope, hasCountryFlag, owner } from "../src/script/triggers.ts";
 
 // Kept past its authoring call on purpose: the assertions below read paths and
 // build triggers, which is the pure side of a ctx and stays usable anywhere.
-const ctx = withScriptCtx({}, (ctx: ScriptCtx<"country", "country">) => ctx);
+const ctx = withScriptCtx<
+  "country",
+  { readonly root: "country"; readonly from: "country" },
+  ScriptCtx<"country", { readonly root: "country"; readonly from: "country" }>
+>({}, (ctx) => ctx);
 
 describe("scope links as value builders", () => {
   it("navigates from ROOT, which the game writes absolutely", () => {
@@ -45,7 +49,11 @@ describe("scope links as value builders", () => {
   it("opens a navigated absolute ref where the author wrote it", () => {
     // Opened inside the authoring call that made the ctx, as an author's
     // effect closure always is.
-    const sink = withScriptCtx({}, (ctx: ScriptCtx<"country", "country">) =>
+    const sink = withScriptCtx<
+      "country",
+      { readonly root: "country"; readonly from: "country" },
+      PdxEntry[]
+    >({}, (ctx) =>
       recordEffects<"country">([], (country) => {
         country.log("outer");
         owner(ctx.from).effects((c) => c.log("from's owner"));

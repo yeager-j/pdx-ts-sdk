@@ -21,7 +21,7 @@ import {
   type ContentRefUse,
 } from "../references.ts";
 import { recordEffects, withScriptCtx } from "../script/effects/recorder.ts";
-import type { ScriptCtx } from "../script/effects/types.ts";
+import type { AmbientScopeContext, ScriptCtx } from "../script/effects/types.ts";
 import { refId, type TypedRef } from "../script/scalar.ts";
 import { scriptValueScalar, type ScriptValue, type Trigger } from "../script/trigger-core.ts";
 import {
@@ -144,8 +144,8 @@ function resolveFromClosure(field: ContentField, value: unknown): unknown {
   if ((value as { readonly kind?: unknown }).kind === "trigger") {
     return value;
   }
-  return withScriptCtx<ScopeName, ScopeName, ScopeName, unknown>({}, (scriptCtx) =>
-    (value as (ctx: ScriptCtx<ScopeName, ScopeName, ScopeName>) => unknown)(scriptCtx)
+  return withScriptCtx<ScopeName, AmbientScopeContext, unknown>({}, (scriptCtx) =>
+    (value as (ctx: ScriptCtx<ScopeName, AmbientScopeContext>) => unknown)(scriptCtx)
   );
 }
 
@@ -416,11 +416,11 @@ export function fieldEntries(
         // wraps has to be opened inside it. `this`, `root` and `from` are
         // fixed script paths, and which of them the block may *read* is the
         // generated signature's business, settled before this runs.
-        const child = withScriptCtx<ScopeName, ScopeName, ScopeName, PdxEntry[]>(
+        const child = withScriptCtx<ScopeName, AmbientScopeContext, PdxEntry[]>(
           { splitRoot: field.splitRoot === true },
           (scriptCtx) =>
             recordEffects(recorded, (scope) =>
-              (value as EffectBlock<ScopeName, ScopeName, ScopeName>)(scope, scriptCtx)
+              (value as EffectBlock<ScopeName, AmbientScopeContext>)(scope, scriptCtx)
             )
         );
         entries.push(block(field.key, child));

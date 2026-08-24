@@ -106,7 +106,7 @@ export function defineHardening(vanilla: VanillaView) {
   });
 
   const delayedA = events.country(2, {
-    from: "planet",
+    scopes: { from: "planet" },
     hideWindow: true,
     isTriggeredOnly: true,
     immediate: (country, ctx) => {
@@ -146,7 +146,7 @@ export function defineHardening(vanilla: VanillaView) {
         hardeningTarget.effects((planet) => planet.log("PDX_HARDENING_TARGET_AVAILABLE_IN_ENTRY"));
         country.countryEvent({
           id: delayedA,
-          from: hardeningTarget,
+          scopes: { from: hardeningTarget },
           days: 1,
         });
         country.countryEvent({ id: delayedB, days: 1 });

@@ -4,7 +4,7 @@ type TestingModule = typeof import("@pdx-ts/sdk-testing");
 type MatcherModule = typeof import("@pdx-ts/sdk-testing/matchers");
 declare const Testing: TestingModule;
 declare const installMatchers: MatcherModule["installMatchers"];
-declare const event: DefinedEvent<"country", undefined>;
+declare const event: DefinedEvent<"country", {}>;
 
 const spec = {
   countries: [{ name: "player", planets: [{ name: "homeworld" }] }],

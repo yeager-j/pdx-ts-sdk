@@ -19,7 +19,7 @@ describe("on-action authoring", () => {
     const first = events.country(1, { isTriggeredOnly: true });
     const second = events.country(2, { isTriggeredOnly: true });
     const diplomacy = events.country(3, {
-      from: "country",
+      scopes: { from: "country" },
       isTriggeredOnly: true,
     });
 
@@ -210,7 +210,7 @@ describe("on-action authoring", () => {
       }),
     ]);
     expect(() => mod.compile([wrongScope])).toThrow(
-      /supplies country scope with no FROM, but event "on_action_test_handles.13" declares planet scope/
+      /supplies country scope with no ambient scopes, but event "on_action_test_handles.13" declares planet scope/
     );
 
     const otherMod = createMod({
@@ -248,8 +248,60 @@ describe("on-action authoring", () => {
     ]);
 
     expect(() => mod.compile([feature])).toThrow(
-      /supplies country scope with no FROM, but event "on_action_test.13" declares planet scope/
+      /supplies country scope with no ambient scopes, but event "on_action_test.13" declares planet scope/
     );
+  });
+
+  it("checks every declared ambient slot on a deep hook contract", () => {
+    const events = mod.namespace();
+    const matching = events.country(14, {
+      scopes: {
+        from: "country",
+        fromfrom: "country",
+        fromfromfrom: "country",
+        fromfromfromfrom: "war",
+      },
+      isTriggeredOnly: true,
+    });
+    const mismatched = events.country(15, {
+      scopes: {
+        from: "country",
+        fromfrom: "fleet",
+        fromfromfrom: "country",
+        fromfromfromfrom: "war",
+      },
+      isTriggeredOnly: true,
+    });
+    const feature = mod.feature("deep_contract", [
+      matching,
+      mismatched,
+      mod.on(onActions.onStatusQuo, [matching]),
+      mod.on(onActions.onStatusQuo, [mismatched] as never),
+    ]);
+
+    expect(() => mod.compile([feature])).toThrow(
+      /supplies country scope with from country, fromfrom country, fromfromfrom country, fromfromfromfrom war, but event "on_action_test.15" declares country scope with from country, fromfrom fleet/
+    );
+  });
+
+  it("accepts the split ROOT contract a generated hook declares", () => {
+    const events = mod.namespace();
+    const colonization = events.carrier(16, {
+      scopes: { root: "planet" },
+      isTriggeredOnly: true,
+      immediate: (carrier, ctx) => {
+        carrier.log("carrier");
+        ctx.root.effects((planet) => planet.log("root planet"));
+      },
+    });
+    const feature = mod.feature("split_root", [
+      colonization,
+      mod.on(onActions.onColonizationStarted, [colonization]),
+    ]);
+
+    expect(
+      render(mod.compile([feature])).get("common/on_actions/on_action_test_on_actions.txt")
+    ).toContain("on_colonization_started = {\n\tevents = { on_action_test.16 }");
   });
 
   it("rejects empty object-form lists at runtime", () => {

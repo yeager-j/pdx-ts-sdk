@@ -168,17 +168,17 @@ describe("production testing module", () => {
     });
     const events = mod.namespace();
     const followup = events.planet(2, {
-      from: "country",
+      scopes: { from: "country" },
       hideWindow: true,
       isTriggeredOnly: true,
     });
     const entry = events.country(1, {
-      from: "planet",
+      scopes: { from: "planet" },
       hideWindow: true,
       isTriggeredOnly: true,
       immediate: (country, ctx) => {
         ctx.from.effects((planet) => {
-          planet.planetEvent({ id: followup, from: ctx.self });
+          planet.planetEvent({ id: followup, scopes: { from: ctx.root } });
         });
       },
     });
@@ -187,7 +187,7 @@ describe("production testing module", () => {
       { events: [entry, followup] }
     );
 
-    world.fire(entry, world.country(0), { from: world.country(0).planet(0) });
+    world.fire(entry, world.country(0), { scopes: { from: world.country(0).planet(0) } });
     world.advance(0);
 
     expect(world.fired).toMatchObject([

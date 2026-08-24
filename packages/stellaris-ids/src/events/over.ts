@@ -3,13 +3,13 @@
 import type { EventRef } from "@pdx-ts/sdk";
 
 export interface VanillaEventNamespaceOver {
-  readonly $1: EventRef<"country", undefined, "country"> & { readonly id: "over.1" };
-  readonly $10: EventRef<"country", undefined, "country"> & { readonly id: "over.10" };
-  readonly $100: EventRef<"country", undefined, "country"> & { readonly id: "over.100" };
-  readonly $20: EventRef<"ship", undefined, "ship"> & { readonly id: "over.20" };
-  readonly $25: EventRef<"country", undefined, "country"> & { readonly id: "over.25" };
-  readonly $30: EventRef<"fleet", undefined, "fleet"> & { readonly id: "over.30" };
-  readonly $5: EventRef<"country", undefined, "country"> & { readonly id: "over.5" };
-  readonly $50: EventRef<"country", undefined, "country"> & { readonly id: "over.50" };
-  readonly $60: EventRef<"country", undefined, "country"> & { readonly id: "over.60" };
+  readonly $1: EventRef<"country", {}, "country"> & { readonly id: "over.1" };
+  readonly $10: EventRef<"country", {}, "country"> & { readonly id: "over.10" };
+  readonly $100: EventRef<"country", {}, "country"> & { readonly id: "over.100" };
+  readonly $20: EventRef<"ship", {}, "ship"> & { readonly id: "over.20" };
+  readonly $25: EventRef<"country", {}, "country"> & { readonly id: "over.25" };
+  readonly $30: EventRef<"fleet", {}, "fleet"> & { readonly id: "over.30" };
+  readonly $5: EventRef<"country", {}, "country"> & { readonly id: "over.5" };
+  readonly $50: EventRef<"country", {}, "country"> & { readonly id: "over.50" };
+  readonly $60: EventRef<"country", {}, "country"> & { readonly id: "over.60" };
 }

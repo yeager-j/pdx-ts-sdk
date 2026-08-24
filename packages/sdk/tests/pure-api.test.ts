@@ -244,7 +244,7 @@ function capabilityFeatures() {
     show: and(isScopeValid(), hasTechnology("tech_titans")),
   });
   const aftershock = events.planet(2, {
-    from: "country",
+    scopes: { from: "country" },
     title: "Aftershock",
     isTriggeredOnly: true,
     immediate: (planet, ctx) => {
@@ -259,7 +259,7 @@ function capabilityFeatures() {
     isTriggeredOnly: true,
     immediate: (country, ctx) => {
       country.everyOwnedPlanet({ limit: hasOwner() }, (planet) => {
-        planet.planetEvent({ id: aftershock, from: ctx.self, days: 30 });
+        planet.planetEvent({ id: aftershock, scopes: { from: ctx.root }, days: 30 });
       });
     },
     options: [{ name: "Fascinating.", key: "fascinating" }],
@@ -592,7 +592,7 @@ describe("event namespaces", () => {
   it("fails loudly on a fired event whose collection was not passed", () => {
     const orphan = namespaceInternal("pp_mod_orphans").definePlanetEvent({
       id: 22,
-      from: "country",
+      scopes: { from: "country" },
       isTriggeredOnly: true,
     });
     const included = createFeatureInternal("events", [
@@ -602,7 +602,7 @@ describe("event namespaces", () => {
         hideWindow: true,
         immediate: (country, ctx) => {
           country.everyOwnedPlanet({ limit: hasOwner() }, (planet) => {
-            planet.planetEvent({ id: orphan, from: ctx.self });
+            planet.planetEvent({ id: orphan, scopes: { from: ctx.root } });
           });
         },
       }),
@@ -619,7 +619,7 @@ describe("event namespaces", () => {
     // must not demand a definition this mod was never going to supply.
     const foreign = namespaceInternal("pp_module_extras").definePlanetEvent({
       id: 22,
-      from: "country",
+      scopes: { from: "country" },
       isTriggeredOnly: true,
     });
     const included = createFeatureInternal("events", [
@@ -629,7 +629,7 @@ describe("event namespaces", () => {
         hideWindow: true,
         immediate: (country, ctx) => {
           country.everyOwnedPlanet({ limit: hasOwner() }, (planet) => {
-            planet.planetEvent({ id: foreign, from: ctx.self });
+            planet.planetEvent({ id: foreign, scopes: { from: ctx.root } });
           });
         },
       }),

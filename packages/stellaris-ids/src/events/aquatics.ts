@@ -3,45 +3,37 @@
 import type { EventRef } from "@pdx-ts/sdk";
 
 export interface VanillaEventNamespaceAquatics {
-  readonly $1: EventRef<"country", undefined, "country"> & { readonly id: "aquatics.1" };
-  readonly $100: EventRef<"country", undefined, "country"> & { readonly id: "aquatics.100" };
-  readonly $1000: EventRef<"country", undefined, "country"> & { readonly id: "aquatics.1000" };
-  readonly $1001: EventRef<"country", undefined, "country"> & { readonly id: "aquatics.1001" };
-  readonly $1005: EventRef<"carrier", undefined, "carrier"> & { readonly id: "aquatics.1005" };
-  readonly $105: EventRef<"country", undefined, "country"> & { readonly id: "aquatics.105" };
-  readonly $110: EventRef<"country", undefined, "country"> & { readonly id: "aquatics.110" };
-  readonly $115: EventRef<"country", undefined, "country"> & { readonly id: "aquatics.115" };
-  readonly $120: EventRef<"country", undefined, "country"> & { readonly id: "aquatics.120" };
-  readonly $150: EventRef<"colony", undefined, "colony"> & { readonly id: "aquatics.150" };
-  readonly $155: EventRef<"carrier", undefined, "carrier"> & { readonly id: "aquatics.155" };
-  readonly $160: EventRef<"carrier", undefined, "carrier"> & { readonly id: "aquatics.160" };
-  readonly $165: EventRef<"carrier", undefined, "carrier"> & { readonly id: "aquatics.165" };
-  readonly $170: EventRef<"carrier", undefined, "carrier"> & { readonly id: "aquatics.170" };
-  readonly $180: EventRef<"fleet", undefined, "fleet"> & { readonly id: "aquatics.180" };
-  readonly $185: EventRef<"country", undefined, "country"> & { readonly id: "aquatics.185" };
-  readonly $190: EventRef<"country", undefined, "country"> & { readonly id: "aquatics.190" };
-  readonly $195: EventRef<"ship", undefined, "ship"> & { readonly id: "aquatics.195" };
-  readonly $200: EventRef<"ship", undefined, "ship"> & { readonly id: "aquatics.200" };
-  readonly $205: EventRef<"ship", undefined, "ship"> & { readonly id: "aquatics.205" };
-  readonly $210: EventRef<"ship", undefined, "ship"> & { readonly id: "aquatics.210" };
-  readonly $215: EventRef<"ship", undefined, "ship"> & { readonly id: "aquatics.215" };
-  readonly $250: EventRef<"country", undefined, "country"> & { readonly id: "aquatics.250" };
-  readonly $255: EventRef<"first_contact", undefined, "first_contact"> & {
-    readonly id: "aquatics.255";
-  };
-  readonly $260: EventRef<"first_contact", undefined, "first_contact"> & {
-    readonly id: "aquatics.260";
-  };
-  readonly $265: EventRef<"first_contact", undefined, "first_contact"> & {
-    readonly id: "aquatics.265";
-  };
-  readonly $270: EventRef<"country", undefined, "country"> & { readonly id: "aquatics.270" };
-  readonly $280: EventRef<"first_contact", undefined, "first_contact"> & {
-    readonly id: "aquatics.280";
-  };
-  readonly $300: EventRef<"fleet", undefined, "fleet"> & { readonly id: "aquatics.300" };
-  readonly $305: EventRef<"ship", undefined, "ship"> & { readonly id: "aquatics.305" };
-  readonly $310: EventRef<"fleet", undefined, "fleet"> & { readonly id: "aquatics.310" };
-  readonly $4: EventRef<"ship", undefined, "ship"> & { readonly id: "aquatics.4" };
-  readonly $5: EventRef<"ship", undefined, "ship"> & { readonly id: "aquatics.5" };
+  readonly $1: EventRef<"country", {}, "country"> & { readonly id: "aquatics.1" };
+  readonly $100: EventRef<"country", {}, "country"> & { readonly id: "aquatics.100" };
+  readonly $1000: EventRef<"country", {}, "country"> & { readonly id: "aquatics.1000" };
+  readonly $1001: EventRef<"country", {}, "country"> & { readonly id: "aquatics.1001" };
+  readonly $1005: EventRef<"carrier", {}, "carrier"> & { readonly id: "aquatics.1005" };
+  readonly $105: EventRef<"country", {}, "country"> & { readonly id: "aquatics.105" };
+  readonly $110: EventRef<"country", {}, "country"> & { readonly id: "aquatics.110" };
+  readonly $115: EventRef<"country", {}, "country"> & { readonly id: "aquatics.115" };
+  readonly $120: EventRef<"country", {}, "country"> & { readonly id: "aquatics.120" };
+  readonly $150: EventRef<"colony", {}, "colony"> & { readonly id: "aquatics.150" };
+  readonly $155: EventRef<"carrier", {}, "carrier"> & { readonly id: "aquatics.155" };
+  readonly $160: EventRef<"carrier", {}, "carrier"> & { readonly id: "aquatics.160" };
+  readonly $165: EventRef<"carrier", {}, "carrier"> & { readonly id: "aquatics.165" };
+  readonly $170: EventRef<"carrier", {}, "carrier"> & { readonly id: "aquatics.170" };
+  readonly $180: EventRef<"fleet", {}, "fleet"> & { readonly id: "aquatics.180" };
+  readonly $185: EventRef<"country", {}, "country"> & { readonly id: "aquatics.185" };
+  readonly $190: EventRef<"country", {}, "country"> & { readonly id: "aquatics.190" };
+  readonly $195: EventRef<"ship", {}, "ship"> & { readonly id: "aquatics.195" };
+  readonly $200: EventRef<"ship", {}, "ship"> & { readonly id: "aquatics.200" };
+  readonly $205: EventRef<"ship", {}, "ship"> & { readonly id: "aquatics.205" };
+  readonly $210: EventRef<"ship", {}, "ship"> & { readonly id: "aquatics.210" };
+  readonly $215: EventRef<"ship", {}, "ship"> & { readonly id: "aquatics.215" };
+  readonly $250: EventRef<"country", {}, "country"> & { readonly id: "aquatics.250" };
+  readonly $255: EventRef<"first_contact", {}, "first_contact"> & { readonly id: "aquatics.255" };
+  readonly $260: EventRef<"first_contact", {}, "first_contact"> & { readonly id: "aquatics.260" };
+  readonly $265: EventRef<"first_contact", {}, "first_contact"> & { readonly id: "aquatics.265" };
+  readonly $270: EventRef<"country", {}, "country"> & { readonly id: "aquatics.270" };
+  readonly $280: EventRef<"first_contact", {}, "first_contact"> & { readonly id: "aquatics.280" };
+  readonly $300: EventRef<"fleet", {}, "fleet"> & { readonly id: "aquatics.300" };
+  readonly $305: EventRef<"ship", {}, "ship"> & { readonly id: "aquatics.305" };
+  readonly $310: EventRef<"fleet", {}, "fleet"> & { readonly id: "aquatics.310" };
+  readonly $4: EventRef<"ship", {}, "ship"> & { readonly id: "aquatics.4" };
+  readonly $5: EventRef<"ship", {}, "ship"> & { readonly id: "aquatics.5" };
 }

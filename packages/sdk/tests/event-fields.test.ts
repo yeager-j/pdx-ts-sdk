@@ -36,7 +36,7 @@ describe("the archaeology blocking case (SDK-46)", () => {
   it("ports arcsite.1000 (events/arcsite_events.txt): archaeology + location + a dig option, no AST escape hatch", () => {
     const events = makeEvents();
     const dig = events.fleet(1000, {
-      from: "archaeological_site",
+      scopes: { from: "archaeological_site" },
       title: "Icelocked Settlement",
       desc: "A settlement locked in ice.",
       picture: "GFX_evt_icelocked_settlement",
@@ -540,7 +540,7 @@ describe("PR #15 review follow-ups (SDK-46)", () => {
   it("lowers situation = from via the same context-closure idiom as location", () => {
     const events = makeEvents();
     const fromSituation = events.fleet(1032, {
-      from: "situation",
+      scopes: { from: "situation" },
       hideWindow: true,
       isTriggeredOnly: true,
       situation: (ctx) => ctx.from,

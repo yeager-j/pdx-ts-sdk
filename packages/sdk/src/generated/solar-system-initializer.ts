@@ -253,7 +253,7 @@ export interface SolarSystemInitializerFields {
    * Only when solar_system_initializer subtype not `fallen_empire_initializer` applies.
    * Only when solar_system_initializer subtype `fallen_empire_initializer` applies.
    */
-  initEffect?: EffectBlock<"system">;
+  initEffect?: EffectBlock<"system", {}>;
   /** default: no. If yes, when a suitable neighbor is not found, a new solar system will be created to fulfill it. */
   mandatoryNeighbors?: boolean;
   neighborSystem?: SolarSystemInitializerNeighborSystem[];

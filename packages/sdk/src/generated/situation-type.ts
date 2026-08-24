@@ -117,7 +117,7 @@ export interface SituationApproachFields {
   triggeredTargetModifier?: TriggeredModifier<"planet", "situation">[];
   customTooltipWithModifiers?: string;
   resources?: EconomicResourceBlock<"situation">[];
-  onSelect?: EffectBlock<"situation", undefined, "situation">;
+  onSelect?: EffectBlock<"situation", { readonly root: "situation" }>;
   aiWeight?: number | WeightBlock<"situation">;
 }
 
@@ -214,8 +214,8 @@ export interface SituationStageFields {
    */
   color?: NamedColorRef | string;
   customTooltip?: string;
-  onFirstEnter?: EffectBlock<"situation", undefined, "situation">;
-  onEnter?: EffectBlock<"situation", undefined, "situation">;
+  onFirstEnter?: EffectBlock<"situation", { readonly root: "situation" }>;
+  onEnter?: EffectBlock<"situation", { readonly root: "situation" }>;
   potential?: Trigger<"situation">;
   modifier?: ModifierClosure<"country">;
   triggeredModifier?: TriggeredModifier<"country", "situation">[];
@@ -333,10 +333,10 @@ export interface SituationTypeFields {
   customTooltip?: string;
   customTooltipWithModifiers?: string;
   potential?: Trigger<"country">;
-  onStart?: EffectBlock<"situation", undefined, "situation">;
-  onFail?: EffectBlock<"situation", undefined, "situation">;
-  onAbort?: EffectBlock<"situation", undefined, "situation">;
-  onProgressComplete?: EffectBlock<"situation", undefined, "situation">;
+  onStart?: EffectBlock<"situation", { readonly root: "situation" }>;
+  onFail?: EffectBlock<"situation", { readonly root: "situation" }>;
+  onAbort?: EffectBlock<"situation", { readonly root: "situation" }>;
+  onProgressComplete?: EffectBlock<"situation", { readonly root: "situation" }>;
   triggeredBlockedDesc?: SituationTypeTriggeredBlockedDesc[];
   abortTrigger?: Trigger<"situation">;
   modifier?: ModifierClosure<"country">;

@@ -4,20 +4,20 @@ import type { EventRef, EventScopelessRef } from "@pdx-ts/sdk";
 
 export interface VanillaEventNamespaceCentral {
   readonly $1: EventScopelessRef & { readonly id: "central.1" };
-  readonly $10: EventRef<"country", undefined, "country"> & { readonly id: "central.10" };
-  readonly $15: EventRef<"country", undefined, "country"> & { readonly id: "central.15" };
-  readonly $19: EventRef<"country", undefined, "country"> & { readonly id: "central.19" };
+  readonly $10: EventRef<"country", {}, "country"> & { readonly id: "central.10" };
+  readonly $15: EventRef<"country", {}, "country"> & { readonly id: "central.15" };
+  readonly $19: EventRef<"country", {}, "country"> & { readonly id: "central.19" };
   readonly $2: EventScopelessRef & { readonly id: "central.2" };
-  readonly $20: EventRef<"country", undefined, "country"> & { readonly id: "central.20" };
-  readonly $21: EventRef<"country", undefined, "country"> & { readonly id: "central.21" };
-  readonly $5: EventRef<"country", undefined, "country"> & { readonly id: "central.5" };
-  readonly $50: EventRef<"country", undefined, "country"> & { readonly id: "central.50" };
-  readonly $51: EventRef<"country", undefined, "country"> & { readonly id: "central.51" };
-  readonly $52: EventRef<"country", undefined, "country"> & { readonly id: "central.52" };
-  readonly $60: EventRef<"country", undefined, "country"> & { readonly id: "central.60" };
-  readonly $61: EventRef<"country", undefined, "country"> & { readonly id: "central.61" };
-  readonly $62: EventRef<"country", undefined, "country"> & { readonly id: "central.62" };
-  readonly $70: EventRef<"country", undefined, "country"> & { readonly id: "central.70" };
-  readonly $71: EventRef<"country", undefined, "country"> & { readonly id: "central.71" };
-  readonly $72: EventRef<"country", undefined, "country"> & { readonly id: "central.72" };
+  readonly $20: EventRef<"country", {}, "country"> & { readonly id: "central.20" };
+  readonly $21: EventRef<"country", {}, "country"> & { readonly id: "central.21" };
+  readonly $5: EventRef<"country", {}, "country"> & { readonly id: "central.5" };
+  readonly $50: EventRef<"country", {}, "country"> & { readonly id: "central.50" };
+  readonly $51: EventRef<"country", {}, "country"> & { readonly id: "central.51" };
+  readonly $52: EventRef<"country", {}, "country"> & { readonly id: "central.52" };
+  readonly $60: EventRef<"country", {}, "country"> & { readonly id: "central.60" };
+  readonly $61: EventRef<"country", {}, "country"> & { readonly id: "central.61" };
+  readonly $62: EventRef<"country", {}, "country"> & { readonly id: "central.62" };
+  readonly $70: EventRef<"country", {}, "country"> & { readonly id: "central.70" };
+  readonly $71: EventRef<"country", {}, "country"> & { readonly id: "central.71" };
+  readonly $72: EventRef<"country", {}, "country"> & { readonly id: "central.72" };
 }

@@ -3,178 +3,128 @@
 import type { EventRef } from "@pdx-ts/sdk";
 
 export interface VanillaEventNamespacePreftlOperation {
-  readonly $100: EventRef<"espionage_operation", undefined, "espionage_operation"> & {
+  readonly $100: EventRef<"espionage_operation", {}, "espionage_operation"> & {
     readonly id: "preftl_operation.100";
   };
-  readonly $1000: EventRef<"espionage_operation", undefined, "espionage_operation"> & {
+  readonly $1000: EventRef<"espionage_operation", {}, "espionage_operation"> & {
     readonly id: "preftl_operation.1000";
   };
-  readonly $1005: EventRef<"country", undefined, "country"> & {
-    readonly id: "preftl_operation.1005";
-  };
-  readonly $1006: EventRef<"country", undefined, "country"> & {
-    readonly id: "preftl_operation.1006";
-  };
-  readonly $1007: EventRef<"country", undefined, "country"> & {
-    readonly id: "preftl_operation.1007";
-  };
-  readonly $1008: EventRef<"country", undefined, "country"> & {
-    readonly id: "preftl_operation.1008";
-  };
-  readonly $1015: EventRef<"espionage_operation", undefined, "espionage_operation"> & {
+  readonly $1005: EventRef<"country", {}, "country"> & { readonly id: "preftl_operation.1005" };
+  readonly $1006: EventRef<"country", {}, "country"> & { readonly id: "preftl_operation.1006" };
+  readonly $1007: EventRef<"country", {}, "country"> & { readonly id: "preftl_operation.1007" };
+  readonly $1008: EventRef<"country", {}, "country"> & { readonly id: "preftl_operation.1008" };
+  readonly $1015: EventRef<"espionage_operation", {}, "espionage_operation"> & {
     readonly id: "preftl_operation.1015";
   };
-  readonly $1016: EventRef<"country", undefined, "country"> & {
-    readonly id: "preftl_operation.1016";
-  };
-  readonly $1017: EventRef<"country", undefined, "country"> & {
-    readonly id: "preftl_operation.1017";
-  };
-  readonly $1018: EventRef<"country", undefined, "country"> & {
-    readonly id: "preftl_operation.1018";
-  };
-  readonly $1019: EventRef<"country", undefined, "country"> & {
-    readonly id: "preftl_operation.1019";
-  };
-  readonly $1020: EventRef<"country", undefined, "country"> & {
-    readonly id: "preftl_operation.1020";
-  };
-  readonly $1021: EventRef<"country", undefined, "country"> & {
-    readonly id: "preftl_operation.1021";
-  };
-  readonly $1025: EventRef<"espionage_operation", undefined, "espionage_operation"> & {
+  readonly $1016: EventRef<"country", {}, "country"> & { readonly id: "preftl_operation.1016" };
+  readonly $1017: EventRef<"country", {}, "country"> & { readonly id: "preftl_operation.1017" };
+  readonly $1018: EventRef<"country", {}, "country"> & { readonly id: "preftl_operation.1018" };
+  readonly $1019: EventRef<"country", {}, "country"> & { readonly id: "preftl_operation.1019" };
+  readonly $1020: EventRef<"country", {}, "country"> & { readonly id: "preftl_operation.1020" };
+  readonly $1021: EventRef<"country", {}, "country"> & { readonly id: "preftl_operation.1021" };
+  readonly $1025: EventRef<"espionage_operation", {}, "espionage_operation"> & {
     readonly id: "preftl_operation.1025";
   };
-  readonly $1026: EventRef<"country", undefined, "country"> & {
-    readonly id: "preftl_operation.1026";
-  };
-  readonly $1027: EventRef<"country", undefined, "country"> & {
-    readonly id: "preftl_operation.1027";
-  };
-  readonly $1028: EventRef<"country", undefined, "country"> & {
-    readonly id: "preftl_operation.1028";
-  };
-  readonly $1035: EventRef<"espionage_operation", undefined, "espionage_operation"> & {
+  readonly $1026: EventRef<"country", {}, "country"> & { readonly id: "preftl_operation.1026" };
+  readonly $1027: EventRef<"country", {}, "country"> & { readonly id: "preftl_operation.1027" };
+  readonly $1028: EventRef<"country", {}, "country"> & { readonly id: "preftl_operation.1028" };
+  readonly $1035: EventRef<"espionage_operation", {}, "espionage_operation"> & {
     readonly id: "preftl_operation.1035";
   };
-  readonly $1036: EventRef<"country", undefined, "country"> & {
-    readonly id: "preftl_operation.1036";
-  };
-  readonly $1037: EventRef<"country", undefined, "country"> & {
-    readonly id: "preftl_operation.1037";
-  };
-  readonly $1038: EventRef<"country", undefined, "country"> & {
-    readonly id: "preftl_operation.1038";
-  };
-  readonly $1039: EventRef<"country", undefined, "country"> & {
-    readonly id: "preftl_operation.1039";
-  };
-  readonly $1045: EventRef<"espionage_operation", undefined, "espionage_operation"> & {
+  readonly $1036: EventRef<"country", {}, "country"> & { readonly id: "preftl_operation.1036" };
+  readonly $1037: EventRef<"country", {}, "country"> & { readonly id: "preftl_operation.1037" };
+  readonly $1038: EventRef<"country", {}, "country"> & { readonly id: "preftl_operation.1038" };
+  readonly $1039: EventRef<"country", {}, "country"> & { readonly id: "preftl_operation.1039" };
+  readonly $1045: EventRef<"espionage_operation", {}, "espionage_operation"> & {
     readonly id: "preftl_operation.1045";
   };
-  readonly $1046: EventRef<"country", undefined, "country"> & {
-    readonly id: "preftl_operation.1046";
-  };
-  readonly $1047: EventRef<"country", undefined, "country"> & {
-    readonly id: "preftl_operation.1047";
-  };
-  readonly $1048: EventRef<"country", undefined, "country"> & {
-    readonly id: "preftl_operation.1048";
-  };
-  readonly $1049: EventRef<"country", undefined, "country"> & {
-    readonly id: "preftl_operation.1049";
-  };
-  readonly $1060: EventRef<"espionage_operation", undefined, "espionage_operation"> & {
+  readonly $1046: EventRef<"country", {}, "country"> & { readonly id: "preftl_operation.1046" };
+  readonly $1047: EventRef<"country", {}, "country"> & { readonly id: "preftl_operation.1047" };
+  readonly $1048: EventRef<"country", {}, "country"> & { readonly id: "preftl_operation.1048" };
+  readonly $1049: EventRef<"country", {}, "country"> & { readonly id: "preftl_operation.1049" };
+  readonly $1060: EventRef<"espionage_operation", {}, "espionage_operation"> & {
     readonly id: "preftl_operation.1060";
   };
-  readonly $1065: EventRef<"country", undefined, "country"> & {
-    readonly id: "preftl_operation.1065";
-  };
-  readonly $1066: EventRef<"country", undefined, "country"> & {
-    readonly id: "preftl_operation.1066";
-  };
-  readonly $1067: EventRef<"country", undefined, "country"> & {
-    readonly id: "preftl_operation.1067";
-  };
-  readonly $1068: EventRef<"country", undefined, "country"> & {
-    readonly id: "preftl_operation.1068";
-  };
-  readonly $3000: EventRef<"espionage_operation", undefined, "espionage_operation"> & {
+  readonly $1065: EventRef<"country", {}, "country"> & { readonly id: "preftl_operation.1065" };
+  readonly $1066: EventRef<"country", {}, "country"> & { readonly id: "preftl_operation.1066" };
+  readonly $1067: EventRef<"country", {}, "country"> & { readonly id: "preftl_operation.1067" };
+  readonly $1068: EventRef<"country", {}, "country"> & { readonly id: "preftl_operation.1068" };
+  readonly $3000: EventRef<"espionage_operation", {}, "espionage_operation"> & {
     readonly id: "preftl_operation.3000";
   };
-  readonly $3001: EventRef<"espionage_operation", undefined, "espionage_operation"> & {
+  readonly $3001: EventRef<"espionage_operation", {}, "espionage_operation"> & {
     readonly id: "preftl_operation.3001";
   };
-  readonly $3002: EventRef<"espionage_operation", undefined, "espionage_operation"> & {
+  readonly $3002: EventRef<"espionage_operation", {}, "espionage_operation"> & {
     readonly id: "preftl_operation.3002";
   };
-  readonly $3003: EventRef<"espionage_operation", undefined, "espionage_operation"> & {
+  readonly $3003: EventRef<"espionage_operation", {}, "espionage_operation"> & {
     readonly id: "preftl_operation.3003";
   };
-  readonly $3010: EventRef<"espionage_operation", undefined, "espionage_operation"> & {
+  readonly $3010: EventRef<"espionage_operation", {}, "espionage_operation"> & {
     readonly id: "preftl_operation.3010";
   };
-  readonly $3011: EventRef<"espionage_operation", undefined, "espionage_operation"> & {
+  readonly $3011: EventRef<"espionage_operation", {}, "espionage_operation"> & {
     readonly id: "preftl_operation.3011";
   };
-  readonly $3012: EventRef<"espionage_operation", undefined, "espionage_operation"> & {
+  readonly $3012: EventRef<"espionage_operation", {}, "espionage_operation"> & {
     readonly id: "preftl_operation.3012";
   };
-  readonly $3020: EventRef<"espionage_operation", undefined, "espionage_operation"> & {
+  readonly $3020: EventRef<"espionage_operation", {}, "espionage_operation"> & {
     readonly id: "preftl_operation.3020";
   };
-  readonly $3030: EventRef<"espionage_operation", undefined, "espionage_operation"> & {
+  readonly $3030: EventRef<"espionage_operation", {}, "espionage_operation"> & {
     readonly id: "preftl_operation.3030";
   };
-  readonly $3040: EventRef<"espionage_operation", undefined, "espionage_operation"> & {
+  readonly $3040: EventRef<"espionage_operation", {}, "espionage_operation"> & {
     readonly id: "preftl_operation.3040";
   };
-  readonly $3041: EventRef<"espionage_operation", undefined, "espionage_operation"> & {
+  readonly $3041: EventRef<"espionage_operation", {}, "espionage_operation"> & {
     readonly id: "preftl_operation.3041";
   };
-  readonly $3042: EventRef<"espionage_operation", undefined, "espionage_operation"> & {
+  readonly $3042: EventRef<"espionage_operation", {}, "espionage_operation"> & {
     readonly id: "preftl_operation.3042";
   };
-  readonly $3043: EventRef<"espionage_operation", undefined, "espionage_operation"> & {
+  readonly $3043: EventRef<"espionage_operation", {}, "espionage_operation"> & {
     readonly id: "preftl_operation.3043";
   };
-  readonly $3044: EventRef<"espionage_operation", undefined, "espionage_operation"> & {
+  readonly $3044: EventRef<"espionage_operation", {}, "espionage_operation"> & {
     readonly id: "preftl_operation.3044";
   };
-  readonly $3045: EventRef<"espionage_operation", undefined, "espionage_operation"> & {
+  readonly $3045: EventRef<"espionage_operation", {}, "espionage_operation"> & {
     readonly id: "preftl_operation.3045";
   };
-  readonly $3046: EventRef<"espionage_operation", undefined, "espionage_operation"> & {
+  readonly $3046: EventRef<"espionage_operation", {}, "espionage_operation"> & {
     readonly id: "preftl_operation.3046";
   };
-  readonly $3050: EventRef<"espionage_operation", undefined, "espionage_operation"> & {
+  readonly $3050: EventRef<"espionage_operation", {}, "espionage_operation"> & {
     readonly id: "preftl_operation.3050";
   };
-  readonly $3051: EventRef<"espionage_operation", undefined, "espionage_operation"> & {
+  readonly $3051: EventRef<"espionage_operation", {}, "espionage_operation"> & {
     readonly id: "preftl_operation.3051";
   };
-  readonly $3055: EventRef<"espionage_operation", undefined, "espionage_operation"> & {
+  readonly $3055: EventRef<"espionage_operation", {}, "espionage_operation"> & {
     readonly id: "preftl_operation.3055";
   };
-  readonly $3060: EventRef<"espionage_operation", undefined, "espionage_operation"> & {
+  readonly $3060: EventRef<"espionage_operation", {}, "espionage_operation"> & {
     readonly id: "preftl_operation.3060";
   };
-  readonly $3061: EventRef<"espionage_operation", undefined, "espionage_operation"> & {
+  readonly $3061: EventRef<"espionage_operation", {}, "espionage_operation"> & {
     readonly id: "preftl_operation.3061";
   };
-  readonly $3062: EventRef<"espionage_operation", undefined, "espionage_operation"> & {
+  readonly $3062: EventRef<"espionage_operation", {}, "espionage_operation"> & {
     readonly id: "preftl_operation.3062";
   };
-  readonly $3063: EventRef<"espionage_operation", undefined, "espionage_operation"> & {
+  readonly $3063: EventRef<"espionage_operation", {}, "espionage_operation"> & {
     readonly id: "preftl_operation.3063";
   };
-  readonly $3064: EventRef<"espionage_operation", undefined, "espionage_operation"> & {
+  readonly $3064: EventRef<"espionage_operation", {}, "espionage_operation"> & {
     readonly id: "preftl_operation.3064";
   };
-  readonly $3100: EventRef<"espionage_operation", undefined, "espionage_operation"> & {
+  readonly $3100: EventRef<"espionage_operation", {}, "espionage_operation"> & {
     readonly id: "preftl_operation.3100";
   };
-  readonly $3105: EventRef<"espionage_operation", undefined, "espionage_operation"> & {
+  readonly $3105: EventRef<"espionage_operation", {}, "espionage_operation"> & {
     readonly id: "preftl_operation.3105";
   };
 }

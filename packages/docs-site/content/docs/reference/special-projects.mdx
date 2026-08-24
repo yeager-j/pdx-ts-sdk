@@ -138,9 +138,9 @@ one.
   `failTrigger` and `abortTrigger` run in country scope with the `eventScope` object as `FROM`; the
   creation location is `FROMFROM`. `onFail` instead receives the creation location as `FROM`. The
   game's rules do not specify `onCancel`'s `FROM`, and shipped scripts reach the location through
-  `FROMFROM`. The SDK currently types `ctx.from` as the event scope in both `onFail` and `onCancel`,
-  which disagrees with that evidence. Avoid reading `ctx.from` in those two callbacks; save a
-  durable target before the project starts when cleanup needs one.
+  `FROMFROM`. The generated special-project overlay does not yet expose that `FROMFROM` slot, so
+  avoid reading `ctx.from` in those two callbacks; save a durable target before the project starts
+  when cleanup needs one.
 </Callout>
 
 ## Complete lifecycle example

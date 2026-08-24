@@ -27,7 +27,7 @@ describe("fleet and archaeological_site scopes", () => {
   it("models a fleet event whose FROM is an archaeological site, and the site's own state", () => {
     const mod = createMod({ name: "Dig probe", prefix: "dig_probe", supportedVersion: "4.4.*" });
     const drillEvent = mod.namespace().fleet(1, {
-      from: "archaeological_site",
+      scopes: { from: "archaeological_site" },
       isTriggeredOnly: true,
       immediate: (_fleet, ctx) => {
         ctx.from.effects((site) => {
@@ -48,8 +48,41 @@ describe("fleet and archaeological_site scopes", () => {
     const site = world.archaeologicalSite(0);
 
     expect(site.progressLocked).toBe(false);
-    world.fire(drillEvent, fleet, { from: site });
+    world.fire(drillEvent, fleet, { scopes: { from: site } });
     expect(site.progressLocked).toBe(true);
+  });
+});
+
+describe("event ambient contracts", () => {
+  it("refuses contexts the immediate-FROM fixture cannot execute", () => {
+    const mod = createMod({
+      name: "Ambient contract probe",
+      prefix: "ambient_contract_probe",
+      supportedVersion: "4.4.*",
+    });
+    const events = mod.namespace();
+    const deeperFrom = events.country(1, {
+      scopes: { fromfrom: "country" },
+      isTriggeredOnly: true,
+    });
+    const previous = events.country(2, {
+      scopes: { prev: "country" },
+      isTriggeredOnly: true,
+    });
+    const splitRoot = events.planet(3, {
+      scopes: { root: "country" },
+      isTriggeredOnly: true,
+    });
+
+    expect(() => fixture({ countries: [{}] }, { events: [deeperFrom] })).toThrow(
+      /declares FROMFROM \(country\).*models only its event scope and immediate FROM/
+    );
+    expect(() => fixture({ countries: [{}] }, { events: [previous] })).toThrow(
+      /declares PREV \(country\).*models only its event scope and immediate FROM/
+    );
+    expect(() => fixture({ countries: [{}] }, { events: [splitRoot] })).toThrow(
+      /declares split ROOT \(country\) for planet scope.*models only its event scope and immediate FROM/
+    );
   });
 });
 

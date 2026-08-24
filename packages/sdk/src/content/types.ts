@@ -12,6 +12,8 @@ import type { ScopedModifierBlock, ScopedModifierRecorder } from "../generated/m
 import type { EconomicCategoryRef } from "../generated/refs.ts";
 import type { ScopeName } from "../generated/scopes.ts";
 import type {
+  AmbientScopeContext,
+  AmbientScopeKey,
   ComplexTriggerModifier,
   ComplexTriggerModifierWithLoc,
   Modifier,
@@ -359,35 +361,37 @@ export interface WeightBlockWithLoc<S extends ScopeName> extends WeightBlockWith
 
 /**
  * A script effect block recorded against the scope declared by the content
- * rules, with the ambient scopes that block runs in as a second argument.
+ * rules. Its second callback argument is a named map of every ambient scope
+ * the rules declare for that block.
  *
- * `From` is the scope the game hands the block as FROM, where the rules name
- * one (`## replace_scopes = { this = fleet from = archaeological_site }`):
+ * Map keys mirror Stellaris scope paths: `root`, `from` through
+ * `fromfromfromfrom`, and `prev` through `prevprevprevprev`. Omitted keys are
+ * unavailable on {@link ScriptCtx}, so a block cannot navigate a scope its
+ * rules do not name.
  *
- *     onRollFailed: (fleet, ctx) => {
- *       ctx.from.effects((site) => { ... });
- *     }
+ * @example
+ * A block with `Context` equal to
+ * `{ root: "fleet"; from: "archaeological_site" }` receives both refs:
  *
- * It defaults to undeclared, and `ctx.from` is then an inert sentinel rather
- * than a ref — a block whose FROM nothing describes must not be navigated.
+ * ```ts
+ * onRollFailed: (fleet, ctx) => {
+ *   ctx.from.effects((site) => { ... });
+ * }
+ * ```
  *
- * `Root` is the same arrangement for ROOT, and defaults to undeclared for the
- * same reason rather than to `S`: `## replace_scopes` states the whole context
- * and clears what it omits, and `## push_scope` never states ROOT at all, so
- * an unstated ROOT here is unknown — not "the block's own scope". Where the
- * rules do state it the two commonly differ, which is the point:
- * `init_effect` on a solar system initializer runs in planet scope with a
- * country as ROOT.
+ * The default empty map declares no ambient scopes. It does not infer ROOT
+ * from `S`: CWT can set THIS and ROOT independently, so generated fields name
+ * ROOT explicitly when it is known.
  */
-export type EffectBlock<
-  S extends ScopeName,
-  From extends ScopeName | undefined = undefined,
-  Root extends ScopeName | undefined = undefined,
-> = (scope: ScopeObjOf<S>, ctx: ScriptCtx<S, From, Root>) => void;
+export type EffectBlock<S extends ScopeName, Context extends AmbientScopeContext = {}> = (
+  scope: ScopeObjOf<S>,
+  ctx: ScriptCtx<S, Context>
+) => void;
 
 /**
- * A declarative field whose rules give the block a FROM: the value itself, or
- * a closure handed the block's scopes that returns it.
+ * A declarative field whose rules give the block a named non-ROOT ambient
+ * scope: the value itself, or a closure handed the block's scopes that returns
+ * it.
  *
  *     allow: (ctx) => ctx.from.trigger(hasSiteFlag("x"))
  *
@@ -395,22 +399,20 @@ export type EffectBlock<
  * argument list to put FROM in — this adds one. The plain form stays: a
  * condition that never names FROM has no reason to grow a closure around it.
  *
- * Emitted only where the rules name a FROM, so the type's presence on a field
- * *is* the statement that FROM means something there. The closure runs once,
- * at definition time (see `ContentAuthoring.define`), so what the definition
- * carries from then on is the ordinary value.
+ * Emitted only where the rules name a FROM or PREV slot, so the type's
+ * presence on a field is the statement that an ambient scope means something
+ * there. The closure runs once, at definition time (see
+ * `ContentAuthoring.define`), so what the definition carries from then on is
+ * the ordinary value.
  *
  * `Root` rides along on the same closure where the rules also name a ROOT, on
- * {@link EffectBlock}'s terms. A field that declares ROOT but no FROM still
- * gets no closure form: the wrapper is emitted on FROM alone, so ROOT is
- * unreachable there — a pre-existing gap, not a statement about that field.
+ * {@link EffectBlock}'s terms. A field that declares ROOT but no other ambient
+ * scope stays a plain value: ROOT alone is not a reason to add a callback.
  */
-export type WithFrom<
-  T,
-  S extends ScopeName,
-  From extends ScopeName | undefined = undefined,
-  Root extends ScopeName | undefined = undefined,
-> = T | ((ctx: ScriptCtx<S, From, Root>) => T);
+export type WithFrom<T, S extends ScopeName, Context extends AmbientScopeContext = {}> =
+  Extract<keyof Context, Exclude<AmbientScopeKey, "root">> extends never
+    ? T
+    : T | ((ctx: ScriptCtx<S, Context>) => T);
 
 /**
  * A conditionally selected description block shared by manually authored

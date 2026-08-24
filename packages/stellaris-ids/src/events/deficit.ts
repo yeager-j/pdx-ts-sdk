@@ -3,20 +3,20 @@
 import type { EventRef } from "@pdx-ts/sdk";
 
 export interface VanillaEventNamespaceDeficit {
-  readonly $100: EventRef<"situation", undefined, "situation"> & { readonly id: "deficit.100" };
-  readonly $110: EventRef<"situation", undefined, "situation"> & { readonly id: "deficit.110" };
-  readonly $125: EventRef<"situation", undefined, "situation"> & { readonly id: "deficit.125" };
-  readonly $130: EventRef<"situation", undefined, "situation"> & { readonly id: "deficit.130" };
-  readonly $140: EventRef<"situation", undefined, "situation"> & { readonly id: "deficit.140" };
-  readonly $145: EventRef<"situation", undefined, "situation"> & { readonly id: "deficit.145" };
-  readonly $155: EventRef<"situation", undefined, "situation"> & { readonly id: "deficit.155" };
-  readonly $160: EventRef<"situation", undefined, "situation"> & { readonly id: "deficit.160" };
-  readonly $170: EventRef<"situation", undefined, "situation"> & { readonly id: "deficit.170" };
-  readonly $175: EventRef<"situation", undefined, "situation"> & { readonly id: "deficit.175" };
-  readonly $185: EventRef<"situation", undefined, "situation"> & { readonly id: "deficit.185" };
-  readonly $190: EventRef<"situation", undefined, "situation"> & { readonly id: "deficit.190" };
-  readonly $200: EventRef<"situation", undefined, "situation"> & { readonly id: "deficit.200" };
-  readonly $205: EventRef<"situation", undefined, "situation"> & { readonly id: "deficit.205" };
-  readonly $215: EventRef<"situation", undefined, "situation"> & { readonly id: "deficit.215" };
-  readonly $220: EventRef<"situation", undefined, "situation"> & { readonly id: "deficit.220" };
+  readonly $100: EventRef<"situation", {}, "situation"> & { readonly id: "deficit.100" };
+  readonly $110: EventRef<"situation", {}, "situation"> & { readonly id: "deficit.110" };
+  readonly $125: EventRef<"situation", {}, "situation"> & { readonly id: "deficit.125" };
+  readonly $130: EventRef<"situation", {}, "situation"> & { readonly id: "deficit.130" };
+  readonly $140: EventRef<"situation", {}, "situation"> & { readonly id: "deficit.140" };
+  readonly $145: EventRef<"situation", {}, "situation"> & { readonly id: "deficit.145" };
+  readonly $155: EventRef<"situation", {}, "situation"> & { readonly id: "deficit.155" };
+  readonly $160: EventRef<"situation", {}, "situation"> & { readonly id: "deficit.160" };
+  readonly $170: EventRef<"situation", {}, "situation"> & { readonly id: "deficit.170" };
+  readonly $175: EventRef<"situation", {}, "situation"> & { readonly id: "deficit.175" };
+  readonly $185: EventRef<"situation", {}, "situation"> & { readonly id: "deficit.185" };
+  readonly $190: EventRef<"situation", {}, "situation"> & { readonly id: "deficit.190" };
+  readonly $200: EventRef<"situation", {}, "situation"> & { readonly id: "deficit.200" };
+  readonly $205: EventRef<"situation", {}, "situation"> & { readonly id: "deficit.205" };
+  readonly $215: EventRef<"situation", {}, "situation"> & { readonly id: "deficit.215" };
+  readonly $220: EventRef<"situation", {}, "situation"> & { readonly id: "deficit.220" };
 }

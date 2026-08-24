@@ -17,17 +17,15 @@ describe("generated event surface", () => {
     );
     expect(new Set(emitted).size).toBe(emitted.length);
     expect(definers).toContain(
-      "  defineCountryEvent<From extends ScopeName | undefined = undefined>(\n" +
-        '    def: EventDef<"country", From>\n' +
-        '  ): EventItem<"country", From, "country">;'
+      "  defineCountryEvent<Context extends AmbientScopeContext = {}>(\n" +
+        '    def: EventDef<"country", Context>\n' +
+        '  ): EventItem<"country", Context, "country">;'
     );
     // The kind's subtype, not its scope: an observer event runs in country
     // scope and is still not a country event to the rules.
-    expect(definers).toContain('  ): EventItem<"country", From, "observer">;');
-    expect(definers).toContain('  ): EventItem<"storm", From, "cosmic_storm">;');
-    expect(definers).toContain(
-      "  defineSituationEvent<From extends ScopeName | undefined = undefined>("
-    );
+    expect(definers).toContain('  ): EventItem<"country", Context, "observer">;');
+    expect(definers).toContain('  ): EventItem<"storm", Context, "cosmic_storm">;');
+    expect(definers).toContain("  defineSituationEvent<Context extends AmbientScopeContext = {}>(");
     expect(definers).toContain('defineSituationEvent: definerOf("situation_event", "situation"),');
     expect(definers).not.toContain("defineEvent<From");
     expect(definers).not.toContain('"event", null');
@@ -73,9 +71,9 @@ describe("generated event surface", () => {
       "export function capabilityEvents<P extends string, N extends string>("
     );
     expect(capability).toContain('minter.handle(id, "country_event", "country", "country"');
-    expect(capability).toContain('CapabilityEventHandle<P, N, Id, "country", From, "observer">');
+    expect(capability).toContain('CapabilityEventHandle<P, N, Id, "country", Context, "observer">');
     expect(definers).toContain("  readonly scope: S;");
-    expect(definers).toContain("  readonly from: From;");
+    expect(definers).toContain("  readonly scopes: Context;");
     expect(capability).toContain(
       "Defines a country event with an id in this capability namespace."
     );
@@ -88,11 +86,11 @@ describe("generated event surface", () => {
     expect(fires).toContain('declare module "./effects.ts"');
     expect(fires).toContain("interface SituationScope {");
     expect(fires).toContain(
-      'situationEvent(args: FireEventArgs<"situation", undefined, "situation">): void;'
+      'situationEvent(args: FireEventArgs<"situation", {}, "situation">): void;'
     );
     expect(fires).toContain(
-      "situationEvent<F extends ScopeName>(\n" +
-        '      args: WitnessedFireEventArgs<"situation", F, "situation">\n' +
+      "situationEvent<Context extends AmbientScopeContext>(\n" +
+        '      args: WitnessedFireEventArgs<"situation", Context, "situation">\n' +
         "    ): void;"
     );
   });
@@ -105,7 +103,7 @@ describe("generated event surface", () => {
     // Pinned with its subtype: firing an ordinary country event through
     // `observer_event = { ... }` is a different event type to the game.
     expect(universal).toContain(
-      'observerEvent(args: FireEventArgs<"country", undefined, "observer">): void;'
+      'observerEvent(args: FireEventArgs<"country", {}, "observer">): void;'
     );
   });
 

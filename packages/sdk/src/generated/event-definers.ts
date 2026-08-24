@@ -5,6 +5,7 @@
 import { assertNamespace } from "../authoring/feature.ts";
 import { assertEventNumber, buildEvent } from "../events/lower.ts";
 import type { EventDef, EventItem, EventRef } from "../events/types.ts";
+import type { AmbientScopeContext } from "../script/effects/types.ts";
 import { EVENT_KINDS, type EventKindKey } from "./events.ts";
 import type { ScopeName } from "./scopes.ts";
 
@@ -26,161 +27,161 @@ export interface EventNamespace {
    * Internal lowering primitive for an agreement event; the full id is
    * `${namespace}.${def.id}`. Public authors call the matching capability method.
    */
-  defineAgreementEvent<From extends ScopeName | undefined = undefined>(
-    def: EventDef<"agreement", From>
-  ): EventItem<"agreement", From, "agreement">;
+  defineAgreementEvent<Context extends AmbientScopeContext = {}>(
+    def: EventDef<"agreement", Context>
+  ): EventItem<"agreement", Context, "agreement">;
 
   /**
    * Internal lowering primitive for an astral rift event; the full id is
    * `${namespace}.${def.id}`. Public authors call the matching capability method.
    */
-  defineAstralRiftEvent<From extends ScopeName | undefined = undefined>(
-    def: EventDef<"astral_rift", From>
-  ): EventItem<"astral_rift", From, "astral_rift">;
+  defineAstralRiftEvent<Context extends AmbientScopeContext = {}>(
+    def: EventDef<"astral_rift", Context>
+  ): EventItem<"astral_rift", Context, "astral_rift">;
 
   /**
    * Internal lowering primitive for a bypass event; the full id is
    * `${namespace}.${def.id}`. Public authors call the matching capability method.
    */
-  defineBypassEvent<From extends ScopeName | undefined = undefined>(
-    def: EventDef<"bypass", From>
-  ): EventItem<"bypass", From, "bypass">;
+  defineBypassEvent<Context extends AmbientScopeContext = {}>(
+    def: EventDef<"bypass", Context>
+  ): EventItem<"bypass", Context, "bypass">;
 
   /**
    * Internal lowering primitive for a carrier event; the full id is
    * `${namespace}.${def.id}`. Public authors call the matching capability method.
    */
-  defineCarrierEvent<From extends ScopeName | undefined = undefined>(
-    def: EventDef<"carrier", From>
-  ): EventItem<"carrier", From, "carrier">;
+  defineCarrierEvent<Context extends AmbientScopeContext = {}>(
+    def: EventDef<"carrier", Context>
+  ): EventItem<"carrier", Context, "carrier">;
 
   /**
    * Internal lowering primitive for a colony event; the full id is
    * `${namespace}.${def.id}`. Public authors call the matching capability method.
    */
-  defineColonyEvent<From extends ScopeName | undefined = undefined>(
-    def: EventDef<"colony", From>
-  ): EventItem<"colony", From, "colony">;
+  defineColonyEvent<Context extends AmbientScopeContext = {}>(
+    def: EventDef<"colony", Context>
+  ): EventItem<"colony", Context, "colony">;
 
   /**
    * Internal lowering primitive for a cosmic storm event; the full id is
    * `${namespace}.${def.id}`. Public authors call the matching capability method.
    */
-  defineCosmicStormEvent<From extends ScopeName | undefined = undefined>(
-    def: EventDef<"storm", From>
-  ): EventItem<"storm", From, "cosmic_storm">;
+  defineCosmicStormEvent<Context extends AmbientScopeContext = {}>(
+    def: EventDef<"storm", Context>
+  ): EventItem<"storm", Context, "cosmic_storm">;
 
   /**
    * Internal lowering primitive for a cosmic storm influence field event; the full id is
    * `${namespace}.${def.id}`. Public authors call the matching capability method.
    */
-  defineCosmicStormInfluenceFieldEvent<From extends ScopeName | undefined = undefined>(
-    def: EventDef<"cosmic_storm_influence_field", From>
-  ): EventItem<"cosmic_storm_influence_field", From, "cosmic_storm_influence_field">;
+  defineCosmicStormInfluenceFieldEvent<Context extends AmbientScopeContext = {}>(
+    def: EventDef<"cosmic_storm_influence_field", Context>
+  ): EventItem<"cosmic_storm_influence_field", Context, "cosmic_storm_influence_field">;
 
   /**
    * Internal lowering primitive for a country event; the full id is
    * `${namespace}.${def.id}`. Public authors call the matching capability method.
    */
-  defineCountryEvent<From extends ScopeName | undefined = undefined>(
-    def: EventDef<"country", From>
-  ): EventItem<"country", From, "country">;
+  defineCountryEvent<Context extends AmbientScopeContext = {}>(
+    def: EventDef<"country", Context>
+  ): EventItem<"country", Context, "country">;
 
   /**
    * Internal lowering primitive for an espionage operation event; the full id is
    * `${namespace}.${def.id}`. Public authors call the matching capability method.
    */
-  defineEspionageOperationEvent<From extends ScopeName | undefined = undefined>(
-    def: EventDef<"espionage_operation", From>
-  ): EventItem<"espionage_operation", From, "espionage_operation">;
+  defineEspionageOperationEvent<Context extends AmbientScopeContext = {}>(
+    def: EventDef<"espionage_operation", Context>
+  ): EventItem<"espionage_operation", Context, "espionage_operation">;
 
   /**
    * Internal lowering primitive for a first contact event; the full id is
    * `${namespace}.${def.id}`. Public authors call the matching capability method.
    */
-  defineFirstContactEvent<From extends ScopeName | undefined = undefined>(
-    def: EventDef<"first_contact", From>
-  ): EventItem<"first_contact", From, "first_contact">;
+  defineFirstContactEvent<Context extends AmbientScopeContext = {}>(
+    def: EventDef<"first_contact", Context>
+  ): EventItem<"first_contact", Context, "first_contact">;
 
   /**
    * Internal lowering primitive for a fleet event; the full id is
    * `${namespace}.${def.id}`. Public authors call the matching capability method.
    */
-  defineFleetEvent<From extends ScopeName | undefined = undefined>(
-    def: EventDef<"fleet", From>
-  ): EventItem<"fleet", From, "fleet">;
+  defineFleetEvent<Context extends AmbientScopeContext = {}>(
+    def: EventDef<"fleet", Context>
+  ): EventItem<"fleet", Context, "fleet">;
 
   /**
    * Internal lowering primitive for a leader event; the full id is
    * `${namespace}.${def.id}`. Public authors call the matching capability method.
    */
-  defineLeaderEvent<From extends ScopeName | undefined = undefined>(
-    def: EventDef<"leader", From>
-  ): EventItem<"leader", From, "leader">;
+  defineLeaderEvent<Context extends AmbientScopeContext = {}>(
+    def: EventDef<"leader", Context>
+  ): EventItem<"leader", Context, "leader">;
 
   /**
    * Internal lowering primitive for an observer event; the full id is
    * `${namespace}.${def.id}`. Public authors call the matching capability method.
    */
-  defineObserverEvent<From extends ScopeName | undefined = undefined>(
-    def: EventDef<"country", From>
-  ): EventItem<"country", From, "observer">;
+  defineObserverEvent<Context extends AmbientScopeContext = {}>(
+    def: EventDef<"country", Context>
+  ): EventItem<"country", Context, "observer">;
 
   /**
    * Internal lowering primitive for a planet event; the full id is
    * `${namespace}.${def.id}`. Public authors call the matching capability method.
    */
-  definePlanetEvent<From extends ScopeName | undefined = undefined>(
-    def: EventDef<"planet", From>
-  ): EventItem<"planet", From, "planet">;
+  definePlanetEvent<Context extends AmbientScopeContext = {}>(
+    def: EventDef<"planet", Context>
+  ): EventItem<"planet", Context, "planet">;
 
   /**
    * Internal lowering primitive for a pop faction event; the full id is
    * `${namespace}.${def.id}`. Public authors call the matching capability method.
    */
-  definePopFactionEvent<From extends ScopeName | undefined = undefined>(
-    def: EventDef<"pop_faction", From>
-  ): EventItem<"pop_faction", From, "pop_faction">;
+  definePopFactionEvent<Context extends AmbientScopeContext = {}>(
+    def: EventDef<"pop_faction", Context>
+  ): EventItem<"pop_faction", Context, "pop_faction">;
 
   /**
    * Internal lowering primitive for a pop group event; the full id is
    * `${namespace}.${def.id}`. Public authors call the matching capability method.
    */
-  definePopGroupEvent<From extends ScopeName | undefined = undefined>(
-    def: EventDef<"pop_group", From>
-  ): EventItem<"pop_group", From, "pop_group">;
+  definePopGroupEvent<Context extends AmbientScopeContext = {}>(
+    def: EventDef<"pop_group", Context>
+  ): EventItem<"pop_group", Context, "pop_group">;
 
   /**
    * Internal lowering primitive for a ship event; the full id is
    * `${namespace}.${def.id}`. Public authors call the matching capability method.
    */
-  defineShipEvent<From extends ScopeName | undefined = undefined>(
-    def: EventDef<"ship", From>
-  ): EventItem<"ship", From, "ship">;
+  defineShipEvent<Context extends AmbientScopeContext = {}>(
+    def: EventDef<"ship", Context>
+  ): EventItem<"ship", Context, "ship">;
 
   /**
    * Internal lowering primitive for a situation event; the full id is
    * `${namespace}.${def.id}`. Public authors call the matching capability method.
    */
-  defineSituationEvent<From extends ScopeName | undefined = undefined>(
-    def: EventDef<"situation", From>
-  ): EventItem<"situation", From, "situation">;
+  defineSituationEvent<Context extends AmbientScopeContext = {}>(
+    def: EventDef<"situation", Context>
+  ): EventItem<"situation", Context, "situation">;
 
   /**
    * Internal lowering primitive for a starbase event; the full id is
    * `${namespace}.${def.id}`. Public authors call the matching capability method.
    */
-  defineStarbaseEvent<From extends ScopeName | undefined = undefined>(
-    def: EventDef<"starbase", From>
-  ): EventItem<"starbase", From, "starbase">;
+  defineStarbaseEvent<Context extends AmbientScopeContext = {}>(
+    def: EventDef<"starbase", Context>
+  ): EventItem<"starbase", Context, "starbase">;
 
   /**
    * Internal lowering primitive for a system event; the full id is
    * `${namespace}.${def.id}`. Public authors call the matching capability method.
    */
-  defineSystemEvent<From extends ScopeName | undefined = undefined>(
-    def: EventDef<"system", From>
-  ): EventItem<"system", From, "system">;
+  defineSystemEvent<Context extends AmbientScopeContext = {}>(
+    def: EventDef<"system", Context>
+  ): EventItem<"system", Context, "system">;
 }
 
 /**
@@ -201,9 +202,9 @@ export function namespace(ns: string): EventNamespace {
   const used = new Set<number>();
   const definerOf =
     <const K extends EventKindKey, S extends ScopeName>(kind: K, scope: S) =>
-    <From extends ScopeName | undefined = undefined>(
-      def: EventDef<S, From>
-    ): EventItem<S, From, (typeof EVENT_KINDS)[K]["subtype"]> => {
+    <Context extends AmbientScopeContext = {}>(
+      def: EventDef<S, Context>
+    ): EventItem<S, Context, (typeof EVENT_KINDS)[K]["subtype"]> => {
       assertEventNumber(def.id);
       if (used.has(def.id)) {
         throw new Error(`Duplicate event id "${ns}.${def.id}"`);
@@ -214,7 +215,7 @@ export function namespace(ns: string): EventNamespace {
         register: (key, text) => locEntries.push([key, text]),
       });
       const item = { ...built, itemKind: "event" as const, namespace: ns, locEntries };
-      return item as EventItem<S, From, (typeof EVENT_KINDS)[K]["subtype"]>;
+      return item as EventItem<S, Context, (typeof EVENT_KINDS)[K]["subtype"]>;
     };
   return {
     kind: "event-namespace",
@@ -258,22 +259,24 @@ export type CapabilityEventItem<
   N extends string,
   Id extends number,
   S extends ScopeName,
-  From extends ScopeName | undefined,
+  Context extends AmbientScopeContext,
   Kind extends string = S,
-> = EventItem<S, From, Kind> & { readonly id: MintedEventId<P, N, Id> };
+> = EventItem<S, Context, Kind> & { readonly id: MintedEventId<P, N, Id> };
 
 export type CapabilityEventHandle<
   P extends string,
   N extends string,
   Id extends number,
   S extends ScopeName,
-  From extends ScopeName | undefined,
+  Context extends AmbientScopeContext,
   Kind extends string = S,
-> = EventRef<S, From, Kind> & {
+> = EventRef<S, Context, Kind> & {
   readonly id: MintedEventId<P, N, Id>;
   readonly scope: S;
-  readonly from: From;
-  define(def: Omit<EventDef<S, From>, "id" | "from">): CapabilityEventItem<P, N, Id, S, From, Kind>;
+  readonly scopes: Context;
+  define(
+    def: Omit<EventDef<S, Context>, "id" | "scopes">
+  ): CapabilityEventItem<P, N, Id, S, Context, Kind>;
 };
 
 export interface CapabilityEventMinter<P extends string, N extends string> {
@@ -281,15 +284,15 @@ export interface CapabilityEventMinter<P extends string, N extends string> {
   handle<
     const Id extends number,
     S extends ScopeName,
-    From extends ScopeName | undefined,
+    Context extends AmbientScopeContext,
     Kind extends string,
   >(
     id: Id,
     kind: EventKindKey,
     scope: S,
     subtype: Kind,
-    from: From
-  ): CapabilityEventHandle<P, N, Id, S, From, Kind>;
+    scopes: Context
+  ): CapabilityEventHandle<P, N, Id, S, Context, Kind>;
 }
 
 export interface CapabilityEvents<P extends string, N extends string> {
@@ -298,126 +301,123 @@ export interface CapabilityEvents<P extends string, N extends string> {
    * Defines an agreement event with an id in this capability namespace.
    * The capability owns the namespace and full id; callers supply only the numeric id.
    */
-  agreement<const Id extends number, From extends ScopeName | undefined = undefined>(
+  agreement<const Id extends number, Context extends AmbientScopeContext = {}>(
     id: Id,
-    def: Omit<EventDef<"agreement", From>, "id">
-  ): CapabilityEventItem<P, N, Id, "agreement", From, "agreement">;
+    def: Omit<EventDef<"agreement", Context>, "id">
+  ): CapabilityEventItem<P, N, Id, "agreement", Context, "agreement">;
 
   /**
    * Creates an immutable agreement event reference in this capability namespace.
    * Define it later with its `define(...)` method when a cycle needs the handle first.
    */
-  agreementHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
+  agreementHandle<const Id extends number, Context extends AmbientScopeContext = {}>(
     id: Id,
-    contract?: { readonly from?: From }
-  ): CapabilityEventHandle<P, N, Id, "agreement", From, "agreement">;
+    contract?: { readonly scopes?: Context }
+  ): CapabilityEventHandle<P, N, Id, "agreement", Context, "agreement">;
 
   /**
    * Defines an astral rift event with an id in this capability namespace.
    * The capability owns the namespace and full id; callers supply only the numeric id.
    */
-  astralRift<const Id extends number, From extends ScopeName | undefined = undefined>(
+  astralRift<const Id extends number, Context extends AmbientScopeContext = {}>(
     id: Id,
-    def: Omit<EventDef<"astral_rift", From>, "id">
-  ): CapabilityEventItem<P, N, Id, "astral_rift", From, "astral_rift">;
+    def: Omit<EventDef<"astral_rift", Context>, "id">
+  ): CapabilityEventItem<P, N, Id, "astral_rift", Context, "astral_rift">;
 
   /**
    * Creates an immutable astral rift event reference in this capability namespace.
    * Define it later with its `define(...)` method when a cycle needs the handle first.
    */
-  astralRiftHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
+  astralRiftHandle<const Id extends number, Context extends AmbientScopeContext = {}>(
     id: Id,
-    contract?: { readonly from?: From }
-  ): CapabilityEventHandle<P, N, Id, "astral_rift", From, "astral_rift">;
+    contract?: { readonly scopes?: Context }
+  ): CapabilityEventHandle<P, N, Id, "astral_rift", Context, "astral_rift">;
 
   /**
    * Defines a bypass event with an id in this capability namespace.
    * The capability owns the namespace and full id; callers supply only the numeric id.
    */
-  bypass<const Id extends number, From extends ScopeName | undefined = undefined>(
+  bypass<const Id extends number, Context extends AmbientScopeContext = {}>(
     id: Id,
-    def: Omit<EventDef<"bypass", From>, "id">
-  ): CapabilityEventItem<P, N, Id, "bypass", From, "bypass">;
+    def: Omit<EventDef<"bypass", Context>, "id">
+  ): CapabilityEventItem<P, N, Id, "bypass", Context, "bypass">;
 
   /**
    * Creates an immutable bypass event reference in this capability namespace.
    * Define it later with its `define(...)` method when a cycle needs the handle first.
    */
-  bypassHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
+  bypassHandle<const Id extends number, Context extends AmbientScopeContext = {}>(
     id: Id,
-    contract?: { readonly from?: From }
-  ): CapabilityEventHandle<P, N, Id, "bypass", From, "bypass">;
+    contract?: { readonly scopes?: Context }
+  ): CapabilityEventHandle<P, N, Id, "bypass", Context, "bypass">;
 
   /**
    * Defines a carrier event with an id in this capability namespace.
    * The capability owns the namespace and full id; callers supply only the numeric id.
    */
-  carrier<const Id extends number, From extends ScopeName | undefined = undefined>(
+  carrier<const Id extends number, Context extends AmbientScopeContext = {}>(
     id: Id,
-    def: Omit<EventDef<"carrier", From>, "id">
-  ): CapabilityEventItem<P, N, Id, "carrier", From, "carrier">;
+    def: Omit<EventDef<"carrier", Context>, "id">
+  ): CapabilityEventItem<P, N, Id, "carrier", Context, "carrier">;
 
   /**
    * Creates an immutable carrier event reference in this capability namespace.
    * Define it later with its `define(...)` method when a cycle needs the handle first.
    */
-  carrierHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
+  carrierHandle<const Id extends number, Context extends AmbientScopeContext = {}>(
     id: Id,
-    contract?: { readonly from?: From }
-  ): CapabilityEventHandle<P, N, Id, "carrier", From, "carrier">;
+    contract?: { readonly scopes?: Context }
+  ): CapabilityEventHandle<P, N, Id, "carrier", Context, "carrier">;
 
   /**
    * Defines a colony event with an id in this capability namespace.
    * The capability owns the namespace and full id; callers supply only the numeric id.
    */
-  colony<const Id extends number, From extends ScopeName | undefined = undefined>(
+  colony<const Id extends number, Context extends AmbientScopeContext = {}>(
     id: Id,
-    def: Omit<EventDef<"colony", From>, "id">
-  ): CapabilityEventItem<P, N, Id, "colony", From, "colony">;
+    def: Omit<EventDef<"colony", Context>, "id">
+  ): CapabilityEventItem<P, N, Id, "colony", Context, "colony">;
 
   /**
    * Creates an immutable colony event reference in this capability namespace.
    * Define it later with its `define(...)` method when a cycle needs the handle first.
    */
-  colonyHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
+  colonyHandle<const Id extends number, Context extends AmbientScopeContext = {}>(
     id: Id,
-    contract?: { readonly from?: From }
-  ): CapabilityEventHandle<P, N, Id, "colony", From, "colony">;
+    contract?: { readonly scopes?: Context }
+  ): CapabilityEventHandle<P, N, Id, "colony", Context, "colony">;
 
   /**
    * Defines a cosmic storm event with an id in this capability namespace.
    * The capability owns the namespace and full id; callers supply only the numeric id.
    */
-  cosmicStorm<const Id extends number, From extends ScopeName | undefined = undefined>(
+  cosmicStorm<const Id extends number, Context extends AmbientScopeContext = {}>(
     id: Id,
-    def: Omit<EventDef<"storm", From>, "id">
-  ): CapabilityEventItem<P, N, Id, "storm", From, "cosmic_storm">;
+    def: Omit<EventDef<"storm", Context>, "id">
+  ): CapabilityEventItem<P, N, Id, "storm", Context, "cosmic_storm">;
 
   /**
    * Creates an immutable cosmic storm event reference in this capability namespace.
    * Define it later with its `define(...)` method when a cycle needs the handle first.
    */
-  cosmicStormHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
+  cosmicStormHandle<const Id extends number, Context extends AmbientScopeContext = {}>(
     id: Id,
-    contract?: { readonly from?: From }
-  ): CapabilityEventHandle<P, N, Id, "storm", From, "cosmic_storm">;
+    contract?: { readonly scopes?: Context }
+  ): CapabilityEventHandle<P, N, Id, "storm", Context, "cosmic_storm">;
 
   /**
    * Defines a cosmic storm influence field event with an id in this capability namespace.
    * The capability owns the namespace and full id; callers supply only the numeric id.
    */
-  cosmicStormInfluenceField<
-    const Id extends number,
-    From extends ScopeName | undefined = undefined,
-  >(
+  cosmicStormInfluenceField<const Id extends number, Context extends AmbientScopeContext = {}>(
     id: Id,
-    def: Omit<EventDef<"cosmic_storm_influence_field", From>, "id">
+    def: Omit<EventDef<"cosmic_storm_influence_field", Context>, "id">
   ): CapabilityEventItem<
     P,
     N,
     Id,
     "cosmic_storm_influence_field",
-    From,
+    Context,
     "cosmic_storm_influence_field"
   >;
 
@@ -427,16 +427,16 @@ export interface CapabilityEvents<P extends string, N extends string> {
    */
   cosmicStormInfluenceFieldHandle<
     const Id extends number,
-    From extends ScopeName | undefined = undefined,
+    Context extends AmbientScopeContext = {},
   >(
     id: Id,
-    contract?: { readonly from?: From }
+    contract?: { readonly scopes?: Context }
   ): CapabilityEventHandle<
     P,
     N,
     Id,
     "cosmic_storm_influence_field",
-    From,
+    Context,
     "cosmic_storm_influence_field"
   >;
 
@@ -444,235 +444,235 @@ export interface CapabilityEvents<P extends string, N extends string> {
    * Defines a country event with an id in this capability namespace.
    * The capability owns the namespace and full id; callers supply only the numeric id.
    */
-  country<const Id extends number, From extends ScopeName | undefined = undefined>(
+  country<const Id extends number, Context extends AmbientScopeContext = {}>(
     id: Id,
-    def: Omit<EventDef<"country", From>, "id">
-  ): CapabilityEventItem<P, N, Id, "country", From, "country">;
+    def: Omit<EventDef<"country", Context>, "id">
+  ): CapabilityEventItem<P, N, Id, "country", Context, "country">;
 
   /**
    * Creates an immutable country event reference in this capability namespace.
    * Define it later with its `define(...)` method when a cycle needs the handle first.
    */
-  countryHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
+  countryHandle<const Id extends number, Context extends AmbientScopeContext = {}>(
     id: Id,
-    contract?: { readonly from?: From }
-  ): CapabilityEventHandle<P, N, Id, "country", From, "country">;
+    contract?: { readonly scopes?: Context }
+  ): CapabilityEventHandle<P, N, Id, "country", Context, "country">;
 
   /**
    * Defines an espionage operation event with an id in this capability namespace.
    * The capability owns the namespace and full id; callers supply only the numeric id.
    */
-  espionageOperation<const Id extends number, From extends ScopeName | undefined = undefined>(
+  espionageOperation<const Id extends number, Context extends AmbientScopeContext = {}>(
     id: Id,
-    def: Omit<EventDef<"espionage_operation", From>, "id">
-  ): CapabilityEventItem<P, N, Id, "espionage_operation", From, "espionage_operation">;
+    def: Omit<EventDef<"espionage_operation", Context>, "id">
+  ): CapabilityEventItem<P, N, Id, "espionage_operation", Context, "espionage_operation">;
 
   /**
    * Creates an immutable espionage operation event reference in this capability namespace.
    * Define it later with its `define(...)` method when a cycle needs the handle first.
    */
-  espionageOperationHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
+  espionageOperationHandle<const Id extends number, Context extends AmbientScopeContext = {}>(
     id: Id,
-    contract?: { readonly from?: From }
-  ): CapabilityEventHandle<P, N, Id, "espionage_operation", From, "espionage_operation">;
+    contract?: { readonly scopes?: Context }
+  ): CapabilityEventHandle<P, N, Id, "espionage_operation", Context, "espionage_operation">;
 
   /**
    * Defines a first contact event with an id in this capability namespace.
    * The capability owns the namespace and full id; callers supply only the numeric id.
    */
-  firstContact<const Id extends number, From extends ScopeName | undefined = undefined>(
+  firstContact<const Id extends number, Context extends AmbientScopeContext = {}>(
     id: Id,
-    def: Omit<EventDef<"first_contact", From>, "id">
-  ): CapabilityEventItem<P, N, Id, "first_contact", From, "first_contact">;
+    def: Omit<EventDef<"first_contact", Context>, "id">
+  ): CapabilityEventItem<P, N, Id, "first_contact", Context, "first_contact">;
 
   /**
    * Creates an immutable first contact event reference in this capability namespace.
    * Define it later with its `define(...)` method when a cycle needs the handle first.
    */
-  firstContactHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
+  firstContactHandle<const Id extends number, Context extends AmbientScopeContext = {}>(
     id: Id,
-    contract?: { readonly from?: From }
-  ): CapabilityEventHandle<P, N, Id, "first_contact", From, "first_contact">;
+    contract?: { readonly scopes?: Context }
+  ): CapabilityEventHandle<P, N, Id, "first_contact", Context, "first_contact">;
 
   /**
    * Defines a fleet event with an id in this capability namespace.
    * The capability owns the namespace and full id; callers supply only the numeric id.
    */
-  fleet<const Id extends number, From extends ScopeName | undefined = undefined>(
+  fleet<const Id extends number, Context extends AmbientScopeContext = {}>(
     id: Id,
-    def: Omit<EventDef<"fleet", From>, "id">
-  ): CapabilityEventItem<P, N, Id, "fleet", From, "fleet">;
+    def: Omit<EventDef<"fleet", Context>, "id">
+  ): CapabilityEventItem<P, N, Id, "fleet", Context, "fleet">;
 
   /**
    * Creates an immutable fleet event reference in this capability namespace.
    * Define it later with its `define(...)` method when a cycle needs the handle first.
    */
-  fleetHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
+  fleetHandle<const Id extends number, Context extends AmbientScopeContext = {}>(
     id: Id,
-    contract?: { readonly from?: From }
-  ): CapabilityEventHandle<P, N, Id, "fleet", From, "fleet">;
+    contract?: { readonly scopes?: Context }
+  ): CapabilityEventHandle<P, N, Id, "fleet", Context, "fleet">;
 
   /**
    * Defines a leader event with an id in this capability namespace.
    * The capability owns the namespace and full id; callers supply only the numeric id.
    */
-  leader<const Id extends number, From extends ScopeName | undefined = undefined>(
+  leader<const Id extends number, Context extends AmbientScopeContext = {}>(
     id: Id,
-    def: Omit<EventDef<"leader", From>, "id">
-  ): CapabilityEventItem<P, N, Id, "leader", From, "leader">;
+    def: Omit<EventDef<"leader", Context>, "id">
+  ): CapabilityEventItem<P, N, Id, "leader", Context, "leader">;
 
   /**
    * Creates an immutable leader event reference in this capability namespace.
    * Define it later with its `define(...)` method when a cycle needs the handle first.
    */
-  leaderHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
+  leaderHandle<const Id extends number, Context extends AmbientScopeContext = {}>(
     id: Id,
-    contract?: { readonly from?: From }
-  ): CapabilityEventHandle<P, N, Id, "leader", From, "leader">;
+    contract?: { readonly scopes?: Context }
+  ): CapabilityEventHandle<P, N, Id, "leader", Context, "leader">;
 
   /**
    * Defines an observer event with an id in this capability namespace.
    * The capability owns the namespace and full id; callers supply only the numeric id.
    */
-  observer<const Id extends number, From extends ScopeName | undefined = undefined>(
+  observer<const Id extends number, Context extends AmbientScopeContext = {}>(
     id: Id,
-    def: Omit<EventDef<"country", From>, "id">
-  ): CapabilityEventItem<P, N, Id, "country", From, "observer">;
+    def: Omit<EventDef<"country", Context>, "id">
+  ): CapabilityEventItem<P, N, Id, "country", Context, "observer">;
 
   /**
    * Creates an immutable observer event reference in this capability namespace.
    * Define it later with its `define(...)` method when a cycle needs the handle first.
    */
-  observerHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
+  observerHandle<const Id extends number, Context extends AmbientScopeContext = {}>(
     id: Id,
-    contract?: { readonly from?: From }
-  ): CapabilityEventHandle<P, N, Id, "country", From, "observer">;
+    contract?: { readonly scopes?: Context }
+  ): CapabilityEventHandle<P, N, Id, "country", Context, "observer">;
 
   /**
    * Defines a planet event with an id in this capability namespace.
    * The capability owns the namespace and full id; callers supply only the numeric id.
    */
-  planet<const Id extends number, From extends ScopeName | undefined = undefined>(
+  planet<const Id extends number, Context extends AmbientScopeContext = {}>(
     id: Id,
-    def: Omit<EventDef<"planet", From>, "id">
-  ): CapabilityEventItem<P, N, Id, "planet", From, "planet">;
+    def: Omit<EventDef<"planet", Context>, "id">
+  ): CapabilityEventItem<P, N, Id, "planet", Context, "planet">;
 
   /**
    * Creates an immutable planet event reference in this capability namespace.
    * Define it later with its `define(...)` method when a cycle needs the handle first.
    */
-  planetHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
+  planetHandle<const Id extends number, Context extends AmbientScopeContext = {}>(
     id: Id,
-    contract?: { readonly from?: From }
-  ): CapabilityEventHandle<P, N, Id, "planet", From, "planet">;
+    contract?: { readonly scopes?: Context }
+  ): CapabilityEventHandle<P, N, Id, "planet", Context, "planet">;
 
   /**
    * Defines a pop faction event with an id in this capability namespace.
    * The capability owns the namespace and full id; callers supply only the numeric id.
    */
-  popFaction<const Id extends number, From extends ScopeName | undefined = undefined>(
+  popFaction<const Id extends number, Context extends AmbientScopeContext = {}>(
     id: Id,
-    def: Omit<EventDef<"pop_faction", From>, "id">
-  ): CapabilityEventItem<P, N, Id, "pop_faction", From, "pop_faction">;
+    def: Omit<EventDef<"pop_faction", Context>, "id">
+  ): CapabilityEventItem<P, N, Id, "pop_faction", Context, "pop_faction">;
 
   /**
    * Creates an immutable pop faction event reference in this capability namespace.
    * Define it later with its `define(...)` method when a cycle needs the handle first.
    */
-  popFactionHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
+  popFactionHandle<const Id extends number, Context extends AmbientScopeContext = {}>(
     id: Id,
-    contract?: { readonly from?: From }
-  ): CapabilityEventHandle<P, N, Id, "pop_faction", From, "pop_faction">;
+    contract?: { readonly scopes?: Context }
+  ): CapabilityEventHandle<P, N, Id, "pop_faction", Context, "pop_faction">;
 
   /**
    * Defines a pop group event with an id in this capability namespace.
    * The capability owns the namespace and full id; callers supply only the numeric id.
    */
-  popGroup<const Id extends number, From extends ScopeName | undefined = undefined>(
+  popGroup<const Id extends number, Context extends AmbientScopeContext = {}>(
     id: Id,
-    def: Omit<EventDef<"pop_group", From>, "id">
-  ): CapabilityEventItem<P, N, Id, "pop_group", From, "pop_group">;
+    def: Omit<EventDef<"pop_group", Context>, "id">
+  ): CapabilityEventItem<P, N, Id, "pop_group", Context, "pop_group">;
 
   /**
    * Creates an immutable pop group event reference in this capability namespace.
    * Define it later with its `define(...)` method when a cycle needs the handle first.
    */
-  popGroupHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
+  popGroupHandle<const Id extends number, Context extends AmbientScopeContext = {}>(
     id: Id,
-    contract?: { readonly from?: From }
-  ): CapabilityEventHandle<P, N, Id, "pop_group", From, "pop_group">;
+    contract?: { readonly scopes?: Context }
+  ): CapabilityEventHandle<P, N, Id, "pop_group", Context, "pop_group">;
 
   /**
    * Defines a ship event with an id in this capability namespace.
    * The capability owns the namespace and full id; callers supply only the numeric id.
    */
-  ship<const Id extends number, From extends ScopeName | undefined = undefined>(
+  ship<const Id extends number, Context extends AmbientScopeContext = {}>(
     id: Id,
-    def: Omit<EventDef<"ship", From>, "id">
-  ): CapabilityEventItem<P, N, Id, "ship", From, "ship">;
+    def: Omit<EventDef<"ship", Context>, "id">
+  ): CapabilityEventItem<P, N, Id, "ship", Context, "ship">;
 
   /**
    * Creates an immutable ship event reference in this capability namespace.
    * Define it later with its `define(...)` method when a cycle needs the handle first.
    */
-  shipHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
+  shipHandle<const Id extends number, Context extends AmbientScopeContext = {}>(
     id: Id,
-    contract?: { readonly from?: From }
-  ): CapabilityEventHandle<P, N, Id, "ship", From, "ship">;
+    contract?: { readonly scopes?: Context }
+  ): CapabilityEventHandle<P, N, Id, "ship", Context, "ship">;
 
   /**
    * Defines a situation event with an id in this capability namespace.
    * The capability owns the namespace and full id; callers supply only the numeric id.
    */
-  situation<const Id extends number, From extends ScopeName | undefined = undefined>(
+  situation<const Id extends number, Context extends AmbientScopeContext = {}>(
     id: Id,
-    def: Omit<EventDef<"situation", From>, "id">
-  ): CapabilityEventItem<P, N, Id, "situation", From, "situation">;
+    def: Omit<EventDef<"situation", Context>, "id">
+  ): CapabilityEventItem<P, N, Id, "situation", Context, "situation">;
 
   /**
    * Creates an immutable situation event reference in this capability namespace.
    * Define it later with its `define(...)` method when a cycle needs the handle first.
    */
-  situationHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
+  situationHandle<const Id extends number, Context extends AmbientScopeContext = {}>(
     id: Id,
-    contract?: { readonly from?: From }
-  ): CapabilityEventHandle<P, N, Id, "situation", From, "situation">;
+    contract?: { readonly scopes?: Context }
+  ): CapabilityEventHandle<P, N, Id, "situation", Context, "situation">;
 
   /**
    * Defines a starbase event with an id in this capability namespace.
    * The capability owns the namespace and full id; callers supply only the numeric id.
    */
-  starbase<const Id extends number, From extends ScopeName | undefined = undefined>(
+  starbase<const Id extends number, Context extends AmbientScopeContext = {}>(
     id: Id,
-    def: Omit<EventDef<"starbase", From>, "id">
-  ): CapabilityEventItem<P, N, Id, "starbase", From, "starbase">;
+    def: Omit<EventDef<"starbase", Context>, "id">
+  ): CapabilityEventItem<P, N, Id, "starbase", Context, "starbase">;
 
   /**
    * Creates an immutable starbase event reference in this capability namespace.
    * Define it later with its `define(...)` method when a cycle needs the handle first.
    */
-  starbaseHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
+  starbaseHandle<const Id extends number, Context extends AmbientScopeContext = {}>(
     id: Id,
-    contract?: { readonly from?: From }
-  ): CapabilityEventHandle<P, N, Id, "starbase", From, "starbase">;
+    contract?: { readonly scopes?: Context }
+  ): CapabilityEventHandle<P, N, Id, "starbase", Context, "starbase">;
 
   /**
    * Defines a system event with an id in this capability namespace.
    * The capability owns the namespace and full id; callers supply only the numeric id.
    */
-  system<const Id extends number, From extends ScopeName | undefined = undefined>(
+  system<const Id extends number, Context extends AmbientScopeContext = {}>(
     id: Id,
-    def: Omit<EventDef<"system", From>, "id">
-  ): CapabilityEventItem<P, N, Id, "system", From, "system">;
+    def: Omit<EventDef<"system", Context>, "id">
+  ): CapabilityEventItem<P, N, Id, "system", Context, "system">;
 
   /**
    * Creates an immutable system event reference in this capability namespace.
    * Define it later with its `define(...)` method when a cycle needs the handle first.
    */
-  systemHandle<const Id extends number, From extends ScopeName | undefined = undefined>(
+  systemHandle<const Id extends number, Context extends AmbientScopeContext = {}>(
     id: Id,
-    contract?: { readonly from?: From }
-  ): CapabilityEventHandle<P, N, Id, "system", From, "system">;
+    contract?: { readonly scopes?: Context }
+  ): CapabilityEventHandle<P, N, Id, "system", Context, "system">;
 }
 
 export function capabilityEvents<P extends string, N extends string>(
@@ -680,82 +680,117 @@ export function capabilityEvents<P extends string, N extends string>(
 ): CapabilityEvents<P, N> {
   return Object.freeze({
     namespace: minter.namespace,
-    agreementHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
+    agreementHandle: <const Id extends number, Context extends AmbientScopeContext = {}>(
       id: Id,
-      contract: { readonly from?: From } = {}
-    ) => minter.handle(id, "agreement_event", "agreement", "agreement", contract.from as From),
-    agreement: <const Id extends number, From extends ScopeName | undefined = undefined>(
-      id: Id,
-      def: Omit<EventDef<"agreement", From>, "id">
+      contract: { readonly scopes?: Context } = {}
     ) =>
-      minter.handle(id, "agreement_event", "agreement", "agreement", def.from as From).define(def),
-    astralRiftHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      minter.handle(
+        id,
+        "agreement_event",
+        "agreement",
+        "agreement",
+        (contract.scopes ?? {}) as Context
+      ),
+    agreement: <const Id extends number, Context extends AmbientScopeContext = {}>(
       id: Id,
-      contract: { readonly from?: From } = {}
-    ) =>
-      minter.handle(id, "astral_rift_event", "astral_rift", "astral_rift", contract.from as From),
-    astralRift: <const Id extends number, From extends ScopeName | undefined = undefined>(
-      id: Id,
-      def: Omit<EventDef<"astral_rift", From>, "id">
+      def: Omit<EventDef<"agreement", Context>, "id">
     ) =>
       minter
-        .handle(id, "astral_rift_event", "astral_rift", "astral_rift", def.from as From)
+        .handle(id, "agreement_event", "agreement", "agreement", (def.scopes ?? {}) as Context)
         .define(def),
-    bypassHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
+    astralRiftHandle: <const Id extends number, Context extends AmbientScopeContext = {}>(
       id: Id,
-      contract: { readonly from?: From } = {}
-    ) => minter.handle(id, "bypass_event", "bypass", "bypass", contract.from as From),
-    bypass: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      contract: { readonly scopes?: Context } = {}
+    ) =>
+      minter.handle(
+        id,
+        "astral_rift_event",
+        "astral_rift",
+        "astral_rift",
+        (contract.scopes ?? {}) as Context
+      ),
+    astralRift: <const Id extends number, Context extends AmbientScopeContext = {}>(
       id: Id,
-      def: Omit<EventDef<"bypass", From>, "id">
-    ) => minter.handle(id, "bypass_event", "bypass", "bypass", def.from as From).define(def),
-    carrierHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
-      id: Id,
-      contract: { readonly from?: From } = {}
-    ) => minter.handle(id, "carrier_event", "carrier", "carrier", contract.from as From),
-    carrier: <const Id extends number, From extends ScopeName | undefined = undefined>(
-      id: Id,
-      def: Omit<EventDef<"carrier", From>, "id">
-    ) => minter.handle(id, "carrier_event", "carrier", "carrier", def.from as From).define(def),
-    colonyHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
-      id: Id,
-      contract: { readonly from?: From } = {}
-    ) => minter.handle(id, "colony_event", "colony", "colony", contract.from as From),
-    colony: <const Id extends number, From extends ScopeName | undefined = undefined>(
-      id: Id,
-      def: Omit<EventDef<"colony", From>, "id">
-    ) => minter.handle(id, "colony_event", "colony", "colony", def.from as From).define(def),
-    cosmicStormHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
-      id: Id,
-      contract: { readonly from?: From } = {}
-    ) => minter.handle(id, "cosmic_storm_event", "storm", "cosmic_storm", contract.from as From),
-    cosmicStorm: <const Id extends number, From extends ScopeName | undefined = undefined>(
-      id: Id,
-      def: Omit<EventDef<"storm", From>, "id">
+      def: Omit<EventDef<"astral_rift", Context>, "id">
     ) =>
       minter
-        .handle(id, "cosmic_storm_event", "storm", "cosmic_storm", def.from as From)
+        .handle(
+          id,
+          "astral_rift_event",
+          "astral_rift",
+          "astral_rift",
+          (def.scopes ?? {}) as Context
+        )
+        .define(def),
+    bypassHandle: <const Id extends number, Context extends AmbientScopeContext = {}>(
+      id: Id,
+      contract: { readonly scopes?: Context } = {}
+    ) => minter.handle(id, "bypass_event", "bypass", "bypass", (contract.scopes ?? {}) as Context),
+    bypass: <const Id extends number, Context extends AmbientScopeContext = {}>(
+      id: Id,
+      def: Omit<EventDef<"bypass", Context>, "id">
+    ) =>
+      minter
+        .handle(id, "bypass_event", "bypass", "bypass", (def.scopes ?? {}) as Context)
+        .define(def),
+    carrierHandle: <const Id extends number, Context extends AmbientScopeContext = {}>(
+      id: Id,
+      contract: { readonly scopes?: Context } = {}
+    ) =>
+      minter.handle(id, "carrier_event", "carrier", "carrier", (contract.scopes ?? {}) as Context),
+    carrier: <const Id extends number, Context extends AmbientScopeContext = {}>(
+      id: Id,
+      def: Omit<EventDef<"carrier", Context>, "id">
+    ) =>
+      minter
+        .handle(id, "carrier_event", "carrier", "carrier", (def.scopes ?? {}) as Context)
+        .define(def),
+    colonyHandle: <const Id extends number, Context extends AmbientScopeContext = {}>(
+      id: Id,
+      contract: { readonly scopes?: Context } = {}
+    ) => minter.handle(id, "colony_event", "colony", "colony", (contract.scopes ?? {}) as Context),
+    colony: <const Id extends number, Context extends AmbientScopeContext = {}>(
+      id: Id,
+      def: Omit<EventDef<"colony", Context>, "id">
+    ) =>
+      minter
+        .handle(id, "colony_event", "colony", "colony", (def.scopes ?? {}) as Context)
+        .define(def),
+    cosmicStormHandle: <const Id extends number, Context extends AmbientScopeContext = {}>(
+      id: Id,
+      contract: { readonly scopes?: Context } = {}
+    ) =>
+      minter.handle(
+        id,
+        "cosmic_storm_event",
+        "storm",
+        "cosmic_storm",
+        (contract.scopes ?? {}) as Context
+      ),
+    cosmicStorm: <const Id extends number, Context extends AmbientScopeContext = {}>(
+      id: Id,
+      def: Omit<EventDef<"storm", Context>, "id">
+    ) =>
+      minter
+        .handle(id, "cosmic_storm_event", "storm", "cosmic_storm", (def.scopes ?? {}) as Context)
         .define(def),
     cosmicStormInfluenceFieldHandle: <
       const Id extends number,
-      From extends ScopeName | undefined = undefined,
+      Context extends AmbientScopeContext = {},
     >(
       id: Id,
-      contract: { readonly from?: From } = {}
+      contract: { readonly scopes?: Context } = {}
     ) =>
       minter.handle(
         id,
         "cosmic_storm_influence_field_event",
         "cosmic_storm_influence_field",
         "cosmic_storm_influence_field",
-        contract.from as From
+        (contract.scopes ?? {}) as Context
       ),
-    cosmicStormInfluenceField: <
-      const Id extends number,
-      From extends ScopeName | undefined = undefined,
-    >(
+    cosmicStormInfluenceField: <const Id extends number, Context extends AmbientScopeContext = {}>(
       id: Id,
-      def: Omit<EventDef<"cosmic_storm_influence_field", From>, "id">
+      def: Omit<EventDef<"cosmic_storm_influence_field", Context>, "id">
     ) =>
       minter
         .handle(
@@ -763,34 +798,35 @@ export function capabilityEvents<P extends string, N extends string>(
           "cosmic_storm_influence_field_event",
           "cosmic_storm_influence_field",
           "cosmic_storm_influence_field",
-          def.from as From
+          (def.scopes ?? {}) as Context
         )
         .define(def),
-    countryHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
+    countryHandle: <const Id extends number, Context extends AmbientScopeContext = {}>(
       id: Id,
-      contract: { readonly from?: From } = {}
-    ) => minter.handle(id, "country_event", "country", "country", contract.from as From),
-    country: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      contract: { readonly scopes?: Context } = {}
+    ) =>
+      minter.handle(id, "country_event", "country", "country", (contract.scopes ?? {}) as Context),
+    country: <const Id extends number, Context extends AmbientScopeContext = {}>(
       id: Id,
-      def: Omit<EventDef<"country", From>, "id">
-    ) => minter.handle(id, "country_event", "country", "country", def.from as From).define(def),
-    espionageOperationHandle: <
-      const Id extends number,
-      From extends ScopeName | undefined = undefined,
-    >(
+      def: Omit<EventDef<"country", Context>, "id">
+    ) =>
+      minter
+        .handle(id, "country_event", "country", "country", (def.scopes ?? {}) as Context)
+        .define(def),
+    espionageOperationHandle: <const Id extends number, Context extends AmbientScopeContext = {}>(
       id: Id,
-      contract: { readonly from?: From } = {}
+      contract: { readonly scopes?: Context } = {}
     ) =>
       minter.handle(
         id,
         "espionage_operation_event",
         "espionage_operation",
         "espionage_operation",
-        contract.from as From
+        (contract.scopes ?? {}) as Context
       ),
-    espionageOperation: <const Id extends number, From extends ScopeName | undefined = undefined>(
+    espionageOperation: <const Id extends number, Context extends AmbientScopeContext = {}>(
       id: Id,
-      def: Omit<EventDef<"espionage_operation", From>, "id">
+      def: Omit<EventDef<"espionage_operation", Context>, "id">
     ) =>
       minter
         .handle(
@@ -798,112 +834,178 @@ export function capabilityEvents<P extends string, N extends string>(
           "espionage_operation_event",
           "espionage_operation",
           "espionage_operation",
-          def.from as From
+          (def.scopes ?? {}) as Context
         )
         .define(def),
-    firstContactHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
+    firstContactHandle: <const Id extends number, Context extends AmbientScopeContext = {}>(
       id: Id,
-      contract: { readonly from?: From } = {}
+      contract: { readonly scopes?: Context } = {}
     ) =>
       minter.handle(
         id,
         "first_contact_event",
         "first_contact",
         "first_contact",
-        contract.from as From
+        (contract.scopes ?? {}) as Context
       ),
-    firstContact: <const Id extends number, From extends ScopeName | undefined = undefined>(
+    firstContact: <const Id extends number, Context extends AmbientScopeContext = {}>(
       id: Id,
-      def: Omit<EventDef<"first_contact", From>, "id">
+      def: Omit<EventDef<"first_contact", Context>, "id">
     ) =>
       minter
-        .handle(id, "first_contact_event", "first_contact", "first_contact", def.from as From)
+        .handle(
+          id,
+          "first_contact_event",
+          "first_contact",
+          "first_contact",
+          (def.scopes ?? {}) as Context
+        )
         .define(def),
-    fleetHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
+    fleetHandle: <const Id extends number, Context extends AmbientScopeContext = {}>(
       id: Id,
-      contract: { readonly from?: From } = {}
-    ) => minter.handle(id, "fleet_event", "fleet", "fleet", contract.from as From),
-    fleet: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      contract: { readonly scopes?: Context } = {}
+    ) => minter.handle(id, "fleet_event", "fleet", "fleet", (contract.scopes ?? {}) as Context),
+    fleet: <const Id extends number, Context extends AmbientScopeContext = {}>(
       id: Id,
-      def: Omit<EventDef<"fleet", From>, "id">
-    ) => minter.handle(id, "fleet_event", "fleet", "fleet", def.from as From).define(def),
-    leaderHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
-      id: Id,
-      contract: { readonly from?: From } = {}
-    ) => minter.handle(id, "leader_event", "leader", "leader", contract.from as From),
-    leader: <const Id extends number, From extends ScopeName | undefined = undefined>(
-      id: Id,
-      def: Omit<EventDef<"leader", From>, "id">
-    ) => minter.handle(id, "leader_event", "leader", "leader", def.from as From).define(def),
-    observerHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
-      id: Id,
-      contract: { readonly from?: From } = {}
-    ) => minter.handle(id, "observer_event", "country", "observer", contract.from as From),
-    observer: <const Id extends number, From extends ScopeName | undefined = undefined>(
-      id: Id,
-      def: Omit<EventDef<"country", From>, "id">
-    ) => minter.handle(id, "observer_event", "country", "observer", def.from as From).define(def),
-    planetHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
-      id: Id,
-      contract: { readonly from?: From } = {}
-    ) => minter.handle(id, "planet_event", "planet", "planet", contract.from as From),
-    planet: <const Id extends number, From extends ScopeName | undefined = undefined>(
-      id: Id,
-      def: Omit<EventDef<"planet", From>, "id">
-    ) => minter.handle(id, "planet_event", "planet", "planet", def.from as From).define(def),
-    popFactionHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
-      id: Id,
-      contract: { readonly from?: From } = {}
+      def: Omit<EventDef<"fleet", Context>, "id">
     ) =>
-      minter.handle(id, "pop_faction_event", "pop_faction", "pop_faction", contract.from as From),
-    popFaction: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      minter.handle(id, "fleet_event", "fleet", "fleet", (def.scopes ?? {}) as Context).define(def),
+    leaderHandle: <const Id extends number, Context extends AmbientScopeContext = {}>(
       id: Id,
-      def: Omit<EventDef<"pop_faction", From>, "id">
+      contract: { readonly scopes?: Context } = {}
+    ) => minter.handle(id, "leader_event", "leader", "leader", (contract.scopes ?? {}) as Context),
+    leader: <const Id extends number, Context extends AmbientScopeContext = {}>(
+      id: Id,
+      def: Omit<EventDef<"leader", Context>, "id">
     ) =>
       minter
-        .handle(id, "pop_faction_event", "pop_faction", "pop_faction", def.from as From)
+        .handle(id, "leader_event", "leader", "leader", (def.scopes ?? {}) as Context)
         .define(def),
-    popGroupHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
+    observerHandle: <const Id extends number, Context extends AmbientScopeContext = {}>(
       id: Id,
-      contract: { readonly from?: From } = {}
-    ) => minter.handle(id, "pop_group_event", "pop_group", "pop_group", contract.from as From),
-    popGroup: <const Id extends number, From extends ScopeName | undefined = undefined>(
-      id: Id,
-      def: Omit<EventDef<"pop_group", From>, "id">
+      contract: { readonly scopes?: Context } = {}
     ) =>
-      minter.handle(id, "pop_group_event", "pop_group", "pop_group", def.from as From).define(def),
-    shipHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      minter.handle(
+        id,
+        "observer_event",
+        "country",
+        "observer",
+        (contract.scopes ?? {}) as Context
+      ),
+    observer: <const Id extends number, Context extends AmbientScopeContext = {}>(
       id: Id,
-      contract: { readonly from?: From } = {}
-    ) => minter.handle(id, "ship_event", "ship", "ship", contract.from as From),
-    ship: <const Id extends number, From extends ScopeName | undefined = undefined>(
-      id: Id,
-      def: Omit<EventDef<"ship", From>, "id">
-    ) => minter.handle(id, "ship_event", "ship", "ship", def.from as From).define(def),
-    situationHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
-      id: Id,
-      contract: { readonly from?: From } = {}
-    ) => minter.handle(id, "situation_event", "situation", "situation", contract.from as From),
-    situation: <const Id extends number, From extends ScopeName | undefined = undefined>(
-      id: Id,
-      def: Omit<EventDef<"situation", From>, "id">
+      def: Omit<EventDef<"country", Context>, "id">
     ) =>
-      minter.handle(id, "situation_event", "situation", "situation", def.from as From).define(def),
-    starbaseHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      minter
+        .handle(id, "observer_event", "country", "observer", (def.scopes ?? {}) as Context)
+        .define(def),
+    planetHandle: <const Id extends number, Context extends AmbientScopeContext = {}>(
       id: Id,
-      contract: { readonly from?: From } = {}
-    ) => minter.handle(id, "starbase_event", "starbase", "starbase", contract.from as From),
-    starbase: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      contract: { readonly scopes?: Context } = {}
+    ) => minter.handle(id, "planet_event", "planet", "planet", (contract.scopes ?? {}) as Context),
+    planet: <const Id extends number, Context extends AmbientScopeContext = {}>(
       id: Id,
-      def: Omit<EventDef<"starbase", From>, "id">
-    ) => minter.handle(id, "starbase_event", "starbase", "starbase", def.from as From).define(def),
-    systemHandle: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      def: Omit<EventDef<"planet", Context>, "id">
+    ) =>
+      minter
+        .handle(id, "planet_event", "planet", "planet", (def.scopes ?? {}) as Context)
+        .define(def),
+    popFactionHandle: <const Id extends number, Context extends AmbientScopeContext = {}>(
       id: Id,
-      contract: { readonly from?: From } = {}
-    ) => minter.handle(id, "system_event", "system", "system", contract.from as From),
-    system: <const Id extends number, From extends ScopeName | undefined = undefined>(
+      contract: { readonly scopes?: Context } = {}
+    ) =>
+      minter.handle(
+        id,
+        "pop_faction_event",
+        "pop_faction",
+        "pop_faction",
+        (contract.scopes ?? {}) as Context
+      ),
+    popFaction: <const Id extends number, Context extends AmbientScopeContext = {}>(
       id: Id,
-      def: Omit<EventDef<"system", From>, "id">
-    ) => minter.handle(id, "system_event", "system", "system", def.from as From).define(def),
+      def: Omit<EventDef<"pop_faction", Context>, "id">
+    ) =>
+      minter
+        .handle(
+          id,
+          "pop_faction_event",
+          "pop_faction",
+          "pop_faction",
+          (def.scopes ?? {}) as Context
+        )
+        .define(def),
+    popGroupHandle: <const Id extends number, Context extends AmbientScopeContext = {}>(
+      id: Id,
+      contract: { readonly scopes?: Context } = {}
+    ) =>
+      minter.handle(
+        id,
+        "pop_group_event",
+        "pop_group",
+        "pop_group",
+        (contract.scopes ?? {}) as Context
+      ),
+    popGroup: <const Id extends number, Context extends AmbientScopeContext = {}>(
+      id: Id,
+      def: Omit<EventDef<"pop_group", Context>, "id">
+    ) =>
+      minter
+        .handle(id, "pop_group_event", "pop_group", "pop_group", (def.scopes ?? {}) as Context)
+        .define(def),
+    shipHandle: <const Id extends number, Context extends AmbientScopeContext = {}>(
+      id: Id,
+      contract: { readonly scopes?: Context } = {}
+    ) => minter.handle(id, "ship_event", "ship", "ship", (contract.scopes ?? {}) as Context),
+    ship: <const Id extends number, Context extends AmbientScopeContext = {}>(
+      id: Id,
+      def: Omit<EventDef<"ship", Context>, "id">
+    ) => minter.handle(id, "ship_event", "ship", "ship", (def.scopes ?? {}) as Context).define(def),
+    situationHandle: <const Id extends number, Context extends AmbientScopeContext = {}>(
+      id: Id,
+      contract: { readonly scopes?: Context } = {}
+    ) =>
+      minter.handle(
+        id,
+        "situation_event",
+        "situation",
+        "situation",
+        (contract.scopes ?? {}) as Context
+      ),
+    situation: <const Id extends number, Context extends AmbientScopeContext = {}>(
+      id: Id,
+      def: Omit<EventDef<"situation", Context>, "id">
+    ) =>
+      minter
+        .handle(id, "situation_event", "situation", "situation", (def.scopes ?? {}) as Context)
+        .define(def),
+    starbaseHandle: <const Id extends number, Context extends AmbientScopeContext = {}>(
+      id: Id,
+      contract: { readonly scopes?: Context } = {}
+    ) =>
+      minter.handle(
+        id,
+        "starbase_event",
+        "starbase",
+        "starbase",
+        (contract.scopes ?? {}) as Context
+      ),
+    starbase: <const Id extends number, Context extends AmbientScopeContext = {}>(
+      id: Id,
+      def: Omit<EventDef<"starbase", Context>, "id">
+    ) =>
+      minter
+        .handle(id, "starbase_event", "starbase", "starbase", (def.scopes ?? {}) as Context)
+        .define(def),
+    systemHandle: <const Id extends number, Context extends AmbientScopeContext = {}>(
+      id: Id,
+      contract: { readonly scopes?: Context } = {}
+    ) => minter.handle(id, "system_event", "system", "system", (contract.scopes ?? {}) as Context),
+    system: <const Id extends number, Context extends AmbientScopeContext = {}>(
+      id: Id,
+      def: Omit<EventDef<"system", Context>, "id">
+    ) =>
+      minter
+        .handle(id, "system_event", "system", "system", (def.scopes ?? {}) as Context)
+        .define(def),
   }) as CapabilityEvents<P, N>;
 }

@@ -26,12 +26,20 @@ export interface CasusBelliFields {
    * trigger, evaluated daily to check if CB should be created or destroyed automatically, does not affect CBs granted via script; \
    * this = attacker (CB owner), from = defender (target country); default: { always = yes }
    */
-  isValid?: WithFrom<Trigger<"country">, "country", "country", "country">;
+  isValid?: WithFrom<
+    Trigger<"country">,
+    "country",
+    { readonly root: "country"; readonly from: "country" }
+  >;
   /**
    * trigger, evaluated daily to destroy CBs that have been granted via script ahead of expiration date; \
    * this = attacker (CB owner), from = defender (target country); default: { always = no }
    */
-  destroyIf?: WithFrom<Trigger<"country">, "country", "country", "country">;
+  destroyIf?: WithFrom<
+    Trigger<"country">,
+    "country",
+    { readonly root: "country"; readonly from: "country" }
+  >;
   /**
    * optional (default = yes), flag to control whether this CB will generate a notification (to avoid duplicate \
    * notification when a claim CB is generated).
@@ -45,7 +53,7 @@ export interface CasusBelliFields {
    * this = country who casus belli
    * from = proxy war instigator
    */
-  onProxyWarStart?: EffectBlock<"country", "country">;
+  onProxyWarStart?: EffectBlock<"country", { readonly from: "country" }>;
   showInDiplomacy?: boolean;
   aggregatedMessageKey?: string;
 }

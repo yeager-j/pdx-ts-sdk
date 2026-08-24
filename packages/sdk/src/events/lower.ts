@@ -13,9 +13,14 @@ import {
   registerModifierDescKey,
 } from "../script/effects/modifiers.ts";
 import { recordEffects, withScriptCtx } from "../script/effects/recorder.ts";
-import type { Modifier, ModifierWithLoc, ScriptCtx } from "../script/effects/types.ts";
+import type {
+  AmbientScopeContext,
+  Modifier,
+  ModifierWithLoc,
+  ScriptCtx,
+} from "../script/effects/types.ts";
 import { refId } from "../script/scalar.ts";
-import type { DefinedEvent, EventDef, LocSink } from "./types.ts";
+import type { DefinedEvent, EventBodyContext, EventDef, LocSink } from "./types.ts";
 
 /**
  * Lowers a `WeightBlock`-shaped modifier row list, reusing the `modifier_rule`
@@ -108,29 +113,31 @@ export function assertEventNumber(id: number): void {
   }
 }
 
-export function buildEvent<S extends ScopeName, From extends ScopeName | undefined>(
+export function buildEvent<S extends ScopeName, Context extends AmbientScopeContext>(
   kind: EventKindKey,
   scope: S,
   namespace: string,
-  def: EventDef<S, From>,
+  def: EventDef<S, Context>,
   loc: LocSink
-): DefinedEvent<S, From> {
+): DefinedEvent<S, Context> {
   assertEventNumber(def.id);
   // One ctx for the whole event: its `immediate`, `after`, `abort_effect` and
   // every option record separately, and all of them are this one lowering.
-  return withScriptCtx<S, From, S, DefinedEvent<S, From>>({}, (ctx) =>
-    lowerEvent(kind, scope, namespace, def, loc, ctx)
+  const scopes = eventScopes(def.scopes);
+  const bodyScopes = scopes as EventBodyContext<S, Context>;
+  return withScriptCtx<S, typeof bodyScopes, DefinedEvent<S, Context>>({}, (ctx) =>
+    lowerEvent<S, Context>(kind, scope, namespace, def, loc, ctx)
   );
 }
 
-function lowerEvent<S extends ScopeName, From extends ScopeName | undefined>(
+function lowerEvent<S extends ScopeName, Context extends AmbientScopeContext>(
   kind: EventKindKey,
   scope: S,
   namespace: string,
-  def: EventDef<S, From>,
+  def: EventDef<S, Context>,
   loc: LocSink,
-  ctx: ScriptCtx<S, From>
-): DefinedEvent<S, From> {
+  ctx: ScriptCtx<S, EventBodyContext<S, Context>>
+): DefinedEvent<S, Context> {
   const id = `${namespace}.${def.id}`;
   const flags = windowFlags(def);
   const warnings: ModWarning[] = [];
@@ -422,9 +429,13 @@ function lowerEvent<S extends ScopeName, From extends ScopeName | undefined>(
     kind: "event-ref",
     scope,
     id,
-    from: def.from as From,
+    scopes: eventScopes(def.scopes),
     entry: block(kind, entries),
     refs,
     warnings,
   };
+}
+
+function eventScopes<Context extends AmbientScopeContext>(scopes: Context | undefined): Context {
+  return (scopes ?? {}) as Context;
 }

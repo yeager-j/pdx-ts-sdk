@@ -144,14 +144,14 @@ const EVENT_FIELD_POLICY: readonly EventFieldPolicyEntry[] = [
     "situation",
     "scalar 0..1",
     "situation",
-    "EventSituation<S, From>",
+    "EventSituation<S, Context>",
     "situation scope value"
   ),
   supported(
     "location",
     "scalar 0..0 | scalar 0..1",
     "location",
-    "EventLocation<S, From>",
+    "EventLocation<S, Context>",
     "event window location"
   ),
   ...(
@@ -243,7 +243,7 @@ const EVENT_FIELD_POLICY: readonly EventFieldPolicyEntry[] = [
     "abort_effect",
     "block 0..1 {alias_name[effect]}",
     "abortEffect",
-    "EventEffect<S, From>",
+    "EventEffect<S, Context>",
     "effects run on abort"
   ),
   supported(
@@ -264,21 +264,21 @@ const EVENT_FIELD_POLICY: readonly EventFieldPolicyEntry[] = [
     "immediate",
     "block 0..1 {alias_name[effect]}",
     "immediate",
-    "EventEffect<S, From>",
+    "EventEffect<S, Context>",
     "immediate effect splice"
   ),
   supported(
     "after",
     "block 0..1 {alias_name[effect]}",
     "after",
-    "EventEffect<S, From>",
+    "EventEffect<S, Context>",
     "after effect splice"
   ),
   supported(
     "option",
     "block 0..inf {ai_chance, alias_name[effect], allow, custom_gui, default_hide_option, exclusive_trigger, hide_option_if_not_allowed, icon, is_dialog_only, name, response_text, sound, tag, trigger}",
     "options",
-    "ReadonlyArray<EventOption<S, From>>",
+    "ReadonlyArray<EventOption<S, Context>>",
     "repeated event options"
   ),
   ...(
@@ -387,7 +387,7 @@ const OPTION_FIELD_POLICY: readonly EventFieldPolicyEntry[] = [
     shape: "splice",
     disposition: "supported",
     reason: "the option block's effect splice",
-    members: [{ member: "effects", type: "EventEffect<S, From>" }],
+    members: [{ member: "effects", type: "EventEffect<S, Context>" }],
     synthetic: true,
   },
 ];
@@ -596,16 +596,16 @@ export function emitEventFieldProtocol(policy: ReturnType<typeof createEventFiel
     'import type { ScopeObjOf } from "./effects.ts";\n' +
     'import type { EventChainRef, MessageTypeRef, SoundEffectRef, SpecimenRef, SpriteRef } from "./refs.ts";\n' +
     'import type { ScopeName } from "./scopes.ts";\n' +
-    'import type { ScriptCtx } from "../script/effects/types.ts";\n' +
+    'import type { AmbientScopeContext, ScriptCtx } from "../script/effects/types.ts";\n' +
     'import type { Trigger } from "../script/trigger-core.ts";\n' +
-    'import type { AiChance, EventLocation, EventOption, EventOptionIcon, EventSituation, EventTriggeredDescription, EventWindowType, MeanTimeToHappen, WeightMultiplier } from "../events/types.ts";\n\n' +
-    "type EventEffect<S extends ScopeName, From extends ScopeName | undefined> = (scope: ScopeObjOf<S>, ctx: ScriptCtx<S, From>) => void;\n\n" +
+    'import type { AiChance, EventBodyContext, EventLocation, EventOption, EventOptionIcon, EventSituation, EventTriggeredDescription, EventWindowType, MeanTimeToHappen, WeightMultiplier } from "../events/types.ts";\n\n' +
+    "type EventEffect<S extends ScopeName, Context extends AmbientScopeContext> = (scope: ScopeObjOf<S>, ctx: ScriptCtx<S, EventBodyContext<S, Context>>) => void;\n\n" +
     docComment(["Event authoring fields projected from the reviewed CWT support policy."]) +
-    "export interface GeneratedEventFields<S extends ScopeName, From extends ScopeName | undefined> {\n" +
+    "export interface GeneratedEventFields<S extends ScopeName, Context extends AmbientScopeContext> {\n" +
     emitInterfaceMembers(policy.event) +
     "}\n\n" +
     docComment(["Event option authoring fields projected from the reviewed CWT support policy."]) +
-    "export interface GeneratedEventOptionFields<S extends ScopeName, From extends ScopeName | undefined> {\n" +
+    "export interface GeneratedEventOptionFields<S extends ScopeName, Context extends AmbientScopeContext> {\n" +
     emitInterfaceMembers(policy.option) +
     "}\n\n" +
     emitSupportLedger("EVENT_FIELD_SUPPORT", policy.event) +

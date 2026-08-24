@@ -301,7 +301,11 @@ export interface SpecialProjectFieldsBase<
   projectType?: string;
   eventScope: E;
   /** this = country (project owner); from = event scope (planet or ship, MIGHT NOT EXIST); fromfrom = project creation scope (usually equals location) */
-  failTrigger?: WithFrom<Trigger<"country">, "country", NoInfer<SpecialProjectScopeOf<E>>>;
+  failTrigger?: WithFrom<
+    Trigger<"country">,
+    "country",
+    { readonly from: NoInfer<SpecialProjectScopeOf<E>> }
+  >;
   timelimit?: number;
   daysToResearch?: number;
   conditionalDesc?: SpecialProjectDesc[];
@@ -311,17 +315,21 @@ export interface SpecialProjectFieldsBase<
   requirements?: SpecialProjectRequirements;
   triggeredRequirement?: SpecialProjectTriggeredRequirement;
   /** this = country (project owner); from = event scope (planet or ship, MIGHT NOT EXIST); fromfrom = project creation scope (usually equals location) */
-  abortTrigger?: WithFrom<Trigger<"country">, "country", NoInfer<SpecialProjectScopeOf<E>>>;
+  abortTrigger?: WithFrom<
+    Trigger<"country">,
+    "country",
+    { readonly from: NoInfer<SpecialProjectScopeOf<E>> }
+  >;
   /** this = event scope (ship or planet); from = project creation scope (usually equals location) */
-  onSuccess?: EffectBlock<NoInfer<SpecialProjectScopeOf<E>>, NoInfer<L>>;
-  onProgress25?: EffectBlock<NoInfer<SpecialProjectScopeOf<E>>, NoInfer<L>>;
-  onProgress50?: EffectBlock<NoInfer<SpecialProjectScopeOf<E>>, NoInfer<L>>;
-  onProgress75?: EffectBlock<NoInfer<SpecialProjectScopeOf<E>>, NoInfer<L>>;
-  onStart?: EffectBlock<NoInfer<SpecialProjectScopeOf<E>>, NoInfer<L>>;
+  onSuccess?: EffectBlock<NoInfer<SpecialProjectScopeOf<E>>, { readonly from: NoInfer<L> }>;
+  onProgress25?: EffectBlock<NoInfer<SpecialProjectScopeOf<E>>, { readonly from: NoInfer<L> }>;
+  onProgress50?: EffectBlock<NoInfer<SpecialProjectScopeOf<E>>, { readonly from: NoInfer<L> }>;
+  onProgress75?: EffectBlock<NoInfer<SpecialProjectScopeOf<E>>, { readonly from: NoInfer<L> }>;
+  onStart?: EffectBlock<NoInfer<SpecialProjectScopeOf<E>>, { readonly from: NoInfer<L> }>;
   /** this = country (project owner); from = project creation scope (usually equals location) */
-  onFail?: EffectBlock<"country", NoInfer<SpecialProjectScopeOf<E>>>;
+  onFail?: EffectBlock<"country", { readonly from: NoInfer<SpecialProjectScopeOf<E>> }>;
   /** new thing from 2.1.3 patch, have it from? */
-  onCancel?: EffectBlock<"country", NoInfer<SpecialProjectScopeOf<E>>>;
+  onCancel?: EffectBlock<"country", { readonly from: NoInfer<SpecialProjectScopeOf<E>> }>;
 }
 
 export type SpecialProjectFields<

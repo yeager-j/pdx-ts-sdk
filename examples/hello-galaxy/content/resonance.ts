@@ -74,7 +74,7 @@ const stormWorld = eventTarget<"planet">("hello_galaxy_storm_world");
  * right here, at define time.
  */
 export const aftershock = events.planet(2, {
-  from: "country",
+  scopes: { from: "country" },
   title: "Aftershock",
   desc: "The crystal hum lingers over this world.",
   isTriggeredOnly: true,
@@ -118,7 +118,7 @@ export const humReturns = events.country(1, {
           // remains true even after THIS transitions to each owned planet.
           country.everyOwnedPlanet({ limit: hasOwner() }, (planet) => {
             planet.saveEventTargetAs(stormWorld);
-            planet.planetEvent({ id: aftershock, from: ctx.self, days: 30 });
+            planet.planetEvent({ id: aftershock, scopes: { from: ctx.root }, days: 30 });
           });
         },
       },

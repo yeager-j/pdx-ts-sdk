@@ -10,7 +10,7 @@ const events = mod.namespace("project");
 const signalWorld = eventTarget<"planet">("crystal_survey_signal_world");
 
 const signalCompleted = events.ship(2, {
-  from: "planet",
+  scopes: { from: "planet" },
   title: "The Crystal Pattern",
   desc: "The transmission resolves into a complete map of the crystal's internal structure.",
   location: (ctx) => ctx.from,
@@ -50,7 +50,7 @@ const analyzeSignal = mod.specialProject("analyze_signal", {
   },
   onProgress50: (ship) => ship.setShipFlag("crystal_survey_halfway"),
   onSuccess: (ship, ctx) => {
-    ship.shipEvent({ id: signalCompleted, from: ctx.from });
+    ship.shipEvent({ id: signalCompleted, scopes: { from: ctx.from } });
   },
   onFail: (country) => country.setCountryFlag("crystal_survey_failed"),
   onCancel: (country) => country.setCountryFlag("crystal_survey_cancelled"),

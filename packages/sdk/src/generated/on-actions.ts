@@ -14,13 +14,13 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_game_start",
     scope: null,
-    from: undefined,
+    scopes: {},
   },
   onGameStartCountry: {
     kind: "on-action-ref",
     name: "on_game_start_country",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * No scope, like on_game_start
@@ -30,14 +30,14 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_single_player_save_game_load",
     scope: null,
-    from: undefined,
+    scopes: {},
   },
   /** No scope, like on_game_start */
   onMonthlyPulse: {
     kind: "on-action-ref",
     name: "on_monthly_pulse",
     scope: null,
-    from: undefined,
+    scopes: {},
   },
   /**
    * Via pre_ftl_tech_progress_situation / preftl.50
@@ -47,7 +47,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_monthly_pulse_pre_ftl_observation",
     scope: "situation",
-    from: undefined,
+    scopes: {},
   },
   /**
    * The following are considered valid for "Broken Shackles" empires observing their original civilizations; see also on_monthly_pulse_pre_ftl_observation (above)
@@ -57,119 +57,119 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_monthly_pulse_pre_ftl_observation_broken_shackles",
     scope: "situation",
-    from: undefined,
+    scopes: {},
   },
   /** No scope, like on_game_start */
   onYearlyPulse: {
     kind: "on-action-ref",
     name: "on_yearly_pulse",
     scope: null,
-    from: undefined,
+    scopes: {},
   },
   /** No scope, like on_game_start */
   onBiYearlyPulse: {
     kind: "on-action-ref",
     name: "on_bi_yearly_pulse",
     scope: null,
-    from: undefined,
+    scopes: {},
   },
   /** No scope, like on_game_start */
   onFiveYearPulse: {
     kind: "on-action-ref",
     name: "on_five_year_pulse",
     scope: null,
-    from: undefined,
+    scopes: {},
   },
   /** No scope, like on_game_start */
   onDecadePulse: {
     kind: "on-action-ref",
     name: "on_decade_pulse",
     scope: null,
-    from: undefined,
+    scopes: {},
   },
   /** No scope, like on_game_start */
   onMidGamePulse: {
     kind: "on-action-ref",
     name: "on_mid_game_pulse",
     scope: null,
-    from: undefined,
+    scopes: {},
   },
   /** No scope, like on_game_start */
   onLateGamePulse: {
     kind: "on-action-ref",
     name: "on_late_game_pulse",
     scope: null,
-    from: undefined,
+    scopes: {},
   },
   /** this = country */
   onMonthlyPulseCountry: {
     kind: "on-action-ref",
     name: "on_monthly_pulse_country",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /** this = country */
   onYearlyPulseCountry: {
     kind: "on-action-ref",
     name: "on_yearly_pulse_country",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /** this = country, fired via action.2001 from on_yearly_pulse_country */
   onYearlyRandomPulseCountryCaravaneersList: {
     kind: "on-action-ref",
     name: "on_yearly_random_pulse_country_caravaneers_list",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /** this = country */
   onBiYearlyPulseCountry: {
     kind: "on-action-ref",
     name: "on_bi_yearly_pulse_country",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /** this = country */
   onFiveYearPulseCountry: {
     kind: "on-action-ref",
     name: "on_five_year_pulse_country",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /** this = country, fired via action.220 from on_five_year_pulse_country */
   onFiveYearRandomPulseCountry: {
     kind: "on-action-ref",
     name: "on_five_year_random_pulse_country",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /** this = country, fired via action.220 from on_five_year_pulse_country */
   onFiveYearsCommunicationSpreadCountry: {
     kind: "on-action-ref",
     name: "on_five_years_communication_spread_country",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /** this = country, fired via action.420 */
   onFiveYearRandomPulseOverlord: {
     kind: "on-action-ref",
     name: "on_five_year_random_pulse_overlord",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /** this = country, fired via action.620 */
   onFiveYearRandomPulsePreFtl: {
     kind: "on-action-ref",
     name: "on_five_year_random_pulse_pre_ftl",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /** this = country, fired via action.630 */
   onFiveYearRandomPulsePreFtlTechEvents: {
     kind: "on-action-ref",
     name: "on_five_year_random_pulse_pre_ftl_tech_events",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Why do this, you might ask, and not just use a random_list? Because on_actions check the triggers of the event before they try to fire them and exclude them from the list if they are false, so a list with no 0 weight will always fire an event so long as any of them are able to be fired
@@ -180,46 +180,46 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_five_year_random_pulse_country_negative_list",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   onFiveYearRandomPulseCountryFeList: {
     kind: "on-action-ref",
     name: "on_five_year_random_pulse_country_fe_list",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /** this = country */
   onDecadePulseCountry: {
     kind: "on-action-ref",
     name: "on_decade_pulse_country",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   onDecadePulseSkrandCountry: {
     kind: "on-action-ref",
     name: "on_decade_pulse_skrand_country",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   onDecadeRandomPulseCountryPaybackBrokenShackles: {
     kind: "on-action-ref",
     name: "on_decade_random_pulse_country_payback_broken_shackles",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /** this = country */
   onMidGamePulseCountry: {
     kind: "on-action-ref",
     name: "on_mid_game_pulse_country",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /** this = country */
   onLateGamePulseCountry: {
     kind: "on-action-ref",
     name: "on_late_game_pulse_country",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * setup advanced colony. So far it has a pop on the capital and a colony shelter building matching the is_colony trigger
@@ -230,13 +230,13 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_initialize_advanced_colony",
     scope: "colony",
-    from: "country",
+    scopes: { from: "country" },
   },
   onBecomeAdvancedEmpire: {
     kind: "on-action-ref",
     name: "on_become_advanced_empire",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Triggers when pressing begin in the intro window
@@ -246,7 +246,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_press_begin",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Triggers when trying to open the diplomacy view for countries with custom diplomacy.
@@ -258,7 +258,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_custom_diplomacy",
     scope: "country",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * Triggered when two empires discover each other
@@ -270,7 +270,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_first_contact",
     scope: "country",
-    from: "country",
+    scopes: { from: "country", fromfrom: "fleet", fromfromfrom: "system" },
   },
   /**
    * Triggered when a first contact process is finished
@@ -281,7 +281,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_first_contact_finished",
     scope: "first_contact",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * Triggered when an Empire has fleets within another Empire's borders.
@@ -294,7 +294,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_enforce_borders",
     scope: "country",
-    from: "country",
+    scopes: { from: "country", fromfrom: "fleet", fromfromfrom: "system" },
   },
   /**
    * Triggers when ground combat starts
@@ -305,7 +305,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_ground_combat_started",
     scope: "carrier",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * Triggers country_event for the attacker upon victory (before controller is switched)
@@ -318,7 +318,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_planet_attackers_win",
     scope: "country",
-    from: "country",
+    scopes: { from: "country", fromfrom: "planet" },
   },
   /**
    * Triggers country_event for the attacker upon defeat
@@ -330,7 +330,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_planet_attackers_lose",
     scope: "country",
-    from: "country",
+    scopes: { from: "country", fromfrom: "planet" },
   },
   /**
    * Triggers country_event for the defender upon victory
@@ -342,7 +342,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_planet_defenders_win",
     scope: "country",
-    from: "country",
+    scopes: { from: "country", fromfrom: "planet" },
   },
   /**
    * Triggers country_event for the defender upon defeat
@@ -354,7 +354,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_planet_defenders_lose",
     scope: "country",
-    from: "country",
+    scopes: { from: "country", fromfrom: "planet" },
   },
   /**
    * Fires when you first get intel (_low and up) on a new system
@@ -365,7 +365,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_system_first_visited",
     scope: "country",
-    from: "system",
+    scopes: { from: "system" },
   },
   /**
    * Triggers event when each country first sends a ship into the system (once per country)
@@ -377,7 +377,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_entering_system_first_time",
     scope: "ship",
-    from: "system",
+    scopes: { from: "system", fromfrom: "country" },
   },
   /**
    * Triggers event when ship enters a system. It's usually better to use on_entering_system_first_time or on_entering_system_fleet
@@ -389,7 +389,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_entering_system",
     scope: "ship",
-    from: "system",
+    scopes: { from: "system", fromfrom: "country" },
   },
   /**
    * A fleet has entered a system | See also: on_fleet_auto_move_arrival
@@ -400,7 +400,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_entering_system_fleet",
     scope: "fleet",
-    from: "system",
+    scopes: { from: "system" },
   },
   /**
    * A fleet executes a move order to exit borders
@@ -412,7 +412,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_crossing_border",
     scope: "fleet",
-    from: "system",
+    scopes: { from: "system", fromfrom: "system" },
   },
   /**
    * A ship has surveyed a planet.
@@ -423,7 +423,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_survey_planet",
     scope: "ship",
-    from: "planet",
+    scopes: { from: "planet" },
   },
   /**
    * A ship has surveyed an Astral Rift.
@@ -434,7 +434,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_survey_astral_rift",
     scope: "ship",
-    from: "astral_rift",
+    scopes: { from: "astral_rift" },
   },
   /**
    * A country has gained a surveyed status on a planet. Happens after "on_survey_planet" if a science ship surveyed a planet. (Can also happen without a ship through changes in intel levels)
@@ -446,7 +446,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_planet_surveyed",
     scope: "carrier",
-    from: "country",
+    scopes: { from: "country", fromfrom: "fleet" },
   },
   /**
    * A country has gained a surveyed status on an astral rift. Happens after "on_survey_astral_rift" if a science ship surveyed an astral rift. (Can also happen without a ship through changes in intel levels)
@@ -458,7 +458,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_astral_rift_surveyed",
     scope: "astral_rift",
-    from: "country",
+    scopes: { from: "country", fromfrom: "fleet" },
   },
   /**
    * A country has gained a surveyed status on a planet.
@@ -471,7 +471,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_system_survey",
     scope: "country",
-    from: "system",
+    scopes: { from: "system", fromfrom: "fleet" },
   },
   /**
    * A ship is done surveying the last unsurveyed planet in a system
@@ -482,7 +482,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_system_survey_ship",
     scope: "ship",
-    from: "system",
+    scopes: { from: "system" },
   },
   /**
    * A planet has begun the colonization process.
@@ -492,7 +492,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_colonization_started",
     scope: "carrier",
-    from: undefined,
+    scopes: { root: "planet" },
   },
   /**
    * A planet has been colonized.
@@ -502,7 +502,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_colonized",
     scope: "carrier",
-    from: undefined,
+    scopes: {},
   },
   /**
    * A colony has been destroyed. Called just before owner and controller is cleared
@@ -512,7 +512,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_colony_destroyed",
     scope: "carrier",
-    from: undefined,
+    scopes: {},
   },
   /**
    * A colony has been destroyed by bombardment. Called after the planet's colony status has been cleared
@@ -523,7 +523,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_colony_destroyed_by_bombardment",
     scope: "carrier",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * This = owner of fleet 1
@@ -535,7 +535,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_entering_battle",
     scope: "country",
-    from: "country",
+    scopes: { from: "country", fromfrom: "fleet", fromfromfrom: "fleet" },
   },
   /**
    * This = owner of ship 1 (destroyed)
@@ -547,7 +547,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_ship_destroyed_victim",
     scope: "country",
-    from: "country",
+    scopes: { from: "country", fromfrom: "ship", fromfromfrom: "ship" },
   },
   /**
    * This = owner of ship 1 (combatant)
@@ -559,7 +559,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_ship_destroyed_perp",
     scope: "country",
-    from: "country",
+    scopes: { from: "country", fromfrom: "ship", fromfromfrom: "ship" },
   },
   /**
    * This = damaged ship
@@ -569,7 +569,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_damage_taken",
     scope: "ship",
-    from: "ship",
+    scopes: { from: "ship" },
   },
   /**
    * This = starbase being destroyed (not ship!)
@@ -579,7 +579,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_starbase_destroyed",
     scope: "starbase",
-    from: "fleet",
+    scopes: { from: "fleet" },
   },
   /**
    * This = starbase being disabled (not ship!)
@@ -589,7 +589,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_starbase_disabled",
     scope: "starbase",
-    from: "fleet",
+    scopes: { from: "fleet" },
   },
   /**
    * This = owner of ship 1 (destroyed)
@@ -601,7 +601,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_ship_disengaged_victim",
     scope: "country",
-    from: "country",
+    scopes: { from: "country", fromfrom: "ship", fromfromfrom: "ship" },
   },
   /**
    * This = owner of ship 1 (combatant)
@@ -613,7 +613,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_ship_disengaged_perp",
     scope: "country",
-    from: "country",
+    scopes: { from: "country", fromfrom: "ship", fromfromfrom: "ship" },
   },
   /**
    * This = owner of fleet 1 (destroyed)
@@ -625,7 +625,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_fleet_destroyed_victim",
     scope: "country",
-    from: "country",
+    scopes: { from: "country", fromfrom: "fleet", fromfromfrom: "fleet" },
   },
   /**
    * This = owner of fleet 1 (combatant)
@@ -637,7 +637,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_fleet_destroyed_perp",
     scope: "country",
-    from: "country",
+    scopes: { from: "country", fromfrom: "fleet", fromfromfrom: "fleet" },
   },
   /**
    * This = owner of fleet 1 (winner)
@@ -650,7 +650,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_space_battle_won",
     scope: "country",
-    from: "country",
+    scopes: { from: "country", fromfrom: "fleet", fromfromfrom: "fleet" },
   },
   /**
    * This = owner of fleet 1 (loser)
@@ -663,7 +663,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_space_battle_lost",
     scope: "country",
-    from: "country",
+    scopes: { from: "country", fromfrom: "fleet", fromfromfrom: "fleet" },
   },
   /**
    * This = owner of fleet 1 (winner)
@@ -676,7 +676,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_space_battle_over",
     scope: "country",
-    from: "country",
+    scopes: { from: "country", fromfrom: "fleet", fromfromfrom: "fleet" },
   },
   /**
    * This = fleet
@@ -687,7 +687,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_fleet_exit_battle",
     scope: "fleet",
-    from: undefined,
+    scopes: {},
   },
   /**
    * This = owner of fleet
@@ -697,7 +697,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_fleet_disbanded",
     scope: "country",
-    from: "fleet",
+    scopes: { from: "fleet" },
   },
   /**
    * This = owner of ship
@@ -707,7 +707,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_ship_disbanded",
     scope: "country",
-    from: "ship",
+    scopes: { from: "ship" },
   },
   /**
    * This = owner of army
@@ -717,7 +717,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_army_disbanded",
     scope: "country",
-    from: "army",
+    scopes: { from: "army" },
   },
   /**
    * This = owner of fleet
@@ -728,7 +728,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_fleet_auto_move_arrival",
     scope: "country",
-    from: "fleet",
+    scopes: { from: "fleet", fromfrom: "planet" },
   },
   /**
    * This = fleet
@@ -740,7 +740,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_fleet_contract_started",
     scope: "fleet",
-    from: "country",
+    scopes: { from: "country", fromfrom: "country" },
   },
   /**
    * This = fleet
@@ -753,7 +753,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_fleet_contract_expired",
     scope: "fleet",
-    from: "country",
+    scopes: { from: "country", fromfrom: "country", fromfromfrom: "country" },
   },
   /**
    * This = fleet
@@ -766,7 +766,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_fleet_contract_cancelled",
     scope: "fleet",
-    from: "country",
+    scopes: { from: "country", fromfrom: "country", fromfromfrom: "country" },
   },
   /**
    * This = fleet
@@ -779,7 +779,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_fleet_contract_broken",
     scope: "fleet",
-    from: "country",
+    scopes: { from: "country", fromfrom: "country", fromfromfrom: "country" },
   },
   /**
    * This = station
@@ -789,7 +789,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_losing_station_control",
     scope: "ship",
-    from: "planet",
+    scopes: { from: "planet" },
   },
   /**
    * This = station
@@ -799,7 +799,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_gaining_station_control",
     scope: "ship",
-    from: "planet",
+    scopes: { from: "planet" },
   },
   /**
    * This = country
@@ -809,7 +809,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_entering_war",
     scope: "country",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * This = Country
@@ -819,7 +819,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_fleet_detected",
     scope: "country",
-    from: "fleet",
+    scopes: { from: "fleet" },
   },
   /**
    * This = Ship
@@ -829,14 +829,14 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_ship_disabled",
     scope: "ship",
-    from: "ship",
+    scopes: { from: "ship" },
   },
   /** This = Ship */
   onShipEnabled: {
     kind: "on-action-ref",
     name: "on_ship_enabled",
     scope: "ship",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Triggers when a Special Project to uplift a pre-sapient species is completed.
@@ -850,7 +850,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_uplift_completion",
     scope: "carrier",
-    from: "species",
+    scopes: { from: "species" },
   },
   /**
    * Planets starts being terraformed
@@ -861,7 +861,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_terraforming_begun",
     scope: "carrier",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * Planets terraforming is 25% completed
@@ -872,7 +872,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_terraforming_progress_25",
     scope: "carrier",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * Planet has been terraformed
@@ -883,7 +883,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_terraforming_complete",
     scope: "carrier",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * Planet has changed planet class in whatever way. Note that this is also called during galaxy creation in some places.
@@ -893,7 +893,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_planet_class_changed",
     scope: "carrier",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Planet has taken damage from orbital bombardment - Damage is applied daily
@@ -905,7 +905,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_planet_bombarded",
     scope: "carrier",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * Planet has reached 0 pops from orbital bombardment
@@ -916,7 +916,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_colony_zero_pops",
     scope: "carrier",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * Planet has taken damage from ground combat - Damage is applied daily
@@ -928,7 +928,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_ground_combat_devastation",
     scope: "carrier",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * Planet has reached 0 pops from collateral damage
@@ -939,7 +939,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_colony_zero_pops_ground_combat",
     scope: "carrier",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * Planet has reached a new ascension tier.
@@ -949,7 +949,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_planet_ascension_tier_increased",
     scope: "carrier",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Pop Group is abducted by raiding stance
@@ -960,7 +960,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_pop_group_abducted",
     scope: "pop_group",
-    from: "planet",
+    scopes: { from: "planet" },
   },
   /**
    * Pop Group is resettled
@@ -971,7 +971,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_pop_group_resettled",
     scope: "pop_group",
-    from: "planet",
+    scopes: { from: "planet" },
   },
   /**
    * Executed right before a country has established communications with another country. Does not fire if comms are established with establish_communications_no_message
@@ -982,7 +982,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_pre_communications_established",
     scope: "country",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * Executed right after country has established communications with another country. Does not fire if comms are established with establish_communications_no_message
@@ -993,7 +993,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_post_communications_established",
     scope: "country",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * Executed right after country has established communications with another country. Always fires, even if comms are established with establish_communications_no_message
@@ -1004,7 +1004,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_post_communications_established_always_fire",
     scope: "country",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * Serves to reveal presence to pre-ftl country
@@ -1015,7 +1015,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_presence_revealed",
     scope: "country",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * Executed whenever a pop is killed due to bombardment damages
@@ -1028,7 +1028,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_pop_bombed_to_death",
     scope: "carrier",
-    from: "country",
+    scopes: { from: "country", fromfrom: "fleet" },
   },
   /**
    * Executed whenever a pop is killed by its planet devastation, caused by another country (not by bombarbment)
@@ -1039,7 +1039,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_pop_collateral_casualty",
     scope: "carrier",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * Executed whenever a pop is sacrificed
@@ -1051,7 +1051,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_pop_sacrificed",
     scope: "pop_group",
-    from: "planet",
+    scopes: { from: "planet", fromfrom: "country" },
   },
   /**
    * Executed when a new heir is appointed
@@ -1061,7 +1061,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_new_heir",
     scope: "leader",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Executed when an heir is promoted to ruler
@@ -1071,7 +1071,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_heir_promoted_to_ruler",
     scope: "leader",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Executed when a ruler is created. Called after the leader is set as ruler of the country
@@ -1082,7 +1082,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_ruler_created",
     scope: "country",
-    from: "leader",
+    scopes: { from: "leader" },
   },
   /**
    * Executed just before on_leader_death if show_notification = yes (default)
@@ -1093,7 +1093,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_leader_death_notify",
     scope: "country",
-    from: "leader",
+    scopes: { from: "leader" },
   },
   /**
    * Executed just before on_leader_death if show_notification = no (explicitly set)
@@ -1104,7 +1104,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_leader_death_no_notify",
     scope: "country",
-    from: "leader",
+    scopes: { from: "leader" },
   },
   /**
    * Executed as a leader has died
@@ -1115,7 +1115,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_leader_death",
     scope: "country",
-    from: "leader",
+    scopes: { from: "leader" },
   },
   /**
    * Executed as a leader is hired
@@ -1125,7 +1125,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_leader_hired",
     scope: "leader",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Executed as a leader has been fired
@@ -1136,7 +1136,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_leader_fired",
     scope: "country",
-    from: "leader",
+    scopes: { from: "leader" },
   },
   /**
    * A leader leveled up.
@@ -1147,14 +1147,14 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_leader_level_up",
     scope: "country",
-    from: "leader",
+    scopes: { from: "leader" },
   },
   /** Scope: Leader (after assignment) */
   onLeaderAssigned: {
     kind: "on-action-ref",
     name: "on_leader_assigned",
     scope: "leader",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Scope: Leader (just before unassignment)
@@ -1164,7 +1164,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_leader_unassigned",
     scope: "leader",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Executed as new ruler has been set
@@ -1174,7 +1174,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_ruler_set",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Executed when a ruler has been removed
@@ -1185,14 +1185,14 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_ruler_removed",
     scope: "country",
-    from: "leader",
+    scopes: { from: "leader" },
   },
   /** This = Planet */
   onBlockerCleared: {
     kind: "on-action-ref",
     name: "on_blocker_cleared",
     scope: "carrier",
-    from: undefined,
+    scopes: {},
   },
   /**
    * A ship has started a new order
@@ -1203,7 +1203,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_ship_order",
     scope: "ship",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * Executes after a policy has been changed
@@ -1214,7 +1214,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_policy_changed",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Scope: Ship Event
@@ -1226,7 +1226,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_ship_built",
     scope: "ship",
-    from: "planet",
+    scopes: { from: "planet" },
   },
   /**
    * A ship design has been finished
@@ -1236,7 +1236,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_ship_designed",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * A ship has been upgraded
@@ -1246,7 +1246,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_ship_upgraded",
     scope: "ship",
-    from: undefined,
+    scopes: {},
   },
   /**
    * A war is beginning, executed for every country in the war.
@@ -1257,7 +1257,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_war_beginning",
     scope: "country",
-    from: "war",
+    scopes: { from: "war" },
   },
   /**
    * A war has ended
@@ -1268,7 +1268,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_war_ended",
     scope: "country",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * A country has been released through a peace deal in a war
@@ -1281,7 +1281,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_country_released_in_war",
     scope: "country",
-    from: "country",
+    scopes: { from: "country", fromfrom: "country", fromfromfrom: "war" },
   },
   /**
    * A Proxy War was started. To access the different wars it spawned, use on_war_beginning and is_from_proxy_war trigger
@@ -1293,7 +1293,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_proxy_war_started",
     scope: "country",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * A country has claimed one or more systems
@@ -1304,7 +1304,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_claim_system",
     scope: "country",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * A country has increased the level of a tech, use last_increased_tech trigger to check tech and level.
@@ -1314,7 +1314,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_tech_increased",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Triggers when a Special Project to apply a species modification template has completed.
@@ -1328,7 +1328,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_modification_complete",
     scope: "country",
-    from: "species",
+    scopes: { from: "species", fromfrom: "species", prev: "planet" },
   },
   /**
    * Triggers when a Special Project applying a species modification template is completed.
@@ -1340,7 +1340,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_modification_completion",
     scope: "country",
-    from: "species",
+    scopes: { from: "species" },
   },
   /**
    * Triggers when a Sub-Species Integration performs a single step.
@@ -1354,7 +1354,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_subspecies_integration_step",
     scope: "country",
-    from: "species",
+    scopes: { from: "species", fromfrom: "species", prev: "planet" },
   },
   /**
    * Triggers when a Sub-Species Integration fully finishes upgrading a species template.
@@ -1368,7 +1368,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_subspecies_integration_complete",
     scope: "country",
-    from: "species",
+    scopes: { from: "species", fromfrom: "species", prev: "planet" },
   },
   /**
    * Triggers when a Country gets a new always available tech as a research option.
@@ -1378,7 +1378,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_research_option_added",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Triggers when a Country gains a favor.
@@ -1389,7 +1389,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_favor_gained",
     scope: "country",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * A planets controller becomes a country not the same as the owner.
@@ -1401,7 +1401,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_planet_occupied",
     scope: "carrier",
-    from: "country",
+    scopes: { from: "country", fromfrom: "country" },
   },
   /**
    * A planets controller becomes the owner of the planet.
@@ -1413,7 +1413,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_planet_returned",
     scope: "carrier",
-    from: "country",
+    scopes: { from: "country", fromfrom: "country" },
   },
   /**
    * A planet decision is enacted.
@@ -1424,7 +1424,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_decision_enacted",
     scope: "carrier",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * An edict is enacted.
@@ -1434,7 +1434,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_edict_activated",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * A fleet has successfully escaped from combat, executed right before the fleet enters FTL
@@ -1446,7 +1446,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_emergency_ftl",
     scope: "fleet",
-    from: "system",
+    scopes: { from: "system", fromfrom: "system" },
   },
   /**
    * An army construction has been completed.
@@ -1457,7 +1457,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_army_recruited",
     scope: "carrier",
-    from: "army",
+    scopes: { root: "country", from: "army" },
   },
   /**
    * An army has been killed in ground combat
@@ -1470,7 +1470,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_army_killed_in_combat",
     scope: "country",
-    from: "army",
+    scopes: { from: "army", fromfrom: "country", fromfromfrom: "planet" },
   },
   /**
    * An army has ceased to exist for any other reason
@@ -1481,7 +1481,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_army_killed_no_combat",
     scope: "country",
-    from: "army",
+    scopes: { from: "army" },
   },
   /**
    * A building construction has been completed.
@@ -1491,7 +1491,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_building_complete",
     scope: "carrier",
-    from: undefined,
+    scopes: {},
   },
   /**
    * A building construction has been queued.
@@ -1501,7 +1501,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_building_queued",
     scope: "carrier",
-    from: undefined,
+    scopes: {},
   },
   /**
    * A building construction has been unqueued.
@@ -1511,7 +1511,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_building_unqueued",
     scope: "carrier",
-    from: undefined,
+    scopes: {},
   },
   /**
    * A building construction has been completed, which is an upgrade of previous building.
@@ -1521,7 +1521,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_building_upgraded",
     scope: "carrier",
-    from: undefined,
+    scopes: { root: "colony" },
   },
   /**
    * A building construction has demolished.
@@ -1531,7 +1531,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_building_demolished",
     scope: "carrier",
-    from: undefined,
+    scopes: {},
   },
   /**
    * A building repair has finished
@@ -1541,7 +1541,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_building_repaired",
     scope: "carrier",
-    from: undefined,
+    scopes: {},
   },
   /**
    * A district construction has been completed.
@@ -1551,7 +1551,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_district_complete",
     scope: "carrier",
-    from: undefined,
+    scopes: {},
   },
   /**
    * A zone construction has been completed.
@@ -1561,7 +1561,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_zone_complete",
     scope: "carrier",
-    from: undefined,
+    scopes: {},
   },
   /**
    * A building construction has finished, replacing another building.
@@ -1571,7 +1571,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_building_replaced",
     scope: "carrier",
-    from: undefined,
+    scopes: {},
   },
   /**
    * A building construction has been downgraded and replaced.
@@ -1581,7 +1581,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_building_downgraded",
     scope: "carrier",
-    from: undefined,
+    scopes: {},
   },
   /**
    * A building has been wrecked by a enemy and is now ruined.
@@ -1592,7 +1592,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_building_ruined",
     scope: "carrier",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * A district construction has been queued.
@@ -1602,7 +1602,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_district_queued",
     scope: "carrier",
-    from: undefined,
+    scopes: {},
   },
   /**
    * A district construction has been unqueued.
@@ -1612,7 +1612,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_district_unqueued",
     scope: "carrier",
-    from: undefined,
+    scopes: {},
   },
   /**
    * A district construction has demolished.
@@ -1622,7 +1622,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_district_demolished",
     scope: "carrier",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Auto-designation has changed the planet's designation.
@@ -1632,7 +1632,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_auto_colony_type_changed",
     scope: "carrier",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Tutorial level for a country has changed
@@ -1642,7 +1642,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_tutorial_level_changed",
     scope: "country",
-    from: "country",
+    scopes: { from: "country", fromfrom: "war" },
   },
   /**
    * A war has been won
@@ -1654,7 +1654,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_war_won",
     scope: "country",
-    from: "country",
+    scopes: { from: "country", fromfrom: "war" },
   },
   /**
    * A war has been lost
@@ -1666,7 +1666,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_war_lost",
     scope: "country",
-    from: "country",
+    scopes: { from: "country", fromfrom: "war" },
   },
   /**
    * A status quo has been signed
@@ -1680,7 +1680,12 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_status_quo",
     scope: "country",
-    from: "country",
+    scopes: {
+      from: "country",
+      fromfrom: "country",
+      fromfromfrom: "country",
+      fromfromfromfrom: "war",
+    },
   },
   /**
    * A status quo has been signed, by force
@@ -1694,7 +1699,12 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_status_quo_forced",
     scope: "country",
-    from: "country",
+    scopes: {
+      from: "country",
+      fromfrom: "country",
+      fromfromfrom: "country",
+      fromfromfromfrom: "war",
+    },
   },
   /**
    * A new species is hosted in the empire
@@ -1709,7 +1719,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_host_new_species",
     scope: "country",
-    from: "species",
+    scopes: { from: "species" },
   },
   /**
    * We changed a species right
@@ -1719,7 +1729,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_pop_group_rights_change",
     scope: "pop_group",
-    from: undefined,
+    scopes: {},
   },
   /**
    * A pop amount has been grown
@@ -1732,7 +1742,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_pop_growth",
     scope: "carrier",
-    from: "country",
+    scopes: { from: "country", fromfrom: "pop_group" },
   },
   /**
    * A pop amount has been assembled
@@ -1745,7 +1755,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_pop_assembly",
     scope: "carrier",
-    from: "country",
+    scopes: { from: "country", fromfrom: "pop_group" },
   },
   /**
    * A pop has finished purging
@@ -1758,7 +1768,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_pop_purged",
     scope: "carrier",
-    from: "country",
+    scopes: { from: "country", fromfrom: "pop_group" },
   },
   /**
    * A pop has been displaced
@@ -1771,7 +1781,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_pop_displaced",
     scope: "carrier",
-    from: "country",
+    scopes: { from: "country", fromfrom: "pop_group" },
   },
   /**
    * Initial rebels manage to take control of the planet, happens before the new owner is set, after the war is created.
@@ -1783,7 +1793,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_rebels_take_planet",
     scope: "country",
-    from: "planet",
+    scopes: { from: "planet", fromfrom: "war" },
   },
   /**
    * Initial rebels manage to take control of the planet, happens after the new owner is set, after the war is created.
@@ -1795,7 +1805,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_rebels_take_planet_owner_switched",
     scope: "country",
-    from: "planet",
+    scopes: { from: "planet", fromfrom: "war" },
   },
   /**
    * FromFrom = Former Owner
@@ -1806,7 +1816,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_planet_ownerless",
     scope: "carrier",
-    from: "country",
+    scopes: { from: "country", fromfrom: "country" },
   },
   /**
    * Fired whenever a new owner is set for a planet, following a war or through trade
@@ -1818,7 +1828,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_planet_transfer",
     scope: "carrier",
-    from: "country",
+    scopes: { from: "country", fromfrom: "country" },
   },
   /**
    * Fired whenever a new owner is set for a planet, and the planet was aggressively conquered
@@ -1831,7 +1841,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_planet_conquer",
     scope: "carrier",
-    from: "country",
+    scopes: { from: "country", fromfrom: "country" },
   },
   /**
    * You have changed the location of your capital. Also called when a country's capital is first set e.g. during galaxy creation (but then FROM is not set)
@@ -1842,7 +1852,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_capital_changed",
     scope: "carrier",
-    from: "colony",
+    scopes: { from: "colony" },
   },
   /**
    * Called when a ship is added to a fleet (for any reason)
@@ -1853,7 +1863,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_ship_enter_fleet",
     scope: "fleet",
-    from: "ship",
+    scopes: { from: "ship" },
   },
   /**
    * Called when a ship is removed from a fleet (for any reason including it being destroyed, but the event fires before it completely dies)
@@ -1864,7 +1874,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_ship_leave_fleet",
     scope: "fleet",
-    from: "ship",
+    scopes: { from: "ship" },
   },
   /**
    * This = Federation leader
@@ -1874,7 +1884,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_join_federation",
     scope: "country",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * This = Federation leader
@@ -1884,7 +1894,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_leave_federation",
     scope: "country",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * This = Country scope, federation leader
@@ -1894,7 +1904,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_federation_law_vote_succeed",
     scope: "country",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * This = Country scope, federation leader
@@ -1904,7 +1914,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_federation_law_vote_failed",
     scope: "country",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * This = Country scope, federation leader
@@ -1914,7 +1924,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_federation_leader_elections",
     scope: "country",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * This = Country scope, new federation leader
@@ -1924,7 +1934,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_federation_new_leader",
     scope: "country",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * This = Country scope, federation leader
@@ -1934,7 +1944,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_federation_leader_challenge",
     scope: "country",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * A federation reached a new level for the first time
@@ -1944,7 +1954,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_federation_new_level_unlocked",
     scope: "country",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * This = destroyed country
@@ -1954,7 +1964,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_country_destroyed",
     scope: "country",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * A country sees its type changed during the game via set_country_type
@@ -1964,7 +1974,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_country_type_changed",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * A Megastructure has been built
@@ -1977,7 +1987,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_megastructure_built",
     scope: "country",
-    from: "megastructure",
+    scopes: { from: "megastructure", fromfrom: "system", fromfromfrom: "fleet" },
   },
   /**
    * A Megastructure has begun to be upgraded
@@ -1989,7 +1999,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_megastructure_upgrade_begin",
     scope: "country",
-    from: "megastructure",
+    scopes: { from: "megastructure", fromfrom: "system" },
   },
   /**
    * A Megastructure has been upgraded
@@ -2001,119 +2011,119 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_megastructure_upgraded",
     scope: "country",
-    from: "megastructure",
+    scopes: { from: "megastructure", fromfrom: "system" },
   },
   /** 1 years has passed since a planet was colonized (won't trigger on empire homeworld) */
   onColony1YearOld: {
     kind: "on-action-ref",
     name: "on_colony_1_year_old",
     scope: "carrier",
-    from: undefined,
+    scopes: {},
   },
   /** 2 years has passed since a planet was colonized (won't trigger on empire homeworld) */
   onColony2YearsOld: {
     kind: "on-action-ref",
     name: "on_colony_2_years_old",
     scope: "carrier",
-    from: undefined,
+    scopes: {},
   },
   /** 3 years has passed since a planet was colonized (won't trigger on empire homeworld) */
   onColony3YearsOld: {
     kind: "on-action-ref",
     name: "on_colony_3_years_old",
     scope: "carrier",
-    from: undefined,
+    scopes: {},
   },
   /** 4 years has passed since a planet was colonized (won't trigger on empire homeworld) */
   onColony4YearsOld: {
     kind: "on-action-ref",
     name: "on_colony_4_years_old",
     scope: "carrier",
-    from: undefined,
+    scopes: {},
   },
   /** 5 years has passed since a planet was colonized (won't trigger on empire homeworld) */
   onColony5YearsOld: {
     kind: "on-action-ref",
     name: "on_colony_5_years_old",
     scope: "carrier",
-    from: undefined,
+    scopes: {},
   },
   /** 6 years has passed since a planet was colonized (won't trigger on empire homeworld) */
   onColony6YearsOld: {
     kind: "on-action-ref",
     name: "on_colony_6_years_old",
     scope: "carrier",
-    from: undefined,
+    scopes: {},
   },
   /** 7 years has passed since a planet was colonized (won't trigger on empire homeworld) */
   onColony7YearsOld: {
     kind: "on-action-ref",
     name: "on_colony_7_years_old",
     scope: "carrier",
-    from: undefined,
+    scopes: {},
   },
   /** 8 years has passed since a planet was colonized (won't trigger on empire homeworld) */
   onColony8YearsOld: {
     kind: "on-action-ref",
     name: "on_colony_8_years_old",
     scope: "carrier",
-    from: undefined,
+    scopes: {},
   },
   /** 9 years has passed since a planet was colonized (won't trigger on empire homeworld) */
   onColony9YearsOld: {
     kind: "on-action-ref",
     name: "on_colony_9_years_old",
     scope: "carrier",
-    from: undefined,
+    scopes: {},
   },
   /** 10 years has passed since a planet was colonized (won't trigger on empire homeworld) */
   onColony10YearsOld: {
     kind: "on-action-ref",
     name: "on_colony_10_years_old",
     scope: "carrier",
-    from: undefined,
+    scopes: {},
   },
   /** 25 years has passed since a planet was colonized (won't trigger on empire homeworld) */
   onColony25YearsOld: {
     kind: "on-action-ref",
     name: "on_colony_25_years_old",
     scope: "carrier",
-    from: undefined,
+    scopes: {},
   },
   /** Fires for each planet every month (counting up from colonisation date, includes home planet) */
   onColonyMonthlyPulse: {
     kind: "on-action-ref",
     name: "on_colony_monthly_pulse",
     scope: "carrier",
-    from: undefined,
+    scopes: {},
   },
   /** Fires for each planet every year (counting up from colonisation date, includes home planet) */
   onColonyYearlyPulse: {
     kind: "on-action-ref",
     name: "on_colony_yearly_pulse",
     scope: "carrier",
-    from: undefined,
+    scopes: {},
   },
   /** Fires for each planet every 5 years (counting up from colonisation date, includes home planet) */
   onColony5YearPulse: {
     kind: "on-action-ref",
     name: "on_colony_5_year_pulse",
     scope: "carrier",
-    from: undefined,
+    scopes: {},
   },
   /** Fires for each planet every 10 years (counting up from colonisation date, includes home planet) */
   onColony10YearPulse: {
     kind: "on-action-ref",
     name: "on_colony_10_year_pulse",
     scope: "carrier",
-    from: undefined,
+    scopes: {},
   },
   /** this = pop, fired via action.2021 */
   onColony10YearPulseRandomPopEventsList: {
     kind: "on-action-ref",
     name: "on_colony_10_year_pulse_random_pop_events_list",
     scope: "pop_group",
-    from: undefined,
+    scopes: {},
   },
   /**
    * a new leader is created
@@ -2123,7 +2133,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_leader_spawned",
     scope: "country",
-    from: "leader",
+    scopes: { from: "leader" },
   },
   /**
    * A leader is added to the leader pool, available for recruitment
@@ -2133,7 +2143,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_added_to_leader_pool",
     scope: "country",
-    from: "leader",
+    scopes: { from: "leader" },
   },
   /**
    * called during empire initialization when starting a new game
@@ -2143,7 +2153,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "empire_init_add_technologies",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Called during empire initialization when starting a new game.
@@ -2155,7 +2165,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "empire_init_capital_colony",
     scope: "colony",
-    from: "species",
+    scopes: { from: "species", fromfrom: "species" },
   },
   /**
    * called during empire initialization when starting a new game
@@ -2165,7 +2175,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "empire_init_create_ships",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Called when an election starts
@@ -2175,7 +2185,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_election_started",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Called when an election ends
@@ -2185,7 +2195,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_election_ended",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Called upon exploring a wormhole
@@ -2196,7 +2206,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_bypass_explored",
     scope: "bypass",
-    from: "fleet",
+    scopes: { from: "fleet" },
   },
   /**
    * Called upon entering FTL (on-action name scripted on the Bypass type)
@@ -2208,7 +2218,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_entering_gateway",
     scope: "fleet",
-    from: "system",
+    scopes: { from: "system", fromfrom: "system" },
   },
   /**
    * Called upon entering FTL (on-action name scripted on the Bypass type)
@@ -2220,7 +2230,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_entering_wormhole",
     scope: "fleet",
-    from: "system",
+    scopes: { from: "system", fromfrom: "system" },
   },
   /**
    * Called upon entering FTL (on-action name scripted on the Bypass type)
@@ -2232,7 +2242,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_entering_shroud_tunnel",
     scope: "fleet",
-    from: "system",
+    scopes: { from: "system", fromfrom: "system" },
   },
   /**
    * Called upon entering FTL (on-action name scripted on the Bypass type)
@@ -2244,14 +2254,14 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_entering_strange_wormhole",
     scope: "fleet",
-    from: "system",
+    scopes: { from: "system", fromfrom: "system" },
   },
   /** THIS = Ship */
   onJumpDrive: {
     kind: "on-action-ref",
     name: "on_jump_drive",
     scope: "ship",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Called upon a catapult jump being finished, per ship in catapulted fleet
@@ -2263,7 +2273,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_ship_quantum_catapult",
     scope: "ship",
-    from: "system",
+    scopes: { from: "system", fromfrom: "system" },
   },
   /**
    * Called upon a catapult jump being finished, per fleet
@@ -2275,14 +2285,14 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_fleet_quantum_catapult",
     scope: "fleet",
-    from: "system",
+    scopes: { from: "system", fromfrom: "system" },
   },
   /** this = country */
   onPirateSpawn: {
     kind: "on-action-ref",
     name: "on_pirate_spawn",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Called when a Starbase changes owner
@@ -2293,7 +2303,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_starbase_transfer",
     scope: "ship",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * This = Aggressor Fleet
@@ -2305,7 +2315,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_fleet_combat_joined_attacker",
     scope: "fleet",
-    from: "fleet",
+    scopes: { from: "fleet", fromfrom: "fleet", fromfromfrom: "fleet" },
   },
   /**
    * This = Attacked Fleet
@@ -2317,7 +2327,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_fleet_combat_joined_defender",
     scope: "fleet",
-    from: "fleet",
+    scopes: { from: "fleet", fromfrom: "fleet", fromfromfrom: "fleet" },
   },
   /**
    * From = system
@@ -2328,7 +2338,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_system_lost",
     scope: "country",
-    from: "system",
+    scopes: { from: "system", fromfrom: "country" },
   },
   /**
    * From = system
@@ -2339,7 +2349,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_system_gained",
     scope: "country",
-    from: "system",
+    scopes: { from: "system", fromfrom: "country" },
   },
   /**
    * This = Pop group
@@ -2350,28 +2360,28 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_slave_sold_on_market",
     scope: "pop_group",
-    from: "country",
+    scopes: { from: "country", fromfrom: "country" },
   },
   /** This = Country */
   onRelicReceived: {
     kind: "on-action-ref",
     name: "on_relic_received",
     scope: "country",
-    from: "country",
+    scopes: { from: "country" },
   },
   /** This = Country */
   onRelicActivated: {
     kind: "on-action-ref",
     name: "on_relic_activated",
     scope: "country",
-    from: "country",
+    scopes: { from: "country" },
   },
   /** This = Country */
   onRelicLost: {
     kind: "on-action-ref",
     name: "on_relic_lost",
     scope: "country",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * This = Fleet ( science vessel )
@@ -2381,63 +2391,63 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_arch_stage_finished",
     scope: "fleet",
-    from: "archaeological_site",
+    scopes: { from: "archaeological_site" },
   },
   onArchSiteFinished: {
     kind: "on-action-ref",
     name: "on_arch_site_finished",
     scope: "fleet",
-    from: "archaeological_site",
+    scopes: { from: "archaeological_site" },
   },
   /** This = Country, first member added */
   onGalacticCommunityFormed: {
     kind: "on-action-ref",
     name: "on_galactic_community_formed",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   onGalacticCouncilEstablished: {
     kind: "on-action-ref",
     name: "on_galactic_council_established",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /** This = Country */
   onAddCommunityMember: {
     kind: "on-action-ref",
     name: "on_add_community_member",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   onRemoveCommunityMember: {
     kind: "on-action-ref",
     name: "on_remove_community_member",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   onAddToCouncil: {
     kind: "on-action-ref",
     name: "on_add_to_council",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   onRemoveFromCouncil: {
     kind: "on-action-ref",
     name: "on_remove_from_council",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   onJoinAlliance: {
     kind: "on-action-ref",
     name: "on_join_alliance",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   onLeaveAlliance: {
     kind: "on-action-ref",
     name: "on_leave_alliance",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * This = Country who accepted the proposal
@@ -2447,7 +2457,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_sign_commercial_pact",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * This = Country who accepted the proposal
@@ -2457,7 +2467,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_sign_defensive_pact",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * This = Country who accepted the proposal
@@ -2467,7 +2477,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_sign_migration_pact",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * This = Country who accepted the proposal
@@ -2477,7 +2487,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_sign_non_aggression_pact",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * This = Country who accepted the proposal
@@ -2487,7 +2497,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_sign_research_pact",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * This = subject
@@ -2497,7 +2507,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_becoming_subject",
     scope: "country",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * fires when a country finishes being integrated
@@ -2508,7 +2518,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_subject_integrated",
     scope: "country",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * fires when a country releases a sector as a vassal
@@ -2519,7 +2529,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_released_as_vassal",
     scope: "country",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * This = empire trying to leave federation
@@ -2529,14 +2539,14 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_ask_to_leave_federation_declined",
     scope: "country",
-    from: "country",
+    scopes: { from: "country" },
   },
   /** this = owner country, from = spynetwork scope */
   onSpynetworkFormed: {
     kind: "on-action-ref",
     name: "on_spynetwork_formed",
     scope: "country",
-    from: "spy_network",
+    scopes: { from: "spy_network" },
   },
   /**
    * THIS = Country: Emperor
@@ -2546,7 +2556,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_add_to_imperial_council",
     scope: "country",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * THIS = Country: Emperor
@@ -2556,7 +2566,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_remove_from_imperial_council",
     scope: "country",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * these three are fired from script, basically for modders who want to change how first contact works or add some extra flavour stories in without overwriting things
@@ -2566,7 +2576,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_first_contact_started",
     scope: "first_contact",
-    from: undefined,
+    scopes: {},
   },
   /**
    * use for custom country types that need first contact paths
@@ -2576,14 +2586,14 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_first_contact_stage_1_no_path",
     scope: "first_contact",
-    from: undefined,
+    scopes: {},
   },
   /** THIS = first_contact */
   onFirstContactGenericStage2: {
     kind: "on-action-ref",
     name: "on_first_contact_generic_stage_2",
     scope: "first_contact",
-    from: undefined,
+    scopes: {},
   },
   /**
    * THIS = Planet: Branch office planet
@@ -2593,7 +2603,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_branch_office_established",
     scope: "carrier",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * THIS = Planet: Branch office planet
@@ -2603,7 +2613,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_branch_office_closed",
     scope: "carrier",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * THIS = System: system being occupied
@@ -2614,7 +2624,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_system_occupied",
     scope: "system",
-    from: "country",
+    scopes: { from: "country", fromfrom: "country" },
   },
   /**
    * THIS = System: system whos controller has changed
@@ -2625,7 +2635,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_system_controller_changed",
     scope: "system",
-    from: "country",
+    scopes: { from: "country", fromfrom: "country" },
   },
   /**
    * THIS = System: system being returned from occupation
@@ -2636,7 +2646,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_system_returned",
     scope: "system",
-    from: "country",
+    scopes: { from: "country", fromfrom: "country" },
   },
   /**
    * A planet has been rendered ownerless, it has an orbital ring or similar, though. The orbital ring is still there, but is about to be deleted
@@ -2648,14 +2658,14 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_orbital_defense_planet_ownerless",
     scope: "starbase",
-    from: "planet",
+    scopes: { from: "planet", fromfrom: "country" },
   },
   /** THIS = Espionage operation */
   onOperationCancelled: {
     kind: "on-action-ref",
     name: "on_operation_cancelled",
     scope: "espionage_operation",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Executed just as country is changing its government, before the new one is applied
@@ -2665,7 +2675,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_pre_government_changed",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Executed just as country is changing its government, after the new one is applied
@@ -2675,7 +2685,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_post_government_changed",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Executed when the Custodian's term ends
@@ -2685,7 +2695,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_custodian_term_ends",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Executed when a country picks any tradition (including starters and finishers)
@@ -2695,7 +2705,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_tradition_picked",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Executed when a country picks an ascension perk
@@ -2705,7 +2715,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_ascension_perk_picked",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Executed when a megastructure has a new owner
@@ -2717,7 +2727,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_megastructure_change_owner",
     scope: "country",
-    from: "megastructure",
+    scopes: { from: "megastructure", fromfrom: "country" },
   },
   /**
    * Executed when a megastructure is rendered ownerless
@@ -2729,13 +2739,13 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_megastructure_ownerless",
     scope: "system",
-    from: "megastructure",
+    scopes: { from: "megastructure", fromfrom: "country" },
   },
   onCrystallineEmpireTask: {
     kind: "on-action-ref",
     name: "on_crystalline_empire_task",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Fired from destroy_star_system scripted effect
@@ -2746,13 +2756,13 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_destroy_star_system",
     scope: "system",
-    from: "ship",
+    scopes: { from: "ship" },
   },
   onAdmiralsBickeringEventChain: {
     kind: "on-action-ref",
     name: "on_admirals_bickering_event_chain",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Executed when an empire wishes to turn a mercenary fleet into a Mercenary enclave
@@ -2762,7 +2772,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_establish_mercenary_enclave",
     scope: "fleet",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Fired when a science ship succesfully analyzed or scavenged debris
@@ -2775,7 +2785,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_debris_researched",
     scope: "country",
-    from: "debris",
+    scopes: { from: "debris", fromfrom: "country", fromfromfrom: "ship" },
   },
   /**
    * Fired when a science ship succesfully analyzed or scavenged debris
@@ -2788,7 +2798,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_debris_scavenged",
     scope: "country",
-    from: "debris",
+    scopes: { from: "debris", fromfrom: "country", fromfromfrom: "ship" },
   },
   /**
    * Fired when a science ship succesfully analyzed or scavenged debris
@@ -2801,7 +2811,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_debris_reanimated",
     scope: "country",
-    from: "debris",
+    scopes: { from: "debris", fromfrom: "country", fromfromfrom: "ship" },
   },
   /**
    * Fired when a science ship succesfully analyzed or scavenged debris
@@ -2814,7 +2824,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_debris_scavenged_and_researched",
     scope: "country",
-    from: "debris",
+    scopes: { from: "debris", fromfrom: "country", fromfromfrom: "ship" },
   },
   /**
    * Fired when a ship completes a special project.
@@ -2825,7 +2835,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "special_project_success",
     scope: "country",
-    from: undefined,
+    scopes: { fromfromfrom: "ship" },
   },
   /**
    * Fired when a ship finishes researching an anomaly.
@@ -2836,7 +2846,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "anomaly_success",
     scope: "ship",
-    from: "planet",
+    scopes: { from: "planet" },
   },
   /**
    * Fired when a subject has started converting to a specialist type
@@ -2848,7 +2858,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_specialist_subject_conversion_started",
     scope: "agreement",
-    from: "country",
+    scopes: { root: "country", from: "country" },
   },
   /**
    * Fired when a subject has finished converting to a specialist type
@@ -2860,7 +2870,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_specialist_subject_conversion_finished",
     scope: "agreement",
-    from: "country",
+    scopes: { root: "country", from: "country" },
   },
   /**
    * Fired when a subject specialist conversion has been aborted
@@ -2872,7 +2882,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_specialist_subject_conversion_aborted",
     scope: "agreement",
-    from: "country",
+    scopes: { root: "country", from: "country" },
   },
   /**
    * Executed when a two capitals get connected through relay network
@@ -2883,7 +2893,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_capitals_connected",
     scope: "country",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * Fired when a change to an existing subject agreement has been accepted
@@ -2895,25 +2905,25 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_agreement_change_accepted",
     scope: "agreement",
-    from: "country",
+    scopes: { root: "country", from: "country" },
   },
   onShroudwalkerDivinationVisitorsSituation: {
     kind: "on-action-ref",
     name: "on_shroudwalker_divination_visitors_situation",
     scope: "situation",
-    from: "country",
+    scopes: { root: "country", from: "country" },
   },
   onShroudwalkerDivinationLocusSituation: {
     kind: "on-action-ref",
     name: "on_shroudwalker_divination_locus_situation",
     scope: "situation",
-    from: "country",
+    scopes: { root: "country", from: "country" },
   },
   onShroudwalkerInsightSituationFinish: {
     kind: "on-action-ref",
     name: "on_shroudwalker_insight_situation_finish",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Executed when an astral rift spawns
@@ -2923,7 +2933,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_astral_rift_spawned",
     scope: "astral_rift",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Executed when the exploration of an astral rift starts
@@ -2935,7 +2945,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_astral_rift_exploration_start",
     scope: "country",
-    from: "astral_rift",
+    scopes: { from: "astral_rift", fromfrom: "fleet" },
   },
   /**
    * Executed when an astral rift event is about to be fired
@@ -2947,7 +2957,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_astral_rift_pre_event_fire",
     scope: "country",
-    from: "astral_rift",
+    scopes: { from: "astral_rift", fromfrom: "fleet" },
   },
   /**
    * Executed when the exploration of an astral rift ends
@@ -2959,7 +2969,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_astral_rift_exploration_complete",
     scope: "country",
-    from: "astral_rift",
+    scopes: { from: "astral_rift", fromfrom: "fleet" },
   },
   /**
    * Fired when a Commercial Pact is Broken for both parties
@@ -2970,7 +2980,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_commercial_pact_broken",
     scope: "country",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * Executed when a country activates an agenda
@@ -2980,7 +2990,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_agenda_finished",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Executed when a country activates an agenda early.
@@ -2991,7 +3001,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_agenda_finished_early",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Fired when a fleet activates cloaking
@@ -3001,7 +3011,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_cloaking_activated",
     scope: "fleet",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Fired when cloaking is deactivated for a fleet (voluntarily or involuntarily)
@@ -3011,7 +3021,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_cloaking_deactivated",
     scope: "fleet",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Fired when a pre-FTL's awareness level increases (by uncloaking ships or using add/set_awareness in events)
@@ -3022,7 +3032,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_awareness_level_increase",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Fired when a pre-FTL's awareness level decreases (by uncloaking ships or using add/set_awareness in events)
@@ -3033,14 +3043,14 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_awareness_level_decrease",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /** Chance of pre-FTL civilizations to shift their ethics */
   onPreFtlPopEthicShift: {
     kind: "on-action-ref",
     name: "on_pre_ftl_pop_ethic_shift",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Fired when a country attacks another country
@@ -3051,7 +3061,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_country_attacked",
     scope: "country",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * Fired when a bypass in locked by a Dimensional Lock
@@ -3062,7 +3072,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_bypass_locked",
     scope: "bypass",
-    from: "fleet",
+    scopes: { from: "fleet" },
   },
   /**
    * Fired when a bypass Dimensional Lock expires
@@ -3072,7 +3082,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_dimensional_lock_expired",
     scope: "bypass",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Fired when a Space Storm is created
@@ -3082,7 +3092,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_space_storm_created",
     scope: "system",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Fired when a Space Storm is destroyed
@@ -3092,21 +3102,21 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_space_storm_destroyed",
     scope: "system",
-    from: undefined,
+    scopes: {},
   },
   /** Fired approximately every decade via 'syndaw.11' */
   onMachineLeaderMalfunction: {
     kind: "on-action-ref",
     name: "on_machine_leader_malfunction",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /** Fired approximately every decade via 'syndaw.11' */
   onSynthLeaderMalfunction: {
     kind: "on-action-ref",
     name: "on_synth_leader_malfunction",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Fired when a PopGroup has a change in their ethics
@@ -3118,7 +3128,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_daily_pop_ethics_divergence",
     scope: "pop_group",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * Situation Random Event Pool | Fired by cyber.5
@@ -3128,13 +3138,13 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_cyberization_situation_random_events_list",
     scope: "situation",
-    from: undefined,
+    scopes: {},
   },
   onCyberizationHiveSituationRandomEventsList: {
     kind: "on-action-ref",
     name: "on_cyberization_hive_situation_random_events_list",
     scope: "situation",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Situation Random Event Pool | Fired by synth.5
@@ -3144,7 +3154,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_digitization_situation_random_events_list",
     scope: "situation",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Work/Family Event Pool | Fired by cyber.600
@@ -3154,7 +3164,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_futureshock_chain_work_family_events_list",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Leisure/Social Event Pool | Fired by cyber.1000
@@ -3164,7 +3174,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_futureshock_chain_leisure_events_list",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Identity Event Pool | Fired by synth.600
@@ -3174,7 +3184,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_synthshock_chain_identity_events_list",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Possibilities Event Pool | Fired by synth.1000
@@ -3184,7 +3194,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_synthshock_chain_opportunity_events_list",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Synth Queen Random Demand Pool | Fired by situation_synth_queen_player_facing
@@ -3194,7 +3204,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_synth_queen_random_demand_list",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Breach the Shroud Situation Random Social Event Pool | Fired by shroud.2200 during Stage 1
@@ -3204,7 +3214,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_breach_the_shroud_situation_random_social_events_list",
     scope: "situation",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Breach the Shroud Situation Random Beneficial Event Pool | Fired by shroud.2200
@@ -3214,7 +3224,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_breach_the_shroud_situation_random_beneficial_events_list",
     scope: "situation",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Breach the Shroud Situation Random Balanced Event Pool | Fired by shroud.2200
@@ -3224,7 +3234,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_breach_the_shroud_situation_random_balanced_events_list",
     scope: "situation",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Breach the Shroud Situation Random Chaotic Event Pool | Fired by shroud.2200
@@ -3234,7 +3244,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_breach_the_shroud_situation_random_chaotic_events_list",
     scope: "situation",
-    from: undefined,
+    scopes: {},
   },
   /**
    * A Gravity Snare was sent by a science fleet
@@ -3245,7 +3255,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_snare_sent",
     scope: "fleet",
-    from: "fleet",
+    scopes: { from: "fleet" },
   },
   /**
    * Fired when a truce is over
@@ -3256,7 +3266,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_truce_end",
     scope: "country",
-    from: "country",
+    scopes: { from: "country" },
   },
   /**
    * Fired when starbase is occupied and changes controller
@@ -3267,7 +3277,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_starbase_occupied",
     scope: "country",
-    from: "starbase",
+    scopes: { from: "starbase" },
   },
   /**
    * A specimen has been acquired
@@ -3277,7 +3287,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_specimen_acquired",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * A specimen has been sold
@@ -3287,7 +3297,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_specimen_sold",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Fired when a ship engulfs another one with an engulf type weapon
@@ -3298,7 +3308,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_ship_engulfed",
     scope: "ship",
-    from: "ship",
+    scopes: { from: "ship" },
   },
   /**
    * This: System
@@ -3308,7 +3318,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_storm_entered_system",
     scope: "system",
-    from: "storm",
+    scopes: { from: "storm" },
   },
   /**
    * This: System
@@ -3318,7 +3328,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_storm_left_system",
     scope: "system",
-    from: "storm",
+    scopes: { from: "storm" },
   },
   /**
    * Fired when a collection exhibit has been unlocked
@@ -3328,7 +3338,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_exhibit_unlocked",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Fired when a space fauna is captured
@@ -3339,7 +3349,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_fauna_captured",
     scope: "ship",
-    from: "fleet",
+    scopes: { from: "fleet" },
   },
   /**
    * Performed once a space fauna capture attempt ends, no matter the outcome of the attempt
@@ -3349,7 +3359,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_fauna_capture_ended",
     scope: "fleet",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Fired when a space fauna is added to the vivarium
@@ -3360,7 +3370,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_vivarium_populated",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Fired when a space fauna is culled
@@ -3371,14 +3381,14 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_space_fauna_culled",
     scope: "country",
-    from: "design",
+    scopes: { from: "design" },
   },
   /** This: Storm */
   onStormFinished: {
     kind: "on-action-ref",
     name: "on_storm_finished",
     scope: "storm",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Fired when a country encounters a storm for the first time
@@ -3390,7 +3400,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_storm_encountered",
     scope: "country",
-    from: "storm",
+    scopes: { from: "storm" },
   },
   /**
    * This = Leader captured
@@ -3402,7 +3412,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_leader_captured",
     scope: "leader",
-    from: "country",
+    scopes: { from: "country", fromfrom: "country", fromfromfrom: "system" },
   },
   /**
    * This = Country
@@ -3412,62 +3422,62 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_biomass_monthly",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /** This = Country */
   onFtlSocietyEntersNewAge: {
     kind: "on-action-ref",
     name: "on_ftl_society_enters_new_age",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   onGeneticAscensionEventsList: {
     kind: "on-action-ref",
     name: "on_genetic_ascension_events_list",
     scope: "situation",
-    from: undefined,
+    scopes: {},
   },
   onGeneticAscensionApproachPurityEventsList: {
     kind: "on-action-ref",
     name: "on_genetic_ascension_approach_purity_events_list",
     scope: "situation",
-    from: undefined,
+    scopes: {},
   },
   onGeneticAscensionApproachCloningEventsList: {
     kind: "on-action-ref",
     name: "on_genetic_ascension_approach_cloning_events_list",
     scope: "situation",
-    from: undefined,
+    scopes: {},
   },
   onGeneticAscensionApproachMutationEventsList: {
     kind: "on-action-ref",
     name: "on_genetic_ascension_approach_mutation_events_list",
     scope: "situation",
-    from: undefined,
+    scopes: {},
   },
   onGeneticAscensionHiveEventsList: {
     kind: "on-action-ref",
     name: "on_genetic_ascension_hive_events_list",
     scope: "situation",
-    from: undefined,
+    scopes: {},
   },
   onGeneticAscensionHiveApproachPurityEventsList: {
     kind: "on-action-ref",
     name: "on_genetic_ascension_hive_approach_purity_events_list",
     scope: "situation",
-    from: undefined,
+    scopes: {},
   },
   onGeneticAscensionHiveApproachCloningEventsList: {
     kind: "on-action-ref",
     name: "on_genetic_ascension_hive_approach_cloning_events_list",
     scope: "situation",
-    from: undefined,
+    scopes: {},
   },
   onGeneticAscensionHiveApproachMutationEventsList: {
     kind: "on-action-ref",
     name: "on_genetic_ascension_hive_approach_mutation_events_list",
     scope: "situation",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Fired when attunement towards a Patron is gained (also fired when losing attunement since it's a gain for the opposite patron)
@@ -3477,7 +3487,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_attunement_gained",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Fired when a country completes a patron's first contact
@@ -3487,33 +3497,33 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_patron_contact_completed",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /** this = Country */
   onCovenantFormed: {
     kind: "on-action-ref",
     name: "on_covenant_formed",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /** this = Country */
   onActiveAccordUnlocked: {
     kind: "on-action-ref",
     name: "on_active_accord_unlocked",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   onSuperstitiousBeliefsRandomPositiveEventsList: {
     kind: "on-action-ref",
     name: "on_superstitious_beliefs_random_positive_events_list",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   onSuperstitiousBeliefsRandomNegativeEventsList: {
     kind: "on-action-ref",
     name: "on_superstitious_beliefs_random_negative_events_list",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Fired by breach_shroud = yes
@@ -3523,7 +3533,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_shroud_breached",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Fired when a country delves, no matter the result
@@ -3533,7 +3543,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_shroud_delve",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Fired when a country delves but finds nothing of interest
@@ -3543,7 +3553,7 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_patron_delve_failed",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /**
    * Fired when a player selects a new country during the game
@@ -3553,20 +3563,20 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_new_country_selected",
     scope: "country",
-    from: undefined,
+    scopes: {},
   },
   /** Beholder Leader's Planetfall action */
   onBeholderTargetPlanetReached: {
     kind: "on-action-ref",
     name: "on_beholder_target_planet_reached",
     scope: "carrier",
-    from: "fleet",
+    scopes: { from: "fleet" },
   },
   onAzarynTargetPlanetReached: {
     kind: "on-action-ref",
     name: "on_azaryn_target_planet_reached",
     scope: "carrier",
-    from: "fleet",
+    scopes: { from: "fleet" },
   },
   /**
    * Executed when a country activates an agenda
@@ -3576,90 +3586,90 @@ export const onActions = {
     kind: "on-action-ref",
     name: "on_azaryn_action_cancel",
     scope: "carrier",
-    from: undefined,
+    scopes: {},
   },
   onCosmogenesisExodusPlanetReached: {
     kind: "on-action-ref",
     name: "on_cosmogenesis_exodus_planet_reached",
     scope: "carrier",
-    from: "fleet",
+    scopes: { from: "fleet" },
   },
   onBehemothFastEggPlanetReached: {
     kind: "on-action-ref",
     name: "on_behemoth_fast_egg_planet_reached",
     scope: "carrier",
-    from: "fleet",
+    scopes: { from: "fleet" },
   },
   onBehemothSlowEggPlanetReached: {
     kind: "on-action-ref",
     name: "on_behemoth_slow_egg_planet_reached",
     scope: "carrier",
-    from: "fleet",
+    scopes: { from: "fleet" },
   },
   onBehemothStrongEggPlanetReached: {
     kind: "on-action-ref",
     name: "on_behemoth_strong_egg_planet_reached",
     scope: "carrier",
-    from: "fleet",
+    scopes: { from: "fleet" },
   },
   onBehemothTurboActivated: {
     kind: "on-action-ref",
     name: "on_behemoth_turbo_activated",
     scope: "fleet",
-    from: "fleet",
+    scopes: { from: "fleet" },
   },
   onBehemothReflexesActivated: {
     kind: "on-action-ref",
     name: "on_behemoth_reflexes_activated",
     scope: "fleet",
-    from: "fleet",
+    scopes: { from: "fleet" },
   },
   onBehemothDrainActivated: {
     kind: "on-action-ref",
     name: "on_behemoth_drain_activated",
     scope: "fleet",
-    from: "fleet",
+    scopes: { from: "fleet" },
   },
   onBehemothSpikeActivated: {
     kind: "on-action-ref",
     name: "on_behemoth_spike_activated",
     scope: "fleet",
-    from: "fleet",
+    scopes: { from: "fleet" },
   },
   onBehemothBurstActivated: {
     kind: "on-action-ref",
     name: "on_behemoth_burst_activated",
     scope: "fleet",
-    from: "fleet",
+    scopes: { from: "fleet" },
   },
   onBehemothBuffActivated: {
     kind: "on-action-ref",
     name: "on_behemoth_buff_activated",
     scope: "fleet",
-    from: "fleet",
+    scopes: { from: "fleet" },
   },
   onBehemothSummonActivated: {
     kind: "on-action-ref",
     name: "on_behemoth_summon_activated",
     scope: "fleet",
-    from: "fleet",
+    scopes: { from: "fleet" },
   },
   onBehemothHealingActivated: {
     kind: "on-action-ref",
     name: "on_behemoth_healing_activated",
     scope: "fleet",
-    from: "fleet",
+    scopes: { from: "fleet" },
   },
   onBehemothSuperweaponActivated: {
     kind: "on-action-ref",
     name: "on_behemoth_superweapon_activated",
     scope: "fleet",
-    from: "fleet",
+    scopes: { from: "fleet" },
   },
   onBehemothRageTriggered: {
     kind: "on-action-ref",
     name: "on_behemoth_rage_triggered",
     scope: "fleet",
-    from: "fleet",
+    scopes: { from: "fleet" },
   },
 } as const satisfies Record<string, OnActionRef>;

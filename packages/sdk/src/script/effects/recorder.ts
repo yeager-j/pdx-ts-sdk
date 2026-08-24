@@ -6,10 +6,12 @@ import {
   container,
   kv,
   scalar as pdxScalar,
+  type PdxContainer,
   type PdxEntry,
   type PdxItem,
   type PdxOp,
   type PdxScalar,
+  type PdxValue,
 } from "@pdx-ts/pdxscript";
 
 import { fieldEntries as contentFieldEntries } from "../../content/lower.ts";
@@ -48,22 +50,27 @@ import {
   type RecordEffects,
   type RecordingState,
 } from "./structural.ts";
-import type {
-  EventTarget,
-  Modifier,
-  RandomListArm,
-  ScopeRef,
-  ScopeValue,
-  ScriptCtx,
+import {
+  AMBIENT_SCOPE_KEYS,
+  type AmbientScopeContext,
+  type EventTarget,
+  type Modifier,
+  type RandomListArm,
+  type ScopeRef,
+  type ScopeValue,
+  type ScriptCtx,
 } from "./types.ts";
 
 const cannotWitnessNaturalFrom = Symbol("cannotWitnessNaturalFrom");
 const scopeLease = Symbol("scopeLease");
+const contextPrevDepth = Symbol("contextPrevDepth");
+const contextPrevEntry = Symbol("contextPrevEntry");
 type ScopeTransition = "same" | "push" | "replace" | "unknown";
 type ScopeIdentity = symbol;
 interface RuntimeScopeValue {
   readonly [cannotWitnessNaturalFrom]?: true;
   readonly [scopeLease]?: ScriptLease;
+  readonly [contextPrevDepth]?: number;
 }
 
 /**
@@ -75,6 +82,15 @@ interface RuntimeScopeValue {
  * ctx used where it was given from one that escaped into another definition.
  */
 type ScriptLease = symbol;
+
+/** A declared PREV trigger path deferred until its receiving effect block is known. */
+interface ContextPrevEntry {
+  readonly [contextPrevEntry]?: {
+    readonly path: string;
+    readonly declaredDepth: number;
+    readonly lease: ScriptLease | undefined;
+  };
+}
 
 /** The authoring calls currently running, innermost last. */
 const LEASES: ScriptLease[] = [];
@@ -96,26 +112,40 @@ export function scopeValue<S extends ScopeName>(
 }
 
 /**
- * SDK-internal: an unchecked openable ref for absolute paths (`from`).
+ * SDK-internal: an openable ref for absolute paths and declared PREV paths.
  *
  * A ref made with a lease can only be opened inside a recording of the
  * authoring call that holds that lease; one made without a lease — an event
  * target, a bare path — is openable in any recording, which is what makes a
  * declared target reusable across definitions.
  */
-export function scopeRef<S extends ScopeName>(path: string, lease?: ScriptLease): ScopeRef<S> {
+export function scopeRef<S extends ScopeName>(
+  path: string,
+  lease?: ScriptLease,
+  declaredPrevDepth?: number
+): ScopeRef<S> {
   return {
     ...scopeValue<S>(path),
     ...(lease === undefined ? {} : { [scopeLease]: lease }),
+    ...(declaredPrevDepth === undefined ? {} : { [contextPrevDepth]: declaredPrevDepth }),
     effects(body) {
       const recording = activeRecording(path);
       assertOwnedBy(recording, lease, path);
-      recording.sink.push(block(path, recordBlock(recording, recording.refs, body, [], "push")));
+      const resolvedPath = resolveContextPrevPath(path, declaredPrevDepth, recording, lease);
+      recording.sink.push(
+        block(resolvedPath, recordBlock(recording, recording.refs, body, [], "push"))
+      );
     },
-    // No lease check: a trigger is a value built with nothing recording, so it
-    // reaches output only where its holder writes it.
     trigger(condition) {
-      return trigger([block(path, [...condition.entries])], [...condition.refs]);
+      const entry = block(path, [...condition.entries]);
+      const contextualEntry =
+        declaredPrevDepth === undefined
+          ? entry
+          : ({
+              ...entry,
+              [contextPrevEntry]: { path, declaredDepth: declaredPrevDepth, lease },
+            } satisfies PdxEntry & ContextPrevEntry);
+      return trigger([contextualEntry], [...condition.refs]);
     },
   };
 }
@@ -138,8 +168,41 @@ export function navigateScope<S extends ScopeName>(base: ScopeValue, key: string
   return "effects" in base && base.path !== "this"
     ? // Navigation carries the base's lease too: `owner(ctx.from)` opens a
       // block of the same authoring call `ctx.from` came from.
-      scopeRef<S>(path, (base as RuntimeScopeValue)[scopeLease])
+      scopeRef<S>(
+        path,
+        (base as RuntimeScopeValue)[scopeLease],
+        (base as RuntimeScopeValue)[contextPrevDepth]
+      )
     : scopeValue<S>(path);
+}
+
+function resolveContextPrevPath(
+  path: string,
+  declaredDepth: number | undefined,
+  recording: Recording,
+  lease: ScriptLease | undefined
+): string {
+  if (declaredDepth === undefined) {
+    return path;
+  }
+  assertOwnedBy(recording, lease, path);
+  if (recording.blockedAncestors.length > 0) {
+    throw new Error(
+      "A context PREV reference crosses a replacement or unknown scope transition. " +
+        "The game does not provide a verified PREV path across that boundary; use ROOT, FROM, " +
+        "or a saved target reference instead."
+    );
+  }
+  const depth = declaredDepth + recording.ancestors.length;
+  if (depth > 4) {
+    throw new Error(
+      `A context PREV reference is ${depth} scopes away from its declaring block. ` +
+        "Stellaris exposes only PREV through PREVPREVPREVPREV; keep the effect within four " +
+        "verified scope pushes or open an explicit saved scope reference."
+    );
+  }
+  const declaredPath = prevKey(declaredDepth);
+  return `${prevKey(depth)}${path.slice(declaredPath.length)}`;
 }
 
 /**
@@ -181,6 +244,55 @@ interface Recording extends RecordingState {
     readonly sink: readonly PdxEntry[];
     readonly mark: number;
   };
+}
+
+function resolveContextPrevEntries(
+  entries: readonly PdxEntry[],
+  recording: Recording | undefined
+): PdxEntry[] {
+  return recording === undefined
+    ? [...entries]
+    : entries.map((entry) => resolveContextPrevEntry(entry, recording));
+}
+
+function resolveContextPrevEntry(entry: PdxEntry, recording: Recording): PdxEntry {
+  const context = (entry as PdxEntry & ContextPrevEntry)[contextPrevEntry];
+  const key =
+    context === undefined
+      ? entry.key
+      : resolveContextPrevPath(context.path, context.declaredDepth, recording, context.lease);
+  return {
+    kind: "entry",
+    key,
+    op: entry.op,
+    value: resolveContextPrevValue(entry.value, recording),
+    ...(entry.line === undefined ? {} : { line: entry.line }),
+  };
+}
+
+function resolveContextPrevValue(value: PdxValue, recording: Recording): PdxValue {
+  return value.kind === "container" ? resolveContextPrevContainer(value, recording) : value;
+}
+
+function resolveContextPrevContainer(value: PdxContainer, recording: Recording): PdxContainer {
+  return {
+    kind: "container",
+    items: value.items.map((item) => resolveContextPrevItem(item, recording)),
+    ...(value.header === undefined ? {} : { header: value.header }),
+  };
+}
+
+function resolveContextPrevItem(item: PdxItem, recording: Recording): PdxItem {
+  if (item.kind === "entry") {
+    return resolveContextPrevEntry(item, recording);
+  }
+  if (item.kind === "container") {
+    return resolveContextPrevContainer(item, recording);
+  }
+  if (item.kind === "param") {
+    return { ...item, items: item.items.map((child) => resolveContextPrevItem(child, recording)) };
+  }
+  return item;
 }
 
 const RECORDINGS: Recording[] = [];
@@ -350,7 +462,7 @@ function assertOwnedBy(recording: Recording, lease: ScriptLease | undefined, pat
  */
 function assertWitnessOwnedBy(
   recording: Recording | undefined,
-  witness: FireCallArgs["from"],
+  witness: FireScopeWitness | undefined,
   key: string
 ): void {
   if (recording === undefined || witness === undefined) {
@@ -360,7 +472,7 @@ function assertWitnessOwnedBy(
     return;
   }
   throw new Error(
-    `'${witness.path}' was passed as the FROM witness of '${key}' from a ScriptCtx belonging ` +
+    `'${witness.path}' was passed as a scope witness of '${key}' from a ScriptCtx belonging ` +
       "to a different definition, so the context escaped the closure it was handed to. The " +
       "fire site would write it as this definition's FROM override while the scope it names " +
       "is the one the earlier definition's rules supply. Use the ctx the closure being " +
@@ -369,33 +481,38 @@ function assertWitnessOwnedBy(
 }
 
 /**
- * Runs one authoring call's body with the three ambient scopes.
+ * Runs one authoring call's body with the declared ambient scopes.
  *
- * The three are the fixed script paths they always are. `Root` defaults to
- * `Self` on {@link ScriptCtx}'s terms — an event's blocks are the top level,
- * so ROOT is the event's own scope — and a caller whose rules say otherwise
- * names it. Which of the three a given closure may *read* is the type
- * argument's business; the object handed over carries all three either way,
- * since they are the same three words in the output regardless.
+ * ROOT and FROM paths are fixed. PREV paths stay relative to the declaring
+ * block, so a verified nested push increases their emitted PREV depth. ROOT
+ * defaults to `Self` on {@link ScriptCtx}'s terms — an event's blocks are the
+ * top level, so ROOT is the event's own scope — and a caller whose rules say
+ * otherwise names it. The context map controls which declared ambient slots a
+ * closure may read; the object carries the complete map in its canonical order.
  *
- * The ctx lives for this call: `root` and `from` may be opened as blocks in
- * any recording started while the body runs — one event's ctx serves its
- * `immediate`, its `after` and every option — and nowhere else. Opening one
- * later reaches {@link assertOwnedBy}, which is why the ctx is built here
+ * The ctx lives for this call: every declared ambient ref may be opened as a
+ * block in any recording started while the body runs — one event's ctx serves
+ * its `immediate`, its `after` and every option — and nowhere else. Opening
+ * one later reaches {@link assertOwnedBy}, which is why the ctx is built here
  * rather than handed out as a value the caller keeps.
  */
 export function withScriptCtx<
   Self extends ScopeName,
-  From extends ScopeName | undefined,
-  Root extends ScopeName | undefined = Self,
+  Context extends AmbientScopeContext = { readonly root: Self },
   T = void,
->(options: { readonly splitRoot?: boolean }, body: (ctx: ScriptCtx<Self, From, Root>) => T): T {
+>(options: { readonly splitRoot?: boolean }, body: (ctx: ScriptCtx<Self, Context>) => T): T {
   const lease: ScriptLease = Symbol("scriptCtx");
   const ctx = {
     self: scopeValue("this", options.splitRoot !== true),
-    root: scopeRef("root", lease),
-    from: scopeRef("from", lease),
-  } as ScriptCtx<Self, From, Root>;
+    ...Object.fromEntries(
+      AMBIENT_SCOPE_KEYS.map((key) => [
+        key,
+        key.startsWith("prev")
+          ? scopeRef(key, lease, key === "prev" ? 1 : key.length / "prev".length)
+          : scopeRef(key, lease),
+      ])
+    ),
+  } as ScriptCtx<Self, Context>;
 
   LEASES.push(lease);
   try {
@@ -992,8 +1109,10 @@ interface FireCallArgs {
   readonly months?: number;
   readonly years?: number;
   readonly random?: number;
-  readonly from?: { readonly path: string } & RuntimeScopeValue;
+  readonly scopes?: Readonly<Record<string, FireScopeWitness>>;
 }
+
+type FireScopeWitness = { readonly path: string } & RuntimeScopeValue;
 
 interface EventChainCounterCallArgs {
   readonly eventChain: { readonly id: string } | string;
@@ -1024,21 +1143,42 @@ function fireEffect(key: string) {
           entries.push(kv(field, value));
         }
       }
-      if (args.from?.[cannotWitnessNaturalFrom] === true) {
+      if (args.scopes?.from?.[cannotWitnessNaturalFrom] === true) {
         throw new Error(
-          "A split-root effect block cannot use `from: ctx.self` as an event's natural FROM: " +
+          "A split-root effect block cannot use `scopes: { from: ctx.self }` as an event's natural FROM: " +
             "the game supplies ROOT, which differs from this block's THIS scope. Pass `ctx.root` " +
             "when the event expects ROOT, or an absolute scope reference for an explicit override."
         );
       }
+      const relativeDeeperFrom = Object.entries(args.scopes ?? {}).find(
+        ([slot, witness]) => slot !== "from" && slot.startsWith("from") && witness.path === "this"
+      );
+      if (relativeDeeperFrom !== undefined) {
+        throw new Error(
+          `Event scope witness "${relativeDeeperFrom[0]}" uses relative THIS. Deeper FROM ` +
+            "overrides must use an absolute scope reference such as ROOT, FROM, or a saved target, " +
+            "because THIS changes inside nested effect callbacks."
+        );
+      }
       // The witness is the other place a ctx path reaches output, so it
       // carries the same lease rule opening a block does.
-      assertWitnessOwnedBy(recording, args.from, key);
+      Object.values(args.scopes ?? {}).forEach((witness) =>
+        assertWitnessOwnedBy(recording, witness, key)
+      );
       // Natural FROM is the firing execution's ROOT. `ctx.self` can witness
       // that omission only where SELF and ROOT are not known to differ; any
       // other ref uses the game's explicit override mechanism.
-      if (args.from !== undefined && args.from.path !== "this") {
-        entries.push(block("scopes", [kv("from", args.from.path)]));
+      const overrides = AMBIENT_SCOPE_KEYS.flatMap((slot) => {
+        if (slot === "root" || slot.startsWith("prev")) {
+          return [];
+        }
+        const witness = args.scopes?.[slot];
+        return witness === undefined || (slot === "from" && witness.path === "this")
+          ? []
+          : [kv(slot, witness.path)];
+      });
+      if (overrides.length > 0) {
+        entries.push(block("scopes", overrides));
       }
       sink.push(block(key, entries));
     };
@@ -1424,6 +1564,9 @@ function recordBlock<S extends ScopeName>(
     recording.live = false;
   }
   assertSynchronousClosure(result, "An effect closure");
+  // Trigger arguments are evaluated before a pushed callback opens. Resolve
+  // declared PREV paths only now, against the block that will contain them.
+  into.splice(0, into.length, ...resolveContextPrevEntries(into, recording));
   return into;
 }
 

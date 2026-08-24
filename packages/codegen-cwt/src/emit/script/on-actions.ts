@@ -1,5 +1,6 @@
 import { scopeIndex, type OnActionDecl, type RuleSet } from "../../cwt/rules.ts";
 import { camelCase, docComment, isPlainName } from "../../naming.ts";
+import { AMBIENT_SCOPE_KEYS, type AmbientScopeKey } from "../../special-scope-paths.ts";
 
 /** Generated on-action reference module text and its lowering report. */
 export interface OnActionsEmission {
@@ -17,7 +18,7 @@ interface LoweredOnAction {
   readonly name: string;
   readonly member: string;
   readonly scope: string | null;
-  readonly from: string | undefined;
+  readonly scopes: Readonly<Partial<Record<AmbientScopeKey, string>>>;
   readonly docs: readonly string[];
 }
 
@@ -43,14 +44,14 @@ export function emitOnActions(rules: RuleSet): OnActionsEmission {
     .map((hook) => {
       const docs = docComment(hook.docs, "  ");
       const scope = hook.scope === null ? "null" : JSON.stringify(hook.scope);
-      const from = hook.from === undefined ? "undefined" : JSON.stringify(hook.from);
+      const scopes = JSON.stringify(hook.scopes);
       return (
         docs +
         `  ${hook.member}: {\n` +
         '    kind: "on-action-ref",\n' +
         `    name: ${JSON.stringify(hook.name)},\n` +
         `    scope: ${scope},\n` +
-        `    from: ${from},\n` +
+        `    scopes: ${scopes},\n` +
         "  },\n"
       );
     })
@@ -102,18 +103,26 @@ function lower(hook: OnActionDecl, scopes: ReadonlyMap<string, string>): Lowered
     }
   }
 
-  const rawFrom = hook.scopes.get("from");
-  const from =
-    rawFrom === undefined || rawFrom === "no_scope" ? undefined : scopes.get(normalize(rawFrom));
-  if (rawFrom !== undefined && rawFrom !== "no_scope" && from === undefined) {
-    return `unknown FROM scope ${rawFrom}`;
+  const ambient: Partial<Record<AmbientScopeKey, string>> = {};
+  for (const key of AMBIENT_SCOPE_KEYS) {
+    const raw = hook.scopes.get(key);
+    if (raw === undefined || raw === "no_scope") {
+      continue;
+    }
+    const declared = scopes.get(normalize(raw));
+    if (declared === undefined) {
+      return `unknown ${key.toUpperCase()} scope ${raw}`;
+    }
+    if (key !== "root" || declared !== scope) {
+      ambient[key] = declared;
+    }
   }
 
   return {
     name: hook.name,
     member: camelCase(hook.name),
     scope: scope ?? null,
-    from,
+    scopes: ambient,
     docs: hook.docs,
   };
 }
