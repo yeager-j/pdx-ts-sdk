@@ -628,6 +628,12 @@ describe("determinism", () => {
     expect(external).not.toContain("https://");
   });
 
+  it("reveals labels on hover only", () => {
+    const { svg } = inspectSolarSystem(define("deterministic", def));
+    expect(svg).toContain('class="hover-target"');
+    expect(svg).toContain(".label:hover .label-body { opacity: 1; }");
+  });
+
   it("shades bodies with gradients keyed to the initializer id", () => {
     const { svg } = inspectSolarSystem(define("deterministic", def));
     expect(svg).toContain(

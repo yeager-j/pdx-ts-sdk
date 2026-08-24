@@ -21,6 +21,9 @@
   .halo-possible { fill: none; stroke: #ffb454; stroke-width: var(--halo); }
   text { fill: #aab4d4; font-family: ui-sans-serif, system-ui, sans-serif; }
   .leader { stroke: #4a5578; stroke-width: var(--hair); }
+  .hover-target { fill: transparent; }
+  .label .label-body { opacity: 0; transition: opacity 0.15s; }
+  .label:hover .label-body { opacity: 1; }
 </style>
 <defs><radialGradient id="inspect_solar_system_initializer_binary_nested-star" cx="35%" cy="35%" r="75%"><stop offset="0%" stop-color="#fff3d6"/><stop offset="55%" stop-color="#ffd27f"/><stop offset="100%" stop-color="#d9a54e"/></radialGradient><radialGradient id="inspect_solar_system_initializer_binary_nested-planet" cx="35%" cy="35%" r="75%"><stop offset="0%" stop-color="#f2f5ff"/><stop offset="55%" stop-color="#cfd8ff"/><stop offset="100%" stop-color="#8d9bd6"/></radialGradient><radialGradient id="inspect_solar_system_initializer_binary_nested-moon" cx="35%" cy="35%" r="75%"><stop offset="0%" stop-color="#d3e0ea"/><stop offset="55%" stop-color="#9fb4c8"/><stop offset="100%" stop-color="#64798d"/></radialGradient><radialGradient id="inspect_solar_system_initializer_binary_nested-asteroid" cx="35%" cy="35%" r="75%"><stop offset="0%" stop-color="#d8cbb6"/><stop offset="55%" stop-color="#b0a08a"/><stop offset="100%" stop-color="#776852"/></radialGradient></defs>
 <rect class="bg" x="-275.46" y="-275.46" width="550.92" height="550.92"/>
@@ -35,18 +38,12 @@
 <circle class="body-moon" cx="199.89" cy="104" r="2.04"/>
 <circle class="body-asteroid" cx="202.89" cy="104" r="2.04"/>
 <circle class="body-planet" cx="-60" cy="-103.92" r="3.5"/>
-<line class="leader" x1="5.3" y1="-5.3" x2="9.13" y2="-9.13"/>
-<text x="11.12" y="-9.13" font-size="6.63">Primary · 30</text>
-<line class="leader" x1="172.42" y1="137.52" x2="175.66" y2="134.28"/>
-<text x="177.65" y="134.28" font-size="6.63">Companion · 22</text>
-<line class="leader" x1="193.86" y1="99.61" x2="196.66" y2="96.81"/>
-<text x="198.65" y="96.81" font-size="6.63">pc_tundra · 16</text>
-<line class="leader" x1="200.43" y1="105.97" x2="203.57" y2="117.57"/>
-<text x="205.56" y="117.57" font-size="6.63">pc_barren · 3</text>
-<line class="leader" x1="203.13" y1="106.03" x2="206.57" y2="134.82"/>
-<text x="208.56" y="134.82" font-size="6.63">pc_asteroid · 1</text>
-<line class="leader" x1="-57.53" y1="-106.4" x2="-54.87" y2="-109.06"/>
-<text x="-52.88" y="-109.06" font-size="6.63">pc_frozen · 14</text>
+<g class="label"><circle class="hover-target" cx="0" cy="0" r="9.54"/><g class="label-body"><line class="leader" x1="5.3" y1="-5.3" x2="9.13" y2="-9.13"/><text x="11.12" y="-9.13" font-size="6.63">Primary · 30</text></g></g>
+<g class="label"><circle class="hover-target" cx="168.53" cy="141.41" r="7.54"/><g class="label-body"><line class="leader" x1="172.42" y1="137.52" x2="175.66" y2="134.28"/><text x="177.65" y="134.28" font-size="6.63">Companion · 22</text></g></g>
+<g class="label"><circle class="hover-target" cx="191.03" cy="102.44" r="6.04"/><g class="label-body"><line class="leader" x1="193.86" y1="99.61" x2="196.66" y2="96.81"/><text x="198.65" y="96.81" font-size="6.63">pc_tundra · 16</text></g></g>
+<g class="label"><circle class="hover-target" cx="199.89" cy="104" r="4.08"/><g class="label-body"><line class="leader" x1="201.34" y1="102.56" x2="203.57" y2="100.33"/><text x="205.56" y="100.33" font-size="6.63">pc_barren · 3</text></g></g>
+<g class="label"><circle class="hover-target" cx="202.89" cy="104" r="4.08"/><g class="label-body"><line class="leader" x1="204.34" y1="102.56" x2="206.57" y2="100.33"/><text x="208.56" y="100.33" font-size="6.63">pc_asteroid · 1</text></g></g>
+<g class="label"><circle class="hover-target" cx="-60" cy="-103.92" r="5.54"/><g class="label-body"><line class="leader" x1="-57.53" y1="-106.4" x2="-54.87" y2="-109.06"/><text x="-52.88" y="-109.06" font-size="6.63">pc_frozen · 14</text></g></g>
 <g font-size="6.63">
 <g transform="translate(0 -262.71)"><circle class="body-planet" cx="-267.81" cy="0" r="3.06"/><text x="-260.16" y="2.32">fixed body</text></g>
 <g transform="translate(0 -252.76)"><circle class="ghost" cx="-267.81" cy="0" r="3.06"/><text x="-260.16" y="2.32">range or random position</text></g>
@@ -65,7 +62,7 @@
   svg.addEventListener("wheel", function (event) {
     if (event.deltaY === 0) return;
     event.preventDefault();
-    var factor = event.deltaY < 0 ? 0.85 : 1 / 0.85;
+    var factor = event.deltaY < 0 ? 0.925 : 1 / 0.925;
     var pointer = toSvg(event);
     vb.x = pointer.x - (pointer.x - vb.x) * factor;
     vb.y = pointer.y - (pointer.y - vb.y) * factor;

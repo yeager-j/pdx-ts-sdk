@@ -179,13 +179,15 @@ idioms and modeling limits. `certainty` speaks about authored ranges:
   scripted-variable `orbitDistance` such as `"@belt_radius"`. The inspector
   reports these instead of guessing.
 
-The preview auto-fits the system, draws orbit paths, asteroid-belt annuli,
-and body labels, shades bodies as lit spheres, and renders uncertainty
+The preview auto-fits the system, draws orbit paths and asteroid-belt
+annuli, shades bodies as lit spheres, and renders uncertainty
 distinctly: ranged positions become translucent bands, random angles become
 dashed rings with a ghost marker, and unresolvable positions become a dotted
 `?` marker. Bodies named in overlap findings get a red (definite) or amber
 (possible) halo. Open the written `.svg` file in a browser: scroll to zoom
-about the pointer, drag to pan, and double-click to reset the view. The
+about the pointer, drag to pan, double-click to reset the view, and hover a
+body to see its name, class, and size. Labels are hover-only, so a static
+embed of the file shows the geometry without them. The
 interaction comes from an inline script in the file itself, so the document
 stays standalone; embedded as an image it is a static picture.
 
