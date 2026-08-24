@@ -26,13 +26,13 @@
  */
 
 import type { PdxEntry } from "@pdx-ts/pdxscript";
+import { AMBIENT_SCOPE_KEYS } from "@pdx-ts/sdk/internals";
 import {
-  AMBIENT_SCOPE_KEYS,
   type AmbientScopeContext,
   type DefinedEvent,
   type EventItemBase,
   type ScopeName,
-} from "@pdx-ts/sdk";
+} from "@pdx-ts/sdk/stellaris";
 
 import {
   applyEffectEntries,

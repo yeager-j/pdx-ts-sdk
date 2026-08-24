@@ -8,17 +8,17 @@
  * calculation with variables and thresholds, the exact shape that used to be
  * untestable and fell back to regexing emitted script.
  */
+import { createMod } from "@pdx-ts/sdk";
 import {
   and,
   checkVariable,
   countryFlags,
-  createMod,
   currentSituationApproach,
   hasCountryFlag,
   isVariableSet,
   situationProgress,
   target,
-} from "@pdx-ts/sdk";
+} from "@pdx-ts/sdk/stellaris";
 import { describe, expect, it } from "vitest";
 
 import { evaluateWeightBlock, fixture } from "../src/index.ts";

@@ -20,7 +20,7 @@ import {
   type GlobalFlag,
   type PlanetFlag,
   type TypedRef,
-} from "@pdx-ts/sdk";
+} from "@pdx-ts/sdk/stellaris";
 
 /**
  * The scopes the fixture models. The interpreter refuses everything else.
