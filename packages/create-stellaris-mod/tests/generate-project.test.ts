@@ -69,7 +69,7 @@ function writeProject(dir: string, shape: ProjectShape = {}): string {
           private: true,
           type: "module",
           imports: { "#mod": "./src/mod.ts" },
-          devDependencies: { "@pdx-ts/sdk": shape.sdkSpecifier ?? "0.2.0" },
+          devDependencies: { "@pdx-ts/sdk": shape.sdkSpecifier ?? "0.3.0" },
         };
   writeFileSync(path.join(dir, "package.json"), `${JSON.stringify(packageJson, null, 2)}\n`);
   return dir;
@@ -106,8 +106,8 @@ describe("finding the installed SDK", () => {
 
   it("finds it beside the project", async () => {
     const project = writeProject(path.join(makeRoot(), "project"));
-    installSdk(project, "0.2.4");
-    expect(await findInstalledSdkVersion(project)).toBe("0.2.4");
+    installSdk(project, "0.3.4");
+    expect(await findInstalledSdkVersion(project)).toBe("0.3.4");
   });
 
   it("finds it hoisted to a workspace root above the project", async () => {
@@ -116,8 +116,8 @@ describe("finding the installed SDK", () => {
     // looked beside the project concluded nothing was installed.
     const root = makeRoot();
     const project = writeProject(path.join(root, "packages/mod"));
-    installSdk(root, "0.2.4");
-    expect(await findInstalledSdkVersion(project)).toBe("0.2.4");
+    installSdk(root, "0.3.4");
+    expect(await findInstalledSdkVersion(project)).toBe("0.3.4");
   });
 
   it("stops at an installation whose package.json says nothing useful", async () => {
@@ -125,8 +125,8 @@ describe("finding the installed SDK", () => {
     // answer is "no version to check" rather than some other copy's version.
     const root = makeRoot();
     const project = writeProject(path.join(root, "packages/mod"));
-    installSdk(root, "0.2.4");
-    installSdk(project, "0.2.0");
+    installSdk(root, "0.3.4");
+    installSdk(project, "0.3.0");
     writeFileSync(path.join(project, "node_modules/@pdx-ts/sdk/package.json"), "null\n");
     expect(await findInstalledSdkVersion(project)).toBeUndefined();
   });
@@ -134,9 +134,9 @@ describe("finding the installed SDK", () => {
   it("takes the nearest one, which is the one that would resolve", async () => {
     const root = makeRoot();
     const project = writeProject(path.join(root, "packages/mod"));
-    installSdk(root, "0.2.0");
-    installSdk(project, "0.2.4");
-    expect(await findInstalledSdkVersion(project)).toBe("0.2.4");
+    installSdk(root, "0.3.0");
+    installSdk(project, "0.3.4");
+    expect(await findInstalledSdkVersion(project)).toBe("0.3.4");
   });
 
   it("refuses a generation against a hoisted install the project has outgrown", async () => {
@@ -144,13 +144,13 @@ describe("finding the installed SDK", () => {
     // declares a range it is entitled to, and the SDK that would actually be
     // imported is older than that.
     const root = makeRoot();
-    const project = writeProject(path.join(root, "packages/mod"), { sdkSpecifier: "~0.2.4" });
-    installSdk(root, "0.2.0");
+    const project = writeProject(path.join(root, "packages/mod"), { sdkSpecifier: "~0.3.4" });
+    installSdk(root, "0.3.0");
 
     const { code, err, out } = await generate(project);
     expect(code).toBe(1);
-    expect(err).toContain("0.2.0");
-    expect(err).toContain("~0.2.4");
+    expect(err).toContain("0.3.0");
+    expect(err).toContain("~0.3.4");
     expect(out).toBe("");
   });
 });
@@ -169,7 +169,7 @@ describe("a package.json that is not the shape it claims", () => {
       "a dependency that is not a string",
       {
         imports: { "#mod": "./src/mod.ts" },
-        devDependencies: { "@pdx-ts/sdk": { version: "^0.2.0" } },
+        devDependencies: { "@pdx-ts/sdk": { version: "^0.3.0" } },
       },
       /must be a version range written as a string/,
     ],

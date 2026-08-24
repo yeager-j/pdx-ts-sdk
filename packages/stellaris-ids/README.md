@@ -4,8 +4,8 @@ Every identifier a real, installed copy of Stellaris defines — content ids for
 43 registries, event ids with their exact scope and kind, scripted trigger and
 effect names with their `$PARAM$` lists, sprite and sound names — shipped as
 TypeScript types, version-pinned to the game build. The package's npm version
-carries the game version: `4.4.6-r.1` carries the identifiers of Stellaris
-4.4.6 and nothing else, where `-r.1` counts publishes of that one build.
+carries the game version: `4.4.6-r.2` carries the identifiers of Stellaris
+4.4.6 and nothing else, where `-r.2` counts publishes of that one build.
 
 Install a build by range rather than by version, so you get its newest
 revision:

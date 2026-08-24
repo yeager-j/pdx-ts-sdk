@@ -1,6 +1,6 @@
 {
   "name": "create-stellaris-mod",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Scaffold a Stellaris mod project that builds with @pdx-ts/sdk",
   "type": "module",
   "license": "MIT",

@@ -1,4 +1,4 @@
-err| The project depends on @pdx-ts/sdk >=0.2.0, which is not inside the 0.2.0 this release's recipes were verified against. Overlapping is not enough: a later install could resolve a version nobody proved them against.
+err| The project depends on @pdx-ts/sdk >=0.3.0, which is not inside the 0.3.0 this release's recipes were verified against. Overlapping is not enough: a later install could resolve a version nobody proved them against.
 err|
 err| Generate anyway with --allow-unsupported-sdk. It changes only this check: it does not load
 err| the SDK, weaken what is generated, or make a later build succeed.

@@ -120,7 +120,7 @@ describe("vanillaIdsCheckWarning", () => {
 
 describe("installedVanillaPackageVersion", () => {
   it("resolves the workspace package's stamped version via the default specifier", () => {
-    // The workspace package is generated and stamped (4.4.6-r.1 today), so this
+    // The workspace package is generated and stamped (4.4.6-r.2 today), so this
     // asserts the shape rather than a literal — a regeneration against a newer
     // install is supposed to move it, and only `PROVENANCE.md`'s consistency
     // check and the install-gated conformance gate pin the exact value.
