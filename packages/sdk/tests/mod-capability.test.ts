@@ -9,7 +9,7 @@ import {
   type IdProfile,
   type ModCapability,
 } from "../src/index.ts";
-import { viewFromFiles } from "../src/stellaris/vanilla/view.ts";
+import { viewFromFiles } from "../src/installation/vanilla/view.ts";
 
 const COMPLETE_PROFILE = {
   technology: "tech",

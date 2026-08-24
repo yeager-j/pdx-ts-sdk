@@ -12,7 +12,7 @@ import {
   type TechnologyItem,
   type TechnologyPatchItem,
 } from "../src/index.ts";
-import { viewFromFiles } from "../src/stellaris/vanilla/view.ts";
+import { viewFromFiles } from "../src/installation/vanilla/view.ts";
 
 describe("the public authoring surface", () => {
   it("keeps capability entry points and item unions public", () => {

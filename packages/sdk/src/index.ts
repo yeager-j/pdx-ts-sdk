@@ -191,7 +191,7 @@ export type {
   ScopelessOnActionEvents,
 } from "./events/on-actions.ts";
 export type { EventItem, EventItemBase } from "./events/types.ts";
-export * as stellaris from "./stellaris/index.ts";
+export * as stellaris from "./installation/index.ts";
 export {
   GameVersionError,
   InstallNotFoundError,
@@ -233,8 +233,8 @@ export {
   type ResolvedRegistryRow,
   type StandaloneRegistry,
   type StandaloneRegistryRow,
-} from "./stellaris/vanilla/override-rules.ts";
-export type { PatchPlan, WinAssertion } from "./stellaris/vanilla/override-plan.ts";
+} from "./installation/vanilla/override-rules.ts";
+export type { PatchPlan, WinAssertion } from "./installation/vanilla/override-plan.ts";
 export {
   anyOf,
   ParsedDefinition,
@@ -247,8 +247,8 @@ export {
   type ParsedRegistryName,
   type Prerequisite,
   type VanillaFile,
-} from "./stellaris/vanilla/parsed-definitions.ts";
-export { VanillaView, viewFromFiles } from "./stellaris/vanilla/view.ts";
+} from "./installation/vanilla/parsed-definitions.ts";
+export { VanillaView, viewFromFiles } from "./installation/vanilla/view.ts";
 export type {
   CheckedVanillaId,
   InvalidVanillaId,

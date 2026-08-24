@@ -43,7 +43,7 @@ import {
   type ModConfig,
   type PureMod,
 } from "../src/index.ts";
-import { viewFromFiles } from "../src/stellaris/vanilla/view.ts";
+import { viewFromFiles } from "../src/installation/vanilla/view.ts";
 
 const config: ModConfig = {
   name: "Launcher Probe",

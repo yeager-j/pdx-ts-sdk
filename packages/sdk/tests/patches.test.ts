@@ -17,7 +17,7 @@ import {
   type ModConfig,
   type TechnologyItem,
 } from "../src/index.ts";
-import { viewFromFiles } from "../src/stellaris/vanilla/view.ts";
+import { viewFromFiles } from "../src/installation/vanilla/view.ts";
 import {
   BUILDING_FILE,
   MEGASTRUCTURE_FILE,

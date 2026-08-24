@@ -10,6 +10,7 @@ import { describe, expect, it } from "vitest";
 
 import type { SolarSystemInitializerItem } from "../src/generated/content-definers.ts";
 import { inspectSolarSystem, type SolarSystemDiagnostic } from "../src/index.ts";
+import { locateInstall } from "../src/installation/installation/locate.ts";
 import {
   CLASS_ENTITY_SCALES,
   FIXED_SCALE_CLASSES,
@@ -18,7 +19,6 @@ import {
   STAR_CLASS_PLANET_CLASSES,
   SYSTEM_VIEW_PLANET_SCALE,
 } from "../src/solar-system-inspect/class-scales.ts";
-import { locateInstall } from "../src/stellaris/installation/locate.ts";
 import {
   readVanillaClassScales,
   readVanillaRenderDefines,

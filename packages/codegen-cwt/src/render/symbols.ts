@@ -80,10 +80,10 @@ const SYMBOL_MODULES: readonly ModuleSymbols[] = [
     values: ["scriptValueScalar", "trigger"],
   },
   {
-    module: "../stellaris/vanilla/patch.ts",
+    module: "../installation/vanilla/patch.ts",
     types: ["ContentPatchItem", "PatchInput", "PatchedContent"],
   },
-  { module: "../stellaris/vanilla/parsed-definitions.ts", types: ["AnyOf"] },
+  { module: "../installation/vanilla/parsed-definitions.ts", types: ["AnyOf"] },
   { module: "./scopes.ts", types: ["ScopeName"] },
 ];
 

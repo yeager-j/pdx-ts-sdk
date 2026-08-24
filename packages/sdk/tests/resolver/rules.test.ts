@@ -15,7 +15,7 @@ import {
   registryRule,
   SUPPORTED_STELLARIS_BUILD,
   unverifiedCellError,
-} from "../../src/stellaris/vanilla/override-rules.ts";
+} from "../../src/installation/vanilla/override-rules.ts";
 
 describe("the rule table", () => {
   it("covers exactly the registries the handoff names", () => {

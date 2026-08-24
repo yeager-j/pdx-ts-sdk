@@ -82,8 +82,8 @@ import {
 // The generated patch members are spelled in terms of `PatchInput`, which the
 // package does not re-export — a consumer never names it, but pinning a member
 // against its exact type does.
-import type { PatchInput } from "../src/stellaris/vanilla/patch.ts";
-import { viewFromFiles } from "../src/stellaris/vanilla/view.ts";
+import type { PatchInput } from "../src/installation/vanilla/patch.ts";
+import { viewFromFiles } from "../src/installation/vanilla/view.ts";
 
 const CONTENT_TYPES_CONFIG = {
   name: "Content types",

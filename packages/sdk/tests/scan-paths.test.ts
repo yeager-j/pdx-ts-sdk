@@ -21,7 +21,7 @@ import {
   isOsMetadataPath,
   readZipEntryNames,
   scanInstallPaths,
-} from "../src/stellaris/installation/scan-paths.ts";
+} from "../src/installation/installation/scan-paths.ts";
 
 /** The repo root, from this module — never the directory vitest was started in. */
 const ROOT = fileURLToPath(new URL("../../../", import.meta.url));

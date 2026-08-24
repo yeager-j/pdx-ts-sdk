@@ -13,3 +13,17 @@ export {
 } from "./installation/version.ts";
 export { modDir, modDirFor } from "./launcher/mod-directory.ts";
 export { load, type LoadOptions } from "./vanilla/load.ts";
+export {
+  anyOf,
+  ParsedDefinition,
+  ParsedTechnology,
+  type AnyOf,
+  type ParsedBuilding,
+  type ParsedMegastructure,
+  type ParsedNumber,
+  type ParsedRegistries,
+  type ParsedRegistryName,
+  type Prerequisite,
+  type VanillaFile,
+} from "./vanilla/parsed-definitions.ts";
+export { VanillaView, viewFromFiles } from "./vanilla/view.ts";

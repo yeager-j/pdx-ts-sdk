@@ -1774,7 +1774,7 @@ describe("generated content definers", () => {
         "    ),\n" +
         "  };"
     );
-    expect(definers).toContain('import { patchContent } from "../stellaris/vanilla/patch.ts";');
+    expect(definers).toContain('import { patchContent } from "../installation/vanilla/patch.ts";');
     expect(definers).not.toContain("transformTechnology");
     expect(definers.match(/^export function add\w+\(/gm)).toEqual([
       "export function addShipOfSizeLimits(",

@@ -24,14 +24,14 @@ import {
   VERIFIED_SUPPORTED_VERSION,
 } from "../src/generated/verified-build.ts";
 import { createMod } from "../src/index.ts";
-import { describeInstall } from "../src/stellaris/installation/describe.ts";
-import { locateInstall, platformDefaultsFor } from "../src/stellaris/installation/locate.ts";
+import { describeInstall } from "../src/installation/installation/describe.ts";
+import { locateInstall, platformDefaultsFor } from "../src/installation/installation/locate.ts";
 import {
   readGameVersion,
   requireGameVersion,
   supportedVersionFor,
-} from "../src/stellaris/installation/version.ts";
-import { load } from "../src/stellaris/vanilla/load.ts";
+} from "../src/installation/installation/version.ts";
+import { load } from "../src/installation/vanilla/load.ts";
 
 const FIXTURE = join(import.meta.dirname, "../../../fixtures/fake-install");
 

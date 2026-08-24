@@ -27,10 +27,10 @@ import {
   render,
   scriptedTrigger,
 } from "../src/index.ts";
+import { locateInstall } from "../src/installation/installation/locate.ts";
+import { load } from "../src/installation/vanilla/load.ts";
+import { SUPPORTED_STELLARIS_BUILD } from "../src/installation/vanilla/override-rules.ts";
 import { compareLogicalPaths } from "../src/ordering.ts";
-import { locateInstall } from "../src/stellaris/installation/locate.ts";
-import { load } from "../src/stellaris/vanilla/load.ts";
-import { SUPPORTED_STELLARIS_BUILD } from "../src/stellaris/vanilla/override-rules.ts";
 
 let installPath: string | undefined;
 try {

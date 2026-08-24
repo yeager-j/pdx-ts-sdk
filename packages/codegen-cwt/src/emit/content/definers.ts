@@ -88,12 +88,12 @@ function contentDefinersModule(plans: readonly RegistryDefinerPlan[]): string {
     // per-registry is imported from a hand-written module.
     (patchPlans.length === 0
       ? ""
-      : 'import { patchContent } from "../stellaris/vanilla/patch.ts";\n') +
+      : 'import { patchContent } from "../installation/vanilla/patch.ts";\n') +
     patchPlans
       .map(
         ({ content }) =>
           `import type { Parsed${content.emission.typeName} } ` +
-          'from "../stellaris/vanilla/parsed-definitions.ts";\n'
+          'from "../installation/vanilla/parsed-definitions.ts";\n'
       )
       .join("") +
     plans

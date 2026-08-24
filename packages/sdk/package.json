@@ -10,9 +10,14 @@
       "default": "./dist/index.js"
     },
     "./stellaris": {
-      "pdx-source": "./src/stellaris/index.ts",
-      "types": "./dist/stellaris/index.d.ts",
-      "default": "./dist/stellaris/index.js"
+      "pdx-source": "./src/installation/index.ts",
+      "types": "./dist/installation/index.d.ts",
+      "default": "./dist/installation/index.js"
+    },
+    "./installation": {
+      "pdx-source": "./src/installation/index.ts",
+      "types": "./dist/installation/index.d.ts",
+      "default": "./dist/installation/index.js"
     },
     "./content-registries": {
       "pdx-source": "./src/content-registries.ts",
