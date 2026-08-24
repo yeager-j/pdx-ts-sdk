@@ -617,6 +617,24 @@ describe("determinism", () => {
     expect(svg).not.toContain("NaN");
     expect(svg).not.toContain("Infinity");
   });
+
+  it("embeds pan and zoom without external dependencies", () => {
+    const { svg } = inspectSolarSystem(define("deterministic", def));
+    expect(svg).toContain("<script><![CDATA[");
+    expect(svg).toContain('addEventListener("wheel"');
+    expect(svg).toContain('addEventListener("dblclick"');
+    const external = svg.replaceAll('xmlns="http://www.w3.org/2000/svg"', "");
+    expect(external).not.toContain("http://");
+    expect(external).not.toContain("https://");
+  });
+
+  it("shades bodies with gradients keyed to the initializer id", () => {
+    const { svg } = inspectSolarSystem(define("deterministic", def));
+    expect(svg).toContain(
+      '<radialGradient id="inspect_solar_system_initializer_deterministic-star"'
+    );
+    expect(svg).toContain("url(#inspect_solar_system_initializer_deterministic-planet)");
+  });
 });
 
 describe("SVG snapshots", () => {

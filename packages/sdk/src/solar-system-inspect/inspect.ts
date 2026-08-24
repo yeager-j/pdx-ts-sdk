@@ -31,7 +31,9 @@ export interface SolarSystemInspection {
   readonly diagnostics: readonly SolarSystemDiagnostic[];
   /**
    * A standalone, deterministic SVG document. It is a schematic of
-   * orbit-cursor space: write it to an `.svg` file and open it in a browser.
+   * orbit-cursor space: write it to an `.svg` file and open it in a browser,
+   * where an inline script adds scroll-zoom, drag-pan, and double-click
+   * reset. Embedded as an image the document stays a static picture.
    */
   readonly svg: string;
 }

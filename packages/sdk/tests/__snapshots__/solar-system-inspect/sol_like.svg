@@ -2,6 +2,7 @@
 <title>inspect_solar_system_initializer_sol_like</title>
 <desc>Cursor-space schematic of inspect_solar_system_initializer_sol_like (class sc_g): 5 bodies, 0 belts, 0 findings. Distances and disc sizes are the documented approximation, not game rendering.</desc>
 <style>
+  svg { cursor: grab; }
   .bg { fill: #0b0e1a; }
   .orbit { fill: none; stroke: #2c3654; stroke-width: var(--hair); }
   .orbit-band { fill: none; stroke: #26304b; stroke-opacity: 0.55; }
@@ -9,10 +10,10 @@
   .belt { fill: none; stroke: #6b5d47; stroke-opacity: 0.35; }
   .belt-edge { fill: none; stroke: #8a7a5e; stroke-width: var(--hair); stroke-dasharray: var(--dash); }
   .line { fill: none; stroke: #3d4a6e; stroke-width: var(--hair); stroke-dasharray: var(--dash); }
-  .body-star { fill: #ffd27f; }
-  .body-planet { fill: #cfd8ff; }
-  .body-moon { fill: #9fb4c8; }
-  .body-asteroid { fill: #b0a08a; }
+  .body-star { fill: url(#inspect_solar_system_initializer_sol_like-star); }
+  .body-planet { fill: url(#inspect_solar_system_initializer_sol_like-planet); }
+  .body-moon { fill: url(#inspect_solar_system_initializer_sol_like-moon); }
+  .body-asteroid { fill: url(#inspect_solar_system_initializer_sol_like-asteroid); }
   .ghost { fill: none; stroke: #7f8cb0; stroke-width: var(--hair); stroke-dasharray: var(--dash); }
   .maybe { opacity: 0.5; }
   .unresolved { fill: none; stroke: #7f8cb0; stroke-width: var(--hair); stroke-dasharray: var(--dot); }
@@ -21,6 +22,7 @@
   text { fill: #aab4d4; font-family: ui-sans-serif, system-ui, sans-serif; }
   .leader { stroke: #4a5578; stroke-width: var(--hair); }
 </style>
+<defs><radialGradient id="inspect_solar_system_initializer_sol_like-star" cx="35%" cy="35%" r="75%"><stop offset="0%" stop-color="#fff3d6"/><stop offset="55%" stop-color="#ffd27f"/><stop offset="100%" stop-color="#d9a54e"/></radialGradient><radialGradient id="inspect_solar_system_initializer_sol_like-planet" cx="35%" cy="35%" r="75%"><stop offset="0%" stop-color="#f2f5ff"/><stop offset="55%" stop-color="#cfd8ff"/><stop offset="100%" stop-color="#8d9bd6"/></radialGradient><radialGradient id="inspect_solar_system_initializer_sol_like-moon" cx="35%" cy="35%" r="75%"><stop offset="0%" stop-color="#d3e0ea"/><stop offset="55%" stop-color="#9fb4c8"/><stop offset="100%" stop-color="#64798d"/></radialGradient><radialGradient id="inspect_solar_system_initializer_sol_like-asteroid" cx="35%" cy="35%" r="75%"><stop offset="0%" stop-color="#d8cbb6"/><stop offset="55%" stop-color="#b0a08a"/><stop offset="100%" stop-color="#776852"/></radialGradient></defs>
 <rect class="bg" x="-138.24" y="-138.24" width="276.48" height="276.48"/>
 <circle class="orbit" cx="0" cy="0" r="40"/>
 <circle class="orbit" cx="0" cy="0" r="65"/>
@@ -48,4 +50,45 @@
 <g transform="translate(0 -116.86)"><circle class="halo-definite" cx="-134.4" cy="0" r="1.54"/><text x="-130.56" y="1.16">definite overlap risk</text></g>
 <g transform="translate(0 -111.87)"><circle class="halo-possible" cx="-134.4" cy="0" r="1.54"/><text x="-130.56" y="1.16">possible overlap risk</text></g>
 </g>
+<script><![CDATA[
+(function () {
+  var svg = document.documentElement;
+  if (!svg || svg.tagName !== "svg") return;
+  var vb = svg.viewBox.baseVal;
+  function toSvg(event) {
+    return new DOMPoint(event.clientX, event.clientY).matrixTransform(svg.getScreenCTM().inverse());
+  }
+  svg.addEventListener("wheel", function (event) {
+    event.preventDefault();
+    var factor = event.deltaY < 0 ? 0.85 : 1 / 0.85;
+    var pointer = toSvg(event);
+    vb.x = pointer.x - (pointer.x - vb.x) * factor;
+    vb.y = pointer.y - (pointer.y - vb.y) * factor;
+    vb.width *= factor;
+    vb.height *= factor;
+  }, { passive: false });
+  var anchor = null;
+  svg.addEventListener("pointerdown", function (event) {
+    anchor = toSvg(event);
+    svg.setPointerCapture(event.pointerId);
+  });
+  svg.addEventListener("pointermove", function (event) {
+    if (anchor === null) return;
+    var pointer = toSvg(event);
+    vb.x -= pointer.x - anchor.x;
+    vb.y -= pointer.y - anchor.y;
+  });
+  svg.addEventListener("pointerup", function (event) {
+    anchor = null;
+    svg.releasePointerCapture(event.pointerId);
+  });
+  svg.addEventListener("dblclick", function () {
+    var reset = [-138.24, -138.24, 276.48, 276.48];
+    vb.x = reset[0];
+    vb.y = reset[1];
+    vb.width = reset[2];
+    vb.height = reset[3];
+  });
+})();
+]]></script>
 </svg>

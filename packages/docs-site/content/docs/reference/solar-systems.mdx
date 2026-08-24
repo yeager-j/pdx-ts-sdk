@@ -180,11 +180,14 @@ idioms and modeling limits. `certainty` speaks about authored ranges:
   reports these instead of guessing.
 
 The preview auto-fits the system, draws orbit paths, asteroid-belt annuli,
-and body labels, and renders uncertainty distinctly: ranged positions become
-translucent bands, random angles become dashed rings with a ghost marker, and
-unresolvable positions become a dotted `?` marker. Bodies named in overlap
-findings get a red (definite) or amber (possible) halo. Open the written
-`.svg` file in a browser.
+and body labels, shades bodies as lit spheres, and renders uncertainty
+distinctly: ranged positions become translucent bands, random angles become
+dashed rings with a ghost marker, and unresolvable positions become a dotted
+`?` marker. Bodies named in overlap findings get a red (definite) or amber
+(possible) halo. Open the written `.svg` file in a browser: scroll to zoom
+about the pointer, drag to pan, and double-click to reset the view. The
+interaction comes from an inline script in the file itself, so the document
+stays standalone; embedded as an image it is a static picture.
 
 <Callout type="warn" title="The preview is a schematic of cursor space">
   The game separates bodies with size-based spacing that has no author-facing formula, and it

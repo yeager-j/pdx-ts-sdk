@@ -30,7 +30,17 @@ const FALLBACK_FAN_STEP_DEG = 137.5;
 /** Deterministic radial step for bodies with unresolvable radii. */
 const UNRESOLVED_SHELF_STEP = 20;
 
-const STYLE = `
+/** Sphere-shaded fill per body kind: highlight, base, and limb stops. */
+const BODY_SHADES = {
+  star: ["#fff3d6", "#ffd27f", "#d9a54e"],
+  planet: ["#f2f5ff", "#cfd8ff", "#8d9bd6"],
+  moon: ["#d3e0ea", "#9fb4c8", "#64798d"],
+  asteroid: ["#d8cbb6", "#b0a08a", "#776852"],
+} as const;
+
+function styleFor(prefix: string): string {
+  return `
+  svg { cursor: grab; }
   .bg { fill: #0b0e1a; }
   .orbit { fill: none; stroke: #2c3654; stroke-width: var(--hair); }
   .orbit-band { fill: none; stroke: #26304b; stroke-opacity: 0.55; }
@@ -38,10 +48,10 @@ const STYLE = `
   .belt { fill: none; stroke: #6b5d47; stroke-opacity: 0.35; }
   .belt-edge { fill: none; stroke: #8a7a5e; stroke-width: var(--hair); stroke-dasharray: var(--dash); }
   .line { fill: none; stroke: #3d4a6e; stroke-width: var(--hair); stroke-dasharray: var(--dash); }
-  .body-star { fill: #ffd27f; }
-  .body-planet { fill: #cfd8ff; }
-  .body-moon { fill: #9fb4c8; }
-  .body-asteroid { fill: #b0a08a; }
+  .body-star { fill: url(#${prefix}-star); }
+  .body-planet { fill: url(#${prefix}-planet); }
+  .body-moon { fill: url(#${prefix}-moon); }
+  .body-asteroid { fill: url(#${prefix}-asteroid); }
   .ghost { fill: none; stroke: #7f8cb0; stroke-width: var(--hair); stroke-dasharray: var(--dash); }
   .maybe { opacity: 0.5; }
   .unresolved { fill: none; stroke: #7f8cb0; stroke-width: var(--hair); stroke-dasharray: var(--dot); }
@@ -50,6 +60,69 @@ const STYLE = `
   text { fill: #aab4d4; font-family: ui-sans-serif, system-ui, sans-serif; }
   .leader { stroke: #4a5578; stroke-width: var(--hair); }
 `;
+}
+
+function renderDefs(prefix: string): string {
+  const gradients = Object.entries(BODY_SHADES).map(
+    ([kind, [highlight, base, limb]]) =>
+      `<radialGradient id="${prefix}-${kind}" cx="35%" cy="35%" r="75%">` +
+      `<stop offset="0%" stop-color="${highlight}"/>` +
+      `<stop offset="55%" stop-color="${base}"/>` +
+      `<stop offset="100%" stop-color="${limb}"/>` +
+      `</radialGradient>`
+  );
+  return `<defs>${gradients.join("")}</defs>`;
+}
+
+/**
+ * Inline pan/zoom for the standalone document: scroll zooms about the
+ * pointer, dragging pans, and a double click resets the view. Inert when the
+ * SVG is embedded as an image.
+ */
+function renderInteraction(view: number): string {
+  const reset = `${fmt(-view)}, ${fmt(-view)}, ${fmt(2 * view)}, ${fmt(2 * view)}`;
+  return `<script><![CDATA[
+(function () {
+  var svg = document.documentElement;
+  if (!svg || svg.tagName !== "svg") return;
+  var vb = svg.viewBox.baseVal;
+  function toSvg(event) {
+    return new DOMPoint(event.clientX, event.clientY).matrixTransform(svg.getScreenCTM().inverse());
+  }
+  svg.addEventListener("wheel", function (event) {
+    event.preventDefault();
+    var factor = event.deltaY < 0 ? 0.85 : 1 / 0.85;
+    var pointer = toSvg(event);
+    vb.x = pointer.x - (pointer.x - vb.x) * factor;
+    vb.y = pointer.y - (pointer.y - vb.y) * factor;
+    vb.width *= factor;
+    vb.height *= factor;
+  }, { passive: false });
+  var anchor = null;
+  svg.addEventListener("pointerdown", function (event) {
+    anchor = toSvg(event);
+    svg.setPointerCapture(event.pointerId);
+  });
+  svg.addEventListener("pointermove", function (event) {
+    if (anchor === null) return;
+    var pointer = toSvg(event);
+    vb.x -= pointer.x - anchor.x;
+    vb.y -= pointer.y - anchor.y;
+  });
+  svg.addEventListener("pointerup", function (event) {
+    anchor = null;
+    svg.releasePointerCapture(event.pointerId);
+  });
+  svg.addEventListener("dblclick", function () {
+    var reset = [${reset}];
+    vb.x = reset[0];
+    vb.y = reset[1];
+    vb.width = reset[2];
+    vb.height = reset[3];
+  });
+})();
+]]></script>`;
+}
 
 /** Renders the standalone SVG preview. `size` sets width/height attributes. */
 export function renderSvg(
@@ -68,6 +141,7 @@ export function renderSvg(
   const highlight = highlightByPath(diagnostics);
   const parts: string[] = [];
   const view = extent * 1.08;
+  const prefix = system.id.replace(/[^A-Za-z0-9_-]/g, "-");
 
   parts.push(
     `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="${fmt(-view)} ${fmt(-view)} ${fmt(2 * view)} ${fmt(2 * view)}" role="img" aria-label="${escape(system.id)}" style="--hair:${fmt(hair)};--halo:${fmt(halo)};--dash:${fmt(4 * hair)} ${fmt(3 * hair)};--dot:${fmt(hair)} ${fmt(2 * hair)}">`
@@ -76,7 +150,8 @@ export function renderSvg(
   parts.push(
     `<desc>Cursor-space schematic of ${escape(system.id)} (class ${escape(system.starClass)}): ${placed.filter((p) => p.body.kind !== "cursor").length} bodies, ${system.belts.length} belts, ${diagnostics.length} findings. Distances and disc sizes are the documented approximation, not game rendering.</desc>`
   );
-  parts.push(`<style>${STYLE}</style>`);
+  parts.push(`<style>${styleFor(prefix)}</style>`);
+  parts.push(renderDefs(prefix));
   parts.push(
     `<rect class="bg" x="${fmt(-view)}" y="${fmt(-view)}" width="${fmt(2 * view)}" height="${fmt(2 * view)}"/>`
   );
@@ -161,6 +236,7 @@ export function renderSvg(
 
   parts.push(...renderLabels(placed, extent, font, minMarker));
   parts.push(...renderLegend(view, u, font));
+  parts.push(renderInteraction(view));
   parts.push("</svg>");
   return parts.join("\n");
 }
