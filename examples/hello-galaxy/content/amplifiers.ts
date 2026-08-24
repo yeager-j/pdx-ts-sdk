@@ -11,7 +11,7 @@
  * content, so reusing the theory never registers it twice.
  */
 
-import type { TechnologyItem } from "@pdx-ts/sdk";
+import type { TechnologyItem } from "@pdx-ts/sdk/stellaris";
 
 import { mod } from "../mod.ts";
 import { resonanceTheory } from "./resonance.ts";

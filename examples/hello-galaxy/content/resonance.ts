@@ -24,7 +24,15 @@
  * written in one module — the handle itself is local and must not be exported.
  */
 
-import { and, eventTarget, hasCountryFlag, hasOwner, isAtWar, not, vanilla } from "@pdx-ts/sdk";
+import {
+  and,
+  eventTarget,
+  hasCountryFlag,
+  hasOwner,
+  isAtWar,
+  not,
+  vanilla,
+} from "@pdx-ts/sdk/stellaris";
 import { giveTechOptionOrProgressEffect } from "@pdx-ts/stellaris-ids/effects";
 import { hasActualDeficit, isRegularEmpire } from "@pdx-ts/stellaris-ids/triggers";
 

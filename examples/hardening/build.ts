@@ -1,5 +1,6 @@
 import { basename, dirname, resolve } from "node:path";
-import { install, render, stellaris } from "@pdx-ts/sdk";
+import { install, render } from "@pdx-ts/sdk";
+import * as stellaris from "@pdx-ts/sdk/installation";
 
 import { defineHardening } from "./mod.ts";
 
