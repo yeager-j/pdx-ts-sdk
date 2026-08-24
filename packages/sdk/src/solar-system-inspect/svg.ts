@@ -212,14 +212,16 @@ export function renderSvg(
     if (body.kind === "cursor") {
       continue;
     }
-    const marker = Math.max(body.visualRadius.max, minMarker);
+    // Bodies draw at their true modeled radius: pan/zoom replaces any
+    // minimum marker size, so drawn discs never overstate the geometry.
+    const marker = body.visualRadius.max;
     const classes: string[] = [];
     if (body.exists === "possible") {
       classes.push("maybe");
     }
     if (p.placement === "unresolved") {
       parts.push(
-        `<g${classAttr(classes)}><circle class="unresolved" cx="${fmt(p.x)}" cy="${fmt(p.y)}" r="${fmt(marker)}"/><text x="${fmt(p.x)}" y="${fmt(p.y + font * 0.35)}" font-size="${fmt(font)}" text-anchor="middle">?</text></g>`
+        `<g${classAttr(classes)}><circle class="unresolved" cx="${fmt(p.x)}" cy="${fmt(p.y)}" r="${fmt(Math.max(marker, minMarker))}"/><text x="${fmt(p.x)}" y="${fmt(p.y + font * 0.35)}" font-size="${fmt(font)}" text-anchor="middle">?</text></g>`
       );
     } else if (p.placement === "fixed") {
       parts.push(
@@ -373,19 +375,20 @@ function renderLabels(placed: readonly Placed[], font: number, minMarker: number
     if (body.copies > 1) {
       text += ` ×${body.copies}`;
     }
-    const marker = Math.max(body.visualRadius.max, minMarker);
+    const marker = body.visualRadius.max;
     anchors.push({ x: p.x, y: p.y, marker, text, ordinal: body.ordinal });
   }
   anchors.sort((a, b) => a.ordinal - b.ordinal);
   for (const anchor of anchors) {
-    const dx = anchor.marker + minMarker * 0.8;
-    const dy = -(anchor.marker + minMarker * 0.8);
+    const offset = Math.max(anchor.marker, minMarker) + minMarker * 0.8;
+    const dx = offset;
+    const dy = -offset;
     const lx = anchor.x + dx;
     const ly = anchor.y + dy;
     const start = discEdgeToward(anchor, dx, dy);
     parts.push(
       `<g class="label">` +
-        `<circle class="hover-target" cx="${fmt(anchor.x)}" cy="${fmt(anchor.y)}" r="${fmt(anchor.marker + minMarker)}"/>` +
+        `<circle class="hover-target" cx="${fmt(anchor.x)}" cy="${fmt(anchor.y)}" r="${fmt(Math.max(anchor.marker, minMarker) + minMarker)}"/>` +
         `<g class="label-body">` +
         `<line class="leader" x1="${fmt(start.x)}" y1="${fmt(start.y)}" x2="${fmt(lx)}" y2="${fmt(ly)}"/>` +
         `<text x="${fmt(lx + font * 0.3)}" y="${fmt(ly)}" font-size="${fmt(font)}">${escape(anchor.text)}</text>` +

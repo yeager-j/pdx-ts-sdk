@@ -33,12 +33,12 @@
 <circle class="orbit" cx="0" cy="0" r="80"/>
 <circle class="orbit" cx="0" cy="0" r="82"/>
 <circle class="body-star" cx="0" cy="0" r="7"/>
-<circle class="body-asteroid" cx="80" cy="0" r="0.96"/>
+<circle class="body-asteroid" cx="80" cy="0" r="0.75"/>
 <circle class="body-asteroid" cx="-51.42" cy="61.28" r="1"/>
 <circle class="body-planet" cx="80.75" cy="14.24" r="4.5"/>
 <circle class="halo-possible" cx="80.75" cy="14.24" r="6.42"/>
 <g class="label"><circle class="hover-target" cx="0" cy="0" r="7.96"/><g class="label-body"><line class="leader" x1="4.95" y1="-4.95" x2="7.77" y2="-7.77"/><text x="8.7" y="-7.77" font-size="3.12">star · 28</text></g></g>
-<g class="label"><circle class="hover-target" cx="80" cy="0" r="1.92"/><g class="label-body"><line class="leader" x1="80.68" y1="-0.68" x2="81.73" y2="-1.73"/><text x="82.66" y="-1.73" font-size="3.12">pc_asteroid · 3</text></g></g>
+<g class="label"><circle class="hover-target" cx="80" cy="0" r="1.92"/><g class="label-body"><line class="leader" x1="80.53" y1="-0.53" x2="81.73" y2="-1.73"/><text x="82.66" y="-1.73" font-size="3.12">pc_asteroid · 3</text></g></g>
 <g class="label"><circle class="hover-target" cx="-51.42" cy="61.28" r="1.96"/><g class="label-body"><line class="leader" x1="-50.72" y1="60.58" x2="-49.66" y2="59.52"/><text x="-48.72" y="59.52" font-size="3.12">pc_asteroid · 4</text></g></g>
 <g class="label"><circle class="hover-target" cx="80.75" cy="14.24" r="5.46"/><g class="label-body"><line class="leader" x1="83.94" y1="11.06" x2="86.02" y2="8.97"/><text x="86.96" y="8.97" font-size="3.12">pc_continental · 18</text></g></g>
 <g font-size="3.12">
