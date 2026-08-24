@@ -1831,14 +1831,14 @@ describe("generated content definers", () => {
     );
   });
 
-  it("keeps raw constructors internal while root exports XItem unions type-only", () => {
-    const publicIndex = readFileSync("packages/sdk/src/index.ts", "utf8");
+  it("keeps raw constructors internal while the vocabulary entry exports XItem unions type-only", () => {
+    const vocabulary = readFileSync("packages/sdk/src/stellaris.ts", "utf8");
 
-    expect(publicIndex).toContain('export type * from "./generated/content-definers.ts";');
-    expect(publicIndex).not.toContain('export * from "./generated/content-definers.ts";');
-    expect(publicIndex).not.toContain("export { defineTechnology");
-    expect(publicIndex).not.toContain("export { patchTechnology");
-    expect(publicIndex).not.toContain("export { addShipOfSizeLimits");
+    expect(vocabulary).toContain('export type * from "./generated/content-definers.ts";');
+    expect(vocabulary).not.toContain('export * from "./generated/content-definers.ts";');
+    expect(vocabulary).not.toContain("export { defineTechnology");
+    expect(vocabulary).not.toContain("export { patchTechnology");
+    expect(vocabulary).not.toContain("export { addShipOfSizeLimits");
   });
 
   it("derives every nested identity table from repeated-struct metadata", () => {

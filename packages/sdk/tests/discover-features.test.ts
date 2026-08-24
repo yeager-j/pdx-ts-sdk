@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { createMod, discoverFeatures, render, type ModConfig } from "../src/index.ts";
 
 const SDK = join(import.meta.dirname, "../src/index.ts");
+const SDK_STELLARIS = join(import.meta.dirname, "../src/stellaris.ts");
 const config: ModConfig = {
   name: "Explicit discovery",
   prefix: "explicit_discovery",
@@ -27,6 +28,10 @@ function moduleTree(files: Record<string, string>): string {
 
 function sdk(names: string): string {
   return `import { ${names} } from ${JSON.stringify(SDK)};\n`;
+}
+
+function stellaris(names: string): string {
+  return `import { ${names} } from ${JSON.stringify(SDK_STELLARIS)};\n`;
 }
 
 function capabilitySource(prefix = config.prefix): string {
@@ -123,7 +128,7 @@ describe("discoverFeatures", () => {
     const explicit =
       `import { mod } from "../capability.ts";\n` +
       `export { mod };\n` +
-      sdk("onActions") +
+      stellaris("onActions") +
       `export const theory = mod.technology("theory", { name: "Theory", area: "physics", tier: 1, category: "particles" });\n` +
       `const events = mod.namespace();\n` +
       `export const pulse = events.country(1, { hideWindow: true, isTriggeredOnly: true });\n` +

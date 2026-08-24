@@ -117,7 +117,9 @@ describe("script reference metadata", () => {
     const packageJson = JSON.parse(readFileSync("packages/sdk/package.json", "utf8")) as {
       exports: Record<string, unknown>;
     };
-    expect(packageJson.exports["./script-reference"]).toBeDefined();
+    expect(packageJson.exports["./reference"]).toBeDefined();
+    expect(packageJson.exports["./script-reference"]).toBeUndefined();
+    expect(packageJson.exports["./content-registries"]).toBeUndefined();
     expect(readFileSync("packages/sdk/src/index.ts", "utf8")).not.toContain("script-reference");
   });
 });
