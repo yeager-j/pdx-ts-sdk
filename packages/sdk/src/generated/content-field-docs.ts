@@ -4,6 +4,9 @@
 // From: common/buildings.cwt
 // From: common/traditions.cwt
 // From: common/ascension_perks.cwt
+// From: common/strategic_resources.cwt
+// From: common/crisis_paths.cwt
+// From: common/crisis.cwt
 // From: common/council_agendas.cwt
 // From: common/edicts.cwt
 // From: common/decisions.cwt
@@ -75,6 +78,9 @@ import { COMPONENT_SET_FIELDS } from "./component-set.ts";
 import type { ContentTypeName } from "./content-registry.ts";
 import { COUNCILOR_FIELDS } from "./councilor.ts";
 import { COUNTRY_SHIP_OF_SIZE_LIMIT_FIELDS } from "./country-ship-of-size-limit.ts";
+import { CRISIS_LEVEL_FIELDS } from "./crisis-level.ts";
+import { CRISIS_OBJECTIVE_FIELDS } from "./crisis-objective.ts";
+import { CRISIS_PATH_FIELDS } from "./crisis-path.ts";
 import { DECISION_CUSTOM_TOOLTIP_FIELDS, DECISION_FIELDS } from "./decision.ts";
 import {
   ECONOMIC_CATEGORY_FIELDS,
@@ -133,6 +139,7 @@ import {
   MEGASTRUCTURE_FIELDS,
   MEGASTRUCTURE_PLACEMENT_RULES_FIELDS,
 } from "./megastructure.ts";
+import { MENACE_PERK_FIELDS } from "./menace-perk.ts";
 import {
   MOON_INITIALIZER_COUNT_FIELDS,
   MOON_INITIALIZER_FIELDS,
@@ -156,6 +163,7 @@ import {
   PLANET_INITIALIZER_ORBITAL_LINE_FIELDS,
   PLANET_INITIALIZER_SIZE_FIELDS,
 } from "./planet-initializer.ts";
+import { RESOURCE_FIELDS } from "./resource.ts";
 import { SCRIPTED_LOC_FIELDS, SCRIPTED_LOC_TEXT_FIELDS } from "./scripted-loc.ts";
 import { SCRIPTED_MODIFIER_FIELDS } from "./scripted-modifier.ts";
 import {
@@ -875,6 +883,111 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         memberType: 'WeightBlock<"country">',
       },
       trigger: { optional: true, docs: [], memberType: 'Trigger<"country">' },
+    },
+  ],
+  [
+    RESOURCE_FIELDS,
+    {
+      tradable: { optional: true, docs: [], memberType: "boolean" },
+      category: {
+        optional: true,
+        docs: [],
+        memberType: "ResourceCategory",
+        literals: ["basic", "advanced", "strategic", "rare", "other", "material", "all"],
+      },
+      hideGain: { optional: true, docs: ["default: no?"], memberType: "boolean" },
+      marketAmount: {
+        optional: true,
+        docs: [
+          "default -1, if non-positive, resource cannot be traded in the Market",
+          "Only when resource subtype `tradable` applies.",
+        ],
+        memberType: "number",
+      },
+      marketPrice: {
+        optional: true,
+        docs: [
+          "default -1, if non-positive, resource cannot be traded in the Market",
+          "Only when resource subtype `tradable` applies.",
+        ],
+        memberType: "number",
+      },
+      max: {
+        optional: true,
+        docs: ["Only when resource subtype `tradable` applies."],
+        memberType: "number",
+      },
+      specialMaxAmount: { optional: true, docs: ["default: no"], memberType: "boolean" },
+      dynamicCapacity: { optional: true, docs: [], memberType: 'WeightBlock<"country">' },
+      allowDeficit: {
+        optional: true,
+        docs: ["default yes, only implemented for tech resources"],
+        memberType: "boolean",
+      },
+      intangibleWeight: { optional: true, docs: [], memberType: "number" },
+      deficitModifier: { optional: true, docs: [], memberType: "StaticModifierRef | string" },
+      deficitSituation: { optional: true, docs: [], memberType: "SituationTypeRef | string" },
+      deficitTradeConversionMult: { optional: true, docs: [], memberType: "number" },
+      cullingConversionValue: { optional: true, docs: [], memberType: "number" },
+      prerequisites: { optional: true, docs: [], memberType: "(TechnologyRef | string)[]" },
+      visibilityPrerequisite: { optional: true, docs: [], memberType: 'Trigger<"country">' },
+      aiWeight: { optional: true, docs: [], memberType: 'WeightBlock<"country">' },
+      tooltipDecimals: { optional: true, docs: [], memberType: "number" },
+      aiWants: { optional: true, docs: [], memberType: 'WeightBlock<"country">' },
+      fixedMaxAmount: {
+        optional: true,
+        docs: ["Only when resource subtype `max` applies."],
+        memberType: "true",
+      },
+      tradableInMarket: { optional: true, docs: [], memberType: 'Trigger<"country">' },
+    },
+  ],
+  [
+    CRISIS_PATH_FIELDS,
+    {
+      crisisCurrency: { optional: false, docs: [], memberType: "ResourceRef | string" },
+      levels: { optional: false, docs: [], memberType: "(CrisisLevelRef | string)[]" },
+      objectives: { optional: false, docs: [], memberType: "(CrisisObjectiveRef | string)[]" },
+    },
+  ],
+  [
+    CRISIS_LEVEL_FIELDS,
+    {
+      allow: { optional: true, docs: [], memberType: 'Trigger<"country">' },
+      requiredCrisisCurrency: { optional: false, docs: [], memberType: "number" },
+      perks: { optional: false, docs: [], memberType: "(MenacePerkRef | string)[]" },
+      onUnlock: {
+        optional: false,
+        docs: [],
+        memberType: 'EffectBlock<"country", { readonly root: "country" }>',
+      },
+    },
+  ],
+  [
+    CRISIS_OBJECTIVE_FIELDS,
+    {
+      potential: { optional: true, docs: [], memberType: 'Trigger<"country">' },
+      reward: { optional: false, docs: [], memberType: "WeightBlock<never>" },
+      recurring: { optional: true, docs: [], memberType: "true" },
+    },
+  ],
+  [
+    MENACE_PERK_FIELDS,
+    {
+      portrait: { optional: false, docs: [], memberType: "SpriteRef | string" },
+      modifier: { optional: true, docs: [], memberType: 'ModifierClosure<"country">' },
+      federationModifier: {
+        optional: true,
+        docs: [
+          "static modifier that is applied to the player's federation, if they have one (this stacks if multiple members have such perks)",
+        ],
+        memberType: 'ModifierClosure<"country">',
+      },
+      onUnlock: {
+        optional: true,
+        docs: [],
+        memberType: 'EffectBlock<"country", { readonly root: "country" }>',
+      },
     },
   ],
   [
@@ -5820,6 +5933,13 @@ export const CONTENT_FIELD_OMISSIONS: Readonly<
   tradition: [],
   tradition_category: [],
   ascension_perk: [],
+  resource: [],
+  crisis_path: [],
+  crisis_level: [],
+  crisis_objective: [],
+  menace_perk: [
+    { path: "resources", kind: "unsupported", reason: "no declaration the emitter can lower" },
+  ],
   agenda: [
     {
       path: "agenda.localisation.council_agenda_name",

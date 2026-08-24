@@ -56,6 +56,7 @@ import type {
   RelativePowerValue,
   ResearchArea,
   ResolutionPosition,
+  ResourceCategory,
   ScopeTypeToken,
   ShipClass,
   ShipOwnerType,
@@ -18250,7 +18251,7 @@ export function resourceIncomeCompare(args: ResourceIncomeCompareArgs): Trigger<
 export interface ResourceIncomeToExpenditureBalanceRatioArgs {
   resource?: ResourceRef | string;
   /** Optional; if not provided, will use sum for all Categories */
-  category?: string;
+  category?: ResourceCategory;
   value: ScriptValue | readonly [PdxOp, ScriptValue];
 }
 

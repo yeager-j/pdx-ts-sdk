@@ -1,0 +1,382 @@
+{
+  "registry": "menace_perk",
+  "definitions": 90,
+  "files": 1,
+  "fingerprint": "03076d6681ab1d65f802d4635a065404c2e1cdcdd8590ec919e25cd2b113ea46",
+  "fields": {
+    "federation_modifier": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 2,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "federation_experience_add",
+        "federation_fleet_cap_add"
+      ],
+      "keysByDefinition": [
+        [
+          "federation_experience_add",
+          "federation_fleet_cap_add"
+        ],
+        [
+          "federation_fleet_cap_add"
+        ]
+      ]
+    },
+    "modifier": {
+      "definitions": 49,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 49,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 3,
+      "values": [],
+      "keys": [
+        "bioship_growth_progress_mult",
+        "category_biology_research_speed_mult",
+        "command_limit_mult",
+        "conduit_spawnrate_add",
+        "country_engineering_research_produces_mult",
+        "country_influence_produces_mult",
+        "country_megastructure_build_cap_add",
+        "country_physics_research_produces_mult",
+        "country_resource_max_food_add",
+        "country_society_research_produces_mult",
+        "country_society_tech_research_speed",
+        "country_subject_acceptance_add",
+        "country_war_exhaustion_mult",
+        "custom_tooltip",
+        "damage_vs_country_type_ai_empire_mult",
+        "damage_vs_country_type_awakened_marauders_mult",
+        "damage_vs_country_type_awakened_synth_queen_mult",
+        "damage_vs_country_type_extradimensional_2_mult",
+        "damage_vs_country_type_extradimensional_3_mult",
+        "damage_vs_country_type_extradimensional_mult",
+        "damage_vs_country_type_frenzied_voidworms_mult",
+        "damage_vs_country_type_gray_goo_mult",
+        "damage_vs_country_type_swarm_mult",
+        "damage_vs_country_type_synth_queen_convoys_mult",
+        "damage_vs_country_type_synth_queen_mult",
+        "damage_vs_country_type_synth_queen_outposts_mult",
+        "damage_vs_country_type_voidworms_crisis_mult",
+        "damage_vs_country_type_voidworms_mult",
+        "damage_vs_country_type_voidworms_treasure_hunters_mult",
+        "damage_vs_player_crisis_mult",
+        "defensive_stations_armor_mult",
+        "defensive_stations_hull_mult",
+        "defensive_stations_shield_hardening_add",
+        "diplo_weight_mult",
+        "emergency_measures_cooldown_mult",
+        "envoys_add",
+        "job_metallurgist_naval_cap_add",
+        "job_researcher_naval_cap_add",
+        "planet_biologists_upkeep_mult",
+        "planet_engineers_upkeep_mult",
+        "planet_farmers_energy_upkeep_add",
+        "planet_farmers_food_produces_add",
+        "planet_farmers_minerals_upkeep_add",
+        "planet_farmers_society_research_produces_add",
+        "planet_physicists_upkeep_mult",
+        "planet_researchers_produces_mult",
+        "pop_purge_speed",
+        "research_sharing_mult",
+        "ship_armor_hardening_add",
+        "ship_damage_against_starbases_mult",
+        "ship_federation_territory_fire_rate_mult",
+        "ship_federation_territory_speed_mult",
+        "ship_fire_rate_mult",
+        "ship_friendly_territory_evasion_mult",
+        "ship_friendly_territory_fire_rate_mult",
+        "ship_military_station_small_upkeep_mult",
+        "ship_orbital_bombardment_mult",
+        "ship_shield_mult",
+        "ship_weapon_damage",
+        "shipclass_military_hull_mult",
+        "shipclass_military_station_build_speed_mult",
+        "ships_upkeep_mult",
+        "shipsize_crisis_corvette_disengage_chance_mult",
+        "shipsize_crisis_corvette_evasion_mult",
+        "shipsize_crisis_cruiser_hull_mult",
+        "shipsize_crisis_destroyer_tracking_mult",
+        "shipsize_ember_battleship_speed_mult",
+        "shipsize_ember_battleship_weapon_damage",
+        "shipsize_ember_cruiser_speed_mult",
+        "shipsize_ember_cruiser_weapon_damage",
+        "starbase_shipyard_build_alloys_cost_mult",
+        "starbase_shipyard_build_speed_mult",
+        "the_cradle_of_souls_attunement_mult"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "bioship_growth_progress_mult",
+          "command_limit_mult"
+        ],
+        [
+          "category_biology_research_speed_mult",
+          "planet_biologists_upkeep_mult"
+        ],
+        [
+          "conduit_spawnrate_add"
+        ],
+        [
+          "country_engineering_research_produces_mult",
+          "planet_engineers_upkeep_mult"
+        ],
+        [
+          "country_influence_produces_mult",
+          "emergency_measures_cooldown_mult"
+        ],
+        [
+          "country_megastructure_build_cap_add"
+        ],
+        [
+          "country_physics_research_produces_mult",
+          "planet_physicists_upkeep_mult"
+        ],
+        [
+          "country_resource_max_food_add"
+        ],
+        [
+          "country_society_research_produces_mult",
+          "planet_biologists_upkeep_mult"
+        ],
+        [
+          "country_society_tech_research_speed",
+          "planet_biologists_upkeep_mult"
+        ],
+        [
+          "country_subject_acceptance_add"
+        ],
+        [
+          "country_war_exhaustion_mult"
+        ],
+        [
+          "country_war_exhaustion_mult",
+          "job_metallurgist_naval_cap_add",
+          "job_researcher_naval_cap_add"
+        ],
+        [
+          "custom_tooltip",
+          "damage_vs_country_type_ai_empire_mult",
+          "damage_vs_country_type_awakened_marauders_mult",
+          "damage_vs_country_type_awakened_synth_queen_mult",
+          "damage_vs_country_type_extradimensional_2_mult",
+          "damage_vs_country_type_extradimensional_3_mult",
+          "damage_vs_country_type_extradimensional_mult",
+          "damage_vs_country_type_frenzied_voidworms_mult",
+          "damage_vs_country_type_gray_goo_mult",
+          "damage_vs_country_type_swarm_mult",
+          "damage_vs_country_type_synth_queen_convoys_mult",
+          "damage_vs_country_type_synth_queen_mult",
+          "damage_vs_country_type_synth_queen_outposts_mult",
+          "damage_vs_country_type_voidworms_crisis_mult",
+          "damage_vs_country_type_voidworms_mult",
+          "damage_vs_country_type_voidworms_treasure_hunters_mult",
+          "damage_vs_player_crisis_mult"
+        ],
+        [
+          "custom_tooltip",
+          "defensive_stations_armor_mult",
+          "defensive_stations_hull_mult",
+          "defensive_stations_shield_hardening_add"
+        ],
+        [
+          "diplo_weight_mult",
+          "envoys_add"
+        ],
+        [
+          "planet_farmers_energy_upkeep_add",
+          "planet_farmers_minerals_upkeep_add",
+          "planet_farmers_society_research_produces_add"
+        ],
+        [
+          "planet_farmers_food_produces_add",
+          "planet_farmers_minerals_upkeep_add"
+        ],
+        [
+          "planet_researchers_produces_mult",
+          "research_sharing_mult"
+        ],
+        [
+          "pop_purge_speed"
+        ],
+        [
+          "research_sharing_mult"
+        ],
+        [
+          "ship_armor_hardening_add",
+          "shipclass_military_hull_mult"
+        ],
+        [
+          "ship_damage_against_starbases_mult"
+        ],
+        [
+          "ship_federation_territory_fire_rate_mult"
+        ],
+        [
+          "ship_federation_territory_speed_mult"
+        ],
+        [
+          "ship_fire_rate_mult"
+        ],
+        [
+          "ship_friendly_territory_evasion_mult",
+          "ship_friendly_territory_fire_rate_mult"
+        ],
+        [
+          "ship_military_station_small_upkeep_mult",
+          "shipclass_military_station_build_speed_mult"
+        ],
+        [
+          "ship_orbital_bombardment_mult"
+        ],
+        [
+          "ship_shield_mult"
+        ],
+        [
+          "ship_weapon_damage"
+        ],
+        [
+          "ships_upkeep_mult"
+        ],
+        [
+          "shipsize_crisis_corvette_disengage_chance_mult",
+          "shipsize_crisis_corvette_evasion_mult"
+        ],
+        [
+          "shipsize_crisis_cruiser_hull_mult"
+        ],
+        [
+          "shipsize_crisis_destroyer_tracking_mult"
+        ],
+        [
+          "shipsize_ember_battleship_speed_mult",
+          "shipsize_ember_cruiser_speed_mult"
+        ],
+        [
+          "shipsize_ember_battleship_weapon_damage",
+          "shipsize_ember_cruiser_weapon_damage"
+        ],
+        [
+          "starbase_shipyard_build_alloys_cost_mult",
+          "starbase_shipyard_build_speed_mult"
+        ],
+        [
+          "starbase_shipyard_build_speed_mult"
+        ],
+        [
+          "the_cradle_of_souls_attunement_mult"
+        ]
+      ]
+    },
+    "on_unlock": {
+      "definitions": 58,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 58,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "custom_tooltip",
+        "else",
+        "if"
+      ],
+      "keysByDefinition": [
+        [
+          "custom_tooltip"
+        ],
+        [
+          "else",
+          "if"
+        ]
+      ]
+    },
+    "portrait": {
+      "definitions": 90,
+      "repeated": 0,
+      "scalars": 90,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "GFX_crisis_icon_advanced_logic",
+        "GFX_crisis_icon_basebreaker",
+        "GFX_crisis_icon_behemoth_bioship_1",
+        "GFX_crisis_icon_behemoth_bioship_2",
+        "GFX_crisis_icon_behemoth_bioship_3",
+        "GFX_crisis_icon_behemoth_egg",
+        "GFX_crisis_icon_behemoth_food_1",
+        "GFX_crisis_icon_behemoth_food_2",
+        "GFX_crisis_icon_behemoth_hatchling",
+        "GFX_crisis_icon_behemoth_objectives",
+        "GFX_crisis_icon_behemoth_society_1",
+        "GFX_crisis_icon_behemoth_society_2",
+        "GFX_crisis_icon_crisis_damage_1",
+        "GFX_crisis_icon_crisis_damage_2",
+        "GFX_crisis_icon_crisis_damage_3",
+        "GFX_crisis_icon_crisis_damage_4",
+        "GFX_crisis_icon_crisiscorvettes",
+        "GFX_crisis_icon_crisiscruiser",
+        "GFX_crisis_icon_crisisdestroyers",
+        "GFX_crisis_icon_custodian",
+        "GFX_crisis_icon_dark_matter_1",
+        "GFX_crisis_icon_dark_matter_2",
+        "GFX_crisis_icon_dark_matter_3",
+        "GFX_crisis_icon_deathfromabove",
+        "GFX_crisis_icon_defense_1",
+        "GFX_crisis_icon_defense_2",
+        "GFX_crisis_icon_defense_3",
+        "GFX_crisis_icon_easilyreplaced",
+        "GFX_crisis_icon_eternal_expansion",
+        "GFX_crisis_icon_fe_building_1",
+        "GFX_crisis_icon_fe_building_2",
+        "GFX_crisis_icon_fe_building_3",
+        "GFX_crisis_icon_fe_building_4",
+        "GFX_crisis_icon_fe_building_5",
+        "GFX_crisis_icon_fe_ship_1",
+        "GFX_crisis_icon_fe_ship_2",
+        "GFX_crisis_icon_fe_ship_3",
+        "GFX_crisis_icon_federation_1",
+        "GFX_crisis_icon_federation_2",
+        "GFX_crisis_icon_flyswatter",
+        "GFX_crisis_icon_galcom_1",
+        "GFX_crisis_icon_galcom_2",
+        "GFX_crisis_icon_gravitational_tools",
+        "GFX_crisis_icon_integrity",
+        "GFX_crisis_icon_intimidation",
+        "GFX_crisis_icon_megastructure",
+        "GFX_crisis_icon_mobilebulwark",
+        "GFX_crisis_icon_nanotech",
+        "GFX_crisis_icon_objectives",
+        "GFX_crisis_icon_opinion_1",
+        "GFX_crisis_icon_opinion_2",
+        "GFX_crisis_icon_opinion_3",
+        "GFX_crisis_icon_paidinambition",
+        "GFX_crisis_icon_rare_components",
+        "GFX_crisis_icon_reality_theses",
+        "GFX_crisis_icon_relentlessaggression",
+        "GFX_crisis_icon_research_1",
+        "GFX_crisis_icon_research_2",
+        "GFX_crisis_icon_ruthlessraiders",
+        "GFX_crisis_icon_shipchipper",
+        "GFX_crisis_icon_stareater",
+        "GFX_crisis_icon_undertaker",
+        "GFX_crisis_icon_void_voyagers",
+        "GFX_crisis_icon_wetware"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    }
+  }
+}

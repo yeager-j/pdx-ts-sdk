@@ -37,6 +37,7 @@ import type {
   PatronContactState,
   RefreshPortraits,
   ResearchArea,
+  ResourceCategory,
   ScopeTypeToken,
   ShipRarity,
   SituationApproach,
@@ -11846,7 +11847,7 @@ export interface EffectsInPlanet {
   stealPlanetOutput(args: {
     planet: ScopeValue<"planet">;
     who: ScopeValue<"country" | "ship">;
-    resource?: ResourceRef | string | "all";
+    resource?: ResourceRef | string | ResourceCategory | "all";
     maxAmount?: ScriptValue;
     percentage?: ScriptValue;
     /** default: steal */

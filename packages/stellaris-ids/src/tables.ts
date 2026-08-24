@@ -45,6 +45,9 @@ import type { VanillaCivicOrOriginId } from "./registries/civic-or-origin.ts";
 import type { VanillaComponentSetId } from "./registries/component-set.ts";
 import type { VanillaCouncilorId } from "./registries/councilor.ts";
 import type { VanillaCountryShipOfSizeLimitId } from "./registries/country-ship-of-size-limit.ts";
+import type { VanillaCrisisLevelId } from "./registries/crisis-level.ts";
+import type { VanillaCrisisObjectiveId } from "./registries/crisis-objective.ts";
+import type { VanillaCrisisPathId } from "./registries/crisis-path.ts";
 import type { VanillaDecisionId } from "./registries/decision.ts";
 import type { VanillaDepositId } from "./registries/deposit.ts";
 import type { VanillaDepositTrie } from "./registries/deposit/index.ts";
@@ -55,6 +58,7 @@ import type { VanillaGlobalShipDesignId } from "./registries/global-ship-design.
 import type { VanillaGraphicalCultureId } from "./registries/graphical-culture.ts";
 import type { VanillaJobId } from "./registries/job.ts";
 import type { VanillaMegastructureId } from "./registries/megastructure.ts";
+import type { VanillaMenacePerkId } from "./registries/menace-perk.ts";
 import type { VanillaOpinionModifierId } from "./registries/opinion-modifier.ts";
 import type { VanillaPdxmeshId } from "./registries/pdxmesh.ts";
 import type { VanillaPdxmeshTrie } from "./registries/pdxmesh/index.ts";
@@ -97,6 +101,11 @@ export interface VanillaIds {
   readonly tradition: VanillaTraditionId;
   readonly tradition_category: VanillaTraditionCategoryId;
   readonly ascension_perk: VanillaAscensionPerkId;
+  readonly resource: VanillaResourceId;
+  readonly crisis_path: VanillaCrisisPathId;
+  readonly crisis_level: VanillaCrisisLevelId;
+  readonly crisis_objective: VanillaCrisisObjectiveId;
+  readonly menace_perk: VanillaMenacePerkId;
   readonly agenda: VanillaAgendaId;
   readonly edict: VanillaEdictId;
   readonly decision: VanillaDecisionId;
@@ -135,7 +144,6 @@ export interface VanillaIds {
   readonly pdxparticle: VanillaPdxparticleId;
   readonly sound: VanillaSoundId;
   readonly sound_effect: VanillaSoundEffectId;
-  readonly resource: VanillaResourceId;
   readonly situation_log_category: VanillaSituationLogCategoryId;
   readonly star_class: VanillaStarClassId;
   readonly planet_class: VanillaPlanetClassId;

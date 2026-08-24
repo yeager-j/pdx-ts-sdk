@@ -1,0 +1,10 @@
+crisis_test_crisis_level_first_level = {
+	allow = {
+		has_authority = auth_democratic
+	}
+	required_crisis_currency = 100
+	perks = { crisis_test_menace_perk_first_perk }
+	on_unlock = {
+		set_country_flag = crisis_test_first_level_unlocked
+	}
+}

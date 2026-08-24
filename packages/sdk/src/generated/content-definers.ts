@@ -4,6 +4,9 @@
 // From: common/buildings.cwt
 // From: common/traditions.cwt
 // From: common/ascension_perks.cwt
+// From: common/strategic_resources.cwt
+// From: common/crisis_paths.cwt
+// From: common/crisis.cwt
 // From: common/council_agendas.cwt
 // From: common/edicts.cwt
 // From: common/decisions.cwt
@@ -66,6 +69,9 @@ import type { CivicOrOriginDef } from "./civic-or-origin.ts";
 import type { ComponentSetDef } from "./component-set.ts";
 import type { CouncilorDef } from "./councilor.ts";
 import type { CountryShipOfSizeLimitDef } from "./country-ship-of-size-limit.ts";
+import type { CrisisLevelDef } from "./crisis-level.ts";
+import type { CrisisObjectiveDef } from "./crisis-objective.ts";
+import type { CrisisPathDef } from "./crisis-path.ts";
 import type { DecisionDef, DecisionScope } from "./decision.ts";
 import type { EconomicCategoryDef } from "./economic-category.ts";
 import type { EdictDef } from "./edict.ts";
@@ -81,9 +87,11 @@ import {
   type MegastructurePatch,
   type MegastructurePatchItem,
 } from "./megastructure.ts";
+import type { MenacePerkDef } from "./menace-perk.ts";
 import type { OpinionModifierDef } from "./opinion-modifier.ts";
 import type { PdxmeshDef } from "./pdxmesh.ts";
 import type { PdxparticleDef } from "./pdxparticle.ts";
+import type { ResourceDef } from "./resource.ts";
 import type { ScopeName } from "./scopes.ts";
 import type { ScriptedLocDef } from "./scripted-loc.ts";
 import type { ScriptedModifierDef } from "./scripted-modifier.ts";
@@ -238,6 +246,76 @@ export function defineAscensionPerk<const Id extends string>(
   def: AscensionPerkDef<Id>
 ): ContentItem<"ascension_perk", AscensionPerkDef<Id>> {
   return { itemKind: "content", type: "ascension_perk", id: def.id, def };
+}
+
+/** What a resource feature can contain. */
+export type ResourceItem = ContentItem<"resource", ResourceDef>;
+
+/**
+ * Internal lowering primitive for a resource. Public authors call
+ * `mod.resource(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
+ */
+export function defineResource<const Id extends string>(
+  def: ResourceDef<Id>
+): ContentItem<"resource", ResourceDef<Id>> {
+  return { itemKind: "content", type: "resource", id: def.id, def };
+}
+
+/** What a crisis path feature can contain. */
+export type CrisisPathItem = ContentItem<"crisis_path", CrisisPathDef>;
+
+/**
+ * Internal lowering primitive for a crisis path. Public authors call
+ * `mod.crisisPath(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
+ */
+export function defineCrisisPath<const Id extends string>(
+  def: CrisisPathDef<Id>
+): ContentItem<"crisis_path", CrisisPathDef<Id>> {
+  return { itemKind: "content", type: "crisis_path", id: def.id, def };
+}
+
+/** What a crisis level feature can contain. */
+export type CrisisLevelItem = ContentItem<"crisis_level", CrisisLevelDef>;
+
+/**
+ * Internal lowering primitive for a crisis level. Public authors call
+ * `mod.crisisLevel(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
+ */
+export function defineCrisisLevel<const Id extends string>(
+  def: CrisisLevelDef<Id>
+): ContentItem<"crisis_level", CrisisLevelDef<Id>> {
+  return { itemKind: "content", type: "crisis_level", id: def.id, def };
+}
+
+/** What a crisis objective feature can contain. */
+export type CrisisObjectiveItem = ContentItem<"crisis_objective", CrisisObjectiveDef>;
+
+/**
+ * Internal lowering primitive for a crisis objective. Public authors call
+ * `mod.crisisObjective(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
+ */
+export function defineCrisisObjective<const Id extends string>(
+  def: CrisisObjectiveDef<Id>
+): ContentItem<"crisis_objective", CrisisObjectiveDef<Id>> {
+  return { itemKind: "content", type: "crisis_objective", id: def.id, def };
+}
+
+/** What a menace perk feature can contain. */
+export type MenacePerkItem = ContentItem<"menace_perk", MenacePerkDef>;
+
+/**
+ * Internal lowering primitive for a menace perk. Public authors call
+ * `mod.menacePerk(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
+ */
+export function defineMenacePerk<const Id extends string>(
+  def: MenacePerkDef<Id>
+): ContentItem<"menace_perk", MenacePerkDef<Id>> {
+  return { itemKind: "content", type: "menace_perk", id: def.id, def };
 }
 
 /** What an agenda feature can contain. */

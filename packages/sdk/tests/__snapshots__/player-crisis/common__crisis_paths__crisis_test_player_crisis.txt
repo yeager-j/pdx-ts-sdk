@@ -1,0 +1,5 @@
+crisis_test_crisis_path_player_crisis = {
+	crisis_currency = crisis_test_resource_crisis_currency
+	levels = { crisis_test_crisis_level_first_level }
+	objectives = { crisis_test_crisis_objective_first_objective }
+}

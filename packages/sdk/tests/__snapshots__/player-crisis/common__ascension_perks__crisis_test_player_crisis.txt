@@ -1,0 +1,5 @@
+crisis_test_ascension_perk_player_crisis = {
+	on_enabled = {
+		activate_crisis_progression = crisis_test_crisis_path_player_crisis
+	}
+}

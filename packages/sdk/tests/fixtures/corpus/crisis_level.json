@@ -1,0 +1,210 @@
+{
+  "registry": "crisis_level",
+  "definitions": 25,
+  "files": 1,
+  "fingerprint": "425e3a2e5f13647f4e2c7d167766fc52e160c661c81a0c16104772a848c793e9",
+  "fields": {
+    "allow": {
+      "definitions": 21,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 21,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "custom_tooltip",
+        "hidden_trigger",
+        "is_galactic_community_member",
+        "is_part_of_galactic_council",
+        "is_subject"
+      ],
+      "keysByDefinition": [
+        [
+          "custom_tooltip"
+        ],
+        [
+          "custom_tooltip",
+          "hidden_trigger"
+        ],
+        [
+          "custom_tooltip",
+          "hidden_trigger",
+          "is_part_of_galactic_council"
+        ],
+        [
+          "custom_tooltip",
+          "hidden_trigger",
+          "is_subject"
+        ],
+        [
+          "custom_tooltip",
+          "is_galactic_community_member"
+        ],
+        [
+          "custom_tooltip",
+          "is_subject"
+        ]
+      ]
+    },
+    "on_unlock": {
+      "definitions": 25,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 25,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "add_cosmogenesis_level_1_perks",
+        "add_cosmogenesis_level_2_perks",
+        "add_cosmogenesis_level_3_perks",
+        "add_cosmogenesis_level_4_perks",
+        "add_cosmogenesis_level_5_perks",
+        "country_event",
+        "hidden_effect",
+        "owner"
+      ],
+      "keysByDefinition": [
+        [
+          "add_cosmogenesis_level_1_perks",
+          "hidden_effect"
+        ],
+        [
+          "add_cosmogenesis_level_2_perks",
+          "hidden_effect"
+        ],
+        [
+          "add_cosmogenesis_level_3_perks",
+          "hidden_effect"
+        ],
+        [
+          "add_cosmogenesis_level_4_perks",
+          "hidden_effect"
+        ],
+        [
+          "add_cosmogenesis_level_5_perks",
+          "hidden_effect"
+        ],
+        [
+          "country_event",
+          "hidden_effect"
+        ],
+        [
+          "hidden_effect"
+        ],
+        [
+          "hidden_effect",
+          "owner"
+        ]
+      ]
+    },
+    "perks": {
+      "definitions": 25,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 25,
+      "bareValues": 25,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "menp_base_breaker",
+        "menp_behemoth_bioship_1",
+        "menp_behemoth_bioship_2",
+        "menp_behemoth_egg",
+        "menp_behemoth_food_1",
+        "menp_behemoth_food_2",
+        "menp_behemoth_hatchling",
+        "menp_behemoth_objectives",
+        "menp_behemoth_society_1",
+        "menp_behemoth_society_2",
+        "menp_cosmo_buildings_1",
+        "menp_cosmo_buildings_2",
+        "menp_cosmo_buildings_3",
+        "menp_cosmo_buildings_4",
+        "menp_cosmo_buildings_5",
+        "menp_cosmo_features_1",
+        "menp_cosmo_features_2",
+        "menp_cosmo_features_3",
+        "menp_cosmo_features_4",
+        "menp_cosmo_features_5",
+        "menp_cosmo_objectives",
+        "menp_cosmo_ship_2",
+        "menp_cosmo_ship_3",
+        "menp_cosmo_ship_4",
+        "menp_cosmo_techs_1",
+        "menp_cosmo_techs_2",
+        "menp_cosmo_techs_3",
+        "menp_cosmo_techs_4",
+        "menp_cosmo_techs_5",
+        "menp_crisis_corvette",
+        "menp_crisis_cruiser",
+        "menp_crisis_destroyer",
+        "menp_death_from_above",
+        "menp_defender_crisis_damage_1",
+        "menp_defender_crisis_damage_2",
+        "menp_defender_crisis_damage_3",
+        "menp_defender_crisis_damage_4",
+        "menp_defender_custodian",
+        "menp_defender_defense_1",
+        "menp_defender_defense_2",
+        "menp_defender_defense_3",
+        "menp_defender_federation_1",
+        "menp_defender_federation_2",
+        "menp_defender_galcom_1",
+        "menp_defender_galcom_2",
+        "menp_defender_galcom_3",
+        "menp_defender_objectives",
+        "menp_defender_opinion_1",
+        "menp_defender_opinion_2",
+        "menp_defender_opinion_3",
+        "menp_defender_research_1",
+        "menp_defender_research_2",
+        "menp_easily_replaced",
+        "menp_flyswatter",
+        "menp_intimidation",
+        "menp_megastructure",
+        "menp_mobile_bulwark",
+        "menp_objectives",
+        "menp_paid_in_ambition",
+        "menp_relentless_aggression",
+        "menp_ruthless_raiders",
+        "menp_ship_chipper",
+        "menp_star_eater",
+        "menp_undertaker"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "required_crisis_currency": {
+      "definitions": 25,
+      "repeated": 0,
+      "scalars": 25,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "0",
+        "1000",
+        "10000",
+        "18000",
+        "2000",
+        "22000",
+        "4000",
+        "45000",
+        "5000",
+        "6000",
+        "60000"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    }
+  }
+}

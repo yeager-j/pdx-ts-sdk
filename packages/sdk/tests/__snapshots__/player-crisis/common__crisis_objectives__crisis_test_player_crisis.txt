@@ -1,0 +1,8 @@
+crisis_test_crisis_objective_first_objective = {
+	potential = {
+		has_authority = auth_democratic
+	}
+	reward = {
+		base = 10
+	}
+}

@@ -1185,6 +1185,113 @@ function defineContentExample(): PureMod {
   ]);
 }
 
+function definePlayerCrisisExample(): PureMod {
+  const mod = createMod({
+    name: "Player Crisis",
+    prefix: "crisis_test",
+    supportedVersion: "4.4.*",
+  });
+  const currency = mod.resource("crisis_currency", {
+    name: "Crisis Currency",
+    desc: "Fuel the path to galactic ruin.",
+    category: "strategic",
+  });
+  const perk = mod.menacePerk("first_perk", {
+    name: "First Perk",
+    desc: "A first step toward the end.",
+    portrait: "GFX_ap_become_the_crisis",
+    modifier: (modifier) => modifier.country.unity.produces.mult(0.1),
+    onUnlock: (country) => country.setCountryFlag("crisis_test_first_perk_unlocked"),
+  });
+  const level = mod.crisisLevel("first_level", {
+    name: "First Level",
+    desc: "The route begins.",
+    allow: hasAuthority("auth_democratic"),
+    requiredCrisisCurrency: 100,
+    perks: [perk],
+    onUnlock: (country) => country.setCountryFlag("crisis_test_first_level_unlocked"),
+  });
+  const objective = mod.crisisObjective("first_objective", {
+    name: "First Objective",
+    desc: "Prove that this crisis has begun.",
+    potential: hasAuthority("auth_democratic"),
+    reward: { base: 10 },
+  });
+  const path = mod.crisisPath("player_crisis", {
+    crisisCurrency: currency,
+    levels: [level],
+    objectives: [objective],
+  });
+  const ascensionPerk = mod.ascensionPerk("player_crisis", {
+    name: "Player Crisis",
+    desc: "Forge a new crisis path.",
+    onEnabled: (country) => country.activateCrisisProgression(path),
+  });
+  const ambitions = mod.assetFile({
+    source: new URL("./fixtures/player-crisis-ambitions.txt", import.meta.url),
+    path: "common/ascension_perk_categories/crisis_test_player_crisis.txt",
+  });
+
+  return mod.compile([
+    mod.feature("player_crisis", [
+      currency,
+      perk,
+      level,
+      objective,
+      path,
+      ascensionPerk,
+      ambitions,
+    ]),
+  ]);
+}
+
+describe("player-crisis content route", () => {
+  const files = render(definePlayerCrisisExample());
+
+  it("writes every route registry and the retained-category override to their exact files", () => {
+    expect([...files.keys()]).toEqual([
+      "common/ascension_perk_categories/crisis_test_player_crisis.txt",
+      "common/ascension_perks/crisis_test_player_crisis.txt",
+      "common/crisis_levels/crisis_test_player_crisis.txt",
+      "common/crisis_objectives/crisis_test_player_crisis.txt",
+      "common/crisis_paths/crisis_test_player_crisis.txt",
+      "common/menace_perks/crisis_test_player_crisis.txt",
+      "common/strategic_resources/crisis_test_player_crisis.txt",
+      "descriptor.mod",
+      "localisation/english/crisis_test_player_crisis_l_english.yml",
+    ]);
+    expect(
+      new TextDecoder().decode(
+        files.file("common/ascension_perk_categories/crisis_test_player_crisis.txt")?.bytes()
+      )
+    ).toBe(
+      [
+        "ap_category_ambitions = {",
+        "\tascension_perks = {",
+        '\t\t"ap_defender_of_the_galaxy_nomads"',
+        '\t\t"ap_become_the_crisis"',
+        '\t\t"ap_cosmogenesis"',
+        '\t\t"ap_behemoths"',
+        '\t\t"ap_galactic_hyperthermia"',
+        '\t\t"crisis_test_ascension_perk_player_crisis"',
+        "\t}",
+        "}",
+        "",
+      ].join("\n")
+    );
+  });
+
+  for (const [relPath, content] of files) {
+    it(`matches the player-crisis golden for ${relPath}`, async () => {
+      const text = content.text ?? new TextDecoder().decode(content.bytes());
+
+      await expect(text).toMatchFileSnapshot(
+        `__snapshots__/player-crisis/${relPath.replaceAll("/", "__")}`
+      );
+    });
+  }
+});
+
 describe("generated content registries", () => {
   const files = render(defineContentExample());
 

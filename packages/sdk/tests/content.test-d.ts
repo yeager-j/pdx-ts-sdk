@@ -40,6 +40,18 @@ import {
   type CasusBelliRef,
   type ComponentTemplateRef,
   type ComponentTemplateUtilityComponentTemplateRef,
+  type CrisisLevelDef,
+  type CrisisLevelFields,
+  type CrisisLevelItem,
+  type CrisisLevelRef,
+  type CrisisObjectiveDef,
+  type CrisisObjectiveFields,
+  type CrisisObjectiveItem,
+  type CrisisObjectiveRef,
+  type CrisisPathDef,
+  type CrisisPathFields,
+  type CrisisPathItem,
+  type CrisisPathRef,
   type DecisionRef,
   type EconomicResourceBlock,
   type EconomicResourceBlockNoProduce,
@@ -52,6 +64,10 @@ import {
   type JobRef,
   type MegastructureFields,
   type MegastructurePatch,
+  type MenacePerkDef,
+  type MenacePerkFields,
+  type MenacePerkItem,
+  type MenacePerkRef,
   type ModelAnimation,
   type ModelMeshRef,
   type ModifierClosure,
@@ -60,6 +76,10 @@ import {
   type PdxmeshFields,
   type PdxparticleFields,
   type PrereqForCategory,
+  type ResourceDef,
+  type ResourceFields,
+  type ResourceItem,
+  type ResourceRef,
   type ScopeName,
   type ScopeRef,
   type ScriptValue,
@@ -127,6 +147,108 @@ describe("generated content authoring types", () => {
       name: "No synthetic membership",
       // @ts-expect-error — membership belongs to TraditionCategoryDef.traditions
       category: "content_types_tradition_category_x",
+    });
+  });
+
+  it("authors a complete player-crisis route with branded registry links", () => {
+    expectTypeOf<CrisisPathFields["crisisCurrency"]>().toEqualTypeOf<ResourceRef | string>();
+    expectTypeOf<CrisisPathFields["levels"]>().toEqualTypeOf<(CrisisLevelRef | string)[]>();
+    expectTypeOf<CrisisPathFields["objectives"]>().toEqualTypeOf<(CrisisObjectiveRef | string)[]>();
+    expectTypeOf<CrisisLevelFields["perks"]>().toEqualTypeOf<(MenacePerkRef | string)[]>();
+    expectTypeOf<CrisisObjectiveFields["potential"]>().toEqualTypeOf<
+      Trigger<"country"> | undefined
+    >();
+    expectTypeOf<MenacePerkFields["modifier"]>().toEqualTypeOf<
+      ModifierClosure<"country"> | undefined
+    >();
+
+    const currency = contentMod.resource("crisis_currency", {
+      name: "Crisis Currency",
+      category: "strategic",
+    });
+    const perk = contentMod.menacePerk("first_perk", {
+      name: "First Perk",
+      portrait: "GFX_ap_become_the_crisis",
+      modifier: (modifier) => modifier.country.unity.produces.mult(0.1),
+      onUnlock: (country) => country.setCountryFlag("content_types_crisis_perk_unlocked"),
+    });
+    const level = contentMod.crisisLevel("first_level", {
+      name: "First Level",
+      requiredCrisisCurrency: 100,
+      perks: [perk],
+      onUnlock: (country) => country.setCountryFlag("content_types_crisis_level_unlocked"),
+    });
+    const objective = contentMod.crisisObjective("first_objective", {
+      name: "First Objective",
+      potential: hasAuthority("auth_democratic"),
+      reward: { base: 10 },
+    });
+    const path = contentMod.crisisPath("player_crisis", {
+      crisisCurrency: currency,
+      levels: [level],
+      objectives: [objective],
+    });
+    const ascensionPerk = contentMod.ascensionPerk("player_crisis", {
+      name: "Player Crisis",
+      onEnabled: (country) => country.activateCrisisProgression(path),
+    });
+
+    const resourceItem: ResourceItem = currency;
+    const resourceDef: ResourceDef = currency.def;
+    const crisisPathItem: CrisisPathItem = path;
+    const crisisPathDef: CrisisPathDef = path.def;
+    const crisisLevelItem: CrisisLevelItem = level;
+    const crisisLevelDef: CrisisLevelDef = level.def;
+    const crisisObjectiveItem: CrisisObjectiveItem = objective;
+    const crisisObjectiveDef: CrisisObjectiveDef = objective.def;
+    const menacePerkItem: MenacePerkItem = perk;
+    const menacePerkDef: MenacePerkDef = perk.def;
+    const vanillaResource: ResourceRef = vanilla.resource("menace");
+    const vanillaPath: CrisisPathRef = vanilla.crisisPath("nemesis_path");
+    const vanillaLevel: CrisisLevelRef = vanilla.crisisLevel("crisis_level_1");
+    const vanillaObjective: CrisisObjectiveRef = vanilla.crisisObjective("crisobj_destroy_worlds");
+    const vanillaPerk: MenacePerkRef = vanilla.menacePerk("menp_base_breaker");
+    void resourceItem;
+    void resourceDef;
+    void crisisPathItem;
+    void crisisPathDef;
+    void crisisLevelItem;
+    void crisisLevelDef;
+    void crisisObjectiveItem;
+    void crisisObjectiveDef;
+    void menacePerkItem;
+    void menacePerkDef;
+    void ascensionPerk;
+    void vanillaResource;
+    void vanillaPath;
+    void vanillaLevel;
+    void vanillaObjective;
+    void vanillaPerk;
+
+    contentMod.crisisPath("wrong_currency", {
+      // @ts-expect-error — a level is not a crisis currency resource
+      crisisCurrency: level,
+      levels: [level],
+      objectives: [objective],
+    });
+    contentMod.crisisLevel("wrong_perk", {
+      requiredCrisisCurrency: 100,
+      // @ts-expect-error — a crisis path is not a menace perk
+      perks: [path],
+      onUnlock: () => {},
+    });
+    contentMod.crisisPath("wrong_objective", {
+      crisisCurrency: currency,
+      levels: [level],
+      // @ts-expect-error — a crisis level is not a crisis objective
+      objectives: [level],
+    });
+    contentMod.ascensionPerk("wrong_crisis_path", {
+      name: "Wrong Crisis Path",
+      onEnabled: (country) => {
+        // @ts-expect-error — activate_crisis_progression requires a crisis path
+        country.activateCrisisProgression(level);
+      },
     });
   });
 
