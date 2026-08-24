@@ -38,6 +38,20 @@ describe("terminal build and install runners", () => {
     expect(terminal.text()).not.toContain("\u001B[2K");
   });
 
+  it("uses static output for a zero-width pseudo-terminal", async () => {
+    const terminal = captureTerminal();
+    Object.assign(terminal.output, { isTTY: true, columns: 0 });
+
+    const report = await runBuild(compiledMod(), {
+      outDir: temporaryDirectory("terminal-zero-width-"),
+      output: terminal.output,
+    });
+
+    expect(report).toBeDefined();
+    expect(terminal.text()).toContain("descriptor.mod");
+    expect(terminal.text()).not.toContain("\u001B[2K");
+  });
+
   it("shows emitted paths and every warning in verbose build output", async () => {
     const outDir = temporaryDirectory("terminal-verbose-");
     const terminal = captureTerminal();
@@ -83,6 +97,27 @@ describe("terminal build and install runners", () => {
       .find((line) => line.includes("unresolved-visual"));
     expect(infoLine).toContain("●");
     expect(infoLine).not.toContain("▲");
+  });
+
+  it("always shows definite preview findings in compact output", async () => {
+    const terminal = captureTerminal();
+
+    const report = await runBuild(compiledModWithDefinitePreviewIssue(), {
+      outDir: temporaryDirectory("terminal-definite-build-"),
+      previewsDir: temporaryDirectory("terminal-definite-previews-"),
+      output: terminal.output,
+      verbose: false,
+    });
+
+    expect(report).toBeDefined();
+    const definiteLine = terminal
+      .text()
+      .split("\n")
+      .find((line) => line.includes("body-overlap"));
+    expect(definiteLine).toContain("▲");
+    expect(definiteLine).toContain("Definite");
+    expect(terminal.text()).not.toContain("unresolved-visual");
+    expect(terminal.text()).toMatch(/Run with --verbose to show \d+ additional layout findings?\./);
   });
 
   it("renders installation drift without a second raw stack trace", async () => {
@@ -173,6 +208,27 @@ function compiledModWithPreviewInfo(): PureMod {
     planet: [{ class: "random", orbitDistance: 40, orbitAngle: 0 }],
   });
   return capability.compile([capability.feature(undefined, [system])]);
+}
+
+function compiledModWithDefinitePreviewIssue(): PureMod {
+  const capability = createMod({
+    name: "Terminal Definite Preview Probe",
+    prefix: "terminal_definite_preview_probe",
+    version: "0.1.0",
+    supportedVersion: "v4.4.*",
+  });
+  const overlap = capability.solarSystemInitializer("overlap", {
+    class: "sc_g",
+    planet: [
+      { class: "pc_continental", size: 20, orbitDistance: 50, orbitAngle: 0 },
+      { class: "pc_barren", size: 20, orbitDistance: 2, orbitAngle: 0 },
+    ],
+  });
+  const uncertain = capability.solarSystemInitializer("uncertain", {
+    class: "sc_g",
+    planet: [{ class: "random", orbitDistance: 40, orbitAngle: 0 }],
+  });
+  return capability.compile([capability.feature(undefined, [overlap, uncertain])]);
 }
 
 function warning(message: string): ModWarning {

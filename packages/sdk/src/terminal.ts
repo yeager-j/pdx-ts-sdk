@@ -21,6 +21,7 @@ import {
   type MaterializationReport,
   type WriteReport,
 } from "./output/write.ts";
+import type { SolarSystemDiagnostic } from "./solar-system-inspect/diagnose.ts";
 
 /** Shared presentation controls for terminal build and install commands. */
 export interface TerminalRunOptions {
@@ -165,7 +166,9 @@ export async function runInstall(
 
 function terminalContext(options: TerminalRunOptions): TerminalContext {
   const output = options.output ?? process.stderr;
-  const interactive = !isCI() && isTTY(output);
+  const columns = "columns" in output ? output.columns : undefined;
+  const hasUsableWidth = typeof columns !== "number" || columns > 0;
+  const interactive = !isCI() && isTTY(output) && hasUsableWidth;
   const verbose = options.verbose ?? (!interactive || process.argv.slice(2).includes("--verbose"));
   return { output, verbose, interactive };
 }
@@ -292,18 +295,32 @@ function reportPreviewDiagnostics(report: SystemPreviewReport, context: Terminal
     log.info(count(infos.length, "solar-system layout note"), { output: context.output });
   }
 
-  if (!context.verbose) {
-    log.info("Run with --verbose to show every layout finding.", { output: context.output });
-    return;
+  const visibleDiagnostics = context.verbose
+    ? diagnostics
+    : diagnostics.filter(({ diagnostic }) => diagnostic.certainty === "definite");
+  for (const { preview, diagnostic } of visibleDiagnostics) {
+    reportPreviewDiagnostic(preview, diagnostic, context);
   }
 
-  for (const { preview, diagnostic } of diagnostics) {
-    const message = `${preview} (${diagnostic.certainty}) ${diagnostic.code}: ${diagnostic.message}`;
-    if (diagnostic.severity === "warning") {
-      log.warn(message, { output: context.output });
-    } else {
-      log.info(message, { output: context.output });
-    }
+  const hiddenCount = diagnostics.length - visibleDiagnostics.length;
+  if (hiddenCount > 0) {
+    log.info(`Run with --verbose to show ${count(hiddenCount, "additional layout finding")}.`, {
+      output: context.output,
+    });
+  }
+}
+
+function reportPreviewDiagnostic(
+  preview: string,
+  diagnostic: SolarSystemDiagnostic,
+  context: TerminalContext
+): void {
+  const certainty = diagnostic.certainty === "definite" ? "Definite" : diagnostic.certainty;
+  const message = `${certainty} · ${preview} · ${diagnostic.code}: ${diagnostic.message}`;
+  if (diagnostic.severity === "warning") {
+    log.warn(message, { output: context.output });
+  } else {
+    log.info(message, { output: context.output });
   }
 }
 

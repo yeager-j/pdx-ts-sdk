@@ -82,6 +82,10 @@ whichever command you run. Interactive output shows up to three warnings
 directly and groups larger sets by code; pass `--verbose` to show every warning.
 CI and non-TTY output are verbose by default.
 
+Solar-system preview diagnostics keep their own warning or info severity.
+Definite findings always print in interactive builds; possible and unresolved
+details remain in `--verbose` output when the compact summary hides them.
+
 Warnings do not stop rendering, writing, or installing. Keep them visible in
 local builds and inspect the full `--verbose` output before release. In CI,
 choose which codes fail your build: a build that throws nothing can still
@@ -94,9 +98,9 @@ committed. A build script that prints only the compiled warnings discards
 those, so check the report too.
 
 <Callout type="info" title="The loader can print a cache notice">
-`stellaris.load()` may print a direct notice if its optional parse cache cannot
-be written and the loader must reparse on each build. That notice concerns
-loader performance, not mod validity, and is not a `ModWarning`.
+  `stellaris.load()` may print a direct notice if its optional parse cache cannot be written and the
+  loader must reparse on each build. That notice concerns loader performance, not mod validity, and
+  is not a `ModWarning`.
 </Callout>
 ## Every warning has a code
 
