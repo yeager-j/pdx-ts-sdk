@@ -5,4 +5,5 @@ crisis_test_crisis_objective_first_objective = {
 	reward = {
 		base = 10
 	}
+	recurring = yes
 }

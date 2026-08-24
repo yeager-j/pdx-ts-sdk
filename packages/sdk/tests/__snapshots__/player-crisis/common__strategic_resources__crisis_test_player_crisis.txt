@@ -1,3 +1,7 @@
 crisis_test_resource_crisis_currency = {
-	category = strategic
+	tradable = no
+	category = other
+	ai_weight = {
+		weight = 1
+	}
 }

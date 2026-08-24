@@ -1194,7 +1194,9 @@ function definePlayerCrisisExample(): PureMod {
   const currency = mod.resource("crisis_currency", {
     name: "Crisis Currency",
     desc: "Fuel the path to galactic ruin.",
-    category: "strategic",
+    tradable: false,
+    category: "other",
+    aiWeight: { weight: 1 },
   });
   const perk = mod.menacePerk("first_perk", {
     name: "First Perk",
@@ -1216,6 +1218,7 @@ function definePlayerCrisisExample(): PureMod {
     desc: "Prove that this crisis has begun.",
     potential: hasAuthority("auth_democratic"),
     reward: { base: 10 },
+    recurring: true,
   });
   const path = mod.crisisPath("player_crisis", {
     crisisCurrency: currency,
