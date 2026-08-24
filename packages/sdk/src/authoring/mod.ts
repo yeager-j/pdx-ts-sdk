@@ -45,6 +45,7 @@ import {
 } from "../generated/event-definers.ts";
 import type { EventKindKey } from "../generated/events.ts";
 import type { ScopeName } from "../generated/scopes.ts";
+import type { AmbientScopeContext } from "../script/effects/types.ts";
 import {
   assertAssetOwner,
   captureAssetFile,
@@ -105,9 +106,9 @@ export type CapabilityEventHandle<
   N extends string,
   Id extends number,
   S extends ScopeName,
-  From extends ScopeName | undefined,
+  Context extends AmbientScopeContext,
   Kind extends string = S,
-> = GeneratedCapabilityEventHandle<P, N, Id, S, From, Kind>;
+> = GeneratedCapabilityEventHandle<P, N, Id, S, Context, Kind>;
 
 /**
  * A defined capability event with its exact prefix, namespace, numeric id,
@@ -286,7 +287,7 @@ function createEventHandle<
   N extends string,
   Id extends number,
   S extends ScopeName,
-  From extends ScopeName | undefined,
+  Context extends AmbientScopeContext,
   Kind extends string,
 >(
   namespace: MintedNamespace<P, N>,
@@ -294,19 +295,19 @@ function createEventHandle<
   kind: EventKindKey,
   scope: S,
   subtype: Kind,
-  from: From
-): CapabilityEventHandle<P, N, Id, S, From, Kind> {
+  scopes: Context
+): CapabilityEventHandle<P, N, Id, S, Context, Kind> {
   assertEventNumber(id);
   const eventId = `${namespace}.${id}` as MintedEventId<P, N, Id>;
   const define = (
-    definition: Omit<EventDef<S, From>, "id" | "from">
-  ): GeneratedCapabilityEventItem<P, N, Id, S, From, Kind> => {
+    definition: Omit<EventDef<S, Context>, "id" | "scopes">
+  ): GeneratedCapabilityEventItem<P, N, Id, S, Context, Kind> => {
     const localizationEntries: (readonly [string, string])[] = [];
     const event = buildEvent(
       kind,
       scope,
       namespace,
-      { ...definition, id, from } as EventDef<S, From>,
+      { ...definition, id, scopes } as EventDef<S, Context>,
       { register: (key, text) => localizationEntries.push([key, text]) }
     );
     return {
@@ -315,15 +316,15 @@ function createEventHandle<
       itemKind: "event",
       namespace,
       locEntries: localizationEntries,
-    } as GeneratedCapabilityEventItem<P, N, Id, S, From, Kind>;
+    } as GeneratedCapabilityEventItem<P, N, Id, S, Context, Kind>;
   };
   return Object.freeze({
     kind: "event-ref",
     scope,
-    from,
+    scopes,
     id: eventId,
     define,
-  }) as CapabilityEventHandle<P, N, Id, S, From, Kind>;
+  }) as CapabilityEventHandle<P, N, Id, S, Context, Kind>;
 }
 
 function createCapabilityEvents<P extends string, N extends string>(
@@ -334,8 +335,8 @@ function createCapabilityEvents<P extends string, N extends string>(
   assertNamespace(namespace);
   const eventMinter: CapabilityEventMinter<P, N> = {
     namespace,
-    handle: (id, kind, scope, subtype, from) =>
-      createEventHandle(namespace, id, kind, scope, subtype, from),
+    handle: (id, kind, scope, subtype, scopes) =>
+      createEventHandle(namespace, id, kind, scope, subtype, scopes),
   };
   return capabilityEvents(eventMinter);
 }

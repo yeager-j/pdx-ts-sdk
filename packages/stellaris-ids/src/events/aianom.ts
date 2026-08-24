@@ -3,15 +3,15 @@
 import type { EventRef } from "@pdx-ts/sdk";
 
 export interface VanillaEventNamespaceAianom {
-  readonly $1: EventRef<"ship", undefined, "ship"> & { readonly id: "aianom.1" };
-  readonly $10: EventRef<"ship", undefined, "ship"> & { readonly id: "aianom.10" };
-  readonly $11: EventRef<"ship", undefined, "ship"> & { readonly id: "aianom.11" };
-  readonly $2: EventRef<"ship", undefined, "ship"> & { readonly id: "aianom.2" };
-  readonly $3: EventRef<"ship", undefined, "ship"> & { readonly id: "aianom.3" };
-  readonly $4: EventRef<"ship", undefined, "ship"> & { readonly id: "aianom.4" };
-  readonly $5: EventRef<"ship", undefined, "ship"> & { readonly id: "aianom.5" };
-  readonly $6: EventRef<"ship", undefined, "ship"> & { readonly id: "aianom.6" };
-  readonly $7: EventRef<"ship", undefined, "ship"> & { readonly id: "aianom.7" };
-  readonly $8: EventRef<"ship", undefined, "ship"> & { readonly id: "aianom.8" };
-  readonly $9: EventRef<"ship", undefined, "ship"> & { readonly id: "aianom.9" };
+  readonly $1: EventRef<"ship", {}, "ship"> & { readonly id: "aianom.1" };
+  readonly $10: EventRef<"ship", {}, "ship"> & { readonly id: "aianom.10" };
+  readonly $11: EventRef<"ship", {}, "ship"> & { readonly id: "aianom.11" };
+  readonly $2: EventRef<"ship", {}, "ship"> & { readonly id: "aianom.2" };
+  readonly $3: EventRef<"ship", {}, "ship"> & { readonly id: "aianom.3" };
+  readonly $4: EventRef<"ship", {}, "ship"> & { readonly id: "aianom.4" };
+  readonly $5: EventRef<"ship", {}, "ship"> & { readonly id: "aianom.5" };
+  readonly $6: EventRef<"ship", {}, "ship"> & { readonly id: "aianom.6" };
+  readonly $7: EventRef<"ship", {}, "ship"> & { readonly id: "aianom.7" };
+  readonly $8: EventRef<"ship", {}, "ship"> & { readonly id: "aianom.8" };
+  readonly $9: EventRef<"ship", {}, "ship"> & { readonly id: "aianom.9" };
 }

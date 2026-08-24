@@ -23,13 +23,13 @@ export interface AgendaFields {
   potential?: Trigger<"country">;
   allow?: Trigger<"country">;
   initialEffectCustomLoc?: string;
-  initEffect?: EffectBlock<"country", undefined, "country">;
+  initEffect?: EffectBlock<"country", { readonly root: "country" }>;
   modifier?: ModifierClosure<"country">;
   finishModifier?:
     | (StaticModifierRef & { readonly hostScope?: never })
     | StaticModifierHostContract<"country">
     | string;
-  effect?: EffectBlock<"country", undefined, "country">;
+  effect?: EffectBlock<"country", { readonly root: "country" }>;
   aiWeight?: WeightBlock<"country">;
 }
 

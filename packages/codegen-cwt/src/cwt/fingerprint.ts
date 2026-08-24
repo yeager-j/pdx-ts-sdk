@@ -25,7 +25,19 @@ export function scopeSignature(field: RuleField): string {
   const scope = field.scope;
   return scope === null
     ? "inherited"
-    : [scope.this, scope.root, scope.from, scope.replaces ? "replace" : "push"]
+    : [
+        scope.this,
+        scope.root,
+        scope.from,
+        scope.fromfrom,
+        scope.fromfromfrom,
+        scope.fromfromfromfrom,
+        scope.prev,
+        scope.prevprev,
+        scope.prevprevprev,
+        scope.prevprevprevprev,
+        scope.replaces ? "replace" : "push",
+      ]
         .map((part) => part ?? "-")
         .join("/");
 }

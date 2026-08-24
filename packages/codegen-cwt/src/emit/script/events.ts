@@ -83,9 +83,9 @@ function definerSignature(kind: EmittedKind & { scope: string }): string {
       ],
       "  "
     ) +
-    `  define${pascalCase(kind.key)}<From extends ScopeName | undefined = undefined>(\n` +
-    `    def: EventDef<${scope}, From>\n` +
-    `  ): EventItem<${scope}, From, ${JSON.stringify(kind.subtype)}>;\n`
+    `  define${pascalCase(kind.key)}<Context extends AmbientScopeContext = {}>(\n` +
+    `    def: EventDef<${scope}, Context>\n` +
+    `  ): EventItem<${scope}, Context, ${JSON.stringify(kind.subtype)}>;\n`
   );
 }
 
@@ -109,10 +109,10 @@ function capabilitySignature(kind: EmittedKind & { scope: string }): string {
       ],
       "  "
     ) +
-    `  ${method}<const Id extends number, From extends ScopeName | undefined = undefined>(\n` +
+    `  ${method}<const Id extends number, Context extends AmbientScopeContext = {}>(\n` +
     `    id: Id,\n` +
-    `    def: Omit<EventDef<${scope}, From>, "id">\n` +
-    `  ): CapabilityEventItem<P, N, Id, ${scope}, From, ${subtype}>;\n\n` +
+    `    def: Omit<EventDef<${scope}, Context>, "id">\n` +
+    `  ): CapabilityEventItem<P, N, Id, ${scope}, Context, ${subtype}>;\n\n` +
     docComment(
       [
         `Creates an immutable ${spoken} reference in this capability namespace.`,
@@ -120,10 +120,10 @@ function capabilitySignature(kind: EmittedKind & { scope: string }): string {
       ],
       "  "
     ) +
-    `  ${method}Handle<const Id extends number, From extends ScopeName | undefined = undefined>(\n` +
+    `  ${method}Handle<const Id extends number, Context extends AmbientScopeContext = {}>(\n` +
     `    id: Id,\n` +
-    `    contract?: { readonly from?: From }\n` +
-    `  ): CapabilityEventHandle<P, N, Id, ${scope}, From, ${subtype}>;\n`
+    `    contract?: { readonly scopes?: Context }\n` +
+    `  ): CapabilityEventHandle<P, N, Id, ${scope}, Context, ${subtype}>;\n`
   );
 }
 
@@ -132,14 +132,14 @@ function capabilityBinding(kind: EmittedKind & { scope: string }): string {
   const scope = JSON.stringify(kind.scope);
   const subtype = JSON.stringify(kind.subtype);
   return (
-    `    ${method}Handle: <const Id extends number, From extends ScopeName | undefined = undefined>(\n` +
+    `    ${method}Handle: <const Id extends number, Context extends AmbientScopeContext = {}>(\n` +
     "      id: Id,\n" +
-    "      contract: { readonly from?: From } = {}\n" +
-    `    ) => minter.handle(id, ${JSON.stringify(kind.key)}, ${scope}, ${subtype}, contract.from as From),\n` +
-    `    ${method}: <const Id extends number, From extends ScopeName | undefined = undefined>(\n` +
+    "      contract: { readonly scopes?: Context } = {}\n" +
+    `    ) => minter.handle(id, ${JSON.stringify(kind.key)}, ${scope}, ${subtype}, (contract.scopes ?? {}) as Context),\n` +
+    `    ${method}: <const Id extends number, Context extends AmbientScopeContext = {}>(\n` +
     "      id: Id,\n" +
-    `      def: Omit<EventDef<${scope}, From>, "id">\n` +
-    `    ) => minter.handle(id, ${JSON.stringify(kind.key)}, ${scope}, ${subtype}, def.from as From).define(def),\n`
+    `      def: Omit<EventDef<${scope}, Context>, "id">\n` +
+    `    ) => minter.handle(id, ${JSON.stringify(kind.key)}, ${scope}, ${subtype}, (def.scopes ?? {}) as Context).define(def),\n`
   );
 }
 
@@ -166,9 +166,9 @@ function fireSignature(kind: EmittedKind & { scope: string }): string {
   const scope = JSON.stringify(kind.scope);
   const subtype = JSON.stringify(kind.subtype);
   return (
-    `${method}(args: FireEventArgs<${scope}, undefined, ${subtype}>): void;\n` +
-    `${method}<F extends ScopeName>(\n` +
-    `  args: WitnessedFireEventArgs<${scope}, F, ${subtype}>\n` +
+    `${method}(args: FireEventArgs<${scope}, {}, ${subtype}>): void;\n` +
+    `${method}<Context extends AmbientScopeContext>(\n` +
+    `  args: WitnessedFireEventArgs<${scope}, Context, ${subtype}>\n` +
     `): void;`
   );
 }
@@ -279,9 +279,9 @@ function eventDefinersCode(scoped: readonly (EmittedKind & { scope: string })[])
     // it at every binding below.
     "  const definerOf =\n" +
     "    <const K extends EventKindKey, S extends ScopeName>(kind: K, scope: S) =>\n" +
-    "    <From extends ScopeName | undefined = undefined>(\n" +
-    "      def: EventDef<S, From>\n" +
-    '    ): EventItem<S, From, (typeof EVENT_KINDS)[K]["subtype"]> => {\n' +
+    "    <Context extends AmbientScopeContext = {}>(\n" +
+    "      def: EventDef<S, Context>\n" +
+    '    ): EventItem<S, Context, (typeof EVENT_KINDS)[K]["subtype"]> => {\n' +
     "      assertEventNumber(def.id);\n" +
     "      if (used.has(def.id)) {\n" +
     '        throw new Error(`Duplicate event id "${ns}.${def.id}"`);\n' +
@@ -292,7 +292,7 @@ function eventDefinersCode(scoped: readonly (EmittedKind & { scope: string })[])
     "        register: (key, text) => locEntries.push([key, text]),\n" +
     "      });\n" +
     '      const item = { ...built, itemKind: "event" as const, namespace: ns, locEntries };\n' +
-    '      return item as EventItem<S, From, (typeof EVENT_KINDS)[K]["subtype"]>;\n' +
+    '      return item as EventItem<S, Context, (typeof EVENT_KINDS)[K]["subtype"]>;\n' +
     "    };\n" +
     "  return {\n" +
     '    kind: "event-namespace",\n' +
@@ -308,36 +308,36 @@ function eventDefinersCode(scoped: readonly (EmittedKind & { scope: string })[])
     "  N extends string,\n" +
     "  Id extends number,\n" +
     "  S extends ScopeName,\n" +
-    "  From extends ScopeName | undefined,\n" +
+    "  Context extends AmbientScopeContext,\n" +
     "  Kind extends string = S,\n" +
-    "> = EventItem<S, From, Kind> & { readonly id: MintedEventId<P, N, Id> };\n\n" +
+    "> = EventItem<S, Context, Kind> & { readonly id: MintedEventId<P, N, Id> };\n\n" +
     "export type CapabilityEventHandle<\n" +
     "  P extends string,\n" +
     "  N extends string,\n" +
     "  Id extends number,\n" +
     "  S extends ScopeName,\n" +
-    "  From extends ScopeName | undefined,\n" +
+    "  Context extends AmbientScopeContext,\n" +
     "  Kind extends string = S,\n" +
-    "> = EventRef<S, From, Kind> & {\n" +
+    "> = EventRef<S, Context, Kind> & {\n" +
     "  readonly id: MintedEventId<P, N, Id>;\n" +
     "  readonly scope: S;\n" +
-    "  readonly from: From;\n" +
-    '  define(def: Omit<EventDef<S, From>, "id" | "from">): CapabilityEventItem<P, N, Id, S, From, Kind>;\n' +
+    "  readonly scopes: Context;\n" +
+    '  define(def: Omit<EventDef<S, Context>, "id" | "scopes">): CapabilityEventItem<P, N, Id, S, Context, Kind>;\n' +
     "};\n\n" +
     "export interface CapabilityEventMinter<P extends string, N extends string> {\n" +
     "  readonly namespace: MintedNamespace<P, N>;\n" +
     "  handle<\n" +
     "    const Id extends number,\n" +
     "    S extends ScopeName,\n" +
-    "    From extends ScopeName | undefined,\n" +
+    "    Context extends AmbientScopeContext,\n" +
     "    Kind extends string,\n" +
     "  >(\n" +
     "    id: Id,\n" +
     "    kind: EventKindKey,\n" +
     "    scope: S,\n" +
     "    subtype: Kind,\n" +
-    "    from: From\n" +
-    "  ): CapabilityEventHandle<P, N, Id, S, From, Kind>;\n" +
+    "    scopes: Context\n" +
+    "  ): CapabilityEventHandle<P, N, Id, S, Context, Kind>;\n" +
     "}\n\n" +
     "export interface CapabilityEvents<P extends string, N extends string> {\n" +
     "  readonly namespace: MintedNamespace<P, N>;\n" +

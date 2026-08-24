@@ -48,13 +48,15 @@ import {
   type RecordEffects,
   type RecordingState,
 } from "./structural.ts";
-import type {
-  EventTarget,
-  Modifier,
-  RandomListArm,
-  ScopeRef,
-  ScopeValue,
-  ScriptCtx,
+import {
+  AMBIENT_SCOPE_KEYS,
+  type AmbientScopeContext,
+  type EventTarget,
+  type Modifier,
+  type RandomListArm,
+  type ScopeRef,
+  type ScopeValue,
+  type ScriptCtx,
 } from "./types.ts";
 
 const cannotWitnessNaturalFrom = Symbol("cannotWitnessNaturalFrom");
@@ -350,7 +352,7 @@ function assertOwnedBy(recording: Recording, lease: ScriptLease | undefined, pat
  */
 function assertWitnessOwnedBy(
   recording: Recording | undefined,
-  witness: FireCallArgs["from"],
+  witness: FireScopeWitness | undefined,
   key: string
 ): void {
   if (recording === undefined || witness === undefined) {
@@ -360,7 +362,7 @@ function assertWitnessOwnedBy(
     return;
   }
   throw new Error(
-    `'${witness.path}' was passed as the FROM witness of '${key}' from a ScriptCtx belonging ` +
+    `'${witness.path}' was passed as a scope witness of '${key}' from a ScriptCtx belonging ` +
       "to a different definition, so the context escaped the closure it was handed to. The " +
       "fire site would write it as this definition's FROM override while the scope it names " +
       "is the one the earlier definition's rules supply. Use the ctx the closure being " +
@@ -386,16 +388,14 @@ function assertWitnessOwnedBy(
  */
 export function withScriptCtx<
   Self extends ScopeName,
-  From extends ScopeName | undefined,
-  Root extends ScopeName | undefined = Self,
+  Context extends AmbientScopeContext = { readonly root: Self },
   T = void,
->(options: { readonly splitRoot?: boolean }, body: (ctx: ScriptCtx<Self, From, Root>) => T): T {
+>(options: { readonly splitRoot?: boolean }, body: (ctx: ScriptCtx<Self, Context>) => T): T {
   const lease: ScriptLease = Symbol("scriptCtx");
   const ctx = {
     self: scopeValue("this", options.splitRoot !== true),
-    root: scopeRef("root", lease),
-    from: scopeRef("from", lease),
-  } as ScriptCtx<Self, From, Root>;
+    ...Object.fromEntries(AMBIENT_SCOPE_KEYS.map((key) => [key, scopeRef(key, lease)])),
+  } as ScriptCtx<Self, Context>;
 
   LEASES.push(lease);
   try {
@@ -992,8 +992,10 @@ interface FireCallArgs {
   readonly months?: number;
   readonly years?: number;
   readonly random?: number;
-  readonly from?: { readonly path: string } & RuntimeScopeValue;
+  readonly scopes?: Readonly<Record<string, FireScopeWitness>>;
 }
+
+type FireScopeWitness = { readonly path: string } & RuntimeScopeValue;
 
 interface EventChainCounterCallArgs {
   readonly eventChain: { readonly id: string } | string;
@@ -1024,21 +1026,30 @@ function fireEffect(key: string) {
           entries.push(kv(field, value));
         }
       }
-      if (args.from?.[cannotWitnessNaturalFrom] === true) {
+      if (args.scopes?.from?.[cannotWitnessNaturalFrom] === true) {
         throw new Error(
-          "A split-root effect block cannot use `from: ctx.self` as an event's natural FROM: " +
+          "A split-root effect block cannot use `scopes: { from: ctx.self }` as an event's natural FROM: " +
             "the game supplies ROOT, which differs from this block's THIS scope. Pass `ctx.root` " +
             "when the event expects ROOT, or an absolute scope reference for an explicit override."
         );
       }
       // The witness is the other place a ctx path reaches output, so it
       // carries the same lease rule opening a block does.
-      assertWitnessOwnedBy(recording, args.from, key);
+      Object.values(args.scopes ?? {}).forEach((witness) =>
+        assertWitnessOwnedBy(recording, witness, key)
+      );
       // Natural FROM is the firing execution's ROOT. `ctx.self` can witness
       // that omission only where SELF and ROOT are not known to differ; any
       // other ref uses the game's explicit override mechanism.
-      if (args.from !== undefined && args.from.path !== "this") {
-        entries.push(block("scopes", [kv("from", args.from.path)]));
+      const overrides = AMBIENT_SCOPE_KEYS.flatMap((slot) => {
+        if (slot === "root" || slot.startsWith("prev")) {
+          return [];
+        }
+        const witness = args.scopes?.[slot];
+        return witness === undefined || witness.path === "this" ? [] : [kv(slot, witness.path)];
+      });
+      if (overrides.length > 0) {
+        entries.push(block("scopes", overrides));
       }
       sink.push(block(key, entries));
     };

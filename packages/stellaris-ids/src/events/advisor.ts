@@ -3,12 +3,12 @@
 import type { EventRef } from "@pdx-ts/sdk";
 
 export interface VanillaEventNamespaceAdvisor {
-  readonly $1: EventRef<"country", undefined, "country"> & { readonly id: "advisor.1" };
-  readonly $10: EventRef<"ship", undefined, "ship"> & { readonly id: "advisor.10" };
-  readonly $15: EventRef<"ship", undefined, "ship"> & { readonly id: "advisor.15" };
-  readonly $17: EventRef<"carrier", undefined, "carrier"> & { readonly id: "advisor.17" };
-  readonly $2: EventRef<"country", undefined, "country"> & { readonly id: "advisor.2" };
-  readonly $20: EventRef<"country", undefined, "country"> & { readonly id: "advisor.20" };
-  readonly $25: EventRef<"ship", undefined, "ship"> & { readonly id: "advisor.25" };
-  readonly $3: EventRef<"country", undefined, "country"> & { readonly id: "advisor.3" };
+  readonly $1: EventRef<"country", {}, "country"> & { readonly id: "advisor.1" };
+  readonly $10: EventRef<"ship", {}, "ship"> & { readonly id: "advisor.10" };
+  readonly $15: EventRef<"ship", {}, "ship"> & { readonly id: "advisor.15" };
+  readonly $17: EventRef<"carrier", {}, "carrier"> & { readonly id: "advisor.17" };
+  readonly $2: EventRef<"country", {}, "country"> & { readonly id: "advisor.2" };
+  readonly $20: EventRef<"country", {}, "country"> & { readonly id: "advisor.20" };
+  readonly $25: EventRef<"ship", {}, "ship"> & { readonly id: "advisor.25" };
+  readonly $3: EventRef<"country", {}, "country"> & { readonly id: "advisor.3" };
 }

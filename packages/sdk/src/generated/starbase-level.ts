@@ -9,7 +9,11 @@ import type { Trigger } from "../script/trigger-core.ts";
 import type { ShipSizeRef, SpriteRef, StarbaseLevelRef } from "./refs.ts";
 
 export interface StarbaseLevelPicture {
-  trigger: WithFrom<Trigger<"starbase">, "starbase", "country", "starbase">;
+  trigger: WithFrom<
+    Trigger<"starbase">,
+    "starbase",
+    { readonly root: "starbase"; readonly from: "country" }
+  >;
   picture: SpriteRef | string;
 }
 
@@ -43,7 +47,11 @@ export interface StarbaseLevelFields {
   /** Default 0, used for claim cost and required module/building level */
   levelWeight?: number;
   /** Determines which levels are more important to upgrade from */
-  aiWeight?: WithFrom<WeightBlock<"starbase">, "starbase", "country", "starbase">;
+  aiWeight?: WithFrom<
+    WeightBlock<"starbase">,
+    "starbase",
+    { readonly root: "starbase"; readonly from: "country" }
+  >;
   /** Optional - determines the image used when viewing the starbase. Default is GFX_starbase_background which */
   picture?: StarbaseLevelPicture | SpriteRef | string;
   /** Default no, if yes starbase may be used as homebase for fleets */

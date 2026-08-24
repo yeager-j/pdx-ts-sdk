@@ -32,6 +32,9 @@ country_event = {
 					planet_event = {
 						id = hello_galaxy_resonance.2
 						days = 30
+						scopes = {
+							from = root
+						}
 					}
 				}
 			}

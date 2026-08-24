@@ -17,7 +17,7 @@ export interface DecisionCustomTooltip<S extends DecisionScope = "planet"> {
   text?: "" | string;
   failText?: "default" | string;
   successText?: string;
-  when?: WithFrom<Trigger<NoInfer<S>>, NoInfer<S>, "country">;
+  when?: WithFrom<Trigger<NoInfer<S>>, NoInfer<S>, { readonly from: "country" }>;
 }
 
 export const DECISION_CUSTOM_TOOLTIP_FIELDS: readonly ContentField[] = [
@@ -58,16 +58,20 @@ export interface DecisionFields<S extends DecisionScope = "planet"> {
   customTooltip?: DecisionCustomTooltip<S>;
   sound?: SoundRef | string | SoundEffectRef;
   icon?: string | DecisionRef;
-  resources?: WithFrom<EconomicResourceBlock<NoInfer<S>>[], NoInfer<S>, "country">;
+  resources?: WithFrom<
+    EconomicResourceBlock<NoInfer<S>>[],
+    NoInfer<S>,
+    { readonly from: "country" }
+  >;
   showTechUnlockIf?: Trigger<"country">;
-  potential?: WithFrom<Trigger<NoInfer<S>>, NoInfer<S>, "country">;
-  allow?: WithFrom<Trigger<NoInfer<S>>, NoInfer<S>, "country">;
-  abortTrigger?: WithFrom<Trigger<NoInfer<S>>, NoInfer<S>, "country">;
-  abortEffect?: EffectBlock<NoInfer<S>, "country">;
-  onQueued?: EffectBlock<NoInfer<S>, "country">;
-  onUnqueued?: EffectBlock<NoInfer<S>, "country">;
-  effect: EffectBlock<NoInfer<S>, "country">;
-  aiWeight?: WithFrom<WeightBlock<NoInfer<S>>, NoInfer<S>, "country">;
+  potential?: WithFrom<Trigger<NoInfer<S>>, NoInfer<S>, { readonly from: "country" }>;
+  allow?: WithFrom<Trigger<NoInfer<S>>, NoInfer<S>, { readonly from: "country" }>;
+  abortTrigger?: WithFrom<Trigger<NoInfer<S>>, NoInfer<S>, { readonly from: "country" }>;
+  abortEffect?: EffectBlock<NoInfer<S>, { readonly from: "country" }>;
+  onQueued?: EffectBlock<NoInfer<S>, { readonly from: "country" }>;
+  onUnqueued?: EffectBlock<NoInfer<S>, { readonly from: "country" }>;
+  effect: EffectBlock<NoInfer<S>, { readonly from: "country" }>;
+  aiWeight?: WithFrom<WeightBlock<NoInfer<S>>, NoInfer<S>, { readonly from: "country" }>;
   prerequisites?: (TechnologyRef | string)[];
 }
 

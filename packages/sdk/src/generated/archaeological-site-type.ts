@@ -106,19 +106,37 @@ export interface ArchaeologicalSiteTypeFields {
   /** Should match number of defined stages below. */
   stages: number;
   /** Trigger checking if a scope with this=fleet,from=archaeological site is potential to excavate (this will add/remove this option without giving the player a reason). */
-  potential?: WithFrom<Trigger<"fleet">, "fleet", "archaeological_site", "fleet">;
+  potential?: WithFrom<
+    Trigger<"fleet">,
+    "fleet",
+    { readonly root: "fleet"; readonly from: "archaeological_site" }
+  >;
   /** Trigger checking if a scope with this=fleet,from=archaeological site is allowed to excavate (this will toggle enable/disabled mode on buttons etc). */
-  allow: WithFrom<Trigger<"fleet">, "fleet", "archaeological_site", "fleet">;
+  allow: WithFrom<
+    Trigger<"fleet">,
+    "fleet",
+    { readonly root: "fleet"; readonly from: "archaeological_site" }
+  >;
   /** Trigger that checks if a scope with this=country can see the from=archaeological site */
-  visible: WithFrom<Trigger<"country">, "country", "archaeological_site", "country">;
+  visible: WithFrom<
+    Trigger<"country">,
+    "country",
+    { readonly root: "country"; readonly from: "archaeological_site" }
+  >;
   /** Stage definition, order dependent. */
   stage?: ArchaeologicalSiteTypeStage[];
   /** Effect to fire when a roll fails, with scope this=fleet, from=archaeological site. */
-  onRollFailed: EffectBlock<"fleet", "archaeological_site", "fleet">;
+  onRollFailed: EffectBlock<
+    "fleet",
+    { readonly root: "fleet"; readonly from: "archaeological_site" }
+  >;
   /** Effect to fire upon site creation, with scope this=archaeological site. */
-  onCreate?: EffectBlock<"archaeological_site", undefined, "archaeological_site">;
+  onCreate?: EffectBlock<"archaeological_site", { readonly root: "archaeological_site" }>;
   /** Effect to fire upon site visible, with scope this=country, from=archaeological site. */
-  onVisible?: EffectBlock<"country", "archaeological_site", "country">;
+  onVisible?: EffectBlock<
+    "country",
+    { readonly root: "country"; readonly from: "archaeological_site" }
+  >;
 }
 
 export interface ArchaeologicalSiteTypeDef<

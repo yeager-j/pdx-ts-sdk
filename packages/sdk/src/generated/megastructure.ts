@@ -106,17 +106,33 @@ export interface MegastructureFields {
   tooltipSystemScoreHighThreshold?: number;
   tooltipShowStarResources?: boolean;
   tooltipBestSystemsHeader?: string;
-  tooltipSystemFilter?: WithFrom<Trigger<"system">, "system", "country", "system">;
+  tooltipSystemFilter?: WithFrom<
+    Trigger<"system">,
+    "system",
+    { readonly root: "system"; readonly from: "country" }
+  >;
   prerequisites?: (TechnologyRef | string)[];
   /** Only when megastructure subtype `has_prereqs` applies. */
   showPrereqs?: boolean;
   /** Only when megastructure subtype `has_prereqs` applies. */
   prereqName?: string;
   potential?: Trigger<"country">;
-  possible?: WithFrom<Trigger<"system">, "system", "country", "system">;
-  contextMenuPotential?: WithFrom<Trigger<"system">, "system", "country", "system">;
+  possible?: WithFrom<
+    Trigger<"system">,
+    "system",
+    { readonly root: "system"; readonly from: "country" }
+  >;
+  contextMenuPotential?: WithFrom<
+    Trigger<"system">,
+    "system",
+    { readonly root: "system"; readonly from: "country" }
+  >;
   /** Use for megastructures that have their own dedicated context_menu_potential shortcut and order_icon, so the general picker is redundant. */
-  buildMenuPotential?: WithFrom<Trigger<"fleet">, "fleet", "country", "fleet">;
+  buildMenuPotential?: WithFrom<
+    Trigger<"fleet">,
+    "fleet",
+    { readonly root: "fleet"; readonly from: "country" }
+  >;
   buildTime?: number;
   starbase?: StarbaseLevelRef | string;
   /** an extra trigger to allow scripted reasons to hide the megastructure. if defined both show_in_outliner and this trigger need to be true for the megastructure to show in the outliner. scope: megastructure */
@@ -133,18 +149,37 @@ export interface MegastructureFields {
   shipModifier?: ModifierClosure<"ship">;
   stationModifier?: ModifierClosure<"megastructure">;
   placementRules?: MegastructurePlacementRules;
-  onBuildQueued?: EffectBlock<"system", "country", "system">;
-  onBuildUnqueued?: EffectBlock<"system", "country", "system">;
-  onBuildStart?: EffectBlock<"system", "country", "system">;
-  onBuildCancel?: EffectBlock<"system", "country", "system">;
-  onBuildComplete?: EffectBlock<"system", "country", "system">;
-  aiWeight?: WithFrom<WeightBlock<"system">, "system", "country", "system">;
+  onBuildQueued?: EffectBlock<
+    "system",
+    { readonly root: "system"; readonly from: "country"; readonly fromfrom: "fleet" }
+  >;
+  onBuildUnqueued?: EffectBlock<
+    "system",
+    { readonly root: "system"; readonly from: "country"; readonly fromfrom: "fleet" }
+  >;
+  onBuildStart?: EffectBlock<
+    "system",
+    { readonly root: "system"; readonly from: "country"; readonly fromfrom: "megastructure" }
+  >;
+  onBuildCancel?: EffectBlock<"system", { readonly root: "system"; readonly from: "country" }>;
+  onBuildComplete?: EffectBlock<
+    "system",
+    { readonly root: "system"; readonly from: "country"; readonly fromfrom: "megastructure" }
+  >;
+  aiWeight?: WithFrom<
+    WeightBlock<"system">,
+    "system",
+    { readonly root: "system"; readonly from: "country"; readonly fromfrom: "megastructure" }
+  >;
   overclockTypes?: (MegastructureOverclockTypeRef | string)[];
   cycleLengthInDays?: ScriptValue;
   cycleTitle?: string;
   cycleDesc?: string;
   cycleIcon?: SpriteRef | string;
-  onCycleComplete?: EffectBlock<"system", "country", "system">;
+  onCycleComplete?: EffectBlock<
+    "system",
+    { readonly root: "system"; readonly from: "country"; readonly fromfrom: "megastructure" }
+  >;
   sensorRange?: number;
   hyperlaneRange?: number;
   /** the type of constructions that block (and are in turn blocked by) this construction, default: multi_stage_type */
@@ -156,24 +191,30 @@ export interface MegastructureFields {
   dismantlePotential?: WithFrom<
     Trigger<"megastructure">,
     "megastructure",
-    "country",
-    "megastructure"
+    { readonly root: "megastructure"; readonly from: "country" }
   >;
   canBeDismantledByNonOwner?: boolean;
   dismantlePossible?: WithFrom<
     Trigger<"megastructure">,
     "megastructure",
-    "country",
-    "megastructure"
+    { readonly root: "megastructure"; readonly from: "country" }
   >;
-  onDismantleStart?: EffectBlock<"system", "country", "system">;
-  onDismantleCancel?: EffectBlock<"system", "country", "system">;
-  onDismantleComplete?: EffectBlock<"system", "country", "system">;
+  onDismantleStart?: EffectBlock<
+    "system",
+    { readonly root: "system"; readonly from: "country"; readonly fromfrom: "megastructure" }
+  >;
+  onDismantleCancel?: EffectBlock<
+    "system",
+    { readonly root: "system"; readonly from: "country"; readonly fromfrom: "megastructure" }
+  >;
+  onDismantleComplete?: EffectBlock<
+    "system",
+    { readonly root: "system"; readonly from: "country" }
+  >;
   shouldAiDismantle?: WithFrom<
     Trigger<"megastructure">,
     "megastructure",
-    "country",
-    "megastructure"
+    { readonly root: "megastructure"; readonly from: "country" }
   >;
   scriptedAction?: (ScriptedActionRef | string)[];
 }
@@ -264,7 +305,7 @@ export interface MegastructurePatch {
   readonly tooltipShowStarResources?: PatchInput<boolean>;
   readonly tooltipBestSystemsHeader?: PatchInput<string>;
   readonly tooltipSystemFilter?: PatchInput<
-    WithFrom<Trigger<"system">, "system", "country", "system">
+    WithFrom<Trigger<"system">, "system", { readonly root: "system"; readonly from: "country" }>
   >;
   readonly prerequisites?: PatchInput<(TechnologyRef | string)[]>;
   /** Only when megastructure subtype `has_prereqs` applies. */
@@ -272,12 +313,16 @@ export interface MegastructurePatch {
   /** Only when megastructure subtype `has_prereqs` applies. */
   readonly prereqName?: PatchInput<string>;
   readonly potential?: PatchInput<Trigger<"country">>;
-  readonly possible?: PatchInput<WithFrom<Trigger<"system">, "system", "country", "system">>;
+  readonly possible?: PatchInput<
+    WithFrom<Trigger<"system">, "system", { readonly root: "system"; readonly from: "country" }>
+  >;
   readonly contextMenuPotential?: PatchInput<
-    WithFrom<Trigger<"system">, "system", "country", "system">
+    WithFrom<Trigger<"system">, "system", { readonly root: "system"; readonly from: "country" }>
   >;
   /** Use for megastructures that have their own dedicated context_menu_potential shortcut and order_icon, so the general picker is redundant. */
-  readonly buildMenuPotential?: PatchInput<WithFrom<Trigger<"fleet">, "fleet", "country", "fleet">>;
+  readonly buildMenuPotential?: PatchInput<
+    WithFrom<Trigger<"fleet">, "fleet", { readonly root: "fleet"; readonly from: "country" }>
+  >;
   readonly buildTime?: PatchInput<number>;
   readonly starbase?: PatchInput<StarbaseLevelRef | string>;
   /** an extra trigger to allow scripted reasons to hide the megastructure. if defined both show_in_outliner and this trigger need to be true for the megastructure to show in the outliner. scope: megastructure */
@@ -294,18 +339,51 @@ export interface MegastructurePatch {
   readonly shipModifier?: PatchInput<ModifierClosure<"ship">>;
   readonly stationModifier?: PatchInput<ModifierClosure<"megastructure">>;
   readonly placementRules?: PatchInput<MegastructurePlacementRules>;
-  readonly onBuildQueued?: PatchInput<EffectBlock<"system", "country", "system">>;
-  readonly onBuildUnqueued?: PatchInput<EffectBlock<"system", "country", "system">>;
-  readonly onBuildStart?: PatchInput<EffectBlock<"system", "country", "system">>;
-  readonly onBuildCancel?: PatchInput<EffectBlock<"system", "country", "system">>;
-  readonly onBuildComplete?: PatchInput<EffectBlock<"system", "country", "system">>;
-  readonly aiWeight?: PatchInput<WithFrom<WeightBlock<"system">, "system", "country", "system">>;
+  readonly onBuildQueued?: PatchInput<
+    EffectBlock<
+      "system",
+      { readonly root: "system"; readonly from: "country"; readonly fromfrom: "fleet" }
+    >
+  >;
+  readonly onBuildUnqueued?: PatchInput<
+    EffectBlock<
+      "system",
+      { readonly root: "system"; readonly from: "country"; readonly fromfrom: "fleet" }
+    >
+  >;
+  readonly onBuildStart?: PatchInput<
+    EffectBlock<
+      "system",
+      { readonly root: "system"; readonly from: "country"; readonly fromfrom: "megastructure" }
+    >
+  >;
+  readonly onBuildCancel?: PatchInput<
+    EffectBlock<"system", { readonly root: "system"; readonly from: "country" }>
+  >;
+  readonly onBuildComplete?: PatchInput<
+    EffectBlock<
+      "system",
+      { readonly root: "system"; readonly from: "country"; readonly fromfrom: "megastructure" }
+    >
+  >;
+  readonly aiWeight?: PatchInput<
+    WithFrom<
+      WeightBlock<"system">,
+      "system",
+      { readonly root: "system"; readonly from: "country"; readonly fromfrom: "megastructure" }
+    >
+  >;
   readonly overclockTypes?: PatchInput<(MegastructureOverclockTypeRef | string)[]>;
   readonly cycleLengthInDays?: PatchInput<ScriptValue>;
   readonly cycleTitle?: PatchInput<string>;
   readonly cycleDesc?: PatchInput<string>;
   readonly cycleIcon?: PatchInput<SpriteRef | string>;
-  readonly onCycleComplete?: PatchInput<EffectBlock<"system", "country", "system">>;
+  readonly onCycleComplete?: PatchInput<
+    EffectBlock<
+      "system",
+      { readonly root: "system"; readonly from: "country"; readonly fromfrom: "megastructure" }
+    >
+  >;
   readonly sensorRange?: PatchInput<number>;
   readonly hyperlaneRange?: PatchInput<number>;
   /** the type of constructions that block (and are in turn blocked by) this construction, default: multi_stage_type */
@@ -315,17 +393,41 @@ export interface MegastructurePatch {
   readonly dismantleCost?: PatchInput<EconomicResourceBlock<ScopeName>>;
   readonly dismantleTime?: PatchInput<number>;
   readonly dismantlePotential?: PatchInput<
-    WithFrom<Trigger<"megastructure">, "megastructure", "country", "megastructure">
+    WithFrom<
+      Trigger<"megastructure">,
+      "megastructure",
+      { readonly root: "megastructure"; readonly from: "country" }
+    >
   >;
   readonly canBeDismantledByNonOwner?: PatchInput<boolean>;
   readonly dismantlePossible?: PatchInput<
-    WithFrom<Trigger<"megastructure">, "megastructure", "country", "megastructure">
+    WithFrom<
+      Trigger<"megastructure">,
+      "megastructure",
+      { readonly root: "megastructure"; readonly from: "country" }
+    >
   >;
-  readonly onDismantleStart?: PatchInput<EffectBlock<"system", "country", "system">>;
-  readonly onDismantleCancel?: PatchInput<EffectBlock<"system", "country", "system">>;
-  readonly onDismantleComplete?: PatchInput<EffectBlock<"system", "country", "system">>;
+  readonly onDismantleStart?: PatchInput<
+    EffectBlock<
+      "system",
+      { readonly root: "system"; readonly from: "country"; readonly fromfrom: "megastructure" }
+    >
+  >;
+  readonly onDismantleCancel?: PatchInput<
+    EffectBlock<
+      "system",
+      { readonly root: "system"; readonly from: "country"; readonly fromfrom: "megastructure" }
+    >
+  >;
+  readonly onDismantleComplete?: PatchInput<
+    EffectBlock<"system", { readonly root: "system"; readonly from: "country" }>
+  >;
   readonly shouldAiDismantle?: PatchInput<
-    WithFrom<Trigger<"megastructure">, "megastructure", "country", "megastructure">
+    WithFrom<
+      Trigger<"megastructure">,
+      "megastructure",
+      { readonly root: "megastructure"; readonly from: "country" }
+    >
   >;
   readonly scriptedAction?: PatchInput<(ScriptedActionRef | string)[]>;
 }

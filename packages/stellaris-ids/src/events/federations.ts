@@ -3,21 +3,21 @@
 import type { EventRef } from "@pdx-ts/sdk";
 
 export interface VanillaEventNamespaceFederations {
-  readonly $10000: EventRef<"country", undefined, "country"> & { readonly id: "federations.10000" };
-  readonly $10010: EventRef<"country", undefined, "country"> & { readonly id: "federations.10010" };
-  readonly $10020: EventRef<"country", undefined, "country"> & { readonly id: "federations.10020" };
-  readonly $10100: EventRef<"country", undefined, "country"> & { readonly id: "federations.10100" };
-  readonly $10110: EventRef<"country", undefined, "country"> & { readonly id: "federations.10110" };
-  readonly $10200: EventRef<"country", undefined, "country"> & { readonly id: "federations.10200" };
-  readonly $10210: EventRef<"country", undefined, "country"> & { readonly id: "federations.10210" };
-  readonly $10220: EventRef<"country", undefined, "country"> & { readonly id: "federations.10220" };
-  readonly $10230: EventRef<"country", undefined, "country"> & { readonly id: "federations.10230" };
-  readonly $10300: EventRef<"country", undefined, "country"> & { readonly id: "federations.10300" };
-  readonly $10310: EventRef<"country", undefined, "country"> & { readonly id: "federations.10310" };
-  readonly $10320: EventRef<"country", undefined, "country"> & { readonly id: "federations.10320" };
-  readonly $10330: EventRef<"country", undefined, "country"> & { readonly id: "federations.10330" };
-  readonly $10340: EventRef<"country", undefined, "country"> & { readonly id: "federations.10340" };
-  readonly $10400: EventRef<"country", undefined, "country"> & { readonly id: "federations.10400" };
-  readonly $10401: EventRef<"country", undefined, "country"> & { readonly id: "federations.10401" };
-  readonly type: EventRef<"country", undefined, "country"> & { readonly id: "federations.type" };
+  readonly $10000: EventRef<"country", {}, "country"> & { readonly id: "federations.10000" };
+  readonly $10010: EventRef<"country", {}, "country"> & { readonly id: "federations.10010" };
+  readonly $10020: EventRef<"country", {}, "country"> & { readonly id: "federations.10020" };
+  readonly $10100: EventRef<"country", {}, "country"> & { readonly id: "federations.10100" };
+  readonly $10110: EventRef<"country", {}, "country"> & { readonly id: "federations.10110" };
+  readonly $10200: EventRef<"country", {}, "country"> & { readonly id: "federations.10200" };
+  readonly $10210: EventRef<"country", {}, "country"> & { readonly id: "federations.10210" };
+  readonly $10220: EventRef<"country", {}, "country"> & { readonly id: "federations.10220" };
+  readonly $10230: EventRef<"country", {}, "country"> & { readonly id: "federations.10230" };
+  readonly $10300: EventRef<"country", {}, "country"> & { readonly id: "federations.10300" };
+  readonly $10310: EventRef<"country", {}, "country"> & { readonly id: "federations.10310" };
+  readonly $10320: EventRef<"country", {}, "country"> & { readonly id: "federations.10320" };
+  readonly $10330: EventRef<"country", {}, "country"> & { readonly id: "federations.10330" };
+  readonly $10340: EventRef<"country", {}, "country"> & { readonly id: "federations.10340" };
+  readonly $10400: EventRef<"country", {}, "country"> & { readonly id: "federations.10400" };
+  readonly $10401: EventRef<"country", {}, "country"> & { readonly id: "federations.10401" };
+  readonly type: EventRef<"country", {}, "country"> & { readonly id: "federations.type" };
 }

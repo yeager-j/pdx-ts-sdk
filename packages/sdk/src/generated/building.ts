@@ -95,18 +95,18 @@ export interface BuildingFields {
   /** Only when building subtype `capital` applies. */
   capitalTier?: number;
   /** an action when queued */
-  onQueued?: EffectBlock<"colony">;
+  onQueued?: EffectBlock<"colony", {}>;
   /** an action when unqueued */
-  onUnqueued?: EffectBlock<"colony">;
+  onUnqueued?: EffectBlock<"colony", {}>;
   /** an action when built */
-  onBuilt?: EffectBlock<"colony">;
+  onBuilt?: EffectBlock<"colony", {}>;
   /** an action when enabled */
-  onEnabled?: EffectBlock<"colony">;
+  onEnabled?: EffectBlock<"colony", {}>;
   customStormAiWeight?: WeightBlock<"colony">;
   /** an action when destroyed */
-  onDestroy?: EffectBlock<"colony">;
+  onDestroy?: EffectBlock<"colony", {}>;
   /** an action when repaired */
-  onRepaired?: EffectBlock<"colony">;
+  onRepaired?: EffectBlock<"colony", {}>;
   /** don't know whether it have quantity limit */
   showInTech?: (TechnologyRef | string)[];
   /** trigger for displaying building in construction list */
@@ -210,18 +210,18 @@ export interface BuildingPatch {
   /** Only when building subtype `capital` applies. */
   readonly capitalTier?: PatchInput<number>;
   /** an action when queued */
-  readonly onQueued?: PatchInput<EffectBlock<"colony">>;
+  readonly onQueued?: PatchInput<EffectBlock<"colony", {}>>;
   /** an action when unqueued */
-  readonly onUnqueued?: PatchInput<EffectBlock<"colony">>;
+  readonly onUnqueued?: PatchInput<EffectBlock<"colony", {}>>;
   /** an action when built */
-  readonly onBuilt?: PatchInput<EffectBlock<"colony">>;
+  readonly onBuilt?: PatchInput<EffectBlock<"colony", {}>>;
   /** an action when enabled */
-  readonly onEnabled?: PatchInput<EffectBlock<"colony">>;
+  readonly onEnabled?: PatchInput<EffectBlock<"colony", {}>>;
   readonly customStormAiWeight?: PatchInput<WeightBlock<"colony">>;
   /** an action when destroyed */
-  readonly onDestroy?: PatchInput<EffectBlock<"colony">>;
+  readonly onDestroy?: PatchInput<EffectBlock<"colony", {}>>;
   /** an action when repaired */
-  readonly onRepaired?: PatchInput<EffectBlock<"colony">>;
+  readonly onRepaired?: PatchInput<EffectBlock<"colony", {}>>;
   /** don't know whether it have quantity limit */
   readonly showInTech?: PatchInput<(TechnologyRef | string)[]>;
   /** trigger for displaying building in construction list */

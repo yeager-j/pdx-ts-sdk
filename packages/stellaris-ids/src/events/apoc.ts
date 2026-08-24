@@ -3,19 +3,19 @@
 import type { EventRef, EventScopelessRef } from "@pdx-ts/sdk";
 
 export interface VanillaEventNamespaceApoc {
-  readonly $1: EventRef<"ship", undefined, "ship"> & { readonly id: "apoc.1" };
-  readonly $10: EventRef<"country", undefined, "country"> & { readonly id: "apoc.10" };
-  readonly $100: EventRef<"country", undefined, "country"> & { readonly id: "apoc.100" };
-  readonly $101: EventRef<"country", undefined, "country"> & { readonly id: "apoc.101" };
-  readonly $11: EventRef<"country", undefined, "country"> & { readonly id: "apoc.11" };
-  readonly $110: EventRef<"country", undefined, "country"> & { readonly id: "apoc.110" };
-  readonly $12: EventRef<"country", undefined, "country"> & { readonly id: "apoc.12" };
-  readonly $120: EventRef<"country", undefined, "country"> & { readonly id: "apoc.120" };
-  readonly $13: EventRef<"country", undefined, "country"> & { readonly id: "apoc.13" };
-  readonly $130: EventRef<"country", undefined, "country"> & { readonly id: "apoc.130" };
-  readonly $14: EventRef<"country", undefined, "country"> & { readonly id: "apoc.14" };
-  readonly $3: EventRef<"ship", undefined, "ship"> & { readonly id: "apoc.3" };
-  readonly $300: EventRef<"country", undefined, "country"> & { readonly id: "apoc.300" };
+  readonly $1: EventRef<"ship", {}, "ship"> & { readonly id: "apoc.1" };
+  readonly $10: EventRef<"country", {}, "country"> & { readonly id: "apoc.10" };
+  readonly $100: EventRef<"country", {}, "country"> & { readonly id: "apoc.100" };
+  readonly $101: EventRef<"country", {}, "country"> & { readonly id: "apoc.101" };
+  readonly $11: EventRef<"country", {}, "country"> & { readonly id: "apoc.11" };
+  readonly $110: EventRef<"country", {}, "country"> & { readonly id: "apoc.110" };
+  readonly $12: EventRef<"country", {}, "country"> & { readonly id: "apoc.12" };
+  readonly $120: EventRef<"country", {}, "country"> & { readonly id: "apoc.120" };
+  readonly $13: EventRef<"country", {}, "country"> & { readonly id: "apoc.13" };
+  readonly $130: EventRef<"country", {}, "country"> & { readonly id: "apoc.130" };
+  readonly $14: EventRef<"country", {}, "country"> & { readonly id: "apoc.14" };
+  readonly $3: EventRef<"ship", {}, "ship"> & { readonly id: "apoc.3" };
+  readonly $300: EventRef<"country", {}, "country"> & { readonly id: "apoc.300" };
   readonly $301: EventScopelessRef & { readonly id: "apoc.301" };
-  readonly $5: EventRef<"ship", undefined, "ship"> & { readonly id: "apoc.5" };
+  readonly $5: EventRef<"ship", {}, "ship"> & { readonly id: "apoc.5" };
 }

@@ -17,7 +17,7 @@ interface LoweredOnAction {
   readonly name: string;
   readonly member: string;
   readonly scope: string | null;
-  readonly from: string | undefined;
+  readonly scopes: Readonly<Record<string, string>>;
   readonly docs: readonly string[];
 }
 
@@ -43,14 +43,14 @@ export function emitOnActions(rules: RuleSet): OnActionsEmission {
     .map((hook) => {
       const docs = docComment(hook.docs, "  ");
       const scope = hook.scope === null ? "null" : JSON.stringify(hook.scope);
-      const from = hook.from === undefined ? "undefined" : JSON.stringify(hook.from);
+      const scopes = JSON.stringify(hook.scopes);
       return (
         docs +
         `  ${hook.member}: {\n` +
         '    kind: "on-action-ref",\n' +
         `    name: ${JSON.stringify(hook.name)},\n` +
         `    scope: ${scope},\n` +
-        `    from: ${from},\n` +
+        `    scopes: ${scopes},\n` +
         "  },\n"
       );
     })
@@ -102,18 +102,43 @@ function lower(hook: OnActionDecl, scopes: ReadonlyMap<string, string>): Lowered
     }
   }
 
-  const rawFrom = hook.scopes.get("from");
-  const from =
-    rawFrom === undefined || rawFrom === "no_scope" ? undefined : scopes.get(normalize(rawFrom));
-  if (rawFrom !== undefined && rawFrom !== "no_scope" && from === undefined) {
-    return `unknown FROM scope ${rawFrom}`;
+  const ambient: Record<string, string> = {};
+  for (const key of [
+    "from",
+    "fromfrom",
+    "fromfromfrom",
+    "fromfromfromfrom",
+    "prev",
+    "prevprev",
+    "prevprevprev",
+    "prevprevprevprev",
+  ]) {
+    const raw = hook.scopes.get(key);
+    if (raw === undefined || raw === "no_scope") {
+      continue;
+    }
+    const declared = scopes.get(normalize(raw));
+    if (declared === undefined) {
+      return `unknown ${key.toUpperCase()} scope ${raw}`;
+    }
+    ambient[key] = declared;
+  }
+  const rawRoot = hook.scopes.get("root");
+  if (rawRoot !== undefined && rawRoot !== "no_scope") {
+    const root = scopes.get(normalize(rawRoot));
+    if (root === undefined) {
+      return `unknown ROOT scope ${rawRoot}`;
+    }
+    if (root !== scope) {
+      return `root scope ${root} disagrees with this scope ${String(scope)}`;
+    }
   }
 
   return {
     name: hook.name,
     member: camelCase(hook.name),
     scope: scope ?? null,
-    from,
+    scopes: ambient,
     docs: hook.docs,
   };
 }

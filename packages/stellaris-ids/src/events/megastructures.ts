@@ -3,10 +3,10 @@
 import type { EventRef } from "@pdx-ts/sdk";
 
 export interface VanillaEventNamespaceMegastructures {
-  readonly $10: EventRef<"country", undefined, "country"> & { readonly id: "megastructures.10" };
-  readonly $20: EventRef<"carrier", undefined, "carrier"> & { readonly id: "megastructures.20" };
-  readonly $200: EventRef<"carrier", undefined, "carrier"> & { readonly id: "megastructures.200" };
-  readonly $210: EventRef<"carrier", undefined, "carrier"> & { readonly id: "megastructures.210" };
-  readonly $220: EventRef<"carrier", undefined, "carrier"> & { readonly id: "megastructures.220" };
-  readonly $30: EventRef<"carrier", undefined, "carrier"> & { readonly id: "megastructures.30" };
+  readonly $10: EventRef<"country", {}, "country"> & { readonly id: "megastructures.10" };
+  readonly $20: EventRef<"carrier", {}, "carrier"> & { readonly id: "megastructures.20" };
+  readonly $200: EventRef<"carrier", {}, "carrier"> & { readonly id: "megastructures.200" };
+  readonly $210: EventRef<"carrier", {}, "carrier"> & { readonly id: "megastructures.210" };
+  readonly $220: EventRef<"carrier", {}, "carrier"> & { readonly id: "megastructures.220" };
+  readonly $30: EventRef<"carrier", {}, "carrier"> & { readonly id: "megastructures.30" };
 }

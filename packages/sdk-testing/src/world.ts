@@ -19,14 +19,14 @@
  * have fired is the green test.
  *
  * `fire` carries the FROM contract: the type-level witness pair mirrors the
- * SDK's fire effects (`from` is required iff the event declares `from:`,
+ * SDK's fire effects (`scopes.from` is required iff the event declares it,
  * forbidden otherwise), and `advance` re-checks the contract at delivery
  * against the registry's declared kinds — the harness restores type safety
  * on the one path production cannot check.
  */
 
 import type { PdxEntry } from "@pdx-ts/pdxscript";
-import type { DefinedEvent, EventRef, ScopeName } from "@pdx-ts/sdk";
+import type { AmbientScopeContext, DefinedEvent, EventItemBase, ScopeName } from "@pdx-ts/sdk";
 
 import {
   applyEffectEntries,
@@ -67,20 +67,26 @@ export { DAYS_PER_MONTH, DAYS_PER_YEAR, type ForcedArms } from "./interpret.ts";
 /** An event the fixture can deliver, narrowed to the scopes the sim models. */
 export type SimEvent<
   S extends SimScopeName = SimScopeName,
-  From extends SimScopeName | undefined = SimScopeName | undefined,
-> = DefinedEvent<S, From, string>;
+  Context extends AmbientScopeContext = AmbientScopeContext,
+> = DefinedEvent<S, Context, string>;
+
+/** Runtime metadata the simulator reads from an authored or directly defined event. */
+type RegisteredEvent = Pick<EventItemBase, "entry" | "id" | "scope" | "scopes">;
 
 /** The event's main scope, as the sim models it. */
-type EventScope<E> =
-  E extends EventRef<infer S, ScopeName | undefined, string> ? Extract<S, SimScopeName> : never;
+type EventScope<E> = E extends { readonly scope: infer S } ? Extract<S, SimScopeName> : never;
 
 /** The event's declared FROM kind; `undefined` when contract-less. */
-type EventFromKind<E> = E extends EventRef<ScopeName, infer F, string> ? F : undefined;
+type EventFromKind<E> = E extends { readonly scopes: infer Context }
+  ? Context extends { readonly from: infer From }
+    ? Extract<From, SimScopeName>
+    : undefined
+  : undefined;
 
 export interface FixtureOptions {
   /**
    * Every event `advance` may deliver. Runtime scope and FROM metadata come
-   * directly from the authored `DefinedEvent`.
+   * directly from the authored event item.
    *
    * The list accepts any `ScopeName`, not just `SimScopeName` — narrowing it
    * to `SimEvent` here would mean an ordinary unsupported event
@@ -89,16 +95,18 @@ export interface FixtureOptions {
    * author would keep seeing TypeScript's own bare assignability failure
    * instead (SDK-49's second half).
    */
-  readonly events: ReadonlyArray<DefinedEvent<ScopeName, ScopeName | undefined, string>>;
+  readonly events: ReadonlyArray<RegisteredEvent>;
 }
 
-interface HarnessFireOpts extends ForcedArms {
+interface HarnessFireScopes {
   readonly from?: SimScope<SimScopeName>;
 }
 
-function immediateEntriesOf(
-  event: DefinedEvent<ScopeName, ScopeName | undefined, string>
-): readonly PdxEntry[] | undefined {
+interface HarnessFireOpts extends ForcedArms {
+  readonly scopes?: HarnessFireScopes;
+}
+
+function immediateEntriesOf(event: RegisteredEvent): readonly PdxEntry[] | undefined {
   if (event.entry.value.kind !== "container") {
     return undefined;
   }
@@ -121,7 +129,7 @@ function immediateEntriesOf(
  * same surprise arriving later. The disposition and the reason both come from
  * `EVENT_FIELD_DELIVERY`, so this reads the table and never restates it.
  */
-function assertDeliverable(event: DefinedEvent<ScopeName, ScopeName | undefined, string>): void {
+function assertDeliverable(event: RegisteredEvent): void {
   if (event.entry.value.kind !== "container") {
     return;
   }
@@ -144,7 +152,7 @@ function assertDeliverable(event: DefinedEvent<ScopeName, ScopeName | undefined,
  * `= no` is not that claim, so it says nothing: a field that spells the flag
  * out as false leaves the event as repeatable as one that never wrote it.
  */
-function firesOnlyOnce(event: DefinedEvent<ScopeName, ScopeName | undefined, string>): boolean {
+function firesOnlyOnce(event: RegisteredEvent): boolean {
   if (event.entry.value.kind !== "container") {
     return false;
   }
@@ -179,7 +187,7 @@ function deliveryRefusal(field: PdxEntry): string | undefined {
 
 export class World {
   private readonly state: WorldState;
-  private readonly registry: Map<string, DefinedEvent<ScopeName, ScopeName | undefined, string>>;
+  private readonly registry: Map<string, RegisteredEvent>;
 
   constructor(state: WorldState, options: FixtureOptions) {
     this.state = state;
@@ -189,9 +197,9 @@ export class World {
       // unsupported scope reaches this targeted diagnosis instead of failing
       // as an opaque assignability error at the call site.
       assertSupportedSimScope(event.scope, `Registering event "${event.id}"`);
-      if (event.from !== undefined) {
+      if (event.scopes.from !== undefined) {
         assertSupportedSimScope(
-          event.from,
+          event.scopes.from,
           `Registering event "${event.id}"'s declared FROM contract`
         );
       }
@@ -248,20 +256,20 @@ export class World {
   }
 
   /**
-   * Fires the event now, running its immediate. `from` is required iff the
+   * Fires the event now, running its immediate. `scopes.from` is required iff the
    * event declares a FROM contract, forbidden otherwise. The whole event
    * type is the single inference site — scope and witness kinds are DERIVED
    * from it — so a wrong-kind witness cannot widen the inference and unify
    * (the same failure the SDK's fire effects prevent with `NoInfer`).
    */
-  fire<E extends SimEvent>(
+  fire<E extends RegisteredEvent>(
     event: E,
     scope: SimScope<EventScope<E>>,
     ...opts: [EventFromKind<E>] extends [SimScopeName]
-      ? [opts: ForcedArms & { readonly from: SimScope<EventFromKind<E>> }]
-      : [opts?: ForcedArms & { readonly from?: never }]
+      ? [opts: ForcedArms & { readonly scopes: { readonly from: SimScope<EventFromKind<E>> } }]
+      : [opts?: ForcedArms & { readonly scopes?: never }]
   ): void;
-  fire(event: SimEvent, scope: SimScope<SimScopeName>, opts?: HarnessFireOpts): void {
+  fire(event: RegisteredEvent, scope: SimScope<SimScopeName>, opts?: HarnessFireOpts): void {
     assertSupportedSimScope(event.scope, `Firing event "${event.id}"`);
     const registered = this.registry.get(event.id);
     if (registered !== event) {
@@ -276,18 +284,18 @@ export class World {
           coverageSummary()
       );
     }
-    if (event.from === undefined) {
-      if (opts?.from !== undefined) {
+    if (event.scopes.from === undefined) {
+      if (opts?.scopes?.from !== undefined) {
         throw new InterpreterError(
           `Event "${event.id}" does not declare FROM, so fire it without a FROM witness. ` +
             coverageSummary()
         );
       }
     } else {
-      if (opts?.from === undefined || opts.from.id.kind !== event.from) {
+      if (opts?.scopes?.from === undefined || opts.scopes.from.id.kind !== event.scopes.from) {
         throw new InterpreterError(
-          `Event "${event.id}" declares from: "${event.from}" — fire it with a matching ` +
-            `FROM: world.fire(event, scope, { from }). ${coverageSummary()}`
+          `Event "${event.id}" declares from: "${event.scopes.from}" — fire it with a matching ` +
+            `FROM: world.fire(event, scope, { scopes: { from } }). ${coverageSummary()}`
         );
       }
     }
@@ -299,7 +307,7 @@ export class World {
           id: event.id,
           dueDay: state.day,
           scope: scope.id,
-          from: opts?.from?.id,
+          from: opts?.scopes?.from?.id,
           seq: state.seq++,
           choicePlan,
         },
@@ -343,9 +351,9 @@ export class World {
             coverageSummary()
         );
       }
-      if (registered.from !== undefined && next.from?.kind !== registered.from) {
+      if (registered.scopes.from !== undefined && next.from?.kind !== registered.scopes.from) {
         throw new InterpreterError(
-          `Queued event "${next.id}" declares from: "${registered.from}" but was delivered ` +
+          `Queued event "${next.id}" declares from: "${registered.scopes.from}" but was delivered ` +
             `with FROM ${next.from === undefined ? "unbound" : `a ${next.from.kind}`}. ` +
             coverageSummary()
         );
@@ -412,7 +420,7 @@ export class World {
   private deliver(
     state: WorldState,
     pending: PendingFire,
-    event: DefinedEvent<ScopeName, ScopeName | undefined, string>,
+    event: RegisteredEvent,
     via: FiredRecord["via"]
   ): void {
     // The fired log is the ledger — a second delivery of a fire-only-once

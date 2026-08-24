@@ -34,7 +34,7 @@ describe("event definitions in a namespace", () => {
     });
     const events = runtimeMod.namespace();
     const needsPlanetFrom = events.planet(1, {
-      from: "planet",
+      scopes: { from: "planet" },
       hideWindow: true,
       isTriggeredOnly: true,
     });
@@ -47,7 +47,7 @@ describe("event definitions in a namespace", () => {
             initEffect: (planet, ctx) => {
               planet.planetEvent({
                 id: needsPlanetFrom,
-                from: ctx.self as unknown as ScopeValue<"planet">,
+                scopes: { from: ctx.self as unknown as ScopeValue<"planet"> },
               });
             },
           },
@@ -65,7 +65,7 @@ describe("event definitions in a namespace", () => {
     });
     const events = runtimeMod.namespace();
     const needsCountryFrom = events.planet(2, {
-      from: "country",
+      scopes: { from: "country" },
       hideWindow: true,
       isTriggeredOnly: true,
     });
@@ -74,7 +74,7 @@ describe("event definitions in a namespace", () => {
       planet: [
         {
           initEffect: (planet, ctx) => {
-            planet.planetEvent({ id: needsCountryFrom, from: ctx.root });
+            planet.planetEvent({ id: needsCountryFrom, scopes: { from: ctx.root } });
           },
         },
       ],
@@ -361,12 +361,40 @@ describe("event definitions in a namespace", () => {
     expect(rendered).toContain("country_event = {\n\t\t\tid = third_party.5\n\t\t\tdays = 30");
   });
 
+  it("serializes every explicit FROM override in canonical order", () => {
+    const events = makeEvents();
+    const fleet = eventTarget<"fleet">("event_test_fleet");
+    const system = eventTarget<"system">("event_test_system");
+    const target = events.country(16, {
+      scopes: { from: "country", fromfrom: "fleet", fromfromfrom: "system" },
+      hideWindow: true,
+      isTriggeredOnly: true,
+    });
+    const firing = events.country(17, {
+      hideWindow: true,
+      isTriggeredOnly: true,
+      immediate: (country, ctx) => {
+        country.countryEvent({
+          id: target,
+          scopes: { from: ctx.root, fromfrom: fleet, fromfromfrom: system },
+        });
+      },
+    });
+    const rendered = render(mod.compile([mod.feature("chained_fires", [target, firing])])).get(
+      "events/event_test_chained_fires.txt"
+    )!;
+
+    expect(rendered).toContain(
+      "scopes = {\n\t\t\t\tfrom = root\n\t\t\t\tfromfrom = event_target:event_test_fleet\n\t\t\t\tfromfromfrom = event_target:event_test_system"
+    );
+  });
+
   it("opens the event's FROM from more than one of its blocks", () => {
     // One ctx serves the whole event, and its blocks record separately: the
     // immediate and the option are two recordings of the same lowering.
     const events = makeEvents();
     const withFrom = events.country(15, {
-      from: "planet",
+      scopes: { from: "planet" },
       isTriggeredOnly: true,
       immediate: (country, ctx) => {
         country.setCountryFlag(flags.event_test_flag);

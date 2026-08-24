@@ -36,7 +36,9 @@ export interface BombardmentStanceFields {
   /** Will this stance attempt to abduct pops to your own planets instead of killing them? default = no */
   abductPops?: boolean;
   /** General scale of damage to planet, default = 1.0 */
-  planetDamage?: number | WithFrom<WeightBlock<"fleet">, "fleet", "planet", "fleet">;
+  planetDamage?:
+    | number
+    | WithFrom<WeightBlock<"fleet">, "fleet", { readonly root: "fleet"; readonly from: "planet" }>;
   /** General scale of damage to armies, default = 1.0 */
   armyDamage?: number;
   /** Chance that a pop_group is killed when planetary damage reaches 100%, default = 0 */
@@ -44,7 +46,11 @@ export interface BombardmentStanceFields {
   /** Will not kill/abduct pops if pops <= this number already, default = 0. Doesn't work for nations that doesn't have diplomatic wars! */
   minPopsToKillPop?: number;
   killPopAmount?: BombardmentStanceKillPopAmount;
-  aiWeight: WithFrom<WeightBlock<"fleet">, "fleet", "planet", "fleet">;
+  aiWeight: WithFrom<
+    WeightBlock<"fleet">,
+    "fleet",
+    { readonly root: "fleet"; readonly from: "planet" }
+  >;
 }
 
 export interface BombardmentStanceDef<Id extends string = string> extends BombardmentStanceFields {

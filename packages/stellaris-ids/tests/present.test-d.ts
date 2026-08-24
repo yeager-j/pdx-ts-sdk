@@ -117,14 +117,14 @@ describe("vanilla events", () => {
   it("preserves each event's scope, subtype, and full id", () => {
     const storySiteFound = vanilla.event.story.$5;
     expectTypeOf(storySiteFound.id).toEqualTypeOf<"story.5">();
-    expectTypeOf(storySiteFound).toExtend<EventRef<"country", undefined, "country">>();
+    expectTypeOf(storySiteFound).toExtend<EventRef<"country", {}, "country">>();
     // @ts-expect-error bare install-derived references carry scope only as a phantom brand.
     storySiteFound.scope;
     // @ts-expect-error vanilla references declare no runtime FROM metadata.
     storySiteFound.from;
 
     const observerDestroyed = vanilla.event.observer.$1;
-    expectTypeOf(observerDestroyed).toExtend<EventRef<"country", undefined, "observer">>();
+    expectTypeOf(observerDestroyed).toExtend<EventRef<"country", {}, "observer">>();
 
     const astralSpawn = vanilla.event.astral_planes.$1;
     expectTypeOf(astralSpawn).toExtend<EventScopelessRef>();

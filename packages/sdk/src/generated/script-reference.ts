@@ -1449,7 +1449,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "event-fire",
     availability: { kind: "scopes", scopes: ["agreement"] },
     signature:
-      'agreementEvent(args: FireEventArgs<"agreement", undefined, "agreement">): void;\nagreementEvent<F extends ScopeName>(\n  args: WitnessedFireEventArgs<"agreement", F, "agreement">\n): void;',
+      'agreementEvent(args: FireEventArgs<"agreement", {}, "agreement">): void;\nagreementEvent<Context extends AmbientScopeContext>(\n  args: WitnessedFireEventArgs<"agreement", Context, "agreement">\n): void;',
     docs: ["Fires an agreement event for the scoped agreement, after any delay."],
   },
   {
@@ -1499,7 +1499,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "event-fire",
     availability: { kind: "scopes", scopes: ["astral_rift"] },
     signature:
-      'astralRiftEvent(args: FireEventArgs<"astral_rift", undefined, "astral_rift">): void;\nastralRiftEvent<F extends ScopeName>(\n  args: WitnessedFireEventArgs<"astral_rift", F, "astral_rift">\n): void;',
+      'astralRiftEvent(args: FireEventArgs<"astral_rift", {}, "astral_rift">): void;\nastralRiftEvent<Context extends AmbientScopeContext>(\n  args: WitnessedFireEventArgs<"astral_rift", Context, "astral_rift">\n): void;',
     docs: ["Fires an astral rift event for the scoped astral_rift, after any delay."],
   },
   {
@@ -1567,7 +1567,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "event-fire",
     availability: { kind: "scopes", scopes: ["bypass"] },
     signature:
-      'bypassEvent(args: FireEventArgs<"bypass", undefined, "bypass">): void;\nbypassEvent<F extends ScopeName>(\n  args: WitnessedFireEventArgs<"bypass", F, "bypass">\n): void;',
+      'bypassEvent(args: FireEventArgs<"bypass", {}, "bypass">): void;\nbypassEvent<Context extends AmbientScopeContext>(\n  args: WitnessedFireEventArgs<"bypass", Context, "bypass">\n): void;',
     docs: ["Fires a bypass event for the scoped bypass, after any delay."],
   },
   {
@@ -1636,7 +1636,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "event-fire",
     availability: { kind: "scopes", scopes: ["carrier", "colony", "planet", "ship"] },
     signature:
-      'carrierEvent(args: FireEventArgs<"carrier", undefined, "carrier">): void;\ncarrierEvent<F extends ScopeName>(\n  args: WitnessedFireEventArgs<"carrier", F, "carrier">\n): void;',
+      'carrierEvent(args: FireEventArgs<"carrier", {}, "carrier">): void;\ncarrierEvent<Context extends AmbientScopeContext>(\n  args: WitnessedFireEventArgs<"carrier", Context, "carrier">\n): void;',
     docs: ["Fires a carrier event for the scoped carrier, after any delay."],
   },
   {
@@ -2276,7 +2276,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "event-fire",
     availability: { kind: "scopes", scopes: ["colony"] },
     signature:
-      'colonyEvent(args: FireEventArgs<"colony", undefined, "colony">): void;\ncolonyEvent<F extends ScopeName>(\n  args: WitnessedFireEventArgs<"colony", F, "colony">\n): void;',
+      'colonyEvent(args: FireEventArgs<"colony", {}, "colony">): void;\ncolonyEvent<Context extends AmbientScopeContext>(\n  args: WitnessedFireEventArgs<"colony", Context, "colony">\n): void;',
     docs: ["Fires a colony event for the scoped colony, after any delay."],
   },
   {
@@ -2472,7 +2472,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "event-fire",
     availability: { kind: "scopes", scopes: ["storm"] },
     signature:
-      'cosmicStormEvent(args: FireEventArgs<"storm", undefined, "cosmic_storm">): void;\ncosmicStormEvent<F extends ScopeName>(\n  args: WitnessedFireEventArgs<"storm", F, "cosmic_storm">\n): void;',
+      'cosmicStormEvent(args: FireEventArgs<"storm", {}, "cosmic_storm">): void;\ncosmicStormEvent<Context extends AmbientScopeContext>(\n  args: WitnessedFireEventArgs<"storm", Context, "cosmic_storm">\n): void;',
     docs: ["Fires a cosmic storm event for the scoped storm, after any delay."],
   },
   {
@@ -2481,7 +2481,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "event-fire",
     availability: { kind: "scopes", scopes: ["cosmic_storm_influence_field"] },
     signature:
-      'cosmicStormInfluenceFieldEvent(args: FireEventArgs<"cosmic_storm_influence_field", undefined, "cosmic_storm_influence_field">): void;\ncosmicStormInfluenceFieldEvent<F extends ScopeName>(\n  args: WitnessedFireEventArgs<"cosmic_storm_influence_field", F, "cosmic_storm_influence_field">\n): void;',
+      'cosmicStormInfluenceFieldEvent(args: FireEventArgs<"cosmic_storm_influence_field", {}, "cosmic_storm_influence_field">): void;\ncosmicStormInfluenceFieldEvent<Context extends AmbientScopeContext>(\n  args: WitnessedFireEventArgs<"cosmic_storm_influence_field", Context, "cosmic_storm_influence_field">\n): void;',
     docs: [
       "Fires a cosmic storm influence field event for the scoped cosmic_storm_influence_field, after any delay.",
     ],
@@ -2506,7 +2506,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "event-fire",
     availability: { kind: "scopes", scopes: ["country"] },
     signature:
-      'countryEvent(args: FireEventArgs<"country", undefined, "country">): void;\ncountryEvent<F extends ScopeName>(\n  args: WitnessedFireEventArgs<"country", F, "country">\n): void;',
+      'countryEvent(args: FireEventArgs<"country", {}, "country">): void;\ncountryEvent<Context extends AmbientScopeContext>(\n  args: WitnessedFireEventArgs<"country", Context, "country">\n): void;',
     docs: ["Fires a country event for the scoped country, after any delay."],
   },
   {
@@ -3910,7 +3910,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "event-fire",
     availability: { kind: "scopes", scopes: ["espionage_operation"] },
     signature:
-      'espionageOperationEvent(args: FireEventArgs<"espionage_operation", undefined, "espionage_operation">): void;\nespionageOperationEvent<F extends ScopeName>(\n  args: WitnessedFireEventArgs<"espionage_operation", F, "espionage_operation">\n): void;',
+      'espionageOperationEvent(args: FireEventArgs<"espionage_operation", {}, "espionage_operation">): void;\nespionageOperationEvent<Context extends AmbientScopeContext>(\n  args: WitnessedFireEventArgs<"espionage_operation", Context, "espionage_operation">\n): void;',
     docs: [
       "Fires an espionage operation event for the scoped espionage_operation, after any delay.",
     ],
@@ -5852,7 +5852,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "event-fire",
     availability: { kind: "scopes", scopes: ["first_contact"] },
     signature:
-      'firstContactEvent(args: FireEventArgs<"first_contact", undefined, "first_contact">): void;\nfirstContactEvent<F extends ScopeName>(\n  args: WitnessedFireEventArgs<"first_contact", F, "first_contact">\n): void;',
+      'firstContactEvent(args: FireEventArgs<"first_contact", {}, "first_contact">): void;\nfirstContactEvent<Context extends AmbientScopeContext>(\n  args: WitnessedFireEventArgs<"first_contact", Context, "first_contact">\n): void;',
     docs: ["Fires a first contact event for the scoped first_contact, after any delay."],
   },
   {
@@ -5876,7 +5876,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "event-fire",
     availability: { kind: "scopes", scopes: ["fleet"] },
     signature:
-      'fleetEvent(args: FireEventArgs<"fleet", undefined, "fleet">): void;\nfleetEvent<F extends ScopeName>(\n  args: WitnessedFireEventArgs<"fleet", F, "fleet">\n): void;',
+      'fleetEvent(args: FireEventArgs<"fleet", {}, "fleet">): void;\nfleetEvent<Context extends AmbientScopeContext>(\n  args: WitnessedFireEventArgs<"fleet", Context, "fleet">\n): void;',
     docs: ["Fires a fleet event for the scoped fleet, after any delay."],
   },
   {
@@ -6337,7 +6337,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "event-fire",
     availability: { kind: "scopes", scopes: ["leader"] },
     signature:
-      'leaderEvent(args: FireEventArgs<"leader", undefined, "leader">): void;\nleaderEvent<F extends ScopeName>(\n  args: WitnessedFireEventArgs<"leader", F, "leader">\n): void;',
+      'leaderEvent(args: FireEventArgs<"leader", {}, "leader">): void;\nleaderEvent<Context extends AmbientScopeContext>(\n  args: WitnessedFireEventArgs<"leader", Context, "leader">\n): void;',
     docs: ["Fires a leader event for the scoped leader, after any delay."],
   },
   {
@@ -6656,7 +6656,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "event-fire",
     availability: { kind: "universal" },
     signature:
-      'observerEvent(args: FireEventArgs<"country", undefined, "observer">): void;\nobserverEvent<F extends ScopeName>(\n  args: WitnessedFireEventArgs<"country", F, "observer">\n): void;',
+      'observerEvent(args: FireEventArgs<"country", {}, "observer">): void;\nobserverEvent<Context extends AmbientScopeContext>(\n  args: WitnessedFireEventArgs<"country", Context, "observer">\n): void;',
     docs: ["Fires an observer event for the scoped country, after any delay."],
   },
   {
@@ -8968,7 +8968,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "event-fire",
     availability: { kind: "scopes", scopes: ["planet"] },
     signature:
-      'planetEvent(args: FireEventArgs<"planet", undefined, "planet">): void;\nplanetEvent<F extends ScopeName>(\n  args: WitnessedFireEventArgs<"planet", F, "planet">\n): void;',
+      'planetEvent(args: FireEventArgs<"planet", {}, "planet">): void;\nplanetEvent<Context extends AmbientScopeContext>(\n  args: WitnessedFireEventArgs<"planet", Context, "planet">\n): void;',
     docs: ["Fires a planet event for the scoped planet, after any delay."],
   },
   {
@@ -9005,7 +9005,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "event-fire",
     availability: { kind: "scopes", scopes: ["pop_faction"] },
     signature:
-      'popFactionEvent(args: FireEventArgs<"pop_faction", undefined, "pop_faction">): void;\npopFactionEvent<F extends ScopeName>(\n  args: WitnessedFireEventArgs<"pop_faction", F, "pop_faction">\n): void;',
+      'popFactionEvent(args: FireEventArgs<"pop_faction", {}, "pop_faction">): void;\npopFactionEvent<Context extends AmbientScopeContext>(\n  args: WitnessedFireEventArgs<"pop_faction", Context, "pop_faction">\n): void;',
     docs: ["Fires a pop faction event for the scoped pop_faction, after any delay."],
   },
   {
@@ -9033,7 +9033,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "event-fire",
     availability: { kind: "scopes", scopes: ["pop_group"] },
     signature:
-      'popGroupEvent(args: FireEventArgs<"pop_group", undefined, "pop_group">): void;\npopGroupEvent<F extends ScopeName>(\n  args: WitnessedFireEventArgs<"pop_group", F, "pop_group">\n): void;',
+      'popGroupEvent(args: FireEventArgs<"pop_group", {}, "pop_group">): void;\npopGroupEvent<Context extends AmbientScopeContext>(\n  args: WitnessedFireEventArgs<"pop_group", Context, "pop_group">\n): void;',
     docs: ["Fires a pop group event for the scoped pop_group, after any delay."],
   },
   {
@@ -16661,7 +16661,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "event-fire",
     availability: { kind: "scopes", scopes: ["ship"] },
     signature:
-      'shipEvent(args: FireEventArgs<"ship", undefined, "ship">): void;\nshipEvent<F extends ScopeName>(\n  args: WitnessedFireEventArgs<"ship", F, "ship">\n): void;',
+      'shipEvent(args: FireEventArgs<"ship", {}, "ship">): void;\nshipEvent<Context extends AmbientScopeContext>(\n  args: WitnessedFireEventArgs<"ship", Context, "ship">\n): void;',
     docs: ["Fires a ship event for the scoped ship, after any delay."],
   },
   {
@@ -16670,7 +16670,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "event-fire",
     availability: { kind: "scopes", scopes: ["situation"] },
     signature:
-      'situationEvent(args: FireEventArgs<"situation", undefined, "situation">): void;\nsituationEvent<F extends ScopeName>(\n  args: WitnessedFireEventArgs<"situation", F, "situation">\n): void;',
+      'situationEvent(args: FireEventArgs<"situation", {}, "situation">): void;\nsituationEvent<Context extends AmbientScopeContext>(\n  args: WitnessedFireEventArgs<"situation", Context, "situation">\n): void;',
     docs: ["Fires a situation event for the scoped situation, after any delay."],
   },
   {
@@ -16833,7 +16833,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "event-fire",
     availability: { kind: "scopes", scopes: ["starbase"] },
     signature:
-      'starbaseEvent(args: FireEventArgs<"starbase", undefined, "starbase">): void;\nstarbaseEvent<F extends ScopeName>(\n  args: WitnessedFireEventArgs<"starbase", F, "starbase">\n): void;',
+      'starbaseEvent(args: FireEventArgs<"starbase", {}, "starbase">): void;\nstarbaseEvent<Context extends AmbientScopeContext>(\n  args: WitnessedFireEventArgs<"starbase", Context, "starbase">\n): void;',
     docs: ["Fires a starbase event for the scoped starbase, after any delay."],
   },
   {
@@ -17091,7 +17091,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "event-fire",
     availability: { kind: "scopes", scopes: ["system"] },
     signature:
-      'systemEvent(args: FireEventArgs<"system", undefined, "system">): void;\nsystemEvent<F extends ScopeName>(\n  args: WitnessedFireEventArgs<"system", F, "system">\n): void;',
+      'systemEvent(args: FireEventArgs<"system", {}, "system">): void;\nsystemEvent<Context extends AmbientScopeContext>(\n  args: WitnessedFireEventArgs<"system", Context, "system">\n): void;',
     docs: ["Fires a system event for the scoped system, after any delay."],
   },
   {

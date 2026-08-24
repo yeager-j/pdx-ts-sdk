@@ -453,8 +453,8 @@ export interface StrikeCraftComponentTemplateFields {
   acceleration?: number;
   attackRange?: number;
   pointDefenceTargets?: PointDefenceTarget[];
-  potential?: WithFrom<Trigger<"design">, "design", "country">;
-  showTechUnlockIf?: WithFrom<Trigger<"country">, "country", "country">;
+  potential?: WithFrom<Trigger<"design">, "design", { readonly from: "country" }>;
+  showTechUnlockIf?: WithFrom<Trigger<"country">, "country", { readonly from: "country" }>;
   friendlyAura?: StrikeCraftComponentTemplateFriendlyAura[];
   hostileAura?: StrikeCraftComponentTemplateHostileAura[];
 }

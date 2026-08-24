@@ -151,7 +151,7 @@ describe("mod capability types", () => {
     const nested = mod.namespace("chain");
     const rootEvent = root.country(1, { hideWindow: true, isTriggeredOnly: true });
     const fromPlanet = nested.country(2, {
-      from: "planet",
+      scopes: { from: "planet" },
       hideWindow: true,
       isTriggeredOnly: true,
       immediate: (_country, ctx) => {
@@ -159,7 +159,7 @@ describe("mod capability types", () => {
       },
     });
     const needsCountryFrom = nested.planet(3, {
-      from: "country",
+      scopes: { from: "country" },
       hideWindow: true,
       isTriggeredOnly: true,
     });
@@ -168,23 +168,20 @@ describe("mod capability types", () => {
       isTriggeredOnly: true,
       immediate: (country, ctx) => {
         country.everyOwnedPlanet({}, (planet) => {
-          planet.planetEvent({ id: needsCountryFrom, from: ctx.self });
+          planet.planetEvent({ id: needsCountryFrom, scopes: { from: ctx.root } });
           // @ts-expect-error — the target's FROM contract requires a country witness.
           planet.planetEvent({ id: needsCountryFrom });
         });
       },
     });
     expectTypeOf(rootEvent).toEqualTypeOf<
-      CapabilityEventItem<"event_types", "", 1, "country", undefined>
-    >();
-    expectTypeOf(fromPlanet).toEqualTypeOf<
-      CapabilityEventItem<"event_types", "chain", 2, "country", "planet">
+      CapabilityEventItem<"event_types", "", 1, "country", {}>
     >();
     expectTypeOf(rootEvent.id).toEqualTypeOf<"event_types.1">();
     expectTypeOf(fromPlanet.id).toEqualTypeOf<"event_types_chain.2">();
     expectTypeOf(rootEvent.scope).toEqualTypeOf<"country">();
-    expectTypeOf(rootEvent.from).toEqualTypeOf<undefined>();
-    expectTypeOf(fromPlanet.from).toEqualTypeOf<"planet">();
+    expectTypeOf(rootEvent.scopes).toEqualTypeOf<{}>();
+    expectTypeOf(fromPlanet.scopes).toEqualTypeOf<{ from: "planet" }>();
   });
 
   it("makes config, tags, and profile readonly", () => {

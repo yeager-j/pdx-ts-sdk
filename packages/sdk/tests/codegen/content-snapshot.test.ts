@@ -188,13 +188,17 @@ describe("content-type codegen", () => {
 
   it("infers reusable effect closures with the content body's scope", () => {
     const agenda = emissions.get("agenda");
-    expect(agenda?.code).toContain('initEffect?: EffectBlock<"country", undefined, "country">;');
-    expect(agenda?.code).toContain('effect?: EffectBlock<"country", undefined, "country">;');
+    expect(agenda?.code).toContain(
+      'initEffect?: EffectBlock<"country", { readonly root: "country" }>;'
+    );
+    expect(agenda?.code).toContain(
+      'effect?: EffectBlock<"country", { readonly root: "country" }>;'
+    );
     expect(agenda?.code).toContain('StaticModifierHostContract<"country">');
     expect(agenda?.code).toContain("StaticModifierRef & { readonly hostScope?: never }");
     expect(agenda?.code).toContain('shape: "effect"');
     expect(emissions.get("ascension_perk")?.code).toContain(
-      'onEnabled?: EffectBlock<"country", undefined, "country">;'
+      'onEnabled?: EffectBlock<"country", { readonly root: "country" }>;'
     );
   });
 
@@ -436,7 +440,7 @@ describe("content-type codegen", () => {
     const decision = emissions.get("decision");
     expect(decision?.code).toContain("export interface DecisionDef");
     expect(decision?.code).toContain(
-      'resources?: WithFrom<EconomicResourceBlock<NoInfer<S>>[], NoInfer<S>, "country">;'
+      'resources?: WithFrom<EconomicResourceBlock<NoInfer<S>>[], NoInfer<S>, { readonly from: "country" }>;'
     );
     expect(decision?.code).toContain("prerequisites?: (TechnologyRef | string)[];");
     expect(decision?.code).toContain('shape: "economicResources"');
@@ -537,7 +541,7 @@ describe("content-type codegen", () => {
     expect(warGoal?.code).toContain("export interface WarGoalDef");
     expect(warGoal?.code).toContain("casusBelli: CasusBelliRef | string;");
     expect(warGoal?.code).toContain(
-      'aiWeight?: WithFrom<WeightBlock<"country">, "country", "country", "country">;'
+      'aiWeight?: WithFrom<WeightBlock<"country">, "country", { readonly root: "country"; readonly from: "country" }>;'
     );
     // forbidden_peace_offers is a fixed-shape anonymous block — the same struct
     // shape shape 3 generalizes down to cardinality 0..1 — so it is no longer
@@ -556,11 +560,11 @@ describe("content-type codegen", () => {
     // in CWT's own declaration order, which is why the two differ.
     const bombardmentStance = emissions.get("bombardment_stance");
     expect(bombardmentStance?.code).toContain(
-      'planetDamage?: number | WithFrom<WeightBlock<"fleet">, "fleet", "planet", "fleet">;'
+      'planetDamage?: number | WithFrom<WeightBlock<"fleet">, "fleet", { readonly root: "fleet"; readonly from: "planet" }>;'
     );
     // A pure modifier_rule splice needs no overlay row either — it infers weightBlock.
     expect(bombardmentStance?.code).toContain(
-      'aiWeight: WithFrom<WeightBlock<"fleet">, "fleet", "planet", "fleet">;'
+      'aiWeight: WithFrom<WeightBlock<"fleet">, "fleet", { readonly root: "fleet"; readonly from: "planet" }>;'
     );
 
     const archaeologicalSiteType = emissions.get("archaeological_site_type");
@@ -577,18 +581,18 @@ describe("content-type codegen", () => {
     // is a `from = { ... }` block — so the closure gets it as `ctx.from`.
     const archaeologicalSiteType = emissions.get("archaeological_site_type");
     expect(archaeologicalSiteType?.code).toContain(
-      'onRollFailed: EffectBlock<"fleet", "archaeological_site", "fleet">;'
+      'onRollFailed: EffectBlock<"fleet", { readonly root: "fleet"; readonly from: "archaeological_site" }>;'
     );
     // The same registry's on_create is `{ root = archaeological_site this =
     // archaeological_site }` — no FROM in a `replace_scopes` means cleared, so
     // the FROM slot stays the undeclared sentinel while ROOT is spelled.
     expect(archaeologicalSiteType?.code).toContain(
-      'onCreate?: EffectBlock<"archaeological_site", undefined, "archaeological_site">;'
+      'onCreate?: EffectBlock<"archaeological_site", { readonly root: "archaeological_site" }>;'
     );
     // Each registry's own rules decide the scope, rather than one convention:
     // a war goal's FROM is the targeted country.
     expect(emissions.get("war_goal")?.code).toContain(
-      'onAccept?: EffectBlock<"country", "country", "country">;'
+      'onAccept?: EffectBlock<"country", { readonly root: "country"; readonly from: "country" }>;'
     );
   });
 
@@ -600,7 +604,7 @@ describe("content-type codegen", () => {
     // both admit planet effects the game rejects and reject the country
     // operations the block reaches for ROOT to perform.
     expect(emitAliasSplice(emitter, "planet_initializer")?.code).toContain(
-      'initEffect?: EffectBlock<"planet", undefined, "country">;'
+      'initEffect?: EffectBlock<"planet", { readonly root: "country"; readonly prev: "system"; readonly prevprev: "system" }>;'
     );
     expect(emitAliasSplice(emitter, "planet_initializer")?.code).toContain(
       'shape: "effect", form: "closure", splitRoot: true'
@@ -612,7 +616,7 @@ describe("content-type codegen", () => {
     // to something an author could navigate — the same rule `from = any`
     // already follows. The top-level init_effect is that case.
     expect(emissions.get("solar_system_initializer")?.code).toContain(
-      'initEffect?: EffectBlock<"system">;'
+      'initEffect?: EffectBlock<"system", {}>;'
     );
     // A `push_scope` states only THIS, and an unannotated field states
     // nothing, so neither invents a ROOT.
@@ -625,7 +629,7 @@ describe("content-type codegen", () => {
     // added closure form rather than through an argument list they never had.
     const archaeologicalSiteType = emissions.get("archaeological_site_type");
     expect(archaeologicalSiteType?.code).toContain(
-      'allow: WithFrom<Trigger<"fleet">, "fleet", "archaeological_site", "fleet">;'
+      'allow: WithFrom<Trigger<"fleet">, "fleet", { readonly root: "fleet"; readonly from: "archaeological_site" }>;'
     );
     // A field with no FROM keeps the plain type: the closure form exists to
     // carry FROM, so a field without one has nothing to offer it.
@@ -634,7 +638,7 @@ describe("content-type codegen", () => {
     // A dual keeps arm-by-arm dispatch: only the arm that can hold a condition
     // grows the closure form.
     expect(emissions.get("opinion_modifier")?.code).toContain(
-      'opinion: WithFrom<WeightBlock<"country">, "country", "country", "country"> | number;'
+      'opinion: WithFrom<WeightBlock<"country">, "country", { readonly root: "country"; readonly from: "country" }> | number;'
     );
   });
 
@@ -732,11 +736,11 @@ describe("content-type codegen", () => {
     const situation = emissions.get("situation_type");
     expect(situation?.code).toContain('modifier?: ModifierClosure<"country">;');
     expect(situation?.code).toContain(
-      'onSelect?: EffectBlock<"situation", undefined, "situation">;'
+      'onSelect?: EffectBlock<"situation", { readonly root: "situation" }>;'
     );
     expect(situation?.code).toContain('resources?: EconomicResourceBlock<"situation">[];');
     expect(situation?.code).toContain(
-      'onFirstEnter?: EffectBlock<"situation", undefined, "situation">;'
+      'onFirstEnter?: EffectBlock<"situation", { readonly root: "situation" }>;'
     );
   });
 
@@ -1001,7 +1005,7 @@ describe("content-type codegen", () => {
     // a decision's scope really does vary per definition, so it takes a scope
     // parameter rather than an asserted constant.
     expect(emissions.get("decision")?.code).toContain(
-      'potential?: WithFrom<Trigger<NoInfer<S>>, NoInfer<S>, "country">;'
+      'potential?: WithFrom<Trigger<NoInfer<S>>, NoInfer<S>, { readonly from: "country" }>;'
     );
   });
 
@@ -1016,7 +1020,9 @@ describe("content-type codegen", () => {
     expect(decision.code).toContain('export type DecisionScope = "planet" | "ship";');
     expect(decision.code).toContain("export interface DecisionFields<S extends DecisionScope");
     expect(decision.code).toContain("  scope?: S;");
-    expect(decision.code).toContain('effect: EffectBlock<NoInfer<S>, "country">;');
+    expect(decision.code).toContain(
+      'effect: EffectBlock<NoInfer<S>, { readonly from: "country" }>;'
+    );
     // A field CWT does pin keeps its own scope: the parameter fills the gap
     // rather than flattening everything into it.
     expect(decision.code).toContain('showTechUnlockIf?: Trigger<"country">;');
@@ -1299,7 +1305,7 @@ describe("content-type codegen", () => {
     expect(graphicalCulture?.code).toContain("randomized?: Trigger<never>;");
     expect(graphicalCulture?.code).toContain("selectable?: Trigger<never>;");
     expect(graphicalCulture?.code).toContain(
-      'shipSelectionWeight?: WithFrom<WeightBlock<"species">, "species", "country">;'
+      'shipSelectionWeight?: WithFrom<WeightBlock<"species">, "species", { readonly from: "country" }>;'
     );
     expect(graphicalCulture?.unsupported).toEqual([]);
   });
@@ -1510,10 +1516,10 @@ describe("content-type codegen", () => {
     // The build hooks are system-scoped with the building country as FROM, and
     // the type says so rather than flattening to one scope.
     expect(megastructure?.code).toContain(
-      'possible?: WithFrom<Trigger<"system">, "system", "country", "system">;'
+      'possible?: WithFrom<Trigger<"system">, "system", { readonly root: "system"; readonly from: "country" }>;'
     );
     expect(megastructure?.code).toContain(
-      'onBuildComplete?: EffectBlock<"system", "country", "system">;'
+      'onBuildComplete?: EffectBlock<"system", { readonly root: "system"; readonly from: "country"; readonly fromfrom: "megastructure" }>;'
     );
     expect(megastructure?.code).toContain('potential?: Trigger<"country">;');
     // `upgrade_desc` is declared twice, `localisation` and the literal `hide`;
@@ -1546,7 +1552,7 @@ describe("content-type codegen", () => {
     const decision = emissions.get("decision");
     expect(decision?.code).toContain("customTooltip?: DecisionCustomTooltip<S>;");
     expect(decision?.code).toContain(
-      'when?: WithFrom<Trigger<NoInfer<S>>, NoInfer<S>, "country">;'
+      'when?: WithFrom<Trigger<NoInfer<S>>, NoInfer<S>, { readonly from: "country" }>;'
     );
     expect(decision?.nestedEmittedFields).toContainEqual({
       field: "decision.custom_tooltip.when",
@@ -1576,7 +1582,9 @@ describe("content-type codegen", () => {
     expect(moon?.code).not.toContain("planet?:");
     expect(moon?.spliceCategories).toEqual(["moon_initializer"]);
     // Scope comes from the nested `## replace_scopes`, not an overlay row.
-    expect(planet?.code).toContain('initEffect?: EffectBlock<"planet", undefined, "country">;');
+    expect(planet?.code).toContain(
+      'initEffect?: EffectBlock<"planet", { readonly root: "country"; readonly prev: "system"; readonly prevprev: "system" }>;'
+    );
     // SDK-30: `change_orbit` inside a planet is the same positional sugar as
     // the top-level one (advances the orbit cursor for the moons that
     // follow it) and is declined the same way — not emitted at all, long

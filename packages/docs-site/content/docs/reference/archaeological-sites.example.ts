@@ -23,7 +23,7 @@ const mod = createMod({
 const events = mod.namespace("dig");
 
 const sealedDoor = events.fleet(1, {
-  from: "archaeological_site",
+  scopes: { from: "archaeological_site" },
   title: "The Sealed Door",
   desc: "The excavation has reached a door with no visible controls.",
   picture: vanilla.spriteType("GFX_evt_archaeological_dig"),
@@ -44,7 +44,7 @@ const sealedDoor = events.fleet(1, {
 });
 
 const memoryVault = events.fleet(2, {
-  from: "archaeological_site",
+  scopes: { from: "archaeological_site" },
   title: "The Memory Vault",
   desc: "Rows of crystal lattices still hold fragments of their makers' memories.",
   picture: vanilla.spriteType("GFX_evt_archaeological_dig"),
@@ -65,7 +65,7 @@ const memoryVault = events.fleet(2, {
 });
 
 const lastCustodian = events.fleet(3, {
-  from: "archaeological_site",
+  scopes: { from: "archaeological_site" },
   title: "The Last Custodian",
   desc: "One machine remains awake beneath the archive and offers us its final catalogue.",
   picture: vanilla.spriteType("GFX_evt_archaeological_dig"),

@@ -119,6 +119,69 @@ export interface UndeclaredRoot {
 }
 
 /**
+ * Every ambient scope name Stellaris can declare for a script block.
+ *
+ * Generated declarations use this map instead of positional generic arguments.
+ * A missing key remains an inert sentinel on {@link ScriptCtx}; it is not a
+ * claim that the game supplies that scope.
+ */
+export interface AmbientScopeContext {
+  /** The top-level script scope. */
+  readonly root?: ScopeName;
+  /** The immediate FROM scope. */
+  readonly from?: ScopeName;
+  /** The second FROM scope. */
+  readonly fromfrom?: ScopeName;
+  /** The third FROM scope. */
+  readonly fromfromfrom?: ScopeName;
+  /** The fourth FROM scope. */
+  readonly fromfromfromfrom?: ScopeName;
+  /** The immediate PREV scope. */
+  readonly prev?: ScopeName;
+  /** The second PREV scope. */
+  readonly prevprev?: ScopeName;
+  /** The third PREV scope. */
+  readonly prevprevprev?: ScopeName;
+  /** The fourth PREV scope. */
+  readonly prevprevprevprev?: ScopeName;
+}
+
+/** The stable order used in generated context maps and runtime scope overrides. */
+export const AMBIENT_SCOPE_KEYS = [
+  "root",
+  "from",
+  "fromfrom",
+  "fromfromfrom",
+  "fromfromfromfrom",
+  "prev",
+  "prevprev",
+  "prevprevprev",
+  "prevprevprevprev",
+] as const satisfies readonly (keyof AmbientScopeContext)[];
+
+/** One named ambient slot. */
+export type AmbientScopeKey = (typeof AMBIENT_SCOPE_KEYS)[number];
+
+/** The declared scope at one ambient slot, or never when the map omits it. */
+export type AmbientScopeAt<
+  Context extends AmbientScopeContext,
+  Key extends AmbientScopeKey,
+> = Key extends keyof Context ? Extract<Context[Key], ScopeName> : never;
+
+/** An ambient slot the rules did not declare. */
+export interface UndeclaredAmbientScope<Key extends AmbientScopeKey> {
+  readonly kind: "undeclared-ambient-scope";
+  readonly slot: Key;
+  readonly hint: "Nothing declares this ambient scope here; read it only where the rules name it.";
+}
+
+type AmbientRef<Context extends AmbientScopeContext, Key extends AmbientScopeKey> = [
+  AmbientScopeAt<Context, Key>,
+] extends [never]
+  ? UndeclaredAmbientScope<Key>
+  : ScopeRef<AmbientScopeAt<Context, Key>>;
+
+/**
  * The ambient scopes a script block runs in, handed to every closure that
  * records effects: an event's `immediate`/`after`/option effects, and a
  * content definition's effect fields.
@@ -138,8 +201,7 @@ export interface UndeclaredRoot {
  */
 export interface ScriptCtx<
   Self extends ScopeName,
-  From extends ScopeName | undefined,
-  Root extends ScopeName | undefined = Self,
+  Context extends AmbientScopeContext = { readonly root: Self },
 > {
   /**
    * The scope this block runs in, as a value — the FROM witness at a fire
@@ -149,7 +211,8 @@ export interface ScriptCtx<
    * is relative to the block it is written in, so
    * inside a scope transition it would name that scope rather than this one.
    */
-  readonly self: ScopeValue<Self> & SelfNaturalFromConstraint<Self, Root>;
+  readonly self: ScopeValue<Self> &
+    SelfNaturalFromConstraint<Self, AmbientScopeAt<Context, "root">>;
   /**
    * ROOT — the scope the script's top level runs in, where something declares
    * what that is. Everywhere else an inert sentinel, exactly like `from`.
@@ -169,16 +232,30 @@ export interface ScriptCtx<
    * block's own scope would both admit planet effects the game rejects and
    * reject the country operations that are the whole point of reaching for it.
    */
-  readonly root: [Root] extends [ScopeName] ? ScopeRef<Root> : UndeclaredRoot;
+  readonly root: AmbientRef<Context, "root">;
   /**
-   * FROM, where something declares what it holds — an event's `from:` field, a
+   * FROM, where something declares what it holds — an event's `scopes.from` field, a
    * content field's `replace_scopes` in the rules. Everywhere else this is an
    * inert sentinel, so touching an undeclared FROM is a compile error.
    */
-  readonly from: [From] extends [ScopeName] ? ScopeRef<From> : UndeclaredFrom;
+  readonly from: AmbientRef<Context, "from">;
+  /** The second declared FROM scope. */
+  readonly fromfrom: AmbientRef<Context, "fromfrom">;
+  /** The third declared FROM scope. */
+  readonly fromfromfrom: AmbientRef<Context, "fromfromfrom">;
+  /** The fourth declared FROM scope. */
+  readonly fromfromfromfrom: AmbientRef<Context, "fromfromfromfrom">;
+  /** The immediate declared PREV scope. */
+  readonly prev: AmbientRef<Context, "prev">;
+  /** The second declared PREV scope. */
+  readonly prevprev: AmbientRef<Context, "prevprev">;
+  /** The third declared PREV scope. */
+  readonly prevprevprev: AmbientRef<Context, "prevprevprev">;
+  /** The fourth declared PREV scope. */
+  readonly prevprevprevprev: AmbientRef<Context, "prevprevprevprev">;
 }
 
-type SelfNaturalFromConstraint<Self extends ScopeName, Root extends ScopeName | undefined> = [
+type SelfNaturalFromConstraint<Self extends ScopeName, Root extends ScopeName | never> = [
   Root,
 ] extends [ScopeName]
   ? [Root] extends [Self]

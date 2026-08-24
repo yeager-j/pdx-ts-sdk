@@ -3,76 +3,76 @@
 import type { EventRef } from "@pdx-ts/sdk";
 
 export interface VanillaEventNamespaceFirstContactCritters {
-  readonly $1: EventRef<"first_contact", undefined, "first_contact"> & {
+  readonly $1: EventRef<"first_contact", {}, "first_contact"> & {
     readonly id: "first_contact_critters.1";
   };
-  readonly $10: EventRef<"first_contact", undefined, "first_contact"> & {
+  readonly $10: EventRef<"first_contact", {}, "first_contact"> & {
     readonly id: "first_contact_critters.10";
   };
-  readonly $100: EventRef<"first_contact", undefined, "first_contact"> & {
+  readonly $100: EventRef<"first_contact", {}, "first_contact"> & {
     readonly id: "first_contact_critters.100";
   };
-  readonly $1000: EventRef<"country", undefined, "country"> & {
+  readonly $1000: EventRef<"country", {}, "country"> & {
     readonly id: "first_contact_critters.1000";
   };
-  readonly $1001: EventRef<"country", undefined, "country"> & {
+  readonly $1001: EventRef<"country", {}, "country"> & {
     readonly id: "first_contact_critters.1001";
   };
-  readonly $105: EventRef<"first_contact", undefined, "first_contact"> & {
+  readonly $105: EventRef<"first_contact", {}, "first_contact"> & {
     readonly id: "first_contact_critters.105";
   };
-  readonly $15: EventRef<"first_contact", undefined, "first_contact"> & {
+  readonly $15: EventRef<"first_contact", {}, "first_contact"> & {
     readonly id: "first_contact_critters.15";
   };
-  readonly $20: EventRef<"first_contact", undefined, "first_contact"> & {
+  readonly $20: EventRef<"first_contact", {}, "first_contact"> & {
     readonly id: "first_contact_critters.20";
   };
-  readonly $25: EventRef<"first_contact", undefined, "first_contact"> & {
+  readonly $25: EventRef<"first_contact", {}, "first_contact"> & {
     readonly id: "first_contact_critters.25";
   };
-  readonly $30: EventRef<"first_contact", undefined, "first_contact"> & {
+  readonly $30: EventRef<"first_contact", {}, "first_contact"> & {
     readonly id: "first_contact_critters.30";
   };
-  readonly $35: EventRef<"first_contact", undefined, "first_contact"> & {
+  readonly $35: EventRef<"first_contact", {}, "first_contact"> & {
     readonly id: "first_contact_critters.35";
   };
-  readonly $40: EventRef<"first_contact", undefined, "first_contact"> & {
+  readonly $40: EventRef<"first_contact", {}, "first_contact"> & {
     readonly id: "first_contact_critters.40";
   };
-  readonly $45: EventRef<"first_contact", undefined, "first_contact"> & {
+  readonly $45: EventRef<"first_contact", {}, "first_contact"> & {
     readonly id: "first_contact_critters.45";
   };
-  readonly $5: EventRef<"first_contact", undefined, "first_contact"> & {
+  readonly $5: EventRef<"first_contact", {}, "first_contact"> & {
     readonly id: "first_contact_critters.5";
   };
-  readonly $50: EventRef<"first_contact", undefined, "first_contact"> & {
+  readonly $50: EventRef<"first_contact", {}, "first_contact"> & {
     readonly id: "first_contact_critters.50";
   };
-  readonly $55: EventRef<"first_contact", undefined, "first_contact"> & {
+  readonly $55: EventRef<"first_contact", {}, "first_contact"> & {
     readonly id: "first_contact_critters.55";
   };
-  readonly $60: EventRef<"first_contact", undefined, "first_contact"> & {
+  readonly $60: EventRef<"first_contact", {}, "first_contact"> & {
     readonly id: "first_contact_critters.60";
   };
-  readonly $65: EventRef<"first_contact", undefined, "first_contact"> & {
+  readonly $65: EventRef<"first_contact", {}, "first_contact"> & {
     readonly id: "first_contact_critters.65";
   };
-  readonly $70: EventRef<"first_contact", undefined, "first_contact"> & {
+  readonly $70: EventRef<"first_contact", {}, "first_contact"> & {
     readonly id: "first_contact_critters.70";
   };
-  readonly $75: EventRef<"first_contact", undefined, "first_contact"> & {
+  readonly $75: EventRef<"first_contact", {}, "first_contact"> & {
     readonly id: "first_contact_critters.75";
   };
-  readonly $80: EventRef<"first_contact", undefined, "first_contact"> & {
+  readonly $80: EventRef<"first_contact", {}, "first_contact"> & {
     readonly id: "first_contact_critters.80";
   };
-  readonly $85: EventRef<"first_contact", undefined, "first_contact"> & {
+  readonly $85: EventRef<"first_contact", {}, "first_contact"> & {
     readonly id: "first_contact_critters.85";
   };
-  readonly $90: EventRef<"first_contact", undefined, "first_contact"> & {
+  readonly $90: EventRef<"first_contact", {}, "first_contact"> & {
     readonly id: "first_contact_critters.90";
   };
-  readonly $95: EventRef<"first_contact", undefined, "first_contact"> & {
+  readonly $95: EventRef<"first_contact", {}, "first_contact"> & {
     readonly id: "first_contact_critters.95";
   };
 }

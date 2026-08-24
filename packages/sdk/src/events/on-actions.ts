@@ -4,6 +4,7 @@ import type { EventScopelessRef } from "../generated/refs.ts";
 import type { ScopeName } from "../generated/scopes.ts";
 import { isVanillaRef } from "../identifiers/trie.ts";
 import { compareUtf8 } from "../ordering.ts";
+import type { AmbientScopeContext } from "../script/effects/types.ts";
 import { refId } from "../script/scalar.ts";
 import { isAuthoredEvent, type EventItem, type EventItemBase, type EventRef } from "./types.ts";
 import { weightedEventBlock, type WeightedEventRow } from "./weighted-events.ts";
@@ -11,7 +12,7 @@ import { weightedEventBlock, type WeightedEventRow } from "./weighted-events.ts"
 /** A generated game hook with its event scope and FROM contract. */
 export interface OnActionRef<
   S extends ScopeName | null = ScopeName | null,
-  From extends ScopeName | undefined = ScopeName | undefined,
+  Context extends AmbientScopeContext = AmbientScopeContext,
 > {
   /** Discriminates generated hook references from other authored values. */
   readonly kind: "on-action-ref";
@@ -19,8 +20,8 @@ export interface OnActionRef<
   readonly name: string;
   /** The event scope supplied by the hook; null means the hook is scopeless. */
   readonly scope: S;
-  /** The FROM scope supplied by the hook, when one is available. */
-  readonly from: From;
+  /** The full ambient scope contract supplied by the hook. */
+  readonly scopes: Context;
 }
 
 interface OnActionHookItemBase {
@@ -49,14 +50,14 @@ export type OnActionHookItem = OnActionHookItemBase &
 
 type OnActionEventReference<
   S extends ScopeName | null,
-  From extends ScopeName | undefined,
-> = S extends null ? EventScopelessRef : EventRef<Extract<S, ScopeName>, From, string>;
+  Context extends AmbientScopeContext,
+> = S extends null ? EventScopelessRef : EventRef<Extract<S, ScopeName>, Context, string>;
 
 /** One weighted on-action choice; omit `event` for the literal `0` no-op arm. */
 export type OnActionRandomEvent<
   S extends ScopeName | null = ScopeName | null,
-  From extends ScopeName | undefined = ScopeName | undefined,
-> = WeightedEventRow<OnActionEventReference<S, From> | string>;
+  Context extends AmbientScopeContext = AmbientScopeContext,
+> = WeightedEventRow<OnActionEventReference<S, Context> | string>;
 
 type NonEmpty<T> = readonly [T, ...T[]];
 
@@ -71,18 +72,18 @@ type NonEmpty<T> = readonly [T, ...T[]];
  * });
  * ```
  */
-export type OnActionEvents<S extends ScopeName, From extends ScopeName | undefined> =
+export type OnActionEvents<S extends ScopeName, Context extends AmbientScopeContext> =
   | {
       /** Ordered events that all fire; every value must be placed in the compiled Features. */
-      readonly events: NonEmpty<EventItem<NoInfer<S>, NoInfer<From>>>;
+      readonly events: NonEmpty<EventItem<NoInfer<S>, NoInfer<Context>>>;
       /** Weighted choices in author order; duplicate weights and event arms are preserved. */
-      readonly randomEvents?: NonEmpty<OnActionRandomEvent<NoInfer<S>, NoInfer<From>>>;
+      readonly randomEvents?: NonEmpty<OnActionRandomEvent<NoInfer<S>, NoInfer<Context>>>;
     }
   | {
       /** Ordered events that all fire; every value must be placed in the compiled Features. */
-      readonly events?: NonEmpty<EventItem<NoInfer<S>, NoInfer<From>>>;
+      readonly events?: NonEmpty<EventItem<NoInfer<S>, NoInfer<Context>>>;
       /** Weighted choices in author order; duplicate weights and event arms are preserved. */
-      readonly randomEvents: NonEmpty<OnActionRandomEvent<NoInfer<S>, NoInfer<From>>>;
+      readonly randomEvents: NonEmpty<OnActionRandomEvent<NoInfer<S>, NoInfer<Context>>>;
     };
 
 /** The object form for a scopeless hook, which accepts checked or raw event references. */
@@ -90,7 +91,7 @@ export interface ScopelessOnActionEvents {
   /** Scopeless hooks cannot receive an ordinary authored event list. */
   readonly events?: never;
   /** Weighted checked references in author order; omit a row's event for a no-op arm. */
-  readonly randomEvents: NonEmpty<OnActionRandomEvent<null, undefined>>;
+  readonly randomEvents: NonEmpty<OnActionRandomEvent<null, {}>>;
 }
 
 interface HookedEvent {
@@ -153,10 +154,10 @@ export class OnActionAuthoring {
   }
 
   private assertHookContract(hook: OnActionRef, event: EventItemBase): void {
-    if (hook.scope !== event.scope || hook.from !== event.from) {
+    if (hook.scope !== event.scope || !sameScopes(hook.scopes, event.scopes)) {
       throw new Error(
-        `On-action "${hook.name}" supplies ${contract(hook.scope, hook.from)}, but event ` +
-          `"${event.id}" declares ${contract(event.scope, event.from)}`
+        `On-action "${hook.name}" supplies ${contract(hook.scope, hook.scopes)}, but event ` +
+          `"${event.id}" declares ${contract(event.scope, event.scopes)}`
       );
     }
   }
@@ -237,9 +238,18 @@ function emptyContribution(): {
   return { events: [], randomEvents: [] };
 }
 
-function contract(scope: ScopeName | null, from: ScopeName | undefined): string {
+function contract(scope: ScopeName | null, scopes: AmbientScopeContext): string {
   const describedScope = scope === null ? "no scope" : `${scope} scope`;
-  return `${describedScope}${from === undefined ? " with no FROM" : ` with FROM ${from}`}`;
+  const entries = Object.entries(scopes);
+  return `${describedScope}${entries.length === 0 ? " with no FROM" : ` with ${entries.map(([key, value]) => `${key} ${value}`).join(", ")}`}`;
+}
+
+function sameScopes(left: AmbientScopeContext, right: AmbientScopeContext): boolean {
+  const leftEntries = Object.entries(left);
+  return (
+    leftEntries.length === Object.keys(right).length &&
+    leftEntries.every(([key, value]) => right[key as keyof AmbientScopeContext] === value)
+  );
 }
 
 function eventId(event: NonNullable<OnActionRandomEvent["event"]>): string {
@@ -255,20 +265,17 @@ export function onActionContributionKey(item: OnActionHookItem): string {
 }
 
 /** Creates one capability-owned ordinary on-action binding. */
-export function on<S extends ScopeName, From extends ScopeName | undefined>(
-  hook: OnActionRef<S, From>,
-  events: NonEmpty<EventItem<NoInfer<S>, NoInfer<From>>>
+export function on<S extends ScopeName, Context extends AmbientScopeContext>(
+  hook: OnActionRef<S, Context>,
+  events: NonEmpty<EventItem<NoInfer<S>, NoInfer<Context>>>
 ): OnActionHookItem;
 /** Creates one capability-owned scoped on-action contribution. */
-export function on<S extends ScopeName, From extends ScopeName | undefined>(
-  hook: OnActionRef<S, From>,
-  events: OnActionEvents<S, From>
+export function on<S extends ScopeName, Context extends AmbientScopeContext>(
+  hook: OnActionRef<S, Context>,
+  events: OnActionEvents<S, Context>
 ): OnActionHookItem;
 /** Creates one capability-owned scopeless random on-action contribution. */
-export function on(
-  hook: OnActionRef<null, undefined>,
-  events: ScopelessOnActionEvents
-): OnActionHookItem;
+export function on(hook: OnActionRef<null, {}>, events: ScopelessOnActionEvents): OnActionHookItem;
 export function on(
   hook: OnActionRef,
   events:

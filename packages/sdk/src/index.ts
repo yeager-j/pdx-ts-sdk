@@ -93,6 +93,12 @@ export type {
   WitnessedFireEventArgs,
 } from "./events/types.ts";
 export type {
+  AmbientScopeAt,
+  AmbientScopeContext,
+  AmbientScopeKey,
+  UndeclaredAmbientScope,
+} from "./script/effects/types.ts";
+export type {
   CustomModifiers,
   EconomicCategoryWitness,
   EconomicResourceBlock,

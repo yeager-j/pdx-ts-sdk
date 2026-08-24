@@ -105,6 +105,20 @@ export interface ScopeContext {
   readonly root: string | null;
   /** The nested block's `FROM` scope, or `null` when not stated. */
   readonly from: string | null;
+  /** The second FROM scope, or null when not stated. */
+  readonly fromfrom?: string | null;
+  /** The third FROM scope, or null when not stated. */
+  readonly fromfromfrom?: string | null;
+  /** The fourth FROM scope, or null when not stated. */
+  readonly fromfromfromfrom?: string | null;
+  /** The immediate PREV scope, or null when not stated. */
+  readonly prev?: string | null;
+  /** The second PREV scope, or null when not stated. */
+  readonly prevprev?: string | null;
+  /** The third PREV scope, or null when not stated. */
+  readonly prevprevprev?: string | null;
+  /** The fourth PREV scope, or null when not stated. */
+  readonly prevprevprevprev?: string | null;
   /**
    * True for `replace_scope(s)`, which states the whole context — a scope it
    * leaves out is cleared, not inherited. `push_scope` states only `this`, so
@@ -392,7 +406,19 @@ export function cardinalityOf(options: readonly CwtOption[]): Cardinality {
 export function scopeOf(options: readonly CwtOption[]): ScopeContext | null {
   const pushed = findOption(options, "push_scope");
   if (pushed?.value?.kind === "scalar") {
-    return { this: pushed.value.text, root: null, from: null, replaces: false };
+    return {
+      this: pushed.value.text,
+      root: null,
+      from: null,
+      fromfrom: null,
+      fromfromfrom: null,
+      fromfromfromfrom: null,
+      prev: null,
+      prevprev: null,
+      prevprevprev: null,
+      prevprevprevprev: null,
+      replaces: false,
+    };
   }
   const replaced = findOption(options, "replace_scope") ?? findOption(options, "replace_scopes");
   const block = replaced?.value;
@@ -406,7 +432,19 @@ export function scopeOf(options: readonly CwtOption[]): ScopeContext | null {
     );
     return node !== undefined && node.value.kind === "scalar" ? node.value.text : null;
   };
-  return { this: read("this"), root: read("root"), from: read("from"), replaces: true };
+  return {
+    this: read("this"),
+    root: read("root"),
+    from: read("from"),
+    fromfrom: read("fromfrom"),
+    fromfromfrom: read("fromfromfrom"),
+    fromfromfromfrom: read("fromfromfromfrom"),
+    prev: read("prev"),
+    prevprev: read("prevprev"),
+    prevprevprev: read("prevprevprev"),
+    prevprevprevprev: read("prevprevprevprev"),
+    replaces: true,
+  };
 }
 
 /**

@@ -424,6 +424,9 @@ function resolveScopePath(path: string, scope: EntityId, ex: ExecCtx): EntityId 
   if (path === "this") {
     return scope;
   }
+  if (path === "root") {
+    return ex.root;
+  }
   if (path.startsWith(EVENT_TARGET_PREFIX)) {
     return resolveEventTarget(path.slice(EVENT_TARGET_PREFIX.length), ex);
   }

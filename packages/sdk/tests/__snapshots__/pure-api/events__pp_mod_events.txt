@@ -12,6 +12,9 @@ country_event = {
 			planet_event = {
 				id = pp_mod.2
 				days = 30
+				scopes = {
+					from = root
+				}
 			}
 		}
 	}

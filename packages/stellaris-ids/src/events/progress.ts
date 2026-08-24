@@ -3,11 +3,11 @@
 import type { EventRef } from "@pdx-ts/sdk";
 
 export interface VanillaEventNamespaceProgress {
-  readonly $2: EventRef<"ship", undefined, "ship"> & { readonly id: "progress.2" };
-  readonly $3: EventRef<"carrier", undefined, "carrier"> & { readonly id: "progress.3" };
-  readonly $4: EventRef<"country", undefined, "country"> & { readonly id: "progress.4" };
-  readonly $5: EventRef<"country", undefined, "country"> & { readonly id: "progress.5" };
-  readonly $6: EventRef<"country", undefined, "country"> & { readonly id: "progress.6" };
-  readonly $7: EventRef<"carrier", undefined, "carrier"> & { readonly id: "progress.7" };
-  readonly $9: EventRef<"country", undefined, "country"> & { readonly id: "progress.9" };
+  readonly $2: EventRef<"ship", {}, "ship"> & { readonly id: "progress.2" };
+  readonly $3: EventRef<"carrier", {}, "carrier"> & { readonly id: "progress.3" };
+  readonly $4: EventRef<"country", {}, "country"> & { readonly id: "progress.4" };
+  readonly $5: EventRef<"country", {}, "country"> & { readonly id: "progress.5" };
+  readonly $6: EventRef<"country", {}, "country"> & { readonly id: "progress.6" };
+  readonly $7: EventRef<"carrier", {}, "carrier"> & { readonly id: "progress.7" };
+  readonly $9: EventRef<"country", {}, "country"> & { readonly id: "progress.9" };
 }

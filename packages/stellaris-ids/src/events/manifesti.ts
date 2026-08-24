@@ -3,12 +3,12 @@
 import type { EventRef } from "@pdx-ts/sdk";
 
 export interface VanillaEventNamespaceManifesti {
-  readonly $1: EventRef<"carrier", undefined, "carrier"> & { readonly id: "manifesti.1" };
-  readonly $10: EventRef<"carrier", undefined, "carrier"> & { readonly id: "manifesti.10" };
-  readonly $15: EventRef<"carrier", undefined, "carrier"> & { readonly id: "manifesti.15" };
-  readonly $20: EventRef<"carrier", undefined, "carrier"> & { readonly id: "manifesti.20" };
-  readonly $25: EventRef<"carrier", undefined, "carrier"> & { readonly id: "manifesti.25" };
-  readonly $26: EventRef<"country", undefined, "country"> & { readonly id: "manifesti.26" };
-  readonly $30: EventRef<"country", undefined, "country"> & { readonly id: "manifesti.30" };
-  readonly $5: EventRef<"carrier", undefined, "carrier"> & { readonly id: "manifesti.5" };
+  readonly $1: EventRef<"carrier", {}, "carrier"> & { readonly id: "manifesti.1" };
+  readonly $10: EventRef<"carrier", {}, "carrier"> & { readonly id: "manifesti.10" };
+  readonly $15: EventRef<"carrier", {}, "carrier"> & { readonly id: "manifesti.15" };
+  readonly $20: EventRef<"carrier", {}, "carrier"> & { readonly id: "manifesti.20" };
+  readonly $25: EventRef<"carrier", {}, "carrier"> & { readonly id: "manifesti.25" };
+  readonly $26: EventRef<"country", {}, "country"> & { readonly id: "manifesti.26" };
+  readonly $30: EventRef<"country", {}, "country"> & { readonly id: "manifesti.30" };
+  readonly $5: EventRef<"carrier", {}, "carrier"> & { readonly id: "manifesti.5" };
 }

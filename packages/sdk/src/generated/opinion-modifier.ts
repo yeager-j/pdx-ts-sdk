@@ -14,11 +14,29 @@ import type { Trigger } from "../script/trigger-core.ts";
 export interface OpinionModifierFields {
   /** English text emitted to localization under `<id>`. */
   name: string;
-  opinion: WithFrom<WeightBlock<"country">, "country", "country", "country"> | number;
+  opinion:
+    | WithFrom<
+        WeightBlock<"country">,
+        "country",
+        { readonly root: "country"; readonly from: "country" }
+      >
+    | number;
   /** Only when opinion_modifier subtype not `triggered_opinion_modifier` applies. */
-  decay?: number | WithFrom<WeightBlock<"country">, "country", "country", "country">;
+  decay?:
+    | number
+    | WithFrom<
+        WeightBlock<"country">,
+        "country",
+        { readonly root: "country"; readonly from: "country" }
+      >;
   /** Only when opinion_modifier subtype not `triggered_opinion_modifier` applies. */
-  growth?: number | WithFrom<WeightBlock<"country">, "country", "country", "country">;
+  growth?:
+    | number
+    | WithFrom<
+        WeightBlock<"country">,
+        "country",
+        { readonly root: "country"; readonly from: "country" }
+      >;
   /**
    * No by default
    * Only when opinion_modifier subtype not `triggered_opinion_modifier` applies.
@@ -51,7 +69,11 @@ export interface OpinionModifierFields {
    * root = country with the opinion, from = country it has the opinion of
    * Only when opinion_modifier subtype `triggered_opinion_modifier` applies.
    */
-  trigger?: WithFrom<Trigger<"country">, "country", "country", "country">;
+  trigger?: WithFrom<
+    Trigger<"country">,
+    "country",
+    { readonly root: "country"; readonly from: "country" }
+  >;
 }
 
 export interface OpinionModifierDef<Id extends string = string> extends OpinionModifierFields {

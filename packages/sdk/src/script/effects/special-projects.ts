@@ -12,8 +12,8 @@
  * location.
  *
  * The four country-scoped callbacks are unaffected. Their FROM is the project's
- * own scope, which `eventScope` already states (SDK-116), and the location
- * reaches them as FROMFROM, which the SDK cannot name at all.
+ * own scope, which `eventScope` already states (SDK-116), and their generated
+ * context also exposes any declared `ctx.fromfrom` location slot.
  */
 
 import type { EnableSpecialProjectArgs } from "../../generated/effects.ts";

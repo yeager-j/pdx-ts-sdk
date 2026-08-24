@@ -150,16 +150,16 @@ describe("event reader and trie", () => {
     );
     expect(files.has("events/declared_namespace_is_not_identity.ts")).toBe(false);
     expect(file("events/fake.ts")).toContain(
-      'readonly $1: EventRef<"country", undefined, "country"> & { readonly id: "fake.1" };'
+      'readonly $1: EventRef<"country", {}, "country"> & { readonly id: "fake.1" };'
     );
     expect(file("events/observer.ts")).toContain(
-      'readonly notice: EventRef<"country", undefined, "observer"> & { readonly id: "observer.notice" };'
+      'readonly notice: EventRef<"country", {}, "observer"> & { readonly id: "observer.notice" };'
     );
     expect(file("events/generic.ts")).toContain(
       'readonly start: EventScopelessRef & { readonly id: "generic.start" };'
     );
     expect(file("events/orphan.ts")).toContain(
-      'readonly $2: EventRef<"ship", undefined, "ship"> & { readonly id: "orphan.2" };'
+      'readonly $2: EventRef<"ship", {}, "ship"> & { readonly id: "orphan.2" };'
     );
   });
 

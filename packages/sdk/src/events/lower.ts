@@ -13,9 +13,14 @@ import {
   registerModifierDescKey,
 } from "../script/effects/modifiers.ts";
 import { recordEffects, withScriptCtx } from "../script/effects/recorder.ts";
-import type { Modifier, ModifierWithLoc, ScriptCtx } from "../script/effects/types.ts";
+import type {
+  AmbientScopeContext,
+  Modifier,
+  ModifierWithLoc,
+  ScriptCtx,
+} from "../script/effects/types.ts";
 import { refId } from "../script/scalar.ts";
-import type { DefinedEvent, EventDef, LocSink } from "./types.ts";
+import type { DefinedEvent, EventBodyContext, EventDef, LocSink } from "./types.ts";
 
 /**
  * Lowers a `WeightBlock`-shaped modifier row list, reusing the `modifier_rule`
@@ -108,29 +113,31 @@ export function assertEventNumber(id: number): void {
   }
 }
 
-export function buildEvent<S extends ScopeName, From extends ScopeName | undefined>(
+export function buildEvent<S extends ScopeName, Context extends AmbientScopeContext>(
   kind: EventKindKey,
   scope: S,
   namespace: string,
-  def: EventDef<S, From>,
+  def: EventDef<S, Context>,
   loc: LocSink
-): DefinedEvent<S, From> {
+): DefinedEvent<S, Context> {
   assertEventNumber(def.id);
   // One ctx for the whole event: its `immediate`, `after`, `abort_effect` and
   // every option record separately, and all of them are this one lowering.
-  return withScriptCtx<S, From, S, DefinedEvent<S, From>>({}, (ctx) =>
-    lowerEvent(kind, scope, namespace, def, loc, ctx)
+  const scopes = eventScopes(scope, def.scopes);
+  const bodyScopes = { ...scopes, root: scope } as { readonly root: S } & typeof scopes;
+  return withScriptCtx<S, typeof bodyScopes, DefinedEvent<S, Context>>({}, (ctx) =>
+    lowerEvent<S, Context>(kind, scope, namespace, def, loc, ctx)
   );
 }
 
-function lowerEvent<S extends ScopeName, From extends ScopeName | undefined>(
+function lowerEvent<S extends ScopeName, Context extends AmbientScopeContext>(
   kind: EventKindKey,
   scope: S,
   namespace: string,
-  def: EventDef<S, From>,
+  def: EventDef<S, Context>,
   loc: LocSink,
-  ctx: ScriptCtx<S, From>
-): DefinedEvent<S, From> {
+  ctx: ScriptCtx<S, { readonly root: S } & Context>
+): DefinedEvent<S, Context> {
   const id = `${namespace}.${def.id}`;
   const flags = windowFlags(def);
   const warnings: ModWarning[] = [];
@@ -205,11 +212,12 @@ function lowerEvent<S extends ScopeName, From extends ScopeName | undefined>(
     entries.push(kv("specimen", refId(def.specimen)));
   }
   if (def.situation !== undefined) {
-    const situation = typeof def.situation === "function" ? def.situation(ctx) : def.situation;
+    const situation =
+      typeof def.situation === "function" ? def.situation(ctx as never) : def.situation;
     entries.push(kv("situation", situation.path));
   }
   if (def.location !== undefined) {
-    const location = typeof def.location === "function" ? def.location(ctx) : def.location;
+    const location = typeof def.location === "function" ? def.location(ctx as never) : def.location;
     entries.push(kv("location", location.path));
   }
   if (def.hideWindow === true) {
@@ -274,7 +282,7 @@ function lowerEvent<S extends ScopeName, From extends ScopeName | undefined>(
   }
   if (def.abortEffect !== undefined) {
     const recorded: ContentRefUse[] = [];
-    const sink = recordEffects<S>(recorded, (scope) => def.abortEffect!(scope, ctx));
+    const sink = recordEffects<S>(recorded, (scope) => def.abortEffect!(scope, ctx as never));
     entries.push(block("abort_effect", sink));
     refs.push(...underField(recorded, "abort_effect"));
   }
@@ -319,13 +327,13 @@ function lowerEvent<S extends ScopeName, From extends ScopeName | undefined>(
   }
   if (def.immediate !== undefined) {
     const recorded: ContentRefUse[] = [];
-    const sink = recordEffects<S>(recorded, (scope) => def.immediate!(scope, ctx));
+    const sink = recordEffects<S>(recorded, (scope) => def.immediate!(scope, ctx as never));
     entries.push(block("immediate", sink));
     refs.push(...underField(recorded, "immediate"));
   }
   if (def.after !== undefined) {
     const recorded: ContentRefUse[] = [];
-    const sink = recordEffects<S>(recorded, (scope) => def.after!(scope, ctx));
+    const sink = recordEffects<S>(recorded, (scope) => def.after!(scope, ctx as never));
     entries.push(block("after", sink));
     refs.push(...underField(recorded, "after"));
   }
@@ -411,7 +419,7 @@ function lowerEvent<S extends ScopeName, From extends ScopeName | undefined>(
     }
     if (option.effects !== undefined) {
       const recorded: ContentRefUse[] = [];
-      const sink = recordEffects<S>(recorded, (scope) => option.effects!(scope, ctx));
+      const sink = recordEffects<S>(recorded, (scope) => option.effects!(scope, ctx as never));
       optionEntries.push(...sink);
       refs.push(...underField(recorded, where));
     }
@@ -422,9 +430,23 @@ function lowerEvent<S extends ScopeName, From extends ScopeName | undefined>(
     kind: "event-ref",
     scope,
     id,
-    from: def.from as From,
+    scopes: eventScopes(scope, def.scopes),
     entry: block(kind, entries),
     refs,
     warnings,
   };
+}
+
+function eventScopes<S extends ScopeName, Context extends AmbientScopeContext>(
+  scope: S,
+  scopes: Context | undefined
+): Context {
+  const declared = (scopes ?? {}) as Context;
+  if (declared.root !== undefined && declared.root !== scope) {
+    throw new Error(
+      `Event scope contract declares ROOT ${declared.root}, but this event runs in ${scope} scope`
+    );
+  }
+  const { root: _root, ...ambient } = declared;
+  return ambient as Context;
 }

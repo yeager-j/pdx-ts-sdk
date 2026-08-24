@@ -5,6 +5,7 @@
 
 import type {
   AiChance,
+  EventBodyContext,
   EventLocation,
   EventOption,
   EventOptionIcon,
@@ -14,7 +15,7 @@ import type {
   MeanTimeToHappen,
   WeightMultiplier,
 } from "../events/types.ts";
-import type { ScriptCtx } from "../script/effects/types.ts";
+import type { AmbientScopeContext, ScriptCtx } from "../script/effects/types.ts";
 import type { Trigger } from "../script/trigger-core.ts";
 import type { ScopeObjOf } from "./effects.ts";
 import type {
@@ -26,13 +27,13 @@ import type {
 } from "./refs.ts";
 import type { ScopeName } from "./scopes.ts";
 
-type EventEffect<S extends ScopeName, From extends ScopeName | undefined> = (
+type EventEffect<S extends ScopeName, Context extends AmbientScopeContext> = (
   scope: ScopeObjOf<S>,
-  ctx: ScriptCtx<S, From>
+  ctx: ScriptCtx<S, EventBodyContext<S, Context>>
 ) => void;
 
 /** Event authoring fields projected from the reviewed CWT support policy. */
-export interface GeneratedEventFields<S extends ScopeName, From extends ScopeName | undefined> {
+export interface GeneratedEventFields<S extends ScopeName, Context extends AmbientScopeContext> {
   /** numeric id within the event namespace */
   readonly id: number;
   /** localized title */
@@ -62,9 +63,9 @@ export interface GeneratedEventFields<S extends ScopeName, From extends ScopeNam
   /** specimen reference */
   readonly specimen?: SpecimenRef | string;
   /** situation scope value */
-  readonly situation?: EventSituation<S, From>;
+  readonly situation?: EventSituation<S, Context>;
   /** event window location */
-  readonly location?: EventLocation<S, From>;
+  readonly location?: EventLocation<S, Context>;
   /** CWT boolean event field */
   readonly hideWindow?: boolean;
   /** CWT boolean event field */
@@ -104,23 +105,23 @@ export interface GeneratedEventFields<S extends ScopeName, From extends ScopeNam
   /** event cancellation gate */
   readonly abortTrigger?: Trigger<S>;
   /** effects run on abort */
-  readonly abortEffect?: EventEffect<S, From>;
+  readonly abortEffect?: EventEffect<S, Context>;
   /** non-triggered scheduling weight */
   readonly meanTimeToHappen?: MeanTimeToHappen<S>;
   /** triggered scheduling weight */
   readonly weightMultiplier?: WeightMultiplier<S>;
   /** immediate effect splice */
-  readonly immediate?: EventEffect<S, From>;
+  readonly immediate?: EventEffect<S, Context>;
   /** after effect splice */
-  readonly after?: EventEffect<S, From>;
+  readonly after?: EventEffect<S, Context>;
   /** repeated event options */
-  readonly options?: ReadonlyArray<EventOption<S, From>>;
+  readonly options?: ReadonlyArray<EventOption<S, Context>>;
 }
 
 /** Event option authoring fields projected from the reviewed CWT support policy. */
 export interface GeneratedEventOptionFields<
   S extends ScopeName,
-  From extends ScopeName | undefined,
+  Context extends AmbientScopeContext,
 > {
   /** one localized scalar name arm */
   readonly name: string;
@@ -149,7 +150,7 @@ export interface GeneratedEventOptionFields<
   /** event-option tag */
   readonly tag?: string;
   /** the option block's effect splice */
-  readonly effects?: EventEffect<S, From>;
+  readonly effects?: EventEffect<S, Context>;
 }
 
 export const EVENT_FIELD_SUPPORT = [

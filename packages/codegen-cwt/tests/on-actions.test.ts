@@ -16,19 +16,25 @@ describe("on-action codegen", () => {
     );
   });
 
-  it("derives the target hook's scope and FROM contracts from CWT metadata", () => {
+  it("derives complete named scope contracts from CWT metadata", () => {
     expect(emission.code).toContain(
-      'onGameStartCountry: {\n    kind: "on-action-ref",\n    name: "on_game_start_country",\n    scope: "country",\n    from: undefined,'
+      'onGameStartCountry: {\n    kind: "on-action-ref",\n    name: "on_game_start_country",\n    scope: "country",\n    scopes: {},'
     );
     expect(emission.code).toContain(
-      'onCustomDiplomacy: {\n    kind: "on-action-ref",\n    name: "on_custom_diplomacy",\n    scope: "country",\n    from: "country",'
+      'onCustomDiplomacy: {\n    kind: "on-action-ref",\n    name: "on_custom_diplomacy",\n    scope: "country",\n    scopes: {"from":"country"},'
+    );
+    expect(emission.code).toContain(
+      'onStatusQuo: {\n    kind: "on-action-ref",\n    name: "on_status_quo",\n    scope: "country",\n    scopes: {"from":"country","fromfrom":"country","fromfromfrom":"country","fromfromfromfrom":"war"},'
+    );
+    expect(emission.code).toContain(
+      'onModificationComplete: {\n    kind: "on-action-ref",\n    name: "on_modification_complete",\n    scope: "country",\n    scopes: {"from":"species","fromfrom":"species","prev":"planet"},'
     );
   });
 
   it("pins the representable and intentionally rejected hook counts", () => {
-    expect(emission.emitted).toBe(372);
+    expect(emission.emitted).toBe(363);
     expect(emission.noScope).toBe(9);
-    expect(emission.skipped).toHaveLength(18);
+    expect(emission.skipped).toHaveLength(27);
   });
 
   it("reports every unrepresentable metadata class instead of guessing", () => {
@@ -39,6 +45,11 @@ describe("on-action codegen", () => {
         "unknown this scope root",
         "unknown this scope any",
         "no_scope metadata disagrees with event_type cosmic_storm",
+        "root scope planet disagrees with this scope carrier",
+        "root scope country disagrees with this scope carrier",
+        "root scope country disagrees with this scope agreement",
+        "root scope country disagrees with this scope situation",
+        "root scope colony disagrees with this scope carrier",
       ])
     );
   });

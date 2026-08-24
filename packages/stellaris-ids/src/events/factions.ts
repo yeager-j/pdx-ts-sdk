@@ -3,16 +3,16 @@
 import type { EventRef } from "@pdx-ts/sdk";
 
 export interface VanillaEventNamespaceFactions {
-  readonly $0: EventRef<"pop_faction", undefined, "pop_faction"> & { readonly id: "factions.0" };
-  readonly $1: EventRef<"pop_faction", undefined, "pop_faction"> & { readonly id: "factions.1" };
-  readonly $10: EventRef<"country", undefined, "country"> & { readonly id: "factions.10" };
-  readonly $1005: EventRef<"carrier", undefined, "carrier"> & { readonly id: "factions.1005" };
-  readonly $11: EventRef<"country", undefined, "country"> & { readonly id: "factions.11" };
-  readonly $12: EventRef<"country", undefined, "country"> & { readonly id: "factions.12" };
-  readonly $13: EventRef<"country", undefined, "country"> & { readonly id: "factions.13" };
-  readonly $15: EventRef<"carrier", undefined, "carrier"> & { readonly id: "factions.15" };
-  readonly $2000: EventRef<"country", undefined, "country"> & { readonly id: "factions.2000" };
-  readonly $3000: EventRef<"carrier", undefined, "carrier"> & { readonly id: "factions.3000" };
-  readonly $3005: EventRef<"carrier", undefined, "carrier"> & { readonly id: "factions.3005" };
-  readonly $3010: EventRef<"carrier", undefined, "carrier"> & { readonly id: "factions.3010" };
+  readonly $0: EventRef<"pop_faction", {}, "pop_faction"> & { readonly id: "factions.0" };
+  readonly $1: EventRef<"pop_faction", {}, "pop_faction"> & { readonly id: "factions.1" };
+  readonly $10: EventRef<"country", {}, "country"> & { readonly id: "factions.10" };
+  readonly $1005: EventRef<"carrier", {}, "carrier"> & { readonly id: "factions.1005" };
+  readonly $11: EventRef<"country", {}, "country"> & { readonly id: "factions.11" };
+  readonly $12: EventRef<"country", {}, "country"> & { readonly id: "factions.12" };
+  readonly $13: EventRef<"country", {}, "country"> & { readonly id: "factions.13" };
+  readonly $15: EventRef<"carrier", {}, "carrier"> & { readonly id: "factions.15" };
+  readonly $2000: EventRef<"country", {}, "country"> & { readonly id: "factions.2000" };
+  readonly $3000: EventRef<"carrier", {}, "carrier"> & { readonly id: "factions.3000" };
+  readonly $3005: EventRef<"carrier", {}, "carrier"> & { readonly id: "factions.3005" };
+  readonly $3010: EventRef<"carrier", {}, "carrier"> & { readonly id: "factions.3010" };
 }

@@ -505,7 +505,7 @@ export interface WeaponComponentTemplateFields {
   firingArc?: number;
   minRange?: number;
   prioProjectile?: boolean;
-  possible?: WithFrom<Trigger<"design">, "design", "country">;
+  possible?: WithFrom<Trigger<"design">, "design", { readonly from: "country" }>;
   staticRotation?: boolean;
   planetDestructionGfx?: string;
   targetWeights?: Readonly<Record<string, number>>;
@@ -531,9 +531,9 @@ export interface WeaponComponentTemplateFields {
   missileRetargetRange?: number;
   pointDefenceTargets?: PointDefenceTarget[];
   /** apply effects to target on hit. Scope = ship (target), from = ship (shooter) */
-  onHit?: EffectBlock<"ship", "ship">;
-  potential?: WithFrom<Trigger<"design">, "design", "country">;
-  showTechUnlockIf?: WithFrom<Trigger<"country">, "country", "country">;
+  onHit?: EffectBlock<"ship", { readonly from: "ship" }>;
+  potential?: WithFrom<Trigger<"design">, "design", { readonly from: "country" }>;
+  showTechUnlockIf?: WithFrom<Trigger<"country">, "country", { readonly from: "country" }>;
   friendlyAura?: WeaponComponentTemplateFriendlyAura[];
   hostileAura?: WeaponComponentTemplateHostileAura[];
 }

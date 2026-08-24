@@ -170,7 +170,7 @@ event from that scope:
 ```ts
 planet.saveEventTargetAs(signalWorld);
 signalWorld.effects((savedPlanet) => {
-  savedPlanet.planetEvent({ id: aftershock, from: ctx.self, days: 30 });
+  savedPlanet.planetEvent({ id: aftershock, scopes: { from: ctx.root }, days: 30 });
 });
 ```
 
@@ -192,7 +192,7 @@ event.
 
 Event values are also references. Fire one with the method matching its event
 kind — the paired example's
-`savedPlanet.planetEvent({ id: aftershock, from: ctx.self, days: 30 })` is a
+`savedPlanet.planetEvent({ id: aftershock, scopes: { from: ctx.root }, days: 30 })` is a
 fire site. The target scope is the planet that receives the event. Optional
 `days`, `months`, `years`, and `random` values control its delay.
 
@@ -211,7 +211,7 @@ The paired planet event declares the scope it expects as `FROM`:
 
 ```ts
 const aftershock = events.planet(2, {
-  from: "country",
+  scopes: { from: "country" },
   immediate: (_planet, ctx) => {
     ctx.from.effects((country) => {
       country.addResource({ resource: "influence", amount: 50 });
@@ -220,8 +220,8 @@ const aftershock = events.planet(2, {
 });
 ```
 
-`from` is a compile-time contract; it does not emit a field in the event
-definition. At the fire site, `from: ctx.self` proves that the firing
+`scopes` is a compile-time contract; it does not emit a field in the event
+definition. At the fire site, `scopes: { from: ctx.root }` proves that the firing
 execution's root country satisfies that contract. When you pass something
 other than the firing execution's own root — for example a saved event
 target — the SDK emits a `scopes` override so the game resolves `FROM`
@@ -229,7 +229,7 @@ correctly.
 
 Natural event `FROM` is the firing execution's stable `ROOT`, not necessarily
 the current `THIS` inside a nested scope. [Scope and context](/guides/scope-and-context/#event-from-comes-from-execution-root)
-explains when to use `ctx.self`, `ctx.root`, or another absolute reference.
+explains when to use `ctx.root` or another absolute reference.
 
 ### Use handles for forward or cyclic references
 

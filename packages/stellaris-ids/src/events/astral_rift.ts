@@ -3,991 +3,365 @@
 import type { EventRef } from "@pdx-ts/sdk";
 
 export interface VanillaEventNamespaceAstralRift {
-  readonly $1: EventRef<"astral_rift", undefined, "astral_rift"> & { readonly id: "astral_rift.1" };
-  readonly $10: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.10";
-  };
-  readonly $100: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.100";
-  };
-  readonly $1000: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1000";
-  };
-  readonly $1005: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1005";
-  };
-  readonly $1006: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1006";
-  };
-  readonly $1010: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1010";
-  };
-  readonly $1015: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1015";
-  };
-  readonly $1020: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1020";
-  };
-  readonly $1025: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1025";
-  };
-  readonly $1030: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1030";
-  };
-  readonly $105: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.105";
-  };
-  readonly $1095: EventRef<"system", undefined, "system"> & { readonly id: "astral_rift.1095" };
-  readonly $110: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.110";
-  };
-  readonly $1100: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1100";
-  };
-  readonly $1105: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1105";
-  };
-  readonly $1110: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1110";
-  };
-  readonly $1115: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1115";
-  };
-  readonly $1120: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1120";
-  };
-  readonly $1125: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1125";
-  };
-  readonly $115: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.115";
-  };
-  readonly $120: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.120";
-  };
-  readonly $1200: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1200";
-  };
-  readonly $1205: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1205";
-  };
-  readonly $1210: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1210";
-  };
-  readonly $1215: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1215";
-  };
-  readonly $1220: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1220";
-  };
-  readonly $1225: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1225";
-  };
-  readonly $1230: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1230";
-  };
-  readonly $1235: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1235";
-  };
-  readonly $125: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.125";
-  };
-  readonly $130: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.130";
-  };
-  readonly $1300: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1300";
-  };
-  readonly $1305: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1305";
-  };
-  readonly $1310: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1310";
-  };
-  readonly $1311: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1311";
-  };
-  readonly $1315: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1315";
-  };
-  readonly $1316: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1316";
-  };
-  readonly $1320: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1320";
-  };
-  readonly $1325: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1325";
-  };
-  readonly $1330: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1330";
-  };
-  readonly $135: EventRef<"country", undefined, "country"> & { readonly id: "astral_rift.135" };
-  readonly $140: EventRef<"fleet", undefined, "fleet"> & { readonly id: "astral_rift.140" };
-  readonly $1400: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1400";
-  };
-  readonly $1405: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1405";
-  };
-  readonly $1410: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1410";
-  };
-  readonly $1415: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1415";
-  };
-  readonly $1420: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1420";
-  };
-  readonly $1425: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1425";
-  };
-  readonly $1430: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1430";
-  };
-  readonly $1435: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1435";
-  };
-  readonly $1440: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1440";
-  };
-  readonly $1445: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1445";
-  };
-  readonly $1450: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1450";
-  };
-  readonly $1451: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1451";
-  };
-  readonly $1455: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1455";
-  };
-  readonly $1456: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1456";
-  };
-  readonly $1457: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1457";
-  };
-  readonly $1460: EventRef<"country", undefined, "country"> & { readonly id: "astral_rift.1460" };
-  readonly $1465: EventRef<"country", undefined, "country"> & { readonly id: "astral_rift.1465" };
-  readonly $15: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.15";
-  };
-  readonly $1500: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1500";
-  };
-  readonly $1505: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1505";
-  };
-  readonly $1510: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1510";
-  };
-  readonly $1515: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1515";
-  };
-  readonly $1520: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1520";
-  };
-  readonly $1525: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1525";
-  };
-  readonly $1530: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1530";
-  };
-  readonly $1535: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1535";
-  };
-  readonly $1540: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1540";
-  };
-  readonly $1545: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1545";
-  };
-  readonly $1550: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1550";
-  };
-  readonly $1555: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1555";
-  };
-  readonly $1560: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1560";
-  };
-  readonly $1565: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1565";
-  };
-  readonly $16: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.16";
-  };
-  readonly $1600: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1600";
-  };
-  readonly $1605: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1605";
-  };
-  readonly $1610: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1610";
-  };
-  readonly $1611: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1611";
-  };
-  readonly $1615: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1615";
-  };
-  readonly $1616: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1616";
-  };
-  readonly $1620: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1620";
-  };
-  readonly $1625: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1625";
-  };
-  readonly $1698: EventRef<"country", undefined, "country"> & { readonly id: "astral_rift.1698" };
-  readonly $1699: EventRef<"country", undefined, "country"> & { readonly id: "astral_rift.1699" };
-  readonly $1700: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1700";
-  };
-  readonly $1705: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1705";
-  };
-  readonly $1710: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1710";
-  };
-  readonly $1715: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1715";
-  };
-  readonly $1720: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1720";
-  };
-  readonly $1725: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1725";
-  };
-  readonly $1800: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1800";
-  };
-  readonly $1805: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1805";
-  };
-  readonly $1810: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1810";
-  };
-  readonly $1815: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1815";
-  };
-  readonly $1816: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1816";
-  };
-  readonly $1820: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1820";
-  };
-  readonly $1825: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1825";
-  };
-  readonly $1830: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1830";
-  };
-  readonly $1835: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1835";
-  };
-  readonly $1890: EventRef<"country", undefined, "country"> & { readonly id: "astral_rift.1890" };
-  readonly $1900: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1900";
-  };
-  readonly $1905: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1905";
-  };
-  readonly $1910: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1910";
-  };
-  readonly $1915: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1915";
-  };
-  readonly $1920: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1920";
-  };
-  readonly $1925: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1925";
-  };
-  readonly $1930: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1930";
-  };
-  readonly $1935: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.1935";
-  };
-  readonly $1940: EventRef<"country", undefined, "country"> & { readonly id: "astral_rift.1940" };
-  readonly $1941: EventRef<"country", undefined, "country"> & { readonly id: "astral_rift.1941" };
-  readonly $1945: EventRef<"country", undefined, "country"> & { readonly id: "astral_rift.1945" };
-  readonly $1950: EventRef<"country", undefined, "country"> & { readonly id: "astral_rift.1950" };
-  readonly $1955: EventRef<"country", undefined, "country"> & { readonly id: "astral_rift.1955" };
-  readonly $1960: EventRef<"country", undefined, "country"> & { readonly id: "astral_rift.1960" };
-  readonly $20: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.20";
-  };
-  readonly $200: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.200";
-  };
-  readonly $2000: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2000";
-  };
-  readonly $2010: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2010";
-  };
-  readonly $2015: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2015";
-  };
-  readonly $2020: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2020";
-  };
-  readonly $2025: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2025";
-  };
-  readonly $2030: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2030";
-  };
-  readonly $2035: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2035";
-  };
-  readonly $2040: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2040";
-  };
-  readonly $2045: EventRef<"country", undefined, "country"> & { readonly id: "astral_rift.2045" };
-  readonly $205: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.205";
-  };
-  readonly $210: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.210";
-  };
-  readonly $2100: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2100";
-  };
-  readonly $2105: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2105";
-  };
-  readonly $2110: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2110";
-  };
-  readonly $2115: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2115";
-  };
-  readonly $2120: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2120";
-  };
-  readonly $2125: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2125";
-  };
-  readonly $215: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.215";
-  };
-  readonly $220: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.220";
-  };
-  readonly $2200: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2200";
-  };
-  readonly $2205: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2205";
-  };
-  readonly $2210: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2210";
-  };
-  readonly $2215: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2215";
-  };
-  readonly $2220: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2220";
-  };
-  readonly $2225: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2225";
-  };
-  readonly $2230: EventRef<"country", undefined, "country"> & { readonly id: "astral_rift.2230" };
-  readonly $225: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.225";
-  };
-  readonly $2300: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2300";
-  };
-  readonly $2305: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2305";
-  };
-  readonly $2310: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2310";
-  };
-  readonly $2315: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2315";
-  };
-  readonly $2320: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2320";
-  };
-  readonly $2325: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2325";
-  };
-  readonly $2330: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2330";
-  };
-  readonly $2398: EventRef<"country", undefined, "country"> & { readonly id: "astral_rift.2398" };
-  readonly $2399: EventRef<"country", undefined, "country"> & { readonly id: "astral_rift.2399" };
-  readonly $2400: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2400";
-  };
-  readonly $2405: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2405";
-  };
-  readonly $2410: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2410";
-  };
-  readonly $2411: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2411";
-  };
-  readonly $2415: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2415";
-  };
-  readonly $2420: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2420";
-  };
-  readonly $2425: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2425";
-  };
-  readonly $2426: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2426";
-  };
-  readonly $2427: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2427";
-  };
-  readonly $2430: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2430";
-  };
-  readonly $2431: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2431";
-  };
-  readonly $2435: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2435";
-  };
-  readonly $2440: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2440";
-  };
-  readonly $2445: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2445";
-  };
-  readonly $2450: EventRef<"country", undefined, "country"> & { readonly id: "astral_rift.2450" };
-  readonly $25: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.25";
-  };
-  readonly $2500: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2500";
-  };
-  readonly $2505: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2505";
-  };
-  readonly $2510: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2510";
-  };
-  readonly $2515: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2515";
-  };
-  readonly $2520: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2520";
-  };
-  readonly $2525: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2525";
-  };
-  readonly $2530: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2530";
-  };
-  readonly $2535: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2535";
-  };
-  readonly $2540: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2540";
-  };
-  readonly $2600: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2600";
-  };
-  readonly $2605: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2605";
-  };
-  readonly $2610: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2610";
-  };
-  readonly $2615: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2615";
-  };
-  readonly $2620: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2620";
-  };
-  readonly $2625: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2625";
-  };
-  readonly $2630: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2630";
-  };
-  readonly $2635: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2635";
-  };
-  readonly $2640: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2640";
-  };
-  readonly $2645: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2645";
-  };
-  readonly $2650: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2650";
-  };
-  readonly $2655: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2655";
-  };
-  readonly $2660: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2660";
-  };
-  readonly $2665: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2665";
-  };
-  readonly $2670: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2670";
-  };
-  readonly $2675: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2675";
-  };
-  readonly $2698: EventRef<"carrier", undefined, "carrier"> & { readonly id: "astral_rift.2698" };
-  readonly $2699: EventRef<"carrier", undefined, "carrier"> & { readonly id: "astral_rift.2699" };
-  readonly $2700: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2700";
-  };
-  readonly $2705: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2705";
-  };
-  readonly $2710: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2710";
-  };
-  readonly $2715: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2715";
-  };
-  readonly $2720: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2720";
-  };
-  readonly $2725: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2725";
-  };
-  readonly $2730: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2730";
-  };
-  readonly $2735: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2735";
-  };
-  readonly $2740: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2740";
-  };
-  readonly $2745: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2745";
-  };
-  readonly $2750: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2750";
-  };
-  readonly $2755: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2755";
-  };
-  readonly $2760: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2760";
-  };
-  readonly $2765: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2765";
-  };
-  readonly $2770: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2770";
-  };
-  readonly $2790: EventRef<"leader", undefined, "leader"> & { readonly id: "astral_rift.2790" };
-  readonly $2800: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2800";
-  };
-  readonly $2805: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2805";
-  };
-  readonly $2810: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2810";
-  };
-  readonly $2815: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2815";
-  };
-  readonly $2820: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2820";
-  };
-  readonly $2825: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2825";
-  };
-  readonly $2830: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2830";
-  };
-  readonly $2835: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2835";
-  };
-  readonly $2840: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2840";
-  };
-  readonly $2845: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2845";
-  };
-  readonly $2890: EventRef<"country", undefined, "country"> & { readonly id: "astral_rift.2890" };
-  readonly $2900: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2900";
-  };
-  readonly $2905: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2905";
-  };
-  readonly $2910: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2910";
-  };
-  readonly $2915: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2915";
-  };
-  readonly $2920: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2920";
-  };
-  readonly $2925: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2925";
-  };
-  readonly $2930: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2930";
-  };
-  readonly $2935: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2935";
-  };
-  readonly $2940: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2940";
-  };
-  readonly $2960: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2960";
-  };
-  readonly $2965: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2965";
-  };
-  readonly $2970: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2970";
-  };
-  readonly $2975: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2975";
-  };
-  readonly $2980: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2980";
-  };
-  readonly $2985: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.2985";
-  };
-  readonly $3: EventRef<"astral_rift", undefined, "astral_rift"> & { readonly id: "astral_rift.3" };
-  readonly $30: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.30";
-  };
-  readonly $300: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.300";
-  };
-  readonly $3000: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3000";
-  };
-  readonly $3005: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3005";
-  };
-  readonly $3006: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3006";
-  };
-  readonly $3010: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3010";
-  };
-  readonly $3015: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3015";
-  };
-  readonly $3020: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3020";
-  };
-  readonly $3021: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3021";
-  };
-  readonly $3025: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3025";
-  };
-  readonly $3030: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3030";
-  };
-  readonly $3031: EventRef<"country", undefined, "country"> & { readonly id: "astral_rift.3031" };
-  readonly $3035: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3035";
-  };
-  readonly $3040: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3040";
-  };
-  readonly $3045: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3045";
-  };
-  readonly $3046: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3046";
-  };
-  readonly $3047: EventRef<"country", undefined, "country"> & { readonly id: "astral_rift.3047" };
-  readonly $3049: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3049";
-  };
-  readonly $305: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.305";
-  };
-  readonly $3050: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3050";
-  };
-  readonly $3055: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3055";
-  };
-  readonly $3060: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3060";
-  };
-  readonly $3065: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3065";
-  };
-  readonly $3070: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3070";
-  };
-  readonly $3075: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3075";
-  };
-  readonly $3076: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3076";
-  };
-  readonly $3080: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3080";
-  };
-  readonly $3085: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3085";
-  };
-  readonly $3090: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3090";
-  };
-  readonly $3095: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3095";
-  };
-  readonly $3098: EventRef<"country", undefined, "country"> & { readonly id: "astral_rift.3098" };
-  readonly $3099: EventRef<"fleet", undefined, "fleet"> & { readonly id: "astral_rift.3099" };
-  readonly $310: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.310";
-  };
-  readonly $3100: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3100";
-  };
-  readonly $3105: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3105";
-  };
-  readonly $3110: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3110";
-  };
-  readonly $3111: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3111";
-  };
-  readonly $3115: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3115";
-  };
-  readonly $3120: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3120";
-  };
-  readonly $3125: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3125";
-  };
-  readonly $3130: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3130";
-  };
-  readonly $3135: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3135";
-  };
-  readonly $3140: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3140";
-  };
-  readonly $3145: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3145";
-  };
-  readonly $315: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.315";
-  };
-  readonly $3150: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3150";
-  };
-  readonly $3155: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3155";
-  };
-  readonly $3190: EventRef<"country", undefined, "country"> & { readonly id: "astral_rift.3190" };
-  readonly $320: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.320";
-  };
-  readonly $3200: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3200";
-  };
-  readonly $3205: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3205";
-  };
-  readonly $3210: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3210";
-  };
-  readonly $3215: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3215";
-  };
-  readonly $3220: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3220";
-  };
-  readonly $3225: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3225";
-  };
-  readonly $3230: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3230";
-  };
-  readonly $3235: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3235";
-  };
-  readonly $3240: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3240";
-  };
-  readonly $3245: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.3245";
-  };
-  readonly $325: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.325";
-  };
-  readonly $3280: EventRef<"country", undefined, "country"> & { readonly id: "astral_rift.3280" };
-  readonly $3285: EventRef<"country", undefined, "country"> & { readonly id: "astral_rift.3285" };
-  readonly $3290: EventRef<"fleet", undefined, "fleet"> & { readonly id: "astral_rift.3290" };
-  readonly $3291: EventRef<"system", undefined, "system"> & { readonly id: "astral_rift.3291" };
-  readonly $3292: EventRef<"ship", undefined, "ship"> & { readonly id: "astral_rift.3292" };
-  readonly $330: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.330";
-  };
-  readonly $335: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.335";
-  };
-  readonly $40: EventRef<"country", undefined, "country"> & { readonly id: "astral_rift.40" };
-  readonly $5: EventRef<"astral_rift", undefined, "astral_rift"> & { readonly id: "astral_rift.5" };
-  readonly $50: EventRef<"country", undefined, "country"> & { readonly id: "astral_rift.50" };
-  readonly $500: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.500";
-  };
-  readonly $505: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.505";
-  };
-  readonly $510: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.510";
-  };
-  readonly $515: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.515";
-  };
-  readonly $516: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.516";
-  };
-  readonly $520: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.520";
-  };
-  readonly $525: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.525";
-  };
-  readonly $530: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.530";
-  };
-  readonly $535: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.535";
-  };
-  readonly $536: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.536";
-  };
-  readonly $537: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.537";
-  };
-  readonly $55: EventRef<"country", undefined, "country"> & { readonly id: "astral_rift.55" };
-  readonly $56: EventRef<"country", undefined, "country"> & { readonly id: "astral_rift.56" };
-  readonly $57: EventRef<"country", undefined, "country"> & { readonly id: "astral_rift.57" };
-  readonly $600: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.600";
-  };
-  readonly $605: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.605";
-  };
-  readonly $610: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.610";
-  };
-  readonly $611: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.611";
-  };
-  readonly $615: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.615";
-  };
-  readonly $620: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.620";
-  };
-  readonly $625: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.625";
-  };
-  readonly $690: EventRef<"country", undefined, "country"> & { readonly id: "astral_rift.690" };
-  readonly $691: EventRef<"country", undefined, "country"> & { readonly id: "astral_rift.691" };
-  readonly $695: EventRef<"country", undefined, "country"> & { readonly id: "astral_rift.695" };
-  readonly $696: EventRef<"country", undefined, "country"> & { readonly id: "astral_rift.696" };
-  readonly $700: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.700";
-  };
-  readonly $705: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.705";
-  };
-  readonly $710: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.710";
-  };
-  readonly $715: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.715";
-  };
-  readonly $720: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.720";
-  };
-  readonly $725: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.725";
-  };
-  readonly $730: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.730";
-  };
-  readonly $800: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.800";
-  };
-  readonly $805: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.805";
-  };
-  readonly $810: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.810";
-  };
-  readonly $815: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.815";
-  };
-  readonly $820: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.820";
-  };
-  readonly $825: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.825";
-  };
-  readonly $830: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.830";
-  };
-  readonly $835: EventRef<"country", undefined, "country"> & { readonly id: "astral_rift.835" };
-  readonly $840: EventRef<"fleet", undefined, "fleet"> & { readonly id: "astral_rift.840" };
-  readonly $845: EventRef<"country", undefined, "country"> & { readonly id: "astral_rift.845" };
-  readonly $900: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.900";
-  };
-  readonly $905: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.905";
-  };
-  readonly $910: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.910";
-  };
-  readonly $915: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.915";
-  };
-  readonly $920: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.920";
-  };
-  readonly $925: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.925";
-  };
-  readonly $930: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.930";
-  };
-  readonly $935: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.935";
-  };
-  readonly $940: EventRef<"astral_rift", undefined, "astral_rift"> & {
-    readonly id: "astral_rift.940";
-  };
+  readonly $1: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1" };
+  readonly $10: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.10" };
+  readonly $100: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.100" };
+  readonly $1000: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1000" };
+  readonly $1005: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1005" };
+  readonly $1006: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1006" };
+  readonly $1010: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1010" };
+  readonly $1015: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1015" };
+  readonly $1020: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1020" };
+  readonly $1025: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1025" };
+  readonly $1030: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1030" };
+  readonly $105: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.105" };
+  readonly $1095: EventRef<"system", {}, "system"> & { readonly id: "astral_rift.1095" };
+  readonly $110: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.110" };
+  readonly $1100: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1100" };
+  readonly $1105: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1105" };
+  readonly $1110: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1110" };
+  readonly $1115: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1115" };
+  readonly $1120: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1120" };
+  readonly $1125: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1125" };
+  readonly $115: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.115" };
+  readonly $120: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.120" };
+  readonly $1200: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1200" };
+  readonly $1205: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1205" };
+  readonly $1210: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1210" };
+  readonly $1215: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1215" };
+  readonly $1220: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1220" };
+  readonly $1225: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1225" };
+  readonly $1230: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1230" };
+  readonly $1235: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1235" };
+  readonly $125: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.125" };
+  readonly $130: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.130" };
+  readonly $1300: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1300" };
+  readonly $1305: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1305" };
+  readonly $1310: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1310" };
+  readonly $1311: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1311" };
+  readonly $1315: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1315" };
+  readonly $1316: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1316" };
+  readonly $1320: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1320" };
+  readonly $1325: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1325" };
+  readonly $1330: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1330" };
+  readonly $135: EventRef<"country", {}, "country"> & { readonly id: "astral_rift.135" };
+  readonly $140: EventRef<"fleet", {}, "fleet"> & { readonly id: "astral_rift.140" };
+  readonly $1400: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1400" };
+  readonly $1405: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1405" };
+  readonly $1410: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1410" };
+  readonly $1415: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1415" };
+  readonly $1420: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1420" };
+  readonly $1425: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1425" };
+  readonly $1430: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1430" };
+  readonly $1435: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1435" };
+  readonly $1440: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1440" };
+  readonly $1445: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1445" };
+  readonly $1450: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1450" };
+  readonly $1451: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1451" };
+  readonly $1455: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1455" };
+  readonly $1456: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1456" };
+  readonly $1457: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1457" };
+  readonly $1460: EventRef<"country", {}, "country"> & { readonly id: "astral_rift.1460" };
+  readonly $1465: EventRef<"country", {}, "country"> & { readonly id: "astral_rift.1465" };
+  readonly $15: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.15" };
+  readonly $1500: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1500" };
+  readonly $1505: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1505" };
+  readonly $1510: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1510" };
+  readonly $1515: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1515" };
+  readonly $1520: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1520" };
+  readonly $1525: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1525" };
+  readonly $1530: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1530" };
+  readonly $1535: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1535" };
+  readonly $1540: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1540" };
+  readonly $1545: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1545" };
+  readonly $1550: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1550" };
+  readonly $1555: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1555" };
+  readonly $1560: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1560" };
+  readonly $1565: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1565" };
+  readonly $16: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.16" };
+  readonly $1600: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1600" };
+  readonly $1605: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1605" };
+  readonly $1610: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1610" };
+  readonly $1611: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1611" };
+  readonly $1615: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1615" };
+  readonly $1616: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1616" };
+  readonly $1620: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1620" };
+  readonly $1625: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1625" };
+  readonly $1698: EventRef<"country", {}, "country"> & { readonly id: "astral_rift.1698" };
+  readonly $1699: EventRef<"country", {}, "country"> & { readonly id: "astral_rift.1699" };
+  readonly $1700: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1700" };
+  readonly $1705: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1705" };
+  readonly $1710: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1710" };
+  readonly $1715: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1715" };
+  readonly $1720: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1720" };
+  readonly $1725: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1725" };
+  readonly $1800: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1800" };
+  readonly $1805: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1805" };
+  readonly $1810: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1810" };
+  readonly $1815: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1815" };
+  readonly $1816: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1816" };
+  readonly $1820: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1820" };
+  readonly $1825: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1825" };
+  readonly $1830: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1830" };
+  readonly $1835: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1835" };
+  readonly $1890: EventRef<"country", {}, "country"> & { readonly id: "astral_rift.1890" };
+  readonly $1900: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1900" };
+  readonly $1905: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1905" };
+  readonly $1910: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1910" };
+  readonly $1915: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1915" };
+  readonly $1920: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1920" };
+  readonly $1925: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1925" };
+  readonly $1930: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1930" };
+  readonly $1935: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.1935" };
+  readonly $1940: EventRef<"country", {}, "country"> & { readonly id: "astral_rift.1940" };
+  readonly $1941: EventRef<"country", {}, "country"> & { readonly id: "astral_rift.1941" };
+  readonly $1945: EventRef<"country", {}, "country"> & { readonly id: "astral_rift.1945" };
+  readonly $1950: EventRef<"country", {}, "country"> & { readonly id: "astral_rift.1950" };
+  readonly $1955: EventRef<"country", {}, "country"> & { readonly id: "astral_rift.1955" };
+  readonly $1960: EventRef<"country", {}, "country"> & { readonly id: "astral_rift.1960" };
+  readonly $20: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.20" };
+  readonly $200: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.200" };
+  readonly $2000: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2000" };
+  readonly $2010: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2010" };
+  readonly $2015: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2015" };
+  readonly $2020: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2020" };
+  readonly $2025: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2025" };
+  readonly $2030: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2030" };
+  readonly $2035: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2035" };
+  readonly $2040: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2040" };
+  readonly $2045: EventRef<"country", {}, "country"> & { readonly id: "astral_rift.2045" };
+  readonly $205: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.205" };
+  readonly $210: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.210" };
+  readonly $2100: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2100" };
+  readonly $2105: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2105" };
+  readonly $2110: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2110" };
+  readonly $2115: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2115" };
+  readonly $2120: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2120" };
+  readonly $2125: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2125" };
+  readonly $215: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.215" };
+  readonly $220: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.220" };
+  readonly $2200: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2200" };
+  readonly $2205: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2205" };
+  readonly $2210: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2210" };
+  readonly $2215: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2215" };
+  readonly $2220: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2220" };
+  readonly $2225: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2225" };
+  readonly $2230: EventRef<"country", {}, "country"> & { readonly id: "astral_rift.2230" };
+  readonly $225: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.225" };
+  readonly $2300: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2300" };
+  readonly $2305: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2305" };
+  readonly $2310: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2310" };
+  readonly $2315: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2315" };
+  readonly $2320: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2320" };
+  readonly $2325: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2325" };
+  readonly $2330: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2330" };
+  readonly $2398: EventRef<"country", {}, "country"> & { readonly id: "astral_rift.2398" };
+  readonly $2399: EventRef<"country", {}, "country"> & { readonly id: "astral_rift.2399" };
+  readonly $2400: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2400" };
+  readonly $2405: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2405" };
+  readonly $2410: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2410" };
+  readonly $2411: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2411" };
+  readonly $2415: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2415" };
+  readonly $2420: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2420" };
+  readonly $2425: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2425" };
+  readonly $2426: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2426" };
+  readonly $2427: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2427" };
+  readonly $2430: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2430" };
+  readonly $2431: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2431" };
+  readonly $2435: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2435" };
+  readonly $2440: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2440" };
+  readonly $2445: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2445" };
+  readonly $2450: EventRef<"country", {}, "country"> & { readonly id: "astral_rift.2450" };
+  readonly $25: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.25" };
+  readonly $2500: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2500" };
+  readonly $2505: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2505" };
+  readonly $2510: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2510" };
+  readonly $2515: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2515" };
+  readonly $2520: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2520" };
+  readonly $2525: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2525" };
+  readonly $2530: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2530" };
+  readonly $2535: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2535" };
+  readonly $2540: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2540" };
+  readonly $2600: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2600" };
+  readonly $2605: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2605" };
+  readonly $2610: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2610" };
+  readonly $2615: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2615" };
+  readonly $2620: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2620" };
+  readonly $2625: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2625" };
+  readonly $2630: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2630" };
+  readonly $2635: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2635" };
+  readonly $2640: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2640" };
+  readonly $2645: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2645" };
+  readonly $2650: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2650" };
+  readonly $2655: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2655" };
+  readonly $2660: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2660" };
+  readonly $2665: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2665" };
+  readonly $2670: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2670" };
+  readonly $2675: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2675" };
+  readonly $2698: EventRef<"carrier", {}, "carrier"> & { readonly id: "astral_rift.2698" };
+  readonly $2699: EventRef<"carrier", {}, "carrier"> & { readonly id: "astral_rift.2699" };
+  readonly $2700: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2700" };
+  readonly $2705: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2705" };
+  readonly $2710: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2710" };
+  readonly $2715: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2715" };
+  readonly $2720: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2720" };
+  readonly $2725: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2725" };
+  readonly $2730: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2730" };
+  readonly $2735: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2735" };
+  readonly $2740: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2740" };
+  readonly $2745: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2745" };
+  readonly $2750: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2750" };
+  readonly $2755: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2755" };
+  readonly $2760: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2760" };
+  readonly $2765: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2765" };
+  readonly $2770: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2770" };
+  readonly $2790: EventRef<"leader", {}, "leader"> & { readonly id: "astral_rift.2790" };
+  readonly $2800: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2800" };
+  readonly $2805: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2805" };
+  readonly $2810: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2810" };
+  readonly $2815: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2815" };
+  readonly $2820: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2820" };
+  readonly $2825: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2825" };
+  readonly $2830: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2830" };
+  readonly $2835: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2835" };
+  readonly $2840: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2840" };
+  readonly $2845: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2845" };
+  readonly $2890: EventRef<"country", {}, "country"> & { readonly id: "astral_rift.2890" };
+  readonly $2900: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2900" };
+  readonly $2905: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2905" };
+  readonly $2910: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2910" };
+  readonly $2915: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2915" };
+  readonly $2920: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2920" };
+  readonly $2925: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2925" };
+  readonly $2930: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2930" };
+  readonly $2935: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2935" };
+  readonly $2940: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2940" };
+  readonly $2960: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2960" };
+  readonly $2965: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2965" };
+  readonly $2970: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2970" };
+  readonly $2975: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2975" };
+  readonly $2980: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2980" };
+  readonly $2985: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.2985" };
+  readonly $3: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3" };
+  readonly $30: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.30" };
+  readonly $300: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.300" };
+  readonly $3000: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3000" };
+  readonly $3005: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3005" };
+  readonly $3006: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3006" };
+  readonly $3010: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3010" };
+  readonly $3015: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3015" };
+  readonly $3020: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3020" };
+  readonly $3021: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3021" };
+  readonly $3025: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3025" };
+  readonly $3030: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3030" };
+  readonly $3031: EventRef<"country", {}, "country"> & { readonly id: "astral_rift.3031" };
+  readonly $3035: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3035" };
+  readonly $3040: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3040" };
+  readonly $3045: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3045" };
+  readonly $3046: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3046" };
+  readonly $3047: EventRef<"country", {}, "country"> & { readonly id: "astral_rift.3047" };
+  readonly $3049: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3049" };
+  readonly $305: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.305" };
+  readonly $3050: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3050" };
+  readonly $3055: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3055" };
+  readonly $3060: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3060" };
+  readonly $3065: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3065" };
+  readonly $3070: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3070" };
+  readonly $3075: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3075" };
+  readonly $3076: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3076" };
+  readonly $3080: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3080" };
+  readonly $3085: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3085" };
+  readonly $3090: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3090" };
+  readonly $3095: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3095" };
+  readonly $3098: EventRef<"country", {}, "country"> & { readonly id: "astral_rift.3098" };
+  readonly $3099: EventRef<"fleet", {}, "fleet"> & { readonly id: "astral_rift.3099" };
+  readonly $310: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.310" };
+  readonly $3100: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3100" };
+  readonly $3105: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3105" };
+  readonly $3110: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3110" };
+  readonly $3111: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3111" };
+  readonly $3115: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3115" };
+  readonly $3120: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3120" };
+  readonly $3125: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3125" };
+  readonly $3130: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3130" };
+  readonly $3135: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3135" };
+  readonly $3140: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3140" };
+  readonly $3145: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3145" };
+  readonly $315: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.315" };
+  readonly $3150: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3150" };
+  readonly $3155: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3155" };
+  readonly $3190: EventRef<"country", {}, "country"> & { readonly id: "astral_rift.3190" };
+  readonly $320: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.320" };
+  readonly $3200: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3200" };
+  readonly $3205: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3205" };
+  readonly $3210: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3210" };
+  readonly $3215: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3215" };
+  readonly $3220: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3220" };
+  readonly $3225: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3225" };
+  readonly $3230: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3230" };
+  readonly $3235: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3235" };
+  readonly $3240: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3240" };
+  readonly $3245: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.3245" };
+  readonly $325: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.325" };
+  readonly $3280: EventRef<"country", {}, "country"> & { readonly id: "astral_rift.3280" };
+  readonly $3285: EventRef<"country", {}, "country"> & { readonly id: "astral_rift.3285" };
+  readonly $3290: EventRef<"fleet", {}, "fleet"> & { readonly id: "astral_rift.3290" };
+  readonly $3291: EventRef<"system", {}, "system"> & { readonly id: "astral_rift.3291" };
+  readonly $3292: EventRef<"ship", {}, "ship"> & { readonly id: "astral_rift.3292" };
+  readonly $330: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.330" };
+  readonly $335: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.335" };
+  readonly $40: EventRef<"country", {}, "country"> & { readonly id: "astral_rift.40" };
+  readonly $5: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.5" };
+  readonly $50: EventRef<"country", {}, "country"> & { readonly id: "astral_rift.50" };
+  readonly $500: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.500" };
+  readonly $505: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.505" };
+  readonly $510: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.510" };
+  readonly $515: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.515" };
+  readonly $516: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.516" };
+  readonly $520: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.520" };
+  readonly $525: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.525" };
+  readonly $530: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.530" };
+  readonly $535: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.535" };
+  readonly $536: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.536" };
+  readonly $537: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.537" };
+  readonly $55: EventRef<"country", {}, "country"> & { readonly id: "astral_rift.55" };
+  readonly $56: EventRef<"country", {}, "country"> & { readonly id: "astral_rift.56" };
+  readonly $57: EventRef<"country", {}, "country"> & { readonly id: "astral_rift.57" };
+  readonly $600: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.600" };
+  readonly $605: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.605" };
+  readonly $610: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.610" };
+  readonly $611: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.611" };
+  readonly $615: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.615" };
+  readonly $620: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.620" };
+  readonly $625: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.625" };
+  readonly $690: EventRef<"country", {}, "country"> & { readonly id: "astral_rift.690" };
+  readonly $691: EventRef<"country", {}, "country"> & { readonly id: "astral_rift.691" };
+  readonly $695: EventRef<"country", {}, "country"> & { readonly id: "astral_rift.695" };
+  readonly $696: EventRef<"country", {}, "country"> & { readonly id: "astral_rift.696" };
+  readonly $700: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.700" };
+  readonly $705: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.705" };
+  readonly $710: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.710" };
+  readonly $715: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.715" };
+  readonly $720: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.720" };
+  readonly $725: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.725" };
+  readonly $730: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.730" };
+  readonly $800: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.800" };
+  readonly $805: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.805" };
+  readonly $810: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.810" };
+  readonly $815: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.815" };
+  readonly $820: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.820" };
+  readonly $825: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.825" };
+  readonly $830: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.830" };
+  readonly $835: EventRef<"country", {}, "country"> & { readonly id: "astral_rift.835" };
+  readonly $840: EventRef<"fleet", {}, "fleet"> & { readonly id: "astral_rift.840" };
+  readonly $845: EventRef<"country", {}, "country"> & { readonly id: "astral_rift.845" };
+  readonly $900: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.900" };
+  readonly $905: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.905" };
+  readonly $910: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.910" };
+  readonly $915: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.915" };
+  readonly $920: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.920" };
+  readonly $925: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.925" };
+  readonly $930: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.930" };
+  readonly $935: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.935" };
+  readonly $940: EventRef<"astral_rift", {}, "astral_rift"> & { readonly id: "astral_rift.940" };
 }

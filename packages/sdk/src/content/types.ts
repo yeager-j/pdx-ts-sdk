@@ -12,6 +12,8 @@ import type { ScopedModifierBlock, ScopedModifierRecorder } from "../generated/m
 import type { EconomicCategoryRef } from "../generated/refs.ts";
 import type { ScopeName } from "../generated/scopes.ts";
 import type {
+  AmbientScopeContext,
+  AmbientScopeKey,
   ComplexTriggerModifier,
   ComplexTriggerModifierWithLoc,
   Modifier,
@@ -379,15 +381,15 @@ export interface WeightBlockWithLoc<S extends ScopeName> extends WeightBlockWith
  * `init_effect` on a solar system initializer runs in planet scope with a
  * country as ROOT.
  */
-export type EffectBlock<
-  S extends ScopeName,
-  From extends ScopeName | undefined = undefined,
-  Root extends ScopeName | undefined = undefined,
-> = (scope: ScopeObjOf<S>, ctx: ScriptCtx<S, From, Root>) => void;
+export type EffectBlock<S extends ScopeName, Context extends AmbientScopeContext = {}> = (
+  scope: ScopeObjOf<S>,
+  ctx: ScriptCtx<S, Context>
+) => void;
 
 /**
- * A declarative field whose rules give the block a FROM: the value itself, or
- * a closure handed the block's scopes that returns it.
+ * A declarative field whose rules give the block a named non-ROOT ambient
+ * scope: the value itself, or a closure handed the block's scopes that returns
+ * it.
  *
  *     allow: (ctx) => ctx.from.trigger(hasSiteFlag("x"))
  *
@@ -395,22 +397,20 @@ export type EffectBlock<
  * argument list to put FROM in — this adds one. The plain form stays: a
  * condition that never names FROM has no reason to grow a closure around it.
  *
- * Emitted only where the rules name a FROM, so the type's presence on a field
- * *is* the statement that FROM means something there. The closure runs once,
- * at definition time (see `ContentAuthoring.define`), so what the definition
- * carries from then on is the ordinary value.
+ * Emitted only where the rules name a FROM or PREV slot, so the type's
+ * presence on a field is the statement that an ambient scope means something
+ * there. The closure runs once, at definition time (see
+ * `ContentAuthoring.define`), so what the definition carries from then on is
+ * the ordinary value.
  *
  * `Root` rides along on the same closure where the rules also name a ROOT, on
- * {@link EffectBlock}'s terms. A field that declares ROOT but no FROM still
- * gets no closure form: the wrapper is emitted on FROM alone, so ROOT is
- * unreachable there — a pre-existing gap, not a statement about that field.
+ * {@link EffectBlock}'s terms. A field that declares ROOT but no other ambient
+ * scope stays a plain value: ROOT alone is not a reason to add a callback.
  */
-export type WithFrom<
-  T,
-  S extends ScopeName,
-  From extends ScopeName | undefined = undefined,
-  Root extends ScopeName | undefined = undefined,
-> = T | ((ctx: ScriptCtx<S, From, Root>) => T);
+export type WithFrom<T, S extends ScopeName, Context extends AmbientScopeContext = {}> =
+  Extract<keyof Context, Exclude<AmbientScopeKey, "root">> extends never
+    ? T
+    : T | ((ctx: ScriptCtx<S, Context>) => T);
 
 /**
  * A conditionally selected description block shared by manually authored

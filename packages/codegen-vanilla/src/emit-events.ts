@@ -54,7 +54,7 @@ export function emitEventTrie(
       const reference =
         event.scope === null
           ? "EventScopelessRef"
-          : `EventRef<${gate.literal(event.scope, "event scope")}, undefined, ${gate.literal(event.subtype, "event subtype")}>`;
+          : `EventRef<${gate.literal(event.scope, "event scope")}, {}, ${gate.literal(event.subtype, "event subtype")}>`;
       return `readonly ${navigationKey}: ${reference} & { readonly id: ${id} };`;
     });
     const file = `events/${namespace}.ts`;

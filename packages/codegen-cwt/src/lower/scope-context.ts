@@ -64,7 +64,32 @@ export interface FieldScope {
    * It is independent of the block's own scope and `null` when undeclared.
    */
   readonly root: string | null;
+  /** Every named ambient slot, in the public map's canonical order. */
+  readonly context: Readonly<Record<AmbientKey, string | null>>;
 }
+
+type AmbientKey =
+  | "root"
+  | "from"
+  | "fromfrom"
+  | "fromfromfrom"
+  | "fromfromfromfrom"
+  | "prev"
+  | "prevprev"
+  | "prevprevprev"
+  | "prevprevprevprev";
+
+const AMBIENT_KEYS: readonly AmbientKey[] = [
+  "root",
+  "from",
+  "fromfrom",
+  "fromfromfrom",
+  "fromfromfromfrom",
+  "prev",
+  "prevprev",
+  "prevprevprev",
+  "prevprevprevprev",
+];
 
 /**
  * The scope FROM holds inside one field's block.
@@ -96,7 +121,7 @@ function ambientType(
   emitter: Emitter,
   field: RuleField,
   ctx: FieldContext,
-  ambient: "from" | "root"
+  ambient: AmbientKey
 ): string | null {
   const declared =
     field.scope?.replaces === true
@@ -122,20 +147,25 @@ export function scopeType(
   // An asserted FROM wins over the rules, on `ContentFieldOverride.scope`'s
   // terms: it is there because the rules state no FROM at all, and a rule that
   // later states one is a disagreement to review rather than to average.
-  const from = ctx.assertedFrom ?? fromType(emitter, field, ctx);
-  const root = rootType(emitter, field, ctx);
+  const context = Object.fromEntries(
+    AMBIENT_KEYS.map((key) => [key, ambientType(emitter, field, ctx, key)])
+  ) as Record<AmbientKey, string | null>;
+  context.from = ctx.assertedFrom ?? context.from;
+  const from = context.from;
+  const root = context.root;
   if (asserted !== undefined) {
     const canonical = emitter.canonicalScope(asserted);
     if (canonical === null) {
       throw new Error(`Overlay asserts unknown scope "${asserted}"`);
     }
-    return { type: JSON.stringify(canonical), scopes: [canonical], from, root };
+    return { type: JSON.stringify(canonical), scopes: [canonical], from, root, context };
   }
   const unpinned: FieldScope = {
     type: ctx.unpinned,
     scopes: "any",
     from,
     root,
+    context,
     ...(ctx.unpinnedSymbol === undefined ? {} : { unpinned: ctx.unpinnedSymbol }),
   };
   const declared = field.scope?.this ?? ctx.scope?.this;
@@ -145,20 +175,22 @@ export function scopeType(
   const canonical = emitter.canonicalScope(declared);
   return canonical === null
     ? unpinned
-    : { type: JSON.stringify(canonical), scopes: [canonical], from, root };
+    : { type: JSON.stringify(canonical), scopes: [canonical], from, root, context };
 }
 
 /**
- * Renders `EffectBlock` generic arguments for the block's own scope, FROM, and ROOT.
- * Trailing arguments are omitted when absent; ROOT without FROM uses `undefined`
- * for the required middle slot.
+ * Renders `EffectBlock` generic arguments with the complete named ambient map.
  */
 export function effectBlockArgs(emitter: Emitter, scope: FieldScope): string {
-  const own = scopeArg(emitter, scope);
-  if (scope.root !== null) {
-    return `${own}, ${scope.from ?? "undefined"}, ${scope.root}`;
-  }
-  return scope.from === null ? own : `${own}, ${scope.from}`;
+  return `${scopeArg(emitter, scope)}, ${contextLiteral(scope)}`;
+}
+
+function contextLiteral(scope: FieldScope): string {
+  const members = AMBIENT_KEYS.flatMap((key) => {
+    const value = scope.context[key];
+    return value === null ? [] : [`readonly ${key}: ${value}`];
+  });
+  return members.length === 0 ? "{}" : `{ ${members.join("; ")} }`;
 }
 
 /**
@@ -173,15 +205,14 @@ export function splitRootMetadata(scope: FieldScope): readonly string[] {
 }
 
 /**
- * Wraps a declarative member type in `WithFrom` when the block exposes FROM.
- * ROOT is included only with that wrapper; a block with no FROM keeps the original type.
+ * Wraps a declarative member type in `WithFrom` when it exposes any ambient
+ * scope. The historical name is retained for generated-emitter call sites.
  */
 export function withFrom(emitter: Emitter, inner: string, scope: FieldScope): string {
-  if (scope.from === null) {
+  if (AMBIENT_KEYS.filter((key) => key !== "root").every((key) => scope.context[key] === null)) {
     return inner;
   }
-  const root = scope.root === null ? "" : `, ${scope.root}`;
-  return `${emitter.use("WithFrom")}<${inner}, ${scopeArg(emitter, scope)}, ${scope.from}${root}>`;
+  return `${emitter.use("WithFrom")}<${inner}, ${scopeArg(emitter, scope)}, ${contextLiteral(scope)}>`;
 }
 
 /**
@@ -202,6 +233,13 @@ function pushedScope(fieldScope: ScopeContext, parentScope: ScopeContext | null)
         this: fieldScope.this,
         root: parentScope?.root ?? null,
         from: parentScope?.from ?? null,
+        fromfrom: parentScope?.fromfrom ?? null,
+        fromfromfrom: parentScope?.fromfromfrom ?? null,
+        fromfromfromfrom: parentScope?.fromfromfromfrom ?? null,
+        prev: parentScope?.prev ?? null,
+        prevprev: parentScope?.prevprev ?? null,
+        prevprevprev: parentScope?.prevprevprev ?? null,
+        prevprevprevprev: parentScope?.prevprevprevprev ?? null,
         replaces: false,
       };
 }

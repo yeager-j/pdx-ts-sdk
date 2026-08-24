@@ -10,7 +10,7 @@ const events = mod.namespace("signal");
 const signalWorld = eventTarget<"planet">("crystal_resonance_signal_world");
 
 const aftershock = events.planet(2, {
-  from: "country",
+  scopes: { from: "country" },
   title: "A World Answers",
   desc: "The signal has found an echo beneath the planet's surface.",
   location: (ctx) => ctx.self,
@@ -35,7 +35,7 @@ const signalDetected = events.country(1, {
         country.randomOwnedPlanet({ limit: hasOwner() }, (planet) => {
           planet.saveEventTargetAs(signalWorld);
           signalWorld.effects((savedPlanet) => {
-            savedPlanet.planetEvent({ id: aftershock, from: ctx.self, days: 30 });
+            savedPlanet.planetEvent({ id: aftershock, scopes: { from: ctx.root }, days: 30 });
           });
         });
       },

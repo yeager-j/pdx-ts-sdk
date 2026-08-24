@@ -28,7 +28,7 @@ export interface TraditionSwapFields {
   customTooltipWithModifiers?: string[];
   /** accepts only country modifiers */
   modifier?: ModifierClosure<"country">;
-  onEnabled?: EffectBlock<"country", undefined, "country">;
+  onEnabled?: EffectBlock<"country", { readonly root: "country" }>;
   /** this determines the chances of a tradition swap appearing for a given empire IF multiple swaps are potential. */
   weight?: WeightBlock<"country">;
   trigger?: Trigger<"country">;
@@ -117,7 +117,7 @@ export interface TraditionFields {
   modifier?: ModifierClosure<"country">;
   triggeredModifier?: TriggeredModifier<"country">[];
   possible?: Trigger<"country">;
-  onEnabled?: EffectBlock<"country", undefined, "country">;
+  onEnabled?: EffectBlock<"country", { readonly root: "country" }>;
   customTooltip?: string[];
   customTooltipWithModifiers?: string[];
   traditionSwap?: Readonly<Record<string, TraditionSwapFields>>;

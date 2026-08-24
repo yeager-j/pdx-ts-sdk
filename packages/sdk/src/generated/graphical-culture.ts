@@ -129,7 +129,7 @@ export interface GraphicalCultureFields {
   selectable?: Trigger<never>;
   shipKinds?: (ShipCategoriesRef | string)[];
   /** the scope contains the species this is for. from contains the country this is for. the country's gfx culture is set to this gfx culture for easy access */
-  shipSelectionWeight?: WithFrom<WeightBlock<"species">, "species", "country">;
+  shipSelectionWeight?: WithFrom<WeightBlock<"species">, "species", { readonly from: "country" }>;
 }
 
 export interface GraphicalCultureDef<Id extends string = string> extends GraphicalCultureFields {

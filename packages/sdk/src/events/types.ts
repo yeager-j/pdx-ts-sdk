@@ -1,14 +1,13 @@
 /**
- * Typed event definitions with the FROM contract.
+ * Typed event definitions with an ambient scope contract.
  *
- * An event declares the scope it expects FROM to be (`from: "country"`) as a
- * phantom type; every fire site is then checked against it by passing a
- * witness value. Natural event FROM is the firing execution's ROOT, so
- * `ctx.self` is the usual witness where SELF and ROOT are the same; a known
- * split-root block cannot make that claim. A witness that names another ref
- * emits the game's own `scopes = { from = ... }` override block. The witness needs
- * `NoInfer` so it cannot widen the inferred FROM, and an undeclared FROM is a
- * sentinel rather than `never` so the overload stays selectable.
+ * An event declares its ambient scopes (`scopes: { from: "country" }`) as a
+ * phantom type. Every fire site then supplies a witness for every declared
+ * FROM slot. Natural event FROM is the firing execution's ROOT, so `ctx.root`
+ * is the usual witness; a known split-root block cannot use `ctx.self` for
+ * that claim. A witness that names another ref emits the game's `scopes`
+ * override block. PREV scopes are game-supplied and cannot be overridden by
+ * typed explicit fires.
  *
  * Event closures run eagerly, inside define: errors carry the author's
  * stack, and cross-references require definition order the same way
@@ -27,6 +26,8 @@ import type { SoundEffectRef, SpriteRef } from "../generated/refs.ts";
 import type { ScopeName } from "../generated/scopes.ts";
 import type { ContentRefUse } from "../references.ts";
 import {
+  type AmbientScopeContext,
+  type AmbientScopeKey,
   type FireFromWitness,
   type Modifier,
   type ScopeValue,
@@ -50,7 +51,7 @@ export interface EventItemBase {
   readonly kind: "event-ref";
   readonly namespace: string;
   readonly scope: ScopeName;
-  readonly from: ScopeName | undefined;
+  readonly scopes: AmbientScopeContext;
   /** The full id, e.g. `pp_mod_ascension.2`. */
   readonly id: string;
   readonly entry: PdxEntry;
@@ -72,18 +73,17 @@ export function isAuthoredEvent(value: unknown): value is EventItemBase {
  */
 export type EventItem<
   S extends ScopeName = ScopeName,
-  From extends ScopeName | undefined = ScopeName | undefined,
+  Context extends AmbientScopeContext = AmbientScopeContext,
   Kind extends string = S,
-> = DefinedEvent<S, From, Kind> & {
+> = DefinedEvent<S, Context, Kind> & {
   readonly itemKind: "event";
   readonly namespace: string;
   readonly locEntries: ReadonlyArray<readonly [string, string]>;
 };
 
 /**
- * A defined event, usable as the `id` of a fire effect. `From` is the scope
- * the event declared it will be fired from — the phantom that makes firing a
- * `from: "country"` event without a country witness a compile error.
+ * A defined event, usable as the `id` of a fire effect. Its ambient context is
+ * the contract the event declares for every named scope slot.
  *
  * It is a `TypedRef` for its own scope's event subtype, which is what makes an
  * event flow into the reference fields that take one — an archaeology stage's
@@ -103,15 +103,16 @@ export type EventItem<
  */
 export interface EventRef<
   S extends ScopeName = ScopeName,
-  From extends ScopeName | undefined = ScopeName | undefined,
+  Context extends AmbientScopeContext = AmbientScopeContext,
   Kind extends string = S,
 > extends TypedRef<`event.${Kind}`> {
   readonly kind: "event-ref";
   /** The full id, e.g. `hello_galaxy.2`. */
   readonly id: string;
-  /** Scope and FROM are compile-time contracts; bare references carry no runtime metadata. */
+  /** Scope and ambient chains are compile-time contracts; bare references carry no runtime metadata. */
   readonly [eventScopeBrand]?: S;
-  readonly [eventFromBrand]?: From;
+  /** Keeps the full ambient contract invariant at typed fire and hook boundaries. */
+  readonly [eventFromBrand]?: (context: Context) => Context;
 }
 
 /**
@@ -151,8 +152,8 @@ export interface EventTriggeredDescription<S extends ScopeName> extends Triggere
 
 export interface EventOption<
   S extends ScopeName,
-  From extends ScopeName | undefined,
-> extends GeneratedEventOptionFields<S, From> {
+  Context extends AmbientScopeContext,
+> extends GeneratedEventOptionFields<S, Context> {
   /**
    * Safe localization suffix shared by the option name, icon caption, response,
    * and AI-chance modifier descriptions. When omitted, the SDK uses the first
@@ -172,8 +173,9 @@ export interface EventOption<
  * commonest `location` in vanilla by a wide margin — `location: target()`,
  * the value form of the `target` link (`script/triggers.ts`).
  */
-export type EventLocation<S extends ScopeName, From extends ScopeName | undefined> =
-  ScopeValue<ScopeName> | ((ctx: ScriptCtx<S, From>) => ScopeValue<ScopeName>);
+export type EventLocation<S extends ScopeName, Context extends AmbientScopeContext> =
+  | ScopeValue<ScopeName>
+  | ((ctx: ScriptCtx<S, EventBodyContext<S, Context>>) => ScopeValue<ScopeName>);
 
 /**
  * A `situation` value (`events.cwt:399`, `scope[situation]`): the same fixed
@@ -184,8 +186,9 @@ export type EventLocation<S extends ScopeName, From extends ScopeName | undefine
  * authoring `situation = from` meant forging the internal `ScopeValue` shape
  * by hand.
  */
-export type EventSituation<S extends ScopeName, From extends ScopeName | undefined> =
-  ScopeValue<"situation"> | ((ctx: ScriptCtx<S, From>) => ScopeValue<"situation">);
+export type EventSituation<S extends ScopeName, Context extends AmbientScopeContext> =
+  | ScopeValue<"situation">
+  | ((ctx: ScriptCtx<S, EventBodyContext<S, Context>>) => ScopeValue<"situation">);
 
 /**
  * A `mean_time_to_happen` block (`events.cwt:456`, `subtype[!triggered]`):
@@ -239,23 +242,29 @@ export type EventWindowType =
 
 export interface EventDef<
   S extends ScopeName,
-  From extends ScopeName | undefined,
-> extends GeneratedEventFields<S, From> {
+  Context extends AmbientScopeContext,
+> extends GeneratedEventFields<S, Context> {
   /**
    * The scope this event expects FROM to be when fired. Emits nothing — it
    * is the compile-time contract every fire site is checked against.
    */
-  readonly from?: From;
+  readonly scopes?: Context;
 }
+
+/** The execution context every event body receives: its root is the event scope. */
+export type EventBodyContext<S extends ScopeName, Context extends AmbientScopeContext> = Omit<
+  Context,
+  "root"
+> & { readonly root: S };
 
 export type DefinedEvent<
   S extends ScopeName,
-  From extends ScopeName | undefined,
+  Context extends AmbientScopeContext,
   Kind extends string = S,
-> = EventRef<S, From, Kind> & {
+> = EventRef<S, Context, Kind> & {
   /** Runtime metadata carried by an authored definition, not a bare reference. */
   readonly scope: S;
-  readonly from: From;
+  readonly scopes: Context;
   readonly entry: PdxEntry;
   /**
    * Content references the event's closures and option conditions wrote. The
@@ -289,7 +298,7 @@ export interface LocSink {
 
 export interface FireEventArgs<
   S extends ScopeName,
-  From extends ScopeName | undefined,
+  Context extends AmbientScopeContext,
   Kind extends string = S,
 > {
   /**
@@ -297,7 +306,7 @@ export interface FireEventArgs<
    * `observer_event = { id = ... }` dispatches an observer event, and an
    * ordinary country event is not one however alike their scopes are.
    */
-  readonly id: EventRef<S, From, Kind> | string;
+  readonly id: EventRef<S, Context, Kind> | string;
   readonly days?: number;
   readonly months?: number;
   readonly years?: number;
@@ -307,14 +316,26 @@ export interface FireEventArgs<
 
 export interface WitnessedFireEventArgs<
   S extends ScopeName,
-  F extends ScopeName,
+  Context extends AmbientScopeContext,
   Kind extends string = S,
-> extends FireEventArgs<S, F, Kind> {
+> extends FireEventArgs<S, Context, Kind> {
   /**
    * Proof the fired event's declared FROM is satisfied: usually `ctx.self`.
    * Any other ref emits the game's `scopes = { from = ... }` override.
    * `NoInfer` keeps the event ref the single inference source, so a
    * wrong-scope witness fails instead of unifying.
    */
-  readonly from: FireFromWitness<NoInfer<F>>;
+  readonly scopes: FireScopeWitnesses<NoInfer<ExplicitFireContext<Context>>>;
 }
+
+type FireScopeKey = Exclude<AmbientScopeKey, "root" | `prev${string}`>;
+
+/** Explicit scope overrides for fire effects; PREV chains are game-supplied only. */
+export type FireScopeWitnesses<Context extends AmbientScopeContext> = {
+  readonly [Key in FireScopeKey as Key extends keyof Context ? Key : never]: FireFromWitness<
+    Extract<Context[Key], ScopeName>
+  >;
+};
+
+type ExplicitFireContext<Context extends AmbientScopeContext> =
+  Extract<keyof Context, `prev${string}`> extends never ? Context : never;

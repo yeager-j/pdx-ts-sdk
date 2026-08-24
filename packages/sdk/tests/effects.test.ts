@@ -1526,7 +1526,11 @@ every_owned_planet = {
     // A ctx serves one definition's closures, however many recordings that
     // definition opens, and its refs land where they are written just like
     // any other absolute ref.
-    const sink = withScriptCtx({}, (ctx: ScriptCtx<"country", "planet">) =>
+    const sink = withScriptCtx<
+      "country",
+      { readonly root: "country"; readonly from: "planet" },
+      PdxEntry[]
+    >({}, (ctx) =>
       recordEffects<"country">([], (country) => {
         ctx.from.effects((planet) => planet.log("outer"));
         country.everyOwnedPlanet({ limit: hasOwner() }, () => {
@@ -1550,11 +1554,58 @@ every_owned_planet = {
 `);
   });
 
+  it("opens and leases every named ambient reference", () => {
+    const entries = withScriptCtx<
+      "country",
+      {
+        readonly root: "country";
+        readonly fromfrom: "fleet";
+        readonly prevprev: "system";
+      },
+      PdxEntry[]
+    >({}, (ctx) =>
+      recordEffects<"country">([], () => {
+        ctx.fromfrom.effects((fleet) => fleet.log("fleet"));
+        ctx.prevprev.effects((system) => system.log("system"));
+      })
+    );
+    expect(serialize(entries)).toContain("fromfrom = {");
+    expect(serialize(entries)).toContain("prevprev = {");
+
+    const ctx = withScriptCtx<
+      "country",
+      {
+        readonly root: "country";
+        readonly fromfrom: "fleet";
+        readonly prevprev: "system";
+      },
+      ScriptCtx<
+        "country",
+        { readonly root: "country"; readonly fromfrom: "fleet"; readonly prevprev: "system" }
+      >
+    >({}, (value) => value);
+
+    expect(() =>
+      recordEffects<"country">([], () => {
+        ctx.fromfrom.effects((fleet) => fleet.log("wrong definition"));
+      })
+    ).toThrow(/escaped the closure it was handed to/);
+    expect(() =>
+      recordEffects<"country">([], () => {
+        ctx.prevprev.effects((system) => system.log("wrong definition"));
+      })
+    ).toThrow(/escaped the closure it was handed to/);
+  });
+
   it("throws when a ctx ref is opened in another authoring call's recording", () => {
     // The ctx of one definition names that definition's FROM and ROOT. Opened
     // in another definition's recording it would write a real block there,
     // under whatever scopes the game supplies that definition instead.
-    const escaped = withScriptCtx({}, (ctx: ScriptCtx<"country", "planet">) => ctx);
+    const escaped = withScriptCtx<
+      "country",
+      { readonly root: "country"; readonly from: "planet" },
+      ScriptCtx<"country", { readonly root: "country"; readonly from: "planet" }>
+    >({}, (ctx) => ctx);
 
     expect(() =>
       recordEffects<"country">([], () => {
@@ -1577,19 +1628,33 @@ every_owned_planet = {
     // The other place a ctx path reaches output: the witness writes
     // `scopes = { from = from }`, and the game supplies the FROM of whatever
     // definition the fire site is in.
-    const escaped = withScriptCtx({}, (ctx: ScriptCtx<"country", "planet">) => ctx);
+    const escaped = withScriptCtx<
+      "country",
+      { readonly root: "country"; readonly from: "planet" },
+      ScriptCtx<"country", { readonly root: "country"; readonly from: "planet" }>
+    >({}, (ctx) => ctx);
 
     expect(() =>
       recordEffects<"country">([], (country) => {
-        country.countryEvent<"planet">({ id: "effects_test.1", from: escaped.from });
+        country.countryEvent<{ readonly from: "planet" }>({
+          id: "effects_test.1",
+          scopes: { from: escaped.from },
+        });
       })
     ).toThrow(/escaped the closure it was handed to/);
   });
 
   it("writes the FROM override when the witness belongs to the fire site's own ctx", () => {
-    const sink = withScriptCtx({}, (ctx: ScriptCtx<"country", "planet">) =>
+    const sink = withScriptCtx<
+      "country",
+      { readonly root: "country"; readonly from: "planet" },
+      PdxEntry[]
+    >({}, (ctx) =>
       recordEffects<"country">([], (country) => {
-        country.countryEvent<"planet">({ id: "effects_test.1", from: ctx.from });
+        country.countryEvent<{ readonly from: "planet" }>({
+          id: "effects_test.1",
+          scopes: { from: ctx.from },
+        });
       })
     );
 
@@ -1607,21 +1672,28 @@ every_owned_planet = {
     // this is ordinary TypeScript. A method kept from A's scope object still
     // opens blocks in A's tree while B's call runs, so B's ctx must not pass
     // the check there and A's must.
-    const sink = withScriptCtx({}, (ctxA: ScriptCtx<"country", "planet">) =>
+    const sink = withScriptCtx<
+      "country",
+      { readonly root: "country"; readonly from: "planet" },
+      PdxEntry[]
+    >({}, (ctxA) =>
       recordEffects<"country">([], (a) => {
-        withScriptCtx({}, (ctxB: ScriptCtx<"country", "planet">) => {
-          recordEffects<"country">([], () => {
-            expect(() =>
-              a.everyOwnedPlanet({ limit: hasOwner() }, () => {
-                ctxB.from.effects((planet) => planet.log("B"));
-              })
-            ).toThrow(/escaped the closure it was handed to/);
+        withScriptCtx<"country", { readonly root: "country"; readonly from: "planet" }, void>(
+          {},
+          (ctxB) => {
+            recordEffects<"country">([], () => {
+              expect(() =>
+                a.everyOwnedPlanet({ limit: hasOwner() }, () => {
+                  ctxB.from.effects((planet) => planet.log("B"));
+                })
+              ).toThrow(/escaped the closure it was handed to/);
 
-            a.everyOwnedPlanet({ limit: hasOwner() }, () => {
-              ctxA.from.effects((planet) => planet.log("A"));
+              a.everyOwnedPlanet({ limit: hasOwner() }, () => {
+                ctxA.from.effects((planet) => planet.log("A"));
+              });
             });
-          });
-        });
+          }
+        );
       })
     );
 
@@ -1639,7 +1711,11 @@ every_owned_planet = {
   it("leaves an escaped ctx usable as a value and as a condition", () => {
     // Only opening a block is bound to the authoring call: a path is a word,
     // and a trigger is a value with nothing to record.
-    const escaped = withScriptCtx({}, (ctx: ScriptCtx<"country", "planet">) => ctx);
+    const escaped = withScriptCtx<
+      "country",
+      { readonly root: "country"; readonly from: "planet" },
+      ScriptCtx<"country", { readonly root: "country"; readonly from: "planet" }>
+    >({}, (ctx) => ctx);
 
     expect(escaped.from.path).toBe("from");
     expect(serialize([...escaped.from.trigger(hasOwner()).entries])).toBe(`from = {

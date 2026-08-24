@@ -3,17 +3,17 @@
 import type { EventRef } from "@pdx-ts/sdk";
 
 export interface VanillaEventNamespaceUplift {
-  readonly $6000: EventRef<"ship", undefined, "ship"> & { readonly id: "uplift.6000" };
-  readonly $6010: EventRef<"carrier", undefined, "carrier"> & { readonly id: "uplift.6010" };
-  readonly $7000: EventRef<"carrier", undefined, "carrier"> & { readonly id: "uplift.7000" };
-  readonly $7010: EventRef<"carrier", undefined, "carrier"> & { readonly id: "uplift.7010" };
-  readonly $7199: EventRef<"carrier", undefined, "carrier"> & { readonly id: "uplift.7199" };
-  readonly $7200: EventRef<"carrier", undefined, "carrier"> & { readonly id: "uplift.7200" };
-  readonly $7205: EventRef<"carrier", undefined, "carrier"> & { readonly id: "uplift.7205" };
-  readonly $7210: EventRef<"carrier", undefined, "carrier"> & { readonly id: "uplift.7210" };
-  readonly $7215: EventRef<"carrier", undefined, "carrier"> & { readonly id: "uplift.7215" };
-  readonly $7500: EventRef<"carrier", undefined, "carrier"> & { readonly id: "uplift.7500" };
-  readonly $7510: EventRef<"carrier", undefined, "carrier"> & { readonly id: "uplift.7510" };
-  readonly $7520: EventRef<"carrier", undefined, "carrier"> & { readonly id: "uplift.7520" };
-  readonly $7525: EventRef<"carrier", undefined, "carrier"> & { readonly id: "uplift.7525" };
+  readonly $6000: EventRef<"ship", {}, "ship"> & { readonly id: "uplift.6000" };
+  readonly $6010: EventRef<"carrier", {}, "carrier"> & { readonly id: "uplift.6010" };
+  readonly $7000: EventRef<"carrier", {}, "carrier"> & { readonly id: "uplift.7000" };
+  readonly $7010: EventRef<"carrier", {}, "carrier"> & { readonly id: "uplift.7010" };
+  readonly $7199: EventRef<"carrier", {}, "carrier"> & { readonly id: "uplift.7199" };
+  readonly $7200: EventRef<"carrier", {}, "carrier"> & { readonly id: "uplift.7200" };
+  readonly $7205: EventRef<"carrier", {}, "carrier"> & { readonly id: "uplift.7205" };
+  readonly $7210: EventRef<"carrier", {}, "carrier"> & { readonly id: "uplift.7210" };
+  readonly $7215: EventRef<"carrier", {}, "carrier"> & { readonly id: "uplift.7215" };
+  readonly $7500: EventRef<"carrier", {}, "carrier"> & { readonly id: "uplift.7500" };
+  readonly $7510: EventRef<"carrier", {}, "carrier"> & { readonly id: "uplift.7510" };
+  readonly $7520: EventRef<"carrier", {}, "carrier"> & { readonly id: "uplift.7520" };
+  readonly $7525: EventRef<"carrier", {}, "carrier"> & { readonly id: "uplift.7525" };
 }

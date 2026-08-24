@@ -12,8 +12,15 @@ import {
   type Trigger,
 } from "../src/script/triggers.ts";
 
-const country = withScriptCtx({}, (ctx: ScriptCtx<"country", "country">) => ctx);
-const planet = withScriptCtx({}, (ctx: ScriptCtx<"planet", undefined>) => ctx);
+const country = withScriptCtx<
+  "country",
+  { readonly root: "country"; readonly from: "country" },
+  ScriptCtx<"country", { readonly root: "country"; readonly from: "country" }>
+>({}, (ctx) => ctx);
+const planet = withScriptCtx<"planet", { readonly root: "planet" }, ScriptCtx<"planet">>(
+  {},
+  (ctx) => ctx
+);
 
 describe("scope links in value position", () => {
   it("hands ROOT over as an openable ref at the block's own scope", () => {

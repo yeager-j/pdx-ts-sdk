@@ -139,9 +139,21 @@ export interface AgreementPresetFields {
   icon?: SpriteRef | string;
   specialistType?: AgreementTermValueSpecialistTypeRef | string;
   termData: AgreementPresetTermData;
-  overlordWeight?: WithFrom<WeightBlock<"country">, "country", "country", "country">;
-  subjectWeight?: WithFrom<WeightBlock<"country">, "country", "country", "country">;
-  potential?: WithFrom<Trigger<"country">, "country", "country", "country">;
+  overlordWeight?: WithFrom<
+    WeightBlock<"country">,
+    "country",
+    { readonly root: "country"; readonly from: "country" }
+  >;
+  subjectWeight?: WithFrom<
+    WeightBlock<"country">,
+    "country",
+    { readonly root: "country"; readonly from: "country" }
+  >;
+  potential?: WithFrom<
+    Trigger<"country">,
+    "country",
+    { readonly root: "country"; readonly from: "country" }
+  >;
   /** Whether the term should show up on the agreement negotiation screen (default: no) */
   hidden?: boolean;
   /** The ai will skip this when trying to find best/preffered agreement preset to negotiate existing or propose new agreement (default: yes) */

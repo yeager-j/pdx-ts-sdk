@@ -3,24 +3,24 @@
 import type { EventRef } from "@pdx-ts/sdk";
 
 export interface VanillaEventNamespaceNecroids {
-  readonly $1: EventRef<"carrier", undefined, "carrier"> & { readonly id: "necroids.1" };
-  readonly $10: EventRef<"carrier", undefined, "carrier"> & { readonly id: "necroids.10" };
-  readonly $15: EventRef<"country", undefined, "country"> & { readonly id: "necroids.15" };
-  readonly $2: EventRef<"country", undefined, "country"> & { readonly id: "necroids.2" };
-  readonly $20: EventRef<"country", undefined, "country"> & { readonly id: "necroids.20" };
-  readonly $200: EventRef<"country", undefined, "country"> & { readonly id: "necroids.200" };
-  readonly $201: EventRef<"country", undefined, "country"> & { readonly id: "necroids.201" };
-  readonly $202: EventRef<"country", undefined, "country"> & { readonly id: "necroids.202" };
-  readonly $25: EventRef<"carrier", undefined, "carrier"> & { readonly id: "necroids.25" };
-  readonly $250: EventRef<"carrier", undefined, "carrier"> & { readonly id: "necroids.250" };
-  readonly $255: EventRef<"country", undefined, "country"> & { readonly id: "necroids.255" };
-  readonly $260: EventRef<"country", undefined, "country"> & { readonly id: "necroids.260" };
-  readonly $275: EventRef<"carrier", undefined, "carrier"> & { readonly id: "necroids.275" };
-  readonly $3: EventRef<"carrier", undefined, "carrier"> & { readonly id: "necroids.3" };
-  readonly $300: EventRef<"country", undefined, "country"> & { readonly id: "necroids.300" };
-  readonly $305: EventRef<"starbase", undefined, "starbase"> & { readonly id: "necroids.305" };
-  readonly $310: EventRef<"country", undefined, "country"> & { readonly id: "necroids.310" };
-  readonly $4: EventRef<"country", undefined, "country"> & { readonly id: "necroids.4" };
-  readonly $5: EventRef<"carrier", undefined, "carrier"> & { readonly id: "necroids.5" };
-  readonly $6: EventRef<"country", undefined, "country"> & { readonly id: "necroids.6" };
+  readonly $1: EventRef<"carrier", {}, "carrier"> & { readonly id: "necroids.1" };
+  readonly $10: EventRef<"carrier", {}, "carrier"> & { readonly id: "necroids.10" };
+  readonly $15: EventRef<"country", {}, "country"> & { readonly id: "necroids.15" };
+  readonly $2: EventRef<"country", {}, "country"> & { readonly id: "necroids.2" };
+  readonly $20: EventRef<"country", {}, "country"> & { readonly id: "necroids.20" };
+  readonly $200: EventRef<"country", {}, "country"> & { readonly id: "necroids.200" };
+  readonly $201: EventRef<"country", {}, "country"> & { readonly id: "necroids.201" };
+  readonly $202: EventRef<"country", {}, "country"> & { readonly id: "necroids.202" };
+  readonly $25: EventRef<"carrier", {}, "carrier"> & { readonly id: "necroids.25" };
+  readonly $250: EventRef<"carrier", {}, "carrier"> & { readonly id: "necroids.250" };
+  readonly $255: EventRef<"country", {}, "country"> & { readonly id: "necroids.255" };
+  readonly $260: EventRef<"country", {}, "country"> & { readonly id: "necroids.260" };
+  readonly $275: EventRef<"carrier", {}, "carrier"> & { readonly id: "necroids.275" };
+  readonly $3: EventRef<"carrier", {}, "carrier"> & { readonly id: "necroids.3" };
+  readonly $300: EventRef<"country", {}, "country"> & { readonly id: "necroids.300" };
+  readonly $305: EventRef<"starbase", {}, "starbase"> & { readonly id: "necroids.305" };
+  readonly $310: EventRef<"country", {}, "country"> & { readonly id: "necroids.310" };
+  readonly $4: EventRef<"country", {}, "country"> & { readonly id: "necroids.4" };
+  readonly $5: EventRef<"carrier", {}, "carrier"> & { readonly id: "necroids.5" };
+  readonly $6: EventRef<"country", {}, "country"> & { readonly id: "necroids.6" };
 }
