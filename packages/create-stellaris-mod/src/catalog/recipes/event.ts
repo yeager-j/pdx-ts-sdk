@@ -4,10 +4,10 @@
  * Both questions change structure rather than a leaf value, which is the whole
  * test for whether something is an Intent question. `visibility` decides whether
  * the emitted event has a window at all — a visible event carries a title, a
- * description and an option whose effects run when the player picks it; a hidden
- * one carries `hideWindow` and an `immediate` closure and has no window fields to
- * carry. `event-kind` decides which definer mints the event, and the definer is
- * what fixes the root scope of every callback in the file: `events.ship(...)`
+ * description, picture, sound, and an option whose effects run when the player
+ * picks it; a hidden one carries `hideWindow` and an `immediate` closure and has
+ * no window fields to carry. `event-kind` decides which definer mints the event,
+ * and the definer fixes the root scope of every callback in the file: `events.ship(...)`
  * hands its closures a ship, so `setShipFlag` is legal there and `setCountryFlag`
  * is not. Neither is a value an author could reasonably retype in source
  * afterwards; both are the shape of the file.
@@ -73,12 +73,12 @@ export const EVENT_KIND_CHOICES = {
 } as const satisfies Readonly<Record<EventKind, string>>;
 
 /**
- * The vanilla sprite the `picture` example cites, and the only vanilla id this
- * recipe names. Generic enough for a starter event of any of the four kinds.
- * Interpolated rather than written into the comment text, so the id an author
- * reads and the id the gate below checks cannot become two different facts.
+ * The vanilla media used by the visible event. Both are generic enough for a
+ * starter event of any of the four kinds. Interpolation keeps the generated
+ * source and the identifier gate on the same values.
  */
 const PICTURE_EXAMPLE = "GFX_evt_mysterious_signal";
+const SOUND_EXAMPLE = "event_alien_signal";
 
 /**
  * Every vanilla id this recipe's examples cite, keyed by the registry in
@@ -91,6 +91,7 @@ const PICTURE_EXAMPLE = "GFX_evt_mysterious_signal";
  */
 export const VANILLA_EXAMPLE_IDS = {
   spriteType: [PICTURE_EXAMPLE],
+  soundEffect: [SOUND_EXAMPLE],
 } as const satisfies Readonly<Record<string, readonly string[]>>;
 
 /** What one `event-kind` answer changes about the emitted source. */
@@ -169,6 +170,7 @@ function renderSource(names: DerivedNames, visibility: Visibility, kind: EventKi
   return [
     header(visibility, kind),
     "",
+    ...(visibility === "visible" ? ['import { vanilla } from "@pdx-ts/sdk/stellaris";', ""] : []),
     'import { mod } from "#mod";',
     "",
     namespaceLines(names),
@@ -185,8 +187,9 @@ function header(visibility: Visibility, kind: EventKind): string {
   const window =
     visibility === "visible"
       ? ` * It shows a window. \`title\`, \`desc\` and the option's \`name\` are English text
- * here and localization keys in the emitted mod, and the option's \`effects\` are
- * what runs when the player picks it.`
+ * here and localization keys in the emitted mod. \`picture\` and \`showSound\`
+ * select checked vanilla media. The option's \`effects\` run when the player
+ * picks it.`
       : ` * It shows no window. \`hideWindow\` makes the event run its \`immediate\` effects
  * and finish without the player being shown anything, which is the ordinary
  * shape for the bookkeeping an on-action or another event sets off.`;
@@ -262,12 +265,8 @@ function visibleFields(names: DerivedNames, kind: EventKind): readonly string[] 
     "  },",
     "],",
     "",
-    "// The artwork the event window shows. The field takes a vanilla sprite id as",
-    "// a plain string, as given — nothing checks a bare literal. `vanilla.spriteType(...)`",
-    "// from @pdx-ts/sdk is the checked form, against the real id set when",
-    "// @pdx-ts/stellaris-ids is installed.",
-    `// picture: ${quoteTs(PICTURE_EXAMPLE)},`,
-    "",
+    `picture: vanilla.spriteType.eventpictures.${PICTURE_EXAMPLE},`,
+    `showSound: vanilla.soundEffect.gui.gui_sound_effects.${SOUND_EXAMPLE},`,
     ...FIRE_ONLY_ONCE_EXAMPLE,
   ];
 }

@@ -6,113 +6,38 @@
  */
 
 import type { Resolved } from "../options.ts";
-import { PROJECT_LAYOUT_FIELDS } from "../project-layout.ts";
 import { quoteTs } from "../quote.ts";
 
 export function modTs(resolved: Resolved): string {
   const vanillaWiring =
     resolved.installPath === undefined ? "" : `import { loadVanilla } from "./vanilla.ts";\n`;
-  const vanillaUse =
+  const buildBody =
     resolved.installPath === undefined
-      ? `  return mod.compile(featuresWithAssets);`
-      : `  // A vanilla view enables checked vanilla references and patching.\n` +
-        `  // Own content ids are minted from this mod's prefix.\n` +
-        `  const vanilla = loadVanilla();\n` +
-        `  return mod.compile(featuresWithAssets, vanilla === undefined ? {} : { vanilla });`;
+      ? "  return project.build();"
+      : "  return project.build({ vanilla: loadVanilla() });";
 
   return `/**
- * The wiring from \`stellaris-mod.json\` to the mod capability, plus
- * \`buildTheMod()\` — the impure discovery shell around the SDK's pure fold.
+ * The mod project declared by \`stellaris-mod.json\`.
  *
- * The manifest is the configuration; this file is not a second copy of it. The
- * sole key under \`mod\` is the mod prefix, so \`keyof typeof manifest.mod\`
- * recovers it as a literal type and every id minted from it stays checked.
- *
- * Importing this file builds nothing: \`config\` and \`mod\` are plain values, so
- * a test — or anything else — that only wants the mod's prefix can import it
- * without triggering a build as a side effect.
- * \`npm run build\` (\`src/index.ts\`) and \`npm run install-mod\`
- * (\`src/install.ts\`) both call \`buildTheMod()\` once and add their own single
- * disk-touching step (\`write\` vs \`install\`) on top, instead of each folding
- * the content directory a second time.
- *
- * \`buildTheMod()\` itself is not pure: \`discoverFeatures\` walks that directory
- * and imports each selected module — real disk reads, running your code — to
- * read its named \`feature\` export, and (when a vanilla install was found)
- * \`loadVanilla()\` parses the game and may write a cache under
- * \`node_modules/.cache\`. \`mod.compile\`, which folds capability-owned features into the
- * \`PureMod\` value \`render\` consumes, is the pure part. \`write\` and \`install\` consume the
- * resulting \`RenderedMod\`.
+ * \`createModProject\` validates the manifest and owns the conventional pipeline:
+ * discover Feature modules, capture the optional Asset tree, then perform one
+ * capability-owned Fold. Pass \`discover\` or \`additionalFeatures\` to
+ * \`project.build()\` for a pre-compile customization. For a different pipeline,
+ * compose \`discoverFeatures\`, \`mod.assetTree\`, and \`mod.compile\` directly.
+ * Project declaration reads no source files; only \`buildTheMod()\` starts work.
  */
 
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { createMod, discoverFeatures, type PureMod } from "@pdx-ts/sdk";
+import { createModProject } from "@pdx-ts/sdk";
 import manifest from "../stellaris-mod.json" with { type: "json" };
 ${vanillaWiring}
-const prefixes = Object.keys(manifest.mod);
-if (prefixes.length !== 1) {
-  throw new Error(
-    \`stellaris-mod.json must declare exactly one mod, and declares \${prefixes.length}. \` +
-      \`The single key under "mod" is this mod's prefix.\`
-  );
-}
+const project = createModProject(manifest, {
+  projectRoot: new URL("../", import.meta.url),
+});
 
-// Every id and every emitted filename starts with this. It is what makes the
-// mod structurally incapable of overwriting someone else's content.
-const prefix = prefixes[0] as keyof typeof manifest.mod;
+export const { config, mod } = project;
 
-// \`prefix\` goes last on purpose: the key under \`mod\` is the prefix, so a
-// \`prefix\` field written inside the entry — a copy of the old shape — must not
-// be able to quietly rename every id this mod mints.
-export const config = { ...manifest.mod[prefix], prefix };
-
-export const mod = createMod(config);
-
-// Where feature source lives, read from the manifest rather than repeated here.
-// \`create-stellaris-mod generate\` writes into \`contentDirectory\`, so this is the
-// same fact read back: changing it in the manifest moves both the writing and
-// the discovery, and a generated file can never land somewhere the build does
-// not look. The check is generated from the same ProjectLayout pattern used by
-// the manifest reader and schema, and path.join keeps URL metacharacters from
-// being reinterpreted.
-// eslint-disable-next-line no-control-regex -- NUL is intentionally rejected by the shared path rule.
-const contentDirectoryPattern = new RegExp(${quoteTs(PROJECT_LAYOUT_FIELDS.contentDirectory.pattern.source)});
-if (!contentDirectoryPattern.test(manifest.contentDirectory)) {
-  throw new Error(
-    \`stellaris-mod.json contentDirectory \${JSON.stringify(manifest.contentDirectory)} is not a \` +
-      \`normalized directory below src.\`
-  );
-}
-const projectRoot = fileURLToPath(new URL("../", import.meta.url));
-const contentDir = path.join(projectRoot, ...manifest.contentDirectory.split("/"));
-const assetsDirectory: unknown =
-  "assetsDirectory" in manifest ? manifest.assetsDirectory : undefined;
-// eslint-disable-next-line no-control-regex -- NUL is intentionally rejected by the shared path rule.
-const assetsDirectoryPattern = new RegExp(${quoteTs(PROJECT_LAYOUT_FIELDS.assetsDirectory.pattern.source)});
-if (
-  assetsDirectory !== undefined &&
-  (typeof assetsDirectory !== "string" || !assetsDirectoryPattern.test(assetsDirectory))
-) {
-  throw new Error(
-    \`stellaris-mod.json assetsDirectory \${JSON.stringify(assetsDirectory)} is not a normalized \` +
-      \`project-relative directory.\`
-  );
-}
-const assetsDir =
-  assetsDirectory === undefined
-    ? undefined
-    : path.join(projectRoot, ...assetsDirectory.split("/"));
-
-export async function buildTheMod(): Promise<PureMod> {
-  const features = await discoverFeatures<typeof mod.config.prefix>(contentDir);
-  const assets =
-    assetsDir === undefined
-      ? []
-      : mod.assetTree({ source: assetsDir, allowMissing: true, allowEmpty: true });
-  const featuresWithAssets =
-    assets.length === 0 ? features : [...features, mod.feature("assets", assets)];
-${vanillaUse}
+export function buildTheMod() {
+${buildBody}
 }
 
 `;
@@ -130,7 +55,7 @@ export function indexTs(): string {
 
 import { runBuild } from "@pdx-ts/sdk";
 
-import { buildTheMod } from "./mod.ts";
+import { buildTheMod } from "#mod";
 
 export const outDir = new URL("../out/", import.meta.url);
 export const previewsDir = new URL("../previews/", import.meta.url);
@@ -163,7 +88,7 @@ export function installTs(): string {
 
 import { runInstall } from "@pdx-ts/sdk";
 
-import { buildTheMod } from "./mod.ts";
+import { buildTheMod } from "#mod";
 
 await runInstall(buildTheMod());
 `;
@@ -243,7 +168,7 @@ export function contentExampleTs(resolved: Resolved): string {
  * \`package.json#imports\`), so moving this module deeper never rewrites it.
  */
 
-import { hasCountryFlag, not, onActions } from "@pdx-ts/sdk/stellaris";
+import { hasCountryFlag, not, onActions, vanilla } from "@pdx-ts/sdk/stellaris";
 
 import { mod } from "#mod";
 
@@ -266,6 +191,8 @@ const events = mod.namespace();
 export const welcome = events.country(1, {
   title: "A New Signal",
   desc: "Something in the data does not belong.",
+  picture: vanilla.spriteType.eventpictures.GFX_evt_mysterious_signal,
+  showSound: vanilla.soundEffect.gui.gui_sound_effects.event_alien_signal,
   isTriggeredOnly: true,
   immediate: (country) => {
     // The closure receives a country scope object, so only country-legal

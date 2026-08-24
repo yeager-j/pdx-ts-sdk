@@ -1,5 +1,5 @@
 import { createMod } from "@pdx-ts/sdk";
-import { eventTarget, hasOwner } from "@pdx-ts/sdk/stellaris";
+import { eventTarget, hasOwner, vanilla } from "@pdx-ts/sdk/stellaris";
 
 const mod = createMod({
   name: "Crystal Resonance",
@@ -14,6 +14,8 @@ const aftershock = events.planet(2, {
   scopes: { from: "country" },
   title: "A World Answers",
   desc: "The signal has found an echo beneath the planet's surface.",
+  picture: vanilla.spriteType.eventpictures.GFX_evt_mysterious_signal,
+  showSound: vanilla.soundEffect.gui.gui_sound_effects.event_alien_signal,
   location: (ctx) => ctx.self,
   isTriggeredOnly: true,
   immediate: (_planet, ctx) => {
@@ -27,6 +29,8 @@ const aftershock = events.planet(2, {
 const signalDetected = events.country(1, {
   title: "A Signal in the Noise",
   desc: "A repeating harmonic reaches us from one of our worlds.",
+  picture: vanilla.spriteType.eventpictures.GFX_evt_mysterious_signal,
+  showSound: vanilla.soundEffect.gui.gui_sound_effects.event_alien_signal,
   isTriggeredOnly: true,
   options: [
     {

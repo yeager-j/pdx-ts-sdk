@@ -25,6 +25,7 @@ import {
   VANILLA_EXAMPLE_IDS as EVENT_IDS,
   EVENT_KIND_CHOICES,
 } from "../src/catalog/recipes/event.ts";
+import { VANILLA_EXAMPLE_IDS as RESEARCH_QUEST_IDS } from "../src/catalog/recipes/research-quest.ts";
 import {
   VANILLA_EXAMPLE_IDS as TECHNOLOGY_IDS,
   VANILLA_CURATED_VALUES as TECHNOLOGY_VALUES,
@@ -247,7 +248,7 @@ const FLAG_EFFECTS = {
 } as const;
 
 /** Everything a window needs, and everything a hidden event must not carry. */
-const WINDOW_FIELDS = ["title", "desc", "picture", "options"] as const;
+const WINDOW_FIELDS = ["title", "desc", "picture", "showSound", "options"] as const;
 
 describe.each(EVENT_VARIANTS)(
   "event, answering visibility=%s event-kind=%s",
@@ -320,6 +321,8 @@ describe.each(EVENT_VARIANTS)(
           if (visibility === "visible") {
             expect(eventsOut).toContain(`title = ${PREFIX}_${STEM}.1.name`);
             expect(eventsOut).toContain(`desc = ${PREFIX}_${STEM}.1.desc`);
+            expect(eventsOut).toContain("picture = GFX_evt_mysterious_signal");
+            expect(eventsOut).toContain("show_sound = event_alien_signal");
             expect(eventsOut).toContain("option = {");
             expect(eventsOut).not.toContain("hide_window");
             expect(project.readOut(localization)).toContain("PLACEHOLDER:");
@@ -330,6 +333,7 @@ describe.each(EVENT_VARIANTS)(
             expect(eventsOut).not.toContain("desc");
             expect(eventsOut).not.toContain("option");
             expect(eventsOut).not.toContain("picture");
+            expect(eventsOut).not.toContain("show_sound");
           }
         },
         COMPILER_TIMEOUT
@@ -410,6 +414,12 @@ describe.each([["one"], ["two"]] as const)("research-quest, answering projects=%
           expect(eventsOut).toContain(`id = ${PREFIX}_${STEM}.3`);
         }
         expect(eventsOut).toContain("is_triggered_only = yes");
+        expect(eventsOut.match(/picture = GFX_evt_mysterious_signal/g)).toHaveLength(
+          projects === "one" ? 2 : 3
+        );
+        expect(eventsOut.match(/show_sound = event_alien_signal/g)).toHaveLength(
+          projects === "one" ? 2 : 3
+        );
         expect(eventsOut).toContain(`begin_event_chain`);
         expect(eventsOut).toContain(`end_event_chain = ${PREFIX}_event_chain_${STEM}`);
 
@@ -531,16 +541,15 @@ describe("the commented examples", () => {
   it.each(EVENT_VARIANTS)(
     "compile as written in event visibility=%s event-kind=%s, once their `// ` is removed",
     (visibility, kind) => {
-      // A hidden event has no window, so `picture` is not among its examples —
-      // and the field gate above is what proves that is an absence rather than
-      // an example this test forgot to name.
+      // A hidden event has no window, so the active media fields are absent.
+      // The field gate above proves this is structural rather than accidental.
       compileUncommented(
         CATALOG.generate({
           recipeId: "event",
           name: NAME,
           answers: { visibility, "event-kind": kind },
         }),
-        visibility === "visible" ? ["picture", "fireOnlyOnce"] : ["fireOnlyOnce"]
+        ["fireOnlyOnce"]
       );
     },
     COMPILER_TIMEOUT
@@ -597,7 +606,7 @@ describe("the vanilla ids the examples cite", () => {
   /**
    * Each recipe's declared citations, with the variant whose source has to
    * carry them. The `event` recipe cites only from its visible branch: a hidden
-   * event has no window to put a picture in.
+   * event has no window to put media in.
    */
   const CITATIONS: readonly (readonly [
     string,
@@ -607,6 +616,7 @@ describe("the vanilla ids the examples cite", () => {
     ["technology", TECHNOLOGY_IDS, {}],
     ["building", BUILDING_IDS, {}],
     ["event", EVENT_IDS, { visibility: "visible", "event-kind": "country" }],
+    ["research-quest", RESEARCH_QUEST_IDS, { projects: "one" }],
   ];
 
   const cited = CITATIONS.flatMap(([recipeId, ids, answers]) =>

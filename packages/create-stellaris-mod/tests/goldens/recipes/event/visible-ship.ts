@@ -12,14 +12,17 @@
  * through `shipEvent`.
  *
  * It shows a window. `title`, `desc` and the option's `name` are English text
- * here and localization keys in the emitted mod, and the option's `effects` are
- * what runs when the player picks it.
+ * here and localization keys in the emitted mod. `picture` and `showSound`
+ * select checked vanilla media. The option's `effects` run when the player
+ * picks it.
  *
  * `#mod` is the project's own alias for `src/mod.ts` (see `package.json#imports`),
  * so moving this file deeper inside the content directory never rewrites the
  * import. The filename decides nothing either: the `mod.feature(...)` call at the
  * bottom is what names the emitted files.
  */
+
+import { vanilla } from "@pdx-ts/sdk/stellaris";
 
 import { mod } from "#mod";
 
@@ -54,12 +57,8 @@ export const resonanceTheory = events.ship(1, {
     },
   ],
 
-  // The artwork the event window shows. The field takes a vanilla sprite id as
-  // a plain string, as given — nothing checks a bare literal. `vanilla.spriteType(...)`
-  // from @pdx-ts/sdk is the checked form, against the real id set when
-  // @pdx-ts/stellaris-ids is installed.
-  // picture: "GFX_evt_mysterious_signal",
-
+  picture: vanilla.spriteType.eventpictures.GFX_evt_mysterious_signal,
+  showSound: vanilla.soundEffect.gui.gui_sound_effects.event_alien_signal,
   // Fires at most once per game, no matter how often its hook runs.
   // fireOnlyOnce: true,
 });

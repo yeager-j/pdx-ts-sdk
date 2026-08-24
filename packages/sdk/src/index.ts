@@ -1,11 +1,11 @@
 /**
  * The pipeline — configure, discover, build, materialize.
  *
- * This entry point carries what a build script calls: `createMod`,
- * `discoverFeatures`, `render`, `write`, `install`, the terminal helpers,
- * and the error classes those steps throw. The game vocabulary an author
- * types inside defs and expressions lives at `@pdx-ts/sdk/stellaris`; the
- * installed game at `@pdx-ts/sdk/installation`; machine-readable SDK facts
+ * This entry point carries what a build script calls: `createModProject`,
+ * `createMod`, `discoverFeatures`, `render`, `write`, `install`, the terminal
+ * helpers, and the error classes those steps throw. The game vocabulary an
+ * author types inside defs and expressions lives at `@pdx-ts/sdk/stellaris`;
+ * the installed game at `@pdx-ts/sdk/installation`; machine-readable SDK facts
  * at `@pdx-ts/sdk/reference`; unstable machinery at `@pdx-ts/sdk/internals`.
  * See docs/adr/0007.
  */
@@ -24,6 +24,14 @@ export {
   discoverFeatures,
   type DiscoverOptions,
 } from "./authoring/discover.ts";
+export {
+  createModProject,
+  type CreateModProjectOptions,
+  type ModProject,
+  type ModProjectBuildOptions,
+  type ModProjectManifest,
+  type ProjectModConfig,
+} from "./project.ts";
 export type { Feature, ModItem, ModItemInput, PlacedItem } from "./authoring/feature.ts";
 export type { AssetFileInput, AssetFileItem, AssetTreeInput } from "./authoring/assets.ts";
 export type { ComponentTagItem } from "./authoring/component-tags.ts";

@@ -15,8 +15,8 @@ feature source file into a project that already exists.
 
 It finds your Stellaris install, reads the build from `launcher-settings.json`,
 and writes a project that typechecks, tests and builds on the first
-`npm install` — including a `content/` directory already wired to
-`discoverFeatures`, a worked example that fires in game, and colocated tests.
+`npm install` — including a `content/` directory already wired to the SDK's
+project pipeline, a worked example that fires in game, and colocated tests.
 
 ```
 my-mod/
@@ -33,7 +33,7 @@ my-mod/
 ├── .prettierrc            (--no-prettier to skip)
 ├── eslint.config.js       (--no-eslint to skip)
 └── src/
-    ├── mod.ts              wires the manifest to createMod, + buildTheMod()
+    ├── mod.ts              declares the SDK project + buildTheMod()
     ├── index.ts            build: render the fold and write it to out/
     ├── install.ts          build + drop it where the launcher looks
     ├── vanilla.ts          the parsed install, when one was found
@@ -45,24 +45,24 @@ my-mod/
 
 `stellaris-mod.json` is the single author-owned source of truth for the mod's
 identity, launcher metadata, and where generated feature source goes. Its sole
-key under `mod` is the mod prefix, so `keyof typeof manifest.mod` recovers it as
-a literal type; `src/mod.ts` is wiring from it to `createMod` rather than a
-second place the same facts are written. Its `contentDirectory` is the single
-placement authority: `src/mod.ts` discovers features there and `generate` writes
-them there, so moving the directory in the manifest moves both and a generated
-file cannot land somewhere the build does not look. The scaffolded package also
-declares `"#mod": "./src/mod.ts"` in `package.json#imports`, and feature modules
-import the mod through it rather than computing a relative path.
+key under `mod` is the mod prefix; `createModProject` preserves that key as a
+literal type and uses it to create the immutable capability. Its
+`contentDirectory` is the single placement authority: the SDK discovers
+features there and `generate` writes them there, so moving the directory in the
+manifest moves both. The scaffolded package also declares
+`"#mod": "./src/mod.ts"` in `package.json#imports`. Feature modules and the build
+and install entrypoints import the mod module through it rather than computing a
+relative path.
 
 Importing `mod.ts` builds nothing — `mod` is an immutable capability — so
 `index.ts` and `install.ts` each import its `buildTheMod()` and add their own
-single disk-touching step (`write` vs `install`) on top, rather than each
-compiling `content/` a second time. That is what keeps a build with a vanilla
-view (id collision checks included) from quietly running twice, once checked
-and once not. `buildTheMod()` is the impure discovery shell around the SDK's
-pure compile step: calling it walks `content/`, imports each module, and reads
-only its named `feature` export. With a vanilla install found, it also parses
-the game and may write a cache under `node_modules/.cache`.
+single disk-touching step (`write` vs `install`) on top. `project.build()` owns
+the conventional discovery, Asset capture, and compile sequence. Pass
+`discover` or `additionalFeatures` when that sequence needs a pre-compile
+adjustment. A fundamentally different pipeline can still compose the public
+`discoverFeatures`, `mod.assetTree`, and `mod.compile` interfaces directly.
+With a vanilla install found, `buildTheMod()` also parses the game and may write
+a cache under `node_modules/.cache`.
 
 The generated ESLint configuration adds two authoring guardrails. It requires
 one event namespace per feature module, and it reports a second direct

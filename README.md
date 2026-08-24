@@ -113,11 +113,13 @@ export const feature = mod.feature("resonance", [
 ]);
 ```
 
-`createMod` is the only authoring entry point. It mints each content id from
-the mod prefix (`hello_galaxy_tech_resonance_theory`), gives events their
-namespace and numeric ids (`hello_galaxy_resonance.1`), and compiles explicit
-features into the immutable mod value that `render` consumes. Rendering snapshots immutable
-artifacts; `write` and `install` materialize that exact `RenderedMod`.
+`createMod` is the low-level authoring entry point. `createModProject` is the
+conventional Project Manifest pipeline built on it. The capability mints each
+content id from the mod prefix (`hello_galaxy_tech_resonance_theory`), gives
+events their namespace and numeric ids (`hello_galaxy_resonance.1`), and
+compiles explicit features into the immutable mod value that `render`
+consumes. Rendering snapshots immutable artifacts; `write` and `install`
+materialize that exact `RenderedMod`.
 
 It builds to `common/technology/hello_galaxy_resonance.txt`:
 
@@ -364,8 +366,9 @@ scripted effect whose `TECH` parameter is handed the mod's own technology.
 
 ## Nested content stays nested
 
-Some registries are trees. A solar system initializer holds planets, planets
-hold moons, and moons hold moons, to whatever depth you write:
+Some registries are trees. A solar system initializer holds anonymous body
+entries, and those entries can hold more planet or moon children to whatever
+depth you write:
 
 ```ts
 const home = mod.solarSystemInitializer("home", {
@@ -526,7 +529,7 @@ and the override didn't take" becomes a build error.
 | [@pdx-ts/stellaris-ids](packages/stellaris-ids/README.md)       | Every identifier a real install defines, as version-pinned types, plus vanilla's scripted triggers and effects bound at their inferred scopes |
 | [@pdx-ts/codegen-cwt](packages/codegen-cwt/README.md)           | Rules-derived generator: emits the SDK's typed surface from the vendored cwtools rules                                                        |
 | [@pdx-ts/codegen-vanilla](packages/codegen-vanilla/README.md)   | Install-derived generator: emits @pdx-ts/stellaris-ids from an installed copy of the game                                                     |
-| [@pdx-ts/docs-site](packages/docs-site/README.md)               | The user-facing documentation site (Fumadocs on Next.js): guides plus a registry-keyed reference. Private, local-only for now                     |
+| [@pdx-ts/docs-site](packages/docs-site/README.md)               | The user-facing documentation site (Fumadocs on Next.js): guides plus a registry-keyed reference. Private, local-only for now                 |
 
 At the root: `vendor/` (the committed cwtools rules and doc dumps),
 `fixtures/` (the shared fake install the hermetic tests run against),

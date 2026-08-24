@@ -88,10 +88,15 @@ describe("the scaffolded tree", () => {
     expect(entries.get(".claude/agents/pdx-docs-expert.md")?.kind).toBe("file");
     expect(entries.get(".codex/agents/pdx-docs-expert.toml")?.kind).toBe("file");
     expect(plan().get("AGENTS.md")).toContain("without forking or inheriting conversation history");
-    expect(plan().get("AGENTS.md")).toContain("return a concise blocker");
-    expect(plan().get("AGENTS.md")).toContain("SDK version: <version>");
     expect(plan().get("AGENTS.md")).toContain(
-      `SDK revision: <revision>\` line to equal \`${SDK_DOCS_REVISION}`
+      "spawn one subagent with the `pdx-docs-expert` agent type"
+    );
+    expect(plan().get("AGENTS.md")).toContain("`@pdx-docs-expert <question>`");
+    expect(plan().get("AGENTS.md")).toContain(
+      "writes an interactive gallery to `previews/index.html`"
+    );
+    expect(plan().get("AGENTS.md")).toContain(
+      "A clean diagnostic list is not a substitute for visual inspection"
     );
     expect(entries.get("CLAUDE.md")).toEqual({ kind: "symlink", target: "AGENTS.md" });
     expect(entries.get(".claude/skills")).toEqual({
@@ -172,15 +177,6 @@ describe("the scaffolded tree", () => {
     expect(claudeInstructions).toBe(codex.developer_instructions);
     const behavior = `${claude}\n${codex.developer_instructions}`;
     expect(behavior).toContain("retrieve fresh for every question");
-    expect(behavior).toContain(
-      "read only the `@pdx-ts/sdk` dependency in the project's `package.json`"
-    );
-    expect(behavior).toContain("SDK version: <version>");
-    expect(behavior).toContain(`SDK revision: <revision>\` line to equal \`${SDK_DOCS_REVISION}`);
-    expect(behavior).toContain("a `file:` checkout");
-    expect(behavior).toContain(
-      "documentation-version or revision mismatch without authoring advice"
-    );
     expect(behavior).toContain("temporary `llms-full.txt` cache");
     expect(behavior).toContain("remove the cache with `unlink`");
     expect(behavior).toContain("remove the empty directory with `rmdir`");
@@ -241,14 +237,19 @@ describe("the scaffolded tree", () => {
   it("leaves no unsubstituted interpolation behind", () => {
     // A template reading a field that is not on `Resolved` lands in the file as
     // the literal text `undefined`. Matched by shape rather than by the bare
-    // word, because generated code legitimately writes `vanilla === undefined`
-    // — the giveaway is `undefined` sitting where a *value* belongs: quoted, or
-    // welded to an identifier.
+    // word; the giveaway is `undefined` sitting where a value belongs: quoted,
+    // or welded to an identifier.
     const accidental = /"undefined"|_undefined|undefined_|: undefined[,\n]/;
     for (const [relPath, contents] of plan()) {
       expect(contents, `${relPath} interpolated undefined`).not.toMatch(accidental);
       expect(contents, relPath).not.toContain("[object Object]");
     }
+  });
+
+  it("forwards the optional vanilla view directly to the project pipeline", () => {
+    const mod = plan().get("src/mod.ts");
+    expect(mod).toContain("return project.build({ vanilla: loadVanilla() });");
+    expect(mod).not.toContain("vanilla === undefined");
   });
 
   it("carries the author's prefix into every place the SDK will read it", () => {
@@ -270,9 +271,8 @@ describe("the scaffolded tree", () => {
 
 /**
  * The Project Manifest is the single author-owned source of truth for mod
- * identity. `src/mod.ts` is wiring from it to `createMod`, not a second place
- * the same facts are written — so the assertions worth making are that the
- * facts are in the manifest and that `src/mod.ts` no longer restates them.
+ * identity. `src/mod.ts` hands it to the SDK's project pipeline rather than
+ * restating either configuration or layout rules.
  */
 describe("the Project Manifest", () => {
   it("holds exactly one mod entry, keyed by the prefix", () => {
@@ -291,35 +291,21 @@ describe("the Project Manifest", () => {
   it("is where src/mod.ts reads the config from", () => {
     const mod = plan().get("src/mod.ts")!;
     expect(mod).toContain('import manifest from "../stellaris-mod.json" with { type: "json" }');
-    expect(mod).toContain("keyof typeof manifest.mod");
+    expect(mod).toContain("createModProject(manifest");
     // The facts live in the manifest now; a literal here would be a second
     // configuration source, which is the thing the manifest replaces.
     expect(mod).not.toContain('name: "My Mod"');
     expect(mod).not.toContain('supportedVersion: "');
   });
 
-  it("keeps the sole mod key authoritative over anything inside the entry", () => {
-    // Spread order is the whole guarantee here. The generated project reads its
-    // manifest with a JSON import and never runs `parseManifest`, so a `prefix`
-    // field hand-written inside the mod entry — the shape `src/mod.ts` used to
-    // carry, and the natural thing to paste back in — is a value the adapter
-    // would reject and this file would otherwise silently obey, renaming every
-    // id the mod mints. `prefix` last means the key always wins.
+  it("delegates manifest identity and layout rules to the SDK", () => {
     const mod = plan().get("src/mod.ts")!;
-    expect(mod).toContain("export const config = { ...manifest.mod[prefix], prefix }");
-    expect(mod).not.toContain("{ prefix, ...manifest.mod[prefix] }");
-
-    // The emitted expression, evaluated: the key beats a nested field.
-    const manifestMod = { my_mod: { name: "My Mod", prefix: "impostor" } };
-    const prefix = "my_mod" as keyof typeof manifestMod;
-    expect({ ...manifestMod[prefix], prefix }.prefix).toBe("my_mod");
-  });
-
-  it("refuses to guess when the manifest declares more than one mod", () => {
-    // `keyof typeof manifest.mod` only recovers the prefix because there is
-    // exactly one key. The generated guard says so at runtime rather than
-    // letting `Object.keys(...)[0]` pick one.
-    expect(plan().get("src/mod.ts")).toContain("must declare exactly one mod");
+    expect(mod).toContain('import { createModProject } from "@pdx-ts/sdk"');
+    expect(mod).toContain('projectRoot: new URL("../", import.meta.url)');
+    expect(mod).toContain("export const { config, mod } = project");
+    expect(mod).not.toContain("Object.keys(manifest.mod)");
+    expect(mod).not.toContain("new RegExp(");
+    expect(mod).not.toContain("DirectoryPattern");
   });
 
   it("discovers features where the manifest says they are, not where a convention says", () => {
@@ -328,34 +314,20 @@ describe("the Project Manifest", () => {
     // author who moved the directory would get generated files the build never
     // imports — present, correct, and silently absent from the mod.
     const mod = plan().get("src/mod.ts")!;
-    expect(mod).toContain('path.join(projectRoot, ...manifest.contentDirectory.split("/"))');
-    expect(mod).toContain("contentDirectoryPattern.test(manifest.contentDirectory)");
+    expect(mod).toContain("createModProject(manifest");
+    expect(mod).toContain("return project.build(");
+    expect(mod).not.toContain("discoverFeatures(");
+    expect(mod).not.toContain("contentDirectoryPattern");
     expect(mod).not.toContain('new URL("./content/"');
     expect(manifest(plan())["imports"]).toBeDefined();
-
-    // The emitted expression, evaluated against both a default and a moved
-    // directory: `src/mod.ts` is one level inside the project, so `../` lands
-    // on the root and the manifest's own path continues from there.
-    for (const contentDirectory of ["src/content", "src/features/generated"]) {
-      const base = "file:///project/src/mod.ts";
-      expect(new URL(`../${contentDirectory}/`, base).pathname).toBe(
-        `/project/${contentDirectory}/`
-      );
-    }
   });
 
   it("captures the manifest Asset tree inside each build invocation", () => {
     const mod = plan().get("src/mod.ts")!;
-    expect(mod).toContain('"assetsDirectory" in manifest');
-    expect(mod).toContain("assetsDirectoryPattern.test(assetsDirectory)");
-    expect(mod).toContain('path.join(projectRoot, ...assetsDirectory.split("/"))');
-    expect(mod).toContain(
-      "mod.assetTree({ source: assetsDir, allowMissing: true, allowEmpty: true })"
-    );
-    expect(mod).toContain('mod.feature("assets", assets)');
-    expect(mod.indexOf("mod.assetTree(")).toBeGreaterThan(
-      mod.indexOf("export async function buildTheMod")
-    );
+    expect(mod).toContain("export function buildTheMod");
+    expect(mod).toContain("return project.build(");
+    expect(mod).not.toContain("mod.assetTree(");
+    expect(mod).not.toContain("mod.compile(");
   });
 
   it("documents the default mirrored Asset directory", () => {
@@ -369,9 +341,13 @@ describe("the Project Manifest", () => {
     const build = plan().get("src/index.ts")!;
     const install = plan().get("src/install.ts")!;
     expect(build).toContain('import { runBuild } from "@pdx-ts/sdk"');
+    expect(build).toContain('import { buildTheMod } from "#mod"');
     expect(build).toContain("await runBuild(buildTheMod(), { outDir, previewsDir })");
     expect(install).toContain('import { runInstall } from "@pdx-ts/sdk"');
+    expect(install).toContain('import { buildTheMod } from "#mod"');
     expect(install).toContain("await runInstall(buildTheMod())");
+    expect(build).not.toContain('from "./mod.ts"');
+    expect(install).not.toContain('from "./mod.ts"');
     expect(build).not.toContain("console.");
     expect(install).not.toContain("console.");
   });
@@ -381,6 +357,16 @@ describe("the Project Manifest", () => {
     expect(imports["#mod"]).toBe("./src/mod.ts");
     expect(plan().get("src/content/example.ts")).toContain('import { mod } from "#mod"');
     expect(plan().get("src/content/example.ts")).not.toContain('from "../mod.ts"');
+  });
+
+  it("gives the scaffolded visible event checked picture and sound media", () => {
+    const example = plan().get("src/content/example.ts")!;
+    expect(example).toContain(
+      "picture: vanilla.spriteType.eventpictures.GFX_evt_mysterious_signal"
+    );
+    expect(example).toContain(
+      "showSound: vanilla.soundEffect.gui.gui_sound_effects.event_alien_signal"
+    );
   });
 });
 
@@ -546,8 +532,11 @@ describe("SDK-54: config has no build side effect", () => {
     // `write` and `install` are the SDK's only disk-touching exports; none of
     // them belongs in this file.
     const mod = plan().get("src/mod.ts")!;
-    expect(mod).toContain("export const config");
-    expect(mod).toContain("export async function buildTheMod");
+    expect(mod).toContain("export const { config, mod } = project");
+    expect(mod).toContain("export function buildTheMod");
+    expect(mod).not.toContain("discoverFeatures(");
+    expect(mod).not.toContain("assetTree(");
+    expect(mod).not.toContain(".compile(");
     expect(mod).not.toContain("render(");
     expect(mod).not.toContain("write(");
     expect(mod).not.toContain("install(");

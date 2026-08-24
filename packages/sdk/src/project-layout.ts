@@ -1,11 +1,4 @@
-/**
- * The Project Layout rules projected into the standalone scaffolder release.
- *
- * The SDK owns the runtime rule used by generated projects. This package keeps
- * a dependency-free projection because the CLI and SDK have independent
- * release ranges; `manifest.test.ts` gates every descriptor against the SDK
- * authority so this copy cannot drift silently.
- */
+/** One normalized interpretation of the source directories a mod project names. */
 
 const WINDOWS_DEVICE_NAME = String.raw`(?:[Cc][Oo][Nn]|[Pp][Rr][Nn]|[Aa][Uu][Xx]|[Nn][Uu][Ll]|[Cc][Oo][Mm][1-9]|[Ll][Pp][Tt][1-9])`;
 const PORTABLE_COMPONENT =
@@ -17,14 +10,19 @@ const PROJECT_DIRECTORY_PATTERN = new RegExp(
   String.raw`^${PORTABLE_COMPONENT}(?:/${PORTABLE_COMPONENT})*$`
 );
 
-type ProjectLayoutFieldDescriptor = {
+/** One project-layout field and the rule used to parse it. */
+export interface ProjectLayoutFieldDescriptor {
+  /** Whether the Project Manifest requires this field. */
   readonly required: boolean;
+  /** Human-readable field description used by generated schemas. */
   readonly description: string;
+  /** ECMA-262 pattern accepted by runtime parsing and generated schemas. */
   readonly pattern: RegExp;
+  /** Describes a value that does not match the field pattern. */
   readonly patternError: (value: string) => string;
-};
+}
 
-/** The SDK Project Layout descriptors projected into manifest parsing and schema generation. */
+/** The project-layout authority used by parsing and JSON Schema generation. */
 export const PROJECT_LAYOUT_FIELDS = {
   contentDirectory: {
     required: true,
@@ -44,10 +42,10 @@ export const PROJECT_LAYOUT_FIELDS = {
   },
 } as const satisfies Record<string, ProjectLayoutFieldDescriptor>;
 
-/** A field governed by the projected Project Layout rules. */
+/** A field governed by the project-layout rules. */
 export type ProjectLayoutFieldName = keyof typeof PROJECT_LAYOUT_FIELDS;
 
-/** Returns the JSON Schema fragment for one projected Project Layout field. */
+/** Returns the JSON Schema fragment for one project-layout field. */
 export function projectLayoutFieldSchema(
   field: ProjectLayoutFieldDescriptor
 ): Record<string, unknown> {
@@ -58,19 +56,23 @@ export function projectLayoutFieldSchema(
   };
 }
 
-/** Validated Project Manifest directories and their portable path segments. */
-export interface ProjectLayout {
+/** The source directories accepted by {@link parseProjectLayout}. */
+export interface ProjectLayoutInput {
   /** Normalized project-relative directory below `src` containing Feature modules. */
   readonly contentDirectory: string;
-  /** Portable path segments parsed from `contentDirectory`. */
-  readonly contentSegments: readonly string[];
   /** Normalized project-relative directory mirrored into the built mod. */
   readonly assetsDirectory?: string;
+}
+
+/** Validated project-relative directories and their portable path segments. */
+export interface ProjectLayout extends ProjectLayoutInput {
+  /** Portable path segments parsed from `contentDirectory`. */
+  readonly contentSegments: readonly string[];
   /** Portable path segments parsed from `assetsDirectory`, when present. */
   readonly assetsSegments?: readonly string[];
 }
 
-/** Reports a Project Manifest directory that violates the projected SDK rule. */
+/** Reports a project directory that is unsafe or outside its required location. */
 export class ProjectLayoutError extends Error {
   constructor(message: string) {
     super(message);
@@ -78,7 +80,7 @@ export class ProjectLayoutError extends Error {
   }
 }
 
-/** Parses one projected Project Layout field into portable path segments. */
+/** Parses one project-layout field into portable path segments. */
 export function parseProjectLayoutField(
   fieldName: ProjectLayoutFieldName,
   raw: string
@@ -94,11 +96,8 @@ export function parseProjectLayoutField(
   return Object.freeze(raw.split("/"));
 }
 
-/** Validates and parses all source directories in one Project Manifest. */
-export function parseProjectLayout(input: {
-  readonly contentDirectory: string;
-  readonly assetsDirectory?: string;
-}): ProjectLayout {
+/** Validates and parses all source directories for one mod project. */
+export function parseProjectLayout(input: ProjectLayoutInput): ProjectLayout {
   const contentSegments = parseProjectLayoutField("contentDirectory", input.contentDirectory);
   if (input.assetsDirectory === undefined) {
     return Object.freeze({

@@ -47,3 +47,8 @@ export {
 } from "./generated/script-reference.ts";
 export { EVENT_KINDS, type EventKindKey } from "./generated/events.ts";
 export { SUPPORTED_STELLARIS_BUILD } from "./installation/vanilla/override-rules.ts";
+export {
+  PROJECT_LAYOUT_FIELDS,
+  projectLayoutFieldSchema,
+  type ProjectLayoutFieldDescriptor,
+} from "./project-layout.ts";
