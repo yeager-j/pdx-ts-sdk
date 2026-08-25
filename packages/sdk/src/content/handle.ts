@@ -55,6 +55,11 @@ export interface ContentHandle<
   K extends ContentTypeName,
   D extends { readonly id: string },
 > extends ContentHandleBase<K, D["id"] & string> {
+  /**
+   * Attaches the body to the already-minted id, returning the item to place in
+   * a Feature. Pure and stateless: calling it twice builds two definitions of
+   * one id, which the Fold refuses exactly as it refuses two eager calls.
+   */
   define(def: Omit<D, "id">): ContentItem<K, D>;
 }
 

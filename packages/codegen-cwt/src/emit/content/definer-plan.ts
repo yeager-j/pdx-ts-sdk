@@ -525,7 +525,12 @@ function capabilityDefineMember(facts: RegistryDefinerFacts): {
         definitionType: erasedDefineDef,
         id: `mint(${JSON.stringify(method)}, name, options)`,
         mintParameters: ", options?: MintNameOptions",
-        premintStatements: "",
+        // Read once, beside the mint it belongs to. `options` is the caller's
+        // object and `define` runs later, so a closure that reread it could
+        // mint an exact name and then decline to record who minted it —
+        // leaving the placement check with only the string, which for a name
+        // carrying two mods' prefixes cannot say which capability owns it.
+        premintStatements: "      const exactName = options?.prefix === false;\n",
         nestedDefinitionMembers,
         nestedDefinitionTable,
         provenance: "exactName",
@@ -1144,7 +1149,7 @@ function capabilityBindings(spec: {
       ? `        return ${spec.definer}(def);\n`
       : spec.provenance === "exactName"
         ? `        const item = ${spec.definer}(def);\n` +
-          "        return options?.prefix === false ? recordExactNameMint(item, mintOwner) : item;\n"
+          "        return exactName ? recordExactNameMint(item, mintOwner) : item;\n"
         : `        return shapeMinted(${spec.definer}(def), mintOwner, ` +
           `${JSON.stringify(spec.provenance.shape)});\n`);
   const expression =

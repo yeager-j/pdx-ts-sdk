@@ -3047,12 +3047,13 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
       ).define(def);
     },
     pdxmeshHandle: <const Name extends string>(name: Name, options?: MintNameOptions) => {
+      const exactName = options?.prefix === false;
       return createContentHandle(
         "pdxmesh",
         mint("pdxmesh", name, options),
         (def: PdxmeshDef<MintedIdOf<P, I, "pdxmesh", Name>>) => {
           const item = definePdxmesh(def);
-          return options?.prefix === false ? recordExactNameMint(item, mintOwner) : item;
+          return exactName ? recordExactNameMint(item, mintOwner) : item;
         }
       );
     },
@@ -3061,22 +3062,24 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
       def: Omit<PdxmeshDef<MintedIdOf<P, I, "pdxmesh", Name>>, "id">,
       options?: MintNameOptions
     ) => {
+      const exactName = options?.prefix === false;
       return createContentHandle(
         "pdxmesh",
         mint("pdxmesh", name, options),
         (def: PdxmeshDef<MintedIdOf<P, I, "pdxmesh", Name>>) => {
           const item = definePdxmesh(def);
-          return options?.prefix === false ? recordExactNameMint(item, mintOwner) : item;
+          return exactName ? recordExactNameMint(item, mintOwner) : item;
         }
       ).define(def as unknown as Omit<PdxmeshDef<MintedIdOf<P, I, "pdxmesh", Name>>, "id">);
     },
     pdxparticleHandle: <const Name extends string>(name: Name, options?: MintNameOptions) => {
+      const exactName = options?.prefix === false;
       return createContentHandle(
         "pdxparticle",
         mint("pdxparticle", name, options),
         (def: PdxparticleDef<MintedIdOf<P, I, "pdxparticle", Name>>) => {
           const item = definePdxparticle(def);
-          return options?.prefix === false ? recordExactNameMint(item, mintOwner) : item;
+          return exactName ? recordExactNameMint(item, mintOwner) : item;
         }
       );
     },
@@ -3085,12 +3088,13 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
       def: Omit<PdxparticleDef<MintedIdOf<P, I, "pdxparticle", Name>>, "id">,
       options?: MintNameOptions
     ) => {
+      const exactName = options?.prefix === false;
       return createContentHandle(
         "pdxparticle",
         mint("pdxparticle", name, options),
         (def: PdxparticleDef<MintedIdOf<P, I, "pdxparticle", Name>>) => {
           const item = definePdxparticle(def);
-          return options?.prefix === false ? recordExactNameMint(item, mintOwner) : item;
+          return exactName ? recordExactNameMint(item, mintOwner) : item;
         }
       ).define(def as unknown as Omit<PdxparticleDef<MintedIdOf<P, I, "pdxparticle", Name>>, "id">);
     },
