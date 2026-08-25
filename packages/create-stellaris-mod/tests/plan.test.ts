@@ -56,6 +56,8 @@ function manifest(files: Map<string, string>): Record<string, Record<string, str
 describe("the scaffolded tree", () => {
   it("is the same set of files every time", () => {
     expect([...plan().keys()]).toEqual([
+      ".agents/skills/pdx-project-startup/SKILL.md",
+      ".agents/skills/pdx-sdk-authoring/SKILL.md",
       ".agents/skills/pdx-sdk-docs/SKILL.md",
       ".claude/agents/pdx-docs-expert.md",
       ".claude/skills",
@@ -71,6 +73,7 @@ describe("the scaffolded tree", () => {
       "src/content/example.ts",
       "src/flags.ts",
       "src/index.ts",
+      "src/inspect.ts",
       "src/install.ts",
       "src/mod.ts",
       "src/vanilla.ts",
@@ -81,13 +84,22 @@ describe("the scaffolded tree", () => {
     ]);
   });
 
-  it("models the enabled LLM bundle as four files and two exact relative links", () => {
+  it("models the enabled LLM bundle as six files and two exact relative links", () => {
     const entries = project();
     expect(entries.get("AGENTS.md")?.kind).toBe("file");
+    expect(entries.get(".agents/skills/pdx-project-startup/SKILL.md")?.kind).toBe("file");
+    expect(entries.get(".agents/skills/pdx-sdk-authoring/SKILL.md")?.kind).toBe("file");
     expect(entries.get(".agents/skills/pdx-sdk-docs/SKILL.md")?.kind).toBe("file");
     expect(entries.get(".claude/agents/pdx-docs-expert.md")?.kind).toBe("file");
     expect(entries.get(".codex/agents/pdx-docs-expert.toml")?.kind).toBe("file");
     expect(plan().get("AGENTS.md")).toContain("without forking or inheriting conversation history");
+    expect(plan().get("AGENTS.md")).toContain("Status: not configured.");
+    expect(plan().get("AGENTS.md")).toContain(
+      "read and follow `.agents/skills/pdx-project-startup/SKILL.md` completely"
+    );
+    expect(plan().get("AGENTS.md")).toContain(
+      "read and follow `.agents/skills/pdx-sdk-authoring/SKILL.md` completely"
+    );
     expect(plan().get("AGENTS.md")).toContain(
       "spawn one subagent with the `pdx-docs-expert` agent type"
     );
@@ -111,6 +123,8 @@ describe("the scaffolded tree", () => {
     for (const relPath of [
       "AGENTS.md",
       "CLAUDE.md",
+      ".agents/skills/pdx-project-startup/SKILL.md",
+      ".agents/skills/pdx-sdk-authoring/SKILL.md",
       ".agents/skills/pdx-sdk-docs/SKILL.md",
       ".claude/skills",
       ".claude/agents/pdx-docs-expert.md",
@@ -120,10 +134,62 @@ describe("the scaffolded tree", () => {
     }
   });
 
-  it("embeds the reviewed docs skill byte for byte", () => {
-    const bytes = plan().get(".agents/skills/pdx-sdk-docs/SKILL.md")!;
-    expect(createHash("sha256").update(bytes).digest("hex")).toBe(
-      "e870f27fb4efdd3bd4bece9fd81ad3130531b3c9306bac44cea95feec3d340dd"
+  it("embeds the reviewed skills byte for byte", () => {
+    const expectedDigests = new Map([
+      [
+        ".agents/skills/pdx-project-startup/SKILL.md",
+        "50984ec193bd0e19d06380f48f02e06925d727a3c7c74c6b512b5c2beda1e37f",
+      ],
+      [
+        ".agents/skills/pdx-sdk-authoring/SKILL.md",
+        "9be42fdd62d613912f66cd1a85b985c1b043dae2cdc9f3f5f8768f1c55c4045e",
+      ],
+      [
+        ".agents/skills/pdx-sdk-docs/SKILL.md",
+        "e870f27fb4efdd3bd4bece9fd81ad3130531b3c9306bac44cea95feec3d340dd",
+      ],
+    ]);
+    for (const [relPath, expectedDigest] of expectedDigests) {
+      const bytes = plan().get(relPath)!;
+      expect(createHash("sha256").update(bytes).digest("hex"), relPath).toBe(expectedDigest);
+    }
+  });
+
+  it("emits valid model-invoked project skills", () => {
+    const expectedDescriptions = new Map([
+      ["pdx-project-startup", "Collaboration agreement"],
+      ["pdx-sdk-authoring", "Feature modules"],
+    ]);
+    for (const [name, descriptionFragment] of expectedDescriptions) {
+      const skill = plan().get(`.agents/skills/${name}/SKILL.md`)!;
+      const frontmatter = /^---\n([\s\S]*?)\n---\n/.exec(skill);
+      expect(frontmatter, name).not.toBeNull();
+      expect(parseYaml(frontmatter![1]!), name).toEqual({
+        name,
+        description: expect.stringContaining(descriptionFragment),
+      });
+      expect(skill, name).not.toContain("disable-model-invocation");
+    }
+
+    const authoring = plan().get(".agents/skills/pdx-sdk-authoring/SKILL.md")!;
+    expect(authoring).toContain("**Items**");
+    expect(authoring).toContain("**Feature**");
+    expect(authoring).toContain("**Fold**");
+  });
+
+  it("discloses startup only while the collaboration agreement is unconfigured", () => {
+    const agents = plan().get("AGENTS.md")!;
+    const startup = plan().get(".agents/skills/pdx-project-startup/SKILL.md")!;
+    expect(agents.match(/<!-- pdx-project-collaboration:start -->/g)).toHaveLength(1);
+    expect(agents.match(/<!-- pdx-project-collaboration:end -->/g)).toHaveLength(1);
+    expect(agents).not.toContain("**Role:**");
+    expect(startup).toContain("Ask the core questions");
+    expect(startup).toContain("resume that request without asking the user to repeat it");
+    expect(startup).toContain("replace only the marked Collaboration agreement");
+    expect(startup).toContain("`/grill-with-docs`");
+    expect(startup).toContain("`/wayfinder`");
+    expect(startup.indexOf("## Recommend optional planning Skills")).toBeGreaterThan(
+      startup.indexOf("## Write the agreement")
     );
   });
 
@@ -337,18 +403,25 @@ describe("the Project Manifest", () => {
     expect(readme).toContain("missing or empty directory is valid");
   });
 
-  it("delegates build and install presentation to the SDK terminal module", () => {
+  it("delegates build, inspection, and install presentation to the SDK", () => {
     const build = plan().get("src/index.ts")!;
+    const inspect = plan().get("src/inspect.ts")!;
     const install = plan().get("src/install.ts")!;
     expect(build).toContain('import { runBuild } from "@pdx-ts/sdk"');
     expect(build).toContain('import { buildTheMod } from "#mod"');
     expect(build).toContain("await runBuild(buildTheMod(), { outDir, previewsDir })");
+    expect(inspect).toContain('import { runInspect } from "@pdx-ts/sdk"');
+    expect(inspect).toContain('import { buildTheMod } from "#mod"');
+    expect(inspect).toContain("await runInspect(buildTheMod(), {");
+    expect(inspect).toContain("manifest,");
     expect(install).toContain('import { runInstall } from "@pdx-ts/sdk"');
     expect(install).toContain('import { buildTheMod } from "#mod"');
     expect(install).toContain("await runInstall(buildTheMod())");
     expect(build).not.toContain('from "./mod.ts"');
+    expect(inspect).not.toContain('from "./mod.ts"');
     expect(install).not.toContain('from "./mod.ts"');
     expect(build).not.toContain("console.");
+    expect(inspect).not.toContain("console.");
     expect(install).not.toContain("console.");
   });
 
@@ -357,6 +430,13 @@ describe("the Project Manifest", () => {
     expect(imports["#mod"]).toBe("./src/mod.ts");
     expect(plan().get("src/content/example.ts")).toContain('import { mod } from "#mod"');
     expect(plan().get("src/content/example.ts")).not.toContain('from "../mod.ts"');
+  });
+
+  it("documents the authored Feature stem as output identity", () => {
+    const example = plan().get("src/content/example.ts")!;
+    expect(example).toContain("Rename or move this file and the emitted paths stay the same");
+    expect(example).toContain("Change the stem to change its");
+    expect(example).not.toContain("Rename this file and the emitted filenames follow");
   });
 
   it("gives the scaffolded visible event checked picture and sound media", () => {
@@ -463,6 +543,13 @@ describe("dependency resolution", () => {
     // `npm run build` is `node src/index.ts`, which needs type stripping.
     expect(manifest(plan())["engines"]!["node"]).toBe(">=22.18.0");
   });
+
+  it("provides the deterministic YAML inspection command", () => {
+    const { scripts } = manifest(plan());
+    expect(scripts!["inspect"]).toBe("node src/inspect.ts");
+    expect(plan().get("README.md")).toContain("npm run inspect");
+    expect(plan().get("README.md")).toContain("deterministic YAML report");
+  });
 });
 
 describe("the vanilla view the project loads", () => {
@@ -542,12 +629,12 @@ describe("SDK-54: config has no build side effect", () => {
     expect(mod).not.toContain("install(");
   });
 
-  it("gives src/index.ts and src/install.ts exactly one fold to share, instead of one each", () => {
-    // Both entrypoints import the same buildTheMod() from src/mod.ts, so there
+  it("gives every project command exactly one fold to share", () => {
+    // Every entrypoint imports the same buildTheMod() from src/mod.ts, so there
     // is exactly one capability compile, built once with whatever vanilla view
     // src/mod.ts resolved.
     const files = plan();
-    for (const relPath of ["src/index.ts", "src/install.ts"]) {
+    for (const relPath of ["src/index.ts", "src/inspect.ts", "src/install.ts"]) {
       const contents = files.get(relPath)!;
       expect(contents, relPath).toContain("buildTheMod");
       expect(contents, relPath).not.toContain("discoverFeatures");

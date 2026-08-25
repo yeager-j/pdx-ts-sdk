@@ -163,6 +163,16 @@ describe("createModProject", () => {
     expect(new TextDecoder().decode(rendered.file("gfx/interface/project-icon.txt")?.bytes())).toBe(
       "asset bytes"
     );
+    expect(compiled.compileInputs.features).toEqual([
+      { stem: "assets", itemCount: 1, itemIds: [] },
+      { stem: "extra", itemCount: 1, itemIds: ["project_pipeline_tech_extra"] },
+      { stem: "main", itemCount: 1, itemIds: ["project_pipeline_tech_theory"] },
+    ]);
+    expect(compiled.compileInputs.vanilla).toEqual({
+      loadedView: false,
+      gameVersion: undefined,
+      pathInventory: false,
+    });
   });
 });
 

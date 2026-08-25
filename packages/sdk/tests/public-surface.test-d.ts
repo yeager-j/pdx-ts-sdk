@@ -57,6 +57,12 @@ describe("the pipeline entry point", () => {
     expectTypeOf(project.build({ additionalFeatures: [extra] })).toEqualTypeOf<
       Promise<sdk.PureMod>
     >();
+    expectTypeOf<sdk.PureMod["compileInputs"]>().toEqualTypeOf<sdk.CompileInputs>();
+    expectTypeOf<sdk.CompileInputs["features"]>().toEqualTypeOf<
+      readonly sdk.CompiledFeatureInput[]
+    >();
+    expectTypeOf<sdk.CompileInputs["vanilla"]>().toEqualTypeOf<sdk.CompiledVanillaInput>();
+    expectTypeOf(sdk.runInspect).toBeFunction();
     expectTypeOf(reference.PROJECT_LAYOUT_FIELDS.contentDirectory.pattern).toEqualTypeOf<RegExp>();
     // @ts-expect-error — Project Layout parsing is an implementation detail.
     expectTypeOf(sdk.parseProjectLayout);

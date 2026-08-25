@@ -12,6 +12,7 @@ export function readme(resolved: Resolved): string {
     "",
     "```bash",
     "npm run build        # write the mod into ./out/",
+    "npm run inspect      # print a YAML map of the compiled project",
     "npm run install-mod  # build, then install it where the launcher looks",
     "npm test             # run mod logic without launching the game",
     "npm run typecheck    # tsc --noEmit",
@@ -25,6 +26,7 @@ export function readme(resolved: Resolved): string {
     "src/",
     "├── mod.ts              declares the SDK project and buildTheMod()",
     "├── index.ts            build: render the fold and write it to out/",
+    "├── inspect.ts          compile and describe the project as YAML",
     "├── install.ts          build + drop it in the launcher's mod directory",
   ];
   if (resolved.installPath !== undefined) {
@@ -62,6 +64,12 @@ export function readme(resolved: Resolved): string {
     "and Fold sequence. Pass `discover` or `additionalFeatures` for a pre-compile",
     "customization, or compose `discoverFeatures`, `mod.assetTree`, and",
     "`mod.compile` directly for a fundamentally different pipeline.",
+    "",
+    "`npm run inspect` performs that same Fold without rendering or writing the",
+    "mod. Its deterministic YAML report lists the manifest layout, installed and",
+    "requested SDK and identifier-package versions, vanilla-checking evidence,",
+    "Feature stems, Item counts and ids, patch plans, and warnings. Use it to",
+    "review what the project will ship or give a coding agent a compact map.",
     "",
     "Source layout is not output layout. `discoverFeatures` imports each selected",
     "module under `content/` and reads its named `feature` export, so one feature",

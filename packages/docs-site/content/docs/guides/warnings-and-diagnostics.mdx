@@ -76,11 +76,12 @@ const rendered = render(built);
 await write(outDir, rendered);
 ```
 
-`create-stellaris-mod` generates calls to `runBuild` and `runInstall` from
-`@pdx-ts/sdk`, so the SDK owns the presentation and warnings appear
-whichever command you run. Interactive output shows up to three warnings
-directly and groups larger sets by code; pass `--verbose` to show every warning.
-CI and non-TTY output are verbose by default.
+`create-stellaris-mod` generates calls to `runBuild`, `runInspect`, and
+`runInstall` from `@pdx-ts/sdk`, so the SDK owns the presentation. Build and
+install show up to three warnings directly in interactive output and group
+larger sets by code; pass `--verbose` to show every warning. CI and non-TTY
+output are verbose by default. Inspect includes every warning as structured
+data in its YAML report.
 
 Solar-system preview diagnostics keep their own warning or info severity.
 Definite findings always print in interactive builds; possible and unresolved

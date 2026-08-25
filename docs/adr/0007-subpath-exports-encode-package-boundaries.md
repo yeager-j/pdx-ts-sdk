@@ -4,7 +4,7 @@
 
 - `.` — the pipeline: configure, discover, build, materialize. `createModProject`,
   `createMod`, `discoverFeatures`, `render`, `write`, `install`, the terminal helpers
-  (`runBuild`, `runInstall`), the error classes, and the mod-level dev tools
+  (`runBuild`, `runInstall`, `runInspect`), the error classes, and the mod-level dev tools
   (`inspectSolarSystem`, `writeSystemPreviews`).
 - `./stellaris` — the game vocabulary: what an author types inside defs,
   trigger expressions, and effect closures. Combinators, the generated

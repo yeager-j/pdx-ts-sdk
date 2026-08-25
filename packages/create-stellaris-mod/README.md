@@ -18,10 +18,16 @@ and writes a project that typechecks, tests and builds on the first
 `npm install` — including a `content/` directory already wired to the SDK's
 project pipeline, a worked example that fires in game, and colocated tests.
 
+Generated projects also include `npm run inspect`, which performs the Fold
+without writing the mod and prints a deterministic YAML map of the project for
+authors and coding agents.
+
 ```
 my-mod/
 ├── AGENTS.md             shared Codex and Claude project guidance
 ├── CLAUDE.md -> AGENTS.md
+├── .agents/skills/pdx-project-startup/SKILL.md
+├── .agents/skills/pdx-sdk-authoring/SKILL.md
 ├── .agents/skills/pdx-sdk-docs/SKILL.md
 ├── .claude/
 │   ├── agents/pdx-docs-expert.md
@@ -35,6 +41,7 @@ my-mod/
 └── src/
     ├── mod.ts              declares the SDK project + buildTheMod()
     ├── index.ts            build: render the fold and write it to out/
+    ├── inspect.ts          compile and describe the project as YAML
     ├── install.ts          build + drop it where the launcher looks
     ├── vanilla.ts          the parsed install, when one was found
     ├── flags.ts            shared values — outside content/, deliberately
@@ -54,13 +61,14 @@ manifest moves both. The scaffolded package also declares
 and install entrypoints import the mod module through it rather than computing a
 relative path.
 
-Importing `mod.ts` builds nothing — `mod` is an immutable capability — so
-`index.ts` and `install.ts` each import its `buildTheMod()` and add their own
-single disk-touching step (`write` vs `install`) on top. `project.build()` owns
-the conventional discovery, Asset capture, and compile sequence. Pass
-`discover` or `additionalFeatures` when that sequence needs a pre-compile
-adjustment. A fundamentally different pipeline can still compose the public
-`discoverFeatures`, `mod.assetTree`, and `mod.compile` interfaces directly.
+Importing `mod.ts` builds nothing — `mod` is an immutable capability — so the
+build, inspect, and install entrypoints share its `buildTheMod()`. The build and
+install commands add one disk-touching step; inspect only describes the Fold.
+`project.build()` owns the conventional discovery, Asset capture, and compile
+sequence. Pass `discover` or `additionalFeatures` when that sequence needs a
+pre-compile adjustment. A fundamentally different pipeline can still compose
+the public `discoverFeatures`, `mod.assetTree`, and `mod.compile` interfaces
+directly.
 With a vanilla install found, `buildTheMod()` also parses the game and may write
 a cache under `node_modules/.cache`.
 
@@ -80,13 +88,24 @@ stdin is not a TTY, it takes the defaults and never asks — a CI run cannot han
 on a prompt nobody will see.
 
 Codex and Claude support is enabled by default. The generated bundle stays
-inside the project: shared instructions, the embedded `pdx-sdk-docs` skill, and
-native project-scoped `pdx-docs-expert` definitions for both clients. Init does
-not download the skill or modify user-level configuration. Use `--no-llm` to
-omit the complete bundle. The shared instructions and skill use relative
+inside the project: shared instructions, an embedded one-time collaboration
+setup, `pdx-sdk-authoring` and `pdx-sdk-docs` skills, and native project-scoped
+`pdx-docs-expert` definitions for both clients. Init does not download the
+skills or modify user-level configuration. Use `--no-llm` to omit the complete
+bundle. The shared instructions and skills use relative
 symlinks where the platform permits them; if symlink creation returns `EPERM`,
 init atomically publishes regular file and directory copies instead, so Windows
 does not require Developer Mode or symbolic-link privileges.
+
+The first substantive agent task finds an unconfigured Collaboration agreement
+in `AGENTS.md`. The startup skill asks how much creative ownership, autonomy,
+explanation, and review the author wants, then replaces only that marked section
+with a short working agreement. It also briefly points the author to the external
+`grill-with-docs` Skill for focused design work and `wayfinder` for work too
+large to plan in one session, then resumes the original task. Those optional
+Skills come from Matt Pocock's Skills plugin; the scaffold does not install
+them. Later agents receive the agreement automatically with the rest of
+`AGENTS.md`; task-specific instructions still override it.
 
 Before the docs expert answers, it compares the exact `@pdx-ts/sdk` dependency
 in the generated project's `package.json` with the `SDK version` declared by

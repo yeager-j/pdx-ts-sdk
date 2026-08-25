@@ -221,6 +221,7 @@ function nextSteps(
   }
   lines.push(
     `  ${pm} run build      # write the mod into ./out/`,
+    `  ${pm} run inspect    # review the compiled project as YAML`,
     `  ${pm} test           # run the example event chain`,
     `  ${pm} run install-mod # install it where the launcher looks`,
     ""

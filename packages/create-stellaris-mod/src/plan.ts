@@ -9,7 +9,14 @@
 
 import { toPackageName } from "./derive.ts";
 import type { Resolved } from "./options.ts";
-import { agentsMd, claudeAgent, codexAgent, pdxSdkDocsSkill } from "./templates/llm.ts";
+import {
+  agentsMd,
+  claudeAgent,
+  codexAgent,
+  pdxProjectStartupSkill,
+  pdxSdkAuthoringSkill,
+  pdxSdkDocsSkill,
+} from "./templates/llm.ts";
 import {
   MANIFEST_FILE,
   MANIFEST_SCHEMA_FILE,
@@ -30,6 +37,7 @@ import {
   contentExampleTs,
   flagsTs,
   indexTs,
+  inspectTs,
   installTs,
   modTs,
   vanillaTs,
@@ -72,6 +80,7 @@ export function planProject(resolved: Resolved, packageName?: string): Map<strin
 
   file("src/mod.ts", modTs(resolved));
   file("src/index.ts", indexTs());
+  file("src/inspect.ts", inspectTs());
   file("src/install.ts", installTs());
   file("src/flags.ts", flagsTs(resolved));
   file("src/content/example.ts", contentExampleTs(resolved));
@@ -87,6 +96,8 @@ export function planProject(resolved: Resolved, packageName?: string): Map<strin
   if (resolved.llmSupport) {
     file("AGENTS.md", agentsMd());
     symlink("CLAUDE.md", "AGENTS.md");
+    file(".agents/skills/pdx-project-startup/SKILL.md", pdxProjectStartupSkill());
+    file(".agents/skills/pdx-sdk-authoring/SKILL.md", pdxSdkAuthoringSkill());
     file(".agents/skills/pdx-sdk-docs/SKILL.md", pdxSdkDocsSkill());
     symlink(".claude/skills", "../.agents/skills");
     file(".claude/agents/pdx-docs-expert.md", claudeAgent());

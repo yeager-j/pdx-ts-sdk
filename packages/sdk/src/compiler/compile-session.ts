@@ -1,6 +1,13 @@
 import type { AssetFileItem } from "../authoring/assets.ts";
-import { flattenItems, type ModItemInput, type PlacedItem } from "../authoring/feature.ts";
+import {
+  flattenItems,
+  type Feature,
+  type ModItem,
+  type ModItemInput,
+  type PlacedItem,
+} from "../authoring/feature.ts";
 import type { ModWarning } from "../diagnostics.ts";
+import type { VanillaView } from "../installation/vanilla/view.ts";
 import { compareUtf8, type LogicalPath } from "../ordering.ts";
 import type { AssetPathUse } from "../references.ts";
 import {
@@ -10,6 +17,7 @@ import {
   type ResolvedModConfig,
 } from "./config.ts";
 import { createLocalizationAccumulator, type LocalizationAccumulator } from "./localization.ts";
+import type { CompiledFeatureInput, CompileInputs } from "./model.ts";
 import type { ReferenceUse } from "./references.ts";
 
 /** An asset item together with its optional source Feature stem. */
@@ -34,6 +42,8 @@ export interface BuildSession {
   readonly config: ResolvedModConfig;
   /** Options that control this build. */
   readonly options: BuildOptions;
+  /** Canonical input provenance retained on the compiled mod. */
+  readonly compileInputs: CompileInputs;
   /** All input items, with their placement metadata. */
   readonly flat: readonly PlacedItem[];
   /** Asset items, ordered by their logical paths. */
@@ -66,6 +76,7 @@ export function createBuildSession(
   return {
     config,
     options,
+    compileInputs: summarizeCompileInputs(features, options),
     flat,
     assets,
     warnings,
@@ -74,6 +85,96 @@ export function createBuildSession(
     pathUses: [],
     stemsByPath: new Map(),
   };
+}
+
+function summarizeCompileInputs(
+  features: readonly ModItemInput[],
+  options: BuildOptions
+): CompileInputs {
+  const compiledFeatures: CompiledFeatureInput[] = [];
+  const vanillaOrigins = new Set<VanillaView>();
+  if (options.vanilla !== undefined) {
+    vanillaOrigins.add(options.vanilla);
+  }
+  collectFeatureInputs(features, compiledFeatures, vanillaOrigins);
+  compiledFeatures.sort(compareCompiledFeatures);
+  const knownGameVersions = [
+    ...new Set(
+      [...vanillaOrigins].flatMap((origin) =>
+        origin.gameVersion === undefined ? [] : [origin.gameVersion]
+      )
+    ),
+  ].sort(compareUtf8);
+  return Object.freeze({
+    features: Object.freeze(
+      compiledFeatures.map((feature) =>
+        Object.freeze({ ...feature, itemIds: Object.freeze(feature.itemIds) })
+      )
+    ),
+    vanilla: Object.freeze({
+      loadedView: vanillaOrigins.size > 0,
+      gameVersion: knownGameVersions.length === 1 ? knownGameVersions[0] : undefined,
+      pathInventory: [...vanillaOrigins].some((origin) => origin.pathInventory !== undefined),
+    }),
+  });
+}
+
+function collectFeatureInputs(
+  inputs: readonly ModItemInput[],
+  compiledFeatures: CompiledFeatureInput[],
+  vanillaOrigins: Set<VanillaView>
+): void {
+  for (const input of inputs) {
+    if (Array.isArray(input)) {
+      collectFeatureInputs(input, compiledFeatures, vanillaOrigins);
+      continue;
+    }
+    const feature = input as Feature;
+    for (const item of feature.items) {
+      if (item.itemKind === "patch") {
+        vanillaOrigins.add(item.patched.source.origin);
+      }
+    }
+    compiledFeatures.push({
+      stem: feature.stem,
+      itemCount: feature.items.length,
+      itemIds: feature.items
+        .flatMap((item) => {
+          const id = authoredItemId(item);
+          return id === undefined ? [] : [id];
+        })
+        .sort(compareUtf8),
+    });
+  }
+}
+
+function compareCompiledFeatures(left: CompiledFeatureInput, right: CompiledFeatureInput): number {
+  if (left.stem === undefined && right.stem !== undefined) return -1;
+  if (left.stem !== undefined && right.stem === undefined) return 1;
+  const stemOrder = compareUtf8(left.stem ?? "", right.stem ?? "");
+  if (stemOrder !== 0) return stemOrder;
+
+  const sharedIds = Math.min(left.itemIds.length, right.itemIds.length);
+  for (let index = 0; index < sharedIds; index++) {
+    const idOrder = compareUtf8(left.itemIds[index]!, right.itemIds[index]!);
+    if (idOrder !== 0) return idOrder;
+  }
+  return left.itemIds.length - right.itemIds.length || left.itemCount - right.itemCount;
+}
+
+function authoredItemId(item: ModItem): string | undefined {
+  switch (item.itemKind) {
+    case "content":
+    case "event":
+    case "component-tag":
+      return item.id;
+    case "asset":
+    case "contribution":
+    case "localization":
+    case "on-action":
+    case "patch":
+      return undefined;
+  }
 }
 
 /** Records a named Feature that placed an item into an emitted file. */

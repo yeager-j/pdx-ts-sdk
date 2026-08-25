@@ -6,12 +6,17 @@ const AGENTS_MD =
     "",
     "This is an `@pdx-ts/sdk` project that generates a Stellaris mod from TypeScript.",
     "",
-    "## Project rules",
+    "<!-- pdx-project-collaboration:start -->",
+    "## Collaboration agreement",
     "",
-    "- Treat `stellaris-mod.json` as the source of truth for mod identity, launcher metadata, and source layout.",
-    "- Import `mod`, `config`, and `buildTheMod` from `#mod`. Do not compute a relative path to `src/mod.ts`.",
-    "- A selected module under the manifest's `contentDirectory` exports exactly one named `feature`. Source layout is not content identity.",
-    "- Use the generated SDK surface for game semantics. Unsupported semantics should stay visible instead of being guessed.",
+    "Status: not configured.",
+    "",
+    "Before the first substantive project change, read and follow `.agents/skills/pdx-project-startup/SKILL.md` completely. Replace this marked section with the agreed working preferences, then resume the user's original task.",
+    "<!-- pdx-project-collaboration:end -->",
+    "",
+    "## SDK authoring",
+    "",
+    "Before adding, changing, reorganizing, or diagnosing SDK content, Feature modules, tests, Assets, or the build pipeline, read and follow `.agents/skills/pdx-sdk-authoring/SKILL.md` completely. It owns this project's stable authoring and Feature contract.",
     "",
     "## SDK documentation expert",
     "",
@@ -35,6 +40,113 @@ const AGENTS_MD =
     "## Verification",
     "",
     "Run `npm run typecheck`, `npm test`, and `npm run build` after code changes. Also run `npm run lint` when that script exists. A task is complete only when the commands pass and any generated solar-system SVGs have been inspected when relevant.",
+  ].join("\n") + "\n";
+
+const PDX_PROJECT_STARTUP_SKILL =
+  [
+    "---",
+    "name: pdx-project-startup",
+    'description: "Establish or revise how an agent collaborates on a create-stellaris-mod project. Use when AGENTS.md\'s Collaboration agreement says `Status: not configured.`, or when the user asks to change that agreement."',
+    "---",
+    "",
+    "# Establishing the collaboration agreement",
+    "",
+    "The questionnaire is temporary; its result is always-loaded project guidance. Preserve the user's current request while running this setup, replace only the marked Collaboration agreement in `AGENTS.md`, then resume that request without asking the user to repeat it.",
+    "",
+    "The section begins with `<!-- pdx-project-collaboration:start -->` and ends with `<!-- pdx-project-collaboration:end -->`. Preserve both markers. If the text between them no longer contains `Status: not configured.`, read and follow the configured agreement without restarting setup unless the user asks to revise it.",
+    "",
+    "## Ask the core questions",
+    "",
+    "Tell the user briefly that their answers will become the project's agent working agreement. Offer `Use recommended defaults` as a complete answer, and otherwise ask these questions in one concise prompt when the client permits:",
+    "",
+    "1. **Role:** Should the agent act as an implementer that translates settled ideas into code, a design partner that develops options and recommends one, or a project lead that can flesh out rough concepts?",
+    "2. **Creative ownership:** For mechanics and balance, lore and narrative, and localization prose, should the user own it, should the user and agent co-design it, or should the agent draft it? Accept a different answer for each area.",
+    "3. **Ambiguity:** Should the agent stop for missing details, present options for consequential choices while making reversible technical choices, or make reasonable creative assumptions and report them?",
+    "4. **Communication:** Should responses contain only the result, concise reasoning, or explanations that teach the SDK and implementation?",
+    "",
+    "The recommended defaults are: design partner with the user making final creative decisions; co-design mechanics, balance, lore, and narrative; draft localization for review; make reversible technical choices; present options for consequential creative choices; suggest adjacent ideas while implementing only agreed scope; give concise reasoning; provide focused in-game checks when playtesting is needed.",
+    "",
+    "## Ask only relevant follow-ups",
+    "",
+    "- When the user owns prose, art, or another creative area, ask whether missing input should stop the task, become an explicit placeholder, or receive a temporary labeled draft.",
+    "- For a design partner or project lead, ask whether adjacent ideas should only be suggested or may be developed into the current feature.",
+    "- When review cadence matters, ask whether the user wants a plan first, reviewable checkpoints, or one completed pass.",
+    "- When the agent will help with creative direction, ask for applicable guardrails such as tone, lore fidelity, power level, complexity, compatibility, and subjects it should leave to the user.",
+    "- When in-game behavior needs verification, ask whether the user can playtest and whether they want a focused playtest script.",
+    "",
+    "Ask no follow-up whose answer is already implied. Keep onboarding short enough that it does not replace the task the user came to complete.",
+    "",
+    "## Write the agreement",
+    "",
+    "Replace only the text between the collaboration markers with the heading and four to eight concise, normative bullets. Record the resolved preferences, not the questions, choice menus, explanation, or conversation transcript. Include `Per-task instructions override this agreement.` as the final bullet.",
+    "",
+    "If the user chooses the recommended defaults, write those defaults explicitly. If the user skips the questions, offer to record the recommended defaults so the next agent does not repeat onboarding. If the user declines both the questions and a saved default, write the heading and one bullet stating that startup was declined and agents should follow explicit task instructions, then continue.",
+    "",
+    "The agreement guides collaboration only. It does not grant standing permission for commits, publishing, destructive operations, external messages, or other actions that need task-specific authority.",
+    "",
+    "## Recommend optional planning Skills",
+    "",
+    "After saving the agreement, tell the user about these optional user-invoked Skills from Matt Pocock's Skills plugin:",
+    "",
+    "- `/grill-with-docs` for a focused mod idea or feature that needs a thorough design interview, shared vocabulary, and recorded decisions.",
+    "- `/wayfinder` for a greenfield mod or feature too large to plan in one agent session; it maps unresolved decisions before implementation. Present it as the heavier workflow, not the default for a well-scoped feature.",
+    "",
+    "Keep this recommendation to a brief two-item note. State that the scaffold does not install these external Skills and that the user can continue without them. If the plugin is unavailable, leave installation as a user-requested follow-up. Then resume the original task.",
+    "",
+    "Setup is complete when the unconfigured status is gone, every preference the user supplied appears once in the marked block, the optional Skills have been mentioned, and the original task has resumed.",
+  ].join("\n") + "\n";
+
+const PDX_SDK_AUTHORING_SKILL =
+  [
+    "---",
+    "name: pdx-sdk-authoring",
+    "description: Author and modify an @pdx-ts/sdk Stellaris mod project. Use when adding or reorganizing Feature modules, shared authoring values, tests, Assets, or build-pipeline customization, or when diagnosing discovery, capability ownership, placement, references, or output identity.",
+    "---",
+    "",
+    "# Authoring an @pdx-ts/sdk project",
+    "",
+    "Use this Skill for the stable project and Feature contract. Use the project-scoped `pdx-docs-expert` from `AGENTS.md` for the exact generated authoring surface: content fields, localization slots, registry coverage, scope effects and triggers, patching, testing APIs, and working content examples.",
+    "",
+    "## Mental model",
+    "",
+    "This project is a TypeScript program that runs once at build time and emits an ordinary Stellaris mod. The game receives PDXScript, localization, metadata, and Asset files; it never runs the TypeScript.",
+    "",
+    "- `mod` is the immutable authoring capability bound to this project's prefix.",
+    "- Capability methods create typed **Items**: definitions, events, on-action contributions, localization, patches, and Assets.",
+    "- A **Feature** explicitly selects Items for the build and gives per-Feature outputs an authored file stem. Importing or exporting an Item does not select it.",
+    "- `mod.compile(features)` is the **Fold**. It validates the selected Features, assigns logical output paths, and produces one immutable mod value before rendering or disk writes.",
+    "",
+    "## Project contract",
+    "",
+    "- Treat `stellaris-mod.json` as the source of truth for mod identity, launcher metadata, and source layout. Its sole key under `mod` is the prefix.",
+    "- Import `mod`, `config`, and `buildTheMod` from `#mod`. The package import alias keeps Feature modules independent of their source depth.",
+    "- `createModProject` constructs the capability without discovering source. Each `project.build()` discovers the manifest's `contentDirectory`, captures the optional Asset tree, appends `additionalFeatures`, and performs one Fold.",
+    "- Use `additionalFeatures` for an additive pre-compile customization. Compose `discoverFeatures`, `mod.assetTree`, and `mod.compile` directly only when the project needs a different pipeline.",
+    "- `npm run inspect` performs the same Fold without writing the mod and prints deterministic YAML. Use it to review Feature stems, Item counts and ids, patch plans, warnings, dependency versions, and vanilla evidence.",
+    "",
+    "## Feature contract",
+    "",
+    "- Organize source around concepts maintained together. One Feature may coordinate Items from several registries; the Fold fans them out to the directories Stellaris expects.",
+    "- Every conventionally discovered module exports exactly one named, stemmed `feature`. Other named and default exports are ordinary module API and are ignored by discovery.",
+    "- Keep helper-only modules outside the discovered directory, or use a custom `discover.include` that selects only Feature modules. A custom pattern replaces the default. The default selects `.ts` and excludes test, spec, benchmark, declaration, and type-test companions.",
+    "- Use a lowercase `snake_case` Feature stem with no `/`. The stem controls per-Feature output filenames; the source filename and directory do not become content identity.",
+    "- Place only Items created by this project's `mod` in its Features. Every authored Item referenced by selected content must also belong to a selected Feature, or the Fold reports a dangling reference.",
+    "- Keep one event namespace in one Feature module. Keep its namespace handle local and place its events and firing hooks in that Feature.",
+    "",
+    "## References and identity",
+    "",
+    "- When a content method takes a logical name, pass only that logical name. The capability mints its full id from the project prefix, registry, and logical name. Use the docs expert to identify nested fields that require a complete authored id.",
+    "- Pass authored Item values as cross-content references so TypeScript and the Fold retain their registry and ownership information.",
+    "- Prefer checked `vanilla.*` references and generated scripted bindings for content supplied by Stellaris. Use raw strings deliberately for third-party content the checked vanilla package cannot contain.",
+    "",
+    "## Authoring sequence",
+    "",
+    "1. Read `stellaris-mod.json`, the package scripts, and the nearest existing Feature before deciding placement. This step is complete when the prefix, discovery directory, current Feature boundary, and available verification commands are known.",
+    "2. Ask the docs expert for every exact content method, field, localization slot, scope operation, or coverage decision the change needs. This step is complete when each SDK call is supported by version-matched documentation; generic Stellaris knowledge is context, not SDK API evidence.",
+    "3. Create Items through `mod`, preserve returned values for references, and group the Items that ship together. This step is complete when every intended Item is reachable from one selected Feature and every authored reference target is selected too.",
+    "4. Export exactly one named `feature` from each discovered module. Keep reusable sibling exports ordinary and keep helper-only modules outside discovery. This step is complete when discovery can select every Feature module without selecting a helper or companion.",
+    "5. Add or update colocated tests when the SDK test interpreter models the changed behavior. Treat its unsupported-semantics refusal as a limit of the harness rather than evidence about the game.",
+    "6. Run `npm run inspect` and the verification required by `AGENTS.md`. Address every build error and warning deliberately, and inspect generated previews when that guidance requires it. The change is complete when those gates pass and the YAML report places every intended id under the expected Feature.",
   ].join("\n") + "\n";
 
 const PDX_SDK_DOCS_SKILL =
@@ -142,6 +254,16 @@ const CODEX_AGENT =
 
 export function agentsMd(): string {
   return AGENTS_MD;
+}
+
+/** Returns the one-time collaboration setup Skill shared by Codex and Claude. */
+export function pdxProjectStartupSkill(): string {
+  return PDX_PROJECT_STARTUP_SKILL;
+}
+
+/** Returns the project-local authoring Skill shared by Codex and Claude. */
+export function pdxSdkAuthoringSkill(): string {
+  return PDX_SDK_AUTHORING_SKILL;
 }
 
 export function pdxSdkDocsSkill(): string {

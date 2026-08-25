@@ -125,6 +125,18 @@ in one feature. Raw definers, raw event/on-action constructors, collection
 assembly, and the old export-discovery mechanism are package internals, not
 public alternatives to the capability.
 
+### Project inspection
+
+`create-stellaris-mod` adds `npm run inspect`. It performs the same Fold as the
+build command, but does not render or write the mod. The command prints one
+deterministic YAML document with Project Manifest layout, requested and
+installed SDK and identifier-package versions, vanilla evidence, Feature and
+Item counts and ids, patch plans, and warnings.
+
+The generated entry point delegates to `runInspect`, so an agent can obtain a
+compact project map without learning the compiler model or scraping terminal
+progress output.
+
 ### Standalone localization
 
 Use `mod.localization(keySuffix, text)` for tooltips, counters, scripted
@@ -403,6 +415,7 @@ re-emit as references.
 ```
 src/
 ├── index.ts           public capability, discovery, materialization, and types
+├── inspect.ts         PureMod + project metadata → deterministic YAML report
 ├── project.ts         Project Manifest → capability + conventional build
 ├── project-layout.ts  shared source-directory validation and schema facts
 ├── authoring/        createMod, feature placement, and named feature discovery
