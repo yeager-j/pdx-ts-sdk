@@ -27,9 +27,97 @@ import type {
   SituationStageFields,
   SituationTypeDef,
 } from "../generated/situation-type.ts";
+import type { ComplexTriggerModifierWithLoc, ModifierWithLoc } from "../script/effects/types.ts";
+import type { TypedRef } from "../script/scalar.ts";
 import type { SituationTrigger } from "../script/triggers.ts";
 import { createContentHandle, type ContentHandleBase } from "./handle.ts";
-import type { ContentItem } from "./types.ts";
+import type { ContentItem, WeightBlockRow, WeightBlockWithLocOperations } from "./types.ts";
+
+/** An approach defined inside one authored situation type. */
+export interface SituationApproach<
+  ParentId extends string,
+  Name extends string,
+> extends TypedRef<"situation_approach"> {
+  /** Distinguishes an approach from other nested situation definitions. */
+  readonly nestedKind: "situation-approach";
+  /** The situation type that owns this approach. */
+  readonly parentId: ParentId;
+  /** The full approach id minted from its parent and logical name. */
+  readonly id: `${ParentId}_approach_${Name}`;
+  /** The approach body lowered beneath its minted id. */
+  readonly def: SituationApproachFields;
+}
+
+/** A stage defined inside one authored situation type. */
+export interface SituationStage<
+  ParentId extends string,
+  Name extends string,
+> extends TypedRef<"situation_stage"> {
+  /** Distinguishes a stage from other nested situation definitions. */
+  readonly nestedKind: "situation-stage";
+  /** The situation type that owns this stage. */
+  readonly parentId: ParentId;
+  /** The full stage id minted from its parent and logical name. */
+  readonly id: `${ParentId}_stage_${Name}`;
+  /** The stage body lowered beneath its minted id. */
+  readonly def: SituationStageFields;
+}
+
+type ContextApproachFields<ParentId extends string> = Omit<
+  SituationApproachFields,
+  "allow" | "potential"
+> & {
+  readonly allow?: SituationTrigger<
+    `${ParentId}_approach_${string}`,
+    `${ParentId}_stage_${string}`
+  >;
+  readonly potential?: SituationTrigger<
+    `${ParentId}_approach_${string}`,
+    `${ParentId}_stage_${string}`
+  >;
+};
+
+type ContextStageFields<ParentId extends string> = Omit<SituationStageFields, "potential"> & {
+  readonly potential?: SituationTrigger<
+    `${ParentId}_approach_${string}`,
+    `${ParentId}_stage_${string}`
+  >;
+};
+
+/**
+ * Parent-bound functions for declaring referenceable situation approaches and stages.
+ *
+ * @example
+ * ```ts
+ * mod.situationType("bloom", (situation) => {
+ *   const observe = situation.approach("observe", {
+ *     name: "Observe",
+ *     icon: "GFX_situation_approach_research",
+ *     iconBackground: "GFX_situation_approach_bg_green",
+ *   });
+ *   return {
+ *     name: "Bloom",
+ *     approach: [observe],
+ *     monthlyProgress: {
+ *       base: 1,
+ *       modifiers: [{ add: 1, desc: "Observing", when: currentSituationApproach(observe) }],
+ *     },
+ *   };
+ * });
+ * ```
+ */
+export interface SituationDefinitionContext<ParentId extends string> {
+  /** Defines an approach whose returned value is also accepted as an approach reference. */
+  approach<const Name extends string>(
+    name: Name,
+    def: ContextApproachFields<ParentId>
+  ): SituationApproach<ParentId, Name>;
+  /** Defines a stage whose returned value is also accepted as a stage reference. */
+  stage<const Name extends string>(
+    name: Name,
+    def: ContextStageFields<ParentId>
+  ): SituationStage<ParentId, Name>;
+}
 
 /**
  * `approach`'s and `stages`' own trigger fields, narrowed from
@@ -57,6 +145,32 @@ type CheckedStageFields<Approach extends string, Stage extends string> = Omit<
   readonly potential?: SituationTrigger<NoInfer<Approach>, NoInfer<Stage>>;
 };
 
+type CheckedSituationModifier<Approach extends string, Stage extends string> = Omit<
+  ModifierWithLoc<"situation">,
+  "when"
+> & {
+  readonly when?: SituationTrigger<NoInfer<Approach>, NoInfer<Stage>>;
+};
+
+type CheckedComplexSituationModifier<Approach extends string, Stage extends string> = Omit<
+  ComplexTriggerModifierWithLoc<"situation">,
+  "potential"
+> & {
+  readonly potential?: SituationTrigger<NoInfer<Approach>, NoInfer<Stage>>;
+};
+
+type CheckedMonthlyProgress<
+  Approach extends string,
+  Stage extends string,
+> = WeightBlockWithLocOperations<"situation"> & {
+  readonly base?: number;
+  readonly modifiers?: readonly WeightBlockRow<
+    "situation",
+    CheckedSituationModifier<Approach, Stage>,
+    CheckedComplexSituationModifier<Approach, Stage>
+  >[];
+};
+
 /**
  * Internal situation-type lowering primitive.
  *
@@ -70,11 +184,13 @@ type CheckedStageFields<Approach extends string, Stage extends string> = Omit<
  * That boundary is narrower than every `current_situation_approach`/
  * `current_stage` a mod might write: it only reaches a value assigned
  * straight to `approach.allow`, `approach.potential`, `stages.potential`, or
- * `abortTrigger`. Vanilla overwhelmingly writes these nested inside a
+ * `abortTrigger`. The parent-bound callback form below also checks
+ * `monthlyProgress` modifier gates against the nested values it returns.
+ * Vanilla also writes these inside a
  * combinator (`and`/`or`/`not`/`customTooltipFail`) or inside an effect
  * closure's `scope.if(...)` (`on_start`, `on_progress_complete`, ...), neither
  * of which can thread a phantom brand through arbitrary composition — the
- * checked positions above are exactly the ones that can. Composed or
+ * checked positions above are the direct-value boundaries that can. Composed or
  * closure-nested values still type-check (`SituationTrigger`'s brands are
  * optional), degrading to unchecked the same as an id whose situation
  * identity genuinely is not known.
@@ -104,6 +220,124 @@ export type SituationTypeCapabilityDef<
   readonly abortTrigger?: SituationTrigger<NoInfer<Approach>, NoInfer<Stage>>;
 };
 
+/** A situation definition authored with parent-scoped nested definition values. */
+export type SituationTypeContextDef<
+  Id extends string,
+  T extends ScopeName | undefined = undefined,
+  Approach extends SituationApproach<Id, string> = never,
+  Stage extends SituationStage<Id, string> = never,
+> = Omit<
+  SituationTypeCapabilityDef<Id, T, NoInfer<Approach["id"]>, NoInfer<Stage["id"]>>,
+  "id" | "approach" | "stages" | "monthlyProgress"
+> & {
+  /** Monthly progress whose direct nested references belong to this situation. */
+  readonly monthlyProgress: CheckedMonthlyProgress<Approach["id"], Stage["id"]>;
+  /** Approaches declared through this definition's parent-bound context. */
+  readonly approach?: readonly Approach[];
+  /** Stages declared through this definition's parent-bound context. */
+  readonly stages?: readonly Stage[];
+};
+
+/** Builds one situation definition from its already-minted parent identity. */
+export type SituationTypeDefinition<
+  Id extends string,
+  T extends ScopeName | undefined = undefined,
+  Approach extends SituationApproach<Id, string> = never,
+  Stage extends SituationStage<Id, string> = never,
+> = (situation: SituationDefinitionContext<Id>) => SituationTypeContextDef<Id, T, Approach, Stage>;
+
+type AnySituationApproach<ParentId extends string> = SituationApproach<ParentId, string>;
+type AnySituationStage<ParentId extends string> = SituationStage<ParentId, string>;
+type SituationTypeInput<Id extends string> =
+  | Omit<SituationTypeCapabilityDef<Id, ScopeName | undefined, string, string>, "id">
+  | SituationTypeDefinition<
+      Id,
+      ScopeName | undefined,
+      AnySituationApproach<Id>,
+      AnySituationStage<Id>
+    >;
+
+function nestedDefinitionRecord<
+  ParentId extends string,
+  Definition extends AnySituationApproach<ParentId> | AnySituationStage<ParentId>,
+>(
+  parentId: ParentId,
+  nestedKind: Definition["nestedKind"],
+  definitions: readonly Definition[]
+): Readonly<Record<string, Definition["def"]>> {
+  const record: Record<string, Definition["def"]> = {};
+  for (const definition of definitions) {
+    if (definition.nestedKind !== nestedKind || definition.parentId !== parentId) {
+      throw new Error(
+        `Nested situation definition "${definition.id}" does not belong to "${parentId}"`
+      );
+    }
+    if (definition.id in record) {
+      throw new Error(`Duplicate nested situation definition id "${definition.id}"`);
+    }
+    record[definition.id] = definition.def;
+  }
+  return record;
+}
+
+function normalizeContextDefinition<
+  Id extends string,
+  T extends ScopeName | undefined,
+  Approach extends AnySituationApproach<Id>,
+  Stage extends AnySituationStage<Id>,
+>(
+  id: Id,
+  def: SituationTypeContextDef<Id, T, Approach, Stage>
+): SituationTypeCapabilityDef<Id, T, Approach["id"], Stage["id"]> {
+  const { approach, stages, ...fields } = def;
+  return {
+    ...fields,
+    ...(approach === undefined
+      ? {}
+      : { approach: nestedDefinitionRecord(id, "situation-approach", approach) }),
+    ...(stages === undefined
+      ? {}
+      : { stages: nestedDefinitionRecord(id, "situation-stage", stages) }),
+  } as SituationTypeCapabilityDef<Id, T, Approach["id"], Stage["id"]>;
+}
+
+function createSituationDefinitionContext<Id extends string>(
+  parentId: Id,
+  assertName: (name: string) => void,
+  assertNestedId: (id: string) => void
+): SituationDefinitionContext<Id> {
+  return Object.freeze({
+    approach<const Name extends string>(
+      name: Name,
+      def: ContextApproachFields<Id>
+    ): SituationApproach<Id, Name> {
+      assertName(name);
+      const id = `${parentId}_approach_${name}` as const;
+      assertNestedId(id);
+      return Object.freeze({
+        nestedKind: "situation-approach",
+        parentId,
+        id,
+        def,
+      }) as SituationApproach<Id, Name>;
+    },
+    stage<const Name extends string>(
+      name: Name,
+      def: ContextStageFields<Id>
+    ): SituationStage<Id, Name> {
+      assertName(name);
+      const id = `${parentId}_stage_${name}` as const;
+      assertNestedId(id);
+      return Object.freeze({
+        nestedKind: "situation-stage",
+        parentId,
+        id,
+        def,
+      }) as SituationStage<Id, Name>;
+    },
+  });
+}
+
 export function defineSituationType<
   const Id extends string,
   T extends ScopeName | undefined = undefined,
@@ -124,17 +358,39 @@ export function defineSituationType<
 
 /** Situation-type authoring methods bound to one mod capability. */
 export interface SituationTypeCapabilityMethods<P extends string, I extends IdProfile> {
+  /**
+   * Defines a situation type from either a plain body or a parent-bound definition callback.
+   * The callback form mints referenceable approaches and stages from logical names.
+   */
   situationType<
     const Name extends string,
     T extends ScopeName | undefined = undefined,
     const Approach extends string = never,
     const Stage extends string = never,
+    const NestedApproach extends SituationApproach<
+      MintedContentId<P, I, "situationType", Name>,
+      string
+    > = never,
+    const NestedStage extends SituationStage<MintedContentId<P, I, "situationType", Name>, string> =
+      never,
   >(
     name: Name,
-    def: Omit<
-      SituationTypeCapabilityDef<MintedContentId<P, I, "situationType", Name>, T, Approach, Stage>,
-      "id"
-    >
+    def:
+      | Omit<
+          SituationTypeCapabilityDef<
+            MintedContentId<P, I, "situationType", Name>,
+            T,
+            Approach,
+            Stage
+          >,
+          "id"
+        >
+      | SituationTypeDefinition<
+          MintedContentId<P, I, "situationType", Name>,
+          T,
+          NestedApproach,
+          NestedStage
+        >
   ): ContentItem<
     "situation_type",
     SituationTypeDef<MintedContentId<P, I, "situationType", Name>>
@@ -179,12 +435,14 @@ export interface SituationTypeCapabilityMethods<P extends string, I extends IdPr
 /** Binds the situation-type capability method to one content-id minter. */
 export function situationTypeCapabilityMethods<P extends string, I extends IdProfile>(
   mint: ContentIdMinter<P, I>,
-  assertNestedId: (id: string) => void
+  assertNestedId: (id: string) => void,
+  assertName: (name: string) => void
 ): SituationTypeCapabilityMethods<P, I> {
-  const handle = <const Name extends string>(name: Name) =>
-    createContentHandle(
+  const handle = <const Name extends string>(name: Name) => {
+    const id = mint("situationType", name);
+    const base = createContentHandle(
       "situation_type",
-      mint("situationType", name),
+      id,
       (def: SituationTypeCapabilityDef<MintedContentId<P, I, "situationType", Name>>) => {
         for (const id of [...Object.keys(def.approach ?? {}), ...Object.keys(def.stages ?? {})]) {
           assertNestedId(id);
@@ -192,17 +450,30 @@ export function situationTypeCapabilityMethods<P extends string, I extends IdPro
         return defineSituationType(def);
       }
     );
+    const context = createSituationDefinitionContext(id, assertName, assertNestedId);
+    return Object.freeze({
+      ...base,
+      define: (input: SituationTypeInput<MintedContentId<P, I, "situationType", Name>>) => {
+        const def =
+          typeof input === "function" ? normalizeContextDefinition(id, input(context)) : input;
+        return base.define(
+          def as unknown as Omit<
+            SituationTypeCapabilityDef<MintedContentId<P, I, "situationType", Name>>,
+            "id"
+          >
+        );
+      },
+    });
+  };
+  const situationType = <const Name extends string>(
+    name: Name,
+    def: SituationTypeInput<MintedContentId<P, I, "situationType", Name>>
+  ) => handle(name).define(def);
   return {
     situationTypeHandle: handle,
     // The eager method is sugar for `handle(name).define(def)`, so the mint and
     // the nested-id assertion happen in one place, as they do for every
     // generated registry.
-    situationType: (name, def) =>
-      handle(name).define(
-        def as unknown as Omit<
-          SituationTypeCapabilityDef<MintedContentId<P, I, "situationType", typeof name>>,
-          "id"
-        >
-      ),
+    situationType,
   } as SituationTypeCapabilityMethods<P, I>;
 }

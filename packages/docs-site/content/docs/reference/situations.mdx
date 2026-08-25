@@ -83,20 +83,23 @@ Situations support two incompatible ways to size their stages.
 In **threshold mode**, omit `totalProgress` and give every stage an `end` value:
 
 ```ts
-stages: {
-  [germination]: {
-    name: "Germination",
-    end: 40,
-    icon: vanilla.spriteType("GFX_situation_stage_1"),
-    iconBackground: vanilla.spriteType("GFX_situation_stage_frame_blue"),
-  },
-  [flowering]: {
-    name: "Flowering",
-    end: 100,
-    icon: vanilla.spriteType("GFX_situation_stage_2"),
-    iconBackground: vanilla.spriteType("GFX_situation_stage_frame_blue"),
-  },
-},
+const germination = situation.stage("germination", {
+  name: "Germination",
+  end: 40,
+  icon: vanilla.spriteType("GFX_situation_stage_1"),
+  iconBackground: vanilla.spriteType("GFX_situation_stage_frame_blue"),
+});
+const flowering = situation.stage("flowering", {
+  name: "Flowering",
+  end: 100,
+  icon: vanilla.spriteType("GFX_situation_stage_2"),
+  iconBackground: vanilla.spriteType("GFX_situation_stage_frame_blue"),
+});
+
+return {
+  // Other fields omitted.
+  stages: [germination, flowering],
+};
 ```
 
 In **section-weight mode**, set `totalProgress` and give every stage a
@@ -149,14 +152,14 @@ belong to that model.
 
 ## Give stages stable, ordered identities
 
-`stages` is a record whose keys are the complete stage ids. Each key must use
-the mod prefix. The values hold the localized name and description, icons,
-progress size, entry effects, conditions, and modifiers. The worked example
-declares each key once as a `const` (`germination`, `flowering`, `awakening`)
-and reuses it everywhere the stage is named.
+Call `situation.stage(logicalName, fields)` inside the situation definition
+callback. The SDK mints the complete, parent-scoped id, and the returned value
+is both the stage definition and its typed reference. The worked example binds
+`germination`, `flowering`, and `awakening` once and reuses those values
+everywhere each stage is named.
 
 Stage declaration order is content: the SDK preserves it in the emitted
-`stages = { ... }` container. Keep the record in progress order.
+`stages = { ... }` container. Keep the `stages` array in progress order.
 
 `onFirstEnter` runs only the first time an instance reaches that stage.
 `onEnter` also runs when progress leaves and later re-enters the stage, which
@@ -172,7 +175,8 @@ target scopes.
 
 ## Approaches are selectable policies
 
-`approach` is another record of complete, prefixed ids. Set one entry as the
+Call `situation.approach(logicalName, fields)` for each selectable policy, then
+place the returned values in the definition's `approach` array. Set one as the
 default. `potential` decides whether an approach belongs in this situation
 instance; `allow` decides whether a present approach can be selected now. The
 field table below covers the rest. One note on `resources`: the example shows
@@ -182,14 +186,12 @@ instead — a standing policy usually costs monthly.
 The worked example keeps **Intervene** visible but locks it until the
 **Flowering** stage with `allow: currentStage(flowering)`.
 
-Some fields are checked against the keys declared in the same definition: an
-approach's `allow` and `potential`, a stage's `potential`, and the
-situation's `abortTrigger`. Other fields do not always carry that
-definition-specific identity. Declare ids once as `const` values and reuse
-them in progress modifiers, events, and effects so a rename cannot leave a
-stale string behind.
+The returned approach and stage values carry their parent situation identity.
+Pass them to `currentSituationApproach`, `currentStage`, and
+`canSetSituationApproach`; do not copy their minted ids into strings. Renaming
+the logical name then updates the declaration and every reference together.
 
-Although stages and approaches are both authored as TypeScript records, their
+Although stages and approaches are both authored as TypeScript arrays, their
 PDXScript forms differ. Stages emit inside one keyed `stages` container.
 Approaches emit as repeated sibling `approach = { name = ... }` blocks. Let the
 SDK lower these structures; do not shape raw PDXScript around them.
@@ -200,9 +202,11 @@ Many situations track a planet or another object. Declare that contract once
 with `targetScope`:
 
 ```ts
-const crystalBloom = mod.situationType("crystal_bloom", {
-  targetScope: "planet",
-  // Other fields omitted.
+const crystalBloom = mod.situationType("bloom", (situation) => {
+  return {
+    targetScope: "planet",
+    // Other fields omitted.
+  };
 });
 ```
 

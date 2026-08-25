@@ -1728,6 +1728,94 @@ describe("generated content registries", () => {
     expect(rendered).toContain("allow = {\n\t\t\tcurrent_stage = sa_test_situation_stage_1\n\t\t}");
   });
 
+  it("mints nested situation definitions and lowers their references", () => {
+    const cap = capabilityFor(configFor("Situation nested reference test", "snr_test"));
+    const situation = cap.situationType("bloom", (nested) => {
+      const observe = nested.approach("observe", {
+        name: "Observe",
+        icon: "GFX_situation_approach_observe",
+        iconBackground: "GFX_situation_approach_bg_observe",
+      });
+      const germination = nested.stage("germination", {
+        name: "Germination",
+        icon: "GFX_situation_stage_germination",
+        iconBackground: "GFX_situation_stage_bg_germination",
+      });
+
+      return {
+        name: "Bloom",
+        approach: [observe],
+        stages: [germination],
+        monthlyProgress: {
+          base: 1,
+          modifiers: [
+            {
+              add: 2,
+              desc: "Observe the bloom.",
+              when: currentSituationApproach(observe),
+            },
+            {
+              factor: 0.5,
+              desc: "The bloom is germinating.",
+              when: currentStage(germination),
+            },
+          ],
+        },
+      };
+    });
+
+    expect(Object.keys(situation.def.approach ?? {})).toEqual([
+      "snr_test_situation_bloom_approach_observe",
+    ]);
+    expect(Object.keys(situation.def.stages ?? {})).toEqual([
+      "snr_test_situation_bloom_stage_germination",
+    ]);
+
+    const rendered = render(cap.compile([cap.feature("situations", [situation])])).get(
+      "common/situations/snr_test_situations.txt"
+    );
+    expect(rendered).toContain("name = snr_test_situation_bloom_approach_observe");
+    expect(rendered).toContain("snr_test_situation_bloom_stage_germination = {");
+    expect(rendered).toContain(
+      "current_situation_approach = snr_test_situation_bloom_approach_observe"
+    );
+    expect(rendered).toContain("current_stage = snr_test_situation_bloom_stage_germination");
+  });
+
+  it("rejects invalid and duplicate nested situation logical names", () => {
+    const cap = capabilityFor(configFor("Situation nested identity test", "sni_test"));
+    const approachFields = {
+      name: "Observe",
+      icon: "GFX_situation_approach_observe",
+      iconBackground: "GFX_situation_approach_bg_observe",
+    } as const;
+
+    expect(() =>
+      cap.situationType("invalid", (situation) => {
+        const invalid = situation.approach("Not Valid", approachFields);
+        return {
+          name: "Invalid",
+          approach: [invalid],
+          monthlyProgress: { base: 1 },
+        };
+      })
+    ).toThrow('Logical content name "Not Valid" must be lowercase snake_case ([a-z][a-z0-9_]*)');
+
+    expect(() =>
+      cap.situationType("duplicate", (situation) => {
+        const first = situation.approach("observe", approachFields);
+        const second = situation.approach("observe", approachFields);
+        return {
+          name: "Duplicate",
+          approach: [first, second],
+          monthlyProgress: { base: 1 },
+        };
+      })
+    ).toThrow(
+      'Duplicate nested situation definition id "sni_test_situation_duplicate_approach_observe"'
+    );
+  });
+
   it("emits conditionalDesc under the game's desc key", () => {
     const cap = capabilityFor(configFor("Conditional desc test", "cd_test"));
     // The authoring member is renamed to dodge the desc flavor-text slot, but

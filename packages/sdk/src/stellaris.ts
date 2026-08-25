@@ -66,6 +66,13 @@ export type {
 export type * from "./generated/content-public.ts";
 export type { EventChainCounterOf } from "./content/event-chains.ts";
 export type {
+  SituationApproach,
+  SituationDefinitionContext,
+  SituationStage,
+  SituationTypeContextDef,
+  SituationTypeDefinition,
+} from "./content/situations.ts";
+export type {
   DefinedEvent,
   EventDef,
   EventItem,
