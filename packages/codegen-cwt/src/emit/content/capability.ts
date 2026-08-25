@@ -13,8 +13,32 @@ import type { RegistryDefinerPlan } from "./definer-plan.ts";
 
 /** The complete `content-capability.ts` text: imports, then the surface. */
 export function contentCapabilityModule(plans: readonly RegistryDefinerPlan[]): string {
+  assertCapabilityMethodsCollisionFree(plans);
   const facts = contentCapabilityFacts(plans);
   return contentCapabilityImports(plans, facts) + "\n" + contentCapabilityDeclarations(facts);
+}
+
+/**
+ * Rejects a capability surface where two methods would share a name.
+ *
+ * Adding `xHandle` beside every `x` doubles the namespace, so a registry whose
+ * method name is another's plus `Handle` would silently overwrite it in the
+ * frozen binding table. The same guard `emit/script/events.ts` runs over the
+ * event pair, for the same reason.
+ */
+function assertCapabilityMethodsCollisionFree(plans: readonly RegistryDefinerPlan[]): void {
+  const names = new Set<string>();
+  for (const member of plans.flatMap((plan) => plan.capabilityMembers)) {
+    const declared = /^ {2}(?:readonly )?(\w+)[<(:]/m.exec(member);
+    if (declared === null) {
+      throw new Error(`content capability member declares no method name:\n${member}`);
+    }
+    const name = declared[1]!;
+    if (names.has(name)) {
+      throw new Error(`content capability method collision at ${name}`);
+    }
+    names.add(name);
+  }
 }
 
 function contentCapabilityFacts(plans: readonly RegistryDefinerPlan[]) {
@@ -65,6 +89,9 @@ function contentCapabilityImports(
   } = facts;
   return (
     'import type { ContentItem, EconomicCategoryWitness, ExactEconomicCategoryWitness } from "../content/types.ts";\n' +
+    // Every registry's handle wears the base; only those whose `define` takes
+    // no generic of its own also name the shared `ContentHandle`.
+    'import { createContentHandle, type ContentHandle, type ContentHandleBase } from "../content/handle.ts";\n' +
     wrapsWitnesses
       .map(
         (wrapsWitness) =>

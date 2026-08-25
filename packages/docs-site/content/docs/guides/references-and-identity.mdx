@@ -103,6 +103,52 @@ Pass values through helpers and data structures instead of converting them to
 strings early. The SDK will lower a reference to its id when it serializes the
 field.
 
+### Use a handle when a definition needs its own id
+
+A definition sometimes has to name the id it is about to be given. Nearly every
+vanilla ascension perk excludes itself in `potential`, so this comes up early.
+The value does not exist yet: `mod.ascensionPerk(name, def)` mints the id inside
+the same call that reads the definition.
+
+Mint the handle first. It carries the final id, and `define(...)` attaches the
+body:
+
+```ts
+const spelltech = mod.ascensionPerkHandle("spelltech");
+
+const perk = spelltech.define({
+  name: "Spelltech",
+  potential: not(hasAscensionPerk(spelltech)),
+});
+```
+
+The same shape closes a cycle between two definitions — two perks that exclude
+each other, or a technology whose description names something that lists it
+back:
+
+```ts
+const first = mod.ascensionPerkHandle("first");
+const second = mod.ascensionPerkHandle("second");
+
+const firstPerk = first.define({ name: "First", potential: not(hasAscensionPerk(second)) });
+const secondPerk = second.define({ name: "Second", potential: not(hasAscensionPerk(first)) });
+```
+
+Every content registry has a handle definer, named for its registry plus
+`Handle`. `mod.<registry>(name, def)` is `mod.<registry>Handle(name).define(def)`,
+so both mint and validate the name the same way. Events use the same shape with
+[event handles](/concepts/events/#use-handles-for-forward-or-cyclic-references).
+
+A handle is a reference, not content. Pass the handle to reference fields; pass
+the item `define(...)` returns to `mod.feature`. Placing the handle itself is a
+type error, because a minted id with no body would emit nothing while every
+reference to it still resolved. A handle that is referenced but never defined is
+rejected by the Fold as a dangling reference, like any other missing target.
+
+Write the id by hand and none of this holds: nothing checks the string, so
+renaming the logical name or changing the id profile leaves a condition that
+silently stops matching.
+
 ## Check vanilla ids through `vanilla`
 
 Use the SDK's `vanilla.*` helpers for content defined by Stellaris:
@@ -298,6 +344,7 @@ When the compiler rejects a reference, check these facts in order:
 3. Is a vanilla id spelled exactly as it appears in the pinned game version?
 4. Is an external raw string intentional, with its dependency documented?
 5. For scripted bindings, are the `$PARAM$` names and current scope correct?
+6. Was a handle minted and referenced, but its `define(...)` result never placed?
 
 Keep authored items as typed values for as long as possible. That lets one
 definition site decide identity and lets every reference reuse the decision.

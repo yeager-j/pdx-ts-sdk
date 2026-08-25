@@ -1104,6 +1104,52 @@ describe("generated content authoring types", () => {
     void crossRegistry;
   });
 
+  it("types a handle as its registry's reference, and never as placeable content", () => {
+    // A handle exists so a definition can name the id the capability is about
+    // to mint for it. That only works if it reaches the same reference fields
+    // its item does — and only stays safe if it cannot be placed in a Feature,
+    // where a minted id with no body would emit nothing while every reference
+    // to it still resolved.
+    const spelltech = contentMod.ascensionPerkHandle("spelltech");
+    expectTypeOf(spelltech.id).toEqualTypeOf<"content_types_ascension_perk_spelltech">();
+
+    // Its own registry's reference fields take it, exactly as the item's do.
+    const own: AscensionPerkRef = spelltech;
+    void own;
+    // @ts-expect-error — an ascension perk handle is not a technology reference
+    const crossRegistry: TechnologyRef = spelltech;
+    void crossRegistry;
+    // @ts-expect-error — a handle is an identity, not content: place what define() returns
+    contentMod.feature(undefined, [spelltech]);
+    // @ts-expect-error — and it is not a ContentItem either
+    const asItem: ContentItem<"ascension_perk"> = spelltech;
+    void asItem;
+
+    // `define` returns exactly what the eager definer returns.
+    expectTypeOf(spelltech.define({ name: "X" })).toEqualTypeOf(
+      contentMod.ascensionPerk("spelltech", { name: "X" })
+    );
+    // The literal id still narrows, so a nested id can be built from it.
+    const nested: `content_types_ascension_perk_spelltech_synth` = `${spelltech.id}_synth`;
+    void nested;
+  });
+
+  it("keeps a definition-time generic on define, where there is a def to infer it from", () => {
+    // A handle mints before any def exists, so a parameter the *definition*
+    // introduces cannot be inferred at the mint. These registries therefore
+    // carry it on `define` rather than on the handle.
+    const decision = contentMod.decisionHandle("survey");
+    expectTypeOf(decision.id).toEqualTypeOf<"content_types_decision_survey">();
+
+    const modifier = contentMod.staticModifierHandle("drag");
+    expectTypeOf(
+      modifier.define({ name: "Drag", hostScope: "ship" }).hostScope
+    ).toEqualTypeOf<"ship">();
+
+    // @ts-expect-error — still not placeable, whatever shape its define takes
+    contentMod.feature(undefined, [decision]);
+  });
+
   it("scopes situations' repeated-struct fields per their own push_scope, not the body default", () => {
     // situation_type's body defaults every unmarked field to "situation"
     // scope, but potential replace_scopes to "country" at the top level while

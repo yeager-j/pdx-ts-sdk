@@ -246,6 +246,27 @@ describe("exact-name identity (SDK-183)", () => {
     );
   });
 
+  it("reads the exact-name option once, beside the mint it belongs to", () => {
+    // A handle mints now and defines later, so the options object the caller
+    // owns is live across that gap. Rereading it at `define` time would let a
+    // mutation between the two mint an exact name and then decline to record
+    // who minted it — and the placement check would fall back to the string,
+    // which for a name carrying two mods' prefixes cannot say which capability
+    // owns it. The decision is snapshotted at the mint instead.
+    const first = gfxMod("first_mod");
+    const second = gfxMod("second_mod");
+    const options = { prefix: false as const };
+    const minted = first.pdxparticleHandle("second_mod_first_mod_flash", options);
+    // The cast is the point: the SDK cannot lean on the caller's types to know
+    // the object it was handed will hold still.
+    (options as { prefix: boolean }).prefix = true;
+    const particle = minted.define({ type: "x_particle" });
+
+    expect(() => second.feature(undefined, [particle])).toThrow(
+      /was minted by a different capability/
+    );
+  });
+
   it("measures a record-less copy by its name, like any hand-built item", () => {
     // Spreading an item makes a new object the module-private table has never
     // seen, so the string is the only evidence left — the same fallback a

@@ -54,6 +54,7 @@ export type {
   LocalizationFile,
   PureMod,
 } from "./compiler/model.ts";
+export type { ContentHandle, ContentHandleBase } from "./content/handle.ts";
 export type { ContentItem, ContributionItem, MintProvenance } from "./content/types.ts";
 export type { ModWarning } from "./diagnostics.ts";
 export { render } from "./output/render.ts";

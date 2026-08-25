@@ -5,7 +5,7 @@ import { emitContentType } from "@pdx-ts/codegen-cwt/emit/content/content-type";
 import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { pickOrdinary, type EmittedField } from "@pdx-ts/codegen-cwt/lower/fields";
 import type { FieldContext } from "@pdx-ts/codegen-cwt/lower/scope-context";
-import { constantCase, pascalCase } from "@pdx-ts/codegen-cwt/naming";
+import { camelCase, constantCase, pascalCase } from "@pdx-ts/codegen-cwt/naming";
 import {
   CONTENT_DECLINED_FIELDS,
   CONTENT_PATCH_REGISTRIES,
@@ -1841,7 +1841,9 @@ describe("generated content definers", () => {
     );
     // The shape mint's ownership record, not the item's own `minted` property.
     expect(capability).toContain("recordShapeMint(");
-    expect(capability).toContain('        mintOwner,\n        "spriteTextIcon"');
+    expect(capability).toContain(
+      'return shapeMinted(defineSpriteType(def), mintOwner, "spriteTextIcon");'
+    );
     expect(capability).toContain("readonly addShipOfSizeLimits: typeof addShipOfSizeLimits;");
     expect(capability).toContain(
       "The capability mints and owns the full id; the returned branded reference"
@@ -1862,6 +1864,32 @@ describe("generated content definers", () => {
     expect(vocabulary).not.toContain("export { defineTechnology");
     expect(vocabulary).not.toContain("export { patchTechnology");
     expect(vocabulary).not.toContain("export { addShipOfSizeLimits");
+  });
+
+  it("gives every generated registry a handle definer beside its definer", () => {
+    // The acceptance measure for SDK-290, read off the manifest rather than a
+    // list kept here: a registry cannot land without a handle, because a
+    // definition that has to name its own id is otherwise stuck retyping the
+    // mint rule as an unchecked string.
+    const generated = CONTENT_MANIFEST.map(registryNameOf).filter(
+      (registry) => !HAND_WRITTEN_CONTENT_DEFINERS.has(registry)
+    );
+    const declared = new Set(
+      [...capability.matchAll(/^ {2}(\w+)Handle[<(]/gm)].map((match) => match[1]!)
+    );
+
+    for (const registry of generated) {
+      expect(declared).toContain(camelCase(pascalCase(registry)));
+    }
+    // The two hand-written grafts carry their own, in their own modules.
+    for (const [registry, graft] of HAND_WRITTEN_CONTENT_DEFINERS) {
+      const module = readFileSync(`packages/sdk/src/${graft.module.replace("../", "")}`, "utf8");
+      expect(module).toContain(
+        `${camelCase(pascalCase(registry))}Handle<const Name extends string>(`
+      );
+    }
+    // A patch mints no id, so it has nothing to hand out early.
+    expect(declared).not.toContain("patchTechnology");
   });
 
   it("derives every nested identity table from repeated-struct metadata", () => {
@@ -1890,7 +1918,11 @@ describe("generated content definers", () => {
       expect(capability).toContain(
         `const ${table} = [${members.map((member) => JSON.stringify(member)).join(", ")}] as const;`
       );
-      expect(capability.match(new RegExp(`\\b${table}\\b`, "g"))).toHaveLength(2);
+      // Declaration, plus the handle binding and the eager binding — each
+      // builds its own closure over the table, and the eager one is
+      // `handle(name).define(def)`, so the assertion still runs exactly once
+      // per definition.
+      expect(capability.match(new RegExp(`\\b${table}\\b`, "g"))).toHaveLength(3);
     }
     expect(capability).toContain("function assertNestedDefinitionIds(");
   });

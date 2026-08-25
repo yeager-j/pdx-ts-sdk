@@ -7,6 +7,7 @@ import * as internals from "../src/internals.ts";
 import * as reference from "../src/reference.ts";
 import * as stellaris from "../src/stellaris.ts";
 import type {
+  AscensionPerkDef,
   BuildingItem,
   BuildingPatchItem,
   MegastructureItem,
@@ -34,6 +35,19 @@ describe("the pipeline entry point", () => {
     expectTypeOf(technology.type).toEqualTypeOf<"technology">();
     expectTypeOf(features).toMatchTypeOf<Promise<unknown>>();
     expectTypeOf(DEFAULT_CONTENT_PATTERN).toEqualTypeOf<RegExp>();
+
+    // A handle is a value an author holds and annotates, so its types are
+    // public; the constructor behind it is internal, like every `defineX`.
+    const spelltech: sdk.ContentHandle<
+      "ascension_perk",
+      AscensionPerkDef<"public_surface_ascension_perk_spelltech">
+    > = mod.ascensionPerkHandle("spelltech");
+    expectTypeOf(spelltech.define).toBeFunction();
+    expectTypeOf<
+      sdk.ContentHandleBase<"ascension_perk", "x">["handleKind"]
+    >().toEqualTypeOf<"content-handle">();
+    // @ts-expect-error — the constructor stays internal
+    void sdk.createContentHandle;
   });
 
   it("publishes the conventional project pipeline without widening the manifest prefix", () => {
