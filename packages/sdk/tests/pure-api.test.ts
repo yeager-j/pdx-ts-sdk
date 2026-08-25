@@ -351,6 +351,11 @@ describe("parity with the deleted class builder", () => {
 
   it("snapshots every later-consumed part of the compiled mod", () => {
     expect(Object.isFrozen(pure)).toBe(true);
+    expect(Object.isFrozen(pure.compileInputs)).toBe(true);
+    expect(Object.isFrozen(pure.compileInputs.features)).toBe(true);
+    expect(Object.isFrozen(pure.compileInputs.features[0])).toBe(true);
+    expect(Object.isFrozen(pure.compileInputs.features[0]!.itemIds)).toBe(true);
+    expect(Object.isFrozen(pure.compileInputs.vanilla)).toBe(true);
     expect(Object.isFrozen(pure.warnings)).toBe(true);
     expect(Object.isFrozen(pure.contentFiles)).toBe(true);
     expect(Object.isFrozen(pure.contentFiles[0])).toBe(true);

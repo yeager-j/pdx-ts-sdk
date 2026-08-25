@@ -1,5 +1,4 @@
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
 import { discoverFeatures, type DiscoverOptions } from "./authoring/discover.ts";
 import { createMod, type CapabilityFeature, type ModCapability } from "./authoring/mod.ts";
@@ -7,6 +6,7 @@ import type { BuildOptions, ModConfig, ResolvedModConfig } from "./compiler/conf
 import type { PureMod } from "./compiler/model.ts";
 import { DEFAULT_ID_PROFILE } from "./generated/content-capability.ts";
 import { parseProjectLayout, type ProjectLayoutInput } from "./project-layout.ts";
+import { resolveProjectRootPath } from "./project-root.ts";
 
 /** Launcher configuration stored below the sole prefix key in a Project Manifest. */
 export type ProjectModConfig = Readonly<Omit<ModConfig<string>, "prefix" | "tags">> & {
@@ -83,7 +83,7 @@ export function createModProject<const Manifest extends ModProjectManifest>(
   };
   const mod = createMod(config);
   const layout = parseProjectLayout(manifest);
-  const projectRoot = projectRootPath(options.projectRoot);
+  const projectRoot = resolveProjectRootPath(options.projectRoot);
   const contentDirectory = path.join(projectRoot, ...layout.contentSegments);
   const assetsDirectory =
     layout.assetsSegments === undefined
@@ -107,12 +107,4 @@ export function createModProject<const Manifest extends ModProjectManifest>(
   };
 
   return Object.freeze({ config: mod.config, mod, build });
-}
-
-function projectRootPath(projectRoot: string | URL): string {
-  const resolved = typeof projectRoot === "string" ? projectRoot : fileURLToPath(projectRoot);
-  if (!path.isAbsolute(resolved)) {
-    throw new Error("Project root must be an absolute path or file URL");
-  }
-  return path.resolve(resolved);
 }

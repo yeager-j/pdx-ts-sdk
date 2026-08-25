@@ -36,7 +36,7 @@ export function finalizeMod(
   componentTagFiles: readonly ComponentTagFile[],
   events: CompiledEvents
 ): PureMod {
-  const { config, flat, localization, options, refUses, warnings } = session;
+  const { compileInputs, config, flat, localization, options, refUses, warnings } = session;
   const { contentFiles, definedGroups } = content;
   const {
     contributionStems,
@@ -118,6 +118,7 @@ export function finalizeMod(
 
   return Object.freeze({
     config,
+    compileInputs,
     warnings: Object.freeze(warnings.map((warning) => Object.freeze({ ...warning }))),
     assets: Object.freeze(session.assets.map(({ item }) => item)),
     contentFiles: Object.freeze(

@@ -42,6 +42,7 @@ import {
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { parse as parseYaml } from "yaml";
 
 import { locateInstall, readGameVersion } from "../../sdk/src/installation/index.ts";
 import { main } from "../src/cli.ts";
@@ -146,6 +147,7 @@ function installTarballs(dir: string, tarballs: string): void {
     "fast-string-width",
     "fast-wrap-ansi",
     "sisteransi",
+    "yaml",
   ]) {
     symlinkSync(path.join(ROOT_MODULES, dep), path.join(modules, dep), "dir");
   }
@@ -217,6 +219,12 @@ describe("a scaffolded project", () => {
     expect(readFileSync(path.join(claudeSkills, "pdx-sdk-docs/SKILL.md"), "utf8")).toContain(
       "# Retrieving @pdx-ts/sdk docs"
     );
+    expect(readFileSync(path.join(claudeSkills, "pdx-sdk-authoring/SKILL.md"), "utf8")).toContain(
+      "# Authoring an @pdx-ts/sdk project"
+    );
+    expect(readFileSync(path.join(claudeSkills, "pdx-project-startup/SKILL.md"), "utf8")).toContain(
+      "# Establishing the collaboration agreement"
+    );
     expect(lstatSync(path.join(projectDir, ".claude/agents/pdx-docs-expert.md")).isFile()).toBe(
       true
     );
@@ -253,6 +261,9 @@ describe("a scaffolded project", () => {
       'import { mod } from "#mod"'
     );
     expect(readFileSync(path.join(projectDir, "src/index.ts"), "utf8")).toContain(
+      'import { buildTheMod } from "#mod"'
+    );
+    expect(readFileSync(path.join(projectDir, "src/inspect.ts"), "utf8")).toContain(
       'import { buildTheMod } from "#mod"'
     );
     expect(readFileSync(path.join(projectDir, "src/install.ts"), "utf8")).toContain(
@@ -370,6 +381,37 @@ describe("a scaffolded project", () => {
     expect(events).toContain("id = smoke_mod.1");
     expect(events).toContain("picture = GFX_evt_mysterious_signal");
     expect(events).toContain("show_sound = event_alien_signal");
+  });
+
+  it("inspects the compiled project as deterministic YAML without writing output", () => {
+    const outDir = path.join(projectDir, "out");
+    rmSync(outDir, { recursive: true, force: true });
+
+    const first = runIn(projectDir, process.execPath, ["src/inspect.ts"]);
+    const second = runIn(projectDir, process.execPath, ["src/inspect.ts"]);
+    const report = parseYaml(first) as {
+      schema: string;
+      summary: Record<string, number>;
+      features: Array<{ stem: string; itemCount: number; itemIds: string[] }>;
+      vanilla: { loadedView: boolean; pathInventory: string };
+    };
+
+    expect(second).toBe(first);
+    expect(report.schema).toBe("pdx-sdk-inspection/v1");
+    expect(report.summary).toEqual({ features: 1, items: 3, patches: 0, warnings: 0 });
+    expect(report.features).toEqual([
+      {
+        stem: "example",
+        itemCount: 3,
+        itemIds: ["smoke_mod_tech_first_steps", "smoke_mod.1"],
+      },
+    ]);
+    expect(report).not.toHaveProperty("outputs");
+    expect(report).not.toHaveProperty("authoredIds");
+    expect(report).not.toHaveProperty("localization");
+    expect(report).not.toHaveProperty("assets");
+    expect(report.vanilla).toMatchObject({ loadedView: false, pathInventory: "packaged" });
+    expect(existsSync(outDir)).toBe(false);
   });
 
   it("keeps a legacy manifest without assetsDirectory buildable", () => {

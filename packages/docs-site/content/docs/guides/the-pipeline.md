@@ -73,10 +73,12 @@ await runBuild(buildTheMod(), {
 
 `runBuild` and `runInstall` accept the `PureMod` or its promise, run the same
 low-level operations shown above, display warnings and structured failures with
-Clack, and return the write or install report on success. They set the command
-exit code and resolve to `undefined` after a reported failure, which prevents
-Node from printing the same raw stack a second time. Advanced build scripts can
-continue to call `render`, `write`, and `install` directly.
+Clack, and return the write or install report on success. `runInspect` instead
+prints one deterministic YAML document from the Fold and Project Manifest. It
+does not render or write the mod. The three runners set the command exit code
+after a reported failure, which prevents Node from printing the same raw stack
+a second time. Advanced build scripts can continue to call `render`, `write`,
+and `install` directly.
 
 ## 1. `createMod`: bind the mod's identity
 
@@ -113,7 +115,9 @@ Not every uncertain condition is an error. For example, a raw Asset path that
 is neither captured by this build nor known as a vanilla path becomes a warning
 because it may come from a DLC, another mod, or a file managed outside the SDK.
 The `PureMod` that `mod.compile` returns carries these non-blocking
-diagnostics on its `warnings` array.
+diagnostics on its `warnings` array. It also retains each Feature's stem, Item
+count and authored ids, plus whether the Fold received a loaded vanilla view,
+so inspection tools do not need to reconstruct inputs from output filenames.
 
 ## 3. `render`: produce the finished bytes
 

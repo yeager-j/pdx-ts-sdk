@@ -1,5 +1,11 @@
 import type { AssetFileItem } from "../authoring/assets.ts";
-import { flattenItems, type ModItemInput, type PlacedItem } from "../authoring/feature.ts";
+import {
+  flattenItems,
+  type Feature,
+  type ModItem,
+  type ModItemInput,
+  type PlacedItem,
+} from "../authoring/feature.ts";
 import type { ModWarning } from "../diagnostics.ts";
 import { compareUtf8, type LogicalPath } from "../ordering.ts";
 import type { AssetPathUse } from "../references.ts";
@@ -10,6 +16,7 @@ import {
   type ResolvedModConfig,
 } from "./config.ts";
 import { createLocalizationAccumulator, type LocalizationAccumulator } from "./localization.ts";
+import type { CompiledFeatureInput, CompileInputs } from "./model.ts";
 import type { ReferenceUse } from "./references.ts";
 
 /** An asset item together with its optional source Feature stem. */
@@ -34,6 +41,8 @@ export interface BuildSession {
   readonly config: ResolvedModConfig;
   /** Options that control this build. */
   readonly options: BuildOptions;
+  /** Canonical input provenance retained on the compiled mod. */
+  readonly compileInputs: CompileInputs;
   /** All input items, with their placement metadata. */
   readonly flat: readonly PlacedItem[];
   /** Asset items, ordered by their logical paths. */
@@ -66,6 +75,7 @@ export function createBuildSession(
   return {
     config,
     options,
+    compileInputs: summarizeCompileInputs(features, options),
     flat,
     assets,
     warnings,
@@ -74,6 +84,68 @@ export function createBuildSession(
     pathUses: [],
     stemsByPath: new Map(),
   };
+}
+
+function summarizeCompileInputs(
+  features: readonly ModItemInput[],
+  options: BuildOptions
+): CompileInputs {
+  const compiledFeatures: CompiledFeatureInput[] = [];
+  collectFeatureInputs(features, compiledFeatures);
+  compiledFeatures.sort((left, right) => {
+    if (left.stem === undefined) return right.stem === undefined ? 0 : -1;
+    if (right.stem === undefined) return 1;
+    return compareUtf8(left.stem, right.stem);
+  });
+  const vanilla = options.vanilla;
+  return Object.freeze({
+    features: Object.freeze(
+      compiledFeatures.map((feature) =>
+        Object.freeze({ ...feature, itemIds: Object.freeze(feature.itemIds) })
+      )
+    ),
+    vanilla: Object.freeze({
+      loadedView: vanilla !== undefined,
+      gameVersion: vanilla?.gameVersion,
+      pathInventory: vanilla?.pathInventory !== undefined,
+    }),
+  });
+}
+
+function collectFeatureInputs(
+  inputs: readonly ModItemInput[],
+  compiledFeatures: CompiledFeatureInput[]
+): void {
+  for (const input of inputs) {
+    if (Array.isArray(input)) {
+      collectFeatureInputs(input, compiledFeatures);
+      continue;
+    }
+    const feature = input as Feature;
+    compiledFeatures.push({
+      stem: feature.stem,
+      itemCount: feature.items.length,
+      itemIds: feature.items.flatMap((item) => {
+        const id = authoredItemId(item);
+        return id === undefined ? [] : [id];
+      }),
+    });
+  }
+}
+
+function authoredItemId(item: ModItem): string | undefined {
+  switch (item.itemKind) {
+    case "content":
+    case "event":
+    case "component-tag":
+      return item.id;
+    case "asset":
+    case "contribution":
+    case "localization":
+    case "on-action":
+    case "patch":
+      return undefined;
+  }
 }
 
 /** Records a named Feature that placed an item into an emitted file. */

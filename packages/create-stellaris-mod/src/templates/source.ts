@@ -94,6 +94,26 @@ await runInstall(buildTheMod());
 `;
 }
 
+/** Returns the generated project's YAML inspection entry point. */
+export function inspectTs(): string {
+  return `/**
+ * \`npm run inspect\`: compile the project and print a deterministic YAML map
+ * of its Features and Item ids, warnings, dependency versions, patch plans,
+ * and vanilla evidence. It does not render or write the mod.
+ */
+
+import { runInspect } from "@pdx-ts/sdk";
+import manifest from "../stellaris-mod.json" with { type: "json" };
+
+import { buildTheMod } from "#mod";
+
+await runInspect(buildTheMod(), {
+  manifest,
+  projectRoot: new URL("../", import.meta.url),
+});
+`;
+}
+
 export function vanillaTs(resolved: Resolved): string {
   return `/**
  * The vanilla view: the installed game, parsed.
@@ -160,9 +180,10 @@ export function contentExampleTs(resolved: Resolved): string {
  * \`common/technology/${p}_example.txt\` *and*
  * \`events/${p}_example.txt\`.
  *
- * Rename this file and the emitted filenames follow. Add \`weapons.ts\` beside it
- * and you get another pair — with no directory in your source tree shaped like
- * the output tree.
+ * Rename or move this file and the emitted paths stay the same while the
+ * Feature stem and Items stay the same. Change the stem to change its
+ * per-Feature filenames; add another module with its own named Feature to make
+ * another output group.
  *
  * \`#mod\` is the project's own import alias for \`src/mod.ts\` (see
  * \`package.json#imports\`), so moving this module deeper never rewrites it.

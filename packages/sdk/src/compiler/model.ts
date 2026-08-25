@@ -54,10 +54,40 @@ export interface LocalizationFile {
   readonly entries: readonly (readonly [key: string, text: string])[];
 }
 
+/** One named or unnamed Feature group supplied to a Fold. */
+export interface CompiledFeatureInput {
+  /** The authored Feature stem, or `undefined` for unnamed Features. */
+  readonly stem: string | undefined;
+  /** Number of Items placed by this Feature. */
+  readonly itemCount: number;
+  /** Authored content, event, and component-tag ids placed by this Feature. */
+  readonly itemIds: readonly string[];
+}
+
+/** Vanilla evidence supplied directly to a Fold. */
+export interface CompiledVanillaInput {
+  /** Whether the Fold received a parsed vanilla view. */
+  readonly loadedView: boolean;
+  /** The loaded view's Stellaris version, when it carried one. */
+  readonly gameVersion: string | undefined;
+  /** Whether the loaded view carried a complete install path inventory. */
+  readonly pathInventory: boolean;
+}
+
+/** Immutable input provenance retained for inspection tools. */
+export interface CompileInputs {
+  /** Feature inputs in canonical stem order. */
+  readonly features: readonly CompiledFeatureInput[];
+  /** Parsed vanilla evidence supplied to the Fold. */
+  readonly vanilla: CompiledVanillaInput;
+}
+
 /** The assembled mod: a value, not a builder. `render(mod)` consumes it. */
 export interface PureMod {
   /** Validated and immutable launcher configuration. */
   readonly config: ResolvedModConfig;
+  /** Input provenance retained for inspection without affecting emitted bytes. */
+  readonly compileInputs: CompileInputs;
   /** Diagnostics collected during the fold. */
   readonly warnings: readonly ModWarning[];
   /** Captured opaque Asset files placed by Features, in canonical path order. */

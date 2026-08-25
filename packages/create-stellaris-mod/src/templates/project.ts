@@ -142,6 +142,7 @@ export function packageJson(resolved: Resolved, packageName: string): string {
 
   const scripts: Record<string, string> = {
     build: "node src/index.ts",
+    inspect: "node src/inspect.ts",
     "install-mod": "node src/install.ts",
     test: "vitest run",
     "test:watch": "vitest",

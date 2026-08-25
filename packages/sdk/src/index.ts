@@ -45,7 +45,15 @@ export {
   type ReplacementLocalizationItem,
 } from "./authoring/localization.ts";
 export type { BuildOptions, ModConfig } from "./compiler/config.ts";
-export type { ComponentTagFile, EmittedFile, LocalizationFile, PureMod } from "./compiler/model.ts";
+export type {
+  CompiledFeatureInput,
+  CompiledVanillaInput,
+  CompileInputs,
+  ComponentTagFile,
+  EmittedFile,
+  LocalizationFile,
+  PureMod,
+} from "./compiler/model.ts";
 export type { ContentItem, ContributionItem, MintProvenance } from "./content/types.ts";
 export type { ModWarning } from "./diagnostics.ts";
 export { render } from "./output/render.ts";
@@ -67,6 +75,7 @@ export {
   type RunInstallOptions,
   type TerminalRunOptions,
 } from "./terminal.ts";
+export { runInspect, type RunInspectOptions } from "./inspect.ts";
 export {
   inspectSolarSystem,
   type InspectSolarSystemOptions,
