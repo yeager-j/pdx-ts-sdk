@@ -248,6 +248,11 @@ export type SituationTypeDefinition<
 
 type AnySituationApproach<ParentId extends string> = SituationApproach<ParentId, string>;
 type AnySituationStage<ParentId extends string> = SituationStage<ParentId, string>;
+interface SituationDefinitionSession<ParentId extends string> {
+  readonly context: SituationDefinitionContext<ParentId>;
+  readonly approaches: readonly AnySituationApproach<ParentId>[];
+  readonly stages: readonly AnySituationStage<ParentId>[];
+}
 type SituationTypeInput<Id extends string> =
   | Omit<SituationTypeCapabilityDef<Id, ScopeName | undefined, string, string>, "id">
   | SituationTypeDefinition<
@@ -263,19 +268,37 @@ function nestedDefinitionRecord<
 >(
   parentId: ParentId,
   nestedKind: Definition["nestedKind"],
-  definitions: readonly Definition[]
+  definitions: readonly Definition[],
+  declarations: readonly Definition[],
+  label: "approach" | "stage",
+  member: "approach" | "stages"
 ): Readonly<Record<string, Definition["def"]>> {
   const record: Record<string, Definition["def"]> = {};
+  const declared = new Set(declarations);
+  const returned = new Set<Definition>();
   for (const definition of definitions) {
     if (definition.nestedKind !== nestedKind || definition.parentId !== parentId) {
       throw new Error(
         `Nested situation definition "${definition.id}" does not belong to "${parentId}"`
       );
     }
+    if (!declared.has(definition)) {
+      throw new Error(
+        `Nested situation ${label} "${definition.id}" was not declared by this definition callback`
+      );
+    }
     if (definition.id in record) {
       throw new Error(`Duplicate nested situation definition id "${definition.id}"`);
     }
     record[definition.id] = definition.def;
+    returned.add(definition);
+  }
+  for (const declaration of declarations) {
+    if (!returned.has(declaration)) {
+      throw new Error(
+        `Nested situation ${label} "${declaration.id}" was declared but omitted from the returned "${member}" array`
+      );
+    }
   }
   return record;
 }
@@ -287,26 +310,47 @@ function normalizeContextDefinition<
   Stage extends AnySituationStage<Id>,
 >(
   id: Id,
-  def: SituationTypeContextDef<Id, T, Approach, Stage>
+  def: SituationTypeContextDef<Id, T, Approach, Stage>,
+  declarations: Pick<SituationDefinitionSession<Id>, "approaches" | "stages">
 ): SituationTypeCapabilityDef<Id, T, Approach["id"], Stage["id"]> {
   const { approach, stages, ...fields } = def;
   return {
     ...fields,
-    ...(approach === undefined
+    ...(approach === undefined && declarations.approaches.length === 0
       ? {}
-      : { approach: nestedDefinitionRecord(id, "situation-approach", approach) }),
-    ...(stages === undefined
+      : {
+          approach: nestedDefinitionRecord(
+            id,
+            "situation-approach",
+            approach ?? [],
+            declarations.approaches,
+            "approach",
+            "approach"
+          ),
+        }),
+    ...(stages === undefined && declarations.stages.length === 0
       ? {}
-      : { stages: nestedDefinitionRecord(id, "situation-stage", stages) }),
+      : {
+          stages: nestedDefinitionRecord(
+            id,
+            "situation-stage",
+            stages ?? [],
+            declarations.stages,
+            "stage",
+            "stages"
+          ),
+        }),
   } as SituationTypeCapabilityDef<Id, T, Approach["id"], Stage["id"]>;
 }
 
-function createSituationDefinitionContext<Id extends string>(
+function createSituationDefinitionSession<Id extends string>(
   parentId: Id,
   assertName: (name: string) => void,
   assertNestedId: (id: string) => void
-): SituationDefinitionContext<Id> {
-  return Object.freeze({
+): SituationDefinitionSession<Id> {
+  const approaches: AnySituationApproach<Id>[] = [];
+  const stages: AnySituationStage<Id>[] = [];
+  const context: SituationDefinitionContext<Id> = Object.freeze({
     approach<const Name extends string>(
       name: Name,
       def: ContextApproachFields<Id>
@@ -314,12 +358,14 @@ function createSituationDefinitionContext<Id extends string>(
       assertName(name);
       const id = `${parentId}_approach_${name}` as const;
       assertNestedId(id);
-      return Object.freeze({
+      const approach = Object.freeze({
         nestedKind: "situation-approach",
         parentId,
         id,
         def,
       }) as SituationApproach<Id, Name>;
+      approaches.push(approach);
+      return approach;
     },
     stage<const Name extends string>(
       name: Name,
@@ -328,14 +374,17 @@ function createSituationDefinitionContext<Id extends string>(
       assertName(name);
       const id = `${parentId}_stage_${name}` as const;
       assertNestedId(id);
-      return Object.freeze({
+      const stage = Object.freeze({
         nestedKind: "situation-stage",
         parentId,
         id,
         def,
       }) as SituationStage<Id, Name>;
+      stages.push(stage);
+      return stage;
     },
   });
+  return { context, approaches, stages };
 }
 
 export function defineSituationType<
@@ -413,16 +462,31 @@ export interface SituationTypeCapabilityMethods<P extends string, I extends IdPr
       T extends ScopeName | undefined = undefined,
       const Approach extends string = never,
       const Stage extends string = never,
+      const NestedApproach extends SituationApproach<
+        MintedContentId<P, I, "situationType", Name>,
+        string
+      > = never,
+      const NestedStage extends SituationStage<
+        MintedContentId<P, I, "situationType", Name>,
+        string
+      > = never,
     >(
-      def: Omit<
-        SituationTypeCapabilityDef<
-          MintedContentId<P, I, "situationType", Name>,
-          T,
-          Approach,
-          Stage
-        >,
-        "id"
-      >
+      def:
+        | Omit<
+            SituationTypeCapabilityDef<
+              MintedContentId<P, I, "situationType", Name>,
+              T,
+              Approach,
+              Stage
+            >,
+            "id"
+          >
+        | SituationTypeDefinition<
+            MintedContentId<P, I, "situationType", Name>,
+            T,
+            NestedApproach,
+            NestedStage
+          >
     ): ContentItem<
       "situation_type",
       SituationTypeDef<MintedContentId<P, I, "situationType", Name>>
@@ -450,12 +514,16 @@ export function situationTypeCapabilityMethods<P extends string, I extends IdPro
         return defineSituationType(def);
       }
     );
-    const context = createSituationDefinitionContext(id, assertName, assertNestedId);
     return Object.freeze({
       ...base,
       define: (input: SituationTypeInput<MintedContentId<P, I, "situationType", Name>>) => {
-        const def =
-          typeof input === "function" ? normalizeContextDefinition(id, input(context)) : input;
+        const def = (() => {
+          if (typeof input !== "function") {
+            return input;
+          }
+          const session = createSituationDefinitionSession(id, assertName, assertNestedId);
+          return normalizeContextDefinition(id, input(session.context), session);
+        })();
         return base.define(
           def as unknown as Omit<
             SituationTypeCapabilityDef<MintedContentId<P, I, "situationType", Name>>,

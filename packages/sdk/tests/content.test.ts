@@ -1746,6 +1746,7 @@ describe("generated content registries", () => {
         name: "Bloom",
         approach: [observe],
         stages: [germination],
+        onStart: (scope) => scope.setSituationApproach(observe),
         monthlyProgress: {
           base: 1,
           modifiers: [
@@ -1780,6 +1781,37 @@ describe("generated content registries", () => {
       "current_situation_approach = snr_test_situation_bloom_approach_observe"
     );
     expect(rendered).toContain("current_stage = snr_test_situation_bloom_stage_germination");
+    expect(rendered).toContain(
+      "set_situation_approach = snr_test_situation_bloom_approach_observe"
+    );
+  });
+
+  it("rejects nested situation definitions omitted from the returned arrays", () => {
+    const cap = capabilityFor(configFor("Situation nested omission test", "sno_test"));
+
+    expect(() =>
+      cap.situationType("bloom", (situation) => {
+        const missing = situation.stage("missing", {
+          name: "Missing",
+          icon: "GFX_situation_stage_missing",
+          iconBackground: "GFX_situation_stage_bg_missing",
+        });
+        const observe = situation.approach("observe", {
+          name: "Observe",
+          icon: "GFX_situation_approach_observe",
+          iconBackground: "GFX_situation_approach_bg_observe",
+          allow: currentStage(missing),
+        });
+        return {
+          name: "Bloom",
+          approach: [observe],
+          stages: [],
+          monthlyProgress: { base: 1 },
+        };
+      })
+    ).toThrow(
+      'Nested situation stage "sno_test_situation_bloom_stage_missing" was declared but omitted from the returned "stages" array'
+    );
   });
 
   it("rejects invalid and duplicate nested situation logical names", () => {

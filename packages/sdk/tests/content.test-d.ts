@@ -1348,6 +1348,7 @@ describe("generated content authoring types", () => {
         name: "Nested references",
         approach: [observe],
         stages: [germination],
+        onStart: (scope) => scope.setSituationApproach(observe),
         monthlyProgress: {
           base: 1,
           modifiers: [
@@ -1363,6 +1364,19 @@ describe("generated content authoring types", () => {
             },
           ],
         },
+      };
+    });
+
+    contentMod.situationTypeHandle("nested_handle_refs").define((situation) => {
+      const observe = situation.approach("observe", {
+        name: "Observe",
+        icon: "GFX_situation_approach_observe",
+        iconBackground: "GFX_situation_approach_bg_observe",
+      });
+      return {
+        name: "Nested handle references",
+        approach: [observe],
+        monthlyProgress: { base: 1 },
       };
     });
 

@@ -15644,7 +15644,8 @@ export const SCRIPT_EFFECT_REFERENCES = [
     key: "set_situation_approach",
     kind: "effect",
     availability: { kind: "scopes", scopes: ["situation"] },
-    signature: "setSituationApproach(value: SituationApproach): void;",
+    signature:
+      'setSituationApproach(value: SituationApproach | import("../content/situations.ts").SituationApproach<string, string>): void;',
     docs: [
       "Sets the approach to the Situation. Respects allow and potential triggers.",
       "",

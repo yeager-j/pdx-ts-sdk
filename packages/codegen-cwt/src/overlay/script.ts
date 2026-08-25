@@ -306,7 +306,7 @@ export interface EffectFieldTypeOverride {
 export interface EffectValueTypeOverride {
   /** TypeScript input type emitted for the effect value. */
   readonly type: string;
-  /** Audited reason the generated fallback must reject a contract-bearing value. */
+  /** Audited reason the mechanical value type does not express the public contract. */
   readonly reason: string;
 }
 
@@ -543,7 +543,7 @@ export const EFFECT_FIELD_TYPE_OVERRIDES = new Map<string, EffectFieldTypeOverri
   ],
 ]);
 
-/** Scalar effects whose generated fallback must not accept a contract-bearing authored ref. */
+/** Scalar effects whose public input type intentionally differs from mechanical rule lowering. */
 export const EFFECT_VALUE_TYPE_OVERRIDES = new Map<string, EffectValueTypeOverride>([
   [
     "remove_modifier",
@@ -562,6 +562,16 @@ export const EFFECT_VALUE_TYPE_OVERRIDES = new Map<string, EffectValueTypeOverri
       reason:
         "SDK-229: removing an authored stage modifier must check its declared host against the " +
         "astral-rift or espionage-operation receiver.",
+    },
+  ],
+  [
+    "set_situation_approach",
+    {
+      type: 'SituationApproach | import("../content/situations.ts").SituationApproach<string, string>',
+      reason:
+        "An approach declared by a situation definition callback is a typed scalar reference. " +
+        "The runtime scalar lowering already unwraps its id, so the generated setter accepts " +
+        "that reference alongside vanilla and third-party approach ids.",
     },
   ],
 ]);
