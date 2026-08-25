@@ -39,6 +39,9 @@ interface PackageJson {
   readonly name?: unknown;
   readonly version?: unknown;
   readonly dependencies?: unknown;
+  readonly devDependencies?: unknown;
+  readonly optionalDependencies?: unknown;
+  readonly peerDependencies?: unknown;
 }
 
 /**
@@ -98,7 +101,7 @@ function packageReport(
   sdkPackage: PackageJson,
   idsVersion: string | null
 ): PackageReport {
-  const dependencies = recordOfStrings(projectPackage.dependencies);
+  const dependencies = requestedDependencies(projectPackage);
   const idsGameVersion =
     idsVersion === null || idsVersion === "0.0.0" ? null : vanillaPackageGameVersion(idsVersion);
   return {
@@ -115,6 +118,15 @@ function packageReport(
         gameVersion: idsGameVersion,
       },
     },
+  };
+}
+
+function requestedDependencies(packageJson: PackageJson): Readonly<Record<string, string>> {
+  return {
+    ...recordOfStrings(packageJson.peerDependencies),
+    ...recordOfStrings(packageJson.devDependencies),
+    ...recordOfStrings(packageJson.dependencies),
+    ...recordOfStrings(packageJson.optionalDependencies),
   };
 }
 

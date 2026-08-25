@@ -7,6 +7,7 @@ import {
   type PlacedItem,
 } from "../authoring/feature.ts";
 import type { ModWarning } from "../diagnostics.ts";
+import type { VanillaView } from "../installation/vanilla/view.ts";
 import { compareUtf8, type LogicalPath } from "../ordering.ts";
 import type { AssetPathUse } from "../references.ts";
 import {
@@ -91,13 +92,19 @@ function summarizeCompileInputs(
   options: BuildOptions
 ): CompileInputs {
   const compiledFeatures: CompiledFeatureInput[] = [];
-  collectFeatureInputs(features, compiledFeatures);
-  compiledFeatures.sort((left, right) => {
-    if (left.stem === undefined) return right.stem === undefined ? 0 : -1;
-    if (right.stem === undefined) return 1;
-    return compareUtf8(left.stem, right.stem);
-  });
-  const vanilla = options.vanilla;
+  const vanillaOrigins = new Set<VanillaView>();
+  if (options.vanilla !== undefined) {
+    vanillaOrigins.add(options.vanilla);
+  }
+  collectFeatureInputs(features, compiledFeatures, vanillaOrigins);
+  compiledFeatures.sort(compareCompiledFeatures);
+  const knownGameVersions = [
+    ...new Set(
+      [...vanillaOrigins].flatMap((origin) =>
+        origin.gameVersion === undefined ? [] : [origin.gameVersion]
+      )
+    ),
+  ].sort(compareUtf8);
   return Object.freeze({
     features: Object.freeze(
       compiledFeatures.map((feature) =>
@@ -105,32 +112,54 @@ function summarizeCompileInputs(
       )
     ),
     vanilla: Object.freeze({
-      loadedView: vanilla !== undefined,
-      gameVersion: vanilla?.gameVersion,
-      pathInventory: vanilla?.pathInventory !== undefined,
+      loadedView: vanillaOrigins.size > 0,
+      gameVersion: knownGameVersions.length === 1 ? knownGameVersions[0] : undefined,
+      pathInventory: [...vanillaOrigins].some((origin) => origin.pathInventory !== undefined),
     }),
   });
 }
 
 function collectFeatureInputs(
   inputs: readonly ModItemInput[],
-  compiledFeatures: CompiledFeatureInput[]
+  compiledFeatures: CompiledFeatureInput[],
+  vanillaOrigins: Set<VanillaView>
 ): void {
   for (const input of inputs) {
     if (Array.isArray(input)) {
-      collectFeatureInputs(input, compiledFeatures);
+      collectFeatureInputs(input, compiledFeatures, vanillaOrigins);
       continue;
     }
     const feature = input as Feature;
+    for (const item of feature.items) {
+      if (item.itemKind === "patch") {
+        vanillaOrigins.add(item.patched.source.origin);
+      }
+    }
     compiledFeatures.push({
       stem: feature.stem,
       itemCount: feature.items.length,
-      itemIds: feature.items.flatMap((item) => {
-        const id = authoredItemId(item);
-        return id === undefined ? [] : [id];
-      }),
+      itemIds: feature.items
+        .flatMap((item) => {
+          const id = authoredItemId(item);
+          return id === undefined ? [] : [id];
+        })
+        .sort(compareUtf8),
     });
   }
+}
+
+function compareCompiledFeatures(left: CompiledFeatureInput, right: CompiledFeatureInput): number {
+  if (left.stem === undefined && right.stem !== undefined) return -1;
+  if (left.stem !== undefined && right.stem === undefined) return 1;
+  const stemOrder = compareUtf8(left.stem ?? "", right.stem ?? "");
+  if (stemOrder !== 0) return stemOrder;
+
+  const sharedIds = Math.min(left.itemIds.length, right.itemIds.length);
+  for (let index = 0; index < sharedIds; index++) {
+    const idOrder = compareUtf8(left.itemIds[index]!, right.itemIds[index]!);
+    if (idOrder !== 0) return idOrder;
+  }
+  return left.itemIds.length - right.itemIds.length || left.itemCount - right.itemCount;
 }
 
 function authoredItemId(item: ModItem): string | undefined {

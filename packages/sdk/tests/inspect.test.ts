@@ -6,6 +6,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import { parse } from "yaml";
 
 import { createMod, runInspect } from "../src/index.ts";
+import { viewFromFiles } from "../src/installation/vanilla/view.ts";
+import { TECH_FILE, VARS_FILE } from "./fixtures/vanilla-fixture.ts";
 
 const temporaryDirectories: string[] = [];
 
@@ -125,8 +127,8 @@ describe("runInspect", () => {
       category: "particles",
     });
     const compiled = mod.compile([
-      mod.feature("shared", [firstTechnology]),
       mod.feature("shared", [secondTechnology]),
+      mod.feature("shared", [firstTechnology]),
     ]);
     const captured = captureTerminal();
 
@@ -151,6 +153,71 @@ describe("runInspect", () => {
         itemIds: ["repeated_stem_probe_tech_second"],
       },
     ]);
+  });
+
+  it("reports vanilla evidence carried only by a patch origin", async () => {
+    const projectRoot = temporaryProject();
+    const vanilla = viewFromFiles(
+      {
+        "common/technology/00_technologies.txt": TECH_FILE,
+        "common/scripted_variables/00_variables.txt": VARS_FILE,
+      },
+      { gameVersion: "4.4.6", pathInventory: ["events/live_origin.txt"] }
+    );
+    const mod = createMod({
+      name: "Patch Origin Probe",
+      prefix: "patch_origin_probe",
+      supportedVersion: "4.4.*",
+    });
+    const patch = mod.patchTechnology(
+      vanilla.definition("technology", "tech_gene_forging"),
+      () => ({ tier: 4 })
+    );
+    const compiled = mod.compile([mod.feature("patches", [patch])]);
+    const captured = captureTerminal();
+
+    await runInspect(compiled, {
+      manifest: {
+        mod: { patch_origin_probe: compiled.config },
+        contentDirectory: "src/content",
+      },
+      projectRoot,
+      output: captured.output,
+    });
+
+    expect(parse(captured.text()).vanilla).toEqual({
+      identifiers: "packaged",
+      loadedView: true,
+      gameVersion: "4.4.6",
+      pathInventory: "packaged-and-loaded",
+    });
+  });
+
+  it("reads requested versions outside regular dependencies", async () => {
+    const projectRoot = temporaryProject({
+      devDependencies: { "@pdx-ts/sdk": "workspace:*" },
+      optionalDependencies: { "@pdx-ts/stellaris-ids": "4.4.6-r.2" },
+    });
+    const mod = createMod({
+      name: "Dependency Section Probe",
+      prefix: "dependency_section_probe",
+      supportedVersion: "4.4.*",
+    }).compile([]);
+    const captured = captureTerminal();
+
+    await runInspect(mod, {
+      manifest: {
+        mod: { dependency_section_probe: mod.config },
+        contentDirectory: "src/content",
+      },
+      projectRoot,
+      output: captured.output,
+    });
+
+    expect(parse(captured.text()).project.package.dependencies).toMatchObject({
+      sdk: { requested: "workspace:*" },
+      stellarisIds: { requested: "4.4.6-r.2" },
+    });
   });
 
   it("writes failures to stderr without partial YAML", async () => {
@@ -179,7 +246,14 @@ describe("runInspect", () => {
   });
 });
 
-function temporaryProject(): string {
+function temporaryProject(
+  packageDependencies: Record<string, Record<string, string>> = {
+    dependencies: {
+      "@pdx-ts/sdk": "^0.3.0",
+      "@pdx-ts/stellaris-ids": ">=4.4.6-0 <4.4.6",
+    },
+  }
+): string {
   const directory = mkdtempSync(path.join(tmpdir(), "pdx-inspection-"));
   temporaryDirectories.push(directory);
   writeFileSync(
@@ -187,10 +261,7 @@ function temporaryProject(): string {
     JSON.stringify({
       name: "inspection-project",
       version: "0.1.0",
-      dependencies: {
-        "@pdx-ts/sdk": "^0.3.0",
-        "@pdx-ts/stellaris-ids": ">=4.4.6-0 <4.4.6",
-      },
+      ...packageDependencies,
     })
   );
   return directory;

@@ -116,8 +116,9 @@ is neither captured by this build nor known as a vanilla path becomes a warning
 because it may come from a DLC, another mod, or a file managed outside the SDK.
 The `PureMod` that `mod.compile` returns carries these non-blocking
 diagnostics on its `warnings` array. It also retains each Feature's stem, Item
-count and authored ids, plus whether the Fold received a loaded vanilla view,
-so inspection tools do not need to reconstruct inputs from output filenames.
+count and authored ids, plus vanilla evidence supplied directly or through a
+patch, so inspection tools do not need to reconstruct inputs from output
+filenames.
 
 ## 3. `render`: produce the finished bytes
 

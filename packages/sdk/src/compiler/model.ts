@@ -64,13 +64,13 @@ export interface CompiledFeatureInput {
   readonly itemIds: readonly string[];
 }
 
-/** Vanilla evidence supplied directly to a Fold. */
+/** Vanilla evidence used by a Fold. */
 export interface CompiledVanillaInput {
-  /** Whether the Fold received a parsed vanilla view. */
+  /** Whether the Fold received a parsed vanilla view directly or through a patch. */
   readonly loadedView: boolean;
-  /** The loaded view's Stellaris version, when it carried one. */
+  /** The Stellaris version when all versioned evidence agrees on one. */
   readonly gameVersion: string | undefined;
-  /** Whether the loaded view carried a complete install path inventory. */
+  /** Whether any loaded evidence carried a complete install path inventory. */
   readonly pathInventory: boolean;
 }
 
