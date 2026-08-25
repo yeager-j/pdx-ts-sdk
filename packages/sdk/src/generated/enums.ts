@@ -332,6 +332,10 @@ export type ResearchArea = "physics" | "society" | "engineering";
 /** `enum[resolution_position]`. */
 export type ResolutionPosition = "support" | "oppose" | "abstain";
 
+/** `enum[resource_category]`. */
+export type ResourceCategory =
+  "basic" | "advanced" | "strategic" | "rare" | "other" | "material" | "all";
+
 /** `enum[satellite_naming_policy]`. */
 export type SatelliteNamingPolicy = "upper_case_roman_numerals" | "lower_case_latin_letters";
 

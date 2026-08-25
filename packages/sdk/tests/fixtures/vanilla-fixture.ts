@@ -26,6 +26,10 @@
  * `placement_rules` — now authorable through SDK-84's mixed trigger-struct
  * lowering, while this fixture still pins its vanilla patch round-trip and
  * passthrough behavior.
+ *
+ * `ASCENSION_PERK_CATEGORY_FILE` is the fourth registry's minimal complete
+ * shape. Its Ambitions category carries several shipped perks so a patch can
+ * prove it retains all existing members before appending an authored perk.
  */
 
 export const TECH_FILE = `# ##################
@@ -130,6 +134,18 @@ export const VARS_FILE = `# Parser-probe scripted variables.
 @t3cost = 4000
 @t3weight = 65
 @pp_boost = 10
+`;
+
+/** Shaped like `common/ascension_perk_categories/00_ascension_perk_categories.txt`. */
+export const ASCENSION_PERK_CATEGORY_FILE = `ap_category_ambitions = {
+	ascension_perks = {
+		ap_defender_of_the_galaxy_nomads
+		ap_become_the_crisis
+		ap_cosmogenesis
+		ap_behemoths
+		ap_galactic_hyperthermia
+	}
+}
 `;
 
 /**

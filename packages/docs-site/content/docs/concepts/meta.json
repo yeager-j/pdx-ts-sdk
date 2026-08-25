@@ -3,6 +3,7 @@
   "pages": [
     "localization",
     "economic-modifiers",
+    "player-crisis-paths",
     "ships",
     "events",
     "on-actions",

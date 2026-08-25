@@ -1,0 +1,502 @@
+{
+  "registry": "resource",
+  "definitions": 26,
+  "files": 1,
+  "fingerprint": "0f8de22215ee83641d4856a939443d5f86391166b23a3d58b81b825087126112",
+  "fields": {
+    "ai_wants": {
+      "definitions": 13,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 13,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "base",
+        "modifier"
+      ],
+      "keysByDefinition": [
+        [
+          "base"
+        ],
+        [
+          "base",
+          "modifier"
+        ]
+      ]
+    },
+    "ai_wants.modifier": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 2,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "country_uses_consumer_goods",
+        "country_uses_food"
+      ],
+      "keysByDefinition": [
+        [
+          "country_uses_consumer_goods"
+        ],
+        [
+          "country_uses_food"
+        ]
+      ]
+    },
+    "ai_weight": {
+      "definitions": 24,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 24,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "modifier",
+        "weight"
+      ],
+      "keysByDefinition": [
+        [
+          "modifier",
+          "weight"
+        ],
+        [
+          "weight"
+        ]
+      ]
+    },
+    "ai_weight.modifier": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 2,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "country_uses_consumer_goods",
+        "country_uses_food"
+      ],
+      "keysByDefinition": [
+        [
+          "country_uses_consumer_goods"
+        ],
+        [
+          "country_uses_food"
+        ]
+      ]
+    },
+    "allow_deficit": {
+      "definitions": 3,
+      "repeated": 0,
+      "scalars": 3,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "no"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "category": {
+      "definitions": 26,
+      "repeated": 0,
+      "scalars": 26,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "advanced",
+        "basic",
+        "other",
+        "rare",
+        "strategic"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "culling_conversion_value": {
+      "definitions": 19,
+      "repeated": 0,
+      "scalars": 19,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "1",
+        "10",
+        "2",
+        "20",
+        "3",
+        "4",
+        "5",
+        "7"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "deficit_modifier": {
+      "definitions": 8,
+      "repeated": 0,
+      "scalars": 8,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "dark_matter_deficit",
+        "entropy_crystals_deficit",
+        "influence_deficit",
+        "nanites_deficit",
+        "sr_living_metal_deficit",
+        "sr_zro_deficit",
+        "trade_deficit",
+        "unity_deficit"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "deficit_situation": {
+      "definitions": 8,
+      "repeated": 0,
+      "scalars": 8,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "situation_alloys_deficit",
+        "situation_consumer_goods_deficit",
+        "situation_energy_deficit",
+        "situation_exotic_gases_deficit",
+        "situation_food_deficit",
+        "situation_mineral_deficit",
+        "situation_rare_crystals_deficit",
+        "situation_volatile_motes_deficit"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "deficit_trade_conversion_mult": {
+      "definitions": 14,
+      "repeated": 0,
+      "scalars": 14,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "-0.125",
+        "-0.25",
+        "-0.5",
+        "-1.25",
+        "-2.5"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "dynamic_capacity": {
+      "definitions": 3,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 3,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "base",
+        "complex_trigger_modifier",
+        "modifier"
+      ],
+      "keysByDefinition": [
+        [
+          "base",
+          "complex_trigger_modifier"
+        ],
+        [
+          "base",
+          "modifier"
+        ]
+      ]
+    },
+    "dynamic_capacity.modifier": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 2,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "country_uses_bio_ships"
+      ],
+      "keysByDefinition": [
+        [
+          "country_uses_bio_ships"
+        ]
+      ]
+    },
+    "fixed_max_amount": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "hide_gain": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "intangible_weight": {
+      "definitions": 3,
+      "repeated": 0,
+      "scalars": 3,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "0.33"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "market_amount": {
+      "definitions": 11,
+      "repeated": 0,
+      "scalars": 11,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "10",
+        "100",
+        "25",
+        "5",
+        "50"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "market_price": {
+      "definitions": 11,
+      "repeated": 0,
+      "scalars": 11,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "100"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "max": {
+      "definitions": 15,
+      "repeated": 0,
+      "scalars": 15,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "1000",
+        "15000",
+        "2000",
+        "25000",
+        "500",
+        "50000"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "prerequisites": {
+      "definitions": 7,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 7,
+      "bareValues": 4,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "tech_astral_harvesting",
+        "tech_mine_dark_matter",
+        "tech_mine_living_metal",
+        "tech_mine_zro"
+      ],
+      "keys": [
+        "OR"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "OR"
+        ]
+      ]
+    },
+    "special_max_amount": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 2,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "tooltip_decimals": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 1,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "1"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "tradable": {
+      "definitions": 21,
+      "repeated": 0,
+      "scalars": 21,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "tradable_in_market": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 1,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOT"
+      ],
+      "keysByDefinition": [
+        [
+          "NOT"
+        ]
+      ]
+    },
+    "visibility_prerequisite": {
+      "definitions": 9,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 9,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "OR",
+        "always",
+        "has_ancrel",
+        "has_astral_planes_dlc",
+        "has_biogenesis_dlc",
+        "has_infernals"
+      ],
+      "keysByDefinition": [
+        [
+          "OR"
+        ],
+        [
+          "OR",
+          "has_biogenesis_dlc"
+        ],
+        [
+          "OR",
+          "has_infernals"
+        ],
+        [
+          "always"
+        ],
+        [
+          "has_ancrel"
+        ],
+        [
+          "has_astral_planes_dlc"
+        ]
+      ]
+    }
+  }
+}

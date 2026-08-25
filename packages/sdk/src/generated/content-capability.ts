@@ -4,6 +4,10 @@
 // From: common/buildings.cwt
 // From: common/traditions.cwt
 // From: common/ascension_perks.cwt
+// From: common/ascension_perk_categories.cwt
+// From: common/strategic_resources.cwt
+// From: common/crisis_paths.cwt
+// From: common/crisis.cwt
 // From: common/council_agendas.cwt
 // From: common/edicts.cwt
 // From: common/decisions.cwt
@@ -47,6 +51,7 @@ import type {
   ExactEconomicCategoryWitness,
 } from "../content/types.ts";
 import type {
+  ParsedAscensionPerkCategory,
   ParsedBuilding,
   ParsedMegastructure,
   ParsedTechnology,
@@ -56,6 +61,11 @@ import type { AgendaDef } from "./agenda.ts";
 import type { AgreementPresetDef } from "./agreement-preset.ts";
 import type { AmbientObjectDef } from "./ambient-object.ts";
 import type { ArchaeologicalSiteTypeDef } from "./archaeological-site-type.ts";
+import type {
+  AscensionPerkCategoryDef,
+  AscensionPerkCategoryPatch,
+  AscensionPerkCategoryPatchItem,
+} from "./ascension-perk-category.ts";
 import type { AscensionPerkDef } from "./ascension-perk.ts";
 import type { BombardmentStanceDef } from "./bombardment-stance.ts";
 import type { BuildingDef, BuildingPatch, BuildingPatchItem } from "./building.ts";
@@ -69,6 +79,7 @@ import {
   defineAmbientObject,
   defineArchaeologicalSiteType,
   defineAscensionPerk,
+  defineAscensionPerkCategory,
   defineBombardmentStance,
   defineBuilding,
   defineCasusBelli,
@@ -76,6 +87,9 @@ import {
   defineComponentSet,
   defineCouncilor,
   defineCountryShipOfSizeLimit,
+  defineCrisisLevel,
+  defineCrisisObjective,
+  defineCrisisPath,
   defineDecision,
   defineEconomicCategory,
   defineEdict,
@@ -83,9 +97,11 @@ import {
   defineGraphicalCulture,
   defineJob,
   defineMegastructure,
+  defineMenacePerk,
   defineOpinionModifier,
   definePdxmesh,
   definePdxparticle,
+  defineResource,
   defineScriptedLoc,
   defineScriptedModifier,
   defineSectionTemplate,
@@ -103,12 +119,16 @@ import {
   defineUtilityComponentTemplate,
   defineWarGoal,
   defineWeaponComponentTemplate,
+  patchAscensionPerkCategory,
   patchBuilding,
   patchMegastructure,
   patchTechnology,
 } from "./content-definers.ts";
 import type { CouncilorDef } from "./councilor.ts";
 import type { CountryShipOfSizeLimitDef } from "./country-ship-of-size-limit.ts";
+import type { CrisisLevelDef } from "./crisis-level.ts";
+import type { CrisisObjectiveDef } from "./crisis-objective.ts";
+import type { CrisisPathDef } from "./crisis-path.ts";
 import type { DecisionDef, DecisionScope } from "./decision.ts";
 import type { EconomicCategoryDef } from "./economic-category.ts";
 import type { EdictDef } from "./edict.ts";
@@ -122,10 +142,12 @@ import type {
   MegastructurePatch,
   MegastructurePatchItem,
 } from "./megastructure.ts";
+import type { MenacePerkDef } from "./menace-perk.ts";
 import type { OpinionModifierDef } from "./opinion-modifier.ts";
 import type { PdxmeshDef } from "./pdxmesh.ts";
 import type { PdxparticleDef } from "./pdxparticle.ts";
 import type { BombardmentStanceRef, ComponentSetRequiredComponentRef } from "./refs.ts";
+import type { ResourceDef } from "./resource.ts";
 import type { ScriptedLocDef } from "./scripted-loc.ts";
 import type { ScriptedModifierDef } from "./scripted-modifier.ts";
 import type { SectionTemplateDef } from "./section-template.ts";
@@ -238,6 +260,36 @@ export interface IdProfile {
    * Override it when this registry needs a different id convention.
    */
   readonly ascensionPerk: string;
+  /**
+   * The segment inserted between the mod prefix and an ascension perk category's logical name.
+   * Override it when this registry needs a different id convention.
+   */
+  readonly ascensionPerkCategory: string;
+  /**
+   * The segment inserted between the mod prefix and a resource's logical name.
+   * Override it when this registry needs a different id convention.
+   */
+  readonly resource: string;
+  /**
+   * The segment inserted between the mod prefix and a crisis path's logical name.
+   * Override it when this registry needs a different id convention.
+   */
+  readonly crisisPath: string;
+  /**
+   * The segment inserted between the mod prefix and a crisis level's logical name.
+   * Override it when this registry needs a different id convention.
+   */
+  readonly crisisLevel: string;
+  /**
+   * The segment inserted between the mod prefix and a crisis objective's logical name.
+   * Override it when this registry needs a different id convention.
+   */
+  readonly crisisObjective: string;
+  /**
+   * The segment inserted between the mod prefix and a menace perk's logical name.
+   * Override it when this registry needs a different id convention.
+   */
+  readonly menacePerk: string;
   /**
    * The segment inserted between the mod prefix and an agenda's logical name.
    * Override it when this registry needs a different id convention.
@@ -412,6 +464,12 @@ export const DEFAULT_ID_PROFILE = Object.freeze({
   tradition: "tradition",
   traditionCategory: "tradition_category",
   ascensionPerk: "ascension_perk",
+  ascensionPerkCategory: "ascension_perk_category",
+  resource: "resource",
+  crisisPath: "crisis_path",
+  crisisLevel: "crisis_level",
+  crisisObjective: "crisis_objective",
+  menacePerk: "menace_perk",
   agenda: "agenda",
   edict: "edict",
   decision: "decision",
@@ -624,6 +682,97 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     name: Name,
     def: Omit<AscensionPerkDef<MintedContentId<P, I, "ascensionPerk", Name>>, "id">
   ): ContentItem<"ascension_perk", AscensionPerkDef<MintedContentId<P, I, "ascensionPerk", Name>>>;
+  /**
+   * Defines an ascension perk category from its logical name.
+   * The capability mints and owns the full id; the returned branded reference
+   * flows into matching content-reference fields.
+   */
+  ascensionPerkCategory<const Name extends string>(
+    name: Name,
+    def: Omit<AscensionPerkCategoryDef<MintedContentId<P, I, "ascensionPerkCategory", Name>>, "id">
+  ): ContentItem<
+    "ascension_perk_category",
+    AscensionPerkCategoryDef<MintedContentId<P, I, "ascensionPerkCategory", Name>>
+  >;
+  /**
+   * Patches a vanilla ascension perk category as a whole-object override.
+   * Unlike a capability definition method, it mints no id and owns no new content —
+   * but it does mint localisation keys for text it adds, from this capability's
+   * prefix, which is why the method is bound to the capability rather than free.
+   * @example
+   * ```ts
+   * import { createMod } from "@pdx-ts/sdk";
+   * import * as stellaris from "@pdx-ts/sdk/installation";
+   * const mod = createMod({
+   *   name: "Archive Ambitions",
+   *   prefix: "archive_ambitions",
+   *   supportedVersion: "4.4.*",
+   * });
+   * const ambition = mod.ascensionPerk("archive", {});
+   * const vanilla = stellaris.load();
+   * const ambitions = vanilla.definition(
+   *   "ascension_perk_category",
+   *   "ap_category_ambitions"
+   * );
+   * const patch = mod.patchAscensionPerkCategory(ambitions, (category) => ({
+   *   ascensionPerks: [...category.ascensionPerks, ambition],
+   * }));
+   * const feature = mod.feature("ambitions", [ambition, patch]);
+   * mod.compile([feature], { vanilla });
+   * ```
+   */
+  patchAscensionPerkCategory<Source extends ParsedAscensionPerkCategory>(
+    ascensionPerkCategory: Source,
+    patch: (ascensionPerkCategory: Source) => AscensionPerkCategoryPatch
+  ): AscensionPerkCategoryPatchItem;
+  /**
+   * Defines a resource from its logical name.
+   * The capability mints and owns the full id; the returned branded reference
+   * flows into matching content-reference fields.
+   */
+  resource<const Name extends string>(
+    name: Name,
+    def: Omit<ResourceDef<MintedContentId<P, I, "resource", Name>>, "id">
+  ): ContentItem<"resource", ResourceDef<MintedContentId<P, I, "resource", Name>>>;
+  /**
+   * Defines a crisis path from its logical name.
+   * The capability mints and owns the full id; the returned branded reference
+   * flows into matching content-reference fields.
+   */
+  crisisPath<const Name extends string>(
+    name: Name,
+    def: Omit<CrisisPathDef<MintedContentId<P, I, "crisisPath", Name>>, "id">
+  ): ContentItem<"crisis_path", CrisisPathDef<MintedContentId<P, I, "crisisPath", Name>>>;
+  /**
+   * Defines a crisis level from its logical name.
+   * The capability mints and owns the full id; the returned branded reference
+   * flows into matching content-reference fields.
+   */
+  crisisLevel<const Name extends string>(
+    name: Name,
+    def: Omit<CrisisLevelDef<MintedContentId<P, I, "crisisLevel", Name>>, "id">
+  ): ContentItem<"crisis_level", CrisisLevelDef<MintedContentId<P, I, "crisisLevel", Name>>>;
+  /**
+   * Defines a crisis objective from its logical name.
+   * The capability mints and owns the full id; the returned branded reference
+   * flows into matching content-reference fields.
+   */
+  crisisObjective<const Name extends string>(
+    name: Name,
+    def: Omit<CrisisObjectiveDef<MintedContentId<P, I, "crisisObjective", Name>>, "id">
+  ): ContentItem<
+    "crisis_objective",
+    CrisisObjectiveDef<MintedContentId<P, I, "crisisObjective", Name>>
+  >;
+  /**
+   * Defines a menace perk from its logical name.
+   * The capability mints and owns the full id; the returned branded reference
+   * flows into matching content-reference fields.
+   */
+  menacePerk<const Name extends string>(
+    name: Name,
+    def: Omit<MenacePerkDef<MintedContentId<P, I, "menacePerk", Name>>, "id">
+  ): ContentItem<"menace_perk", MenacePerkDef<MintedContentId<P, I, "menacePerk", Name>>>;
   /**
    * Defines an agenda from its logical name.
    * The capability mints and owns the full id; the returned branded reference
@@ -1176,6 +1325,56 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
         MintedContentId<P, I, "ascensionPerk", Name>
       >);
     },
+    ascensionPerkCategory: <const Name extends string>(
+      name: Name,
+      def: Omit<
+        AscensionPerkCategoryDef<MintedContentId<P, I, "ascensionPerkCategory", Name>>,
+        "id"
+      >
+    ) =>
+      defineAscensionPerkCategory({
+        ...def,
+        id: mint("ascensionPerkCategory", name),
+      } as AscensionPerkCategoryDef<MintedContentId<P, I, "ascensionPerkCategory", Name>>),
+    patchAscensionPerkCategory: <Source extends ParsedAscensionPerkCategory>(
+      ascensionPerkCategory: Source,
+      patch: (ascensionPerkCategory: Source) => AscensionPerkCategoryPatch
+    ) => patchAscensionPerkCategory(ascensionPerkCategory, patch, prefix),
+    resource: <const Name extends string>(
+      name: Name,
+      def: Omit<ResourceDef<MintedContentId<P, I, "resource", Name>>, "id">
+    ) =>
+      defineResource({ ...def, id: mint("resource", name) } as ResourceDef<
+        MintedContentId<P, I, "resource", Name>
+      >),
+    crisisPath: <const Name extends string>(
+      name: Name,
+      def: Omit<CrisisPathDef<MintedContentId<P, I, "crisisPath", Name>>, "id">
+    ) =>
+      defineCrisisPath({ ...def, id: mint("crisisPath", name) } as CrisisPathDef<
+        MintedContentId<P, I, "crisisPath", Name>
+      >),
+    crisisLevel: <const Name extends string>(
+      name: Name,
+      def: Omit<CrisisLevelDef<MintedContentId<P, I, "crisisLevel", Name>>, "id">
+    ) =>
+      defineCrisisLevel({ ...def, id: mint("crisisLevel", name) } as CrisisLevelDef<
+        MintedContentId<P, I, "crisisLevel", Name>
+      >),
+    crisisObjective: <const Name extends string>(
+      name: Name,
+      def: Omit<CrisisObjectiveDef<MintedContentId<P, I, "crisisObjective", Name>>, "id">
+    ) =>
+      defineCrisisObjective({ ...def, id: mint("crisisObjective", name) } as CrisisObjectiveDef<
+        MintedContentId<P, I, "crisisObjective", Name>
+      >),
+    menacePerk: <const Name extends string>(
+      name: Name,
+      def: Omit<MenacePerkDef<MintedContentId<P, I, "menacePerk", Name>>, "id">
+    ) =>
+      defineMenacePerk({ ...def, id: mint("menacePerk", name) } as MenacePerkDef<
+        MintedContentId<P, I, "menacePerk", Name>
+      >),
     agenda: <const Name extends string>(
       name: Name,
       def: Omit<AgendaDef<MintedContentId<P, I, "agenda", Name>>, "id">

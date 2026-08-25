@@ -9,13 +9,14 @@
  * property-accessible — which for a registry with no reader of its own is the
  * whole body.
  *
- * {@link ParsedTechnology} is the one registry that models fields today:
- * numeric fields are `ParsedNumber` (resolved value plus `@variable`
+ * {@link ParsedTechnology} models the fields patch transforms need: numeric
+ * fields are `ParsedNumber` (resolved value plus `@variable`
  * provenance — arithmetic is poisoned by the object type, `.value` bakes
  * visibly), refs wear the optional `TypedRef` brand, `area` is validated at
  * parse time, and prerequisites admit vanilla's `OR = { ... }` groups as
  * `AnyOf` values — ordinary data here, where the probe's parser had to refuse
- * them.
+ * them. {@link ParsedAscensionPerkCategory} models its member list so a patch
+ * can preserve the loaded perks before appending one.
  *
  * Each definition carries its provenance — source file, source bytes' sha256,
  * and the view it came from — which is what the win engine computes filenames
@@ -25,7 +26,11 @@
 import type { PdxEntry } from "@pdx-ts/pdxscript";
 
 import type { ResearchArea } from "../../generated/enums.ts";
-import type { TechnologyCategoryRef, TechnologyRef } from "../../generated/refs.ts";
+import type {
+  AscensionPerkRef,
+  TechnologyCategoryRef,
+  TechnologyRef,
+} from "../../generated/refs.ts";
 import type { LogicalPath } from "../../ordering.ts";
 import type { Trigger } from "../../script/trigger-core.ts";
 import type { VanillaView } from "./view.ts";
@@ -133,6 +138,21 @@ export class ParsedDefinition<R extends string = string> {
 /** A parsed vanilla building. Nothing about its body is modelled yet. */
 export type ParsedBuilding = ParsedDefinition<"building">;
 
+interface AscensionPerkCategoryInit extends ParsedDefinitionInit<"ascension_perk_category"> {
+  readonly ascensionPerks: readonly AscensionPerkRef[];
+}
+
+/** A parsed vanilla ascension perk category with its current member list. */
+export class ParsedAscensionPerkCategory extends ParsedDefinition<"ascension_perk_category"> {
+  /** The ascension perks currently registered in this category. */
+  readonly ascensionPerks: readonly AscensionPerkRef[];
+
+  constructor(init: AscensionPerkCategoryInit) {
+    super(init);
+    this.ascensionPerks = init.ascensionPerks;
+  }
+}
+
 /** A parsed vanilla megastructure. Nothing about its body is modelled yet. */
 export type ParsedMegastructure = ParsedDefinition<"megastructure">;
 
@@ -202,6 +222,7 @@ export class ParsedTechnology extends ParsedDefinition<"technology"> {
 export interface ParsedRegistries {
   readonly technology: ParsedTechnology;
   readonly building: ParsedBuilding;
+  readonly ascension_perk_category: ParsedAscensionPerkCategory;
   readonly megastructure: ParsedMegastructure;
 }
 

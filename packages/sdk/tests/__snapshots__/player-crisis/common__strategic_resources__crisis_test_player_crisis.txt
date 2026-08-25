@@ -1,0 +1,7 @@
+crisis_test_resource_crisis_currency = {
+	tradable = no
+	category = other
+	ai_weight = {
+		weight = 1
+	}
+}

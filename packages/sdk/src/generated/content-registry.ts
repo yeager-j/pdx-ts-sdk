@@ -4,6 +4,10 @@
 // From: common/buildings.cwt
 // From: common/traditions.cwt
 // From: common/ascension_perks.cwt
+// From: common/ascension_perk_categories.cwt
+// From: common/strategic_resources.cwt
+// From: common/crisis_paths.cwt
+// From: common/crisis.cwt
 // From: common/council_agendas.cwt
 // From: common/edicts.cwt
 // From: common/decisions.cwt
@@ -43,6 +47,10 @@ import {
   ARCHAEOLOGICAL_SITE_TYPE_FIELDS,
   ARCHAEOLOGICAL_SITE_TYPE_LOCALISATION,
 } from "./archaeological-site-type.ts";
+import {
+  ASCENSION_PERK_CATEGORY_FIELDS,
+  ASCENSION_PERK_CATEGORY_LOCALISATION,
+} from "./ascension-perk-category.ts";
 import { ASCENSION_PERK_FIELDS, ASCENSION_PERK_LOCALISATION } from "./ascension-perk.ts";
 import {
   BOMBARDMENT_STANCE_FIELDS,
@@ -57,6 +65,9 @@ import {
   COUNTRY_SHIP_OF_SIZE_LIMIT_FIELDS,
   COUNTRY_SHIP_OF_SIZE_LIMIT_LOCALISATION,
 } from "./country-ship-of-size-limit.ts";
+import { CRISIS_LEVEL_FIELDS, CRISIS_LEVEL_LOCALISATION } from "./crisis-level.ts";
+import { CRISIS_OBJECTIVE_FIELDS, CRISIS_OBJECTIVE_LOCALISATION } from "./crisis-objective.ts";
+import { CRISIS_PATH_FIELDS, CRISIS_PATH_LOCALISATION } from "./crisis-path.ts";
 import { DECISION_FIELDS, DECISION_LOCALISATION } from "./decision.ts";
 import { ECONOMIC_CATEGORY_FIELDS, ECONOMIC_CATEGORY_LOCALISATION } from "./economic-category.ts";
 import { EDICT_FIELDS, EDICT_LOCALISATION } from "./edict.ts";
@@ -68,9 +79,11 @@ import {
 import { GRAPHICAL_CULTURE_FIELDS, GRAPHICAL_CULTURE_LOCALISATION } from "./graphical-culture.ts";
 import { JOB_FIELDS, JOB_LOCALISATION } from "./job.ts";
 import { MEGASTRUCTURE_FIELDS, MEGASTRUCTURE_LOCALISATION } from "./megastructure.ts";
+import { MENACE_PERK_FIELDS, MENACE_PERK_LOCALISATION } from "./menace-perk.ts";
 import { OPINION_MODIFIER_FIELDS, OPINION_MODIFIER_LOCALISATION } from "./opinion-modifier.ts";
 import { PDXMESH_FIELDS, PDXMESH_LOCALISATION } from "./pdxmesh.ts";
 import { PDXPARTICLE_FIELDS, PDXPARTICLE_LOCALISATION } from "./pdxparticle.ts";
+import { RESOURCE_FIELDS, RESOURCE_LOCALISATION } from "./resource.ts";
 import { SCRIPTED_LOC_FIELDS, SCRIPTED_LOC_LOCALISATION } from "./scripted-loc.ts";
 import { SCRIPTED_MODIFIER_FIELDS, SCRIPTED_MODIFIER_LOCALISATION } from "./scripted-modifier.ts";
 import { SECTION_TEMPLATE_FIELDS, SECTION_TEMPLATE_LOCALISATION } from "./section-template.ts";
@@ -150,6 +163,60 @@ export const CONTENT_REGISTRIES = [
     fileExtension: ".txt",
     fields: ASCENSION_PERK_FIELDS,
     localisation: ASCENSION_PERK_LOCALISATION,
+  },
+  {
+    type: "ascension_perk_category",
+    referenceName: "ascension_perk_category",
+    outputDir: "common/ascension_perk_categories",
+    fileStem: "ascension_perk_categories",
+    fileExtension: ".txt",
+    fields: ASCENSION_PERK_CATEGORY_FIELDS,
+    localisation: ASCENSION_PERK_CATEGORY_LOCALISATION,
+  },
+  {
+    type: "resource",
+    referenceName: "resource",
+    outputDir: "common/strategic_resources",
+    fileStem: "strategic_resources",
+    fileExtension: ".txt",
+    fields: RESOURCE_FIELDS,
+    localisation: RESOURCE_LOCALISATION,
+  },
+  {
+    type: "crisis_path",
+    referenceName: "crisis_path",
+    outputDir: "common/crisis_paths",
+    fileStem: "crisis_paths",
+    fileExtension: ".txt",
+    fields: CRISIS_PATH_FIELDS,
+    localisation: CRISIS_PATH_LOCALISATION,
+  },
+  {
+    type: "crisis_level",
+    referenceName: "crisis_level",
+    outputDir: "common/crisis_levels",
+    fileStem: "crisis_levels",
+    fileExtension: ".txt",
+    fields: CRISIS_LEVEL_FIELDS,
+    localisation: CRISIS_LEVEL_LOCALISATION,
+  },
+  {
+    type: "crisis_objective",
+    referenceName: "crisis_objective",
+    outputDir: "common/crisis_objectives",
+    fileStem: "crisis_objectives",
+    fileExtension: ".txt",
+    fields: CRISIS_OBJECTIVE_FIELDS,
+    localisation: CRISIS_OBJECTIVE_LOCALISATION,
+  },
+  {
+    type: "menace_perk",
+    referenceName: "menace_perk",
+    outputDir: "common/menace_perks",
+    fileStem: "menace_perks",
+    fileExtension: ".txt",
+    fields: MENACE_PERK_FIELDS,
+    localisation: MENACE_PERK_LOCALISATION,
   },
   {
     type: "agenda",

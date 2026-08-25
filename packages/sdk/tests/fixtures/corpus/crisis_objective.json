@@ -1,0 +1,142 @@
+{
+  "registry": "crisis_objective",
+  "definitions": 37,
+  "files": 1,
+  "fingerprint": "00feda16693b589c09b4a062e4774510e670f235e5ea979999f47dfcdb681fb0",
+  "fields": {
+    "potential": {
+      "definitions": 4,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 4,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "has_federations_dlc",
+        "has_grand_archive_dlc",
+        "has_overlord_dlc",
+        "is_homicidal"
+      ],
+      "keysByDefinition": [
+        [
+          "has_federations_dlc"
+        ],
+        [
+          "has_grand_archive_dlc",
+          "is_homicidal"
+        ],
+        [
+          "has_overlord_dlc"
+        ]
+      ]
+    },
+    "recurring": {
+      "definitions": 9,
+      "repeated": 0,
+      "scalars": 9,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "reward": {
+      "definitions": 37,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 37,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "add",
+        "base",
+        "complex_trigger_modifier",
+        "divide",
+        "min",
+        "mult",
+        "round",
+        "round_to"
+      ],
+      "keysByDefinition": [
+        [
+          "add",
+          "base",
+          "min",
+          "round"
+        ],
+        [
+          "base"
+        ],
+        [
+          "base",
+          "complex_trigger_modifier",
+          "divide",
+          "min",
+          "round"
+        ],
+        [
+          "base",
+          "complex_trigger_modifier",
+          "divide",
+          "min",
+          "round_to"
+        ],
+        [
+          "base",
+          "complex_trigger_modifier",
+          "min"
+        ],
+        [
+          "base",
+          "complex_trigger_modifier",
+          "min",
+          "round_to"
+        ],
+        [
+          "base",
+          "complex_trigger_modifier",
+          "round_to"
+        ],
+        [
+          "base",
+          "divide",
+          "min",
+          "mult",
+          "round"
+        ],
+        [
+          "base",
+          "divide",
+          "min",
+          "round"
+        ],
+        [
+          "base",
+          "divide",
+          "min",
+          "round_to"
+        ],
+        [
+          "base",
+          "divide",
+          "mult",
+          "round"
+        ],
+        [
+          "base",
+          "mult"
+        ]
+      ]
+    }
+  }
+}

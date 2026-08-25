@@ -4,6 +4,10 @@
 // From: common/buildings.cwt
 // From: common/traditions.cwt
 // From: common/ascension_perks.cwt
+// From: common/ascension_perk_categories.cwt
+// From: common/strategic_resources.cwt
+// From: common/crisis_paths.cwt
+// From: common/crisis.cwt
 // From: common/council_agendas.cwt
 // From: common/edicts.cwt
 // From: common/decisions.cwt
@@ -44,6 +48,7 @@ import type {
   AmbientObjectRef,
   AnomalyCategoryRef,
   ArchaeologicalSiteTypeRef,
+  AscensionPerkCategoryRef,
   AscensionPerkRef,
   AsteroidBeltTypeRef,
   BombardmentStanceRef,
@@ -56,6 +61,9 @@ import type {
   ComponentTemplateWeaponComponentTemplateRef,
   CouncilorRef,
   CountryShipOfSizeLimitRef,
+  CrisisLevelRef,
+  CrisisObjectiveRef,
+  CrisisPathRef,
   DecisionRef,
   DepositRef,
   EconomicCategoryRef,
@@ -65,6 +73,7 @@ import type {
   GraphicalCultureRef,
   JobRef,
   MegastructureRef,
+  MenacePerkRef,
   ModelMeshRef,
   OpinionModifierRef,
   ParticleRef,
@@ -150,6 +159,78 @@ export function ascensionPerk<const Id extends VanillaId<"ascension_perk">>(
   id: Id
 ): AscensionPerkRef & { readonly id: Id } {
   return makeVanillaRef(id) as AscensionPerkRef & { readonly id: Id };
+}
+
+/**
+ * A checked reference to a vanilla ascension perk category id.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
+ */
+export function ascensionPerkCategory<const Id extends VanillaId<"ascension_perk_category">>(
+  id: Id
+): AscensionPerkCategoryRef & { readonly id: Id } {
+  return makeVanillaRef(id) as AscensionPerkCategoryRef & { readonly id: Id };
+}
+
+/**
+ * A checked reference to a vanilla resource id.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
+ */
+export function resource<const Id extends VanillaId<"resource">>(
+  id: Id
+): ResourceRef & { readonly id: Id } {
+  return makeVanillaRef(id) as ResourceRef & { readonly id: Id };
+}
+
+/**
+ * A checked reference to a vanilla crisis path id.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
+ */
+export function crisisPath<const Id extends VanillaId<"crisis_path">>(
+  id: Id
+): CrisisPathRef & { readonly id: Id } {
+  return makeVanillaRef(id) as CrisisPathRef & { readonly id: Id };
+}
+
+/**
+ * A checked reference to a vanilla crisis level id.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
+ */
+export function crisisLevel<const Id extends VanillaId<"crisis_level">>(
+  id: Id
+): CrisisLevelRef & { readonly id: Id } {
+  return makeVanillaRef(id) as CrisisLevelRef & { readonly id: Id };
+}
+
+/**
+ * A checked reference to a vanilla crisis objective id.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
+ */
+export function crisisObjective<const Id extends VanillaId<"crisis_objective">>(
+  id: Id
+): CrisisObjectiveRef & { readonly id: Id } {
+  return makeVanillaRef(id) as CrisisObjectiveRef & { readonly id: Id };
+}
+
+/**
+ * A checked reference to a vanilla menace perk id.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
+ */
+export function menacePerk<const Id extends VanillaId<"menace_perk">>(
+  id: Id
+): MenacePerkRef & { readonly id: Id } {
+  return makeVanillaRef(id) as MenacePerkRef & { readonly id: Id };
 }
 
 /**
@@ -625,18 +706,6 @@ export const soundEffect: VanillaTrie<"sound_effect"> &
   (<const Id extends string>(
     id: Id & CheckedVanillaId<"sound_effect", Id>
   ) => SoundEffectRef & { readonly id: Id }) = makeIdTrie("sound_effect");
-
-/**
- * A checked reference to a vanilla resource id.
- * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
- * a misspelled id is a compile error. Zero runtime validation — this
- * only constructs the branded reference the rest of the SDK accepts.
- */
-export function resource<const Id extends VanillaId<"resource">>(
-  id: Id
-): ResourceRef & { readonly id: Id } {
-  return makeVanillaRef(id) as ResourceRef & { readonly id: Id };
-}
 
 /**
  * A checked reference to a vanilla situation log category id.

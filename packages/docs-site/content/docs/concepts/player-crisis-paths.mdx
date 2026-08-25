@@ -1,0 +1,192 @@
+---
+title: Player Crisis Paths
+description: Connect a crisis currency, objectives, levels, menace perks, and an activating ascension perk into one playable progression.
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+
+import { PairedExample } from "@/components/PairedExample";
+
+A **player crisis path** is a connected progression that a country activates,
+advances with a dedicated resource, and completes through objectives. Seven
+content registries participate in the complete Ambition route:
+
+```text
+Ambitions category -> ascension perk -> crisis path -> crisis currency
+                                                |----> ordered crisis levels -> menace perks
+                                                '----> crisis objectives
+```
+
+The worked example defines a non-tradable currency, two objectives, two menace
+perks, two levels, a path, and an ascension perk whose `onEnabled` effect starts
+the path:
+
+<PairedExample name="player-crisis-paths" />
+
+The SDK emits the route into `common/crisis_paths/`,
+`common/crisis_levels/`, `common/crisis_objectives/`,
+`common/menace_perks/`, `common/strategic_resources/`, and
+`common/ascension_perks/`. The typed Ambitions category patch later on emits
+under `common/ascension_perk_categories/`.
+
+## Build the graph from its leaves
+
+Define the currency, objectives, perks, and levels before the path. Pass the
+returned items into the fields that reference them. The generated brands stop
+a level from being used as an objective, a path from being used as a perk, or
+another registry from being used as the currency.
+
+| Definition | Owns | Reference page |
+| --- | --- | --- |
+| Resource | Progress currency behavior and resource text | [Strategic Resources](/reference/strategic-resources/) |
+| Crisis objective | Availability and currency reward | [Crisis Objectives](/reference/crisis-objectives/) |
+| Menace perk | Persistent modifiers and unlock effects | [Menace Perks](/reference/menace-perks/) |
+| Crisis level | Threshold, gate, rewards, and unlock callback | [Crisis Levels](/reference/crisis-levels/) |
+| Crisis path | The ordered lists and currency identity | [Crisis Paths](/reference/crisis-paths/) |
+| Ascension perk | Country eligibility and path activation | [Ascension Perks](/reference/ascension-perks/) |
+| Ascension perk category | Membership in the Ambitions panel | [Ascension Perk Categories](/reference/ascension-perk-categories/) |
+
+Keep all definitions in Features passed to the same `mod.compile` call. The
+Fold rejects an owned reference whose definition was not placed in the build.
+
+## Use the currency as the UI namespace
+
+`crisisCurrency` points to a resource definition. Vanilla uses the resource id
+as both the progression value and the prefix for player-crisis UI
+localization. Its current player-crisis currencies are non-tradable
+resources in category `other` with `ai_weight = { weight = 1 }`:
+
+```ts
+const resolve = mod.resource("resolve", {
+  name: "Resolve",
+  desc: "The will to preserve the archive.",
+  tradable: false,
+  category: "other",
+  aiWeight: { weight: 1 },
+});
+```
+
+That is a strong starting convention, not a type-level requirement.
+`ResourceDef` generates only `<currency-id>` and `<currency-id>_desc` from
+`name` and `desc`. A complete crisis interface needs additional manual
+localization. Vanilla uses this family:
+
+- `<currency-id>_value`, `_name`, `_gaining`, and `_desc`
+- `<currency-id>_crisis_objective`, `_crisis_objective_gained`,
+  `_crisis_objective_reward`, and `_crisis_objective_progress`
+- `<currency-id>_crisis_level_locked`, `_crisis_level_unlocked`,
+  `_crisis_level_desc`, and `_crisis_level_unlock`
+- `<currency-id>_current_value`
+- `<currency-id>_crisis_description_title`, `_crisis_description`, and the
+  optional `_crisis_description_intro` composition key
+- `<currency-id>_crisis_howto_title` and `_crisis_howto`
+
+Create these keys with `mod.localization(...)`. Keep the full minted currency
+id in one constant when several keys depend on it, so a rename cannot leave a
+partial namespace behind.
+
+## Connect the route and activate it
+
+The path links the resource and the two progression lists:
+
+```ts
+const archivePath = mod.crisisPath("archive", {
+  crisisCurrency: resolve,
+  levels: [firstLevel, secondLevel],
+  objectives: [archiveRecovered, defendArchive],
+});
+```
+
+Activate the path from a country-scoped effect. An ascension perk is the normal
+entry point:
+
+```ts
+const ambition = mod.ascensionPerk("archive_ambition", {
+  name: "Archive Ambition",
+  onEnabled: (country) => country.activateCrisisProgression(archivePath),
+});
+```
+
+`activateCrisisProgression` requires a `CrisisPathRef` or an explicit string.
+Passing an authored level or objective is a compile error. Vanilla starts its
+player-crisis routes from an ascension perk's `on_enabled` block. That block
+does not define the perk's `potential` or `possible` fields, so add those rules
+as your design requires and verify visibility, selection, and activation in
+game.
+
+## Add the perk to the Ambitions category
+
+Creating a new perk does not join `ap_category_ambitions` automatically. Load
+the installed category and use `mod.patchAscensionPerkCategory` to append the
+authored perk while retaining the members shipped by the loaded game version:
+
+```ts
+import * as stellaris from "@pdx-ts/sdk/installation";
+
+const vanillaView = stellaris.load();
+const ambitions = vanillaView.definition(
+  "ascension_perk_category",
+  "ap_category_ambitions"
+);
+
+const ambitionsPatch = mod.patchAscensionPerkCategory(ambitions, (category) => ({
+  ascensionPerks: [...category.ascensionPerks, archiveAmbition],
+}));
+
+const categoryFeature = mod.feature("ambitions_category", [ambitionsPatch]);
+export default mod.compile([feature, categoryFeature], { vanilla: vanillaView });
+```
+
+Here `feature` and `archiveAmbition` are the values from the worked example.
+The patch callback receives the installed category's typed member list. The
+spread retains every current member, and the authored perk contributes its
+minted id. Pass the same loaded view to `mod.compile` so the compiler can
+prove the generated patch filename sorts after the vanilla definer.
+
+<Callout type="warn" title="The category rules are reviewed assumptions">
+  No category-specific in-game oracle currently proves the duplicate-winner or whole-object rule.
+  The SDK records both assumptions in an `assumed-patch-rule` warning and in the emitted file
+  header. Test the complete Ambitions panel after every supported game update. Another mod that
+  patches the same category can still conflict by load order.
+</Callout>
+
+See [Ascension Perk Categories](/reference/ascension-perk-categories/) for the
+registry contract and the distinction between a checked vanilla reference and
+a parsed patch target.
+
+## Mix authored and vanilla nodes deliberately
+
+Every registry in the route has a checked vanilla helper:
+
+```ts
+const vanillaPath = vanilla.crisisPath("nemesis_path");
+const vanillaLevel = vanilla.crisisLevel("crisis_level_1");
+const vanillaObjective = vanilla.crisisObjective("crisobj_destroy_worlds");
+const vanillaPerk = vanilla.menacePerk("menp_base_breaker");
+const vanillaCurrency = vanilla.resource("menace");
+```
+
+These helpers check ids against the selected `@pdx-ts/stellaris-ids` game
+version and return branded references. They do not read or validate the game at
+runtime. Use raw strings only for deliberate third-party ids or a different
+version whose identifier package you have not selected.
+
+## Test the route as one feature
+
+- Keep level thresholds monotonic and test every boundary exactly below, at,
+  and above the required currency.
+- Test objective `potential` changes, repeated objectives, and reward math.
+- Test every level's `allow` branch and `onUnlock` effects.
+- Test menace-perk country and federation modifiers before and after unlock.
+- Test ascension-perk visibility, selection, activation, and save/load with a
+  partially completed path.
+- Verify every currency localization key and normal, grey, and large resource
+  icon in the crisis interface.
+- Inspect the generated category patch and retest Ambitions membership for
+  every supported game version.
+
+The SDK serializes and links the route but does not simulate currency gain,
+objective completion, level advancement, perk application, UI layout, or
+interactions between two active crisis paths. See
+[Testing your mod](/guides/testing-your-mod/) for the boundary between SDK
+checks and live-game verification.

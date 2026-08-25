@@ -56,6 +56,7 @@ import {
   COMPLEX_ENUM_REFERENCE_OVERLAYS,
   CONTENT_CONTRIBUTION_SINKS,
   CONTENT_DECLINED_FIELDS,
+  CONTENT_FIELD_DOCS,
   CONTENT_FIELD_OVERRIDES,
   CONTENT_PATCH_REGISTRIES,
   CONTENT_SCOPE_PARAMETERS,
@@ -377,6 +378,7 @@ function assertGenerationPolicies(
     REPEATED_STRUCT_FIELD_OVERRIDES.keys()
   );
   emitter.overlayAudit.assertAllApplied("FIELD_WIDENINGS", FIELD_WIDENINGS.keys());
+  emitter.overlayAudit.assertAllApplied("CONTENT_FIELD_DOCS", CONTENT_FIELD_DOCS.keys());
   emitter.overlayAudit.assertAllApplied("CONTENT_DECLINED_FIELDS", CONTENT_DECLINED_FIELDS.keys());
   emitter.overlayAudit.assertAllApplied("REQUIRED_LOCALISATION", REQUIRED_LOCALISATION.keys());
   emitter.overlayAudit.assertAllApplied("SYNTHETIC_LOCALISATION", SYNTHETIC_LOCALISATION.keys());

@@ -20,11 +20,12 @@ import {
 } from "@pdx-ts/pdxscript";
 
 import type { ResearchArea } from "../../generated/enums.ts";
-import type { TechnologyCategoryRef } from "../../generated/refs.ts";
+import type { AscensionPerkRef, TechnologyCategoryRef } from "../../generated/refs.ts";
 import { compareLogicalPaths, normalizeLogicalPath, type LogicalPath } from "../../ordering.ts";
 import { trigger, type Trigger } from "../../script/trigger-core.ts";
 import { registryRule } from "./override-rules.ts";
 import {
+  ParsedAscensionPerkCategory,
   ParsedDefinition,
   ParsedTechnology,
   type ParsedDefinitionInit,
@@ -101,6 +102,13 @@ export const PARSED_REGISTRIES: readonly ParsedRegistryRow[] = [
   // Verified flat against the installed game: `common/buildings` holds 28
   // files and no subdirectory at all.
   { registry: "building", knownSubdirs: new Set<string>() },
+  // Verified flat against the installed game: `common/ascension_perk_categories`
+  // holds one file and no subdirectory.
+  {
+    registry: "ascension_perk_category",
+    knownSubdirs: new Set<string>(),
+    read: readAscensionPerkCategory,
+  },
   // Verified flat the same way: `common/megastructures` holds 30 files and no
   // subdirectory at all.
   { registry: "megastructure", knownSubdirs: new Set<string>() },
@@ -320,7 +328,7 @@ function scalarRef(item: PdxItem, entry: PdxEntry, file: string): { id: string }
   return { id: item.value };
 }
 
-function categoryField(entry: PdxEntry, file: string): { id: string }[] {
+function referenceListField(entry: PdxEntry, file: string): { id: string }[] {
   const value = entry.value;
   if (value.kind === "str") {
     return [{ id: value.value }];
@@ -448,7 +456,7 @@ function readTechnology(init: ParsedDefinitionInit<string>, vars: VarTable): Par
         fields.area ??= areaField(field, file);
         break;
       case "category":
-        fields.category ??= categoryField(field, file);
+        fields.category ??= referenceListField(field, file);
         break;
       case "prerequisites":
         fields.prerequisites ??= prerequisitesField(field, file);
@@ -476,6 +484,34 @@ function readTechnology(init: ParsedDefinitionInit<string>, vars: VarTable): Par
     ...fields,
     area: fields.area,
     category: fields.category ?? [],
+    rest,
+  });
+}
+
+function readAscensionPerkCategory(
+  init: ParsedDefinitionInit<string>
+): ParsedAscensionPerkCategory {
+  const file = init.sourceFile;
+  let ascensionPerks: readonly AscensionPerkRef[] | undefined;
+  const rest: PdxEntry[] = [];
+
+  for (const field of init.body) {
+    if (field.key === "ascension_perks" && ascensionPerks === undefined) {
+      ascensionPerks = referenceListField(field, file);
+    } else {
+      rest.push(field);
+    }
+  }
+
+  if (ascensionPerks === undefined) {
+    throw new Error(
+      `${file}:${init.line ?? "?"}: ascension_perk_category ${init.id} has no ascension_perks`
+    );
+  }
+  return new ParsedAscensionPerkCategory({
+    ...init,
+    registry: "ascension_perk_category",
+    ascensionPerks,
     rest,
   });
 }

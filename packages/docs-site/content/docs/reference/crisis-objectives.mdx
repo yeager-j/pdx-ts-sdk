@@ -1,0 +1,90 @@
+---
+title: Crisis Objectives
+description: Define objective availability, crisis-currency reward calculations, recurrence, and localization.
+registries: [crisis_objective]
+---
+
+import { FieldTable } from "@/components/FieldTable";
+
+A **crisis objective** is an activity that grants the active path's crisis
+currency. Its definition controls the reward calculation, optional country
+availability, recurrence, and display text. The SDK writes crisis objectives
+under `common/crisis_objectives/`.
+
+```ts
+const archiveRecovered = mod.crisisObjective("archive_recovered", {
+  name: "Recover an Archive",
+  desc: "Secure a threatened civilization's records.",
+  reward: { base: 100 },
+  recurring: true,
+});
+```
+
+`reward` is required. `potential`, `recurring`, `name`, and `desc` are
+optional. A crisis path lists the objectives available to that progression.
+
+For the complete graph, see
+[Player Crisis Paths](/concepts/player-crisis-paths/).
+
+## Calculate the reward explicitly
+
+`reward` is a weight block. `base` supplies the starting value, and the block
+can apply supported numeric operations or modifier rows:
+
+```ts
+reward: {
+  base: 250,
+  mult: 2,
+},
+```
+
+The generated type proves the script shape, not game balance. Test the reward
+against the smallest and largest empires or event states that can complete the
+objective.
+
+## Use `potential` for current availability
+
+`potential` is a country-scoped trigger that the game checks daily. Use it for
+downloadable-content gates, empire restrictions, or other conditions that
+should remove an objective from the current list.
+
+```ts
+potential: hasAuthority("auth_democratic"),
+```
+
+List membership on a crisis path does not guarantee current availability. A
+condition that changes at runtime can make the objective appear or disappear.
+
+## Mark repeatable objectives explicitly
+
+`recurring: true` lets the objective grant its reward again. The field does not
+set a monthly or yearly schedule; the engine system that completes the
+objective determines when it can recur.
+
+Omit `recurring` for a one-time objective. Test repeat completion and confirm
+that the game grants the reward the intended number of times.
+
+Country-scoped effects can complete an objective through
+`country.completeCrisisObjective(objective)`. Pass an authored or checked
+objective reference instead of copying its id.
+
+## Localization, identity, and limits
+
+`mod.crisisObjective("archive_recovered", ...)` mints
+`<prefix>_crisis_objective_archive_recovered`. `name` emits localization under
+`<id>_name`; `desc` emits under `<id>_desc`. This name pattern differs from the
+bare `<id>` name used by crisis levels and menace perks.
+
+Crisis objectives have no patch surface. The SDK checks the trigger scope,
+reward shape, identity, output path, and localization. It does not simulate
+objective detection, completion frequency, or reward application.
+
+[`CrisisObjectiveDef`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/crisis-objective.ts)
+is the generated definition used by `mod.crisisObjective`.
+[`vanilla.crisisObjective(...)`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
+checks ids against the selected game version's
+[vanilla crisis objective ids](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/stellaris-ids/src/registries/crisis-objective.ts).
+
+## Field reference
+
+<FieldTable registry="crisis_objective" />

@@ -33,6 +33,7 @@ import {
 } from "../../naming.ts";
 import {
   CONTENT_DECLINED_FIELDS,
+  CONTENT_FIELD_DOCS,
   CONTENT_FIELD_OVERRIDES,
   CONTENT_PATCH_REGISTRIES,
   FIELD_WIDENINGS,
@@ -564,7 +565,17 @@ function declareOrdinaryField(
     return;
   }
   const optional = memberOptional(group, override);
-  const docLines = [...new Set([...group.flatMap((field) => field.docs), ...(lowered.docs ?? [])])];
+  const overlayDocs = CONTENT_FIELD_DOCS.get(path);
+  if (overlayDocs !== undefined) {
+    emitter.overlayAudit.applied("CONTENT_FIELD_DOCS", path);
+  }
+  const docLines = [
+    ...new Set([
+      ...(overlayDocs ?? []),
+      ...group.flatMap((field) => field.docs),
+      ...(lowered.docs ?? []),
+    ]),
+  ];
   const memberType =
     parameter?.selector?.member === member ? parameter.parameterName : lowered.memberType;
   draft.members.push(renderMember({ name: member, type: memberType, optional, docs: docLines }));

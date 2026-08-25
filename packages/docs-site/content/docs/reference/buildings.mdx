@@ -179,8 +179,8 @@ members through.
 
 A parsed building is opaque: nothing about its body is modelled yet. So a
 building patch states new values and cannot read old ones, and the callback
-below ignores its argument. Only parsed technologies expose typed members and
-`.require(...)`.
+below ignores its argument. Parsed technologies expose selected typed members
+and `.require(...)`; parsed ascension perk categories expose their member list.
 
 `stellaris.load()` returns the loaded install. This page names it `vanillaView`
 because `vanilla` here is the checked-id namespace:

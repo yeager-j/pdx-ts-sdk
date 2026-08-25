@@ -4,6 +4,10 @@
 // From: common/buildings.cwt
 // From: common/traditions.cwt
 // From: common/ascension_perks.cwt
+// From: common/ascension_perk_categories.cwt
+// From: common/strategic_resources.cwt
+// From: common/crisis_paths.cwt
+// From: common/crisis.cwt
 // From: common/council_agendas.cwt
 // From: common/edicts.cwt
 // From: common/decisions.cwt
@@ -42,6 +46,7 @@ import type {
   ExactEconomicCategoryWitness,
 } from "../content/types.ts";
 import type {
+  ParsedAscensionPerkCategory,
   ParsedBuilding,
   ParsedMegastructure,
   ParsedTechnology,
@@ -52,6 +57,13 @@ import type { AgendaDef } from "./agenda.ts";
 import type { AgreementPresetDef } from "./agreement-preset.ts";
 import type { AmbientObjectDef } from "./ambient-object.ts";
 import type { ArchaeologicalSiteTypeDef } from "./archaeological-site-type.ts";
+import {
+  ASCENSION_PERK_CATEGORY_FIELDS,
+  ASCENSION_PERK_CATEGORY_LOCALISATION,
+  type AscensionPerkCategoryDef,
+  type AscensionPerkCategoryPatch,
+  type AscensionPerkCategoryPatchItem,
+} from "./ascension-perk-category.ts";
 import type { AscensionPerkDef } from "./ascension-perk.ts";
 import type { BombardmentStanceDef } from "./bombardment-stance.ts";
 import {
@@ -66,6 +78,9 @@ import type { CivicOrOriginDef } from "./civic-or-origin.ts";
 import type { ComponentSetDef } from "./component-set.ts";
 import type { CouncilorDef } from "./councilor.ts";
 import type { CountryShipOfSizeLimitDef } from "./country-ship-of-size-limit.ts";
+import type { CrisisLevelDef } from "./crisis-level.ts";
+import type { CrisisObjectiveDef } from "./crisis-objective.ts";
+import type { CrisisPathDef } from "./crisis-path.ts";
 import type { DecisionDef, DecisionScope } from "./decision.ts";
 import type { EconomicCategoryDef } from "./economic-category.ts";
 import type { EdictDef } from "./edict.ts";
@@ -81,9 +96,11 @@ import {
   type MegastructurePatch,
   type MegastructurePatchItem,
 } from "./megastructure.ts";
+import type { MenacePerkDef } from "./menace-perk.ts";
 import type { OpinionModifierDef } from "./opinion-modifier.ts";
 import type { PdxmeshDef } from "./pdxmesh.ts";
 import type { PdxparticleDef } from "./pdxparticle.ts";
+import type { ResourceDef } from "./resource.ts";
 import type { ScopeName } from "./scopes.ts";
 import type { ScriptedLocDef } from "./scripted-loc.ts";
 import type { ScriptedModifierDef } from "./scripted-modifier.ts";
@@ -238,6 +255,119 @@ export function defineAscensionPerk<const Id extends string>(
   def: AscensionPerkDef<Id>
 ): ContentItem<"ascension_perk", AscensionPerkDef<Id>> {
   return { itemKind: "content", type: "ascension_perk", id: def.id, def };
+}
+
+/** What an ascension perk category feature can contain. */
+export type AscensionPerkCategoryItem =
+  ContentItem<"ascension_perk_category", AscensionPerkCategoryDef> | AscensionPerkCategoryPatchItem;
+
+/**
+ * Internal lowering primitive for an ascension perk category. Public authors call
+ * `mod.ascensionPerkCategory(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
+ */
+export function defineAscensionPerkCategory<const Id extends string>(
+  def: AscensionPerkCategoryDef<Id>
+): ContentItem<"ascension_perk_category", AscensionPerkCategoryDef<Id>> {
+  return { itemKind: "content", type: "ascension_perk_category", id: def.id, def };
+}
+
+/**
+ * Internal lowering primitive for patching an vanilla ascension perk category. The transform
+ * runs here (pure); public authors call the capability method, while the duplicate-key
+ * and one-view checks stay in
+ * the internal fold, which sees every patch together, and the emitted filename
+ * is always resolver-computed — a patch item never carries a file of its own.
+ * `prefix` is the mod prefix the capability closure binds: a patch that mints a
+ * localisation key of its own derives it from `<prefix>_<vanilla id>`, so the key
+ * cannot collide with vanilla's by construction.
+ */
+export function patchAscensionPerkCategory<Source extends ParsedAscensionPerkCategory>(
+  ascensionPerkCategory: Source,
+  patch: (ascensionPerkCategory: Source) => AscensionPerkCategoryPatch,
+  prefix: string
+): AscensionPerkCategoryPatchItem {
+  return {
+    itemKind: "patch",
+    patched: patchContent(
+      ascensionPerkCategory,
+      patch,
+      "ascension_perk_category",
+      ASCENSION_PERK_CATEGORY_FIELDS,
+      ASCENSION_PERK_CATEGORY_LOCALISATION,
+      prefix
+    ),
+  };
+}
+
+/** What a resource feature can contain. */
+export type ResourceItem = ContentItem<"resource", ResourceDef>;
+
+/**
+ * Internal lowering primitive for a resource. Public authors call
+ * `mod.resource(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
+ */
+export function defineResource<const Id extends string>(
+  def: ResourceDef<Id>
+): ContentItem<"resource", ResourceDef<Id>> {
+  return { itemKind: "content", type: "resource", id: def.id, def };
+}
+
+/** What a crisis path feature can contain. */
+export type CrisisPathItem = ContentItem<"crisis_path", CrisisPathDef>;
+
+/**
+ * Internal lowering primitive for a crisis path. Public authors call
+ * `mod.crisisPath(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
+ */
+export function defineCrisisPath<const Id extends string>(
+  def: CrisisPathDef<Id>
+): ContentItem<"crisis_path", CrisisPathDef<Id>> {
+  return { itemKind: "content", type: "crisis_path", id: def.id, def };
+}
+
+/** What a crisis level feature can contain. */
+export type CrisisLevelItem = ContentItem<"crisis_level", CrisisLevelDef>;
+
+/**
+ * Internal lowering primitive for a crisis level. Public authors call
+ * `mod.crisisLevel(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
+ */
+export function defineCrisisLevel<const Id extends string>(
+  def: CrisisLevelDef<Id>
+): ContentItem<"crisis_level", CrisisLevelDef<Id>> {
+  return { itemKind: "content", type: "crisis_level", id: def.id, def };
+}
+
+/** What a crisis objective feature can contain. */
+export type CrisisObjectiveItem = ContentItem<"crisis_objective", CrisisObjectiveDef>;
+
+/**
+ * Internal lowering primitive for a crisis objective. Public authors call
+ * `mod.crisisObjective(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
+ */
+export function defineCrisisObjective<const Id extends string>(
+  def: CrisisObjectiveDef<Id>
+): ContentItem<"crisis_objective", CrisisObjectiveDef<Id>> {
+  return { itemKind: "content", type: "crisis_objective", id: def.id, def };
+}
+
+/** What a menace perk feature can contain. */
+export type MenacePerkItem = ContentItem<"menace_perk", MenacePerkDef>;
+
+/**
+ * Internal lowering primitive for a menace perk. Public authors call
+ * `mod.menacePerk(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
+ */
+export function defineMenacePerk<const Id extends string>(
+  def: MenacePerkDef<Id>
+): ContentItem<"menace_perk", MenacePerkDef<Id>> {
+  return { itemKind: "content", type: "menace_perk", id: def.id, def };
 }
 
 /** What an agenda feature can contain. */

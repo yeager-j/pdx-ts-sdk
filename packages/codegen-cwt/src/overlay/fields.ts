@@ -69,6 +69,84 @@ export const ASSET_PATH_FIELDS = new Map<string, string>([
   ],
 ]);
 
+/**
+ * Consumer-facing descriptions for content fields whose CWT declarations do
+ * not explain how an author should use them.
+ *
+ * These lines are appended to any rule-owned documentation. Keys use the same
+ * `<registry>.<field>` path as the other field overlays, and the generation
+ * audit rejects a row whose field no longer exists.
+ */
+export const CONTENT_FIELD_DOCS = new Map<string, readonly string[]>([
+  [
+    "ascension_perk_category.ascension_perks",
+    ["Ascension perks that belong to this category; emitted list order is preserved."],
+  ],
+  ["resource.tradable", ["Whether the resource participates in resource-trading behavior."]],
+  ["resource.category", ["Built-in resource group the game uses for this definition."]],
+  [
+    "resource.dynamic_capacity",
+    ["Country-scoped weight block that calculates a dynamic storage capacity."],
+  ],
+  ["resource.intangible_weight", ["Weight used when the game evaluates intangible resources."]],
+  ["resource.deficit_modifier", ["Static modifier applied by the resource's deficit behavior."]],
+  ["resource.deficit_situation", ["Situation started by the resource's deficit behavior."]],
+  [
+    "resource.deficit_trade_conversion_mult",
+    ["Multiplier applied when deficit behavior converts trade."],
+  ],
+  ["resource.culling_conversion_value", ["Conversion value used by resource-culling systems."]],
+  ["resource.prerequisites", ["Flat list of technologies required by this resource."]],
+  [
+    "resource.visibility_prerequisite",
+    ["Country condition that must pass before the resource is visible."],
+  ],
+  [
+    "resource.ai_weight",
+    [
+      "One of the two country-scoped AI weights used by resource logic.",
+      "Stellaris does not document how it differs from `aiWants`.",
+    ],
+  ],
+  ["resource.tooltip_decimals", ["Number of decimal places shown in resource tooltips."]],
+  [
+    "resource.ai_wants",
+    [
+      "One of the two country-scoped AI weights used by resource logic.",
+      "Stellaris does not document how it differs from `aiWeight`.",
+    ],
+  ],
+  [
+    "resource.tradable_in_market",
+    ["Country condition that gates whether the resource can be traded on the market."],
+  ],
+  ["crisis_path.crisis_currency", ["Resource that tracks progress along this crisis path."]],
+  [
+    "crisis_path.levels",
+    ["Crisis levels in progression order; align the order with their currency thresholds."],
+  ],
+  ["crisis_path.objectives", ["Objectives available to this crisis progression path."]],
+  ["crisis_level.allow", ["Country condition that must pass before this crisis level may unlock."]],
+  [
+    "crisis_level.required_crisis_currency",
+    ["Crisis-currency amount required to reach this level."],
+  ],
+  ["crisis_level.perks", ["Menace perks granted when this crisis level unlocks."]],
+  ["crisis_level.on_unlock", ["Country effects run when this crisis level unlocks."]],
+  [
+    "crisis_objective.potential",
+    ["Daily country condition that controls whether this objective is currently available."],
+  ],
+  ["crisis_objective.reward", ["Weight block that calculates the reward for completion."]],
+  [
+    "crisis_objective.recurring",
+    ["Whether the objective may grant its reward again after completion."],
+  ],
+  ["menace_perk.portrait", ["GFX sprite displayed for this menace perk."]],
+  ["menace_perk.modifier", ["Continuing country modifiers granted by this menace perk."]],
+  ["menace_perk.on_unlock", ["Country effects run when this menace perk is granted."]],
+]);
+
 /** An extra authoring form accepted in addition to a field's mechanically derived type. */
 export interface FieldWidening {
   /** Appended to the mechanically derived type. */

@@ -1,0 +1,103 @@
+---
+title: Crisis Levels
+description: Define progression thresholds, country gates, menace-perk rewards, and level-unlock effects.
+registries: [crisis_level]
+---
+
+import { FieldTable } from "@/components/FieldTable";
+
+A **crisis level** is one step in a player-crisis progression. It sets the
+required currency threshold, can gate advancement with a country trigger,
+grants menace perks, and runs an unlock effect. The SDK writes crisis levels
+under `common/crisis_levels/`.
+
+```ts
+const livingArchive = mod.crisisLevel("living_archive", {
+  name: "The Living Archive",
+  desc: "Knowledge becomes the foundation of galactic defense.",
+  allow: hasAuthority("auth_democratic"),
+  requiredCrisisCurrency: 1_500,
+  perks: [wardens],
+  onUnlock: (country) => country.setCountryFlag("my_mod_living_archive"),
+});
+```
+
+`requiredCrisisCurrency`, `perks`, and `onUnlock` are required. `allow`,
+`name`, and `desc` are optional. The path that references the level determines
+its position in the progression.
+
+For the complete graph, see
+[Player Crisis Paths](/concepts/player-crisis-paths/).
+
+## Keep thresholds aligned with path order
+
+`requiredCrisisCurrency` is the amount needed to reach the level. The SDK
+accepts any number and does not compare sibling levels. Keep thresholds
+non-decreasing in the same order used by `CrisisPathDef.levels`.
+
+Vanilla's current paths use five levels. Their first level starts at zero, and
+later thresholds rise by route-specific amounts. The installed documentation
+recommends five levels for alignment with the crisis interface, but the type
+does not enforce that count.
+
+## Use `allow` for runtime advancement gates
+
+`allow` is a country-scoped trigger. Use it for conditions beyond the currency
+threshold: technology, subject status, galactic-community membership, event
+state, or another country property.
+
+Do not copy the currency comparison into `allow`. Keep the numeric threshold in
+`requiredCrisisCurrency` and reserve `allow` for the other gate.
+
+## Grant persistent behavior through menace perks
+
+`perks` is a list of `MenacePerkRef` values. Pass items returned by
+`mod.menacePerk`, checked `vanilla.menacePerk(...)` references, or deliberate
+third-party strings.
+
+```ts
+perks: [cataloguers, wardens],
+```
+
+Menace perks own continuing modifiers and optional perk-level unlock effects.
+The level owns the advancement threshold and its own transition effect. Keep
+those responsibilities separate.
+
+## Treat `onUnlock` as a transition
+
+`onUnlock` is a required country-scoped effect callback. Vanilla uses it for
+events, flags, special-project state, galactic-community changes, and other
+one-time transitions.
+
+```ts
+onUnlock: (country) => {
+  country.setCountryFlag("my_mod_living_archive");
+},
+```
+
+Use menace-perk modifiers for persistent bonuses. Make the level callback safe
+against duplicate execution where practical, and test it after save/load.
+
+## Localization, identity, and limits
+
+`mod.crisisLevel("living_archive", ...)` mints
+`<prefix>_crisis_level_living_archive`. `name` emits localization under the
+full id and `desc` under `<id>_desc`.
+
+Crisis levels have no patch surface. The SDK checks field and effect scopes,
+references, output paths, and localization. It does not simulate advancement,
+UI layout, or unlock timing.
+
+Test every threshold just below, at, and above its value; every `allow` branch;
+all granted perks; the unlock callback; and save/load before and after the
+transition.
+
+[`CrisisLevelDef`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/crisis-level.ts)
+is the generated definition used by `mod.crisisLevel`.
+[`vanilla.crisisLevel(...)`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
+checks ids against the selected game version's
+[vanilla crisis level ids](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/stellaris-ids/src/registries/crisis-level.ts).
+
+## Field reference
+
+<FieldTable registry="crisis_level" />

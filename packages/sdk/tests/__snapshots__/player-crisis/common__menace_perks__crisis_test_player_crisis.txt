@@ -1,0 +1,9 @@
+crisis_test_menace_perk_first_perk = {
+	portrait = GFX_ap_become_the_crisis
+	modifier = {
+		country_unity_produces_mult = 0.1
+	}
+	on_unlock = {
+		set_country_flag = crisis_test_first_perk_unlocked
+	}
+}

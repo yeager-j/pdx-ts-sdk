@@ -1,0 +1,120 @@
+{
+  "registry": "crisis_path",
+  "definitions": 5,
+  "files": 6,
+  "fingerprint": "b842a9f6553808453c9b9ecd8cf463012442877fde4c4bcdc619b01ec5800be5",
+  "fields": {
+    "crisis_currency": {
+      "definitions": 5,
+      "repeated": 0,
+      "scalars": 5,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "advanced_logic",
+        "entropy_crystals",
+        "feral_insight",
+        "integrity",
+        "menace"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "levels": {
+      "definitions": 5,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 5,
+      "bareValues": 5,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "crisis_behemoth_level_1",
+        "crisis_behemoth_level_2",
+        "crisis_behemoth_level_3",
+        "crisis_behemoth_level_4",
+        "crisis_behemoth_level_5",
+        "crisis_cosmogenesis_level_1",
+        "crisis_cosmogenesis_level_2",
+        "crisis_cosmogenesis_level_3",
+        "crisis_cosmogenesis_level_4",
+        "crisis_cosmogenesis_level_5",
+        "crisis_defender_level_1",
+        "crisis_defender_level_2",
+        "crisis_defender_level_3",
+        "crisis_defender_level_4",
+        "crisis_defender_level_5",
+        "crisis_hyperthermia_level_1",
+        "crisis_hyperthermia_level_2",
+        "crisis_hyperthermia_level_3",
+        "crisis_hyperthermia_level_4",
+        "crisis_hyperthermia_level_5",
+        "crisis_level_1",
+        "crisis_level_2",
+        "crisis_level_3",
+        "crisis_level_4",
+        "crisis_level_5"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "objectives": {
+      "definitions": 5,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 5,
+      "bareValues": 5,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "crisobj_be_in_breach_of_galcom_law",
+        "crisobj_behemoth_rage",
+        "crisobj_birth_behemoth",
+        "crisobj_breed_fauna",
+        "crisobj_build_behemoth_egg",
+        "crisobj_build_bioships",
+        "crisobj_cap_fauna",
+        "crisobj_conquer_worlds",
+        "crisobj_create_red_stars",
+        "crisobj_create_volcanics",
+        "crisobj_defensive_pacts",
+        "crisobj_destroy_crisis_countries",
+        "crisobj_destroy_crisis_ships",
+        "crisobj_destroy_empires",
+        "crisobj_destroy_enemy_ships",
+        "crisobj_destroy_starbases",
+        "crisobj_destroy_worlds",
+        "crisobj_entropy_starbase",
+        "crisobj_federated",
+        "crisobj_galcom_activity",
+        "crisobj_galcom_science_resolution",
+        "crisobj_have_scholarium_vassals",
+        "crisobj_have_science_nexuses",
+        "crisobj_have_vassals",
+        "crisobj_kill_bioships",
+        "crisobj_kill_space_fauna",
+        "crisobj_lens_beam_impact",
+        "crisobj_neural_chips",
+        "crisobj_not_in_aggressive_war",
+        "crisobj_own_red_stars",
+        "crisobj_own_volcanics",
+        "crisobj_perform_upsetting_operations",
+        "crisobj_planet_firestorm",
+        "crisobj_purge_pops",
+        "crisobj_research_tech",
+        "crisobj_research_thesis",
+        "crisobj_vassalise_empires"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    }
+  }
+}

@@ -149,6 +149,29 @@ describe("content-type codegen", () => {
     });
   });
 
+  it("lowers the player-crisis route with branded links and country closures", () => {
+    const resource = emissions.get("resource");
+    const path = emissions.get("crisis_path");
+    const level = emissions.get("crisis_level");
+    const objective = emissions.get("crisis_objective");
+    const perk = emissions.get("menace_perk");
+
+    expect(resource?.code).toContain("export interface ResourceFields {");
+    expect(path?.code).toContain("crisisCurrency: ResourceRef | string;");
+    expect(path?.code).toContain("levels: (CrisisLevelRef | string)[];");
+    expect(path?.code).toContain("objectives: (CrisisObjectiveRef | string)[];");
+    expect(level?.code).toContain('allow?: Trigger<"country">;');
+    expect(level?.code).toContain("perks: (MenacePerkRef | string)[];");
+    expect(level?.code).toContain(
+      'onUnlock: EffectBlock<"country", { readonly root: "country" }>;'
+    );
+    expect(objective?.code).toContain('potential?: Trigger<"country">;');
+    expect(perk?.code).toContain('modifier?: ModifierClosure<"country">;');
+    expect(perk?.code).toContain(
+      'onUnlock?: EffectBlock<"country", { readonly root: "country" }>;'
+    );
+  });
+
   it("emits repeated-struct definitions as data-driven field tables", () => {
     const tradition = emissions.get("tradition");
     expect(tradition?.code).toContain("export interface TraditionSwapFields");

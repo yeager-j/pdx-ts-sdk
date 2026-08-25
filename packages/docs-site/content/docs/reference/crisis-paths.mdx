@@ -1,0 +1,100 @@
+---
+title: Crisis Paths
+description: Define the crisis currency and the ordered level and objective lists for one player-crisis progression.
+registries: [crisis_path]
+---
+
+import { FieldTable } from "@/components/FieldTable";
+
+A **crisis path** is the root definition for one player-controlled crisis
+progression. It selects the progression currency, orders the crisis levels,
+and lists the objectives that can award that currency. The SDK writes crisis
+paths under `common/crisis_paths/`.
+
+```ts
+const archivePath = mod.crisisPath("archive", {
+  crisisCurrency: resolve,
+  levels: [firstRecord, livingArchive],
+  objectives: [surveyWorld, defendArchive],
+});
+```
+
+All three members are required. The returned items from `mod.resource`,
+`mod.crisisLevel`, and `mod.crisisObjective` carry distinct reference brands,
+so TypeScript rejects a definition from the wrong registry.
+
+For a complete route and activating ascension perk, see
+[Player Crisis Paths](/concepts/player-crisis-paths/).
+
+## Select one currency
+
+`crisisCurrency` accepts a `ResourceRef` or an explicit string. Pass an owned
+resource item when the same mod defines the currency. Use
+`vanilla.resource(...)` for a checked vanilla resource and a raw string only
+for a deliberate third-party id.
+
+The currency id also prefixes the crisis interface's localization family. A
+resource definition creates only its normal name and description keys; the
+connected concept page lists the additional crisis UI keys.
+
+## Order the levels deliberately
+
+`levels` is the progression order. Keep the list aligned with each level's
+`requiredCrisisCurrency` threshold and keep those thresholds non-decreasing.
+The installed game documentation recommends five levels because the vanilla
+crisis interface is designed around five steps.
+
+```ts
+levels: [awakening, mobilization, dominion, apotheosis, culmination],
+```
+
+A shorter or longer list is accepted by the generated type, but the SDK does
+not validate interface layout or advancement behavior. Test the complete track
+in Stellaris.
+
+## List every objective the path can use
+
+`objectives` accepts crisis-objective references. Objective `potential` rules
+can remove individual objectives from the current list, so membership does not
+guarantee runtime availability.
+
+Keep the array stable for readable output. The shipped documentation does not
+state that array order is an interface-order contract, so do not rely on it
+without in-game evidence.
+
+## Activate the path from country scope
+
+Defining a path does not start it. Call
+`country.activateCrisisProgression(path)` from a country-scoped effect. An
+ascension perk's `onEnabled` callback is the normal entry point:
+
+```ts
+const ambition = mod.ascensionPerk("archive_ambition", {
+  name: "Archive Ambition",
+  onEnabled: (country) => country.activateCrisisProgression(archivePath),
+});
+```
+
+The effect accepts the authored path directly. Passing a crisis level or
+objective is a compile error.
+
+## Identity, vanilla references, and limits
+
+`mod.crisisPath("archive", ...)` mints
+`<prefix>_crisis_path_archive`. Crisis paths have no definition-owned
+localization slots and no patch surface.
+
+- Reuse the returned item instead of copying its full id.
+- Compile the path and every owned node it references.
+- Test activation, every level boundary, objective availability, and
+  save/load with partial progress.
+
+[`CrisisPathDef`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/crisis-path.ts)
+is the generated definition used by `mod.crisisPath`.
+[`vanilla.crisisPath(...)`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
+checks ids against the selected game version's
+[vanilla crisis path ids](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/stellaris-ids/src/registries/crisis-path.ts).
+
+## Field reference
+
+<FieldTable registry="crisis_path" />

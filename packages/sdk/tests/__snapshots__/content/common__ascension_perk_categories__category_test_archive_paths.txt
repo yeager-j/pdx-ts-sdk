@@ -1,0 +1,3 @@
+category_test_ascension_perk_category_archive_paths = {
+	ascension_perks = { category_test_ascension_perk_preservation category_test_ascension_perk_exploration }
+}

@@ -1,0 +1,186 @@
+---
+title: Strategic Resources
+description: Define resource identity, trade and storage behavior, visibility, deficit handling, and AI valuation.
+registries: [resource]
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+
+import { FieldTable } from "@/components/FieldTable";
+import { PairedExample } from "@/components/PairedExample";
+
+A **resource** is a named value that a country can gain, spend, store, and
+sometimes trade. The definition controls the resource's category, market and
+capacity behavior, visibility, deficit policy, and AI valuation. The SDK writes
+resource definitions under `common/strategic_resources/`.
+
+This example defines two resources. `resolve` is a non-tradable progress
+currency visible only to democratic countries. `volatileIsotopes` is a
+tradable strategic resource with a market price, storage cap, decimal display,
+and AI weights:
+
+<PairedExample name="strategic-resources" />
+
+The SDK mints both ids from the mod prefix. The definitions do not create
+income, costs, icons, or a market listing by themselves. Other content and
+effects must use the resources, and visible resources need their matching art.
+
+## Choose trade, category, and visibility separately
+
+Three fields answer different questions:
+
+| Member | Responsibility |
+| --- | --- |
+| `tradable` | Whether the resource participates in resource-trading behavior. |
+| `category` | Which built-in resource group the engine uses for the definition. |
+| `visibilityPrerequisite` | Which countries can see the resource. |
+
+`category` accepts `basic`, `advanced`, `strategic`, `rare`, `other`,
+`material`, or `all`. It does not make a resource tradable. Vanilla's five
+player-crisis currencies are all non-tradable resources in the `other`
+category, but those values are a design convention rather than a rule enforced
+by the SDK.
+
+Use `visibilityPrerequisite` for a country-scoped rule that must hold before
+the resource appears. The first definition in the example limits `resolve` to
+democratic countries. A resource used by every country can omit this field.
+
+`hideGain` controls gain presentation rather than availability. Do not use it
+as a substitute for `visibilityPrerequisite`.
+
+## Market fields belong together
+
+For a tradable resource, `marketAmount` and `marketPrice` describe its market
+unit and starting price. The game rules document non-positive values as
+disabling market trade. Keep those fields off a resource whose `tradable`
+value is `false`.
+
+```ts
+const crystals = mod.resource("crystals", {
+  name: "Prismatic Crystals",
+  tradable: true,
+  category: "strategic",
+  marketAmount: 10,
+  marketPrice: 30,
+});
+```
+
+The SDK checks the field types but does not prove that a chosen market price is
+balanced, that the resource reaches the market interface, or that another mod
+does not change the market rules.
+
+## Capacity and deficits are independent policies
+
+`max` supplies a numeric storage cap. `specialMaxAmount`, `fixedMaxAmount`, and
+`dynamicCapacity` select more specialized capacity behavior. A dynamic
+capacity is a country-scoped weight block, so it can combine a base value,
+numeric operations, and conditional modifier rows:
+
+```ts
+dynamicCapacity: {
+  base: 2_000,
+  modifiers: [{ add: 1_000, when: hasAuthority("auth_machine_intelligence") }],
+},
+```
+
+`allowDeficit` controls whether the country may run below zero, but the shipped
+rules say Stellaris implements it only for technology resources. Do not rely on
+it for an ordinary custom resource without in-game evidence. A resource with
+supported deficit gameplay can also point to a `deficitModifier` and
+`deficitSituation`, and tune `deficitTradeConversionMult`. Those fields
+reference a static modifier and situation type; pass owned definitions or
+checked `vanilla.*` references where possible.
+
+<Callout type="warn" title="A deficit policy is a connected feature">
+  A `deficitSituation` reference does not configure the situation for you. Define or select the
+  situation, its modifiers, and its recovery behavior, then test the transition into and out of
+  deficit in Stellaris.
+</Callout>
+
+## AI weights describe different decisions
+
+`aiWeight` and `aiWants` are country-scoped weight blocks. Vanilla uses both on
+resources, but the shipped rules do not document their distinct runtime roles.
+Preserve the field used by the vanilla design you are adapting instead of
+treating them as aliases, and test the resulting AI behavior in game.
+
+Both fields accept a starting `base`, direct operations such as `weight`,
+`factor`, and `add`, and conditional `modifiers` rows. This writes the common
+vanilla spelling:
+
+```ts
+aiWeight: {
+  weight: 1,
+},
+```
+
+An AI weight does not grant the resource, make it visible, or decide whether it
+can be traded. Keep production and costs in the content that owns those
+economic operations.
+
+## Prerequisites and specialized values
+
+`prerequisites` accepts a flat list of technology references. It cannot express
+the `OR = { ... }` prerequisite groups used by three vanilla strategic
+resources. `tradableInMarket` is a country-scoped trigger for conditional
+market access. The remaining specialized members cover resource-specific
+engine systems:
+
+- `intangibleWeight` contributes to intangible-resource evaluation.
+- `cullingConversionValue` supplies a conversion value for culling systems.
+- `tooltipDecimals` controls numeric precision in tooltips.
+- `deficitTradeConversionMult` scales deficit trade conversion.
+
+Use these fields only when the surrounding system reads them. A legal field is
+not proof that every resource needs it.
+
+## Localization, icons, and identity
+
+`mod.resource("resolve", definition)` mints
+`<prefix>_resource_resolve`. `name` and `desc` create localization under that
+full id and `<id>_desc`. Both text members are optional in the generated type,
+but a resource shown to the player should have them.
+
+The game derives resource texture paths from the full id:
+
+- `gfx/interface/icons/resources/<id>.dds`
+- `gfx/interface/icons/resources/<id>_grey.dds`
+- `gfx/interface/icons/resources/<id>_large.dds`
+
+The SDK does not create these textures or their GFX declarations. Add the art
+your interface uses and verify the normal, grey, and large states. A resource
+used as a player-crisis currency also owns a larger localization namespace;
+see [Player Crisis Paths](/concepts/player-crisis-paths/).
+
+Pass an authored resource item directly wherever a generated field expects a
+`ResourceRef`. For a vanilla resource, use `vanilla.resource(...)`. Raw strings
+remain available for deliberate third-party ids, but they do not catch a typo
+at compile time.
+
+## Best practices and current limits
+
+- Give one module ownership of the resource id, definition, localization, and
+  art. Reuse the returned item instead of copying its full id.
+- Keep market fields consistent with `tradable` and test market visibility,
+  prices, buying, and selling.
+- Test storage at zero, at the cap, above the cap, and through save/load.
+- Test every visibility and market trigger for both passing and failing
+  countries.
+- Resources have no patch surface. `mod.patchResource` does not exist.
+- The SDK serializes resource policy but does not create producers, consumers,
+  stockpiles, interface counters, or economic modifiers automatically.
+
+## API and vanilla references
+
+- [`ResourceDef`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/resource.ts)
+  is the generated TypeScript definition used by `mod.resource`.
+- [`vanilla.resource(...)`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
+  checks ids against the selected game version's
+  [vanilla resource ids](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/stellaris-ids/src/registries/resource.ts).
+
+## Field reference
+
+The table below is generated from the same descriptor and field metadata that
+drive resource authoring and serialization.
+
+<FieldTable registry="resource" />

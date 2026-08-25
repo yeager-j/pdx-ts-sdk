@@ -4,6 +4,10 @@
 // From: common/buildings.cwt
 // From: common/traditions.cwt
 // From: common/ascension_perks.cwt
+// From: common/ascension_perk_categories.cwt
+// From: common/strategic_resources.cwt
+// From: common/crisis_paths.cwt
+// From: common/crisis.cwt
 // From: common/council_agendas.cwt
 // From: common/edicts.cwt
 // From: common/decisions.cwt
@@ -59,6 +63,14 @@ export type {
   DefinedArchaeologicalSiteType,
 } from "./archaeological-site-type.ts";
 export type {
+  AscensionPerkCategoryDef,
+  AscensionPerkCategoryFields,
+  AscensionPerkCategoryPatch,
+  AscensionPerkCategoryPatchItem,
+  DefinedAscensionPerkCategory,
+  PatchedAscensionPerkCategory,
+} from "./ascension-perk-category.ts";
+export type {
   AscensionPerkDef,
   AscensionPerkFields,
   AscensionPerkSwapFields,
@@ -94,6 +106,13 @@ export type {
   CountryShipOfSizeLimitFields,
   DefinedCountryShipOfSizeLimit,
 } from "./country-ship-of-size-limit.ts";
+export type { CrisisLevelDef, CrisisLevelFields, DefinedCrisisLevel } from "./crisis-level.ts";
+export type {
+  CrisisObjectiveDef,
+  CrisisObjectiveFields,
+  DefinedCrisisObjective,
+} from "./crisis-objective.ts";
+export type { CrisisPathDef, CrisisPathFields, DefinedCrisisPath } from "./crisis-path.ts";
 export type { DecisionDef, DecisionFields, DecisionScope, DefinedDecision } from "./decision.ts";
 export type {
   DefinedEconomicCategory,
@@ -131,6 +150,7 @@ export type {
   MegastructurePatchItem,
   PatchedMegastructure,
 } from "./megastructure.ts";
+export type { DefinedMenacePerk, MenacePerkDef, MenacePerkFields } from "./menace-perk.ts";
 export type { MoonInitializerFields } from "./moon-initializer.ts";
 export type {
   DefinedOpinionModifier,
@@ -146,6 +166,7 @@ export type {
 } from "./pdxmesh.ts";
 export type { DefinedPdxparticle, PdxparticleDef, PdxparticleFields } from "./pdxparticle.ts";
 export type { PlanetInitializerFields } from "./planet-initializer.ts";
+export type { DefinedResource, ResourceDef, ResourceFields } from "./resource.ts";
 export type { DefinedScriptedLoc, ScriptedLocDef, ScriptedLocFields } from "./scripted-loc.ts";
 export type {
   DefinedScriptedModifier,

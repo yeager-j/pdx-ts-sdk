@@ -163,9 +163,12 @@ localization, icons, and other definitions can refer to them.
   exist. See [Coverage](/reference/coverage/) for the registries that can be
   patched today, and [Patching vanilla](/guides/patching-vanilla/) for how a
   patch works.
-- There is no registry for `ascension_perk_category`, the definition that
-  groups perks into the Ascension Paths and Ambitions panels. A perk you define
-  sits outside those panels.
+- Creating a perk does not add it to a category automatically. Use
+  `mod.ascensionPerkCategory` for a new group or
+  `mod.patchAscensionPerkCategory` to extend a loaded group while retaining its
+  current members. See
+  [Ascension Perk Categories](/reference/ascension-perk-categories/) and the
+  complete [Player Crisis Paths](/concepts/player-crisis-paths/) route.
 - The SDK checks field shapes, trigger and effect scopes, localization,
   nested swap ids, references, and emitted paths. It does not simulate perk
   slots, the selection interface, AI choice, swap resolution, modifier behavior,

@@ -16948,7 +16948,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["planet"] },
     signature:
-      'stealPlanetOutput(args: { planet: ScopeValue<"planet">; who: ScopeValue<"country"|"ship">; resource?: ResourceRef | string | "all"; maxAmount?: ScriptValue; percentage?: ScriptValue; mode?: "steal" | "duplicate"; notificationMode?: "none" | "thief_only" | "both"; showInMonthlyResourcesMode?: "none" | "thief_only" | "both" }): void;',
+      'stealPlanetOutput(args: { planet: ScopeValue<"planet">; who: ScopeValue<"country"|"ship">; resource?: ResourceRef | string | ResourceCategory | "all"; maxAmount?: ScriptValue; percentage?: ScriptValue; mode?: "steal" | "duplicate"; notificationMode?: "none" | "thief_only" | "both"; showInMonthlyResourcesMode?: "none" | "thief_only" | "both" }): void;',
     docs: [
       "Steals resource output from a planet and gives it to a target empire or stockpile.",
       "",
