@@ -6,9 +6,10 @@ description: Build complete-object replacements and emit files proven to win loa
 A vanilla patch changes a definition that Stellaris already provides. The SDK
 starts from the parsed vanilla object and re-emits a complete replacement.
 Whole-object replacement is verified for technologies and buildings. For
-megastructures, the SDK has confirmed that the later file wins, but not
-whether the winner replaces the earlier object or merges with it. It assumes
-replacement, warns you, and records the assumption in the emitted file; test
+megastructures, the SDK has confirmed that the later file wins but assumes
+whole-object replacement. For ascension perk categories, it assumes both that
+the later definition wins and that the winner replaces the whole object. An
+assumption produces a warning and remains visible in the emitted file; test
 the patched object in game.
 
 Patching real installed content normally starts from a local Stellaris
@@ -60,11 +61,12 @@ Fields the typed model does not interpret also pass through. This preserves
 the source definition instead of guessing defaults for fields the patch did
 not mention.
 
-How much of the parsed body you can read differs by registry. Only parsed
-technologies model members today. A parsed building or megastructure is
-opaque — its whole body rides through unchanged — so those patch callbacks can
-write new values but not read old ones, which is why the example above ignores
-its argument.
+How much of the parsed body you can read differs by registry. Parsed
+technologies expose selected fields, and parsed ascension perk categories
+expose their `ascensionPerks` list so a patch can retain current members before
+appending one. A parsed building or megastructure is opaque — its whole body
+rides through unchanged — so those patch callbacks can write new values but
+not read old ones, which is why the example above ignores its argument.
 
 For technologies, some parsed members are optional because not every vanilla
 definition has them. Use `.require(...)` when the transform depends on a
@@ -95,9 +97,11 @@ replacement layer wins.
 
 ## The emitted filename must provably win
 
-Technology, building, and megastructure definitions are last-wins: when an id
-appears more than once, the definition in the later-sorting file wins. A patch
-in an arbitrary filename can therefore load before vanilla and have no effect.
+Technology, building, megastructure, and ascension perk category patches use a
+last-wins rule: when an id appears more than once, the definition in the
+later-sorting file wins. The category rule is an explicit reviewed assumption;
+the other confidence differences are described above. A patch in an arbitrary
+filename can therefore load before vanilla and have no effect.
 
 For each patched registry, the [Fold](/guides/the-pipeline/) examines the
 files from the loaded vanilla view and the files produced by the current mod.
@@ -123,6 +127,7 @@ The public patch methods currently are:
 
 - [`mod.patchTechnology`](/reference/technologies/)
 - [`mod.patchBuilding`](/reference/buildings/)
+- [`mod.patchAscensionPerkCategory`](/reference/ascension-perk-categories/)
 - [`mod.patchMegastructure`](/reference/megastructures/)
 
 A content registry having `mod.<type>` does not automatically give it a

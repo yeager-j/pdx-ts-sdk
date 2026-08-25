@@ -8,6 +8,8 @@
 - Situations
 - Ships
 - Megastructures
+- Player Crisis Paths
+- Strategic Resources
 
 ## Moderately Complex
 

@@ -1,0 +1,110 @@
+---
+title: Ascension Perk Categories
+description: Group ascension perks and extend the vanilla Ambitions category with explicit runtime verification.
+registries: [ascension_perk_category]
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+
+import { FieldTable } from "@/components/FieldTable";
+import { PairedExample } from "@/components/PairedExample";
+
+An **ascension perk category** is a data definition that groups ascension
+perks. The SDK writes category definitions under
+`common/ascension_perk_categories/`.
+
+The registry can define a new category or patch a category loaded from the
+installed game. This example defines two perks and groups them in a new
+category:
+
+<PairedExample name="ascension-perk-categories" />
+
+## List the complete category membership
+
+`ascensionPerks` is the category's only script field. Pass authored perk items
+directly so their minted ids stay connected to their definitions:
+
+```ts
+const archivePaths = mod.ascensionPerkCategory("archive_paths", {
+  name: "Archive Paths",
+  ascensionPerks: [preservation, exploration],
+});
+```
+
+With the default ID profile,
+`mod.ascensionPerkCategory("archive_paths", ...)` mints
+`<prefix>_ascension_perk_category_archive_paths`. Its optional `name` and
+`desc` members create localization under that full id and `<id>_desc`.
+
+Use `vanilla.ascensionPerk(...)` for an id checked against the SDK's generated
+vanilla-id set, currently Stellaris 4.4.6, and a raw string only for a
+deliberate third-party id. List order is preserved in the emitted definition.
+The installed rules do not document how the interface orders or renders a
+newly introduced category, so verify its placement and text in Stellaris.
+
+## Extend the vanilla Ambitions category
+
+Creating an ascension perk does not add it to a category automatically. Load
+the installed definition and append the authored perk through
+`mod.patchAscensionPerkCategory`:
+
+```ts
+import * as stellaris from "@pdx-ts/sdk/installation";
+
+const vanillaView = stellaris.load();
+const ambitions = vanillaView.definition(
+  "ascension_perk_category",
+  "ap_category_ambitions"
+);
+
+const ambitionsPatch = mod.patchAscensionPerkCategory(ambitions, (category) => ({
+  ascensionPerks: [...category.ascensionPerks, archiveAmbition],
+}));
+
+const categoryFeature = mod.feature("ambitions_category", [ambitionsPatch]);
+const built = mod.compile([playerCrisisFeature, categoryFeature], {
+  vanilla: vanillaView,
+});
+```
+
+The parsed category exposes its current `ascensionPerks` list. Spreading that
+list preserves every member in the loaded game version and appending the
+authored item adds its minted id. The SDK then emits a complete-object
+replacement in a filename selected to sort after every loaded vanilla file
+that defines the category.
+
+Pass the same `vanillaView` to `mod.compile`. Do not use
+`vanilla.ascensionPerkCategory("ap_category_ambitions")` as the patch target:
+that helper is a checked reference only, while a patch needs the parsed body
+and source-file provenance.
+
+<Callout type="warn" title="Category patch rules are assumed">
+  No category-specific in-game oracle currently proves which repeated definition wins or whether
+  the winner replaces the whole object. The SDK applies reviewed last-wins and whole-object
+  assumptions for SDK-289. Compilation emits an `assumed-patch-rule` warning, and the generated
+  patch file records both assumptions in its header. Test the Ambitions panel in game after every
+  supported Stellaris update.
+</Callout>
+
+The filename proof covers vanilla and the current mod, not another mod that
+patches the same category. Two Ambitions patches can still conflict by mod
+load order. See [Patching vanilla](/guides/patching-vanilla/) for the complete
+patch contract and failure modes.
+
+For the currency, objectives, levels, menace perks, path, and activating perk
+that form a new Ambition, see
+[Player Crisis Paths](/concepts/player-crisis-paths/).
+
+## API and vanilla references
+
+- [`AscensionPerkCategoryDef`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/ascension-perk-category.ts)
+  is the generated TypeScript definition used by
+  `mod.ascensionPerkCategory`.
+- [`vanilla.ascensionPerkCategory(...)`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
+  checks ids against the SDK's generated vanilla-id set, currently Stellaris
+  4.4.6. The set is published as
+  [vanilla ascension perk category ids](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/stellaris-ids/src/registries/ascension-perk-category.ts).
+
+## Field reference
+
+<FieldTable registry="ascension_perk_category" />

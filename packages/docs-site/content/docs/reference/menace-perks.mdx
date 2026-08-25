@@ -1,0 +1,110 @@
+---
+title: Menace Perks
+description: Define crisis-progression rewards with portraits, country and federation modifiers, and unlock effects.
+registries: [menace_perk]
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+
+import { FieldTable } from "@/components/FieldTable";
+
+A **menace perk** is a reward granted by a crisis level. It selects a portrait,
+can apply continuing country or federation modifiers, and can run a one-time
+country effect when unlocked. The SDK writes menace perks under
+`common/menace_perks/`.
+
+```ts
+const wardens = mod.menacePerk("wardens", {
+  name: "Wardens of Memory",
+  desc: "The archive's guardians stand ready against every threat.",
+  portrait: vanilla.spriteType("GFX_crisis_icon_integrity"),
+  modifier: (modifier) => modifier.country.unity.produces.mult(0.1),
+  onUnlock: (country) => country.setCountryFlag("my_mod_wardens_unlocked"),
+});
+```
+
+`portrait` is required. `modifier`, `federationModifier`, `onUnlock`, `name`,
+and `desc` are optional. Crisis levels reference the returned item from their
+`perks` list.
+
+For the complete graph, see
+[Player Crisis Paths](/concepts/player-crisis-paths/).
+
+## Use modifiers for continuing behavior
+
+`modifier` records country modifier keys. The bonus remains attached to the
+country through the perk rather than being applied once at unlock time:
+
+```ts
+modifier: (modifier) => {
+  modifier.country.influence.produces.mult(0.1);
+  modifier.country.unity.produces.mult(0.1);
+},
+```
+
+`federationModifier` is also authored through a country-scoped modifier
+closure, but the game applies the resulting static modifier to the player's
+federation. Vanilla documents that bonuses from several federation members
+stack.
+
+Keep a continuing bonus in a modifier. Do not reproduce it by adding and
+removing a temporary modifier from `onUnlock` unless the design needs a
+separate lifecycle.
+
+## Use `onUnlock` for one-time transitions
+
+`onUnlock` is a country-scoped effect callback. Use it for flags, events,
+special-project state, or another transition that happens when the perk is
+granted:
+
+```ts
+onUnlock: (country) => {
+  country.setCountryFlag("my_mod_wardens_unlocked");
+},
+```
+
+Make the callback safe against duplicate execution where practical and test it
+through save/load.
+
+## Supply a GFX portrait
+
+`portrait` accepts a `SpriteRef` or explicit string. It is a GFX sprite id, not
+a texture path. Use `vanilla.spriteType(...)` for a checked vanilla sprite, or
+define and ship a custom sprite and its texture.
+
+The SDK does not create portrait art from the menace-perk id. Test the sprite
+at the sizes and backgrounds used by the crisis interface.
+
+<Callout type="warn" title="The resources block is not authorable yet">
+  The game rules declare a `resources` block on menace perks, but the current generator cannot
+  lower that declaration. `MenacePerkDef` omits it. No installed 4.4.6 menace perk uses the field,
+  so the corpus records no blocked vanilla shape; do not invent a raw substitute inside the
+  generated definition.
+</Callout>
+
+## Localization, identity, and limits
+
+`mod.menacePerk("wardens", ...)` mints
+`<prefix>_menace_perk_wardens`. `name` emits localization under the full id
+and `desc` under `<id>_desc`.
+
+Menace perks have no patch surface. The SDK checks modifier and effect scopes,
+sprite references, identity, output paths, and localization. It does not
+simulate perk application, federation stacking, or interface presentation.
+
+Test country and federation modifiers independently, the unlock callback,
+portrait rendering, a level that grants several perks, and save/load before
+and after the level unlocks.
+
+[`MenacePerkDef`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/menace-perk.ts)
+is the generated definition used by `mod.menacePerk`.
+[`vanilla.menacePerk(...)`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
+checks ids against the selected game version's
+[vanilla menace perk ids](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/stellaris-ids/src/registries/menace-perk.ts).
+
+## Field reference
+
+The generated table includes the unsupported `resources` omission so it stays
+visible until the authoring surface can lower it.
+
+<FieldTable registry="menace_perk" />
