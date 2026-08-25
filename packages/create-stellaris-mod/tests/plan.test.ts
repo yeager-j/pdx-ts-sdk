@@ -495,7 +495,9 @@ describe("dependency resolution", () => {
     // registry predates the revision scheme — it is the one version that must
     // not win, and highest-wins would otherwise hand it every install.
     const range = manifest(plan({ gameVersion: "4.4.6" })).dependencies!["@pdx-ts/stellaris-ids"]!;
-    expect(semver.maxSatisfying(["4.4.6", "4.4.6-r.1", "4.4.6-r.2"], range)).toBe("4.4.6-r.2");
+    expect(semver.maxSatisfying(["4.4.6", "4.4.6-r.1", "4.4.6-r.2", "4.4.6-r.3"], range)).toBe(
+      "4.4.6-r.3"
+    );
     expect(semver.maxSatisfying(["4.4.6-r.9", "4.4.6-r.10"], range)).toBe("4.4.6-r.10");
     expect(semver.satisfies("4.4.6", range)).toBe(false);
     expect(semver.satisfies("4.4.7-r.1", range)).toBe(false);

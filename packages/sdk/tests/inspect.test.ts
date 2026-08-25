@@ -65,10 +65,10 @@ describe("runInspect", () => {
           name: "inspection-project",
           version: "0.1.0",
           dependencies: {
-            sdk: { requested: "^0.3.0", resolved: "0.3.0" },
+            sdk: { requested: "^0.4.0", resolved: "0.4.0" },
             stellarisIds: {
               requested: ">=4.4.6-0 <4.4.6",
-              resolved: "4.4.6-r.2",
+              resolved: "4.4.6-r.3",
               gameVersion: "4.4.6",
             },
           },
@@ -249,7 +249,7 @@ describe("runInspect", () => {
 function temporaryProject(
   packageDependencies: Record<string, Record<string, string>> = {
     dependencies: {
-      "@pdx-ts/sdk": "^0.3.0",
+      "@pdx-ts/sdk": "^0.4.0",
       "@pdx-ts/stellaris-ids": ">=4.4.6-0 <4.4.6",
     },
   }

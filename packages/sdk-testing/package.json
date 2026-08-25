@@ -1,6 +1,6 @@
 {
   "name": "@pdx-ts/sdk-testing",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Test Stellaris mod logic without launching the game \u2014 a whitelist interpreter over the triggers and effects @pdx-ts/sdk records",
   "type": "module",
   "license": "MIT",
@@ -30,7 +30,7 @@
     "vitest"
   ],
   "peerDependencies": {
-    "@pdx-ts/sdk": "^0.3.0",
+    "@pdx-ts/sdk": "^0.4.0",
     "vitest": ">=3"
   },
   "peerDependenciesMeta": {
@@ -39,7 +39,7 @@
     }
   },
   "dependencies": {
-    "@pdx-ts/pdxscript": "^0.3.0"
+    "@pdx-ts/pdxscript": "^0.4.0"
   },
   "devDependencies": {
     "@pdx-ts/codegen-cwt": "*"

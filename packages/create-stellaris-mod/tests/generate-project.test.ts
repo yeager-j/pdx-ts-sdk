@@ -69,7 +69,7 @@ function writeProject(dir: string, shape: ProjectShape = {}): string {
           private: true,
           type: "module",
           imports: { "#mod": "./src/mod.ts" },
-          devDependencies: { "@pdx-ts/sdk": shape.sdkSpecifier ?? "0.3.0" },
+          devDependencies: { "@pdx-ts/sdk": shape.sdkSpecifier ?? "0.4.0" },
         };
   writeFileSync(path.join(dir, "package.json"), `${JSON.stringify(packageJson, null, 2)}\n`);
   return dir;
@@ -144,13 +144,13 @@ describe("finding the installed SDK", () => {
     // declares a range it is entitled to, and the SDK that would actually be
     // imported is older than that.
     const root = makeRoot();
-    const project = writeProject(path.join(root, "packages/mod"), { sdkSpecifier: "~0.3.4" });
-    installSdk(root, "0.3.0");
+    const project = writeProject(path.join(root, "packages/mod"), { sdkSpecifier: "0.4.0" });
+    installSdk(root, "0.3.4");
 
     const { code, err, out } = await generate(project);
     expect(code).toBe(1);
-    expect(err).toContain("0.3.0");
-    expect(err).toContain("~0.3.4");
+    expect(err).toContain("0.3.4");
+    expect(err).toContain("0.4.0");
     expect(out).toBe("");
   });
 });

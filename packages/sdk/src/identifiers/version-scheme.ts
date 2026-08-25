@@ -51,9 +51,9 @@ export function stampedVanillaPackageVersion(gameVersion: string, currentVersion
 
 /**
  * The game build a package version pins, which is that version with its
- * revision suffix stripped: `"4.4.6-r.2"` -> `"4.4.6"`.
+ * revision suffix stripped: `"4.4.6-r.3"` -> `"4.4.6"`.
  *
- * The two are never interchangeable. `4.4.6-r.2` is a package version and never
+ * The two are never interchangeable. `4.4.6-r.3` is a package version and never
  * an install version, so a comparison against an install has to come through
  * here — a regen-fix release still pins the same build.
  */
