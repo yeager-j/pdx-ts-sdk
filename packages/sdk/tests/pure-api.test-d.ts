@@ -106,6 +106,23 @@ describe("capability authoring", () => {
     const narrowed: Feature<TechnologyItem> = mixed;
     void narrowed;
   });
+
+  it("keeps handles out of features, on both the content and event sides", () => {
+    // Every `ModItem` arm carries a literal `itemKind`; neither handle has one,
+    // which is the whole reason a handle cannot be placed. That has been true
+    // by construction rather than by assertion, so pin it: a minted id that
+    // reached the Fold without a body would emit nothing while every reference
+    // to it still resolved.
+    const mod = createMod({ name: "Handles", prefix: "handle_neg", supportedVersion: "4.4.*" });
+
+    // @ts-expect-error — a content handle is an identity, not content
+    mod.feature("perks", [mod.ascensionPerkHandle("spelltech")]);
+    // @ts-expect-error — an event handle is a reference, not an event item
+    mod.feature("events", [mod.namespace("chain").countryHandle(1)]);
+
+    // What define() returns does place.
+    mod.feature("perks", [mod.ascensionPerkHandle("spelltech").define({ name: "X" })]);
+  });
 });
 
 describe("the capability on() contract", () => {

@@ -41,6 +41,11 @@
 // From: content-manifest.ts
 
 import {
+  createContentHandle,
+  type ContentHandle,
+  type ContentHandleBase,
+} from "../content/handle.ts";
+import {
   recordExactNameMint,
   recordShapeMint,
   type MintCapabilityOwner,
@@ -620,6 +625,15 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     def: Omit<TechnologyDef<MintedContentId<P, I, "technology", Name>>, "id">
   ): ContentItem<"technology", TechnologyDef<MintedContentId<P, I, "technology", Name>>>;
   /**
+   * Mints a technology id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * a technology that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  technologyHandle<const Name extends string>(
+    name: Name
+  ): ContentHandle<"technology", TechnologyDef<MintedContentId<P, I, "technology", Name>>>;
+  /**
    * Patches a vanilla technology as a whole-object override.
    * Unlike a capability definition method, it mints no id and owns no new content —
    * but it does mint localisation keys for text it adds, from this capability's
@@ -638,6 +652,15 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     name: Name,
     def: Omit<BuildingDef<MintedContentId<P, I, "building", Name>>, "id">
   ): ContentItem<"building", BuildingDef<MintedContentId<P, I, "building", Name>>>;
+  /**
+   * Mints a building id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * a building that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  buildingHandle<const Name extends string>(
+    name: Name
+  ): ContentHandle<"building", BuildingDef<MintedContentId<P, I, "building", Name>>>;
   /**
    * Patches a vanilla building as a whole-object override.
    * Unlike a capability definition method, it mints no id and owns no new content —
@@ -660,6 +683,15 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     def: Omit<TraditionDef<MintedContentId<P, I, "tradition", Name>>, "id">
   ): ContentItem<"tradition", TraditionDef<MintedContentId<P, I, "tradition", Name>>>;
   /**
+   * Mints a tradition id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * a tradition that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  traditionHandle<const Name extends string>(
+    name: Name
+  ): ContentHandle<"tradition", TraditionDef<MintedContentId<P, I, "tradition", Name>>>;
+  /**
    * Defines a tradition category from its logical name.
    * The capability mints and owns the full id; the returned branded reference
    * flows into matching content-reference fields.
@@ -668,6 +700,18 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     name: Name,
     def: Omit<TraditionCategoryDef<MintedContentId<P, I, "traditionCategory", Name>>, "id">
   ): ContentItem<
+    "tradition_category",
+    TraditionCategoryDef<MintedContentId<P, I, "traditionCategory", Name>>
+  >;
+  /**
+   * Mints a tradition category id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * a tradition category that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  traditionCategoryHandle<const Name extends string>(
+    name: Name
+  ): ContentHandle<
     "tradition_category",
     TraditionCategoryDef<MintedContentId<P, I, "traditionCategory", Name>>
   >;
@@ -683,6 +727,18 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     def: Omit<AscensionPerkDef<MintedContentId<P, I, "ascensionPerk", Name>>, "id">
   ): ContentItem<"ascension_perk", AscensionPerkDef<MintedContentId<P, I, "ascensionPerk", Name>>>;
   /**
+   * Mints an ascension perk id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * an ascension perk that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  ascensionPerkHandle<const Name extends string>(
+    name: Name
+  ): ContentHandle<
+    "ascension_perk",
+    AscensionPerkDef<MintedContentId<P, I, "ascensionPerk", Name>>
+  >;
+  /**
    * Defines an ascension perk category from its logical name.
    * The capability mints and owns the full id; the returned branded reference
    * flows into matching content-reference fields.
@@ -691,6 +747,18 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     name: Name,
     def: Omit<AscensionPerkCategoryDef<MintedContentId<P, I, "ascensionPerkCategory", Name>>, "id">
   ): ContentItem<
+    "ascension_perk_category",
+    AscensionPerkCategoryDef<MintedContentId<P, I, "ascensionPerkCategory", Name>>
+  >;
+  /**
+   * Mints an ascension perk category id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * an ascension perk category that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  ascensionPerkCategoryHandle<const Name extends string>(
+    name: Name
+  ): ContentHandle<
     "ascension_perk_category",
     AscensionPerkCategoryDef<MintedContentId<P, I, "ascensionPerkCategory", Name>>
   >;
@@ -735,6 +803,15 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     def: Omit<ResourceDef<MintedContentId<P, I, "resource", Name>>, "id">
   ): ContentItem<"resource", ResourceDef<MintedContentId<P, I, "resource", Name>>>;
   /**
+   * Mints a resource id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * a resource that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  resourceHandle<const Name extends string>(
+    name: Name
+  ): ContentHandle<"resource", ResourceDef<MintedContentId<P, I, "resource", Name>>>;
+  /**
    * Defines a crisis path from its logical name.
    * The capability mints and owns the full id; the returned branded reference
    * flows into matching content-reference fields.
@@ -744,6 +821,15 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     def: Omit<CrisisPathDef<MintedContentId<P, I, "crisisPath", Name>>, "id">
   ): ContentItem<"crisis_path", CrisisPathDef<MintedContentId<P, I, "crisisPath", Name>>>;
   /**
+   * Mints a crisis path id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * a crisis path that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  crisisPathHandle<const Name extends string>(
+    name: Name
+  ): ContentHandle<"crisis_path", CrisisPathDef<MintedContentId<P, I, "crisisPath", Name>>>;
+  /**
    * Defines a crisis level from its logical name.
    * The capability mints and owns the full id; the returned branded reference
    * flows into matching content-reference fields.
@@ -752,6 +838,15 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     name: Name,
     def: Omit<CrisisLevelDef<MintedContentId<P, I, "crisisLevel", Name>>, "id">
   ): ContentItem<"crisis_level", CrisisLevelDef<MintedContentId<P, I, "crisisLevel", Name>>>;
+  /**
+   * Mints a crisis level id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * a crisis level that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  crisisLevelHandle<const Name extends string>(
+    name: Name
+  ): ContentHandle<"crisis_level", CrisisLevelDef<MintedContentId<P, I, "crisisLevel", Name>>>;
   /**
    * Defines a crisis objective from its logical name.
    * The capability mints and owns the full id; the returned branded reference
@@ -765,6 +860,18 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     CrisisObjectiveDef<MintedContentId<P, I, "crisisObjective", Name>>
   >;
   /**
+   * Mints a crisis objective id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * a crisis objective that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  crisisObjectiveHandle<const Name extends string>(
+    name: Name
+  ): ContentHandle<
+    "crisis_objective",
+    CrisisObjectiveDef<MintedContentId<P, I, "crisisObjective", Name>>
+  >;
+  /**
    * Defines a menace perk from its logical name.
    * The capability mints and owns the full id; the returned branded reference
    * flows into matching content-reference fields.
@@ -773,6 +880,15 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     name: Name,
     def: Omit<MenacePerkDef<MintedContentId<P, I, "menacePerk", Name>>, "id">
   ): ContentItem<"menace_perk", MenacePerkDef<MintedContentId<P, I, "menacePerk", Name>>>;
+  /**
+   * Mints a menace perk id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * a menace perk that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  menacePerkHandle<const Name extends string>(
+    name: Name
+  ): ContentHandle<"menace_perk", MenacePerkDef<MintedContentId<P, I, "menacePerk", Name>>>;
   /**
    * Defines an agenda from its logical name.
    * The capability mints and owns the full id; the returned branded reference
@@ -783,6 +899,15 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     def: Omit<AgendaDef<MintedContentId<P, I, "agenda", Name>>, "id">
   ): ContentItem<"agenda", AgendaDef<MintedContentId<P, I, "agenda", Name>>>;
   /**
+   * Mints an agenda id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * an agenda that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  agendaHandle<const Name extends string>(
+    name: Name
+  ): ContentHandle<"agenda", AgendaDef<MintedContentId<P, I, "agenda", Name>>>;
+  /**
    * Defines an edict from its logical name.
    * The capability mints and owns the full id; the returned branded reference
    * flows into matching content-reference fields.
@@ -791,6 +916,15 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     name: Name,
     def: Omit<EdictDef<MintedContentId<P, I, "edict", Name>>, "id">
   ): ContentItem<"edict", EdictDef<MintedContentId<P, I, "edict", Name>>>;
+  /**
+   * Mints an edict id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * an edict that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  edictHandle<const Name extends string>(
+    name: Name
+  ): ContentHandle<"edict", EdictDef<MintedContentId<P, I, "edict", Name>>>;
   /**
    * Defines a decision from its logical name.
    * The capability mints and owns the full id; the returned branded reference
@@ -801,6 +935,19 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     def: Omit<DecisionDef<MintedContentId<P, I, "decision", Name>, S>, "id">
   ): ContentItem<"decision", DecisionDef<MintedContentId<P, I, "decision", Name>, never>>;
   /**
+   * Mints a decision id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * a decision that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  decisionHandle<const Name extends string>(
+    name: Name
+  ): ContentHandleBase<"decision", MintedContentId<P, I, "decision", Name>> & {
+    define<S extends DecisionScope = "planet">(
+      def: Omit<DecisionDef<MintedContentId<P, I, "decision", Name>, S>, "id">
+    ): ContentItem<"decision", DecisionDef<MintedContentId<P, I, "decision", Name>, never>>;
+  };
+  /**
    * Defines a job from its logical name.
    * The capability mints and owns the full id; the returned branded reference
    * flows into matching content-reference fields.
@@ -810,6 +957,15 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     def: Omit<JobDef<MintedContentId<P, I, "job", Name>>, "id">
   ): ContentItem<"job", JobDef<MintedContentId<P, I, "job", Name>>>;
   /**
+   * Mints a job id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * a job that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  jobHandle<const Name extends string>(
+    name: Name
+  ): ContentHandle<"job", JobDef<MintedContentId<P, I, "job", Name>>>;
+  /**
    * Defines a global ship design from its logical name.
    * The capability mints and owns the full id; the returned branded reference
    * flows into matching content-reference fields.
@@ -818,6 +974,18 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     name: Name,
     def: Omit<GlobalShipDesignDef<MintedContentId<P, I, "globalShipDesign", Name>>, "id">
   ): ContentItem<
+    "global_ship_design",
+    GlobalShipDesignDef<MintedContentId<P, I, "globalShipDesign", Name>>
+  >;
+  /**
+   * Mints a global ship design id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * a global ship design that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  globalShipDesignHandle<const Name extends string>(
+    name: Name
+  ): ContentHandle<
     "global_ship_design",
     GlobalShipDesignDef<MintedContentId<P, I, "globalShipDesign", Name>>
   >;
@@ -837,6 +1005,18 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     UtilityComponentTemplateDef<MintedContentId<P, I, "utilityComponentTemplate", Name>>
   >;
   /**
+   * Mints an utility component template id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * an utility component template that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  utilityComponentTemplateHandle<const Name extends string>(
+    name: Name
+  ): ContentHandle<
+    "utility_component_template",
+    UtilityComponentTemplateDef<MintedContentId<P, I, "utilityComponentTemplate", Name>>
+  >;
+  /**
    * Defines a weapon component template from its logical name.
    * The capability mints and owns the full id; the returned branded reference
    * flows into matching content-reference fields.
@@ -848,6 +1028,18 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
       "id"
     >
   ): ContentItem<
+    "weapon_component_template",
+    WeaponComponentTemplateDef<MintedContentId<P, I, "weaponComponentTemplate", Name>>
+  >;
+  /**
+   * Mints a weapon component template id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * a weapon component template that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  weaponComponentTemplateHandle<const Name extends string>(
+    name: Name
+  ): ContentHandle<
     "weapon_component_template",
     WeaponComponentTemplateDef<MintedContentId<P, I, "weaponComponentTemplate", Name>>
   >;
@@ -867,6 +1059,18 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     StrikeCraftComponentTemplateDef<MintedContentId<P, I, "strikeCraftComponentTemplate", Name>>
   >;
   /**
+   * Mints a strike craft component template id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * a strike craft component template that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  strikeCraftComponentTemplateHandle<const Name extends string>(
+    name: Name
+  ): ContentHandle<
+    "strike_craft_component_template",
+    StrikeCraftComponentTemplateDef<MintedContentId<P, I, "strikeCraftComponentTemplate", Name>>
+  >;
+  /**
    * Defines a ship size from its logical name.
    * The capability mints and owns the full id; the returned branded reference
    * flows into matching content-reference fields.
@@ -876,6 +1080,15 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     def: Omit<ShipSizeDef<MintedContentId<P, I, "shipSize", Name>>, "id">
   ): ContentItem<"ship_size", ShipSizeDef<MintedContentId<P, I, "shipSize", Name>>>;
   /**
+   * Mints a ship size id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * a ship size that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  shipSizeHandle<const Name extends string>(
+    name: Name
+  ): ContentHandle<"ship_size", ShipSizeDef<MintedContentId<P, I, "shipSize", Name>>>;
+  /**
    * Defines an opinion modifier from its logical name.
    * The capability mints and owns the full id; the returned branded reference
    * flows into matching content-reference fields.
@@ -884,6 +1097,18 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     name: Name,
     def: Omit<OpinionModifierDef<MintedContentId<P, I, "opinionModifier", Name>>, "id">
   ): ContentItem<
+    "opinion_modifier",
+    OpinionModifierDef<MintedContentId<P, I, "opinionModifier", Name>>
+  >;
+  /**
+   * Mints an opinion modifier id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * an opinion modifier that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  opinionModifierHandle<const Name extends string>(
+    name: Name
+  ): ContentHandle<
     "opinion_modifier",
     OpinionModifierDef<MintedContentId<P, I, "opinionModifier", Name>>
   >;
@@ -900,6 +1125,22 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     Omit<StaticModifierDef<MintedContentId<P, I, "staticModifier", Name>, never>, "hostScope">
   > & { readonly hostScope: S };
   /**
+   * Mints a static modifier id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * a static modifier that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  staticModifierHandle<const Name extends string>(
+    name: Name
+  ): ContentHandleBase<"static_modifier", MintedContentId<P, I, "staticModifier", Name>> & {
+    define<S extends StaticModifierScope = StaticModifierScope>(
+      def: Omit<StaticModifierDef<MintedContentId<P, I, "staticModifier", Name>, S>, "id">
+    ): ContentItem<
+      "static_modifier",
+      Omit<StaticModifierDef<MintedContentId<P, I, "staticModifier", Name>, never>, "hostScope">
+    > & { readonly hostScope: S };
+  };
+  /**
    * Defines a scripted modifier from its logical name.
    * The capability mints and owns the full id; the returned branded reference
    * flows into matching content-reference fields.
@@ -914,6 +1155,26 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     ScriptedModifierDef<MintedContentId<P, I, "scriptedModifier", Name>> & { readonly category: W }
   >;
   /**
+   * Mints a scripted modifier id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * a scripted modifier that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  scriptedModifierHandle<const Name extends string>(
+    name: Name
+  ): ContentHandleBase<"scripted_modifier", MintedContentId<P, I, "scriptedModifier", Name>> & {
+    define<W extends ScriptedModifierCategory>(
+      def: Omit<ScriptedModifierDef<MintedContentId<P, I, "scriptedModifier", Name>>, "id"> & {
+        readonly category: W;
+      }
+    ): ContentItem<
+      "scripted_modifier",
+      ScriptedModifierDef<MintedContentId<P, I, "scriptedModifier", Name>> & {
+        readonly category: W;
+      }
+    >;
+  };
+  /**
    * Defines a casus belli from its logical name.
    * The capability mints and owns the full id; the returned branded reference
    * flows into matching content-reference fields.
@@ -923,6 +1184,15 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     def: Omit<CasusBelliDef<MintedContentId<P, I, "casusBelli", Name>>, "id">
   ): ContentItem<"casus_belli", CasusBelliDef<MintedContentId<P, I, "casusBelli", Name>>>;
   /**
+   * Mints a casus belli id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * a casus belli that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  casusBelliHandle<const Name extends string>(
+    name: Name
+  ): ContentHandle<"casus_belli", CasusBelliDef<MintedContentId<P, I, "casusBelli", Name>>>;
+  /**
    * Defines a war goal from its logical name.
    * The capability mints and owns the full id; the returned branded reference
    * flows into matching content-reference fields.
@@ -931,6 +1201,15 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     name: Name,
     def: Omit<WarGoalDef<MintedContentId<P, I, "warGoal", Name>>, "id">
   ): ContentItem<"war_goal", WarGoalDef<MintedContentId<P, I, "warGoal", Name>>>;
+  /**
+   * Mints a war goal id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * a war goal that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  warGoalHandle<const Name extends string>(
+    name: Name
+  ): ContentHandle<"war_goal", WarGoalDef<MintedContentId<P, I, "warGoal", Name>>>;
   /**
    * Defines an agreement preset from its logical name.
    * The capability mints and owns the full id; the returned branded reference
@@ -944,6 +1223,18 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     AgreementPresetDef<MintedContentId<P, I, "agreementPreset", Name>>
   >;
   /**
+   * Mints an agreement preset id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * an agreement preset that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  agreementPresetHandle<const Name extends string>(
+    name: Name
+  ): ContentHandle<
+    "agreement_preset",
+    AgreementPresetDef<MintedContentId<P, I, "agreementPreset", Name>>
+  >;
+  /**
    * Defines a bombardment stance from its logical name.
    * The capability mints and owns the full id; the returned branded reference
    * flows into matching content-reference fields.
@@ -952,6 +1243,18 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     name: Name,
     def: Omit<BombardmentStanceDef<MintedContentId<P, I, "bombardmentStance", Name>>, "id">
   ): ContentItem<
+    "bombardment_stance",
+    BombardmentStanceDef<MintedContentId<P, I, "bombardmentStance", Name>>
+  >;
+  /**
+   * Mints a bombardment stance id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * a bombardment stance that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  bombardmentStanceHandle<const Name extends string>(
+    name: Name
+  ): ContentHandle<
     "bombardment_stance",
     BombardmentStanceDef<MintedContentId<P, I, "bombardmentStance", Name>>
   >;
@@ -971,6 +1274,18 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     ArchaeologicalSiteTypeDef<MintedContentId<P, I, "archaeologicalSiteType", Name>>
   >;
   /**
+   * Mints an archaeological site type id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * an archaeological site type that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  archaeologicalSiteTypeHandle<const Name extends string>(
+    name: Name
+  ): ContentHandle<
+    "archaeological_site_type",
+    ArchaeologicalSiteTypeDef<MintedContentId<P, I, "archaeologicalSiteType", Name>>
+  >;
+  /**
    * Defines a scripted loc from its logical name.
    * The capability mints and owns the full id; the returned branded reference
    * flows into matching content-reference fields.
@@ -980,6 +1295,15 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     def: Omit<ScriptedLocDef<MintedContentId<P, I, "scriptedLoc", Name>>, "id">
   ): ContentItem<"scripted_loc", ScriptedLocDef<MintedContentId<P, I, "scriptedLoc", Name>>>;
   /**
+   * Mints a scripted loc id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * a scripted loc that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  scriptedLocHandle<const Name extends string>(
+    name: Name
+  ): ContentHandle<"scripted_loc", ScriptedLocDef<MintedContentId<P, I, "scriptedLoc", Name>>>;
+  /**
    * Defines a councilor from its logical name.
    * The capability mints and owns the full id; the returned branded reference
    * flows into matching content-reference fields.
@@ -988,6 +1312,15 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     name: Name,
     def: Omit<CouncilorDef<MintedContentId<P, I, "councilor", Name>>, "id">
   ): ContentItem<"councilor", CouncilorDef<MintedContentId<P, I, "councilor", Name>>>;
+  /**
+   * Mints a councilor id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * a councilor that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  councilorHandle<const Name extends string>(
+    name: Name
+  ): ContentHandle<"councilor", CouncilorDef<MintedContentId<P, I, "councilor", Name>>>;
   /**
    * Defines an economic category from its logical name.
    * The capability mints and owns the full id; the returned branded reference
@@ -1023,6 +1356,44 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
       W
   >;
   /**
+   * Mints an economic category id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * an economic category that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  economicCategoryHandle<const Name extends string>(
+    name: Name
+  ): ContentHandleBase<"economic_category", MintedContentId<P, I, "economicCategory", Name>> & {
+    define<const W extends EconomicCategoryWitness>(
+      def: Omit<
+        EconomicCategoryDef<MintedContentId<P, I, "economicCategory", Name>>,
+        | "id"
+        | "modifierCategory"
+        | "generateAddModifiers"
+        | "generateMultModifiers"
+        | "triggeredCostModifier"
+        | "triggeredProducesModifier"
+        | "triggeredUpkeepModifier"
+        | "triggeredLogisticsModifier"
+      > &
+        W &
+        ExactEconomicCategoryWitness<W>
+    ): ContentItem<
+      "economic_category",
+      Omit<
+        EconomicCategoryDef<MintedContentId<P, I, "economicCategory", Name>>,
+        | "modifierCategory"
+        | "generateAddModifiers"
+        | "generateMultModifiers"
+        | "triggeredCostModifier"
+        | "triggeredProducesModifier"
+        | "triggeredUpkeepModifier"
+        | "triggeredLogisticsModifier"
+      > &
+        W
+    >;
+  };
+  /**
    * Defines a civic or origin from its logical name.
    * The capability mints and owns the full id; the returned branded reference
    * flows into matching content-reference fields.
@@ -1031,6 +1402,18 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     name: Name,
     def: Omit<CivicOrOriginDef<MintedContentId<P, I, "civicOrOrigin", Name>>, "id">
   ): ContentItem<"civic_or_origin", CivicOrOriginDef<MintedContentId<P, I, "civicOrOrigin", Name>>>;
+  /**
+   * Mints a civic or origin id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * a civic or origin that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  civicOrOriginHandle<const Name extends string>(
+    name: Name
+  ): ContentHandle<
+    "civic_or_origin",
+    CivicOrOriginDef<MintedContentId<P, I, "civicOrOrigin", Name>>
+  >;
   /**
    * Defines a component set from its logical name.
    * The capability mints and owns the full id; the returned branded reference
@@ -1053,6 +1436,30 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     def: Omit<ComponentSetDef<MintedContentId<P, I, "componentSet", Name>>, "id">
   ): ContentItem<"component_set", ComponentSetDef<MintedContentId<P, I, "componentSet", Name>>>;
   /**
+   * Mints a component set id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * a component set that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  componentSetHandle<const Name extends string>(
+    name: Name
+  ): ContentHandleBase<"component_set", MintedContentId<P, I, "componentSet", Name>> & {
+    define(
+      def: Omit<ComponentSetDef<MintedContentId<P, I, "componentSet", Name>>, "id"> & {
+        readonly requiredComponentSet: true;
+      }
+    ): ContentItem<
+      "component_set",
+      ComponentSetDef<MintedContentId<P, I, "componentSet", Name>> & {
+        readonly requiredComponentSet: true;
+      }
+    > &
+      ComponentSetRequiredComponentRef;
+    define(
+      def: Omit<ComponentSetDef<MintedContentId<P, I, "componentSet", Name>>, "id">
+    ): ContentItem<"component_set", ComponentSetDef<MintedContentId<P, I, "componentSet", Name>>>;
+  };
+  /**
    * Defines a section template from its logical name.
    * The capability mints and owns the full id; the returned branded reference
    * flows into matching content-reference fields.
@@ -1061,6 +1468,18 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     name: Name,
     def: Omit<SectionTemplateDef<MintedContentId<P, I, "sectionTemplate", Name>>, "id">
   ): ContentItem<
+    "section_template",
+    SectionTemplateDef<MintedContentId<P, I, "sectionTemplate", Name>>
+  >;
+  /**
+   * Mints a section template id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * a section template that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  sectionTemplateHandle<const Name extends string>(
+    name: Name
+  ): ContentHandle<
     "section_template",
     SectionTemplateDef<MintedContentId<P, I, "sectionTemplate", Name>>
   >;
@@ -1074,6 +1493,18 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     def: Omit<AmbientObjectDef<MintedContentId<P, I, "ambientObject", Name>>, "id">
   ): ContentItem<"ambient_object", AmbientObjectDef<MintedContentId<P, I, "ambientObject", Name>>>;
   /**
+   * Mints an ambient object id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * an ambient object that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  ambientObjectHandle<const Name extends string>(
+    name: Name
+  ): ContentHandle<
+    "ambient_object",
+    AmbientObjectDef<MintedContentId<P, I, "ambientObject", Name>>
+  >;
+  /**
    * Defines a graphical culture from its logical name.
    * The capability mints and owns the full id; the returned branded reference
    * flows into matching content-reference fields.
@@ -1082,6 +1513,18 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     name: Name,
     def: Omit<GraphicalCultureDef<MintedContentId<P, I, "graphicalCulture", Name>>, "id">
   ): ContentItem<
+    "graphical_culture",
+    GraphicalCultureDef<MintedContentId<P, I, "graphicalCulture", Name>>
+  >;
+  /**
+   * Mints a graphical culture id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * a graphical culture that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  graphicalCultureHandle<const Name extends string>(
+    name: Name
+  ): ContentHandle<
     "graphical_culture",
     GraphicalCultureDef<MintedContentId<P, I, "graphicalCulture", Name>>
   >;
@@ -1095,6 +1538,18 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     def: Omit<StarbaseLevelDef<MintedContentId<P, I, "starbaseLevel", Name>>, "id">
   ): ContentItem<"starbase_level", StarbaseLevelDef<MintedContentId<P, I, "starbaseLevel", Name>>>;
   /**
+   * Mints a starbase level id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * a starbase level that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  starbaseLevelHandle<const Name extends string>(
+    name: Name
+  ): ContentHandle<
+    "starbase_level",
+    StarbaseLevelDef<MintedContentId<P, I, "starbaseLevel", Name>>
+  >;
+  /**
    * Defines a species class from its logical name.
    * The capability mints and owns the full id; the returned branded reference
    * flows into matching content-reference fields.
@@ -1103,6 +1558,15 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     name: Name,
     def: Omit<SpeciesClassDef<MintedContentId<P, I, "speciesClass", Name>>, "id">
   ): ContentItem<"species_class", SpeciesClassDef<MintedContentId<P, I, "speciesClass", Name>>>;
+  /**
+   * Mints a species class id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * a species class that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  speciesClassHandle<const Name extends string>(
+    name: Name
+  ): ContentHandle<"species_class", SpeciesClassDef<MintedContentId<P, I, "speciesClass", Name>>>;
   /**
    * Defines a country ship of size limit from its logical name.
    * The capability mints and owns the full id; the returned branded reference
@@ -1115,6 +1579,18 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
       "id"
     >
   ): ContentItem<
+    "country_ship_of_size_limit",
+    CountryShipOfSizeLimitDef<MintedContentId<P, I, "countryShipOfSizeLimit", Name>>
+  >;
+  /**
+   * Mints a country ship of size limit id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * a country ship of size limit that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  countryShipOfSizeLimitHandle<const Name extends string>(
+    name: Name
+  ): ContentHandle<
     "country_ship_of_size_limit",
     CountryShipOfSizeLimitDef<MintedContentId<P, I, "countryShipOfSizeLimit", Name>>
   >;
@@ -1139,6 +1615,18 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     SolarSystemInitializerDef<MintedContentId<P, I, "solarSystemInitializer", Name>>
   >;
   /**
+   * Mints a solar system initializer id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * a solar system initializer that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  solarSystemInitializerHandle<const Name extends string>(
+    name: Name
+  ): ContentHandle<
+    "solar_system_initializer",
+    SolarSystemInitializerDef<MintedContentId<P, I, "solarSystemInitializer", Name>>
+  >;
+  /**
    * Defines a special project from its logical name.
    * The capability mints and owns the full id; the returned branded reference
    * flows into matching content-reference fields.
@@ -1158,6 +1646,25 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     SpecialProjectDef<MintedContentId<P, I, "specialProject", Name>, never>
   > & { readonly locationScope: L };
   /**
+   * Mints a special project id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * a special project that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  specialProjectHandle<const Name extends string>(
+    name: Name
+  ): ContentHandleBase<"special_project", MintedContentId<P, I, "specialProject", Name>> & {
+    define<
+      E extends SpEventScope = "country_event",
+      L extends SpecialProjectLocationScope | undefined = undefined,
+    >(
+      def: SpecialProjectFields<E, L>
+    ): ContentItem<
+      "special_project",
+      SpecialProjectDef<MintedContentId<P, I, "specialProject", Name>, never>
+    > & { readonly locationScope: L };
+  };
+  /**
    * Defines a megastructure from its logical name.
    * The capability mints and owns the full id; the returned branded reference
    * flows into matching content-reference fields.
@@ -1166,6 +1673,15 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     name: Name,
     def: Omit<MegastructureDef<MintedContentId<P, I, "megastructure", Name>>, "id">
   ): ContentItem<"megastructure", MegastructureDef<MintedContentId<P, I, "megastructure", Name>>>;
+  /**
+   * Mints a megastructure id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * a megastructure that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  megastructureHandle<const Name extends string>(
+    name: Name
+  ): ContentHandle<"megastructure", MegastructureDef<MintedContentId<P, I, "megastructure", Name>>>;
   /**
    * Patches a vanilla megastructure as a whole-object override.
    * Unlike a capability definition method, it mints no id and owns no new content —
@@ -1186,6 +1702,15 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     def: Omit<SpriteTypeDef<MintedIdOf<P, I, "spriteType", Name>>, "id">
   ): ContentItem<"spriteType", SpriteTypeDef<MintedIdOf<P, I, "spriteType", Name>>>;
   /**
+   * Mints a sprite type id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * a sprite type that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  spriteTypeHandle<const Name extends string>(
+    name: Name
+  ): ContentHandle<"spriteType", SpriteTypeDef<MintedIdOf<P, I, "spriteType", Name>>>;
+  /**
    * Defines the `GFX_text_`-led sprite the game generates from a name.
    * The capability mints and owns the full name, exactly as an ordinary definition does.
    * In every other respect this is an ordinary sprite type definition.
@@ -1195,6 +1720,15 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     name: Name,
     def: Omit<SpriteTypeDef<SpriteTextIconName<P, Name>>, "id">
   ): ContentItem<"spriteType", SpriteTypeDef<SpriteTextIconName<P, Name>>>;
+  /**
+   * Mints the `GFX_text_`-led sprite name without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the name first.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   * Seed: `icon = GFX_text_$` in common/leader_classes.cwt's `images` block, and the same family in common/ship_sizes.cwt (`GFX_text_<key>` beside `GFX_<key>`)
+   */
+  spriteTextIconHandle<const Name extends string>(
+    name: Name
+  ): ContentHandle<"spriteType", SpriteTypeDef<SpriteTextIconName<P, Name>>>;
   /**
    * Defines the `GFX_fleet_order_button_ground_support_`-led sprite the game generates from a bombardment stance.
    * The minted name carries the target's id rather than the mod prefix, so ownership rides on the item as mint provenance instead of on the string.
@@ -1209,6 +1743,22 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     def: Omit<SpriteTypeDef<SpriteFleetOrderButtonGroundSupportName<Target, Selected>>, "id">,
     options?: { readonly selected?: Selected }
   ): ContentItem<
+    "spriteType",
+    SpriteTypeDef<SpriteFleetOrderButtonGroundSupportName<Target, Selected>>
+  >;
+  /**
+   * Mints the `GFX_fleet_order_button_ground_support_`-led sprite name without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the name first.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   * Seed: `fleet_view = "GFX_fleet_order_button_ground_support_$"` and `fleet_view_selected = "GFX_fleet_order_button_ground_support_$_selected"`, both `# inferred`, in common/bombardment_stances.cwt
+   */
+  spriteFleetOrderButtonGroundSupportHandle<
+    const Target extends string,
+    const Selected extends boolean = false,
+  >(
+    bombardmentStance: Target | (BombardmentStanceRef & { readonly id: Target }),
+    options?: { readonly selected?: Selected }
+  ): ContentHandle<
     "spriteType",
     SpriteTypeDef<SpriteFleetOrderButtonGroundSupportName<Target, Selected>>
   >;
@@ -1240,6 +1790,26 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     options: { readonly prefix: false }
   ): ContentItem<"pdxmesh", PdxmeshDef<Name>>;
   /**
+   * Mints a pdxmesh id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * a pdxmesh that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  pdxmeshHandle<const Name extends string>(
+    name: Name,
+    options?: { readonly prefix?: true }
+  ): ContentHandle<"pdxmesh", PdxmeshDef<MintedIdOf<P, I, "pdxmesh", Name>>>;
+  /**
+   * Mints a pdxmesh id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * a pdxmesh that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  pdxmeshHandle<const Name extends ExactMintName<P>>(
+    name: Name,
+    options: { readonly prefix: false }
+  ): ContentHandle<"pdxmesh", PdxmeshDef<Name>>;
+  /**
    * Defines a pdxparticle from its logical name.
    * The capability mints and owns the full id; the returned branded reference
    * flows into matching content-reference fields.
@@ -1266,6 +1836,26 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     def: Omit<PdxparticleDef<Name>, "id">,
     options: { readonly prefix: false }
   ): ContentItem<"pdxparticle", PdxparticleDef<Name>>;
+  /**
+   * Mints a pdxparticle id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * a pdxparticle that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  pdxparticleHandle<const Name extends string>(
+    name: Name,
+    options?: { readonly prefix?: true }
+  ): ContentHandle<"pdxparticle", PdxparticleDef<MintedIdOf<P, I, "pdxparticle", Name>>>;
+  /**
+   * Mints a pdxparticle id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * a pdxparticle that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  pdxparticleHandle<const Name extends ExactMintName<P>>(
+    name: Name,
+    options: { readonly prefix: false }
+  ): ContentHandle<"pdxparticle", PdxparticleDef<Name>>;
 }
 
 /** Builds the internal content-method table for a mod capability. */
@@ -1277,53 +1867,142 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
   mintOwner: MintCapabilityOwner
 ): ContentCapabilityMethods<P, I> {
   return Object.freeze({
+    technologyHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "technology",
+        mint("technology", name),
+        (def: TechnologyDef<MintedContentId<P, I, "technology", Name>>) => {
+          return defineTechnology(def);
+        }
+      );
+    },
     technology: <const Name extends string>(
       name: Name,
       def: Omit<TechnologyDef<MintedContentId<P, I, "technology", Name>>, "id">
-    ) =>
-      defineTechnology({ ...def, id: mint("technology", name) } as TechnologyDef<
-        MintedContentId<P, I, "technology", Name>
-      >),
+    ) => {
+      return createContentHandle(
+        "technology",
+        mint("technology", name),
+        (def: TechnologyDef<MintedContentId<P, I, "technology", Name>>) => {
+          return defineTechnology(def);
+        }
+      ).define(
+        def as unknown as Omit<TechnologyDef<MintedContentId<P, I, "technology", Name>>, "id">
+      );
+    },
     patchTechnology: <Source extends ParsedTechnology>(
       technology: Source,
       patch: (technology: Source) => TechnologyPatch
     ) => patchTechnology(technology, patch, prefix),
+    buildingHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "building",
+        mint("building", name),
+        (def: BuildingDef<MintedContentId<P, I, "building", Name>>) => {
+          return defineBuilding(def);
+        }
+      );
+    },
     building: <const Name extends string>(
       name: Name,
       def: Omit<BuildingDef<MintedContentId<P, I, "building", Name>>, "id">
-    ) =>
-      defineBuilding({ ...def, id: mint("building", name) } as BuildingDef<
-        MintedContentId<P, I, "building", Name>
-      >),
+    ) => {
+      return createContentHandle(
+        "building",
+        mint("building", name),
+        (def: BuildingDef<MintedContentId<P, I, "building", Name>>) => {
+          return defineBuilding(def);
+        }
+      ).define(def as unknown as Omit<BuildingDef<MintedContentId<P, I, "building", Name>>, "id">);
+    },
     patchBuilding: <Source extends ParsedBuilding>(
       building: Source,
       patch: (building: Source) => BuildingPatch
     ) => patchBuilding(building, patch, prefix),
+    traditionHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "tradition",
+        mint("tradition", name),
+        (def: TraditionDef<MintedContentId<P, I, "tradition", Name>>) => {
+          assertNestedDefinitionIds(def, assertNestedId, TRADITION_NESTED_DEFINITION_MEMBERS);
+          return defineTradition(def);
+        }
+      );
+    },
     tradition: <const Name extends string>(
       name: Name,
       def: Omit<TraditionDef<MintedContentId<P, I, "tradition", Name>>, "id">
     ) => {
-      assertNestedDefinitionIds(def, assertNestedId, TRADITION_NESTED_DEFINITION_MEMBERS);
-      return defineTradition({ ...def, id: mint("tradition", name) } as TraditionDef<
-        MintedContentId<P, I, "tradition", Name>
-      >);
+      return createContentHandle(
+        "tradition",
+        mint("tradition", name),
+        (def: TraditionDef<MintedContentId<P, I, "tradition", Name>>) => {
+          assertNestedDefinitionIds(def, assertNestedId, TRADITION_NESTED_DEFINITION_MEMBERS);
+          return defineTradition(def);
+        }
+      ).define(
+        def as unknown as Omit<TraditionDef<MintedContentId<P, I, "tradition", Name>>, "id">
+      );
+    },
+    traditionCategoryHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "tradition_category",
+        mint("traditionCategory", name),
+        (def: TraditionCategoryDef<MintedContentId<P, I, "traditionCategory", Name>>) => {
+          return defineTraditionCategory(def);
+        }
+      );
     },
     traditionCategory: <const Name extends string>(
       name: Name,
       def: Omit<TraditionCategoryDef<MintedContentId<P, I, "traditionCategory", Name>>, "id">
-    ) =>
-      defineTraditionCategory({
-        ...def,
-        id: mint("traditionCategory", name),
-      } as TraditionCategoryDef<MintedContentId<P, I, "traditionCategory", Name>>),
+    ) => {
+      return createContentHandle(
+        "tradition_category",
+        mint("traditionCategory", name),
+        (def: TraditionCategoryDef<MintedContentId<P, I, "traditionCategory", Name>>) => {
+          return defineTraditionCategory(def);
+        }
+      ).define(
+        def as unknown as Omit<
+          TraditionCategoryDef<MintedContentId<P, I, "traditionCategory", Name>>,
+          "id"
+        >
+      );
+    },
+    ascensionPerkHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "ascension_perk",
+        mint("ascensionPerk", name),
+        (def: AscensionPerkDef<MintedContentId<P, I, "ascensionPerk", Name>>) => {
+          assertNestedDefinitionIds(def, assertNestedId, ASCENSION_PERK_NESTED_DEFINITION_MEMBERS);
+          return defineAscensionPerk(def);
+        }
+      );
+    },
     ascensionPerk: <const Name extends string>(
       name: Name,
       def: Omit<AscensionPerkDef<MintedContentId<P, I, "ascensionPerk", Name>>, "id">
     ) => {
-      assertNestedDefinitionIds(def, assertNestedId, ASCENSION_PERK_NESTED_DEFINITION_MEMBERS);
-      return defineAscensionPerk({ ...def, id: mint("ascensionPerk", name) } as AscensionPerkDef<
-        MintedContentId<P, I, "ascensionPerk", Name>
-      >);
+      return createContentHandle(
+        "ascension_perk",
+        mint("ascensionPerk", name),
+        (def: AscensionPerkDef<MintedContentId<P, I, "ascensionPerk", Name>>) => {
+          assertNestedDefinitionIds(def, assertNestedId, ASCENSION_PERK_NESTED_DEFINITION_MEMBERS);
+          return defineAscensionPerk(def);
+        }
+      ).define(
+        def as unknown as Omit<AscensionPerkDef<MintedContentId<P, I, "ascensionPerk", Name>>, "id">
+      );
+    },
+    ascensionPerkCategoryHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "ascension_perk_category",
+        mint("ascensionPerkCategory", name),
+        (def: AscensionPerkCategoryDef<MintedContentId<P, I, "ascensionPerkCategory", Name>>) => {
+          return defineAscensionPerkCategory(def);
+        }
+      );
     },
     ascensionPerkCategory: <const Name extends string>(
       name: Name,
@@ -1331,105 +2010,329 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
         AscensionPerkCategoryDef<MintedContentId<P, I, "ascensionPerkCategory", Name>>,
         "id"
       >
-    ) =>
-      defineAscensionPerkCategory({
-        ...def,
-        id: mint("ascensionPerkCategory", name),
-      } as AscensionPerkCategoryDef<MintedContentId<P, I, "ascensionPerkCategory", Name>>),
+    ) => {
+      return createContentHandle(
+        "ascension_perk_category",
+        mint("ascensionPerkCategory", name),
+        (def: AscensionPerkCategoryDef<MintedContentId<P, I, "ascensionPerkCategory", Name>>) => {
+          return defineAscensionPerkCategory(def);
+        }
+      ).define(
+        def as unknown as Omit<
+          AscensionPerkCategoryDef<MintedContentId<P, I, "ascensionPerkCategory", Name>>,
+          "id"
+        >
+      );
+    },
     patchAscensionPerkCategory: <Source extends ParsedAscensionPerkCategory>(
       ascensionPerkCategory: Source,
       patch: (ascensionPerkCategory: Source) => AscensionPerkCategoryPatch
     ) => patchAscensionPerkCategory(ascensionPerkCategory, patch, prefix),
+    resourceHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "resource",
+        mint("resource", name),
+        (def: ResourceDef<MintedContentId<P, I, "resource", Name>>) => {
+          return defineResource(def);
+        }
+      );
+    },
     resource: <const Name extends string>(
       name: Name,
       def: Omit<ResourceDef<MintedContentId<P, I, "resource", Name>>, "id">
-    ) =>
-      defineResource({ ...def, id: mint("resource", name) } as ResourceDef<
-        MintedContentId<P, I, "resource", Name>
-      >),
+    ) => {
+      return createContentHandle(
+        "resource",
+        mint("resource", name),
+        (def: ResourceDef<MintedContentId<P, I, "resource", Name>>) => {
+          return defineResource(def);
+        }
+      ).define(def as unknown as Omit<ResourceDef<MintedContentId<P, I, "resource", Name>>, "id">);
+    },
+    crisisPathHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "crisis_path",
+        mint("crisisPath", name),
+        (def: CrisisPathDef<MintedContentId<P, I, "crisisPath", Name>>) => {
+          return defineCrisisPath(def);
+        }
+      );
+    },
     crisisPath: <const Name extends string>(
       name: Name,
       def: Omit<CrisisPathDef<MintedContentId<P, I, "crisisPath", Name>>, "id">
-    ) =>
-      defineCrisisPath({ ...def, id: mint("crisisPath", name) } as CrisisPathDef<
-        MintedContentId<P, I, "crisisPath", Name>
-      >),
+    ) => {
+      return createContentHandle(
+        "crisis_path",
+        mint("crisisPath", name),
+        (def: CrisisPathDef<MintedContentId<P, I, "crisisPath", Name>>) => {
+          return defineCrisisPath(def);
+        }
+      ).define(
+        def as unknown as Omit<CrisisPathDef<MintedContentId<P, I, "crisisPath", Name>>, "id">
+      );
+    },
+    crisisLevelHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "crisis_level",
+        mint("crisisLevel", name),
+        (def: CrisisLevelDef<MintedContentId<P, I, "crisisLevel", Name>>) => {
+          return defineCrisisLevel(def);
+        }
+      );
+    },
     crisisLevel: <const Name extends string>(
       name: Name,
       def: Omit<CrisisLevelDef<MintedContentId<P, I, "crisisLevel", Name>>, "id">
-    ) =>
-      defineCrisisLevel({ ...def, id: mint("crisisLevel", name) } as CrisisLevelDef<
-        MintedContentId<P, I, "crisisLevel", Name>
-      >),
+    ) => {
+      return createContentHandle(
+        "crisis_level",
+        mint("crisisLevel", name),
+        (def: CrisisLevelDef<MintedContentId<P, I, "crisisLevel", Name>>) => {
+          return defineCrisisLevel(def);
+        }
+      ).define(
+        def as unknown as Omit<CrisisLevelDef<MintedContentId<P, I, "crisisLevel", Name>>, "id">
+      );
+    },
+    crisisObjectiveHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "crisis_objective",
+        mint("crisisObjective", name),
+        (def: CrisisObjectiveDef<MintedContentId<P, I, "crisisObjective", Name>>) => {
+          return defineCrisisObjective(def);
+        }
+      );
+    },
     crisisObjective: <const Name extends string>(
       name: Name,
       def: Omit<CrisisObjectiveDef<MintedContentId<P, I, "crisisObjective", Name>>, "id">
-    ) =>
-      defineCrisisObjective({ ...def, id: mint("crisisObjective", name) } as CrisisObjectiveDef<
-        MintedContentId<P, I, "crisisObjective", Name>
-      >),
+    ) => {
+      return createContentHandle(
+        "crisis_objective",
+        mint("crisisObjective", name),
+        (def: CrisisObjectiveDef<MintedContentId<P, I, "crisisObjective", Name>>) => {
+          return defineCrisisObjective(def);
+        }
+      ).define(
+        def as unknown as Omit<
+          CrisisObjectiveDef<MintedContentId<P, I, "crisisObjective", Name>>,
+          "id"
+        >
+      );
+    },
+    menacePerkHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "menace_perk",
+        mint("menacePerk", name),
+        (def: MenacePerkDef<MintedContentId<P, I, "menacePerk", Name>>) => {
+          return defineMenacePerk(def);
+        }
+      );
+    },
     menacePerk: <const Name extends string>(
       name: Name,
       def: Omit<MenacePerkDef<MintedContentId<P, I, "menacePerk", Name>>, "id">
-    ) =>
-      defineMenacePerk({ ...def, id: mint("menacePerk", name) } as MenacePerkDef<
-        MintedContentId<P, I, "menacePerk", Name>
-      >),
+    ) => {
+      return createContentHandle(
+        "menace_perk",
+        mint("menacePerk", name),
+        (def: MenacePerkDef<MintedContentId<P, I, "menacePerk", Name>>) => {
+          return defineMenacePerk(def);
+        }
+      ).define(
+        def as unknown as Omit<MenacePerkDef<MintedContentId<P, I, "menacePerk", Name>>, "id">
+      );
+    },
+    agendaHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "agenda",
+        mint("agenda", name),
+        (def: AgendaDef<MintedContentId<P, I, "agenda", Name>>) => {
+          return defineAgenda(def);
+        }
+      );
+    },
     agenda: <const Name extends string>(
       name: Name,
       def: Omit<AgendaDef<MintedContentId<P, I, "agenda", Name>>, "id">
-    ) =>
-      defineAgenda({ ...def, id: mint("agenda", name) } as AgendaDef<
-        MintedContentId<P, I, "agenda", Name>
-      >),
+    ) => {
+      return createContentHandle(
+        "agenda",
+        mint("agenda", name),
+        (def: AgendaDef<MintedContentId<P, I, "agenda", Name>>) => {
+          return defineAgenda(def);
+        }
+      ).define(def as unknown as Omit<AgendaDef<MintedContentId<P, I, "agenda", Name>>, "id">);
+    },
+    edictHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "edict",
+        mint("edict", name),
+        (def: EdictDef<MintedContentId<P, I, "edict", Name>>) => {
+          return defineEdict(def);
+        }
+      );
+    },
     edict: <const Name extends string>(
       name: Name,
       def: Omit<EdictDef<MintedContentId<P, I, "edict", Name>>, "id">
-    ) =>
-      defineEdict({ ...def, id: mint("edict", name) } as EdictDef<
-        MintedContentId<P, I, "edict", Name>
-      >),
+    ) => {
+      return createContentHandle(
+        "edict",
+        mint("edict", name),
+        (def: EdictDef<MintedContentId<P, I, "edict", Name>>) => {
+          return defineEdict(def);
+        }
+      ).define(def as unknown as Omit<EdictDef<MintedContentId<P, I, "edict", Name>>, "id">);
+    },
+    decisionHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "decision",
+        mint("decision", name),
+        (def: DecisionDef<MintedContentId<P, I, "decision", Name>>) => {
+          return defineDecision(def);
+        }
+      );
+    },
     decision: <const Name extends string, S extends DecisionScope = "planet">(
       name: Name,
       def: Omit<DecisionDef<MintedContentId<P, I, "decision", Name>, S>, "id">
-    ) =>
-      defineDecision({ ...def, id: mint("decision", name) } as DecisionDef<
-        MintedContentId<P, I, "decision", Name>,
-        S
-      >),
+    ) => {
+      return createContentHandle(
+        "decision",
+        mint("decision", name),
+        (def: DecisionDef<MintedContentId<P, I, "decision", Name>>) => {
+          return defineDecision(def);
+        }
+      ).define(def as unknown as Omit<DecisionDef<MintedContentId<P, I, "decision", Name>>, "id">);
+    },
+    jobHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "job",
+        mint("job", name),
+        (def: JobDef<MintedContentId<P, I, "job", Name>>) => {
+          return defineJob(def);
+        }
+      );
+    },
     job: <const Name extends string>(
       name: Name,
       def: Omit<JobDef<MintedContentId<P, I, "job", Name>>, "id">
-    ) => defineJob({ ...def, id: mint("job", name) } as JobDef<MintedContentId<P, I, "job", Name>>),
+    ) => {
+      return createContentHandle(
+        "job",
+        mint("job", name),
+        (def: JobDef<MintedContentId<P, I, "job", Name>>) => {
+          return defineJob(def);
+        }
+      ).define(def as unknown as Omit<JobDef<MintedContentId<P, I, "job", Name>>, "id">);
+    },
+    globalShipDesignHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "global_ship_design",
+        mint("globalShipDesign", name),
+        (def: GlobalShipDesignDef<MintedContentId<P, I, "globalShipDesign", Name>>) => {
+          return defineGlobalShipDesign(def);
+        }
+      );
+    },
     globalShipDesign: <const Name extends string>(
       name: Name,
       def: Omit<GlobalShipDesignDef<MintedContentId<P, I, "globalShipDesign", Name>>, "id">
-    ) =>
-      defineGlobalShipDesign({ ...def, id: mint("globalShipDesign", name) } as GlobalShipDesignDef<
-        MintedContentId<P, I, "globalShipDesign", Name>
-      >),
+    ) => {
+      return createContentHandle(
+        "global_ship_design",
+        mint("globalShipDesign", name),
+        (def: GlobalShipDesignDef<MintedContentId<P, I, "globalShipDesign", Name>>) => {
+          return defineGlobalShipDesign(def);
+        }
+      ).define(
+        def as unknown as Omit<
+          GlobalShipDesignDef<MintedContentId<P, I, "globalShipDesign", Name>>,
+          "id"
+        >
+      );
+    },
+    utilityComponentTemplateHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "utility_component_template",
+        mint("utilityComponentTemplate", name),
+        (
+          def: UtilityComponentTemplateDef<MintedContentId<P, I, "utilityComponentTemplate", Name>>
+        ) => {
+          return defineUtilityComponentTemplate(def);
+        }
+      );
+    },
     utilityComponentTemplate: <const Name extends string>(
       name: Name,
       def: Omit<
         UtilityComponentTemplateDef<MintedContentId<P, I, "utilityComponentTemplate", Name>>,
         "id"
       >
-    ) =>
-      defineUtilityComponentTemplate({
-        ...def,
-        id: mint("utilityComponentTemplate", name),
-      } as UtilityComponentTemplateDef<MintedContentId<P, I, "utilityComponentTemplate", Name>>),
+    ) => {
+      return createContentHandle(
+        "utility_component_template",
+        mint("utilityComponentTemplate", name),
+        (
+          def: UtilityComponentTemplateDef<MintedContentId<P, I, "utilityComponentTemplate", Name>>
+        ) => {
+          return defineUtilityComponentTemplate(def);
+        }
+      ).define(
+        def as unknown as Omit<
+          UtilityComponentTemplateDef<MintedContentId<P, I, "utilityComponentTemplate", Name>>,
+          "id"
+        >
+      );
+    },
+    weaponComponentTemplateHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "weapon_component_template",
+        mint("weaponComponentTemplate", name),
+        (
+          def: WeaponComponentTemplateDef<MintedContentId<P, I, "weaponComponentTemplate", Name>>
+        ) => {
+          return defineWeaponComponentTemplate(def);
+        }
+      );
+    },
     weaponComponentTemplate: <const Name extends string>(
       name: Name,
       def: Omit<
         WeaponComponentTemplateDef<MintedContentId<P, I, "weaponComponentTemplate", Name>>,
         "id"
       >
-    ) =>
-      defineWeaponComponentTemplate({
-        ...def,
-        id: mint("weaponComponentTemplate", name),
-      } as WeaponComponentTemplateDef<MintedContentId<P, I, "weaponComponentTemplate", Name>>),
+    ) => {
+      return createContentHandle(
+        "weapon_component_template",
+        mint("weaponComponentTemplate", name),
+        (
+          def: WeaponComponentTemplateDef<MintedContentId<P, I, "weaponComponentTemplate", Name>>
+        ) => {
+          return defineWeaponComponentTemplate(def);
+        }
+      ).define(
+        def as unknown as Omit<
+          WeaponComponentTemplateDef<MintedContentId<P, I, "weaponComponentTemplate", Name>>,
+          "id"
+        >
+      );
+    },
+    strikeCraftComponentTemplateHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "strike_craft_component_template",
+        mint("strikeCraftComponentTemplate", name),
+        (
+          def: StrikeCraftComponentTemplateDef<
+            MintedContentId<P, I, "strikeCraftComponentTemplate", Name>
+          >
+        ) => {
+          return defineStrikeCraftComponentTemplate(def);
+        }
+      );
+    },
     strikeCraftComponentTemplate: <const Name extends string>(
       name: Name,
       def: Omit<
@@ -1438,101 +2341,310 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
         >,
         "id"
       >
-    ) =>
-      defineStrikeCraftComponentTemplate({
-        ...def,
-        id: mint("strikeCraftComponentTemplate", name),
-      } as StrikeCraftComponentTemplateDef<
-        MintedContentId<P, I, "strikeCraftComponentTemplate", Name>
-      >),
+    ) => {
+      return createContentHandle(
+        "strike_craft_component_template",
+        mint("strikeCraftComponentTemplate", name),
+        (
+          def: StrikeCraftComponentTemplateDef<
+            MintedContentId<P, I, "strikeCraftComponentTemplate", Name>
+          >
+        ) => {
+          return defineStrikeCraftComponentTemplate(def);
+        }
+      ).define(
+        def as unknown as Omit<
+          StrikeCraftComponentTemplateDef<
+            MintedContentId<P, I, "strikeCraftComponentTemplate", Name>
+          >,
+          "id"
+        >
+      );
+    },
+    shipSizeHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "ship_size",
+        mint("shipSize", name),
+        (def: ShipSizeDef<MintedContentId<P, I, "shipSize", Name>>) => {
+          return defineShipSize(def);
+        }
+      );
+    },
     shipSize: <const Name extends string>(
       name: Name,
       def: Omit<ShipSizeDef<MintedContentId<P, I, "shipSize", Name>>, "id">
-    ) =>
-      defineShipSize({ ...def, id: mint("shipSize", name) } as ShipSizeDef<
-        MintedContentId<P, I, "shipSize", Name>
-      >),
+    ) => {
+      return createContentHandle(
+        "ship_size",
+        mint("shipSize", name),
+        (def: ShipSizeDef<MintedContentId<P, I, "shipSize", Name>>) => {
+          return defineShipSize(def);
+        }
+      ).define(def as unknown as Omit<ShipSizeDef<MintedContentId<P, I, "shipSize", Name>>, "id">);
+    },
+    opinionModifierHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "opinion_modifier",
+        mint("opinionModifier", name),
+        (def: OpinionModifierDef<MintedContentId<P, I, "opinionModifier", Name>>) => {
+          return defineOpinionModifier(def);
+        }
+      );
+    },
     opinionModifier: <const Name extends string>(
       name: Name,
       def: Omit<OpinionModifierDef<MintedContentId<P, I, "opinionModifier", Name>>, "id">
-    ) =>
-      defineOpinionModifier({ ...def, id: mint("opinionModifier", name) } as OpinionModifierDef<
-        MintedContentId<P, I, "opinionModifier", Name>
-      >),
+    ) => {
+      return createContentHandle(
+        "opinion_modifier",
+        mint("opinionModifier", name),
+        (def: OpinionModifierDef<MintedContentId<P, I, "opinionModifier", Name>>) => {
+          return defineOpinionModifier(def);
+        }
+      ).define(
+        def as unknown as Omit<
+          OpinionModifierDef<MintedContentId<P, I, "opinionModifier", Name>>,
+          "id"
+        >
+      );
+    },
+    staticModifierHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "static_modifier",
+        mint("staticModifier", name),
+        (def: StaticModifierDef<MintedContentId<P, I, "staticModifier", Name>>) => {
+          return defineStaticModifier(def);
+        }
+      );
+    },
     staticModifier: <
       const Name extends string,
       S extends StaticModifierScope = StaticModifierScope,
     >(
       name: Name,
       def: Omit<StaticModifierDef<MintedContentId<P, I, "staticModifier", Name>, S>, "id">
-    ) =>
-      defineStaticModifier({ ...def, id: mint("staticModifier", name) } as StaticModifierDef<
-        MintedContentId<P, I, "staticModifier", Name>,
-        S
-      >),
+    ) => {
+      return createContentHandle(
+        "static_modifier",
+        mint("staticModifier", name),
+        (def: StaticModifierDef<MintedContentId<P, I, "staticModifier", Name>>) => {
+          return defineStaticModifier(def);
+        }
+      ).define(
+        def as unknown as Omit<
+          StaticModifierDef<MintedContentId<P, I, "staticModifier", Name>>,
+          "id"
+        >
+      );
+    },
+    scriptedModifierHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "scripted_modifier",
+        mint("scriptedModifier", name),
+        (def: ScriptedModifierDef<MintedContentId<P, I, "scriptedModifier", Name>>) => {
+          return defineScriptedModifier(def);
+        }
+      );
+    },
     scriptedModifier: <const Name extends string, W extends ScriptedModifierCategory>(
       name: Name,
       def: Omit<ScriptedModifierDef<MintedContentId<P, I, "scriptedModifier", Name>>, "id"> & {
         readonly category: W;
       }
-    ) =>
-      defineScriptedModifier({ ...def, id: mint("scriptedModifier", name) } as ScriptedModifierDef<
-        MintedContentId<P, I, "scriptedModifier", Name>
-      >),
+    ) => {
+      return createContentHandle(
+        "scripted_modifier",
+        mint("scriptedModifier", name),
+        (def: ScriptedModifierDef<MintedContentId<P, I, "scriptedModifier", Name>>) => {
+          return defineScriptedModifier(def);
+        }
+      ).define(
+        def as unknown as Omit<
+          ScriptedModifierDef<MintedContentId<P, I, "scriptedModifier", Name>>,
+          "id"
+        >
+      );
+    },
+    casusBelliHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "casus_belli",
+        mint("casusBelli", name),
+        (def: CasusBelliDef<MintedContentId<P, I, "casusBelli", Name>>) => {
+          return defineCasusBelli(def);
+        }
+      );
+    },
     casusBelli: <const Name extends string>(
       name: Name,
       def: Omit<CasusBelliDef<MintedContentId<P, I, "casusBelli", Name>>, "id">
-    ) =>
-      defineCasusBelli({ ...def, id: mint("casusBelli", name) } as CasusBelliDef<
-        MintedContentId<P, I, "casusBelli", Name>
-      >),
+    ) => {
+      return createContentHandle(
+        "casus_belli",
+        mint("casusBelli", name),
+        (def: CasusBelliDef<MintedContentId<P, I, "casusBelli", Name>>) => {
+          return defineCasusBelli(def);
+        }
+      ).define(
+        def as unknown as Omit<CasusBelliDef<MintedContentId<P, I, "casusBelli", Name>>, "id">
+      );
+    },
+    warGoalHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "war_goal",
+        mint("warGoal", name),
+        (def: WarGoalDef<MintedContentId<P, I, "warGoal", Name>>) => {
+          return defineWarGoal(def);
+        }
+      );
+    },
     warGoal: <const Name extends string>(
       name: Name,
       def: Omit<WarGoalDef<MintedContentId<P, I, "warGoal", Name>>, "id">
-    ) =>
-      defineWarGoal({ ...def, id: mint("warGoal", name) } as WarGoalDef<
-        MintedContentId<P, I, "warGoal", Name>
-      >),
+    ) => {
+      return createContentHandle(
+        "war_goal",
+        mint("warGoal", name),
+        (def: WarGoalDef<MintedContentId<P, I, "warGoal", Name>>) => {
+          return defineWarGoal(def);
+        }
+      ).define(def as unknown as Omit<WarGoalDef<MintedContentId<P, I, "warGoal", Name>>, "id">);
+    },
+    agreementPresetHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "agreement_preset",
+        mint("agreementPreset", name),
+        (def: AgreementPresetDef<MintedContentId<P, I, "agreementPreset", Name>>) => {
+          return defineAgreementPreset(def);
+        }
+      );
+    },
     agreementPreset: <const Name extends string>(
       name: Name,
       def: Omit<AgreementPresetDef<MintedContentId<P, I, "agreementPreset", Name>>, "id">
-    ) =>
-      defineAgreementPreset({ ...def, id: mint("agreementPreset", name) } as AgreementPresetDef<
-        MintedContentId<P, I, "agreementPreset", Name>
-      >),
+    ) => {
+      return createContentHandle(
+        "agreement_preset",
+        mint("agreementPreset", name),
+        (def: AgreementPresetDef<MintedContentId<P, I, "agreementPreset", Name>>) => {
+          return defineAgreementPreset(def);
+        }
+      ).define(
+        def as unknown as Omit<
+          AgreementPresetDef<MintedContentId<P, I, "agreementPreset", Name>>,
+          "id"
+        >
+      );
+    },
+    bombardmentStanceHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "bombardment_stance",
+        mint("bombardmentStance", name),
+        (def: BombardmentStanceDef<MintedContentId<P, I, "bombardmentStance", Name>>) => {
+          return defineBombardmentStance(def);
+        }
+      );
+    },
     bombardmentStance: <const Name extends string>(
       name: Name,
       def: Omit<BombardmentStanceDef<MintedContentId<P, I, "bombardmentStance", Name>>, "id">
-    ) =>
-      defineBombardmentStance({
-        ...def,
-        id: mint("bombardmentStance", name),
-      } as BombardmentStanceDef<MintedContentId<P, I, "bombardmentStance", Name>>),
+    ) => {
+      return createContentHandle(
+        "bombardment_stance",
+        mint("bombardmentStance", name),
+        (def: BombardmentStanceDef<MintedContentId<P, I, "bombardmentStance", Name>>) => {
+          return defineBombardmentStance(def);
+        }
+      ).define(
+        def as unknown as Omit<
+          BombardmentStanceDef<MintedContentId<P, I, "bombardmentStance", Name>>,
+          "id"
+        >
+      );
+    },
+    archaeologicalSiteTypeHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "archaeological_site_type",
+        mint("archaeologicalSiteType", name),
+        (def: ArchaeologicalSiteTypeDef<MintedContentId<P, I, "archaeologicalSiteType", Name>>) => {
+          return defineArchaeologicalSiteType(def);
+        }
+      );
+    },
     archaeologicalSiteType: <const Name extends string>(
       name: Name,
       def: Omit<
         ArchaeologicalSiteTypeDef<MintedContentId<P, I, "archaeologicalSiteType", Name>>,
         "id"
       >
-    ) =>
-      defineArchaeologicalSiteType({
-        ...def,
-        id: mint("archaeologicalSiteType", name),
-      } as ArchaeologicalSiteTypeDef<MintedContentId<P, I, "archaeologicalSiteType", Name>>),
+    ) => {
+      return createContentHandle(
+        "archaeological_site_type",
+        mint("archaeologicalSiteType", name),
+        (def: ArchaeologicalSiteTypeDef<MintedContentId<P, I, "archaeologicalSiteType", Name>>) => {
+          return defineArchaeologicalSiteType(def);
+        }
+      ).define(
+        def as unknown as Omit<
+          ArchaeologicalSiteTypeDef<MintedContentId<P, I, "archaeologicalSiteType", Name>>,
+          "id"
+        >
+      );
+    },
+    scriptedLocHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "scripted_loc",
+        mint("scriptedLoc", name),
+        (def: ScriptedLocDef<MintedContentId<P, I, "scriptedLoc", Name>>) => {
+          return defineScriptedLoc(def);
+        }
+      );
+    },
     scriptedLoc: <const Name extends string>(
       name: Name,
       def: Omit<ScriptedLocDef<MintedContentId<P, I, "scriptedLoc", Name>>, "id">
-    ) =>
-      defineScriptedLoc({ ...def, id: mint("scriptedLoc", name) } as ScriptedLocDef<
-        MintedContentId<P, I, "scriptedLoc", Name>
-      >),
+    ) => {
+      return createContentHandle(
+        "scripted_loc",
+        mint("scriptedLoc", name),
+        (def: ScriptedLocDef<MintedContentId<P, I, "scriptedLoc", Name>>) => {
+          return defineScriptedLoc(def);
+        }
+      ).define(
+        def as unknown as Omit<ScriptedLocDef<MintedContentId<P, I, "scriptedLoc", Name>>, "id">
+      );
+    },
+    councilorHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "councilor",
+        mint("councilor", name),
+        (def: CouncilorDef<MintedContentId<P, I, "councilor", Name>>) => {
+          return defineCouncilor(def);
+        }
+      );
+    },
     councilor: <const Name extends string>(
       name: Name,
       def: Omit<CouncilorDef<MintedContentId<P, I, "councilor", Name>>, "id">
-    ) =>
-      defineCouncilor({ ...def, id: mint("councilor", name) } as CouncilorDef<
-        MintedContentId<P, I, "councilor", Name>
-      >),
+    ) => {
+      return createContentHandle(
+        "councilor",
+        mint("councilor", name),
+        (def: CouncilorDef<MintedContentId<P, I, "councilor", Name>>) => {
+          return defineCouncilor(def);
+        }
+      ).define(
+        def as unknown as Omit<CouncilorDef<MintedContentId<P, I, "councilor", Name>>, "id">
+      );
+    },
+    economicCategoryHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "economic_category",
+        mint("economicCategory", name),
+        (def: EconomicCategoryDef<MintedContentId<P, I, "economicCategory", Name>>) => {
+          return defineEconomicCategory(def);
+        }
+      );
+    },
     economicCategory: <const Name extends string, const W extends EconomicCategoryWitness>(
       name: Name,
       def: Omit<
@@ -1548,82 +2660,255 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
       > &
         W &
         ExactEconomicCategoryWitness<W>
-    ) =>
-      defineEconomicCategory({ ...def, id: mint("economicCategory", name) } as EconomicCategoryDef<
-        MintedContentId<P, I, "economicCategory", Name>
-      >),
+    ) => {
+      return createContentHandle(
+        "economic_category",
+        mint("economicCategory", name),
+        (def: EconomicCategoryDef<MintedContentId<P, I, "economicCategory", Name>>) => {
+          return defineEconomicCategory(def);
+        }
+      ).define(
+        def as unknown as Omit<
+          EconomicCategoryDef<MintedContentId<P, I, "economicCategory", Name>>,
+          "id"
+        >
+      );
+    },
+    civicOrOriginHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "civic_or_origin",
+        mint("civicOrOrigin", name),
+        (def: CivicOrOriginDef<MintedContentId<P, I, "civicOrOrigin", Name>>) => {
+          return defineCivicOrOrigin(def);
+        }
+      );
+    },
     civicOrOrigin: <const Name extends string>(
       name: Name,
       def: Omit<CivicOrOriginDef<MintedContentId<P, I, "civicOrOrigin", Name>>, "id">
-    ) =>
-      defineCivicOrOrigin({ ...def, id: mint("civicOrOrigin", name) } as CivicOrOriginDef<
-        MintedContentId<P, I, "civicOrOrigin", Name>
-      >),
+    ) => {
+      return createContentHandle(
+        "civic_or_origin",
+        mint("civicOrOrigin", name),
+        (def: CivicOrOriginDef<MintedContentId<P, I, "civicOrOrigin", Name>>) => {
+          return defineCivicOrOrigin(def);
+        }
+      ).define(
+        def as unknown as Omit<CivicOrOriginDef<MintedContentId<P, I, "civicOrOrigin", Name>>, "id">
+      );
+    },
+    componentSetHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "component_set",
+        mint("componentSet", name),
+        (def: ComponentSetDef<MintedContentId<P, I, "componentSet", Name>>) => {
+          return defineComponentSet(def);
+        }
+      );
+    },
     componentSet: <const Name extends string>(
       name: Name,
       def: Omit<ComponentSetDef<MintedContentId<P, I, "componentSet", Name>>, "id">
-    ) =>
-      defineComponentSet({ ...def, id: mint("componentSet", name) } as ComponentSetDef<
-        MintedContentId<P, I, "componentSet", Name>
-      >),
+    ) => {
+      return createContentHandle(
+        "component_set",
+        mint("componentSet", name),
+        (def: ComponentSetDef<MintedContentId<P, I, "componentSet", Name>>) => {
+          return defineComponentSet(def);
+        }
+      ).define(
+        def as unknown as Omit<ComponentSetDef<MintedContentId<P, I, "componentSet", Name>>, "id">
+      );
+    },
+    sectionTemplateHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "section_template",
+        mint("sectionTemplate", name),
+        (def: SectionTemplateDef<MintedContentId<P, I, "sectionTemplate", Name>>) => {
+          return defineSectionTemplate(def);
+        }
+      );
+    },
     sectionTemplate: <const Name extends string>(
       name: Name,
       def: Omit<SectionTemplateDef<MintedContentId<P, I, "sectionTemplate", Name>>, "id">
-    ) =>
-      defineSectionTemplate({ ...def, id: mint("sectionTemplate", name) } as SectionTemplateDef<
-        MintedContentId<P, I, "sectionTemplate", Name>
-      >),
+    ) => {
+      return createContentHandle(
+        "section_template",
+        mint("sectionTemplate", name),
+        (def: SectionTemplateDef<MintedContentId<P, I, "sectionTemplate", Name>>) => {
+          return defineSectionTemplate(def);
+        }
+      ).define(
+        def as unknown as Omit<
+          SectionTemplateDef<MintedContentId<P, I, "sectionTemplate", Name>>,
+          "id"
+        >
+      );
+    },
+    ambientObjectHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "ambient_object",
+        mint("ambientObject", name),
+        (def: AmbientObjectDef<MintedContentId<P, I, "ambientObject", Name>>) => {
+          return defineAmbientObject(def);
+        }
+      );
+    },
     ambientObject: <const Name extends string>(
       name: Name,
       def: Omit<AmbientObjectDef<MintedContentId<P, I, "ambientObject", Name>>, "id">
-    ) =>
-      defineAmbientObject({ ...def, id: mint("ambientObject", name) } as AmbientObjectDef<
-        MintedContentId<P, I, "ambientObject", Name>
-      >),
+    ) => {
+      return createContentHandle(
+        "ambient_object",
+        mint("ambientObject", name),
+        (def: AmbientObjectDef<MintedContentId<P, I, "ambientObject", Name>>) => {
+          return defineAmbientObject(def);
+        }
+      ).define(
+        def as unknown as Omit<AmbientObjectDef<MintedContentId<P, I, "ambientObject", Name>>, "id">
+      );
+    },
+    graphicalCultureHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "graphical_culture",
+        mint("graphicalCulture", name),
+        (def: GraphicalCultureDef<MintedContentId<P, I, "graphicalCulture", Name>>) => {
+          return defineGraphicalCulture(def);
+        }
+      );
+    },
     graphicalCulture: <const Name extends string>(
       name: Name,
       def: Omit<GraphicalCultureDef<MintedContentId<P, I, "graphicalCulture", Name>>, "id">
-    ) =>
-      defineGraphicalCulture({ ...def, id: mint("graphicalCulture", name) } as GraphicalCultureDef<
-        MintedContentId<P, I, "graphicalCulture", Name>
-      >),
+    ) => {
+      return createContentHandle(
+        "graphical_culture",
+        mint("graphicalCulture", name),
+        (def: GraphicalCultureDef<MintedContentId<P, I, "graphicalCulture", Name>>) => {
+          return defineGraphicalCulture(def);
+        }
+      ).define(
+        def as unknown as Omit<
+          GraphicalCultureDef<MintedContentId<P, I, "graphicalCulture", Name>>,
+          "id"
+        >
+      );
+    },
+    starbaseLevelHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "starbase_level",
+        mint("starbaseLevel", name),
+        (def: StarbaseLevelDef<MintedContentId<P, I, "starbaseLevel", Name>>) => {
+          return defineStarbaseLevel(def);
+        }
+      );
+    },
     starbaseLevel: <const Name extends string>(
       name: Name,
       def: Omit<StarbaseLevelDef<MintedContentId<P, I, "starbaseLevel", Name>>, "id">
-    ) =>
-      defineStarbaseLevel({ ...def, id: mint("starbaseLevel", name) } as StarbaseLevelDef<
-        MintedContentId<P, I, "starbaseLevel", Name>
-      >),
+    ) => {
+      return createContentHandle(
+        "starbase_level",
+        mint("starbaseLevel", name),
+        (def: StarbaseLevelDef<MintedContentId<P, I, "starbaseLevel", Name>>) => {
+          return defineStarbaseLevel(def);
+        }
+      ).define(
+        def as unknown as Omit<StarbaseLevelDef<MintedContentId<P, I, "starbaseLevel", Name>>, "id">
+      );
+    },
+    speciesClassHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "species_class",
+        mint("speciesClass", name),
+        (def: SpeciesClassDef<MintedContentId<P, I, "speciesClass", Name>>) => {
+          return defineSpeciesClass(def);
+        }
+      );
+    },
     speciesClass: <const Name extends string>(
       name: Name,
       def: Omit<SpeciesClassDef<MintedContentId<P, I, "speciesClass", Name>>, "id">
-    ) =>
-      defineSpeciesClass({ ...def, id: mint("speciesClass", name) } as SpeciesClassDef<
-        MintedContentId<P, I, "speciesClass", Name>
-      >),
+    ) => {
+      return createContentHandle(
+        "species_class",
+        mint("speciesClass", name),
+        (def: SpeciesClassDef<MintedContentId<P, I, "speciesClass", Name>>) => {
+          return defineSpeciesClass(def);
+        }
+      ).define(
+        def as unknown as Omit<SpeciesClassDef<MintedContentId<P, I, "speciesClass", Name>>, "id">
+      );
+    },
+    countryShipOfSizeLimitHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "country_ship_of_size_limit",
+        mint("countryShipOfSizeLimit", name),
+        (def: CountryShipOfSizeLimitDef<MintedContentId<P, I, "countryShipOfSizeLimit", Name>>) => {
+          return defineCountryShipOfSizeLimit(def);
+        }
+      );
+    },
     countryShipOfSizeLimit: <const Name extends string>(
       name: Name,
       def: Omit<
         CountryShipOfSizeLimitDef<MintedContentId<P, I, "countryShipOfSizeLimit", Name>>,
         "id"
       >
-    ) =>
-      defineCountryShipOfSizeLimit({
-        ...def,
-        id: mint("countryShipOfSizeLimit", name),
-      } as CountryShipOfSizeLimitDef<MintedContentId<P, I, "countryShipOfSizeLimit", Name>>),
+    ) => {
+      return createContentHandle(
+        "country_ship_of_size_limit",
+        mint("countryShipOfSizeLimit", name),
+        (def: CountryShipOfSizeLimitDef<MintedContentId<P, I, "countryShipOfSizeLimit", Name>>) => {
+          return defineCountryShipOfSizeLimit(def);
+        }
+      ).define(
+        def as unknown as Omit<
+          CountryShipOfSizeLimitDef<MintedContentId<P, I, "countryShipOfSizeLimit", Name>>,
+          "id"
+        >
+      );
+    },
     addShipOfSizeLimits,
+    solarSystemInitializerHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "solar_system_initializer",
+        mint("solarSystemInitializer", name),
+        (def: SolarSystemInitializerDef<MintedContentId<P, I, "solarSystemInitializer", Name>>) => {
+          return defineSolarSystemInitializer(def);
+        }
+      );
+    },
     solarSystemInitializer: <const Name extends string>(
       name: Name,
       def: Omit<
         SolarSystemInitializerDef<MintedContentId<P, I, "solarSystemInitializer", Name>>,
         "id"
       >
-    ) =>
-      defineSolarSystemInitializer({
-        ...def,
-        id: mint("solarSystemInitializer", name),
-      } as SolarSystemInitializerDef<MintedContentId<P, I, "solarSystemInitializer", Name>>),
+    ) => {
+      return createContentHandle(
+        "solar_system_initializer",
+        mint("solarSystemInitializer", name),
+        (def: SolarSystemInitializerDef<MintedContentId<P, I, "solarSystemInitializer", Name>>) => {
+          return defineSolarSystemInitializer(def);
+        }
+      ).define(
+        def as unknown as Omit<
+          SolarSystemInitializerDef<MintedContentId<P, I, "solarSystemInitializer", Name>>,
+          "id"
+        >
+      );
+    },
+    specialProjectHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "special_project",
+        mint("specialProject", name),
+        (def: SpecialProjectDef<MintedContentId<P, I, "specialProject", Name>>) => {
+          return defineSpecialProject(def);
+        }
+      );
+    },
     specialProject: <
       const Name extends string,
       E extends SpEventScope = "country_event",
@@ -1631,42 +2916,111 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
     >(
       name: Name,
       def: SpecialProjectFields<E, L>
-    ) =>
-      defineSpecialProject({ ...def, id: mint("specialProject", name) } as SpecialProjectDef<
-        MintedContentId<P, I, "specialProject", Name>,
-        E,
-        L
-      >),
+    ) => {
+      return createContentHandle(
+        "special_project",
+        mint("specialProject", name),
+        (def: SpecialProjectDef<MintedContentId<P, I, "specialProject", Name>>) => {
+          return defineSpecialProject(def);
+        }
+      ).define(
+        def as unknown as Omit<
+          SpecialProjectDef<MintedContentId<P, I, "specialProject", Name>>,
+          "id"
+        >
+      );
+    },
+    megastructureHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "megastructure",
+        mint("megastructure", name),
+        (def: MegastructureDef<MintedContentId<P, I, "megastructure", Name>>) => {
+          return defineMegastructure(def);
+        }
+      );
+    },
     megastructure: <const Name extends string>(
       name: Name,
       def: Omit<MegastructureDef<MintedContentId<P, I, "megastructure", Name>>, "id">
-    ) =>
-      defineMegastructure({ ...def, id: mint("megastructure", name) } as MegastructureDef<
-        MintedContentId<P, I, "megastructure", Name>
-      >),
+    ) => {
+      return createContentHandle(
+        "megastructure",
+        mint("megastructure", name),
+        (def: MegastructureDef<MintedContentId<P, I, "megastructure", Name>>) => {
+          return defineMegastructure(def);
+        }
+      ).define(
+        def as unknown as Omit<MegastructureDef<MintedContentId<P, I, "megastructure", Name>>, "id">
+      );
+    },
     patchMegastructure: <Source extends ParsedMegastructure>(
       megastructure: Source,
       patch: (megastructure: Source) => MegastructurePatch
     ) => patchMegastructure(megastructure, patch, prefix),
+    spriteTypeHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "spriteType",
+        mint("spriteType", name),
+        (def: SpriteTypeDef<MintedIdOf<P, I, "spriteType", Name>>) => {
+          return defineSpriteType(def);
+        }
+      );
+    },
     spriteType: <const Name extends string>(
       name: Name,
       def: Omit<SpriteTypeDef<MintedIdOf<P, I, "spriteType", Name>>, "id">
-    ) =>
-      defineSpriteType({ ...def, id: mint("spriteType", name) } as SpriteTypeDef<
-        MintedIdOf<P, I, "spriteType", Name>
-      >),
+    ) => {
+      return createContentHandle(
+        "spriteType",
+        mint("spriteType", name),
+        (def: SpriteTypeDef<MintedIdOf<P, I, "spriteType", Name>>) => {
+          return defineSpriteType(def);
+        }
+      ).define(def as unknown as Omit<SpriteTypeDef<MintedIdOf<P, I, "spriteType", Name>>, "id">);
+    },
+    spriteTextIconHandle: <const Name extends string>(name: Name) => {
+      assertName(name);
+      return createContentHandle(
+        "spriteType",
+        `GFX_text_${prefix}_${name}` as SpriteTextIconName<P, Name>,
+        (def: SpriteTypeDef<SpriteTextIconName<P, Name>>) => {
+          return shapeMinted(defineSpriteType(def), mintOwner, "spriteTextIcon");
+        }
+      );
+    },
     spriteTextIcon: <const Name extends string>(
       name: Name,
       def: Omit<SpriteTypeDef<SpriteTextIconName<P, Name>>, "id">
     ) => {
       assertName(name);
-      return shapeMinted(
-        defineSpriteType({
-          ...def,
-          id: `GFX_text_${prefix}_${name}` as SpriteTextIconName<P, Name>,
-        } as SpriteTypeDef<SpriteTextIconName<P, Name>>),
-        mintOwner,
-        "spriteTextIcon"
+      return createContentHandle(
+        "spriteType",
+        `GFX_text_${prefix}_${name}` as SpriteTextIconName<P, Name>,
+        (def: SpriteTypeDef<SpriteTextIconName<P, Name>>) => {
+          return shapeMinted(defineSpriteType(def), mintOwner, "spriteTextIcon");
+        }
+      ).define(def);
+    },
+    spriteFleetOrderButtonGroundSupportHandle: <
+      const Target extends string,
+      const Selected extends boolean = false,
+    >(
+      bombardmentStance: Target | (BombardmentStanceRef & { readonly id: Target }),
+      options?: { readonly selected?: Selected }
+    ) => {
+      return createContentHandle(
+        "spriteType",
+        `GFX_fleet_order_button_ground_support_${shapeMintTarget(bombardmentStance)}${options?.selected === true ? "_selected" : ""}` as SpriteFleetOrderButtonGroundSupportName<
+          Target,
+          Selected
+        >,
+        (def: SpriteTypeDef<SpriteFleetOrderButtonGroundSupportName<Target, Selected>>) => {
+          return shapeMinted(
+            defineSpriteType(def),
+            mintOwner,
+            "spriteFleetOrderButtonGroundSupport"
+          );
+        }
       );
     },
     spriteFleetOrderButtonGroundSupport: <
@@ -1677,16 +3031,29 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
       def: Omit<SpriteTypeDef<SpriteFleetOrderButtonGroundSupportName<Target, Selected>>, "id">,
       options?: { readonly selected?: Selected }
     ) => {
-      return shapeMinted(
-        defineSpriteType({
-          ...def,
-          id: `GFX_fleet_order_button_ground_support_${shapeMintTarget(bombardmentStance)}${options?.selected === true ? "_selected" : ""}` as SpriteFleetOrderButtonGroundSupportName<
-            Target,
-            Selected
-          >,
-        } as SpriteTypeDef<SpriteFleetOrderButtonGroundSupportName<Target, Selected>>),
-        mintOwner,
-        "spriteFleetOrderButtonGroundSupport"
+      return createContentHandle(
+        "spriteType",
+        `GFX_fleet_order_button_ground_support_${shapeMintTarget(bombardmentStance)}${options?.selected === true ? "_selected" : ""}` as SpriteFleetOrderButtonGroundSupportName<
+          Target,
+          Selected
+        >,
+        (def: SpriteTypeDef<SpriteFleetOrderButtonGroundSupportName<Target, Selected>>) => {
+          return shapeMinted(
+            defineSpriteType(def),
+            mintOwner,
+            "spriteFleetOrderButtonGroundSupport"
+          );
+        }
+      ).define(def);
+    },
+    pdxmeshHandle: <const Name extends string>(name: Name, options?: MintNameOptions) => {
+      return createContentHandle(
+        "pdxmesh",
+        mint("pdxmesh", name, options),
+        (def: PdxmeshDef<MintedIdOf<P, I, "pdxmesh", Name>>) => {
+          const item = definePdxmesh(def);
+          return options?.prefix === false ? recordExactNameMint(item, mintOwner) : item;
+        }
       );
     },
     pdxmesh: <const Name extends string>(
@@ -1694,21 +3061,38 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
       def: Omit<PdxmeshDef<MintedIdOf<P, I, "pdxmesh", Name>>, "id">,
       options?: MintNameOptions
     ) => {
-      const item = definePdxmesh({ ...def, id: mint("pdxmesh", name, options) } as PdxmeshDef<
-        MintedIdOf<P, I, "pdxmesh", Name>
-      >);
-      return options?.prefix === false ? recordExactNameMint(item, mintOwner) : item;
+      return createContentHandle(
+        "pdxmesh",
+        mint("pdxmesh", name, options),
+        (def: PdxmeshDef<MintedIdOf<P, I, "pdxmesh", Name>>) => {
+          const item = definePdxmesh(def);
+          return options?.prefix === false ? recordExactNameMint(item, mintOwner) : item;
+        }
+      ).define(def as unknown as Omit<PdxmeshDef<MintedIdOf<P, I, "pdxmesh", Name>>, "id">);
+    },
+    pdxparticleHandle: <const Name extends string>(name: Name, options?: MintNameOptions) => {
+      return createContentHandle(
+        "pdxparticle",
+        mint("pdxparticle", name, options),
+        (def: PdxparticleDef<MintedIdOf<P, I, "pdxparticle", Name>>) => {
+          const item = definePdxparticle(def);
+          return options?.prefix === false ? recordExactNameMint(item, mintOwner) : item;
+        }
+      );
     },
     pdxparticle: <const Name extends string>(
       name: Name,
       def: Omit<PdxparticleDef<MintedIdOf<P, I, "pdxparticle", Name>>, "id">,
       options?: MintNameOptions
     ) => {
-      const item = definePdxparticle({
-        ...def,
-        id: mint("pdxparticle", name, options),
-      } as PdxparticleDef<MintedIdOf<P, I, "pdxparticle", Name>>);
-      return options?.prefix === false ? recordExactNameMint(item, mintOwner) : item;
+      return createContentHandle(
+        "pdxparticle",
+        mint("pdxparticle", name, options),
+        (def: PdxparticleDef<MintedIdOf<P, I, "pdxparticle", Name>>) => {
+          const item = definePdxparticle(def);
+          return options?.prefix === false ? recordExactNameMint(item, mintOwner) : item;
+        }
+      ).define(def as unknown as Omit<PdxparticleDef<MintedIdOf<P, I, "pdxparticle", Name>>, "id">);
     },
   }) as ContentCapabilityMethods<P, I>;
 }

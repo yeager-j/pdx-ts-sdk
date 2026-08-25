@@ -292,6 +292,8 @@ function itemUnionType(facts: RegistryDefinerFacts): string {
 function capabilityDefineMember(facts: RegistryDefinerFacts): {
   readonly member: string;
   readonly binding: string;
+  readonly handleMember: string;
+  readonly handleBinding: string;
   readonly exactNameRow: ExactNameMintRow | null;
 } {
   const {
@@ -324,19 +326,35 @@ function capabilityDefineMember(facts: RegistryDefinerFacts): {
     declaredContract?.parameter === undefined
       ? ""
       : ` & { readonly ${declaredContract.member}: ${declaredContract.parameter} }`;
-  const parameters =
+  // The generics the *definition* introduces, split from `Name`, which is the
+  // mint's own argument. A handle mints its id before any def exists, so these
+  // can only be inferred at `define` time and the handle's mint carries `Name`
+  // alone.
+  const defineTypeParameters =
     scoped === null
       ? contentWitness === undefined
-        ? "<const Name extends string>"
+        ? ""
         : contentWitness.mode === "wraps"
-          ? `<const Name extends string, W extends ${contentWitness.type}>`
-          : `<const Name extends string, const W extends ${contentWitness.type}>`
-      : `<\n    const Name extends string,\n    ${scoped.parameterName} extends ` +
+          ? `<W extends ${contentWitness.type}>`
+          : `<const W extends ${contentWitness.type}>`
+      : `<${scoped.parameterName} extends ` +
         `${scoped.parameterType} = ${scoped.parameterDefault},` +
-        `${declaredFromParameter}\n  >`;
+        `${declaredFromParameter}>`;
+  const parameters =
+    defineTypeParameters === ""
+      ? "<const Name extends string>"
+      : scoped === null
+        ? `<const Name extends string, ${defineTypeParameters.slice(1)}`
+        : `<\n    const Name extends string,\n    ${scoped.parameterName} extends ` +
+          `${scoped.parameterType} = ${scoped.parameterDefault},` +
+          `${declaredFromParameter}\n  >`;
   const def =
     `${name}Def<${minted}${scoped === null ? "" : `, ${scoped.parameterName}`}` +
     `${declaredFrom === undefined ? "" : ", L"}>`;
+  // The same definition with every define-time generic dropped back to its
+  // default. A handle mints before any def exists, so its closure cannot name
+  // a parameter only the definition introduces.
+  const erasedDefineDef = `${name}Def<${minted}>`;
   const economicInputBase =
     contentWitness?.mode === "intersects"
       ? `Omit<${def}, "id" | ${economicWitnessOmit}>`
@@ -383,6 +401,34 @@ function capabilityDefineMember(facts: RegistryDefinerFacts): {
           )
           .join(" | ") +
         `\n  ): ContentItem<${key}, ${name}Def<${minted}, never>>${declaration};`;
+  // A handle whose `define` introduces no generic of its own is the shared
+  // `ContentHandle`; the rest spell `ContentHandleBase` intersected with the
+  // `define` their own type parameters force. The distinction is decided here,
+  // from the same strings the eager member is built out of, so the two cannot
+  // describe different definitions.
+  const plainHandle = defineTypeParameters === "" && referenceRefinement === undefined;
+  const handleReturn = plainHandle
+    ? `ContentHandle<${key}, ${result}>`
+    : `ContentHandleBase<${key}, ${minted}> & {\n` +
+      (referenceRefinement === undefined
+        ? ""
+        : `    define(\n      def: Omit<${def}, "id"> & ` +
+          `{ readonly ${referenceRefinement.member}: true }\n` +
+          `    ): ContentItem<${key}, ${result} & ` +
+          `{ readonly ${referenceRefinement.member}: true }> & ` +
+          `${pascalCase(referenceRefinement.reference)}Ref;\n`) +
+      `    define${defineTypeParameters}(def: ${input}): ` +
+      `ContentItem<${key}, ${result}>${declaration};\n` +
+      "  }";
+  const handleDoc = docComment(
+    [
+      `Mints ${article} ${spoken} id without its definition.`,
+      "Define it later with its `define(...)` method when a cycle needs the id first —",
+      `${article} ${spoken} that names itself, or two that name each other.`,
+      "The handle is a reference, not content: place the item `define(...)` returns.",
+    ],
+    "  "
+  );
   if (exactName === undefined) {
     return {
       member:
@@ -400,15 +446,26 @@ function capabilityDefineMember(facts: RegistryDefinerFacts): {
           ],
           "  "
         ) + signatures,
-      binding: capabilityBinding(
-        method,
-        parameters,
-        input,
-        `define${name}`,
-        def,
-        nestedDefinitionMembers,
-        nestedDefinitionTable
-      ),
+      ...(() => {
+        const bindings = capabilityBindings({
+          method,
+          key,
+          parameters,
+          definitionArgument: input,
+          definer: `define${name}`,
+          definitionType: erasedDefineDef,
+          id: `mint(${JSON.stringify(method)}, name)`,
+          mintParameters: "",
+          premintStatements: "",
+          nestedDefinitionMembers,
+          nestedDefinitionTable,
+          provenance: "none",
+        });
+        return { binding: bindings.eager, handleBinding: bindings.handle };
+      })(),
+      handleMember:
+        `${handleDoc}  ${method}Handle<const Name extends string>(\n` +
+        `    name: Name\n  ): ${handleReturn};`,
       exactNameRow: null,
     };
   }
@@ -458,11 +515,35 @@ function capabilityDefineMember(facts: RegistryDefinerFacts): {
       `    def: Omit<${name}Def<Name>, "id">,\n` +
       `    options: { readonly prefix: false }\n` +
       `  ): ContentItem<${key}, ${name}Def<Name>>;`,
-    binding:
-      `    ${method}: ${parameters}(name: Name, def: ${input}, options?: MintNameOptions) => {\n` +
-      `      const item = define${name}({ ...def, id: mint(${JSON.stringify(method)}, name, options) } as ${def});\n` +
-      `      return options?.prefix === false ? recordExactNameMint(item, mintOwner) : item;\n` +
-      "    },",
+    ...(() => {
+      const bindings = capabilityBindings({
+        method,
+        key,
+        parameters,
+        definitionArgument: input,
+        definer: `define${name}`,
+        definitionType: erasedDefineDef,
+        id: `mint(${JSON.stringify(method)}, name, options)`,
+        mintParameters: ", options?: MintNameOptions",
+        premintStatements: "",
+        nestedDefinitionMembers,
+        nestedDefinitionTable,
+        provenance: "exactName",
+      });
+      return { binding: bindings.eager, handleBinding: bindings.handle };
+    })(),
+    // `prefix: false` is a mint-time option, so the handle carries the same
+    // overload pair the eager method does and its `define` stays plain.
+    handleMember:
+      `${handleDoc}  ${method}Handle<const Name extends string>(\n` +
+      `    name: Name,\n` +
+      `    options?: { readonly prefix?: true }\n` +
+      `  ): ContentHandle<${key}, ${result}>;\n` +
+      handleDoc +
+      `  ${method}Handle<const Name extends ExactMintName<P>>(\n` +
+      `    name: Name,\n` +
+      `    options: { readonly prefix: false }\n` +
+      `  ): ContentHandle<${key}, ${name}Def<Name>>;`,
     exactNameRow: {
       method,
       namePattern: exactName.namePattern,
@@ -702,8 +783,11 @@ export function planRegistryDefiner(
 
   if (graft === undefined) {
     const defined = capabilityDefineMember(facts);
-    capabilityMembers.push(defined.member);
-    capabilityBindings.push(defined.binding);
+    // Member order `x` then `xHandle`, binding order `xHandle` then `x`, as
+    // `emit/script/events.ts` orders the event pair, so the two generated
+    // capability surfaces read alike.
+    capabilityMembers.push(defined.member, defined.handleMember);
+    capabilityBindings.push(defined.handleBinding, defined.binding);
     exactNameRow = defined.exactNameRow;
     runtimeDefiners.push(`define${name}`);
     for (const shape of shapesFor(registry)) {
@@ -716,8 +800,8 @@ export function planRegistryDefiner(
       const emitted = shapeMintMethod(shape, name, contents);
       shapeMintTypes.push(emitted.type);
       shapeMintTypeNames.push(emitted.typeName);
-      capabilityMembers.push(emitted.member);
-      capabilityBindings.push(emitted.binding);
+      capabilityMembers.push(emitted.member, emitted.handleMember);
+      capabilityBindings.push(emitted.handleBinding, emitted.binding);
       shapeMintRefTypes.push(...emitted.refTypes);
     }
   }
@@ -818,6 +902,8 @@ function shapeMintMethod(
   readonly typeName: string;
   readonly member: string;
   readonly binding: string;
+  readonly handleMember: string;
+  readonly handleBinding: string;
   readonly refTypes: readonly string[];
 } {
   const alias = `${pascalCase(shape.method)}Name`;
@@ -879,6 +965,34 @@ function shapeMintMethod(
     ? "name: Name"
     : `${parameterName}: Target | (${refType} & { readonly id: Target })`;
   const runtimeHole = named ? `\${prefix}_\${name}` : `\${shapeMintTarget(${parameterName})}`;
+  const shapeParameters = `<\n      ${methodParameters},\n    >`;
+  const shapeArguments = `${argument}${optionsParameter.replace("\n    ", "\n      ")}`;
+  const shapeId = `\`${shape.head}${runtimeHole}${variantRuntimeTail}\` as ${nameType}`;
+  const shapeBody =
+    `        return shapeMinted(define${typeName}(def), mintOwner, ` +
+    `${JSON.stringify(shape.method)});\n`;
+  const shapeExpression =
+    `createContentHandle(\n` +
+    `        ${JSON.stringify(SHAPE_MINT_REGISTRY)},\n` +
+    `        ${shapeId},\n` +
+    `        (def: ${def}) => {\n` +
+    shapeBody +
+    `        }\n` +
+    `      )`;
+  const shapeBindings = {
+    handle:
+      `    ${shape.method}Handle: ${shapeParameters}(\n      ${shapeArguments}\n    ) => {\n` +
+      (named ? `      assertName(name);\n` : "") +
+      `      return ${shapeExpression};\n` +
+      "    },",
+    eager:
+      `    ${shape.method}: ${shapeParameters}(\n      ${argument},\n` +
+      `      def: Omit<${def}, "id">` +
+      `${optionsParameter.replace("\n    ", "\n      ")}\n    ) => {\n` +
+      (named ? `      assertName(name);\n` : "") +
+      `      return ${shapeExpression}.define(def);\n` +
+      "    },",
+  };
 
   return {
     type:
@@ -905,21 +1019,25 @@ function shapeMintMethod(
       `    ${argument},\n` +
       `    def: Omit<${def}, "id">${optionsParameter}\n` +
       `  ): ContentItem<${JSON.stringify(SHAPE_MINT_REGISTRY)}, ${def}>;`,
-    binding:
-      `    ${shape.method}: <\n      ${methodParameters},\n    >(\n` +
-      `      ${argument},\n` +
-      `      def: Omit<${def}, "id">${optionsParameter.replace("\n    ", "\n      ")}\n` +
-      `    ) => {\n` +
-      (named ? `      assertName(name);\n` : "") +
-      `      return shapeMinted(\n` +
-      `        define${typeName}({\n` +
-      `          ...def,\n` +
-      `          id: \`${shape.head}${runtimeHole}${variantRuntimeTail}\` as ${nameType},\n` +
-      `        } as ${def}),\n` +
-      `        mintOwner,\n` +
-      `        ${JSON.stringify(shape.method)}\n` +
-      `      );\n` +
-      `    },`,
+    // A shape mint's variants and target are read at mint time, so the handle
+    // takes them and its `define` stays plain, exactly as the eager method's
+    // `def` is the only thing deferred.
+    binding: shapeBindings.eager,
+    handleMember:
+      docComment(
+        [
+          `Mints the \`${shape.head}\`-led sprite name without its definition.`,
+          "Define it later with its `define(...)` method when a cycle needs the name first.",
+          "The handle is a reference, not content: place the item `define(...)` returns.",
+          "",
+          `Seed: ${shape.seed}`,
+        ],
+        "  "
+      ) +
+      `  ${shape.method}Handle<\n    ${methodParameters},\n  >(\n` +
+      `    ${argument}${optionsParameter}\n` +
+      `  ): ContentHandle<${JSON.stringify(SHAPE_MINT_REGISTRY)}, ${def}>;`,
+    handleBinding: shapeBindings.handle,
     refTypes: refType === undefined ? [] : [refType],
   };
 }
@@ -988,26 +1106,68 @@ function emittedMemberNames(emission: ContentEmission): ReadonlySet<string> {
   );
 }
 
-function capabilityBinding(
-  method: string,
-  parameters: string,
-  definitionArgument: string,
-  definer: string,
-  definitionType: string,
-  nestedDefinitionMembers: readonly string[],
-  nestedDefinitionTable: string
-): string {
-  const withId = `{ ...def, id: mint(${JSON.stringify(method)}, name) }`;
-  if (nestedDefinitionMembers.length === 0) {
-    return (
-      `    ${method}: ${parameters}(name: Name, def: ${definitionArgument}) =>\n` +
-      `      ${definer}(${withId} as ${definitionType}),`
-    );
-  }
-  return (
-    `    ${method}: ${parameters}(name: Name, def: ${definitionArgument}) => {\n` +
-    `      assertNestedDefinitionIds(def, assertNestedId, ${nestedDefinitionTable});\n` +
-    `      return ${definer}(${withId} as ${definitionType});\n` +
-    "    },"
-  );
+/** What a registry's handle closure does once the id is minted. */
+type MintProvenanceKind = "none" | "exactName" | { readonly shape: string };
+
+/**
+ * Both of a registry's runtime bindings, from one handle expression.
+ *
+ * The eager method is sugar for `handle(name).define(def)`, the arrangement
+ * `capabilityBinding` in `emit/script/events.ts` already uses for events.
+ * Everything a mint decides — the id, the nested-id assertion, the exact-name
+ * and shape-mint provenance — is written into the handle's `define` closure
+ * exactly once, so the two entry points cannot drift into minting differently.
+ */
+function capabilityBindings(spec: {
+  readonly method: string;
+  readonly key: string;
+  /** Eager type parameters: the mint's `Name` plus any the definition infers. */
+  readonly parameters: string;
+  readonly definitionArgument: string;
+  readonly definer: string;
+  readonly definitionType: string;
+  /** The minted id expression, which the eager and handle bindings share. */
+  readonly id: string;
+  /** Extra runtime parameters the mint itself reads, such as `options`. */
+  readonly mintParameters: string;
+  /** Statements the closure runs before the definer, at mint time. */
+  readonly premintStatements: string;
+  readonly nestedDefinitionMembers: readonly string[];
+  readonly nestedDefinitionTable: string;
+  readonly provenance: MintProvenanceKind;
+}): { readonly handle: string; readonly eager: string } {
+  const body =
+    (spec.nestedDefinitionMembers.length === 0
+      ? ""
+      : `        assertNestedDefinitionIds(def, assertNestedId, ${spec.nestedDefinitionTable});\n`) +
+    (spec.provenance === "none"
+      ? `        return ${spec.definer}(def);\n`
+      : spec.provenance === "exactName"
+        ? `        const item = ${spec.definer}(def);\n` +
+          "        return options?.prefix === false ? recordExactNameMint(item, mintOwner) : item;\n"
+        : `        return shapeMinted(${spec.definer}(def), mintOwner, ` +
+          `${JSON.stringify(spec.provenance.shape)});\n`);
+  const expression =
+    `createContentHandle(${spec.key}, ${spec.id}, (def: ${spec.definitionType}) => {\n` +
+    body +
+    "      })";
+  // The handle's closure is typed by the definition with every define-time
+  // generic erased, because a handle mints before there is a def to infer one
+  // from. The eager method asserts its own def into that shape, which is the
+  // same assertion the pre-handle binding made when it merged the id in.
+  return {
+    handle:
+      `    ${spec.method}Handle: <const Name extends string>(\n` +
+      `      name: Name${spec.mintParameters}\n    ) => {\n` +
+      spec.premintStatements +
+      `      return ${expression};\n` +
+      "    },",
+    eager:
+      `    ${spec.method}: ${spec.parameters}(\n      name: Name,\n` +
+      `      def: ${spec.definitionArgument}${spec.mintParameters}\n    ) => {\n` +
+      spec.premintStatements +
+      `      return ${expression}.define(\n` +
+      `        def as unknown as Omit<${spec.definitionType}, "id">\n      );\n` +
+      "    },",
+  };
 }

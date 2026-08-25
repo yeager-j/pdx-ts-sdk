@@ -28,6 +28,7 @@ import type {
   SituationTypeDef,
 } from "../generated/situation-type.ts";
 import type { SituationTrigger } from "../script/triggers.ts";
+import { createContentHandle, type ContentHandleBase } from "./handle.ts";
 import type { ContentItem } from "./types.ts";
 
 /**
@@ -140,6 +141,39 @@ export interface SituationTypeCapabilityMethods<P extends string, I extends IdPr
   > & {
     readonly targetScope: T;
   };
+  /**
+   * Mints a situation type id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   *
+   * The target scope, approach keys, and stage keys are all read off the
+   * definition, so they live on `define` rather than on the mint — there is no
+   * def to infer them from when the id is minted.
+   */
+  situationTypeHandle<const Name extends string>(
+    name: Name
+  ): ContentHandleBase<"situation_type", MintedContentId<P, I, "situationType", Name>> & {
+    define<
+      T extends ScopeName | undefined = undefined,
+      const Approach extends string = never,
+      const Stage extends string = never,
+    >(
+      def: Omit<
+        SituationTypeCapabilityDef<
+          MintedContentId<P, I, "situationType", Name>,
+          T,
+          Approach,
+          Stage
+        >,
+        "id"
+      >
+    ): ContentItem<
+      "situation_type",
+      SituationTypeDef<MintedContentId<P, I, "situationType", Name>>
+    > & {
+      readonly targetScope: T;
+    };
+  };
 }
 
 /** Binds the situation-type capability method to one content-id minter. */
@@ -147,15 +181,28 @@ export function situationTypeCapabilityMethods<P extends string, I extends IdPro
   mint: ContentIdMinter<P, I>,
   assertNestedId: (id: string) => void
 ): SituationTypeCapabilityMethods<P, I> {
-  return {
-    situationType: (name, def) => {
-      for (const id of [...Object.keys(def.approach ?? {}), ...Object.keys(def.stages ?? {})]) {
-        assertNestedId(id);
+  const handle = <const Name extends string>(name: Name) =>
+    createContentHandle(
+      "situation_type",
+      mint("situationType", name),
+      (def: SituationTypeCapabilityDef<MintedContentId<P, I, "situationType", Name>>) => {
+        for (const id of [...Object.keys(def.approach ?? {}), ...Object.keys(def.stages ?? {})]) {
+          assertNestedId(id);
+        }
+        return defineSituationType(def);
       }
-      return defineSituationType({
-        ...def,
-        id: mint("situationType", name),
-      } as SituationTypeCapabilityDef<MintedContentId<P, I, "situationType", typeof name>>);
-    },
+    );
+  return {
+    situationTypeHandle: handle,
+    // The eager method is sugar for `handle(name).define(def)`, so the mint and
+    // the nested-id assertion happen in one place, as they do for every
+    // generated registry.
+    situationType: (name, def) =>
+      handle(name).define(
+        def as unknown as Omit<
+          SituationTypeCapabilityDef<MintedContentId<P, I, "situationType", typeof name>>,
+          "id"
+        >
+      ),
   } as SituationTypeCapabilityMethods<P, I>;
 }

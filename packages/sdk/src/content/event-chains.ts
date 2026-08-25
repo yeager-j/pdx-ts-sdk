@@ -13,6 +13,7 @@ import type {
 } from "../generated/content-capability.ts";
 import type { EventChainCounterDefinition, EventChainDef } from "../generated/event-chain.ts";
 import type { EventChainRef } from "../generated/refs.ts";
+import { createContentHandle, type ContentHandleBase } from "./handle.ts";
 import type { ContentItem } from "./types.ts";
 
 declare const eventChainCounters: unique symbol;
@@ -58,17 +59,44 @@ export interface EventChainCapabilityMethods<P extends string, I extends IdProfi
     name: Name,
     def: Omit<EventChainCapabilityDef<MintedContentId<P, I, "eventChain", Name>, Counter>, "id">
   ): EventChainItem<MintedContentId<P, I, "eventChain", Name>, Counter>;
+  /**
+   * Mints an event chain id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   *
+   * `Counter` is declared by the definition, so it lives on `define` rather than
+   * on the mint — there is no def to infer it from when the id is minted.
+   */
+  eventChainHandle<const Name extends string>(
+    name: Name
+  ): ContentHandleBase<"event_chain", MintedContentId<P, I, "eventChain", Name>> & {
+    define<const Counter extends string = never>(
+      def: Omit<EventChainCapabilityDef<MintedContentId<P, I, "eventChain", Name>, Counter>, "id">
+    ): EventChainItem<MintedContentId<P, I, "eventChain", Name>, Counter>;
+  };
 }
 
 /** Binds the event-chain capability method to one content-id minter. */
 export function eventChainCapabilityMethods<P extends string, I extends IdProfile>(
   mint: ContentIdMinter<P, I>
 ): EventChainCapabilityMethods<P, I> {
+  const handle = <const Name extends string>(name: Name) =>
+    createContentHandle(
+      "event_chain",
+      mint("eventChain", name),
+      (def: EventChainCapabilityDef<MintedContentId<P, I, "eventChain", Name>>) =>
+        defineEventChain(def)
+    );
   return {
+    eventChainHandle: handle,
+    // The eager method is sugar for `handle(name).define(def)`, so the mint
+    // happens in one place, as it does for every generated registry.
     eventChain: (name, def) =>
-      defineEventChain({
-        ...def,
-        id: mint("eventChain", name),
-      } as EventChainCapabilityDef<MintedContentId<P, I, "eventChain", typeof name>>),
-  };
+      handle(name).define(
+        def as unknown as Omit<
+          EventChainCapabilityDef<MintedContentId<P, I, "eventChain", typeof name>>,
+          "id"
+        >
+      ),
+  } as EventChainCapabilityMethods<P, I>;
 }

@@ -83,6 +83,12 @@ describe("mod capability types", () => {
     expectTypeOf(required.def.requiredComponentSet).toEqualTypeOf<true>();
     // @ts-expect-error — an ordinary component set does not carry the required-component subtype.
     acceptsRequired(ordinary);
+
+    // The handle's `define` carries the same overload pair, so deferring the
+    // definition does not cost the subtype refinement.
+    acceptsRequired(mod.componentSetHandle("deferred").define({ requiredComponentSet: true }));
+    // @ts-expect-error — and the unrefined arm still does not qualify.
+    acceptsRequired(mod.componentSetHandle("plain").define({}));
   });
 
   it("mints exact default and custom ids without accepting caller ids", () => {
