@@ -12405,7 +12405,9 @@ export interface EffectsInSituation {
    * set_situation_approach = <approach> (name field of the approach)
    * ```
    */
-  setSituationApproach(value: SituationApproach): void;
+  setSituationApproach(
+    value: SituationApproach | import("../content/situations.ts").SituationApproach<string, string>
+  ): void;
 
   /**
    * Sets an arbitrarily-named flag on the scoped situation

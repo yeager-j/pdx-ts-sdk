@@ -15,6 +15,7 @@ import type {
   EventChainItem,
   ExternalEventChainRef,
 } from "../content/event-chains.ts";
+import type { SituationApproach, SituationStage } from "../content/situations.ts";
 import type { StaticModifierRef } from "../generated/refs.ts";
 import type { ScopeName } from "../generated/scopes.ts";
 import type { StaticModifierScope } from "../generated/static-modifier.ts";
@@ -22,7 +23,7 @@ import type { Unambiguous } from "./effects/contracts.ts";
 import { scopeValue } from "./effects/recorder.ts";
 import type { StaticModifierHostContract } from "./effects/static-modifiers.ts";
 import type { ScopeValue } from "./effects/types.ts";
-import { refId } from "./scalar.ts";
+import { refId, type TypedRef } from "./scalar.ts";
 import { conjoin, trigger, type Trigger } from "./trigger-core.ts";
 
 export type { ScopeName } from "../generated/scopes.ts";
@@ -68,10 +69,20 @@ export type SituationTrigger<
  * current_situation_approach = <approach> (name field of the approach)
  * ```
  */
+export function currentSituationApproach<const ParentId extends string, const Name extends string>(
+  value: SituationApproach<ParentId, Name>
+): SituationTrigger<SituationApproach<ParentId, Name>["id"], never>;
+/** Checks an approach identified by a complete vanilla or third-party id. */
 export function currentSituationApproach<const Approach extends string>(
   value: Approach
-): SituationTrigger<Approach, never> {
-  return trigger([kv("current_situation_approach", value)]) as SituationTrigger<Approach, never>;
+): SituationTrigger<Approach, never>;
+export function currentSituationApproach(
+  value: string | TypedRef<string>
+): SituationTrigger<string, never> {
+  return trigger([kv("current_situation_approach", String(refId(value)))]) as SituationTrigger<
+    string,
+    never
+  >;
 }
 
 /**
@@ -82,10 +93,15 @@ export function currentSituationApproach<const Approach extends string>(
  * current_stage = <stage> (name defined in situation's stages)
  * ```
  */
+export function currentStage<const ParentId extends string, const Name extends string>(
+  value: SituationStage<ParentId, Name>
+): SituationTrigger<never, SituationStage<ParentId, Name>["id"]>;
+/** Checks a stage identified by a complete vanilla or third-party id. */
 export function currentStage<const Stage extends string>(
   value: Stage
-): SituationTrigger<never, Stage> {
-  return trigger([kv("current_stage", value)]) as SituationTrigger<never, Stage>;
+): SituationTrigger<never, Stage>;
+export function currentStage(value: string | TypedRef<string>): SituationTrigger<never, string> {
+  return trigger([kv("current_stage", String(refId(value)))]) as SituationTrigger<never, string>;
 }
 
 /**
@@ -97,10 +113,20 @@ export function currentStage<const Stage extends string>(
  * can_set_situation_approach = <approach> (name field of the approach)
  * ```
  */
+export function canSetSituationApproach<const ParentId extends string, const Name extends string>(
+  value: SituationApproach<ParentId, Name>
+): SituationTrigger<SituationApproach<ParentId, Name>["id"], never>;
+/** Checks an approach identified by a complete vanilla or third-party id. */
 export function canSetSituationApproach<const Approach extends string>(
   value: Approach
-): SituationTrigger<Approach, never> {
-  return trigger([kv("can_set_situation_approach", value)]) as SituationTrigger<Approach, never>;
+): SituationTrigger<Approach, never>;
+export function canSetSituationApproach(
+  value: string | TypedRef<string>
+): SituationTrigger<string, never> {
+  return trigger([kv("can_set_situation_approach", String(refId(value)))]) as SituationTrigger<
+    string,
+    never
+  >;
 }
 
 type DefinedEventChainCounterArgs<Chain extends EventChainItem> = {

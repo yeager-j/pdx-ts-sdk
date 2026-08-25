@@ -148,6 +148,12 @@ describe("emitted effect signatures", () => {
     );
   });
 
+  it("accepts an authored nested reference when setting a situation approach", () => {
+    expect(signature("setSituationApproach")).toContain(
+      'import("../content/situations.ts").SituationApproach<string, string>'
+    );
+  });
+
   it("scope_group[G]: the group's members, canonicalised and sorted", () => {
     // A group is a coercion, so `target_country` lists every scope the game
     // reads a country out of — not scopes that are countries.

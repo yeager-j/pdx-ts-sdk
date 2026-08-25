@@ -523,7 +523,8 @@ export function createMod<const P extends string, const I extends IdProfile>(
   );
   const situationTypeMethods = situationTypeCapabilityMethods<P, I | typeof DEFAULT_ID_PROFILE>(
     mintId,
-    assertNestedDefinitionId
+    assertNestedDefinitionId,
+    assertLogicalName
   );
   const eventChainMethods = eventChainCapabilityMethods<P, I | typeof DEFAULT_ID_PROFILE>(mintId);
 

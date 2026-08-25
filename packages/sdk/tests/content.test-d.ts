@@ -89,6 +89,7 @@ import {
   type ScopeRef,
   type ScriptValue,
   type SectionTemplateFields,
+  type SituationApproach,
   type SituationApproachFields,
   type SituationStageFields,
   type SituationTypeFields,
@@ -1320,6 +1321,87 @@ describe("generated content authoring types", () => {
       name: "X",
       monthlyProgress: { base: 1 },
       abortTrigger: or(always(), always()),
+    });
+  });
+
+  it("defines situation approaches and stages as parent-scoped references", () => {
+    contentMod.situationType("nested_refs", (situation) => {
+      const observe = situation.approach("observe", {
+        name: "Observe",
+        icon: "GFX_situation_approach_observe",
+        iconBackground: "GFX_situation_approach_bg_observe",
+      });
+      const germination = situation.stage("germination", {
+        name: "Germination",
+        icon: "GFX_situation_stage_germination",
+        iconBackground: "GFX_situation_stage_bg_germination",
+      });
+
+      expectTypeOf(
+        observe.id
+      ).toEqualTypeOf<"content_types_situation_nested_refs_approach_observe">();
+      expectTypeOf(
+        germination.id
+      ).toEqualTypeOf<"content_types_situation_nested_refs_stage_germination">();
+
+      return {
+        name: "Nested references",
+        approach: [observe],
+        stages: [germination],
+        onStart: (scope) => scope.setSituationApproach(observe),
+        monthlyProgress: {
+          base: 1,
+          modifiers: [
+            {
+              add: 2,
+              desc: "Observe the situation.",
+              when: currentSituationApproach(observe),
+            },
+            {
+              factor: 0.5,
+              desc: "The situation is germinating.",
+              when: currentStage(germination),
+            },
+          ],
+        },
+      };
+    });
+
+    contentMod.situationTypeHandle("nested_handle_refs").define((situation) => {
+      const observe = situation.approach("observe", {
+        name: "Observe",
+        icon: "GFX_situation_approach_observe",
+        iconBackground: "GFX_situation_approach_bg_observe",
+      });
+      return {
+        name: "Nested handle references",
+        approach: [observe],
+        monthlyProgress: { base: 1 },
+      };
+    });
+
+    const foreign = {} as SituationApproach<"content_types_situation_foreign", "observe">;
+    // @ts-expect-error — the callback references an approach owned by another situation type
+    contentMod.situationType("nested_ref_owner", (situation) => {
+      const local = situation.approach("observe", {
+        name: "Observe",
+        icon: "GFX_situation_approach_observe",
+        iconBackground: "GFX_situation_approach_bg_observe",
+      });
+      return {
+        name: "Nested reference owner",
+        approach: [local],
+        monthlyProgress: {
+          base: 1,
+          modifiers: [
+            {
+              add: 1,
+              desc: "Wrong owner",
+              when: currentSituationApproach(foreign),
+            },
+          ],
+        },
+      };
     });
   });
 
