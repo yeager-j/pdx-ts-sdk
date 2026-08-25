@@ -64,6 +64,10 @@ export const CONTENT_MANIFEST = [
   { type: "tradition", source: "common/traditions.cwt" },
   { type: "tradition_category", source: "common/traditions.cwt" },
   { type: "ascension_perk", source: "common/ascension_perks.cwt" },
+  {
+    type: "ascension_perk_category",
+    source: "common/ascension_perk_categories.cwt",
+  },
   { type: "resource", source: "common/strategic_resources.cwt" },
   { type: "crisis_path", source: "common/crisis_paths.cwt" },
   { type: "crisis_level", source: "common/crisis.cwt" },

@@ -22,6 +22,7 @@ describe("the rule table", () => {
     expect(REGISTRY_RULES.map((row) => row.registry)).toEqual([
       "technology",
       "building",
+      "ascension_perk_category",
       "scripted-triggers",
       "scripted-effects",
       "events",
@@ -70,6 +71,16 @@ describe("the rule table", () => {
     }
   });
 
+  it("ascension perk categories carry the SDK-289 judgment in both cells", () => {
+    const row = registryRule("ascension_perk_category");
+    for (const cell of [row.repeat, row.replacement]) {
+      expect(cell.state).toBe("assumed");
+      if (cell.state === "assumed") {
+        expect(cell.judgment).toContain("Jackson, 2026-08-24 (SDK-289)");
+      }
+    }
+  });
+
   it("localization refuses filename-order assertions in both cells", () => {
     const row = registryRule("localization");
     expect(row.repeat.state).toBe("refused");
@@ -82,7 +93,12 @@ describe("the rule table", () => {
   });
 
   it("derives a manifest-backed row's dir from the generated descriptor", () => {
-    for (const registry of ["technology", "building", "megastructure"] as const) {
+    for (const registry of [
+      "technology",
+      "building",
+      "ascension_perk_category",
+      "megastructure",
+    ] as const) {
       const descriptor = CONTENT_REGISTRIES.find((candidate) => candidate.type === registry);
       expect(descriptor).toBeDefined();
       expect(registryRule(registry).dir).toBe(descriptor!.outputDir);
@@ -90,11 +106,12 @@ describe("the rule table", () => {
     // The derivation is the claim; these pin what it currently resolves to.
     expect(registryRule("technology").dir).toBe("common/technology");
     expect(registryRule("building").dir).toBe("common/buildings");
+    expect(registryRule("ascension_perk_category").dir).toBe("common/ascension_perk_categories");
     expect(registryRule("megastructure").dir).toBe("common/megastructures");
   });
 
   it("stores no dir on a manifest-backed row", () => {
-    for (const registry of ["technology", "building", "megastructure"]) {
+    for (const registry of ["technology", "building", "ascension_perk_category", "megastructure"]) {
       const row = REGISTRY_RULES.find((candidate) => candidate.registry === registry);
       expect(row).toBeDefined();
       expect(Object.hasOwn(row!, "dir")).toBe(false);

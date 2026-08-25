@@ -4,6 +4,7 @@
 // From: common/buildings.cwt
 // From: common/traditions.cwt
 // From: common/ascension_perks.cwt
+// From: common/ascension_perk_categories.cwt
 // From: common/strategic_resources.cwt
 // From: common/crisis_paths.cwt
 // From: common/crisis.cwt
@@ -45,6 +46,7 @@ import type {
   ExactEconomicCategoryWitness,
 } from "../content/types.ts";
 import type {
+  ParsedAscensionPerkCategory,
   ParsedBuilding,
   ParsedMegastructure,
   ParsedTechnology,
@@ -55,6 +57,13 @@ import type { AgendaDef } from "./agenda.ts";
 import type { AgreementPresetDef } from "./agreement-preset.ts";
 import type { AmbientObjectDef } from "./ambient-object.ts";
 import type { ArchaeologicalSiteTypeDef } from "./archaeological-site-type.ts";
+import {
+  ASCENSION_PERK_CATEGORY_FIELDS,
+  ASCENSION_PERK_CATEGORY_LOCALISATION,
+  type AscensionPerkCategoryDef,
+  type AscensionPerkCategoryPatch,
+  type AscensionPerkCategoryPatchItem,
+} from "./ascension-perk-category.ts";
 import type { AscensionPerkDef } from "./ascension-perk.ts";
 import type { BombardmentStanceDef } from "./bombardment-stance.ts";
 import {
@@ -246,6 +255,49 @@ export function defineAscensionPerk<const Id extends string>(
   def: AscensionPerkDef<Id>
 ): ContentItem<"ascension_perk", AscensionPerkDef<Id>> {
   return { itemKind: "content", type: "ascension_perk", id: def.id, def };
+}
+
+/** What an ascension perk category feature can contain. */
+export type AscensionPerkCategoryItem =
+  ContentItem<"ascension_perk_category", AscensionPerkCategoryDef> | AscensionPerkCategoryPatchItem;
+
+/**
+ * Internal lowering primitive for an ascension perk category. Public authors call
+ * `mod.ascensionPerkCategory(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
+ */
+export function defineAscensionPerkCategory<const Id extends string>(
+  def: AscensionPerkCategoryDef<Id>
+): ContentItem<"ascension_perk_category", AscensionPerkCategoryDef<Id>> {
+  return { itemKind: "content", type: "ascension_perk_category", id: def.id, def };
+}
+
+/**
+ * Internal lowering primitive for patching an vanilla ascension perk category. The transform
+ * runs here (pure); public authors call the capability method, while the duplicate-key
+ * and one-view checks stay in
+ * the internal fold, which sees every patch together, and the emitted filename
+ * is always resolver-computed — a patch item never carries a file of its own.
+ * `prefix` is the mod prefix the capability closure binds: a patch that mints a
+ * localisation key of its own derives it from `<prefix>_<vanilla id>`, so the key
+ * cannot collide with vanilla's by construction.
+ */
+export function patchAscensionPerkCategory<Source extends ParsedAscensionPerkCategory>(
+  ascensionPerkCategory: Source,
+  patch: (ascensionPerkCategory: Source) => AscensionPerkCategoryPatch,
+  prefix: string
+): AscensionPerkCategoryPatchItem {
+  return {
+    itemKind: "patch",
+    patched: patchContent(
+      ascensionPerkCategory,
+      patch,
+      "ascension_perk_category",
+      ASCENSION_PERK_CATEGORY_FIELDS,
+      ASCENSION_PERK_CATEGORY_LOCALISATION,
+      prefix
+    ),
+  };
 }
 
 /** What a resource feature can contain. */

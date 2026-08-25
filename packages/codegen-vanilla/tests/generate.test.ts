@@ -791,8 +791,8 @@ describe("report", () => {
     // pieces of operating-system metadata, and one real path. Only the last
     // reaches the inventory, and the archive file itself is a walked path too.
     expect(generated.report.paths).toEqual({
-      total: 32,
-      installFiles: 31,
+      total: 33,
+      installFiles: 32,
       archives: 1,
       archiveEntries: 4,
       junkExcluded: 3,

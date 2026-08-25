@@ -4,6 +4,7 @@
 // From: common/buildings.cwt
 // From: common/traditions.cwt
 // From: common/ascension_perks.cwt
+// From: common/ascension_perk_categories.cwt
 // From: common/strategic_resources.cwt
 // From: common/crisis_paths.cwt
 // From: common/crisis.cwt
@@ -54,6 +55,7 @@ import {
   ARCHAEOLOGICAL_SITE_TYPE_STAGE_DIFFICULTY_FIELDS,
   ARCHAEOLOGICAL_SITE_TYPE_STAGE_FIELDS,
 } from "./archaeological-site-type.ts";
+import { ASCENSION_PERK_CATEGORY_FIELDS } from "./ascension-perk-category.ts";
 import { ASCENSION_PERK_FIELDS, ASCENSION_PERK_SWAP_FIELDS } from "./ascension-perk.ts";
 import {
   BOMBARDMENT_STANCE_FIELDS,
@@ -883,6 +885,12 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         memberType: 'WeightBlock<"country">',
       },
       trigger: { optional: true, docs: [], memberType: 'Trigger<"country">' },
+    },
+  ],
+  [
+    ASCENSION_PERK_CATEGORY_FIELDS,
+    {
+      ascensionPerks: { optional: false, docs: [], memberType: "(AscensionPerkRef | string)[]" },
     },
   ],
   [
@@ -5933,6 +5941,7 @@ export const CONTENT_FIELD_OMISSIONS: Readonly<
   tradition: [],
   tradition_category: [],
   ascension_perk: [],
+  ascension_perk_category: [],
   resource: [],
   crisis_path: [],
   crisis_level: [],

@@ -13,6 +13,7 @@ import { createMod, render, type ModConfig } from "../src/index.ts";
 import { viewFromFiles } from "../src/installation/vanilla/view.ts";
 import { always, type EconomicResourceOperation, type TechnologyItem } from "../src/stellaris.ts";
 import {
+  ASCENSION_PERK_CATEGORY_FILE,
   BUILDING_FILE,
   MEGASTRUCTURE_FILE,
   TECH_FILE,
@@ -20,6 +21,7 @@ import {
 } from "./fixtures/vanilla-fixture.ts";
 
 const FILES = {
+  "common/ascension_perk_categories/pp_ascension_perk_categories.txt": ASCENSION_PERK_CATEGORY_FILE,
   "common/technology/pp_soc_tech.txt": TECH_FILE,
   "common/buildings/pp_buildings.txt": BUILDING_FILE,
   "common/megastructures/pp_megastructures.txt": MEGASTRUCTURE_FILE,
@@ -255,6 +257,81 @@ describe("patching end to end", () => {
         "\t}\n"
     );
     expect(content).not.toContain("mod_weight_if_group_picked = {\n\t\t{");
+  });
+});
+
+describe("patching the Ambitions ascension perk category", () => {
+  const ambitions = vanilla.definition("ascension_perk_category", "ap_category_ambitions");
+
+  function ambitionMod() {
+    const mod = createMod(makeConfig());
+    const archiveAmbition = mod.ascensionPerk("archive_ambition", {
+      name: "Archive Ambition",
+    });
+    return mod.compile([
+      mod.feature(undefined, [
+        archiveAmbition,
+        mod.patchAscensionPerkCategory(ambitions, (category) => ({
+          ascensionPerks: [...category.ascensionPerks, archiveAmbition],
+        })),
+      ]),
+    ]);
+  }
+
+  it("retains every shipped Ambition and appends the authored perk", async () => {
+    const files = render(ambitionMod());
+    expect([...files.keys()]).toEqual(
+      [
+        "descriptor.mod",
+        "common/ascension_perks/pp_mod_ascension_perks.txt",
+        "localisation/english/pp_mod_l_english.yml",
+        "common/ascension_perk_categories/pp_ascension_perk_categories_pp_mod_patch.txt",
+      ].sort()
+    );
+    await expect(
+      files.get("common/ascension_perk_categories/pp_ascension_perk_categories_pp_mod_patch.txt")
+    ).toMatchFileSnapshot(
+      "__snapshots__/patches/common__ascension_perk_categories__pp_ascension_perk_categories_pp_mod_patch.txt"
+    );
+  });
+
+  it("reports both category rules as assumed and keeps the judgment visible", () => {
+    const compiled = ambitionMod();
+    expect(compiled.patchPlans[0]?.assertions).toEqual([
+      {
+        registry: "ascension_perk_category",
+        key: "ap_category_ambitions",
+        rule: "last-wins",
+        confidence: "assumed",
+        beats: ["common/ascension_perk_categories/pp_ascension_perk_categories.txt"],
+        verifiedAgainst: "4.4.6",
+      },
+    ]);
+    expect(compiled.patchPlans[0]?.content).toContain(
+      "# ASSUMED duplicate-winner rule: Jackson, 2026-08-24 (SDK-289)"
+    );
+    expect(compiled.patchPlans[0]?.content).toContain(
+      "Registry `ascension_perk_category` uses an ASSUMED last-wins rule"
+    );
+    expect(compiled.patchPlans[0]?.content).not.toContain("Overrides verified against");
+    expect(compiled.patchPlans[0]?.content).toContain(
+      "# ASSUMED field-replacement rule: Jackson, 2026-08-24 (SDK-289)"
+    );
+    expect(compiled.warnings).toContainEqual({
+      code: "assumed-patch-rule",
+      message: expect.stringContaining('for "ap_category_ambitions"'),
+    });
+  });
+
+  it("rejects a second patch for the same category", () => {
+    const mod = createMod(makeConfig());
+    const feature = mod.feature(undefined, [
+      mod.patchAscensionPerkCategory(ambitions, () => ({ ascensionPerks: [] })),
+      mod.patchAscensionPerkCategory(ambitions, () => ({ ascensionPerks: [] })),
+    ]);
+    expect(() => mod.compile([feature])).toThrow(
+      /Duplicate patch for ascension_perk_category "ap_category_ambitions"/
+    );
   });
 });
 

@@ -93,6 +93,7 @@ describe("load", () => {
     expect(view.gameVersion).toBe("4.4.6");
     expect(view.fromCache).toBe(false);
     expect(view.files.map((file) => file.path)).toEqual([
+      "common/ascension_perk_categories/00_fake_ascension_perk_categories.txt",
       "common/buildings/00_fake_buildings.txt",
       "common/megastructures/00_fake_megastructures.txt",
       "common/scripted_variables/00_fake_vars.txt",
@@ -101,6 +102,9 @@ describe("load", () => {
     expect(view.definitions("building").map((building) => building.id)).toEqual([
       "building_fake_hydroponics",
     ]);
+    expect(
+      view.definition("ascension_perk_category", "ap_category_ambitions").ascensionPerks
+    ).toEqual([{ id: "ap_defender_of_the_galaxy_nomads" }, { id: "ap_become_the_crisis" }]);
     expect(view.definitions("megastructure").map((mega) => mega.id)).toEqual([
       "megastructure_fake_array_0",
       "megastructure_fake_array_1",

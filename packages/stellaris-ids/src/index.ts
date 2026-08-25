@@ -14,6 +14,7 @@ export type { VanillaAmbientObjectId } from "./registries/ambient-object.ts";
 export type { VanillaAnomalyCategoryId } from "./registries/anomaly-category.ts";
 export type { VanillaAnomalyCategoryTrie } from "./registries/anomaly-category/index.ts";
 export type { VanillaArchaeologicalSiteTypeId } from "./registries/archaeological-site-type.ts";
+export type { VanillaAscensionPerkCategoryId } from "./registries/ascension-perk-category.ts";
 export type { VanillaAscensionPerkId } from "./registries/ascension-perk.ts";
 export type { VanillaAsteroidBeltTypeId } from "./registries/asteroid-belt-type.ts";
 export type { VanillaBombardmentStanceId } from "./registries/bombardment-stance.ts";

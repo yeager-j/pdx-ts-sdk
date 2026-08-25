@@ -24,6 +24,7 @@ const profile = {
   tradition: "tradition",
   traditionCategory: "tradition_category",
   ascensionPerk: "ascension_perk",
+  ascensionPerkCategory: "ascension_perk_category",
   resource: "resource",
   crisisPath: "crisis_path",
   crisisLevel: "crisis_level",

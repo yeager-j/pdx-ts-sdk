@@ -1,0 +1,6 @@
+ap_category_ambitions = {
+	ascension_perks = {
+		ap_defender_of_the_galaxy_nomads
+		ap_become_the_crisis
+	}
+}

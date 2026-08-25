@@ -59,6 +59,11 @@ export type ArmyRef = TypedRef<"army" | `army.${string}`>;
 /** A reference to a `<ascension_perk>`. */
 export type AscensionPerkRef = TypedRef<"ascension_perk" | `ascension_perk.${string}`>;
 
+/** A reference to a `<ascension_perk_category>`. */
+export type AscensionPerkCategoryRef = TypedRef<
+  "ascension_perk_category" | `ascension_perk_category.${string}`
+>;
+
 /** A reference to a `<asset_selector.room>`. */
 export type AssetSelectorRoomRef = TypedRef<"asset_selector.room">;
 

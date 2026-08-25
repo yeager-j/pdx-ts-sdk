@@ -32,6 +32,14 @@ export const CONTENT_PATCH_REGISTRIES = new Map<string, string>([
       "r8 established last-wins and whole-object replacement from matching diagnostics",
   ],
   [
+    "ascension_perk_category",
+    "parsed by the vanilla loader as a flat keyed registry, and its rule-table row carries two " +
+      "explicit assumed cells — the SDK-289 judgment applies the r8/r10 keyed-script model until " +
+      "a category-specific runtime oracle settles repeat registration and omitted-field behavior. " +
+      'Every win it backs reports `confidence: "assumed"`, and every emitted patch file states ' +
+      "the judgment in its header",
+  ],
+  [
     "megastructure",
     "parsed by the vanilla loader beside technology and building (PARSED_REGISTRIES in " +
       "packages/sdk/src/installation/vanilla/parse.ts), and its rule-table row carries two " +

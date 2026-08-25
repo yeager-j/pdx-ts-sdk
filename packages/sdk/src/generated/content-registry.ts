@@ -4,6 +4,7 @@
 // From: common/buildings.cwt
 // From: common/traditions.cwt
 // From: common/ascension_perks.cwt
+// From: common/ascension_perk_categories.cwt
 // From: common/strategic_resources.cwt
 // From: common/crisis_paths.cwt
 // From: common/crisis.cwt
@@ -46,6 +47,10 @@ import {
   ARCHAEOLOGICAL_SITE_TYPE_FIELDS,
   ARCHAEOLOGICAL_SITE_TYPE_LOCALISATION,
 } from "./archaeological-site-type.ts";
+import {
+  ASCENSION_PERK_CATEGORY_FIELDS,
+  ASCENSION_PERK_CATEGORY_LOCALISATION,
+} from "./ascension-perk-category.ts";
 import { ASCENSION_PERK_FIELDS, ASCENSION_PERK_LOCALISATION } from "./ascension-perk.ts";
 import {
   BOMBARDMENT_STANCE_FIELDS,
@@ -158,6 +163,15 @@ export const CONTENT_REGISTRIES = [
     fileExtension: ".txt",
     fields: ASCENSION_PERK_FIELDS,
     localisation: ASCENSION_PERK_LOCALISATION,
+  },
+  {
+    type: "ascension_perk_category",
+    referenceName: "ascension_perk_category",
+    outputDir: "common/ascension_perk_categories",
+    fileStem: "ascension_perk_categories",
+    fileExtension: ".txt",
+    fields: ASCENSION_PERK_CATEGORY_FIELDS,
+    localisation: ASCENSION_PERK_CATEGORY_LOCALISATION,
   },
   {
     type: "resource",

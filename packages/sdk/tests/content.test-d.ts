@@ -30,6 +30,11 @@ import {
   type AgendaRef,
   type AgreementPresetRef,
   type ArchaeologicalSiteTypeRef,
+  type AscensionPerkCategoryDef,
+  type AscensionPerkCategoryFields,
+  type AscensionPerkCategoryItem,
+  type AscensionPerkCategoryPatch,
+  type AscensionPerkCategoryRef,
   type AscensionPerkRef,
   type BombardmentStanceRef,
   type BuildingDef,
@@ -192,6 +197,10 @@ describe("generated content authoring types", () => {
       name: "Player Crisis",
       onEnabled: (country) => country.activateCrisisProgression(path),
     });
+    const category = contentMod.ascensionPerkCategory("player_crisis", {
+      name: "Player Crisis Paths",
+      ascensionPerks: [ascensionPerk],
+    });
 
     const resourceItem: ResourceItem = currency;
     const resourceDef: ResourceDef = currency.def;
@@ -203,11 +212,15 @@ describe("generated content authoring types", () => {
     const crisisObjectiveDef: CrisisObjectiveDef = objective.def;
     const menacePerkItem: MenacePerkItem = perk;
     const menacePerkDef: MenacePerkDef = perk.def;
+    const categoryItem: AscensionPerkCategoryItem = category;
+    const categoryDef: AscensionPerkCategoryDef = category.def;
     const vanillaResource: ResourceRef = vanilla.resource("menace");
     const vanillaPath: CrisisPathRef = vanilla.crisisPath("nemesis_path");
     const vanillaLevel: CrisisLevelRef = vanilla.crisisLevel("crisis_level_1");
     const vanillaObjective: CrisisObjectiveRef = vanilla.crisisObjective("crisobj_destroy_worlds");
     const vanillaPerk: MenacePerkRef = vanilla.menacePerk("menp_base_breaker");
+    const vanillaCategory: AscensionPerkCategoryRef =
+      vanilla.ascensionPerkCategory("ap_category_ambitions");
     void resourceItem;
     void resourceDef;
     void crisisPathItem;
@@ -218,12 +231,19 @@ describe("generated content authoring types", () => {
     void crisisObjectiveDef;
     void menacePerkItem;
     void menacePerkDef;
+    void categoryItem;
+    void categoryDef;
     void ascensionPerk;
     void vanillaResource;
     void vanillaPath;
     void vanillaLevel;
     void vanillaObjective;
     void vanillaPerk;
+    void vanillaCategory;
+
+    expectTypeOf<AscensionPerkCategoryFields["ascensionPerks"]>().toEqualTypeOf<
+      (AscensionPerkRef | string)[]
+    >();
 
     contentMod.crisisPath("wrong_currency", {
       // @ts-expect-error — a level is not a crisis currency resource
@@ -2563,11 +2583,14 @@ describe("generated patch authoring types", () => {
       "tech_pp_forging = {\n\tarea = society\n\ttier = 3\n\tcategory = { biology }\n}\n",
     "common/buildings/pp_buildings.txt":
       "building_pp_refinery = {\n\tcategory = manufacturing\n\tplanet_limit = 1\n}\n",
+    "common/ascension_perk_categories/pp_ascension_perk_categories.txt":
+      "ap_category_ambitions = {\n\tascension_perks = { ap_become_the_crisis }\n}\n",
     "common/megastructures/pp_megastructures.txt":
       "megastructure_pp_array = {\n\tentity = pp_array_entity\n\tbuild_time = 1800\n}\n",
   });
   const forging = view.definition("technology", "tech_pp_forging");
   const refinery = view.definition("building", "building_pp_refinery");
+  const ambitions = view.definition("ascension_perk_category", "ap_category_ambitions");
   const array = view.definition("megastructure", "megastructure_pp_array");
 
   it("keeps vanilla's identity: a patch cannot set an id", () => {
@@ -2582,6 +2605,27 @@ describe("generated patch authoring types", () => {
     // @ts-expect-error — a member naming nothing the patch type has, in the one
     // position the compiler does check it: an object with no member in common.
     contentMod.patchTechnology(forging, () => ({ csot: 8000 }));
+  });
+
+  it("appends an authored perk to a parsed ascension perk category", () => {
+    const archiveAmbition = contentMod.ascensionPerk("archive_ambition", {
+      name: "Archive Ambition",
+    });
+    expectTypeOf(ambitions.registry).toEqualTypeOf<"ascension_perk_category">();
+    expectTypeOf(ambitions.ascensionPerks).toEqualTypeOf<readonly AscensionPerkRef[]>();
+    expectTypeOf<AscensionPerkCategoryPatch["ascensionPerks"]>().toEqualTypeOf<
+      PatchInput<(AscensionPerkRef | string)[]> | undefined
+    >();
+    expectTypeOf<AscensionPerkCategoryPatch>().not.toHaveProperty("id");
+    expectTypeOf(
+      contentMod.patchAscensionPerkCategory(ambitions, (category) => ({
+        ascensionPerks: [...category.ascensionPerks, archiveAmbition],
+      })).patched.registry
+    ).toEqualTypeOf<"ascension_perk_category">();
+    // @ts-expect-error — a parsed building is not an ascension perk category.
+    contentMod.patchAscensionPerkCategory(refinery, () => ({ ascensionPerks: [] }));
+    // @ts-expect-error — a category is not a building patch source.
+    contentMod.patchBuilding(ambitions, () => ({ planetLimit: 1 }));
   });
 
   it("leaves an unknown member beside a known one to the runtime guard", () => {

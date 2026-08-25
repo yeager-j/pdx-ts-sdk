@@ -19,6 +19,7 @@ import {
   defineWeaponComponentTemplate,
 } from "../src/generated/content-definers.ts";
 import { createMod, render, type PureMod } from "../src/index.ts";
+import { viewFromFiles } from "../src/installation/vanilla/view.ts";
 import {
   always,
   and,
@@ -41,6 +42,7 @@ import {
   type ScopeName,
   type SpriteRef,
 } from "../src/stellaris.ts";
+import { ASCENSION_PERK_CATEGORY_FILE } from "./fixtures/vanilla-fixture.ts";
 
 function configFor(name: string, prefix: string) {
   return { name, prefix, supportedVersion: "4.4.*" };
@@ -1185,6 +1187,45 @@ function defineContentExample(): PureMod {
   ]);
 }
 
+function defineAscensionPerkCategoryExample(): PureMod {
+  const mod = createMod({
+    name: "Ascension Perk Categories",
+    prefix: "category_test",
+    supportedVersion: "4.4.*",
+  });
+  const preservation = mod.ascensionPerk("preservation", {
+    name: "Galactic Preservation",
+  });
+  const exploration = mod.ascensionPerk("exploration", {
+    name: "Boundless Exploration",
+  });
+  const category = mod.ascensionPerkCategory("archive_paths", {
+    name: "Archive Paths",
+    desc: "Paths devoted to discovery and preservation.",
+    ascensionPerks: [preservation, exploration],
+  });
+
+  return mod.compile([mod.feature("archive_paths", [preservation, exploration, category])]);
+}
+
+describe("ascension perk category authoring", () => {
+  const files = render(defineAscensionPerkCategoryExample());
+
+  it("writes the category and its authored perk references", async () => {
+    expect([...files.keys()]).toEqual([
+      "common/ascension_perk_categories/category_test_archive_paths.txt",
+      "common/ascension_perks/category_test_archive_paths.txt",
+      "descriptor.mod",
+      "localisation/english/category_test_archive_paths_l_english.yml",
+    ]);
+    await expect(
+      files.get("common/ascension_perk_categories/category_test_archive_paths.txt")
+    ).toMatchFileSnapshot(
+      "__snapshots__/content/common__ascension_perk_categories__category_test_archive_paths.txt"
+    );
+  });
+});
+
 function definePlayerCrisisExample(): PureMod {
   const mod = createMod({
     name: "Player Crisis",
@@ -1230,10 +1271,14 @@ function definePlayerCrisisExample(): PureMod {
     desc: "Forge a new crisis path.",
     onEnabled: (country) => country.activateCrisisProgression(path),
   });
-  const ambitions = mod.assetFile({
-    source: new URL("./fixtures/player-crisis-ambitions.txt", import.meta.url),
-    path: "common/ascension_perk_categories/crisis_test_player_crisis.txt",
+  const vanilla = viewFromFiles({
+    "common/ascension_perk_categories/00_ascension_perk_categories.txt":
+      ASCENSION_PERK_CATEGORY_FILE,
   });
+  const ambitions = mod.patchAscensionPerkCategory(
+    vanilla.definition("ascension_perk_category", "ap_category_ambitions"),
+    (category) => ({ ascensionPerks: [...category.ascensionPerks, ascensionPerk] })
+  );
 
   return mod.compile([
     mod.feature("player_crisis", [
@@ -1251,9 +1296,9 @@ function definePlayerCrisisExample(): PureMod {
 describe("player-crisis content route", () => {
   const files = render(definePlayerCrisisExample());
 
-  it("writes every route registry and the retained-category override to their exact files", () => {
+  it("writes every route registry and the retained-category patch to their exact files", () => {
     expect([...files.keys()]).toEqual([
-      "common/ascension_perk_categories/crisis_test_player_crisis.txt",
+      "common/ascension_perk_categories/00_ascension_perk_categories_crisis_test_patch.txt",
       "common/ascension_perks/crisis_test_player_crisis.txt",
       "common/crisis_levels/crisis_test_player_crisis.txt",
       "common/crisis_objectives/crisis_test_player_crisis.txt",
@@ -1265,22 +1310,16 @@ describe("player-crisis content route", () => {
     ]);
     expect(
       new TextDecoder().decode(
-        files.file("common/ascension_perk_categories/crisis_test_player_crisis.txt")?.bytes()
+        files
+          .file(
+            "common/ascension_perk_categories/00_ascension_perk_categories_crisis_test_patch.txt"
+          )
+          ?.bytes()
       )
-    ).toBe(
-      [
-        "ap_category_ambitions = {",
-        "\tascension_perks = {",
-        '\t\t"ap_defender_of_the_galaxy_nomads"',
-        '\t\t"ap_become_the_crisis"',
-        '\t\t"ap_cosmogenesis"',
-        '\t\t"ap_behemoths"',
-        '\t\t"ap_galactic_hyperthermia"',
-        '\t\t"crisis_test_ascension_perk_player_crisis"',
-        "\t}",
-        "}",
-        "",
-      ].join("\n")
+    ).toContain(
+      "\tascension_perks = { ap_defender_of_the_galaxy_nomads ap_become_the_crisis " +
+        "ap_cosmogenesis ap_behemoths ap_galactic_hyperthermia " +
+        "crisis_test_ascension_perk_player_crisis }"
     );
   });
 

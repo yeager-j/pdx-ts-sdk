@@ -125,6 +125,35 @@ export const REGISTRY_RULES: readonly RegistryRow[] = [
     verifiedAgainst: SUPPORTED_STELLARIS_BUILD,
   },
   /**
+   * Ascension perk categories: SDK-289 needs a whole-object override to add
+   * custom Ambitions while retaining the category's shipped members. No
+   * category-specific oracle exists, so both cells remain assumptions based
+   * on the keyed-script registry results from `r8` and the global path-order
+   * model from `r10`. Every emitted patch keeps this weaker evidence visible.
+   */
+  {
+    registry: "ascension_perk_category",
+    repeat: {
+      state: "assumed",
+      rule: "last-wins",
+      runs: ["r8", "r10"],
+      judgment:
+        "Jackson, 2026-08-24 (SDK-289): ascension perk categories use the keyed-script " +
+        "last-wins rule until a category-specific runtime observable proves otherwise. " +
+        "Graduates to verified when an in-game probe distinguishes the repeated category winner.",
+    },
+    replacement: {
+      state: "assumed",
+      rule: "whole-object",
+      runs: ["r8", "r10"],
+      judgment:
+        "Jackson, 2026-08-24 (SDK-289): ascension perk category redefinitions replace the whole " +
+        "object, so Ambitions patches must retain the shipped members. Graduates to verified " +
+        "when an in-game probe observes whether an omitted ascension_perks field survives.",
+    },
+    verifiedAgainst: SUPPORTED_STELLARIS_BUILD,
+  },
+  /**
    * Scripted triggers and effects: last-wins (`r1` collided them alongside
    * technologies in one run; `r4` covered the positional control). Parameter
    * (`$X$` / `[[X]`) behavior under override is a named open question — it

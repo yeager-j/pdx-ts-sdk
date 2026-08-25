@@ -4,6 +4,7 @@
 // From: common/buildings.cwt
 // From: common/traditions.cwt
 // From: common/ascension_perks.cwt
+// From: common/ascension_perk_categories.cwt
 // From: common/strategic_resources.cwt
 // From: common/crisis_paths.cwt
 // From: common/crisis.cwt
@@ -50,6 +51,7 @@ import type {
   ExactEconomicCategoryWitness,
 } from "../content/types.ts";
 import type {
+  ParsedAscensionPerkCategory,
   ParsedBuilding,
   ParsedMegastructure,
   ParsedTechnology,
@@ -59,6 +61,11 @@ import type { AgendaDef } from "./agenda.ts";
 import type { AgreementPresetDef } from "./agreement-preset.ts";
 import type { AmbientObjectDef } from "./ambient-object.ts";
 import type { ArchaeologicalSiteTypeDef } from "./archaeological-site-type.ts";
+import type {
+  AscensionPerkCategoryDef,
+  AscensionPerkCategoryPatch,
+  AscensionPerkCategoryPatchItem,
+} from "./ascension-perk-category.ts";
 import type { AscensionPerkDef } from "./ascension-perk.ts";
 import type { BombardmentStanceDef } from "./bombardment-stance.ts";
 import type { BuildingDef, BuildingPatch, BuildingPatchItem } from "./building.ts";
@@ -72,6 +79,7 @@ import {
   defineAmbientObject,
   defineArchaeologicalSiteType,
   defineAscensionPerk,
+  defineAscensionPerkCategory,
   defineBombardmentStance,
   defineBuilding,
   defineCasusBelli,
@@ -111,6 +119,7 @@ import {
   defineUtilityComponentTemplate,
   defineWarGoal,
   defineWeaponComponentTemplate,
+  patchAscensionPerkCategory,
   patchBuilding,
   patchMegastructure,
   patchTechnology,
@@ -251,6 +260,11 @@ export interface IdProfile {
    * Override it when this registry needs a different id convention.
    */
   readonly ascensionPerk: string;
+  /**
+   * The segment inserted between the mod prefix and an ascension perk category's logical name.
+   * Override it when this registry needs a different id convention.
+   */
+  readonly ascensionPerkCategory: string;
   /**
    * The segment inserted between the mod prefix and a resource's logical name.
    * Override it when this registry needs a different id convention.
@@ -450,6 +464,7 @@ export const DEFAULT_ID_PROFILE = Object.freeze({
   tradition: "tradition",
   traditionCategory: "tradition_category",
   ascensionPerk: "ascension_perk",
+  ascensionPerkCategory: "ascension_perk_category",
   resource: "resource",
   crisisPath: "crisis_path",
   crisisLevel: "crisis_level",
@@ -667,6 +682,28 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     name: Name,
     def: Omit<AscensionPerkDef<MintedContentId<P, I, "ascensionPerk", Name>>, "id">
   ): ContentItem<"ascension_perk", AscensionPerkDef<MintedContentId<P, I, "ascensionPerk", Name>>>;
+  /**
+   * Defines an ascension perk category from its logical name.
+   * The capability mints and owns the full id; the returned branded reference
+   * flows into matching content-reference fields.
+   */
+  ascensionPerkCategory<const Name extends string>(
+    name: Name,
+    def: Omit<AscensionPerkCategoryDef<MintedContentId<P, I, "ascensionPerkCategory", Name>>, "id">
+  ): ContentItem<
+    "ascension_perk_category",
+    AscensionPerkCategoryDef<MintedContentId<P, I, "ascensionPerkCategory", Name>>
+  >;
+  /**
+   * Patches a vanilla ascension perk category as a whole-object override.
+   * Unlike a capability definition method, it mints no id and owns no new content —
+   * but it does mint localisation keys for text it adds, from this capability's
+   * prefix, which is why the method is bound to the capability rather than free.
+   */
+  patchAscensionPerkCategory<Source extends ParsedAscensionPerkCategory>(
+    ascensionPerkCategory: Source,
+    patch: (ascensionPerkCategory: Source) => AscensionPerkCategoryPatch
+  ): AscensionPerkCategoryPatchItem;
   /**
    * Defines a resource from its logical name.
    * The capability mints and owns the full id; the returned branded reference
@@ -1267,6 +1304,21 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
         MintedContentId<P, I, "ascensionPerk", Name>
       >);
     },
+    ascensionPerkCategory: <const Name extends string>(
+      name: Name,
+      def: Omit<
+        AscensionPerkCategoryDef<MintedContentId<P, I, "ascensionPerkCategory", Name>>,
+        "id"
+      >
+    ) =>
+      defineAscensionPerkCategory({
+        ...def,
+        id: mint("ascensionPerkCategory", name),
+      } as AscensionPerkCategoryDef<MintedContentId<P, I, "ascensionPerkCategory", Name>>),
+    patchAscensionPerkCategory: <Source extends ParsedAscensionPerkCategory>(
+      ascensionPerkCategory: Source,
+      patch: (ascensionPerkCategory: Source) => AscensionPerkCategoryPatch
+    ) => patchAscensionPerkCategory(ascensionPerkCategory, patch, prefix),
     resource: <const Name extends string>(
       name: Name,
       def: Omit<ResourceDef<MintedContentId<P, I, "resource", Name>>, "id">

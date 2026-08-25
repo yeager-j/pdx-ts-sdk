@@ -36,6 +36,7 @@ import type { VanillaAmbientObjectId } from "./registries/ambient-object.ts";
 import type { VanillaAnomalyCategoryId } from "./registries/anomaly-category.ts";
 import type { VanillaAnomalyCategoryTrie } from "./registries/anomaly-category/index.ts";
 import type { VanillaArchaeologicalSiteTypeId } from "./registries/archaeological-site-type.ts";
+import type { VanillaAscensionPerkCategoryId } from "./registries/ascension-perk-category.ts";
 import type { VanillaAscensionPerkId } from "./registries/ascension-perk.ts";
 import type { VanillaAsteroidBeltTypeId } from "./registries/asteroid-belt-type.ts";
 import type { VanillaBombardmentStanceId } from "./registries/bombardment-stance.ts";
@@ -101,6 +102,7 @@ export interface VanillaIds {
   readonly tradition: VanillaTraditionId;
   readonly tradition_category: VanillaTraditionCategoryId;
   readonly ascension_perk: VanillaAscensionPerkId;
+  readonly ascension_perk_category: VanillaAscensionPerkCategoryId;
   readonly resource: VanillaResourceId;
   readonly crisis_path: VanillaCrisisPathId;
   readonly crisis_level: VanillaCrisisLevelId;

@@ -10,8 +10,10 @@ import { describe, expect, it } from "vitest";
 
 import type { ContentField } from "../../src/content/schema.ts";
 import { SwapPatchError } from "../../src/errors.ts";
+import type { AscensionPerkCategoryPatch } from "../../src/generated/ascension-perk-category.ts";
 import type { BuildingPatch } from "../../src/generated/building.ts";
 import {
+  patchAscensionPerkCategory as patchAscensionPerkCategoryItem,
   patchBuilding as patchBuildingItem,
   patchMegastructure as patchMegastructureItem,
   patchTechnology as patchTechnologyItem,
@@ -21,6 +23,7 @@ import type { TechnologyPatch } from "../../src/generated/technology.ts";
 import { sha256Hex } from "../../src/installation/vanilla/parse.ts";
 import {
   anyOf,
+  type ParsedAscensionPerkCategory,
   type ParsedBuilding,
   type ParsedMegastructure,
   type ParsedTechnology,
@@ -29,6 +32,7 @@ import { patchContent } from "../../src/installation/vanilla/patch.ts";
 import { viewFromFiles } from "../../src/installation/vanilla/view.ts";
 import { always } from "../../src/stellaris.ts";
 import {
+  ASCENSION_PERK_CATEGORY_FILE,
   BUILDING_FILE,
   MEGASTRUCTURE_FILE,
   OR_TECH_FILE,
@@ -50,6 +54,11 @@ const patchTechnology = <Source extends ParsedTechnology>(
   technology: Source,
   patch: (technology: Source) => TechnologyPatch
 ) => patchTechnologyItem(technology, patch, PREFIX).patched;
+
+const patchAscensionPerkCategory = <Source extends ParsedAscensionPerkCategory>(
+  category: Source,
+  patch: (category: Source) => AscensionPerkCategoryPatch
+) => patchAscensionPerkCategoryItem(category, patch, PREFIX).patched;
 
 const patchBuilding = <Source extends ParsedBuilding>(
   building: Source,
@@ -735,14 +744,57 @@ describe("the building slice", () => {
   });
 });
 
+describe("the ascension perk category slice", () => {
+  const view = viewFromFiles({
+    "common/ascension_perk_categories/pp_ascension_perk_categories.txt":
+      ASCENSION_PERK_CATEGORY_FILE,
+  });
+  const ambitions = view.definition("ascension_perk_category", "ap_category_ambitions");
+
+  it("parses the current members as branded references", () => {
+    expect(ambitions.registry).toBe("ascension_perk_category");
+    expect(ambitions.sourceSha256).toBe(sha256Hex(ASCENSION_PERK_CATEGORY_FILE));
+    expect(ambitions.ascensionPerks.map((perk) => perk.id)).toEqual([
+      "ap_defender_of_the_galaxy_nomads",
+      "ap_become_the_crisis",
+      "ap_cosmogenesis",
+      "ap_behemoths",
+      "ap_galactic_hyperthermia",
+    ]);
+    expect(ambitions.rest).toEqual([]);
+  });
+
+  it("round-trips the category and appends a perk in its original field slot", () => {
+    const roundTrip = serialize([ambitions.toEntries()]);
+    expect(serialize(parse(roundTrip, "category.txt").items)).toBe(roundTrip);
+
+    const patched = patchAscensionPerkCategory(ambitions, (category) => ({
+      ascensionPerks: [...category.ascensionPerks, "pp_ascension_perk_archive_ambition"],
+    }));
+    const emitted = serialize([patched.toEntries()]);
+    expect(emitted).toContain(
+      "\tascension_perks = { ap_defender_of_the_galaxy_nomads ap_become_the_crisis " +
+        "ap_cosmogenesis ap_behemoths ap_galactic_hyperthermia " +
+        "pp_ascension_perk_archive_ambition }\n"
+    );
+  });
+
+  it("rejects a category without its required member list", () => {
+    expect(() =>
+      viewFromFiles({
+        "common/ascension_perk_categories/broken.txt": "ap_category_empty = { }\n",
+      })
+    ).toThrow(/ascension_perk_category ap_category_empty has no ascension_perks/);
+  });
+});
+
 /**
- * The third registry, and the first whose rule-table replacement cell is a
- * judgment rather than a finding. Nothing about the parse or the transform
- * changes for that — the confidence rides on the *win*, which this file does
- * not compute — so what is measured here is the same property the building
- * slice measures, through shapes neither earlier registry writes: an
- * `economic_template` block, an inline nested struct, and a field the emitter
- * declines outright.
+ * The megastructure registry also has an assumed rule-table cell. Nothing
+ * about the parse or transform changes for that — the confidence rides on the
+ * *win*, which this file does not compute — so what is measured here is the
+ * same property the building slice measures, through shapes neither earlier
+ * registry writes: an `economic_template` block, an inline nested struct, and
+ * a field the emitter declines outright.
  */
 describe("the megastructure slice", () => {
   const view = viewFromFiles({

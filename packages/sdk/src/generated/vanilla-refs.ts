@@ -4,6 +4,7 @@
 // From: common/buildings.cwt
 // From: common/traditions.cwt
 // From: common/ascension_perks.cwt
+// From: common/ascension_perk_categories.cwt
 // From: common/strategic_resources.cwt
 // From: common/crisis_paths.cwt
 // From: common/crisis.cwt
@@ -47,6 +48,7 @@ import type {
   AmbientObjectRef,
   AnomalyCategoryRef,
   ArchaeologicalSiteTypeRef,
+  AscensionPerkCategoryRef,
   AscensionPerkRef,
   AsteroidBeltTypeRef,
   BombardmentStanceRef,
@@ -157,6 +159,18 @@ export function ascensionPerk<const Id extends VanillaId<"ascension_perk">>(
   id: Id
 ): AscensionPerkRef & { readonly id: Id } {
   return makeVanillaRef(id) as AscensionPerkRef & { readonly id: Id };
+}
+
+/**
+ * A checked reference to a vanilla ascension perk category id.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
+ */
+export function ascensionPerkCategory<const Id extends VanillaId<"ascension_perk_category">>(
+  id: Id
+): AscensionPerkCategoryRef & { readonly id: Id } {
+  return makeVanillaRef(id) as AscensionPerkCategoryRef & { readonly id: Id };
 }
 
 /**
