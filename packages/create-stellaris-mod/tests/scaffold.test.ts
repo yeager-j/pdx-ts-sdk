@@ -403,7 +403,7 @@ describe("a scaffolded project", () => {
       {
         stem: "example",
         itemCount: 3,
-        itemIds: ["smoke_mod_tech_first_steps", "smoke_mod.1"],
+        itemIds: ["smoke_mod.1", "smoke_mod_tech_first_steps"],
       },
     ]);
     expect(report).not.toHaveProperty("outputs");
