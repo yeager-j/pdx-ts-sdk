@@ -14,7 +14,10 @@
  */
 
 import { camelCase, docComment, spokenName } from "../../naming.ts";
-import { HAND_WRITTEN_VANILLA_REFS } from "../../overlay/index.ts";
+import {
+  HAND_WRITTEN_VANILLA_REFS,
+  VANILLA_SUBTYPE_REFERENCE_PROJECTIONS,
+} from "../../overlay/index.ts";
 import {
   registryNameOf,
   type ContentManifestEntry,
@@ -37,6 +40,10 @@ export interface VanillaRefsEmission {
 interface VanillaRefRow {
   /** Registry name: what the function or trie root is called after. */
   readonly registry: string;
+  /** Public function or trie-root name. */
+  readonly helper: string;
+  /** Human-readable registry name used in public documentation. */
+  readonly spoken: string;
   /**
    * The CWT reference the id satisfies — differs from `registry` only for the
    * `component_template` registries that share one CWT type via `as`, where it
@@ -64,14 +71,25 @@ export function emitVanillaRefs(
       const registry = registryNameOf(entry);
       return {
         registry,
+        helper: camelCase(registry),
+        spoken: spokenName(registry),
         refSource: referenceNames.get(registry) ?? entry.type,
         oversized: entry.oversized ?? false,
       };
     }),
     ...extras.map((extra): VanillaRefRow => ({
       registry: extra.type,
+      helper: camelCase(extra.type),
+      spoken: spokenName(extra.type),
       refSource: extra.type,
       oversized: extra.oversized ?? false,
+    })),
+    ...VANILLA_SUBTYPE_REFERENCE_PROJECTIONS.map((projection): VanillaRefRow => ({
+      registry: `${projection.registry}.${projection.subtype}`,
+      helper: camelCase(projection.subtype),
+      spoken: spokenName(projection.subtype),
+      refSource: `${projection.registry}.${projection.subtype}`,
+      oversized: false,
     })),
   ];
 
@@ -112,9 +130,9 @@ function emitRow(emitter: Emitter, row: VanillaRefRow): string {
   // `resource` are ref-only extras with no other emitter touching them.
   emitter.usedRefs.add(row.refSource);
   const refType = emitter.refTypeName(row.refSource);
-  const name = camelCase(row.registry);
+  const name = row.helper;
   const key = JSON.stringify(row.registry);
-  const spoken = spokenName(row.registry);
+  const spoken = row.spoken;
 
   if (!row.oversized) {
     return (

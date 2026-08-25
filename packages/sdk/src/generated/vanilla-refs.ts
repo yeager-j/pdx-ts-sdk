@@ -54,6 +54,8 @@ import type {
   BombardmentStanceRef,
   BuildingRef,
   CasusBelliRef,
+  CivicOrOriginCivicRef,
+  CivicOrOriginOriginRef,
   CivicOrOriginRef,
   ComponentSetRef,
   ComponentTemplateStrikeCraftComponentTemplateRef,
@@ -797,6 +799,30 @@ export function asteroidBeltType<const Id extends VanillaId<"asteroid_belt_type"
   id: Id
 ): AsteroidBeltTypeRef & { readonly id: Id } {
   return makeVanillaRef(id) as AsteroidBeltTypeRef & { readonly id: Id };
+}
+
+/**
+ * A checked reference to a vanilla civic id.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
+ */
+export function civic<const Id extends VanillaId<"civic_or_origin.civic">>(
+  id: Id
+): CivicOrOriginCivicRef & { readonly id: Id } {
+  return makeVanillaRef(id) as CivicOrOriginCivicRef & { readonly id: Id };
+}
+
+/**
+ * A checked reference to a vanilla origin id.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
+ */
+export function origin<const Id extends VanillaId<"civic_or_origin.origin">>(
+  id: Id
+): CivicOrOriginOriginRef & { readonly id: Id } {
+  return makeVanillaRef(id) as CivicOrOriginOriginRef & { readonly id: Id };
 }
 
 /**

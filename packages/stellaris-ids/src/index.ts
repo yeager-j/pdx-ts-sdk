@@ -21,7 +21,9 @@ export type { VanillaBombardmentStanceId } from "./registries/bombardment-stance
 export type { VanillaBuildingId } from "./registries/building.ts";
 export type { VanillaCallingCounterMember } from "./enums/calling-counter.ts";
 export type { VanillaCasusBelliId } from "./registries/casus-belli.ts";
+export type { VanillaCivicOrOriginCivicId } from "./registries/civic-or-origin-civic.ts";
 export type { VanillaCivicOrOriginId } from "./registries/civic-or-origin.ts";
+export type { VanillaCivicOrOriginOriginId } from "./registries/civic-or-origin-origin.ts";
 export type { VanillaComponentSetId } from "./registries/component-set.ts";
 export type { VanillaComponentSlotMember } from "./enums/component-slot.ts";
 export type { VanillaComponentTagMember } from "./enums/component-tag.ts";

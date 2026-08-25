@@ -18,6 +18,10 @@ import {
   referenceNameOf,
   typesReferencedBySubtype,
 } from "@pdx-ts/codegen-cwt/lower/content-reference";
+import {
+  VANILLA_SUBTYPE_REFERENCE_PROJECTIONS,
+  type VanillaSubtypeReferenceProjection,
+} from "@pdx-ts/codegen-cwt/overlay";
 
 import type { VanillaIdRow } from "./manifest.ts";
 import type { BucketLayout } from "./trie.ts";
@@ -81,6 +85,8 @@ export interface RegistrySpec {
   readonly bucket: BucketLayout;
   /** An explicitly oversized public registry gets a trie regardless of current count. */
   readonly oversized: boolean;
+  /** Install-derived subtype id sets projected from this shared registry. */
+  readonly subtypeProjections: readonly VanillaSubtypeReferenceProjection[];
 }
 
 /** The extension the game assumes when the rules declare none. */
@@ -161,5 +167,8 @@ function resolveRow(
     pathStrict: type.pathStrict ?? false,
     bucket: row.bucket ?? "stripped-file",
     oversized: row.oversized === true,
+    subtypeProjections: VANILLA_SUBTYPE_REFERENCE_PROJECTIONS.filter(
+      (projection) => projection.registry === row.registry
+    ),
   };
 }

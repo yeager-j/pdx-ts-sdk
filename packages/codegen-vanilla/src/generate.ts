@@ -264,6 +264,23 @@ export function generateVanillaPackage(options: GenerateOptions): {
       missing: read.missing,
       trie: trieReport,
     });
+    for (const projection of read.subtypeProjections) {
+      const projectionFile = registryFile(projection.registry);
+      files.set(
+        projectionFile,
+        emitIdUnion(projection.registry, projection.ids, gate, gameVersion)
+      );
+      exports.push({ name: idTypeName(projection.registry), file: projectionFile });
+      plan.ids.push({ registry: projection.registry, file: projectionFile });
+      registries.push({
+        registry: projection.registry,
+        ids: projection.ids.length,
+        files: read.files,
+        diagnostics: 0,
+        missing: read.missing,
+        trie: null,
+      });
+    }
   }
 
   const complexEnums: ComplexEnumReport[] = [];

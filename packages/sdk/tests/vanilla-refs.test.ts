@@ -51,6 +51,16 @@ describe("checked helpers in ref fields", () => {
         "}\n"
     );
   });
+
+  it("constructs subtype references with the same zero-validation runtime shape", () => {
+    const civic = vanilla.civic("civic_agrarian_idyll");
+    const origin = vanilla.origin("origin_endbringers");
+
+    expect(civic).toEqual({ id: "civic_agrarian_idyll" });
+    expect(origin).toEqual({ id: "origin_endbringers" });
+    expect(isVanillaRef(civic)).toBe(true);
+    expect(isVanillaRef(origin)).toBe(true);
+  });
 });
 
 /** Navigation is untyped in this program (the package is absent, so

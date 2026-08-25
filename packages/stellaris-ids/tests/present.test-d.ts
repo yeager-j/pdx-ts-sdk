@@ -13,8 +13,12 @@ import type { PdxEntry } from "@pdx-ts/pdxscript";
 import { createMod } from "@pdx-ts/sdk";
 import { makeScope, type VanillaEnumMember } from "@pdx-ts/sdk/internals";
 import {
+  hasCivic,
+  hasOrigin,
   scriptedTriggerModifier,
   vanilla,
+  type CivicOrOriginCivicRef,
+  type CivicOrOriginOriginRef,
   type ComponentSlot,
   type EventRef,
   type EventScopelessRef,
@@ -59,6 +63,33 @@ describe("checked registry helpers", () => {
     // @ts-expect-error
     vanilla.technology("building_capital");
     expectTypeOf(vanilla.building("building_capital").id).toEqualTypeOf<"building_capital">();
+  });
+
+  it("checks civic and origin ids against their installed subtype evidence", () => {
+    const civic = vanilla.civic("civic_agrarian_idyll");
+    const origin = vanilla.origin("origin_endbringers");
+
+    expectTypeOf(civic.id).toEqualTypeOf<"civic_agrarian_idyll">();
+    expectTypeOf(civic).toExtend<CivicOrOriginCivicRef>();
+    expectTypeOf(origin.id).toEqualTypeOf<"origin_endbringers">();
+    expectTypeOf(origin).toExtend<CivicOrOriginOriginRef>();
+    hasCivic(civic);
+    hasOrigin(origin);
+    // @ts-expect-error an origin reference does not satisfy a civic-only consumer.
+    hasCivic(origin);
+    // @ts-expect-error a civic reference does not satisfy an origin-only consumer.
+    hasOrigin(civic);
+
+    // @ts-expect-error an origin is not a civic.
+    vanilla.civic("origin_endbringers");
+    // @ts-expect-error a civic is not an origin.
+    vanilla.origin("civic_agrarian_idyll");
+    // @ts-expect-error this id does not exist in either installed subtype.
+    vanilla.origin("origin_that_never_existed");
+
+    expectTypeOf(
+      vanilla.civicOrOrigin("origin_endbringers").id
+    ).toEqualTypeOf<"origin_endbringers">();
   });
 
   it("checks situation-log category ids", () => {
