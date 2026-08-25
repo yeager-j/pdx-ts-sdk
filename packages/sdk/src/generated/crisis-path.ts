@@ -11,8 +11,11 @@ import type { CrisisLevelRef, CrisisObjectiveRef, ResourceRef } from "./refs.ts"
  * Generated from `type[crisis_path]` at `game/common/crisis_paths`.
  */
 export interface CrisisPathFields {
+  /** Resource that tracks progress along this crisis path. */
   crisisCurrency: ResourceRef | string;
+  /** Crisis levels in progression order; align the order with their currency thresholds. */
   levels: (CrisisLevelRef | string)[];
+  /** Objectives available to this crisis progression path. */
   objectives: (CrisisObjectiveRef | string)[];
 }
 

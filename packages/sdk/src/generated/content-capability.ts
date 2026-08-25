@@ -699,6 +699,27 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
    * Unlike a capability definition method, it mints no id and owns no new content —
    * but it does mint localisation keys for text it adds, from this capability's
    * prefix, which is why the method is bound to the capability rather than free.
+   * @example
+   * ```ts
+   * import { createMod } from "@pdx-ts/sdk";
+   * import * as stellaris from "@pdx-ts/sdk/installation";
+   * const mod = createMod({
+   *   name: "Archive Ambitions",
+   *   prefix: "archive_ambitions",
+   *   supportedVersion: "4.4.*",
+   * });
+   * const ambition = mod.ascensionPerk("archive", {});
+   * const vanilla = stellaris.load();
+   * const ambitions = vanilla.definition(
+   *   "ascension_perk_category",
+   *   "ap_category_ambitions"
+   * );
+   * const patch = mod.patchAscensionPerkCategory(ambitions, (category) => ({
+   *   ascensionPerks: [...category.ascensionPerks, ambition],
+   * }));
+   * const feature = mod.feature("ambitions", [ambition, patch]);
+   * mod.compile([feature], { vanilla });
+   * ```
    */
   patchAscensionPerkCategory<Source extends ParsedAscensionPerkCategory>(
     ascensionPerkCategory: Source,

@@ -261,7 +261,11 @@ export function emitIdUnion(
 ): string {
   const context = `${registry} id`;
   const union = ids.length === 0 ? "never" : ids.map((id) => gate.literal(id, context)).join(" | ");
-  return `${header(gameVersion)}export type ${idTypeName(registry)} = ${union};\n`;
+  return (
+    header(gameVersion) +
+    `/** Identifiers defined in Stellaris ${gameVersion} for the \`${registry}\` registry. */\n` +
+    `export type ${idTypeName(registry)} = ${union};\n`
+  );
 }
 
 export function emitEnumUnion(

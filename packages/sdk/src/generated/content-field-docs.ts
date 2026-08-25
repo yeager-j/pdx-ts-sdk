@@ -890,16 +890,24 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
   [
     ASCENSION_PERK_CATEGORY_FIELDS,
     {
-      ascensionPerks: { optional: false, docs: [], memberType: "(AscensionPerkRef | string)[]" },
+      ascensionPerks: {
+        optional: false,
+        docs: ["Ascension perks that belong to this category; emitted list order is preserved."],
+        memberType: "(AscensionPerkRef | string)[]",
+      },
     },
   ],
   [
     RESOURCE_FIELDS,
     {
-      tradable: { optional: true, docs: [], memberType: "boolean" },
+      tradable: {
+        optional: true,
+        docs: ["Whether the resource participates in resource-trading behavior."],
+        memberType: "boolean",
+      },
       category: {
         optional: true,
-        docs: [],
+        docs: ["Built-in resource group the game uses for this definition."],
         memberType: "ResourceCategory",
         literals: ["basic", "advanced", "strategic", "rare", "other", "material", "all"],
       },
@@ -926,47 +934,127 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         memberType: "number",
       },
       specialMaxAmount: { optional: true, docs: ["default: no"], memberType: "boolean" },
-      dynamicCapacity: { optional: true, docs: [], memberType: 'WeightBlock<"country">' },
+      dynamicCapacity: {
+        optional: true,
+        docs: ["Country-scoped weight block that calculates a dynamic storage capacity."],
+        memberType: 'WeightBlock<"country">',
+      },
       allowDeficit: {
         optional: true,
         docs: ["default yes, only implemented for tech resources"],
         memberType: "boolean",
       },
-      intangibleWeight: { optional: true, docs: [], memberType: "number" },
-      deficitModifier: { optional: true, docs: [], memberType: "StaticModifierRef | string" },
-      deficitSituation: { optional: true, docs: [], memberType: "SituationTypeRef | string" },
-      deficitTradeConversionMult: { optional: true, docs: [], memberType: "number" },
-      cullingConversionValue: { optional: true, docs: [], memberType: "number" },
-      prerequisites: { optional: true, docs: [], memberType: "(TechnologyRef | string)[]" },
-      visibilityPrerequisite: { optional: true, docs: [], memberType: 'Trigger<"country">' },
-      aiWeight: { optional: true, docs: [], memberType: 'WeightBlock<"country">' },
-      tooltipDecimals: { optional: true, docs: [], memberType: "number" },
-      aiWants: { optional: true, docs: [], memberType: 'WeightBlock<"country">' },
+      intangibleWeight: {
+        optional: true,
+        docs: ["Weight used when the game evaluates intangible resources."],
+        memberType: "number",
+      },
+      deficitModifier: {
+        optional: true,
+        docs: ["Static modifier applied by the resource's deficit behavior."],
+        memberType: "StaticModifierRef | string",
+      },
+      deficitSituation: {
+        optional: true,
+        docs: ["Situation started by the resource's deficit behavior."],
+        memberType: "SituationTypeRef | string",
+      },
+      deficitTradeConversionMult: {
+        optional: true,
+        docs: ["Multiplier applied when deficit behavior converts trade."],
+        memberType: "number",
+      },
+      cullingConversionValue: {
+        optional: true,
+        docs: ["Conversion value used by resource-culling systems."],
+        memberType: "number",
+      },
+      prerequisites: {
+        optional: true,
+        docs: ["Flat list of technologies required by this resource."],
+        memberType: "(TechnologyRef | string)[]",
+      },
+      visibilityPrerequisite: {
+        optional: true,
+        docs: ["Country condition that must pass before the resource is visible."],
+        memberType: 'Trigger<"country">',
+      },
+      aiWeight: {
+        optional: true,
+        docs: [
+          "One of the two country-scoped AI weights used by resource logic.",
+          "Stellaris does not document how it differs from `aiWants`.",
+        ],
+        memberType: 'WeightBlock<"country">',
+      },
+      tooltipDecimals: {
+        optional: true,
+        docs: ["Number of decimal places shown in resource tooltips."],
+        memberType: "number",
+      },
+      aiWants: {
+        optional: true,
+        docs: [
+          "One of the two country-scoped AI weights used by resource logic.",
+          "Stellaris does not document how it differs from `aiWeight`.",
+        ],
+        memberType: 'WeightBlock<"country">',
+      },
       fixedMaxAmount: {
         optional: true,
         docs: ["Only when resource subtype `max` applies."],
         memberType: "true",
       },
-      tradableInMarket: { optional: true, docs: [], memberType: 'Trigger<"country">' },
+      tradableInMarket: {
+        optional: true,
+        docs: ["Country condition that gates whether the resource can be traded on the market."],
+        memberType: 'Trigger<"country">',
+      },
     },
   ],
   [
     CRISIS_PATH_FIELDS,
     {
-      crisisCurrency: { optional: false, docs: [], memberType: "ResourceRef | string" },
-      levels: { optional: false, docs: [], memberType: "(CrisisLevelRef | string)[]" },
-      objectives: { optional: false, docs: [], memberType: "(CrisisObjectiveRef | string)[]" },
+      crisisCurrency: {
+        optional: false,
+        docs: ["Resource that tracks progress along this crisis path."],
+        memberType: "ResourceRef | string",
+      },
+      levels: {
+        optional: false,
+        docs: [
+          "Crisis levels in progression order; align the order with their currency thresholds.",
+        ],
+        memberType: "(CrisisLevelRef | string)[]",
+      },
+      objectives: {
+        optional: false,
+        docs: ["Objectives available to this crisis progression path."],
+        memberType: "(CrisisObjectiveRef | string)[]",
+      },
     },
   ],
   [
     CRISIS_LEVEL_FIELDS,
     {
-      allow: { optional: true, docs: [], memberType: 'Trigger<"country">' },
-      requiredCrisisCurrency: { optional: false, docs: [], memberType: "number" },
-      perks: { optional: false, docs: [], memberType: "(MenacePerkRef | string)[]" },
+      allow: {
+        optional: true,
+        docs: ["Country condition that must pass before this crisis level may unlock."],
+        memberType: 'Trigger<"country">',
+      },
+      requiredCrisisCurrency: {
+        optional: false,
+        docs: ["Crisis-currency amount required to reach this level."],
+        memberType: "number",
+      },
+      perks: {
+        optional: false,
+        docs: ["Menace perks granted when this crisis level unlocks."],
+        memberType: "(MenacePerkRef | string)[]",
+      },
       onUnlock: {
         optional: false,
-        docs: [],
+        docs: ["Country effects run when this crisis level unlocks."],
         memberType: 'EffectBlock<"country", { readonly root: "country" }>',
       },
     },
@@ -974,16 +1062,38 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
   [
     CRISIS_OBJECTIVE_FIELDS,
     {
-      potential: { optional: true, docs: [], memberType: 'Trigger<"country">' },
-      reward: { optional: false, docs: [], memberType: "WeightBlock<never>" },
-      recurring: { optional: true, docs: [], memberType: "true" },
+      potential: {
+        optional: true,
+        docs: [
+          "Daily country condition that controls whether this objective is currently available.",
+        ],
+        memberType: 'Trigger<"country">',
+      },
+      reward: {
+        optional: false,
+        docs: ["Weight block that calculates the reward for completion."],
+        memberType: "WeightBlock<never>",
+      },
+      recurring: {
+        optional: true,
+        docs: ["Whether the objective may grant its reward again after completion."],
+        memberType: "true",
+      },
     },
   ],
   [
     MENACE_PERK_FIELDS,
     {
-      portrait: { optional: false, docs: [], memberType: "SpriteRef | string" },
-      modifier: { optional: true, docs: [], memberType: 'ModifierClosure<"country">' },
+      portrait: {
+        optional: false,
+        docs: ["GFX sprite displayed for this menace perk."],
+        memberType: "SpriteRef | string",
+      },
+      modifier: {
+        optional: true,
+        docs: ["Continuing country modifiers granted by this menace perk."],
+        memberType: 'ModifierClosure<"country">',
+      },
       federationModifier: {
         optional: true,
         docs: [
@@ -993,7 +1103,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       },
       onUnlock: {
         optional: true,
-        docs: [],
+        docs: ["Country effects run when this menace perk is granted."],
         memberType: 'EffectBlock<"country", { readonly root: "country" }>',
       },
     },

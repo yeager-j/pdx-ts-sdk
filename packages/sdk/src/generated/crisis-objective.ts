@@ -16,8 +16,11 @@ export interface CrisisObjectiveFields {
   name?: string;
   /** English text emitted to localization under `<id>_desc`. */
   desc?: string;
+  /** Daily country condition that controls whether this objective is currently available. */
   potential?: Trigger<"country">;
+  /** Weight block that calculates the reward for completion. */
   reward: WeightBlock<never>;
+  /** Whether the objective may grant its reward again after completion. */
   recurring?: true;
 }
 

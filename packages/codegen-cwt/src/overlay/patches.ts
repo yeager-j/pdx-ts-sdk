@@ -8,6 +8,14 @@
 
 import type { FieldWidening } from "./fields.ts";
 
+/** Reviewed evidence and optional consumer guidance for one patchable registry. */
+export interface ContentPatchRegistry {
+  /** Evidence that permits the registry's whole-object patch surface. */
+  readonly reason: string;
+  /** JSDoc lines appended to the generated capability method. */
+  readonly example?: readonly string[];
+}
+
 /**
  * Registries whose collection factory also offers a vanilla patch.
  *
@@ -17,37 +25,73 @@ import type { FieldWidening } from "./fields.ts";
  * names are derived (`patchTechnology`, `ParsedTechnology`, `TechnologyPatch`);
  * the row is the permission.
  */
-export const CONTENT_PATCH_REGISTRIES = new Map<string, string>([
+export const CONTENT_PATCH_REGISTRIES = new Map<string, ContentPatchRegistry>([
   [
     "technology",
-    "the first registry the vanilla loader parses and the patch resolver plans emission for " +
-      "(packages/sdk/src/installation/vanilla/, " +
-      "packages/sdk/src/compiler/patches.ts) — verified in-game by the " +
-      "patches-that-provably-win calibration",
+    {
+      reason:
+        "the first registry the vanilla loader parses and the patch resolver plans emission for " +
+        "(packages/sdk/src/installation/vanilla/, " +
+        "packages/sdk/src/compiler/patches.ts) — verified in-game by the " +
+        "patches-that-provably-win calibration",
+    },
   ],
   [
     "building",
-    "parsed by the vanilla loader beside technology (PARSED_REGISTRIES in " +
-      "packages/sdk/src/installation/vanilla/parse.ts), and its rule-table row is fully verified — " +
-      "r8 established last-wins and whole-object replacement from matching diagnostics",
+    {
+      reason:
+        "parsed by the vanilla loader beside technology (PARSED_REGISTRIES in " +
+        "packages/sdk/src/installation/vanilla/parse.ts), and its rule-table row is fully verified — " +
+        "r8 established last-wins and whole-object replacement from matching diagnostics",
+    },
   ],
   [
     "ascension_perk_category",
-    "parsed by the vanilla loader as a flat keyed registry, and its rule-table row carries two " +
-      "explicit assumed cells — the SDK-289 judgment applies the r8/r10 keyed-script model until " +
-      "a category-specific runtime oracle settles repeat registration and omitted-field behavior. " +
-      'Every win it backs reports `confidence: "assumed"`, and every emitted patch file states ' +
-      "the judgment in its header",
+    {
+      reason:
+        "parsed by the vanilla loader as a flat keyed registry, and its rule-table row carries two " +
+        "explicit assumed cells — the SDK-289 judgment applies the r8/r10 keyed-script model until " +
+        "a category-specific runtime oracle settles repeat registration and omitted-field behavior. " +
+        'Every win it backs reports `confidence: "assumed"`, and every emitted patch file states ' +
+        "the judgment in its header",
+      example: [
+        "@example",
+        "```ts",
+        'import { createMod } from "@pdx-ts/sdk";',
+        'import * as stellaris from "@pdx-ts/sdk/installation";',
+        "",
+        "const mod = createMod({",
+        '  name: "Archive Ambitions",',
+        '  prefix: "archive_ambitions",',
+        '  supportedVersion: "4.4.*",',
+        "});",
+        'const ambition = mod.ascensionPerk("archive", {});',
+        "const vanilla = stellaris.load();",
+        "const ambitions = vanilla.definition(",
+        '  "ascension_perk_category",',
+        '  "ap_category_ambitions"',
+        ");",
+        "const patch = mod.patchAscensionPerkCategory(ambitions, (category) => ({",
+        "  ascensionPerks: [...category.ascensionPerks, ambition],",
+        "}));",
+        'const feature = mod.feature("ambitions", [ambition, patch]);',
+        "mod.compile([feature], { vanilla });",
+        "```",
+      ],
+    },
   ],
   [
     "megastructure",
-    "parsed by the vanilla loader beside technology and building (PARSED_REGISTRIES in " +
-      "packages/sdk/src/installation/vanilla/parse.ts), and its rule-table row carries two " +
-      "non-refused cells — r8 verified last-wins, and whole-object replacement is the named " +
-      "2026-07-31 judgment r8 could not discriminate. Assumed rather than verified is still a " +
-      'rule the engine may act on: every win it backs reports `confidence: "assumed"` and ' +
-      "every emitted patch file states the judgment in its header, so the weaker evidence is " +
-      "visible rather than laundered",
+    {
+      reason:
+        "parsed by the vanilla loader beside technology and building (PARSED_REGISTRIES in " +
+        "packages/sdk/src/installation/vanilla/parse.ts), and its rule-table row carries two " +
+        "non-refused cells — r8 verified last-wins, and whole-object replacement is the named " +
+        "2026-07-31 judgment r8 could not discriminate. Assumed rather than verified is still a " +
+        'rule the engine may act on: every win it backs reports `confidence: "assumed"` and ' +
+        "every emitted patch file states the judgment in its header, so the weaker evidence is " +
+        "visible rather than laundered",
+    },
   ],
 ]);
 

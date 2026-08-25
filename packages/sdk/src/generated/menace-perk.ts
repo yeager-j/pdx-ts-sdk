@@ -16,10 +16,13 @@ export interface MenacePerkFields {
   name?: string;
   /** English text emitted to localization under `<id>_desc`. */
   desc?: string;
+  /** GFX sprite displayed for this menace perk. */
   portrait: SpriteRef | string;
+  /** Continuing country modifiers granted by this menace perk. */
   modifier?: ModifierClosure<"country">;
   /** static modifier that is applied to the player's federation, if they have one (this stacks if multiple members have such perks) */
   federationModifier?: ModifierClosure<"country">;
+  /** Country effects run when this menace perk is granted. */
   onUnlock?: EffectBlock<"country", { readonly root: "country" }>;
 }
 

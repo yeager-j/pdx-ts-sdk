@@ -17,9 +17,13 @@ export interface CrisisLevelFields {
   name?: string;
   /** English text emitted to localization under `<id>_desc`. */
   desc?: string;
+  /** Country condition that must pass before this crisis level may unlock. */
   allow?: Trigger<"country">;
+  /** Crisis-currency amount required to reach this level. */
   requiredCrisisCurrency: number;
+  /** Menace perks granted when this crisis level unlocks. */
   perks: (MenacePerkRef | string)[];
+  /** Country effects run when this crisis level unlocks. */
   onUnlock: EffectBlock<"country", { readonly root: "country" }>;
 }
 

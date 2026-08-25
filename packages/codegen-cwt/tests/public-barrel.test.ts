@@ -103,6 +103,32 @@ function publishedFor(registry: string): readonly string[] {
 }
 
 describe("the generated public content barrel", () => {
+  it("documents every authored field in the player-crisis registries", () => {
+    const registries = new Set([
+      "ascension_perk_category",
+      "resource",
+      "crisis_path",
+      "crisis_level",
+      "crisis_objective",
+      "menace_perk",
+    ]);
+    const undocumented = contents
+      .filter((content) => registries.has(content.registry))
+      .flatMap((content) =>
+        Object.entries(content.emission.docTables[0]?.members ?? {}).flatMap(([member, row]) =>
+          row.docs.length === 0 ? [`${content.registry}.${member}`] : []
+        )
+      );
+
+    expect(undocumented).toEqual([]);
+  });
+
+  it("documents the vanilla-view workflow for ascension perk category patches", () => {
+    expect(definers.capabilityCode).toContain("@example");
+    expect(definers.capabilityCode).toContain("const vanilla = stellaris.load();");
+    expect(definers.capabilityCode).toContain("mod.compile([feature], { vanilla });");
+  });
+
   it("publishes every manifest registry's authoring types", () => {
     const missing = CONTENT_MANIFEST.flatMap((entry) => {
       const registry = registryNameOf(entry);

@@ -21,6 +21,7 @@ export interface AscensionPerkCategoryFields {
   name?: string;
   /** English text emitted to localization under `<id>_desc`. */
   desc?: string;
+  /** Ascension perks that belong to this category; emitted list order is preserved. */
   ascensionPerks: (AscensionPerkRef | string)[];
 }
 
@@ -55,6 +56,7 @@ export interface AscensionPerkCategoryPatch {
    * of the ordinary one — a rename, not a new key.
    */
   readonly desc?: string;
+  /** Ascension perks that belong to this category; emitted list order is preserved. */
   readonly ascensionPerks?: PatchInput<(AscensionPerkRef | string)[]>;
 }
 

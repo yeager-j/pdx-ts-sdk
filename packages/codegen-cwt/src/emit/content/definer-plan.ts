@@ -27,6 +27,7 @@ import {
   MINT_SHAPE_OVERLAYS,
   SHAPE_MINT_REGISTRY,
   SPRITE_SHAPE_MINTS,
+  type ContentPatchRegistry,
   type ContentSubtypeReferenceRefinement,
   type ContentWitness,
   type ContributionSink,
@@ -133,7 +134,7 @@ interface RegistryDefinerFacts {
   readonly mintShape: MintShape | undefined;
   readonly exactName: ExactNameMint | undefined;
   readonly graft: HandWrittenDefiner | undefined;
-  readonly patchable: string | undefined;
+  readonly patchable: ContentPatchRegistry | undefined;
   readonly contribution: ContributionSink | undefined;
   readonly referenceRefinement: ContentSubtypeReferenceRefinement | undefined;
   readonly contentWitness: ContentWitness | undefined;
@@ -728,6 +729,7 @@ export function planRegistryDefiner(
           "Unlike a capability definition method, it mints no id and owns no new content —",
           "but it does mint localisation keys for text it adds, from this capability's",
           "prefix, which is why the method is bound to the capability rather than free.",
+          ...(patchable.example ?? []),
         ],
         "  "
       ) +

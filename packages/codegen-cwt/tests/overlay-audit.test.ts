@@ -21,6 +21,7 @@ import {
   COMPLEX_ENUM_REFERENCE_OVERLAYS,
   CONTENT_CONTRIBUTION_SINKS,
   CONTENT_DECLINED_FIELDS,
+  CONTENT_FIELD_DOCS,
   CONTENT_FIELD_OVERRIDES,
   CONTENT_PATCH_REGISTRIES,
   CONTENT_SCOPE_PARAMETERS,
@@ -621,6 +622,9 @@ describe("the real pipeline's overlay tables", () => {
     ).not.toThrow();
     expect(() =>
       emitter.overlayAudit.assertAllApplied("FIELD_WIDENINGS", FIELD_WIDENINGS.keys())
+    ).not.toThrow();
+    expect(() =>
+      emitter.overlayAudit.assertAllApplied("CONTENT_FIELD_DOCS", CONTENT_FIELD_DOCS.keys())
     ).not.toThrow();
     expect(() =>
       emitter.overlayAudit.assertAllApplied(

@@ -18,7 +18,9 @@ export interface ResourceFields {
   name?: string;
   /** English text emitted to localization under `<id>_desc`. */
   desc?: string;
+  /** Whether the resource participates in resource-trading behavior. */
   tradable?: boolean;
+  /** Built-in resource group the game uses for this definition. */
   category?: ResourceCategory;
   /** default: no? */
   hideGain?: boolean;
@@ -36,21 +38,39 @@ export interface ResourceFields {
   max?: number;
   /** default: no */
   specialMaxAmount?: boolean;
+  /** Country-scoped weight block that calculates a dynamic storage capacity. */
   dynamicCapacity?: WeightBlock<"country">;
   /** default yes, only implemented for tech resources */
   allowDeficit?: boolean;
+  /** Weight used when the game evaluates intangible resources. */
   intangibleWeight?: number;
+  /** Static modifier applied by the resource's deficit behavior. */
   deficitModifier?: StaticModifierRef | string;
+  /** Situation started by the resource's deficit behavior. */
   deficitSituation?: SituationTypeRef | string;
+  /** Multiplier applied when deficit behavior converts trade. */
   deficitTradeConversionMult?: number;
+  /** Conversion value used by resource-culling systems. */
   cullingConversionValue?: number;
+  /** Flat list of technologies required by this resource. */
   prerequisites?: (TechnologyRef | string)[];
+  /** Country condition that must pass before the resource is visible. */
   visibilityPrerequisite?: Trigger<"country">;
+  /**
+   * One of the two country-scoped AI weights used by resource logic.
+   * Stellaris does not document how it differs from `aiWants`.
+   */
   aiWeight?: WeightBlock<"country">;
+  /** Number of decimal places shown in resource tooltips. */
   tooltipDecimals?: number;
+  /**
+   * One of the two country-scoped AI weights used by resource logic.
+   * Stellaris does not document how it differs from `aiWeight`.
+   */
   aiWants?: WeightBlock<"country">;
   /** Only when resource subtype `max` applies. */
   fixedMaxAmount?: true;
+  /** Country condition that gates whether the resource can be traded on the market. */
   tradableInMarket?: Trigger<"country">;
 }
 
