@@ -1,7 +1,7 @@
 /**
  * Registry-identity overlay rows: the witness a registry's item type carries
- * beside its def, the subtype-qualified references a capability return must
- * retain, and the canonical file stems SDK-121 fixed.
+ * beside its def, subtype-qualified references and vanilla id projections,
+ * and the canonical file stems SDK-121 fixed.
  *
  * See `./index.ts` for what this directory is and how a row here earns its
  * place.
@@ -156,6 +156,55 @@ export const CONTENT_SUBTYPE_REFERENCE_REFINEMENTS = new Map<
     },
   ],
 ]);
+
+/**
+ * An install-derived subtype projection for a shared content registry.
+ * The discriminator is read from each installed definition, and the projected id set backs a
+ * subtype-specific checked vanilla reference helper.
+ */
+export interface VanillaSubtypeReferenceProjection {
+  /** Shared registry whose installed definitions are partitioned. */
+  readonly registry: string;
+  /** CWT subtype and public helper name. */
+  readonly subtype: string;
+  /** Scalar definition member that selects the subtype. */
+  readonly member: string;
+  /** Scalar value that selects the subtype. */
+  readonly value: string;
+  /** Whether definitions without the discriminator member select this subtype. */
+  readonly includeAbsent: boolean;
+  /** Why the broad registry reference is insufficient. */
+  readonly reason: string;
+}
+
+/**
+ * Shared registries whose installed definitions produce subtype-specific vanilla id sets.
+ *
+ * These rows are the one authority used by both generators: `codegen-vanilla` partitions the
+ * installed ids, and `codegen-cwt` emits the checked helpers that consume those partitions.
+ */
+export const VANILLA_SUBTYPE_REFERENCE_PROJECTIONS: readonly VanillaSubtypeReferenceProjection[] = [
+  {
+    registry: "civic_or_origin",
+    subtype: "civic",
+    member: "is_origin",
+    value: "no",
+    includeAbsent: true,
+    reason:
+      "has_civic and other civic-only consumers require civic_or_origin.civic, while the shared " +
+      "registry helper returns civic_or_origin.",
+  },
+  {
+    registry: "civic_or_origin",
+    subtype: "origin",
+    member: "is_origin",
+    value: "yes",
+    includeAbsent: false,
+    reason:
+      "has_origin and other origin-only consumers require civic_or_origin.origin, while the " +
+      "shared registry helper returns civic_or_origin.",
+  },
+];
 
 /**
  * Emitted file stems that are not the last component of the registry's output

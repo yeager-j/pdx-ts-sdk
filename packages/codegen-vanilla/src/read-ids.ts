@@ -44,6 +44,11 @@ export interface RegistryIds {
    * than filesystem-dependent.
    */
   readonly sourcePaths: ReadonlyMap<string, string>;
+  /** Subtype-specific id sets derived from discriminator fields in installed definitions. */
+  readonly subtypeProjections: readonly {
+    readonly registry: string;
+    readonly ids: readonly string[];
+  }[];
 }
 
 /**
@@ -54,9 +59,9 @@ export interface RegistryIds {
  * `skip_root_key` on top of that the definitions sit one level inside a root
  * block, and the rules decide how those are recognised — see {@link collect}.
  */
-function nameFieldValue(items: readonly PdxItem[], nameField: string): string | null {
+function scalarFieldValue(items: readonly PdxItem[], field: string): string | null {
   for (const item of items) {
-    if (item.kind !== "entry" || item.key.toLowerCase() !== nameField.toLowerCase()) {
+    if (item.kind !== "entry" || item.key.toLowerCase() !== field.toLowerCase()) {
       continue;
     }
     if (item.value.kind === "str") {
@@ -64,6 +69,9 @@ function nameFieldValue(items: readonly PdxItem[], nameField: string): string | 
     }
     if (item.value.kind === "num") {
       return item.value.lexeme;
+    }
+    if (item.value.kind === "bool") {
+      return item.value.value ? "yes" : "no";
     }
   }
   return null;
@@ -92,7 +100,11 @@ function nameFieldValue(items: readonly PdxItem[], nameField: string): string | 
  * blanket lowercase — a key that differs from the filter only by case is a
  * finding, not something to absorb quietly.
  */
-function collect(spec: RegistrySpec, items: readonly PdxItem[], add: (id: string) => void): void {
+function collect(
+  spec: RegistrySpec,
+  items: readonly PdxItem[],
+  add: (id: string, definition: readonly PdxItem[]) => void
+): void {
   for (const item of items) {
     if (item.kind !== "entry" || item.value.kind !== "container") {
       continue;
@@ -114,9 +126,9 @@ function collect(spec: RegistrySpec, items: readonly PdxItem[], add: (id: string
         if (keys !== null && !keys.includes(inner.key)) {
           continue;
         }
-        const id = nameFieldValue(inner.value.items, spec.nameField);
+        const id = scalarFieldValue(inner.value.items, spec.nameField);
         if (id !== null) {
-          add(id);
+          add(id, inner.value.items);
         }
       }
       continue;
@@ -125,14 +137,18 @@ function collect(spec: RegistrySpec, items: readonly PdxItem[], add: (id: string
       if (item.key !== spec.keyword) {
         continue;
       }
-      const id = nameFieldValue(item.value.items, spec.nameField);
+      const id = scalarFieldValue(item.value.items, spec.nameField);
       if (id !== null) {
-        add(id);
+        add(id, item.value.items);
       }
       continue;
     }
-    add(item.key);
+    add(item.key, item.value.items);
   }
+}
+
+function subtypeRegistry(registry: string, subtype: string): string {
+  return `${registry}.${subtype}`;
 }
 
 export function readRegistryIds(root: string, spec: RegistrySpec): RegistryIds {
@@ -140,16 +156,38 @@ export function readRegistryIds(root: string, spec: RegistrySpec): RegistryIds {
   const files = walkRegistryFiles(dir, spec.extension, !spec.pathStrict);
   const ids = new Set<string>();
   const sourcePaths = new Map<string, string>();
+  const projectedIds = new Map(
+    spec.subtypeProjections.map((projection) => [
+      subtypeRegistry(projection.registry, projection.subtype),
+      new Set<string>(),
+    ])
+  );
   let diagnostics = 0;
   for (const file of files) {
     const parsed = parse(readFileSync(file, "utf8"), path.basename(file));
     diagnostics += parsed.diagnostics.length;
     const source = relativeRegistryPath(dir, file);
-    collect(spec, parsed.items, (id) => {
+    collect(spec, parsed.items, (id, definition) => {
       ids.add(id);
       if (!sourcePaths.has(id)) {
         sourcePaths.set(id, source);
       }
+      if (spec.subtypeProjections.length === 0) {
+        return;
+      }
+      const matches = spec.subtypeProjections.filter((projection) => {
+        const discriminator = scalarFieldValue(definition, projection.member);
+        return (
+          discriminator === projection.value || (discriminator === null && projection.includeAbsent)
+        );
+      });
+      if (matches.length !== 1) {
+        throw new Error(
+          `${spec.registry} id ${JSON.stringify(id)} matches ${matches.length} subtype projections; expected exactly one`
+        );
+      }
+      const projection = matches[0]!;
+      projectedIds.get(subtypeRegistry(projection.registry, projection.subtype))!.add(id);
     });
   }
   return {
@@ -159,6 +197,10 @@ export function readRegistryIds(root: string, spec: RegistrySpec): RegistryIds {
     diagnostics,
     missing: files.length === 0 && !exists(dir),
     sourcePaths,
+    subtypeProjections: [...projectedIds].map(([registry, members]) => ({
+      registry,
+      ids: [...members].sort(compareIdentifiers),
+    })),
   };
 }
 

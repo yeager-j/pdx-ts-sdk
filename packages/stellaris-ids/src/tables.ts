@@ -42,6 +42,8 @@ import type { VanillaAsteroidBeltTypeId } from "./registries/asteroid-belt-type.
 import type { VanillaBombardmentStanceId } from "./registries/bombardment-stance.ts";
 import type { VanillaBuildingId } from "./registries/building.ts";
 import type { VanillaCasusBelliId } from "./registries/casus-belli.ts";
+import type { VanillaCivicOrOriginCivicId } from "./registries/civic-or-origin-civic.ts";
+import type { VanillaCivicOrOriginOriginId } from "./registries/civic-or-origin-origin.ts";
 import type { VanillaCivicOrOriginId } from "./registries/civic-or-origin.ts";
 import type { VanillaComponentSetId } from "./registries/component-set.ts";
 import type { VanillaCouncilorId } from "./registries/councilor.ts";
@@ -130,6 +132,8 @@ export interface VanillaIds {
   readonly councilor: VanillaCouncilorId;
   readonly economic_category: VanillaEconomicCategoryId;
   readonly civic_or_origin: VanillaCivicOrOriginId;
+  readonly "civic_or_origin.civic": VanillaCivicOrOriginCivicId;
+  readonly "civic_or_origin.origin": VanillaCivicOrOriginOriginId;
   readonly component_set: VanillaComponentSetId;
   readonly section_template: VanillaSectionTemplateId;
   readonly ambient_object: VanillaAmbientObjectId;
