@@ -15,7 +15,8 @@ export interface MissionCategoryFields {
   name?: string;
   /** English text emitted to localization under `<id>_short`. */
   short?: string;
-  isContract: boolean;
+  /** Whether this is a contract category. This SDK release supports ordinary missions only, so it must be `false`. */
+  isContract: false;
   mapIcon: SpriteRef | string;
   logIcon: string;
   showInIssueList?: boolean;

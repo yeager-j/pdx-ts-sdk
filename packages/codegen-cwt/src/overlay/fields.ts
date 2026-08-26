@@ -117,6 +117,16 @@ export const CONTENT_FIELD_DOCS = new Map<string, readonly string[]>([
     ],
   ],
   [
+    "mission_category.is_contract",
+    [
+      "Whether this is a contract category. This SDK release supports ordinary missions only, so it must be `false`.",
+    ],
+  ],
+  [
+    "mission.counter.max",
+    ["Maximum counter value shown in the mission's localized counter display."],
+  ],
+  [
     "resource.tradable_in_market",
     ["Country condition that gates whether the resource can be traded on the market."],
   ],
@@ -226,6 +236,57 @@ export const FIELD_WIDENINGS = new Map<string, FieldWidening>([
  * shape the emitter merely lowers badly — to clear this bar.
  */
 export const CONTENT_DECLINED_FIELDS = new Map<string, string>([
+  [
+    "mission.potential_issuer",
+    "SDK-294 supports ordinary missions only. Contract issue and acceptance conditions need a " +
+      "runtime location scope that the ordinary mission callback contract cannot represent.",
+  ],
+  [
+    "mission.possible_issuer",
+    "SDK-294 supports ordinary missions only. Contract issue and acceptance conditions need a " +
+      "runtime location scope that the ordinary mission callback contract cannot represent.",
+  ],
+  [
+    "mission.potential_operator",
+    "SDK-294 supports ordinary missions only. Contract issue and acceptance conditions need a " +
+      "runtime location scope that the ordinary mission callback contract cannot represent.",
+  ],
+  [
+    "mission.possible_operator",
+    "SDK-294 supports ordinary missions only. Contract issue and acceptance conditions need a " +
+      "runtime location scope that the ordinary mission callback contract cannot represent.",
+  ],
+  [
+    "mission.small_picture",
+    "SDK-294 supports ordinary missions only; this field belongs exclusively to contract issue-list entries.",
+  ],
+  [
+    "mission.time_to_accept",
+    "SDK-294 supports ordinary missions only; this field belongs exclusively to contracts.",
+  ],
+  [
+    "mission.time_to_complete",
+    "SDK-294 supports ordinary missions only; this field belongs exclusively to contracts.",
+  ],
+  [
+    "mission.ai_behaviour",
+    "SDK-294 supports ordinary missions only; this field belongs exclusively to contracts.",
+  ],
+  [
+    "mission.on_issue",
+    "SDK-294 supports ordinary missions only. Contract issuance exposes a dynamic location scope " +
+      "that the ordinary mission callback contract cannot represent.",
+  ],
+  [
+    "mission.on_accept",
+    "SDK-294 supports ordinary missions only. Contract acceptance exposes a dynamic location scope " +
+      "that the ordinary mission callback contract cannot represent.",
+  ],
+  [
+    "mission.ai_weight",
+    "SDK-294 supports ordinary missions only. Contract selection exposes a dynamic location scope " +
+      "that the ordinary mission callback contract cannot represent.",
+  ],
   [
     "solar_system_initializer.change_orbit",
     "At the top level, change_orbit is positional sugar: written between two `planet` blocks, " +
@@ -644,6 +705,8 @@ export interface ContentFieldOverride {
   readonly optional?: true;
   /** Public name for a nested struct the mechanical path-derived name misstates. */
   readonly nestedTypeName?: string;
+  /** Consumer-facing description emitted above a named nested struct. */
+  readonly nestedTypeDocs?: readonly string[];
   /** Replaces the public authoring type without changing the field's runtime lowering. */
   readonly authoringType?: {
     /** TypeScript type emitted for the authoring member. */
@@ -739,6 +802,7 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
     {
       shape: "structMap",
       nestedTypeName: "MissionCounterDefinition",
+      nestedTypeDocs: ["One named counter definition for a mission."],
       reason:
         "Mission counters have the same enum-keyed map shape as event-chain counters: each " +
         "engine-visible counter name owns an optional localisation.max block. CWT declares the " +
@@ -754,6 +818,16 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
       reason:
         "missions.cwt:245 calls this field optional and says it defaults to yes, while the " +
         "missing cardinality annotation would otherwise require an author to restate the default.",
+    },
+  ],
+  [
+    "mission_category.is_contract",
+    {
+      authoringType: { type: "false", imports: [] },
+      reason:
+        "SDK-294 deliberately exposes ordinary missions only. Contract categories require " +
+        "dynamic location scopes and contract-specific required fields that this registry " +
+        "does not yet model, so accepting `true` would let authors emit invalid contracts.",
     },
   ],
   [

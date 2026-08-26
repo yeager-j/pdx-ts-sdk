@@ -71,35 +71,6 @@
         ]
       ]
     },
-    "ai_weight.modifier": {
-      "definitions": 3,
-      "repeated": 1,
-      "scalars": 0,
-      "blocks": 3,
-      "bareValues": 0,
-      "bareBlocks": 0,
-      "emptyBlocks": 0,
-      "values": [],
-      "keys": [
-        "from",
-        "fromfrom",
-        "used_starbase_capacity_percent",
-        "years_passed"
-      ],
-      "keysByDefinition": [
-        [
-          "from"
-        ],
-        [
-          "from",
-          "used_starbase_capacity_percent",
-          "years_passed"
-        ],
-        [
-          "fromfrom"
-        ]
-      ]
-    },
     "category": {
       "definitions": 23,
       "repeated": 0,

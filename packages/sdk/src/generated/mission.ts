@@ -4,7 +4,7 @@
 
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
-import type { EffectBlock, WeightBlock, WithFrom } from "../content/types.ts";
+import type { EffectBlock, WithFrom } from "../content/types.ts";
 import type { Trigger } from "../script/trigger-core.ts";
 import type { EventChainRef, MissionCategoryRef, SpriteRef } from "./refs.ts";
 
@@ -74,7 +74,9 @@ export const MISSION_DESC_ISSUER_FIELDS: readonly ContentField[] = [
   },
 ];
 
+/** One named counter definition for a mission. */
 export interface MissionCounterDefinition {
+  /** Maximum counter value shown in the mission's localized counter display. */
   max?: number;
 }
 
@@ -141,40 +143,6 @@ export interface MissionFields {
   cost?: number;
   /** Counter to define and track what is needed for the player to complete the mission. Multiple of these can be used. */
   counter?: Readonly<Record<string, MissionCounterDefinition>>;
-  /**
-   * OPTIONAL. Trigger that determines whether the contract can be seen as an option by a potential issuer.
-   * this: issuer country
-   * from: system to issue in
-   */
-  potentialIssuer?: WithFrom<
-    Trigger<"country">,
-    "country",
-    { readonly root: "country"; readonly from: "system"; readonly fromfrom: "country" }
-  >;
-  /**
-   * OPTIONAL. Trigger that determines whether the contract can be issued by a potential issuer.
-   * this: issuer country
-   * from: system to issue in
-   */
-  possibleIssuer?: WithFrom<
-    Trigger<"country">,
-    "country",
-    { readonly root: "country"; readonly from: "system"; readonly fromfrom: "country" }
-  >;
-  /**
-   * OPTIONAL. Trigger that determines whether the contract can be accepted by a potential operator.
-   * this: operator country
-   * from: contract location
-   * fromfrom: issuer country
-   */
-  potentialOperator?: Trigger<"country">;
-  /**
-   * OPTIONAL. Trigger that determines whether the contract can be seen by a potential operator.
-   * this: operator country
-   * from: contract location
-   * fromfrom: issuer country
-   */
-  possibleOperator?: Trigger<"country">;
   /** Effect to be run on daily update while the mission is active. */
   onDaily?: EffectBlock<"country", { readonly root: "country" }>;
   /** Effect to be run on monthly update while the mission is active. */
@@ -248,53 +216,6 @@ export interface MissionFields {
   >;
   /** OPTIONAL, defaults to yes. Doesn't actually do anything. */
   sound?: boolean;
-  /**
-   * The image used in the list when players Issue Contracts. Not needed for internal contracts.
-   * Only when mission subtype `contract` applies.
-   */
-  smallPicture?: SpriteRef | string;
-  /**
-   * Sets the maximum amount of days to accept the mission before it times out. Only used for contracts.
-   * Default: no time limit
-   * Only when mission subtype `contract` applies.
-   */
-  timeToAccept?: number;
-  /**
-   * Sets the maximum amount of days to complete the mission before it fails.
-   * Default: no time limit
-   * Only when mission subtype `contract` applies.
-   */
-  timeToComplete?: number;
-  /** Only when mission subtype `contract` applies. */
-  aiBehaviour?: "attack" | "raid";
-  /**
-   * OPTIONAL, Contracts only, Effect to be run when a country issues up the contract
-   * this: issuer
-   * from: the scope from the mission
-   * fromfrom: contract location, if applicable
-   * Only when mission subtype `contract` applies.
-   */
-  onIssue?: EffectBlock<"country", { readonly root: "country"; readonly from: "country" }>;
-  /**
-   * OPTIONAL, Contracts only, Effect to be run when a country picks up the contract
-   * this: operator (the country doing the mission/contract)
-   * prev: issuer if applicable (the country that issued the contract)
-   * from: the scope from the mission
-   * fromfrom: contract location, if applicable
-   * Only when mission subtype `contract` applies.
-   */
-  onAccept?: EffectBlock<
-    "country",
-    { readonly root: "country"; readonly from: "country"; readonly prev: "country" }
-  >;
-  /**
-   * OPTIONAL. Only used for contracts. Weight used to determine what contracts will be picked up by an AI operator.
-   * If the weight is equivalent between contracts, the closest contract will be selected.
-   * he AI will heavily prefer picking up player-issued contracts adding the PLAYER_ISSUED_CONTRACT_PREFERENCE define to the weight.
-   * this: operator country from: contract location fromfrom: issuer country
-   * Only when mission subtype `contract` applies.
-   */
-  aiWeight?: WeightBlock<"country">;
 }
 
 export interface MissionDef<Id extends string = string> extends MissionFields {
@@ -433,10 +354,6 @@ export const MISSION_FIELDS: readonly ContentField[] = [
     fields: MISSION_COUNTER_DEFINITION_FIELDS,
     repeated: true,
   },
-  { key: "potential_issuer", member: "potentialIssuer", shape: "trigger", form: "trigger" },
-  { key: "possible_issuer", member: "possibleIssuer", shape: "trigger", form: "trigger" },
-  { key: "potential_operator", member: "potentialOperator", shape: "trigger", form: "trigger" },
-  { key: "possible_operator", member: "possibleOperator", shape: "trigger", form: "trigger" },
   { key: "on_daily", member: "onDaily", shape: "effect", form: "closure" },
   { key: "on_monthly", member: "onMonthly", shape: "effect", form: "closure" },
   { key: "abort_trigger", member: "abortTrigger", shape: "trigger", form: "trigger" },
@@ -446,38 +363,6 @@ export const MISSION_FIELDS: readonly ContentField[] = [
   { key: "on_stop", member: "onStop", shape: "effect", form: "closure" },
   { key: "issued_abort_trigger", member: "issuedAbortTrigger", shape: "trigger", form: "trigger" },
   { key: "sound", member: "sound", shape: "value", form: "scalar", conversion: "identity" },
-  {
-    key: "small_picture",
-    member: "smallPicture",
-    shape: "value",
-    form: "scalar",
-    conversion: "ref",
-    refTypes: ["sprite"],
-  },
-  {
-    key: "time_to_accept",
-    member: "timeToAccept",
-    shape: "value",
-    form: "scalar",
-    conversion: "identity",
-  },
-  {
-    key: "time_to_complete",
-    member: "timeToComplete",
-    shape: "value",
-    form: "scalar",
-    conversion: "identity",
-  },
-  {
-    key: "ai_behaviour",
-    member: "aiBehaviour",
-    shape: "value",
-    form: "scalar",
-    conversion: "identity",
-  },
-  { key: "on_issue", member: "onIssue", shape: "effect", form: "closure" },
-  { key: "on_accept", member: "onAccept", shape: "effect", form: "closure" },
-  { key: "ai_weight", member: "aiWeight", shape: "weightBlock", form: "block" },
 ];
 
 export const MISSION_LOCALISATION: readonly ContentLocalisation[] = [

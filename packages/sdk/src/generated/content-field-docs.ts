@@ -3534,46 +3534,6 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         ],
         memberType: "Readonly<Record<string, MissionCounterDefinition>>",
       },
-      potentialIssuer: {
-        optional: true,
-        docs: [
-          "OPTIONAL. Trigger that determines whether the contract can be seen as an option by a potential issuer.",
-          "this: issuer country",
-          "from: system to issue in",
-        ],
-        memberType:
-          'WithFrom<Trigger<"country">, "country", { readonly root: "country"; readonly from: "system"; readonly fromfrom: "country" }>',
-      },
-      possibleIssuer: {
-        optional: true,
-        docs: [
-          "OPTIONAL. Trigger that determines whether the contract can be issued by a potential issuer.",
-          "this: issuer country",
-          "from: system to issue in",
-        ],
-        memberType:
-          'WithFrom<Trigger<"country">, "country", { readonly root: "country"; readonly from: "system"; readonly fromfrom: "country" }>',
-      },
-      potentialOperator: {
-        optional: true,
-        docs: [
-          "OPTIONAL. Trigger that determines whether the contract can be accepted by a potential operator.",
-          "this: operator country",
-          "from: contract location",
-          "fromfrom: issuer country",
-        ],
-        memberType: 'Trigger<"country">',
-      },
-      possibleOperator: {
-        optional: true,
-        docs: [
-          "OPTIONAL. Trigger that determines whether the contract can be seen by a potential operator.",
-          "this: operator country",
-          "from: contract location",
-          "fromfrom: issuer country",
-        ],
-        memberType: 'Trigger<"country">',
-      },
       onDaily: {
         optional: true,
         docs: ["Effect to be run on daily update while the mission is active."],
@@ -3660,74 +3620,6 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         docs: ["OPTIONAL, defaults to yes. Doesn't actually do anything."],
         memberType: "boolean",
       },
-      smallPicture: {
-        optional: true,
-        docs: [
-          "The image used in the list when players Issue Contracts. Not needed for internal contracts.",
-          "Only when mission subtype `contract` applies.",
-        ],
-        memberType: "SpriteRef | string",
-      },
-      timeToAccept: {
-        optional: true,
-        docs: [
-          "Sets the maximum amount of days to accept the mission before it times out. Only used for contracts.",
-          "Default: no time limit",
-          "Only when mission subtype `contract` applies.",
-        ],
-        memberType: "number",
-      },
-      timeToComplete: {
-        optional: true,
-        docs: [
-          "Sets the maximum amount of days to complete the mission before it fails.",
-          "Default: no time limit",
-          "Only when mission subtype `contract` applies.",
-        ],
-        memberType: "number",
-      },
-      aiBehaviour: {
-        optional: true,
-        docs: ["Only when mission subtype `contract` applies."],
-        memberType: '"attack" | "raid"',
-        literals: ["attack", "raid"],
-      },
-      onIssue: {
-        optional: true,
-        docs: [
-          "OPTIONAL, Contracts only, Effect to be run when a country issues up the contract",
-          "this: issuer",
-          "from: the scope from the mission",
-          "fromfrom: contract location, if applicable",
-          "Only when mission subtype `contract` applies.",
-        ],
-        memberType:
-          'EffectBlock<"country", { readonly root: "country"; readonly from: "country" }>',
-      },
-      onAccept: {
-        optional: true,
-        docs: [
-          "OPTIONAL, Contracts only, Effect to be run when a country picks up the contract",
-          "this: operator (the country doing the mission/contract)",
-          "prev: issuer if applicable (the country that issued the contract)",
-          "from: the scope from the mission",
-          "fromfrom: contract location, if applicable",
-          "Only when mission subtype `contract` applies.",
-        ],
-        memberType:
-          'EffectBlock<"country", { readonly root: "country"; readonly from: "country"; readonly prev: "country" }>',
-      },
-      aiWeight: {
-        optional: true,
-        docs: [
-          "OPTIONAL. Only used for contracts. Weight used to determine what contracts will be picked up by an AI operator.",
-          "If the weight is equivalent between contracts, the closest contract will be selected.",
-          "he AI will heavily prefer picking up player-issued contracts adding the PLAYER_ISSUED_CONTRACT_PREFERENCE define to the weight.",
-          "this: operator country from: contract location fromfrom: issuer country",
-          "Only when mission subtype `contract` applies.",
-        ],
-        memberType: 'WeightBlock<"country">',
-      },
     },
   ],
   [
@@ -3769,13 +3661,23 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
   [
     MISSION_COUNTER_DEFINITION_FIELDS,
     {
-      max: { optional: true, docs: [], memberType: "number" },
+      max: {
+        optional: true,
+        docs: ["Maximum counter value shown in the mission's localized counter display."],
+        memberType: "number",
+      },
     },
   ],
   [
     MISSION_CATEGORY_FIELDS,
     {
-      isContract: { optional: false, docs: [], memberType: "boolean" },
+      isContract: {
+        optional: false,
+        docs: [
+          "Whether this is a contract category. This SDK release supports ordinary missions only, so it must be `false`.",
+        ],
+        memberType: "false",
+      },
       mapIcon: { optional: false, docs: [], memberType: "SpriteRef | string" },
       logIcon: { optional: false, docs: [], memberType: "string" },
       showInIssueList: { optional: true, docs: [], memberType: "boolean" },
@@ -6470,6 +6372,72 @@ export const CONTENT_FIELD_OMISSIONS: Readonly<
   ],
   relic: [],
   mission: [
+    {
+      path: "mission.ai_behaviour",
+      kind: "declined",
+      reason:
+        "SDK-294 supports ordinary missions only; this field belongs exclusively to contracts.",
+    },
+    {
+      path: "mission.ai_weight",
+      kind: "declined",
+      reason:
+        "SDK-294 supports ordinary missions only. Contract selection exposes a dynamic location scope that the ordinary mission callback contract cannot represent.",
+    },
+    {
+      path: "mission.on_accept",
+      kind: "declined",
+      reason:
+        "SDK-294 supports ordinary missions only. Contract acceptance exposes a dynamic location scope that the ordinary mission callback contract cannot represent.",
+    },
+    {
+      path: "mission.on_issue",
+      kind: "declined",
+      reason:
+        "SDK-294 supports ordinary missions only. Contract issuance exposes a dynamic location scope that the ordinary mission callback contract cannot represent.",
+    },
+    {
+      path: "mission.possible_issuer",
+      kind: "declined",
+      reason:
+        "SDK-294 supports ordinary missions only. Contract issue and acceptance conditions need a runtime location scope that the ordinary mission callback contract cannot represent.",
+    },
+    {
+      path: "mission.possible_operator",
+      kind: "declined",
+      reason:
+        "SDK-294 supports ordinary missions only. Contract issue and acceptance conditions need a runtime location scope that the ordinary mission callback contract cannot represent.",
+    },
+    {
+      path: "mission.potential_issuer",
+      kind: "declined",
+      reason:
+        "SDK-294 supports ordinary missions only. Contract issue and acceptance conditions need a runtime location scope that the ordinary mission callback contract cannot represent.",
+    },
+    {
+      path: "mission.potential_operator",
+      kind: "declined",
+      reason:
+        "SDK-294 supports ordinary missions only. Contract issue and acceptance conditions need a runtime location scope that the ordinary mission callback contract cannot represent.",
+    },
+    {
+      path: "mission.small_picture",
+      kind: "declined",
+      reason:
+        "SDK-294 supports ordinary missions only; this field belongs exclusively to contract issue-list entries.",
+    },
+    {
+      path: "mission.time_to_accept",
+      kind: "declined",
+      reason:
+        "SDK-294 supports ordinary missions only; this field belongs exclusively to contracts.",
+    },
+    {
+      path: "mission.time_to_complete",
+      kind: "declined",
+      reason:
+        "SDK-294 supports ordinary missions only; this field belongs exclusively to contracts.",
+    },
     {
       path: "mission.localisation.desc",
       kind: "collapsed",

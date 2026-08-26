@@ -40,8 +40,10 @@ export const PUBLIC_NESTED_TYPES: readonly PublicNestedTypeRow[] = [
   },
   {
     module: "mission.ts",
-    names: ["MissionCounterDefinition"],
-    reason: "`MissionFields.counter` is a record of these engine-visible counter definitions.",
+    names: ["MissionCounterDefinition", "MissionDesc", "MissionDescIssuer", "MissionDescOperator"],
+    reason:
+      "`MissionFields.counter` is a record of counter definitions, and its structured description " +
+      "members use the three MissionDesc helper types.",
   },
   {
     module: "government-trigger.ts",

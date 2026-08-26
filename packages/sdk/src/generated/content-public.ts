@@ -161,6 +161,9 @@ export type {
   DefinedMission,
   MissionCounterDefinition,
   MissionDef,
+  MissionDesc,
+  MissionDescIssuer,
+  MissionDescOperator,
   MissionFields,
 } from "./mission.ts";
 export type { MoonInitializerFields } from "./moon-initializer.ts";
