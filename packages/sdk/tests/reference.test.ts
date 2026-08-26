@@ -65,6 +65,16 @@ describe("script reference metadata", () => {
     expect(missionSignature).toBe(`${missionOverload}\n${missionFallback}`);
     expect(missionSignature).not.toContain("enableMission(args: {");
 
+    const contract = SCRIPT_EFFECT_REFERENCES.find(
+      (reference) => reference.method === "issueContract"
+    );
+    const contractOverload =
+      'issueContract<L extends MissionLocationScope>(args: Omit<IssueContractArgs, "contract" | "location"> & { contract: Unambiguous<L, MissionLocationContract<L>>; location: ScopeValue<NoInfer<L>> }): void;';
+    const contractFallback = "issueContract(args: IssueContractArgs): void;";
+    const contractSignature = contract?.signature ?? "";
+    expect(contractSignature).toBe(`${contractOverload}\n${contractFallback}`);
+    expect(contractSignature).not.toContain("issueContract(args: {");
+
     const modifierMethods = [
       "addModifier",
       "addStageModifier",

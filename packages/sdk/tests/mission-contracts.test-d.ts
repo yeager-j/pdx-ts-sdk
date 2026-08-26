@@ -87,7 +87,7 @@ describe("contract missions", () => {
     expectTypeOf(mission.locationScope).toEqualTypeOf<"planet">();
   });
 
-  it("requires enableMission to use the declared location scope", () => {
+  it("requires mission effects to use the declared location scope", () => {
     const mod = createMod(CONFIG);
     const category = mod.missionCategory("enable", {
       isContract: true,
@@ -115,6 +115,10 @@ describe("contract missions", () => {
         // @ts-expect-error — a declared location must be supplied
         country.enableMission({ name: contract });
         country.enableMission({ name: "a_vanilla_mission", location: fleet });
+        country.issueContract({ contract, location: planet });
+        // @ts-expect-error — this contract declares a planet location
+        country.issueContract({ contract, location: fleet });
+        country.issueContract({ contract: "a_vanilla_contract", location: fleet });
       },
     });
   });

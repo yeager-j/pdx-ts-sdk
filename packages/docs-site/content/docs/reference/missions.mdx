@@ -63,25 +63,34 @@ the place for common cleanup.
 
 ## Locations and callback scopes
 
-Set `location: true` when the mission has a specific location. For a mission
-that reads that location in callbacks, also declare `locationScope`, then pass a
-matching scope to `enableMission`:
+Set `location: true` when the mission has a specific location. Contract
+missions that read that location in callbacks can also declare `locationScope`.
+Pass the same scope to `issueContract`:
 
 ```ts
-const survey = mod.mission("survey", {
+const contractCategory = mod.missionCategory("survey_contracts", {
+  isContract: true,
+  mapIcon: "GFX_nomad_contract_science_icon",
+  logIcon: "gfx/interface/icons/contracts/science_contract_icon_log.dds",
+});
+const contractChain = mod.eventChain("survey_contract", {});
+const surveyContract = mod.mission("survey_contract", {
+  category: contractCategory,
+  eventChain: contractChain,
   picture: "GFX_event_pictures_ancient_ruins",
   location: true,
   locationScope: "planet",
 });
 
-country.enableMission({ name: survey, location: surveyWorld });
+country.issueContract({ contract: surveyContract, location: surveyWorld });
 ```
 
 The declaration does not emit a `location_scope` field. It is an SDK authoring
 contract: it types the location ambient scope in callbacks and requires each
-typed `enableMission` call to supply the same scope. Omit it only when the
-definition does not need a typed location, or when calling a deliberate
-Vanilla or third-party mission through the unchecked string-compatible API.
+typed `enableMission` or `issueContract` call to supply the same scope. Omit it
+only when the definition does not need a typed contract location, or when
+calling a deliberate Vanilla or third-party mission through the unchecked
+string-compatible API.
 
 Lifecycle callbacks run with the operator country as their main scope.
 `onStart` runs when the mission starts, `onSuccess` on successful completion,

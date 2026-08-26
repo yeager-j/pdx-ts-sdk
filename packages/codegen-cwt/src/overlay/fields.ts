@@ -509,17 +509,17 @@ export const CONTENT_SCOPE_PARAMETERS = new Map<string, ContentScopeParameter>([
           onAccept: "fromfrom",
           aiWeight: "from",
         },
-        effect: "enable_mission",
+        effect: "issue_contract",
         argument: "location",
         reason:
-          "A contract's location is selected by enable_mission.location. The contract callbacks " +
-          "declare it as scope_group[spatial_object], while the effect accepts the wider " +
-          "scope_field form, so the authored declaration chooses one supported spatial scope " +
-          "and the checked overload requires that same scope at call sites.",
+          "A contract's location is selected by issue_contract.location. The contract callbacks " +
+          "and the effect both declare it as scope_group[spatial_object], so the authored " +
+          "declaration chooses one supported spatial scope and the checked overload requires " +
+          "that same scope at call sites.",
       },
       reason:
         "Mission callbacks run in country scope. Contract callbacks additionally receive the " +
-        "location selected by enable_mission as FROM or FROMFROM; that location varies per " +
+        "location selected by issue_contract as FROM or FROMFROM; that location varies per " +
         "definition and must be declared to make its ambient reference authorable.",
     },
   ],

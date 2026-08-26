@@ -94,7 +94,35 @@ export function defineMission<
 
 /** Mission authoring methods bound to one mod capability. */
 export interface MissionCapabilityMethods<P extends string, I extends IdProfile> {
-  /** Defines a mission whose category controls its contract-only surface. */
+  /**
+   * Defines a mission whose category controls its contract-only surface.
+   *
+   * @example
+   * ```ts
+   * const ordinaryCategory = mod.missionCategory("survey", {
+   *   isContract: false,
+   *   mapIcon: "GFX_nomad_contract_icon",
+   *   logIcon: "gfx/interface/icons/contracts/contract_icon_log.dds",
+   * });
+   * mod.mission("survey", {
+   *   category: ordinaryCategory,
+   *   picture: "GFX_event_pictures_ancient_ruins",
+   * });
+   *
+   * const contractCategory = mod.missionCategory("contracts", {
+   *   isContract: true,
+   *   mapIcon: "GFX_nomad_contract_icon",
+   *   logIcon: "gfx/interface/icons/contracts/contract_icon_log.dds",
+   * });
+   * const contractChain = mod.eventChain("contract", {});
+   * mod.mission("recovery_contract", {
+   *   category: contractCategory,
+   *   eventChain: contractChain,
+   *   picture: "GFX_event_pictures_ancient_ruins",
+   *   locationScope: "planet",
+   * });
+   * ```
+   */
   mission<
     const Name extends string,
     const Category extends MissionCategoryInput = undefined,

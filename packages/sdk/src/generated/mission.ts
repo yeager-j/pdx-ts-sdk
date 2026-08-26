@@ -117,12 +117,12 @@ export interface MissionFields<
   L extends MissionLocationScope | undefined = undefined,
 > {
   /**
-   * The scope `enable_mission` is handed as this definition's
+   * The scope `issue_contract` is handed as this definition's
    * location, and the ambient location scope its callbacks receive.
    * Emits nothing — the game learns it from the call site, not from the
    * definition. Declaring it types the matching ambient scope in
    * `potentialOperator`, `possibleOperator`, `abortTrigger`, `onCancel`, `onStart`, `onSuccess`, `onStop`, `issuedAbortTrigger`, `onIssue`, `onAccept` and `aiWeight`, and holds every
-   * `enableMission` call for this definition to a
+   * `issueContract` call for this definition to a
    * location of the same scope. Omitted, that ambient scope stays unreadable and the
    * call sites stay unchecked.
    */
