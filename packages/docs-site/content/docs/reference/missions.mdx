@@ -1,0 +1,164 @@
+---
+title: Missions
+description: Define situation-log missions and contracts, connect them to categories and event chains, and control their lifecycle.
+registries: [mission]
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+
+import { FieldTable } from "@/components/FieldTable";
+import { PairedExample } from "@/components/PairedExample";
+
+A **mission** is a country task displayed in the situation log. It may track
+named counters, run lifecycle effects, and belong to a mission category and an
+event chain. The SDK writes mission definitions under
+`common/missions/missions/`.
+
+This example defines an ordinary mission, starts its event chain and mission,
+updates its counter, and completes it successfully:
+
+<PairedExample name="missions-ordinary" />
+
+## Category and event chain have different jobs
+
+`category` controls classification and default map and situation-log icons.
+Use an item returned by `mod.missionCategory(...)` for a mod-owned category.
+See [Mission Categories](/reference/mission-categories/) for ordinary and
+contract categories.
+
+`eventChain` associates the mission with a situation-log event chain. It does
+not start or end that chain. Call `beginEventChain` when the story starts and
+`endEventChain` when its entries should close. A mission may share a chain with
+events and other missions, so the correct end point belongs to the story's
+lifecycle rather than to the reference itself.
+
+## Start, progress, and complete an ordinary mission
+
+Mission definitions do not start themselves. Use these country-scoped effects:
+
+| Step          | Effect                                                                      |
+| ------------- | --------------------------------------------------------------------------- |
+| Start         | `enableMission({ name: mission })`                                          |
+| Set progress  | `setMissionCounter({ mission, counter, amount })`                            |
+| Add progress  | `addMissionCounter({ mission, counter, amount })`                            |
+| Complete      | `stopMission({ mission, status: "success" })`                               |
+| Stop early    | `stopMission({ mission, status: "stop" })`                                  |
+
+Declare counters with `counter`, keyed by the same stable string passed to the
+counter effects. A counter's `max` is the maximum shown in its localized
+mission display. Reaching `max` does not replace the completion effect: call
+`stopMission` with `status: "success"` when your completion condition passes.
+
+`status: "success"` completes the mission and runs `onSuccess`. Use
+`status: "stop"` to stop it without reporting success. The game can also cancel
+a mission because `abortTrigger` passes or a time limit expires. Put
+failure-specific work in `onCancel`; `onStop` runs after any ending, so it is
+the place for common cleanup.
+
+<Callout type="info" title="The mission and event chain are started separately">
+  A common start event calls both `beginEventChain(...)` and `enableMission(...)`. Neither call
+  implies the other. The same separation applies at completion: stopping a mission does not by
+  itself express when a shared event chain should end.
+</Callout>
+
+## Locations and callback scopes
+
+Set `location: true` when the mission has a specific location. For a mission
+that reads that location in callbacks, also declare `locationScope`, then pass a
+matching scope to `enableMission`:
+
+```ts
+const survey = mod.mission("survey", {
+  picture: "GFX_event_pictures_ancient_ruins",
+  location: true,
+  locationScope: "planet",
+});
+
+country.enableMission({ name: survey, location: surveyWorld });
+```
+
+The declaration does not emit a `location_scope` field. It is an SDK authoring
+contract: it types the location ambient scope in callbacks and requires each
+typed `enableMission` call to supply the same scope. Omit it only when the
+definition does not need a typed location, or when calling a deliberate
+Vanilla or third-party mission through the unchecked string-compatible API.
+
+Lifecycle callbacks run with the operator country as their main scope.
+`onStart` runs when the mission starts, `onSuccess` on successful completion,
+`onCancel` on an unsuccessful end, and `onStop` after any end. `onDaily` and
+`onMonthly` run while the mission remains active. Keep frequent callbacks
+small and verify their cost in a real game.
+
+## Contract missions
+
+A contract is a mission whose category has `isContract: true`. The SDK requires
+an `eventChain` for that category and makes the contract-only fields available.
+Contracts distinguish the country that issues the work from the operator that
+accepts and performs it.
+
+<PairedExample name="missions-contract" />
+
+Start a contract with `issueContract`, not `enableMission`:
+
+```ts
+issuer.issueContract({
+  contract: recoverArchive,
+  location: contractWorld,
+  target: allowedOperator,
+});
+```
+
+`location` is required and identifies the spatial object where the contract is
+offered. Optional `target` restricts who may pick it up. The issue effect makes
+the contract available; an operator still accepts it through the contract
+flow. `onIssue` runs for the issuer, and `onAccept` runs for the operator after
+acceptance. The example begins the event chain in `onAccept`, when an operator
+actually takes the work.
+
+`potentialIssuer` and `possibleIssuer` control visibility and eligibility for
+the issuer. `potentialOperator` and `possibleOperator` do the corresponding
+work for prospective operators. `timeToAccept` limits how long the offer stays
+available, and `timeToComplete` limits the accepted work. `aiWeight` weights an
+AI operator's choice among eligible contracts.
+
+After acceptance, progress and successful completion use the same mission
+counter and `stopMission` effects as an ordinary mission. From mission scope,
+`cancelContract({ refund, showMessage })` cancels a contract and can control its
+refund and message behavior.
+
+Contract callbacks expose additional ambient scopes. In operator lifecycle
+callbacks, `ctx.prev` is the issuer and `ctx.fromfrom` is the declared contract
+location. Declaring `locationScope` gives that location a usable SDK type. In
+issuer eligibility callbacks, `ctx.from` is the issue system; in operator
+eligibility and AI-weight callbacks, `ctx.from` is the contract location and
+`ctx.fromfrom` is the issuer.
+
+## Current limits and testing advice
+
+The SDK checks subtype fields, category and event-chain references, declared
+location scopes, callback scopes, localization, and emitted paths. It does not
+simulate situation-log display, counter completion, abort timing, contract
+selection, acceptance, refunds, or AI behavior. There is no `mod.patchMission`
+surface.
+
+Test ordinary start, every progress source, success, early stop, abort, and
+save/load. For contracts, test issuer visibility, operator visibility,
+acceptance, both time limits, location callbacks, cancellation and refund,
+success, cleanup, and AI pickup. Confirm that each event-chain entry opens and
+closes at the intended time. See [Testing your mod](/guides/testing-your-mod/)
+for the boundary between SDK checks and live-game verification.
+
+## API and vanilla references
+
+- [`MissionDef`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/mission.ts)
+  is the generated authoring contract.
+- [`vanilla.mission(...)`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
+  checks ids against the install-derived
+  [Vanilla mission ids](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/stellaris-ids/src/registries/mission.ts).
+
+## Field reference
+
+These tables are generated from the SDK's own field definitions, including
+contract-only members and nested counter and description rows.
+
+<FieldTable registry="mission" />
