@@ -127,8 +127,12 @@ function contentDefinersModule(plans: readonly RegistryDefinerPlan[]): string {
         return `import { ${names.join(", ")} } from ${JSON.stringify(from)};\n`;
       })
       .join("") +
+    wrapsWitnesses
+      .flatMap((witness) =>
+        witness.module === undefined ? [] : [importList(witness.module, [witness.type])]
+      )
+      .join("") +
     importList("./enums.ts", [
-      ...wrapsWitnesses.map((wrapsWitness) => wrapsWitness.type),
       ...new Set(
         plans.flatMap(({ content }) =>
           content.emission.scopeParameter?.selector === undefined

@@ -12,6 +12,7 @@ import {
   type EventChainCapabilityMethods,
 } from "../content/event-chains.ts";
 import { exactNameMintOf, shapeMintOf } from "../content/mint-provenance.ts";
+import { missionCapabilityMethods, type MissionCapabilityMethods } from "../content/missions.ts";
 import { carriesPrefixSegment } from "../content/schema.ts";
 import {
   situationTypeCapabilityMethods,
@@ -186,6 +187,7 @@ export type ModCapability<P extends string, I extends IdProfile> = {
     text: LocalizationText
   ): ReplacementLocalizationItem<P, Key>;
 } & ContentCapabilityMethods<P, I> &
+  MissionCapabilityMethods<P, I> &
   SituationTypeCapabilityMethods<P, I> &
   EventChainCapabilityMethods<P, I>;
 
@@ -526,12 +528,14 @@ export function createMod<const P extends string, const I extends IdProfile>(
     assertNestedDefinitionId,
     assertLogicalName
   );
+  const missionMethods = missionCapabilityMethods<P, I | typeof DEFAULT_ID_PROFILE>(mintId);
   const eventChainMethods = eventChainCapabilityMethods<P, I | typeof DEFAULT_ID_PROFILE>(mintId);
 
   return Object.freeze({
     config,
     ids,
     ...contentMethods,
+    ...missionMethods,
     ...situationTypeMethods,
     ...eventChainMethods,
     namespace: <const N extends string>(name: N = "" as N) =>

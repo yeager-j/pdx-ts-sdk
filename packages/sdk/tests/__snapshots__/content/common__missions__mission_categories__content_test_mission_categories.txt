@@ -1,3 +1,9 @@
+content_test_mission_category_contracts = {
+	is_contract = yes
+	map_icon = GFX_nomad_contract_icon
+	log_icon = gfx/interface/icons/contracts/contract_icon_log.dds
+}
+
 content_test_mission_category_labours = {
 	is_contract = no
 	map_icon = GFX_nomad_contract_icon

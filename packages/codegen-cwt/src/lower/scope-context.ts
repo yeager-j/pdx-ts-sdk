@@ -30,11 +30,8 @@ export interface FieldContext {
    * Omit this for enclosing-definition type parameters.
    */
   readonly unpinnedSymbol?: string;
-  /**
-   * An overlay-provided TypeScript type for FROM when CWT leaves it unstated.
-   * This value takes precedence over the ambient rule context.
-   */
-  readonly assertedFrom?: string;
+  /** Overlay-provided TypeScript types for ambient slots CWT leaves unstated. */
+  readonly assertedAmbient?: Readonly<Partial<Record<AmbientScopeKey, string>>>;
   /** The enclosing registry's authoring parameter, for nested typed blocks. */
   readonly nestedTypeParameter?: {
     /** The generic parameter declaration appended to the nested interface name. */
@@ -122,13 +119,12 @@ export function scopeType(
   ctx: FieldContext,
   asserted?: string
 ): FieldScope {
-  // An asserted FROM wins over the rules, on `ContentFieldOverride.scope`'s
-  // terms: it is there because the rules state no FROM at all, and a rule that
-  // later states one is a disagreement to review rather than to average.
   const context = Object.fromEntries(
     AMBIENT_SCOPE_KEYS.map((key) => [key, ambientType(emitter, field, ctx, key)])
   ) as Record<AmbientScopeKey, string | null>;
-  context.from = ctx.assertedFrom ?? context.from;
+  for (const [key, type] of Object.entries(ctx.assertedAmbient ?? {})) {
+    context[key as AmbientScopeKey] = type;
+  }
   const from = context.from;
   const root = context.root;
   if (asserted !== undefined) {

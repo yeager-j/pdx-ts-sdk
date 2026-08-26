@@ -1,3 +1,5 @@
+content_test_event_chain_contract_chain = {}
+
 content_test_event_chain_crystal_signal = {
 	icon = gfx/interface/icons/situation_log/situation_log_ancient_relics.dds
 	counter = {

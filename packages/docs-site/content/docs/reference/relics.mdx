@@ -1,0 +1,119 @@
+---
+title: Relics
+description: Define relic ownership, passive modifiers, activation costs and effects, AI use, and lifecycle effects.
+registries: [relic]
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+
+import { FieldTable } from "@/components/FieldTable";
+import { PairedExample } from "@/components/PairedExample";
+
+A **relic** is a unique country-owned object that can grant passive bonuses and
+an activated effect. The SDK writes relic definitions under `common/relics/`.
+
+This minimal relic is always eligible for activation and grants research when
+activated:
+
+<PairedExample name="relics-basic" />
+
+## Definition and ownership are separate
+
+`mod.relic(...)` defines the relic but does not give it to a country. Award the
+returned reference from an event or another country-scoped effect:
+
+```ts
+country.addRelic(echoLens);
+```
+
+Use `country.removeRelic(echoLens)` to remove it and `hasRelic(echoLens)` in a
+country trigger to test ownership. The object returned by `mod.relic(...)`
+keeps those calls connected to the authored id. Use `vanilla.relic(...)` for a
+checked Vanilla id and a raw string only for a deliberate third-party id.
+
+The SDK also exposes relic lifecycle on-actions: `onRelicReceived`,
+`onRelicActivated`, and `onRelicLost`. Use them when behavior belongs to every
+relic lifecycle occurrence rather than to one relic's `activeEffect`.
+
+## Passive and active behavior
+
+`triggeredCountryModifier` supplies passive country modifiers while the
+country owns the relic and each row's `when` trigger passes. `activeEffect`
+runs in country scope when the player activates the relic. They are independent:
+a relic may define either behavior or both.
+
+The advanced example combines a passive research bonus with an immediate
+activation reward and awards the relic from an event:
+
+<PairedExample name="relics-advanced" />
+
+`possible` controls whether the owned relic can be activated. It does not
+control whether the country may acquire the relic. Keep acquisition conditions
+on the event or effect that calls `addRelic`.
+
+## Activation cost, duration, and cooldown
+
+These fields participate in activation:
+
+| Field                | Responsibility                                                      |
+| -------------------- | ------------------------------------------------------------------- |
+| `possible`           | Checks whether the owning country may activate the relic now.       |
+| `resources`          | Declares the economic cost and other resource entries for use.      |
+| `activeEffect`       | Runs the relic's country-scoped activation effects.                 |
+| `activationDuration` | Supplies the activation duration used by the relic interface.       |
+| `aiWeight`           | Weights activation for an AI-controlled owner.                      |
+
+Vanilla relics normally make cooldown an explicit part of their script. Their
+shared `possible` check rejects activation while the country has
+`relic_activation_cooldown`, and their `active_effect` adds that timed
+modifier. The advanced example shows the second half. If your relic should use
+the same cooldown, also make its `possible` trigger reject the modifier. The
+SDK does not add or enforce a cooldown automatically.
+
+<Callout type="warn" title="Activation duration does not implement cooldown">
+  `activationDuration` is definition data used by the relic system. It does not add a country
+  modifier or change `possible`. Implement those rules in `activeEffect` and `possible`.
+</Callout>
+
+Each `resources` row is an economic resource block. Vanilla commonly uses the
+`relics` category with a Unity `cost`. The schema also accepts production and
+upkeep shapes, but test non-cost behavior in Stellaris because the installed
+relic documentation only identifies this block as the activation cost.
+
+## Presentation, score, and theft
+
+`portrait` is the relic's interface sprite and is required. `sound` selects an
+activation sound. `score` adds the relic's value to victory score.
+`canBeStolen` controls whether another country may steal it; Stellaris defaults
+this to enabled when the field is absent.
+
+Use `country.stealRelic(...)` only when another country should transfer a relic
+through script. This is separate from the `canBeStolen` policy on the
+definition.
+
+## Current limits and testing advice
+
+The SDK checks field shapes, reference ownership, effect and trigger scopes,
+localization, and emitted paths. It does not simulate the relic interface,
+resource payment, AI activation, cooldown rules, score, or theft. There is no
+`mod.patchRelic` surface; define a new relic rather than assuming a partial
+Vanilla override is safe.
+
+Test acquisition, loss, activation eligibility, cost payment, the active
+effect, passive modifier conditions, cooldown expiry, AI use, and save/load in
+Stellaris. See [Testing your mod](/guides/testing-your-mod/) for the boundary
+between SDK checks and live-game verification.
+
+## API and vanilla references
+
+- [`RelicDef`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/relic.ts)
+  is the generated authoring contract.
+- [`vanilla.relic(...)`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
+  checks ids against the install-derived
+  [Vanilla relic ids](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/stellaris-ids/src/registries/relic.ts).
+
+## Field reference
+
+These tables are generated from the SDK's own field definitions.
+
+<FieldTable registry="relic" />

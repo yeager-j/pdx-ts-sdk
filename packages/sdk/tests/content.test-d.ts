@@ -2362,12 +2362,6 @@ describe("generated content authoring types", () => {
       mapIcon: "GFX_nomad_contract_icon",
       logIcon: "gfx/interface/icons/contracts/contract_icon_log.dds",
     });
-    contentMod.missionCategory("unsupported_contract", {
-      // @ts-expect-error — SDK-294 supports ordinary missions, not contracts.
-      isContract: true,
-      mapIcon: "GFX_nomad_contract_icon",
-      logIcon: "gfx/interface/icons/contracts/contract_icon_log.dds",
-    });
     const mission = contentMod.mission("first_labour", {
       category,
       picture: "GFX_event_pictures_ancient_ruins",

@@ -1,0 +1,68 @@
+---
+title: Mission Categories
+description: Group missions, configure their map and situation-log icons, and distinguish ordinary missions from contracts.
+registries: [mission_category]
+---
+
+import { FieldTable } from "@/components/FieldTable";
+import { PairedExample } from "@/components/PairedExample";
+
+A **mission category** groups missions and supplies their default map and
+situation-log presentation. The SDK writes category definitions under
+`common/missions/mission_categories/`.
+
+This example defines one ordinary category:
+
+<PairedExample name="mission-categories" />
+
+## Ordinary categories and contract categories
+
+`isContract` is required and changes which mission fields are valid. A category
+with `isContract: false` accepts ordinary missions. A category with
+`isContract: true` is a contract category; passing its returned reference to
+`mod.mission(...)` requires an `eventChain` and enables contract-only fields
+such as issuer and operator checks, acceptance and completion time limits,
+`onIssue`, `onAccept`, and `aiWeight`.
+
+Keep the returned category item instead of reducing it to a raw id. Its literal
+`isContract` value is the evidence the SDK uses to select the correct mission
+contract.
+
+```ts
+const researchContracts = mod.missionCategory("research_contract", {
+  name: "Research Contracts",
+  isContract: true,
+  mapIcon: vanilla.spriteType("GFX_nomad_contract_science_icon"),
+  logIcon: "gfx/interface/icons/contracts/science_contract_icon_log.dds",
+  showInIssueList: true,
+});
+```
+
+`mapIcon` is a sprite reference used on the galactic map. `logIcon` is a file
+path used by the situation log. `showInIssueList` controls whether a contract
+category appears in the issue-contract interface; Vanilla uses it on contract
+categories and leaves it disabled by default.
+
+If a mission omits `category`, Stellaris uses the first loaded mission category.
+That makes behavior depend on load order, so assign a category explicitly.
+See [Missions](/reference/missions/) for the complete ordinary and contract
+lifecycle.
+
+There is no `mod.patchMissionCategory` surface. The SDK checks the definition
+shape, owned references, localization, and emitted path, but it does not verify
+icon layout or contract-interface placement. Test both the map and situation
+log in Stellaris.
+
+## API and vanilla references
+
+- [`MissionCategoryDef`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/mission-category.ts)
+  is the generated authoring contract.
+- [`vanilla.missionCategory(...)`](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/sdk/src/generated/vanilla-refs.ts)
+  checks ids against the install-derived
+  [Vanilla mission-category ids](https://github.com/yeager-j/pdx-ts-sdk/blob/main/packages/stellaris-ids/src/registries/mission-category.ts).
+
+## Field reference
+
+These tables are generated from the SDK's own field definitions.
+
+<FieldTable registry="mission_category" />

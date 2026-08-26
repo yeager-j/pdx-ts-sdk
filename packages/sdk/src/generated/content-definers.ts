@@ -99,7 +99,7 @@ import {
 } from "./megastructure.ts";
 import type { MenacePerkDef } from "./menace-perk.ts";
 import type { MissionCategoryDef } from "./mission-category.ts";
-import type { MissionDef } from "./mission.ts";
+import type { MissionDef, MissionLocationScope, MissionScope } from "./mission.ts";
 import type { OpinionModifierDef } from "./opinion-modifier.ts";
 import type { PdxmeshDef } from "./pdxmesh.ts";
 import type { PdxparticleDef } from "./pdxparticle.ts";
@@ -672,22 +672,26 @@ export function defineRelic<const Id extends string>(
   return { itemKind: "content", type: "relic", id: def.id, def };
 }
 
-/** What a mission feature can contain. */
-export type MissionItem = ContentItem<"mission", MissionDef>;
-
 /**
- * Internal lowering primitive for a mission. Public authors call
- * `mod.mission(name, def)`, then place the returned item with
- * `mod.feature(...)` before compiling the same capability.
+ * What a mission feature can contain.
+ * Parameterised by the declared `locationScope`, which the item carries
+ * and the effect consuming it is checked against: naming this type without
+ * the parameter widens the declaration to every scope the registry admits,
+ * which is checkable as none of them.
  */
-export function defineMission<const Id extends string>(
-  def: MissionDef<Id>
-): ContentItem<"mission", MissionDef<Id>> {
-  return { itemKind: "content", type: "mission", id: def.id, def };
-}
+export type MissionItem<
+  W extends MissionLocationScope | undefined = MissionLocationScope | undefined,
+> = ContentItem<"mission", MissionDef<string, never>> & { readonly locationScope: W };
+
+// defineMission is hand-written; re-exported here so every definer this
+// SDK has comes from one module.
+export { defineMission } from "../content/missions.ts";
 
 /** What a mission category feature can contain. */
-export type MissionCategoryItem = ContentItem<"mission_category", MissionCategoryDef>;
+export type MissionCategoryItem<W extends boolean = boolean> = ContentItem<
+  "mission_category",
+  MissionCategoryDef
+> & { readonly def: MissionCategoryDef & { readonly isContract: W } };
 
 /**
  * Internal lowering primitive for a mission category. Public authors call

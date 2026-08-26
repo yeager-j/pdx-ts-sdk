@@ -93,9 +93,10 @@ function contentCapabilityImports(
     // no generic of its own also name the shared `ContentHandle`.
     'import { createContentHandle, type ContentHandle, type ContentHandleBase } from "../content/handle.ts";\n' +
     wrapsWitnesses
-      .map(
-        (wrapsWitness) =>
-          `import type { ${wrapsWitness.type} } from ${JSON.stringify(wrapsWitness.module)};\n`
+      .flatMap((wrapsWitness) =>
+        wrapsWitness.module === undefined
+          ? []
+          : [`import type { ${wrapsWitness.type} } from ${JSON.stringify(wrapsWitness.module)};\n`]
       )
       .join("") +
     importList(

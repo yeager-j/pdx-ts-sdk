@@ -595,7 +595,7 @@ describe("LoweredRule", () => {
 
     expect(emitted.interfaces).toContain(
       "export interface UniversalEffects<S extends ScopeName> extends " +
-        "EnableSpecialProjectEffectsExtension {"
+        "EnableMissionEffectsExtension, EnableSpecialProjectEffectsExtension {"
     );
     expect(emitted.universalParameters).toBe("<S extends ScopeName>");
     expect(emitted.interfaces).toContain("trigger?: Trigger<S> }[] }): void;");

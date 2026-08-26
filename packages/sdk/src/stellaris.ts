@@ -51,6 +51,7 @@ export type {
   ScopeObjOf,
 } from "./generated/effects.ts";
 export type { SituationTargetContract } from "./script/effects/situations.ts";
+export type { MissionLocationContract } from "./script/effects/missions.ts";
 export type { SpecialProjectLocationContract } from "./script/effects/special-projects.ts";
 export type { StaticModifierHostContract } from "./script/effects/static-modifiers.ts";
 export { onActions } from "./generated/on-actions.ts";

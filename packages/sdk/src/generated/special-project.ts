@@ -271,12 +271,12 @@ export interface SpecialProjectFieldsBase<
 > {
   /**
    * The scope `enable_special_project` is handed as this definition's
-   * location, and the FROM its callbacks are given.
+   * location, and the ambient location scope its callbacks receive.
    * Emits nothing — the game learns it from the call site, not from the
-   * definition. Declaring it types `ctx.from` in
+   * definition. Declaring it types the matching ambient scope in
    * `onSuccess`, `onProgress25`, `onProgress50`, `onProgress75` and `onStart`, and holds every
    * `enableSpecialProject` call for this definition to a
-   * location of the same scope. Omitted, FROM stays unreadable and the
+   * location of the same scope. Omitted, that ambient scope stays unreadable and the
    * call sites stay unchecked.
    */
   locationScope?: L;

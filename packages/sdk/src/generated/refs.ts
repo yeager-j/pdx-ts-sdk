@@ -315,6 +315,9 @@ export type MissionContractRef = TypedRef<"mission.contract">;
 /** A reference to a `<mission_category>`. */
 export type MissionCategoryRef = TypedRef<"mission_category" | `mission_category.${string}`>;
 
+/** A reference to a `<mission_category.contract>`. */
+export type MissionCategoryContractRef = TypedRef<"mission_category.contract">;
+
 /** A reference to a `<model_entity>`. */
 export type ModelEntityRef = TypedRef<"model_entity" | `model_entity.${string}`>;
 

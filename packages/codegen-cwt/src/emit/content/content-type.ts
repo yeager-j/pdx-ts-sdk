@@ -546,7 +546,23 @@ function declareOrdinaryField(
     emitter.overlayAudit.applied("FIELD_WIDENINGS", path);
     useWideningSymbols(emitter, widening);
   }
-  const loweredContext = selectedContext(fieldContext, parameter, member);
+  const ambient = Object.fromEntries(
+    Object.entries(override?.ambient ?? {}).map(([key, scope]) => {
+      const canonical = emitter.canonicalScope(scope);
+      if (canonical === null) {
+        throw new Error(`Overlay asserts unknown ambient scope "${scope}" at ${path}`);
+      }
+      return [key, JSON.stringify(canonical)];
+    })
+  );
+  const assertedContext =
+    Object.keys(ambient).length === 0
+      ? fieldContext
+      : {
+          ...fieldContext,
+          assertedAmbient: { ...fieldContext.assertedAmbient, ...ambient },
+        };
+  const loweredContext = selectedContext(assertedContext, parameter, member);
   const lowered = pickOrdinary(
     emitter,
     group,
@@ -845,12 +861,12 @@ function scopeParameterDeclarations(
       : docComment(
           [
             `The scope \`${declaredFrom.effect}\` is handed as this definition's`,
-            "location, and the FROM its callbacks are given.",
+            "location, and the ambient location scope its callbacks receive.",
             "Emits nothing — the game learns it from the call site, not from the",
-            "definition. Declaring it types `ctx.from` in",
-            `${listed(declaredFrom.members)}, and holds every`,
+            "definition. Declaring it types the matching ambient scope in",
+            `${listed(Object.keys(declaredFrom.members))}, and holds every`,
             `\`${camelCase(declaredFrom.effect)}\` call for this definition to a`,
-            "location of the same scope. Omitted, FROM stays unreadable and the",
+            "location of the same scope. Omitted, that ambient scope stays unreadable and the",
             "call sites stay unchecked.",
           ],
           "  "

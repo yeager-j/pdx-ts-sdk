@@ -82,11 +82,7 @@ export interface Coverage {
  * because the reference milestone has not started — the gate's value today is
  * that a *new* registry cannot slip in silently.
  */
-export const UNDOCUMENTED_REGISTRIES: Readonly<Record<string, string>> = {
-  relic: "SDK-294: documentation will be added in a separate pass.",
-  mission: "SDK-294: documentation will be added in a separate pass.",
-  mission_category: "SDK-294: documentation will be added in a separate pass.",
-};
+export const UNDOCUMENTED_REGISTRIES: Readonly<Record<string, string>> = {};
 
 /**
  * The authoring surfaces that are not registries.

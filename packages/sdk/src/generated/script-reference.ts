@@ -3800,7 +3800,8 @@ export const SCRIPT_EFFECT_REFERENCES = [
     key: "enable_mission",
     kind: "effect",
     availability: { kind: "universal" },
-    signature: "enableMission(args: { name: MissionRef | string; location?: ScopeValue }): void;",
+    signature:
+      'enableMission<L extends MissionLocationScope>(args: Omit<EnableMissionArgs, "name" | "location"> & { name: Unambiguous<L, MissionLocationContract<L>>; location: ScopeValue<NoInfer<L>> }): void;\nenableMission(args: EnableMissionArgs): void;',
     docs: [
       "Enables a mission for target country",
       "",
@@ -6216,7 +6217,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["country"] },
     signature:
-      'issueContract(args: { contract: MissionRef | string; location: ScopeValue<"ambient_object"|"archaeological_site"|"astral_rift"|"bypass"|"carrier"|"colony"|"debris"|"fleet"|"megastructure"|"planet"|"ship"|"situation"|"starbase"|"system">; target?: ScopeValue<"country"> }): void;',
+      'issueContract<L extends MissionLocationScope>(args: Omit<IssueContractArgs, "contract" | "location"> & { contract: Unambiguous<L, MissionLocationContract<L>>; location: ScopeValue<NoInfer<L>> }): void;\nissueContract(args: IssueContractArgs): void;',
     docs: [
       "Adds the specified contract to a target system.",
       "",

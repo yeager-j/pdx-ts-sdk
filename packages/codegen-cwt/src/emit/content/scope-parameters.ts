@@ -10,6 +10,7 @@ import type { FieldContext } from "../../lower/scope-context.ts";
 import { pascalCase } from "../../naming.ts";
 import { CONTENT_SCOPE_PARAMETERS, type ContentScopeParameter } from "../../overlay/index.ts";
 import { Emitter } from "../../render/emitter.ts";
+import type { AmbientScopeKey } from "../../special-scope-paths.ts";
 
 /** A {@link ContentScopeParameter.declaredFrom} row, resolved against the rules. */
 export interface DeclaredFrom {
@@ -19,8 +20,8 @@ export interface DeclaredFrom {
   readonly typeName: string;
   /** Canonical scopes admitted by the referenced CWT scope group. */
   readonly scopes: readonly string[];
-  /** Definition members whose callbacks receive this scope as FROM. */
-  readonly members: readonly string[];
+  /** Definition members and ambient slots that receive this scope. */
+  readonly members: Readonly<Record<string, AmbientScopeKey>>;
   /** Effect whose argument supplies the declared location. */
   readonly effect: string;
 }
@@ -71,12 +72,12 @@ function declaredFromOf(
   registry: string,
   row: NonNullable<ContentScopeParameter["declaredFrom"]>
 ): DeclaredFrom {
-  const declared = effectArgumentScopeGroup(emitter, row.effect, row.argument);
-  if (declared !== row.scopeGroup) {
+  const declared = effectArgumentScopeConstraint(emitter, row.effect, row.argument);
+  if (declared !== "open" && declared !== row.scopeGroup) {
     throw new Error(
       `Overlay declared FROM for ${registry} names scope group "${row.scopeGroup}", but ` +
         `${row.effect}.${row.argument} is declared ` +
-        `${declared === null ? "with no scope group" : `"${declared}"`} — ` +
+        `${declared === null ? "with no scope" : `"${declared}"`} — ` +
         "the declaration must be typed by the argument that supplies it"
     );
   }
@@ -125,19 +126,22 @@ export function scopeParameterOf(emitter: Emitter, registry: string): ScopeParam
       ? effectReceivingScopes(emitter, registry, row.scopes.effect)
       : row.scopes;
   const scopes = scopeNames.map(canonical);
-  const authoringMember = row.authoringMember ?? {
-    member: "scope",
-    required: false,
-    carriesWitness: false,
-    docs: [
-      "The scope this definition's own clauses run in.",
-      "",
-      "Emits nothing — it names a fact the game already knows and the rules",
-      "decline to state (`this = any`).",
-    ],
-  };
+  const authoringMember =
+    row.authoringMember === undefined
+      ? {
+          member: "scope",
+          required: false,
+          carriesWitness: false,
+          docs: [
+            "The scope this definition's own clauses run in.",
+            "",
+            "Emits nothing — it names a fact the game already knows and the rules",
+            "decline to state (`this = any`).",
+          ],
+        }
+      : row.authoringMember;
   const fallback = row.fallback === undefined ? null : canonical(row.fallback);
-  if (fallback === null && !authoringMember.required) {
+  if (fallback === null && authoringMember?.required !== true) {
     throw new Error(
       `Overlay scope parameter for ${registry} has no fallback for an optional declaration`
     );
@@ -172,6 +176,9 @@ export function scopeParameterOf(emitter: Emitter, registry: string): ScopeParam
     parameterType: `${pascalCase(registry)}Scope`,
     parameterDefault: fallback === null ? `${pascalCase(registry)}Scope` : JSON.stringify(fallback),
     authoringMember,
+    ...(row.declaredFrom === undefined
+      ? {}
+      : { declaredFrom: declaredFromOf(emitter, registry, row.declaredFrom) }),
   };
 }
 
@@ -207,35 +214,45 @@ export function underParameter(
 }
 
 /**
- * The context one member of a selector-parameterised registry lowers against.
+ * The context one member of a scope-parameterised registry lowers against.
  *
  * `fieldContext.unpinned` carries the selected scope, so which member is being
  * lowered decides where that type lands: the member the selector scopes gets it
  * as its own scope — plus the declared FROM, where the registry has one — a
  * member the selector supplies as FROM gets it there and runs in the registry's
  * fallback scope instead, and everything else is the fallback with no FROM. A
- * registry with no selector lowers every member the same way and passes through
- * untouched.
+ * A declared location then fills the ambient slot that member maps to, with or
+ * without a selector.
  */
 export function selectedContext(
   fieldContext: FieldContext,
   parameter: ScopeParameter | null,
   member: string
 ): FieldContext {
-  const selector = parameter === null ? undefined : parameter.selector;
-  if (parameter === null || selector === undefined) {
+  if (parameter === null) {
     return fieldContext;
   }
+  const selector = parameter.selector;
   const declaredFrom = parameter.declaredFrom;
-  if (selector.scopedMembers.includes(member)) {
-    return declaredFrom?.members.includes(member) === true
-      ? { ...fieldContext, assertedFrom: "NoInfer<L>" }
-      : fieldContext;
+  let selected = fieldContext;
+  if (selector !== undefined && selector.scopedMembers.includes(member)) {
+    selected = fieldContext;
+  } else if (selector?.fromMembers?.includes(member) === true) {
+    selected = {
+      ...fieldContext,
+      unpinned: JSON.stringify(parameter.fallback),
+      assertedAmbient: { ...fieldContext.assertedAmbient, from: fieldContext.unpinned },
+    };
+  } else if (selector !== undefined) {
+    selected = { ...fieldContext, unpinned: JSON.stringify(parameter.fallback) };
   }
-  const fallback = JSON.stringify(parameter.fallback);
-  return selector.fromMembers?.includes(member) === true
-    ? { ...fieldContext, unpinned: fallback, assertedFrom: fieldContext.unpinned }
-    : { ...fieldContext, unpinned: fallback };
+  const ambient = declaredFrom?.members[member];
+  return ambient === undefined
+    ? selected
+    : {
+        ...selected,
+        assertedAmbient: { ...selected.assertedAmbient, [ambient]: "NoInfer<L>" },
+      };
 }
 
 /**
@@ -243,11 +260,11 @@ export function selectedContext(
  * `null` where the effect, the argument, or a group on it is absent — each of
  * which is a reason for the caller to fail rather than a shape to work around.
  */
-function effectArgumentScopeGroup(
+function effectArgumentScopeConstraint(
   emitter: Emitter,
   effect: string,
   argument: string
-): string | null {
+): string | "open" | null {
   const declarations = emitter.rules.effects.get(effect) ?? [];
   for (const declaration of declarations) {
     if (declaration.type.kind !== "block") {
@@ -259,6 +276,9 @@ function effectArgumentScopeGroup(
       }
       if (field.type.kind === "scopeGroup") {
         return field.type.name;
+      }
+      if (field.type.kind === "scope" && field.type.name === "any") {
+        return "open";
       }
     }
   }

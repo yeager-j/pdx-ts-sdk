@@ -541,6 +541,28 @@ export const EFFECT_FIELD_TYPE_OVERRIDES = new Map<string, EffectFieldTypeOverri
         "`locationScope` to conflict.",
     },
   ],
+  [
+    "enable_mission.name",
+    {
+      type: "(MissionRef & { locationScope?: never }) | string",
+      reason:
+        "A mission carrying locationScope must reach the hand-written overload that checks the " +
+        "enable_mission location. Excluding that witness from the generated fallback prevents a " +
+        "mismatched authored mission from becoming an unchecked call, while undeclared, vanilla, " +
+        "and third-party mission references remain accepted.",
+    },
+  ],
+  [
+    "issue_contract.contract",
+    {
+      type: "(MissionRef & { locationScope?: never }) | string",
+      reason:
+        "A contract carrying locationScope must reach the hand-written overload that checks the " +
+        "issue_contract location. Excluding that witness from the generated fallback prevents a " +
+        "mismatched authored contract from becoming an unchecked call, while undeclared, vanilla, " +
+        "and third-party mission references remain accepted.",
+    },
+  ],
 ]);
 
 /** Scalar effects whose public input type intentionally differs from mechanical rule lowering. */
@@ -697,6 +719,30 @@ export const EFFECT_EXTENSION_SEAMS = new Map<string, EffectExtensionSeam>([
         "`enableSpecialProject` checks its `location` against the project's author-declared " +
         "`locationScope`, which is also the FROM its success callbacks read " +
         "(src/script/effects/special-projects.ts).",
+    },
+  ],
+  [
+    "enable_mission",
+    {
+      interfaceName: "EnableMissionEffectsExtension",
+      referenceSignature:
+        'enableMission<L extends MissionLocationScope>(args: Omit<EnableMissionArgs, "name" | "location"> & { name: Unambiguous<L, MissionLocationContract<L>>; location: ScopeValue<NoInfer<L>> }): void;',
+      reason:
+        "`enableMission` checks its `location` against the mission's author-declared " +
+        "`locationScope`, which also types the contract-location ambient scope in callbacks " +
+        "(src/script/effects/missions.ts).",
+    },
+  ],
+  [
+    "issue_contract",
+    {
+      interfaceName: "IssueContractEffectsExtension",
+      referenceSignature:
+        'issueContract<L extends MissionLocationScope>(args: Omit<IssueContractArgs, "contract" | "location"> & { contract: Unambiguous<L, MissionLocationContract<L>>; location: ScopeValue<NoInfer<L>> }): void;',
+      reason:
+        "`issueContract` checks its `location` against the contract mission's author-declared " +
+        "`locationScope`, which also types the contract-location ambient scope in callbacks " +
+        "(src/script/effects/missions.ts).",
     },
   ],
 ]);
