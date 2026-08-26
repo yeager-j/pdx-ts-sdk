@@ -546,6 +546,26 @@ export interface EnableSpecialProjectEffectsExtension {
   enableSpecialProject(args: EnableSpecialProjectArgs): void;
 }
 
+/** The arguments `enableMission` takes, as the rules declare them. */
+export type EnableMissionArgs = {
+  name: (MissionRef & { locationScope?: never }) | string;
+  location?: ScopeValue;
+};
+/**
+ * Stable extension seam for the hand-written enableMission overload.
+ * The generated cluster containing enable_mission inherits this interface.
+ * `enableMission` checks its `location` against the mission's author-declared `locationScope`, which also types the contract-location ambient scope in callbacks (src/script/effects/missions.ts).
+ */
+export interface EnableMissionEffectsExtension {
+  /**
+   * Enables a mission for target country
+   * ```
+   *  enable_mission = { name = <mission key> }
+   * ```
+   */
+  enableMission(args: EnableMissionArgs): void;
+}
+
 /** Effects valid in: ambient_object, astral_rift, carrier, colony, debris, fleet, megastructure, planet, ship, starbase, system. */
 export interface EffectsIn11Scopes5713 {
   /**
@@ -14357,9 +14377,8 @@ export interface EffectsInWar {
 }
 
 /** Effects valid in every scope. */
-export interface UniversalEffects<
-  S extends ScopeName,
-> extends EnableSpecialProjectEffectsExtension {
+export interface UniversalEffects<S extends ScopeName>
+  extends EnableMissionEffectsExtension, EnableSpecialProjectEffectsExtension {
   /**
    * Destroys a situation in right hand side event target, firing on_abort (use to cancel and fire that effect)
    * ```
@@ -15709,14 +15728,6 @@ export interface UniversalEffects<
    * ```
    */
   destroySituation(value: ScopeValue<"situation">): void;
-
-  /**
-   * Enables a mission for target country
-   * ```
-   *  enable_mission = { name = <mission key> }
-   * ```
-   */
-  enableMission(args: { name: MissionRef | string; location?: ScopeValue }): void;
 
   /**
    * Enables a resource on the Galactic Market

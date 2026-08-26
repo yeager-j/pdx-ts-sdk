@@ -9,6 +9,7 @@
  */
 
 import type { ContentShape } from "../lower/content-shape.ts";
+import type { AmbientScopeKey } from "../special-scope-paths.ts";
 
 /**
  * The fields whose value is a path from the mod root, so a captured Asset can
@@ -116,12 +117,7 @@ export const CONTENT_FIELD_DOCS = new Map<string, readonly string[]>([
       "Stellaris does not document how it differs from `aiWeight`.",
     ],
   ],
-  [
-    "mission_category.is_contract",
-    [
-      "Whether this is a contract category. This SDK release supports ordinary missions only, so it must be `false`.",
-    ],
-  ],
+  ["mission_category.is_contract", ["Whether this is a contract category."]],
   [
     "mission.counter.max",
     ["Maximum counter value shown in the mission's localized counter display."],
@@ -237,57 +233,6 @@ export const FIELD_WIDENINGS = new Map<string, FieldWidening>([
  */
 export const CONTENT_DECLINED_FIELDS = new Map<string, string>([
   [
-    "mission.potential_issuer",
-    "SDK-294 supports ordinary missions only. Contract issue and acceptance conditions need a " +
-      "runtime location scope that the ordinary mission callback contract cannot represent.",
-  ],
-  [
-    "mission.possible_issuer",
-    "SDK-294 supports ordinary missions only. Contract issue and acceptance conditions need a " +
-      "runtime location scope that the ordinary mission callback contract cannot represent.",
-  ],
-  [
-    "mission.potential_operator",
-    "SDK-294 supports ordinary missions only. Contract issue and acceptance conditions need a " +
-      "runtime location scope that the ordinary mission callback contract cannot represent.",
-  ],
-  [
-    "mission.possible_operator",
-    "SDK-294 supports ordinary missions only. Contract issue and acceptance conditions need a " +
-      "runtime location scope that the ordinary mission callback contract cannot represent.",
-  ],
-  [
-    "mission.small_picture",
-    "SDK-294 supports ordinary missions only; this field belongs exclusively to contract issue-list entries.",
-  ],
-  [
-    "mission.time_to_accept",
-    "SDK-294 supports ordinary missions only; this field belongs exclusively to contracts.",
-  ],
-  [
-    "mission.time_to_complete",
-    "SDK-294 supports ordinary missions only; this field belongs exclusively to contracts.",
-  ],
-  [
-    "mission.ai_behaviour",
-    "SDK-294 supports ordinary missions only; this field belongs exclusively to contracts.",
-  ],
-  [
-    "mission.on_issue",
-    "SDK-294 supports ordinary missions only. Contract issuance exposes a dynamic location scope " +
-      "that the ordinary mission callback contract cannot represent.",
-  ],
-  [
-    "mission.on_accept",
-    "SDK-294 supports ordinary missions only. Contract acceptance exposes a dynamic location scope " +
-      "that the ordinary mission callback contract cannot represent.",
-  ],
-  [
-    "mission.ai_weight",
-    "SDK-294 supports ordinary missions only. Contract selection exposes a dynamic location scope " +
-      "that the ordinary mission callback contract cannot represent.",
-  ],
-  [
     "solar_system_initializer.change_orbit",
     "At the top level, change_orbit is positional sugar: written between two `planet` blocks, " +
       "it advances the orbit cursor for the planets that follow it, so its position among them " +
@@ -339,7 +284,7 @@ export interface ContentScopeParameter {
     readonly carriesWitness: boolean;
     /** Consumer-facing description of the declared scope. */
     readonly docs: readonly string[];
-  };
+  } | null;
   /** A game field that selects the scope instead of a synthetic `scope` member. */
   readonly selector?: {
     /** Authoring member that carries the game's scope selector. */
@@ -401,8 +346,8 @@ export interface ContentScopeParameter {
      * declaration and the signature it is checked against disagreeing.
      */
     readonly scopeGroup: string;
-    /** Members whose FROM the declaration becomes. */
-    readonly members: readonly string[];
+    /** Members and ambient slots that receive the declared scope. */
+    readonly members: Readonly<Record<string, AmbientScopeKey>>;
     /** The effect whose argument the scope actually is, and that argument. */
     readonly effect: string;
     /** Effect argument that supplies the declared FROM scope. */
@@ -492,7 +437,13 @@ export const CONTENT_SCOPE_PARAMETERS = new Map<string, ContentScopeParameter>([
       declaredFrom: {
         member: "locationScope",
         scopeGroup: "spatial_object",
-        members: ["onSuccess", "onProgress25", "onProgress50", "onProgress75", "onStart"],
+        members: {
+          onSuccess: "from",
+          onProgress25: "from",
+          onProgress50: "from",
+          onProgress75: "from",
+          onStart: "from",
+        },
         effect: "enable_special_project",
         argument: "location",
         reason:
@@ -534,6 +485,42 @@ export const CONTENT_SCOPE_PARAMETERS = new Map<string, ContentScopeParameter>([
         "not assertable at all, since enable_special_project takes it as any of fourteen " +
         "scope_group[spatial_object] scopes and vanilla's 660 call sites that set it range over " +
         "planets, ships, fleets, systems, starbases and ambient objects.",
+    },
+  ],
+  [
+    "mission",
+    {
+      scopes: ["country"],
+      fallback: "country",
+      authoringMember: null,
+      declaredFrom: {
+        member: "locationScope",
+        scopeGroup: "spatial_object",
+        members: {
+          potentialOperator: "from",
+          possibleOperator: "from",
+          abortTrigger: "fromfrom",
+          onCancel: "fromfrom",
+          onStart: "fromfrom",
+          onSuccess: "fromfrom",
+          onStop: "fromfrom",
+          issuedAbortTrigger: "fromfrom",
+          onIssue: "fromfrom",
+          onAccept: "fromfrom",
+          aiWeight: "from",
+        },
+        effect: "enable_mission",
+        argument: "location",
+        reason:
+          "A contract's location is selected by enable_mission.location. The contract callbacks " +
+          "declare it as scope_group[spatial_object], while the effect accepts the wider " +
+          "scope_field form, so the authored declaration chooses one supported spatial scope " +
+          "and the checked overload requires that same scope at call sites.",
+      },
+      reason:
+        "Mission callbacks run in country scope. Contract callbacks additionally receive the " +
+        "location selected by enable_mission as FROM or FROMFROM; that location varies per " +
+        "definition and must be declared to make its ambient reference authorable.",
     },
   ],
 ]);
@@ -678,6 +665,11 @@ export interface ContentFieldOverride {
    */
   readonly scope?: string;
   /**
+   * Corrects named ambient slots that CWT omits or misspells while keeping the
+   * field's own execution scope unchanged.
+   */
+  readonly ambient?: Readonly<Partial<Record<AmbientScopeKey, string>>>;
+  /**
    * Asserts how often the key may be written, where CWT's cardinality says
    * otherwise and the corpus proves it wrong. Like {@link scope}, this states
    * game semantics the rules get wrong, so a row needs evidence and a row
@@ -821,13 +813,30 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
     },
   ],
   [
-    "mission_category.is_contract",
+    "mission.potential_operator",
     {
-      authoringType: { type: "false", imports: [] },
+      ambient: { fromfrom: "country" },
       reason:
-        "SDK-294 deliberately exposes ordinary missions only. Contract categories require " +
-        "dynamic location scopes and contract-specific required fields that this registry " +
-        "does not yet model, so accepting `true` would let authors emit invalid contracts.",
+        "missions.cwt documents FROMFROM as the issuer country but omits it from the adjacent " +
+        "replace_scopes declaration. Every shipped operator condition uses that issuer contract.",
+    },
+  ],
+  [
+    "mission.possible_operator",
+    {
+      ambient: { fromfrom: "country" },
+      reason:
+        "The possible-operator block has the same documented issuer-country FROMFROM as " +
+        "potential_operator and the same omission in its replace_scopes declaration.",
+    },
+  ],
+  [
+    "mission.ai_weight",
+    {
+      ambient: { fromfrom: "country" },
+      reason:
+        "missions.cwt documents the issuer country as FROMFROM but misspells the slot as " +
+        "fromform in replace_scopes. The correction restores the documented ambient scope.",
     },
   ],
   [

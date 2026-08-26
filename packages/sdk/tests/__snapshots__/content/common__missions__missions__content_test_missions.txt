@@ -1,3 +1,60 @@
+content_test_mission_crystal_contract = {
+	category = content_test_mission_category_contracts
+	event_chain = content_test_event_chain_contract_chain
+	picture = GFX_event_pictures_space_battle
+	potential_issuer = {
+		from = {
+			is_bottleneck_system = yes
+		}
+	}
+	possible_issuer = {
+		fromfrom = {
+			has_country_flag = content_test_contract_issuer_ready
+		}
+	}
+	potential_operator = {
+		from = {
+			is_capital = yes
+		}
+	}
+	possible_operator = {
+		fromfrom = {
+			has_country_flag = content_test_contract_operator_ready
+		}
+	}
+	on_start = {
+		fromfrom = {
+			set_planet_flag = content_test_contract_started
+		}
+	}
+	small_picture = GFX_event_pictures_ancient_ruins
+	time_to_accept = 180
+	time_to_complete = 720
+	ai_behaviour = raid
+	on_issue = {
+		fromfrom = {
+			set_planet_flag = content_test_contract_issued
+		}
+	}
+	on_accept = {
+		prev = {
+			set_country_flag = content_test_contract_accepted
+		}
+		fromfrom = {
+			set_planet_flag = content_test_contract_claimed
+		}
+	}
+	ai_weight = {
+		base = 1
+		modifier = {
+			factor = 2
+			from = {
+				is_capital = yes
+			}
+		}
+	}
+}
+
 content_test_mission_first_labour = {
 	category = content_test_mission_category_labours
 	picture = GFX_event_pictures_ancient_ruins

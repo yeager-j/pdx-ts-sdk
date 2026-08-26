@@ -882,6 +882,9 @@ async function main(): Promise<void> {
     VANILLA_REF_EXTRAS,
     new Map(contents.map((content) => [content.registry, content.referenceName]))
   );
+  for (const refinement of CONTENT_SUBTYPE_REFERENCE_REFINEMENTS.values()) {
+    emitter.usedRefs.add(refinement.reference);
+  }
 
   const modifiers = await writeSharedRuleModules({
     commit,

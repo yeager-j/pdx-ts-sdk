@@ -189,7 +189,7 @@ describe("emitted effect signatures", () => {
     // The unbracketed spelling of `scope[any]`. It used to lower to the
     // useless literal type `"scope_field"`.
     expect(signature("enableMission")).toMatchInlineSnapshot(
-      `"enableMission(args: { name: MissionRef | string; location?: ScopeValue }): void;"`
+      `"enableMission(args: EnableMissionArgs): void;"`
     );
   });
 

@@ -104,7 +104,6 @@ import {
   defineJob,
   defineMegastructure,
   defineMenacePerk,
-  defineMission,
   defineMissionCategory,
   defineOpinionModifier,
   definePdxmesh,
@@ -153,11 +152,15 @@ import type {
 } from "./megastructure.ts";
 import type { MenacePerkDef } from "./menace-perk.ts";
 import type { MissionCategoryDef } from "./mission-category.ts";
-import type { MissionDef } from "./mission.ts";
+import type { MissionDef, MissionLocationScope, MissionScope } from "./mission.ts";
 import type { OpinionModifierDef } from "./opinion-modifier.ts";
 import type { PdxmeshDef } from "./pdxmesh.ts";
 import type { PdxparticleDef } from "./pdxparticle.ts";
-import type { BombardmentStanceRef, ComponentSetRequiredComponentRef } from "./refs.ts";
+import type {
+  BombardmentStanceRef,
+  ComponentSetRequiredComponentRef,
+  MissionCategoryContractRef,
+} from "./refs.ts";
 import type { RelicDef } from "./relic.ts";
 import type { ResourceDef } from "./resource.ts";
 import type { ScriptedLocDef } from "./scripted-loc.ts";
@@ -1329,34 +1332,30 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
     name: Name
   ): ContentHandle<"relic", RelicDef<MintedContentId<P, I, "relic", Name>>>;
   /**
-   * Defines a mission from its logical name.
-   * The capability mints and owns the full id; the returned branded reference
-   * flows into matching content-reference fields.
-   */
-  mission<const Name extends string>(
-    name: Name,
-    def: Omit<MissionDef<MintedContentId<P, I, "mission", Name>>, "id">
-  ): ContentItem<"mission", MissionDef<MintedContentId<P, I, "mission", Name>>>;
-  /**
-   * Mints a mission id without its definition.
-   * Define it later with its `define(...)` method when a cycle needs the id first —
-   * a mission that names itself, or two that name each other.
-   * The handle is a reference, not content: place the item `define(...)` returns.
-   */
-  missionHandle<const Name extends string>(
-    name: Name
-  ): ContentHandle<"mission", MissionDef<MintedContentId<P, I, "mission", Name>>>;
-  /**
    * Defines a mission category from its logical name.
    * The capability mints and owns the full id; the returned branded reference
    * flows into matching content-reference fields.
    */
   missionCategory<const Name extends string>(
     name: Name,
-    def: Omit<MissionCategoryDef<MintedContentId<P, I, "missionCategory", Name>>, "id">
+    def: Omit<MissionCategoryDef<MintedContentId<P, I, "missionCategory", Name>>, "id"> & {
+      readonly isContract: true;
+    }
   ): ContentItem<
     "mission_category",
-    MissionCategoryDef<MintedContentId<P, I, "missionCategory", Name>>
+    MissionCategoryDef<MintedContentId<P, I, "missionCategory", Name>> & {
+      readonly isContract: true;
+    } & { readonly isContract: true }
+  > &
+    MissionCategoryContractRef;
+  missionCategory<const Name extends string, W extends boolean>(
+    name: Name,
+    def: Omit<MissionCategoryDef<MintedContentId<P, I, "missionCategory", Name>>, "id"> & {
+      readonly isContract: W;
+    }
+  ): ContentItem<
+    "mission_category",
+    MissionCategoryDef<MintedContentId<P, I, "missionCategory", Name>> & { readonly isContract: W }
   >;
   /**
    * Mints a mission category id without its definition.
@@ -1366,10 +1365,29 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
    */
   missionCategoryHandle<const Name extends string>(
     name: Name
-  ): ContentHandle<
-    "mission_category",
-    MissionCategoryDef<MintedContentId<P, I, "missionCategory", Name>>
-  >;
+  ): ContentHandleBase<"mission_category", MintedContentId<P, I, "missionCategory", Name>> & {
+    define(
+      def: Omit<MissionCategoryDef<MintedContentId<P, I, "missionCategory", Name>>, "id"> & {
+        readonly isContract: true;
+      }
+    ): ContentItem<
+      "mission_category",
+      MissionCategoryDef<MintedContentId<P, I, "missionCategory", Name>> & {
+        readonly isContract: true;
+      } & { readonly isContract: true }
+    > &
+      MissionCategoryContractRef;
+    define<W extends boolean>(
+      def: Omit<MissionCategoryDef<MintedContentId<P, I, "missionCategory", Name>>, "id"> & {
+        readonly isContract: W;
+      }
+    ): ContentItem<
+      "mission_category",
+      MissionCategoryDef<MintedContentId<P, I, "missionCategory", Name>> & {
+        readonly isContract: W;
+      }
+    >;
+  };
   /**
    * Defines a scripted loc from its logical name.
    * The capability mints and owns the full id; the returned branded reference
@@ -2696,27 +2714,6 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
         }
       ).define(def as unknown as Omit<RelicDef<MintedContentId<P, I, "relic", Name>>, "id">);
     },
-    missionHandle: <const Name extends string>(name: Name) => {
-      return createContentHandle(
-        "mission",
-        mint("mission", name),
-        (def: MissionDef<MintedContentId<P, I, "mission", Name>>) => {
-          return defineMission(def);
-        }
-      );
-    },
-    mission: <const Name extends string>(
-      name: Name,
-      def: Omit<MissionDef<MintedContentId<P, I, "mission", Name>>, "id">
-    ) => {
-      return createContentHandle(
-        "mission",
-        mint("mission", name),
-        (def: MissionDef<MintedContentId<P, I, "mission", Name>>) => {
-          return defineMission(def);
-        }
-      ).define(def as unknown as Omit<MissionDef<MintedContentId<P, I, "mission", Name>>, "id">);
-    },
     missionCategoryHandle: <const Name extends string>(name: Name) => {
       return createContentHandle(
         "mission_category",
@@ -2726,9 +2723,11 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
         }
       );
     },
-    missionCategory: <const Name extends string>(
+    missionCategory: <const Name extends string, W extends boolean>(
       name: Name,
-      def: Omit<MissionCategoryDef<MintedContentId<P, I, "missionCategory", Name>>, "id">
+      def: Omit<MissionCategoryDef<MintedContentId<P, I, "missionCategory", Name>>, "id"> & {
+        readonly isContract: W;
+      }
     ) => {
       return createContentHandle(
         "mission_category",

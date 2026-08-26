@@ -377,6 +377,19 @@ function capabilityDefineMember(facts: RegistryDefinerFacts): {
       : contentWitness.mode === "wraps"
         ? `${name}Def<${minted}> & { readonly ${contentWitness.member}: W }`
         : `${economicResultBase} & W`;
+  if (
+    referenceRefinement !== undefined &&
+    contentWitness !== undefined &&
+    (contentWitness.mode !== "wraps" || contentWitness.member !== referenceRefinement.member)
+  ) {
+    throw new Error(
+      `Subtype refinement for ${registry} must share its member with a wraps content witness`
+    );
+  }
+  const refinedResult =
+    contentWitness?.mode === "wraps"
+      ? `${name}Def<${minted}> & { readonly ${contentWitness.member}: true }`
+      : result;
   const signatures =
     scoped?.selector === undefined
       ? (referenceRefinement === undefined
@@ -384,7 +397,7 @@ function capabilityDefineMember(facts: RegistryDefinerFacts): {
           : `  ${method}<const Name extends string>(\n` +
             `    name: Name,\n` +
             `    def: Omit<${def}, "id"> & { readonly ${referenceRefinement.member}: true }\n` +
-            `  ): ContentItem<${key}, ${result} & { readonly ${referenceRefinement.member}: true }> & ` +
+            `  ): ContentItem<${key}, ${refinedResult} & { readonly ${referenceRefinement.member}: true }> & ` +
             `${pascalCase(referenceRefinement.reference)}Ref;\n`) +
         `  ${method}${parameters}(\n` +
         `    name: Name,\n` +
@@ -414,7 +427,7 @@ function capabilityDefineMember(facts: RegistryDefinerFacts): {
         ? ""
         : `    define(\n      def: Omit<${def}, "id"> & ` +
           `{ readonly ${referenceRefinement.member}: true }\n` +
-          `    ): ContentItem<${key}, ${result} & ` +
+          `    ): ContentItem<${key}, ${refinedResult} & ` +
           `{ readonly ${referenceRefinement.member}: true }> & ` +
           `${pascalCase(referenceRefinement.reference)}Ref;\n`) +
       `    define${defineTypeParameters}(def: ${input}): ` +

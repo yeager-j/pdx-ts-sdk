@@ -115,6 +115,7 @@ describe("generated event surface", () => {
     for (const [seam, method] of [
       ["StartSituation", "startSituation"],
       ["EnableSpecialProject", "enableSpecialProject"],
+      ["EnableMission", "enableMission"],
     ] as const) {
       expect(effects).toContain(`export type ${seam}Args = {`);
       expect(effects).toContain(

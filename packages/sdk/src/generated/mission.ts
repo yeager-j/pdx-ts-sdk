@@ -4,7 +4,7 @@
 
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
-import type { EffectBlock, WithFrom } from "../content/types.ts";
+import type { EffectBlock, WeightBlock, WithFrom } from "../content/types.ts";
 import type { Trigger } from "../script/trigger-core.ts";
 import type { EventChainRef, MissionCategoryRef, SpriteRef } from "./refs.ts";
 
@@ -84,11 +84,49 @@ export const MISSION_COUNTER_DEFINITION_FIELDS: readonly ContentField[] = [
   { key: "max", member: "max", shape: "value", form: "scalar", conversion: "identity" },
 ];
 
+/** The scopes a mission may declare. */
+export type MissionScope = "country";
+
+/**
+ * The scopes a mission may declare as its
+ * location — the rules' own `scope_group` for the argument, so the
+ * declaration and the effect that takes it cannot drift apart.
+ */
+export type MissionLocationScope =
+  | "ambient_object"
+  | "archaeological_site"
+  | "astral_rift"
+  | "bypass"
+  | "carrier"
+  | "colony"
+  | "debris"
+  | "fleet"
+  | "megastructure"
+  | "planet"
+  | "ship"
+  | "situation"
+  | "starbase"
+  | "system";
+
 /**
  * A mission, as the game's rules describe it.
  * Generated from `type[mission]` at `game/common/missions/missions`.
  */
-export interface MissionFields {
+export interface MissionFields<
+  S extends MissionScope = "country",
+  L extends MissionLocationScope | undefined = undefined,
+> {
+  /**
+   * The scope `enable_mission` is handed as this definition's
+   * location, and the ambient location scope its callbacks receive.
+   * Emits nothing — the game learns it from the call site, not from the
+   * definition. Declaring it types the matching ambient scope in
+   * `potentialOperator`, `possibleOperator`, `abortTrigger`, `onCancel`, `onStart`, `onSuccess`, `onStop`, `issuedAbortTrigger`, `onIssue`, `onAccept` and `aiWeight`, and holds every
+   * `enableMission` call for this definition to a
+   * location of the same scope. Omitted, that ambient scope stays unreadable and the
+   * call sites stay unchecked.
+   */
+  locationScope?: L;
   /** English text emitted to localization under `<id>`. */
   name?: string;
   /** English text emitted to localization under `<id>_desc`. */
@@ -143,6 +181,48 @@ export interface MissionFields {
   cost?: number;
   /** Counter to define and track what is needed for the player to complete the mission. Multiple of these can be used. */
   counter?: Readonly<Record<string, MissionCounterDefinition>>;
+  /**
+   * OPTIONAL. Trigger that determines whether the contract can be seen as an option by a potential issuer.
+   * this: issuer country
+   * from: system to issue in
+   */
+  potentialIssuer?: WithFrom<
+    Trigger<"country">,
+    "country",
+    { readonly root: "country"; readonly from: "system"; readonly fromfrom: "country" }
+  >;
+  /**
+   * OPTIONAL. Trigger that determines whether the contract can be issued by a potential issuer.
+   * this: issuer country
+   * from: system to issue in
+   */
+  possibleIssuer?: WithFrom<
+    Trigger<"country">,
+    "country",
+    { readonly root: "country"; readonly from: "system"; readonly fromfrom: "country" }
+  >;
+  /**
+   * OPTIONAL. Trigger that determines whether the contract can be accepted by a potential operator.
+   * this: operator country
+   * from: contract location
+   * fromfrom: issuer country
+   */
+  potentialOperator?: WithFrom<
+    Trigger<"country">,
+    "country",
+    { readonly root: "country"; readonly from: NoInfer<L>; readonly fromfrom: "country" }
+  >;
+  /**
+   * OPTIONAL. Trigger that determines whether the contract can be seen by a potential operator.
+   * this: operator country
+   * from: contract location
+   * fromfrom: issuer country
+   */
+  possibleOperator?: WithFrom<
+    Trigger<"country">,
+    "country",
+    { readonly root: "country"; readonly from: NoInfer<L>; readonly fromfrom: "country" }
+  >;
   /** Effect to be run on daily update while the mission is active. */
   onDaily?: EffectBlock<"country", { readonly root: "country" }>;
   /** Effect to be run on monthly update while the mission is active. */
@@ -157,7 +237,12 @@ export interface MissionFields {
   abortTrigger?: WithFrom<
     Trigger<"country">,
     "country",
-    { readonly root: "country"; readonly from: "country"; readonly prev: "country" }
+    {
+      readonly root: "country";
+      readonly from: "country";
+      readonly fromfrom: NoInfer<L>;
+      readonly prev: "country";
+    }
   >;
   /**
    * OPTIONAL. Effect to be run when the mission is ended early (cancelled/failed/timed out).
@@ -168,7 +253,12 @@ export interface MissionFields {
    */
   onCancel?: EffectBlock<
     "country",
-    { readonly root: "country"; readonly from: "country"; readonly prev: "country" }
+    {
+      readonly root: "country";
+      readonly from: "country";
+      readonly fromfrom: NoInfer<L>;
+      readonly prev: "country";
+    }
   >;
   /**
    * OPTIONAL. Effect to be run when the mission is started.
@@ -179,7 +269,12 @@ export interface MissionFields {
    */
   onStart?: EffectBlock<
     "country",
-    { readonly root: "country"; readonly from: "country"; readonly prev: "country" }
+    {
+      readonly root: "country";
+      readonly from: "country";
+      readonly fromfrom: NoInfer<L>;
+      readonly prev: "country";
+    }
   >;
   /**
    * OPTIONAL. Effect to be run when the mission is completed.
@@ -190,7 +285,12 @@ export interface MissionFields {
    */
   onSuccess?: EffectBlock<
     "country",
-    { readonly root: "country"; readonly from: "country"; readonly prev: "country" }
+    {
+      readonly root: "country";
+      readonly from: "country";
+      readonly fromfrom: NoInfer<L>;
+      readonly prev: "country";
+    }
   >;
   /**
    * OPTIONAL. Effect to be run after the mission ends, in any way (success/abort/time out).
@@ -201,7 +301,12 @@ export interface MissionFields {
    */
   onStop?: EffectBlock<
     "country",
-    { readonly root: "country"; readonly from: "country"; readonly prev: "country" }
+    {
+      readonly root: "country";
+      readonly from: "country";
+      readonly fromfrom: NoInfer<L>;
+      readonly prev: "country";
+    }
   >;
   /**
    * OPTIONAL. Trigger to abort the mission, from the issuer side.
@@ -212,13 +317,76 @@ export interface MissionFields {
   issuedAbortTrigger?: WithFrom<
     Trigger<"country">,
     "country",
-    { readonly root: "country"; readonly from: "country" }
+    { readonly root: "country"; readonly from: "country"; readonly fromfrom: NoInfer<L> }
   >;
   /** OPTIONAL, defaults to yes. Doesn't actually do anything. */
   sound?: boolean;
+  /**
+   * The image used in the list when players Issue Contracts. Not needed for internal contracts.
+   * Only when mission subtype `contract` applies.
+   */
+  smallPicture?: SpriteRef | string;
+  /**
+   * Sets the maximum amount of days to accept the mission before it times out. Only used for contracts.
+   * Default: no time limit
+   * Only when mission subtype `contract` applies.
+   */
+  timeToAccept?: number;
+  /**
+   * Sets the maximum amount of days to complete the mission before it fails.
+   * Default: no time limit
+   * Only when mission subtype `contract` applies.
+   */
+  timeToComplete?: number;
+  /** Only when mission subtype `contract` applies. */
+  aiBehaviour?: "attack" | "raid";
+  /**
+   * OPTIONAL, Contracts only, Effect to be run when a country issues up the contract
+   * this: issuer
+   * from: the scope from the mission
+   * fromfrom: contract location, if applicable
+   * Only when mission subtype `contract` applies.
+   */
+  onIssue?: EffectBlock<
+    "country",
+    { readonly root: "country"; readonly from: "country"; readonly fromfrom: NoInfer<L> }
+  >;
+  /**
+   * OPTIONAL, Contracts only, Effect to be run when a country picks up the contract
+   * this: operator (the country doing the mission/contract)
+   * prev: issuer if applicable (the country that issued the contract)
+   * from: the scope from the mission
+   * fromfrom: contract location, if applicable
+   * Only when mission subtype `contract` applies.
+   */
+  onAccept?: EffectBlock<
+    "country",
+    {
+      readonly root: "country";
+      readonly from: "country";
+      readonly fromfrom: NoInfer<L>;
+      readonly prev: "country";
+    }
+  >;
+  /**
+   * OPTIONAL. Only used for contracts. Weight used to determine what contracts will be picked up by an AI operator.
+   * If the weight is equivalent between contracts, the closest contract will be selected.
+   * he AI will heavily prefer picking up player-issued contracts adding the PLAYER_ISSUED_CONTRACT_PREFERENCE define to the weight.
+   * this: operator country from: contract location fromfrom: issuer country
+   * Only when mission subtype `contract` applies.
+   */
+  aiWeight?: WithFrom<
+    WeightBlock<"country">,
+    "country",
+    { readonly root: "country"; readonly from: NoInfer<L>; readonly fromfrom: "country" }
+  >;
 }
 
-export interface MissionDef<Id extends string = string> extends MissionFields {
+export interface MissionDef<
+  Id extends string = string,
+  S extends MissionScope = "country",
+  L extends MissionLocationScope | undefined = undefined,
+> extends MissionFields<S, L> {
   /** Full content id, including the mod prefix. */
   id: Id;
 }
@@ -354,6 +522,10 @@ export const MISSION_FIELDS: readonly ContentField[] = [
     fields: MISSION_COUNTER_DEFINITION_FIELDS,
     repeated: true,
   },
+  { key: "potential_issuer", member: "potentialIssuer", shape: "trigger", form: "trigger" },
+  { key: "possible_issuer", member: "possibleIssuer", shape: "trigger", form: "trigger" },
+  { key: "potential_operator", member: "potentialOperator", shape: "trigger", form: "trigger" },
+  { key: "possible_operator", member: "possibleOperator", shape: "trigger", form: "trigger" },
   { key: "on_daily", member: "onDaily", shape: "effect", form: "closure" },
   { key: "on_monthly", member: "onMonthly", shape: "effect", form: "closure" },
   { key: "abort_trigger", member: "abortTrigger", shape: "trigger", form: "trigger" },
@@ -363,6 +535,38 @@ export const MISSION_FIELDS: readonly ContentField[] = [
   { key: "on_stop", member: "onStop", shape: "effect", form: "closure" },
   { key: "issued_abort_trigger", member: "issuedAbortTrigger", shape: "trigger", form: "trigger" },
   { key: "sound", member: "sound", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "small_picture",
+    member: "smallPicture",
+    shape: "value",
+    form: "scalar",
+    conversion: "ref",
+    refTypes: ["sprite"],
+  },
+  {
+    key: "time_to_accept",
+    member: "timeToAccept",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
+  {
+    key: "time_to_complete",
+    member: "timeToComplete",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
+  {
+    key: "ai_behaviour",
+    member: "aiBehaviour",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+  },
+  { key: "on_issue", member: "onIssue", shape: "effect", form: "closure" },
+  { key: "on_accept", member: "onAccept", shape: "effect", form: "closure" },
+  { key: "ai_weight", member: "aiWeight", shape: "weightBlock", form: "block" },
 ];
 
 export const MISSION_LOCALISATION: readonly ContentLocalisation[] = [

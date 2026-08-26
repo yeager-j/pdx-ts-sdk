@@ -611,6 +611,14 @@ function defineContentExample(): PureMod {
     mapIcon: "GFX_nomad_contract_icon",
     logIcon: "gfx/interface/icons/contracts/contract_icon_log.dds",
   });
+  const contractCategory = mod.missionCategory("contracts", {
+    name: "Contracts",
+    short: "Contracts",
+    isContract: true,
+    mapIcon: "GFX_nomad_contract_icon",
+    logIcon: "gfx/interface/icons/contracts/contract_icon_log.dds",
+  });
+  const contractChain = mod.eventChain("contract_chain", {});
   const labourHandle = mod.missionHandle("first_labour");
   const mission = labourHandle.define({
     name: "The First Labour",
@@ -625,7 +633,36 @@ function defineContentExample(): PureMod {
         amount: 1,
       }),
   });
-
+  const contractMission = mod.mission("crystal_contract", {
+    name: "Crystal Contract",
+    desc: "Recover crystals for the issuer.",
+    category: contractCategory,
+    eventChain: contractChain,
+    picture: "GFX_event_pictures_space_battle",
+    locationScope: "planet",
+    potentialIssuer: (ctx) => ctx.from.trigger(isBottleneckSystem()),
+    possibleIssuer: (ctx) =>
+      ctx.fromfrom.trigger(hasCountryFlag("content_test_contract_issuer_ready")),
+    potentialOperator: (ctx) => ctx.from.trigger(isCapital()),
+    possibleOperator: (ctx) =>
+      ctx.fromfrom.trigger(hasCountryFlag("content_test_contract_operator_ready")),
+    smallPicture: "GFX_event_pictures_ancient_ruins",
+    timeToAccept: 180,
+    timeToComplete: 720,
+    aiBehaviour: "raid",
+    onStart: (_country, ctx) =>
+      ctx.fromfrom.effects((planet) => planet.setPlanetFlag("content_test_contract_started")),
+    onIssue: (_country, ctx) =>
+      ctx.fromfrom.effects((planet) => planet.setPlanetFlag("content_test_contract_issued")),
+    onAccept: (_country, ctx) => {
+      ctx.prev.effects((issuer) => issuer.setCountryFlag("content_test_contract_accepted"));
+      ctx.fromfrom.effects((planet) => planet.setPlanetFlag("content_test_contract_claimed"));
+    },
+    aiWeight: (ctx) => ({
+      base: 1,
+      modifiers: [{ factor: 2, when: ctx.from.trigger(isCapital()) }],
+    }),
+  });
   const situationType = mod.situationType("machine_uprising", {
     name: "Machine Uprising",
     desc: "The machines stir beneath the surface.",
@@ -1193,7 +1230,10 @@ function defineContentExample(): PureMod {
       archaeologicalSiteType,
       relic,
       missionCategory,
+      contractCategory,
+      contractChain,
       mission,
+      contractMission,
       situationType,
       scriptedLoc,
       councilor,

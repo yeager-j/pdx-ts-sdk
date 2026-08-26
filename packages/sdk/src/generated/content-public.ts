@@ -165,6 +165,8 @@ export type {
   MissionDescIssuer,
   MissionDescOperator,
   MissionFields,
+  MissionLocationScope,
+  MissionScope,
 } from "./mission.ts";
 export type { MoonInitializerFields } from "./moon-initializer.ts";
 export type {

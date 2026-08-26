@@ -45,8 +45,8 @@ export type ContentWitness =
       readonly mode: "wraps";
       /** Witness type name, e.g. `ScriptedModifierCategory`. */
       readonly type: string;
-      /** Module the witness type imports from. */
-      readonly module: string;
+      /** Module the witness type imports from; omit for a TypeScript primitive. */
+      readonly module?: string;
       /** The def member the witness narrows. */
       readonly member: string;
       /** Audited reason the def must retain this literal witness. */
@@ -120,6 +120,18 @@ export const CONTENT_WITNESSES = new Map<string, ContentWitness>([
         "const-inferred W instead.",
     },
   ],
+  [
+    "mission_category",
+    {
+      mode: "wraps",
+      type: "boolean",
+      member: "isContract",
+      reason:
+        "The mission definer distinguishes authored contract categories from ordinary ones and " +
+        "requires eventChain only for the former, so the literal is_contract value must survive " +
+        "instead of widening back to boolean on the returned item.",
+    },
+  ],
 ]);
 
 /**
@@ -153,6 +165,16 @@ export const CONTENT_SUBTYPE_REFERENCE_REFINEMENTS = new Map<
       reason:
         "ship_size.required_component_set accepts only the required_component subtype, which " +
         "component_set selects with required_component_set = yes.",
+    },
+  ],
+  [
+    "mission_category",
+    {
+      member: "isContract",
+      reference: "mission_category.contract",
+      reason:
+        "A mission using an SDK-authored contract category must require event_chain and expose " +
+        "contract-only fields, so is_contract = yes must survive as a qualified reference.",
     },
   ],
 ]);
