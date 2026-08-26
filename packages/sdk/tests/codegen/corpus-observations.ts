@@ -325,6 +325,39 @@ export const OBSERVATIONS: readonly ClassifiedObservation[] = [
     rationale: resourceRows(),
   },
   {
+    registry: "mission",
+    field: "counter",
+    kind: "arity",
+    evidence: [],
+    classification: "rules-wider-than-vanilla",
+    declaration: "common/missions.cwt:145 — ## cardinality = 0..inf",
+    rationale:
+      "Each counter block is an engine-keyed map, and every one of the 51 shipped missions " +
+      "that has counters writes one such block. The rules still permit repeated blocks, so the " +
+      "map must retain the breadth rather than treating one shipped spelling as a ceiling.",
+  },
+  {
+    registry: "mission",
+    field: "desc",
+    kind: "arity",
+    evidence: [],
+    classification: "rules-wider-than-vanilla",
+    declaration: "common/missions.cwt:63 — ## cardinality = 0..inf",
+    rationale:
+      "A mission can provide several triggered description rows, while vanilla writes at most " +
+      "one. The list retains the declared form rather than rejecting a mod with separate " +
+      "conditions for several description texts.",
+  },
+  {
+    registry: "relic",
+    field: "resources",
+    kind: "arity",
+    evidence: [],
+    classification: "rules-wider-than-vanilla",
+    declaration: "common/archaeology.cwt:128 — ## cardinality = 0..inf",
+    rationale: resourceRows(),
+  },
+  {
     registry: "resource",
     field: "ai_wants.modifier",
     kind: "arity",

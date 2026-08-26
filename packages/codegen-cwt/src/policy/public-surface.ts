@@ -39,6 +39,13 @@ export const PUBLIC_NESTED_TYPES: readonly PublicNestedTypeRow[] = [
       "input reuses the type to infer the declared counter names.",
   },
   {
+    module: "mission.ts",
+    names: ["MissionCounterDefinition", "MissionDesc", "MissionDescIssuer", "MissionDescOperator"],
+    reason:
+      "`MissionFields.counter` is a record of counter definitions, and its structured description " +
+      "members use the three MissionDesc helper types.",
+  },
+  {
     module: "government-trigger.ts",
     names: ["GovernmentTriggerBlock", "GovernmentTriggerClause", "GovernmentTriggerClauseGroup"],
     reason:

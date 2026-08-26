@@ -21,6 +21,7 @@
 // From: common/agreements.cwt
 // From: common/bombardment_stances.cwt
 // From: common/archaeology.cwt
+// From: common/missions.cwt
 // From: common/situations.cwt
 // From: common/scripted_loc.cwt
 // From: common/governments.cwt
@@ -142,6 +143,14 @@ import {
   MEGASTRUCTURE_PLACEMENT_RULES_FIELDS,
 } from "./megastructure.ts";
 import { MENACE_PERK_FIELDS } from "./menace-perk.ts";
+import { MISSION_CATEGORY_FIELDS } from "./mission-category.ts";
+import {
+  MISSION_COUNTER_DEFINITION_FIELDS,
+  MISSION_DESC_FIELDS,
+  MISSION_DESC_ISSUER_FIELDS,
+  MISSION_DESC_OPERATOR_FIELDS,
+  MISSION_FIELDS,
+} from "./mission.ts";
 import {
   MOON_INITIALIZER_COUNT_FIELDS,
   MOON_INITIALIZER_FIELDS,
@@ -165,6 +174,7 @@ import {
   PLANET_INITIALIZER_ORBITAL_LINE_FIELDS,
   PLANET_INITIALIZER_SIZE_FIELDS,
 } from "./planet-initializer.ts";
+import { RELIC_FIELDS } from "./relic.ts";
 import { RESOURCE_FIELDS } from "./resource.ts";
 import { SCRIPTED_LOC_FIELDS, SCRIPTED_LOC_TEXT_FIELDS } from "./scripted-loc.ts";
 import { SCRIPTED_MODIFIER_FIELDS } from "./scripted-modifier.ts";
@@ -3420,6 +3430,260 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
     },
   ],
   [
+    RELIC_FIELDS,
+    {
+      activationDuration: { optional: true, docs: [], memberType: "number" },
+      portrait: { optional: false, docs: [], memberType: "SpriteRef | string" },
+      sound: { optional: true, docs: [], memberType: "SoundEffectRef | string" },
+      score: { optional: true, docs: [], memberType: "number" },
+      possible: {
+        optional: false,
+        docs: ["Possible check for activation"],
+        memberType: 'Trigger<"country">',
+      },
+      resources: { optional: true, docs: [], memberType: "EconomicResourceBlock<ScopeName>[]" },
+      canBeStolen: { optional: true, docs: [], memberType: "boolean" },
+      triggeredCountryModifier: {
+        optional: true,
+        docs: [],
+        memberType: 'TriggeredModifier<"country">[]',
+      },
+      activeEffect: {
+        optional: true,
+        docs: [],
+        memberType: 'EffectBlock<"country", { readonly root: "country" }>',
+      },
+      aiWeight: { optional: true, docs: [], memberType: 'WeightBlock<"country">' },
+    },
+  ],
+  [
+    MISSION_FIELDS,
+    {
+      category: { optional: true, docs: [], memberType: "MissionCategoryRef | string" },
+      conditionalDesc: {
+        optional: true,
+        docs: [
+          "The description of the mission in the situation log. Supports triggered descriptions.",
+          "Both desc and desc_operator can be used here, prefer the latter if there is also a desc_issuer (for example for contracts).",
+          "Defaults: [mission_name]_desc",
+        ],
+        memberType: "string | MissionDesc[]",
+      },
+      descOperator: {
+        optional: true,
+        docs: [
+          "The description of the mission in the situation log. Supports triggered descriptions.",
+          "Both desc and desc_operator can be used here, prefer the latter if there is also a desc_issuer (for example for contracts).",
+          "Defaults: [mission_name]_desc",
+        ],
+        memberType: "string | MissionDescOperator[]",
+      },
+      descIssuer: {
+        optional: true,
+        docs: [
+          "The description of the mission in the situation log, for the issuing side. Supports triggered descriptions.",
+          "Default: [mission_name]_issuer_desc",
+        ],
+        memberType: "string | MissionDescIssuer[]",
+      },
+      eventChain: {
+        optional: true,
+        docs: [
+          "The event chain this mission is part of. (Only REQUIRED for contracts)",
+          "Only when mission subtype `contract` applies.",
+        ],
+        memberType: "EventChainRef | string",
+      },
+      icon: {
+        optional: true,
+        docs: [
+          "Icon used for the situation log entry. Overrides mission category log_icon if such exists.",
+        ],
+        memberType: "string",
+      },
+      picture: {
+        optional: false,
+        docs: ["The image used for the mission in the situation log."],
+        memberType: "SpriteRef | string",
+      },
+      location: {
+        optional: true,
+        docs: ["Sets whether the mission has a specific location or not.", "Default: no"],
+        memberType: "boolean",
+      },
+      loreIssued: {
+        optional: true,
+        docs: ["Supports scripted loc.", "Scopes: this = issuer, from = operator"],
+        memberType: "string",
+      },
+      loreCompleted: {
+        optional: true,
+        docs: ["Supports scripted loc.", "Scopes: this = issuer, from = operator"],
+        memberType: "string",
+      },
+      loreFailed: {
+        optional: true,
+        docs: ["Supports scripted loc.", "Scopes: this = issuer, from = operator"],
+        memberType: "string",
+      },
+      cost: { optional: true, docs: [], memberType: "number" },
+      counter: {
+        optional: true,
+        docs: [
+          "Counter to define and track what is needed for the player to complete the mission. Multiple of these can be used.",
+        ],
+        memberType: "Readonly<Record<string, MissionCounterDefinition>>",
+      },
+      onDaily: {
+        optional: true,
+        docs: ["Effect to be run on daily update while the mission is active."],
+        memberType: 'EffectBlock<"country", { readonly root: "country" }>',
+      },
+      onMonthly: {
+        optional: true,
+        docs: ["Effect to be run on monthly update while the mission is active."],
+        memberType: 'EffectBlock<"country", { readonly root: "country" }>',
+      },
+      abortTrigger: {
+        optional: true,
+        docs: [
+          "OPTIONAL. Trigger to abort the mission.",
+          "this: operator (the country doing the mission/contract)",
+          "prev: issuer if applicable (the country that issued the contract)",
+          "from: the scope from the mission",
+          "fromfrom: contract location, if applicable",
+        ],
+        memberType:
+          'WithFrom<Trigger<"country">, "country", { readonly root: "country"; readonly from: "country"; readonly prev: "country" }>',
+      },
+      onCancel: {
+        optional: true,
+        docs: [
+          "OPTIONAL. Effect to be run when the mission is ended early (cancelled/failed/timed out).",
+          "this: operator (the country doing the mission/contract)",
+          "prev: issuer if applicable (the country that issued the contract)",
+          "from: the scope from the mission",
+          "fromfrom: contract location, if applicable",
+        ],
+        memberType:
+          'EffectBlock<"country", { readonly root: "country"; readonly from: "country"; readonly prev: "country" }>',
+      },
+      onStart: {
+        optional: true,
+        docs: [
+          "OPTIONAL. Effect to be run when the mission is started.",
+          "this: operator (the country doing the mission/contract)",
+          "prev: issuer if applicable (the country that issued the contract)",
+          "from: the scope from the mission",
+          "fromfrom: contract location, if applicable",
+        ],
+        memberType:
+          'EffectBlock<"country", { readonly root: "country"; readonly from: "country"; readonly prev: "country" }>',
+      },
+      onSuccess: {
+        optional: true,
+        docs: [
+          "OPTIONAL. Effect to be run when the mission is completed.",
+          "this: operator (the country doing the mission/contract)",
+          "prev: issuer if applicable (the country that issued the contract)",
+          "from: the scope from the mission",
+          "fromfrom: contract location, if applicable",
+        ],
+        memberType:
+          'EffectBlock<"country", { readonly root: "country"; readonly from: "country"; readonly prev: "country" }>',
+      },
+      onStop: {
+        optional: true,
+        docs: [
+          "OPTIONAL. Effect to be run after the mission ends, in any way (success/abort/time out).",
+          "this: operator (the country doing the mission/contract)",
+          "prev: issuer if applicable (the country that issued the contract)",
+          "from: the scope from the mission",
+          "fromfrom: contract location, if applicable",
+        ],
+        memberType:
+          'EffectBlock<"country", { readonly root: "country"; readonly from: "country"; readonly prev: "country" }>',
+      },
+      issuedAbortTrigger: {
+        optional: true,
+        docs: [
+          "OPTIONAL. Trigger to abort the mission, from the issuer side.",
+          "this: issuer",
+          "from: the scope from the mission",
+          "fromfrom: contract location, if applicable",
+        ],
+        memberType:
+          'WithFrom<Trigger<"country">, "country", { readonly root: "country"; readonly from: "country" }>',
+      },
+      sound: {
+        optional: true,
+        docs: ["OPTIONAL, defaults to yes. Doesn't actually do anything."],
+        memberType: "boolean",
+      },
+    },
+  ],
+  [
+    MISSION_DESC_FIELDS,
+    {
+      trigger: {
+        optional: true,
+        docs: [],
+        memberType:
+          'WithFrom<Trigger<"country">, "country", { readonly root: "country"; readonly from: "country" }>',
+      },
+      text: { optional: true, docs: [], memberType: "string[]" },
+    },
+  ],
+  [
+    MISSION_DESC_OPERATOR_FIELDS,
+    {
+      trigger: {
+        optional: true,
+        docs: [],
+        memberType:
+          'WithFrom<Trigger<"country">, "country", { readonly root: "country"; readonly from: "country" }>',
+      },
+      text: { optional: true, docs: [], memberType: "string[]" },
+    },
+  ],
+  [
+    MISSION_DESC_ISSUER_FIELDS,
+    {
+      trigger: {
+        optional: true,
+        docs: [],
+        memberType:
+          'WithFrom<Trigger<"country">, "country", { readonly root: "country"; readonly from: "country" }>',
+      },
+      text: { optional: true, docs: [], memberType: "string[]" },
+    },
+  ],
+  [
+    MISSION_COUNTER_DEFINITION_FIELDS,
+    {
+      max: {
+        optional: true,
+        docs: ["Maximum counter value shown in the mission's localized counter display."],
+        memberType: "number",
+      },
+    },
+  ],
+  [
+    MISSION_CATEGORY_FIELDS,
+    {
+      isContract: {
+        optional: false,
+        docs: [
+          "Whether this is a contract category. This SDK release supports ordinary missions only, so it must be `false`.",
+        ],
+        memberType: "false",
+      },
+      mapIcon: { optional: false, docs: [], memberType: "SpriteRef | string" },
+      logIcon: { optional: false, docs: [], memberType: "string" },
+      showInIssueList: { optional: true, docs: [], memberType: "boolean" },
+    },
+  ],
+  [
     SITUATION_TYPE_FIELDS,
     {
       picture: { optional: true, docs: [], memberType: "(SpriteRef | string)[]" },
@@ -6106,6 +6370,81 @@ export const CONTENT_FIELD_OMISSIONS: Readonly<
       reason: "(desc) has no `$` id placeholder — not a static <id>-keyed slot, excluded",
     },
   ],
+  relic: [],
+  mission: [
+    {
+      path: "mission.ai_behaviour",
+      kind: "declined",
+      reason:
+        "SDK-294 supports ordinary missions only; this field belongs exclusively to contracts.",
+    },
+    {
+      path: "mission.ai_weight",
+      kind: "declined",
+      reason:
+        "SDK-294 supports ordinary missions only. Contract selection exposes a dynamic location scope that the ordinary mission callback contract cannot represent.",
+    },
+    {
+      path: "mission.on_accept",
+      kind: "declined",
+      reason:
+        "SDK-294 supports ordinary missions only. Contract acceptance exposes a dynamic location scope that the ordinary mission callback contract cannot represent.",
+    },
+    {
+      path: "mission.on_issue",
+      kind: "declined",
+      reason:
+        "SDK-294 supports ordinary missions only. Contract issuance exposes a dynamic location scope that the ordinary mission callback contract cannot represent.",
+    },
+    {
+      path: "mission.possible_issuer",
+      kind: "declined",
+      reason:
+        "SDK-294 supports ordinary missions only. Contract issue and acceptance conditions need a runtime location scope that the ordinary mission callback contract cannot represent.",
+    },
+    {
+      path: "mission.possible_operator",
+      kind: "declined",
+      reason:
+        "SDK-294 supports ordinary missions only. Contract issue and acceptance conditions need a runtime location scope that the ordinary mission callback contract cannot represent.",
+    },
+    {
+      path: "mission.potential_issuer",
+      kind: "declined",
+      reason:
+        "SDK-294 supports ordinary missions only. Contract issue and acceptance conditions need a runtime location scope that the ordinary mission callback contract cannot represent.",
+    },
+    {
+      path: "mission.potential_operator",
+      kind: "declined",
+      reason:
+        "SDK-294 supports ordinary missions only. Contract issue and acceptance conditions need a runtime location scope that the ordinary mission callback contract cannot represent.",
+    },
+    {
+      path: "mission.small_picture",
+      kind: "declined",
+      reason:
+        "SDK-294 supports ordinary missions only; this field belongs exclusively to contract issue-list entries.",
+    },
+    {
+      path: "mission.time_to_accept",
+      kind: "declined",
+      reason:
+        "SDK-294 supports ordinary missions only; this field belongs exclusively to contracts.",
+    },
+    {
+      path: "mission.time_to_complete",
+      kind: "declined",
+      reason:
+        "SDK-294 supports ordinary missions only; this field belongs exclusively to contracts.",
+    },
+    {
+      path: "mission.localisation.desc",
+      kind: "collapsed",
+      reason: "(desc) has no `$` id placeholder — not a static <id>-keyed slot, excluded",
+    },
+  ],
+  mission_category: [],
   situation_type: [
     {
       path: "situation_type.localisation.title",

@@ -119,6 +119,9 @@ export const CONTENT_MANIFEST = [
     type: "archaeological_site_type",
     source: "common/archaeology.cwt",
   },
+  { type: "relic", source: "common/archaeology.cwt" },
+  { type: "mission", source: "common/missions.cwt" },
+  { type: "mission_category", source: "common/missions.cwt" },
   { type: "situation_type", source: "common/situations.cwt" },
   {
     type: "scripted_loc",

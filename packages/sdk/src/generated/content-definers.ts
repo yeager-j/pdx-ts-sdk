@@ -21,6 +21,7 @@
 // From: common/agreements.cwt
 // From: common/bombardment_stances.cwt
 // From: common/archaeology.cwt
+// From: common/missions.cwt
 // From: common/situations.cwt
 // From: common/scripted_loc.cwt
 // From: common/governments.cwt
@@ -97,9 +98,12 @@ import {
   type MegastructurePatchItem,
 } from "./megastructure.ts";
 import type { MenacePerkDef } from "./menace-perk.ts";
+import type { MissionCategoryDef } from "./mission-category.ts";
+import type { MissionDef } from "./mission.ts";
 import type { OpinionModifierDef } from "./opinion-modifier.ts";
 import type { PdxmeshDef } from "./pdxmesh.ts";
 import type { PdxparticleDef } from "./pdxparticle.ts";
+import type { RelicDef } from "./relic.ts";
 import type { ResourceDef } from "./resource.ts";
 import type { ScopeName } from "./scopes.ts";
 import type { ScriptedLocDef } from "./scripted-loc.ts";
@@ -652,6 +656,48 @@ export function defineArchaeologicalSiteType<const Id extends string>(
   def: ArchaeologicalSiteTypeDef<Id>
 ): ContentItem<"archaeological_site_type", ArchaeologicalSiteTypeDef<Id>> {
   return { itemKind: "content", type: "archaeological_site_type", id: def.id, def };
+}
+
+/** What a relic feature can contain. */
+export type RelicItem = ContentItem<"relic", RelicDef>;
+
+/**
+ * Internal lowering primitive for a relic. Public authors call
+ * `mod.relic(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
+ */
+export function defineRelic<const Id extends string>(
+  def: RelicDef<Id>
+): ContentItem<"relic", RelicDef<Id>> {
+  return { itemKind: "content", type: "relic", id: def.id, def };
+}
+
+/** What a mission feature can contain. */
+export type MissionItem = ContentItem<"mission", MissionDef>;
+
+/**
+ * Internal lowering primitive for a mission. Public authors call
+ * `mod.mission(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
+ */
+export function defineMission<const Id extends string>(
+  def: MissionDef<Id>
+): ContentItem<"mission", MissionDef<Id>> {
+  return { itemKind: "content", type: "mission", id: def.id, def };
+}
+
+/** What a mission category feature can contain. */
+export type MissionCategoryItem = ContentItem<"mission_category", MissionCategoryDef>;
+
+/**
+ * Internal lowering primitive for a mission category. Public authors call
+ * `mod.missionCategory(name, def)`, then place the returned item with
+ * `mod.feature(...)` before compiling the same capability.
+ */
+export function defineMissionCategory<const Id extends string>(
+  def: MissionCategoryDef<Id>
+): ContentItem<"mission_category", MissionCategoryDef<Id>> {
+  return { itemKind: "content", type: "mission_category", id: def.id, def };
 }
 
 /**

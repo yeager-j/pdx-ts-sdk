@@ -597,6 +597,35 @@ function defineContentExample(): PureMod {
     onVisible: (country) => country.setCountryFlag("content_test_site_visible"),
   });
 
+  const relic = mod.relic("hesperides", {
+    name: "Seed of the Hesperides",
+    desc: "A relic claimed by a long-forgotten civilization.",
+    portrait: "GFX_relic_ancient_sword",
+    possible: always(),
+    activeEffect: (country) => country.setCountryFlag("content_test_hesperides_activated"),
+  });
+  const missionCategory = mod.missionCategory("labours", {
+    name: "The Labours",
+    short: "Labours",
+    isContract: false,
+    mapIcon: "GFX_nomad_contract_icon",
+    logIcon: "gfx/interface/icons/contracts/contract_icon_log.dds",
+  });
+  const labourHandle = mod.missionHandle("first_labour");
+  const mission = labourHandle.define({
+    name: "The First Labour",
+    desc: "Complete the first of four trials.",
+    category: missionCategory,
+    picture: "GFX_event_pictures_ancient_ruins",
+    counter: { labours_completed: { max: 4 } },
+    onSuccess: (country) =>
+      country.addMissionCounter({
+        mission: labourHandle,
+        counter: "labours_completed",
+        amount: 1,
+      }),
+  });
+
   const situationType = mod.situationType("machine_uprising", {
     name: "Machine Uprising",
     desc: "The machines stir beneath the surface.",
@@ -1162,6 +1191,9 @@ function defineContentExample(): PureMod {
       agreementPreset,
       bombardmentStance,
       archaeologicalSiteType,
+      relic,
+      missionCategory,
+      mission,
       situationType,
       scriptedLoc,
       councilor,
@@ -1363,6 +1395,18 @@ describe("generated content registries", () => {
       expect(rendered!.split(`${envelope} = {`).length - 1, path).toBe(1);
       expect(rendered, path).toContain(`\t${keyword} = {\n\t\tname = ${namePrefix}`);
     }
+  });
+
+  it("writes relics and missions to their declared directories with counter maps", () => {
+    expect(files.get("common/relics/content_test_relics.txt")).toContain(
+      "content_test_relic_hesperides = {"
+    );
+    expect(
+      files.get("common/missions/mission_categories/content_test_mission_categories.txt")
+    ).toContain("content_test_mission_category_labours = {");
+    expect(files.get("common/missions/missions/content_test_missions.txt")).toContain(
+      "counter = {\n\t\tlabours_completed = {\n\t\t\tmax = 4\n\t\t}"
+    );
   });
 
   it("mints GFX names segmentlessly, and never lets an author supply one", () => {

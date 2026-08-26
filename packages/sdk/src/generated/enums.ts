@@ -270,6 +270,12 @@ export type MessageVariableType = "key" | "name" | "variable";
 /** `enum[mia_type]`. */
 export type MiaType = "mia_return_home" | "mia_emergency_ftl" | "mia_fleet_eaten";
 
+/**
+ * `enum[mission_counter]`.
+ * Its members come from game content, and are narrowed by @pdx-ts/stellaris-ids.
+ */
+export type MissionCounter = VanillaEnumMember<"mission_counter"> | (string & {});
+
 /** `enum[mission_status]`. */
 export type MissionStatus = "success" | "stop";
 

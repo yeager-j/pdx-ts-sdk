@@ -73,6 +73,10 @@ import {
   type MenacePerkFields,
   type MenacePerkItem,
   type MenacePerkRef,
+  type MissionCategoryRef,
+  type MissionCounterDefinition,
+  type MissionFields,
+  type MissionRef,
   type ModelAnimation,
   type ModelMeshRef,
   type ModifierClosure,
@@ -81,6 +85,7 @@ import {
   type PdxmeshFields,
   type PdxparticleFields,
   type PrereqForCategory,
+  type RelicRef,
   type ResourceDef,
   type ResourceFields,
   type ResourceItem,
@@ -2345,6 +2350,56 @@ describe("generated content authoring types", () => {
     const _wrongChain: EventChainRef = project;
     // @ts-expect-error — an event chain cannot flow into a special-project reference.
     const _wrongProject: SpecialProjectRef = chain;
+  });
+
+  it("preserves relic and mission ids and brands mission categories and counters", () => {
+    const relic = contentMod.relic("hesperides", {
+      portrait: "GFX_relic_ancient_sword",
+      possible: always(),
+    });
+    const category = contentMod.missionCategory("labours", {
+      isContract: false,
+      mapIcon: "GFX_nomad_contract_icon",
+      logIcon: "gfx/interface/icons/contracts/contract_icon_log.dds",
+    });
+    contentMod.missionCategory("unsupported_contract", {
+      // @ts-expect-error — SDK-294 supports ordinary missions, not contracts.
+      isContract: true,
+      mapIcon: "GFX_nomad_contract_icon",
+      logIcon: "gfx/interface/icons/contracts/contract_icon_log.dds",
+    });
+    const mission = contentMod.mission("first_labour", {
+      category,
+      picture: "GFX_event_pictures_ancient_ruins",
+      counter: { labours_completed: { max: 4 } },
+    });
+    expectTypeOf(relic.id).toEqualTypeOf<"content_types_relic_hesperides">();
+    expectTypeOf(mission.id).toEqualTypeOf<"content_types_mission_first_labour">();
+    expectTypeOf<MissionFields["counter"]>().toEqualTypeOf<
+      Readonly<Record<string, MissionCounterDefinition>> | undefined
+    >();
+    const acceptsMission = (_mission: MissionRef): void => {};
+    const acceptsCategory = (_category: MissionCategoryRef): void => {};
+    const acceptsRelic = (_relic: RelicRef): void => {};
+    acceptsMission(mission);
+    acceptsCategory(category);
+    acceptsRelic(relic);
+    contentMod.mission("wrong_category", {
+      picture: "GFX_event_pictures_ancient_ruins",
+      // @ts-expect-error — a relic is not a mission category.
+      category: relic,
+    });
+    // @ts-expect-error — items from another registry cannot become mission references.
+    acceptsMission(relic);
+    contentMod.mission("bad_counter", {
+      picture: "GFX_event_pictures_ancient_ruins",
+      counter: {
+        labours_completed: {
+          // @ts-expect-error — a mission counter maximum is numeric.
+          max: "four",
+        },
+      },
+    });
   });
 
   it("hands the country-scoped callbacks the project's own scope as FROM", () => {

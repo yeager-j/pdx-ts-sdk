@@ -583,7 +583,15 @@ function lowerSelectedShape(
     case "weightedEvents":
       return lowerWeightedEvents(emitter, field, name);
     case "structMap":
-      return lowerStructMap(emitter, field, name, path, ctx, override?.nestedTypeName);
+      return lowerStructMap(
+        emitter,
+        field,
+        name,
+        path,
+        ctx,
+        override?.nestedTypeName,
+        override?.nestedTypeDocs
+      );
     case "scalarMap":
       return lowerScalarMap(emitter, field, name);
     case "aliasStruct":

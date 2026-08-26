@@ -2,8 +2,8 @@
 
 import type { DescentNode } from "../corpus/observations.ts";
 import { isRepeated, type RuleField } from "../cwt/model.ts";
-import { camelCase, constantCase, pascalCase } from "../naming.ts";
-import { CONTENT_FIELD_OVERRIDES, FIELD_WIDENINGS } from "../overlay/index.ts";
+import { camelCase, constantCase, docComment, pascalCase } from "../naming.ts";
+import { CONTENT_FIELD_DOCS, CONTENT_FIELD_OVERRIDES, FIELD_WIDENINGS } from "../overlay/index.ts";
 import { Emitter } from "../render/emitter.ts";
 import type { DocTable, FieldOmissionRow, MemberDocRow } from "../render/field-rows.ts";
 import { constArray, member as renderMember } from "../render/writer.ts";
@@ -207,7 +207,17 @@ function lowerNamedStructMembers(
       continue;
     }
     const optional = memberOptional(group, override);
-    const docs = [...new Set([...group.flatMap((field) => field.docs), ...(lowered.docs ?? [])])];
+    const overlayDocs = CONTENT_FIELD_DOCS.get(fieldPath);
+    if (overlayDocs !== undefined) {
+      emitter.overlayAudit.applied("CONTENT_FIELD_DOCS", fieldPath);
+    }
+    const docs = [
+      ...new Set([
+        ...(overlayDocs ?? []),
+        ...group.flatMap((field) => field.docs),
+        ...(lowered.docs ?? []),
+      ]),
+    ];
     members.push(renderMember({ name: member, type: lowered.memberType, optional, docs }));
     memberDocs[member] = {
       optional,
@@ -276,7 +286,8 @@ function structShape(
   path: string,
   ctx: FieldContext,
   inlineTrigger?: FieldScope,
-  typeNameOverride?: string
+  typeNameOverride?: string,
+  typeDocs?: readonly string[]
 ): StructShape | null {
   const keyed = enumKeyedEntryOf(emitter, block);
   const ordinary =
@@ -337,6 +348,7 @@ function structShape(
     docTables: [{ constant: fieldsConstant, members: draft.memberDocs }, ...draft.docTables],
     code:
       draft.extraCode.join("") +
+      docComment(typeDocs ?? []) +
       `export interface ${typeName}${generic?.declaration ?? ""} {\n` +
       draft.members.join("") +
       "}\n\n" +
@@ -360,7 +372,8 @@ export function lowerStructMap(
   name: string,
   path: string,
   ctx: FieldContext,
-  typeNameOverride?: string
+  typeNameOverride?: string,
+  typeDocs?: readonly string[]
 ): LoweredField | null {
   const block = wildcardBlockOf(field.type);
   if (block === null) {
@@ -373,7 +386,8 @@ export function lowerStructMap(
     path,
     containerContext(field, ctx),
     undefined,
-    typeNameOverride
+    typeNameOverride,
+    typeDocs
   );
   if (shape === null) {
     return null;

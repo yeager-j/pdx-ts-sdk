@@ -21,6 +21,7 @@
 // From: common/agreements.cwt
 // From: common/bombardment_stances.cwt
 // From: common/archaeology.cwt
+// From: common/missions.cwt
 // From: common/situations.cwt
 // From: common/scripted_loc.cwt
 // From: common/governments.cwt
@@ -76,11 +77,14 @@ import type {
   JobRef,
   MegastructureRef,
   MenacePerkRef,
+  MissionCategoryRef,
+  MissionRef,
   ModelMeshRef,
   OpinionModifierRef,
   ParticleRef,
   PlanetClassRef,
   PlanetModifierRef,
+  RelicRef,
   ResourceRef,
   ScriptedLocRef,
   ScriptedModifierRef,
@@ -439,6 +443,40 @@ export function archaeologicalSiteType<const Id extends VanillaId<"archaeologica
   id: Id
 ): ArchaeologicalSiteTypeRef & { readonly id: Id } {
   return makeVanillaRef(id) as ArchaeologicalSiteTypeRef & { readonly id: Id };
+}
+
+/**
+ * A checked reference to a vanilla relic id.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
+ */
+export function relic<const Id extends VanillaId<"relic">>(id: Id): RelicRef & { readonly id: Id } {
+  return makeVanillaRef(id) as RelicRef & { readonly id: Id };
+}
+
+/**
+ * A checked reference to a vanilla mission id.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
+ */
+export function mission<const Id extends VanillaId<"mission">>(
+  id: Id
+): MissionRef & { readonly id: Id } {
+  return makeVanillaRef(id) as MissionRef & { readonly id: Id };
+}
+
+/**
+ * A checked reference to a vanilla mission category id.
+ * Checked against @pdx-ts/stellaris-ids's id set for this registry, so
+ * a misspelled id is a compile error. Zero runtime validation — this
+ * only constructs the branded reference the rest of the SDK accepts.
+ */
+export function missionCategory<const Id extends VanillaId<"mission_category">>(
+  id: Id
+): MissionCategoryRef & { readonly id: Id } {
+  return makeVanillaRef(id) as MissionCategoryRef & { readonly id: Id };
 }
 
 /**

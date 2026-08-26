@@ -1,0 +1,89 @@
+{
+  "registry": "mission_category",
+  "definitions": 22,
+  "files": 1,
+  "fingerprint": "04cd8a7d22971d105b1f65ea8db69c25bf2af79cd6db318061b269e5a80b2aee",
+  "fields": {
+    "is_contract": {
+      "definitions": 22,
+      "repeated": 0,
+      "scalars": 22,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "no",
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "log_icon": {
+      "definitions": 22,
+      "repeated": 0,
+      "scalars": 22,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "gfx/interface/icons/contracts/contract_icon_log.dds",
+        "gfx/interface/icons/contracts/diplomacy_contract_icon_log.dds",
+        "gfx/interface/icons/contracts/diplomacy_special_contract_icon_log.dds",
+        "gfx/interface/icons/contracts/military_contract_icon_log.dds",
+        "gfx/interface/icons/contracts/military_special_contract_icon_log.dds",
+        "gfx/interface/icons/contracts/resource_contract_icon_log.dds",
+        "gfx/interface/icons/contracts/resource_special_contract_icon_log.dds",
+        "gfx/interface/icons/contracts/science_contract_icon_log.dds",
+        "gfx/interface/icons/contracts/science_special_contract_icon_log.dds"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "map_icon": {
+      "definitions": 22,
+      "repeated": 0,
+      "scalars": 22,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "GFX_nomad_contract_diplomacy_icon",
+        "GFX_nomad_contract_diplomacy_special_icon",
+        "GFX_nomad_contract_icon",
+        "GFX_nomad_contract_military_icon",
+        "GFX_nomad_contract_military_special_icon",
+        "GFX_nomad_contract_resource_icon",
+        "GFX_nomad_contract_resource_special_icon",
+        "GFX_nomad_contract_science_icon",
+        "GFX_nomad_contract_science_special_icon"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "show_in_issue_list": {
+      "definitions": 4,
+      "repeated": 0,
+      "scalars": 4,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    }
+  }
+}
