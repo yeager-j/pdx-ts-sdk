@@ -4,6 +4,7 @@ import { dirname, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
+  checkRelease,
   prepareReleaseCoordinates,
   RELEASE_PACKAGES,
   stellarisIdsRevisionDecision,
@@ -61,6 +62,10 @@ function releaseFixture(staleLiteral = "0.5.0"): string {
   return root;
 }
 
+function contents(root: string, file: string): string {
+  return readFileSync(join(root, file), "utf8");
+}
+
 describe("release preparation", () => {
   it("updates every release coordinate and no unrelated dependency", () => {
     const root = releaseFixture();
@@ -104,14 +109,70 @@ describe("release preparation", () => {
     };
     expect(sdk.version).toBe("0.5.0");
   });
+
+  it("leaves every coordinate untouched when a later manifest is malformed", () => {
+    const root = releaseFixture();
+    const tracked = [
+      ...RELEASE_PACKAGES.map(({ directory }) => `${directory}/package.json`),
+      "packages/create-stellaris-mod/src/release-manifest.ts",
+    ];
+    const before = new Map(tracked.map((file) => [file, contents(root, file)]));
+    write(
+      root,
+      "packages/sdk-testing/package.json",
+      contents(root, "packages/sdk-testing/package.json").replace(
+        '"@pdx-ts/sdk": "^0.5.0"',
+        '"missing": "^0.5.0"'
+      )
+    );
+
+    expect(() => prepareReleaseCoordinates(root, "0.5.1")).toThrow(
+      "packages/sdk-testing/package.json has no peerDependencies.@pdx-ts/sdk"
+    );
+    for (const [file, expected] of before) {
+      if (file === "packages/sdk-testing/package.json") {
+        continue;
+      }
+      expect(contents(root, file)).toBe(expected);
+    }
+  });
+});
+
+describe("release readiness", () => {
+  it("fails before running gates when release packages do not share one coordinate", () => {
+    const root = releaseFixture();
+    write(
+      root,
+      "packages/pdxscript/package.json",
+      contents(root, "packages/pdxscript/package.json").replace(
+        '"version": "0.5.0"',
+        '"version": "0.5.1"'
+      )
+    );
+    const commands: string[] = [];
+    const results = checkRelease(
+      root,
+      (_root, command, args) => commands.push(`${command} ${args.join(" ")}`),
+      null
+    ) as Array<{ name: string; passed: boolean }>;
+
+    expect(results[0]).toMatchObject({ name: "release coordinates", passed: false });
+    expect(commands[0]).toBe("npm run typecheck");
+  });
 });
 
 describe("Stellaris IDs revision decision", () => {
   it("requires the next revision only when generated identifiers changed", () => {
-    expect(stellarisIdsRevisionDecision("4.4.6-r.3", false)).toMatchObject({ changed: false });
-    expect(stellarisIdsRevisionDecision("4.4.6-r.3", true)).toMatchObject({
+    expect(stellarisIdsRevisionDecision("4.4.6-r.3", "4.4.6-r.3", false)).toMatchObject({
+      changed: false,
+    });
+    expect(stellarisIdsRevisionDecision("4.4.6-r.3", "4.4.6-r.3", true)).toMatchObject({
       changed: true,
       message: expect.stringContaining("4.4.6-r.4"),
+    });
+    expect(stellarisIdsRevisionDecision("4.4.6-r.3", "4.4.7-r.1", true)).toMatchObject({
+      changed: true,
+      message: expect.stringContaining("4.4.7-r.1"),
     });
   });
 });

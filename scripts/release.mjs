@@ -1,6 +1,6 @@
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { join, relative, resolve } from "node:path";
+import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { locateInstall } from "@pdx-ts/sdk/installation";
 import semver from "semver";
@@ -34,6 +34,7 @@ const RELEASE_LITERAL_FILES = [
 const PACKAGE_MANIFEST = "package.json";
 const SCAFFOLDER_RELEASE_MANIFEST = "packages/create-stellaris-mod/src/release-manifest.ts";
 const IDENTIFIERS_PACKAGE = "@pdx-ts/stellaris-ids";
+const DETECT_INSTALL = Symbol("detect install");
 
 /** Refuses anything other than an exact semantic version coordinate. */
 export function validateReleaseVersion(version) {
@@ -98,9 +99,9 @@ function releaseVersionsIn(contents) {
   );
 }
 
-function assertReleaseLiteralsCurrent(root, version) {
-  const stale = RELEASE_LITERAL_FILES.flatMap((file) =>
-    releaseVersionsIn(readFileSync(join(root, file), "utf8"))
+function assertReleaseLiteralsCurrent(files, version) {
+  const stale = files.flatMap(({ file, contents }) =>
+    releaseVersionsIn(contents)
       .filter((literal) => literal !== version)
       .map((literal) => `${file}: ${literal}`)
   );
@@ -113,12 +114,14 @@ function assertReleaseLiteralsCurrent(root, version) {
   }
 }
 
-function replaceLiteral(file, oldVersion, newVersion) {
-  const contents = readFileSync(file, "utf8");
-  writeFileSync(file, contents.replaceAll(oldVersion, newVersion));
+function releaseLiteralFiles(root) {
+  return RELEASE_LITERAL_FILES.map((file) => ({
+    file,
+    contents: readFileSync(join(root, file), "utf8"),
+  }));
 }
 
-function updateScaffolderManifest(root, version) {
+function preparedScaffolderManifest(root, version) {
   const file = join(root, SCAFFOLDER_RELEASE_MANIFEST);
   let contents = readFileSync(file, "utf8");
   for (const releasePackage of RELEASE_PACKAGES) {
@@ -135,47 +138,54 @@ function updateScaffolderManifest(root, version) {
     }
     contents = contents.replace(pattern, `$1${version}$2`);
   }
-  writeFileSync(file, contents);
+  return { file, contents };
 }
 
-function updatePackageManifest(root, releasePackage, version) {
+function preparedPackageManifest(root, releasePackage, version) {
   const file = releasePackageManifest(root, releasePackage);
+  const manifest = readJson(file);
+  for (const dependency of releasePackage.dependencies ?? []) {
+    const dependencies = manifest[dependency.section];
+    if (
+      typeof dependencies !== "object" ||
+      dependencies === null ||
+      !(dependency.name in dependencies)
+    ) {
+      throw new Error(
+        `${releasePackage.directory}/package.json has no ${dependency.section}.${dependency.name}.`
+      );
+    }
+  }
   let contents = readFileSync(file, "utf8");
   contents = replaceJsonStringProperty(contents, "version", version, file);
   for (const dependency of releasePackage.dependencies ?? []) {
     contents = replaceJsonStringProperty(contents, dependency.name, `^${version}`, file);
   }
-  writeFileSync(file, contents);
+  return { file: releasePackageManifest(root, releasePackage), contents };
 }
 
 /** Updates only release-owned coordinates, leaving unrelated dependencies untouched. */
 export function prepareReleaseCoordinates(root, version) {
   validateReleaseVersion(version);
   const previousVersion = currentReleaseVersion(root);
-  assertReleaseLiteralsCurrent(root, previousVersion);
+  const previousLiterals = releaseLiteralFiles(root);
+  assertReleaseLiteralsCurrent(previousLiterals, previousVersion);
 
-  for (const releasePackage of RELEASE_PACKAGES) {
-    for (const dependency of releasePackage.dependencies ?? []) {
-      const manifest = readJson(releasePackageManifest(root, releasePackage));
-      const dependencies = manifest[dependency.section];
-      if (
-        typeof dependencies !== "object" ||
-        dependencies === null ||
-        !(dependency.name in dependencies)
-      ) {
-        throw new Error(
-          `${releasePackage.directory}/package.json has no ${dependency.section}.${dependency.name}.`
-        );
-      }
-    }
-    updatePackageManifest(root, releasePackage, version);
+  const updatedLiterals = previousLiterals.map(({ file, contents }) => ({
+    file,
+    contents: contents.replaceAll(previousVersion, version),
+  }));
+  const writes = [
+    ...RELEASE_PACKAGES.map((releasePackage) =>
+      preparedPackageManifest(root, releasePackage, version)
+    ),
+    preparedScaffolderManifest(root, version),
+    ...updatedLiterals.map(({ file, contents }) => ({ file: join(root, file), contents })),
+  ];
+  assertReleaseLiteralsCurrent(updatedLiterals, version);
+  for (const { file, contents } of writes) {
+    writeFileSync(file, contents);
   }
-
-  updateScaffolderManifest(root, version);
-  for (const file of RELEASE_LITERAL_FILES) {
-    replaceLiteral(join(root, file), previousVersion, version);
-  }
-  assertReleaseLiteralsCurrent(root, version);
   return { previousVersion, version, packages: RELEASE_PACKAGES };
 }
 
@@ -190,15 +200,23 @@ export function prepareRelease(root, version, execute = run) {
   return prepared;
 }
 
-/** States whether regenerated identifiers require a manually chosen new revision. */
-export function stellarisIdsRevisionDecision(version, changed) {
+/** States whether identifier output needs a new package revision after regeneration. */
+export function stellarisIdsRevisionDecision(publishedVersion, generatedVersion, changed) {
   if (!changed) {
     return {
       changed: false,
       message: `${IDENTIFIERS_PACKAGE} did not change; no new revision is needed.`,
     };
   }
-  const match = /^(.*)-r\.(\d+)$/.exec(version);
+  const publishedBuild = publishedVersion.split("-", 1)[0];
+  const generatedBuild = generatedVersion.split("-", 1)[0];
+  if (publishedBuild !== generatedBuild) {
+    return {
+      changed: true,
+      message: `${IDENTIFIERS_PACKAGE} changed for game build ${generatedBuild}; release ${generatedVersion}.`,
+    };
+  }
+  const match = /^(.*)-r\.(\d+)$/.exec(publishedVersion);
   const next = match === null ? "a new -r.1 revision" : `${match[1]}-r.${Number(match[2]) + 1}`;
   return {
     changed: true,
@@ -220,30 +238,50 @@ function installedStellarisPath() {
   }
 }
 
-function trackedIdentifierFiles(root) {
-  const ids = join(root, "packages", "stellaris-ids");
-  const result = [];
-  const collect = (directory) => {
-    for (const entry of readdirSync(directory, { withFileTypes: true })) {
-      const file = join(directory, entry.name);
-      if (entry.isDirectory()) {
-        collect(file);
-      } else if (entry.isFile()) {
-        result.push([relative(ids, file), readFileSync(file)]);
-      }
+function identifierRevisionBaseline(root, version) {
+  const packageJson = "packages/stellaris-ids/package.json";
+  const commits = execFileSync("git", ["log", "--format=%H", "--", packageJson], {
+    cwd: root,
+    encoding: "utf8",
+  })
+    .trim()
+    .split("\n")
+    .filter(Boolean);
+  for (const commit of commits) {
+    const current = readJsonFromGit(root, `${commit}:${packageJson}`);
+    const parent = readJsonFromGit(root, `${commit}^:${packageJson}`);
+    if (current.version === version && parent.version !== version) {
+      return commit;
     }
-  };
-  collect(join(ids, "src"));
-  result.push([PACKAGE_MANIFEST, readFileSync(join(ids, PACKAGE_MANIFEST))]);
-  return result;
+  }
+  throw new Error(`Could not find the release baseline for ${IDENTIFIERS_PACKAGE}@${version}.`);
 }
 
-function identifierFilesChanged(before, after) {
-  if (before.length !== after.length) {
+function readJsonFromGit(root, object) {
+  return JSON.parse(execFileSync("git", ["show", object], { cwd: root, encoding: "utf8" }));
+}
+
+function identifierOutputChangedSince(root, baseline) {
+  const result = spawnSync(
+    "git",
+    [
+      "diff",
+      "--quiet",
+      baseline,
+      "--",
+      "packages/stellaris-ids/src",
+      "packages/stellaris-ids/package.json",
+    ],
+    { cwd: root }
+  );
+  if (result.status === 0) {
+    return false;
+  }
+  if (result.status === 1) {
     return true;
   }
-  return before.some(
-    ([file, contents], index) => file !== after[index][0] || !contents.equals(after[index][1])
+  throw new Error(
+    result.stderr.toString("utf8") || "Could not compare identifier output to its release baseline."
   );
 }
 
@@ -261,10 +299,13 @@ function runCheckStep(results, name, action) {
 }
 
 /** Runs the release gates and returns each result so callers can print a concise summary. */
-export function checkRelease(root, execute = run, installPath = installedStellarisPath()) {
+export function checkRelease(root, execute = run, installPath = DETECT_INSTALL) {
   const results = [];
   const npm = (name, args) => runCheckStep(results, name, () => execute(root, "npm", args));
+  const resolvedInstallPath =
+    installPath === DETECT_INSTALL ? installedStellarisPath() : installPath;
 
+  runCheckStep(results, "release coordinates", () => currentReleaseVersion(root));
   npm("typecheck", ["run", "typecheck"]);
   npm("test", ["test"]);
   npm("asset-scale", ["run", "test:asset-scale"]);
@@ -280,7 +321,7 @@ export function checkRelease(root, execute = run, installPath = installedStellar
     npm(`pack ${releasePackage.name}`, ["pack", "--dry-run", "--workspace", releasePackage.name]);
   }
 
-  if (installPath === undefined) {
+  if (resolvedInstallPath === undefined || resolvedInstallPath === null) {
     results.push({
       name: "vanilla codegen drift",
       passed: false,
@@ -290,16 +331,21 @@ export function checkRelease(root, execute = run, installPath = installedStellar
     return results;
   }
 
-  const before = trackedIdentifierFiles(root);
+  const publishedVersion = readJson(
+    join(root, "packages", "stellaris-ids", PACKAGE_MANIFEST)
+  ).version;
+  const baseline = identifierRevisionBaseline(root, publishedVersion);
   runCheckStep(results, "vanilla codegen drift", () =>
     execute(root, "npm", ["run", "codegen:vanilla:check"])
   );
-  const changed = identifierFilesChanged(before, trackedIdentifierFiles(root));
-  const version = readJson(join(root, "packages", "stellaris-ids", PACKAGE_MANIFEST)).version;
+  const generatedVersion = readJson(
+    join(root, "packages", "stellaris-ids", PACKAGE_MANIFEST)
+  ).version;
+  const changed = identifierOutputChangedSince(root, baseline);
   results.push({
     name: "stellaris-ids revision",
     passed: !changed,
-    ...stellarisIdsRevisionDecision(version, changed),
+    ...stellarisIdsRevisionDecision(publishedVersion, generatedVersion, changed),
   });
   return results;
 }
@@ -314,7 +360,8 @@ function printCoordinates(prepared) {
 function printSummary(results) {
   for (const result of results) {
     const status = result.passed ? "PASS" : result.skipped ? "SKIPPED" : "FAIL";
-    console.log(`${status} ${result.name}${result.error === undefined ? "" : `: ${result.error}`}`);
+    const detail = [result.error, result.message].filter((value) => value !== undefined).join(" ");
+    console.log(`${status} ${result.name}${detail === "" ? "" : `: ${detail}`}`);
   }
   const passed = results.every((result) => result.passed);
   console.log(passed ? "Release readiness: PASS" : "Release readiness: FAIL");
