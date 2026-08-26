@@ -1,5 +1,5 @@
 import { createMod } from "@pdx-ts/sdk";
-import { always, onActions, vanilla } from "@pdx-ts/sdk/stellaris";
+import { always, hasModifier, not, onActions, vanilla } from "@pdx-ts/sdk/stellaris";
 
 const mod = createMod({
   name: "Echo Archive",
@@ -15,7 +15,7 @@ const echoLens = mod.relic("echo_lens", {
   activationDuration: 3_600,
   canBeStolen: false,
   score: 1_000,
-  possible: always(),
+  possible: not(hasModifier(vanilla.staticModifier("relic_activation_cooldown"))),
   resources: [
     {
       category: "relics",
