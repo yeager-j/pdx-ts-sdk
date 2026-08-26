@@ -1,0 +1,16 @@
+content_test_mission_first_labour = {
+	category = content_test_mission_category_labours
+	picture = GFX_event_pictures_ancient_ruins
+	counter = {
+		labours_completed = {
+			max = 4
+		}
+	}
+	on_success = {
+		add_mission_counter = {
+			mission = content_test_mission_first_labour
+			counter = labours_completed
+			amount = 1
+		}
+	}
+}

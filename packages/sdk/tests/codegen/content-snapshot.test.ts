@@ -57,6 +57,20 @@ const emissions = new Map(
 );
 
 describe("content-type codegen", () => {
+  it("generates relic, mission, and mission-category authoring surfaces", () => {
+    const relic = emissions.get("relic");
+    const mission = emissions.get("mission");
+    const missionCategory = emissions.get("mission_category");
+
+    expect(relic?.code).toContain('possible: Trigger<"country">;');
+    expect(mission?.code).toContain("export interface MissionCounterDefinition");
+    expect(mission?.code).toContain(
+      "counter?: Readonly<Record<string, MissionCounterDefinition>>;"
+    );
+    expect(mission?.code).toContain("category?: MissionCategoryRef | string;");
+    expect(missionCategory?.code).toContain("isContract: boolean;");
+  });
+
   it("declines ambiguous mixed trigger structs instead of dropping declarations", () => {
     const field = (key: RuleField["key"]): RuleField => ({
       key,
@@ -845,6 +859,7 @@ describe("content-type codegen", () => {
     expect(renamed.sort()).toEqual([
       "archaeological_site_type",
       "building",
+      "mission",
       "situation_type",
       "special_project",
       "tradition_category",

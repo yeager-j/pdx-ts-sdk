@@ -21,6 +21,7 @@
 // From: common/agreements.cwt
 // From: common/bombardment_stances.cwt
 // From: common/archaeology.cwt
+// From: common/missions.cwt
 // From: common/situations.cwt
 // From: common/scripted_loc.cwt
 // From: common/governments.cwt
@@ -151,6 +152,17 @@ export type {
   PatchedMegastructure,
 } from "./megastructure.ts";
 export type { DefinedMenacePerk, MenacePerkDef, MenacePerkFields } from "./menace-perk.ts";
+export type {
+  DefinedMissionCategory,
+  MissionCategoryDef,
+  MissionCategoryFields,
+} from "./mission-category.ts";
+export type {
+  DefinedMission,
+  MissionCounterDefinition,
+  MissionDef,
+  MissionFields,
+} from "./mission.ts";
 export type { MoonInitializerFields } from "./moon-initializer.ts";
 export type {
   DefinedOpinionModifier,
@@ -166,6 +178,7 @@ export type {
 } from "./pdxmesh.ts";
 export type { DefinedPdxparticle, PdxparticleDef, PdxparticleFields } from "./pdxparticle.ts";
 export type { PlanetInitializerFields } from "./planet-initializer.ts";
+export type { DefinedRelic, RelicDef, RelicFields } from "./relic.ts";
 export type { DefinedResource, ResourceDef, ResourceFields } from "./resource.ts";
 export type { DefinedScriptedLoc, ScriptedLocDef, ScriptedLocFields } from "./scripted-loc.ts";
 export type {

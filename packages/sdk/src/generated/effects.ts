@@ -31,6 +31,7 @@ import type {
   GrowthStance,
   MessageVariableType,
   MiaType,
+  MissionCounter,
   MissionStatus,
   ModelState,
   OptimisationBatch,
@@ -8349,7 +8350,7 @@ export interface EffectsInCountry extends StartSituationEffectsExtension {
    */
   setMissionCounter(args: {
     mission: MissionRef | string;
-    counter: string;
+    counter: MissionCounter;
     amount: ScriptValue;
   }): void;
 
@@ -8983,7 +8984,7 @@ export interface EffectsInCountryMission {
    */
   addMissionCounter(args: {
     mission: MissionRef | string;
-    counter: string;
+    counter: MissionCounter;
     amount: ScriptValue;
   }): void;
 }

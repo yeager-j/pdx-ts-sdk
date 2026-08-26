@@ -21,6 +21,7 @@
 // From: common/agreements.cwt
 // From: common/bombardment_stances.cwt
 // From: common/archaeology.cwt
+// From: common/missions.cwt
 // From: common/situations.cwt
 // From: common/scripted_loc.cwt
 // From: common/governments.cwt
@@ -103,9 +104,12 @@ import {
   defineJob,
   defineMegastructure,
   defineMenacePerk,
+  defineMission,
+  defineMissionCategory,
   defineOpinionModifier,
   definePdxmesh,
   definePdxparticle,
+  defineRelic,
   defineResource,
   defineScriptedLoc,
   defineScriptedModifier,
@@ -148,10 +152,13 @@ import type {
   MegastructurePatchItem,
 } from "./megastructure.ts";
 import type { MenacePerkDef } from "./menace-perk.ts";
+import type { MissionCategoryDef } from "./mission-category.ts";
+import type { MissionDef } from "./mission.ts";
 import type { OpinionModifierDef } from "./opinion-modifier.ts";
 import type { PdxmeshDef } from "./pdxmesh.ts";
 import type { PdxparticleDef } from "./pdxparticle.ts";
 import type { BombardmentStanceRef, ComponentSetRequiredComponentRef } from "./refs.ts";
+import type { RelicDef } from "./relic.ts";
 import type { ResourceDef } from "./resource.ts";
 import type { ScriptedLocDef } from "./scripted-loc.ts";
 import type { ScriptedModifierDef } from "./scripted-modifier.ts";
@@ -381,6 +388,21 @@ export interface IdProfile {
    */
   readonly archaeologicalSiteType: string;
   /**
+   * The segment inserted between the mod prefix and a relic's logical name.
+   * Override it when this registry needs a different id convention.
+   */
+  readonly relic: string;
+  /**
+   * The segment inserted between the mod prefix and a mission's logical name.
+   * Override it when this registry needs a different id convention.
+   */
+  readonly mission: string;
+  /**
+   * The segment inserted between the mod prefix and a mission category's logical name.
+   * Override it when this registry needs a different id convention.
+   */
+  readonly missionCategory: string;
+  /**
    * The segment inserted between the mod prefix and a situation type's logical name.
    * Override it when this registry needs a different id convention.
    */
@@ -492,6 +514,9 @@ export const DEFAULT_ID_PROFILE = Object.freeze({
   agreementPreset: "agreement_preset",
   bombardmentStance: "bombardment_stance",
   archaeologicalSiteType: "archaeological_site_type",
+  relic: "relic",
+  mission: "mission",
+  missionCategory: "mission_category",
   situationType: "situation_type",
   scriptedLoc: "scripted_loc",
   councilor: "councilor",
@@ -1284,6 +1309,66 @@ export interface ContentCapabilityMethods<P extends string, I extends IdProfile>
   ): ContentHandle<
     "archaeological_site_type",
     ArchaeologicalSiteTypeDef<MintedContentId<P, I, "archaeologicalSiteType", Name>>
+  >;
+  /**
+   * Defines a relic from its logical name.
+   * The capability mints and owns the full id; the returned branded reference
+   * flows into matching content-reference fields.
+   */
+  relic<const Name extends string>(
+    name: Name,
+    def: Omit<RelicDef<MintedContentId<P, I, "relic", Name>>, "id">
+  ): ContentItem<"relic", RelicDef<MintedContentId<P, I, "relic", Name>>>;
+  /**
+   * Mints a relic id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * a relic that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  relicHandle<const Name extends string>(
+    name: Name
+  ): ContentHandle<"relic", RelicDef<MintedContentId<P, I, "relic", Name>>>;
+  /**
+   * Defines a mission from its logical name.
+   * The capability mints and owns the full id; the returned branded reference
+   * flows into matching content-reference fields.
+   */
+  mission<const Name extends string>(
+    name: Name,
+    def: Omit<MissionDef<MintedContentId<P, I, "mission", Name>>, "id">
+  ): ContentItem<"mission", MissionDef<MintedContentId<P, I, "mission", Name>>>;
+  /**
+   * Mints a mission id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * a mission that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  missionHandle<const Name extends string>(
+    name: Name
+  ): ContentHandle<"mission", MissionDef<MintedContentId<P, I, "mission", Name>>>;
+  /**
+   * Defines a mission category from its logical name.
+   * The capability mints and owns the full id; the returned branded reference
+   * flows into matching content-reference fields.
+   */
+  missionCategory<const Name extends string>(
+    name: Name,
+    def: Omit<MissionCategoryDef<MintedContentId<P, I, "missionCategory", Name>>, "id">
+  ): ContentItem<
+    "mission_category",
+    MissionCategoryDef<MintedContentId<P, I, "missionCategory", Name>>
+  >;
+  /**
+   * Mints a mission category id without its definition.
+   * Define it later with its `define(...)` method when a cycle needs the id first —
+   * a mission category that names itself, or two that name each other.
+   * The handle is a reference, not content: place the item `define(...)` returns.
+   */
+  missionCategoryHandle<const Name extends string>(
+    name: Name
+  ): ContentHandle<
+    "mission_category",
+    MissionCategoryDef<MintedContentId<P, I, "missionCategory", Name>>
   >;
   /**
    * Defines a scripted loc from its logical name.
@@ -2586,6 +2671,74 @@ export function contentCapabilityMethods<P extends string, I extends IdProfile>(
       ).define(
         def as unknown as Omit<
           ArchaeologicalSiteTypeDef<MintedContentId<P, I, "archaeologicalSiteType", Name>>,
+          "id"
+        >
+      );
+    },
+    relicHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "relic",
+        mint("relic", name),
+        (def: RelicDef<MintedContentId<P, I, "relic", Name>>) => {
+          return defineRelic(def);
+        }
+      );
+    },
+    relic: <const Name extends string>(
+      name: Name,
+      def: Omit<RelicDef<MintedContentId<P, I, "relic", Name>>, "id">
+    ) => {
+      return createContentHandle(
+        "relic",
+        mint("relic", name),
+        (def: RelicDef<MintedContentId<P, I, "relic", Name>>) => {
+          return defineRelic(def);
+        }
+      ).define(def as unknown as Omit<RelicDef<MintedContentId<P, I, "relic", Name>>, "id">);
+    },
+    missionHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "mission",
+        mint("mission", name),
+        (def: MissionDef<MintedContentId<P, I, "mission", Name>>) => {
+          return defineMission(def);
+        }
+      );
+    },
+    mission: <const Name extends string>(
+      name: Name,
+      def: Omit<MissionDef<MintedContentId<P, I, "mission", Name>>, "id">
+    ) => {
+      return createContentHandle(
+        "mission",
+        mint("mission", name),
+        (def: MissionDef<MintedContentId<P, I, "mission", Name>>) => {
+          return defineMission(def);
+        }
+      ).define(def as unknown as Omit<MissionDef<MintedContentId<P, I, "mission", Name>>, "id">);
+    },
+    missionCategoryHandle: <const Name extends string>(name: Name) => {
+      return createContentHandle(
+        "mission_category",
+        mint("missionCategory", name),
+        (def: MissionCategoryDef<MintedContentId<P, I, "missionCategory", Name>>) => {
+          return defineMissionCategory(def);
+        }
+      );
+    },
+    missionCategory: <const Name extends string>(
+      name: Name,
+      def: Omit<MissionCategoryDef<MintedContentId<P, I, "missionCategory", Name>>, "id">
+    ) => {
+      return createContentHandle(
+        "mission_category",
+        mint("missionCategory", name),
+        (def: MissionCategoryDef<MintedContentId<P, I, "missionCategory", Name>>) => {
+          return defineMissionCategory(def);
+        }
+      ).define(
+        def as unknown as Omit<
+          MissionCategoryDef<MintedContentId<P, I, "missionCategory", Name>>,
           "id"
         >
       );

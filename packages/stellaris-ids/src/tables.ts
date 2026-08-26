@@ -62,12 +62,15 @@ import type { VanillaGraphicalCultureId } from "./registries/graphical-culture.t
 import type { VanillaJobId } from "./registries/job.ts";
 import type { VanillaMegastructureId } from "./registries/megastructure.ts";
 import type { VanillaMenacePerkId } from "./registries/menace-perk.ts";
+import type { VanillaMissionCategoryId } from "./registries/mission-category.ts";
+import type { VanillaMissionId } from "./registries/mission.ts";
 import type { VanillaOpinionModifierId } from "./registries/opinion-modifier.ts";
 import type { VanillaPdxmeshId } from "./registries/pdxmesh.ts";
 import type { VanillaPdxmeshTrie } from "./registries/pdxmesh/index.ts";
 import type { VanillaPdxparticleId } from "./registries/pdxparticle.ts";
 import type { VanillaPlanetClassId } from "./registries/planet-class.ts";
 import type { VanillaPlanetModifierId } from "./registries/planet-modifier.ts";
+import type { VanillaRelicId } from "./registries/relic.ts";
 import type { VanillaResourceId } from "./registries/resource.ts";
 import type { VanillaScriptedLocId } from "./registries/scripted-loc.ts";
 import type { VanillaScriptedModifierId } from "./registries/scripted-modifier.ts";
@@ -127,6 +130,9 @@ export interface VanillaIds {
   readonly agreement_preset: VanillaAgreementPresetId;
   readonly bombardment_stance: VanillaBombardmentStanceId;
   readonly archaeological_site_type: VanillaArchaeologicalSiteTypeId;
+  readonly relic: VanillaRelicId;
+  readonly mission: VanillaMissionId;
+  readonly mission_category: VanillaMissionCategoryId;
   readonly situation_type: VanillaSituationTypeId;
   readonly scripted_loc: VanillaScriptedLocId;
   readonly councilor: VanillaCouncilorId;
@@ -162,6 +168,7 @@ export interface VanillaEnums {
   readonly component_tag: VanillaComponentTagMember;
   readonly ship_class: VanillaShipClassMember;
   readonly section_slot: VanillaSectionSlotMember;
+  readonly mission_counter: VanillaMissionCounterMember;
   readonly situation_approach: VanillaSituationApproachMember;
   readonly situation_stage: VanillaSituationStageMember;
   readonly component_slot: VanillaComponentSlotMember;
@@ -174,7 +181,6 @@ export interface VanillaEnums {
   readonly particle_force: VanillaParticleForceMember;
   readonly intel_token: VanillaIntelTokenMember;
   readonly job_tag: VanillaJobTagMember;
-  readonly mission_counter: VanillaMissionCounterMember;
   readonly name_list_category: VanillaNameListCategoryMember;
   readonly deed_counter: VanillaDeedCounterMember;
   readonly calling_counter: VanillaCallingCounterMember;

@@ -21,6 +21,7 @@
 // From: common/agreements.cwt
 // From: common/bombardment_stances.cwt
 // From: common/archaeology.cwt
+// From: common/missions.cwt
 // From: common/situations.cwt
 // From: common/scripted_loc.cwt
 // From: common/governments.cwt
@@ -80,9 +81,12 @@ import { GRAPHICAL_CULTURE_FIELDS, GRAPHICAL_CULTURE_LOCALISATION } from "./grap
 import { JOB_FIELDS, JOB_LOCALISATION } from "./job.ts";
 import { MEGASTRUCTURE_FIELDS, MEGASTRUCTURE_LOCALISATION } from "./megastructure.ts";
 import { MENACE_PERK_FIELDS, MENACE_PERK_LOCALISATION } from "./menace-perk.ts";
+import { MISSION_CATEGORY_FIELDS, MISSION_CATEGORY_LOCALISATION } from "./mission-category.ts";
+import { MISSION_FIELDS, MISSION_LOCALISATION } from "./mission.ts";
 import { OPINION_MODIFIER_FIELDS, OPINION_MODIFIER_LOCALISATION } from "./opinion-modifier.ts";
 import { PDXMESH_FIELDS, PDXMESH_LOCALISATION } from "./pdxmesh.ts";
 import { PDXPARTICLE_FIELDS, PDXPARTICLE_LOCALISATION } from "./pdxparticle.ts";
+import { RELIC_FIELDS, RELIC_LOCALISATION } from "./relic.ts";
 import { RESOURCE_FIELDS, RESOURCE_LOCALISATION } from "./resource.ts";
 import { SCRIPTED_LOC_FIELDS, SCRIPTED_LOC_LOCALISATION } from "./scripted-loc.ts";
 import { SCRIPTED_MODIFIER_FIELDS, SCRIPTED_MODIFIER_LOCALISATION } from "./scripted-modifier.ts";
@@ -374,6 +378,33 @@ export const CONTENT_REGISTRIES = [
     fileExtension: ".txt",
     fields: ARCHAEOLOGICAL_SITE_TYPE_FIELDS,
     localisation: ARCHAEOLOGICAL_SITE_TYPE_LOCALISATION,
+  },
+  {
+    type: "relic",
+    referenceName: "relic",
+    outputDir: "common/relics",
+    fileStem: "relics",
+    fileExtension: ".txt",
+    fields: RELIC_FIELDS,
+    localisation: RELIC_LOCALISATION,
+  },
+  {
+    type: "mission",
+    referenceName: "mission",
+    outputDir: "common/missions/missions",
+    fileStem: "missions",
+    fileExtension: ".txt",
+    fields: MISSION_FIELDS,
+    localisation: MISSION_LOCALISATION,
+  },
+  {
+    type: "mission_category",
+    referenceName: "mission_category",
+    outputDir: "common/missions/mission_categories",
+    fileStem: "mission_categories",
+    fileExtension: ".txt",
+    fields: MISSION_CATEGORY_FIELDS,
+    localisation: MISSION_CATEGORY_LOCALISATION,
   },
   {
     type: "situation_type",

@@ -1,0 +1,1310 @@
+{
+  "registry": "mission",
+  "definitions": 102,
+  "files": 5,
+  "fingerprint": "2d18d1c483bc493cbea6dda09409cb9071561bfabea8503bea1858d4401e7a88",
+  "fields": {
+    "abort_trigger": {
+      "definitions": 32,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 32,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "NAND",
+        "NOT",
+        "OR",
+        "event_target:champions_forge_enclave_country?"
+      ],
+      "keysByDefinition": [
+        [
+          "NAND"
+        ],
+        [
+          "NOT"
+        ],
+        [
+          "OR"
+        ],
+        [
+          "event_target:champions_forge_enclave_country?"
+        ]
+      ]
+    },
+    "ai_behaviour": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 2,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "attack",
+        "raid"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "ai_weight": {
+      "definitions": 3,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 3,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "modifier",
+        "weight"
+      ],
+      "keysByDefinition": [
+        [
+          "modifier",
+          "weight"
+        ]
+      ]
+    },
+    "ai_weight.modifier": {
+      "definitions": 3,
+      "repeated": 1,
+      "scalars": 0,
+      "blocks": 3,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "from",
+        "fromfrom",
+        "used_starbase_capacity_percent",
+        "years_passed"
+      ],
+      "keysByDefinition": [
+        [
+          "from"
+        ],
+        [
+          "from",
+          "used_starbase_capacity_percent",
+          "years_passed"
+        ],
+        [
+          "fromfrom"
+        ]
+      ]
+    },
+    "category": {
+      "definitions": 23,
+      "repeated": 0,
+      "scalars": 23,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "diplomacy_contract",
+        "diplomacy_contract_internal",
+        "diplomacy_contract_special",
+        "heirs_military_contract_special",
+        "military_contract",
+        "resource_contract",
+        "science_contract",
+        "science_contract_internal"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "cost": {
+      "definitions": 22,
+      "repeated": 0,
+      "scalars": 22,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "0",
+        "1000",
+        "10000",
+        "1500",
+        "2000",
+        "500",
+        "5000"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "counter": {
+      "definitions": 51,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 51,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "BE_CUSTODIAN",
+        "BE_ON_GALACTIC_COUNCIL",
+        "BE_ON_GALCOM",
+        "CLEARED_HANGAR_BAYS",
+        "COOLANT_FLUSHED",
+        "EXOTIC_GASES_HARVESTED",
+        "RARE_CRYSTALS_HARVESTED",
+        "SENSOR_CALIBRATION_UNIQUE_STARS",
+        "SHIELD_REALIGNMENT",
+        "SIGNAL_DECIPHERED",
+        "VOLATILE_MOTES_HARVESTED",
+        "ancient_wonders_progress",
+        "antique_threat_progress",
+        "contract_build_waystation_counter",
+        "contract_clear_blockers_counter",
+        "contract_diplomatic_support_counter",
+        "contract_megastructure_support_counter",
+        "contract_pest_control_counter",
+        "contract_prisoner_disposal_counter",
+        "contract_progress_counter",
+        "contract_scan_debris_counter",
+        "days_storm_rider_spend_in_storm",
+        "enclave_progress",
+        "far_edge_explored",
+        "fleets_defeated_in_storm",
+        "galactic_landmark_progress",
+        "marauder_progress",
+        "natural_spectacle_progress",
+        "precursor_progress",
+        "rider_died_in_storm",
+        "send_storm_to_other_empire",
+        "space_ecology_progress",
+        "star_journal_progress_binary_trinary",
+        "star_journal_progress_black_holes",
+        "star_journal_progress_mighty_beasts",
+        "star_journal_progress_neutron_star",
+        "star_journal_progress_pulsar",
+        "star_journal_progress_unknown_sights",
+        "storm_unraveled_event_investigated"
+      ],
+      "keysByDefinition": [
+        [
+          "BE_CUSTODIAN"
+        ],
+        [
+          "BE_ON_GALACTIC_COUNCIL"
+        ],
+        [
+          "BE_ON_GALCOM"
+        ],
+        [
+          "CLEARED_HANGAR_BAYS"
+        ],
+        [
+          "COOLANT_FLUSHED"
+        ],
+        [
+          "EXOTIC_GASES_HARVESTED",
+          "RARE_CRYSTALS_HARVESTED",
+          "VOLATILE_MOTES_HARVESTED"
+        ],
+        [
+          "SENSOR_CALIBRATION_UNIQUE_STARS"
+        ],
+        [
+          "SHIELD_REALIGNMENT"
+        ],
+        [
+          "SIGNAL_DECIPHERED"
+        ],
+        [
+          "ancient_wonders_progress"
+        ],
+        [
+          "antique_threat_progress"
+        ],
+        [
+          "contract_build_waystation_counter"
+        ],
+        [
+          "contract_clear_blockers_counter"
+        ],
+        [
+          "contract_diplomatic_support_counter"
+        ],
+        [
+          "contract_megastructure_support_counter"
+        ],
+        [
+          "contract_pest_control_counter"
+        ],
+        [
+          "contract_prisoner_disposal_counter"
+        ],
+        [
+          "contract_progress_counter"
+        ],
+        [
+          "contract_scan_debris_counter"
+        ],
+        [
+          "days_storm_rider_spend_in_storm"
+        ],
+        [
+          "enclave_progress"
+        ],
+        [
+          "far_edge_explored"
+        ],
+        [
+          "fleets_defeated_in_storm"
+        ],
+        [
+          "galactic_landmark_progress"
+        ],
+        [
+          "marauder_progress"
+        ],
+        [
+          "natural_spectacle_progress"
+        ],
+        [
+          "precursor_progress"
+        ],
+        [
+          "rider_died_in_storm"
+        ],
+        [
+          "send_storm_to_other_empire"
+        ],
+        [
+          "space_ecology_progress"
+        ],
+        [
+          "star_journal_progress_binary_trinary"
+        ],
+        [
+          "star_journal_progress_black_holes"
+        ],
+        [
+          "star_journal_progress_mighty_beasts"
+        ],
+        [
+          "star_journal_progress_neutron_star"
+        ],
+        [
+          "star_journal_progress_pulsar"
+        ],
+        [
+          "star_journal_progress_unknown_sights"
+        ],
+        [
+          "storm_unraveled_event_investigated"
+        ]
+      ]
+    },
+    "counter.max": {
+      "definitions": 51,
+      "repeated": 0,
+      "scalars": 51,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "-1",
+        "1",
+        "180",
+        "2",
+        "3",
+        "30",
+        "4",
+        "5"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "desc": {
+      "definitions": 51,
+      "repeated": 0,
+      "scalars": 51,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "MISSION_BE_CUSTODIAN_DESC",
+        "MISSION_BE_ON_GALACTIC_COUNCIL_DESC",
+        "MISSION_BE_ON_GALCOM_DESC",
+        "MISSION_CS_STORM_FEVER_CHALLENGE_1_DESC",
+        "MISSION_CS_STORM_FEVER_CHALLENGE_2_DESC",
+        "MISSION_CS_STORM_FEVER_CHALLENGE_3_DESC",
+        "MISSION_CS_STORM_FEVER_CHALLENGE_4_DESC",
+        "MISSION_CS_STORM_FEVER_CHALLENGE_5_DESC",
+        "MISSION_CS_STORM_FEVER_CHALLENGE_6_DESC",
+        "NOMAD_CHECKLIST_CLEAR_HANGAR_BAYS_DESC",
+        "NOMAD_CHECKLIST_DECIPHER_SIGNAL_DESC",
+        "NOMAD_CHECKLIST_FLUSH_COOLANT_DESC",
+        "NOMAD_CHECKLIST_HARVEST_RESOURCES_DESC",
+        "NOMAD_CHECKLIST_SENSOR_CALIBRATION_DESC",
+        "NOMAD_CHECKLIST_SHIELD_REALIGNMENT_DESC",
+        "NOMAD_EXPLORATION_ANCIENT_WONDERS_DESC",
+        "NOMAD_EXPLORATION_ANTIQUE_THREAT_DESC",
+        "NOMAD_EXPLORATION_ENCLAVE_CATEGORY_DESC",
+        "NOMAD_EXPLORATION_GALACTIC_LANDMARK_DESC",
+        "NOMAD_EXPLORATION_MARAUDER_DESC",
+        "NOMAD_EXPLORATION_NATURAL_SPECTACLE_DESC",
+        "NOMAD_EXPLORATION_PRECURSOR_CATEGORY_DESC",
+        "NOMAD_EXPLORATION_SPACE_ECOLOGY_DESC",
+        "NOMAD_STAR_JOURNAL_BINARY_TRINARY_DESC",
+        "NOMAD_STAR_JOURNAL_BLACK_HOLES_DESC",
+        "NOMAD_STAR_JOURNAL_MIGHTY_BEASTS_DESC",
+        "NOMAD_STAR_JOURNAL_NEUTRON_STAR_DESC",
+        "NOMAD_STAR_JOURNAL_PULSAR_DESC",
+        "NOMAD_STAR_JOURNAL_UNKNOWN_SIGHTS_DESC",
+        "contract_arkship_diplomatic_envoy_desc",
+        "contract_build_waystation_desc",
+        "contract_clear_blockers_desc",
+        "contract_colony_startup_desc",
+        "contract_deep_scan_desc",
+        "contract_destroy_station_heirs_desc",
+        "contract_diplomatic_support_desc",
+        "contract_espionage_support_desc",
+        "contract_eternal_chorus_desc",
+        "contract_host_cfl_tournament_desc",
+        "contract_intercept_raid_heirs_desc",
+        "contract_join_war_desc",
+        "contract_megastructure_support_desc",
+        "contract_pest_control_desc",
+        "contract_prisoner_disposal_desc",
+        "contract_raid_planet_small_desc",
+        "contract_scan_debris_desc",
+        "contract_sightseeing_tour_desc",
+        "contract_stellar_ignition_desc"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "event_chain": {
+      "definitions": 52,
+      "repeated": 0,
+      "scalars": 52,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "arkship_diplomatic_envoy_chain",
+        "arkship_eternal_chorus_chain",
+        "contract_build_waystation_chain",
+        "contract_clear_blockers_chain",
+        "contract_colony_startup_chain",
+        "contract_deep_scan_chain",
+        "contract_destroy_station_heirs_chain",
+        "contract_diplomatic_support_chain",
+        "contract_espionage_support_chain",
+        "contract_host_cfl_tournament_chain",
+        "contract_intercept_raid_heirs_chain",
+        "contract_join_war_chain",
+        "contract_megastructure_support_chain",
+        "contract_pest_control_chain",
+        "contract_prisoner_disposal_chain",
+        "contract_raid_planet_chain",
+        "contract_scan_debris_chain",
+        "contract_sightseeing_tour_chain",
+        "contract_stellar_ignition_chain",
+        "cs_stormfever_chain",
+        "defender_of_the_galaxy_chain",
+        "nomad_checklist_chain",
+        "nomad_exploration_chain",
+        "nomad_star_journal_chain"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "icon": {
+      "definitions": 51,
+      "repeated": 0,
+      "scalars": 51,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "gfx/interface/icons/situation_log/situation_log_engineering.dds",
+        "gfx/interface/icons/situation_log/situation_log_physics.dds",
+        "gfx/interface/icons/situation_log/situation_log_quest.dds",
+        "gfx/interface/icons/situation_log/situation_log_radar.dds",
+        "gfx/interface/icons/situation_log/situation_log_scanning_beam.dds",
+        "gfx/interface/icons/situation_log/situation_log_ship.dds"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "inline_script": {
+      "definitions": 50,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 50,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "ADD1",
+        "ADD3",
+        "ADD5",
+        "CANDIDATE",
+        "CATEGORY",
+        "ISSUER",
+        "L1",
+        "L2",
+        "L3",
+        "L4",
+        "L5",
+        "L6",
+        "L7",
+        "L8",
+        "L9",
+        "PICTURE",
+        "RESEARCH",
+        "RESOURCE",
+        "VARIANT",
+        "script"
+      ],
+      "keysByDefinition": [
+        [
+          "ADD1",
+          "ADD3",
+          "ADD5",
+          "CANDIDATE",
+          "L1",
+          "L2",
+          "L3",
+          "L4",
+          "L5",
+          "L6",
+          "L7",
+          "L8",
+          "L9",
+          "PICTURE",
+          "RESOURCE",
+          "script"
+        ],
+        [
+          "CATEGORY",
+          "ISSUER",
+          "PICTURE",
+          "VARIANT",
+          "script"
+        ],
+        [
+          "ISSUER",
+          "PICTURE",
+          "VARIANT",
+          "script"
+        ],
+        [
+          "RESEARCH",
+          "script"
+        ],
+        [
+          "RESOURCE",
+          "script"
+        ]
+      ]
+    },
+    "issued_abort_trigger": {
+      "definitions": 15,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 15,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "OR",
+        "is_nomadic"
+      ],
+      "keysByDefinition": [
+        [
+          "OR"
+        ],
+        [
+          "is_nomadic"
+        ]
+      ]
+    },
+    "location": {
+      "definitions": 26,
+      "repeated": 0,
+      "scalars": 26,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "yes"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "lore_completed": {
+      "definitions": 29,
+      "repeated": 0,
+      "scalars": 29,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "contract_completed_lore_build_waystation",
+        "contract_completed_lore_clear_blockers",
+        "contract_completed_lore_colony_startup",
+        "contract_completed_lore_deep_scan",
+        "contract_completed_lore_diplomatic_support",
+        "contract_completed_lore_espionage",
+        "contract_completed_lore_harvest",
+        "contract_completed_lore_join_wars",
+        "contract_completed_lore_megastructure_support",
+        "contract_completed_lore_pest_control",
+        "contract_completed_lore_raid_planet",
+        "contract_completed_lore_scan_debris",
+        "contract_completed_lore_sightseeing_tour",
+        "contract_completed_lore_stellar_ignition",
+        "contract_destroy_station_heirs_lore_completed",
+        "contract_host_cfl_tournament_lore_completed",
+        "contract_intercept_raid_heirs_lore_completed"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "lore_failed": {
+      "definitions": 25,
+      "repeated": 0,
+      "scalars": 25,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "contract_failed_lore_build_waystation",
+        "contract_failed_lore_clear_blockers",
+        "contract_failed_lore_colony_startup",
+        "contract_failed_lore_deep_scan",
+        "contract_failed_lore_diplomatic_support",
+        "contract_failed_lore_espionage",
+        "contract_failed_lore_harvest",
+        "contract_failed_lore_join_wars",
+        "contract_failed_lore_megastructure_support",
+        "contract_failed_lore_pest_control",
+        "contract_failed_lore_raid_planet",
+        "contract_failed_lore_scan_debris",
+        "contract_failed_lore_sightseeing_tour",
+        "contract_failed_lore_stellar_ignition"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "lore_issued": {
+      "definitions": 25,
+      "repeated": 0,
+      "scalars": 25,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "contract_issued_lore_build_waystation",
+        "contract_issued_lore_clear_blockers",
+        "contract_issued_lore_colony_startup",
+        "contract_issued_lore_deep_scan",
+        "contract_issued_lore_diplomatic_support",
+        "contract_issued_lore_espionage",
+        "contract_issued_lore_harvest",
+        "contract_issued_lore_join_wars",
+        "contract_issued_lore_megastructure_support",
+        "contract_issued_lore_pest_control",
+        "contract_issued_lore_raid_planet",
+        "contract_issued_lore_scan_debris",
+        "contract_issued_lore_sightseeing_tour",
+        "contract_issued_lore_stellar_ignition"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "on_accept": {
+      "definitions": 23,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 23,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 1,
+      "values": [],
+      "keys": [
+        "add_mission_counter",
+        "begin_event_chain",
+        "create_point_of_interest",
+        "declare_war",
+        "enable_special_project",
+        "every_owned_ship",
+        "from",
+        "fromfrom",
+        "if",
+        "inline_script",
+        "prev",
+        "random_system"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "add_mission_counter",
+          "begin_event_chain",
+          "from",
+          "if"
+        ],
+        [
+          "begin_event_chain",
+          "create_point_of_interest",
+          "fromfrom"
+        ],
+        [
+          "begin_event_chain",
+          "declare_war",
+          "fromfrom",
+          "if"
+        ],
+        [
+          "begin_event_chain",
+          "enable_special_project",
+          "fromfrom"
+        ],
+        [
+          "begin_event_chain",
+          "enable_special_project",
+          "fromfrom",
+          "prev"
+        ],
+        [
+          "begin_event_chain",
+          "every_owned_ship",
+          "random_system"
+        ],
+        [
+          "begin_event_chain",
+          "fromfrom"
+        ],
+        [
+          "begin_event_chain",
+          "fromfrom",
+          "if",
+          "inline_script"
+        ],
+        [
+          "begin_event_chain",
+          "fromfrom",
+          "if",
+          "inline_script",
+          "prev"
+        ],
+        [
+          "begin_event_chain",
+          "fromfrom",
+          "prev"
+        ],
+        [
+          "enable_special_project",
+          "random_system"
+        ]
+      ]
+    },
+    "on_cancel": {
+      "definitions": 52,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 52,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 2,
+      "values": [],
+      "keys": [
+        "hidden_effect",
+        "if"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "hidden_effect"
+        ],
+        [
+          "if"
+        ]
+      ]
+    },
+    "on_daily": {
+      "definitions": 1,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 1,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "else",
+        "every_owned_leader",
+        "if"
+      ],
+      "keysByDefinition": [
+        [
+          "else",
+          "every_owned_leader",
+          "if"
+        ]
+      ]
+    },
+    "on_issue": {
+      "definitions": 18,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 18,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "fromfrom",
+        "remove_country_flag",
+        "set_country_flag",
+        "set_timed_country_flag"
+      ],
+      "keysByDefinition": [
+        [
+          "fromfrom",
+          "remove_country_flag"
+        ],
+        [
+          "fromfrom",
+          "set_country_flag"
+        ],
+        [
+          "set_country_flag"
+        ],
+        [
+          "set_timed_country_flag"
+        ]
+      ]
+    },
+    "on_monthly": {
+      "definitions": 16,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 16,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 1,
+      "values": [],
+      "keys": [
+        "country_event"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "country_event"
+        ]
+      ]
+    },
+    "on_stop": {
+      "definitions": 24,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 24,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 2,
+      "values": [],
+      "keys": [
+        "clear_global_event_target",
+        "end_event_chain",
+        "every_owned_leader",
+        "hidden_effect",
+        "hired_guns_modifier_cleanup",
+        "if",
+        "random_country",
+        "random_owned_leader",
+        "random_system",
+        "remove_country_flag",
+        "remove_global_flag",
+        "remove_point_of_interest"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "clear_global_event_target",
+          "end_event_chain",
+          "if",
+          "random_system",
+          "remove_country_flag",
+          "remove_global_flag"
+        ],
+        [
+          "end_event_chain",
+          "random_country",
+          "random_owned_leader",
+          "random_system",
+          "remove_country_flag",
+          "remove_point_of_interest"
+        ],
+        [
+          "every_owned_leader"
+        ],
+        [
+          "hidden_effect"
+        ],
+        [
+          "hired_guns_modifier_cleanup",
+          "if"
+        ],
+        [
+          "if"
+        ]
+      ]
+    },
+    "on_success": {
+      "definitions": 82,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 82,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 9,
+      "values": [],
+      "keys": [
+        "add_challenge_completed",
+        "add_event_chain_counter",
+        "add_monthly_resource_mult",
+        "add_resource",
+        "complete_checklist_clear_hangar_bays_effect",
+        "complete_checklist_decipher_signal_effect",
+        "complete_checklist_flush_coolant_effect",
+        "complete_checklist_harvest_resources_effect",
+        "complete_checklist_sensor_calibration_effect",
+        "complete_checklist_shield_realignment_effect",
+        "country_event",
+        "custom_tooltip",
+        "else",
+        "else_if",
+        "every_system",
+        "hidden_effect",
+        "if",
+        "random_system",
+        "set_country_flag",
+        "tooltip"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "add_challenge_completed"
+        ],
+        [
+          "add_challenge_completed",
+          "country_event"
+        ],
+        [
+          "add_challenge_completed",
+          "set_country_flag"
+        ],
+        [
+          "add_event_chain_counter",
+          "every_system",
+          "if",
+          "set_country_flag",
+          "tooltip"
+        ],
+        [
+          "add_monthly_resource_mult"
+        ],
+        [
+          "add_monthly_resource_mult",
+          "custom_tooltip",
+          "hidden_effect",
+          "set_country_flag"
+        ],
+        [
+          "add_monthly_resource_mult",
+          "hidden_effect",
+          "random_system",
+          "set_country_flag"
+        ],
+        [
+          "add_resource",
+          "custom_tooltip",
+          "else_if",
+          "hidden_effect",
+          "if"
+        ],
+        [
+          "add_resource",
+          "custom_tooltip",
+          "hidden_effect"
+        ],
+        [
+          "add_resource",
+          "hidden_effect"
+        ],
+        [
+          "complete_checklist_clear_hangar_bays_effect"
+        ],
+        [
+          "complete_checklist_decipher_signal_effect"
+        ],
+        [
+          "complete_checklist_flush_coolant_effect"
+        ],
+        [
+          "complete_checklist_harvest_resources_effect"
+        ],
+        [
+          "complete_checklist_sensor_calibration_effect"
+        ],
+        [
+          "complete_checklist_shield_realignment_effect"
+        ],
+        [
+          "custom_tooltip",
+          "else",
+          "hidden_effect",
+          "if"
+        ],
+        [
+          "custom_tooltip",
+          "hidden_effect"
+        ],
+        [
+          "if"
+        ]
+      ]
+    },
+    "picture": {
+      "definitions": 52,
+      "repeated": 0,
+      "scalars": 52,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "GFX_evt_arkship_bridge",
+        "GFX_evt_astral_rift_clock",
+        "GFX_evt_black_hole",
+        "GFX_evt_champions_forge",
+        "GFX_evt_colony_settlement",
+        "GFX_evt_debris",
+        "GFX_evt_decryption",
+        "GFX_evt_diplomatic_visit",
+        "GFX_evt_engineering_research",
+        "GFX_evt_experimental_testing",
+        "GFX_evt_galactic_community",
+        "GFX_evt_gas_giant",
+        "GFX_evt_heirs_of_the_khan",
+        "GFX_evt_infiltration_neutral",
+        "GFX_evt_megastructure_construction",
+        "GFX_evt_mercenary_enclave",
+        "GFX_evt_mining_station",
+        "GFX_evt_mysterious_signal",
+        "GFX_evt_nomad_contracts",
+        "GFX_evt_obelisk_tourists",
+        "GFX_evt_origin_stormchasers_specialproject",
+        "GFX_evt_ship_in_orbit_3",
+        "GFX_evt_ship_offloading_cargo",
+        "GFX_evt_signing",
+        "GFX_evt_spy_network",
+        "GFX_evt_spymaster",
+        "GFX_evt_surrender",
+        "GFX_evt_three_sided_deal",
+        "GFX_evt_timeworm_transcriptions",
+        "GFX_evt_tiyanki_observation",
+        "GFX_evt_waystation"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "possible_issuer": {
+      "definitions": 16,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 16,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "custom_tooltip",
+        "else_if",
+        "if"
+      ],
+      "keysByDefinition": [
+        [
+          "custom_tooltip"
+        ],
+        [
+          "custom_tooltip",
+          "else_if",
+          "if"
+        ]
+      ]
+    },
+    "possible_operator": {
+      "definitions": 27,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 27,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 1,
+      "values": [],
+      "keys": [
+        "NOT",
+        "contract_target_system_reachable",
+        "custom_tooltip",
+        "has_technology"
+      ],
+      "keysByDefinition": [
+        [],
+        [
+          "NOT",
+          "custom_tooltip"
+        ],
+        [
+          "contract_target_system_reachable",
+          "custom_tooltip"
+        ],
+        [
+          "contract_target_system_reachable",
+          "custom_tooltip",
+          "has_technology"
+        ]
+      ]
+    },
+    "potential_issuer": {
+      "definitions": 23,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 23,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "always",
+        "any_available_debris",
+        "any_country",
+        "can_build_megastructures",
+        "can_issue_contracts_trigger",
+        "contract_system_is_own",
+        "contract_system_is_own_or_neutral",
+        "contract_system_is_owned_by_other_empire",
+        "exists",
+        "from",
+        "from.owner?",
+        "fromfrom",
+        "fromfrom.owner",
+        "has_country_flag",
+        "is_gestalt",
+        "is_nomadic"
+      ],
+      "keysByDefinition": [
+        [
+          "always"
+        ],
+        [
+          "any_available_debris",
+          "can_issue_contracts_trigger"
+        ],
+        [
+          "any_country",
+          "can_issue_contracts_trigger",
+          "from.owner?"
+        ],
+        [
+          "can_build_megastructures",
+          "can_issue_contracts_trigger",
+          "contract_system_is_own"
+        ],
+        [
+          "can_issue_contracts_trigger"
+        ],
+        [
+          "can_issue_contracts_trigger",
+          "contract_system_is_own"
+        ],
+        [
+          "can_issue_contracts_trigger",
+          "contract_system_is_own",
+          "from"
+        ],
+        [
+          "can_issue_contracts_trigger",
+          "contract_system_is_own_or_neutral"
+        ],
+        [
+          "can_issue_contracts_trigger",
+          "contract_system_is_owned_by_other_empire"
+        ],
+        [
+          "can_issue_contracts_trigger",
+          "contract_system_is_owned_by_other_empire",
+          "fromfrom.owner"
+        ],
+        [
+          "can_issue_contracts_trigger",
+          "contract_system_is_owned_by_other_empire",
+          "fromfrom.owner",
+          "is_nomadic"
+        ],
+        [
+          "contract_system_is_own"
+        ],
+        [
+          "contract_system_is_own",
+          "fromfrom"
+        ],
+        [
+          "contract_system_is_own",
+          "is_gestalt"
+        ],
+        [
+          "exists",
+          "has_country_flag"
+        ]
+      ]
+    },
+    "potential_operator": {
+      "definitions": 18,
+      "repeated": 0,
+      "scalars": 0,
+      "blocks": 18,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [
+        "NOT",
+        "OR",
+        "always",
+        "benefits_from_waystation_network",
+        "has_technology"
+      ],
+      "keysByDefinition": [
+        [
+          "NOT"
+        ],
+        [
+          "NOT",
+          "OR"
+        ],
+        [
+          "NOT",
+          "benefits_from_waystation_network",
+          "has_technology"
+        ],
+        [
+          "NOT",
+          "has_technology"
+        ],
+        [
+          "always"
+        ]
+      ]
+    },
+    "small_picture": {
+      "definitions": 18,
+      "repeated": 0,
+      "scalars": 18,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "GFX_contract_build_waystation_small",
+        "GFX_contract_clear_blockers_small",
+        "GFX_contract_colony_startup_small",
+        "GFX_contract_deep_scan_small",
+        "GFX_contract_diplomatic_support_small",
+        "GFX_contract_espionage_support_small",
+        "GFX_contract_host_cfl_tournament_small",
+        "GFX_contract_join_war_small",
+        "GFX_contract_megastructure_support_small",
+        "GFX_contract_pest_control_small",
+        "GFX_contract_prisoner_transport_small",
+        "GFX_contract_raid_planet_small",
+        "GFX_contract_scan_debris_small",
+        "GFX_contract_sightseeing_tour_small",
+        "GFX_contract_stellar_ignition_small"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "time_to_accept": {
+      "definitions": 23,
+      "repeated": 0,
+      "scalars": 23,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [
+        "100",
+        "360"
+      ],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    },
+    "time_to_complete": {
+      "definitions": 2,
+      "repeated": 0,
+      "scalars": 2,
+      "blocks": 0,
+      "bareValues": 0,
+      "bareBlocks": 0,
+      "emptyBlocks": 0,
+      "values": [],
+      "keys": [],
+      "keysByDefinition": [
+        []
+      ]
+    }
+  }
+}

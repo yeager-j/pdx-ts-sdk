@@ -1,0 +1,9 @@
+content_test_relic_hesperides = {
+	portrait = GFX_relic_ancient_sword
+	possible = {
+		always = yes
+	}
+	active_effect = {
+		set_country_flag = content_test_hesperides_activated
+	}
+}

@@ -735,6 +735,38 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
     },
   ],
   [
+    "mission.counter",
+    {
+      shape: "structMap",
+      nestedTypeName: "MissionCounterDefinition",
+      reason:
+        "Mission counters have the same enum-keyed map shape as event-chain counters: each " +
+        "engine-visible counter name owns an optional localisation.max block. CWT declares the " +
+        "same nested shape at missions.cwt:146-152, and the Stellaris 4.4.6 corpus records 51 " +
+        "missions that use it. Counter names are not content ids, take no mod prefix, and have " +
+        "no meaningful order.",
+    },
+  ],
+  [
+    "mission.sound",
+    {
+      optional: true,
+      reason:
+        "missions.cwt:245 calls this field optional and says it defaults to yes, while the " +
+        "missing cardinality annotation would otherwise require an author to restate the default.",
+    },
+  ],
+  [
+    "relic.ai_weight",
+    {
+      scope: "country",
+      reason:
+        "CWT omits a scope for this weight block, but all 56 Stellaris 4.4.6 relic weights " +
+        "use country triggers such as has_origin, has_resource, is_at_war, and " +
+        "count_owned_leader. Relic activation already runs in country scope.",
+    },
+  ],
+  [
     "technology.prerequisites",
     {
       shape: "valueList",

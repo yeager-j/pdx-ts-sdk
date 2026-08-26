@@ -721,7 +721,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["country", "mission"] },
     signature:
-      "addMissionCounter(args: { mission: MissionRef | string; counter: string; amount: ScriptValue }): void;",
+      "addMissionCounter(args: { mission: MissionRef | string; counter: MissionCounter; amount: ScriptValue }): void;",
     docs: [
       "Increments (or decrements with negative values) a mission counter for the scoped country by a specific amount",
       "",
@@ -14921,7 +14921,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["country"] },
     signature:
-      "setMissionCounter(args: { mission: MissionRef | string; counter: string; amount: ScriptValue }): void;",
+      "setMissionCounter(args: { mission: MissionRef | string; counter: MissionCounter; amount: ScriptValue }): void;",
     docs: [
       "Sets a mission counter for the scoped country to a specific amount",
       "",
