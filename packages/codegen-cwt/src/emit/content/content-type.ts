@@ -53,6 +53,7 @@ import { constArray, member as renderMember } from "../../render/writer.ts";
 import {
   localisationMembers,
   localisationMetadata,
+  localisationRefType,
   planLocalisation,
   type LocalisationPlan,
 } from "./localisation.ts";
@@ -89,6 +90,12 @@ export interface ContentEmission {
   readonly fieldsConstant: string;
   /** Name of the registry's generated localisation descriptor table. */
   readonly localisationConstant: string;
+  /**
+   * Name of the registry's generated `loc` reference type, or `null` where the
+   * registry declares no localisation slots and its items carry the shared
+   * empty surface instead.
+   */
+  readonly locTypeName: string | null;
   /** Top-level fields represented by the authoring interface. */
   readonly emittedFields: readonly EmittedField[];
   /**
@@ -788,12 +795,14 @@ function contentPublicTypes(
   typeName: string,
   parameter: ScopeParameter | null,
   patchable: boolean,
-  repeatedStructTypes: readonly string[]
+  repeatedStructTypes: readonly string[],
+  locTypeName: string | null
 ): string[] {
   return [
     `${typeName}Def`,
     `${typeName}Fields`,
     `Defined${typeName}`,
+    ...(locTypeName === null ? [] : [locTypeName]),
     ...(parameter === null ? [] : [parameter.typeName]),
     ...(parameter?.declaredFrom === undefined ? [] : [parameter.declaredFrom.typeName]),
     ...(patchable ? [`${typeName}Patch`, `Patched${typeName}`, `${typeName}PatchItem`] : []),
@@ -947,6 +956,11 @@ function contentTypeCode(
     "  /** Full content id, including the mod prefix. */\n" +
     "  id: Id;\n" +
     "}\n\n" +
+    // A registry with no declared slots emits no type: its items carry the
+    // shared empty surface, so there is nothing per-registry to name.
+    (localisationPlan.entries.length === 0
+      ? ""
+      : localisationRefType(emitter, type, typeName, localisationPlan)) +
     `export type Defined${typeName}<Id extends string = string> = ` +
     `${emitter.use("DefinedContent")}<\n` +
     `  ${JSON.stringify(type.name)},\n` +
@@ -1053,6 +1067,7 @@ export function emitContentType(
     return lineA < lineB ? -1 : lineA > lineB ? 1 : 0;
   });
   const collapsedRows = [...localisationPlan.aliases, ...draft.localisationAliases];
+  const locTypeName = localisationPlan.entries.length === 0 ? null : `${names.typeName}Loc`;
   return {
     code,
     typeName: names.typeName,
@@ -1060,10 +1075,12 @@ export function emitContentType(
       names.typeName,
       parameter,
       patchable,
-      draft.repeatedStructTypes
+      draft.repeatedStructTypes,
+      locTypeName
     ),
     fieldsConstant: names.fieldsConstant,
     localisationConstant: names.localisationConstant,
+    locTypeName,
     emittedFields: draft.emittedFields,
     nestedEmittedFields: draft.nestedEmittedFields,
     corpusDescents: draft.corpusDescents,

@@ -2,7 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/missions.cwt
 
-import type { LocalizedText } from "../authoring/localization.ts";
+import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { SpriteRef } from "./refs.ts";
@@ -33,6 +33,18 @@ export interface MissionCategoryDef<Id extends string = string> extends MissionC
   /** Full content id, including the mod prefix. */
   id: Id;
 }
+
+/**
+ * The localization keys one `mission_category` mints, as references.
+ * Every slot is present whether or not the definition supplied its text:
+ * the key follows from the id alone.
+ */
+export type MissionCategoryLoc = {
+  /** The `<id>` key. */
+  readonly name: LocalizationRef;
+  /** The `<id>_short` key. */
+  readonly short: LocalizationRef;
+};
 
 export type DefinedMissionCategory<Id extends string = string> = DefinedContent<
   "mission_category",

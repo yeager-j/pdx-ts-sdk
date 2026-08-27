@@ -71,6 +71,18 @@ export interface CasusBelliDef<Id extends string = string> extends CasusBelliFie
   id: Id;
 }
 
+/**
+ * The localization keys one `casus_belli` mints, as references.
+ * Every slot is present whether or not the definition supplied its text:
+ * the key follows from the id alone.
+ */
+export type CasusBelliLoc = {
+  /** The `casus_belli_<id>` key. */
+  readonly name: LocalizationRef;
+  /** The `casus_belli_<id>_acquire_hint` key. */
+  readonly hint: LocalizationRef;
+};
+
 export type DefinedCasusBelli<Id extends string = string> = DefinedContent<
   "casus_belli",
   CasusBelliDef<Id>

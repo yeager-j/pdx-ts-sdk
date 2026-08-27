@@ -416,6 +416,20 @@ export interface SituationTypeDef<Id extends string = string> extends SituationT
   id: Id;
 }
 
+/**
+ * The localization keys one `situation_type` mints, as references.
+ * Every slot is present whether or not the definition supplied its text:
+ * the key follows from the id alone.
+ */
+export type SituationTypeLoc = {
+  /** The `<id>` key. */
+  readonly name: LocalizationRef;
+  /** The `<id>_type` key. */
+  readonly typeName: LocalizationRef;
+  /** The `<id>_desc` key. */
+  readonly desc: LocalizationRef;
+};
+
 export type DefinedSituationType<Id extends string = string> = DefinedContent<
   "situation_type",
   SituationTypeDef<Id>

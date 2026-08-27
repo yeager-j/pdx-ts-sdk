@@ -252,6 +252,22 @@ export interface MegastructureDef<Id extends string = string> extends Megastruct
   id: Id;
 }
 
+/**
+ * The localization keys one `megastructure` mints, as references.
+ * Every slot is present whether or not the definition supplied its text:
+ * the key follows from the id alone.
+ */
+export type MegastructureLoc = {
+  /** The `<id>` key. */
+  readonly name: LocalizationRef;
+  /** The `<id>_DESC` key. */
+  readonly desc: LocalizationRef;
+  /** The `<id>_MEGASTRUCTURE_DETAILS` key. */
+  readonly details: LocalizationRef;
+  /** The `<id>_CONSTRUCTION_INFO_DELAYED` key. */
+  readonly delayedInfo: LocalizationRef;
+};
+
 export type DefinedMegastructure<Id extends string = string> = DefinedContent<
   "megastructure",
   MegastructureDef<Id>

@@ -2,7 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/section_templates.cwt
 
-import type { LocalizedText } from "../authoring/localization.ts";
+import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { EconomicResourceBlock, ModifierClosure, WeightBlock } from "../content/types.ts";
@@ -111,6 +111,16 @@ export interface SectionTemplateDef<Id extends string = string> extends SectionT
   /** Full content id, including the mod prefix. */
   id: Id;
 }
+
+/**
+ * The localization keys one `section_template` mints, as references.
+ * Every slot is present whether or not the definition supplied its text:
+ * the key follows from the id alone.
+ */
+export type SectionTemplateLoc = {
+  /** The `<id>` key. */
+  readonly name: LocalizationRef;
+};
 
 export type DefinedSectionTemplate<Id extends string = string> = DefinedContent<
   "section_template",

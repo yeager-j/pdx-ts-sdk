@@ -2,7 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/agreements.cwt
 
-import type { LocalizedText } from "../authoring/localization.ts";
+import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { WeightBlock, WithFrom } from "../content/types.ts";
@@ -176,6 +176,20 @@ export interface AgreementPresetDef<Id extends string = string> extends Agreemen
   /** Full content id, including the mod prefix. */
   id: Id;
 }
+
+/**
+ * The localization keys one `agreement_preset` mints, as references.
+ * Every slot is present whether or not the definition supplied its text:
+ * the key follows from the id alone.
+ */
+export type AgreementPresetLoc = {
+  /** The `<id>` key. */
+  readonly name: LocalizationRef;
+  /** The `<id>_desc` key. */
+  readonly desc: LocalizationRef;
+  /** The `<id>_flavor_desc` key. */
+  readonly flavor: LocalizationRef;
+};
 
 export type DefinedAgreementPreset<Id extends string = string> = DefinedContent<
   "agreement_preset",

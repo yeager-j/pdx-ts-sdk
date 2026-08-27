@@ -348,6 +348,18 @@ export interface TechnologyDef<Id extends string = string> extends TechnologyFie
   id: Id;
 }
 
+/**
+ * The localization keys one `technology` mints, as references.
+ * Every slot is present whether or not the definition supplied its text:
+ * the key follows from the id alone.
+ */
+export type TechnologyLoc = {
+  /** The `<id>` key. */
+  readonly name: LocalizationRef;
+  /** The `<id>_desc` key. */
+  readonly desc: LocalizationRef;
+};
+
 export type DefinedTechnology<Id extends string = string> = DefinedContent<
   "technology",
   TechnologyDef<Id>

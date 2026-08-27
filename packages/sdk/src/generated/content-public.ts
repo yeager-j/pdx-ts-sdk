@@ -47,25 +47,29 @@
  * `packages/codegen-cwt/src/policy/public-surface.ts` is the only place a
  * further generated type becomes public.
  */
-export type { AgendaDef, AgendaFields, DefinedAgenda } from "./agenda.ts";
+export type { AgendaDef, AgendaFields, AgendaLoc, DefinedAgenda } from "./agenda.ts";
 export type {
   AgreementPresetDef,
   AgreementPresetFields,
+  AgreementPresetLoc,
   DefinedAgreementPreset,
 } from "./agreement-preset.ts";
 export type {
   AmbientObjectDef,
   AmbientObjectFields,
+  AmbientObjectLoc,
   DefinedAmbientObject,
 } from "./ambient-object.ts";
 export type {
   ArchaeologicalSiteTypeDef,
   ArchaeologicalSiteTypeFields,
+  ArchaeologicalSiteTypeLoc,
   DefinedArchaeologicalSiteType,
 } from "./archaeological-site-type.ts";
 export type {
   AscensionPerkCategoryDef,
   AscensionPerkCategoryFields,
+  AscensionPerkCategoryLoc,
   AscensionPerkCategoryPatch,
   AscensionPerkCategoryPatchItem,
   DefinedAscensionPerkCategory,
@@ -74,63 +78,91 @@ export type {
 export type {
   AscensionPerkDef,
   AscensionPerkFields,
+  AscensionPerkLoc,
   AscensionPerkSwapFields,
   DefinedAscensionPerk,
 } from "./ascension-perk.ts";
 export type {
   BombardmentStanceDef,
   BombardmentStanceFields,
+  BombardmentStanceLoc,
   DefinedBombardmentStance,
 } from "./bombardment-stance.ts";
 export type {
   BuildingDef,
   BuildingFields,
+  BuildingLoc,
   BuildingPatch,
   BuildingPatchItem,
   DefinedBuilding,
   PatchedBuilding,
 } from "./building.ts";
-export type { CasusBelliDef, CasusBelliFields, DefinedCasusBelli } from "./casus-belli.ts";
+export type {
+  CasusBelliDef,
+  CasusBelliFields,
+  CasusBelliLoc,
+  DefinedCasusBelli,
+} from "./casus-belli.ts";
 export type {
   CivicOrOriginDef,
   CivicOrOriginFields,
+  CivicOrOriginLoc,
   DefinedCivicOrOrigin,
 } from "./civic-or-origin.ts";
-export type { ComponentSetDef, ComponentSetFields, DefinedComponentSet } from "./component-set.ts";
+export type {
+  ComponentSetDef,
+  ComponentSetFields,
+  ComponentSetLoc,
+  DefinedComponentSet,
+} from "./component-set.ts";
 export type {
   SpriteFleetOrderButtonGroundSupportName,
   SpriteTextIconName,
 } from "./content-capability.ts";
-export type { CouncilorDef, CouncilorFields, DefinedCouncilor } from "./councilor.ts";
+export type { CouncilorDef, CouncilorFields, CouncilorLoc, DefinedCouncilor } from "./councilor.ts";
 export type {
   CountryShipOfSizeLimitDef,
   CountryShipOfSizeLimitFields,
   DefinedCountryShipOfSizeLimit,
 } from "./country-ship-of-size-limit.ts";
-export type { CrisisLevelDef, CrisisLevelFields, DefinedCrisisLevel } from "./crisis-level.ts";
+export type {
+  CrisisLevelDef,
+  CrisisLevelFields,
+  CrisisLevelLoc,
+  DefinedCrisisLevel,
+} from "./crisis-level.ts";
 export type {
   CrisisObjectiveDef,
   CrisisObjectiveFields,
+  CrisisObjectiveLoc,
   DefinedCrisisObjective,
 } from "./crisis-objective.ts";
 export type { CrisisPathDef, CrisisPathFields, DefinedCrisisPath } from "./crisis-path.ts";
-export type { DecisionDef, DecisionFields, DecisionScope, DefinedDecision } from "./decision.ts";
+export type {
+  DecisionDef,
+  DecisionFields,
+  DecisionLoc,
+  DecisionScope,
+  DefinedDecision,
+} from "./decision.ts";
 export type {
   DefinedEconomicCategory,
   EconomicCategoryDef,
   EconomicCategoryFields,
 } from "./economic-category.ts";
-export type { DefinedEdict, EdictDef, EdictFields } from "./edict.ts";
+export type { DefinedEdict, EdictDef, EdictFields, EdictLoc } from "./edict.ts";
 export type {
   DefinedEventChain,
   EventChainCounterDefinition,
   EventChainDef,
   EventChainFields,
+  EventChainLoc,
 } from "./event-chain.ts";
 export type {
   DefinedGlobalShipDesign,
   GlobalShipDesignDef,
   GlobalShipDesignFields,
+  GlobalShipDesignLoc,
 } from "./global-ship-design.ts";
 export type {
   GovernmentTriggerBlock,
@@ -142,20 +174,27 @@ export type {
   GraphicalCultureDef,
   GraphicalCultureFields,
 } from "./graphical-culture.ts";
-export type { DefinedJob, JobDef, JobFields } from "./job.ts";
+export type { DefinedJob, JobDef, JobFields, JobLoc } from "./job.ts";
 export type {
   DefinedMegastructure,
   MegastructureDef,
   MegastructureFields,
+  MegastructureLoc,
   MegastructurePatch,
   MegastructurePatchItem,
   PatchedMegastructure,
 } from "./megastructure.ts";
-export type { DefinedMenacePerk, MenacePerkDef, MenacePerkFields } from "./menace-perk.ts";
+export type {
+  DefinedMenacePerk,
+  MenacePerkDef,
+  MenacePerkFields,
+  MenacePerkLoc,
+} from "./menace-perk.ts";
 export type {
   DefinedMissionCategory,
   MissionCategoryDef,
   MissionCategoryFields,
+  MissionCategoryLoc,
 } from "./mission-category.ts";
 export type {
   DefinedMission,
@@ -165,6 +204,7 @@ export type {
   MissionDescIssuer,
   MissionDescOperator,
   MissionFields,
+  MissionLoc,
   MissionLocationScope,
   MissionScope,
 } from "./mission.ts";
@@ -173,6 +213,7 @@ export type {
   DefinedOpinionModifier,
   OpinionModifierDef,
   OpinionModifierFields,
+  OpinionModifierLoc,
 } from "./opinion-modifier.ts";
 export type {
   DefinedPdxmesh,
@@ -183,23 +224,26 @@ export type {
 } from "./pdxmesh.ts";
 export type { DefinedPdxparticle, PdxparticleDef, PdxparticleFields } from "./pdxparticle.ts";
 export type { PlanetInitializerFields } from "./planet-initializer.ts";
-export type { DefinedRelic, RelicDef, RelicFields } from "./relic.ts";
-export type { DefinedResource, ResourceDef, ResourceFields } from "./resource.ts";
+export type { DefinedRelic, RelicDef, RelicFields, RelicLoc } from "./relic.ts";
+export type { DefinedResource, ResourceDef, ResourceFields, ResourceLoc } from "./resource.ts";
 export type { DefinedScriptedLoc, ScriptedLocDef, ScriptedLocFields } from "./scripted-loc.ts";
 export type {
   DefinedScriptedModifier,
   ScriptedModifierDef,
   ScriptedModifierFields,
+  ScriptedModifierLoc,
 } from "./scripted-modifier.ts";
 export type {
   DefinedSectionTemplate,
   SectionTemplateDef,
   SectionTemplateFields,
+  SectionTemplateLoc,
 } from "./section-template.ts";
 export type {
   DefinedShipSize,
   ShipSizeDef,
   ShipSizeFields,
+  ShipSizeLoc,
   ShipSizeSectionSlots,
 } from "./ship-size.ts";
 export type {
@@ -208,6 +252,7 @@ export type {
   SituationStageFields,
   SituationTypeDef,
   SituationTypeFields,
+  SituationTypeLoc,
 } from "./situation-type.ts";
 export type {
   DefinedSolarSystemInitializer,
@@ -218,12 +263,18 @@ export type {
   DefinedSpecialProject,
   SpecialProjectDef,
   SpecialProjectFields,
+  SpecialProjectLoc,
   SpecialProjectLocationScope,
   SpecialProjectRequirements,
   SpecialProjectScope,
   SpecialProjectTriggeredRequirement,
 } from "./special-project.ts";
-export type { DefinedSpeciesClass, SpeciesClassDef, SpeciesClassFields } from "./species-class.ts";
+export type {
+  DefinedSpeciesClass,
+  SpeciesClassDef,
+  SpeciesClassFields,
+  SpeciesClassLoc,
+} from "./species-class.ts";
 export type {
   DefinedSpriteType,
   SpriteTypeAnimation,
@@ -239,18 +290,21 @@ export type {
   DefinedStaticModifier,
   StaticModifierDef,
   StaticModifierFields,
+  StaticModifierLoc,
   StaticModifierScope,
 } from "./static-modifier.ts";
 export type {
   DefinedStrikeCraftComponentTemplate,
   StrikeCraftComponentTemplateDef,
   StrikeCraftComponentTemplateFields,
+  StrikeCraftComponentTemplateLoc,
 } from "./strike-craft-component-template.ts";
 export type {
   DefinedTechnology,
   PatchedTechnology,
   TechnologyDef,
   TechnologyFields,
+  TechnologyLoc,
   TechnologyPatch,
   TechnologyPatchItem,
 } from "./technology.ts";
@@ -258,21 +312,25 @@ export type {
   DefinedTraditionCategory,
   TraditionCategoryDef,
   TraditionCategoryFields,
+  TraditionCategoryLoc,
 } from "./tradition-category.ts";
 export type {
   DefinedTradition,
   TraditionDef,
   TraditionFields,
+  TraditionLoc,
   TraditionSwapFields,
 } from "./tradition.ts";
 export type {
   DefinedUtilityComponentTemplate,
   UtilityComponentTemplateDef,
   UtilityComponentTemplateFields,
+  UtilityComponentTemplateLoc,
 } from "./utility-component-template.ts";
-export type { DefinedWarGoal, WarGoalDef, WarGoalFields } from "./war-goal.ts";
+export type { DefinedWarGoal, WarGoalDef, WarGoalFields, WarGoalLoc } from "./war-goal.ts";
 export type {
   DefinedWeaponComponentTemplate,
   WeaponComponentTemplateDef,
   WeaponComponentTemplateFields,
+  WeaponComponentTemplateLoc,
 } from "./weapon-component-template.ts";

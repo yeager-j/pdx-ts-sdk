@@ -22,14 +22,16 @@ import type {
   MintedContentId,
 } from "../generated/content-capability.ts";
 import type { ScopeName } from "../generated/scopes.ts";
-import type {
-  SituationApproachFields,
-  SituationStageFields,
-  SituationTypeDef,
+import {
+  SITUATION_TYPE_LOCALISATION,
+  type SituationApproachFields,
+  type SituationStageFields,
+  type SituationTypeDef,
 } from "../generated/situation-type.ts";
 import type { ComplexTriggerModifierWithLoc, ModifierWithLoc } from "../script/effects/types.ts";
 import type { TypedRef } from "../script/scalar.ts";
 import type { SituationTrigger } from "../script/triggers.ts";
+import { contentLocalizationRefs } from "./authoring.ts";
 import { createContentHandle, type ContentHandleBase } from "./handle.ts";
 import type { ContentItem, WeightBlockRow, WeightBlockWithLocOperations } from "./types.ts";
 
@@ -401,6 +403,7 @@ export function defineSituationType<
     type: "situation_type",
     id: def.id,
     def: rest as SituationTypeDef<Id>,
+    loc: contentLocalizationRefs(def.id, SITUATION_TYPE_LOCALISATION),
     targetScope: targetScope as T,
   };
 }

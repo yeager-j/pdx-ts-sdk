@@ -2,7 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/modifiers.cwt
 
-import type { LocalizedText } from "../authoring/localization.ts";
+import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { WeightBlock, WithFrom } from "../content/types.ts";
@@ -84,6 +84,16 @@ export interface OpinionModifierDef<Id extends string = string> extends OpinionM
   /** Full content id, including the mod prefix. */
   id: Id;
 }
+
+/**
+ * The localization keys one `opinion_modifier` mints, as references.
+ * Every slot is present whether or not the definition supplied its text:
+ * the key follows from the id alone.
+ */
+export type OpinionModifierLoc = {
+  /** The `<id>` key. */
+  readonly name: LocalizationRef;
+};
 
 export type DefinedOpinionModifier<Id extends string = string> = DefinedContent<
   "opinion_modifier",

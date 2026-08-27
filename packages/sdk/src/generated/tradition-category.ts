@@ -56,6 +56,18 @@ export interface TraditionCategoryDef<Id extends string = string> extends Tradit
   id: Id;
 }
 
+/**
+ * The localization keys one `tradition_category` mints, as references.
+ * Every slot is present whether or not the definition supplied its text:
+ * the key follows from the id alone.
+ */
+export type TraditionCategoryLoc = {
+  /** The `<id>` key. */
+  readonly name: LocalizationRef;
+  /** The `<id>_desc` key. */
+  readonly desc: LocalizationRef;
+};
+
 export type DefinedTraditionCategory<Id extends string = string> = DefinedContent<
   "tradition_category",
   TraditionCategoryDef<Id>

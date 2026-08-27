@@ -1772,11 +1772,20 @@ describe("generated content definers", () => {
   });
 
   it("preserves a definition's literal id, and registers nothing", () => {
+    // `loc` is minted from the registry's own slot table rather than spelled
+    // out per registry, so an item's references and the keys the fold
+    // registers for the same definition come from one derivation (SDK-305).
     expect(definers).toContain(
       "export function defineTechnology<const Id extends string>(\n" +
         "  def: TechnologyDef<Id>\n" +
         '): ContentItem<"technology", TechnologyDef<Id>> {\n' +
-        '  return { itemKind: "content", type: "technology", id: def.id, def };\n' +
+        "  return {\n" +
+        '    itemKind: "content",\n' +
+        '    type: "technology",\n' +
+        "    id: def.id,\n" +
+        "    def,\n" +
+        "    loc: contentLocalizationRefs(def.id, TECHNOLOGY_LOCALISATION),\n" +
+        "  };\n" +
         "}"
     );
     // No collection, no item array, nothing pushed: a definer is a function

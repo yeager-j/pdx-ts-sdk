@@ -2,27 +2,28 @@ import { serialize } from "@pdx-ts/pdxscript";
 import { describe, expect, it } from "vitest";
 
 import { modifierEntries, triggeredModifierBlock } from "../src/content/blocks.ts";
+import {
+  defineEconomicCategory,
+  defineScriptedModifier,
+  type ScriptedModifierItem,
+} from "../src/generated/content-definers.ts";
 import type { JobRef } from "../src/generated/refs.ts";
 
 describe("job-derived modifier recorder", () => {
   it("emits owned scripted and economic modifier keys", () => {
-    const scripted = {
-      itemKind: "content" as const,
-      type: "scripted_modifier" as const,
+    // `defineScriptedModifier` widens `category` back to the whole union; the
+    // capability method is what narrows it, and the recorder reads the narrowed
+    // form.
+    const scripted = defineScriptedModifier({
       id: "mymod_efficiency",
-      def: { id: "mymod_efficiency", category: "country" as const },
-    };
-    const category = {
-      itemKind: "content" as const,
-      type: "economic_category" as const,
+      category: "country",
+    }) as ScriptedModifierItem<"country">;
+    const category = defineEconomicCategory({
       id: "mymod_expeditions",
-      def: {
-        id: "mymod_expeditions",
-        generateAddModifiers: ["cost"] as const,
-        generateMultModifiers: ["upkeep"] as const,
-        triggeredCostModifier: [{ key: "mymod_unused_triggered", modifierTypes: [] }] as const,
-      },
-    };
+      generateAddModifiers: ["cost"],
+      generateMultModifiers: ["upkeep"],
+      triggeredCostModifier: [{ key: "mymod_unused_triggered", modifierTypes: [] }],
+    });
     const entries = modifierEntries((modifier) => {
       modifier.scripted(scripted).set(0.2);
       modifier.economic(category).resource("energy").cost.add(3);

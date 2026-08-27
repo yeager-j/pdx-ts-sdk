@@ -4,6 +4,7 @@
  */
 
 import type { PureMod } from "../compiler/model.ts";
+import { defineSolarSystemInitializer } from "../generated/content-definers.ts";
 import type { SolarSystemInitializerDef } from "../generated/solar-system-initializer.ts";
 import { inspectSolarSystem, type SolarSystemInspection } from "./inspect.ts";
 
@@ -29,14 +30,11 @@ export function inspectSolarSystems(mod: PureMod): ReadonlyMap<string, SolarSyst
       continue;
     }
     for (const defined of group.defined) {
+      // Rebuilt through the definer rather than assembled here: an item is
+      // more than its body, and a second spelling of one would drift.
       inspections.set(
         defined.id,
-        inspectSolarSystem({
-          itemKind: "content",
-          type: "solar_system_initializer",
-          id: defined.id,
-          def: defined.def as SolarSystemInitializerDef,
-        })
+        inspectSolarSystem(defineSolarSystemInitializer(defined.def as SolarSystemInitializerDef))
       );
     }
   }

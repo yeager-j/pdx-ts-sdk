@@ -2,7 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/strategic_resources.cwt
 
-import type { LocalizedText } from "../authoring/localization.ts";
+import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { WeightBlock } from "../content/types.ts";
@@ -85,6 +85,18 @@ export interface ResourceDef<Id extends string = string> extends ResourceFields 
   /** Full content id, including the mod prefix. */
   id: Id;
 }
+
+/**
+ * The localization keys one `resource` mints, as references.
+ * Every slot is present whether or not the definition supplied its text:
+ * the key follows from the id alone.
+ */
+export type ResourceLoc = {
+  /** The `<id>` key. */
+  readonly name: LocalizationRef;
+  /** The `<id>_desc` key. */
+  readonly desc: LocalizationRef;
+};
 
 export type DefinedResource<Id extends string = string> = DefinedContent<
   "resource",

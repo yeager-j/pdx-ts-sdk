@@ -116,6 +116,62 @@ counts from `0` in the order you wrote them.
 To point one of these fields at a key that already exists, pass a reference
 rather than text. That is the only meaning a bare string does _not_ have here.
 
+## Reference the keys a definition mints
+
+Every content item exposes its own generated keys as references, one per
+localization slot the registry declares, under `loc`:
+
+```ts
+const glory = mod.resource("glory", { name: "Glory", category: "other" });
+
+glory.loc.name.key; // "crystal_resonance_resource_glory"
+glory.loc.desc.key; // "crystal_resonance_resource_glory_desc"
+```
+
+A reference goes wherever a key goes: into another definition's key-naming
+field, or into display text through the `loc` tag. Do not rebuild a key from
+the id by hand — only a `name` slot happens to equal its id, and `desc` and
+every pattern slot do not.
+
+Events expose the same thing. `title` and `desc` are there only when the event
+supplied that text, and `options` follows the order the options were written:
+
+```ts
+const contact = mod.namespace("story").country(1, {
+  title: "First Contact",
+  options: [{ name: { english: "Answer.", key: "answer" } }],
+});
+
+contact.loc.title?.key; // "crystal_resonance_story.1.name"
+contact.loc.options[0].name.key; // "crystal_resonance_story.1.answer"
+```
+
+Every declared slot has a reference whether or not its text was ever supplied,
+because the key follows from the id alone. Naming a slot you left empty ships a
+key with no entry behind it, which the game displays as the key itself. Slots
+on a nested repeated entry — a technology swap's own name — are not exposed.
+
+### Embed one definition's text in another with `loc`
+
+The `loc` tagged template builds display text that shows another key's text
+inside it. A reference becomes the game's `$key$` variable; a string or a
+number is written as it stands:
+
+```ts
+import { loc } from "@pdx-ts/sdk";
+
+mod.ascensionPerk("ambition", {
+  name: "Boundless Ambition",
+  desc: loc`Allows the accumulation of §Y${glory.loc.name}§! by completing §HAmbition Objectives§!`,
+});
+```
+
+The tag is deliberately narrow. Colours, icons, and every other piece of game
+markup stay text you write yourself, exactly as in an untagged string — there
+is no formatting API to learn. Anything interpolated that is not a reference, a
+string, or a number is refused, so an object cannot reach the emitted file as
+`[object Object]`.
+
 ## Create a standalone key with `mod.localization`
 
 `mod.localization` mints a key of your own, and what it returns is a reference

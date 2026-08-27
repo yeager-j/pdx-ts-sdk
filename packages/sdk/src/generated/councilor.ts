@@ -78,6 +78,18 @@ export interface CouncilorDef<Id extends string = string> extends CouncilorField
   id: Id;
 }
 
+/**
+ * The localization keys one `councilor` mints, as references.
+ * Every slot is present whether or not the definition supplied its text:
+ * the key follows from the id alone.
+ */
+export type CouncilorLoc = {
+  /** The `<id>` key. */
+  readonly name: LocalizationRef;
+  /** The `<id>_desc` key. */
+  readonly desc: LocalizationRef;
+};
+
 export type DefinedCouncilor<Id extends string = string> = DefinedContent<
   "councilor",
   CouncilorDef<Id>

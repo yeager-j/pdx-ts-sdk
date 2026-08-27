@@ -36,17 +36,21 @@ export type { Feature, ModItem, ModItemInput, PlacedItem } from "./authoring/fea
 export type { AssetFileInput, AssetFileItem, AssetTreeInput } from "./authoring/assets.ts";
 export type { ComponentTagItem } from "./authoring/component-tags.ts";
 export {
+  loc,
   LOCALIZATION_LANGUAGES,
   type LocalizationItem,
   type LocalizationLanguage,
   type LocalizationRef,
+  type LocalizationRefs,
   type LocalizationReplacementText,
   type LocalizationReplacements,
   type LocalizationText,
   type LocalizationTranslations,
   type LocalizedText,
   type LocalizedTextRecord,
+  type LocInterpolation,
   type MintedLocalizationKey,
+  type NoLocalizationRefs,
   type ReplacementLocalizationItem,
 } from "./authoring/localization.ts";
 export { external } from "./authoring/external.ts";

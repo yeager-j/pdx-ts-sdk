@@ -11,12 +11,18 @@ import type {
   IdProfile,
   MintedContentId,
 } from "../generated/content-capability.ts";
-import type { MissionDef, MissionFields, MissionLocationScope } from "../generated/mission.ts";
+import {
+  MISSION_LOCALISATION,
+  type MissionDef,
+  type MissionFields,
+  type MissionLocationScope,
+} from "../generated/mission.ts";
 import type {
   EventChainRef,
   MissionCategoryContractRef,
   MissionCategoryRef,
 } from "../generated/refs.ts";
+import { contentLocalizationRefs } from "./authoring.ts";
 import { createContentHandle, type ContentHandleBase } from "./handle.ts";
 import type { ContentItem } from "./types.ts";
 
@@ -88,6 +94,7 @@ export function defineMission<
     type: "mission",
     id: def.id,
     def: stored as MissionDef<Id, never>,
+    loc: contentLocalizationRefs(def.id, MISSION_LOCALISATION),
     locationScope: locationScope as L,
   };
 }

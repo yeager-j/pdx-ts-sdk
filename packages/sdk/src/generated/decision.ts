@@ -109,6 +109,18 @@ export interface DecisionDef<
   id: Id;
 }
 
+/**
+ * The localization keys one `decision` mints, as references.
+ * Every slot is present whether or not the definition supplied its text:
+ * the key follows from the id alone.
+ */
+export type DecisionLoc = {
+  /** The `<id>` key. */
+  readonly name: LocalizationRef;
+  /** The `<id>_desc` key. */
+  readonly desc: LocalizationRef;
+};
+
 export type DefinedDecision<Id extends string = string> = DefinedContent<
   "decision",
   DecisionDef<Id>

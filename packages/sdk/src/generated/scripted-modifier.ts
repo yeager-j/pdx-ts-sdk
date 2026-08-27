@@ -2,7 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/scripted_modifiers.cwt
 
-import type { LocalizedText } from "../authoring/localization.ts";
+import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { ScriptedModifierCategory } from "./enums.ts";
@@ -45,6 +45,16 @@ export interface ScriptedModifierDef<Id extends string = string> extends Scripte
   /** Full content id, including the mod prefix. */
   id: Id;
 }
+
+/**
+ * The localization keys one `scripted_modifier` mints, as references.
+ * Every slot is present whether or not the definition supplied its text:
+ * the key follows from the id alone.
+ */
+export type ScriptedModifierLoc = {
+  /** The `mod_<id>` key. */
+  readonly name: LocalizationRef;
+};
 
 export type DefinedScriptedModifier<Id extends string = string> = DefinedContent<
   "scripted_modifier",

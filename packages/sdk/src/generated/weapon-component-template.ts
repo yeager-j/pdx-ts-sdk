@@ -568,6 +568,16 @@ export interface WeaponComponentTemplateDef<
   id: Id;
 }
 
+/**
+ * The localization keys one `weapon_component_template` mints, as references.
+ * Every slot is present whether or not the definition supplied its text:
+ * the key follows from the id alone.
+ */
+export type WeaponComponentTemplateLoc = {
+  /** The `<id>` key. */
+  readonly name: LocalizationRef;
+};
+
 export type DefinedWeaponComponentTemplate<Id extends string = string> = DefinedContent<
   "weapon_component_template",
   WeaponComponentTemplateDef<Id>
