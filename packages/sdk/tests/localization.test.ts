@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { createMod, render, type LocalizationText } from "../src/index.ts";
+import {
+  createMod,
+  render,
+  type LocalizationReplacementText,
+  type LocalizationText,
+} from "../src/index.ts";
 
 function capability(prefix = "localization_test") {
   return createMod({
@@ -168,6 +173,52 @@ describe("standalone localization authoring", () => {
     expect(files.get("localisation/replace/french/localization_test_crisis_l_french.yml")).toBe(
       '﻿l_french:\n crisis.2010.a:0 "Réfléchissez."\n'
     );
+  });
+
+  it("emits only the supplied languages for partial replacements", () => {
+    const mod = capability();
+    const replacement = mod.replaceLocalization("crisis.2010.a", {
+      french: "Réfléchissez.",
+    });
+    const files = render(mod.compile([mod.feature("crisis", [replacement])]));
+
+    expect(files.get("localisation/replace/french/localization_test_crisis_l_french.yml")).toBe(
+      '﻿l_french:\n crisis.2010.a:0 "Réfléchissez."\n'
+    );
+    expect(files.has("localisation/replace/english/localization_test_crisis_l_english.yml")).toBe(
+      false
+    );
+  });
+
+  it("rejects empty replacement language records", () => {
+    const mod = capability();
+
+    expect(() => mod.replaceLocalization("empty_replacement", {})).toThrow(
+      "A replacement must supply at least one language"
+    );
+  });
+
+  it("keeps bare replacement strings English-only", () => {
+    const mod = capability();
+    const replacement = mod.replaceLocalization("crisis.2010.a", "Reconsider.");
+    const files = render(mod.compile([mod.feature("crisis", [replacement])]));
+
+    expect(files.get("localisation/replace/english/localization_test_crisis_l_english.yml")).toBe(
+      '﻿l_english:\n crisis.2010.a:0 "Reconsider."\n'
+    );
+    expect(files.has("localisation/replace/french/localization_test_crisis_l_french.yml")).toBe(
+      false
+    );
+  });
+
+  it("rejects unsupported replacement languages", () => {
+    const mod = capability();
+
+    expect(() =>
+      mod.replaceLocalization("unknown_language", {
+        klingon: "Qapla'",
+      } as unknown as LocalizationReplacementText)
+    ).toThrow('Unsupported localization language "klingon"');
   });
 
   it("keeps deliberate replacements separate from ordinary localization", () => {

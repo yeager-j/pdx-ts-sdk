@@ -27,6 +27,12 @@ export type LocalizationTranslations = Readonly<
 /** English shorthand or an explicitly translated localization value. */
 export type LocalizationText = string | LocalizationTranslations;
 
+/** One or more explicitly translated values used when replacing existing text. */
+export type LocalizationReplacements = Readonly<Partial<Record<LocalizationLanguage, string>>>;
+
+/** English shorthand or a replacement language map with at least one supplied value. */
+export type LocalizationReplacementText = string | LocalizationReplacements;
+
 /**
  * A language record for a text position whose localization key the SDK derives
  * rather than the author spelling it, with an optional pin for that key.
@@ -65,10 +71,10 @@ export interface ResolvedLocalizedText {
   readonly key?: string;
 }
 
-/** One localization key and every language's text for it, before a file is chosen. */
+/** One localization key and its supplied language text, before a file is chosen. */
 export interface KeyedLocalization {
   readonly key: string;
-  readonly translations: LocalizationTranslations;
+  readonly translations: LocalizationReplacements;
 }
 
 /** The complete localization key minted from a mod prefix and author-chosen suffix. */
@@ -121,8 +127,8 @@ export interface ReplacementLocalizationItem<
   readonly key: Key;
   /** Runtime ownership proof used when the item is placed in a feature. */
   readonly prefix: P;
-  /** English plus every explicitly supplied replacement translation. */
-  readonly translations: LocalizationTranslations;
+  /** Every explicitly supplied replacement translation. */
+  readonly translations: LocalizationReplacements;
 }
 
 const LOCALIZATION_KEY_PATTERN = /^[A-Za-z0-9_][A-Za-z0-9_.\-']*$/;
@@ -140,18 +146,31 @@ function assertExactOrdinaryLocalizationKey(key: string): void {
 function assertLanguageRecord(
   languages: Readonly<Record<string, unknown>>
 ): asserts languages is LocalizationTranslations {
+  assertLanguageNamesAndValues(languages);
+  if (typeof languages["english"] !== "string") {
+    throw new Error('Localization language records must include an "english" string');
+  }
+}
+
+function assertLanguageNamesAndValues(languages: Readonly<Record<string, unknown>>): void {
   for (const language of Object.keys(languages)) {
     if (!languageSet.has(language)) {
       throw new Error(`Unsupported localization language "${language}"`);
     }
   }
-  if (typeof languages["english"] !== "string") {
-    throw new Error('Localization language records must include an "english" string');
-  }
   for (const [language, value] of Object.entries(languages)) {
     if (typeof value !== "string") {
       throw new Error(`Localization text for "${language}" must be a string`);
     }
+  }
+}
+
+function assertReplacementLanguageRecord(
+  languages: Readonly<Record<string, unknown>>
+): asserts languages is LocalizationReplacements {
+  assertLanguageNamesAndValues(languages);
+  if (Object.keys(languages).length === 0) {
+    throw new Error("A replacement must supply at least one language");
   }
 }
 
@@ -174,8 +193,9 @@ function resolveTranslations(text: LocalizationText): LocalizationTranslations {
  * Validates authored display text and separates its key pin from its languages.
  *
  * Use this wherever the SDK derives the localization key itself. `mod.localization`
- * and `mod.replaceLocalization` take {@link LocalizationText} instead: their key is
- * an explicit argument, so a pin there would have nothing to pin.
+ * takes {@link LocalizationText}, while `mod.replaceLocalization` takes
+ * {@link LocalizationReplacementText}: their key is an explicit argument, so a pin there would
+ * have nothing to pin.
  */
 export function resolveLocalizedText(text: LocalizedText): ResolvedLocalizedText {
   if (typeof text === "string") {
@@ -278,11 +298,22 @@ export function localizationFor<const P extends string>(prefix: P): Localization
   return localization;
 }
 
+function resolveReplacementTranslations(
+  text: LocalizationReplacementText
+): LocalizationReplacements {
+  if (typeof text === "string") {
+    return Object.freeze({ english: text });
+  }
+  assertTextRecord(text);
+  assertReplacementLanguageRecord(text);
+  return Object.freeze({ ...text });
+}
+
 /** Creates a prefix-owned item that deliberately replaces an exact existing key. */
 export function createReplacementLocalizationItem<const P extends string, const Key extends string>(
   prefix: P,
   key: Key,
-  text: LocalizationText
+  text: LocalizationReplacementText
 ): ReplacementLocalizationItem<P, Key> {
   if (!LOCALIZATION_KEY_PATTERN.test(key)) {
     throw new Error(
@@ -295,6 +326,6 @@ export function createReplacementLocalizationItem<const P extends string, const 
     layer: "replace",
     key,
     prefix,
-    translations: resolveTranslations(text),
+    translations: resolveReplacementTranslations(text),
   });
 }

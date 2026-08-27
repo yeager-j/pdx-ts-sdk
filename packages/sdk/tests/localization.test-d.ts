@@ -3,6 +3,7 @@ import { describe, expectTypeOf, it } from "vitest";
 import {
   createMod,
   type LocalizationItem,
+  type LocalizationReplacements,
   type LocalizedText,
   type LocalizedTextRecord,
   type MintedLocalizationKey,
@@ -64,6 +65,14 @@ describe("standalone localization types", () => {
       ReplacementLocalizationItem<"localization_types", "crisis.2010.a">
     >();
     expectTypeOf(replacement.key).toEqualTypeOf<"crisis.2010.a">();
+
+    const frenchOnly: LocalizationReplacements = { french: "Réfléchissez." };
+    const partialReplacement = mod.replaceLocalization("crisis.2010.french", frenchOnly);
+    expectTypeOf(partialReplacement).toEqualTypeOf<
+      ReplacementLocalizationItem<"localization_types", "crisis.2010.french">
+    >();
+    // @ts-expect-error — standalone localization records need English as their base text.
+    mod.localization("partial_not_allowed", frenchOnly);
 
     mod.localization("english_only", "English only");
     mod.localization("unknown_language", {
