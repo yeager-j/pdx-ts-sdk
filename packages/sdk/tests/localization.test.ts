@@ -193,9 +193,9 @@ describe("standalone localization authoring", () => {
   it("rejects empty replacement language records", () => {
     const mod = capability();
 
-    expect(() => mod.replaceLocalization("empty_replacement", {})).toThrow(
-      "A replacement must supply at least one language"
-    );
+    expect(() =>
+      mod.replaceLocalization("empty_replacement", {} as unknown as LocalizationReplacementText)
+    ).toThrow("A replacement must supply at least one language");
   });
 
   it("keeps bare replacement strings English-only", () => {

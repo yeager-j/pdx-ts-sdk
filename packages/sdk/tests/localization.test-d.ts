@@ -66,11 +66,17 @@ describe("standalone localization types", () => {
     >();
     expectTypeOf(replacement.key).toEqualTypeOf<"crisis.2010.a">();
 
+    const englishOnly = mod.replaceLocalization("crisis.2010.english", {
+      english: "Reconsider.",
+    });
+    expectTypeOf(englishOnly.translations).toMatchTypeOf<LocalizationReplacements>();
     const frenchOnly: LocalizationReplacements = { french: "Réfléchissez." };
     const partialReplacement = mod.replaceLocalization("crisis.2010.french", frenchOnly);
     expectTypeOf(partialReplacement).toEqualTypeOf<
       ReplacementLocalizationItem<"localization_types", "crisis.2010.french">
     >();
+    // @ts-expect-error — replacement language records must supply at least one language.
+    mod.replaceLocalization("empty_replacement", {});
     // @ts-expect-error — standalone localization records need English as their base text.
     mod.localization("partial_not_allowed", frenchOnly);
 

@@ -27,8 +27,14 @@ export type LocalizationTranslations = Readonly<
 /** English shorthand or an explicitly translated localization value. */
 export type LocalizationText = string | LocalizationTranslations;
 
+type AtLeastOneLanguage = {
+  [L in LocalizationLanguage]: Readonly<
+    Partial<Record<LocalizationLanguage, string>> & Record<L, string>
+  >;
+}[LocalizationLanguage];
+
 /** One or more explicitly translated values used when replacing existing text. */
-export type LocalizationReplacements = Readonly<Partial<Record<LocalizationLanguage, string>>>;
+export type LocalizationReplacements = AtLeastOneLanguage;
 
 /** English shorthand or a replacement language map with at least one supplied value. */
 export type LocalizationReplacementText = string | LocalizationReplacements;
