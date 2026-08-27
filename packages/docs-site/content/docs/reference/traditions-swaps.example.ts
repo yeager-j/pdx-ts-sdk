@@ -78,7 +78,7 @@ const adaptiveHorizons = mod.traditionCategory("adaptive_horizons", {
   conditionalDesc: [
     {
       trigger: hasAuthority("auth_machine_intelligence"),
-      text: machineCategoryDescription.key,
+      text: machineCategoryDescription,
     },
   ],
   treeTemplate: "tree_12_11",

@@ -7,7 +7,7 @@ content_test_agenda_machine_futures = {
 	allow = {
 		has_authority = auth_machine_intelligence
 	}
-	initial_effect_custom_loc = content_test_agenda_machine_futures_initial
+	initial_effect_custom_loc = content_test_agenda_machine_futures_initial_effect_custom_loc
 	init_effect = {
 		set_country_flag = content_test_machine_agenda_started
 	}

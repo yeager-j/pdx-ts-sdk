@@ -17,6 +17,7 @@
 
 import type { PdxOp, PdxScalar } from "@pdx-ts/pdxscript";
 
+import { isLocalizationRef, type LocalizationRef } from "../authoring/localization.ts";
 import type { ScopeValue } from "./effects/types.ts";
 import { scriptValueScalar, type ScriptValue } from "./trigger-core.ts";
 
@@ -44,7 +45,8 @@ export interface TypedRef<T extends string> {
  * either. A scope value (`ctx.self`, an event target) is a reference too, and
  * rules overload against those as freely: `is_planet_class` takes a
  * `<planet_class>` or any scope the game coerces to a planet. It lowers to its
- * path rather than an id, which is the only reason the two are told apart.
+ * path rather than an id, which is the only reason the two are told apart. A
+ * localization reference is the third kind, and lowers to its key.
  *
  * `ScopeValue`'s `kind` discriminant settles that distinction rather than the
  * presence of a `path` property. A content reference is structurally open, so
@@ -52,11 +54,14 @@ export interface TypedRef<T extends string> {
  * and must still serialize the id the game requires.
  */
 export function refId<T extends string | number | boolean>(
-  value: TypedRef<string> | ScopeValue | T
+  value: TypedRef<string> | ScopeValue | LocalizationRef | T
 ): string | T {
   if ((typeof value === "object" && value !== null) || typeof value === "function") {
     if ("kind" in value && value.kind === "scope-ref") {
       return value.path;
+    }
+    if (isLocalizationRef(value)) {
+      return value.key;
     }
     return (value as TypedRef<string>).id;
   }
@@ -64,9 +69,9 @@ export function refId<T extends string | number | boolean>(
 }
 
 /** Anything that lowers to one PDXScript scalar. */
-export type ScalarArg = string | number | boolean | TypedRef<string> | ScopeValue;
+export type ScalarArg = string | number | boolean | TypedRef<string> | ScopeValue | LocalizationRef;
 
-export type ScalarObjectKind = "scope-ref" | "typed-ref";
+export type ScalarObjectKind = "scope-ref" | "typed-ref" | "localization-ref";
 
 /** The generated block contract needed to distinguish an effect's call forms. */
 export type EffectBlockDiscriminator =
@@ -86,6 +91,9 @@ function isDeclaredScalarObject(
     return false;
   }
   if (scalarObjectKinds.includes("scope-ref") && "kind" in value && value.kind === "scope-ref") {
+    return true;
+  }
+  if (scalarObjectKinds.includes("localization-ref") && isLocalizationRef(value)) {
     return true;
   }
   return scalarObjectKinds.includes("typed-ref") && "id" in value && typeof value.id === "string";

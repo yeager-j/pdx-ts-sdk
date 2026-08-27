@@ -2,7 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/ship_sizes.cwt
 
-import type { LocalizedText } from "../authoring/localization.ts";
+import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { EconomicResourceBlock, ModifierClosure, WeightBlock } from "../content/types.ts";
@@ -294,7 +294,8 @@ export interface ShipSizeFields {
   isEntropyConduit?: boolean;
   scalesWithPlanet?: boolean;
   canBeInspected?: boolean;
-  preCommunicationsName?: string;
+  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
+  preCommunicationsName?: LocalizedText | LocalizationRef;
   /** reference to other ship_sizes + _entity, handled by manual validator */
   entity?: ModelEntityRef | string;
   /**
@@ -402,12 +403,19 @@ export interface ShipSizeFields {
   roleBackground?: SpriteRef | string;
   onClickSound?: SoundEffectRef | string;
   mapIconOverride?: ShipSizeMapIconOverride;
-  customStateLocPrefix?: string;
+  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
+  customStateLocPrefix?: LocalizedText | LocalizationRef;
   isBioShip?: boolean;
-  /** Only when ship_size subtype `bio_ship` applies. */
-  shipFamilyName?: string;
-  /** Only when ship_size subtype `bio_ship` applies. */
-  growthStageDescriptor?: string;
+  /**
+   * Only when ship_size subtype `bio_ship` applies.
+   * Names a localization key: pass a reference, or display text the SDK keys and emits for you.
+   */
+  shipFamilyName?: LocalizedText | LocalizationRef;
+  /**
+   * Only when ship_size subtype `bio_ship` applies.
+   * Names a localization key: pass a reference, or display text the SDK keys and emits for you.
+   */
+  growthStageDescriptor?: LocalizedText | LocalizationRef;
   /** Only when ship_size subtype `bio_ship` applies. */
   bioshipGrowthProgressRequired?: number;
   /** Only when ship_size subtype `bio_ship` applies. */

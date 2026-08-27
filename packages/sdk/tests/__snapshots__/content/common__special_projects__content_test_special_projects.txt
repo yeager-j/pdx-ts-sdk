@@ -30,7 +30,7 @@ special_project = {
 	tech_department = physics_technology
 	event_scope = planet_event
 	desc = {
-		text = content_test_crystal_survey_condition
+		text = content_test_special_project_crystal_survey_desc_0_text
 		trigger = {
 			always = yes
 		}
@@ -40,7 +40,7 @@ special_project = {
 		research_station = yes
 	}
 	triggered_requirement = {
-		text = content_test_crystal_survey_requirement
+		text = content_test_special_project_crystal_survey_triggered_requirement_text
 		count = 1
 		trigger = {
 			always = yes

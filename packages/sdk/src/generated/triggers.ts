@@ -15,6 +15,7 @@ import {
   type PdxOp,
 } from "@pdx-ts/pdxscript";
 
+import type { LocalizationRef } from "../authoring/localization.ts";
 import type { ContentRefUse } from "../references.ts";
 import type { ScopeValue } from "../script/effects/types.ts";
 import {
@@ -6438,9 +6439,9 @@ export function customProgress<S extends ScopeName = ScopeName>(
 
 /** The arguments `customTooltip` takes, as the rules declare them. */
 export type CustomTooltipArgs<S extends ScopeName = ScopeName> = {
-  text?: "" | string;
-  failText?: "default" | string;
-  successText?: string;
+  text?: "" | string | LocalizationRef;
+  failText?: "default" | string | LocalizationRef;
+  successText?: string | LocalizationRef;
   /** The nested conditions, written bare inside the block beside its named keys. */
   conditions: Trigger<S>;
 };
@@ -6455,37 +6456,38 @@ export type CustomTooltipArgs<S extends ScopeName = ScopeName> = {
  * 	<triggers>
  * }
  * ```
+ * A localization key: a bare string is the key itself, and a reference is unwrapped to its key. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
  */
-export function customTooltip(value: string): Trigger<ScopeName>;
+export function customTooltip(value: string | LocalizationRef): Trigger<ScopeName>;
 export function customTooltip<S extends ScopeName = ScopeName>(
   args: CustomTooltipArgs<S>
 ): Trigger<S>;
 export function customTooltip<S extends ScopeName>(
-  value: string | CustomTooltipArgs<S>
+  value: string | LocalizationRef | CustomTooltipArgs<S>
 ): Trigger<ScopeName> {
-  if (isStructuredValue(value, [])) {
+  if (isStructuredValue(value, ["localization-ref"])) {
     const args = value;
     const entries: PdxEntry[] = [];
     const refs: ContentRefUse[] = [];
     if (args.text !== undefined) {
-      entries.push(kv("text", args.text));
+      entries.push(kv("text", refId(args.text)));
     }
     if (args.failText !== undefined) {
-      entries.push(kv("fail_text", args.failText));
+      entries.push(kv("fail_text", refId(args.failText)));
     }
     if (args.successText !== undefined) {
-      entries.push(kv("success_text", args.successText));
+      entries.push(kv("success_text", refId(args.successText)));
     }
     entries.push(...args.conditions.entries);
     refs.push(...args.conditions.refs);
     return trigger([block("custom_tooltip", entries)], refs);
   }
-  return trigger([kv("custom_tooltip", value)]);
+  return trigger([kv("custom_tooltip", refId(value))]);
 }
 
 /** The arguments `customTooltipFail` takes, as the rules declare them. */
 export interface CustomTooltipFailArgs<S extends ScopeName = ScopeName> {
-  text: string;
+  text: string | LocalizationRef;
   /** The nested conditions, written bare inside the block beside its named keys. */
   conditions: Trigger<S>;
 }
@@ -6498,13 +6500,14 @@ export interface CustomTooltipFailArgs<S extends ScopeName = ScopeName> {
  * 	<triggers>
  * }
  * ```
+ * A localization key: a bare string is the key itself, and a reference is unwrapped to its key. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
  */
 export function customTooltipFail<S extends ScopeName = ScopeName>(
   args: CustomTooltipFailArgs<S>
 ): Trigger<S> {
   const entries: PdxEntry[] = [];
   const refs: ContentRefUse[] = [];
-  entries.push(kv("text", args.text));
+  entries.push(kv("text", refId(args.text)));
   entries.push(...args.conditions.entries);
   refs.push(...args.conditions.refs);
   return trigger([block("custom_tooltip_fail", entries)], refs);
@@ -6512,7 +6515,7 @@ export function customTooltipFail<S extends ScopeName = ScopeName>(
 
 /** The arguments `customTooltipSuccess` takes, as the rules declare them. */
 export interface CustomTooltipSuccessArgs<S extends ScopeName = ScopeName> {
-  text: string;
+  text: string | LocalizationRef;
   /** The nested conditions, written bare inside the block beside its named keys. */
   conditions: Trigger<S>;
 }
@@ -6525,13 +6528,14 @@ export interface CustomTooltipSuccessArgs<S extends ScopeName = ScopeName> {
  * 	<triggers>
  * }
  * ```
+ * A localization key: a bare string is the key itself, and a reference is unwrapped to its key. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
  */
 export function customTooltipSuccess<S extends ScopeName = ScopeName>(
   args: CustomTooltipSuccessArgs<S>
 ): Trigger<S> {
   const entries: PdxEntry[] = [];
   const refs: ContentRefUse[] = [];
-  entries.push(kv("text", args.text));
+  entries.push(kv("text", refId(args.text)));
   entries.push(...args.conditions.entries);
   refs.push(...args.conditions.refs);
   return trigger([block("custom_tooltip_success", entries)], refs);
@@ -7022,7 +7026,7 @@ export function factionApproval(op: PdxOp, value: ScriptValue): Trigger<"pop_fac
 
 /** The arguments `failText` takes, as the rules declare them. */
 export type FailTextArgs<S extends ScopeName = ScopeName> = {
-  text: string;
+  text: string | LocalizationRef;
   /** The nested conditions, written bare inside the block beside its named keys. */
   conditions: Trigger<S>;
 };
@@ -7035,20 +7039,23 @@ export type FailTextArgs<S extends ScopeName = ScopeName> = {
  * 	<triggers>
  * }
  * ```
+ * A localization key: a bare string is the key itself, and a reference is unwrapped to its key. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
  */
-export function failText(value: string): Trigger<ScopeName>;
+export function failText(value: string | LocalizationRef): Trigger<ScopeName>;
 export function failText<S extends ScopeName = ScopeName>(args: FailTextArgs<S>): Trigger<S>;
-export function failText<S extends ScopeName>(value: string | FailTextArgs<S>): Trigger<ScopeName> {
-  if (isStructuredValue(value, [])) {
+export function failText<S extends ScopeName>(
+  value: string | LocalizationRef | FailTextArgs<S>
+): Trigger<ScopeName> {
+  if (isStructuredValue(value, ["localization-ref"])) {
     const args = value;
     const entries: PdxEntry[] = [];
     const refs: ContentRefUse[] = [];
-    entries.push(kv("text", args.text));
+    entries.push(kv("text", refId(args.text)));
     entries.push(...args.conditions.entries);
     refs.push(...args.conditions.refs);
     return trigger([block("fail_text", entries)], refs);
   }
-  return trigger([kv("fail_text", value)]);
+  return trigger([kv("fail_text", refId(value))]);
 }
 
 /** Checks Fallen / Awakened Empire strength scaling in game setup */
@@ -8375,9 +8382,12 @@ export function hasClaim(
  * ```
  * has_climate = dry
  * ```
+ * A localization key: a bare string is the key itself, and a reference is unwrapped to its key. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
  */
-export function hasClimate(value: string): Trigger<"carrier" | "colony" | "planet" | "ship"> {
-  return trigger([kv("has_climate", value)]);
+export function hasClimate(
+  value: string | LocalizationRef
+): Trigger<"carrier" | "colony" | "planet" | "ship"> {
+  return trigger([kv("has_climate", refId(value))]);
 }
 
 /**
@@ -18740,7 +18750,7 @@ export function subjects(op: PdxOp, value: ScriptValue): Trigger<"country"> {
 
 /** The arguments `successText` takes, as the rules declare them. */
 export type SuccessTextArgs<S extends ScopeName = ScopeName> = {
-  text: string;
+  text: string | LocalizationRef;
   /** The nested conditions, written bare inside the block beside its named keys. */
   conditions?: Trigger<S>;
 };
@@ -18753,24 +18763,25 @@ export type SuccessTextArgs<S extends ScopeName = ScopeName> = {
  * 	<triggers>
  * }
  * ```
+ * A localization key: a bare string is the key itself, and a reference is unwrapped to its key. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
  */
-export function successText(value: string): Trigger<ScopeName>;
+export function successText(value: string | LocalizationRef): Trigger<ScopeName>;
 export function successText<S extends ScopeName = ScopeName>(args: SuccessTextArgs<S>): Trigger<S>;
 export function successText<S extends ScopeName>(
-  value: string | SuccessTextArgs<S>
+  value: string | LocalizationRef | SuccessTextArgs<S>
 ): Trigger<ScopeName> {
-  if (isStructuredValue(value, [])) {
+  if (isStructuredValue(value, ["localization-ref"])) {
     const args = value;
     const entries: PdxEntry[] = [];
     const refs: ContentRefUse[] = [];
-    entries.push(kv("text", args.text));
+    entries.push(kv("text", refId(args.text)));
     if (args.conditions !== undefined) {
       entries.push(...args.conditions.entries);
       refs.push(...args.conditions.refs);
     }
     return trigger([block("success_text", entries)], refs);
   }
-  return trigger([kv("success_text", value)]);
+  return trigger([kv("success_text", refId(value))]);
 }
 
 /**
@@ -18906,9 +18917,10 @@ export function terraformedBy(
  * ```
  * text = <text>
  * ```
+ * A localization key: a bare string is the key itself, and a reference is unwrapped to its key. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
  */
-export function text(value: string): Trigger<ScopeName> {
-  return trigger([kv("text", value)]);
+export function text(value: string | LocalizationRef): Trigger<ScopeName> {
+  return trigger([kv("text", refId(value))]);
 }
 
 /** The arguments `theirOpinion` takes, as the rules declare them. */

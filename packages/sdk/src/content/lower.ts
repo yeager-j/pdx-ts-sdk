@@ -259,7 +259,7 @@ function collectRefs(ctx: LoweringContext, refs: readonly ContentRefUse[], segme
  * carry a parsed occurrence of a repeated field back out unchanged beside
  * freshly authored ones.
  */
-function isPassthrough(value: unknown): value is PdxItem {
+export function isPassthrough(value: unknown): value is PdxItem {
   const kind = (value as { readonly kind?: unknown } | null)?.kind;
   if (kind === "entry" || kind === "container" || kind === "param" || kind === "param-text") {
     return true;
@@ -582,7 +582,7 @@ export function fieldEntries(
               // The entry's own id becomes the nearest enclosing identity for
               // anything nested inside it (a WeightBlock's desc keys among
               // them) — the render-side mirror of
-              // `collectRepeatedStructs`'s identical rebind.
+              // `resolveFieldTree`'s identical rebind.
               Object.entries(record).map(([id, item]) =>
                 block(id, fieldEntries(item, field.fields, childContext(ctx, field.key, id)))
               )

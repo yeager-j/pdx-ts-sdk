@@ -2,7 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/archaeology.cwt
 
-import type { LocalizedText } from "../authoring/localization.ts";
+import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { EffectBlock, WeightBlock, WithFrom } from "../content/types.ts";
@@ -11,7 +11,8 @@ import type { EventFleetRef, SituationLogCategoryRef, SpriteRef } from "./refs.t
 
 export interface ArchaeologicalSiteTypeDesc {
   trigger?: Trigger<"archaeological_site">;
-  text?: string;
+  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
+  text?: LocalizedText | LocalizationRef;
 }
 
 export const ARCHAEOLOGICAL_SITE_TYPE_DESC_FIELDS: readonly ContentField[] = [
@@ -103,7 +104,7 @@ export interface ArchaeologicalSiteTypeFields {
   /** GFX_* sprite key for the sites image */
   picture?: SpriteRef | string;
   /** Description generator for the site, with scope this=archaeological site. */
-  conditionalDesc?: string | ArchaeologicalSiteTypeDesc[];
+  conditionalDesc?: LocalizedText | LocalizationRef | ArchaeologicalSiteTypeDesc[];
   situationLogCategory?: SituationLogCategoryRef | string;
   /** Max instances of this type a galaxy can have, only checked when using 'create_archaeological_site = random' */
   maxInstances?: number;

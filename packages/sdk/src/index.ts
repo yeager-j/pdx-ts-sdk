@@ -39,6 +39,7 @@ export {
   LOCALIZATION_LANGUAGES,
   type LocalizationItem,
   type LocalizationLanguage,
+  type LocalizationRef,
   type LocalizationReplacementText,
   type LocalizationReplacements,
   type LocalizationText,
@@ -48,6 +49,7 @@ export {
   type MintedLocalizationKey,
   type ReplacementLocalizationItem,
 } from "./authoring/localization.ts";
+export { external } from "./authoring/external.ts";
 export type { BuildOptions, ModConfig } from "./compiler/config.ts";
 export type {
   CompiledFeatureInput,

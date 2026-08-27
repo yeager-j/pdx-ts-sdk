@@ -120,8 +120,8 @@ flow. Make the effect safe against duplicate execution where practical, and do
 not use it as a migration hook for countries that selected the perk in an
 older save.
 
-Create custom tooltip text with `mod.localization(...)` and pass the returned
-`.key`.
+Write the custom tooltip text directly and the SDK keys it for you, or pass a
+`mod.localization(...)` item to reuse one entry across fields.
 
 <Callout type="warn" title="Root tooltip support is narrower than Vanilla">
   Vanilla uses repeated `custom_tooltip` fields and a root-level `custom_tooltip_with_modifiers` in

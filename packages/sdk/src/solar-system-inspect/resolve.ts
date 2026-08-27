@@ -9,6 +9,11 @@
  * and `asteroidBelt.radius` is absolute from the system center.
  */
 
+import {
+  isLocalizationRef,
+  type LocalizationRef,
+  type LocalizedText,
+} from "../authoring/localization.ts";
 import type { MoonInitializerFields } from "../generated/moon-initializer.ts";
 import type { PlanetInitializerFields } from "../generated/planet-initializer.ts";
 import type { SolarSystemInitializerDef } from "../generated/solar-system-initializer.ts";
@@ -62,6 +67,14 @@ const MAX_EXPANDED_COPIES = 64;
 /** What a resolved entry stands for. `cursor` is a `class: "none"` advance. */
 export type BodyKind = "star" | "planet" | "moon" | "asteroid" | "cursor";
 
+/** The label {@link ResolvedBody.name} carries, from either authored form. */
+function bodyLabel(name: LocalizedText | LocalizationRef | undefined): string | undefined {
+  if (name === undefined || typeof name === "string") {
+    return name;
+  }
+  return isLocalizationRef(name) ? name.key : name.english;
+}
+
 /** One fixed point in the system frame, in cursor units. */
 export interface Point {
   readonly x: number;
@@ -79,6 +92,11 @@ export interface ResolvedBody {
   /** Expanded copy total for the template. */
   readonly copies: number;
   readonly kind: BodyKind;
+  /**
+   * The authored `name`, as a label: the key a reference names, or the English
+   * of display text. Text the SDK keys itself has no key yet — an initializer
+   * is inspected before it is defined.
+   */
   readonly name: string | undefined;
   readonly className: string | undefined;
   /** Identity of the sibling list this entry belongs to. */
@@ -297,7 +315,7 @@ function resolveEntry(
       copy,
       copies: count.copies,
       kind,
-      name: entry.name,
+      name: bodyLabel(entry.name),
       className,
       listId,
       indexInList: cursor.indexInList++,

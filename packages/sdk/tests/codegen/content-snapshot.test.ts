@@ -473,7 +473,7 @@ describe("content-type codegen", () => {
     // body fields — struct lowering now expresses those as ordinary members on
     // JobSwappableDataDefault, an unrelated field the loc-alias exclusion above
     // does not (and should not) suppress.
-    expect(job?.code).toContain("conditionString?: string;");
+    expect(job?.code).toContain("conditionString?: LocalizedText | LocalizationRef;");
     expect(job?.localisationAliases).toEqual([
       "job.localisation.desc (swappable_data/default/desc) has no `$` id placeholder — " +
         "not a static <id>-keyed slot, excluded",
@@ -706,7 +706,7 @@ describe("content-type codegen", () => {
     // case of the same anonymous-struct mechanism as shape 3, not a fourth shape.
     const warGoal = emissions.get("war_goal");
     expect(warGoal?.code).toContain("export interface WarGoalForbiddenPeaceOffers");
-    expect(warGoal?.code).toContain("demandSurrender?: string;");
+    expect(warGoal?.code).toContain("demandSurrender?: LocalizedText | LocalizationRef;");
     expect(warGoal?.code).not.toContain("forbiddenPeaceOffers?: WarGoalForbiddenPeaceOffers[];");
   });
 
@@ -850,7 +850,9 @@ describe("content-type codegen", () => {
     // situations' desc is also declared as a bare localisation scalar, which
     // shipped situations do write, so the renamed member is a dual of both arms.
     const situation = emissions.get("situation_type");
-    expect(situation?.code).toContain("conditionalDesc?: string | SituationTypeDesc[];");
+    expect(situation?.code).toContain(
+      "conditionalDesc?: LocalizedText | LocalizationRef | SituationTypeDesc[];"
+    );
     // The rename has to reach the arms too: the writer resolves an arm by its
     // own member name, so a single-shot replace would leave them as `desc`.
     expect(situation?.code).not.toContain('member: "desc", shape: "struct"');
@@ -1583,8 +1585,13 @@ describe("content-type codegen", () => {
     );
     expect(megastructure?.code).toContain('potential?: Trigger<"country">;');
     // `upgrade_desc` is declared twice, `localisation` and the literal `hide`;
-    // the two arms union without an overlay row.
-    expect(megastructure?.code).toContain('upgradeDesc?: string | "hide";');
+    // the two arms union without an overlay row. `hide` is an engine sentinel
+    // rather than a key, so it survives beside the two authored forms of one
+    // and rides through the resolution verbatim (SDK-303).
+    expect(megastructure?.code).toContain(
+      'upgradeDesc?: "hide" | LocalizedText | LocalizationRef;'
+    );
+    expect(megastructure?.code).toContain('locKeyLiterals: ["hide"]');
     // Every shipped megastructure is named in the build menu, so the slot is a
     // REQUIRED_LOCALISATION row and the member is not optional.
     expect(megastructure?.code).toContain("  name: LocalizedText;");
@@ -1605,7 +1612,7 @@ describe("content-type codegen", () => {
       "strike_craft_component_template",
     ]) {
       const code = emissions.get(registry)?.code;
-      expect(code).toContain("customTooltip?: string | ");
+      expect(code).toContain("customTooltip?: LocalizedText | LocalizationRef | ");
       expect(code).toContain('shape: "triggerStruct"');
       expect(code).toContain("when?: Trigger<never>;");
     }

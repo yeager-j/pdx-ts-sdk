@@ -3,7 +3,7 @@ content_test_decision_machine_ascendancy = {
 	important = yes
 	enactment_time = 360
 	custom_tooltip = {
-		success_text = content_test_machine_ascendancy_ready
+		success_text = content_test_decision_machine_ascendancy_custom_tooltip_success_text
 		always = yes
 	}
 	icon = GFX_decision_machine_ascendancy

@@ -67,6 +67,7 @@ import {
   type EventFleetRef,
   type GovernmentTriggerBlock,
   type JobRef,
+  type LocalizationRef,
   type LocalizedText,
   type MegastructureFields,
   type MegastructurePatch,
@@ -1969,14 +1970,21 @@ describe("generated content authoring types", () => {
       PrereqForCategory[] | undefined
     >();
     expectTypeOf<PrereqforDesc["diploAction"]>().toEqualTypeOf<Entry[] | undefined>();
-    expectTypeOf<Entry>().toEqualTypeOf<{ title: string; desc?: string }>();
+    expectTypeOf<Entry>().toEqualTypeOf<{
+      title: LocalizedText | LocalizationRef;
+      desc?: LocalizedText | LocalizationRef;
+    }>();
     // The same declaration one level down is its own lowering, not the
     // parent's: closing only the top level would have left 28 shipped
     // technology_swap blocks unauthorable.
     type Swap = NonNullable<TechnologyFields["technologySwap"]>[number];
     type SwapPrereqforDesc = NonNullable<Swap["prereqforDesc"]>[number];
     expectTypeOf<SwapPrereqforDesc["ship"]>().toEqualTypeOf<
-      { title: string; desc?: string }[] | undefined
+      | {
+          title: LocalizedText | LocalizationRef;
+          desc?: LocalizedText | LocalizationRef;
+        }[]
+      | undefined
     >();
     expectTypeOf<TechnologyPatch["prereqforDesc"]>().toEqualTypeOf<
       PatchInput<PrereqforDesc[]> | undefined
@@ -2578,12 +2586,16 @@ describe("generated content authoring types", () => {
         when: hasCountryFlag("country_only"),
       },
     });
+    // `text` and `fail_text` are each declared twice — once as an engine
+    // sentinel, once as `localisation` — so the sentinel stays in the union
+    // beside the two authored forms of a key (SDK-303).
     expectTypeOf<UtilityComponentTemplateFields["customTooltip"]>().toEqualTypeOf<
-      | string
+      | LocalizedText
+      | LocalizationRef
       | {
-          text?: "" | string;
-          failText?: "default" | string;
-          successText?: string;
+          text?: "" | LocalizedText | LocalizationRef;
+          failText?: "default" | LocalizedText | LocalizationRef;
+          successText?: LocalizedText | LocalizationRef;
           when?: Trigger<never>;
         }
       | undefined

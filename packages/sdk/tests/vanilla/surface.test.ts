@@ -8,6 +8,7 @@
 import { parse, serialize, withoutLines } from "@pdx-ts/pdxscript";
 import { describe, expect, it } from "vitest";
 
+import { external } from "../../src/authoring/external.ts";
 import type { ContentField } from "../../src/content/schema.ts";
 import { SwapPatchError } from "../../src/errors.ts";
 import type { AscensionPerkCategoryPatch } from "../../src/generated/ascension-perk-category.ts";
@@ -1016,42 +1017,92 @@ describe("the megastructure slice", () => {
 /**
  * Which shapes a patch may carry is a question about the *define* path: the
  * only localisation a definition mints for itself comes from
- * `ContentAuthoring`'s pre-pass, which reaches `weightBlock` desc rows and
- * `repeatedStruct` ids — and, since it descends `struct` levels, anything
- * nested inside one. Everything else a definition can hold is a key the author
- * wrote, copied verbatim by the lowering, and rides a patch unchanged.
+ * `ContentAuthoring`'s pre-pass, which reaches `weightBlock` desc rows,
+ * `repeatedStruct` ids, and every key-typed field — and, since it descends
+ * `struct` levels, anything nested inside one. A patch runs the same pre-pass
+ * against `<prefix>_<vanillaId>`. Everything else a definition can hold is a
+ * recorder's output, and rides a patch unchanged.
  */
 describe("what a patch may and may not carry", () => {
   const view = viewFromFiles({ "common/buildings/pp_buildings.txt": BUILDING_FILE });
   const refinery = view.definition("building", "building_pp_refinery");
 
-  it("carries the four building shapes that mint nothing", () => {
+  it("carries the two building shapes that mint nothing", () => {
     const emitted = serialize([
       patchBuilding(refinery, () => ({
-        // triggeredModifierBlock: `description` and `custom_tooltip` are keys,
-        // and the modifier recorder writes `name = amount` rows.
-        triggeredPlanetModifier: [
-          {
-            when: always(),
-            description: "pp_refinery_bonus_desc",
-            modifier: (m) => m.raw("planet_jobs_produces_mult", 0.4),
-          },
-        ],
         // modifierBlock: a recorder, nothing else.
         planetModifier: (m) => m.raw("planet_housing_add", 2),
         // effect: the effect recorder collects references, never localisation.
         onBuilt: (colony) => {
           colony.addModifier({ modifier: "pp_refinery_online", days: -1 });
         },
-        // struct: `triggered_desc.text` is a locKey field — a pointer at a key
-        // the author owns, not a key the SDK mints.
-        triggeredDesc: [{ trigger: always(), text: "pp_refinery_triggered_desc" }],
       })).toEntries(),
     ]);
-    expect(emitted).toContain("\t\tdescription = pp_refinery_bonus_desc\n");
     expect(emitted).toContain("\tplanet_modifier = {\n\t\tplanet_housing_add = 2\n\t}\n");
     expect(emitted).toContain("\ton_built = {\n\t\tadd_modifier = {");
-    expect(emitted).toContain("\t\ttext = pp_refinery_triggered_desc\n");
+  });
+
+  it("mints a patched definition's key-typed text under the prefixed vanilla id", () => {
+    const patched = patchBuilding(refinery, () => ({
+      // triggeredModifierBlock: `description` is a key CWT types `localisation`.
+      triggeredPlanetModifier: [
+        {
+          when: always(),
+          description: "Refined output rises.",
+          modifier: (m) => m.raw("planet_jobs_produces_mult", 0.4),
+        },
+      ],
+      // struct: `triggered_desc.text` is a key-typed field one level down.
+      triggeredDesc: [{ trigger: always(), text: "The refinery is running hot." }],
+      // A reference names a key that already exists, so it mints nothing.
+      customTooltip: external.localization("pp_refinery_existing_tooltip"),
+    }));
+    expect(patched.loc).toEqual([
+      {
+        key: "pp_building_pp_refinery_triggered_planet_modifier_0_description",
+        translations: { english: "Refined output rises." },
+      },
+      {
+        key: "pp_building_pp_refinery_triggered_desc_0_text",
+        translations: { english: "The refinery is running hot." },
+      },
+    ]);
+    const emitted = serialize([patched.toEntries()]);
+    expect(emitted).toContain(
+      "\t\tdescription = pp_building_pp_refinery_triggered_planet_modifier_0_description\n"
+    );
+    expect(emitted).toContain("\t\ttext = pp_building_pp_refinery_triggered_desc_0_text\n");
+    expect(emitted).toContain("\tcustom_tooltip = pp_refinery_existing_tooltip\n");
+  });
+
+  it("leaves a passthrough occurrence alone while an authored sibling mints", () => {
+    // Vanilla's own second `triggered_planet_modifier` rides through as the
+    // node it already is: its text, if it had any, is vanilla's and already
+    // keyed, so nothing here may re-key it.
+    const vanillaClause = refinery.body.filter(
+      (entry) => entry.key === "triggered_planet_modifier"
+    )[1]!;
+    const patched = patchBuilding(refinery, () => ({
+      triggeredPlanetModifier: [
+        vanillaClause,
+        {
+          when: always(),
+          description: "An authored clause.",
+          modifier: (m) => m.raw("planet_housing_add", 1),
+        },
+      ],
+    }));
+    expect(patched.loc).toEqual([
+      {
+        key: "pp_building_pp_refinery_triggered_planet_modifier_1_description",
+        translations: { english: "An authored clause." },
+      },
+    ]);
+    const emitted = serialize([patched.toEntries()]);
+    expect(emitted).toContain("\t\thas_modifier = pp_storm_touched\n");
+    expect(emitted).toContain(
+      "\t\tdescription = pp_building_pp_refinery_triggered_planet_modifier_1_description\n"
+    );
   });
 
   it("mints for a desc'd modifier row nested inside a struct member", () => {

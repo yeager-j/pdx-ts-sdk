@@ -95,10 +95,31 @@ options: [
 `key` is only for those anonymous positions. On a slot whose key comes from the
 definition id, it would name a key nothing reads, so the build refuses it.
 
+## Fields that name a key
+
+Some PDXScript fields hold a localization key rather than owning the text
+themselves — a `customTooltip`, a conditional `desc`. They take the same
+display text every other slot takes, and the SDK keys it for you from the
+definition id and the field, so nothing has to be named twice:
+
+```ts
+const resonanceArchive = mod.building("resonance_archive", {
+  customTooltip: "Stores discoveries made through resonance research.",
+});
+```
+
+That emits `custom_tooltip = crystal_resonance_building_resonance_archive_custom_tooltip`
+and writes the English under it. The key is built from the id and the field
+path, so editing the words never moves it. Where the field repeats, each entry
+counts from `0` in the order you wrote them.
+
+To point one of these fields at a key that already exists, pass a reference
+rather than text. That is the only meaning a bare string does _not_ have here.
+
 ## Create a standalone key with `mod.localization`
 
-Some PDXScript fields expect a localization key but do not own the text. Create
-one explicitly and pass its `.key` to that field:
+`mod.localization` mints a key of your own, and what it returns is a reference
+you can hand straight to any field that names one:
 
 ```ts
 const archiveTooltip = mod.localization("archive_tooltip", {
@@ -108,14 +129,34 @@ const archiveTooltip = mod.localization("archive_tooltip", {
 
 // The same building as before, showing only the tooltip field.
 const resonanceArchive = mod.building("resonance_archive", {
-  customTooltip: archiveTooltip.key,
+  customTooltip: archiveTooltip,
 });
 ```
 
 `mod.localization` adds the mod prefix to the name you pass, so this item owns
-the complete key `crystal_resonance_archive_tooltip`. That literal key is part
-of `.key`'s type, so you can pass it through helpers without copying the final
-string.
+the complete key `crystal_resonance_archive_tooltip`, still readable as
+`.key`. Reach for it when several fields share one entry, or when the text is
+placed in a Feature of its own.
+
+### Name a key this mod does not define
+
+Vanilla's keys, and another mod's, come from `external.localization`:
+
+```ts
+import { external } from "@pdx-ts/sdk";
+
+const resonanceArchive = mod.building("resonance_archive", {
+  customTooltip: external.localization("BUILDING_RESEARCH_LAB_1_DESC"),
+});
+```
+
+Only the key's syntax is checked: this build has no record of what vanilla
+defines, so a misspelling reaches the game, where an unresolved key shows as
+itself.
+
+Recorded script reads a bare string the other way round. A key inside a trigger
+or effect — `customTooltip("...")` — has no owning definition to key text
+against, so a string there is still the key, and a reference works as well.
 
 A string is shorthand for English-only text:
 

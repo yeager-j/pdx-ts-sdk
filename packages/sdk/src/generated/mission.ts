@@ -2,7 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/missions.cwt
 
-import type { LocalizedText } from "../authoring/localization.ts";
+import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { EffectBlock, WeightBlock, WithFrom } from "../content/types.ts";
@@ -15,7 +15,8 @@ export interface MissionDesc {
     "country",
     { readonly root: "country"; readonly from: "country" }
   >;
-  text?: string[];
+  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
+  text?: (LocalizedText | LocalizationRef)[];
 }
 
 export const MISSION_DESC_FIELDS: readonly ContentField[] = [
@@ -37,7 +38,8 @@ export interface MissionDescOperator {
     "country",
     { readonly root: "country"; readonly from: "country" }
   >;
-  text?: string[];
+  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
+  text?: (LocalizedText | LocalizationRef)[];
 }
 
 export const MISSION_DESC_OPERATOR_FIELDS: readonly ContentField[] = [
@@ -59,7 +61,8 @@ export interface MissionDescIssuer {
     "country",
     { readonly root: "country"; readonly from: "country" }
   >;
-  text?: string[];
+  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
+  text?: (LocalizedText | LocalizationRef)[];
 }
 
 export const MISSION_DESC_ISSUER_FIELDS: readonly ContentField[] = [
@@ -79,6 +82,8 @@ export const MISSION_DESC_ISSUER_FIELDS: readonly ContentField[] = [
 export interface MissionCounterDefinition {
   /** Maximum counter value shown in the mission's localized counter display. */
   max?: number;
+  /** Display text emitted to localization under this entry's own key. */
+  name?: LocalizedText;
 }
 
 export const MISSION_COUNTER_DEFINITION_FIELDS: readonly ContentField[] = [
@@ -144,18 +149,18 @@ export interface MissionFields<
    * Both desc and desc_operator can be used here, prefer the latter if there is also a desc_issuer (for example for contracts).
    * Defaults: [mission_name]_desc
    */
-  conditionalDesc?: string | MissionDesc[];
+  conditionalDesc?: LocalizedText | LocalizationRef | MissionDesc[];
   /**
    * The description of the mission in the situation log. Supports triggered descriptions.
    * Both desc and desc_operator can be used here, prefer the latter if there is also a desc_issuer (for example for contracts).
    * Defaults: [mission_name]_desc
    */
-  descOperator?: string | MissionDescOperator[];
+  descOperator?: LocalizedText | LocalizationRef | MissionDescOperator[];
   /**
    * The description of the mission in the situation log, for the issuing side. Supports triggered descriptions.
    * Default: [mission_name]_issuer_desc
    */
-  descIssuer?: string | MissionDescIssuer[];
+  descIssuer?: LocalizedText | LocalizationRef | MissionDescIssuer[];
   /**
    * The event chain this mission is part of. (Only REQUIRED for contracts)
    * Only when mission subtype `contract` applies.
@@ -173,18 +178,21 @@ export interface MissionFields<
   /**
    * Supports scripted loc.
    * Scopes: this = issuer, from = operator
+   * Names a localization key: pass a reference, or display text the SDK keys and emits for you.
    */
-  loreIssued?: string;
+  loreIssued?: LocalizedText | LocalizationRef;
   /**
    * Supports scripted loc.
    * Scopes: this = issuer, from = operator
+   * Names a localization key: pass a reference, or display text the SDK keys and emits for you.
    */
-  loreCompleted?: string;
+  loreCompleted?: LocalizedText | LocalizationRef;
   /**
    * Supports scripted loc.
    * Scopes: this = issuer, from = operator
+   * Names a localization key: pass a reference, or display text the SDK keys and emits for you.
    */
-  loreFailed?: string;
+  loreFailed?: LocalizedText | LocalizationRef;
   cost?: number;
   /** Counter to define and track what is needed for the player to complete the mission. Multiple of these can be used. */
   counter?: Readonly<Record<string, MissionCounterDefinition>>;
@@ -527,6 +535,7 @@ export const MISSION_FIELDS: readonly ContentField[] = [
     shape: "structMap",
     form: "block",
     fields: MISSION_COUNTER_DEFINITION_FIELDS,
+    localisation: [{ member: "name", pattern: "$", required: false }],
     repeated: true,
   },
   { key: "potential_issuer", member: "potentialIssuer", shape: "trigger", form: "trigger" },

@@ -79,18 +79,18 @@ be scaled through that separate game rule.
 
 The text fields have different localization behavior:
 
-| Member                       | Result                                                    |
-| ---------------------------- | --------------------------------------------------------- |
-| `name`                       | Creates localization at the civic's full id.              |
-| `desc`                       | Creates localization at `<full-id>_desc`.                 |
-| `description`                | Takes an existing key shown under **Effects**.            |
-| `negativeDescription`        | Takes an existing key shown under **Penalties**.          |
-| `customTooltip`              | Takes repeated keys that replace generated modifier text. |
-| `customTooltipWithModifiers` | Takes repeated keys shown with generated modifier text.   |
+| Member                       | Result                                               |
+| ---------------------------- | ---------------------------------------------------- |
+| `name`                       | Creates localization at the civic's full id.         |
+| `desc`                       | Creates localization at `<full-id>_desc`.            |
+| `description`                | Text shown under **Effects**.                        |
+| `negativeDescription`        | Text shown under **Penalties**.                      |
+| `customTooltip`              | Repeated text that replaces generated modifier text. |
+| `customTooltipWithModifiers` | Repeated text shown with generated modifier text.    |
 
-Create the latter four kinds of text with `mod.localization(...)` and pass the
-returned `.key`. They are references to localization; they do not accept the
-display text directly.
+Each of the latter four names a localization key. Write the display text and
+the SDK keys it for you, or pass a `mod.localization(...)` item — or
+`external.localization(...)` — to name a key that already exists.
 
 ## Reform rules
 

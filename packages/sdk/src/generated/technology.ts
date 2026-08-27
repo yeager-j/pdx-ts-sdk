@@ -2,7 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/technologies_consolidated.cwt
 
-import type { LocalizedText } from "../authoring/localization.ts";
+import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { ModifierClosure, WeightBlock } from "../content/types.ts";
@@ -18,8 +18,10 @@ import type { TechnologyCategoryRef, TechnologyRef, TechnologyTierRef } from "./
 import type { FeatureFlag, TechWeightGroup } from "./value-sets.ts";
 
 export interface TechnologyTechnologySwapPrereqforDescEntry {
-  title: string;
-  desc?: string;
+  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
+  title: LocalizedText | LocalizationRef;
+  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
+  desc?: LocalizedText | LocalizationRef;
 }
 
 export const TECHNOLOGY_TECHNOLOGY_SWAP_PREREQFOR_DESC_ENTRY_FIELDS: readonly ContentField[] = [
@@ -111,7 +113,7 @@ export const TECHNOLOGY_TECHNOLOGY_SWAP_PREREQFOR_DESC_FIELDS: readonly ContentF
 ];
 
 export interface TechnologyTechnologySwap {
-  name?: string;
+  name?: string | LocalizationRef;
   inheritIcon?: boolean;
   inheritName?: boolean;
   inheritEffects?: boolean;
@@ -124,7 +126,7 @@ export interface TechnologyTechnologySwap {
 }
 
 export const TECHNOLOGY_TECHNOLOGY_SWAP_FIELDS: readonly ContentField[] = [
-  { key: "name", member: "name", shape: "value", form: "scalar", conversion: "identity" },
+  { key: "name", member: "name", shape: "value", form: "scalar", conversion: "ref" },
   {
     key: "inherit_icon",
     member: "inheritIcon",
@@ -177,8 +179,10 @@ export const TECHNOLOGY_TECHNOLOGY_SWAP_FIELDS: readonly ContentField[] = [
 ];
 
 export interface TechnologyPrereqforDescEntry {
-  title: string;
-  desc?: string;
+  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
+  title: LocalizedText | LocalizationRef;
+  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
+  desc?: LocalizedText | LocalizationRef;
 }
 
 export const TECHNOLOGY_PREREQFOR_DESC_ENTRY_FIELDS: readonly ContentField[] = [

@@ -83,15 +83,71 @@ export interface KeyedLocalization {
   readonly translations: LocalizationReplacements;
 }
 
+declare const localizationRefBrand: unique symbol;
+
+/**
+ * A reference to one localization key, in the only form a key-typed content
+ * field accepts besides inline text.
+ *
+ * `mod.localization()` and `mod.replaceLocalization()` return references, so
+ * their result goes straight into a field that wants a key. A key this build
+ * does not define — vanilla's, or another mod's — is spelled
+ * `external.localization("key")`.
+ *
+ * The brand exists only in the type: the constructors above are the only way
+ * to obtain one, so a bare `{ key }` object cannot stand in for a key the SDK
+ * has no record of.
+ */
+export interface LocalizationRef {
+  /** Separates a key reference from authored display text at runtime. */
+  readonly refKind: "localization";
+  /** The complete emitted key. */
+  readonly key: string;
+  readonly [localizationRefBrand]: true;
+}
+
+/**
+ * Whether an authored text value is a key reference rather than display text.
+ *
+ * The runtime signature is `refKind` rather than the presence of `key`:
+ * {@link LocalizedTextRecord} carries an optional `key` of its own, which
+ * pins a derived key and is not a reference to anything.
+ */
+export function isLocalizationRef(value: unknown): value is LocalizationRef {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    (value as { readonly refKind?: unknown }).refKind === "localization"
+  );
+}
+
+/**
+ * Adds the phantom brand to a record that already carries the runtime marker.
+ *
+ * The brand has no runtime presence, so this assertion is what makes a
+ * `LocalizationRef`. Keeping it here means every reference the SDK hands out
+ * comes from a constructor in this module.
+ */
+function brandLocalizationRef<T extends { readonly refKind: "localization"; readonly key: string }>(
+  value: T
+): T & LocalizationRef {
+  return value as T & LocalizationRef;
+}
+
 /** The complete localization key minted from a mod prefix and author-chosen suffix. */
 export type MintedLocalizationKey<P extends string, Suffix extends string> = `${P}_${Suffix}`;
 
-/** An immutable standalone localization entry placed through `mod.feature()`. */
+/**
+ * An immutable standalone localization entry placed through `mod.feature()`.
+ *
+ * It is also a {@link LocalizationRef}, so it can be passed directly to any
+ * content field that names a localization key.
+ */
 export interface LocalizationItem<
   P extends string = string,
   Key extends string = string,
   ShouldPrefix extends boolean = true,
-> {
+> extends LocalizationRef {
   readonly itemKind: "localization";
   readonly layer: "ordinary";
   /** The complete emitted key. */
@@ -122,11 +178,16 @@ export interface LocalizationMethod<P extends string> {
   ): LocalizationItem<P, Key, boolean>;
 }
 
-/** An immutable, deliberate replacement of an exact existing localization key. */
+/**
+ * An immutable, deliberate replacement of an exact existing localization key.
+ *
+ * It is also a {@link LocalizationRef}: the key it rewrites is a key a content
+ * field may name.
+ */
 export interface ReplacementLocalizationItem<
   P extends string = string,
   Key extends string = string,
-> {
+> extends LocalizationRef {
   readonly itemKind: "localization";
   readonly layer: "replace";
   /** The exact existing key written without prefixing or normalization. */
@@ -140,13 +201,26 @@ export interface ReplacementLocalizationItem<
 const LOCALIZATION_KEY_PATTERN = /^[A-Za-z0-9_][A-Za-z0-9_.\-']*$/;
 const languageSet = new Set<string>(LOCALIZATION_LANGUAGES);
 
-function assertExactOrdinaryLocalizationKey(key: string): void {
+function assertExactLocalizationKey(key: string, subject: string): void {
   if (!LOCALIZATION_KEY_PATTERN.test(key)) {
     throw new Error(
-      `Exact ordinary localization key "${key}" must start with an ASCII letter, digit, or "_" ` +
+      `${subject} "${key}" must start with an ASCII letter, digit, or "_" ` +
         `and contain only ASCII letters, digits, "_", ".", "-", or "'"`
     );
   }
+}
+
+/**
+ * References a localization key by its exact spelling, validating only its
+ * syntax. Published as `external.localization`.
+ *
+ * The reference is declared rather than checked: nothing knows which keys the
+ * game or a third-party mod defines, so a misspelling reaches the shipped mod,
+ * where an unresolved key shows as itself.
+ */
+export function localizationRef(key: string): LocalizationRef {
+  assertExactLocalizationKey(key, "Localization key");
+  return brandLocalizationRef(Object.freeze({ refKind: "localization" as const, key }));
 }
 
 function assertLanguageRecord(
@@ -207,6 +281,13 @@ export function resolveLocalizedText(text: LocalizedText): ResolvedLocalizedText
   if (typeof text === "string") {
     return { translations: Object.freeze({ english: text }) };
   }
+  if (isLocalizationRef(text)) {
+    throw new Error(
+      `A localization reference ("${text.key}") was given where the SDK derives the key ` +
+        "itself, so the reference has nowhere to point. Write the display text here, or move " +
+        "the reference to a field that names a key."
+    );
+  }
   assertTextRecord(text);
   const { key, ...languages } = text;
   assertLanguageRecord(languages);
@@ -260,17 +341,20 @@ function createLocalizationItem<const P extends string, const Key extends string
       throw new Error(`Localization key "${emittedKey}" is not valid for Stellaris 4.4.6`);
     }
   } else {
-    assertExactOrdinaryLocalizationKey(key);
+    assertExactLocalizationKey(key, "Exact ordinary localization key");
     emittedKey = key;
   }
   const typedKey = emittedKey as LocalizationItem<P, Key, boolean>["key"];
-  return Object.freeze({
-    itemKind: "localization",
-    layer: "ordinary",
-    key: typedKey,
-    prefix,
-    translations: resolveTranslations(text),
-  });
+  return brandLocalizationRef(
+    Object.freeze({
+      itemKind: "localization" as const,
+      layer: "ordinary" as const,
+      refKind: "localization" as const,
+      key: typedKey,
+      prefix,
+      translations: resolveTranslations(text),
+    })
+  );
 }
 
 /** Binds standalone localization authoring to one mod prefix. */
@@ -321,17 +405,15 @@ export function createReplacementLocalizationItem<const P extends string, const 
   key: Key,
   text: LocalizationReplacementText
 ): ReplacementLocalizationItem<P, Key> {
-  if (!LOCALIZATION_KEY_PATTERN.test(key)) {
-    throw new Error(
-      `Replacement localization key "${key}" must start with an ASCII letter, digit, or "_" ` +
-        `and contain only ASCII letters, digits, "_", ".", "-", or "'"`
-    );
-  }
-  return Object.freeze({
-    itemKind: "localization",
-    layer: "replace",
-    key,
-    prefix,
-    translations: resolveReplacementTranslations(text),
-  });
+  assertExactLocalizationKey(key, "Replacement localization key");
+  return brandLocalizationRef(
+    Object.freeze({
+      itemKind: "localization" as const,
+      layer: "replace" as const,
+      refKind: "localization" as const,
+      key,
+      prefix,
+      translations: resolveReplacementTranslations(text),
+    })
+  );
 }

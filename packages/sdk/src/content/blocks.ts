@@ -640,6 +640,37 @@ export function economicResourceBlock(
   return block(key, entries);
 }
 
+/**
+ * The triggered-modifier members CWT types `localisation` (`aliases.cwt:37-65`),
+ * paired with the key each writes.
+ *
+ * One list, read by the definition walk that resolves them to keys and by the
+ * lowering below that writes those keys, so the two cannot disagree about which
+ * members carry text.
+ */
+export const TRIGGERED_MODIFIER_TEXT_MEMBERS = [
+  ["key", "key"],
+  ["notPotentialOverrideTextKey", "not_potential_override_text_key"],
+  ["description", "description"],
+  ["customTooltip", "custom_tooltip"],
+] as const satisfies readonly (readonly [keyof TriggeredModifier<ScopeName>, string])[];
+
+/**
+ * Writes a member the definition walk already resolved to a localization key.
+ * A value that is still text never reached that walk, which would ship the
+ * author's prose as a key.
+ */
+function resolvedKeyEntry(key: string, value: unknown): PdxEntry {
+  if (typeof value !== "string") {
+    throw new Error(
+      `"${key}" holds display text that no definition walk resolved to a localization key. ` +
+        "A triggered modifier authored outside a content definition has no identity to mint " +
+        "one from; pass a localization reference instead."
+    );
+  }
+  return kv(key, value);
+}
+
 export function triggeredModifierBlock(
   key: string,
   value: TriggeredModifier<ScopeName>,
@@ -651,13 +682,15 @@ export function triggeredModifierBlock(
     collectRefs(ctx, value.when.refs, `${key}.potential`);
   }
   if (value.key !== undefined) {
-    entries.push(kv("key", value.key));
+    entries.push(resolvedKeyEntry("key", value.key));
   }
   if (value.showIfNotPotential !== undefined) {
     entries.push(kv("show_if_not_potential", value.showIfNotPotential));
   }
   if (value.notPotentialOverrideTextKey !== undefined) {
-    entries.push(kv("not_potential_override_text_key", value.notPotentialOverrideTextKey));
+    entries.push(
+      resolvedKeyEntry("not_potential_override_text_key", value.notPotentialOverrideTextKey)
+    );
   }
   if (value.modifier !== undefined) {
     entries.push(
@@ -668,7 +701,7 @@ export function triggeredModifierBlock(
     entries.push(...modifierEntries(value.modifiers, (use) => collectRefs(ctx, [use], key)));
   }
   if (value.description !== undefined) {
-    entries.push(kv("description", value.description));
+    entries.push(resolvedKeyEntry("description", value.description));
   }
   if (value.descriptionParameters !== undefined) {
     entries.push(
@@ -682,7 +715,7 @@ export function triggeredModifierBlock(
     entries.push(kv("show_only_custom_tooltip", value.showOnlyCustomTooltip));
   }
   if (value.customTooltip !== undefined) {
-    entries.push(kv("custom_tooltip", value.customTooltip));
+    entries.push(resolvedKeyEntry("custom_tooltip", value.customTooltip));
   }
   entries.push(...repeatedNumbers("mult", value.mult));
   entries.push(...repeatedNumbers("multiplier", value.multiplier));

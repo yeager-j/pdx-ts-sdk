@@ -2,7 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/buildings.cwt
 
-import type { LocalizedText } from "../authoring/localization.ts";
+import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type {
@@ -26,7 +26,8 @@ import type { BuildingSet } from "./value-sets.ts";
 
 export interface BuildingDesc {
   trigger?: Trigger<"colony">;
-  text?: string;
+  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
+  text?: LocalizedText | LocalizationRef;
 }
 
 export const BUILDING_DESC_FIELDS: readonly ContentField[] = [
@@ -43,7 +44,8 @@ export const BUILDING_DESC_FIELDS: readonly ContentField[] = [
 
 export interface BuildingTriggeredDesc {
   trigger?: Trigger<"colony">;
-  text?: string;
+  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
+  text?: LocalizedText | LocalizationRef;
 }
 
 export const BUILDING_TRIGGERED_DESC_FIELDS: readonly ContentField[] = [
@@ -156,7 +158,8 @@ export interface BuildingFields {
   aiEstimateWithoutUnemployment?: boolean;
   additionalAiWeight?: number;
   aiWeightCoefficient?: number;
-  customTooltip?: string;
+  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
+  customTooltip?: LocalizedText | LocalizationRef;
 }
 
 export interface BuildingDef<Id extends string = string> extends BuildingFields {
@@ -275,7 +278,8 @@ export interface BuildingPatch {
   readonly aiEstimateWithoutUnemployment?: PatchInput<boolean>;
   readonly additionalAiWeight?: PatchInput<number>;
   readonly aiWeightCoefficient?: PatchInput<number>;
-  readonly customTooltip?: PatchInput<string>;
+  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
+  readonly customTooltip?: PatchInput<LocalizedText | LocalizationRef>;
 }
 
 /** A patched vanilla building, ready for the win engine. */

@@ -3,7 +3,12 @@
 import type { DescentNode } from "../corpus/observations.ts";
 import { isRepeated, type RuleField } from "../cwt/model.ts";
 import { camelCase, constantCase, docComment, pascalCase } from "../naming.ts";
-import { CONTENT_FIELD_DOCS, CONTENT_FIELD_OVERRIDES, FIELD_WIDENINGS } from "../overlay/index.ts";
+import {
+  CONTENT_FIELD_DOCS,
+  CONTENT_FIELD_OVERRIDES,
+  FIELD_WIDENINGS,
+  type ContentFieldOverride,
+} from "../overlay/index.ts";
 import { Emitter } from "../render/emitter.ts";
 import type { DocTable, FieldOmissionRow, MemberDocRow } from "../render/field-rows.ts";
 import { constArray, member as renderMember } from "../render/writer.ts";
@@ -279,6 +284,20 @@ function enumKeysCollideWithMembers(
  * `lowerStructMap` differ only in how they find that block and what they wrap
  * the resulting type in.
  */
+/** Naming and extra members a caller adds to the block interface it asks for. */
+interface StructShapeOptions {
+  /** Replaces the name derived from the field path. */
+  readonly typeName?: string;
+  readonly typeDocs?: readonly string[];
+  /**
+   * Adds an optional display-text member for a block the game localises under
+   * a key of its own rather than through a body field — an engine-keyed map
+   * entry, shown under its map key. It carries no field metadata, because the
+   * game reads no such key in the block.
+   */
+  readonly localisationMember?: string;
+}
+
 function structShape(
   emitter: Emitter,
   block: BlockType,
@@ -286,8 +305,7 @@ function structShape(
   path: string,
   ctx: FieldContext,
   inlineTrigger?: FieldScope,
-  typeNameOverride?: string,
-  typeDocs?: readonly string[]
+  options: StructShapeOptions = {}
 ): StructShape | null {
   const keyed = enumKeyedEntryOf(emitter, block);
   const ordinary =
@@ -299,8 +317,18 @@ function structShape(
   if (grouped.size === 0 && keyed === null) {
     return null;
   }
-  const typeName = typeNameOverride ?? pascalCase(path);
+  const typeName = options.typeName ?? pascalCase(path);
   const draft = lowerNamedStructMembers(emitter, grouped, path, ctx);
+  if (options.localisationMember !== undefined) {
+    const textType = emitter.use("LocalizedText");
+    const docs = ["Display text emitted to localization under this entry's own key."];
+    draft.members.push(`${docComment(docs, "  ")}  ${options.localisationMember}?: ${textType};\n`);
+    draft.memberDocs[options.localisationMember] = {
+      optional: true,
+      docs,
+      memberType: textType,
+    };
+  }
   if (keyed !== null) {
     const expanded = enumKeysCollideWithMembers(grouped, keyed)
       ? null
@@ -348,7 +376,7 @@ function structShape(
     docTables: [{ constant: fieldsConstant, members: draft.memberDocs }, ...draft.docTables],
     code:
       draft.extraCode.join("") +
-      docComment(typeDocs ?? []) +
+      docComment(options.typeDocs ?? []) +
       `export interface ${typeName}${generic?.declaration ?? ""} {\n` +
       draft.members.join("") +
       "}\n\n" +
@@ -372,29 +400,36 @@ export function lowerStructMap(
   name: string,
   path: string,
   ctx: FieldContext,
-  typeNameOverride?: string,
-  typeDocs?: readonly string[]
+  override: ContentFieldOverride | undefined
 ): LoweredField | null {
   const block = wildcardBlockOf(field.type);
   if (block === null) {
     return null;
   }
-  const shape = structShape(
-    emitter,
-    block,
-    name,
-    path,
-    containerContext(field, ctx),
-    undefined,
-    typeNameOverride,
-    typeDocs
-  );
+  // An entry the game shows under its own map key localises through that key
+  // and nothing else, so its slot pattern is a bare `$`.
+  const localisationMember = override?.mapKeyLocalisation === true ? "name" : undefined;
+  const shape = structShape(emitter, block, name, path, containerContext(field, ctx), undefined, {
+    typeName: override?.nestedTypeName,
+    typeDocs: override?.nestedTypeDocs,
+    localisationMember,
+  });
   if (shape === null) {
     return null;
   }
+  const localisation =
+    localisationMember === undefined
+      ? []
+      : [
+          `localisation: [{ member: ${JSON.stringify(localisationMember)}, ` +
+            `pattern: "$", required: false }]`,
+        ];
   return {
     memberType: `Readonly<Record<string, ${shape.typeName}>>`,
-    metadata: metadata(field, name, "structMap", [`fields: ${shape.fieldsConstant}`]),
+    metadata: metadata(field, name, "structMap", [
+      `fields: ${shape.fieldsConstant}`,
+      ...localisation,
+    ]),
     admits: { shape: "structMap", repeated: repeatsSiblings(field, "structMap") },
     code: shape.code,
     unsupported: shape.unsupported,

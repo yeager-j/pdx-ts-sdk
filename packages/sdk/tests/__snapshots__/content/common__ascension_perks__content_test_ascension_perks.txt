@@ -24,11 +24,11 @@ content_test_ascension_perk_machine_futures = {
 			has_authority = auth_machine_intelligence
 		}
 	}
-	custom_tooltip = content_test_machine_futures_tooltip
+	custom_tooltip = content_test_ascension_perk_machine_futures_custom_tooltip
 	tradition_swap = {
 		name = content_test_ascension_perk_machine_servitor
 		inherit_icon = yes
-		custom_tooltip = content_test_machine_servitor_tooltip
+		custom_tooltip = content_test_ascension_perk_machine_servitor_custom_tooltip_0
 		modifier = {
 			pop_happiness = 0.05
 		}

@@ -2,6 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/economic_categories.cwt
 
+import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { Trigger } from "../script/trigger-core.ts";
@@ -136,7 +137,8 @@ export interface EconomicCategoryFields {
   modifierCategory?: ScriptedModifierCategory;
   /** default: no */
   addUnscaledValueToTooltip?: boolean;
-  scaledValueKey?: string;
+  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
+  scaledValueKey?: LocalizedText | LocalizationRef;
   generateAddModifiers?: EconomicModifierCategory[];
   generateMultModifiers?: EconomicModifierCategory[];
   triggeredCostModifier?: EconomicCategoryTriggeredCostModifier[];

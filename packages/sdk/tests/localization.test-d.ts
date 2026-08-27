@@ -1,8 +1,11 @@
 import { describe, expectTypeOf, it } from "vitest";
 
+import type { TraditionFields } from "../src/generated/tradition.ts";
 import {
   createMod,
+  external,
   type LocalizationItem,
+  type LocalizationRef,
   type LocalizationReplacements,
   type LocalizedText,
   type LocalizedTextRecord,
@@ -142,6 +145,46 @@ describe("definition-attached text types", () => {
         // @ts-expect-error — `descKey` is gone; the pin rides on `desc`.
         modifiers: [{ factor: 2, desc: "Already resonant.", descKey: "resonant" }],
       },
+    });
+  });
+});
+
+describe("localization references", () => {
+  const mod = createMod({
+    name: "Localization refs",
+    prefix: "localization_refs",
+    supportedVersion: "4.4.*",
+  });
+
+  it("takes text, a language record, or a reference in a key-typed member", () => {
+    expectTypeOf<TraditionFields["customTooltip"]>().toEqualTypeOf<
+      (LocalizedText | LocalizationRef)[] | undefined
+    >();
+    mod.tradition("every_form", {
+      name: "Every form",
+      customTooltip: [
+        "Inline English.",
+        { english: "Inline English.", french: "Anglais en ligne." },
+        mod.localization("shared", "Shared."),
+        external.localization("tr_vanilla_key"),
+      ],
+    });
+  });
+
+  it("brands the reference so a bare key object cannot stand in for one", () => {
+    const owned: LocalizationRef = mod.localization("owned", "Owned.");
+    const replaced: LocalizationRef = mod.replaceLocalization("crisis.2010.a", "Replaced.");
+    expectTypeOf(owned.key).toEqualTypeOf<string>();
+    expectTypeOf(replaced.key).toEqualTypeOf<string>();
+    const forged = { key: "tr_vanilla_key" };
+    // @ts-expect-error — a reference comes from a constructor, not from any
+    // object that happens to carry a `key`.
+    const asRef: LocalizationRef = forged;
+    void asRef;
+    mod.tradition("forged", {
+      name: "Forged",
+      // @ts-expect-error — same, at the member that would consume one.
+      customTooltip: [forged],
     });
   });
 });

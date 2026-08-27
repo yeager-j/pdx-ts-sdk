@@ -16,5 +16,5 @@ content_test_casus_belli_manufactured_grievance = {
 		set_country_flag = content_test_proxy_war_started
 	}
 	show_in_diplomacy = yes
-	aggregated_message_key = content_test_casus_belli_aggregated
+	aggregated_message_key = content_test_casus_belli_manufactured_grievance_aggregated_message_key
 }

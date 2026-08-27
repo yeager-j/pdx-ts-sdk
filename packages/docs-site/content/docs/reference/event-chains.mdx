@@ -55,7 +55,7 @@ Each member of `counter` declares one named value. `max` is an optional
 completion threshold:
 
 ```ts
-counter: { [signalsDecoded.key]: { max: 2 } },
+counter: { crystal_mystery_signals_decoded: { max: 2, name: "Signals decoded" } },
 ```
 
 Use `addEventChainCounter` and `resetEventChainCounter` to change it, and
@@ -65,10 +65,11 @@ counter names into those calls, so a misspelling is a TypeScript error. Vanilla
 and third-party chain references cannot provide that counter-name union and
 accept an unchecked string instead.
 
-Counter labels use the counter key itself, not a key derived from the chain.
-The lifecycle example creates the label with `mod.localization` and uses its
-`.key` as both the counter name and the effect argument. This keeps the emitted
-counter and localization in agreement.
+The game shows a counter under its own name, not under a key derived from the
+chain, so `name` is the label and needs no entry of its own. The name is a map
+key rather than a value, so it stays a plain string — give it the mod prefix
+yourself, as the lifecycle example does, and pass that same string to the
+counter effects.
 
 Omit `max` for an unbounded statistic. Reaching a maximum changes the counter's
 completion state, but it does not fire an event or end the chain by itself.
@@ -79,13 +80,13 @@ next event explicitly:
 ```ts
 country.addEventChainCounter({
   eventChain: crystalMystery,
-  counter: signalsDecoded.key,
+  counter: signalsDecoded,
   amount: 1,
 });
 country.if(
   hasCompletedEventChainCounter({
     eventChain: crystalMystery,
-    counter: signalsDecoded.key,
+    counter: signalsDecoded,
   }),
   (owner) => owner.countryEvent({ id: signalCompleted })
 );

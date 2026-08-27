@@ -6,8 +6,8 @@ content_test_war_goal_liberation = {
 	surrender_acceptance = 10
 	war_exhaustion = 1.2
 	forbidden_peace_offers = {
-		demand_surrender = content_test_war_goal_liberation_no_demand
-		surrender = content_test_war_goal_liberation_no_surrender
+		demand_surrender = content_test_war_goal_liberation_forbidden_peace_offers_demand_surrender
+		surrender = content_test_war_goal_liberation_forbidden_peace_offers_surrender
 	}
 	potential = {
 		has_authority = auth_machine_intelligence

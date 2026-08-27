@@ -2,7 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/components.cwt
 
-import type { LocalizedText } from "../authoring/localization.ts";
+import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type {
@@ -38,15 +38,34 @@ import type {
 import type { UpgradePath } from "./value-sets.ts";
 
 export interface WeaponComponentTemplateCustomTooltip {
-  text?: "" | string;
-  failText?: "default" | string;
-  successText?: string;
+  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
+  text?: "" | LocalizedText | LocalizationRef;
+  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
+  failText?: "default" | LocalizedText | LocalizationRef;
+  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
+  successText?: LocalizedText | LocalizationRef;
   when?: Trigger<never>;
 }
 
 export const WEAPON_COMPONENT_TEMPLATE_CUSTOM_TOOLTIP_FIELDS: readonly ContentField[] = [
-  { key: "text", member: "text", shape: "value", form: "scalar", conversion: "identity" },
-  { key: "fail_text", member: "failText", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "text",
+    member: "text",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+    locKey: true,
+    locKeyLiterals: [""],
+  },
+  {
+    key: "fail_text",
+    member: "failText",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+    locKey: true,
+    locKeyLiterals: ["default"],
+  },
   {
     key: "success_text",
     member: "successText",
@@ -483,7 +502,7 @@ export interface WeaponComponentTemplateFields {
   shipLimit?: number;
   sizeRestriction?: (ShipSizeRef | string | "null")[];
   blockedBy?: (ComponentTemplateRef | string)[];
-  customTooltip?: string | WeaponComponentTemplateCustomTooltip;
+  customTooltip?: LocalizedText | LocalizationRef | WeaponComponentTemplateCustomTooltip;
   shouldAiUse?: boolean;
   validForCountry?: Trigger<"country">;
   aiWeight?: WeightBlock<"country">;
