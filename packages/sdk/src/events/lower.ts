@@ -393,7 +393,7 @@ function lowerEvent<S extends ScopeName, Context extends AmbientScopeContext>(
       });
     }
     locSink.register(optionKey, name.translations);
-    optionRefs.push({ name: localizationRef(optionKey) });
+    optionRefs.push(Object.freeze({ name: localizationRef(optionKey) }));
     const optionEntries: PdxEntry[] = [kv("name", optionKey)];
     const where = `option[${index}]`;
     if (option.icon !== undefined) {

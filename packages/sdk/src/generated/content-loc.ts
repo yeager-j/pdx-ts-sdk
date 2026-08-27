@@ -89,55 +89,105 @@ import type { WeaponComponentTemplateLoc } from "./weapon-component-template.ts"
  * surface, so naming a slot it never mints is a compile error.
  */
 export interface ContentLocByType {
+  /** The localization keys one `technology` mints, as references. */
   readonly technology: TechnologyLoc;
+  /** The localization keys one `building` mints, as references. */
   readonly building: BuildingLoc;
+  /** The localization keys one `tradition` mints, as references. */
   readonly tradition: TraditionLoc;
+  /** The localization keys one `tradition_category` mints, as references. */
   readonly tradition_category: TraditionCategoryLoc;
+  /** The localization keys one `ascension_perk` mints, as references. */
   readonly ascension_perk: AscensionPerkLoc;
+  /** The localization keys one `ascension_perk_category` mints, as references. */
   readonly ascension_perk_category: AscensionPerkCategoryLoc;
+  /** The localization keys one `resource` mints, as references. */
   readonly resource: ResourceLoc;
+  /** A `crisis_path` declares no localisation slots, so it mints no keys. */
   readonly crisis_path: NoLocalizationRefs;
+  /** The localization keys one `crisis_level` mints, as references. */
   readonly crisis_level: CrisisLevelLoc;
+  /** The localization keys one `crisis_objective` mints, as references. */
   readonly crisis_objective: CrisisObjectiveLoc;
+  /** The localization keys one `menace_perk` mints, as references. */
   readonly menace_perk: MenacePerkLoc;
+  /** The localization keys one `agenda` mints, as references. */
   readonly agenda: AgendaLoc;
+  /** The localization keys one `edict` mints, as references. */
   readonly edict: EdictLoc;
+  /** The localization keys one `decision` mints, as references. */
   readonly decision: DecisionLoc;
+  /** The localization keys one `job` mints, as references. */
   readonly job: JobLoc;
+  /** The localization keys one `global_ship_design` mints, as references. */
   readonly global_ship_design: GlobalShipDesignLoc;
+  /** The localization keys one `utility_component_template` mints, as references. */
   readonly utility_component_template: UtilityComponentTemplateLoc;
+  /** The localization keys one `weapon_component_template` mints, as references. */
   readonly weapon_component_template: WeaponComponentTemplateLoc;
+  /** The localization keys one `strike_craft_component_template` mints, as references. */
   readonly strike_craft_component_template: StrikeCraftComponentTemplateLoc;
+  /** The localization keys one `ship_size` mints, as references. */
   readonly ship_size: ShipSizeLoc;
+  /** The localization keys one `opinion_modifier` mints, as references. */
   readonly opinion_modifier: OpinionModifierLoc;
+  /** The localization keys one `static_modifier` mints, as references. */
   readonly static_modifier: StaticModifierLoc;
+  /** The localization keys one `scripted_modifier` mints, as references. */
   readonly scripted_modifier: ScriptedModifierLoc;
+  /** The localization keys one `casus_belli` mints, as references. */
   readonly casus_belli: CasusBelliLoc;
+  /** The localization keys one `war_goal` mints, as references. */
   readonly war_goal: WarGoalLoc;
+  /** The localization keys one `agreement_preset` mints, as references. */
   readonly agreement_preset: AgreementPresetLoc;
+  /** The localization keys one `bombardment_stance` mints, as references. */
   readonly bombardment_stance: BombardmentStanceLoc;
+  /** The localization keys one `archaeological_site_type` mints, as references. */
   readonly archaeological_site_type: ArchaeologicalSiteTypeLoc;
+  /** The localization keys one `relic` mints, as references. */
   readonly relic: RelicLoc;
+  /** The localization keys one `mission` mints, as references. */
   readonly mission: MissionLoc;
+  /** The localization keys one `mission_category` mints, as references. */
   readonly mission_category: MissionCategoryLoc;
+  /** The localization keys one `situation_type` mints, as references. */
   readonly situation_type: SituationTypeLoc;
+  /** A `scripted_loc` declares no localisation slots, so it mints no keys. */
   readonly scripted_loc: NoLocalizationRefs;
+  /** The localization keys one `councilor` mints, as references. */
   readonly councilor: CouncilorLoc;
+  /** A `economic_category` declares no localisation slots, so it mints no keys. */
   readonly economic_category: NoLocalizationRefs;
+  /** The localization keys one `civic_or_origin` mints, as references. */
   readonly civic_or_origin: CivicOrOriginLoc;
+  /** The localization keys one `component_set` mints, as references. */
   readonly component_set: ComponentSetLoc;
+  /** The localization keys one `section_template` mints, as references. */
   readonly section_template: SectionTemplateLoc;
+  /** The localization keys one `ambient_object` mints, as references. */
   readonly ambient_object: AmbientObjectLoc;
+  /** A `graphical_culture` declares no localisation slots, so it mints no keys. */
   readonly graphical_culture: NoLocalizationRefs;
+  /** A `starbase_level` declares no localisation slots, so it mints no keys. */
   readonly starbase_level: NoLocalizationRefs;
+  /** The localization keys one `species_class` mints, as references. */
   readonly species_class: SpeciesClassLoc;
+  /** A `country_ship_of_size_limit` declares no localisation slots, so it mints no keys. */
   readonly country_ship_of_size_limit: NoLocalizationRefs;
+  /** A `solar_system_initializer` declares no localisation slots, so it mints no keys. */
   readonly solar_system_initializer: NoLocalizationRefs;
+  /** The localization keys one `event_chain` mints, as references. */
   readonly event_chain: EventChainLoc;
+  /** The localization keys one `special_project` mints, as references. */
   readonly special_project: SpecialProjectLoc;
+  /** The localization keys one `megastructure` mints, as references. */
   readonly megastructure: MegastructureLoc;
+  /** A `spriteType` declares no localisation slots, so it mints no keys. */
   readonly spriteType: NoLocalizationRefs;
+  /** A `pdxmesh` declares no localisation slots, so it mints no keys. */
   readonly pdxmesh: NoLocalizationRefs;
+  /** A `pdxparticle` declares no localisation slots, so it mints no keys. */
   readonly pdxparticle: NoLocalizationRefs;
 }
 

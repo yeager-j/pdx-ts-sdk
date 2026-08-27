@@ -7,7 +7,13 @@ import { describe, expectTypeOf, it } from "vitest";
 
 import { always } from "../src/generated/triggers.ts";
 import { createMod, type LocalizationRef, type NoLocalizationRefs } from "../src/index.ts";
-import type { ContentLoc, EventLoc, EventOptionLoc, TechnologyLoc } from "../src/stellaris.ts";
+import type {
+  ContentLoc,
+  EventItemBase,
+  EventLoc,
+  EventOptionLoc,
+  TechnologyLoc,
+} from "../src/stellaris.ts";
 
 const mod = createMod({
   name: "Localization reference types",
@@ -68,5 +74,15 @@ describe("event loc references", () => {
     expectTypeOf(event.loc.desc).toEqualTypeOf<LocalizationRef | undefined>();
     expectTypeOf(event.loc.options).toEqualTypeOf<readonly EventOptionLoc[]>();
     expectTypeOf<EventOptionLoc>().toEqualTypeOf<{ readonly name: LocalizationRef }>();
+  });
+
+  it("keeps the references readable off a compiled mod, not just an authored event", () => {
+    const event = mod.namespace("story").country(1, { title: "A Story", isTriggeredOnly: true });
+    const compiled = mod.compile([mod.feature("story", [event])]);
+
+    // `PureMod.events` is `EventItemBase`; inspection and tooling read the
+    // references there rather than from the definer's return value.
+    expectTypeOf<EventItemBase["loc"]>().toEqualTypeOf<EventLoc>();
+    expectTypeOf(compiled.events[0]!.loc).toEqualTypeOf<EventLoc>();
   });
 });

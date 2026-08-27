@@ -8,8 +8,9 @@
  * method, handle, and item union would have to carry.
  */
 
-import { docComment, kebabCase, propertyName } from "../../naming.ts";
+import { docComment, kebabCase } from "../../naming.ts";
 import { importList } from "../../render/symbols.ts";
+import { member as renderMember } from "../../render/writer.ts";
 import type { ContentEmission } from "./content-type.ts";
 
 /** One registry's contribution to the lookup: its name, and the type its items carry. */
@@ -33,10 +34,18 @@ export function contentLocLookup(contents: readonly LocLookupContent[]): string 
       )
       .join("");
   const members = contents
-    .map(
-      (content) =>
-        `  readonly ${propertyName(content.registry)}: ` +
-        `${content.emission.locTypeName ?? EMPTY_SURFACE};\n`
+    .map(({ registry, emission }) =>
+      renderMember({
+        name: registry,
+        type: emission.locTypeName ?? EMPTY_SURFACE,
+        readonly: true,
+        optional: false,
+        docs: [
+          emission.locTypeName === null
+            ? `A \`${registry}\` declares no localisation slots, so it mints no keys.`
+            : `The localization keys one \`${registry}\` mints, as references.`,
+        ],
+      })
     )
     .join("");
   return (

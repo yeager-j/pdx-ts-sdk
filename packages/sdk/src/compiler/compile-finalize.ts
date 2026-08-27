@@ -392,6 +392,10 @@ function freezeEvents(events: CompiledEvents["orderedEvents"]): PureMod["events"
             Object.freeze({ ...ref, targets: Object.freeze([...ref.targets]) })
           )
         ),
+        loc: Object.freeze({
+          ...event.loc,
+          options: Object.freeze(event.loc.options.map((option) => Object.freeze({ ...option }))),
+        }),
         locEntries: Object.freeze(
           event.locEntries.map((entry) =>
             Object.freeze({

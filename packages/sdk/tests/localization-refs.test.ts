@@ -140,6 +140,46 @@ describe("event localization references", () => {
 
     expect(english).toContain(` ${event.loc.options[0]!.name.key}:0 "Hash this option."`);
   });
+
+  it("carries the references through to the compiled mod's own events", () => {
+    const mod = capability();
+    const event = mod.namespace("story").country(1, {
+      title: "A Story",
+      isTriggeredOnly: true,
+      options: [{ name: { english: "Answer.", key: "answer" } }],
+    });
+    const compiled = mod.compile([mod.feature("story", [event])]);
+    const compiledEvent = compiled.events[0]!;
+
+    // `PureMod.events` is `EventItemBase`, which is what inspection and tooling
+    // read; the references have to survive the fold, not just the definer.
+    expect(compiledEvent.loc.title?.key).toBe("loc_refs_story.1.name");
+    expect(compiledEvent.loc.options.map((option) => option.name.key)).toEqual([
+      "loc_refs_story.1.answer",
+    ]);
+  });
+
+  it("deep-freezes the references a compiled mod hands back", () => {
+    const mod = capability();
+    const event = mod.namespace("story").country(1, {
+      title: "A Story",
+      isTriggeredOnly: true,
+      options: [{ name: { english: "Answer.", key: "answer" } }],
+    });
+    const compiled = mod.compile([mod.feature("story", [event])]);
+    const compiledLoc = compiled.events[0]!.loc;
+
+    // The rest of an event's metadata is deep-frozen in `PureMod`; a mutable
+    // option record inside it would be the one hole.
+    expect(Object.isFrozen(compiledLoc)).toBe(true);
+    expect(Object.isFrozen(compiledLoc.options)).toBe(true);
+    expect(Object.isFrozen(compiledLoc.options[0])).toBe(true);
+    expect(Object.isFrozen(compiledLoc.options[0]!.name)).toBe(true);
+    expect(Object.isFrozen(compiledLoc.title)).toBe(true);
+    // The authored event freezes the same shape at the lowering site, so the
+    // guarantee does not depend on the fold having run.
+    expect(Object.isFrozen(event.loc.options[0])).toBe(true);
+  });
 });
 
 describe("the loc template tag", () => {

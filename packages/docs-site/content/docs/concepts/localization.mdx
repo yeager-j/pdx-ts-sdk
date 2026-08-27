@@ -143,7 +143,7 @@ const contact = mod.namespace("story").country(1, {
 });
 
 contact.loc.title?.key; // "crystal_resonance_story.1.name"
-contact.loc.options[0].name.key; // "crystal_resonance_story.1.answer"
+contact.loc.options[0]!.name.key; // "crystal_resonance_story.1.answer"
 ```
 
 Every declared slot has a reference whether or not its text was ever supplied,

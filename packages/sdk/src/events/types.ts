@@ -63,6 +63,12 @@ export interface EventItemBase {
   readonly id: string;
   readonly entry: PdxEntry;
   readonly refs: readonly ContentRefUse[];
+  /**
+   * The localization keys this event minted, as references — the same value
+   * {@link DefinedEvent.loc} carries, surviving into `PureMod.events` so a
+   * compiled mod can be read for them as well as an authored event.
+   */
+  readonly loc: EventLoc;
   readonly locEntries: readonly KeyedLocalization[];
   readonly warnings: readonly ModWarning[];
 }
@@ -320,7 +326,7 @@ export interface EventOptionLoc {
  * });
  *
  * contact.loc.title?.key; // "hello_galaxy_story.1.name"
- * contact.loc.options[0].name.key; // "hello_galaxy_story.1.answer"
+ * contact.loc.options[0]!.name.key; // "hello_galaxy_story.1.answer"
  * ```
  */
 export interface EventLoc {
