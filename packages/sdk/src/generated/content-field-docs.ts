@@ -1420,7 +1420,13 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       },
       tags: { optional: true, docs: [], memberType: "string[]" },
       triggeredTags: { optional: true, docs: [], memberType: "JobTriggeredTags" },
-      localizedTags: { optional: true, docs: [], memberType: "(string | LocalizationRef)[]" },
+      localizedTags: {
+        optional: true,
+        docs: [
+          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+        ],
+        memberType: "(LocalizedText | LocalizationRef)[]",
+      },
       possiblePrecalc: {
         optional: true,
         docs: [],

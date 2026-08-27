@@ -17,8 +17,8 @@ const relay = mod.ambientObject("relay", {
   entity: "ancient_relay_entity",
   selectable: true,
   showName: true,
-  description: relayDescription.key,
-  tooltip: relayTooltip.key,
+  description: relayDescription,
+  tooltip: relayTooltip,
 });
 
 const relaySystem = mod.solarSystemInitializer("relay_system", {

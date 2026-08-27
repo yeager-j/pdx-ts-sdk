@@ -360,14 +360,22 @@ function lowerValueList(
   if (value === null) {
     return null;
   }
-  const listType = arrayType(emitter.useValue(value).type);
+  // `job.localized_tags = { localisation }` — the brace-list spelling of the
+  // same "this value names a localisation key" declaration `lowerValue` reads
+  // off a bare `= localisation`. The element contract is the repeated scalar
+  // one, so the element type and the runtime resolution are the same.
+  const isLocKey = bare.every((type) => type.kind === "localisation");
+  const elementType = isLocKey
+    ? `${emitter.use("LocalizedText")} | ${emitter.use("LocalizationRef")}`
+    : emitter.useValue(value).type;
   return {
-    memberType: listType + (widening === undefined ? "" : ` | ${widening}`),
+    memberType: arrayType(elementType) + (widening === undefined ? "" : ` | ${widening}`),
     metadata: metadata(field, name, "valueList", [
-      ...scalarMetadata(value),
+      ...(isLocKey ? ['conversion: "identity"', "locKey: true"] : scalarMetadata(value)),
       ...(quoted ? ["quoted: true"] : []),
     ]),
     admits: admitsScalars(field, "valueList", widening === undefined ? value : null),
+    docs: isLocKey ? [LOC_KEY_MEMBER_DOC] : undefined,
   };
 }
 

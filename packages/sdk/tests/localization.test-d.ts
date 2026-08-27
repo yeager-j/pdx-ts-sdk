@@ -1,5 +1,6 @@
 import { describe, expectTypeOf, it } from "vitest";
 
+import type { JobFields } from "../src/generated/job.ts";
 import type { TraditionFields } from "../src/generated/tradition.ts";
 import {
   createMod,
@@ -167,6 +168,23 @@ describe("localization references", () => {
         { english: "Inline English.", french: "Anglais en ligne." },
         mod.localization("shared", "Shared."),
         external.localization("tr_vanilla_key"),
+      ],
+    });
+  });
+
+  it("takes the same three forms in a key-typed value list", () => {
+    expectTypeOf<JobFields["localizedTags"]>().toEqualTypeOf<
+      (LocalizedText | LocalizationRef)[] | undefined
+    >();
+    mod.job("tagged", {
+      name: "Tagged",
+      plural: "Tagged",
+      desc: "Tagged.",
+      category: "specialist",
+      localizedTags: [
+        "Inline tag text",
+        { english: "Tagged", french: "Étiqueté" },
+        external.localization("SOME_TAG"),
       ],
     });
   });

@@ -96,6 +96,16 @@ interface ContentValueListField extends ContentFieldBase, ContentRefTypes {
   readonly shape: "valueList";
   readonly conversion: "identity" | "ref";
   readonly quoted?: boolean;
+  /**
+   * The rules type this list's elements as localisation keys — CWT's
+   * `localized_tags = { localisation }`, the brace-list spelling of the same
+   * declaration {@link ContentValueField.locKey} marks on a bare scalar.
+   *
+   * Each element takes a `LocalizationRef` or inline display text, and the
+   * definition walk resolves it exactly as a repeated scalar's element is
+   * resolved, indexed by its position in the list.
+   */
+  readonly locKey?: true;
 }
 
 interface ContentTriggerField extends ContentFieldBase {

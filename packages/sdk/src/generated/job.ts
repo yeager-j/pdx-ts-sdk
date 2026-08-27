@@ -236,7 +236,8 @@ export interface JobFields {
   possiblePreTriggers?: JobPossiblePreTriggers;
   tags?: string[];
   triggeredTags?: JobTriggeredTags;
-  localizedTags?: (string | LocalizationRef)[];
+  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
+  localizedTags?: (LocalizedText | LocalizationRef)[];
   possiblePrecalc?: JobTrigger;
   possible?: Trigger<"pop_group">;
   resources?: EconomicResourceBlock<"colony">[];
@@ -383,7 +384,8 @@ export const JOB_FIELDS: readonly ContentField[] = [
     member: "localizedTags",
     shape: "valueList",
     form: "list",
-    conversion: "ref",
+    conversion: "identity",
+    locKey: true,
   },
   {
     key: "possible_precalc",

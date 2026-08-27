@@ -34,11 +34,11 @@ science-ship operation there, reacts to progress, and fires a completion event.
 
 The registry supports several gameplay shapes:
 
-| Shape                  | Typical fields                                                       | Examples                                                                                                     |
-| ---------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| Empire-level objective | `eventScope: "country_event"`, often no `requirements`               | A country pays a research cost, waits for a fixed duration, or reaches scripted completion.                  |
-| Fleet operation        | `eventScope: "ship_event"` plus `requirements`                       | A science ship investigates, a constructor drills, a military fleet intervenes, or transports deploy armies. |
-| Bombardment operation  | `projectType: "project_type_bombardment"` plus military requirements | A fleet performs a scripted bombardment through the situation log.                                           |
+| Shape                  | Typical fields                                                                              | Examples                                                                                                     |
+| ---------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Empire-level objective | `eventScope: "country_event"`, often no `requirements`                                      | A country pays a research cost, waits for a fixed duration, or reaches scripted completion.                  |
+| Fleet operation        | `eventScope: "ship_event"` plus `requirements`                                              | A science ship investigates, a constructor drills, a military fleet intervenes, or transports deploy armies. |
+| Bombardment operation  | `projectType: external.localization("project_type_bombardment")` plus military requirements | A fleet performs a scripted bombardment through the situation log.                                           |
 
 `eventScope` controls callback scope; it does not by itself choose who may work
 on the project. `requirements` controls eligible fleets when assignment is part

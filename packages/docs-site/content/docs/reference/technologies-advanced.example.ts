@@ -40,7 +40,7 @@ const orbitalDynamics = mod.technology("orbital_dynamics", {
   modifier: (modifier) => modifier.country.physics.research.produces.mult(0.05),
   prereqforDesc: [
     {
-      custom: [{ title: unlockTitle.key, desc: unlockDesc.key }],
+      custom: [{ title: unlockTitle, desc: unlockDesc }],
     },
   ],
   technologySwap: [

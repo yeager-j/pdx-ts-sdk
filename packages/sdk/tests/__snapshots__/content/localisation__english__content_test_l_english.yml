@@ -36,6 +36,7 @@
  content_test_edict_machine_mobilization_triggered_country_modifier_0_not_potential_override_text_key:0 "Requires a machine authority."
  content_test_event_chain_crystal_signal_desc:0 "A strange signal resonates from the planet below."
  content_test_event_chain_crystal_signal_title:0 "Crystal Signal"
+ content_test_job_synthetic_technician_localized_tags_1:0 "Assembled rather than born."
  content_test_megastructure_foundry_1:0 "Synthetic Foundry"
  content_test_megastructure_foundry_1_DESC:0 "A ring of automated assembly yards."
  content_test_megastructure_foundry_1_MEGASTRUCTURE_DETAILS:0 "Constructs synthetic bodies at scale."

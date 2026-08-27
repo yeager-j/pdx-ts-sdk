@@ -328,6 +328,40 @@ describe("standalone localization authoring", () => {
     );
   });
 
+  it("resolves each element of a key-typed value list by its own position", () => {
+    const mod = capability();
+    const job = mod.job("resonator", {
+      name: "Resonator",
+      plural: "Resonators",
+      desc: "Tunes crystals.",
+      category: "specialist",
+      // CWT's `localized_tags = { localisation }` — the brace-list spelling of
+      // the same key-typed contract a bare `= localisation` carries.
+      localizedTags: [
+        external.localization("SOME_TAG"),
+        "Inline tag text",
+        { english: "Tagged", french: "Étiqueté" },
+      ],
+    });
+    const files = render(mod.compile([mod.feature("tags", [job])]));
+
+    expect(files.get("common/pop_jobs/localization_test_tags.txt")).toContain(
+      "localized_tags = { SOME_TAG localization_test_job_resonator_localized_tags_1 " +
+        "localization_test_job_resonator_localized_tags_2 }"
+    );
+    expect(files.get("localisation/english/localization_test_tags_l_english.yml")).toContain(
+      ' localization_test_job_resonator_localized_tags_1:0 "Inline tag text"\n' +
+        ' localization_test_job_resonator_localized_tags_2:0 "Tagged"\n'
+    );
+    expect(files.get("localisation/french/localization_test_tags_l_french.yml")).toContain(
+      ' localization_test_job_resonator_localized_tags_2:0 "Étiqueté"\n'
+    );
+    // The referenced key is named, not registered.
+    expect(files.get("localisation/english/localization_test_tags_l_english.yml")).not.toContain(
+      "SOME_TAG:0"
+    );
+  });
+
   it("refuses a key pin on inline text a key-typed field keys by its path", () => {
     const mod = capability();
     const tradition = mod.tradition("pinned_tooltip", {

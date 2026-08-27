@@ -363,7 +363,7 @@ function defineContentExample(): PureMod {
     // named bools rather than a Trigger the game would not read here.
     possiblePreTriggers: { hasOwner: true, isEnslaved: false, isRobotic: true },
     tags: ["content_test_tag_machine"],
-    localizedTags: ["content_test_job_localized_tag"],
+    localizedTags: [external.localization("JOB_TAG_MACHINE"), "Assembled rather than born."],
     possiblePrecalc: "can_fill_worker_job",
     possible: canJoinFactions(),
     resources: [
@@ -3056,7 +3056,7 @@ describe("SDK-50: identity-conversion text fields", () => {
     const site = cap.archaeologicalSiteType("desc_conflict", {
       name: "Sdk50 Site",
       desc: "Some prose the author also pointed elsewhere.",
-      conditionalDesc: "SDK50_HAND_WRITTEN_KEY",
+      conditionalDesc: external.localization("SDK50_HAND_WRITTEN_KEY"),
       allow: always(),
       visible: always(),
       stages: 1,

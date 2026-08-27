@@ -21,7 +21,7 @@ const distributedScholarship = mod.civicOrOrigin("distributed_scholarship", {
   name: "Distributed Scholarship",
   desc: "Every institution shares discoveries through a common civic archive.",
   icon: "gfx/interface/icons/governments/civics/civic_technocracy.dds",
-  description: effects.key,
+  description: effects,
   potential: {
     authority: { not: [{ values: ["auth_corporate"] }] },
     ethics: { not: [{ values: ["ethic_gestalt_consciousness"] }] },
@@ -39,7 +39,7 @@ const distributedScholarship = mod.civicOrOrigin("distributed_scholarship", {
   modification: false,
   swapType: [
     {
-      description: oligarchicEffects.key,
+      description: oligarchicEffects,
       trigger: and(isScopeValid(), hasAuthority("auth_oligarchic")),
       modifier: (modifier) => modifier.unchecked("country_unity_produces_mult", 0.1),
     },

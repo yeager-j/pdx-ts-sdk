@@ -25,7 +25,6 @@ import {
   type ContentField,
   type ContentLocalisation,
   type ContentRegistryDescriptor,
-  type ContentValueField,
 } from "./schema.ts";
 import type { TriggeredModifier, WeightBlock } from "./types.ts";
 
@@ -163,14 +162,15 @@ export function mapOccurrences(
  * A {@link LocalizationRef} names a key that already exists — this mod's, or
  * one declared through `external.localization` — so it registers nothing. Two
  * other values ride through untouched: a parsed one, carrying a key read out
- * of the install that is not this mod's to mint, and one of the field's own
- * `locKeyLiterals`, which is an engine sentinel rather than a key.
+ * of the install that is not this mod's to mint, and one of the position's own
+ * `sentinels`, which is an engine word rather than a key.
  *
+ * @param sentinels - The field's `locKeyLiterals`, or nothing where it declares none.
  * @param position - Names the text position in a refusal, e.g. `tradition.custom_tooltip`.
  */
 export function resolveKeyedText(
   value: unknown,
-  field: Pick<ContentValueField, "locKeyLiterals">,
+  sentinels: readonly string[] | undefined,
   mintedKey: string,
   position: string,
   into: KeyedLocalization[]
@@ -178,7 +178,7 @@ export function resolveKeyedText(
   if (isLocalizationRef(value)) {
     return value.key;
   }
-  if (isPassthrough(value) || isLocKeySentinel(value, field)) {
+  if (isPassthrough(value) || (typeof value === "string" && sentinels?.includes(value) === true)) {
     return value;
   }
   into.push({
@@ -186,13 +186,6 @@ export function resolveKeyedText(
     translations: resolveFixedKeyText(value as LocalizedText, position, mintedKey),
   });
   return mintedKey;
-}
-
-function isLocKeySentinel(
-  value: unknown,
-  field: Pick<ContentValueField, "locKeyLiterals">
-): boolean {
-  return typeof value === "string" && field.locKeyLiterals?.includes(value) === true;
 }
 
 /**
@@ -218,7 +211,7 @@ export function resolveTriggeredModifierText(
       ...resolved,
       [member]: resolveKeyedText(
         text,
-        {},
+        undefined,
         keyedTextKey(ownerId, `${fieldPath}_${key}`),
         `The triggered modifier "${key}" on "${ownerId}" (${fieldPath})`,
         into
@@ -491,7 +484,27 @@ export class ContentAuthoring {
           mapOccurrences(raw, field.repeated === true, (item, index) =>
             resolveKeyedText(
               item,
-              field,
+              field.locKeyLiterals,
+              keyedTextKey(ownerId, fieldPath, index),
+              position,
+              localisation
+            )
+          )
+        );
+        continue;
+      }
+      if (field.shape === "valueList" && field.locKey === true) {
+        // A list's elements are always indexed, and the writer accepts a bare
+        // value as the one-element list it is — normalizing here keeps the two
+        // readings from disagreeing about what index an element carries.
+        const items = Array.isArray(raw) ? raw : [raw];
+        const position = `${ownerType}.${fieldPath} for "${ownerId}"`;
+        rewrite(
+          field.member,
+          items.map((item, index) =>
+            resolveKeyedText(
+              item,
+              undefined,
               keyedTextKey(ownerId, fieldPath, index),
               position,
               localisation

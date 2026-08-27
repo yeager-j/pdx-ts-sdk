@@ -195,9 +195,9 @@ through unchanged.
 A technology can apply a continuing country `modifier` and expose
 `featureFlags` that game systems recognize. `prereqforDesc` adds UI rows that
 describe unlocked ships, components, diplomatic actions, features, resources,
-or custom content. Its `title` and optional `desc` values are localization
-keys, so create those strings with `mod.localization` and pass their `.key`
-values.
+or custom content. Its `title` and optional `desc` name localization keys:
+write the display text and the SDK keys it for you, or pass a
+`mod.localization(...)` item, as the advanced example does.
 
 Most concrete unlocks belong to the thing being unlocked. A building uses its
 own `prerequisites`, as the advanced example does. Ship sizes and component

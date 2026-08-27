@@ -390,7 +390,29 @@ function mintLocalisation(
       return mapOccurrences(value, field.repeated === true, (item, index) =>
         resolveKeyedText(
           item,
-          field,
+          field.locKeyLiterals,
+          keyedTextKey(ctx.ownerId, fieldPath, index),
+          position,
+          ctx.into
+        )
+      );
+    }
+    case "valueList": {
+      // The list spelling of the same contract, resolved the same way. No
+      // patch registry declares one today (`job` is the only registry with a
+      // `locKey` list and is not patchable), but the elements are the very
+      // values the `value` case above resolves, so handling them costs one
+      // branch and cannot drift from the define path's arithmetic.
+      if (field.locKey !== true) {
+        return value;
+      }
+      const fieldPath = joinFieldPath(path, field.key);
+      const position = `The patched "${member}" of "${ctx.ownerId}"`;
+      const items = Array.isArray(value) ? (value as readonly unknown[]) : [value];
+      return items.map((item, index) =>
+        resolveKeyedText(
+          item,
+          undefined,
           keyedTextKey(ctx.ownerId, fieldPath, index),
           position,
           ctx.into
