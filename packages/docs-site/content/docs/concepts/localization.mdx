@@ -215,6 +215,10 @@ An item placed both ways is still one entry. Placing it only adds its Feature's
 stem to the choice of file, so it never conflicts with the entry a reference
 already registered.
 
+Because a reference places text, it is held to the same ownership rule as
+placing the item: referencing an item another `createMod` capability minted
+fails the build, rather than shipping that mod's text or a key nothing writes.
+
 One reference does not carry: `loc` returns a plain string, so an item
 interpolated into a template is text by the time the field sees it. Place such
 an item yourself. A definition's own `loc` member needs no placement, since

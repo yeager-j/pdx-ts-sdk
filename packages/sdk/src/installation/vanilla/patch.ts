@@ -40,6 +40,7 @@ import { container, quoted, scalar, type PdxEntry, type PdxItem } from "@pdx-ts/
 import {
   resolveFixedKeyText,
   type KeyedLocalization,
+  type LocalizationMint,
   type LocalizedText,
 } from "../../authoring/localization.ts";
 import {
@@ -264,8 +265,12 @@ function lowerable(value: unknown, field: ContentField, ctx: LoweringContext): u
 /**
  * What the minting walk below accumulates: the owning identity, the entries it
  * mints, and the diagnostics it raises.
+ *
+ * It extends {@link LocalizationMint}, so the walk carries the patching mod's
+ * prefix down to the shared resolver — a patch consumes standalone items on
+ * the same terms a definition does, and is held to the same ownership rule.
  */
-interface MintContext {
+interface MintContext extends LocalizationMint {
   /**
    * `<prefix>_<vanillaId>` — the identity every key this walk mints is built
    * from, and the `ownerId` the lowering will resolve those keys under.
@@ -277,7 +282,6 @@ interface MintContext {
    * this mod defines, applied at the one place a patch mints anything.
    */
   readonly ownerId: string;
-  readonly into: KeyedLocalization[];
   readonly warnings: ModWarning[];
 }
 
@@ -393,7 +397,7 @@ function mintLocalisation(
           field.locKeyLiterals,
           keyedTextKey(ctx.ownerId, fieldPath, index),
           position,
-          ctx.into
+          ctx
         )
       );
     }
@@ -415,7 +419,7 @@ function mintLocalisation(
           undefined,
           keyedTextKey(ctx.ownerId, fieldPath, index),
           position,
-          ctx.into
+          ctx
         )
       );
     }
@@ -427,7 +431,7 @@ function mintLocalisation(
               clause as TriggeredModifier<ScopeName>,
               ctx.ownerId,
               occurrencePath(fieldPath, index),
-              ctx.into
+              ctx
             )
           : clause
       );
@@ -593,6 +597,7 @@ export function patchContent<Source extends ParsedDefinition, Patch extends obje
   }
 
   const mint: MintContext = {
+    prefix,
     ownerId: `${prefix}_${source.id}`,
     into: [],
     warnings: [],

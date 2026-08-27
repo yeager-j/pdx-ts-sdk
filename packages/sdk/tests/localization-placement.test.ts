@@ -207,3 +207,98 @@ describe("a patch consuming a standalone item", () => {
     );
   });
 });
+
+describe("ownership of a consumed item", () => {
+  it("refuses a content field consuming another capability's item", () => {
+    const mod = capability();
+    const other = capability("elsewhere");
+    const foreign = other.localization("archive_tooltip", TOOLTIP);
+    const archive = mod.building("archive", { name: "Resonance Archive", customTooltip: foreign });
+
+    // Placing the item throws already; referencing it places it, so it throws
+    // on the same terms rather than shipping another mod's text.
+    expect(() => mod.compile([mod.feature("archive", [archive])])).toThrow(
+      'Localization key "elsewhere_archive_tooltip" belongs to mod prefix "elsewhere", ' +
+        'not "place"'
+    );
+  });
+
+  it("refuses recorded script consuming another capability's item", () => {
+    const mod = capability();
+    const other = capability("elsewhere");
+    const foreign = other.localization("archive_tooltip", TOOLTIP);
+    const archive = mod.building("archive", {
+      name: "Resonance Archive",
+      potential: customTooltip({ text: foreign, conditions: always() }),
+    });
+
+    expect(() => mod.compile([mod.feature("archive", [archive])])).toThrow(
+      'Localization key "elsewhere_archive_tooltip" belongs to mod prefix "elsewhere", ' +
+        'not "place"'
+    );
+  });
+
+  it("names the consuming position in both refusals", () => {
+    const mod = capability();
+    const other = capability("elsewhere");
+    const foreign = other.localization("archive_tooltip", TOOLTIP);
+
+    expect(() =>
+      mod.compile([
+        mod.feature("archive", [
+          mod.building("archive", { name: "Resonance Archive", customTooltip: foreign }),
+        ]),
+      ])
+    ).toThrow('building.custom_tooltip for "place_building_archive"');
+    expect(() =>
+      mod.compile([
+        mod.feature("archive", [
+          mod.building("archive", {
+            name: "Resonance Archive",
+            potential: customTooltip({ text: foreign, conditions: always() }),
+          }),
+        ]),
+      ])
+    ).toThrow('building "place_building_archive" in "potential.custom_tooltip.text"');
+  });
+
+  it("refuses a foreign item a patch consumes", () => {
+    const mod = capability();
+    const other = capability("elsewhere");
+    const foreign = other.localization("archive_tooltip", TOOLTIP);
+
+    expect(() =>
+      mod.patchBuilding(vanilla.definition("building", "building_pp_refinery"), () => ({
+        customTooltip: foreign,
+      }))
+    ).toThrow('belongs to mod prefix "elsewhere", not "place"');
+  });
+
+  it("applies the same rule to an unprefixed item, whose owner is still its capability", () => {
+    const mod = capability();
+    const other = capability("elsewhere");
+    const own = mod.localization("gateway_place_orbital", "Orbital gateway.", { prefix: false });
+    const foreign = other.localization("gateway_place_orbital", "Orbital gateway.", {
+      prefix: false,
+    });
+
+    // The emitted key carries no prefix either way; `item.prefix` still records
+    // the capability that minted it, which is what the rule reads.
+    const files = render(
+      mod.compile([
+        mod.feature("archive", [
+          mod.building("archive", { name: "Resonance Archive", customTooltip: own }),
+        ]),
+      ])
+    );
+    expect(files.get("localisation/english/place_archive_l_english.yml")).toContain(
+      ' gateway_place_orbital:0 "Orbital gateway."'
+    );
+
+    expect(() =>
+      mod.compile([
+        mod.feature("annex", [mod.building("annex", { name: "Annex", customTooltip: foreign })]),
+      ])
+    ).toThrow('Localization key "gateway_place_orbital" belongs to mod prefix "elsewhere"');
+  });
+});

@@ -1,3 +1,4 @@
+import { assertOwnLocalizationItem } from "../authoring/localization.ts";
 import {
   checkVanillaPackagePin,
   installedVanillaPackageVersion,
@@ -193,12 +194,16 @@ function registerFinalLocalization(
  * stems and keeps the lowest resulting path, so an item several Features reach
  * still lands in exactly one file per language — the same collapse an item that
  * was also placed explicitly goes through.
+ *
+ * The ownership refusal is the same one the content-field channel applies, so
+ * neither channel can place a key another capability minted.
  */
 function registerConsumedLocalization(session: BuildSession): void {
-  for (const { stem, use } of session.refUses) {
+  for (const { owner, stem, use } of session.refUses) {
     if (use.kind !== "localization") {
       continue;
     }
+    assertOwnLocalizationItem(use.item, session.config.prefix, `${owner} in "${use.field}"`);
     registerLocalization(session.localization, { layer: "ordinary", stem }, [
       { key: use.item.key, translations: use.item.translations },
     ]);
