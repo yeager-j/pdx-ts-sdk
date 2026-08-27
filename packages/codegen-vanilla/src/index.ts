@@ -181,6 +181,7 @@ function printReport(report: VanillaReport, removed: readonly string[]): void {
   ]);
   reportSection("Vanilla localization keys", [
     `${report.localization.keys} keys from ${report.localization.files} english files` +
+      (report.localization.missing ? " — DIRECTORY MISSING" : "") +
       (report.localization.unparsedLines === 0
         ? ""
         : ` — ${report.localization.unparsedLines} LINES UNRECOGNISED, so their keys are missing ` +

@@ -1,4 +1,5 @@
 import { createMod } from "@pdx-ts/sdk";
+import { customTooltip, isSubject, owner, vanilla } from "@pdx-ts/sdk/stellaris";
 
 const mod = createMod({
   name: "Crystal Resonance",
@@ -20,6 +21,11 @@ const resonanceArchive = mod.building("resonance_archive", {
   buildingSets: ["research"],
   canBuild: true,
   customTooltip: archiveTooltip,
+  // A key vanilla owns, checked against the packaged inventory.
+  potential: customTooltip({
+    failText: vanilla.localization("requires_independence"),
+    conditions: owner(isSubject(false)),
+  }),
 });
 
 const reconsider = mod.replaceLocalization("crisis.2010.a", {

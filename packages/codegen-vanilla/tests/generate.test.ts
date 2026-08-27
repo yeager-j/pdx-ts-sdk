@@ -835,6 +835,7 @@ describe("report", () => {
       keys: 5,
       files: 1,
       unparsedLines: 0,
+      missing: false,
     });
   });
 

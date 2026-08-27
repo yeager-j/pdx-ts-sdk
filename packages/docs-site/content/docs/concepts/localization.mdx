@@ -230,7 +230,7 @@ Vanilla's keys come from `vanilla.localization`, checked against the key
 inventory `@pdx-ts/stellaris-ids` reads out of your install:
 
 ```ts
-import { vanilla } from "@pdx-ts/sdk";
+import { vanilla } from "@pdx-ts/sdk/stellaris";
 
 const resonanceArchive = mod.building("resonance_archive", {
   customTooltip: vanilla.localization("BUILDING_RESEARCH_LAB_1_DESC"),
@@ -261,11 +261,18 @@ bare string mean a key. A key inside a recorded trigger or effect is a
 reference like any other:
 
 ```ts
-mod.ascensionPerk("apotheosis", {
-  name: "Apotheosis",
-  potential: isIndependent({ failText: vanilla.localization("requires_independence") }),
+import { customTooltip, isSubject, owner, vanilla } from "@pdx-ts/sdk/stellaris";
+
+mod.building("resonance_archive", {
+  name: "Resonance Archive",
+  potential: customTooltip({
+    failText: vanilla.localization("requires_independence"),
+    conditions: owner(isSubject(false)),
+  }),
 });
 ```
+
+The paired example above builds exactly this, so the compiler checks it.
 
 A string is shorthand for English-only text:
 

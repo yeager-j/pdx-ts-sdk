@@ -11,7 +11,7 @@
  * every other language directory is a subset of it, translated.
  */
 
-import { readdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 
 import { compareIdentifiers } from "./emit.ts";
@@ -51,29 +51,50 @@ export interface LocalizationKeys {
    * so it is reported rather than thrown on.
    */
   readonly unparsedLines: number;
+  /**
+   * The whole `localisation/english` tree is absent. The only read failure
+   * that is not thrown: a tree that exists and will not be read is a defect,
+   * not an empty inventory.
+   */
   readonly missing: boolean;
 }
 
+/**
+ * Every `.yml` beneath `dir`, with no error tolerated.
+ *
+ * A directory that will not be read is not an empty directory: swallowing the
+ * failure would shrink the inventory silently and publish a package whose
+ * `vanilla.localization()` then rejects keys the game really defines. The one
+ * absence that is not a failure — the whole tree missing — is settled by
+ * {@link readLocalizationKeys} before this is called, so everything here
+ * propagates.
+ */
 function ymlFilesUnder(dir: string): string[] {
-  let names: string[];
-  try {
-    names = readdirSync(dir).sort(compareIdentifiers);
-  } catch {
-    return [];
-  }
-  return names.flatMap((name) => {
-    const file = path.join(dir, name);
-    return statSync(file).isDirectory() ? ymlFilesUnder(file) : name.endsWith(".yml") ? [file] : [];
-  });
+  return readdirSync(dir)
+    .sort(compareIdentifiers)
+    .flatMap((name) => {
+      const file = path.join(dir, name);
+      return statSync(file).isDirectory()
+        ? ymlFilesUnder(file)
+        : name.endsWith(".yml")
+          ? [file]
+          : [];
+    });
 }
 
 /**
  * Reads the install's english localization tree and returns its keys.
  *
  * @param root - The install root, the directory holding `localisation/`.
+ * @throws Error If the tree exists but any part of it cannot be read. Only its
+ * complete absence is tolerated, and that is reported as `missing`.
  */
 export function readLocalizationKeys(root: string): LocalizationKeys {
-  const files = ymlFilesUnder(path.join(root, LOCALIZATION_DIR));
+  const dir = path.join(root, LOCALIZATION_DIR);
+  if (!existsSync(dir)) {
+    return { keys: [], files: 0, unparsedLines: 0, missing: true };
+  }
+  const files = ymlFilesUnder(dir);
   const keys = new Set<string>();
   let unparsedLines = 0;
   for (const file of files) {
@@ -101,6 +122,8 @@ export function readLocalizationKeys(root: string): LocalizationKeys {
     keys: [...keys].sort(compareIdentifiers),
     files: files.length,
     unparsedLines,
-    missing: files.length === 0,
+    // The absent tree returned above. Reaching here means the directory is
+    // there, whether or not it happened to hold any `.yml`.
+    missing: false,
   };
 }

@@ -157,6 +157,7 @@ export interface VanillaReport {
     readonly keys: number;
     readonly files: number;
     readonly unparsedLines: number;
+    readonly missing: boolean;
   };
   readonly emittedFiles: number;
   /** Parser repairs across every file read. Reported, never fatal. */
@@ -431,6 +432,7 @@ export function generateVanillaPackage(options: GenerateOptions): {
         keys: facts.localization.keys.length,
         files: facts.localization.files,
         unparsedLines: facts.localization.unparsedLines,
+        missing: facts.localization.missing,
       },
       emittedFiles: files.size,
       diagnostics:
