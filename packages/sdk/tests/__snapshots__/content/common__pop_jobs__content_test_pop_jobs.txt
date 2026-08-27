@@ -17,7 +17,7 @@ content_test_job_synthetic_technician = {
 		is_robotic = yes
 	}
 	tags = { content_test_tag_machine }
-	localized_tags = { content_test_job_localized_tag }
+	localized_tags = { JOB_TAG_MACHINE content_test_job_synthetic_technician_localized_tags_1 }
 	possible_precalc = can_fill_worker_job
 	possible = {
 		can_join_factions = yes

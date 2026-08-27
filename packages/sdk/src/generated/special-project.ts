@@ -2,7 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/special_projects.cwt
 
-import type { LocalizedText } from "../authoring/localization.ts";
+import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { EffectBlock, WeightBlock, WithFrom } from "../content/types.ts";
@@ -20,7 +20,8 @@ import type {
 } from "./refs.ts";
 
 export interface SpecialProjectDesc {
-  text: string;
+  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
+  text: LocalizedText | LocalizationRef;
   trigger: Trigger<"country">;
 }
 
@@ -59,7 +60,8 @@ export interface SpecialProjectRequirements {
   shipclassScienceShip?: number;
   shipclassColonizer?: number;
   shipclassTransport?: number;
-  handledByEventTooltip?: string;
+  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
+  handledByEventTooltip?: LocalizedText | LocalizationRef;
   hasTechnology?: TechnologyRef | string;
   leader?: LeaderClassRef | string;
   assaultArmies?: number;
@@ -210,7 +212,8 @@ export const SPECIAL_PROJECT_REQUIREMENTS_FIELDS: readonly ContentField[] = [
 ];
 
 export interface SpecialProjectTriggeredRequirement {
-  text: string;
+  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
+  text: LocalizedText | LocalizationRef;
   count: number;
   trigger: Trigger<"fleet">;
 }
@@ -305,7 +308,8 @@ export interface SpecialProjectFieldsBase<
   /** default: no */
   location?: boolean;
   removeWhenCompleted?: boolean;
-  projectType?: string;
+  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
+  projectType?: LocalizedText | LocalizationRef;
   eventScope: E;
   /** this = country (project owner); from = event scope (planet or ship, MIGHT NOT EXIST); fromfrom = project creation scope (usually equals location) */
   failTrigger?: WithFrom<

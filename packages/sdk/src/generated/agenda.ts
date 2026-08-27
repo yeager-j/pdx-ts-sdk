@@ -2,7 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/council_agendas.cwt
 
-import type { LocalizedText } from "../authoring/localization.ts";
+import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { EffectBlock, ModifierClosure, WeightBlock } from "../content/types.ts";
@@ -29,7 +29,8 @@ export interface AgendaFields {
   agendaCooldown?: ScriptValue;
   potential?: Trigger<"country">;
   allow?: Trigger<"country">;
-  initialEffectCustomLoc?: string;
+  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
+  initialEffectCustomLoc?: LocalizedText | LocalizationRef;
   initEffect?: EffectBlock<"country", { readonly root: "country" }>;
   modifier?: ModifierClosure<"country">;
   finishModifier?:

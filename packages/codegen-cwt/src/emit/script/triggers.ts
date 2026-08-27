@@ -7,6 +7,7 @@
  * with no scope in either source is skipped and reported, never guessed at.
  */
 
+import type { RuleType } from "../../cwt/model.ts";
 import type { AliasDecl } from "../../cwt/rules.ts";
 import type { DocEntry } from "../../logs/trigger-docs.ts";
 import type { LoweredRule } from "../../lower/lowered-rule.ts";
@@ -234,6 +235,8 @@ function staleEnclosingScopeWrapper(key: string, shape: Shape | SkipReason): str
 /**
  * Builds generated JSDoc lines from CWT declarations and the game documentation fallback.
  * CWT supplies the first available summary; a non-empty usage example is appended as a code block.
+ * A rule naming a localisation key also states how a bare string is read there,
+ * which is the opposite of how a content member reads one.
  */
 export function tsDoc(declarations: readonly AliasDecl[], doc: DocEntry | undefined): string[] {
   const summary = declarations.flatMap((declaration) => declaration.docs)[0] ?? doc?.summary ?? "";
@@ -241,7 +244,27 @@ export function tsDoc(declarations: readonly AliasDecl[], doc: DocEntry | undefi
   if (doc !== undefined && doc.usage !== "") {
     lines.push("", "```", ...doc.usage.split("\n"), "```");
   }
+  if (declarations.some((declaration) => namesLocalisationKey(declaration.type))) {
+    lines.push("", LOCALISATION_ARGUMENT_DOC);
+  }
   return lines;
+}
+
+/**
+ * What a recorded-script localisation argument's documentation says about a
+ * bare string, since a content member spells the same value the other way
+ * round (SDK-303).
+ */
+const LOCALISATION_ARGUMENT_DOC =
+  "A localization key: a bare string is the key itself, and a reference is unwrapped to its " +
+  "key. Unlike a content field, recorded script has no owning definition to key display text " +
+  "against, so text belongs in `mod.localization()` first.";
+
+function namesLocalisationKey(type: RuleType): boolean {
+  if (type.kind === "localisation") {
+    return true;
+  }
+  return type.kind === "block" && type.fields.some((field) => namesLocalisationKey(field.type));
 }
 
 function emitBoolean(

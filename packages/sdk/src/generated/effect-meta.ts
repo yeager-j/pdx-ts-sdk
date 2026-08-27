@@ -69,7 +69,7 @@ export interface EffectFieldMeta {
   /** Literal yes/no arms that lower to PDXScript booleans rather than strings. */
   readonly booleanLiterals?: readonly ("yes" | "no")[];
   /** Object-backed scalar forms accepted by a mixed scalar/block field. */
-  readonly objectKinds?: readonly ("scope-ref" | "typed-ref")[];
+  readonly objectKinds?: readonly ("scope-ref" | "typed-ref" | "localization-ref")[];
   /** Whether the field accepts repeated entries under the same script key. */
   readonly repeated?: boolean;
   /** The spliced alias category an alias-list or alias-struct field authors. */
@@ -97,7 +97,7 @@ export type EffectScalarShapeMeta =
       readonly kind: "value";
       readonly refTypes?: readonly string[];
       readonly booleanLiterals?: readonly ("yes" | "no")[];
-      readonly objectKinds?: readonly ("scope-ref" | "typed-ref")[];
+      readonly objectKinds?: readonly ("scope-ref" | "typed-ref" | "localization-ref")[];
     };
 
 /** One block call form of an effect. */
@@ -1263,7 +1263,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: {},
+          scalar: { objectKinds: ["localization-ref"] },
           block: {
             kind: "fields",
             fields: [
@@ -1503,7 +1503,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: {},
+          scalar: { objectKinds: ["localization-ref"] },
           block: {
             kind: "fields",
             fields: [
@@ -1548,7 +1548,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: { objectKinds: ["scope-ref"] },
+          scalar: { objectKinds: ["localization-ref", "scope-ref"] },
           block: {
             kind: "fields",
             fields: [
@@ -1559,7 +1559,12 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         },
         { prop: "size", key: "size", kind: "value" },
         { prop: "canOverflow", key: "can_overflow", kind: "value" },
-        { prop: "shipDesigns", key: "ship_designs", kind: "value-list", scalar: {} },
+        {
+          prop: "shipDesigns",
+          key: "ship_designs",
+          kind: "value-list",
+          scalar: { objectKinds: ["localization-ref"] },
+        },
         { prop: "effect", key: "effect", kind: "effect", transition: "push" },
       ],
     },
@@ -1649,7 +1654,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: { objectKinds: ["scope-ref"] },
+          scalar: { objectKinds: ["scope-ref", "localization-ref"] },
           block: {
             kind: "fields",
             fields: [
@@ -1780,7 +1785,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: { objectKinds: ["scope-ref"] },
+          scalar: { objectKinds: ["localization-ref", "scope-ref"] },
           block: {
             kind: "fields",
             fields: [
@@ -1839,7 +1844,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: {},
+          scalar: { objectKinds: ["localization-ref"] },
           block: {
             kind: "fields",
             fields: [
@@ -2001,7 +2006,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: { objectKinds: ["scope-ref"] },
+          scalar: { objectKinds: ["localization-ref", "scope-ref"] },
           block: {
             kind: "fields",
             fields: [
@@ -2016,7 +2021,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "shipDesigns",
           key: "ship_designs",
           kind: "value-list",
-          scalar: {},
+          scalar: { objectKinds: ["localization-ref"] },
           fields: [
             { prop: "design", key: "design", kind: "value" },
             { prop: "weight", key: "weight", kind: "value" },
@@ -2037,7 +2042,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: { objectKinds: ["scope-ref"] },
+          scalar: { objectKinds: ["localization-ref", "scope-ref"] },
           block: {
             kind: "fields",
             fields: [
@@ -2134,7 +2139,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: {},
+          scalar: { objectKinds: ["localization-ref"] },
           block: {
             kind: "fields",
             fields: [
@@ -2177,7 +2182,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: { objectKinds: ["scope-ref"] },
+          scalar: { objectKinds: ["localization-ref", "scope-ref"] },
           block: {
             kind: "fields",
             fields: [
@@ -2230,7 +2235,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: { objectKinds: ["scope-ref"] },
+          scalar: { objectKinds: ["scope-ref", "localization-ref"] },
           block: {
             kind: "fields",
             fields: [
@@ -2341,7 +2346,10 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     },
   },
   creator: { key: "creator", shape: { kind: "scope-link", transition: "push" } },
-  customTooltip: { key: "custom_tooltip", shape: { kind: "value" } },
+  customTooltip: {
+    key: "custom_tooltip",
+    shape: { kind: "value", objectKinds: ["localization-ref"] },
+  },
   customTooltipWithParams: {
     key: "custom_tooltip_with_params",
     shape: {
@@ -2391,7 +2399,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: {},
+          scalar: { objectKinds: ["localization-ref"] },
           block: {
             kind: "fields",
             fields: [
@@ -3737,7 +3745,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: {},
+          scalar: { objectKinds: ["localization-ref"] },
           block: {
             kind: "fields",
             fields: [
@@ -3898,7 +3906,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: {},
+          scalar: { objectKinds: ["localization-ref"] },
           block: {
             kind: "fields",
             fields: [
@@ -7024,7 +7032,10 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       fields: [{ prop: "name", key: "name", kind: "value", refTypes: ["decision"] }],
     },
   },
-  setAdjective: { key: "set_adjective", shape: { kind: "value", objectKinds: ["scope-ref"] } },
+  setAdjective: {
+    key: "set_adjective",
+    shape: { kind: "value", objectKinds: ["localization-ref", "scope-ref"] },
+  },
   setAdvisorActive: { key: "set_advisor_active", shape: { kind: "bool" } },
   setAge: { key: "set_age", shape: { kind: "value" } },
   setAggroRange: { key: "set_aggro_range", shape: { kind: "value" } },
@@ -7242,7 +7253,10 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: { kind: "bool" },
   },
   setEmpireFlag: { key: "set_empire_flag", shape: { kind: "value" } },
-  setEmpireName: { key: "set_empire_name", shape: { kind: "value" } },
+  setEmpireName: {
+    key: "set_empire_name",
+    shape: { kind: "value", objectKinds: ["localization-ref"] },
+  },
   setEqualVotingPower: { key: "set_equal_voting_power", shape: { kind: "bool" } },
   setEspionageAssetFlag: { key: "set_espionage_asset_flag", shape: { kind: "value" } },
   setEspionageOperationFlag: { key: "set_espionage_operation_flag", shape: { kind: "value" } },
@@ -7312,8 +7326,14 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "set_federation_type",
     shape: { kind: "value", refTypes: ["federation_type"], objectKinds: ["typed-ref"] },
   },
-  setFemaleHeirTitle: { key: "set_female_heir_title", shape: { kind: "value" } },
-  setFemaleRulerTitle: { key: "set_female_ruler_title", shape: { kind: "value" } },
+  setFemaleHeirTitle: {
+    key: "set_female_heir_title",
+    shape: { kind: "value", objectKinds: ["localization-ref"] },
+  },
+  setFemaleRulerTitle: {
+    key: "set_female_ruler_title",
+    shape: { kind: "value", objectKinds: ["localization-ref"] },
+  },
   setFirstContactFlag: { key: "set_first_contact_flag", shape: { kind: "value" } },
   setFirstContactStage: {
     key: "set_first_contact_stage",
@@ -7441,8 +7461,14 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       },
     },
   },
-  setMaleHeirTitle: { key: "set_male_heir_title", shape: { kind: "value" } },
-  setMaleRulerTitle: { key: "set_male_ruler_title", shape: { kind: "value" } },
+  setMaleHeirTitle: {
+    key: "set_male_heir_title",
+    shape: { kind: "value", objectKinds: ["localization-ref"] },
+  },
+  setMaleRulerTitle: {
+    key: "set_male_ruler_title",
+    shape: { kind: "value", objectKinds: ["localization-ref"] },
+  },
   setMarketLeader: { key: "set_market_leader", shape: { kind: "bool" } },
   setMegastructureFlag: { key: "set_megastructure_flag", shape: { kind: "value" } },
   setMia: { key: "set_mia", shape: { kind: "value" } },
@@ -7489,7 +7515,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "set_name",
     shape: {
       kind: "scalar-or-block",
-      scalar: { kind: "value", objectKinds: ["scope-ref"] },
+      scalar: { kind: "value", objectKinds: ["scope-ref", "localization-ref"] },
       block: {
         kind: "fields",
         fields: [
@@ -7635,8 +7661,14 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   setRuleJoinSubjectWars: { key: "set_rule_join_subject_wars", shape: { kind: "value" } },
   setRuleSubjectHasAccess: { key: "set_rule_subject_has_access", shape: { kind: "bool" } },
   setRuleSubjectHasSensors: { key: "set_rule_subject_has_sensors", shape: { kind: "bool" } },
-  setRulerTitleFemale: { key: "set_ruler_title_female", shape: { kind: "value" } },
-  setRulerTitleMale: { key: "set_ruler_title_male", shape: { kind: "value" } },
+  setRulerTitleFemale: {
+    key: "set_ruler_title_female",
+    shape: { kind: "value", objectKinds: ["localization-ref"] },
+  },
+  setRulerTitleMale: {
+    key: "set_ruler_title_male",
+    shape: { kind: "value", objectKinds: ["localization-ref"] },
+  },
   setSavedDate: {
     key: "set_saved_date",
     shape: {
@@ -7667,7 +7699,10 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     },
   },
   setShipFlag: { key: "set_ship_flag", shape: { kind: "value" } },
-  setShipPrefix: { key: "set_ship_prefix", shape: { kind: "value", objectKinds: ["scope-ref"] } },
+  setShipPrefix: {
+    key: "set_ship_prefix",
+    shape: { kind: "value", objectKinds: ["localization-ref", "scope-ref"] },
+  },
   setSiteProgressLocked: { key: "set_site_progress_locked", shape: { kind: "bool" } },
   setSituationApproach: { key: "set_situation_approach", shape: { kind: "value" } },
   setSituationFlag: { key: "set_situation_flag", shape: { kind: "value" } },
@@ -8199,7 +8234,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: {},
+          scalar: { objectKinds: ["localization-ref"] },
           block: {
             kind: "fields",
             fields: [

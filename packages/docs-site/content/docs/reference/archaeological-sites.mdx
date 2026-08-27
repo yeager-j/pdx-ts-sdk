@@ -270,8 +270,9 @@ entry and the raw `desc = <generated key>` pointer that the game reads. Do not
 set `desc` and `conditionalDesc` together.
 
 Use `conditionalDesc` when the displayed text changes by site-scoped
-conditions. Its string form is an existing localization key; its array form is
-an ordered list of `{ trigger, text }` clauses. The first matching clause is
+conditions. Its scalar form is one piece of display text, or a reference to an
+existing key; its array form is an ordered list of `{ trigger, text }`
+clauses. The first matching clause is
 used, so put specific conditions before a fallback.
 
 ## Lifecycle effects

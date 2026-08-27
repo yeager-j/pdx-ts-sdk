@@ -2,7 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/traditions.cwt
 
-import type { LocalizedText } from "../authoring/localization.ts";
+import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { WeightBlock } from "../content/types.ts";
@@ -11,7 +11,8 @@ import type { TraditionRef } from "./refs.ts";
 
 export interface TraditionCategoryDesc {
   trigger?: Trigger<"country">;
-  text?: string;
+  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
+  text?: LocalizedText | LocalizationRef;
 }
 
 export const TRADITION_CATEGORY_DESC_FIELDS: readonly ContentField[] = [

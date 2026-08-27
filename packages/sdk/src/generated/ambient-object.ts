@@ -2,7 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/ambient_objects.cwt
 
-import type { LocalizedText } from "../authoring/localization.ts";
+import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { ModelEntityRef } from "./refs.ts";
@@ -21,8 +21,10 @@ export interface AmbientObjectFields {
   selectable?: boolean;
   /** Determines whether you can read the name of the object ingame. */
   showName?: boolean;
-  description?: string;
-  tooltip?: string;
+  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
+  description?: LocalizedText | LocalizationRef;
+  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
+  tooltip?: LocalizedText | LocalizationRef;
 }
 
 export interface AmbientObjectDef<Id extends string = string> extends AmbientObjectFields {

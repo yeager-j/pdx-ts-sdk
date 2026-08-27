@@ -2,6 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: alias[government_trigger:...] across the rule files
 
+import type { LocalizationRef } from "../authoring/localization.ts";
 import { registerAliasStructFields, type ContentField } from "../content/schema.ts";
 import type { Dlc } from "./enums.ts";
 import type {
@@ -532,7 +533,7 @@ export const GOVERNMENT_TRIGGER_GRAPHICAL_CULTURE_CLAUSE_FIELDS: readonly Conten
  * static configuration, so only the members below are read.
  */
 export interface GovernmentTriggerBlock {
-  text?: string;
+  text?: string | LocalizationRef;
   always?: boolean;
   authority?: GovernmentTriggerClause<AuthorityRef | string>;
   countryType?: GovernmentTriggerClause<CountryTypeRef | string>;
@@ -552,7 +553,7 @@ export interface GovernmentTriggerBlock {
 }
 
 export const GOVERNMENT_TRIGGER_FIELDS: readonly ContentField[] = [
-  { key: "text", member: "text", shape: "value", form: "scalar", conversion: "identity" },
+  { key: "text", member: "text", shape: "value", form: "scalar", conversion: "ref" },
   { key: "always", member: "always", shape: "value", form: "scalar", conversion: "identity" },
   {
     key: "authority",

@@ -55,7 +55,7 @@ export interface TsValue {
 }
 
 /** A runtime-discriminated object form accepted by a scalar field. */
-export type ScalarObjectKind = "scope-ref" | "typed-ref";
+export type ScalarObjectKind = "scope-ref" | "typed-ref" | "localization-ref";
 
 /** The symbols and generated aliases referenced while emitting one output file. */
 export interface Usage {
@@ -351,8 +351,20 @@ export class Emitter {
           scriptValue: true,
           typeSymbols: ["ScriptValue"],
         };
-      case "scalar":
+      // A recorded script argument keeps the game's own reading of a bare
+      // string here — it is a key, since recorded script carries no identity
+      // to mint one from — and additionally accepts a reference to one. A
+      // key-typed *content* member reads a bare string as display text
+      // instead (SDK-303) and spells its own type, so it does not use this.
       case "localisation":
+        return {
+          type: "string | LocalizationRef",
+          toScalar: (expression) => `refId(${expression})`,
+          objectKinds: ["localization-ref"],
+          typeSymbols: ["LocalizationRef"],
+          scalarSymbol: "refId",
+        };
+      case "scalar":
       case "filepath":
       case "icon":
       case "colour":

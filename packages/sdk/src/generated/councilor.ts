@@ -2,7 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/governments.cwt
 
-import type { LocalizedText } from "../authoring/localization.ts";
+import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { ModifierClosure, TriggeredModifier, WeightBlock } from "../content/types.ts";
@@ -31,19 +31,31 @@ export interface CouncilorFields {
   possible?: Trigger<"country">;
   /** Leader scope triggers to evaluate if a leader can be assigned to this position. */
   isLeaderPossible?: Trigger<"leader">;
-  /** Custom tooltip text shown for the requirements of the council position. */
-  conditionalTooltip?: string;
+  /**
+   * Custom tooltip text shown for the requirements of the council position.
+   * Names a localization key: pass a reference, or display text the SDK keys and emits for you.
+   */
+  conditionalTooltip?: LocalizedText | LocalizationRef;
   /** Civic that is required for this council position. Also used by UI. Default = none. */
   civic?: CivicOrOriginCivicRef | string;
-  /** Custom text shown instead of "UNLOCK_COUNCIL_POSITION_TOOLTIP for council positions without a civic" */
-  customUnlockTitle?: string;
+  /**
+   * Custom text shown instead of "UNLOCK_COUNCIL_POSITION_TOOLTIP for council positions without a civic"
+   * Names a localization key: pass a reference, or display text the SDK keys and emits for you.
+   */
+  customUnlockTitle?: LocalizedText | LocalizationRef;
   /** Country Modifier, that is multiplied by assigned Leader's level. */
   modifier?: ModifierClosure<"country">;
   triggeredCountryModifier?: TriggeredModifier<"country">[];
-  /** Custom tooltip text shown instead of the auto-generated modifier tooltip text of the council position. */
-  customTooltip?: string;
-  /** Custom tooltip text shown in addition to the auto-generated modifier tooltip text of the council position. */
-  customTooltipWithModifiers?: string;
+  /**
+   * Custom tooltip text shown instead of the auto-generated modifier tooltip text of the council position.
+   * Names a localization key: pass a reference, or display text the SDK keys and emits for you.
+   */
+  customTooltip?: LocalizedText | LocalizationRef;
+  /**
+   * Custom tooltip text shown in addition to the auto-generated modifier tooltip text of the council position.
+   * Names a localization key: pass a reference, or display text the SDK keys and emits for you.
+   */
+  customTooltipWithModifiers?: LocalizedText | LocalizationRef;
   /** Icon used for the council position, if a civic is not specified. */
   icon?: SpriteRef | string;
   aiPriority?: number;

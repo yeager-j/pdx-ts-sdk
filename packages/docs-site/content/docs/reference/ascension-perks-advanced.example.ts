@@ -30,7 +30,7 @@ const adaptiveDestinies = mod.ascensionPerk("adaptive_destinies", {
     },
   ],
   onEnabled: (country) => country.setCountryFlag("adaptive_destinies_adopted"),
-  customTooltip: baseTooltip.key,
+  customTooltip: baseTooltip,
   traditionSwap: {
     adaptive_destinies_ascension_perk_machine_destinies: {
       name: "Machine Destinies",
@@ -39,7 +39,7 @@ const adaptiveDestinies = mod.ascensionPerk("adaptive_destinies", {
       inheritIcon: true,
       inheritName: false,
       inheritEffects: false,
-      customTooltipWithModifiers: [machineTooltip.key],
+      customTooltipWithModifiers: [machineTooltip],
       modifier: (modifier) => {
         modifier.country.unity.produces.mult(0.1);
         modifier.country.engineering.research.produces.mult(0.1);

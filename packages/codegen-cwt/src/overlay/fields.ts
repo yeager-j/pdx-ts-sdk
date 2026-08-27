@@ -695,6 +695,17 @@ export interface ContentFieldOverride {
    * rather than each registry growing its own exception.
    */
   readonly optional?: true;
+  /**
+   * Declares that a `structMap`'s keys are the very localisation keys the game
+   * shows its entries under, so each entry gains an optional `name` display-text
+   * member registered under the entry's own map key.
+   *
+   * Only for a map whose keys the game displays. Most engine-keyed maps name
+   * something the engine reads and never shows (a ship size's `section_slots`),
+   * and a `name` member there would write text nothing renders — so a row needs
+   * both the CWT declaration and a shipped localisation entry as evidence.
+   */
+  readonly mapKeyLocalisation?: true;
   /** Public name for a nested struct the mechanical path-derived name misstates. */
   readonly nestedTypeName?: string;
   /** Consumer-facing description emitted above a named nested struct. */
@@ -782,11 +793,18 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
     {
       shape: "structMap",
       nestedTypeName: "EventChainCounterDefinition",
+      mapKeyLocalisation: true,
       reason:
         "Each counter name is an engine-visible key inside one event chain, with an optional " +
         "localisation.max block beneath it. CWT expresses that as an enum-keyed block, which is " +
         "the same engine-keyed map shape structMap already lowers for section_slots: counter " +
-        "names are not content ids, take no mod prefix, and have no meaningful order.",
+        "names are not content ids, take no mod prefix, and have no meaningful order. " +
+        "The key is displayed, not merely read: event_chains.cwt:31-37 types the wildcard key " +
+        "`localisation`, and Stellaris 4.4.6 defines every shipped counter name as a " +
+        'localisation key — `ancient_ward_upgraded: "Building Upgraded"` and ' +
+        "`reckoning_consumed_worlds` both sit in shroud_l_english.yml against the counters " +
+        "00_event_chains_shroud.txt declares. So the entry takes a `name` display-text member " +
+        "keyed by the map key itself (SDK-303).",
     },
   ],
   [
@@ -795,12 +813,15 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
       shape: "structMap",
       nestedTypeName: "MissionCounterDefinition",
       nestedTypeDocs: ["One named counter definition for a mission."],
+      mapKeyLocalisation: true,
       reason:
         "Mission counters have the same enum-keyed map shape as event-chain counters: each " +
         "engine-visible counter name owns an optional localisation.max block. CWT declares the " +
-        "same nested shape at missions.cwt:146-152, and the Stellaris 4.4.6 corpus records 51 " +
-        "missions that use it. Counter names are not content ids, take no mod prefix, and have " +
-        "no meaningful order.",
+        "same nested shape at missions.cwt:146-152 — wildcard key typed `localisation`, exactly " +
+        "as event_chains.cwt declares it — and the Stellaris 4.4.6 corpus records 51 missions " +
+        "that use it. Counter names are not content ids, take no mod prefix, and have no " +
+        "meaningful order, but they are displayed, so the entry takes a `name` display-text " +
+        "member keyed by the map key itself (SDK-303).",
     },
   ],
   [

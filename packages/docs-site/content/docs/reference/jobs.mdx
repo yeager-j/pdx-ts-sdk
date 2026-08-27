@@ -117,9 +117,11 @@ filled as an independent job. Its definition owns the alternative job's four
 localization entries and default display metadata. The main job points to that
 typed definition from `swapType.name` and `swapType.icon`.
 
-`conditionString` is a localization key used by the job UI, not free English
-text. `buildingIcon` refers to the building art associated with the job, while
-`icon` selects a job icon. These fields do not add capacity and do not connect
+`conditionString` names a localization key the job UI shows. Write the display
+text and the SDK keys it for you, or pass a reference — the paired example uses
+`external.localization` because vanilla already defines
+`SPECIALIST_JOB_TRIGGER`. `buildingIcon` refers to the building art associated
+with the job, while `icon` selects a job icon. These fields do not add capacity and do not connect
 the job to the referenced building's behavior.
 
 Keep the default identity useful even when no row matches, and order or

@@ -1,5 +1,5 @@
 import { createMod } from "@pdx-ts/sdk";
-import { always, hasBuilding, isRobotPop, vanilla } from "@pdx-ts/sdk/stellaris";
+import { always, external, hasBuilding, isRobotPop, vanilla } from "@pdx-ts/sdk/stellaris";
 
 const mod = createMod({
   name: "Crystal Harmonics",
@@ -19,7 +19,7 @@ const crystalResonator = mod.job("crystal_resonator", {
   possible: always(false),
   swappableData: {
     default: {
-      conditionString: "SPECIALIST_JOB_TRIGGER",
+      conditionString: external.localization("SPECIALIST_JOB_TRIGGER"),
       buildingIcon: crystalPlant,
     },
   },
@@ -33,7 +33,7 @@ const harmonicResearcher = mod.job("harmonic_researcher", {
   category: "specialist",
   swappableData: {
     default: {
-      conditionString: "SPECIALIST_JOB_TRIGGER",
+      conditionString: external.localization("SPECIALIST_JOB_TRIGGER"),
       buildingIcon: researchLab,
     },
     swapType: [

@@ -42,10 +42,18 @@ import {
   type KeyedLocalization,
   type LocalizedText,
 } from "../../authoring/localization.ts";
-import { localisationKey } from "../../content/authoring.ts";
+import {
+  keyedTextKey,
+  localisationKey,
+  mapOccurrences,
+  occurrencePath,
+  resolveKeyedText,
+  resolveTriggeredModifierText,
+} from "../../content/authoring.ts";
 import { isComplexTriggerModifier } from "../../content/blocks.ts";
-import { fieldEntries } from "../../content/lower.ts";
+import { dualArm, fieldEntries } from "../../content/lower.ts";
 import type { ContentField, ContentLocalisation } from "../../content/schema.ts";
+import type { TriggeredModifier } from "../../content/types.ts";
 import type { ModWarning } from "../../diagnostics.ts";
 import type { ScopeName } from "../../generated/scopes.ts";
 import type { ContentRefSink, ContentRefUse } from "../../references.ts";
@@ -345,23 +353,25 @@ function mintModifierDescs(
 }
 
 /**
- * Mints the localisation a patched member needs, and refuses the shapes that
- * still have nowhere to put one.
+ * Mints the localisation a patched member needs, refuses the shapes that still
+ * have nowhere to put one, and returns the member with its key-typed text
+ * resolved to the keys the body will emit.
  *
  * The shapes reached are exactly the ones `define`'s own pre-pass
- * (`ContentAuthoring.collectRepeatedStructs`) reaches:
+ * (`ContentAuthoring.resolveFieldTree`) reaches: `locKey` values, whose inline
+ * text is registered under a key minted from the patched identity,
  * `weightBlock`/`weightBlockWithLoc` rows carrying `desc`, `repeatedStruct`
  * ids carrying localisation, and — since the walk descends `struct` and `dual`
- * levels — anything either is nested inside. The first is minted here; the
- * second is refused, because a `repeatedStruct` entry's key *is* an id of this
- * mod's own and a patch has no minting rule for one (no live patch registry
- * has such a field, so nothing is withheld in practice).
+ * levels — anything either is nested inside. The first two are minted here;
+ * the third is refused, because a `repeatedStruct` entry's key *is* an id of
+ * this mod's own and a patch has no minting rule for one (no live patch
+ * registry has such a field, so nothing is withheld in practice).
  *
  * The other block shapes a definition can hold mint nothing: a
- * `triggeredModifierBlock`'s `description`/`custom_tooltip`, and a `locKey`
- * scalar such as `triggered_desc.text`, are keys the author writes and the
- * lowering copies; `modifierBlock` and `effect` run recorders that emit
- * `name = amount` rows and script entries only. Those ride through unchanged.
+ * `triggeredModifierBlock`'s `description`/`custom_tooltip` is a key the author
+ * writes and the lowering copies, and `modifierBlock` and `effect` run
+ * recorders that emit `name = amount` rows and script entries only. Those ride
+ * through unchanged.
  */
 function mintLocalisation(
   value: unknown,
@@ -369,12 +379,63 @@ function mintLocalisation(
   member: string,
   path: string,
   ctx: MintContext
-): void {
+): unknown {
   switch (field.shape) {
+    case "value": {
+      if (field.locKey !== true) {
+        return value;
+      }
+      const fieldPath = joinFieldPath(path, field.key);
+      const position = `The patched "${member}" of "${ctx.ownerId}"`;
+      return mapOccurrences(value, field.repeated === true, (item, index) =>
+        resolveKeyedText(
+          item,
+          field.locKeyLiterals,
+          keyedTextKey(ctx.ownerId, fieldPath, index),
+          position,
+          ctx.into
+        )
+      );
+    }
+    case "valueList": {
+      // The list spelling of the same contract, resolved the same way. No
+      // patch registry declares one today (`job` is the only registry with a
+      // `locKey` list and is not patchable), but the elements are the very
+      // values the `value` case above resolves, so handling them costs one
+      // branch and cannot drift from the define path's arithmetic.
+      if (field.locKey !== true) {
+        return value;
+      }
+      const fieldPath = joinFieldPath(path, field.key);
+      const position = `The patched "${member}" of "${ctx.ownerId}"`;
+      const items = Array.isArray(value) ? (value as readonly unknown[]) : [value];
+      return items.map((item, index) =>
+        resolveKeyedText(
+          item,
+          undefined,
+          keyedTextKey(ctx.ownerId, fieldPath, index),
+          position,
+          ctx.into
+        )
+      );
+    }
+    case "triggeredModifierBlock": {
+      const fieldPath = joinFieldPath(path, field.key);
+      return mapOccurrences(value, field.repeated === true, (clause, index) =>
+        isAuthoredRecord(clause)
+          ? resolveTriggeredModifierText(
+              clause as TriggeredModifier<ScopeName>,
+              ctx.ownerId,
+              occurrencePath(fieldPath, index),
+              ctx.into
+            )
+          : clause
+      );
+    }
     case "weightBlock":
     case "weightBlockWithLoc":
       mintModifierDescs(value, field.key, joinFieldPath(path, field.key), ctx);
-      return;
+      return value;
     case "repeatedStruct":
       if (field.localisation.length > 0) {
         throw new Error(
@@ -384,16 +445,13 @@ function mintLocalisation(
             "and desc'd modifier rows in weight blocks; define your own content for the rest."
         );
       }
-      return;
+      return value;
     case "dual":
-      // Every arm, not the resolved one: `dualArm` throws on a form no arm
-      // takes, and the lowering below is where that belongs. An arm whose
-      // shape does not match what the author passed finds nothing and mints
-      // nothing on its own.
-      for (const arm of field.arms) {
-        mintLocalisation(value, arm, member, path, ctx);
-      }
-      return;
+      // The resolved arm, not every arm: the walk now rewrites the member, so
+      // it has to agree with the one arm `fieldEntries` will lower. `dualArm`
+      // is that decision, and its refusal of a form no arm takes is the same
+      // refusal the lowering would raise a moment later.
+      return mintLocalisation(value, dualArm(field, value), member, path, ctx);
     case "struct":
     case "triggerStruct": {
       // A struct carries no localisation of its own, but the fields inside it
@@ -403,22 +461,40 @@ function mintLocalisation(
       // so an authored sibling's path does not move when one is added.
       const items = Array.isArray(value) ? (value as readonly unknown[]) : [value];
       const fieldPath = joinFieldPath(path, field.key);
-      items.forEach((item, index) => {
+      const walked = items.map((item, index) => {
         if (!isAuthoredRecord(item)) {
-          return;
+          return item;
         }
         const itemPath = field.repeated ? `${fieldPath}_${index}` : fieldPath;
+        let resolved = item;
         for (const nested of field.fields) {
           const inner = item[nested.member];
-          if (inner !== undefined) {
-            mintLocalisation(inner, nested, `${member}.${nested.member}`, itemPath, ctx);
+          if (inner === undefined) {
+            continue;
+          }
+          const next = mintLocalisation(inner, nested, `${member}.${nested.member}`, itemPath, ctx);
+          if (next !== inner) {
+            resolved = { ...resolved, [nested.member]: next };
           }
         }
+        return resolved;
       });
-      return;
+      return Array.isArray(value) ? walked : walked[0];
     }
+    case "aliasStruct":
+    case "structMap":
+      // Reachable only from a patch registry whose fields hold one of these,
+      // which none does. Both can nest a `locKey` value, and a `structMap` can
+      // key localisation by a map key this mod does not own, so neither has a
+      // patch rule yet — and a silent pass-through would ship the author's
+      // prose as a key.
+      throw new Error(
+        `The patched "${member}" is a ${field.shape} field, and the patch path has no rule ` +
+          "for the localisation one can nest. Extend `mintLocalisation` before adding a patch " +
+          "registry that has one."
+      );
     default:
-      return;
+      return value;
   }
 }
 
@@ -523,11 +599,13 @@ export function patchContent<Source extends ParsedDefinition, Patch extends obje
   };
   // Every field's keys are minted before any field lowers, mirroring the two
   // passes `define` runs for the same reason: `modifierEntry` resolves a row's
-  // key at lowering time and refuses one that was never registered.
+  // key at lowering time and refuses one that was never registered. The same
+  // pass resolves key-typed text, so what lowers below is what was registered.
+  const resolved: Record<string, unknown> = { ...patched };
   for (const field of fields) {
-    const value = patched[field.member];
+    const value = resolved[field.member];
     if (value !== undefined && keyOf(field) !== undefined) {
-      mintLocalisation(value, field, field.member, "", mint);
+      resolved[field.member] = mintLocalisation(value, field, field.member, "", mint);
     }
   }
 
@@ -539,7 +617,7 @@ export function patchContent<Source extends ParsedDefinition, Patch extends obje
   };
   const replacements = new Map<string, PdxEntry[]>();
   for (const field of fields) {
-    const value = patched[field.member];
+    const value = resolved[field.member];
     if (value === undefined) {
       continue;
     }
@@ -555,7 +633,7 @@ export function patchContent<Source extends ParsedDefinition, Patch extends obje
     id: source.id,
     registry,
     source,
-    def: patched,
+    def: resolved,
     refs,
     loc: mint.into,
     replaceLoc,

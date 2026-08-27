@@ -2,6 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: alias[planet_initializer:...] across the rule files
 
+import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
 import { registerAliasStructFields, type ContentField } from "../content/schema.ts";
 import type { EffectBlock } from "../content/types.ts";
 import type { ScriptValue } from "../script/trigger-core.ts";
@@ -81,7 +82,7 @@ export const PLANET_INITIALIZER_SIZE_FIELDS: readonly ContentField[] = [
  * no id of its own.
  */
 export interface PlanetInitializerFields {
-  name?: string;
+  name?: LocalizedText | LocalizationRef;
   namelist?: CustomPlanetNames;
   /** count is optional, default to 1 if isn't specified or written at all */
   count?: number | PlanetInitializerCount;

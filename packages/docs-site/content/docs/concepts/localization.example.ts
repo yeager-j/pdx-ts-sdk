@@ -19,7 +19,7 @@ const resonanceArchive = mod.building("resonance_archive", {
   icon: "building_research_lab_1",
   buildingSets: ["research"],
   canBuild: true,
-  customTooltip: archiveTooltip.key,
+  customTooltip: archiveTooltip,
 });
 
 const reconsider = mod.replaceLocalization("crisis.2010.a", {

@@ -1,3 +1,4 @@
+import { isLocalizationRef } from "../authoring/localization.ts";
 import type { ContentConversion, ContentShape } from "../generated/content-shape.ts";
 
 /**
@@ -59,7 +60,7 @@ export interface ContentRefTypes {
   readonly refTypes?: readonly string[];
 }
 
-interface ContentValueField extends ContentFieldBase, ContentRefTypes {
+export interface ContentValueField extends ContentFieldBase, ContentRefTypes {
   readonly shape: "value";
   /**
    * `"assetPath"` marks a field the rules type `filepath`: its member is
@@ -74,17 +75,37 @@ interface ContentValueField extends ContentFieldBase, ContentRefTypes {
    * The rules type this field's raw value as a localisation key rather than
    * free text (CWT's bare `= localisation`, distinct from a `"$"`-pattern
    * slot the {@link ContentLocalisation} pipeline auto-generates a key for).
-   * `contentScalar` uses it to warn when an authored value looks like prose
-   * rather than a key (SDK-50) — the game shows an unresolved key verbatim,
-   * with no error, so this is the closest the SDK can get to catching it.
+   *
+   * The member accepts a `LocalizationRef` or inline display text, and the
+   * definition walk resolves either to the key the body emits — minting one
+   * from the owner id and field path for inline text (SDK-303). Nothing
+   * downstream can otherwise tell "raw key" from "any other string field", so
+   * this flag is what makes that resolution possible.
    */
   readonly locKey?: true;
+  /**
+   * Engine sentinels the rules declare beside the localisation arm, which the
+   * resolution passes through untouched — `custom_tooltip`'s `fail_text =
+   * default`, which selects the game's own text, and `text = ""`. They are not
+   * keys, and minting one for them would change what the game shows.
+   */
+  readonly locKeyLiterals?: readonly string[];
 }
 
 interface ContentValueListField extends ContentFieldBase, ContentRefTypes {
   readonly shape: "valueList";
   readonly conversion: "identity" | "ref";
   readonly quoted?: boolean;
+  /**
+   * The rules type this list's elements as localisation keys — CWT's
+   * `localized_tags = { localisation }`, the brace-list spelling of the same
+   * declaration {@link ContentValueField.locKey} marks on a bare scalar.
+   *
+   * Each element takes a `LocalizationRef` or inline display text, and the
+   * definition walk resolves it exactly as a repeated scalar's element is
+   * resolved, indexed by its position in the list.
+   */
+  readonly locKey?: true;
 }
 
 interface ContentTriggerField extends ContentFieldBase {
@@ -254,6 +275,16 @@ interface ContentAliasStructField extends ContentFieldBase {
 interface ContentStructMapField extends ContentFieldBase {
   readonly shape: "structMap";
   readonly fields: readonly ContentField[];
+  /**
+   * Slots keyed by the map key itself rather than by a definition id — an
+   * event-chain or mission `counter`, whose engine-visible name is the very
+   * localisation key the game shows it under. Their {@link ContentLocalisation}
+   * pattern is therefore a bare `"$"`.
+   *
+   * Absent on the maps whose keys the engine reads but never displays, such as
+   * a ship size's `section_slots`.
+   */
+  readonly localisation?: readonly ContentLocalisation[];
 }
 
 /**
@@ -371,7 +402,24 @@ export function authoredForm(value: unknown): AuthoredForm {
   if ((value as { readonly kind?: unknown } | null)?.kind === "trigger") {
     return "trigger";
   }
+  // A key reference and a language record are objects at authoring time and
+  // one bare word in the file, exactly as a `TypedRef` is — so both belong on
+  // a `locKey` field's scalar arm rather than reading as a block.
+  if (isKeyedTextObject(value)) {
+    return "scalar";
+  }
   return typeof value === "function" ? "closure" : "block";
+}
+
+function isKeyedTextObject(value: unknown): boolean {
+  if (isLocalizationRef(value)) {
+    return true;
+  }
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    typeof (value as { readonly english?: unknown }).english === "string"
+  );
 }
 
 const ALIAS_STRUCT_FIELDS = new Map<string, readonly ContentField[]>();

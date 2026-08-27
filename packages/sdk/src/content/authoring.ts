@@ -2,6 +2,8 @@
 import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
 
 import {
+  isLocalizationRef,
+  localizationRef,
   resolveFixedKeyText,
   type KeyedLocalization,
   type LocalizedText,
@@ -14,16 +16,17 @@ import {
   registerModifierDescKey,
 } from "../script/effects/modifiers.ts";
 import type { TypedRef } from "../script/scalar.ts";
-import { isComplexTriggerModifier } from "./blocks.ts";
-import { dualArm, fieldEntries, resolveFromClosures } from "./lower.ts";
+import { isComplexTriggerModifier, TRIGGERED_MODIFIER_TEXT_MEMBERS } from "./blocks.ts";
+import { dualArm, fieldEntries, isPassthrough, resolveFromClosures } from "./lower.ts";
 import type { ShapeMint } from "./mint-provenance.ts";
 import {
+  aliasStructFieldsOf,
   carriesPrefixSegment,
   type ContentField,
   type ContentLocalisation,
   type ContentRegistryDescriptor,
 } from "./schema.ts";
-import type { WeightBlock } from "./types.ts";
+import type { TriggeredModifier, WeightBlock } from "./types.ts";
 
 export type { AssetPathSink, AssetPathUse, ContentRefSink, ContentRefUse } from "../references.ts";
 
@@ -44,6 +47,14 @@ export interface DefinedContent<
 type ContentDef = { readonly id: string };
 type RegisterLoc = (entries: readonly KeyedLocalization[]) => void;
 
+/** What the definition walk carries unchanged into a block field's interior. */
+interface StructWalkContext {
+  readonly ownerId: string;
+  readonly ownerType: string;
+  readonly pendingIds: Map<string, Set<string>>;
+  readonly localisation: KeyedLocalization[];
+}
+
 /**
  * Accumulates the reference sink, the dotted path to the current level (for
  * ref diagnostics), and the nearest enclosing identity (for desc-key
@@ -55,7 +66,7 @@ type RegisterLoc = (entries: readonly KeyedLocalization[]) => void;
  * and desc-key resolution (unlike ref collection) is not an optional
  * diagnostic a caller can decline. `ownerId` starts as the top-level
  * definition's own id and rebinds to a repeated-struct entry's own id on the
- * way down, mirroring `ContentAuthoring.collectRepeatedStructs`'s identical
+ * way down, mirroring `ContentAuthoring.resolveFieldTree`'s identical
  * rebind for the same reason: a nested entry (a tradition swap, a situation
  * stage) is itself a stable identity a `WeightBlock` inside it can key desc
  * localisation against.
@@ -107,6 +118,109 @@ export function localisationKey(pattern: string, id: string): string {
   return pattern.replace("$", id);
 }
 
+/**
+ * The key a `locKey` field's inline text is registered and emitted under.
+ *
+ * Derived from the nearest enclosing identity and the field's path rather than
+ * from the text, so editing the words never orphans a shipped translation.
+ * A repeated field counts its entries, which makes their keys order-sensitive
+ * — the same trade a `complex_trigger_modifier` row's desc key already makes.
+ *
+ * Shared with the patch path (`installation/vanilla/patch.ts`), which applies
+ * it to the patched definition's prefixed id. One derivation, so a patched
+ * member and an authored one can never disagree about where their text went.
+ */
+export function keyedTextKey(ownerId: string, fieldPath: string, index?: number): string {
+  return `${ownerId}_${occurrencePath(fieldPath, index)}`;
+}
+
+/** One occurrence's field path: a repeated field counts its entries into it. */
+export function occurrencePath(fieldPath: string, index: number | undefined): string {
+  return index === undefined ? fieldPath : `${fieldPath}_${index}`;
+}
+
+/**
+ * Resolves each of a field's occurrences, keeping the one-or-a-list shape its
+ * member has. `index` is the entry's position where the field repeats, and
+ * `undefined` where the member holds a single occurrence — the same
+ * distinction {@link occurrencePath} and {@link keyedTextKey} read.
+ */
+export function mapOccurrences(
+  value: unknown,
+  repeated: boolean,
+  resolve: (item: unknown, index: number | undefined) => unknown
+): unknown {
+  return repeated
+    ? (value as readonly unknown[]).map((item, index) => resolve(item, index))
+    : resolve(value, undefined);
+}
+
+/**
+ * Resolves one authored `locKey` value to the key the definition body emits,
+ * registering the translations of inline text under the minted key.
+ *
+ * A {@link LocalizationRef} names a key that already exists — this mod's, or
+ * one declared through `external.localization` — so it registers nothing. Two
+ * other values ride through untouched: a parsed one, carrying a key read out
+ * of the install that is not this mod's to mint, and one of the position's own
+ * `sentinels`, which is an engine word rather than a key.
+ *
+ * @param sentinels - The field's `locKeyLiterals`, or nothing where it declares none.
+ * @param position - Names the text position in a refusal, e.g. `tradition.custom_tooltip`.
+ */
+export function resolveKeyedText(
+  value: unknown,
+  sentinels: readonly string[] | undefined,
+  mintedKey: string,
+  position: string,
+  into: KeyedLocalization[]
+): unknown {
+  if (isLocalizationRef(value)) {
+    return value.key;
+  }
+  if (isPassthrough(value) || (typeof value === "string" && sentinels?.includes(value) === true)) {
+    return value;
+  }
+  into.push({
+    key: mintedKey,
+    translations: resolveFixedKeyText(value as LocalizedText, position, mintedKey),
+  });
+  return mintedKey;
+}
+
+/**
+ * Resolves the four key-typed members of one triggered-modifier clause, whose
+ * type is hand-written rather than generated and so has no `ContentField` for
+ * {@link resolveFieldTree} to read.
+ *
+ * @param fieldPath - The clause's own path, index included where the field repeats.
+ */
+export function resolveTriggeredModifierText(
+  value: TriggeredModifier<ScopeName>,
+  ownerId: string,
+  fieldPath: string,
+  into: KeyedLocalization[]
+): TriggeredModifier<ScopeName> {
+  let resolved = value;
+  for (const [member, key] of TRIGGERED_MODIFIER_TEXT_MEMBERS) {
+    const text = value[member];
+    if (text === undefined) {
+      continue;
+    }
+    resolved = {
+      ...resolved,
+      [member]: resolveKeyedText(
+        text,
+        undefined,
+        keyedTextKey(ownerId, `${fieldPath}_${key}`),
+        `The triggered modifier "${key}" on "${ownerId}" (${fieldPath})`,
+        into
+      ),
+    };
+  }
+  return resolved;
+}
+
 export class ContentAuthoring {
   private readonly prefix: string;
   private readonly byType: ReadonlyMap<string, ContentRegistryDescriptor>;
@@ -115,15 +229,13 @@ export class ContentAuthoring {
   private readonly registerLoc: RegisterLoc;
   private readonly onPrefixViolation: (message: string) => void;
   private readonly onUnstableDescKey: (message: string) => void;
-  private readonly onLocKeyLooksLikeText: (message: string) => void;
 
   constructor(
     prefix: string,
     descriptors: readonly ContentRegistryDescriptor[],
     registerLoc: RegisterLoc,
     onPrefixViolation?: (message: string) => void,
-    onUnstableDescKey?: (message: string) => void,
-    onLocKeyLooksLikeText?: (message: string) => void
+    onUnstableDescKey?: (message: string) => void
   ) {
     this.prefix = prefix;
     // Indexed by type, not kept as a list: nothing walks every registry since
@@ -136,11 +248,6 @@ export class ContentAuthoring {
         throw new Error(message);
       });
     this.onUnstableDescKey = onUnstableDescKey ?? (() => {});
-    // A warning, not an invariant: the SDK cannot know whether the string is
-    // really prose or a real (if unconventional) key, so the no-op default
-    // does not reject anything a direct `ContentAuthoring` caller writes.
-    // `buildMod` supplies the callback that surfaces it on `mod.warnings`.
-    this.onLocKeyLooksLikeText = onLocKeyLooksLikeText ?? ((): void => {});
   }
 
   /**
@@ -180,11 +287,19 @@ export class ContentAuthoring {
     // game through the body pointer the vendored rules actually read; fill
     // it in before either the .yml text or the body fields get collected, so
     // the two are never produced apart.
-    const def = this.applySyntheticPointers(resolved, descriptor.localisation) as D;
+    const pointed = this.applySyntheticPointers(resolved, descriptor.localisation);
     const localisation: KeyedLocalization[] = [];
     const nestedIds = new Map<string, Set<string>>();
-    this.collectLocalisation(def.id, def, descriptor.localisation, localisation);
-    this.collectRepeatedStructs(def.id, "", def, descriptor.fields, type, nestedIds, localisation);
+    this.collectLocalisation(resolved.id, pointed, descriptor.localisation, localisation);
+    const def = this.resolveFieldTree(
+      resolved.id,
+      "",
+      pointed,
+      descriptor.fields,
+      type,
+      nestedIds,
+      localisation
+    ) as D;
     registerLoc(localisation);
     for (const [identity, pending] of nestedIds) {
       const ids = this.nestedIds.get(identity) ?? new Set<string>();
@@ -281,9 +396,11 @@ export class ContentAuthoring {
             `generated) or only ${slot.pointerMember} (write the key yourself).`
         );
       }
-      (patched ??= { ...def })[slot.pointerMember] = localisationKey(
-        slot.pattern,
-        def["id"] as string
+      // A reference, not the bare key: the pointer member is itself a
+      // key-typed field, and a string there is display text the walk below
+      // would key and register a second time.
+      (patched ??= { ...def })[slot.pointerMember] = localizationRef(
+        localisationKey(slot.pattern, def["id"] as string)
       );
     }
     return patched ?? def;
@@ -317,20 +434,25 @@ export class ContentAuthoring {
   }
 
   /**
-   * Walks every field level (top, plain `struct` nesting, and `repeatedStruct`
-   * nesting) for three things that need this same recursive descent:
-   * repeated-struct ids (prefix and duplicate checks, matched against
-   * localisation), `WeightBlock`/`WeightBlockWithLoc` modifier rows carrying
-   * `desc` (registered as localisation via {@link collectModifierDescs}), and
-   * `locKey`-tagged scalar values that look like literal text rather than a
-   * localisation key (SDK-50, via {@link onLocKeyLooksLikeText}). `ownerId` is
-   * the nearest enclosing identity — the definition id, or a repeated-struct
-   * entry's own id once recursion crosses one — and `path` accumulates plain
-   * `struct` field keys since the last identity, so a modifier's generated key
-   * (and a loc-key warning's field path) stays unique even several `struct`
-   * levels deep.
+   * Walks every field level — top, `struct`, `aliasStruct` and `structMap`
+   * nesting, and `repeatedStruct` nesting — for the four things that need this
+   * same recursive descent: repeated-struct ids (prefix and duplicate checks,
+   * matched against localisation), the localisation an engine-keyed map keys by
+   * its own map key, `WeightBlock`/`WeightBlockWithLoc` modifier rows carrying
+   * `desc` (registered via {@link collectModifierDescs}), and `locKey` values,
+   * whose inline text is registered under a key minted by {@link keyedTextKey}.
+   *
+   * Returns the definition with every `locKey` value replaced by the key the
+   * body emits, so the writer downstream lowers plain strings and cannot
+   * disagree with what was registered here. The definition is rewritten rather
+   * than mutated, and an untouched subtree is returned as it stands.
+   *
+   * `ownerId` is the nearest enclosing identity — the definition id, or a
+   * repeated-struct entry's own id once recursion crosses one — and `path`
+   * accumulates field keys since the last identity, so a minted key stays
+   * unique several levels deep.
    */
-  private collectRepeatedStructs(
+  private resolveFieldTree(
     ownerId: string,
     path: string,
     def: Readonly<Record<string, unknown>>,
@@ -338,7 +460,11 @@ export class ContentAuthoring {
     ownerType: string,
     pendingIds: Map<string, Set<string>>,
     localisation: KeyedLocalization[]
-  ): void {
+  ): Readonly<Record<string, unknown>> {
+    let rewritten: Record<string, unknown> | undefined;
+    const rewrite = (member: string, value: unknown): void => {
+      (rewritten ??= { ...def })[member] = value;
+    };
     for (const field of fields) {
       const raw = def[field.member];
       // An unkeyed splice has no key to build a path from, and nothing inside
@@ -352,16 +478,53 @@ export class ContentAuthoring {
       }
       const fieldPath = path === "" ? field.key : `${path}_${field.key}`;
       if (field.shape === "value" && field.locKey === true) {
-        const values = field.repeated ? (raw as readonly unknown[]) : [raw];
-        for (const item of values) {
-          if (typeof item === "string" && item.includes(" ")) {
-            this.onLocKeyLooksLikeText(
-              `${ownerType}.${fieldPath} for "${ownerId}" is a localisation key, not free text, ` +
-                `but contains a space: ${JSON.stringify(item)}. The game shows this string ` +
-                "verbatim if no localisation entry defines that key."
-            );
-          }
-        }
+        const position = `${ownerType}.${fieldPath} for "${ownerId}"`;
+        rewrite(
+          field.member,
+          mapOccurrences(raw, field.repeated === true, (item, index) =>
+            resolveKeyedText(
+              item,
+              field.locKeyLiterals,
+              keyedTextKey(ownerId, fieldPath, index),
+              position,
+              localisation
+            )
+          )
+        );
+        continue;
+      }
+      if (field.shape === "valueList" && field.locKey === true) {
+        // A list's elements are always indexed, and the writer accepts a bare
+        // value as the one-element list it is — normalizing here keeps the two
+        // readings from disagreeing about what index an element carries.
+        const items = Array.isArray(raw) ? raw : [raw];
+        const position = `${ownerType}.${fieldPath} for "${ownerId}"`;
+        rewrite(
+          field.member,
+          items.map((item, index) =>
+            resolveKeyedText(
+              item,
+              undefined,
+              keyedTextKey(ownerId, fieldPath, index),
+              position,
+              localisation
+            )
+          )
+        );
+        continue;
+      }
+      if (field.shape === "triggeredModifierBlock") {
+        rewrite(
+          field.member,
+          mapOccurrences(raw, field.repeated === true, (clause, index) =>
+            resolveTriggeredModifierText(
+              clause as TriggeredModifier<ScopeName>,
+              ownerId,
+              occurrencePath(fieldPath, index),
+              localisation
+            )
+          )
+        );
         continue;
       }
       if (field.shape === "weightBlock" || field.shape === "weightBlockWithLoc") {
@@ -379,7 +542,7 @@ export class ContentAuthoring {
         // ordinary field it is. `path`, not `fieldPath` — the arm carries the
         // same key, so the recursion rebuilds the identical path.
         const arm = dualArm(field, raw);
-        this.collectRepeatedStructs(
+        const armDef = this.resolveFieldTree(
           ownerId,
           path,
           { [arm.member]: raw },
@@ -388,24 +551,56 @@ export class ContentAuthoring {
           pendingIds,
           localisation
         );
+        if (armDef[arm.member] !== raw) {
+          rewrite(field.member, armDef[arm.member]);
+        }
         continue;
       }
       if (field.shape === "struct" || field.shape === "triggerStruct") {
-        const items = field.repeated
-          ? (raw as readonly Readonly<Record<string, unknown>>[])
-          : [raw as Readonly<Record<string, unknown>>];
-        items.forEach((item, index) => {
-          const itemPath = field.repeated ? `${fieldPath}_${index}` : fieldPath;
-          this.collectRepeatedStructs(
+        // A wrapped struct is an array whatever `repeated` says — the schema's
+        // own rule — and each element needs its own path segment either way.
+        const asList = field.repeated === true || (field.shape === "struct" && field.wrapped);
+        this.rewriteStructItems(
+          raw,
+          asList === true,
+          fieldPath,
+          field.fields,
+          { ownerId, ownerType, pendingIds, localisation },
+          (value) => rewrite(field.member, value)
+        );
+        continue;
+      }
+      if (field.shape === "aliasStruct") {
+        this.rewriteStructItems(
+          raw,
+          field.repeated === true,
+          fieldPath,
+          aliasStructFieldsOf(field.category),
+          { ownerId, ownerType, pendingIds, localisation },
+          (value) => rewrite(field.member, value)
+        );
+        continue;
+      }
+      if (field.shape === "structMap") {
+        const record = raw as Readonly<Record<string, Readonly<Record<string, unknown>>>>;
+        const entries = Object.entries(record).map(([name, item]) => {
+          // The map key is the localisation key: an event-chain counter shows
+          // under its own name, with no pattern around it.
+          this.collectLocalisation(name, item, field.localisation ?? [], localisation);
+          const nested = this.resolveFieldTree(
             ownerId,
-            itemPath,
+            `${fieldPath}_${name}`,
             item,
             field.fields,
             ownerType,
             pendingIds,
             localisation
           );
+          return [name, nested] as const;
         });
+        if (entries.some(([name, nested]) => nested !== record[name])) {
+          rewrite(field.member, Object.fromEntries(entries));
+        }
         continue;
       }
       if (field.shape !== "repeatedStruct") {
@@ -415,6 +610,7 @@ export class ContentAuthoring {
       const identity = `${ownerType}.${field.key}`;
       const existingIds = this.nestedIds.get(identity);
       const pending = pendingIds.get(identity) ?? new Set<string>();
+      const entries: (readonly [string, Readonly<Record<string, unknown>>])[] = [];
       for (const [id, nested] of Object.entries(record)) {
         // Nested definition ids are never minted with a head and carry no
         // exact-name allowance: no descriptor, so the plain measure applies.
@@ -424,18 +620,49 @@ export class ContentAuthoring {
         }
         pending.add(id);
         this.collectLocalisation(id, nested, field.localisation, localisation);
-        this.collectRepeatedStructs(
+        entries.push([
           id,
-          "",
-          nested,
-          field.fields,
-          identity,
-          pendingIds,
-          localisation
-        );
+          this.resolveFieldTree(id, "", nested, field.fields, identity, pendingIds, localisation),
+        ]);
       }
       pendingIds.set(identity, pending);
+      if (entries.some(([id, nested]) => nested !== record[id])) {
+        rewrite(field.member, Object.fromEntries(entries));
+      }
     }
+    return rewritten ?? def;
+  }
+
+  /**
+   * Walks a block-valued field's interior — one block, or an array of them —
+   * and reports a rewritten value only when the walk actually changed one.
+   */
+  private rewriteStructItems(
+    raw: unknown,
+    asList: boolean,
+    fieldPath: string,
+    fields: readonly ContentField[],
+    ctx: StructWalkContext,
+    rewrite: (value: unknown) => void
+  ): void {
+    const items = asList
+      ? (raw as readonly Readonly<Record<string, unknown>>[])
+      : [raw as Readonly<Record<string, unknown>>];
+    const walked = items.map((item, index) =>
+      this.resolveFieldTree(
+        ctx.ownerId,
+        asList ? `${fieldPath}_${index}` : fieldPath,
+        item,
+        fields,
+        ctx.ownerType,
+        ctx.pendingIds,
+        ctx.localisation
+      )
+    );
+    if (walked.every((item, index) => item === items[index])) {
+      return;
+    }
+    rewrite(asList ? walked : walked[0]);
   }
 
   /**

@@ -2,7 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/traditions.cwt
 
-import type { LocalizedText } from "../authoring/localization.ts";
+import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type {
@@ -34,8 +34,10 @@ export interface TraditionSwapFields {
   inheritName?: boolean;
   inheritEffects?: boolean;
   unlocksAgenda?: AgendaRef | string;
-  customTooltip?: string[];
-  customTooltipWithModifiers?: string[];
+  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
+  customTooltip?: (LocalizedText | LocalizationRef)[];
+  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
+  customTooltipWithModifiers?: (LocalizedText | LocalizationRef)[];
   /** accepts only country modifiers */
   modifier?: ModifierClosure<"country">;
   onEnabled?: EffectBlock<"country", { readonly root: "country" }>;
@@ -137,8 +139,10 @@ export interface TraditionFields {
   triggeredModifier?: TriggeredModifier<"country">[];
   possible?: Trigger<"country">;
   onEnabled?: EffectBlock<"country", { readonly root: "country" }>;
-  customTooltip?: string[];
-  customTooltipWithModifiers?: string[];
+  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
+  customTooltip?: (LocalizedText | LocalizationRef)[];
+  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
+  customTooltipWithModifiers?: (LocalizedText | LocalizationRef)[];
   traditionSwap?: Readonly<Record<string, TraditionSwapFields>>;
   /** the ai_weight in traditions applies both to the main traditions and the tradition swaps, there are no seperate fields. */
   aiWeight?: WeightBlock<"country">;

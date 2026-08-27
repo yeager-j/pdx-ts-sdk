@@ -1,7 +1,7 @@
 /**
  * Consumer-facing contracts shared by generated content registries and the generic lowerer.
  */
-import type { LocalizedText } from "../authoring/localization.ts";
+import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
 import type { ContentReferenceName, ContentTypeName } from "../generated/content-registry.ts";
 import type { ScopeObjOf } from "../generated/effects.ts";
 import type {
@@ -436,24 +436,36 @@ export interface TriggeredModifier<
 > {
   /** In-game condition emitted under the clause's `potential` block. */
   readonly when?: Trigger<PotentialScope>;
-  /** Optional localization key identifying the clause. */
-  readonly key?: string;
+  /**
+   * Names the localization key identifying the clause: pass a reference, or
+   * display text the SDK keys and emits for you.
+   */
+  readonly key?: LocalizedText | LocalizationRef;
   /** Whether the modifier remains visible when its potential fails. */
   readonly showIfNotPotential?: boolean;
-  /** Replacement text shown when the potential fails. */
-  readonly notPotentialOverrideTextKey?: string;
+  /**
+   * Names the localization key for the text shown when the potential fails:
+   * pass a reference, or display text the SDK keys and emits for you.
+   */
+  readonly notPotentialOverrideTextKey?: LocalizedText | LocalizationRef;
   /** Modifiers nested under an explicit `modifier` block. */
   readonly modifier?: ModifierClosure<ModifierScope>;
   /** Modifiers spliced directly into the triggered-modifier block. */
   readonly modifiers?: ModifierClosure<ModifierScope>;
-  /** Optional localization key describing the modifier. */
-  readonly description?: string;
+  /**
+   * Names the localization key describing the modifier: pass a reference, or
+   * display text the SDK keys and emits for you.
+   */
+  readonly description?: LocalizedText | LocalizationRef;
   /** Values substituted into the description localization. */
   readonly descriptionParameters?: Readonly<Record<string, string>>;
   /** Hides generated modifier text in favor of `customTooltip`. */
   readonly showOnlyCustomTooltip?: boolean;
-  /** Custom tooltip localization key. */
-  readonly customTooltip?: string;
+  /**
+   * Names the custom tooltip's localization key: pass a reference, or display
+   * text the SDK keys and emits for you.
+   */
+  readonly customTooltip?: LocalizedText | LocalizationRef;
   /** Repeated scripted multipliers emitted under `mult`. */
   readonly mult?: ScriptValue | readonly ScriptValue[];
   /** Repeated scripted multipliers emitted under `multiplier`. */

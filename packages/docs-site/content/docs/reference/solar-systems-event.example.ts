@@ -11,7 +11,7 @@ const archiveName = mod.localization("LOST_REACH_ARCHIVE", "Archive");
 const sentinelName = mod.localization("LOST_REACH_SENTINEL", "Sentinel");
 
 const sentinel = mod.solarSystemInitializer("lost_reach_sentinel", {
-  name: sentinelName.key,
+  name: sentinelName,
   class: "sc_m",
   planet: [
     { class: "star", orbitDistance: 0, size: 20 },
@@ -20,7 +20,7 @@ const sentinel = mod.solarSystemInitializer("lost_reach_sentinel", {
 });
 
 const lostReach = mod.solarSystemInitializer("lost_reach", {
-  name: reachName.key,
+  name: reachName,
   class: "sc_neutron_star",
   flags: ["frontier_cartography_lost_reach"],
   preventAnomalies: true,
@@ -31,7 +31,7 @@ const lostReach = mod.solarSystemInitializer("lost_reach", {
   planet: [
     { class: "star", orbitDistance: 0, size: 25 },
     {
-      name: archiveName.key,
+      name: archiveName,
       class: "pc_relic",
       orbitDistance: 70,
       orbitAngle: 40,

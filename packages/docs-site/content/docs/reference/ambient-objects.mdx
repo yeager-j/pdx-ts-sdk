@@ -27,10 +27,10 @@ flag can stay next to the placement. The paired example defines, places, and
 configures one object through that complete path.
 
 `name` is English source text. The SDK emits it under the ambient object's
-minted id. `description` and `tooltip` are different: they expect localization
-keys, so the example creates those keys with `mod.localization` and passes
-their `.key` values. See [Localization](/concepts/localization/) for adding
-translations.
+minted id. `description` and `tooltip` name a localization key, so they take
+either display text the SDK keys for you or a reference to an existing key —
+the example passes `mod.localization` items. See
+[Localization](/concepts/localization/) for adding translations.
 
 The raw `entity` id must name a model entity supplied by Stellaris or a mod.
 The SDK checks a branded model-entity reference when one is available, but it

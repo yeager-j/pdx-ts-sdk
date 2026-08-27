@@ -219,39 +219,39 @@ describe("emitted trigger signatures", () => {
   it("scalar plus block: preserves both custom_tooltip forms as overloads", () => {
     expect(argsDeclaration("CustomTooltipArgs")).toMatchInlineSnapshot(`
       "export type CustomTooltipArgs<S extends ScopeName = ScopeName> = {
-        text?: "" | string;
-        failText?: "default" | string;
-        successText?: string;
+        text?: "" | string | LocalizationRef;
+        failText?: "default" | string | LocalizationRef;
+        successText?: string | LocalizationRef;
         /** The nested conditions, written bare inside the block beside its named keys. */
         conditions: Trigger<S>;
       };"
     `);
     expect(declaration("customTooltip")).toMatchInlineSnapshot(`
-      "export function customTooltip(value: string): Trigger<ScopeName>;
+      "export function customTooltip(value: string | LocalizationRef): Trigger<ScopeName>;
       export function customTooltip<S extends ScopeName = ScopeName>(
         args: CustomTooltipArgs<S>
       ): Trigger<S>;
       export function customTooltip<S extends ScopeName>(
-        value: string | CustomTooltipArgs<S>
+        value: string | LocalizationRef | CustomTooltipArgs<S>
       ): Trigger<ScopeName> {
-        if (isStructuredValue(value, [])) {
+        if (isStructuredValue(value, ["localization-ref"])) {
           const args = value;
           const entries: PdxEntry[] = [];
           const refs: ContentRefUse[] = [];
           if (args.text !== undefined) {
-            entries.push(kv("text", args.text));
+            entries.push(kv("text", refId(args.text)));
           }
           if (args.failText !== undefined) {
-            entries.push(kv("fail_text", args.failText));
+            entries.push(kv("fail_text", refId(args.failText)));
           }
           if (args.successText !== undefined) {
-            entries.push(kv("success_text", args.successText));
+            entries.push(kv("success_text", refId(args.successText)));
           }
           entries.push(...args.conditions.entries);
           refs.push(...args.conditions.refs);
           return trigger([block("custom_tooltip", entries)], refs);
         }
-        return trigger([kv("custom_tooltip", value)]);
+        return trigger([kv("custom_tooltip", refId(value))]);
       }"
     `);
   });

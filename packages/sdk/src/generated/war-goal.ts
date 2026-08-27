@@ -2,7 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/casus_belli_and_war_goals.cwt
 
-import type { LocalizedText } from "../authoring/localization.ts";
+import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { EffectBlock, WeightBlock, WithFrom } from "../content/types.ts";
@@ -11,9 +11,12 @@ import type { CedeClaim, PeaceOffer, WarGoalHide } from "./enums.ts";
 import type { CasusBelliRef, WarGoalRef } from "./refs.ts";
 
 export interface WarGoalForbiddenPeaceOffers {
-  demandSurrender?: string;
-  statusQuo?: string;
-  surrender?: string;
+  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
+  demandSurrender?: LocalizedText | LocalizationRef;
+  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
+  statusQuo?: LocalizedText | LocalizationRef;
+  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
+  surrender?: LocalizedText | LocalizationRef;
 }
 
 export const WAR_GOAL_FORBIDDEN_PEACE_OFFERS_FIELDS: readonly ContentField[] = [

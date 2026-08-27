@@ -6,6 +6,7 @@
 // From: script-docs/v4.4.1/effects.log
 // From: script-docs/v4.4.1/scopes.log
 
+import type { LocalizationRef } from "../authoring/localization.ts";
 import type {
   EffectPath,
   EffectPathTransition,
@@ -636,11 +637,12 @@ export interface EffectsIn15Scopesee16 {
    * ```
    * set_name = <string>/<target>
    * ```
+   * A localization key: a bare string is the key itself, and a reference is unwrapped to its key. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
    */
-  setName(value: "random" | ScopeValue | string): void;
+  setName(value: "random" | ScopeValue | string | LocalizationRef): void;
   setName(args: {
     /** string in localisation (which contains one or more bracket commands) */
-    key: string;
+    key: string | LocalizationRef;
     /** one of the bracket commands contained in the localisation referenced above, brackets optional (there should be 1 variable_string per unique bracket command) */
     variableString?: readonly string[];
   }): void;
@@ -1053,7 +1055,11 @@ export interface EffectsIn4Scopes2b24 {
    * ```
    */
   createArmy(args: {
-    name?: string | "random" | { key: string; variableString?: readonly string[] };
+    name?:
+      | string
+      | LocalizationRef
+      | "random"
+      | { key: string | LocalizationRef; variableString?: readonly string[] };
     owner: ScopeValue<
       | "agreement"
       | "archaeological_site"
@@ -1119,6 +1125,7 @@ export interface EffectsIn4Scopes2b24 {
    * 	effect = <init effect> (optional)
    * }
    * ```
+   * A localization key: a bare string is the key itself, and a reference is unwrapped to its key. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
    */
   createPopGroup(args: {
     species?:
@@ -1168,7 +1175,7 @@ export interface EffectsIn4Scopes2b24 {
     /** If set, the amount will be randomized in [size - random, size + random]. The minimum value is 0 if size is 0, and 1 otherwise. */
     random?: ScriptValue;
     /** default: 'GROWTH_CAT_OTHER' */
-    growthCategory?: string;
+    growthCategory?: string | LocalizationRef;
     effect?: (scope: PopGroupScope) => void;
   }): void;
 
@@ -1185,7 +1192,12 @@ export interface EffectsIn4Scopes2b24 {
    * ```
    */
   createRebels(args: {
-    name?: string | ScopeValue | "random" | { key: string; variableString?: readonly string[] };
+    name?:
+      | string
+      | LocalizationRef
+      | ScopeValue
+      | "random"
+      | { key: string | LocalizationRef; variableString?: readonly string[] };
     authority:
       | "random"
       | AuthorityRef
@@ -2313,12 +2325,13 @@ export interface EffectsIn5Scopes979f {
    * ```
    * create_point_of_interest = { id = <key> name = <string> desc = <string> event_chain = <key> location = <target> }
    * ```
+   * A localization key: a bare string is the key itself, and a reference is unwrapped to its key. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
    */
   createPointOfInterest(args: {
     id: PointOfInterest;
     /** Leaving out "name" gives a blank button that looks really terrible and unprofessional. Don't do it :P */
-    name: string;
-    desc?: string;
+    name: string | LocalizationRef;
+    desc?: string | LocalizationRef;
     eventChain: EventChainRef | string;
     location?: ScopeValue<
       | "ambient_object"
@@ -3039,8 +3052,12 @@ export interface EffectsInArchaeologicalSite {
    * 	tooltip = <loc key>
    * }
    * ```
+   * A localization key: a bare string is the key itself, and a reference is unwrapped to its key. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
    */
-  addExpeditionLogEntry(args: { title?: string; tooltip?: string }): void;
+  addExpeditionLogEntry(args: {
+    title?: string | LocalizationRef;
+    tooltip?: string | LocalizationRef;
+  }): void;
 
   /**
    * Manually flags an archaeological event as expired
@@ -3167,7 +3184,11 @@ export interface EffectsInArmy {
    * ```
    */
   modifyArmy(args: {
-    name?: "random" | string | { key: string; variableString?: readonly string[] };
+    name?:
+      | "random"
+      | string
+      | LocalizationRef
+      | { key: string | LocalizationRef; variableString?: readonly string[] };
     owner?: ScopeValue<
       | "agreement"
       | "archaeological_site"
@@ -4198,6 +4219,7 @@ export interface EffectsInCountry
    *   override_id = my_defined_unique_id
    *   override_text = { "button:MY_OTHER_LOC_STRING" "button2:ANOTHER_LOC_OVERRIDE" }  override_texture = { "button:GFX_short_button button2:GFX_otherbutton" }  override_tooltip, "loc_tooltip"  override_tooltip_delayed, "loc_delayed_tooltip"}
    * ```
+   * A localization key: a bare string is the key itself, and a reference is unwrapped to its key. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
    */
   addTimelineEvent(args: {
     type: TimelineEventsRef | string;
@@ -4206,14 +4228,14 @@ export interface EffectsInCountry
     /** (There is also overrides that can be used to override settings on the database entries. The Id is required, and the others are optional) */
     overrideId?: TimelineEventId;
     /** override_tooltip */
-    overrideTooltip?: string;
+    overrideTooltip?: string | LocalizationRef;
     overrideTypes?: readonly ScopeTypeToken[];
     overrideText?: readonly string[];
     overrideTexture?: readonly string[];
     /** (optional - array of event targets. This depends on localization and what event targets the type requires) */
     targets?: readonly ScopeValue[];
     /** loc_delayed_tooltip */
-    overrideTooltipDelayed?: string;
+    overrideTooltipDelayed?: string | LocalizationRef;
   }): void;
 
   /**
@@ -4297,8 +4319,9 @@ export interface EffectsInCountry
    * ```
    * add_victory_score = { source=<loc_key> score=<value>/<variable> }
    * ```
+   * A localization key: a bare string is the key itself, and a reference is unwrapped to its key. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
    */
-  addVictoryScore(args: { source: string; score: ScriptValue }): void;
+  addVictoryScore(args: { source: string | LocalizationRef; score: ScriptValue }): void;
 
   /**
    * Used after an advanced authority swap to make sure things are changed properly
@@ -4554,6 +4577,7 @@ export interface EffectsInCountry
    * 	effect = { ... }
    * }
    * ```
+   * A localization key: a bare string is the key itself, and a reference is unwrapped to its key. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
    */
   cloneLeader(args: {
     target: ScopeValue<
@@ -4567,7 +4591,11 @@ export interface EffectsInCountry
       | "sector"
       | "ship"
     >;
-    name?: string | "random" | { key: string; variableString?: readonly string[] };
+    name?:
+      | string
+      | LocalizationRef
+      | "random"
+      | { key: string | LocalizationRef; variableString?: readonly string[] };
     /** Other scopes will simply default to this.owner_main_species */
     species?:
       | ScopeValue<
@@ -4623,9 +4651,9 @@ export interface EffectsInCountry
     /** Optional. Scripted effect(s) that are run on the leader after it has been created. */
     effect?: (scope: LeaderScope) => void;
     /** Optional. */
-    customDescription?: string;
+    customDescription?: string | LocalizationRef;
     /** Optional. */
-    customCatchPhrase?: string;
+    customCatchPhrase?: string | LocalizationRef;
     /** Optional, default = no. Disables random generation of a background. */
     skipBackgroundGeneration?: boolean;
     /** Optional. Used as the home planet of the leader. */
@@ -4841,12 +4869,16 @@ export interface EffectsInCountry
    * ```
    */
   createBalancedFleet(args: {
-    name?: string | ScopeValue<"fleet"> | { key: string; variableString?: readonly string[] };
+    name?:
+      | string
+      | LocalizationRef
+      | ScopeValue<"fleet">
+      | { key: string | LocalizationRef; variableString?: readonly string[] };
     size: ScriptValue;
     /** optional; default yes */
     canOverflow?: boolean;
     /** optional; if omitted, uses the country's own designs */
-    shipDesigns?: readonly string[];
+    shipDesigns?: readonly (string | LocalizationRef)[];
     effect?: (scope: FleetScope) => void;
   }): void;
 
@@ -4898,9 +4930,14 @@ export interface EffectsInCountry
    * 	background_ethic = <key> # Optional.
    * }
    * ```
+   * A localization key: a bare string is the key itself, and a reference is unwrapped to its key. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
    */
   createLeader(args: {
-    name?: string | "random" | { key: string; variableString?: readonly string[] };
+    name?:
+      | string
+      | LocalizationRef
+      | "random"
+      | { key: string | LocalizationRef; variableString?: readonly string[] };
     /** Other scopes will simply default to this.owner_main_species */
     species?:
       | ScopeValue<
@@ -4958,9 +4995,9 @@ export interface EffectsInCountry
     /** Optional. Scripted effect(s) that are run on the leader after it has been created. */
     effect?: (scope: LeaderScope) => void;
     /** Optional. */
-    customDescription?: string;
+    customDescription?: string | LocalizationRef;
     /** Optional. */
-    customCatchPhrase?: string;
+    customCatchPhrase?: string | LocalizationRef;
     /** Optional, default = no. Disables random generation of a background. */
     skipBackgroundGeneration?: boolean;
     /** Optional. Used as the home planet of the leader. */
@@ -4996,11 +5033,17 @@ export interface EffectsInCountry
    */
   createRandomFleet(args: {
     name?:
-      string | "random" | ScopeValue<"fleet"> | { key: string; variableString?: readonly string[] };
+      | string
+      | LocalizationRef
+      | "random"
+      | ScopeValue<"fleet">
+      | { key: string | LocalizationRef; variableString?: readonly string[] };
     size?: ScriptValue;
     canOverflow?: boolean;
     shipDesigns?: readonly (
-      string | { design: string; weight?: number; min?: number; max?: number }
+      | string
+      | LocalizationRef
+      | { design: string | LocalizationRef; weight?: number; min?: number; max?: number }
     )[];
     effect?: (scope: FleetScope) => void;
   }): void;
@@ -5035,7 +5078,11 @@ export interface EffectsInCountry
       | "starbase"
       | "system"
     >;
-    name?: string | "random" | { key: string; variableString?: readonly string[] };
+    name?:
+      | string
+      | LocalizationRef
+      | "random"
+      | { key: string | LocalizationRef; variableString?: readonly string[] };
     gender?: Gender;
     class?: "random" | LeaderClassRef | string;
     species:
@@ -5106,7 +5153,10 @@ export interface EffectsInCountry
       | "system"
     >;
     attackerWarGoal: WarGoalRef | string;
-    name?: string | { key: string; variableString?: readonly string[] };
+    name?:
+      | string
+      | LocalizationRef
+      | { key: string | LocalizationRef; variableString?: readonly string[] };
     effect?: (scope: WarScope) => void;
   }): void;
 
@@ -5853,10 +5903,11 @@ export interface EffectsInCountry
    * ```
    * give_specimen = { key = <specimen> origin = <key> }
    * ```
+   * A localization key: a bare string is the key itself, and a reference is unwrapped to its key. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
    */
   giveSpecimen(args: {
     key: SpecimenRef | string;
-    origin?: string;
+    origin?: string | LocalizationRef;
     /** EVENT_TARGET_# Indexed event targets for localisation */
     targets?: readonly [ScopeValue];
   }): void;
@@ -5972,7 +6023,10 @@ export interface EffectsInCountry
       | "system"
     >;
     overrideRequirements: boolean;
-    name: string | { key: string; variableString?: readonly string[] };
+    name:
+      | string
+      | LocalizationRef
+      | { key: string | LocalizationRef; variableString?: readonly string[] };
   }): void;
 
   /**
@@ -7968,10 +8022,12 @@ export interface EffectsInCountry
    * ```
    * set_adjective = <string>
    * ```
+   * A localization key: a bare string is the key itself, and a reference is unwrapped to its key. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
    */
   setAdjective(
     value:
       | string
+      | LocalizationRef
       | ScopeValue<
           | "agreement"
           | "archaeological_site"
@@ -8115,16 +8171,24 @@ export interface EffectsInCountry
    * ```
    * set_council_position_title_female = { position_tag = COUNCIL_POSITION_TAG title = TITLE_FEMALE }
    * ```
+   * A localization key: a bare string is the key itself, and a reference is unwrapped to its key. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
    */
-  setCouncilPositionTitleFemale(args: { positionTag: string; title: string }): void;
+  setCouncilPositionTitleFemale(args: {
+    positionTag: string | LocalizationRef;
+    title: string | LocalizationRef;
+  }): void;
 
   /**
    * Sets the scoped country's council position's male title.
    * ```
    * set_council_position_title_male = { position_tag = COUNCIL_POSITION_TAG title = TITLE_MALE }
    * ```
+   * A localization key: a bare string is the key itself, and a reference is unwrapped to its key. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
    */
-  setCouncilPositionTitleMale(args: { positionTag: string; title: string }): void;
+  setCouncilPositionTitleMale(args: {
+    positionTag: string | LocalizationRef;
+    title: string | LocalizationRef;
+  }): void;
 
   /**
    * Assigns a council position to the country's council, if possible.
@@ -8197,8 +8261,9 @@ export interface EffectsInCountry
    * ```
    * set_empire_name = "name_loc_key"
    * ```
+   * A localization key: a bare string is the key itself, and a reference is unwrapped to its key. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
    */
-  setEmpireName(value: string): void;
+  setEmpireName(value: string | LocalizationRef): void;
 
   /**
    * Sets the aggro state of the scoped faction-type country
@@ -8239,6 +8304,7 @@ export interface EffectsInCountry
    * ```
    * set_faction_properties = { some_flag_1 = yes some_flag_2 = no }
    * ```
+   * A localization key: a bare string is the key itself, and a reference is unwrapped to its key. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
    */
   setFactionProperties(args: {
     /** if yes, fleets will never attack anything and will never be attacked */
@@ -8258,7 +8324,7 @@ export interface EffectsInCountry
     /** primitive countries can have observation stations build by others in orbit of their planets */
     primitive?: boolean;
     /** if primitive = yes, localization string. Remember that these values are dynamic and this value will most likely be overwritten instantly by the same event that created the country. This field can probably be left empty */
-    primitiveAge?: string;
+    primitiveAge?: string | LocalizationRef;
     /** toggles if country turns hostile against attacker */
     hostileWhenAttacked?: boolean;
     /** if no, borders for countries of this type will not be shown if in uncharted space */
@@ -8274,16 +8340,18 @@ export interface EffectsInCountry
    * ```
    * set_female_heir_title = "Little Executioneress"
    * ```
+   * A localization key: a bare string is the key itself, and a reference is unwrapped to its key. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
    */
-  setFemaleHeirTitle(value: string): void;
+  setFemaleHeirTitle(value: string | LocalizationRef): void;
 
   /**
    * Sets the country's female ruler title to a custom value
    * ```
    * set_female_ruler_title = "Grand Executionerress"
    * ```
+   * A localization key: a bare string is the key itself, and a reference is unwrapped to its key. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
    */
-  setFemaleRulerTitle(value: string): void;
+  setFemaleRulerTitle(value: string | LocalizationRef): void;
 
   /**
    * Sets whether or not the scoped country is the Galactic Custodian
@@ -8353,16 +8421,18 @@ export interface EffectsInCountry
    * ```
    * set_male_heir_title = "Little Executioner"
    * ```
+   * A localization key: a bare string is the key itself, and a reference is unwrapped to its key. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
    */
-  setMaleHeirTitle(value: string): void;
+  setMaleHeirTitle(value: string | LocalizationRef): void;
 
   /**
    * Sets the country's male ruler title to a custom value
    * ```
    * set_male_ruler_title = "Grand Executioner"
    * ```
+   * A localization key: a bare string is the key itself, and a reference is unwrapped to its key. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
    */
-  setMaleRulerTitle(value: string): void;
+  setMaleRulerTitle(value: string | LocalizationRef): void;
 
   /**
    * Set scoped country as the current Galactic Market leader. set_market_leader = <yes/no>
@@ -8520,26 +8590,30 @@ export interface EffectsInCountry
    * ```
    * set_ruler_title_female = RULER_TITLE_FEMALE
    * ```
+   * A localization key: a bare string is the key itself, and a reference is unwrapped to its key. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
    */
-  setRulerTitleFemale(value: string): void;
+  setRulerTitleFemale(value: string | LocalizationRef): void;
 
   /**
    * Sets the scoped country's male ruler's title.
    * ```
    * set_ruler_title_male = RULER_TITLE_MALE
    * ```
+   * A localization key: a bare string is the key itself, and a reference is unwrapped to its key. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
    */
-  setRulerTitleMale(value: string): void;
+  setRulerTitleMale(value: string | LocalizationRef): void;
 
   /**
    * Sets the ship prefix of the scoped country
    * ```
    * set_ship_prefix = <string>
    * ```
+   * A localization key: a bare string is the key itself, and a reference is unwrapped to its key. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
    */
   setShipPrefix(
     value:
       | string
+      | LocalizationRef
       | ScopeValue<
           | "agreement"
           | "archaeological_site"
@@ -10292,12 +10366,13 @@ export interface EffectsInFleet {
    * 	species = <target>
    * }
    * ```
+   * A localization key: a bare string is the key itself, and a reference is unwrapped to its key. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
    */
   createArmyTransport(args: {
     graphicalCulture?: GraphicalCultureRef | string;
     armyType: ArmyRef | string;
-    shipName?: string | "random";
-    armyName?: string;
+    shipName?: string | LocalizationRef | "random";
+    armyName?: string | LocalizationRef;
     species?:
       | ScopeValue<
           | "army"
@@ -10891,11 +10966,17 @@ export interface EffectsInFleetStarbase {
    * 	create_colony = yes/no (default: yes; if yes, will also create the carrier colony,only when ship_size is marked to carry a colony. WARNING: carrier ships with no colony are killed on a daily basis)
    * }
    * ```
+   * A localization key: a bare string is the key itself, and a reference is unwrapped to its key. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
    */
   createShip(args: {
     name?:
-      string | "random" | ScopeValue<"ship"> | { key: string; variableString?: readonly string[] };
-    design?: string | GlobalShipDesignRef | ScopeValue<"design"> | "last_created_design";
+      | string
+      | LocalizationRef
+      | "random"
+      | ScopeValue<"ship">
+      | { key: string | LocalizationRef; variableString?: readonly string[] };
+    design?:
+      string | LocalizationRef | GlobalShipDesignRef | ScopeValue<"design"> | "last_created_design";
     randomExistingDesign?: ShipSizeRef | string;
     prefix?: boolean;
     suffix?: boolean;
@@ -12009,13 +12090,14 @@ export interface EffectsInPopGroup {
    * 		growth_category = <key> (optional, default: 'GROWTH_CAT_OTHER')
    * 	}
    * ```
+   * A localization key: a bare string is the key itself, and a reference is unwrapped to its key. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
    */
   addPopAmount(value: ScriptValue): void;
   addPopAmount(args: {
     amount: ScriptValue;
     random?: ScriptValue;
     /** default: 'GROWTH_CAT_OTHER' */
-    growthCategory?: string;
+    growthCategory?: string | LocalizationRef;
   }): void;
 
   /**
@@ -12103,13 +12185,14 @@ export interface EffectsInPopGroup {
    * 		growth_category = <key> (optional, default: 'GROWTH_CAT_OTHER')
    * 	}
    * ```
+   * A localization key: a bare string is the key itself, and a reference is unwrapped to its key. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
    */
   removePopAmount(value: ScriptValue): void;
   removePopAmount(args: {
     amount: ScriptValue;
     random?: ScriptValue;
     /** default: 'GROWTH_CAT_OTHER' */
-    growthCategory?: string;
+    growthCategory?: string | LocalizationRef;
   }): void;
 
   /**
@@ -12184,6 +12267,7 @@ export interface EffectsInPopJob {
    * 	growth_category = <key> (optional, default: 'GROWTH_CAT_OTHER')
    * }
    * ```
+   * A localization key: a bare string is the key itself, and a reference is unwrapped to its key. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
    */
   killAssignedPopAmount(args: {
     limit?: Trigger<"pop_job">;
@@ -12191,7 +12275,7 @@ export interface EffectsInPopJob {
     random?: ScriptValue;
     percentage?: ScriptValue;
     /** default: 'GROWTH_CAT_OTHER' */
-    growthCategory?: string;
+    growthCategory?: string | LocalizationRef;
   }): void;
 
   /**
@@ -13260,10 +13344,11 @@ export interface EffectsInSystem {
    * 	effect = { <effects on every system in the new nebula> }
    * }
    * ```
+   * A localization key: a bare string is the key itself, and a reference is unwrapped to its key. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
    */
   createNebula(args: {
     /** (loc, optional - default is random) */
-    name?: string;
+    name?: string | LocalizationRef;
     radius: ScriptValue;
     /** effects on every system in the new nebula */
     effect?: (scope: SystemScope) => void;
@@ -14052,7 +14137,10 @@ export interface EffectsInSystem {
       | "starbase"
       | "system"
     >;
-    name: string | { key: string; variableString?: readonly string[] };
+    name:
+      | string
+      | LocalizationRef
+      | { key: string | LocalizationRef; variableString?: readonly string[] };
     orbitAngle?: "random" | number | { min: number; max: number };
     orbitDistance?: ScriptValue | { min: ScriptValue; max: ScriptValue };
     owner?: ScopeValue<
@@ -14115,13 +14203,16 @@ export interface EffectsInSystem {
     initEffect?: (scope: BypassScope) => void;
   }): void;
 
-  /** Spawns a planet in a system. */
+  /**
+   * Spawns a planet in a system.
+   * A localization key: a bare string is the key itself, and a reference is unwrapped to its key. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
+   */
   spawnPlanet(args: {
     class: PlanetClassRef | string | PlanetClassRandomListRef | "random" | "random_colonizable";
     generateRandomName?: boolean;
     /** default: no? */
     checkOverlap?: boolean;
-    name?: string;
+    name?: string | LocalizationRef;
     location?:
       | ScopeValue<
           | "ambient_object"
@@ -14734,11 +14825,17 @@ export interface UniversalEffects<S extends ScopeName>
    * 	remove_invalid_civics = yes/no # (default: no) drop copied civics that are not possible for the new empire
    * }
    * ```
+   * A localization key: a bare string is the key itself, and a reference is unwrapped to its key. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
    */
   createCountry(args: {
-    name?: ScopeValue | "random" | string | { key: string; variableString?: readonly string[] };
+    name?:
+      | ScopeValue
+      | "random"
+      | string
+      | LocalizationRef
+      | { key: string | LocalizationRef; variableString?: readonly string[] };
     /** Sets country adjective. Allowed values are <string in localisation>/<string written in quotes e.g. "Korean"> */
-    adjective?: ScopeValue | "random" | string;
+    adjective?: ScopeValue | "random" | string | LocalizationRef;
     type?: CountryTypeRef | string;
     contactRule?: ContactRule;
     autoDelete?: boolean;
@@ -15109,7 +15206,11 @@ export interface UniversalEffects<S extends ScopeName>
    * ```
    */
   createFleet(args: {
-    name?: string | ScopeValue<"fleet"> | { key: string; variableString?: readonly string[] };
+    name?:
+      | string
+      | LocalizationRef
+      | ScopeValue<"fleet">
+      | { key: string | LocalizationRef; variableString?: readonly string[] };
     parent?: ScopeValue<"fleet"> | "none";
     setTakePoint?: boolean;
     settings?: readonly {
@@ -15144,11 +15245,12 @@ export interface UniversalEffects<S extends ScopeName>
    *   variable = { type = name localization = SYSTEM2 scope = fromfrom }
    * }
    * ```
+   * A localization key: a bare string is the key itself, and a reference is unwrapped to its key. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
    */
   createMessage(args: {
     type: MessageTypeRef | string;
-    localization?: string;
-    customMessageText?: string;
+    localization?: string | LocalizationRef;
+    customMessageText?: string | LocalizationRef;
     days?: number;
     customToastIcon?: SpriteRef | string;
     target?: ScopeValue;
@@ -15202,8 +15304,9 @@ export interface UniversalEffects<S extends ScopeName>
    * ```
    * create_ship_design = { design = <key> ftl = <target, optional, sets FTL drive to target country's> }
    * ```
+   * A localization key: a bare string is the key itself, and a reference is unwrapped to its key. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
    */
-  createShipDesign(args: { design: string }): void;
+  createShipDesign(args: { design: string | LocalizationRef }): void;
 
   /**
    * Creates a new species. The habitability trait is determined by homeworld, traits = random, traits = { ideal_planet_class = <pc_XYZ> }, traits = <trait_pc_XYZ_preference>, or else is assigned randomly.
@@ -15227,9 +15330,15 @@ export interface UniversalEffects<S extends ScopeName>
    * 	effect = {}
    * }
    * ```
+   * A localization key: a bare string is the key itself, and a reference is unwrapped to its key. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
    */
   createSpecies(args: {
-    name?: ScopeValue | "random" | string | { key: string; variableString?: readonly string[] };
+    name?:
+      | ScopeValue
+      | "random"
+      | string
+      | LocalizationRef
+      | { key: string | LocalizationRef; variableString?: readonly string[] };
     namelist?:
       | NameListRef
       | string
@@ -15487,7 +15596,7 @@ export interface UniversalEffects<S extends ScopeName>
     sapient?: boolean;
     /** determines if species is a modification of another (default: no) */
     isMod?: boolean;
-    modNameAffix?: string;
+    modNameAffix?: string | LocalizationRef;
     /** determines if species leaders are immortal (default: no) */
     immortal?: boolean;
     /** determines if pops of that species can colonize */
@@ -15548,8 +15657,9 @@ export interface UniversalEffects<S extends ScopeName>
    * ```
    * custom_tooltip = <string>
    * ```
+   * A localization key: a bare string is the key itself, and a reference is unwrapped to its key. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
    */
-  customTooltip(value: string): void;
+  customTooltip(value: string | LocalizationRef): void;
 
   /**
    * Displays a specific localization string with parameters in tooltip
@@ -15561,9 +15671,10 @@ export interface UniversalEffects<S extends ScopeName>
    * 	}
    * }
    * ```
+   * A localization key: a bare string is the key itself, and a reference is unwrapped to its key. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
    */
   customTooltipWithParams(args: {
-    description: string;
+    description: string | LocalizationRef;
     descriptionParameters?: { readonly [parameter: string]: string };
   }): void;
 
@@ -16016,6 +16127,7 @@ export interface UniversalEffects<S extends ScopeName>
    * 	growth_category = <key> (optional, default: 'GROWTH_CAT_OTHER')
    * }
    * ```
+   * A localization key: a bare string is the key itself, and a reference is unwrapped to its key. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
    */
   killPopGroup(args: {
     popGroup: ScopeValue<"pop_group">;
@@ -16024,7 +16136,7 @@ export interface UniversalEffects<S extends ScopeName>
     /** If set, the amount will be randomized in [max(0, size - random), size + random] */
     random?: ScriptValue;
     /** default: 'GROWTH_CAT_OTHER' */
-    growthCategory?: string;
+    growthCategory?: string | LocalizationRef;
   }): void;
 
   /** Prints a message to game.log for debugging purposes. */
@@ -17178,6 +17290,7 @@ export interface UniversalEffects<S extends ScopeName>
    * 	growth_category = <key> (optional, default: 'GROWTH_CAT_OTHER')
    * }
    * ```
+   * A localization key: a bare string is the key itself, and a reference is unwrapped to its key. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
    */
   transferPopAmount(args: {
     source: ScopeValue<"pop_group">;
@@ -17186,7 +17299,7 @@ export interface UniversalEffects<S extends ScopeName>
     percentage?: ScriptValue;
     random?: ScriptValue;
     /** default: 'GROWTH_CAT_OTHER' */
-    growthCategory?: string;
+    growthCategory?: string | LocalizationRef;
   }): void;
 }
 

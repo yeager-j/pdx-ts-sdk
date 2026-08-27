@@ -12,8 +12,8 @@ const curiousGreeting = mod.localization("curious_greeting", "Your signal has ou
 const greeting = mod.scriptedLoc("frontier_greeting", {
   random: true,
   text: [
-    { weight: 3, localizationKey: formalGreeting.key },
-    { weight: 1, localizationKey: curiousGreeting.key },
+    { weight: 3, localizationKey: formalGreeting },
+    { weight: 1, localizationKey: curiousGreeting },
   ],
 });
 

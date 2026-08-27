@@ -14,13 +14,13 @@ const effects = mod.localization(
 );
 
 const havenSystem = mod.solarSystemInitializer("haven", {
-  name: systemName.key,
+  name: systemName,
   class: "sc_g",
   preventAnomalies: true,
   planet: [
     { class: "star", orbitDistance: 0, size: 30 },
     {
-      name: worldName.key,
+      name: worldName,
       class: "pc_continental",
       orbitDistance: 60,
       orbitAngle: 30,
@@ -38,7 +38,7 @@ const havenFounders = mod.civicOrOrigin("haven_founders", {
   icon: "gfx/interface/icons/origins/origins_default.dds",
   picture: "GFX_origin_default",
   flags: ["custom_start_screen"],
-  description: effects.key,
+  description: effects,
   startingColony: "pc_continental",
   habitabilityPreference: "pc_continental",
   initializers: [havenSystem],

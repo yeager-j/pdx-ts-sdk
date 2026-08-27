@@ -112,7 +112,7 @@ one-time selection effect:
 | `modifier`          | Applies continuing country modifiers while the perk is active.              |
 | `triggeredModifier` | Applies a group of country modifiers only while its `when` trigger is true. |
 | `onEnabled`         | Runs country-scoped effects when the perk is selected.                      |
-| `customTooltip`     | Shows one localization key instead of the generated root modifier tooltip.  |
+| `customTooltip`     | Shows one piece of text instead of the generated root modifier tooltip.     |
 
 Use a modifier for state that should remain active. Use `onEnabled` for a
 one-time state change, such as setting a flag or starting another scripted
@@ -120,8 +120,8 @@ flow. Make the effect safe against duplicate execution where practical, and do
 not use it as a migration hook for countries that selected the perk in an
 older save.
 
-Create custom tooltip text with `mod.localization(...)` and pass the returned
-`.key`.
+Write the custom tooltip text directly and the SDK keys it for you, or pass a
+`mod.localization(...)` item to reuse one entry across fields.
 
 <Callout type="warn" title="Root tooltip support is narrower than Vanilla">
   Vanilla uses repeated `custom_tooltip` fields and a root-level `custom_tooltip_with_modifiers` in

@@ -1,5 +1,5 @@
 import { createMod } from "@pdx-ts/sdk";
-import { always, and, isCapital, owner, vanilla } from "@pdx-ts/sdk/stellaris";
+import { always, and, external, isCapital, owner, vanilla } from "@pdx-ts/sdk/stellaris";
 import {
   canThink,
   complexSpecialistJobCheckTrigger,
@@ -31,7 +31,7 @@ const signalCurator = mod.job("signal_curator", {
   isCappedByModifier: true,
   swappableData: {
     default: {
-      conditionString: "SPECIALIST_JOB_TRIGGER",
+      conditionString: external.localization("SPECIALIST_JOB_TRIGGER"),
       buildingIcon: researchLab,
       icon: vanilla.job("physicist"),
     },
@@ -63,7 +63,7 @@ const resonanceWeaver = mod.job("resonance_weaver", {
   possible: always(false),
   swappableData: {
     default: {
-      conditionString: "DRONE_JOB_TRIGGER",
+      conditionString: external.localization("DRONE_JOB_TRIGGER"),
       buildingIcon: researchLab,
       icon: vanilla.job("brain_drone_physicist"),
     },
@@ -79,7 +79,7 @@ const signalProcessor = mod.job("signal_processor", {
   isCappedByModifier: true,
   swappableData: {
     default: {
-      conditionString: "DRONE_JOB_TRIGGER",
+      conditionString: external.localization("DRONE_JOB_TRIGGER"),
       buildingIcon: researchLab,
       icon: vanilla.job("calculator_physicist"),
     },
@@ -90,7 +90,7 @@ const signalProcessor = mod.job("signal_processor", {
         desc: `job_${resonanceWeaver.id}_desc`,
         icon: vanilla.job("brain_drone_physicist"),
         buildingIcon: researchLab,
-        conditionString: "DRONE_JOB_TRIGGER",
+        conditionString: external.localization("DRONE_JOB_TRIGGER"),
         weight: 10,
       },
     ],

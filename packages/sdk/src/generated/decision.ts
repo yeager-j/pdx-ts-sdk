@@ -2,7 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/decisions.cwt
 
-import type { LocalizedText } from "../authoring/localization.ts";
+import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type {
@@ -15,15 +15,34 @@ import type { Trigger } from "../script/trigger-core.ts";
 import type { DecisionRef, SoundEffectRef, SoundRef, TechnologyRef } from "./refs.ts";
 
 export interface DecisionCustomTooltip<S extends DecisionScope = "planet"> {
-  text?: "" | string;
-  failText?: "default" | string;
-  successText?: string;
+  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
+  text?: "" | LocalizedText | LocalizationRef;
+  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
+  failText?: "default" | LocalizedText | LocalizationRef;
+  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
+  successText?: LocalizedText | LocalizationRef;
   when?: WithFrom<Trigger<NoInfer<S>>, NoInfer<S>, { readonly from: "country" }>;
 }
 
 export const DECISION_CUSTOM_TOOLTIP_FIELDS: readonly ContentField[] = [
-  { key: "text", member: "text", shape: "value", form: "scalar", conversion: "identity" },
-  { key: "fail_text", member: "failText", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "text",
+    member: "text",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+    locKey: true,
+    locKeyLiterals: [""],
+  },
+  {
+    key: "fail_text",
+    member: "failText",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+    locKey: true,
+    locKeyLiterals: ["default"],
+  },
   {
     key: "success_text",
     member: "successText",

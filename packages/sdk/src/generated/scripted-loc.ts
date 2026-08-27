@@ -2,6 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/scripted_loc.cwt
 
+import type { LocalizationRef } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { WeightBlock } from "../content/types.ts";
@@ -11,7 +12,7 @@ import type { SpriteRef } from "./refs.ts";
 export interface ScriptedLocText {
   weight?: WeightBlock<never> | number;
   trigger?: Trigger<never>;
-  localizationKey: string | SpriteRef;
+  localizationKey: string | LocalizationRef | SpriteRef;
 }
 
 export const SCRIPTED_LOC_TEXT_FIELDS: readonly ContentField[] = [
@@ -42,7 +43,7 @@ export interface ScriptedLocFields {
   random?: boolean;
   text?: ScriptedLocText[];
   value?: ScriptValue;
-  default?: string | SpriteRef;
+  default?: string | LocalizationRef | SpriteRef;
 }
 
 export interface ScriptedLocDef<Id extends string = string> extends ScriptedLocFields {

@@ -1,6 +1,7 @@
 import { serialize } from "@pdx-ts/pdxscript";
 import { describe, expect, it } from "vitest";
 
+import { external } from "../src/authoring/external.ts";
 import { createMod, render } from "../src/index.ts";
 import { and, hasCountryFlag, hasTechnology, not } from "../src/script/triggers.ts";
 
@@ -137,18 +138,23 @@ describe("Technology", () => {
         {
           hidePrereqForDesc: ["component"],
           custom: [
-            { title: "TECH_UNLOCK_ION_CANNON_TITLE", desc: "TECH_UNLOCK_ION_CANNON_DESC" },
-            { title: "TECH_UNLOCK_ION_AURAS_TITLE" },
+            {
+              title: external.localization("TECH_UNLOCK_ION_CANNON_TITLE"),
+              desc: external.localization("TECH_UNLOCK_ION_CANNON_DESC"),
+            },
+            { title: external.localization("TECH_UNLOCK_ION_AURAS_TITLE") },
           ],
-          diploAction: [{ title: "TECH_UNLOCK_ION_DIPLO_TITLE" }],
+          diploAction: [{ title: external.localization("TECH_UNLOCK_ION_DIPLO_TITLE") }],
         },
-        { custom: [{ title: "TECH_UNLOCK_ION_REFIT_TITLE" }] },
+        { custom: [{ title: external.localization("TECH_UNLOCK_ION_REFIT_TITLE") }] },
       ],
       technologySwap: [
         {
           name: "bio_ion_cannon",
           trigger: hasCountryFlag("bio_ships"),
-          prereqforDesc: [{ ship: [{ title: "TECH_UNLOCK_BIO_ION_TITLE" }] }],
+          prereqforDesc: [
+            { ship: [{ title: external.localization("TECH_UNLOCK_BIO_ION_TITLE") }] },
+          ],
         },
       ],
     });

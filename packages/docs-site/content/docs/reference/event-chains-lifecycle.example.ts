@@ -8,14 +8,16 @@ const mod = createMod({
 });
 
 const events = mod.namespace("signal");
-const signalsDecoded = mod.localization("signals_decoded", "Signals decoded");
+// A counter's own name is the localization key the game shows it under, so the
+// label rides on the counter rather than needing an entry of its own.
+const signalsDecoded = "crystal_mystery_signals_decoded";
 
 const crystalMystery = mod.eventChain("signal", {
   title: "The Crystal Signal",
   desc: "Decode two transmissions hidden in the repeating signal.",
   icon: "gfx/interface/icons/situation_log/situation_log_quest.dds",
   picture: vanilla.spriteType("GFX_evt_archaeological_dig"),
-  counter: { [signalsDecoded.key]: { max: 2 } },
+  counter: { [signalsDecoded]: { max: 2, name: "Signals decoded" } },
 });
 
 const signalCompleted = events.country(3, {
@@ -45,13 +47,13 @@ const secondSignal = events.country(2, {
       effects: (country) => {
         country.addEventChainCounter({
           eventChain: crystalMystery,
-          counter: signalsDecoded.key,
+          counter: signalsDecoded,
           amount: 1,
         });
         country.if(
           hasCompletedEventChainCounter({
             eventChain: crystalMystery,
-            counter: signalsDecoded.key,
+            counter: signalsDecoded,
           }),
           () => country.countryEvent({ id: signalCompleted })
         );
@@ -73,7 +75,7 @@ const firstSignal = events.country(1, {
         country.beginEventChain({ eventChain: crystalMystery, target: ctx.self });
         country.addEventChainCounter({
           eventChain: crystalMystery,
-          counter: signalsDecoded.key,
+          counter: signalsDecoded,
           amount: 1,
         });
         country.countryEvent({ id: secondSignal });
@@ -85,7 +87,6 @@ const firstSignal = events.country(1, {
 const startSignal = mod.on(onActions.onGameStartCountry, [firstSignal]);
 
 export const feature: CapabilityFeature<"crystal_mystery"> = mod.feature("crystal_signal", [
-  signalsDecoded,
   crystalMystery,
   firstSignal,
   secondSignal,

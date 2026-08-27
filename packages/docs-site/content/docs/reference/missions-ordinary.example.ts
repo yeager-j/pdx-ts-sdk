@@ -8,7 +8,8 @@ const mod = createMod({
 });
 
 const events = mod.namespace("survey");
-const signalsDecoded = mod.localization("signals_decoded", "Signals decoded");
+// A counter's own name is the localization key the game shows it under.
+const signalsDecoded = "signal_expeditions_signals_decoded";
 
 const signalSurveyCategory = mod.missionCategory("signal_survey", {
   name: "Signal Surveys",
@@ -31,7 +32,7 @@ const decodeSignals = mod.mission("decode_signals", {
   category: signalSurveyCategory,
   eventChain: signalSurveyChain,
   picture: "GFX_event_pictures_ancient_ruins",
-  counter: { [signalsDecoded.key]: { max: 3 } },
+  counter: { [signalsDecoded]: { max: 3, name: "Signals decoded" } },
   onSuccess: (country) => {
     country.addResource({ resource: "physics_research", amount: 500 });
   },
@@ -50,7 +51,7 @@ const finishSurvey = events.country(2, {
       effects: (country) => {
         country.addMissionCounter({
           mission: decodeSignals,
-          counter: signalsDecoded.key,
+          counter: signalsDecoded,
           amount: 3,
         });
         country.stopMission({ mission: decodeSignals, status: "success" });
@@ -79,7 +80,6 @@ const startSurvey = events.country(1, {
 const beginSurvey = mod.on(onActions.onGameStartCountry, [startSurvey]);
 
 export const feature: CapabilityFeature<"signal_expeditions"> = mod.feature("signal_survey", [
-  signalsDecoded,
   signalSurveyCategory,
   signalSurveyChain,
   decodeSignals,

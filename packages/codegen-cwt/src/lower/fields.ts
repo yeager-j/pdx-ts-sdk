@@ -293,6 +293,13 @@ function authoredScalarType(type: RuleType, fallback: string): string {
   return type.text === "no" ? "false" : fallback;
 }
 
+/**
+ * What every localisation-key member's documentation says, appended to the
+ * rule's own. One sentence, because the member appears about ninety times.
+ */
+const LOC_KEY_MEMBER_DOC =
+  "Names a localization key: pass a reference, or display text the SDK keys and emits for you.";
+
 function lowerValue(
   emitter: Emitter,
   field: RuleField,
@@ -304,24 +311,37 @@ function lowerValue(
     return null;
   }
   const repeated = isRepeated(field.cardinality);
-  const literalType = authoredScalarType(field.type, value.type);
-  const base = literalType + (widening === undefined ? "" : ` | ${widening}`);
   // `field.type.kind === "localisation"` is CWT's own way of typing a plain
-  // body field as "this value is a localisation key, not free text" — the
-  // same RuleType `job.condition_string` and `global_ship_design`'s name_field
-  // pointer both use. It lowers to the same `string`, `conversion: "identity"`
-  // shape ordinary scalars do (`render/emitter.ts`'s `valueFor`), so nothing
-  // downstream can otherwise tell "raw key" from "any other string field" —
-  // `locKey: true` is that signal, consumed by the runtime's
-  // `onLocKeyLooksLikeText` check (SDK-50).
-  const locKeyExtra = field.type.kind === "localisation" ? ["locKey: true"] : [];
-  emitter.useValue(value);
+  // body field as "this value names a localisation key" — the same RuleType
+  // `job.condition_string` and `global_ship_design`'s name_field pointer both
+  // use. It lowers to the same `string`, `conversion: "identity"` shape
+  // ordinary scalars do (`render/emitter.ts`'s `valueFor`), so nothing
+  // downstream can otherwise tell a key from any other string field;
+  // `locKey: true` is that signal, and the runtime resolves the member
+  // through it (SDK-303).
+  const isLocKey = field.type.kind === "localisation";
+  const scalarType = isLocKey
+    ? `${emitter.use("LocalizedText")} | ${emitter.use("LocalizationRef")}`
+    : authoredScalarType(field.type, value.type);
+  const base = scalarType + (widening === undefined ? "" : ` | ${widening}`);
+  if (!isLocKey) {
+    emitter.useValue(value);
+  }
   return {
     memberType: repeated ? arrayType(base) : base,
-    metadata: metadata(field, name, "value", [...scalarMetadata(value), ...locKeyExtra]),
+    // A key-typed member is written by `contentScalar` as the plain string the
+    // definition walk already resolved it to, so its conversion stays the
+    // identity even though the script reading of `localisation` is not.
+    metadata: metadata(
+      field,
+      name,
+      "value",
+      isLocKey ? ['conversion: "identity"', "locKey: true"] : scalarMetadata(value)
+    ),
     // A widening opens the set: it exists precisely to admit forms the rules do
     // not name, so the closed arm no longer describes everything legal.
     admits: admitsScalars(field, "value", widening === undefined ? value : null),
+    docs: isLocKey ? [LOC_KEY_MEMBER_DOC] : undefined,
   };
 }
 
@@ -340,14 +360,22 @@ function lowerValueList(
   if (value === null) {
     return null;
   }
-  const listType = arrayType(emitter.useValue(value).type);
+  // `job.localized_tags = { localisation }` — the brace-list spelling of the
+  // same "this value names a localisation key" declaration `lowerValue` reads
+  // off a bare `= localisation`. The element contract is the repeated scalar
+  // one, so the element type and the runtime resolution are the same.
+  const isLocKey = bare.every((type) => type.kind === "localisation");
+  const elementType = isLocKey
+    ? `${emitter.use("LocalizedText")} | ${emitter.use("LocalizationRef")}`
+    : emitter.useValue(value).type;
   return {
-    memberType: listType + (widening === undefined ? "" : ` | ${widening}`),
+    memberType: arrayType(elementType) + (widening === undefined ? "" : ` | ${widening}`),
     metadata: metadata(field, name, "valueList", [
-      ...scalarMetadata(value),
+      ...(isLocKey ? ['conversion: "identity"', "locKey: true"] : scalarMetadata(value)),
       ...(quoted ? ["quoted: true"] : []),
     ]),
     admits: admitsScalars(field, "valueList", widening === undefined ? value : null),
+    docs: isLocKey ? [LOC_KEY_MEMBER_DOC] : undefined,
   };
 }
 
@@ -583,15 +611,7 @@ function lowerSelectedShape(
     case "weightedEvents":
       return lowerWeightedEvents(emitter, field, name);
     case "structMap":
-      return lowerStructMap(
-        emitter,
-        field,
-        name,
-        path,
-        ctx,
-        override?.nestedTypeName,
-        override?.nestedTypeDocs
-      );
+      return lowerStructMap(emitter, field, name, path, ctx, override);
     case "scalarMap":
       return lowerScalarMap(emitter, field, name);
     case "aliasStruct":
@@ -810,12 +830,57 @@ function lowerScalarUnion(
   if (value === null) {
     return null;
   }
-  const base = emitter.useValue(value).type + (widening === undefined ? "" : ` | ${widening}`);
+  const locKey = locKeyUnion(emitter, group);
+  const base =
+    (locKey?.type ?? emitter.useValue(value).type) +
+    (widening === undefined ? "" : ` | ${widening}`);
   return {
     memberType: repeated[0]! ? arrayType(base) : base,
-    metadata: metadata(group[0]!, name, "value", scalarMetadata(value)),
+    metadata: metadata(
+      group[0]!,
+      name,
+      "value",
+      locKey === undefined
+        ? scalarMetadata(value)
+        : [
+            'conversion: "identity"',
+            "locKey: true",
+            `locKeyLiterals: ${JSON.stringify(locKey.literals)}`,
+          ]
+    ),
     admits: admitsScalars(group[0]!, "value", widening === undefined ? value : null),
+    docs: locKey === undefined ? undefined : [LOC_KEY_MEMBER_DOC],
   };
+}
+
+/**
+ * The localisation-key member type for a group CWT declares as `localisation`
+ * beside one or more engine sentinels — `text = ""` and `fail_text = default`
+ * alongside `text = localisation` and `fail_text = localisation`, in the
+ * `custom_tooltip` block decisions and component templates share.
+ *
+ * The sentinels stay in the union and travel verbatim: `default` selects the
+ * game's own fail text and is not a key the mod could supply. Returns
+ * `undefined` for any other group, including one holding a plain `scalar` arm,
+ * where a `string` in the union is not the localisation arm's.
+ */
+function locKeyUnion(
+  emitter: Emitter,
+  group: readonly RuleField[]
+): { readonly type: string; readonly literals: readonly string[] } | undefined {
+  const literals = group.flatMap((field) =>
+    field.type.kind === "literal" ? [field.type.text] : []
+  );
+  const localisationArms = group.filter((field) => field.type.kind === "localisation").length;
+  if (localisationArms === 0 || localisationArms + literals.length !== group.length) {
+    return undefined;
+  }
+  const arms = [
+    ...new Set(literals.map((text) => JSON.stringify(text))),
+    emitter.use("LocalizedText"),
+    emitter.use("LocalizationRef"),
+  ];
+  return { type: arms.join(" | "), literals: [...new Set(literals)] };
 }
 
 /**

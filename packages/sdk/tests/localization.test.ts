@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   createMod,
+  external,
   render,
   type LocalizationReplacementText,
   type LocalizationText,
 } from "../src/index.ts";
+import { customTooltip, hasAuthority } from "../src/stellaris.ts";
 
 function capability(prefix = "localization_test") {
   return createMod({
@@ -302,6 +304,166 @@ describe("standalone localization authoring", () => {
     expect(() => mod.compile([mod.feature("pinned", [technology])])).toThrow(
       'Localization "name" for "localization_test_tech_pinned" sets "key", but its ' +
         'localization key is always "localization_test_tech_pinned"'
+    );
+  });
+
+  it("keys a repeated key-typed field by its index, in authoring order", () => {
+    const mod = capability();
+    const tradition = mod.tradition("indexed", {
+      name: "Indexed",
+      customTooltip: ["First line.", { english: "Second line.", french: "Deuxième ligne." }],
+    });
+    const files = render(mod.compile([mod.feature("indexed", [tradition])]));
+
+    expect(files.get("common/traditions/localization_test_indexed.txt")).toContain(
+      "custom_tooltip = localization_test_tradition_indexed_custom_tooltip_0\n" +
+        "\tcustom_tooltip = localization_test_tradition_indexed_custom_tooltip_1\n"
+    );
+    expect(files.get("localisation/english/localization_test_indexed_l_english.yml")).toContain(
+      ' localization_test_tradition_indexed_custom_tooltip_0:0 "First line."\n' +
+        ' localization_test_tradition_indexed_custom_tooltip_1:0 "Second line."\n'
+    );
+    expect(files.get("localisation/french/localization_test_indexed_l_french.yml")).toContain(
+      ' localization_test_tradition_indexed_custom_tooltip_1:0 "Deuxième ligne."\n'
+    );
+  });
+
+  it("resolves each element of a key-typed value list by its own position", () => {
+    const mod = capability();
+    const job = mod.job("resonator", {
+      name: "Resonator",
+      plural: "Resonators",
+      desc: "Tunes crystals.",
+      category: "specialist",
+      // CWT's `localized_tags = { localisation }` — the brace-list spelling of
+      // the same key-typed contract a bare `= localisation` carries.
+      localizedTags: [
+        external.localization("SOME_TAG"),
+        "Inline tag text",
+        { english: "Tagged", french: "Étiqueté" },
+      ],
+    });
+    const files = render(mod.compile([mod.feature("tags", [job])]));
+
+    expect(files.get("common/pop_jobs/localization_test_tags.txt")).toContain(
+      "localized_tags = { SOME_TAG localization_test_job_resonator_localized_tags_1 " +
+        "localization_test_job_resonator_localized_tags_2 }"
+    );
+    expect(files.get("localisation/english/localization_test_tags_l_english.yml")).toContain(
+      ' localization_test_job_resonator_localized_tags_1:0 "Inline tag text"\n' +
+        ' localization_test_job_resonator_localized_tags_2:0 "Tagged"\n'
+    );
+    expect(files.get("localisation/french/localization_test_tags_l_french.yml")).toContain(
+      ' localization_test_job_resonator_localized_tags_2:0 "Étiqueté"\n'
+    );
+    // The referenced key is named, not registered.
+    expect(files.get("localisation/english/localization_test_tags_l_english.yml")).not.toContain(
+      "SOME_TAG:0"
+    );
+  });
+
+  it("refuses a key pin on inline text a key-typed field keys by its path", () => {
+    const mod = capability();
+    const tradition = mod.tradition("pinned_tooltip", {
+      name: "Pinned tooltip",
+      customTooltip: [{ english: "Pinned.", key: "my_tooltip" }],
+    });
+    expect(() => mod.compile([mod.feature("pinned", [tradition])])).toThrow(
+      'tradition.custom_tooltip for "localization_test_tradition_pinned_tooltip" sets "key"'
+    );
+  });
+
+  it("emits a mod.localization item's own key and registers nothing extra for it", () => {
+    const mod = capability();
+    const tooltip = mod.localization("shared_tooltip", "Shared across fields.");
+    const tradition = mod.tradition("referenced", {
+      name: "Referenced",
+      customTooltip: [tooltip],
+      customTooltipWithModifiers: [tooltip],
+    });
+    const files = render(mod.compile([mod.feature("referenced", [tooltip, tradition])]));
+
+    expect(files.get("common/traditions/localization_test_referenced.txt")).toContain(
+      "custom_tooltip = localization_test_shared_tooltip\n" +
+        "\tcustom_tooltip_with_modifiers = localization_test_shared_tooltip\n"
+    );
+    // One entry, from the item itself: a reference registers nothing.
+    expect(
+      files
+        .get("localisation/english/localization_test_referenced_l_english.yml")
+        ?.match(/localization_test_shared_tooltip:0/g)
+    ).toHaveLength(1);
+  });
+
+  it("emits an external key verbatim and registers nothing for it", () => {
+    const mod = capability();
+    const tradition = mod.tradition("external_key", {
+      name: "External",
+      customTooltip: [external.localization("tr_adaptability_delta")],
+    });
+    const files = render(mod.compile([mod.feature("external", [tradition])]));
+
+    expect(files.get("common/traditions/localization_test_external.txt")).toContain(
+      "custom_tooltip = tr_adaptability_delta\n"
+    );
+    expect(
+      files.get("localisation/english/localization_test_external_l_english.yml")
+    ).not.toContain("tr_adaptability_delta:0");
+  });
+
+  it("rejects an external key that is not a valid localization key", () => {
+    expect(() => external.localization("not a key!")).toThrow(
+      'Localization key "not a key!" must start with an ASCII letter, digit, or "_"'
+    );
+  });
+
+  it("shows an event-chain counter under its own name", () => {
+    const mod = capability();
+    const chain = mod.eventChain("signal", {
+      title: "The Signal",
+      counter: {
+        localization_test_signals_decoded: { max: 2, name: "Signals decoded" },
+      },
+    });
+    const files = render(mod.compile([mod.feature("chain", [chain])]));
+
+    expect(files.get("localisation/english/localization_test_chain_l_english.yml")).toContain(
+      ' localization_test_signals_decoded:0 "Signals decoded"\n'
+    );
+    // The name is the map key's own text, not a body field the game reads.
+    expect(files.get("common/event_chains/localization_test_chain.txt")).not.toContain("name =");
+  });
+
+  it("refuses a key pin on a counter name, whose key is the counter itself", () => {
+    const mod = capability();
+    const chain = mod.eventChain("pinned_counter", {
+      title: "The Signal",
+      counter: {
+        localization_test_signals_decoded: {
+          name: { english: "Signals decoded", key: "decoded" },
+        },
+      },
+    });
+    expect(() => mod.compile([mod.feature("chain", [chain])])).toThrow(
+      'Localization "name" for "localization_test_signals_decoded" sets "key"'
+    );
+  });
+
+  it("unwraps a localization reference in recorded script, and keeps a string a key", () => {
+    const mod = capability();
+    const tooltip = mod.localization("script_tooltip", "Only machines may pass.");
+    const tradition = mod.tradition("scripted", {
+      name: "Scripted",
+      possible: customTooltip({
+        text: tooltip,
+        failText: "tr_scripted_locked",
+        conditions: hasAuthority("auth_machine_intelligence"),
+      }),
+    });
+    const files = render(mod.compile([mod.feature("scripted", [tooltip, tradition])]));
+
+    expect(files.get("common/traditions/localization_test_scripted.txt")).toContain(
+      "text = localization_test_script_tooltip\n\t\t\tfail_text = tr_scripted_locked\n"
     );
   });
 

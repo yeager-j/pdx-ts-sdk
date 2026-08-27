@@ -2,7 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/pop_jobs.cwt
 
-import type { LocalizedText } from "../authoring/localization.ts";
+import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type {
@@ -16,10 +16,12 @@ import type { JobTrigger } from "./enums.ts";
 import type { BuildingRef, JobRef, PopCategoryRef, PurgeTypeRef, TraitRef } from "./refs.ts";
 
 export interface JobSwappableDataDefault {
-  desc?: string;
+  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
+  desc?: LocalizedText | LocalizationRef;
   icon?: JobRef | string;
   buildingIcon?: BuildingRef | string;
-  conditionString?: string;
+  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
+  conditionString?: LocalizedText | LocalizationRef;
 }
 
 export const JOB_SWAPPABLE_DATA_DEFAULT_FIELDS: readonly ContentField[] = [
@@ -51,11 +53,13 @@ export const JOB_SWAPPABLE_DATA_DEFAULT_FIELDS: readonly ContentField[] = [
 
 export interface JobSwappableDataSwapType {
   trigger: Trigger<"planet">;
-  name?: string | JobRef;
-  desc?: string;
+  name?: string | LocalizationRef | JobRef;
+  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
+  desc?: LocalizedText | LocalizationRef;
   icon?: JobRef | string;
   buildingIcon?: BuildingRef | string;
-  conditionString?: string;
+  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
+  conditionString?: LocalizedText | LocalizationRef;
   weight: number | WeightBlock<"pop_group">;
 }
 
@@ -232,7 +236,8 @@ export interface JobFields {
   possiblePreTriggers?: JobPossiblePreTriggers;
   tags?: string[];
   triggeredTags?: JobTriggeredTags;
-  localizedTags?: string[];
+  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
+  localizedTags?: (LocalizedText | LocalizationRef)[];
   possiblePrecalc?: JobTrigger;
   possible?: Trigger<"pop_group">;
   resources?: EconomicResourceBlock<"colony">[];
@@ -380,6 +385,7 @@ export const JOB_FIELDS: readonly ContentField[] = [
     shape: "valueList",
     form: "list",
     conversion: "identity",
+    locKey: true,
   },
   {
     key: "possible_precalc",

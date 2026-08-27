@@ -10,6 +10,8 @@ import type { SituationLogCategoryRef, SpriteRef } from "./refs.ts";
 
 export interface EventChainCounterDefinition {
   max?: number;
+  /** Display text emitted to localization under this entry's own key. */
+  name?: LocalizedText;
 }
 
 export const EVENT_CHAIN_COUNTER_DEFINITION_FIELDS: readonly ContentField[] = [
@@ -64,6 +66,7 @@ export const EVENT_CHAIN_FIELDS: readonly ContentField[] = [
     shape: "structMap",
     form: "block",
     fields: EVENT_CHAIN_COUNTER_DEFINITION_FIELDS,
+    localisation: [{ member: "name", pattern: "$", required: false }],
     repeated: true,
   },
   {

@@ -25,8 +25,9 @@ Stellaris because the SDK checks the modifier shape, not council calculations.
 
 Set `civic` when a position belongs to a civic. Without a civic, provide `icon`
 when the position needs its own sprite. `conditionalTooltip`,
-`customUnlockTitle`, `customTooltip`, and `customTooltipWithModifiers` expect
-localization keys rather than English source text.
+`customUnlockTitle`, `customTooltip`, and `customTooltipWithModifiers` each
+name a localization key: write the display text and the SDK keys it for you, or
+pass a reference to an entry that already exists.
 
 Vanilla councilors use `optional` and AI weights to guide assignment, but the
 generated contract does not establish every UI or AI behavior. Test position

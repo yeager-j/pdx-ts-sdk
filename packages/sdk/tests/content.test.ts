@@ -27,6 +27,7 @@ import {
   canJoinFactions,
   currentSituationApproach,
   currentStage,
+  external,
   hasAuthority,
   hasCountryFlag,
   hasPlanetFlag,
@@ -133,7 +134,7 @@ function defineContentExample(): PureMod {
     agendaCooldown: 3_600,
     potential: hasAuthority("auth_machine_intelligence"),
     allow: hasAuthority("auth_machine_intelligence"),
-    initialEffectCustomLoc: "content_test_agenda_machine_futures_initial",
+    initialEffectCustomLoc: "Synthetic futures begin to take shape.",
     initEffect: (country) => country.setCountryFlag("content_test_machine_agenda_started"),
     modifier: (m) => m.country.unity.produces.mult(0.1),
     finishModifier: "agenda_defensive_focus_finish",
@@ -168,15 +169,15 @@ function defineContentExample(): PureMod {
     triggeredCountryModifier: [
       {
         when: hasAuthority("auth_machine_intelligence"),
-        key: "content_test_machine_mobilization_modifier",
+        key: external.localization("content_test_machine_mobilization_modifier"),
         showIfNotPotential: false,
-        notPotentialOverrideTextKey: "content_test_requires_machine_authority",
+        notPotentialOverrideTextKey: "Requires a machine authority.",
         modifier: (m) => m.command.limit.add(1),
         modifiers: (m) => m.country.naval.cap.mult(0.1),
-        description: "content_test_machine_mobilization_modifier_desc",
+        description: "Mobilizes the machine war economy.",
         descriptionParameters: { amount: "10%" },
         showOnlyCustomTooltip: false,
-        customTooltip: "content_test_machine_mobilization_modifier_tooltip",
+        customTooltip: "Command limit rises while mobilized.",
         mult: [1, 2],
         multiplier: 0.5,
       },
@@ -234,7 +235,9 @@ function defineContentExample(): PureMod {
     unlocksAgenda: agenda,
     modifier: (m) => m.planet.pop.assembly.mult(0.1),
     possible: hasAuthority("auth_machine_intelligence"),
-    customTooltip: ["content_test_ascension_tooltip"],
+    customTooltip: [
+      { english: "The ascension path opens.", french: "La voie ascendante s'ouvre." },
+    ],
     traditionSwap: {
       content_test_tradition_ascension_servitor: {
         name: "Custodian Ascension",
@@ -286,14 +289,14 @@ function defineContentExample(): PureMod {
       base: 100,
       modifiers: [{ factor: 2, when: hasAuthority("auth_machine_intelligence") }],
     },
-    customTooltip: "content_test_machine_futures_tooltip",
+    customTooltip: "Synthetic futures unlock new agendas.",
     traditionSwap: {
       content_test_ascension_perk_machine_servitor: {
         name: "Custodian Futures",
         flavor: "Perfection is stewardship.",
         effects: "Our purpose is renewed.",
         inheritIcon: true,
-        customTooltip: ["content_test_machine_servitor_tooltip"],
+        customTooltip: ["Custodial futures unlock new agendas."],
         modifier: (m) => m.pop.happiness(0.05),
         onEnabled: (country) =>
           country.setCountryFlag("content_test_machine_servitor_futures_enabled"),
@@ -314,7 +317,7 @@ function defineContentExample(): PureMod {
     enactmentTime: 360,
     icon: "GFX_decision_machine_ascendancy",
     customTooltip: {
-      successText: "content_test_machine_ascendancy_ready",
+      successText: "The ascendancy is ready to begin.",
       when: always(),
     },
     resources: [
@@ -360,7 +363,7 @@ function defineContentExample(): PureMod {
     // named bools rather than a Trigger the game would not read here.
     possiblePreTriggers: { hasOwner: true, isEnslaved: false, isRobotic: true },
     tags: ["content_test_tag_machine"],
-    localizedTags: ["content_test_job_localized_tag"],
+    localizedTags: [external.localization("JOB_TAG_MACHINE"), "Assembled rather than born."],
     possiblePrecalc: "can_fill_worker_job",
     possible: canJoinFactions(),
     resources: [
@@ -437,7 +440,7 @@ function defineContentExample(): PureMod {
     icon: "gfx/interface/icons/modifiers/mod_synthetic_surge.dds",
     iconFrame: 2,
     important: true,
-    customTooltip: "content_test_static_modifier_synthetic_surge_tt",
+    customTooltip: "Production runs past its rated limits.",
     showOnlyCustomTooltip: false,
     hideFromCountryList: true,
   });
@@ -479,7 +482,7 @@ function defineContentExample(): PureMod {
     proxyWarResources: [{ category: "physics_research", cost: { amounts: { unity: 50 } } }],
     onProxyWarStart: (country) => country.setCountryFlag("content_test_proxy_war_started"),
     showInDiplomacy: true,
-    aggregatedMessageKey: "content_test_casus_belli_aggregated",
+    aggregatedMessageKey: "Grievances have accumulated.",
   });
 
   const warGoal = mod.warGoal("liberation", {
@@ -511,8 +514,8 @@ function defineContentExample(): PureMod {
     }),
     destroyStarbases: true,
     forbiddenPeaceOffers: {
-      demandSurrender: "content_test_war_goal_liberation_no_demand",
-      surrender: "content_test_war_goal_liberation_no_surrender",
+      demandSurrender: "Liberation admits no demand for surrender.",
+      surrender: "Liberation admits no surrender.",
     },
   });
 
@@ -902,8 +905,8 @@ function defineContentExample(): PureMod {
     // `description`/`tooltip` are `localisation`-typed CWT fields with no `$`
     // static id placeholder, so they hold an author-chosen localisation key
     // rather than a slot the SDK auto-writes — hence the free-form names.
-    description: "content_test_ambient_object_wreck_description",
-    tooltip: "content_test_ambient_object_wreck_tooltip",
+    description: "A hull broken open by something patient.",
+    tooltip: "Derelict hull",
   });
 
   const graphicalCulture = mod.graphicalCulture("synthetic", {
@@ -1082,7 +1085,7 @@ function defineContentExample(): PureMod {
     planet: [
       { count: 1, class: "star", orbitDistance: 0, orbitAngle: 0, size: { min: 30, max: 35 } },
       {
-        name: "NAME_Content_Test_Prime",
+        name: external.localization("NAME_Content_Test_Prime"),
         class: "pc_continental",
         orbitDistance: 60,
         orbitAngle: { min: 90, max: 270 },
@@ -1135,11 +1138,11 @@ function defineContentExample(): PureMod {
     eventScope: "planet_event",
     requirements: { researchStation: true, hasTechnology: "tech_lasers_2" },
     triggeredRequirement: {
-      text: "content_test_crystal_survey_requirement",
+      text: "Survey the crystalline formation.",
       count: 1,
       trigger: always(),
     },
-    conditionalDesc: [{ text: "content_test_crystal_survey_condition", trigger: always() }],
+    conditionalDesc: [{ text: "The crystals are still resonating.", trigger: always() }],
     onStart: () => {},
     onFail: (country, ctx) => {
       country.setCountryFlag("content_test_crystal_survey_failed");
@@ -1941,8 +1944,8 @@ describe("generated content registries", () => {
         name: "Situation",
         monthlyProgress: { base: 1 },
         conditionalDesc: [
-          { trigger: always(), text: "cd_test_situation_desc_alt" },
-          { text: "cd_test_situation_desc_fallback" },
+          { trigger: always(), text: external.localization("cd_test_situation_desc_alt") },
+          { text: external.localization("cd_test_situation_desc_fallback") },
         ],
       }),
     ]);
@@ -1990,7 +1993,7 @@ describe("generated content registries", () => {
     // directory use a top-level operation rather than `base`.
     const tradition = cap.tradition("extrapolation", {
       name: "Evolutionary Extrapolation",
-      customTooltipWithModifiers: ["wb_test_tradition_extrapolation_tt"],
+      customTooltipWithModifiers: [external.localization("wb_test_tradition_extrapolation_tt")],
       modifier: (m) => {
         m.unchecked("category_biology_research_speed_mult", 0.15);
         m.unchecked("planet_buildings_clone_vats_upkeep_mult", -0.5);
@@ -3053,7 +3056,7 @@ describe("SDK-50: identity-conversion text fields", () => {
     const site = cap.archaeologicalSiteType("desc_conflict", {
       name: "Sdk50 Site",
       desc: "Some prose the author also pointed elsewhere.",
-      conditionalDesc: "SDK50_HAND_WRITTEN_KEY",
+      conditionalDesc: external.localization("SDK50_HAND_WRITTEN_KEY"),
       allow: always(),
       visible: always(),
       stages: 1,
@@ -3064,42 +3067,49 @@ describe("SDK-50: identity-conversion text fields", () => {
     );
   });
 
-  it("warns when a locKey-tagged field looks like literal text (sdk50IdentityLocalisation)", () => {
-    const cap = capabilityFor(configFor("SDK-50 test", "sdk50"));
-    // conditionalDesc's scalar arm is conversion: "identity" — a raw key, by
-    // design (it duals with the triggered_desc_clause block form). Writing
-    // English into it used to fail silently; it now warns.
-    const site = cap.archaeologicalSiteType("loc_key_warning", {
-      name: "Sdk50 Site",
-      conditionalDesc: "this looks like a sentence, not a key",
+  it("keys and registers literal text written into a locKey field (SDK-303)", () => {
+    const cap = capabilityFor(configFor("SDK-303 test", "sdk303"));
+    // conditionalDesc's scalar arm is a localisation key. Prose there used to
+    // ship verbatim as an unresolvable key, warning at best; it is now the
+    // English of a key minted from the definition and the field path.
+    const site = cap.archaeologicalSiteType("inline_text", {
+      name: "Sdk303 Site",
+      conditionalDesc: "This looks like a sentence, because it is one.",
       allow: always(),
       visible: always(),
       stages: 1,
       onRollFailed: () => {},
     });
     const mod = cap.compile([cap.feature(undefined, [site])]);
-    expect(mod.warnings).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          code: "loc-key-looks-like-text",
-          message: expect.stringContaining("this looks like a sentence, not a key"),
-        }),
-      ])
+    const rendered = render(mod);
+    expect(mod.warnings).toEqual([]);
+    expect(
+      rendered.get("common/archaeological_site_types/sdk303_archaeological_site_types.txt")
+    ).toContain("desc = sdk303_archaeological_site_type_inline_text_desc");
+    expect(rendered.get("localisation/english/sdk303_l_english.yml")).toContain(
+      ' sdk303_archaeological_site_type_inline_text_desc:0 "This looks like a sentence, because it is one."'
     );
   });
 
-  it("does not warn when a locKey-tagged field looks like a real key", () => {
-    const cap = capabilityFor(configFor("SDK-50 test", "sdk50"));
+  it("emits a referenced key verbatim and registers nothing for it (SDK-303)", () => {
+    const cap = capabilityFor(configFor("SDK-303 test", "sdk303"));
     const site = cap.archaeologicalSiteType("real_key", {
-      name: "Sdk50 Site",
-      conditionalDesc: "SDK50_REAL_LOC_KEY",
+      name: "Sdk303 Site",
+      conditionalDesc: external.localization("SDK303_REAL_LOC_KEY"),
       allow: always(),
       visible: always(),
       stages: 1,
       onRollFailed: () => {},
     });
     const mod = cap.compile([cap.feature(undefined, [site])]);
+    const rendered = render(mod);
     expect(mod.warnings).toEqual([]);
+    expect(
+      rendered.get("common/archaeological_site_types/sdk303_archaeological_site_types.txt")
+    ).toContain("desc = SDK303_REAL_LOC_KEY");
+    expect(rendered.get("localisation/english/sdk303_l_english.yml")).not.toContain(
+      "SDK303_REAL_LOC_KEY:0"
+    );
   });
 });
 
@@ -3134,7 +3144,7 @@ describe("widenedLowering: unpinned scope and value_field widening", () => {
         conditionalDesc: [
           {
             trigger: hasAuthority("auth_machine_intelligence"),
-            text: "Only machine empires walk this path.",
+            text: external.localization("wl_test_only_machine_empires"),
           },
         ],
       }),
@@ -3144,7 +3154,7 @@ describe("widenedLowering: unpinned scope and value_field widening", () => {
     )!;
     expect(rendered).toContain(
       "\tdesc = {\n\t\ttrigger = {\n\t\t\thas_authority = auth_machine_intelligence\n\t\t}\n" +
-        '\t\ttext = "Only machine empires walk this path."\n\t}'
+        "\t\ttext = wl_test_only_machine_empires\n\t}"
     );
   });
 
@@ -3486,10 +3496,11 @@ describe("alias-struct serialization", () => {
       ],
       () => {}
     );
-    authoring.define("civic_or_origin", { id: "gt_test_civic_unregistered", potential: {} });
-    expect(() => authoring.entries("civic_or_origin")).toThrow(
-      'No field table registered for alias category "species_trigger"'
-    );
+    // The definition walk resolves the category on the way in, so the refusal
+    // arrives at `define` rather than at render.
+    expect(() =>
+      authoring.define("civic_or_origin", { id: "gt_test_civic_unregistered", potential: {} })
+    ).toThrow('No field table registered for alias category "species_trigger"');
   });
 });
 
@@ -3915,17 +3926,14 @@ describe("modifier closures are recorded synchronously", () => {
   });
 });
 
-describe("SDK-48 and SDK-50 warning callbacks both survive one ContentAuthoring build", () => {
-  // Both land in `ContentAuthoring` through the same constructor
-  // (`onUnstableDescKey`, `onLocKeyLooksLikeText`) and the same
-  // `buildMod` wiring. A resolution that keeps one parameter list and drops
-  // the other still typechecks — both are optional — and disables a whole
-  // diagnostic with nothing failing at the type level. Triggering both in
-  // one build is the regression test for that: if either callback were
-  // silently dropped, `mod.warnings` would be missing exactly one of these
-  // two entries rather than both, which a test asserting only one code
-  // could not distinguish from "working as intended".
-  it("emits unstable-desc-key and loc-key-looks-like-text from the same build", () => {
+describe("SDK-48's warning callback survives beside SDK-303's locKey resolution", () => {
+  // `onUnstableDescKey` reaches `ContentAuthoring` through an optional
+  // constructor parameter, so dropping its `buildMod` wiring still typechecks
+  // and disables a whole diagnostic silently. SDK-303 removed the parameter
+  // that used to sit beside it, which is exactly the edit that could take this
+  // one with it — so the warning is asserted from a build that also resolves a
+  // locKey field, the work that replaced the removed callback.
+  it("emits unstable-desc-key from a build that also keys a locKey field", () => {
     const cap = capabilityFor(configFor("Warning coexistence test", "warning_coexist_test"));
     const situation = cap.situationType("coexist", {
       name: "Warning Coexistence Test",
@@ -3934,18 +3942,14 @@ describe("SDK-48 and SDK-50 warning callbacks both survive one ContentAuthoring 
         base: 1,
         modifiers: [{ subtract: 1, desc: "An unpinned tooltip.", when: always() }],
       },
-      // A locKey-tagged field holding prose, not a key: triggers SDK-50's
-      // onLocKeyLooksLikeText.
-      activeTooltip: "this looks like a sentence, not a key",
+      activeTooltip: "Prose in a key-typed field, keyed by the SDK.",
     });
 
     const mod = cap.compile([cap.feature(undefined, [situation])]);
 
-    expect(mod.warnings).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ code: "unstable-desc-key" }),
-        expect.objectContaining({ code: "loc-key-looks-like-text" }),
-      ])
+    expect(mod.warnings).toEqual([expect.objectContaining({ code: "unstable-desc-key" })]);
+    expect(render(mod).get("localisation/english/warning_coexist_test_l_english.yml")).toContain(
+      '"Prose in a key-typed field, keyed by the SDK."'
     );
   });
 });

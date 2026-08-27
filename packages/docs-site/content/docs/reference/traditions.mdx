@@ -108,10 +108,11 @@ type, origin, and downloadable-content availability. Keep legality in
 `potential`; a zero AI weight does not make a category unavailable to the
 player.
 
-Each `conditionalDesc` row holds a country trigger and a localization **key**,
-not English text. Create that text with `mod.localization`, then pass its
-`.key`. The swaps example below does this with `machineCategoryDescription`.
-See [Localization](/concepts/localization/) for how those entries are written.
+Each `conditionalDesc` row holds a country trigger and the text that trigger
+selects. Write the display text and the SDK keys it from the category and the
+field path, or pass a `mod.localization(...)` item — the swaps example below
+does the latter with `machineCategoryDescription`. See
+[Localization](/concepts/localization/) for how those entries are written.
 
 All eight vanilla categories that use conditional descriptions cover the
 whole empire-type space, with two to five rows each. The SDK does not check
