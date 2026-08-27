@@ -53,7 +53,7 @@ export const JOB_SWAPPABLE_DATA_DEFAULT_FIELDS: readonly ContentField[] = [
 
 export interface JobSwappableDataSwapType {
   trigger: Trigger<"planet">;
-  name?: string | LocalizationRef | JobRef;
+  name?: LocalizationRef | JobRef | string;
   /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
   desc?: LocalizedText | LocalizationRef;
   icon?: JobRef | string;
