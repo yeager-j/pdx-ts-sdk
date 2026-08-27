@@ -145,11 +145,11 @@ describe("trigger emission", () => {
     expect(emission.code).toContain(
       "export type CustomTooltipArgs<S extends ScopeName = ScopeName> = {"
     );
-    expect(emission.code).toContain('failText?: "default" | string | LocalizationRef;');
+    expect(emission.code).toContain('failText?: "default" | LocalizationRef;');
     expect(emission.code).toContain("conditions: Trigger<S>;");
     for (const fn of ["customTooltip", "failText", "successText"]) {
       expect(emission.code).toContain(
-        `export function ${fn}(value: string | LocalizationRef): Trigger<ScopeName>;`
+        `export function ${fn}(value: LocalizationRef): Trigger<ScopeName>;`
       );
     }
     // Both arms carry refs: the key the author wrote may belong to a standalone

@@ -363,14 +363,16 @@ export class Emitter {
           scriptValue: true,
           typeSymbols: ["ScriptValue"],
         };
-      // A recorded script argument keeps the game's own reading of a bare
-      // string here — it is a key, since recorded script carries no identity
-      // to mint one from — and additionally accepts a reference to one. A
-      // key-typed *content* member reads a bare string as display text
-      // instead (SDK-303) and spells its own type, so it does not use this.
+      // A reference and nothing else. Every key has a spelling that mints one
+      // — `mod.localization()`, a definition's `loc` member,
+      // `vanilla.localization()` for a key the game ships,
+      // `external.localization()` for one it does not — so a bare string here
+      // would only be an unchecked fourth way to say what those already say
+      // (SDK-307). This completes the inversion SDK-303 began: nowhere in the
+      // API does a bare string mean a key.
       case "localisation":
         return {
-          type: "string | LocalizationRef",
+          type: "LocalizationRef",
           toScalar: (expression) => `refId(${expression})`,
           objectKinds: ["localization-ref"],
           typeSymbols: ["LocalizationRef"],

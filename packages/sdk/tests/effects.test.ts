@@ -33,6 +33,7 @@ import {
   isPlanetClass,
   owner,
 } from "../src/script/triggers.ts";
+import { external, vanilla } from "../src/stellaris.ts";
 
 const flags = countryFlags("effects_test_flag");
 const stormWorld = eventTarget<"planet">("effects_test_target");
@@ -391,7 +392,11 @@ set_diplomacy_action_setting = {
       except: ["tech_alpha", "tech_beta"],
     });
     country.createRandomFleet({
-      shipDesigns: ["corvette", { design: "destroyer", weight: 2, min: 1, max: 3 }, "cruiser"],
+      shipDesigns: [
+        vanilla.localization("corvette"),
+        { design: vanilla.localization("destroyer"), weight: 2, min: 1, max: 3 },
+        vanilla.localization("cruiser"),
+      ],
       effect: (fleet) => fleet.setFleetFlag("effects_test_created_fleet"),
     });
     country.startStormAreaPlacing({
@@ -508,7 +513,7 @@ storm_apply_aftermath_modifier = {
     });
     country.createMessage({
       type: "effects_test_message_type",
-      localization: "EFFECTS_TEST_MESSAGE",
+      localization: external.localization("EFFECTS_TEST_MESSAGE"),
       days: 30,
       target: scopeValue<"planet">("this"),
       variable: [
@@ -699,7 +704,7 @@ create_message = {
 
     planet.createArmy({
       name: {
-        key: "effects_test_army_name",
+        key: external.localization("effects_test_army_name"),
         variableString: ["effects_test_first", "effects_test_second"],
       },
       owner: scopeValue<"country">("root"),
@@ -760,7 +765,10 @@ create_message = {
       type: "effects_test_megastructure",
       planet: scopeValue<"planet">("from"),
       coordsFrom: scopeValue<"system">("this"),
-      name: { key: "effects_test_megastructure_name", variableString: ["effects_test_owner"] },
+      name: {
+        key: external.localization("effects_test_megastructure_name"),
+        variableString: ["effects_test_owner"],
+      },
       orbitAngle: { min: 45, max: 90 },
       orbitDistance: "@effects_test_distance",
       owner: scopeValue<"country">("root"),
@@ -815,7 +823,7 @@ create_message = {
       category: { id: "specialist" },
       size: "local_spent_biomass",
       random: "@effects_test_variance",
-      growthCategory: "GROWTH_CAT_OTHER",
+      growthCategory: vanilla.localization("GROWTH_CAT_OTHER"),
       effect: (popGroup) => popGroup.setPopGroupFlag("effects_test_created"),
     });
 
@@ -2146,7 +2154,7 @@ set_country_code_flags = {
       owners: { space_amoeba: eventTarget<"country">("effects_test_amoeba_country") },
     });
     country.customTooltipWithParams({
-      description: "EFFECTS_TEST_TOOLTIP",
+      description: external.localization("EFFECTS_TEST_TOOLTIP"),
       // A numeric-looking value stays quoted: the rules type it as a string,
       // and a bare 1 would re-parse as a number.
       descriptionParameters: { MIN: "1", MAX: "high" },

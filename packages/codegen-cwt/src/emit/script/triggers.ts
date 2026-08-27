@@ -251,14 +251,19 @@ export function tsDoc(declarations: readonly AliasDecl[], doc: DocEntry | undefi
 }
 
 /**
- * What a recorded-script localisation argument's documentation says about a
- * bare string, since a content member spells the same value the other way
- * round (SDK-303).
+ * What a recorded-script localisation argument's documentation says about the
+ * reference it takes.
+ *
+ * There is no bare-string arm to explain any more (SDK-307), so what is left to
+ * say is where a reference comes from — including that recorded script, unlike
+ * a content member (SDK-303), has no owning definition to key display text
+ * against.
  */
 const LOCALISATION_ARGUMENT_DOC =
-  "A localization key: a bare string is the key itself, and a reference is unwrapped to its " +
-  "key. Unlike a content field, recorded script has no owning definition to key display text " +
-  "against, so text belongs in `mod.localization()` first.";
+  "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for " +
+  "a key this mod owns, `vanilla.localization()` for one the game ships, " +
+  "`external.localization()` for another mod's. Unlike a content field, recorded script has no " +
+  "owning definition to key display text against, so text belongs in `mod.localization()` first.";
 
 function namesLocalisationKey(type: RuleType): boolean {
   if (type.kind === "localisation") {

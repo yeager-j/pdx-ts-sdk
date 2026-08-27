@@ -113,7 +113,7 @@ export const TECHNOLOGY_TECHNOLOGY_SWAP_PREREQFOR_DESC_FIELDS: readonly ContentF
 ];
 
 export interface TechnologyTechnologySwap {
-  name?: string | LocalizationRef;
+  name?: LocalizationRef | string;
   inheritIcon?: boolean;
   inheritName?: boolean;
   inheritEffects?: boolean;

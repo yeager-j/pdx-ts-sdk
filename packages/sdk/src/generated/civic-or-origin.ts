@@ -25,7 +25,7 @@ import type { CountryFlag } from "./value-sets.ts";
 import "./government-trigger.ts";
 
 export interface CivicOrOriginSwapType {
-  name?: string | LocalizationRef;
+  name?: LocalizationRef | string;
   /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
   description?: LocalizedText | LocalizationRef;
   /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */

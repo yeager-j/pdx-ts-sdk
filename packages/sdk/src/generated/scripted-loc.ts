@@ -12,7 +12,7 @@ import type { SpriteRef } from "./refs.ts";
 export interface ScriptedLocText {
   weight?: WeightBlock<never> | number;
   trigger?: Trigger<never>;
-  localizationKey: string | LocalizationRef | SpriteRef;
+  localizationKey: LocalizationRef | SpriteRef | string;
 }
 
 export const SCRIPTED_LOC_TEXT_FIELDS: readonly ContentField[] = [
@@ -43,7 +43,7 @@ export interface ScriptedLocFields {
   random?: boolean;
   text?: ScriptedLocText[];
   value?: ScriptValue;
-  default?: string | LocalizationRef | SpriteRef;
+  default?: LocalizationRef | SpriteRef | string;
 }
 
 export interface ScriptedLocDef<Id extends string = string> extends ScriptedLocFields {

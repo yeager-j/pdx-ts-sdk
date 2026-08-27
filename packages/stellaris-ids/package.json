@@ -30,6 +30,11 @@
       "types": "./dist/gfx-ids.d.ts",
       "default": "./dist/gfx-ids.js"
     },
+    "./localization-keys": {
+      "pdx-source": "./src/localization-keys.ts",
+      "types": "./dist/localization-keys.d.ts",
+      "default": "./dist/localization-keys.js"
+    },
     "./enum-members": {
       "pdx-source": "./src/enum-members.ts",
       "types": "./dist/enum-members.d.ts",

@@ -16,6 +16,7 @@ import {
   canJoinFactions,
   currentSituationApproach,
   currentStage,
+  external,
   hasAuthority,
   hasCompletedEventChainCounter,
   hasCountryFlag,
@@ -570,13 +571,13 @@ describe("generated content authoring types", () => {
       onRollFailed: (fleet, ctx) => {
         expectTypeOf(ctx.from).toEqualTypeOf<ScopeRef<"archaeological_site">>();
         ctx.from.effects((site) => {
-          site.addExpeditionLogEntry({ title: "The dig fails." });
+          site.addExpeditionLogEntry({ title: external.localization("content_test_dig_failed") });
         });
       },
       onCreate: (site, ctx) => {
         // Same registry, and CWT gives this one a `push_scope` with no FROM:
         // the ctx is still there, and reading FROM through it does not compile.
-        site.addExpeditionLogEntry({ title: "The dig begins." });
+        site.addExpeditionLogEntry({ title: external.localization("content_test_dig_begins") });
         // @ts-expect-error — on_create declares no FROM; ctx.from is an inert sentinel
         ctx.from.effects(() => {});
       },

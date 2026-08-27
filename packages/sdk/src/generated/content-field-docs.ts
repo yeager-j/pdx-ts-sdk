@@ -440,7 +440,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
   [
     TECHNOLOGY_TECHNOLOGY_SWAP_FIELDS,
     {
-      name: { optional: true, docs: [], memberType: "string | LocalizationRef" },
+      name: { optional: true, docs: [], memberType: "LocalizationRef | string" },
       inheritIcon: { optional: true, docs: [], memberType: "boolean" },
       inheritName: { optional: true, docs: [], memberType: "boolean" },
       inheritEffects: { optional: true, docs: [], memberType: "boolean" },
@@ -1520,7 +1520,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
     JOB_SWAPPABLE_DATA_SWAP_TYPE_FIELDS,
     {
       trigger: { optional: false, docs: [], memberType: 'Trigger<"planet">' },
-      name: { optional: true, docs: [], memberType: "string | LocalizationRef | JobRef" },
+      name: { optional: true, docs: [], memberType: "LocalizationRef | JobRef | string" },
       desc: {
         optional: true,
         docs: [
@@ -4428,7 +4428,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       random: { optional: true, docs: [], memberType: "boolean" },
       text: { optional: true, docs: [], memberType: "ScriptedLocText[]" },
       value: { optional: true, docs: [], memberType: "ScriptValue" },
-      default: { optional: true, docs: [], memberType: "string | LocalizationRef | SpriteRef" },
+      default: { optional: true, docs: [], memberType: "LocalizationRef | SpriteRef | string" },
     },
   ],
   [
@@ -4439,7 +4439,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       localizationKey: {
         optional: false,
         docs: [],
-        memberType: "string | LocalizationRef | SpriteRef",
+        memberType: "LocalizationRef | SpriteRef | string",
       },
     },
   ],
@@ -4926,7 +4926,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
   [
     CIVIC_OR_ORIGIN_SWAP_TYPE_FIELDS,
     {
-      name: { optional: true, docs: [], memberType: "string | LocalizationRef" },
+      name: { optional: true, docs: [], memberType: "LocalizationRef | string" },
       description: {
         optional: true,
         docs: [
@@ -6294,7 +6294,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
   [
     GOVERNMENT_TRIGGER_FIELDS,
     {
-      text: { optional: true, docs: [], memberType: "string | LocalizationRef" },
+      text: { optional: true, docs: [], memberType: "LocalizationRef" },
       always: { optional: true, docs: [], memberType: "boolean" },
       authority: {
         optional: true,

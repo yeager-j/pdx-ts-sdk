@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { packagedVanillaLocalizationKeys } from "../src/identifiers/vanilla-localization.ts";
 import {
   createMod,
   external,
@@ -7,7 +8,7 @@ import {
   type LocalizationReplacementText,
   type LocalizationText,
 } from "../src/index.ts";
-import { customTooltip, hasAuthority } from "../src/stellaris.ts";
+import { customTooltip, hasAuthority, vanilla } from "../src/stellaris.ts";
 
 function capability(prefix = "localization_test") {
   return createMod({
@@ -417,6 +418,47 @@ describe("standalone localization authoring", () => {
     );
   });
 
+  it("emits a checked vanilla key in a content field and in recorded script", () => {
+    const mod = capability("localization_test_vanilla");
+    // The key SDK-307 was filed over: real, and unchecked until now.
+    const independence = vanilla.localization("requires_independence");
+    const tradition = mod.tradition("checked_key", {
+      name: "Checked",
+      customTooltip: [independence],
+      possible: customTooltip(independence),
+    });
+    const files = render(mod.compile([mod.feature("checked", [tradition])]));
+    const emitted = files.get("common/traditions/localization_test_vanilla_checked.txt");
+
+    expect(emitted).toContain("custom_tooltip = requires_independence\n");
+    // Vanilla owns the text, so nothing is placed for it, exactly as for an
+    // external key.
+    expect(
+      files.get("localisation/english/localization_test_vanilla_checked_l_english.yml")
+    ).not.toContain("requires_independence:0");
+  });
+
+  it("rejects a misspelled vanilla key, naming it and the game build", () => {
+    expect(() => vanilla.localization("requires_independance")).toThrow(
+      /^"requires_independance" is not a localization key Stellaris 4\.4\.6 defines\./
+    );
+  });
+
+  it("points a key it does not know at the unchecked constructor", () => {
+    // A third-party mod's key is not a defect; it is the other constructor.
+    expect(() => vanilla.localization("some_other_mods_key")).toThrow(
+      'external.localization("some_other_mods_key")'
+    );
+  });
+
+  it("checks against the packaged inventory rather than a copy of it", () => {
+    const inventory = packagedVanillaLocalizationKeys();
+    expect(inventory.has("requires_independence")).toBe(true);
+    expect(inventory.has("requires_independance")).toBe(false);
+    // Memoized: one `Set` per process, however many keys are named.
+    expect(packagedVanillaLocalizationKeys()).toBe(inventory);
+  });
+
   it("shows an event-chain counter under its own name", () => {
     const mod = capability();
     const chain = mod.eventChain("signal", {
@@ -456,7 +498,7 @@ describe("standalone localization authoring", () => {
       name: "Scripted",
       possible: customTooltip({
         text: tooltip,
-        failText: "tr_scripted_locked",
+        failText: external.localization("tr_scripted_locked"),
         conditions: hasAuthority("auth_machine_intelligence"),
       }),
     });

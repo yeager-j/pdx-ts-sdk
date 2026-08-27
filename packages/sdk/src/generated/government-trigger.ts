@@ -533,7 +533,7 @@ export const GOVERNMENT_TRIGGER_GRAPHICAL_CULTURE_CLAUSE_FIELDS: readonly Conten
  * static configuration, so only the members below are read.
  */
 export interface GovernmentTriggerBlock {
-  text?: string | LocalizationRef;
+  text?: LocalizationRef;
   always?: boolean;
   authority?: GovernmentTriggerClause<AuthorityRef | string>;
   countryType?: GovernmentTriggerClause<CountryTypeRef | string>;
