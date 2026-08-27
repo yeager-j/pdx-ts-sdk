@@ -25,6 +25,7 @@ import {
   compareIdentifiers,
   createChokepoint,
   emitVanillaGfxIds,
+  emitVanillaLocalizationKeys,
   emitVanillaPaths,
 } from "../src/emit.ts";
 import { generateVanillaPackage } from "../src/generate.ts";
@@ -44,7 +45,7 @@ const OPTIONS = {
 const generated = generateVanillaPackage(OPTIONS);
 
 /**
- * The five files that carry runtime, and the only five. Everything else the
+ * The six files that carry runtime, and the only six. Everything else the
  * generator emits is types with zero payload. `triggers.ts` and `effects.ts`
  * hold one bound call per scripted definition (SDK-13); `paths.ts` holds the
  * install's path inventory, which is data because the SDK looks paths up at
@@ -53,10 +54,18 @@ const generated = generateVanillaPackage(OPTIONS);
  * registries' ids, for the same reason one step over — a minted GFX name is
  * only known at build time, so the collision refusal is a lookup rather than a
  * type (SDK-121); `enum-members.ts` holds the selected complex-enum members
- * whose exact identity must take precedence over prefix-based ownership.
+ * whose exact identity must take precedence over prefix-based ownership;
+ * `localization-keys.ts` holds the localization key inventory, data for the
+ * same reason `paths.ts` is and by a wider margin — 149,217 keys (SDK-307).
  */
 const BINDING_FILES = new Set(["triggers.ts", "effects.ts"]);
-const RUNTIME_FILES = new Set([...BINDING_FILES, "paths.ts", "gfx-ids.ts", "enum-members.ts"]);
+const RUNTIME_FILES = new Set([
+  ...BINDING_FILES,
+  "paths.ts",
+  "gfx-ids.ts",
+  "enum-members.ts",
+  "localization-keys.ts",
+]);
 
 describe("assertVanillaIdentifier", () => {
   it("passes the names the game actually defines", () => {
@@ -167,6 +176,16 @@ describe("negative control", () => {
         "4.4.6"
       )
     ).toThrow(/spriteType id: refusing to emit/);
+  });
+
+  it("refuses to emit a localization inventory carrying anything but a key", () => {
+    expect(() =>
+      emitVanillaLocalizationKeys(
+        ["FAKE_TECH_NAME", "The Grand Herald has arrived."],
+        createChokepoint(),
+        "4.4.6"
+      )
+    ).toThrow(/localization key: refusing to emit/);
   });
 
   it("fails to generate against an install whose names are localised text", () => {
@@ -311,6 +330,43 @@ describe("generated output", () => {
         /^(?: {2}"[\w]+": \/\*#__PURE__\*\/ Object\.freeze\(\[| {4}"[^"\\]+",| {2}\]\),)$/
       );
     }
+  });
+
+  /**
+   * The largest runtime file, pinned the same way — and here the pin is doing
+   * the most work of any of them. Its source is the one place in the install
+   * where a name and the localized text it holds sit on the same line, so
+   * "one quoted key per line" is what says the reader stopped at the colon.
+   */
+  it("keeps the localization inventory to one quoted key per line", () => {
+    const text = generated.files.get("localization-keys.ts");
+    expect(text, "localization-keys.ts was not emitted").toBeDefined();
+    const body = text!.split("\n").filter((line) => line !== "" && !line.startsWith("//"));
+    expect(body[0]).toMatch(/^export const VANILLA_LOCALIZATION_GAME_VERSION = "4\.4\.6";$/);
+    expect(body[1]).toBe(
+      "export const VANILLA_LOCALIZATION_KEYS: readonly string[] = /*#__PURE__*/ Object.freeze(["
+    );
+    expect(body[body.length - 1]).toBe("]);");
+    for (const line of body.slice(2, -1)) {
+      expect(line).toMatch(/^ {2}"[A-Za-z0-9_][A-Za-z0-9_.'-]*",$/);
+    }
+  });
+
+  it("carries the fixture's keys, including one that opens like a language header", () => {
+    const text = generated.files.get("localization-keys.ts")!;
+    const keys = [...text.matchAll(/^ {2}"([^"]+)",$/gm)].map((match) => match[1]!);
+    expect(keys).toEqual([
+      "FAKE_TECH_DESC",
+      "FAKE_TECH_NAME",
+      "fake.dotted-key",
+      "fake_apostrophe's_key",
+      // `l_english:` is the header and `l_slot` is a key. Only the trailing
+      // quoted value tells them apart, so a prefix test would drop this one.
+      "l_slot",
+    ]);
+    // The text those keys hold is on the same source line as the key itself.
+    expect(text).not.toContain("Fake Technology");
+    expect(text).not.toContain("never crosses the boundary");
   });
 
   it("covers every mint-shaped registry, and only those", () => {

@@ -513,6 +513,37 @@ export function emitVanillaPaths(
 }
 
 /**
+ * The install's localization key inventory as one frozen array.
+ *
+ * The same shape as {@link emitVanillaPaths} and for the same reason, only
+ * more so: 149,217 keys is an order of magnitude past the largest registry
+ * this package emits as a union, so `vanilla.localization(key)` checks
+ * membership at build time rather than asking a compiler to hold the set. It
+ * ships behind its own `./localization-keys` subpath, so the root loads none
+ * of it.
+ *
+ * Keys only. Every string here is a name the install's `localisation/english`
+ * tree defines; not one character of the text those keys hold is read past the
+ * colon that ends the key (`read-localization.ts`).
+ */
+export function emitVanillaLocalizationKeys(
+  keys: readonly string[],
+  gate: Chokepoint,
+  gameVersion: string
+): string {
+  const lines = [...keys]
+    .sort(compareUtf8)
+    .map((key) => `  ${gate.literal(key, "localization key")},\n`)
+    .join("");
+  return (
+    header(gameVersion) +
+    `export const VANILLA_LOCALIZATION_GAME_VERSION = ${gate.literal(gameVersion, "game version")};\n\n` +
+    "export const VANILLA_LOCALIZATION_KEYS: readonly string[] = /*#__PURE__*/ Object.freeze([\n" +
+    `${lines}]);\n`
+  );
+}
+
+/**
  * The ids of the mint-shaped registries, as runtime sets rather than as types.
  *
  * Same content as those registries' emitted id unions, in the one other form

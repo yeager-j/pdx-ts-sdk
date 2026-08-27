@@ -28,7 +28,7 @@ import {
   traitHasAllTags,
   type Trigger,
 } from "../src/script/triggers.ts";
-import { eventTarget } from "../src/stellaris.ts";
+import { eventTarget, external } from "../src/stellaris.ts";
 
 const base = {
   id: "mymod_tech_x",
@@ -69,10 +69,10 @@ describe("research areas", () => {
 
 describe("shapes the rules give a signature", () => {
   it("accepts custom tooltip's scalar and gated-block forms", () => {
-    customTooltip("requires_ascension_theory");
+    customTooltip(external.localization("requires_ascension_theory"));
     customTooltip({
       failText: "default",
-      successText: "ascension_theory_ready",
+      successText: external.localization("ascension_theory_ready"),
       conditions: hasCountryFlag("ascension_ready"),
     });
     // @ts-expect-error — the block form must still carry the conditions it explains

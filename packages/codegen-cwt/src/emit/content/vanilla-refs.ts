@@ -107,12 +107,32 @@ export function emitVanillaRefs(
     chunks.push(emitEventRow());
   }
 
+  chunks.push(emitLocalizationRow());
+
   return {
     code: chunks.join("\n"),
     refs: [...new Set(rows.map((row) => row.refSource))].sort(),
     checked: rows.filter((row) => !row.oversized).length,
     tries: rows.filter((row) => row.oversized).length + HAND_WRITTEN_VANILLA_REFS.length,
   };
+}
+
+/**
+ * The one `vanilla.*` member that is not a registry: a re-export of the
+ * hand-written `vanilla.localization` (SDK-307).
+ *
+ * No `CONTENT_MANIFEST` or `VANILLA_REF_EXTRAS` row could produce it, and it is
+ * not a graft of the mechanical checked-id pair either — a localization key has
+ * no registry, no `Ref` brand, and no id set to check a union against. Its
+ * 149,217 keys are checked at build time against a `Set`, which this generator
+ * cannot emit because it never reads an install. So the inventory and the
+ * lookup live where they belong and this file states only what the namespace
+ * holds, which is the part this generator does own. The doc comment stays on
+ * the re-exported declaration, where a hover over `vanilla.localization`
+ * resolves it.
+ */
+function emitLocalizationRow(): string {
+  return 'export { vanillaLocalizationRef as localization } from "../identifiers/vanilla-localization.ts";\n';
 }
 
 function emitEventRow(): string {

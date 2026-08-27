@@ -9,7 +9,7 @@ and shipped as TypeScript types. Alongside them, the install's path inventory:
 which paths vanilla occupies, by name. `@pdx-ts/sdk` imports its lookup tables
 (ADR-0006) so every vanilla reference is checked at compile time.
 
-The identifier surface is types with zero runtime payload. Four subpaths are
+The identifier surface is types with zero runtime payload. Five subpaths are
 the exception. `./triggers` and `./effects` carry one bound call per scripted
 definition, each a single `scriptedTrigger`/`scriptedEffect` call naming the
 definition and the scope inferred for it; they are `/*#__PURE__*/`-annotated so
@@ -22,8 +22,10 @@ SDK mints without an id segment — sprites, meshes and particles — as frozen
 arrays of strings. Those are the same ids the package already ships as types,
 in the one other form the SDK needs them: a minted name is only known at build
 time, so the SDK's refusal to shadow a vanilla definition is a lookup rather
-than a question for a compiler. Each is its own subpath so that importing the
-package's root loads none of them.
+than a question for a compiler. `./localization-keys` carries the localization
+key inventory as a frozen array of strings — key **names** only, never the text
+a key holds. Each is its own subpath so that importing the package's root loads
+none of them.
 
 ## Game version
 
@@ -75,6 +77,25 @@ The 4.4.6 generation read 43 registries and 31,180 ids, 9,995 events across
 scripted effects (382 parameterized). Of those events, 9,856 have an exact
 scope and kind from `events.cwt`; the 139 generic `event = {}` definitions are
 scopeless.
+It also read 149,217 localization keys from the 231 files of
+`localisation/english`, emitted as 4.5 MB of `localization-keys.ts`.
+
+English is the whole inventory rather than a tenth of it: the game falls back
+to english for any key a translation omits, so `localisation/english` is the
+set of keys that resolve at all and every other language directory is a subset
+of it. The launcher's own `pdx_launcher/` and `pdx_online_assets/` trees carry
+english files too and are excluded — the game resolves no script key from
+either.
+
+That count is what decided the shape. The registries below at 9.2k and 5.9k ids
+are already past what one completion menu can hold and get a trie beside their
+flat union; 149,217 is another order of magnitude up, so this inventory gets
+**no union at all**. `vanilla.localization(key)` is the only `vanilla.*` member
+checked at build time against a `Set` rather than at compile time against a
+type — 4.5 MB of literals is a file no compiler should be asked to hold, and
+the same reasoning that put the path inventory behind `./paths` applies here
+with more force.
+
 `sprite`, `sound`, `sound_effect`, and `static_modifier` are large enough to be
 emitted as navigable tries as well as flat unions. The first three nest by name
 (ids split on `_`); `static_modifier` nests by the vanilla file each id is
@@ -89,12 +110,20 @@ This is a licensing boundary the generator enforces, not merely a convention:
 - **Here:** ids, definition names, scripted trigger/effect names and their
   `$PARAM$` lists, event ids and namespaces, sprite and sound names, resource
   keys, event scope/kind contracts, the scope each scripted definition is
-  legal in, and the paths the install occupies.
+  legal in, the paths the install occupies, and the localization keys it
+  defines.
 - **Never here:** script bodies, localized text, descriptions, or asset data —
   and, for the path inventory, no file contents, sizes, or hashes either. The
   `./gfx-ids` runtime sets carry no id the flat unions do not already carry, in
   the same order and through the same gate; the form changed, the boundary did
   not.
+
+The localization inventory is where that boundary is thinnest, since a key and
+the text it holds sit on the same source line. The reader matches the key
+prefix of a line and stops at the colon, so no character of the value is ever
+captured, and the licensing test pins the emitted file to one quoted key per
+line. A key answers "does this key exist"; the text answering "what does it
+say" stays in the install.
 
 Scripted-definition scopes are the one entry derived from a body rather than
 read off one, so it is worth being precise about what crosses. The generator
@@ -128,9 +157,12 @@ npm run codegen:vanilla
 Read the report the run prints (per-registry id counts, scoped/scopeless event
 and namespace counts, per-kind event counts, parameterized scripted
 trigger/effect counts, the path inventory's counts — paths shipped, install
-files walked, DLC archives read, and metadata excluded — diagnostics, and any
-licensing-chokepoint rejections; there should be zero of the last). Review the
-diff under
+files walked, DLC archives read, and metadata excluded — the localization key
+count and the files it came from, diagnostics, and any
+licensing-chokepoint rejections; there should be zero of the last). A non-zero
+"lines unrecognised" beside the localization count means vanilla started
+writing a line shape the reader does not know, and those keys are missing from
+the inventory. Review the diff under
 `packages/stellaris-ids/src` as a public-API change, then commit the
 generated output together with whatever prompted the regeneration (a game
 patch, a generator fix).

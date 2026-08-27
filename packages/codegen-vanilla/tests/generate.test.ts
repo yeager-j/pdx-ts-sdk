@@ -820,11 +820,21 @@ describe("report", () => {
     // pieces of operating-system metadata, and one real path. Only the last
     // reaches the inventory, and the archive file itself is a walked path too.
     expect(generated.report.paths).toEqual({
-      total: 34,
-      installFiles: 33,
+      total: 35,
+      installFiles: 34,
       archives: 1,
       archiveEntries: 4,
       junkExcluded: 3,
+    });
+  });
+
+  it("counts the localization keys and the files they were read from", () => {
+    // The fixture's one english file spends seven lines on a header, a
+    // comment, and five keys.
+    expect(generated.report.localization).toEqual({
+      keys: 5,
+      files: 1,
+      unparsedLines: 0,
     });
   });
 

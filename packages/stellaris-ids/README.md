@@ -47,6 +47,12 @@ vanilla.spriteType("GFX_evt_ship_in_orbit"); // the checked call form, for copy-
 // exact event scope, and event kind, so only the matching fire effect accepts it:
 vanilla.event.story.$5; // EventRef<"country", undefined, "country">, id "story.5"
 vanilla.event.observer.$1; // country scope, distinct "observer" kind
+
+// Localization keys are the one exception: 149.2k of them is far past what a
+// union can carry, so this one is checked when it runs rather than when it
+// compiles, against the packaged inventory.
+vanilla.localization("requires_independence"); // ok
+vanilla.localization("requires_independance"); // throws, naming the key and 4.4.6
 ```
 
 Numeric local ids gain a `$` navigation prefix because JavaScript property

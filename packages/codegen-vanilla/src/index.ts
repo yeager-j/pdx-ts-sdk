@@ -179,6 +179,13 @@ function printReport(report: VanillaReport, removed: readonly string[]): void {
       `${report.paths.archiveEntries} entries in ${report.paths.archives} DLC archives ` +
       `(${report.paths.junkExcluded} operating-system metadata entries excluded)`,
   ]);
+  reportSection("Vanilla localization keys", [
+    `${report.localization.keys} keys from ${report.localization.files} english files` +
+      (report.localization.unparsedLines === 0
+        ? ""
+        : ` — ${report.localization.unparsedLines} LINES UNRECOGNISED, so their keys are missing ` +
+          "from the inventory"),
+  ]);
   reportSection("Inferred scopes", report.scripted.map(scopeLine));
   reportSection(
     "Keys the rules do not cover, by bindings they cost a narrowing",

@@ -1,0 +1,7 @@
+﻿l_english:
+ # a comment line the reader skips
+ FAKE_TECH_NAME:0 "Fake Technology"
+ FAKE_TECH_DESC:1 "Its description, which never crosses the boundary."
+ l_slot:0 "Large Component Slot"
+ fake.dotted-key:0 "Punctuation the tree really spells"
+ fake_apostrophe's_key:0 "An apostrophe"

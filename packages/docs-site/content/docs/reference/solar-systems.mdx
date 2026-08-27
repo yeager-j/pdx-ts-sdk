@@ -264,7 +264,8 @@ Nested planets and moons have no ids. Their `name` fields name a localization
 key, not a logical name or a definition. The initializer's own `name` does the
 same. Write the display text and the SDK keys it from the initializer and the
 field path, or pass a [`mod.localization`](/concepts/localization/) item —
-`external.localization(...)` for one of vanilla's own name keys.
+`vanilla.localization(...)` for one of vanilla's own name keys, and
+`external.localization(...)` for another mod's.
 
 <Callout type="warn" title="Names are not references">
   Renaming a planet's localization key does not change any initializer id. If another script must

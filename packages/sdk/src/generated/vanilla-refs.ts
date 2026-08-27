@@ -868,3 +868,5 @@ export function origin<const Id extends VanillaId<"civic_or_origin.origin">>(
  * The identifier package supplies exact EventRef scope and kind types.
  */
 export const event: VanillaTrie<"event"> = makeEventTrie();
+
+export { vanillaLocalizationRef as localization } from "../identifiers/vanilla-localization.ts";

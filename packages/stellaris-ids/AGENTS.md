@@ -30,8 +30,11 @@ package, not the package itself, and never reads an install.
   `packages/stellaris-ids/PROVENANCE.md` ("Revisions") is the authority.
 - Licensing boundary, enforced by the generator itself rather than left to convention: this package
   emits ids, definition names, scripted trigger/effect names and their `$PARAM$` lists, event
-  ids/namespaces, and the scope each scripted definition is legal in — never script bodies,
-  localized text, descriptions, or asset data. See `packages/stellaris-ids/PROVENANCE.md`.
+  ids/namespaces, localization keys, and the scope each scripted definition is legal in — never
+  script bodies, localized text, descriptions, or asset data. The localization inventory is where
+  that line is thinnest, since a key and its text share a source line: `read-localization.ts`
+  stops at the colon and `licensing.test.ts` pins the emitted file to one quoted key per line.
+  See `packages/stellaris-ids/PROVENANCE.md`.
 - The scopes are the one thing derived from a body rather than read off one, so the boundary there
   is worth stating: `infer-scopes.ts` intersects the scopes cwtools' rules already declare for the
   keys a body evaluates and keeps a `scopes.cwt` scope name; the body reaches no emitter. The

@@ -18,7 +18,7 @@ import {
 } from "../src/generated/value-sets.ts";
 import { eventTarget, makeScope, scopeValue } from "../src/script/effects/recorder.ts";
 import { hasPlanetFlag, hasStarFlag, isAtWar } from "../src/script/triggers.ts";
-import type { EffectPath, EffectPathOf } from "../src/stellaris.ts";
+import { external, vanilla, type EffectPath, type EffectPathOf } from "../src/stellaris.ts";
 
 const sink: PdxEntry[] = [];
 const flags = planetFlags("effects_type_test_flag");
@@ -157,7 +157,10 @@ describe("generated effect scope safety", () => {
     });
     country.createBalancedFleet({ size: 10 });
     country.createRandomFleet({
-      shipDesigns: ["corvette", { design: "destroyer", weight: 2, min: 1, max: 3 }],
+      shipDesigns: [
+        vanilla.localization("corvette"),
+        { design: vanilla.localization("destroyer"), weight: 2, min: 1, max: 3 },
+      ],
     });
     const system = makeScope<"system">(sink);
     system.spawnPlanet({
@@ -293,7 +296,7 @@ describe("generated effect scope safety", () => {
     system.spawnMegastructure({
       type: megastructureRef,
       name: {
-        key: "effects_type_test_megastructure_name",
+        key: external.localization("effects_type_test_megastructure_name"),
         variableString: ["effects_type_test_variable"],
       },
       orbitAngle: { min: 10, max: 20 },
@@ -311,7 +314,7 @@ describe("generated effect scope safety", () => {
     system.spawnMegastructure({
       type: megastructureRef,
       name: {
-        key: "effects_type_test_name",
+        key: external.localization("effects_type_test_name"),
         // @ts-expect-error — repeated variable_string entries author as an array
         variableString: "effects_type_test_variable",
       },

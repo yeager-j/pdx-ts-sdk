@@ -13,7 +13,13 @@ import {
   type MintedLocalizationKey,
   type ReplacementLocalizationItem,
 } from "../src/index.ts";
-import type { TechnologyFields, TechnologyPatch } from "../src/stellaris.ts";
+import {
+  and,
+  customTooltip,
+  vanilla,
+  type TechnologyFields,
+  type TechnologyPatch,
+} from "../src/stellaris.ts";
 
 describe("standalone localization types", () => {
   it("preserves the exact minted key and accepts supported translations", () => {
@@ -203,6 +209,31 @@ describe("localization references", () => {
       name: "Forged",
       // @ts-expect-error — same, at the member that would consume one.
       customTooltip: [forged],
+    });
+  });
+
+  it("takes a reference and only a reference on a recorded-script key (SDK-307)", () => {
+    const perk = mod.ascensionPerk("every_source", {
+      name: "Every source",
+      potential: and(
+        // The four ways to name a key, and the whole set of them.
+        customTooltip(mod.localization("owned", "Owned.")),
+        customTooltip(vanilla.localization("requires_independence")),
+        customTooltip(external.localization("some_other_mods_key")),
+        customTooltip(mod.replaceLocalization("crisis.2010.a", "Replaced."))
+      ),
+    });
+    void perk;
+  });
+
+  it("refuses a bare string on a recorded-script key, where it used to mean one", () => {
+    // @ts-expect-error — a key is a reference now; a bare string is neither a
+    // key nor display text here.
+    customTooltip("requires_independence");
+    mod.ascensionPerk("bare", {
+      name: "Bare",
+      // @ts-expect-error — the same inside the gated block form.
+      potential: customTooltip({ failText: "requires_independence", conditions: and() }),
     });
   });
 });

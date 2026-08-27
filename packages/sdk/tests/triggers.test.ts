@@ -49,6 +49,7 @@ import {
   type ScriptValue,
   type SwitchArgs,
 } from "../src/script/triggers.ts";
+import { external } from "../src/stellaris.ts";
 
 describe("trigger builders", () => {
   it("wraps a nested trigger in an iterator block", () => {
@@ -219,14 +220,14 @@ describe("trigger builders", () => {
   });
 
   it("writes a custom tooltip as either its localisation scalar or its gated block", () => {
-    expect(serialize([...customTooltip("requires_ascension_theory").entries])).toBe(
-      "custom_tooltip = requires_ascension_theory\n"
-    );
+    expect(
+      serialize([...customTooltip(external.localization("requires_ascension_theory")).entries])
+    ).toBe("custom_tooltip = requires_ascension_theory\n");
     expect(
       serialize([
         ...customTooltip({
           failText: "default",
-          successText: "ascension_theory_ready",
+          successText: external.localization("ascension_theory_ready"),
           conditions: hasTechnology("tech_ascension_theory"),
         }).entries,
       ])

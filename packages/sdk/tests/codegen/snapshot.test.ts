@@ -219,20 +219,20 @@ describe("emitted trigger signatures", () => {
   it("scalar plus block: preserves both custom_tooltip forms as overloads", () => {
     expect(argsDeclaration("CustomTooltipArgs")).toMatchInlineSnapshot(`
       "export type CustomTooltipArgs<S extends ScopeName = ScopeName> = {
-        text?: "" | string | LocalizationRef;
-        failText?: "default" | string | LocalizationRef;
-        successText?: string | LocalizationRef;
+        text?: "" | LocalizationRef;
+        failText?: "default" | LocalizationRef;
+        successText?: LocalizationRef;
         /** The nested conditions, written bare inside the block beside its named keys. */
         conditions: Trigger<S>;
       };"
     `);
     expect(declaration("customTooltip")).toMatchInlineSnapshot(`
-      "export function customTooltip(value: string | LocalizationRef): Trigger<ScopeName>;
+      "export function customTooltip(value: LocalizationRef): Trigger<ScopeName>;
       export function customTooltip<S extends ScopeName = ScopeName>(
         args: CustomTooltipArgs<S>
       ): Trigger<S>;
       export function customTooltip<S extends ScopeName>(
-        value: string | LocalizationRef | CustomTooltipArgs<S>
+        value: LocalizationRef | CustomTooltipArgs<S>
       ): Trigger<ScopeName> {
         if (isStructuredValue(value, ["localization-ref"])) {
           const args = value;

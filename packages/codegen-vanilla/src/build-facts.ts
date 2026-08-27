@@ -12,6 +12,7 @@ import { VANILLA_MANIFEST, type VanillaIdRow, type VanillaScriptedRow } from "./
 import { readComplexEnumMembers, type ComplexEnumMembers } from "./read-complex-enums.ts";
 import { readVanillaEvents, type VanillaEventsRead } from "./read-events.ts";
 import { readRegistryIds, type RegistryIds } from "./read-ids.ts";
+import { readLocalizationKeys, type LocalizationKeys } from "./read-localization.ts";
 import { readScriptedDefinitions, type ScriptedRegistry } from "./read-scripted.ts";
 import { resolveRegistries, type RegistrySpec } from "./resolve.ts";
 
@@ -51,6 +52,8 @@ export interface VanillaBuildFacts {
    * same code that produced the packaged inventory.
    */
   readonly paths: VanillaPathScan;
+  /** Every localization key the install's english tree defines. */
+  readonly localization: LocalizationKeys;
 }
 
 export interface RegistryBuildFacts {
@@ -193,6 +196,7 @@ export function buildVanillaFacts(options: VanillaBuildFactsOptions): VanillaBui
   // on, and a whole-install walk that ran first would decide the failure of a
   // run whose real complaint is a name that must not be emitted.
   const paths = scanInstallPaths(options.installRoot);
+  const localization = readLocalizationKeys(options.installRoot);
   const installEvidenceInputs: EvidenceInput[] = [
     { root: events.path, extension: events.extension, recurse: true },
     ...scriptedRows.map((row) => ({ root: row.dir, extension: ".txt", recurse: true })),
@@ -235,5 +239,6 @@ export function buildVanillaFacts(options: VanillaBuildFactsOptions): VanillaBui
     scripted,
     inferredScopes,
     paths,
+    localization,
   };
 }

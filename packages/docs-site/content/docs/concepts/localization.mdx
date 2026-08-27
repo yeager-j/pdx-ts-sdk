@@ -226,23 +226,46 @@ that text already ships with the definition that minted it.
 
 ### Name a key this mod does not define
 
-Vanilla's keys, and another mod's, come from `external.localization`:
+Vanilla's keys come from `vanilla.localization`, checked against the key
+inventory `@pdx-ts/stellaris-ids` reads out of your install:
+
+```ts
+import { vanilla } from "@pdx-ts/sdk";
+
+const resonanceArchive = mod.building("resonance_archive", {
+  customTooltip: vanilla.localization("BUILDING_RESEARCH_LAB_1_DESC"),
+});
+```
+
+A key the game does not define fails the build, naming the key and the game
+version. This is the one `vanilla.*` member checked when it runs rather than
+when it compiles: vanilla ships about 149,000 keys, too many to put in a type.
+
+Another mod's keys come from `external.localization`:
 
 ```ts
 import { external } from "@pdx-ts/sdk";
 
-const resonanceArchive = mod.building("resonance_archive", {
-  customTooltip: external.localization("BUILDING_RESEARCH_LAB_1_DESC"),
+const annex = mod.building("annex", {
+  customTooltip: external.localization("SOME_OTHER_MOD_TOOLTIP"),
 });
 ```
 
-Only the key's syntax is checked: this build has no record of what vanilla
-defines, so a misspelling reaches the game, where an unresolved key shows as
-itself.
+Only the key's syntax is checked there: this build has no record of what
+another mod defines, so a misspelling reaches the game, where an unresolved key
+shows as itself.
 
-Recorded script reads a bare string the other way round. A key inside a trigger
-or effect — `customTooltip("...")` — has no owning definition to key text
-against, so a string there is still the key, and a reference works as well.
+Between the two, plus `mod.localization` and a definition's `loc` member, every
+key has a spelling that says where it comes from — so nowhere in the API does a
+bare string mean a key. A key inside a recorded trigger or effect is a
+reference like any other:
+
+```ts
+mod.ascensionPerk("apotheosis", {
+  name: "Apotheosis",
+  potential: isIndependent({ failText: vanilla.localization("requires_independence") }),
+});
+```
 
 A string is shorthand for English-only text:
 
