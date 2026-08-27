@@ -2,6 +2,7 @@ import {
   LOCALIZATION_LANGUAGES,
   type KeyedLocalization,
   type LocalizationLanguage,
+  type LocalizationLayer,
 } from "../authoring/localization.ts";
 import type { ModWarning } from "../diagnostics.ts";
 import {
@@ -17,8 +18,12 @@ const LOC_FORBIDDEN = /[\r\n\0]/;
 /** One `.yml` line's worth of localization, before any file is chosen for it. */
 export type LocalisationEntry = readonly [key: string, text: string];
 
-/** Which of the two localization layers an entry is emitted into. */
-export type LocalizationLayer = "ordinary" | "replace";
+// Declared with `KeyedLocalization`, which carries a per-entry override of it,
+// and re-exported here because every consumer of the layer is on this side.
+export type { LocalizationLayer };
+
+/** Both layers, in the order entries are handed to the accumulator. */
+const LOCALIZATION_LAYERS = ["ordinary", "replace"] as const satisfies readonly LocalizationLayer[];
 
 export interface LocalizationRegistration {
   readonly layer: LocalizationLayer;
@@ -79,19 +84,26 @@ export interface LocalizationAccumulator {
  * accumulator below places one language's entries at a time. This is the one
  * place that turns the first into the second, so a language absent from every
  * entry never opens a file for itself.
+ *
+ * `where.layer` is the collector's layer, which an entry may override for
+ * itself: one collector can produce both, as the content walk does when a
+ * localization role names a resource this build does not define.
  */
 export function registerLocalization(
   accumulator: LocalizationAccumulator,
   where: { readonly layer: LocalizationLayer; readonly stem: string | undefined },
   collected: readonly KeyedLocalization[]
 ): void {
-  for (const language of LOCALIZATION_LANGUAGES) {
-    const entries = collected.flatMap<LocalisationEntry>(({ key, translations }) => {
-      const text = translations[language];
-      return text === undefined ? [] : [[key, text]];
-    });
-    if (entries.length > 0) {
-      accumulator.register({ layer: where.layer, language, stem: where.stem, entries });
+  for (const layer of LOCALIZATION_LAYERS) {
+    const inLayer = collected.filter((entry) => (entry.layer ?? where.layer) === layer);
+    for (const language of LOCALIZATION_LANGUAGES) {
+      const entries = inLayer.flatMap<LocalisationEntry>(({ key, translations }) => {
+        const text = translations[language];
+        return text === undefined ? [] : [[key, text]];
+      });
+      if (entries.length > 0) {
+        accumulator.register({ layer, language, stem: where.stem, entries });
+      }
     }
   }
 }

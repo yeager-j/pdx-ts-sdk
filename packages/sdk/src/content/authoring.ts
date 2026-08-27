@@ -17,7 +17,7 @@ import {
 } from "../script/effects/modifiers.ts";
 import type { TypedRef } from "../script/scalar.ts";
 import { isComplexTriggerModifier, TRIGGERED_MODIFIER_TEXT_MEMBERS } from "./blocks.ts";
-import { resolveLocalizationRole } from "./localization-families.ts";
+import { resolveLocalizationRole, type LocalizationRoleUse } from "./localization-families.ts";
 import { dualArm, fieldEntries, isPassthrough, resolveFromClosures } from "./lower.ts";
 import type { ShapeMint } from "./mint-provenance.ts";
 import {
@@ -227,6 +227,7 @@ export class ContentAuthoring {
   private readonly byType: ReadonlyMap<string, ContentRegistryDescriptor>;
   private readonly definitions = new Map<string, ContentDefinition<string, ContentDef>[]>();
   private readonly nestedIds = new Map<string, Set<string>>();
+  private readonly roleUses: LocalizationRoleUse[] = [];
   private readonly registerLoc: RegisterLoc;
   private readonly onPrefixViolation: (message: string) => void;
   private readonly onUnstableDescKey: (message: string) => void;
@@ -325,6 +326,19 @@ export class ContentAuthoring {
    */
   entries(type: string): readonly PdxEntry[] {
     return (this.definitions.get(type) ?? []).map((definition) => definition.toEntries());
+  }
+
+  /**
+   * Every localization role named by the definitions walked so far, in define
+   * order.
+   *
+   * The walk cannot decide whether a role's reference is owned — a handle and a
+   * raw string both name an id whose definition may arrive in another feature —
+   * so it records the use and the fold settles it against the ids this build
+   * actually defines.
+   */
+  get localizationRoleUses(): readonly LocalizationRoleUse[] {
+    return this.roleUses;
   }
 
   /**
@@ -519,11 +533,11 @@ export class ContentAuthoring {
       }
       if (field.shape === "value" && field.localizationFamily !== undefined) {
         const family = field.localizationFamily;
-        const position = `${ownerType}.${fieldPath} for "${ownerId}"`;
+        const site = { ownerType, ownerId, fieldPath };
         rewrite(
           field.member,
           mapOccurrences(raw, field.repeated === true, (item) =>
-            resolveLocalizationRole(item, family, position, localisation)
+            resolveLocalizationRole(item, family, site, localisation, this.roleUses)
           )
         );
         continue;

@@ -66,7 +66,33 @@ export interface LocalizationFamilyMember {
 export interface LocalizationKeyFamily {
   /** Family name, as the generated field metadata spells it. */
   readonly name: string;
+  /** Content registry the referenced id belongs to, checked at fold time. */
+  readonly registry: string;
+  /** What reads this family, named when the fold refuses a missing one. */
+  readonly reader: string;
   readonly members: readonly LocalizationFamilyMember[];
+}
+
+/**
+ * One field's use of a localization role, recorded for the fold.
+ *
+ * The type-level gate refuses the obvious spellings of an owned resource, but
+ * a handle, a widened item, or a raw string can still name one; only the fold
+ * knows every id this build defines, so the guarantee is settled there.
+ */
+export interface LocalizationRoleUse {
+  /** Definition naming the referenced id, e.g. `crisis_path "x_path"`. */
+  readonly owner: string;
+  /** Serialized field the reference was written in. */
+  readonly field: string;
+  /** Registry the referenced id must belong to. */
+  readonly registry: string;
+  /** The referenced id the family keys from. */
+  readonly id: string;
+  /** Whether the author supplied the family text beside the reference. */
+  readonly bundled: boolean;
+  /** {@link LocalizationKeyFamily.reader}, carried so the fold needs no lookup. */
+  readonly reader: string;
 }
 
 /**
@@ -148,22 +174,82 @@ type RequiredMemberName = Extract<CrisisCurrencyMember, { readonly required: tru
 type OptionalMemberName = Extract<CrisisCurrencyMember, { readonly required: false }>["member"];
 
 /**
- * The Ambition UI's text for one crisis currency, one member per key the game
- * derives from the resource id.
+ * {@link CrisisCurrencyLocalization} as the measured table alone describes it.
  *
- * The members are this shape because the table above is: each required member
- * of the measured family is a required member here, so a family the UI would
- * show raw keys for cannot be authored.
+ * Deliberately not re-exported from the package entry points: it exists so a
+ * test can pin the documented interface to the table in both directions, which
+ * is what lets the table stay the runtime authority while the interface carries
+ * the prose an author reads.
  */
-export type CrisisCurrencyLocalization = Readonly<Record<RequiredMemberName, LocalizedText>> &
+export type CrisisCurrencyFamilyShape = Readonly<Record<RequiredMemberName, LocalizedText>> &
   Readonly<Partial<Record<OptionalMemberName, LocalizedText>>>;
 
 /**
- * A resource whose crisis-currency text already exists — vanilla's own, or
- * another mod's. `def?: never` is what excludes a resource this build defines:
- * only a `DefinedContent` carries `def`, and one of those needs the bundle.
+ * The Ambition UI's text for one crisis currency, one member per key the game
+ * derives from the resource id.
+ *
+ * Every member is required except {@link CrisisCurrencyLocalization.crisisDescriptionIntro},
+ * so a family the UI would show raw keys for cannot be authored. Members whose
+ * text carries a runtime value name it below; that token must survive into
+ * every translation supplied for the member.
  */
-type ForeignResourceRef = ResourceRef & { readonly def?: never };
+export interface CrisisCurrencyLocalization {
+  /** The currency's label where a value is shown beside it, as in `"Resolve:"`. */
+  readonly name: LocalizedText;
+  /** One currency amount with its icon. Must carry `$VAL|0$`. */
+  readonly value: LocalizedText;
+  /** The stockpile readout in the crisis panel. Must carry `$VALUE|0$`. */
+  readonly currentValue: LocalizedText;
+  /** How the player earns the currency, shown in its tooltip. */
+  readonly gaining: LocalizedText;
+  /** Heading over the objective list, as in `"Archive Objectives"`. */
+  readonly crisisObjective: LocalizedText;
+  /** Label on the amount an objective awarded, as in `"Resolve gained"`. */
+  readonly crisisObjectiveGained: LocalizedText;
+  /** Confirmation that an objective paid out. Must carry `$AMOUNT$`. */
+  readonly crisisObjectiveProgress: LocalizedText;
+  /** Wrapper around one objective's reward line. Must carry `$REWARD$`. */
+  readonly crisisObjectiveReward: LocalizedText;
+  /** Heading over an unreached level's requirements. */
+  readonly crisisLevelLocked: LocalizedText;
+  /** Heading over a reached level's rewards. Must carry `$LEVEL$`. */
+  readonly crisisLevelUnlocked: LocalizedText;
+  /** One level's currency requirement. Must carry `$CURRENCY$`. */
+  readonly crisisLevelUnlock: LocalizedText;
+  /** How the player advances between levels. */
+  readonly crisisLevelDesc: LocalizedText;
+  /** The path's title in the crisis panel, as in `"Galactic Nemesis"`. */
+  readonly crisisDescriptionTitle: LocalizedText;
+  /** The path's flavour body under that title. */
+  readonly crisisDescription: LocalizedText;
+  /** The path's mechanical heading, as in `"Menace & Engine"`. */
+  readonly crisisHowtoTitle: LocalizedText;
+  /** The path's mechanical body under that heading. */
+  readonly crisisHowto: LocalizedText;
+  /**
+   * Optional opening paragraph. Vanilla's `menace` composes it into
+   * {@link CrisisCurrencyLocalization.crisisDescription} with
+   * `$<currency-id>_crisis_description_intro$`; `integrity` defines no such
+   * key and inlines the prose instead.
+   */
+  readonly crisisDescriptionIntro?: LocalizedText;
+}
+
+/**
+ * A resource whose crisis-currency text already exists — vanilla's own, or
+ * another mod's.
+ *
+ * The two absent properties are what exclude a resource this build defines:
+ * a `DefinedContent` carries `def` and a `ContentHandleBase` carries
+ * `handleKind`, and both of those need the bundle. Neither is the whole
+ * guarantee — an owned resource widened to `ResourceRef`, or named as a raw
+ * string, wears neither — which is why the fold checks the referenced id
+ * against every id this build defines.
+ */
+type ForeignResourceRef = ResourceRef & {
+  readonly def?: never;
+  readonly handleKind?: never;
+};
 
 /**
  * A crisis path's currency: the resource, plus the Ambition UI text keyed from
@@ -197,7 +283,15 @@ export type CrisisCurrencyRole =
 
 /** Every family a generated field's `localizationFamily` may name. */
 export const LOCALIZATION_KEY_FAMILIES: ReadonlyMap<string, LocalizationKeyFamily> = new Map([
-  ["crisis_currency", { name: "crisis_currency", members: CRISIS_CURRENCY_MEMBERS }],
+  [
+    "crisis_currency",
+    {
+      name: "crisis_currency",
+      registry: "resource",
+      reader: "The Ambition UI",
+      members: CRISIS_CURRENCY_MEMBERS,
+    },
+  ],
 ]);
 
 /** An authored role bundle, before its members have been checked. */
@@ -215,6 +309,23 @@ interface RoleBundle {
  */
 function isRoleBundle(value: unknown): value is RoleBundle {
   return typeof value === "object" && value !== null && "resource" in value;
+}
+
+/**
+ * Whether a referenced value is a definition this build makes, by the two
+ * shapes authoring hands out: a placed `ContentItem` and a minted handle.
+ *
+ * Shape rather than id, because this decides the layer during the definition
+ * walk, before the fold has the id census. A raw string naming an owned id
+ * reads as foreign here and is refused outright at fold time, so the two
+ * checks never disagree about a mod that builds.
+ */
+function isOwnDefinition(value: unknown): boolean {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const candidate = value as { readonly itemKind?: unknown; readonly handleKind?: unknown };
+  return candidate.itemKind === "content" || candidate.handleKind === "content-handle";
 }
 
 const PLACEHOLDER_PATTERN = /\$([^$|]+)(?:\|[^$]*)?\$/g;
@@ -246,6 +357,16 @@ function assertPlaceholders(
   }
 }
 
+/** Where in a definition one localization role was authored. */
+export interface LocalizationRoleSite {
+  /** Registry of the definition naming the reference. */
+  readonly ownerType: string;
+  /** Id of the definition naming the reference. */
+  readonly ownerId: string;
+  /** Serialized field path the reference was written in. */
+  readonly fieldPath: string;
+}
+
 /**
  * Resolves an authored role value to the reference the definition body emits,
  * registering the referenced id's key family when the author supplied one.
@@ -253,31 +374,53 @@ function assertPlaceholders(
  * The bundle collapses to its `resource` on the way out, so the field lowers
  * and collects references exactly as a bare reference does.
  *
+ * Text for a resource this build does not define is registered on the
+ * `replace` layer, because those keys already exist — vanilla's `menace_*`,
+ * another mod's — and `localisation/replace/` is the only thing that decides a
+ * localisation winner. Nothing is lost when the key exists nowhere else: the
+ * replace directory is an ordinary localisation source the game reads with
+ * priority, not an override that needs something to override.
+ *
  * @param familyName - Family named by the field's generated `localizationFamily`.
- * @param position - Names the field in a refusal, e.g. `crisis_path.crisis_currency for "x"`.
  * @param into - Collects one entry per supplied member, keyed by the referenced id.
+ * @param roleUses - Collects the use itself, for the fold's completeness check.
  */
 export function resolveLocalizationRole(
   value: unknown,
   familyName: string,
-  position: string,
-  into: KeyedLocalization[]
+  site: LocalizationRoleSite,
+  into: KeyedLocalization[],
+  roleUses: LocalizationRoleUse[]
 ): unknown {
+  const position = `${site.ownerType}.${site.fieldPath} for "${site.ownerId}"`;
   const family = LOCALIZATION_KEY_FAMILIES.get(familyName);
   if (family === undefined) {
     throw new Error(`${position} names localization family "${familyName}", which does not exist`);
   }
-  if (!isRoleBundle(value)) {
+  const bundled = isRoleBundle(value);
+  const reference = bundled ? value.resource : value;
+  const id = refId(reference as TypedRef<string> | string);
+  if (typeof id === "string" && id !== "") {
+    roleUses.push({
+      owner: `${site.ownerType} "${site.ownerId}"`,
+      field: site.fieldPath,
+      registry: family.registry,
+      id,
+      bundled,
+      reader: family.reader,
+    });
+  }
+  if (!bundled) {
     return value;
   }
   const localization = value.localization;
   if (typeof localization !== "object" || localization === null) {
     throw new Error(`${position} supplies a resource without its "localization" text`);
   }
-  const id = refId(value.resource as TypedRef<string> | string);
   if (typeof id !== "string" || id === "") {
     throw new Error(`${position} supplies a bundle whose "resource" names nothing`);
   }
+  const layer = isOwnDefinition(reference) ? "ordinary" : "replace";
   const supplied = localization as Readonly<Record<string, LocalizedText | undefined>>;
   for (const member of family.members) {
     const text = supplied[member.member];
@@ -293,7 +436,7 @@ export function resolveLocalizationRole(
     const key = `${id}${member.suffix}`;
     const translations = resolveFixedKeyText(text, `${position} "${member.member}"`, key);
     assertPlaceholders(member, translations, position);
-    into.push({ key, translations });
+    into.push({ key, translations, layer });
   }
-  return value.resource;
+  return reference;
 }

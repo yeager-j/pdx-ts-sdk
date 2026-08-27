@@ -69,6 +69,7 @@ export function compileContent(session: BuildSession): CompiledContent {
   );
   const rawGroups = collectContentGroups(session);
   const definedGroups = defineContentGroups(session, content, rawGroups);
+  session.roleUses.push(...content.localizationRoleUses);
   const contentFiles = lowerContentGroups(session, definedGroups);
   assertPlacedAssetReferences(session);
 

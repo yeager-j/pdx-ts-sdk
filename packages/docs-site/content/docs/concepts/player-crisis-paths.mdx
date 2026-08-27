@@ -126,8 +126,16 @@ const nemesis = mod.crisisPath("nemesis_route", {
 });
 ```
 
-Pass the bundle over a vanilla reference only to restate that text yourself. A
-plain string stays available for a resource from another mod, and is unchecked.
+Pass the bundle over a vanilla reference only to restate that text yourself.
+Those keys already exist, so the SDK writes them to `localisation/replace/`,
+which is the only thing that decides a localisation winner — a file stem never
+does. A plain string stays available for a resource from another mod, and is
+unchecked; its family is written to the replace layer for the same reason.
+
+Whichever form you use, the completeness rule is settled against the resources
+this build actually defines, not against how the reference is spelled. Naming
+an owned currency through a handle, a widened reference, or its bare id
+without the bundle fails the build rather than shipping raw keys.
 
 ## Connect the route and activate it
 

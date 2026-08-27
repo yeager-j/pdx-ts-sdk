@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { LOCALIZATION_KEY_FAMILIES } from "../src/content/localization-families.ts";
 import { CRISIS_PATH_FIELDS } from "../src/generated/crisis-path.ts";
 import { createMod, render, type CrisisCurrencyLocalization } from "../src/index.ts";
-import { vanilla } from "../src/stellaris.ts";
+import { vanilla, type ResourceItem, type ResourceRef } from "../src/stellaris.ts";
 
 function capability(prefix = "crisis_loc") {
   return createMod({ name: "Crisis currency text", prefix, supportedVersion: "4.4.*" });
@@ -32,19 +32,26 @@ const COMPLETE_TEXT = {
 const RESOURCE_ID = "crisis_loc_resource_resolve";
 const PATH_ID = "crisis_loc_crisis_path_archive";
 const ENGLISH = "localisation/english/crisis_loc_archive_l_english.yml";
+const RESOURCE_DEF = { name: "Resolve", category: "other", aiWeight: { weight: 1 } } as const;
+
+const OWNED_CURRENCY_REFUSAL =
+  `crisis_path "${PATH_ID}" names resource "${RESOURCE_ID}" in "crisis_currency", and this ` +
+  "build defines that resource. The Ambition UI builds a required text family from its id, " +
+  "and nothing ships that text, so the mod would show raw keys wherever the family is read — " +
+  "write the reference and its text together as { resource: …, localization: … }.";
 
 /**
- * Renders a path over a resource this mod defines, so the derived keys carry
- * the resource id rather than the path's. The family is checked by the
- * definition walk, which runs during `compile`.
+ * Compiles one crisis path over `currency`, placing `owned` in the same
+ * feature when the build defines a resource of its own.
+ *
+ * The family is checked by the definition walk and by the fold, both of which
+ * run during `compile` rather than at `mod.crisisPath(...)`.
  */
-function renderPath(localization: Readonly<Record<string, unknown>>) {
-  const mod = capability();
-  const resource = mod.resource("resolve", {
-    name: "Resolve",
-    category: "other",
-    aiWeight: { weight: 1 },
-  });
+function compileWithCurrency(
+  mod: ReturnType<typeof capability>,
+  currency: unknown,
+  owned?: ResourceItem
+) {
   const level = mod.crisisLevel("first", {
     name: "First",
     requiredCrisisCurrency: 0,
@@ -53,11 +60,20 @@ function renderPath(localization: Readonly<Record<string, unknown>>) {
   });
   const objective = mod.crisisObjective("survey", { name: "Survey", reward: { base: 10 } });
   const path = mod.crisisPath("archive", {
-    crisisCurrency: { resource, localization } as never,
+    crisisCurrency: currency as never,
     levels: [level],
     objectives: [objective],
   });
-  return render(mod.compile([mod.feature("archive", [resource, level, objective, path])]));
+  return mod.compile([
+    mod.feature("archive", [...(owned === undefined ? [] : [owned]), level, objective, path]),
+  ]);
+}
+
+/** Renders a path whose currency is a resource this build defines. */
+function renderPath(localization: Readonly<Record<string, unknown>>) {
+  const mod = capability();
+  const resource = mod.resource("resolve", RESOURCE_DEF);
+  return render(compileWithCurrency(mod, { resource, localization }, resource));
 }
 
 describe("localization key family tables", () => {
@@ -134,7 +150,9 @@ describe("crisis-currency localization family", () => {
     );
   });
 
-  it("localizes a vanilla currency's family under the vanilla id", () => {
+  // `menace_*` already exist in vanilla, and `localisation/replace/` is the
+  // only thing that decides a localisation winner — a file stem never does.
+  it("retexts a vanilla currency's family on the replace layer", () => {
     const mod = capability();
     const level = mod.crisisLevel("first", {
       name: "First",
@@ -150,8 +168,43 @@ describe("crisis-currency localization family", () => {
     });
     const files = render(mod.compile([mod.feature("retext", [level, objective, path])]));
 
-    expect(files.get("localisation/english/crisis_loc_retext_l_english.yml")).toContain(
+    expect(files.get("localisation/replace/english/crisis_loc_retext_l_english.yml")).toContain(
       ' menace_crisis_howto_title:0 "Memory and Resolve"\n'
+    );
+    // The ordinary file still exists for the level and objective text; what it
+    // must not carry is a key vanilla already defines.
+    expect(files.get("localisation/english/crisis_loc_retext_l_english.yml") ?? "").not.toContain(
+      "menace_"
+    );
+  });
+
+  it("retexts a third-party currency named by a raw string on the replace layer", () => {
+    const mod = capability();
+    const level = mod.crisisLevel("first", {
+      name: "First",
+      requiredCrisisCurrency: 0,
+      perks: [],
+      onUnlock: () => {},
+    });
+    const objective = mod.crisisObjective("survey", { name: "Survey", reward: { base: 10 } });
+    const path = mod.crisisPath("foreign_retext", {
+      crisisCurrency: { resource: "other_mod_currency", localization: COMPLETE_TEXT },
+      levels: [level],
+      objectives: [objective],
+    });
+    const files = render(mod.compile([mod.feature("retext", [level, objective, path])]));
+
+    expect(files.get("localisation/replace/english/crisis_loc_retext_l_english.yml")).toContain(
+      ' other_mod_currency_name:0 "Resolve:"\n'
+    );
+  });
+
+  it("keeps an owned currency's family on the ordinary layer", () => {
+    const files = renderPath(COMPLETE_TEXT);
+
+    expect(files.get(ENGLISH)).toContain(` ${RESOURCE_ID}_name:0 "Resolve:"\n`);
+    expect([...files.keys()].filter((path) => path.startsWith("localisation/replace/"))).toEqual(
+      []
     );
   });
 
@@ -183,6 +236,50 @@ describe("crisis-currency localization family", () => {
     expect(emitted).toContain("crisis_currency = third_party_currency");
     expect(files.get("localisation/english/crisis_loc_bare_l_english.yml") ?? "").not.toContain(
       "menace_name"
+    );
+  });
+
+  // The type gate cannot see these three: a handle has no `def`, a widened
+  // item wears nothing to test, and a raw string wears less. Only the fold
+  // knows every id this build defines.
+  it("refuses a bare handle to a resource this build defines", () => {
+    const mod = capability();
+    const handle = mod.resourceHandle("resolve");
+
+    expect(() => compileWithCurrency(mod, handle, handle.define(RESOURCE_DEF))).toThrow(
+      OWNED_CURRENCY_REFUSAL
+    );
+  });
+
+  it("refuses an owned resource widened to a plain reference", () => {
+    const mod = capability();
+    const resource = mod.resource("resolve", RESOURCE_DEF);
+    const widened: ResourceRef = resource;
+
+    expect(() => compileWithCurrency(mod, widened, resource)).toThrow(OWNED_CURRENCY_REFUSAL);
+  });
+
+  it("refuses a raw string spelling an id this build defines", () => {
+    const mod = capability();
+    const resource = mod.resource("resolve", RESOURCE_DEF);
+
+    expect(() => compileWithCurrency(mod, RESOURCE_ID, resource)).toThrow(OWNED_CURRENCY_REFUSAL);
+  });
+
+  it("accepts an owned resource named by a handle inside the bundle", () => {
+    const mod = capability();
+    const handle = mod.resourceHandle("resolve");
+    const files = render(
+      compileWithCurrency(
+        mod,
+        { resource: handle, localization: COMPLETE_TEXT },
+        handle.define(RESOURCE_DEF)
+      )
+    );
+
+    expect(files.get(ENGLISH)).toContain(` ${RESOURCE_ID}_name:0 "Resolve:"\n`);
+    expect([...files.keys()].filter((path) => path.startsWith("localisation/replace/"))).toEqual(
+      []
     );
   });
 

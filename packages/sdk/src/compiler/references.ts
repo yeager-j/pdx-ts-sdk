@@ -1,6 +1,7 @@
 import { walkItems, type PdxItem } from "@pdx-ts/pdxscript";
 
 import { contentDescriptor } from "../content/descriptors.ts";
+import type { LocalizationRoleUse } from "../content/localization-families.ts";
 import { SWAP_IDENTITIES, type SwapIdentity } from "../content/swaps.ts";
 import { CONTENT_REGISTRIES } from "../generated/content-registry.ts";
 import type { ContentRefUse } from "../references.ts";
@@ -18,6 +19,7 @@ type ReferenceValidationInput = {
     readonly def: Readonly<Record<string, unknown>>;
   }[];
   readonly refUses: readonly ReferenceUse[];
+  readonly roleUses: readonly LocalizationRoleUse[];
   readonly vanillaIdsOf: (registry: string) => ReadonlySet<string> | undefined;
 };
 
@@ -226,6 +228,33 @@ export interface ReferenceUse {
 }
 
 /**
+ * Rejects a localization role whose reference this build defines but supplies no text family for.
+ *
+ * The authoring type refuses the two owned shapes it can see, but a handle
+ * reaches the field before its definition exists, a defined item widened to a
+ * plain reference wears nothing to test, and a raw string wears less. All
+ * three land here, where the same id census the reference check uses settles
+ * ownership by identity rather than by shape.
+ */
+function assertLocalizationRolesComplete(
+  roleUses: readonly LocalizationRoleUse[],
+  builtIds: ReadonlyMap<string, ReadonlySet<string>>
+): void {
+  for (const use of roleUses) {
+    if (use.bundled || builtIds.get(use.registry)?.has(use.id) !== true) {
+      continue;
+    }
+    throw new Error(
+      `${use.owner} names ${use.registry} "${use.id}" in "${use.field}", and this build defines ` +
+        `that ${use.registry}. ${use.reader} builds a required text family from its id, and ` +
+        `nothing ships that text, so the mod would show raw keys wherever the family is read — ` +
+        `write the reference and its text together as ` +
+        `{ resource: …, localization: … }.`
+    );
+  }
+}
+
+/**
  * Rejects event and content references that look owned by this mod but have no definition in the
  * compiled Feature set. Verified vanilla references and assumed third-party references pass through.
  */
@@ -235,4 +264,5 @@ export function validateReferences(args: ReferenceValidationInput): void {
   for (const { owner, use } of args.refUses) {
     assertContentReferenceExists(owner, use, args.prefix, builtIds, args.vanillaIdsOf);
   }
+  assertLocalizationRolesComplete(args.roleUses, builtIds);
 }

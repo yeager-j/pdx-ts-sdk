@@ -1,5 +1,6 @@
 import { describe, expectTypeOf, it } from "vitest";
 
+import type { CrisisCurrencyFamilyShape } from "../src/content/localization-families.ts";
 import { defineBuilding } from "../src/generated/content-definers.ts";
 import { createMod, type ContentItem } from "../src/index.ts";
 import { anyOf } from "../src/installation/index.ts";
@@ -355,10 +356,33 @@ describe("generated content authoring types", () => {
       ...lists,
     });
 
+    // A handle carries no `def`, so only excluding `handleKind` too keeps a
+    // resource whose definition has not been attached yet out of the bare arm.
+    const handle = contentMod.resourceHandle("handle_currency");
+    contentMod.crisisPath("bare_handle_currency", {
+      // @ts-expect-error — a handle names a resource this mod is about to define
+      crisisCurrency: handle,
+      ...lists,
+    });
+    contentMod.crisisPath("bundled_handle_currency", {
+      crisisCurrency: { resource: handle, localization: crisisCurrencyText },
+      ...lists,
+    });
+
     expectTypeOf<CrisisCurrencyLocalization["name"]>().toEqualTypeOf<LocalizedText>();
     expectTypeOf<CrisisCurrencyLocalization["crisisDescriptionIntro"]>().toEqualTypeOf<
       LocalizedText | undefined
     >();
+  });
+
+  // The interface carries the prose and the measured table stays the runtime
+  // authority, so nothing but this stops the two from drifting apart. Mutual
+  // assignability rather than identity: a dropped member, an added one, or a
+  // flipped optionality each break one direction, and the table's shape is an
+  // intersection the interface is deliberately not spelled as.
+  it("keeps the crisis-currency interface in step with the measured family table", () => {
+    expectTypeOf<CrisisCurrencyLocalization>().toExtend<CrisisCurrencyFamilyShape>();
+    expectTypeOf<CrisisCurrencyFamilyShape>().toExtend<CrisisCurrencyLocalization>();
   });
 
   it("carries inherited and explicit trigger scopes", () => {

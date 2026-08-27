@@ -35,8 +35,13 @@ family, and the SDK keys each one from the resource's id.
 
 Use `vanilla.resource(...)` on its own for a vanilla currency, whose family the
 game already ships, and a raw string only for a deliberate third-party id,
-which is unchecked. Passing the bundle over a vanilla reference restates that
-text under the vanilla keys.
+which is unchecked. Passing the bundle over either restates that text under the
+foreign keys, written to `localisation/replace/` because those keys already
+have a definition elsewhere.
+
+The rule is enforced against the ids this build defines, not against how the
+reference is written, so a handle, a widened reference, or the bare minted id
+without the bundle all fail the build.
 
 [Player Crisis Paths](/concepts/player-crisis-paths/) shows the complete
 family, the one optional member, and the placeholders the game substitutes.
