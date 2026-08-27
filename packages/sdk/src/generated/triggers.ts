@@ -16,7 +16,7 @@ import {
 } from "@pdx-ts/pdxscript";
 
 import type { LocalizationRef } from "../authoring/localization.ts";
-import type { ContentRefUse } from "../references.ts";
+import { recordLocalization, type RecordedRefUse } from "../references.ts";
 import type { ScopeValue } from "../script/effects/types.ts";
 import {
   caseEntries,
@@ -1578,7 +1578,7 @@ export interface CalcTrueIfArgs<S extends ScopeName = ScopeName> {
  */
 export function calcTrueIf<S extends ScopeName = ScopeName>(args: CalcTrueIfArgs<S>): Trigger<S> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   entries.push(
     typeof args.amount === "object"
       ? cmp("amount", args.amount[0], scriptValueScalar(args.amount[1]))
@@ -1812,7 +1812,7 @@ export interface CanCopyRandomTechFromArgs {
  */
 export function canCopyRandomTechFrom(args: CanCopyRandomTechFromArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   entries.push(kv("who", args.who.path));
   if (args.category !== undefined) {
     const id1 = refId(args.category);
@@ -1867,7 +1867,7 @@ export interface CanDeclareWarArgs {
  */
 export function canDeclareWar(args: CanDeclareWarArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   entries.push(kv("target", args.target.path));
   const id1 = refId(args.attackerWarGoal);
   entries.push(kv("attacker_war_goal", id1));
@@ -2018,7 +2018,7 @@ export interface CanSetPolicyArgs {
  */
 export function canSetPolicy(args: CanSetPolicyArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   const id0 = refId(args.policy);
   entries.push(kv("policy", id0));
   refs.push({ targets: ["policy"], id: id0, field: "can_set_policy.policy" });
@@ -2111,7 +2111,7 @@ export function checkEconomicProductionModifierForJob(
   args: CheckEconomicProductionModifierForJobArgs
 ): Trigger<"carrier" | "colony" | "planet" | "pop_group" | "ship"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   const id0 = refId(args.job);
   entries.push(kv("job", id0));
   refs.push({ targets: ["job"], id: id0, field: "check_economic_production_modifier_for_job.job" });
@@ -2501,7 +2501,7 @@ export interface ClosestSystemArgs {
  */
 export function closestSystem(args: ClosestSystemArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.minSteps !== undefined) {
     entries.push(
       typeof args.minSteps === "object"
@@ -2673,7 +2673,7 @@ export function conditionalTooltip<S extends ScopeName = ScopeName>(
   args: ConditionalTooltipArgs<S>
 ): Trigger<S> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   entries.push(block("trigger", [...args.trigger.entries]));
   refs.push(...args.trigger.refs);
   entries.push(...args.conditions.entries);
@@ -2758,7 +2758,7 @@ export interface CountActiveFirstContactArgs {
  */
 export function countActiveFirstContact(args: CountActiveFirstContactArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -2788,7 +2788,7 @@ export interface CountAgreementArgs {
  */
 export function countAgreement(args: CountAgreementArgs): Trigger<"country" | "no_scope"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -2818,7 +2818,7 @@ export interface CountAmbientObjectArgs {
  */
 export function countAmbientObject(args: CountAmbientObjectArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -2848,7 +2848,7 @@ export interface CountArchaeologicalSiteArgs {
  */
 export function countArchaeologicalSite(args: CountArchaeologicalSiteArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -2878,7 +2878,7 @@ export interface CountAssociateArgs {
  */
 export function countAssociate(args: CountAssociateArgs): Trigger<"federation"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -2908,7 +2908,7 @@ export interface CountAstralRiftArgs {
  */
 export function countAstralRift(args: CountAstralRiftArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -2938,7 +2938,7 @@ export interface CountAttackerArgs {
  */
 export function countAttacker(args: CountAttackerArgs): Trigger<"war"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -2978,7 +2978,7 @@ export interface CountAvailableDebrisArgs {
  */
 export function countAvailableDebris(args: CountAvailableDebrisArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -3008,7 +3008,7 @@ export interface CountBypassArgs {
  */
 export function countBypass(args: CountBypassArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -3038,7 +3038,7 @@ export interface CountBypassInSystemArgs {
  */
 export function countBypassInSystem(args: CountBypassInSystemArgs): Trigger<"system"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -3068,7 +3068,7 @@ export interface CountCombatantFleetArgs {
  */
 export function countCombatantFleet(args: CountCombatantFleetArgs): Trigger<"fleet"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -3109,7 +3109,7 @@ export interface CountControlledColonyArgs {
  */
 export function countControlledColony(args: CountControlledColonyArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -3139,7 +3139,7 @@ export interface CountControlledFleetArgs {
  */
 export function countControlledFleet(args: CountControlledFleetArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -3169,7 +3169,7 @@ export interface CountControlledPlanetArgs {
  */
 export function countControlledPlanet(args: CountControlledPlanetArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -3199,7 +3199,7 @@ export interface CountControlledShipArgs {
  */
 export function countControlledShip(args: CountControlledShipArgs): Trigger<"country" | "fleet"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -3229,7 +3229,7 @@ export interface CountCosmicStormArgs {
  */
 export function countCosmicStorm(args: CountCosmicStormArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -3261,7 +3261,7 @@ export function countCosmicStormEndPosition(
   args: CountCosmicStormEndPositionArgs
 ): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -3293,7 +3293,7 @@ export function countCosmicStormStartPosition(
   args: CountCosmicStormStartPositionArgs
 ): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -3323,7 +3323,7 @@ export interface CountCouncilMemberArgs {
  */
 export function countCouncilMember(args: CountCouncilMemberArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -3353,7 +3353,7 @@ export interface CountCountryArgs {
  */
 export function countCountry(args: CountCountryArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -3385,7 +3385,7 @@ export function countCountryNeighborToSystem(
   args: CountCountryNeighborToSystemArgs
 ): Trigger<"system"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -3415,7 +3415,7 @@ export interface CountDefenderArgs {
  */
 export function countDefender(args: CountDefenderArgs): Trigger<"war"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -3447,7 +3447,7 @@ export function countDeposit(
   args: CountDepositArgs
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -3477,7 +3477,7 @@ export function countDeposits(
   args: CountDepositsArgs
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.type !== undefined) {
     const id0 = refId(args.type);
     entries.push(kv("type", id0));
@@ -3526,7 +3526,7 @@ export function countEnslavedSpecies(
   args: CountEnslavedSpeciesArgs
 ): Trigger<"carrier" | "colony" | "country" | "planet" | "ship"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -3556,7 +3556,7 @@ export interface CountEnvoyArgs {
  */
 export function countEnvoy(args: CountEnvoyArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -3588,7 +3588,7 @@ export function countEspionageAsset(
   args: CountEspionageAssetArgs
 ): Trigger<"espionage_operation" | "no_scope" | "spy_network"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -3620,7 +3620,7 @@ export function countEspionageOperation(
   args: CountEspionageOperationArgs
 ): Trigger<"country" | "no_scope" | "spy_network"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -3649,7 +3649,7 @@ export function countExactSpecies(
   args: CountExactSpeciesArgs
 ): Trigger<"carrier" | "colony" | "country" | "planet" | "ship"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -3679,7 +3679,7 @@ export interface CountExhibitArgs {
  */
 export function countExhibit(args: CountExhibitArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -3711,7 +3711,7 @@ export function countExistingSpeciesTraits(
   args: CountExistingSpeciesTraitsArgs
 ): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -3741,7 +3741,7 @@ export interface CountFederationArgs {
  */
 export function countFederation(args: CountFederationArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -3771,7 +3771,7 @@ export interface CountFederationAllyArgs {
  */
 export function countFederationAlly(args: CountFederationAllyArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -3801,7 +3801,7 @@ export interface CountFirstContactArgs {
  */
 export function countFirstContact(args: CountFirstContactArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -3833,7 +3833,7 @@ export function countFleetInOrbit(
   args: CountFleetInOrbitArgs
 ): Trigger<"carrier" | "megastructure" | "planet" | "ship" | "starbase"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -3863,7 +3863,7 @@ export interface CountFleetInSystemArgs {
  */
 export function countFleetInSystem(args: CountFleetInSystemArgs): Trigger<"system"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -3893,7 +3893,7 @@ export interface CountGalaxyFleetArgs {
  */
 export function countGalaxyFleet(args: CountGalaxyFleetArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -3923,7 +3923,7 @@ export interface CountGalaxyPlanetArgs {
  */
 export function countGalaxyPlanet(args: CountGalaxyPlanetArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -3953,7 +3953,7 @@ export interface CountGalaxySectorArgs {
  */
 export function countGalaxySector(args: CountGalaxySectorArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -3983,7 +3983,7 @@ export interface CountGalaxySpeciesArgs {
  */
 export function countGalaxySpecies(args: CountGalaxySpeciesArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -4013,7 +4013,7 @@ export interface CountGalcomMemberArgs {
  */
 export function countGalcomMember(args: CountGalcomMemberArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -4045,7 +4045,7 @@ export function countGroundCombatAttacker(
   args: CountGroundCombatAttackerArgs
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -4077,7 +4077,7 @@ export function countGroundCombatDefender(
   args: CountGroundCombatDefenderArgs
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -4117,7 +4117,7 @@ export interface CountIssuedMissionArgs {
  */
 export function countIssuedMission(args: CountIssuedMissionArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -4147,7 +4147,7 @@ export interface CountJobPopGroupArgs {
  */
 export function countJobPopGroup(args: CountJobPopGroupArgs): Trigger<"pop_job"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -4177,7 +4177,7 @@ export interface CountMegastructureArgs {
  */
 export function countMegastructure(args: CountMegastructureArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -4207,7 +4207,7 @@ export interface CountMemberArgs {
  */
 export function countMember(args: CountMemberArgs): Trigger<"federation"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -4237,7 +4237,7 @@ export interface CountMoonArgs {
  */
 export function countMoon(args: CountMoonArgs): Trigger<"carrier" | "colony" | "planet" | "ship"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -4267,7 +4267,7 @@ export interface CountNeighborCountryArgs {
  */
 export function countNeighborCountry(args: CountNeighborCountryArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -4297,7 +4297,7 @@ export interface CountNeighborSystemArgs {
  */
 export function countNeighborSystem(args: CountNeighborSystemArgs): Trigger<"system"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -4329,7 +4329,7 @@ export function countNeighborSystemEuclidean(
   args: CountNeighborSystemEuclideanArgs
 ): Trigger<"system"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -4361,7 +4361,7 @@ export function countObservedPreFtlWithinBorder(
   args: CountObservedPreFtlWithinBorderArgs
 ): Trigger<"country" | "sector"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -4391,7 +4391,7 @@ export interface CountOrbitalStationArgs {
  */
 export function countOrbitalStation(args: CountOrbitalStationArgs): Trigger<"country" | "system"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -4421,7 +4421,7 @@ export interface CountOwnedArmyArgs {
  */
 export function countOwnedArmy(args: CountOwnedArmyArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -4451,7 +4451,7 @@ export interface CountOwnedColonyArgs {
  */
 export function countOwnedColony(args: CountOwnedColonyArgs): Trigger<"country" | "sector"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -4481,7 +4481,7 @@ export interface CountOwnedContractArgs {
  */
 export function countOwnedContract(args: CountOwnedContractArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -4511,7 +4511,7 @@ export interface CountOwnedDesignArgs {
  */
 export function countOwnedDesign(args: CountOwnedDesignArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -4541,7 +4541,7 @@ export interface CountOwnedFleetArgs {
  */
 export function countOwnedFleet(args: CountOwnedFleetArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -4571,7 +4571,7 @@ export interface CountOwnedLeaderArgs {
  */
 export function countOwnedLeader(args: CountOwnedLeaderArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -4601,7 +4601,7 @@ export interface CountOwnedMegastructureArgs {
  */
 export function countOwnedMegastructure(args: CountOwnedMegastructureArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -4631,7 +4631,7 @@ export interface CountOwnedMissionArgs {
  */
 export function countOwnedMission(args: CountOwnedMissionArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -4663,7 +4663,7 @@ export function countOwnedNonprimaryStarbase(
   args: CountOwnedNonprimaryStarbaseArgs
 ): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -4693,7 +4693,7 @@ export interface CountOwnedPlanetArgs {
  */
 export function countOwnedPlanet(args: CountOwnedPlanetArgs): Trigger<"country" | "sector"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -4727,7 +4727,7 @@ export function countOwnedPopAmount(
   "carrier" | "colony" | "country" | "planet" | "pop_faction" | "sector" | "ship" | "system"
 > {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -4761,7 +4761,7 @@ export function countOwnedPopGroup(
   "carrier" | "colony" | "country" | "planet" | "pop_faction" | "sector" | "ship" | "system"
 > {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -4793,7 +4793,7 @@ export function countOwnedPopJob(
   args: CountOwnedPopJobArgs
 ): Trigger<"carrier" | "colony" | "country" | "planet" | "sector" | "ship" | "system"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -4823,7 +4823,7 @@ export interface CountOwnedPopSpeciesArgs {
  */
 export function countOwnedPopSpecies(args: CountOwnedPopSpeciesArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -4853,7 +4853,7 @@ export interface CountOwnedSectorArgs {
  */
 export function countOwnedSector(args: CountOwnedSectorArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -4883,7 +4883,7 @@ export interface CountOwnedShipArgs {
  */
 export function countOwnedShip(args: CountOwnedShipArgs): Trigger<"country" | "fleet"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -4915,7 +4915,7 @@ export function countOwnedSpecies(
   args: CountOwnedSpeciesArgs
 ): Trigger<"carrier" | "colony" | "country" | "planet" | "ship"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -4945,7 +4945,7 @@ export interface CountOwnedStarbaseArgs {
  */
 export function countOwnedStarbase(args: CountOwnedStarbaseArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -4977,7 +4977,7 @@ export function countOwnedStormInfluenceField(
   args: CountOwnedStormInfluenceFieldArgs
 ): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -5009,7 +5009,7 @@ export function countOwnedWorkforce(
   args: CountOwnedWorkforceArgs
 ): Trigger<"carrier" | "colony" | "country" | "planet" | "sector" | "ship" | "system"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -5041,7 +5041,7 @@ export function countPlanetArmy(
   args: CountPlanetArmyArgs
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -5071,7 +5071,7 @@ export interface CountPlanetWithinBorderArgs {
  */
 export function countPlanetWithinBorder(args: CountPlanetWithinBorderArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -5101,7 +5101,7 @@ export interface CountPlayableCountryArgs {
  */
 export function countPlayableCountry(args: CountPlayableCountryArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -5131,7 +5131,7 @@ export interface CountPoolLeaderArgs {
  */
 export function countPoolLeader(args: CountPoolLeaderArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -5161,7 +5161,7 @@ export interface CountPopFactionArgs {
  */
 export function countPopFaction(args: CountPopFactionArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -5193,7 +5193,7 @@ export function countPotentialWarParticipants(
   args: CountPotentialWarParticipantsArgs
 ): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -5228,7 +5228,7 @@ export function countPreFtlWithinBorder(
   args: CountPreFtlWithinBorderArgs
 ): Trigger<"country" | "sector"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -5258,7 +5258,7 @@ export interface CountRelationArgs {
  */
 export function countRelation(args: CountRelationArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -5288,7 +5288,7 @@ export interface CountRimSystemArgs {
  */
 export function countRimSystem(args: CountRimSystemArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -5318,7 +5318,7 @@ export interface CountRivalCountryArgs {
  */
 export function countRivalCountry(args: CountRivalCountryArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -5348,7 +5348,7 @@ export interface CountShipInSystemArgs {
  */
 export function countShipInSystem(args: CountShipInSystemArgs): Trigger<"system"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -5379,7 +5379,7 @@ export interface CountShipSizeInSystemArgs {
  */
 export function countShipSizeInSystem(args: CountShipSizeInSystemArgs): Trigger<"system"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -5409,7 +5409,7 @@ export interface CountSituationArgs {
  */
 export function countSituation(args: CountSituationArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -5438,7 +5438,7 @@ export function countSpecies(
   args: CountSpeciesArgs
 ): Trigger<"carrier" | "colony" | "country" | "planet" | "ship"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -5468,7 +5468,7 @@ export interface CountSpeciesPopGroupArgs {
  */
 export function countSpeciesPopGroup(args: CountSpeciesPopGroupArgs): Trigger<"species"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -5497,7 +5497,7 @@ export interface CountSpeciesTraitsArgs {
  */
 export function countSpeciesTraits(args: CountSpeciesTraitsArgs): Trigger<"pop_group" | "species"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -5537,7 +5537,7 @@ export interface CountSpynetworkArgs {
  */
 export function countSpynetwork(args: CountSpynetworkArgs): Trigger<"country" | "no_scope"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -5567,7 +5567,7 @@ export function countStarbaseBuildings(
   args: CountStarbaseBuildingsArgs
 ): Trigger<"country" | "starbase" | "system"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
@@ -5601,7 +5601,7 @@ export interface CountStarbaseInNetworkArgs {
  */
 export function countStarbaseInNetwork(args: CountStarbaseInNetworkArgs): Trigger<"starbase"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -5631,7 +5631,7 @@ export interface CountStarbaseInSystemArgs {
  */
 export function countStarbaseInSystem(args: CountStarbaseInSystemArgs): Trigger<"system"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -5661,7 +5661,7 @@ export function countStarbaseModules(
   args: CountStarbaseModulesArgs
 ): Trigger<"country" | "starbase" | "system"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
@@ -5695,7 +5695,7 @@ export interface CountStarbaseSizesArgs {
  */
 export function countStarbaseSizes(args: CountStarbaseSizesArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   entries.push(
     typeof args.count === "object"
       ? cmp("count", args.count[0], scriptValueScalar(args.count[1]))
@@ -5728,7 +5728,7 @@ export interface CountSubjectArgs {
  */
 export function countSubject(args: CountSubjectArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -5758,7 +5758,7 @@ export interface CountSystemArgs {
  */
 export function countSystem(args: CountSystemArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -5788,7 +5788,7 @@ export interface CountSystemAddedToStormArgs {
  */
 export function countSystemAddedToStorm(args: CountSystemAddedToStormArgs): Trigger<"storm"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -5818,7 +5818,7 @@ export interface CountSystemAmbientObjectArgs {
  */
 export function countSystemAmbientObject(args: CountSystemAmbientObjectArgs): Trigger<"system"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -5850,7 +5850,7 @@ export function countSystemInCosmicStormInfluenceField(
   args: CountSystemInCosmicStormInfluenceFieldArgs
 ): Trigger<"cosmic_storm_influence_field"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -5880,7 +5880,7 @@ export interface CountSystemMegastructureArgs {
  */
 export function countSystemMegastructure(args: CountSystemMegastructureArgs): Trigger<"system"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -5910,7 +5910,7 @@ export interface CountSystemPlanetArgs {
  */
 export function countSystemPlanet(args: CountSystemPlanetArgs): Trigger<"system"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -5940,7 +5940,7 @@ export interface CountSystemPlanetColonyArgs {
  */
 export function countSystemPlanetColony(args: CountSystemPlanetColonyArgs): Trigger<"system"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -5972,7 +5972,7 @@ export function countSystemRemovedFromStorm(
   args: CountSystemRemovedFromStormArgs
 ): Trigger<"storm"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -6002,7 +6002,7 @@ export interface CountSystemShipColonyArgs {
  */
 export function countSystemShipColony(args: CountSystemShipColonyArgs): Trigger<"system"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -6032,7 +6032,7 @@ export interface CountSystemWithAuraArgs {
  */
 export function countSystemWithAura(args: CountSystemWithAuraArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -6064,7 +6064,7 @@ export function countSystemWithinBorder(
   args: CountSystemWithinBorderArgs
 ): Trigger<"country" | "sector"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -6094,7 +6094,7 @@ export interface CountSystemWithinStormArgs {
  */
 export function countSystemWithinStorm(args: CountSystemWithinStormArgs): Trigger<"storm"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -6136,7 +6136,7 @@ export function countTargetingSituation(
   args: CountTargetingSituationArgs
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -6192,7 +6192,7 @@ export function countTraitAvailableForSpecies(
   args: CountTraitAvailableForSpeciesArgs
 ): Trigger<"leader" | "pop_group" | "species"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -6225,7 +6225,7 @@ export function countTraitOfSpecies(
   args: CountTraitOfSpeciesArgs
 ): Trigger<"leader" | "pop_group" | "species"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -6264,7 +6264,7 @@ export function countUsedNavalCap(
   args: CountUsedNavalCapArgs
 ): Trigger<"country" | "fleet" | "ship"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -6304,7 +6304,7 @@ export interface CountWarArgs {
  */
 export function countWar(args: CountWarArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -6334,7 +6334,7 @@ export interface CountWarParticipantArgs {
  */
 export function countWarParticipant(args: CountWarParticipantArgs): Trigger<"war"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -6362,7 +6362,7 @@ export interface CountWarParticipantsArgs {
  */
 export function countWarParticipants(args: CountWarParticipantsArgs): Trigger<"war"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -6410,7 +6410,7 @@ export function customProgress<S extends ScopeName = ScopeName>(
   args: CustomProgressArgs<S>
 ): Trigger<S> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.currentValCoeff !== undefined) {
     entries.push(
       typeof args.currentValCoeff === "object"
@@ -6468,21 +6468,26 @@ export function customTooltip<S extends ScopeName>(
   if (isStructuredValue(value, ["localization-ref"])) {
     const args = value;
     const entries: PdxEntry[] = [];
-    const refs: ContentRefUse[] = [];
+    const refs: RecordedRefUse[] = [];
     if (args.text !== undefined) {
       entries.push(kv("text", refId(args.text)));
+      recordLocalization(refs, args.text, "custom_tooltip.text");
     }
     if (args.failText !== undefined) {
       entries.push(kv("fail_text", refId(args.failText)));
+      recordLocalization(refs, args.failText, "custom_tooltip.fail_text");
     }
     if (args.successText !== undefined) {
       entries.push(kv("success_text", refId(args.successText)));
+      recordLocalization(refs, args.successText, "custom_tooltip.success_text");
     }
     entries.push(...args.conditions.entries);
     refs.push(...args.conditions.refs);
     return trigger([block("custom_tooltip", entries)], refs);
   }
-  return trigger([kv("custom_tooltip", refId(value))]);
+  const refs: RecordedRefUse[] = [];
+  recordLocalization(refs, value, "custom_tooltip");
+  return trigger([kv("custom_tooltip", refId(value))], refs);
 }
 
 /** The arguments `customTooltipFail` takes, as the rules declare them. */
@@ -6506,8 +6511,9 @@ export function customTooltipFail<S extends ScopeName = ScopeName>(
   args: CustomTooltipFailArgs<S>
 ): Trigger<S> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   entries.push(kv("text", refId(args.text)));
+  recordLocalization(refs, args.text, "custom_tooltip_fail.text");
   entries.push(...args.conditions.entries);
   refs.push(...args.conditions.refs);
   return trigger([block("custom_tooltip_fail", entries)], refs);
@@ -6534,8 +6540,9 @@ export function customTooltipSuccess<S extends ScopeName = ScopeName>(
   args: CustomTooltipSuccessArgs<S>
 ): Trigger<S> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   entries.push(kv("text", refId(args.text)));
+  recordLocalization(refs, args.text, "custom_tooltip_success.text");
   entries.push(...args.conditions.entries);
   refs.push(...args.conditions.refs);
   return trigger([block("custom_tooltip_success", entries)], refs);
@@ -6833,7 +6840,7 @@ export interface ElseArgs<S extends ScopeName = ScopeName> {
  */
 export function else_<S extends ScopeName = ScopeName>(args: ElseArgs<S>): Trigger<S> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -6859,7 +6866,7 @@ export interface ElseIfArgs<S extends ScopeName = ScopeName> {
  */
 export function elseIf<S extends ScopeName = ScopeName>(args: ElseIfArgs<S>): Trigger<S> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   entries.push(block("limit", [...args.limit.entries]));
   refs.push(...args.limit.refs);
   entries.push(...args.conditions.entries);
@@ -7049,13 +7056,16 @@ export function failText<S extends ScopeName>(
   if (isStructuredValue(value, ["localization-ref"])) {
     const args = value;
     const entries: PdxEntry[] = [];
-    const refs: ContentRefUse[] = [];
+    const refs: RecordedRefUse[] = [];
     entries.push(kv("text", refId(args.text)));
+    recordLocalization(refs, args.text, "fail_text.text");
     entries.push(...args.conditions.entries);
     refs.push(...args.conditions.refs);
     return trigger([block("fail_text", entries)], refs);
   }
-  return trigger([kv("fail_text", refId(value))]);
+  const refs: RecordedRefUse[] = [];
+  recordLocalization(refs, value, "fail_text");
+  return trigger([kv("fail_text", refId(value))], refs);
 }
 
 /** Checks Fallen / Awakened Empire strength scaling in game setup */
@@ -7358,7 +7368,7 @@ export function freeJobsOfType(
   args: FreeJobsOfTypeArgs
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.job !== undefined) {
     const id0 = refId(args.job);
     entries.push(kv("job", id0));
@@ -7480,7 +7490,7 @@ export interface GetAttunementPointsForArgs {
  */
 export function getAttunementPointsFor(args: GetAttunementPointsForArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   const id0 = refId(args.patron);
   entries.push(kv("patron", id0));
   refs.push({ targets: ["patron_type"], id: id0, field: "get_attunement_points_for.patron" });
@@ -7508,7 +7518,7 @@ export interface GetCouncilorLevelArgs {
  */
 export function getCouncilorLevel(args: GetCouncilorLevelArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   const id0 = refId(args.type);
   entries.push(kv("type", id0));
   refs.push({ targets: ["councilor"], id: id0, field: "get_councilor_level.type" });
@@ -7658,7 +7668,7 @@ export function hasActiveBuilding(
  */
 export function hasActiveEvent(values: readonly (EventRef | string)[]): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   const items0: PdxItem[] = [];
   for (const item0 of values) {
     const id0 = refId(item0);
@@ -8223,7 +8233,7 @@ export interface HasCasusBelliArgs {
  */
 export function hasCasusBelli(args: HasCasusBelliArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   entries.push(kv("target", args.target.path));
   if (args.type !== undefined) {
     const id1 = refId(args.type);
@@ -8282,7 +8292,7 @@ export function hasCitizenshipType(
   args: HasCitizenshipTypeArgs
 ): Trigger<"leader" | "pop_group" | "species"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.country !== undefined) {
     entries.push(kv("country", args.country.path));
   }
@@ -8322,7 +8332,7 @@ export interface HasCivicInSlotArgs {
  */
 export function hasCivicInSlot(args: HasCivicInSlotArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   const id0 = refId(args.civic);
   entries.push(kv("civic", id0));
   refs.push({ targets: ["civic_or_origin.civic"], id: id0, field: "has_civic_in_slot.civic" });
@@ -8387,7 +8397,9 @@ export function hasClaim(
 export function hasClimate(
   value: string | LocalizationRef
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
-  return trigger([kv("has_climate", refId(value))]);
+  const refs: RecordedRefUse[] = [];
+  recordLocalization(refs, value, "has_climate");
+  return trigger([kv("has_climate", refId(value))], refs);
 }
 
 /**
@@ -8668,7 +8680,7 @@ export interface HasCountryResourceArgs {
  */
 export function hasCountryResource(args: HasCountryResourceArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   const id0 = refId(args.type);
   entries.push(kv("type", id0));
   refs.push({ targets: ["resource"], id: id0, field: "has_country_resource.type" });
@@ -8917,7 +8929,7 @@ export interface HasDnaArgs {
  */
 export function hasDna(args: HasDnaArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   const id0 = refId(args.shipCategory);
   entries.push(kv("ship_category", id0));
   refs.push({ targets: ["ship_categories"], id: id0, field: "has_dna.ship_category" });
@@ -9567,7 +9579,7 @@ export interface HasIntelLevelArgs {
  */
 export function hasIntelLevel(args: HasIntelLevelArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   entries.push(kv("who", args.who.path));
   const id1 = refId(args.category);
   entries.push(kv("category", id1));
@@ -9616,7 +9628,7 @@ export interface HasIntelReportArgs {
  */
 export function hasIntelReport(args: HasIntelReportArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   entries.push(kv("who", args.who.path));
   const id1 = refId(args.category);
   entries.push(kv("category", id1));
@@ -9715,7 +9727,7 @@ export function hasLivingStandard(
   args: HasLivingStandardArgs
 ): Trigger<"leader" | "pop_group" | "species"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.country !== undefined) {
     entries.push(kv("country", args.country.path));
   }
@@ -9917,7 +9929,7 @@ export function hasMilitaryServiceType(
   args: HasMilitaryServiceTypeArgs
 ): Trigger<"leader" | "pop_group" | "species"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.country !== undefined) {
     entries.push(kv("country", args.country.path));
   }
@@ -9980,7 +9992,7 @@ export interface HasMonthlyIncomeArgs {
  */
 export function hasMonthlyIncome(args: HasMonthlyIncomeArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.resource !== undefined) {
     const id0 = refId(args.resource);
     entries.push(kv("resource", id0));
@@ -10150,7 +10162,7 @@ export interface HasOpinionModifierArgs {
  */
 export function hasOpinionModifier(args: HasOpinionModifierArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   entries.push(kv("who", args.who.path));
   const id1 = refId(args.modifier);
   entries.push(kv("modifier", id1));
@@ -10602,7 +10614,7 @@ export interface HasPurgeTypeArgs {
  */
 export function hasPurgeType(args: HasPurgeTypeArgs): Trigger<"leader" | "pop_group" | "species"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.country !== undefined) {
     entries.push(kv("country", args.country.path));
   }
@@ -10734,7 +10746,7 @@ export function hasResource(
   if (isStructuredValue(value, ["typed-ref"])) {
     const args = value;
     const entries: PdxEntry[] = [];
-    const refs: ContentRefUse[] = [];
+    const refs: RecordedRefUse[] = [];
     const id0 = refId(args.type);
     entries.push(kv("type", id0));
     refs.push({ targets: ["resource"], id: id0, field: "has_resource.type" });
@@ -11062,7 +11074,7 @@ export function hasSlaveryType(
   args: HasSlaveryTypeArgs
 ): Trigger<"leader" | "pop_group" | "species"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.country !== undefined) {
     entries.push(kv("country", args.country.path));
   }
@@ -11387,7 +11399,7 @@ export interface HasTermValueArgs {
  */
 export function hasTermValue(args: HasTermValueArgs): Trigger<"agreement"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   const id0 = refId(args.term);
   entries.push(kv("term", id0));
   refs.push({ targets: ["agreement_term"], id: id0, field: "has_term_value.term" });
@@ -11656,7 +11668,7 @@ export interface IfArgs<S extends ScopeName = ScopeName> {
  */
 export function if_<S extends ScopeName = ScopeName>(args: IfArgs<S>): Trigger<S> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   entries.push(block("limit", [...args.limit.entries]));
   refs.push(...args.limit.refs);
   entries.push(...args.conditions.entries);
@@ -11814,7 +11826,7 @@ export function invertedSwitch<S extends ScopeName = ScopeName>(
   args: InvertedSwitchArgs<S>
 ): Trigger<S> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   entries.push(kv("trigger", args.trigger));
   for (const [key1, condition1] of caseEntries(args.cases, "inverted_switch.cases", 1, [
     "trigger",
@@ -11865,7 +11877,7 @@ export interface IsActionActiveArgs {
  */
 export function isActionActive(args: IsActionActiveArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   const id0 = refId(args.action);
   entries.push(kv("action", id0));
   refs.push({ targets: ["tradable_action"], id: id0, field: "is_action_active.action" });
@@ -13791,7 +13803,7 @@ export interface IsJobOfPopCategoryArgs {
  */
 export function isJobOfPopCategory(args: IsJobOfPopCategoryArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   const id0 = refId(args.job);
   entries.push(kv("job", id0));
   refs.push({ targets: ["job"], id: id0, field: "is_job_of_pop_category.job" });
@@ -14509,7 +14521,7 @@ export function isPointOfInterest(
   args: IsPointOfInterestArgs
 ): Trigger<"ambient_object" | "carrier" | "country" | "planet" | "ship" | "system"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   entries.push(kv("id", args.id));
   const id1 = refId(args.eventChain);
   entries.push(kv("event_chain", id1));
@@ -16117,7 +16129,7 @@ export interface MarketResourcePriceArgs {
  */
 export function marketResourcePrice(args: MarketResourcePriceArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   const id0 = refId(args.resource);
   entries.push(kv("resource", id0));
   refs.push({ targets: ["resource"], id: id0, field: "market_resource_price.resource" });
@@ -17072,7 +17084,7 @@ export interface NumNeighborSystemsArgs {
  */
 export function numNeighborSystems(args: NumNeighborSystemsArgs): Trigger<ScopeName> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -17347,7 +17359,7 @@ export interface NumShipsInDebrisArgs {
  */
 export function numShipsInDebris(args: NumShipsInDebrisArgs): Trigger<"debris"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   const id0 = refId(args.shipSize);
   entries.push(kv("ship_size", id0));
   refs.push({ targets: ["ship_size"], id: id0, field: "num_ships_in_debris.ship_size" });
@@ -17854,7 +17866,7 @@ export function planetHappinessAboveThreshold(
   args: PlanetHappinessAboveThresholdArgs
 ): Trigger<"planet" | "system"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -17894,7 +17906,7 @@ export function planetResourceCompare(
   args: PlanetResourceCompareArgs
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.type !== undefined) {
     entries.push(kv("type", args.type));
   }
@@ -17957,7 +17969,7 @@ export function popAmountPercentage(
   args: PopAmountPercentageArgs
 ): Trigger<"carrier" | "colony" | "country" | "planet" | "pop_faction" | "sector" | "ship"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   entries.push(block("limit", [...args.limit.entries]));
   refs.push(...args.limit.refs);
   if (args.exclude !== undefined) {
@@ -18054,7 +18066,7 @@ export interface PopMaintenanceCostArgs {
  */
 export function popMaintenanceCost(args: PopMaintenanceCostArgs): Trigger<"pop_group"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   const id0 = refId(args.resource);
   entries.push(kv("resource", id0));
   refs.push({ targets: ["resource"], id: id0, field: "pop_maintenance_cost.resource" });
@@ -18207,7 +18219,7 @@ export interface ResourceExpensesCompareArgs {
  */
 export function resourceExpensesCompare(args: ResourceExpensesCompareArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   const id0 = refId(args.resource);
   entries.push(kv("resource", id0));
   refs.push({ targets: ["resource"], id: id0, field: "resource_expenses_compare.resource" });
@@ -18245,7 +18257,7 @@ export interface ResourceIncomeCompareArgs {
  */
 export function resourceIncomeCompare(args: ResourceIncomeCompareArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   const id0 = refId(args.resource);
   entries.push(kv("resource", id0));
   refs.push({ targets: ["resource"], id: id0, field: "resource_income_compare.resource" });
@@ -18279,7 +18291,7 @@ export function resourceIncomeToExpenditureBalanceRatio(
   args: ResourceIncomeToExpenditureBalanceRatioArgs
 ): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.resource !== undefined) {
     const id0 = refId(args.resource);
     entries.push(kv("resource", id0));
@@ -18320,7 +18332,7 @@ export interface ResourceRevenueCompareArgs {
  */
 export function resourceRevenueCompare(args: ResourceRevenueCompareArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.category !== undefined) {
     const id0 = refId(args.category);
     entries.push(kv("category", id0));
@@ -18363,7 +18375,7 @@ export function resourceStockpileCompare(
   args: ResourceStockpileCompareArgs
 ): Trigger<"country" | "ship"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   const id0 = refId(args.resource);
   entries.push(kv("resource", id0));
   refs.push({ targets: ["resource"], id: id0, field: "resource_stockpile_compare.resource" });
@@ -18407,7 +18419,7 @@ export interface ResourceStockpilePercentArgs {
  */
 export function resourceStockpilePercent(args: ResourceStockpilePercentArgs): Trigger<"country"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   const id0 = refId(args.resource);
   entries.push(kv("resource", id0));
   refs.push({ targets: ["resource"], id: id0, field: "resource_stockpile_percent.resource" });
@@ -18493,7 +18505,7 @@ export function shipSizeCostResourcePercent(
   args: ShipSizeCostResourcePercentArgs
 ): Trigger<"design" | "ship" | "ship_growth_stage"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   const id0 = refId(args.resource);
   entries.push(kv("resource", id0));
   refs.push({ targets: ["resource"], id: id0, field: "ship_size_cost_resource_percent.resource" });
@@ -18637,7 +18649,7 @@ export function starbaseBuildableIsInQueueBefore(
   args: StarbaseBuildableIsInQueueBeforeArgs
 ): Trigger<"starbase"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   const id0 = refId(args.first);
   entries.push(kv("first", id0));
   refs.push({
@@ -18773,15 +18785,18 @@ export function successText<S extends ScopeName>(
   if (isStructuredValue(value, ["localization-ref"])) {
     const args = value;
     const entries: PdxEntry[] = [];
-    const refs: ContentRefUse[] = [];
+    const refs: RecordedRefUse[] = [];
     entries.push(kv("text", refId(args.text)));
+    recordLocalization(refs, args.text, "success_text.text");
     if (args.conditions !== undefined) {
       entries.push(...args.conditions.entries);
       refs.push(...args.conditions.refs);
     }
     return trigger([block("success_text", entries)], refs);
   }
-  return trigger([kv("success_text", refId(value))]);
+  const refs: RecordedRefUse[] = [];
+  recordLocalization(refs, value, "success_text");
+  return trigger([kv("success_text", refId(value))], refs);
 }
 
 /**
@@ -18819,7 +18834,7 @@ export interface SwitchArgs<S extends ScopeName = ScopeName> {
  */
 export function switch_<S extends ScopeName = ScopeName>(args: SwitchArgs<S>): Trigger<S> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   entries.push(kv("trigger", args.trigger));
   for (const [key1, condition1] of caseEntries(args.cases, "switch.cases", 1, [
     "trigger",
@@ -18920,7 +18935,9 @@ export function terraformedBy(
  * A localization key: a bare string is the key itself, and a reference is unwrapped to its key. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
  */
 export function text(value: string | LocalizationRef): Trigger<ScopeName> {
-  return trigger([kv("text", refId(value))]);
+  const refs: RecordedRefUse[] = [];
+  recordLocalization(refs, value, "text");
+  return trigger([kv("text", refId(value))], refs);
 }
 
 /** The arguments `theirOpinion` takes, as the rules declare them. */
@@ -19094,7 +19111,7 @@ export function totalSystemWorkforceWithJobTag(
   args: TotalSystemWorkforceWithJobTagArgs
 ): Trigger<"system"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   if (args.limit !== undefined) {
     entries.push(block("limit", [...args.limit.entries]));
     refs.push(...args.limit.refs);
@@ -19387,7 +19404,7 @@ export interface UsingWarGoalArgs {
  */
 export function usingWarGoal(args: UsingWarGoalArgs): Trigger<"war"> {
   const entries: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   const id0 = refId(args.type);
   entries.push(kv("type", id0));
   refs.push({ targets: ["war_goal"], id: id0, field: "using_war_goal.type" });

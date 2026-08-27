@@ -1,3 +1,4 @@
+import { assertOwnLocalizationItem } from "../authoring/localization.ts";
 import {
   checkVanillaPackagePin,
   installedVanillaPackageVersion,
@@ -12,6 +13,7 @@ import {
 import type { PatchedContent } from "../installation/vanilla/patch.ts";
 import type { VanillaView } from "../installation/vanilla/view.ts";
 import { compareUtf8, normalizeLogicalPath } from "../ordering.ts";
+import type { RecordedRefUse } from "../references.ts";
 import type { CompiledContent } from "./compile-content.ts";
 import type { CompiledEvents } from "./compile-events.ts";
 import { stemsOf, type BuildSession } from "./compile-session.ts";
@@ -177,7 +179,35 @@ function registerFinalLocalization(
       { key: item.key, translations: item.translations },
     ]);
   }
+  registerConsumedLocalization(session);
   return patchStem;
+}
+
+/**
+ * Places every standalone localization item that recorded script consumed,
+ * under the stem of the Feature that placed the consumer (SDK-306).
+ *
+ * A key-typed content field registers its own consumption while the definition
+ * resolves (`content/authoring.ts`), so what reaches here is the other channel:
+ * a trigger or effect that wrote the item's key inside a placed definition, an
+ * event, or a patch. Every consumer registers, and the accumulator merges their
+ * stems and keeps the lowest resulting path, so an item several Features reach
+ * still lands in exactly one file per language — the same collapse an item that
+ * was also placed explicitly goes through.
+ *
+ * The ownership refusal is the same one the content-field channel applies, so
+ * neither channel can place a key another capability minted.
+ */
+function registerConsumedLocalization(session: BuildSession): void {
+  for (const { owner, stem, use } of session.refUses) {
+    if (use.kind !== "localization") {
+      continue;
+    }
+    assertOwnLocalizationItem(use.item, session.config.prefix, `${owner} in "${use.field}"`);
+    registerLocalization(session.localization, { layer: "ordinary", stem }, [
+      { key: use.item.key, translations: use.item.translations },
+    ]);
+  }
 }
 
 function collectInitialClaims(
@@ -382,16 +412,19 @@ function registerVanillaVersionWarnings(session: BuildSession): void {
   }
 }
 
+/** Deep-freezes one recorded reference; a consumed item is frozen at its constructor. */
+function freezeRefUse(use: RecordedRefUse): RecordedRefUse {
+  return use.kind === "localization"
+    ? Object.freeze({ ...use })
+    : Object.freeze({ ...use, targets: Object.freeze([...use.targets]) });
+}
+
 function freezeEvents(events: CompiledEvents["orderedEvents"]): PureMod["events"] {
   return Object.freeze(
     events.map((event) =>
       Object.freeze({
         ...event,
-        refs: Object.freeze(
-          event.refs.map((ref) =>
-            Object.freeze({ ...ref, targets: Object.freeze([...ref.targets]) })
-          )
-        ),
+        refs: Object.freeze(event.refs.map(freezeRefUse)),
         loc: Object.freeze({
           ...event.loc,
           options: Object.freeze(event.loc.options.map((option) => Object.freeze({ ...option }))),

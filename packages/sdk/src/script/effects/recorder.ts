@@ -28,7 +28,7 @@ import {
 import { FIRE_EFFECT_KEYS, type StructuralEffectMethod } from "../../generated/effect-policy.ts";
 import type { ScopeObjOf } from "../../generated/effects.ts";
 import type { ScopeName } from "../../generated/scopes.ts";
-import type { ContentRefUse } from "../../references.ts";
+import { recordLocalization, type RecordedRefUse } from "../../references.ts";
 import {
   isComparisonList,
   isEffectBlockValue,
@@ -217,7 +217,7 @@ function resolveContextPrevPath(
  */
 interface Recording extends RecordingState {
   readonly sink: PdxEntry[];
-  readonly refs: ContentRefUse[];
+  readonly refs: RecordedRefUse[];
   /**
    * False once {@link recordEffects} has popped this recording — the closure
    * returned, and its entries are finished data the caller has already put in
@@ -299,7 +299,7 @@ const RECORDINGS: Recording[] = [];
 
 interface EffectDestination {
   readonly sink: PdxEntry[];
-  readonly refs: ContentRefUse[];
+  readonly refs: RecordedRefUse[];
   readonly owner: Recording | undefined;
 }
 
@@ -315,7 +315,7 @@ function routedRecording(
   active: Recording,
   target: Recording,
   sink: PdxEntry[],
-  refs: ContentRefUse[],
+  refs: RecordedRefUse[],
   adjacencyWitness: NonNullable<Recording["adjacencyWitness"]>
 ): Recording {
   return {
@@ -371,7 +371,7 @@ function effectReceiver(
     );
   }
   const sink: PdxEntry[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   const adjacencyWitness = { sink: active.sink, mark: active.sink.length + 1 };
   return {
     sink,
@@ -529,7 +529,7 @@ export function withScriptCtx<
  * the same rule the content field tables follow.
  */
 function recordRef(
-  refs: ContentRefUse[],
+  refs: RecordedRefUse[],
   targets: readonly string[] | undefined,
   field: string,
   value: string | number | boolean | PdxScalar
@@ -597,7 +597,7 @@ function mapValueEntries(
   map: EffectMapMeta,
   values: Record<string, unknown>,
   path: string,
-  refs: ContentRefUse[]
+  refs: RecordedRefUse[]
 ): PdxEntry[] {
   return mapEntries(values, path, map.min).map(([key, value]) => {
     recordRef(refs, map.keyRefTypes, path, key);
@@ -606,6 +606,7 @@ function mapValueEntries(
     }
     const scalar = toScalar(value, map.value.booleanLiterals);
     recordRef(refs, map.value.refTypes, path, scalar);
+    recordLocalization(refs, value, path);
     return kv(key, scalar);
   });
 }
@@ -618,7 +619,7 @@ function valueListItems(
   arm: { readonly scalar?: EffectScalarMeta; readonly fields?: readonly EffectFieldMeta[] },
   values: readonly unknown[],
   path: string,
-  refs: ContentRefUse[],
+  refs: RecordedRefUse[],
   owner: Recording | undefined
 ): PdxItem[] {
   return values.map((item) => {
@@ -632,6 +633,7 @@ function valueListItems(
     }
     const scalar = toScalar(item, arm.scalar?.booleanLiterals);
     recordRef(refs, arm.scalar?.refTypes, path, scalar);
+    recordLocalization(refs, item, path);
     return typeof scalar === "object" ? scalar : pdxScalar(scalar);
   });
 }
@@ -645,7 +647,7 @@ function blockEntry(
   value: unknown,
   key: string,
   path: string,
-  refs: ContentRefUse[],
+  refs: RecordedRefUse[],
   owner: Recording | undefined
 ): PdxEntry {
   switch (arm.kind) {
@@ -668,13 +670,14 @@ function scalarEffectEntry(
   key: string,
   scalar: Extract<EffectShapeMeta, { readonly kind: "bool" | "value" }>,
   value: unknown,
-  refs: ContentRefUse[]
+  refs: RecordedRefUse[]
 ): PdxEntry {
   if (scalar.kind === "bool") {
     return kv(key, (value as boolean | undefined) ?? true);
   }
   const lowered = toScalar(value, scalar.booleanLiterals);
   recordRef(refs, scalar.refTypes, key, lowered);
+  recordLocalization(refs, value, key);
   return kv(key, lowered);
 }
 
@@ -683,7 +686,7 @@ function scalarOrBlockEffect(
   shape: Extract<EffectShapeMeta, { readonly kind: "scalar-or-block" }>,
   args: readonly unknown[],
   sink: PdxEntry[],
-  refs: ContentRefUse[],
+  refs: RecordedRefUse[],
   recording: Recording | undefined
 ): void {
   const [value, body] = args;
@@ -774,7 +777,7 @@ function aliasListEntries(
   category: string | undefined,
   items: readonly unknown[],
   where: string,
-  refs: ContentRefUse[],
+  refs: RecordedRefUse[],
   owner: Recording | undefined
 ): PdxEntry[] {
   const members = aliasMembers(category, where);
@@ -808,7 +811,7 @@ export function fieldEntries(
   fields: readonly EffectFieldMeta[],
   args: Record<string, unknown>,
   path: string,
-  refs: ContentRefUse[],
+  refs: RecordedRefUse[],
   owner: Recording | undefined
 ): PdxEntry[] {
   const entries: PdxEntry[] = [];
@@ -823,6 +826,7 @@ export function fieldEntries(
         case "value": {
           const scalar = toScalar(value, field.booleanLiterals);
           recordRef(refs, field.refTypes, `${path}.${field.key}`, scalar);
+          recordLocalization(refs, value, `${path}.${field.key}`);
           entries.push(kv(field.key, scalar));
           break;
         }
@@ -838,6 +842,7 @@ export function fieldEntries(
           }
           const scalar = toScalar(value, field.scalar?.booleanLiterals);
           recordRef(refs, field.scalar?.refTypes, `${path}.${field.key}`, scalar);
+          recordLocalization(refs, value, `${path}.${field.key}`);
           entries.push(kv(field.key, scalar));
           break;
         }
@@ -888,6 +893,7 @@ export function fieldEntries(
           } else {
             const scalar = toScalar(value, field.booleanLiterals);
             recordRef(refs, field.refTypes, `${path}.${field.key}`, scalar);
+            recordLocalization(refs, value, `${path}.${field.key}`);
             entries.push(kv(field.key, scalar));
           }
           break;
@@ -964,7 +970,7 @@ export function fieldEntries(
 function weightedList(
   key: string,
   sink: PdxEntry[],
-  refs: ContentRefUse[],
+  refs: RecordedRefUse[],
   owner: Recording | undefined
 ) {
   return (arms: ReadonlyArray<RandomListArm<ScopeName>>): void => {
@@ -985,7 +991,7 @@ function weightedList(
 // and has to carry the liveness the scope object checks.
 type StructuralFactory = (
   sink: PdxEntry[],
-  refs: ContentRefUse[],
+  refs: RecordedRefUse[],
   recording: Recording | undefined
 ) => unknown;
 
@@ -1121,7 +1127,7 @@ interface EventChainCounterCallArgs {
 }
 
 function eventChainCounterEffect(key: string, needsAmount: boolean) {
-  return (sink: PdxEntry[], refs: ContentRefUse[]) =>
+  return (sink: PdxEntry[], refs: RecordedRefUse[]) =>
     (args: EventChainCounterCallArgs): void => {
       const id = String(refId(args.eventChain));
       const entries = [kv("event_chain", id), kv("counter", args.counter)];
@@ -1134,7 +1140,7 @@ function eventChainCounterEffect(key: string, needsAmount: boolean) {
 }
 
 function fireEffect(key: string) {
-  return (sink: PdxEntry[], _refs: ContentRefUse[], recording: Recording | undefined) =>
+  return (sink: PdxEntry[], _refs: RecordedRefUse[], recording: Recording | undefined) =>
     (args: FireCallArgs): void => {
       const entries: PdxEntry[] = [kv("id", refId(args.id))];
       for (const field of ["days", "months", "years", "random"] as const) {
@@ -1232,7 +1238,7 @@ function guarded(recording: Recording | undefined, member: string, dispatch: unk
  */
 function makeEffectPath(
   sink: PdxEntry[],
-  refs: ContentRefUse[],
+  refs: RecordedRefUse[],
   recording: Recording | undefined,
   keys: readonly string[],
   transitions: readonly ScopeTransition[] = []
@@ -1295,7 +1301,7 @@ function makeEffectPath(
 
 function recordPathLeaf(
   owner: Recording | undefined,
-  refs: ContentRefUse[],
+  refs: RecordedRefUse[],
   body: (scope: unknown) => void,
   transitions: readonly ScopeTransition[]
 ): PdxEntry[] {
@@ -1316,7 +1322,7 @@ function recordPathLeaf(
   return leaf;
 }
 
-function makeAnyScope(sink: PdxEntry[], refs: ContentRefUse[], recording?: Recording): unknown {
+function makeAnyScope(sink: PdxEntry[], refs: RecordedRefUse[], recording?: Recording): unknown {
   const dispatch = (prop: string, receiver: EffectReceiver): unknown => {
     const structural = STRUCTURAL[prop];
     if (structural !== undefined) {
@@ -1471,7 +1477,7 @@ export function isEventFireKey(key: string): boolean {
  */
 export function makeScope<S extends ScopeName>(
   sink: PdxEntry[],
-  refs: ContentRefUse[] = []
+  refs: RecordedRefUse[] = []
 ): ScopeObjOf<S> {
   const recording: Recording = {
     sink,
@@ -1501,7 +1507,7 @@ export function makeScope<S extends ScopeName>(
  * the stack — which is exactly as long as writing to it is still meaningful.
  */
 export function recordEffects<S extends ScopeName>(
-  refs: ContentRefUse[],
+  refs: RecordedRefUse[],
   body: (scope: ScopeObjOf<S>) => void,
   into: PdxEntry[] = []
 ): PdxEntry[] {
@@ -1523,7 +1529,7 @@ export function recordEffects<S extends ScopeName>(
  */
 function recordBlock<S extends ScopeName>(
   owner: Recording | undefined,
-  refs: ContentRefUse[],
+  refs: RecordedRefUse[],
   body: (scope: ScopeObjOf<S>) => void,
   into: PdxEntry[] = [],
   transition: ScopeTransition = "same"

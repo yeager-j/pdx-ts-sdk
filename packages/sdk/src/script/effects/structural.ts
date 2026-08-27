@@ -3,7 +3,7 @@
 import { block, type PdxEntry } from "@pdx-ts/pdxscript";
 
 import type { ScopeName } from "../../generated/scopes.ts";
-import type { ContentRefUse } from "../../references.ts";
+import type { RecordedRefUse } from "../../references.ts";
 import type { Trigger } from "../trigger-core.ts";
 
 export interface RecordingState {
@@ -11,7 +11,7 @@ export interface RecordingState {
 }
 
 export type RecordEffects = (
-  refs: ContentRefUse[],
+  refs: RecordedRefUse[],
   body: (scope: unknown) => void,
   into?: PdxEntry[]
 ) => PdxEntry[];
@@ -22,7 +22,7 @@ export function conditionalBlock(
   key: string,
   condition: Trigger<ScopeName>,
   body: (scope: unknown) => void,
-  refs: ContentRefUse[],
+  refs: RecordedRefUse[],
   recordEffects: RecordEffects
 ): PdxEntry {
   const child: PdxEntry[] = [block("limit", [...condition.entries])];
@@ -34,7 +34,7 @@ export function conditionalBlock(
 /** Keeps an in-game if/else chain adjacent in the emitted effect block. */
 export class IfChainRecorder {
   private readonly sink: PdxEntry[];
-  private readonly refs: ContentRefUse[];
+  private readonly refs: RecordedRefUse[];
   private readonly recording: RecordingState | undefined;
   private readonly recordEffects: RecordEffects;
   private readonly assertLive: AssertLive;
@@ -45,7 +45,7 @@ export class IfChainRecorder {
 
   constructor(
     sink: PdxEntry[],
-    refs: ContentRefUse[],
+    refs: RecordedRefUse[],
     recording: RecordingState | undefined,
     recordEffects: RecordEffects,
     assertLive: AssertLive,

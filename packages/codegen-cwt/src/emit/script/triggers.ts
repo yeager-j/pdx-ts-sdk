@@ -41,7 +41,7 @@ import {
   TRIGGER_DOC_SUMMARY_OVERRIDES,
 } from "../../overlay/index.ts";
 import { HAND_WRITTEN_TRIGGER_RULES_BY_KEY } from "../../policy/triggers.ts";
-import { Emitter, type TsValue } from "../../render/emitter.ts";
+import { Emitter, recordsLocalization, type TsValue } from "../../render/emitter.ts";
 import { member as renderMember } from "../../render/writer.ts";
 import type { ScriptTriggerReferenceRow } from "./script-reference.ts";
 import {
@@ -307,6 +307,46 @@ function emitComparison(
 }
 
 /**
+ * The `return` statement for a whole-value trigger that consumes a
+ * localization reference, which is recorded from the authored value so the
+ * fold can place a standalone item's text (SDK-306).
+ *
+ * It collects into a `refs` local rather than the array literal
+ * {@link scalarEntryReturn} returns inline, because a rule overloaded between
+ * a localisation key and a content reference has both to record.
+ */
+function localizationEntryReturn(
+  emitter: Emitter,
+  key: string,
+  value: TsValue,
+  access: string,
+  indent: string
+): string {
+  const keyText = JSON.stringify(key);
+  const collect =
+    `${indent}const refs: ${emitter.use("RecordedRefUse")}[] = [];\n` +
+    `${indent}${emitter.use("recordLocalization")}(refs, ${access}, ${keyText});\n`;
+  const returned = (written: string): string =>
+    `${indent}return ${emitter.use("trigger")}([${emitter.use("kv")}(${keyText}, ` +
+    `${written})], refs);\n`;
+  if (value.refTypes === undefined) {
+    return collect + returned(pushExpr(emitter, value, access));
+  }
+  if (value.scalarSymbol !== undefined) {
+    emitter.use(value.scalarSymbol);
+  }
+  // The id is bound once and both written and recorded, for the same reason
+  // {@link scalarEntryReturn} binds one.
+  return (
+    `${indent}const id = ${value.toScalar(access)};\n` +
+    collect +
+    `${indent}refs.push({ targets: ${JSON.stringify(value.refTypes)}, id, ` +
+    `field: ${keyText} });\n` +
+    returned("id")
+  );
+}
+
+/**
  * The `return` statement that writes one whole-value trigger entry, also
  * recording a content reference when every form the value admits is one.
  */
@@ -317,6 +357,9 @@ function scalarEntryReturn(
   access: string,
   indent: string
 ): string {
+  if (recordsLocalization(value)) {
+    return localizationEntryReturn(emitter, key, value, access, indent);
+  }
   if (value.refTypes === undefined) {
     return (
       `${indent}return ${emitter.use("trigger")}([${emitter.use("kv")}(${JSON.stringify(key)}, ` +
@@ -487,7 +530,7 @@ function emitValueList(
       docComment(docs) +
       `export function ${signature} {\n` +
       `  const entries: ${emitter.use("PdxEntry")}[] = [];\n` +
-      (withRefs ? `  const refs: ${emitter.use("ContentRefUse")}[] = [];\n` : "") +
+      (withRefs ? `  const refs: ${emitter.use("RecordedRefUse")}[] = [];\n` : "") +
       `  ${pushValueListCode(emitter, value, "values", key, 0, JSON.stringify(key), "entries")}\n` +
       `  return ${emitter.use("trigger")}(entries${withRefs ? ", refs" : ""});\n}\n`,
   };
@@ -550,7 +593,7 @@ function emitFields(
       docComment(docs) +
       `export function ${signature} {\n` +
       `  const entries: ${emitter.use("PdxEntry")}[] = [];\n` +
-      (withRefs ? `  const refs: ${emitter.use("ContentRefUse")}[] = [];\n` : "") +
+      (withRefs ? `  const refs: ${emitter.use("RecordedRefUse")}[] = [];\n` : "") +
       pushes +
       `  return ${emitter.use("trigger")}([${emitter.use("block")}(${JSON.stringify(key)}, ` +
       `entries)]${withRefs ? ", refs" : ""});\n}\n`,
@@ -600,7 +643,7 @@ function emitScalarOrFields(
       `${JSON.stringify(scalar.objectKinds ?? [])})) {\n` +
       `    const args = value;\n` +
       `    const entries: ${emitter.use("PdxEntry")}[] = [];\n` +
-      (withRefs ? `    const refs: ${emitter.use("ContentRefUse")}[] = [];\n` : "") +
+      (withRefs ? `    const refs: ${emitter.use("RecordedRefUse")}[] = [];\n` : "") +
       pushes +
       `    return ${emitter.use("trigger")}([${emitter.use("block")}(${JSON.stringify(key)}, ` +
       `entries)]${withRefs ? ", refs" : ""});\n` +

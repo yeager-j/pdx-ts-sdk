@@ -1,5 +1,5 @@
 /**
- * The vocabulary for recorded content references.
+ * The vocabulary for the references recorded script and content lowering write.
  *
  * It lives in its own module because all three encoders write them: content
  * lowering (`content/lower.ts`), the trigger builders (`script/trigger-core.ts`), and
@@ -15,9 +15,16 @@
  */
 
 import type { AssetFileItem } from "./authoring/assets.ts";
+import { isPlaceableLocalizationItem, type LocalizationItem } from "./authoring/localization.ts";
 
 /** One id-valued reference, recorded while it is written. */
 export interface ContentRefUse {
+  /**
+   * Absent, which is how a content use is told from the localization arm of
+   * {@link RecordedRefUse}. Declared as absent rather than spelled `"content"`
+   * so none of the recording sites — most of them generated — has to write it.
+   */
+  readonly kind?: undefined;
   /** Registries the id may name; every one of them a real content type. */
   readonly targets: readonly string[];
   /** The lowered id, with branded refs already resolved to their string. */
@@ -28,8 +35,45 @@ export interface ContentRefUse {
   readonly verifiedVanilla?: true;
 }
 
+/**
+ * One `mod.localization()` item consumed by reference, recorded while its key
+ * is written.
+ *
+ * The item is carried whole rather than as its key: the fold places its text
+ * in the consuming definition's own localization file, so it needs the
+ * translations and not only the name of the key. Only an ordinary item is
+ * recorded — a replacement layer is a file the author places deliberately, and
+ * an `external.localization` key has no text this build could place (SDK-306).
+ */
+export interface LocalizationRefUse {
+  readonly kind: "localization";
+  /** The consumed item, carried whole so the fold can place its translations. */
+  readonly item: LocalizationItem;
+  /** Dotted PDXScript key path to the field holding its key, e.g. `custom_tooltip.text`. */
+  readonly field: string;
+}
+
+/** One reference an encoder recorded, of either recorded vocabulary. */
+export type RecordedRefUse = ContentRefUse | LocalizationRefUse;
+
 /** Where an encoder reports the references it writes. */
-export type ContentRefSink = (use: ContentRefUse) => void;
+export type RefUseSink = (use: RecordedRefUse) => void;
+
+/**
+ * Records a consumed localization item beside the key an encoder just wrote.
+ *
+ * Call it wherever a `LocalizationRef` is lowered through `refId`, passing the
+ * value as it was authored: anything that is not a placeable item — a bare key
+ * string, an external reference, a replacement — is silently not recorded,
+ * because none of them names text this build places.
+ *
+ * @param field - Dotted PDXScript key path to the field holding the key.
+ */
+export function recordLocalization(refs: RecordedRefUse[], value: unknown, field: string): void {
+  if (isPlaceableLocalizationItem(value)) {
+    refs.push({ kind: "localization", item: value, field });
+  }
+}
 
 /**
  * One filepath-valued field, recorded while it is written.
@@ -65,10 +109,10 @@ export type AssetPathUse = AssetPathItemUse | AssetPathStringUse;
 /**
  * Where an encoder reports the asset paths it writes.
  *
- * Separate from {@link ContentRefSink} rather than a widening of it: the two
- * other encoders that write a `ContentRefSink` — the trigger builders and the
- * effect recorder — write no filepath fields at all, and widening the sink they
- * share would give both of them an arm neither can ever produce.
+ * Separate from {@link RefUseSink} rather than a widening of it: the two other
+ * encoders that write a `RefUseSink` — the trigger builders and the effect
+ * recorder — write no filepath fields at all, and widening the sink they share
+ * would give both of them an arm neither can ever produce.
  */
 export type AssetPathSink = (use: AssetPathUse) => void;
 
@@ -80,7 +124,10 @@ export type AssetPathSink = (use: AssetPathUse) => void;
  * or an event prepends that context, so the diagnostic names the whole path
  * rather than a bare condition name.
  */
-export function underField(refs: readonly ContentRefUse[], path: string): readonly ContentRefUse[] {
+export function underField(
+  refs: readonly RecordedRefUse[],
+  path: string
+): readonly RecordedRefUse[] {
   if (path === "") {
     return refs;
   }

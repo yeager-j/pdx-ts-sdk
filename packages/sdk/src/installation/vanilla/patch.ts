@@ -40,6 +40,7 @@ import { container, quoted, scalar, type PdxEntry, type PdxItem } from "@pdx-ts/
 import {
   resolveFixedKeyText,
   type KeyedLocalization,
+  type LocalizationMint,
   type LocalizedText,
 } from "../../authoring/localization.ts";
 import {
@@ -56,7 +57,7 @@ import type { ContentField, ContentLocalisation } from "../../content/schema.ts"
 import type { TriggeredModifier } from "../../content/types.ts";
 import type { ModWarning } from "../../diagnostics.ts";
 import type { ScopeName } from "../../generated/scopes.ts";
-import type { ContentRefSink, ContentRefUse } from "../../references.ts";
+import type { RecordedRefUse, RefUseSink } from "../../references.ts";
 import {
   modifierDescKey,
   registerComplexTriggerModifierDescKey,
@@ -68,7 +69,7 @@ import type { AnyOf, ParsedDefinition, ParsedNumber } from "./parsed-definitions
 
 /** What the shared lowering reads; the same shape `fieldEntries` is handed. */
 interface LoweringContext {
-  readonly collect: ContentRefSink;
+  readonly collect: RefUseSink;
   readonly path: string;
   readonly ownerId: string;
 }
@@ -117,7 +118,7 @@ export interface PatchedContent<Source extends ParsedDefinition = ParsedDefiniti
    * prerequisites is the calibration anchor itself — so the ids it writes have
    * to resolve on the same terms a `define`'s do.
    */
-  readonly refs: readonly ContentRefUse[];
+  readonly refs: readonly RecordedRefUse[];
   /**
    * Text this patch mints keys of its own for, bound for the mod's ordinary
    * localization file.
@@ -264,8 +265,12 @@ function lowerable(value: unknown, field: ContentField, ctx: LoweringContext): u
 /**
  * What the minting walk below accumulates: the owning identity, the entries it
  * mints, and the diagnostics it raises.
+ *
+ * It extends {@link LocalizationMint}, so the walk carries the patching mod's
+ * prefix down to the shared resolver — a patch consumes standalone items on
+ * the same terms a definition does, and is held to the same ownership rule.
  */
-interface MintContext {
+interface MintContext extends LocalizationMint {
   /**
    * `<prefix>_<vanillaId>` — the identity every key this walk mints is built
    * from, and the `ownerId` the lowering will resolve those keys under.
@@ -277,7 +282,6 @@ interface MintContext {
    * this mod defines, applied at the one place a patch mints anything.
    */
   readonly ownerId: string;
-  readonly into: KeyedLocalization[];
   readonly warnings: ModWarning[];
 }
 
@@ -393,7 +397,7 @@ function mintLocalisation(
           field.locKeyLiterals,
           keyedTextKey(ctx.ownerId, fieldPath, index),
           position,
-          ctx.into
+          ctx
         )
       );
     }
@@ -415,7 +419,7 @@ function mintLocalisation(
           undefined,
           keyedTextKey(ctx.ownerId, fieldPath, index),
           position,
-          ctx.into
+          ctx
         )
       );
     }
@@ -427,7 +431,7 @@ function mintLocalisation(
               clause as TriggeredModifier<ScopeName>,
               ctx.ownerId,
               occurrencePath(fieldPath, index),
-              ctx.into
+              ctx
             )
           : clause
       );
@@ -593,6 +597,7 @@ export function patchContent<Source extends ParsedDefinition, Patch extends obje
   }
 
   const mint: MintContext = {
+    prefix,
     ownerId: `${prefix}_${source.id}`,
     into: [],
     warnings: [],
@@ -609,9 +614,9 @@ export function patchContent<Source extends ParsedDefinition, Patch extends obje
     }
   }
 
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   const ctx: LoweringContext = {
-    collect: (use: ContentRefUse) => refs.push(use),
+    collect: (use: RecordedRefUse) => refs.push(use),
     path: "",
     ownerId: mint.ownerId,
   };

@@ -1,7 +1,7 @@
 import { varRef, type PdxEntry, type PdxScalar } from "@pdx-ts/pdxscript";
 
 import type { ScopeName } from "../generated/scopes.ts";
-import type { ContentRefUse } from "../references.ts";
+import type { RecordedRefUse } from "../references.ts";
 
 declare const scopeBrand: unique symbol;
 declare const scriptValueBrand: unique symbol;
@@ -76,7 +76,7 @@ export interface Trigger<S extends ScopeName = ScopeName> {
    * an event option, an effect's `limit` — so it carries its own references
    * rather than expecting each splice site to rediscover them.
    */
-  readonly refs: readonly ContentRefUse[];
+  readonly refs: readonly RecordedRefUse[];
   /**
    * Fluent conjunction: `a.and(b, c)` builds the same tree `and(a, b, c)`
    * does (`./triggers.ts`) — declarative, not mutating. `a`, `b`, and `c` are
@@ -120,7 +120,7 @@ export function conjoin<S extends ScopeName>(operands: readonly Trigger<S>[]): T
 
 export function trigger<S extends ScopeName>(
   entries: PdxEntry[],
-  refs: readonly ContentRefUse[] = []
+  refs: readonly RecordedRefUse[] = []
 ): Trigger<S> {
   return Object.assign(
     () => {

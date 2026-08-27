@@ -17,8 +17,8 @@ import type { ScopeName } from "../generated/scopes.ts";
 import {
   underField,
   type AssetPathSink,
-  type ContentRefSink,
-  type ContentRefUse,
+  type RecordedRefUse,
+  type RefUseSink,
 } from "../references.ts";
 import { recordEffects, withScriptCtx } from "../script/effects/recorder.ts";
 import type { AmbientScopeContext, ScriptCtx } from "../script/effects/types.ts";
@@ -205,7 +205,7 @@ export function resolveFromClosures(
 }
 
 interface LoweringContext {
-  readonly collect?: ContentRefSink;
+  readonly collect?: RefUseSink;
   readonly collectPath?: AssetPathSink;
   readonly path: string;
   readonly ownerId: string;
@@ -241,7 +241,7 @@ function joinPath(path: string, segment: string): string {
 
 /** Reports references a spliced trigger or effect closure recorded, re-rooted
  * under the field that holds them so the diagnostic names the whole path. */
-function collectRefs(ctx: LoweringContext, refs: readonly ContentRefUse[], segment: string): void {
+function collectRefs(ctx: LoweringContext, refs: readonly RecordedRefUse[], segment: string): void {
   if (ctx.collect === undefined) {
     return;
   }
@@ -411,7 +411,7 @@ export function fieldEntries(
         // A reference written inside a script closure is a reference like any
         // other; the recorder reports them here so they face the same
         // integrity check as the declarative fields around them.
-        const recorded: ContentRefUse[] = [];
+        const recorded: RecordedRefUse[] = [];
         // The ctx is leased to this field's lowering, so the recording it
         // wraps has to be opened inside it. `this`, `root` and `from` are
         // fixed script paths, and which of them the block may *read* is the

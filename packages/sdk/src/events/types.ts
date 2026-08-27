@@ -30,7 +30,7 @@ import type {
 } from "../generated/event-fields.ts";
 import type { SoundEffectRef, SpriteRef } from "../generated/refs.ts";
 import type { ScopeName } from "../generated/scopes.ts";
-import type { ContentRefUse } from "../references.ts";
+import type { RecordedRefUse } from "../references.ts";
 import {
   type AmbientScopeContext,
   type AmbientScopeKey,
@@ -62,7 +62,7 @@ export interface EventItemBase {
   /** The full id, e.g. `pp_mod_ascension.2`. */
   readonly id: string;
   readonly entry: PdxEntry;
-  readonly refs: readonly ContentRefUse[];
+  readonly refs: readonly RecordedRefUse[];
   /**
    * The localization keys this event minted, as references — the same value
    * {@link DefinedEvent.loc} carries, surviving into `PureMod.events` so a
@@ -288,7 +288,7 @@ export type DefinedEvent<
    * captured here too — `buildMod` resolves it against the ids the build
    * defined, exactly as it does for declarative content fields.
    */
-  readonly refs: readonly ContentRefUse[];
+  readonly refs: readonly RecordedRefUse[];
   /**
    * Diagnostics collected at define time. They can contain `unstable-desc-key`
    * entries for unpinned modifier descriptions and `unstable-option-key`

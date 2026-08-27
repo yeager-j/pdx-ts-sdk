@@ -2,15 +2,18 @@
 import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
 
 import {
+  assertOwnLocalizationItem,
   isLocalizationRef,
+  isPlaceableLocalizationItem,
   localizationRef,
   resolveFixedKeyText,
   type KeyedLocalization,
+  type LocalizationMint,
   type LocalizationRefs,
   type LocalizedText,
 } from "../authoring/localization.ts";
 import type { ScopeName } from "../generated/scopes.ts";
-import type { AssetPathSink, ContentRefSink } from "../references.ts";
+import type { AssetPathSink, RefUseSink } from "../references.ts";
 import {
   modifierDescKey,
   registerComplexTriggerModifierDescKey,
@@ -30,7 +33,13 @@ import {
 } from "./schema.ts";
 import type { TriggeredModifier, WeightBlock } from "./types.ts";
 
-export type { AssetPathSink, AssetPathUse, ContentRefSink, ContentRefUse } from "../references.ts";
+export type {
+  AssetPathSink,
+  AssetPathUse,
+  ContentRefUse,
+  RecordedRefUse,
+  RefUseSink,
+} from "../references.ts";
 
 /** A definition registered with a mod and usable as a typed cross-reference. */
 export interface DefinedContent<
@@ -43,7 +52,7 @@ export interface DefinedContent<
    * Lowers the definition, reporting every reference it writes to `collect` and
    * every filepath field it writes to `collectPath`.
    */
-  toEntries(collect?: ContentRefSink, collectPath?: AssetPathSink): PdxEntry;
+  toEntries(collect?: RefUseSink, collectPath?: AssetPathSink): PdxEntry;
 }
 
 type ContentDef = { readonly id: string };
@@ -54,7 +63,7 @@ interface StructWalkContext {
   readonly ownerId: string;
   readonly ownerType: string;
   readonly pendingIds: Map<string, Set<string>>;
-  readonly localisation: KeyedLocalization[];
+  readonly mint: LocalizationMint;
 }
 
 /**
@@ -77,7 +86,7 @@ interface StructWalkContext {
 function toEntry(
   def: ContentDef,
   descriptor: ContentRegistryDescriptor,
-  collect?: ContentRefSink,
+  collect?: RefUseSink,
   collectPath?: AssetPathSink
 ): PdxEntry {
   const fields = fieldEntries(def as Readonly<Record<string, unknown>>, descriptor.fields, {
@@ -105,7 +114,7 @@ class ContentDefinition<K extends string, D extends ContentDef> implements Defin
     this.descriptor = descriptor;
   }
 
-  toEntries(collect?: ContentRefSink, collectPath?: AssetPathSink): PdxEntry {
+  toEntries(collect?: RefUseSink, collectPath?: AssetPathSink): PdxEntry {
     return toEntry(this.def, this.descriptor, collect, collectPath);
   }
 }
@@ -181,11 +190,16 @@ export function mapOccurrences(
  * Resolves one authored `locKey` value to the key the definition body emits,
  * registering the translations of inline text under the minted key.
  *
- * A {@link LocalizationRef} names a key that already exists — this mod's, or
- * one declared through `external.localization` — so it registers nothing. Two
- * other values ride through untouched: a parsed one, carrying a key read out
- * of the install that is not this mod's to mint, and one of the position's own
- * `sentinels`, which is an engine word rather than a key.
+ * A standalone `mod.localization()` item registers its own translations here,
+ * so consuming it places its text in the consuming definition's localization
+ * file whether or not a feature also places the item itself (SDK-306) — and is
+ * refused when another capability minted it, exactly as placing it would be.
+ * Every other {@link LocalizationRef} names a key whose text is somewhere else
+ * — a definition's own slot, a replacement layer, `external.localization` — so
+ * it registers nothing. Two further values ride through untouched: a parsed
+ * one, carrying a key read out of the install that is not this mod's to mint,
+ * and one of the position's own `sentinels`, which is an engine word rather
+ * than a key.
  *
  * @param sentinels - The field's `locKeyLiterals`, or nothing where it declares none.
  * @param position - Names the text position in a refusal, e.g. `tradition.custom_tooltip`.
@@ -195,15 +209,20 @@ export function resolveKeyedText(
   sentinels: readonly string[] | undefined,
   mintedKey: string,
   position: string,
-  into: KeyedLocalization[]
+  mint: LocalizationMint
 ): unknown {
+  if (isPlaceableLocalizationItem(value)) {
+    assertOwnLocalizationItem(value, mint.prefix, position);
+    mint.into.push({ key: value.key, translations: value.translations });
+    return value.key;
+  }
   if (isLocalizationRef(value)) {
     return value.key;
   }
   if (isPassthrough(value) || (typeof value === "string" && sentinels?.includes(value) === true)) {
     return value;
   }
-  into.push({
+  mint.into.push({
     key: mintedKey,
     translations: resolveFixedKeyText(value as LocalizedText, position, mintedKey),
   });
@@ -221,7 +240,7 @@ export function resolveTriggeredModifierText(
   value: TriggeredModifier<ScopeName>,
   ownerId: string,
   fieldPath: string,
-  into: KeyedLocalization[]
+  mint: LocalizationMint
 ): TriggeredModifier<ScopeName> {
   let resolved = value;
   for (const [member, key] of TRIGGERED_MODIFIER_TEXT_MEMBERS) {
@@ -236,7 +255,7 @@ export function resolveTriggeredModifierText(
         undefined,
         keyedTextKey(ownerId, `${fieldPath}_${key}`),
         `The triggered modifier "${key}" on "${ownerId}" (${fieldPath})`,
-        into
+        mint
       ),
     };
   }
@@ -311,9 +330,9 @@ export class ContentAuthoring {
     // it in before either the .yml text or the body fields get collected, so
     // the two are never produced apart.
     const pointed = this.applySyntheticPointers(resolved, descriptor.localisation);
-    const localisation: KeyedLocalization[] = [];
+    const mint: LocalizationMint = { prefix: this.prefix, into: [] };
     const nestedIds = new Map<string, Set<string>>();
-    this.collectLocalisation(resolved.id, pointed, descriptor.localisation, localisation);
+    this.collectLocalisation(resolved.id, pointed, descriptor.localisation, mint.into);
     const def = this.resolveFieldTree(
       resolved.id,
       "",
@@ -321,9 +340,9 @@ export class ContentAuthoring {
       descriptor.fields,
       type,
       nestedIds,
-      localisation
+      mint
     ) as D;
-    registerLoc(localisation);
+    registerLoc(mint.into);
     for (const [identity, pending] of nestedIds) {
       const ids = this.nestedIds.get(identity) ?? new Set<string>();
       for (const id of pending) {
@@ -498,7 +517,7 @@ export class ContentAuthoring {
     fields: readonly ContentField[],
     ownerType: string,
     pendingIds: Map<string, Set<string>>,
-    localisation: KeyedLocalization[]
+    mint: LocalizationMint
   ): Readonly<Record<string, unknown>> {
     let rewritten: Record<string, unknown> | undefined;
     const rewrite = (member: string, value: unknown): void => {
@@ -526,7 +545,7 @@ export class ContentAuthoring {
               field.locKeyLiterals,
               keyedTextKey(ownerId, fieldPath, index),
               position,
-              localisation
+              mint
             )
           )
         );
@@ -546,7 +565,7 @@ export class ContentAuthoring {
               undefined,
               keyedTextKey(ownerId, fieldPath, index),
               position,
-              localisation
+              mint
             )
           )
         );
@@ -558,7 +577,7 @@ export class ContentAuthoring {
         rewrite(
           field.member,
           mapOccurrences(raw, field.repeated === true, (item) =>
-            resolveLocalizationRole(item, family, site, localisation, this.roleUses)
+            resolveLocalizationRole(item, family, site, mint.into, this.roleUses)
           )
         );
         continue;
@@ -571,7 +590,7 @@ export class ContentAuthoring {
               clause as TriggeredModifier<ScopeName>,
               ownerId,
               occurrencePath(fieldPath, index),
-              localisation
+              mint
             )
           )
         );
@@ -583,7 +602,7 @@ export class ContentAuthoring {
           fieldPath,
           field.key,
           raw as WeightBlock<ScopeName>,
-          localisation
+          mint.into
         );
         continue;
       }
@@ -599,7 +618,7 @@ export class ContentAuthoring {
           [arm],
           ownerType,
           pendingIds,
-          localisation
+          mint
         );
         if (armDef[arm.member] !== raw) {
           rewrite(field.member, armDef[arm.member]);
@@ -615,7 +634,7 @@ export class ContentAuthoring {
           asList === true,
           fieldPath,
           field.fields,
-          { ownerId, ownerType, pendingIds, localisation },
+          { ownerId, ownerType, pendingIds, mint },
           (value) => rewrite(field.member, value)
         );
         continue;
@@ -626,7 +645,7 @@ export class ContentAuthoring {
           field.repeated === true,
           fieldPath,
           aliasStructFieldsOf(field.category),
-          { ownerId, ownerType, pendingIds, localisation },
+          { ownerId, ownerType, pendingIds, mint },
           (value) => rewrite(field.member, value)
         );
         continue;
@@ -636,7 +655,7 @@ export class ContentAuthoring {
         const entries = Object.entries(record).map(([name, item]) => {
           // The map key is the localisation key: an event-chain counter shows
           // under its own name, with no pattern around it.
-          this.collectLocalisation(name, item, field.localisation ?? [], localisation);
+          this.collectLocalisation(name, item, field.localisation ?? [], mint.into);
           const nested = this.resolveFieldTree(
             ownerId,
             `${fieldPath}_${name}`,
@@ -644,7 +663,7 @@ export class ContentAuthoring {
             field.fields,
             ownerType,
             pendingIds,
-            localisation
+            mint
           );
           return [name, nested] as const;
         });
@@ -669,10 +688,10 @@ export class ContentAuthoring {
           throw new Error(`Duplicate ${identity} id "${id}"`);
         }
         pending.add(id);
-        this.collectLocalisation(id, nested, field.localisation, localisation);
+        this.collectLocalisation(id, nested, field.localisation, mint.into);
         entries.push([
           id,
-          this.resolveFieldTree(id, "", nested, field.fields, identity, pendingIds, localisation),
+          this.resolveFieldTree(id, "", nested, field.fields, identity, pendingIds, mint),
         ]);
       }
       pendingIds.set(identity, pending);
@@ -706,7 +725,7 @@ export class ContentAuthoring {
         fields,
         ctx.ownerType,
         ctx.pendingIds,
-        ctx.localisation
+        ctx.mint
       )
     );
     if (walked.every((item, index) => item === items[index])) {

@@ -116,7 +116,13 @@ describe("job-derived modifier recorder", () => {
       (modifier) => {
         (modifier.economic as any)(category).triggered(costKey).cost.mult(1);
       },
-      (use) => uses.push({ id: use.id, targets: use.targets })
+      (use) => {
+        // A modifier row writes content ids only, so the localization arm of
+        // the recorded vocabulary never appears among them.
+        if (use.kind !== "localization") {
+          uses.push({ id: use.id, targets: use.targets });
+        }
+      }
     );
     expect(uses).toEqual([
       { id: "mymod_source_category", targets: ["economic_category"] },

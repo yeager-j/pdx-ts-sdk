@@ -98,6 +98,21 @@ export interface KeyedLocalization {
   readonly layer?: LocalizationLayer;
 }
 
+/**
+ * Where resolved localization is collected, and the mod prefix entitled to
+ * ship it.
+ *
+ * The two travel together because consuming a standalone item registers its
+ * text (SDK-306): a collector that did not say whose build it belongs to could
+ * not tell an item this capability minted from another mod's.
+ */
+export interface LocalizationMint {
+  /** The prefix of the capability whose definition or patch is being resolved. */
+  readonly prefix: string;
+  /** Collects one entry per key resolved, in resolution order. */
+  readonly into: KeyedLocalization[];
+}
+
 declare const localizationRefBrand: unique symbol;
 
 /**
@@ -144,6 +159,48 @@ export function isLocalizationRef(value: unknown): value is LocalizationRef {
     typeof value === "object" &&
     value !== null &&
     (value as { readonly refKind?: unknown }).refKind === "localization"
+  );
+}
+
+/**
+ * Whether a value is a standalone ordinary localization item, the one kind of
+ * reference whose text this build can place on the consumer's behalf.
+ *
+ * A `ReplacementLocalizationItem` fails it because its file is a layer the
+ * author chooses deliberately, and an `external.localization` reference fails
+ * it because it carries no text at all.
+ */
+export function isPlaceableLocalizationItem(value: unknown): value is LocalizationItem {
+  if (!isLocalizationRef(value)) {
+    return false;
+  }
+  const item = value as Partial<LocalizationItem>;
+  return item.itemKind === "localization" && item.layer === "ordinary";
+}
+
+/**
+ * Refuses a consumed localization item another capability minted.
+ *
+ * Consuming an item is what places its text (SDK-306), so consumption is held
+ * to the ownership rule `mod.feature()` already applies to placement. Reading
+ * the key alone is refused for the same reason: nothing would then write the
+ * text behind it, and the mod would ship a reference resolving to the raw key.
+ *
+ * @param prefix - The mod prefix of the build consuming the item.
+ * @param where - Names the consuming position, e.g. `building.custom_tooltip for "arc"`.
+ */
+export function assertOwnLocalizationItem(
+  item: LocalizationItem,
+  prefix: string,
+  where: string
+): void {
+  if (item.prefix === prefix) {
+    return;
+  }
+  throw new Error(
+    `Localization key "${item.key}" belongs to mod prefix "${item.prefix}", not "${prefix}": ` +
+      `${where} references it, and referencing an item places its text in this build. ` +
+      `Create the item with the capability that ships it.`
   );
 }
 
@@ -276,6 +333,12 @@ function interpolatedText(value: LocInterpolation, position: number): string {
  * resolves at display time to whatever text that key holds; a string or a
  * number is written as it stands. Everything else — colour codes, icon tags,
  * scope properties — is ordinary text, so write the game's markup directly.
+ *
+ * The result is a plain string, so a `mod.localization()` item interpolated
+ * here is not carried into the consuming feature the way a reference passed
+ * whole to a key-typed field is: place that item in a feature yourself. A
+ * definition's own `loc` member needs no placement, since its text already
+ * ships with the definition that minted it.
  *
  * @throws TypeError If an interpolated value is not a reference, string, or number.
  * @example

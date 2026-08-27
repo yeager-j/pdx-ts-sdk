@@ -152,7 +152,11 @@ describe("trigger emission", () => {
         `export function ${fn}(value: string | LocalizationRef): Trigger<ScopeName>;`
       );
     }
-    expect(emission.code).toContain('return trigger([kv("custom_tooltip", refId(value))]);');
+    // Both arms carry refs: the key the author wrote may belong to a standalone
+    // item this build has to place beside the definition that names it (SDK-306).
+    expect(emission.code).toContain('recordLocalization(refs, value, "custom_tooltip");');
+    expect(emission.code).toContain('return trigger([kv("custom_tooltip", refId(value))], refs);');
+    expect(emission.code).toContain('recordLocalization(refs, args.text, "custom_tooltip.text");');
     expect(emission.code).toContain('return trigger([block("custom_tooltip", entries)], refs);');
   });
 

@@ -11,7 +11,7 @@ import { MODIFIER_OPERATIONS } from "../../generated/modifier-policy.ts";
 import type { ScopeName } from "../../generated/scopes.ts";
 import { shortLocalizationHash } from "../../localization-key.ts";
 import { compareUtf8 } from "../../ordering.ts";
-import type { ContentRefUse } from "../../references.ts";
+import type { RecordedRefUse } from "../../references.ts";
 import { toScalar } from "../scalar.ts";
 import { scriptValueScalar, type ScriptValue } from "../trigger-core.ts";
 import type { ComplexTriggerModifier, Modifier } from "./types.ts";
@@ -206,7 +206,7 @@ export function weightOperationEntries(value: WeightOperations): PdxEntry[] {
  */
 export function modifierEntry(
   modifier: Modifier<ScopeName>,
-  refs?: ContentRefUse[],
+  refs?: RecordedRefUse[],
   ownerKey?: string
 ): PdxEntry {
   const entries: PdxEntry[] = weightOperationEntries(modifier);
@@ -266,7 +266,7 @@ export function registerComplexTriggerModifierDescKey(
  */
 export function complexTriggerModifierEntry(
   modifier: ComplexTriggerModifier<ScopeName>,
-  refs?: ContentRefUse[],
+  refs?: RecordedRefUse[],
   ownerKey?: string
 ): PdxEntry {
   const entries: PdxEntry[] = [kv("trigger", modifier.trigger)];

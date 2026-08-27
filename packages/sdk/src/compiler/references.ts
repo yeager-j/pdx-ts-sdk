@@ -4,7 +4,7 @@ import { contentDescriptor } from "../content/descriptors.ts";
 import type { LocalizationRoleUse } from "../content/localization-families.ts";
 import { SWAP_IDENTITIES, type SwapIdentity } from "../content/swaps.ts";
 import { CONTENT_REGISTRIES } from "../generated/content-registry.ts";
-import type { ContentRefUse } from "../references.ts";
+import type { ContentRefUse, RecordedRefUse } from "../references.ts";
 import type { ContentFile, DefinedGroup, EmittedFile } from "./model.ts";
 
 type ReferenceValidationInput = {
@@ -219,12 +219,18 @@ function assertContentReferenceExists(
   );
 }
 
-/** A recorded content reference and the definition or event that wrote it. */
+/** A recorded reference and the definition, event, or patch that wrote it. */
 export interface ReferenceUse {
-  /** The definition or event whose serialized field contains the reference. */
+  /** The definition, event, or patch whose serialized field contains the reference. */
   readonly owner: string;
-  /** The referenced id, target registry names, and serialized field path. */
-  readonly use: ContentRefUse;
+  /**
+   * The stem of the Feature that placed the owner, so a consumed localization
+   * item can be placed in the same file the owner's own text goes to.
+   * `undefined` where the owner was placed outside a named Feature.
+   */
+  readonly stem: string | undefined;
+  /** What was referenced, and the serialized field path holding it. */
+  readonly use: RecordedRefUse;
 }
 
 /**
@@ -262,6 +268,11 @@ export function validateReferences(args: ReferenceValidationInput): void {
   assertOwnEventReferencesExist(args.prefix, args.contentFiles, args.eventFiles, args.eventIds);
   const builtIds = collectBuiltIds(args.definedGroups, args.patched, args.componentTagIds);
   for (const { owner, use } of args.refUses) {
+    // A consumed localization key names no content, and the fold places its
+    // text rather than checking it against a registry (`compile-finalize.ts`).
+    if (use.kind === "localization") {
+      continue;
+    }
     assertContentReferenceExists(owner, use, args.prefix, builtIds, args.vanillaIdsOf);
   }
   assertLocalizationRolesComplete(args.roleUses, builtIds);
