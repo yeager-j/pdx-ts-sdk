@@ -2,6 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/ambient_objects.cwt
 
+import type { LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { ModelEntityRef } from "./refs.ts";
@@ -11,8 +12,11 @@ import type { ModelEntityRef } from "./refs.ts";
  * Generated from `type[ambient_object]` at `game/common/ambient_objects`.
  */
 export interface AmbientObjectFields {
-  /** English text emitted to localization under `<id>`. */
-  name?: string;
+  /**
+   * Display text emitted to localization under `<id>`.
+   * A bare string is the English shorthand.
+   */
+  name?: LocalizedText;
   entity: ModelEntityRef | string;
   selectable?: boolean;
   /** Determines whether you can read the name of the object ingame. */

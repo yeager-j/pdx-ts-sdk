@@ -2,6 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/species_consolidated.cwt
 
+import type { LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { EconomicResourceBlock, ModifierClosure, WeightBlock } from "../content/types.ts";
@@ -47,60 +48,141 @@ export const SPECIES_CLASS_CUSTOM_PORTRAITS_FIELDS: readonly ContentField[] = [
  * Generated from `type[species_class]` at `game/common/species_classes`.
  */
 export interface SpeciesClassFields {
-  /** English text emitted to localization under `<id>`. */
-  name?: string;
-  /** English text emitted to localization under `<id>_desc`. */
-  desc?: string;
-  /** English text emitted to localization under `<id>_plural`. */
-  plural?: string;
-  /** English text emitted to localization under `<id>_insult_01`. */
-  insult?: string;
-  /** English text emitted to localization under `<id>_insult_plural_01`. */
-  insultPlural?: string;
-  /** English text emitted to localization under `<id>_compliment_01`. */
-  compliment?: string;
-  /** English text emitted to localization under `<id>_compliment_plural_01`. */
-  complimentPlural?: string;
-  /** English text emitted to localization under `<id>_spawn`. */
-  spawn?: string;
-  /** English text emitted to localization under `<id>_spawn_plural`. */
-  spawnPlural?: string;
-  /** English text emitted to localization under `<id>_sound_01`. */
-  sound01?: string;
-  /** English text emitted to localization under `<id>_sound_02`. */
-  sound02?: string;
-  /** English text emitted to localization under `<id>_sound_03`. */
-  sound03?: string;
-  /** English text emitted to localization under `<id>_sound_04`. */
-  sound04?: string;
-  /** English text emitted to localization under `<id>_sound_05`. */
-  sound05?: string;
-  /** English text emitted to localization under `<id>_organ`. */
-  organ?: string;
-  /** English text emitted to localization under `<id>_organ_plural`. */
-  organPlural?: string;
-  /** English text emitted to localization under `<id>_mouth`. */
-  mouth?: string;
-  /** English text emitted to localization under `<id>_hand`. */
-  hand?: string;
-  /** English text emitted to localization under `<id>_hand_plural`. */
-  handPlural?: string;
-  /** English text emitted to localization under `<id>_ear`. */
-  ear?: string;
-  /** English text emitted to localization under `<id>_ear_plural`. */
-  earPlural?: string;
-  /** English text emitted to localization under `<id>_tooth`. */
-  tooth?: string;
-  /** English text emitted to localization under `<id>_tooth_plural`. */
-  toothPlural?: string;
-  /** English text emitted to localization under `<id>_fossil`. */
-  fossil?: string;
-  /** English text emitted to localization under `<id>_fossil_plural`. */
-  fossilPlural?: string;
-  /** English text emitted to localization under `<id>_remnant`. */
-  remnant?: string;
-  /** English text emitted to localization under `<id>_remnant_plural`. */
-  remnantPlural?: string;
+  /**
+   * Display text emitted to localization under `<id>`.
+   * A bare string is the English shorthand.
+   */
+  name?: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_desc`.
+   * A bare string is the English shorthand.
+   */
+  desc?: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_plural`.
+   * A bare string is the English shorthand.
+   */
+  plural?: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_insult_01`.
+   * A bare string is the English shorthand.
+   */
+  insult?: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_insult_plural_01`.
+   * A bare string is the English shorthand.
+   */
+  insultPlural?: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_compliment_01`.
+   * A bare string is the English shorthand.
+   */
+  compliment?: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_compliment_plural_01`.
+   * A bare string is the English shorthand.
+   */
+  complimentPlural?: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_spawn`.
+   * A bare string is the English shorthand.
+   */
+  spawn?: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_spawn_plural`.
+   * A bare string is the English shorthand.
+   */
+  spawnPlural?: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_sound_01`.
+   * A bare string is the English shorthand.
+   */
+  sound01?: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_sound_02`.
+   * A bare string is the English shorthand.
+   */
+  sound02?: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_sound_03`.
+   * A bare string is the English shorthand.
+   */
+  sound03?: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_sound_04`.
+   * A bare string is the English shorthand.
+   */
+  sound04?: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_sound_05`.
+   * A bare string is the English shorthand.
+   */
+  sound05?: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_organ`.
+   * A bare string is the English shorthand.
+   */
+  organ?: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_organ_plural`.
+   * A bare string is the English shorthand.
+   */
+  organPlural?: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_mouth`.
+   * A bare string is the English shorthand.
+   */
+  mouth?: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_hand`.
+   * A bare string is the English shorthand.
+   */
+  hand?: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_hand_plural`.
+   * A bare string is the English shorthand.
+   */
+  handPlural?: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_ear`.
+   * A bare string is the English shorthand.
+   */
+  ear?: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_ear_plural`.
+   * A bare string is the English shorthand.
+   */
+  earPlural?: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_tooth`.
+   * A bare string is the English shorthand.
+   */
+  tooth?: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_tooth_plural`.
+   * A bare string is the English shorthand.
+   */
+  toothPlural?: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_fossil`.
+   * A bare string is the English shorthand.
+   */
+  fossil?: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_fossil_plural`.
+   * A bare string is the English shorthand.
+   */
+  fossilPlural?: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_remnant`.
+   * A bare string is the English shorthand.
+   */
+  remnant?: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_remnant_plural`.
+   * A bare string is the English shorthand.
+   */
+  remnantPlural?: LocalizedText;
   archetype?: SpeciesArchetypeRef | string;
   modifier?: ModifierClosure<"pop_group">;
   playable?: Trigger<never>;

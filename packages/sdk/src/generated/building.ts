@@ -2,6 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/buildings.cwt
 
+import type { LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type {
@@ -62,10 +63,16 @@ export const BUILDING_TRIGGERED_DESC_FIELDS: readonly ContentField[] = [
  * Generated from `type[building]` at `game/common/buildings`.
  */
 export interface BuildingFields {
-  /** English text emitted to localization under `<id>`. */
-  name: string;
-  /** English text emitted to localization under `<id>_desc`. */
-  desc?: string;
+  /**
+   * Display text emitted to localization under `<id>`.
+   * A bare string is the English shorthand.
+   */
+  name: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_desc`.
+   * A bare string is the English shorthand.
+   */
+  desc?: LocalizedText;
   conditionalDesc?: BuildingDesc[];
   /** optional: default is no limit Mult by -1 to remove limit (still affected by is_capped_by_modifier = yes) */
   districtLimit?: number | WeightBlock<"colony">;
@@ -170,17 +177,19 @@ export type DefinedBuilding<Id extends string = string> = DefinedContent<
  */
 export interface BuildingPatch {
   /**
-   * Replacement English text for vanilla's own `<vanilla id>` key.
+   * Replacement text for vanilla's own `<vanilla id>` key.
    * Emitted to `localisation/replace/`, the layer the game resolves ahead
-   * of the ordinary one — a rename, not a new key.
+   * of the ordinary one — a rename, not a new key. English is always
+   * supplied, so a rename replaces the original English text too.
    */
-  readonly name?: string;
+  readonly name?: LocalizedText;
   /**
-   * Replacement English text for vanilla's own `<vanilla id>_desc` key.
+   * Replacement text for vanilla's own `<vanilla id>_desc` key.
    * Emitted to `localisation/replace/`, the layer the game resolves ahead
-   * of the ordinary one — a rename, not a new key.
+   * of the ordinary one — a rename, not a new key. English is always
+   * supplied, so a rename replaces the original English text too.
    */
-  readonly desc?: string;
+  readonly desc?: LocalizedText;
   readonly conditionalDesc?: PatchInput<BuildingDesc[]>;
   /** optional: default is no limit Mult by -1 to remove limit (still affected by is_capped_by_modifier = yes) */
   readonly districtLimit?: PatchInput<number | WeightBlock<"colony">>;

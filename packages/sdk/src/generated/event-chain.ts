@@ -2,6 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/event_chains.cwt
 
+import type { LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { Trigger } from "../script/trigger-core.ts";
@@ -20,10 +21,16 @@ export const EVENT_CHAIN_COUNTER_DEFINITION_FIELDS: readonly ContentField[] = [
  * Generated from `type[event_chain]` at `game/common/event_chains`.
  */
 export interface EventChainFields {
-  /** English text emitted to localization under `<id>_title`. */
-  title?: string;
-  /** English text emitted to localization under `<id>_desc`. */
-  desc?: string;
+  /**
+   * Display text emitted to localization under `<id>_title`.
+   * A bare string is the English shorthand.
+   */
+  title?: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_desc`.
+   * A bare string is the English shorthand.
+   */
+  desc?: LocalizedText;
   icon?: string;
   picture?: SpriteRef | string;
   counter?: Readonly<Record<string, EventChainCounterDefinition>>;

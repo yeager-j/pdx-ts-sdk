@@ -2,6 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/components.cwt
 
+import type { LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type {
@@ -461,8 +462,11 @@ export const WEAPON_COMPONENT_TEMPLATE_HOSTILE_AURA_FIELDS: readonly ContentFiel
  * Generated from `type[component_template]` at `game/common/component_templates`.
  */
 export interface WeaponComponentTemplateFields {
-  /** English text emitted to localization under `<id>`. */
-  name?: string;
+  /**
+   * Display text emitted to localization under `<id>`.
+   * A bare string is the English shorthand.
+   */
+  name?: LocalizedText;
   icon: SpriteRef | string;
   iconFrame?: number;
   prerequisites?: (TechnologyRef | string)[];

@@ -2,6 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/bombardment_stances.cwt
 
+import type { LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { WeightBlock, WithFrom } from "../content/types.ts";
@@ -22,10 +23,16 @@ export const BOMBARDMENT_STANCE_KILL_POP_AMOUNT_FIELDS: readonly ContentField[] 
  * Generated from `type[bombardment_stance]` at `game/common/bombardment_stances`.
  */
 export interface BombardmentStanceFields {
-  /** English text emitted to localization under `bombardment_<id>`. */
-  name: string;
-  /** English text emitted to localization under `bombardment_<id>_desc`. */
-  desc?: string;
+  /**
+   * Display text emitted to localization under `bombardment_<id>`.
+   * A bare string is the English shorthand.
+   */
+  name: LocalizedText;
+  /**
+   * Display text emitted to localization under `bombardment_<id>_desc`.
+   * A bare string is the English shorthand.
+   */
+  desc?: LocalizedText;
   trigger: Trigger<"fleet">;
   /** Is this the default stance that new fleets will use? */
   default: boolean;

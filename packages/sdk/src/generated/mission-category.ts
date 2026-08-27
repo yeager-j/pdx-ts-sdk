@@ -2,6 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/missions.cwt
 
+import type { LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { SpriteRef } from "./refs.ts";
@@ -11,10 +12,16 @@ import type { SpriteRef } from "./refs.ts";
  * Generated from `type[mission_category]` at `game/common/missions/mission_categories`.
  */
 export interface MissionCategoryFields {
-  /** English text emitted to localization under `<id>`. */
-  name?: string;
-  /** English text emitted to localization under `<id>_short`. */
-  short?: string;
+  /**
+   * Display text emitted to localization under `<id>`.
+   * A bare string is the English shorthand.
+   */
+  name?: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_short`.
+   * A bare string is the English shorthand.
+   */
+  short?: LocalizedText;
   /** Whether this is a contract category. */
   isContract: boolean;
   mapIcon: SpriteRef | string;

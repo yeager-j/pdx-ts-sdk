@@ -2,6 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/ascension_perks.cwt
 
+import type { LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type {
@@ -13,12 +14,21 @@ import type {
 import type { Trigger } from "../script/trigger-core.ts";
 
 export interface AscensionPerkSwapFields {
-  /** English text emitted to localization under `<id>`. */
-  name?: string;
-  /** English text emitted to localization under `<id>_delayed`. */
-  flavor?: string;
-  /** English text emitted to localization under `<id>_desc`. */
-  effects?: string;
+  /**
+   * Display text emitted to localization under `<id>`.
+   * A bare string is the English shorthand.
+   */
+  name?: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_delayed`.
+   * A bare string is the English shorthand.
+   */
+  flavor?: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_desc`.
+   * A bare string is the English shorthand.
+   */
+  effects?: LocalizedText;
   inheritIcon?: boolean;
   inheritName?: boolean;
   inheritEffects?: boolean;
@@ -89,10 +99,16 @@ export const ASCENSION_PERK_SWAP_LOCALISATION: readonly ContentLocalisation[] = 
  * Generated from `type[ascension_perk]` at `game/common/ascension_perks`.
  */
 export interface AscensionPerkFields {
-  /** English text emitted to localization under `<id>`. */
-  name: string;
-  /** English text emitted to localization under `<id>_desc`. */
-  desc?: string;
+  /**
+   * Display text emitted to localization under `<id>`.
+   * A bare string is the English shorthand.
+   */
+  name: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_desc`.
+   * A bare string is the English shorthand.
+   */
+  desc?: LocalizedText;
   potential?: Trigger<"country">;
   possible?: Trigger<"country">;
   onEnabled?: EffectBlock<"country", { readonly root: "country" }>;

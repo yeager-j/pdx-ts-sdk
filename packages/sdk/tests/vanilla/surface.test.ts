@@ -456,20 +456,23 @@ describe("descriptor-derived patching", () => {
     // The key is the define path's own derivation with the owner substituted:
     // `<prefix>_<vanillaId>` leads it, so it cannot be a key vanilla defines.
     const [entry] = patched.loc;
-    expect(entry?.[0]).toMatch(/^pp_tech_gene_forging_weight_modifier_[0-9a-f]{8}$/);
-    expect(entry?.[1]).toBe("Because reasons");
+    expect(entry?.key).toMatch(/^pp_tech_gene_forging_weight_modifier_[0-9a-f]{8}$/);
+    expect(entry?.translations).toEqual({ english: "Because reasons" });
     expect(patched.replaceLoc).toEqual([]);
-    expect(serialize([patched.toEntries()])).toContain(`\t\tdesc = ${entry![0]}\n`);
+    expect(serialize([patched.toEntries()])).toContain(`\t\tdesc = ${entry!.key}\n`);
   });
 
-  it("pins the minted key to an author-supplied descKey, through the same owner", () => {
+  it("pins the minted key to an author-supplied key, through the same owner", () => {
     const patched = patchTechnology(geneForging, () => ({
       weightModifier: {
-        modifiers: [{ factor: 2, desc: "Because reasons", descKey: "flesh_is_weak" }],
+        modifiers: [{ factor: 2, desc: { english: "Because reasons", key: "flesh_is_weak" } }],
       },
     }));
     expect(patched.loc).toEqual([
-      ["pp_tech_gene_forging_weight_modifier_flesh_is_weak", "Because reasons"],
+      {
+        key: "pp_tech_gene_forging_weight_modifier_flesh_is_weak",
+        translations: { english: "Because reasons" },
+      },
     ]);
     expect(patched.warnings).toEqual([]);
   });
@@ -495,8 +498,8 @@ describe("descriptor-derived patching", () => {
     // — so the replacement lands where the game already looks. Nothing about
     // the emitted body changes: a rename is localisation, not script.
     expect(patched.replaceLoc).toEqual([
-      ["tech_gene_forging", "Chimeric Forging"],
-      ["tech_gene_forging_desc", "Rewritten flavour."],
+      { key: "tech_gene_forging", translations: { english: "Chimeric Forging" } },
+      { key: "tech_gene_forging_desc", translations: { english: "Rewritten flavour." } },
     ]);
     expect(patched.loc).toEqual([]);
     expect(serialize([patched.toEntries()])).toBe(GOLDEN_ROUNDTRIP);
@@ -990,10 +993,19 @@ describe("the megastructure slice", () => {
       delayedInfo: "Construction continues.",
     }));
     expect(patched.replaceLoc).toEqual([
-      ["megastructure_pp_array_0", "Resonance Array"],
-      ["megastructure_pp_array_0_DESC", "A lattice tuned to the system's star."],
-      ["megastructure_pp_array_0_MEGASTRUCTURE_DETAILS", "Amplifies research across the empire."],
-      ["megastructure_pp_array_0_CONSTRUCTION_INFO_DELAYED", "Construction continues."],
+      { key: "megastructure_pp_array_0", translations: { english: "Resonance Array" } },
+      {
+        key: "megastructure_pp_array_0_DESC",
+        translations: { english: "A lattice tuned to the system's star." },
+      },
+      {
+        key: "megastructure_pp_array_0_MEGASTRUCTURE_DETAILS",
+        translations: { english: "Amplifies research across the empire." },
+      },
+      {
+        key: "megastructure_pp_array_0_CONSTRUCTION_INFO_DELAYED",
+        translations: { english: "Construction continues." },
+      },
     ]);
     expect(patched.loc).toEqual([]);
     // A rename is localisation, not script: the body is the unpatched one.
@@ -1051,17 +1063,27 @@ describe("what a patch may and may not carry", () => {
       technologySwap: [
         {
           name: "tech_gene_forging_frugal",
-          weight: { modifiers: [{ factor: 2, desc: "Cheaper", descKey: "frugal" }] },
+          weight: {
+            modifiers: [{ factor: 2, desc: { english: "Cheaper", key: "frugal" } }],
+          },
         },
         {
           name: "tech_gene_forging_lavish",
-          weight: { modifiers: [{ factor: 3, desc: "Pricier", descKey: "lavish" }] },
+          weight: {
+            modifiers: [{ factor: 3, desc: { english: "Pricier", key: "lavish" } }],
+          },
         },
       ],
     }));
     expect(patched.loc).toEqual([
-      ["pp_tech_gene_forging_technology_swap_0_weight_frugal", "Cheaper"],
-      ["pp_tech_gene_forging_technology_swap_1_weight_lavish", "Pricier"],
+      {
+        key: "pp_tech_gene_forging_technology_swap_0_weight_frugal",
+        translations: { english: "Cheaper" },
+      },
+      {
+        key: "pp_tech_gene_forging_technology_swap_1_weight_lavish",
+        translations: { english: "Pricier" },
+      },
     ]);
     const emitted = serialize([patched.toEntries()]);
     expect(emitted).toContain(

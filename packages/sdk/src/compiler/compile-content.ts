@@ -8,6 +8,7 @@ import { CONTENT_REGISTRIES, type ContentTypeName } from "../generated/content-r
 import { PACKAGED_ID_EVIDENCE } from "../identifiers/vanilla-gfx-ids.ts";
 import { compareUtf8, normalizeLogicalPath, type LogicalPath } from "../ordering.ts";
 import { noteStem, type BuildSession } from "./compile-session.ts";
+import { registerLocalization } from "./localization.ts";
 import type { ContentFile, DefinedGroup } from "./model.ts";
 
 /** Content definitions and files produced by the three content passes. */
@@ -183,12 +184,7 @@ function defineContentGroups(
             item.type,
             item.def,
             (entries) =>
-              session.localization.register({
-                layer: "ordinary",
-                language: "english",
-                stem,
-                entries,
-              }),
+              registerLocalization(session.localization, { layer: "ordinary", stem }, entries),
             shapeMintOf(item)
           )
         ),

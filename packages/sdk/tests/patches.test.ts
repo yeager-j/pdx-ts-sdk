@@ -698,7 +698,13 @@ describe("patched localization end to end", () => {
         mod.patchBuilding(refinery, () => ({
           planetLimit: {
             base: 2,
-            modifiers: [{ add: 1, when: always(), desc: "Crowded world", descKey: "crowded" }],
+            modifiers: [
+              {
+                add: 1,
+                when: always(),
+                desc: { english: "Crowded world", key: "crowded" },
+              },
+            ],
           },
         })),
       ]),
@@ -760,7 +766,7 @@ describe("patched localization end to end", () => {
     const feature = mod.feature(undefined, [
       mod.patchTechnology(vanilla.definition("technology", "tech_gene_forging"), () => ({
         weightModifier: {
-          modifiers: [{ factor: 2, desc: "Because reasons", descKey: "x" }],
+          modifiers: [{ factor: 2, desc: { english: "Because reasons", key: "x" } }],
         },
       })),
       mod.technology("gene_forging_weight_modifier_x", {
@@ -772,6 +778,52 @@ describe("patched localization end to end", () => {
     ]);
     expect(() => mod.compile([feature])).toThrow(
       'Duplicate localization key "pp_mod_tech_gene_forging_weight_modifier_x"'
+    );
+  });
+
+  it("fans a rename and a minted key out to every language they supply", () => {
+    const mod = createMod(makeConfig());
+    const files = render(
+      mod.compile([
+        mod.feature("translated", [
+          mod.patchTechnology(vanilla.definition("technology", "tech_gene_forging"), () => ({
+            name: { english: "Chimeric Forging", french: "Forge chimérique" },
+          })),
+          mod.patchBuilding(refinery, () => ({
+            planetLimit: {
+              base: 2,
+              modifiers: [
+                {
+                  add: 1,
+                  when: always(),
+                  desc: { english: "Crowded world", french: "Monde surpeuplé", key: "crowded" },
+                },
+              ],
+            },
+          })),
+        ]),
+      ])
+    );
+
+    // A rename keeps vanilla's key in both layers' languages; a minted key
+    // keeps the prefixed one.
+    expect(files.get("localisation/replace/french/pp_mod_translated_l_french.yml")).toBe(
+      '﻿l_french:\n tech_gene_forging:0 "Forge chimérique"\n'
+    );
+    expect(files.get("localisation/french/pp_mod_translated_l_french.yml")).toBe(
+      '﻿l_french:\n pp_mod_building_pp_refinery_planet_limit_crowded:0 "Monde surpeuplé"\n'
+    );
+  });
+
+  it("refuses a key pin on a rename, whose key is vanilla's own", () => {
+    const mod = createMod(makeConfig());
+    expect(() =>
+      mod.patchTechnology(vanilla.definition("technology", "tech_gene_forging"), () => ({
+        name: { english: "Chimeric Forging", key: "chimeric" },
+      }))
+    ).toThrow(
+      'The patched "name" of technology "tech_gene_forging" sets "key", but its localization ' +
+        'key is always "tech_gene_forging"'
     );
   });
 });

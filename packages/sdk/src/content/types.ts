@@ -1,6 +1,7 @@
 /**
  * Consumer-facing contracts shared by generated content registries and the generic lowerer.
  */
+import type { LocalizedText } from "../authoring/localization.ts";
 import type { ContentReferenceName, ContentTypeName } from "../generated/content-registry.ts";
 import type { ScopeObjOf } from "../generated/effects.ts";
 import type {
@@ -217,7 +218,7 @@ export type EconomicResourceBlockNoProduce<S extends ScopeName> = Omit<
  * The `complex_maths_enum` operations `modifier_rule.cwt:1-3` allows directly
  * alongside `base`, sibling to the `modifier`/`complex_trigger_modifier` rows
  * rather than inside one of them — the same measured member set {@link
- * Modifier} carries at row level, minus `desc`/`descKey`/`when` which only
+ * Modifier} carries at row level, minus `desc`/`when` which only
  * make sense on a gated row. `Omit` rather than a hand-kept duplicate, so a
  * future change to `Modifier`'s numeric arms flows through here automatically,
  * the same reasoning as {@link EconomicResourceBlockNoProduce}.
@@ -227,12 +228,8 @@ export type EconomicResourceBlockNoProduce<S extends ScopeName> = Omit<
  * a top-level `factor` rather than `base`, and across all `ai_weight` blocks
  * under `common/`, top-level `weight` (2,255) outnumbers `base` (848).
  */
-export type WeightBlockOperations<S extends ScopeName> = Omit<
-  Modifier<S>,
-  "desc" | "descKey" | "when"
-> & {
+export type WeightBlockOperations<S extends ScopeName> = Omit<Modifier<S>, "desc" | "when"> & {
   readonly desc?: never;
-  readonly descKey?: never;
   readonly when?: never;
 };
 
@@ -422,8 +419,8 @@ export type WithFrom<T, S extends ScopeName, Context extends AmbientScopeContext
 export interface TriggeredDescription<S extends ScopeName> {
   /** Condition under which this description is selected. */
   readonly trigger?: Trigger<S>;
-  /** English text emitted as one or more repeated `text` entries. */
-  readonly text?: string | readonly string[];
+  /** Display text emitted as one or more repeated `text` entries. */
+  readonly text?: LocalizedText | readonly LocalizedText[];
 }
 
 /**

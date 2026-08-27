@@ -40,7 +40,7 @@ const patternEmerges = events.country(1, {
   immediate: (country) => {
     country.run(giveTechOptionOrProgressEffect({ TECH: observatoryNetworks }));
   },
-  options: [{ name: "Follow every thread.", key: "follow_every_thread" }],
+  options: [{ name: { english: "Follow every thread.", key: "follow_every_thread" } }],
 });
 
 export default mod.compile([

@@ -2,6 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/council_agendas.cwt
 
+import type { LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { EffectBlock, ModifierClosure, WeightBlock } from "../content/types.ts";
@@ -14,10 +15,16 @@ import type { StaticModifierRef } from "./refs.ts";
  * Generated from `type[agenda]` at `game/common/council_agendas`.
  */
 export interface AgendaFields {
-  /** English text emitted to localization under `council_agenda_<id>_name`. */
-  name: string;
-  /** English text emitted to localization under `council_agenda_<id>_desc`. */
-  desc?: string;
+  /**
+   * Display text emitted to localization under `council_agenda_<id>_name`.
+   * A bare string is the English shorthand.
+   */
+  name: LocalizedText;
+  /**
+   * Display text emitted to localization under `council_agenda_<id>_desc`.
+   * A bare string is the English shorthand.
+   */
+  desc?: LocalizedText;
   agendaCost: ScriptValue;
   agendaCooldown?: ScriptValue;
   potential?: Trigger<"country">;

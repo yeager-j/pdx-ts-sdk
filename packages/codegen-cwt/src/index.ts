@@ -800,6 +800,7 @@ async function writeEventModules(input: EventModuleInput): Promise<EventModuleEm
       'import { assertEventNumber, buildEvent } from "../events/lower.ts";\n' +
       'import type { EventDef, EventItem, EventRef } from "../events/types.ts";\n' +
       'import type { AmbientScopeContext } from "../script/effects/types.ts";\n' +
+      'import type { KeyedLocalization } from "../authoring/localization.ts";\n' +
       'import { assertNamespace } from "../authoring/feature.ts";\n' +
       'import { EVENT_KINDS, type EventKindKey } from "./events.ts";\n' +
       'import type { ScopeName } from "./scopes.ts";\n\n' +

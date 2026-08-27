@@ -137,8 +137,8 @@ describe("event definitions in a namespace", () => {
       desc: "A description.",
       isTriggeredOnly: true,
       options: [
-        { name: "First.", key: "a" },
-        { name: "Second.", key: "b" },
+        { name: { english: "First.", key: "a" } },
+        { name: { english: "Second.", key: "b" } },
       ],
     });
     const loc = render(mod.compile([mod.feature("events", [titled])])).get(
@@ -174,12 +174,11 @@ describe("event definitions in a namespace", () => {
       isTriggeredOnly: true,
       options: [
         {
-          name: "A changing caption.",
-          key: "accept_quest",
+          name: { english: "A changing caption.", key: "accept_quest" },
           icon: { icon: "GFX_option", text: "Icon caption." },
           responseText: "Response caption.",
           aiChance: {
-            modifiers: [{ factor: 2, desc: "AI tooltip.", descKey: "ai_tooltip" }],
+            modifiers: [{ factor: 2, desc: { english: "AI tooltip.", key: "ai_tooltip" } }],
           },
         },
       ],
@@ -213,11 +212,11 @@ describe("event definitions in a namespace", () => {
     const events = makeEvents();
     const before = events.country(204, {
       isTriggeredOnly: true,
-      options: [{ name: "Original", key: "2a" }],
+      options: [{ name: { english: "Original", key: "2a" } }],
     });
     const after = events.country(204, {
       isTriggeredOnly: true,
-      options: [{ name: "Renamed", key: "2a" }],
+      options: [{ name: { english: "Renamed", key: "2a" } }],
     });
     const keyFor = (item: typeof before) =>
       render(mod.compile([mod.feature("events", [item])]))
@@ -232,7 +231,7 @@ describe("event definitions in a namespace", () => {
     expect(() =>
       events.country(203, {
         isTriggeredOnly: true,
-        options: [{ name: "Unsafe", key: "not safe" }],
+        options: [{ name: { english: "Unsafe", key: "not safe" } }],
       })
     ).toThrow('Localization key suffix "not safe"');
   });
@@ -434,8 +433,7 @@ describe("event definitions in a namespace", () => {
       },
       options: [
         {
-          name: "Open FROM here too.",
-          key: "from_option",
+          name: { english: "Open FROM here too.", key: "from_option" },
           effects: (country, ctx) => {
             ctx.from.effects((planet) => planet.log("option"));
           },

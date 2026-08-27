@@ -3,6 +3,7 @@
 // From: events/events.cwt
 
 import { assertNamespace } from "../authoring/feature.ts";
+import type { KeyedLocalization } from "../authoring/localization.ts";
 import { assertEventNumber, buildEvent } from "../events/lower.ts";
 import type { EventDef, EventItem, EventRef } from "../events/types.ts";
 import type { AmbientScopeContext } from "../script/effects/types.ts";
@@ -210,9 +211,9 @@ export function namespace(ns: string): EventNamespace {
         throw new Error(`Duplicate event id "${ns}.${def.id}"`);
       }
       used.add(def.id);
-      const locEntries: (readonly [string, string])[] = [];
+      const locEntries: KeyedLocalization[] = [];
       const built = buildEvent(kind, scope, ns, def, {
-        register: (key, text) => locEntries.push([key, text]),
+        register: (key, translations) => locEntries.push({ key, translations }),
       });
       const item = { ...built, itemKind: "event" as const, namespace: ns, locEntries };
       return item as EventItem<S, Context, (typeof EVENT_KINDS)[K]["subtype"]>;

@@ -42,8 +42,7 @@ export const resonanceTheory = events.ship(1, {
   isTriggeredOnly: true,
   options: [
     {
-      name: "PLACEHOLDER: acknowledge it.",
-      key: "acknowledge",
+      name: { english: "PLACEHOLDER: acknowledge it.", key: "acknowledge" },
       effects: (ship) => {
         // `ship` is this event's root scope, and the kind is what fixed it.
         // `setShipFlag` is in scope here; the other three scopes' flag

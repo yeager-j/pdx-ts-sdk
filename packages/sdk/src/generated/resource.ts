@@ -2,6 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/strategic_resources.cwt
 
+import type { LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { WeightBlock } from "../content/types.ts";
@@ -14,10 +15,16 @@ import type { SituationTypeRef, StaticModifierRef, TechnologyRef } from "./refs.
  * Generated from `type[resource]` at `game/common/strategic_resources`.
  */
 export interface ResourceFields {
-  /** English text emitted to localization under `<id>`. */
-  name?: string;
-  /** English text emitted to localization under `<id>_desc`. */
-  desc?: string;
+  /**
+   * Display text emitted to localization under `<id>`.
+   * A bare string is the English shorthand.
+   */
+  name?: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_desc`.
+   * A bare string is the English shorthand.
+   */
+  desc?: LocalizedText;
   /** Whether the resource participates in resource-trading behavior. */
   tradable?: boolean;
   /** Built-in resource group the game uses for this definition. */

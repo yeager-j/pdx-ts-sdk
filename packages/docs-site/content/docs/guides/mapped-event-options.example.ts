@@ -117,8 +117,7 @@ const chooseResponse = events.country(1, {
   isTriggeredOnly: true,
   options: EMPIRE_KINDS.flatMap((kind) =>
     OPTIONS_BY_EMPIRE[kind].map(({ key, name, resource, amount }) => ({
-      key: `${kind}_${key}`,
-      name,
+      name: { english: name, key: `${kind}_${key}` },
       trigger: EMPIRE_CONDITION[kind],
       effects: (country) => {
         country.addResource({ resource, amount });

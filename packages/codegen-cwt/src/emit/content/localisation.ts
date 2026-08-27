@@ -157,9 +157,12 @@ export function localisationMembers(
       const pattern = entry.pattern.replace("$", "<id>");
       return renderMember({
         name: field,
-        type: "string",
+        type: emitter.use("LocalizedText"),
         optional: !required,
-        docs: [`English text emitted to localization under \`${pattern}\`.`],
+        docs: [
+          `Display text emitted to localization under \`${pattern}\`.`,
+          "A bare string is the English shorthand.",
+        ],
       });
     })
     .join("");

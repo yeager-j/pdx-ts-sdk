@@ -2,6 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/traditions.cwt
 
+import type { LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { WeightBlock } from "../content/types.ts";
@@ -30,10 +31,16 @@ export const TRADITION_CATEGORY_DESC_FIELDS: readonly ContentField[] = [
  * Generated from `type[tradition_category]` at `game/common/tradition_categories`.
  */
 export interface TraditionCategoryFields {
-  /** English text emitted to localization under `<id>`. */
-  name: string;
-  /** English text emitted to localization under `<id>_desc`. */
-  desc?: string;
+  /**
+   * Display text emitted to localization under `<id>`.
+   * A bare string is the English shorthand.
+   */
+  name: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_desc`.
+   * A bare string is the English shorthand.
+   */
+  desc?: LocalizedText;
   conditionalDesc?: TraditionCategoryDesc[];
   treeTemplate: string;
   adoptionBonus: TraditionRef | string;

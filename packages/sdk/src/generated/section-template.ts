@@ -2,6 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/section_templates.cwt
 
+import type { LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { EconomicResourceBlock, ModifierClosure, WeightBlock } from "../content/types.ts";
@@ -80,8 +81,11 @@ export const SECTION_TEMPLATE_COMPONENT_SLOT_FIELDS: readonly ContentField[] = [
  * Generated from `type[section_template]` at `game/common/section_templates`.
  */
 export interface SectionTemplateFields {
-  /** English text emitted to localization under `<id>`. */
-  name?: string;
+  /**
+   * Display text emitted to localization under `<id>`.
+   * A bare string is the English shorthand.
+   */
+  name?: LocalizedText;
   shipSize?: (ShipSizeRef | string)[];
   fitsOnSlot?: SectionSlot[];
   entity: ModelEntityRef | string;

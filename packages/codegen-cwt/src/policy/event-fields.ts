@@ -66,17 +66,17 @@ const partial = (
 
 const EVENT_FIELD_POLICY: readonly EventFieldPolicyEntry[] = [
   supported("id", "scalar 1..1", "id", "number", "numeric id within the event namespace", true),
-  supported("title", "scalar 0..1 | scalar 1..1", "title", "string", "localized title"),
+  supported("title", "scalar 0..1 | scalar 1..1", "title", "LocalizedText", "localized title"),
   {
     ...supported(
       "desc",
       "block 0..inf {exclusive_trigger, show_sound, text, trigger} | scalar 0..1 | scalar 1..1",
       "desc",
-      "string",
+      "LocalizedText",
       "one scalar plus the complete repeated conditional-description block"
     ),
     members: [
-      { member: "desc", type: "string" },
+      { member: "desc", type: "LocalizedText" },
       { member: "conditionalDesc", type: "readonly EventTriggeredDescription<S>[]" },
     ],
   },
@@ -84,10 +84,16 @@ const EVENT_FIELD_POLICY: readonly EventFieldPolicyEntry[] = [
     "diplomatic_title",
     "scalar 0..1",
     "diplomaticTitle",
-    "string",
+    "LocalizedText",
     "diplomatic-screen title"
   ),
-  supported("message_desc", "scalar 0..1", "messageDesc", "string", "message-feed description"),
+  supported(
+    "message_desc",
+    "scalar 0..1",
+    "messageDesc",
+    "LocalizedText",
+    "message-feed description"
+  ),
   partial(
     "picture",
     "block 0..inf {picture, trigger} | scalar 0..0 | scalar 0..inf | scalar 1..inf",
@@ -329,7 +335,7 @@ const OPTION_FIELD_POLICY: readonly EventFieldPolicyEntry[] = [
     "name",
     "block 1..inf {exclusive_trigger, text} | block 1..inf {text, trigger} | scalar 1..inf",
     "name",
-    "string",
+    "LocalizedText",
     "one localized scalar name arm",
     ["repeated scalar names", "triggered name blocks"],
     true
@@ -370,7 +376,13 @@ const OPTION_FIELD_POLICY: readonly EventFieldPolicyEntry[] = [
     "AiChance<S>",
     "modifier-rule AI weighting"
   ),
-  supported("response_text", "scalar 0..1", "responseText", "string", "localized response text"),
+  supported(
+    "response_text",
+    "scalar 0..1",
+    "responseText",
+    "LocalizedText",
+    "localized response text"
+  ),
   supported("is_dialog_only", "scalar 0..1", "isDialogOnly", "boolean", "dialog-only flag"),
   supported(
     "hide_option_if_not_allowed",
@@ -598,7 +610,8 @@ export function emitEventFieldProtocol(policy: ReturnType<typeof createEventFiel
     'import type { ScopeName } from "./scopes.ts";\n' +
     'import type { AmbientScopeContext, ScriptCtx } from "../script/effects/types.ts";\n' +
     'import type { Trigger } from "../script/trigger-core.ts";\n' +
-    'import type { AiChance, EventBodyContext, EventLocation, EventOption, EventOptionIcon, EventSituation, EventTriggeredDescription, EventWindowType, MeanTimeToHappen, WeightMultiplier } from "../events/types.ts";\n\n' +
+    'import type { AiChance, EventBodyContext, EventLocation, EventOption, EventOptionIcon, EventSituation, EventTriggeredDescription, EventWindowType, MeanTimeToHappen, WeightMultiplier } from "../events/types.ts";\n' +
+    'import type { LocalizedText } from "../authoring/localization.ts";\n\n' +
     "type EventEffect<S extends ScopeName, Context extends AmbientScopeContext> = (scope: ScopeObjOf<S>, ctx: ScriptCtx<S, EventBodyContext<S, Context>>) => void;\n\n" +
     docComment(["Event authoring fields projected from the reviewed CWT support policy."]) +
     "export interface GeneratedEventFields<S extends ScopeName, Context extends AmbientScopeContext> {\n" +

@@ -227,8 +227,7 @@ function capabilityFeatures() {
       modifiers: [
         {
           mult: 1.5,
-          desc: "The probe is spreading.",
-          descKey: "probe_is_spreading",
+          desc: { english: "The probe is spreading.", key: "probe_is_spreading" },
           when: always(),
         },
       ],
@@ -249,7 +248,7 @@ function capabilityFeatures() {
         country.addResource({ resource: "influence", amount: 50 });
       });
     },
-    options: [{ name: "Noted.", key: "noted" }],
+    options: [{ name: { english: "Noted.", key: "noted" } }],
   });
   const hum = events.country(1, {
     title: "The Hum",
@@ -259,7 +258,7 @@ function capabilityFeatures() {
         planet.planetEvent({ id: aftershock, scopes: { from: ctx.root }, days: 30 });
       });
     },
-    options: [{ name: "Fascinating.", key: "fascinating" }],
+    options: [{ name: { english: "Fascinating.", key: "fascinating" } }],
   });
   const patch = capability.patchTechnology(
     vanilla.definition("technology", "tech_gene_forging").require("cost", "prerequisites"),
@@ -1116,7 +1115,7 @@ describe("content reference integrity", () => {
             planet.saveEventTargetAs(eventTarget<"planet">("pp_mod_storm_world"));
           });
         },
-        options: [{ name: "Noted.", key: "noted" }],
+        options: [{ name: { english: "Noted.", key: "noted" } }],
       }),
     ]);
     expect(buildInternal(CONFIG, [events]).warnings).toEqual([]);
@@ -1648,7 +1647,7 @@ tech_probe_zeta = {
         const event = events.country(10, {
           title: "Ten",
           isTriggeredOnly: true,
-          options: [{ name: "Noted.", key: "noted" }],
+          options: [{ name: { english: "Noted.", key: "noted" } }],
         });
         eventItems.push(event);
         hookItems.push(orderMod.on(onActions.onGameStartCountry, [event]));
@@ -1657,7 +1656,7 @@ tech_probe_zeta = {
         const event = events.country(2, {
           title: "Two",
           isTriggeredOnly: true,
-          options: [{ name: "Fascinating.", key: "fascinating" }],
+          options: [{ name: { english: "Fascinating.", key: "fascinating" } }],
         });
         eventItems.push(event);
         // A different hook, so the two registrations are hook-block ordering
@@ -1669,7 +1668,7 @@ tech_probe_zeta = {
           zetaNamespace.country(1, {
             title: "Zeta",
             isTriggeredOnly: true,
-            options: [{ name: "Noted.", key: "noted" }],
+            options: [{ name: { english: "Noted.", key: "noted" } }],
           })
         );
       },

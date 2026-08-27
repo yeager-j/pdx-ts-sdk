@@ -2,6 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/pop_jobs.cwt
 
+import type { LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type {
@@ -190,14 +191,26 @@ export const JOB_TRIGGERED_TAGS_FIELDS: readonly ContentField[] = [
  * Generated from `type[job]` at `game/common/pop_jobs`.
  */
 export interface JobFields {
-  /** English text emitted to localization under `job_<id>`. */
-  name: string;
-  /** English text emitted to localization under `job_<id>_plural`. */
-  plural?: string;
-  /** English text emitted to localization under `job_<id>_desc`. */
-  desc?: string;
-  /** English text emitted to localization under `job_<id>_effect_desc`. */
-  effect?: string;
+  /**
+   * Display text emitted to localization under `job_<id>`.
+   * A bare string is the English shorthand.
+   */
+  name: LocalizedText;
+  /**
+   * Display text emitted to localization under `job_<id>_plural`.
+   * A bare string is the English shorthand.
+   */
+  plural?: LocalizedText;
+  /**
+   * Display text emitted to localization under `job_<id>_desc`.
+   * A bare string is the English shorthand.
+   */
+  desc?: LocalizedText;
+  /**
+   * Display text emitted to localization under `job_<id>_effect_desc`.
+   * A bare string is the English shorthand.
+   */
+  effect?: LocalizedText;
   category?: PopCategoryRef | string;
   /** default: no? */
   firstComeFirstServed?: boolean;

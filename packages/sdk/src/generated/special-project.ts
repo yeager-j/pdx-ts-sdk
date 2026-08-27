@@ -2,6 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/special_projects.cwt
 
+import type { LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { EffectBlock, WeightBlock, WithFrom } from "../content/types.ts";
@@ -280,10 +281,16 @@ export interface SpecialProjectFieldsBase<
    * call sites stay unchecked.
    */
   locationScope?: L;
-  /** English text emitted to localization under `<id>`. */
-  name?: string;
-  /** English text emitted to localization under `<id>_DESC`. */
-  desc?: string;
+  /**
+   * Display text emitted to localization under `<id>`.
+   * A bare string is the English shorthand.
+   */
+  name?: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_DESC`.
+   * A bare string is the English shorthand.
+   */
+  desc?: LocalizedText;
   eventChain?: EventChainRef | string;
   cost?: number | WeightBlock<"country">;
   energy?: number;

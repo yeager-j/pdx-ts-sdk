@@ -255,8 +255,10 @@ function starterCall(names: DerivedNames, projects: Projects): string {
     "  },",
     "  options: [",
     "    {",
-    `      name: ${quoteTs("PLACEHOLDER: the option that takes the quest on.")},`,
-    '      key: "accept_quest",',
+    "      name: {",
+    `        english: ${quoteTs("PLACEHOLDER: the option that takes the quest on.")},`,
+    '        key: "accept_quest",',
+    "      },",
     "      effects: (country) => {",
     ...enable,
     "      },",
@@ -281,7 +283,7 @@ function completionCalls(names: DerivedNames, projects: Projects): readonly stri
       "  immediate: (country) => {",
       "    country.endEventChain(chain);",
       "  },",
-      `  options: [{ name: ${quoteTs("PLACEHOLDER: acknowledge it.")}, key: "acknowledge" }],`,
+      `  options: [{ name: { english: ${quoteTs("PLACEHOLDER: acknowledge it.")}, key: "acknowledge" } }],`,
       "});",
     ].join("\n");
   if (projects === "one") {

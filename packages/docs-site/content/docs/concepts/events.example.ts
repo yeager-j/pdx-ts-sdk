@@ -23,7 +23,7 @@ const aftershock = events.planet(2, {
       country.addResource({ resource: "influence", amount: 50 });
     });
   },
-  options: [{ name: "Record the harmonic.", key: "record_harmonic" }],
+  options: [{ name: { english: "Record the harmonic.", key: "record_harmonic" } }],
 });
 
 const signalDetected = events.country(1, {
@@ -34,8 +34,7 @@ const signalDetected = events.country(1, {
   isTriggeredOnly: true,
   options: [
     {
-      name: "Trace it to the source.",
-      key: "trace_source",
+      name: { english: "Trace it to the source.", key: "trace_source" },
       effects: (country, ctx) => {
         country.randomOwnedPlanet({ limit: hasOwner() }, (planet) => {
           planet.saveEventTargetAs(signalWorld);

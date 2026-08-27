@@ -2,6 +2,11 @@
 
 import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
 
+import {
+  resolveFixedKeyText,
+  resolveLocalizedText,
+  type LocalizedText,
+} from "../authoring/localization.ts";
 import type { ModWarning } from "../diagnostics.ts";
 import type { EventKindKey } from "../generated/events.ts";
 import type { ScopeName } from "../generated/scopes.ts";
@@ -13,12 +18,7 @@ import {
   registerModifierDescKey,
 } from "../script/effects/modifiers.ts";
 import { recordEffects, withScriptCtx } from "../script/effects/recorder.ts";
-import type {
-  AmbientScopeContext,
-  Modifier,
-  ModifierWithLoc,
-  ScriptCtx,
-} from "../script/effects/types.ts";
+import type { AmbientScopeContext, Modifier, ScriptCtx } from "../script/effects/types.ts";
 import { refId } from "../script/scalar.ts";
 import type { DefinedEvent, EventBodyContext, EventDef, LocSink } from "./types.ts";
 
@@ -75,18 +75,45 @@ function registerModifierDescs<S extends ScopeName>(
     if (modifier.desc === undefined) {
       return;
     }
-    const { key, unstableWarning } = modifierDescKey(
+    const { key, translations, unstableWarning } = modifierDescKey(
       ownerId,
       fieldPath,
-      modifier as ModifierWithLoc<ScopeName>
+      modifier.desc
     );
-    loc.register(key, modifier.desc);
+    loc.register(key, translations);
     registerModifierDescKey(modifier as Modifier<ScopeName>, ownerKey, key);
     if (unstableWarning !== undefined) {
       warnings.push({ code: "unstable-desc-key", message: unstableWarning });
     }
   });
   return ownerKey;
+}
+
+/**
+ * A conditional description's `text` as the list of entries it emits.
+ *
+ * The member takes one text or several, and a language record is itself an
+ * object, so the arms are told apart by `Array.isArray` rather than by
+ * "not a string".
+ */
+function conditionalDescTexts(
+  text: LocalizedText | readonly LocalizedText[] | undefined
+): readonly LocalizedText[] {
+  if (text === undefined) {
+    return [];
+  }
+  return Array.isArray(text) ? (text as readonly LocalizedText[]) : [text as LocalizedText];
+}
+
+/**
+ * Registers one text slot whose localization key the event's own id fixes.
+ *
+ * Every slot below is keyed off `<event id>.<slot>`, so a `key` pin on the
+ * text would name a key nothing reads; `resolveFixedKeyText` says so rather
+ * than dropping it. `position` names the slot in that refusal.
+ */
+function registerEventText(loc: LocSink, key: string, text: LocalizedText, position: string): void {
+  loc.register(key, resolveFixedKeyText(text, position, key));
 }
 
 /**
@@ -145,11 +172,11 @@ function lowerEvent<S extends ScopeName, Context extends AmbientScopeContext>(
 
   const entries: PdxEntry[] = [kv("id", id)];
   if (def.title !== undefined) {
-    loc.register(`${id}.name`, def.title);
+    registerEventText(loc, `${id}.name`, def.title, `Event "${id}" title`);
     entries.push(kv("title", `${id}.name`));
   }
   if (def.desc !== undefined) {
-    loc.register(`${id}.desc`, def.desc);
+    registerEventText(loc, `${id}.desc`, def.desc, `Event "${id}" desc`);
     entries.push(kv("desc", `${id}.desc`));
   }
   let descriptionTextIndex = def.desc === undefined ? 0 : 1;
@@ -166,12 +193,11 @@ function lowerEvent<S extends ScopeName, Context extends AmbientScopeContext>(
       );
       refs.push(...underField(description.exclusiveTrigger.refs, `${where}.exclusive_trigger`));
     }
-    const texts =
-      typeof description.text === "string" ? [description.text] : (description.text ?? []);
+    const texts = conditionalDescTexts(description.text);
     for (const text of texts) {
       const key = descriptionTextIndex === 0 ? `${id}.desc` : `${id}.desc.${descriptionTextIndex}`;
       descriptionTextIndex += 1;
-      loc.register(key, text);
+      registerEventText(loc, key, text, `Event "${id}" ${where} text`);
       descriptionEntries.push(kv("text", key));
     }
     if (description.showSound !== undefined) {
@@ -180,12 +206,14 @@ function lowerEvent<S extends ScopeName, Context extends AmbientScopeContext>(
     entries.push(block("desc", descriptionEntries));
   });
   if (def.diplomaticTitle !== undefined) {
-    loc.register(`${id}.diplomatic_title`, def.diplomaticTitle);
-    entries.push(kv("diplomatic_title", `${id}.diplomatic_title`));
+    const key = `${id}.diplomatic_title`;
+    registerEventText(loc, key, def.diplomaticTitle, `Event "${id}" diplomaticTitle`);
+    entries.push(kv("diplomatic_title", key));
   }
   if (def.messageDesc !== undefined) {
-    loc.register(`${id}.message_desc`, def.messageDesc);
-    entries.push(kv("message_desc", `${id}.message_desc`));
+    const key = `${id}.message_desc`;
+    registerEventText(loc, key, def.messageDesc, `Event "${id}" messageDesc`);
+    entries.push(kv("message_desc", key));
   }
   if (def.picture !== undefined) {
     entries.push(kv("picture", refId(def.picture)));
@@ -337,17 +365,19 @@ function lowerEvent<S extends ScopeName, Context extends AmbientScopeContext>(
     refs.push(...underField(recorded, "after"));
   }
   (def.options ?? []).forEach((option, index) => {
-    const optionSuffix = localizationSuffix(option.name, option.key);
+    const name = resolveLocalizedText(option.name);
+    const optionSuffix = localizationSuffix(name.translations.english, name.key);
     const optionKey = `${id}.${optionSuffix.suffix}`;
     if (optionSuffix.usedFallback) {
       warnings.push({
         code: "unstable-option-key",
         message:
           `Event option "${id}[${index}]" has no key; its localization key uses a hash of the ` +
-          "option name and will change if that text is edited. Set key to pin a stable key.",
+          "English option name and will change if that text is edited. Set name.key to pin a " +
+          "stable key.",
       });
     }
-    loc.register(optionKey, option.name);
+    loc.register(optionKey, name.translations);
     const optionEntries: PdxEntry[] = [kv("name", optionKey)];
     const where = `option[${index}]`;
     if (option.icon !== undefined) {
@@ -357,7 +387,7 @@ function lowerEvent<S extends ScopeName, Context extends AmbientScopeContext>(
       }
       if (option.icon.text !== undefined) {
         const textKey = `${optionKey}.icon`;
-        loc.register(textKey, option.icon.text);
+        registerEventText(loc, textKey, option.icon.text, `Event "${id}" ${where} icon text`);
         iconEntries.push(kv("text", textKey));
       }
       optionEntries.push(block("icon", iconEntries));
@@ -398,7 +428,12 @@ function lowerEvent<S extends ScopeName, Context extends AmbientScopeContext>(
     }
     if (option.responseText !== undefined) {
       const responseKey = `${optionKey}.response`;
-      loc.register(responseKey, option.responseText);
+      registerEventText(
+        loc,
+        responseKey,
+        option.responseText,
+        `Event "${id}" ${where} responseText`
+      );
       optionEntries.push(kv("response_text", responseKey));
     }
     if (option.isDialogOnly === true) {

@@ -2,6 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/components.cwt
 
+import type { LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { SpriteRef } from "./refs.ts";
@@ -11,14 +12,26 @@ import type { SpriteRef } from "./refs.ts";
  * Generated from `type[component_set]` at `game/common/component_sets`.
  */
 export interface ComponentSetFields {
-  /** English text emitted to localization under `<id>`. */
-  name?: string;
-  /** English text emitted to localization under `<id>_DESC`. */
-  desc?: string;
-  /** English text emitted to localization under `ship_<id>_DESC`. */
-  shipDesc?: string;
-  /** English text emitted to localization under `station_<id>_DESC`. */
-  stationDesc?: string;
+  /**
+   * Display text emitted to localization under `<id>`.
+   * A bare string is the English shorthand.
+   */
+  name?: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_DESC`.
+   * A bare string is the English shorthand.
+   */
+  desc?: LocalizedText;
+  /**
+   * Display text emitted to localization under `ship_<id>_DESC`.
+   * A bare string is the English shorthand.
+   */
+  shipDesc?: LocalizedText;
+  /**
+   * Display text emitted to localization under `station_<id>_DESC`.
+   * A bare string is the English shorthand.
+   */
+  stationDesc?: LocalizedText;
   requiredComponentSet?: boolean;
   isCoreComponentSet?: boolean;
   isSpaceFaunaComponentSet?: boolean;

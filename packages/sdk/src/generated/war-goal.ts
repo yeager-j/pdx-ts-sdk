@@ -2,6 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/casus_belli_and_war_goals.cwt
 
+import type { LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { EffectBlock, WeightBlock, WithFrom } from "../content/types.ts";
@@ -47,10 +48,16 @@ export const WAR_GOAL_FORBIDDEN_PEACE_OFFERS_FIELDS: readonly ContentField[] = [
  * Generated from `type[war_goal]` at `game/common/war_goals`.
  */
 export interface WarGoalFields {
-  /** English text emitted to localization under `war_goal_<id>`. */
-  name: string;
-  /** English text emitted to localization under `war_goal_<id>_desc`. */
-  desc?: string;
+  /**
+   * Display text emitted to localization under `war_goal_<id>`.
+   * A bare string is the English shorthand.
+   */
+  name: LocalizedText;
+  /**
+   * Display text emitted to localization under `war_goal_<id>_desc`.
+   * A bare string is the English shorthand.
+   */
+  desc?: LocalizedText;
   casusBelli: CasusBelliRef | string;
   proxyWarsOnly?: boolean;
   hide?: WarGoalHide;

@@ -2,6 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/situations.cwt
 
+import type { LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type {
@@ -102,10 +103,16 @@ export const SITUATION_TYPE_ON_MONTHLY_FIELDS: readonly ContentField[] = [
 ];
 
 export interface SituationApproachFields {
-  /** English text emitted to localization under `<id>`. */
-  name: string;
-  /** English text emitted to localization under `<id>_desc`. */
-  desc?: string;
+  /**
+   * Display text emitted to localization under `<id>`.
+   * A bare string is the English shorthand.
+   */
+  name: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_desc`.
+   * A bare string is the English shorthand.
+   */
+  desc?: LocalizedText;
   icon: SpriteRef | string;
   iconBackground: SpriteRef | string;
   default?: true;
@@ -196,10 +203,16 @@ export const SITUATION_APPROACH_LOCALISATION: readonly ContentLocalisation[] = [
 ];
 
 export interface SituationStageFields {
-  /** English text emitted to localization under `<id>`. */
-  name: string;
-  /** English text emitted to localization under `<id>_desc`. */
-  desc?: string;
+  /**
+   * Display text emitted to localization under `<id>`.
+   * A bare string is the English shorthand.
+   */
+  name: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_desc`.
+   * A bare string is the English shorthand.
+   */
+  desc?: LocalizedText;
   /** Only when SituationStage subtype not `dynamic_progress` applies. */
   end?: ScriptValue | WeightBlock<"situation">;
   /** Only when SituationStage subtype `dynamic_progress` applies. */
@@ -313,12 +326,21 @@ export const SITUATION_STAGE_LOCALISATION: readonly ContentLocalisation[] = [
  * Generated from `type[situation_type]` at `game/common/situations`.
  */
 export interface SituationTypeFields {
-  /** English text emitted to localization under `<id>`. */
-  name: string;
-  /** English text emitted to localization under `<id>_type`. */
-  typeName?: string;
-  /** English text emitted to localization under `<id>_desc`. */
-  desc?: string;
+  /**
+   * Display text emitted to localization under `<id>`.
+   * A bare string is the English shorthand.
+   */
+  name: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_type`.
+   * A bare string is the English shorthand.
+   */
+  typeName?: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_desc`.
+   * A bare string is the English shorthand.
+   */
+  desc?: LocalizedText;
   picture?: (SpriteRef | string)[];
   category?: SituationCategory;
   situationLogCategory?: SituationLogCategoryRef | string;

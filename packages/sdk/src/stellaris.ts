@@ -18,6 +18,7 @@ export {
   type AsteroidBeltInput,
 } from "./solar-system-layout.ts";
 export type { ScopeName } from "./generated/scopes.ts";
+export type { LocalizedText, LocalizedTextRecord } from "./authoring/localization.ts";
 export * from "./generated/enums.ts";
 export { refId, type TypedRef } from "./script/scalar.ts";
 export * from "./generated/refs.ts";

@@ -2,6 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/governments.cwt
 
+import type { LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { ModifierClosure, TriggeredModifier, WeightBlock } from "../content/types.ts";
@@ -14,10 +15,16 @@ import type { ClimateLabel } from "./value-sets.ts";
  * Generated from `type[councilor]` at `game/common/governments/councilors`.
  */
 export interface CouncilorFields {
-  /** English text emitted to localization under `<id>`. */
-  name: string;
-  /** English text emitted to localization under `<id>_desc`. */
-  desc?: string;
+  /**
+   * Display text emitted to localization under `<id>`.
+   * A bare string is the English shorthand.
+   */
+  name: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_desc`.
+   * A bare string is the English shorthand.
+   */
+  desc?: LocalizedText;
   /** Which leader classes can have this council position. Currently only used for the Recruit new Leader buttons. Default = none. */
   leaderClass: (LeaderClassRef | string)[];
   /** Country scope triggers to evaluate if the council position is allowed. */

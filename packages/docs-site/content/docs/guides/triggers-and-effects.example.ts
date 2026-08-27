@@ -38,7 +38,7 @@ const humReturns = events.country(1, {
       })
       .else(() => country.log("the hum went unheard"));
   },
-  options: [{ name: "Fascinating.", key: "fascinating" }],
+  options: [{ name: { english: "Fascinating.", key: "fascinating" } }],
 });
 
 export default mod.compile([mod.feature("resonance", [resonanceWeapons, humReturns])]);

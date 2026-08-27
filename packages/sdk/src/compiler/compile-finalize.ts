@@ -1,4 +1,3 @@
-import { LOCALIZATION_LANGUAGES } from "../authoring/localization.ts";
 import {
   checkVanillaPackagePin,
   installedVanillaPackageVersion,
@@ -17,6 +16,7 @@ import type { CompiledContent } from "./compile-content.ts";
 import type { CompiledEvents } from "./compile-events.ts";
 import { stemsOf, type BuildSession } from "./compile-session.ts";
 import { freezeItems, immutableSet } from "./freeze.ts";
+import { registerLocalization } from "./localization.ts";
 import type { ComponentTagFile, PureMod } from "./model.ts";
 import { collectPatches, planPatches } from "./patches.ts";
 import {
@@ -164,34 +164,17 @@ function registerFinalLocalization(
   );
   for (const patched of locOrderedPatches) {
     session.warnings.push(...patched.warnings);
-    session.localization.register({
-      layer: "ordinary",
-      language: "english",
-      stem: patchStem.get(patched),
-      entries: patched.loc,
-    });
-    session.localization.register({
-      layer: "replace",
-      language: "english",
-      stem: patchStem.get(patched),
-      entries: patched.replaceLoc,
-    });
+    const stem = patchStem.get(patched);
+    registerLocalization(session.localization, { layer: "ordinary", stem }, patched.loc);
+    registerLocalization(session.localization, { layer: "replace", stem }, patched.replaceLoc);
   }
   for (const { item, stem } of session.flat) {
     if (item.itemKind !== "localization") {
       continue;
     }
-    for (const language of LOCALIZATION_LANGUAGES) {
-      const text = item.translations[language];
-      if (text !== undefined) {
-        session.localization.register({
-          layer: item.layer,
-          language,
-          stem,
-          entries: [[item.key, text]],
-        });
-      }
-    }
+    registerLocalization(session.localization, { layer: item.layer, stem }, [
+      { key: item.key, translations: item.translations },
+    ]);
   }
   return patchStem;
 }
@@ -409,7 +392,12 @@ function freezeEvents(events: CompiledEvents["orderedEvents"]): PureMod["events"
           )
         ),
         locEntries: Object.freeze(
-          event.locEntries.map(([key, text]) => Object.freeze([key, text] as const))
+          event.locEntries.map((entry) =>
+            Object.freeze({
+              key: entry.key,
+              translations: Object.freeze({ ...entry.translations }),
+            })
+          )
         ),
         warnings: Object.freeze(event.warnings.map((warning) => Object.freeze({ ...warning }))),
       })

@@ -1,6 +1,11 @@
 /** Content definition identity, localization, and authoring registration. */
 import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
 
+import {
+  resolveFixedKeyText,
+  type KeyedLocalization,
+  type LocalizedText,
+} from "../authoring/localization.ts";
 import type { ScopeName } from "../generated/scopes.ts";
 import type { AssetPathSink, ContentRefSink } from "../references.ts";
 import {
@@ -8,7 +13,6 @@ import {
   registerComplexTriggerModifierDescKey,
   registerModifierDescKey,
 } from "../script/effects/modifiers.ts";
-import type { ModifierWithLoc } from "../script/effects/types.ts";
 import type { TypedRef } from "../script/scalar.ts";
 import { isComplexTriggerModifier } from "./blocks.ts";
 import { dualArm, fieldEntries, resolveFromClosures } from "./lower.ts";
@@ -38,9 +42,7 @@ export interface DefinedContent<
 }
 
 type ContentDef = { readonly id: string };
-/** One `.yml` line's worth of localization, before any file is chosen for it. */
-export type LocalisationEntry = readonly [key: string, text: string];
-type RegisterLoc = (entries: readonly LocalisationEntry[]) => void;
+type RegisterLoc = (entries: readonly KeyedLocalization[]) => void;
 
 /**
  * Accumulates the reference sink, the dotted path to the current level (for
@@ -179,7 +181,7 @@ export class ContentAuthoring {
     // it in before either the .yml text or the body fields get collected, so
     // the two are never produced apart.
     const def = this.applySyntheticPointers(resolved, descriptor.localisation) as D;
-    const localisation: LocalisationEntry[] = [];
+    const localisation: KeyedLocalization[] = [];
     const nestedIds = new Map<string, Set<string>>();
     this.collectLocalisation(def.id, def, descriptor.localisation, localisation);
     this.collectRepeatedStructs(def.id, "", def, descriptor.fields, type, nestedIds, localisation);
@@ -291,7 +293,7 @@ export class ContentAuthoring {
     id: string,
     def: Readonly<Record<string, unknown>>,
     slots: readonly ContentLocalisation[],
-    into: LocalisationEntry[]
+    into: KeyedLocalization[]
   ): void {
     for (const slot of slots) {
       const text = def[slot.member];
@@ -302,7 +304,15 @@ export class ContentAuthoring {
         }
         continue;
       }
-      into.push([localisationKey(slot.pattern, id), text as string]);
+      const key = localisationKey(slot.pattern, id);
+      into.push({
+        key,
+        translations: resolveFixedKeyText(
+          text as LocalizedText,
+          `Localization "${slot.member}" for "${id}"`,
+          key
+        ),
+      });
     }
   }
 
@@ -327,7 +337,7 @@ export class ContentAuthoring {
     fields: readonly ContentField[],
     ownerType: string,
     pendingIds: Map<string, Set<string>>,
-    localisation: LocalisationEntry[]
+    localisation: KeyedLocalization[]
   ): void {
     for (const field of fields) {
       const raw = def[field.member];
@@ -432,14 +442,13 @@ export class ContentAuthoring {
    * Registers one localisation key per desc-bearing modifier row in a
    * `WeightBlock`. `Modifier` rows go through the shared derivation
    * `modifierDescKey` — see its doc comment in `script/effects/modifiers.ts` for the key
-   * shape, the `descKey`/hash-fallback split, and why the derivation lives
+   * shape, the key-pin/hash-fallback split, and why the derivation lives
    * there rather than here (`events.ts`'s `registerModifierDescs` is the
    * other caller).
    *
-   * `ComplexTriggerModifier` rows have no `descKey` field to pin against —
-   * `complex_trigger_modifier`'s own name/parameter pair is already the
-   * row's content-derived identity — so they key as
-   * `<ownerId>_<fieldPath>_<index>`, keeping every row on the field counted
+   * `ComplexTriggerModifier` rows take no key pin — `complex_trigger_modifier`'s
+   * own name/parameter pair is already the row's content-derived identity — so
+   * they key as `<ownerId>_<fieldPath>_<index>`, keeping every row on the field counted
    * (both kinds together) so a `Modifier` and a `ComplexTriggerModifier`
    * sharing one `modifiers` array never collide on the same key either.
    *
@@ -471,7 +480,7 @@ export class ContentAuthoring {
     fieldPath: string,
     fieldKey: string,
     weight: WeightBlock<ScopeName>,
-    into: LocalisationEntry[]
+    into: KeyedLocalization[]
   ): void {
     const ownerKey = `${ownerId}::${fieldKey}`;
     weight.modifiers?.forEach((row, index) => {
@@ -480,19 +489,22 @@ export class ContentAuthoring {
       }
       if (isComplexTriggerModifier(row)) {
         const key = `${ownerId}_${fieldPath}_${index}`;
-        into.push([key, row.desc]);
+        into.push({
+          key,
+          translations: resolveFixedKeyText(
+            row.desc,
+            `The complex trigger modifier desc on "${ownerId}" (${fieldPath}[${index}])`,
+            key
+          ),
+        });
         registerComplexTriggerModifierDescKey(row, ownerKey, key);
         return;
       }
-      const { key, unstableWarning } = modifierDescKey(
-        ownerId,
-        fieldPath,
-        row as ModifierWithLoc<ScopeName>
-      );
+      const { key, translations, unstableWarning } = modifierDescKey(ownerId, fieldPath, row.desc);
       if (unstableWarning !== undefined) {
         this.onUnstableDescKey(unstableWarning);
       }
-      into.push([key, row.desc]);
+      into.push({ key, translations });
       registerModifierDescKey(row, ownerKey, key);
     });
   }
