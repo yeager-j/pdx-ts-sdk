@@ -183,11 +183,18 @@ Do not use `replaceLocalization` only because a new mod-owned key needs exact
 spelling. Use `mod.localization(key, text, { prefix: false })` for that case so
 the entry remains in ordinary localization.
 
-A language record always carries `english`, so a replacement cannot ship a
-translation alone: the English text is emitted into the replace layer too, and
-it wins over the original English. To replace only the French text of a
-vanilla key, copy the vanilla English string into `english` so English games
-keep their original words.
+A replacement language record is partial: include only the languages whose text
+should change. Languages omitted from the record keep Vanilla's existing text,
+so replacing only the French text does not emit an English replacement:
+
+```ts
+const frenchOnly = mod.replaceLocalization("crisis.2010.a", {
+  french: "Réexaminez le signal.",
+});
+```
+
+A bare string remains shorthand for replacing English only. A language record
+must supply at least one language.
 
 Ordinary localization and replacement localization are separate layers. Even
 if they name the same key, the Fold keeps both files because the replacement

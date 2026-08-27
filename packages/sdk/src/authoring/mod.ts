@@ -73,6 +73,7 @@ import {
   localizationFor,
   type KeyedLocalization,
   type LocalizationMethod,
+  type LocalizationReplacementText,
   type LocalizationText,
   type ReplacementLocalizationItem,
 } from "./localization.ts";
@@ -182,10 +183,13 @@ export type ModCapability<P extends string, I extends IdProfile> = {
    * Use this for free-standing keys that a typed content patch cannot reach,
    * such as event option text. The returned item always emits through the
    * feature's `localisation/replace/` files.
+   *
+   * A bare string replaces English only. A language record may be partial, so
+   * languages it omits keep Vanilla's existing text.
    */
   replaceLocalization<const Key extends string>(
     key: Key,
-    text: LocalizationText
+    text: LocalizationReplacementText
   ): ReplacementLocalizationItem<P, Key>;
 } & ContentCapabilityMethods<P, I> &
   MissionCapabilityMethods<P, I> &
@@ -560,7 +564,7 @@ export function createMod<const P extends string, const I extends IdProfile>(
       return createComponentTagItem(capabilityOwner, config.prefix, name);
     },
     localization: localizationFor(config.prefix),
-    replaceLocalization: <const Key extends string>(key: Key, text: LocalizationText) =>
+    replaceLocalization: <const Key extends string>(key: Key, text: LocalizationReplacementText) =>
       createReplacementLocalizationItem(config.prefix, key, text),
   }) as ModCapability<P, I | typeof DEFAULT_ID_PROFILE>;
 }

@@ -39,6 +39,8 @@ export {
   LOCALIZATION_LANGUAGES,
   type LocalizationItem,
   type LocalizationLanguage,
+  type LocalizationReplacementText,
+  type LocalizationReplacements,
   type LocalizationText,
   type LocalizationTranslations,
   type LocalizedText,
