@@ -45,6 +45,8 @@ import {
   type CasusBelliRef,
   type ComponentTemplateRef,
   type ComponentTemplateUtilityComponentTemplateRef,
+  type CrisisCurrencyLocalization,
+  type CrisisCurrencyRole,
   type CrisisLevelDef,
   type CrisisLevelFields,
   type CrisisLevelItem,
@@ -142,6 +144,26 @@ const legacyCountryLimitMod = createMod(CONTENT_TYPES_CONFIG, {
 const originMod = createMod(CONTENT_TYPES_CONFIG, {
   ids: { ...defaultContentMod.ids, civicOrOrigin: "origin" },
 });
+/** Every required member of the crisis-currency family, and none of the optional one. */
+const crisisCurrencyText = {
+  name: "Crisis Currency:",
+  value: "$VAL|0$",
+  currentValue: "Current Value: $VALUE|0$",
+  gaining: "Complete Crisis Objectives to gain more.",
+  crisisObjective: "Crisis Objectives",
+  crisisObjectiveGained: "Crisis Currency gained",
+  crisisObjectiveProgress: "We have gained $AMOUNT$ from this Crisis Objective.",
+  crisisObjectiveReward: "$REWARD$",
+  crisisLevelLocked: "Required to unlock this level:",
+  crisisLevelUnlocked: "At $LEVEL$, you get the rewards:",
+  crisisLevelUnlock: "Has $CURRENCY$ Crisis Currency",
+  crisisLevelDesc: "Accumulate Crisis Currency to advance.",
+  crisisDescriptionTitle: "Test Crisis",
+  crisisDescription: "The galaxy will remember this.",
+  crisisHowtoTitle: "Ruin & Resolve",
+  crisisHowto: "Pursuing Crisis Objectives generates Crisis Currency.",
+} satisfies CrisisCurrencyLocalization;
+
 const SDK45_CONFIG = { name: "SDK-45 types", prefix: "sdk45", supportedVersion: "4.4.*" } as const;
 const defaultSdk45Mod = createMod(SDK45_CONFIG);
 const sdk45Mod = createMod(SDK45_CONFIG, {
@@ -164,7 +186,7 @@ describe("generated content authoring types", () => {
   });
 
   it("authors a complete player-crisis route with branded registry links", () => {
-    expectTypeOf<CrisisPathFields["crisisCurrency"]>().toEqualTypeOf<ResourceRef | string>();
+    expectTypeOf<CrisisPathFields["crisisCurrency"]>().toEqualTypeOf<CrisisCurrencyRole>();
     expectTypeOf<CrisisPathFields["levels"]>().toEqualTypeOf<(CrisisLevelRef | string)[]>();
     expectTypeOf<CrisisPathFields["objectives"]>().toEqualTypeOf<(CrisisObjectiveRef | string)[]>();
     expectTypeOf<CrisisLevelFields["perks"]>().toEqualTypeOf<(MenacePerkRef | string)[]>();
@@ -197,7 +219,7 @@ describe("generated content authoring types", () => {
       reward: { base: 10 },
     });
     const path = contentMod.crisisPath("player_crisis", {
-      crisisCurrency: currency,
+      crisisCurrency: { resource: currency, localization: crisisCurrencyText },
       levels: [level],
       objectives: [objective],
     });
@@ -266,7 +288,7 @@ describe("generated content authoring types", () => {
       onUnlock: () => {},
     });
     contentMod.crisisPath("wrong_objective", {
-      crisisCurrency: currency,
+      crisisCurrency: { resource: currency, localization: crisisCurrencyText },
       levels: [level],
       // @ts-expect-error — a crisis level is not a crisis objective
       objectives: [level],
@@ -278,6 +300,65 @@ describe("generated content authoring types", () => {
         country.activateCrisisProgression(level);
       },
     });
+  });
+
+  it("requires the Ambition UI text family from a mod-defined crisis currency", () => {
+    const currency = contentMod.resource("family_currency", {
+      name: "Family Currency",
+      category: "strategic",
+    });
+    const level = contentMod.crisisLevel("family_level", {
+      name: "Family Level",
+      requiredCrisisCurrency: 100,
+      perks: [],
+      onUnlock: () => {},
+    });
+    const objective = contentMod.crisisObjective("family_objective", {
+      name: "Family Objective",
+      reward: { base: 10 },
+    });
+    const lists = { levels: [level], objectives: [objective] };
+
+    contentMod.crisisPath("bare_owned_currency", {
+      // @ts-expect-error — vanilla ships no text for a resource this mod defines
+      crisisCurrency: currency,
+      ...lists,
+    });
+    contentMod.crisisPath("partial_family", {
+      // @ts-expect-error — a partial family shows raw keys through the Ambition UI
+      crisisCurrency: { resource: currency, localization: { name: "Family Currency:" } },
+      ...lists,
+    });
+
+    // Vanilla already defines `menace_*`, so its reference stands alone; the
+    // bundle stays legal over it for a mod that restates that text.
+    contentMod.crisisPath("vanilla_currency", {
+      crisisCurrency: vanilla.resource("menace"),
+      ...lists,
+    });
+    contentMod.crisisPath("vanilla_currency_retext", {
+      crisisCurrency: { resource: vanilla.resource("menace"), localization: crisisCurrencyText },
+      ...lists,
+    });
+    contentMod.crisisPath("foreign_currency", {
+      crisisCurrency: "other_mod_currency",
+      ...lists,
+    });
+    contentMod.crisisPath("with_intro", {
+      crisisCurrency: {
+        resource: currency,
+        localization: {
+          ...crisisCurrencyText,
+          crisisDescriptionIntro: "Long ago, it was foretold.",
+        },
+      },
+      ...lists,
+    });
+
+    expectTypeOf<CrisisCurrencyLocalization["name"]>().toEqualTypeOf<LocalizedText>();
+    expectTypeOf<CrisisCurrencyLocalization["crisisDescriptionIntro"]>().toEqualTypeOf<
+      LocalizedText | undefined
+    >();
   });
 
   it("carries inherited and explicit trigger scopes", () => {

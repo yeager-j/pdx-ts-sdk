@@ -3,6 +3,7 @@
 // From: common/crisis_paths.cwt
 
 import type { DefinedContent } from "../content/authoring.ts";
+import type { CrisisCurrencyRole } from "../content/localization-families.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { CrisisLevelRef, CrisisObjectiveRef, ResourceRef } from "./refs.ts";
 
@@ -11,8 +12,11 @@ import type { CrisisLevelRef, CrisisObjectiveRef, ResourceRef } from "./refs.ts"
  * Generated from `type[crisis_path]` at `game/common/crisis_paths`.
  */
 export interface CrisisPathFields {
-  /** Resource that tracks progress along this crisis path. */
-  crisisCurrency: ResourceRef | string;
+  /**
+   * Resource that tracks progress along this crisis path.
+   * A resource defined by this mod comes with the Ambition UI text the game keys from its id.
+   */
+  crisisCurrency: CrisisCurrencyRole;
   /** Crisis levels in progression order; align the order with their currency thresholds. */
   levels: (CrisisLevelRef | string)[];
   /** Objectives available to this crisis progression path. */
@@ -37,6 +41,7 @@ export const CRISIS_PATH_FIELDS: readonly ContentField[] = [
     form: "scalar",
     conversion: "ref",
     refTypes: ["resource"],
+    localizationFamily: "crisis_currency",
   },
   {
     key: "levels",

@@ -17,6 +17,7 @@ import {
 } from "../script/effects/modifiers.ts";
 import type { TypedRef } from "../script/scalar.ts";
 import { isComplexTriggerModifier, TRIGGERED_MODIFIER_TEXT_MEMBERS } from "./blocks.ts";
+import { resolveLocalizationRole } from "./localization-families.ts";
 import { dualArm, fieldEntries, isPassthrough, resolveFromClosures } from "./lower.ts";
 import type { ShapeMint } from "./mint-provenance.ts";
 import {
@@ -435,12 +436,15 @@ export class ContentAuthoring {
 
   /**
    * Walks every field level — top, `struct`, `aliasStruct` and `structMap`
-   * nesting, and `repeatedStruct` nesting — for the four things that need this
+   * nesting, and `repeatedStruct` nesting — for the five things that need this
    * same recursive descent: repeated-struct ids (prefix and duplicate checks,
    * matched against localisation), the localisation an engine-keyed map keys by
    * its own map key, `WeightBlock`/`WeightBlockWithLoc` modifier rows carrying
-   * `desc` (registered via {@link collectModifierDescs}), and `locKey` values,
-   * whose inline text is registered under a key minted by {@link keyedTextKey}.
+   * `desc` (registered via {@link collectModifierDescs}), `locKey` values,
+   * whose inline text is registered under a key minted by {@link keyedTextKey},
+   * and a `localizationFamily` field's role bundle, whose text is registered
+   * under keys derived from the id it references
+   * ({@link resolveLocalizationRole}).
    *
    * Returns the definition with every `locKey` value replaced by the key the
    * body emits, so the writer downstream lowers plain strings and cannot
@@ -509,6 +513,17 @@ export class ContentAuthoring {
               position,
               localisation
             )
+          )
+        );
+        continue;
+      }
+      if (field.shape === "value" && field.localizationFamily !== undefined) {
+        const family = field.localizationFamily;
+        const position = `${ownerType}.${fieldPath} for "${ownerId}"`;
+        rewrite(
+          field.member,
+          mapOccurrences(raw, field.repeated === true, (item) =>
+            resolveLocalizationRole(item, family, position, localisation)
           )
         );
         continue;

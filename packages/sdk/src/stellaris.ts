@@ -71,6 +71,10 @@ export type {
 // Every content type an author can name. Derived from the generation tables;
 // `codegen-cwt/src/policy/public-surface.ts` is the only door for the rest.
 export type * from "./generated/content-public.ts";
+export type {
+  CrisisCurrencyLocalization,
+  CrisisCurrencyRole,
+} from "./content/localization-families.ts";
 export type { EventChainCounterOf } from "./content/event-chains.ts";
 export type {
   SituationApproach,

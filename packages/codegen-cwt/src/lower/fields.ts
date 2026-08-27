@@ -35,6 +35,7 @@ import {
   arrayType,
   metadata,
   scalarMetadata,
+  withMetadataEntry,
 } from "./field-metadata.ts";
 import {
   lowerScalarMap,
@@ -905,13 +906,27 @@ export function pickOrdinary(
     path
   );
   const authoringType = override?.authoringType;
+  const family = override?.localizationFamily;
+  if (family !== undefined && authoringType === undefined) {
+    throw new Error(
+      `CONTENT_FIELD_OVERRIDES's "${path}" row grafts localization family "${family}" but ` +
+        "supplies no authoringType, so the member would accept no bundle to register"
+    );
+  }
   if (lowered === null || authoringType === undefined) {
     return lowered;
   }
   for (const imported of authoringType.imports) {
     emitter.useFrom(imported.module, imported.name, "type");
   }
-  return { ...lowered, memberType: authoringType.type };
+  const typed = { ...lowered, memberType: authoringType.type };
+  if (family === undefined) {
+    return typed;
+  }
+  return {
+    ...typed,
+    metadata: withMetadataEntry(typed.metadata, `localizationFamily: ${JSON.stringify(family)}`),
+  };
 }
 
 function pickLowering(

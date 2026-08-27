@@ -180,7 +180,8 @@ describe("content-type codegen", () => {
     const perk = emissions.get("menace_perk");
 
     expect(resource?.code).toContain("export interface ResourceFields {");
-    expect(path?.code).toContain("crisisCurrency: ResourceRef | string;");
+    expect(path?.code).toContain("crisisCurrency: CrisisCurrencyRole;");
+    expect(path?.code).toContain('localizationFamily: "crisis_currency"');
     expect(path?.code).toContain("levels: (CrisisLevelRef | string)[];");
     expect(path?.code).toContain("objectives: (CrisisObjectiveRef | string)[];");
     expect(level?.code).toContain('allow?: Trigger<"country">;');

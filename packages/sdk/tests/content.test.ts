@@ -1337,7 +1337,30 @@ function definePlayerCrisisExample(): PureMod {
     recurring: true,
   });
   const path = mod.crisisPath("player_crisis", {
-    crisisCurrency: currency,
+    crisisCurrency: {
+      resource: currency,
+      localization: {
+        name: "Crisis Currency:",
+        value: "£crisis_test_resource_crisis_currency£ $VAL|0$",
+        currentValue: "Current Value: §Y$VALUE|0$§!",
+        gaining: "Complete Crisis Objectives to gain more Crisis Currency.",
+        crisisObjective: {
+          english: "Crisis Objectives",
+          french: "Objectifs de crise",
+        },
+        crisisObjectiveGained: "Crisis Currency gained",
+        crisisObjectiveProgress: "We have gained $AMOUNT$ from this Crisis Objective.",
+        crisisObjectiveReward: "$REWARD$",
+        crisisLevelLocked: "Required to unlock this level:\\n",
+        crisisLevelUnlocked: "At $LEVEL$, you get the rewards:\\n",
+        crisisLevelUnlock: "Has §Y$CURRENCY$§! Crisis Currency",
+        crisisLevelDesc: "Accumulate Crisis Currency to advance through the levels.",
+        crisisDescriptionTitle: "Test Crisis",
+        crisisDescription: "Our actions have echoes the galaxy will not forget.",
+        crisisHowtoTitle: "Ruin & Resolve",
+        crisisHowto: "Pursuing Crisis Objectives generates Crisis Currency.",
+      },
+    },
     levels: [level],
     objectives: [objective],
   });
@@ -1382,6 +1405,7 @@ describe("player-crisis content route", () => {
       "common/strategic_resources/crisis_test_player_crisis.txt",
       "descriptor.mod",
       "localisation/english/crisis_test_player_crisis_l_english.yml",
+      "localisation/french/crisis_test_player_crisis_l_french.yml",
     ]);
     expect(
       new TextDecoder().decode(

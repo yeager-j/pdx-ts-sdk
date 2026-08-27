@@ -1117,8 +1117,11 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
     {
       crisisCurrency: {
         optional: false,
-        docs: ["Resource that tracks progress along this crisis path."],
-        memberType: "ResourceRef | string",
+        docs: [
+          "Resource that tracks progress along this crisis path.",
+          "A resource defined by this mod comes with the Ambition UI text the game keys from its id.",
+        ],
+        memberType: "CrisisCurrencyRole",
       },
       levels: {
         optional: false,

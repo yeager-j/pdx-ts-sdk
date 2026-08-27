@@ -90,6 +90,18 @@ export interface ContentValueField extends ContentFieldBase, ContentRefTypes {
    * keys, and minting one for them would change what the game shows.
    */
   readonly locKeyLiterals?: readonly string[];
+  /**
+   * Names a {@link LOCALIZATION_KEY_FAMILIES} entry: the family of keys the
+   * game derives from the id this field *references*, which the referenced
+   * definition cannot supply on its own (SDK-304).
+   *
+   * The member accepts a role bundle carrying that text beside the reference,
+   * and the definition walk registers the family and collapses the bundle back
+   * to its reference. The rules cannot state this — `localisation` describes
+   * the definition it sits on — so the flag comes from an audited overlay row,
+   * which supplies the matching authoring type in the same place.
+   */
+  readonly localizationFamily?: string;
 }
 
 interface ContentValueListField extends ContentFieldBase, ContentRefTypes {
