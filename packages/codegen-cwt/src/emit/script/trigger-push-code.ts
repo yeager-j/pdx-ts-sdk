@@ -8,7 +8,7 @@
 
 import type { ArgField, ArgValue, BlockValue, MapValue } from "../../lower/script-shape.ts";
 import { camelCase, propertyAccess } from "../../naming.ts";
-import { Emitter, type TsValue } from "../../render/emitter.ts";
+import { Emitter, recordsLocalization, type TsValue } from "../../render/emitter.ts";
 
 /**
  * The expression a scalar `TsValue` pushes into `kv()`, `scriptValueScalar`-
@@ -23,10 +23,15 @@ export function pushExpr(emitter: Emitter, value: TsValue, expr: string): string
   return value.scriptValue === true ? `${emitter.use("scriptValueScalar")}(${scalar})` : scalar;
 }
 
-/** Whether this field can put a content reference into the emitted tree: a
+/** Whether this field can put a reference into the emitted tree: a
  * whole-reference scalar directly, a nested condition through its own refs. */
 export function contributesRefs(field: ArgField): boolean {
   return valueContributesRefs(field.value);
+}
+
+/** Whether one scalar records anything: a content id, a consumed localization item, or both. */
+function scalarContributesRefs(value: TsValue): boolean {
+  return value.refTypes !== undefined || recordsLocalization(value);
 }
 
 function valueContributesRefs(value: ArgValue): boolean {
@@ -35,21 +40,43 @@ function valueContributesRefs(value: ArgValue): boolean {
     case "keyedClauses":
       return true;
     case "scalar":
-      return value.value.refTypes !== undefined;
+      return scalarContributesRefs(value.value);
     case "comparison":
       return false;
     case "map":
-      return value.map.keyRefTypes !== undefined || value.map.value.refTypes !== undefined;
+      return value.map.keyRefTypes !== undefined || scalarContributesRefs(value.map.value);
     case "fields":
       return value.fields.some(contributesRefs);
     case "scalarOrBlock":
-      return value.scalar.refTypes !== undefined || valueContributesRefs(value.block);
+      return scalarContributesRefs(value.scalar) || valueContributesRefs(value.block);
     case "valueList":
-      return value.scalar?.refTypes !== undefined || (value.fields?.some(contributesRefs) ?? false);
+      return (
+        (value.scalar !== null && scalarContributesRefs(value.scalar)) ||
+        (value.fields?.some(contributesRefs) ?? false)
+      );
     case "aliasList":
     case "aliasStruct":
       return unauthorableAliasValue(value);
   }
+}
+
+/**
+ * The statement that records a consumed localization item beside the key just
+ * written, or nothing when the scalar admits no localization reference.
+ *
+ * The authored expression is passed rather than the lowered key: the fold
+ * places the item's translations, which only the item itself carries.
+ */
+export function localizationRecordCode(
+  emitter: Emitter,
+  value: TsValue,
+  access: string,
+  fieldPath: string
+): string {
+  if (!recordsLocalization(value)) {
+    return "";
+  }
+  return `\n${emitter.use("recordLocalization")}(refs, ${access}, ${JSON.stringify(fieldPath)});`;
 }
 
 /** The `cmp()` arguments one comparison occurrence supplies. */
@@ -111,7 +138,8 @@ export function unauthorableAliasValue(
 
 /**
  * Renders the statement that writes one whole-value entry under `key`, also
- * recording a content reference when every form the value admits is one.
+ * recording a content reference when every form the value admits is one, and
+ * the item behind a consumed localization reference.
  */
 function scalarPushCode(
   emitter: Emitter,
@@ -122,9 +150,12 @@ function scalarPushCode(
   index: number,
   sink: string
 ): string {
+  const recordLoc = localizationRecordCode(emitter, value, access, fieldPath);
   const { refTypes } = value;
   if (refTypes === undefined) {
-    return `${sink}.push(${emitter.use("kv")}(${key}, ${pushExpr(emitter, value, access)}));`;
+    return (
+      `${sink}.push(${emitter.use("kv")}(${key}, ${pushExpr(emitter, value, access)}));` + recordLoc
+    );
   }
   // Indexed rather than named after the field, so the local can never
   // collide with `args`, `entries`, `refs`, or a sibling field's name.
@@ -136,7 +167,8 @@ function scalarPushCode(
     `const ${local} = ${value.toScalar(access)};\n` +
     `    ${sink}.push(${emitter.use("kv")}(${key}, ${local}));\n` +
     `    refs.push({ targets: ${JSON.stringify(refTypes)}, id: ${local}, ` +
-    `field: ${JSON.stringify(fieldPath)} });`
+    `field: ${JSON.stringify(fieldPath)} });` +
+    recordLoc
   );
 }
 
@@ -311,8 +343,9 @@ export function pushValueListCode(
     const expression = pushExpr(emitter, scalar, item);
     const pdxScalar =
       scalar.scriptValue === true ? expression : `${emitter.use("scalar")}(${expression})`;
+    const recordLoc = localizationRecordCode(emitter, scalar, item, fieldPath);
     if (scalar.refTypes === undefined) {
-      return `${items}.push(${pdxScalar});`;
+      return `${items}.push(${pdxScalar});` + recordLoc;
     }
     const id = `id${index}`;
     if (scalar.scalarSymbol !== undefined) {
@@ -321,7 +354,8 @@ export function pushValueListCode(
     return (
       `const ${id} = ${scalar.toScalar(item)};\n` +
       `${items}.push(${emitter.use("scalar")}(${id}));\n` +
-      `refs.push({ targets: ${JSON.stringify(scalar.refTypes)}, id: ${id}, field: ${JSON.stringify(fieldPath)} });`
+      `refs.push({ targets: ${JSON.stringify(scalar.refTypes)}, id: ${id}, field: ${JSON.stringify(fieldPath)} });` +
+      recordLoc
     );
   })();
   const structuredPush = (() => {

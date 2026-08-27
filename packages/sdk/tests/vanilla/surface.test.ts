@@ -31,6 +31,7 @@ import {
 } from "../../src/installation/vanilla/parsed-definitions.ts";
 import { patchContent } from "../../src/installation/vanilla/patch.ts";
 import { viewFromFiles } from "../../src/installation/vanilla/view.ts";
+import type { RecordedRefUse } from "../../src/references.ts";
 import { always } from "../../src/stellaris.ts";
 import {
   ASCENSION_PERK_CATEGORY_FILE,
@@ -46,6 +47,17 @@ import {
  * localisation key a patch mints starts with it.
  */
 const PREFIX = "pp";
+
+/**
+ * Every reference a patch recorded, in a stable order. Both arms of the
+ * recorded vocabulary are kept, so an unexpected localization use shows up in
+ * the comparison rather than being filtered away.
+ */
+function sortedRefs(refs: readonly RecordedRefUse[]): RecordedRefUse[] {
+  const orderKey = (use: RecordedRefUse): string =>
+    use.kind === "localization" ? use.item.key : use.id;
+  return [...refs].sort((a, b) => orderKey(a).localeCompare(orderKey(b)));
+}
 
 /**
  * The generated definer returns a placeable item; these tests measure the
@@ -405,7 +417,7 @@ describe("descriptor-derived patching", () => {
       prerequisites: [...t.prerequisites, anyOf("tech_a", "pp_tech_b")],
     }));
     // Every id the member writes, grouped or not, on the same terms.
-    expect([...patched.refs].sort((a, b) => a.id.localeCompare(b.id))).toEqual([
+    expect(sortedRefs(patched.refs)).toEqual([
       { targets: ["technology"], id: "pp_tech_b", field: "prerequisites" },
       { targets: ["technology"], id: "tech_a", field: "prerequisites" },
       { targets: ["technology"], id: "tech_helix_mapping", field: "prerequisites" },
@@ -741,7 +753,7 @@ describe("the building slice", () => {
       upgrades: [{ id: "pp_building_annex" }],
       prerequisites: ["pp_tech_refining"],
     }));
-    expect([...patched.refs].sort((a, b) => a.id.localeCompare(b.id))).toEqual([
+    expect(sortedRefs(patched.refs)).toEqual([
       { targets: ["building"], id: "pp_building_annex", field: "upgrades" },
       { targets: ["technology"], id: "pp_tech_refining", field: "prerequisites" },
     ]);
@@ -980,7 +992,7 @@ describe("the megastructure slice", () => {
       prerequisites: ["pp_tech_resonance"],
       upgradeFrom: [{ id: "pp_megastructure_seed" }],
     }));
-    expect([...patched.refs].sort((a, b) => a.id.localeCompare(b.id))).toEqual([
+    expect(sortedRefs(patched.refs)).toEqual([
       { targets: ["megastructure"], id: "pp_megastructure_seed", field: "upgrade_from" },
       { targets: ["technology"], id: "pp_tech_resonance", field: "prerequisites" },
     ]);

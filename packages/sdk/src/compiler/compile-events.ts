@@ -126,14 +126,11 @@ function registerEvents(
         throw new Error(`Duplicate event id "${item.id}"`);
       }
       eventIds.add(item.id);
+      const stem = eventStem.get(item);
       for (const use of item.refs) {
-        session.refUses.push({ owner: `event "${item.id}"`, use });
+        session.refUses.push({ owner: `event "${item.id}"`, stem, use });
       }
-      registerLocalization(
-        session.localization,
-        { layer: "ordinary", stem: eventStem.get(item) },
-        item.locEntries
-      );
+      registerLocalization(session.localization, { layer: "ordinary", stem }, item.locEntries);
       session.warnings.push(...item.warnings);
       if (!namespaces.includes(item.namespace)) {
         namespaces.push(item.namespace);
@@ -205,6 +202,7 @@ function compileContributions(session: BuildSession): {
       contributedLimits.push(id);
       session.refUses.push({
         owner: `the ${item.registry} contribution`,
+        stem,
         use: { targets: [item.refRegistry], id, field: `default.${item.registry}` },
       });
     }

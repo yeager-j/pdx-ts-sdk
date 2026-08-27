@@ -17,6 +17,18 @@ export interface CompiledContent {
   readonly definedGroups: readonly DefinedGroup[];
 }
 
+/** One defined definition, as a group holds it. */
+type DefinedDefinition = DefinedGroup["defined"][number];
+
+/**
+ * The stem of the Feature that placed each definition.
+ *
+ * A group is keyed by emitted path rather than by Feature, and the two differ
+ * where an unnamed placement and a Feature named after the registry's default
+ * stem land in one file, so the stem is kept per definition.
+ */
+type StemByDefinition = ReadonlyMap<DefinedDefinition, string | undefined>;
+
 type RawContentGroups = Map<
   ContentTypeName,
   Map<LogicalPath, { items: Array<{ item: ContentItem; stem: string | undefined }> }>
@@ -68,9 +80,9 @@ export function compileContent(session: BuildSession): CompiledContent {
     (message) => session.warnings.push({ code: "unstable-desc-key", message })
   );
   const rawGroups = collectContentGroups(session);
-  const definedGroups = defineContentGroups(session, content, rawGroups);
+  const { definedGroups, stemByDefinition } = defineContentGroups(session, content, rawGroups);
   session.roleUses.push(...content.localizationRoleUses);
-  const contentFiles = lowerContentGroups(session, definedGroups);
+  const contentFiles = lowerContentGroups(session, definedGroups, stemByDefinition);
   assertPlacedAssetReferences(session);
 
   return { contentFiles, definedGroups };
@@ -164,8 +176,9 @@ function defineContentGroups(
     ContentTypeName,
     ReadonlyMap<LogicalPath, { items: Array<{ item: ContentItem; stem: string | undefined }> }>
   >
-): DefinedGroup[] {
+): { definedGroups: DefinedGroup[]; stemByDefinition: StemByDefinition } {
   const definedGroups: DefinedGroup[] = [];
+  const stemByDefinition = new Map<DefinedDefinition, string | undefined>();
   for (const descriptor of CONTENT_REGISTRIES) {
     const type = descriptor.type as ContentTypeName;
     const byPath = rawByType.get(type);
@@ -179,24 +192,27 @@ function defineContentGroups(
       definedGroups.push({
         type,
         relPath,
-        defined: items.map(({ item, stem }) =>
-          content.define(
+        defined: items.map(({ item, stem }) => {
+          const defined = content.define(
             item.type,
             item.def,
             (entries) =>
               registerLocalization(session.localization, { layer: "ordinary", stem }, entries),
             shapeMintOf(item)
-          )
-        ),
+          );
+          stemByDefinition.set(defined, stem);
+          return defined;
+        }),
       });
     }
   }
-  return definedGroups;
+  return { definedGroups, stemByDefinition };
 }
 
 function lowerContentGroups(
   session: BuildSession,
-  definedGroups: readonly DefinedGroup[]
+  definedGroups: readonly DefinedGroup[],
+  stemByDefinition: StemByDefinition
 ): ContentFile[] {
   const filesByPath = new Map<
     LogicalPath,
@@ -212,11 +228,13 @@ function lowerContentGroups(
     }
     file.types.push(group.type);
     for (const defined of group.defined) {
+      const owner = `${group.type} "${defined.id}"`;
+      const stem = stemByDefinition.get(defined);
       file.ids.push(defined.id);
       file.entries.push(
         defined.toEntries(
-          (use) => session.refUses.push({ owner: `${group.type} "${defined.id}"`, use }),
-          (use) => session.pathUses.push({ owner: `${group.type} "${defined.id}"`, use })
+          (use) => session.refUses.push({ owner, stem, use }),
+          (use) => session.pathUses.push({ owner, use })
         )
       );
     }

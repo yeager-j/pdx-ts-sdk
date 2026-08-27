@@ -39,7 +39,7 @@ export function collectPatches(
 ): ReadonlyMap<string, readonly PatchedContent[]> {
   const byRegistry = new Map<string, PatchedContent[]>();
   let expected = options.vanilla?.manifestKey;
-  for (const { item } of flat) {
+  for (const { item, stem } of flat) {
     if (item.itemKind !== "patch") {
       continue;
     }
@@ -61,7 +61,7 @@ export function collectPatches(
     patches.push(patched);
     byRegistry.set(registry, patches);
     for (const use of patched.refs) {
-      refUses.push({ owner: `the patch of ${patched.id}`, use });
+      refUses.push({ owner: `the patch of ${patched.id}`, stem, use });
     }
   }
   return new Map(

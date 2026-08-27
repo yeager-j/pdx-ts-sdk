@@ -191,8 +191,34 @@ const resonanceArchive = mod.building("resonance_archive", {
 
 `mod.localization` adds the mod prefix to the name you pass, so this item owns
 the complete key `crystal_resonance_archive_tooltip`, still readable as
-`.key`. Reach for it when several fields share one entry, or when the text is
-placed in a Feature of its own.
+`.key`. Reach for it when several fields share one entry.
+
+### Placement follows the reference
+
+The building above places nothing but itself, and its tooltip text still ships:
+a reference passed to a field that names a key carries the item into the
+consuming definition's Feature, into the same language files that definition's
+own `name` and `desc` go to. This holds for a key written inside a recorded
+trigger or effect, and for one a patch writes, too.
+
+When several Features reference one item, the SDK writes a single entry per
+language, choosing the lowest emitted path among their stems.
+
+Place the item in a Feature yourself for the two cases the reference cannot
+cover:
+
+- a key nothing references, because the game reads it by a name it derives
+  itself;
+- a key you want in a different file from the definition that uses it.
+
+An item placed both ways is still one entry. Placing it only adds its Feature's
+stem to the choice of file, so it never conflicts with the entry a reference
+already registered.
+
+One reference does not carry: `loc` returns a plain string, so an item
+interpolated into a template is text by the time the field sees it. Place such
+an item yourself. A definition's own `loc` member needs no placement, since
+that text already ships with the definition that minted it.
 
 ### Name a key this mod does not define
 
@@ -227,10 +253,10 @@ as `LOCALIZATION_LANGUAGES`. English is required, and TypeScript rejects
 unknown language names. The Fold emits only the language files that have
 text.
 
-Calling `mod.localization` does not emit anything on its own. The returned
-value is a mod item: place it in a [Feature](/guides/features-and-discovery/)
-and include that Feature in `mod.compile`, just like content and events. The
-Feature's stem selects the localization filename.
+An item nothing references emits nothing on its own. The returned value is a
+mod item: place it in a [Feature](/guides/features-and-discovery/) and include
+that Feature in `mod.compile`, just like content and events. The Feature's stem
+selects the localization filename.
 
 ### Preserve an exact key in ordinary localization
 

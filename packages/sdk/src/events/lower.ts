@@ -13,7 +13,7 @@ import type { ModWarning } from "../diagnostics.ts";
 import type { EventKindKey } from "../generated/events.ts";
 import type { ScopeName } from "../generated/scopes.ts";
 import { localizationSuffix } from "../localization-key.ts";
-import { underField, type ContentRefUse } from "../references.ts";
+import { underField, type RecordedRefUse } from "../references.ts";
 import {
   modifierDescKey,
   modifierEntry,
@@ -36,7 +36,7 @@ import type { DefinedEvent, EventBodyContext, EventDef, EventOptionLoc, LocSink 
  */
 function modifierRows<S extends ScopeName>(
   modifiers: readonly Modifier<S>[] | undefined,
-  refs: ContentRefUse[],
+  refs: RecordedRefUse[],
   ownerKey: string
 ): PdxEntry[] {
   return (modifiers ?? []).map((modifier) =>
@@ -175,7 +175,7 @@ function lowerEvent<S extends ScopeName, Context extends AmbientScopeContext>(
   const id = `${namespace}.${def.id}`;
   const flags = windowFlags(def);
   const warnings: ModWarning[] = [];
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
 
   const entries: PdxEntry[] = [kv("id", id)];
   // Filled beside each registration below, so a reference and the entry it
@@ -323,7 +323,7 @@ function lowerEvent<S extends ScopeName, Context extends AmbientScopeContext>(
     refs.push(...underField(def.abortTrigger.refs, "abort_trigger"));
   }
   if (def.abortEffect !== undefined) {
-    const recorded: ContentRefUse[] = [];
+    const recorded: RecordedRefUse[] = [];
     const sink = recordEffects<S>(recorded, (scope) => def.abortEffect!(scope, ctx));
     entries.push(block("abort_effect", sink));
     refs.push(...underField(recorded, "abort_effect"));
@@ -347,7 +347,7 @@ function lowerEvent<S extends ScopeName, Context extends AmbientScopeContext>(
       "mean_time_to_happen",
       mtth.modifiers
     );
-    const mtthRefs: ContentRefUse[] = [];
+    const mtthRefs: RecordedRefUse[] = [];
     mtthEntries.push(...modifierRows(mtth.modifiers, mtthRefs, mtthOwnerKey));
     entries.push(block("mean_time_to_happen", mtthEntries));
     refs.push(...underField(mtthRefs, "mean_time_to_happen"));
@@ -362,19 +362,19 @@ function lowerEvent<S extends ScopeName, Context extends AmbientScopeContext>(
       "weight_multiplier",
       weight.modifiers
     );
-    const weightRefs: ContentRefUse[] = [];
+    const weightRefs: RecordedRefUse[] = [];
     weightEntries.push(...modifierRows(weight.modifiers, weightRefs, weightOwnerKey));
     entries.push(block("weight_multiplier", weightEntries));
     refs.push(...underField(weightRefs, "weight_multiplier"));
   }
   if (def.immediate !== undefined) {
-    const recorded: ContentRefUse[] = [];
+    const recorded: RecordedRefUse[] = [];
     const sink = recordEffects<S>(recorded, (scope) => def.immediate!(scope, ctx));
     entries.push(block("immediate", sink));
     refs.push(...underField(recorded, "immediate"));
   }
   if (def.after !== undefined) {
-    const recorded: ContentRefUse[] = [];
+    const recorded: RecordedRefUse[] = [];
     const sink = recordEffects<S>(recorded, (scope) => def.after!(scope, ctx));
     entries.push(block("after", sink));
     refs.push(...underField(recorded, "after"));
@@ -435,7 +435,7 @@ function lowerEvent<S extends ScopeName, Context extends AmbientScopeContext>(
         `option_${optionSuffix.suffix}.ai_chance`,
         option.aiChance.modifiers
       );
-      const aiChanceRefs: ContentRefUse[] = [];
+      const aiChanceRefs: RecordedRefUse[] = [];
       aiChanceEntries.push(
         ...modifierRows(option.aiChance.modifiers, aiChanceRefs, aiChanceOwnerKey)
       );
@@ -468,7 +468,7 @@ function lowerEvent<S extends ScopeName, Context extends AmbientScopeContext>(
       optionEntries.push(kv("tag", option.tag));
     }
     if (option.effects !== undefined) {
-      const recorded: ContentRefUse[] = [];
+      const recorded: RecordedRefUse[] = [];
       const sink = recordEffects<S>(recorded, (scope) => option.effects!(scope, ctx));
       optionEntries.push(...sink);
       refs.push(...underField(recorded, where));

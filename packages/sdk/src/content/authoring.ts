@@ -3,6 +3,7 @@ import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
 
 import {
   isLocalizationRef,
+  isPlaceableLocalizationItem,
   localizationRef,
   resolveFixedKeyText,
   type KeyedLocalization,
@@ -10,7 +11,7 @@ import {
   type LocalizedText,
 } from "../authoring/localization.ts";
 import type { ScopeName } from "../generated/scopes.ts";
-import type { AssetPathSink, ContentRefSink } from "../references.ts";
+import type { AssetPathSink, RefUseSink } from "../references.ts";
 import {
   modifierDescKey,
   registerComplexTriggerModifierDescKey,
@@ -30,7 +31,13 @@ import {
 } from "./schema.ts";
 import type { TriggeredModifier, WeightBlock } from "./types.ts";
 
-export type { AssetPathSink, AssetPathUse, ContentRefSink, ContentRefUse } from "../references.ts";
+export type {
+  AssetPathSink,
+  AssetPathUse,
+  ContentRefUse,
+  RecordedRefUse,
+  RefUseSink,
+} from "../references.ts";
 
 /** A definition registered with a mod and usable as a typed cross-reference. */
 export interface DefinedContent<
@@ -43,7 +50,7 @@ export interface DefinedContent<
    * Lowers the definition, reporting every reference it writes to `collect` and
    * every filepath field it writes to `collectPath`.
    */
-  toEntries(collect?: ContentRefSink, collectPath?: AssetPathSink): PdxEntry;
+  toEntries(collect?: RefUseSink, collectPath?: AssetPathSink): PdxEntry;
 }
 
 type ContentDef = { readonly id: string };
@@ -77,7 +84,7 @@ interface StructWalkContext {
 function toEntry(
   def: ContentDef,
   descriptor: ContentRegistryDescriptor,
-  collect?: ContentRefSink,
+  collect?: RefUseSink,
   collectPath?: AssetPathSink
 ): PdxEntry {
   const fields = fieldEntries(def as Readonly<Record<string, unknown>>, descriptor.fields, {
@@ -105,7 +112,7 @@ class ContentDefinition<K extends string, D extends ContentDef> implements Defin
     this.descriptor = descriptor;
   }
 
-  toEntries(collect?: ContentRefSink, collectPath?: AssetPathSink): PdxEntry {
+  toEntries(collect?: RefUseSink, collectPath?: AssetPathSink): PdxEntry {
     return toEntry(this.def, this.descriptor, collect, collectPath);
   }
 }
@@ -181,11 +188,15 @@ export function mapOccurrences(
  * Resolves one authored `locKey` value to the key the definition body emits,
  * registering the translations of inline text under the minted key.
  *
- * A {@link LocalizationRef} names a key that already exists — this mod's, or
- * one declared through `external.localization` — so it registers nothing. Two
- * other values ride through untouched: a parsed one, carrying a key read out
- * of the install that is not this mod's to mint, and one of the position's own
- * `sentinels`, which is an engine word rather than a key.
+ * A standalone `mod.localization()` item registers its own translations here,
+ * so consuming it places its text in the consuming definition's localization
+ * file whether or not a feature also places the item itself (SDK-306). Every
+ * other {@link LocalizationRef} names a key whose text is somewhere else — a
+ * definition's own slot, a replacement layer, `external.localization` — so it
+ * registers nothing. Two further values ride through untouched: a parsed one,
+ * carrying a key read out of the install that is not this mod's to mint, and
+ * one of the position's own `sentinels`, which is an engine word rather than
+ * a key.
  *
  * @param sentinels - The field's `locKeyLiterals`, or nothing where it declares none.
  * @param position - Names the text position in a refusal, e.g. `tradition.custom_tooltip`.
@@ -197,6 +208,10 @@ export function resolveKeyedText(
   position: string,
   into: KeyedLocalization[]
 ): unknown {
+  if (isPlaceableLocalizationItem(value)) {
+    into.push({ key: value.key, translations: value.translations });
+    return value.key;
+  }
   if (isLocalizationRef(value)) {
     return value.key;
   }

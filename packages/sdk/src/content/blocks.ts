@@ -4,7 +4,7 @@ import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
 import { MODIFIER_REFERENCE_FAMILIES } from "../generated/modifiers.ts";
 import type { ScopeName } from "../generated/scopes.ts";
 import { isVanillaRef } from "../identifiers/trie.ts";
-import { underField, type ContentRefSink, type ContentRefUse } from "../references.ts";
+import { underField, type RecordedRefUse, type RefUseSink } from "../references.ts";
 import {
   complexTriggerModifierEntry,
   modifierEntry,
@@ -26,7 +26,7 @@ import type {
 } from "./types.ts";
 
 interface LoweringContext {
-  readonly collect?: ContentRefSink;
+  readonly collect?: RefUseSink;
   readonly path: string;
   readonly ownerId: string;
 }
@@ -50,7 +50,7 @@ function joinPath(path: string, segment: string): string {
   return path === "" ? segment : `${path}.${segment}`;
 }
 
-function collectRefs(ctx: LoweringContext, refs: readonly ContentRefUse[], segment: string): void {
+function collectRefs(ctx: LoweringContext, refs: readonly RecordedRefUse[], segment: string): void {
   if (ctx.collect === undefined) {
     return;
   }
@@ -444,7 +444,7 @@ function modifierRecorder(record: ModifierRecord, live: { value: boolean }): unk
   return node([]);
 }
 
-export function modifierEntries(closure: ModifierClosure, collect?: ContentRefSink): PdxEntry[] {
+export function modifierEntries(closure: ModifierClosure, collect?: RefUseSink): PdxEntry[] {
   const entries: PdxEntry[] = [];
   const live = { value: true };
   let result: unknown;
@@ -478,11 +478,7 @@ export function modifierEntries(closure: ModifierClosure, collect?: ContentRefSi
   return entries;
 }
 
-export function modifierBlock(
-  key: string,
-  value: ModifierClosure,
-  collect?: ContentRefSink
-): PdxEntry {
+export function modifierBlock(key: string, value: ModifierClosure, collect?: RefUseSink): PdxEntry {
   return block(key, modifierEntries(value, collect));
 }
 
@@ -529,7 +525,7 @@ export function weightBlock(
     entries.push(kv("base", value.base));
   }
   entries.push(...weightOperationEntries(value));
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   const ownerKey = descOwnerKey(ctx, key);
   entries.push(
     ...(value.modifiers ?? []).map((row) =>
@@ -545,7 +541,7 @@ export function weightBlock(
   return block(key, entries);
 }
 
-function scaledModifierEntry(modifier: ScaledModifier, refs: ContentRefUse[]): PdxEntry {
+function scaledModifierEntry(modifier: ScaledModifier, refs: RecordedRefUse[]): PdxEntry {
   const entries: PdxEntry[] = [];
   if (modifier.limit !== undefined) {
     entries.push(block("limit", [...modifier.limit.entries]));

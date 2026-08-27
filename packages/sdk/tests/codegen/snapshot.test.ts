@@ -91,7 +91,7 @@ describe("emitted trigger signatures", () => {
         "carrier" | "colony" | "country" | "planet" | "pop_faction" | "sector" | "ship" | "system"
       > {
         const entries: PdxEntry[] = [];
-        const refs: ContentRefUse[] = [];
+        const refs: RecordedRefUse[] = [];
         if (args.limit !== undefined) {
           entries.push(block("limit", [...args.limit.entries]));
           refs.push(...args.limit.refs);
@@ -117,7 +117,7 @@ describe("emitted trigger signatures", () => {
     expect(declaration("calcTrueIf")).toMatchInlineSnapshot(`
       "export function calcTrueIf<S extends ScopeName = ScopeName>(args: CalcTrueIfArgs<S>): Trigger<S> {
         const entries: PdxEntry[] = [];
-        const refs: ContentRefUse[] = [];
+        const refs: RecordedRefUse[] = [];
         entries.push(
           typeof args.amount === "object"
             ? cmp("amount", args.amount[0], scriptValueScalar(args.amount[1]))
@@ -237,21 +237,26 @@ describe("emitted trigger signatures", () => {
         if (isStructuredValue(value, ["localization-ref"])) {
           const args = value;
           const entries: PdxEntry[] = [];
-          const refs: ContentRefUse[] = [];
+          const refs: RecordedRefUse[] = [];
           if (args.text !== undefined) {
             entries.push(kv("text", refId(args.text)));
+            recordLocalization(refs, args.text, "custom_tooltip.text");
           }
           if (args.failText !== undefined) {
             entries.push(kv("fail_text", refId(args.failText)));
+            recordLocalization(refs, args.failText, "custom_tooltip.fail_text");
           }
           if (args.successText !== undefined) {
             entries.push(kv("success_text", refId(args.successText)));
+            recordLocalization(refs, args.successText, "custom_tooltip.success_text");
           }
           entries.push(...args.conditions.entries);
           refs.push(...args.conditions.refs);
           return trigger([block("custom_tooltip", entries)], refs);
         }
-        return trigger([kv("custom_tooltip", refId(value))]);
+        const refs: RecordedRefUse[] = [];
+        recordLocalization(refs, value, "custom_tooltip");
+        return trigger([kv("custom_tooltip", refId(value))], refs);
       }"
     `);
   });
@@ -276,7 +281,7 @@ describe("emitted trigger signatures", () => {
         if (isStructuredValue(value, ["typed-ref"])) {
           const args = value;
           const entries: PdxEntry[] = [];
-          const refs: ContentRefUse[] = [];
+          const refs: RecordedRefUse[] = [];
           const id0 = refId(args.type);
           entries.push(kv("type", id0));
           refs.push({ targets: ["resource"], id: id0, field: "has_resource.type" });

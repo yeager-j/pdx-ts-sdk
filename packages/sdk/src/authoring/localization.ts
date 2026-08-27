@@ -148,6 +148,22 @@ export function isLocalizationRef(value: unknown): value is LocalizationRef {
 }
 
 /**
+ * Whether a value is a standalone ordinary localization item, the one kind of
+ * reference whose text this build can place on the consumer's behalf.
+ *
+ * A `ReplacementLocalizationItem` fails it because its file is a layer the
+ * author chooses deliberately, and an `external.localization` reference fails
+ * it because it carries no text at all.
+ */
+export function isPlaceableLocalizationItem(value: unknown): value is LocalizationItem {
+  if (!isLocalizationRef(value)) {
+    return false;
+  }
+  const item = value as Partial<LocalizationItem>;
+  return item.itemKind === "localization" && item.layer === "ordinary";
+}
+
+/**
  * Adds the phantom brand to a record that already carries the runtime marker.
  *
  * The brand has no runtime presence, so this assertion is what makes a
@@ -276,6 +292,12 @@ function interpolatedText(value: LocInterpolation, position: number): string {
  * resolves at display time to whatever text that key holds; a string or a
  * number is written as it stands. Everything else — colour codes, icon tags,
  * scope properties — is ordinary text, so write the game's markup directly.
+ *
+ * The result is a plain string, so a `mod.localization()` item interpolated
+ * here is not carried into the consuming feature the way a reference passed
+ * whole to a key-typed field is: place that item in a feature yourself. A
+ * definition's own `loc` member needs no placement, since its text already
+ * ships with the definition that minted it.
  *
  * @throws TypeError If an interpolated value is not a reference, string, or number.
  * @example

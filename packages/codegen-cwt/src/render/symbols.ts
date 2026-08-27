@@ -66,7 +66,11 @@ const SYMBOL_MODULES: readonly ModuleSymbols[] = [
       "WithFrom",
     ],
   },
-  { module: "../references.ts", types: ["ContentRefUse"] },
+  {
+    module: "../references.ts",
+    types: ["RecordedRefUse"],
+    values: ["recordLocalization"],
+  },
   {
     module: "../script/effects/types.ts",
     types: ["EffectPath", "EffectPathTransition", "Modifier", "ScopeValue", "StructuralEffects"],

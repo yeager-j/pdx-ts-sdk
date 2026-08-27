@@ -57,6 +57,18 @@ export interface TsValue {
 /** A runtime-discriminated object form accepted by a scalar field. */
 export type ScalarObjectKind = "scope-ref" | "typed-ref" | "localization-ref";
 
+/**
+ * Whether a scalar admits a localization reference, and so must record the
+ * item behind one so the fold can place its text (SDK-306).
+ *
+ * A value only ever admits one where the rule names a localisation key, so
+ * this reads the same tag the runtime already dispatches object arms on rather
+ * than a second flag that could disagree with it.
+ */
+export function recordsLocalization(value: TsValue): boolean {
+  return value.objectKinds?.includes("localization-ref") === true;
+}
+
 /** The symbols and generated aliases referenced while emitting one output file. */
 export interface Usage {
   /** CWT enum aliases referenced by the file. */

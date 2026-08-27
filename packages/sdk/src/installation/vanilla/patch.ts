@@ -56,7 +56,7 @@ import type { ContentField, ContentLocalisation } from "../../content/schema.ts"
 import type { TriggeredModifier } from "../../content/types.ts";
 import type { ModWarning } from "../../diagnostics.ts";
 import type { ScopeName } from "../../generated/scopes.ts";
-import type { ContentRefSink, ContentRefUse } from "../../references.ts";
+import type { RecordedRefUse, RefUseSink } from "../../references.ts";
 import {
   modifierDescKey,
   registerComplexTriggerModifierDescKey,
@@ -68,7 +68,7 @@ import type { AnyOf, ParsedDefinition, ParsedNumber } from "./parsed-definitions
 
 /** What the shared lowering reads; the same shape `fieldEntries` is handed. */
 interface LoweringContext {
-  readonly collect: ContentRefSink;
+  readonly collect: RefUseSink;
   readonly path: string;
   readonly ownerId: string;
 }
@@ -117,7 +117,7 @@ export interface PatchedContent<Source extends ParsedDefinition = ParsedDefiniti
    * prerequisites is the calibration anchor itself — so the ids it writes have
    * to resolve on the same terms a `define`'s do.
    */
-  readonly refs: readonly ContentRefUse[];
+  readonly refs: readonly RecordedRefUse[];
   /**
    * Text this patch mints keys of its own for, bound for the mod's ordinary
    * localization file.
@@ -609,9 +609,9 @@ export function patchContent<Source extends ParsedDefinition, Patch extends obje
     }
   }
 
-  const refs: ContentRefUse[] = [];
+  const refs: RecordedRefUse[] = [];
   const ctx: LoweringContext = {
-    collect: (use: ContentRefUse) => refs.push(use),
+    collect: (use: RecordedRefUse) => refs.push(use),
     path: "",
     ownerId: mint.ownerId,
   };
