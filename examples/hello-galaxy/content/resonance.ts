@@ -91,7 +91,7 @@ export const aftershock = events.planet(2, {
       country.addResource({ resource: "influence", amount: 50 });
     });
   },
-  options: [{ name: "Noted.", key: "noted" }],
+  options: [{ name: { english: "Noted.", key: "noted" } }],
 });
 
 export const humReturns = events.country(1, {
@@ -137,7 +137,7 @@ export const humReturns = events.country(1, {
       })
       .else(() => country.log("the hum went unheard"));
   },
-  options: [{ name: "Fascinating.", key: "fascinating" }],
+  options: [{ name: { english: "Fascinating.", key: "fascinating" } }],
 });
 
 export const feature = mod.feature("resonance", [

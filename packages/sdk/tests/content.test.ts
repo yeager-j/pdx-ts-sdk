@@ -2249,11 +2249,15 @@ describe("generated content registries", () => {
     // and unused — orphaned for a translator to trip over). Registration
     // and resolution are keyed by `${ownerId}::${fieldKey}` in addition to
     // the row object, so each definition resolves its own occurrence. The
-    // key's own *value* — `descKey` pinned, here, rather than falling back
+    // key's own *value* — pinned by `desc.key` here, rather than falling back
     // to a hash of the text (SDK-48) — is a separate, orthogonal concern:
     // both definitions share the same pinned slug (same row, same text) but
     // still resolve to their own owner-prefixed key.
-    const sharedRow = { mult: 2, desc: "Shared gate.", descKey: "shared_gate", when: always() };
+    const sharedRow = {
+      mult: 2,
+      desc: { english: "Shared gate.", key: "shared_gate" },
+      when: always(),
+    };
     const first = cap.tradition("shared_row_first", {
       name: "Shared Row First",
       aiWeight: { modifiers: [sharedRow] },
@@ -3650,7 +3654,7 @@ describe("modifier desc keys are content-derived, not positional (SDK-48)", () =
     }
   });
 
-  it("derives the key from an author-supplied descKey and emits no warning", () => {
+  it("derives the key from an author-supplied key pin and emits no warning", () => {
     const cap = capabilityFor(DESC_KEY_CONFIG);
     const situation = cap.situationType("pinned", {
       name: "Pinned Key Test",
@@ -3659,8 +3663,7 @@ describe("modifier desc keys are content-derived, not positional (SDK-48)", () =
         modifiers: [
           {
             subtract: 1,
-            desc: "The Flesh is Weak.",
-            descKey: "flesh_is_weak",
+            desc: { english: "The Flesh is Weak.", key: "flesh_is_weak" },
             when: always(),
           },
         ],
@@ -3675,7 +3678,7 @@ describe("modifier desc keys are content-derived, not positional (SDK-48)", () =
     expect(mod.warnings).toEqual([]);
   });
 
-  it("falls back to a hash of the desc text and warns when no descKey is given", () => {
+  it("falls back to a hash of the desc text and warns when no key pin is given", () => {
     const cap = capabilityFor(DESC_KEY_CONFIG);
     const desc = "Machine intelligence keeps the uprising contained.";
     const expectedSlug = createHash("sha256").update(desc).digest("hex").slice(0, 8);
@@ -3696,9 +3699,9 @@ describe("modifier desc keys are content-derived, not positional (SDK-48)", () =
         code: "unstable-desc-key",
         message:
           'Modifier desc on "desc_key_test_situation_unkeyed" (monthly_progress) has no ' +
-          "descKey; its localisation key is a hash of the desc text and will change if that " +
-          "text is edited, silently orphaning any existing translation. Set descKey to pin a " +
-          "stable key.",
+          "key; its localisation key is a hash of the English desc text and will change if " +
+          "that text is edited, silently orphaning any existing translation. Set desc.key to " +
+          "pin a stable key.",
       },
     ]);
   });
@@ -3720,7 +3723,7 @@ describe("modifier desc keys are content-derived, not positional (SDK-48)", () =
       technologySwap: [
         {
           name: "desc_key_test_tech_nested_desc_frugal",
-          weight: { modifiers: [{ factor: 2, desc: "Cheaper.", descKey: "frugal" }] },
+          weight: { modifiers: [{ factor: 2, desc: { english: "Cheaper.", key: "frugal" } }] },
         },
       ],
     });
@@ -3740,7 +3743,7 @@ describe("modifier desc keys are content-derived, not positional (SDK-48)", () =
     // paths. Only a shared row object can reach that, and keeping the last
     // registration would render one occurrence under the other's key.
     const cap = capabilityFor(DESC_KEY_CONFIG);
-    const sharedRow = { factor: 2, desc: "Cheaper.", descKey: "frugal" } as const;
+    const sharedRow = { factor: 2, desc: { english: "Cheaper.", key: "frugal" } } as const;
     const technology = cap.technology("shared_nested_row", {
       name: "Shared Nested Row Test",
       area: "society",
@@ -3763,18 +3766,24 @@ describe("modifier desc keys are content-derived, not positional (SDK-48)", () =
     );
   });
 
-  it("rejects a descKey that is not lowercase snake_case", () => {
+  it("rejects a desc key pin that is not lowercase snake_case", () => {
     const cap = capabilityFor(DESC_KEY_CONFIG);
     const situation = cap.situationType("bad_key", {
       name: "Bad Key Test",
       monthlyProgress: {
         base: 1,
-        modifiers: [{ subtract: 1, desc: "Bad key.", descKey: "Flesh-Is-Weak", when: always() }],
+        modifiers: [
+          {
+            subtract: 1,
+            desc: { english: "Bad key.", key: "Flesh-Is-Weak" },
+            when: always(),
+          },
+        ],
       },
     });
 
     expect(() => cap.compile([cap.feature(undefined, [situation])])).toThrow(
-      'Modifier.descKey "Flesh-Is-Weak" on "desc_key_test_situation_bad_key" ' +
+      'Modifier desc key "Flesh-Is-Weak" on "desc_key_test_situation_bad_key" ' +
         '(monthly_progress) must be lowercase snake_case (e.g. "flesh_is_weak")'
     );
   });
@@ -3783,7 +3792,7 @@ describe("modifier desc keys are content-derived, not positional (SDK-48)", () =
     const cap = capabilityFor(DESC_KEY_CONFIG);
     // Two rows can legitimately want the exact same tooltip gated on
     // different conditions — "insufficient resources" under one flag, the
-    // same line under another. Hashing only the desc text (no descKey given)
+    // same line under another. Hashing only the desc text (no key pin given)
     // produces the same slug, and therefore the same full key, for both
     // rows. That must not be treated as a collision: the game shows the
     // same string either way, so registering the identical key/text once
@@ -3818,7 +3827,7 @@ describe("modifier desc keys are content-derived, not positional (SDK-48)", () =
 
   it("still rejects a genuine collision — same key, different text", () => {
     const cap = capabilityFor(DESC_KEY_CONFIG);
-    // Two rows deliberately sharing a descKey but carrying different desc
+    // Two rows deliberately sharing a key pin but carrying different desc
     // text compute the same localisation key for different English strings.
     // That is exactly what the duplicate-key guard exists to catch, and the
     // benign same-text exemption above must not weaken it.
@@ -3827,8 +3836,8 @@ describe("modifier desc keys are content-derived, not positional (SDK-48)", () =
       monthlyProgress: {
         base: 1,
         modifiers: [
-          { subtract: 1, desc: "Text A.", descKey: "shared_key", when: always() },
-          { factor: 2, desc: "Text B.", descKey: "shared_key", when: always() },
+          { subtract: 1, desc: { english: "Text A.", key: "shared_key" }, when: always() },
+          { factor: 2, desc: { english: "Text B.", key: "shared_key" }, when: always() },
         ],
       },
     });
@@ -3847,8 +3856,7 @@ describe("modifier desc keys are content-derived, not positional (SDK-48)", () =
         modifiers: [
           {
             subtract: 1,
-            desc: "The Flesh is Weak.",
-            descKey: "flesh_is_weak",
+            desc: { english: "The Flesh is Weak.", key: "flesh_is_weak" },
             when: always(),
           },
           { factor: 2, desc: "An unpinned row.", when: always() },
@@ -3921,7 +3929,7 @@ describe("SDK-48 and SDK-50 warning callbacks both survive one ContentAuthoring 
     const cap = capabilityFor(configFor("Warning coexistence test", "warning_coexist_test"));
     const situation = cap.situationType("coexist", {
       name: "Warning Coexistence Test",
-      // No descKey: triggers SDK-48's onUnstableDescKey.
+      // No key pin: triggers SDK-48's onUnstableDescKey.
       monthlyProgress: {
         base: 1,
         modifiers: [{ subtract: 1, desc: "An unpinned tooltip.", when: always() }],

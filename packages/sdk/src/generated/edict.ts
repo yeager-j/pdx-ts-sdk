@@ -2,6 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/edicts.cwt
 
+import type { LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type {
@@ -19,10 +20,16 @@ import type { SpriteRef, TechnologyRef } from "./refs.ts";
  * Generated from `type[edict]` at `game/common/edicts`.
  */
 export interface EdictFields {
-  /** English text emitted to localization under `edict_<id>`. */
-  name: string;
-  /** English text emitted to localization under `edict_<id>_desc`. */
-  description?: string;
+  /**
+   * Display text emitted to localization under `edict_<id>`.
+   * A bare string is the English shorthand.
+   */
+  name: LocalizedText;
+  /**
+   * Display text emitted to localization under `edict_<id>_desc`.
+   * A bare string is the English shorthand.
+   */
+  description?: LocalizedText;
   /** number of days the trigger is active. */
   length: number;
   icon: SpriteRef | string;

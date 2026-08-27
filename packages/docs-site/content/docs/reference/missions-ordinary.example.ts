@@ -46,8 +46,7 @@ const finishSurvey = events.country(2, {
   isTriggeredOnly: true,
   options: [
     {
-      name: "Archive the result.",
-      key: "archive_signal",
+      name: { english: "Archive the result.", key: "archive_signal" },
       effects: (country) => {
         country.addMissionCounter({
           mission: decodeSignals,
@@ -67,8 +66,7 @@ const startSurvey = events.country(1, {
   isTriggeredOnly: true,
   options: [
     {
-      name: "Begin decoding.",
-      key: "begin_decoding",
+      name: { english: "Begin decoding.", key: "begin_decoding" },
       effects: (country, ctx) => {
         country.beginEventChain({ eventChain: signalSurveyChain, target: ctx.self });
         country.enableMission({ name: decodeSignals });

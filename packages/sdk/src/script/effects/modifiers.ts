@@ -2,6 +2,11 @@
 
 import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
 
+import {
+  resolveLocalizedText,
+  type LocalizationTranslations,
+  type LocalizedText,
+} from "../../authoring/localization.ts";
 import { MODIFIER_OPERATIONS } from "../../generated/modifier-policy.ts";
 import type { ScopeName } from "../../generated/scopes.ts";
 import { shortLocalizationHash } from "../../localization-key.ts";
@@ -9,7 +14,7 @@ import { compareUtf8 } from "../../ordering.ts";
 import type { ContentRefUse } from "../../references.ts";
 import { toScalar } from "../scalar.ts";
 import { scriptValueScalar, type ScriptValue } from "../trigger-core.ts";
-import type { ComplexTriggerModifier, Modifier, ModifierWithLoc } from "./types.ts";
+import type { ComplexTriggerModifier, Modifier } from "./types.ts";
 
 /**
  * Resolved `desc` keys, by the exact `Modifier` object that carries them —
@@ -80,26 +85,29 @@ export function registerModifierDescKey(
   existing.set(ownerKey, key);
 }
 
-/** `Modifier.descKey`'s required shape — lowercase snake_case, matching content ids. */
+/** A modifier desc's key pin — lowercase snake_case, matching content ids. */
 export const DESC_KEY_PATTERN = /^[a-z][a-z0-9_]*$/;
 
 /**
- * A derived modifier desc localisation key, plus a warning to surface when
- * the derivation fell back to a content hash rather than an author-supplied
- * `descKey`. The warning is returned rather than emitted so this function
- * stays free of any opinion about where a caller's diagnostics land —
- * `content/authoring.ts` has `onUnstableDescKey` wired to `mod.warnings` already;
- * `events.ts` threads it through `DefinedEvent.warnings` instead, since an
- * event has no `ContentAuthoring` instance to hang a callback off.
+ * A derived modifier desc localisation key, the text to emit under it, and a
+ * warning to surface when the derivation fell back to a content hash rather
+ * than an author-supplied key pin. The warning is returned rather than emitted
+ * so this function stays free of any opinion about where a caller's
+ * diagnostics land — `content/authoring.ts` has `onUnstableDescKey` wired to
+ * `mod.warnings` already; `events.ts` threads it through `DefinedEvent.warnings`
+ * instead, since an event has no `ContentAuthoring` instance to hang a callback
+ * off.
  */
 export interface ModifierDescKeyResult {
   readonly key: string;
+  /** English plus every translation the row's `desc` supplied. */
+  readonly translations: LocalizationTranslations;
   readonly unstableWarning?: string;
 }
 
 /**
  * Derives the localisation key for one desc-bearing `modifier_rule` row:
- * `<ownerId>_<fieldPath>_<descKey-or-hash>`. Modifier rows are anonymous and
+ * `<ownerId>_<fieldPath>_<pin-or-hash>`. Modifier rows are anonymous and
  * repeated with no id of their own, so the key cannot ride the row's own
  * identity and is derived instead. `ownerId` and `fieldPath` are already
  * unique per definition (mod-prefixed and duplicate-checked, or a fixed
@@ -110,12 +118,12 @@ export interface ModifierDescKeyResult {
  * shipped translation with no build error and no symptom until a player
  * reads that language (SDK-48).
  *
- * An author-supplied `descKey` is preferred when given: stable under
+ * The `key` member of the row's `desc` is preferred when given: stable under
  * reordering and under text edits, so it is the only scheme translations
  * can safely be pinned against long-term. Without one, the key falls back
- * to a short hash of the `desc` text itself — still a function of content
- * rather than position, so it survives reordering and insertion, but it
- * changes (and orphans any existing translation) whenever the English text
+ * to a short hash of the English `desc` text itself — still a function of
+ * content rather than position, so it survives reordering and insertion, but
+ * it changes (and orphans any existing translation) whenever that text
  * is edited; the caller is expected to surface `unstableWarning` when that
  * happens, the same way `content/authoring.ts`'s `onUnstableDescKey`/`mod.warnings`
  * already does, rather than let the fallback stay silently unattended.
@@ -128,24 +136,26 @@ export interface ModifierDescKeyResult {
 export function modifierDescKey(
   ownerId: string,
   fieldPath: string,
-  modifier: ModifierWithLoc<ScopeName>
+  desc: LocalizedText
 ): ModifierDescKeyResult {
-  if (modifier.descKey !== undefined) {
-    if (!DESC_KEY_PATTERN.test(modifier.descKey)) {
+  const { translations, key } = resolveLocalizedText(desc);
+  if (key !== undefined) {
+    if (!DESC_KEY_PATTERN.test(key)) {
       throw new Error(
-        `Modifier.descKey "${modifier.descKey}" on "${ownerId}" (${fieldPath}) must be ` +
+        `Modifier desc key "${key}" on "${ownerId}" (${fieldPath}) must be ` +
           `lowercase snake_case (e.g. "flesh_is_weak")`
       );
     }
-    return { key: `${ownerId}_${fieldPath}_${modifier.descKey}` };
+    return { key: `${ownerId}_${fieldPath}_${key}`, translations };
   }
-  const slug = shortLocalizationHash(modifier.desc);
+  const slug = shortLocalizationHash(translations.english);
   return {
     key: `${ownerId}_${fieldPath}_${slug}`,
+    translations,
     unstableWarning:
-      `Modifier desc on "${ownerId}" (${fieldPath}) has no descKey; its localisation key ` +
-      `is a hash of the desc text and will change if that text is edited, silently ` +
-      `orphaning any existing translation. Set descKey to pin a stable key.`,
+      `Modifier desc on "${ownerId}" (${fieldPath}) has no key; its localisation key ` +
+      `is a hash of the English desc text and will change if that text is edited, silently ` +
+      `orphaning any existing translation. Set desc.key to pin a stable key.`,
   };
 }
 
@@ -155,7 +165,7 @@ export function modifierDescKey(
  * `content/types.ts`'s `WeightBlockOperations` is the same set, spelled from the
  * same place ({@link Modifier}).
  */
-export type WeightOperations = Omit<Modifier<ScopeName>, "desc" | "descKey" | "when">;
+export type WeightOperations = Omit<Modifier<ScopeName>, "desc" | "when">;
 
 /**
  * The operations in emission order, as (member, emitted key) pairs.

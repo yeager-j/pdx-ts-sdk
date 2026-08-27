@@ -2,6 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/governments.cwt
 
+import type { LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { ModifierClosure, WeightBlock } from "../content/types.ts";
@@ -159,10 +160,16 @@ export const CIVIC_OR_ORIGIN_SOFT_TRAITS_FIELDS: readonly ContentField[] = [
  * Generated from `type[civic_or_origin]` at `game/common/governments/civics`.
  */
 export interface CivicOrOriginFields {
-  /** English text emitted to localization under `<id>`. */
-  name?: string;
-  /** English text emitted to localization under `<id>_desc`. */
-  desc?: string;
+  /**
+   * Display text emitted to localization under `<id>`.
+   * A bare string is the English shorthand.
+   */
+  name?: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_desc`.
+   * A bare string is the English shorthand.
+   */
+  desc?: LocalizedText;
   icon?: string;
   /** Custom text that will appear under the "Effects" heading. */
   description?: string;

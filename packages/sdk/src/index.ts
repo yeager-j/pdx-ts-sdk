@@ -41,6 +41,8 @@ export {
   type LocalizationLanguage,
   type LocalizationText,
   type LocalizationTranslations,
+  type LocalizedText,
+  type LocalizedTextRecord,
   type MintedLocalizationKey,
   type ReplacementLocalizationItem,
 } from "./authoring/localization.ts";

@@ -6,6 +6,7 @@ import { compareUtf8, type LogicalPath } from "../ordering.ts";
 import { emissionPath } from "./compile-content.ts";
 import { noteStem, type BuildSession } from "./compile-session.ts";
 import { immutableSet } from "./freeze.ts";
+import { registerLocalization } from "./localization.ts";
 import type { EmittedFile } from "./model.ts";
 
 /** Event, on-action, and contribution products emitted by their compiler phase. */
@@ -128,12 +129,11 @@ function registerEvents(
       for (const use of item.refs) {
         session.refUses.push({ owner: `event "${item.id}"`, use });
       }
-      session.localization.register({
-        layer: "ordinary",
-        language: "english",
-        stem: eventStem.get(item),
-        entries: item.locEntries,
-      });
+      registerLocalization(
+        session.localization,
+        { layer: "ordinary", stem: eventStem.get(item) },
+        item.locEntries
+      );
       session.warnings.push(...item.warnings);
       if (!namespaces.includes(item.namespace)) {
         namespaces.push(item.namespace);

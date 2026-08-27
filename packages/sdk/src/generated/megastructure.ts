@@ -2,6 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/megastructures.cwt
 
+import type { LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type {
@@ -58,14 +59,26 @@ export const MEGASTRUCTURE_PLACEMENT_RULES_FIELDS: readonly ContentField[] = [
  * Generated from `type[megastructure]` at `game/common/megastructures`.
  */
 export interface MegastructureFields {
-  /** English text emitted to localization under `<id>`. */
-  name: string;
-  /** English text emitted to localization under `<id>_DESC`. */
-  desc?: string;
-  /** English text emitted to localization under `<id>_MEGASTRUCTURE_DETAILS`. */
-  details?: string;
-  /** English text emitted to localization under `<id>_CONSTRUCTION_INFO_DELAYED`. */
-  delayedInfo?: string;
+  /**
+   * Display text emitted to localization under `<id>`.
+   * A bare string is the English shorthand.
+   */
+  name: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_DESC`.
+   * A bare string is the English shorthand.
+   */
+  desc?: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_MEGASTRUCTURE_DETAILS`.
+   * A bare string is the English shorthand.
+   */
+  details?: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_CONSTRUCTION_INFO_DELAYED`.
+   * A bare string is the English shorthand.
+   */
+  delayedInfo?: LocalizedText;
   entity: ModelEntityRef | string;
   constructionEntity?: string;
   rotateToCenter?: boolean;
@@ -241,29 +254,33 @@ export type DefinedMegastructure<Id extends string = string> = DefinedContent<
  */
 export interface MegastructurePatch {
   /**
-   * Replacement English text for vanilla's own `<vanilla id>` key.
+   * Replacement text for vanilla's own `<vanilla id>` key.
    * Emitted to `localisation/replace/`, the layer the game resolves ahead
-   * of the ordinary one — a rename, not a new key.
+   * of the ordinary one — a rename, not a new key. English is always
+   * supplied, so a rename replaces the original English text too.
    */
-  readonly name?: string;
+  readonly name?: LocalizedText;
   /**
-   * Replacement English text for vanilla's own `<vanilla id>_DESC` key.
+   * Replacement text for vanilla's own `<vanilla id>_DESC` key.
    * Emitted to `localisation/replace/`, the layer the game resolves ahead
-   * of the ordinary one — a rename, not a new key.
+   * of the ordinary one — a rename, not a new key. English is always
+   * supplied, so a rename replaces the original English text too.
    */
-  readonly desc?: string;
+  readonly desc?: LocalizedText;
   /**
-   * Replacement English text for vanilla's own `<vanilla id>_MEGASTRUCTURE_DETAILS` key.
+   * Replacement text for vanilla's own `<vanilla id>_MEGASTRUCTURE_DETAILS` key.
    * Emitted to `localisation/replace/`, the layer the game resolves ahead
-   * of the ordinary one — a rename, not a new key.
+   * of the ordinary one — a rename, not a new key. English is always
+   * supplied, so a rename replaces the original English text too.
    */
-  readonly details?: string;
+  readonly details?: LocalizedText;
   /**
-   * Replacement English text for vanilla's own `<vanilla id>_CONSTRUCTION_INFO_DELAYED` key.
+   * Replacement text for vanilla's own `<vanilla id>_CONSTRUCTION_INFO_DELAYED` key.
    * Emitted to `localisation/replace/`, the layer the game resolves ahead
-   * of the ordinary one — a rename, not a new key.
+   * of the ordinary one — a rename, not a new key. English is always
+   * supplied, so a rename replaces the original English text too.
    */
-  readonly delayedInfo?: string;
+  readonly delayedInfo?: LocalizedText;
   readonly entity?: PatchInput<ModelEntityRef | string>;
   readonly constructionEntity?: PatchInput<string>;
   readonly rotateToCenter?: PatchInput<boolean>;

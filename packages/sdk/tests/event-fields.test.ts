@@ -314,8 +314,7 @@ describe("previously-omitted EventOption fields", () => {
       isTriggeredOnly: true,
       options: [
         {
-          name: "First",
-          key: "a",
+          name: { english: "First", key: "a" },
           icon: {
             icon: "GFX_option_icon",
             iconBackground: "GFX_option_bg",
@@ -365,8 +364,8 @@ describe("PR #15 review follow-ups (SDK-46)", () => {
     // The real proof: this builds at all. Before this fix, modifierEntry threw
     // "this row was never registered" for every one of these three fields —
     // a hard crash on a legal `Modifier<S>` input (modifier_rule.cwt's `desc`).
-    // Pinned with descKey so the emitted key is deterministic and readable;
-    // the hash fallback (no descKey) is covered by the mirror-case test below.
+    // Pinned with `desc.key` so the emitted key is deterministic and readable;
+    // the hash fallback (no pin) is covered by the mirror-case test below.
     const scheduled = events.country(1030, {
       hideWindow: true,
       meanTimeToHappen: {
@@ -374,8 +373,7 @@ describe("PR #15 review follow-ups (SDK-46)", () => {
         modifiers: [
           {
             factor: 2,
-            desc: "MTTH modifier tooltip.",
-            descKey: "mtth_tooltip",
+            desc: { english: "MTTH modifier tooltip.", key: "mtth_tooltip" },
             when: hasGlobalFlag("event_fields_mtth"),
           },
         ],
@@ -385,23 +383,20 @@ describe("PR #15 review follow-ups (SDK-46)", () => {
         modifiers: [
           {
             factor: 3,
-            desc: "Weight modifier tooltip.",
-            descKey: "weight_tooltip",
+            desc: { english: "Weight modifier tooltip.", key: "weight_tooltip" },
             when: hasGlobalFlag("event_fields_weight"),
           },
         ],
       },
       options: [
         {
-          name: "First",
-          key: "a",
+          name: { english: "First", key: "a" },
           aiChance: {
             factor: 10,
             modifiers: [
               {
                 factor: 4,
-                desc: "AI chance modifier tooltip.",
-                descKey: "ai_chance_tooltip",
+                desc: { english: "AI chance modifier tooltip.", key: "ai_chance_tooltip" },
                 when: hasGlobalFlag("event_fields_ai"),
               },
             ],
@@ -434,7 +429,7 @@ describe("PR #15 review follow-ups (SDK-46)", () => {
     );
   });
 
-  it("keeps a descKey-pinned modifier's key stable across reordering, and derives an 8-char content hash when descKey is omitted", () => {
+  it("keeps a pinned modifier's key stable across reordering, and derives an 8-char content hash when the pin is omitted", () => {
     const keyFor = (text: string, loc: string) => {
       const match = new RegExp(`^ (\\S+):0 "${text}"$`, "m").exec(loc);
       expect(match).not.toBeNull();
@@ -448,8 +443,7 @@ describe("PR #15 review follow-ups (SDK-46)", () => {
         modifiers: [
           {
             factor: 2,
-            desc: "Pinned tooltip.",
-            descKey: "pinned_tooltip",
+            desc: { english: "Pinned tooltip.", key: "pinned_tooltip" },
             when: hasGlobalFlag("event_fields_pinned"),
           },
           {
@@ -486,8 +480,7 @@ describe("PR #15 review follow-ups (SDK-46)", () => {
           },
           {
             factor: 2,
-            desc: "Pinned tooltip.",
-            descKey: "pinned_tooltip",
+            desc: { english: "Pinned tooltip.", key: "pinned_tooltip" },
             when: hasGlobalFlag("event_fields_pinned"),
           },
         ],
@@ -500,14 +493,14 @@ describe("PR #15 review follow-ups (SDK-46)", () => {
     expect(keyFor("Unpinned tooltip\\.", afterLoc)).toBe(unpinnedKeyBefore);
   });
 
-  it("surfaces an unstable-desc-key warning in mod.warnings when an event modifier desc has no descKey", () => {
+  it("surfaces an unstable-desc-key warning in mod.warnings when an event modifier desc has no key pin", () => {
     const events = makeEvents();
     const unpinned = events.country(1042, {
       hideWindow: true,
       meanTimeToHappen: {
         days: 5,
         modifiers: [
-          { factor: 2, desc: "No descKey here.", when: hasGlobalFlag("event_fields_no_key") },
+          { factor: 2, desc: "No key pin here.", when: hasGlobalFlag("event_fields_no_key") },
         ],
       },
     });
@@ -516,7 +509,7 @@ describe("PR #15 review follow-ups (SDK-46)", () => {
     expect(unstable).toHaveLength(1);
     expect(unstable[0]!.message).toContain("event_fields.1042");
     expect(unstable[0]!.message).toContain("mean_time_to_happen");
-    expect(unstable[0]!.message).toContain("descKey");
+    expect(unstable[0]!.message).toContain("desc.key");
   });
 
   it("lowers majorTrigger as a country-scope predicate, evaluated per recipient country rather than the event's own scope", () => {

@@ -2,6 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/traditions.cwt
 
+import type { LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type {
@@ -14,12 +15,21 @@ import type { Trigger } from "../script/trigger-core.ts";
 import type { AgendaRef } from "./refs.ts";
 
 export interface TraditionSwapFields {
-  /** English text emitted to localization under `<id>`. */
-  name?: string;
-  /** English text emitted to localization under `<id>_delayed`. */
-  flavor?: string;
-  /** English text emitted to localization under `<id>_desc`. */
-  effects?: string;
+  /**
+   * Display text emitted to localization under `<id>`.
+   * A bare string is the English shorthand.
+   */
+  name?: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_delayed`.
+   * A bare string is the English shorthand.
+   */
+  flavor?: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_desc`.
+   * A bare string is the English shorthand.
+   */
+  effects?: LocalizedText;
   inheritIcon?: boolean;
   inheritName?: boolean;
   inheritEffects?: boolean;
@@ -107,12 +117,21 @@ export const TRADITION_SWAP_LOCALISATION: readonly ContentLocalisation[] = [
  * Generated from `type[tradition]` at `game/common/traditions`.
  */
 export interface TraditionFields {
-  /** English text emitted to localization under `<id>`. */
-  name: string;
-  /** English text emitted to localization under `<id>_delayed`. */
-  flavor?: string;
-  /** English text emitted to localization under `<id>_desc`. */
-  effects?: string;
+  /**
+   * Display text emitted to localization under `<id>`.
+   * A bare string is the English shorthand.
+   */
+  name: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_delayed`.
+   * A bare string is the English shorthand.
+   */
+  flavor?: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_desc`.
+   * A bare string is the English shorthand.
+   */
+  effects?: LocalizedText;
   unlocksAgenda?: AgendaRef | string;
   modifier?: ModifierClosure<"country">;
   triggeredModifier?: TriggeredModifier<"country">[];

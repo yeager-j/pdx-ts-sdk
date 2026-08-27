@@ -2,6 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/ship_sizes.cwt
 
+import type { LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { EconomicResourceBlock, ModifierClosure, WeightBlock } from "../content/types.ts";
@@ -276,10 +277,16 @@ export const SHIP_SIZE_HERO_SHIP_FIELDS: readonly ContentField[] = [
  * Generated from `type[ship_size]` at `game/common/ship_sizes`.
  */
 export interface ShipSizeFields {
-  /** English text emitted to localization under `<id>`. */
-  name?: string;
-  /** English text emitted to localization under `<id>_plural`. */
-  plural?: string;
+  /**
+   * Display text emitted to localization under `<id>`.
+   * A bare string is the English shorthand.
+   */
+  name?: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_plural`.
+   * A bare string is the English shorthand.
+   */
+  plural?: LocalizedText;
   graphicalCulture?: (GraphicalCultureRef | string)[] | boolean;
   isSpaceObject?: boolean;
   isReckoningShip?: boolean;

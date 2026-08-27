@@ -2,6 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/crisis.cwt
 
+import type { LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { WeightBlock } from "../content/types.ts";
@@ -12,10 +13,16 @@ import type { Trigger } from "../script/trigger-core.ts";
  * Generated from `type[crisis_objective]` at `game/common/crisis_objectives`.
  */
 export interface CrisisObjectiveFields {
-  /** English text emitted to localization under `<id>_name`. */
-  name?: string;
-  /** English text emitted to localization under `<id>_desc`. */
-  desc?: string;
+  /**
+   * Display text emitted to localization under `<id>_name`.
+   * A bare string is the English shorthand.
+   */
+  name?: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_desc`.
+   * A bare string is the English shorthand.
+   */
+  desc?: LocalizedText;
   /** Daily country condition that controls whether this objective is currently available. */
   potential?: Trigger<"country">;
   /** Weight block that calculates the reward for completion. */

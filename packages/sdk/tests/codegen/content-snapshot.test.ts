@@ -450,8 +450,8 @@ describe("content-type codegen", () => {
 
   it("collapses duplicate localization patterns without hiding them", () => {
     const agenda = emissions.get("agenda");
-    expect(agenda?.code).toContain("name: string;");
-    expect(agenda?.code).toContain("desc?: string;");
+    expect(agenda?.code).toContain("name: LocalizedText;");
+    expect(agenda?.code).toContain("desc?: LocalizedText;");
     expect(agenda?.code).not.toContain("councilAgendaName");
     expect(agenda?.localisationAliases).toEqual([
       "agenda.localisation.council_agenda_name (council_agenda_$_name) duplicates name at council_agenda_$_name",
@@ -461,14 +461,14 @@ describe("content-type codegen", () => {
 
   it("excludes localization patterns with no $ id placeholder rather than emit an unusable member", () => {
     const job = emissions.get("job");
-    expect(job?.code).toContain("name: string;");
-    expect(job?.code).toContain("desc?: string;");
+    expect(job?.code).toContain("name: LocalizedText;");
+    expect(job?.code).toContain("desc?: LocalizedText;");
     // Only one `desc` member survives on JobFields itself even though the rules
     // declare it twice — struct-shaped fields nested elsewhere in the file (like
     // swappable_data's own `desc`) are unrelated members and legitimately reuse
     // the name, so the check is scoped to the top-level interface body.
     const jobFieldsBody = job?.code?.match(/export interface JobFields \{([\s\S]*?)\n\}/)?.[1];
-    expect(jobFieldsBody?.match(/\bdesc\??: string;/g)).toHaveLength(1);
+    expect(jobFieldsBody?.match(/\bdesc\??: LocalizedText;/g)).toHaveLength(1);
     // The excluded patterns point at swappable_data's own `desc`/`condition_string`
     // body fields — struct lowering now expresses those as ordinary members on
     // JobSwappableDataDefault, an unrelated field the loc-alias exclusion above
@@ -1587,7 +1587,7 @@ describe("content-type codegen", () => {
     expect(megastructure?.code).toContain('upgradeDesc?: string | "hide";');
     // Every shipped megastructure is named in the build menu, so the slot is a
     // REQUIRED_LOCALISATION row and the member is not optional.
-    expect(megastructure?.code).toContain("  name: string;");
+    expect(megastructure?.code).toContain("  name: LocalizedText;");
     expect(megastructure?.code).toContain('{ member: "name", pattern: "$", required: true }');
     expect(fieldNames(megastructure!.emittedFields)).toContain("resources");
     expect(fieldNames(megastructure!.emittedFields)).toContain("country_modifier");

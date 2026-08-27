@@ -1,5 +1,6 @@
 /** Public effect-surface types shared by the recorder and generated scope interfaces. */
 
+import type { LocalizedText } from "../../authoring/localization.ts";
 import type { EffectPathOf, ScopeObjOf } from "../../generated/effects.ts";
 import type { ModifierOperationFields } from "../../generated/modifier-policy.ts";
 import type { StaticModifierRef } from "../../generated/refs.ts";
@@ -288,21 +289,15 @@ export interface Modifier<S extends ScopeName> extends ModifierOperationFields<S
    * runtime-recorded effect modifiers have no such stable, once-only
    * registration point — `modifierEntry` below throws if `desc` reaches it
    * unresolved from one of those.
+   *
+   * Modifier rows have no id of their own, so the generated key ends in a
+   * hash of the English text: it survives reordering, but it changes — and
+   * orphans any shipped translation — whenever that text is edited, which
+   * `mod.warnings` reports. Write `{ english, key: "flesh_is_weak" }` to pin
+   * that part of the key instead. The pin is lowercase snake_case, matching
+   * the same pattern as content ids.
    */
-  readonly desc?: string;
-  /**
-   * A stable slug identifying this row's `desc` for localisation, e.g.
-   * `"flesh_is_weak"`. Modifier rows have no id of their own and, absent a
-   * `descKey`, the generated key falls back to a hash of the `desc` text —
-   * automatic and stable under reordering, but it changes (and orphans any
-   * shipped translation) whenever the English text is edited. Supplying
-   * `descKey` pins the key so translations survive text edits too; see
-   * `ContentAuthoring`'s modifier-desc collection in `content/authoring.ts` for the
-   * exact key format and the `mod.warnings` entry an unset `descKey` emits.
-   * Ignored when `desc` is not set. Lowercase snake_case, matching the same
-   * pattern as content ids.
-   */
-  readonly descKey?: string;
+  readonly desc?: LocalizedText;
   /**
    * The gating condition, spliced inline per `modifier_rule.cwt`.
    *
@@ -323,7 +318,7 @@ export interface Modifier<S extends ScopeName> extends ModifierOperationFields<S
  * we can make good tooltips with", per the CWT source comment. Same concept
  * as `Modifier`, one stricter requiredness level, not a duplicate shape.
  */
-export type ModifierWithLoc<S extends ScopeName> = Modifier<S> & { readonly desc: string };
+export type ModifierWithLoc<S extends ScopeName> = Modifier<S> & { readonly desc: LocalizedText };
 
 /**
  * The `mode` a {@link ComplexTriggerModifier} row feeds its trigger result
@@ -393,9 +388,11 @@ export interface ComplexTriggerModifier<S extends ScopeName> {
    * Display text for this row's tooltip, auto-registered as localisation the
    * same way {@link Modifier.desc} is — see `ContentAuthoring`'s
    * modifier-desc collection in `content/authoring.ts`. `complexTriggerModifierEntry`
-   * below throws if `desc` reaches it unresolved.
+   * below throws if `desc` reaches it unresolved. Unlike {@link Modifier.desc},
+   * this row's key is its position among the field's rows rather than a hash
+   * of its text, so it takes no `key` pin.
    */
-  readonly desc?: string;
+  readonly desc?: LocalizedText;
   /** Additional gate evaluated alongside the named trigger. */
   readonly potential?: Trigger<S>;
 }
@@ -422,7 +419,7 @@ export type ComplexTriggerModifierWithLoc<S extends ScopeName> = Omit<
   ComplexTriggerModifier<S>,
   "divide" | "minValue" | "maxValue" | "desc"
 > & {
-  readonly desc: string;
+  readonly desc: LocalizedText;
   readonly divide?: never;
   readonly minValue?: never;
   readonly maxValue?: never;

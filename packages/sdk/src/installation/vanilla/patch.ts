@@ -37,7 +37,12 @@
 
 import { container, quoted, scalar, type PdxEntry, type PdxItem } from "@pdx-ts/pdxscript";
 
-import { localisationKey, type LocalisationEntry } from "../../content/authoring.ts";
+import {
+  resolveFixedKeyText,
+  type KeyedLocalization,
+  type LocalizedText,
+} from "../../authoring/localization.ts";
+import { localisationKey } from "../../content/authoring.ts";
 import { isComplexTriggerModifier } from "../../content/blocks.ts";
 import { fieldEntries } from "../../content/lower.ts";
 import type { ContentField, ContentLocalisation } from "../../content/schema.ts";
@@ -114,7 +119,7 @@ export interface PatchedContent<Source extends ParsedDefinition = ParsedDefiniti
    * gives a definition's own ids, reached by substituting the owner rather
    * than by checking the result.
    */
-  readonly loc: readonly LocalisationEntry[];
+  readonly loc: readonly KeyedLocalization[];
   /**
    * Replacement text for keys vanilla already defines — a rename.
    *
@@ -124,7 +129,7 @@ export interface PatchedContent<Source extends ParsedDefinition = ParsedDefiniti
    * never decides a localisation winner, so this is a mechanism rather than a
    * claim, and carries no win assertion.
    */
-  readonly replaceLoc: readonly LocalisationEntry[];
+  readonly replaceLoc: readonly KeyedLocalization[];
   /** Diagnostics raised while minting keys, for `mod.warnings`. */
   readonly warnings: readonly ModWarning[];
   /**
@@ -264,7 +269,7 @@ interface MintContext {
    * this mod defines, applied at the one place a patch mints anything.
    */
   readonly ownerId: string;
-  readonly into: LocalisationEntry[];
+  readonly into: KeyedLocalization[];
   readonly warnings: ModWarning[];
 }
 
@@ -315,15 +320,26 @@ function mintModifierDescs(
     const typed = row as unknown as ModifierWithLoc<ScopeName>;
     if (isComplexTriggerModifier(typed)) {
       const key = `${ctx.ownerId}_${fieldPath}_${index}`;
-      ctx.into.push([key, typed.desc]);
+      ctx.into.push({
+        key,
+        translations: resolveFixedKeyText(
+          typed.desc,
+          `The complex trigger modifier desc on "${ctx.ownerId}" (${fieldPath}[${index}])`,
+          key
+        ),
+      });
       registerComplexTriggerModifierDescKey(typed, ownerKey, key);
       return;
     }
-    const { key, unstableWarning } = modifierDescKey(ctx.ownerId, fieldPath, typed);
+    const { key, translations, unstableWarning } = modifierDescKey(
+      ctx.ownerId,
+      fieldPath,
+      typed.desc
+    );
     if (unstableWarning !== undefined) {
       ctx.warnings.push({ code: "unstable-desc-key", message: unstableWarning });
     }
-    ctx.into.push([key, typed.desc]);
+    ctx.into.push({ key, translations });
     registerModifierDescKey(typed, ownerKey, key);
   });
 }
@@ -484,11 +500,19 @@ export function patchContent<Source extends ParsedDefinition, Patch extends obje
   // the vanilla id — so the text lands where the game already looks. It is a
   // replacement, not a new key, which is why it goes to its own layer rather
   // than beside the minted keys below.
-  const replaceLoc: LocalisationEntry[] = [];
+  const replaceLoc: KeyedLocalization[] = [];
   for (const slot of localisation) {
     const text = patched[slot.member];
     if (text !== undefined) {
-      replaceLoc.push([localisationKey(slot.pattern, source.id), text as string]);
+      const key = localisationKey(slot.pattern, source.id);
+      replaceLoc.push({
+        key,
+        translations: resolveFixedKeyText(
+          text as LocalizedText,
+          `The patched "${slot.member}" of ${registry} "${source.id}"`,
+          key
+        ),
+      });
     }
   }
 

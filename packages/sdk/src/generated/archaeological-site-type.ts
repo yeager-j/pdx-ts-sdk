@@ -2,6 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/archaeology.cwt
 
+import type { LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { EffectBlock, WeightBlock, WithFrom } from "../content/types.ts";
@@ -89,10 +90,16 @@ export const ARCHAEOLOGICAL_SITE_TYPE_STAGE_FIELDS: readonly ContentField[] = [
  * Generated from `type[archaeological_site_type]` at `game/common/archaeological_site_types`.
  */
 export interface ArchaeologicalSiteTypeFields {
-  /** English text emitted to localization under `<id>`. */
-  name: string;
-  /** English text emitted to localization under `<id>_desc`. */
-  desc?: string;
+  /**
+   * Display text emitted to localization under `<id>`.
+   * A bare string is the English shorthand.
+   */
+  name: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_desc`.
+   * A bare string is the English shorthand.
+   */
+  desc?: LocalizedText;
   /** GFX_* sprite key for the sites image */
   picture?: SpriteRef | string;
   /** Description generator for the site, with scope this=archaeological site. */

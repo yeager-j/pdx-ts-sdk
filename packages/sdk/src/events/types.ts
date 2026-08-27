@@ -16,6 +16,11 @@
 
 import type { PdxEntry } from "@pdx-ts/pdxscript";
 
+import type {
+  KeyedLocalization,
+  LocalizationTranslations,
+  LocalizedText,
+} from "../authoring/localization.ts";
 import type { TriggeredDescription } from "../content/types.ts";
 import type { ModWarning } from "../diagnostics.ts";
 import type {
@@ -57,7 +62,7 @@ export interface EventItemBase {
   readonly id: string;
   readonly entry: PdxEntry;
   readonly refs: readonly ContentRefUse[];
-  readonly locEntries: ReadonlyArray<readonly [string, string]>;
+  readonly locEntries: readonly KeyedLocalization[];
   readonly warnings: readonly ModWarning[];
 }
 
@@ -79,7 +84,7 @@ export type EventItem<
 > = DefinedEvent<S, Context, Kind> & {
   readonly itemKind: "event";
   readonly namespace: string;
-  readonly locEntries: ReadonlyArray<readonly [string, string]>;
+  readonly locEntries: readonly KeyedLocalization[];
 };
 
 /**
@@ -123,8 +128,8 @@ export interface EventRef<
 export interface EventOptionIcon {
   readonly icon: SpriteRef | string;
   readonly iconBackground?: SpriteRef | string;
-  /** English caption text; a localization key is generated the same way `name` is. */
-  readonly text?: string;
+  /** Caption text, keyed off the option's own key the same way `name` is. */
+  readonly text?: LocalizedText;
 }
 
 /**
@@ -151,17 +156,18 @@ export interface EventTriggeredDescription<S extends ScopeName> extends Triggere
   readonly showSound?: SoundEffectRef | string;
 }
 
-export interface EventOption<
+/**
+ * One `option = { ... }` row.
+ *
+ * The option has no id of its own, so its localization keys — the name, the
+ * icon caption, the response, and every AI-chance modifier desc — hang off a
+ * suffix taken from the name's own `key` pin, or from a hash of the English
+ * name when none is given, which also raises an `unstable-option-key` warning.
+ */
+export type EventOption<
   S extends ScopeName,
   Context extends AmbientScopeContext,
-> extends GeneratedEventOptionFields<S, Context> {
-  /**
-   * Safe localization suffix shared by the option name, icon caption, response,
-   * and AI-chance modifier descriptions. When omitted, the SDK uses the first
-   * eight characters of the name hash and emits an `unstable-option-key` warning.
-   */
-  readonly key?: string;
-}
+> = GeneratedEventOptionFields<S, Context>;
 
 /**
  * A `location` value (`events.cwt:308`, `scope_field`): either a fixed
@@ -290,7 +296,7 @@ export type DefinedEvent<
 
 /** Where definition-side localization lands; the caller supplies its registry. */
 export interface LocSink {
-  register(key: string, text: string): void;
+  register(key: string, translations: LocalizationTranslations): void;
 }
 
 // ---------------------------------------------------------------------------

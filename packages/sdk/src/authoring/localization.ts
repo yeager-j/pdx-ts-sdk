@@ -1,4 +1,4 @@
-/** Standalone, mod-bound localization authoring. */
+/** Author-facing localization text, and standalone, mod-bound localization authoring. */
 
 import { assertLocalizationSuffix } from "../localization-key.ts";
 
@@ -26,6 +26,50 @@ export type LocalizationTranslations = Readonly<
 
 /** English shorthand or an explicitly translated localization value. */
 export type LocalizationText = string | LocalizationTranslations;
+
+/**
+ * A language record for a text position whose localization key the SDK derives
+ * rather than the author spelling it, with an optional pin for that key.
+ */
+export type LocalizedTextRecord = Readonly<
+  LocalizationTranslations & {
+    /**
+     * Pins the derived key's anonymous part instead of hashing the English
+     * text, so editing that text does not orphan shipped translations. Only
+     * accepted where the key would otherwise be a hash — a modifier row's
+     * `desc`, an event option's `name`.
+     */
+    readonly key?: string;
+  }
+>;
+
+/**
+ * Display text for any slot the SDK keys itself: a bare string is the English
+ * shorthand, and a language record carries English plus every translation
+ * supplied for the same key.
+ *
+ * @example
+ * ```ts
+ * mod.building("resonance_archive", {
+ *   name: { english: "Resonance Archive", french: "Archive de résonance" },
+ * });
+ * ```
+ */
+export type LocalizedText = string | LocalizedTextRecord;
+
+/** {@link LocalizedText} split into the text to emit and the key pin, if any. */
+export interface ResolvedLocalizedText {
+  /** English plus every explicitly supplied translation. */
+  readonly translations: LocalizationTranslations;
+  /** The author's key pin, absent when the key stays fully derived. */
+  readonly key?: string;
+}
+
+/** One localization key and every language's text for it, before a file is chosen. */
+export interface KeyedLocalization {
+  readonly key: string;
+  readonly translations: LocalizationTranslations;
+}
 
 /** The complete localization key minted from a mod prefix and author-chosen suffix. */
 export type MintedLocalizationKey<P extends string, Suffix extends string> = `${P}_${Suffix}`;
@@ -93,27 +137,85 @@ function assertExactOrdinaryLocalizationKey(key: string): void {
   }
 }
 
-function resolveTranslations(text: LocalizationText): LocalizationTranslations {
-  if (typeof text === "string") {
-    return Object.freeze({ english: text });
-  }
-  if (text === null || Array.isArray(text) || typeof text !== "object") {
-    throw new Error("Localization text must be an English string or a language record");
-  }
-  for (const language of Object.keys(text)) {
+function assertLanguageRecord(
+  languages: Readonly<Record<string, unknown>>
+): asserts languages is LocalizationTranslations {
+  for (const language of Object.keys(languages)) {
     if (!languageSet.has(language)) {
       throw new Error(`Unsupported localization language "${language}"`);
     }
   }
-  if (typeof text.english !== "string") {
+  if (typeof languages["english"] !== "string") {
     throw new Error('Localization language records must include an "english" string');
   }
-  for (const [language, value] of Object.entries(text)) {
+  for (const [language, value] of Object.entries(languages)) {
     if (typeof value !== "string") {
       throw new Error(`Localization text for "${language}" must be a string`);
     }
   }
+}
+
+function assertTextRecord(text: unknown): asserts text is Readonly<Record<string, unknown>> {
+  if (text === null || Array.isArray(text) || typeof text !== "object") {
+    throw new Error("Localization text must be an English string or a language record");
+  }
+}
+
+function resolveTranslations(text: LocalizationText): LocalizationTranslations {
+  if (typeof text === "string") {
+    return Object.freeze({ english: text });
+  }
+  assertTextRecord(text);
+  assertLanguageRecord(text);
   return Object.freeze({ ...text });
+}
+
+/**
+ * Validates authored display text and separates its key pin from its languages.
+ *
+ * Use this wherever the SDK derives the localization key itself. `mod.localization`
+ * and `mod.replaceLocalization` take {@link LocalizationText} instead: their key is
+ * an explicit argument, so a pin there would have nothing to pin.
+ */
+export function resolveLocalizedText(text: LocalizedText): ResolvedLocalizedText {
+  if (typeof text === "string") {
+    return { translations: Object.freeze({ english: text }) };
+  }
+  assertTextRecord(text);
+  const { key, ...languages } = text;
+  assertLanguageRecord(languages);
+  if (key === undefined) {
+    return { translations: Object.freeze(languages) };
+  }
+  if (typeof key !== "string") {
+    throw new Error('Localization text "key" must be a string');
+  }
+  assertLocalizationSuffix(key);
+  return { translations: Object.freeze(languages), key };
+}
+
+/**
+ * Resolves display text for a position whose localization key is fixed by the
+ * definition it rides on, refusing a key pin that could not take effect.
+ *
+ * @param position - Names the text position in the refusal, e.g. `technology "x" name`.
+ * @param derivedKey - The key the position always emits under.
+ */
+export function resolveFixedKeyText(
+  text: LocalizedText,
+  position: string,
+  derivedKey: string
+): LocalizationTranslations {
+  const { translations, key } = resolveLocalizedText(text);
+  if (key !== undefined) {
+    throw new Error(
+      `${position} sets "key", but its localization key is always "${derivedKey}": no part of ` +
+        `it comes from the English text, so there is nothing to pin. Remove "key" — it is for ` +
+        `anonymous text, a modifier row's desc or an event option's name, whose key would ` +
+        `otherwise hash that text.`
+    );
+  }
+  return translations;
 }
 
 /** Creates a prefix-owned standalone localization item. */

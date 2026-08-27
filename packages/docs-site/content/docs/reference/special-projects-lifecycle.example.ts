@@ -18,8 +18,7 @@ const signalCompleted = events.ship(2, {
   isTriggeredOnly: true,
   options: [
     {
-      name: "Record the pattern.",
-      key: "record_pattern",
+      name: { english: "Record the pattern.", key: "record_pattern" },
       effects: (ship) => {
         ship.owner.effects((country) => {
           country.addResource({ resource: "physics_research", amount: 500 });
@@ -64,8 +63,7 @@ const signalDetected = events.country(1, {
   trigger: isAi(false),
   options: [
     {
-      name: "Prepare an expedition.",
-      key: "prepare_expedition",
+      name: { english: "Prepare an expedition.", key: "prepare_expedition" },
       effects: (country, ctx) => {
         country.randomOwnedPlanet({ limit: hasOwner() }, (planet) => {
           planet.saveEventTargetAs(signalWorld);

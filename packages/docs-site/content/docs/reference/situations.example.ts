@@ -26,8 +26,7 @@ const unstableGrowth = events.situation(2, {
   isTriggeredOnly: true,
   options: [
     {
-      name: "Stabilize the lattice.",
-      key: "stabilize_lattice",
+      name: { english: "Stabilize the lattice.", key: "stabilize_lattice" },
       effects: (situation) => situation.addSituationProgress(-5),
     },
   ],
@@ -40,8 +39,7 @@ const harmonicInsight = events.situation(3, {
   isTriggeredOnly: true,
   options: [
     {
-      name: "Apply the pattern.",
-      key: "apply_pattern",
+      name: { english: "Apply the pattern.", key: "apply_pattern" },
       effects: (situation) => situation.addSituationProgress(8),
     },
   ],
@@ -54,8 +52,7 @@ const bloomComplete = events.situation(4, {
   isTriggeredOnly: true,
   options: [
     {
-      name: "Listen to its song.",
-      key: "listen",
+      name: { english: "Listen to its song.", key: "listen" },
       effects: (situation, ctx) => situation.destroySituation(ctx.self),
     },
   ],

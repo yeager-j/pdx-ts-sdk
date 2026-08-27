@@ -287,9 +287,9 @@ function eventDefinersCode(scoped: readonly (EmittedKind & { scope: string })[])
     '        throw new Error(`Duplicate event id "${ns}.${def.id}"`);\n' +
     "      }\n" +
     "      used.add(def.id);\n" +
-    "      const locEntries: (readonly [string, string])[] = [];\n" +
+    "      const locEntries: KeyedLocalization[] = [];\n" +
     "      const built = buildEvent(kind, scope, ns, def, {\n" +
-    "        register: (key, text) => locEntries.push([key, text]),\n" +
+    "        register: (key, translations) => locEntries.push({ key, translations }),\n" +
     "      });\n" +
     '      const item = { ...built, itemKind: "event" as const, namespace: ns, locEntries };\n' +
     '      return item as EventItem<S, Context, (typeof EVENT_KINDS)[K]["subtype"]>;\n' +

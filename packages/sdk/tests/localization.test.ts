@@ -219,6 +219,86 @@ describe("standalone localization authoring", () => {
     ).toThrow('Duplicate localization key "gateway_localization_test" for english');
   });
 
+  it("fans a content slot's language record out to one file per language", async () => {
+    const mod = capability();
+    const technology = mod.technology("lattice", {
+      name: { english: "Lattice Theory", french: "Théorie du treillis" },
+      desc: "Only the English half of this one is written.",
+      area: "physics",
+      tier: 1,
+      category: "particles",
+    });
+    const files = render(mod.compile([mod.feature("slots", [technology])]));
+
+    // One key, two files: the slot's key comes from the definition id, so the
+    // French entry lands under exactly the key the English entry uses.
+    expect(files.get("localisation/english/localization_test_slots_l_english.yml")).toContain(
+      ' localization_test_tech_lattice:0 "Lattice Theory"'
+    );
+    await expect(
+      files.get("localisation/french/localization_test_slots_l_french.yml")
+    ).toMatchFileSnapshot("__snapshots__/localization/slots_l_french.yml");
+  });
+
+  it("refuses a key pin on a slot whose key the definition id fixes", () => {
+    const mod = capability();
+    const technology = mod.technology("pinned", {
+      name: { english: "Pinned", key: "pinned_name" },
+      area: "physics",
+      tier: 1,
+      category: "particles",
+    });
+    expect(() => mod.compile([mod.feature("pinned", [technology])])).toThrow(
+      'Localization "name" for "localization_test_tech_pinned" sets "key", but its ' +
+        'localization key is always "localization_test_tech_pinned"'
+    );
+  });
+
+  it("fans event title, desc, and option text out per language", () => {
+    const mod = capability();
+    const event = mod.namespace("story").country(2, {
+      title: { english: "A Story", french: "Une histoire" },
+      desc: { english: "It begins.", french: "Elle commence." },
+      isTriggeredOnly: true,
+      options: [{ name: { english: "Read on.", french: "Poursuivre.", key: "read_on" } }],
+    });
+    const files = render(mod.compile([mod.feature("story", [event])]));
+
+    expect(files.get("localisation/french/localization_test_story_l_french.yml")).toBe(
+      "﻿l_french:\n" +
+        ' localization_test_story.2.desc:0 "Elle commence."\n' +
+        ' localization_test_story.2.name:0 "Une histoire"\n' +
+        ' localization_test_story.2.read_on:0 "Poursuivre."\n'
+    );
+  });
+
+  it("fans a modifier desc's translations out under its pinned key", () => {
+    const mod = capability();
+    const tradition = mod.tradition("resonance", {
+      name: "Resonance",
+      aiWeight: {
+        modifiers: [
+          {
+            factor: 2,
+            desc: { english: "Already resonant.", german: "Bereits resonant.", key: "resonant" },
+          },
+        ],
+      },
+    });
+    const compiled = mod.compile([mod.feature("weights", [tradition])]);
+    const files = render(compiled);
+    const key = "localization_test_tradition_resonance_ai_weight_resonant";
+
+    expect(files.get("localisation/english/localization_test_weights_l_english.yml")).toContain(
+      ` ${key}:0 "Already resonant."`
+    );
+    expect(files.get("localisation/german/localization_test_weights_l_german.yml")).toContain(
+      ` ${key}:0 "Bereits resonant."`
+    );
+    // A pinned key is stable under text edits, so nothing is unstable here.
+    expect(compiled.warnings).toEqual([]);
+  });
+
   it("rejects placement through a different mod capability", () => {
     const alpha = capability("alpha_loc");
     const beta = capability("beta_loc");

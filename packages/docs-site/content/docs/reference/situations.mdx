@@ -57,8 +57,10 @@ monthlyProgress: {
   modifiers: [
     {
       add: 2,
-      desc: "Our observers let the bloom develop naturally.",
-      descKey: "observation_progress",
+      desc: {
+        english: "Our observers let the bloom develop naturally.",
+        key: "observation_progress",
+      },
       when: currentSituationApproach(observe),
     },
   ],
@@ -67,7 +69,7 @@ monthlyProgress: {
 
 Every modifier row needs `desc`. The SDK registers that explanation as
 localization because the game shows it in the progress tooltip. Set a stable
-`descKey` when the row will be maintained over time; this keeps its
+`key` on the desc when the row will be maintained over time; this keeps its
 localization identity separate from edits to the English text.
 
 Use `add` for a flat change and `factor` for a multiplier. Conditions such as

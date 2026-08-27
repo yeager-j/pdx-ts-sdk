@@ -9,7 +9,7 @@ The SDK turns author-facing text into the localization keys and files that
 Stellaris loads. Use the narrowest authoring surface for each kind of text:
 
 - Put a definition's own text in its generated localization members, such as
-  `name` and `desc`.
+  `name` and `desc`. They take English text or a language record.
 - Use `mod.localization` when another script field needs a standalone key owned
   by your mod. It adds the mod prefix by default, or can preserve an exact key
   in the ordinary localization layer.
@@ -27,7 +27,7 @@ written separately, under the game's replace directory.
 ## Put definition text on the definition
 
 Generated content methods expose the text slots declared for that content
-type. For a building, `name` and `desc` are English source text:
+type. For a building, `name` and `desc` are display text:
 
 ```ts
 const resonanceArchive = mod.building("resonance_archive", {
@@ -52,6 +52,48 @@ Each registry reference page lists its localization slots as `$`-patterns,
 such as `$_desc` in the [building field tables](/reference/buildings/). In
 those tables `$` means the definition id, and for a nested entry's slots it
 means that entry's own key.
+
+### Translate a slot in place
+
+Every text position takes the same value: a bare string, which is the English
+shorthand, or a language record. Write the record where the definition is, and
+the Fold emits one entry per language under the same generated key:
+
+```ts
+const resonanceArchive = mod.building("resonance_archive", {
+  name: { english: "Resonance Archive", french: "Archive de résonance" },
+  desc: "A living record of every harmonic signal we have found.",
+});
+```
+
+`english` is required and the other names must be supported Stellaris
+languages, exactly as in `mod.localization`. A language file is written only
+for the languages some entry supplies, so the `desc` above stays in the
+English file alone.
+
+This is the same value everywhere text is authored: event `title`, `desc`, and
+option names, a modifier row's `desc`, and the rename slots of a content patch.
+
+### Pin a key that would otherwise hash its text
+
+Most slots key off the definition id, so their keys are stable whatever the
+text says. Two positions have no id to key off — a modifier row's `desc` and an
+event option's `name` — and their keys end in a hash of the English text. Edit
+that text and the key changes, orphaning any translation shipped against the
+old one; the build reports it as `unstable-desc-key` or `unstable-option-key`.
+
+Add `key` to the record to pin that part of the key instead:
+
+```ts
+options: [
+  {
+    name: { english: "Trace it to the source.", key: "trace_source" },
+  },
+];
+```
+
+`key` is only for those anonymous positions. On a slot whose key comes from the
+definition id, it would name a key nothing reads, so the build refuses it.
 
 ## Create a standalone key with `mod.localization`
 

@@ -2,6 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/agreements.cwt
 
+import type { LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { WeightBlock, WithFrom } from "../content/types.ts";
@@ -128,12 +129,21 @@ export const AGREEMENT_PRESET_TERM_DATA_FIELDS: readonly ContentField[] = [
  * Generated from `type[agreement_preset]` at `game/common/agreement_presets`.
  */
 export interface AgreementPresetFields {
-  /** English text emitted to localization under `<id>`. */
-  name: string;
-  /** English text emitted to localization under `<id>_desc`. */
-  desc?: string;
-  /** English text emitted to localization under `<id>_flavor_desc`. */
-  flavor?: string;
+  /**
+   * Display text emitted to localization under `<id>`.
+   * A bare string is the English shorthand.
+   */
+  name: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_desc`.
+   * A bare string is the English shorthand.
+   */
+  desc?: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_flavor_desc`.
+   * A bare string is the English shorthand.
+   */
+  flavor?: LocalizedText;
   /** Only when agreement_preset subtype `has_parent` applies. */
   parent?: AgreementPresetRef | string;
   icon?: SpriteRef | string;

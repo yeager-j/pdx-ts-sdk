@@ -16,7 +16,7 @@ const firstSignal = events.country(1, {
   immediate: (country) => {
     country.addResource({ resource: "influence", amount: 50 });
   },
-  options: [{ name: "Begin the search.", key: "begin_search" }],
+  options: [{ name: { english: "Begin the search.", key: "begin_search" } }],
 });
 
 const atGameStart = mod.on(onActions.onGameStartCountry, [firstSignal]);

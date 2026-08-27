@@ -67,6 +67,7 @@ import {
   type EventFleetRef,
   type GovernmentTriggerBlock,
   type JobRef,
+  type LocalizedText,
   type MegastructureFields,
   type MegastructurePatch,
   type MenacePerkDef,
@@ -1430,30 +1431,6 @@ describe("generated content authoring types", () => {
       name: "X",
       aiWeight: { factor: 5000 },
     });
-    contentMod.tradition("weight_operation_desc_key", {
-      name: "X",
-      aiWeight: {
-        factor: 5000,
-        // @ts-expect-error — descKey belongs to a modifier row; a top-level
-        // weight-block descKey has no emitted PDXScript representation.
-        descKey: "silently_dropped",
-      },
-    });
-    const aliasedWeightWithDescKey = { factor: 5000, descKey: "silently_dropped" };
-    contentMod.tradition("aliased_weight_operation_desc_key", {
-      name: "X",
-      // @ts-expect-error — structural authoring through an alias must not
-      // bypass the top-level descKey prohibition.
-      aiWeight: aliasedWeightWithDescKey,
-    });
-    function weightWithDescKey() {
-      return { factor: 5000, descKey: "silently_dropped" };
-    }
-    contentMod.tradition("returned_weight_operation_desc_key", {
-      name: "X",
-      // @ts-expect-error — nor may a helper return the silently dropped field.
-      aiWeight: weightWithDescKey(),
-    });
     const aliasedWeightWithDesc = { factor: 5000, desc: "silently dropped" };
     contentMod.tradition("aliased_weight_operation_desc", {
       name: "X",
@@ -1469,7 +1446,7 @@ describe("generated content authoring types", () => {
     contentMod.tradition("modifier_row_desc_key", {
       name: "X",
       aiWeight: {
-        modifiers: [{ factor: 2, desc: "Still allowed.", descKey: "still_allowed" }],
+        modifiers: [{ factor: 2, desc: { english: "Still allowed.", key: "still_allowed" } }],
       },
     });
     // SDK-36: a complex_trigger_modifier row (no `when`) sits in the same
@@ -2863,12 +2840,12 @@ describe("generated patch authoring types", () => {
   it("carries the registry's localisation slots as optional replacement text", () => {
     // Derived from the same declared localisation table the definition's own
     // text members come from — not a hand-listed pair — so both registries
-    // have both slots, both optional, both plain strings: the text replaces
-    // vanilla's, and the key is vanilla's own rather than anything authored.
-    expectTypeOf<TechnologyPatch["name"]>().toEqualTypeOf<string | undefined>();
-    expectTypeOf<TechnologyPatch["desc"]>().toEqualTypeOf<string | undefined>();
-    expectTypeOf<BuildingPatch["name"]>().toEqualTypeOf<string | undefined>();
-    expectTypeOf<BuildingPatch["desc"]>().toEqualTypeOf<string | undefined>();
+    // have both slots, both optional, both the shared text type: the text
+    // replaces vanilla's, and the key is vanilla's own rather than authored.
+    expectTypeOf<TechnologyPatch["name"]>().toEqualTypeOf<LocalizedText | undefined>();
+    expectTypeOf<TechnologyPatch["desc"]>().toEqualTypeOf<LocalizedText | undefined>();
+    expectTypeOf<BuildingPatch["name"]>().toEqualTypeOf<LocalizedText | undefined>();
+    expectTypeOf<BuildingPatch["desc"]>().toEqualTypeOf<LocalizedText | undefined>();
     // A rename alone is a complete patch: nothing about the body is required.
     const rename: TechnologyPatch = { name: "Renamed" };
     void rename;
@@ -2911,10 +2888,10 @@ describe("generated patch authoring types", () => {
     void patch;
     // Four declared localisation slots rather than the other two registries'
     // two: the member list is the registry's own table, never a fixed pair.
-    expectTypeOf<MegastructurePatch["name"]>().toEqualTypeOf<string | undefined>();
-    expectTypeOf<MegastructurePatch["desc"]>().toEqualTypeOf<string | undefined>();
-    expectTypeOf<MegastructurePatch["details"]>().toEqualTypeOf<string | undefined>();
-    expectTypeOf<MegastructurePatch["delayedInfo"]>().toEqualTypeOf<string | undefined>();
+    expectTypeOf<MegastructurePatch["name"]>().toEqualTypeOf<LocalizedText | undefined>();
+    expectTypeOf<MegastructurePatch["desc"]>().toEqualTypeOf<LocalizedText | undefined>();
+    expectTypeOf<MegastructurePatch["details"]>().toEqualTypeOf<LocalizedText | undefined>();
+    expectTypeOf<MegastructurePatch["delayedInfo"]>().toEqualTypeOf<LocalizedText | undefined>();
     // @ts-expect-error — a member naming nothing the patch type has.
     contentMod.patchMegastructure(array, () => ({ buildTme: 1 }));
   });

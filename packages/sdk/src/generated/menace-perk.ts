@@ -2,6 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/crisis.cwt
 
+import type { LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { EffectBlock, ModifierClosure } from "../content/types.ts";
@@ -12,10 +13,16 @@ import type { SpriteRef } from "./refs.ts";
  * Generated from `type[menace_perk]` at `game/common/menace_perks`.
  */
 export interface MenacePerkFields {
-  /** English text emitted to localization under `<id>`. */
-  name?: string;
-  /** English text emitted to localization under `<id>_desc`. */
-  desc?: string;
+  /**
+   * Display text emitted to localization under `<id>`.
+   * A bare string is the English shorthand.
+   */
+  name?: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_desc`.
+   * A bare string is the English shorthand.
+   */
+  desc?: LocalizedText;
   /** GFX sprite displayed for this menace perk. */
   portrait: SpriteRef | string;
   /** Continuing country modifiers granted by this menace perk. */

@@ -25,8 +25,7 @@ const signalCompleted = events.country(3, {
   isTriggeredOnly: true,
   options: [
     {
-      name: "Archive the completed pattern.",
-      key: "archive_pattern",
+      name: { english: "Archive the completed pattern.", key: "archive_pattern" },
       effects: (country) => {
         country.addResource({ resource: "physics_research", amount: 500 });
         country.endEventChain(crystalMystery);
@@ -42,8 +41,7 @@ const secondSignal = events.country(2, {
   isTriggeredOnly: true,
   options: [
     {
-      name: "Add it to the record.",
-      key: "record_second_signal",
+      name: { english: "Add it to the record.", key: "record_second_signal" },
       effects: (country) => {
         country.addEventChainCounter({
           eventChain: crystalMystery,
@@ -70,8 +68,7 @@ const firstSignal = events.country(1, {
   trigger: isAi(false),
   options: [
     {
-      name: "Record it and keep listening.",
-      key: "record_first_signal",
+      name: { english: "Record it and keep listening.", key: "record_first_signal" },
       effects: (country, ctx) => {
         country.beginEventChain({ eventChain: crystalMystery, target: ctx.self });
         country.addEventChainCounter({

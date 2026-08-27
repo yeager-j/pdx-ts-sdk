@@ -2,6 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/scripted_modifiers.cwt
 
+import type { LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { ScriptedModifierCategory } from "./enums.ts";
@@ -11,8 +12,11 @@ import type { ScriptedModifierCategory } from "./enums.ts";
  * Generated from `type[scripted_modifier]` at `game/common/scripted_modifiers`.
  */
 export interface ScriptedModifierFields {
-  /** English text emitted to localization under `mod_<id>`. */
-  name?: string;
+  /**
+   * Display text emitted to localization under `mod_<id>`.
+   * A bare string is the English shorthand.
+   */
+  name?: LocalizedText;
   /** name of file in gfx\interface\icons\modifiers (without the .dds). Default is "mod_" + key */
   icon?: string;
   /** show as a % or not (default: no) */

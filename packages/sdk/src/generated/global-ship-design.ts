@@ -2,6 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/global_ship_designs.cwt
 
+import type { LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { ComponentSlot, SectionSlot, UtilityComponentSlot } from "./enums.ts";
@@ -140,8 +141,11 @@ export const GLOBAL_SHIP_DESIGN_SECTION_FIELDS: readonly ContentField[] = [
  * Generated from `type[global_ship_design]` at `game/common/global_ship_designs`.
  */
 export interface GlobalShipDesignFields {
-  /** English text emitted to localization under `<id>`. */
-  name?: string;
+  /**
+   * Display text emitted to localization under `<id>`.
+   * A bare string is the English shorthand.
+   */
+  name?: LocalizedText;
   shipSize?: ShipSizeRef | string;
   hideSize?: boolean;
   upgradesTo?: GlobalShipDesignRef | string;

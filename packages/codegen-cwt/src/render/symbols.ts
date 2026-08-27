@@ -45,6 +45,7 @@ const SYMBOL_MODULES: readonly ModuleSymbols[] = [
     values: ["block", "cmp", "container", "kv", "scalar"],
   },
   { module: "../authoring/assets.ts", types: ["AssetFileItem"] },
+  { module: "../authoring/localization.ts", types: ["LocalizedText"] },
   { module: "../content/authoring.ts", types: ["DefinedContent"] },
   {
     module: "../content/schema.ts",

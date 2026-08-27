@@ -2,6 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/modifiers.cwt
 
+import type { LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { ModifierClosure } from "../content/types.ts";
@@ -37,10 +38,16 @@ export interface StaticModifierFields<S extends StaticModifierScope = StaticModi
    * making those objects valid hosts themselves.
    */
   hostScope: S;
-  /** English text emitted to localization under `<id>`. */
-  name: string;
-  /** English text emitted to localization under `<id>_desc`. */
-  desc?: string;
+  /**
+   * Display text emitted to localization under `<id>`.
+   * A bare string is the English shorthand.
+   */
+  name: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_desc`.
+   * A bare string is the English shorthand.
+   */
+  desc?: LocalizedText;
   /** Modifiers written directly into the definition body, with no enclosing key. */
   modifiers?: ModifierClosure<NoInfer<S>>;
   /** Only when static_modifier subtype `planet` applies. */

@@ -2,6 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/casus_belli_and_war_goals.cwt
 
+import type { LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { EconomicResourceBlock, EffectBlock, WithFrom } from "../content/types.ts";
@@ -13,10 +14,16 @@ import type { ScopeName } from "./scopes.ts";
  * Generated from `type[casus_belli]` at `game/common/casus_belli`.
  */
 export interface CasusBelliFields {
-  /** English text emitted to localization under `casus_belli_<id>`. */
-  name: string;
-  /** English text emitted to localization under `casus_belli_<id>_acquire_hint`. */
-  hint?: string;
+  /**
+   * Display text emitted to localization under `casus_belli_<id>`.
+   * A bare string is the English shorthand.
+   */
+  name: LocalizedText;
+  /**
+   * Display text emitted to localization under `casus_belli_<id>_acquire_hint`.
+   * A bare string is the English shorthand.
+   */
+  hint?: LocalizedText;
   /**
    * trigger to make some CBs invalid for certain types of countries; \
    * this = attacker (CB owner); default: { always = yes }

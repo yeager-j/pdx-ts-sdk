@@ -71,6 +71,7 @@ import {
 import {
   createReplacementLocalizationItem,
   localizationFor,
+  type KeyedLocalization,
   type LocalizationMethod,
   type LocalizationText,
   type ReplacementLocalizationItem,
@@ -304,13 +305,13 @@ function createEventHandle<
   const define = (
     definition: Omit<EventDef<S, Context>, "id" | "scopes">
   ): GeneratedCapabilityEventItem<P, N, Id, S, Context, Kind> => {
-    const localizationEntries: (readonly [string, string])[] = [];
+    const localizationEntries: KeyedLocalization[] = [];
     const event = buildEvent(
       kind,
       scope,
       namespace,
       { ...definition, id, scopes } as EventDef<S, Context>,
-      { register: (key, text) => localizationEntries.push([key, text]) }
+      { register: (key, translations) => localizationEntries.push({ key, translations }) }
     );
     return {
       ...event,

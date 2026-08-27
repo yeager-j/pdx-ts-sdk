@@ -1,5 +1,8 @@
-import type { LocalizationLanguage } from "../authoring/localization.ts";
-import type { LocalisationEntry } from "../content/authoring.ts";
+import {
+  LOCALIZATION_LANGUAGES,
+  type KeyedLocalization,
+  type LocalizationLanguage,
+} from "../authoring/localization.ts";
 import type { ModWarning } from "../diagnostics.ts";
 import {
   compareLogicalPaths,
@@ -11,7 +14,11 @@ import type { LocalizationFile } from "./model.ts";
 
 const LOC_FORBIDDEN = /[\r\n\0]/;
 
-type LocalizationLayer = "ordinary" | "replace";
+/** One `.yml` line's worth of localization, before any file is chosen for it. */
+export type LocalisationEntry = readonly [key: string, text: string];
+
+/** Which of the two localization layers an entry is emitted into. */
+export type LocalizationLayer = "ordinary" | "replace";
 
 export interface LocalizationRegistration {
   readonly layer: LocalizationLayer;
@@ -62,6 +69,31 @@ function localizationPath(
 export interface LocalizationAccumulator {
   register(registration: LocalizationRegistration): void;
   finish(prefix: string): readonly LocalizationFile[];
+}
+
+/**
+ * Registers collected localization, once per language any entry supplies.
+ *
+ * Every collector — content slots, event text, patch localization, standalone
+ * items — produces keys carrying all their languages together, while the
+ * accumulator below places one language's entries at a time. This is the one
+ * place that turns the first into the second, so a language absent from every
+ * entry never opens a file for itself.
+ */
+export function registerLocalization(
+  accumulator: LocalizationAccumulator,
+  where: { readonly layer: LocalizationLayer; readonly stem: string | undefined },
+  collected: readonly KeyedLocalization[]
+): void {
+  for (const language of LOCALIZATION_LANGUAGES) {
+    const entries = collected.flatMap<LocalisationEntry>(({ key, translations }) => {
+      const text = translations[language];
+      return text === undefined ? [] : [[key, text]];
+    });
+    if (entries.length > 0) {
+      accumulator.register({ layer: where.layer, language, stem: where.stem, entries });
+    }
+  }
 }
 
 /** Collects localization globally, then resolves deterministic feature-owned files. */

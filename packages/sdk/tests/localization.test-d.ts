@@ -3,9 +3,12 @@ import { describe, expectTypeOf, it } from "vitest";
 import {
   createMod,
   type LocalizationItem,
+  type LocalizedText,
+  type LocalizedTextRecord,
   type MintedLocalizationKey,
   type ReplacementLocalizationItem,
 } from "../src/index.ts";
+import type { TechnologyFields, TechnologyPatch } from "../src/stellaris.ts";
 
 describe("standalone localization types", () => {
   it("preserves the exact minted key and accepts supported translations", () => {
@@ -71,6 +74,59 @@ describe("standalone localization types", () => {
     // @ts-expect-error — every language record supplies the English source text.
     mod.localization("missing_english", {
       french: "Seulement français",
+    });
+    // @ts-expect-error — a standalone item's key is its own argument, so the
+    // text it carries has no key member to pin.
+    mod.localization("pinned", { english: "Pinned", key: "elsewhere" });
+  });
+});
+
+describe("definition-attached text types", () => {
+  const mod = createMod({
+    name: "Localized text types",
+    prefix: "localized_text_types",
+    supportedVersion: "4.4.*",
+  });
+  const events = mod.namespace("story");
+
+  it("accepts one shared text type in every slot the SDK keys itself", () => {
+    expectTypeOf<LocalizedText>().toEqualTypeOf<string | LocalizedTextRecord>();
+    expectTypeOf<TechnologyFields["name"]>().toEqualTypeOf<LocalizedText>();
+    expectTypeOf<TechnologyPatch["name"]>().toEqualTypeOf<LocalizedText | undefined>();
+
+    mod.technology("theory", {
+      name: { english: "Theory", french: "Théorie" },
+      desc: "English shorthand.",
+      area: "physics",
+      tier: 1,
+      category: "particles",
+    });
+    mod.technology("unknown_language", {
+      // @ts-expect-error — slot records accept only supported Stellaris languages.
+      name: { english: "Theory", klingon: "Qapla'" },
+      area: "physics",
+      tier: 1,
+      category: "particles",
+    });
+  });
+
+  it("carries the key pin on the text rather than beside it", () => {
+    events.country(1, {
+      isTriggeredOnly: true,
+      options: [{ name: { english: "Noted.", key: "noted" } }],
+    });
+    events.country(2, {
+      isTriggeredOnly: true,
+      // @ts-expect-error — the option's own `key` member is gone; the pin
+      // rides on the name, which is what the suffix is derived from.
+      options: [{ name: "Noted.", key: "noted" }],
+    });
+    mod.tradition("resonance", {
+      name: "Resonance",
+      aiWeight: {
+        // @ts-expect-error — `descKey` is gone; the pin rides on `desc`.
+        modifiers: [{ factor: 2, desc: "Already resonant.", descKey: "resonant" }],
+      },
     });
   });
 });

@@ -94,8 +94,7 @@ const sealedDoor = events.fleet(1, {
   // Other fields omitted.
   options: [
     {
-      name: "Cut through the seal.",
-      key: "cut_the_seal",
+      name: { english: "Cut through the seal.", key: "cut_the_seal" },
       effects: (fleet) => {
         fleet.owner.effects((country) => {
           country.addResource({ resource: "engineering_research", amount: 250 });

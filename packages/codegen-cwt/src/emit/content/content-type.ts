@@ -201,14 +201,15 @@ function patchTypes(
     patchLocMembers.push(`${type.name}.${member} — replacement text under \`${pattern}\``);
     return renderMember({
       name: member,
-      type: "string",
+      type: emitter.use("LocalizedText"),
       optional: true,
       readonly: true,
       docs: [
-        `Replacement English text for vanilla's own \`${pattern}\` key.`,
+        `Replacement text for vanilla's own \`${pattern}\` key.`,
         "",
         "Emitted to `localisation/replace/`, the layer the game resolves ahead",
-        "of the ordinary one — a rename, not a new key.",
+        "of the ordinary one — a rename, not a new key. English is always",
+        "supplied, so a rename replaces the original English text too.",
       ],
     });
   });

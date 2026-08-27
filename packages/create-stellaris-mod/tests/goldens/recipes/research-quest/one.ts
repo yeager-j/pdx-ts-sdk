@@ -66,8 +66,10 @@ export const started = events.country(1, {
   },
   options: [
     {
-      name: "PLACEHOLDER: the option that takes the quest on.",
-      key: "accept_quest",
+      name: {
+        english: "PLACEHOLDER: the option that takes the quest on.",
+        key: "accept_quest",
+      },
       effects: (country) => {
         country.enableSpecialProject({ name: project });
       },
@@ -86,7 +88,7 @@ export const completed = events.country(2, {
   immediate: (country) => {
     country.endEventChain(chain);
   },
-  options: [{ name: "PLACEHOLDER: acknowledge it.", key: "acknowledge" }],
+  options: [{ name: { english: "PLACEHOLDER: acknowledge it.", key: "acknowledge" } }],
 });
 
 // Without a hook nothing fires `started`; this fires it for every country when

@@ -2,6 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/technologies_consolidated.cwt
 
+import type { LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { ModifierClosure, WeightBlock } from "../content/types.ts";
@@ -273,10 +274,16 @@ export const TECHNOLOGY_PREREQFOR_DESC_FIELDS: readonly ContentField[] = [
  * Generated from `type[technology]` at `game/common/technology`.
  */
 export interface TechnologyFields {
-  /** English text emitted to localization under `<id>`. */
-  name: string;
-  /** English text emitted to localization under `<id>_desc`. */
-  desc?: string;
+  /**
+   * Display text emitted to localization under `<id>`.
+   * A bare string is the English shorthand.
+   */
+  name: LocalizedText;
+  /**
+   * Display text emitted to localization under `<id>_desc`.
+   * A bare string is the English shorthand.
+   */
+  desc?: LocalizedText;
   area: ResearchArea;
   tier: TechnologyTierRef | string | number;
   category: (TechnologyCategoryRef | string)[] | TechnologyCategoryRef | string;
@@ -350,17 +357,19 @@ export type DefinedTechnology<Id extends string = string> = DefinedContent<
  */
 export interface TechnologyPatch {
   /**
-   * Replacement English text for vanilla's own `<vanilla id>` key.
+   * Replacement text for vanilla's own `<vanilla id>` key.
    * Emitted to `localisation/replace/`, the layer the game resolves ahead
-   * of the ordinary one — a rename, not a new key.
+   * of the ordinary one — a rename, not a new key. English is always
+   * supplied, so a rename replaces the original English text too.
    */
-  readonly name?: string;
+  readonly name?: LocalizedText;
   /**
-   * Replacement English text for vanilla's own `<vanilla id>_desc` key.
+   * Replacement text for vanilla's own `<vanilla id>_desc` key.
    * Emitted to `localisation/replace/`, the layer the game resolves ahead
-   * of the ordinary one — a rename, not a new key.
+   * of the ordinary one — a rename, not a new key. English is always
+   * supplied, so a rename replaces the original English text too.
    */
-  readonly desc?: string;
+  readonly desc?: LocalizedText;
   readonly area?: PatchInput<ResearchArea>;
   readonly tier?: PatchInput<TechnologyTierRef | string | number>;
   readonly category?: PatchInput<

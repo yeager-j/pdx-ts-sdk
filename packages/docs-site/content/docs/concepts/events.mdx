@@ -136,8 +136,7 @@ and effects:
 ```ts
 options: [
   {
-    name: "Trace it to the source.",
-    key: "trace_source",
+    name: { english: "Trace it to the source.", key: "trace_source" },
     effects: (country) => {
       country.addResource({ resource: "influence", amount: 10 });
     },
@@ -149,9 +148,10 @@ The option above uses the localization key
 `crystal_resonance_signal.1.trace_source`. Related option text, such as an icon
 caption or response text, derives from the same suffix.
 
-Always set `key` for maintained content. If it is omitted, the SDK hashes the
-option name and records an `unstable-option-key` warning. That fallback keeps
-the event authorable, but editing the displayed text also changes its key.
+Always set the name's `key` for maintained content. If it is omitted, the SDK
+hashes the English option name and records an `unstable-option-key` warning.
+That fallback keeps the event authorable, but editing the displayed text also
+changes its key.
 
 Option `trigger` controls visibility, `allow` can disable the choice, and
 `effects` records the PDXScript that runs when the player selects it. These are

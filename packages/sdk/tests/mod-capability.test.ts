@@ -454,7 +454,9 @@ describe("mod capability composition", () => {
       vanilla.definition("technology", "tech_probe"),
       () => ({
         name: "Renamed by Alpha",
-        weightModifier: { modifiers: [{ factor: 2, desc: "Because.", descKey: "because" }] },
+        weightModifier: {
+          modifiers: [{ factor: 2, desc: { english: "Because.", key: "because" } }],
+        },
       })
     );
 

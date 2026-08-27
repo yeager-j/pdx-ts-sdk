@@ -2,6 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/modifiers.cwt
 
+import type { LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { WeightBlock, WithFrom } from "../content/types.ts";
@@ -12,8 +13,11 @@ import type { Trigger } from "../script/trigger-core.ts";
  * Generated from `type[opinion_modifier]` at `game/common/opinion_modifiers`.
  */
 export interface OpinionModifierFields {
-  /** English text emitted to localization under `<id>`. */
-  name: string;
+  /**
+   * Display text emitted to localization under `<id>`.
+   * A bare string is the English shorthand.
+   */
+  name: LocalizedText;
   opinion:
     | WithFrom<
         WeightBlock<"country">,

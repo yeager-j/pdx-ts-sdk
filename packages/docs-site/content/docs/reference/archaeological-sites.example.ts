@@ -32,8 +32,7 @@ const sealedDoor = events.fleet(1, {
   isTriggeredOnly: true,
   options: [
     {
-      name: "Cut through the seal.",
-      key: "cut_the_seal",
+      name: { english: "Cut through the seal.", key: "cut_the_seal" },
       effects: (fleet) => {
         fleet.owner.effects((country) => {
           country.addResource({ resource: "engineering_research", amount: 250 });
@@ -53,8 +52,7 @@ const memoryVault = events.fleet(2, {
   isTriggeredOnly: true,
   options: [
     {
-      name: "Preserve every recoverable fragment.",
-      key: "preserve_fragments",
+      name: { english: "Preserve every recoverable fragment.", key: "preserve_fragments" },
       effects: (fleet) => {
         fleet.owner.effects((country) => {
           country.addResource({ resource: "society_research", amount: 500 });
@@ -74,8 +72,7 @@ const lastCustodian = events.fleet(3, {
   isTriggeredOnly: true,
   options: [
     {
-      name: "Accept the catalogue.",
-      key: "accept_catalogue",
+      name: { english: "Accept the catalogue.", key: "accept_catalogue" },
       effects: (fleet) => {
         fleet.owner.effects((country) => {
           country.addResource({ resource: "minor_artifacts", amount: 100 });
