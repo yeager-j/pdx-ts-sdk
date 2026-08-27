@@ -51,10 +51,9 @@ Fold rejects an owned reference whose definition was not placed in the build.
 
 ## Use the currency as the UI namespace
 
-`crisisCurrency` points to a resource definition. Vanilla uses the resource id
-as both the progression value and the prefix for player-crisis UI
-localization. Its current player-crisis currencies are non-tradable
-resources in category `other` with `ai_weight = { weight = 1 }`:
+`crisisCurrency` points to a resource definition. Vanilla's player-crisis
+currencies are non-tradable resources in category `other` with
+`ai_weight = { weight = 1 }`:
 
 ```ts
 const resolve = mod.resource("resolve", {
@@ -67,31 +66,84 @@ const resolve = mod.resource("resolve", {
 ```
 
 That is a strong starting convention, not a type-level requirement.
-`ResourceDef` generates only `<currency-id>` and `<currency-id>_desc` from
-`name` and `desc`. A complete crisis interface needs additional manual
-localization. Vanilla uses this family:
 
-- `<currency-id>_value`, `_name`, `_gaining`, and `_desc`
-- `<currency-id>_crisis_objective`, `_crisis_objective_gained`,
-  `_crisis_objective_reward`, and `_crisis_objective_progress`
-- `<currency-id>_crisis_level_locked`, `_crisis_level_unlocked`,
-  `_crisis_level_desc`, and `_crisis_level_unlock`
-- `<currency-id>_current_value`
-- `<currency-id>_crisis_description_title`, `_crisis_description`, and the
-  optional `_crisis_description_intro` composition key
-- `<currency-id>_crisis_howto_title` and `_crisis_howto`
+The Ambition UI builds its own text keys from the currency's id at runtime, so
+a resource is not enough on its own. `ResourceDef` generates `<currency-id>`
+and `<currency-id>_desc`; the UI reads sixteen more keys, from
+`<currency-id>_name` to `<currency-id>_crisis_howto`, and shows the raw key
+wherever one is absent. That text belongs to the *role*, not to the resource:
+the same resource used outside a crisis path needs none of it.
 
-Create these keys with `mod.localization(...)`. Keep the full minted currency
-id in one constant when several keys depend on it, so a rename cannot leave a
-partial namespace behind.
+So `crisisCurrency` takes the resource together with that text. The member
+names are the key suffixes, and every required one must be present:
+
+```ts
+const resolveText = {
+  name: "Resolve:",
+  value: "£archive_ambition_resource_resolve£ $VAL|0$",
+  currentValue: "Current Resolve: §Y$VALUE|0$§!",
+  gaining: "Complete §HArchive Objectives§! to gain more §YResolve§!.",
+  crisisObjective: "Archive Objectives",
+  crisisObjectiveGained: "Resolve gained",
+  crisisObjectiveProgress: "We have gained $AMOUNT$ Resolve from this Archive Objective.",
+  crisisObjectiveReward: "$REWARD$",
+  crisisLevelLocked: "Required to unlock this level:\\n",
+  crisisLevelUnlocked: "At $LEVEL$, you get the rewards:\\n",
+  crisisLevelUnlock: "Has §Y$CURRENCY$§! Resolve",
+  crisisLevelDesc: "To advance through the Archive levels, accumulate Resolve.",
+  crisisDescriptionTitle: "Keeper of the Archive",
+  crisisDescription: "Every civilization the galaxy forgets, we remember.",
+  crisisHowtoTitle: "Memory and Resolve",
+  crisisHowto: "Pursuing §HArchive Objectives§! generates §HResolve§!.",
+};
+```
+
+`crisisDescriptionIntro` is the one optional member — vanilla's `menace` uses
+it to open its description, and `integrity` does not.
+
+The SDK keys each member from the resource the bundle names, so a rename
+cannot leave half a namespace behind. Each member takes the same
+[localized text](/concepts/localization/) every other display slot takes, so a
+translation rides along:
+
+```ts
+crisisObjective: { english: "Archive Objectives", french: "Objectifs d'archive" },
+```
+
+Two members are checked further. `$VAL$`, `$VALUE$`, `$AMOUNT$`, `$REWARD$`,
+`$LEVEL$`, and `$CURRENCY$` are values the game substitutes at runtime, so the
+members that carry them must keep them in every supplied language. Other
+`$…$` tokens are yours to use — a key of your own composes exactly as
+vanilla's `$menace_crisis_description_intro$` does.
+
+A vanilla currency needs no bundle, because the game already ships its family:
+
+```ts
+const nemesis = mod.crisisPath("nemesis_route", {
+  crisisCurrency: vanilla.resource("menace"),
+  levels: [firstLevel],
+  objectives: [archiveRecovered],
+});
+```
+
+Pass the bundle over a vanilla reference only to restate that text yourself.
+Those keys already exist, so the SDK writes them to `localisation/replace/`,
+which is the only thing that decides a localisation winner — a file stem never
+does. A plain string stays available for a resource from another mod, and is
+unchecked; its family is written to the replace layer for the same reason.
+
+Whichever form you use, the completeness rule is settled against the resources
+this build actually defines, not against how the reference is spelled. Naming
+an owned currency through a handle, a widened reference, or its bare id
+without the bundle fails the build rather than shipping raw keys.
 
 ## Connect the route and activate it
 
-The path links the resource and the two progression lists:
+The path links the currency and the two progression lists:
 
 ```ts
 const archivePath = mod.crisisPath("archive", {
-  crisisCurrency: resolve,
+  crisisCurrency: { resource: resolve, localization: resolveText },
   levels: [firstLevel, secondLevel],
   objectives: [archiveRecovered, defendArchive],
 });

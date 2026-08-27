@@ -17,6 +17,7 @@ import {
 } from "../script/effects/modifiers.ts";
 import type { TypedRef } from "../script/scalar.ts";
 import { isComplexTriggerModifier, TRIGGERED_MODIFIER_TEXT_MEMBERS } from "./blocks.ts";
+import { resolveLocalizationRole, type LocalizationRoleUse } from "./localization-families.ts";
 import { dualArm, fieldEntries, isPassthrough, resolveFromClosures } from "./lower.ts";
 import type { ShapeMint } from "./mint-provenance.ts";
 import {
@@ -226,6 +227,7 @@ export class ContentAuthoring {
   private readonly byType: ReadonlyMap<string, ContentRegistryDescriptor>;
   private readonly definitions = new Map<string, ContentDefinition<string, ContentDef>[]>();
   private readonly nestedIds = new Map<string, Set<string>>();
+  private readonly roleUses: LocalizationRoleUse[] = [];
   private readonly registerLoc: RegisterLoc;
   private readonly onPrefixViolation: (message: string) => void;
   private readonly onUnstableDescKey: (message: string) => void;
@@ -324,6 +326,19 @@ export class ContentAuthoring {
    */
   entries(type: string): readonly PdxEntry[] {
     return (this.definitions.get(type) ?? []).map((definition) => definition.toEntries());
+  }
+
+  /**
+   * Every localization role named by the definitions walked so far, in define
+   * order.
+   *
+   * The walk cannot decide whether a role's reference is owned — a handle and a
+   * raw string both name an id whose definition may arrive in another feature —
+   * so it records the use and the fold settles it against the ids this build
+   * actually defines.
+   */
+  get localizationRoleUses(): readonly LocalizationRoleUse[] {
+    return this.roleUses;
   }
 
   /**
@@ -435,12 +450,15 @@ export class ContentAuthoring {
 
   /**
    * Walks every field level — top, `struct`, `aliasStruct` and `structMap`
-   * nesting, and `repeatedStruct` nesting — for the four things that need this
+   * nesting, and `repeatedStruct` nesting — for the five things that need this
    * same recursive descent: repeated-struct ids (prefix and duplicate checks,
    * matched against localisation), the localisation an engine-keyed map keys by
    * its own map key, `WeightBlock`/`WeightBlockWithLoc` modifier rows carrying
-   * `desc` (registered via {@link collectModifierDescs}), and `locKey` values,
-   * whose inline text is registered under a key minted by {@link keyedTextKey}.
+   * `desc` (registered via {@link collectModifierDescs}), `locKey` values,
+   * whose inline text is registered under a key minted by {@link keyedTextKey},
+   * and a `localizationFamily` field's role bundle, whose text is registered
+   * under keys derived from the id it references
+   * ({@link resolveLocalizationRole}).
    *
    * Returns the definition with every `locKey` value replaced by the key the
    * body emits, so the writer downstream lowers plain strings and cannot
@@ -509,6 +527,17 @@ export class ContentAuthoring {
               position,
               localisation
             )
+          )
+        );
+        continue;
+      }
+      if (field.shape === "value" && field.localizationFamily !== undefined) {
+        const family = field.localizationFamily;
+        const site = { ownerType, ownerId, fieldPath };
+        rewrite(
+          field.member,
+          mapOccurrences(raw, field.repeated === true, (item) =>
+            resolveLocalizationRole(item, family, site, localisation, this.roleUses)
           )
         );
         continue;

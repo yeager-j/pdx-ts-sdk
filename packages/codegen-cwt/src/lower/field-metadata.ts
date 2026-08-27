@@ -85,6 +85,18 @@ export function metadata(
   return `{ ${members.join(", ")} }`;
 }
 
+/**
+ * Appends one entry to an already-rendered field descriptor.
+ *
+ * Overlay corrections applied after a shape has been chosen (`pickOrdinary`)
+ * have no other way in: the descriptor is text by then, and threading every
+ * overlay property through each {@link metadata} call site would make every
+ * lowering carry properties only one of them can use.
+ */
+export function withMetadataEntry(descriptor: string, entry: string): string {
+  return `${descriptor.slice(0, descriptor.lastIndexOf("}")).trimEnd()}, ${entry} }`;
+}
+
 /** The descriptor for a shape whose whole value is one scalar the rules type. */
 export function admitsScalars(
   field: RuleField,

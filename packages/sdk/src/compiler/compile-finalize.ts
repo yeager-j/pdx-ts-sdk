@@ -62,6 +62,7 @@ export function finalizeMod(
     definedGroups,
     patched: patches,
     refUses,
+    roleUses: session.roleUses,
     vanillaIdsOf: (registry) =>
       (PACKAGED_ID_EVIDENCE.get(registry) ?? PACKAGED_ENUM_EVIDENCE.get(registry))?.(),
   });

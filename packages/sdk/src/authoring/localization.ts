@@ -77,10 +77,25 @@ export interface ResolvedLocalizedText {
   readonly key?: string;
 }
 
+/**
+ * Which of the two localization directories an entry is emitted into.
+ *
+ * `replace` is `localisation/replace/`, which the game reads with priority
+ * over the ordinary directory. Filename order never decides a localisation
+ * winner, so this layer — not a file stem — is how text lands on a key some
+ * other source already defines.
+ */
+export type LocalizationLayer = "ordinary" | "replace";
+
 /** One localization key and its supplied language text, before a file is chosen. */
 export interface KeyedLocalization {
   readonly key: string;
   readonly translations: LocalizationReplacements;
+  /**
+   * Overrides the layer the registering collector would otherwise use, for a
+   * collector that produces both. Absent means the collector's own layer.
+   */
+  readonly layer?: LocalizationLayer;
 }
 
 declare const localizationRefBrand: unique symbol;

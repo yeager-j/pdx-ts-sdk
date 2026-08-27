@@ -6,6 +6,7 @@ import {
   type ModItemInput,
   type PlacedItem,
 } from "../authoring/feature.ts";
+import type { LocalizationRoleUse } from "../content/localization-families.ts";
 import type { ModWarning } from "../diagnostics.ts";
 import type { VanillaView } from "../installation/vanilla/view.ts";
 import { compareUtf8, type LogicalPath } from "../ordering.ts";
@@ -54,6 +55,8 @@ export interface BuildSession {
   readonly localization: LocalizationAccumulator;
   /** Content references collected during the build. */
   readonly refUses: ReferenceUse[];
+  /** Localization roles collected during the build, checked against defined ids. */
+  readonly roleUses: LocalizationRoleUse[];
   /** Asset path references collected during the build. */
   readonly pathUses: AssetPathReference[];
   /** Source Feature stems grouped by emitted file path. */
@@ -82,6 +85,7 @@ export function createBuildSession(
     warnings,
     localization: createLocalizationAccumulator(warnings),
     refUses: [],
+    roleUses: [],
     pathUses: [],
     stemsByPath: new Map(),
   };

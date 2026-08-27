@@ -13,7 +13,7 @@ paths under `common/crisis_paths/`.
 
 ```ts
 const archivePath = mod.crisisPath("archive", {
-  crisisCurrency: resolve,
+  crisisCurrency: { resource: resolve, localization: resolveText },
   levels: [firstRecord, livingArchive],
   objectives: [surveyWorld, defendArchive],
 });
@@ -28,14 +28,23 @@ For a complete route and activating ascension perk, see
 
 ## Select one currency
 
-`crisisCurrency` accepts a `ResourceRef` or an explicit string. Pass an owned
-resource item when the same mod defines the currency. Use
-`vanilla.resource(...)` for a checked vanilla resource and a raw string only
-for a deliberate third-party id.
+The currency id is also how the Ambition UI names its own text. A resource
+definition creates only its name and description keys, so a resource this mod
+defines is passed together with the sixteen required members of that text
+family, and the SDK keys each one from the resource's id.
 
-The currency id also prefixes the crisis interface's localization family. A
-resource definition creates only its normal name and description keys; the
-connected concept page lists the additional crisis UI keys.
+Use `vanilla.resource(...)` on its own for a vanilla currency, whose family the
+game already ships, and a raw string only for a deliberate third-party id,
+which is unchecked. Passing the bundle over either restates that text under the
+foreign keys, written to `localisation/replace/` because those keys already
+have a definition elsewhere.
+
+The rule is enforced against the ids this build defines, not against how the
+reference is written, so a handle, a widened reference, or the bare minted id
+without the bundle all fail the build.
+
+[Player Crisis Paths](/concepts/player-crisis-paths/) shows the complete
+family, the one optional member, and the placeholders the game substitutes.
 
 ## Order the levels deliberately
 
@@ -81,8 +90,9 @@ objective is a compile error.
 ## Identity, vanilla references, and limits
 
 `mod.crisisPath("archive", ...)` mints
-`<prefix>_crisis_path_archive`. Crisis paths have no definition-owned
-localization slots and no patch surface.
+`<prefix>_crisis_path_archive`. Crisis paths have no patch surface, and no
+localization slot of their own — the currency's family keys from the resource
+id, never from the path's.
 
 - Reuse the returned item instead of copying its full id.
 - Compile the path and every owned node it references.

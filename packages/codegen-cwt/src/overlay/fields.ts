@@ -126,7 +126,13 @@ export const CONTENT_FIELD_DOCS = new Map<string, readonly string[]>([
     "resource.tradable_in_market",
     ["Country condition that gates whether the resource can be traded on the market."],
   ],
-  ["crisis_path.crisis_currency", ["Resource that tracks progress along this crisis path."]],
+  [
+    "crisis_path.crisis_currency",
+    [
+      "Resource that tracks progress along this crisis path.",
+      "A resource defined by this mod comes with the Ambition UI text the game keys from its id.",
+    ],
+  ],
   [
     "crisis_path.levels",
     ["Crisis levels in progression order; align the order with their currency thresholds."],
@@ -723,6 +729,25 @@ export interface ContentFieldOverride {
     }[];
   };
   /**
+   * Grafts a family of localization keys onto an id-valued field: the text the
+   * game derives from the id this field *references*, which the referenced
+   * definition cannot supply on its own (SDK-304).
+   *
+   * The name is one the SDK's `LOCALIZATION_KEY_FAMILIES` carries, and it
+   * reaches the runtime as `localizationFamily` on the emitted descriptor.
+   * `authoringType` is required alongside it and codegen fails without one:
+   * the graft is a pair of claims — the member accepts a role bundle, and the
+   * walk knows what to do with one — and a row making only the second would
+   * emit a member no author can fill, while a row making only the first would
+   * accept a bundle nothing registers, losing the text silently.
+   *
+   * `localisation` blocks describe the definition they sit on and carry no
+   * conditionality on an inbound reference, so no reading of the rules can
+   * produce this; a row states game behaviour measured against the install,
+   * and belongs with that measurement recorded beside the family table.
+   */
+  readonly localizationFamily?: string;
+  /**
    * Lowers a `<type>` reference to a bare, unchecked `string`.
    *
    * The rules reference types the SDK has no registry for and never will:
@@ -761,6 +786,24 @@ export interface ContentFieldOverride {
  * says is no longer one of its jobs.
  */
 export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
+  [
+    "crisis_path.crisis_currency",
+    {
+      localizationFamily: "crisis_currency",
+      authoringType: {
+        type: "CrisisCurrencyRole",
+        imports: [{ module: "../content/localization-families.ts", name: "CrisisCurrencyRole" }],
+      },
+      reason:
+        "SDK-304: the Ambition UI builds 16 required text keys from the id this field names, " +
+        "measured against Stellaris 4.4.6's menace_* and integrity_* entries. The referenced " +
+        "resource cannot supply them — the family exists because of this reference, and the " +
+        "same resource used outside a crisis path needs none of it — and `localisation` " +
+        "blocks have no inbound-reference conditionality to say so. Bundling the text with " +
+        "the reference makes a mod-defined currency's family required by type rather than " +
+        "checked after the fact; a vanilla or third-party reference stays bare.",
+    },
+  ],
   [
     "agenda.finish_modifier",
     {

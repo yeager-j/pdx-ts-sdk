@@ -62,7 +62,27 @@ const defendArchive = mod.crisisObjective("defend_archive", {
 });
 
 const archivePath = mod.crisisPath("archive", {
-  crisisCurrency: resolve,
+  crisisCurrency: {
+    resource: resolve,
+    localization: {
+      name: "Resolve:",
+      value: "£archive_ambition_resource_resolve£ $VAL|0$",
+      currentValue: "Current Resolve: §Y$VALUE|0$§!",
+      gaining: "Complete §HArchive Objectives§! to gain more §YResolve§!.",
+      crisisObjective: "Archive Objectives",
+      crisisObjectiveGained: "Resolve gained",
+      crisisObjectiveProgress: "We have gained $AMOUNT$ Resolve from this Archive Objective.",
+      crisisObjectiveReward: "$REWARD$",
+      crisisLevelLocked: "Required to unlock this level:\\n",
+      crisisLevelUnlocked: "At $LEVEL$, you get the rewards:\\n",
+      crisisLevelUnlock: "Has §Y$CURRENCY$§! Resolve",
+      crisisLevelDesc: "To advance through the Archive levels, accumulate Resolve.",
+      crisisDescriptionTitle: "Keeper of the Archive",
+      crisisDescription: "Every civilization the galaxy forgets, we remember.",
+      crisisHowtoTitle: "Memory and Resolve",
+      crisisHowto: "Pursuing §HArchive Objectives§! generates §HResolve§!.",
+    },
+  },
   levels: [firstRecord, livingArchive],
   objectives: [surveyWorld, defendArchive],
 });
