@@ -2,7 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/bombardment_stances.cwt
 
-import type { LocalizedText } from "../authoring/localization.ts";
+import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { WeightBlock, WithFrom } from "../content/types.ts";
@@ -64,6 +64,18 @@ export interface BombardmentStanceDef<Id extends string = string> extends Bombar
   /** Full content id, including the mod prefix. */
   id: Id;
 }
+
+/**
+ * The localization keys one `bombardment_stance` mints, as references.
+ * Every slot is present whether or not the definition supplied its text:
+ * the key follows from the id alone.
+ */
+export type BombardmentStanceLoc = {
+  /** The `bombardment_<id>` key. */
+  readonly name: LocalizationRef;
+  /** The `bombardment_<id>_desc` key. */
+  readonly desc: LocalizationRef;
+};
 
 export type DefinedBombardmentStance<Id extends string = string> = DefinedContent<
   "bombardment_stance",

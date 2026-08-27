@@ -71,6 +71,18 @@ export interface StaticModifierDef<
   id: Id;
 }
 
+/**
+ * The localization keys one `static_modifier` mints, as references.
+ * Every slot is present whether or not the definition supplied its text:
+ * the key follows from the id alone.
+ */
+export type StaticModifierLoc = {
+  /** The `<id>` key. */
+  readonly name: LocalizationRef;
+  /** The `<id>_desc` key. */
+  readonly desc: LocalizationRef;
+};
+
 export type DefinedStaticModifier<Id extends string = string> = DefinedContent<
   "static_modifier",
   StaticModifierDef<Id>

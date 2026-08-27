@@ -641,17 +641,24 @@ function definerFunctions(facts: RegistryDefinerFacts): {
         : [scoped.authoringMember.member]),
       ...(declaredFrom === undefined ? [] : [declaredFrom.member]),
     ];
+    // Minted from the registry's own slot table rather than spelled out here,
+    // so an item's references and the keys the fold registers for the same
+    // definition come from one derivation.
+    const loc = `loc: contentLocalizationRefs(def.id, ${emission.localisationConstant})`;
     const body =
       scoped === null
         ? contentWitness?.mode === "intersects"
-          ? `  return { itemKind: "content", type: ${key}, id: def.id, def } as ${definerResult};\n`
-          : `  return { itemKind: "content", type: ${key}, id: def.id, def };\n`
+          ? `  return { itemKind: "content", type: ${key}, id: def.id, def, ${loc} } ` +
+            `as ${definerResult};\n`
+          : `  return { itemKind: "content", type: ${key}, id: def.id, def, ${loc} };\n`
         : stripped.length === 0
           ? `  return { itemKind: "content", type: ${key}, id: def.id, ` +
-            `def: def as unknown as ${storedDefType(`${name}Def<Id, never>`, emission)} };\n`
+            `def: def as unknown as ${storedDefType(`${name}Def<Id, never>`, emission)}, ` +
+            `${loc} };\n`
           : `  const { ${stripped.join(", ")}, ...rest } = def;\n` +
             `  return { itemKind: "content", type: ${key}, id: def.id, ` +
-            `def: rest as unknown as ${storedDefType(`${name}Def<Id, never>`, emission)}${carried} };\n`;
+            `def: rest as unknown as ${storedDefType(`${name}Def<Id, never>`, emission)}` +
+            `${carried}, ${loc} };\n`;
     definitions.push(
       docComment([
         `Internal lowering primitive for ${article} ${spoken}. Public authors call`,

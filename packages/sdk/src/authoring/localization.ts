@@ -121,6 +121,17 @@ export interface LocalizationRef {
   readonly [localizationRefBrand]: true;
 }
 
+/** A definition's minted localization keys, one reference per named slot. */
+export type LocalizationRefs = Readonly<Record<string, LocalizationRef>>;
+
+/**
+ * The `loc` member of a registry that declares no localization slots at all.
+ *
+ * An empty surface rather than an absent member: the registry mints no keys,
+ * so naming one is a compile error instead of a reference to nothing.
+ */
+export type NoLocalizationRefs = { readonly [slot in never]: LocalizationRef };
+
 /**
  * Whether an authored text value is a key reference rather than display text.
  *
@@ -236,6 +247,53 @@ function assertExactLocalizationKey(key: string, subject: string): void {
 export function localizationRef(key: string): LocalizationRef {
   assertExactLocalizationKey(key, "Localization key");
   return brandLocalizationRef(Object.freeze({ refKind: "localization" as const, key }));
+}
+
+/** What a {@link loc} template accepts in an interpolation. */
+export type LocInterpolation = LocalizationRef | string | number;
+
+function interpolatedText(value: LocInterpolation, position: number): string {
+  if (isLocalizationRef(value)) {
+    return `$${value.key}$`;
+  }
+  if (typeof value === "string") {
+    return value;
+  }
+  if (typeof value === "number") {
+    return String(value);
+  }
+  throw new TypeError(
+    `loc\`\` interpolation ${position} is of type "${typeof value}": it takes a localization ` +
+      "reference, a string, or a number. Text a definition owns is authored on that " +
+      "definition, and the reference its `loc` member carries is what goes here."
+  );
+}
+
+/**
+ * Builds display text that embeds the localization keys other definitions mint.
+ *
+ * A {@link LocalizationRef} becomes the game's `$<key>$` variable, which
+ * resolves at display time to whatever text that key holds; a string or a
+ * number is written as it stands. Everything else — colour codes, icon tags,
+ * scope properties — is ordinary text, so write the game's markup directly.
+ *
+ * @throws TypeError If an interpolated value is not a reference, string, or number.
+ * @example
+ * ```ts
+ * const glory = mod.resource("glory", { name: "Glory" });
+ *
+ * mod.ascensionPerk("ambition", {
+ *   name: "Boundless Ambition",
+ *   desc: loc`Allows the accumulation of §Y${glory.loc.name}§! by completing objectives.`,
+ * });
+ * ```
+ */
+export function loc(strings: TemplateStringsArray, ...values: readonly LocInterpolation[]): string {
+  const parts = [strings[0] ?? ""];
+  values.forEach((value, index) => {
+    parts.push(interpolatedText(value, index), strings[index + 1] ?? "");
+  });
+  return parts.join("");
 }
 
 function assertLanguageRecord(

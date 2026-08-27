@@ -2,7 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/species_consolidated.cwt
 
-import type { LocalizedText } from "../authoring/localization.ts";
+import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { EconomicResourceBlock, ModifierClosure, WeightBlock } from "../content/types.ts";
@@ -218,6 +218,68 @@ export interface SpeciesClassDef<Id extends string = string> extends SpeciesClas
   /** Full content id, including the mod prefix. */
   id: Id;
 }
+
+/**
+ * The localization keys one `species_class` mints, as references.
+ * Every slot is present whether or not the definition supplied its text:
+ * the key follows from the id alone.
+ */
+export type SpeciesClassLoc = {
+  /** The `<id>` key. */
+  readonly name: LocalizationRef;
+  /** The `<id>_desc` key. */
+  readonly desc: LocalizationRef;
+  /** The `<id>_plural` key. */
+  readonly plural: LocalizationRef;
+  /** The `<id>_insult_01` key. */
+  readonly insult: LocalizationRef;
+  /** The `<id>_insult_plural_01` key. */
+  readonly insultPlural: LocalizationRef;
+  /** The `<id>_compliment_01` key. */
+  readonly compliment: LocalizationRef;
+  /** The `<id>_compliment_plural_01` key. */
+  readonly complimentPlural: LocalizationRef;
+  /** The `<id>_spawn` key. */
+  readonly spawn: LocalizationRef;
+  /** The `<id>_spawn_plural` key. */
+  readonly spawnPlural: LocalizationRef;
+  /** The `<id>_sound_01` key. */
+  readonly sound01: LocalizationRef;
+  /** The `<id>_sound_02` key. */
+  readonly sound02: LocalizationRef;
+  /** The `<id>_sound_03` key. */
+  readonly sound03: LocalizationRef;
+  /** The `<id>_sound_04` key. */
+  readonly sound04: LocalizationRef;
+  /** The `<id>_sound_05` key. */
+  readonly sound05: LocalizationRef;
+  /** The `<id>_organ` key. */
+  readonly organ: LocalizationRef;
+  /** The `<id>_organ_plural` key. */
+  readonly organPlural: LocalizationRef;
+  /** The `<id>_mouth` key. */
+  readonly mouth: LocalizationRef;
+  /** The `<id>_hand` key. */
+  readonly hand: LocalizationRef;
+  /** The `<id>_hand_plural` key. */
+  readonly handPlural: LocalizationRef;
+  /** The `<id>_ear` key. */
+  readonly ear: LocalizationRef;
+  /** The `<id>_ear_plural` key. */
+  readonly earPlural: LocalizationRef;
+  /** The `<id>_tooth` key. */
+  readonly tooth: LocalizationRef;
+  /** The `<id>_tooth_plural` key. */
+  readonly toothPlural: LocalizationRef;
+  /** The `<id>_fossil` key. */
+  readonly fossil: LocalizationRef;
+  /** The `<id>_fossil_plural` key. */
+  readonly fossilPlural: LocalizationRef;
+  /** The `<id>_remnant` key. */
+  readonly remnant: LocalizationRef;
+  /** The `<id>_remnant_plural` key. */
+  readonly remnantPlural: LocalizationRef;
+};
 
 export type DefinedSpeciesClass<Id extends string = string> = DefinedContent<
   "species_class",

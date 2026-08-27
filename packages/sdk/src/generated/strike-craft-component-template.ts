@@ -489,6 +489,16 @@ export interface StrikeCraftComponentTemplateDef<
   id: Id;
 }
 
+/**
+ * The localization keys one `strike_craft_component_template` mints, as references.
+ * Every slot is present whether or not the definition supplied its text:
+ * the key follows from the id alone.
+ */
+export type StrikeCraftComponentTemplateLoc = {
+  /** The `<id>` key. */
+  readonly name: LocalizationRef;
+};
+
 export type DefinedStrikeCraftComponentTemplate<Id extends string = string> = DefinedContent<
   "strike_craft_component_template",
   StrikeCraftComponentTemplateDef<Id>

@@ -40,6 +40,7 @@
 // From: gfx/model_entities.cwt
 // From: gfx/particles.cwt
 
+import { contentLocalizationRefs } from "../content/authoring.ts";
 import type {
   ContentItem,
   ContributionItem,
@@ -54,10 +55,13 @@ import type {
 } from "../installation/vanilla/parsed-definitions.ts";
 import { patchContent } from "../installation/vanilla/patch.ts";
 import { refId, type TypedRef } from "../script/scalar.ts";
-import type { AgendaDef } from "./agenda.ts";
-import type { AgreementPresetDef } from "./agreement-preset.ts";
-import type { AmbientObjectDef } from "./ambient-object.ts";
-import type { ArchaeologicalSiteTypeDef } from "./archaeological-site-type.ts";
+import { AGENDA_LOCALISATION, type AgendaDef } from "./agenda.ts";
+import { AGREEMENT_PRESET_LOCALISATION, type AgreementPresetDef } from "./agreement-preset.ts";
+import { AMBIENT_OBJECT_LOCALISATION, type AmbientObjectDef } from "./ambient-object.ts";
+import {
+  ARCHAEOLOGICAL_SITE_TYPE_LOCALISATION,
+  type ArchaeologicalSiteTypeDef,
+} from "./archaeological-site-type.ts";
 import {
   ASCENSION_PERK_CATEGORY_FIELDS,
   ASCENSION_PERK_CATEGORY_LOCALISATION,
@@ -65,8 +69,11 @@ import {
   type AscensionPerkCategoryPatch,
   type AscensionPerkCategoryPatchItem,
 } from "./ascension-perk-category.ts";
-import type { AscensionPerkDef } from "./ascension-perk.ts";
-import type { BombardmentStanceDef } from "./bombardment-stance.ts";
+import { ASCENSION_PERK_LOCALISATION, type AscensionPerkDef } from "./ascension-perk.ts";
+import {
+  BOMBARDMENT_STANCE_LOCALISATION,
+  type BombardmentStanceDef,
+} from "./bombardment-stance.ts";
 import {
   BUILDING_FIELDS,
   BUILDING_LOCALISATION,
@@ -74,22 +81,25 @@ import {
   type BuildingPatch,
   type BuildingPatchItem,
 } from "./building.ts";
-import type { CasusBelliDef } from "./casus-belli.ts";
-import type { CivicOrOriginDef } from "./civic-or-origin.ts";
-import type { ComponentSetDef } from "./component-set.ts";
-import type { CouncilorDef } from "./councilor.ts";
-import type { CountryShipOfSizeLimitDef } from "./country-ship-of-size-limit.ts";
-import type { CrisisLevelDef } from "./crisis-level.ts";
-import type { CrisisObjectiveDef } from "./crisis-objective.ts";
-import type { CrisisPathDef } from "./crisis-path.ts";
-import type { DecisionDef, DecisionScope } from "./decision.ts";
-import type { EconomicCategoryDef } from "./economic-category.ts";
-import type { EdictDef } from "./edict.ts";
+import { CASUS_BELLI_LOCALISATION, type CasusBelliDef } from "./casus-belli.ts";
+import { CIVIC_OR_ORIGIN_LOCALISATION, type CivicOrOriginDef } from "./civic-or-origin.ts";
+import { COMPONENT_SET_LOCALISATION, type ComponentSetDef } from "./component-set.ts";
+import { COUNCILOR_LOCALISATION, type CouncilorDef } from "./councilor.ts";
+import {
+  COUNTRY_SHIP_OF_SIZE_LIMIT_LOCALISATION,
+  type CountryShipOfSizeLimitDef,
+} from "./country-ship-of-size-limit.ts";
+import { CRISIS_LEVEL_LOCALISATION, type CrisisLevelDef } from "./crisis-level.ts";
+import { CRISIS_OBJECTIVE_LOCALISATION, type CrisisObjectiveDef } from "./crisis-objective.ts";
+import { CRISIS_PATH_LOCALISATION, type CrisisPathDef } from "./crisis-path.ts";
+import { DECISION_LOCALISATION, type DecisionDef, type DecisionScope } from "./decision.ts";
+import { ECONOMIC_CATEGORY_LOCALISATION, type EconomicCategoryDef } from "./economic-category.ts";
+import { EDICT_LOCALISATION, type EdictDef } from "./edict.ts";
 import type { ScriptedModifierCategory, SpEventScope } from "./enums.ts";
 import type { EventChainDef } from "./event-chain.ts";
-import type { GlobalShipDesignDef } from "./global-ship-design.ts";
-import type { GraphicalCultureDef } from "./graphical-culture.ts";
-import type { JobDef } from "./job.ts";
+import { GLOBAL_SHIP_DESIGN_LOCALISATION, type GlobalShipDesignDef } from "./global-ship-design.ts";
+import { GRAPHICAL_CULTURE_LOCALISATION, type GraphicalCultureDef } from "./graphical-culture.ts";
+import { JOB_LOCALISATION, type JobDef } from "./job.ts";
 import {
   MEGASTRUCTURE_FIELDS,
   MEGASTRUCTURE_LOCALISATION,
@@ -97,31 +107,42 @@ import {
   type MegastructurePatch,
   type MegastructurePatchItem,
 } from "./megastructure.ts";
-import type { MenacePerkDef } from "./menace-perk.ts";
-import type { MissionCategoryDef } from "./mission-category.ts";
+import { MENACE_PERK_LOCALISATION, type MenacePerkDef } from "./menace-perk.ts";
+import { MISSION_CATEGORY_LOCALISATION, type MissionCategoryDef } from "./mission-category.ts";
 import type { MissionDef, MissionLocationScope, MissionScope } from "./mission.ts";
-import type { OpinionModifierDef } from "./opinion-modifier.ts";
-import type { PdxmeshDef } from "./pdxmesh.ts";
-import type { PdxparticleDef } from "./pdxparticle.ts";
-import type { RelicDef } from "./relic.ts";
-import type { ResourceDef } from "./resource.ts";
+import { OPINION_MODIFIER_LOCALISATION, type OpinionModifierDef } from "./opinion-modifier.ts";
+import { PDXMESH_LOCALISATION, type PdxmeshDef } from "./pdxmesh.ts";
+import { PDXPARTICLE_LOCALISATION, type PdxparticleDef } from "./pdxparticle.ts";
+import { RELIC_LOCALISATION, type RelicDef } from "./relic.ts";
+import { RESOURCE_LOCALISATION, type ResourceDef } from "./resource.ts";
 import type { ScopeName } from "./scopes.ts";
-import type { ScriptedLocDef } from "./scripted-loc.ts";
-import type { ScriptedModifierDef } from "./scripted-modifier.ts";
-import type { SectionTemplateDef } from "./section-template.ts";
-import type { ShipSizeDef } from "./ship-size.ts";
+import { SCRIPTED_LOC_LOCALISATION, type ScriptedLocDef } from "./scripted-loc.ts";
+import { SCRIPTED_MODIFIER_LOCALISATION, type ScriptedModifierDef } from "./scripted-modifier.ts";
+import { SECTION_TEMPLATE_LOCALISATION, type SectionTemplateDef } from "./section-template.ts";
+import { SHIP_SIZE_LOCALISATION, type ShipSizeDef } from "./ship-size.ts";
 import type { SituationTypeDef } from "./situation-type.ts";
-import type { SolarSystemInitializerDef } from "./solar-system-initializer.ts";
-import type {
-  SpecialProjectDef,
-  SpecialProjectLocationScope,
-  SpecialProjectScope,
+import {
+  SOLAR_SYSTEM_INITIALIZER_LOCALISATION,
+  type SolarSystemInitializerDef,
+} from "./solar-system-initializer.ts";
+import {
+  SPECIAL_PROJECT_LOCALISATION,
+  type SpecialProjectDef,
+  type SpecialProjectLocationScope,
+  type SpecialProjectScope,
 } from "./special-project.ts";
-import type { SpeciesClassDef } from "./species-class.ts";
-import type { SpriteTypeDef } from "./sprite-type.ts";
-import type { StarbaseLevelDef } from "./starbase-level.ts";
-import type { StaticModifierDef, StaticModifierScope } from "./static-modifier.ts";
-import type { StrikeCraftComponentTemplateDef } from "./strike-craft-component-template.ts";
+import { SPECIES_CLASS_LOCALISATION, type SpeciesClassDef } from "./species-class.ts";
+import { SPRITE_TYPE_LOCALISATION, type SpriteTypeDef } from "./sprite-type.ts";
+import { STARBASE_LEVEL_LOCALISATION, type StarbaseLevelDef } from "./starbase-level.ts";
+import {
+  STATIC_MODIFIER_LOCALISATION,
+  type StaticModifierDef,
+  type StaticModifierScope,
+} from "./static-modifier.ts";
+import {
+  STRIKE_CRAFT_COMPONENT_TEMPLATE_LOCALISATION,
+  type StrikeCraftComponentTemplateDef,
+} from "./strike-craft-component-template.ts";
 import {
   TECHNOLOGY_FIELDS,
   TECHNOLOGY_LOCALISATION,
@@ -129,11 +150,20 @@ import {
   type TechnologyPatch,
   type TechnologyPatchItem,
 } from "./technology.ts";
-import type { TraditionCategoryDef } from "./tradition-category.ts";
-import type { TraditionDef } from "./tradition.ts";
-import type { UtilityComponentTemplateDef } from "./utility-component-template.ts";
-import type { WarGoalDef } from "./war-goal.ts";
-import type { WeaponComponentTemplateDef } from "./weapon-component-template.ts";
+import {
+  TRADITION_CATEGORY_LOCALISATION,
+  type TraditionCategoryDef,
+} from "./tradition-category.ts";
+import { TRADITION_LOCALISATION, type TraditionDef } from "./tradition.ts";
+import {
+  UTILITY_COMPONENT_TEMPLATE_LOCALISATION,
+  type UtilityComponentTemplateDef,
+} from "./utility-component-template.ts";
+import { WAR_GOAL_LOCALISATION, type WarGoalDef } from "./war-goal.ts";
+import {
+  WEAPON_COMPONENT_TEMPLATE_LOCALISATION,
+  type WeaponComponentTemplateDef,
+} from "./weapon-component-template.ts";
 
 /** What a technology feature can contain. */
 export type TechnologyItem = ContentItem<"technology", TechnologyDef> | TechnologyPatchItem;
@@ -146,7 +176,13 @@ export type TechnologyItem = ContentItem<"technology", TechnologyDef> | Technolo
 export function defineTechnology<const Id extends string>(
   def: TechnologyDef<Id>
 ): ContentItem<"technology", TechnologyDef<Id>> {
-  return { itemKind: "content", type: "technology", id: def.id, def };
+  return {
+    itemKind: "content",
+    type: "technology",
+    id: def.id,
+    def,
+    loc: contentLocalizationRefs(def.id, TECHNOLOGY_LOCALISATION),
+  };
 }
 
 /**
@@ -188,7 +224,13 @@ export type BuildingItem = ContentItem<"building", BuildingDef> | BuildingPatchI
 export function defineBuilding<const Id extends string>(
   def: BuildingDef<Id>
 ): ContentItem<"building", BuildingDef<Id>> {
-  return { itemKind: "content", type: "building", id: def.id, def };
+  return {
+    itemKind: "content",
+    type: "building",
+    id: def.id,
+    def,
+    loc: contentLocalizationRefs(def.id, BUILDING_LOCALISATION),
+  };
 }
 
 /**
@@ -230,7 +272,13 @@ export type TraditionItem = ContentItem<"tradition", TraditionDef>;
 export function defineTradition<const Id extends string>(
   def: TraditionDef<Id>
 ): ContentItem<"tradition", TraditionDef<Id>> {
-  return { itemKind: "content", type: "tradition", id: def.id, def };
+  return {
+    itemKind: "content",
+    type: "tradition",
+    id: def.id,
+    def,
+    loc: contentLocalizationRefs(def.id, TRADITION_LOCALISATION),
+  };
 }
 
 /** What a tradition category feature can contain. */
@@ -244,7 +292,13 @@ export type TraditionCategoryItem = ContentItem<"tradition_category", TraditionC
 export function defineTraditionCategory<const Id extends string>(
   def: TraditionCategoryDef<Id>
 ): ContentItem<"tradition_category", TraditionCategoryDef<Id>> {
-  return { itemKind: "content", type: "tradition_category", id: def.id, def };
+  return {
+    itemKind: "content",
+    type: "tradition_category",
+    id: def.id,
+    def,
+    loc: contentLocalizationRefs(def.id, TRADITION_CATEGORY_LOCALISATION),
+  };
 }
 
 /** What an ascension perk feature can contain. */
@@ -258,7 +312,13 @@ export type AscensionPerkItem = ContentItem<"ascension_perk", AscensionPerkDef>;
 export function defineAscensionPerk<const Id extends string>(
   def: AscensionPerkDef<Id>
 ): ContentItem<"ascension_perk", AscensionPerkDef<Id>> {
-  return { itemKind: "content", type: "ascension_perk", id: def.id, def };
+  return {
+    itemKind: "content",
+    type: "ascension_perk",
+    id: def.id,
+    def,
+    loc: contentLocalizationRefs(def.id, ASCENSION_PERK_LOCALISATION),
+  };
 }
 
 /** What an ascension perk category feature can contain. */
@@ -273,7 +333,13 @@ export type AscensionPerkCategoryItem =
 export function defineAscensionPerkCategory<const Id extends string>(
   def: AscensionPerkCategoryDef<Id>
 ): ContentItem<"ascension_perk_category", AscensionPerkCategoryDef<Id>> {
-  return { itemKind: "content", type: "ascension_perk_category", id: def.id, def };
+  return {
+    itemKind: "content",
+    type: "ascension_perk_category",
+    id: def.id,
+    def,
+    loc: contentLocalizationRefs(def.id, ASCENSION_PERK_CATEGORY_LOCALISATION),
+  };
 }
 
 /**
@@ -315,7 +381,13 @@ export type ResourceItem = ContentItem<"resource", ResourceDef>;
 export function defineResource<const Id extends string>(
   def: ResourceDef<Id>
 ): ContentItem<"resource", ResourceDef<Id>> {
-  return { itemKind: "content", type: "resource", id: def.id, def };
+  return {
+    itemKind: "content",
+    type: "resource",
+    id: def.id,
+    def,
+    loc: contentLocalizationRefs(def.id, RESOURCE_LOCALISATION),
+  };
 }
 
 /** What a crisis path feature can contain. */
@@ -329,7 +401,13 @@ export type CrisisPathItem = ContentItem<"crisis_path", CrisisPathDef>;
 export function defineCrisisPath<const Id extends string>(
   def: CrisisPathDef<Id>
 ): ContentItem<"crisis_path", CrisisPathDef<Id>> {
-  return { itemKind: "content", type: "crisis_path", id: def.id, def };
+  return {
+    itemKind: "content",
+    type: "crisis_path",
+    id: def.id,
+    def,
+    loc: contentLocalizationRefs(def.id, CRISIS_PATH_LOCALISATION),
+  };
 }
 
 /** What a crisis level feature can contain. */
@@ -343,7 +421,13 @@ export type CrisisLevelItem = ContentItem<"crisis_level", CrisisLevelDef>;
 export function defineCrisisLevel<const Id extends string>(
   def: CrisisLevelDef<Id>
 ): ContentItem<"crisis_level", CrisisLevelDef<Id>> {
-  return { itemKind: "content", type: "crisis_level", id: def.id, def };
+  return {
+    itemKind: "content",
+    type: "crisis_level",
+    id: def.id,
+    def,
+    loc: contentLocalizationRefs(def.id, CRISIS_LEVEL_LOCALISATION),
+  };
 }
 
 /** What a crisis objective feature can contain. */
@@ -357,7 +441,13 @@ export type CrisisObjectiveItem = ContentItem<"crisis_objective", CrisisObjectiv
 export function defineCrisisObjective<const Id extends string>(
   def: CrisisObjectiveDef<Id>
 ): ContentItem<"crisis_objective", CrisisObjectiveDef<Id>> {
-  return { itemKind: "content", type: "crisis_objective", id: def.id, def };
+  return {
+    itemKind: "content",
+    type: "crisis_objective",
+    id: def.id,
+    def,
+    loc: contentLocalizationRefs(def.id, CRISIS_OBJECTIVE_LOCALISATION),
+  };
 }
 
 /** What a menace perk feature can contain. */
@@ -371,7 +461,13 @@ export type MenacePerkItem = ContentItem<"menace_perk", MenacePerkDef>;
 export function defineMenacePerk<const Id extends string>(
   def: MenacePerkDef<Id>
 ): ContentItem<"menace_perk", MenacePerkDef<Id>> {
-  return { itemKind: "content", type: "menace_perk", id: def.id, def };
+  return {
+    itemKind: "content",
+    type: "menace_perk",
+    id: def.id,
+    def,
+    loc: contentLocalizationRefs(def.id, MENACE_PERK_LOCALISATION),
+  };
 }
 
 /** What an agenda feature can contain. */
@@ -385,7 +481,13 @@ export type AgendaItem = ContentItem<"agenda", AgendaDef>;
 export function defineAgenda<const Id extends string>(
   def: AgendaDef<Id>
 ): ContentItem<"agenda", AgendaDef<Id>> {
-  return { itemKind: "content", type: "agenda", id: def.id, def };
+  return {
+    itemKind: "content",
+    type: "agenda",
+    id: def.id,
+    def,
+    loc: contentLocalizationRefs(def.id, AGENDA_LOCALISATION),
+  };
 }
 
 /** What an edict feature can contain. */
@@ -399,7 +501,13 @@ export type EdictItem = ContentItem<"edict", EdictDef>;
 export function defineEdict<const Id extends string>(
   def: EdictDef<Id>
 ): ContentItem<"edict", EdictDef<Id>> {
-  return { itemKind: "content", type: "edict", id: def.id, def };
+  return {
+    itemKind: "content",
+    type: "edict",
+    id: def.id,
+    def,
+    loc: contentLocalizationRefs(def.id, EDICT_LOCALISATION),
+  };
 }
 
 /** What a decision feature can contain. */
@@ -421,6 +529,7 @@ export function defineDecision<const Id extends string, S extends DecisionScope 
     type: "decision",
     id: def.id,
     def: rest as unknown as DecisionDef<Id, never>,
+    loc: contentLocalizationRefs(def.id, DECISION_LOCALISATION),
   };
 }
 
@@ -435,7 +544,13 @@ export type JobItem = ContentItem<"job", JobDef>;
 export function defineJob<const Id extends string>(
   def: JobDef<Id>
 ): ContentItem<"job", JobDef<Id>> {
-  return { itemKind: "content", type: "job", id: def.id, def };
+  return {
+    itemKind: "content",
+    type: "job",
+    id: def.id,
+    def,
+    loc: contentLocalizationRefs(def.id, JOB_LOCALISATION),
+  };
 }
 
 /** What a global ship design feature can contain. */
@@ -449,7 +564,13 @@ export type GlobalShipDesignItem = ContentItem<"global_ship_design", GlobalShipD
 export function defineGlobalShipDesign<const Id extends string>(
   def: GlobalShipDesignDef<Id>
 ): ContentItem<"global_ship_design", GlobalShipDesignDef<Id>> {
-  return { itemKind: "content", type: "global_ship_design", id: def.id, def };
+  return {
+    itemKind: "content",
+    type: "global_ship_design",
+    id: def.id,
+    def,
+    loc: contentLocalizationRefs(def.id, GLOBAL_SHIP_DESIGN_LOCALISATION),
+  };
 }
 
 /** What an utility component template feature can contain. */
@@ -466,7 +587,13 @@ export type UtilityComponentTemplateItem = ContentItem<
 export function defineUtilityComponentTemplate<const Id extends string>(
   def: UtilityComponentTemplateDef<Id>
 ): ContentItem<"utility_component_template", UtilityComponentTemplateDef<Id>> {
-  return { itemKind: "content", type: "utility_component_template", id: def.id, def };
+  return {
+    itemKind: "content",
+    type: "utility_component_template",
+    id: def.id,
+    def,
+    loc: contentLocalizationRefs(def.id, UTILITY_COMPONENT_TEMPLATE_LOCALISATION),
+  };
 }
 
 /** What a weapon component template feature can contain. */
@@ -483,7 +610,13 @@ export type WeaponComponentTemplateItem = ContentItem<
 export function defineWeaponComponentTemplate<const Id extends string>(
   def: WeaponComponentTemplateDef<Id>
 ): ContentItem<"weapon_component_template", WeaponComponentTemplateDef<Id>> {
-  return { itemKind: "content", type: "weapon_component_template", id: def.id, def };
+  return {
+    itemKind: "content",
+    type: "weapon_component_template",
+    id: def.id,
+    def,
+    loc: contentLocalizationRefs(def.id, WEAPON_COMPONENT_TEMPLATE_LOCALISATION),
+  };
 }
 
 /** What a strike craft component template feature can contain. */
@@ -500,7 +633,13 @@ export type StrikeCraftComponentTemplateItem = ContentItem<
 export function defineStrikeCraftComponentTemplate<const Id extends string>(
   def: StrikeCraftComponentTemplateDef<Id>
 ): ContentItem<"strike_craft_component_template", StrikeCraftComponentTemplateDef<Id>> {
-  return { itemKind: "content", type: "strike_craft_component_template", id: def.id, def };
+  return {
+    itemKind: "content",
+    type: "strike_craft_component_template",
+    id: def.id,
+    def,
+    loc: contentLocalizationRefs(def.id, STRIKE_CRAFT_COMPONENT_TEMPLATE_LOCALISATION),
+  };
 }
 
 /** What a ship size feature can contain. */
@@ -514,7 +653,13 @@ export type ShipSizeItem = ContentItem<"ship_size", ShipSizeDef>;
 export function defineShipSize<const Id extends string>(
   def: ShipSizeDef<Id>
 ): ContentItem<"ship_size", ShipSizeDef<Id>> {
-  return { itemKind: "content", type: "ship_size", id: def.id, def };
+  return {
+    itemKind: "content",
+    type: "ship_size",
+    id: def.id,
+    def,
+    loc: contentLocalizationRefs(def.id, SHIP_SIZE_LOCALISATION),
+  };
 }
 
 /** What an opinion modifier feature can contain. */
@@ -528,7 +673,13 @@ export type OpinionModifierItem = ContentItem<"opinion_modifier", OpinionModifie
 export function defineOpinionModifier<const Id extends string>(
   def: OpinionModifierDef<Id>
 ): ContentItem<"opinion_modifier", OpinionModifierDef<Id>> {
-  return { itemKind: "content", type: "opinion_modifier", id: def.id, def };
+  return {
+    itemKind: "content",
+    type: "opinion_modifier",
+    id: def.id,
+    def,
+    loc: contentLocalizationRefs(def.id, OPINION_MODIFIER_LOCALISATION),
+  };
 }
 
 /**
@@ -565,6 +716,7 @@ export function defineStaticModifier<
     id: def.id,
     def: rest as unknown as Omit<StaticModifierDef<Id, never>, "hostScope">,
     hostScope: hostScope as S,
+    loc: contentLocalizationRefs(def.id, STATIC_MODIFIER_LOCALISATION),
   };
 }
 
@@ -582,7 +734,13 @@ export type ScriptedModifierItem<W extends ScriptedModifierCategory = ScriptedMo
 export function defineScriptedModifier<const Id extends string>(
   def: ScriptedModifierDef<Id>
 ): ContentItem<"scripted_modifier", ScriptedModifierDef<Id>> {
-  return { itemKind: "content", type: "scripted_modifier", id: def.id, def };
+  return {
+    itemKind: "content",
+    type: "scripted_modifier",
+    id: def.id,
+    def,
+    loc: contentLocalizationRefs(def.id, SCRIPTED_MODIFIER_LOCALISATION),
+  };
 }
 
 /** What a casus belli feature can contain. */
@@ -596,7 +754,13 @@ export type CasusBelliItem = ContentItem<"casus_belli", CasusBelliDef>;
 export function defineCasusBelli<const Id extends string>(
   def: CasusBelliDef<Id>
 ): ContentItem<"casus_belli", CasusBelliDef<Id>> {
-  return { itemKind: "content", type: "casus_belli", id: def.id, def };
+  return {
+    itemKind: "content",
+    type: "casus_belli",
+    id: def.id,
+    def,
+    loc: contentLocalizationRefs(def.id, CASUS_BELLI_LOCALISATION),
+  };
 }
 
 /** What a war goal feature can contain. */
@@ -610,7 +774,13 @@ export type WarGoalItem = ContentItem<"war_goal", WarGoalDef>;
 export function defineWarGoal<const Id extends string>(
   def: WarGoalDef<Id>
 ): ContentItem<"war_goal", WarGoalDef<Id>> {
-  return { itemKind: "content", type: "war_goal", id: def.id, def };
+  return {
+    itemKind: "content",
+    type: "war_goal",
+    id: def.id,
+    def,
+    loc: contentLocalizationRefs(def.id, WAR_GOAL_LOCALISATION),
+  };
 }
 
 /** What an agreement preset feature can contain. */
@@ -624,7 +794,13 @@ export type AgreementPresetItem = ContentItem<"agreement_preset", AgreementPrese
 export function defineAgreementPreset<const Id extends string>(
   def: AgreementPresetDef<Id>
 ): ContentItem<"agreement_preset", AgreementPresetDef<Id>> {
-  return { itemKind: "content", type: "agreement_preset", id: def.id, def };
+  return {
+    itemKind: "content",
+    type: "agreement_preset",
+    id: def.id,
+    def,
+    loc: contentLocalizationRefs(def.id, AGREEMENT_PRESET_LOCALISATION),
+  };
 }
 
 /** What a bombardment stance feature can contain. */
@@ -638,7 +814,13 @@ export type BombardmentStanceItem = ContentItem<"bombardment_stance", Bombardmen
 export function defineBombardmentStance<const Id extends string>(
   def: BombardmentStanceDef<Id>
 ): ContentItem<"bombardment_stance", BombardmentStanceDef<Id>> {
-  return { itemKind: "content", type: "bombardment_stance", id: def.id, def };
+  return {
+    itemKind: "content",
+    type: "bombardment_stance",
+    id: def.id,
+    def,
+    loc: contentLocalizationRefs(def.id, BOMBARDMENT_STANCE_LOCALISATION),
+  };
 }
 
 /** What an archaeological site type feature can contain. */
@@ -655,7 +837,13 @@ export type ArchaeologicalSiteTypeItem = ContentItem<
 export function defineArchaeologicalSiteType<const Id extends string>(
   def: ArchaeologicalSiteTypeDef<Id>
 ): ContentItem<"archaeological_site_type", ArchaeologicalSiteTypeDef<Id>> {
-  return { itemKind: "content", type: "archaeological_site_type", id: def.id, def };
+  return {
+    itemKind: "content",
+    type: "archaeological_site_type",
+    id: def.id,
+    def,
+    loc: contentLocalizationRefs(def.id, ARCHAEOLOGICAL_SITE_TYPE_LOCALISATION),
+  };
 }
 
 /** What a relic feature can contain. */
@@ -669,7 +857,13 @@ export type RelicItem = ContentItem<"relic", RelicDef>;
 export function defineRelic<const Id extends string>(
   def: RelicDef<Id>
 ): ContentItem<"relic", RelicDef<Id>> {
-  return { itemKind: "content", type: "relic", id: def.id, def };
+  return {
+    itemKind: "content",
+    type: "relic",
+    id: def.id,
+    def,
+    loc: contentLocalizationRefs(def.id, RELIC_LOCALISATION),
+  };
 }
 
 /**
@@ -701,7 +895,13 @@ export type MissionCategoryItem<W extends boolean = boolean> = ContentItem<
 export function defineMissionCategory<const Id extends string>(
   def: MissionCategoryDef<Id>
 ): ContentItem<"mission_category", MissionCategoryDef<Id>> {
-  return { itemKind: "content", type: "mission_category", id: def.id, def };
+  return {
+    itemKind: "content",
+    type: "mission_category",
+    id: def.id,
+    def,
+    loc: contentLocalizationRefs(def.id, MISSION_CATEGORY_LOCALISATION),
+  };
 }
 
 /**
@@ -729,7 +929,13 @@ export type ScriptedLocItem = ContentItem<"scripted_loc", ScriptedLocDef>;
 export function defineScriptedLoc<const Id extends string>(
   def: ScriptedLocDef<Id>
 ): ContentItem<"scripted_loc", ScriptedLocDef<Id>> {
-  return { itemKind: "content", type: "scripted_loc", id: def.id, def };
+  return {
+    itemKind: "content",
+    type: "scripted_loc",
+    id: def.id,
+    def,
+    loc: contentLocalizationRefs(def.id, SCRIPTED_LOC_LOCALISATION),
+  };
 }
 
 /** What a councilor feature can contain. */
@@ -743,7 +949,13 @@ export type CouncilorItem = ContentItem<"councilor", CouncilorDef>;
 export function defineCouncilor<const Id extends string>(
   def: CouncilorDef<Id>
 ): ContentItem<"councilor", CouncilorDef<Id>> {
-  return { itemKind: "content", type: "councilor", id: def.id, def };
+  return {
+    itemKind: "content",
+    type: "councilor",
+    id: def.id,
+    def,
+    loc: contentLocalizationRefs(def.id, COUNCILOR_LOCALISATION),
+  };
 }
 
 /** What an economic category feature can contain. */
@@ -798,7 +1010,13 @@ export function defineEconomicCategory<
   > &
     W
 > {
-  return { itemKind: "content", type: "economic_category", id: def.id, def } as ContentItem<
+  return {
+    itemKind: "content",
+    type: "economic_category",
+    id: def.id,
+    def,
+    loc: contentLocalizationRefs(def.id, ECONOMIC_CATEGORY_LOCALISATION),
+  } as ContentItem<
     "economic_category",
     Omit<
       EconomicCategoryDef<Id>,
@@ -825,7 +1043,13 @@ export type CivicOrOriginItem = ContentItem<"civic_or_origin", CivicOrOriginDef>
 export function defineCivicOrOrigin<const Id extends string>(
   def: CivicOrOriginDef<Id>
 ): ContentItem<"civic_or_origin", CivicOrOriginDef<Id>> {
-  return { itemKind: "content", type: "civic_or_origin", id: def.id, def };
+  return {
+    itemKind: "content",
+    type: "civic_or_origin",
+    id: def.id,
+    def,
+    loc: contentLocalizationRefs(def.id, CIVIC_OR_ORIGIN_LOCALISATION),
+  };
 }
 
 /** What a component set feature can contain. */
@@ -839,7 +1063,13 @@ export type ComponentSetItem = ContentItem<"component_set", ComponentSetDef>;
 export function defineComponentSet<const Id extends string>(
   def: ComponentSetDef<Id>
 ): ContentItem<"component_set", ComponentSetDef<Id>> {
-  return { itemKind: "content", type: "component_set", id: def.id, def };
+  return {
+    itemKind: "content",
+    type: "component_set",
+    id: def.id,
+    def,
+    loc: contentLocalizationRefs(def.id, COMPONENT_SET_LOCALISATION),
+  };
 }
 
 /** What a section template feature can contain. */
@@ -853,7 +1083,13 @@ export type SectionTemplateItem = ContentItem<"section_template", SectionTemplat
 export function defineSectionTemplate<const Id extends string>(
   def: SectionTemplateDef<Id>
 ): ContentItem<"section_template", SectionTemplateDef<Id>> {
-  return { itemKind: "content", type: "section_template", id: def.id, def };
+  return {
+    itemKind: "content",
+    type: "section_template",
+    id: def.id,
+    def,
+    loc: contentLocalizationRefs(def.id, SECTION_TEMPLATE_LOCALISATION),
+  };
 }
 
 /** What an ambient object feature can contain. */
@@ -867,7 +1103,13 @@ export type AmbientObjectItem = ContentItem<"ambient_object", AmbientObjectDef>;
 export function defineAmbientObject<const Id extends string>(
   def: AmbientObjectDef<Id>
 ): ContentItem<"ambient_object", AmbientObjectDef<Id>> {
-  return { itemKind: "content", type: "ambient_object", id: def.id, def };
+  return {
+    itemKind: "content",
+    type: "ambient_object",
+    id: def.id,
+    def,
+    loc: contentLocalizationRefs(def.id, AMBIENT_OBJECT_LOCALISATION),
+  };
 }
 
 /** What a graphical culture feature can contain. */
@@ -881,7 +1123,13 @@ export type GraphicalCultureItem = ContentItem<"graphical_culture", GraphicalCul
 export function defineGraphicalCulture<const Id extends string>(
   def: GraphicalCultureDef<Id>
 ): ContentItem<"graphical_culture", GraphicalCultureDef<Id>> {
-  return { itemKind: "content", type: "graphical_culture", id: def.id, def };
+  return {
+    itemKind: "content",
+    type: "graphical_culture",
+    id: def.id,
+    def,
+    loc: contentLocalizationRefs(def.id, GRAPHICAL_CULTURE_LOCALISATION),
+  };
 }
 
 /** What a starbase level feature can contain. */
@@ -895,7 +1143,13 @@ export type StarbaseLevelItem = ContentItem<"starbase_level", StarbaseLevelDef>;
 export function defineStarbaseLevel<const Id extends string>(
   def: StarbaseLevelDef<Id>
 ): ContentItem<"starbase_level", StarbaseLevelDef<Id>> {
-  return { itemKind: "content", type: "starbase_level", id: def.id, def };
+  return {
+    itemKind: "content",
+    type: "starbase_level",
+    id: def.id,
+    def,
+    loc: contentLocalizationRefs(def.id, STARBASE_LEVEL_LOCALISATION),
+  };
 }
 
 /** What a species class feature can contain. */
@@ -909,7 +1163,13 @@ export type SpeciesClassItem = ContentItem<"species_class", SpeciesClassDef>;
 export function defineSpeciesClass<const Id extends string>(
   def: SpeciesClassDef<Id>
 ): ContentItem<"species_class", SpeciesClassDef<Id>> {
-  return { itemKind: "content", type: "species_class", id: def.id, def };
+  return {
+    itemKind: "content",
+    type: "species_class",
+    id: def.id,
+    def,
+    loc: contentLocalizationRefs(def.id, SPECIES_CLASS_LOCALISATION),
+  };
 }
 
 /** What a country ship of size limit feature can contain. */
@@ -924,7 +1184,13 @@ export type CountryShipOfSizeLimitItem =
 export function defineCountryShipOfSizeLimit<const Id extends string>(
   def: CountryShipOfSizeLimitDef<Id>
 ): ContentItem<"country_ship_of_size_limit", CountryShipOfSizeLimitDef<Id>> {
-  return { itemKind: "content", type: "country_ship_of_size_limit", id: def.id, def };
+  return {
+    itemKind: "content",
+    type: "country_ship_of_size_limit",
+    id: def.id,
+    def,
+    loc: contentLocalizationRefs(def.id, COUNTRY_SHIP_OF_SIZE_LIMIT_LOCALISATION),
+  };
 }
 
 /**
@@ -958,7 +1224,13 @@ export type SolarSystemInitializerItem = ContentItem<
 export function defineSolarSystemInitializer<const Id extends string>(
   def: SolarSystemInitializerDef<Id>
 ): ContentItem<"solar_system_initializer", SolarSystemInitializerDef<Id>> {
-  return { itemKind: "content", type: "solar_system_initializer", id: def.id, def };
+  return {
+    itemKind: "content",
+    type: "solar_system_initializer",
+    id: def.id,
+    def,
+    loc: contentLocalizationRefs(def.id, SOLAR_SYSTEM_INITIALIZER_LOCALISATION),
+  };
 }
 
 /** What an event chain feature can contain. */
@@ -1004,6 +1276,7 @@ export function defineSpecialProject<
     id: def.id,
     def: rest as unknown as SpecialProjectDef<Id, never>,
     locationScope: locationScope as L,
+    loc: contentLocalizationRefs(def.id, SPECIAL_PROJECT_LOCALISATION),
   };
 }
 
@@ -1019,7 +1292,13 @@ export type MegastructureItem =
 export function defineMegastructure<const Id extends string>(
   def: MegastructureDef<Id>
 ): ContentItem<"megastructure", MegastructureDef<Id>> {
-  return { itemKind: "content", type: "megastructure", id: def.id, def };
+  return {
+    itemKind: "content",
+    type: "megastructure",
+    id: def.id,
+    def,
+    loc: contentLocalizationRefs(def.id, MEGASTRUCTURE_LOCALISATION),
+  };
 }
 
 /**
@@ -1061,7 +1340,13 @@ export type SpriteTypeItem = ContentItem<"spriteType", SpriteTypeDef>;
 export function defineSpriteType<const Id extends string>(
   def: SpriteTypeDef<Id>
 ): ContentItem<"spriteType", SpriteTypeDef<Id>> {
-  return { itemKind: "content", type: "spriteType", id: def.id, def };
+  return {
+    itemKind: "content",
+    type: "spriteType",
+    id: def.id,
+    def,
+    loc: contentLocalizationRefs(def.id, SPRITE_TYPE_LOCALISATION),
+  };
 }
 
 /** What a pdxmesh feature can contain. */
@@ -1075,7 +1360,13 @@ export type PdxmeshItem = ContentItem<"pdxmesh", PdxmeshDef>;
 export function definePdxmesh<const Id extends string>(
   def: PdxmeshDef<Id>
 ): ContentItem<"pdxmesh", PdxmeshDef<Id>> {
-  return { itemKind: "content", type: "pdxmesh", id: def.id, def };
+  return {
+    itemKind: "content",
+    type: "pdxmesh",
+    id: def.id,
+    def,
+    loc: contentLocalizationRefs(def.id, PDXMESH_LOCALISATION),
+  };
 }
 
 /** What a pdxparticle feature can contain. */
@@ -1089,5 +1380,11 @@ export type PdxparticleItem = ContentItem<"pdxparticle", PdxparticleDef>;
 export function definePdxparticle<const Id extends string>(
   def: PdxparticleDef<Id>
 ): ContentItem<"pdxparticle", PdxparticleDef<Id>> {
-  return { itemKind: "content", type: "pdxparticle", id: def.id, def };
+  return {
+    itemKind: "content",
+    type: "pdxparticle",
+    id: def.id,
+    def,
+    loc: contentLocalizationRefs(def.id, PDXPARTICLE_LOCALISATION),
+  };
 }

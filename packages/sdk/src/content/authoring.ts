@@ -6,6 +6,7 @@ import {
   localizationRef,
   resolveFixedKeyText,
   type KeyedLocalization,
+  type LocalizationRefs,
   type LocalizedText,
 } from "../authoring/localization.ts";
 import type { ScopeName } from "../generated/scopes.ts";
@@ -117,6 +118,26 @@ class ContentDefinition<K extends string, D extends ContentDef> implements Defin
  */
 export function localisationKey(pattern: string, id: string): string {
   return pattern.replace("$", id);
+}
+
+/**
+ * One reference per localization slot a registry declares, for the definition
+ * with this id — what an item's `loc` member carries.
+ *
+ * Every declared slot is present whether or not the definition supplied its
+ * text, since {@link localisationKey} derives the key from the id alone.
+ * `Refs` is the slot table's own emitted type: the table and the type come out
+ * of one generator run, so naming it here narrows a record the runtime cannot
+ * describe rather than asserting something the caller had to get right.
+ */
+export function contentLocalizationRefs<Refs extends LocalizationRefs>(
+  id: string,
+  slots: readonly ContentLocalisation[]
+): Refs {
+  const refs = slots.map(
+    (slot) => [slot.member, localizationRef(localisationKey(slot.pattern, id))] as const
+  );
+  return Object.freeze(Object.fromEntries(refs)) as Refs;
 }
 
 /**

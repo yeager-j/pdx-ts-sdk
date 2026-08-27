@@ -81,6 +81,7 @@ function contentDefinersModule(plans: readonly RegistryDefinerPlan[]): string {
   }
   const imports =
     importList("../content/types.ts", contentItemTypes) +
+    'import { contentLocalizationRefs } from "../content/authoring.ts";\n' +
     renderImports(witnessImports.snapshot()) +
     (refImports ? 'import { refId, type TypedRef } from "../script/scalar.ts";\n' : "") +
     // One generic transform, called with the registry's own field descriptors:
@@ -97,7 +98,7 @@ function contentDefinersModule(plans: readonly RegistryDefinerPlan[]): string {
       )
       .join("") +
     plans
-      .map(({ content, patchable }) => {
+      .map(({ content, patchable, grafted }) => {
         const from = `./${kebabCase(content.registry)}.ts`;
         const types = [
           `${content.emission.typeName}Def`,
@@ -110,16 +111,27 @@ function contentDefinersModule(plans: readonly RegistryDefinerPlan[]): string {
             ? []
             : [content.emission.scopeParameter.declaredFrom.typeName]),
         ];
-        if (!patchable) {
+        // The slot table is a runtime value for two reasons: a definer mints
+        // the item's `loc` references from it, and a patch derives its rename
+        // keys from it. A hand-written definer mints its own.
+        const values = new Set<string>();
+        if (grafted === null) {
+          values.add(content.emission.localisationConstant);
+        }
+        if (patchable) {
+          values.add(content.emission.fieldsConstant);
+          values.add(content.emission.localisationConstant);
+        }
+        if (values.size === 0) {
           return importList(from, types);
         }
         const names = [
-          content.emission.fieldsConstant,
-          content.emission.localisationConstant,
+          ...[...values].sort(),
           ...[
             ...types,
-            `${content.emission.typeName}Patch`,
-            `${content.emission.typeName}PatchItem`,
+            ...(patchable
+              ? [`${content.emission.typeName}Patch`, `${content.emission.typeName}PatchItem`]
+              : []),
           ]
             .sort()
             .map((name) => `type ${name}`),

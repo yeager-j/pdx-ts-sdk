@@ -127,6 +127,18 @@ export interface AscensionPerkDef<Id extends string = string> extends AscensionP
   id: Id;
 }
 
+/**
+ * The localization keys one `ascension_perk` mints, as references.
+ * Every slot is present whether or not the definition supplied its text:
+ * the key follows from the id alone.
+ */
+export type AscensionPerkLoc = {
+  /** The `<id>` key. */
+  readonly name: LocalizationRef;
+  /** The `<id>_desc` key. */
+  readonly desc: LocalizationRef;
+};
+
 export type DefinedAscensionPerk<Id extends string = string> = DefinedContent<
   "ascension_perk",
   AscensionPerkDef<Id>

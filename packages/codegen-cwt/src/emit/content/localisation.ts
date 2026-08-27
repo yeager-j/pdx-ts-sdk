@@ -7,7 +7,7 @@
  */
 
 import type { ContentType } from "../../cwt/rules.ts";
-import { camelCase } from "../../naming.ts";
+import { camelCase, docComment } from "../../naming.ts";
 import { REQUIRED_LOCALISATION, SYNTHETIC_LOCALISATION } from "../../overlay/index.ts";
 import { Emitter } from "../../render/emitter.ts";
 import type { FieldOmissionRow } from "../../render/field-rows.ts";
@@ -166,6 +166,42 @@ export function localisationMembers(
       });
     })
     .join("");
+}
+
+/**
+ * Renders a content type's localisation slots as the `XLoc` type its items
+ * carry — one reference per slot, from the same plan the authoring members
+ * come from, so a slot an author can write and a slot they can reference are
+ * always the same set.
+ *
+ * A type alias rather than an interface: `contentLocalizationRefs` narrows a
+ * record of references, and only an alias carries the implicit index signature
+ * that constraint reads.
+ */
+export function localisationRefType(
+  emitter: Emitter,
+  type: ContentType,
+  typeName: string,
+  plan: LocalisationPlan
+): string {
+  const members = plan.entries
+    .map((entry) =>
+      renderMember({
+        name: camelCase(entry.key),
+        type: emitter.use("LocalizationRef"),
+        readonly: true,
+        optional: false,
+        docs: [`The \`${entry.pattern.replace("$", "<id>")}\` key.`],
+      })
+    )
+    .join("");
+  return (
+    docComment([
+      `The localization keys one \`${type.name}\` mints, as references.`,
+      "Every slot is present whether or not the definition supplied its text:",
+      "the key follows from the id alone.",
+    ]) + `export type ${typeName}Loc = {\n${members}};\n\n`
+  );
 }
 
 /**

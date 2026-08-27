@@ -8,7 +8,10 @@
 
 import { describe, expect, it } from "vitest";
 
-import type { SolarSystemInitializerItem } from "../src/generated/content-definers.ts";
+import {
+  defineSolarSystemInitializer,
+  type SolarSystemInitializerItem,
+} from "../src/generated/content-definers.ts";
 import { inspectSolarSystem, type SolarSystemDiagnostic } from "../src/index.ts";
 import { locateInstall } from "../src/installation/installation/locate.ts";
 import {
@@ -34,12 +37,7 @@ try {
 }
 
 function item(initializer: VanillaInitializer): SolarSystemInitializerItem {
-  return {
-    itemKind: "content",
-    type: "solar_system_initializer",
-    id: initializer.def.id,
-    def: initializer.def,
-  };
+  return defineSolarSystemInitializer(initializer.def);
 }
 
 describe.skipIf(installPath === undefined)("vanilla solar-system calibration (non-gating)", () => {

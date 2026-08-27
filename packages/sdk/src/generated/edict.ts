@@ -2,7 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/edicts.cwt
 
-import type { LocalizedText } from "../authoring/localization.ts";
+import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type {
@@ -61,6 +61,18 @@ export interface EdictDef<Id extends string = string> extends EdictFields {
   /** Full content id, including the mod prefix. */
   id: Id;
 }
+
+/**
+ * The localization keys one `edict` mints, as references.
+ * Every slot is present whether or not the definition supplied its text:
+ * the key follows from the id alone.
+ */
+export type EdictLoc = {
+  /** The `edict_<id>` key. */
+  readonly name: LocalizationRef;
+  /** The `edict_<id>_desc` key. */
+  readonly description: LocalizationRef;
+};
 
 export type DefinedEdict<Id extends string = string> = DefinedContent<"edict", EdictDef<Id>>;
 

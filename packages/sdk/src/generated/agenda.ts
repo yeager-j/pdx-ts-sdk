@@ -46,6 +46,18 @@ export interface AgendaDef<Id extends string = string> extends AgendaFields {
   id: Id;
 }
 
+/**
+ * The localization keys one `agenda` mints, as references.
+ * Every slot is present whether or not the definition supplied its text:
+ * the key follows from the id alone.
+ */
+export type AgendaLoc = {
+  /** The `council_agenda_<id>_name` key. */
+  readonly name: LocalizationRef;
+  /** The `council_agenda_<id>_desc` key. */
+  readonly desc: LocalizationRef;
+};
+
 export type DefinedAgenda<Id extends string = string> = DefinedContent<"agenda", AgendaDef<Id>>;
 
 export const AGENDA_FIELDS: readonly ContentField[] = [

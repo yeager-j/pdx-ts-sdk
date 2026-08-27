@@ -2,7 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/event_chains.cwt
 
-import type { LocalizedText } from "../authoring/localization.ts";
+import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { Trigger } from "../script/trigger-core.ts";
@@ -44,6 +44,18 @@ export interface EventChainDef<Id extends string = string> extends EventChainFie
   /** Full content id, including the mod prefix. */
   id: Id;
 }
+
+/**
+ * The localization keys one `event_chain` mints, as references.
+ * Every slot is present whether or not the definition supplied its text:
+ * the key follows from the id alone.
+ */
+export type EventChainLoc = {
+  /** The `<id>_title` key. */
+  readonly title: LocalizationRef;
+  /** The `<id>_desc` key. */
+  readonly desc: LocalizationRef;
+};
 
 export type DefinedEventChain<Id extends string = string> = DefinedContent<
   "event_chain",

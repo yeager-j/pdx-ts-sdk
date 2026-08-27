@@ -462,6 +462,18 @@ export interface ShipSizeDef<Id extends string = string> extends ShipSizeFields 
   id: Id;
 }
 
+/**
+ * The localization keys one `ship_size` mints, as references.
+ * Every slot is present whether or not the definition supplied its text:
+ * the key follows from the id alone.
+ */
+export type ShipSizeLoc = {
+  /** The `<id>` key. */
+  readonly name: LocalizationRef;
+  /** The `<id>_plural` key. */
+  readonly plural: LocalizationRef;
+};
+
 export type DefinedShipSize<Id extends string = string> = DefinedContent<
   "ship_size",
   ShipSizeDef<Id>

@@ -261,6 +261,22 @@ export interface JobDef<Id extends string = string> extends JobFields {
   id: Id;
 }
 
+/**
+ * The localization keys one `job` mints, as references.
+ * Every slot is present whether or not the definition supplied its text:
+ * the key follows from the id alone.
+ */
+export type JobLoc = {
+  /** The `job_<id>` key. */
+  readonly name: LocalizationRef;
+  /** The `job_<id>_plural` key. */
+  readonly plural: LocalizationRef;
+  /** The `job_<id>_desc` key. */
+  readonly desc: LocalizationRef;
+  /** The `job_<id>_effect_desc` key. */
+  readonly effect: LocalizationRef;
+};
+
 export type DefinedJob<Id extends string = string> = DefinedContent<"job", JobDef<Id>>;
 
 export const JOB_FIELDS: readonly ContentField[] = [

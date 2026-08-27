@@ -167,6 +167,18 @@ export interface BuildingDef<Id extends string = string> extends BuildingFields 
   id: Id;
 }
 
+/**
+ * The localization keys one `building` mints, as references.
+ * Every slot is present whether or not the definition supplied its text:
+ * the key follows from the id alone.
+ */
+export type BuildingLoc = {
+  /** The `<id>` key. */
+  readonly name: LocalizationRef;
+  /** The `<id>_desc` key. */
+  readonly desc: LocalizationRef;
+};
+
 export type DefinedBuilding<Id extends string = string> = DefinedContent<
   "building",
   BuildingDef<Id>

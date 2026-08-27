@@ -3,8 +3,10 @@
 import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
 
 import {
+  localizationRef,
   resolveFixedKeyText,
   resolveLocalizedText,
+  type LocalizationRef,
   type LocalizedText,
 } from "../authoring/localization.ts";
 import type { ModWarning } from "../diagnostics.ts";
@@ -20,7 +22,7 @@ import {
 import { recordEffects, withScriptCtx } from "../script/effects/recorder.ts";
 import type { AmbientScopeContext, Modifier, ScriptCtx } from "../script/effects/types.ts";
 import { refId } from "../script/scalar.ts";
-import type { DefinedEvent, EventBodyContext, EventDef, LocSink } from "./types.ts";
+import type { DefinedEvent, EventBodyContext, EventDef, EventOptionLoc, LocSink } from "./types.ts";
 
 /**
  * Lowers a `WeightBlock`-shaped modifier row list, reusing the `modifier_rule`
@@ -65,7 +67,7 @@ function modifierRows<S extends ScopeName>(
  */
 function registerModifierDescs<S extends ScopeName>(
   warnings: ModWarning[],
-  loc: LocSink,
+  locSink: LocSink,
   ownerId: string,
   fieldPath: string,
   modifiers: readonly Modifier<S>[] | undefined
@@ -80,7 +82,7 @@ function registerModifierDescs<S extends ScopeName>(
       fieldPath,
       modifier.desc
     );
-    loc.register(key, translations);
+    locSink.register(key, translations);
     registerModifierDescKey(modifier as Modifier<ScopeName>, ownerKey, key);
     if (unstableWarning !== undefined) {
       warnings.push({ code: "unstable-desc-key", message: unstableWarning });
@@ -112,8 +114,13 @@ function conditionalDescTexts(
  * text would name a key nothing reads; `resolveFixedKeyText` says so rather
  * than dropping it. `position` names the slot in that refusal.
  */
-function registerEventText(loc: LocSink, key: string, text: LocalizedText, position: string): void {
-  loc.register(key, resolveFixedKeyText(text, position, key));
+function registerEventText(
+  locSink: LocSink,
+  key: string,
+  text: LocalizedText,
+  position: string
+): void {
+  locSink.register(key, resolveFixedKeyText(text, position, key));
 }
 
 /**
@@ -145,7 +152,7 @@ export function buildEvent<S extends ScopeName, Context extends AmbientScopeCont
   scope: S,
   namespace: string,
   def: EventDef<S, Context>,
-  loc: LocSink
+  locSink: LocSink
 ): DefinedEvent<S, Context> {
   assertEventNumber(def.id);
   // One ctx for the whole event: its `immediate`, `after`, `abort_effect` and
@@ -153,7 +160,7 @@ export function buildEvent<S extends ScopeName, Context extends AmbientScopeCont
   const scopes = eventScopes(def.scopes);
   const bodyScopes = scopes as EventBodyContext<S, Context>;
   return withScriptCtx<S, typeof bodyScopes, DefinedEvent<S, Context>>({}, (ctx) =>
-    lowerEvent<S, Context>(kind, scope, namespace, def, loc, ctx)
+    lowerEvent<S, Context>(kind, scope, namespace, def, locSink, ctx)
   );
 }
 
@@ -162,7 +169,7 @@ function lowerEvent<S extends ScopeName, Context extends AmbientScopeContext>(
   scope: S,
   namespace: string,
   def: EventDef<S, Context>,
-  loc: LocSink,
+  locSink: LocSink,
   ctx: ScriptCtx<S, EventBodyContext<S, Context>>
 ): DefinedEvent<S, Context> {
   const id = `${namespace}.${def.id}`;
@@ -171,13 +178,21 @@ function lowerEvent<S extends ScopeName, Context extends AmbientScopeContext>(
   const refs: ContentRefUse[] = [];
 
   const entries: PdxEntry[] = [kv("id", id)];
+  // Filled beside each registration below, so a reference and the entry it
+  // points at are minted from one spelling of the key.
+  const eventRefs: { title?: LocalizationRef; desc?: LocalizationRef } = {};
+  const optionRefs: EventOptionLoc[] = [];
   if (def.title !== undefined) {
-    registerEventText(loc, `${id}.name`, def.title, `Event "${id}" title`);
-    entries.push(kv("title", `${id}.name`));
+    const key = `${id}.name`;
+    registerEventText(locSink, key, def.title, `Event "${id}" title`);
+    entries.push(kv("title", key));
+    eventRefs.title = localizationRef(key);
   }
   if (def.desc !== undefined) {
-    registerEventText(loc, `${id}.desc`, def.desc, `Event "${id}" desc`);
-    entries.push(kv("desc", `${id}.desc`));
+    const key = `${id}.desc`;
+    registerEventText(locSink, key, def.desc, `Event "${id}" desc`);
+    entries.push(kv("desc", key));
+    eventRefs.desc = localizationRef(key);
   }
   let descriptionTextIndex = def.desc === undefined ? 0 : 1;
   (def.conditionalDesc ?? []).forEach((description, index) => {
@@ -197,7 +212,7 @@ function lowerEvent<S extends ScopeName, Context extends AmbientScopeContext>(
     for (const text of texts) {
       const key = descriptionTextIndex === 0 ? `${id}.desc` : `${id}.desc.${descriptionTextIndex}`;
       descriptionTextIndex += 1;
-      registerEventText(loc, key, text, `Event "${id}" ${where} text`);
+      registerEventText(locSink, key, text, `Event "${id}" ${where} text`);
       descriptionEntries.push(kv("text", key));
     }
     if (description.showSound !== undefined) {
@@ -207,12 +222,12 @@ function lowerEvent<S extends ScopeName, Context extends AmbientScopeContext>(
   });
   if (def.diplomaticTitle !== undefined) {
     const key = `${id}.diplomatic_title`;
-    registerEventText(loc, key, def.diplomaticTitle, `Event "${id}" diplomaticTitle`);
+    registerEventText(locSink, key, def.diplomaticTitle, `Event "${id}" diplomaticTitle`);
     entries.push(kv("diplomatic_title", key));
   }
   if (def.messageDesc !== undefined) {
     const key = `${id}.message_desc`;
-    registerEventText(loc, key, def.messageDesc, `Event "${id}" messageDesc`);
+    registerEventText(locSink, key, def.messageDesc, `Event "${id}" messageDesc`);
     entries.push(kv("message_desc", key));
   }
   if (def.picture !== undefined) {
@@ -327,7 +342,7 @@ function lowerEvent<S extends ScopeName, Context extends AmbientScopeContext>(
     }
     const mtthOwnerKey = registerModifierDescs(
       warnings,
-      loc,
+      locSink,
       id,
       "mean_time_to_happen",
       mtth.modifiers
@@ -342,7 +357,7 @@ function lowerEvent<S extends ScopeName, Context extends AmbientScopeContext>(
     const weightEntries: PdxEntry[] = [kv("factor", weight.factor)];
     const weightOwnerKey = registerModifierDescs(
       warnings,
-      loc,
+      locSink,
       id,
       "weight_multiplier",
       weight.modifiers
@@ -377,7 +392,8 @@ function lowerEvent<S extends ScopeName, Context extends AmbientScopeContext>(
           "stable key.",
       });
     }
-    loc.register(optionKey, name.translations);
+    locSink.register(optionKey, name.translations);
+    optionRefs.push(Object.freeze({ name: localizationRef(optionKey) }));
     const optionEntries: PdxEntry[] = [kv("name", optionKey)];
     const where = `option[${index}]`;
     if (option.icon !== undefined) {
@@ -387,7 +403,7 @@ function lowerEvent<S extends ScopeName, Context extends AmbientScopeContext>(
       }
       if (option.icon.text !== undefined) {
         const textKey = `${optionKey}.icon`;
-        registerEventText(loc, textKey, option.icon.text, `Event "${id}" ${where} icon text`);
+        registerEventText(locSink, textKey, option.icon.text, `Event "${id}" ${where} icon text`);
         iconEntries.push(kv("text", textKey));
       }
       optionEntries.push(block("icon", iconEntries));
@@ -414,7 +430,7 @@ function lowerEvent<S extends ScopeName, Context extends AmbientScopeContext>(
       }
       const aiChanceOwnerKey = registerModifierDescs(
         warnings,
-        loc,
+        locSink,
         id,
         `option_${optionSuffix.suffix}.ai_chance`,
         option.aiChance.modifiers
@@ -429,7 +445,7 @@ function lowerEvent<S extends ScopeName, Context extends AmbientScopeContext>(
     if (option.responseText !== undefined) {
       const responseKey = `${optionKey}.response`;
       registerEventText(
-        loc,
+        locSink,
         responseKey,
         option.responseText,
         `Event "${id}" ${where} responseText`
@@ -466,6 +482,7 @@ function lowerEvent<S extends ScopeName, Context extends AmbientScopeContext>(
     id,
     scopes: eventScopes(def.scopes),
     entry: block(kind, entries),
+    loc: Object.freeze({ ...eventRefs, options: Object.freeze(optionRefs) }),
     refs,
     warnings,
   };

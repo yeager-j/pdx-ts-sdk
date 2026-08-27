@@ -154,6 +154,18 @@ export interface ArchaeologicalSiteTypeDef<
   id: Id;
 }
 
+/**
+ * The localization keys one `archaeological_site_type` mints, as references.
+ * Every slot is present whether or not the definition supplied its text:
+ * the key follows from the id alone.
+ */
+export type ArchaeologicalSiteTypeLoc = {
+  /** The `<id>` key. */
+  readonly name: LocalizationRef;
+  /** The `<id>_desc` key. */
+  readonly desc: LocalizationRef;
+};
+
 export type DefinedArchaeologicalSiteType<Id extends string = string> = DefinedContent<
   "archaeological_site_type",
   ArchaeologicalSiteTypeDef<Id>

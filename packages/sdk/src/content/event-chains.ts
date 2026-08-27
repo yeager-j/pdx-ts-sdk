@@ -11,8 +11,13 @@ import type {
   IdProfile,
   MintedContentId,
 } from "../generated/content-capability.ts";
-import type { EventChainCounterDefinition, EventChainDef } from "../generated/event-chain.ts";
+import {
+  EVENT_CHAIN_LOCALISATION,
+  type EventChainCounterDefinition,
+  type EventChainDef,
+} from "../generated/event-chain.ts";
 import type { EventChainRef } from "../generated/refs.ts";
+import { contentLocalizationRefs } from "./authoring.ts";
 import { createContentHandle, type ContentHandleBase } from "./handle.ts";
 import type { ContentItem } from "./types.ts";
 
@@ -50,6 +55,7 @@ export function defineEventChain<const Id extends string, const Counter extends 
     type: "event_chain",
     id: def.id,
     def: def as EventChainDef<Id>,
+    loc: contentLocalizationRefs(def.id, EVENT_CHAIN_LOCALISATION),
   };
 }
 

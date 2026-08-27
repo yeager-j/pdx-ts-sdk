@@ -18,6 +18,7 @@ import type { PdxEntry } from "@pdx-ts/pdxscript";
 
 import type {
   KeyedLocalization,
+  LocalizationRef,
   LocalizationTranslations,
   LocalizedText,
 } from "../authoring/localization.ts";
@@ -62,6 +63,12 @@ export interface EventItemBase {
   readonly id: string;
   readonly entry: PdxEntry;
   readonly refs: readonly ContentRefUse[];
+  /**
+   * The localization keys this event minted, as references — the same value
+   * {@link DefinedEvent.loc} carries, surviving into `PureMod.events` so a
+   * compiled mod can be read for them as well as an authored event.
+   */
+  readonly loc: EventLoc;
   readonly locEntries: readonly KeyedLocalization[];
   readonly warnings: readonly ModWarning[];
 }
@@ -273,6 +280,8 @@ export type DefinedEvent<
   readonly scope: S;
   readonly scopes: Context;
   readonly entry: PdxEntry;
+  /** The localization keys this event minted, as references. */
+  readonly loc: EventLoc;
   /**
    * Content references the event's closures and option conditions wrote. The
    * closures ran here, at the definition site, so the recorder's report is
@@ -293,6 +302,41 @@ export type DefinedEvent<
    */
   readonly warnings: readonly ModWarning[];
 };
+
+/** One authored event option's minted localization key, as a reference. */
+export interface EventOptionLoc {
+  /** The key the option's own `name` text is emitted under. */
+  readonly name: LocalizationRef;
+}
+
+/**
+ * The localization keys an event mints, for embedding its text elsewhere —
+ * with the `loc` template tag, or in any field that names a key.
+ *
+ * `title` and `desc` are absent unless the event supplied that text. An event
+ * lowers inside its definer, unlike a content definition, so what it set is
+ * already known here and a key with no entry behind it need never be offered.
+ *
+ * @example
+ * ```ts
+ * const contact = mod.namespace("story").country(1, {
+ *   title: "First Contact",
+ *   isTriggeredOnly: true,
+ *   options: [{ name: { english: "Answer.", key: "answer" } }],
+ * });
+ *
+ * contact.loc.title?.key; // "hello_galaxy_story.1.name"
+ * contact.loc.options[0]!.name.key; // "hello_galaxy_story.1.answer"
+ * ```
+ */
+export interface EventLoc {
+  /** Absent unless the event set `title`. */
+  readonly title?: LocalizationRef;
+  /** Absent unless the event set `desc`. */
+  readonly desc?: LocalizationRef;
+  /** One entry per authored option, in the order the options were written. */
+  readonly options: readonly EventOptionLoc[];
+}
 
 /** Where definition-side localization lands; the caller supplies its registry. */
 export interface LocSink {

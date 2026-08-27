@@ -127,6 +127,18 @@ export interface WarGoalDef<Id extends string = string> extends WarGoalFields {
   id: Id;
 }
 
+/**
+ * The localization keys one `war_goal` mints, as references.
+ * Every slot is present whether or not the definition supplied its text:
+ * the key follows from the id alone.
+ */
+export type WarGoalLoc = {
+  /** The `war_goal_<id>` key. */
+  readonly name: LocalizationRef;
+  /** The `war_goal_<id>_desc` key. */
+  readonly desc: LocalizationRef;
+};
+
 export type DefinedWarGoal<Id extends string = string> = DefinedContent<"war_goal", WarGoalDef<Id>>;
 
 export const WAR_GOAL_FIELDS: readonly ContentField[] = [

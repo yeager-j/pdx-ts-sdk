@@ -2,7 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/global_ship_designs.cwt
 
-import type { LocalizedText } from "../authoring/localization.ts";
+import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { ComponentSlot, SectionSlot, UtilityComponentSlot } from "./enums.ts";
@@ -171,6 +171,16 @@ export interface GlobalShipDesignDef<Id extends string = string> extends GlobalS
   /** Full content id, including the mod prefix. */
   id: Id;
 }
+
+/**
+ * The localization keys one `global_ship_design` mints, as references.
+ * Every slot is present whether or not the definition supplied its text:
+ * the key follows from the id alone.
+ */
+export type GlobalShipDesignLoc = {
+  /** The `<id>` key. */
+  readonly name: LocalizationRef;
+};
 
 export type DefinedGlobalShipDesign<Id extends string = string> = DefinedContent<
   "global_ship_design",

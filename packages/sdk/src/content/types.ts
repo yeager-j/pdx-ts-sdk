@@ -2,6 +2,7 @@
  * Consumer-facing contracts shared by generated content registries and the generic lowerer.
  */
 import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
+import type { ContentLoc } from "../generated/content-loc.ts";
 import type { ContentReferenceName, ContentTypeName } from "../generated/content-registry.ts";
 import type { ScopeObjOf } from "../generated/effects.ts";
 import type {
@@ -36,6 +37,28 @@ export interface ContentItem<
   readonly type: K;
   readonly id: D["id"];
   readonly def: D;
+  /**
+   * The localization keys this definition mints, one reference per slot the
+   * registry declares, for embedding its text in another definition's — with
+   * the `loc` template tag, or in any field that names a key.
+   *
+   * Every declared slot is present whether or not the definition supplied its
+   * text, because the key follows from the id alone. Naming a slot left unset
+   * therefore ships a key with no entry, which the game shows as the key
+   * itself. Slots on nested repeated entries — a technology swap's own name —
+   * are not exposed here.
+   *
+   * @example
+   * ```ts
+   * const glory = mod.resource("glory", { name: "Glory" });
+   *
+   * mod.ascensionPerk("ambition", {
+   *   name: "Boundless Ambition",
+   *   desc: loc`Accumulate §Y${glory.loc.name}§! by completing objectives.`,
+   * });
+   * ```
+   */
+  readonly loc: ContentLoc<K>;
   /**
    * Present only on a shape-minted definition (SDK-121): which capability
    * minted it, and under which shape.

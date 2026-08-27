@@ -32,6 +32,16 @@ export interface AmbientObjectDef<Id extends string = string> extends AmbientObj
   id: Id;
 }
 
+/**
+ * The localization keys one `ambient_object` mints, as references.
+ * Every slot is present whether or not the definition supplied its text:
+ * the key follows from the id alone.
+ */
+export type AmbientObjectLoc = {
+  /** The `<id>` key. */
+  readonly name: LocalizationRef;
+};
+
 export type DefinedAmbientObject<Id extends string = string> = DefinedContent<
   "ambient_object",
   AmbientObjectDef<Id>

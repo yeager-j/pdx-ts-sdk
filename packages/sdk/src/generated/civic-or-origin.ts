@@ -293,6 +293,18 @@ export interface CivicOrOriginDef<Id extends string = string> extends CivicOrOri
   id: Id;
 }
 
+/**
+ * The localization keys one `civic_or_origin` mints, as references.
+ * Every slot is present whether or not the definition supplied its text:
+ * the key follows from the id alone.
+ */
+export type CivicOrOriginLoc = {
+  /** The `<id>` key. */
+  readonly name: LocalizationRef;
+  /** The `<id>_desc` key. */
+  readonly desc: LocalizationRef;
+};
+
 export type DefinedCivicOrOrigin<Id extends string = string> = DefinedContent<
   "civic_or_origin",
   CivicOrOriginDef<Id>

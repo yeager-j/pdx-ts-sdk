@@ -153,6 +153,20 @@ export interface TraditionDef<Id extends string = string> extends TraditionField
   id: Id;
 }
 
+/**
+ * The localization keys one `tradition` mints, as references.
+ * Every slot is present whether or not the definition supplied its text:
+ * the key follows from the id alone.
+ */
+export type TraditionLoc = {
+  /** The `<id>` key. */
+  readonly name: LocalizationRef;
+  /** The `<id>_delayed` key. */
+  readonly flavor: LocalizationRef;
+  /** The `<id>_desc` key. */
+  readonly effects: LocalizationRef;
+};
+
 export type DefinedTradition<Id extends string = string> = DefinedContent<
   "tradition",
   TraditionDef<Id>

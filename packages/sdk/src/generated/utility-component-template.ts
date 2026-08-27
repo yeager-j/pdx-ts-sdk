@@ -458,6 +458,16 @@ export interface UtilityComponentTemplateDef<
   id: Id;
 }
 
+/**
+ * The localization keys one `utility_component_template` mints, as references.
+ * Every slot is present whether or not the definition supplied its text:
+ * the key follows from the id alone.
+ */
+export type UtilityComponentTemplateLoc = {
+  /** The `<id>` key. */
+  readonly name: LocalizationRef;
+};
+
 export type DefinedUtilityComponentTemplate<Id extends string = string> = DefinedContent<
   "utility_component_template",
   UtilityComponentTemplateDef<Id>

@@ -18,6 +18,7 @@ import type { AliasSpliceEmission } from "./emit/content/alias-splice.ts";
 import { emitContentType, type ContentEmission } from "./emit/content/content-type.ts";
 import { contentDefiners } from "./emit/content/definers.ts";
 import { emitContentFieldDocs, type FieldDocsModule } from "./emit/content/field-docs.ts";
+import { contentLocLookup } from "./emit/content/loc-lookup.ts";
 import { contentPublicBarrel } from "./emit/content/public-barrel.ts";
 import { contentRegistry } from "./emit/content/registry.ts";
 import { emitVanillaRefs } from "./emit/content/vanilla-refs.ts";
@@ -649,6 +650,7 @@ async function writeContentModules(
 
   const contentSources = [...new Set(CONTENT_MANIFEST.map((entry) => entry.source))];
   await write("content-registry.ts", header(commit, contentSources) + contentRegistry(contents));
+  await write("content-loc.ts", header(commit, contentSources) + contentLocLookup(contents));
 
   const fieldDocsModules: FieldDocsModule[] = [
     ...contents.map((content) => ({

@@ -2,7 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/components.cwt
 
-import type { LocalizedText } from "../authoring/localization.ts";
+import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { SpriteRef } from "./refs.ts";
@@ -56,6 +56,22 @@ export interface ComponentSetDef<Id extends string = string> extends ComponentSe
   /** Full content id, including the mod prefix. */
   id: Id;
 }
+
+/**
+ * The localization keys one `component_set` mints, as references.
+ * Every slot is present whether or not the definition supplied its text:
+ * the key follows from the id alone.
+ */
+export type ComponentSetLoc = {
+  /** The `<id>` key. */
+  readonly name: LocalizationRef;
+  /** The `<id>_DESC` key. */
+  readonly desc: LocalizationRef;
+  /** The `ship_<id>_DESC` key. */
+  readonly shipDesc: LocalizationRef;
+  /** The `station_<id>_DESC` key. */
+  readonly stationDesc: LocalizationRef;
+};
 
 export type DefinedComponentSet<Id extends string = string> = DefinedContent<
   "component_set",

@@ -18,11 +18,16 @@ export {
   type AsteroidBeltInput,
 } from "./solar-system-layout.ts";
 export type { ScopeName } from "./generated/scopes.ts";
-export type {
-  LocalizationRef,
-  LocalizedText,
-  LocalizedTextRecord,
+export {
+  loc,
+  type LocalizationRef,
+  type LocalizationRefs,
+  type LocalizedText,
+  type LocalizedTextRecord,
+  type LocInterpolation,
+  type NoLocalizationRefs,
 } from "./authoring/localization.ts";
+export type { ContentLoc, ContentLocByType } from "./generated/content-loc.ts";
 export { external } from "./authoring/external.ts";
 export * from "./generated/enums.ts";
 export { refId, type TypedRef } from "./script/scalar.ts";
@@ -88,7 +93,9 @@ export type {
   EventDef,
   EventItem,
   EventItemBase,
+  EventLoc,
   EventOption,
+  EventOptionLoc,
   EventRef,
   EventTriggeredDescription,
   FireEventArgs,

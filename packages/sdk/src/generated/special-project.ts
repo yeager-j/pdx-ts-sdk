@@ -357,6 +357,18 @@ export interface SpecialProjectDef<
   id: Id;
 }
 
+/**
+ * The localization keys one `special_project` mints, as references.
+ * Every slot is present whether or not the definition supplied its text:
+ * the key follows from the id alone.
+ */
+export type SpecialProjectLoc = {
+  /** The `<id>` key. */
+  readonly name: LocalizationRef;
+  /** The `<id>_DESC` key. */
+  readonly desc: LocalizationRef;
+};
+
 export type DefinedSpecialProject<Id extends string = string> = DefinedContent<
   "special_project",
   SpecialProjectDef<Id>
