@@ -64,11 +64,11 @@ afterEach(() => {
   projects = [];
 });
 
-/** A real directory, disposed after the test. `realpath` because macOS. */
+/** A real directory, disposed after the test, in the native canonical spelling. */
 function makeRoot(): string {
   const root = mkdtempSync(path.join(tmpdir(), "pdx-publish-"));
   roots.push(root);
-  return realpathSync(root);
+  return realpathSync.native(root);
 }
 
 function openProject(): TempProject {
@@ -183,7 +183,7 @@ describe("preflight", () => {
     symlinkSync(real, alias);
     mkdirSync(path.join(real, "src/content"), { recursive: true });
 
-    const result = await preflight(realpathSync(alias));
+    const result = await preflight(realpathSync.native(alias));
     expect(result.existingDir).toBe(path.join(real, "src/content"));
 
     const written = await publishExclusive(result, CONTENTS);

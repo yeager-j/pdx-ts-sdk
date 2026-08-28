@@ -109,7 +109,7 @@ export interface TempProject {
  * `devDependencies`, which is what the compatibility preflight reads.
  */
 export function createTempProject(): TempProject {
-  const dir = realpathSync(mkdtempSync(path.join(tmpdir(), "pdx-generate-project-")));
+  const dir = realpathSync.native(mkdtempSync(path.join(tmpdir(), "pdx-generate-project-")));
   materializeGoldenProject(dir);
   return {
     dir,
@@ -119,7 +119,7 @@ export function createTempProject(): TempProject {
 }
 
 export function createGoldenProject(): GoldenProject {
-  const dir = realpathSync(mkdtempSync(path.join(tmpdir(), "pdx-golden-project-")));
+  const dir = realpathSync.native(mkdtempSync(path.join(tmpdir(), "pdx-golden-project-")));
   materializeGoldenProject(dir);
   addHarnessCompilerSettings(dir);
 

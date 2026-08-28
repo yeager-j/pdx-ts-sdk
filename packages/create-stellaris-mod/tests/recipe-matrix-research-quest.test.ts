@@ -189,7 +189,9 @@ describe("a project that moved its content directory", () => {
 
   it("writes into the directory the manifest names", () => {
     expect(exitCode).toBe(0);
-    expect(stdout.trim().endsWith(`src/features/generated/${STEM}.ts`)).toBe(true);
+    expect(
+      stdout.trim().split(path.sep).join("/").endsWith(`src/features/generated/${STEM}.ts`)
+    ).toBe(true);
     expect(existsSync(path.join(project.dir, `src/features/generated/${STEM}.ts`))).toBe(true);
     expect(existsSync(path.join(project.dir, `src/content/${STEM}.ts`))).toBe(false);
   });

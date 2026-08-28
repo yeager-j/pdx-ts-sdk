@@ -29,7 +29,7 @@ const file = (contents: string): ProjectEntry => ({ kind: "file", contents });
 const link = (target: string): ProjectEntry => ({ kind: "symlink", target });
 
 function tempRoot(): string {
-  const dir = realpathSync(mkdtempSync(path.join(tmpdir(), "csm-fs-")));
+  const dir = realpathSync.native(mkdtempSync(path.join(tmpdir(), "csm-fs-")));
   temps.push(dir);
   return dir;
 }

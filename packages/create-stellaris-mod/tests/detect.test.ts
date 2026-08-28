@@ -21,7 +21,7 @@ const FIXTURE = path.resolve(import.meta.dirname, "../../../fixtures/fake-instal
 
 const temps: string[] = [];
 function tempDir(): string {
-  const dir = realpathSync(mkdtempSync(path.join(tmpdir(), "csm-detect-")));
+  const dir = realpathSync.native(mkdtempSync(path.join(tmpdir(), "csm-detect-")));
   temps.push(dir);
   return dir;
 }

@@ -16,7 +16,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { main } from "../src/cli.ts";
 import { installFailureSteps } from "../src/commands/init.ts";
 import { supportedVersionFor } from "../src/detect.ts";
-import { run, teeCommandOutput } from "../src/exec.ts";
+import { gitInitCommands, installCommand, run, teeCommandOutput } from "../src/exec.ts";
 import { VERIFIED_STELLARIS_BUILD } from "../src/generated/verified-build.ts";
 import { parseManifest } from "../src/manifest.ts";
 import { COMMANDS, splitCommand, type CommandName } from "../src/options.ts";
@@ -159,7 +159,7 @@ describe("init", () => {
   });
 
   it("omits the complete agent bundle with --no-llm and writes nothing in dry-run", async () => {
-    const root = realpathSync(mkdtempSync(path.join(tmpdir(), "create-stellaris-mod-dry-")));
+    const root = realpathSync.native(mkdtempSync(path.join(tmpdir(), "create-stellaris-mod-dry-")));
     try {
       const { io, out, err } = capture(root);
       expect(await main(["--dry-run", "--yes", "--no-llm", "my-mod"], io)).toBe(0);
@@ -219,7 +219,9 @@ describe("init", () => {
   });
 
   it("rejects an explicit invalid Stellaris path before writing in non-interactive mode", async () => {
-    const root = realpathSync(mkdtempSync(path.join(tmpdir(), "create-stellaris-mod-path-")));
+    const root = realpathSync.native(
+      mkdtempSync(path.join(tmpdir(), "create-stellaris-mod-path-"))
+    );
     try {
       const invalid = path.join(root, "typoed-stellaris");
       const { io, out, err } = capture(root);
@@ -237,6 +239,12 @@ describe("init", () => {
 });
 
 describe("dependency install recovery", () => {
+  it("uses a shell only for package-manager shims", () => {
+    expect(installCommand("npm").shell).toBe(process.platform === "win32");
+    expect(installCommand("custom-package-manager").shell).toBe(false);
+    expect(gitInitCommands().every((command) => command.shell !== true)).toBe(true);
+  });
+
   it("retains package-manager diagnostics written to stdout", async () => {
     const stdout = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
     try {
@@ -334,7 +342,7 @@ describe("the launcher version init writes", () => {
   });
 
   it("refuses a value the launcher would silently reject, writing nothing", async () => {
-    root = realpathSync(mkdtempSync(path.join(tmpdir(), "create-stellaris-mod-version-")));
+    root = realpathSync.native(mkdtempSync(path.join(tmpdir(), "create-stellaris-mod-version-")));
     const { io, out, err } = capture(root);
 
     // Deliberately not --dry-run: the point is that resolution fails before
@@ -353,7 +361,7 @@ describe("the launcher version init writes", () => {
   });
 
   it("takes a legal explicit value, and puts it in the manifest", async () => {
-    root = realpathSync(mkdtempSync(path.join(tmpdir(), "create-stellaris-mod-version-")));
+    root = realpathSync.native(mkdtempSync(path.join(tmpdir(), "create-stellaris-mod-version-")));
     const { io } = capture(root);
 
     expect(

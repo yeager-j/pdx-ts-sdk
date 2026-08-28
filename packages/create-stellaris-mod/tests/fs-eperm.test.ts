@@ -32,7 +32,7 @@ afterEach(() => {
 
 describe("the no-symlink-privilege fallback", () => {
   it("publishes regular file and directory copies when symlink returns EPERM", async () => {
-    const root = realpathSync(mkdtempSync(path.join(tmpdir(), "csm-fs-eperm-")));
+    const root = realpathSync.native(mkdtempSync(path.join(tmpdir(), "csm-fs-eperm-")));
     temps.push(root);
     const target = path.join(root, "new-mod");
 

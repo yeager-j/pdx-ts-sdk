@@ -27,7 +27,7 @@ function write(root: string, file: string, contents: string): void {
 }
 
 function releaseFixture(staleLiteral = "0.5.0"): string {
-  const root = realpathSync(mkdtempSync(join(tmpdir(), "pdx-release-")));
+  const root = realpathSync.native(mkdtempSync(join(tmpdir(), "pdx-release-")));
   roots.push(root);
   for (const file of [
     "LICENSE",

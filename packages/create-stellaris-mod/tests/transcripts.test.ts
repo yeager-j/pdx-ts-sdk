@@ -257,7 +257,7 @@ describe("generate", () => {
   });
 
   it("says what it searched for when there is no project", async () => {
-    elsewhere = realpathSync(mkdtempSync(path.join(tmpdir(), "pdx-no-project-")));
+    elsewhere = realpathSync.native(mkdtempSync(path.join(tmpdir(), "pdx-no-project-")));
     const { transcript, code } = await run(
       ["generate", "technology", "Resonance Theory", "--yes"],
       {
@@ -265,9 +265,10 @@ describe("generate", () => {
       }
     );
     expect(code).toBe(1);
+    const elsewhereMask = elsewhere.split(path.sep).join("/");
     expectGolden(
       "transcripts/generate-missing-manifest.txt",
-      transcript.split(elsewhere).join("<elsewhere>")
+      transcript.split(elsewhereMask).join("<elsewhere>")
     );
   });
 

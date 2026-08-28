@@ -53,7 +53,7 @@ afterEach(() => {
 });
 
 function makeRoot(): string {
-  const root = realpathSync(mkdtempSync(path.join(tmpdir(), "pdx-generate-project-")));
+  const root = realpathSync.native(mkdtempSync(path.join(tmpdir(), "pdx-generate-project-")));
   roots.push(root);
   return root;
 }
@@ -207,7 +207,9 @@ describe("--cwd", () => {
     const { code, out, err } = await generate(root, ["--cwd", alias]);
     expect(err).toBe("");
     expect(code).toBe(0);
-    expect(out.trim().endsWith("src/content/resonance_theory.ts")).toBe(true);
+    expect(out.trim().split(path.sep).join("/").endsWith("src/content/resonance_theory.ts")).toBe(
+      true
+    );
   });
 
   it("says the directory does not exist, rather than that the project does not", async () => {

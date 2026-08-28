@@ -185,7 +185,7 @@ function runInWithEnv(
 }
 
 beforeAll(async () => {
-  const root = realpathSync(mkdtempSync(path.join(tmpdir(), "create-stellaris-mod-")));
+  const root = realpathSync.native(mkdtempSync(path.join(tmpdir(), "create-stellaris-mod-")));
   projectDir = path.join(root, "smoke-mod");
   tarballDir = path.join(root, "tarballs");
   mkdirSync(tarballDir, { recursive: true });
@@ -513,7 +513,9 @@ describe("a scaffolded project", () => {
       writeFileSync(hidden, "hidden");
       writeFileSync(visible, "after");
 
-      const modDir = realpathSync(mkdtempSync(path.join(tmpdir(), "create-stellaris-mod-assets-")));
+      const modDir = realpathSync.native(
+        mkdtempSync(path.join(tmpdir(), "create-stellaris-mod-assets-"))
+      );
       try {
         const installOutput = runInWithEnv(projectDir, process.execPath, ["src/install.ts"], {
           ...process.env,
@@ -563,7 +565,9 @@ describe("a scaffolded project", () => {
     // install.ts imports the same buildTheMod() as src/index.ts, so there is
     // exactly one capability compile and this proves the ordinary path still
     // works end to end.
-    const modDir = realpathSync(mkdtempSync(path.join(tmpdir(), "create-stellaris-mod-launcher-")));
+    const modDir = realpathSync.native(
+      mkdtempSync(path.join(tmpdir(), "create-stellaris-mod-launcher-"))
+    );
     try {
       const output = runInWithEnv(projectDir, process.execPath, ["src/install.ts"], {
         ...process.env,
@@ -596,7 +600,9 @@ describe("a scaffolded project", () => {
     expect(withQuotedDesc).not.toBe(original);
     writeFileSync(examplePath, withQuotedDesc);
 
-    const modDir = realpathSync(mkdtempSync(path.join(tmpdir(), "create-stellaris-mod-warn-")));
+    const modDir = realpathSync.native(
+      mkdtempSync(path.join(tmpdir(), "create-stellaris-mod-warn-"))
+    );
     try {
       // The terminal runner writes its presentation to stderr, so inspect both
       // captured streams while still proving that warnings leave exit code 0.
@@ -627,7 +633,7 @@ describe.skipIf(!realVanillaSuiteRunnable)(
     let launcherModDir: string;
 
     beforeAll(async () => {
-      const root = realpathSync(
+      const root = realpathSync.native(
         mkdtempSync(path.join(tmpdir(), "create-stellaris-mod-collision-"))
       );
       checkedProjectDir = path.join(root, "checked-mod");
