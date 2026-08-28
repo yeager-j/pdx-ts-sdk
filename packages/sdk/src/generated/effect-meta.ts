@@ -22,7 +22,7 @@ export type EffectFieldKind =
 /** How one scalar-valued position lowers to a PDXScript scalar. */
 export type EffectScalarMeta = Pick<
   EffectFieldMeta,
-  "refTypes" | "booleanLiterals" | "objectKinds"
+  "refTypes" | "booleanLiterals" | "objectKinds" | "locInput" | "locLiterals"
 >;
 
 /**
@@ -69,7 +69,18 @@ export interface EffectFieldMeta {
   /** Literal yes/no arms that lower to PDXScript booleans rather than strings. */
   readonly booleanLiterals?: readonly ("yes" | "no")[];
   /** Object-backed scalar forms accepted by a mixed scalar/block field. */
-  readonly objectKinds?: readonly ("scope-ref" | "typed-ref" | "localization-ref")[];
+  readonly objectKinds?: readonly (
+    "scope-ref" | "typed-ref" | "localization-ref" | "localized-text" | "literal-text"
+  )[];
+  /**
+   * Whether the rules type this position as a localisation key, so the
+   * recorder lowers it through `localizationScalar`: a reference emits its
+   * key, and inline display text defers one until a splice supplies an
+   * owner.
+   */
+  readonly locInput?: true;
+  /** Engine sentinels that pass through instead of becoming display text. */
+  readonly locLiterals?: readonly string[];
   /** Whether the field accepts repeated entries under the same script key. */
   readonly repeated?: boolean;
   /** The spliced alias category an alias-list or alias-struct field authors. */
@@ -97,7 +108,11 @@ export type EffectScalarShapeMeta =
       readonly kind: "value";
       readonly refTypes?: readonly string[];
       readonly booleanLiterals?: readonly ("yes" | "no")[];
-      readonly objectKinds?: readonly ("scope-ref" | "typed-ref" | "localization-ref")[];
+      readonly objectKinds?: readonly (
+        "scope-ref" | "typed-ref" | "localization-ref" | "localized-text" | "literal-text"
+      )[];
+      readonly locInput?: true;
+      readonly locLiterals?: readonly string[];
     };
 
 /** One block call form of an effect. */
@@ -169,7 +184,7 @@ export const ALIAS_LIST_META: Record<string, readonly EffectFieldMeta[] | undefi
       key: "destroy_planet",
       kind: "fields",
       fields: [
-        { prop: "target", key: "target", kind: "value" },
+        { prop: "target", key: "target", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "skipRules", key: "skip_rules", kind: "value" },
         { prop: "skipFirePhase", key: "skip_fire_phase", kind: "value" },
         { prop: "skipWindupPhase", key: "skip_windup_phase", kind: "value" },
@@ -312,7 +327,7 @@ export const ALIAS_LIST_META: Record<string, readonly EffectFieldMeta[] | undefi
       key: "merge_fleet",
       kind: "fields",
       fields: [
-        { prop: "target", key: "target", kind: "value" },
+        { prop: "target", key: "target", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "allowFtl", key: "allow_ftl", kind: "value" },
       ],
     },
@@ -321,13 +336,13 @@ export const ALIAS_LIST_META: Record<string, readonly EffectFieldMeta[] | undefi
       key: "attack_fleet",
       kind: "fields",
       fields: [
-        { prop: "target", key: "target", kind: "value" },
+        { prop: "target", key: "target", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "allowFtl", key: "allow_ftl", kind: "value" },
       ],
     },
-    { prop: "moveTo", key: "move_to", kind: "value" },
-    { prop: "orbitPlanet", key: "orbit_planet", kind: "value" },
-    { prop: "terraformFleet", key: "terraform_fleet", kind: "value" },
+    { prop: "moveTo", key: "move_to", kind: "value", objectKinds: ["scope-ref"] },
+    { prop: "orbitPlanet", key: "orbit_planet", kind: "value", objectKinds: ["scope-ref"] },
+    { prop: "terraformFleet", key: "terraform_fleet", kind: "value", objectKinds: ["scope-ref"] },
     {
       prop: "changeStance",
       key: "change_stance",
@@ -352,8 +367,14 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "type", key: "type", kind: "value", refTypes: ["special_project"] },
-        { prop: "location", key: "location", kind: "value" },
+        {
+          prop: "type",
+          key: "type",
+          kind: "value",
+          refTypes: ["special_project"],
+          objectKinds: ["typed-ref"],
+        },
+        { prop: "location", key: "location", kind: "value", objectKinds: ["scope-ref"] },
       ],
     },
   },
@@ -390,8 +411,14 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "category", key: "category", kind: "value", refTypes: ["anomaly_category"] },
-        { prop: "target", key: "target", kind: "value" },
+        {
+          prop: "category",
+          key: "category",
+          kind: "value",
+          refTypes: ["anomaly_category"],
+          objectKinds: ["typed-ref"],
+        },
+        { prop: "target", key: "target", kind: "value", objectKinds: ["scope-ref"] },
       ],
     },
   },
@@ -404,7 +431,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "who", key: "who", kind: "value" },
+        { prop: "who", key: "who", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "overrideRequirements", key: "override_requirements", kind: "value" },
       ],
     },
@@ -415,7 +442,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       kind: "fields",
       fields: [
         { prop: "radius", key: "radius", kind: "value" },
-        { prop: "type", key: "type", kind: "value", refTypes: ["asteroid_belt_type"] },
+        {
+          prop: "type",
+          key: "type",
+          kind: "value",
+          refTypes: ["asteroid_belt_type"],
+          objectKinds: ["typed-ref"],
+        },
       ],
     },
   },
@@ -430,8 +463,19 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "type", key: "type", kind: "value", refTypes: ["deposit.blocker"] },
-        { prop: "blockedDeposit", key: "blocked_deposit", kind: "value" },
+        {
+          prop: "type",
+          key: "type",
+          kind: "value",
+          refTypes: ["deposit.blocker"],
+          objectKinds: ["typed-ref"],
+        },
+        {
+          prop: "blockedDeposit",
+          key: "blocked_deposit",
+          kind: "value",
+          objectKinds: ["scope-ref"],
+        },
       ],
     },
   },
@@ -443,9 +487,27 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       block: {
         kind: "fields",
         fields: [
-          { prop: "district", key: "district", kind: "value", refTypes: ["district"] },
-          { prop: "zone", key: "zone", kind: "value", refTypes: ["zone"] },
-          { prop: "building", key: "building", kind: "value", refTypes: ["building"] },
+          {
+            prop: "district",
+            key: "district",
+            kind: "value",
+            refTypes: ["district"],
+            objectKinds: ["typed-ref"],
+          },
+          {
+            prop: "zone",
+            key: "zone",
+            kind: "value",
+            refTypes: ["zone"],
+            objectKinds: ["typed-ref"],
+          },
+          {
+            prop: "building",
+            key: "building",
+            kind: "value",
+            refTypes: ["building"],
+            objectKinds: ["typed-ref"],
+          },
         ],
       },
     },
@@ -455,8 +517,14 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "type", key: "type", kind: "value", refTypes: ["casus_belli"] },
-        { prop: "who", key: "who", kind: "value" },
+        {
+          prop: "type",
+          key: "type",
+          kind: "value",
+          refTypes: ["casus_belli"],
+          objectKinds: ["typed-ref"],
+        },
+        { prop: "who", key: "who", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "days", key: "days", kind: "value" },
       ],
     },
@@ -466,7 +534,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "who", key: "who", kind: "value" },
+        { prop: "who", key: "who", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "numOfClaims", key: "num_of_claims", kind: "value" },
         { prop: "showNotification", key: "show_notification", kind: "value" },
       ],
@@ -493,7 +561,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       block: {
         kind: "fields",
         fields: [
-          { prop: "districtType", key: "district_type", kind: "value", refTypes: ["district"] },
+          {
+            prop: "districtType",
+            key: "district_type",
+            kind: "value",
+            refTypes: ["district"],
+            objectKinds: ["typed-ref"],
+          },
           { prop: "ignoreCap", key: "ignore_cap", kind: "value", booleanLiterals: ["yes"] },
           {
             prop: "typeConversion",
@@ -515,8 +589,20 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "title", key: "title", kind: "value" },
-        { prop: "tooltip", key: "tooltip", kind: "value" },
+        {
+          prop: "title",
+          key: "title",
+          kind: "value",
+          objectKinds: ["localization-ref", "localized-text"],
+          locInput: true,
+        },
+        {
+          prop: "tooltip",
+          key: "tooltip",
+          kind: "value",
+          objectKinds: ["localization-ref", "localized-text"],
+          locInput: true,
+        },
       ],
     },
   },
@@ -526,7 +612,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "target", key: "target", kind: "value" },
+        { prop: "target", key: "target", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "value", key: "value", kind: "value" },
       ],
     },
@@ -537,7 +623,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "category", key: "category", kind: "value", refTypes: ["country_card_categories"] },
+        {
+          prop: "category",
+          key: "category",
+          kind: "value",
+          refTypes: ["country_card_categories"],
+          objectKinds: ["typed-ref"],
+        },
         { prop: "amount", key: "amount", kind: "value" },
       ],
     },
@@ -557,8 +649,9 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           key: "holding",
           kind: "value",
           refTypes: ["building.corporate", "building.holding"],
+          objectKinds: ["typed-ref"],
         },
-        { prop: "owner", key: "owner", kind: "value" },
+        { prop: "owner", key: "owner", kind: "value", objectKinds: ["scope-ref"] },
       ],
     },
   },
@@ -567,8 +660,8 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "from", key: "from", kind: "value" },
-        { prop: "to", key: "to", kind: "value" },
+        { prop: "from", key: "from", kind: "value", objectKinds: ["scope-ref"] },
+        { prop: "to", key: "to", kind: "value", objectKinds: ["scope-ref"] },
       ],
     },
   },
@@ -578,7 +671,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "who", key: "who", kind: "value" },
+        { prop: "who", key: "who", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "amount", key: "amount", kind: "value" },
       ],
     },
@@ -588,10 +681,16 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "category", key: "category", kind: "value", refTypes: ["intel_category"] },
+        {
+          prop: "category",
+          key: "category",
+          kind: "value",
+          refTypes: ["intel_category"],
+          objectKinds: ["typed-ref"],
+        },
         { prop: "level", key: "level", kind: "value" },
         { prop: "days", key: "days", kind: "value" },
-        { prop: "who", key: "who", kind: "value" },
+        { prop: "who", key: "who", kind: "value", objectKinds: ["scope-ref"] },
       ],
     },
   },
@@ -601,7 +700,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "mission", key: "mission", kind: "value", refTypes: ["mission"] },
+        {
+          prop: "mission",
+          key: "mission",
+          kind: "value",
+          refTypes: ["mission"],
+          objectKinds: ["typed-ref"],
+        },
         { prop: "counter", key: "counter", kind: "value" },
         { prop: "amount", key: "amount", kind: "value" },
       ],
@@ -613,7 +718,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "modifier", key: "modifier", kind: "value", refTypes: ["static_modifier"] },
+        {
+          prop: "modifier",
+          key: "modifier",
+          kind: "value",
+          refTypes: ["static_modifier"],
+          objectKinds: ["typed-ref"],
+        },
         { prop: "days", key: "days", kind: "value" },
         { prop: "months", key: "months", kind: "value" },
         { prop: "years", key: "years", kind: "value" },
@@ -634,7 +745,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "resource", key: "resource", kind: "value", refTypes: ["resource"] },
+        {
+          prop: "resource",
+          key: "resource",
+          kind: "value",
+          refTypes: ["resource"],
+          objectKinds: ["typed-ref"],
+        },
         { prop: "value", key: "value", kind: "value" },
         { prop: "min", key: "min", kind: "value" },
         { prop: "max", key: "max", kind: "value" },
@@ -651,8 +768,14 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "who", key: "who", kind: "value" },
-        { prop: "modifier", key: "modifier", kind: "value", refTypes: ["opinion_modifier"] },
+        { prop: "who", key: "who", kind: "value", objectKinds: ["scope-ref"] },
+        {
+          prop: "modifier",
+          key: "modifier",
+          kind: "value",
+          refTypes: ["opinion_modifier"],
+          objectKinds: ["typed-ref"],
+        },
       ],
     },
   },
@@ -679,7 +802,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         fields: [
           { prop: "amount", key: "amount", kind: "value" },
           { prop: "random", key: "random", kind: "value" },
-          { prop: "growthCategory", key: "growth_category", kind: "value" },
+          {
+            prop: "growthCategory",
+            key: "growth_category",
+            kind: "value",
+            objectKinds: ["localization-ref", "localized-text"],
+            locInput: true,
+          },
         ],
       },
     },
@@ -690,9 +819,21 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "category", key: "category", kind: "value", refTypes: ["technology_category"] },
+        {
+          prop: "category",
+          key: "category",
+          kind: "value",
+          refTypes: ["technology_category"],
+          objectKinds: ["typed-ref"],
+        },
         { prop: "area", key: "area", kind: "value" },
-        { prop: "tier", key: "tier", kind: "value", refTypes: ["technology_tier"] },
+        {
+          prop: "tier",
+          key: "tier",
+          kind: "value",
+          refTypes: ["technology_tier"],
+          objectKinds: ["typed-ref"],
+        },
         { prop: "addProgress", key: "add_progress", kind: "value" },
         { prop: "failEffects", key: "fail_effects", kind: "effect", transition: "same" },
         { prop: "ignorePrereqs", key: "ignore_prereqs", kind: "value" },
@@ -710,7 +851,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       block: {
         kind: "fields",
         fields: [
-          { prop: "key", key: "key", kind: "value", refTypes: ["relic"] },
+          {
+            prop: "key",
+            key: "key",
+            kind: "value",
+            refTypes: ["relic"],
+            objectKinds: ["typed-ref"],
+          },
           { prop: "fullDescription", key: "full_description", kind: "value" },
         ],
       },
@@ -731,7 +878,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           kind: "map",
           map: { keyRefTypes: ["resource"], value: {}, min: 0, splice: true },
         },
-        { prop: "system", key: "system", kind: "value" },
+        { prop: "system", key: "system", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "mult", key: "mult", kind: "value" },
       ],
     },
@@ -773,7 +920,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "modifier", key: "modifier", kind: "value", refTypes: ["static_modifier"] },
+        {
+          prop: "modifier",
+          key: "modifier",
+          kind: "value",
+          refTypes: ["static_modifier"],
+          objectKinds: ["typed-ref"],
+        },
         { prop: "days", key: "days", kind: "value" },
         { prop: "months", key: "months", kind: "value" },
         { prop: "years", key: "years", kind: "value" },
@@ -786,7 +939,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "component", key: "component", kind: "value", refTypes: ["component_template"] },
+        {
+          prop: "component",
+          key: "component",
+          kind: "value",
+          refTypes: ["component_template"],
+          objectKinds: ["typed-ref"],
+        },
       ],
     },
   },
@@ -795,8 +954,8 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "attacker", key: "attacker", kind: "value" },
-        { prop: "location", key: "location", kind: "value" },
+        { prop: "attacker", key: "attacker", kind: "value", objectKinds: ["scope-ref"] },
+        { prop: "location", key: "location", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "valueForPlanetDestruction", key: "value_for_planet_destruction", kind: "value" },
       ],
     },
@@ -806,7 +965,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "tech", key: "tech", kind: "value", refTypes: ["technology"] },
+        {
+          prop: "tech",
+          key: "tech",
+          kind: "value",
+          refTypes: ["technology"],
+          objectKinds: ["typed-ref"],
+        },
         { prop: "progress", key: "progress", kind: "value" },
       ],
     },
@@ -821,7 +986,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "who", key: "who", kind: "value" },
+        { prop: "who", key: "who", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "amount", key: "amount", kind: "value" },
       ],
     },
@@ -831,7 +996,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "trait", key: "trait", kind: "value", refTypes: ["trait"] },
+        {
+          prop: "trait",
+          key: "trait",
+          kind: "value",
+          refTypes: ["trait"],
+          objectKinds: ["typed-ref"],
+        },
         { prop: "days", key: "days", kind: "value" },
         { prop: "months", key: "months", kind: "value" },
         { prop: "years", key: "years", kind: "value" },
@@ -843,10 +1014,22 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "type", key: "type", kind: "value", refTypes: ["timeline_events"] },
+        {
+          prop: "type",
+          key: "type",
+          kind: "value",
+          refTypes: ["timeline_events"],
+          objectKinds: ["typed-ref"],
+        },
         { prop: "date", key: "date", kind: "value" },
         { prop: "overrideId", key: "override_id", kind: "value" },
-        { prop: "overrideTooltip", key: "override_tooltip", kind: "value" },
+        {
+          prop: "overrideTooltip",
+          key: "override_tooltip",
+          kind: "value",
+          objectKinds: ["localization-ref", "localized-text"],
+          locInput: true,
+        },
         { prop: "overrideTypes", key: "override_types", kind: "value-list", scalar: {} },
         { prop: "overrideText", key: "override_text", kind: "value-list", scalar: {} },
         { prop: "overrideTexture", key: "override_texture", kind: "value-list", scalar: {} },
@@ -856,7 +1039,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           kind: "value-list",
           scalar: { objectKinds: ["scope-ref"] },
         },
-        { prop: "overrideTooltipDelayed", key: "override_tooltip_delayed", kind: "value" },
+        {
+          prop: "overrideTooltipDelayed",
+          key: "override_tooltip_delayed",
+          kind: "value",
+          objectKinds: ["localization-ref", "localized-text"],
+          locInput: true,
+        },
       ],
     },
   },
@@ -871,7 +1060,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "design", key: "design", kind: "value" },
+        { prop: "design", key: "design", kind: "value", objectKinds: ["typed-ref", "scope-ref"] },
         { prop: "rarity", key: "rarity", kind: "value" },
         { prop: "amount", key: "amount", kind: "value" },
       ],
@@ -889,7 +1078,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       block: {
         kind: "fields",
         fields: [
-          { prop: "trait", key: "trait", kind: "value" },
+          { prop: "trait", key: "trait", kind: "value", objectKinds: ["typed-ref"] },
           { prop: "consumeSelection", key: "consume_selection", kind: "value" },
           { prop: "showMessage", key: "show_message", kind: "value" },
         ],
@@ -902,7 +1091,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       kind: "fields",
       fields: [
         { prop: "amount", key: "amount", kind: "value" },
-        { prop: "who", key: "who", kind: "value" },
+        { prop: "who", key: "who", kind: "value", objectKinds: ["scope-ref"] },
       ],
     },
   },
@@ -921,7 +1110,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "source", key: "source", kind: "value" },
+        {
+          prop: "source",
+          key: "source",
+          kind: "value",
+          objectKinds: ["localization-ref", "localized-text"],
+          locInput: true,
+        },
         { prop: "score", key: "score", kind: "value" },
       ],
     },
@@ -931,9 +1126,15 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "district", key: "district", kind: "value" },
-        { prop: "zone", key: "zone", kind: "value", refTypes: ["zone"] },
-        { prop: "zoneSlot", key: "zone_slot", kind: "value" },
+        { prop: "district", key: "district", kind: "value", objectKinds: ["typed-ref"] },
+        {
+          prop: "zone",
+          key: "zone",
+          kind: "value",
+          refTypes: ["zone"],
+          objectKinds: ["typed-ref"],
+        },
+        { prop: "zoneSlot", key: "zone_slot", kind: "value", objectKinds: ["typed-ref"] },
         { prop: "replace", key: "replace", kind: "value" },
       ],
     },
@@ -983,7 +1184,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       block: {
         kind: "fields",
         fields: [
-          { prop: "target", key: "target", kind: "value" },
+          { prop: "target", key: "target", kind: "value", objectKinds: ["scope-ref"] },
           { prop: "attackFleet", key: "attack_fleet", kind: "value" },
         ],
       },
@@ -994,7 +1195,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "target", key: "target", kind: "value" },
+        { prop: "target", key: "target", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "clearAutoMoveOnArrival", key: "clear_auto_move_on_arrival", kind: "value" },
         { prop: "destroyOnArrival", key: "destroy_on_arrival", kind: "value" },
         {
@@ -1002,6 +1203,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           key: "arrival_effect",
           kind: "value",
           refTypes: ["scripted_effect"],
+          objectKinds: ["typed-ref"],
         },
       ],
     },
@@ -1012,8 +1214,14 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "eventChain", key: "event_chain", kind: "value", refTypes: ["event_chain"] },
-        { prop: "target", key: "target", kind: "value" },
+        {
+          prop: "eventChain",
+          key: "event_chain",
+          kind: "value",
+          refTypes: ["event_chain"],
+          objectKinds: ["typed-ref"],
+        },
+        { prop: "target", key: "target", kind: "value", objectKinds: ["scope-ref"] },
       ],
     },
   },
@@ -1093,7 +1301,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "species", key: "species", kind: "value" },
+        { prop: "species", key: "species", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "changeAll", key: "change_all", kind: "value", booleanLiterals: ["yes"] },
       ],
     },
@@ -1106,7 +1314,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       block: {
         kind: "fields",
         fields: [
-          { prop: "authority", key: "authority", kind: "value" },
+          { prop: "authority", key: "authority", kind: "value", objectKinds: ["typed-ref"] },
           {
             prop: "civics",
             key: "civics",
@@ -1114,7 +1322,15 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
             scalar: {},
             block: {
               kind: "fields",
-              fields: [{ prop: "civic", key: "civic", kind: "value", repeated: true }],
+              fields: [
+                {
+                  prop: "civic",
+                  key: "civic",
+                  kind: "value",
+                  objectKinds: ["typed-ref"],
+                  repeated: true,
+                },
+              ],
             },
           },
           { prop: "cooldown", key: "cooldown", kind: "value" },
@@ -1144,7 +1360,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       block: {
         kind: "fields",
         fields: [
-          { prop: "class", key: "class", kind: "value" },
+          { prop: "class", key: "class", kind: "value", objectKinds: ["typed-ref", "scope-ref"] },
           { prop: "inheritEntity", key: "inherit_entity", kind: "value" },
         ],
       },
@@ -1163,13 +1379,24 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       fields: [
         { prop: "sapient", key: "sapient", kind: "value" },
         { prop: "immortal", key: "immortal", kind: "value" },
-        { prop: "canBeModified", key: "can_be_modified", kind: "value" },
-        { prop: "portrait", key: "portrait", kind: "value" },
+        {
+          prop: "canBeModified",
+          key: "can_be_modified",
+          kind: "value",
+          objectKinds: ["scope-ref"],
+        },
+        {
+          prop: "portrait",
+          key: "portrait",
+          kind: "value",
+          objectKinds: ["scope-ref", "typed-ref"],
+        },
         {
           prop: "addTrait",
           key: "add_trait",
           kind: "value",
           refTypes: ["trait.species_trait"],
+          objectKinds: ["typed-ref"],
           repeated: true,
         },
         { prop: "addTraitsAtStartOfList", key: "add_traits_at_start_of_list", kind: "value" },
@@ -1178,9 +1405,10 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           key: "remove_trait",
           kind: "value",
           refTypes: ["trait.species_trait"],
+          objectKinds: ["typed-ref"],
           repeated: true,
         },
-        { prop: "gender", key: "gender", kind: "value" },
+        { prop: "gender", key: "gender", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "canChangeLeader", key: "can_change_leader", kind: "value" },
       ],
     },
@@ -1204,8 +1432,14 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "target", key: "target", kind: "value" },
-        { prop: "type", key: "type", kind: "value", refTypes: ["casus_belli"] },
+        { prop: "target", key: "target", kind: "value", objectKinds: ["scope-ref"] },
+        {
+          prop: "type",
+          key: "type",
+          kind: "value",
+          refTypes: ["casus_belli"],
+          objectKinds: ["typed-ref"],
+        },
       ],
     },
   },
@@ -1229,8 +1463,14 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "category", key: "category", kind: "value", refTypes: ["intel_category"] },
-        { prop: "who", key: "who", kind: "value" },
+        {
+          prop: "category",
+          key: "category",
+          kind: "value",
+          refTypes: ["intel_category"],
+          objectKinds: ["typed-ref"],
+        },
+        { prop: "who", key: "who", kind: "value", objectKinds: ["scope-ref"] },
       ],
     },
   },
@@ -1242,7 +1482,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "target", key: "target", kind: "value" },
+        { prop: "target", key: "target", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "relations", key: "relations", kind: "value-list", scalar: {} },
       ],
     },
@@ -1258,23 +1498,39 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "target", key: "target", kind: "value" },
+        { prop: "target", key: "target", kind: "value", objectKinds: ["scope-ref"] },
         {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: { objectKinds: ["localization-ref"] },
+          scalar: {
+            objectKinds: ["localization-ref", "localized-text", "literal-text"],
+            locInput: true,
+            locLiterals: ["random"],
+          },
           block: {
             kind: "fields",
             fields: [
-              { prop: "key", key: "key", kind: "value" },
+              {
+                prop: "key",
+                key: "key",
+                kind: "value",
+                objectKinds: ["localization-ref", "localized-text"],
+                locInput: true,
+              },
               { prop: "variableString", key: "variable_string", kind: "value", repeated: true },
             ],
           },
         },
-        { prop: "species", key: "species", kind: "value" },
-        { prop: "class", key: "class", kind: "value" },
-        { prop: "tier", key: "tier", kind: "value", refTypes: ["leader_tier"] },
+        { prop: "species", key: "species", kind: "value", objectKinds: ["scope-ref"] },
+        { prop: "class", key: "class", kind: "value", objectKinds: ["typed-ref"] },
+        {
+          prop: "tier",
+          key: "tier",
+          kind: "value",
+          refTypes: ["leader_tier"],
+          objectKinds: ["typed-ref"],
+        },
         { prop: "skill", key: "skill", kind: "value" },
         { prop: "setAge", key: "set_age", kind: "value" },
         {
@@ -1288,7 +1544,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
               kind: "map",
               map: { value: { objectKinds: ["typed-ref"] }, min: 0, splice: true },
             },
-            { prop: "trait", key: "trait", kind: "value", repeated: true },
+            {
+              prop: "trait",
+              key: "trait",
+              kind: "value",
+              objectKinds: ["typed-ref"],
+              repeated: true,
+            },
           ],
         },
         { prop: "gender", key: "gender", kind: "value" },
@@ -1303,12 +1565,41 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         { prop: "leaderAgeMin", key: "leader_age_min", kind: "value" },
         { prop: "leaderAgeMax", key: "leader_age_max", kind: "value" },
         { prop: "effect", key: "effect", kind: "effect", transition: "push" },
-        { prop: "customDescription", key: "custom_description", kind: "value" },
-        { prop: "customCatchPhrase", key: "custom_catch_phrase", kind: "value" },
+        {
+          prop: "customDescription",
+          key: "custom_description",
+          kind: "value",
+          objectKinds: ["localization-ref", "localized-text"],
+          locInput: true,
+        },
+        {
+          prop: "customCatchPhrase",
+          key: "custom_catch_phrase",
+          kind: "value",
+          objectKinds: ["localization-ref", "localized-text"],
+          locInput: true,
+        },
         { prop: "skipBackgroundGeneration", key: "skip_background_generation", kind: "value" },
-        { prop: "backgroundPlanet", key: "background_planet", kind: "value" },
-        { prop: "backgroundJob", key: "background_job", kind: "value", refTypes: ["job"] },
-        { prop: "backgroundEthic", key: "background_ethic", kind: "value", refTypes: ["ethic"] },
+        {
+          prop: "backgroundPlanet",
+          key: "background_planet",
+          kind: "value",
+          objectKinds: ["scope-ref"],
+        },
+        {
+          prop: "backgroundJob",
+          key: "background_job",
+          kind: "value",
+          refTypes: ["job"],
+          objectKinds: ["typed-ref"],
+        },
+        {
+          prop: "backgroundEthic",
+          key: "background_ethic",
+          kind: "value",
+          refTypes: ["ethic"],
+          objectKinds: ["typed-ref"],
+        },
       ],
     },
   },
@@ -1340,8 +1631,14 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "type", key: "type", kind: "value", refTypes: ["special_project"] },
-        { prop: "location", key: "location", kind: "value" },
+        {
+          prop: "type",
+          key: "type",
+          kind: "value",
+          refTypes: ["special_project"],
+          objectKinds: ["typed-ref"],
+        },
+        { prop: "location", key: "location", kind: "value", objectKinds: ["scope-ref"] },
       ],
     },
   },
@@ -1358,7 +1655,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "target", key: "target", kind: "value" },
+        { prop: "target", key: "target", kind: "value", objectKinds: ["scope-ref"] },
         {
           prop: "exceptions",
           key: "exceptions",
@@ -1381,8 +1678,14 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "who", key: "who", kind: "value" },
-        { prop: "category", key: "category", kind: "value", refTypes: ["technology_category"] },
+        { prop: "who", key: "who", kind: "value", objectKinds: ["scope-ref"] },
+        {
+          prop: "category",
+          key: "category",
+          kind: "value",
+          refTypes: ["technology_category"],
+          objectKinds: ["typed-ref"],
+        },
         { prop: "area", key: "area", kind: "value" },
         { prop: "progress", key: "progress", kind: "value" },
       ],
@@ -1393,7 +1696,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "target", key: "target", kind: "value" },
+        { prop: "target", key: "target", kind: "value", objectKinds: ["scope-ref"] },
         {
           prop: "except",
           key: "except",
@@ -1408,7 +1711,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "target", key: "target", kind: "value" },
+        { prop: "target", key: "target", kind: "value", objectKinds: ["scope-ref"] },
         {
           prop: "exceptions",
           key: "exceptions",
@@ -1435,8 +1738,14 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "type", key: "type", kind: "value", refTypes: ["ambient_object"] },
-        { prop: "location", key: "location", kind: "value" },
+        {
+          prop: "type",
+          key: "type",
+          kind: "value",
+          refTypes: ["ambient_object"],
+          objectKinds: ["typed-ref"],
+        },
+        { prop: "location", key: "location", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "scale", key: "scale", kind: "value" },
         { prop: "use3dLocation", key: "use_3d_location", kind: "value" },
         {
@@ -1478,14 +1787,24 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
             ],
           },
         },
-        { prop: "baseAngleTowards", key: "base_angle_towards", kind: "value" },
-        { prop: "entityFaceObject", key: "entity_face_object", kind: "value" },
+        {
+          prop: "baseAngleTowards",
+          key: "base_angle_towards",
+          kind: "value",
+          objectKinds: ["scope-ref"],
+        },
+        {
+          prop: "entityFaceObject",
+          key: "entity_face_object",
+          kind: "value",
+          objectKinds: ["scope-ref"],
+        },
         { prop: "entityScaleToSize", key: "entity_scale_to_size", kind: "value" },
         { prop: "scriptedScale", key: "scripted_scale", kind: "value" },
         { prop: "playAnimationOnce", key: "play_animation_once", kind: "value" },
         { prop: "duration", key: "duration", kind: "value" },
         { prop: "isWreck", key: "is_wreck", kind: "value" },
-        { prop: "target", key: "target", kind: "value" },
+        { prop: "target", key: "target", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "effect", key: "effect", kind: "effect", transition: "push" },
       ],
     },
@@ -1503,19 +1822,35 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: { objectKinds: ["localization-ref"] },
+          scalar: {
+            objectKinds: ["localization-ref", "localized-text", "literal-text"],
+            locInput: true,
+            locLiterals: ["random"],
+          },
           block: {
             kind: "fields",
             fields: [
-              { prop: "key", key: "key", kind: "value" },
+              {
+                prop: "key",
+                key: "key",
+                kind: "value",
+                objectKinds: ["localization-ref", "localized-text"],
+                locInput: true,
+              },
               { prop: "variableString", key: "variable_string", kind: "value", repeated: true },
             ],
           },
         },
-        { prop: "owner", key: "owner", kind: "value" },
-        { prop: "type", key: "type", kind: "value", refTypes: ["army"] },
-        { prop: "species", key: "species", kind: "value" },
-        { prop: "leader", key: "leader", kind: "value" },
+        { prop: "owner", key: "owner", kind: "value", objectKinds: ["scope-ref"] },
+        {
+          prop: "type",
+          key: "type",
+          kind: "value",
+          refTypes: ["army"],
+          objectKinds: ["typed-ref"],
+        },
+        { prop: "species", key: "species", kind: "value", objectKinds: ["scope-ref"] },
+        { prop: "leader", key: "leader", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "effect", key: "effect", kind: "effect", transition: "push" },
       ],
     },
@@ -1530,11 +1865,31 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           key: "graphical_culture",
           kind: "value",
           refTypes: ["graphical_culture"],
+          objectKinds: ["typed-ref"],
         },
-        { prop: "armyType", key: "army_type", kind: "value", refTypes: ["army"] },
-        { prop: "shipName", key: "ship_name", kind: "value" },
-        { prop: "armyName", key: "army_name", kind: "value" },
-        { prop: "species", key: "species", kind: "value" },
+        {
+          prop: "armyType",
+          key: "army_type",
+          kind: "value",
+          refTypes: ["army"],
+          objectKinds: ["typed-ref"],
+        },
+        {
+          prop: "shipName",
+          key: "ship_name",
+          kind: "value",
+          objectKinds: ["localization-ref", "localized-text"],
+          locInput: true,
+          locLiterals: ["random"],
+        },
+        {
+          prop: "armyName",
+          key: "army_name",
+          kind: "value",
+          objectKinds: ["localization-ref", "localized-text"],
+          locInput: true,
+        },
+        { prop: "species", key: "species", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "effect", key: "effect", kind: "effect", transition: "push" },
       ],
     },
@@ -1548,11 +1903,20 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: { objectKinds: ["localization-ref", "scope-ref"] },
+          scalar: {
+            objectKinds: ["localization-ref", "localized-text", "literal-text", "scope-ref"],
+            locInput: true,
+          },
           block: {
             kind: "fields",
             fields: [
-              { prop: "key", key: "key", kind: "value" },
+              {
+                prop: "key",
+                key: "key",
+                kind: "value",
+                objectKinds: ["localization-ref", "localized-text"],
+                locInput: true,
+              },
               { prop: "variableString", key: "variable_string", kind: "value", repeated: true },
             ],
           },
@@ -1563,7 +1927,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "shipDesigns",
           key: "ship_designs",
           kind: "value-list",
-          scalar: { objectKinds: ["localization-ref"] },
+          scalar: { objectKinds: ["localization-ref", "localized-text"], locInput: true },
         },
         { prop: "effect", key: "effect", kind: "effect", transition: "push" },
       ],
@@ -1574,8 +1938,14 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "owner", key: "owner", kind: "value" },
-        { prop: "type", key: "type", kind: "value", refTypes: ["bypass"] },
+        { prop: "owner", key: "owner", kind: "value", objectKinds: ["scope-ref"] },
+        {
+          prop: "type",
+          key: "type",
+          kind: "value",
+          refTypes: ["bypass"],
+          objectKinds: ["typed-ref"],
+        },
         { prop: "effect", key: "effect", kind: "effect", transition: "replace" },
       ],
     },
@@ -1587,7 +1957,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       fields: [
         { prop: "id", key: "id", kind: "value" },
         { prop: "radius", key: "radius", kind: "value" },
-        { prop: "center", key: "center", kind: "value" },
+        { prop: "center", key: "center", kind: "value", objectKinds: ["scope-ref"] },
       ],
     },
   },
@@ -1596,8 +1966,8 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "owner", key: "owner", kind: "value" },
-        { prop: "species", key: "species", kind: "value" },
+        { prop: "owner", key: "owner", kind: "value", objectKinds: ["scope-ref"] },
+        { prop: "species", key: "species", kind: "value", objectKinds: ["scope-ref"] },
         {
           prop: "ethos",
           key: "ethos",
@@ -1606,7 +1976,14 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           block: {
             kind: "fields",
             fields: [
-              { prop: "ethic", key: "ethic", kind: "value", refTypes: ["ethic"], repeated: true },
+              {
+                prop: "ethic",
+                key: "ethic",
+                kind: "value",
+                refTypes: ["ethic"],
+                objectKinds: ["typed-ref"],
+                repeated: true,
+              },
             ],
           },
         },
@@ -1618,14 +1995,35 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "stormStartPosition", key: "storm_start_position", kind: "value" },
-        { prop: "stormEndPosition", key: "storm_end_position", kind: "value" },
+        {
+          prop: "stormStartPosition",
+          key: "storm_start_position",
+          kind: "value",
+          objectKinds: ["scope-ref"],
+        },
+        {
+          prop: "stormEndPosition",
+          key: "storm_end_position",
+          kind: "value",
+          objectKinds: ["scope-ref"],
+        },
         { prop: "stormMinRadius", key: "storm_min_radius", kind: "value" },
         { prop: "stormMaxRadius", key: "storm_max_radius", kind: "value" },
         { prop: "stormMaxRange", key: "storm_max_range", kind: "value" },
-        { prop: "type", key: "type", kind: "value", refTypes: ["storm_types"] },
+        {
+          prop: "type",
+          key: "type",
+          kind: "value",
+          refTypes: ["storm_types"],
+          objectKinds: ["typed-ref"],
+        },
         { prop: "immediate", key: "immediate", kind: "value" },
-        { prop: "cosmicStormStartPosition", key: "cosmic_storm_start_position", kind: "value" },
+        {
+          prop: "cosmicStormStartPosition",
+          key: "cosmic_storm_start_position",
+          kind: "value",
+          objectKinds: ["scope-ref"],
+        },
       ],
     },
   },
@@ -1634,7 +2032,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "center", key: "center", kind: "value" },
+        { prop: "center", key: "center", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "radius", key: "radius", kind: "modifiers" },
         {
           prop: "isTimedInfluenceField",
@@ -1654,22 +2052,55 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: { objectKinds: ["scope-ref", "localization-ref"] },
+          scalar: {
+            objectKinds: ["scope-ref", "localization-ref", "localized-text", "literal-text"],
+            locInput: true,
+            locLiterals: ["random"],
+          },
           block: {
             kind: "fields",
             fields: [
-              { prop: "key", key: "key", kind: "value" },
+              {
+                prop: "key",
+                key: "key",
+                kind: "value",
+                objectKinds: ["localization-ref", "localized-text"],
+                locInput: true,
+              },
               { prop: "variableString", key: "variable_string", kind: "value", repeated: true },
             ],
           },
         },
-        { prop: "adjective", key: "adjective", kind: "value" },
-        { prop: "type", key: "type", kind: "value", refTypes: ["country_type"] },
+        {
+          prop: "adjective",
+          key: "adjective",
+          kind: "value",
+          objectKinds: ["scope-ref", "localization-ref", "localized-text"],
+          locInput: true,
+          locLiterals: ["random"],
+        },
+        {
+          prop: "type",
+          key: "type",
+          kind: "value",
+          refTypes: ["country_type"],
+          objectKinds: ["typed-ref"],
+        },
         { prop: "contactRule", key: "contact_rule", kind: "value" },
         { prop: "autoDelete", key: "auto_delete", kind: "value" },
-        { prop: "nameList", key: "name_list", kind: "value" },
+        {
+          prop: "nameList",
+          key: "name_list",
+          kind: "value",
+          objectKinds: ["typed-ref", "scope-ref"],
+        },
         { prop: "shipPrefix", key: "ship_prefix", kind: "value" },
-        { prop: "authority", key: "authority", kind: "value" },
+        {
+          prop: "authority",
+          key: "authority",
+          kind: "value",
+          objectKinds: ["typed-ref", "scope-ref"],
+        },
         {
           prop: "civics",
           key: "civics",
@@ -1677,14 +2108,27 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           scalar: { objectKinds: ["scope-ref"] },
           block: {
             kind: "fields",
-            fields: [{ prop: "civic", key: "civic", kind: "value", repeated: true }],
+            fields: [
+              {
+                prop: "civic",
+                key: "civic",
+                kind: "value",
+                objectKinds: ["typed-ref"],
+                repeated: true,
+              },
+            ],
           },
         },
-        { prop: "origin", key: "origin", kind: "value" },
-        { prop: "species", key: "species", kind: "value" },
+        { prop: "origin", key: "origin", kind: "value", objectKinds: ["typed-ref", "scope-ref"] },
+        { prop: "species", key: "species", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "setCapitalFromSpecies", key: "set_capital_from_species", kind: "value" },
         { prop: "randomizeEthos", key: "randomize_ethos", kind: "value", booleanLiterals: ["yes"] },
-        { prop: "useHostilitiesFrom", key: "use_hostilities_from", kind: "value" },
+        {
+          prop: "useHostilitiesFrom",
+          key: "use_hostilities_from",
+          kind: "value",
+          objectKinds: ["scope-ref"],
+        },
         {
           prop: "ethos",
           key: "ethos",
@@ -1692,7 +2136,15 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           scalar: { objectKinds: ["scope-ref"] },
           block: {
             kind: "fields",
-            fields: [{ prop: "ethic", key: "ethic", kind: "value", repeated: true }],
+            fields: [
+              {
+                prop: "ethic",
+                key: "ethic",
+                kind: "value",
+                objectKinds: ["typed-ref"],
+                repeated: true,
+              },
+            ],
           },
         },
         { prop: "effect", key: "effect", kind: "effect", transition: "push" },
@@ -1701,12 +2153,14 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           key: "graphical_culture",
           kind: "value",
           refTypes: ["graphical_culture"],
+          objectKinds: ["typed-ref"],
         },
         {
           prop: "cityGraphicalCulture",
           key: "city_graphical_culture",
           kind: "value",
           refTypes: ["graphical_culture"],
+          objectKinds: ["typed-ref"],
         },
         {
           prop: "shipKinds",
@@ -1751,9 +2205,24 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           },
         },
         { prop: "dayZeroContact", key: "day_zero_contact", kind: "value" },
-        { prop: "excludeDayZeroContact", key: "exclude_day_zero_contact", kind: "value" },
-        { prop: "releasedByCountry", key: "released_by_country", kind: "value" },
-        { prop: "releasedFromCountry", key: "released_from_country", kind: "value" },
+        {
+          prop: "excludeDayZeroContact",
+          key: "exclude_day_zero_contact",
+          kind: "value",
+          objectKinds: ["scope-ref"],
+        },
+        {
+          prop: "releasedByCountry",
+          key: "released_by_country",
+          kind: "value",
+          objectKinds: ["scope-ref"],
+        },
+        {
+          prop: "releasedFromCountry",
+          key: "released_from_country",
+          kind: "value",
+          objectKinds: ["scope-ref"],
+        },
         { prop: "ignoreInitialColonyError", key: "ignore_initial_colony_error", kind: "value" },
         {
           prop: "governmentRestrictions",
@@ -1761,7 +2230,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           kind: "alias-struct",
           category: "government_trigger",
         },
-        { prop: "nomadic", key: "nomadic", kind: "value" },
+        { prop: "nomadic", key: "nomadic", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "removeInvalidCivics", key: "remove_invalid_civics", kind: "value" },
       ],
     },
@@ -1771,7 +2240,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "type", key: "type", kind: "value", refTypes: ["espionage_asset"] },
+        {
+          prop: "type",
+          key: "type",
+          kind: "value",
+          refTypes: ["espionage_asset"],
+          objectKinds: ["typed-ref"],
+        },
         { prop: "effect", key: "effect", kind: "effect", transition: "push" },
       ],
     },
@@ -1785,16 +2260,25 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: { objectKinds: ["localization-ref", "scope-ref"] },
+          scalar: {
+            objectKinds: ["localization-ref", "localized-text", "literal-text", "scope-ref"],
+            locInput: true,
+          },
           block: {
             kind: "fields",
             fields: [
-              { prop: "key", key: "key", kind: "value" },
+              {
+                prop: "key",
+                key: "key",
+                kind: "value",
+                objectKinds: ["localization-ref", "localized-text"],
+                locInput: true,
+              },
               { prop: "variableString", key: "variable_string", kind: "value", repeated: true },
             ],
           },
         },
-        { prop: "parent", key: "parent", kind: "value" },
+        { prop: "parent", key: "parent", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "setTakePoint", key: "set_take_point", kind: "value" },
         {
           prop: "settings",
@@ -1844,18 +2328,34 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: { objectKinds: ["localization-ref"] },
+          scalar: {
+            objectKinds: ["localization-ref", "localized-text", "literal-text"],
+            locInput: true,
+            locLiterals: ["random"],
+          },
           block: {
             kind: "fields",
             fields: [
-              { prop: "key", key: "key", kind: "value" },
+              {
+                prop: "key",
+                key: "key",
+                kind: "value",
+                objectKinds: ["localization-ref", "localized-text"],
+                locInput: true,
+              },
               { prop: "variableString", key: "variable_string", kind: "value", repeated: true },
             ],
           },
         },
-        { prop: "species", key: "species", kind: "value" },
-        { prop: "class", key: "class", kind: "value" },
-        { prop: "tier", key: "tier", kind: "value", refTypes: ["leader_tier"] },
+        { prop: "species", key: "species", kind: "value", objectKinds: ["scope-ref"] },
+        { prop: "class", key: "class", kind: "value", objectKinds: ["typed-ref"] },
+        {
+          prop: "tier",
+          key: "tier",
+          kind: "value",
+          refTypes: ["leader_tier"],
+          objectKinds: ["typed-ref"],
+        },
         { prop: "skill", key: "skill", kind: "value" },
         { prop: "setAge", key: "set_age", kind: "value" },
         {
@@ -1869,7 +2369,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
               kind: "map",
               map: { value: { objectKinds: ["typed-ref"] }, min: 0, splice: true },
             },
-            { prop: "trait", key: "trait", kind: "value", repeated: true },
+            {
+              prop: "trait",
+              key: "trait",
+              kind: "value",
+              objectKinds: ["typed-ref"],
+              repeated: true,
+            },
           ],
         },
         { prop: "gender", key: "gender", kind: "value" },
@@ -1885,12 +2391,41 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         { prop: "leaderAgeMax", key: "leader_age_max", kind: "value" },
         { prop: "useRegnalName", key: "use_regnal_name", kind: "value" },
         { prop: "effect", key: "effect", kind: "effect", transition: "push" },
-        { prop: "customDescription", key: "custom_description", kind: "value" },
-        { prop: "customCatchPhrase", key: "custom_catch_phrase", kind: "value" },
+        {
+          prop: "customDescription",
+          key: "custom_description",
+          kind: "value",
+          objectKinds: ["localization-ref", "localized-text"],
+          locInput: true,
+        },
+        {
+          prop: "customCatchPhrase",
+          key: "custom_catch_phrase",
+          kind: "value",
+          objectKinds: ["localization-ref", "localized-text"],
+          locInput: true,
+        },
         { prop: "skipBackgroundGeneration", key: "skip_background_generation", kind: "value" },
-        { prop: "backgroundPlanet", key: "background_planet", kind: "value" },
-        { prop: "backgroundJob", key: "background_job", kind: "value", refTypes: ["job"] },
-        { prop: "backgroundEthic", key: "background_ethic", kind: "value", refTypes: ["ethic"] },
+        {
+          prop: "backgroundPlanet",
+          key: "background_planet",
+          kind: "value",
+          objectKinds: ["scope-ref"],
+        },
+        {
+          prop: "backgroundJob",
+          key: "background_job",
+          kind: "value",
+          refTypes: ["job"],
+          objectKinds: ["typed-ref"],
+        },
+        {
+          prop: "backgroundEthic",
+          key: "background_ethic",
+          kind: "value",
+          refTypes: ["ethic"],
+          objectKinds: ["typed-ref"],
+        },
       ],
     },
   },
@@ -1899,13 +2434,37 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "type", key: "type", kind: "value", refTypes: ["message_type"] },
-        { prop: "localization", key: "localization", kind: "value" },
-        { prop: "customMessageText", key: "custom_message_text", kind: "value" },
+        {
+          prop: "type",
+          key: "type",
+          kind: "value",
+          refTypes: ["message_type"],
+          objectKinds: ["typed-ref"],
+        },
+        {
+          prop: "localization",
+          key: "localization",
+          kind: "value",
+          objectKinds: ["localization-ref", "localized-text"],
+          locInput: true,
+        },
+        {
+          prop: "customMessageText",
+          key: "custom_message_text",
+          kind: "value",
+          objectKinds: ["localization-ref", "localized-text"],
+          locInput: true,
+        },
         { prop: "days", key: "days", kind: "value" },
-        { prop: "customToastIcon", key: "custom_toast_icon", kind: "value", refTypes: ["sprite"] },
-        { prop: "target", key: "target", kind: "value" },
-        { prop: "recipient", key: "recipient", kind: "value" },
+        {
+          prop: "customToastIcon",
+          key: "custom_toast_icon",
+          kind: "value",
+          refTypes: ["sprite"],
+          objectKinds: ["typed-ref"],
+        },
+        { prop: "target", key: "target", kind: "value", objectKinds: ["scope-ref"] },
+        { prop: "recipient", key: "recipient", kind: "value", objectKinds: ["scope-ref"] },
         {
           prop: "variable",
           key: "variable",
@@ -1916,7 +2475,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
             { prop: "key", key: "key", kind: "value" },
             { prop: "value", key: "value", kind: "value" },
             { prop: "localization", key: "localization", kind: "value" },
-            { prop: "scope", key: "scope", kind: "value" },
+            { prop: "scope", key: "scope", kind: "value", objectKinds: ["scope-ref"] },
             { prop: "trigger", key: "trigger", kind: "trigger" },
           ],
           repeated: true,
@@ -1929,7 +2488,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "owner", key: "owner", kind: "value" },
+        { prop: "owner", key: "owner", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "scaledSize", key: "scaled_size", kind: "modifiers" },
         { prop: "effect", key: "effect", kind: "effect", transition: "same" },
       ],
@@ -1940,7 +2499,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "owner", key: "owner", kind: "value" },
+        { prop: "owner", key: "owner", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "effect", key: "effect", kind: "effect", transition: "push" },
       ],
     },
@@ -1950,7 +2509,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "name", key: "name", kind: "value" },
+        {
+          prop: "name",
+          key: "name",
+          kind: "value",
+          objectKinds: ["localization-ref", "localized-text"],
+          locInput: true,
+        },
         { prop: "radius", key: "radius", kind: "value" },
         { prop: "effect", key: "effect", kind: "effect", transition: "push" },
       ],
@@ -1963,12 +2528,36 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       kind: "fields",
       fields: [
         { prop: "id", key: "id", kind: "value" },
-        { prop: "name", key: "name", kind: "value" },
-        { prop: "desc", key: "desc", kind: "value" },
-        { prop: "eventChain", key: "event_chain", kind: "value", refTypes: ["event_chain"] },
-        { prop: "location", key: "location", kind: "value" },
+        {
+          prop: "name",
+          key: "name",
+          kind: "value",
+          objectKinds: ["localization-ref", "localized-text"],
+          locInput: true,
+        },
+        {
+          prop: "desc",
+          key: "desc",
+          kind: "value",
+          objectKinds: ["localization-ref", "localized-text"],
+          locInput: true,
+        },
+        {
+          prop: "eventChain",
+          key: "event_chain",
+          kind: "value",
+          refTypes: ["event_chain"],
+          objectKinds: ["typed-ref"],
+        },
+        { prop: "location", key: "location", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "category", key: "category", kind: "value" },
-        { prop: "picture", key: "picture", kind: "value", refTypes: ["sprite"] },
+        {
+          prop: "picture",
+          key: "picture",
+          kind: "value",
+          refTypes: ["sprite"],
+          objectKinds: ["typed-ref"],
+        },
       ],
     },
   },
@@ -1977,8 +2566,8 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "species", key: "species", kind: "value" },
-        { prop: "popGroup", key: "pop_group", kind: "value" },
+        { prop: "species", key: "species", kind: "value", objectKinds: ["scope-ref"] },
+        { prop: "popGroup", key: "pop_group", kind: "value", objectKinds: ["scope-ref"] },
         {
           prop: "ethos",
           key: "ethos",
@@ -1986,13 +2575,33 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           scalar: { objectKinds: ["scope-ref"] },
           block: {
             kind: "fields",
-            fields: [{ prop: "ethic", key: "ethic", kind: "value", refTypes: ["ethic"] }],
+            fields: [
+              {
+                prop: "ethic",
+                key: "ethic",
+                kind: "value",
+                refTypes: ["ethic"],
+                objectKinds: ["typed-ref"],
+              },
+            ],
           },
         },
-        { prop: "category", key: "category", kind: "value", refTypes: ["pop_category"] },
+        {
+          prop: "category",
+          key: "category",
+          kind: "value",
+          refTypes: ["pop_category"],
+          objectKinds: ["typed-ref"],
+        },
         { prop: "size", key: "size", kind: "value" },
         { prop: "random", key: "random", kind: "value" },
-        { prop: "growthCategory", key: "growth_category", kind: "value" },
+        {
+          prop: "growthCategory",
+          key: "growth_category",
+          kind: "value",
+          objectKinds: ["localization-ref", "localized-text"],
+          locInput: true,
+        },
         { prop: "effect", key: "effect", kind: "effect", transition: "push" },
       ],
     },
@@ -2006,11 +2615,21 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: { objectKinds: ["localization-ref", "scope-ref"] },
+          scalar: {
+            objectKinds: ["localization-ref", "localized-text", "literal-text", "scope-ref"],
+            locInput: true,
+            locLiterals: ["random"],
+          },
           block: {
             kind: "fields",
             fields: [
-              { prop: "key", key: "key", kind: "value" },
+              {
+                prop: "key",
+                key: "key",
+                kind: "value",
+                objectKinds: ["localization-ref", "localized-text"],
+                locInput: true,
+              },
               { prop: "variableString", key: "variable_string", kind: "value", repeated: true },
             ],
           },
@@ -2021,9 +2640,15 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "shipDesigns",
           key: "ship_designs",
           kind: "value-list",
-          scalar: { objectKinds: ["localization-ref"] },
+          scalar: { objectKinds: ["localization-ref", "localized-text"], locInput: true },
           fields: [
-            { prop: "design", key: "design", kind: "value" },
+            {
+              prop: "design",
+              key: "design",
+              kind: "value",
+              objectKinds: ["localization-ref", "localized-text"],
+              locInput: true,
+            },
             { prop: "weight", key: "weight", kind: "value" },
             { prop: "min", key: "min", kind: "value" },
             { prop: "max", key: "max", kind: "value" },
@@ -2042,17 +2667,38 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: { objectKinds: ["localization-ref", "scope-ref"] },
+          scalar: {
+            objectKinds: ["localization-ref", "localized-text", "literal-text", "scope-ref"],
+            locInput: true,
+            locLiterals: ["random"],
+          },
           block: {
             kind: "fields",
             fields: [
-              { prop: "key", key: "key", kind: "value" },
+              {
+                prop: "key",
+                key: "key",
+                kind: "value",
+                objectKinds: ["localization-ref", "localized-text"],
+                locInput: true,
+              },
               { prop: "variableString", key: "variable_string", kind: "value", repeated: true },
             ],
           },
         },
-        { prop: "authority", key: "authority", kind: "value" },
-        { prop: "origin", key: "origin", kind: "value", refTypes: ["civic_or_origin.origin"] },
+        {
+          prop: "authority",
+          key: "authority",
+          kind: "value",
+          objectKinds: ["typed-ref", "scope-ref"],
+        },
+        {
+          prop: "origin",
+          key: "origin",
+          kind: "value",
+          refTypes: ["civic_or_origin.origin"],
+          objectKinds: ["typed-ref"],
+        },
         {
           prop: "civics",
           key: "civics",
@@ -2060,10 +2706,18 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           scalar: { objectKinds: ["scope-ref"] },
           block: {
             kind: "fields",
-            fields: [{ prop: "civic", key: "civic", kind: "value", repeated: true }],
+            fields: [
+              {
+                prop: "civic",
+                key: "civic",
+                kind: "value",
+                objectKinds: ["typed-ref"],
+                repeated: true,
+              },
+            ],
           },
         },
-        { prop: "species", key: "species", kind: "value" },
+        { prop: "species", key: "species", kind: "value", objectKinds: ["scope-ref"] },
         {
           prop: "ethos",
           key: "ethos",
@@ -2072,7 +2726,14 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           block: {
             kind: "fields",
             fields: [
-              { prop: "ethic", key: "ethic", kind: "value", refTypes: ["ethic"], repeated: true },
+              {
+                prop: "ethic",
+                key: "ethic",
+                kind: "value",
+                refTypes: ["ethic"],
+                objectKinds: ["typed-ref"],
+                repeated: true,
+              },
             ],
           },
         },
@@ -2111,9 +2772,14 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
             ],
           },
         },
-        { prop: "nameList", key: "name_list", kind: "value" },
+        { prop: "nameList", key: "name_list", kind: "value", objectKinds: ["typed-ref"] },
         { prop: "shipPrefix", key: "ship_prefix", kind: "value" },
-        { prop: "releasedFromCountry", key: "released_from_country", kind: "value" },
+        {
+          prop: "releasedFromCountry",
+          key: "released_from_country",
+          kind: "value",
+          objectKinds: ["scope-ref"],
+        },
         { prop: "effect", key: "effect", kind: "effect", transition: "push" },
       ],
     },
@@ -2123,7 +2789,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "owner", key: "owner", kind: "value" },
+        { prop: "owner", key: "owner", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "effect", key: "effect", kind: "effect", transition: "push" },
       ],
     },
@@ -2134,23 +2800,33 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       kind: "fields",
       fields: [
         { prop: "key", key: "key", kind: "value" },
-        { prop: "creator", key: "creator", kind: "value" },
+        { prop: "creator", key: "creator", kind: "value", objectKinds: ["scope-ref"] },
         {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: { objectKinds: ["localization-ref"] },
+          scalar: {
+            objectKinds: ["localization-ref", "localized-text", "literal-text"],
+            locInput: true,
+            locLiterals: ["random"],
+          },
           block: {
             kind: "fields",
             fields: [
-              { prop: "key", key: "key", kind: "value" },
+              {
+                prop: "key",
+                key: "key",
+                kind: "value",
+                objectKinds: ["localization-ref", "localized-text"],
+                locInput: true,
+              },
               { prop: "variableString", key: "variable_string", kind: "value", repeated: true },
             ],
           },
         },
         { prop: "gender", key: "gender", kind: "value" },
-        { prop: "class", key: "class", kind: "value" },
-        { prop: "species", key: "species", kind: "value" },
+        { prop: "class", key: "class", kind: "value", objectKinds: ["typed-ref"] },
+        { prop: "species", key: "species", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "eventLeader", key: "event_leader", kind: "value" },
         { prop: "setAge", key: "set_age", kind: "value" },
         { prop: "skill", key: "skill", kind: "value" },
@@ -2165,7 +2841,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
               kind: "map",
               map: { value: { objectKinds: ["typed-ref"] }, min: 0, splice: true },
             },
-            { prop: "trait", key: "trait", kind: "value", repeated: true },
+            {
+              prop: "trait",
+              key: "trait",
+              kind: "value",
+              objectKinds: ["typed-ref"],
+              repeated: true,
+            },
           ],
         },
         { prop: "effect", key: "effect", kind: "effect", transition: "push" },
@@ -2182,28 +2864,61 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: { objectKinds: ["localization-ref", "scope-ref"] },
+          scalar: {
+            objectKinds: ["localization-ref", "localized-text", "literal-text", "scope-ref"],
+            locInput: true,
+            locLiterals: ["random"],
+          },
           block: {
             kind: "fields",
             fields: [
-              { prop: "key", key: "key", kind: "value" },
+              {
+                prop: "key",
+                key: "key",
+                kind: "value",
+                objectKinds: ["localization-ref", "localized-text"],
+                locInput: true,
+              },
               { prop: "variableString", key: "variable_string", kind: "value", repeated: true },
             ],
           },
         },
-        { prop: "design", key: "design", kind: "value" },
+        {
+          prop: "design",
+          key: "design",
+          kind: "value",
+          objectKinds: ["localization-ref", "localized-text", "typed-ref", "scope-ref"],
+          locInput: true,
+          locLiterals: ["last_created_design"],
+        },
         {
           prop: "randomExistingDesign",
           key: "random_existing_design",
           kind: "value",
           refTypes: ["ship_size"],
+          objectKinds: ["typed-ref"],
         },
         { prop: "prefix", key: "prefix", kind: "value" },
         { prop: "suffix", key: "suffix", kind: "value" },
-        { prop: "graphicalCulture", key: "graphical_culture", kind: "value" },
-        { prop: "graphicalCultureFallback", key: "graphical_culture_fallback", kind: "value" },
+        {
+          prop: "graphicalCulture",
+          key: "graphical_culture",
+          kind: "value",
+          objectKinds: ["typed-ref", "scope-ref"],
+        },
+        {
+          prop: "graphicalCultureFallback",
+          key: "graphical_culture_fallback",
+          kind: "value",
+          objectKinds: ["typed-ref", "scope-ref"],
+        },
         { prop: "upgradable", key: "upgradable", kind: "value" },
-        { prop: "colonizerSpecies", key: "colonizer_species", kind: "value" },
+        {
+          prop: "colonizerSpecies",
+          key: "colonizer_species",
+          kind: "value",
+          objectKinds: ["scope-ref"],
+        },
         { prop: "age", key: "age", kind: "value" },
         { prop: "rarity", key: "rarity", kind: "value" },
         { prop: "createColony", key: "create_colony", kind: "value" },
@@ -2214,7 +2929,18 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   },
   createShipDesign: {
     key: "create_ship_design",
-    shape: { kind: "fields", fields: [{ prop: "design", key: "design", kind: "value" }] },
+    shape: {
+      kind: "fields",
+      fields: [
+        {
+          prop: "design",
+          key: "design",
+          kind: "value",
+          objectKinds: ["localization-ref", "localized-text"],
+          locInput: true,
+        },
+      ],
+    },
   },
   createSmallerSizeCreatureInFleet: {
     key: "create_smaller_size_creature_in_fleet",
@@ -2235,24 +2961,49 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: { objectKinds: ["scope-ref", "localization-ref"] },
+          scalar: {
+            objectKinds: ["scope-ref", "localization-ref", "localized-text", "literal-text"],
+            locInput: true,
+            locLiterals: ["random"],
+          },
           block: {
             kind: "fields",
             fields: [
-              { prop: "key", key: "key", kind: "value" },
+              {
+                prop: "key",
+                key: "key",
+                kind: "value",
+                objectKinds: ["localization-ref", "localized-text"],
+                locInput: true,
+              },
               { prop: "variableString", key: "variable_string", kind: "value", repeated: true },
             ],
           },
         },
-        { prop: "namelist", key: "namelist", kind: "value" },
-        { prop: "nameList", key: "name_list", kind: "value" },
-        { prop: "plural", key: "plural", kind: "value" },
+        {
+          prop: "namelist",
+          key: "namelist",
+          kind: "value",
+          objectKinds: ["typed-ref", "scope-ref"],
+        },
+        {
+          prop: "nameList",
+          key: "name_list",
+          kind: "value",
+          objectKinds: ["typed-ref", "scope-ref"],
+        },
+        { prop: "plural", key: "plural", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "speciesBio", key: "species_bio", kind: "value" },
         { prop: "adjective", key: "adjective", kind: "value" },
-        { prop: "class", key: "class", kind: "value" },
-        { prop: "portrait", key: "portrait", kind: "value" },
-        { prop: "gender", key: "gender", kind: "value" },
-        { prop: "homeworld", key: "homeworld", kind: "value" },
+        { prop: "class", key: "class", kind: "value", objectKinds: ["typed-ref", "scope-ref"] },
+        {
+          prop: "portrait",
+          key: "portrait",
+          kind: "value",
+          objectKinds: ["scope-ref", "typed-ref"],
+        },
+        { prop: "gender", key: "gender", kind: "value", objectKinds: ["scope-ref"] },
+        { prop: "homeworld", key: "homeworld", kind: "value", objectKinds: ["scope-ref"] },
         {
           prop: "traits",
           key: "traits",
@@ -2261,13 +3012,25 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           block: {
             kind: "fields",
             fields: [
-              { prop: "idealPlanetClass", key: "ideal_planet_class", kind: "value" },
-              { prop: "trait", key: "trait", kind: "value", repeated: true },
+              {
+                prop: "idealPlanetClass",
+                key: "ideal_planet_class",
+                kind: "value",
+                objectKinds: ["scope-ref", "typed-ref"],
+              },
+              {
+                prop: "trait",
+                key: "trait",
+                kind: "value",
+                objectKinds: ["typed-ref"],
+                repeated: true,
+              },
               {
                 prop: "addTrait",
                 key: "add_trait",
                 kind: "value",
                 refTypes: ["trait.species_trait"],
+                objectKinds: ["typed-ref"],
                 repeated: true,
               },
               { prop: "addTraitsAtStartOfList", key: "add_traits_at_start_of_list", kind: "value" },
@@ -2277,7 +3040,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         },
         { prop: "sapient", key: "sapient", kind: "value" },
         { prop: "isMod", key: "is_mod", kind: "value" },
-        { prop: "modNameAffix", key: "mod_name_affix", kind: "value" },
+        {
+          prop: "modNameAffix",
+          key: "mod_name_affix",
+          kind: "value",
+          objectKinds: ["localization-ref", "localized-text"],
+          locInput: true,
+        },
         { prop: "immortal", key: "immortal", kind: "value" },
         { prop: "popsCanBeColonizers", key: "pops_can_be_colonizers", kind: "value" },
         { prop: "popsCanMigrate", key: "pops_can_migrate", kind: "value" },
@@ -2287,7 +3056,12 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         { prop: "popsCanBeSlaves", key: "pops_can_be_slaves", kind: "value" },
         { prop: "popsHaveHappiness", key: "pops_have_happiness", kind: "value" },
         { prop: "consumerGoods", key: "consumer_goods", kind: "value" },
-        { prop: "canBeModified", key: "can_be_modified", kind: "value" },
+        {
+          prop: "canBeModified",
+          key: "can_be_modified",
+          kind: "value",
+          objectKinds: ["scope-ref"],
+        },
         { prop: "popsAutoGrowth", key: "pops_auto_growth", kind: "value" },
         { prop: "popMaintenance", key: "pop_maintenance", kind: "value" },
         {
@@ -2295,7 +3069,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           key: "new_pop_resource_requirement",
           kind: "fields",
           fields: [
-            { prop: "type", key: "type", kind: "value" },
+            { prop: "type", key: "type", kind: "value", objectKinds: ["typed-ref"] },
             { prop: "value", key: "value", kind: "value" },
           ],
         },
@@ -2324,14 +3098,27 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "owner", key: "owner", kind: "value" },
-        { prop: "size", key: "size", kind: "value", refTypes: ["ship_size.starbase"] },
-        { prop: "design", key: "design", kind: "value", refTypes: ["global_ship_design"] },
+        { prop: "owner", key: "owner", kind: "value", objectKinds: ["scope-ref"] },
+        {
+          prop: "size",
+          key: "size",
+          kind: "value",
+          refTypes: ["ship_size.starbase"],
+          objectKinds: ["typed-ref"],
+        },
+        {
+          prop: "design",
+          key: "design",
+          kind: "value",
+          refTypes: ["global_ship_design"],
+          objectKinds: ["typed-ref"],
+        },
         {
           prop: "module",
           key: "module",
           kind: "value",
           refTypes: ["starbase_module"],
+          objectKinds: ["typed-ref"],
           repeated: true,
         },
         {
@@ -2339,6 +3126,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           key: "building",
           kind: "value",
           refTypes: ["starbase_building"],
+          objectKinds: ["typed-ref"],
           repeated: true,
         },
         { prop: "effect", key: "effect", kind: "effect", transition: "push" },
@@ -2348,14 +3136,20 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   creator: { key: "creator", shape: { kind: "scope-link", transition: "push" } },
   customTooltip: {
     key: "custom_tooltip",
-    shape: { kind: "value", objectKinds: ["localization-ref"] },
+    shape: { kind: "value", objectKinds: ["localization-ref", "localized-text"], locInput: true },
   },
   customTooltipWithParams: {
     key: "custom_tooltip_with_params",
     shape: {
       kind: "fields",
       fields: [
-        { prop: "description", key: "description", kind: "value" },
+        {
+          prop: "description",
+          key: "description",
+          kind: "value",
+          objectKinds: ["localization-ref", "localized-text"],
+          locInput: true,
+        },
         {
           prop: "descriptionParameters",
           key: "description_parameters",
@@ -2375,7 +3169,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         kind: "fields",
         fields: [
           { prop: "amount", key: "amount", kind: "value" },
-          { prop: "attacker", key: "attacker", kind: "value" },
+          { prop: "attacker", key: "attacker", kind: "value", objectKinds: ["scope-ref"] },
         ],
       },
     },
@@ -2388,22 +3182,32 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "target", key: "target", kind: "value" },
+        { prop: "target", key: "target", kind: "value", objectKinds: ["scope-ref"] },
         {
           prop: "attackerWarGoal",
           key: "attacker_war_goal",
           kind: "value",
           refTypes: ["war_goal"],
+          objectKinds: ["typed-ref"],
         },
         {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: { objectKinds: ["localization-ref"] },
+          scalar: {
+            objectKinds: ["localization-ref", "localized-text", "literal-text"],
+            locInput: true,
+          },
           block: {
             kind: "fields",
             fields: [
-              { prop: "key", key: "key", kind: "value" },
+              {
+                prop: "key",
+                key: "key",
+                kind: "value",
+                objectKinds: ["localization-ref", "localized-text"],
+                locInput: true,
+              },
               { prop: "variableString", key: "variable_string", kind: "value", repeated: true },
             ],
           },
@@ -2420,7 +3224,10 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "scalar-or-block",
       scalar: { kind: "value", objectKinds: ["scope-ref"] },
-      block: { kind: "fields", fields: [{ prop: "target", key: "target", kind: "value" }] },
+      block: {
+        kind: "fields",
+        fields: [{ prop: "target", key: "target", kind: "value", objectKinds: ["scope-ref"] }],
+      },
     },
   },
   deleteFleet: {
@@ -2431,7 +3238,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       block: {
         kind: "fields",
         fields: [
-          { prop: "target", key: "target", kind: "value" },
+          { prop: "target", key: "target", kind: "value", objectKinds: ["scope-ref"] },
           { prop: "killLeader", key: "kill_leader", kind: "value" },
           { prop: "destroyTemplate", key: "destroy_template", kind: "value" },
         ],
@@ -2443,7 +3250,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "target", key: "target", kind: "value" },
+        { prop: "target", key: "target", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "navalCap", key: "naval_cap", kind: "value" },
         { prop: "killLeader", key: "kill_leader", kind: "value" },
       ],
@@ -2475,7 +3282,10 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   destroyCosmicStorm: { key: "destroy_cosmic_storm", shape: { kind: "bool" } },
   destroyCosmicStormInfluenceField: {
     key: "destroy_cosmic_storm_influence_field",
-    shape: { kind: "fields", fields: [{ prop: "center", key: "center", kind: "value" }] },
+    shape: {
+      kind: "fields",
+      fields: [{ prop: "center", key: "center", kind: "value", objectKinds: ["scope-ref"] }],
+    },
   },
   destroyCountry: { key: "destroy_country", shape: { kind: "bool" } },
   destroyEspionageAsset: {
@@ -2494,7 +3304,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       block: {
         kind: "fields",
         fields: [
-          { prop: "target", key: "target", kind: "value" },
+          { prop: "target", key: "target", kind: "value", objectKinds: ["scope-ref"] },
           { prop: "killLeader", key: "kill_leader", kind: "value" },
           { prop: "destroyTemplate", key: "destroy_template", kind: "value" },
         ],
@@ -2506,7 +3316,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "target", key: "target", kind: "value" },
+        { prop: "target", key: "target", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "navalCap", key: "naval_cap", kind: "value" },
         { prop: "killLeader", key: "kill_leader", kind: "value" },
       ],
@@ -2555,7 +3365,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "center", key: "center", kind: "value" },
+        { prop: "center", key: "center", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "ownedPlanetsPercentage", key: "owned_planets_percentage", kind: "value" },
         { prop: "planetLimit", key: "planet_limit", kind: "trigger" },
         { prop: "effect", key: "effect", kind: "effect", transition: "push" },
@@ -2572,8 +3382,14 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "name", key: "name", kind: "value", refTypes: ["mission"] },
-        { prop: "location", key: "location", kind: "value" },
+        {
+          prop: "name",
+          key: "name",
+          kind: "value",
+          refTypes: ["mission"],
+          objectKinds: ["typed-ref"],
+        },
+        { prop: "location", key: "location", kind: "value", objectKinds: ["scope-ref"] },
       ],
     },
   },
@@ -2586,10 +3402,22 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "name", key: "name", kind: "value", refTypes: ["special_project"] },
-        { prop: "patron", key: "patron", kind: "value", refTypes: ["patron_type"] },
-        { prop: "owner", key: "owner", kind: "value" },
-        { prop: "location", key: "location", kind: "value" },
+        {
+          prop: "name",
+          key: "name",
+          kind: "value",
+          refTypes: ["special_project"],
+          objectKinds: ["typed-ref"],
+        },
+        {
+          prop: "patron",
+          key: "patron",
+          kind: "value",
+          refTypes: ["patron_type"],
+          objectKinds: ["typed-ref"],
+        },
+        { prop: "owner", key: "owner", kind: "value", objectKinds: ["scope-ref"] },
+        { prop: "location", key: "location", kind: "value", objectKinds: ["scope-ref"] },
       ],
     },
   },
@@ -2598,9 +3426,15 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "name", key: "name", kind: "value", refTypes: ["special_project"] },
-        { prop: "owner", key: "owner", kind: "value" },
-        { prop: "location", key: "location", kind: "value" },
+        {
+          prop: "name",
+          key: "name",
+          kind: "value",
+          refTypes: ["special_project"],
+          objectKinds: ["typed-ref"],
+        },
+        { prop: "owner", key: "owner", kind: "value", objectKinds: ["scope-ref"] },
+        { prop: "location", key: "location", kind: "value", objectKinds: ["scope-ref"] },
       ],
     },
   },
@@ -2620,7 +3454,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       block: {
         kind: "fields",
         fields: [
-          { prop: "initiator", key: "initiator", kind: "value" },
+          { prop: "initiator", key: "initiator", kind: "value", objectKinds: ["scope-ref"] },
           { prop: "reason", key: "reason", kind: "value" },
         ],
       },
@@ -2650,8 +3484,8 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "who", key: "who", kind: "value" },
-        { prop: "location", key: "location", kind: "value" },
+        { prop: "who", key: "who", kind: "value", objectKinds: ["scope-ref"] },
+        { prop: "location", key: "location", kind: "value", objectKinds: ["scope-ref"] },
       ],
     },
   },
@@ -3496,6 +4330,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           key: "modifier",
           kind: "value",
           refTypes: ["modifier", "static_modifier"],
+          objectKinds: ["typed-ref"],
         },
         { prop: "variable", key: "variable", kind: "value" },
       ],
@@ -3516,7 +4351,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "resource", key: "resource", kind: "value", refTypes: ["resource"] },
+        {
+          prop: "resource",
+          key: "resource",
+          kind: "value",
+          refTypes: ["resource"],
+          objectKinds: ["typed-ref"],
+        },
         { prop: "variable", key: "variable", kind: "value" },
       ],
     },
@@ -3526,7 +4367,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "resource", key: "resource", kind: "value", refTypes: ["resource"] },
+        {
+          prop: "resource",
+          key: "resource",
+          kind: "value",
+          refTypes: ["resource"],
+          objectKinds: ["typed-ref"],
+        },
         { prop: "variable", key: "variable", kind: "value" },
       ],
     },
@@ -3536,7 +4383,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "resource", key: "resource", kind: "value", refTypes: ["resource"] },
+        {
+          prop: "resource",
+          key: "resource",
+          kind: "value",
+          refTypes: ["resource"],
+          objectKinds: ["typed-ref"],
+        },
         { prop: "variable", key: "variable", kind: "value" },
       ],
     },
@@ -3570,16 +4423,32 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "onAction", key: "on_action", kind: "value", refTypes: ["on_action"] },
+        {
+          prop: "onAction",
+          key: "on_action",
+          kind: "value",
+          refTypes: ["on_action"],
+          objectKinds: ["typed-ref"],
+        },
         {
           prop: "scopes",
           key: "scopes",
           kind: "fields",
           fields: [
-            { prop: "from", key: "from", kind: "value" },
-            { prop: "fromfrom", key: "fromfrom", kind: "value" },
-            { prop: "fromfromfrom", key: "fromfromfrom", kind: "value" },
-            { prop: "fromfromfromfrom", key: "fromfromfromfrom", kind: "value" },
+            { prop: "from", key: "from", kind: "value", objectKinds: ["scope-ref"] },
+            { prop: "fromfrom", key: "fromfrom", kind: "value", objectKinds: ["scope-ref"] },
+            {
+              prop: "fromfromfrom",
+              key: "fromfromfrom",
+              kind: "value",
+              objectKinds: ["scope-ref"],
+            },
+            {
+              prop: "fromfromfromfrom",
+              key: "fromfromfromfrom",
+              kind: "value",
+              objectKinds: ["scope-ref"],
+            },
           ],
         },
       ],
@@ -3600,8 +4469,9 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           key: "special_project",
           kind: "value",
           refTypes: ["special_project"],
+          objectKinds: ["typed-ref"],
         },
-        { prop: "target", key: "target", kind: "value" },
+        { prop: "target", key: "target", kind: "value", objectKinds: ["scope-ref"] },
       ],
     },
   },
@@ -3644,14 +4514,17 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   },
   getTradeData: {
     key: "get_trade_data",
-    shape: { kind: "fields", fields: [{ prop: "target", key: "target", kind: "value" }] },
+    shape: {
+      kind: "fields",
+      fields: [{ prop: "target", key: "target", kind: "value", objectKinds: ["scope-ref"] }],
+    },
   },
   giveCullingRewards: {
     key: "give_culling_rewards",
     shape: {
       kind: "fields",
       fields: [
-        { prop: "design", key: "design", kind: "value" },
+        { prop: "design", key: "design", kind: "value", objectKinds: ["typed-ref", "scope-ref"] },
         { prop: "mult", key: "mult", kind: "value" },
       ],
     },
@@ -3666,6 +4539,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           key: "ship_category",
           kind: "value",
           refTypes: ["ship_categories"],
+          objectKinds: ["typed-ref"],
         },
         { prop: "rarity", key: "rarity", kind: "value" },
       ],
@@ -3676,7 +4550,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "controller", key: "controller", kind: "value" },
+        { prop: "controller", key: "controller", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "days", key: "days", kind: "value" },
       ],
     },
@@ -3686,8 +4560,20 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "key", key: "key", kind: "value", refTypes: ["specimen"] },
-        { prop: "origin", key: "origin", kind: "value" },
+        {
+          prop: "key",
+          key: "key",
+          kind: "value",
+          refTypes: ["specimen"],
+          objectKinds: ["typed-ref"],
+        },
+        {
+          prop: "origin",
+          key: "origin",
+          kind: "value",
+          objectKinds: ["localization-ref", "localized-text"],
+          locInput: true,
+        },
         {
           prop: "targets",
           key: "targets",
@@ -3702,7 +4588,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "tech", key: "tech", kind: "value", refTypes: ["technology"] },
+        {
+          prop: "tech",
+          key: "tech",
+          kind: "value",
+          refTypes: ["technology"],
+          objectKinds: ["typed-ref"],
+        },
         { prop: "message", key: "message", kind: "value" },
       ],
     },
@@ -3714,7 +4606,10 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "scalar-or-block",
       scalar: { kind: "value", objectKinds: ["scope-ref"] },
-      block: { kind: "fields", fields: [{ prop: "target", key: "target", kind: "value" }] },
+      block: {
+        kind: "fields",
+        fields: [{ prop: "target", key: "target", kind: "value", objectKinds: ["scope-ref"] }],
+      },
     },
   },
   heir: { key: "heir", shape: { kind: "scope-link", transition: "push" } },
@@ -3727,9 +4622,15 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "contract", key: "contract", kind: "value", refTypes: ["mission"] },
-        { prop: "location", key: "location", kind: "value" },
-        { prop: "target", key: "target", kind: "value" },
+        {
+          prop: "contract",
+          key: "contract",
+          kind: "value",
+          refTypes: ["mission"],
+          objectKinds: ["typed-ref"],
+        },
+        { prop: "location", key: "location", kind: "value", objectKinds: ["scope-ref"] },
+        { prop: "target", key: "target", kind: "value", objectKinds: ["scope-ref"] },
       ],
     },
   },
@@ -3739,17 +4640,26 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "who", key: "who", kind: "value" },
+        { prop: "who", key: "who", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "overrideRequirements", key: "override_requirements", kind: "value" },
         {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: { objectKinds: ["localization-ref"] },
+          scalar: {
+            objectKinds: ["localization-ref", "localized-text", "literal-text"],
+            locInput: true,
+          },
           block: {
             kind: "fields",
             fields: [
-              { prop: "key", key: "key", kind: "value" },
+              {
+                prop: "key",
+                key: "key",
+                kind: "value",
+                objectKinds: ["localization-ref", "localized-text"],
+                locInput: true,
+              },
               { prop: "variableString", key: "variable_string", kind: "value", repeated: true },
             ],
           },
@@ -3763,8 +4673,8 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "war", key: "war", kind: "value" },
-        { prop: "side", key: "side", kind: "value" },
+        { prop: "war", key: "war", kind: "value", objectKinds: ["scope-ref"] },
+        { prop: "side", key: "side", kind: "value", objectKinds: ["scope-ref"] },
       ],
     },
   },
@@ -3777,7 +4687,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         { prop: "amount", key: "amount", kind: "value" },
         { prop: "random", key: "random", kind: "value" },
         { prop: "percentage", key: "percentage", kind: "value" },
-        { prop: "growthCategory", key: "growth_category", kind: "value" },
+        {
+          prop: "growthCategory",
+          key: "growth_category",
+          kind: "value",
+          objectKinds: ["localization-ref", "localized-text"],
+          locInput: true,
+        },
       ],
     },
   },
@@ -3787,7 +4703,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "class", key: "class", kind: "value" },
+        { prop: "class", key: "class", kind: "value", objectKinds: ["typed-ref"] },
         { prop: "ability", key: "ability", kind: "value" },
         { prop: "showNotification", key: "show_notification", kind: "value" },
         { prop: "executed", key: "executed", kind: "value" },
@@ -3802,11 +4718,17 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "popGroup", key: "pop_group", kind: "value" },
+        { prop: "popGroup", key: "pop_group", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "amount", key: "amount", kind: "value" },
         { prop: "percentage", key: "percentage", kind: "value" },
         { prop: "random", key: "random", kind: "value" },
-        { prop: "growthCategory", key: "growth_category", kind: "value" },
+        {
+          prop: "growthCategory",
+          key: "growth_category",
+          kind: "value",
+          objectKinds: ["localization-ref", "localized-text"],
+          locInput: true,
+        },
       ],
     },
   },
@@ -3875,7 +4797,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "country", key: "country", kind: "value" },
+        { prop: "country", key: "country", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "duration", key: "duration", kind: "value" },
       ],
     },
@@ -3893,7 +4815,10 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   logError: { key: "log_error", shape: { kind: "value" } },
   makeSpecialTrade: {
     key: "make_special_trade",
-    shape: { kind: "fields", fields: [{ prop: "target", key: "target", kind: "value" }] },
+    shape: {
+      kind: "fields",
+      fields: [{ prop: "target", key: "target", kind: "value", objectKinds: ["scope-ref"] }],
+    },
   },
   mergeSpecies: { key: "merge_species", shape: { kind: "bool" } },
   miningStation: { key: "mining_station", shape: { kind: "scope-link", transition: "push" } },
@@ -3906,18 +4831,34 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: { objectKinds: ["localization-ref"] },
+          scalar: {
+            objectKinds: ["localization-ref", "localized-text", "literal-text"],
+            locInput: true,
+            locLiterals: ["random"],
+          },
           block: {
             kind: "fields",
             fields: [
-              { prop: "key", key: "key", kind: "value" },
+              {
+                prop: "key",
+                key: "key",
+                kind: "value",
+                objectKinds: ["localization-ref", "localized-text"],
+                locInput: true,
+              },
               { prop: "variableString", key: "variable_string", kind: "value", repeated: true },
             ],
           },
         },
-        { prop: "owner", key: "owner", kind: "value" },
-        { prop: "species", key: "species", kind: "value" },
-        { prop: "type", key: "type", kind: "value", refTypes: ["army"] },
+        { prop: "owner", key: "owner", kind: "value", objectKinds: ["scope-ref"] },
+        { prop: "species", key: "species", kind: "value", objectKinds: ["scope-ref"] },
+        {
+          prop: "type",
+          key: "type",
+          kind: "value",
+          refTypes: ["army"],
+          objectKinds: ["typed-ref"],
+        },
       ],
     },
   },
@@ -3926,20 +4867,38 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "species", key: "species", kind: "value" },
-        { prop: "base", key: "base", kind: "value" },
-        { prop: "addTrait", key: "add_trait", kind: "value", refTypes: ["trait"], repeated: true },
+        { prop: "species", key: "species", kind: "value", objectKinds: ["scope-ref"] },
+        { prop: "base", key: "base", kind: "value", objectKinds: ["scope-ref"] },
+        {
+          prop: "addTrait",
+          key: "add_trait",
+          kind: "value",
+          refTypes: ["trait"],
+          objectKinds: ["typed-ref"],
+          repeated: true,
+        },
         { prop: "addTraitsAtStartOfList", key: "add_traits_at_start_of_list", kind: "value" },
         {
           prop: "removeTrait",
           key: "remove_trait",
           kind: "value",
           refTypes: ["trait"],
+          objectKinds: ["typed-ref"],
           repeated: true,
         },
-        { prop: "idealPlanetClass", key: "ideal_planet_class", kind: "value" },
+        {
+          prop: "idealPlanetClass",
+          key: "ideal_planet_class",
+          kind: "value",
+          objectKinds: ["scope-ref", "typed-ref"],
+        },
         { prop: "changeScopedSpecies", key: "change_scoped_species", kind: "value" },
-        { prop: "portrait", key: "portrait", kind: "value" },
+        {
+          prop: "portrait",
+          key: "portrait",
+          kind: "value",
+          objectKinds: ["scope-ref", "typed-ref"],
+        },
         { prop: "addRandomSpeciesTrait", key: "add_random_species_trait", kind: "trigger" },
         {
           prop: "onRandomTraitAdded",
@@ -3968,7 +4927,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "target", key: "target", kind: "value" },
+        { prop: "target", key: "target", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "minDistance", key: "min_distance", kind: "value" },
         { prop: "maxDistance", key: "max_distance", kind: "value" },
         { prop: "direction", key: "direction", kind: "value" },
@@ -5360,7 +6319,10 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   ownerSpecies: { key: "owner_species", shape: { kind: "scope-link", transition: "push" } },
   passDebrisOwnership: {
     key: "pass_debris_ownership",
-    shape: { kind: "fields", fields: [{ prop: "owner", key: "owner", kind: "value" }] },
+    shape: {
+      kind: "fields",
+      fields: [{ prop: "owner", key: "owner", kind: "value", objectKinds: ["scope-ref"] }],
+    },
   },
   passResolution: {
     key: "pass_resolution",
@@ -5375,8 +6337,14 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "resolution", key: "resolution", kind: "value", refTypes: ["resolution"] },
-        { prop: "target", key: "target", kind: "value" },
+        {
+          prop: "resolution",
+          key: "resolution",
+          kind: "value",
+          refTypes: ["resolution"],
+          objectKinds: ["typed-ref"],
+        },
+        { prop: "target", key: "target", kind: "value", objectKinds: ["scope-ref"] },
       ],
     },
   },
@@ -5394,8 +6362,14 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       block: {
         kind: "fields",
         fields: [
-          { prop: "sound", key: "sound", kind: "value", refTypes: ["sound_effect"] },
-          { prop: "location", key: "location", kind: "value" },
+          {
+            prop: "sound",
+            key: "sound",
+            kind: "value",
+            refTypes: ["sound_effect"],
+            objectKinds: ["typed-ref"],
+          },
+          { prop: "location", key: "location", kind: "value", objectKinds: ["scope-ref"] },
         ],
       },
     },
@@ -5405,7 +6379,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "ethic", key: "ethic", kind: "value", refTypes: ["ethic"] },
+        {
+          prop: "ethic",
+          key: "ethic",
+          kind: "value",
+          refTypes: ["ethic"],
+          objectKinds: ["typed-ref"],
+        },
         { prop: "amount", key: "amount", kind: "value" },
         { prop: "percentage", key: "percentage", kind: "value" },
         { prop: "random", key: "random", kind: "value" },
@@ -5418,7 +6398,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "ethic", key: "ethic", kind: "value", refTypes: ["ethic"] },
+        {
+          prop: "ethic",
+          key: "ethic",
+          kind: "value",
+          refTypes: ["ethic"],
+          objectKinds: ["typed-ref"],
+        },
         { prop: "amount", key: "amount", kind: "value" },
         { prop: "percentage", key: "percentage", kind: "value" },
         { prop: "random", key: "random", kind: "value" },
@@ -5431,7 +6417,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "ethic", key: "ethic", kind: "value", refTypes: ["ethic"] },
+        {
+          prop: "ethic",
+          key: "ethic",
+          kind: "value",
+          refTypes: ["ethic"],
+          objectKinds: ["typed-ref"],
+        },
         { prop: "amount", key: "amount", kind: "value" },
         { prop: "percentage", key: "percentage", kind: "value" },
         { prop: "random", key: "random", kind: "value" },
@@ -5449,8 +6441,14 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "resolution", key: "resolution", kind: "value", refTypes: ["resolution"] },
-        { prop: "target", key: "target", kind: "value" },
+        {
+          prop: "resolution",
+          key: "resolution",
+          kind: "value",
+          refTypes: ["resolution"],
+          objectKinds: ["typed-ref"],
+        },
+        { prop: "target", key: "target", kind: "value", objectKinds: ["scope-ref"] },
       ],
     },
   },
@@ -6580,7 +7578,10 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   randomizeFlagSymbol: { key: "randomize_flag_symbol", shape: { kind: "value" } },
   reanimateSpaceFauna: {
     key: "reanimate_space_fauna",
-    shape: { kind: "fields", fields: [{ prop: "fleet", key: "fleet", kind: "value" }] },
+    shape: {
+      kind: "fields",
+      fields: [{ prop: "fleet", key: "fleet", kind: "value", objectKinds: ["scope-ref"] }],
+    },
   },
   recalculateStormInfluenceField: {
     key: "recalculate_storm_influence_field",
@@ -6607,7 +7608,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       block: {
         kind: "fields",
         fields: [
-          { prop: "patron", key: "patron", kind: "value", refTypes: ["patron_type"] },
+          {
+            prop: "patron",
+            key: "patron",
+            kind: "value",
+            refTypes: ["patron_type"],
+            objectKinds: ["typed-ref"],
+          },
           { prop: "resetAttunement", key: "reset_attunement", kind: "value" },
         ],
       },
@@ -6618,9 +7625,9 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "category", key: "category", kind: "value" },
-        { prop: "location", key: "location", kind: "value" },
-        { prop: "owner", key: "owner", kind: "value" },
+        { prop: "category", key: "category", kind: "value", objectKinds: ["typed-ref"] },
+        { prop: "location", key: "location", kind: "value", objectKinds: ["scope-ref"] },
+        { prop: "owner", key: "owner", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "cullVivariumCritter", key: "cull_vivarium_critter", kind: "value" },
       ],
     },
@@ -6631,7 +7638,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       kind: "fields",
       fields: [
         { prop: "count", key: "count", kind: "value" },
-        { prop: "location", key: "location", kind: "value" },
+        { prop: "location", key: "location", kind: "value", objectKinds: ["scope-ref"] },
         {
           prop: "owners",
           key: "owners",
@@ -6661,7 +7668,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "who", key: "who", kind: "value" },
+        { prop: "who", key: "who", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "overrideRequirements", key: "override_requirements", kind: "value" },
       ],
     },
@@ -6678,7 +7685,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "who", key: "who", kind: "value" },
+        { prop: "who", key: "who", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "numOfClaims", key: "num_of_claims", kind: "value" },
       ],
     },
@@ -6709,7 +7716,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "target", key: "target", kind: "value" },
+        { prop: "target", key: "target", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "value", key: "value", kind: "value" },
       ],
     },
@@ -6736,8 +7743,9 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           key: "holding",
           kind: "value",
           refTypes: ["building.corporate", "building.holding"],
+          objectKinds: ["typed-ref"],
         },
-        { prop: "owner", key: "owner", kind: "value" },
+        { prop: "owner", key: "owner", kind: "value", objectKinds: ["scope-ref"] },
       ],
     },
   },
@@ -6746,8 +7754,8 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "from", key: "from", kind: "value" },
-        { prop: "to", key: "to", kind: "value" },
+        { prop: "from", key: "from", kind: "value", objectKinds: ["scope-ref"] },
+        { prop: "to", key: "to", kind: "value", objectKinds: ["scope-ref"] },
       ],
     },
   },
@@ -6771,8 +7779,14 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "who", key: "who", kind: "value" },
-        { prop: "modifier", key: "modifier", kind: "value", refTypes: ["opinion_modifier"] },
+        { prop: "who", key: "who", kind: "value", objectKinds: ["scope-ref"] },
+        {
+          prop: "modifier",
+          key: "modifier",
+          kind: "value",
+          refTypes: ["opinion_modifier"],
+          objectKinds: ["typed-ref"],
+        },
       ],
     },
   },
@@ -6794,7 +7808,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         fields: [
           { prop: "amount", key: "amount", kind: "value" },
           { prop: "random", key: "random", kind: "value" },
-          { prop: "growthCategory", key: "growth_category", kind: "value" },
+          {
+            prop: "growthCategory",
+            key: "growth_category",
+            kind: "value",
+            objectKinds: ["localization-ref", "localized-text"],
+            locInput: true,
+          },
         ],
       },
     },
@@ -6808,7 +7828,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "type", key: "type", kind: "value", refTypes: ["starbase_building"] },
+        {
+          prop: "type",
+          key: "type",
+          kind: "value",
+          refTypes: ["starbase_building"],
+          objectKinds: ["typed-ref"],
+        },
         { prop: "count", key: "count", kind: "value" },
       ],
     },
@@ -6818,7 +7844,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "type", key: "type", kind: "value", refTypes: ["starbase_module"] },
+        {
+          prop: "type",
+          key: "type",
+          kind: "value",
+          refTypes: ["starbase_module"],
+          objectKinds: ["typed-ref"],
+        },
         { prop: "count", key: "count", kind: "value" },
       ],
     },
@@ -6828,7 +7860,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "who", key: "who", kind: "value" },
+        { prop: "who", key: "who", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "flag", key: "flag", kind: "value" },
       ],
     },
@@ -6866,7 +7898,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       kind: "fields",
       fields: [
         { prop: "slot", key: "slot", kind: "value" },
-        { prop: "building", key: "building", kind: "value" },
+        { prop: "building", key: "building", kind: "value", objectKinds: ["typed-ref"] },
       ],
     },
   },
@@ -6875,7 +7907,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "component", key: "component", kind: "value", refTypes: ["component_template"] },
+        {
+          prop: "component",
+          key: "component",
+          kind: "value",
+          refTypes: ["component_template"],
+          objectKinds: ["typed-ref"],
+        },
       ],
     },
   },
@@ -6886,7 +7924,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       kind: "fields",
       fields: [
         { prop: "slot", key: "slot", kind: "value" },
-        { prop: "module", key: "module", kind: "value" },
+        { prop: "module", key: "module", kind: "value", objectKinds: ["typed-ref"] },
       ],
     },
   },
@@ -6910,9 +7948,27 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "district", key: "district", kind: "value", refTypes: ["district"] },
-        { prop: "zone", key: "zone", kind: "value", refTypes: ["zone"] },
-        { prop: "zoneSlot", key: "zone_slot", kind: "value", refTypes: ["zone_slots"] },
+        {
+          prop: "district",
+          key: "district",
+          kind: "value",
+          refTypes: ["district"],
+          objectKinds: ["typed-ref"],
+        },
+        {
+          prop: "zone",
+          key: "zone",
+          kind: "value",
+          refTypes: ["zone"],
+          objectKinds: ["typed-ref"],
+        },
+        {
+          prop: "zoneSlot",
+          key: "zone_slot",
+          kind: "value",
+          refTypes: ["zone_slots"],
+          objectKinds: ["typed-ref"],
+        },
         { prop: "all", key: "all", kind: "value" },
       ],
     },
@@ -6922,9 +7978,15 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "promptCountry", key: "prompt_country", kind: "value" },
+        { prop: "promptCountry", key: "prompt_country", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "name", key: "name", kind: "value" },
-        { prop: "nameList", key: "name_list", kind: "value", refTypes: ["species_named_list"] },
+        {
+          prop: "nameList",
+          key: "name_list",
+          kind: "value",
+          refTypes: ["species_named_list"],
+          objectKinds: ["typed-ref"],
+        },
       ],
     },
   },
@@ -6946,12 +8008,19 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "newPatron", key: "new_patron", kind: "value", refTypes: ["patron_type"] },
+        {
+          prop: "newPatron",
+          key: "new_patron",
+          kind: "value",
+          refTypes: ["patron_type"],
+          objectKinds: ["typed-ref"],
+        },
         {
           prop: "replacedPatron",
           key: "replaced_patron",
           kind: "value",
           refTypes: ["patron_type"],
+          objectKinds: ["typed-ref"],
         },
       ],
     },
@@ -7012,7 +8081,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "popGroup", key: "pop_group", kind: "value" },
+        { prop: "popGroup", key: "pop_group", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "amount", key: "amount", kind: "value" },
         { prop: "percentage", key: "percentage", kind: "value" },
       ],
@@ -7029,12 +8098,24 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "select_decision",
     shape: {
       kind: "fields",
-      fields: [{ prop: "name", key: "name", kind: "value", refTypes: ["decision"] }],
+      fields: [
+        {
+          prop: "name",
+          key: "name",
+          kind: "value",
+          refTypes: ["decision"],
+          objectKinds: ["typed-ref"],
+        },
+      ],
     },
   },
   setAdjective: {
     key: "set_adjective",
-    shape: { kind: "value", objectKinds: ["localization-ref", "scope-ref"] },
+    shape: {
+      kind: "value",
+      objectKinds: ["localization-ref", "localized-text", "scope-ref"],
+      locInput: true,
+    },
   },
   setAdvisorActive: { key: "set_advisor_active", shape: { kind: "bool" } },
   setAge: { key: "set_age", shape: { kind: "value" } },
@@ -7046,7 +8127,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "preset", key: "preset", kind: "value", refTypes: ["agreement_preset"] },
+        {
+          prop: "preset",
+          key: "preset",
+          kind: "value",
+          refTypes: ["agreement_preset"],
+          objectKinds: ["typed-ref"],
+        },
         { prop: "applyTerms", key: "apply_terms", kind: "value" },
       ],
     },
@@ -7087,7 +8174,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       kind: "fields",
       fields: [
         { prop: "radius", key: "radius", kind: "value" },
-        { prop: "type", key: "type", kind: "value", refTypes: ["asteroid_belt_type"] },
+        {
+          prop: "type",
+          key: "type",
+          kind: "value",
+          refTypes: ["asteroid_belt_type"],
+          objectKinds: ["typed-ref"],
+        },
       ],
     },
   },
@@ -7098,7 +8191,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       kind: "fields",
       fields: [
         { prop: "value", key: "value", kind: "value" },
-        { prop: "patron", key: "patron", kind: "value", refTypes: ["patron_type"] },
+        {
+          prop: "patron",
+          key: "patron",
+          kind: "value",
+          refTypes: ["patron_type"],
+          objectKinds: ["typed-ref"],
+        },
       ],
     },
   },
@@ -7116,8 +8215,14 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "country", key: "country", kind: "value" },
-        { prop: "type", key: "type", kind: "value", refTypes: ["citizenship_type"] },
+        { prop: "country", key: "country", kind: "value", objectKinds: ["scope-ref"] },
+        {
+          prop: "type",
+          key: "type",
+          kind: "value",
+          refTypes: ["citizenship_type"],
+          objectKinds: ["typed-ref"],
+        },
         { prop: "cooldown", key: "cooldown", kind: "value" },
       ],
     },
@@ -7132,7 +8237,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "who", key: "who", kind: "value" },
+        { prop: "who", key: "who", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "status", key: "status", kind: "value" },
         { prop: "forced", key: "forced", kind: "value" },
       ],
@@ -7143,8 +8248,8 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "country", key: "country", kind: "value" },
-        { prop: "type", key: "type", kind: "value" },
+        { prop: "country", key: "country", kind: "value", objectKinds: ["scope-ref"] },
+        { prop: "type", key: "type", kind: "value", objectKinds: ["typed-ref"] },
         { prop: "cooldown", key: "cooldown", kind: "value" },
       ],
     },
@@ -7160,7 +8265,9 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "set_cosmic_storm",
     shape: {
       kind: "fields",
-      fields: [{ prop: "cosmicStorm", key: "cosmic_storm", kind: "value" }],
+      fields: [
+        { prop: "cosmicStorm", key: "cosmic_storm", kind: "value", objectKinds: ["scope-ref"] },
+      ],
     },
   },
   setCouncilAgenda: {
@@ -7177,8 +8284,20 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "positionTag", key: "position_tag", kind: "value" },
-        { prop: "title", key: "title", kind: "value" },
+        {
+          prop: "positionTag",
+          key: "position_tag",
+          kind: "value",
+          objectKinds: ["localization-ref", "localized-text"],
+          locInput: true,
+        },
+        {
+          prop: "title",
+          key: "title",
+          kind: "value",
+          objectKinds: ["localization-ref", "localized-text"],
+          locInput: true,
+        },
       ],
     },
   },
@@ -7187,8 +8306,20 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "positionTag", key: "position_tag", kind: "value" },
-        { prop: "title", key: "title", kind: "value" },
+        {
+          prop: "positionTag",
+          key: "position_tag",
+          kind: "value",
+          objectKinds: ["localization-ref", "localized-text"],
+          locInput: true,
+        },
+        {
+          prop: "title",
+          key: "title",
+          kind: "value",
+          objectKinds: ["localization-ref", "localized-text"],
+          locInput: true,
+        },
       ],
     },
   },
@@ -7228,7 +8359,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "action", key: "action", kind: "value", refTypes: ["diplomatic_action"] },
+        {
+          prop: "action",
+          key: "action",
+          kind: "value",
+          refTypes: ["diplomatic_action"],
+          objectKinds: ["typed-ref"],
+        },
         {
           prop: "settings",
           key: "settings",
@@ -7255,7 +8392,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   setEmpireFlag: { key: "set_empire_flag", shape: { kind: "value" } },
   setEmpireName: {
     key: "set_empire_name",
-    shape: { kind: "value", objectKinds: ["localization-ref"] },
+    shape: { kind: "value", objectKinds: ["localization-ref", "localized-text"], locInput: true },
   },
   setEqualVotingPower: { key: "set_equal_voting_power", shape: { kind: "bool" } },
   setEspionageAssetFlag: { key: "set_espionage_asset_flag", shape: { kind: "value" } },
@@ -7271,7 +8408,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "target", key: "target", kind: "value" },
+        { prop: "target", key: "target", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "setHostile", key: "set_hostile", kind: "value" },
         { prop: "setNeutral", key: "set_neutral", kind: "value" },
         { prop: "setFriendly", key: "set_friendly", kind: "value" },
@@ -7291,7 +8428,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         { prop: "generateBorders", key: "generate_borders", kind: "value" },
         { prop: "needsColony", key: "needs_colony", kind: "value" },
         { prop: "primitive", key: "primitive", kind: "value" },
-        { prop: "primitiveAge", key: "primitive_age", kind: "value" },
+        {
+          prop: "primitiveAge",
+          key: "primitive_age",
+          kind: "value",
+          objectKinds: ["localization-ref", "localized-text"],
+          locInput: true,
+        },
         { prop: "hostileWhenAttacked", key: "hostile_when_attacked", kind: "value" },
         { prop: "showBordersInUs", key: "show_borders_in_us", kind: "value" },
         { prop: "pirate", key: "pirate", kind: "value" },
@@ -7328,11 +8471,11 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   },
   setFemaleHeirTitle: {
     key: "set_female_heir_title",
-    shape: { kind: "value", objectKinds: ["localization-ref"] },
+    shape: { kind: "value", objectKinds: ["localization-ref", "localized-text"], locInput: true },
   },
   setFemaleRulerTitle: {
     key: "set_female_ruler_title",
-    shape: { kind: "value", objectKinds: ["localization-ref"] },
+    shape: { kind: "value", objectKinds: ["localization-ref", "localized-text"], locInput: true },
   },
   setFirstContactFlag: { key: "set_first_contact_flag", shape: { kind: "value" } },
   setFirstContactStage: {
@@ -7406,6 +8549,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           key: "trait",
           kind: "value",
           refTypes: ["trait.species_trait"],
+          objectKinds: ["typed-ref"],
           repeated: true,
         },
       ],
@@ -7427,8 +8571,14 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "country", key: "country", kind: "value" },
-        { prop: "type", key: "type", kind: "value", refTypes: ["living_standard"] },
+        { prop: "country", key: "country", kind: "value", objectKinds: ["scope-ref"] },
+        {
+          prop: "type",
+          key: "type",
+          kind: "value",
+          refTypes: ["living_standard"],
+          objectKinds: ["typed-ref"],
+        },
         { prop: "cooldown", key: "cooldown", kind: "value" },
       ],
     },
@@ -7441,7 +8591,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       block: {
         kind: "fields",
         fields: [
-          { prop: "target", key: "target", kind: "value" },
+          { prop: "target", key: "target", kind: "value", objectKinds: ["scope-ref"] },
           {
             prop: "distance",
             key: "distance",
@@ -7463,11 +8613,11 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   },
   setMaleHeirTitle: {
     key: "set_male_heir_title",
-    shape: { kind: "value", objectKinds: ["localization-ref"] },
+    shape: { kind: "value", objectKinds: ["localization-ref", "localized-text"], locInput: true },
   },
   setMaleRulerTitle: {
     key: "set_male_ruler_title",
-    shape: { kind: "value", objectKinds: ["localization-ref"] },
+    shape: { kind: "value", objectKinds: ["localization-ref", "localized-text"], locInput: true },
   },
   setMarketLeader: { key: "set_market_leader", shape: { kind: "bool" } },
   setMegastructureFlag: { key: "set_megastructure_flag", shape: { kind: "value" } },
@@ -7478,8 +8628,8 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "country", key: "country", kind: "value" },
-        { prop: "type", key: "type", kind: "value" },
+        { prop: "country", key: "country", kind: "value", objectKinds: ["scope-ref"] },
+        { prop: "type", key: "type", kind: "value", objectKinds: ["typed-ref"] },
         { prop: "cooldown", key: "cooldown", kind: "value" },
       ],
     },
@@ -7489,8 +8639,14 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "country", key: "country", kind: "value" },
-        { prop: "type", key: "type", kind: "value", refTypes: ["military_service_type"] },
+        { prop: "country", key: "country", kind: "value", objectKinds: ["scope-ref"] },
+        {
+          prop: "type",
+          key: "type",
+          kind: "value",
+          refTypes: ["military_service_type"],
+          objectKinds: ["typed-ref"],
+        },
         { prop: "cooldown", key: "cooldown", kind: "value" },
       ],
     },
@@ -7504,7 +8660,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "mission", key: "mission", kind: "value", refTypes: ["mission"] },
+        {
+          prop: "mission",
+          key: "mission",
+          kind: "value",
+          refTypes: ["mission"],
+          objectKinds: ["typed-ref"],
+        },
         { prop: "counter", key: "counter", kind: "value" },
         { prop: "amount", key: "amount", kind: "value" },
       ],
@@ -7515,11 +8677,22 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "set_name",
     shape: {
       kind: "scalar-or-block",
-      scalar: { kind: "value", objectKinds: ["scope-ref", "localization-ref"] },
+      scalar: {
+        kind: "value",
+        objectKinds: ["scope-ref", "localization-ref", "localized-text"],
+        locInput: true,
+        locLiterals: ["random"],
+      },
       block: {
         kind: "fields",
         fields: [
-          { prop: "key", key: "key", kind: "value" },
+          {
+            prop: "key",
+            key: "key",
+            kind: "value",
+            objectKinds: ["localization-ref", "localized-text"],
+            locInput: true,
+          },
           { prop: "variableString", key: "variable_string", kind: "value", repeated: true },
         ],
       },
@@ -7530,8 +8703,14 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "id", key: "id", kind: "value", refTypes: ["event"] },
-        { prop: "onRollFailed", key: "on_roll_failed", kind: "value", refTypes: ["event"] },
+        { prop: "id", key: "id", kind: "value", refTypes: ["event"], objectKinds: ["typed-ref"] },
+        {
+          prop: "onRollFailed",
+          key: "on_roll_failed",
+          kind: "value",
+          refTypes: ["event"],
+          objectKinds: ["typed-ref"],
+        },
         { prop: "failProbability", key: "fail_probability", kind: "value" },
       ],
     },
@@ -7547,7 +8726,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "patron", key: "patron", kind: "value", refTypes: ["patron_type"] },
+        {
+          prop: "patron",
+          key: "patron",
+          kind: "value",
+          refTypes: ["patron_type"],
+          objectKinds: ["typed-ref"],
+        },
         { prop: "state", key: "state", kind: "value" },
       ],
     },
@@ -7557,8 +8742,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "entity", key: "entity", kind: "value" },
-        { prop: "graphicalCulture", key: "graphical_culture", kind: "value" },
+        { prop: "entity", key: "entity", kind: "value", objectKinds: ["typed-ref"] },
+        {
+          prop: "graphicalCulture",
+          key: "graphical_culture",
+          kind: "value",
+          objectKinds: ["typed-ref", "scope-ref"],
+        },
         { prop: "picture", key: "picture", kind: "value" },
         { prop: "atmosphereColor", key: "atmosphere_color", kind: "value" },
         { prop: "atmosphereIntensity", key: "atmosphere_intensity", kind: "value" },
@@ -7580,7 +8770,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "policy", key: "policy", kind: "value", refTypes: ["policy"] },
+        {
+          prop: "policy",
+          key: "policy",
+          kind: "value",
+          refTypes: ["policy"],
+          objectKinds: ["typed-ref"],
+        },
         { prop: "option", key: "option", kind: "value" },
         { prop: "cooldown", key: "cooldown", kind: "value" },
       ],
@@ -7601,8 +8797,8 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "country", key: "country", kind: "value" },
-        { prop: "type", key: "type", kind: "value" },
+        { prop: "country", key: "country", kind: "value", objectKinds: ["scope-ref"] },
+        { prop: "type", key: "type", kind: "value", objectKinds: ["typed-ref"] },
         { prop: "cooldown", key: "cooldown", kind: "value" },
       ],
     },
@@ -7616,8 +8812,14 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "country", key: "country", kind: "value" },
-        { prop: "type", key: "type", kind: "value", refTypes: ["purge_type"] },
+        { prop: "country", key: "country", kind: "value", objectKinds: ["scope-ref"] },
+        {
+          prop: "type",
+          key: "type",
+          kind: "value",
+          refTypes: ["purge_type"],
+          objectKinds: ["typed-ref"],
+        },
         { prop: "cooldown", key: "cooldown", kind: "value" },
       ],
     },
@@ -7627,7 +8829,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "who", key: "who", kind: "value" },
+        { prop: "who", key: "who", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "flag", key: "flag", kind: "value" },
       ],
     },
@@ -7637,7 +8839,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "resource", key: "resource", kind: "value", refTypes: ["resource"] },
+        {
+          prop: "resource",
+          key: "resource",
+          kind: "value",
+          refTypes: ["resource"],
+          objectKinds: ["typed-ref"],
+        },
         { prop: "value", key: "value", kind: "value" },
       ],
     },
@@ -7663,11 +8871,11 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   setRuleSubjectHasSensors: { key: "set_rule_subject_has_sensors", shape: { kind: "bool" } },
   setRulerTitleFemale: {
     key: "set_ruler_title_female",
-    shape: { kind: "value", objectKinds: ["localization-ref"] },
+    shape: { kind: "value", objectKinds: ["localization-ref", "localized-text"], locInput: true },
   },
   setRulerTitleMale: {
     key: "set_ruler_title_male",
-    shape: { kind: "value", objectKinds: ["localization-ref"] },
+    shape: { kind: "value", objectKinds: ["localization-ref", "localized-text"], locInput: true },
   },
   setSavedDate: {
     key: "set_saved_date",
@@ -7688,12 +8896,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "design", key: "design", kind: "value" },
+        { prop: "design", key: "design", kind: "value", objectKinds: ["typed-ref", "scope-ref"] },
         {
           prop: "randomExistingDesign",
           key: "random_existing_design",
           kind: "value",
           refTypes: ["ship_size"],
+          objectKinds: ["typed-ref"],
         },
       ],
     },
@@ -7701,7 +8910,11 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   setShipFlag: { key: "set_ship_flag", shape: { kind: "value" } },
   setShipPrefix: {
     key: "set_ship_prefix",
-    shape: { kind: "value", objectKinds: ["localization-ref", "scope-ref"] },
+    shape: {
+      kind: "value",
+      objectKinds: ["localization-ref", "localized-text", "scope-ref"],
+      locInput: true,
+    },
   },
   setSiteProgressLocked: { key: "set_site_progress_locked", shape: { kind: "bool" } },
   setSituationApproach: { key: "set_situation_approach", shape: { kind: "value" } },
@@ -7714,8 +8927,14 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "country", key: "country", kind: "value" },
-        { prop: "type", key: "type", kind: "value", refTypes: ["slavery_type"] },
+        { prop: "country", key: "country", kind: "value", objectKinds: ["scope-ref"] },
+        {
+          prop: "type",
+          key: "type",
+          kind: "value",
+          refTypes: ["slavery_type"],
+          objectKinds: ["typed-ref"],
+        },
         { prop: "cooldown", key: "cooldown", kind: "value" },
       ],
     },
@@ -7742,7 +8961,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       kind: "fields",
       fields: [
         { prop: "slot", key: "slot", kind: "value" },
-        { prop: "building", key: "building", kind: "value", refTypes: ["starbase_building"] },
+        {
+          prop: "building",
+          key: "building",
+          kind: "value",
+          refTypes: ["starbase_building"],
+          objectKinds: ["typed-ref"],
+        },
       ],
     },
   },
@@ -7753,7 +8978,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       kind: "fields",
       fields: [
         { prop: "slot", key: "slot", kind: "value" },
-        { prop: "module", key: "module", kind: "value", refTypes: ["starbase_module"] },
+        {
+          prop: "module",
+          key: "module",
+          kind: "value",
+          refTypes: ["starbase_module"],
+          objectKinds: ["typed-ref"],
+        },
       ],
     },
   },
@@ -7767,10 +8998,16 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "who", key: "who", kind: "value" },
+        { prop: "who", key: "who", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "useDemandedTerms", key: "use_demanded_terms", kind: "value" },
         { prop: "allowInstantNegotiation", key: "allow_instant_negotiation", kind: "value" },
-        { prop: "preset", key: "preset", kind: "value", refTypes: ["agreement_preset"] },
+        {
+          prop: "preset",
+          key: "preset",
+          kind: "value",
+          refTypes: ["agreement_preset"],
+          objectKinds: ["typed-ref"],
+        },
       ],
     },
   },
@@ -7780,7 +9017,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
       kind: "fields",
       fields: [
         { prop: "surveyed", key: "surveyed", kind: "value" },
-        { prop: "surveyor", key: "surveyor", kind: "value" },
+        { prop: "surveyor", key: "surveyor", kind: "value", objectKinds: ["scope-ref"] },
       ],
     },
   },
@@ -8008,7 +9245,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "who", key: "who", kind: "value" },
+        { prop: "who", key: "who", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "flag", key: "flag", kind: "value" },
         { prop: "days", key: "days", kind: "value" },
         { prop: "months", key: "months", kind: "value" },
@@ -8121,7 +9358,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "target", key: "target", kind: "value" },
+        { prop: "target", key: "target", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "type", key: "type", kind: "value" },
       ],
     },
@@ -8157,9 +9394,15 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "type", key: "type", kind: "value", refTypes: ["war_goal"] },
-        { prop: "target", key: "target", kind: "value" },
-        { prop: "enemy", key: "enemy", kind: "value" },
+        {
+          prop: "type",
+          key: "type",
+          kind: "value",
+          refTypes: ["war_goal"],
+          objectKinds: ["typed-ref"],
+        },
+        { prop: "target", key: "target", kind: "value", objectKinds: ["scope-ref"] },
+        { prop: "enemy", key: "enemy", kind: "value", objectKinds: ["scope-ref"] },
       ],
     },
   },
@@ -8177,7 +9420,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "inPlaceOf", key: "in_place_of", kind: "value" },
+        { prop: "inPlaceOf", key: "in_place_of", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "randomPos", key: "random_pos", kind: "value" },
         {
           prop: "orbitDistance",
@@ -8194,13 +9437,14 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         },
         { prop: "orbitAngle", key: "orbit_angle", kind: "value" },
         { prop: "tolerance", key: "tolerance", kind: "value" },
-        { prop: "id", key: "id", kind: "value" },
-        { prop: "relativeTo", key: "relative_to", kind: "value" },
+        { prop: "id", key: "id", kind: "value", objectKinds: ["typed-ref"] },
+        { prop: "relativeTo", key: "relative_to", kind: "value", objectKinds: ["scope-ref"] },
         {
           prop: "graphicsEntityName",
           key: "graphics_entity_name",
           kind: "value",
           refTypes: ["model_entity"],
+          objectKinds: ["typed-ref"],
         },
         { prop: "spawnSound", key: "spawn_sound", kind: "value" },
         { prop: "initEffect", key: "init_effect", kind: "effect", transition: "push" },
@@ -8212,7 +9456,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "for", key: "for", kind: "value" },
+        { prop: "for", key: "for", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "shouldAddShipToDebris", key: "should_add_ship_to_debris", kind: "trigger" },
         { prop: "mustScavenge", key: "must_scavenge", kind: "value" },
         { prop: "mustResearch", key: "must_research", kind: "value" },
@@ -8227,18 +9471,33 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "type", key: "type", kind: "value", refTypes: ["megastructure"] },
-        { prop: "planet", key: "planet", kind: "value" },
-        { prop: "coordsFrom", key: "coords_from", kind: "value" },
+        {
+          prop: "type",
+          key: "type",
+          kind: "value",
+          refTypes: ["megastructure"],
+          objectKinds: ["typed-ref"],
+        },
+        { prop: "planet", key: "planet", kind: "value", objectKinds: ["scope-ref"] },
+        { prop: "coordsFrom", key: "coords_from", kind: "value", objectKinds: ["scope-ref"] },
         {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: { objectKinds: ["localization-ref"] },
+          scalar: {
+            objectKinds: ["localization-ref", "localized-text", "literal-text"],
+            locInput: true,
+          },
           block: {
             kind: "fields",
             fields: [
-              { prop: "key", key: "key", kind: "value" },
+              {
+                prop: "key",
+                key: "key",
+                kind: "value",
+                objectKinds: ["localization-ref", "localized-text"],
+                locInput: true,
+              },
               { prop: "variableString", key: "variable_string", kind: "value", repeated: true },
             ],
           },
@@ -8269,8 +9528,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
             ],
           },
         },
-        { prop: "owner", key: "owner", kind: "value" },
-        { prop: "graphicalCulture", key: "graphical_culture", kind: "value" },
+        { prop: "owner", key: "owner", kind: "value", objectKinds: ["scope-ref"] },
+        {
+          prop: "graphicalCulture",
+          key: "graphical_culture",
+          kind: "value",
+          objectKinds: ["typed-ref", "scope-ref"],
+        },
         { prop: "randomPos", key: "random_pos", kind: "value" },
         { prop: "initEffect", key: "init_effect", kind: "effect", transition: "push" },
       ],
@@ -8281,8 +9545,14 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "inPlaceOf", key: "in_place_of", kind: "value" },
-        { prop: "bypassType", key: "bypass_type", kind: "value", refTypes: ["bypass"] },
+        { prop: "inPlaceOf", key: "in_place_of", kind: "value", objectKinds: ["scope-ref"] },
+        {
+          prop: "bypassType",
+          key: "bypass_type",
+          kind: "value",
+          refTypes: ["bypass"],
+          objectKinds: ["typed-ref"],
+        },
         {
           prop: "orbitDistance",
           key: "orbit_distance",
@@ -8315,6 +9585,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           key: "graphics_entity_name",
           kind: "value",
           refTypes: ["model_entity"],
+          objectKinds: ["typed-ref"],
         },
         { prop: "initEffect", key: "init_effect", kind: "effect", transition: "push" },
       ],
@@ -8325,11 +9596,17 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "class", key: "class", kind: "value" },
+        { prop: "class", key: "class", kind: "value", objectKinds: ["typed-ref"] },
         { prop: "generateRandomName", key: "generate_random_name", kind: "value" },
         { prop: "checkOverlap", key: "check_overlap", kind: "value" },
-        { prop: "name", key: "name", kind: "value" },
-        { prop: "location", key: "location", kind: "value" },
+        {
+          prop: "name",
+          key: "name",
+          kind: "value",
+          objectKinds: ["localization-ref", "localized-text"],
+          locInput: true,
+        },
+        { prop: "location", key: "location", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "orbitLocation", key: "orbit_location", kind: "value" },
         {
           prop: "orbitDistance",
@@ -8353,6 +9630,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           key: "modifier",
           kind: "value",
           refTypes: ["planet_modifier"],
+          objectKinds: ["typed-ref"],
           repeated: true,
         },
         { prop: "flags", key: "flags", kind: "value-list", scalar: {} },
@@ -8382,23 +9660,43 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "owner", key: "owner", kind: "value" },
-        { prop: "type", key: "type", kind: "value", refTypes: ["psionic_aura"] },
+        { prop: "owner", key: "owner", kind: "value", objectKinds: ["scope-ref"] },
+        {
+          prop: "type",
+          key: "type",
+          kind: "value",
+          refTypes: ["psionic_aura"],
+          objectKinds: ["typed-ref"],
+        },
         { prop: "updateType", key: "update_type", kind: "value" },
       ],
     },
   },
   spawnRandomAnomaly: {
     key: "spawn_random_anomaly",
-    shape: { kind: "fields", fields: [{ prop: "target", key: "target", kind: "value" }] },
+    shape: {
+      kind: "fields",
+      fields: [{ prop: "target", key: "target", kind: "value", objectKinds: ["scope-ref"] }],
+    },
   },
   spawnRandomStorm: {
     key: "spawn_random_storm",
     shape: {
       kind: "fields",
       fields: [
-        { prop: "type", key: "type", kind: "value", refTypes: ["storm_types"] },
-        { prop: "cosmicStormStartPosition", key: "cosmic_storm_start_position", kind: "value" },
+        {
+          prop: "type",
+          key: "type",
+          kind: "value",
+          refTypes: ["storm_types"],
+          objectKinds: ["typed-ref"],
+        },
+        {
+          prop: "cosmicStormStartPosition",
+          key: "cosmic_storm_start_position",
+          kind: "value",
+          objectKinds: ["scope-ref"],
+        },
         { prop: "immediate", key: "immediate", kind: "value", booleanLiterals: ["yes"] },
       ],
     },
@@ -8413,7 +9711,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
         { prop: "direction", key: "direction", kind: "value" },
         { prop: "minJumps", key: "min_jumps", kind: "value" },
         { prop: "maxJumps", key: "max_jumps", kind: "value" },
-        { prop: "initializer", key: "initializer", kind: "value" },
+        { prop: "initializer", key: "initializer", kind: "value", objectKinds: ["typed-ref"] },
         { prop: "hyperlane", key: "hyperlane", kind: "value" },
         { prop: "isDiscovered", key: "is_discovered", kind: "value" },
         { prop: "minOrientationAngle", key: "min_orientation_angle", kind: "value" },
@@ -8445,8 +9743,8 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "owner", key: "owner", kind: "value" },
-        { prop: "species", key: "species", kind: "value" },
+        { prop: "owner", key: "owner", kind: "value", objectKinds: ["scope-ref"] },
+        { prop: "species", key: "species", kind: "value", objectKinds: ["scope-ref"] },
         {
           prop: "ethos",
           key: "ethos",
@@ -8455,7 +9753,14 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           block: {
             kind: "fields",
             fields: [
-              { prop: "ethic", key: "ethic", kind: "value", refTypes: ["ethic"], repeated: true },
+              {
+                prop: "ethic",
+                key: "ethic",
+                kind: "value",
+                refTypes: ["ethic"],
+                objectKinds: ["typed-ref"],
+                repeated: true,
+              },
             ],
           },
         },
@@ -8467,8 +9772,14 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "type", key: "type", kind: "value", refTypes: ["situation_type"] },
-        { prop: "target", key: "target", kind: "value" },
+        {
+          prop: "type",
+          key: "type",
+          kind: "value",
+          refTypes: ["situation_type"],
+          objectKinds: ["typed-ref"],
+        },
+        { prop: "target", key: "target", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "effect", key: "effect", kind: "effect", transition: "push" },
       ],
     },
@@ -8484,7 +9795,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           kind: "value",
           booleanLiterals: ["yes"],
         },
-        { prop: "cosmicStorm", key: "cosmic_storm", kind: "value", refTypes: ["storm_types"] },
+        {
+          prop: "cosmicStorm",
+          key: "cosmic_storm",
+          kind: "value",
+          refTypes: ["storm_types"],
+          objectKinds: ["typed-ref"],
+        },
         { prop: "immediate", key: "immediate", kind: "value", booleanLiterals: ["yes"] },
         { prop: "reticleRadius", key: "reticle_radius", kind: "modifiers" },
         { prop: "maxRange", key: "max_range", kind: "modifiers" },
@@ -8510,6 +9827,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
             key: "class",
             kind: "value",
             refTypes: ["planet_class", "planet_class_random_list"],
+            objectKinds: ["typed-ref"],
           },
           { prop: "inheritEntity", key: "inherit_entity", kind: "value" },
         ],
@@ -8533,6 +9851,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
             key: "class",
             kind: "value",
             refTypes: ["planet_class", "planet_class_random_list"],
+            objectKinds: ["typed-ref"],
           },
           { prop: "inheritEntity", key: "inherit_entity", kind: "value" },
           { prop: "requiredProgress", key: "required_progress", kind: "value" },
@@ -8545,9 +9864,9 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "planet", key: "planet", kind: "value" },
-        { prop: "who", key: "who", kind: "value" },
-        { prop: "resource", key: "resource", kind: "value" },
+        { prop: "planet", key: "planet", kind: "value", objectKinds: ["scope-ref"] },
+        { prop: "who", key: "who", kind: "value", objectKinds: ["scope-ref"] },
+        { prop: "resource", key: "resource", kind: "value", objectKinds: ["typed-ref"] },
         { prop: "maxAmount", key: "max_amount", kind: "value" },
         { prop: "percentage", key: "percentage", kind: "value" },
         { prop: "mode", key: "mode", kind: "value" },
@@ -8565,8 +9884,8 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "target", key: "target", kind: "value" },
-        { prop: "relic", key: "relic", kind: "value" },
+        { prop: "target", key: "target", kind: "value", objectKinds: ["scope-ref"] },
+        { prop: "relic", key: "relic", kind: "value", objectKinds: ["typed-ref"] },
       ],
     },
   },
@@ -8575,8 +9894,8 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "who", key: "who", kind: "value" },
-        { prop: "category", key: "category", kind: "value" },
+        { prop: "who", key: "who", kind: "value", objectKinds: ["scope-ref"] },
+        { prop: "category", key: "category", kind: "value", objectKinds: ["typed-ref"] },
         { prop: "count", key: "count", kind: "value" },
         { prop: "showNotification", key: "show_notification", kind: "value" },
       ],
@@ -8588,7 +9907,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "mission", key: "mission", kind: "value", refTypes: ["mission"] },
+        {
+          prop: "mission",
+          key: "mission",
+          kind: "value",
+          refTypes: ["mission"],
+          objectKinds: ["typed-ref"],
+        },
         { prop: "status", key: "status", kind: "value" },
       ],
     },
@@ -8617,7 +9942,13 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           key: "severity",
           kind: "fields",
           fields: [
-            { prop: "modifier", key: "modifier", kind: "value", refTypes: ["static_modifier"] },
+            {
+              prop: "modifier",
+              key: "modifier",
+              kind: "value",
+              refTypes: ["static_modifier"],
+              objectKinds: ["typed-ref"],
+            },
             { prop: "days", key: "days", kind: "value" },
             { prop: "chance", key: "chance", kind: "modifiers" },
             { prop: "effect", key: "effect", kind: "effect", transition: "same" },
@@ -8653,8 +9984,8 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "source", key: "source", kind: "value" },
-        { prop: "target", key: "target", kind: "value" },
+        { prop: "source", key: "source", kind: "value", objectKinds: ["scope-ref"] },
+        { prop: "target", key: "target", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "transferOwnership", key: "transfer_ownership", kind: "value" },
         { prop: "transferController", key: "transfer_controller", kind: "value" },
         { prop: "mergePops", key: "merge_pops", kind: "value" },
@@ -8671,12 +10002,18 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "source", key: "source", kind: "value" },
-        { prop: "target", key: "target", kind: "value" },
+        { prop: "source", key: "source", kind: "value", objectKinds: ["scope-ref"] },
+        { prop: "target", key: "target", kind: "value", objectKinds: ["scope-ref"] },
         { prop: "amount", key: "amount", kind: "value" },
         { prop: "percentage", key: "percentage", kind: "value" },
         { prop: "random", key: "random", kind: "value" },
-        { prop: "growthCategory", key: "growth_category", kind: "value" },
+        {
+          prop: "growthCategory",
+          key: "growth_category",
+          kind: "value",
+          objectKinds: ["localization-ref", "localized-text"],
+          locInput: true,
+        },
       ],
     },
   },
@@ -8685,8 +10022,14 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     shape: {
       kind: "fields",
       fields: [
-        { prop: "target", key: "target", kind: "value" },
-        { prop: "mult", key: "mult", kind: "value", refTypes: ["variable"] },
+        { prop: "target", key: "target", kind: "value", objectKinds: ["scope-ref"] },
+        {
+          prop: "mult",
+          key: "mult",
+          kind: "value",
+          refTypes: ["variable"],
+          objectKinds: ["typed-ref"],
+        },
       ],
     },
   },

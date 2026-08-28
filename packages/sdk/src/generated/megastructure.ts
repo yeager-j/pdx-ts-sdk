@@ -2,7 +2,11 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/megastructures.cwt
 
-import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
+import type {
+  LocalizationInput,
+  LocalizationRef,
+  LocalizedText,
+} from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type {
@@ -115,19 +119,19 @@ export interface MegastructureFields {
   bypassType?: BypassRef | string;
   /**
    * also possible to use here upgrade_desc = hide, and localisations are not required in that case
-   * Names a localization key: pass a reference, or display text the SDK keys and emits for you.
+   * Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.
    */
-  upgradeDesc?: "hide" | LocalizedText | LocalizationRef;
+  upgradeDesc?: LocalizationInput | "hide";
   upgradeFrom?: (MegastructureRef | string)[];
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  customTooltipRequirements?: LocalizedText | LocalizationRef;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  customTooltipRequirements?: LocalizationInput;
   buildSystemTooltip?: SystemTooltipRef | string;
   tooltipSystemScore?: WeightBlock<"system">;
   tooltipSystemScoreLowThreshold?: number;
   tooltipSystemScoreHighThreshold?: number;
   tooltipShowStarResources?: boolean;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  tooltipBestSystemsHeader?: LocalizedText | LocalizationRef;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  tooltipBestSystemsHeader?: LocalizationInput;
   tooltipSystemFilter?: WithFrom<
     Trigger<"system">,
     "system",
@@ -138,9 +142,9 @@ export interface MegastructureFields {
   showPrereqs?: boolean;
   /**
    * Only when megastructure subtype `has_prereqs` applies.
-   * Names a localization key: pass a reference, or display text the SDK keys and emits for you.
+   * Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.
    */
-  prereqName?: LocalizedText | LocalizationRef;
+  prereqName?: LocalizationInput;
   potential?: Trigger<"country">;
   possible?: WithFrom<
     Trigger<"system">,
@@ -198,10 +202,10 @@ export interface MegastructureFields {
   >;
   overclockTypes?: (MegastructureOverclockTypeRef | string)[];
   cycleLengthInDays?: ScriptValue;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  cycleTitle?: LocalizedText | LocalizationRef;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  cycleDesc?: LocalizedText | LocalizationRef;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  cycleTitle?: LocalizationInput;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  cycleDesc?: LocalizationInput;
   cycleIcon?: SpriteRef | string;
   onCycleComplete?: EffectBlock<
     "system",
@@ -211,8 +215,8 @@ export interface MegastructureFields {
   hyperlaneRange?: number;
   /** the type of constructions that block (and are in turn blocked by) this construction, default: multi_stage_type */
   constructionBlocksAndBlockedBy?: MegastructureBlockType;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  buildMegastructureNoCostLocalizationKey?: LocalizedText | LocalizationRef;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  buildMegastructureNoCostLocalizationKey?: LocalizationInput;
   victoryScore?: number;
   dismantleCost?: EconomicResourceBlock<ScopeName>;
   dismantleTime?: number;
@@ -344,19 +348,19 @@ export interface MegastructurePatch {
   readonly bypassType?: PatchInput<BypassRef | string>;
   /**
    * also possible to use here upgrade_desc = hide, and localisations are not required in that case
-   * Names a localization key: pass a reference, or display text the SDK keys and emits for you.
+   * Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.
    */
-  readonly upgradeDesc?: PatchInput<"hide" | LocalizedText | LocalizationRef>;
+  readonly upgradeDesc?: PatchInput<LocalizationInput | "hide">;
   readonly upgradeFrom?: PatchInput<(MegastructureRef | string)[]>;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  readonly customTooltipRequirements?: PatchInput<LocalizedText | LocalizationRef>;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  readonly customTooltipRequirements?: PatchInput<LocalizationInput>;
   readonly buildSystemTooltip?: PatchInput<SystemTooltipRef | string>;
   readonly tooltipSystemScore?: PatchInput<WeightBlock<"system">>;
   readonly tooltipSystemScoreLowThreshold?: PatchInput<number>;
   readonly tooltipSystemScoreHighThreshold?: PatchInput<number>;
   readonly tooltipShowStarResources?: PatchInput<boolean>;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  readonly tooltipBestSystemsHeader?: PatchInput<LocalizedText | LocalizationRef>;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  readonly tooltipBestSystemsHeader?: PatchInput<LocalizationInput>;
   readonly tooltipSystemFilter?: PatchInput<
     WithFrom<Trigger<"system">, "system", { readonly root: "system"; readonly from: "country" }>
   >;
@@ -365,9 +369,9 @@ export interface MegastructurePatch {
   readonly showPrereqs?: PatchInput<boolean>;
   /**
    * Only when megastructure subtype `has_prereqs` applies.
-   * Names a localization key: pass a reference, or display text the SDK keys and emits for you.
+   * Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.
    */
-  readonly prereqName?: PatchInput<LocalizedText | LocalizationRef>;
+  readonly prereqName?: PatchInput<LocalizationInput>;
   readonly potential?: PatchInput<Trigger<"country">>;
   readonly possible?: PatchInput<
     WithFrom<Trigger<"system">, "system", { readonly root: "system"; readonly from: "country" }>
@@ -431,10 +435,10 @@ export interface MegastructurePatch {
   >;
   readonly overclockTypes?: PatchInput<(MegastructureOverclockTypeRef | string)[]>;
   readonly cycleLengthInDays?: PatchInput<ScriptValue>;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  readonly cycleTitle?: PatchInput<LocalizedText | LocalizationRef>;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  readonly cycleDesc?: PatchInput<LocalizedText | LocalizationRef>;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  readonly cycleTitle?: PatchInput<LocalizationInput>;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  readonly cycleDesc?: PatchInput<LocalizationInput>;
   readonly cycleIcon?: PatchInput<SpriteRef | string>;
   readonly onCycleComplete?: PatchInput<
     EffectBlock<
@@ -446,8 +450,8 @@ export interface MegastructurePatch {
   readonly hyperlaneRange?: PatchInput<number>;
   /** the type of constructions that block (and are in turn blocked by) this construction, default: multi_stage_type */
   readonly constructionBlocksAndBlockedBy?: PatchInput<MegastructureBlockType>;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  readonly buildMegastructureNoCostLocalizationKey?: PatchInput<LocalizedText | LocalizationRef>;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  readonly buildMegastructureNoCostLocalizationKey?: PatchInput<LocalizationInput>;
   readonly victoryScore?: PatchInput<number>;
   readonly dismantleCost?: PatchInput<EconomicResourceBlock<ScopeName>>;
   readonly dismantleTime?: PatchInput<number>;

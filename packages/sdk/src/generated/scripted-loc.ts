@@ -2,7 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/scripted_loc.cwt
 
-import type { LocalizationRef } from "../authoring/localization.ts";
+import type { LiteralText, LocalizationInput } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { WeightBlock } from "../content/types.ts";
@@ -12,7 +12,8 @@ import type { SpriteRef } from "./refs.ts";
 export interface ScriptedLocText {
   weight?: WeightBlock<never> | number;
   trigger?: Trigger<never>;
-  localizationKey: LocalizationRef | SpriteRef | string;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  localizationKey: LocalizationInput | SpriteRef | LiteralText;
 }
 
 export const SCRIPTED_LOC_TEXT_FIELDS: readonly ContentField[] = [
@@ -32,6 +33,7 @@ export const SCRIPTED_LOC_TEXT_FIELDS: readonly ContentField[] = [
     shape: "value",
     form: "scalar",
     conversion: "ref",
+    locKey: true,
   },
 ];
 
@@ -43,7 +45,8 @@ export interface ScriptedLocFields {
   random?: boolean;
   text?: ScriptedLocText[];
   value?: ScriptValue;
-  default?: LocalizationRef | SpriteRef | string;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  default?: LocalizationInput | SpriteRef | LiteralText;
 }
 
 export interface ScriptedLocDef<Id extends string = string> extends ScriptedLocFields {
@@ -67,7 +70,14 @@ export const SCRIPTED_LOC_FIELDS: readonly ContentField[] = [
     repeated: true,
   },
   { key: "value", member: "value", shape: "value", form: "scalar", conversion: "identity" },
-  { key: "default", member: "default", shape: "value", form: "scalar", conversion: "ref" },
+  {
+    key: "default",
+    member: "default",
+    shape: "value",
+    form: "scalar",
+    conversion: "ref",
+    locKey: true,
+  },
 ];
 
 export const SCRIPTED_LOC_LOCALISATION: readonly ContentLocalisation[] = [];

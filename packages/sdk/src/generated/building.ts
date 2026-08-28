@@ -2,7 +2,11 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/buildings.cwt
 
-import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
+import type {
+  LocalizationInput,
+  LocalizationRef,
+  LocalizedText,
+} from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type {
@@ -26,8 +30,8 @@ import type { BuildingSet } from "./value-sets.ts";
 
 export interface BuildingDesc {
   trigger?: Trigger<"colony">;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  text?: LocalizedText | LocalizationRef;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  text?: LocalizationInput;
 }
 
 export const BUILDING_DESC_FIELDS: readonly ContentField[] = [
@@ -44,8 +48,8 @@ export const BUILDING_DESC_FIELDS: readonly ContentField[] = [
 
 export interface BuildingTriggeredDesc {
   trigger?: Trigger<"colony">;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  text?: LocalizedText | LocalizationRef;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  text?: LocalizationInput;
 }
 
 export const BUILDING_TRIGGERED_DESC_FIELDS: readonly ContentField[] = [
@@ -158,8 +162,8 @@ export interface BuildingFields {
   aiEstimateWithoutUnemployment?: boolean;
   additionalAiWeight?: number;
   aiWeightCoefficient?: number;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  customTooltip?: LocalizedText | LocalizationRef;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  customTooltip?: LocalizationInput;
 }
 
 export interface BuildingDef<Id extends string = string> extends BuildingFields {
@@ -290,8 +294,8 @@ export interface BuildingPatch {
   readonly aiEstimateWithoutUnemployment?: PatchInput<boolean>;
   readonly additionalAiWeight?: PatchInput<number>;
   readonly aiWeightCoefficient?: PatchInput<number>;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  readonly customTooltip?: PatchInput<LocalizedText | LocalizationRef>;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  readonly customTooltip?: PatchInput<LocalizationInput>;
 }
 
 /** A patched vanilla building, ready for the win engine. */

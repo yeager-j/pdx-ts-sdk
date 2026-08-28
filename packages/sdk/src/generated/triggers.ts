@@ -15,13 +15,14 @@ import {
   type PdxOp,
 } from "@pdx-ts/pdxscript";
 
-import type { LocalizationRef } from "../authoring/localization.ts";
+import type { LocalizationInput } from "../authoring/localization.ts";
 import { recordLocalization, type RecordedRefUse } from "../references.ts";
 import type { ScopeValue } from "../script/effects/types.ts";
 import {
   caseEntries,
   isComparisonList,
   isStructuredValue,
+  localizationScalar,
   mapEntries,
   refId,
 } from "../script/scalar.ts";
@@ -6439,9 +6440,9 @@ export function customProgress<S extends ScopeName = ScopeName>(
 
 /** The arguments `customTooltip` takes, as the rules declare them. */
 export type CustomTooltipArgs<S extends ScopeName = ScopeName> = {
-  text?: "" | LocalizationRef;
-  failText?: "default" | LocalizationRef;
-  successText?: LocalizationRef;
+  text?: "" | LocalizationInput;
+  failText?: "default" | LocalizationInput;
+  successText?: LocalizationInput;
   /** The nested conditions, written bare inside the block beside its named keys. */
   conditions: Trigger<S>;
 };
@@ -6456,29 +6457,33 @@ export type CustomTooltipArgs<S extends ScopeName = ScopeName> = {
  * 	<triggers>
  * }
  * ```
- * A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
+ * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
  */
-export function customTooltip(value: LocalizationRef): Trigger<ScopeName>;
+export function customTooltip(value: LocalizationInput): Trigger<ScopeName>;
 export function customTooltip<S extends ScopeName = ScopeName>(
   args: CustomTooltipArgs<S>
 ): Trigger<S>;
 export function customTooltip<S extends ScopeName>(
-  value: LocalizationRef | CustomTooltipArgs<S>
+  value: LocalizationInput | CustomTooltipArgs<S>
 ): Trigger<ScopeName> {
-  if (isStructuredValue(value, ["localization-ref"])) {
+  if (isStructuredValue(value, ["localization-ref", "localized-text"])) {
     const args = value;
     const entries: PdxEntry[] = [];
     const refs: RecordedRefUse[] = [];
     if (args.text !== undefined) {
-      entries.push(kv("text", refId(args.text)));
+      entries.push(kv("text", localizationScalar(args.text, "custom_tooltip.text", [""])));
       recordLocalization(refs, args.text, "custom_tooltip.text");
     }
     if (args.failText !== undefined) {
-      entries.push(kv("fail_text", refId(args.failText)));
+      entries.push(
+        kv("fail_text", localizationScalar(args.failText, "custom_tooltip.fail_text", ["default"]))
+      );
       recordLocalization(refs, args.failText, "custom_tooltip.fail_text");
     }
     if (args.successText !== undefined) {
-      entries.push(kv("success_text", refId(args.successText)));
+      entries.push(
+        kv("success_text", localizationScalar(args.successText, "custom_tooltip.success_text"))
+      );
       recordLocalization(refs, args.successText, "custom_tooltip.success_text");
     }
     entries.push(...args.conditions.entries);
@@ -6487,12 +6492,12 @@ export function customTooltip<S extends ScopeName>(
   }
   const refs: RecordedRefUse[] = [];
   recordLocalization(refs, value, "custom_tooltip");
-  return trigger([kv("custom_tooltip", refId(value))], refs);
+  return trigger([kv("custom_tooltip", localizationScalar(value, "custom_tooltip"))], refs);
 }
 
 /** The arguments `customTooltipFail` takes, as the rules declare them. */
 export interface CustomTooltipFailArgs<S extends ScopeName = ScopeName> {
-  text: LocalizationRef;
+  text: LocalizationInput;
   /** The nested conditions, written bare inside the block beside its named keys. */
   conditions: Trigger<S>;
 }
@@ -6505,14 +6510,14 @@ export interface CustomTooltipFailArgs<S extends ScopeName = ScopeName> {
  * 	<triggers>
  * }
  * ```
- * A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
+ * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
  */
 export function customTooltipFail<S extends ScopeName = ScopeName>(
   args: CustomTooltipFailArgs<S>
 ): Trigger<S> {
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
-  entries.push(kv("text", refId(args.text)));
+  entries.push(kv("text", localizationScalar(args.text, "custom_tooltip_fail.text")));
   recordLocalization(refs, args.text, "custom_tooltip_fail.text");
   entries.push(...args.conditions.entries);
   refs.push(...args.conditions.refs);
@@ -6521,7 +6526,7 @@ export function customTooltipFail<S extends ScopeName = ScopeName>(
 
 /** The arguments `customTooltipSuccess` takes, as the rules declare them. */
 export interface CustomTooltipSuccessArgs<S extends ScopeName = ScopeName> {
-  text: LocalizationRef;
+  text: LocalizationInput;
   /** The nested conditions, written bare inside the block beside its named keys. */
   conditions: Trigger<S>;
 }
@@ -6534,14 +6539,14 @@ export interface CustomTooltipSuccessArgs<S extends ScopeName = ScopeName> {
  * 	<triggers>
  * }
  * ```
- * A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
+ * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
  */
 export function customTooltipSuccess<S extends ScopeName = ScopeName>(
   args: CustomTooltipSuccessArgs<S>
 ): Trigger<S> {
   const entries: PdxEntry[] = [];
   const refs: RecordedRefUse[] = [];
-  entries.push(kv("text", refId(args.text)));
+  entries.push(kv("text", localizationScalar(args.text, "custom_tooltip_success.text")));
   recordLocalization(refs, args.text, "custom_tooltip_success.text");
   entries.push(...args.conditions.entries);
   refs.push(...args.conditions.refs);
@@ -7033,7 +7038,7 @@ export function factionApproval(op: PdxOp, value: ScriptValue): Trigger<"pop_fac
 
 /** The arguments `failText` takes, as the rules declare them. */
 export type FailTextArgs<S extends ScopeName = ScopeName> = {
-  text: LocalizationRef;
+  text: LocalizationInput;
   /** The nested conditions, written bare inside the block beside its named keys. */
   conditions: Trigger<S>;
 };
@@ -7046,18 +7051,18 @@ export type FailTextArgs<S extends ScopeName = ScopeName> = {
  * 	<triggers>
  * }
  * ```
- * A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
+ * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
  */
-export function failText(value: LocalizationRef): Trigger<ScopeName>;
+export function failText(value: LocalizationInput): Trigger<ScopeName>;
 export function failText<S extends ScopeName = ScopeName>(args: FailTextArgs<S>): Trigger<S>;
 export function failText<S extends ScopeName>(
-  value: LocalizationRef | FailTextArgs<S>
+  value: LocalizationInput | FailTextArgs<S>
 ): Trigger<ScopeName> {
-  if (isStructuredValue(value, ["localization-ref"])) {
+  if (isStructuredValue(value, ["localization-ref", "localized-text"])) {
     const args = value;
     const entries: PdxEntry[] = [];
     const refs: RecordedRefUse[] = [];
-    entries.push(kv("text", refId(args.text)));
+    entries.push(kv("text", localizationScalar(args.text, "fail_text.text")));
     recordLocalization(refs, args.text, "fail_text.text");
     entries.push(...args.conditions.entries);
     refs.push(...args.conditions.refs);
@@ -7065,7 +7070,7 @@ export function failText<S extends ScopeName>(
   }
   const refs: RecordedRefUse[] = [];
   recordLocalization(refs, value, "fail_text");
-  return trigger([kv("fail_text", refId(value))], refs);
+  return trigger([kv("fail_text", localizationScalar(value, "fail_text"))], refs);
 }
 
 /** Checks Fallen / Awakened Empire strength scaling in game setup */
@@ -8392,14 +8397,14 @@ export function hasClaim(
  * ```
  * has_climate = dry
  * ```
- * A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
+ * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
  */
 export function hasClimate(
-  value: LocalizationRef
+  value: LocalizationInput
 ): Trigger<"carrier" | "colony" | "planet" | "ship"> {
   const refs: RecordedRefUse[] = [];
   recordLocalization(refs, value, "has_climate");
-  return trigger([kv("has_climate", refId(value))], refs);
+  return trigger([kv("has_climate", localizationScalar(value, "has_climate"))], refs);
 }
 
 /**
@@ -18762,7 +18767,7 @@ export function subjects(op: PdxOp, value: ScriptValue): Trigger<"country"> {
 
 /** The arguments `successText` takes, as the rules declare them. */
 export type SuccessTextArgs<S extends ScopeName = ScopeName> = {
-  text: LocalizationRef;
+  text: LocalizationInput;
   /** The nested conditions, written bare inside the block beside its named keys. */
   conditions?: Trigger<S>;
 };
@@ -18775,18 +18780,18 @@ export type SuccessTextArgs<S extends ScopeName = ScopeName> = {
  * 	<triggers>
  * }
  * ```
- * A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
+ * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
  */
-export function successText(value: LocalizationRef): Trigger<ScopeName>;
+export function successText(value: LocalizationInput): Trigger<ScopeName>;
 export function successText<S extends ScopeName = ScopeName>(args: SuccessTextArgs<S>): Trigger<S>;
 export function successText<S extends ScopeName>(
-  value: LocalizationRef | SuccessTextArgs<S>
+  value: LocalizationInput | SuccessTextArgs<S>
 ): Trigger<ScopeName> {
-  if (isStructuredValue(value, ["localization-ref"])) {
+  if (isStructuredValue(value, ["localization-ref", "localized-text"])) {
     const args = value;
     const entries: PdxEntry[] = [];
     const refs: RecordedRefUse[] = [];
-    entries.push(kv("text", refId(args.text)));
+    entries.push(kv("text", localizationScalar(args.text, "success_text.text")));
     recordLocalization(refs, args.text, "success_text.text");
     if (args.conditions !== undefined) {
       entries.push(...args.conditions.entries);
@@ -18796,7 +18801,7 @@ export function successText<S extends ScopeName>(
   }
   const refs: RecordedRefUse[] = [];
   recordLocalization(refs, value, "success_text");
-  return trigger([kv("success_text", refId(value))], refs);
+  return trigger([kv("success_text", localizationScalar(value, "success_text"))], refs);
 }
 
 /**
@@ -18932,12 +18937,12 @@ export function terraformedBy(
  * ```
  * text = <text>
  * ```
- * A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
+ * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
  */
-export function text(value: LocalizationRef): Trigger<ScopeName> {
+export function text(value: LocalizationInput): Trigger<ScopeName> {
   const refs: RecordedRefUse[] = [];
   recordLocalization(refs, value, "text");
-  return trigger([kv("text", refId(value))], refs);
+  return trigger([kv("text", localizationScalar(value, "text"))], refs);
 }
 
 /** The arguments `theirOpinion` takes, as the rules declare them. */

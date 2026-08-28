@@ -15,9 +15,18 @@
  * the one place that owns that representation and gate.
  */
 
-import type { PdxOp, PdxScalar } from "@pdx-ts/pdxscript";
+import { scalar, type PdxOp, type PdxScalar } from "@pdx-ts/pdxscript";
 
-import { isLocalizationRef, type LocalizationRef } from "../authoring/localization.ts";
+import { deferLocalization } from "../authoring/deferred-localization.ts";
+import {
+  isLiteralText,
+  isLocalizationRef,
+  isLocalizedTextRecord,
+  type LiteralText,
+  type LocalizationRef,
+  type LocalizedTextRecord,
+} from "../authoring/localization.ts";
+import type { ScopeName } from "../generated/scopes.ts";
 import type { ScopeValue } from "./effects/types.ts";
 import { scriptValueScalar, type ScriptValue } from "./trigger-core.ts";
 
@@ -71,7 +80,16 @@ export function refId<T extends string | number | boolean>(
 /** Anything that lowers to one PDXScript scalar. */
 export type ScalarArg = string | number | boolean | TypedRef<string> | ScopeValue | LocalizationRef;
 
-export type ScalarObjectKind = "scope-ref" | "typed-ref" | "localization-ref";
+/**
+ * A runtime-discriminated object form a scalar position accepts.
+ *
+ * `localized-text` and `literal-text` exist because a stored-key position
+ * overloaded with a braced block gets both its language record and that block
+ * as objects: naming the scalar arm's own object forms is what keeps
+ * `{ english: "..." }` off the block arm.
+ */
+export type ScalarObjectKind =
+  "scope-ref" | "typed-ref" | "localization-ref" | "localized-text" | "literal-text";
 
 /** The generated block contract needed to distinguish an effect's call forms. */
 export type EffectBlockDiscriminator =
@@ -96,8 +114,80 @@ function isDeclaredScalarObject(
   if (scalarObjectKinds.includes("localization-ref") && isLocalizationRef(value)) {
     return true;
   }
+  if (scalarObjectKinds.includes("literal-text") && isLiteralText(value)) {
+    return true;
+  }
+  if (scalarObjectKinds.includes("localized-text") && isLocalizedTextRecord(value)) {
+    return true;
+  }
   return scalarObjectKinds.includes("typed-ref") && "id" in value && typeof value.id === "string";
 }
+
+/**
+ * Lowers one authored `LocalizationInput` to the scalar the file stores.
+ *
+ * Dispatch order is the field's own engine sentinels, then a localization
+ * reference, then the explicit spellings a mixed field admits — raw displayed
+ * text, a content or scope reference — and only then inline display text. A
+ * sentinel keeps precedence over English shorthand because it is an engine
+ * word rather than a key; to show the word itself, write it as a language
+ * record (`{ english: "default" }`).
+ *
+ * Recorded script has no owner yet, so inline text becomes a deferred marker
+ * that the splice into a definition, an event, or a patch resolves. The result
+ * is always a node rather than a string, because that marker is one.
+ *
+ * @param path - The generated script field path, e.g. `custom_tooltip.fail_text`.
+ * @param sentinels - Engine literals this field declares beside the localization arm.
+ * @throws Error If the value is none of the forms the position accepts.
+ */
+export function localizationScalar(
+  value: unknown,
+  path: string,
+  sentinels: readonly string[] = []
+): PdxScalar {
+  if (typeof value === "string") {
+    return sentinels.includes(value) ? scalar(value) : deferLocalization(value, path);
+  }
+  if (isLocalizationRef(value)) {
+    return scalar(value.key);
+  }
+  if (isLiteralText(value)) {
+    return scalar(value.text);
+  }
+  if (isLocalizedTextRecord(value)) {
+    return deferLocalization(value, path);
+  }
+  if ((typeof value === "object" && value !== null) || typeof value === "function") {
+    const lowered = refId(value as TypedRef<string> | ScopeValue);
+    if (typeof lowered === "string") {
+      return scalar(lowered);
+    }
+  }
+  throw new Error(
+    `"${path}" was given ${JSON.stringify(value)}, which names no localization key. Write ` +
+      "display text as a string or a language record, an existing key as a reference " +
+      "(`mod.localization()`, a definition's `loc` member, `vanilla.localization()`, " +
+      "`external.localization()`), and raw displayed text as `literalText()`."
+  );
+}
+
+/**
+ * The authored value behind one declared scalar object kind.
+ *
+ * The narrowing below has to remove the scalar arm by name rather than by
+ * shape: a language record and a `LiteralText` are object types exactly like
+ * the block arm they sit beside, so "anything object-shaped is the block" is
+ * no longer a sound reading. Keying the removal off the kinds the generated
+ * metadata actually declares keeps the type-level answer and the runtime
+ * answer derived from one list.
+ */
+type ScalarObjectValue<K extends ScalarObjectKind> =
+  | (K extends "localization-ref" ? LocalizationRef : never)
+  | (K extends "localized-text" ? LocalizedTextRecord : never)
+  | (K extends "literal-text" ? LiteralText : never)
+  | (K extends "scope-ref" ? ScopeValue<ScopeName> : never)
+  | (K extends "typed-ref" ? TypedRef<string> : never);
 
 /**
  * Whether an object-shaped authored value belongs to a structured block arm.
@@ -105,10 +195,10 @@ function isDeclaredScalarObject(
  * arm accepts, so this decision follows the generated contract rather than
  * treating every object as a block.
  */
-export function isStructuredValue(
-  value: unknown,
-  scalarObjectKinds: readonly ScalarObjectKind[]
-): value is Record<string, unknown> {
+export function isStructuredValue<T, K extends ScalarObjectKind>(
+  value: T,
+  scalarObjectKinds: readonly K[]
+): value is Exclude<T, ScalarObjectValue<K> | string | number | boolean> {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
     return false;
   }

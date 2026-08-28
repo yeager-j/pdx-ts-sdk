@@ -1,10 +1,15 @@
 import { describe, expectTypeOf, it } from "vitest";
 
 import type { JobFields } from "../src/generated/job.ts";
+import type { ScopeName } from "../src/generated/scopes.ts";
+import type { ScriptedLocFields } from "../src/generated/scripted-loc.ts";
 import type { TraditionFields } from "../src/generated/tradition.ts";
 import {
   createMod,
   external,
+  literalText,
+  type LiteralText,
+  type LocalizationInput,
   type LocalizationItem,
   type LocalizationRef,
   type LocalizationReplacements,
@@ -13,6 +18,7 @@ import {
   type MintedLocalizationKey,
   type ReplacementLocalizationItem,
 } from "../src/index.ts";
+import type { Trigger } from "../src/script/trigger-core.ts";
 import {
   and,
   customTooltip,
@@ -165,7 +171,7 @@ describe("localization references", () => {
 
   it("takes text, a language record, or a reference in a key-typed member", () => {
     expectTypeOf<TraditionFields["customTooltip"]>().toEqualTypeOf<
-      (LocalizedText | LocalizationRef)[] | undefined
+      LocalizationInput[] | undefined
     >();
     mod.tradition("every_form", {
       name: "Every form",
@@ -179,9 +185,7 @@ describe("localization references", () => {
   });
 
   it("takes the same three forms in a key-typed value list", () => {
-    expectTypeOf<JobFields["localizedTags"]>().toEqualTypeOf<
-      (LocalizedText | LocalizationRef)[] | undefined
-    >();
+    expectTypeOf<JobFields["localizedTags"]>().toEqualTypeOf<LocalizationInput[] | undefined>();
     mod.job("tagged", {
       name: "Tagged",
       plural: "Tagged",
@@ -212,11 +216,11 @@ describe("localization references", () => {
     });
   });
 
-  it("takes a reference and only a reference on a recorded-script key (SDK-307)", () => {
+  it("takes every reference form on a recorded-script key", () => {
     const perk = mod.ascensionPerk("every_source", {
       name: "Every source",
       potential: and(
-        // The four ways to name a key, and the whole set of them.
+        // The four ways to name an existing key, and the whole set of them.
         customTooltip(mod.localization("owned", "Owned.")),
         customTooltip(vanilla.localization("requires_independence")),
         customTooltip(external.localization("some_other_mods_key")),
@@ -226,14 +230,79 @@ describe("localization references", () => {
     void perk;
   });
 
-  it("refuses a bare string on a recorded-script key, where it used to mean one", () => {
-    // @ts-expect-error — a key is a reference now; a bare string is neither a
-    // key nor display text here.
-    customTooltip("requires_independence");
-    mod.ascensionPerk("bare", {
-      name: "Bare",
-      // @ts-expect-error — the same inside the gated block form.
-      potential: customTooltip({ failText: "requires_independence", conditions: and() }),
+  it("takes a reference in modifier description positions", () => {
+    mod.technology("modifier_reference", {
+      name: "Modifier reference",
+      area: "physics",
+      tier: 1,
+      category: "particles",
+      weightModifier: {
+        modifiers: [
+          { factor: 2, desc: external.localization("EXISTING_MODIFIER_DESC") },
+          {
+            trigger: "some_scripted_trigger",
+            mode: "factor",
+            desc: mod.localization("complex_desc", "Complex description."),
+          },
+        ],
+      },
     });
+  });
+
+  it("reads a bare string on a recorded-script key as English display text", () => {
+    mod.ascensionPerk("inline", {
+      name: "Inline",
+      potential: and(
+        customTooltip("Requires an awakened gateway."),
+        customTooltip({ english: "Requires a gateway.", french: "Exige un portail." }),
+        customTooltip({ english: "Pinned.", key: "pinned" }),
+        customTooltip({
+          failText: "Not yet.",
+          successText: vanilla.localization("requires_independence"),
+          conditions: and(),
+        }),
+        // The sentinel the rules declare beside the key stays in the union.
+        customTooltip({ failText: "default", conditions: and() })
+      ),
+    });
+  });
+
+  it("keeps a language record off the block arm of an overloaded key", () => {
+    // `{ english }` is an object like the gated block is, so the overload has
+    // to place it by membership rather than by "not a string".
+    expectTypeOf(customTooltip({ english: "Inline." })).toEqualTypeOf<Trigger<ScopeName>>();
+  });
+
+  it("refuses raw displayed text where the rules declare no raw scalar arm", () => {
+    // @ts-expect-error — `custom_tooltip` stores a key and nothing else, so
+    // there is no raw arm for `literalText()` to write into.
+    customTooltip(literalText("requires_independence"));
+    mod.tradition("no_raw_arm", {
+      name: "No raw arm",
+      // @ts-expect-error — the same at a key-typed content member.
+      customTooltip: [literalText("tr_adaptability_delta")],
+    });
+  });
+
+  it("takes literal text and a declared external reference on the mixed arms", () => {
+    // `scripted_loc`'s `default` is CWT's `localisation | <sprite> | scalar`:
+    // one position with all three of the mixed arms on it.
+    const inline: ScriptedLocFields["default"] = "Fallback text";
+    const record: ScriptedLocFields["default"] = { english: "Fallback", french: "Repli" };
+    const reference: ScriptedLocFields["default"] = vanilla.localization("NAME_Sentry");
+    const raw: ScriptedLocFields["default"] = literalText("§Y");
+    const unchecked: ScriptedLocFields["default"] = external.reference("other_mod_sprite");
+    void [inline, record, reference, raw, unchecked];
+    expectTypeOf(literalText("x")).toEqualTypeOf<LiteralText>();
+  });
+
+  it("keeps a swap's own id out of the localization surface", () => {
+    // A `technology_swap` name is the swap's id — other definitions reference
+    // it — so it stays a bare string however CWT spells it.
+    const swap: TechnologyFields["technologySwap"] = [{ name: "hello_galaxy_tech_swap" }];
+    void swap;
+    // @ts-expect-error — an id is not display text, so no language record.
+    const recorded: TechnologyFields["technologySwap"] = [{ name: { english: "Swap" } }];
+    void recorded;
   });
 });

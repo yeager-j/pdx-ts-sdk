@@ -124,8 +124,9 @@ category is available to.
 
 `modifier` and `triggeredModifier` carry continuing country bonuses.
 `onEnabled` carries a one-time state change. `customTooltip` and
-`customTooltipWithModifiers` both take localization keys: the first is shown
-instead of the generated modifier tooltip, the second in addition to it.
+`customTooltipWithModifiers` both store a localization key — write the display
+text or pass a reference: the first is shown instead of the generated modifier
+tooltip, the second in addition to it.
 
 `onEnabled` runs when a country selects the tradition. It is not a migration
 hook: adding it to a tradition that countries already hold is not a reliable

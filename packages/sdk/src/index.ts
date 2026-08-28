@@ -36,8 +36,11 @@ export type { Feature, ModItem, ModItemInput, PlacedItem } from "./authoring/fea
 export type { AssetFileInput, AssetFileItem, AssetTreeInput } from "./authoring/assets.ts";
 export type { ComponentTagItem } from "./authoring/component-tags.ts";
 export {
+  literalText,
   loc,
   LOCALIZATION_LANGUAGES,
+  type LiteralText,
+  type LocalizationInput,
   type LocalizationItem,
   type LocalizationLanguage,
   type LocalizationRef,
@@ -53,7 +56,7 @@ export {
   type NoLocalizationRefs,
   type ReplacementLocalizationItem,
 } from "./authoring/localization.ts";
-export { external } from "./authoring/external.ts";
+export { external, type ExternalReference } from "./authoring/external.ts";
 export type { BuildOptions, ModConfig } from "./compiler/config.ts";
 export type {
   CompiledFeatureInput,

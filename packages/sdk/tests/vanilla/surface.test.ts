@@ -31,8 +31,9 @@ import {
 } from "../../src/installation/vanilla/parsed-definitions.ts";
 import { patchContent } from "../../src/installation/vanilla/patch.ts";
 import { viewFromFiles } from "../../src/installation/vanilla/view.ts";
+import { shortLocalizationHash } from "../../src/localization-key.ts";
 import type { RecordedRefUse } from "../../src/references.ts";
-import { always } from "../../src/stellaris.ts";
+import { always, customTooltip } from "../../src/stellaris.ts";
 import {
   ASCENSION_PERK_CATEGORY_FILE,
   BUILDING_FILE,
@@ -1155,6 +1156,30 @@ describe("what a patch may and may not carry", () => {
     expect(emitted).toContain(
       "\t\t\tdesc = pp_tech_gene_forging_technology_swap_1_weight_lavish\n"
     );
+  });
+
+  it("keys a patched member's recorded script under the prefixed vanilla id", () => {
+    // A patch keeps vanilla's id in the file, so the owner its inline script
+    // text keys against is `<prefix>_<vanillaId>` — the same construction
+    // every other key a patch mints uses, and the reason none of them can
+    // collide with a key vanilla itself defines.
+    const patched = patchTechnology(geneForging, () => ({
+      potential: customTooltip("Requires gene tailoring."),
+    }));
+    const key = `pp_tech_gene_forging_custom_tooltip_${shortLocalizationHash("Requires gene tailoring.")}`;
+
+    expect(patched.loc).toEqual([{ key, translations: { english: "Requires gene tailoring." } }]);
+    expect(patched.warnings.map((warning) => warning.code)).toEqual(["unstable-localization-key"]);
+    expect(serialize([patched.toEntries()])).toContain(`custom_tooltip = ${key}`);
+  });
+
+  it("leaves no deferred marker in a patched body", () => {
+    const patched = patchTechnology(geneForging, () => ({
+      potential: customTooltip({ english: "Pinned.", key: "pinned" }),
+    }));
+
+    expect(serialize([patched.toEntries()])).not.toContain("__pdx_deferred_localization_");
+    expect(patched.warnings).toEqual([]);
   });
 
   it("refuses a nested definition whose ids would need localisation of their own", () => {

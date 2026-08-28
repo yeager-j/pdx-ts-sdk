@@ -2,7 +2,11 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/decisions.cwt
 
-import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
+import type {
+  LocalizationInput,
+  LocalizationRef,
+  LocalizedText,
+} from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type {
@@ -15,12 +19,12 @@ import type { Trigger } from "../script/trigger-core.ts";
 import type { DecisionRef, SoundEffectRef, SoundRef, TechnologyRef } from "./refs.ts";
 
 export interface DecisionCustomTooltip<S extends DecisionScope = "planet"> {
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  text?: "" | LocalizedText | LocalizationRef;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  failText?: "default" | LocalizedText | LocalizationRef;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  successText?: LocalizedText | LocalizationRef;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  text?: "" | LocalizationInput;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  failText?: "default" | LocalizationInput;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  successText?: LocalizationInput;
   when?: WithFrom<Trigger<NoInfer<S>>, NoInfer<S>, { readonly from: "country" }>;
 }
 

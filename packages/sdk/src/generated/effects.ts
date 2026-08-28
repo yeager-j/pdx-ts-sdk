@@ -6,7 +6,7 @@
 // From: script-docs/v4.4.1/effects.log
 // From: script-docs/v4.4.1/scopes.log
 
-import type { LocalizationRef } from "../authoring/localization.ts";
+import type { LiteralText, LocalizationInput } from "../authoring/localization.ts";
 import type {
   EffectPath,
   EffectPathTransition,
@@ -637,12 +637,12 @@ export interface EffectsIn15Scopesee16 {
    * ```
    * set_name = <string>/<target>
    * ```
-   * A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
+   * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
    */
-  setName(value: "random" | ScopeValue | LocalizationRef): void;
+  setName(value: "random" | ScopeValue | LocalizationInput): void;
   setName(args: {
     /** string in localisation (which contains one or more bracket commands) */
-    key: LocalizationRef;
+    key: LocalizationInput;
     /** one of the bracket commands contained in the localisation referenced above, brackets optional (there should be 1 variable_string per unique bracket command) */
     variableString?: readonly string[];
   }): void;
@@ -1056,10 +1056,10 @@ export interface EffectsIn4Scopes2b24 {
    */
   createArmy(args: {
     name?:
-      | LocalizationRef
-      | string
+      | LocalizationInput
+      | LiteralText
       | "random"
-      | { key: LocalizationRef; variableString?: readonly string[] };
+      | { key: LocalizationInput; variableString?: readonly string[] };
     owner: ScopeValue<
       | "agreement"
       | "archaeological_site"
@@ -1125,7 +1125,7 @@ export interface EffectsIn4Scopes2b24 {
    * 	effect = <init effect> (optional)
    * }
    * ```
-   * A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
+   * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
    */
   createPopGroup(args: {
     species?:
@@ -1175,7 +1175,7 @@ export interface EffectsIn4Scopes2b24 {
     /** If set, the amount will be randomized in [size - random, size + random]. The minimum value is 0 if size is 0, and 1 otherwise. */
     random?: ScriptValue;
     /** default: 'GROWTH_CAT_OTHER' */
-    growthCategory?: LocalizationRef;
+    growthCategory?: LocalizationInput;
     effect?: (scope: PopGroupScope) => void;
   }): void;
 
@@ -1193,11 +1193,11 @@ export interface EffectsIn4Scopes2b24 {
    */
   createRebels(args: {
     name?:
-      | LocalizationRef
-      | string
+      | LocalizationInput
+      | LiteralText
       | ScopeValue
       | "random"
-      | { key: LocalizationRef; variableString?: readonly string[] };
+      | { key: LocalizationInput; variableString?: readonly string[] };
     authority:
       | "random"
       | AuthorityRef
@@ -2325,13 +2325,13 @@ export interface EffectsIn5Scopes979f {
    * ```
    * create_point_of_interest = { id = <key> name = <string> desc = <string> event_chain = <key> location = <target> }
    * ```
-   * A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
+   * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
    */
   createPointOfInterest(args: {
     id: PointOfInterest;
     /** Leaving out "name" gives a blank button that looks really terrible and unprofessional. Don't do it :P */
-    name: LocalizationRef;
-    desc?: LocalizationRef;
+    name: LocalizationInput;
+    desc?: LocalizationInput;
     eventChain: EventChainRef | string;
     location?: ScopeValue<
       | "ambient_object"
@@ -3052,9 +3052,9 @@ export interface EffectsInArchaeologicalSite {
    * 	tooltip = <loc key>
    * }
    * ```
-   * A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
+   * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
    */
-  addExpeditionLogEntry(args: { title?: LocalizationRef; tooltip?: LocalizationRef }): void;
+  addExpeditionLogEntry(args: { title?: LocalizationInput; tooltip?: LocalizationInput }): void;
 
   /**
    * Manually flags an archaeological event as expired
@@ -3183,9 +3183,9 @@ export interface EffectsInArmy {
   modifyArmy(args: {
     name?:
       | "random"
-      | LocalizationRef
-      | string
-      | { key: LocalizationRef; variableString?: readonly string[] };
+      | LocalizationInput
+      | LiteralText
+      | { key: LocalizationInput; variableString?: readonly string[] };
     owner?: ScopeValue<
       | "agreement"
       | "archaeological_site"
@@ -4216,7 +4216,7 @@ export interface EffectsInCountry
    *   override_id = my_defined_unique_id
    *   override_text = { "button:MY_OTHER_LOC_STRING" "button2:ANOTHER_LOC_OVERRIDE" }  override_texture = { "button:GFX_short_button button2:GFX_otherbutton" }  override_tooltip, "loc_tooltip"  override_tooltip_delayed, "loc_delayed_tooltip"}
    * ```
-   * A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
+   * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
    */
   addTimelineEvent(args: {
     type: TimelineEventsRef | string;
@@ -4225,14 +4225,14 @@ export interface EffectsInCountry
     /** (There is also overrides that can be used to override settings on the database entries. The Id is required, and the others are optional) */
     overrideId?: TimelineEventId;
     /** override_tooltip */
-    overrideTooltip?: LocalizationRef;
+    overrideTooltip?: LocalizationInput;
     overrideTypes?: readonly ScopeTypeToken[];
     overrideText?: readonly string[];
     overrideTexture?: readonly string[];
     /** (optional - array of event targets. This depends on localization and what event targets the type requires) */
     targets?: readonly ScopeValue[];
     /** loc_delayed_tooltip */
-    overrideTooltipDelayed?: LocalizationRef;
+    overrideTooltipDelayed?: LocalizationInput;
   }): void;
 
   /**
@@ -4316,9 +4316,9 @@ export interface EffectsInCountry
    * ```
    * add_victory_score = { source=<loc_key> score=<value>/<variable> }
    * ```
-   * A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
+   * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
    */
-  addVictoryScore(args: { source: LocalizationRef; score: ScriptValue }): void;
+  addVictoryScore(args: { source: LocalizationInput; score: ScriptValue }): void;
 
   /**
    * Used after an advanced authority swap to make sure things are changed properly
@@ -4574,7 +4574,7 @@ export interface EffectsInCountry
    * 	effect = { ... }
    * }
    * ```
-   * A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
+   * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
    */
   cloneLeader(args: {
     target: ScopeValue<
@@ -4589,10 +4589,10 @@ export interface EffectsInCountry
       | "ship"
     >;
     name?:
-      | LocalizationRef
-      | string
+      | LocalizationInput
+      | LiteralText
       | "random"
-      | { key: LocalizationRef; variableString?: readonly string[] };
+      | { key: LocalizationInput; variableString?: readonly string[] };
     /** Other scopes will simply default to this.owner_main_species */
     species?:
       | ScopeValue<
@@ -4648,9 +4648,9 @@ export interface EffectsInCountry
     /** Optional. Scripted effect(s) that are run on the leader after it has been created. */
     effect?: (scope: LeaderScope) => void;
     /** Optional. */
-    customDescription?: LocalizationRef;
+    customDescription?: LocalizationInput;
     /** Optional. */
-    customCatchPhrase?: LocalizationRef;
+    customCatchPhrase?: LocalizationInput;
     /** Optional, default = no. Disables random generation of a background. */
     skipBackgroundGeneration?: boolean;
     /** Optional. Used as the home planet of the leader. */
@@ -4867,15 +4867,15 @@ export interface EffectsInCountry
    */
   createBalancedFleet(args: {
     name?:
-      | LocalizationRef
-      | string
+      | LocalizationInput
+      | LiteralText
       | ScopeValue<"fleet">
-      | { key: LocalizationRef; variableString?: readonly string[] };
+      | { key: LocalizationInput; variableString?: readonly string[] };
     size: ScriptValue;
     /** optional; default yes */
     canOverflow?: boolean;
     /** optional; if omitted, uses the country's own designs */
-    shipDesigns?: readonly LocalizationRef[];
+    shipDesigns?: readonly LocalizationInput[];
     effect?: (scope: FleetScope) => void;
   }): void;
 
@@ -4927,14 +4927,14 @@ export interface EffectsInCountry
    * 	background_ethic = <key> # Optional.
    * }
    * ```
-   * A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
+   * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
    */
   createLeader(args: {
     name?:
-      | LocalizationRef
-      | string
+      | LocalizationInput
+      | LiteralText
       | "random"
-      | { key: LocalizationRef; variableString?: readonly string[] };
+      | { key: LocalizationInput; variableString?: readonly string[] };
     /** Other scopes will simply default to this.owner_main_species */
     species?:
       | ScopeValue<
@@ -4992,9 +4992,9 @@ export interface EffectsInCountry
     /** Optional. Scripted effect(s) that are run on the leader after it has been created. */
     effect?: (scope: LeaderScope) => void;
     /** Optional. */
-    customDescription?: LocalizationRef;
+    customDescription?: LocalizationInput;
     /** Optional. */
-    customCatchPhrase?: LocalizationRef;
+    customCatchPhrase?: LocalizationInput;
     /** Optional, default = no. Disables random generation of a background. */
     skipBackgroundGeneration?: boolean;
     /** Optional. Used as the home planet of the leader. */
@@ -5030,15 +5030,15 @@ export interface EffectsInCountry
    */
   createRandomFleet(args: {
     name?:
-      | LocalizationRef
-      | string
+      | LocalizationInput
+      | LiteralText
       | "random"
       | ScopeValue<"fleet">
-      | { key: LocalizationRef; variableString?: readonly string[] };
+      | { key: LocalizationInput; variableString?: readonly string[] };
     size?: ScriptValue;
     canOverflow?: boolean;
     shipDesigns?: readonly (
-      LocalizationRef | { design: LocalizationRef; weight?: number; min?: number; max?: number }
+      LocalizationInput | { design: LocalizationInput; weight?: number; min?: number; max?: number }
     )[];
     effect?: (scope: FleetScope) => void;
   }): void;
@@ -5074,10 +5074,10 @@ export interface EffectsInCountry
       | "system"
     >;
     name?:
-      | LocalizationRef
-      | string
+      | LocalizationInput
+      | LiteralText
       | "random"
-      | { key: LocalizationRef; variableString?: readonly string[] };
+      | { key: LocalizationInput; variableString?: readonly string[] };
     gender?: Gender;
     class?: "random" | LeaderClassRef | string;
     species:
@@ -5148,7 +5148,10 @@ export interface EffectsInCountry
       | "system"
     >;
     attackerWarGoal: WarGoalRef | string;
-    name?: LocalizationRef | string | { key: LocalizationRef; variableString?: readonly string[] };
+    name?:
+      | LocalizationInput
+      | LiteralText
+      | { key: LocalizationInput; variableString?: readonly string[] };
     effect?: (scope: WarScope) => void;
   }): void;
 
@@ -5895,11 +5898,11 @@ export interface EffectsInCountry
    * ```
    * give_specimen = { key = <specimen> origin = <key> }
    * ```
-   * A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
+   * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
    */
   giveSpecimen(args: {
     key: SpecimenRef | string;
-    origin?: LocalizationRef;
+    origin?: LocalizationInput;
     /** EVENT_TARGET_# Indexed event targets for localisation */
     targets?: readonly [ScopeValue];
   }): void;
@@ -6015,7 +6018,10 @@ export interface EffectsInCountry
       | "system"
     >;
     overrideRequirements: boolean;
-    name: LocalizationRef | string | { key: LocalizationRef; variableString?: readonly string[] };
+    name:
+      | LocalizationInput
+      | LiteralText
+      | { key: LocalizationInput; variableString?: readonly string[] };
   }): void;
 
   /**
@@ -8011,11 +8017,11 @@ export interface EffectsInCountry
    * ```
    * set_adjective = <string>
    * ```
-   * A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
+   * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
    */
   setAdjective(
     value:
-      | LocalizationRef
+      | LocalizationInput
       | ScopeValue<
           | "agreement"
           | "archaeological_site"
@@ -8159,11 +8165,11 @@ export interface EffectsInCountry
    * ```
    * set_council_position_title_female = { position_tag = COUNCIL_POSITION_TAG title = TITLE_FEMALE }
    * ```
-   * A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
+   * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
    */
   setCouncilPositionTitleFemale(args: {
-    positionTag: LocalizationRef;
-    title: LocalizationRef;
+    positionTag: LocalizationInput;
+    title: LocalizationInput;
   }): void;
 
   /**
@@ -8171,9 +8177,12 @@ export interface EffectsInCountry
    * ```
    * set_council_position_title_male = { position_tag = COUNCIL_POSITION_TAG title = TITLE_MALE }
    * ```
-   * A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
+   * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
    */
-  setCouncilPositionTitleMale(args: { positionTag: LocalizationRef; title: LocalizationRef }): void;
+  setCouncilPositionTitleMale(args: {
+    positionTag: LocalizationInput;
+    title: LocalizationInput;
+  }): void;
 
   /**
    * Assigns a council position to the country's council, if possible.
@@ -8246,9 +8255,9 @@ export interface EffectsInCountry
    * ```
    * set_empire_name = "name_loc_key"
    * ```
-   * A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
+   * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
    */
-  setEmpireName(value: LocalizationRef): void;
+  setEmpireName(value: LocalizationInput): void;
 
   /**
    * Sets the aggro state of the scoped faction-type country
@@ -8289,7 +8298,7 @@ export interface EffectsInCountry
    * ```
    * set_faction_properties = { some_flag_1 = yes some_flag_2 = no }
    * ```
-   * A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
+   * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
    */
   setFactionProperties(args: {
     /** if yes, fleets will never attack anything and will never be attacked */
@@ -8309,7 +8318,7 @@ export interface EffectsInCountry
     /** primitive countries can have observation stations build by others in orbit of their planets */
     primitive?: boolean;
     /** if primitive = yes, localization string. Remember that these values are dynamic and this value will most likely be overwritten instantly by the same event that created the country. This field can probably be left empty */
-    primitiveAge?: LocalizationRef;
+    primitiveAge?: LocalizationInput;
     /** toggles if country turns hostile against attacker */
     hostileWhenAttacked?: boolean;
     /** if no, borders for countries of this type will not be shown if in uncharted space */
@@ -8325,18 +8334,18 @@ export interface EffectsInCountry
    * ```
    * set_female_heir_title = "Little Executioneress"
    * ```
-   * A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
+   * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
    */
-  setFemaleHeirTitle(value: LocalizationRef): void;
+  setFemaleHeirTitle(value: LocalizationInput): void;
 
   /**
    * Sets the country's female ruler title to a custom value
    * ```
    * set_female_ruler_title = "Grand Executionerress"
    * ```
-   * A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
+   * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
    */
-  setFemaleRulerTitle(value: LocalizationRef): void;
+  setFemaleRulerTitle(value: LocalizationInput): void;
 
   /**
    * Sets whether or not the scoped country is the Galactic Custodian
@@ -8406,18 +8415,18 @@ export interface EffectsInCountry
    * ```
    * set_male_heir_title = "Little Executioner"
    * ```
-   * A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
+   * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
    */
-  setMaleHeirTitle(value: LocalizationRef): void;
+  setMaleHeirTitle(value: LocalizationInput): void;
 
   /**
    * Sets the country's male ruler title to a custom value
    * ```
    * set_male_ruler_title = "Grand Executioner"
    * ```
-   * A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
+   * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
    */
-  setMaleRulerTitle(value: LocalizationRef): void;
+  setMaleRulerTitle(value: LocalizationInput): void;
 
   /**
    * Set scoped country as the current Galactic Market leader. set_market_leader = <yes/no>
@@ -8575,29 +8584,29 @@ export interface EffectsInCountry
    * ```
    * set_ruler_title_female = RULER_TITLE_FEMALE
    * ```
-   * A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
+   * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
    */
-  setRulerTitleFemale(value: LocalizationRef): void;
+  setRulerTitleFemale(value: LocalizationInput): void;
 
   /**
    * Sets the scoped country's male ruler's title.
    * ```
    * set_ruler_title_male = RULER_TITLE_MALE
    * ```
-   * A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
+   * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
    */
-  setRulerTitleMale(value: LocalizationRef): void;
+  setRulerTitleMale(value: LocalizationInput): void;
 
   /**
    * Sets the ship prefix of the scoped country
    * ```
    * set_ship_prefix = <string>
    * ```
-   * A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
+   * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
    */
   setShipPrefix(
     value:
-      | LocalizationRef
+      | LocalizationInput
       | ScopeValue<
           | "agreement"
           | "archaeological_site"
@@ -10350,13 +10359,13 @@ export interface EffectsInFleet {
    * 	species = <target>
    * }
    * ```
-   * A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
+   * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
    */
   createArmyTransport(args: {
     graphicalCulture?: GraphicalCultureRef | string;
     armyType: ArmyRef | string;
-    shipName?: LocalizationRef | "random";
-    armyName?: LocalizationRef;
+    shipName?: LocalizationInput | "random";
+    armyName?: LocalizationInput;
     species?:
       | ScopeValue<
           | "army"
@@ -10950,17 +10959,16 @@ export interface EffectsInFleetStarbase {
    * 	create_colony = yes/no (default: yes; if yes, will also create the carrier colony,only when ship_size is marked to carry a colony. WARNING: carrier ships with no colony are killed on a daily basis)
    * }
    * ```
-   * A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
+   * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
    */
   createShip(args: {
     name?:
-      | LocalizationRef
-      | string
+      | LocalizationInput
+      | LiteralText
       | "random"
       | ScopeValue<"ship">
-      | { key: LocalizationRef; variableString?: readonly string[] };
-    design?:
-      LocalizationRef | GlobalShipDesignRef | string | ScopeValue<"design"> | "last_created_design";
+      | { key: LocalizationInput; variableString?: readonly string[] };
+    design?: LocalizationInput | GlobalShipDesignRef | ScopeValue<"design"> | "last_created_design";
     randomExistingDesign?: ShipSizeRef | string;
     prefix?: boolean;
     suffix?: boolean;
@@ -12074,14 +12082,14 @@ export interface EffectsInPopGroup {
    * 		growth_category = <key> (optional, default: 'GROWTH_CAT_OTHER')
    * 	}
    * ```
-   * A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
+   * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
    */
   addPopAmount(value: ScriptValue): void;
   addPopAmount(args: {
     amount: ScriptValue;
     random?: ScriptValue;
     /** default: 'GROWTH_CAT_OTHER' */
-    growthCategory?: LocalizationRef;
+    growthCategory?: LocalizationInput;
   }): void;
 
   /**
@@ -12169,14 +12177,14 @@ export interface EffectsInPopGroup {
    * 		growth_category = <key> (optional, default: 'GROWTH_CAT_OTHER')
    * 	}
    * ```
-   * A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
+   * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
    */
   removePopAmount(value: ScriptValue): void;
   removePopAmount(args: {
     amount: ScriptValue;
     random?: ScriptValue;
     /** default: 'GROWTH_CAT_OTHER' */
-    growthCategory?: LocalizationRef;
+    growthCategory?: LocalizationInput;
   }): void;
 
   /**
@@ -12251,7 +12259,7 @@ export interface EffectsInPopJob {
    * 	growth_category = <key> (optional, default: 'GROWTH_CAT_OTHER')
    * }
    * ```
-   * A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
+   * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
    */
   killAssignedPopAmount(args: {
     limit?: Trigger<"pop_job">;
@@ -12259,7 +12267,7 @@ export interface EffectsInPopJob {
     random?: ScriptValue;
     percentage?: ScriptValue;
     /** default: 'GROWTH_CAT_OTHER' */
-    growthCategory?: LocalizationRef;
+    growthCategory?: LocalizationInput;
   }): void;
 
   /**
@@ -13328,11 +13336,11 @@ export interface EffectsInSystem {
    * 	effect = { <effects on every system in the new nebula> }
    * }
    * ```
-   * A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
+   * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
    */
   createNebula(args: {
     /** (loc, optional - default is random) */
-    name?: LocalizationRef;
+    name?: LocalizationInput;
     radius: ScriptValue;
     /** effects on every system in the new nebula */
     effect?: (scope: SystemScope) => void;
@@ -14121,7 +14129,10 @@ export interface EffectsInSystem {
       | "starbase"
       | "system"
     >;
-    name: LocalizationRef | string | { key: LocalizationRef; variableString?: readonly string[] };
+    name:
+      | LocalizationInput
+      | LiteralText
+      | { key: LocalizationInput; variableString?: readonly string[] };
     orbitAngle?: "random" | number | { min: number; max: number };
     orbitDistance?: ScriptValue | { min: ScriptValue; max: ScriptValue };
     owner?: ScopeValue<
@@ -14186,14 +14197,14 @@ export interface EffectsInSystem {
 
   /**
    * Spawns a planet in a system.
-   * A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
+   * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
    */
   spawnPlanet(args: {
     class: PlanetClassRef | string | PlanetClassRandomListRef | "random" | "random_colonizable";
     generateRandomName?: boolean;
     /** default: no? */
     checkOverlap?: boolean;
-    name?: LocalizationRef;
+    name?: LocalizationInput;
     location?:
       | ScopeValue<
           | "ambient_object"
@@ -14806,17 +14817,17 @@ export interface UniversalEffects<S extends ScopeName>
    * 	remove_invalid_civics = yes/no # (default: no) drop copied civics that are not possible for the new empire
    * }
    * ```
-   * A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
+   * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
    */
   createCountry(args: {
     name?:
       | ScopeValue
       | "random"
-      | LocalizationRef
-      | string
-      | { key: LocalizationRef; variableString?: readonly string[] };
+      | LocalizationInput
+      | LiteralText
+      | { key: LocalizationInput; variableString?: readonly string[] };
     /** Sets country adjective. Allowed values are <string in localisation>/<string written in quotes e.g. "Korean"> */
-    adjective?: ScopeValue | "random" | LocalizationRef;
+    adjective?: ScopeValue | "random" | LocalizationInput;
     type?: CountryTypeRef | string;
     contactRule?: ContactRule;
     autoDelete?: boolean;
@@ -15188,10 +15199,10 @@ export interface UniversalEffects<S extends ScopeName>
    */
   createFleet(args: {
     name?:
-      | LocalizationRef
-      | string
+      | LocalizationInput
+      | LiteralText
       | ScopeValue<"fleet">
-      | { key: LocalizationRef; variableString?: readonly string[] };
+      | { key: LocalizationInput; variableString?: readonly string[] };
     parent?: ScopeValue<"fleet"> | "none";
     setTakePoint?: boolean;
     settings?: readonly {
@@ -15226,12 +15237,12 @@ export interface UniversalEffects<S extends ScopeName>
    *   variable = { type = name localization = SYSTEM2 scope = fromfrom }
    * }
    * ```
-   * A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
+   * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
    */
   createMessage(args: {
     type: MessageTypeRef | string;
-    localization?: LocalizationRef;
-    customMessageText?: LocalizationRef;
+    localization?: LocalizationInput;
+    customMessageText?: LocalizationInput;
     days?: number;
     customToastIcon?: SpriteRef | string;
     target?: ScopeValue;
@@ -15285,9 +15296,9 @@ export interface UniversalEffects<S extends ScopeName>
    * ```
    * create_ship_design = { design = <key> ftl = <target, optional, sets FTL drive to target country's> }
    * ```
-   * A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
+   * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
    */
-  createShipDesign(args: { design: LocalizationRef }): void;
+  createShipDesign(args: { design: LocalizationInput }): void;
 
   /**
    * Creates a new species. The habitability trait is determined by homeworld, traits = random, traits = { ideal_planet_class = <pc_XYZ> }, traits = <trait_pc_XYZ_preference>, or else is assigned randomly.
@@ -15311,15 +15322,15 @@ export interface UniversalEffects<S extends ScopeName>
    * 	effect = {}
    * }
    * ```
-   * A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
+   * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
    */
   createSpecies(args: {
     name?:
       | ScopeValue
       | "random"
-      | LocalizationRef
-      | string
-      | { key: LocalizationRef; variableString?: readonly string[] };
+      | LocalizationInput
+      | LiteralText
+      | { key: LocalizationInput; variableString?: readonly string[] };
     namelist?:
       | NameListRef
       | string
@@ -15577,7 +15588,7 @@ export interface UniversalEffects<S extends ScopeName>
     sapient?: boolean;
     /** determines if species is a modification of another (default: no) */
     isMod?: boolean;
-    modNameAffix?: LocalizationRef;
+    modNameAffix?: LocalizationInput;
     /** determines if species leaders are immortal (default: no) */
     immortal?: boolean;
     /** determines if pops of that species can colonize */
@@ -15638,9 +15649,9 @@ export interface UniversalEffects<S extends ScopeName>
    * ```
    * custom_tooltip = <string>
    * ```
-   * A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
+   * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
    */
-  customTooltip(value: LocalizationRef): void;
+  customTooltip(value: LocalizationInput): void;
 
   /**
    * Displays a specific localization string with parameters in tooltip
@@ -15652,10 +15663,10 @@ export interface UniversalEffects<S extends ScopeName>
    * 	}
    * }
    * ```
-   * A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
+   * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
    */
   customTooltipWithParams(args: {
-    description: LocalizationRef;
+    description: LocalizationInput;
     descriptionParameters?: { readonly [parameter: string]: string };
   }): void;
 
@@ -16108,7 +16119,7 @@ export interface UniversalEffects<S extends ScopeName>
    * 	growth_category = <key> (optional, default: 'GROWTH_CAT_OTHER')
    * }
    * ```
-   * A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
+   * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
    */
   killPopGroup(args: {
     popGroup: ScopeValue<"pop_group">;
@@ -16117,7 +16128,7 @@ export interface UniversalEffects<S extends ScopeName>
     /** If set, the amount will be randomized in [max(0, size - random), size + random] */
     random?: ScriptValue;
     /** default: 'GROWTH_CAT_OTHER' */
-    growthCategory?: LocalizationRef;
+    growthCategory?: LocalizationInput;
   }): void;
 
   /** Prints a message to game.log for debugging purposes. */
@@ -17271,7 +17282,7 @@ export interface UniversalEffects<S extends ScopeName>
    * 	growth_category = <key> (optional, default: 'GROWTH_CAT_OTHER')
    * }
    * ```
-   * A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.
+   * Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.
    */
   transferPopAmount(args: {
     source: ScopeValue<"pop_group">;
@@ -17280,7 +17291,7 @@ export interface UniversalEffects<S extends ScopeName>
     percentage?: ScriptValue;
     random?: ScriptValue;
     /** default: 'GROWTH_CAT_OTHER' */
-    growthCategory?: LocalizationRef;
+    growthCategory?: LocalizationInput;
   }): void;
 }
 

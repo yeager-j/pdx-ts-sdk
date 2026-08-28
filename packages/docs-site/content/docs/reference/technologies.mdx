@@ -179,12 +179,14 @@ explicitly, especially when the swap changes `modifier`. Test every trigger
 branch in the research interface because the SDK lowers the blocks but does
 not simulate swap selection.
 
-A swap's `name` is also a localization key. When `inheritName` is false — the
-shape every technology swap in Stellaris uses — the game reads the swap's
-displayed name from `<name>` and its description from `<name>_desc`. A
-technology swap has no generated localization slots, so the SDK neither
-creates those entries nor reports them as missing. Write them yourself and
-check the swap in game. See [Localization](/concepts/localization/).
+A swap's `name` is the swap's id, and the game derives its display keys from
+that id: when `inheritName` is false — the shape every technology swap in
+Stellaris uses — it reads the swap's displayed name from `<name>` and its
+description from `<name>_desc`. The member is therefore a bare id string
+rather than display text, and a technology swap has no generated localization
+slots, so the SDK neither creates those entries nor reports them as missing.
+Write them yourself with `mod.localization(..., { prefix: false })` and check
+the swap in game. See [Localization](/concepts/localization/).
 
 `mod.patchTechnology` cannot target a swap by its own name; it refuses with a
 `SwapPatchError`. Patch the parent technology instead, and its swaps ride
@@ -273,8 +275,8 @@ contract.
   emitted without an error. Use only categories and tiers that already exist.
   See [Coverage](/reference/coverage/) for the content types the SDK can
   author.
-- A technology swap's `name` is a localization key with no generated slot, as
-  the swaps section above describes.
+- A technology swap's `name` is an id the game also reads display keys from,
+  with no generated slot, as the swaps section above describes.
 - The SDK checks field shapes, reference ownership, trigger and modifier
   scopes, localization registration, and emitted paths. It does not simulate
   the research deck, tier progression, draw probabilities, AI choices,

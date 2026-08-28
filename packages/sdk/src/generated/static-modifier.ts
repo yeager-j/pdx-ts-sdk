@@ -2,7 +2,11 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/modifiers.cwt
 
-import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
+import type {
+  LocalizationInput,
+  LocalizationRef,
+  LocalizedText,
+} from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { ModifierClosure } from "../content/types.ts";
@@ -55,8 +59,8 @@ export interface StaticModifierFields<S extends StaticModifierScope = StaticModi
   /** Only when static_modifier subtype `planet` applies. */
   icon?: string;
   important?: boolean;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  customTooltip?: LocalizedText | LocalizationRef;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  customTooltip?: LocalizationInput;
   showOnlyCustomTooltip?: boolean;
   applyModifierToOtherPlanets?: StaticModifierRef | string;
   /** Hides it from the country government modifiers interface */

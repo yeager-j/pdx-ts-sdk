@@ -766,6 +766,20 @@ export interface ContentFieldOverride {
    * with it.
    */
   readonly uncheckedString?: true;
+  /**
+   * A field CWT types `localisation` that is really the nested definition's
+   * own *identity*, not a pointer at a key.
+   *
+   * The game derives the display key from the id, so the two coincide in the
+   * file and CWT can only spell that as `localisation`. They are not the same
+   * thing here: other definitions name a swap by this exact string, the fold
+   * registers it as a nested id, and minting a key from display text would
+   * both break those references and put prose where an id belongs. A row
+   * lowers the localisation arm as the plain scalar it functionally is, which
+   * keeps the member a bare id and leaves the swap's own text to the
+   * localisation slot that already covers it.
+   */
+  readonly identityName?: true;
   /** Audited evidence for every correction supplied by the row. */
   readonly reason: string;
 }
@@ -946,6 +960,39 @@ export const CONTENT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([
         "itself lowers with no shape row — the enum-keyed entry declaration expands to one " +
         "member per `enum[prereq_for_category]` value on its own (SDK-64) — so this row " +
         "asserts only the arity the rules get wrong.",
+    },
+  ],
+  [
+    "technology.technology_swap.name",
+    {
+      identityName: true,
+      reason:
+        "SDK-308: a technology swap's `name` is the swap's id. `SWAP_IDENTITIES` keys the " +
+        "technology registry's swaps by this member, the fold registers each one as a nested " +
+        "definition id, and another definition names the swap by that exact string. The game " +
+        "then derives the swap's display key from the same id, which is the only reason CWT " +
+        "types it `localisation`; the swap's own text is authored through the localisation " +
+        "slot that pattern already generates.",
+    },
+  ],
+  [
+    "civic_or_origin.swap_type.name",
+    {
+      identityName: true,
+      reason:
+        "SDK-308: the same identity, one registry over — `SWAP_IDENTITIES` keys " +
+        "civic_or_origin's swaps by `swap_type.name`, so the member is the id other " +
+        "definitions reference and not a key pointer.",
+    },
+  ],
+  [
+    "job.swappable_data.swap_type.name",
+    {
+      identityName: true,
+      reason:
+        "SDK-308: the same identity again, and CWT spells this one `localisation | <job>` — " +
+        "the reference arm is the swap standing in for an existing job, which makes it plainer " +
+        "still that the member names a definition rather than a display key.",
     },
   ],
   [

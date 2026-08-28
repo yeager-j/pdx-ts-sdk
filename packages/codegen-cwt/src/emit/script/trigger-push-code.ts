@@ -23,6 +23,32 @@ export function pushExpr(emitter: Emitter, value: TsValue, expr: string): string
   return value.scriptValue === true ? `${emitter.use("scriptValueScalar")}(${scalar})` : scalar;
 }
 
+/**
+ * The expression one scalar `TsValue` lowers to, routed through
+ * `localizationScalar` when the rules type the position as a localisation key.
+ *
+ * That conversion needs the field's own path, which {@link pushExpr} has no
+ * way to carry: recorded script has no owner yet, so inline display text
+ * becomes a deferred marker keyed against this path once one exists. Every
+ * scalar-writing site goes through here rather than {@link pushExpr}, so a
+ * localisation position cannot silently lower as an ordinary reference.
+ */
+export function scalarExpr(
+  emitter: Emitter,
+  value: TsValue,
+  expr: string,
+  fieldPath: string
+): string {
+  if (value.localizationInput !== true) {
+    return pushExpr(emitter, value, expr);
+  }
+  const sentinels =
+    value.localizationLiterals === undefined
+      ? ""
+      : `, ${JSON.stringify(value.localizationLiterals)}`;
+  return `${emitter.use("localizationScalar")}(${expr}, ${JSON.stringify(fieldPath)}${sentinels})`;
+}
+
 /** Whether this field can put a reference into the emitted tree: a
  * whole-reference scalar directly, a nested condition through its own refs. */
 export function contributesRefs(field: ArgField): boolean {
@@ -152,9 +178,19 @@ function scalarPushCode(
 ): string {
   const recordLoc = localizationRecordCode(emitter, value, access, fieldPath);
   const { refTypes } = value;
+  if (refTypes !== undefined && value.localizationInput === true) {
+    // `referenceTargetsOf` only closes a union whose every arm is a reference,
+    // and a localisation arm is not one, so this cannot happen from the rules.
+    // It would matter if it did: the recorded id would be a scalar node.
+    throw new Error(
+      `"${fieldPath}" lowered as both a localisation key and a closed reference set, which ` +
+        "would record a PDXScript node where the reference guard expects an id"
+    );
+  }
   if (refTypes === undefined) {
     return (
-      `${sink}.push(${emitter.use("kv")}(${key}, ${pushExpr(emitter, value, access)}));` + recordLoc
+      `${sink}.push(${emitter.use("kv")}(${key}, ${scalarExpr(emitter, value, access, fieldPath)}));` +
+      recordLoc
     );
   }
   // Indexed rather than named after the field, so the local can never
@@ -164,7 +200,7 @@ function scalarPushCode(
     emitter.use(value.scalarSymbol);
   }
   return (
-    `const ${local} = ${value.toScalar(access)};\n` +
+    `const ${local} = ${scalarExpr(emitter, value, access, fieldPath)};\n` +
     `    ${sink}.push(${emitter.use("kv")}(${key}, ${local}));\n` +
     `    refs.push({ targets: ${JSON.stringify(refTypes)}, id: ${local}, ` +
     `field: ${JSON.stringify(fieldPath)} });` +
@@ -192,8 +228,8 @@ function mapEntriesCode(
     map.comparison === true
       ? `${sink}.push(typeof ${entryValue} === "object" ` +
         `? ${emitter.use("cmp")}(${entryKey}, ${entryValue}[0], ` +
-        `${pushExpr(emitter, map.value, `${entryValue}[1]`)}) ` +
-        `: ${emitter.use("kv")}(${entryKey}, ${pushExpr(emitter, map.value, entryValue)}));`
+        `${scalarExpr(emitter, map.value, `${entryValue}[1]`, fieldPath)}) ` +
+        `: ${emitter.use("kv")}(${entryKey}, ${scalarExpr(emitter, map.value, entryValue, fieldPath)}));`
       : scalarPushCode(emitter, map.value, entryValue, entryKey, fieldPath, index, sink);
   return (
     `for (const [${entryKey}, ${entryValue}] of ` +
@@ -340,9 +376,13 @@ export function pushValueListCode(
     if (scalar === null) {
       return "";
     }
-    const expression = pushExpr(emitter, scalar, item);
+    const expression = scalarExpr(emitter, scalar, item, fieldPath);
+    // `localizationScalar` already returns a PDXScript scalar — it has to, so
+    // a deferred marker survives — and so must not be wrapped a second time.
     const pdxScalar =
-      scalar.scriptValue === true ? expression : `${emitter.use("scalar")}(${expression})`;
+      scalar.scriptValue === true || scalar.localizationInput === true
+        ? expression
+        : `${emitter.use("scalar")}(${expression})`;
     const recordLoc = localizationRecordCode(emitter, scalar, item, fieldPath);
     if (scalar.refTypes === undefined) {
       return `${items}.push(${pdxScalar});` + recordLoc;
@@ -352,7 +392,7 @@ export function pushValueListCode(
       emitter.use(scalar.scalarSymbol);
     }
     return (
-      `const ${id} = ${scalar.toScalar(item)};\n` +
+      `const ${id} = ${scalarExpr(emitter, scalar, item, fieldPath)};\n` +
       `${items}.push(${emitter.use("scalar")}(${id}));\n` +
       `refs.push({ targets: ${JSON.stringify(scalar.refTypes)}, id: ${id}, field: ${JSON.stringify(fieldPath)} });` +
       recordLoc

@@ -45,7 +45,10 @@ const SYMBOL_MODULES: readonly ModuleSymbols[] = [
     values: ["block", "cmp", "container", "kv", "scalar"],
   },
   { module: "../authoring/assets.ts", types: ["AssetFileItem"] },
-  { module: "../authoring/localization.ts", types: ["LocalizationRef", "LocalizedText"] },
+  {
+    module: "../authoring/localization.ts",
+    types: ["LiteralText", "LocalizationInput", "LocalizationRef", "LocalizedText"],
+  },
   { module: "../content/authoring.ts", types: ["DefinedContent"] },
   {
     module: "../content/schema.ts",
@@ -77,7 +80,14 @@ const SYMBOL_MODULES: readonly ModuleSymbols[] = [
   },
   {
     module: "../script/scalar.ts",
-    values: ["caseEntries", "isComparisonList", "isStructuredValue", "mapEntries", "refId"],
+    values: [
+      "caseEntries",
+      "isComparisonList",
+      "isStructuredValue",
+      "localizationScalar",
+      "mapEntries",
+      "refId",
+    ],
   },
   {
     module: "../script/trigger-core.ts",

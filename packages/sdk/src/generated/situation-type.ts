@@ -2,7 +2,11 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/situations.cwt
 
-import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
+import type {
+  LocalizationInput,
+  LocalizationRef,
+  LocalizedText,
+} from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type {
@@ -26,8 +30,8 @@ import type { ScopeName } from "./scopes.ts";
 
 export interface SituationTypeTitle {
   trigger: Trigger<"situation">;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  text?: LocalizedText | LocalizationRef;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  text?: LocalizationInput;
 }
 
 export const SITUATION_TYPE_TITLE_FIELDS: readonly ContentField[] = [
@@ -44,8 +48,8 @@ export const SITUATION_TYPE_TITLE_FIELDS: readonly ContentField[] = [
 
 export interface SituationTypeDesc {
   trigger?: Trigger<"situation">;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  text?: LocalizedText | LocalizationRef;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  text?: LocalizationInput;
 }
 
 export const SITUATION_TYPE_DESC_FIELDS: readonly ContentField[] = [
@@ -62,8 +66,8 @@ export const SITUATION_TYPE_DESC_FIELDS: readonly ContentField[] = [
 
 export interface SituationTypeTriggeredBlockedDesc {
   trigger?: Trigger<"situation">;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  text?: LocalizedText | LocalizationRef;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  text?: LocalizationInput;
 }
 
 export const SITUATION_TYPE_TRIGGERED_BLOCKED_DESC_FIELDS: readonly ContentField[] = [
@@ -125,8 +129,8 @@ export interface SituationApproachFields {
   targetModifier?: ModifierClosure<"planet">;
   triggeredModifier?: TriggeredModifier<"country", "situation">[];
   triggeredTargetModifier?: TriggeredModifier<"planet", "situation">[];
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  customTooltipWithModifiers?: LocalizedText | LocalizationRef;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  customTooltipWithModifiers?: LocalizationInput;
   resources?: EconomicResourceBlock<"situation">[];
   onSelect?: EffectBlock<"situation", { readonly root: "situation" }>;
   aiWeight?: number | WeightBlock<"situation">;
@@ -230,8 +234,8 @@ export interface SituationStageFields {
    * Defaults to SITUATION_STAGE_DEFAULT_COLOR
    */
   color?: NamedColorRef | string;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  customTooltip?: LocalizedText | LocalizationRef;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  customTooltip?: LocalizationInput;
   onFirstEnter?: EffectBlock<"situation", { readonly root: "situation" }>;
   onEnter?: EffectBlock<"situation", { readonly root: "situation" }>;
   potential?: Trigger<"situation">;
@@ -349,24 +353,24 @@ export interface SituationTypeFields {
   picture?: (SpriteRef | string)[];
   category?: SituationCategory;
   situationLogCategory?: SituationLogCategoryRef | string;
-  title?: LocalizedText | LocalizationRef | SituationTypeTitle[];
-  conditionalDesc?: LocalizedText | LocalizationRef | SituationTypeDesc[];
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  activeTooltip?: LocalizedText | LocalizationRef;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  overrideActiveTitle?: LocalizedText | LocalizationRef;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  overrideActiveDesc?: LocalizedText | LocalizationRef;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  overrideFinisherTitle?: LocalizedText | LocalizationRef;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  overrideFinisherDesc?: LocalizedText | LocalizationRef;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  overrideProgressCurrentDesc?: LocalizedText | LocalizationRef;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  customTooltip?: LocalizedText | LocalizationRef;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  customTooltipWithModifiers?: LocalizedText | LocalizationRef;
+  title?: LocalizationInput | SituationTypeTitle[];
+  conditionalDesc?: LocalizationInput | SituationTypeDesc[];
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  activeTooltip?: LocalizationInput;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  overrideActiveTitle?: LocalizationInput;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  overrideActiveDesc?: LocalizationInput;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  overrideFinisherTitle?: LocalizationInput;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  overrideFinisherDesc?: LocalizationInput;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  overrideProgressCurrentDesc?: LocalizationInput;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  customTooltip?: LocalizationInput;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  customTooltipWithModifiers?: LocalizationInput;
   potential?: Trigger<"country">;
   onStart?: EffectBlock<"situation", { readonly root: "situation" }>;
   onFail?: EffectBlock<"situation", { readonly root: "situation" }>;

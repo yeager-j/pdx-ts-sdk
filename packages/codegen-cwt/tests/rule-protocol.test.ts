@@ -531,8 +531,8 @@ describe("LoweredRule", () => {
       emitted.interfaces.indexOf("declareWar(args:") + 1_500
     );
     expect(declareWarSignature).toContain(
-      "name?: LocalizationRef | string | " +
-        "{ key: LocalizationRef; variableString?: readonly string[] }"
+      "name?: LocalizationInput | LiteralText | " +
+        "{ key: LocalizationInput; variableString?: readonly string[] }"
     );
     expect(emitted.fieldCardinalityOverrides).toEqual([
       expect.stringContaining("declare_war.name → optional"),
@@ -580,7 +580,7 @@ describe("LoweredRule", () => {
         "repeated: true }"
     );
     expect(emitted.meta).toContain(
-      '{ prop: "ethic", key: "ethic", kind: "value", refTypes: ["ethic"], repeated: true }'
+      '{ prop: "ethic", key: "ethic", kind: "value", refTypes: ["ethic"], objectKinds: ["typed-ref"], repeated: true }'
     );
   });
 
@@ -993,7 +993,7 @@ describe("a repeated argument's declared bound", () => {
     );
     // The recorder needs the fact, not the bound.
     expect(emitted.meta).toContain(
-      '{ prop: "ethic", key: "ethic", kind: "value", refTypes: ["ethic"], repeated: true }'
+      '{ prop: "ethic", key: "ethic", kind: "value", refTypes: ["ethic"], objectKinds: ["typed-ref"], repeated: true }'
     );
   });
 });

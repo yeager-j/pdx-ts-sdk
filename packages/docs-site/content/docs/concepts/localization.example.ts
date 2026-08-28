@@ -21,8 +21,11 @@ const resonanceArchive = mod.building("resonance_archive", {
   buildingSets: ["research"],
   canBuild: true,
   customTooltip: archiveTooltip,
-  // A key vanilla owns, checked against the packaged inventory.
   potential: customTooltip({
+    // Display text written where it is read. The SDK keys it against this
+    // building and the field path, and ships it in this Feature's own file.
+    successText: "The archive is yours to fill.",
+    // A key vanilla owns, checked against the packaged inventory.
     failText: vanilla.localization("requires_independence"),
     conditions: owner(isSubject(false)),
   }),

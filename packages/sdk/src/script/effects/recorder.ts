@@ -33,6 +33,7 @@ import {
   isComparisonList,
   isEffectBlockValue,
   isStructuredValue,
+  localizationScalar,
   mapEntries,
   refId,
   toScalar,
@@ -543,6 +544,25 @@ function recordRef(
 }
 
 /**
+ * Lowers one scalar-valued position to what the AST accepts.
+ *
+ * A position the rules type as a localisation key goes through
+ * `localizationScalar`, which is the only lowering that can produce a deferred
+ * marker for inline display text; every other position lowers as it always
+ * did. The generated `locInput` flag decides, so the recorder follows the
+ * rules rather than guessing a localisation key from the value's shape.
+ */
+function loweredScalar(
+  meta: EffectScalarMeta | undefined,
+  value: unknown,
+  path: string
+): string | number | boolean | PdxScalar {
+  return meta?.locInput === true
+    ? localizationScalar(value, path, meta.locLiterals)
+    : toScalar(value, meta?.booleanLiterals);
+}
+
+/**
  * The occurrences one authored argument writes, one entry per script key.
  *
  * A repeated field authors an array of values. A comparison instead carries
@@ -604,7 +624,7 @@ function mapValueEntries(
     if (map.comparison === true && Array.isArray(value)) {
       return cmp(key, value[0] as PdxOp, toScalar(value[1]));
     }
-    const scalar = toScalar(value, map.value.booleanLiterals);
+    const scalar = loweredScalar(map.value, value, path);
     recordRef(refs, map.value.refTypes, path, scalar);
     recordLocalization(refs, value, path);
     return kv(key, scalar);
@@ -631,7 +651,7 @@ function valueListItems(
         fieldEntries(arm.fields, item as Record<string, unknown>, path, refs, owner)
       );
     }
-    const scalar = toScalar(item, arm.scalar?.booleanLiterals);
+    const scalar = loweredScalar(arm.scalar, item, path);
     recordRef(refs, arm.scalar?.refTypes, path, scalar);
     recordLocalization(refs, item, path);
     return typeof scalar === "object" ? scalar : pdxScalar(scalar);
@@ -675,7 +695,7 @@ function scalarEffectEntry(
   if (scalar.kind === "bool") {
     return kv(key, (value as boolean | undefined) ?? true);
   }
-  const lowered = toScalar(value, scalar.booleanLiterals);
+  const lowered = loweredScalar(scalar, value, key);
   recordRef(refs, scalar.refTypes, key, lowered);
   recordLocalization(refs, value, key);
   return kv(key, lowered);
@@ -824,7 +844,7 @@ export function fieldEntries(
     for (const value of occurrences) {
       switch (field.kind) {
         case "value": {
-          const scalar = toScalar(value, field.booleanLiterals);
+          const scalar = loweredScalar(field, value, `${path}.${field.key}`);
           recordRef(refs, field.refTypes, `${path}.${field.key}`, scalar);
           recordLocalization(refs, value, `${path}.${field.key}`);
           entries.push(kv(field.key, scalar));
@@ -840,7 +860,7 @@ export function fieldEntries(
             entries.push(blockEntry(arm, value, field.key, `${path}.${field.key}`, refs, owner));
             break;
           }
-          const scalar = toScalar(value, field.scalar?.booleanLiterals);
+          const scalar = loweredScalar(field.scalar, value, `${path}.${field.key}`);
           recordRef(refs, field.scalar?.refTypes, `${path}.${field.key}`, scalar);
           recordLocalization(refs, value, `${path}.${field.key}`);
           entries.push(kv(field.key, scalar));
@@ -891,7 +911,7 @@ export function fieldEntries(
           if (Array.isArray(value)) {
             entries.push(cmp(field.key, value[0] as PdxOp, toScalar(value[1])));
           } else {
-            const scalar = toScalar(value, field.booleanLiterals);
+            const scalar = loweredScalar(field, value, `${path}.${field.key}`);
             recordRef(refs, field.refTypes, `${path}.${field.key}`, scalar);
             recordLocalization(refs, value, `${path}.${field.key}`);
             entries.push(kv(field.key, scalar));
@@ -946,6 +966,9 @@ export function fieldEntries(
                   // definition id, so its field path stands in; no member of a
                   // spliced alias block carries such a row today.
                   ownerId: `${path}.${field.key}`,
+                  // No definition walk ran in front of these values, so a
+                  // key-typed member here is still whatever the author wrote.
+                  unresolvedKeys: true,
                 }
               )
             )

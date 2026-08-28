@@ -2,7 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/starbases_consolidated.cwt
 
-import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
+import type { LocalizationInput } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { WeightBlock, WithFrom } from "../content/types.ts";
@@ -37,8 +37,8 @@ export const STARBASE_LEVEL_PICTURE_FIELDS: readonly ContentField[] = [
 export interface StarbaseLevelFields {
   shipSize: ShipSizeRef | string;
   nextLevel?: StarbaseLevelRef | string;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  levelTooltip?: LocalizedText | LocalizationRef;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  levelTooltip?: LocalizationInput;
   /** Default yes, if yes starbase will be shown in outliner */
   showInOutliner?: boolean;
   /** Default no, if yes empire shield will be shown even if there's no colony */

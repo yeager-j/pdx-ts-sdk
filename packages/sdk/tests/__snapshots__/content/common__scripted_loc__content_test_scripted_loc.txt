@@ -6,7 +6,7 @@ defined_text = {
 		trigger = {
 			always = yes
 		}
-		localization_key = content_test_scripted_loc_flavor_text_machine
+		localization_key = content_test_scripted_loc_flavor_text_text_0_localization_key
 	}
 	text = {
 		localization_key = content_test_scripted_loc_flavor_text_default

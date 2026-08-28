@@ -37,7 +37,9 @@
 
 import { container, quoted, scalar, type PdxEntry, type PdxItem } from "@pdx-ts/pdxscript";
 
+import type { ScriptLocalizationSink } from "../../authoring/deferred-localization.ts";
 import {
+  isLocalizationRef,
   resolveFixedKeyText,
   type KeyedLocalization,
   type LocalizationMint,
@@ -72,6 +74,7 @@ interface LoweringContext {
   readonly collect: RefUseSink;
   readonly path: string;
   readonly ownerId: string;
+  readonly localization?: ScriptLocalizationSink;
 }
 
 /**
@@ -330,6 +333,9 @@ function mintModifierDescs(
       return;
     }
     const typed = row as unknown as ModifierWithLoc<ScopeName>;
+    if (isLocalizationRef(typed.desc)) {
+      return;
+    }
     if (isComplexTriggerModifier(typed)) {
       const key = `${ctx.ownerId}_${fieldPath}_${index}`;
       ctx.into.push({
@@ -619,6 +625,14 @@ export function patchContent<Source extends ParsedDefinition, Patch extends obje
     collect: (use: RecordedRefUse) => refs.push(use),
     path: "",
     ownerId: mint.ownerId,
+    // A patched member's spliced script keys its inline text under the same
+    // `<prefix>_<vanillaId>` owner the member's own slots mint from, so the
+    // patch never writes a key vanilla might already define.
+    localization: {
+      into: mint.into,
+      warn: (warning) => mint.warnings.push(warning),
+      warned: new Set<string>(),
+    },
   };
   const replacements = new Map<string, PdxEntry[]>();
   for (const field of fields) {

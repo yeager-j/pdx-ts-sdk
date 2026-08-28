@@ -2,7 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/solar_system_initializers.cwt
 
-import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
+import type { LocalizationInput } from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { EffectBlock, WeightBlock } from "../content/types.ts";
@@ -228,8 +228,8 @@ export const SOLAR_SYSTEM_INITIALIZER_NEIGHBOR_SYSTEM_FIELDS: readonly ContentFi
  * Generated from `type[solar_system_initializer]` at `game/common/solar_system_initializers`.
  */
 export interface SolarSystemInitializerFields {
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  name?: LocalizedText | LocalizationRef;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  name?: LocalizationInput;
   namelist?: CustomStarNames;
   class: StarClassRef | string | StarClassRandomListRef;
   flags?: StarFlag[];

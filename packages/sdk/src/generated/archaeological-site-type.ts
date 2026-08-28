@@ -2,7 +2,11 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/archaeology.cwt
 
-import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
+import type {
+  LocalizationInput,
+  LocalizationRef,
+  LocalizedText,
+} from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { EffectBlock, WeightBlock, WithFrom } from "../content/types.ts";
@@ -11,8 +15,8 @@ import type { EventFleetRef, SituationLogCategoryRef, SpriteRef } from "./refs.t
 
 export interface ArchaeologicalSiteTypeDesc {
   trigger?: Trigger<"archaeological_site">;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  text?: LocalizedText | LocalizationRef;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  text?: LocalizationInput;
 }
 
 export const ARCHAEOLOGICAL_SITE_TYPE_DESC_FIELDS: readonly ContentField[] = [
@@ -104,7 +108,7 @@ export interface ArchaeologicalSiteTypeFields {
   /** GFX_* sprite key for the sites image */
   picture?: SpriteRef | string;
   /** Description generator for the site, with scope this=archaeological site. */
-  conditionalDesc?: LocalizedText | LocalizationRef | ArchaeologicalSiteTypeDesc[];
+  conditionalDesc?: LocalizationInput | ArchaeologicalSiteTypeDesc[];
   situationLogCategory?: SituationLogCategoryRef | string;
   /** Max instances of this type a galaxy can have, only checked when using 'create_archaeological_site = random' */
   maxInstances?: number;

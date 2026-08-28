@@ -369,6 +369,7 @@ function valueMemberEmission(
  * table would silently reuse the first member's `refTypes` for the rest.
  */
 function clauseDocTables(
+  localizationInputType: string,
   ref: TsValue,
   clauseFieldsConstant: string,
   groupFieldsConstant: string,
@@ -406,8 +407,11 @@ function clauseDocTables(
       members: {
         text: {
           optional: true,
-          docs: ["Localization key for the tooltip this group produces."],
-          memberType: "string",
+          docs: [
+            "The tooltip this group produces: display text the SDK keys and emits, or a " +
+              "reference to a key that already exists.",
+          ],
+          memberType: localizationInputType,
         },
         values: {
           optional: false,
@@ -426,9 +430,13 @@ function clauseFieldsCode(
   groupFieldsConstant: string
 ): string {
   const suffix = refTypesSuffix(ref);
+  // CWT types the group's `text` as a localisation key, so the member takes
+  // the same input every other stored-key position does and the definition
+  // walk resolves it against the definition holding the clause.
   const groupRows =
     `  { key: "text", member: "text", shape: "value", ` +
-    `form: ${JSON.stringify(formOfShape({ shape: "value" }))}, conversion: "identity" },\n` +
+    `form: ${JSON.stringify(formOfShape({ shape: "value" }))}, conversion: "identity", ` +
+    `locKey: true },\n` +
     `  { key: "value", member: "values", shape: "value", ` +
     `form: ${JSON.stringify(formOfShape({ shape: "value", repeated: true }))}, ` +
     `conversion: ${JSON.stringify(conversionFor(ref))}${suffix}, repeated: true },\n`;
@@ -486,7 +494,13 @@ function memberEmission(
         clauseFieldsCode(emitter, shape.ref, clauseFieldsConstant, groupFieldsConstant),
       ],
       docTables: [
-        ...clauseDocTables(shape.ref, clauseFieldsConstant, groupFieldsConstant, groupName),
+        ...clauseDocTables(
+          emitter.use("LocalizationInput"),
+          shape.ref,
+          clauseFieldsConstant,
+          groupFieldsConstant,
+          groupName
+        ),
       ],
     };
   }
@@ -566,8 +580,9 @@ export function emitAliasStruct(
         "`text` as the tooltip shown when the group decides the outcome.",
       ]) +
       `export interface ${groupName}<R> {\n` +
-      "  /** Localization key for the tooltip this group produces. */\n" +
-      "  text?: string;\n" +
+      "  /** The tooltip this group produces: display text the SDK keys and emits, or a " +
+      "reference to a key that already exists. */\n" +
+      `  text?: ${emitter.use("LocalizationInput")};\n` +
       "  /** The group's operands, emitted as repeated `value` keys. */\n" +
       "  values: readonly R[];\n" +
       "}\n\n" +

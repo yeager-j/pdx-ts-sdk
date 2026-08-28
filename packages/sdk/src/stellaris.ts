@@ -19,7 +19,10 @@ export {
 } from "./solar-system-layout.ts";
 export type { ScopeName } from "./generated/scopes.ts";
 export {
+  literalText,
   loc,
+  type LiteralText,
+  type LocalizationInput,
   type LocalizationRef,
   type LocalizationRefs,
   type LocalizedText,
@@ -28,7 +31,7 @@ export {
   type NoLocalizationRefs,
 } from "./authoring/localization.ts";
 export type { ContentLoc, ContentLocByType } from "./generated/content-loc.ts";
-export { external } from "./authoring/external.ts";
+export { external, type ExternalReference } from "./authoring/external.ts";
 export * from "./generated/enums.ts";
 export { refId, type TypedRef } from "./script/scalar.ts";
 export * from "./generated/refs.ts";

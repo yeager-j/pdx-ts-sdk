@@ -147,9 +147,10 @@ describe("government_trigger emission", () => {
   it("carries the block-level text and always fields the consumers write", () => {
     // `text` and `always` are declared on each combinator, and the consuming
     // `potential`/`possible` blocks declare the same two beside their splice.
-    expect(emission.code).toContain("  text?: LocalizationRef;\n  always?: boolean;\n");
+    expect(emission.code).toContain("  text?: LocalizationInput;\n  always?: boolean;\n");
     expect(emission.code).toContain(
-      '{ key: "text", member: "text", shape: "value", form: "scalar", conversion: "identity" }'
+      '{ key: "text", member: "text", shape: "value", form: "scalar", conversion: "identity", ' +
+        "locKey: true }"
     );
     expect(emission.code).toContain(
       '{ key: "always", member: "always", shape: "value", form: "scalar", conversion: "identity" }'

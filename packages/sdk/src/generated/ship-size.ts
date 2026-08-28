@@ -2,7 +2,11 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/ship_sizes.cwt
 
-import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
+import type {
+  LocalizationInput,
+  LocalizationRef,
+  LocalizedText,
+} from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { EconomicResourceBlock, ModifierClosure, WeightBlock } from "../content/types.ts";
@@ -294,8 +298,8 @@ export interface ShipSizeFields {
   isEntropyConduit?: boolean;
   scalesWithPlanet?: boolean;
   canBeInspected?: boolean;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  preCommunicationsName?: LocalizedText | LocalizationRef;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  preCommunicationsName?: LocalizationInput;
   /** reference to other ship_sizes + _entity, handled by manual validator */
   entity?: ModelEntityRef | string;
   /**
@@ -403,19 +407,19 @@ export interface ShipSizeFields {
   roleBackground?: SpriteRef | string;
   onClickSound?: SoundEffectRef | string;
   mapIconOverride?: ShipSizeMapIconOverride;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  customStateLocPrefix?: LocalizedText | LocalizationRef;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  customStateLocPrefix?: LocalizationInput;
   isBioShip?: boolean;
   /**
    * Only when ship_size subtype `bio_ship` applies.
-   * Names a localization key: pass a reference, or display text the SDK keys and emits for you.
+   * Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.
    */
-  shipFamilyName?: LocalizedText | LocalizationRef;
+  shipFamilyName?: LocalizationInput;
   /**
    * Only when ship_size subtype `bio_ship` applies.
-   * Names a localization key: pass a reference, or display text the SDK keys and emits for you.
+   * Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.
    */
-  growthStageDescriptor?: LocalizedText | LocalizationRef;
+  growthStageDescriptor?: LocalizationInput;
   /** Only when ship_size subtype `bio_ship` applies. */
   bioshipGrowthProgressRequired?: number;
   /** Only when ship_size subtype `bio_ship` applies. */

@@ -3,6 +3,7 @@
 import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
 
 import {
+  isLocalizationRef,
   resolveLocalizedText,
   type LocalizationTranslations,
   type LocalizedText,
@@ -11,7 +12,7 @@ import { MODIFIER_OPERATIONS } from "../../generated/modifier-policy.ts";
 import type { ScopeName } from "../../generated/scopes.ts";
 import { shortLocalizationHash } from "../../localization-key.ts";
 import { compareUtf8 } from "../../ordering.ts";
-import type { RecordedRefUse } from "../../references.ts";
+import { recordLocalization, type RecordedRefUse } from "../../references.ts";
 import { toScalar } from "../scalar.ts";
 import { scriptValueScalar, type ScriptValue } from "../trigger-core.ts";
 import type { ComplexTriggerModifier, Modifier } from "./types.ts";
@@ -211,18 +212,26 @@ export function modifierEntry(
 ): PdxEntry {
   const entries: PdxEntry[] = weightOperationEntries(modifier);
   if (modifier.desc !== undefined) {
-    const key = ownerKey === undefined ? undefined : modifierDescKeys.get(modifier)?.get(ownerKey);
-    if (key === undefined) {
-      throw new Error(
-        "Modifier.desc is display text that must be registered as localization before it can " +
-          "be lowered, and this row was never registered for this occurrence. desc is only " +
-          "supported on modifiers inside a content definition's WeightBlock (e.g. " +
-          "situation_type.monthly_progress) — randomList/lockedRandomList/random and other " +
-          "runtime-recorded effect modifiers have no stable, once-only point to register a key " +
-          "against, so they cannot accept desc."
-      );
+    if (isLocalizationRef(modifier.desc)) {
+      if (refs !== undefined) {
+        recordLocalization(refs, modifier.desc, "desc");
+      }
+      entries.push(kv("desc", modifier.desc.key));
+    } else {
+      const key =
+        ownerKey === undefined ? undefined : modifierDescKeys.get(modifier)?.get(ownerKey);
+      if (key === undefined) {
+        throw new Error(
+          "Modifier.desc is display text that must be registered as localization before it can " +
+            "be lowered, and this row was never registered for this occurrence. desc is only " +
+            "supported on modifiers inside a content definition's WeightBlock (e.g. " +
+            "situation_type.monthly_progress) — randomList/lockedRandomList/random and other " +
+            "runtime-recorded effect modifiers have no stable, once-only point to register a key " +
+            "against, so they cannot accept inline desc text."
+        );
+      }
+      entries.push(kv("desc", key));
     }
-    entries.push(kv("desc", key));
   }
   // An ungated row emits its operations and nothing else: `when` is optional
   // (see {@link Modifier.when}), and an absent condition must contribute no
@@ -310,19 +319,26 @@ export function complexTriggerModifierEntry(
     entries.push(kv("max_value", scriptValueScalar(modifier.maxValue)));
   }
   if (modifier.desc !== undefined) {
-    const key =
-      ownerKey === undefined
-        ? undefined
-        : complexTriggerModifierDescKeys.get(modifier)?.get(ownerKey);
-    if (key === undefined) {
-      throw new Error(
-        "ComplexTriggerModifier.desc is display text that must be registered as localization " +
-          "before it can be lowered, and this row was never registered for this occurrence. " +
-          "desc is only supported on complex trigger modifiers inside a content definition's " +
-          "WeightBlock — see Modifier.desc for the same constraint on the sibling row kind."
-      );
+    if (isLocalizationRef(modifier.desc)) {
+      if (refs !== undefined) {
+        recordLocalization(refs, modifier.desc, "desc");
+      }
+      entries.push(kv("desc", modifier.desc.key));
+    } else {
+      const key =
+        ownerKey === undefined
+          ? undefined
+          : complexTriggerModifierDescKeys.get(modifier)?.get(ownerKey);
+      if (key === undefined) {
+        throw new Error(
+          "ComplexTriggerModifier.desc is display text that must be registered as localization " +
+            "before it can be lowered, and this row was never registered for this occurrence. " +
+            "desc is only supported on complex trigger modifiers inside a content definition's " +
+            "WeightBlock — see Modifier.desc for the same constraint on the sibling row kind."
+        );
+      }
+      entries.push(kv("desc", key));
     }
-    entries.push(kv("desc", key));
   }
   if (modifier.potential !== undefined) {
     entries.push(block("potential", [...modifier.potential.entries]));

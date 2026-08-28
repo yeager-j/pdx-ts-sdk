@@ -105,7 +105,7 @@ describe("emitted effect signatures", () => {
     expect(create).toContain("category?: PopCategoryRef | string;");
     expect(create).toContain("size?: ScriptValue;");
     expect(create).toContain("random?: ScriptValue;");
-    expect(create).toContain("growthCategory?: LocalizationRef;");
+    expect(create).toContain("growthCategory?: LocalizationInput;");
     expect(create).toContain("effect?: (scope: PopGroupScope) => void;");
   });
 
@@ -117,6 +117,16 @@ describe("emitted effect signatures", () => {
     expect(entry).toContain('scalar: { objectKinds: ["scope-ref"] }');
     expect(entry).toContain(
       '{ prop: "effect", key: "effect", kind: "effect", transition: "push" }'
+    );
+  });
+
+  it("ordinary localization fields carry their scalar metadata", () => {
+    const entry = structuredMetaEntry("createMessage");
+    expect(entry).toContain(
+      'prop: "localization",\n          key: "localization",\n          kind: "value",\n          objectKinds: ["localization-ref", "localized-text"],\n          locInput: true'
+    );
+    expect(entry).toContain(
+      'prop: "customMessageText",\n          key: "custom_message_text",\n          kind: "value",\n          objectKinds: ["localization-ref", "localized-text"],\n          locInput: true'
     );
   });
 
@@ -358,7 +368,7 @@ describe("emitted effect signatures", () => {
                 kind: "map",
                 map: { keyRefTypes: ["resource"], value: {}, min: 0, splice: true },
               },
-              { prop: "system", key: "system", kind: "value" },
+              { prop: "system", key: "system", kind: "value", objectKinds: ["scope-ref"] },
               { prop: "mult", key: "mult", kind: "value" },
             ],
           },
