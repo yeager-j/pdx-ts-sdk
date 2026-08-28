@@ -580,7 +580,7 @@ describe("LoweredRule", () => {
         "repeated: true }"
     );
     expect(emitted.meta).toContain(
-      '{ prop: "ethic", key: "ethic", kind: "value", refTypes: ["ethic"], repeated: true }'
+      '{ prop: "ethic", key: "ethic", kind: "value", refTypes: ["ethic"], objectKinds: ["typed-ref"], repeated: true }'
     );
   });
 
@@ -993,7 +993,7 @@ describe("a repeated argument's declared bound", () => {
     );
     // The recorder needs the fact, not the bound.
     expect(emitted.meta).toContain(
-      '{ prop: "ethic", key: "ethic", kind: "value", refTypes: ["ethic"], repeated: true }'
+      '{ prop: "ethic", key: "ethic", kind: "value", refTypes: ["ethic"], objectKinds: ["typed-ref"], repeated: true }'
     );
   });
 });

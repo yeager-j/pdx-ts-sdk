@@ -1,6 +1,6 @@
 /** Declared-unchecked references to names this build does not define. */
 
-import { isBareToken } from "@pdx-ts/pdxscript";
+import { isBareString } from "@pdx-ts/pdxscript";
 
 import { localizationRef } from "./localization.ts";
 
@@ -29,17 +29,17 @@ export interface ExternalReference {
  * raw id string is still accepted, and a checked `vanilla.*` reference or an
  * SDK-owned item is better than either.
  *
- * @throws Error If the id cannot be written as a bare PDXScript token.
+ * @throws Error If the id cannot be written as a bare PDXScript string identifier.
  * @example
  * ```ts
  * scope.createShip({ design: external.reference("other_mod_dreadnought") });
  * ```
  */
 export function externalReference(id: string): ExternalReference {
-  if (typeof id !== "string" || !isBareToken(id)) {
+  if (typeof id !== "string" || !isBareString(id)) {
     throw new Error(
       `external.reference(${JSON.stringify(id)}) is not a content id: an id is one bare ` +
-        "PDXScript token, so it holds no spaces, braces, quotes, or comparison operators."
+        "PDXScript string identifier, not a number, boolean, variable, or quoted value."
     );
   }
   return Object.freeze({ id });

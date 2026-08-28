@@ -9,7 +9,6 @@
 import type { ArgField, BlockValue, MapValue } from "../../lower/script-shape.ts";
 import { camelCase, compareStrings, docComment } from "../../naming.ts";
 import { aliasCategoryModule, type TsValue } from "../../render/emitter.ts";
-import { refTypesSuffix } from "../../render/writer.ts";
 import type {
   EffectCluster,
   EffectShape,
@@ -17,12 +16,6 @@ import type {
   EmittedScopeLink,
   ScopeLinkCluster,
 } from "./effects.ts";
-
-function booleanLiteralsMeta(value: TsValue | undefined): string {
-  return value?.booleanLiterals === undefined
-    ? ""
-    : `, booleanLiterals: ${JSON.stringify(value.booleanLiterals)}`;
-}
 
 function scalarMetaMembers(value: TsValue): string[] {
   return [
@@ -133,11 +126,8 @@ function fieldMeta(field: ArgField): string {
     field.value.kind === "clause" && field.value.category === "effect"
       ? `, transition: ${JSON.stringify(field.value.transition)}`
       : "";
-  const refTypes = refTypesSuffix(field.value.kind === "scalar" ? field.value.value : undefined);
-  const booleanLiterals = booleanLiteralsMeta(
-    field.value.kind === "scalar" ? field.value.value : undefined
-  );
-  return `{ ${identity}, kind: ${JSON.stringify(kind)}${transition}${refTypes}${booleanLiterals}${spliceMeta(field.value)}${repeated} }`;
+  const scalarMeta = field.value.kind === "scalar" ? scalarMetaSuffix(field.value.value) : "";
+  return `{ ${identity}, kind: ${JSON.stringify(kind)}${transition}${scalarMeta}${spliceMeta(field.value)}${repeated} }`;
 }
 
 function scalarShapeMeta(shape: Extract<EffectShape, { readonly kind: "bool" | "value" }>): string {

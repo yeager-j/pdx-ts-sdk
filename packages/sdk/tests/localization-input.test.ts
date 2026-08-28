@@ -288,8 +288,11 @@ describe("sentinels and raw text", () => {
     });
   });
 
-  it("refuses an external reference that is not one bare token", () => {
+  it("refuses an external reference that is not a bare string identifier", () => {
     expect(() => external.reference("not an id")).toThrow(/is not a content id/);
+    expect(() => external.reference("@other")).toThrow(/is not a content id/);
+    expect(() => external.reference("yes")).toThrow(/is not a content id/);
+    expect(() => external.reference("123")).toThrow(/is not a content id/);
     expect(external.reference("other_mod_design")).toEqual({ id: "other_mod_design" });
   });
 
@@ -459,6 +462,27 @@ describe("every generated shape a localization key reaches", () => {
     expect(body(mod, "army", [decision])).toContain(
       `li_decision_army_create_army_name_${shortLocalizationHash("The Iron Watch")}`
     );
+  });
+
+  it("keys an ordinary scalar field inside an effect argument block", () => {
+    const mod = capability();
+    const decision = mod.decision("message", {
+      name: "Message",
+      potential: always(),
+      allow: always(),
+      effect: (scope) => {
+        scope.owner.effects((country) => {
+          country.createMessage({
+            type: "li_message_type",
+            localization: "The signal is clear.",
+          });
+        });
+      },
+    });
+    const key = `li_decision_message_create_message_localization_${shortLocalizationHash("The signal is clear.")}`;
+
+    expect(body(mod, "message", [decision])).toContain(`localization = ${key}`);
+    expect(english(mod, "message", [decision])).toContain(` ${key}:0 "The signal is clear."`);
   });
 
   it("keys a key-typed content member alongside a repeated element's index", () => {

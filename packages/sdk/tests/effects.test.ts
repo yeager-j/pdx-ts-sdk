@@ -309,7 +309,7 @@ describe("the effect recorder over generated meta", () => {
       },
       {
         name: "setName",
-        call: (scope) => scope.setName({ key: "NAME" }),
+        call: (scope) => scope.setName({ key: external.localization("NAME") }),
         output: "set_name = {\n\tkey = NAME\n}\n",
       },
       {

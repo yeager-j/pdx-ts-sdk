@@ -120,6 +120,16 @@ describe("emitted effect signatures", () => {
     );
   });
 
+  it("ordinary localization fields carry their scalar metadata", () => {
+    const entry = structuredMetaEntry("createMessage");
+    expect(entry).toContain(
+      'prop: "localization",\n          key: "localization",\n          kind: "value",\n          objectKinds: ["localization-ref", "localized-text"],\n          locInput: true'
+    );
+    expect(entry).toContain(
+      'prop: "customMessageText",\n          key: "custom_message_text",\n          kind: "value",\n          objectKinds: ["localization-ref", "localized-text"],\n          locInput: true'
+    );
+  });
+
   it("emits structured-only field types and metadata", () => {
     const fire = signature("fireOnAction");
     expect(fire).toContain("scopes?: {");
@@ -358,7 +368,7 @@ describe("emitted effect signatures", () => {
                 kind: "map",
                 map: { keyRefTypes: ["resource"], value: {}, min: 0, splice: true },
               },
-              { prop: "system", key: "system", kind: "value" },
+              { prop: "system", key: "system", kind: "value", objectKinds: ["scope-ref"] },
               { prop: "mult", key: "mult", kind: "value" },
             ],
           },
