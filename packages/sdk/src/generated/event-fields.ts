@@ -3,7 +3,7 @@
 // From: events/events.cwt
 // From: codegen-cwt event field support policy
 
-import type { LocalizedText } from "../authoring/localization.ts";
+import type { LocalizationInput } from "../authoring/localization.ts";
 import type {
   AiChance,
   EventBodyContext,
@@ -38,15 +38,15 @@ export interface GeneratedEventFields<S extends ScopeName, Context extends Ambie
   /** numeric id within the event namespace */
   readonly id: number;
   /** localized title */
-  readonly title?: LocalizedText;
+  readonly title?: LocalizationInput;
   /** one scalar plus the complete repeated conditional-description block */
-  readonly desc?: LocalizedText;
+  readonly desc?: LocalizationInput;
   /** one scalar plus the complete repeated conditional-description block */
   readonly conditionalDesc?: readonly EventTriggeredDescription<S>[];
   /** diplomatic-screen title */
-  readonly diplomaticTitle?: LocalizedText;
+  readonly diplomaticTitle?: LocalizationInput;
   /** message-feed description */
-  readonly messageDesc?: LocalizedText;
+  readonly messageDesc?: LocalizationInput;
   /** one scalar picture arm */
   readonly picture?: SpriteRef | string;
   /** one scalar sound arm */
@@ -125,7 +125,7 @@ export interface GeneratedEventOptionFields<
   Context extends AmbientScopeContext,
 > {
   /** one localized scalar name arm */
-  readonly name: LocalizedText;
+  readonly name: LocalizationInput;
   /** complete icon block */
   readonly icon?: EventOptionIcon;
   /** raw sound key */
@@ -139,7 +139,7 @@ export interface GeneratedEventOptionFields<
   /** modifier-rule AI weighting */
   readonly aiChance?: AiChance<S>;
   /** localized response text */
-  readonly responseText?: LocalizedText;
+  readonly responseText?: LocalizationInput;
   /** dialog-only flag */
   readonly isDialogOnly?: boolean;
   /** allow-gated hiding */

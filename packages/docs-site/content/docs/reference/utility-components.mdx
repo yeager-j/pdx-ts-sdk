@@ -130,9 +130,10 @@ production, or logistics in ship scope. Most ordinary equipment uses a
 
 `name` emits [localization](/concepts/localization/) for the component id. Set
 text belongs to the component set; component text identifies this exact tier
-or variant. `customTooltip` can use an existing key or a conditional block.
-The text members of `customTooltip` are localization keys. This registry does
-not emit their text.
+or variant. `customTooltip` takes one text value or the conditional block. Its text
+members store a localization key, so each takes display text the SDK keys for
+you, a reference to an entry that already exists, or the engine sentinel the
+rules declare beside it (`""` for `text`, `default` for `failText`).
 
 ## Current limits and testing advice
 

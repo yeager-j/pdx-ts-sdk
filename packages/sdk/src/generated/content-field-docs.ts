@@ -440,7 +440,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
   [
     TECHNOLOGY_TECHNOLOGY_SWAP_FIELDS,
     {
-      name: { optional: true, docs: [], memberType: "LocalizationRef | string" },
+      name: { optional: true, docs: [], memberType: "string" },
       inheritIcon: { optional: true, docs: [], memberType: "boolean" },
       inheritName: { optional: true, docs: [], memberType: "boolean" },
       inheritEffects: { optional: true, docs: [], memberType: "boolean" },
@@ -508,16 +508,16 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       title: {
         optional: false,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       desc: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
     },
   ],
@@ -544,16 +544,16 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       title: {
         optional: false,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       desc: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
     },
   ],
@@ -781,9 +781,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       customTooltip: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
     },
   ],
@@ -794,9 +794,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       text: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
     },
   ],
@@ -807,9 +807,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       text: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
     },
   ],
@@ -828,16 +828,16 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       customTooltip: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "(LocalizedText | LocalizationRef)[]",
+        memberType: "LocalizationInput[]",
       },
       customTooltipWithModifiers: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "(LocalizedText | LocalizationRef)[]",
+        memberType: "LocalizationInput[]",
       },
       traditionSwap: {
         optional: true,
@@ -863,16 +863,16 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       customTooltip: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "(LocalizedText | LocalizationRef)[]",
+        memberType: "LocalizationInput[]",
       },
       customTooltipWithModifiers: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "(LocalizedText | LocalizationRef)[]",
+        memberType: "LocalizationInput[]",
       },
       modifier: {
         optional: true,
@@ -914,9 +914,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       text: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
     },
   ],
@@ -936,9 +936,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       customTooltip: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       traditionSwap: {
         optional: true,
@@ -956,16 +956,16 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       customTooltip: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "(LocalizedText | LocalizationRef)[]",
+        memberType: "LocalizationInput[]",
       },
       customTooltipWithModifiers: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "(LocalizedText | LocalizationRef)[]",
+        memberType: "LocalizationInput[]",
       },
       modifier: {
         optional: true,
@@ -1221,9 +1221,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       initialEffectCustomLoc: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       initEffect: {
         optional: true,
@@ -1370,23 +1370,23 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       text: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: '"" | LocalizedText | LocalizationRef',
+        memberType: '"" | LocalizationInput',
       },
       failText: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: '"default" | LocalizedText | LocalizationRef',
+        memberType: '"default" | LocalizationInput',
       },
       successText: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       when: {
         optional: true,
@@ -1426,9 +1426,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       localizedTags: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "(LocalizedText | LocalizationRef)[]",
+        memberType: "LocalizationInput[]",
       },
       possiblePrecalc: {
         optional: true,
@@ -1501,18 +1501,18 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       desc: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       icon: { optional: true, docs: [], memberType: "JobRef | string" },
       buildingIcon: { optional: true, docs: [], memberType: "BuildingRef | string" },
       conditionString: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
     },
   ],
@@ -1520,22 +1520,22 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
     JOB_SWAPPABLE_DATA_SWAP_TYPE_FIELDS,
     {
       trigger: { optional: false, docs: [], memberType: 'Trigger<"planet">' },
-      name: { optional: true, docs: [], memberType: "LocalizationRef | JobRef | string" },
+      name: { optional: true, docs: [], memberType: "string | JobRef" },
       desc: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       icon: { optional: true, docs: [], memberType: "JobRef | string" },
       buildingIcon: { optional: true, docs: [], memberType: "BuildingRef | string" },
       conditionString: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       weight: { optional: false, docs: [], memberType: 'number | WeightBlock<"pop_group">' },
     },
@@ -1683,7 +1683,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       customTooltip: {
         optional: true,
         docs: [],
-        memberType: "LocalizedText | LocalizationRef | UtilityComponentTemplateCustomTooltip",
+        memberType: "LocalizationInput | UtilityComponentTemplateCustomTooltip",
       },
       shouldAiUse: { optional: true, docs: [], memberType: "boolean" },
       validForCountry: { optional: true, docs: [], memberType: 'Trigger<"country">' },
@@ -1760,23 +1760,23 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       text: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: '"" | LocalizedText | LocalizationRef',
+        memberType: '"" | LocalizationInput',
       },
       failText: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: '"default" | LocalizedText | LocalizationRef',
+        memberType: '"default" | LocalizationInput',
       },
       successText: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       when: { optional: true, docs: [], memberType: "Trigger<never>" },
     },
@@ -1960,7 +1960,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       customTooltip: {
         optional: true,
         docs: [],
-        memberType: "LocalizedText | LocalizationRef | WeaponComponentTemplateCustomTooltip",
+        memberType: "LocalizationInput | WeaponComponentTemplateCustomTooltip",
       },
       shouldAiUse: { optional: true, docs: [], memberType: "boolean" },
       validForCountry: { optional: true, docs: [], memberType: 'Trigger<"country">' },
@@ -2096,23 +2096,23 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       text: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: '"" | LocalizedText | LocalizationRef',
+        memberType: '"" | LocalizationInput',
       },
       failText: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: '"default" | LocalizedText | LocalizationRef',
+        memberType: '"default" | LocalizationInput',
       },
       successText: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       when: { optional: true, docs: [], memberType: "Trigger<never>" },
     },
@@ -2343,7 +2343,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       customTooltip: {
         optional: true,
         docs: [],
-        memberType: "LocalizedText | LocalizationRef | StrikeCraftComponentTemplateCustomTooltip",
+        memberType: "LocalizationInput | StrikeCraftComponentTemplateCustomTooltip",
       },
       shouldAiUse: { optional: true, docs: [], memberType: "boolean" },
       validForCountry: { optional: true, docs: [], memberType: 'Trigger<"country">' },
@@ -2438,23 +2438,23 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       text: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: '"" | LocalizedText | LocalizationRef',
+        memberType: '"" | LocalizationInput',
       },
       failText: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: '"default" | LocalizedText | LocalizationRef',
+        memberType: '"default" | LocalizationInput',
       },
       successText: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       when: { optional: true, docs: [], memberType: "Trigger<never>" },
     },
@@ -2631,9 +2631,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       preCommunicationsName: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       entity: {
         optional: true,
@@ -2803,26 +2803,26 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       customStateLocPrefix: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       isBioShip: { optional: true, docs: [], memberType: "boolean" },
       shipFamilyName: {
         optional: true,
         docs: [
           "Only when ship_size subtype `bio_ship` applies.",
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       growthStageDescriptor: {
         optional: true,
         docs: [
           "Only when ship_size subtype `bio_ship` applies.",
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       bioshipGrowthProgressRequired: {
         optional: true,
@@ -3083,9 +3083,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       customTooltip: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       showOnlyCustomTooltip: { optional: true, docs: [], memberType: "boolean" },
       applyModifierToOtherPlanets: {
@@ -3232,9 +3232,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       aggregatedMessageKey: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
     },
   ],
@@ -3375,23 +3375,23 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       demandSurrender: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       statusQuo: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       surrender: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
     },
   ],
@@ -3567,7 +3567,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       conditionalDesc: {
         optional: true,
         docs: ["Description generator for the site, with scope this=archaeological site."],
-        memberType: "LocalizedText | LocalizationRef | ArchaeologicalSiteTypeDesc[]",
+        memberType: "LocalizationInput | ArchaeologicalSiteTypeDesc[]",
       },
       situationLogCategory: {
         optional: true,
@@ -3653,9 +3653,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       text: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
     },
   ],
@@ -3722,7 +3722,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
           "Both desc and desc_operator can be used here, prefer the latter if there is also a desc_issuer (for example for contracts).",
           "Defaults: [mission_name]_desc",
         ],
-        memberType: "LocalizedText | LocalizationRef | MissionDesc[]",
+        memberType: "LocalizationInput | MissionDesc[]",
       },
       descOperator: {
         optional: true,
@@ -3731,7 +3731,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
           "Both desc and desc_operator can be used here, prefer the latter if there is also a desc_issuer (for example for contracts).",
           "Defaults: [mission_name]_desc",
         ],
-        memberType: "LocalizedText | LocalizationRef | MissionDescOperator[]",
+        memberType: "LocalizationInput | MissionDescOperator[]",
       },
       descIssuer: {
         optional: true,
@@ -3739,7 +3739,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
           "The description of the mission in the situation log, for the issuing side. Supports triggered descriptions.",
           "Default: [mission_name]_issuer_desc",
         ],
-        memberType: "LocalizedText | LocalizationRef | MissionDescIssuer[]",
+        memberType: "LocalizationInput | MissionDescIssuer[]",
       },
       eventChain: {
         optional: true,
@@ -3771,27 +3771,27 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         docs: [
           "Supports scripted loc.",
           "Scopes: this = issuer, from = operator",
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       loreCompleted: {
         optional: true,
         docs: [
           "Supports scripted loc.",
           "Scopes: this = issuer, from = operator",
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       loreFailed: {
         optional: true,
         docs: [
           "Supports scripted loc.",
           "Scopes: this = issuer, from = operator",
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       cost: { optional: true, docs: [], memberType: "number" },
       counter: {
@@ -4012,9 +4012,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       text: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "(LocalizedText | LocalizationRef)[]",
+        memberType: "LocalizationInput[]",
       },
     },
   ],
@@ -4030,9 +4030,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       text: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "(LocalizedText | LocalizationRef)[]",
+        memberType: "LocalizationInput[]",
       },
     },
   ],
@@ -4048,9 +4048,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       text: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "(LocalizedText | LocalizationRef)[]",
+        memberType: "LocalizationInput[]",
       },
     },
   ],
@@ -4097,71 +4097,67 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         docs: [],
         memberType: "SituationLogCategoryRef | string",
       },
-      title: {
-        optional: true,
-        docs: [],
-        memberType: "LocalizedText | LocalizationRef | SituationTypeTitle[]",
-      },
+      title: { optional: true, docs: [], memberType: "LocalizationInput | SituationTypeTitle[]" },
       conditionalDesc: {
         optional: true,
         docs: [],
-        memberType: "LocalizedText | LocalizationRef | SituationTypeDesc[]",
+        memberType: "LocalizationInput | SituationTypeDesc[]",
       },
       activeTooltip: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       overrideActiveTitle: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       overrideActiveDesc: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       overrideFinisherTitle: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       overrideFinisherDesc: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       overrideProgressCurrentDesc: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       customTooltip: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       customTooltipWithModifiers: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       potential: { optional: true, docs: [], memberType: 'Trigger<"country">' },
       onStart: {
@@ -4277,9 +4273,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       text: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
     },
   ],
@@ -4290,9 +4286,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       text: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
     },
   ],
@@ -4303,9 +4299,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       text: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
     },
   ],
@@ -4348,9 +4344,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       customTooltipWithModifiers: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       resources: { optional: true, docs: [], memberType: 'EconomicResourceBlock<"situation">[]' },
       onSelect: {
@@ -4389,9 +4385,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       customTooltip: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       onFirstEnter: {
         optional: true,
@@ -4428,7 +4424,13 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       random: { optional: true, docs: [], memberType: "boolean" },
       text: { optional: true, docs: [], memberType: "ScriptedLocText[]" },
       value: { optional: true, docs: [], memberType: "ScriptValue" },
-      default: { optional: true, docs: [], memberType: "LocalizationRef | SpriteRef | string" },
+      default: {
+        optional: true,
+        docs: [
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
+        ],
+        memberType: "LocalizationInput | SpriteRef | LiteralText",
+      },
     },
   ],
   [
@@ -4438,8 +4440,10 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       trigger: { optional: true, docs: [], memberType: "Trigger<never>" },
       localizationKey: {
         optional: false,
-        docs: [],
-        memberType: "LocalizationRef | SpriteRef | string",
+        docs: [
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
+        ],
+        memberType: "LocalizationInput | SpriteRef | LiteralText",
       },
     },
   ],
@@ -4467,9 +4471,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         optional: true,
         docs: [
           "Custom tooltip text shown for the requirements of the council position.",
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       civic: {
         optional: true,
@@ -4482,9 +4486,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         optional: true,
         docs: [
           'Custom text shown instead of "UNLOCK_COUNCIL_POSITION_TOOLTIP for council positions without a civic"',
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       modifier: {
         optional: true,
@@ -4500,17 +4504,17 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         optional: true,
         docs: [
           "Custom tooltip text shown instead of the auto-generated modifier tooltip text of the council position.",
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       customTooltipWithModifiers: {
         optional: true,
         docs: [
           "Custom tooltip text shown in addition to the auto-generated modifier tooltip text of the council position.",
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       icon: {
         optional: true,
@@ -4611,9 +4615,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       scaledValueKey: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       generateAddModifiers: {
         optional: true,
@@ -4713,17 +4717,17 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         optional: true,
         docs: [
           'Custom text that will appear under the "Effects" heading.',
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       negativeDescription: {
         optional: true,
         docs: [
           'Custom text that will appear under the "Penalties" heading.',
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       playable: {
         optional: true,
@@ -4773,16 +4777,16 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       customTooltip: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "(LocalizedText | LocalizationRef)[]",
+        memberType: "LocalizationInput[]",
       },
       customTooltipWithModifiers: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "(LocalizedText | LocalizationRef)[]",
+        memberType: "LocalizationInput[]",
       },
       swapType: { optional: true, docs: [], memberType: "CivicOrOriginSwapType[]" },
       cost: {
@@ -4926,20 +4930,20 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
   [
     CIVIC_OR_ORIGIN_SWAP_TYPE_FIELDS,
     {
-      name: { optional: true, docs: [], memberType: "LocalizationRef | string" },
+      name: { optional: true, docs: [], memberType: "string" },
       description: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       negativeDescription: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       trigger: {
         optional: false,
@@ -4962,9 +4966,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       moddableConditionsCustomTooltip: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       add: { optional: true, docs: [], memberType: 'Trigger<"country">' },
       remove: { optional: true, docs: [], memberType: 'Trigger<"country">' },
@@ -4982,9 +4986,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       title: {
         optional: false,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       traits: { optional: true, docs: [], memberType: "CivicOrOriginHasSecondarySpeciesTraits" },
     },
@@ -5089,16 +5093,16 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       description: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       tooltip: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
     },
   ],
@@ -5147,9 +5151,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       levelTooltip: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       showInOutliner: {
         optional: true,
@@ -5337,9 +5341,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       name: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       namelist: { optional: true, docs: [], memberType: "CustomStarNames" },
       class: {
@@ -5549,9 +5553,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       projectType: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       eventScope: {
         optional: false,
@@ -5634,9 +5638,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       text: {
         optional: false,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       trigger: { optional: false, docs: [], memberType: 'Trigger<"country">' },
     },
@@ -5652,9 +5656,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       handledByEventTooltip: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       hasTechnology: { optional: true, docs: [], memberType: "TechnologyRef | string" },
       leader: { optional: true, docs: [], memberType: "LeaderClassRef | string" },
@@ -5688,9 +5692,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       text: {
         optional: false,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       count: { optional: false, docs: [], memberType: "number" },
       trigger: { optional: false, docs: [], memberType: 'Trigger<"fleet">' },
@@ -5755,17 +5759,17 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         optional: true,
         docs: [
           "also possible to use here upgrade_desc = hide, and localisations are not required in that case",
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: '"hide" | LocalizedText | LocalizationRef',
+        memberType: 'LocalizationInput | "hide"',
       },
       upgradeFrom: { optional: true, docs: [], memberType: "(MegastructureRef | string)[]" },
       customTooltipRequirements: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       buildSystemTooltip: { optional: true, docs: [], memberType: "SystemTooltipRef | string" },
       tooltipSystemScore: { optional: true, docs: [], memberType: 'WeightBlock<"system">' },
@@ -5775,9 +5779,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       tooltipBestSystemsHeader: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       tooltipSystemFilter: {
         optional: true,
@@ -5795,9 +5799,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
         optional: true,
         docs: [
           "Only when megastructure subtype `has_prereqs` applies.",
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       potential: { optional: true, docs: [], memberType: 'Trigger<"country">' },
       possible: {
@@ -5897,16 +5901,16 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       cycleTitle: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       cycleDesc: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       cycleIcon: { optional: true, docs: [], memberType: "SpriteRef | string" },
       onCycleComplete: {
@@ -5928,9 +5932,9 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
       buildMegastructureNoCostLocalizationKey: {
         optional: true,
         docs: [
-          "Names a localization key: pass a reference, or display text the SDK keys and emits for you.",
+          "Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.",
         ],
-        memberType: "LocalizedText | LocalizationRef",
+        memberType: "LocalizationInput",
       },
       victoryScore: { optional: true, docs: [], memberType: "number" },
       dismantleCost: { optional: true, docs: [], memberType: "EconomicResourceBlock<ScopeName>" },
@@ -6294,7 +6298,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
   [
     GOVERNMENT_TRIGGER_FIELDS,
     {
-      text: { optional: true, docs: [], memberType: "LocalizationRef" },
+      text: { optional: true, docs: [], memberType: "LocalizationInput" },
       always: { optional: true, docs: [], memberType: "boolean" },
       authority: {
         optional: true,
@@ -6383,8 +6387,10 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
     {
       text: {
         optional: true,
-        docs: ["Localization key for the tooltip this group produces."],
-        memberType: "string",
+        docs: [
+          "The tooltip this group produces: display text the SDK keys and emits, or a reference to a key that already exists.",
+        ],
+        memberType: "LocalizationInput",
       },
       values: {
         optional: false,
@@ -6423,8 +6429,10 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
     {
       text: {
         optional: true,
-        docs: ["Localization key for the tooltip this group produces."],
-        memberType: "string",
+        docs: [
+          "The tooltip this group produces: display text the SDK keys and emits, or a reference to a key that already exists.",
+        ],
+        memberType: "LocalizationInput",
       },
       values: {
         optional: false,
@@ -6463,8 +6471,10 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
     {
       text: {
         optional: true,
-        docs: ["Localization key for the tooltip this group produces."],
-        memberType: "string",
+        docs: [
+          "The tooltip this group produces: display text the SDK keys and emits, or a reference to a key that already exists.",
+        ],
+        memberType: "LocalizationInput",
       },
       values: {
         optional: false,
@@ -6503,8 +6513,10 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
     {
       text: {
         optional: true,
-        docs: ["Localization key for the tooltip this group produces."],
-        memberType: "string",
+        docs: [
+          "The tooltip this group produces: display text the SDK keys and emits, or a reference to a key that already exists.",
+        ],
+        memberType: "LocalizationInput",
       },
       values: {
         optional: false,
@@ -6543,8 +6555,10 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
     {
       text: {
         optional: true,
-        docs: ["Localization key for the tooltip this group produces."],
-        memberType: "string",
+        docs: [
+          "The tooltip this group produces: display text the SDK keys and emits, or a reference to a key that already exists.",
+        ],
+        memberType: "LocalizationInput",
       },
       values: {
         optional: false,
@@ -6583,8 +6597,10 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
     {
       text: {
         optional: true,
-        docs: ["Localization key for the tooltip this group produces."],
-        memberType: "string",
+        docs: [
+          "The tooltip this group produces: display text the SDK keys and emits, or a reference to a key that already exists.",
+        ],
+        memberType: "LocalizationInput",
       },
       values: {
         optional: false,
@@ -6623,8 +6639,10 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
     {
       text: {
         optional: true,
-        docs: ["Localization key for the tooltip this group produces."],
-        memberType: "string",
+        docs: [
+          "The tooltip this group produces: display text the SDK keys and emits, or a reference to a key that already exists.",
+        ],
+        memberType: "LocalizationInput",
       },
       values: {
         optional: false,
@@ -6663,8 +6681,10 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
     {
       text: {
         optional: true,
-        docs: ["Localization key for the tooltip this group produces."],
-        memberType: "string",
+        docs: [
+          "The tooltip this group produces: display text the SDK keys and emits, or a reference to a key that already exists.",
+        ],
+        memberType: "LocalizationInput",
       },
       values: {
         optional: false,
@@ -6703,8 +6723,10 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
     {
       text: {
         optional: true,
-        docs: ["Localization key for the tooltip this group produces."],
-        memberType: "string",
+        docs: [
+          "The tooltip this group produces: display text the SDK keys and emits, or a reference to a key that already exists.",
+        ],
+        memberType: "LocalizationInput",
       },
       values: {
         optional: false,
@@ -6743,8 +6765,10 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
     {
       text: {
         optional: true,
-        docs: ["Localization key for the tooltip this group produces."],
-        memberType: "string",
+        docs: [
+          "The tooltip this group produces: display text the SDK keys and emits, or a reference to a key that already exists.",
+        ],
+        memberType: "LocalizationInput",
       },
       values: {
         optional: false,
@@ -6756,7 +6780,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
   [
     PLANET_INITIALIZER_FIELDS,
     {
-      name: { optional: true, docs: [], memberType: "LocalizedText | LocalizationRef" },
+      name: { optional: true, docs: [], memberType: "LocalizationInput" },
       namelist: { optional: true, docs: [], memberType: "CustomPlanetNames" },
       count: {
         optional: true,
@@ -6850,7 +6874,7 @@ export const CONTENT_FIELD_MEMBER_DOCS: ReadonlyMap<
   [
     MOON_INITIALIZER_FIELDS,
     {
-      name: { optional: true, docs: [], memberType: "LocalizedText | LocalizationRef" },
+      name: { optional: true, docs: [], memberType: "LocalizationInput" },
       count: {
         optional: true,
         docs: ["count is optional, default to 1 if isn't specified or written at all"],

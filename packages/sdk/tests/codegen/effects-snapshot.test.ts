@@ -105,7 +105,7 @@ describe("emitted effect signatures", () => {
     expect(create).toContain("category?: PopCategoryRef | string;");
     expect(create).toContain("size?: ScriptValue;");
     expect(create).toContain("random?: ScriptValue;");
-    expect(create).toContain("growthCategory?: LocalizationRef;");
+    expect(create).toContain("growthCategory?: LocalizationInput;");
     expect(create).toContain("effect?: (scope: PopGroupScope) => void;");
   });
 

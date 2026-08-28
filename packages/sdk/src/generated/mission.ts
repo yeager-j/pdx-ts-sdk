@@ -2,7 +2,11 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/missions.cwt
 
-import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
+import type {
+  LocalizationInput,
+  LocalizationRef,
+  LocalizedText,
+} from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { EffectBlock, WeightBlock, WithFrom } from "../content/types.ts";
@@ -15,8 +19,8 @@ export interface MissionDesc {
     "country",
     { readonly root: "country"; readonly from: "country" }
   >;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  text?: (LocalizedText | LocalizationRef)[];
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  text?: LocalizationInput[];
 }
 
 export const MISSION_DESC_FIELDS: readonly ContentField[] = [
@@ -38,8 +42,8 @@ export interface MissionDescOperator {
     "country",
     { readonly root: "country"; readonly from: "country" }
   >;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  text?: (LocalizedText | LocalizationRef)[];
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  text?: LocalizationInput[];
 }
 
 export const MISSION_DESC_OPERATOR_FIELDS: readonly ContentField[] = [
@@ -61,8 +65,8 @@ export interface MissionDescIssuer {
     "country",
     { readonly root: "country"; readonly from: "country" }
   >;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  text?: (LocalizedText | LocalizationRef)[];
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  text?: LocalizationInput[];
 }
 
 export const MISSION_DESC_ISSUER_FIELDS: readonly ContentField[] = [
@@ -149,18 +153,18 @@ export interface MissionFields<
    * Both desc and desc_operator can be used here, prefer the latter if there is also a desc_issuer (for example for contracts).
    * Defaults: [mission_name]_desc
    */
-  conditionalDesc?: LocalizedText | LocalizationRef | MissionDesc[];
+  conditionalDesc?: LocalizationInput | MissionDesc[];
   /**
    * The description of the mission in the situation log. Supports triggered descriptions.
    * Both desc and desc_operator can be used here, prefer the latter if there is also a desc_issuer (for example for contracts).
    * Defaults: [mission_name]_desc
    */
-  descOperator?: LocalizedText | LocalizationRef | MissionDescOperator[];
+  descOperator?: LocalizationInput | MissionDescOperator[];
   /**
    * The description of the mission in the situation log, for the issuing side. Supports triggered descriptions.
    * Default: [mission_name]_issuer_desc
    */
-  descIssuer?: LocalizedText | LocalizationRef | MissionDescIssuer[];
+  descIssuer?: LocalizationInput | MissionDescIssuer[];
   /**
    * The event chain this mission is part of. (Only REQUIRED for contracts)
    * Only when mission subtype `contract` applies.
@@ -178,21 +182,21 @@ export interface MissionFields<
   /**
    * Supports scripted loc.
    * Scopes: this = issuer, from = operator
-   * Names a localization key: pass a reference, or display text the SDK keys and emits for you.
+   * Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.
    */
-  loreIssued?: LocalizedText | LocalizationRef;
+  loreIssued?: LocalizationInput;
   /**
    * Supports scripted loc.
    * Scopes: this = issuer, from = operator
-   * Names a localization key: pass a reference, or display text the SDK keys and emits for you.
+   * Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.
    */
-  loreCompleted?: LocalizedText | LocalizationRef;
+  loreCompleted?: LocalizationInput;
   /**
    * Supports scripted loc.
    * Scopes: this = issuer, from = operator
-   * Names a localization key: pass a reference, or display text the SDK keys and emits for you.
+   * Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.
    */
-  loreFailed?: LocalizedText | LocalizationRef;
+  loreFailed?: LocalizationInput;
   cost?: number;
   /** Counter to define and track what is needed for the player to complete the mission. Multiple of these can be used. */
   counter?: Readonly<Record<string, MissionCounterDefinition>>;

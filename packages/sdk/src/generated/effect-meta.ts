@@ -22,7 +22,7 @@ export type EffectFieldKind =
 /** How one scalar-valued position lowers to a PDXScript scalar. */
 export type EffectScalarMeta = Pick<
   EffectFieldMeta,
-  "refTypes" | "booleanLiterals" | "objectKinds"
+  "refTypes" | "booleanLiterals" | "objectKinds" | "locInput" | "locLiterals"
 >;
 
 /**
@@ -69,7 +69,18 @@ export interface EffectFieldMeta {
   /** Literal yes/no arms that lower to PDXScript booleans rather than strings. */
   readonly booleanLiterals?: readonly ("yes" | "no")[];
   /** Object-backed scalar forms accepted by a mixed scalar/block field. */
-  readonly objectKinds?: readonly ("scope-ref" | "typed-ref" | "localization-ref")[];
+  readonly objectKinds?: readonly (
+    "scope-ref" | "typed-ref" | "localization-ref" | "localized-text" | "literal-text"
+  )[];
+  /**
+   * Whether the rules type this position as a localisation key, so the
+   * recorder lowers it through `localizationScalar`: a reference emits its
+   * key, and inline display text defers one until a splice supplies an
+   * owner.
+   */
+  readonly locInput?: true;
+  /** Engine sentinels that pass through instead of becoming display text. */
+  readonly locLiterals?: readonly string[];
   /** Whether the field accepts repeated entries under the same script key. */
   readonly repeated?: boolean;
   /** The spliced alias category an alias-list or alias-struct field authors. */
@@ -97,7 +108,11 @@ export type EffectScalarShapeMeta =
       readonly kind: "value";
       readonly refTypes?: readonly string[];
       readonly booleanLiterals?: readonly ("yes" | "no")[];
-      readonly objectKinds?: readonly ("scope-ref" | "typed-ref" | "localization-ref")[];
+      readonly objectKinds?: readonly (
+        "scope-ref" | "typed-ref" | "localization-ref" | "localized-text" | "literal-text"
+      )[];
+      readonly locInput?: true;
+      readonly locLiterals?: readonly string[];
     };
 
 /** One block call form of an effect. */
@@ -1263,7 +1278,11 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: { objectKinds: ["localization-ref"] },
+          scalar: {
+            objectKinds: ["localization-ref", "localized-text", "literal-text"],
+            locInput: true,
+            locLiterals: ["random"],
+          },
           block: {
             kind: "fields",
             fields: [
@@ -1503,7 +1522,11 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: { objectKinds: ["localization-ref"] },
+          scalar: {
+            objectKinds: ["localization-ref", "localized-text", "literal-text"],
+            locInput: true,
+            locLiterals: ["random"],
+          },
           block: {
             kind: "fields",
             fields: [
@@ -1548,7 +1571,10 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: { objectKinds: ["localization-ref", "scope-ref"] },
+          scalar: {
+            objectKinds: ["localization-ref", "localized-text", "literal-text", "scope-ref"],
+            locInput: true,
+          },
           block: {
             kind: "fields",
             fields: [
@@ -1563,7 +1589,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "shipDesigns",
           key: "ship_designs",
           kind: "value-list",
-          scalar: { objectKinds: ["localization-ref"] },
+          scalar: { objectKinds: ["localization-ref", "localized-text"], locInput: true },
         },
         { prop: "effect", key: "effect", kind: "effect", transition: "push" },
       ],
@@ -1654,7 +1680,11 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: { objectKinds: ["scope-ref", "localization-ref"] },
+          scalar: {
+            objectKinds: ["scope-ref", "localization-ref", "localized-text", "literal-text"],
+            locInput: true,
+            locLiterals: ["random"],
+          },
           block: {
             kind: "fields",
             fields: [
@@ -1785,7 +1815,10 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: { objectKinds: ["localization-ref", "scope-ref"] },
+          scalar: {
+            objectKinds: ["localization-ref", "localized-text", "literal-text", "scope-ref"],
+            locInput: true,
+          },
           block: {
             kind: "fields",
             fields: [
@@ -1844,7 +1877,11 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: { objectKinds: ["localization-ref"] },
+          scalar: {
+            objectKinds: ["localization-ref", "localized-text", "literal-text"],
+            locInput: true,
+            locLiterals: ["random"],
+          },
           block: {
             kind: "fields",
             fields: [
@@ -2006,7 +2043,11 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: { objectKinds: ["localization-ref", "scope-ref"] },
+          scalar: {
+            objectKinds: ["localization-ref", "localized-text", "literal-text", "scope-ref"],
+            locInput: true,
+            locLiterals: ["random"],
+          },
           block: {
             kind: "fields",
             fields: [
@@ -2021,7 +2062,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "shipDesigns",
           key: "ship_designs",
           kind: "value-list",
-          scalar: { objectKinds: ["localization-ref"] },
+          scalar: { objectKinds: ["localization-ref", "localized-text"], locInput: true },
           fields: [
             { prop: "design", key: "design", kind: "value" },
             { prop: "weight", key: "weight", kind: "value" },
@@ -2042,7 +2083,11 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: { objectKinds: ["localization-ref", "scope-ref"] },
+          scalar: {
+            objectKinds: ["localization-ref", "localized-text", "literal-text", "scope-ref"],
+            locInput: true,
+            locLiterals: ["random"],
+          },
           block: {
             kind: "fields",
             fields: [
@@ -2139,7 +2184,11 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: { objectKinds: ["localization-ref"] },
+          scalar: {
+            objectKinds: ["localization-ref", "localized-text", "literal-text"],
+            locInput: true,
+            locLiterals: ["random"],
+          },
           block: {
             kind: "fields",
             fields: [
@@ -2182,7 +2231,11 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: { objectKinds: ["localization-ref", "scope-ref"] },
+          scalar: {
+            objectKinds: ["localization-ref", "localized-text", "literal-text", "scope-ref"],
+            locInput: true,
+            locLiterals: ["random"],
+          },
           block: {
             kind: "fields",
             fields: [
@@ -2235,7 +2288,11 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: { objectKinds: ["scope-ref", "localization-ref"] },
+          scalar: {
+            objectKinds: ["scope-ref", "localization-ref", "localized-text", "literal-text"],
+            locInput: true,
+            locLiterals: ["random"],
+          },
           block: {
             kind: "fields",
             fields: [
@@ -2348,7 +2405,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   creator: { key: "creator", shape: { kind: "scope-link", transition: "push" } },
   customTooltip: {
     key: "custom_tooltip",
-    shape: { kind: "value", objectKinds: ["localization-ref"] },
+    shape: { kind: "value", objectKinds: ["localization-ref", "localized-text"], locInput: true },
   },
   customTooltipWithParams: {
     key: "custom_tooltip_with_params",
@@ -2399,7 +2456,10 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: { objectKinds: ["localization-ref"] },
+          scalar: {
+            objectKinds: ["localization-ref", "localized-text", "literal-text"],
+            locInput: true,
+          },
           block: {
             kind: "fields",
             fields: [
@@ -3745,7 +3805,10 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: { objectKinds: ["localization-ref"] },
+          scalar: {
+            objectKinds: ["localization-ref", "localized-text", "literal-text"],
+            locInput: true,
+          },
           block: {
             kind: "fields",
             fields: [
@@ -3906,7 +3969,11 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: { objectKinds: ["localization-ref"] },
+          scalar: {
+            objectKinds: ["localization-ref", "localized-text", "literal-text"],
+            locInput: true,
+            locLiterals: ["random"],
+          },
           block: {
             kind: "fields",
             fields: [
@@ -7034,7 +7101,11 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   },
   setAdjective: {
     key: "set_adjective",
-    shape: { kind: "value", objectKinds: ["localization-ref", "scope-ref"] },
+    shape: {
+      kind: "value",
+      objectKinds: ["localization-ref", "localized-text", "scope-ref"],
+      locInput: true,
+    },
   },
   setAdvisorActive: { key: "set_advisor_active", shape: { kind: "bool" } },
   setAge: { key: "set_age", shape: { kind: "value" } },
@@ -7255,7 +7326,7 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   setEmpireFlag: { key: "set_empire_flag", shape: { kind: "value" } },
   setEmpireName: {
     key: "set_empire_name",
-    shape: { kind: "value", objectKinds: ["localization-ref"] },
+    shape: { kind: "value", objectKinds: ["localization-ref", "localized-text"], locInput: true },
   },
   setEqualVotingPower: { key: "set_equal_voting_power", shape: { kind: "bool" } },
   setEspionageAssetFlag: { key: "set_espionage_asset_flag", shape: { kind: "value" } },
@@ -7328,11 +7399,11 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   },
   setFemaleHeirTitle: {
     key: "set_female_heir_title",
-    shape: { kind: "value", objectKinds: ["localization-ref"] },
+    shape: { kind: "value", objectKinds: ["localization-ref", "localized-text"], locInput: true },
   },
   setFemaleRulerTitle: {
     key: "set_female_ruler_title",
-    shape: { kind: "value", objectKinds: ["localization-ref"] },
+    shape: { kind: "value", objectKinds: ["localization-ref", "localized-text"], locInput: true },
   },
   setFirstContactFlag: { key: "set_first_contact_flag", shape: { kind: "value" } },
   setFirstContactStage: {
@@ -7463,11 +7534,11 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   },
   setMaleHeirTitle: {
     key: "set_male_heir_title",
-    shape: { kind: "value", objectKinds: ["localization-ref"] },
+    shape: { kind: "value", objectKinds: ["localization-ref", "localized-text"], locInput: true },
   },
   setMaleRulerTitle: {
     key: "set_male_ruler_title",
-    shape: { kind: "value", objectKinds: ["localization-ref"] },
+    shape: { kind: "value", objectKinds: ["localization-ref", "localized-text"], locInput: true },
   },
   setMarketLeader: { key: "set_market_leader", shape: { kind: "bool" } },
   setMegastructureFlag: { key: "set_megastructure_flag", shape: { kind: "value" } },
@@ -7515,7 +7586,12 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
     key: "set_name",
     shape: {
       kind: "scalar-or-block",
-      scalar: { kind: "value", objectKinds: ["scope-ref", "localization-ref"] },
+      scalar: {
+        kind: "value",
+        objectKinds: ["scope-ref", "localization-ref", "localized-text"],
+        locInput: true,
+        locLiterals: ["random"],
+      },
       block: {
         kind: "fields",
         fields: [
@@ -7663,11 +7739,11 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   setRuleSubjectHasSensors: { key: "set_rule_subject_has_sensors", shape: { kind: "bool" } },
   setRulerTitleFemale: {
     key: "set_ruler_title_female",
-    shape: { kind: "value", objectKinds: ["localization-ref"] },
+    shape: { kind: "value", objectKinds: ["localization-ref", "localized-text"], locInput: true },
   },
   setRulerTitleMale: {
     key: "set_ruler_title_male",
-    shape: { kind: "value", objectKinds: ["localization-ref"] },
+    shape: { kind: "value", objectKinds: ["localization-ref", "localized-text"], locInput: true },
   },
   setSavedDate: {
     key: "set_saved_date",
@@ -7701,7 +7777,11 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
   setShipFlag: { key: "set_ship_flag", shape: { kind: "value" } },
   setShipPrefix: {
     key: "set_ship_prefix",
-    shape: { kind: "value", objectKinds: ["localization-ref", "scope-ref"] },
+    shape: {
+      kind: "value",
+      objectKinds: ["localization-ref", "localized-text", "scope-ref"],
+      locInput: true,
+    },
   },
   setSiteProgressLocked: { key: "set_site_progress_locked", shape: { kind: "bool" } },
   setSituationApproach: { key: "set_situation_approach", shape: { kind: "value" } },
@@ -8234,7 +8314,10 @@ export const EFFECT_META: Record<string, EffectMeta | undefined> = {
           prop: "name",
           key: "name",
           kind: "scalar-or-block",
-          scalar: { objectKinds: ["localization-ref"] },
+          scalar: {
+            objectKinds: ["localization-ref", "localized-text", "literal-text"],
+            locInput: true,
+          },
           block: {
             kind: "fields",
             fields: [

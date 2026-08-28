@@ -19,8 +19,9 @@ import {
   type ContentFieldShape,
   type FieldWidening,
 } from "../overlay/index.ts";
-import { Emitter } from "../render/emitter.ts";
+import { Emitter, type TsValue } from "../render/emitter.ts";
 import type { DocTable, FieldOmissionRow } from "../render/field-rows.ts";
+import { refTypesEntries } from "../render/writer.ts";
 import { formOfShape } from "./authored-form.ts";
 import { contentShape } from "./content-shape.ts";
 import { assertedArity, assertedAssetPath, assertedUncheckedString } from "./field-assertions.ts";
@@ -299,7 +300,8 @@ function authoredScalarType(type: RuleType, fallback: string): string {
  * rule's own. One sentence, because the member appears about ninety times.
  */
 const LOC_KEY_MEMBER_DOC =
-  "Names a localization key: pass a reference, or display text the SDK keys and emits for you.";
+  "Names a localization key: pass display text the SDK keys and emits for you, or a reference " +
+  "to a key that already exists.";
 
 function lowerValue(
   emitter: Emitter,
@@ -322,7 +324,7 @@ function lowerValue(
   // through it (SDK-303).
   const isLocKey = field.type.kind === "localisation";
   const scalarType = isLocKey
-    ? `${emitter.use("LocalizedText")} | ${emitter.use("LocalizationRef")}`
+    ? emitter.use("LocalizationInput")
     : authoredScalarType(field.type, value.type);
   const base = scalarType + (widening === undefined ? "" : ` | ${widening}`);
   if (!isLocKey) {
@@ -366,9 +368,7 @@ function lowerValueList(
   // off a bare `= localisation`. The element contract is the repeated scalar
   // one, so the element type and the runtime resolution are the same.
   const isLocKey = bare.every((type) => type.kind === "localisation");
-  const elementType = isLocKey
-    ? `${emitter.use("LocalizedText")} | ${emitter.use("LocalizationRef")}`
-    : emitter.useValue(value).type;
+  const elementType = isLocKey ? emitter.use("LocalizationInput") : emitter.useValue(value).type;
   return {
     memberType: arrayType(elementType) + (widening === undefined ? "" : ` | ${widening}`),
     metadata: metadata(field, name, "valueList", [
@@ -831,7 +831,7 @@ function lowerScalarUnion(
   if (value === null) {
     return null;
   }
-  const locKey = locKeyUnion(emitter, group);
+  const locKey = locKeyUnion(emitter, group, value);
   const base =
     (locKey?.type ?? emitter.useValue(value).type) +
     (widening === undefined ? "" : ` | ${widening}`);
@@ -841,13 +841,7 @@ function lowerScalarUnion(
       group[0]!,
       name,
       "value",
-      locKey === undefined
-        ? scalarMetadata(value)
-        : [
-            'conversion: "identity"',
-            "locKey: true",
-            `locKeyLiterals: ${JSON.stringify(locKey.literals)}`,
-          ]
+      locKey === undefined ? scalarMetadata(value) : locKey.metadata
     ),
     admits: admitsScalars(group[0]!, "value", widening === undefined ? value : null),
     docs: locKey === undefined ? undefined : [LOC_KEY_MEMBER_DOC],
@@ -855,33 +849,50 @@ function lowerScalarUnion(
 }
 
 /**
- * The localisation-key member type for a group CWT declares as `localisation`
- * beside one or more engine sentinels — `text = ""` and `fail_text = default`
- * alongside `text = localisation` and `fail_text = localisation`, in the
- * `custom_tooltip` block decisions and component templates share.
+ * The localisation-key member type and metadata for any group CWT declares
+ * with a `localisation` arm.
  *
- * The sentinels stay in the union and travel verbatim: `default` selects the
- * game's own fail text and is not a key the mod could supply. Returns
- * `undefined` for any other group, including one holding a plain `scalar` arm,
- * where a `string` in the union is not the localisation arm's.
+ * Three shapes reach here. The plainest is localisation beside one or more
+ * engine sentinels — `text = ""` and `fail_text = default` alongside
+ * `text = localisation`, in the `custom_tooltip` block decisions and component
+ * templates share; the sentinels stay in the union and travel verbatim, since
+ * `default` selects the game's own fail text and is not a key the mod could
+ * supply. The others are localisation beside a raw displayed scalar (a swap's
+ * `name`) and localisation beside a content reference (a job swap's `name`,
+ * `scripted_loc`'s `default`), whose ambiguous string arms `unionFor` has
+ * already replaced with `LiteralText` and a bare reference type.
+ *
+ * The metadata keeps `conversion: "ref"` wherever an object-shaped arm
+ * survives the definition walk: the walk resolves text to a key string and
+ * leaves a reference as it stands, and `refId` handles both. Returns
+ * `undefined` for a group with no localisation arm at all.
  */
 function locKeyUnion(
   emitter: Emitter,
-  group: readonly RuleField[]
-): { readonly type: string; readonly literals: readonly string[] } | undefined {
-  const literals = group.flatMap((field) =>
-    field.type.kind === "literal" ? [field.type.text] : []
-  );
-  const localisationArms = group.filter((field) => field.type.kind === "localisation").length;
-  if (localisationArms === 0 || localisationArms + literals.length !== group.length) {
+  group: readonly RuleField[],
+  value: TsValue
+):
+  | { readonly type: string; readonly literals: readonly string[]; readonly metadata: string[] }
+  | undefined {
+  if (!group.some((field) => field.type.kind === "localisation")) {
     return undefined;
   }
-  const arms = [
-    ...new Set(literals.map((text) => JSON.stringify(text))),
-    emitter.use("LocalizedText"),
-    emitter.use("LocalizationRef"),
+  const literals = [
+    ...new Set(group.flatMap((field) => (field.type.kind === "literal" ? [field.type.text] : []))),
   ];
-  return { type: arms.join(" | "), literals: [...new Set(literals)] };
+  const carriesReference = value.objectKinds?.some(
+    (kind) => kind === "typed-ref" || kind === "scope-ref"
+  );
+  return {
+    type: emitter.useValue(value).type,
+    literals,
+    metadata: [
+      `conversion: ${JSON.stringify(carriesReference === true ? "ref" : "identity")}`,
+      "locKey: true",
+      ...(literals.length === 0 ? [] : [`locKeyLiterals: ${JSON.stringify(literals)}`]),
+      ...refTypesEntries(value),
+    ],
+  };
 }
 
 /**
@@ -897,10 +908,11 @@ export function pickOrdinary(
   widening: string | undefined,
   path: string
 ): LoweredField | null {
+  const identified = asIdentityName(declared, override, path);
   const lowered = assertedAssetPath(
     emitter,
-    pickLowering(emitter, declared, name, ctx, override, widening, path),
-    declared,
+    pickLowering(emitter, identified, name, ctx, override, widening, path),
+    identified,
     name,
     widening,
     path
@@ -927,6 +939,34 @@ export function pickOrdinary(
     ...typed,
     metadata: withMetadataEntry(typed.metadata, `localizationFamily: ${JSON.stringify(family)}`),
   };
+}
+
+/**
+ * Reads a `localisation`-typed field as the plain id it functionally is, for
+ * an audited {@link ContentFieldOverride.identityName} row.
+ *
+ * The rewrite is on the rule types rather than on the lowered member, so
+ * everything downstream — the union, the metadata, the corpus gate's view of
+ * the shape — sees one field that was never a localisation position, rather
+ * than a localisation position with its resolution switched off.
+ */
+function asIdentityName(
+  declared: readonly RuleField[],
+  override: ContentFieldOverride | undefined,
+  path: string
+): readonly RuleField[] {
+  if (override?.identityName !== true) {
+    return declared;
+  }
+  if (!declared.some((field) => field.type.kind === "localisation")) {
+    throw new Error(
+      `CONTENT_FIELD_OVERRIDES's "${path}" row declares identityName, but the field has no ` +
+        "localisation arm to reinterpret — the row is stale"
+    );
+  }
+  return declared.map((field) =>
+    field.type.kind === "localisation" ? { ...field, type: { kind: "scalar" as const } } : field
+  );
 }
 
 function pickLowering(

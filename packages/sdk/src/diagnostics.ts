@@ -16,6 +16,7 @@ interface FlatWarning {
     | "loc-quote-replaced"
     | "unstable-desc-key"
     | "unstable-option-key"
+    | "unstable-localization-key"
     | "assumed-patch-rule"
     | "mismatched-vanilla-ids";
   readonly message: string;

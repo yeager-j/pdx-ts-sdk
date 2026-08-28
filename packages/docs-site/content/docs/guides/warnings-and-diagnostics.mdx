@@ -108,15 +108,16 @@ those, so check the report too.
 Every warning has a stable `code` and a human-readable `message`. The current
 codes are:
 
-| Code                     | Meaning                                                                                                                                              |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `missing-prefix`         | A complete content id or event namespace does not carry this mod's prefix, so it may collide with vanilla or another mod.                            |
-| `loc-quote-replaced`     | Localization text contained `"`; the output format cannot escape it, so the SDK replaced it with `'`.                                                |
-| `unstable-desc-key`      | A modifier description has no `key`; its generated localization key depends on the description text and changes when that text changes.              |
-| `unstable-option-key`    | An event option name has no `key`; its generated localization key depends on the option name and changes when that text changes.                     |
-| `assumed-patch-rule`     | A vanilla patch relies on resolver behavior that is not fully verified; the emitted patch header records the assumption.                             |
-| `mismatched-vanilla-ids` | The build explicitly accepted an installed game version different from the pinned `@pdx-ts/stellaris-ids` version, so some checked ids may be stale. |
-| `unverified-asset-path`  | A raw GFX path matches neither an Asset captured by this build nor the available vanilla path inventory.                                             |
+| Code                        | Meaning                                                                                                                                                      |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `missing-prefix`            | A complete content id or event namespace does not carry this mod's prefix, so it may collide with vanilla or another mod.                                    |
+| `loc-quote-replaced`        | Localization text contained `"`; the output format cannot escape it, so the SDK replaced it with `'`.                                                        |
+| `unstable-desc-key`         | A modifier description has no `key`; its generated localization key depends on the description text and changes when that text changes.                      |
+| `unstable-option-key`       | An event option name has no `key`; its generated localization key depends on the option name and changes when that text changes.                             |
+| `unstable-localization-key` | Display text written inside a trigger or effect has no `key`; its generated localization key depends on the English text and changes when that text changes. |
+| `assumed-patch-rule`        | A vanilla patch relies on resolver behavior that is not fully verified; the emitted patch header records the assumption.                                     |
+| `mismatched-vanilla-ids`    | The build explicitly accepted an installed game version different from the pinned `@pdx-ts/stellaris-ids` version, so some checked ids may be stale.         |
+| `unverified-asset-path`     | A raw GFX path matches neither an Asset captured by this build nor the available vanilla path inventory.                                                     |
 
 Most variants are the flat shape `{ code, message }`. An
 `unverified-asset-path` warning also carries structured fields:
@@ -165,9 +166,11 @@ Most warnings have a direct authoring fix:
   reports; see [References and identity](/guides/references-and-identity/).
 - `loc-quote-replaced` — replace the double quote yourself when the
   punctuation matters; see [Localization](/concepts/localization/).
-- `unstable-desc-key` and `unstable-option-key` — write the text as
-  `{ english: "...", key: "..." }` on the modifier `desc` or the option `name`
-  before translations depend on the generated key.
+- `unstable-desc-key`, `unstable-option-key`, and `unstable-localization-key`
+  — write the text as `{ english: "...", key: "..." }` on the modifier `desc`,
+  the option `name`, or the trigger or effect argument, before translations
+  depend on the generated key. The last one is reported once per derived key,
+  so a reused trigger is not repeated for every owner that places it.
 - `assumed-patch-rule` — not a typo in authoring code: the emitted patch
   header records the assumption the
   [patch planner](/guides/patching-vanilla/) made. Keep it visible and verify

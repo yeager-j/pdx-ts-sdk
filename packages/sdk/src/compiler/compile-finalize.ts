@@ -1,3 +1,4 @@
+import { assertNoDeferredLocalization } from "../authoring/deferred-localization.ts";
 import { assertOwnLocalizationItem } from "../authoring/localization.ts";
 import {
   checkVanillaPackagePin,
@@ -108,15 +109,21 @@ export function finalizeMod(
   const paths = adjudicatePaths({ claims, vanillaPaths });
   registerVanillaVersionWarnings(session);
 
+  // Every renderable channel, checked once where they all meet: a marker that
+  // reached here names a splice point that never supplied an owner, and the
+  // file would ship the placeholder as if it were a localization key.
   for (const file of contentFiles) {
+    assertNoDeferredLocalization(file.entries, `Content file "${file.relPath}"`);
     freezeItems(file.entries);
   }
   for (const file of eventFiles) {
+    assertNoDeferredLocalization(file.entries, `Event file "${file.relPath}"`);
     freezeItems(file.entries);
   }
   for (const file of componentTagFiles) {
     freezeItems(file.entries);
   }
+  assertNoDeferredLocalization(onActions, "The on-action hooks");
   freezeItems(onActions);
 
   return Object.freeze({

@@ -49,6 +49,7 @@ import {
   pushCode,
   pushExpr,
   pushValueListCode,
+  scalarExpr,
   unauthorableAliasValue,
 } from "./trigger-push-code.ts";
 
@@ -252,18 +253,18 @@ export function tsDoc(declarations: readonly AliasDecl[], doc: DocEntry | undefi
 
 /**
  * What a recorded-script localisation argument's documentation says about the
- * reference it takes.
+ * text or reference it takes.
  *
- * There is no bare-string arm to explain any more (SDK-307), so what is left to
- * say is where a reference comes from — including that recorded script, unlike
- * a content member (SDK-303), has no owning definition to key display text
- * against.
+ * Recorded script has no owner of its own, so the two halves worth saying are
+ * that inline text is keyed where the script is placed, and that a bare string
+ * is that text rather than a key.
  */
 const LOCALISATION_ARGUMENT_DOC =
-  "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for " +
-  "a key this mod owns, `vanilla.localization()` for one the game ships, " +
-  "`external.localization()` for another mod's. Unlike a content field, recorded script has no " +
-  "owning definition to key display text against, so text belongs in `mod.localization()` first.";
+  "Names a localization key. Inline display text — a string, or a language record — is keyed " +
+  "and emitted for you against whatever definition, event, or patch this script is placed in; " +
+  "reuse the same script under two owners and each gets its own key. An existing key goes here " +
+  "as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, " +
+  "`vanilla.localization()` for one the game ships, `external.localization()` for another mod's.";
 
 function namesLocalisationKey(type: RuleType): boolean {
   if (type.kind === "localisation") {
@@ -335,7 +336,7 @@ function localizationEntryReturn(
     `${indent}return ${emitter.use("trigger")}([${emitter.use("kv")}(${keyText}, ` +
     `${written})], refs);\n`;
   if (value.refTypes === undefined) {
-    return collect + returned(pushExpr(emitter, value, access));
+    return collect + returned(scalarExpr(emitter, value, access, key));
   }
   if (value.scalarSymbol !== undefined) {
     emitter.use(value.scalarSymbol);
@@ -368,7 +369,7 @@ function scalarEntryReturn(
   if (value.refTypes === undefined) {
     return (
       `${indent}return ${emitter.use("trigger")}([${emitter.use("kv")}(${JSON.stringify(key)}, ` +
-      `${pushExpr(emitter, value, access)})]);\n`
+      `${scalarExpr(emitter, value, access, key)})]);\n`
     );
   }
   // The id is bound once and both written and recorded, so the emitted entry

@@ -760,15 +760,19 @@ function defineContentExample(): PureMod {
     // scripted_loc carries no fixed scope in the rules, so only a scope-agnostic
     // trigger like always() type-checks here — the same reasoning as decision.potential.
     text: [
+      // Inline display text: the SDK keys it against the definition and the
+      // field path, and ships it in this feature's own .yml.
       {
         weight: 2,
         trigger: always(),
-        localizationKey: "content_test_scripted_loc_flavor_text_machine",
+        localizationKey: { english: "Machine minds prefer order." },
       },
-      { localizationKey: "content_test_scripted_loc_flavor_text_default" },
+      // The other two arms name one key that already exists, so both emit it
+      // and neither registers text of its own.
+      { localizationKey: external.localization("content_test_scripted_loc_flavor_text_default") },
     ],
     value: 1,
-    default: "content_test_scripted_loc_flavor_text_default",
+    default: external.localization("content_test_scripted_loc_flavor_text_default"),
   });
 
   const councilor = mod.councilor("chancellor", {
@@ -837,7 +841,7 @@ function defineContentExample(): PureMod {
       authority: {
         or: [
           {
-            text: "content_test_meritocracy_oligarchic",
+            text: external.localization("content_test_meritocracy_oligarchic"),
             values: ["auth_democratic", "auth_oligarchic"],
           },
         ],

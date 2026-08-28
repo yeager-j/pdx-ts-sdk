@@ -3,17 +3,23 @@
 import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
 
 import {
+  resolveDeferredLocalization,
+  type ScriptLocalizationSink,
+} from "../authoring/deferred-localization.ts";
+import {
+  isLocalizationRef,
   localizationRef,
   resolveFixedKeyText,
   resolveLocalizedText,
+  type KeyedLocalization,
+  type LocalizationInput,
   type LocalizationRef,
-  type LocalizedText,
 } from "../authoring/localization.ts";
 import type { ModWarning } from "../diagnostics.ts";
 import type { EventKindKey } from "../generated/events.ts";
 import type { ScopeName } from "../generated/scopes.ts";
-import { localizationSuffix } from "../localization-key.ts";
-import { underField, type RecordedRefUse } from "../references.ts";
+import { localizationSuffix, shortLocalizationHash } from "../localization-key.ts";
+import { recordLocalization, underField, type RecordedRefUse } from "../references.ts";
 import {
   modifierDescKey,
   modifierEntry,
@@ -77,6 +83,9 @@ function registerModifierDescs<S extends ScopeName>(
     if (modifier.desc === undefined) {
       return;
     }
+    if (isLocalizationRef(modifier.desc)) {
+      return;
+    }
     const { key, translations, unstableWarning } = modifierDescKey(
       ownerId,
       fieldPath,
@@ -99,28 +108,84 @@ function registerModifierDescs<S extends ScopeName>(
  * "not a string".
  */
 function conditionalDescTexts(
-  text: LocalizedText | readonly LocalizedText[] | undefined
-): readonly LocalizedText[] {
+  text: LocalizationInput | readonly LocalizationInput[] | undefined
+): readonly LocalizationInput[] {
   if (text === undefined) {
     return [];
   }
-  return Array.isArray(text) ? (text as readonly LocalizedText[]) : [text as LocalizedText];
+  return Array.isArray(text) ? (text as readonly LocalizationInput[]) : [text as LocalizationInput];
 }
 
 /**
- * Registers one text slot whose localization key the event's own id fixes.
+ * Resolves one event text slot to the key its emitted entry stores, and the
+ * reference `event.loc` reports for it.
  *
- * Every slot below is keyed off `<event id>.<slot>`, so a `key` pin on the
- * text would name a key nothing reads; `resolveFixedKeyText` says so rather
- * than dropping it. `position` names the slot in that refusal.
+ * A reference is emitted as it stands and registers nothing: its text lives
+ * wherever it was authored. It is still *recorded*, so a standalone
+ * `mod.localization()` item consumed here is placed by the Feature that placed
+ * this event and refused when another capability minted it (SDK-306) — the
+ * same treatment a key-typed content field gives one.
+ *
+ * Inline text keys off `<event id>.<slot>`, which is fixed, so a `key` pin
+ * would name a key nothing reads; `resolveFixedKeyText` says so rather than
+ * dropping it.
+ *
+ * @param derivedKey - The key inline text is registered and emitted under.
+ * @param position - Names the slot in a refusal, e.g. `Event "x.1" title`.
+ * @param field - Dotted PDXScript key path recorded with a consumed item.
  */
-function registerEventText(
+function eventText(
   locSink: LocSink,
-  key: string,
-  text: LocalizedText,
-  position: string
-): void {
-  locSink.register(key, resolveFixedKeyText(text, position, key));
+  refs: RecordedRefUse[],
+  input: LocalizationInput,
+  derivedKey: string,
+  position: string,
+  field: string
+): LocalizationRef {
+  if (isLocalizationRef(input)) {
+    recordLocalization(refs, input, field);
+    return input;
+  }
+  locSink.register(derivedKey, resolveFixedKeyText(input, position, derivedKey));
+  return localizationRef(derivedKey);
+}
+
+/** An option's effective `name` reference and the stem its child text hangs off. */
+interface OptionName {
+  /** The reference the option's `name` writes, and `loc.options[i].name` reports. */
+  readonly nameRef: LocalizationRef;
+  /** The suffix under the event id that the option's child keys are built from. */
+  readonly suffix: string;
+  /** Whether the suffix hashes English text the author can still edit. */
+  readonly unstable: boolean;
+}
+
+/**
+ * Resolves an option's `name` to the key it emits and the stem its children use.
+ *
+ * Inline text keeps the existing behaviour exactly: the key pin, or a hash of
+ * the English name, becomes both the emitted key's suffix and the child stem.
+ * A reference is emitted as it stands, so the option has no suffix of its own;
+ * hashing the referenced key gives it one that is still event-owned, since
+ * defining `<other mod's key>.response` would write into that mod's namespace.
+ */
+function optionName(
+  name: LocalizationInput,
+  id: string,
+  refs: RecordedRefUse[],
+  where: string
+): OptionName {
+  if (isLocalizationRef(name)) {
+    recordLocalization(refs, name, `${where}.name`);
+    return { nameRef: name, suffix: shortLocalizationHash(name.key), unstable: false };
+  }
+  const resolved = resolveLocalizedText(name);
+  const suffix = localizationSuffix(resolved.translations.english, resolved.key);
+  return {
+    nameRef: localizationRef(`${id}.${suffix.suffix}`),
+    suffix: suffix.suffix,
+    unstable: suffix.usedFallback,
+  };
 }
 
 /**
@@ -183,16 +248,14 @@ function lowerEvent<S extends ScopeName, Context extends AmbientScopeContext>(
   const eventRefs: { title?: LocalizationRef; desc?: LocalizationRef } = {};
   const optionRefs: EventOptionLoc[] = [];
   if (def.title !== undefined) {
-    const key = `${id}.name`;
-    registerEventText(locSink, key, def.title, `Event "${id}" title`);
-    entries.push(kv("title", key));
-    eventRefs.title = localizationRef(key);
+    const ref = eventText(locSink, refs, def.title, `${id}.name`, `Event "${id}" title`, "title");
+    entries.push(kv("title", ref.key));
+    eventRefs.title = ref;
   }
   if (def.desc !== undefined) {
-    const key = `${id}.desc`;
-    registerEventText(locSink, key, def.desc, `Event "${id}" desc`);
-    entries.push(kv("desc", key));
-    eventRefs.desc = localizationRef(key);
+    const ref = eventText(locSink, refs, def.desc, `${id}.desc`, `Event "${id}" desc`, "desc");
+    entries.push(kv("desc", ref.key));
+    eventRefs.desc = ref;
   }
   let descriptionTextIndex = def.desc === undefined ? 0 : 1;
   (def.conditionalDesc ?? []).forEach((description, index) => {
@@ -212,8 +275,15 @@ function lowerEvent<S extends ScopeName, Context extends AmbientScopeContext>(
     for (const text of texts) {
       const key = descriptionTextIndex === 0 ? `${id}.desc` : `${id}.desc.${descriptionTextIndex}`;
       descriptionTextIndex += 1;
-      registerEventText(locSink, key, text, `Event "${id}" ${where} text`);
-      descriptionEntries.push(kv("text", key));
+      const ref = eventText(
+        locSink,
+        refs,
+        text,
+        key,
+        `Event "${id}" ${where} text`,
+        `${where}.text`
+      );
+      descriptionEntries.push(kv("text", ref.key));
     }
     if (description.showSound !== undefined) {
       descriptionEntries.push(kv("show_sound", refId(description.showSound)));
@@ -221,14 +291,26 @@ function lowerEvent<S extends ScopeName, Context extends AmbientScopeContext>(
     entries.push(block("desc", descriptionEntries));
   });
   if (def.diplomaticTitle !== undefined) {
-    const key = `${id}.diplomatic_title`;
-    registerEventText(locSink, key, def.diplomaticTitle, `Event "${id}" diplomaticTitle`);
-    entries.push(kv("diplomatic_title", key));
+    const ref = eventText(
+      locSink,
+      refs,
+      def.diplomaticTitle,
+      `${id}.diplomatic_title`,
+      `Event "${id}" diplomaticTitle`,
+      "diplomatic_title"
+    );
+    entries.push(kv("diplomatic_title", ref.key));
   }
   if (def.messageDesc !== undefined) {
-    const key = `${id}.message_desc`;
-    registerEventText(locSink, key, def.messageDesc, `Event "${id}" messageDesc`);
-    entries.push(kv("message_desc", key));
+    const ref = eventText(
+      locSink,
+      refs,
+      def.messageDesc,
+      `${id}.message_desc`,
+      `Event "${id}" messageDesc`,
+      "message_desc"
+    );
+    entries.push(kv("message_desc", ref.key));
   }
   if (def.picture !== undefined) {
     entries.push(kv("picture", refId(def.picture)));
@@ -380,10 +462,14 @@ function lowerEvent<S extends ScopeName, Context extends AmbientScopeContext>(
     refs.push(...underField(recorded, "after"));
   }
   (def.options ?? []).forEach((option, index) => {
-    const name = resolveLocalizedText(option.name);
-    const optionSuffix = localizationSuffix(name.translations.english, name.key);
-    const optionKey = `${id}.${optionSuffix.suffix}`;
-    if (optionSuffix.usedFallback) {
+    const where = `option[${index}]`;
+    // An option has no id, so its child text — the icon caption, the response,
+    // every AI-chance modifier desc — hangs off a stem the option derives.
+    // A referenced name gives that stem no suffix of its own, and defining
+    // children under the referenced key's namespace would write into whatever
+    // mod owns it, so the stem hashes the key instead and stays event-owned.
+    const { nameRef, suffix, unstable } = optionName(option.name, id, refs, where);
+    if (unstable) {
       warnings.push({
         code: "unstable-option-key",
         message:
@@ -392,19 +478,27 @@ function lowerEvent<S extends ScopeName, Context extends AmbientScopeContext>(
           "stable key.",
       });
     }
-    locSink.register(optionKey, name.translations);
-    optionRefs.push(Object.freeze({ name: localizationRef(optionKey) }));
-    const optionEntries: PdxEntry[] = [kv("name", optionKey)];
-    const where = `option[${index}]`;
+    if (!isLocalizationRef(option.name)) {
+      locSink.register(nameRef.key, resolveLocalizedText(option.name).translations);
+    }
+    const childStem = `${id}.${suffix}`;
+    optionRefs.push(Object.freeze({ name: nameRef }));
+    const optionEntries: PdxEntry[] = [kv("name", nameRef.key)];
     if (option.icon !== undefined) {
       const iconEntries: PdxEntry[] = [kv("icon", refId(option.icon.icon))];
       if (option.icon.iconBackground !== undefined) {
         iconEntries.push(kv("icon_background", refId(option.icon.iconBackground)));
       }
       if (option.icon.text !== undefined) {
-        const textKey = `${optionKey}.icon`;
-        registerEventText(locSink, textKey, option.icon.text, `Event "${id}" ${where} icon text`);
-        iconEntries.push(kv("text", textKey));
+        const iconRef = eventText(
+          locSink,
+          refs,
+          option.icon.text,
+          `${childStem}.icon`,
+          `Event "${id}" ${where} icon text`,
+          `${where}.icon.text`
+        );
+        iconEntries.push(kv("text", iconRef.key));
       }
       optionEntries.push(block("icon", iconEntries));
     }
@@ -432,7 +526,7 @@ function lowerEvent<S extends ScopeName, Context extends AmbientScopeContext>(
         warnings,
         locSink,
         id,
-        `option_${optionSuffix.suffix}.ai_chance`,
+        `option_${suffix}.ai_chance`,
         option.aiChance.modifiers
       );
       const aiChanceRefs: RecordedRefUse[] = [];
@@ -443,14 +537,15 @@ function lowerEvent<S extends ScopeName, Context extends AmbientScopeContext>(
       refs.push(...underField(aiChanceRefs, `${where}.ai_chance`));
     }
     if (option.responseText !== undefined) {
-      const responseKey = `${optionKey}.response`;
-      registerEventText(
+      const responseRef = eventText(
         locSink,
-        responseKey,
+        refs,
         option.responseText,
-        `Event "${id}" ${where} responseText`
+        `${childStem}.response`,
+        `Event "${id}" ${where} responseText`,
+        `${where}.response_text`
       );
-      optionEntries.push(kv("response_text", responseKey));
+      optionEntries.push(kv("response_text", responseRef.key));
     }
     if (option.isDialogOnly === true) {
       optionEntries.push(kv("is_dialog_only", true));
@@ -476,12 +571,25 @@ function lowerEvent<S extends ScopeName, Context extends AmbientScopeContext>(
     entries.push(block("option", optionEntries));
   });
 
+  // Every trigger and effect spliced above is resolved here, once, against the
+  // event id: an event is a single identity with no nested owners, so one pass
+  // over the finished body keys the same script the same way whichever slot of
+  // this event it was spliced into.
+  const scriptLocalization: KeyedLocalization[] = [];
+  const resolved = resolveDeferredLocalization(entries, id, {
+    into: scriptLocalization,
+    warn: (warning) => warnings.push(warning),
+  } satisfies ScriptLocalizationSink);
+  for (const { key, translations } of scriptLocalization) {
+    locSink.register(key, translations);
+  }
+
   return {
     kind: "event-ref",
     scope,
     id,
     scopes: eventScopes(def.scopes),
-    entry: block(kind, entries),
+    entry: block(kind, [...resolved]),
     loc: Object.freeze({ ...eventRefs, options: Object.freeze(optionRefs) }),
     refs,
     warnings,

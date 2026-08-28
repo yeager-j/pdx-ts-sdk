@@ -95,12 +95,18 @@ options: [
 `key` is only for those anonymous positions. On a slot whose key comes from the
 definition id, it would name a key nothing reads, so the build refuses it.
 
-## Fields that name a key
+## Fields that store a key
 
 Some PDXScript fields hold a localization key rather than owning the text
-themselves — a `customTooltip`, a conditional `desc`. They take the same
-display text every other slot takes, and the SDK keys it for you from the
-definition id and the field, so nothing has to be named twice:
+themselves — a `customTooltip`, a conditional `desc`, an event option's `name`,
+a trigger's `fail_text`. Every one of them takes the same value, spelled
+`LocalizationInput`, in three forms:
+
+- a bare string, which is English display text;
+- a language record, which is that text plus its translations;
+- a reference, which names a key that already exists.
+
+The SDK keys inline text for you, so nothing has to be named twice:
 
 ```ts
 const resonanceArchive = mod.building("resonance_archive", {
@@ -113,8 +119,55 @@ and writes the English under it. The key is built from the id and the field
 path, so editing the words never moves it. Where the field repeats, each entry
 counts from `0` in the order you wrote them.
 
-To point one of these fields at a key that already exists, pass a reference
-rather than text. That is the only meaning a bare string does _not_ have here.
+A bare string here is display text and never a key. To point one of these
+fields at a key that already exists, pass a reference — `mod.localization()`, a
+definition's `loc` member, `vanilla.localization()`, or
+`external.localization()`.
+
+### Stored-key fields and fixed-key slots
+
+The two look alike and behave differently, and which one you are in is decided
+by the emitted PDXScript rather than by the field's name:
+
+|              | Fixed-key slot                    | Stored-key field                    |
+| ------------ | --------------------------------- | ----------------------------------- |
+| Examples     | a technology's `name`, `desc`     | `customTooltip`, an option's `name` |
+| Emitted body | writes nothing; the id is the key | writes the key it points at         |
+| Takes        | display text only                 | display text **or** a reference     |
+| A reference  | refused — nothing would read it   | emitted as it stands                |
+
+A fixed-key slot has no pointer in the file: Stellaris derives a technology's
+`name` key from the technology id, so the SDK must register the text under that
+exact key and a reference would have nowhere to point. Registry-owned `name`,
+`desc`, and `plural` slots are all of this kind.
+
+### Raw displayed text and unchecked ids
+
+Two engine fields are genuinely overloaded, and a bare string can no longer
+carry both meanings at once. Each ambiguous arm has a spelling of its own:
+
+```ts
+import { external, literalText } from "@pdx-ts/sdk";
+
+// A name-writing effect stores either a key or the words themselves.
+scope.createCountry({ name: literalText("The Contingency"), type: "faction" });
+
+// A field overloaded between a key and a content reference, where the id
+// belongs to a mod this build has no record of.
+mod.scriptedLoc("flavour", { default: external.reference("other_mod_sprite") });
+```
+
+`literalText()` writes the value as the raw scalar the game displays, and
+registers no localization entry. `external.reference()` is an unchecked content
+id, the reference counterpart of `external.localization()`; a checked
+`vanilla.*` reference or an SDK-owned item is better wherever one exists. Both
+are accepted only where the rules prove that arm exists — passing
+`literalText()` to a pure key field is a compile error.
+
+Where a field also declares an engine sentinel — `custom_tooltip`'s
+`fail_text = default`, `text = ""`, a name effect's `random` — that word keeps
+its engine meaning and takes precedence over English shorthand. To display the
+word itself, write it as a language record: `{ english: "default" }`.
 
 ## Reference the keys a definition mints
 
@@ -133,8 +186,11 @@ field, or into display text through the `loc` tag. Do not rebuild a key from
 the id by hand — only a `name` slot happens to equal its id, and `desc` and
 every pattern slot do not.
 
-Events expose the same thing. `title` and `desc` are there only when the event
-supplied that text, and `options` follows the order the options were written:
+Events expose the _effective_ references they write, which is not quite the
+same thing: a slot given `vanilla.localization("x")` reports that reference,
+since it is what the emitted event points at. `title` and `desc` are there only
+when the event supplied that slot, and `options` follows the order the options
+were written:
 
 ```ts
 const contact = mod.namespace("story").country(1, {
@@ -145,6 +201,12 @@ const contact = mod.namespace("story").country(1, {
 contact.loc.title?.key; // "crystal_resonance_story.1.name"
 contact.loc.options[0]!.name.key; // "crystal_resonance_story.1.answer"
 ```
+
+`locEntries` remains the narrower thing: only the text this event owns and
+ships. An option whose `name` is a reference has no suffix of its own, so its
+child text — the icon caption, the response — hangs off a stem this event
+derives from the referenced key rather than being defined inside that key's
+namespace.
 
 Every declared slot has a reference whether or not its text was ever supplied,
 because the key follows from the id alone. Naming a slot you left empty ships a
@@ -257,8 +319,13 @@ shows as itself.
 
 Between the two, plus `mod.localization` and a definition's `loc` member, every
 key has a spelling that says where it comes from — so nowhere in the API does a
-bare string mean a key. A key inside a recorded trigger or effect is a
-reference like any other:
+bare string mean a key.
+
+## Text inside a trigger or effect
+
+A trigger or an effect closure takes the same three forms every stored-key
+field takes, and inline text there is keyed against whatever the script is
+placed in:
 
 ```ts
 import { customTooltip, isSubject, owner, vanilla } from "@pdx-ts/sdk/stellaris";
@@ -266,6 +333,7 @@ import { customTooltip, isSubject, owner, vanilla } from "@pdx-ts/sdk/stellaris"
 mod.building("resonance_archive", {
   name: "Resonance Archive",
   potential: customTooltip({
+    successText: "The archive is yours to fill.",
     failText: vanilla.localization("requires_independence"),
     conditions: owner(isSubject(false)),
   }),
@@ -273,6 +341,29 @@ mod.building("resonance_archive", {
 ```
 
 The paired example above builds exactly this, so the compiler checks it.
+
+A trigger is a value that travels, so it has no owner while it is being built:
+the key is decided where the trigger is spliced into a definition, an event, or
+a patch. That has three consequences worth knowing:
+
+- The same trigger used by two definitions resolves independently under each,
+  and both ship their own copy of the text.
+- Reading `someTrigger.entries` before it is placed shows a placeholder, not a
+  key. A trigger holding inline text is an owner-relative template until then.
+- The key is `<owner id>_<script field path>_<pin or hash>`, so the same
+  trigger keys the same way whichever field of one owner it is composed under.
+
+The last part of the key hashes the English text unless you pin it, exactly as
+a modifier row's `desc` does, and the build reports an unpinned one as
+`unstable-localization-key`:
+
+```ts
+potential: customTooltip({ english: "Needs a gateway.", key: "gateway" });
+```
+
+Reuse across several positions is still what `mod.localization` is for: it
+mints one key, and every field that names it emits that key rather than a copy
+of the words.
 
 A string is shorthand for English-only text:
 

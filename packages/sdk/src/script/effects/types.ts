@@ -1,6 +1,6 @@
 /** Public effect-surface types shared by the recorder and generated scope interfaces. */
 
-import type { LocalizedText } from "../../authoring/localization.ts";
+import type { LocalizationInput } from "../../authoring/localization.ts";
 import type { EffectPathOf, ScopeObjOf } from "../../generated/effects.ts";
 import type { ModifierOperationFields } from "../../generated/modifier-policy.ts";
 import type { StaticModifierRef } from "../../generated/refs.ts";
@@ -279,16 +279,16 @@ type SelfNaturalFromConstraint<Self extends ScopeName, Root extends ScopeName | 
  */
 export interface Modifier<S extends ScopeName> extends ModifierOperationFields<ScriptValue> {
   /**
-   * Display text for this modifier row's tooltip (`desc = localisation` in
-   * `modifier_rule.cwt`). Like every other definition-attached localization
-   * slot in the SDK, the author writes text and a key is generated and
-   * registered automatically — see `ContentAuthoring`'s modifier-desc
+   * Text for this modifier row's tooltip (`desc = localisation` in
+   * `modifier_rule.cwt`). Inline display text is keyed and registered
+   * automatically — see `ContentAuthoring`'s modifier-desc
    * collection in `content/authoring.ts`, which is the only pathway that can safely
    * auto-register (it runs once, at `define()` time, against a stable
    * definition id). `randomList`/`lockedRandomList`/`random` and other
    * runtime-recorded effect modifiers have no such stable, once-only
-   * registration point — `modifierEntry` below throws if `desc` reaches it
-   * unresolved from one of those.
+   * registration point — `modifierEntry` below throws if inline text reaches
+   * it unresolved from one of those. A `LocalizationRef` already has a key and
+   * is accepted anywhere this row shape is used.
    *
    * Modifier rows have no id of their own, so the generated key ends in a
    * hash of the English text: it survives reordering, but it changes — and
@@ -297,7 +297,7 @@ export interface Modifier<S extends ScopeName> extends ModifierOperationFields<S
    * that part of the key instead. The pin is lowercase snake_case, matching
    * the same pattern as content ids.
    */
-  readonly desc?: LocalizedText;
+  readonly desc?: LocalizationInput;
   /**
    * The gating condition, spliced inline per `modifier_rule.cwt`.
    *
@@ -318,7 +318,9 @@ export interface Modifier<S extends ScopeName> extends ModifierOperationFields<S
  * we can make good tooltips with", per the CWT source comment. Same concept
  * as `Modifier`, one stricter requiredness level, not a duplicate shape.
  */
-export type ModifierWithLoc<S extends ScopeName> = Modifier<S> & { readonly desc: LocalizedText };
+export type ModifierWithLoc<S extends ScopeName> = Modifier<S> & {
+  readonly desc: LocalizationInput;
+};
 
 /**
  * The `mode` a {@link ComplexTriggerModifier} row feeds its trigger result
@@ -385,14 +387,14 @@ export interface ComplexTriggerModifier<S extends ScopeName> {
   readonly minValue?: ScriptValue;
   readonly maxValue?: ScriptValue;
   /**
-   * Display text for this row's tooltip, auto-registered as localisation the
-   * same way {@link Modifier.desc} is — see `ContentAuthoring`'s
+   * Text for this row's tooltip. Inline display text is auto-registered as
+   * localisation the same way {@link Modifier.desc} is — see `ContentAuthoring`'s
    * modifier-desc collection in `content/authoring.ts`. `complexTriggerModifierEntry`
    * below throws if `desc` reaches it unresolved. Unlike {@link Modifier.desc},
    * this row's key is its position among the field's rows rather than a hash
    * of its text, so it takes no `key` pin.
    */
-  readonly desc?: LocalizedText;
+  readonly desc?: LocalizationInput;
   /** Additional gate evaluated alongside the named trigger. */
   readonly potential?: Trigger<S>;
 }
@@ -419,7 +421,7 @@ export type ComplexTriggerModifierWithLoc<S extends ScopeName> = Omit<
   ComplexTriggerModifier<S>,
   "divide" | "minValue" | "maxValue" | "desc"
 > & {
-  readonly desc: LocalizedText;
+  readonly desc: LocalizationInput;
   readonly divide?: never;
   readonly minValue?: never;
   readonly maxValue?: never;

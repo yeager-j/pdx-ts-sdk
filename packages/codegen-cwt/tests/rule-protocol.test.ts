@@ -531,8 +531,8 @@ describe("LoweredRule", () => {
       emitted.interfaces.indexOf("declareWar(args:") + 1_500
     );
     expect(declareWarSignature).toContain(
-      "name?: LocalizationRef | string | " +
-        "{ key: LocalizationRef; variableString?: readonly string[] }"
+      "name?: LocalizationInput | LiteralText | " +
+        "{ key: LocalizationInput; variableString?: readonly string[] }"
     );
     expect(emitted.fieldCardinalityOverrides).toEqual([
       expect.stringContaining("declare_war.name → optional"),

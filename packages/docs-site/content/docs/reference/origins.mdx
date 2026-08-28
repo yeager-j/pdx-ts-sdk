@@ -130,8 +130,8 @@ galaxy before depending on them; the SDK only serializes the values.
 
 `name` creates localization at the full origin id and `desc` creates
 `<full-id>_desc`. `description`, `negativeDescription`, `customTooltip`, and
-`customTooltipWithModifiers` take existing localization keys. They do not
-accept display text directly.
+`customTooltipWithModifiers` store a localization key, so each takes display
+text the SDK keys for you or a reference to an entry that already exists.
 
 `icon` is a raw path to the small origin icon. `picture` is a sprite reference
 for the larger origin illustration. The examples reuse Vanilla assets; the SDK

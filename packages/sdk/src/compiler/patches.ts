@@ -1,5 +1,6 @@
 import { serialize } from "@pdx-ts/pdxscript";
 
+import { assertNoDeferredLocalization } from "../authoring/deferred-localization.ts";
 import type { PlacedItem } from "../authoring/feature.ts";
 import { StaleRuleTableError } from "../errors.ts";
 import type { ContentTypeName } from "../generated/content-registry.ts";
@@ -133,6 +134,9 @@ function planRegistry(
     registry,
     patches: patches.map((patched) => {
       const entry = patched.toEntries();
+      // The plan hashes this entry to compute a winning filename, so a marker
+      // reaching here would be hashed as well as emitted.
+      assertNoDeferredLocalization([entry], `The patch of ${registry} "${patched.id}"`);
       const fileLocals = origin.localVariables(patched.source.sourceFile);
       const locals = new Map<string, number>();
       for (const name of collectVarRefs(entry)) {

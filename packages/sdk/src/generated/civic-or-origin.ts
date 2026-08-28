@@ -2,7 +2,11 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/governments.cwt
 
-import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
+import type {
+  LocalizationInput,
+  LocalizationRef,
+  LocalizedText,
+} from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { ModifierClosure, WeightBlock } from "../content/types.ts";
@@ -25,11 +29,11 @@ import type { CountryFlag } from "./value-sets.ts";
 import "./government-trigger.ts";
 
 export interface CivicOrOriginSwapType {
-  name?: LocalizationRef | string;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  description?: LocalizedText | LocalizationRef;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  negativeDescription?: LocalizedText | LocalizationRef;
+  name?: string;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  description?: LocalizationInput;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  negativeDescription?: LocalizationInput;
   /** In empire creation / galaxy setup this has no scope; during the game, when countries actually exist, it is country scope. Always guard country-scope conditions with is_scope_valid first (see civic_devouring_swarm), or you will get errors or it won't work as intended. */
   trigger: Trigger<"country">;
   /** modifier that is applied to the country when triggers are evaluated as true */
@@ -39,7 +43,7 @@ export interface CivicOrOriginSwapType {
 }
 
 export const CIVIC_OR_ORIGIN_SWAP_TYPE_FIELDS: readonly ContentField[] = [
-  { key: "name", member: "name", shape: "value", form: "scalar", conversion: "ref" },
+  { key: "name", member: "name", shape: "value", form: "scalar", conversion: "identity" },
   {
     key: "description",
     member: "description",
@@ -68,8 +72,8 @@ export const CIVIC_OR_ORIGIN_SWAP_TYPE_FIELDS: readonly ContentField[] = [
 ];
 
 export interface CivicOrOriginModification {
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  moddableConditionsCustomTooltip?: LocalizedText | LocalizationRef;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  moddableConditionsCustomTooltip?: LocalizationInput;
   add?: Trigger<"country">;
   remove?: Trigger<"country">;
 }
@@ -120,8 +124,8 @@ export const CIVIC_OR_ORIGIN_HAS_SECONDARY_SPECIES_TRAITS_FIELDS: readonly Conte
 ];
 
 export interface CivicOrOriginHasSecondarySpecies {
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  title: LocalizedText | LocalizationRef;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  title: LocalizationInput;
   traits?: CivicOrOriginHasSecondarySpeciesTraits;
 }
 
@@ -177,14 +181,14 @@ export interface CivicOrOriginFields {
   icon?: string;
   /**
    * Custom text that will appear under the "Effects" heading.
-   * Names a localization key: pass a reference, or display text the SDK keys and emits for you.
+   * Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.
    */
-  description?: LocalizedText | LocalizationRef;
+  description?: LocalizationInput;
   /**
    * Custom text that will appear under the "Penalties" heading.
-   * Names a localization key: pass a reference, or display text the SDK keys and emits for you.
+   * Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists.
    */
-  negativeDescription?: LocalizedText | LocalizationRef;
+  negativeDescription?: LocalizationInput;
   /** AND trigger, no scope; use this to prevent the civic from being selectable by the player (UI). Possibly only works with DLC checks. */
   playable?: Trigger<"no_scope">;
   /** AND trigger, no scope; use this to prevent the civic from being selectable by the AI. Possibly only works with DLC checks. */
@@ -203,10 +207,10 @@ export interface CivicOrOriginFields {
   hideModifiers?: boolean;
   multiplyByHabitabilityEffectModifier?: ModifierClosure<"country">;
   startingColony?: PlanetClassRef | string;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  customTooltip?: (LocalizedText | LocalizationRef)[];
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  customTooltipWithModifiers?: (LocalizedText | LocalizationRef)[];
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  customTooltip?: LocalizationInput[];
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  customTooltipWithModifiers?: LocalizationInput[];
   swapType?: CivicOrOriginSwapType[];
   /**
    * default: 1

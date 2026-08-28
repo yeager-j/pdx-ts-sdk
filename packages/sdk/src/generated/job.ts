@@ -2,7 +2,11 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/pop_jobs.cwt
 
-import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
+import type {
+  LocalizationInput,
+  LocalizationRef,
+  LocalizedText,
+} from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type {
@@ -16,12 +20,12 @@ import type { JobTrigger } from "./enums.ts";
 import type { BuildingRef, JobRef, PopCategoryRef, PurgeTypeRef, TraitRef } from "./refs.ts";
 
 export interface JobSwappableDataDefault {
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  desc?: LocalizedText | LocalizationRef;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  desc?: LocalizationInput;
   icon?: JobRef | string;
   buildingIcon?: BuildingRef | string;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  conditionString?: LocalizedText | LocalizationRef;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  conditionString?: LocalizationInput;
 }
 
 export const JOB_SWAPPABLE_DATA_DEFAULT_FIELDS: readonly ContentField[] = [
@@ -53,13 +57,13 @@ export const JOB_SWAPPABLE_DATA_DEFAULT_FIELDS: readonly ContentField[] = [
 
 export interface JobSwappableDataSwapType {
   trigger: Trigger<"planet">;
-  name?: LocalizationRef | JobRef | string;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  desc?: LocalizedText | LocalizationRef;
+  name?: string | JobRef;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  desc?: LocalizationInput;
   icon?: JobRef | string;
   buildingIcon?: BuildingRef | string;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  conditionString?: LocalizedText | LocalizationRef;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  conditionString?: LocalizationInput;
   weight: number | WeightBlock<"pop_group">;
 }
 
@@ -236,8 +240,8 @@ export interface JobFields {
   possiblePreTriggers?: JobPossiblePreTriggers;
   tags?: string[];
   triggeredTags?: JobTriggeredTags;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  localizedTags?: (LocalizedText | LocalizationRef)[];
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  localizedTags?: LocalizationInput[];
   possiblePrecalc?: JobTrigger;
   possible?: Trigger<"pop_group">;
   resources?: EconomicResourceBlock<"colony">[];

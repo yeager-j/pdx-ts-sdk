@@ -52,10 +52,26 @@ export interface TsValue {
    * This import is used by `emit/script/triggers.ts`, which writes conversion expressions.
    */
   readonly scalarSymbol?: string;
+  /**
+   * Marks a value the rules type as a localisation key, which the SDK lowers
+   * through `localizationScalar` rather than {@link TsValue.toScalar}.
+   *
+   * The conversion needs the field's own path, which a `toScalar` expression
+   * has no way to carry, because inline text recorded by script is keyed
+   * against that path once an owner is known. `localizationScalarExpr` in
+   * `emit/script/trigger-push-code.ts` is the one writer of that call.
+   */
+  readonly localizationInput?: true;
+  /**
+   * Engine sentinels declared beside the localisation arm, which pass through
+   * as themselves rather than becoming display text.
+   */
+  readonly localizationLiterals?: readonly string[];
 }
 
 /** A runtime-discriminated object form accepted by a scalar field. */
-export type ScalarObjectKind = "scope-ref" | "typed-ref" | "localization-ref";
+export type ScalarObjectKind =
+  "scope-ref" | "typed-ref" | "localization-ref" | "localized-text" | "literal-text";
 
 /**
  * Whether a scalar admits a localization reference, and so must record the
@@ -338,7 +354,13 @@ export class Emitter {
    * Lowers one rule type and records any enum, reference, value-set, or scope usage it introduces.
    * Returns `null` when the rule has no sensible scalar representation.
    */
-  valueFor(type: RuleType): TsValue | null {
+  valueFor(type: RuleType, inLocalisationUnion = false): TsValue | null {
+    if (inLocalisationUnion) {
+      const beside = this.valueBesideLocalisation(type);
+      if (beside !== undefined) {
+        return beside;
+      }
+    }
     switch (type.kind) {
       case "bool":
         return {
@@ -363,20 +385,21 @@ export class Emitter {
           scriptValue: true,
           typeSymbols: ["ScriptValue"],
         };
-      // A reference and nothing else. Every key has a spelling that mints one
-      // — `mod.localization()`, a definition's `loc` member,
-      // `vanilla.localization()` for a key the game ships,
-      // `external.localization()` for one it does not — so a bare string here
-      // would only be an unchecked fourth way to say what those already say
-      // (SDK-307). This completes the inversion SDK-303 began: nowhere in the
-      // API does a bare string mean a key.
+      // Display text or a reference — one input for every position that stores
+      // a key. A bare string is the English text and never a key: an existing
+      // key has four spellings that mint a reference (`mod.localization()`, a
+      // definition's `loc` member, `vanilla.localization()`,
+      // `external.localization()`), so a fifth unchecked one would say nothing
+      // the others do not. Inline text recorded by script defers its key until
+      // the splice into a definition, an event, or a patch supplies an owner.
       case "localisation":
         return {
-          type: "LocalizationRef",
+          type: "LocalizationInput",
           toScalar: (expression) => `refId(${expression})`,
-          objectKinds: ["localization-ref"],
-          typeSymbols: ["LocalizationRef"],
+          objectKinds: ["localization-ref", "localized-text"],
+          typeSymbols: ["LocalizationInput"],
           scalarSymbol: "refId",
+          localizationInput: true,
         };
       case "scalar":
       case "filepath":
@@ -496,11 +519,66 @@ export class Emitter {
   }
 
   /**
+   * Re-lowers one arm of a union that also names a localisation key, so no arm
+   * is left spelled as a bare `string`.
+   *
+   * A bare string now means English display text, so a second string-backed
+   * arm in the same position would be two things at once with nothing to tell
+   * them apart. Each such arm gets a runtime-distinguishable spelling instead:
+   * raw displayed text becomes {@link LiteralText}, and a `<type>` reference
+   * drops the escape-hatch `| string` in favour of `external.reference()`,
+   * which is the same `{ id }` shape every branded reference already is.
+   *
+   * An arm with no such spelling is refused rather than reinterpreted or
+   * dropped — see `tests/localisation-unions.test.ts`, which walks every
+   * localisation union in the rules so a future CWT change cannot introduce
+   * one unnoticed.
+   *
+   * Returns `undefined` for an arm that needs no adjustment.
+   */
+  private valueBesideLocalisation(type: RuleType): TsValue | undefined {
+    switch (type.kind) {
+      case "scalar":
+      case "filepath":
+      case "icon":
+      case "colour":
+        return {
+          type: "LiteralText",
+          toScalar: (expression) => `${expression}.text`,
+          objectKinds: ["literal-text"],
+          typeSymbols: ["LiteralText"],
+        };
+      case "typeRef": {
+        this.usedRefs.add(type.name);
+        this.scopedRefs.add(type.name);
+        return {
+          type: this.refTypeName(type.name),
+          toScalar: (expression) => `refId(${expression})`,
+          refTypes: [type.name],
+          objectKinds: ["typed-ref"],
+          scalarSymbol: "refId",
+        };
+      }
+      case "enum":
+      case "valueSet":
+        throw new Error(
+          `A localisation position is overloaded with ${type.kind}[${type.name}], whose members ` +
+            "are bare strings: a string there would be both display text and one of those " +
+            "names, with nothing to tell them apart. Give the arm a runtime-distinguishable " +
+            "spelling, or keep the field out of the localization input surface."
+        );
+      default:
+        return undefined;
+    }
+  }
+
+  /**
    * Lowers an overloaded rule into one signature while recording every arm's usage.
    * Returns `null` when any arm has no sensible scalar representation.
    */
   unionFor(types: readonly RuleType[]): TsValue | null {
-    const values = types.map((type) => this.valueFor(type));
+    const localisation = types.some((type) => type.kind === "localisation");
+    const values = types.map((type) => this.valueFor(type, localisation));
     if (!values.every((value): value is TsValue => value !== null)) {
       return null;
     }
@@ -529,11 +607,20 @@ export class Emitter {
     const scriptValue =
       !conversionsDiffer && values.every((value) => value.scriptValue === true) ? true : undefined;
     const scalarSymbol = conversionsDiffer ? "refId" : firstValue.scalarSymbol;
+    // The sentinels a mixed localisation position keeps: `default` selects the
+    // game's own fail text, `random` its own name generator, and neither is a
+    // key the mod could supply. They keep precedence over English shorthand,
+    // so `{ english: "default" }` is how the word itself is displayed.
+    const localizationLiterals = localisation
+      ? [...new Set(types.flatMap((type) => (type.kind === "literal" ? [type.text] : [])))]
+      : [];
     return {
       type: parts.join(" | "),
       toScalar: conversionsDiffer ? (expression) => `refId(${expression})` : firstValue.toScalar,
       refTypes,
       literals,
+      ...(localisation ? { localizationInput: true as const } : {}),
+      ...(localizationLiterals.length === 0 ? {} : { localizationLiterals }),
       ...(booleanLiterals.length === 0 ? {} : { booleanLiterals }),
       ...(scriptValue === undefined ? {} : { scriptValue }),
       ...(objectKinds.length === 0 ? {} : { objectKinds }),

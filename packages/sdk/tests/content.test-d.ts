@@ -71,6 +71,7 @@ import {
   type EventFleetRef,
   type GovernmentTriggerBlock,
   type JobRef,
+  type LocalizationInput,
   type LocalizationRef,
   type LocalizedText,
   type MegastructureFields,
@@ -2077,8 +2078,8 @@ describe("generated content authoring types", () => {
     >();
     expectTypeOf<PrereqforDesc["diploAction"]>().toEqualTypeOf<Entry[] | undefined>();
     expectTypeOf<Entry>().toEqualTypeOf<{
-      title: LocalizedText | LocalizationRef;
-      desc?: LocalizedText | LocalizationRef;
+      title: LocalizationInput;
+      desc?: LocalizationInput;
     }>();
     // The same declaration one level down is its own lowering, not the
     // parent's: closing only the top level would have left 28 shipped
@@ -2087,8 +2088,8 @@ describe("generated content authoring types", () => {
     type SwapPrereqforDesc = NonNullable<Swap["prereqforDesc"]>[number];
     expectTypeOf<SwapPrereqforDesc["ship"]>().toEqualTypeOf<
       | {
-          title: LocalizedText | LocalizationRef;
-          desc?: LocalizedText | LocalizationRef;
+          title: LocalizationInput;
+          desc?: LocalizationInput;
         }[]
       | undefined
     >();
@@ -2696,12 +2697,11 @@ describe("generated content authoring types", () => {
     // sentinel, once as `localisation` — so the sentinel stays in the union
     // beside the two authored forms of a key (SDK-303).
     expectTypeOf<UtilityComponentTemplateFields["customTooltip"]>().toEqualTypeOf<
-      | LocalizedText
-      | LocalizationRef
+      | LocalizationInput
       | {
-          text?: "" | LocalizedText | LocalizationRef;
-          failText?: "default" | LocalizedText | LocalizationRef;
-          successText?: LocalizedText | LocalizationRef;
+          text?: "" | LocalizationInput;
+          failText?: "default" | LocalizationInput;
+          successText?: LocalizationInput;
           when?: Trigger<never>;
         }
       | undefined

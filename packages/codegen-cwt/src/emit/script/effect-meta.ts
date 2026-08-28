@@ -31,6 +31,10 @@ function scalarMetaMembers(value: TsValue): string[] {
       ? null
       : `booleanLiterals: ${JSON.stringify(value.booleanLiterals)}`,
     value.objectKinds === undefined ? null : `objectKinds: ${JSON.stringify(value.objectKinds)}`,
+    value.localizationInput === true ? "locInput: true" : null,
+    value.localizationLiterals === undefined
+      ? null
+      : `locLiterals: ${JSON.stringify(value.localizationLiterals)}`,
   ].filter((member): member is string => member !== null);
 }
 
@@ -218,7 +222,7 @@ export function effectMetaCode(
     '"value" | "comparison" | "trigger" | "effect" | "modifiers" | "fields" | "map" | "scalar-or-block" | "value-list" | "alias-list" | "alias-struct";\n\n' +
     "/** How one scalar-valued position lowers to a PDXScript scalar. */\n" +
     "export type EffectScalarMeta = " +
-    'Pick<EffectFieldMeta, "refTypes" | "booleanLiterals" | "objectKinds">;\n\n' +
+    'Pick<EffectFieldMeta, "refTypes" | "booleanLiterals" | "objectKinds" | "locInput" | "locLiterals">;\n\n' +
     docComment([
       "A block whose keys the script itself supplies, written as one object.",
       "Entries keep authoring order; `splice` writes them beside the enclosing",
@@ -261,7 +265,19 @@ export function effectMetaCode(
     "  /** Literal yes/no arms that lower to PDXScript booleans rather than strings. */\n" +
     '  readonly booleanLiterals?: readonly ("yes" | "no")[];\n' +
     "  /** Object-backed scalar forms accepted by a mixed scalar/block field. */\n" +
-    '  readonly objectKinds?: readonly ("scope-ref" | "typed-ref" | "localization-ref")[];\n' +
+    '  readonly objectKinds?: readonly ("scope-ref" | "typed-ref" | "localization-ref" | "localized-text" | "literal-text")[];\n' +
+    docComment(
+      [
+        "Whether the rules type this position as a localisation key, so the",
+        "recorder lowers it through `localizationScalar`: a reference emits its",
+        "key, and inline display text defers one until a splice supplies an",
+        "owner.",
+      ],
+      "  "
+    ) +
+    "  readonly locInput?: true;\n" +
+    "  /** Engine sentinels that pass through instead of becoming display text. */\n" +
+    "  readonly locLiterals?: readonly string[];\n" +
     "  /** Whether the field accepts repeated entries under the same script key. */\n" +
     "  readonly repeated?: boolean;\n" +
     "  /** The spliced alias category an alias-list or alias-struct field authors. */\n" +
@@ -287,7 +303,7 @@ export function effectMetaCode(
     "/** One scalar call form of an effect. */\n" +
     "export type EffectScalarShapeMeta =\n" +
     '  | { readonly kind: "bool" }\n' +
-    '  | { readonly kind: "value"; readonly refTypes?: readonly string[]; readonly booleanLiterals?: readonly ("yes" | "no")[]; readonly objectKinds?: readonly ("scope-ref" | "typed-ref" | "localization-ref")[] };\n\n' +
+    '  | { readonly kind: "value"; readonly refTypes?: readonly string[]; readonly booleanLiterals?: readonly ("yes" | "no")[]; readonly objectKinds?: readonly ("scope-ref" | "typed-ref" | "localization-ref" | "localized-text" | "literal-text")[]; readonly locInput?: true; readonly locLiterals?: readonly string[] };\n\n' +
     "/** One block call form of an effect. */\n" +
     "export type EffectBlockShapeMeta =\n" +
     '  | { readonly kind: "fields"; readonly fields: readonly EffectFieldMeta[] }\n' +

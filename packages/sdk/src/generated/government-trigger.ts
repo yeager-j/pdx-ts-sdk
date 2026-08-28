@@ -2,7 +2,7 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: alias[government_trigger:...] across the rule files
 
-import type { LocalizationRef } from "../authoring/localization.ts";
+import type { LocalizationInput } from "../authoring/localization.ts";
 import { registerAliasStructFields, type ContentField } from "../content/schema.ts";
 import type { Dlc } from "./enums.ts";
 import type {
@@ -24,8 +24,8 @@ import type {
  * `text` as the tooltip shown when the group decides the outcome.
  */
 export interface GovernmentTriggerClauseGroup<R> {
-  /** Localization key for the tooltip this group produces. */
-  text?: string;
+  /** The tooltip this group produces: display text the SDK keys and emits, or a reference to a key that already exists. */
+  text?: LocalizationInput;
   /** The group's operands, emitted as repeated `value` keys. */
   values: readonly R[];
 }
@@ -47,7 +47,14 @@ export interface GovernmentTriggerClause<R> {
 }
 
 export const GOVERNMENT_TRIGGER_AUTHORITY_CLAUSE_GROUP_FIELDS: readonly ContentField[] = [
-  { key: "text", member: "text", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "text",
+    member: "text",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+    locKey: true,
+  },
   {
     key: "value",
     member: "values",
@@ -95,7 +102,14 @@ export const GOVERNMENT_TRIGGER_AUTHORITY_CLAUSE_FIELDS: readonly ContentField[]
 ];
 
 export const GOVERNMENT_TRIGGER_COUNTRY_TYPE_CLAUSE_GROUP_FIELDS: readonly ContentField[] = [
-  { key: "text", member: "text", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "text",
+    member: "text",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+    locKey: true,
+  },
   {
     key: "value",
     member: "values",
@@ -143,7 +157,14 @@ export const GOVERNMENT_TRIGGER_COUNTRY_TYPE_CLAUSE_FIELDS: readonly ContentFiel
 ];
 
 export const GOVERNMENT_TRIGGER_ETHICS_CLAUSE_GROUP_FIELDS: readonly ContentField[] = [
-  { key: "text", member: "text", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "text",
+    member: "text",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+    locKey: true,
+  },
   {
     key: "value",
     member: "values",
@@ -191,7 +212,14 @@ export const GOVERNMENT_TRIGGER_ETHICS_CLAUSE_FIELDS: readonly ContentField[] = 
 ];
 
 export const GOVERNMENT_TRIGGER_CIVICS_CLAUSE_GROUP_FIELDS: readonly ContentField[] = [
-  { key: "text", member: "text", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "text",
+    member: "text",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+    locKey: true,
+  },
   {
     key: "value",
     member: "values",
@@ -239,7 +267,14 @@ export const GOVERNMENT_TRIGGER_CIVICS_CLAUSE_FIELDS: readonly ContentField[] = 
 ];
 
 export const GOVERNMENT_TRIGGER_ORIGIN_CLAUSE_GROUP_FIELDS: readonly ContentField[] = [
-  { key: "text", member: "text", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "text",
+    member: "text",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+    locKey: true,
+  },
   {
     key: "value",
     member: "values",
@@ -287,7 +322,14 @@ export const GOVERNMENT_TRIGGER_ORIGIN_CLAUSE_FIELDS: readonly ContentField[] = 
 ];
 
 export const GOVERNMENT_TRIGGER_TRAITS_CLAUSE_GROUP_FIELDS: readonly ContentField[] = [
-  { key: "text", member: "text", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "text",
+    member: "text",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+    locKey: true,
+  },
   {
     key: "value",
     member: "values",
@@ -335,7 +377,14 @@ export const GOVERNMENT_TRIGGER_TRAITS_CLAUSE_FIELDS: readonly ContentField[] = 
 ];
 
 export const GOVERNMENT_TRIGGER_SPECIES_CLASS_CLAUSE_GROUP_FIELDS: readonly ContentField[] = [
-  { key: "text", member: "text", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "text",
+    member: "text",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+    locKey: true,
+  },
   {
     key: "value",
     member: "values",
@@ -383,7 +432,14 @@ export const GOVERNMENT_TRIGGER_SPECIES_CLASS_CLAUSE_FIELDS: readonly ContentFie
 ];
 
 export const GOVERNMENT_TRIGGER_SPECIES_ARCHETYPE_CLAUSE_GROUP_FIELDS: readonly ContentField[] = [
-  { key: "text", member: "text", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "text",
+    member: "text",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+    locKey: true,
+  },
   {
     key: "value",
     member: "values",
@@ -432,7 +488,14 @@ export const GOVERNMENT_TRIGGER_SPECIES_ARCHETYPE_CLAUSE_FIELDS: readonly Conten
 
 export const GOVERNMENT_TRIGGER_PREFERRED_PLANET_CLASS_CLAUSE_GROUP_FIELDS: readonly ContentField[] =
   [
-    { key: "text", member: "text", shape: "value", form: "scalar", conversion: "identity" },
+    {
+      key: "text",
+      member: "text",
+      shape: "value",
+      form: "scalar",
+      conversion: "identity",
+      locKey: true,
+    },
     {
       key: "value",
       member: "values",
@@ -480,7 +543,14 @@ export const GOVERNMENT_TRIGGER_PREFERRED_PLANET_CLASS_CLAUSE_FIELDS: readonly C
 ];
 
 export const GOVERNMENT_TRIGGER_GRAPHICAL_CULTURE_CLAUSE_GROUP_FIELDS: readonly ContentField[] = [
-  { key: "text", member: "text", shape: "value", form: "scalar", conversion: "identity" },
+  {
+    key: "text",
+    member: "text",
+    shape: "value",
+    form: "scalar",
+    conversion: "identity",
+    locKey: true,
+  },
   {
     key: "value",
     member: "values",
@@ -533,7 +603,7 @@ export const GOVERNMENT_TRIGGER_GRAPHICAL_CULTURE_CLAUSE_FIELDS: readonly Conten
  * static configuration, so only the members below are read.
  */
 export interface GovernmentTriggerBlock {
-  text?: LocalizationRef;
+  text?: LocalizationInput;
   always?: boolean;
   authority?: GovernmentTriggerClause<AuthorityRef | string>;
   countryType?: GovernmentTriggerClause<CountryTypeRef | string>;

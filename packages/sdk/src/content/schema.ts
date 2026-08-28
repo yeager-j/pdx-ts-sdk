@@ -76,11 +76,16 @@ export interface ContentValueField extends ContentFieldBase, ContentRefTypes {
    * free text (CWT's bare `= localisation`, distinct from a `"$"`-pattern
    * slot the {@link ContentLocalisation} pipeline auto-generates a key for).
    *
-   * The member accepts a `LocalizationRef` or inline display text, and the
-   * definition walk resolves either to the key the body emits — minting one
-   * from the owner id and field path for inline text (SDK-303). Nothing
-   * downstream can otherwise tell "raw key" from "any other string field", so
-   * this flag is what makes that resolution possible.
+   * The member accepts a `LocalizationInput` — inline display text, or a
+   * reference to a key that already exists — and the definition walk resolves
+   * either to the key the body emits, minting one from the owner id and field
+   * path for inline text (SDK-303). Nothing downstream can otherwise tell "raw
+   * key" from "any other string field", so this flag is what makes that
+   * resolution possible.
+   *
+   * Where the rules overload the position, the same flag covers the other
+   * arms: `LiteralText` lowers to the raw scalar the game displays, and a
+   * content or scope reference rides through to `refId` unchanged (SDK-308).
    */
   readonly locKey?: true;
   /**

@@ -2,7 +2,11 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/special_projects.cwt
 
-import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
+import type {
+  LocalizationInput,
+  LocalizationRef,
+  LocalizedText,
+} from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type { EffectBlock, WeightBlock, WithFrom } from "../content/types.ts";
@@ -20,8 +24,8 @@ import type {
 } from "./refs.ts";
 
 export interface SpecialProjectDesc {
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  text: LocalizedText | LocalizationRef;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  text: LocalizationInput;
   trigger: Trigger<"country">;
 }
 
@@ -60,8 +64,8 @@ export interface SpecialProjectRequirements {
   shipclassScienceShip?: number;
   shipclassColonizer?: number;
   shipclassTransport?: number;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  handledByEventTooltip?: LocalizedText | LocalizationRef;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  handledByEventTooltip?: LocalizationInput;
   hasTechnology?: TechnologyRef | string;
   leader?: LeaderClassRef | string;
   assaultArmies?: number;
@@ -212,8 +216,8 @@ export const SPECIAL_PROJECT_REQUIREMENTS_FIELDS: readonly ContentField[] = [
 ];
 
 export interface SpecialProjectTriggeredRequirement {
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  text: LocalizedText | LocalizationRef;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  text: LocalizationInput;
   count: number;
   trigger: Trigger<"fleet">;
 }
@@ -308,8 +312,8 @@ export interface SpecialProjectFieldsBase<
   /** default: no */
   location?: boolean;
   removeWhenCompleted?: boolean;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  projectType?: LocalizedText | LocalizationRef;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  projectType?: LocalizationInput;
   eventScope: E;
   /** this = country (project owner); from = event scope (planet or ship, MIGHT NOT EXIST); fromfrom = project creation scope (usually equals location) */
   failTrigger?: WithFrom<

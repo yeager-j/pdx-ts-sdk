@@ -12,6 +12,10 @@ import {
 } from "@pdx-ts/pdxscript";
 
 import type { AssetFileItem } from "../authoring/assets.ts";
+import {
+  resolveDeferredLocalization,
+  type ScriptLocalizationSink,
+} from "../authoring/deferred-localization.ts";
 import { weightedEventBlock } from "../events/weighted-events.ts";
 import type { ScopeName } from "../generated/scopes.ts";
 import {
@@ -22,7 +26,7 @@ import {
 } from "../references.ts";
 import { recordEffects, withScriptCtx } from "../script/effects/recorder.ts";
 import type { AmbientScopeContext, ScriptCtx } from "../script/effects/types.ts";
-import { refId, type TypedRef } from "../script/scalar.ts";
+import { localizationScalar, refId, type TypedRef } from "../script/scalar.ts";
 import { scriptValueScalar, type ScriptValue, type Trigger } from "../script/trigger-core.ts";
 import {
   ECONOMIC_RESOURCE_OPERATIONS,
@@ -204,11 +208,33 @@ export function resolveFromClosures(
   return resolved;
 }
 
-interface LoweringContext {
+export interface LoweringContext {
   readonly collect?: RefUseSink;
   readonly collectPath?: AssetPathSink;
   readonly path: string;
   readonly ownerId: string;
+  /**
+   * Where inline text a spliced trigger or effect recorded is registered.
+   *
+   * Recorded script carries {@link deferLocalization} markers rather than
+   * keys, because the recorder has no owner to key them against. This is the
+   * owner: it travels with `ownerId`, so a nested repeated-struct entry keys
+   * the script inside it under its own id, exactly as the definition walk
+   * mints that entry's other localisation under it.
+   */
+  readonly localization?: ScriptLocalizationSink;
+  /**
+   * Set by a caller that lowers content fields without a definition walk in
+   * front of them — the effect recorder, splicing a whole alias category into
+   * a block it is recording.
+   *
+   * A definition resolves every `locKey` member to the key its body emits
+   * before anything lowers, so by the time {@link fieldEntries} sees one it is
+   * a plain string. There is no such pass here: the values arrive as the
+   * author wrote them, and there is no owner yet to key display text against,
+   * so they defer exactly as a recorded trigger argument does.
+   */
+  readonly unresolvedKeys?: true;
 }
 
 function childContext(ctx: LoweringContext, segment: string, ownerId?: string): LoweringContext {
@@ -217,6 +243,8 @@ function childContext(ctx: LoweringContext, segment: string, ownerId?: string): 
     collectPath: ctx.collectPath,
     path: joinPath(ctx.path, segment),
     ownerId: ownerId ?? ctx.ownerId,
+    localization: ctx.localization,
+    unresolvedKeys: ctx.unresolvedKeys,
   };
 }
 
@@ -287,10 +315,17 @@ function isAssetFileItem(value: unknown): value is AssetFileItem {
 function contentScalar(
   value: unknown,
   field: ContentFieldBase &
-    ContentRefTypes & { readonly conversion: "identity" | "ref" | "assetPath" },
+    ContentRefTypes & {
+      readonly conversion: "identity" | "ref" | "assetPath";
+      readonly locKey?: true;
+      readonly locKeyLiterals?: readonly string[];
+    },
   quote: boolean,
   ctx?: LoweringContext
 ): PdxScalar {
+  if (field.locKey === true && ctx?.unresolvedKeys === true) {
+    return localizationScalar(value, joinPath(ctx.path, field.key), field.locKeyLiterals);
+  }
   if (field.conversion === "assetPath") {
     // Both forms write a path and both are recorded: an Item is a path this
     // build ships and can prove, a string is a path only the fold's evidence
@@ -345,11 +380,31 @@ export function fieldEntries(
   ctx: LoweringContext
 ) {
   const entries: PdxEntry[] = [];
+  /**
+   * Resolves the entries one field just wrote, before the walk leaves the
+   * level whose `ownerId` those entries' inline localization keys hang off.
+   *
+   * Per field rather than per definition: a `repeatedStruct` entry rebinds
+   * `ownerId` on the way down, and a one-pass sweep over a finished top-level
+   * entry would key every marker under the outermost id instead.
+   */
+  const resolveField = (from: number): void => {
+    if (ctx.localization === undefined || entries.length === from) {
+      return;
+    }
+    const written = entries.slice(from);
+    const resolved = resolveDeferredLocalization(written, ctx.ownerId, ctx.localization);
+    if (resolved !== written) {
+      entries.length = from;
+      entries.push(...resolved);
+    }
+  };
   for (const field of fields) {
     const value = def[field.member];
     if (value === undefined) {
       continue;
     }
+    const writtenFrom = entries.length;
     // A repeated member whose array mixes parsed occurrences with fresh inputs
     // is emitted one element at a time, in the author's order: the parsed ones
     // splice in as they stand, and each fresh one lowers through this same
@@ -601,6 +656,7 @@ export function fieldEntries(
         break;
       }
     }
+    resolveField(writtenFrom);
   }
   return entries;
 }

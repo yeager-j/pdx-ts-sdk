@@ -1,9 +1,12 @@
 /** Content definition identity, localization, and authoring registration. */
 import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
 
+import type { ScriptLocalizationSink } from "../authoring/deferred-localization.ts";
 import {
   assertOwnLocalizationItem,
+  isLiteralText,
   isLocalizationRef,
+  isLocalizedTextRecord,
   isPlaceableLocalizationItem,
   localizationRef,
   resolveFixedKeyText,
@@ -12,6 +15,7 @@ import {
   type LocalizationRefs,
   type LocalizedText,
 } from "../authoring/localization.ts";
+import type { ModWarning } from "../diagnostics.ts";
 import type { ScopeName } from "../generated/scopes.ts";
 import type { AssetPathSink, RefUseSink } from "../references.ts";
 import {
@@ -87,13 +91,15 @@ function toEntry(
   def: ContentDef,
   descriptor: ContentRegistryDescriptor,
   collect?: RefUseSink,
-  collectPath?: AssetPathSink
+  collectPath?: AssetPathSink,
+  localization?: ScriptLocalizationSink
 ): PdxEntry {
   const fields = fieldEntries(def as Readonly<Record<string, unknown>>, descriptor.fields, {
     collect,
     collectPath,
     path: "",
     ownerId: def.id,
+    localization,
   });
   if (descriptor.keyedBy === undefined) {
     return block(def.id, fields);
@@ -107,15 +113,45 @@ class ContentDefinition<K extends string, D extends ContentDef> implements Defin
   readonly id: D["id"];
   readonly def: D;
   private readonly descriptor: ContentRegistryDescriptor;
+  private readonly localization: ScriptLocalizationSink;
+  private readonly registerLoc: RegisterLoc;
 
-  constructor(def: D, descriptor: ContentRegistryDescriptor) {
+  constructor(
+    def: D,
+    descriptor: ContentRegistryDescriptor,
+    registerLoc: RegisterLoc,
+    warn: (warning: ModWarning) => void
+  ) {
     this.id = def.id;
     this.def = def;
     this.descriptor = descriptor;
+    this.registerLoc = registerLoc;
+    // The `warned` set outlives one lowering, so a definition lowered twice —
+    // `entries()` beside the compiler's own `toEntries` — reports the same
+    // derived key once.
+    this.localization = { into: [], warn, warned: new Set<string>() };
   }
 
+  /**
+   * Effects are recorded here rather than at define time, so the text a
+   * recorded closure writes is only knowable now: the sink collects it while
+   * the walk still holds each level's `ownerId`, and `registerLoc` places it
+   * exactly as the definition's own slots were placed.
+   *
+   * Registering again on a second call is harmless: the same walk derives the
+   * same keys from the same text, and the accumulator refuses only a *changed*
+   * value under a key it already holds.
+   */
   toEntries(collect?: RefUseSink, collectPath?: AssetPathSink): PdxEntry {
-    return toEntry(this.def, this.descriptor, collect, collectPath);
+    const into: KeyedLocalization[] = [];
+    const entry = toEntry(this.def, this.descriptor, collect, collectPath, {
+      ...this.localization,
+      into,
+    });
+    if (into.length > 0) {
+      this.registerLoc(into);
+    }
+    return entry;
   }
 }
 
@@ -201,6 +237,12 @@ export function mapOccurrences(
  * and one of the position's own `sentinels`, which is an engine word rather
  * than a key.
  *
+ * A field the rules overload between a localization key and something else
+ * carries the rest of its arms through untouched: {@link LiteralText} lowers
+ * to the raw scalar the game displays, and a content or scope reference is
+ * left as the object it is, for `contentScalar` to unwrap the way it unwraps
+ * every other reference.
+ *
  * @param sentinels - The field's `locKeyLiterals`, or nothing where it declares none.
  * @param position - Names the text position in a refusal, e.g. `tradition.custom_tooltip`.
  */
@@ -221,6 +263,21 @@ export function resolveKeyedText(
   }
   if (isPassthrough(value) || (typeof value === "string" && sentinels?.includes(value) === true)) {
     return value;
+  }
+  if (isLiteralText(value)) {
+    return value.text;
+  }
+  if (typeof value !== "string" && !isLocalizedTextRecord(value)) {
+    // A `<job>` swap name, a `<sprite>` scripted-loc default: the arm is a
+    // reference, and a reference names no text this walk could register.
+    if ((typeof value === "object" && value !== null) || typeof value === "function") {
+      return value;
+    }
+    throw new Error(
+      `${position} was given ${JSON.stringify(value)}, which names no localization key. ` +
+        "Write display text as a string or a language record, and an existing key as a " +
+        "reference."
+    );
   }
   mint.into.push({
     key: mintedKey,
@@ -271,13 +328,15 @@ export class ContentAuthoring {
   private readonly registerLoc: RegisterLoc;
   private readonly onPrefixViolation: (message: string) => void;
   private readonly onUnstableDescKey: (message: string) => void;
+  private readonly onWarning: (warning: ModWarning) => void;
 
   constructor(
     prefix: string,
     descriptors: readonly ContentRegistryDescriptor[],
     registerLoc: RegisterLoc,
     onPrefixViolation?: (message: string) => void,
-    onUnstableDescKey?: (message: string) => void
+    onUnstableDescKey?: (message: string) => void,
+    onWarning?: (warning: ModWarning) => void
   ) {
     this.prefix = prefix;
     // Indexed by type, not kept as a list: nothing walks every registry since
@@ -290,6 +349,7 @@ export class ContentAuthoring {
         throw new Error(message);
       });
     this.onUnstableDescKey = onUnstableDescKey ?? (() => {});
+    this.onWarning = onWarning ?? (() => {});
   }
 
   /**
@@ -350,7 +410,7 @@ export class ContentAuthoring {
       }
       this.nestedIds.set(identity, ids);
     }
-    const content = new ContentDefinition<K, D>(def, descriptor);
+    const content = new ContentDefinition<K, D>(def, descriptor, registerLoc, this.onWarning);
     definitions.push(content as ContentDefinition<string, ContentDef>);
     this.definitions.set(type, definitions);
     return content;
@@ -781,6 +841,9 @@ export class ContentAuthoring {
     const ownerKey = `${ownerId}::${fieldKey}`;
     weight.modifiers?.forEach((row, index) => {
       if (row.desc === undefined) {
+        return;
+      }
+      if (isLocalizationRef(row.desc)) {
         return;
       }
       if (isComplexTriggerModifier(row)) {

@@ -539,7 +539,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["archaeological_site"] },
     signature:
-      "addExpeditionLogEntry(args: { title?: LocalizationRef; tooltip?: LocalizationRef }): void;",
+      "addExpeditionLogEntry(args: { title?: LocalizationInput; tooltip?: LocalizationInput }): void;",
     docs: [
       "Adds a specific expedition log entry to an archaeological site chapter",
       "",
@@ -550,7 +550,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
       "}",
       "```",
       "",
-      "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.",
+      "Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.",
     ],
   },
   {
@@ -889,7 +889,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["pop_group"] },
     signature:
-      "addPopAmount(value: ScriptValue): void;\n  addPopAmount(args: { amount: ScriptValue; random?: ScriptValue; growthCategory?: LocalizationRef }): void;",
+      "addPopAmount(value: ScriptValue): void;\n  addPopAmount(args: { amount: ScriptValue; random?: ScriptValue; growthCategory?: LocalizationInput }): void;",
     docs: [
       "Adds the amount of pops to the scope pop group.",
       "",
@@ -903,7 +903,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
       "\t}",
       "```",
       "",
-      "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.",
+      "Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.",
     ],
   },
   {
@@ -1247,7 +1247,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["country"] },
     signature:
-      "addTimelineEvent(args: { type: TimelineEventsRef | string; date?: string; overrideId?: TimelineEventId; overrideTooltip?: LocalizationRef; overrideTypes?: readonly ScopeTypeToken[]; overrideText?: readonly string[]; overrideTexture?: readonly string[]; targets?: readonly ScopeValue[]; overrideTooltipDelayed?: LocalizationRef }): void;",
+      "addTimelineEvent(args: { type: TimelineEventsRef | string; date?: string; overrideId?: TimelineEventId; overrideTooltip?: LocalizationInput; overrideTypes?: readonly ScopeTypeToken[]; overrideText?: readonly string[]; overrideTexture?: readonly string[]; targets?: readonly ScopeValue[]; overrideTooltipDelayed?: LocalizationInput }): void;",
     docs: [
       "Adds a new timeline event for the scope country.",
       "",
@@ -1261,7 +1261,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
       '  override_text = { "button:MY_OTHER_LOC_STRING" "button2:ANOTHER_LOC_OVERRIDE" }  override_texture = { "button:GFX_short_button button2:GFX_otherbutton" }  override_tooltip, "loc_tooltip"  override_tooltip_delayed, "loc_delayed_tooltip"}',
       "```",
       "",
-      "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.",
+      "Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.",
     ],
   },
   {
@@ -1423,7 +1423,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     key: "add_victory_score",
     kind: "effect",
     availability: { kind: "scopes", scopes: ["country"] },
-    signature: "addVictoryScore(args: { source: LocalizationRef; score: ScriptValue }): void;",
+    signature: "addVictoryScore(args: { source: LocalizationInput; score: ScriptValue }): void;",
     docs: [
       "Adds victory score to a country",
       "",
@@ -1431,7 +1431,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
       "add_victory_score = { source=<loc_key> score=<value>/<variable> }",
       "```",
       "",
-      "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.",
+      "Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.",
     ],
   },
   {
@@ -2250,7 +2250,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["country"] },
     signature:
-      'cloneLeader(args: { target: ScopeValue<"archaeological_site"|"army"|"country"|"first_contact"|"fleet"|"leader"|"pop_faction"|"sector"|"ship">; name?: LocalizationRef | string | "random" | { key: LocalizationRef; variableString?: readonly string[] }; species?: ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species"> | string; class?: LeaderClassRef | string | "random" | "random_ruler"; tier?: LeaderTierRef | string; skill?: number | "random"; setAge?: ScriptValue; traits?: { entries?: { readonly [int: number]: TraitLeaderTraitRef | string | "random_trait" | "random_common" }; trait?: readonly (TraitLeaderTraitRef | string | "random_trait" | "random_common")[] }; gender?: Gender; eventLeader?: boolean; immortal?: boolean; hideAge?: boolean; subType?: "survey"; canManuallyChangeLocation?: boolean; canAssignToCouncil?: boolean; hideLeader?: boolean; randomizeTraits?: boolean; leaderAgeMin?: number; leaderAgeMax?: number; effect?: (scope: LeaderScope) => void; customDescription?: LocalizationRef; customCatchPhrase?: LocalizationRef; skipBackgroundGeneration?: boolean; backgroundPlanet?: ScopeValue<"planet">; backgroundJob?: JobRef | string; backgroundEthic?: EthicRef | string }): void;',
+      'cloneLeader(args: { target: ScopeValue<"archaeological_site"|"army"|"country"|"first_contact"|"fleet"|"leader"|"pop_faction"|"sector"|"ship">; name?: LocalizationInput | LiteralText | "random" | { key: LocalizationInput; variableString?: readonly string[] }; species?: ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species"> | string; class?: LeaderClassRef | string | "random" | "random_ruler"; tier?: LeaderTierRef | string; skill?: number | "random"; setAge?: ScriptValue; traits?: { entries?: { readonly [int: number]: TraitLeaderTraitRef | string | "random_trait" | "random_common" }; trait?: readonly (TraitLeaderTraitRef | string | "random_trait" | "random_common")[] }; gender?: Gender; eventLeader?: boolean; immortal?: boolean; hideAge?: boolean; subType?: "survey"; canManuallyChangeLocation?: boolean; canAssignToCouncil?: boolean; hideLeader?: boolean; randomizeTraits?: boolean; leaderAgeMin?: number; leaderAgeMax?: number; effect?: (scope: LeaderScope) => void; customDescription?: LocalizationInput; customCatchPhrase?: LocalizationInput; skipBackgroundGeneration?: boolean; backgroundPlanet?: ScopeValue<"planet">; backgroundJob?: JobRef | string; backgroundEthic?: EthicRef | string }): void;',
     docs: [
       "Clones the last created leader for the scoped country",
       "",
@@ -2265,7 +2265,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
       "}",
       "```",
       "",
-      "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.",
+      "Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.",
     ],
   },
   {
@@ -2640,7 +2640,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["carrier", "colony", "planet", "ship"] },
     signature:
-      'createArmy(args: { name?: LocalizationRef | string | "random" | { key: LocalizationRef; variableString?: readonly string[] }; owner: ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system">; type: ArmyRef | string; species?: ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species"> | string; leader?: ScopeValue<"archaeological_site"|"army"|"country"|"first_contact"|"fleet"|"leader"|"pop_faction"|"sector"|"ship">; effect?: (scope: ArmyScope) => void }): void;',
+      'createArmy(args: { name?: LocalizationInput | LiteralText | "random" | { key: LocalizationInput; variableString?: readonly string[] }; owner: ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system">; type: ArmyRef | string; species?: ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species"> | string; leader?: ScopeValue<"archaeological_site"|"army"|"country"|"first_contact"|"fleet"|"leader"|"pop_faction"|"sector"|"ship">; effect?: (scope: ArmyScope) => void }): void;',
     docs: [
       "Creates a new army",
       "",
@@ -2660,7 +2660,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["fleet"] },
     signature:
-      'createArmyTransport(args: { graphicalCulture?: GraphicalCultureRef | string; armyType: ArmyRef | string; shipName?: LocalizationRef | "random"; armyName?: LocalizationRef; species?: ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species"> | string; effect?: (scope: ShipScope) => void }): void;',
+      'createArmyTransport(args: { graphicalCulture?: GraphicalCultureRef | string; armyType: ArmyRef | string; shipName?: LocalizationInput | "random"; armyName?: LocalizationInput; species?: ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species"> | string; effect?: (scope: ShipScope) => void }): void;',
     docs: [
       "Creates a new army in a new transport ship",
       "",
@@ -2674,7 +2674,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
       "}",
       "```",
       "",
-      "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.",
+      "Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.",
     ],
   },
   {
@@ -2683,7 +2683,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["country"] },
     signature:
-      'createBalancedFleet(args: { name?: LocalizationRef | string | ScopeValue<"fleet"> | { key: LocalizationRef; variableString?: readonly string[] }; size: ScriptValue; canOverflow?: boolean; shipDesigns?: readonly LocalizationRef[]; effect?: (scope: FleetScope) => void }): void;',
+      'createBalancedFleet(args: { name?: LocalizationInput | LiteralText | ScopeValue<"fleet"> | { key: LocalizationInput; variableString?: readonly string[] }; size: ScriptValue; canOverflow?: boolean; shipDesigns?: readonly LocalizationInput[]; effect?: (scope: FleetScope) => void }): void;',
     docs: [
       "Creates a fleet of the requested size, distributing ships deterministically across the listed designs by each ship_size's ai_ship_data.fraction.",
       "",
@@ -2792,7 +2792,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "universal" },
     signature:
-      'createCountry(args: { name?: ScopeValue | "random" | LocalizationRef | string | { key: LocalizationRef; variableString?: readonly string[] }; adjective?: ScopeValue | "random" | LocalizationRef; type?: CountryTypeRef | string; contactRule?: ContactRule; autoDelete?: boolean; nameList?: NameListRef | string | "random" | ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system">; shipPrefix?: string; authority?: "random" | AuthorityRef | string | ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system">; civics?: ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system"> | "random" | { civic?: readonly (CivicOrOriginCivicRef | string | "random")[] }; origin?: CivicOrOriginOriginRef | string | ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system">; species?: "random" | ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species">; setCapitalFromSpecies?: boolean; randomizeEthos?: "yes"; useHostilitiesFrom?: ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system">; ethos?: "random" | ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system"> | { ethic: readonly [EthicRef | string | "random"] | readonly [EthicRef | string | "random", EthicRef | string | "random"] | readonly [EthicRef | string | "random", EthicRef | string | "random", EthicRef | string | "random"] }; effect?: (scope: CountryScope) => void; graphicalCulture?: GraphicalCultureRef | string; cityGraphicalCulture?: GraphicalCultureRef | string; shipKinds?: readonly (ShipCategoriesRef | string)[]; room?: string; flag?: ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system"> | "random" | { icon?: { category: string; file: string }; background: { category: string; file: string }; colors: readonly [] | readonly [ColorDefineRef | string | "null"] | readonly [ColorDefineRef | string | "null", ColorDefineRef | string | "null"] | readonly [ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null"] | readonly [ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null"] | readonly [ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null"] | readonly [ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null"] | readonly [ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null"] | readonly [ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null"] }; dayZeroContact?: boolean; excludeDayZeroContact?: ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system">; releasedByCountry?: ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system">; releasedFromCountry?: ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system">; ignoreInitialColonyError?: boolean; governmentRestrictions?: GovernmentTriggerBlock; nomadic?: boolean | ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system">; removeInvalidCivics?: boolean }): void;',
+      'createCountry(args: { name?: ScopeValue | "random" | LocalizationInput | LiteralText | { key: LocalizationInput; variableString?: readonly string[] }; adjective?: ScopeValue | "random" | LocalizationInput; type?: CountryTypeRef | string; contactRule?: ContactRule; autoDelete?: boolean; nameList?: NameListRef | string | "random" | ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system">; shipPrefix?: string; authority?: "random" | AuthorityRef | string | ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system">; civics?: ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system"> | "random" | { civic?: readonly (CivicOrOriginCivicRef | string | "random")[] }; origin?: CivicOrOriginOriginRef | string | ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system">; species?: "random" | ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species">; setCapitalFromSpecies?: boolean; randomizeEthos?: "yes"; useHostilitiesFrom?: ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system">; ethos?: "random" | ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system"> | { ethic: readonly [EthicRef | string | "random"] | readonly [EthicRef | string | "random", EthicRef | string | "random"] | readonly [EthicRef | string | "random", EthicRef | string | "random", EthicRef | string | "random"] }; effect?: (scope: CountryScope) => void; graphicalCulture?: GraphicalCultureRef | string; cityGraphicalCulture?: GraphicalCultureRef | string; shipKinds?: readonly (ShipCategoriesRef | string)[]; room?: string; flag?: ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system"> | "random" | { icon?: { category: string; file: string }; background: { category: string; file: string }; colors: readonly [] | readonly [ColorDefineRef | string | "null"] | readonly [ColorDefineRef | string | "null", ColorDefineRef | string | "null"] | readonly [ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null"] | readonly [ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null"] | readonly [ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null"] | readonly [ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null"] | readonly [ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null"] | readonly [ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null"] }; dayZeroContact?: boolean; excludeDayZeroContact?: ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system">; releasedByCountry?: ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system">; releasedFromCountry?: ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system">; ignoreInitialColonyError?: boolean; governmentRestrictions?: GovernmentTriggerBlock; nomadic?: boolean | ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system">; removeInvalidCivics?: boolean }): void;',
     docs: [
       "Creates a new country",
       "",
@@ -2822,7 +2822,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
       "}",
       "```",
       "",
-      "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.",
+      "Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.",
     ],
   },
   {
@@ -2849,7 +2849,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "universal" },
     signature:
-      'createFleet(args: { name?: LocalizationRef | string | ScopeValue<"fleet"> | { key: LocalizationRef; variableString?: readonly string[] }; parent?: ScopeValue<"fleet"> | "none"; setTakePoint?: boolean; settings?: readonly { spawnDebris?: boolean; garrison?: boolean; canUpgrade?: boolean; canDisband?: boolean; canChangeComposition?: boolean; canChangeLeader?: boolean; usesNavalCapacity?: boolean; isBoss?: boolean; aiIgnoreStrength?: boolean; isUltraBoss?: boolean }[]; effect?: (scope: FleetScope) => void; growthStage?: number; createColony?: boolean }): void;',
+      'createFleet(args: { name?: LocalizationInput | LiteralText | ScopeValue<"fleet"> | { key: LocalizationInput; variableString?: readonly string[] }; parent?: ScopeValue<"fleet"> | "none"; setTakePoint?: boolean; settings?: readonly { spawnDebris?: boolean; garrison?: boolean; canUpgrade?: boolean; canDisband?: boolean; canChangeComposition?: boolean; canChangeLeader?: boolean; usesNavalCapacity?: boolean; isBoss?: boolean; aiIgnoreStrength?: boolean; isUltraBoss?: boolean }[]; effect?: (scope: FleetScope) => void; growthStage?: number; createColony?: boolean }): void;',
     docs: [
       "Creates a new fleet",
       "",
@@ -2880,7 +2880,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["country"] },
     signature:
-      'createLeader(args: { name?: LocalizationRef | string | "random" | { key: LocalizationRef; variableString?: readonly string[] }; species?: ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species"> | string; class: LeaderClassRef | string | "random" | "random_ruler"; tier?: LeaderTierRef | string; skill?: number | "random"; setAge?: ScriptValue; traits?: { entries?: { readonly [int: number]: TraitLeaderTraitRef | string | "random_trait" | "random_common" }; trait?: readonly (TraitLeaderTraitRef | string | "random_trait" | "random_common")[] }; gender?: Gender; eventLeader?: boolean; immortal?: boolean; hideAge?: boolean; subType?: "survey"; canManuallyChangeLocation?: boolean; canAssignToCouncil?: boolean; hideLeader?: boolean; randomizeTraits?: boolean; leaderAgeMin?: number; leaderAgeMax?: number; useRegnalName?: boolean; effect?: (scope: LeaderScope) => void; customDescription?: LocalizationRef; customCatchPhrase?: LocalizationRef; skipBackgroundGeneration?: boolean; backgroundPlanet?: ScopeValue<"carrier"|"colony"|"planet"|"ship">; backgroundJob?: JobRef | string; backgroundEthic?: EthicRef | string }): void;',
+      'createLeader(args: { name?: LocalizationInput | LiteralText | "random" | { key: LocalizationInput; variableString?: readonly string[] }; species?: ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species"> | string; class: LeaderClassRef | string | "random" | "random_ruler"; tier?: LeaderTierRef | string; skill?: number | "random"; setAge?: ScriptValue; traits?: { entries?: { readonly [int: number]: TraitLeaderTraitRef | string | "random_trait" | "random_common" }; trait?: readonly (TraitLeaderTraitRef | string | "random_trait" | "random_common")[] }; gender?: Gender; eventLeader?: boolean; immortal?: boolean; hideAge?: boolean; subType?: "survey"; canManuallyChangeLocation?: boolean; canAssignToCouncil?: boolean; hideLeader?: boolean; randomizeTraits?: boolean; leaderAgeMin?: number; leaderAgeMax?: number; useRegnalName?: boolean; effect?: (scope: LeaderScope) => void; customDescription?: LocalizationInput; customCatchPhrase?: LocalizationInput; skipBackgroundGeneration?: boolean; backgroundPlanet?: ScopeValue<"carrier"|"colony"|"planet"|"ship">; backgroundJob?: JobRef | string; backgroundEthic?: EthicRef | string }): void;',
     docs: [
       "Creates a new leader for the scoped country",
       "",
@@ -2917,7 +2917,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
       "}",
       "```",
       "",
-      "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.",
+      "Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.",
     ],
   },
   {
@@ -2926,7 +2926,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "universal" },
     signature:
-      "createMessage(args: { type: MessageTypeRef | string; localization?: LocalizationRef; customMessageText?: LocalizationRef; days?: number; customToastIcon?: SpriteRef | string; target?: ScopeValue; recipient?: ScopeValue; variable?: readonly { varname?: ScriptValue; type?: MessageVariableType; key?: string; value?: string; localization?: string; scope?: ScopeValue; trigger?: Trigger<ScopeName> }[] }): void;",
+      "createMessage(args: { type: MessageTypeRef | string; localization?: LocalizationInput; customMessageText?: LocalizationInput; days?: number; customToastIcon?: SpriteRef | string; target?: ScopeValue; recipient?: ScopeValue; variable?: readonly { varname?: ScriptValue; type?: MessageVariableType; key?: string; value?: string; localization?: string; scope?: ScopeValue; trigger?: Trigger<ScopeName> }[] }): void;",
     docs: [
       "Creates a message, can take multiple variables",
       "",
@@ -2941,7 +2941,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
       "}",
       "```",
       "",
-      "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.",
+      "Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.",
     ],
   },
   {
@@ -2980,7 +2980,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["system"] },
     signature:
-      "createNebula(args: { name?: LocalizationRef; radius: ScriptValue; effect?: (scope: SystemScope) => void }): void;",
+      "createNebula(args: { name?: LocalizationInput; radius: ScriptValue; effect?: (scope: SystemScope) => void }): void;",
     docs: [
       "Creates a new Nebula with a given radius centered around the current system.",
       "",
@@ -2992,7 +2992,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
       "}",
       "```",
       "",
-      "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.",
+      "Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.",
     ],
   },
   {
@@ -3015,7 +3015,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["carrier", "country", "planet", "pop_group", "ship"] },
     signature:
-      'createPointOfInterest(args: { id: PointOfInterest; name: LocalizationRef; desc?: LocalizationRef; eventChain: EventChainRef | string; location?: ScopeValue<"ambient_object"|"archaeological_site"|"army"|"astral_rift"|"bypass"|"carrier"|"colony"|"country"|"debris"|"deposit"|"fleet"|"leader"|"megastructure"|"planet"|"pop_group"|"ship"|"situation"|"starbase"|"system">; category?: string; picture?: SpriteRef | string }): void;',
+      'createPointOfInterest(args: { id: PointOfInterest; name: LocalizationInput; desc?: LocalizationInput; eventChain: EventChainRef | string; location?: ScopeValue<"ambient_object"|"archaeological_site"|"army"|"astral_rift"|"bypass"|"carrier"|"colony"|"country"|"debris"|"deposit"|"fleet"|"leader"|"megastructure"|"planet"|"pop_group"|"ship"|"situation"|"starbase"|"system">; category?: string; picture?: SpriteRef | string }): void;',
     docs: [
       "Creates a point of interest for the scoped country at a specific location, associated with an event chain",
       "",
@@ -3023,7 +3023,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
       "create_point_of_interest = { id = <key> name = <string> desc = <string> event_chain = <key> location = <target> }",
       "```",
       "",
-      "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.",
+      "Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.",
     ],
   },
   {
@@ -3032,7 +3032,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["carrier", "colony", "planet", "ship"] },
     signature:
-      'createPopGroup(args: { species?: ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species"> | string; popGroup?: ScopeValue<"pop_group">; ethos?: "random" | ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system"> | { ethic: EthicRef | string }; category?: PopCategoryRef | string; size?: ScriptValue; random?: ScriptValue; growthCategory?: LocalizationRef; effect?: (scope: PopGroupScope) => void }): void;',
+      'createPopGroup(args: { species?: ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species"> | string; popGroup?: ScopeValue<"pop_group">; ethos?: "random" | ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system"> | { ethic: EthicRef | string }; category?: PopCategoryRef | string; size?: ScriptValue; random?: ScriptValue; growthCategory?: LocalizationInput; effect?: (scope: PopGroupScope) => void }): void;',
     docs: [
       "Creates a new pop_group on the scoped planet",
       "",
@@ -3049,7 +3049,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
       "}",
       "```",
       "",
-      "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.",
+      "Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.",
     ],
   },
   {
@@ -3058,7 +3058,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["country"] },
     signature:
-      'createRandomFleet(args: { name?: LocalizationRef | string | "random" | ScopeValue<"fleet"> | { key: LocalizationRef; variableString?: readonly string[] }; size?: ScriptValue; canOverflow?: boolean; shipDesigns?: readonly (LocalizationRef | { design: LocalizationRef; weight?: number; min?: number; max?: number })[]; effect?: (scope: FleetScope) => void }): void;',
+      'createRandomFleet(args: { name?: LocalizationInput | LiteralText | "random" | ScopeValue<"fleet"> | { key: LocalizationInput; variableString?: readonly string[] }; size?: ScriptValue; canOverflow?: boolean; shipDesigns?: readonly (LocalizationInput | { design: LocalizationInput; weight?: number; min?: number; max?: number })[]; effect?: (scope: FleetScope) => void }): void;',
     docs: [
       "Creates a fleet of the requested size by repeatedly picking ships from the listed designs at random, weighted by each entry's weight (default 1). Each entry may also specify a guaranteed min count and a max cap. If ship_designs is omitted, falls back to the country's own AI-recruitable designs at uniform weight.",
       "",
@@ -3082,7 +3082,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["carrier", "colony", "planet", "ship"] },
     signature:
-      'createRebels(args: { name?: LocalizationRef | string | ScopeValue | "random" | { key: LocalizationRef; variableString?: readonly string[] }; authority: "random" | AuthorityRef | string | ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system">; origin?: CivicOrOriginOriginRef | string; civics?: ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system"> | "random" | { civic?: readonly (CivicOrOriginCivicRef | string | "random")[] }; species: ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species"> | string; ethos?: "random" | ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system"> | { ethic: readonly [EthicRef | string] | readonly [EthicRef | string, EthicRef | string] | readonly [EthicRef | string, EthicRef | string, EthicRef | string] }; flag?: ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system"> | "random" | { icon?: { category: string; file: string }; background: { category: string; file: string }; colors: readonly [] | readonly [ColorDefineRef | string | "null"] | readonly [ColorDefineRef | string | "null", ColorDefineRef | string | "null"] | readonly [ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null"] | readonly [ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null"] | readonly [ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null"] | readonly [ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null"] | readonly [ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null"] | readonly [ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null"] }; nameList?: NameListRef | string | "random"; shipPrefix?: string; releasedFromCountry?: ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system">; effect: (scope: CountryScope) => void }): void;',
+      'createRebels(args: { name?: LocalizationInput | LiteralText | ScopeValue | "random" | { key: LocalizationInput; variableString?: readonly string[] }; authority: "random" | AuthorityRef | string | ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system">; origin?: CivicOrOriginOriginRef | string; civics?: ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system"> | "random" | { civic?: readonly (CivicOrOriginCivicRef | string | "random")[] }; species: ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species"> | string; ethos?: "random" | ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system"> | { ethic: readonly [EthicRef | string] | readonly [EthicRef | string, EthicRef | string] | readonly [EthicRef | string, EthicRef | string, EthicRef | string] }; flag?: ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system"> | "random" | { icon?: { category: string; file: string }; background: { category: string; file: string }; colors: readonly [] | readonly [ColorDefineRef | string | "null"] | readonly [ColorDefineRef | string | "null", ColorDefineRef | string | "null"] | readonly [ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null"] | readonly [ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null"] | readonly [ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null"] | readonly [ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null"] | readonly [ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null"] | readonly [ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null", ColorDefineRef | string | "null"] }; nameList?: NameListRef | string | "random"; shipPrefix?: string; releasedFromCountry?: ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system">; effect: (scope: CountryScope) => void }): void;',
     docs: [
       "Creates a rebellion",
       "",
@@ -3118,7 +3118,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["country"] },
     signature:
-      'createSavedLeader(args: { key: SavedLeader; creator?: ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system">; name?: LocalizationRef | string | "random" | { key: LocalizationRef; variableString?: readonly string[] }; gender?: Gender; class?: "random" | LeaderClassRef | string; species: ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species"> | string; eventLeader?: boolean; setAge?: ScriptValue; skill?: "random" | number; traits?: { entries?: { readonly [int: number]: TraitLeaderTraitRef | string | "random_trait" | "random_common" }; trait?: readonly (TraitLeaderTraitRef | string | "random_trait" | "random_common")[] }; effect?: (scope: LeaderScope) => void }): void;',
+      'createSavedLeader(args: { key: SavedLeader; creator?: ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system">; name?: LocalizationInput | LiteralText | "random" | { key: LocalizationInput; variableString?: readonly string[] }; gender?: Gender; class?: "random" | LeaderClassRef | string; species: ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species"> | string; eventLeader?: boolean; setAge?: ScriptValue; skill?: "random" | number; traits?: { entries?: { readonly [int: number]: TraitLeaderTraitRef | string | "random_trait" | "random_common" }; trait?: readonly (TraitLeaderTraitRef | string | "random_trait" | "random_common")[] }; effect?: (scope: LeaderScope) => void }): void;',
     docs: [
       "Creates a new saved leader for the scoped country with a lookup key",
       "",
@@ -3147,7 +3147,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["fleet", "starbase"] },
     signature:
-      'createShip(args: { name?: LocalizationRef | string | "random" | ScopeValue<"ship"> | { key: LocalizationRef; variableString?: readonly string[] }; design?: LocalizationRef | GlobalShipDesignRef | string | ScopeValue<"design"> | "last_created_design"; randomExistingDesign?: ShipSizeRef | string; prefix?: boolean; suffix?: boolean; graphicalCulture?: GraphicalCultureRef | string | ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"species"|"spy_network"|"starbase"|"system">; graphicalCultureFallback?: GraphicalCultureRef | string | ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"species"|"spy_network"|"starbase"|"system">; upgradable?: boolean; colonizerSpecies?: ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species">; age?: number | "min" | "random"; rarity?: ShipRarity; createColony?: boolean; effect?: (scope: ShipScope) => void; growthStage?: number }): void;',
+      'createShip(args: { name?: LocalizationInput | LiteralText | "random" | ScopeValue<"ship"> | { key: LocalizationInput; variableString?: readonly string[] }; design?: LocalizationInput | GlobalShipDesignRef | ScopeValue<"design"> | "last_created_design"; randomExistingDesign?: ShipSizeRef | string; prefix?: boolean; suffix?: boolean; graphicalCulture?: GraphicalCultureRef | string | ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"species"|"spy_network"|"starbase"|"system">; graphicalCultureFallback?: GraphicalCultureRef | string | ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"species"|"spy_network"|"starbase"|"system">; upgradable?: boolean; colonizerSpecies?: ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species">; age?: number | "min" | "random"; rarity?: ShipRarity; createColony?: boolean; effect?: (scope: ShipScope) => void; growthStage?: number }): void;',
     docs: [
       "Creates a new ship",
       "",
@@ -3166,7 +3166,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
       "}",
       "```",
       "",
-      "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.",
+      "Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.",
     ],
   },
   {
@@ -3174,7 +3174,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     key: "create_ship_design",
     kind: "effect",
     availability: { kind: "universal" },
-    signature: "createShipDesign(args: { design: LocalizationRef }): void;",
+    signature: "createShipDesign(args: { design: LocalizationInput }): void;",
     docs: [
       "Creates a new ship design for use with last_created_design target",
       "",
@@ -3182,7 +3182,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
       "create_ship_design = { design = <key> ftl = <target, optional, sets FTL drive to target country's> }",
       "```",
       "",
-      "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.",
+      "Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.",
     ],
   },
   {
@@ -3206,7 +3206,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "universal" },
     signature:
-      'createSpecies(args: { name?: ScopeValue | "random" | LocalizationRef | string | { key: LocalizationRef; variableString?: readonly string[] }; namelist?: NameListRef | string | ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"species"|"spy_network"|"starbase"|"system"> | "random" | "random_class"; nameList?: NameListRef | string | ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"species"|"spy_network"|"starbase"|"system"> | "random" | "random_class"; plural?: ScopeValue | "random" | string; speciesBio?: string; adjective?: string; class: SpeciesClassRef | string | ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species"> | "random" | "random_non_machine" | "random_pre_ftl"; portrait?: ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species"> | PortraitRef | string | PortraitGroupRef | "random" | "this"; gender?: GendersNotSet | ScopeValue<"archaeological_site"|"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"species">; homeworld?: ScopeValue<"archaeological_site"|"army"|"carrier"|"colony"|"country"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_group"|"ship"|"species">; traits?: readonly [] | readonly [ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species"> | "random" | "this" | { idealPlanetClass?: ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species"> | PlanetClassHabitablePlanetRef | string; trait?: readonly (TraitSpeciesTraitRef | string | "random_traits" | "random_presapient_trait")[]; addTrait?: readonly (TraitSpeciesTraitRef | string)[]; addTraitsAtStartOfList?: boolean }] | readonly [ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species"> | "random" | "this" | { idealPlanetClass?: ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species"> | PlanetClassHabitablePlanetRef | string; trait?: readonly (TraitSpeciesTraitRef | string | "random_traits" | "random_presapient_trait")[]; addTrait?: readonly (TraitSpeciesTraitRef | string)[]; addTraitsAtStartOfList?: boolean }, ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species"> | "random" | "this" | { idealPlanetClass?: ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species"> | PlanetClassHabitablePlanetRef | string; trait?: readonly (TraitSpeciesTraitRef | string | "random_traits" | "random_presapient_trait")[]; addTrait?: readonly (TraitSpeciesTraitRef | string)[]; addTraitsAtStartOfList?: boolean }]; sapient?: boolean; isMod?: boolean; modNameAffix?: LocalizationRef; immortal?: boolean; popsCanBeColonizers?: boolean; popsCanMigrate?: boolean; popsCanReproduce?: boolean; popsCanJoinFactions?: boolean; canGenerateLeaders?: boolean; popsCanBeSlaves?: boolean; popsHaveHappiness?: boolean; consumerGoods?: boolean; canBeModified?: boolean | ScopeValue; popsAutoGrowth?: number; popMaintenance?: number; newPopResourceRequirement?: { type: ResourceRef | string | "robot_food"; value: number }; clearParentSpeciesLink?: boolean; allowNegativeTraits?: boolean; extraTraitPoints?: number; popEthics?: "no" | "random" | EthicRef | string | readonly [EthicRef | string | "random"] | readonly [EthicRef | string | "random", EthicRef | string | "random"] | readonly [EthicRef | string | "random", EthicRef | string | "random", EthicRef | string | "random"] | readonly [EthicRef | string | "random", EthicRef | string | "random", EthicRef | string | "random", EthicRef | string | "random"]; effect?: (scope: SpeciesScope) => void; blockedArchetypes?: readonly [SpeciesArchetypeRef | string, ...(SpeciesArchetypeRef | string)[]] }): void;',
+      'createSpecies(args: { name?: ScopeValue | "random" | LocalizationInput | LiteralText | { key: LocalizationInput; variableString?: readonly string[] }; namelist?: NameListRef | string | ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"species"|"spy_network"|"starbase"|"system"> | "random" | "random_class"; nameList?: NameListRef | string | ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"species"|"spy_network"|"starbase"|"system"> | "random" | "random_class"; plural?: ScopeValue | "random" | string; speciesBio?: string; adjective?: string; class: SpeciesClassRef | string | ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species"> | "random" | "random_non_machine" | "random_pre_ftl"; portrait?: ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species"> | PortraitRef | string | PortraitGroupRef | "random" | "this"; gender?: GendersNotSet | ScopeValue<"archaeological_site"|"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"species">; homeworld?: ScopeValue<"archaeological_site"|"army"|"carrier"|"colony"|"country"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_group"|"ship"|"species">; traits?: readonly [] | readonly [ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species"> | "random" | "this" | { idealPlanetClass?: ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species"> | PlanetClassHabitablePlanetRef | string; trait?: readonly (TraitSpeciesTraitRef | string | "random_traits" | "random_presapient_trait")[]; addTrait?: readonly (TraitSpeciesTraitRef | string)[]; addTraitsAtStartOfList?: boolean }] | readonly [ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species"> | "random" | "this" | { idealPlanetClass?: ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species"> | PlanetClassHabitablePlanetRef | string; trait?: readonly (TraitSpeciesTraitRef | string | "random_traits" | "random_presapient_trait")[]; addTrait?: readonly (TraitSpeciesTraitRef | string)[]; addTraitsAtStartOfList?: boolean }, ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species"> | "random" | "this" | { idealPlanetClass?: ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species"> | PlanetClassHabitablePlanetRef | string; trait?: readonly (TraitSpeciesTraitRef | string | "random_traits" | "random_presapient_trait")[]; addTrait?: readonly (TraitSpeciesTraitRef | string)[]; addTraitsAtStartOfList?: boolean }]; sapient?: boolean; isMod?: boolean; modNameAffix?: LocalizationInput; immortal?: boolean; popsCanBeColonizers?: boolean; popsCanMigrate?: boolean; popsCanReproduce?: boolean; popsCanJoinFactions?: boolean; canGenerateLeaders?: boolean; popsCanBeSlaves?: boolean; popsHaveHappiness?: boolean; consumerGoods?: boolean; canBeModified?: boolean | ScopeValue; popsAutoGrowth?: number; popMaintenance?: number; newPopResourceRequirement?: { type: ResourceRef | string | "robot_food"; value: number }; clearParentSpeciesLink?: boolean; allowNegativeTraits?: boolean; extraTraitPoints?: number; popEthics?: "no" | "random" | EthicRef | string | readonly [EthicRef | string | "random"] | readonly [EthicRef | string | "random", EthicRef | string | "random"] | readonly [EthicRef | string | "random", EthicRef | string | "random", EthicRef | string | "random"] | readonly [EthicRef | string | "random", EthicRef | string | "random", EthicRef | string | "random", EthicRef | string | "random"]; effect?: (scope: SpeciesScope) => void; blockedArchetypes?: readonly [SpeciesArchetypeRef | string, ...(SpeciesArchetypeRef | string)[]] }): void;',
     docs: [
       "Creates a new species. The habitability trait is determined by homeworld, traits = random, traits = { ideal_planet_class = <pc_XYZ> }, traits = <trait_pc_XYZ_preference>, or else is assigned randomly.",
       "",
@@ -3231,7 +3231,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
       "}",
       "```",
       "",
-      "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.",
+      "Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.",
     ],
   },
   {
@@ -3261,7 +3261,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     key: "custom_tooltip",
     kind: "effect",
     availability: { kind: "universal" },
-    signature: "customTooltip(value: LocalizationRef): void;",
+    signature: "customTooltip(value: LocalizationInput): void;",
     docs: [
       "Displays a specific localization string in tooltip",
       "",
@@ -3269,7 +3269,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
       "custom_tooltip = <string>",
       "```",
       "",
-      "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.",
+      "Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.",
     ],
   },
   {
@@ -3278,7 +3278,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "universal" },
     signature:
-      "customTooltipWithParams(args: { description: LocalizationRef; descriptionParameters?: { readonly [parameter: string]: string } }): void;",
+      "customTooltipWithParams(args: { description: LocalizationInput; descriptionParameters?: { readonly [parameter: string]: string } }): void;",
     docs: [
       "Displays a specific localization string with parameters in tooltip",
       "",
@@ -3291,7 +3291,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
       "}",
       "```",
       "",
-      "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.",
+      "Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.",
     ],
   },
   {
@@ -3361,7 +3361,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["country"] },
     signature:
-      'declareWar(args: { target: ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system">; attackerWarGoal: WarGoalRef | string; name?: LocalizationRef | string | { key: LocalizationRef; variableString?: readonly string[] }; effect?: (scope: WarScope) => void }): void;',
+      'declareWar(args: { target: ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system">; attackerWarGoal: WarGoalRef | string; name?: LocalizationInput | LiteralText | { key: LocalizationInput; variableString?: readonly string[] }; effect?: (scope: WarScope) => void }): void;',
     docs: [
       "Declares war between the scoped country and target country",
       "",
@@ -6165,7 +6165,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["country"] },
     signature:
-      "giveSpecimen(args: { key: SpecimenRef | string; origin?: LocalizationRef; targets?: readonly [ScopeValue] }): void;",
+      "giveSpecimen(args: { key: SpecimenRef | string; origin?: LocalizationInput; targets?: readonly [ScopeValue] }): void;",
     docs: [
       "Gives a given specimen to the target country.",
       "",
@@ -6173,7 +6173,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
       "give_specimen = { key = <specimen> origin = <key> }",
       "```",
       "",
-      "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.",
+      "Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.",
     ],
   },
   {
@@ -6274,7 +6274,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["country"] },
     signature:
-      'joinAlliance(args: { who: ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system">; overrideRequirements: boolean; name: LocalizationRef | string | { key: LocalizationRef; variableString?: readonly string[] } }): void;',
+      'joinAlliance(args: { who: ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system">; overrideRequirements: boolean; name: LocalizationInput | LiteralText | { key: LocalizationInput; variableString?: readonly string[] } }): void;',
     docs: [
       "Join federation with target",
       "",
@@ -6313,7 +6313,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["pop_job"] },
     signature:
-      'killAssignedPopAmount(args: { limit?: Trigger<"pop_job">; amount?: ScriptValue; random?: ScriptValue; percentage?: ScriptValue; growthCategory?: LocalizationRef }): void;',
+      'killAssignedPopAmount(args: { limit?: Trigger<"pop_job">; amount?: ScriptValue; random?: ScriptValue; percentage?: ScriptValue; growthCategory?: LocalizationInput }): void;',
     docs: [
       "Instantly destroys part of the assigned pops to this job",
       "",
@@ -6326,7 +6326,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
       "}",
       "```",
       "",
-      "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.",
+      "Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.",
     ],
   },
   {
@@ -6373,7 +6373,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "universal" },
     signature:
-      'killPopGroup(args: { popGroup: ScopeValue<"pop_group">; amount?: ScriptValue; percentage?: ScriptValue; random?: ScriptValue; growthCategory?: LocalizationRef }): void;',
+      'killPopGroup(args: { popGroup: ScopeValue<"pop_group">; amount?: ScriptValue; percentage?: ScriptValue; random?: ScriptValue; growthCategory?: LocalizationInput }): void;',
     docs: [
       "Instantly destroys the scoped pop_group",
       "",
@@ -6386,7 +6386,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
       "}",
       "```",
       "",
-      "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.",
+      "Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.",
     ],
   },
   {
@@ -6532,7 +6532,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["army"] },
     signature:
-      'modifyArmy(args: { name?: "random" | LocalizationRef | string | { key: LocalizationRef; variableString?: readonly string[] }; owner?: ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system">; species?: ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species"> | string; type?: ArmyRef | string }): void;',
+      'modifyArmy(args: { name?: "random" | LocalizationInput | LiteralText | { key: LocalizationInput; variableString?: readonly string[] }; owner?: ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system">; species?: ScopeValue<"army"|"carrier"|"country"|"first_contact"|"fleet"|"leader"|"planet"|"pop_group"|"ship"|"species"> | string; type?: ArmyRef | string }): void;',
     docs: [
       "Modifies army with parameters:",
       "",
@@ -12372,7 +12372,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["pop_group"] },
     signature:
-      "removePopAmount(value: ScriptValue): void;\n  removePopAmount(args: { amount: ScriptValue; random?: ScriptValue; growthCategory?: LocalizationRef }): void;",
+      "removePopAmount(value: ScriptValue): void;\n  removePopAmount(args: { amount: ScriptValue; random?: ScriptValue; growthCategory?: LocalizationInput }): void;",
     docs: [
       "Removes the amount of pops from the scope pop group.",
       "",
@@ -12386,7 +12386,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
       "\t}",
       "```",
       "",
-      "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.",
+      "Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.",
     ],
   },
   {
@@ -13367,7 +13367,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["country"] },
     signature:
-      'setAdjective(value: LocalizationRef | ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system">): void;',
+      'setAdjective(value: LocalizationInput | ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system">): void;',
     docs: [
       "Sets the adjective of the scoped country",
       "",
@@ -13375,7 +13375,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
       "set_adjective = <string>",
       "```",
       "",
-      "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.",
+      "Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.",
     ],
   },
   {
@@ -13899,7 +13899,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["country"] },
     signature:
-      "setCouncilPositionTitleFemale(args: { positionTag: LocalizationRef; title: LocalizationRef }): void;",
+      "setCouncilPositionTitleFemale(args: { positionTag: LocalizationInput; title: LocalizationInput }): void;",
     docs: [
       "Sets the scoped country's council position's female title.",
       "",
@@ -13907,7 +13907,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
       "set_council_position_title_female = { position_tag = COUNCIL_POSITION_TAG title = TITLE_FEMALE }",
       "```",
       "",
-      "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.",
+      "Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.",
     ],
   },
   {
@@ -13916,7 +13916,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["country"] },
     signature:
-      "setCouncilPositionTitleMale(args: { positionTag: LocalizationRef; title: LocalizationRef }): void;",
+      "setCouncilPositionTitleMale(args: { positionTag: LocalizationInput; title: LocalizationInput }): void;",
     docs: [
       "Sets the scoped country's council position's male title.",
       "",
@@ -13924,7 +13924,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
       "set_council_position_title_male = { position_tag = COUNCIL_POSITION_TAG title = TITLE_MALE }",
       "```",
       "",
-      "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.",
+      "Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.",
     ],
   },
   {
@@ -14194,7 +14194,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     key: "set_empire_name",
     kind: "effect",
     availability: { kind: "scopes", scopes: ["country"] },
-    signature: "setEmpireName(value: LocalizationRef): void;",
+    signature: "setEmpireName(value: LocalizationInput): void;",
     docs: [
       "Sets the name of the current Empire.",
       "",
@@ -14202,7 +14202,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
       'set_empire_name = "name_loc_key"',
       "```",
       "",
-      "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.",
+      "Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.",
     ],
   },
   {
@@ -14304,7 +14304,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["country"] },
     signature:
-      "setFactionProperties(args: { neutral?: boolean; hostile?: boolean; follow?: boolean; autoDelete?: boolean; needsBorderAccess?: boolean; generateBorders?: boolean; needsColony?: boolean; primitive?: boolean; primitiveAge?: LocalizationRef; hostileWhenAttacked?: boolean; showBordersInUs?: boolean; pirate?: boolean; spaceCreatures?: boolean; intelEffectsSurveyed?: boolean }): void;",
+      "setFactionProperties(args: { neutral?: boolean; hostile?: boolean; follow?: boolean; autoDelete?: boolean; needsBorderAccess?: boolean; generateBorders?: boolean; needsColony?: boolean; primitive?: boolean; primitiveAge?: LocalizationInput; hostileWhenAttacked?: boolean; showBordersInUs?: boolean; pirate?: boolean; spaceCreatures?: boolean; intelEffectsSurveyed?: boolean }): void;",
     docs: [
       "Sets country's faction properties:",
       "",
@@ -14312,7 +14312,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
       "set_faction_properties = { some_flag_1 = yes some_flag_2 = no }",
       "```",
       "",
-      "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.",
+      "Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.",
     ],
   },
   {
@@ -14438,7 +14438,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     key: "set_female_heir_title",
     kind: "effect",
     availability: { kind: "scopes", scopes: ["country"] },
-    signature: "setFemaleHeirTitle(value: LocalizationRef): void;",
+    signature: "setFemaleHeirTitle(value: LocalizationInput): void;",
     docs: [
       "Sets the country's female heir title to a custom value",
       "",
@@ -14446,7 +14446,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
       'set_female_heir_title = "Little Executioneress"',
       "```",
       "",
-      "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.",
+      "Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.",
     ],
   },
   {
@@ -14454,7 +14454,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     key: "set_female_ruler_title",
     kind: "effect",
     availability: { kind: "scopes", scopes: ["country"] },
-    signature: "setFemaleRulerTitle(value: LocalizationRef): void;",
+    signature: "setFemaleRulerTitle(value: LocalizationInput): void;",
     docs: [
       "Sets the country's female ruler title to a custom value",
       "",
@@ -14462,7 +14462,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
       'set_female_ruler_title = "Grand Executionerress"',
       "```",
       "",
-      "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.",
+      "Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.",
     ],
   },
   {
@@ -14852,7 +14852,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     key: "set_male_heir_title",
     kind: "effect",
     availability: { kind: "scopes", scopes: ["country"] },
-    signature: "setMaleHeirTitle(value: LocalizationRef): void;",
+    signature: "setMaleHeirTitle(value: LocalizationInput): void;",
     docs: [
       "Sets the country's male heir title to a custom value",
       "",
@@ -14860,7 +14860,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
       'set_male_heir_title = "Little Executioner"',
       "```",
       "",
-      "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.",
+      "Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.",
     ],
   },
   {
@@ -14868,7 +14868,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     key: "set_male_ruler_title",
     kind: "effect",
     availability: { kind: "scopes", scopes: ["country"] },
-    signature: "setMaleRulerTitle(value: LocalizationRef): void;",
+    signature: "setMaleRulerTitle(value: LocalizationInput): void;",
     docs: [
       "Sets the country's male ruler title to a custom value",
       "",
@@ -14876,7 +14876,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
       'set_male_ruler_title = "Grand Executioner"',
       "```",
       "",
-      "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.",
+      "Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.",
     ],
   },
   {
@@ -15033,7 +15033,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
       ],
     },
     signature:
-      'setName(value: "random" | ScopeValue | LocalizationRef): void;\n  setName(args: { key: LocalizationRef; variableString?: readonly string[] }): void;',
+      'setName(value: "random" | ScopeValue | LocalizationInput): void;\n  setName(args: { key: LocalizationInput; variableString?: readonly string[] }): void;',
     docs: [
       "Sets the name of the scoped object",
       "",
@@ -15041,7 +15041,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
       "set_name = <string>/<target>",
       "```",
       "",
-      "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.",
+      "Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.",
     ],
   },
   {
@@ -15533,7 +15533,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     key: "set_ruler_title_female",
     kind: "effect",
     availability: { kind: "scopes", scopes: ["country"] },
-    signature: "setRulerTitleFemale(value: LocalizationRef): void;",
+    signature: "setRulerTitleFemale(value: LocalizationInput): void;",
     docs: [
       "Sets the scoped country's female ruler's title.",
       "",
@@ -15541,7 +15541,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
       "set_ruler_title_female = RULER_TITLE_FEMALE",
       "```",
       "",
-      "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.",
+      "Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.",
     ],
   },
   {
@@ -15549,7 +15549,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     key: "set_ruler_title_male",
     kind: "effect",
     availability: { kind: "scopes", scopes: ["country"] },
-    signature: "setRulerTitleMale(value: LocalizationRef): void;",
+    signature: "setRulerTitleMale(value: LocalizationInput): void;",
     docs: [
       "Sets the scoped country's male ruler's title.",
       "",
@@ -15557,7 +15557,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
       "set_ruler_title_male = RULER_TITLE_MALE",
       "```",
       "",
-      "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.",
+      "Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.",
     ],
   },
   {
@@ -15692,7 +15692,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["country"] },
     signature:
-      'setShipPrefix(value: LocalizationRef | ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system">): void;',
+      'setShipPrefix(value: LocalizationInput | ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system">): void;',
     docs: [
       "Sets the ship prefix of the scoped country",
       "",
@@ -15700,7 +15700,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
       "set_ship_prefix = <string>",
       "```",
       "",
-      "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.",
+      "Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.",
     ],
   },
   {
@@ -16811,7 +16811,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["system"] },
     signature:
-      'spawnMegastructure(args: { type: MegastructureRef | string; planet?: ScopeValue<"archaeological_site"|"army"|"carrier"|"deposit"|"fleet"|"megastructure"|"planet"|"pop_group"|"ship">; coordsFrom?: ScopeValue<"ambient_object"|"archaeological_site"|"astral_rift"|"bypass"|"carrier"|"colony"|"debris"|"fleet"|"megastructure"|"planet"|"ship"|"situation"|"starbase"|"system">; name: LocalizationRef | string | { key: LocalizationRef; variableString?: readonly string[] }; orbitAngle?: "random" | number | { min: number; max: number }; orbitDistance?: ScriptValue | { min: ScriptValue; max: ScriptValue }; owner?: ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system">; graphicalCulture?: GraphicalCultureRef | string | ScopeValue<"country"|"megastructure"|"ship">; randomPos?: boolean; initEffect?: (scope: MegastructureScope) => void }): void;',
+      'spawnMegastructure(args: { type: MegastructureRef | string; planet?: ScopeValue<"archaeological_site"|"army"|"carrier"|"deposit"|"fleet"|"megastructure"|"planet"|"pop_group"|"ship">; coordsFrom?: ScopeValue<"ambient_object"|"archaeological_site"|"astral_rift"|"bypass"|"carrier"|"colony"|"debris"|"fleet"|"megastructure"|"planet"|"ship"|"situation"|"starbase"|"system">; name: LocalizationInput | LiteralText | { key: LocalizationInput; variableString?: readonly string[] }; orbitAngle?: "random" | number | { min: number; max: number }; orbitDistance?: ScriptValue | { min: ScriptValue; max: ScriptValue }; owner?: ScopeValue<"agreement"|"archaeological_site"|"army"|"carrier"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_faction"|"pop_group"|"sector"|"ship"|"situation"|"spy_network"|"starbase"|"system">; graphicalCulture?: GraphicalCultureRef | string | ScopeValue<"country"|"megastructure"|"ship">; randomPos?: boolean; initEffect?: (scope: MegastructureScope) => void }): void;',
     docs: [
       "Spawns a mega structure in a system.",
       "",
@@ -16851,11 +16851,11 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "scopes", scopes: ["system"] },
     signature:
-      'spawnPlanet(args: { class: PlanetClassRef | string | PlanetClassRandomListRef | "random" | "random_colonizable"; generateRandomName?: boolean; checkOverlap?: boolean; name?: LocalizationRef; location?: ScopeValue<"ambient_object"|"archaeological_site"|"army"|"carrier"|"colony"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_group"|"ship"|"starbase"|"system"> | "none"; orbitLocation?: boolean; orbitDistance?: ScriptValue | { min: ScriptValue; max: ScriptValue }; orbitDistanceOffset?: ScriptValue; planeOffset?: number; depositBlockers?: "none"; modifiers?: "none"; modifier?: readonly (PlanetModifierRef | string)[]; flags?: readonly PlanetFlag[]; size?: number | "random"; hasRing?: boolean; spawnBeyondGravityWell?: boolean; orbitAngle?: "random" | number | { min: number; max: number }; orbitAngleOffset?: number; initEffect?: (scope: PlanetScope) => void }): void;',
+      'spawnPlanet(args: { class: PlanetClassRef | string | PlanetClassRandomListRef | "random" | "random_colonizable"; generateRandomName?: boolean; checkOverlap?: boolean; name?: LocalizationInput; location?: ScopeValue<"ambient_object"|"archaeological_site"|"army"|"carrier"|"colony"|"country"|"debris"|"deposit"|"first_contact"|"fleet"|"leader"|"megastructure"|"planet"|"pop_group"|"ship"|"starbase"|"system"> | "none"; orbitLocation?: boolean; orbitDistance?: ScriptValue | { min: ScriptValue; max: ScriptValue }; orbitDistanceOffset?: ScriptValue; planeOffset?: number; depositBlockers?: "none"; modifiers?: "none"; modifier?: readonly (PlanetModifierRef | string)[]; flags?: readonly PlanetFlag[]; size?: number | "random"; hasRing?: boolean; spawnBeyondGravityWell?: boolean; orbitAngle?: "random" | number | { min: number; max: number }; orbitAngleOffset?: number; initEffect?: (scope: PlanetScope) => void }): void;',
     docs: [
       "Spawns a planet in a system.",
       "",
-      "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.",
+      "Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.",
     ],
   },
   {
@@ -17244,7 +17244,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
     kind: "effect",
     availability: { kind: "universal" },
     signature:
-      'transferPopAmount(args: { source: ScopeValue<"pop_group">; target: ScopeValue<"pop_group">; amount?: ScriptValue; percentage?: ScriptValue; random?: ScriptValue; growthCategory?: LocalizationRef }): void;',
+      'transferPopAmount(args: { source: ScopeValue<"pop_group">; target: ScopeValue<"pop_group">; amount?: ScriptValue; percentage?: ScriptValue; random?: ScriptValue; growthCategory?: LocalizationInput }): void;',
     docs: [
       "Transfer the amount of pops from the source pop group to the target pop group",
       "",
@@ -17258,7 +17258,7 @@ export const SCRIPT_EFFECT_REFERENCES = [
       "}",
       "```",
       "",
-      "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.",
+      "Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.",
     ],
   },
   {
@@ -21743,7 +21743,7 @@ export const SCRIPT_TRIGGER_REFERENCES = [
     key: "custom_tooltip",
     availability: { kind: "universal" },
     signature:
-      "customTooltip(value: LocalizationRef): Trigger<ScopeName>;\ncustomTooltip<S extends ScopeName = ScopeName>(args: CustomTooltipArgs<S>): Trigger<S>;",
+      "customTooltip(value: LocalizationInput): Trigger<ScopeName>;\ncustomTooltip<S extends ScopeName = ScopeName>(args: CustomTooltipArgs<S>): Trigger<S>;",
     docs: [
       "Replaces the tooltips for the enclosed triggers with a custom text",
       "",
@@ -21756,7 +21756,7 @@ export const SCRIPT_TRIGGER_REFERENCES = [
       "}",
       "```",
       "",
-      "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.",
+      "Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.",
     ],
   },
   {
@@ -21775,7 +21775,7 @@ export const SCRIPT_TRIGGER_REFERENCES = [
       "}",
       "```",
       "",
-      "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.",
+      "Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.",
     ],
   },
   {
@@ -21794,7 +21794,7 @@ export const SCRIPT_TRIGGER_REFERENCES = [
       "}",
       "```",
       "",
-      "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.",
+      "Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.",
     ],
   },
   {
@@ -22137,7 +22137,7 @@ export const SCRIPT_TRIGGER_REFERENCES = [
     key: "fail_text",
     availability: { kind: "universal" },
     signature:
-      "failText(value: LocalizationRef): Trigger<ScopeName>;\nfailText<S extends ScopeName = ScopeName>(args: FailTextArgs<S>): Trigger<S>;",
+      "failText(value: LocalizationInput): Trigger<ScopeName>;\nfailText<S extends ScopeName = ScopeName>(args: FailTextArgs<S>): Trigger<S>;",
     docs: [
       "For 'desc={trigger={' use. Shows custom text when the associated trigger fails.",
       "",
@@ -22148,7 +22148,7 @@ export const SCRIPT_TRIGGER_REFERENCES = [
       "}",
       "```",
       "",
-      "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.",
+      "Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.",
     ],
   },
   {
@@ -23257,7 +23257,7 @@ export const SCRIPT_TRIGGER_REFERENCES = [
     key: "has_climate",
     availability: { kind: "scopes", scopes: ["carrier", "colony", "planet", "ship"] },
     signature:
-      'hasClimate(value: LocalizationRef): Trigger<"carrier" | "colony" | "planet" | "ship">',
+      'hasClimate(value: LocalizationInput): Trigger<"carrier" | "colony" | "planet" | "ship">',
     docs: [
       "Checks if the planet's climate is set to a specified string in planet_classes:",
       "",
@@ -23265,7 +23265,7 @@ export const SCRIPT_TRIGGER_REFERENCES = [
       "has_climate = dry",
       "```",
       "",
-      "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.",
+      "Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.",
     ],
   },
   {
@@ -31278,7 +31278,7 @@ export const SCRIPT_TRIGGER_REFERENCES = [
     key: "success_text",
     availability: { kind: "universal" },
     signature:
-      "successText(value: LocalizationRef): Trigger<ScopeName>;\nsuccessText<S extends ScopeName = ScopeName>(args: SuccessTextArgs<S>): Trigger<S>;",
+      "successText(value: LocalizationInput): Trigger<ScopeName>;\nsuccessText<S extends ScopeName = ScopeName>(args: SuccessTextArgs<S>): Trigger<S>;",
     docs: [
       "For 'desc={trigger={' use. Shows custom text when the associated trigger passes.",
       "",
@@ -31289,7 +31289,7 @@ export const SCRIPT_TRIGGER_REFERENCES = [
       "}",
       "```",
       "",
-      "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.",
+      "Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.",
     ],
   },
   {
@@ -31348,7 +31348,7 @@ export const SCRIPT_TRIGGER_REFERENCES = [
     method: "text",
     key: "text",
     availability: { kind: "universal" },
-    signature: "text(value: LocalizationRef): Trigger<ScopeName>",
+    signature: "text(value: LocalizationInput): Trigger<ScopeName>",
     docs: [
       "For 'desc={trigger={' use. Shows custom text",
       "",
@@ -31356,7 +31356,7 @@ export const SCRIPT_TRIGGER_REFERENCES = [
       "text = <text>",
       "```",
       "",
-      "A localization key, as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's. Unlike a content field, recorded script has no owning definition to key display text against, so text belongs in `mod.localization()` first.",
+      "Names a localization key. Inline display text — a string, or a language record — is keyed and emitted for you against whatever definition, event, or patch this script is placed in; reuse the same script under two owners and each gets its own key. An existing key goes here as a reference: `mod.localization()` or a definition's `loc` member for a key this mod owns, `vanilla.localization()` for one the game ships, `external.localization()` for another mod's.",
     ],
   },
   {

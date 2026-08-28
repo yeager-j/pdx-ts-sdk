@@ -1,5 +1,7 @@
 /** Author-facing localization text, and standalone, mod-bound localization authoring. */
 
+import { isWritableText } from "@pdx-ts/pdxscript";
+
 import { assertLocalizationSuffix } from "../localization-key.ts";
 
 /** Language directories and file headers supported by Stellaris 4.4.6. */
@@ -68,6 +70,102 @@ export type LocalizedTextRecord = Readonly<
  * ```
  */
 export type LocalizedText = string | LocalizedTextRecord;
+
+/**
+ * What every position whose emitted PDXScript stores a localization key
+ * accepts: display text the SDK keys itself, or a reference to a key that
+ * already exists.
+ *
+ * The three forms are a bare string (English shorthand), a
+ * {@link LocalizedTextRecord} (English plus translations, and an optional key
+ * pin), and a {@link LocalizationRef} — `mod.localization()`, a definition's
+ * `loc` member, `vanilla.localization()`, or `external.localization()`.
+ *
+ * A bare string here is *always* display text, never an existing key: an
+ * existing key is spelled as a reference. Use it only for audited stored-key
+ * positions; a slot whose key the definition fixes (a technology's `name`)
+ * stays {@link LocalizedText}, since a reference would have nowhere to point.
+ *
+ * @example
+ * ```ts
+ * customTooltip("Requires an awakened gateway.");
+ * customTooltip({ english: "Requires a gateway.", french: "Exige un portail." });
+ * customTooltip(vanilla.localization("requires_independence"));
+ * ```
+ */
+export type LocalizationInput = LocalizedText | LocalizationRef;
+
+/**
+ * Raw displayed text for the uncommon engine field that stores either a
+ * localization key or the words themselves — a name-writing effect, a swap's
+ * `name`.
+ *
+ * Once a bare string means English localized text, the raw arm needs a
+ * spelling of its own; {@link literalText} is it. Only a field whose rules
+ * prove a raw scalar arm exists accepts one.
+ */
+export interface LiteralText {
+  /** Separates raw displayed text from authored localization at runtime. */
+  readonly kind: "literal-text";
+  /** The exact scalar written into the file. */
+  readonly text: string;
+}
+
+/**
+ * Writes text into a mixed field as the raw scalar the game displays, rather
+ * than as localized text the SDK keys.
+ *
+ * @throws Error If the value cannot be written as a PDXScript scalar.
+ * @example
+ * ```ts
+ * scope.setName(literalText("The Contingency"));
+ * ```
+ */
+export function literalText(text: string): LiteralText {
+  if (typeof text !== "string") {
+    throw new TypeError("literalText() takes the raw string the game displays");
+  }
+  if (!isWritableText(text)) {
+    throw new Error(
+      `literalText(${JSON.stringify(text)}) cannot be written as a PDXScript scalar — ` +
+        "a raw displayed value is one scalar token, so it cannot hold a line break or a quote " +
+        "the file has no escape for."
+    );
+  }
+  return Object.freeze({ kind: "literal-text" as const, text });
+}
+
+/** Whether an authored value is raw displayed text rather than localized text. */
+export function isLiteralText(value: unknown): value is LiteralText {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    (value as { readonly kind?: unknown }).kind === "literal-text" &&
+    typeof (value as { readonly text?: unknown }).text === "string"
+  );
+}
+
+const LANGUAGE_RECORD_MEMBERS = new Set<string>([...LOCALIZATION_LANGUAGES, "key"]);
+
+/**
+ * Whether an object is a {@link LocalizedTextRecord} rather than some other
+ * block-shaped authored value.
+ *
+ * A stored-key field overloaded between a key and a braced block gets both as
+ * objects, so the arms are told apart by membership: a language record carries
+ * an `english` string and nothing but language names and the `key` pin. No
+ * block arm in the rules declares an `english` member, so the two cannot be
+ * confused.
+ */
+export function isLocalizedTextRecord(value: unknown): value is LocalizedTextRecord {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return false;
+  }
+  if (typeof (value as { readonly english?: unknown }).english !== "string") {
+    return false;
+  }
+  return Object.keys(value).every((member) => LANGUAGE_RECORD_MEMBERS.has(member));
+}
 
 /** {@link LocalizedText} split into the text to emit and the key pin, if any. */
 export interface ResolvedLocalizedText {

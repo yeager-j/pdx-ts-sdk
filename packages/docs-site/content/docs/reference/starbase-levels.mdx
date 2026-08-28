@@ -134,9 +134,9 @@ the station-view background for bioship empires. `portrait` is undocumented in
 the same way as `specialConstruction`: the rules accept a sprite, the game
 documents no meaning for it, and no vanilla level sets it.
 
-`levelTooltip` is an existing localization key. The registry does not create
-English text for it, so declare that key through the mod's
-[Localization](/concepts/localization/) channel when it belongs to this mod.
+`levelTooltip` stores a localization key. Write the display text and the SDK
+keys it against the level and the field, or pass a reference to an entry that
+already exists — see [Localization](/concepts/localization/).
 
 Graphics must agree with the selected ship size and starbase UI. The SDK checks
 sprite reference shapes, not whether the final composition renders.

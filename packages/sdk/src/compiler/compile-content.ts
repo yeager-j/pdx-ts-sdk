@@ -77,7 +77,8 @@ export function compileContent(session: BuildSession): CompiledContent {
     CONTENT_REGISTRIES,
     () => {},
     (message) => session.warnings.push({ code: "missing-prefix", message }),
-    (message) => session.warnings.push({ code: "unstable-desc-key", message })
+    (message) => session.warnings.push({ code: "unstable-desc-key", message }),
+    (warning) => session.warnings.push(warning)
   );
   const rawGroups = collectContentGroups(session);
   const { definedGroups, stemByDefinition } = defineContentGroups(session, content, rawGroups);

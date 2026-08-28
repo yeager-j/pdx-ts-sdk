@@ -33,7 +33,7 @@ import {
   isPlanetClass,
   owner,
 } from "../src/script/triggers.ts";
-import { external, vanilla } from "../src/stellaris.ts";
+import { external, literalText, vanilla } from "../src/stellaris.ts";
 
 const flags = countryFlags("effects_test_flag");
 const stormWorld = eventTarget<"planet">("effects_test_target");
@@ -2399,12 +2399,21 @@ queue_actions = {
     const country = makeScope<"country">(sink, refs);
 
     country.createCountry({
-      name: "effects_test_country",
+      // A raw displayed name and an existing key: both arms of a mixed field,
+      // spelled so neither can be read as the other.
+      name: literalText("effects_test_country"),
       type: "faction",
       removeInvalidCivics: false,
       governmentRestrictions: {
         authority: { value: "auth_democratic" },
-        civics: { or: [{ text: "CIVIC_TIP", values: ["civic_a", "effects_test_missing_civic"] }] },
+        civics: {
+          or: [
+            {
+              text: external.localization("CIVIC_TIP"),
+              values: ["civic_a", "effects_test_missing_civic"],
+            },
+          ],
+        },
       },
     });
 

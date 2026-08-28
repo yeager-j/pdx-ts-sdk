@@ -9,7 +9,7 @@
 import { describe, expect, it } from "vitest";
 
 import { PathOwnershipError, StaleRuleTableError } from "../src/errors.ts";
-import { createMod, render, type ModConfig } from "../src/index.ts";
+import { createMod, external, render, type ModConfig } from "../src/index.ts";
 import { viewFromFiles } from "../src/installation/vanilla/view.ts";
 import { always, type EconomicResourceOperation, type TechnologyItem } from "../src/stellaris.ts";
 import {
@@ -741,6 +741,28 @@ describe("patched localization end to end", () => {
     // And the patched body points at exactly that key.
     expect(files.get("common/buildings/pp_buildings_pp_mod_patch.txt")).toContain(
       "\t\t\tdesc = pp_mod_building_pp_refinery_planet_limit_crowded\n"
+    );
+  });
+
+  it("emits an existing key from a patched modifier description", () => {
+    const mod = createMod(makeConfig());
+    const files = render(
+      mod.compile([
+        mod.feature("referenced_desc", [
+          mod.patchTechnology(vanilla.definition("technology", "tech_gene_forging"), () => ({
+            weightModifier: {
+              modifiers: [{ factor: 2, desc: external.localization("EXISTING_MODIFIER_DESC") }],
+            },
+          })),
+        ]),
+      ])
+    );
+
+    expect(files.get("common/technology/pp_soc_tech_pp_mod_patch.txt")).toContain(
+      "desc = EXISTING_MODIFIER_DESC"
+    );
+    expect([...files.keys()].filter((path) => path.startsWith("localisation/english/"))).toEqual(
+      []
     );
   });
 

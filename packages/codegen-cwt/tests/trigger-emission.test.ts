@@ -145,17 +145,19 @@ describe("trigger emission", () => {
     expect(emission.code).toContain(
       "export type CustomTooltipArgs<S extends ScopeName = ScopeName> = {"
     );
-    expect(emission.code).toContain('failText?: "default" | LocalizationRef;');
+    expect(emission.code).toContain('failText?: "default" | LocalizationInput;');
     expect(emission.code).toContain("conditions: Trigger<S>;");
     for (const fn of ["customTooltip", "failText", "successText"]) {
       expect(emission.code).toContain(
-        `export function ${fn}(value: LocalizationRef): Trigger<ScopeName>;`
+        `export function ${fn}(value: LocalizationInput): Trigger<ScopeName>;`
       );
     }
     // Both arms carry refs: the key the author wrote may belong to a standalone
     // item this build has to place beside the definition that names it (SDK-306).
     expect(emission.code).toContain('recordLocalization(refs, value, "custom_tooltip");');
-    expect(emission.code).toContain('return trigger([kv("custom_tooltip", refId(value))], refs);');
+    expect(emission.code).toContain(
+      'return trigger([kv("custom_tooltip", localizationScalar(value, "custom_tooltip"))], refs);'
+    );
     expect(emission.code).toContain('recordLocalization(refs, args.text, "custom_tooltip.text");');
     expect(emission.code).toContain('return trigger([block("custom_tooltip", entries)], refs);');
   });

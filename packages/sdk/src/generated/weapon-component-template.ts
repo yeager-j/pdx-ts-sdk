@@ -2,7 +2,11 @@
 // Source: cwtools-stellaris-config @ 97ff2fcd6098
 // From: common/components.cwt
 
-import type { LocalizationRef, LocalizedText } from "../authoring/localization.ts";
+import type {
+  LocalizationInput,
+  LocalizationRef,
+  LocalizedText,
+} from "../authoring/localization.ts";
 import type { DefinedContent } from "../content/authoring.ts";
 import type { ContentField, ContentLocalisation } from "../content/schema.ts";
 import type {
@@ -38,12 +42,12 @@ import type {
 import type { UpgradePath } from "./value-sets.ts";
 
 export interface WeaponComponentTemplateCustomTooltip {
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  text?: "" | LocalizedText | LocalizationRef;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  failText?: "default" | LocalizedText | LocalizationRef;
-  /** Names a localization key: pass a reference, or display text the SDK keys and emits for you. */
-  successText?: LocalizedText | LocalizationRef;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  text?: "" | LocalizationInput;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  failText?: "default" | LocalizationInput;
+  /** Names a localization key: pass display text the SDK keys and emits for you, or a reference to a key that already exists. */
+  successText?: LocalizationInput;
   when?: Trigger<never>;
 }
 
@@ -502,7 +506,7 @@ export interface WeaponComponentTemplateFields {
   shipLimit?: number;
   sizeRestriction?: (ShipSizeRef | string | "null")[];
   blockedBy?: (ComponentTemplateRef | string)[];
-  customTooltip?: LocalizedText | LocalizationRef | WeaponComponentTemplateCustomTooltip;
+  customTooltip?: LocalizationInput | WeaponComponentTemplateCustomTooltip;
   shouldAiUse?: boolean;
   validForCountry?: Trigger<"country">;
   aiWeight?: WeightBlock<"country">;

@@ -219,35 +219,39 @@ describe("emitted trigger signatures", () => {
   it("scalar plus block: preserves both custom_tooltip forms as overloads", () => {
     expect(argsDeclaration("CustomTooltipArgs")).toMatchInlineSnapshot(`
       "export type CustomTooltipArgs<S extends ScopeName = ScopeName> = {
-        text?: "" | LocalizationRef;
-        failText?: "default" | LocalizationRef;
-        successText?: LocalizationRef;
+        text?: "" | LocalizationInput;
+        failText?: "default" | LocalizationInput;
+        successText?: LocalizationInput;
         /** The nested conditions, written bare inside the block beside its named keys. */
         conditions: Trigger<S>;
       };"
     `);
     expect(declaration("customTooltip")).toMatchInlineSnapshot(`
-      "export function customTooltip(value: LocalizationRef): Trigger<ScopeName>;
+      "export function customTooltip(value: LocalizationInput): Trigger<ScopeName>;
       export function customTooltip<S extends ScopeName = ScopeName>(
         args: CustomTooltipArgs<S>
       ): Trigger<S>;
       export function customTooltip<S extends ScopeName>(
-        value: LocalizationRef | CustomTooltipArgs<S>
+        value: LocalizationInput | CustomTooltipArgs<S>
       ): Trigger<ScopeName> {
-        if (isStructuredValue(value, ["localization-ref"])) {
+        if (isStructuredValue(value, ["localization-ref", "localized-text"])) {
           const args = value;
           const entries: PdxEntry[] = [];
           const refs: RecordedRefUse[] = [];
           if (args.text !== undefined) {
-            entries.push(kv("text", refId(args.text)));
+            entries.push(kv("text", localizationScalar(args.text, "custom_tooltip.text", [""])));
             recordLocalization(refs, args.text, "custom_tooltip.text");
           }
           if (args.failText !== undefined) {
-            entries.push(kv("fail_text", refId(args.failText)));
+            entries.push(
+              kv("fail_text", localizationScalar(args.failText, "custom_tooltip.fail_text", ["default"]))
+            );
             recordLocalization(refs, args.failText, "custom_tooltip.fail_text");
           }
           if (args.successText !== undefined) {
-            entries.push(kv("success_text", refId(args.successText)));
+            entries.push(
+              kv("success_text", localizationScalar(args.successText, "custom_tooltip.success_text"))
+            );
             recordLocalization(refs, args.successText, "custom_tooltip.success_text");
           }
           entries.push(...args.conditions.entries);
@@ -256,7 +260,7 @@ describe("emitted trigger signatures", () => {
         }
         const refs: RecordedRefUse[] = [];
         recordLocalization(refs, value, "custom_tooltip");
-        return trigger([kv("custom_tooltip", refId(value))], refs);
+        return trigger([kv("custom_tooltip", localizationScalar(value, "custom_tooltip"))], refs);
       }"
     `);
   });
@@ -304,7 +308,8 @@ describe("scalar lowering ownership", () => {
     expect(refs).not.toContain("function refId");
     expect(source).toContain(
       "import {\n" +
-        "  caseEntries,\n  isComparisonList,\n  isStructuredValue,\n  mapEntries,\n  refId,\n" +
+        "  caseEntries,\n  isComparisonList,\n  isStructuredValue,\n  localizationScalar,\n" +
+        "  mapEntries,\n  refId,\n" +
         '} from "../script/scalar.ts";'
     );
     expect(contentDefiners).toContain(

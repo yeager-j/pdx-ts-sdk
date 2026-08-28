@@ -18,9 +18,9 @@ import type { PdxEntry } from "@pdx-ts/pdxscript";
 
 import type {
   KeyedLocalization,
+  LocalizationInput,
   LocalizationRef,
-  LocalizationTranslations,
-  LocalizedText,
+  LocalizationReplacements,
 } from "../authoring/localization.ts";
 import type { TriggeredDescription } from "../content/types.ts";
 import type { ModWarning } from "../diagnostics.ts";
@@ -64,7 +64,7 @@ export interface EventItemBase {
   readonly entry: PdxEntry;
   readonly refs: readonly RecordedRefUse[];
   /**
-   * The localization keys this event minted, as references — the same value
+   * The localization references this event writes — the same value
    * {@link DefinedEvent.loc} carries, surviving into `PureMod.events` so a
    * compiled mod can be read for them as well as an authored event.
    */
@@ -135,8 +135,11 @@ export interface EventRef<
 export interface EventOptionIcon {
   readonly icon: SpriteRef | string;
   readonly iconBackground?: SpriteRef | string;
-  /** Caption text, keyed off the option's own key the same way `name` is. */
-  readonly text?: LocalizedText;
+  /**
+   * Caption text, keyed off the option's own key the same way `name` is, or a
+   * reference to a key that already exists.
+   */
+  readonly text?: LocalizationInput;
 }
 
 /**
@@ -280,7 +283,7 @@ export type DefinedEvent<
   readonly scope: S;
   readonly scopes: Context;
   readonly entry: PdxEntry;
-  /** The localization keys this event minted, as references. */
+  /** The effective localization references this event writes. */
   readonly loc: EventLoc;
   /**
    * Content references the event's closures and option conditions wrote. The
@@ -303,15 +306,24 @@ export type DefinedEvent<
   readonly warnings: readonly ModWarning[];
 };
 
-/** One authored event option's minted localization key, as a reference. */
+/** One authored event option's effective `name` reference. */
 export interface EventOptionLoc {
-  /** The key the option's own `name` text is emitted under. */
+  /**
+   * The key the option's `name` writes: the one this event minted for inline
+   * text, or the reference the author supplied, carried through as the object
+   * it was so a consumed item keeps its provenance.
+   */
   readonly name: LocalizationRef;
 }
 
 /**
- * The localization keys an event mints, for embedding its text elsewhere —
- * with the `loc` template tag, or in any field that names a key.
+ * The localization references an event writes, for embedding its text
+ * elsewhere — with the `loc` template tag, or in any field that names a key.
+ *
+ * These are the *effective* references, not only the keys the event minted: a
+ * slot given `vanilla.localization("x")` reports that reference, since it is
+ * what the emitted event points at. `locEntries` remains the narrower thing —
+ * the text this event owns and ships.
  *
  * `title` and `desc` are absent unless the event supplied that text. An event
  * lowers inside its definer, unlike a content definition, so what it set is
@@ -338,9 +350,16 @@ export interface EventLoc {
   readonly options: readonly EventOptionLoc[];
 }
 
-/** Where definition-side localization lands; the caller supplies its registry. */
+/**
+ * Where definition-side localization lands; the caller supplies its registry.
+ *
+ * The value is a replacement map rather than a full translation record because
+ * one producer supplies partial languages: text a recorded trigger carried into
+ * the event registers whatever languages the author wrote, exactly as an
+ * ordinary slot does.
+ */
 export interface LocSink {
-  register(key: string, translations: LocalizationTranslations): void;
+  register(key: string, translations: LocalizationReplacements): void;
 }
 
 // ---------------------------------------------------------------------------
