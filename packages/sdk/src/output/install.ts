@@ -1,4 +1,5 @@
-import { rename, rm, writeFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { readFile, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import { MATERIALIZATION_MANIFEST_PATH } from "../compiler/paths.ts";
@@ -200,7 +201,7 @@ async function installJournaled(
     descriptor,
     receipt,
   });
-  validateCurrentDescriptor(contentDir, descriptorPath, rendered, inspection, descriptor);
+  await validateCurrentDescriptor(contentDir, descriptorPath, rendered, inspection, descriptor);
 
   const common = {
     contentDir,
@@ -295,13 +296,13 @@ async function installJournaled(
  * renaming it aside and deleting it whole. The author removes it by hand; the
  * SDK does not delete a subtree nobody reviewed.
  */
-function validateCurrentDescriptor(
+async function validateCurrentDescriptor(
   contentDir: string,
   descriptorPath: string,
   rendered: RenderedMod,
   inspection: MaterializationInspection,
   descriptor: DescriptorSnapshot
-): void {
+): Promise<void> {
   const basename = path.basename(descriptorPath);
   if (inspection.kind !== "owned") {
     if (descriptor.state !== "absent") {
@@ -325,9 +326,47 @@ function validateCurrentDescriptor(
   if (descriptor.state === "symlink") {
     throw descriptorDrift(contentDir, rendered, inspection, basename, "symlink");
   }
-  if (!sameDescriptor(inspection.manifest?.launcherDescriptor, descriptor)) {
+  if (
+    !(await matchesOwnedDescriptor(
+      inspection.manifest?.launcherDescriptor,
+      descriptor,
+      descriptorPath
+    ))
+  ) {
     throw descriptorDrift(contentDir, rendered, inspection, basename, "modified");
   }
+}
+
+async function matchesOwnedDescriptor(
+  expected: LauncherDescriptorRecord | undefined,
+  observed: DescriptorSnapshot,
+  descriptorPath: string
+): Promise<boolean> {
+  if (observed.state !== "file") {
+    return false;
+  }
+  if (sameDescriptor(expected, observed)) {
+    return true;
+  }
+  if (
+    expected === undefined ||
+    expected.basename !== observed.basename ||
+    expected.byteLength !== observed.byteLength + 1
+  ) {
+    return false;
+  }
+
+  // The launcher removes the final newline from descriptors written by older SDK builds.
+  const bytes = await readFile(descriptorPath);
+  const current = {
+    basename: observed.basename,
+    byteLength: bytes.byteLength,
+    sha256: createHash("sha256").update(bytes).digest("hex"),
+  };
+  if (!sameDescriptor(observed, current)) {
+    return false;
+  }
+  return createHash("sha256").update(bytes).update("\n").digest("hex") === expected.sha256;
 }
 
 function sameDescriptor(
