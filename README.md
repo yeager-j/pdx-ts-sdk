@@ -17,7 +17,7 @@ const mod = createMod({
   supportedVersion: "4.4.*",
 });
 
-const flags = countryFlags("heard_the_hum");
+const flags = countryFlags("hello_galaxy_heard_the_hum");
 
 const resonanceTheory = mod.technology("resonance_theory", {
   name: "Crystal Resonance Theory",
@@ -33,7 +33,7 @@ const resonanceTheory = mod.technology("resonance_theory", {
     modifiers: [
       { factor: 2, when: hasCivic("civic_technocracy") },
       { factor: 0.5, when: isAtWar() },
-      { factor: 0, when: not(hasCountryFlag(flags.heard_the_hum)) }
+      { factor: 0, when: not(hasCountryFlag(flags.hello_galaxy_heard_the_hum)) }
     ],
   },
   modifier: (m) => m.country.unity.produces.mult(0.5),
@@ -72,7 +72,7 @@ hello_galaxy_tech_resonance_theory = {
     modifier = {
       factor = 0
       NOT = {
-        has_country_flag = heard_the_hum
+        has_country_flag = hello_galaxy_heard_the_hum
       }
     }
   }
