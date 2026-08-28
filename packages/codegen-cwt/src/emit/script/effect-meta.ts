@@ -126,8 +126,8 @@ function fieldMeta(field: ArgField): string {
     field.value.kind === "clause" && field.value.category === "effect"
       ? `, transition: ${JSON.stringify(field.value.transition)}`
       : "";
-  const scalarMeta = field.value.kind === "scalar" ? scalarMetaSuffix(field.value.value) : "";
-  return `{ ${identity}, kind: ${JSON.stringify(kind)}${transition}${scalarMeta}${spliceMeta(field.value)}${repeated} }`;
+  const scalarMetadata = field.value.kind === "scalar" ? scalarMetaSuffix(field.value.value) : "";
+  return `{ ${identity}, kind: ${JSON.stringify(kind)}${transition}${scalarMetadata}${spliceMeta(field.value)}${repeated} }`;
 }
 
 function scalarShapeMeta(shape: Extract<EffectShape, { readonly kind: "bool" | "value" }>): string {
