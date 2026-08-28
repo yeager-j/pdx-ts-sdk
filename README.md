@@ -1,576 +1,425 @@
 # pdx-ts
 
-Write Stellaris mods in TypeScript. Your code runs once, at build time, and
-produces an ordinary mod folder — the game never sees anything but normal
-PDXScript. There is no DSL and no template language: definitions are plain
-TypeScript values, a build folds them into a mod, and rendering is a pure
-function from that value to files.
+Write Stellaris mods in TypeScript. Your program runs once at build time and
+produces an ordinary mod folder. Stellaris receives normal PDXScript,
+localization, assets, and descriptors. The game does not load a JavaScript
+runtime, template engine, or custom file format.
 
 ```ts
-// src/mod.ts
 import { createMod } from "@pdx-ts/sdk";
+import { countryFlags, hasCivic, hasCountryFlag, isAtWar, not, vanilla } from "@pdx-ts/sdk/stellaris";
+import { isFallenEmpire } from "@pdx-ts/stellaris-ids/triggers";
 
-export const mod = createMod({
+const mod = createMod({
   name: "Hello Galaxy",
   prefix: "hello_galaxy",
   version: "0.1.0",
   supportedVersion: "4.4.*",
 });
-```
 
-```ts
-// src/content/resonance.ts
-import {
-  and,
-  countryFlags,
-  eventTarget,
-  hasCountryFlag,
-  hasOwner,
-  isAtWar,
-  not,
-  onActions,
-} from "@pdx-ts/sdk/stellaris";
+const flags = countryFlags("heard_the_hum");
 
-import { mod } from "../mod.ts";
-
-const flags = countryFlags("hello_galaxy_heard_the_hum", "hello_galaxy_pacifist_path");
-const stormWorld = eventTarget<"planet">("hello_galaxy_storm_world");
-
-export const resonanceTheory = mod.technology("resonance_theory", {
+const resonanceTheory = mod.technology("resonance_theory", {
   name: "Crystal Resonance Theory",
   desc: "The lattice hums at frequencies we are only beginning to hear.",
-  cost: 2000,
+  cost: 2_000,
   area: "physics",
   tier: 2,
   category: "particles",
-  weight: 100,
-});
-
-export const resonanceWeapons = mod.technology("resonance_weapons", {
-  name: "Resonance Disruptors",
-  desc: "Weaponized harmonics that shatter hulls from within.",
-  cost: 6000,
-  area: "physics",
-  tier: 3,
-  category: "particles",
-  prerequisites: [resonanceTheory, "tech_lasers_2"],
-  isRare: true,
-  weight: 70,
-  potential: and(
-    hasCountryFlag(flags.hello_galaxy_heard_the_hum),
-    not(hasCountryFlag(flags.hello_galaxy_pacifist_path))
-  ),
-});
-
-const events = mod.namespace("resonance");
-export const aftershock = events.planet(2, {
-  from: "country",
-  title: "Aftershock",
-  desc: "The crystal hum lingers over this world.",
-  isTriggeredOnly: true,
-  immediate: (planet, ctx) => {
-    ctx.from.effects((country) => country.addResource({ resource: "influence", amount: 50 }));
-  },
-  options: [{ name: "Noted.", key: "noted" }],
-});
-
-export const humReturns = events.country(1, {
-  title: "The Hum Returns",
-  desc: "Deep in the lattice, something answers back.",
-  isTriggeredOnly: true,
-  immediate: (country, ctx) => {
-    country.randomList([
-      {
-        weight: 60,
-        do: () => country.setCountryFlag(flags.hello_galaxy_heard_the_hum),
-      },
-      {
-        weight: 40,
-        modifiers: [{ factor: 2, when: isAtWar() }],
-        do: () => {
-          country.everyOwnedPlanet({ limit: hasOwner() }, (planet) => {
-            planet.saveEventTargetAs(stormWorld);
-            planet.planetEvent({ id: aftershock, from: ctx.self, days: 30 });
-          });
-        },
-      },
-    ]);
-    country
-      .if(hasCountryFlag(flags.hello_galaxy_heard_the_hum), () => {
-        stormWorld.effects((planet) => planet.addDeposit("d_minerals_1"));
-      })
-      .else(() => country.log("the hum went unheard"));
-  },
-  options: [{ name: "Fascinating.", key: "fascinating" }],
-});
-
-export const feature = mod.feature("resonance", [
-  resonanceTheory,
-  resonanceWeapons,
-  aftershock,
-  humReturns,
-  mod.on(onActions.onGameStartCountry, [humReturns]),
-]);
-```
-
-`createMod` is the low-level authoring entry point. `createModProject` is the
-conventional Project Manifest pipeline built on it. The capability mints each
-content id from the mod prefix (`hello_galaxy_tech_resonance_theory`), gives
-events their namespace and numeric ids (`hello_galaxy_resonance.1`), and
-compiles explicit features into the immutable mod value that `render`
-consumes. Rendering snapshots immutable artifacts; `write` and `install`
-materialize that exact `RenderedMod`.
-
-It builds to `common/technology/hello_galaxy_resonance.txt`:
-
-```
-hello_galaxy_tech_resonance_theory = {
-	area = physics
-	tier = 2
-	category = { particles }
-	cost = 2000
-	weight = 100
-}
-
-hello_galaxy_tech_resonance_weapons = {
-	area = physics
-	tier = 3
-	category = { particles }
-	cost = 6000
-	weight = 70
-	prerequisites = { "hello_galaxy_tech_resonance_theory" "tech_lasers_2" }
-	potential = {
-		AND = {
-			has_country_flag = hello_galaxy_heard_the_hum
-			NOT = {
-				has_country_flag = hello_galaxy_pacifist_path
-			}
-		}
-	}
-	is_rare = yes
-}
-```
-
-and `events/hello_galaxy_resonance.txt`:
-
-```
-namespace = hello_galaxy_resonance
-
-country_event = {
-	id = hello_galaxy_resonance.1
-	title = hello_galaxy_resonance.1.name
-	desc = hello_galaxy_resonance.1.desc
-	is_triggered_only = yes
-	immediate = {
-		random_list = {
-			60 = {
-				set_country_flag = hello_galaxy_heard_the_hum
-			}
-			40 = {
-				modifier = {
-					factor = 2
-					is_at_war = yes
-				}
-				every_owned_planet = {
-					limit = {
-						has_owner = yes
-					}
-					save_event_target_as = hello_galaxy_storm_world
-					planet_event = {
-						id = hello_galaxy_resonance.2
-						days = 30
-					}
-				}
-			}
-		}
-		if = {
-			limit = {
-				has_country_flag = hello_galaxy_heard_the_hum
-			}
-			event_target:hello_galaxy_storm_world = {
-				add_deposit = d_minerals_1
-			}
-		}
-		else = {
-			log = "the hum went unheard"
-		}
-	}
-	option = {
-		name = hello_galaxy_resonance.1.fascinating
-	}
-}
-```
-
-plus the localization `.yml` (BOM and all) and the descriptor.
-Source can be organized however you like; the build sorts content into the engine's
-one-directory-per-registry layout.
-
-## The IDE plugins are good. They are also linters.
-
-Serious PDXScript modding already has real tooling: the JetBrains Paradox
-Language Support plugin and cwtools for VS Code index the game and your mod,
-complete fields and vanilla ids — with documentation, icons, and
-jump-to-definition — annotate scopes inline, and flag unresolved references.
-They are driven by the same community-maintained cwtools rules this project
-generates its types from, and if you write raw PDXScript you should
-absolutely use one.
-
-But a linter checks text you already wrote, and its findings are advisory.
-That ceiling is what a compiler raises:
-
-- **A squiggle can be ignored; a failed build ships nothing.** The plugin
-  marks `tech_lazers_2` as unresolved and lets you package the mod anyway.
-  Here the same mistake is a type error or a build refusal — the mod folder
-  is never produced with the defect in it.
-- **Wrong-scope code isn't flagged, it's unrepresentable.** The plugin
-  annotates scopes and warns on mismatches, within what the `.cwt` rules can
-  express. In the SDK an effect closure receives a scope object that simply
-  does not have the wrong-scope methods, and contracts the rules cannot state
-  are still checked: what `FROM` is when an event fires (witnessed at every
-  fire site), what scope an event target holds, what a situation's `target`
-  is.
-- **Modifier completion that answers before you stop typing.** The plugin
-  does complete modifiers — all 45,501 of them, in one flat list, which in
-  practice means multi-second menus. The SDK types them as paths
-  (`m.country.unity.produces.mult(0.01)`): the largest menu anywhere in the
-  tree has 369 entries, every segment is checked, and scope-illegal modifiers
-  don't appear at all.
-- **A linter cannot write content; a language can.** Five amplifier
-  technologies with scaling costs are a `for` loop. Shared trigger fragments
-  are functions. Constants are constants. Rules-based tooling has nothing to
-  offer here because there is nothing to check yet.
-- **Nobody warns you that your vanilla override lost.** PDXScript overrides
-  are whole-object, load-order-sensitive replacements, and the folklore
-  answer is a `zz_` filename prefix and hope. The SDK parses the real install,
-  computes a filename that provably byte-sorts after every vanilla or
-  current-mod competitor in its enumeration, and fails the build when no
-  winning name exists.
-- **The edit-test loop is "launch, console-fire, squint."** Recorded triggers
-  and effects can be interpreted outside the game: event chains get unit
-  tests that run in milliseconds, and `explain` answers "why doesn't my
-  `potential` pass" by naming the failing subcondition.
-
-The trade is real, in both directions: the plugins work on any existing mod
-with zero adoption cost and show you icons and game files in place, while the
-SDK asks you to write TypeScript and run a build. What you get for that is
-the difference between warnings about what you typed and guarantees about
-what ships.
-
-## One feature, one module
-
-Stellaris reads one directory per registry: every technology in
-`common/technology/`, every event in `events/`. That is an engine constraint,
-and raw PDXScript makes you live inside it — one feature's technologies and
-events end up in different folders, held together by a naming convention and
-your memory. The SDK is a compiler, so source layout and output layout are
-decoupled: write a module per feature, and the build sorts its contents into
-the directories the game demands using the feature's authored stem.
-
-```
-examples/hello-galaxy/
-├── mod.ts             config + the fold
-├── flags.ts           shared values live outside content/
-└── content/
-    ├── resonance.ts   → common/technology/hello_galaxy_resonance.txt
-    │                  → events/hello_galaxy_resonance.txt
-    └── amplifiers.ts  → common/technology/hello_galaxy_amplifiers.txt
-```
-
-`discoverFeatures(dir)` imports every selected module and reads its named
-`feature` export. Other named and default exports are ordinary ESM API, so
-`resonanceTheory` can be reused by `amplifiers.ts` without placing it twice.
-Each feature owns its output stem; moving or renaming a source module changes
-neither emitted identity nor bytes unless that authored stem changes.
-
-## A real language
-
-The amplifier ladder in the tree above is one loop — five technologies, each
-requiring the previous, costs on a curve:
-
-```ts
-const amplifiers: TechnologyItem[] = [];
-let previous: TechnologyItem = resonanceTheory;
-for (const [index, adjective] of [
-  "Attuned",
-  "Harmonic",
-  "Coherent",
-  "Superradiant",
-  "Transcendent",
-].entries()) {
-  const tier = index + 1;
-  previous = mod.technology(`amplifier_${tier}`, {
-    name: `${adjective} Resonance Amplifiers`,
-    cost: 1000 * 2 ** tier,
-    area: "physics",
-    tier: Math.min(tier + 1, 5),
-    category: "particles",
-    prerequisites: [previous],
-    weight: 100 - 10 * tier,
-  });
-  amplifiers.push(previous);
-}
-export { amplifiers };
-export const feature = mod.feature("amplifiers", amplifiers);
-```
-
-That is ordinary TypeScript — no macros, no templates. The same move scales
-to anything mechanical: a function that stamps out a family of edicts, a
-shared trigger fragment used by twelve events, a constant used in forty
-places and changed in one.
-
-## Flags know their kind
-
-Flags are the classic silent failure: `has_country_flag` against a flag that
-was only ever set on a planet is not an error in game, it is a condition that
-is never true. Declare the names your mod invents, and they autocomplete and
-type-check by kind:
-
-```ts
-const flags = countryFlags("hello_galaxy_heard_the_hum", "hello_galaxy_pacifist_path");
-
-hasCountryFlag(flags.hello_galaxy_heard_the_hum); // ok
-hasCountryFlag(flags.hello_galaxy_heard_the_humm); // typo: compile error
-hasCountryFlag(planetFlags("surveyed").surveyed); // wrong kind: compile error
-hasCountryFlag("some_vanilla_flag"); // raw strings still work
-```
-
-## Vanilla's own script is callable, and knows its scope
-
-Most of what a real mod's conditions do is call vanilla's scripted triggers.
-`is_fallen_empire` appears 214 times in one surveyed mod, and it is not a game
-primitive the rules describe — it is script, in a file the game ships. Install
-the identifier package and all ~1,600 of them arrive already bound:
-
-```ts
-import { isFallenEmpire, hasCrisisStage } from "@pdx-ts/stellaris-ids/triggers";
-import { giveAscensionPerkEffect } from "@pdx-ts/stellaris-ids/effects";
-
-potential: and(isFallenEmpire(), hasCrisisStage({ STAGE: 2 })),
-immediate: (s) => {
-  s.run(giveAscensionPerkEffect({ PERK: "ap_mind_over_matter" }));
-},
-```
-
-The parameter lists are typed, and so is the scope: `isFallenEmpire()` is a
-`Trigger<"country">`, so using it where a planet condition belongs is a compile
-error. That scope is derived rather than asserted — the generator intersects
-the scopes the rules already declare for the keys each body evaluates, and a
-body it cannot read widens to every scope instead of guessing. The standing
-gate checks 4,860 direct call sites across 9,856 known-scope events, reaching
-894 of 3,275 scripted definitions (27%); it finds no contradictions within
-that structural slice. Clause-bearing calls outside the event-body walk still
-require manual review.
-
-`examples/hello-galaxy/content/resonance.ts` uses all three forms, including a
-scripted effect whose `TECH` parameter is handed the mod's own technology.
-
-## Nested content stays nested
-
-Some registries are trees. A solar system initializer holds anonymous body
-entries, and those entries can hold more planet or moon children to whatever
-depth you write:
-
-```ts
-const home = mod.solarSystemInitializer("home", {
-  class: "rl_standard_stars",
-  usage: ["custom_empire"],
-  planet: [
-    { count: 1, class: "star", orbitDistance: 0, size: { min: 30, max: 35 } },
-    {
-      name: "NAME_Resonance_Prime",
-      class: "pc_continental",
-      orbitDistance: 60,
-      size: 20,
-      homePlanet: true,
-      initEffect: (planet) => planet.setCapital(true),
-      moon: [
-        // Advances the orbit cursor for the moon that follows — the long
-        // form of `change_orbit`, see below.
-        { class: "none", orbitDistance: 12 },
-        { class: "pc_barren", size: 8, orbitDistance: 10 },
-      ],
-    },
-  ],
-  neighborSystem: [{ initializer: outpost, hyperlaneJumps: 1 }],
-});
-```
-
-These blocks are anonymous and ordered — they have no ids, and their array
-order is the order the game reads them in, so it is preserved exactly as
-written. That is the one place array order is author data rather than something
-the SDK sorts.
-
-The scopes follow the nesting too. The initializer's own `initEffect` runs in
-system scope and a planet's runs in planet scope, so `setCapital` is available
-on the inner one and not the outer. A planet or moon initializer is also a
-split-root block: THIS is the planet while ROOT is country. Because the game's
-natural event FROM is ROOT, `ctx.self` cannot witness a planet-FROM event there;
-the generated type rejects that mismatch instead of letting the recorder omit
-an override that would deliver the country.
-
-**There is no `changeOrbit` field.** The rules' `change_orbit` key is sugar —
-written between two `planet` (or two `moon`) blocks, it advances an orbit
-cursor for whatever follows it, so its _position_ among its siblings is the
-geometry. A field can't carry that: every repeated `change_orbit` collapses
-into one array-shaped member with one fixed emission slot, and 288 of 355
-shipped top-level initializer blocks interleave it between `planet` blocks —
-the position the collapse cannot keep. The long form says the same thing
-without needing one: a `planet` or `moon` entry with `class: "none"` and its
-own `orbitDistance` advances the cursor exactly where it sits in the array,
-because array order among these siblings is preserved verbatim. `none` is a
-real, game-legal class (`SolarSysInitPlanetClass`), so this is not a
-workaround — it is the same thing `change_orbit` already meant, spelled as an
-ordinary sibling instead of a field with nowhere consistent to go.
-
-## Testing mod logic
-
-Because triggers and effects are recorded as data, mod logic can be
-interpreted outside the game — unit tests for event chains, no game launch,
-no console:
-
-```ts
-const world = fixture(
-  {
-    countries: [
-      { name: "player", flags: [flags.heard_the_hum], planets: [{ name: "alpha" }] },
-      { name: "rival" },
+  prerequisites: [vanilla.technology("tech_space_science_1")],
+  potential: not(isFallenEmpire()),
+  weight: 80,
+  weightModifier: {
+    modifiers: [
+      { factor: 2, when: hasCivic("civic_technocracy") },
+      { factor: 0.5, when: isAtWar() },
+      { factor: 0, when: not(hasCountryFlag(flags.heard_the_hum)) }
     ],
   },
-  { events: [humReturns, aftershock] }
-);
+  modifier: (m) => m.country.unity.produces.mult(0.5),
+});
 
-world.fire(humReturns, world.country(0));
-world.advance(30); // delivers due scheduled fires
-
-expect(world.fired).toContainEvent(aftershock, { day: 30, from: world.country(0) });
-expect(world.country(0).has(resonanceTheory)).toBe(true);
+export const feature = mod.feature("resonance", [resonanceTheory]);
 ```
 
-For triggers, `explain` answers "why doesn't my `potential` pass" by naming
-the failing subcondition:
+The build writes a launcher-ready definition with a deterministic, prefixed id:
 
+```pdx
+hello_galaxy_tech_resonance_theory = {
+  area = physics
+  tier = 2
+  category = { particles }
+  cost = 2000
+  weight = 80
+  prerequisites = { "tech_space_science_1" }
+  potential = {
+    NOT = {
+      is_fallen_empire = yes
+    }
+  }
+  modifier = {
+    country_unity_produces_mult = 0.5
+  }
+  weight_modifier = {
+    modifier = {
+      factor = 2
+      has_civic = civic_technocracy
+    }
+    modifier = {
+      factor = 0.5
+      is_at_war = yes
+    }
+    modifier = {
+      factor = 0
+      NOT = {
+        has_country_flag = heard_the_hum
+      }
+    }
+  }
+}
 ```
-✗ AND
-  ✓ has_global_flag = lattice_awake — set globally
-  ✓ has_country_flag = heard_the_hum — set on country "player"
-  ✗ NOT
-    ✓ has_country_flag = pacifist_path — set on country "player"
+
+## Quick start
+
+Node.js 22.18 or newer is required for generated projects.
+
+```bash
+npx create-stellaris-mod my-mod
+cd my-mod
+
+npm run inspect      # show the compiled project as deterministic YAML
+npm test             # test mod logic without launching Stellaris
+npm run build        # write the mod to ./out/
+npm run install-mod  # build and install it for the Stellaris launcher
 ```
 
-The interpreter is a second implementation of the game's semantics, so it is
-deliberately whitelist-only: everything it models carries a one-line defense
-of the real game's behavior, and anything unmodeled throws instead of
-guessing. A test can only pass through semantics someone consciously
-verified.
+The scaffolder detects the local Stellaris build when possible, installs the
+matching vanilla identifier package, and creates a working technology, event,
+on-action hook, and test. It also writes the Project Manifest that owns the
+mod's identity and source layout.
 
-## Patching vanilla
+To assemble a custom toolchain instead, install `@pdx-ts/sdk` with the
+`@pdx-ts/stellaris-ids` release for your Stellaris build. The
+[@pdx-ts/sdk README](packages/sdk/README.md) documents the low-level API.
 
-PDXScript overrides are whole-object replacement: changing one field of a
-vanilla technology means re-emitting the complete object, which requires the
-game's own files. `stellaris.load()` parses the local install and surfaces
-each definition as a typed object; a patch is a plain transform over it:
+## Documentation
+
+The [pdx-ts documentation](https://pdx-ts-sdk-docs-site.vercel.app/) includes
+workflow guides, end-to-end tutorials, core concepts, generated scope and effect
+references, and a field-by-field page for each supported content registry.
+Examples are compiled with the SDK and pair their complete TypeScript source
+with the PDXScript files it renders, so the documented API stays checked against
+the package. The site also publishes plain-Markdown versions of every page for
+search tools and coding agents.
+
+When you create a mod with the CLI, your project will come with Skills and Subagents for searching and reading this documentation. Your coding agent will automatically know how to use the SDK.
+
+## What the compiler gives you
+
+### Scope-safe script
+
+Triggers and effects know which Stellaris scopes accept them. An effect closure
+receives only the methods legal for its scope, and a scope link changes the
+callback type to its destination scope.
 
 ```ts
-const vanilla = stellaris.load();
+immediate: (country) => {
+  country.everyOwnedPlanet({ limit: hasOwner() }, (planet) => {
+    planet.addDeposit("d_minerals_1");
+    // planet.addResource(...); // type error: this is not a country scope
+  });
+};
+```
 
-const newTechnology = mod.technology("new", {
-  name: "New Technology",
-  cost: 2000,
-  area: "physics",
-  tier: 2,
-  category: "particles",
-});
-const geneTailoring = mod.patchTechnology(
-  vanilla.definition("technology", "tech_gene_tailoring").require("cost", "prerequisites"),
-  (t) => ({
-    cost: t.cost.value * 2, // cost is @tier3cost1 in the file — .value bakes it, visibly
-    prerequisites: [...t.prerequisites, newTechnology],
-  })
-);
-const cityDistrict = mod.patchBuilding(
-  vanilla.definition("building", "building_capital_1"),
-  () => ({
-    planetLimit: 2,
-    prerequisites: [newTechnology],
-  })
-);
+The generated interfaces come from the same community-maintained cwtools rules
+used by Stellaris editor tooling. The SDK turns those rules into build
+constraints instead of advisory diagnostics.
 
-const compiled = mod.compile(
-  [mod.feature(undefined, [newTechnology, geneTailoring, cityDistrict])],
-  { vanilla }
+### Automatic `PREV` routing
+
+TypeScript keeps outer variables available in nested callbacks. The effect
+recorder preserves that lexical relationship in PDXScript:
+
+```ts
+immediate: (country) => {
+  country.everyOwnedPlanet({}, (planet) => {
+    country.addResource({ resource: "influence", amount: 10 });
+    planet.addDeposit("d_minerals_1");
+  });
+};
+```
+
+The captured `country` proxy automatically routes through `PREV`:
+
+```pdx
+every_owned_planet = {
+  prev = {
+    add_resource = { influence = 10 }
+  }
+  add_deposit = d_minerals_1
+}
+```
+
+Nested verified pushes route through `PREVPREV`, `PREVPREVPREV`, and
+`PREVPREVPREVPREV` as needed. A replacement or unknown transition breaks that
+relationship, so the build refuses it rather than writing a path whose meaning
+is uncertain. Declared `ctx.prev*` references receive the same depth adjustment
+inside nested callbacks.
+
+### Checked vanilla references
+
+`@pdx-ts/stellaris-ids` is generated from a real Stellaris installation and
+pinned to that game build. It supplies content ids, event identities and scopes,
+scripted trigger and effect signatures, sprite names, sounds, resources, and
+localization keys.
+
+```ts
+vanilla.technology("tech_lasers_1"); // checked at compile time
+vanilla.technology("tech_lazers_1"); // type error
+
+import { isFallenEmpire } from "@pdx-ts/stellaris-ids/triggers";
+
+potential: isFallenEmpire(); // Trigger<"country">
+```
+
+Raw strings remain available when a mod intentionally refers to another mod or
+to content newer than its installed identifier package.
+
+### Every modifier, without the 45,000-entry menu
+
+Modifier callbacks use a typed path recorder:
+
+```ts
+modifier: (m) => m.country.unity.produces.mult(0.5),
+```
+
+That path records one ordinary PDXScript assignment:
+
+```pdx
+country_unity_produces_mult = 0.5
+```
+
+The generated types include all 45,501 names in the pinned vanilla modifier
+dump and narrow them by the scopes accepted by the surrounding field. Every
+path segment and final operation is checked, so a typo or scope-illegal
+modifier fails in TypeScript.
+
+A flat object type would make the editor construct one completion menu with all
+45,501 properties. Dot-separated path tries avoid that menu while preserving
+the exact flat key that Stellaris reads. `m.raw(name, value)` keeps the name
+checked when a copied key is more convenient, and `m.unchecked(name, value)` is
+the explicit escape hatch for a third-party or newer-game modifier.
+
+### Ordinary TypeScript
+
+Content definitions are values. Use functions, loops, constants, modules, and
+the rest of the language to remove repetition without inventing a macro system.
+
+```ts
+const amplifiers = Array.from({ length: 5 }, (_, index) =>
+  mod.technology(`amplifier_${index + 1}`, {
+    name: `Resonance Amplifier ${index + 1}`,
+    cost: 1_000 * 2 ** (index + 1),
+    area: "physics",
+    tier: Math.min(index + 2, 5),
+    category: "particles",
+  })
 );
 ```
 
-`vanilla.definition(registry, id)` is tagged with the registry it came from, so
-a parsed building cannot be handed to `patchTechnology`. Each patched registry
-gets its own emission, resolved independently — `technology`, `building` and
-`megastructure` are the registries with a `patchX` today. The first two rest on
-fully verified override rules; `megastructure`'s whole-object replacement is a
-recorded judgment rather than a finding, so every win it backs reports
-`confidence: "assumed"` and the emitted patch file states the judgment in its
-own header.
+### Feature-oriented source layout
 
-Fields the transform doesn't touch are carried through byte-faithfully,
-`@variable` references included. The build then emits the patch into a file
-whose name is computed from the parsed load-order enumeration to provably
-sort after every competing file — and fails loudly when no winning name
-exists, when the registry's override rule is unverified, or when the install
-version drifted from what the SDK was verified against. "Launched the game
-and the override didn't take" becomes a build error.
+Stellaris requires one output directory per registry. Authors usually think in
+features instead. A feature module can contain technologies, events,
+localization, on-action hooks, and assets; the compiler sorts each Item into the
+engine path it requires.
+
+```text
+src/content/resonance.ts
+  -> common/technology/hello_galaxy_resonance.txt
+  -> events/hello_galaxy_resonance.txt
+  -> common/on_actions/hello_galaxy_resonance.txt
+  -> localisation/english/hello_galaxy_resonance_l_english.yml
+```
+
+Source filenames do not define content identity. Moving a Feature does not
+rename its ids.
+
+### Solar-system validation and SVG previews
+
+Solar-system initializers are ordered geometry. A definition can be valid
+PDXScript while placing planets inside a star or on top of one another. The SDK
+resolves that geometry before launch, reports structured layout findings, and
+renders a standalone SVG preview.
+
+```ts
+const overlapShowcase = mod.solarSystemInitializer("overlap_showcase", {
+  class: "sc_g",
+  asteroidBelt: [{ type: "rocky_asteroid_belt", radius: 80 }],
+  planet: [
+    { class: "star", name: "Sun", size: 30, orbitDistance: 0, orbitAngle: 0 },
+    { class: "pc_molten", name: "Inner", size: 10, orbitDistance: 40, orbitAngle: 70 },
+    {
+      class: "pc_continental",
+      name: "Home",
+      size: 20,
+      orbitDistance: 25,
+      orbitAngle: 160,
+      moon: [{ class: "pc_barren", name: "Luna", size: 4, orbitDistance: 10, orbitAngle: 0 }],
+    },
+    { class: "pc_asteroid", size: 3, orbitDistance: 15, orbitAngle: 0 },
+    { class: "pc_asteroid", size: 4, orbitDistance: 0, orbitAngle: 120 },
+    { class: "pc_asteroid", size: 4, orbitDistance: 0, orbitAngle: 135 },
+    { class: "pc_gas_giant", name: "Giant", size: 32, orbitDistance: 55, orbitAngle: -100 },
+    { class: "pc_gas_giant", name: "Sky God", size: 25, orbitDistance: 5, orbitAngle: 5 },
+  ],
+});
+```
+
+Projects created by `create-stellaris-mod` already run the preview step during
+`npm run build`:
+
+```ts
+import { runBuild } from "@pdx-ts/sdk";
+
+import { buildTheMod } from "#mod";
+
+await runBuild(buildTheMod(), {
+  outDir: new URL("../out/", import.meta.url),
+  previewsDir: new URL("../previews/", import.meta.url),
+});
+```
+
+The build writes `previews/<id>.svg` for each initializer and a
+`previews/index.html` gallery. Definite overlaps print as solar-system layout
+warnings; possible and unresolved findings remain available in verbose output.
+The findings are advisory and do not enter `mod.warnings` or fail the Fold.
+
+![Generated solar-system SVG with overlap halos](packages/sdk/tests/__snapshots__/solar-system-inspect/overlap_showcase.svg)
+
+Red halos mark definite overlap risks and amber halos mark possible ones. The
+SVG also draws orbit paths, ranged positions, asteroid belts, and unresolved
+geometry. It is an interactive standalone file when opened in a browser, with
+zoom, pan, reset, and hover labels. The preview is a cursor-space schematic,
+not an exact model of the game renderer, because Stellaris applies additional
+sprite and body-size spacing that has no complete author-facing formula.
+
+### Mod logic tests
+
+The SDK records triggers and effects as PDXScript syntax trees before it
+serializes them. `@pdx-ts/sdk-testing` can interpret an audited subset of that
+data without starting Stellaris.
+
+```ts
+const world = fixture({ countries: [{ name: "player" }] }, { events: [welcome] });
+
+world.fire(welcome, world.country(0));
+world.advance(30);
+
+expect(world.fired).toContainEvent(followup, { day: 30 });
+```
+
+The interpreter throws on semantics it has not verified. `explain()` also
+returns a tree that identifies the exact subcondition that made a trigger fail.
+
+### Safe vanilla patches
+
+PDXScript overrides replace whole objects and depend on filename order. The SDK
+parses the installed definition, applies a typed transformation, preserves
+untouched syntax semantically, and computes a filename that sorts after every
+known vanilla and current-mod competitor. Compilation refuses unsupported
+override rules and cases with no winning filename. An assumed rule can compile
+with explicit warnings and emitted provenance. A game-version mismatch also
+requires an explicit `acceptGameVersion` acknowledgement.
+
+### Deterministic, failure-safe output
+
+The Fold validates duplicate ids, namespace conflicts, references,
+localization, and output paths before a `PureMod` exists. Rendering then creates
+an immutable byte snapshot. Materialization tracks owned files, removes stale
+generated files, preserves unrelated files, and refuses modified or unsafe
+owned paths.
+
+## Why TypeScript
+
+The JetBrains Paradox Language Support plugin and cwtools for VS Code are good
+tools for raw PDXScript. They index game files, complete fields and ids, show
+documentation, and report likely errors. Use one when editing PDXScript.
+
+An editor plugin still checks text after it has been written, and its findings
+remain advisory. A TypeScript build can make illegal states unrepresentable:
+
+- Wrong-scope methods are absent instead of underlined.
+- Misspelled ids prevent output instead of producing a warning.
+- Cross-content references retain their registry and scope types.
+- Functions and loops create content before there is text to lint.
+- Recorded logic can run in unit tests.
+- Vanilla override failures become build errors.
+
+The cost is a build step and a TypeScript project. The result is stronger than
+editor assistance: if the compiler rejects the mod, it does not ship the broken
+folder.
+
+## How it works
+
+```text
+TypeScript source
+  -> capability-owned Items
+  -> explicit Features
+  -> deterministic Fold
+  -> immutable PureMod
+  -> pure render
+  -> immutable RenderedMod
+  -> write or launcher install
+```
+
+Two generators supply the typed surface. `@pdx-ts/codegen-cwt` reads vendored
+cwtools rules and Stellaris documentation dumps to generate content fields,
+triggers, effects, scopes, events, and modifiers. `@pdx-ts/codegen-vanilla`
+reads an installed game to generate the versioned vanilla identifier package.
+The standalone `@pdx-ts/pdxscript` package supplies the order-preserving parser
+and serializer below both paths.
 
 ## Packages
 
-| Package                                                         | What it is                                                                                                                                    |
-| --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| [create-stellaris-mod](packages/create-stellaris-mod/README.md) | `npx create-stellaris-mod my-mod` — detects your install and scaffolds a project that builds on the first `npm install`                       |
-| [@pdx-ts/sdk](packages/sdk/README.md)                           | The SDK: capability authoring, triggers/effects, scope safety, building, rendering, vanilla patching, mod-logic testing                       |
-| [@pdx-ts/sdk-testing](packages/sdk-testing/README.md)           | Test mod logic without launching the game: a whitelist interpreter over the recorded triggers and effects, plus vitest matchers               |
-| [@pdx-ts/pdxscript](packages/pdxscript/README.md)               | Standalone PDXScript parser/serializer — order-preserving, round-trip-verified, game-semantics-free                                           |
-| [@pdx-ts/stellaris-ids](packages/stellaris-ids/README.md)       | Every identifier a real install defines, as version-pinned types, plus vanilla's scripted triggers and effects bound at their inferred scopes |
-| [@pdx-ts/codegen-cwt](packages/codegen-cwt/README.md)           | Rules-derived generator: emits the SDK's typed surface from the vendored cwtools rules                                                        |
-| [@pdx-ts/codegen-vanilla](packages/codegen-vanilla/README.md)   | Install-derived generator: emits @pdx-ts/stellaris-ids from an installed copy of the game                                                     |
-| [@pdx-ts/docs-site](packages/docs-site/README.md)               | The user-facing documentation site (Fumadocs on Next.js): guides plus a registry-keyed reference. Private, local-only for now                 |
+| Package | Role |
+| --- | --- |
+| [create-stellaris-mod](packages/create-stellaris-mod/README.md) | Scaffolds a working mod project and generates curated Feature starters. |
+| [@pdx-ts/sdk](packages/sdk/README.md) | Main authoring, compilation, rendering, inspection, and installation API. |
+| [@pdx-ts/sdk-testing](packages/sdk-testing/README.md) | Audited interpreter and Vitest matchers for recorded mod logic. |
+| [@pdx-ts/pdxscript](packages/pdxscript/README.md) | Standalone PDXScript parser and canonical serializer. |
+| [@pdx-ts/stellaris-ids](packages/stellaris-ids/README.md) | Install-derived, game-versioned vanilla identifiers and scripted bindings. |
+| [@pdx-ts/codegen-cwt](packages/codegen-cwt/README.md) | Private rules-derived generator for the SDK TypeScript surface. |
+| [@pdx-ts/codegen-vanilla](packages/codegen-vanilla/README.md) | Private install-derived generator for `stellaris-ids`. |
+| [@pdx-ts/docs-site](packages/docs-site/README.md) | Next.js and Fumadocs documentation site with executable examples. |
 
-At the root: `vendor/` (the committed cwtools rules and doc dumps),
-`fixtures/` (the shared fake install the hermetic tests run against),
-`examples/` (the quickstart and the hardening corpus), and `docs/`
-(the ADRs, plus proposals not yet implemented).
+[CONTEXT-MAP.md](CONTEXT-MAP.md) describes the six bounded contexts and the
+terms that change meaning between them.
 
-[CONTEXT-MAP.md](CONTEXT-MAP.md) indexes the five bounded contexts and their
-glossaries.
+## Compatibility and status
 
-## Development
+The project is pre-1.0 and its public APIs may still change. The current SDK is
+verified against Stellaris 4.4.6. Generated output is covered by reviewed
+snapshots and drift gates; parser verification includes a round-trip fixpoint
+over the complete vanilla `common/` tree when a local installation is present.
 
-npm workspace; every command runs from the repository root.
+Published libraries require Node.js 22 or newer. `create-stellaris-mod` itself
+runs on Node.js 20 or newer, while the project it generates requires Node.js
+22.18 or newer so Node can execute erasable TypeScript directly.
+
+## Repository development
+
+The private npm workspace root requires Node.js 24. Run all commands from the
+repository root:
 
 ```bash
-npm test                     # all suites, all packages (vitest)
-npm run typecheck            # tsc --noEmit, then each package's own check
-npm run build                # emit each package's dist/, and the docs site
-npm run docs:dev             # serve the docs site at localhost:3000
-npm run example              # build examples/hello-galaxy/out/
-npm run codegen              # regenerate the SDK's types from the cwt rules
-npm run codegen:check        # ...and fail if committed output moved
-npm run codegen:vanilla      # regenerate stellaris-ids (needs an install)
-npm run codegen:vanilla:check
-npm run scaffold             # drive create-stellaris-mod from source
+npm ci
+npm run format:check
+npm run typecheck
+npm test
+npm run build
 ```
 
-Every publishable package builds to `dist/`, because Node refuses to strip
-types from anything under `node_modules` — a package shipping raw `.ts` dies at
-a consumer's first import. The workspace hides that completely, since npm links
-members as symlinks whose realpath escapes `node_modules`, so during development
-nothing is built. `exports` therefore names both worlds: a `pdx-source`
-condition pointing at `src/`, and `types`/`default` pointing at `dist/`. This
-repo passes that condition (tsconfig `customConditions`, Node `--conditions`,
-Vite `resolve.conditions`); a published consumer never does, and gets `dist/`.
-
-Contributor rules — codegen discipline, the content-registry procedure,
-design boundaries — live in [AGENTS.md](AGENTS.md).
-
-## Status
-
-0.x, built and verified against Stellaris 4.4.6. Emitted
-output is pinned by golden files, generated types by drift gates, override
-behavior by an in-game calibration record, and the parser by a round-trip
-fixpoint over the entire vanilla `common/` tree.
+Generator, docs, example, and release gates are available as dedicated root
+scripts. [AGENTS.md](AGENTS.md) documents generated-file discipline, design
+boundaries, and the required verification for each kind of change.

@@ -1,114 +1,232 @@
 # @pdx-ts/codegen-cwt
 
-The rules-derived code generator. It reads the vendored
-[cwtools-stellaris-config](../../vendor/cwtools-stellaris-config/VERSION.md)
-rules and the game's documentation dumps, and emits the committed TypeScript
-surface under `packages/sdk/src/generated/` — trigger and effect interfaces,
-the modifier path trie, content definers and field descriptors, event tables,
-on-action references, and the `vanilla.*` helper namespace. Private workspace
-package; never published.
+`@pdx-ts/codegen-cwt` is the private, rules-derived generator for
+`@pdx-ts/sdk`. It reads vendored cwtools rules and version-matched Stellaris
+documentation dumps, reconciles their claims, applies reviewed policy and
+overlays, and emits the committed TypeScript surface under
+`packages/sdk/src/generated/`.
 
-Its sibling [@pdx-ts/codegen-vanilla](../codegen-vanilla/README.md) is
-install-derived: it reads a real Stellaris installation instead of the rules.
-The two stay separate because they have different sources, different
-regeneration triggers, and different failure modes — this package regenerates
-when the vendored rules are bumped, the other when the game updates.
+The package is a workspace tool and is never published.
 
-## Usage
+## Inputs and outputs
+
+The generator has two independent source families.
+`vendor/cwtools-stellaris-config/config/` contributes content declarations,
+field shapes, cardinality, references, enum values, documentation, triggers,
+effects, scope links, and scope legality.
+
+`vendor/cwtools-stellaris-config/script-docs/` supplies a second opinion on
+trigger and effect names and legal scopes, plus modifier names and categories.
+
+Generated output includes:
+
+- content `Def` and `Item` types
+- capability methods such as `mod.technology`
+- runtime field and registry descriptors
+- triggers, effects, and scope links
+- events and fire methods
+- on-action references
+- modifiers and modifier path navigation
+- enums and value sets
+- script-reference metadata
+- checked `vanilla.*` helper types
+
+The output is committed because it is the SDK's public API, not a disposable
+build artifact.
+
+This package does not enumerate the ids defined by a game installation. That is
+the separate responsibility of
+[@pdx-ts/codegen-vanilla](../codegen-vanilla/README.md).
+
+## Running code generation
+
+Run from the repository root with Node.js 24:
 
 ```bash
-npm run codegen        # regenerate packages/sdk/src/generated/
-npm run codegen:check  # regenerate, then git diff --exit-code the output
+npm run codegen
+npm run codegen:check
 ```
 
-Both run from the repository root. Read the report: every skipped rule,
-unrepresentable declaration, and collapsed field is listed with a named
-reason; nothing is dropped silently. The generated diff is a public-API
-change and is reviewed and committed together with the source change that
-produced it. Generated headers, formatting (programmatic Prettier), and file
-naming are generator-owned.
+`codegen` rewrites `packages/sdk/src/generated/` and prints a report.
+`codegen:check` regenerates and then runs `git diff --exit-code` against that
+directory. It is the CI drift gate when generated output is expected to match
+the committed tree.
 
-## Two sources, joined with a drift gate
+After an intentional generator change, run `npm run codegen`, read the full
+report, and inspect every generated diff. Commit source and generated output
+together. Do not hand-edit generated headers, formatting, names, or files.
 
-- **The `.cwt` rules** give argument shapes — fields, cardinality, enums,
-  cross-registry references, doc comments — and scopes.
-- **The game's doc dumps** (version-matched to the release the rules target)
-  cover what the rule annotations miss and act as an independent second
-  opinion on every name and scope.
+## Pipeline
 
-Names present in one source but not the other, and scopes the two disagree
-on, are compared against the committed `src/drift-baseline.json`. Codegen
-fails when either set moves rather than emitting a possibly-wrong signature.
-Do not rebaseline reflexively: `npm run codegen -- --rebaseline` is for
-reviewed, intentionally accepted drift only. Where the sources conflict, the
-rules win — they track scope renames the game's own dump lags behind.
-
-## Where stuff lives
-
+```text
+CWT rule files                  Stellaris documentation dumps
+       |                                      |
+       v                                      v
+   CWT parser                              log parsers
+       |                                      |
+       +------------> reconciliation <--------+
+                           |
+                     drift baseline
+                           |
+                    semantic lowering
+                           |
+              content policy and overlays
+                           |
+                    TypeScript emitters
+                           |
+                 generated-file protocol
+                           |
+              programmatic Prettier output
+                           |
+              SDK generated files + report
 ```
+
+Parsing records what the sources say. Lowering converts those declarations to
+the supported authoring model. Emitters project that model into TypeScript and
+runtime descriptors. This separation keeps source interpretation out of the
+SDK runtime and formatting concerns out of semantic lowering.
+
+## Reconciliation and drift
+
+CWT and the documentation dumps overlap on names and scopes but do not always
+agree. Reconciliation compares both sources before emission:
+
+- names found in only one source
+- scopes found in only one source
+- incompatible scope sets
+
+Known differences live in `src/drift-baseline.json`. Generation fails when the
+observed sets move. The baseline is evidence of a reviewed disagreement, not a
+filter for hiding current output.
+
+Use `npm run codegen -- --rebaseline` only after reviewing and accepting the new
+source relationship. Where scope sources conflict, current policy gives the CWT
+rules authority because they track rule-level scope renames that documentation
+dumps can lag.
+
+## Content manifest
+
+`src/policy/manifest.ts` is the explicit allowlist of SDK content registries. A
+CWT `type[...]` declaration does not become public merely because the parser can
+read it. A manifest row grants the registry a capability method, public
+definition types, layout, generated descriptors, and reporting.
+
+Adding a registry is therefore a public API change. It should be data driven:
+add a manifest row and evidence, then let the generic lowerers and emitters
+handle it. Do not add a registry-specific branch to the generic emitter when a
+declarative row can express the difference.
+
+Patch methods have a separate allowlist. `mod.x` does not imply `mod.patchX`
+because whole-object override behavior and winning filename rules need evidence
+for each registry.
+
+## Policies and overlays
+
+Policy files make reviewed choices where the source data alone does not select
+an authoring surface. They cover registry exposure, triggers, effects,
+modifiers, event fields, swaps, and known script gaps.
+
+`src/overlay/` contains every deliberate departure from a mechanical reading of
+the rules. Typical rows describe:
+
+- required localization that the raw declaration marks optional
+- a more useful authored form
+- corrected field shape or scope with evidence
+- content identity and minting behavior
+- patch-specific widening
+- a hand-written graft where the generic model cannot express the API
+
+Overlay rows are audited for staleness. Keep exceptions centralized here rather
+than embedding one-off conditions in an emitter.
+
+## Lowering and descriptors
+
+Lowering decides each field's shape, arity, interior, valid scopes, references,
+and authored form. The selected form is emitted into runtime descriptors so the
+SDK writer reads the decision instead of reconstructing CWT semantics.
+
+The distinction matters for repeated and spliced structures. A generated
+TypeScript property may admit a scalar, list, trigger, closure, or nested block,
+while the runtime descriptor still records exactly how that value becomes
+ordered PDXScript entries.
+
+Unsupported, omitted, or collapsed declarations remain visible in the report.
+Corpus conformance tracks generated fields that shipped definitions have not
+used. Filters must not make either evidence stream disappear.
+
+## Reports and generated files
+
+The report covers generated-output counts and selected losses. Review at least:
+
+- skipped declarations and their reasons
+- unrepresentable rule shapes
+- collapsed localization aliases
+- generated registry and script counts
+
+Source drift fails before the normal report is built, so review that diagnostic
+separately when reconciliation stops generation. Stale overlay audits also fail
+before report construction and need separate review.
+
+Generated files follow a shared protocol for headers, import tracking, symbol
+allocation, ordering, and formatting. Emitters return complete files rather
+than appending ad hoc text to existing output.
+
+## Common change workflows
+
+Repository procedures cover the changes that cross several evidence layers:
+
+- `.agents/skills/add-registry/SKILL.md` adds a new content registry.
+- `.agents/skills/add-patch-registry/SKILL.md` adds a verified whole-object patch
+  surface.
+- `.agents/skills/close-corpus-gap/SKILL.md` lowers a game-written field the SDK
+  cannot yet author.
+
+Each workflow connects the manifest or overlay change with generated output,
+type-level evidence, emitted PDXScript, and corpus observations. The root
+[AGENTS.md](../../AGENTS.md) states the general codegen discipline.
+
+## Implementation
+
+The generator is strict TypeScript and ESM. It uses its own CWT lexer and
+parser, parsers for the documentation dump formats, `@pdx-ts/pdxscript` for
+corpus files, and programmatic Prettier for generated TypeScript.
+
+```text
 src/
-├── index.ts             thin wiring: load, drift-gate, run the stages, write files
-├── report.ts            report accumulation and printing
-├── load-rules.ts        the one-call rule loader (manifest sources + overlay categories)
-├── naming.ts            snake_case → PascalCase/camelCase, doc-comment helpers
-├── drift-baseline.json  committed record of accepted source disagreements
-├── cwt/                 lexer, parser, and rule model for .cwt files; rules.ts is
-│                        pure over parsed nodes, load.ts the fs shell over it
-├── logs/                parsers for the game's dumps (triggers, modifiers, scopes)
-├── reconcile/           reconcile.ts joins the two sources; baseline.ts compares
-│                        against and updates the committed baseline
-├── policy/              manifest.ts, the registry allowlist (adding one is a
-│                        public-API decision), and the hand-reviewed policies:
-│                        triggers, effects, modifiers, content-swaps, event-fields
-│                        (+ event-field-signatures), script-gaps
-├── overlay/             every audited departure from a mechanical rules reading,
-│                        split by domain: fields, localisation, patches, identity,
-│                        grafts, script, mints; index.ts is the barrel every
-│                        importer uses, audit.ts the staleness asserts
-├── lower/               rule-to-shape lowering shared by the emitters — fields,
-│                        script-shape, rule-shapes, scope-context, content-shape,
-│                        content-layout, content-reference, event-kinds, scope-facts;
-│                        authored-form.ts decides the form each field arm admits
-│                        (emitted into descriptors, so the SDK runtime reads it
-│                        instead of recomputing)
-├── render/              the emitter core (emitter.ts), symbol/import tracking,
-│                        the code writer, field-row tables, generated-file protocol
-├── emit/                one emitter per output family: content/ (content types,
-│                        alias structs/splices/categories, definers, registry,
-│                        field docs, vanilla refs), script/ (triggers, effects,
-│                        links, events, modifiers, on-actions, script-reference),
-│                        and shared support.ts
-└── corpus/              reads a registry directory of a real install (conformance
-                         tests): observations.ts the vocabulary, read.ts the
-                         reading engine, conformance.ts the verdicts
-tests/                   emitter unit tests that re-run the pipeline in-process
+|-- index.ts             pipeline coordinator and filesystem shell
+|-- cwt/                 CWT lexer, parser, models, and rule loader
+|-- logs/                Stellaris documentation-dump parsers
+|-- reconcile/           source joining and drift-baseline checks
+|-- policy/              registry allowlist and reviewed generation policy
+|-- overlay/             audited departures from raw rules
+|-- lower/               source declarations to supported authoring model
+|-- render/              code writer, imports, symbols, and file protocol
+|-- emit/                output-family emitters
+|-- corpus/              installed-definition observations and conformance
+|-- report.ts            visible pipeline accounting
+`-- drift-baseline.json  accepted two-source differences
 ```
 
-Two design rules keep the emitters honest. Additions should be data-driven —
-a new registry is a manifest row, not a new emitter or a
-`if (type === "...")` branch in the generic writer. And exceptions are
-centralized: anything that departs from what the rules mechanically say lives
-as a reviewed row in `overlay/` (required localization, ergonomic field
-widenings, shape/scope corrections with evidence), never inline in an
-emitter.
+Filesystem access stays near the shell. Parsers, reconciliation, lowering, and
+emitters are testable over in-memory data.
 
-## Testing
+## Verification
 
-Unit tests here (`tests/`) re-run pipeline pieces in-process against the
-vendored rules: the cwt parser, the two-source reconciliation, and individual
-emitters. The committed _output_ is gated elsewhere, with the artifact it
-belongs to: `packages/sdk/tests/codegen/` holds the generated-text snapshot
-tests and the corpus-conformance suite that measures every emitted interface
-against the committed vanilla-install fixture as an observed lower bound.
-`npm run codegen:check`
-is the CI-style drift gate for the whole pipeline.
+Package tests exercise the CWT parser, documentation parsers, reconciliation,
+overlay audits, lowerers, and emitters against vendored inputs. Artifact-level
+tests live with the SDK output under `packages/sdk/tests/codegen/`.
 
-Adding a content registry has a documented procedure — manifest row, report
-review, overlay evidence, four kinds of tests — in the repository's
-[AGENTS.md](../../AGENTS.md).
+The complete change gate is:
 
-## Vocabulary
+```bash
+npm run codegen
+npm run typecheck
+npm test
+npm run build
+```
 
-This package is the [CWT Codegen](./CONTEXT.md) context. Its glossary is the authority
-for what these words mean; the [context map](../../CONTEXT-MAP.md) shows how they change
-at the boundaries with the other contexts.
+Review generated text as public API. Corpus conformance is an observed lower
+bound based on shipped Stellaris definitions, not proof that every legal game
+shape has appeared in vanilla.
+
+See the [CWT Codegen glossary](./CONTEXT.md) for the terms used by this package.

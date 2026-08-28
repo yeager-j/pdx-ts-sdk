@@ -1,106 +1,181 @@
 # @pdx-ts/sdk-testing
 
-Test Stellaris mod logic without launching the game.
+`@pdx-ts/sdk-testing` runs recorded Stellaris mod logic without launching the
+game. It supplies fixtures, a mutable simulated world, trigger evaluation,
+event delivery, explanation trees, and optional Vitest matchers.
 
-Because [@pdx-ts/sdk](../sdk/README.md) records triggers and effects as data
-rather than emitting text directly, that data can be interpreted outside the
-game: event chains get unit tests that run in milliseconds, and a failing
-trigger can say _which_ subcondition failed.
+The interpreter is intentionally incomplete. It executes only game semantics
+that have been reviewed and entered in a central whitelist. Unsupported script
+throws instead of returning a result based on a guess.
+
+## Installation
+
+The package requires Node.js 22 or newer and `@pdx-ts/sdk`. Install Vitest only
+when using the matcher subpath or Vitest as the test runner.
+
+```bash
+npm install --save-dev @pdx-ts/sdk-testing vitest
+```
+
+The core evaluator does not import a test framework.
+
+## A complete event test
 
 ```ts
+import { expect, test } from "vitest";
+import { countryFlags } from "@pdx-ts/sdk/stellaris";
 import { fixture } from "@pdx-ts/sdk-testing";
 
-const world = fixture({ countries: [{ name: "player" }] }, { events: [welcome] });
+import { mod } from "../mod.ts";
 
-world.fire(welcome, world.country(0));
-world.advance(30); // delivers due scheduled fires; days are non-negative whole numbers
+const flags = countryFlags("mymod_welcomed");
+const events = mod.namespace("welcome");
 
-expect(world.country(0).hasFlag(flags.welcomed)).toBe(true);
+const welcome = events.country(1, {
+  isTriggeredOnly: true,
+  immediate: (country) => {
+    country.setCountryFlag(flags.mymod_welcomed);
+  },
+});
+
+test("the welcome event marks the country", () => {
+  const world = fixture(
+    { countries: [{ name: "player" }] },
+    { events: [welcome] }
+  );
+
+  world.fire(welcome, world.country(0));
+
+  expect(world.country(0).hasFlag(flags.mymod_welcomed)).toBe(true);
+});
 ```
 
-Force `random_list` branches with zero-based arm indices:
-`world.fire(event, scope, { arms: [1, 0] })`. The plan is consumed in execution
-order, follows scheduled fires through the queue, and fails if any supplied
-choice remains unused when the chain ends. Weights are probabilities, not arm
-identities, so duplicate-weight lists remain selectable.
+The fixture consumes the same event metadata and PDXScript entries that the SDK
+would render. The test does not call a second implementation of the authored
+TypeScript closure.
 
-For triggers, `explain` answers "why doesn't my `potential` pass":
+## How interpretation works
 
-```
-✗ AND
-  ✓ has_global_flag = lattice_awake — set globally
-  ✓ has_country_flag = heard_the_hum — set on country "player"
-  ✗ NOT
-    ✓ has_country_flag = pacifist_path — set on country "player"
-```
-
-## What a fixture refuses to deliver
-
-The same refusal applies to whole events, not only to the keys inside them.
-Delivery runs an event's `immediate` and nothing else — no option is ever
-selected, no `trigger` is re-checked, no `after` block runs — so registering an
-event that carries any of that would produce a fired record for a firing the
-game may never have made, or a payoff it never paid. `fixture(spec, { events })`
-refuses those events by name instead:
-
-```
-Event "adv.1" carries "option", which delivery will not run: No option is ever
-selected here … This one carries set_country_flag.
+```text
+SDK effect closure
+  -> typed effect recorder
+  -> PDXScript entries
+  -> whitelist dispatcher
+  -> mutable World state
+  -> fired records, queued events, and explanations
 ```
 
-Options that carry only a name, an icon, or a gate stay deliverable, because
-nothing is skipped when there is nothing to skip.
+`fixture(spec, { events })` validates the declared world and every event the
+world may deliver. `world.fire()` delivers an event immediately.
+`world.advance(days)` moves the discrete-event clock and drains due scheduled
+fires in timestamp order. Delivered events can schedule more events into the
+same queue.
 
-`fireOnlyOnce` is the one flag delivery enforces rather than reads past: the
-first delivery runs and a second is refused, since running the immediate again
-would apply its effects to a world no game ever held. What the flag counts by
-is undocumented, so the harness models only the part that is not in doubt — a
-chain that genuinely needs a second firing gets a second fixture.
+The clock is not a game tick simulator. It does not run monthly income, mean
+time to happen rolls, pull events, situation progress, or option selection.
 
-Situations get the same treatment in the time dimension. A situation is a
-monthly mechanic — progress, `on_monthly`, stages, completion — and `advance`
-ticks none of it, so an advance that crosses a month boundary while the fixture
-holds a situation is refused rather than freezing progress behind a moving
-clock. Compute the arithmetic directly with `evaluateWeightBlock`, keep the
-advance inside the month, or declare `staticProgress: true` on the situation to
-say this chain does not depend on its progress moving.
+## Fixtures and world state
 
-## Whitelist-only, on purpose
+The supported simulated scopes are:
 
-The interpreter is a **second implementation of the game's semantics**, so it is
-deliberately whitelist-based: everything it models carries a one-line defense of
-the real game's behavior, and anything unmodeled throws instead of guessing. A
-test can only pass through semantics somebody consciously verified.
+- country
+- planet
+- fleet
+- situation
+- archaeological site
 
-Verified once is not verified, though, so each entry also pins the paragraph of
-Paradox's own documentation dump it was read from, by hash. Revendoring a newer
-dump makes every changed or newly deprecated paragraph fail the audit gate until
-somebody re-reads it — which is how `num_owned_planets` was caught still being
-modeled as current after the game deprecated it.
-
-That is also why a passing test is a narrower claim than it looks. It says the
-logic you wrote does what you meant — not that the game agrees about everything
-surrounding it. Where the game's own limits are cheap to state, the fixture lets
-you state them: a country can declare `storage` per resource, and `add_resource`
-is then bounded by it, the way the game's resource definitions bound a stockpile
-by its maximum storage capacity.
+Fixture specs describe only state used by whitelisted semantics:
 
 ```ts
-fixture(
-  { countries: [{ resources: { energy: 24_000 }, storage: { energy: 25_000 } }] },
-  { events }
+const global = globalFlags("lattice_awake");
+const country = countryFlags("heard_the_hum");
+
+const world = fixture(
+  {
+    globalFlags: [global.lattice_awake],
+    countries: [
+      {
+        name: "player",
+        flags: [country.heard_the_hum],
+        resources: { energy: 24_000 },
+        storage: { energy: 25_000 },
+        planets: [{ name: "alpha", deposits: ["d_minerals_1"] }],
+      },
+    ],
+  },
+  { events: [] }
 );
-// a 5,000 energy reward lands as 25,000, not 29,000
 ```
 
-Capacity is undeclared by default and then unbounded: a real capacity is a base
-plus techs, buildings, modifiers and whatever your mod changes, and inventing a
-number would be exactly the wrong emulator this package refuses to be.
+Entity handles such as `Country`, `Planet`, and `Fleet` are typed scope
+witnesses as well as state accessors. Passing a planet handle to a
+country-scoped trigger is a TypeScript error.
 
-## Matchers
+Storage is undeclared and unbounded by default. When a country declares a
+resource capacity, `add_resource` clamps the resulting stockpile to it. The
+fixture does not invent capacities because the real value depends on game and
+mod state outside the test.
 
-The evaluator itself has no test-framework dependency. Vitest matchers are a
-separate subpath, installed explicitly:
+## Trigger evaluation and explanations
+
+Use `evaluate` for a boolean result:
+
+```ts
+const holds = evaluate(hasCountryFlag(country.heard_the_hum), world.country(0));
+```
+
+Use `explain` when the reason matters:
+
+```ts
+const result = explain(potential, world.country(0));
+console.log(renderExplanation(result));
+```
+
+`renderExplanation` formats the result as a nested pass/fail tree and includes
+the world-state reason for each leaf, such as a named flag being present on the
+selected country.
+
+`evaluateWeightBlock` evaluates supported base, factor, add, and modifier
+arithmetic directly against a simulated scope. This is useful for situation
+progress formulas even though the World does not advance situation months.
+
+## Event delivery and time
+
+Delivery records the firing and runs the event's `immediate` block. It does not
+select an option, re-check the event's `trigger`, or run `after`. An event that
+contains executable structure the harness would skip is refused when it is
+registered.
+
+Options containing only metadata such as a name or icon remain deliverable.
+Options with effects do not. `fireOnlyOnce` is enforced: a second delivery is
+refused because executing the immediate twice would create a state the game
+would not have produced.
+
+`world.advance(30)` delivers scheduled events due during those 30 days. It
+refuses to cross a month boundary while the fixture contains a situation whose
+monthly progress would silently remain fixed. Set `staticProgress: true` on a
+situation only when the test explicitly does not depend on progress changing.
+
+Events with a declared FROM contract require a matching simulated scope witness
+when fired. Ambient contracts the harness cannot model, such as deeper FROM or
+PREV chains and split ROOT, are refused during registration.
+
+## Deterministic random branches
+
+The interpreter does not roll random numbers. Supply zero-based arm indices for
+each `random_list` reached by an event chain:
+
+```ts
+world.fire(event, world.country(0), { arms: [1, 0] });
+```
+
+The plan is consumed in execution order and follows scheduled events through
+the queue. A leftover arm or a missing choice fails the run. Arm indices, not
+weights, identify branches, so lists with duplicate weights remain selectable.
+
+## Vitest matchers
+
+Install the optional matchers once in a setup file:
 
 ```ts
 // vitest.setup.ts
@@ -109,30 +184,76 @@ import { installMatchers } from "@pdx-ts/sdk-testing/matchers";
 installMatchers();
 ```
 
-Then `expect(world.fired).toContainEvent(event, { day: 30 })` and
-`expect(trigger).toHoldFor(scope)`, whose failure message is the rendered
-explain tree.
+Then reference the setup file from `vitest.config.ts`:
 
-## Why this is not part of @pdx-ts/sdk
+```ts
+import { defineConfig } from "vitest/config";
 
-Two reasons, and the second is the one that keeps paying.
+export default defineConfig({
+  test: { setupFiles: ["./vitest.setup.ts"] },
+});
+```
 
-The matchers integrate with a test framework, so this package peer-depends on
-vitest (optionally — the evaluator alone does not need it). That dependency does
-not belong in an SDK whose job is emitting game files.
+The matchers include event-log and trigger assertions:
 
-And a package boundary forces these helpers to consume the SDK through its
-**public interface**, which is the honest test surface. Splitting the package
-found exactly one place where they had been reaching past it: the interpreter
-imported the generated `EFFECT_META` table to answer a yes/no question about a
-key. That is now `isEffectKey` on the SDK's public API, and the generated
-table's shape stayed private where it belongs. `scopeLinkOutput` is the second
-of the same kind: the interpreter has to tell a scope link it has not modeled
-from a scripted binding it never can, and it asks the SDK that question rather
-than keeping its own list of link names.
+```ts
+expect(world.fired).toContainEvent(followup, { day: 30 });
+expect(potential).toHoldFor(world.country(0));
+```
 
-## Vocabulary
+Trigger failures include the rendered explanation tree.
 
-This package is the [Simulation](./CONTEXT.md) context. Its glossary is the authority
-for what these words mean; the [context map](../../CONTEXT-MAP.md) shows how they change
-at the boundaries with the other contexts.
+## The whitelist boundary
+
+The whitelist classifies supported leaf triggers, combinators, effects,
+structural effects, iterators, and scope links. Every implemented row carries a
+short defense of its behavior. Rows based on Paradox's documentation also pin
+the exact source paragraph by hash.
+
+A changed documentation-dump version or a changed pinned paragraph fails the
+whitelist audit until the affected claims are reviewed. Unpinned documentation
+paragraphs are outside that hash check. Semantics established through an
+in-game probe, such as event-target lifetime, are pinned to the verified game
+build instead.
+
+Scripted vanilla triggers and effects cannot run here. The identifier package
+contains their names, parameters, and inferred scopes, but excludes their
+bodies. The interpreter reports this boundary rather than treating the calls as
+true, false, or no-ops.
+
+A passing test proves the behavior of the modeled script under the declared
+fixture. It does not prove unmodeled game systems around that script.
+
+## Implementation
+
+The package uses strict TypeScript and ESM. It depends on
+`@pdx-ts/pdxscript` for syntax trees and consumes the SDK through public or
+explicitly internal package exports. Vitest is an optional peer dependency.
+
+```text
+src/
+|-- state.ts       fixture schema, mutable state, and typed entity handles
+|-- world.ts       event registry, delivery, queue, and clock
+|-- interpret.ts   trigger evaluation and effect execution
+|-- whitelist.ts   audited semantic dispatch tables and documentation pins
+|-- matchers.ts    optional Vitest integration
+`-- index.ts       framework-independent public API
+```
+
+The separate package boundary keeps test-framework dependencies out of the SDK
+and forces the interpreter to consume recorded script through a defined
+interface.
+
+## Development and verification
+
+Run the root repository gates:
+
+```bash
+npm run typecheck
+npm test
+npm run build
+```
+
+Changes to modeled semantics need focused interpreter tests, whitelist audit
+evidence, and refusal tests for nearby unsupported behavior. See the
+[Simulation glossary](./CONTEXT.md) for the package's terms and design bar.
