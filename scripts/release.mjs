@@ -1,5 +1,5 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { locateInstall } from "@pdx-ts/sdk/installation";
@@ -34,6 +34,11 @@ const RELEASE_LITERAL_FILES = [
 const PACKAGE_MANIFEST = "package.json";
 const SCAFFOLDER_RELEASE_MANIFEST = "packages/create-stellaris-mod/src/release-manifest.ts";
 const IDENTIFIERS_PACKAGE = "@pdx-ts/stellaris-ids";
+const LICENSE_FILES = [
+  "LICENSE",
+  ...RELEASE_PACKAGES.map(({ directory }) => join(directory, "LICENSE")),
+  "packages/stellaris-ids/LICENSE",
+];
 const DETECT_INSTALL = Symbol("detect install");
 
 /** Refuses anything other than an exact semantic version coordinate. */
@@ -224,12 +229,6 @@ export function stellarisIdsRevisionDecision(publishedVersion, generatedVersion,
   };
 }
 
-function cleanPackageDists(root) {
-  for (const name of readdirSync(join(root, "packages"))) {
-    rmSync(join(root, "packages", name, "dist"), { recursive: true, force: true });
-  }
-}
-
 function installedStellarisPath() {
   try {
     return locateInstall();
@@ -298,6 +297,13 @@ function runCheckStep(results, name, action) {
   }
 }
 
+function assertLicenseFiles(root) {
+  const missing = LICENSE_FILES.filter((file) => !existsSync(join(root, file)));
+  if (missing.length > 0) {
+    throw new Error(`Missing license file(s): ${missing.join(", ")}.`);
+  }
+}
+
 /** Runs the release gates and returns each result so callers can print a concise summary. */
 export function checkRelease(root, execute = run, installPath = DETECT_INSTALL) {
   const results = [];
@@ -310,12 +316,13 @@ export function checkRelease(root, execute = run, installPath = DETECT_INSTALL) 
   npm("test", ["test"]);
   npm("asset-scale", ["run", "test:asset-scale"]);
   runCheckStep(results, "docs from clean sources", () => {
-    cleanPackageDists(root);
+    execute(root, "npm", ["run", "clean"]);
     execute(root, "npm", ["run", "docs:build"]);
   });
   npm("build", ["run", "build"]);
   npm("CWT codegen drift", ["run", "codegen:check"]);
   npm("verified-build drift", ["run", "codegen:verified-build:check"]);
+  runCheckStep(results, "license files", () => assertLicenseFiles(root));
 
   for (const releasePackage of [...RELEASE_PACKAGES, { name: IDENTIFIERS_PACKAGE }]) {
     npm(`pack ${releasePackage.name}`, ["pack", "--dry-run", "--workspace", releasePackage.name]);

@@ -3,6 +3,9 @@
   "version": "0.5.0",
   "description": "Test Stellaris mod logic without launching the game \u2014 a whitelist interpreter over the triggers and effects @pdx-ts/sdk records",
   "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
   "license": "MIT",
   "exports": {
     ".": {

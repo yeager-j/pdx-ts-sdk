@@ -9,6 +9,7 @@
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",
+    "clean": "node scripts/clean.mjs",
     "codegen": "node --conditions=pdx-source packages/codegen-cwt/src/index.ts",
     "codegen:check": "node --conditions=pdx-source packages/codegen-cwt/src/index.ts && git diff --exit-code packages/sdk/src/generated",
     "codegen:vanilla": "node --conditions=pdx-source packages/codegen-vanilla/src/index.ts",
@@ -28,10 +29,15 @@
     "test:asset-scale": "node --expose-gc --conditions=pdx-source packages/sdk/tests/assets-scale.ts",
     "test:watch": "vitest",
     "example": "node --conditions=pdx-source examples/hello-galaxy/build.ts",
+    "format": "prettier --write \"**/*.{ts,tsx}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx}\"",
     "scaffold": "node --conditions=pdx-source packages/create-stellaris-mod/src/bin.ts",
     "prepare": "node .husky/install.mjs && npm run generate:version",
     "release:prepare": "node --conditions=pdx-source scripts/release.mjs prepare",
     "release:check": "node --conditions=pdx-source scripts/release.mjs check"
+  },
+  "engines": {
+    "node": ">=24"
   },
   "lint-staged": {
     "**/*.{ts,tsx}": "prettier --write"

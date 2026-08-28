@@ -18,6 +18,12 @@ afterEach(() => {
   }
 });
 
+function temporaryDirectory(prefix: string): string {
+  const directory = mkdtempSync(path.join(tmpdir(), prefix));
+  temporaryDirectories.push(directory);
+  return directory;
+}
+
 describe("runInspect", () => {
   it("writes one compact deterministic YAML project map", async () => {
     const projectRoot = temporaryProject();
@@ -234,7 +240,7 @@ describe("runInspect", () => {
         mod: { inspection_failure: mod.config },
         contentDirectory: "src/content",
       },
-      projectRoot: path.join(tmpdir(), "missing-inspection-project"),
+      projectRoot: temporaryDirectory("pdx-inspection-missing-"),
       output: output.output,
       errorOutput: errors.output,
     });
@@ -254,8 +260,7 @@ function temporaryProject(
     },
   }
 ): string {
-  const directory = mkdtempSync(path.join(tmpdir(), "pdx-inspection-"));
-  temporaryDirectories.push(directory);
+  const directory = temporaryDirectory("pdx-inspection-");
   writeFileSync(
     path.join(directory, "package.json"),
     JSON.stringify({
