@@ -43,9 +43,15 @@ jobs:
         os: [ubuntu-latest]
         node: [22, 24]
         include:
+          # Experimental: the suite has known Windows failures (spawning
+          # `.bin` shims, 8.3 short temp paths, materialization filesystem
+          # semantics). Non-blocking until the port lands; the job still runs
+          # so the failure count is visible on every PR.
           - os: windows-latest
             node: 24
+            experimental: true
     runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.experimental == true }}
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
