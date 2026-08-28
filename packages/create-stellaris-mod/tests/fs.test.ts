@@ -12,6 +12,7 @@ import {
   readdirSync,
   readFileSync,
   readlinkSync,
+  realpathSync,
   rmSync,
   symlinkSync,
   writeFileSync,
@@ -28,7 +29,7 @@ const file = (contents: string): ProjectEntry => ({ kind: "file", contents });
 const link = (target: string): ProjectEntry => ({ kind: "symlink", target });
 
 function tempRoot(): string {
-  const dir = mkdtempSync(path.join(tmpdir(), "csm-fs-"));
+  const dir = realpathSync(mkdtempSync(path.join(tmpdir(), "csm-fs-")));
   temps.push(dir);
   return dir;
 }
@@ -80,7 +81,7 @@ describe("writeTree", () => {
     const claudeSkills = path.join(target, ".claude/skills");
     const claudeSkillsStat = lstatSync(claudeSkills);
     if (claudeSkillsStat.isSymbolicLink()) {
-      expect(readlinkSync(claudeSkills)).toBe("../.agents/skills");
+      expect(readlinkSync(claudeSkills).split(path.sep).join("/")).toBe("../.agents/skills");
     } else {
       expect(claudeSkillsStat.isDirectory()).toBe(true);
     }

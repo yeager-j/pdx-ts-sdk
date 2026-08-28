@@ -61,9 +61,9 @@ const genTwo = renderGeneration(2);
 
 const temps: string[] = [];
 
-/** Physical from the start; the system temp directory is a symlink on macOS. */
+/** Physical from the start, with Windows' 8.3 spelling removed as well. */
 function tempDir(): string {
-  const dir = realpathSync(mkdtempSync(join(tmpdir(), "pdx-crash-")));
+  const dir = realpathSync.native(mkdtempSync(join(tmpdir(), "pdx-crash-")));
   temps.push(dir);
   return dir;
 }

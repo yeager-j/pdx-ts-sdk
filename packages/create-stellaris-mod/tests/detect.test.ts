@@ -1,6 +1,6 @@
 /** The CLI's best-effort detection contract, exercised without the SDK. */
 
-import { cpSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -21,7 +21,7 @@ const FIXTURE = path.resolve(import.meta.dirname, "../../../fixtures/fake-instal
 
 const temps: string[] = [];
 function tempDir(): string {
-  const dir = mkdtempSync(path.join(tmpdir(), "csm-detect-"));
+  const dir = realpathSync(mkdtempSync(path.join(tmpdir(), "csm-detect-")));
   temps.push(dir);
   return dir;
 }

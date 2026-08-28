@@ -7,7 +7,7 @@
 
 import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { join, posix, win32 } from "node:path";
 
 import {
   CORE_GAME_VERSION_PATTERN,
@@ -32,6 +32,7 @@ export interface Detection {
   readonly gameVersion: string | undefined;
 }
 
+/** Returns the platform's default install candidates in search order. */
 export function platformDefaults(platform: NodeJS.Platform, home: string): string[] {
   const defaults =
     platform === "darwin"
@@ -39,8 +40,9 @@ export function platformDefaults(platform: NodeJS.Platform, home: string): strin
       : platform === "win32"
         ? PLATFORM_INSTALL_DEFAULTS.win32
         : PLATFORM_INSTALL_DEFAULTS.other;
+  const platformJoin = platform === "win32" ? win32.join : posix.join;
   return defaults.map((candidate) =>
-    candidate.kind === "home" ? join(home, ...candidate.segments) : candidate.path
+    candidate.kind === "home" ? platformJoin(home, ...candidate.segments) : candidate.path
   );
 }
 

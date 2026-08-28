@@ -36,6 +36,8 @@ export function run(command: Command, cwd: string): Promise<CommandResult> {
     const child = spawn(command.command, [...command.args], {
       cwd,
       stdio: ["inherit", "pipe", "pipe"],
+      // npm and the other supported package managers are .cmd shims on Windows.
+      shell: process.platform === "win32",
     });
     let output = "";
     const observe = (chunk: Buffer): void => {

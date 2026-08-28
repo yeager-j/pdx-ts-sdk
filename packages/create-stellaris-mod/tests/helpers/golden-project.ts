@@ -35,6 +35,7 @@ import { planProject } from "../../src/plan.ts";
 
 const PACKAGE = path.resolve(import.meta.dirname, "../..");
 const REPO = path.resolve(PACKAGE, "../..");
+const TSC = path.resolve(REPO, "node_modules/typescript/lib/tsc.js");
 
 const GOLDEN_PROJECT: Resolved = {
   targetDir: "/tmp/golden-project",
@@ -108,19 +109,17 @@ export interface TempProject {
  * `devDependencies`, which is what the compatibility preflight reads.
  */
 export function createTempProject(): TempProject {
-  const dir = mkdtempSync(path.join(tmpdir(), "pdx-generate-project-"));
+  const dir = realpathSync(mkdtempSync(path.join(tmpdir(), "pdx-generate-project-")));
   materializeGoldenProject(dir);
   return {
     dir,
-    // macOS puts temporary directories under a symlinked /var, so the path the
-    // CLI resolves and prints is not the one `mkdtemp` returned.
-    realDir: realpathSync(dir),
+    realDir: dir,
     dispose: () => rmSync(dir, { recursive: true, force: true }),
   };
 }
 
 export function createGoldenProject(): GoldenProject {
-  const dir = mkdtempSync(path.join(tmpdir(), "pdx-golden-project-"));
+  const dir = realpathSync(mkdtempSync(path.join(tmpdir(), "pdx-golden-project-")));
   materializeGoldenProject(dir);
   addHarnessCompilerSettings(dir);
 
@@ -144,7 +143,7 @@ export function createGoldenProject(): GoldenProject {
       writeFileSync(path.join(contentDir, basename), contents);
     },
 
-    typecheck: () => run(path.join(REPO, "node_modules/.bin/tsc"), ["-p", dir], dir),
+    typecheck: () => run(process.execPath, [TSC, "-p", dir], dir),
 
     build: () =>
       run(process.execPath, ["--conditions=pdx-source", "src/build-check.ts", outDir], dir),

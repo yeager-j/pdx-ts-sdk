@@ -11,6 +11,7 @@ import {
   mkdtempSync,
   readdirSync,
   readFileSync,
+  realpathSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
@@ -36,8 +37,9 @@ import { load } from "../src/installation/vanilla/load.ts";
 const FIXTURE = join(import.meta.dirname, "../../../fixtures/fake-install");
 
 const temps: string[] = [];
+/** Keep temporary roots in the canonical spelling used by installation paths. */
 function tempDir(): string {
-  const dir = mkdtempSync(join(tmpdir(), "pdx-sdk-test-"));
+  const dir = realpathSync.native(mkdtempSync(join(tmpdir(), "pdx-sdk-test-")));
   temps.push(dir);
   return dir;
 }
@@ -51,11 +53,19 @@ afterEach(() => {
 describe("locateInstall", () => {
   it("interprets the generated platform defaults without drift", () => {
     expect(platformDefaultsFor("darwin", "/home/u")).toEqual([
-      "/home/u/Library/Application Support/Steam/steamapps/common/Stellaris",
+      join(
+        "/home/u",
+        "Library",
+        "Application Support",
+        "Steam",
+        "steamapps",
+        "common",
+        "Stellaris"
+      ),
     ]);
     expect(platformDefaultsFor("linux", "/home/u")).toEqual([
-      "/home/u/.local/share/Steam/steamapps/common/Stellaris",
-      "/home/u/.steam/steam/steamapps/common/Stellaris",
+      join("/home/u", ".local", "share", "Steam", "steamapps", "common", "Stellaris"),
+      join("/home/u", ".steam", "steam", "steamapps", "common", "Stellaris"),
     ]);
   });
 

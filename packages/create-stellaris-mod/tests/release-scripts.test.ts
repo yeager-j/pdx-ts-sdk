@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -27,7 +27,7 @@ function write(root: string, file: string, contents: string): void {
 }
 
 function releaseFixture(staleLiteral = "0.5.0"): string {
-  const root = mkdtempSync(join(tmpdir(), "pdx-release-"));
+  const root = realpathSync(mkdtempSync(join(tmpdir(), "pdx-release-")));
   roots.push(root);
   for (const file of [
     "LICENSE",
@@ -181,7 +181,7 @@ describe("release readiness", () => {
     expect(results).toContainEqual({
       name: "license files",
       passed: false,
-      error: expect.stringContaining("packages/sdk/LICENSE"),
+      error: expect.stringContaining(join("packages", "sdk", "LICENSE")),
     });
   });
 });

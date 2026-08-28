@@ -26,8 +26,8 @@
  */
 
 import { randomBytes } from "node:crypto";
-import type { Stats } from "node:fs";
-import { link as fsLink, open as fsOpen, lstat, mkdir, realpath, unlink } from "node:fs/promises";
+import { realpathSync, type Stats } from "node:fs";
+import { link as fsLink, open as fsOpen, lstat, mkdir, unlink } from "node:fs/promises";
 import path from "node:path";
 
 import { parseProjectLayoutField } from "./project-layout.ts";
@@ -138,7 +138,9 @@ export async function preflightTarget(
     existingDir = candidate;
   }
 
-  const real = await realpath(existingDir);
+  // Keep containment comparisons on the same spelling as the caller's root.
+  // On Windows, mixing async and sync realpath can compare 8.3 and long forms.
+  const real = realpathSync(existingDir);
   requireContainment(rootDir, real, existingDir);
 
   const targetPath = path.join(real, ...missingSegments, basename);
@@ -215,7 +217,7 @@ export async function publishExclusive(
 
   // The chain is complete now, so containment is checked against what actually
   // exists rather than against what existed before the directories were made.
-  const real = await realpath(dir);
+  const real = realpathSync(dir);
   requireContainment(preflight.rootDir, real, dir);
 
   const target = path.join(real, preflight.basename);
