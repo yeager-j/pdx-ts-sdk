@@ -122,7 +122,7 @@ export function createTempProject(): TempProject {
 export function createGoldenProject(): GoldenProject {
   const dir = mkdtempSync(path.join(tmpdir(), "pdx-golden-project-"));
   materializeGoldenProject(dir);
-  addSourceLinkedCompilerCondition(dir);
+  addHarnessCompilerSettings(dir);
 
   for (const [specifier, target] of LINKS) {
     const link = path.join(dir, "node_modules", specifier);
@@ -165,9 +165,9 @@ export function createGoldenProject(): GoldenProject {
 /**
  * Materialize the production scaffold, then make the two test-only changes the
  * matrix needs: an empty content directory and a build harness whose output
- * directory is supplied by the test. `createGoldenProject` adds its source-link
- * compiler condition afterwards; it is intentionally not production plan data.
- * No committed mirror can silently drift from `planProject`.
+ * directory is supplied by the test. `createGoldenProject` adds its harness
+ * compiler settings afterwards; they are intentionally not production plan
+ * data. No committed mirror can silently drift from `planProject`.
  */
 function materializeGoldenProject(dir: string): void {
   for (const [relPath, entry] of planProject(GOLDEN_PROJECT, "golden-fixture")) {
@@ -187,18 +187,28 @@ function materializeGoldenProject(dir: string): void {
 
 /**
  * The matrix links unbuilt workspace packages, so TypeScript must resolve their
- * source export condition. This is test harness state after materialization,
- * never a generated project's compiler policy: a real scaffold consumes the
- * packages' default `dist/` exports.
+ * source export condition. Incremental mode is the other harness setting: one
+ * project hosts many `typecheck()` runs that differ only in the content file,
+ * and the build-info cache turns every run after the first from a full SDK
+ * typecheck into a re-check of the swapped file — the swapped file itself is
+ * always checked in full, so a gate that must refuse bad source still does.
+ * Both are test harness state after materialization, never a generated
+ * project's compiler policy: a real scaffold consumes the packages' default
+ * `dist/` exports and starts cold.
  */
-function addSourceLinkedCompilerCondition(dir: string): void {
+function addHarnessCompilerSettings(dir: string): void {
   const configPath = path.join(dir, "tsconfig.json");
   const parsed = ts.parseConfigFileTextToJson(configPath, readFileSync(configPath, "utf8"));
   if (parsed.error !== undefined) {
     throw new Error(ts.flattenDiagnosticMessageText(parsed.error.messageText, "\n"));
   }
   const config = parsed.config as { compilerOptions?: Record<string, unknown> };
-  config.compilerOptions = { ...config.compilerOptions, customConditions: ["pdx-source"] };
+  config.compilerOptions = {
+    ...config.compilerOptions,
+    customConditions: ["pdx-source"],
+    incremental: true,
+    tsBuildInfoFile: "./.tsbuildinfo",
+  };
   writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
 }
 

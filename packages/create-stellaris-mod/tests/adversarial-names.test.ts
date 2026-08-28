@@ -23,8 +23,7 @@ import { technologyRecipe } from "../src/catalog/recipes/technology.ts";
 import type { DerivedNames } from "../src/catalog/types.ts";
 import { quoteTs } from "../src/quote.ts";
 import { createGoldenProject, type GoldenProject } from "./helpers/golden-project.ts";
-
-const COMPILER_TIMEOUT = 180_000;
+import { COMPILER_TIMEOUT, expectTypechecks, freshOut } from "./helpers/matrix.ts";
 
 /** The longest stem the derivation accepts, and one character more. */
 const AT_LIMIT = "a".repeat(64);
@@ -256,166 +255,151 @@ describe("names the derivation accepts", () => {
 /**
  * One project, every accepted name at once. Compiling and building a dozen-odd
  * separate projects would prove the same thing fourteen times over and cost a
- * minute each; the names are distinct, so they coexist.
+ * minute each; the names are distinct, so they coexist. The recipes share the
+ * project too: each one's describe swaps in its own render of every name —
+ * derived basenames are per name, not per recipe — and the harness's
+ * incremental typecheck re-checks only the swapped files.
  */
 describe("every accepted name, in one real project", () => {
   let project: GoldenProject;
 
   beforeAll(() => {
     project = createGoldenProject();
-    for (const [name] of ACCEPTED) {
-      const names = deriveNames(name);
-      project.place(names.basename, renderFor(names));
-    }
   }, COMPILER_TIMEOUT);
 
   afterAll(() => project?.dispose());
 
-  it(
-    "typechecks",
-    () => {
-      const result = project.typecheck();
-      expect(result.output).toBe("");
-      expect(result.status).toBe(0);
-    },
-    COMPILER_TIMEOUT
-  );
-
-  it(
-    "builds one technology per name",
-    () => {
-      const result = project.build();
-      expect(result.status, result.output).toBe(0);
-
-      const emitted = project.outFiles();
-      for (const [, stem] of ACCEPTED) {
-        const technology = `common/technology/golden_mod_${stem}.txt`;
-        expect(emitted, stem).toContain(technology);
-        expect(project.readOut(technology)).toContain(`golden_mod_tech_${stem}`);
-      }
-    },
-    COMPILER_TIMEOUT
-  );
-});
-
-/**
- * The same shared-project economy for the feature recipe, with the structural
- * superset variant: every accepted name renders `projects=two`, so every
- * correlated symbol and logical id — the chain, both projects, all three
- * events, the option-group link, and the merged on-action registration — is
- * proved per name against the real compiler and the real build. A quest per
- * name also means every feature registers the same `on_game_start_country`
- * hook, so the one `<prefix>_on_actions.txt` merging them all is itself under
- * test.
- */
-describe("every accepted name, as a two-project research quest, in one real project", () => {
-  let project: GoldenProject;
-
-  beforeAll(() => {
-    project = createGoldenProject();
-    for (const [name] of ACCEPTED) {
-      const names = deriveNames(name);
-      project.place(names.basename, renderQuestFor(names, "two"));
-    }
-  }, COMPILER_TIMEOUT);
-
-  afterAll(() => project?.dispose());
-
-  it(
-    "typechecks",
-    () => {
-      const result = project.typecheck();
-      expect(result.output).toBe("");
-      expect(result.status).toBe(0);
-    },
-    COMPILER_TIMEOUT
-  );
-
-  it(
-    "builds every correlated id per name",
-    () => {
-      const result = project.build();
-      expect(result.status, result.output).toBe(0);
-
-      const emitted = project.outFiles();
-      const onActions = project.readOut("common/on_actions/golden_mod_on_actions.txt");
-      for (const [, stem] of ACCEPTED) {
-        const chain = `common/event_chains/golden_mod_${stem}.txt`;
-        const specialProjects = `common/special_projects/golden_mod_${stem}.txt`;
-        const events = `events/golden_mod_${stem}.txt`;
-        expect(emitted, stem).toContain(chain);
-        expect(emitted, stem).toContain(specialProjects);
-        expect(emitted, stem).toContain(events);
-
-        expect(project.readOut(chain)).toContain(`golden_mod_event_chain_${stem}`);
-
-        const projectsOut = project.readOut(specialProjects);
-        expect(projectsOut).toContain(`key = golden_mod_special_project_${stem}_1`);
-        expect(projectsOut).toContain(`key = golden_mod_special_project_${stem}_2`);
-        expect(projectsOut).toContain(
-          `same_option_group_as = { golden_mod_special_project_${stem}_1 }`
-        );
-
-        const eventsOut = project.readOut(events);
-        expect(eventsOut).toContain(`namespace = golden_mod_${stem}`);
-        for (const id of [1, 2, 3]) {
-          expect(eventsOut, `${stem}.${id}`).toContain(`id = golden_mod_${stem}.${id}`);
-        }
-
-        expect(onActions, stem).toContain(`golden_mod_${stem}.1`);
-      }
-    },
-    COMPILER_TIMEOUT
-  );
-});
-
-/**
- * The two Item recipes added in SDK-111, on the same shared-project economy.
- *
- * They earn a place here for a reason `technology` does not cover: both bind
- * the derived identifier *beside* a fixed recipe word, so a name is no longer
- * only a literal and a filename — it is a declaration that has to coexist with
- * the ones the recipe writes itself. `generate event "Events"` derived to
- * `events` and collided with the namespace handle, and nothing caught it,
- * because no corpus rendered this recipe.
- */
-describe.each([
-  ["building", renderBuildingFor, (stem: string) => `common/buildings/golden_mod_${stem}.txt`],
-  ["event", renderEventFor, (stem: string) => `events/golden_mod_${stem}.txt`],
-] as const)("every accepted name, as a %s, in one real project", (_id, render, emittedPath) => {
-  let project: GoldenProject;
-
-  beforeAll(() => {
-    project = createGoldenProject();
+  /** Renders every accepted name into the shared project's content directory. */
+  function placeAll(render: (names: DerivedNames) => string): void {
+    freshOut(project);
     for (const [name] of ACCEPTED) {
       const names = deriveNames(name);
       project.place(names.basename, render(names));
     }
-  }, COMPILER_TIMEOUT);
+  }
 
-  afterAll(() => project?.dispose());
+  describe("as a technology", () => {
+    beforeAll(() => placeAll(renderFor), COMPILER_TIMEOUT);
 
-  it(
-    "typechecks",
-    () => {
-      const result = project.typecheck();
-      expect(result.output).toBe("");
-      expect(result.status).toBe(0);
-    },
-    COMPILER_TIMEOUT
-  );
+    it(
+      "typechecks",
+      () => {
+        expectTypechecks(project);
+      },
+      COMPILER_TIMEOUT
+    );
 
-  it(
-    "builds one per name",
-    () => {
-      const result = project.build();
-      expect(result.status, result.output).toBe(0);
+    it(
+      "builds one technology per name",
+      () => {
+        const result = project.build();
+        expect(result.status, result.output).toBe(0);
 
-      const emitted = project.outFiles();
-      for (const [, stem] of ACCEPTED) {
-        expect(emitted, stem).toContain(emittedPath(stem));
-      }
-    },
-    COMPILER_TIMEOUT
-  );
+        const emitted = project.outFiles();
+        for (const [, stem] of ACCEPTED) {
+          const technology = `common/technology/golden_mod_${stem}.txt`;
+          expect(emitted, stem).toContain(technology);
+          expect(project.readOut(technology)).toContain(`golden_mod_tech_${stem}`);
+        }
+      },
+      COMPILER_TIMEOUT
+    );
+  });
+
+  /**
+   * The feature recipe, with the structural superset variant: every accepted
+   * name renders `projects=two`, so every correlated symbol and logical id —
+   * the chain, both projects, all three events, the option-group link, and the
+   * merged on-action registration — is proved per name against the real
+   * compiler and the real build. A quest per name also means every feature
+   * registers the same `on_game_start_country` hook, so the one
+   * `<prefix>_on_actions.txt` merging them all is itself under test.
+   */
+  describe("as a two-project research quest", () => {
+    beforeAll(() => placeAll((names) => renderQuestFor(names, "two")), COMPILER_TIMEOUT);
+
+    it(
+      "typechecks",
+      () => {
+        expectTypechecks(project);
+      },
+      COMPILER_TIMEOUT
+    );
+
+    it(
+      "builds every correlated id per name",
+      () => {
+        const result = project.build();
+        expect(result.status, result.output).toBe(0);
+
+        const emitted = project.outFiles();
+        const onActions = project.readOut("common/on_actions/golden_mod_on_actions.txt");
+        for (const [, stem] of ACCEPTED) {
+          const chain = `common/event_chains/golden_mod_${stem}.txt`;
+          const specialProjects = `common/special_projects/golden_mod_${stem}.txt`;
+          const events = `events/golden_mod_${stem}.txt`;
+          expect(emitted, stem).toContain(chain);
+          expect(emitted, stem).toContain(specialProjects);
+          expect(emitted, stem).toContain(events);
+
+          expect(project.readOut(chain)).toContain(`golden_mod_event_chain_${stem}`);
+
+          const projectsOut = project.readOut(specialProjects);
+          expect(projectsOut).toContain(`key = golden_mod_special_project_${stem}_1`);
+          expect(projectsOut).toContain(`key = golden_mod_special_project_${stem}_2`);
+          expect(projectsOut).toContain(
+            `same_option_group_as = { golden_mod_special_project_${stem}_1 }`
+          );
+
+          const eventsOut = project.readOut(events);
+          expect(eventsOut).toContain(`namespace = golden_mod_${stem}`);
+          for (const id of [1, 2, 3]) {
+            expect(eventsOut, `${stem}.${id}`).toContain(`id = golden_mod_${stem}.${id}`);
+          }
+
+          expect(onActions, stem).toContain(`golden_mod_${stem}.1`);
+        }
+      },
+      COMPILER_TIMEOUT
+    );
+  });
+
+  /**
+   * The two Item recipes added in SDK-111.
+   *
+   * They earn a place here for a reason `technology` does not cover: both bind
+   * the derived identifier *beside* a fixed recipe word, so a name is no longer
+   * only a literal and a filename — it is a declaration that has to coexist
+   * with the ones the recipe writes itself. `generate event "Events"` derived
+   * to `events` and collided with the namespace handle, and nothing caught it,
+   * because no corpus rendered this recipe.
+   */
+  describe.each([
+    ["building", renderBuildingFor, (stem: string) => `common/buildings/golden_mod_${stem}.txt`],
+    ["event", renderEventFor, (stem: string) => `events/golden_mod_${stem}.txt`],
+  ] as const)("as a %s", (_id, render, emittedPath) => {
+    beforeAll(() => placeAll(render), COMPILER_TIMEOUT);
+
+    it(
+      "typechecks",
+      () => {
+        expectTypechecks(project);
+      },
+      COMPILER_TIMEOUT
+    );
+
+    it(
+      "builds one per name",
+      () => {
+        const result = project.build();
+        expect(result.status, result.output).toBe(0);
+
+        const emitted = project.outFiles();
+        for (const [, stem] of ACCEPTED) {
+          expect(emitted, stem).toContain(emittedPath(stem));
+        }
+      },
+      COMPILER_TIMEOUT
+    );
+  });
 });
