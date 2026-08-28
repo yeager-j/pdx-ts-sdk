@@ -47,6 +47,7 @@ import { renderLauncherDescriptor } from "../src/output/render.ts";
 import { createRenderedMod, type RenderedMod } from "../src/output/rendered.ts";
 import {
   activateMaterialization,
+  descriptorRecord,
   stageMaterialization,
   validateExistingMaterialization,
 } from "../src/output/write.ts";
@@ -692,6 +693,24 @@ describe("a materialization that would change nothing does nothing", () => {
     expect(report.manifestPath).toBe(join(first.contentDir, MANIFEST));
     expect(statSync(first.descriptorPath).mtimeMs).toBe(before.mtimeMs);
     expect(readdirSync(root).sort()).toEqual(["mz_probe", "mz_probe.mod"]);
+  });
+});
+
+describe("launcher descriptor normalization", () => {
+  it("accepts the launcher's final-newline normalization from an older install", async () => {
+    const root = tempDir();
+    const first = await install(renderedMod, { modDir: root });
+    const descriptor = readFileSync(first.descriptorPath, "utf8").trimEnd();
+    writeFileSync(first.descriptorPath, descriptor, "utf8");
+    const manifest = JSON.parse(readFileSync(first.manifestPath, "utf8"));
+    manifest.launcherDescriptor = descriptorRecord("mz_probe.mod", `${descriptor}\n`);
+    writeFileSync(first.manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
+
+    const upgraded = await install(renderedMod, { modDir: root });
+
+    expect(upgraded.status).toBe("written");
+    expect(readFileSync(first.descriptorPath, "utf8")).toBe(descriptor);
+    expect((await install(renderedMod, { modDir: root })).status).toBe("unchanged");
   });
 });
 

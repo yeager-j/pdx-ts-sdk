@@ -189,7 +189,7 @@ describe("renderLauncherDescriptor", () => {
     // of them decides those.
     const inner = render(mod).get("descriptor.mod")!;
     expect(renderLauncherDescriptor(renderedMod, "/some/where/lp_probe")).toBe(
-      `${inner.trimEnd()}\npath="/some/where/lp_probe"\n`
+      `${inner.trimEnd()}\npath="/some/where/lp_probe"`
     );
   });
 });

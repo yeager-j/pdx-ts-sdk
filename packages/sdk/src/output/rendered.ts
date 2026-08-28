@@ -172,7 +172,7 @@ class ImmutableRenderedMod implements RenderedMod {
   }
 
   launcherDescriptor(contentDir: string): string {
-    return `${this.#descriptorHeader}path="${contentDir}"\n`;
+    return `${this.#descriptorHeader}path="${contentDir}"`;
   }
 }
 
