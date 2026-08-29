@@ -1,0 +1,64 @@
+# Publishing requires npm Trusted Publishing to be configured for these packages on npmjs.com.
+# This workflow does not use an NPM_TOKEN secret; npm authenticates the job through OIDC.
+# @pdx-ts/stellaris-ids is deliberately not published here. It follows the game build's
+# version cadence and needs a Stellaris install to regenerate, so it stays maintainer-published
+# (see scripts/release.mjs).
+# Maintainers run `npm run release:prepare <version>` and `npm run release:check` locally before tagging.
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      # currentReleaseVersion throws when the four release manifests disagree,
+      # so a stale package cannot ride along and leave a partial release when
+      # its own publish fails.
+      - name: Verify tag matches the shared release version
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          node --conditions=pdx-source --input-type=module -e '
+            const { currentReleaseVersion } = await import("./scripts/release.mjs");
+            const tag = process.env.TAG_NAME.replace(/^v/, "");
+            const version = currentReleaseVersion(process.cwd());
+            if (tag !== version) {
+              console.error(`Tag ${process.env.TAG_NAME} does not match the shared release version ${version}.`);
+              process.exit(1);
+            }
+          '
+      # A prerelease coordinate (any version with a hyphen) publishes under the
+      # `next` dist-tag so ordinary installs keep resolving the last stable.
+      - name: Choose the npm dist-tag
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          version="${TAG_NAME#v}"
+          case "$version" in
+            *-*) echo "DIST_TAG=next" >> "$GITHUB_ENV" ;;
+            *) echo "DIST_TAG=latest" >> "$GITHUB_ENV" ;;
+          esac
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run codegen:verified-build:check
+      - run: npm run codegen:check
+      - run: npm run build
+      - run: npm publish --workspace create-stellaris-mod --provenance --access public --tag "$DIST_TAG"
+      - run: npm publish --workspace @pdx-ts/pdxscript --provenance --access public --tag "$DIST_TAG"
+      - run: npm publish --workspace @pdx-ts/sdk --provenance --access public --tag "$DIST_TAG"
+      - run: npm publish --workspace @pdx-ts/sdk-testing --provenance --access public --tag "$DIST_TAG"

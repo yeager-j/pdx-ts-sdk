@@ -3,6 +3,9 @@
   "version": "0.5.0",
   "description": "Parser and serializer for PDXScript, the Clausewitz engine script format (Stellaris-tested): order-preserving, duplicate-preserving, semantic round-trip",
   "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
   "license": "MIT",
   "exports": {
     ".": {

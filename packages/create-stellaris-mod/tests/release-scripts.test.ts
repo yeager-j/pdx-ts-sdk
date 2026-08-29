@@ -29,6 +29,13 @@ function write(root: string, file: string, contents: string): void {
 function releaseFixture(staleLiteral = "0.5.0"): string {
   const root = mkdtempSync(join(tmpdir(), "pdx-release-"));
   roots.push(root);
+  for (const file of [
+    "LICENSE",
+    ...RELEASE_PACKAGES.map(({ directory }) => `${directory}/LICENSE`),
+    "packages/stellaris-ids/LICENSE",
+  ]) {
+    write(root, file, "MIT License\n");
+  }
   for (const releasePackage of RELEASE_PACKAGES) {
     const manifest: Record<string, unknown> = { name: releasePackage.name, version: "0.5.0" };
     for (const dependency of releasePackage.dependencies ?? []) {
@@ -158,6 +165,24 @@ describe("release readiness", () => {
 
     expect(results[0]).toMatchObject({ name: "release coordinates", passed: false });
     expect(commands[0]).toBe("npm run typecheck");
+    expect(commands.indexOf("npm run clean")).toBeLessThan(commands.indexOf("npm run docs:build"));
+  });
+
+  it("fails the license files check when a license is missing", () => {
+    const root = releaseFixture();
+    rmSync(join(root, "packages/sdk/LICENSE"));
+
+    const results = checkRelease(root, () => undefined, null) as Array<{
+      name: string;
+      passed: boolean;
+      error?: string;
+    }>;
+
+    expect(results).toContainEqual({
+      name: "license files",
+      passed: false,
+      error: expect.stringContaining("packages/sdk/LICENSE"),
+    });
   });
 });
 

@@ -119,6 +119,7 @@ async function refusal(operation: Promise<unknown>): Promise<MaterializationErro
 }
 
 const temps: string[] = [];
+const originalModDir = process.env["STELLARIS_MOD_DIR"];
 /**
  * Physical from the start: `install` resolves the mod directory through every
  * symlink before it reports one, and the system temp directory is a symlink on
@@ -134,7 +135,11 @@ afterEach(() => {
   for (const dir of temps.splice(0)) {
     rmSync(dir, { recursive: true, force: true });
   }
-  delete process.env["STELLARIS_MOD_DIR"];
+  if (originalModDir === undefined) {
+    delete process.env["STELLARIS_MOD_DIR"];
+  } else {
+    process.env["STELLARIS_MOD_DIR"] = originalModDir;
+  }
 });
 
 describe("modDirFor", () => {
@@ -163,16 +168,20 @@ describe("modDirFor", () => {
 
 describe("modDir precedence", () => {
   it("prefers an explicit path over everything", () => {
-    process.env["STELLARIS_MOD_DIR"] = "/from/env";
-    expect(stellaris.modDir("/explicit")).toBe("/explicit");
+    const fromEnv = tempDir();
+    const explicit = tempDir();
+    process.env["STELLARIS_MOD_DIR"] = fromEnv;
+    expect(stellaris.modDir(explicit)).toBe(explicit);
   });
 
   it("prefers STELLARIS_MOD_DIR over the platform default", () => {
-    process.env["STELLARIS_MOD_DIR"] = "/from/env";
-    expect(stellaris.modDir()).toBe("/from/env");
+    const fromEnv = tempDir();
+    process.env["STELLARIS_MOD_DIR"] = fromEnv;
+    expect(stellaris.modDir()).toBe(fromEnv);
   });
 
   it("falls back to the platform default", () => {
+    delete process.env["STELLARIS_MOD_DIR"];
     expect(stellaris.modDir()).toBe(stellaris.modDirFor(process.platform, homedir()));
   });
 
@@ -188,8 +197,9 @@ describe("renderLauncherDescriptor", () => {
     // disagree about name, version, tags or supported_version, because only one
     // of them decides those.
     const inner = render(mod).get("descriptor.mod")!;
-    expect(renderLauncherDescriptor(renderedMod, "/some/where/lp_probe")).toBe(
-      `${inner.trimEnd()}\npath="/some/where/lp_probe"`
+    const contentDir = join(tempDir(), "lp_probe");
+    expect(renderLauncherDescriptor(renderedMod, contentDir)).toBe(
+      `${inner.trimEnd()}\npath="${contentDir}"`
     );
   });
 });

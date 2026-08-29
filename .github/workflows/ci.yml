@@ -12,16 +12,22 @@ on:
   push:
     branches: [main]
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   typecheck-and-codegen:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 24
           cache: npm
       - run: npm ci
+      - run: npm run format:check
       - run: npm run typecheck
       - run: npm run codegen:verified-build:check
       # The CI-style codegen drift gate: regenerates from vendored inputs and
@@ -29,12 +35,29 @@ jobs:
       - run: npm run codegen:check
 
   tests:
-    runs-on: ubuntu-latest
+    strategy:
+      # One platform's failure is signal about that platform, not about the
+      # other legs; let them finish.
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        node: [22, 24]
+        include:
+          # Experimental: the suite has known Windows failures (spawning
+          # `.bin` shims, 8.3 short temp paths, materialization filesystem
+          # semantics). Non-blocking until SDK-310 lands the port; the job
+          # still runs so the failure count is visible on every PR.
+          - os: windows-latest
+            node: 24
+            experimental: true
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.experimental == true }}
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
-          node-version: 24
+          node-version: ${{ matrix.node }}
           cache: npm
       - run: npm ci
       - run: npm test
@@ -42,32 +65,40 @@ jobs:
 
   docs:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 24
           cache: npm
+      - uses: actions/cache@v4
+        with:
+          path: packages/docs-site/.next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('package-lock.json') }}-${{ hashFiles('packages/docs-site/**/*.ts', 'packages/docs-site/**/*.tsx') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('package-lock.json') }}-
       - run: npm ci
       # The docs drift gate (SDK-185): every paired example typechecks against
       # the workspace SDK, compiles through the Fold, and renders. A broken
       # example fails this build.
       #
-      # Deleting `dist/` is half the gate, so it happens in this step rather
-      # than a neighbouring one. The site must resolve the workspace packages
+      # Running `npm run clean` is half the gate, so it happens in this step
+      # rather than a neighbouring one. The site must resolve the workspace packages
       # to their sources (SDK-214), and an empty tree is what proves it; with
       # `dist/` on disk the coverage and example gates can check compiled
       # output instead of the sources under review, silently, as they did
       # before. Keep the deletion inside this job so later edits cannot make
       # the source-tree guarantee depend on another job's filesystem.
       - name: Docs gate, against sources rather than dist/
-        run: rm -rf packages/*/dist && npm run docs:build
+        run: npm run clean && npm run docs:build
 
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 24
           cache: npm

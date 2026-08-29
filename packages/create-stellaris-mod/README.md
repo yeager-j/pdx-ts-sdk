@@ -1,220 +1,324 @@
 # create-stellaris-mod
 
-Scaffold a Stellaris mod project that builds with [@pdx-ts/sdk](../sdk/README.md).
+`create-stellaris-mod` scaffolds Stellaris mod projects for
+[@pdx-ts/sdk](../sdk/README.md). It can also inspect a built-in Recipe Catalog
+and add curated Feature source to an existing project.
+
+The CLI produces source code the author owns. It is not a runtime dependency of
+the generated mod.
+
+## Requirements and quick start
+
+The CLI requires Node.js 20 or newer. Generated projects require Node.js 22.18
+or newer because their scripts execute erasable TypeScript directly.
 
 ```bash
 npx create-stellaris-mod my-mod
-npx create-stellaris-mod init my-mod   # the same thing, spelled canonically
+cd my-mod
+
+npm run inspect
+npm test
+npm run build
+npm run install-mod
 ```
 
-`init`, `list`, `view` and `generate` are reserved first-position command names;
-anything else is the directory to scaffold into. The last three are the Recipe
-Catalog: `list` shows what this release can generate, `view <recipe>` shows what
-one recipe asks and how to answer it without prompting, and `generate` writes a
-feature source file into a project that already exists.
-
-It finds your Stellaris install, reads the build from `launcher-settings.json`,
-and writes a project that typechecks, tests and builds on the first
-`npm install` — including a `content/` directory already wired to the SDK's
-project pipeline, a worked example that fires in game, and colocated tests.
-
-Generated projects also include `npm run inspect`, which performs the Fold
-without writing the mod and prints a deterministic YAML map of the project for
-authors and coding agents.
-
-```
-my-mod/
-├── AGENTS.md             shared Codex and Claude project guidance
-├── CLAUDE.md -> AGENTS.md
-├── .agents/skills/pdx-project-startup/SKILL.md
-├── .agents/skills/pdx-sdk-authoring/SKILL.md
-├── .agents/skills/pdx-sdk-docs/SKILL.md
-├── .claude/
-│   ├── agents/pdx-docs-expert.md
-│   └── skills -> ../.agents/skills
-├── .codex/agents/pdx-docs-expert.toml
-├── package.json  tsconfig.json  vitest.config.ts
-├── stellaris-mod.json     the Project Manifest: mod identity and launcher metadata
-├── stellaris-mod.schema.json  its schema, for your editor
-├── .prettierrc            (--no-prettier to skip)
-├── eslint.config.js       (--no-eslint to skip)
-└── src/
-    ├── mod.ts              declares the SDK project + buildTheMod()
-    ├── index.ts            build: render the fold and write it to out/
-    ├── inspect.ts          compile and describe the project as YAML
-    ├── install.ts          build + drop it where the launcher looks
-    ├── vanilla.ts          the parsed install, when one was found
-    ├── flags.ts            shared values — outside content/, deliberately
-    └── content/
-        ├── example.ts      named `feature`: a technology, event, and firing hook
-        └── example.test.ts colocated, and skipped by discovery
-```
-
-`stellaris-mod.json` is the single author-owned source of truth for the mod's
-identity, launcher metadata, and where generated feature source goes. Its sole
-key under `mod` is the mod prefix; `createModProject` preserves that key as a
-literal type and uses it to create the immutable capability. Its
-`contentDirectory` is the single placement authority: the SDK discovers
-features there and `generate` writes them there, so moving the directory in the
-manifest moves both. The scaffolded package also declares
-`"#mod": "./src/mod.ts"` in `package.json#imports`. Feature modules and the build
-and install entrypoints import the mod module through it rather than computing a
-relative path.
-
-Importing `mod.ts` builds nothing — `mod` is an immutable capability — so the
-build, inspect, and install entrypoints share its `buildTheMod()`. The build and
-install commands add one disk-touching step; inspect only describes the Fold.
-`project.build()` owns the conventional discovery, Asset capture, and compile
-sequence. Pass `discover` or `additionalFeatures` when that sequence needs a
-pre-compile adjustment. A fundamentally different pipeline can still compose
-the public `discoverFeatures`, `mod.assetTree`, and `mod.compile` interfaces
-directly.
-With a vanilla install found, `buildTheMod()` also parses the game and may write
-a cache under `node_modules/.cache`.
-
-The generated ESLint configuration adds two authoring guardrails. It requires
-one event namespace per feature module, and it reports a second direct
-`.define()` call on the same local `CapabilityEventHandle`. The latter rule is
-type-aware but deliberately local: aliases, helper-mediated calls, and
-cross-module calls still rely on `mod.compile()`, the semantic authority for
-duplicate event definitions; two direct calls report even when control flow
-makes them mutually exclusive. Use `--no-eslint` only when another
-configuration supplies equivalent checks.
-
-## Options
-
-Every prompt has a flag, so the CLI is scriptable. With `--yes`, or whenever
-stdin is not a TTY, it takes the defaults and never asks — a CI run cannot hang
-on a prompt nobody will see.
-
-Codex and Claude support is enabled by default. The generated bundle stays
-inside the project: shared instructions, an embedded one-time collaboration
-setup, `pdx-sdk-authoring` and `pdx-sdk-docs` skills, and native project-scoped
-`pdx-docs-expert` definitions for both clients. Init does not download the
-skills or modify user-level configuration. Use `--no-llm` to omit the complete
-bundle. The shared instructions and skills use relative
-symlinks where the platform permits them; if symlink creation returns `EPERM`,
-init atomically publishes regular file and directory copies instead, so Windows
-does not require Developer Mode or symbolic-link privileges.
-
-The first substantive agent task finds an unconfigured Collaboration agreement
-in `AGENTS.md`. The startup skill asks how much creative ownership, autonomy,
-explanation, and review the author wants, then replaces only that marked section
-with a short working agreement. It also briefly points the author to the external
-`grill-with-docs` Skill for focused design work and `wayfinder` for work too
-large to plan in one session, then resumes the original task. Those optional
-Skills come from Matt Pocock's Skills plugin; the scaffold does not install
-them. Later agents receive the agreement automatically with the rest of
-`AGENTS.md`; task-specific instructions still override it.
-
-Before the docs expert answers, it compares the exact `@pdx-ts/sdk` dependency
-in the generated project's `package.json` with the `SDK version` declared by
-the fetched documentation index. It also compares the index's SDK source
-revision with the revision embedded by this scaffold, so an unversioned docs
-deployment cannot silently move to a different API while retaining the same
-package version. A local `file:` checkout, a dependency range, missing
-provenance, or a different deployed version or revision produces a concise
-mismatch report instead of advice for the wrong SDK surface.
-
-```
---name <string>              --prefix <snake_case>     --stellaris-path <path>
---supported-version <v4.4.*> --tags <a,b>              --local <path-to-pdx-sdk>
---pm <npm|pnpm|yarn|bun>     --dry-run                 -y, --yes
---no-prettier  --no-eslint  --no-llm  --no-git  --no-install
-```
-
-A missing Stellaris install is not fatal: the scaffold drops `src/vanilla.ts`,
-and the mod still builds. It still pins `@pdx-ts/stellaris-ids` — to the game
-build this scaffolder was verified against, since the SDK reads that package's
-id tables and a project without it does not typecheck.
-
-An explicit `--stellaris-path` is different: if it is not a game root, init
-fails before writing instead of treating a typo as permission to drop checking.
-Immediately after a game patch, the matching `@pdx-ts/stellaris-ids` release may
-not exist yet. If dependency installation reports that case, init says so and
-names the two ways forward — wait for the release, or repin the project to a
-build that has one.
-
-## Generating a feature
+`create-stellaris-mod my-mod` is an alias for the canonical command:
 
 ```bash
-npx create-stellaris-mod list                                  # what this release carries
-npx create-stellaris-mod view technology                       # what it asks, and the flags
+npx create-stellaris-mod init my-mod
+```
+
+The CLI finds the local Stellaris installation when possible and reads the game
+version from `launcher-settings.json`. A supported three-part version selects
+the matching identifier package; missing or unsupported version data falls back
+to the build this scaffolder was verified against. The generated project
+typechecks, tests, and builds after installation.
+
+## First five minutes
+
+1. Edit the mod name, version, tags, or supported game version in
+   `stellaris-mod.json`.
+2. Open `src/content/example.ts` to see a technology, event, and on-action hook
+   in one Feature.
+3. Run `npm run inspect` to review Feature stems, Item ids, dependency versions,
+   vanilla evidence, patch plans, and warnings as deterministic YAML.
+4. Run `npm test` to execute the example event chain without launching the game.
+5. Run `npm run build` to write `out/`, or `npm run install-mod` to place the
+   built mod where the launcher expects it.
+
+The generated README repeats these project-specific commands and records the
+game-version pin chosen during scaffolding.
+
+## Commands
+
+### `init`
+
+Create a new project:
+
+```bash
+npx create-stellaris-mod init my-mod
+```
+
+The destination must not already exist, even as an empty directory. The planner
+resolves every prompt before publication, and cancellation leaves the target
+unchanged.
+
+### `list`
+
+List the recipes included in this release:
+
+```bash
+npx create-stellaris-mod list
+```
+
+### `view`
+
+Describe a recipe, its generated topology, its questions, and the flags that
+answer those questions without prompting:
+
+```bash
+npx create-stellaris-mod view technology
+```
+
+### `generate`
+
+Write one Feature source file into an existing project:
+
+```bash
 npx create-stellaris-mod generate technology "Resonance Theory"
 ```
 
-`generate` writes one file into an existing project and never touches anything
-else. It searches upward from the current directory for `stellaris-mod.json`
-(`--cwd <path>` starts the search elsewhere), checks that the project maps
-`#mod` and depends on an SDK range this release verified its recipes against,
-and then writes `<contentDirectory>/<derived_name>.ts`. The name you type
-becomes the filename, the content ids and the TypeScript binding.
+`generate` searches upward for `stellaris-mod.json`, reads the manifest's
+`contentDirectory`, checks for a string `package.json#imports.#mod` mapping and
+a supported SDK range, then writes `<contentDirectory>/resonance_theory.ts`.
 
+It never overwrites an existing file, directory, or symlink. `--dry-run` prints
+the exact source without creating directories or files. A successful normal run
+writes only the created path to stdout.
+
+## Generated project
+
+```text
+my-mod/
+|-- stellaris-mod.json         Project Manifest and mod identity
+|-- stellaris-mod.schema.json  local editor schema
+|-- package.json
+|-- tsconfig.json
+|-- vitest.config.ts
+|-- eslint.config.js           omitted with --no-eslint
+|-- .prettierrc                omitted with --no-prettier
+|-- assets/                    create when the first Asset is needed
+`-- src/
+    |-- mod.ts                 createModProject and buildTheMod
+    |-- index.ts               render and write out/
+    |-- inspect.ts             Fold and print deterministic YAML
+    |-- install.ts             build and install for the launcher
+    |-- vanilla.ts             parsed install, when one was found
+    |-- flags.ts               shared typed values
+    `-- content/
+        |-- example.ts         named Feature export
+        `-- example.test.ts    colocated mod-logic test
 ```
---cwd <path>   --yes   --dry-run   --allow-unsupported-sdk
+
+Agent support files are also generated by default and are described separately
+below.
+
+## Project Manifest and build pipeline
+
+`stellaris-mod.json` is the single author-owned source of truth for mod identity,
+launcher metadata, Feature source, and the Asset tree. Its `mod` object contains
+exactly one key, the mod prefix:
+
+```json
+{
+  "$schema": "./stellaris-mod.schema.json",
+  "mod": {
+    "my_mod": {
+      "name": "My Mod",
+      "version": "0.1.0",
+      "supportedVersion": "4.4.*",
+      "tags": []
+    }
+  },
+  "contentDirectory": "src/content",
+  "assetsDirectory": "assets"
+}
 ```
 
-Plus `--<question>` for every question the chosen recipe asks; `view <recipe>`
-lists those. With `--yes`, or when stdin is not a TTY, the recipe id and the
-name are both required and every question takes its default.
+The object key preserves the prefix as a TypeScript literal. The manifest's
+`contentDirectory` is shared by SDK discovery and recipe generation, so moving
+it changes both consumers. `assetsDirectory` mirrors opaque files into the
+built mod root.
 
-The file is never written over anything: an existing file, directory or symlink
-of that name is a refusal, not an overwrite, and `--dry-run` prints the exact
-bytes a real run would publish without creating so much as a directory. A
-successful run puts the written path — and nothing else — on stdout.
+The generated package maps `#mod` to `./src/mod.ts`. Feature modules import the
+capability through that stable alias instead of computing relative paths.
 
-`--allow-unsupported-sdk` downgrades the compatibility refusal to a warning. It
-changes only that decision: it does not load the SDK, weaken what is generated,
-or make a later build succeed.
+Importing `mod.ts` does not compile or touch disk. Its bound `buildTheMod()` owns
+the conventional sequence:
 
-## `--local`, and why it exists
+```text
+validate manifest
+  -> create immutable capability
+  -> discover named Feature exports
+  -> capture Assets
+  -> load vanilla view when configured
+  -> Fold once
+```
 
-The default registry ranges resolve from npm. To develop against an unreleased
-checkout of the SDK instead — testing an SDK change against a real scaffold —
-point the CLI at it:
+The build, inspect, and install commands call that same sequence and then add
+their one final operation. A custom project can pass discovery hooks or compose
+the SDK's lower-level interfaces directly.
+
+## Recipe Catalog
+
+Recipes generate short, working TypeScript starters. An Item recipe emits one
+Feature containing one Item. A Feature recipe coordinates several Items when a
+useful example needs event chains, references, or shared script.
+
+Recipe questions cover structural intent: topology, scope contracts, control
+flow, authoring kind, and cross-Item relationships. Values that are easier to
+edit in source are left in source instead of becoming prompts.
+
+Each recipe owns a pure renderer from validated answers to one source file. The
+Catalog does not derive templates by walking SDK field metadata, and it does not
+create a second authoring schema.
+
+With `--yes`, or when stdin is not a terminal, `generate` requires the recipe id
+and name and uses every recipe default. `view <recipe>` lists all available
+question flags.
+
+## Install discovery and version pinning
+
+The CLI uses `--stellaris-path` first, then `STELLARIS_PATH`, then the platform's
+normal Steam locations. A missing automatically detected install is not fatal:
+the project omits `src/vanilla.ts` and pins identifiers to the Stellaris build
+this scaffolder was verified against.
+
+An explicit invalid `--stellaris-path` is fatal. Treating a misspelled path as a
+request to disable install checks would hide user intent.
+
+The generated dependency range has the form:
+
+```json
+"@pdx-ts/stellaris-ids": ">=4.4.6-0 <4.4.6"
+```
+
+It selects the newest package revision for one exact game build. Immediately
+after a Stellaris update, the matching npm release may not exist. The CLI
+reports that case and asks the author to wait for the release or choose a game
+build that has one.
+
+## Safety and automation
+
+Every configurable `init` prompt has a flag. The target directory remains a
+positional argument. For `generate`, recipe questions have flags while the
+recipe id and generated name remain positional. `--yes`, or non-terminal stdin,
+accepts defaults without waiting for input and requires those positionals.
+
+```text
+--name <string>
+--prefix <snake_case>
+--stellaris-path <path>
+--supported-version <v4.4.*>
+--tags <a,b>
+--local <path>
+--pm <command>  # npm, pnpm, yarn, and bun are the detected common cases
+--dry-run
+-y, --yes
+--no-prettier
+--no-eslint
+--no-llm
+--no-git
+--no-install
+```
+
+Generation-specific flags are:
+
+```text
+--cwd <path>
+--yes
+--dry-run
+--allow-unsupported-sdk
+```
+
+`--allow-unsupported-sdk` changes one compatibility refusal into a warning. It
+does not load the SDK, weaken the generated code, or promise that a later build
+will pass.
+
+On platforms where symlink creation returns `EPERM`, publication falls back to
+regular file and directory copies. This keeps the default project usable on
+Windows without symbolic-link privileges.
+
+## Optional agent support
+
+The default project includes shared `AGENTS.md` guidance, project-scoped skills,
+and Codex and Claude definitions for an SDK documentation expert. All files stay
+inside the generated project; initialization does not edit user-level agent
+configuration or download external skills.
+
+The generated agent instructions tell the documentation expert to compare the
+project's SDK dependency with documentation provenance before giving API advice.
+This is an agent workflow instruction, not a separate compatibility checker in
+the CLI.
+
+Use `--no-llm` to omit the complete bundle.
+
+## Local SDK development
+
+Point `--local` at an unreleased repository checkout to scaffold a consumer
+against local packages:
 
 ```bash
+npm run build  # in the pdx-sdk checkout first
 npx create-stellaris-mod my-mod --local ~/code/pdx-sdk
 ```
 
-That writes `file:` dependencies pointing at the checkout. **Build it first** —
-`npm run build` in the pdx-sdk root — because a scaffolded project consumes
-those packages through their published `exports`, which resolve to `dist/`. The
-repo skips that internally with a `pdx-source` export condition it passes to
-tsc, Node and Vite; a scaffolded project is an ordinary consumer and does not.
-The CLI checks, and names the command if the checkout is unbuilt.
+The project receives `file:` dependencies. Build the checkout first because an
+external project resolves published `dist/` exports. The monorepo's internal
+`pdx-source` condition is deliberately not part of the consumer contract.
 
-## Why this package has a build step
+## Implementation
 
-Every publishable package here builds now, for one shared reason: Node refuses
-to strip types from anything under `node_modules`, so a package shipping raw
-`.ts` dies at a consumer's first import. For this package the consequence is
-sharper still — `npx` installs a CLI into exactly that directory, so a `.ts`
-entry point would fail at _load_, before any of its own code could parse, let
-alone print something helpful. Compiling also lets `engines` say `>=20` rather
-than `>=22.18`; only the _generated project_ still needs type stripping, and it
-declares that itself.
+The published CLI is compiled TypeScript and ESM. It uses `@clack/prompts` for
+interactive terminals and `semver` for dependency compatibility. Generated
+projects use strict TypeScript, Vitest, optional ESLint and Prettier, JSON Schema
+validation, and the selected package-manager command.
 
-## Development
+The public module exports `main`, `processIo`, `CliIo`, and
+`detectPackageManager`. `main(argv, io, terminal)` returns an exit code and uses
+injected I/O, which lets tests run the complete command router without calling
+`process.exit`.
 
-```bash
-npm run scaffold -- --help                    # from the repo root
-npm run scaffold -- --dry-run --yes /tmp/demo
-npm test
+Internally, resolution and publication are separate:
+
+```text
+CLI arguments and prompts
+  -> resolved configuration
+  -> pure scaffold or recipe plan
+  -> exclusive filesystem publication
+  -> optional package installation and git initialization
 ```
 
-The `scaffold` script exists because running `src/bin.ts` directly needs
-`node --conditions=pdx-source`, the condition that resolves workspace packages
-to their sources rather than the `dist/` they publish.
+`src/plan.ts` returns a map of regular files and relative symlinks without
+touching disk. Recipe renderers are also pure. The filesystem layer publishes
+only after validation succeeds.
 
-`src/plan.ts` is pure — a resolved config in, a map of regular-file and
-relative-symlink entries out — so most assertions run against a `Map` rather
-than a directory. `tests/scaffold.test.ts` is the gate
-that matters: it scaffolds into a temp directory, symlinks the dependency tree,
-and then typechecks, builds and tests the result with the real toolchain,
-because templates are strings and nothing else checks the code they produce.
+## Development and verification
 
-## Vocabulary
+Run from the repository root:
 
-This package introduces no vocabulary of its own; it borrows the [Authoring](../sdk/CONTEXT.md)
-context's. The [context map](../../CONTEXT-MAP.md) lists every context in the repo.
+```bash
+npm run scaffold -- --help
+npm run scaffold -- --dry-run --yes /tmp/demo
+npm run typecheck
+npm test
+npm run build
+```
+
+The end-to-end scaffold test creates a temporary project and runs its real
+typecheck, build, and tests. This is the main guard against invalid TypeScript
+inside string templates. Unit tests cover pure plans, option parsing, command
+routing, Recipe variants, safety refusals, and cross-platform publication.
+
+See the [Scaffolding glossary](./CONTEXT.md) for Recipe and Project Manifest
+terminology.

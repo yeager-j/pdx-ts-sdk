@@ -1,0 +1,5 @@
+# Never convert line endings. Vendored dumps, fixtures, and goldens are
+# byte-faithful test inputs, and a CRLF checkout (the Windows default) breaks
+# their parsers and snapshot comparisons. Prettier already enforces LF in
+# source, so every checkout must be byte-identical to the repository.
+* -text
