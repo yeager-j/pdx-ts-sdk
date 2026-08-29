@@ -123,10 +123,11 @@ const originalModDir = process.env["STELLARIS_MOD_DIR"];
 /**
  * Physical from the start: `install` resolves the mod directory through every
  * symlink before it reports one, and the system temp directory is a symlink on
- * macOS, so a raw `mkdtemp` path would differ from every reported path.
+ * macOS, so a raw `mkdtemp` path would differ from every reported path. The
+ * native resolver also avoids retaining Windows' 8.3 spelling here.
  */
 function tempDir(): string {
-  const dir = realpathSync(mkdtempSync(join(tmpdir(), "pdx-launcher-")));
+  const dir = realpathSync.native(mkdtempSync(join(tmpdir(), "pdx-launcher-")));
   temps.push(dir);
   return dir;
 }
@@ -144,9 +145,17 @@ afterEach(() => {
 
 describe("modDirFor", () => {
   it.each([
-    ["darwin", "/home/u", "/home/u/Documents/Paradox Interactive/Stellaris/mod"],
-    ["linux", "/home/u", "/home/u/.local/share/Paradox Interactive/Stellaris/mod"],
-    ["freebsd", "/home/u", "/home/u/.local/share/Paradox Interactive/Stellaris/mod"],
+    ["darwin", "/home/u", join("/home/u", "Documents", "Paradox Interactive", "Stellaris", "mod")],
+    [
+      "linux",
+      "/home/u",
+      join("/home/u", ".local", "share", "Paradox Interactive", "Stellaris", "mod"),
+    ],
+    [
+      "freebsd",
+      "/home/u",
+      join("/home/u", ".local", "share", "Paradox Interactive", "Stellaris", "mod"),
+    ],
   ])("puts %s's mod directory under %s", (platform, home, expected) => {
     expect(stellaris.modDirFor(platform as NodeJS.Platform, home)).toBe(expected);
   });

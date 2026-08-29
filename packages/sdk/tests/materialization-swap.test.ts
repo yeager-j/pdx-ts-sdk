@@ -52,8 +52,9 @@ const SECRET = "the file that must never be linked\n";
 
 const temps: string[] = [];
 
+/** Physical from the start, with Windows' 8.3 spelling removed as well. */
 function tempDir(): string {
-  const dir = realpathSync(mkdtempSync(join(tmpdir(), "pdx-swap-")));
+  const dir = realpathSync.native(mkdtempSync(join(tmpdir(), "pdx-swap-")));
   temps.push(dir);
   return dir;
 }

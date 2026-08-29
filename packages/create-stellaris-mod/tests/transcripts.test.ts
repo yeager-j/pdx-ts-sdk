@@ -64,11 +64,13 @@ async function run(argv: readonly string[], options: RunOptions = {}): Promise<R
 /** The temporary project's two spellings, and nothing else. */
 function normalize(transcript: string, project: TempProject | undefined): string {
   if (project === undefined) {
-    return transcript;
+    return transcript.split(path.sep).join("/");
   }
+  const stable = transcript.split(path.sep).join("/");
   return [project.realDir, project.dir]
+    .map((dir) => dir.split(path.sep).join("/"))
     .sort((a, b) => b.length - a.length)
-    .reduce((text, dir) => text.split(dir).join("<project>"), transcript);
+    .reduce((text, dir) => text.split(dir).join("<project>"), stable);
 }
 
 /**
@@ -255,7 +257,7 @@ describe("generate", () => {
   });
 
   it("says what it searched for when there is no project", async () => {
-    elsewhere = mkdtempSync(path.join(tmpdir(), "pdx-no-project-"));
+    elsewhere = realpathSync.native(mkdtempSync(path.join(tmpdir(), "pdx-no-project-")));
     const { transcript, code } = await run(
       ["generate", "technology", "Resonance Theory", "--yes"],
       {
@@ -263,13 +265,10 @@ describe("generate", () => {
       }
     );
     expect(code).toBe(1);
+    const elsewhereMask = elsewhere.split(path.sep).join("/");
     expectGolden(
       "transcripts/generate-missing-manifest.txt",
-      // Both spellings: the command reports the directory it really searched,
-      // and on macOS a temporary directory is reached through a symlinked /var.
-      [realpathSync(elsewhere), elsewhere]
-        .sort((a, b) => b.length - a.length)
-        .reduce((text, dir) => text.split(dir).join("<elsewhere>"), transcript)
+      transcript.split(elsewhereMask).join("<elsewhere>")
     );
   });
 
