@@ -15,7 +15,7 @@
  */
 
 import { execFileSync, spawnSync } from "node:child_process";
-import { chmodSync, readFileSync } from "node:fs";
+import { chmodSync, existsSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
@@ -28,10 +28,16 @@ const GOLDEN = path.join(PACKAGE, "tests/goldens/recipes/technology/default.ts")
 let project: TempProject;
 
 beforeAll(() => {
-  execFileSync("npm", ["run", "build"], { cwd: PACKAGE, stdio: "pipe" });
-  // npm restores the executable bit on install; a freshly compiled file in a
-  // checkout has whatever tsc gave it.
-  chmodSync(BIN, 0o755);
+  execFileSync("npm", ["run", "build"], {
+    cwd: PACKAGE,
+    stdio: "pipe",
+    shell: process.platform === "win32",
+  });
+  if (process.platform !== "win32") {
+    // npm restores the executable bit on install; a freshly compiled file in a
+    // checkout has whatever tsc gave it.
+    chmodSync(BIN, 0o755);
+  }
   project = createTempProject();
 }, 120_000);
 
@@ -40,8 +46,31 @@ afterAll(() => {
 });
 
 describe("the compiled binary", () => {
+  it("has the expected entrypoint", () => {
+    expect(existsSync(BIN)).toBe(true);
+    expect(readFileSync(BIN, "utf8").startsWith("#!/usr/bin/env node\n")).toBe(true);
+
+    if (process.platform === "win32") {
+      const result = spawnSync(process.execPath, [BIN, "--version"], {
+        encoding: "utf8",
+      });
+      expect(result.error).toBeUndefined();
+      expect(result.stderr).toBe("");
+      expect(result.status).toBe(0);
+      expect(result.stdout).toMatch(/^\d+\.\d+\.\d+\n$/);
+      return;
+    }
+
+    expect(statSync(BIN).mode & 0o111).not.toBe(0);
+  });
+
   it("generates a feature file and exits zero", () => {
-    const result = spawnSync(BIN, ["generate", "technology", "Resonance Theory", "--yes"], {
+    const command = process.platform === "win32" ? process.execPath : BIN;
+    const args =
+      process.platform === "win32"
+        ? [BIN, "generate", "technology", "Resonance Theory", "--yes"]
+        : ["generate", "technology", "Resonance Theory", "--yes"];
+    const result = spawnSync(command, args, {
       cwd: project.dir,
       encoding: "utf8",
     });

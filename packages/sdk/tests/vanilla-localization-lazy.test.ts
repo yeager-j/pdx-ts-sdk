@@ -17,10 +17,9 @@
  */
 
 import { execFileSync } from "node:child_process";
-import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
-const STELLARIS = fileURLToPath(new URL("../src/stellaris.ts", import.meta.url));
+const STELLARIS = new URL("../src/stellaris.ts", import.meta.url).href;
 
 /**
  * A `module.registerHooks` load hook is the observable, rather than

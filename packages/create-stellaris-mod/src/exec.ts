@@ -12,6 +12,8 @@ import type { Readable, Writable } from "node:stream";
 export interface Command {
   readonly command: string;
   readonly args: readonly string[];
+  /** Whether this command requires a shell to resolve a platform shim. */
+  readonly shell?: boolean;
 }
 
 export interface CommandResult {
@@ -21,6 +23,7 @@ export interface CommandResult {
 
 /** Keep the failure tail useful without retaining an unbounded dependency-install transcript. */
 const DIAGNOSTIC_LIMIT = 64 * 1024;
+const WINDOWS_PACKAGE_MANAGERS = ["npm", "pnpm", "yarn", "bun"] as const;
 
 export function teeCommandOutput(
   source: Readable,
@@ -36,6 +39,7 @@ export function run(command: Command, cwd: string): Promise<CommandResult> {
     const child = spawn(command.command, [...command.args], {
       cwd,
       stdio: ["inherit", "pipe", "pipe"],
+      shell: command.shell ?? false,
     });
     let output = "";
     const observe = (chunk: Buffer): void => {
@@ -62,7 +66,14 @@ export function detectPackageManager(userAgent = process.env["npm_config_user_ag
 }
 
 export function installCommand(packageManager: string): Command {
-  return { command: packageManager, args: ["install"] };
+  return {
+    command: packageManager,
+    args: ["install"],
+    // npm and the other supported package managers are .cmd shims on Windows.
+    shell:
+      process.platform === "win32" &&
+      WINDOWS_PACKAGE_MANAGERS.some((manager) => manager === packageManager),
+  };
 }
 
 export function gitInitCommands(): Command[] {

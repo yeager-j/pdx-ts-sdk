@@ -100,10 +100,11 @@ const temps: string[] = [];
  * through every symlink, and the system temp directory is one on macOS, so a
  * raw `mkdtemp` path would make every reported path differ from the one a
  * test built its expectation from — a difference about `/var` rather than
- * about the SDK.
+ * about the SDK. Native resolution also removes Windows' 8.3 spelling so the
+ * test and the async resolver use the same physical form.
  */
 function tempDir(): string {
-  const dir = realpathSync(mkdtempSync(join(tmpdir(), "pdx-materialize-")));
+  const dir = realpathSync.native(mkdtempSync(join(tmpdir(), "pdx-materialize-")));
   temps.push(dir);
   return dir;
 }
