@@ -10,12 +10,12 @@
 export const SCAFFOLDER_RELEASE_MANIFEST = {
   sdk: {
     packageName: "@pdx-ts/sdk",
-    range: "0.5.0",
+    range: "0.6.0",
     rationale: "Runtime authoring dependency selected for every new project.",
   },
   sdkTesting: {
     packageName: "@pdx-ts/sdk-testing",
-    range: "0.5.0",
+    range: "0.6.0",
     rationale: "Test-only interpreter dependency; it never ships with the mod.",
   },
 } as const;

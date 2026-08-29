@@ -5,8 +5,8 @@ Stellaris build. Generated TypeScript covers content ids, event ids and scopes,
 scripted trigger and effect signatures, sprites, sounds, resources, enum
 members, paths, and localization keys.
 
-The package version carries the game version. `4.4.6-r.3` describes Stellaris
-4.4.6; `r.3` is the third package revision generated for that game build.
+The package version carries the game version. `4.4.6-r.4` describes Stellaris
+4.4.6; `r.4` is the fourth package revision generated for that game build.
 
 ## Installation and compatibility
 
@@ -21,7 +21,7 @@ Install it beside `@pdx-ts/sdk`, which consumes it as a peer dependency.
 `create-stellaris-mod` detects the local game build and writes the range
 automatically.
 
-Do not use `^4.4.6-r.3`: the leading numbers are the game coordinate, not the
+Do not use `^4.4.6-r.4`: the leading numbers are the game coordinate, not the
 SDK's compatibility version. A bounded range prevents a project from silently
 moving to identifiers generated from another game patch.
 
@@ -160,7 +160,7 @@ When a build supplies a parsed vanilla installation, `mod.compile(features,
 installed version.
 
 Package revisions do not affect the game comparison. Both `4.4.6-r.1` and
-`4.4.6-r.3` pin Stellaris 4.4.6.
+`4.4.6-r.4` pin Stellaris 4.4.6.
 
 TypeScript also resolves one table set per program. Two projects can use
 different game pins, but one compilation does not combine identifier tables

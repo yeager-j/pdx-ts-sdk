@@ -188,14 +188,14 @@ describe("release readiness", () => {
 
 describe("Stellaris IDs revision decision", () => {
   it("requires the next revision only when generated identifiers changed", () => {
-    expect(stellarisIdsRevisionDecision("4.4.6-r.3", "4.4.6-r.3", false)).toMatchObject({
+    expect(stellarisIdsRevisionDecision("4.4.6-r.4", "4.4.6-r.4", false)).toMatchObject({
       changed: false,
     });
-    expect(stellarisIdsRevisionDecision("4.4.6-r.3", "4.4.6-r.3", true)).toMatchObject({
+    expect(stellarisIdsRevisionDecision("4.4.6-r.4", "4.4.6-r.4", true)).toMatchObject({
       changed: true,
-      message: expect.stringContaining("4.4.6-r.4"),
+      message: expect.stringContaining("4.4.6-r.5"),
     });
-    expect(stellarisIdsRevisionDecision("4.4.6-r.3", "4.4.7-r.1", true)).toMatchObject({
+    expect(stellarisIdsRevisionDecision("4.4.6-r.4", "4.4.7-r.1", true)).toMatchObject({
       changed: true,
       message: expect.stringContaining("4.4.7-r.1"),
     });

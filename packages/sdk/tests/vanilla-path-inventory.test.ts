@@ -99,7 +99,7 @@ describe("checkVanillaPathInventoryConsistency", () => {
   });
 
   it("passes when the package version matches the shipped inventory", () => {
-    expect(() => checkVanillaPathInventoryConsistency("4.4.6-r.3")).not.toThrow();
+    expect(() => checkVanillaPathInventoryConsistency("4.4.6-r.4")).not.toThrow();
   });
 
   it("throws when the package pins a different build than its own path inventory", () => {

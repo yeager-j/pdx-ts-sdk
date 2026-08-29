@@ -155,7 +155,7 @@ redistributing game implementation or presentation content.
 ## Versioning and release cadence
 
 The generated package version uses `<game-version>-r.<revision>`, for example
-`4.4.6-r.3`. The generator writes the game coordinate. Maintainers increment the
+`4.4.6-r.4`. The generator writes the game coordinate. Maintainers increment the
 revision when publishing another generator result for the same game build,
 because npm versions cannot be reused.
 

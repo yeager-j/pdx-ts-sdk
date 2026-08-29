@@ -25,7 +25,7 @@ import {
 
 describe("stampedVanillaPackageVersion", () => {
   it("starts a new game build at revision 1", () => {
-    expect(stampedVanillaPackageVersion("4.5.0", "4.4.6-r.3")).toBe("4.5.0-r.1");
+    expect(stampedVanillaPackageVersion("4.5.0", "4.4.6-r.4")).toBe("4.5.0-r.1");
   });
 
   it("leaves the revision alone when regenerating the build already stamped", () => {
@@ -59,9 +59,9 @@ describe("vanillaPackageInstallRange", () => {
     // is the one version that must not win, and highest-wins would otherwise
     // hand it every install.
     const range = vanillaPackageInstallRange("4.4.6");
-    expect(semver.maxSatisfying(["4.4.6", "4.4.6-r.1", "4.4.6-r.2", "4.4.6-r.3"], range)).toBe(
-      "4.4.6-r.3"
-    );
+    expect(
+      semver.maxSatisfying(["4.4.6", "4.4.6-r.1", "4.4.6-r.2", "4.4.6-r.3", "4.4.6-r.4"], range)
+    ).toBe("4.4.6-r.4");
     expect(semver.maxSatisfying(["4.4.6-r.9", "4.4.6-r.10"], range)).toBe("4.4.6-r.10");
     expect(semver.satisfies("4.4.6", range)).toBe(false);
     expect(semver.satisfies("4.4.7-r.1", range)).toBe(false);
