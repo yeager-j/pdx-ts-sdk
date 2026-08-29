@@ -15,7 +15,15 @@
  * inside a workspace, reached through a symlink, or malformed.
  */
 
-import { chmodSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  mkdirSync,
+  mkdtempSync,
+  realpathSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -45,7 +53,7 @@ afterEach(() => {
 });
 
 function makeRoot(): string {
-  const root = mkdtempSync(path.join(tmpdir(), "pdx-generate-project-"));
+  const root = realpathSync.native(mkdtempSync(path.join(tmpdir(), "pdx-generate-project-")));
   roots.push(root);
   return root;
 }
@@ -199,7 +207,9 @@ describe("--cwd", () => {
     const { code, out, err } = await generate(root, ["--cwd", alias]);
     expect(err).toBe("");
     expect(code).toBe(0);
-    expect(out.trim().endsWith("src/content/resonance_theory.ts")).toBe(true);
+    expect(out.trim().split(path.sep).join("/").endsWith("src/content/resonance_theory.ts")).toBe(
+      true
+    );
   });
 
   it("says the directory does not exist, rather than that the project does not", async () => {
@@ -215,8 +225,9 @@ describe("--cwd", () => {
 
 describe("when the filesystem says no", () => {
   it("reports a refused write as a message rather than a stack trace", async () => {
-    if (process.getuid?.() === 0) {
-      return; // root ignores the permission bits this test relies on.
+    if (process.platform === "win32" || process.getuid?.() === 0) {
+      // Windows and root ignore the permission bits this test relies on.
+      return;
     }
     const project = writeProject(path.join(makeRoot(), "project"));
     rmSync(path.join(project, "src/content"), { recursive: true });

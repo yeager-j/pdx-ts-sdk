@@ -35,6 +35,7 @@ import {
   readdirSync,
   readFileSync,
   readlinkSync,
+  realpathSync,
   rmSync,
   symlinkSync,
   writeFileSync,
@@ -105,6 +106,7 @@ function packWorkspacePackages(destination: string): void {
     execFileSync("npm", ["pack", "--pack-destination", destination], {
       cwd: path.join(REPO, "packages", pkg),
       stdio: ["ignore", "pipe", "pipe"],
+      shell: process.platform === "win32",
     });
   }
 }
@@ -167,7 +169,11 @@ function runInWithEnv(
   args: readonly string[],
   env: NodeJS.ProcessEnv
 ): string {
-  const result = spawnSync(command, [...args], { cwd: dir, encoding: "utf8", env });
+  const result = spawnSync(command, [...args], {
+    cwd: dir,
+    encoding: "utf8",
+    env,
+  });
   if (result.error !== undefined) {
     throw result.error;
   }
@@ -179,7 +185,7 @@ function runInWithEnv(
 }
 
 beforeAll(async () => {
-  const root = mkdtempSync(path.join(tmpdir(), "create-stellaris-mod-"));
+  const root = realpathSync.native(mkdtempSync(path.join(tmpdir(), "create-stellaris-mod-")));
   projectDir = path.join(root, "smoke-mod");
   tarballDir = path.join(root, "tarballs");
   mkdirSync(tarballDir, { recursive: true });
@@ -212,7 +218,7 @@ describe("a scaffolded project", () => {
     );
     const claudeSkillsStat = lstatSync(claudeSkills);
     if (claudeSkillsStat.isSymbolicLink()) {
-      expect(readlinkSync(claudeSkills)).toBe("../.agents/skills");
+      expect(readlinkSync(claudeSkills).split(path.sep).join("/")).toBe("../.agents/skills");
     } else {
       expect(claudeSkillsStat.isDirectory()).toBe(true);
     }
@@ -299,7 +305,10 @@ describe("a scaffolded project", () => {
 
   it("typechecks with the toolchain it asked for", () => {
     expect(() =>
-      runIn(projectDir, path.join(projectDir, "node_modules/.bin/tsc"), ["--noEmit"])
+      runIn(projectDir, process.execPath, [
+        path.join(projectDir, "node_modules/typescript/lib/tsc.js"),
+        "--noEmit",
+      ])
     ).not.toThrow();
   });
 
@@ -308,6 +317,7 @@ describe("a scaffolded project", () => {
       cwd: projectDir,
       encoding: "utf8",
       env: { ...process.env, PDX_NO_VANILLA: "1" },
+      shell: process.platform === "win32",
     });
     expect(result.status, result.stdout + result.stderr).toBe(0);
   });
@@ -328,23 +338,31 @@ describe("a scaffolded project", () => {
     ];
     const firstLine = source.findIndex((line) => line.startsWith("handle.define")) + 1;
     const secondLine = source.length + 1;
-    const eslint = path.join(projectDir, "node_modules/.bin/eslint");
+    const eslint = path.join(projectDir, "node_modules/eslint/bin/eslint.js");
 
     try {
       writeFileSync(probe, `${source.join("\n")}\n`);
-      const accepted = spawnSync(eslint, ["src/lint-probe.ts", "--format", "json"], {
-        cwd: projectDir,
-        encoding: "utf8",
-        env: { ...process.env, PDX_NO_VANILLA: "1" },
-      });
+      const accepted = spawnSync(
+        process.execPath,
+        [eslint, "src/lint-probe.ts", "--format", "json"],
+        {
+          cwd: projectDir,
+          encoding: "utf8",
+          env: { ...process.env, PDX_NO_VANILLA: "1" },
+        }
+      );
       expect(accepted.status, accepted.stderr).toBe(0);
 
       writeFileSync(probe, `${source.join("\n")}\nhandle.define({ isTriggeredOnly: true });\n`);
-      const rejected = spawnSync(eslint, ["src/lint-probe.ts", "--format", "json"], {
-        cwd: projectDir,
-        encoding: "utf8",
-        env: { ...process.env, PDX_NO_VANILLA: "1" },
-      });
+      const rejected = spawnSync(
+        process.execPath,
+        [eslint, "src/lint-probe.ts", "--format", "json"],
+        {
+          cwd: projectDir,
+          encoding: "utf8",
+          env: { ...process.env, PDX_NO_VANILLA: "1" },
+        }
+      );
       expect(rejected.status, rejected.stderr).toBe(1);
       const messages = (
         JSON.parse(rejected.stdout) as Array<{
@@ -376,7 +394,7 @@ describe("a scaffolded project", () => {
     expect(output).toContain("descriptor.mod");
     expect(output).toContain("localisation/english/smoke_mod_example_l_english.yml");
 
-    const events = runIn(projectDir, "cat", ["out/events/smoke_mod_example.txt"]);
+    const events = readFileSync(path.join(projectDir, "out/events/smoke_mod_example.txt"), "utf8");
     expect(events).toContain("namespace = smoke_mod");
     expect(events).toContain("id = smoke_mod.1");
     expect(events).toContain("picture = GFX_evt_mysterious_signal");
@@ -423,7 +441,10 @@ describe("a scaffolded project", () => {
 
     try {
       expect(() =>
-        runIn(projectDir, path.join(projectDir, "node_modules/.bin/tsc"), ["--noEmit"])
+        runIn(projectDir, process.execPath, [
+          path.join(projectDir, "node_modules/typescript/lib/tsc.js"),
+          "--noEmit",
+        ])
       ).not.toThrow();
       const output = runIn(projectDir, process.execPath, ["src/index.ts"]);
       expect(output).toContain("0 assets · 0 bytes");
@@ -479,8 +500,10 @@ describe("a scaffolded project", () => {
       const buildOutput = runIn(projectDir, process.execPath, ["src/index.ts"]);
       expect(buildOutput).toContain("2 assets · 11 bytes");
       expect(buildOutput).toContain("gfx/interface/icon.bin");
-      expect(runIn(projectDir, "cat", ["out/gfx/interface/icon.bin"])).toBe("after");
-      expect(runIn(projectDir, "cat", ["out/.hidden/secret.bin"])).toBe("hidden");
+      expect(readFileSync(path.join(projectDir, "out/gfx/interface/icon.bin"), "utf8")).toBe(
+        "after"
+      );
+      expect(readFileSync(path.join(projectDir, "out/.hidden/secret.bin"), "utf8")).toBe("hidden");
 
       rmSync(path.dirname(hidden), { recursive: true });
       writeFileSync(visible, "x");
@@ -490,7 +513,9 @@ describe("a scaffolded project", () => {
       writeFileSync(hidden, "hidden");
       writeFileSync(visible, "after");
 
-      const modDir = mkdtempSync(path.join(tmpdir(), "create-stellaris-mod-assets-"));
+      const modDir = realpathSync.native(
+        mkdtempSync(path.join(tmpdir(), "create-stellaris-mod-assets-"))
+      );
       try {
         const installOutput = runInWithEnv(projectDir, process.execPath, ["src/install.ts"], {
           ...process.env,
@@ -511,7 +536,7 @@ describe("a scaffolded project", () => {
 
   it("emits a descriptor the launcher can read", () => {
     runIn(projectDir, process.execPath, ["src/index.ts"]);
-    const descriptor = runIn(projectDir, "cat", ["out/descriptor.mod"]);
+    const descriptor = readFileSync(path.join(projectDir, "out/descriptor.mod"), "utf8");
     expect(descriptor).toContain('name="Smoke Mod"');
     expect(descriptor).toContain('supported_version="v');
   });
@@ -519,7 +544,10 @@ describe("a scaffolded project", () => {
   it("passes the tests it was scaffolded with", () => {
     // The generated test asserts the generated event chain, so this catches a
     // template whose example compiles but does not do what its prose claims.
-    const output = runIn(projectDir, path.join(projectDir, "node_modules/.bin/vitest"), ["run"]);
+    const output = runIn(projectDir, process.execPath, [
+      path.join(projectDir, "node_modules/vitest/vitest.mjs"),
+      "run",
+    ]);
     expect(output).toMatch(/2 passed/);
   });
 
@@ -537,7 +565,9 @@ describe("a scaffolded project", () => {
     // install.ts imports the same buildTheMod() as src/index.ts, so there is
     // exactly one capability compile and this proves the ordinary path still
     // works end to end.
-    const modDir = mkdtempSync(path.join(tmpdir(), "create-stellaris-mod-launcher-"));
+    const modDir = realpathSync.native(
+      mkdtempSync(path.join(tmpdir(), "create-stellaris-mod-launcher-"))
+    );
     try {
       const output = runInWithEnv(projectDir, process.execPath, ["src/install.ts"], {
         ...process.env,
@@ -570,7 +600,9 @@ describe("a scaffolded project", () => {
     expect(withQuotedDesc).not.toBe(original);
     writeFileSync(examplePath, withQuotedDesc);
 
-    const modDir = mkdtempSync(path.join(tmpdir(), "create-stellaris-mod-warn-"));
+    const modDir = realpathSync.native(
+      mkdtempSync(path.join(tmpdir(), "create-stellaris-mod-warn-"))
+    );
     try {
       // The terminal runner writes its presentation to stderr, so inspect both
       // captured streams while still proving that warnings leave exit code 0.
@@ -601,7 +633,9 @@ describe.skipIf(!realVanillaSuiteRunnable)(
     let launcherModDir: string;
 
     beforeAll(async () => {
-      const root = mkdtempSync(path.join(tmpdir(), "create-stellaris-mod-collision-"));
+      const root = realpathSync.native(
+        mkdtempSync(path.join(tmpdir(), "create-stellaris-mod-collision-"))
+      );
       checkedProjectDir = path.join(root, "checked-mod");
       launcherModDir = path.join(root, "launcher-mod-dir");
 
