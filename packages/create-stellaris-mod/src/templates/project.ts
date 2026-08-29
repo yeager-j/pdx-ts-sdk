@@ -28,9 +28,10 @@ export const VERSIONS = {
   typescript: "^6.0.3",
   vitest: "^4.0.5",
   prettier: "^3.9.6",
-  eslint: "^9.0.0",
-  eslint_js: "^9.0.0",
-  typescript_eslint: "^8.0.0",
+  eslint: "^10.0.0",
+  eslint_js: "^10.0.0",
+  // Floor at the range the repo verifies; earlier 8.x lacks the eslint 10 peer.
+  typescript_eslint: "^8.66.0",
 } as const;
 
 function json(value: unknown): string {

@@ -51,6 +51,10 @@ import { parseManifest } from "../src/manifest.ts";
 
 const REPO = path.resolve(import.meta.dirname, "../../..");
 const ROOT_MODULES = path.join(REPO, "node_modules");
+// npm may nest a workspace dependency under the package instead of hoisting
+// it (it keeps a lockfile's historical placement), so links resolve
+// package-local first, the way Node resolution from this package does.
+const MODULE_ROOTS = [path.resolve(import.meta.dirname, "../node_modules"), ROOT_MODULES] as const;
 const WORKSPACE_PACKAGES = ["sdk", "sdk-testing", "pdxscript", "stellaris-ids"] as const;
 
 /** Absent when no real Stellaris install is on this machine. */
@@ -151,11 +155,46 @@ function installTarballs(dir: string, tarballs: string): void {
     "sisteransi",
     "yaml",
   ]) {
-    symlinkSync(path.join(ROOT_MODULES, dep), path.join(modules, dep), "dir");
+    linkDependency(modules, dep);
   }
   mkdirSync(path.join(modules, ".bin"), { recursive: true });
   for (const bin of ["tsc", "vitest", "eslint"]) {
     symlinkSync(path.join(ROOT_MODULES, ".bin", bin), path.join(modules, ".bin", bin));
+  }
+}
+
+/**
+ * Symlinks one dependency into the project the way Node would resolve it. A
+ * scope links member by member because its members can live under different
+ * roots (npm nests a package while the rest of its scope stays hoisted).
+ */
+function linkDependency(modules: string, dep: string): void {
+  if (!dep.startsWith("@")) {
+    const source = MODULE_ROOTS.map((root) => path.join(root, dep)).find(existsSync);
+    if (source === undefined) {
+      throw new Error(`${dep} is not installed under any module root`);
+    }
+    symlinkSync(source, path.join(modules, dep), "dir");
+    return;
+  }
+  const scopeDir = path.join(modules, dep);
+  mkdirSync(scopeDir, { recursive: true });
+  const linked = new Set<string>();
+  for (const root of MODULE_ROOTS) {
+    const scope = path.join(root, dep);
+    if (!existsSync(scope)) {
+      continue;
+    }
+    for (const member of readdirSync(scope)) {
+      if (linked.has(member) || member.startsWith(".")) {
+        continue;
+      }
+      linked.add(member);
+      symlinkSync(path.join(scope, member), path.join(scopeDir, member), "dir");
+    }
+  }
+  if (linked.size === 0) {
+    throw new Error(`${dep} is not installed under any module root`);
   }
 }
 
