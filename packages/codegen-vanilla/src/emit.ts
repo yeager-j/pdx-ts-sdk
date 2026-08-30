@@ -508,6 +508,17 @@ export function emitVanillaPaths(
   return (
     header(gameVersion) +
     `export const VANILLA_PATH_GAME_VERSION = ${gate.literal(gameVersion, "game version")};\n\n` +
+    "/**\n" +
+    " * SHA-256 fingerprint of the install data projected into this package.\n" +
+    " *\n" +
+    " * Covers relative paths and bytes of parsed event, registry, complex-enum, and\n" +
+    " * scripted-definition files, all emitted install path names (including DLC\n" +
+    " * archive entries), and all emitted English localization keys. It excludes CWT\n" +
+    " * rules, script documentation, game version, and generator code, so it is not\n" +
+    " * a hash of generated package bytes.\n" +
+    " *\n" +
+    " * Compare values only when those excluded inputs are unchanged.\n" +
+    " */\n" +
     `export const VANILLA_INSTALL_EVIDENCE_SHA256 = ${gate.literal(installEvidenceSha256, "install evidence hash")};\n\n` +
     "export const VANILLA_PATHS: readonly string[] = /*#__PURE__*/ Object.freeze([\n" +
     `${lines}]);\n`

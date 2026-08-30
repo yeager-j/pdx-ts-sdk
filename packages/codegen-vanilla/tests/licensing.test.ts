@@ -304,12 +304,25 @@ describe("generated output", () => {
     const body = text!.split("\n").filter((line) => line !== "" && !line.startsWith("//"));
     expect(body.length).toBeGreaterThan(3);
     expect(body[0]).toMatch(/^export const VANILLA_PATH_GAME_VERSION = "4\.4\.6";$/);
-    expect(body[1]).toMatch(/^export const VANILLA_INSTALL_EVIDENCE_SHA256 = "[0-9a-f]{64}";$/);
-    expect(body[2]).toBe(
+    expect(body.slice(1, 12)).toEqual([
+      "/**",
+      " * SHA-256 fingerprint of the install data projected into this package.",
+      " *",
+      " * Covers relative paths and bytes of parsed event, registry, complex-enum, and",
+      " * scripted-definition files, all emitted install path names (including DLC",
+      " * archive entries), and all emitted English localization keys. It excludes CWT",
+      " * rules, script documentation, game version, and generator code, so it is not",
+      " * a hash of generated package bytes.",
+      " *",
+      " * Compare values only when those excluded inputs are unchanged.",
+      " */",
+    ]);
+    expect(body[12]).toMatch(/^export const VANILLA_INSTALL_EVIDENCE_SHA256 = "[0-9a-f]{64}";$/);
+    expect(body[13]).toBe(
       "export const VANILLA_PATHS: readonly string[] = /*#__PURE__*/ Object.freeze(["
     );
     expect(body[body.length - 1]).toBe("]);");
-    for (const line of body.slice(3, -1)) {
+    for (const line of body.slice(14, -1)) {
       expect(line).toMatch(/^ {2}"[^"\\]+",$/);
     }
   });
