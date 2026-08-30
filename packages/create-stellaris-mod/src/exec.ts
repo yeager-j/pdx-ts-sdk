@@ -84,6 +84,23 @@ export function gitInitCommands(): Command[] {
   ];
 }
 
+/**
+ * One command as a line somebody could paste.
+ *
+ * For the dry run, so that what a preview promises and what a run performs are
+ * the same value read two ways rather than two lists maintained in parallel.
+ * The quoting is display quoting: an argument with whitespace or a shell
+ * metacharacter is quoted so the printed line means what the spawned command
+ * means. Nothing here is fed back to a shell, and `run` passes argv directly.
+ */
+export function describeCommand({ command, args }: Command): string {
+  return [command, ...args].map(quoteArgument).join(" ");
+}
+
+function quoteArgument(value: string): string {
+  return /^[A-Za-z0-9_@%+=:,./-]+$/.test(value) ? value : `'${value.replace(/'/g, `'\\''`)}'`;
+}
+
 /** True when `cwd` is already inside a git work tree, so `git init` would nest. */
 export function insideGitWorkTree(cwd: string): Promise<boolean> {
   return new Promise((resolve) => {

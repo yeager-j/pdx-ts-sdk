@@ -64,6 +64,52 @@ describe("the source matrix", () => {
     ]);
     expect(counts.reduce((total, recipe) => total + recipe.variants, 0)).toBe(12);
   });
+
+  /**
+   * SDK-393. Every item a variant declares is in its Feature.
+   *
+   * This is the failure a topology decision spread across separate branches
+   * invites: change the shape, update the declarations, and forget the roster.
+   * The result compiles, typechecks, and builds — and ships a definition the
+   * Fold never sees, because placement in a Feature is what selects an Item.
+   * Nothing else in the suite would notice, so the property is stated over
+   * every variant of every recipe rather than only where it has bitten.
+   */
+  it.each(
+    CATALOG.list().flatMap((summary) =>
+      variants(CATALOG.view(summary.id).questions).map(
+        (answers) => [summary.id, JSON.stringify(answers), answers] as const
+      )
+    )
+  )("%s %s places every item it declares", (recipeId, _label, answers) => {
+    const { contents } = CATALOG.generate({ recipeId, names: NAMES, answers });
+
+    const declared = [...contents.matchAll(/^export const (\w+) =/gm)]
+      .map(([, binding]) => binding!)
+      .filter((binding) => binding !== "feature");
+    // Anchored to the statement: every recipe's header comment also mentions
+    // `mod.feature(...)`, and that mention is prose rather than a roster.
+    const roster = /^export const feature = mod\.feature\(.*?, \[([\s\S]*?)\]\);/m.exec(
+      contents
+    )?.[1];
+    expect(roster, `${recipeId} renders no mod.feature(...) roster`).toBeDefined();
+    const placed = new Set(
+      roster!
+        .split(",")
+        .map((item) => item.trim())
+        .filter((item) => item !== "")
+    );
+
+    expect(declared.length).toBeGreaterThan(0);
+    for (const binding of declared) {
+      expect(placed.has(binding), `${recipeId} declares ${binding} but never places it`).toBe(true);
+    }
+    // And the other direction: a roster naming something the file does not
+    // declare is a dangling reference the Fold refuses.
+    for (const binding of placed) {
+      expect(declared, `${recipeId} places ${binding} but never declares it`).toContain(binding);
+    }
+  });
 });
 
 /**

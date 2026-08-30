@@ -171,6 +171,48 @@ describe("init", () => {
     }
   });
 
+  /**
+   * SDK-388. The dry run used to rebuild the optional commands separately from
+   * the code that ran them, and the two had already drifted: the preview
+   * reported `git init` before the install, while the real path installs first
+   * so the lockfile it produces is part of the initial commit. It also covered
+   * the files but not the rest of the operation being previewed.
+   */
+  it("previews the commands it would run, in the order it would run them", async () => {
+    const { io, out } = capture("/tmp/elsewhere");
+    expect(await main(["--dry-run", "--yes", "my-mod"], io)).toBe(0);
+
+    const commands = out()
+      .split("\n")
+      .filter((line) => line.startsWith("  $ "))
+      .map((line) => line.slice(4));
+    expect(commands).toEqual([
+      "npm install",
+      "git init",
+      "git add -A",
+      "git commit -m 'Scaffold with create-stellaris-mod'",
+    ]);
+  });
+
+  it("says which of the previewed steps a real run may skip", async () => {
+    // The preview cannot answer it: the target does not exist yet, so whether
+    // it lands inside an existing repository is not a question a dry run has.
+    const { io, out } = capture("/tmp/elsewhere");
+    expect(await main(["--dry-run", "--yes", "my-mod"], io)).toBe(0);
+    const lines = out().split("\n");
+    const note = lines.findIndex((line) => line.includes("already inside a git repository"));
+    expect(note).toBeGreaterThan(-1);
+    expect(lines[note + 1]).toBe("  $ git init");
+    // And it applies to the git group only.
+    expect(lines.indexOf("  $ npm install")).toBeLessThan(note);
+  });
+
+  it("previews only the steps the answers actually ask for", async () => {
+    const { io, out } = capture("/tmp/elsewhere");
+    expect(await main(["--dry-run", "--yes", "--no-git", "--no-install", "my-mod"], io)).toBe(0);
+    expect(out()).not.toContain("  $ ");
+  });
+
   it("resolves the target directory against the injected cwd", async () => {
     const { io, out } = capture("/tmp/elsewhere");
     expect(await main(["--dry-run", "--yes", "my-mod"], io)).toBe(0);
