@@ -34,7 +34,6 @@ import {
   MINT_SHAPE_OVERLAYS,
   PATCH_WIDENINGS,
   REPEATED_STRUCT_DEFINITIONS,
-  REPEATED_STRUCT_FIELD_OVERRIDES,
   REQUIRED_LOCALISATION,
   SCRIPTED_MODIFIER_CATEGORY_MAP,
   SYNTHETIC_LOCALISATION,
@@ -545,10 +544,7 @@ describe("the real pipeline's overlay tables", () => {
         emitCategory(nested, "splice");
       }
     };
-    for (const override of [
-      ...CONTENT_FIELD_OVERRIDES.values(),
-      ...REPEATED_STRUCT_FIELD_OVERRIDES.values(),
-    ]) {
+    for (const override of CONTENT_FIELD_OVERRIDES.values()) {
       if (override.shape === "aliasStruct") {
         emitCategory(override.category!, "struct");
       }
@@ -612,12 +608,6 @@ describe("the real pipeline's overlay tables", () => {
       emitter.overlayAudit.assertAllApplied(
         "CONTENT_FIELD_OVERRIDES",
         CONTENT_FIELD_OVERRIDES.keys()
-      )
-    ).not.toThrow();
-    expect(() =>
-      emitter.overlayAudit.assertAllApplied(
-        "REPEATED_STRUCT_FIELD_OVERRIDES",
-        REPEATED_STRUCT_FIELD_OVERRIDES.keys()
       )
     ).not.toThrow();
     expect(() =>

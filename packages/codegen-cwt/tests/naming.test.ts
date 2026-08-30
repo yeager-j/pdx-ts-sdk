@@ -1,4 +1,5 @@
 import {
+  compareStrings,
   pluralize,
   propertyAccess,
   propertyName,
@@ -19,6 +20,12 @@ describe("pluralize", () => {
     // evidence otherwise is two lines of committed generated output.
     expect(pluralize("customStarNames")).toBe("customStarNames");
     expect(pluralize("customPlanetNames")).toBe("customPlanetNames");
+  });
+});
+
+describe("compareStrings", () => {
+  it("orders strings by codepoint instead of the host locale", () => {
+    expect(["a", "Z"].sort(compareStrings)).toEqual(["Z", "a"]);
   });
 });
 

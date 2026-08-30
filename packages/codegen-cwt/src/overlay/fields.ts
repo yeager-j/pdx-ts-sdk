@@ -1284,21 +1284,3 @@ export const REPEATED_STRUCT_DEFINITIONS = new Map<string, RepeatedStructDefinit
   // complex_enum's body outright, so the parsed model does not carry it.
   ["situation_type.approach", { typeName: "SituationApproach", identityKey: "name" }],
 ]);
-
-/**
- * The same overrides, for a field one level down inside a repeated struct —
- * `situation_type.approach.modifier` rather than `situation_type.modifier`.
- *
- * Empty, and kept rather than deleted. All twelve rows it held were clause
- * shapes, and every one of them said the same thing its top-level sibling said:
- * this nested field splices `modifier_clause`, or a `triggered_modifier*_clause`,
- * or `economic_template`. `lower/rule-shapes.ts` derives that from the clause name
- * now (SDK-142), and nesting changes nothing about it — `lowerOrdinary` is the same
- * function at both depths.
- *
- * A future row here would have to be something the *nesting* makes true: a
- * scope, arity or optionality that differs from the same field's top-level
- * declaration, with the corpus evidence any `scope`/`arity` row needs. Naming a
- * shape a nested field's own declaration already names is not that.
- */
-export const REPEATED_STRUCT_FIELD_OVERRIDES = new Map<string, ContentFieldOverride>([]);
