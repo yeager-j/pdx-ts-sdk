@@ -72,6 +72,21 @@ function mod() {
 }
 
 describe("mod capability purity and ids", () => {
+  it("applies the lowercase snake_case grammar to prefixes and feature stems", () => {
+    expect(() =>
+      createMod({ name: "Invalid prefix", prefix: "Invalid Prefix", supportedVersion: "4.4.*" })
+    ).toThrow('Mod prefix "Invalid Prefix" must be lowercase snake_case ([a-z][a-z0-9_]*)');
+
+    const capability = createMod({
+      name: "Invalid stem",
+      prefix: "invalid_stem",
+      supportedVersion: "4.4.*",
+    });
+    expect(() => capability.feature("Invalid Stem", [])).toThrow(
+      'Feature file stem "Invalid Stem" must be lowercase snake_case ([a-z][a-z0-9_]*)'
+    );
+  });
+
   it("snapshots config and tags, freezes the capability, and defers placement until feature", () => {
     const tags = ["Technologies"];
     const config = { name: "Snapshot", prefix: "snapshot_mod", supportedVersion: "4.4.*", tags };

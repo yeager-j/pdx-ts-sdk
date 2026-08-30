@@ -2,7 +2,7 @@
  * Turning what the author typed into what the SDK requires. Pure, no I/O — so
  * every rule here is checkable without a filesystem or a terminal.
  *
- * The prefix rules are not this module's to invent: `FILE_STEM_PATTERN` and
+ * The prefix rules are not this module's to invent: `LOWERCASE_SNAKE_CASE` and
  * `createMod`'s own prefix check owns them, and a property test asserts that
  * whatever `toPrefix` produces, the SDK accepts. That way a change to the SDK's
  * grammar breaks a test here rather than a stranger's scaffold.

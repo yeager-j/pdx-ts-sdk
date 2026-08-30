@@ -1,13 +1,13 @@
 /**
  * The pure derivations. The property test is the one that matters: it asserts
- * against the SDK's own `FILE_STEM_PATTERN` rather than a copy, so tightening
+ * against the SDK's own `LOWERCASE_SNAKE_CASE` rather than a copy, so tightening
  * the SDK's grammar breaks a test here instead of a stranger's scaffold.
  */
 
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 
-import { FILE_STEM_PATTERN } from "../../sdk/src/authoring/feature.ts";
+import { LOWERCASE_SNAKE_CASE } from "../../sdk/src/identity.ts";
 import { isValidPrefix, toDisplayName, toPackageName, toPrefix, toTags } from "../src/derive.ts";
 
 describe("toPrefix", () => {
@@ -38,7 +38,7 @@ describe("toPrefix", () => {
     fc.assert(
       fc.property(fc.string(), (name) => {
         const prefix = toPrefix(name);
-        expect(FILE_STEM_PATTERN.test(prefix)).toBe(true);
+        expect(LOWERCASE_SNAKE_CASE.pattern.test(prefix)).toBe(true);
         expect(isValidPrefix(prefix)).toBe(true);
       }),
       { numRuns: 1000 }

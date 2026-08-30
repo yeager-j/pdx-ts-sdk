@@ -46,6 +46,7 @@ import {
 } from "../generated/event-definers.ts";
 import type { EventKindKey } from "../generated/events.ts";
 import type { ScopeName } from "../generated/scopes.ts";
+import { LOWERCASE_SNAKE_CASE } from "../identity.ts";
 import type { AmbientScopeContext } from "../script/effects/types.ts";
 import {
   assertAssetOwner,
@@ -61,13 +62,7 @@ import {
   createComponentTagItem,
   type ComponentTagItem,
 } from "./component-tags.ts";
-import {
-  assertNamespace,
-  createFeature,
-  FILE_STEM_PATTERN,
-  type Feature,
-  type ModItem,
-} from "./feature.ts";
+import { assertNamespace, createFeature, type Feature, type ModItem } from "./feature.ts";
 import {
   createReplacementLocalizationItem,
   localizationFor,
@@ -197,10 +192,8 @@ export type ModCapability<P extends string, I extends IdProfile> = {
   EventChainCapabilityMethods<P, I>;
 
 function assertLogicalName(name: string): void {
-  if (!FILE_STEM_PATTERN.test(name)) {
-    throw new Error(
-      `Logical content name "${name}" must be lowercase snake_case ([a-z][a-z0-9_]*)`
-    );
+  if (!LOWERCASE_SNAKE_CASE.pattern.test(name)) {
+    throw new Error(`Logical content name "${name}" must be ${LOWERCASE_SNAKE_CASE.diagnostic}`);
   }
 }
 
@@ -271,10 +264,8 @@ function mintContentId<P extends string, I extends IdProfile>(
 
 function createNestedDefinitionIdAssertion(prefix: string): (id: string) => void {
   return (id) => {
-    if (!FILE_STEM_PATTERN.test(id)) {
-      throw new Error(
-        `Nested definition id "${id}" must be lowercase snake_case ([a-z][a-z0-9_]*)`
-      );
+    if (!LOWERCASE_SNAKE_CASE.pattern.test(id)) {
+      throw new Error(`Nested definition id "${id}" must be ${LOWERCASE_SNAKE_CASE.diagnostic}`);
     }
     if (!belongsToPrefix(id, prefix)) {
       throw new Error(`Nested definition id "${id}" does not belong to mod prefix "${prefix}"`);
@@ -491,7 +482,7 @@ function resolveIdProfile<I extends IdProfile>(profile: I): Readonly<I> {
   }
   for (const key of expected) {
     const segment = profile[key as keyof I];
-    if (typeof segment !== "string" || !FILE_STEM_PATTERN.test(segment)) {
+    if (typeof segment !== "string" || !LOWERCASE_SNAKE_CASE.pattern.test(segment)) {
       throw new Error(
         `Id profile segment "${key}: ${String(segment)}" must be lowercase snake_case`
       );
