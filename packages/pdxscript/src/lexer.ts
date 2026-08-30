@@ -10,7 +10,7 @@
  * serializer, so that no two of them can disagree.
  */
 
-import { isParamName } from "./representable.ts";
+import { isParamName, TOKEN_TERMINATORS } from "./representable.ts";
 
 export type TokenKind =
   "identifier" | "op" | "lbrace" | "rbrace" | "math" | "param" | "rbracket" | "eof";
@@ -41,26 +41,11 @@ export class PdxSyntaxError extends Error {
   }
 }
 
+// Trivia is a different question from termination — which characters are
+// *skipped*, not which ones end a token — so it stays here. What ends a bare
+// token is `TOKEN_TERMINATORS`, owned by `representable.ts` because the
+// constructors and the serializer ask it too.
 const TRIVIA = new Set([" ", "\t", "\r", "\v", "\f", ";"]);
-const TERMINATORS = new Set([
-  " ",
-  "\t",
-  "\r",
-  "\n",
-  "\v",
-  "\f",
-  ";",
-  "{",
-  "}",
-  "[",
-  "]",
-  "=",
-  "<",
-  ">",
-  "!",
-  "#",
-  '"',
-]);
 
 function operatorAt(text: string, index: number): string | null {
   const char = text[index];
@@ -278,7 +263,7 @@ export function tokenize(source: string, fileName: string, startLine = 1): Token
     }
 
     const start = index;
-    while (index < text.length && !TERMINATORS.has(text[index]!)) {
+    while (index < text.length && !TOKEN_TERMINATORS.has(text[index]!)) {
       if (text[index] === "?" && text[index + 1] === "=") {
         throw new PdxSyntaxError("Unsupported operator '?='", fileName, line);
       }

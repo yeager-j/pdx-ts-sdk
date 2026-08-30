@@ -20,6 +20,7 @@ import {
   block,
   container,
   inlineMath,
+  isBareToken,
   kv,
   list,
   numberValue,
@@ -38,6 +39,7 @@ import {
   type PdxEntry,
   type PdxValue,
 } from "../src/index.ts";
+import { tokenize } from "../src/lexer.ts";
 
 function clean(source: string): PdxDocument {
   const document = parse(source, "claims.txt");
@@ -206,6 +208,37 @@ describe("lexer", () => {
 
   it("keeps non-ASCII bytes inside unquoted tokens (jomini)", () => {
     expect(first("jean_jaurès = bar").key).toBe("jean_jaurès");
+  });
+
+  /**
+   * The two ends of one question, checked against each other rather than
+   * against a list: `isBareToken` says whether text is a single token, and
+   * the lexer decides it again while scanning. They read one terminator
+   * table (SDK-319), and this is what would fail if a second one appeared —
+   * for every character, not for the handful anyone thought to enumerate.
+   */
+  it("ends a bare token at exactly the characters representability refuses", () => {
+    const sweep = [
+      ...Array.from({ length: 0x80 }, (_, code) => String.fromCharCode(code)),
+      "è",
+      "中",
+      "𝕏",
+      "\uFEFF",
+    ];
+    for (const char of sweep) {
+      const text = `a${char}b`;
+      let lexesAsOneToken: boolean;
+      try {
+        const tokens = tokenize(text, "terminators.txt");
+        const [token, ...rest] = tokens;
+        lexesAsOneToken =
+          rest.length === 1 && token?.kind === "identifier" && !token.quoted && token.text === text;
+      } catch (error) {
+        expect(error).toBeInstanceOf(PdxSyntaxError);
+        lexesAsOneToken = false;
+      }
+      expect(isBareToken(text), JSON.stringify(char)).toBe(lexesAsOneToken);
+    }
   });
 });
 
