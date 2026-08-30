@@ -26,9 +26,15 @@ import { PdxSyntaxError, tokenize, type Token } from "./lexer.ts";
 import { BYTE_ORDER_MARK, classifyUnquoted, MAX_NESTING_DEPTH } from "./representable.ts";
 
 /**
- * The depth guard, as an error the textual fallback must not absorb. A
- * region's body is re-scanned per level, so swallowing this would turn deep
- * nesting into a slow success instead of a refusal.
+ * The depth guard, as an error the textual fallback must not absorb — every
+ * way of reaching the limit, braces inside a region included. A region's body
+ * is re-scanned per level, so swallowing this would turn deep nesting into a
+ * slow success instead of a refusal, and it would report the refusal as a
+ * *syntactic* fact about the body ("this is not a tree") when it is a
+ * resource bound.
+ *
+ * It extends `PdxSyntaxError`, so callers still catch one error type and read
+ * the same `file:line`.
  */
 class NestingLimitError extends PdxSyntaxError {}
 
@@ -84,7 +90,11 @@ class Parser {
   /** The shared item loop; `body` decides where it ends and how it repairs. */
   private parseItems(body: Body, openLine: number, depth: number): PdxItem[] {
     if (depth > MAX_NESTING_DEPTH) {
-      this.fail(`Nesting exceeds ${MAX_NESTING_DEPTH} levels`, openLine);
+      throw new NestingLimitError(
+        `Nesting exceeds ${MAX_NESTING_DEPTH} levels`,
+        this.fileName,
+        openLine
+      );
     }
     const items: PdxItem[] = [];
     for (;;) {
@@ -156,7 +166,13 @@ class Parser {
     try {
       items = inner.parseItems("region", token.line, depth + 1);
     } catch (error) {
-      if (error instanceof NestingLimitError) {
+      // `param-text` is a claim about the body — that it is not a balanced
+      // item sequence — so only the failure that establishes that claim may
+      // produce one. A depth-limit failure is a resource bound, not a fact
+      // about the text, and anything that is not a `PdxSyntaxError` is a
+      // defect in this package. Turning either into `param-text` would report
+      // a bug as a legitimate syntactic distinction, silently.
+      if (!(error instanceof PdxSyntaxError) || error instanceof NestingLimitError) {
         throw error;
       }
       return { kind: "param-text", name, negated, text: body };

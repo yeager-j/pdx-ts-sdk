@@ -707,6 +707,22 @@ describe("parser: conditional text regions (corpus — Gigastructural Engineerin
     const nested = `${"[[X] ".repeat(1200)}a${" ]".repeat(1200)}`;
     expect(() => parse(nested, "claims.txt")).toThrow(/Nesting exceeds/);
   });
+
+  /**
+   * The same refusal by the other route (SDK-316). Braces inside a region
+   * reach the limit through the ordinary item loop, and its failure used to
+   * be an undifferentiated `PdxSyntaxError` that the fallback absorbed — so
+   * absurd nesting became a quiet `param-text` instead of a refusal.
+   */
+  it("refuses absurd brace nesting inside a region rather than keeping it as text", () => {
+    const body = "{".repeat(MAX_NESTING_DEPTH);
+    expect(() => parse(`[[X]${body}]`, "claims.txt")).toThrow(/Nesting exceeds/);
+  });
+
+  it("keeps the limit where a body that merely fails to balance still becomes text", () => {
+    const region = clean(`[[X]${"{".repeat(MAX_NESTING_DEPTH - 2)}]`).items[0]!;
+    expect(region.kind).toBe("param-text");
+  });
 });
 
 describe("parser: repair diagnostics", () => {
