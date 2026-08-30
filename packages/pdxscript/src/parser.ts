@@ -23,7 +23,7 @@ import type {
   PdxValue,
 } from "./ast.ts";
 import { PdxSyntaxError, tokenize, type Token } from "./lexer.ts";
-import { classifyUnquoted } from "./representable.ts";
+import { BYTE_ORDER_MARK, classifyUnquoted } from "./representable.ts";
 
 /** Fuzz-proofing: error on absurd nesting instead of overflowing the stack. */
 const MAX_DEPTH = 1000;
@@ -278,7 +278,11 @@ export function regionItems(region: PdxParamText, fileName = "<region>"): PdxIte
 }
 
 export function parse(source: string, fileName = "<input>"): PdxDocument {
-  const parser = new Parser(tokenize(source, fileName), fileName);
+  // The file boundary, and the only place a byte-order mark means one: it
+  // states the encoding of this document. `tokenize` reads fragments too
+  // (a region body, `regionItems`), where a leading `U+FEFF` is just text.
+  const text = source.startsWith(BYTE_ORDER_MARK) ? source.slice(BYTE_ORDER_MARK.length) : source;
+  const parser = new Parser(tokenize(text, fileName), fileName);
   const items = parser.parseTopLevel();
   return { fileName, items, diagnostics: parser.diagnostics };
 }

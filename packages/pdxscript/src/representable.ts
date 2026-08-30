@@ -53,6 +53,14 @@ export const TOKEN_TERMINATORS: ReadonlySet<string> = new Set([
   '"',
 ]);
 
+/**
+ * The byte-order mark, which is a property of a *file* rather than of the
+ * syntax: it marks the encoding of a whole document, so it is stripped where
+ * a document begins and nowhere else. A `U+FEFF` anywhere further in is an
+ * ordinary character this language has no reading for, and it is left alone.
+ */
+export const BYTE_ORDER_MARK = "\uFEFF";
+
 /** True when `text` would lex back as a single unquoted identifier token. */
 export function isBareToken(text: string): boolean {
   if (text.length === 0) {
@@ -189,6 +197,25 @@ export function isQuotableContent(content: string): boolean {
     index += 1;
   }
   return true;
+}
+
+/**
+ * True when `key` can be written without quotes.
+ *
+ * A key is never classified, so `yes` and `123` are keys like any other and
+ * the character class decides — with one exception. A key opening with a
+ * byte-order mark is written quoted, because a document may not begin with
+ * one: `parse` reads that as the file's encoding mark and removes it, so a
+ * bare `\uFEFFkey` at the top of a file would come back as `key`.
+ *
+ * The quotes cost nothing here, and that is why this rule is a key's alone. An
+ * entry records no `quoted` flag for its key, so quoting one leaves the same
+ * tree; a `str` carries that flag, so promoting a value would change the tree
+ * a reparse gives back. A value that would open a document with the mark is
+ * refused by `serialize` instead.
+ */
+export function isBareKey(key: string): boolean {
+  return isBareToken(key) && !key.startsWith(BYTE_ORDER_MARK);
 }
 
 /** True when `name` can be written between `[[`/`[[!` and `]`. */

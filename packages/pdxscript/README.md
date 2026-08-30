@@ -31,7 +31,8 @@ const canonical = serialize(document.items);
 ```
 
 `parse` accepts a decoded string and a filename used in diagnostics. File I/O
-and decoding belong to the caller; the lexer strips one leading UTF-8 BOM.
+and decoding belong to the caller; `parse` strips one UTF-8 BOM opening the
+document, and `serialize` refuses to emit a document that would open with one.
 `serialize` uses one canonical style with tabs and a final newline.
 
 The round-trip contract is semantic:

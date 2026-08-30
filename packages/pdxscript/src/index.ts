@@ -4,6 +4,7 @@ export {
   canonicalNumeral,
   classifyUnquoted,
   decimalLexeme,
+  isBareKey,
   isBareString,
   isBareToken,
   isMathSource,
