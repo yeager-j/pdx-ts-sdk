@@ -1,5 +1,6 @@
 import type { EmittedField } from "../lower/fields.ts";
 import type { RuleScopes } from "../lower/scope-facts.ts";
+import { compareStrings } from "../naming.ts";
 import type { FieldObservation, RegistryCorpus } from "./observations.ts";
 
 /**
@@ -51,7 +52,7 @@ export function conformance(
   const unexpressed = [...corpus.occurrences]
     .filter(([field]) => !expressible(field))
     .map(([field, observation]) => ({ field, count: observation.definitions }))
-    .sort((a, b) => b.count - a.count || a.field.localeCompare(b.field));
+    .sort((a, b) => b.count - a.count || compareStrings(a.field, b.field));
   let total = 0;
   let covered = 0;
   for (const [field, observation] of corpus.occurrences) {

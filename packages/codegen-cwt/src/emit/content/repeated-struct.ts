@@ -18,11 +18,7 @@ import {
 import { wildcardBlockOf } from "../../lower/rule-shapes.ts";
 import type { FieldContext } from "../../lower/scope-context.ts";
 import { camelCase, constantCase } from "../../naming.ts";
-import {
-  CONTENT_DECLINED_FIELDS,
-  REPEATED_STRUCT_FIELD_OVERRIDES,
-  type RepeatedStructDefinition,
-} from "../../overlay/index.ts";
+import { CONTENT_DECLINED_FIELDS, type RepeatedStructDefinition } from "../../overlay/index.ts";
 import { Emitter } from "../../render/emitter.ts";
 import type { DocTable, FieldOmissionRow, MemberDocRow } from "../../render/field-rows.ts";
 import { constArray, member as renderMember } from "../../render/writer.ts";
@@ -187,11 +183,7 @@ function lowerRepeatedStructMembers(
       });
       continue;
     }
-    const override = REPEATED_STRUCT_FIELD_OVERRIDES.get(fieldPath);
-    if (override !== undefined) {
-      emitter.overlayAudit.applied("REPEATED_STRUCT_FIELD_OVERRIDES", fieldPath);
-    }
-    const lowering = pickOrdinary(emitter, group, name, ctx, override, undefined, fieldPath);
+    const lowering = pickOrdinary(emitter, group, name, ctx, undefined, undefined, fieldPath);
     if (lowering === null) {
       unsupported.push({
         path: fieldPath,
@@ -200,7 +192,7 @@ function lowerRepeatedStructMembers(
       });
       continue;
     }
-    const optional = memberOptional(group, override);
+    const optional = memberOptional(group, undefined);
     const docs = [...new Set([...group.flatMap((field) => field.docs), ...(lowering.docs ?? [])])];
     members.push(renderMember({ name: member, type: lowering.memberType, optional, docs }));
     memberDocs[member] = {

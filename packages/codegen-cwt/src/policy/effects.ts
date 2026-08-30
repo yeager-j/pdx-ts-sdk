@@ -1,6 +1,6 @@
 import type { RuleSet } from "../cwt/rules.ts";
 import { eventKinds } from "../lower/event-kinds.ts";
-import { camelCase } from "../naming.ts";
+import { camelCase, compareStrings } from "../naming.ts";
 
 /** The implementation surface that owns an effect key and its public method. */
 export type EffectOwner = "generated" | "structural" | "fire";
@@ -119,7 +119,7 @@ export function emitEffectPolicyProtocol(policy: EffectPolicy): string {
   const fireKeys = [...policy.fireKeys].sort();
   const nonGeneratedEntries = [...policy.byKey.values()]
     .filter((entry) => entry.owner !== "generated")
-    .sort((left, right) => left.key.localeCompare(right.key));
+    .sort((left, right) => compareStrings(left.key, right.key));
   return (
     `export const EFFECT_OWNERSHIP = ${JSON.stringify(nonGeneratedEntries)} as const;\n\n` +
     `export const STRUCTURAL_EFFECT_METHODS = ${JSON.stringify(structural)} as const;\n\n` +

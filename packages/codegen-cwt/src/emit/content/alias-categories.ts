@@ -14,7 +14,7 @@
 
 import type { RuleSet } from "../../cwt/rules.ts";
 import { structuralSpliceOf } from "../../lower/rule-shapes.ts";
-import { CONTENT_FIELD_OVERRIDES, REPEATED_STRUCT_FIELD_OVERRIDES } from "../../overlay/index.ts";
+import { CONTENT_FIELD_OVERRIDES } from "../../overlay/index.ts";
 import type { Emitter, Usage } from "../../render/emitter.ts";
 import type { DocTable, FieldOmissionRow } from "../../render/field-rows.ts";
 import { emitAliasSplice, type AliasSpliceEmission } from "./alias-splice.ts";
@@ -114,10 +114,7 @@ export function emitAliasCategories(
     aliasCategories: new Map(),
     aliasSplices: new Map(),
   };
-  for (const override of [
-    ...CONTENT_FIELD_OVERRIDES.values(),
-    ...REPEATED_STRUCT_FIELD_OVERRIDES.values(),
-  ]) {
+  for (const override of CONTENT_FIELD_OVERRIDES.values()) {
     if (override.shape === "aliasStruct") {
       emitAliasCategory(emitter, rules, state, override.category!, "struct");
     }

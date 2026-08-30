@@ -1,6 +1,6 @@
 import type { ContentType, RuleSet } from "../cwt/rules.ts";
 import type { ContentEmission } from "../emit/content/content-type.ts";
-import { docComment } from "../naming.ts";
+import { compareStrings, docComment } from "../naming.ts";
 
 /** Swap bases that deliberately have no generated registry, with the reason for each exclusion. */
 export const CONTENT_SWAP_EXCLUSIONS = new Map<string, string>([
@@ -115,7 +115,7 @@ export function deriveContentSwapIdentities(
       throw new Error(`CONTENT_SWAP_EXCLUSIONS names ${excluded}, but no swap declaration uses it`);
     }
   }
-  return identities.sort((left, right) => left.registryType.localeCompare(right.registryType));
+  return identities.sort((left, right) => compareStrings(left.registryType, right.registryType));
 }
 
 /** Emits the generated swap-identity contract and its derived policy rows. */

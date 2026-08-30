@@ -6,6 +6,7 @@ import { joinModifierScopes } from "../emit/script/modifiers.ts";
 import type { ModifierDocs } from "../logs/modifier-docs.ts";
 import type { ScopeLink } from "../logs/scopes.ts";
 import type { DocDump } from "../logs/trigger-docs.ts";
+import { compareStrings } from "../naming.ts";
 import { UNIVERSAL_SCOPES } from "../overlay/index.ts";
 import { SPECIAL_SCOPE_PATHS } from "../special-scope-paths.ts";
 
@@ -195,7 +196,7 @@ function compareScopes(
   }
 
   return {
-    conflicts: conflicts.sort((left, right) => left.name.localeCompare(right.name)),
+    conflicts: conflicts.sort((left, right) => compareStrings(left.name, right.name)),
     unscoped: unscoped.sort(),
   };
 }

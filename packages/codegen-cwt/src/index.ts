@@ -70,7 +70,6 @@ import {
   MINT_SHAPE_OVERLAYS,
   PATCH_WIDENINGS,
   REPEATED_STRUCT_DEFINITIONS,
-  REPEATED_STRUCT_FIELD_OVERRIDES,
   REQUIRED_LOCALISATION,
   SCRIPTED_MODIFIER_CATEGORY_MAP,
   SYNTHETIC_LOCALISATION,
@@ -92,6 +91,7 @@ import {
 } from "./policy/modifiers.ts";
 import { formatScriptGapReport, reconcileScriptGaps } from "./policy/script-gaps.ts";
 import { HAND_WRITTEN_TRIGGER_EXPORTS, RESERVED_TRIGGER_EXPORT_NAMES } from "./policy/triggers.ts";
+import { parseUpstreamCommit } from "./provenance.ts";
 import { checkDrift } from "./reconcile/baseline.ts";
 import { reconcile } from "./reconcile/reconcile.ts";
 import { Emitter, type Usage } from "./render/emitter.ts";
@@ -204,7 +204,7 @@ interface CodegenReportInput {
 
 function readUpstreamCommit(vendorDirectory: string): string {
   const version = readFileSync(path.join(vendorDirectory, "VERSION.md"), "utf8");
-  return /`([0-9a-f]{40})`/.exec(version)?.[1] ?? "unknown";
+  return parseUpstreamCommit(version);
 }
 
 function readGeneratorSources(
@@ -374,10 +374,6 @@ function assertGenerationPolicies(
     new Set([...rules.triggers.keys()].map((key) => key.toLowerCase()))
   );
   emitter.overlayAudit.assertAllApplied("CONTENT_FIELD_OVERRIDES", CONTENT_FIELD_OVERRIDES.keys());
-  emitter.overlayAudit.assertAllApplied(
-    "REPEATED_STRUCT_FIELD_OVERRIDES",
-    REPEATED_STRUCT_FIELD_OVERRIDES.keys()
-  );
   emitter.overlayAudit.assertAllApplied("FIELD_WIDENINGS", FIELD_WIDENINGS.keys());
   emitter.overlayAudit.assertAllApplied("CONTENT_FIELD_DOCS", CONTENT_FIELD_DOCS.keys());
   emitter.overlayAudit.assertAllApplied("CONTENT_DECLINED_FIELDS", CONTENT_DECLINED_FIELDS.keys());
@@ -458,9 +454,6 @@ function buildCodegenReport(input: CodegenReportInput): string[] {
       ` (${[...effects.byShape].map(([kind, count]) => `${kind} ${count}`).join(", ")}` +
       `; clusters ${effects.clusterCount})`
   );
-  for (const content of contents) {
-    report.push(`${content.registry}: ${describeEmittedFields(content.emission)}`);
-  }
   report.push(
     `content definers: ${definers.definers} emitted` +
       ` (${CONTENT_PATCH_REGISTRIES.size} free patchX,` +

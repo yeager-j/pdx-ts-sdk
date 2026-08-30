@@ -3,6 +3,7 @@ import type {
   ScriptSkipCategory,
   SkippedRule,
 } from "../lower/script-shape.ts";
+import { compareStrings } from "../naming.ts";
 
 /** The generated script surface on which a skipped CWT rule was declared. */
 export type ScriptRuleKind = "trigger" | "effect";
@@ -102,7 +103,9 @@ function classifyScriptSkips(
   return [
     ...triggers.map((skip) => ({ ...skip, kind: "trigger" as const })),
     ...effects.map((skip) => ({ ...skip, kind: "effect" as const })),
-  ].sort((left, right) => `${left.kind}:${left.name}`.localeCompare(`${right.kind}:${right.name}`));
+  ].sort((left, right) =>
+    compareStrings(`${left.kind}:${left.name}`, `${right.kind}:${right.name}`)
+  );
 }
 
 /**

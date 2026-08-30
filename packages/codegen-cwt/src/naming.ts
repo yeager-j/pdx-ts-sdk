@@ -149,7 +149,7 @@ export function propertyAccess(objectExpression: string, name: string): string {
 
 /**
  * Compares strings by codepoint for deterministic generated output.
- * Unlike `localeCompare`, the result does not depend on the host locale or ICU data.
+ * Unlike locale-sensitive comparison, the result does not depend on host locale or ICU data.
  */
 export function compareStrings(left: string, right: string): number {
   if (left < right) {
