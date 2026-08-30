@@ -15,5 +15,8 @@ describe("parseUpstreamCommit", () => {
     expect(() => parseUpstreamCommit("Revision: `0123`")).toThrow(
       "VERSION.md does not contain a 40-character lowercase upstream commit"
     );
+    expect(() =>
+      parseUpstreamCommit("Revision: `0123456789abcdef0123456789abcdef012345678`")
+    ).toThrow("VERSION.md does not contain a 40-character lowercase upstream commit");
   });
 });
