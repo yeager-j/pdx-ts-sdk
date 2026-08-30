@@ -6,6 +6,7 @@ import { capture } from "./helpers/capture.ts";
 
 const clack = vi.hoisted(() => ({
   confirm: vi.fn(),
+  note: vi.fn(),
   text: vi.fn(),
 }));
 
@@ -14,7 +15,7 @@ vi.mock("@clack/prompts", () => ({
   intro: vi.fn(),
   isCancel: () => false,
   log: { error: vi.fn(), warn: vi.fn() },
-  note: vi.fn(),
+  note: clack.note,
   text: clack.text,
 }));
 
@@ -39,6 +40,7 @@ const argv = [
 
 beforeEach(() => {
   clack.confirm.mockReset();
+  clack.note.mockReset();
   clack.text.mockReset();
   clack.text.mockResolvedValue("");
 });
@@ -65,5 +67,30 @@ describe("the interactive LLM choice", () => {
 
     expect(resolved.llmSupport).toBe(false);
     expect(clack.confirm).not.toHaveBeenCalled();
+  });
+});
+
+describe("building without an install", () => {
+  it("explains the verified-build identifier fallback", async () => {
+    await resolveInteractive(parseArgv(argv), capture("/tmp", true).io);
+
+    expect(clack.text).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: "Path to your Stellaris install (blank to skip)",
+        placeholder: "leave blank to use checked ids for the verified game build",
+      })
+    );
+    expect(clack.note).toHaveBeenCalledWith(
+      expect.stringContaining("vanilla ids checked against\nthe verified game build"),
+      "Building without vanilla",
+      expect.anything()
+    );
+    expect(clack.note).toHaveBeenCalledWith(
+      expect.stringContaining(
+        "STELLARIS_PATH later to load your install for patching; it does not change\nthe identifier package."
+      ),
+      "Building without vanilla",
+      expect.anything()
+    );
   });
 });

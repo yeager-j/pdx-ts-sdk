@@ -78,7 +78,7 @@ export function planProject(resolved: Resolved, packageName?: string): Map<strin
     file("eslint.config.js", eslintConfig());
   }
 
-  file("src/mod.ts", modTs(resolved));
+  file("src/mod.ts", modTs());
   file("src/index.ts", indexTs());
   file("src/inspect.ts", inspectTs());
   file("src/install.ts", installTs());
@@ -86,12 +86,7 @@ export function planProject(resolved: Resolved, packageName?: string): Map<strin
   file("src/content/example.ts", contentExampleTs(resolved));
   file("src/content/example.test.ts", contentExampleTestTs(resolved));
 
-  // Only when an install was found: the module calls `stellaris.load()`, and
-  // shipping it unconditionally would put a file in the project whose whole
-  // purpose is unavailable.
-  if (resolved.installPath !== undefined) {
-    file("src/vanilla.ts", vanillaTs(resolved));
-  }
+  file("src/vanilla.ts", vanillaTs(resolved));
 
   if (resolved.llmSupport) {
     file("AGENTS.md", agentsMd());
