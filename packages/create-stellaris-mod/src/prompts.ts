@@ -256,8 +256,8 @@ export async function resolveInteractive(argv: ParsedArgv, io: CliIo): Promise<R
 
 /**
  * Confirm the detected install, or take a path. Declining is a supported
- * answer: without an install the scaffold simply drops `src/vanilla.ts` and the
- * identifier pin, and the mod still builds.
+ * answer: without an install the scaffold drops `src/vanilla.ts` and uses the
+ * verified build's identifier pin, so the mod still builds with checked ids.
  */
 async function askInstall(
   explicit: string | undefined,
@@ -287,15 +287,16 @@ async function askInstall(
       await text({
         ...streams,
         message: "Path to your Stellaris install (blank to skip)",
-        placeholder: "leave blank to build without vanilla checks",
+        placeholder: "leave blank to use checked ids for the verified game build",
         defaultValue: "",
       })
     );
     if (typed === "") {
       note(
-        "Without an install the mod still builds — vanilla ids stay unchecked\n" +
-          "strings and patching is unavailable. Set STELLARIS_PATH later to\n" +
-          "turn both on.",
+        "Without an install the mod still builds with vanilla ids checked against\n" +
+          `the verified game build (${VERIFIED_STELLARIS_BUILD}). Patching is unavailable. Set\n` +
+          "STELLARIS_PATH later to load your install for patching; it does not change\n" +
+          "the identifier package.",
         "Building without vanilla",
         streams
       );
