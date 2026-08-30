@@ -164,7 +164,12 @@ describe("assertVanillaPath", () => {
 describe("negative control", () => {
   it("refuses to emit an inventory carrying anything but a path", () => {
     expect(() =>
-      emitVanillaPaths(["sound/ok.asset", "a = b"], createChokepoint(), "4.4.6")
+      emitVanillaPaths(
+        ["sound/ok.asset", "a = b"],
+        "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        createChokepoint(),
+        "4.4.6"
+      )
     ).toThrow(/vanilla path: refusing to emit/);
   });
 
@@ -289,9 +294,9 @@ describe("generated output", () => {
 
   /**
    * The inventory is the package's third runtime file, and this pins that it
-   * is a list of names and nothing more: two exported constants, one quoted
-   * path per line, and the array's close. No sizes, no hashes, no contents —
-   * a generator change that started carrying any of those would land here.
+   * is a list of names and nothing more: three exported constants, one quoted
+   * path per line, and the array's close. No per-path sizes, hashes, or contents
+   * — a generator change that started carrying any of those would land here.
    */
   it("keeps the path inventory to one quoted path per line", () => {
     const text = generated.files.get("paths.ts");
@@ -299,11 +304,12 @@ describe("generated output", () => {
     const body = text!.split("\n").filter((line) => line !== "" && !line.startsWith("//"));
     expect(body.length).toBeGreaterThan(3);
     expect(body[0]).toMatch(/^export const VANILLA_PATH_GAME_VERSION = "4\.4\.6";$/);
-    expect(body[1]).toBe(
+    expect(body[1]).toMatch(/^export const VANILLA_INSTALL_EVIDENCE_SHA256 = "[0-9a-f]{64}";$/);
+    expect(body[2]).toBe(
       "export const VANILLA_PATHS: readonly string[] = /*#__PURE__*/ Object.freeze(["
     );
     expect(body[body.length - 1]).toBe("]);");
-    for (const line of body.slice(2, -1)) {
+    for (const line of body.slice(3, -1)) {
       expect(line).toMatch(/^ {2}"[^"\\]+",$/);
     }
   });
@@ -410,6 +416,7 @@ describe("emitVanillaPaths", () => {
     // for the first non-ASCII path Paradox ships.
     const emitted = emitVanillaPaths(
       ["gfx/\u{10000}.dds", "gfx/\uE000.dds"],
+      "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
       createChokepoint(),
       "4.4.6"
     );

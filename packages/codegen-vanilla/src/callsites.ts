@@ -22,14 +22,14 @@
  * demonstrated power and not merely coverage.
  */
 
-import { readdirSync, readFileSync, statSync } from "node:fs";
-import path from "node:path";
+import { readFileSync } from "node:fs";
 import type { EventKindSpec } from "@pdx-ts/codegen-cwt/lower/event-kinds";
 import type { RuleScopes } from "@pdx-ts/codegen-cwt/lower/scope-facts";
 import { parse, type PdxItem } from "@pdx-ts/pdxscript";
 
 import { compareIdentifiers } from "./emit.ts";
 import type { ScriptedKind } from "./infer-scopes.ts";
+import type { VanillaEventSource } from "./read-events.ts";
 
 /** Event body fields whose contents are conditions in the event's own scope. */
 const CONDITION_FIELDS = new Set(["trigger", "is_triggered_only_check"]);
@@ -61,20 +61,8 @@ export interface CallSiteReport {
 
 export type InferredScopes = Readonly<Record<ScriptedKind, ReadonlyMap<string, RuleScopes>>>;
 
-function eventFiles(dir: string): string[] {
-  let names: string[];
-  try {
-    names = readdirSync(dir).sort(compareIdentifiers);
-  } catch {
-    return [];
-  }
-  return names
-    .map((name) => path.join(dir, name))
-    .filter((full) => !statSync(full).isDirectory() && full.endsWith(".txt"));
-}
-
 export function checkCallSites(
-  installRoot: string,
+  eventFiles: readonly VanillaEventSource[],
   inferred: InferredScopes,
   eventKinds: readonly EventKindSpec[]
 ): CallSiteReport {
@@ -129,9 +117,8 @@ export function checkCallSites(
     }
   };
 
-  for (const file of eventFiles(path.join(installRoot, "events"))) {
-    const parsed = parse(readFileSync(file, "utf8"), path.basename(file));
-    const name = path.basename(file);
+  for (const file of eventFiles) {
+    const parsed = parse(readFileSync(file.path, "utf8"), file.source);
     for (const item of parsed.items) {
       if (item.kind !== "entry" || item.value.kind !== "container") {
         continue;
@@ -147,9 +134,9 @@ export function checkCallSites(
         }
         const key = field.key.toLowerCase();
         if (CONDITION_FIELDS.has(key)) {
-          visitConditions(field.value.items, scope, name);
+          visitConditions(field.value.items, scope, file.source);
         } else if (EFFECT_FIELDS.has(key)) {
-          visitEffects(field.value.items, scope, name);
+          visitEffects(field.value.items, scope, file.source);
         } else if (key === "option") {
           for (const part of field.value.items) {
             if (part.kind !== "entry" || part.value.kind !== "container") {
@@ -157,10 +144,10 @@ export function checkCallSites(
             }
             const optionKey = part.key.toLowerCase();
             if (optionKey === "trigger" || optionKey === "allow") {
-              visitConditions(part.value.items, scope, name);
+              visitConditions(part.value.items, scope, file.source);
             }
           }
-          visitEffects(field.value.items, scope, name);
+          visitEffects(field.value.items, scope, file.source);
         }
       }
     }

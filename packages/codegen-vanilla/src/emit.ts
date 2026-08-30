@@ -315,7 +315,7 @@ export function emitTrie(
   const takenNames = new Set<string>([root]);
   // `index` is the registry's own index file, and two keys can mangle onto one
   // stem on a case-insensitive filesystem (`GFX_ship` and `gfx-ship`).
-  const takenStems = new Set<string>(["index"]);
+  const takenStemIdentities = new Set<string>(["index"]);
 
   /**
    * One node as a type.
@@ -350,7 +350,7 @@ export function emitTrie(
       continue;
     }
     const name = unique(`${root}${pascalCase(key)}`, takenNames);
-    const stem = unique(kebabCase(key), takenStems);
+    const stem = uniqueFileStem(kebabCase(key), takenStemIdentities);
     files.set(
       `${dir}/${stem}.ts`,
       `${header(gameVersion)}import type { ${reference} } from "@pdx-ts/sdk/stellaris";\n\n` +
@@ -494,6 +494,7 @@ export function emitScriptedBindings(
  */
 export function emitVanillaPaths(
   paths: readonly string[],
+  installEvidenceSha256: string,
   gate: Chokepoint,
   gameVersion: string
 ): string {
@@ -507,6 +508,7 @@ export function emitVanillaPaths(
   return (
     header(gameVersion) +
     `export const VANILLA_PATH_GAME_VERSION = ${gate.literal(gameVersion, "game version")};\n\n` +
+    `export const VANILLA_INSTALL_EVIDENCE_SHA256 = ${gate.literal(installEvidenceSha256, "install evidence hash")};\n\n` +
     "export const VANILLA_PATHS: readonly string[] = /*#__PURE__*/ Object.freeze([\n" +
     `${lines}]);\n`
   );
@@ -725,4 +727,16 @@ function unique(candidate: string, taken: Set<string>): string {
   }
   taken.add(name);
   return name;
+}
+
+/** Reserves a file stem by the identity used on case-insensitive filesystems. */
+function uniqueFileStem(candidate: string, takenIdentities: Set<string>): string {
+  let stem = candidate;
+  let suffix = 2;
+  while (takenIdentities.has(stem.toLowerCase())) {
+    stem = `${candidate}${suffix}`;
+    suffix += 1;
+  }
+  takenIdentities.add(stem.toLowerCase());
+  return stem;
 }

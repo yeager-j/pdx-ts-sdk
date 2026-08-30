@@ -350,7 +350,10 @@ export function generateVanillaPackage(options: GenerateOptions): {
   // Not re-exported from the barrel. The inventory is tens of thousands of
   // strings behind its own `./paths` subpath, and the root must stay something
   // a project can import without loading it.
-  files.set("paths.ts", emitVanillaPaths(facts.paths.paths, gate, gameVersion));
+  files.set(
+    "paths.ts",
+    emitVanillaPaths(facts.paths.paths, facts.evidence.install.sha256, gate, gameVersion)
+  );
   // The third of the same kind, and the largest: 149,217 keys is far past what
   // a union can carry, so `vanilla.localization` checks membership at build
   // time (SDK-307). Its own `./localization-keys` subpath, for the same reason.
