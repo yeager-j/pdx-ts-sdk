@@ -12,9 +12,15 @@
 
 import { isParamName, TOKEN_TERMINATORS } from "./representable.ts";
 
+/**
+ * What a token is. `identifier` covers every unquoted word and every quoted
+ * string — what such a token *means* is decided later, by `classifyUnquoted`,
+ * so that the lexer holds no reading of its own.
+ */
 export type TokenKind =
   "identifier" | "op" | "lbrace" | "rbrace" | "math" | "param" | "rbracket" | "eof";
 
+/** One token, with the source spelling kept and the line it opened on. */
 export interface Token {
   readonly kind: TokenKind;
   /**
@@ -29,6 +35,14 @@ export interface Token {
   readonly line: number;
 }
 
+/**
+ * Source this package cannot read, at a place it can name.
+ *
+ * The only error type {@link parse} raises for bad input, and the `message`
+ * always begins `file:line: `. It means the text is not PDXScript — not that
+ * it is malformed in a way the game tolerates, which is repaired instead and
+ * reported through `PdxDocument.diagnostics`.
+ */
 export class PdxSyntaxError extends Error {
   readonly fileName: string;
   readonly line: number;

@@ -40,6 +40,19 @@ function quotedText(content: string, what: string): string {
   return `"${content}"`;
 }
 
+/**
+ * One scalar as this package writes it, which is what {@link serialize} would
+ * emit for it.
+ *
+ * A `str` renders bare only where re-lexing it would give back the same single
+ * `str`; otherwise it is quoted, so `"yes"`, `"123"` and `"@x"` come back as
+ * strings rather than as a bool, a number, or a variable reference.
+ *
+ * @throws Error for a value no spelling can carry — a `num` whose lexeme is
+ * not a canonical numeral, a string whose content would terminate its own
+ * quotes, or a malformed `var` or `math`. The constructors refuse these on the
+ * way in, so a throw here means a node assembled as a bare object literal.
+ */
 export function scalarText(scalar: PdxScalar): string {
   switch (scalar.kind) {
     case "bool":
@@ -72,6 +85,7 @@ export function scalarText(scalar: PdxScalar): string {
   }
 }
 
+/** Narrows an item to a scalar: one of the five value kinds, not a node. */
 export function isScalar(item: PdxItem): item is PdxScalar {
   return (
     item.kind === "str" ||
@@ -204,6 +218,39 @@ function serializeItem(item: PdxItem, depth: number): string {
   return `${indent}${scalarText(item)}`;
 }
 
+/**
+ * Writes items back to PDXScript in this package's one canonical style: tabs,
+ * a blank line between top-level items, and a final newline.
+ *
+ * The round trip it promises is semantic, not byte-identical, and it is a
+ * claim about *items* rather than documents:
+ *
+ * ```ts
+ * const document = parse(source);
+ * const reparsed = parse(serialize(document.items));
+ * withoutLines(reparsed.items); // equals withoutLines(document.items)
+ * ```
+ *
+ * `withoutLines` is part of the claim, not a convenience. Canonical spacing
+ * moves entries onto different lines, so `line` differs even where nothing
+ * else does. The documents differ in other ways too: repaired input is
+ * written in its repaired form, so the reparse reports no diagnostics.
+ * Comments, blank lines and semicolons are dropped, `2.0` becomes `2`, and a
+ * bare string that would read back as something else is quoted. A second
+ * emission of the reparsed items is byte-identical to the first.
+ *
+ * @throws Error for a tree that could not be written and read back as itself:
+ * an operator outside {@link PDX_OPERATORS}, a scalar {@link scalarText}
+ * refuses, a region body that would read back as a different node, a
+ * non-boolean region negation, nesting past {@link MAX_NESTING_DEPTH}, or a
+ * document whose first character would be a byte-order mark.
+ *
+ * The last two are checked only here, so a constructor-built tree can still
+ * reach them: depth is a property of an assembled tree that `container()`
+ * cannot see, and whether a value opens the document is a property of its
+ * position. The rest are refused by the constructors as well, so hitting one
+ * of those means a tree assembled as bare object literals.
+ */
 export function serialize(items: readonly PdxItem[]): string {
   const text = items.map((item) => serializeItem(item, 0)).join("\n\n") + "\n";
   // The write side of the file boundary. `parse` reads a leading `U+FEFF` as

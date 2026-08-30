@@ -59,6 +59,9 @@ The guarantee this package actually makes: `serialize(parse(x))` means the same
 as `x`, not that it is byte-identical to it.
 
 **Fixpoint**:
-The stronger property, verified across the whole vanilla tree:
-`parse(serialize(parse(x)))` equals `parse(x)`. One reparse settles everything
-serialization normalized.
+The stronger property, verified across the whole vanilla tree: reparsing the
+serialization of a document's items gives those same items back, compared
+through `withoutLines`. One reparse settles everything serialization
+normalized. The comparison is of items rather than whole documents because
+canonical spacing renumbers lines, and a repaired document re-emits with its
+repairs already applied, so its reparse carries no diagnostics.

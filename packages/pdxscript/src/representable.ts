@@ -108,6 +108,11 @@ export const MAX_NESTING_DEPTH = 1000;
  */
 export const PDX_OPERATORS = Object.freeze(["=", ">", "<", ">=", "<=", "!="] as const);
 
+/**
+ * The operator of an entry, as one of {@link PDX_OPERATORS}. Derived from that
+ * list so the type and the runtime check cannot drift; `isOperator` is the
+ * check to use where the type has been erased, which is any JavaScript caller.
+ */
 export type PdxOp = (typeof PDX_OPERATORS)[number];
 
 /** True when `op` is an operator this package can write and read back. */

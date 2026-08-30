@@ -43,8 +43,20 @@ import {
   type PdxOp,
 } from "./representable.ts";
 
+// Declared with the operator table it is derived from, and re-exported here
+// because an entry's operator is part of the AST a reader comes for. Its
+// documentation lives with the declaration.
 export type { PdxOp };
 
+/**
+ * A single value: a string, a number, a bool, an `@name` reference, or an
+ * `@[ ... ]` expression.
+ *
+ * `quoted` on a `str` is a rendering hint, not part of the value: the
+ * serializer promotes a bare string to quoted whenever bare would read back as
+ * something else (`"yes"`, `"123"`, `"@x"`), and never demotes one. A `num` is
+ * its lexeme rather than a JS `number` — see {@link numeral}.
+ */
 export type PdxScalar =
   | { kind: "str"; value: string; quoted: boolean }
   | { kind: "num"; lexeme: string }
@@ -52,6 +64,14 @@ export type PdxScalar =
   | { kind: "var"; name: string }
   | { kind: "math"; source: string };
 
+/**
+ * A braced list of items: `{ a b c }`, `{ a = 1 }`, or both at once.
+ *
+ * Deliberately not a map. It may hold entries, bare scalars, or a mix, its
+ * keys may repeat, and item order is preserved — the game is sensitive to
+ * both. Whether it renders inline or one item per line is the serializer's
+ * decision from what it holds, not a property of the node.
+ */
 export interface PdxContainer {
   readonly kind: "container";
   /**
@@ -63,6 +83,12 @@ export interface PdxContainer {
   readonly items: readonly PdxItem[];
 }
 
+/**
+ * A `key op value` triple, such as `cost = 100` or `has_level >= 2`.
+ *
+ * The key is raw text and is never classified, so `yes` and `123` are keys
+ * like any other. Duplicate keys are kept, in order.
+ */
 export interface PdxEntry {
   readonly kind: "entry";
   readonly key: string;
@@ -102,8 +128,13 @@ export interface PdxParamText {
   readonly text: string;
 }
 
+/** Anything that can stand at item position: in a file, or inside a container. */
 export type PdxItem = PdxEntry | PdxScalar | PdxContainer | PdxParamBlock | PdxParamText;
 
+/**
+ * Anything that can stand on the right of an operator. Narrower than
+ * {@link PdxItem}: a conditional region is an item, never a value.
+ */
 export type PdxValue = PdxScalar | PdxContainer;
 
 /**
@@ -133,6 +164,21 @@ function reject(what: string, value: string): never {
   throw new Error(`Cannot represent ${JSON.stringify(value)} as a PDXScript ${what}`);
 }
 
+/**
+ * A scalar from a JS value, refusing anything this syntax cannot carry.
+ *
+ * A string is refused when it can be written neither bare nor between quotes
+ * — content ending in an odd run of backslashes, or holding an unescaped `"`,
+ * would eat its own terminator. It is *not* refused for merely needing quotes:
+ * `scalar("two words")` is a bare `str` node that the serializer will quote,
+ * and `scalar("yes")` likewise, so that it does not read back as a bool.
+ *
+ * A number is refused when it is not finite. Note that it goes through a JS
+ * double: for an integer past 2^53 or more decimals than a double keeps, use
+ * {@link numeral}, which takes the digits as written.
+ *
+ * @throws Error when the value has no spelling in this syntax.
+ */
 export function scalar(value: string | number | boolean): PdxScalar {
   switch (typeof value) {
     case "string":
@@ -159,6 +205,16 @@ export function numeral(lexeme: string): PdxScalar {
   return { kind: "num", lexeme: canonicalNumeral(lexeme) };
 }
 
+/**
+ * A string that keeps its quotes through the round trip, where {@link scalar}
+ * would leave the serializer to decide.
+ *
+ * The content is emitted raw between the quotes: escapes are not decoded on
+ * the way in and not added on the way out.
+ *
+ * @throws Error when the content could not sit between quotes and come back
+ * unchanged — an unescaped `"`, or a trailing odd run of backslashes.
+ */
 export function quoted(value: string): PdxScalar {
   if (!isQuotableContent(value)) {
     reject("quoted string", value);
@@ -182,6 +238,17 @@ export function inlineMath(source: string): PdxScalar {
   return { kind: "math", source };
 }
 
+/**
+ * A braced list of items, with an optional scalar header: the `hsv` in
+ * `color = hsv { 0.63 0.13 0.5 }`.
+ *
+ * The items are not re-checked — each was built by its own constructor.
+ * Nesting depth is not checked here either, because depth belongs to the whole
+ * assembled tree rather than to one level; {@link serialize} refuses a tree
+ * deeper than {@link MAX_NESTING_DEPTH}.
+ *
+ * @throws Error when the header could not be written as a bare token.
+ */
 export function container(items: readonly PdxItem[], header?: string): PdxContainer {
   if (header !== undefined && !isBareToken(header)) {
     reject("container header", header);
@@ -231,6 +298,20 @@ export function paramText(name: string, text: string, negated = false): PdxParam
   return { kind: "param-text", name, negated, text };
 }
 
+/**
+ * A `key op value` entry.
+ *
+ * The key is not classified, so `yes` and `123` are keys like any other. A key
+ * outside the bare character class is not refused but quoted on the way out,
+ * since the parser reads quoted keys.
+ *
+ * `op` is checked at runtime as well as in the type: the `PdxOp` annotation is
+ * erased, so it stops nothing a JavaScript caller does, and the operator is
+ * emitted raw.
+ *
+ * @throws Error when the key can be written neither bare nor quoted, or when
+ * `op` is not one of {@link PDX_OPERATORS}.
+ */
 export function entry(key: string, op: PdxOp, value: PdxValue): PdxEntry {
   // A key is not classified, so `yes` and `123` are legal keys: only the
   // character class, and quotability where that fails, decide.
@@ -246,11 +327,27 @@ export function entry(key: string, op: PdxOp, value: PdxValue): PdxEntry {
   return { kind: "entry", key, op, value };
 }
 
+/**
+ * `key = value`, the common case. A JS value is passed through
+ * {@link scalar}; an already-built node is used as it is.
+ *
+ * @throws Error for whatever {@link entry} or {@link scalar} would refuse.
+ */
 export function kv(key: string, value: string | number | boolean | PdxValue): PdxEntry {
   const isNode = typeof value === "object" && value !== null && "kind" in value;
   return entry(key, "=", isNode ? value : scalar(value));
 }
 
+/**
+ * {@link kv} with a comparison operator: `has_level >= 2`.
+ *
+ * Scalar-only as a convenience, not as a rule of the syntax: the parser reads
+ * a value the same way after any operator, and `entry("x", ">=",
+ * container([]))` is accepted and round-trips as `x >= {}`. Use {@link entry}
+ * for that.
+ *
+ * @throws Error for whatever {@link entry} or {@link scalar} would refuse.
+ */
 export function cmp(
   key: string,
   op: PdxOp,

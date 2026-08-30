@@ -294,6 +294,33 @@ export function regionItems(region: PdxParamText, fileName = "<region>"): PdxIte
   return items;
 }
 
+/**
+ * Reads a decoded PDXScript source into a document.
+ *
+ * `source` is text, not bytes: file reading and decoding belong to the caller.
+ * One leading byte-order mark is stripped, because that marks the encoding of
+ * this document; a `U+FEFF` anywhere else is ordinary text. `fileName` is used
+ * only in diagnostics and error messages.
+ *
+ * Malformed input the game itself repairs is repaired the same way, and each
+ * repair is reported in `diagnostics`. Parsing still succeeds, so a caller
+ * wanting strictness fails on a non-empty `diagnostics` rather than on a
+ * thrown error. The repairs are a stray `}`, a container left open at end of
+ * file, and a same-line `foo{...}` entry missing its `=`.
+ *
+ * That last one is unconditional only at the top level. Inside a container,
+ * `foo { ... }` is repaired when the braces open with an entry
+ * (`outer = { foo { a = b } }`) and read as a bare scalar followed by a
+ * container when they do not (`outer = { foo { a b } }`, which reports no
+ * diagnostic) — because at item position `rgb { 1 2 3 }` is legitimate, and
+ * the shape of the first child is what separates the two without a list of
+ * game-specific names.
+ *
+ * @throws PdxSyntaxError when the source is not PDXScript at all: an
+ * unterminated quote, `@[`, or `[[` region, a `]` with no opener, an operator
+ * with no value, an unsupported operator, or nesting past
+ * {@link MAX_NESTING_DEPTH}.
+ */
 export function parse(source: string, fileName = "<input>"): PdxDocument {
   // The file boundary, and the only place a byte-order mark means one: it
   // states the encoding of this document. `tokenize` reads fragments too
