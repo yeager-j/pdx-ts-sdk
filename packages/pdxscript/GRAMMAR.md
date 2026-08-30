@@ -175,6 +175,15 @@ not textual (identical bytes).
   and all, since re-indenting text this package did not read would be an
   edit, and anything inserted would change what the next parse captures.
 
+  That body is the one field written from raw text rather than from a checked
+  value, so it is the one that could emit something reading back as a
+  different node. A body that balances comes back as a `param`; a body holding
+  a `]` the region scan does not skip closes the region early and spills the
+  rest into the document. `paramText()` refuses both, with the reason, and the
+  serializer refuses them again for trees built as object literals. A body the
+  parser produced always passes: the region scan is deterministic, so what it
+  captured it captures again.
+
 Consequences, all fixpoint-stable: comments, blank lines, and semicolons
 drop; `2.0` renders `2`; `.5` renders `0.5`; multi-line scalar lists render
 inline; repaired input re-emits in repaired form.

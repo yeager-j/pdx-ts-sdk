@@ -28,6 +28,8 @@ import {
   MAX_NESTING_DEPTH,
   numberValue,
   numeral,
+  paramBlock,
+  paramText,
   parse,
   PDX_OPERATORS,
   PdxSyntaxError,
@@ -701,6 +703,55 @@ describe("parser: conditional text regions (corpus — Gigastructural Engineerin
     } else {
       expect.unreachable();
     }
+  });
+
+  /**
+   * A region body is the one field spliced in as raw text rather than
+   * written from a checked value, so it is the one that could emit something
+   * reading back as a different node (SDK-315). Both ways it can go wrong are
+   * refused, at construction and again at serialization, since a tree built
+   * as an object literal never passes a constructor.
+   */
+  it("refuses a region body that would read back as a region with a tree", () => {
+    for (const text of [" a = 1 ", " a ", " ", " a = { b = 1 } "]) {
+      expect(() => paramText("X", text)).toThrow(/balanced item sequence/);
+      expect(() => serialize([{ kind: "param-text", name: "X", negated: false, text }])).toThrow(
+        /balanced item sequence/
+      );
+    }
+  });
+
+  it("refuses a region body whose ] would close the region early", () => {
+    for (const text of ["]", " a ] ", " a ] b ", ' " ']) {
+      expect(() => paramText("X", text)).toThrow(/Cannot represent/);
+      expect(() => serialize([{ kind: "param-text", name: "X", negated: false, text }])).toThrow(
+        /Cannot serialize region body/
+      );
+    }
+  });
+
+  /**
+   * `negated` decides one character of the opener, and its type is erased, so
+   * a JavaScript caller can pass a truthy `"false"` and get `[[!X]` for a node
+   * whose own field says otherwise — a reparse then returns the region negated
+   * the other way. Refused wherever the flag becomes a character.
+   */
+  it("refuses a negation flag that is not a boolean", () => {
+    const notBoolean = "false" as unknown as boolean;
+    expect(() => paramBlock("X", [scalar("a")], notBoolean)).toThrow(/only a boolean/);
+    expect(() => paramText("X", "\n\t}\n", notBoolean)).toThrow(/only a boolean/);
+    expect(() =>
+      serialize([{ kind: "param", name: "X", negated: notBoolean, items: [scalar("a")] }])
+    ).toThrow(/only a boolean/);
+    expect(() =>
+      serialize([{ kind: "param-text", name: "X", negated: notBoolean, text: "\n\t}\n" }])
+    ).toThrow(/only a boolean/);
+  });
+
+  it("accepts a body that genuinely has no tree, and re-reads it as itself", () => {
+    const region = paramText("POP_GROUP", "\n\tx = {\n");
+    expect(serialize([region])).toBe("[[POP_GROUP]\n\tx = {\n]\n");
+    expect(parse(serialize([region]), "claims.txt").items).toEqual([region]);
   });
 
   it("still refuses absurd region nesting rather than falling back to text", () => {

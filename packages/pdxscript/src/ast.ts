@@ -28,6 +28,7 @@
  * hand-built trees omit it, and tree comparisons ignore it.
  */
 
+import { assertNegation, regionTextProblem } from "./region.ts";
 import {
   canonicalNumeral,
   decimalLexeme,
@@ -35,6 +36,7 @@ import {
   isMathSource,
   isNumeral,
   isOperator,
+  isParamName,
   isQuotableContent,
   isVarName,
   isWritableText,
@@ -185,6 +187,48 @@ export function container(items: readonly PdxItem[], header?: string): PdxContai
     reject("container header", header);
   }
   return { kind: "container", header, items };
+}
+
+/**
+ * A `[[NAME] ... ]` region whose body is a balanced item sequence.
+ *
+ * The items are ordinary items, already checked by their own constructors;
+ * what this adds is the name and the negation flag, which are what this node
+ * contributes to the output.
+ *
+ * @throws Error when the name could not be written between `[[` and `]`, or
+ * when `negated` is not a boolean — the type is erased, and a truthy
+ * `"false"` would write `[[!NAME]` for a node whose field says otherwise.
+ */
+export function paramBlock(
+  name: string,
+  items: readonly PdxItem[],
+  negated = false
+): PdxParamBlock {
+  if (!isParamName(name)) {
+    reject("parameter name", name);
+  }
+  assertNegation(negated);
+  return { kind: "param", name, negated, items };
+}
+
+/**
+ * The same region when its body has no tree, carried as text.
+ *
+ * This is the one field in the AST that is spliced between delimiters rather
+ * than written from a checked value, so it is the one that can emit something
+ * reading back as a different node: a body that happens to balance comes back
+ * as a `param`, and a body holding a bare `]` ends the region early and
+ * spills the rest into the document. Both are refused here, with the reason.
+ */
+export function paramText(name: string, text: string, negated = false): PdxParamText {
+  const problem = regionTextProblem(name, negated, text);
+  if (problem !== null) {
+    throw new Error(
+      `Cannot represent ${JSON.stringify(text)} as the body of a PDXScript region: ${problem}`
+    );
+  }
+  return { kind: "param-text", name, negated, text };
 }
 
 export function entry(key: string, op: PdxOp, value: PdxValue): PdxEntry {

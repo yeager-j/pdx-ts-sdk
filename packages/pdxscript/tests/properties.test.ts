@@ -25,6 +25,8 @@ import {
   inlineMath,
   kv,
   numeral,
+  paramBlock,
+  paramText,
   parse,
   PDX_OPERATORS,
   PdxSyntaxError,
@@ -35,6 +37,7 @@ import {
   varRef,
   withoutLines,
   type PdxItem,
+  type PdxParamText,
   type PdxScalar,
   type PdxValue,
 } from "../src/index.ts";
@@ -80,10 +83,38 @@ const pdxScalar: fc.Arbitrary<PdxScalar> = fc.oneof(
 /**
  * Bodies a conditional region keeps as text: each is unbalanced on its own,
  * which is the whole reason it has no tree. Balanced text would come back as
- * a `param` node and fail the round trip for the right reason.
+ * a `param` node, so the tree generator draws from here — the wider space is
+ * `regionBody` below, where being refused is one of the allowed answers.
  */
 const unbalancedRegionText = bareText.chain((text) =>
   fc.constantFrom(`\n\t${text} = {\n`, `\n\t}\n`, `\n\t{ ${text}\n`)
+);
+
+/**
+ * Region bodies including the two shapes the generator above deliberately
+ * avoids, which is what let the defect hide (SDK-315): text that balances,
+ * and so reads back as a `param` node rather than the `param-text` that was
+ * written; and text holding a `]`, which closes the region early and spills
+ * the rest of the body into the document as loose tokens.
+ */
+const regionBody = fc.oneof(
+  unbalancedRegionText,
+  bareText.chain((text) =>
+    fc.constantFrom(
+      ` ${text} `,
+      ` ${text} = 1 `,
+      ` ${text} = { a = 1 } `,
+      ` ${text} ] `,
+      `] ${text}`,
+      ` ] `,
+      ` [[Y] ${text} ] `,
+      ` "${text}" `,
+      ` @[ ${text} ] `,
+      ` # ${text}\n`,
+      ` } ${text}`
+    )
+  ),
+  fc.string({ maxLength: 24 })
 );
 
 const key = fc.stringMatching(/^[a-z0-9_.@$-]{1,10}$/);
@@ -108,10 +139,12 @@ const pdxItem: fc.Arbitrary<PdxItem> = fc.letrec<{ item: PdxItem; items: PdxItem
     fc.record({ items: tie("items") }).map(({ items }): PdxItem => ({ kind: "container", items })),
     fc
       .record({ name: bareText, negated: fc.boolean(), items: tie("items") })
-      .map(({ name, negated, items }): PdxItem => ({ kind: "param", name, negated, items })),
+      .map(({ name, negated, items }): PdxItem => paramBlock(name, items, negated)),
+    // Built through the constructor, so the generator cannot produce a region
+    // the package would refuse to write.
     fc
       .record({ name: bareText, negated: fc.boolean(), text: unbalancedRegionText })
-      .map(({ name, negated, text }): PdxItem => ({ kind: "param-text", name, negated, text }))
+      .map(({ name, negated, text }): PdxItem => paramText(name, text, negated))
   ),
   items: fc.array(tie("item"), { maxLength: 5 }),
 })).item;
@@ -278,6 +311,33 @@ describe("properties", () => {
       }),
       { numRuns: 1000 }
     );
+  });
+
+  /**
+   * The region body is the one field carried as raw text, so it is the one
+   * that could emit something reading back as a different node. Either it is
+   * refused before anything is written, or the region comes back exactly as
+   * it was built — balanced bodies and `]`-bearing bodies included.
+   */
+  it("closure: a region body is refused, or re-reads as the same region", () => {
+    let accepted = 0;
+    fc.assert(
+      fc.property(bareText, fc.boolean(), regionBody, (name, negated, text) => {
+        let region: PdxParamText;
+        try {
+          region = paramText(name, text, negated);
+        } catch {
+          return; // outside the language, and said so before emitting
+        }
+        accepted += 1;
+        const document = parse(serialize([region]), "prop.txt");
+        expect(document.diagnostics).toEqual([]);
+        expect(document.items).toEqual([region]);
+      }),
+      { numRuns: 2000 }
+    );
+    // A property that refused every input would pass while proving nothing.
+    expect(accepted).toBeGreaterThan(100);
   });
 
   it("closure: a key survives as itself, bare or quoted", () => {
