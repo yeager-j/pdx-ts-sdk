@@ -20,9 +20,11 @@ import {
   isBareToken,
   isMathSource,
   isNumeral,
+  isOperator,
   isParamName,
   isQuotableContent,
   isVarName,
+  PDX_OPERATORS,
 } from "./representable.ts";
 
 /** Between quotes, and readable back as the same content. */
@@ -134,6 +136,15 @@ function serializeItem(item: PdxItem, depth: number): string {
     // answer covers a key opening with a byte-order mark, which no document
     // may open with.
     const key = isBareKey(item.key) ? item.key : quotedText(item.key, "key");
+    // The same backstop the other fields get. `op` is emitted raw, and its
+    // `PdxOp` type is gone by now, so a tree assembled as an object literal
+    // could write text no parse of the result would accept.
+    if (!isOperator(item.op)) {
+      throw new Error(
+        `Cannot serialize operator ${JSON.stringify(item.op)}: it is emitted raw, and parsing ` +
+          `the result would fail (one of ${PDX_OPERATORS.join(" ")})`
+      );
+    }
     const value =
       item.value.kind === "container" ? containerText(item.value, depth) : scalarText(item.value);
     return `${indent}${key} ${item.op} ${value}`;
