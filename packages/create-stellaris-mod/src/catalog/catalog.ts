@@ -15,10 +15,14 @@
  * `defineRecipe` is a type-inference helper and a protocol check. It is not a
  * template language: a recipe's renderer owns its whole source shape, and the
  * only thing the catalog knows about that source is that it is a string.
+ *
+ * Name derivation is the caller's too, and for the same reason defaults are:
+ * the command has to derive before it can preview a path or a binding, so a
+ * derivation here would be a second decision about one file. A request arrives
+ * with its names already refined, or it is not a request yet.
  */
 
 import { COMMON_GENERATE_FLAGS } from "../options.ts";
-import { deriveNames } from "./names.ts";
 import type {
   AnswersOf,
   ChoiceQuestion,
@@ -140,7 +144,7 @@ export function createCatalog(recipes: readonly AnyRecipe[]): RecipeCatalog {
     generate(request) {
       const recipe = resolveRecipe(request.recipeId);
       const answers = validateAnswers(recipe, request.answers);
-      const names = deriveNames(request.name);
+      const { names } = request;
       return {
         stem: names.stem,
         basename: names.basename,

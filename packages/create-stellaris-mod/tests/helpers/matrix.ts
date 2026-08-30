@@ -14,6 +14,7 @@ import path from "node:path";
 import { format, resolveConfig, type Options } from "prettier";
 import { expect, it } from "vitest";
 
+import { deriveNames } from "../../src/catalog/names.ts";
 import type { GeneratedFeatureSource } from "../../src/catalog/types.ts";
 import type { GoldenProject } from "./golden-project.ts";
 import { expectGolden } from "./goldens.ts";
@@ -23,6 +24,12 @@ export const COMPILER_TIMEOUT = 180_000;
 
 export const NAME = "Resonance Theory";
 export const STEM = "resonance_theory";
+/**
+ * The canonical name, derived once. `generate` derives before it can preview a
+ * path, and the catalog now takes that same refined value, so the matrix builds
+ * requests the way the command does rather than handing over raw text.
+ */
+export const NAMES = deriveNames(NAME);
 export const PREFIX = "golden_mod";
 export const MATERIALIZATION_MANIFEST = ".pdx-sdk-manifest.json";
 

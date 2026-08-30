@@ -13,10 +13,14 @@ import semver from "semver";
 import { describe, expect, it } from "vitest";
 
 import type { ReleaseCompatibilityPolicy } from "../src/release-manifest.ts";
-import { checkSdkCompatibility, VERIFIED_SDK_RANGE } from "../src/sdk-range.ts";
+import { checkSdkCompatibility, VERIFIED_SDK_RANGE, type InstalledSdk } from "../src/sdk-range.ts";
 
 function check(declaredSpecifier: string | undefined, installedVersion?: string) {
-  return checkSdkCompatibility({ declaredSpecifier, installedVersion });
+  const installed: InstalledSdk =
+    installedVersion === undefined
+      ? { kind: "absent" }
+      : { kind: "installed", version: installedVersion };
+  return checkSdkCompatibility({ declaredSpecifier, installed });
 }
 
 describe("checkSdkCompatibility", () => {
@@ -32,7 +36,7 @@ describe("checkSdkCompatibility", () => {
   it("accepts a custom release policy that proves the declared coordinate", () => {
     expect(
       checkSdkCompatibility(
-        { declaredSpecifier: "0.2.1", installedVersion: undefined },
+        { declaredSpecifier: "0.2.1", installed: { kind: "absent" } },
         compatiblePolicy
       ).supported
     ).toBe(true);
@@ -40,7 +44,7 @@ describe("checkSdkCompatibility", () => {
 
   it("refuses a custom release policy that cannot prove the declared coordinate", () => {
     const result = checkSdkCompatibility(
-      { declaredSpecifier: "0.2.1", installedVersion: undefined },
+      { declaredSpecifier: "0.2.1", installed: { kind: "absent" } },
       incompatiblePolicy
     );
     expect(result.supported).toBe(false);
@@ -103,6 +107,43 @@ describe("checkSdkCompatibility", () => {
     const result = check("0.6.0", "not-a-version");
     expect(result.supported).toBe(false);
     expect(result.supported === false && result.reason).toBe("installed-version-unsupported");
+  });
+
+  /**
+   * SDK-387. An absent install and an unreadable one are different facts and
+   * have to stay different. The first is ordinary — authors generate before
+   * installing, and a range provably inside the verified one is evidence on its
+   * own. The second is an installation that is there, that the project would
+   * resolve, and that supports no claim at all; treating it as an absence lets
+   * the declared range stand as evidence for a version nobody could read.
+   */
+  it("refuses an installation whose metadata cannot be read", () => {
+    const result = checkSdkCompatibility({
+      declaredSpecifier: VERIFIED_SDK_RANGE,
+      installed: {
+        kind: "unreadable",
+        file: "/project/node_modules/@pdx-ts/sdk/package.json",
+        detail: "it declares no version",
+      },
+    });
+    expect(result.supported).toBe(false);
+    expect(result.supported === false && result.reason).toBe("installed-metadata-unreadable");
+    // The message has to name the file, because the author's next move is to
+    // look at it.
+    expect(result.detail).toContain("/project/node_modules/@pdx-ts/sdk/package.json");
+    expect(result.detail).toContain("it declares no version");
+  });
+
+  it("does not let a provable declared range excuse an unreadable installation", () => {
+    // The same declared range that is sufficient on its own with nothing
+    // installed is not sufficient once something is.
+    expect(check(VERIFIED_SDK_RANGE).supported).toBe(true);
+    expect(
+      checkSdkCompatibility({
+        declaredSpecifier: VERIFIED_SDK_RANGE,
+        installed: { kind: "unreadable", file: "/x/package.json", detail: "EACCES" },
+      }).supported
+    ).toBe(false);
   });
 
   it("says which check failed, in words an author can act on", () => {

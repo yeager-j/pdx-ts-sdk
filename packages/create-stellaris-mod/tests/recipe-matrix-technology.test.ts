@@ -22,12 +22,13 @@ import {
   expectTypechecks,
   MATERIALIZATION_MANIFEST,
   NAME,
+  NAMES,
   PREFIX,
   STEM,
 } from "./helpers/matrix.ts";
 
 const generate = (): GeneratedFeatureSource =>
-  CATALOG.generate({ recipeId: "technology", name: NAME, answers: {} });
+  CATALOG.generate({ recipeId: "technology", names: NAMES, answers: {} });
 
 describe("technology, with its only answer set", () => {
   describeSource("recipes/technology/default.ts", generate);

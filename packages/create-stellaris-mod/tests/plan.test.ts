@@ -509,7 +509,7 @@ describe("dependency resolution", () => {
     };
     const sdk = dependencies![SCAFFOLDER_RELEASE_MANIFEST.sdk.packageName];
     expect(
-      checkSdkCompatibility({ declaredSpecifier: sdk, installedVersion: undefined }).supported
+      checkSdkCompatibility({ declaredSpecifier: sdk, installed: { kind: "absent" } }).supported
     ).toBe(true);
     expect(devDependencies[SCAFFOLDER_RELEASE_MANIFEST.sdkTesting.packageName]).toBeDefined();
     expect(dependencies![SCAFFOLDER_RELEASE_MANIFEST.sdkTesting.packageName]).toBeUndefined();

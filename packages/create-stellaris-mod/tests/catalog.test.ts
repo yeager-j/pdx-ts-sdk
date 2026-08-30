@@ -68,7 +68,7 @@ function question(overrides: Partial<ChoiceQuestion> = {}): ChoiceQuestion {
 function recipe(overrides: {
   summary?: RecipeSummary;
   questions?: readonly ChoiceQuestion[];
-  render?: () => string;
+  render?: AnyRecipe["render"];
 }): AnyRecipe {
   return {
     summary: overrides.summary ?? summary(),
@@ -165,7 +165,7 @@ describe("constructing a catalog", () => {
 
 describe("generate", () => {
   const guided = createCatalog([recipe({ questions: [question()], render: () => "// guided\n" })]);
-  const request = { recipeId: "synthetic", name: "Some Name" };
+  const request = { recipeId: "synthetic", names: NAMES };
 
   it("refuses a recipe it does not carry, and carries the ids that exist", () => {
     let caught: unknown;
@@ -205,15 +205,51 @@ describe("generate", () => {
     );
   });
 
+  /**
+   * SDK-392. The command derives before it can preview a target path or a
+   * binding, so the catalog taking raw text and deriving again would put two
+   * decisions behind one file. They agree only while the derivation happens to
+   * be idempotent over its own output — nothing in the design says it is, and
+   * nobody would notice it breaking until an author confirmed one path and
+   * received another.
+   */
+  it("renders the names it was given rather than re-deriving them", () => {
+    const seen: DerivedNames[] = [];
+    const catalog = createCatalog([
+      recipe({
+        render: ({ names: given }) => {
+          seen.push(given);
+          return "// rendered\n";
+        },
+      }),
+    ]);
+
+    const generated = catalog.generate({ recipeId: "synthetic", names: NAMES, answers: {} });
+
+    // The same object, not a value that merely matches one.
+    expect(seen).toEqual([NAMES]);
+    expect(seen[0]).toBe(NAMES);
+    expect(generated.stem).toBe(NAMES.stem);
+    expect(generated.basename).toBe(NAMES.basename);
+  });
+
+  it("publishes under exactly the basename the caller previewed", () => {
+    // The two values the command shows an author before it writes anything.
+    const names = deriveNames("Résonance Théorie");
+    const generated = CATALOG.generate({ recipeId: "technology", names, answers: {} });
+    expect(generated.basename).toBe(names.basename);
+    expect(generated.stem).toBe(names.stem);
+  });
+
   it("returns the same bytes for the same request, twice", () => {
     const once = CATALOG.generate({
       recipeId: "technology",
-      name: "Resonance Theory",
+      names: deriveNames("Resonance Theory"),
       answers: {},
     });
     const twice = CATALOG.generate({
       recipeId: "technology",
-      name: "Resonance Theory",
+      names: deriveNames("Resonance Theory"),
       answers: {},
     });
     expect(twice.contents).toBe(once.contents);
@@ -256,7 +292,7 @@ describe("the baked recipes", () => {
       const name = "Some Name";
       const { identifier } = deriveNames(name);
       for (const answers of variants(CATALOG.view(id).questions)) {
-        const { contents } = CATALOG.generate({ recipeId: id, name, answers });
+        const { contents } = CATALOG.generate({ recipeId: id, names: deriveNames(name), answers });
         expect(
           contents.includes(`export const ${identifier} =`),
           `${id} (${kind}) with ${JSON.stringify(answers)}`

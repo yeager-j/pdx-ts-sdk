@@ -23,7 +23,7 @@ import {
   expectTypechecks,
   freshOut,
   MATERIALIZATION_MANIFEST,
-  NAME,
+  NAMES,
   PREFIX,
   STEM,
 } from "./matrix.ts";
@@ -47,7 +47,7 @@ export function describeEventMatrix(visibility: Visibility): void {
   const generateKind = (kind: (typeof KINDS)[number]): GeneratedFeatureSource =>
     CATALOG.generate({
       recipeId: "event",
-      name: NAME,
+      names: NAMES,
       answers: { visibility, "event-kind": kind },
     });
 

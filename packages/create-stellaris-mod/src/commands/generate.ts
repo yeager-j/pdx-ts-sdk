@@ -42,7 +42,7 @@ import type { CliIo } from "../io.ts";
 import { findManifest, MANIFEST_BASENAME, ManifestError } from "../manifest.ts";
 import { helpText, OptionsError, parseGenerateArgv, parseRecipeFlags } from "../options.ts";
 import { collisionMessage, preflightTarget, PublishError, publishExclusive } from "../publish.ts";
-import { checkSdkCompatibility, SDK_PACKAGE } from "../sdk-range.ts";
+import { checkSdkCompatibility, SDK_PACKAGE, type InstalledSdk } from "../sdk-range.ts";
 import { CancelledError, type Terminal } from "../terminal.ts";
 import { VERSION } from "../version.ts";
 import { kindLabel } from "./list.ts";
@@ -170,7 +170,7 @@ export async function runGenerate(
 
     const compatibility = checkSdkCompatibility({
       declaredSpecifier: project.declaredSpecifier,
-      installedVersion: await findInstalledSdkVersion(found.rootDir),
+      installed: await findInstalledSdk(found.rootDir),
     });
     if (!compatibility.supported) {
       if (!parsed.allowUnsupportedSdk) {
@@ -217,13 +217,10 @@ export async function runGenerate(
 
     // 7. The pure catalog, once. This same value feeds the dry run and the
     //    publisher, so what an author previews is what an author gets. The
-    //    normalized title goes in rather than the raw argument, and the catalog
-    //    derives its own names from it — so the path shown at step 5 and the
-    //    basename published at step 10 agree only if the derivation is
-    //    idempotent over its own title. That is an invariant rather than a
-    //    construction, and `adversarial-names.test.ts` pins it across the
-    //    hostile-name corpus.
-    const generated = CATALOG.generate({ recipeId, name: names.title, answers });
+    //    derivation from step 4 goes in whole, so the path shown at step 5 and
+    //    the basename published at step 10 are the same value rather than two
+    //    derivations that happen to agree.
+    const generated = CATALOG.generate({ recipeId, names, answers });
 
     // 8. A look at the target, which creates nothing.
     const preflight = await preflightTarget(
@@ -427,7 +424,12 @@ async function readProjectPackage(rootDir: string): Promise<ProjectPackage> {
     throw new ManifestError(`${file}: "imports" must be a JSON object, and is not one.`);
   }
 
-  let declaredSpecifier: string | undefined;
+  // Both blocks are read before either is accepted. Taking the first
+  // declaration and skipping the rest would let `dependencies` answer for a
+  // `devDependencies` entry asking for something else — and the two ranges
+  // decide which SDK an install resolves, so a project that names two of them
+  // has not said which SDK the generated source is checked against.
+  const declarations: { block: string; specifier: string }[] = [];
   for (const block of ["dependencies", "devDependencies"] as const) {
     const declared = root[block];
     if (declared === undefined) {
@@ -437,7 +439,7 @@ async function readProjectPackage(rootDir: string): Promise<ProjectPackage> {
       throw new ManifestError(`${file}: "${block}" must be a JSON object, and is not one.`);
     }
     const specifier = declared[SDK_PACKAGE];
-    if (specifier === undefined || declaredSpecifier !== undefined) {
+    if (specifier === undefined) {
       continue;
     }
     if (typeof specifier !== "string") {
@@ -446,14 +448,24 @@ async function readProjectPackage(rootDir: string): Promise<ProjectPackage> {
           `is not one. Nothing can be proved about a dependency that is not spelled out.`
       );
     }
-    declaredSpecifier = specifier;
+    declarations.push({ block, specifier });
   }
 
-  return { modImport: imports?.["#mod"], declaredSpecifier };
+  const [first, second] = declarations;
+  if (first !== undefined && second !== undefined && first.specifier !== second.specifier) {
+    throw new ManifestError(
+      `${file} declares ${SDK_PACKAGE} twice and differently: ` +
+        `"${first.block}" asks for ${first.specifier} and "${second.block}" asks for ` +
+        `${second.specifier}. Which one an install resolves is not this command's to guess, so ` +
+        `remove one of them and leave the range the project means.`
+    );
+  }
+
+  return { modImport: imports?.["#mod"], declaredSpecifier: first?.specifier };
 }
 
 /**
- * The installed SDK's version, when there is one to read.
+ * What is installed where this project would resolve the SDK.
  *
  * The walk upward is Node's own lookup, not thoroughness for its own sake: in a
  * workspace the SDK is installed once at the root and the project resolves it
@@ -465,30 +477,62 @@ async function readProjectPackage(rootDir: string): Promise<ProjectPackage> {
  * the SDK's `exports` map does not expose `package.json`, so resolution of the
  * one file that carries the version fails.
  *
- * An absent install is not a fault — a declared range provably inside the
- * verified one is evidence on its own, and authors generate before installing.
+ * Three answers, not two. An absent install is not a fault — a declared range
+ * provably inside the verified one is evidence on its own, and authors generate
+ * before installing. A *present* install whose metadata will not parse is the
+ * opposite: it is what the project would resolve, and it cannot support any
+ * claim about the SDK the generated source will run against. Only `ENOENT`
+ * means "not at this level, keep walking"; a refused read is a fact about the
+ * installation that is there.
  */
-export async function findInstalledSdkVersion(startDir: string): Promise<string | undefined> {
+export async function findInstalledSdk(startDir: string): Promise<InstalledSdk> {
   let dir = path.resolve(startDir);
   for (;;) {
     const file = path.join(dir, "node_modules", ...SDK_PACKAGE.split("/"), "package.json");
-    let installed: unknown;
-    let isInstalled = false;
+    let bytes: string | undefined;
     try {
-      installed = JSON.parse(await readFile(file, "utf8"));
-      isInstalled = true;
-    } catch {
+      bytes = await readFile(file, "utf8");
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException | undefined)?.code !== "ENOENT") {
+        return {
+          kind: "unreadable",
+          file,
+          detail: error instanceof Error ? error.message : String(error),
+        };
+      }
       // Not installed at this level; keep walking, the way Node would.
     }
-    if (isInstalled) {
-      // The first installation found is the one that would be resolved, so its
-      // version is the answer even when that turns out to be no answer at all.
+
+    if (bytes !== undefined) {
+      // The first installation found is the one that would be resolved, so it
+      // is the answer — including when the answer is that it cannot be read.
+      let installed: unknown;
+      try {
+        installed = JSON.parse(bytes);
+      } catch (error) {
+        return {
+          kind: "unreadable",
+          file,
+          detail: `it is not valid JSON (${error instanceof Error ? error.message : String(error)})`,
+        };
+      }
       const version = isPlainObject(installed) ? installed["version"] : undefined;
-      return typeof version === "string" ? version : undefined;
+      if (typeof version !== "string") {
+        return {
+          kind: "unreadable",
+          file,
+          detail:
+            version === undefined
+              ? "it declares no version"
+              : `its "version" is ${typeof version} rather than a string`,
+        };
+      }
+      return { kind: "installed", version };
     }
+
     const parent = path.dirname(dir);
     if (parent === dir) {
-      return undefined;
+      return { kind: "absent" };
     }
     dir = parent;
   }
