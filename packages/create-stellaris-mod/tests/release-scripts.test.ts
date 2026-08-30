@@ -184,6 +184,47 @@ describe("release readiness", () => {
       error: expect.stringContaining(join("packages", "sdk", "LICENSE")),
     });
   });
+
+  /**
+   * The install-gated gates are the checks a hermetic CI runner cannot make,
+   * so a skipped one is recorded as a failure rather than a pass (SDK-320).
+   * Without this, a release could go out with neither the vanilla codegen
+   * drift check nor the pdxscript external evidence behind it, and the summary
+   * would read green.
+   */
+  it("fails, rather than passes, every install-gated gate when there is no install", () => {
+    const results = checkRelease(releaseFixture(), () => undefined, null) as Array<{
+      name: string;
+      passed: boolean;
+      skipped?: boolean;
+      error?: string;
+    }>;
+
+    for (const name of ["pdxscript vanilla evidence", "vanilla codegen drift"]) {
+      expect(results).toContainEqual({
+        name,
+        passed: false,
+        skipped: true,
+        error: expect.stringContaining("SKIPPED: no Stellaris install found"),
+      });
+    }
+  });
+
+  it("runs the pdxscript external evidence when an install is present", () => {
+    const commands: string[] = [];
+    // The fixture carries no stellaris-ids manifest, so the run stops at the
+    // revision step further down. The evidence gate runs before it, which is
+    // what this asserts.
+    expect(() =>
+      checkRelease(
+        releaseFixture(),
+        (_root, command, args) => commands.push(`${command} ${args.join(" ")}`),
+        "/somewhere/Stellaris"
+      )
+    ).toThrow(/stellaris-ids/);
+
+    expect(commands).toContain("npm run test:vanilla");
+  });
 });
 
 describe("Stellaris IDs revision decision", () => {

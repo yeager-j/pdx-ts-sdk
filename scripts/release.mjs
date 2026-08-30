@@ -328,15 +328,29 @@ export function checkRelease(root, execute = run, installPath = DETECT_INSTALL) 
     npm(`pack ${releasePackage.name}`, ["pack", "--dry-run", "--workspace", releasePackage.name]);
   }
 
+  // Install-gated gates. A skip is recorded as a failure rather than a pass:
+  // these are the checks a hermetic CI runner cannot make, so a release that
+  // silently went without them is a release with less evidence behind it than
+  // it appears to have.
   if (resolvedInstallPath === undefined || resolvedInstallPath === null) {
-    results.push({
-      name: "vanilla codegen drift",
-      passed: false,
-      skipped: true,
-      error: "SKIPPED: no Stellaris install found; codegen:vanilla:check was not run.",
-    });
+    for (const [name, command] of [
+      ["pdxscript vanilla evidence", "test:vanilla"],
+      ["vanilla codegen drift", "codegen:vanilla:check"],
+    ]) {
+      results.push({
+        name,
+        passed: false,
+        skipped: true,
+        error: `SKIPPED: no Stellaris install found; ${command} was not run.`,
+      });
+    }
     return results;
   }
+
+  // The pdxscript fixpoint over every shipped file, and its agreement with an
+  // independent parser. `npm test` skips both without an install; this script
+  // refuses to (SDK-320).
+  npm("pdxscript vanilla evidence", ["run", "test:vanilla"]);
 
   const publishedVersion = readJson(
     join(root, "packages", "stellaris-ids", PACKAGE_MANIFEST)

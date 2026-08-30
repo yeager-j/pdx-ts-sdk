@@ -26,6 +26,7 @@
     "corpus:check": "node --conditions=pdx-source packages/sdk/tests/codegen/corpus-check.ts",
     "typecheck": "npm run generate:version && tsc --noEmit && npm run typecheck --workspaces --if-present",
     "test": "npm run generate:version && vitest run",
+    "test:vanilla": "node --conditions=pdx-source scripts/test-vanilla.mjs",
     "test:asset-scale": "node --expose-gc --conditions=pdx-source packages/sdk/tests/assets-scale.ts",
     "test:watch": "vitest",
     "example": "node --conditions=pdx-source examples/hello-galaxy/build.ts",

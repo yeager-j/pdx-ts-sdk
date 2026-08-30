@@ -1,55 +1,34 @@
 /**
  * Contact with reality: parse every .txt under the local install's common/
  * tree and assert the semantic fixpoint — parse → serialize → re-parse
- * yields the same tree, byte-stable on the second emit. Runs only where the
- * install exists; the committed gates are the per-claim suite and the
- * property tests.
+ * yields the same tree, byte-stable on the second emit.
+ *
+ * One of the package's two pieces of external evidence. The per-claim and
+ * property suites prove it is consistent with itself; only this one says it
+ * reads the files the game actually ships. It needs an install, so an
+ * ordinary `npm test` skips it — see `vanilla-install.ts` for where a skip is
+ * made to fail instead of passing quietly (SDK-320).
  *
  * No silent caps: files the parser cannot read are collected and pinned by
  * name, never skipped quietly. Growing a list means vanilla changed under
  * the suite (or a claim is wrong — either is worth knowing).
  */
 
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { join, relative } from "node:path";
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { parse, serialize, withoutLines, type PdxDocument } from "../src/index.ts";
+import {
+  requireInstall,
+  SKIP_WITHOUT_INSTALL,
+  vanillaFiles,
+  vanillaName,
+} from "./vanilla-install.ts";
 
-const STELLARIS_DIR =
-  process.env["STELLARIS_PATH"] ??
-  join(process.env["HOME"] ?? "", "Library/Application Support/Steam/steamapps/common/Stellaris");
-const COMMON = join(STELLARIS_DIR, "common");
-const HAS_INSTALL = existsSync(COMMON);
-
-if (!HAS_INSTALL) {
-  console.warn(
-    `[pdxscript] skipping the vanilla fixpoint: ${COMMON} does not exist; ` +
-      "set STELLARIS_PATH to the Stellaris install root"
-  );
-}
-
-function walk(dir: string): string[] {
-  const files: string[] = [];
-  for (const name of readdirSync(dir)) {
-    const path = join(dir, name);
-    if (statSync(path).isDirectory()) {
-      files.push(...walk(path));
-    } else if (name.endsWith(".txt")) {
-      files.push(path);
-    }
-  }
-  return files;
-}
-
-// Files that are not PDXScript at all (modding documentation shipped as .txt).
-const NOT_PDXSCRIPT = new Set(["HOW_TO_MAKE_NEW_SHIPS.txt", "99_README_EDICTS.txt"]);
-
-describe.skipIf(!HAS_INSTALL)("vanilla corpus (non-gating)", () => {
+describe.skipIf(SKIP_WITHOUT_INSTALL)("vanilla corpus", () => {
   it("parse → serialize → re-parse is a fixpoint over all of common/", () => {
-    const files = walk(COMMON).filter(
-      (path) => !NOT_PDXSCRIPT.has(relative(COMMON, path).split("/").pop()!)
-    );
+    requireInstall();
+    const files = vanillaFiles();
     expect(files.length).toBeGreaterThan(500);
 
     const unreadable: string[] = [];
@@ -57,7 +36,7 @@ describe.skipIf(!HAS_INSTALL)("vanilla corpus (non-gating)", () => {
     let entries = 0;
 
     for (const path of files) {
-      const name = relative(COMMON, path);
+      const name = vanillaName(path);
       const source = readFileSync(path, "utf8");
       let document: PdxDocument;
       try {
