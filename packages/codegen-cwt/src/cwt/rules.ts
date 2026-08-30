@@ -546,7 +546,7 @@ export function readAliases(
       name,
       type: classify(entry.value, resolverFor(singleAliases), collector.report),
       docs: entry.docs,
-      scope: scopeOf(entry.options),
+      scope: scopeOf(entry.options, collector.report),
       supportedScopes: supportedScopesOf(entry.options),
       file,
       line: entry.line,
@@ -743,7 +743,7 @@ function readBodies(
     const block = classifyBlock(entry.value, resolverFor(singleAliases), collector.report);
     bodies.set(entry.key.text, {
       fields: block.fields,
-      scope: scopeOf(entry.options),
+      scope: scopeOf(entry.options, collector.report),
     });
   }
   return { bodies, diagnostics: collector.diagnostics };
@@ -931,6 +931,7 @@ export function buildRuleSet(
 ): RuleSet {
   const state = createRuleSetAccumulator(extraAliasCategories);
   mergeParserDiagnostics(parsedFiles, state);
+  mergeParserDiagnostics(extraComplexEnumFiles, state);
   mergeReferencedDeclarations(parsedFiles, state);
   mergeResolvedRules(parsedFiles, state);
   mergeExtraComplexEnums(extraComplexEnumFiles, state);

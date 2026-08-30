@@ -94,6 +94,14 @@ describe("buildRuleSet order independence", () => {
     const resolved = buildRuleSet([consumes, declares]).triggers.get("my_trigger")?.[0];
     expect(resolved?.type.kind).toBe("block");
   });
+
+  it("retains parser diagnostics from secondary complex-enum files", () => {
+    const secondary = file("secondary.cwt", "## cardinality 0..1\nfield = bool");
+
+    expect(buildRuleSet([], [secondary]).diagnostics).toEqual([
+      { kind: "malformed-option", file: "secondary.cwt", line: 1, text: "## cardinality 0..1" },
+    ]);
+  });
 });
 
 describe("loadRules against the real rules", () => {

@@ -11,7 +11,7 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 
-import { parseCwt } from "./parser.ts";
+import { parseCwt, type CwtDiagnostic } from "./parser.ts";
 import {
   buildRuleSet,
   readContentTypes,
@@ -66,19 +66,29 @@ function cwtFiles(root: string, relative = ""): string[] {
   return files;
 }
 
-/** Loads only content type declarations from an explicit list of CWT files. */
+/** Content type declarations and parser diagnostics loaded from CWT files. */
+export interface ContentTypeLoadResult {
+  /** Content type declarations keyed by their CWT type name. */
+  readonly contentTypes: ReadonlyMap<string, ContentType>;
+  /** Recoverable parser diagnostics from the loaded files. */
+  readonly diagnostics: readonly CwtDiagnostic[];
+}
+
+/** Loads content type declarations and parser diagnostics from explicit CWT files. */
 export function loadContentTypesFrom(
   root: string,
   files: readonly string[]
-): ReadonlyMap<string, ContentType> {
+): ContentTypeLoadResult {
   const contentTypes = new Map<string, ContentType>();
+  const diagnostics: CwtDiagnostic[] = [];
   for (const relative of files) {
     const parsed = parseCwt(readFileSync(path.join(root, relative), "utf8"), relative);
+    diagnostics.push(...parsed.diagnostics);
     for (const [name, contentType] of readContentTypes(parsed.nodes)) {
       contentTypes.set(name, contentType);
     }
   }
-  return contentTypes;
+  return { contentTypes, diagnostics };
 }
 
 function parseFile(root: string, relative: string): ParsedRuleFile {

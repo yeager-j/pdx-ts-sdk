@@ -108,7 +108,14 @@ export function resolveRegistries(
   const rules = loadRules(configRoot);
   const outside = rows.filter((row) => !rules.contentTypes.has(row.type));
   const extraSources = [...new Set(outside.map((row) => row.source))].sort();
-  const extra = loadContentTypesFrom(configRoot, extraSources);
+  const { contentTypes: extra, diagnostics } = loadContentTypesFrom(configRoot, extraSources);
+  if (diagnostics.length > 0) {
+    throw new Error(
+      "Hermetic content type resolution has no drift baseline; malformed CWT rules must be " +
+        "fixed rather than accepted:\n" +
+        diagnostics.map(({ file, line, text }) => `  ${file}:${line} ${text}`).join("\n")
+    );
+  }
   const subtypeReferencedTypes = typesReferencedBySubtype(rules);
   return rows.map((row) =>
     resolveRow(row, rules.contentTypes.get(row.type) ?? extra.get(row.type), subtypeReferencedTypes)
