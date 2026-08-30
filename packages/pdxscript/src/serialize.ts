@@ -24,6 +24,7 @@ import {
   isParamName,
   isQuotableContent,
   isVarName,
+  MAX_NESTING_DEPTH,
   PDX_OPERATORS,
 } from "./representable.ts";
 
@@ -80,7 +81,27 @@ export function isScalar(item: PdxItem): item is PdxScalar {
   );
 }
 
+/**
+ * The depth the parser guards, checked from the writing end.
+ *
+ * A body sits one level below the item that opens it, and the parser refuses
+ * to read a body past the limit — so emitting one would produce a file this
+ * package could not read back, which is the closure the constructors and the
+ * serializer are supposed to keep. The check is here rather than in
+ * `container()` because depth is a property of the whole assembled tree, and
+ * a constructor sees only the level it is handed.
+ */
+function enterBody(depth: number, what: string): void {
+  if (depth + 1 > MAX_NESTING_DEPTH) {
+    throw new Error(
+      `Cannot serialize a ${what} nested deeper than ${MAX_NESTING_DEPTH} levels: parsing the ` +
+        "result would fail with the same limit"
+    );
+  }
+}
+
 function containerText(container: PdxContainer, depth: number): string {
+  enterBody(depth, "container");
   let head = "";
   if (container.header !== undefined) {
     if (!isBareToken(container.header)) {
@@ -107,6 +128,7 @@ function regionOpener(param: PdxParamBlock | PdxParamText): string {
 }
 
 function paramText(param: PdxParamBlock, depth: number): string {
+  enterBody(depth, "region");
   const indent = "\t".repeat(depth);
   const open = regionOpener(param);
   if (param.items.length === 0) {
@@ -121,8 +143,14 @@ function paramText(param: PdxParamBlock, depth: number): string {
  * the body: the parser's region scan is deterministic, so what it captured
  * it captures again — but only if no indentation creeps in between the
  * opener and the closing `]`.
+ *
+ * The depth guard applies here as much as to a region with a tree. Nothing is
+ * emitted one level down, so it is easy to read this as a leaf — but the
+ * parser does not treat it as one: reading the output back opens a region body
+ * at `depth + 1` whether or not that body turns out to be a tree.
  */
-function paramTextRegion(param: PdxParamText): string {
+function paramTextRegion(param: PdxParamText, depth: number): string {
+  enterBody(depth, "region");
   return `${regionOpener(param)}${param.text}]`;
 }
 
@@ -156,7 +184,7 @@ function serializeItem(item: PdxItem, depth: number): string {
     return `${indent}${paramText(item, depth)}`;
   }
   if (item.kind === "param-text") {
-    return `${indent}${paramTextRegion(item)}`;
+    return `${indent}${paramTextRegion(item, depth)}`;
   }
   return `${indent}${scalarText(item)}`;
 }

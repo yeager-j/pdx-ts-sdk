@@ -23,10 +23,7 @@ import type {
   PdxValue,
 } from "./ast.ts";
 import { PdxSyntaxError, tokenize, type Token } from "./lexer.ts";
-import { BYTE_ORDER_MARK, classifyUnquoted } from "./representable.ts";
-
-/** Fuzz-proofing: error on absurd nesting instead of overflowing the stack. */
-const MAX_DEPTH = 1000;
+import { BYTE_ORDER_MARK, classifyUnquoted, MAX_NESTING_DEPTH } from "./representable.ts";
 
 /**
  * The depth guard, as an error the textual fallback must not absorb. A
@@ -86,8 +83,8 @@ class Parser {
 
   /** The shared item loop; `body` decides where it ends and how it repairs. */
   private parseItems(body: Body, openLine: number, depth: number): PdxItem[] {
-    if (depth > MAX_DEPTH) {
-      this.fail(`Nesting exceeds ${MAX_DEPTH} levels`, openLine);
+    if (depth > MAX_NESTING_DEPTH) {
+      this.fail(`Nesting exceeds ${MAX_NESTING_DEPTH} levels`, openLine);
     }
     const items: PdxItem[] = [];
     for (;;) {
@@ -147,8 +144,12 @@ class Parser {
     const negated = token.text.startsWith("!");
     const name = negated ? token.text.slice(1) : token.text;
     const body = token.body ?? "";
-    if (depth + 1 > MAX_DEPTH) {
-      throw new NestingLimitError(`Nesting exceeds ${MAX_DEPTH} levels`, this.fileName, token.line);
+    if (depth + 1 > MAX_NESTING_DEPTH) {
+      throw new NestingLimitError(
+        `Nesting exceeds ${MAX_NESTING_DEPTH} levels`,
+        this.fileName,
+        token.line
+      );
     }
     const inner = new Parser(tokenize(body, this.fileName, token.line), this.fileName);
     let items: PdxItem[];

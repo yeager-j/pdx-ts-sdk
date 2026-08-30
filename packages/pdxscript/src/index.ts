@@ -14,6 +14,7 @@ export {
   isQuotableContent,
   isVarName,
   isWritableText,
+  MAX_NESTING_DEPTH,
   numberValue,
   PDX_OPERATORS,
   tryNumberValue,
