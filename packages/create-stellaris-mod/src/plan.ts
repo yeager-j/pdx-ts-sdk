@@ -79,9 +79,9 @@ export function planProject(resolved: Resolved, packageName?: string): Map<strin
   }
 
   file("src/mod.ts", modTs());
-  file("src/index.ts", indexTs());
-  file("src/inspect.ts", inspectTs());
-  file("src/install.ts", installTs());
+  file("src/index.ts", indexTs(resolved));
+  file("src/inspect.ts", inspectTs(resolved));
+  file("src/install.ts", installTs(resolved));
   file("src/flags.ts", flagsTs(resolved));
   file("src/content/example.ts", contentExampleTs(resolved));
   file("src/content/example.test.ts", contentExampleTestTs(resolved));
@@ -89,10 +89,10 @@ export function planProject(resolved: Resolved, packageName?: string): Map<strin
   file("src/vanilla.ts", vanillaTs(resolved));
 
   if (resolved.llmSupport) {
-    file("AGENTS.md", agentsMd());
+    file("AGENTS.md", agentsMd(resolved));
     symlink("CLAUDE.md", "AGENTS.md");
     file(".agents/skills/pdx-project-startup/SKILL.md", pdxProjectStartupSkill());
-    file(".agents/skills/pdx-sdk-authoring/SKILL.md", pdxSdkAuthoringSkill());
+    file(".agents/skills/pdx-sdk-authoring/SKILL.md", pdxSdkAuthoringSkill(resolved));
     file(".agents/skills/pdx-sdk-docs/SKILL.md", pdxSdkDocsSkill());
     symlink(".claude/skills", "../.agents/skills");
     file(".claude/agents/pdx-docs-expert.md", claudeAgent());

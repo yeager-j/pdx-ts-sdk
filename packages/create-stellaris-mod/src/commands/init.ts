@@ -16,6 +16,7 @@ import { preflight, writeTree } from "../fs.ts";
 import { VERIFIED_STELLARIS_BUILD } from "../generated/verified-build.ts";
 import type { CliIo } from "../io.ts";
 import { helpText, parseArgv, type Resolved } from "../options.ts";
+import { installDependencies, runScript } from "../package-manager.ts";
 import { planProject } from "../plan.ts";
 import { resolveInteractive, resolveNonInteractive } from "../prompts.ts";
 import { CancelledError } from "../terminal.ts";
@@ -156,7 +157,7 @@ function plannedCommands(resolved: Resolved): string[] {
     commands.push("git init");
   }
   if (resolved.install) {
-    commands.push(`${resolved.packageManager} install`);
+    commands.push(installDependencies(resolved.packageManager));
   }
   return commands;
 }
@@ -187,7 +188,9 @@ export function installFailureSteps(
   output: string
 ): string[] {
   if (!idsPackageUnavailable(output)) {
-    return [`  ${packageManager} install        # the install did not complete; run it again`];
+    return [
+      `  ${installDependencies(packageManager)}        # the install did not complete; run it again`,
+    ];
   }
   const build = gameVersion === undefined ? "the detected game build" : `game build ${gameVersion}`;
   return [
@@ -197,7 +200,7 @@ export function installFailureSteps(
     "",
     "  Either wait for the release for that build, or edit the",
     '  "@pdx-ts/stellaris-ids" range in package.json to a build that has one and',
-    `  re-run ${packageManager} install. Ids that moved between the two builds are`,
+    `  re-run ${installDependencies(packageManager)}. Ids that moved between the two builds are`,
     "  then checked against the wrong game.",
   ];
 }
@@ -217,15 +220,16 @@ function nextSteps(
   if (!installed && resolved.install) {
     lines.push(...installFailureSteps(pm, resolved.gameVersion, installOutput));
   } else if (!resolved.install) {
-    lines.push(`  ${pm} install`);
+    lines.push(`  ${installDependencies(pm)}`);
   }
-  lines.push(
-    `  ${pm} run build      # write the mod into ./out/`,
-    `  ${pm} run inspect    # review the compiled project as YAML`,
-    `  ${pm} test           # run the example event chain`,
-    `  ${pm} run install-mod # install it where the launcher looks`,
-    ""
-  );
+  const commands = [
+    ["build", "write the mod into ./out/"],
+    ["inspect", "review the compiled project as YAML"],
+    ["test", "run the example event chain"],
+    ["install-mod", "install it where the launcher looks"],
+  ].map(([script, what]) => [runScript(pm, script!), what!] as const);
+  const width = Math.max(...commands.map(([command]) => command.length));
+  lines.push(...commands.map(([command, what]) => `  ${command.padEnd(width)} # ${what}`), "");
 
   if (resolved.installPath === undefined) {
     lines.push(

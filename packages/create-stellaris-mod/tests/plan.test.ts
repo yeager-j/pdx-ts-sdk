@@ -250,6 +250,34 @@ describe("the scaffolded tree", () => {
     expect(behavior).not.toMatch(/\/Users\/|~\/|LLM-SETUP/);
   });
 
+  /**
+   * SDK-386. The guidance tells the documentation expert to compare the
+   * documentation's declared revision against this scaffold's, so the scaffold
+   * has to state one. Without it the instruction has no second operand: the
+   * workflow either stalls or quietly drops the evidence requirement it claims
+   * to enforce.
+   */
+  it("records the SDK source revision the guidance compares against", () => {
+    const agents = plan().get("AGENTS.md")!;
+    expect(agents).toContain(`SDK source revision: \`${SDK_DOCS_REVISION}\``);
+    expect(agents).toContain(SCAFFOLDER_RELEASE_MANIFEST.sdk.range);
+    expect(agents).toContain("matches the one recorded below");
+    // The docs site publishes the same hash under this label, which is what
+    // makes the two comparable at all.
+    expect(agents).toContain("`SDK revision:`");
+  });
+
+  it("says the recorded revision stops being evidence after an SDK upgrade", () => {
+    // A hash of one SDK source tree describes that tree and no later one, so
+    // guidance that presented it as a standing check would be wrong the first
+    // time an author upgrades.
+    expect(plan().get("AGENTS.md")).toContain("not a live check");
+  });
+
+  it("omits the provenance record with the rest of the agent bundle", () => {
+    expect(project({ llmSupport: false }).has("AGENTS.md")).toBe(false);
+  });
+
   it("drops the opt-outs and their dependencies together", () => {
     const files = plan({ prettier: false, eslint: false });
     expect(files.has(".prettierrc")).toBe(false);
@@ -389,7 +417,7 @@ describe("the Project Manifest", () => {
 
   it("captures the manifest Asset tree inside each build invocation", () => {
     const mod = plan().get("src/mod.ts")!;
-    expect(mod).toContain("export function buildTheMod");
+    expect(mod).toContain("export async function buildTheMod");
     expect(mod).toContain("return project.build(");
     expect(mod).not.toContain("mod.assetTree(");
     expect(mod).not.toContain("mod.compile(");
@@ -553,6 +581,40 @@ describe("dependency resolution", () => {
   });
 });
 
+/**
+ * SDK-385. The generated loader has exactly two states that mean "no view", and
+ * both are named. Collapsing an unreadable install, a parser defect, or a
+ * refused directory into the same silent `undefined` would hand the author a
+ * build with no id-collision checks, no version evidence, and no patch sources,
+ * indistinguishable from one that had all three.
+ */
+describe("the vanilla view's absence and its failures", () => {
+  const vanilla = (overrides: Partial<Resolved> = {}): string =>
+    plan(overrides).get("src/vanilla.ts")!;
+
+  it("returns no view for the deliberate opt-out and for a missing install", () => {
+    expect(vanilla()).toContain('process.env["PDX_NO_VANILLA"] === "1"');
+    expect(vanilla()).toContain("if (error instanceof InstallNotFoundError) {");
+    expect(vanilla()).toContain('import { InstallNotFoundError } from "@pdx-ts/sdk";');
+  });
+
+  it("propagates every other failure instead of building without evidence", () => {
+    expect(vanilla()).toContain("throw error;");
+    expect(vanilla()).not.toContain("return undefined;\n  }\n}\n");
+  });
+
+  it("reports through no console call, the way the SDK's own diagnostics do", () => {
+    expect(vanilla()).not.toContain("console.");
+  });
+
+  it("defers the refusal into the promise the terminal runner awaits", () => {
+    // `runBuild(buildTheMod(), ...)` evaluates the argument first, so a
+    // synchronous throw from `loadVanilla()` would escape the runner that
+    // exists to present failures. An async function makes it a rejection.
+    expect(plan().get("src/mod.ts")).toContain("export async function buildTheMod()");
+  });
+});
+
 describe("the vanilla view the project loads", () => {
   it("bakes in a path the author named, since detection would miss it", () => {
     const vanilla = plan({ installPath: "/weird/place", installPathIsExplicit: true }).get(
@@ -570,6 +632,57 @@ describe("the vanilla view the project loads", () => {
     const vanilla = plan({ installPathIsExplicit: false }).get("src/vanilla.ts")!;
     expect(vanilla).not.toContain("SCAFFOLDED_INSTALL");
     expect(vanilla).toContain("stellaris.load()");
+  });
+});
+
+/**
+ * SDK-391. The selection already decides what gets installed and what the
+ * terminal says next; the documents the project keeps have to agree with it.
+ * A pnpm project whose README says `npm install` earns a second lockfile and a
+ * dependency graph nobody resolved.
+ */
+describe("the selected package manager", () => {
+  it("reaches every command the generated documents print", () => {
+    const files = plan({ packageManager: "pnpm" });
+    const readme = files.get("README.md")!;
+    expect(readme).toContain("pnpm run build");
+    expect(readme).toContain("pnpm run inspect");
+    expect(readme).toContain("pnpm run install-mod");
+    expect(readme).toContain("pnpm run typecheck");
+    expect(files.get("AGENTS.md")).toContain("pnpm run typecheck");
+    expect(files.get(".agents/skills/pdx-sdk-authoring/SKILL.md")).toContain("pnpm run inspect");
+  });
+
+  it("leaves no npm command behind in any generated document", () => {
+    // The failure this catches is a partial derivation: one line converted and
+    // its neighbour still saying `npm`, which reads as a deliberate exception.
+    for (const packageManager of ["pnpm", "yarn", "bun"]) {
+      for (const [relPath, contents] of plan({ packageManager })) {
+        expect(contents, `${relPath} under ${packageManager}`).not.toMatch(/\bnpm (?:run|install)/);
+      }
+    }
+  });
+
+  it("spells adding one dependency the way that manager spells it", () => {
+    // The only command the four genuinely disagree about: `yarn install <pkg>`
+    // is not an add under Yarn Berry, so this one cannot be uniform.
+    const withoutInstall = { installPath: undefined, gameVersion: undefined } as const;
+    for (const [packageManager, expected] of [
+      ["npm", "npm install "],
+      ["pnpm", "pnpm add "],
+      ["yarn", "yarn add "],
+      ["bun", "bun add "],
+    ]) {
+      const readme = plan({ ...withoutInstall, packageManager }).get("README.md")!;
+      expect(readme, packageManager).toContain(`${expected}"@pdx-ts/stellaris-ids@`);
+    }
+  });
+
+  it("always uses the explicit run form, because `bun test` is not the test script", () => {
+    // `bun test` runs Bun's own test runner rather than the project's `test`
+    // script, so the npm shorthand does not survive translation.
+    expect(plan({ packageManager: "bun" }).get("README.md")).toContain("bun run test");
+    expect(plan({ packageManager: "bun" }).get("AGENTS.md")).toContain("bun run test");
   });
 });
 
@@ -621,7 +734,7 @@ describe("SDK-54: config has no build side effect", () => {
     // them belongs in this file.
     const mod = plan().get("src/mod.ts")!;
     expect(mod).toContain("export const { config, mod } = project");
-    expect(mod).toContain("export function buildTheMod");
+    expect(mod).toContain("export async function buildTheMod");
     expect(mod).not.toContain("discoverFeatures(");
     expect(mod).not.toContain("assetTree(");
     expect(mod).not.toContain(".compile(");
