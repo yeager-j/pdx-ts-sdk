@@ -1,7 +1,6 @@
 import { SUPPORTED_VERSION_PATTERN } from "../generated/verified-build.ts";
+import { LOWERCASE_SNAKE_CASE } from "../identity.ts";
 import type { VanillaView } from "../installation/vanilla/view.ts";
-
-const PREFIX_PATTERN = /^[a-z][a-z0-9_]*$/;
 
 /** The mod's identity and launcher metadata. */
 export interface ModConfig<P extends string = string> {
@@ -58,8 +57,8 @@ function assertDescriptorSafe(field: string, value: string): void {
 export function resolveConfig<P extends string>(
   config: Omit<ModConfig<P>, "tags"> & { readonly tags?: readonly string[] }
 ): ResolvedModConfig<P> {
-  if (!PREFIX_PATTERN.test(config.prefix)) {
-    throw new Error(`Mod prefix "${config.prefix}" must be lowercase snake_case ([a-z][a-z0-9_]*)`);
+  if (!LOWERCASE_SNAKE_CASE.pattern.test(config.prefix)) {
+    throw new Error(`Mod prefix "${config.prefix}" must be ${LOWERCASE_SNAKE_CASE.diagnostic}`);
   }
   assertDescriptorSafe("name", config.name);
   if (config.version !== undefined) {

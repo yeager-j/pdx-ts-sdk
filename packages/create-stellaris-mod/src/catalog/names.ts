@@ -18,7 +18,7 @@ import { slugify } from "../fold.ts";
 import type { DerivedNames } from "./types.ts";
 
 /**
- * The SDK's `FILE_STEM_PATTERN`, restated so this package needs no runtime
+ * The SDK's `LOWERCASE_SNAKE_CASE`, restated so this package needs no runtime
  * dependency on the SDK — the same trade `derive.ts` and `manifest.ts` make.
  * `adversarial-names.test.ts` imports the real pattern and asserts the two are
  * identical, so a change to the SDK's grammar breaks a test here rather than a

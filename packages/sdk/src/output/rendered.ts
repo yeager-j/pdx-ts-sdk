@@ -4,27 +4,60 @@ import { compareLogicalPaths, normalizeLogicalPath, type LogicalPath } from "../
 
 const encoder = new TextEncoder();
 
+/**
+ * One immutable rendered artifact at a validated logical path.
+ *
+ * Its identity and contents do not change after rendering. Use `bytes()` to
+ * read binary content without exposing the stored bytes to mutation.
+ */
 export interface RenderedFile {
+  /** The normalized path relative to the mod root. */
   readonly path: LogicalPath;
+  /** Whether this artifact was rendered from text or raw bytes. */
   readonly kind: "text" | "bytes";
+  /** The exact number of stored bytes. */
   readonly byteLength: number;
+  /** The lowercase hexadecimal SHA-256 hash of the stored bytes. */
   readonly sha256: string;
+  /** The source text for a text artifact; `undefined` for a byte artifact. */
   readonly text: string | undefined;
+  /** Returns a new copy of the stored bytes. Mutating it does not change this file. */
   bytes(): Uint8Array;
 }
 
+/**
+ * An immutable, hash-identified snapshot of a rendered mod.
+ *
+ * File iteration is always in canonical logical-path order. Lookup methods
+ * normalize and validate their path input before looking it up.
+ */
 export interface RenderedMod extends Iterable<readonly [LogicalPath, RenderedFile]> {
+  /** The mod prefix that owns this snapshot. */
   readonly prefix: string;
+  /** The number of files in this snapshot. */
   readonly size: number;
+  /** The lowercase hexadecimal SHA-256 hash of the canonical file identities. */
   readonly sha256: string;
-  /** Text-only compatibility projection; use `file()` for byte artifacts. */
+  /**
+   * Returns text at `path`, or `undefined` when it is absent or is a byte artifact.
+   *
+   * This is a text-only compatibility projection; use `file()` for byte artifacts.
+   */
   get(path: string): string | undefined;
+  /** Returns whether this snapshot contains the normalized `path`. */
   has(path: string): boolean;
+  /** Returns the artifact at `path`, or `undefined` when the path is absent. */
   file(path: string): RenderedFile | undefined;
+  /** Returns text at `path`, or `undefined` when it is absent or is a byte artifact. */
   text(path: string): string | undefined;
+  /** Returns paths in canonical logical-path order. */
   keys(): IterableIterator<LogicalPath>;
+  /** Returns files in canonical logical-path order. */
   values(): IterableIterator<RenderedFile>;
+  /** Returns path-file pairs in canonical logical-path order. */
   entries(): IterableIterator<readonly [LogicalPath, RenderedFile]>;
+  /** Returns the same canonical path-file pairs as `entries()`. */
+  [Symbol.iterator](): IterableIterator<readonly [LogicalPath, RenderedFile]>;
 }
 
 /**

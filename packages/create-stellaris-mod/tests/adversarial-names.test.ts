@@ -14,7 +14,7 @@
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { FILE_STEM_PATTERN } from "../../sdk/src/authoring/feature.ts";
+import { LOWERCASE_SNAKE_CASE } from "../../sdk/src/identity.ts";
 import { deriveNames, NameError, STEM_PATTERN } from "../src/catalog/names.ts";
 import { buildingRecipe } from "../src/catalog/recipes/building.ts";
 import { eventRecipe } from "../src/catalog/recipes/event.ts";
@@ -146,7 +146,7 @@ describe("the stem grammar", () => {
     // `names.ts` restates it so the package needs no runtime dependency on the
     // SDK. This is what makes that restatement safe: tightening the SDK's
     // grammar breaks a test here rather than a stranger's generated file.
-    expect(STEM_PATTERN.source).toBe(FILE_STEM_PATTERN.source);
+    expect(STEM_PATTERN.source).toBe(LOWERCASE_SNAKE_CASE.pattern.source);
   });
 });
 
@@ -177,7 +177,7 @@ describe("names the derivation accepts", () => {
       expect(names.stem).toBe(stem);
       expect(names.logicalName).toBe(stem);
       expect(names.basename).toBe(`${stem}.ts`);
-      expect(FILE_STEM_PATTERN.test(names.stem)).toBe(true);
+      expect(LOWERCASE_SNAKE_CASE.pattern.test(names.stem)).toBe(true);
       expect(names.stem.length).toBeLessThanOrEqual(64);
 
       expect(RESERVED.has(names.identifier)).toBe(false);

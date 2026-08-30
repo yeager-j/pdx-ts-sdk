@@ -13,6 +13,7 @@
 import type { ContentItem, ContributionItem } from "../content/types.ts";
 import type { OnActionHookItem } from "../events/on-actions.ts";
 import type { EventItemBase } from "../events/types.ts";
+import { LOWERCASE_SNAKE_CASE } from "../identity.ts";
 import type { ContentPatchItem } from "../installation/vanilla/patch.ts";
 import type { AssetFileItem } from "./assets.ts";
 import type { ComponentTagItem } from "./component-tags.ts";
@@ -46,16 +47,10 @@ export interface Feature<T extends ModItem = ModItem> {
   readonly items: readonly T[];
 }
 
-/** Same shape as the mod prefix: lowercase snake_case, ASCII, flat. The
- * game does not read registry content out of subdirectories — the subdirs
- * under `common/technology/` (`category/`, `tier/`) are different
- * registries, not layout — so stems carry no `/`. */
-export const FILE_STEM_PATTERN = /^[a-z][a-z0-9_]*$/;
-
 export function assertFileStem(stem: string): void {
-  if (!FILE_STEM_PATTERN.test(stem)) {
+  if (!LOWERCASE_SNAKE_CASE.pattern.test(stem)) {
     throw new Error(
-      `Feature file stem "${stem}" must be lowercase snake_case ([a-z][a-z0-9_]*) — ` +
+      `Feature file stem "${stem}" must be ${LOWERCASE_SNAKE_CASE.diagnostic} — ` +
         `flat, no "/": the game does not read registry content out of subdirectories`
     );
   }
@@ -64,10 +59,8 @@ export function assertFileStem(stem: string): void {
 /** Event namespaces share the stem grammar; prefix compliance is checked
  * (as a warning) at `buildMod`, matching the content-id policy. */
 export function assertNamespace(namespace: string): void {
-  if (!FILE_STEM_PATTERN.test(namespace)) {
-    throw new Error(
-      `Event namespace "${namespace}" must be lowercase snake_case ([a-z][a-z0-9_]*)`
-    );
+  if (!LOWERCASE_SNAKE_CASE.pattern.test(namespace)) {
+    throw new Error(`Event namespace "${namespace}" must be ${LOWERCASE_SNAKE_CASE.diagnostic}`);
   }
 }
 
