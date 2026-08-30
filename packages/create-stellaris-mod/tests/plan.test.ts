@@ -268,12 +268,11 @@ describe("the scaffolded tree", () => {
     expect(scripts["lint"]).toBeUndefined();
   });
 
-  it("omits src/vanilla.ts when there is no install to load", () => {
-    // The module's whole body is `stellaris.load()`; shipping it without an
-    // install would put a file in the project that cannot do its job.
+  it("keeps vanilla loading available without a detected install", () => {
     const files = plan({ installPath: undefined, gameVersion: undefined });
-    expect(files.has("src/vanilla.ts")).toBe(false);
-    expect(files.get("src/mod.ts")).not.toContain("./vanilla.ts");
+    expect(files.get("src/vanilla.ts")).toContain("export function loadVanilla()");
+    expect(files.get("src/mod.ts")).toContain('import { loadVanilla } from "./vanilla.ts";');
+    expect(files.get("src/mod.ts")).toContain("return project.build({ vanilla: loadVanilla() });");
   });
 
   it("emits strict JSON where the format is strict", () => {

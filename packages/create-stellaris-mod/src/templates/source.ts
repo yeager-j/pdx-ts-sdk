@@ -8,14 +8,7 @@
 import type { Resolved } from "../options.ts";
 import { quoteTs } from "../quote.ts";
 
-export function modTs(resolved: Resolved): string {
-  const vanillaWiring =
-    resolved.installPath === undefined ? "" : `import { loadVanilla } from "./vanilla.ts";\n`;
-  const buildBody =
-    resolved.installPath === undefined
-      ? "  return project.build();"
-      : "  return project.build({ vanilla: loadVanilla() });";
-
+export function modTs(): string {
   return `/**
  * The mod project declared by \`stellaris-mod.json\`.
  *
@@ -29,7 +22,8 @@ export function modTs(resolved: Resolved): string {
 
 import { createModProject } from "@pdx-ts/sdk";
 import manifest from "../stellaris-mod.json" with { type: "json" };
-${vanillaWiring}
+import { loadVanilla } from "./vanilla.ts";
+
 const project = createModProject(manifest, {
   projectRoot: new URL("../", import.meta.url),
 });
@@ -37,7 +31,7 @@ const project = createModProject(manifest, {
 export const { config, mod } = project;
 
 export function buildTheMod() {
-${buildBody}
+  return project.build({ vanilla: loadVanilla() });
 }
 
 `;
@@ -118,14 +112,14 @@ export function vanillaTs(resolved: Resolved): string {
   return `/**
  * The vanilla view: the installed game, parsed.
  *
- * Passing it to \`mod.compile\` enables checked vanilla references and gives
- * \`mod.patchTechnology\` the parsed definition it needs to re-emit a vanilla
- * definition faithfully. Own content ids are already minted from the mod prefix.
+ * Passing it to \`mod.compile\` gives \`mod.patchTechnology\` the parsed
+ * definition it needs to re-emit a vanilla definition faithfully. Vanilla
+ * identifiers remain checked through the packaged identifier inventory.
  *
  * Optional on purpose. A checkout on a machine without the game still builds —
- * it just builds unchecked — so a teammate or a CI runner is never blocked by
- * not owning Stellaris. Set \`STELLARIS_PATH\` if the install is somewhere the
- * SDK does not look, or \`PDX_NO_VANILLA=1\` to skip it deliberately.
+ * it only has no parsed vanilla view — so a teammate or a CI runner is never
+ * blocked by not owning Stellaris. Set \`STELLARIS_PATH\` if the install is
+ * somewhere the SDK does not look, or \`PDX_NO_VANILLA=1\` to skip it deliberately.
  */
 
 import * as stellaris from "@pdx-ts/sdk/installation";
@@ -141,7 +135,7 @@ export function loadVanilla(): VanillaView | undefined {
     console.warn(
       \`Building without the vanilla view: \${error instanceof Error ? error.message : String(error)}\`
     );
-    console.warn("Set STELLARIS_PATH to the game root to enable vanilla id checks and patches.");
+    console.warn("Set STELLARIS_PATH to the game root to enable vanilla inspection and patches.");
     return undefined;
   }
 }
