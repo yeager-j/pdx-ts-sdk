@@ -193,9 +193,7 @@ export type ModCapability<P extends string, I extends IdProfile> = {
 
 function assertLogicalName(name: string): void {
   if (!LOWERCASE_SNAKE_CASE.pattern.test(name)) {
-    throw new Error(
-      `Logical content name "${name}" must be lowercase snake_case ([a-z][a-z0-9_]*)`
-    );
+    throw new Error(`Logical content name "${name}" must be ${LOWERCASE_SNAKE_CASE.diagnostic}`);
   }
 }
 
@@ -267,9 +265,7 @@ function mintContentId<P extends string, I extends IdProfile>(
 function createNestedDefinitionIdAssertion(prefix: string): (id: string) => void {
   return (id) => {
     if (!LOWERCASE_SNAKE_CASE.pattern.test(id)) {
-      throw new Error(
-        `Nested definition id "${id}" must be lowercase snake_case ([a-z][a-z0-9_]*)`
-      );
+      throw new Error(`Nested definition id "${id}" must be ${LOWERCASE_SNAKE_CASE.diagnostic}`);
     }
     if (!belongsToPrefix(id, prefix)) {
       throw new Error(`Nested definition id "${id}" does not belong to mod prefix "${prefix}"`);
