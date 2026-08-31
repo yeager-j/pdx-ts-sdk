@@ -11,7 +11,15 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 
 import { toPackageName } from "../derive.ts";
-import { gitInitCommands, insideGitWorkTree, installCommand, run } from "../exec.ts";
+import {
+  describeCommand,
+  gitInitCommands,
+  insideGitWorkTree,
+  installCommand,
+  run,
+  type Command,
+  type CommandResult,
+} from "../exec.ts";
 import { preflight, writeTree } from "../fs.ts";
 import { VERIFIED_STELLARIS_BUILD } from "../generated/verified-build.ts";
 import type { CliIo } from "../io.ts";
@@ -69,6 +77,7 @@ export async function runInit(argv: readonly string[], io: CliIo): Promise<numbe
   const localSdk =
     resolved.localSdk === undefined ? undefined : path.resolve(io.cwd, resolved.localSdk);
   const project = planProject({ ...resolved, targetDir, localSdk }, packageName);
+  const steps = plannedSteps(resolved);
 
   if (parsed.values["dry-run"] === true) {
     io.stdout.write(`Would scaffold ${targetDir}:\n`);
@@ -76,8 +85,8 @@ export async function runInit(argv: readonly string[], io: CliIo): Promise<numbe
       const target = entry.kind === "symlink" ? ` -> ${entry.target}` : "";
       io.stdout.write(`  ${relPath}${target}\n`);
     }
-    for (const command of plannedCommands(resolved)) {
-      io.stdout.write(`  $ ${command}\n`);
+    for (const line of previewSteps(steps)) {
+      io.stdout.write(`${line}\n`);
     }
     return 0;
   }
@@ -91,24 +100,12 @@ export async function runInit(argv: readonly string[], io: CliIo): Promise<numbe
     return 1;
   }
 
-  // Install first, so the lockfile it produces is part of the initial commit.
-  // The other order leaves a freshly scaffolded repository immediately dirty,
-  // with its first commit describing a dependency graph that was never resolved.
-  let installed = false;
-  let installOutput = "";
-  if (resolved.install) {
-    const result = await run(installCommand(resolved.packageManager), targetDir);
-    installed = result.code === 0;
-    installOutput = result.output;
-  }
+  const outcomes = await runSteps(steps, targetDir);
+  const install = outcomes.get("install");
 
-  if (resolved.git && !(await insideGitWorkTree(targetDir))) {
-    for (const command of gitInitCommands()) {
-      await run(command, targetDir);
-    }
-  }
-
-  io.stdout.write(nextSteps(resolved, targetDir, io.cwd, installed, installOutput));
+  io.stdout.write(
+    nextSteps(resolved, targetDir, io.cwd, install?.code === 0, install?.output ?? "")
+  );
   return 0;
 }
 
@@ -151,15 +148,86 @@ function checkLocalCheckout(localSdk: string | undefined): void {
   }
 }
 
-function plannedCommands(resolved: Resolved): string[] {
-  const commands: string[] = [];
-  if (resolved.git) {
-    commands.push("git init");
-  }
+/** The steps a scaffold performs after its files, named so outcomes read back. */
+type StepId = "install" | "git";
+
+/**
+ * One group of commands the scaffold runs against the target, and the condition
+ * under which it does not.
+ *
+ * A group rather than a command because `git init`, `git add` and `git commit`
+ * share one precondition and it stops holding after the first of them runs:
+ * asking again before `git add` would find the repository the step just made
+ * and skip the rest of its own work.
+ */
+interface ScaffoldStep {
+  readonly id: StepId;
+  readonly commands: readonly Command[];
+  /** Answered against the real target. A dry run has no target to ask. */
+  readonly skipWhen?: (targetDir: string) => Promise<boolean>;
+  /** That condition in words, since the preview cannot evaluate it. */
+  readonly condition?: string;
+}
+
+/**
+ * Everything the scaffold does after writing files, in the order it does it.
+ *
+ * One value, read twice: the dry run prints it and the real run executes it.
+ * The order is a decision rather than an accident — the install runs first so
+ * the lockfile it produces is part of the initial commit, and the other order
+ * leaves a freshly scaffolded repository immediately dirty, its first commit
+ * describing a dependency graph that was never resolved. A preview that
+ * reconstructed the list separately said the opposite, and was describing a
+ * command this one is not.
+ */
+function plannedSteps(resolved: Resolved): ScaffoldStep[] {
+  const steps: ScaffoldStep[] = [];
   if (resolved.install) {
-    commands.push(installDependencies(resolved.packageManager));
+    steps.push({ id: "install", commands: [installCommand(resolved.packageManager)] });
   }
-  return commands;
+  if (resolved.git) {
+    steps.push({
+      id: "git",
+      commands: gitInitCommands(),
+      skipWhen: insideGitWorkTree,
+      condition: "skipped when the target is already inside a git repository",
+    });
+  }
+  return steps;
+}
+
+/** The plan as lines, for the dry run. */
+function previewSteps(steps: readonly ScaffoldStep[]): string[] {
+  return steps.flatMap((step) => [
+    ...(step.condition === undefined ? [] : [`  # ${step.condition}`]),
+    ...step.commands.map((command) => `  $ ${describeCommand(command)}`),
+  ]);
+}
+
+/**
+ * The plan, performed. Every step is best-effort: a scaffold whose files are
+ * all correctly written but whose install hit a network blip should tell the
+ * author to run it again, not delete their project and exit non-zero.
+ *
+ * A skipped step has no result, which is a different fact from a step that ran
+ * and failed — `nextSteps` distinguishes the two.
+ */
+async function runSteps(
+  steps: readonly ScaffoldStep[],
+  targetDir: string
+): Promise<Map<StepId, CommandResult>> {
+  const outcomes = new Map<StepId, CommandResult>();
+  for (const step of steps) {
+    if (step.skipWhen !== undefined && (await step.skipWhen(targetDir))) {
+      continue;
+    }
+    let last: CommandResult = { code: 0, output: "" };
+    for (const command of step.commands) {
+      last = await run(command, targetDir);
+    }
+    outcomes.set(step.id, last);
+  }
+  return outcomes;
 }
 
 function idsPackageUnavailable(output: string): boolean {

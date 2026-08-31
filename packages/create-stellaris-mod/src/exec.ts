@@ -84,6 +84,51 @@ export function gitInitCommands(): Command[] {
   ];
 }
 
+/**
+ * One command as a line somebody could paste into this platform's shell.
+ *
+ * For the dry run, so that what a preview promises and what a run performs are
+ * the same value read two ways rather than two lists maintained in parallel.
+ *
+ * The quoting is display quoting — nothing here is fed back to a shell, and
+ * `run` passes argv directly — but it still has to be the quoting of the shell
+ * the reader is looking at. `cmd.exe` does not group an argument with single
+ * quotes, so a POSIX-quoted `git commit -m 'Scaffold with …'` pasted there
+ * becomes four arguments and a commit message of `'Scaffold`. A preview that
+ * cannot be pasted on the platform it is printed on is not a preview.
+ *
+ * @param command The command as it would be spawned.
+ * @param platform The shell family to quote for. Injected so both spellings
+ *   are testable from either platform, the way `platformDefaultsFor` and
+ *   `modDirFor` take theirs.
+ * @returns The command and its arguments as one line.
+ */
+export function describeCommand(
+  { command, args }: Command,
+  platform: NodeJS.Platform = process.platform
+): string {
+  const quote = platform === "win32" ? quoteForCmd : quoteForPosix;
+  return [command, ...args].map(quote).join(" ");
+}
+
+/** Arguments needing no quotes anywhere: no whitespace, no metacharacters. */
+const BARE_ARGUMENT = /^[A-Za-z0-9_@%+=:,./-]+$/;
+
+/** POSIX single quotes, with the standard `'\''` break for an embedded quote. */
+function quoteForPosix(value: string): string {
+  return BARE_ARGUMENT.test(value) ? value : `'${value.replace(/'/g, `'\\''`)}'`;
+}
+
+/**
+ * `cmd.exe` double quotes, with `""` for an embedded quote.
+ *
+ * This is the grouping `CommandLineToArgvW` undoes, which is how the
+ * `.cmd` package-manager shims and `git` read their arguments.
+ */
+function quoteForCmd(value: string): string {
+  return BARE_ARGUMENT.test(value) ? value : `"${value.replace(/"/g, `""`)}"`;
+}
+
 /** True when `cwd` is already inside a git work tree, so `git init` would nest. */
 export function insideGitWorkTree(cwd: string): Promise<boolean> {
   return new Promise((resolve) => {

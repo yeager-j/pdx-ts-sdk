@@ -16,7 +16,13 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { main } from "../src/cli.ts";
 import { installFailureSteps } from "../src/commands/init.ts";
 import { supportedVersionFor } from "../src/detect.ts";
-import { gitInitCommands, installCommand, run, teeCommandOutput } from "../src/exec.ts";
+import {
+  describeCommand,
+  gitInitCommands,
+  installCommand,
+  run,
+  teeCommandOutput,
+} from "../src/exec.ts";
 import { VERIFIED_STELLARIS_BUILD } from "../src/generated/verified-build.ts";
 import { parseManifest } from "../src/manifest.ts";
 import { COMMANDS, splitCommand, type CommandName } from "../src/options.ts";
@@ -171,6 +177,56 @@ describe("init", () => {
     }
   });
 
+  /**
+   * SDK-388. The dry run used to rebuild the optional commands separately from
+   * the code that ran them, and the two had already drifted: the preview
+   * reported `git init` before the install, while the real path installs first
+   * so the lockfile it produces is part of the initial commit. It also covered
+   * the files but not the rest of the operation being previewed.
+   */
+  it("previews the commands it would run, in the order it would run them", async () => {
+    const { io, out } = capture("/tmp/elsewhere");
+    expect(await main(["--dry-run", "--yes", "my-mod"], io)).toBe(0);
+
+    const commands = out()
+      .split("\n")
+      .filter((line) => line.startsWith("  $ "))
+      .map((line) => line.slice(4));
+    // The commit message is quoted for whichever shell this platform has, so
+    // the line is compared through the same renderer the preview used rather
+    // than against one platform's spelling.
+    expect(commands).toEqual([
+      "npm install",
+      "git init",
+      "git add -A",
+      describeCommand({
+        command: "git",
+        args: ["commit", "-m", "Scaffold with create-stellaris-mod"],
+      }),
+    ]);
+    // And it really is one argument, not four.
+    expect(commands[3]).toMatch(/^git commit -m \S*Scaffold with create-stellaris-mod\S*$/);
+  });
+
+  it("says which of the previewed steps a real run may skip", async () => {
+    // The preview cannot answer it: the target does not exist yet, so whether
+    // it lands inside an existing repository is not a question a dry run has.
+    const { io, out } = capture("/tmp/elsewhere");
+    expect(await main(["--dry-run", "--yes", "my-mod"], io)).toBe(0);
+    const lines = out().split("\n");
+    const note = lines.findIndex((line) => line.includes("already inside a git repository"));
+    expect(note).toBeGreaterThan(-1);
+    expect(lines[note + 1]).toBe("  $ git init");
+    // And it applies to the git group only.
+    expect(lines.indexOf("  $ npm install")).toBeLessThan(note);
+  });
+
+  it("previews only the steps the answers actually ask for", async () => {
+    const { io, out } = capture("/tmp/elsewhere");
+    expect(await main(["--dry-run", "--yes", "--no-git", "--no-install", "my-mod"], io)).toBe(0);
+    expect(out()).not.toContain("  $ ");
+  });
+
   it("resolves the target directory against the injected cwd", async () => {
     const { io, out } = capture("/tmp/elsewhere");
     expect(await main(["--dry-run", "--yes", "my-mod"], io)).toBe(0);
@@ -243,6 +299,42 @@ describe("dependency install recovery", () => {
     expect(installCommand("npm").shell).toBe(process.platform === "win32");
     expect(installCommand("custom-package-manager").shell).toBe(false);
     expect(gitInitCommands().every((command) => command.shell !== true)).toBe(true);
+  });
+
+  /**
+   * The dry run prints these lines with a `$` prompt, so they have to be
+   * pasteable where they are printed. `cmd.exe` does not group an argument
+   * with single quotes: a POSIX-quoted commit message pasted there becomes
+   * four arguments and a message of `'Scaffold`. Both spellings are checked
+   * from either platform, the way `platformDefaultsFor` takes its platform.
+   */
+  it("quotes previewed commands for the shell of the platform printing them", () => {
+    const commit = {
+      command: "git",
+      args: ["commit", "-m", "Scaffold with create-stellaris-mod"],
+    } as const;
+    expect(describeCommand(commit, "linux")).toBe(
+      "git commit -m 'Scaffold with create-stellaris-mod'"
+    );
+    expect(describeCommand(commit, "darwin")).toBe(
+      "git commit -m 'Scaffold with create-stellaris-mod'"
+    );
+    expect(describeCommand(commit, "win32")).toBe(
+      'git commit -m "Scaffold with create-stellaris-mod"'
+    );
+  });
+
+  it("leaves an argument that needs no quotes anywhere unquoted", () => {
+    for (const platform of ["linux", "win32"] as const) {
+      expect(describeCommand({ command: "npm", args: ["install"] }, platform)).toBe("npm install");
+      expect(describeCommand({ command: "git", args: ["add", "-A"] }, platform)).toBe("git add -A");
+    }
+  });
+
+  it("escapes a quote with the escape that shell understands", () => {
+    const quoted = { command: "echo", args: [`say "hi" and 'bye'`] } as const;
+    expect(describeCommand(quoted, "linux")).toBe(`echo 'say "hi" and '\\''bye'\\'''`);
+    expect(describeCommand(quoted, "win32")).toBe(`echo "say ""hi"" and 'bye'"`);
   });
 
   it("retains package-manager diagnostics written to stdout", async () => {

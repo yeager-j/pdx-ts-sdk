@@ -45,6 +45,134 @@ type Projects = "one" | "two";
 const EVENT_PICTURE = "GFX_evt_mysterious_signal";
 const EVENT_SOUND = "event_alien_signal";
 
+/** The event this project's `onSuccess` fires, and the file's payoff. */
+interface QuestCompletion {
+  /** The `const` the generated file binds it to. */
+  readonly binding: string;
+  /** Its number inside the feature's namespace. */
+  readonly id: number;
+  readonly comment: string;
+  readonly title: string;
+}
+
+/** One special project, with everything the sections need in order to write it. */
+interface QuestProject {
+  /** The `const` the generated file binds it to. */
+  readonly binding: string;
+  /** The logical name it mints its id from. */
+  readonly logicalName: string;
+  /** The comment introducing the declaration. Hand-wrapped, so it is data. */
+  readonly comment: readonly string[];
+  readonly namePlaceholder: string;
+  /** Body lines between `cost` and `onSuccess`: the option-group correlation. */
+  readonly correlation: readonly string[];
+  /** Body lines after `onSuccess`: the commented-out optional field. */
+  readonly trailer: readonly string[];
+  readonly completion: QuestCompletion;
+}
+
+/**
+ * The `projects` answer, resolved.
+ *
+ * The one Intent question changes the shape of the whole file: how many
+ * projects are declared, what each is called, which completion event each
+ * fires, whether an option group correlates them, how the header and the
+ * starter's comment read, and which bindings the Feature roster carries.
+ * Deciding that once and handing every section the result is what keeps those
+ * consistent. Asking `projects === "one"` in each section instead made a
+ * topology change six edits that had to agree — and forgetting the roster, for
+ * one, leaves a rendered declaration outside the Feature, which is a file that
+ * compiles and ships a definition the build never sees.
+ */
+interface QuestTopology {
+  readonly projects: readonly [QuestProject, ...QuestProject[]];
+}
+
+const DESC_PLACEHOLDER = "PLACEHOLDER: what researching it involves, in a sentence or two.";
+
+/**
+ * Days before an untouched project expires, shown once. It is a field worth
+ * knowing about and not worth repeating, so it rides on the first project
+ * whether or not there is a second.
+ */
+const TIMELIMIT_TRAILER = [
+  "",
+  "// Days before an untouched project expires. 3600 is ten game years.",
+  "// timelimit: 3600,",
+];
+
+function topologyFor(names: DerivedNames, projects: Projects): QuestTopology {
+  if (projects === "one") {
+    return {
+      projects: [
+        {
+          binding: "project",
+          logicalName: names.stem,
+          comment: [
+            "// `onSuccess` runs in the owner's country scope when the research finishes. It",
+            "// may name `completed`, declared further down, because content callbacks run",
+            "// at build time rather than here.",
+          ],
+          namePlaceholder: "PLACEHOLDER: what the situation log calls this project.",
+          correlation: [],
+          trailer: TIMELIMIT_TRAILER,
+          completion: {
+            binding: "completed",
+            id: 2,
+            comment: "// The payoff; ending the chain closes the situation log entry.",
+            title: "PLACEHOLDER: the discovery.",
+          },
+        },
+      ],
+    };
+  }
+  return {
+    projects: [
+      {
+        binding: "firstProject",
+        logicalName: `${names.stem}_1`,
+        comment: [
+          "// `onSuccess` runs in the owner's country scope when the research finishes. It",
+          "// may name `firstCompleted`, declared further down, because content callbacks",
+          "// run at build time rather than here.",
+        ],
+        namePlaceholder: "PLACEHOLDER: what the situation log calls this approach.",
+        correlation: [],
+        trailer: TIMELIMIT_TRAILER,
+        completion: {
+          binding: "firstCompleted",
+          id: 2,
+          comment:
+            "// The first approach pays off; ending the chain closes the situation log entry.",
+          title: "PLACEHOLDER: the discovery.",
+        },
+      },
+      {
+        binding: "secondProject",
+        logicalName: `${names.stem}_2`,
+        comment: [
+          "// The rival approach. Sharing an option group makes starting one project the",
+          "// choice against the other: completing either removes both from the log.",
+        ],
+        namePlaceholder: "PLACEHOLDER: what the situation log calls the rival approach.",
+        correlation: ["sameOptionGroupAs: [firstProject],"],
+        trailer: [],
+        completion: {
+          binding: "secondCompleted",
+          id: 3,
+          comment: "// The rival approach pays off instead.",
+          title: "PLACEHOLDER: the rival discovery.",
+        },
+      },
+    ],
+  };
+}
+
+/** True when the quest coordinates exactly one project, for the prose that says so. */
+function isSingle(topology: QuestTopology): boolean {
+  return topology.projects.length === 1;
+}
+
 /** Vanilla media cited by the generated visible events. */
 export const VANILLA_EXAMPLE_IDS = {
   spriteType: [EVENT_PICTURE],
@@ -84,8 +212,10 @@ export const researchQuestRecipe = defineRecipe({
 });
 
 function renderSource(names: DerivedNames, projects: Projects): string {
+  // The one place the answer is read. Everything below consumes the topology.
+  const topology = topologyFor(names, projects);
   return [
-    header(projects),
+    header(topology),
     "",
     'import { onActions, vanilla } from "@pdx-ts/sdk/stellaris";',
     "",
@@ -95,23 +225,23 @@ function renderSource(names: DerivedNames, projects: Projects): string {
     "",
     namespaceLines(names),
     "",
-    ...projectCalls(names, projects),
-    starterCall(names, projects),
+    ...projectCalls(topology),
+    starterCall(topology),
     "",
-    ...completionCalls(names, projects),
+    ...completionCalls(topology),
     ON_NEW_GAME,
     "",
-    featureCall(names, projects),
+    featureCall(names, topology),
     "",
   ].join("\n");
 }
 
-function header(projects: Projects): string {
-  const what =
-    projects === "one"
-      ? "the special project that advances it"
-      : "the special projects that advance it";
-  const enabled = projects === "one" ? "the project" : "the projects";
+function header(topology: QuestTopology): string {
+  const single = isSingle(topology);
+  const what = single
+    ? "the special project that advances it"
+    : "the special projects that advance it";
+  const enabled = single ? "the project" : "the projects";
   return `/**
  * A research quest: one event chain, ${what}, and
  * the country events that begin and end it — several coordinated items, one
@@ -154,93 +284,38 @@ function namespaceLines(names: DerivedNames): string {
   ].join("\n");
 }
 
-/** One or both projects, each followed by a blank separator line. */
-function projectCalls(names: DerivedNames, projects: Projects): readonly string[] {
-  if (projects === "one") {
-    const body = [
-      `name: ${quoteTs("PLACEHOLDER: what the situation log calls this project.")},`,
-      `desc: ${quoteTs("PLACEHOLDER: what researching it involves, in a sentence or two.")},`,
-      "eventChain: chain,",
-      `eventScope: "country_event",`,
-      "cost: 1000,",
-      "onSuccess: (country) => {",
-      "  country.countryEvent({ id: completed });",
-      "},",
-      "",
-      "// Days before an untouched project expires. 3600 is ten game years.",
-      "// timelimit: 3600,",
-    ];
-    return [
-      [
-        "// `onSuccess` runs in the owner's country scope when the research finishes. It",
-        "// may name `completed`, declared further down, because content callbacks run",
-        "// at build time rather than here.",
-        call("export const project = mod.specialProject(", quoteTs(names.stem), body),
-      ].join("\n"),
-      "",
-    ];
-  }
-  const first = [
-    `name: ${quoteTs("PLACEHOLDER: what the situation log calls this approach.")},`,
-    `desc: ${quoteTs("PLACEHOLDER: what researching it involves, in a sentence or two.")},`,
-    "eventChain: chain,",
-    `eventScope: "country_event",`,
-    "cost: 1000,",
-    "onSuccess: (country) => {",
-    "  country.countryEvent({ id: firstCompleted });",
-    "},",
-    "",
-    "// Days before an untouched project expires. 3600 is ten game years.",
-    "// timelimit: 3600,",
-  ];
-  const second = [
-    `name: ${quoteTs("PLACEHOLDER: what the situation log calls the rival approach.")},`,
-    `desc: ${quoteTs("PLACEHOLDER: what researching it involves, in a sentence or two.")},`,
-    "eventChain: chain,",
-    `eventScope: "country_event",`,
-    "cost: 1000,",
-    "sameOptionGroupAs: [firstProject],",
-    "onSuccess: (country) => {",
-    "  country.countryEvent({ id: secondCompleted });",
-    "},",
-  ];
-  return [
+/** Every project the topology carries, each followed by a blank separator line. */
+function projectCalls(topology: QuestTopology): readonly string[] {
+  return topology.projects.flatMap((project) => [
     [
-      "// `onSuccess` runs in the owner's country scope when the research finishes. It",
-      "// may name `firstCompleted`, declared further down, because content callbacks",
-      "// run at build time rather than here.",
-      call("export const firstProject = mod.specialProject(", quoteTs(`${names.stem}_1`), first),
+      ...project.comment,
+      call(`export const ${project.binding} = mod.specialProject(`, quoteTs(project.logicalName), [
+        `name: ${quoteTs(project.namePlaceholder)},`,
+        `desc: ${quoteTs(DESC_PLACEHOLDER)},`,
+        "eventChain: chain,",
+        `eventScope: "country_event",`,
+        "cost: 1000,",
+        ...project.correlation,
+        "onSuccess: (country) => {",
+        `  country.countryEvent({ id: ${project.completion.binding} });`,
+        "},",
+        ...project.trailer,
+      ]),
     ].join("\n"),
     "",
-    [
-      "// The rival approach. Sharing an option group makes starting one project the",
-      "// choice against the other: completing either removes both from the log.",
-      call("export const secondProject = mod.specialProject(", quoteTs(`${names.stem}_2`), second),
-    ].join("\n"),
-    "",
-  ];
+  ]);
 }
 
-function starterCall(names: DerivedNames, projects: Projects): string {
-  const enable =
-    projects === "one"
-      ? ["        country.enableSpecialProject({ name: project });"]
-      : [
-          "        country.enableSpecialProject({ name: firstProject });",
-          "        country.enableSpecialProject({ name: secondProject });",
-        ];
-  const comment =
-    projects === "one"
-      ? [
-          "// Opens the quest: begins the chain, and its option puts the project in the",
-          "// situation log. `enableSpecialProject` records when this event is defined,",
-          "// which is why the project is declared above it.",
-        ]
-      : [
-          "// Opens the quest: begins the chain, and its option puts both projects in the",
-          "// situation log. `enableSpecialProject` records when this event is defined,",
-          "// which is why the projects are declared above it.",
-        ];
+function starterCall(topology: QuestTopology): string {
+  const single = isSingle(topology);
+  const enable = topology.projects.map(
+    (project) => `        country.enableSpecialProject({ name: ${project.binding} });`
+  );
+  const comment = [
+    `// Opens the quest: begins the chain, and its option puts ${single ? "the project" : "both projects"} in the`,
+    "// situation log. `enableSpecialProject` records when this event is defined,",
+    `// which is why ${single ? "the project is" : "the projects are"} declared above it.`,
+  ];
   return [
     ...comment,
     "export const started = events.country(1, {",
@@ -268,13 +343,13 @@ function starterCall(names: DerivedNames, projects: Projects): string {
   ].join("\n");
 }
 
-/** The completion event(s), each followed by a blank separator line. */
-function completionCalls(names: DerivedNames, projects: Projects): readonly string[] {
-  const completion = (binding: string, id: number, comment: string, title: string): string =>
+/** One completion event per project, each followed by a blank separator line. */
+function completionCalls(topology: QuestTopology): readonly string[] {
+  return topology.projects.flatMap(({ completion }) => [
     [
-      comment,
-      `export const ${binding} = events.country(${id}, {`,
-      `  title: ${quoteTs(title)},`,
+      completion.comment,
+      `export const ${completion.binding} = events.country(${completion.id}, {`,
+      `  title: ${quoteTs(completion.title)},`,
       `  desc: ${quoteTs("PLACEHOLDER: what was found, in a paragraph.")},`,
       `  picture: vanilla.spriteType.eventpictures.${EVENT_PICTURE},`,
       `  showSound: vanilla.soundEffect.gui.gui_sound_effects.${EVENT_SOUND},`,
@@ -285,34 +360,9 @@ function completionCalls(names: DerivedNames, projects: Projects): readonly stri
       "  },",
       `  options: [{ name: { english: ${quoteTs("PLACEHOLDER: acknowledge it.")}, key: "acknowledge" } }],`,
       "});",
-    ].join("\n");
-  if (projects === "one") {
-    return [
-      completion(
-        "completed",
-        2,
-        "// The payoff; ending the chain closes the situation log entry.",
-        "PLACEHOLDER: the discovery."
-      ),
-      "",
-    ];
-  }
-  return [
-    completion(
-      "firstCompleted",
-      2,
-      "// The first approach pays off; ending the chain closes the situation log entry.",
-      "PLACEHOLDER: the discovery."
-    ),
+    ].join("\n"),
     "",
-    completion(
-      "secondCompleted",
-      3,
-      "// The rival approach pays off instead.",
-      "PLACEHOLDER: the rival discovery."
-    ),
-    "",
-  ];
+  ]);
 }
 
 const ON_NEW_GAME = [
@@ -321,10 +371,22 @@ const ON_NEW_GAME = [
   "export const onNewGame = mod.on(onActions.onGameStartCountry, [started]);",
 ].join("\n");
 
-function items(projects: Projects): string {
-  return projects === "one"
-    ? "chain, project, started, completed, onNewGame"
-    : "chain, firstProject, secondProject, started, firstCompleted, secondCompleted, onNewGame";
+/**
+ * Every item the file declares, in declaration order.
+ *
+ * Derived from the topology rather than restated beside it. A roster written
+ * out by hand is the branch most easily forgotten when the topology changes,
+ * and forgetting it leaves a rendered declaration outside the Feature: a file
+ * that compiles, and a definition the build never emits.
+ */
+function roster(topology: QuestTopology): string[] {
+  return [
+    "chain",
+    ...topology.projects.map((project) => project.binding),
+    "started",
+    ...topology.projects.map((project) => project.completion.binding),
+    "onNewGame",
+  ];
 }
 
 /**
@@ -341,12 +403,10 @@ function call(open: string, logicalName: string, body: readonly string[]): strin
  * line, always: a coordinated Feature's roster reads as a list, and this is
  * the shape Prettier keeps for it at any conventional name length.
  */
-function featureCall(names: DerivedNames, projects: Projects): string {
+function featureCall(names: DerivedNames, topology: QuestTopology): string {
   return [
     `export const feature = mod.feature(${quoteTs(names.stem)}, [`,
-    ...items(projects)
-      .split(", ")
-      .map((item) => `  ${item},`),
+    ...roster(topology).map((item) => `  ${item},`),
     "]);",
   ].join("\n");
 }
