@@ -281,6 +281,9 @@ function freezeFailure(failure: MaterializationFailure): MaterializationFailure 
   }
 }
 
+/** A Project Manifest field is absent, or holds a shape the pipeline cannot read. */
+export class ProjectManifestError extends PdxSdkError {}
+
 /** No Stellaris install at any searched location. */
 export class InstallNotFoundError extends PdxSdkError {}
 

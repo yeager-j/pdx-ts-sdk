@@ -6,6 +6,7 @@ import type { BuildOptions, ModConfig, ResolvedModConfig } from "./compiler/conf
 import type { PureMod } from "./compiler/model.ts";
 import { DEFAULT_ID_PROFILE } from "./generated/content-capability.ts";
 import { parseProjectLayout, type ProjectLayoutInput } from "./project-layout.ts";
+import { parseProjectManifest } from "./project-manifest.ts";
 import { resolveProjectRootPath } from "./project-root.ts";
 
 /** Launcher configuration stored below the sole prefix key in a Project Manifest. */
@@ -66,23 +67,19 @@ export function createModProject<const Manifest extends ModProjectManifest>(
 ): ModProject<ProjectPrefix<Manifest>> {
   type Prefix = ProjectPrefix<Manifest>;
 
-  const prefixes = Object.keys(manifest.mod);
-  if (prefixes.length !== 1) {
-    throw new Error(
-      `stellaris-mod.json must declare exactly one mod, and declares ${prefixes.length}. ` +
-        `The single key under "mod" is this mod's prefix.`
-    );
-  }
-
-  const prefix = prefixes[0] as Prefix;
-  const manifestConfig = manifest.mod[prefix] as ProjectModConfig;
+  // The manifest arrives from a JSON import, so its annotation is an
+  // assertion rather than a check: everything below this line reads fields
+  // whose types have actually been established.
+  const parsed = parseProjectManifest(manifest);
+  const prefix = parsed.prefix as Prefix;
+  const manifestConfig = parsed.config as ProjectModConfig;
   const config: ModConfig<Prefix> = {
     ...manifestConfig,
     tags: manifestConfig.tags === undefined ? undefined : [...manifestConfig.tags],
     prefix,
   };
   const mod = createMod(config);
-  const layout = parseProjectLayout(manifest);
+  const layout = parseProjectLayout(parsed.layout as ProjectLayoutInput);
   const projectRoot = resolveProjectRootPath(options.projectRoot);
   const contentDirectory = path.join(projectRoot, ...layout.contentSegments);
   const assetsDirectory =

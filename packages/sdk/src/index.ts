@@ -122,6 +122,7 @@ export {
   NoWinningFilenameError,
   PathOwnershipError,
   PdxSdkError,
+  ProjectManifestError,
   StaleRuleTableError,
   SwapPatchError,
   UnverifiedRegistryError,

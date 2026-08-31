@@ -52,3 +52,9 @@ export {
   projectLayoutFieldSchema,
   type ProjectLayoutFieldDescriptor,
 } from "./project-layout.ts";
+export {
+  PROJECT_MOD_FIELDS,
+  type ProjectModFieldDescriptor,
+  type ProjectModFieldKind,
+  type ProjectModFieldName,
+} from "./project-manifest.ts";
