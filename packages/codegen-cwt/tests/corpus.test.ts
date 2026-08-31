@@ -197,19 +197,31 @@ describe("a sibling type sharing the directory", () => {
 describe("file layout", () => {
   it("propagates an unreadable registry path instead of treating it as empty", () => {
     const root = mkdtempSync(path.join(tmpdir(), "pdx-corpus-"));
-    // A regular-file parent reliably makes readdirSync report ENOTDIR on both macOS and Linux,
-    // without depending on platform-specific permission handling.
-    const regularFile = path.join(root, "not-a-directory");
-    writeFileSync(regularFile, "", "utf8");
-
-    expect(() =>
+    // The registry path IS the regular file, rather than a path beneath one.
+    // Reading a file as a directory is a fault on every platform; a path
+    // *under* a file is one only where the walk stops at the file, and Windows
+    // instead resolves the whole path and reports it absent — which the reader
+    // would then correctly treat as a registry that ships no directory.
+    writeFileSync(path.join(root, "not-a-directory"), "", "utf8");
+    const read = (): unknown =>
       readRegistryCorpus(root, {
         registry: "system",
-        registryPath: "not-a-directory/registry",
+        registryPath: "not-a-directory",
         keyword: null,
         nameField: null,
-      })
-    ).toThrowError(expect.objectContaining({ code: "ENOTDIR" }));
+      });
+
+    // The contract is that a fault is not an absent registry, so the code is
+    // asserted to be something other than ENOENT rather than pinned to the
+    // ENOTDIR POSIX reports — the reader's own rule is about ENOENT alone.
+    expect(read).toThrow();
+    let thrown: NodeJS.ErrnoException | undefined;
+    try {
+      read();
+    } catch (error) {
+      thrown = error as NodeJS.ErrnoException;
+    }
+    expect(thrown?.code).not.toBe("ENOENT");
   });
 
   it("returns an empty corpus for a genuinely absent registry directory", () => {

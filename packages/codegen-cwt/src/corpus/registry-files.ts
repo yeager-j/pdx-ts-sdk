@@ -7,6 +7,11 @@ import path from "node:path";
  * Set `recurse` from the registry's `path_strict` rule. A directory that does not exist returns an
  * empty list so callers can report an empty corpus without handling an `ENOENT` filesystem error;
  * all other filesystem errors propagate to the caller.
+ *
+ * Absence is whatever the platform calls `ENOENT`, and platforms disagree at the margin: a path
+ * *beneath* a regular file is `ENOTDIR` on POSIX but absent on Windows. The faults worth telling
+ * apart from an absent registry — a permission error, a file where the directory belongs — raise
+ * a distinct code everywhere.
  */
 export function walkRegistryFiles(
   dir: string,
