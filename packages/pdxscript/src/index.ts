@@ -21,5 +21,6 @@ export {
 } from "./representable.ts";
 export { withoutLines } from "./normalize.ts";
 export { parse, regionItems } from "./parser.ts";
+export { isRegionText, regionTextProblem } from "./region.ts";
 export { isScalar, scalarText, serialize } from "./serialize.ts";
 export { itemChildren, skipChildren, stopWalk, walkItems, type RegionPolicy } from "./walk.ts";

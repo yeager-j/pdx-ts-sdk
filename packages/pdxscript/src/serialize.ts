@@ -12,6 +12,7 @@
  */
 
 import type { PdxContainer, PdxItem, PdxParamBlock, PdxParamText, PdxScalar } from "./ast.ts";
+import { regionOpener, regionTextProblem } from "./region.ts";
 import {
   BYTE_ORDER_MARK,
   canonicalNumeral,
@@ -120,17 +121,17 @@ function containerText(container: PdxContainer, depth: number): string {
   return `${head}{\n${body}\n${indent}}`;
 }
 
-function regionOpener(param: PdxParamBlock | PdxParamText): string {
+function openerFor(param: PdxParamBlock | PdxParamText): string {
   if (!isParamName(param.name)) {
     throw new Error(`Cannot serialize parameter name ${JSON.stringify(param.name)}`);
   }
-  return `[[${param.negated ? "!" : ""}${param.name}]`;
+  return regionOpener(param.name, param.negated);
 }
 
-function paramText(param: PdxParamBlock, depth: number): string {
+function paramBlockText(param: PdxParamBlock, depth: number): string {
   enterBody(depth, "region");
   const indent = "\t".repeat(depth);
-  const open = regionOpener(param);
+  const open = openerFor(param);
   if (param.items.length === 0) {
     return `${open}\n${indent}]`;
   }
@@ -144,6 +145,12 @@ function paramText(param: PdxParamBlock, depth: number): string {
  * it captures again — but only if no indentation creeps in between the
  * opener and the closing `]`.
  *
+ * That holds for a body the parser produced. A hand-assembled one is text
+ * nothing checked, and it is spliced in raw: a body that balances comes back
+ * as a `param` node, and one holding a bare `]` closes the region early and
+ * spills the remainder into the document. `paramText()` refuses both, and
+ * this is the same refusal for a tree built as an object literal.
+ *
  * The depth guard applies here as much as to a region with a tree. Nothing is
  * emitted one level down, so it is easy to read this as a leaf — but the
  * parser does not treat it as one: reading the output back opens a region body
@@ -151,7 +158,15 @@ function paramText(param: PdxParamBlock, depth: number): string {
  */
 function paramTextRegion(param: PdxParamText, depth: number): string {
   enterBody(depth, "region");
-  return `${regionOpener(param)}${param.text}]`;
+  const text = `${openerFor(param)}${param.text}]`;
+  const problem = regionTextProblem(param.name, param.negated, param.text);
+  if (problem !== null) {
+    throw new Error(
+      `Cannot serialize region body ${JSON.stringify(param.text)}: ${problem} ` +
+        "(build regions with paramText() or paramBlock())"
+    );
+  }
+  return text;
 }
 
 function serializeItem(item: PdxItem, depth: number): string {
@@ -181,7 +196,7 @@ function serializeItem(item: PdxItem, depth: number): string {
     return `${indent}${containerText(item, depth)}`;
   }
   if (item.kind === "param") {
-    return `${indent}${paramText(item, depth)}`;
+    return `${indent}${paramBlockText(item, depth)}`;
   }
   if (item.kind === "param-text") {
     return `${indent}${paramTextRegion(item, depth)}`;
