@@ -63,7 +63,7 @@ export function packagedVanillaPathGameVersion(): string {
  * `VanillaPackageMismatchError`.
  *
  * Silent pass when `packageVersion` is `undefined` (no version could be read;
- * see {@link installedVanillaPackageVersion "installedVanillaPackageVersion"}
+ * see {@link installedVanillaPackagePin "installedVanillaPackagePin"}
  * in `package-pin.ts`) or `"0.0.0"` (the unstamped sentinel: no generation has
  * produced this package, so there is no pin to compare).
  */

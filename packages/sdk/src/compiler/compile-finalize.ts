@@ -1,9 +1,12 @@
 import { assertNoDeferredLocalization } from "../authoring/deferred-localization.ts";
 import { assertOwnLocalizationItem } from "../authoring/localization.ts";
+import type { ModWarning } from "../diagnostics.ts";
+import { VanillaPackageUnreadableError } from "../errors.ts";
 import {
   checkVanillaPackagePin,
-  installedVanillaPackageVersion,
+  installedVanillaPackagePin,
   vanillaIdsCheckWarning,
+  type VanillaPackagePin,
 } from "../identifiers/package-pin.ts";
 import { PACKAGED_ENUM_EVIDENCE } from "../identifiers/vanilla-enum-members.ts";
 import { PACKAGED_ID_EVIDENCE } from "../identifiers/vanilla-gfx-ids.ts";
@@ -102,10 +105,11 @@ export function finalizeMod(
   registerPatchPlanWarnings(warnings, patchPlans);
   registerPatchPlanClaims(claims, patchPlans, patchesByRegistry, patchStem);
 
-  const vanillaPaths = collectVanillaPaths(session, patches);
+  const vanillaPackagePin = installedVanillaPackagePin();
+  const vanillaPaths = collectVanillaPaths(session, patches, vanillaPackagePin);
   registerUnverifiedAssetWarnings(session, vanillaPaths);
   const paths = adjudicatePaths({ claims, vanillaPaths });
-  registerVanillaVersionWarnings(session);
+  registerVanillaVersionWarnings(session, vanillaPackagePin);
 
   // Every renderable channel, checked once where they all meet: a marker that
   // reached here names a splice point that never supplied an owner, and the
@@ -352,7 +356,8 @@ function registerPatchPlanClaims(
 
 function collectVanillaPaths(
   session: BuildSession,
-  patches: readonly { readonly source: { readonly origin: VanillaView } }[]
+  patches: readonly { readonly source: { readonly origin: VanillaView } }[],
+  packagePin: VanillaPackagePin
 ): ReadonlySet<string> {
   const vanillaOrigins = new Set<VanillaView>();
   if (session.options.vanilla !== undefined) {
@@ -361,7 +366,9 @@ function collectVanillaPaths(
   for (const patched of patches) {
     vanillaOrigins.add(patched.source.origin);
   }
-  checkVanillaPathInventoryConsistency(installedVanillaPackageVersion());
+  checkVanillaPathInventoryConsistency(
+    packagePin.state === "read" ? packagePin.version : undefined
+  );
   return immutableSet([
     ...packagedVanillaPaths(),
     ...[...vanillaOrigins].flatMap((origin) => origin.files.map((file) => file.path)),
@@ -400,21 +407,59 @@ function registerUnverifiedAssetWarnings(
   }
 }
 
-function registerVanillaVersionWarnings(session: BuildSession): void {
-  if (session.options.vanilla !== undefined) {
-    checkVanillaPackagePin(
-      installedVanillaPackageVersion(),
-      session.options.vanilla.gameVersion,
-      session.config.acceptGameVersion
-    );
-  }
-  const idsWarning = vanillaIdsCheckWarning(
-    installedVanillaPackageVersion(),
-    session.options.vanilla?.gameVersion,
+function registerVanillaVersionWarnings(
+  session: BuildSession,
+  packagePin: VanillaPackagePin
+): void {
+  const warning = applyVanillaPackagePin(
+    packagePin,
+    session.options.vanilla,
     session.config.acceptGameVersion
   );
-  if (idsWarning !== undefined) {
-    session.warnings.push({ code: "mismatched-vanilla-ids", message: idsWarning });
+  if (warning !== undefined) {
+    session.warnings.push(warning);
+  }
+}
+
+/**
+ * Applies the identifier package pin to one optional vanilla view.
+ *
+ * Returns the warning to register for an accepted mismatch or an absent
+ * package. It throws when unreadable metadata prevents the compatibility gate
+ * from running. A build without a vanilla view receives no check or warning.
+ */
+export function applyVanillaPackagePin(
+  packagePin: VanillaPackagePin,
+  vanilla: Pick<VanillaView, "gameVersion"> | undefined,
+  acceptGameVersion: string | undefined
+): ModWarning | undefined {
+  if (vanilla === undefined) {
+    return undefined;
+  }
+  switch (packagePin.state) {
+    case "read": {
+      checkVanillaPackagePin(packagePin.version, vanilla.gameVersion, acceptGameVersion);
+      const idsWarning = vanillaIdsCheckWarning(
+        packagePin.version,
+        vanilla.gameVersion,
+        acceptGameVersion
+      );
+      return idsWarning === undefined
+        ? undefined
+        : { code: "mismatched-vanilla-ids", message: idsWarning };
+    }
+    case "unreadable":
+      throw new VanillaPackageUnreadableError(
+        `The identifier compatibility gate cannot run: @pdx-ts/stellaris-ids package metadata ` +
+          `is unreadable (${packagePin.detail}).`
+      );
+    case "absent":
+      return {
+        code: "missing-stellaris-ids",
+        message:
+          `Vanilla identifier checks cannot be verified because @pdx-ts/stellaris-ids is not ` +
+          `installed (${packagePin.detail}).`,
+      };
   }
 }
 
