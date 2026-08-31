@@ -8,11 +8,16 @@
  * a dependency order. This file proves the two-phase load no longer depends
  * on file order, against the real rules and against a synthetic, order-rigged
  * pair of files.
+ *
+ * SDK-357: the same claim also needs the tables holding one declaration per
+ * key. They used to let the last file read win, so a colliding declaration
+ * silently made file order load-bearing again. They now throw, with one
+ * documented exception for an enum redeclared with the same member set.
  */
 
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { cwtFiles } from "@pdx-ts/codegen-cwt/cwt/load";
+import { cwtFiles, parseRuleSources } from "@pdx-ts/codegen-cwt/cwt/load";
 import type { SingleAliasTarget } from "@pdx-ts/codegen-cwt/cwt/model";
 import { parseCwt } from "@pdx-ts/codegen-cwt/cwt/parser";
 import {
@@ -20,8 +25,11 @@ import {
   readAliases,
   type AliasDecl,
   type ParsedRuleFile,
+  type RuleSet,
 } from "@pdx-ts/codegen-cwt/cwt/rules";
 import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
+import { EXTRA_ALIAS_CATEGORIES } from "@pdx-ts/codegen-cwt/overlay";
+import { CONTENT_MANIFEST } from "@pdx-ts/codegen-cwt/policy/manifest";
 import { describe, expect, it } from "vitest";
 
 /** The repo root, from this module — never the directory vitest was started in. */
@@ -103,6 +111,167 @@ describe("buildRuleSet order independence", () => {
       { kind: "malformed-option", file: "secondary.cwt", line: 1, text: "## cardinality 0..1" },
     ]);
   });
+
+  // Every table holding one declaration per key. `triggers`, `effects`,
+  // `aliasCategories`, `onActions` and `modifierTemplates` are left out on
+  // purpose: they accumulate in file order by design, so reversing the files
+  // reverses them.
+  const SINGLE_DECLARATION_TABLES = [
+    "enums",
+    "complexEnums",
+    "scopes",
+    "scopeGroups",
+    "links",
+    "contentTypes",
+    "bodies",
+    "modifierCategories",
+    "modifierDecls",
+  ] as const satisfies readonly (keyof RuleSet)[];
+
+  it("assembles the real rule files into the same tables in either file order", () => {
+    const sources = parseRuleSources(
+      CONFIG,
+      CONTENT_MANIFEST.map((entry) => entry.source)
+    );
+    const categories = [...EXTRA_ALIAS_CATEGORIES.keys()];
+    const forward = buildRuleSet(sources.ruleFiles, sources.complexEnumFiles, categories);
+    const reversed = buildRuleSet(
+      [...sources.ruleFiles].reverse(),
+      [...sources.complexEnumFiles].reverse(),
+      categories
+    );
+
+    for (const table of SINGLE_DECLARATION_TABLES) {
+      expect(reversed[table], table).toEqual(forward[table]);
+    }
+    expect(forward.contentTypes.size).toBeGreaterThan(0);
+  });
+});
+
+/**
+ * Two files declaring one key, for a table that holds a single declaration.
+ * `first.cwt` and `second.cwt` are read in both orders, so the error must name
+ * whichever file was read first as the owner.
+ */
+interface ConflictCase {
+  /** The rule set table the collision lands in. */
+  readonly table: string;
+  /** The key both files declare. */
+  readonly key: string;
+  /** `first.cwt`'s source. */
+  readonly first: string;
+  /** `second.cwt`'s source, declaring `key` with different content. */
+  readonly second: string;
+}
+
+const CONFLICTS: readonly ConflictCase[] = [
+  {
+    table: "enums",
+    key: "hull_class",
+    first: ["enums = {", "\tenum[hull_class] = {", "\t\tcorvette", "\t}", "}"].join("\n"),
+    second: ["enums = {", "\tenum[hull_class] = {", "\t\tcruiser", "\t}", "}"].join("\n"),
+  },
+  {
+    table: "scopes",
+    key: "Colony",
+    first: ["scopes = {", "\tColony = {", "\t\taliases = { colony }", "\t}", "}"].join("\n"),
+    second: ["scopes = {", "\tColony = {", "\t\taliases = { settlement }", "\t}", "}"].join("\n"),
+  },
+  {
+    table: "links",
+    key: "capital_world",
+    first: [
+      "links = {",
+      "\tcapital_world = {",
+      "\t\tinput_scopes = { country }",
+      "\t\toutput_scope = planet",
+      "\t}",
+      "}",
+    ].join("\n"),
+    second: [
+      "links = {",
+      "\tcapital_world = {",
+      "\t\tinput_scopes = { country }",
+      "\t\toutput_scope = system",
+      "\t}",
+      "}",
+    ].join("\n"),
+  },
+  {
+    table: "singleAliases",
+    key: "my_clause",
+    first: ["single_alias[my_clause] = {", "\tflag = bool", "}"].join("\n"),
+    second: ["single_alias[my_clause] = {", "\tcount = int", "}"].join("\n"),
+  },
+  {
+    table: "contentTypes",
+    key: "my_type",
+    first: ["types = {", "\ttype[my_type] = {", '\t\tpath = "common/first"', "\t}", "}"].join("\n"),
+    second: ["types = {", "\ttype[my_type] = {", '\t\tpath = "common/second"', "\t}", "}"].join(
+      "\n"
+    ),
+  },
+  {
+    table: "bodies",
+    key: "my_type",
+    // The `type[...]` half sits in `first.cwt` so both files can supply a body
+    // for it; content types are read from every file before any body is.
+    first: [
+      "types = {",
+      "\ttype[my_type] = {",
+      '\t\tpath = "common/my_types"',
+      "\t}",
+      "}",
+      "my_type = {",
+      "\tflag = bool",
+      "}",
+    ].join("\n"),
+    second: ["my_type = {", "\tcount = int", "}"].join("\n"),
+  },
+];
+
+describe("colliding declarations", () => {
+  it.each(CONFLICTS)("reject a second $table declaration of $key", (conflict) => {
+    const first = file("first.cwt", conflict.first);
+    const second = file("second.cwt", conflict.second);
+    const message = (owner: string, other: string): string =>
+      `${conflict.table} key "${conflict.key}" is declared by ${owner} and declared again by ${other}`;
+
+    expect(() => buildRuleSet([first, second])).toThrow(message("first.cwt", "second.cwt"));
+    expect(() => buildRuleSet([second, first])).toThrow(message("second.cwt", "first.cwt"));
+  });
+
+  it("accept an enum redeclared with the same members in another order", () => {
+    // What `enums.cwt` and `common/governments.cwt` do to `election_type`.
+    const listed = file(
+      "listed.cwt",
+      [
+        "enums = {",
+        "\tenum[election_type] = {",
+        "\t\tnone",
+        "\t\tdemocratic",
+        "\t\toligarchic",
+        "\t}",
+        "}",
+      ].join("\n")
+    );
+    const reordered = file(
+      "reordered.cwt",
+      [
+        "enums = {",
+        "\tenum[election_type] = {",
+        "\t\tnone",
+        "\t\toligarchic",
+        "\t\tdemocratic",
+        "\t}",
+        "}",
+      ].join("\n")
+    );
+    const sorted = ["democratic", "none", "oligarchic"];
+
+    expect(buildRuleSet([listed, reordered]).enums.get("election_type")).toEqual(sorted);
+    expect(buildRuleSet([reordered, listed]).enums.get("election_type")).toEqual(sorted);
+  });
 });
 
 describe("the CWT file sweep spells paths portably", () => {
@@ -158,6 +327,13 @@ describe("loadRules against the real rules", () => {
     expect(statusOf(rules.effects, "ai_trade_facility")).toEqual(["kept"]);
     expect(statusOf(rules.effects, "run_in_ai_mode")).toEqual(["kept"]);
     expect(statusOf(rules.triggers, "has_country_flag")).toEqual([null]);
+  });
+
+  it("merges the two election_type declarations to their sorted members", () => {
+    // `enums.cwt:49` and `common/governments.cwt:662` declare the same three
+    // members in different orders — the one repeated declaration in the whole
+    // vendored config, and the reason enums tolerate an equal member set.
+    expect(rules.enums.get("election_type")).toEqual(["democratic", "none", "oligarchic"]);
   });
 });
 

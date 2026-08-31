@@ -790,6 +790,9 @@ export interface ParsedRuleFile {
   readonly parsed: CwtParseResult;
 }
 
+/** Table name -> declared key -> the file that declared it. */
+type DeclarationOwners = Map<string, Map<string, string>>;
+
 interface RuleSetAccumulator extends RuleSet {
   readonly enums: Map<string, readonly string[]>;
   readonly complexEnums: Map<string, ComplexEnum>;
@@ -808,6 +811,7 @@ interface RuleSetAccumulator extends RuleSet {
   readonly singleAliases: Map<string, SingleAliasTarget>;
   readonly diagnostics: CwtDiagnostic[];
   readonly classificationDiagnosticKeys: Set<string>;
+  readonly declarationOwners: DeclarationOwners;
 }
 
 function createRuleSetAccumulator(extraAliasCategories: readonly string[]): RuleSetAccumulator {
@@ -829,15 +833,94 @@ function createRuleSetAccumulator(extraAliasCategories: readonly string[]): Rule
     singleAliases: new Map(),
     diagnostics: [],
     classificationDiagnosticKeys: new Set(),
+    declarationOwners: new Map(),
   };
 }
 
-function mergeLatestEntries<Key, Value>(
-  target: Map<Key, Value>,
-  source: ReadonlyMap<Key, Value>
+/**
+ * Records `file` as the declaring file of `key` in `table`, and returns the
+ * file that declared it first when one already had.
+ */
+function claimDeclaration(
+  owners: DeclarationOwners,
+  table: string,
+  key: string,
+  file: string
+): string | undefined {
+  let declared = owners.get(table);
+  if (declared === undefined) {
+    declared = new Map();
+    owners.set(table, declared);
+  }
+  const owner = declared.get(key);
+  if (owner === undefined) {
+    declared.set(key, file);
+  }
+  return owner;
+}
+
+function declarationConflict(table: string, key: string, owner: string, file: string): Error {
+  return new Error(
+    `${table} key "${key}" is declared by ${owner} and declared again by ${file}; ` +
+      "rule set assembly accepts one declaration per key"
+  );
+}
+
+/**
+ * Merges one file's entries into a table that admits one declaration per key.
+ *
+ * @throws Error when another file already declared one of the keys.
+ */
+function mergeUniqueEntries<Value>(
+  target: Map<string, Value>,
+  source: ReadonlyMap<string, Value>,
+  table: string,
+  file: string,
+  owners: DeclarationOwners
 ): void {
   for (const [key, value] of source) {
+    const owner = claimDeclaration(owners, table, key, file);
+    if (owner !== undefined) {
+      throw declarationConflict(table, key, owner, file);
+    }
     target.set(key, value);
+  }
+}
+
+function sameMembers(left: readonly string[], right: readonly string[]): boolean {
+  const members = new Set(left);
+  return members.size === new Set(right).size && right.every((member) => members.has(member));
+}
+
+/**
+ * Merges one file's enum declarations, accepting a repeated declaration whose
+ * members are the same set and storing those members sorted.
+ *
+ * An enum's members are a set, so a second declaration listing them in another
+ * order says the same thing. The vendored rules do exactly that:
+ * `enums.cwt:49` and `common/governments.cwt:662` both declare `election_type`
+ * as none, democratic and oligarchic, in different orders. Sorting keeps the
+ * merged members the same whichever file is read first.
+ *
+ * @throws Error when another file declared the same enum with different
+ * members.
+ */
+function mergeEnumEntries(
+  target: Map<string, readonly string[]>,
+  source: ReadonlyMap<string, readonly string[]>,
+  file: string,
+  owners: DeclarationOwners
+): void {
+  for (const [key, members] of source) {
+    const owner = claimDeclaration(owners, "enums", key, file);
+    if (owner === undefined) {
+      target.set(key, members);
+      continue;
+    }
+    if (!sameMembers(target.get(key) ?? [], members)) {
+      throw declarationConflict("enums", key, owner, file);
+    }
+    target.set(key, [...new Set(members)].sort());
   }
 }
 
@@ -876,20 +959,40 @@ function mergeReferencedDeclarations(
   files: readonly ParsedRuleFile[],
   state: RuleSetAccumulator
 ): void {
+  const owners = state.declarationOwners;
   for (const { file, parsed } of files) {
-    mergeLatestEntries(state.singleAliases, readSingleAliases(parsed.nodes, file));
-    mergeLatestEntries(state.contentTypes, readContentTypes(parsed.nodes));
+    mergeUniqueEntries(
+      state.singleAliases,
+      readSingleAliases(parsed.nodes, file),
+      "singleAliases",
+      file,
+      owners
+    );
+    mergeUniqueEntries(
+      state.contentTypes,
+      readContentTypes(parsed.nodes),
+      "contentTypes",
+      file,
+      owners
+    );
   }
 }
 
 function mergeResolvedRules(files: readonly ParsedRuleFile[], state: RuleSetAccumulator): void {
+  const owners = state.declarationOwners;
   for (const { file, parsed } of files) {
     const enums = readEnums(parsed.nodes, file);
-    mergeLatestEntries(state.enums, enums.enums);
-    mergeLatestEntries(state.complexEnums, enums.complexEnums);
-    mergeLatestEntries(state.scopes, readScopes(parsed.nodes));
-    mergeLatestEntries(state.scopeGroups, readScopeGroups(parsed.nodes));
-    mergeLatestEntries(state.links, readLinks(parsed.nodes, file));
+    mergeEnumEntries(state.enums, enums.enums, file, owners);
+    mergeUniqueEntries(state.complexEnums, enums.complexEnums, "complexEnums", file, owners);
+    mergeUniqueEntries(state.scopes, readScopes(parsed.nodes), "scopes", file, owners);
+    mergeUniqueEntries(
+      state.scopeGroups,
+      readScopeGroups(parsed.nodes),
+      "scopeGroups",
+      file,
+      owners
+    );
+    mergeUniqueEntries(state.links, readLinks(parsed.nodes, file), "links", file, owners);
 
     const triggers = readAliases(parsed.nodes, file, "trigger", state.singleAliases);
     appendEntries(state.triggers, triggers.aliases);
@@ -906,24 +1009,50 @@ function mergeResolvedRules(files: readonly ParsedRuleFile[], state: RuleSetAccu
     }
 
     const bodies = readBodies(parsed.nodes, file, state.contentTypes, state.singleAliases);
-    mergeLatestEntries(state.bodies, bodies.bodies);
+    mergeUniqueEntries(state.bodies, bodies.bodies, "bodies", file, owners);
     mergeClassificationDiagnostics(state, bodies.diagnostics);
 
     state.onActions.push(...readOnActions(parsed.nodes, file));
-    mergeLatestEntries(state.modifierCategories, readModifierCategories(parsed.nodes));
+    mergeUniqueEntries(
+      state.modifierCategories,
+      readModifierCategories(parsed.nodes),
+      "modifierCategories",
+      file,
+      owners
+    );
     const modifiers = readModifierDecls(parsed.nodes);
-    mergeLatestEntries(state.modifierDecls, modifiers.declarations);
+    mergeUniqueEntries(state.modifierDecls, modifiers.declarations, "modifierDecls", file, owners);
     state.modifierTemplates.push(...modifiers.templates);
   }
 }
 
 function mergeExtraComplexEnums(files: readonly ParsedRuleFile[], state: RuleSetAccumulator): void {
+  const owners = state.declarationOwners;
   for (const { file, parsed } of files) {
-    mergeLatestEntries(state.complexEnums, readComplexEnums(parsed.nodes, file));
+    mergeUniqueEntries(
+      state.complexEnums,
+      readComplexEnums(parsed.nodes, file),
+      "complexEnums",
+      file,
+      owners
+    );
   }
 }
 
-/** Builds an order-independent rule set from already-parsed CWT files. */
+/**
+ * Builds a rule set from already-parsed CWT files, independent of the order the
+ * files are supplied in.
+ *
+ * Order independence is enforced rather than assumed: two files declaring the
+ * same enum, scope, scope group, link, content type, body, modifier category,
+ * modifier declaration or single alias throw. The one exception is a repeated
+ * enum whose members are the same set, which merges to those members sorted.
+ * Trigger, effect and alias-category declarations accumulate per name instead,
+ * so several files may declare one name.
+ *
+ * @throws Error when two files declare the same key in a single-declaration
+ * table.
+ */
 export function buildRuleSet(
   parsedFiles: readonly ParsedRuleFile[],
   extraComplexEnumFiles: readonly ParsedRuleFile[] = [],
