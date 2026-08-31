@@ -44,6 +44,8 @@ import {
 import * as stellaris from "../src/installation/index.ts";
 import { viewFromFiles } from "../src/installation/vanilla/view.ts";
 import { renderLauncherDescriptor } from "../src/output/render.ts";
+import { _setMaterializationTestHook } from "../src/output/test-hooks.ts";
+import { RENAME_CONTENT_ACTIVATE } from "./helpers/crash-points.ts";
 
 const config: ModConfig = {
   name: "Launcher Probe",
@@ -133,6 +135,7 @@ function tempDir(): string {
 }
 
 afterEach(() => {
+  _setMaterializationTestHook();
   for (const dir of temps.splice(0)) {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -463,6 +466,77 @@ describe("install is atomic in the ways that matter", () => {
       [...rendered.entries()].map(([relPath, file]) => [relPath, file.text])
     );
     expect(existsSync(stale)).toBe(false);
+  });
+});
+
+/**
+ * The descriptor half of the commit, from the same angle `materialization.test`
+ * takes on the content half: the state the install acts on has to be the state
+ * that is there now, not the one it read before staging.
+ *
+ * Both hazards below are ways the descriptor rename destroys evidence. The
+ * rename overwrites whatever it lands on, and whatever it moves aside is
+ * removed recursively once the install commits — so a stale observation is the
+ * difference between refusing and deleting a stranger's directory.
+ *
+ * The change is made through the fault-injection seam at the instant the hazard
+ * needs, because a test that raced a timer would pass by luck.
+ */
+describe("the launcher descriptor is rechecked at the commit point", () => {
+  const FOREIGN = 'name="Somebody Else\'s Mod"\npath="/elsewhere"\n';
+
+  it("refuses when a descriptor appeared where the install found none", async () => {
+    const root = tempDir();
+    const descriptorPath = join(root, "lp_probe.mod");
+    _setMaterializationTestHook((point) => {
+      if (point !== RENAME_CONTENT_ACTIVATE) {
+        return;
+      }
+      writeFileSync(descriptorPath, FOREIGN, "utf8");
+    });
+
+    const error = await refusal(install(renderedMod, { modDir: root }));
+
+    expect(error.reason).toBe("busy");
+    if (error.failure.reason !== "busy") {
+      throw new Error("unreachable");
+    }
+    expect(error.failure.detail).toContain(descriptorPath);
+    // The rename would have replaced it with the SDK's own descriptor and
+    // reported the install as written.
+    expect(readFileSync(descriptorPath, "utf8")).toBe(FOREIGN);
+    // Nothing of the refused install survived: neither the content half it had
+    // already renamed into place, nor the descriptor staged beside it.
+    expect(readdirSync(root)).toEqual(["lp_probe.mod"]);
+  });
+
+  it("refuses when the descriptor became a directory while the output was staged", async () => {
+    const root = tempDir();
+    const descriptorPath = join(root, "lp_probe.mod");
+    await install(renderedMod, { modDir: root });
+    _setMaterializationTestHook((point) => {
+      if (point !== RENAME_CONTENT_ACTIVATE) {
+        return;
+      }
+      rmSync(descriptorPath);
+      mkdirSync(descriptorPath);
+      writeFileSync(join(descriptorPath, "marker.txt"), "not the SDK's to delete", "utf8");
+    });
+
+    const error = await refusal(install(renderedWithOldFeature(), { modDir: root }));
+
+    expect(error.reason).toBe("busy");
+    // A directory renamed aside is deleted whole by the post-commit cleanup,
+    // and the snapshot behind the observation says only "other" — so no
+    // receipt is evidence about what was in it, and it is left alone.
+    expect(readFileSync(join(descriptorPath, "marker.txt"), "utf8")).toBe(
+      "not the SDK's to delete"
+    );
+    // The content half went back to the install that was already there.
+    const contentDir = join(root, "lp_probe");
+    expect(existsSync(join(contentDir, "common/technology/lp_probe_old_feature.txt"))).toBe(false);
+    expect(existsSync(join(contentDir, "common/technology/lp_probe_technology.txt"))).toBe(true);
+    expect(readdirSync(root).sort()).toEqual(["lp_probe", "lp_probe.mod"]);
   });
 });
 
