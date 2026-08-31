@@ -44,6 +44,38 @@ function tempDir(): string {
   return dir;
 }
 
+/** One cached source as the entry holds it, before anything has checked it. */
+interface CachedSource {
+  path: string;
+  sha256: string;
+  items: unknown;
+}
+
+/** One cache entry as JSON gives it back. */
+interface CacheEntry {
+  formatVersion: number;
+  sources: CachedSource[];
+}
+
+/** The entry with its first source's named members replaced. */
+function withFirstSource(entry: CacheEntry, changes: Partial<CachedSource>): CacheEntry {
+  return {
+    ...entry,
+    sources: [{ ...entry.sources[0]!, ...changes }, ...entry.sources.slice(1)],
+  };
+}
+
+/**
+ * Rewrites the one cache entry in place, keeping its content-addressed name so
+ * the next load still finds it and has to decide whether to believe it.
+ */
+function tamperCacheEntry(cache: string, mutate: (entry: CacheEntry) => unknown): void {
+  const [entryName] = readdirSync(cache).filter((name) => name.startsWith("vanilla-"));
+  const entryPath = join(cache, entryName!);
+  const entry = JSON.parse(readFileSync(entryPath, "utf8")) as CacheEntry;
+  writeFileSync(entryPath, JSON.stringify(mutate(entry)), "utf8");
+}
+
 afterEach(() => {
   for (const dir of temps.splice(0)) {
     rmSync(dir, { recursive: true, force: true });
@@ -208,6 +240,116 @@ describe("load", () => {
       warn.mockRestore();
       error.mockRestore();
     }
+  });
+
+  /**
+   * A cache entry that is valid JSON, sits under the right content-addressed
+   * name, and still does not hold this load's parse. The key covers the bytes
+   * on disk and therefore the entry's *name*; it said nothing about what was
+   * inside the file, which used to be cast to `CacheFile` and returned on the
+   * strength of one integer (SDK-339).
+   */
+  const TAMPERED: readonly (readonly [string, (entry: CacheEntry) => unknown])[] = [
+    ["an entry claiming no sources at all", (entry) => ({ ...entry, sources: [] })],
+    [
+      "fewer sources than the manifest names",
+      (entry) => ({ ...entry, sources: [entry.sources[0]] }),
+    ],
+    [
+      "a source under a path the manifest does not name",
+      (entry) => withFirstSource(entry, { path: "common/technology/somewhere_else.txt" }),
+    ],
+    [
+      "a source whose content hash disagrees with the manifest",
+      (entry) => withFirstSource(entry, { sha256: "0".repeat(64) }),
+    ],
+    ["items that are not a list", (entry) => withFirstSource(entry, { items: "not a list" })],
+    [
+      "a number node whose lexeme came back as a JSON number",
+      (entry) => withFirstSource(entry, { items: [{ kind: "num", lexeme: 100 }] }),
+    ],
+    [
+      "a node kind the parser does not produce",
+      (entry) => withFirstSource(entry, { items: [{ kind: "comment", text: "hello" }] }),
+    ],
+    // Each of these is the right JSON type in the right field and still a
+    // spelling no parse yields. Left unchecked they load, and then fail in
+    // whichever reader first asks the node for its value — `cost is garbage`
+    // out of the technology reader, with nothing naming the cache.
+    [
+      "a number whose lexeme is not a numeral",
+      (entry) => withFirstSource(entry, { items: [{ kind: "num", lexeme: "garbage" }] }),
+    ],
+    [
+      "an @variable reference that is not a variable name",
+      (entry) => withFirstSource(entry, { items: [{ kind: "var", name: "not a var" }] }),
+    ],
+    [
+      "an inline-math node holding something that is not inline math",
+      (entry) => withFirstSource(entry, { items: [{ kind: "math", source: "1 + 1" }] }),
+    ],
+    [
+      "a bare string that could not be written bare",
+      (entry) =>
+        withFirstSource(entry, { items: [{ kind: "str", value: 'ends "badly', quoted: false }] }),
+    ],
+    [
+      "a container header that could not be written as a bare token",
+      (entry) =>
+        withFirstSource(entry, {
+          items: [{ kind: "container", header: "not a token", items: [] }],
+        }),
+    ],
+    [
+      "an entry whose operator is not one the syntax has",
+      (entry) =>
+        withFirstSource(entry, {
+          items: [{ kind: "entry", key: "cost", op: "~=", value: { kind: "bool", value: true } }],
+        }),
+    ],
+    [
+      "an entry holding a conditional region where only a value may stand",
+      (entry) =>
+        withFirstSource(entry, {
+          items: [
+            {
+              kind: "entry",
+              key: "cost",
+              op: "=",
+              value: { kind: "param-text", name: "X", negated: false, text: "" },
+            },
+          ],
+        }),
+    ],
+    ["a stale format version", (entry) => ({ ...entry, formatVersion: 0 })],
+  ];
+
+  it.each(TAMPERED)("re-derives rather than trusting %s", (_description, mutate) => {
+    const cache = tempDir();
+    const written = load({ installPath: FIXTURE, cache });
+    expect(written.fromCache).toBe(false);
+    tamperCacheEntry(cache, mutate);
+
+    const view = load({ installPath: FIXTURE, cache });
+
+    expect(view.fromCache).toBe(false);
+    // Re-derived, rather than served as whatever the entry claimed: the empty
+    // `sources` case above is exactly the one that used to produce an empty
+    // vanilla view in silence.
+    expect(view.files).toHaveLength(5);
+    expect(view.definition("technology", "tech_fake_farming").cost?.value).toBe(100);
+  });
+
+  it("serves an untouched entry, so the checks above reject only what they name", () => {
+    const cache = tempDir();
+    load({ installPath: FIXTURE, cache });
+    tamperCacheEntry(cache, (entry) => entry);
+
+    const view = load({ installPath: FIXTURE, cache });
+
+    expect(view.fromCache).toBe(true);
+    expect(view.files).toHaveLength(5);
+    expect(view.definition("technology", "tech_fake_farming").cost?.value).toBe(100);
   });
 
   it("refuses a subdirectory under a flat-parsed dir", () => {

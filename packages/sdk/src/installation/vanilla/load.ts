@@ -108,7 +108,9 @@ export function load(options: LoadOptions = {}): VanillaView {
   const key = cacheKey(manifest);
 
   if (cacheDir !== undefined) {
-    const cached = readCache(cacheDir, key);
+    // The manifest goes with the key: the key names the entry, and the
+    // manifest is what the entry has to turn out to hold.
+    const cached = readCache(cacheDir, key, manifest);
     if (cached !== undefined) {
       return new VanillaView(cached, {
         installPath,
