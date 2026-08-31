@@ -3,6 +3,7 @@ import { block, list, scalar, type PdxEntry } from "@pdx-ts/pdxscript";
 import type { EventScopelessRef } from "../generated/refs.ts";
 import type { ScopeName } from "../generated/scopes.ts";
 import { isVanillaRef } from "../identifiers/trie.ts";
+import { ownEventIdPattern } from "../identity.ts";
 import { compareUtf8 } from "../ordering.ts";
 import type { AmbientScopeContext } from "../script/effects/types.ts";
 import { refId } from "../script/scalar.ts";
@@ -116,7 +117,7 @@ export class OnActionAuthoring {
   constructor(prefix: string, selectedEvents: readonly EventItemBase[]) {
     this.selectedEvents = new Set(selectedEvents);
     this.selectedEventsById = new Map(selectedEvents.map((event) => [event.id, event]));
-    this.ownEventId = new RegExp(`^${prefix}(_[a-z0-9_]*)?\\.\\d+$`);
+    this.ownEventId = ownEventIdPattern(prefix);
   }
 
   /** Adds one ordinary event after validating ownership and the hook contract. */

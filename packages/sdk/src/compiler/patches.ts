@@ -12,7 +12,7 @@ import {
 import { registryRule, SUPPORTED_STELLARIS_BUILD } from "../installation/vanilla/override-rules.ts";
 import { sha256Hex } from "../installation/vanilla/parse.ts";
 import type { VanillaFile } from "../installation/vanilla/parsed-definitions.ts";
-import type { PatchedContent } from "../installation/vanilla/patch.ts";
+import type { ContentPatchItem, PatchedContent } from "../installation/vanilla/patch.ts";
 import {
   compareLogicalPaths,
   compareUtf8,
@@ -34,16 +34,13 @@ import type { ReferenceUse } from "./references.ts";
  * one-view check spans every registry — a build patches one vanilla load.
  */
 export function collectPatches(
-  flat: readonly PlacedItem[],
+  placedPatches: readonly PlacedItem<ContentPatchItem>[],
   options: BuildOptions,
   refUses: ReferenceUse[]
 ): ReadonlyMap<string, readonly PatchedContent[]> {
   const byRegistry = new Map<string, PatchedContent[]>();
   let expected = options.vanilla?.manifestKey;
-  for (const { item, stem } of flat) {
-    if (item.itemKind !== "patch") {
-      continue;
-    }
+  for (const { item, stem } of placedPatches) {
     const patched = item.patched;
     const { registry } = patched;
     const patches = byRegistry.get(registry) ?? [];

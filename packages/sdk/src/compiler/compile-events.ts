@@ -1,5 +1,6 @@
 import { kv, type PdxEntry } from "@pdx-ts/pdxscript";
 
+import type { PlacedItem } from "../authoring/feature.ts";
 import { OnActionAuthoring, onActionContributionKey } from "../events/on-actions.ts";
 import type { EventItemBase } from "../events/types.ts";
 import { compareUtf8, type LogicalPath } from "../ordering.ts";
@@ -22,10 +23,7 @@ export interface CompiledEvents {
 
 /** Compiles events, on-actions, and shared contributions in their required order. */
 export function compileEvents(session: BuildSession): CompiledEvents {
-  const placedEvents = session.flat.filter(
-    (placed): placed is { item: EventItemBase; stem: string | undefined } =>
-      placed.item.itemKind === "event"
-  );
+  const placedEvents = session.items.event;
   const eventStem = new Map(placedEvents.map(({ item, stem }) => [item, stem] as const));
   const eventGroups = groupEvents(session, placedEvents);
   const orderedEvents = eventGroups.flatMap((group) => group.events);
@@ -34,7 +32,7 @@ export function compileEvents(session: BuildSession): CompiledEvents {
     relPath: group.relPath,
     entries: [kv("namespace", group.namespace), ...group.events.map((event) => event.entry)],
   }));
-  const { onActions, onActionStems } = compileOnActions(session, placedEvents);
+  const { onActions, onActionStems } = compileOnActions(session);
   const { shipOfSizeLimits, contributionStems } = compileContributions(session);
 
   return {
@@ -60,7 +58,7 @@ function eventNumber(event: EventItemBase, namespace: string): number {
 
 function groupEvents(
   session: BuildSession,
-  placedEvents: readonly { item: EventItemBase; stem: string | undefined }[]
+  placedEvents: readonly PlacedItem<EventItemBase>[]
 ): EventGroup[] {
   const eventsByPath = new Map<LogicalPath, { namespace: string; events: EventItemBase[] }>();
   for (const { item, stem } of placedEvents) {
@@ -91,9 +89,7 @@ function groupEvents(
     }));
 }
 
-function assertOneStemPerNamespace(
-  placedEvents: readonly { item: EventItemBase; stem: string | undefined }[]
-): void {
+function assertOneStemPerNamespace(placedEvents: readonly PlacedItem<EventItemBase>[]): void {
   const stemsByNamespace = new Map<string, Set<string>>();
   for (const { item, stem } of placedEvents) {
     const stems = stemsByNamespace.get(item.namespace) ?? new Set<string>();
@@ -151,29 +147,27 @@ function registerEvents(
   return eventIds;
 }
 
-function compileOnActions(
-  session: BuildSession,
-  placedEvents: readonly { item: EventItemBase; stem: string | undefined }[]
-): { onActions: PdxEntry[]; onActionStems: ReadonlySet<string> } {
+function compileOnActions(session: BuildSession): {
+  onActions: PdxEntry[];
+  onActionStems: ReadonlySet<string>;
+} {
   const onActionAuthoring = new OnActionAuthoring(
     session.config.prefix,
-    placedEvents.map(({ item }) => item)
+    session.items.event.map(({ item }) => item)
   );
   const onActionStems = new Set<string>();
-  const bindings = session.flat.flatMap(({ item, stem }) => {
-    if (item.itemKind !== "on-action") {
-      return [];
-    }
+  for (const { stem } of session.items.onAction) {
     if (stem !== undefined) {
       onActionStems.add(stem);
     }
-    return [item];
-  });
-  const orderedBindings = [...bindings].sort(
-    (a, b) =>
-      compareUtf8(a.hook.name, b.hook.name) ||
-      compareUtf8(onActionContributionKey(a), onActionContributionKey(b))
-  );
+  }
+  const orderedBindings = session.items.onAction
+    .map(({ item }) => item)
+    .sort(
+      (a, b) =>
+        compareUtf8(a.hook.name, b.hook.name) ||
+        compareUtf8(onActionContributionKey(a), onActionContributionKey(b))
+    );
   for (const item of orderedBindings) {
     for (const event of item.events ?? []) {
       onActionAuthoring.register(item.hook, event);
@@ -191,10 +185,7 @@ function compileContributions(session: BuildSession): {
 } {
   const contributedLimits: string[] = [];
   const contributionStems = new Set<string>();
-  for (const { item, stem } of session.flat) {
-    if (item.itemKind !== "contribution") {
-      continue;
-    }
+  for (const { item, stem } of session.items.contribution) {
     if (stem !== undefined) {
       contributionStems.add(stem);
     }

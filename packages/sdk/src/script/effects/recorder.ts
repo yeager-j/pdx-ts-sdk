@@ -1163,9 +1163,11 @@ function eventChainCounterEffect(key: string, needsAmount: boolean) {
 }
 
 function fireEffect(key: string) {
-  return (sink: PdxEntry[], _refs: RecordedRefUse[], recording: Recording | undefined) =>
+  return (sink: PdxEntry[], refs: RecordedRefUse[], recording: Recording | undefined) =>
     (args: FireCallArgs): void => {
-      const entries: PdxEntry[] = [kv("id", refId(args.id))];
+      const id = String(refId(args.id));
+      const entries: PdxEntry[] = [kv("id", id)];
+      refs.push({ targets: ["event"], id, field: `${key}.id` });
       for (const field of ["days", "months", "years", "random"] as const) {
         const value = args[field];
         if (value !== undefined) {
