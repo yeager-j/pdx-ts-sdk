@@ -2,11 +2,12 @@
  * Authored values are snapshots of what the caller passed (SDK-325), and a
  * compiled `PureMod` exposes them as immutable data (SDK-327).
  */
-import { serialize } from "@pdx-ts/pdxscript";
+import { kv, serialize, type PdxEntry } from "@pdx-ts/pdxscript";
 import { describe, expect, it } from "vitest";
 
 import { freezeAuthoredData, snapshotAuthoredValue } from "../src/authoring/snapshot.ts";
 import { createMod, render } from "../src/index.ts";
+import { always, hasCountryFlag } from "../src/script/triggers.ts";
 import { onActions } from "../src/stellaris.ts";
 
 const CONFIG = {
@@ -16,7 +17,7 @@ const CONFIG = {
 };
 const mod = createMod(CONFIG);
 
-function technologyText(features: Parameters<typeof mod.compile>[0]): string {
+function contentText(features: Parameters<typeof mod.compile>[0]): string {
   const file = mod.compile(features).contentFiles[0]!;
   return serialize([...file.entries]);
 }
@@ -39,11 +40,21 @@ describe("snapshotAuthoredValue", () => {
   });
 
   it("keeps an already-frozen container, so recorded object identity survives", () => {
-    // A captured Asset file is identified by object identity, and reaches the
-    // definer inside a definition field.
-    const recorded = Object.freeze({ itemKind: "asset", path: "gfx/a.dds" });
+    const recorded = Object.freeze({ path: "gfx/a.dds", byteLength: 4 });
 
     expect(snapshotAuthoredValue({ textureFile: recorded }).textureFile).toBe(recorded);
+  });
+
+  it("shares an Item rather than copying its payload", () => {
+    // A definition may name another definition by its Item. Copying one would
+    // clone the whole def it carries and lose the identity the SDK recorded it
+    // under — a captured Asset file is checked by exactly that identity.
+    const item = { itemKind: "content", type: "technology", id: "a", def: { id: "a" } };
+
+    const snapshot = snapshotAuthoredValue({ prerequisites: [item] });
+
+    expect(snapshot.prerequisites[0]).toBe(item);
+    expect(Object.isFrozen(item)).toBe(false);
   });
 
   it("reports a cycle rather than recursing until the stack runs out", () => {
@@ -79,7 +90,7 @@ describe("authored values snapshot their caller's input (SDK-325)", () => {
 
     category.push("biology");
 
-    expect(technologyText([placed])).toContain("category = { particles }");
+    expect(contentText([placed])).toContain("category = { particles }");
   });
 
   it("keeps the items a feature was placed with when the array is appended to", () => {
@@ -147,6 +158,77 @@ describe("authored values snapshot their caller's input (SDK-325)", () => {
         mod.feature(undefined, [mod.on(onActions.onCustomDiplomacy, [diplomacy])]),
       ])
     ).not.toThrow();
+  });
+
+  it("keeps the ambient scopes an event handle was minted with", () => {
+    // A handle circulates as an event reference whose `scopes` the hook
+    // contract check reads, and `.define()` runs whenever the author gets to
+    // it — both must see the map the handle was minted with.
+    const scopes: { from: "country" } = { from: "country" };
+    const events = mod.namespace("handle_scopes");
+    const handle = events.countryHandle(1, { scopes });
+
+    (scopes as { from: string }).from = "planet";
+
+    expect(handle.scopes).toEqual({ from: "country" });
+    const defined = handle.define({ isTriggeredOnly: true });
+    expect(() =>
+      mod.compile([
+        mod.feature("handle_scope_events", [defined]),
+        mod.feature(undefined, [mod.on(onActions.onCustomDiplomacy, [defined])]),
+      ])
+    ).not.toThrow();
+  });
+
+  it("leaves an object a WithFrom closure returned mutable for its caller", () => {
+    // The closure runs once at definition time and its result is spliced into
+    // the definition tree. A caller that hands back an object it shares must
+    // not find that object frozen once the mod compiles.
+    const row = { subtract: 1, when: always() };
+    const shared = { base: 1, modifiers: [row] };
+    const culture = mod.graphicalCulture("closure_weight", {
+      shipSelectionWeight: () => shared,
+    });
+    const placed = mod.feature(undefined, [culture]);
+
+    expect(contentText([placed])).toContain("subtract = 1");
+
+    // The closure is the author's own code and re-runs on the next compile, so
+    // what the snapshot promises here is narrower than for a plain field: the
+    // object comes back the caller's to write to.
+    expect(Object.isFrozen(shared)).toBe(false);
+    expect(Object.isFrozen(row)).toBe(false);
+    expect(() => {
+      row.subtract = 9;
+    }).not.toThrow();
+  });
+
+  it("keeps an Item a definition names as the object it was minted as", () => {
+    const base = mod.technology("prereq_base", {
+      name: "Prerequisite Base",
+      area: "physics",
+      tier: 1,
+      category: ["particles"],
+    });
+    const dependent = mod.technology("prereq_dependent", {
+      name: "Prerequisite Dependent",
+      area: "physics",
+      tier: 2,
+      category: ["particles"],
+      prerequisites: [base],
+    });
+
+    expect(dependent.def.prerequisites![0]).toBe(base);
+  });
+});
+
+describe("triggers are immutable once built (SDK-327)", () => {
+  it("freezes the entries and refs a trigger carries", () => {
+    const condition = hasCountryFlag("frozen_flag");
+
+    expect(Object.isFrozen(condition.entries)).toBe(true);
+    expect(Object.isFrozen(condition.refs)).toBe(true);
+    expect(() => (condition.entries as PdxEntry[]).push(kv("a", 1))).toThrow(TypeError);
   });
 });
 

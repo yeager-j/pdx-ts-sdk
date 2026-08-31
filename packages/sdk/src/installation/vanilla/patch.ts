@@ -45,6 +45,7 @@ import {
   type LocalizationMint,
   type LocalizedText,
 } from "../../authoring/localization.ts";
+import { snapshotAuthoredValue } from "../../authoring/snapshot.ts";
 import {
   keyedTextKey,
   localisationKey,
@@ -656,7 +657,11 @@ export function patchContent<Source extends ParsedDefinition, Patch extends obje
     id: source.id,
     registry,
     source,
-    def: resolved,
+    // Snapshotted after lowering, so the retained definition cannot drift from
+    // the entries above. The fold rereads this for the swap names a patch
+    // declares, and a caller who mutated a nested object they had returned
+    // would otherwise register an id nothing emits (SDK-325).
+    def: snapshotAuthoredValue(resolved),
     refs,
     loc: mint.into,
     replaceLoc,

@@ -13,6 +13,11 @@
  * instance are all SDK-owned values whose identity and behavior callers depend
  * on, and none of them is a container an author can mutate.
  *
+ * An Item is shared for the same reason even though it is a plain object. A
+ * definition may name another definition by its Item, and an Item carries its
+ * own definition and lowered payload, so copying one would clone that payload
+ * and hand back a value the SDK no longer recognizes as the one it minted.
+ *
  * @throws Error - When the value contains a cycle. Authored definitions are
  * tree-shaped data, and a cycle is input the SDK could never serialize.
  */
@@ -95,6 +100,22 @@ function isPlainData(value: unknown): value is object {
   if (Array.isArray(value)) {
     return true;
   }
+  if (isItem(value)) {
+    return false;
+  }
   const prototype = Object.getPrototypeOf(value) as object | null;
   return prototype === Object.prototype || prototype === null;
+}
+
+/**
+ * Whether the value is an Item — content, event, patch, Asset file, or any
+ * other value an authoring method returns.
+ *
+ * `itemKind` is the discriminant every Item carries and nothing else does, so
+ * it settles this without naming one kind. An author can of course write
+ * `{ itemKind: "…" }` by hand; the cost of believing them is that their own
+ * object is shared rather than copied, which is what an Item wants anyway.
+ */
+function isItem(value: object): boolean {
+  return typeof (value as { readonly itemKind?: unknown }).itemKind === "string";
 }

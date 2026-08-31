@@ -124,6 +124,39 @@ describe("patching end to end", () => {
     );
   });
 
+  it("keeps a mutated swap object out of both the emitted body and the registered ids", () => {
+    // The patch lowers its replacement entries when it is built, but the fold
+    // rereads `def` later for the swap names the patch declares. A caller who
+    // mutated a nested object they had returned used to make those two
+    // disagree: another definition could then name the mutated id, pass the
+    // dangling-reference guard, and ship a reference to content nobody emits
+    // (SDK-325).
+    const mod = createMod(makeConfig());
+    const swap = { name: "pp_mod_swap_original", weight: { factor: 2 } };
+    const patch = mod.patchTechnology(
+      vanilla.definition("technology", "tech_gene_forging").require("cost"),
+      () => ({ technologySwap: [swap] })
+    );
+
+    swap.name = "pp_mod_swap_mutated";
+
+    const compiled = mod.compile([mod.feature(undefined, [patch])]);
+    const emitted = render(compiled).get("common/technology/pp_soc_tech_pp_mod_patch.txt")!;
+    expect(emitted).toContain("name = pp_mod_swap_original");
+    expect(emitted).not.toContain("pp_mod_swap_mutated");
+
+    const referencesMutated = mod.technology("dependent", {
+      name: "Dependent",
+      area: "society",
+      tier: 3,
+      category: "biology",
+      prerequisites: ["pp_mod_swap_mutated"],
+    });
+    expect(() =>
+      mod.compile([mod.feature(undefined, [patch]), mod.feature("dependent", [referencesMutated])])
+    ).toThrow(/pp_mod_swap_mutated/);
+  });
+
   it("rejects patches from two different vanilla loads", () => {
     const mod = createMod(makeConfig());
     const other = viewFromFiles({
