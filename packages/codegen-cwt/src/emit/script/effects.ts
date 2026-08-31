@@ -20,7 +20,11 @@
 
 import type { Cardinality, RuleField, RuleType } from "../../cwt/model.ts";
 import type { DocEntry } from "../../logs/trigger-docs.ts";
-import type { LoweredRule, LoweredRuleBlock } from "../../lower/lowered-rule.ts";
+import {
+  loweredRuleConflictSkips,
+  type LoweredRule,
+  type LoweredRuleBlock,
+} from "../../lower/lowered-rule.ts";
 import {
   aliasListMembers,
   canonicalScopeSet,
@@ -1084,6 +1088,10 @@ function clusterEffects(
     const candidate = generatedEffectRule(key, rule, policy);
     if ("category" in candidate) {
       skipped.push(candidate);
+      continue;
+    }
+    if (candidate.rule.conflicts.length > 0) {
+      skipped.push(...loweredRuleConflictSkips(candidate.rule));
       continue;
     }
     const lowered = lowerEffect(emitter, docs, candidate);

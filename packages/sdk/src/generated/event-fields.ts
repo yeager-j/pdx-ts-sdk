@@ -175,7 +175,7 @@ export const EVENT_FIELD_SUPPORT = [
     shape:
       "block 0..inf {exclusive_trigger, show_sound, text, trigger} | scalar 0..1 | scalar 1..1",
     ruleSignature:
-      '0..1:assignment:inherited:literal["OK"] | 0..inf:assignment:inherited:block{fields=[exclusive_trigger:0..1:assignment:inherited:block{fields=[alias_name[trigger]:1..1:assignment:inherited:alias_match_left[trigger]];bare=[]};show_sound:0..1:assignment:inherited:<sound_effect>;text:0..inf:assignment:inherited:localisation;trigger:0..1:assignment:inherited:block{fields=[alias_name[trigger]:1..1:assignment:inherited:alias_match_left[trigger]];bare=[]}];bare=[]} | 1..1:assignment:inherited:localisation',
+      '0..1:assignment:inherited:literal["OK"] | 0..inf:assignment:inherited:block{fields=[exclusive_trigger:0..1:assignment:inherited:block{fields=[alias_name[trigger]:1..1:assignment:inherited:alias_match_left[trigger]];bare=[];via="trigger_clause"};show_sound:0..1:assignment:inherited:<sound_effect>;text:0..inf:assignment:inherited:localisation;trigger:0..1:assignment:inherited:block{fields=[alias_name[trigger]:1..1:assignment:inherited:alias_match_left[trigger]];bare=[];via="trigger_clause"}];bare=[]} | 1..1:assignment:inherited:localisation',
     disposition: "supported",
     reason: "one scalar plus the complete repeated conditional-description block",
   },
@@ -197,7 +197,7 @@ export const EVENT_FIELD_SUPPORT = [
     scriptKey: "picture",
     shape: "block 0..inf {picture, trigger} | scalar 0..0 | scalar 0..inf | scalar 1..inf",
     ruleSignature:
-      "0..0:assignment:inherited:scalar | 0..inf:assignment:inherited:<sprite> | 0..inf:assignment:inherited:block{fields=[picture:1..1:assignment:inherited:<sprite>;trigger:0..1:assignment:inherited:block{fields=[alias_name[trigger]:1..1:assignment:inherited:alias_match_left[trigger]];bare=[]}];bare=[]} | 1..inf:assignment:inherited:<sprite>",
+      '0..0:assignment:inherited:scalar | 0..inf:assignment:inherited:<sprite> | 0..inf:assignment:inherited:block{fields=[picture:1..1:assignment:inherited:<sprite>;trigger:0..1:assignment:inherited:block{fields=[alias_name[trigger]:1..1:assignment:inherited:alias_match_left[trigger]];bare=[];via="trigger_clause"}];bare=[]} | 1..inf:assignment:inherited:<sprite>',
     disposition: "partial",
     reason: "one scalar picture arm",
     unsupportedForms: ["repeated scalar picture values", "triggered picture blocks"],
@@ -206,7 +206,7 @@ export const EVENT_FIELD_SUPPORT = [
     scriptKey: "show_sound",
     shape: "block 0..inf {sound, sound_is_advisor, trigger} | scalar 0..0 | scalar 0..inf",
     ruleSignature:
-      "0..0:assignment:inherited:scalar | 0..inf:assignment:inherited:<sound_effect> | 0..inf:assignment:inherited:block{fields=[sound:1..1:assignment:inherited:<sound_effect>;sound_is_advisor:0..1:assignment:inherited:bool;trigger:0..1:assignment:inherited:block{fields=[alias_name[trigger]:1..1:assignment:inherited:alias_match_left[trigger]];bare=[]}];bare=[]}",
+      '0..0:assignment:inherited:scalar | 0..inf:assignment:inherited:<sound_effect> | 0..inf:assignment:inherited:block{fields=[sound:1..1:assignment:inherited:<sound_effect>;sound_is_advisor:0..1:assignment:inherited:bool;trigger:0..1:assignment:inherited:block{fields=[alias_name[trigger]:1..1:assignment:inherited:alias_match_left[trigger]];bare=[];via="trigger_clause"}];bare=[]}',
     disposition: "partial",
     reason: "one scalar sound arm",
     unsupportedForms: ["repeated scalar sound values", "triggered show_sound blocks"],
@@ -348,7 +348,7 @@ export const EVENT_FIELD_SUPPORT = [
     scriptKey: "major_trigger",
     shape: "block 0..1 {alias_name[trigger]}",
     ruleSignature:
-      "0..1:assignment:inherited:block{fields=[alias_name[trigger]:1..1:assignment:inherited:alias_match_left[trigger]];bare=[]}",
+      '0..1:assignment:inherited:block{fields=[alias_name[trigger]:1..1:assignment:inherited:alias_match_left[trigger]];bare=[];via="trigger_clause"}',
     disposition: "supported",
     reason: "recipient-country visibility gate",
   },
@@ -391,7 +391,7 @@ export const EVENT_FIELD_SUPPORT = [
     scriptKey: "trigger",
     shape: "block 0..1 {alias_name[trigger]}",
     ruleSignature:
-      "0..1:assignment:inherited:block{fields=[alias_name[trigger]:1..1:assignment:inherited:alias_match_left[trigger]];bare=[]}",
+      '0..1:assignment:inherited:block{fields=[alias_name[trigger]:1..1:assignment:inherited:alias_match_left[trigger]];bare=[];via="trigger_clause"}',
     disposition: "supported",
     reason: "event visibility gate",
   },
@@ -399,7 +399,7 @@ export const EVENT_FIELD_SUPPORT = [
     scriptKey: "abort_trigger",
     shape: "block 0..1 {alias_name[trigger]}",
     ruleSignature:
-      "0..1:assignment:inherited:block{fields=[alias_name[trigger]:1..1:assignment:inherited:alias_match_left[trigger]];bare=[]}",
+      '0..1:assignment:inherited:block{fields=[alias_name[trigger]:1..1:assignment:inherited:alias_match_left[trigger]];bare=[];via="trigger_clause"}',
     disposition: "supported",
     reason: "event cancellation gate",
   },
@@ -407,7 +407,7 @@ export const EVENT_FIELD_SUPPORT = [
     scriptKey: "abort_effect",
     shape: "block 0..1 {alias_name[effect]}",
     ruleSignature:
-      "0..1:assignment:inherited:block{fields=[alias_name[effect]:1..1:assignment:inherited:alias_match_left[effect]];bare=[]}",
+      '0..1:assignment:inherited:block{fields=[alias_name[effect]:1..1:assignment:inherited:alias_match_left[effect]];bare=[];via="effect_clause"}',
     disposition: "supported",
     reason: "effects run on abort",
   },
@@ -431,7 +431,7 @@ export const EVENT_FIELD_SUPPORT = [
     scriptKey: "immediate",
     shape: "block 0..1 {alias_name[effect]}",
     ruleSignature:
-      "0..1:assignment:inherited:block{fields=[alias_name[effect]:1..1:assignment:inherited:alias_match_left[effect]];bare=[]}",
+      '0..1:assignment:inherited:block{fields=[alias_name[effect]:1..1:assignment:inherited:alias_match_left[effect]];bare=[];via="effect_clause"}',
     disposition: "supported",
     reason: "immediate effect splice",
   },
@@ -439,7 +439,7 @@ export const EVENT_FIELD_SUPPORT = [
     scriptKey: "after",
     shape: "block 0..1 {alias_name[effect]}",
     ruleSignature:
-      "0..1:assignment:inherited:block{fields=[alias_name[effect]:1..1:assignment:inherited:alias_match_left[effect]];bare=[]}",
+      '0..1:assignment:inherited:block{fields=[alias_name[effect]:1..1:assignment:inherited:alias_match_left[effect]];bare=[];via="effect_clause"}',
     disposition: "supported",
     reason: "after effect splice",
   },
@@ -448,7 +448,7 @@ export const EVENT_FIELD_SUPPORT = [
     shape:
       "block 0..inf {ai_chance, alias_name[effect], allow, custom_gui, default_hide_option, exclusive_trigger, hide_option_if_not_allowed, icon, is_dialog_only, name, response_text, sound, tag, trigger}",
     ruleSignature:
-      "0..inf:assignment:inherited:block{fields=[ai_chance:0..1:assignment:inherited:block{fields=[alias_name[modifier_rule]:1..1:assignment:inherited:alias_match_left[modifier_rule]];bare=[]};alias_name[effect]:1..1:assignment:inherited:alias_match_left[effect];allow:0..1:assignment:inherited:block{fields=[alias_name[trigger]:1..1:assignment:inherited:alias_match_left[trigger]];bare=[]};custom_gui:0..1:assignment:inherited:scalar;default_hide_option:0..1:assignment:inherited:bool;exclusive_trigger:0..1:assignment:inherited:block{fields=[alias_name[trigger]:1..1:assignment:inherited:alias_match_left[trigger]];bare=[]};hide_option_if_not_allowed:0..1:assignment:inherited:bool;icon:0..1:assignment:inherited:block{fields=[icon:1..1:assignment:inherited:<sprite>;icon_background:0..1:assignment:inherited:<sprite>;text:0..1:assignment:inherited:localisation];bare=[]};is_dialog_only:0..1:assignment:inherited:bool;name:1..inf:assignment:inherited:block{fields=[exclusive_trigger:1..1:assignment:inherited:block{fields=[alias_name[trigger]:1..1:assignment:inherited:alias_match_left[trigger]];bare=[]};text:0..1:assignment:inherited:localisation];bare=[]};name:1..inf:assignment:inherited:block{fields=[text:0..1:assignment:inherited:localisation;trigger:1..1:assignment:inherited:block{fields=[alias_name[trigger]:1..1:assignment:inherited:alias_match_left[trigger]];bare=[]}];bare=[]};name:1..inf:assignment:inherited:localisation;response_text:0..1:assignment:inherited:localisation;sound:0..1:assignment:inherited:scalar;subtype[diplomatic]:1..1:assignment:inherited:block{fields=[custom_gui:0..1:assignment:inherited:scalar;default_hide_option:0..1:assignment:inherited:bool];bare=[]};tag:0..1:assignment:inherited:value_set[event_option_tag];trigger:0..1:assignment:inherited:block{fields=[alias_name[trigger]:1..1:assignment:inherited:alias_match_left[trigger]];bare=[]}];bare=[]}",
+      '0..inf:assignment:inherited:block{fields=[ai_chance:0..1:assignment:inherited:block{fields=[alias_name[modifier_rule]:1..1:assignment:inherited:alias_match_left[modifier_rule]];bare=[]};alias_name[effect]:1..1:assignment:inherited:alias_match_left[effect];allow:0..1:assignment:inherited:block{fields=[alias_name[trigger]:1..1:assignment:inherited:alias_match_left[trigger]];bare=[];via="trigger_clause"};custom_gui:0..1:assignment:inherited:scalar;default_hide_option:0..1:assignment:inherited:bool;exclusive_trigger:0..1:assignment:inherited:block{fields=[alias_name[trigger]:1..1:assignment:inherited:alias_match_left[trigger]];bare=[];via="trigger_clause"};hide_option_if_not_allowed:0..1:assignment:inherited:bool;icon:0..1:assignment:inherited:block{fields=[icon:1..1:assignment:inherited:<sprite>;icon_background:0..1:assignment:inherited:<sprite>;text:0..1:assignment:inherited:localisation];bare=[]};is_dialog_only:0..1:assignment:inherited:bool;name:1..inf:assignment:inherited:block{fields=[exclusive_trigger:1..1:assignment:inherited:block{fields=[alias_name[trigger]:1..1:assignment:inherited:alias_match_left[trigger]];bare=[];via="trigger_clause"};text:0..1:assignment:inherited:localisation];bare=[]};name:1..inf:assignment:inherited:block{fields=[text:0..1:assignment:inherited:localisation;trigger:1..1:assignment:inherited:block{fields=[alias_name[trigger]:1..1:assignment:inherited:alias_match_left[trigger]];bare=[];via="trigger_clause"}];bare=[]};name:1..inf:assignment:inherited:localisation;response_text:0..1:assignment:inherited:localisation;sound:0..1:assignment:inherited:scalar;subtype[diplomatic]:1..1:assignment:inherited:block{fields=[custom_gui:0..1:assignment:inherited:scalar;default_hide_option:0..1:assignment:inherited:bool];bare=[]};tag:0..1:assignment:inherited:value_set[event_option_tag];trigger:0..1:assignment:inherited:block{fields=[alias_name[trigger]:1..1:assignment:inherited:alias_match_left[trigger]];bare=[];via="trigger_clause"}];bare=[]}',
     disposition: "supported",
     reason: "repeated event options",
   },
@@ -499,7 +499,7 @@ export const EVENT_FIELD_SUPPORT = [
     shape:
       "block 0..inf {city_level, graphical_culture, planet_background, portrait, room, tooltip, trigger}",
     ruleSignature:
-      "0..inf:assignment:inherited:block{fields=[city_level:0..1:assignment:inherited:scope[country];city_level:0..1:assignment:inherited:scope[planet];city_level:0..1:assignment:inherited:scope[species];graphical_culture:0..1:assignment:inherited:<graphical_culture>;graphical_culture:0..1:assignment:inherited:scope[country];graphical_culture:0..1:assignment:inherited:scope[species];planet_background:0..1:assignment:inherited:<planet_class>;planet_background:0..1:assignment:inherited:scope[carrier];planet_background:0..1:assignment:inherited:scope[country];planet_background:0..1:assignment:inherited:scope[planet];planet_background:0..1:assignment:inherited:scope[ship];planet_background:0..1:assignment:inherited:scope[species];portrait:0..1:assignment:inherited:<portrait>;portrait:0..1:assignment:inherited:scope[country];portrait:0..1:assignment:inherited:scope[leader];portrait:0..1:assignment:inherited:scope[species];room:0..1:assignment:inherited:<asset_selector.room>;room:0..1:assignment:inherited:icon[gfx/portraits/city_sets];room:0..1:assignment:inherited:icon[gfx/portraits/city_sets];room:0..1:assignment:inherited:scope[country];room:0..1:assignment:inherited:scope[leader];room:0..1:assignment:inherited:scope[species];tooltip:0..1:assignment:inherited:bool;trigger:0..1:assignment:inherited:block{fields=[alias_name[trigger]:1..1:assignment:inherited:alias_match_left[trigger]];bare=[]}];bare=[]}",
+      '0..inf:assignment:inherited:block{fields=[city_level:0..1:assignment:inherited:scope[country];city_level:0..1:assignment:inherited:scope[planet];city_level:0..1:assignment:inherited:scope[species];graphical_culture:0..1:assignment:inherited:<graphical_culture>;graphical_culture:0..1:assignment:inherited:scope[country];graphical_culture:0..1:assignment:inherited:scope[species];planet_background:0..1:assignment:inherited:<planet_class>;planet_background:0..1:assignment:inherited:scope[carrier];planet_background:0..1:assignment:inherited:scope[country];planet_background:0..1:assignment:inherited:scope[planet];planet_background:0..1:assignment:inherited:scope[ship];planet_background:0..1:assignment:inherited:scope[species];portrait:0..1:assignment:inherited:<portrait>;portrait:0..1:assignment:inherited:scope[country];portrait:0..1:assignment:inherited:scope[leader];portrait:0..1:assignment:inherited:scope[species];room:0..1:assignment:inherited:<asset_selector.room>;room:0..1:assignment:inherited:icon[gfx/portraits/city_sets];room:0..1:assignment:inherited:icon[gfx/portraits/city_sets];room:0..1:assignment:inherited:scope[country];room:0..1:assignment:inherited:scope[leader];room:0..1:assignment:inherited:scope[species];tooltip:0..1:assignment:inherited:bool;trigger:0..1:assignment:inherited:block{fields=[alias_name[trigger]:1..1:assignment:inherited:alias_match_left[trigger]];bare=[];via="trigger_clause"}];bare=[]}',
     disposition: "unsupported",
     reason: "the SDK surfaces the flat picture arm only",
   },
@@ -533,7 +533,7 @@ export const EVENT_OPTION_FIELD_SUPPORT = [
     scriptKey: "name",
     shape: "block 1..inf {exclusive_trigger, text} | block 1..inf {text, trigger} | scalar 1..inf",
     ruleSignature:
-      "1..inf:assignment:inherited:block{fields=[exclusive_trigger:1..1:assignment:inherited:block{fields=[alias_name[trigger]:1..1:assignment:inherited:alias_match_left[trigger]];bare=[]};text:0..1:assignment:inherited:localisation];bare=[]} | 1..inf:assignment:inherited:block{fields=[text:0..1:assignment:inherited:localisation;trigger:1..1:assignment:inherited:block{fields=[alias_name[trigger]:1..1:assignment:inherited:alias_match_left[trigger]];bare=[]}];bare=[]} | 1..inf:assignment:inherited:localisation",
+      '1..inf:assignment:inherited:block{fields=[exclusive_trigger:1..1:assignment:inherited:block{fields=[alias_name[trigger]:1..1:assignment:inherited:alias_match_left[trigger]];bare=[];via="trigger_clause"};text:0..1:assignment:inherited:localisation];bare=[]} | 1..inf:assignment:inherited:block{fields=[text:0..1:assignment:inherited:localisation;trigger:1..1:assignment:inherited:block{fields=[alias_name[trigger]:1..1:assignment:inherited:alias_match_left[trigger]];bare=[];via="trigger_clause"}];bare=[]} | 1..inf:assignment:inherited:localisation',
     disposition: "partial",
     reason: "one localized scalar name arm",
     unsupportedForms: ["repeated scalar names", "triggered name blocks"],
@@ -557,7 +557,7 @@ export const EVENT_OPTION_FIELD_SUPPORT = [
     scriptKey: "trigger",
     shape: "block 0..1 {alias_name[trigger]}",
     ruleSignature:
-      "0..1:assignment:inherited:block{fields=[alias_name[trigger]:1..1:assignment:inherited:alias_match_left[trigger]];bare=[]}",
+      '0..1:assignment:inherited:block{fields=[alias_name[trigger]:1..1:assignment:inherited:alias_match_left[trigger]];bare=[];via="trigger_clause"}',
     disposition: "supported",
     reason: "visibility gate",
   },
@@ -565,7 +565,7 @@ export const EVENT_OPTION_FIELD_SUPPORT = [
     scriptKey: "allow",
     shape: "block 0..1 {alias_name[trigger]}",
     ruleSignature:
-      "0..1:assignment:inherited:block{fields=[alias_name[trigger]:1..1:assignment:inherited:alias_match_left[trigger]];bare=[]}",
+      '0..1:assignment:inherited:block{fields=[alias_name[trigger]:1..1:assignment:inherited:alias_match_left[trigger]];bare=[];via="trigger_clause"}',
     disposition: "supported",
     reason: "availability gate",
   },
@@ -573,7 +573,7 @@ export const EVENT_OPTION_FIELD_SUPPORT = [
     scriptKey: "exclusive_trigger",
     shape: "block 0..1 {alias_name[trigger]}",
     ruleSignature:
-      "0..1:assignment:inherited:block{fields=[alias_name[trigger]:1..1:assignment:inherited:alias_match_left[trigger]];bare=[]}",
+      '0..1:assignment:inherited:block{fields=[alias_name[trigger]:1..1:assignment:inherited:alias_match_left[trigger]];bare=[];via="trigger_clause"}',
     disposition: "supported",
     reason: "exclusive visibility gate",
   },

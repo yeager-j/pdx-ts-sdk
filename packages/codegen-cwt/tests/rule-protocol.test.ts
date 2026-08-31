@@ -1,8 +1,13 @@
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { scopeSignature } from "@pdx-ts/codegen-cwt/cwt/fingerprint";
-import { scopeOf, type RuleField } from "@pdx-ts/codegen-cwt/cwt/model";
+import { ruleTypeSignature, scopeSignature } from "@pdx-ts/codegen-cwt/cwt/fingerprint";
+import {
+  scopeOf,
+  type RuleBareValue,
+  type RuleField,
+  type RuleType,
+} from "@pdx-ts/codegen-cwt/cwt/model";
 import { parseCwt, type CwtNode } from "@pdx-ts/codegen-cwt/cwt/parser";
 import { readAliases, scopeIndex } from "@pdx-ts/codegen-cwt/cwt/rules";
 import { emitEffects } from "@pdx-ts/codegen-cwt/emit/script/effects";
@@ -43,6 +48,49 @@ const docs = parseTriggerDocs(
 );
 const emitter = new Emitter(rules);
 const scopes = scopeIndex(rules);
+
+function bareValue(overrides: Partial<RuleBareValue> = {}): RuleBareValue {
+  return {
+    type: { kind: "scalar" },
+    cardinality: { min: 1, max: 1 },
+    docs: [],
+    scope: null,
+    line: 1,
+    ...overrides,
+  };
+}
+
+function blockType(
+  fields: readonly RuleField[] = [],
+  bare: readonly RuleBareValue[] = [],
+  via?: string
+): Extract<RuleType, { readonly kind: "block" }> {
+  return via === undefined ? { kind: "block", fields, bare } : { kind: "block", fields, bare, via };
+}
+
+function field(name: string): RuleField {
+  return {
+    key: { kind: "name", name },
+    type: { kind: "bool" },
+    cardinality: { min: 1, max: 1 },
+    docs: [],
+    scope: null,
+    line: 1,
+    comparison: false,
+  };
+}
+
+function pushedScope(name: string) {
+  const node = parseCwt(`## push_scope = ${name}\nfield = scalar`, `${name}-scope.cwt`).nodes[0];
+  if (node?.kind !== "assignment") {
+    throw new Error("synthetic scope must be attached to an assignment");
+  }
+  const scope = scopeOf(node.options);
+  if (scope === null) {
+    throw new Error("synthetic push_scope must classify");
+  }
+  return scope;
+}
 
 /**
  * The named members one block of declarations lowers to. A block that lowers
@@ -122,7 +170,94 @@ function syntheticEffectInput(source: string, emitter: Emitter) {
   };
 }
 
+describe("rule fingerprints", () => {
+  it("changes when a bare member's cardinality changes", () => {
+    const required = blockType([], [bareValue()]);
+    const optional = blockType([], [bareValue({ cardinality: { min: 0, max: 1 } })]);
+
+    expect(ruleTypeSignature(required)).not.toBe(ruleTypeSignature(optional));
+  });
+
+  it("changes when a bare member's scope changes", () => {
+    const inherited = blockType([], [bareValue()]);
+    const pushed = blockType([], [bareValue({ scope: pushedScope("planet") })]);
+
+    expect(ruleTypeSignature(inherited)).not.toBe(ruleTypeSignature(pushed));
+  });
+
+  it("changes when a block's alias provenance changes", () => {
+    const inline = blockType([field("condition")]);
+    const expanded = blockType([field("condition")], [], "trigger_clause");
+
+    expect(ruleTypeSignature(inline)).not.toBe(ruleTypeSignature(expanded));
+  });
+
+  it("keeps identical declarations equal when their members are reordered", () => {
+    const first = blockType(
+      [field("first"), field("second")],
+      [bareValue(), bareValue({ type: { kind: "bool" } })],
+      "trigger_clause"
+    );
+    const second = blockType(
+      [...first.fields].reverse(),
+      [...first.bare].reverse(),
+      "trigger_clause"
+    );
+
+    expect(ruleTypeSignature(first)).toBe(ruleTypeSignature(second));
+  });
+});
+
 describe("LoweredRule", () => {
+  it("omits and reports a clause whose declarations disagree about scope", () => {
+    const key = "synthetic_conflicting_clause";
+    const input = syntheticEffectInput(
+      [
+        "## scopes = any",
+        `alias[effect:${key}] = { limit = { alias_name[trigger] = alias_match_left[trigger] } }`,
+        "## scopes = any",
+        `alias[effect:${key}] = { ## push_scope = planet\nlimit = { alias_name[trigger] = alias_match_left[trigger] } }`,
+      ].join("\n"),
+      new Emitter(rules)
+    );
+    const rule = input.rules.get(key)!;
+
+    // ScopeFacts spreads LoweredRuleBody into its fact, so an omitted clause
+    // remains unknown instead of manufacturing a narrowing from one winner.
+    expect(rule.body.clauses.has("limit")).toBe(false);
+    expect(rule.conflicts).toEqual([
+      {
+        name: "limit",
+        category: "conflicting-clause-scope",
+        detail: 'field "limit" has incompatible scope transitions across its declarations',
+      },
+    ]);
+    expect(
+      emitEffects(new Emitter(rules), docs.effects, scopes, input.rules, input.policy, []).skipped
+    ).toContainEqual({
+      name: key,
+      category: "conflicting-clause-scope",
+      detail: 'field "limit" has incompatible scope transitions across its declarations',
+    });
+  });
+
+  it("retains a repeated clause when all declarations agree about scope", () => {
+    const key = "synthetic_repeated_clause";
+    const input = syntheticEffectInput(
+      [
+        "## scopes = any",
+        `alias[effect:${key}] = { limit = { alias_name[trigger] = alias_match_left[trigger] } }`,
+        "## scopes = any",
+        `alias[effect:${key}] = { limit = { alias_name[trigger] = alias_match_left[trigger] } }`,
+      ].join("\n"),
+      new Emitter(rules)
+    );
+    const rule = input.rules.get(key)!;
+
+    expect([...rule.body.clauses]).toEqual([["limit", null]]);
+    expect(rule.conflicts).toEqual([]);
+  });
+
   it("keeps complete and sparse ambient maps through parsing, fingerprints, and push inheritance", () => {
     const full = parseCwt(
       "## replace_scopes = { this = country root = country from = fleet fromfrom = system fromfromfrom = ship fromfromfromfrom = war prev = planet prevprev = country prevprevprev = fleet prevprevprevprev = system }\nfield = bool",
@@ -166,7 +301,7 @@ describe("LoweredRule", () => {
       prev: null,
       replaces: true,
     });
-    expect(scopeSignature({ scope: fullScope } as RuleField)).toBe(
+    expect(scopeSignature(fullScope)).toBe(
       "country/country/fleet/system/ship/war/planet/country/fleet/system/replace"
     );
     expect(

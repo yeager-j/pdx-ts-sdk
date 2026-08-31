@@ -406,7 +406,7 @@ const OPTION_FIELD_POLICY: readonly EventFieldPolicyEntry[] = [
 
 function armSignature(field: RuleField): string {
   const cardinality = `${field.cardinality.min}..${field.cardinality.max ?? "inf"}`;
-  return `${cardinality}:${field.comparison ? "comparison" : "assignment"}:${scopeSignature(field)}:${ruleTypeSignature(field.type)}`;
+  return `${cardinality}:${field.comparison ? "comparison" : "assignment"}:${scopeSignature(field.scope)}:${ruleTypeSignature(field.type)}`;
 }
 
 function namedFieldArmValues(

@@ -1,7 +1,16 @@
 import type { RuleField, RuleType } from "../cwt/model.ts";
 import type { AliasDecl } from "../cwt/rules.ts";
 import type { Emitter } from "../render/emitter.ts";
-import { canonicalScopeSet, clauseOf, declaredScopes } from "./script-shape.ts";
+import {
+  canonicalScopeSet,
+  clauseOf,
+  clauseScopeContext,
+  clauseScopesAgree,
+  declaredScopes,
+  skippedRule,
+  type ClauseScope,
+  type SkippedRule,
+} from "./script-shape.ts";
 
 /** The canonical scopes a lowered script rule supports, or all scopes. */
 export type LoweredRuleScopes = readonly string[] | "universal";
@@ -17,6 +26,16 @@ export interface LoweredRuleBody {
   readonly clauses: ReadonlyMap<string, string | null>;
   /** Lowercase names of non-clause arguments. */
   readonly args: ReadonlySet<string>;
+}
+
+/** A nested clause or splice omitted because its declarations disagree on scope behavior. */
+export interface LoweredRuleConflict {
+  /** The nested field name, or `splice` for an unkeyed clause splice. */
+  readonly name: string;
+  /** The stable script-generation skip category for this conflict. */
+  readonly category: "conflicting-clause-scope";
+  /** The declaration-specific explanation shown in the generation report. */
+  readonly detail: string;
 }
 
 /** One block-form declaration partitioned into named fields and alias splices. */
@@ -61,6 +80,13 @@ export interface LoweredRule {
   readonly blocks: readonly LoweredRuleBlock[];
   /** Facts about the rule's nested clauses and arguments. */
   readonly body: LoweredRuleBody;
+  /** Nested clauses or splices omitted because their declarations conflict. */
+  readonly conflicts: readonly LoweredRuleConflict[];
+}
+
+/** Converts a lowered rule's nested scope conflicts into the shared skip report records. */
+export function loweredRuleConflictSkips(rule: LoweredRule): readonly SkippedRule[] {
+  return rule.conflicts.map(({ category, detail }) => skippedRule(rule.key, category, detail));
 }
 
 /**
@@ -112,7 +138,8 @@ export function lowerRule(
     supportedScopes.length === 0 ? null : canonicalScopeSet(supportedScopes, scopeIndex);
   const scalars: AliasDecl[] = [];
   const blocks: LoweredRuleBlock[] = [];
-  let splice: { scope: string | null } | null = null;
+  const spliceCandidates: ClauseScope[] = [];
+  const clauseCandidates = new Map<string, ClauseScope[]>();
   const clauses = new Map<string, string | null>();
   const args = new Set<string>();
 
@@ -122,19 +149,18 @@ export function lowerRule(
       continue;
     }
     const inheritedScope = declaration.scope?.this ?? null;
+    const inheritedClause = clauseScopeContext(declaration.scope);
     const named: RuleField[] = [];
     const splices: RuleField[] = [];
-    const resolve = (own: string | null): string | null => {
-      const pushed = own ?? inheritedScope;
-      return pushed === null ? null : emitter.canonicalScope(pushed);
+    const candidateScope = (scope: RuleField["scope"]): ClauseScope => {
+      return scope === null ? inheritedClause : clauseScopeContext(scope);
     };
 
     for (const field of declaration.type.fields) {
-      const own = field.scope?.this ?? null;
       if (field.key.kind === "aliasName") {
         splices.push(field);
         if (field.key.category === "trigger" || field.key.category === "effect") {
-          splice = { scope: resolve(own) };
+          spliceCandidates.push(candidateScope(field.scope));
         }
         continue;
       }
@@ -145,10 +171,46 @@ export function lowerRule(
       if (clauseOf(field.type) === null) {
         args.add(field.key.name.toLowerCase());
       } else {
-        clauses.set(field.key.name.toLowerCase(), resolve(own));
+        const name = field.key.name.toLowerCase();
+        const candidates = clauseCandidates.get(name) ?? [];
+        candidates.push(candidateScope(field.scope));
+        clauseCandidates.set(name, candidates);
       }
     }
     blocks.push({ declaration, type: declaration.type, inheritedScope, named, splices });
+  }
+
+  const conflicts: LoweredRuleConflict[] = [];
+  for (const [name, candidates] of clauseCandidates) {
+    if (!clauseScopesAgree(candidates)) {
+      // A conflicting clause has no safe scope. Leave it absent so ScopeFacts
+      // reports unknown rather than manufacturing a narrowing from one winner.
+      conflicts.push({
+        name,
+        category: "conflicting-clause-scope",
+        detail: `field "${name}" has incompatible scope transitions across its declarations`,
+      });
+      continue;
+    }
+    const candidate = candidates[0]!;
+    clauses.set(name, candidate.scope === null ? null : emitter.canonicalScope(candidate.scope));
+  }
+
+  let splice: { scope: string | null } | null = null;
+  if (clauseScopesAgree(spliceCandidates)) {
+    const candidate = spliceCandidates[0];
+    if (candidate !== undefined) {
+      splice = {
+        scope: candidate.scope === null ? null : emitter.canonicalScope(candidate.scope),
+      };
+    }
+  } else {
+    conflicts.push({
+      name: "splice",
+      category: "conflicting-clause-scope",
+      detail:
+        "the unkeyed clause splice has incompatible scope transitions across its declarations",
+    });
   }
 
   return {
@@ -162,6 +224,7 @@ export function lowerRule(
     scalars,
     blocks,
     body: { splice, clauses, args },
+    conflicts,
   };
 }
 

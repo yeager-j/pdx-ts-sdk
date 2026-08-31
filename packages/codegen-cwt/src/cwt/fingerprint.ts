@@ -12,7 +12,7 @@
  */
 
 import { AMBIENT_SCOPE_KEYS } from "../special-scope-paths.ts";
-import type { RuleField, RuleType } from "./model.ts";
+import type { Cardinality, RuleBareValue, RuleField, RuleType, ScopeContext } from "./model.ts";
 
 function rangeSignature(range: {
   readonly min: number | null;
@@ -21,9 +21,8 @@ function rangeSignature(range: {
   return `${range.min ?? "-inf"}..${range.max ?? "inf"}`;
 }
 
-/** Serializes a field's nested scope context for inclusion in a fingerprint. */
-export function scopeSignature(field: RuleField): string {
-  const scope = field.scope;
+/** Serializes a nested scope context for inclusion in a fingerprint. */
+export function scopeSignature(scope: ScopeContext | null): string {
   return scope === null
     ? "inherited"
     : [
@@ -33,6 +32,14 @@ export function scopeSignature(field: RuleField): string {
       ]
         .map((part) => part ?? "-")
         .join("/");
+}
+
+function cardinalitySignature(cardinality: Cardinality): string {
+  return `${cardinality.min}..${cardinality.max ?? "inf"}`;
+}
+
+function bareValueSignature(value: RuleBareValue): string {
+  return `${cardinalitySignature(value.cardinality)}:${scopeSignature(value.scope)}:${ruleTypeSignature(value.type)}`;
 }
 
 function keySignature(field: RuleField): string {
@@ -87,16 +94,16 @@ export function ruleTypeSignature(type: RuleType): string {
       return `literal[${JSON.stringify(type.text)}]`;
     case "block": {
       const fields = type.fields.map(fieldSignature).sort();
-      const bare = type.bare.map((value) => ruleTypeSignature(value.type)).sort();
-      return `block{fields=[${fields.join(";")}];bare=[${bare.join(";")}]}`;
+      const bare = type.bare.map(bareValueSignature).sort();
+      const via = type.via === undefined ? "" : `;via=${JSON.stringify(type.via)}`;
+      return `block{fields=[${fields.join(";")}];bare=[${bare.join(";")}]${via}}`;
     }
   }
 }
 
 /** Serializes a keyed rule field into a deterministic fingerprint. */
 export function fieldSignature(field: RuleField): string {
-  const cardinality = `${field.cardinality.min}..${field.cardinality.max ?? "inf"}`;
-  return `${keySignature(field)}:${cardinality}:${field.comparison ? "comparison" : "assignment"}:${scopeSignature(field)}:${ruleTypeSignature(field.type)}`;
+  return `${keySignature(field)}:${cardinalitySignature(field.cardinality)}:${field.comparison ? "comparison" : "assignment"}:${scopeSignature(field.scope)}:${ruleTypeSignature(field.type)}`;
 }
 
 function memberNames(type: RuleType): string[] {
@@ -122,7 +129,7 @@ function memberNames(type: RuleType): string[] {
 
 /** Describes whether a field is scalar or block-shaped and names its block members. */
 export function armShape(field: RuleField): string {
-  const cardinality = `${field.cardinality.min}..${field.cardinality.max ?? "inf"}`;
+  const cardinality = cardinalitySignature(field.cardinality);
   if (field.type.kind !== "block") {
     return `scalar ${cardinality}`;
   }
