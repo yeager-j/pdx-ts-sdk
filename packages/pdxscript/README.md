@@ -188,12 +188,23 @@ Five test families cover different failure classes:
    vanilla Stellaris `common/` tree when a local installation is available. It
    excludes two documented `.txt` files whose contents are not PDXScript.
 
+Families 3 and 5 are the only external evidence here: the rest establish that
+the package is consistent with itself, which would hold just as well if it read
+every file wrongly but consistently. Both need a Stellaris install, so `npm
+test` skips them. `npm run test:vanilla` refuses to skip — a missing install
+fails with the path it looked for — and `npm run release:check` runs that, and
+records a skipped install-gated gate as a failed one.
+
 Run the repository gates from the workspace root:
 
 ```bash
 npm run typecheck
 npm test
 npm run build
+
+# Requires a Stellaris install; set STELLARIS_PATH if it is not in the
+# default Steam location.
+npm run test:vanilla
 ```
 
 The package is pre-1.0 and its API may still change. It is the syntax foundation

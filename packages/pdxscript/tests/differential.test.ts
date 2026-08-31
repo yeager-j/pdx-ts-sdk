@@ -5,6 +5,12 @@
  * independent implementation is what proves we read files the way the game
  * does. Runs only where the install exists.
  *
+ * The second of the package's two pieces of external evidence, and the only
+ * one that is independent of us: a fixpoint over our own output would hold
+ * just as well if we read every file wrongly but consistently. It needs an
+ * install, so an ordinary `npm test` skips it — see `vanilla-install.ts` for
+ * where a skip is made to fail instead of passing quietly (SDK-320).
+ *
  * Both sides are mapped into a common normal form. Known representation
  * divergences, normalized deliberately (each verified by hand):
  * - jomini decodes `\"` escapes; we keep raw content → unescape ours.
@@ -17,27 +23,17 @@
  *   files are pinned below, not skipped silently.
  */
 
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { join, relative } from "node:path";
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { parse } from "../src/index.ts";
 import { normJominiBody, normOurs, type Norm } from "./jomini-normalize.ts";
-
-const STELLARIS_DIR =
-  process.env["STELLARIS_PATH"] ??
-  join(process.env["HOME"] ?? "", "Library/Application Support/Steam/steamapps/common/Stellaris");
-const COMMON = join(STELLARIS_DIR, "common");
-const HAS_INSTALL = existsSync(COMMON);
-
-if (!HAS_INSTALL) {
-  console.warn(
-    `[pdxscript] skipping the jomini differential: ${COMMON} does not exist; ` +
-      "set STELLARIS_PATH to the Stellaris install root"
-  );
-}
-
-const NOT_PDXSCRIPT = new Set(["HOW_TO_MAKE_NEW_SHIPS.txt", "99_README_EDICTS.txt"]);
+import {
+  requireInstall,
+  SKIP_WITHOUT_INSTALL,
+  vanillaFiles,
+  vanillaName,
+} from "./vanilla-install.ts";
 
 // Files jomini's text parser rejects but the game (and this parser) accepts.
 // Each rejection was reproduced minimally and is jomini's limitation:
@@ -96,33 +92,19 @@ const JOMINI_MISREADS = [
   "technology/00_megastructures.txt",
 ];
 
-function walk(dir: string): string[] {
-  const files: string[] = [];
-  for (const name of readdirSync(dir)) {
-    const path = join(dir, name);
-    if (statSync(path).isDirectory()) {
-      files.push(...walk(path));
-    } else if (name.endsWith(".txt")) {
-      files.push(path);
-    }
-  }
-  return files;
-}
-
-describe.skipIf(!HAS_INSTALL)("jomini differential (non-gating)", () => {
+describe.skipIf(SKIP_WITHOUT_INSTALL)("jomini differential", () => {
   it("agrees with jomini on every vanilla common/ file", async () => {
+    requireInstall();
     const { Jomini } = await import("jomini");
     const jomini = await Jomini.initialize();
 
-    const files = walk(COMMON).filter(
-      (path) => !NOT_PDXSCRIPT.has(relative(COMMON, path).split("/").pop()!)
-    );
+    const files = vanillaFiles();
     const jominiRejected: string[] = [];
     const mismatched: string[] = [];
     let compared = 0;
 
     for (const path of files) {
-      const name = relative(COMMON, path);
+      const name = vanillaName(path);
       const source = readFileSync(path, "utf8");
       const ours = normOurs(parse(source, name).items);
 

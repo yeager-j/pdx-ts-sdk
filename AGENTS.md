@@ -148,6 +148,11 @@ npm run build
 Also run `npm run codegen` whenever codegen inputs or implementation change, and inspect the
 result. Use `npm run example` when changing synthesis behavior or the quickstart example.
 
+For changes to `packages/pdxscript`, also run `npm run test:vanilla`. `npm test` skips the
+full-vanilla fixpoint and the jomini differential when no Stellaris install is present, and those
+two are the package's only evidence that it reads real files the way the game does. That command
+refuses to skip them; `npm run release:check` requires it.
+
 Prefer focused Vitest runs while iterating, but finish with the full relevant gates. Snapshot
 changes are review evidence: update them only when the serialized output change is intentional,
 then inspect their contents rather than accepting them blindly.
