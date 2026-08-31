@@ -1167,7 +1167,6 @@ function fireEffect(key: string) {
     (args: FireCallArgs): void => {
       const id = String(refId(args.id));
       const entries: PdxEntry[] = [kv("id", id)];
-      refs.push({ targets: ["event"], id, field: `${key}.id` });
       for (const field of ["days", "months", "years", "random"] as const) {
         const value = args[field];
         if (value !== undefined) {
@@ -1211,6 +1210,11 @@ function fireEffect(key: string) {
       if (overrides.length > 0) {
         entries.push(block("scopes", overrides));
       }
+      // Recorded where the entry is committed, not where the id is read: every
+      // refusal above is an ordinary throw an author can catch, and a reference
+      // recorded for a call that wrote nothing would have the fold demand an
+      // event the emitted script never names.
+      refs.push({ targets: ["event"], id, field: `${key}.id` });
       sink.push(block(key, entries));
     };
 }
