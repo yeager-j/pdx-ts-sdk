@@ -106,10 +106,11 @@ export function finalizeMod(
   registerPatchPlanClaims(claims, patchPlans, patchesByRegistry, patchStem);
 
   const vanillaPackagePin = installedVanillaPackagePin();
+  const vanillaView = vanillaViewForPin(session.options.vanilla, patches);
   const vanillaPaths = collectVanillaPaths(session, patches, vanillaPackagePin);
   registerUnverifiedAssetWarnings(session, vanillaPaths);
   const paths = adjudicatePaths({ claims, vanillaPaths });
-  registerVanillaVersionWarnings(session, vanillaPackagePin);
+  registerVanillaVersionWarnings(session, vanillaPackagePin, vanillaView);
 
   // Every renderable channel, checked once where they all meet: a marker that
   // reached here names a splice point that never supplied an owner, and the
@@ -409,16 +410,25 @@ function registerUnverifiedAssetWarnings(
 
 function registerVanillaVersionWarnings(
   session: BuildSession,
-  packagePin: VanillaPackagePin
+  packagePin: VanillaPackagePin,
+  vanilla: VanillaView | undefined
 ): void {
-  const warning = applyVanillaPackagePin(
-    packagePin,
-    session.options.vanilla,
-    session.config.acceptGameVersion
-  );
+  const warning = applyVanillaPackagePin(packagePin, vanilla, session.config.acceptGameVersion);
   if (warning !== undefined) {
     session.warnings.push(warning);
   }
+}
+
+/**
+ * Selects the vanilla view that supplies identifier compatibility evidence.
+ * An explicitly configured view takes precedence; otherwise the first patch's
+ * origin supplies the build view for a patch-only compilation.
+ */
+export function vanillaViewForPin(
+  configuredVanilla: VanillaView | undefined,
+  patches: readonly { readonly source: { readonly origin: VanillaView } }[]
+): VanillaView | undefined {
+  return configuredVanilla ?? patches[0]?.source.origin;
 }
 
 /**

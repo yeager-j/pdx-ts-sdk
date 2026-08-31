@@ -29,7 +29,9 @@ export type VanillaPackagePin =
  * `package.json` via `createRequire`.
  *
  * `specifier` exists for tests: point it at a fixture `package.json` path to
- * exercise this without touching the workspace-installed package.
+ * exercise this without touching the workspace-installed package. An
+ * unresolvable fixture path is reported as `"absent"` without probing a
+ * package name.
  */
 export function installedVanillaPackagePin(
   specifier = "@pdx-ts/stellaris-ids/package.json"
@@ -57,9 +59,29 @@ export function installedVanillaPackagePin(
     const detail = `could not read package metadata from ${JSON.stringify(specifier)}: ${errorDetail(
       error
     )}`;
-    return isModuleNotFoundError(error)
-      ? { state: "absent", detail }
-      : { state: "unreadable", detail };
+    if (!isModuleNotFoundError(error)) {
+      return { state: "unreadable", detail };
+    }
+    const packageName = packageNameFromSpecifier(specifier);
+    if (packageName === undefined) {
+      return { state: "absent", detail };
+    }
+    try {
+      createRequire(import.meta.url).resolve(packageName);
+      return {
+        state: "unreadable",
+        detail: `${detail}; package ${JSON.stringify(packageName)} resolves, so its metadata is unreadable`,
+      };
+    } catch (probeError) {
+      return isModuleNotFoundError(probeError)
+        ? { state: "absent", detail }
+        : {
+            state: "unreadable",
+            detail:
+              `${detail}; package ${JSON.stringify(packageName)} could not be probed: ` +
+              errorDetail(probeError),
+          };
+    }
   }
 }
 
@@ -73,6 +95,25 @@ function isModuleNotFoundError(error: unknown): boolean {
   }
   const code = (error as { readonly code?: unknown }).code;
   return code === "MODULE_NOT_FOUND" || code === "ERR_MODULE_NOT_FOUND";
+}
+
+function packageNameFromSpecifier(specifier: string): string | undefined {
+  if (
+    specifier.startsWith(".") ||
+    specifier.startsWith("/") ||
+    specifier.startsWith("\\") ||
+    specifier.startsWith("file:") ||
+    specifier.startsWith("#") ||
+    specifier.startsWith("node:") ||
+    /^[A-Za-z]:[\\/]/.test(specifier)
+  ) {
+    return undefined;
+  }
+  const parts = specifier.split("/");
+  if (specifier.startsWith("@")) {
+    return parts.length >= 2 ? `${parts[0]}/${parts[1]}` : undefined;
+  }
+  return parts[0] === "" ? undefined : parts[0];
 }
 
 function errorDetail(error: unknown): string {

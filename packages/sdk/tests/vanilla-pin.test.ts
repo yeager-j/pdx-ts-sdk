@@ -10,7 +10,7 @@
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
-import { applyVanillaPackagePin } from "../src/compiler/compile-finalize.ts";
+import { applyVanillaPackagePin, vanillaViewForPin } from "../src/compiler/compile-finalize.ts";
 import {
   checkVanillaPackagePin,
   installedVanillaPackagePin,
@@ -126,7 +126,7 @@ describe("installedVanillaPackagePin", () => {
     if (pin.state !== "read") {
       throw new Error(`expected a readable workspace package pin, got ${pin.state}`);
     }
-    expect(pin.version).toMatch(/^\d+\.\d+\.\d+/);
+    expect(pin.version).toMatch(/^\d+\.\d+\.\d+-r\.\d+$/);
     expect(pin.version).not.toBe("0.0.0");
   });
 
@@ -134,6 +134,17 @@ describe("installedVanillaPackagePin", () => {
     const pin = installedVanillaPackagePin("@pdx-ts/does-not-exist/package.json");
     expect(pin).toMatchObject({ state: "absent" });
     expect(pin.state === "absent" ? pin.detail : "").toContain("does-not-exist");
+  });
+
+  it("reports absent for a missing fixture path", () => {
+    const specifier = fileURLToPath(new URL("./fixtures/does-not-exist.json", import.meta.url));
+    expect(installedVanillaPackagePin(specifier)).toMatchObject({ state: "absent" });
+  });
+
+  it("reports unreadable when a package resolves but its metadata subpath is missing", () => {
+    const pin = installedVanillaPackagePin("@pdx-ts/stellaris-ids/does-not-exist.json");
+    expect(pin.state).toBe("unreadable");
+    expect(pin.state === "unreadable" ? pin.detail : "").toContain("does-not-exist.json");
   });
 
   it.each([
@@ -186,6 +197,24 @@ describe("applyVanillaPackagePin", () => {
     );
     expect(warning).toMatchObject({ code: "missing-stellaris-ids" });
     expect(warning?.message).toContain("not installed");
+  });
+
+  it("uses a patch-origin view when no build-option vanilla view is present", () => {
+    const origin = viewFromFiles(
+      {
+        "common/technology/pp_soc_tech.txt": TECH_FILE,
+        "common/scripted_variables/pp_vars.txt": VARS_FILE,
+      },
+      { gameVersion: "4.5.0" }
+    );
+    const vanilla = vanillaViewForPin(undefined, [{ source: { origin } }]);
+    if (vanilla === undefined) {
+      throw new Error("expected the patch origin to supply the vanilla view");
+    }
+    expect(vanilla).toBe(origin);
+    expect(() =>
+      applyVanillaPackagePin({ state: "read", version: "4.4.6" }, vanilla, undefined)
+    ).toThrow(VanillaPackageMismatchError);
   });
 
   it("stays silent when no vanilla view is present", () => {

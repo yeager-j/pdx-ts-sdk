@@ -4,6 +4,7 @@ import type { Writable } from "node:stream";
 import { stringify } from "yaml";
 
 import type { PureMod } from "./compiler/model.ts";
+import { VanillaPackageUnreadableError } from "./errors.ts";
 import { installedVanillaPackagePin } from "./identifiers/package-pin.ts";
 import { vanillaPackageGameVersion } from "./identifiers/version-scheme.ts";
 import { parseProjectLayout } from "./project-layout.ts";
@@ -74,6 +75,11 @@ export async function runInspect(
       readPackage(new URL("../package.json", import.meta.url)),
     ]);
     const idsPin = installedVanillaPackagePin();
+    if (idsPin.state === "unreadable") {
+      throw new VanillaPackageUnreadableError(
+        `Inspection cannot read @pdx-ts/stellaris-ids package metadata: ${idsPin.detail}.`
+      );
+    }
     const idsVersion = idsPin.state === "read" ? idsPin.version : null;
     const report = inspectionReport(
       mod,
