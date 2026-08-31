@@ -1,3 +1,20 @@
+/**
+ * The impure shell: an install root in, one parsed {@link VanillaBuildFacts}
+ * value out.
+ *
+ * Every filesystem read the generator performs happens here or in a `read-*.ts`
+ * module this calls. That is the whole point of the split — {@link
+ * readVanillaFacts} is the only step whose result can change without an
+ * argument changing, so it is the only step that has to be pointed at a real
+ * install to be exercised. `emit-package.ts` takes the value this returns and
+ * is a function of it, which is what lets a policy be tested without a fixture
+ * install on disk.
+ *
+ * Named `read` rather than `build` because reading is what it does. "Build" in
+ * {@link VanillaBuildFacts} is the game build these facts describe, not the act
+ * of assembling them.
+ */
+
 import { createHash } from "node:crypto";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
@@ -16,6 +33,7 @@ import { readLocalizationKeys, type LocalizationKeys } from "./read-localization
 import { readScriptedDefinitions, type ScriptedRegistry } from "./read-scripted.ts";
 import { resolveRegistries, type RegistrySpec } from "./resolve.ts";
 
+/** Which install, and which vendored evidence to read it against. */
 export interface VanillaBuildFactsOptions {
   readonly installRoot: string;
   readonly gameVersion: string;
@@ -23,14 +41,23 @@ export interface VanillaBuildFactsOptions {
   readonly docsRoot: string;
 }
 
+/** A SHA-256 fingerprint of one evidence source's bytes. */
 export interface EvidenceHash {
   readonly sha256: string;
 }
 
+/** An evidence source that also states which release it is. */
 export interface VersionedEvidence extends EvidenceHash {
   readonly version: string;
 }
 
+/**
+ * Everything read out of one game build, and the only input emission takes.
+ *
+ * The generator is `readVanillaFacts` then `emitVanillaPackage`, and this value
+ * is the seam between them: once it exists nothing else is read, so the emitted
+ * files are a function of it alone.
+ */
 export interface VanillaBuildFacts {
   readonly formatVersion: 1;
   readonly gameVersion: string;
@@ -56,6 +83,7 @@ export interface VanillaBuildFacts {
   readonly localization: LocalizationKeys;
 }
 
+/** One registry's resolved layout, paired with what that layout yielded. */
 export interface RegistryBuildFacts {
   readonly spec: RegistrySpec;
   readonly read: RegistryIds;
@@ -172,7 +200,16 @@ function cwtVersion(configRoot: string): string {
   return commit;
 }
 
-export function buildVanillaFacts(options: VanillaBuildFactsOptions): VanillaBuildFacts {
+/**
+ * Reads an install and returns everything emission needs to know about it.
+ *
+ * @param options - Which install, which game version, and which vendored rule
+ * and documentation roots to read it against.
+ * @throws Error If the install and the selected documentation evidence are not
+ * on the same `major.minor` compatibility line, or if any reader refuses what
+ * it found.
+ */
+export function readVanillaFacts(options: VanillaBuildFactsOptions): VanillaBuildFacts {
   const evidenceDocsVersion = docsVersion(options.docsRoot);
   assertCompatible(options.gameVersion, evidenceDocsVersion);
 

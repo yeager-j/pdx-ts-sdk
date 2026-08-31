@@ -21,12 +21,12 @@ import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { VANILLA_REF_EXTRAS } from "@pdx-ts/codegen-cwt/policy/manifest";
 import { describe, expect, it } from "vitest";
 
-import { buildVanillaFacts } from "../src/build-facts.ts";
 import { createChokepoint, emitTrie, registryFile, TABLE_NAMES } from "../src/emit.ts";
 import { formatEmitted } from "../src/format.ts";
 import { generateVanillaPackage } from "../src/generate.ts";
 import { VANILLA_MANIFEST, type VanillaIdRow } from "../src/manifest.ts";
 import { readVanillaEvents } from "../src/read-events.ts";
+import { readVanillaFacts } from "../src/read-facts.ts";
 import { readRegistryIds } from "../src/read-ids.ts";
 import { readScriptedDefinitions } from "../src/read-scripted.ts";
 import { bucketPath, fileBucketKey, type TrieNode } from "../src/trie.ts";
@@ -495,7 +495,7 @@ describe("scripted definition identity", () => {
 
 describe("versioned build facts", () => {
   it("records compatible evidence versions and stable hashes", () => {
-    const facts = buildVanillaFacts(OPTIONS);
+    const facts = readVanillaFacts(OPTIONS);
     expect(facts.formatVersion).toBe(1);
     expect(facts.gameVersion).toBe("4.4.6");
     expect(facts.evidence.docs.version).toBe("4.4.1");
@@ -503,11 +503,11 @@ describe("versioned build facts", () => {
     expect(facts.evidence.install.sha256).toMatch(/^[0-9a-f]{64}$/);
     expect(facts.evidence.cwt.sha256).toMatch(/^[0-9a-f]{64}$/);
     expect(facts.evidence.docs.sha256).toMatch(/^[0-9a-f]{64}$/);
-    expect(buildVanillaFacts(OPTIONS).evidence).toEqual(facts.evidence);
+    expect(readVanillaFacts(OPTIONS).evidence).toEqual(facts.evidence);
   });
 
   it("rejects a game and docs snapshot from different compatibility versions", () => {
-    expect(() => buildVanillaFacts({ ...OPTIONS, gameVersion: "4.5.0" })).toThrow(
+    expect(() => readVanillaFacts({ ...OPTIONS, gameVersion: "4.5.0" })).toThrow(
       "Stellaris 4.5.0 is incompatible with script docs 4.4.1"
     );
   });
@@ -519,10 +519,10 @@ describe("versioned build facts", () => {
     try {
       mkdirSync(technologies, { recursive: true });
       writeFileSync(source, "tech_first = {}\n");
-      const first = buildVanillaFacts({ ...OPTIONS, installRoot: root });
+      const first = readVanillaFacts({ ...OPTIONS, installRoot: root });
 
       writeFileSync(source, "tech_second = {}\n");
-      const second = buildVanillaFacts({ ...OPTIONS, installRoot: root });
+      const second = readVanillaFacts({ ...OPTIONS, installRoot: root });
 
       const technologyIds = (facts: typeof first) =>
         facts.registries.find(({ spec }) => spec.registry === "technology")?.read.ids;
@@ -541,12 +541,12 @@ describe("versioned build facts", () => {
       mkdirSync(path.join(root, "gfx"), { recursive: true });
       mkdirSync(localization, { recursive: true });
       writeFileSync(path.join(localization, "keys.yml"), 'l_english:\n first_key:0 "Text"\n');
-      const first = buildVanillaFacts({ ...OPTIONS, installRoot: root });
+      const first = readVanillaFacts({ ...OPTIONS, installRoot: root });
 
       writeFileSync(path.join(root, "gfx/new_asset.dds"), "");
-      const withPath = buildVanillaFacts({ ...OPTIONS, installRoot: root });
+      const withPath = readVanillaFacts({ ...OPTIONS, installRoot: root });
       writeFileSync(path.join(localization, "keys.yml"), 'l_english:\n second_key:0 "Text"\n');
-      const withLocalization = buildVanillaFacts({ ...OPTIONS, installRoot: root });
+      const withLocalization = readVanillaFacts({ ...OPTIONS, installRoot: root });
 
       expect(withPath.paths.paths).toContain("gfx/new_asset.dds");
       expect(withLocalization.localization.keys).toEqual(["second_key"]);
@@ -558,7 +558,7 @@ describe("versioned build facts", () => {
   });
 
   it("persists the install evidence identity in generated output", () => {
-    const facts = buildVanillaFacts(OPTIONS);
+    const facts = readVanillaFacts(OPTIONS);
     expect(file("paths.ts")).toMatch(
       new RegExp(
         `export const VANILLA_INSTALL_EVIDENCE_SHA256\\s*=\\s*"${facts.evidence.install.sha256}";`

@@ -20,10 +20,10 @@ import type { RuleScopes } from "@pdx-ts/codegen-cwt/lower/scope-facts";
 import { locateInstall, requireGameVersion } from "@pdx-ts/sdk/installation";
 import { beforeAll, describe, expect, it } from "vitest";
 
-import { buildVanillaFacts } from "../src/build-facts.ts";
 import { checkCallSites } from "../src/callsites.ts";
 import type { ScriptedKind } from "../src/infer-scopes.ts";
 import { readVanillaEvents } from "../src/read-events.ts";
+import { readVanillaFacts } from "../src/read-facts.ts";
 
 const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
 const CONFIG = path.join(ROOT, "vendor/cwtools-stellaris-config/config");
@@ -37,7 +37,7 @@ try {
 }
 
 function measure(root: string) {
-  const facts = buildVanillaFacts({
+  const facts = readVanillaFacts({
     installRoot: root,
     gameVersion: requireGameVersion(root),
     configRoot: CONFIG,
