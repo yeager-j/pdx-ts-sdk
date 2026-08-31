@@ -54,11 +54,7 @@ describe("the project's own Prettier, after publication", () => {
     const { io, out } = capture(project.dir);
     const code = await main(["generate", "research-quest", "Resonance Theory", "--yes"], io);
     expect(code).toBe(0);
-    expect(
-      out()
-        .trim()
-        .endsWith(path.join("src", "content", "resonance_theory.ts"))
-    ).toBe(true);
+    expect(out()).toBe(`${path.join(project.dir, "src/content/resonance_theory.ts")}\n`);
 
     const golden = readFileSync(GOLDEN_ONE, "utf8");
     const expected = await format(golden, { parser: "typescript", singleQuote: true });
@@ -83,11 +79,7 @@ describe("the project's own Prettier, after publication", () => {
     // broken formatter is their tooling problem, said out loud — never a
     // failed generation and never a mutated file.
     expect(code).toBe(0);
-    expect(
-      out()
-        .trim()
-        .endsWith(path.join("src", "content", "resonance_theory.ts"))
-    ).toBe(true);
+    expect(out()).toBe(`${path.join(project.dir, "src/content/resonance_theory.ts")}\n`);
     expect(err()).toContain("warning: the project's Prettier could not format");
     expect(written()).toBe(readFileSync(GOLDEN_ONE, "utf8"));
   });
