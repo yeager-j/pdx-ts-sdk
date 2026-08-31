@@ -13,7 +13,9 @@
 
 import type { PdxContainer, PdxItem, PdxParamBlock, PdxParamText, PdxScalar } from "./ast.ts";
 import {
+  BYTE_ORDER_MARK,
   canonicalNumeral,
+  isBareKey,
   isBareString,
   isBareToken,
   isMathSource,
@@ -128,8 +130,10 @@ function serializeItem(item: PdxItem, depth: number): string {
     // A key is raw text, never classified: `yes` and `123` are keys as
     // readily as `foo`. Only the character class decides, and a key outside
     // it is quoted rather than refused — the parser accepts quoted keys, so
-    // refusing to write one is what made the language not closed.
-    const key = isBareToken(item.key) ? item.key : quotedText(item.key, "key");
+    // refusing to write one is what made the language not closed. The same
+    // answer covers a key opening with a byte-order mark, which no document
+    // may open with.
+    const key = isBareKey(item.key) ? item.key : quotedText(item.key, "key");
     const value =
       item.value.kind === "container" ? containerText(item.value, depth) : scalarText(item.value);
     return `${indent}${key} ${item.op} ${value}`;
@@ -147,5 +151,17 @@ function serializeItem(item: PdxItem, depth: number): string {
 }
 
 export function serialize(items: readonly PdxItem[]): string {
-  return items.map((item) => serializeItem(item, 0)).join("\n\n") + "\n";
+  const text = items.map((item) => serializeItem(item, 0)).join("\n\n") + "\n";
+  // The write side of the file boundary. `parse` reads a leading `U+FEFF` as
+  // this document's encoding mark and removes it, so emitting one here would
+  // produce a file that reads back short a character — `scalar("﻿foo")`
+  // coming back as `foo`. Anywhere but the first character it is ordinary
+  // text and needs no guard.
+  if (text.startsWith(BYTE_ORDER_MARK)) {
+    throw new Error(
+      "Cannot serialize a document whose first character is U+FEFF: that is read back as a " +
+        "byte-order mark and stripped (quote the value, or put it after another item)"
+    );
+  }
+  return text;
 }

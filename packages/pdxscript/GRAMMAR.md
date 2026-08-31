@@ -3,7 +3,12 @@
 The whole language, in EBNF-ish form. Terminals in caps; trivia (whitespace,
 `\r`, semicolons, and `#` comments to end of line — vanilla gfx files end
 statements with `;`, the format treats it as whitespace) can appear between
-any two tokens and is dropped. A leading UTF-8 BOM is stripped.
+any two tokens and is dropped. A UTF-8 BOM opening a *file* is stripped —
+it states that document's encoding. Elsewhere `U+FEFF` is ordinary text, so a
+region body opening with one keeps it. A key holding one is written quoted,
+since a quoted key round-trips and an entry records no quoting flag; a *value*
+that would open a document with the mark is refused instead, because quoting
+it would change the tree a reparse gives back.
 
 ```
 file       = item* EOF               (a container body without braces)

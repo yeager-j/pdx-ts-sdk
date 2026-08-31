@@ -85,6 +85,37 @@ describe("lexer", () => {
     expect(first("﻿a = 1").key).toBe("a");
   });
 
+  /**
+   * A mark states the encoding of a *file*, so it is read as one only where
+   * a file begins (SDK-318). A region body is a fragment the engine splices
+   * mid-file, where the same character is ordinary text.
+   */
+  it("keeps a U+FEFF that opens a region body, where it is text rather than a mark", () => {
+    const region = clean("[[X]\uFEFFa = 1 ]").items[0]!;
+    if (region.kind !== "param") {
+      throw new Error(`Expected a param region, got ${region.kind}`);
+    }
+    expect(region.items[0]).toMatchObject({ kind: "entry", key: "\uFEFFa" });
+  });
+
+  it("keeps a U+FEFF opening the body of a region with no tree", () => {
+    const region = clean("[[X]\uFEFFa = {\n]").items[0]!;
+    if (region.kind !== "param-text") {
+      throw new Error(`Expected a text region, got ${region.kind}`);
+    }
+    expect(region.text.startsWith("\uFEFF")).toBe(true);
+    expect(regionItems(region)[0]).toEqual({ kind: "str", value: "\uFEFFa", quoted: false });
+  });
+
+  it("keeps a U+FEFF that is not the first character of the file as ordinary text", () => {
+    expect(first("a = \uFEFFfoo").value).toEqual({
+      kind: "str",
+      value: "\uFEFFfoo",
+      quoted: false,
+    });
+    expectFixpoint("a = 1\n\uFEFFb = 2");
+  });
+
   it("drops # comments to end of line, including inline after a value", () => {
     expect(keys(clean("a = 1 # trailing\n# whole line\nb = 2"))).toEqual(["a", "b"]);
   });
@@ -782,6 +813,33 @@ describe("serializer", () => {
   it("quotes a key that cannot be written bare, instead of refusing it", () => {
     expect(serialize([kv("two words", 1)])).toBe('"two words" = 1\n');
     expectFixpoint('"two words" = 1');
+  });
+
+  /**
+   * The write side of the file boundary (SDK-318): `parse` reads a leading
+   * U+FEFF as this document's encoding mark and removes it, so a document
+   * that opened with one would come back a character short. Anywhere else
+   * the character is ordinary and needs no guard.
+   */
+  it("refuses to emit a document that would open with a byte-order mark", () => {
+    expect(() => serialize([scalar("﻿foo")])).toThrow(/byte-order mark/);
+    expect(() => serialize([kv("a", 1), scalar("﻿foo")])).not.toThrow();
+    expect(serialize([kv("a", 1), scalar("﻿foo")])).toBe("a = 1\n\n﻿foo\n");
+  });
+
+  /**
+   * A quoted key keeps the mark through a parse, since the quotes shield it
+   * from the strip — so this is a tree the parser can hand back, and refusing
+   * to write it would leave accepted input with no round trip. Quoting is the
+   * answer rather than a refusal: an entry records no `quoted` flag for its
+   * key, so the tree is the same either way.
+   */
+  it("quotes a key holding a byte-order mark rather than refusing the document", () => {
+    expect(serialize([kv("\uFEFFk", 1)])).toBe('"\uFEFFk" = 1\n');
+    expectFixpoint('"\uFEFFkey" = 1');
+    expect(emitted('"\uFEFFkey" = 1')).toBe('"\uFEFFkey" = 1\n');
+    // Not the first item either: the rule is the key's, not the position's.
+    expectFixpoint('a = 1\n"\uFEFFb" = 2');
   });
 });
 

@@ -154,9 +154,14 @@ function scanRegion(text: string, start: number): number {
  * `startLine` numbers the first line of `source`; the parser passes the
  * opener's line when it re-tokenizes a conditional region's body, so lines
  * stay absolute inside one.
+ *
+ * `text` is a *fragment*, not necessarily a file: this is also how a region's
+ * body and `regionItems` are read. So nothing here is stripped — a byte-order
+ * mark belongs to a document, and `parse()` removes it at that boundary.
+ * Doing it here would eat a `U+FEFF` that opens a region body, which is
+ * ordinary text inside one.
  */
-export function tokenize(source: string, fileName: string, startLine = 1): Token[] {
-  const text = source.charCodeAt(0) === 0xfeff ? source.slice(1) : source;
+export function tokenize(text: string, fileName: string, startLine = 1): Token[] {
   const tokens: Token[] = [];
   let index = 0;
   let line = startLine;
