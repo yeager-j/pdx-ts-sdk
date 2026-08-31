@@ -130,9 +130,20 @@ still carries the exact full event id.
 ## Scripted definitions and scope inference
 
 For scripted triggers and effects, the generator extracts definition names and
-`$PARAM$` names. `$X|default$` marks an optional parameter, and `[[FLAG]]`
-regions contribute conditional parameter names. Default values and bodies do
-not reach an emitter.
+`$PARAM$` names. Default values and bodies do not reach an emitter.
+
+A parameter is required when some occurrence of it is substituted
+unconditionally and supplies no default. That is one rule over all of a name's
+occurrences: `$X|10$` in one place and `$X$` in another is required, because the
+second substitution has nothing to fall back on.
+
+`[[FLAG] ... ]` regions make their parameters omissible and also tie them
+together. Where activating a region forces a parameter that nothing outside it
+substitutes, the emitted type is the union of the definition's call shapes
+rather than a flat object — supplying the condition then requires the rest, and
+omitting it forbids them. Two definitions in vanilla 4.4.6 are shaped this way.
+A region that forces nothing, because its parameters are required anyway or it
+substitutes only its own name, stays one flat shape.
 
 Scope inference reads a body only inside the private build stage. It finds
 rule-known keys evaluated by that body and intersects the scopes cwtools

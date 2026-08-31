@@ -97,8 +97,25 @@ export type ScriptedParams = Readonly<Record<string, ScriptedParamValue | undefi
  * Additive on purpose. `P[K] | ScalarArg` would collapse to `ScalarArg`, since
  * the package types every parameter `string | number` today — and would then
  * silently widen away any parameter it ever types more narrowly.
+ *
+ * A parameter typed `never` is the one thing not widened, and skipping it is
+ * what makes a `[[FLAG] ... ]` region's contract hold. The package spells a
+ * parameter that must not be supplied in a given call shape as `FLAG?: never`
+ * — the branch where the region is off — and widening that to
+ * `boolean | …` would accept `{ FLAG: true }`, which is precisely the call
+ * that activates the region while its parameters go unsubstituted. `Exclude`
+ * rather than a bare check because the repo does not set
+ * `exactOptionalPropertyTypes`, so an optional `never` property reads as
+ * `undefined` here.
+ *
+ * Homomorphic, so it distributes over the union of call shapes the package
+ * emits for such a definition and preserves each branch's optional modifiers.
  */
-type Widened<P> = { readonly [K in keyof P]: P[K] | boolean | TypedRef<string> | ScopeValue };
+type Widened<P> = {
+  readonly [K in keyof P]: [Exclude<P[K], undefined>] extends [never]
+    ? P[K]
+    : P[K] | boolean | TypedRef<string> | ScopeValue;
+};
 
 /**
  * The argument list a binding takes, resolved once where the name is known.

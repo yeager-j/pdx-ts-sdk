@@ -7,11 +7,25 @@
  * check a call offline, and nothing more. Default values are body content and
  * are never captured, only the fact that one exists.
  *
- * Optionality has two sources, both of them structural. `$AGE|10$` supplies a
- * default, so the caller may omit it. A parameter used only inside a
- * `[[FLAG] ... ]` block is only substituted when the block is active, so it is
- * optional too — and `FLAG` itself, the block's own condition, is the archetype
- * of an optional parameter.
+ * A parameter is *required* when some occurrence of it will definitely be
+ * substituted and supplies no default — one outside every `[[FLAG] ... ]`
+ * region, spelled without a `|`. Everything else is omissible: `$AGE|10$`
+ * supplies a default, an occurrence inside a region is only substituted when
+ * the region is active, and `FLAG` itself, the region's own condition, is the
+ * archetype of an optional parameter.
+ *
+ * That is one rule over all of a name's occurrences rather than a property of
+ * any one of them, and it has to be. A name written `$X|10$` in one place and
+ * `$X$` in another is required: the second substitution has no default to fall
+ * back on, and reading the first as permission to omit it produced a signature
+ * that let a caller leave a hole in the emitted script.
+ *
+ * Optional is not the same as independent, which is the other thing recorded
+ * here. `[[FLAG] ... $NAME$ ... ]` makes both names omissible, and it also ties
+ * them together: supplying `FLAG` activates the region, and then `$NAME$` is a
+ * substitution site with nothing to substitute. So a region that forces a
+ * parameter is kept as a {@link ScriptedRegion} rather than flattened into two
+ * unrelated optional names.
  *
  * The parsed body, parameters, and provenance form one definition identity for
  * `infer-scopes.ts` to measure. Ambiguous duplicate identities stop the build;
@@ -29,14 +43,36 @@ import { parse, regionItems, type PdxItem } from "@pdx-ts/pdxscript";
 
 import { compareIdentifiers } from "./emit.ts";
 
+/** One `$PARAM$` a definition substitutes, and whether it may be left out. */
 export interface ScriptedParam {
   readonly name: string;
   readonly optional: boolean;
 }
 
+/**
+ * A `[[NAME] ... ]` region whose activation forces other parameters.
+ *
+ * Only regions that force something are recorded. A region whose parameters are
+ * all required anyway, or that substitutes nothing but its own name, adds no
+ * constraint a caller could violate, and listing it would only multiply the
+ * call shapes the emitted type has to spell.
+ */
+export interface ScriptedRegion {
+  /** The parameter whose presence activates the region. */
+  readonly condition: string;
+  /**
+   * Parameters that must be supplied when it is: the ones this region
+   * substitutes that nothing outside it does, and that carry no default.
+   */
+  readonly requires: readonly string[];
+}
+
+/** One scripted trigger or effect: its name, its parameters, and its body. */
 export interface ScriptedDefinition {
   readonly name: string;
   readonly params: readonly ScriptedParam[];
+  /** Regions whose activation forces parameters. Usually empty. */
+  readonly regions: readonly ScriptedRegion[];
   /** The parsed body. Read by the scope inference; never emitted. */
   readonly body: readonly PdxItem[];
   /** Slash-normalized path relative to the scripted registry directory. */
@@ -62,43 +98,66 @@ const PARAM_TOKEN = /\$([A-Za-z0-9_]+)(?:\|[^$]*)?\$/g;
 interface Occurrence {
   /** The occurrence supplied a default, so the parameter may be omitted. */
   readonly defaulted: boolean;
-  /** The occurrence sits inside a `[[NAME] ... ]` block. */
-  readonly conditional: boolean;
+  /**
+   * The `[[NAME] ... ]` regions enclosing it, outermost first.
+   *
+   * The whole stack rather than one flag, because which region governs an
+   * occurrence is the fact a caller has to satisfy. Empty means the
+   * substitution always happens.
+   */
+  readonly regions: readonly string[];
+  /**
+   * This occurrence *is* a region's condition rather than a substitution site.
+   *
+   * Kept apart from the rest because the two say opposite things. A
+   * substitution outside every region makes a parameter required; a region
+   * header naming that same parameter is exactly what makes it omissible, and
+   * counting the header as a substitution would make every region's condition
+   * mandatory — which is to say, would make every region always active.
+   */
+  readonly condition: boolean;
 }
 
-function scan(text: string, conditional: boolean, into: Map<string, Occurrence[]>): void {
+function scan(text: string, regions: readonly string[], into: Map<string, Occurrence[]>): void {
   for (const match of text.matchAll(PARAM_TOKEN)) {
     const name = match[1]!;
-    into.set(name, [...(into.get(name) ?? []), { defaulted: match[0].includes("|"), conditional }]);
+    into.set(name, [
+      ...(into.get(name) ?? []),
+      { defaulted: match[0].includes("|"), regions, condition: false },
+    ]);
   }
 }
 
-function recordCondition(name: string, into: Map<string, Occurrence[]>): void {
-  into.set(name, [...(into.get(name) ?? []), { defaulted: false, conditional: true }]);
+function recordCondition(
+  name: string,
+  regions: readonly string[],
+  into: Map<string, Occurrence[]>
+): void {
+  into.set(name, [...(into.get(name) ?? []), { defaulted: false, regions, condition: true }]);
 }
 
 function walkItems(
   items: readonly PdxItem[],
-  conditional: boolean,
+  regions: readonly string[],
   into: Map<string, Occurrence[]>
 ): void {
   for (const item of items) {
     switch (item.kind) {
       case "entry":
-        scan(item.key, conditional, into);
-        walkItems([item.value], conditional, into);
+        scan(item.key, regions, into);
+        walkItems([item.value], regions, into);
         break;
       case "container":
         if (item.header !== undefined) {
-          scan(item.header, conditional, into);
+          scan(item.header, regions, into);
         }
-        walkItems(item.items, conditional, into);
+        walkItems(item.items, regions, into);
         break;
       case "param":
         // The block's own condition is a parameter, and one whose whole purpose
         // is to be omissible.
-        recordCondition(item.name, into);
-        walkItems(item.items, true, into);
+        recordCondition(item.name, regions, into);
+        walkItems(item.items, [...regions, item.name], into);
         break;
       case "param-text":
         // The same construct without a tree. Its body is read through the
@@ -106,17 +165,17 @@ function walkItems(
         // commented-out `# $OLD$` must not enter the parameter contract this
         // package publishes, and a region nested inside comes back as a
         // region — its name is a parameter too.
-        recordCondition(item.name, into);
-        walkItems(regionItems(item), true, into);
+        recordCondition(item.name, regions, into);
+        walkItems(regionItems(item), [...regions, item.name], into);
         break;
       case "str":
-        scan(item.value, conditional, into);
+        scan(item.value, regions, into);
         break;
       case "var":
-        scan(item.name, conditional, into);
+        scan(item.name, regions, into);
         break;
       case "math":
-        scan(item.source, conditional, into);
+        scan(item.source, regions, into);
         break;
       default:
         break;
@@ -124,15 +183,100 @@ function walkItems(
   }
 }
 
-function paramsOf(items: readonly PdxItem[]): ScriptedParam[] {
+/** A substitution that definitely happens and supplies nothing to fall back on. */
+function isRequired(seen: readonly Occurrence[]): boolean {
+  return seen.some((one) => !one.condition && !one.defaulted && one.regions.length === 0);
+}
+
+/**
+ * The regions every substitution of a name sits inside.
+ *
+ * A name confined to exactly one region is the interesting case: it can only
+ * ever be substituted when that region is active, so the region's activation is
+ * the whole story about when it is needed. A name substituted both inside and
+ * outside a region is not confined and is governed by its unconditional
+ * occurrence instead.
+ */
+function confinedTo(seen: readonly Occurrence[]): ReadonlySet<string> {
+  const substitutions = seen.filter((one) => !one.condition);
+  const first = substitutions[0];
+  if (first === undefined) {
+    return new Set();
+  }
+  let shared = new Set<string>(first.regions);
+  for (const one of substitutions.slice(1)) {
+    shared = new Set([...shared].filter((region) => one.regions.includes(region)));
+  }
+  return shared;
+}
+
+/**
+ * The regions that force something, and what each forces.
+ *
+ * A region qualifies when activating it turns an otherwise-omissible parameter
+ * into a required one: its own condition is not already required (or the region
+ * is always active and constrains nothing), and it confines at least one
+ * undefaulted parameter of its own.
+ *
+ * The confinement has to be to *this* region alone. A parameter confined to two
+ * nested regions would be forced by each of them independently, and the two
+ * claims contradict each other in the call shape where only the outer one is
+ * active. Vanilla 4.4.6 nests no regions at all, so this excludes nothing
+ * today; it is here so that a game patch which starts nesting them produces a
+ * weaker type rather than a wrong one.
+ */
+function regionsOf(occurrences: ReadonlyMap<string, Occurrence[]>): ScriptedRegion[] {
+  const names = new Set(
+    [...occurrences].flatMap(([, seen]) =>
+      seen.flatMap((one) => (one.condition ? [] : one.regions))
+    )
+  );
+  for (const [name, seen] of occurrences) {
+    for (const one of seen) {
+      if (one.condition) {
+        names.add(name);
+      }
+    }
+  }
+
+  const regions: ScriptedRegion[] = [];
+  for (const condition of [...names].sort(compareIdentifiers)) {
+    if (isRequired(occurrences.get(condition) ?? [])) {
+      continue;
+    }
+    const requires = [...occurrences]
+      .filter(([name, seen]) => {
+        if (name === condition || isRequired(seen)) {
+          return false;
+        }
+        const confined = confinedTo(seen);
+        return (
+          confined.size === 1 &&
+          confined.has(condition) &&
+          seen.some((one) => !one.condition && !one.defaulted)
+        );
+      })
+      .map(([name]) => name)
+      .sort(compareIdentifiers);
+    if (requires.length > 0) {
+      regions.push({ condition, requires });
+    }
+  }
+  return regions;
+}
+
+function readParams(items: readonly PdxItem[]): {
+  params: ScriptedParam[];
+  regions: ScriptedRegion[];
+} {
   const occurrences = new Map<string, Occurrence[]>();
-  walkItems(items, false, occurrences);
-  return [...occurrences]
-    .map(([name, seen]) => ({
-      name,
-      optional: seen.some((one) => one.defaulted) || seen.every((one) => one.conditional),
-    }))
-    .sort((left, right) => compareIdentifiers(left.name, right.name));
+  walkItems(items, [], occurrences);
+  return {
+    params: [...occurrences]
+      .map(([name, seen]) => ({ name, optional: !isRequired(seen) }))
+      .sort((left, right) => compareIdentifiers(left.name, right.name)),
+    regions: regionsOf(occurrences),
+  };
 }
 
 function walkFiles(dir: string): string[] {
@@ -175,7 +319,7 @@ export function readScriptedDefinitions(
       }
       const definition: ScriptedDefinition = {
         name: item.key,
-        params: paramsOf(item.value.items),
+        ...readParams(item.value.items),
         body: item.value.items,
         source,
         ordinal,

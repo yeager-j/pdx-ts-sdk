@@ -53,6 +53,18 @@ _Avoid_: using this for the scripted-definition kind; that is `ScriptedKind`
 Which of the two scripted-definition kinds a definition is: `trigger` or
 `effect`.
 
+**Region**:
+A `[[FLAG] ... ]` block in a scripted definition's body, active only when the
+caller supplies `FLAG`. Recorded as a **forcing region** when activating it
+makes some other parameter necessary — that is a dependency between parameters,
+not two independent optional ones, and flattening it published a signature that
+accepted `{ FLAG: true }` and emitted a body with nothing to substitute.
+
+**Call shape**:
+One combination of a definition's forcing regions being on or off, emitted as
+one member of the parameter type's union. A definition with no forcing region
+has exactly one, which is the flat object almost every definition gets.
+
 **Inferred scope**:
 The scope a scripted definition is legal in, _derived_ rather than read off
 anything — the intersection of the scopes cwtools already declares for the keys

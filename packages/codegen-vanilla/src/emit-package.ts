@@ -101,6 +101,15 @@ export interface ScriptedReport {
   readonly registry: string;
   readonly definitions: number;
   readonly parameterized: number;
+  /**
+   * Definitions whose parameters are tied to a `[[FLAG] ... ]` region, so the
+   * emitted type is a union of call shapes rather than one object.
+   *
+   * Two across vanilla 4.4.6. Worth watching after a patch: this is where a
+   * definition's signature stops being a flat bag, so a jump here explains a
+   * generated diff that would otherwise look like churn.
+   */
+  readonly regionDependent: number;
   readonly files: number;
   readonly diagnostics: number;
   readonly missing: boolean;
@@ -371,6 +380,7 @@ export function emitVanillaPackage(
       registry: row.registry,
       definitions: read.definitions.length,
       parameterized: read.definitions.filter((one) => one.params.length > 0).length,
+      regionDependent: read.definitions.filter((one) => one.regions.length > 0).length,
       files: read.files,
       diagnostics: read.diagnostics,
       missing: read.missing,

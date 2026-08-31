@@ -19,10 +19,15 @@ export interface VanillaScriptedTriggerParams {
     readonly NOTTAG: string | number;
     readonly TAG: string | number;
   };
-  readonly any_available_random_trait_by_tag_evopred: {
-    readonly SPECIES?: string | number;
-    readonly TAG?: string | number;
-  };
+  readonly any_available_random_trait_by_tag_evopred:
+    | {
+        readonly SPECIES?: never;
+        readonly TAG?: never;
+      }
+    | {
+        readonly SPECIES: string | number;
+        readonly TAG: string | number;
+      };
   readonly any_valid_lured_critter_fleet: {};
   readonly apply_pop_template_pop_check: {
     readonly TIER: string | number;
