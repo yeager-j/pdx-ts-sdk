@@ -58,6 +58,7 @@ export interface RegistryCorpus {
  * Lists the block traversal strategies the corpus reader supports.
  *
  * Emit a {@link DescentNode} with one of these modes when a lowered field exposes nested paths.
+ * The mode union of {@link DescentNode} is derived from this runtime inventory.
  */
 export const DESCENT_MODES = [
   "struct",
@@ -70,28 +71,102 @@ export const DESCENT_MODES = [
   "triggerStruct",
 ] as const;
 
+type DescentMode = (typeof DESCENT_MODES)[number];
+
+/** The field and nesting every descent arm carries, whatever its mode. */
+interface DescentNodeBase {
+  /** The game's key at this level; the corpus path grows `<prefix>.<field>`. */
+  readonly field: string;
+  /** Nested block-valued fields. */
+  readonly children: readonly DescentNode[];
+}
+
+/**
+ * The per-mode properties, all optional-`never` so an arm can refuse the ones
+ * it does not use.
+ *
+ * A discriminated union alone does not close this: TypeScript's excess-property
+ * check accepts any property declared on *some* member of the union, so without
+ * these guards `{ mode: "struct", strippedKeys }` would compile and then be
+ * ignored at read time — the same silent mismatch the union exists to prevent.
+ * Each arm re-admits only its own through `Omit`.
+ */
+interface DescentOptions {
+  /** Keying strategy for a repeated struct. */
+  readonly keying?: never;
+  /** Identifier field omitted from a sibling-keyed repeated struct. */
+  readonly identityKey?: never;
+  /** Keys omitted before observing a weight modifier's trigger. */
+  readonly strippedKeys?: never;
+  /** Direct keys that remain regular trigger-struct members. */
+  readonly ordinaryKeys?: never;
+}
+
+/** A descent whose mode reaches nested blocks with no further configuration. */
+type PlainDescentNode = DescentNodeBase &
+  DescentOptions & {
+    /** Strategy used to reach nested blocks. */
+    readonly mode: Exclude<DescentMode, "repeatedStruct" | "weightModifiers" | "triggerStruct">;
+  };
+
+/**
+ * Where a repeated struct's record key lives, and the identity field that
+ * sibling keying needs.
+ *
+ * The two travel together from `planRepeatedStruct` through emission into the
+ * corpus descent, so they are one type rather than two fields each hop has to
+ * re-check. `planRepeatedStruct` declines a sibling-keyed struct with no
+ * identity field, so pairing them here states a guarantee the producer already
+ * establishes instead of asserting it again downstream.
+ */
+export type RepeatedStructKeying =
+  | {
+      /** Each entry's own value holds the struct. */
+      readonly keying: "container";
+      /** Container keying takes its record key from the entry, never from a field. */
+      readonly identityKey?: never;
+    }
+  | {
+      /** Sibling keys in the enclosing block hold the struct. */
+      readonly keying: "siblings";
+      /** Identifier field omitted from the observed members. */
+      readonly identityKey: string;
+    };
+
+/** A repeated struct, reached according to where its record key lives. */
+type RepeatedStructNode = DescentNodeBase &
+  Omit<DescentOptions, "keying" | "identityKey"> &
+  RepeatedStructKeying & {
+    /** Strategy used to reach nested blocks. */
+    readonly mode: Extract<DescentMode, "repeatedStruct">;
+  };
+
+/** A weight block whose modifier rows are read once their operation keys are stripped. */
+type WeightModifiersNode = DescentNodeBase &
+  Omit<DescentOptions, "strippedKeys"> & {
+    /** Strategy used to reach nested blocks. */
+    readonly mode: Extract<DescentMode, "weightModifiers">;
+    /** Keys omitted before observing a weight modifier's trigger. */
+    readonly strippedKeys: ReadonlySet<string>;
+  };
+
+/** A trigger struct whose ordinary members are named apart from its spliced condition. */
+type TriggerStructNode = DescentNodeBase &
+  Omit<DescentOptions, "ordinaryKeys"> & {
+    /** Strategy used to reach nested blocks. */
+    readonly mode: Extract<DescentMode, "triggerStruct">;
+    /** Direct keys that remain regular trigger-struct members. */
+    readonly ordinaryKeys: readonly string[];
+  };
+
 /**
  * Describes how the corpus reader reaches fields inside one block-valued field.
  *
  * The emitter derives these nodes from the same lowering that emits nested fields; provide them
  * through {@link RegistryRead.descents} rather than hand-writing unrelated paths.
  */
-export interface DescentNode {
-  /** The game's key at this level; the corpus path grows `<prefix>.<field>`. */
-  readonly field: string;
-  /** Strategy used to reach nested blocks. Choose the mode matching the field's emitted lowering. */
-  readonly mode: (typeof DESCENT_MODES)[number];
-  /** Keying strategy for a repeated struct. Set only when `mode` is `repeatedStruct`. */
-  readonly keying?: "container" | "siblings";
-  /** Identifier field omitted from a sibling-keyed repeated struct. Set only with `keying: "siblings"`. */
-  readonly identityKey?: string;
-  /** Keys omitted before observing a weight modifier's trigger. Set only when `mode` is `weightModifiers`. */
-  readonly strippedKeys?: ReadonlySet<string>;
-  /** Direct keys that remain regular trigger-struct members. Set only when `mode` is `triggerStruct`. */
-  readonly ordinaryKeys?: readonly string[];
-  /** Nested block-valued fields. */
-  readonly children: readonly DescentNode[];
-}
+export type DescentNode =
+  PlainDescentNode | RepeatedStructNode | WeightModifiersNode | TriggerStructNode;
 
 /**
  * Describes one structural alias member and its recursive children.

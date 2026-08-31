@@ -4,7 +4,7 @@
  * localisation plan, and declined/unsupported loop.
  */
 
-import type { DescentNode } from "../../corpus/observations.ts";
+import type { DescentNode, RepeatedStructKeying } from "../../corpus/observations.ts";
 import type { RuleField } from "../../cwt/model.ts";
 import type { ContentType } from "../../cwt/rules.ts";
 import {
@@ -34,7 +34,7 @@ import {
  * Generated code and coverage evidence for one overlay-configured repeated struct.
  * The content-type emitter adds its code and coverage rows to the owning registry's emission.
  */
-export interface RepeatedStructEmission {
+export type RepeatedStructEmission = RepeatedStructKeying & {
   /** Generated nested interface and runtime tables. */
   readonly code: string;
   /** Name of the nested runtime field table. */
@@ -57,23 +57,17 @@ export interface RepeatedStructEmission {
   readonly localisationAliases: readonly FieldOmissionRow[];
   /** Documentation for the entry's field table and nested tables. */
   readonly docTables: readonly DocTable[];
-  /** Whether record keys are sibling identity fields or container keys. */
-  readonly keying: "siblings" | "container";
-  /** Body field carrying a sibling-keyed record's identity. */
-  readonly identityKey: string | undefined;
-}
+};
 
 type RepeatedStructLocalisation =
   | { readonly kind: "available"; readonly type: ContentType; readonly plan: LocalisationPlan }
   | { readonly kind: "missing"; readonly typeName: string };
 
-interface RepeatedStructPlan {
+type RepeatedStructPlan = RepeatedStructKeying & {
   readonly typeName: string;
-  readonly keying: "siblings" | "container";
-  readonly identityKey: string | undefined;
   readonly groupedFields: ReadonlyMap<string, readonly RuleField[]>;
   readonly localisation: RepeatedStructLocalisation;
-}
+};
 
 interface RepeatedStructMembers {
   readonly members: string[];
@@ -116,15 +110,21 @@ function planRepeatedStruct(
     return null;
   }
   const container = wildcardBlockOf(ownerField.type);
-  const keying = container === null ? "siblings" : "container";
   const declaredType =
     config.localisationType === undefined
       ? undefined
       : emitter.rules.contentTypes.get(config.localisationType);
   const identityKey = declaredType?.nameField ?? config.identityKey;
-  if (keying === "siblings" && identityKey === undefined) {
+  // A struct with no wildcard container is written as repeated sibling keys, so
+  // it needs a field to carry the record key. Without one there is nothing to
+  // key the records by, and the struct is declined rather than emitted unkeyed.
+  if (container === null && identityKey === undefined) {
     return null;
   }
+  const keying: RepeatedStructKeying =
+    container === null
+      ? { keying: "siblings", identityKey: identityKey! }
+      : { keying: "container" };
   const groupedFields = mergeByName((container ?? ownerField.type).fields, config.typeName);
   if (identityKey !== undefined) {
     groupedFields.delete(identityKey);
@@ -137,9 +137,8 @@ function planRepeatedStruct(
   );
 
   return {
+    ...keying,
     typeName: config.typeName,
-    keying,
-    identityKey,
     groupedFields,
     localisation,
   };
@@ -324,7 +323,8 @@ export function repeatedStructEmission(
       { constant: rendered.fieldsConstant, members: members.memberDocs },
       ...members.docTables,
     ],
-    keying: plan.keying,
-    identityKey: plan.identityKey,
+    ...(plan.keying === "siblings"
+      ? { keying: plan.keying, identityKey: plan.identityKey }
+      : { keying: plan.keying }),
   };
 }

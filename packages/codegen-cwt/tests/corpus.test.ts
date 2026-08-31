@@ -195,6 +195,48 @@ describe("a sibling type sharing the directory", () => {
 });
 
 describe("file layout", () => {
+  it("propagates an unreadable registry path instead of treating it as empty", () => {
+    const root = mkdtempSync(path.join(tmpdir(), "pdx-corpus-"));
+    // The registry path IS the regular file, rather than a path beneath one.
+    // Reading a file as a directory is a fault on every platform; a path
+    // *under* a file is one only where the walk stops at the file, and Windows
+    // instead resolves the whole path and reports it absent — which the reader
+    // would then correctly treat as a registry that ships no directory.
+    writeFileSync(path.join(root, "not-a-directory"), "", "utf8");
+    const read = (): unknown =>
+      readRegistryCorpus(root, {
+        registry: "system",
+        registryPath: "not-a-directory",
+        keyword: null,
+        nameField: null,
+      });
+
+    // The contract is that a fault is not an absent registry, so the code is
+    // asserted to be something other than ENOENT rather than pinned to the
+    // ENOTDIR POSIX reports — the reader's own rule is about ENOENT alone.
+    expect(read).toThrow();
+    let thrown: NodeJS.ErrnoException | undefined;
+    try {
+      read();
+    } catch (error) {
+      thrown = error as NodeJS.ErrnoException;
+    }
+    expect(thrown?.code).not.toBe("ENOENT");
+  });
+
+  it("returns an empty corpus for a genuinely absent registry directory", () => {
+    const root = mkdtempSync(path.join(tmpdir(), "pdx-corpus-"));
+
+    const corpus = readRegistryCorpus(root, {
+      registry: "system",
+      registryPath: "missing/registry",
+      keyword: null,
+      nameField: null,
+    });
+
+    expect(corpus).toEqual({ definitions: 0, files: 0, occurrences: new Map() });
+  });
+
   // A registry whose files are not `.txt` reads as an empty directory rather
   // than as an unread one, so the extension has to reach the reader or the
   // conformance evidence for it is vacuous.

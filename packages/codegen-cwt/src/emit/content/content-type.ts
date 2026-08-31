@@ -531,13 +531,17 @@ function declareRepeatedStruct(
   });
   // The emission's own derived keying, so the reader's and the authoring
   // shape's cannot disagree about where the record key lives.
-  draft.corpusDescents.push({
-    field: name,
-    mode: "repeatedStruct",
-    keying: nested.keying,
-    ...(nested.identityKey === undefined ? {} : { identityKey: nested.identityKey }),
-    children: nested.children,
-  });
+  draft.corpusDescents.push(
+    nested.keying === "container"
+      ? { field: name, mode: "repeatedStruct", keying: "container", children: nested.children }
+      : {
+          field: name,
+          mode: "repeatedStruct",
+          keying: "siblings",
+          identityKey: nested.identityKey,
+          children: nested.children,
+        }
+  );
 }
 
 /** Lowers one ordinary body field and records its member, docs, and tables. */
