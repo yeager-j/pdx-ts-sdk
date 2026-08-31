@@ -390,9 +390,10 @@ export interface ComplexTriggerModifier<S extends ScopeName> {
    * Text for this row's tooltip. Inline display text is auto-registered as
    * localisation the same way {@link Modifier.desc} is — see `ContentAuthoring`'s
    * modifier-desc collection in `content/authoring.ts`. `complexTriggerModifierEntry`
-   * below throws if `desc` reaches it unresolved. Unlike {@link Modifier.desc},
-   * this row's key is its position among the field's rows rather than a hash
-   * of its text, so it takes no `key` pin.
+   * below throws if `desc` reaches it unresolved. Like {@link Modifier.desc},
+   * this row has no id of its own, so an unpinned key hashes the English text
+   * and an optional `key` pin supplies a stable anonymous segment; reordering
+   * rows does not change either form.
    */
   readonly desc?: LocalizationInput;
   /** Additional gate evaluated alongside the named trigger. */

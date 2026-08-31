@@ -809,14 +809,15 @@ export class ContentAuthoring {
    * `WeightBlock`. `Modifier` rows go through the shared derivation
    * `modifierDescKey` — see its doc comment in `script/effects/modifiers.ts` for the key
    * shape, the key-pin/hash-fallback split, and why the derivation lives
-   * there rather than here (`events.ts`'s `registerModifierDescs` is the
-   * other caller).
+   * there rather than here (`events.ts`'s `registerModifierDescs` and the
+   * vanilla patch path are the other callers).
    *
-   * `ComplexTriggerModifier` rows take no key pin — `complex_trigger_modifier`'s
-   * own name/parameter pair is already the row's content-derived identity — so
-   * they key as `<ownerId>_<fieldPath>_<index>`, keeping every row on the field counted
-   * (both kinds together) so a `Modifier` and a `ComplexTriggerModifier`
-   * sharing one `modifiers` array never collide on the same key either.
+   * `ComplexTriggerModifier` rows use the same `modifierDescKey` derivation as
+   * `Modifier` rows: an author-supplied pin gives the anonymous key segment,
+   * while an unpinned desc hashes its English text. The key therefore depends
+   * on the row's own desc content, never on its position in the `modifiers`
+   * array; a `LocalizationRef` continues to bypass registration because it
+   * already names a fixed foreign key.
    *
    * The registration itself is keyed by the row object *and* by
    * `${ownerId}::${fieldKey}` — the token `descOwnerKey` rebuilds on the
@@ -849,7 +850,7 @@ export class ContentAuthoring {
     into: KeyedLocalization[]
   ): void {
     const ownerKey = `${ownerId}::${fieldKey}`;
-    weight.modifiers?.forEach((row, index) => {
+    weight.modifiers?.forEach((row) => {
       if (row.desc === undefined) {
         return;
       }
@@ -857,15 +858,15 @@ export class ContentAuthoring {
         return;
       }
       if (isComplexTriggerModifier(row)) {
-        const key = `${ownerId}_${fieldPath}_${index}`;
-        into.push({
-          key,
-          translations: resolveFixedKeyText(
-            row.desc,
-            `The complex trigger modifier desc on "${ownerId}" (${fieldPath}[${index}])`,
-            key
-          ),
-        });
+        const { key, translations, unstableWarning } = modifierDescKey(
+          ownerId,
+          fieldPath,
+          row.desc
+        );
+        if (unstableWarning !== undefined) {
+          this.onUnstableDescKey(unstableWarning);
+        }
+        into.push({ key, translations });
         registerComplexTriggerModifierDescKey(row, ownerKey, key);
         return;
       }

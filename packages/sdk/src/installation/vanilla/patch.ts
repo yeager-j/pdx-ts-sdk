@@ -316,8 +316,8 @@ function joinFieldPath(path: string, key: string): string {
  * `WeightBlock`.
  *
  * This is `ContentAuthoring.collectModifierDescs` with the owner substituted,
- * deliberately reusing `modifierDescKey` and the index-keyed complex form
- * rather than forking them: a patched row and a defined row derive their keys
+ * deliberately reusing `modifierDescKey` for both row kinds rather than
+ * forking the derivation: a patched row and a defined row derive their keys
  * the same way, differing only in what `ownerId` is. Registration runs before
  * the field lowers, exactly as `define`'s pre-pass does, because
  * `modifierEntry` refuses a `desc` it cannot resolve a key for.
@@ -333,7 +333,7 @@ function mintModifierDescs(
     return;
   }
   const ownerKey = `${ctx.ownerId}::${fieldKey}`;
-  (rows as readonly unknown[]).forEach((row, index) => {
+  (rows as readonly unknown[]).forEach((row) => {
     if (!isAuthoredRecord(row) || row["desc"] === undefined) {
       return;
     }
@@ -342,15 +342,15 @@ function mintModifierDescs(
       return;
     }
     if (isComplexTriggerModifier(typed)) {
-      const key = `${ctx.ownerId}_${fieldPath}_${index}`;
-      ctx.into.push({
-        key,
-        translations: resolveFixedKeyText(
-          typed.desc,
-          `The complex trigger modifier desc on "${ctx.ownerId}" (${fieldPath}[${index}])`,
-          key
-        ),
-      });
+      const { key, translations, unstableWarning } = modifierDescKey(
+        ctx.ownerId,
+        fieldPath,
+        typed.desc
+      );
+      if (unstableWarning !== undefined) {
+        ctx.warnings.push({ code: "unstable-desc-key", message: unstableWarning });
+      }
+      ctx.into.push({ key, translations });
       registerComplexTriggerModifierDescKey(typed, ownerKey, key);
       return;
     }
