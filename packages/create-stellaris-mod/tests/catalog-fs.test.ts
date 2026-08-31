@@ -23,6 +23,7 @@ import {
   readdirSync,
   readFileSync,
   realpathSync,
+  renameSync,
   rmSync,
   symlinkSync,
   writeFileSync,
@@ -290,6 +291,27 @@ describe("publishing", () => {
     expect(readdirSync(elsewhere)).toEqual([]);
   });
 
+  it("refuses an outside symlink swapped in during temporary-file open", async () => {
+    const root = makeRoot();
+    const dir = path.join(root, ...SEGMENTS);
+    mkdirSync(dir, { recursive: true });
+    const result = await preflight(root);
+    const elsewhere = makeRoot();
+
+    await expect(
+      publishExclusive(result, CONTENTS, {
+        open: async (target, flags, mode) => {
+          renameSync(dir, `${dir}-original`);
+          symlinkSync(elsewhere, dir);
+          return open(target, flags, mode);
+        },
+      })
+    ).rejects.toThrow(ContainmentError);
+
+    expect(readdirSync(elsewhere)).toEqual([]);
+    expect(existsSync(path.join(elsewhere, BASENAME))).toBe(false);
+  });
+
   it("leaves no temporary file behind when the write itself fails", async () => {
     // A full disk is the ordinary way this happens, and it is the one failure
     // that used to litter: the bytes never arrive, the dotfile does.
@@ -303,6 +325,7 @@ describe("publishing", () => {
         open: async (target, flags, mode) => {
           const handle = await open(target, flags, mode);
           return {
+            stat: () => handle.stat(),
             writeFile: () =>
               Promise.reject(Object.assign(new Error("ENOSPC: no space left"), { code: "ENOSPC" })),
             sync: () => handle.sync(),

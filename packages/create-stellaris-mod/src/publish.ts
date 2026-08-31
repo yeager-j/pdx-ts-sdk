@@ -21,6 +21,14 @@
  * gets a loud error, because the alternative is silently destroying the source
  * file an author spent the afternoon in.
  *
+ * Node exposes neither `openat` nor `linkat`, so pathname publication cannot
+ * eliminate a swap that is made and put back entirely between two filesystem
+ * calls. The destination directory is therefore pinned by device and inode,
+ * checked after the temporary file is opened, and checked again immediately
+ * before publication. A concurrent replacement that survives either boundary
+ * is refused; complete protection against a hostile double swap requires
+ * descriptor-relative primitives Node does not provide.
+ *
  * Nothing here creates a directory before the author has confirmed: `preflight`
  * only looks, and `publishExclusive` is what runs afterwards.
  */
@@ -154,8 +162,13 @@ export async function preflightTarget(
 
 /** The part of a `FileHandle` publication uses. */
 export interface ExclusiveFile {
+  /** Returns the identity of the file opened with exclusive creation. */
+  stat(): Promise<Stats>;
+  /** Writes the generated source bytes. */
   writeFile(contents: string, encoding: BufferEncoding): Promise<void>;
+  /** Flushes the complete file before publication. */
   sync(): Promise<void>;
+  /** Releases the temporary file handle. */
   close(): Promise<void>;
 }
 
@@ -217,6 +230,7 @@ export async function publishExclusive(
   // exists rather than against what existed before the directories were made.
   const real = await realpath(dir);
   requireContainment(preflight.rootDir, real, dir);
+  const directoryIdentity = await requireRealDirectory(real);
 
   const target = path.join(real, preflight.basename);
   const temporary = path.join(real, `.${preflight.basename}.${randomBytes(12).toString("hex")}`);
@@ -227,7 +241,11 @@ export async function publishExclusive(
   // leaves the same litter otherwise: a dotfile in somebody's source tree that
   // nothing will ever come back for.
   try {
+    let temporaryIdentity: Stats;
     try {
+      temporaryIdentity = await handle.stat();
+      await requireUnchangedDirectory(preflight.rootDir, real, directoryIdentity);
+      await requireUnchangedFile(temporary, temporaryIdentity);
       await handle.writeFile(contents, "utf8");
       // Flushed before it is published, so the name never appears pointing at
       // bytes that are not on the disk yet.
@@ -236,6 +254,8 @@ export async function publishExclusive(
       await handle.close();
     }
 
+    await requireUnchangedDirectory(preflight.rootDir, real, directoryIdentity);
+    await requireUnchangedFile(temporary, temporaryIdentity);
     try {
       await link(temporary, target);
     } catch (error) {
@@ -291,6 +311,60 @@ async function classify(targetPath: string): Promise<TargetKind> {
     return "dir";
   }
   return stats.isFile() ? "file" : "other";
+}
+
+async function requireRealDirectory(target: string): Promise<Stats> {
+  const stats = await lstatOrUndefined(target);
+  if (stats === undefined || stats.isSymbolicLink() || !stats.isDirectory()) {
+    throw new ContainmentError(
+      `${target} changed while publication was preparing it and is no longer a real directory. ` +
+        `Nothing was published.`
+    );
+  }
+  return stats;
+}
+
+async function requireUnchangedDirectory(
+  rootDir: string,
+  target: string,
+  expected: Stats
+): Promise<void> {
+  const observed = await lstatOrUndefined(target);
+  if (
+    observed === undefined ||
+    observed.isSymbolicLink() ||
+    !observed.isDirectory() ||
+    !sameInode(observed, expected)
+  ) {
+    throw new ContainmentError(
+      `${target} changed identity while publication was running. Nothing was published.`
+    );
+  }
+  const resolved = await realpath(target);
+  requireContainment(rootDir, resolved, target);
+  if (resolved !== target) {
+    throw new ContainmentError(
+      `${target} changed identity while publication was running. Nothing was published.`
+    );
+  }
+}
+
+async function requireUnchangedFile(target: string, expected: Stats): Promise<void> {
+  const observed = await lstatOrUndefined(target);
+  if (
+    observed === undefined ||
+    observed.isSymbolicLink() ||
+    !observed.isFile() ||
+    !sameInode(observed, expected)
+  ) {
+    throw new ContainmentError(
+      `${target} changed identity while publication was running. Nothing was published.`
+    );
+  }
+}
+
+function sameInode(observed: Stats, expected: Stats): boolean {
+  return observed.dev === expected.dev && observed.ino === expected.ino;
 }
 
 function requireContainment(rootDir: string, real: string, shown: string): void {
