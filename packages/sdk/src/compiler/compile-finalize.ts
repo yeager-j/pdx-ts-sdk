@@ -39,7 +39,7 @@ export function finalizeMod(
   componentTagFiles: readonly ComponentTagFile[],
   events: CompiledEvents
 ): PureMod {
-  const { compileInputs, config, flat, localization, options, refUses, warnings } = session;
+  const { compileInputs, config, items, localization, options, refUses, warnings } = session;
   const { contentFiles, definedGroups } = content;
   const {
     contributionStems,
@@ -51,16 +51,14 @@ export function finalizeMod(
     shipOfSizeLimits,
   } = events;
 
-  const patchesByRegistry = collectPatches(flat, options, refUses);
+  const patchesByRegistry = collectPatches(items.patch, options, refUses);
   const patches = [...patchesByRegistry.values()].flat();
   const patchStem = registerFinalLocalization(session, patches);
   const localizationFiles = localization.finish(config.prefix);
 
   validateReferences({
     prefix: config.prefix,
-    contentFiles,
     componentTagIds: new Set(componentTagFiles.flatMap((file) => file.ids)),
-    eventFiles,
     eventIds,
     definedGroups,
     patched: patches,
@@ -174,9 +172,7 @@ function registerFinalLocalization(
     (a, b) => compareUtf8(a.registry, b.registry) || compareUtf8(a.id, b.id)
   );
   const patchStem = new Map(
-    session.flat.flatMap(({ item, stem }) =>
-      item.itemKind === "patch" ? [[item.patched, stem] as const] : []
-    )
+    session.items.patch.map(({ item, stem }) => [item.patched, stem] as const)
   );
   for (const patched of locOrderedPatches) {
     session.warnings.push(...patched.warnings);
@@ -184,10 +180,7 @@ function registerFinalLocalization(
     registerLocalization(session.localization, { layer: "ordinary", stem }, patched.loc);
     registerLocalization(session.localization, { layer: "replace", stem }, patched.replaceLoc);
   }
-  for (const { item, stem } of session.flat) {
-    if (item.itemKind !== "localization") {
-      continue;
-    }
+  for (const { item, stem } of session.items.localization) {
     registerLocalization(session.localization, { layer: item.layer, stem }, [
       { key: item.key, translations: item.translations },
     ]);

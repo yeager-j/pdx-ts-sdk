@@ -1,13 +1,20 @@
 import type { AssetFileItem } from "../authoring/assets.ts";
+import type { ComponentTagItem } from "../authoring/component-tags.ts";
 import {
   flattenItems,
+  refuseUnknownItemKind,
   type Feature,
   type ModItem,
   type ModItemInput,
   type PlacedItem,
 } from "../authoring/feature.ts";
+import type { LocalizationItem, ReplacementLocalizationItem } from "../authoring/localization.ts";
 import type { LocalizationRoleUse } from "../content/localization-families.ts";
+import type { ContentItem, ContributionItem } from "../content/types.ts";
 import type { ModWarning } from "../diagnostics.ts";
+import type { OnActionHookItem } from "../events/on-actions.ts";
+import type { EventItemBase } from "../events/types.ts";
+import type { ContentPatchItem } from "../installation/vanilla/patch.ts";
 import type { VanillaView } from "../installation/vanilla/view.ts";
 import { compareUtf8, type LogicalPath } from "../ordering.ts";
 import type { AssetPathUse } from "../references.ts";
@@ -21,12 +28,76 @@ import { createLocalizationAccumulator, type LocalizationAccumulator } from "./l
 import type { CompiledFeatureInput, CompileInputs } from "./model.ts";
 import type { ReferenceUse } from "./references.ts";
 
-/** An asset item together with its optional source Feature stem. */
-export interface PlacedAsset {
-  /** The asset definition to emit. */
-  readonly item: AssetFileItem;
-  /** The source Feature stem, when the asset came from a named Feature. */
-  readonly stem: string | undefined;
+/** The two authored layers that share the `localization` item kind. */
+type PlacedLocalization = LocalizationItem<string, string, boolean> | ReplacementLocalizationItem;
+
+/**
+ * Every placed item, split once by the `itemKind` that decides which compiler
+ * phase compiles it (SDK-326).
+ *
+ * The fold reads its input through these buckets rather than re-filtering the
+ * flat list per phase, so the choice of phase is made in one place. That is
+ * also what makes an unclaimed kind visible: filtering per phase drops it from
+ * every phase in turn and ships a mod quietly missing it, while the partition
+ * has nowhere to put it and says so.
+ */
+export interface PlacedItems {
+  readonly content: readonly PlacedItem<ContentItem>[];
+  readonly event: readonly PlacedItem<EventItemBase>[];
+  readonly onAction: readonly PlacedItem<OnActionHookItem>[];
+  readonly patch: readonly PlacedItem<ContentPatchItem>[];
+  readonly contribution: readonly PlacedItem<ContributionItem>[];
+  readonly localization: readonly PlacedItem<PlacedLocalization>[];
+  readonly asset: readonly PlacedItem<AssetFileItem>[];
+  readonly componentTag: readonly PlacedItem<ComponentTagItem>[];
+}
+
+/** The mutable form the partition is filled in, before it is handed out. */
+type PlacedItemBuckets = { -readonly [K in keyof PlacedItems]: PlacedItems[K][number][] };
+
+/** Splits placed items by kind, refusing any kind no phase claims. */
+function partitionPlacedItems(flat: readonly PlacedItem[]): PlacedItems {
+  const buckets: PlacedItemBuckets = {
+    content: [],
+    event: [],
+    onAction: [],
+    patch: [],
+    contribution: [],
+    localization: [],
+    asset: [],
+    componentTag: [],
+  };
+  for (const { item, stem } of flat) {
+    switch (item.itemKind) {
+      case "content":
+        buckets.content.push({ item, stem });
+        break;
+      case "event":
+        buckets.event.push({ item, stem });
+        break;
+      case "on-action":
+        buckets.onAction.push({ item, stem });
+        break;
+      case "patch":
+        buckets.patch.push({ item, stem });
+        break;
+      case "contribution":
+        buckets.contribution.push({ item, stem });
+        break;
+      case "localization":
+        buckets.localization.push({ item, stem });
+        break;
+      case "asset":
+        buckets.asset.push({ item, stem });
+        break;
+      case "component-tag":
+        buckets.componentTag.push({ item, stem });
+        break;
+      default:
+        refuseUnknownItemKind(item);
+    }
+  }
+  return buckets;
 }
 
 /** An asset path reference recorded while compiling an emitted file. */
@@ -45,10 +116,10 @@ export interface BuildSession {
   readonly options: BuildOptions;
   /** Canonical input provenance retained on the compiled mod. */
   readonly compileInputs: CompileInputs;
-  /** All input items, with their placement metadata. */
-  readonly flat: readonly PlacedItem[];
+  /** All input items, with their placement metadata, split once by kind. */
+  readonly items: PlacedItems;
   /** Asset items, ordered by their logical paths. */
-  readonly assets: readonly PlacedAsset[];
+  readonly assets: readonly PlacedItem<AssetFileItem>[];
   /** Diagnostics collected during the build. */
   readonly warnings: ModWarning[];
   /** Localization entries collected during the build. */
@@ -70,17 +141,15 @@ export function createBuildSession(
   options: BuildOptions
 ): BuildSession {
   const config = resolveConfig(callerConfig);
-  const flat = flattenItems(features);
-  const assets = flat
-    .filter((placed): placed is PlacedAsset => placed.item.itemKind === "asset")
-    .sort((a, b) => compareUtf8(a.item.path, b.item.path));
+  const items = partitionPlacedItems(flattenItems(features));
+  const assets = [...items.asset].sort((a, b) => compareUtf8(a.item.path, b.item.path));
   const warnings: ModWarning[] = [];
 
   return {
     config,
     options,
-    compileInputs: summarizeCompileInputs(features, options),
-    flat,
+    compileInputs: summarizeCompileInputs(features, options, items.patch),
+    items,
     assets,
     warnings,
     localization: createLocalizationAccumulator(warnings),
@@ -93,14 +162,18 @@ export function createBuildSession(
 
 function summarizeCompileInputs(
   features: readonly ModItemInput[],
-  options: BuildOptions
+  options: BuildOptions,
+  patches: readonly PlacedItem<ContentPatchItem>[]
 ): CompileInputs {
   const compiledFeatures: CompiledFeatureInput[] = [];
   const vanillaOrigins = new Set<VanillaView>();
   if (options.vanilla !== undefined) {
     vanillaOrigins.add(options.vanilla);
   }
-  collectFeatureInputs(features, compiledFeatures, vanillaOrigins);
+  for (const { item } of patches) {
+    vanillaOrigins.add(item.patched.source.origin);
+  }
+  collectFeatureInputs(features, compiledFeatures);
   compiledFeatures.sort(compareCompiledFeatures);
   const knownGameVersions = [
     ...new Set(
@@ -125,20 +198,14 @@ function summarizeCompileInputs(
 
 function collectFeatureInputs(
   inputs: readonly ModItemInput[],
-  compiledFeatures: CompiledFeatureInput[],
-  vanillaOrigins: Set<VanillaView>
+  compiledFeatures: CompiledFeatureInput[]
 ): void {
   for (const input of inputs) {
     if (Array.isArray(input)) {
-      collectFeatureInputs(input, compiledFeatures, vanillaOrigins);
+      collectFeatureInputs(input, compiledFeatures);
       continue;
     }
     const feature = input as Feature;
-    for (const item of feature.items) {
-      if (item.itemKind === "patch") {
-        vanillaOrigins.add(item.patched.source.origin);
-      }
-    }
     compiledFeatures.push({
       stem: feature.stem,
       itemCount: feature.items.length,

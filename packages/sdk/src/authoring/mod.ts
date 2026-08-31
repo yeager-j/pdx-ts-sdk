@@ -62,7 +62,13 @@ import {
   createComponentTagItem,
   type ComponentTagItem,
 } from "./component-tags.ts";
-import { assertNamespace, createFeature, type Feature, type ModItem } from "./feature.ts";
+import {
+  assertNamespace,
+  createFeature,
+  refuseUnknownItemKind,
+  type Feature,
+  type ModItem,
+} from "./feature.ts";
 import {
   createReplacementLocalizationItem,
   localizationFor,
@@ -460,6 +466,8 @@ function assertCapabilityItem(
     case "component-tag":
       assertComponentTagOwner(item, capabilityOwner, prefix);
       return;
+    default:
+      refuseUnknownItemKind(item);
   }
 }
 

@@ -47,6 +47,7 @@ import {
   always,
   and,
   eventTarget,
+  hasActiveEvent,
   hasOwner,
   hasTechnology,
   isPreferredWeapons,
@@ -608,9 +609,30 @@ describe("event namespaces", () => {
         },
       }),
     ]);
-    // `orphans` is never passed — the emitted id has no definition behind it.
+    // `orphans` is never passed — the recorded fire has no definition behind it.
     expect(() => buildInternal(CONFIG, [included])).toThrow(
-      '"pp_mod_orphans.22" looks like one of this mod\'s event ids'
+      'event "pp_mod.21" references event "pp_mod_orphans.22" in "immediate.planet_event.id", ' +
+        "but no such event is among the features passed to buildMod"
+    );
+  });
+
+  it("fails loudly on an event a trigger tests for but no feature places", () => {
+    const orphan = namespaceInternal("pp_mod_orphans").defineCountryEvent({
+      id: 24,
+      isTriggeredOnly: true,
+    });
+    const included = createFeatureInternal("events", [
+      namespaceInternal("pp_mod").defineCountryEvent({
+        id: 25,
+        isTriggeredOnly: true,
+        hideWindow: true,
+        trigger: hasActiveEvent([orphan]),
+      }),
+    ]);
+    // The trigger side records the same `event` target the fire side does, so
+    // an id only ever read still has to have a definition behind it.
+    expect(() => buildInternal(CONFIG, [included])).toThrow(
+      'event "pp_mod.25" references event "pp_mod_orphans.24" in "trigger.has_active_event"'
     );
   });
 
@@ -646,6 +668,28 @@ describe("event namespaces", () => {
     ]);
     expect(() => buildInternal(CONFIG, [hooks])).toThrow(
       'Event "pp_mod.31" is not among the features passed to buildMod'
+    );
+  });
+});
+
+describe("item kind partition", () => {
+  // Only a cast can produce this: the authoring surface has no method that
+  // returns it, and every arm of `ModItem` is a kind some phase compiles.
+  const forged = { itemKind: "wormhole", id: "pp_mod_rift" } as unknown as ModItem;
+
+  it("refuses an unknown item kind in the fold", () => {
+    const feature = createFeatureInternal("rifts", [forged]);
+    // Before the partition every phase filtered this item out, and the build
+    // shipped a mod that silently lacked it.
+    expect(() => buildInternal(CONFIG, [feature])).toThrow(
+      'Item kind "wormhole" is not one this SDK defines'
+    );
+  });
+
+  it("refuses an unknown item kind at capability placement", () => {
+    const mod = createMod(CONFIG);
+    expect(() => mod.compile([mod.feature("rifts", [forged])])).toThrow(
+      'Item kind "wormhole" is not one this SDK defines'
     );
   });
 });

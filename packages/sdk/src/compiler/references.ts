@@ -1,17 +1,14 @@
-import { walkItems, type PdxItem } from "@pdx-ts/pdxscript";
-
 import { contentDescriptor } from "../content/descriptors.ts";
 import type { LocalizationRoleUse } from "../content/localization-families.ts";
 import { SWAP_IDENTITIES, type SwapIdentity } from "../content/swaps.ts";
 import { CONTENT_REGISTRIES } from "../generated/content-registry.ts";
+import { ownEventIdPattern } from "../identity.ts";
 import type { ContentRefUse, RecordedRefUse } from "../references.ts";
-import type { ContentFile, DefinedGroup, EmittedFile } from "./model.ts";
+import type { DefinedGroup } from "./model.ts";
 
 type ReferenceValidationInput = {
   readonly prefix: string;
-  readonly contentFiles: readonly ContentFile[];
   readonly componentTagIds: ReadonlySet<string>;
-  readonly eventFiles: readonly EmittedFile[];
   readonly eventIds: ReadonlySet<string>;
   readonly definedGroups: readonly DefinedGroup[];
   readonly patched: readonly {
@@ -70,46 +67,6 @@ function swapIds(value: unknown, keying: SwapIdentity["keying"]): readonly strin
     }
   }
   return ids;
-}
-
-/** Every `str` scalar anywhere in the tree, regions included, in source order. */
-function scanStrings(nodes: readonly PdxItem[], strings: string[]): void {
-  walkItems(
-    nodes,
-    undefined,
-    (node) => {
-      if (node.kind === "str") {
-        strings.push(node.value);
-      }
-      return undefined;
-    },
-    { read: true }
-  );
-}
-
-function assertOwnEventReferencesExist(
-  prefix: string,
-  contentFiles: readonly ContentFile[],
-  eventFiles: readonly EmittedFile[],
-  eventIds: ReadonlySet<string>
-): void {
-  const ownEventId = new RegExp(`^${prefix}(_[a-z0-9_]*)?\\.\\d+$`);
-  const strings: string[] = [];
-  for (const file of contentFiles) {
-    scanStrings(file.entries, strings);
-  }
-  for (const file of eventFiles) {
-    scanStrings(file.entries, strings);
-  }
-
-  for (const value of strings) {
-    if (ownEventId.test(value) && !eventIds.has(value)) {
-      throw new Error(
-        `"${value}" looks like one of this mod's event ids, but no such event is among the ` +
-          `features passed to buildMod — was the feature holding it included?`
-      );
-    }
-  }
 }
 
 function indexDefinitionsByType(
@@ -179,6 +136,46 @@ function registriesFor(use: ContentRefUse): readonly string[] | undefined {
     return undefined;
   }
   return resolvedTargets.flatMap((registries) => registries ?? []);
+}
+
+/**
+ * Whether every registry a reference may name is the event domain.
+ *
+ * The rules write an event reference either bare or qualified by the event's
+ * own subtype (`event.fleet`, `event.situation`), and no content registry is
+ * called `event`, so the head segment decides. A use naming both domains
+ * cannot be settled by either census and is left to the content check, which
+ * declines targets it cannot resolve.
+ */
+function namesOnlyEvents(use: ContentRefUse): boolean {
+  return (
+    use.targets.length > 0 &&
+    use.targets.every((target) => target === "event" || target.startsWith("event."))
+  );
+}
+
+/**
+ * Rejects an event reference written in one of this mod's own event namespaces
+ * that no placed event defines.
+ *
+ * Events are not a content registry, so ownership rests on the id's namespace
+ * rather than on a prefixed name: an id in the game's or another mod's
+ * namespace names an event this build was never going to define, and passes.
+ */
+function assertOwnEventExists(
+  owner: string,
+  use: ContentRefUse,
+  ownEventId: RegExp,
+  eventIds: ReadonlySet<string>
+): void {
+  if (use.verifiedVanilla === true || !ownEventId.test(use.id) || eventIds.has(use.id)) {
+    return;
+  }
+  throw new Error(
+    `${owner} references event "${use.id}" in "${use.field}", but no such event is among the ` +
+      `features passed to buildMod — the id is in one of this mod's event namespaces, so this ` +
+      `build has to define it; was the feature holding it passed to buildMod?`
+  );
 }
 
 function isOwnedReference(id: string, prefix: string, minted: boolean): boolean {
@@ -265,12 +262,16 @@ function assertLocalizationRolesComplete(
  * compiled Feature set. Verified vanilla references and assumed third-party references pass through.
  */
 export function validateReferences(args: ReferenceValidationInput): void {
-  assertOwnEventReferencesExist(args.prefix, args.contentFiles, args.eventFiles, args.eventIds);
   const builtIds = collectBuiltIds(args.definedGroups, args.patched, args.componentTagIds);
+  const ownEventId = ownEventIdPattern(args.prefix);
   for (const { owner, use } of args.refUses) {
     // A consumed localization key names no content, and the fold places its
     // text rather than checking it against a registry (`compile-finalize.ts`).
     if (use.kind === "localization") {
+      continue;
+    }
+    if (namesOnlyEvents(use)) {
+      assertOwnEventExists(owner, use, ownEventId, args.eventIds);
       continue;
     }
     assertContentReferenceExists(owner, use, args.prefix, builtIds, args.vanillaIdsOf);

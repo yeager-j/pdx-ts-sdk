@@ -17,10 +17,7 @@ export function compileComponentTags(session: BuildSession): readonly ComponentT
   const ids = new Set<string>();
   const groups = new Map<LogicalPath, TagGroup>();
 
-  for (const { item, stem } of session.flat) {
-    if (item.itemKind !== "component-tag") {
-      continue;
-    }
+  for (const { item, stem } of session.items.componentTag) {
     if (ids.has(item.id)) {
       throw new Error(`Component tag "${item.id}" is declared more than once`);
     }

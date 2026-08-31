@@ -121,6 +121,47 @@ describe("event definitions in a namespace", () => {
     }).toThrow(/fromfrom.*relative THIS/i);
   });
 
+  it("records no reference for a fire call its own witness check refused", () => {
+    const runtimeMod = createMod({
+      name: "Caught witness refusal",
+      prefix: "caught_fire",
+      supportedVersion: "4.4.*",
+    });
+    const events = runtimeMod.namespace();
+    const never = events.planet(5, {
+      scopes: { from: "country", fromfrom: "country" },
+      hideWindow: true,
+      isTriggeredOnly: true,
+    });
+    const source = events.country(6, {
+      hideWindow: true,
+      isTriggeredOnly: true,
+      immediate: (country, ctx) => {
+        country.everyOwnedPlanet({}, (planet) => {
+          try {
+            planet.planetEvent({
+              id: never,
+              scopes: { from: ctx.root, fromfrom: ctx.self as unknown as ScopeRef<"country"> },
+            });
+          } catch {
+            // An author may handle the refusal and write something else.
+          }
+        });
+      },
+    });
+
+    // The refused call wrote no entry, so `never` is nowhere in the output and
+    // the fold must not demand a definition for it — the reference is recorded
+    // where the entry is committed, not where the id was read.
+    const rendered = render(runtimeMod.compile([runtimeMod.feature("caught", [source])])).get(
+      "events/caught_fire_caught.txt"
+    )!;
+
+    expect(rendered).toContain("id = caught_fire.6");
+    expect(rendered).not.toContain("planet_event");
+    expect(rendered).not.toContain("caught_fire.5");
+  });
+
   it("rejects duplicate event ids within the namespace", () => {
     const events = makeEvents();
     const country = events.country(1, { hideWindow: true, isTriggeredOnly: true });

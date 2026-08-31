@@ -84,9 +84,24 @@ export function createFeature<T extends ModItem>(
 export type ModItemInput = Feature | readonly ModItemInput[];
 
 /** An item plus the file stem of the feature that created it. */
-export interface PlacedItem {
-  readonly item: ModItem;
+export interface PlacedItem<T extends ModItem = ModItem> {
+  readonly item: T;
   readonly stem: string | undefined;
+}
+
+/**
+ * Refuses an item whose `itemKind` belongs to no arm of {@link ModItem}.
+ *
+ * The parameter is `never`, so a new arm that no dispatch handles fails to
+ * compile; the throw is what catches a value cast past the type, which would
+ * otherwise be dropped from the output without a word.
+ */
+export function refuseUnknownItemKind(item: never): never {
+  const kind = (item as ModItem).itemKind;
+  throw new Error(
+    `Item kind "${String(kind)}" is not one this SDK defines — every item in a Feature must come ` +
+      `from a capability method on the mod`
+  );
 }
 
 export function flattenItems(items: readonly ModItemInput[]): PlacedItem[] {

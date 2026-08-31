@@ -78,6 +78,20 @@ describe("event text slots", () => {
     expect(english).not.toContain("SOME_OTHER_MOD_DESC:0");
   });
 
+  it("accepts a foreign key spelled like one of this mod's event ids", () => {
+    // "probe.404" is exactly what an own event id looks like, and it is a
+    // localization key. References are checked where they are recorded, and
+    // the title field records a localization use, so nothing here demands an
+    // event definition (SDK-323).
+    const mod = capability("probe");
+    const event = mod.namespace("story").country(6, {
+      title: external.localization("probe.404"),
+      isTriggeredOnly: true,
+    });
+
+    expect(texts(mod, "story", [event], "events/")).toContain("title = probe.404");
+  });
+
   it("refuses a consumed item another capability minted", () => {
     const mine = capability("mine");
     const theirs = capability("theirs");

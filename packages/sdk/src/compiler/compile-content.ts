@@ -94,10 +94,7 @@ function collectContentGroups(session: BuildSession): RawContentGroups {
   const ownIdsByDir = new Map<string, Map<string, ContentTypeName>>();
   const rawByType: RawContentGroups = new Map();
 
-  for (const { item, stem } of session.flat) {
-    if (item.itemKind !== "content") {
-      continue;
-    }
+  for (const { item, stem } of session.items.content) {
     const descriptor = contentDescriptor(item.type);
     if (descriptor === undefined) {
       throw new Error(`Unknown generated content type "${item.type}"`);
