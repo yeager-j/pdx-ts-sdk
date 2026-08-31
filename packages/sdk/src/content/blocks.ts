@@ -4,7 +4,7 @@ import { block, kv, type PdxEntry } from "@pdx-ts/pdxscript";
 import { MODIFIER_REFERENCE_FAMILIES } from "../generated/modifiers.ts";
 import type { ScopeName } from "../generated/scopes.ts";
 import { isVanillaRef } from "../identifiers/trie.ts";
-import { underField, type RecordedRefUse, type RefUseSink } from "../references.ts";
+import type { RecordedRefUse, RefUseSink } from "../references.ts";
 import {
   complexTriggerModifierEntry,
   modifierEntry,
@@ -14,6 +14,13 @@ import { assertSynchronousClosure } from "../script/effects/recorder.ts";
 import type { ComplexTriggerModifier, Modifier } from "../script/effects/types.ts";
 import { refId, type TypedRef } from "../script/scalar.ts";
 import { scriptValueScalar, type ScriptValue } from "../script/trigger-core.ts";
+import {
+  childContext,
+  collectRefs,
+  descOwnerKey,
+  joinPath,
+  type LoweringContext,
+} from "./lowering-context.ts";
 import type {
   EconomicResourceBlock,
   EconomicResourceBlockNoProduce,
@@ -24,40 +31,6 @@ import type {
   WeightBlock,
   WeightBlockRow,
 } from "./types.ts";
-
-interface LoweringContext {
-  readonly collect?: RefUseSink;
-  readonly path: string;
-  readonly ownerId: string;
-}
-
-function childContext(ctx: LoweringContext, segment: string, ownerId?: string): LoweringContext {
-  return {
-    collect: ctx.collect,
-    path: joinPath(ctx.path, segment),
-    ownerId: ownerId ?? ctx.ownerId,
-  };
-}
-
-function descOwnerKey(ctx: LoweringContext, key: string): string {
-  return `${ctx.ownerId}::${key}`;
-}
-
-function joinPath(path: string, segment: string): string {
-  if (segment === "") {
-    return path;
-  }
-  return path === "" ? segment : `${path}.${segment}`;
-}
-
-function collectRefs(ctx: LoweringContext, refs: readonly RecordedRefUse[], segment: string): void {
-  if (ctx.collect === undefined) {
-    return;
-  }
-  for (const use of underField(refs, joinPath(ctx.path, segment))) {
-    ctx.collect(use);
-  }
-}
 
 interface DynamicModifierFamily {
   readonly target: string;

@@ -55,6 +55,7 @@ import {
 } from "../../content/authoring.ts";
 import { isComplexTriggerModifier } from "../../content/blocks.ts";
 import { dualArm, fieldEntries } from "../../content/lower.ts";
+import type { LoweringContext } from "../../content/lowering-context.ts";
 import type { ContentField, ContentLocalisation } from "../../content/schema.ts";
 import type { TriggeredModifier } from "../../content/types.ts";
 import type { ModWarning } from "../../diagnostics.ts";
@@ -69,13 +70,12 @@ import type { ModifierWithLoc } from "../../script/effects/types.ts";
 import { refId } from "../../script/scalar.ts";
 import type { AnyOf, ParsedDefinition, ParsedNumber } from "./parsed-definitions.ts";
 
-/** What the shared lowering reads; the same shape `fieldEntries` is handed. */
-interface LoweringContext {
-  readonly collect: RefUseSink;
-  readonly path: string;
-  readonly ownerId: string;
-  readonly localization?: ScriptLocalizationSink;
-}
+/**
+ * The shared lowering context, narrowed to the one guarantee this path adds:
+ * a patch always collects, because a reference it carried in from a parsed
+ * definition still has to face the integrity check.
+ */
+type PatchLoweringContext = LoweringContext & { readonly collect: RefUseSink };
 
 /**
  * A parsed occurrence carried into a patched member unchanged.
@@ -233,7 +233,11 @@ function refTypesOf(field: ContentField): readonly string[] | undefined {
  * be reported here or nowhere. An id inside an OR group is a reference exactly
  * as a bare one beside it is.
  */
-function anyOfEntry(group: AnyOf<unknown>, field: ContentField, ctx: LoweringContext): PdxEntry {
+function anyOfEntry(
+  group: AnyOf<unknown>,
+  field: ContentField,
+  ctx: PatchLoweringContext
+): PdxEntry {
   const quote = quotesItems(field);
   const targets = refTypesOf(field);
   const options = group.options.map((option) => {
@@ -250,7 +254,7 @@ function anyOfEntry(group: AnyOf<unknown>, field: ContentField, ctx: LoweringCon
  * The patch-only input forms, rewritten into what `fieldEntries` already
  * understands. Everything else is handed to the define path untouched.
  */
-function lowerable(value: unknown, field: ContentField, ctx: LoweringContext): unknown {
+function lowerable(value: unknown, field: ContentField, ctx: PatchLoweringContext): unknown {
   if (isParsedNumber(value)) {
     return parsedScalar(value);
   }
@@ -621,7 +625,7 @@ export function patchContent<Source extends ParsedDefinition, Patch extends obje
   }
 
   const refs: RecordedRefUse[] = [];
-  const ctx: LoweringContext = {
+  const ctx: PatchLoweringContext = {
     collect: (use: RecordedRefUse) => refs.push(use),
     path: "",
     ownerId: mint.ownerId,
