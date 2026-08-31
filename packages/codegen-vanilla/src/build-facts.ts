@@ -111,7 +111,16 @@ interface EvidenceInput {
   readonly recurse: boolean;
 }
 
-function evidenceHash(root: string, inputs: readonly EvidenceInput[]): string {
+interface EvidenceValues {
+  readonly name: string;
+  readonly values: readonly string[];
+}
+
+function evidenceHash(
+  root: string,
+  inputs: readonly EvidenceInput[],
+  valueSets: readonly EvidenceValues[] = []
+): string {
   const hash = createHash("sha256");
   const unique = new Map(
     inputs.map((input) => [
@@ -138,6 +147,15 @@ function evidenceHash(root: string, inputs: readonly EvidenceInput[]): string {
       hash.update(relative);
       hash.update("\0");
       hash.update(readFileSync(file));
+      hash.update("\0");
+    }
+  }
+  for (const valueSet of [...valueSets].sort((left, right) =>
+    compareIdentifiers(left.name, right.name)
+  )) {
+    hash.update(`values\0${valueSet.name}\0`);
+    for (const value of [...new Set(valueSet.values)].sort(compareIdentifiers)) {
+      hash.update(value);
       hash.update("\0");
     }
   }
@@ -217,7 +235,10 @@ export function buildVanillaFacts(options: VanillaBuildFactsOptions): VanillaBui
     gameVersion: options.gameVersion,
     evidence: {
       install: {
-        sha256: evidenceHash(options.installRoot, installEvidenceInputs),
+        sha256: evidenceHash(options.installRoot, installEvidenceInputs, [
+          { name: "localization-keys", values: localization.keys },
+          { name: "paths", values: paths.paths },
+        ]),
       },
       cwt: {
         version: cwtVersion(options.configRoot),

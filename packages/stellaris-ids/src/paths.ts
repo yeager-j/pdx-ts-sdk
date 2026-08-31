@@ -2,6 +2,20 @@
 
 export const VANILLA_PATH_GAME_VERSION = "4.4.6";
 
+/**
+ * SHA-256 fingerprint of the install data projected into this package.
+ *
+ * Covers relative paths and bytes of parsed event, registry, complex-enum, and
+ * scripted-definition files, all emitted install path names (including DLC
+ * archive entries), and all emitted English localization keys. It excludes CWT
+ * rules, script documentation, game version, and generator code, so it is not
+ * a hash of generated package bytes.
+ *
+ * Compare values only when those excluded inputs are unchanged.
+ */
+export const VANILLA_INSTALL_EVIDENCE_SHA256 =
+  "da54cef90ee0a381940b069a5fce3fa69b07c4a135522e775f31047c35796633";
+
 export const VANILLA_PATHS: readonly string[] = /*#__PURE__*/ Object.freeze([
   "assets/app-background.png",
   "assets/button.png",

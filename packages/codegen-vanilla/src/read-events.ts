@@ -13,8 +13,17 @@ export interface VanillaEventDefinition extends EventKindSpec {
   readonly source: string;
 }
 
+/** One event source file resolved from the CWT event type declaration. */
+export interface VanillaEventSource {
+  readonly path: string;
+  /** Path relative to the configured event directory. */
+  readonly source: string;
+}
+
 export interface VanillaEventsRead {
   readonly definitions: readonly VanillaEventDefinition[];
+  /** The exact files read, for checks that must measure the same event corpus. */
+  readonly sourceFiles: readonly VanillaEventSource[];
   /** Directory under the install root that supplied the definitions. */
   readonly path: string;
   readonly extension: string;
@@ -76,14 +85,16 @@ export function readVanillaEvents(
 
   const dir = path.join(installRoot, type.path.slice("game/".length));
   const extension = type.pathExtension ?? ".txt";
-  const files = walk(dir, extension);
+  const sourceFiles = walk(dir, extension).map((file) => ({
+    path: file,
+    source: path.relative(dir, file).split(path.sep).join("/"),
+  }));
   const kinds = new Map((eventKindFacts ?? eventKinds(rules)).map((kind) => [kind.key, kind]));
   const definitions = new Map<string, VanillaEventDefinition>();
   let diagnostics = 0;
 
-  for (const file of files) {
-    const source = path.relative(dir, file).split(path.sep).join("/");
-    const parsed = parse(readFileSync(file, "utf8"), source);
+  for (const file of sourceFiles) {
+    const parsed = parse(readFileSync(file.path, "utf8"), file.source);
     diagnostics += parsed.diagnostics.length;
 
     for (const item of parsed.items) {
@@ -95,22 +106,27 @@ export function readVanillaEvents(
         continue;
       }
       if (item.value.kind !== "container") {
-        throw new Error(`${source}: ${item.key} must be a block`);
+        throw new Error(`${file.source}: ${item.key} must be a block`);
       }
       const idEntry = item.value.items.find(
         (candidate) => candidate.kind === "entry" && candidate.key === "id"
       );
       const id = idEntry?.kind === "entry" ? scalar(idEntry.value) : null;
       if (id === null) {
-        throw new Error(`${source}: ${item.key} has no scalar id`);
+        throw new Error(`${file.source}: ${item.key} has no scalar id`);
       }
       const existing = definitions.get(id);
       if (existing !== undefined) {
         throw new Error(
-          `${source}: duplicate event id ${JSON.stringify(id)}; first defined in ${existing.source}`
+          `${file.source}: duplicate event id ${JSON.stringify(id)}; first defined in ${existing.source}`
         );
       }
-      definitions.set(id, { ...kind, ...splitEventId(id, source), id, source });
+      definitions.set(id, {
+        ...kind,
+        ...splitEventId(id, file.source),
+        id,
+        source: file.source,
+      });
     }
   }
 
@@ -120,10 +136,11 @@ export function readVanillaEvents(
         compareIdentifiers(left.namespace, right.namespace) ||
         compareIdentifiers(left.localId, right.localId)
     ),
+    sourceFiles,
     path: type.path.slice("game/".length),
     extension,
-    files: files.length,
+    files: sourceFiles.length,
     diagnostics,
-    missing: files.length === 0,
+    missing: sourceFiles.length === 0,
   };
 }

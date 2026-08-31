@@ -12,6 +12,8 @@
  * exactly the drift a regeneration is supposed to surface.
  */
 
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { RuleScopes } from "@pdx-ts/codegen-cwt/lower/scope-facts";
@@ -21,6 +23,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { buildVanillaFacts } from "../src/build-facts.ts";
 import { checkCallSites } from "../src/callsites.ts";
 import type { ScriptedKind } from "../src/infer-scopes.ts";
+import { readVanillaEvents } from "../src/read-events.ts";
 
 const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
 const CONFIG = path.join(ROOT, "vendor/cwtools-stellaris-config/config");
@@ -43,11 +46,39 @@ function measure(root: string) {
   const lowered = (registry: ScriptedKind): ReadonlyMap<string, RuleScopes> =>
     new Map(facts.inferredScopes[registry].map((one) => [one.name.toLowerCase(), one.scopes]));
   return checkCallSites(
-    root,
+    facts.events.sourceFiles,
     { trigger: lowered("trigger"), effect: lowered("effect") },
     facts.eventKinds
   );
 }
+
+it("checks nested files from the event extractor's inventory", () => {
+  const root = mkdtempSync(path.join(tmpdir(), "pdx-event-callsites-"));
+  const nested = path.join(root, "events/nested");
+  try {
+    mkdirSync(nested, { recursive: true });
+    writeFileSync(
+      path.join(nested, "calls.txt"),
+      "country_event = { id = nested.1 trigger = { known_trigger = yes } }\n"
+    );
+
+    const events = readVanillaEvents(root, CONFIG);
+    const report = checkCallSites(
+      events.sourceFiles,
+      {
+        trigger: new Map([["known_trigger", ["country"]]]),
+        effect: new Map(),
+      },
+      events.definitions
+    );
+
+    expect(events.definitions.map((event) => event.id)).toEqual(["nested.1"]);
+    expect(events.sourceFiles.map((file) => file.source)).toEqual(["nested/calls.txt"]);
+    expect(report).toMatchObject({ events: 1, checked: 1, covered: 1, contradictions: [] });
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
 
 describe.skipIf(installRoot === undefined)(
   "inferred scopes against vanilla's own call sites",

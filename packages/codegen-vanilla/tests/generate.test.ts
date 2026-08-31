@@ -22,14 +22,14 @@ import { VANILLA_REF_EXTRAS } from "@pdx-ts/codegen-cwt/policy/manifest";
 import { describe, expect, it } from "vitest";
 
 import { buildVanillaFacts } from "../src/build-facts.ts";
-import { registryFile, TABLE_NAMES } from "../src/emit.ts";
+import { createChokepoint, emitTrie, registryFile, TABLE_NAMES } from "../src/emit.ts";
 import { formatEmitted } from "../src/format.ts";
 import { generateVanillaPackage } from "../src/generate.ts";
 import { VANILLA_MANIFEST, type VanillaIdRow } from "../src/manifest.ts";
 import { readVanillaEvents } from "../src/read-events.ts";
 import { readRegistryIds } from "../src/read-ids.ts";
 import { readScriptedDefinitions } from "../src/read-scripted.ts";
-import { bucketPath, fileBucketKey } from "../src/trie.ts";
+import { bucketPath, fileBucketKey, type TrieNode } from "../src/trie.ts";
 
 /** The repo root, from this module — never the directory vitest was started in. */
 const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
@@ -533,6 +533,38 @@ describe("versioned build facts", () => {
       rmSync(root, { recursive: true, force: true });
     }
   });
+
+  it("changes the install identity when emitted path or localization evidence changes", () => {
+    const root = mkdtempSync(path.join(tmpdir(), "pdx-build-evidence-"));
+    const localization = path.join(root, "localisation/english");
+    try {
+      mkdirSync(path.join(root, "gfx"), { recursive: true });
+      mkdirSync(localization, { recursive: true });
+      writeFileSync(path.join(localization, "keys.yml"), 'l_english:\n first_key:0 "Text"\n');
+      const first = buildVanillaFacts({ ...OPTIONS, installRoot: root });
+
+      writeFileSync(path.join(root, "gfx/new_asset.dds"), "");
+      const withPath = buildVanillaFacts({ ...OPTIONS, installRoot: root });
+      writeFileSync(path.join(localization, "keys.yml"), 'l_english:\n second_key:0 "Text"\n');
+      const withLocalization = buildVanillaFacts({ ...OPTIONS, installRoot: root });
+
+      expect(withPath.paths.paths).toContain("gfx/new_asset.dds");
+      expect(withLocalization.localization.keys).toEqual(["second_key"]);
+      expect(first.evidence.install.sha256).not.toBe(withPath.evidence.install.sha256);
+      expect(withPath.evidence.install.sha256).not.toBe(withLocalization.evidence.install.sha256);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("persists the install evidence identity in generated output", () => {
+    const facts = buildVanillaFacts(OPTIONS);
+    expect(file("paths.ts")).toMatch(
+      new RegExp(
+        `export const VANILLA_INSTALL_EVIDENCE_SHA256\\s*=\\s*"${facts.evidence.install.sha256}";`
+      )
+    );
+  });
 });
 
 describe("inferred scopes", () => {
@@ -620,6 +652,33 @@ describe("file bucket keys", () => {
 });
 
 describe("trie", () => {
+  it("reserves bucket filenames case-insensitively, including the index stem", () => {
+    const branch = (id: string): TrieNode => ({
+      id: null,
+      children: new Map([[id, { id, children: new Map() }]]),
+    });
+    const emission = emitTrie(
+      "collision",
+      "technology",
+      new Map([
+        ["GFX_ship", branch("first")],
+        ["Index", branch("second")],
+        ["gfx-ship", branch("third")],
+      ]),
+      createChokepoint(),
+      "4.4.6"
+    );
+    const emittedPaths = [...emission.files.keys()].sort();
+
+    expect(emittedPaths).toEqual([
+      "registries/collision/GFX-ship.ts",
+      "registries/collision/Index2.ts",
+      "registries/collision/gfx-ship2.ts",
+      "registries/collision/index.ts",
+    ]);
+    expect(new Set(emittedPaths.map((file) => file.toLowerCase())).size).toBe(emittedPaths.length);
+  });
+
   it("buckets a registry by its vanilla source files, ids at the root when a file names no subject", () => {
     // The fixture's `common/static_modifiers/` mirrors vanilla's own layout:
     // `00_static_modifiers.txt` and `01_static_modifiers.txt` strip to nothing
