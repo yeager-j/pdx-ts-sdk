@@ -98,7 +98,8 @@ export function deriveCodexReviewState(
   issueComments,
   reviews,
   reviewComments,
-  headCommit
+  headCommit,
+  reactions = []
 ) {
   const summaries = issueComments.filter(
     (comment) => isCodexAuthored(comment) && comment.body?.includes(CODEX_SUMMARY_MARKER)
@@ -150,6 +151,23 @@ export function deriveCodexReviewState(
       commits.some((commit) => review.commit_id?.startsWith(commit))
   );
   const review = latestBy(matchingReviews, "submitted_at");
+  const noFindings = reactions.some(
+    (reaction) =>
+      isCodexAuthored(reaction) &&
+      reaction.content === "+1" &&
+      typeof reaction.created_at === "string" &&
+      typeof summary.updated_at === "string" &&
+      compareTimestamps(reaction.created_at, summary.updated_at) >= 0
+  );
+  if (review === undefined && !noFindings) {
+    return {
+      pullRequest,
+      status: "settling",
+      commits,
+      summaryUpdatedAt: summary.updated_at,
+      findings: [],
+    };
+  }
   const findings =
     review === undefined
       ? []
@@ -190,6 +208,9 @@ export function formatCodexReviewState(state) {
   }
   if (state.status === "running") {
     return `${prefix} Codex review is running${commit}.`;
+  }
+  if (state.status === "settling") {
+    return `${prefix} Codex review completed${commit}; waiting for GitHub to publish the result.`;
   }
   if (state.status === "failed") {
     return `${prefix} Codex review failed${commit}: ${state.failure ?? "unknown failure"}.`;
@@ -242,15 +263,23 @@ async function loadCodexReviewState(pullRequest) {
     throw new Error(`GitHub returned no head commit for ${pullRequest.label}.`);
   }
   const status = deriveCodexReviewState(pullRequest, issueComments, [], [], headCommit);
-  if (status.status !== "completed") {
+  if (status.status !== "settling" && status.status !== "completed") {
     return status;
   }
 
-  const [reviews, reviewComments] = await Promise.all([
+  const [reviews, reviewComments, reactions] = await Promise.all([
     githubApiPages(`${base}/pulls/${pullRequest.number}/reviews?per_page=100`),
     githubApiPages(`${base}/pulls/${pullRequest.number}/comments?per_page=100`),
+    githubApiPages(`${base}/issues/${pullRequest.number}/reactions?per_page=100`),
   ]);
-  return deriveCodexReviewState(pullRequest, issueComments, reviews, reviewComments, headCommit);
+  return deriveCodexReviewState(
+    pullRequest,
+    issueComments,
+    reviews,
+    reviewComments,
+    headCommit,
+    reactions
+  );
 }
 
 /**

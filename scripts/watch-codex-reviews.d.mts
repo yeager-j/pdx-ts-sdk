@@ -31,7 +31,7 @@ export interface CodexReviewState {
   /** Pull request being observed. */
   readonly pullRequest: PullRequestReference;
   /** Current lifecycle state reported by the Codex summary comment. */
-  readonly status: "waiting" | "running" | "completed" | "failed";
+  readonly status: "waiting" | "running" | "settling" | "completed" | "failed";
   /** Commit abbreviations listed in the current Codex status table. */
   readonly commits: readonly string[];
   /** Last update time of the Codex status comment. */
@@ -88,6 +88,18 @@ export interface GitHubReview {
   readonly submitted_at?: string;
 }
 
+/** Structural subset of a GitHub REST API reaction used by the poller. */
+export interface GitHubReaction {
+  /** GitHub reaction ID. */
+  readonly id: number;
+  /** Reaction author when returned by GitHub. */
+  readonly user?: GitHubUser;
+  /** GitHub reaction kind, such as `+1` or `eyes`. */
+  readonly content?: string;
+  /** GitHub reaction creation timestamp. */
+  readonly created_at?: string;
+}
+
 /** Testable effect boundaries and timing controls for the polling loop. */
 export interface WatchCodexReviewOptions {
   /** Delay between polls in milliseconds, from 1 through Node's maximum timer delay. */
@@ -111,7 +123,8 @@ export function deriveCodexReviewState(
   issueComments: readonly GitHubComment[],
   reviews: readonly GitHubReview[],
   reviewComments: readonly GitHubComment[],
-  headCommit?: string
+  headCommit?: string,
+  reactions?: readonly GitHubReaction[]
 ): CodexReviewState;
 
 /** Formats one changed Codex state as concise, agent-readable text. */

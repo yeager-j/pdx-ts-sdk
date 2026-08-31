@@ -136,6 +136,35 @@ describe("Codex review polling", () => {
     );
   });
 
+  it("waits for GitHub to expose a completed result", () => {
+    const completedSummary = [summary("✅ **Completed**")];
+    const headCommit = "e363bfad81490a55614e2f3966c1cbbe3e595029";
+
+    expect(deriveCodexReviewState(pullRequest, completedSummary, [], [], headCommit)).toMatchObject(
+      { status: "settling" }
+    );
+    expect(
+      deriveCodexReviewState(pullRequest, completedSummary, [], [], headCommit, [
+        {
+          id: 29,
+          user: codex,
+          content: "+1",
+          created_at: "2026-08-31T00:08:33Z",
+        },
+      ])
+    ).toMatchObject({ status: "settling" });
+    expect(
+      deriveCodexReviewState(pullRequest, completedSummary, [], [], headCommit, [
+        {
+          id: 30,
+          user: codex,
+          content: "+1",
+          created_at: "2026-08-31T00:08:35Z",
+        },
+      ])
+    ).toMatchObject({ status: "completed", findings: [] });
+  });
+
   it("rejects a malformed inline finding without a path", () => {
     expect(() =>
       deriveCodexReviewState(
