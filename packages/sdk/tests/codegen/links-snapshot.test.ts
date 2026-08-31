@@ -151,7 +151,7 @@ describe("emitted scope links", () => {
         | ScopeValue<"country"> {
         return "path" in arg
           ? navigateScope<"country">(arg, "owner")
-          : trigger([block("owner", [...arg.entries])]);
+          : trigger([block("owner", [...arg.entries])], [...arg.refs]);
       }"
     `);
   });
@@ -174,7 +174,7 @@ describe("emitted scope links", () => {
       ): Trigger<"country"> | ScopeValue<"country"> {
         return "path" in arg
           ? navigateScope<"country">(arg, "overlord")
-          : trigger([block("overlord", [...arg.entries])]);
+          : trigger([block("overlord", [...arg.entries])], [...arg.refs]);
       }"
     `);
   });
@@ -197,7 +197,7 @@ describe("emitted scope links", () => {
       ): Trigger<ScopeName> | ScopeValue<"country"> {
         return "path" in arg
           ? navigateScope<"country">(arg, "last_created_country")
-          : trigger([block("last_created_country", [...arg.entries])]);
+          : trigger([block("last_created_country", [...arg.entries])], [...arg.refs]);
       }"
     `);
   });
@@ -234,7 +234,7 @@ describe("emitted scope links", () => {
       ): Trigger<"country"> | ScopeValue<"colony"> {
         return "path" in arg
           ? navigateScope<"colony">(arg, "capital_scope")
-          : trigger([block("capital_scope", [...arg.entries])]);
+          : trigger([block("capital_scope", [...arg.entries])], [...arg.refs]);
       }"
     `);
   });
@@ -257,7 +257,7 @@ describe("emitted scope links", () => {
       ): Trigger<ScopeName> | ScopeValue<"no_scope"> {
         return "path" in arg
           ? navigateScope<"no_scope">(arg, "no_scope")
-          : trigger([block("no_scope", [...arg.entries])]);
+          : trigger([block("no_scope", [...arg.entries])], [...arg.refs]);
       }"
     `);
   });
