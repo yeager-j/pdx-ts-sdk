@@ -127,6 +127,7 @@ export {
   SwapPatchError,
   UnverifiedRegistryError,
   VanillaPackageMismatchError,
+  VanillaPackageUnreadableError,
   VanillaPathCollisionError,
   VanillaPathInventoryError,
   type ForeignClaimConflict,

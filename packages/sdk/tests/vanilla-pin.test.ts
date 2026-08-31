@@ -3,16 +3,19 @@
  * version-pin gate that refuses a mismatched package
  * (`checkVanillaPackagePin`), and the canary that reports one checking against
  * the wrong game build (`vanillaIdsCheckWarning`). A pure matrix over each,
- * the runtime resolver `installedVanillaPackageVersion`, and a capability's
+ * the runtime resolver `installedVanillaPackagePin`, and a capability's
  * hooks for both. Hermetic throughout — no install is required.
  */
 
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
+import { applyVanillaPackagePin, vanillaViewForPin } from "../src/compiler/compile-finalize.ts";
 import {
   checkVanillaPackagePin,
-  installedVanillaPackageVersion,
+  installedVanillaPackagePin,
   vanillaIdsCheckWarning,
+  type VanillaPackagePin,
 } from "../src/identifiers/package-pin.ts";
 import { vanillaPackageGameVersion } from "../src/identifiers/version-scheme.ts";
 import {
@@ -20,6 +23,7 @@ import {
   render,
   StaleRuleTableError,
   VanillaPackageMismatchError,
+  VanillaPackageUnreadableError,
   type ModConfig,
 } from "../src/index.ts";
 import { viewFromFiles } from "../src/installation/vanilla/view.ts";
@@ -67,13 +71,6 @@ describe("checkVanillaPackagePin", () => {
     expect(() => checkVanillaPackagePin("0.0.0", "4.5.0", undefined)).not.toThrow();
   });
 
-  it("passes when no package version could be read", () => {
-    // The package is a hard dependency, so this is a broken install rather
-    // than a supported one — and a runtime version read has nothing useful to
-    // say about it. The SDK's own import is what refuses that project.
-    expect(() => checkVanillaPackagePin(undefined, "4.5.0", undefined)).not.toThrow();
-  });
-
   it("passes when the install carries no game version", () => {
     expect(() => checkVanillaPackagePin("4.4.6", undefined, undefined)).not.toThrow();
   });
@@ -98,10 +95,6 @@ describe("vanillaIdsCheckWarning", () => {
     expect(warning).toContain(">=4.5.0-0 <4.5.0");
   });
 
-  it("stays silent when no package version could be read", () => {
-    expect(vanillaIdsCheckWarning(undefined, "4.4.6", undefined)).toBeUndefined();
-  });
-
   it("stays silent when the package pins the install's own version", () => {
     expect(vanillaIdsCheckWarning("4.4.6", "4.4.6", undefined)).toBeUndefined();
     expect(vanillaIdsCheckWarning("4.4.6-r.1", "4.4.6", undefined)).toBeUndefined();
@@ -118,9 +111,9 @@ describe("vanillaIdsCheckWarning", () => {
   });
 });
 
-describe("installedVanillaPackageVersion", () => {
+describe("installedVanillaPackagePin", () => {
   it("resolves the workspace package's stamped version via the default specifier", () => {
-    // The workspace package is generated and stamped (4.4.6-r.2 today), so this
+    // The workspace package is generated and stamped (4.4.6-r.4 today), so this
     // asserts the shape rather than a literal — a regeneration against a newer
     // install is supposed to move it, and only `PROVENANCE.md`'s consistency
     // check and the install-gated conformance gate pin the exact value.
@@ -129,12 +122,116 @@ describe("installedVanillaPackageVersion", () => {
     // version npm has already consumed and can never reissue, so a stamp
     // without one is a package that cannot be published (PROVENANCE.md,
     // "Revisions").
-    expect(installedVanillaPackageVersion()).toMatch(/^\d+\.\d+\.\d+-r\.\d+$/);
-    expect(installedVanillaPackageVersion()).not.toBe("0.0.0");
+    const pin = installedVanillaPackagePin();
+    if (pin.state !== "read") {
+      throw new Error(`expected a readable workspace package pin, got ${pin.state}`);
+    }
+    expect(pin.version).toMatch(/^\d+\.\d+\.\d+-r\.\d+$/);
+    expect(pin.version).not.toBe("0.0.0");
   });
 
-  it("returns undefined for a specifier that does not resolve", () => {
-    expect(installedVanillaPackageVersion("@pdx-ts/does-not-exist/package.json")).toBeUndefined();
+  it("reports absent for a specifier that does not resolve", () => {
+    const pin = installedVanillaPackagePin("@pdx-ts/does-not-exist/package.json");
+    expect(pin).toMatchObject({ state: "absent" });
+    expect(pin.state === "absent" ? pin.detail : "").toContain("does-not-exist");
+  });
+
+  it("reports absent for a missing fixture path", () => {
+    const specifier = fileURLToPath(new URL("./fixtures/does-not-exist.json", import.meta.url));
+    expect(installedVanillaPackagePin(specifier)).toMatchObject({ state: "absent" });
+  });
+
+  it("reports unreadable when a package resolves but its metadata subpath is missing", () => {
+    const pin = installedVanillaPackagePin("@pdx-ts/stellaris-ids/does-not-exist.json");
+    expect(pin.state).toBe("unreadable");
+    expect(pin.state === "unreadable" ? pin.detail : "").toContain("does-not-exist.json");
+  });
+
+  it.each([
+    ["malformed JSON", "vanilla-package-pin-malformed.json", "could not read"],
+    ["missing version", "vanilla-package-pin-missing-version.json", "no version"],
+    ["non-string version", "vanilla-package-pin-non-string-version.json", "not a string"],
+  ])("reports unreadable for %s metadata", (_caseName, filename, detail) => {
+    const specifier = fileURLToPath(new URL(`./fixtures/${filename}`, import.meta.url));
+    const pin = installedVanillaPackagePin(specifier);
+    expect(pin.state).toBe("unreadable");
+    expect(pin.state === "unreadable" ? pin.detail : "").toContain(detail);
+  });
+});
+
+describe("applyVanillaPackagePin", () => {
+  const vanilla = { gameVersion: "4.5.0" } as const;
+
+  it("throws VanillaPackageMismatchError for a read pin that mismatches", () => {
+    expect(() =>
+      applyVanillaPackagePin({ state: "read", version: "4.4.6" }, vanilla, undefined)
+    ).toThrow(VanillaPackageMismatchError);
+  });
+
+  it("returns the mismatched-vanilla-ids warning for an accepted mismatch", () => {
+    const warning = applyVanillaPackagePin({ state: "read", version: "4.4.6" }, vanilla, "4.5.0");
+    expect(warning).toMatchObject({ code: "mismatched-vanilla-ids" });
+  });
+
+  it("throws VanillaPackageUnreadableError for unreadable metadata", () => {
+    const pin: VanillaPackagePin = {
+      state: "unreadable",
+      detail: "metadata has no version field",
+    };
+    expect(() => applyVanillaPackagePin(pin, vanilla, undefined)).toThrow(
+      VanillaPackageUnreadableError
+    );
+    expect(() => applyVanillaPackagePin(pin, vanilla, undefined)).toThrow(
+      /metadata has no version field/
+    );
+    expect(() => applyVanillaPackagePin(pin, vanilla, undefined)).toThrow(
+      /identifier compatibility gate cannot run/i
+    );
+  });
+
+  it("returns a missing-stellaris-ids warning for an absent package", () => {
+    const warning = applyVanillaPackagePin(
+      { state: "absent", detail: "the package could not be resolved" },
+      vanilla,
+      undefined
+    );
+    expect(warning).toMatchObject({ code: "missing-stellaris-ids" });
+    expect(warning?.message).toContain("not installed");
+  });
+
+  it("uses a patch-origin view when no build-option vanilla view is present", () => {
+    const origin = viewFromFiles(
+      {
+        "common/technology/pp_soc_tech.txt": TECH_FILE,
+        "common/scripted_variables/pp_vars.txt": VARS_FILE,
+      },
+      { gameVersion: "4.5.0" }
+    );
+    const vanilla = vanillaViewForPin(undefined, [{ source: { origin } }]);
+    if (vanilla === undefined) {
+      throw new Error("expected the patch origin to supply the vanilla view");
+    }
+    expect(vanilla).toBe(origin);
+    expect(() =>
+      applyVanillaPackagePin({ state: "read", version: "4.4.6" }, vanilla, undefined)
+    ).toThrow(VanillaPackageMismatchError);
+  });
+
+  it("stays silent when no vanilla view is present", () => {
+    expect(
+      applyVanillaPackagePin(
+        { state: "unreadable", detail: "metadata has no version field" },
+        undefined,
+        undefined
+      )
+    ).toBeUndefined();
+    expect(
+      applyVanillaPackagePin(
+        { state: "absent", detail: "the package could not be resolved" },
+        undefined,
+        undefined
+      )
+    ).toBeUndefined();
   });
 });
 
@@ -146,7 +243,11 @@ describe("installedVanillaPackageVersion", () => {
  * exist and the gate below fires on it.
  */
 function installedGameVersion(): string {
-  return vanillaPackageGameVersion(installedVanillaPackageVersion()!);
+  const pin = installedVanillaPackagePin();
+  if (pin.state !== "read") {
+    throw new Error(`The workspace identifier package is ${pin.state}: ${pin.detail}`);
+  }
+  return vanillaPackageGameVersion(pin.version);
 }
 
 describe("the mod capability's version-pin hook", () => {

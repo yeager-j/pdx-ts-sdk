@@ -18,7 +18,8 @@ interface FlatWarning {
     | "unstable-option-key"
     | "unstable-localization-key"
     | "assumed-patch-rule"
-    | "mismatched-vanilla-ids";
+    | "mismatched-vanilla-ids"
+    | "missing-stellaris-ids";
   readonly message: string;
 }
 

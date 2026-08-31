@@ -311,6 +311,9 @@ export class VanillaPathCollisionError extends PdxSdkError {}
  */
 export class VanillaPackageMismatchError extends PdxSdkError {}
 
+/** The installed identifier package metadata could not be read. */
+export class VanillaPackageUnreadableError extends PdxSdkError {}
+
 /**
  * The vanilla path inventory is present but cannot be trusted: a DLC archive
  * that does not parse, an install directory that claimed to exist and would

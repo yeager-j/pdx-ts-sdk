@@ -14,40 +14,123 @@ import { VanillaPackageMismatchError } from "../errors.ts";
 import { vanillaPackageGameVersion, vanillaPackageInstallRange } from "./version-scheme.ts";
 
 /**
- * The version pinned by the installed `@pdx-ts/stellaris-ids` package,
- * read from its `package.json` at runtime via `createRequire` — a runtime
- * read rather than an import, because the version is data and the package's
- * types are what the SDK imports.
- *
- * Any failure (no such export in the resolver, malformed `package.json`,
- * missing or non-string `version`) returns `undefined`, and every check below
- * then passes silently. That is not tolerance for an absent package — the
- * package is a hard dependency, and a project without it fails to typecheck on
- * the SDK's own import of it. It is that a runtime version read is the wrong
- * place to re-litigate a compile-time fact, and has nothing useful to say when
- * it cannot read one.
+ * The result of reading the installed `@pdx-ts/stellaris-ids` package pin.
+ * `"absent"` means the package could not be resolved; `"unreadable"` means
+ * resolution succeeded or failed for another reason, but usable metadata was
+ * not available.
+ */
+export type VanillaPackagePin =
+  | { readonly state: "read"; readonly version: string }
+  | { readonly state: "absent"; readonly detail: string }
+  | { readonly state: "unreadable"; readonly detail: string };
+
+/**
+ * Reads the installed `@pdx-ts/stellaris-ids` package pin from its
+ * `package.json` via `createRequire`.
  *
  * `specifier` exists for tests: point it at a fixture `package.json` path to
- * exercise this without touching the workspace-installed package.
+ * exercise this without touching the workspace-installed package. An
+ * unresolvable fixture path is reported as `"absent"` without probing a
+ * package name.
  */
-export function installedVanillaPackageVersion(
+export function installedVanillaPackagePin(
   specifier = "@pdx-ts/stellaris-ids/package.json"
-): string | undefined {
+): VanillaPackagePin {
   try {
     const require = createRequire(import.meta.url);
     const pkg: unknown = require(specifier);
-    if (
-      typeof pkg === "object" &&
-      pkg !== null &&
-      "version" in pkg &&
-      typeof (pkg as { version: unknown }).version === "string"
-    ) {
-      return (pkg as { version: string }).version;
+    if (!isPackageMetadata(pkg)) {
+      return {
+        state: "unreadable",
+        detail: `metadata was ${describeValue(pkg)}, not a JSON object`,
+      };
     }
-    return undefined;
-  } catch {
+    if (!("version" in pkg)) {
+      return { state: "unreadable", detail: "metadata has no version field" };
+    }
+    if (typeof pkg.version !== "string") {
+      return {
+        state: "unreadable",
+        detail: `metadata version was ${describeValue(pkg.version)}, not a string`,
+      };
+    }
+    return { state: "read", version: pkg.version };
+  } catch (error) {
+    const detail = `could not read package metadata from ${JSON.stringify(specifier)}: ${errorDetail(
+      error
+    )}`;
+    if (!isModuleNotFoundError(error)) {
+      return { state: "unreadable", detail };
+    }
+    const packageName = packageNameFromSpecifier(specifier);
+    if (packageName === undefined) {
+      return { state: "absent", detail };
+    }
+    try {
+      createRequire(import.meta.url).resolve(packageName);
+      return {
+        state: "unreadable",
+        detail: `${detail}; package ${JSON.stringify(packageName)} resolves, so its metadata is unreadable`,
+      };
+    } catch (probeError) {
+      return isModuleNotFoundError(probeError)
+        ? { state: "absent", detail }
+        : {
+            state: "unreadable",
+            detail:
+              `${detail}; package ${JSON.stringify(packageName)} could not be probed: ` +
+              errorDetail(probeError),
+          };
+    }
+  }
+}
+
+function isPackageMetadata(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isModuleNotFoundError(error: unknown): boolean {
+  if (typeof error !== "object" || error === null || !("code" in error)) {
+    return false;
+  }
+  const code = (error as { readonly code?: unknown }).code;
+  return code === "MODULE_NOT_FOUND" || code === "ERR_MODULE_NOT_FOUND";
+}
+
+function packageNameFromSpecifier(specifier: string): string | undefined {
+  if (
+    specifier.startsWith(".") ||
+    specifier.startsWith("/") ||
+    specifier.startsWith("\\") ||
+    specifier.startsWith("file:") ||
+    specifier.startsWith("#") ||
+    specifier.startsWith("node:") ||
+    /^[A-Za-z]:[\\/]/.test(specifier)
+  ) {
     return undefined;
   }
+  const parts = specifier.split("/");
+  if (specifier.startsWith("@")) {
+    return parts.length >= 2 ? `${parts[0]}/${parts[1]}` : undefined;
+  }
+  return parts[0] === "" ? undefined : parts[0];
+}
+
+function errorDetail(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function describeValue(value: unknown): string {
+  if (value === null) {
+    return "null";
+  }
+  if (Array.isArray(value)) {
+    return "an array";
+  }
+  if (typeof value === "string") {
+    return `the string ${JSON.stringify(value)}`;
+  }
+  return `${typeof value} ${String(value)}`;
 }
 
 /**
@@ -57,8 +140,6 @@ export function installedVanillaPackageVersion(
  * unless the mod config explicitly accepts that install version.
  *
  * Silent pass when:
- * - `packageVersion` is `undefined` — no version could be read; see
- *   {@link installedVanillaPackageVersion}.
  * - `packageVersion` is `"0.0.0"` — the UNSTAMPED SENTINEL: 0.0.0 means no
  *   generation has produced this package; there is no pin to enforce.
  * - `installGameVersion` is `undefined` — a hermetic or metadata-less view
@@ -70,15 +151,11 @@ export function installedVanillaPackageVersion(
  *   `acceptGameVersion`.
  */
 export function checkVanillaPackagePin(
-  packageVersion: string | undefined,
+  packageVersion: string,
   installGameVersion: string | undefined,
   acceptGameVersion: string | undefined
 ): void {
-  if (
-    packageVersion === undefined ||
-    packageVersion === "0.0.0" ||
-    installGameVersion === undefined
-  ) {
+  if (packageVersion === "0.0.0" || installGameVersion === undefined) {
     return;
   }
   const pinned = vanillaPackageGameVersion(packageVersion);
@@ -107,20 +184,14 @@ export function checkVanillaPackagePin(
  *
  * `"0.0.0"` — the unstamped sentinel — reports nothing, the same reading the
  * gate above takes: no generation has produced that package, so there is no
- * pin to compare and no claim about ids to weigh it against. An unreadable
- * version reports nothing either, for the reason
- * {@link installedVanillaPackageVersion} gives.
+ * pin to compare and no claim about ids to weigh it against.
  */
 export function vanillaIdsCheckWarning(
-  packageVersion: string | undefined,
+  packageVersion: string,
   installGameVersion: string | undefined,
   acceptGameVersion: string | undefined
 ): string | undefined {
-  if (
-    packageVersion === undefined ||
-    packageVersion === "0.0.0" ||
-    installGameVersion === undefined
-  ) {
+  if (packageVersion === "0.0.0" || installGameVersion === undefined) {
     return undefined;
   }
   const pinned = vanillaPackageGameVersion(packageVersion);
