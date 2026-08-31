@@ -26,6 +26,7 @@ import {
   kv,
   numeral,
   parse,
+  PDX_OPERATORS,
   PdxSyntaxError,
   quoted,
   scalar,
@@ -86,7 +87,8 @@ const unbalancedRegionText = bareText.chain((text) =>
 );
 
 const key = fc.stringMatching(/^[a-z0-9_.@$-]{1,10}$/);
-const op = fc.constantFrom("=", ">", "<", ">=", "<=", "!=" as const);
+/** Drawn from the operator table, so the generator cannot drift from it. */
+const op = fc.constantFrom(...PDX_OPERATORS);
 
 const pdxItem: fc.Arbitrary<PdxItem> = fc.letrec<{ item: PdxItem; items: PdxItem[] }>((tie) => ({
   item: fc.oneof(

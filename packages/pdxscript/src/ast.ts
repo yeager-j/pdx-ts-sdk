@@ -34,12 +34,14 @@ import {
   isBareToken,
   isMathSource,
   isNumeral,
+  isOperator,
   isQuotableContent,
   isVarName,
   isWritableText,
+  type PdxOp,
 } from "./representable.ts";
 
-export type PdxOp = "=" | ">" | "<" | ">=" | "<=" | "!=";
+export type { PdxOp };
 
 export type PdxScalar =
   | { kind: "str"; value: string; quoted: boolean }
@@ -190,6 +192,12 @@ export function entry(key: string, op: PdxOp, value: PdxValue): PdxEntry {
   // character class, and quotability where that fails, decide.
   if (!isBareToken(key) && !isQuotableContent(key)) {
     reject("key", key);
+  }
+  // The `PdxOp` annotation is erased at runtime, so it stops nothing a
+  // JavaScript caller does. Every other field is checked here; this one was
+  // taken on trust and emitted verbatim.
+  if (!isOperator(op)) {
+    reject("operator", op);
   }
   return { kind: "entry", key, op, value };
 }

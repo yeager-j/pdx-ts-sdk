@@ -19,13 +19,16 @@ import { describe, expect, it } from "vitest";
 import {
   block,
   container,
+  entry,
   inlineMath,
   isBareToken,
+  isOperator,
   kv,
   list,
   numberValue,
   numeral,
   parse,
+  PDX_OPERATORS,
   PdxSyntaxError,
   quoted,
   regionItems,
@@ -37,6 +40,7 @@ import {
   withoutLines,
   type PdxDocument,
   type PdxEntry,
+  type PdxOp,
   type PdxValue,
 } from "../src/index.ts";
 import { tokenize } from "../src/lexer.ts";
@@ -170,8 +174,38 @@ describe("lexer", () => {
   });
 
   it("lexes each operator as one token: = < > <= >= !=", () => {
-    for (const op of ["=", "<", ">", "<=", ">=", "!="] as const) {
+    for (const op of PDX_OPERATORS) {
       expect(first(`k ${op} 2`).op).toBe(op);
+    }
+  });
+
+  /**
+   * The operator table is the constructors' and the serializer's authority
+   * (SDK-317), so it has to be the lexer's too. Rather than restate the list,
+   * this builds every one- and two-character string over the operator
+   * characters and asserts the lexer never produces an `op` token outside the
+   * table — which is what would fail if the lexer learned one the table
+   * does not have.
+   */
+  it("never lexes an operator the table does not have", () => {
+    const characters = ["=", "<", ">", "!", "?", "+", "-", ":"];
+    const candidates = characters.flatMap((left) => [
+      left,
+      ...characters.map((right) => `${left}${right}`),
+    ]);
+    for (const candidate of candidates) {
+      let tokens;
+      try {
+        tokens = tokenize(`a ${candidate} b`, "operators.txt");
+      } catch (error) {
+        expect(error).toBeInstanceOf(PdxSyntaxError);
+        continue;
+      }
+      for (const token of tokens) {
+        if (token.kind === "op") {
+          expect(isOperator(token.text), token.text).toBe(true);
+        }
+      }
     }
   });
 
@@ -313,9 +347,9 @@ describe("parser: top level", () => {
   });
 
   it("accepts @name keys (variable definitions)", () => {
-    const entry = first("@tier3cost1 = 4000");
-    expect(entry.key).toBe("@tier3cost1");
-    expect(entry.value).toEqual({ kind: "num", lexeme: "4000" });
+    const declaration = first("@tier3cost1 = 4000");
+    expect(declaration.key).toBe("@tier3cost1");
+    expect(declaration.value).toEqual({ kind: "num", lexeme: "4000" });
   });
 
   it("accepts quoted keys as their text (deferral documented) (jomini)", () => {
@@ -813,6 +847,38 @@ describe("serializer", () => {
   it("quotes a key that cannot be written bare, instead of refusing it", () => {
     expect(serialize([kv("two words", 1)])).toBe('"two words" = 1\n');
     expectFixpoint('"two words" = 1');
+  });
+
+  /**
+   * `PdxOp` is erased at runtime, so it stops nothing a JavaScript caller or
+   * a hand-assembled object literal does — and `op` is emitted raw. Both ends
+   * refuse it now (SDK-317), the way every other field is already refused.
+   */
+  it("refuses an operator this syntax has no reading for", () => {
+    for (const op of ["===", "?=", "=>", "", " = "]) {
+      expect(() => entry("a", op as PdxOp, scalar(1))).toThrow(/Cannot represent/);
+      expect(() =>
+        serialize([{ kind: "entry", key: "a", op: op as PdxOp, value: scalar(1) }])
+      ).toThrow(/Cannot serialize operator/);
+    }
+  });
+
+  it("writes every operator the table has, and reads it back", () => {
+    for (const op of PDX_OPERATORS) {
+      expect(serialize([entry("a", op, scalar(1))])).toBe(`a ${op} 1\n`);
+      expectFixpoint(`a ${op} 1`);
+    }
+  });
+
+  /**
+   * `as const` is erased with everything else, so an exported array would be
+   * one `push` away from teaching `isOperator` something the lexer refuses —
+   * the drift the single table exists to prevent, arriving from outside.
+   */
+  it("refuses to have the operator table extended from outside", () => {
+    expect(Object.isFrozen(PDX_OPERATORS)).toBe(true);
+    expect(() => (PDX_OPERATORS as unknown as string[]).push("?=")).toThrow(TypeError);
+    expect(isOperator("?=")).toBe(false);
   });
 
   /**

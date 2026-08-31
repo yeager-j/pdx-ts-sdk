@@ -74,6 +74,29 @@ export function isBareToken(text: string): boolean {
   return true;
 }
 
+/**
+ * Every operator an entry can carry, in one list.
+ *
+ * `PdxOp` is derived from it rather than written beside it, so the type and
+ * the runtime check cannot drift. The runtime check is the part that matters:
+ * TypeScript erases, so a JavaScript caller or a hand-assembled object
+ * literal can put any text in `op`, and the serializer emits it verbatim —
+ * which is how a tree came to produce output this parser then refused.
+ *
+ * Frozen for the same reason the check exists. `as const` is erased too, so
+ * an exported array is one `push` away from teaching `isOperator` an operator
+ * the lexer will still refuse — the drift this list was made to prevent,
+ * arriving from outside the package.
+ */
+export const PDX_OPERATORS = Object.freeze(["=", ">", "<", ">=", "<=", "!="] as const);
+
+export type PdxOp = (typeof PDX_OPERATORS)[number];
+
+/** True when `op` is an operator this package can write and read back. */
+export function isOperator(op: string): op is PdxOp {
+  return (PDX_OPERATORS as readonly string[]).includes(op);
+}
+
 const NUMERAL = /^[+-]?(\d+(\.\d+)?|\.\d+)$/;
 
 /** True when an unquoted token reads as a number (vanilla writes `+0.10`). */

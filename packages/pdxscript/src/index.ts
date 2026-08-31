@@ -9,11 +9,13 @@ export {
   isBareToken,
   isMathSource,
   isNumeral,
+  isOperator,
   isParamName,
   isQuotableContent,
   isVarName,
   isWritableText,
   numberValue,
+  PDX_OPERATORS,
   tryNumberValue,
 } from "./representable.ts";
 export { withoutLines } from "./normalize.ts";
