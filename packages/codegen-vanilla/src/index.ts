@@ -182,11 +182,7 @@ function printReport(report: VanillaReport, removed: readonly string[]): void {
   ]);
   reportSection("Vanilla localization keys", [
     `${report.localization.keys} keys from ${report.localization.files} english files` +
-      (report.localization.missing ? " — DIRECTORY MISSING" : "") +
-      (report.localization.unparsedLines === 0
-        ? ""
-        : ` — ${report.localization.unparsedLines} LINES UNRECOGNISED, so their keys are missing ` +
-          "from the inventory"),
+      (report.localization.missing ? " — DIRECTORY MISSING" : ""),
   ]);
   reportSection("Inferred scopes", report.scripted.map(scopeLine));
   reportSection(

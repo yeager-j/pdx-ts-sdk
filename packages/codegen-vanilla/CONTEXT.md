@@ -18,6 +18,24 @@ this package publishable: identifiers, definition names, parameter lists, event
 ids and namespaces cross it; script bodies, localized text, descriptions, and
 asset data do not.
 
+**Extraction gap**:
+A part of an inventory this package publishes as *exact* that no reader read —
+a complex-enum file that would not parse, a localization line whose shape the
+reader does not know. Recorded rather than skipped, because these inventories
+are membership the SDK rejects against: a short one ships as a wrong answer,
+not as a missing completion. Emission refuses while any gap is open. A file
+*proved* unable to hold a member is not a gap: the install ships prose under
+`.txt` where enums search, and an unreadable file whose text does not contain
+the identifier a member requires cannot bear on the answer under any parse.
+_Avoid_: confusing this with CWT Codegen's **corpus gap**, which is a field the
+game writes that no author can produce. Different context, different problem.
+
+**Parser repair**:
+A malformed construct in a shipped file that the parser fixed the way the game
+does. Counted per registry and never fatal — the file was read whole. The
+opposite number to an **extraction gap**, and the distinction is load-bearing:
+a file nothing read used to be counted as a repair.
+
 **Registry**:
 A content registry read out of the install — `technology`, `sprite`, `sound`.
 _Avoid_: using this for the scripted-definition kind; that is `ScriptedKind`

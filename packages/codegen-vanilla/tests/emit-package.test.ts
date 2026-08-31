@@ -104,6 +104,7 @@ function facts(overrides: Partial<VanillaBuildFacts> = {}): VanillaBuildFacts {
       files: 1,
       diagnostics: 0,
       missing: false,
+      gaps: [],
     })),
     scripted: {
       trigger: scriptedRegistry("scripted_trigger"),
@@ -111,10 +112,67 @@ function facts(overrides: Partial<VanillaBuildFacts> = {}): VanillaBuildFacts {
     },
     inferredScopes: { trigger: [], effect: [] },
     paths: { paths: [], installFiles: 0, archives: 0, archiveEntries: 0, junkExcluded: 0 },
-    localization: { keys: [], files: 0, unparsedLines: 0, missing: false },
+    localization: { keys: [], files: 0, unparsedLines: 0, gaps: [], missing: false },
     ...overrides,
   };
 }
+
+describe("emitVanillaPackage extraction gaps", () => {
+  it("refuses to publish an enum union a reader came back short of", () => {
+    const complexEnums = facts().complexEnums.map((one) => ({
+      ...one,
+      gaps: [
+        { inventory: one.name, source: "common/fake/00_broken.txt", detail: "unterminated string" },
+      ],
+    }));
+
+    expect(() => emitVanillaPackage(facts({ complexEnums }))).toThrow(
+      /refusing to emit: 1 gap[\s\S]*00_broken\.txt\): unterminated string/
+    );
+  });
+
+  it("refuses to publish a localization inventory a reader came back short of", () => {
+    expect(() =>
+      emitVanillaPackage(
+        facts({
+          localization: {
+            keys: ["KEPT"],
+            files: 1,
+            unparsedLines: 1,
+            gaps: [
+              {
+                inventory: "localization",
+                source: "localisation/english/keys.yml",
+                detail: "1 line names neither a key nor a language header, first at line 3",
+              },
+            ],
+            missing: false,
+          },
+        })
+      )
+    ).toThrow(/refusing to emit: 1 gap[\s\S]*localisation\/english\/keys\.yml/);
+  });
+
+  it("names every gap, not just the first", () => {
+    // After a game patch the useful question is what shape of input the readers
+    // stopped recognising, and one example rarely shows it.
+    const complexEnums = facts().complexEnums.map((one) => ({
+      ...one,
+      gaps: [
+        { inventory: one.name, source: "a.txt", detail: "first" },
+        { inventory: one.name, source: "b.txt", detail: "second" },
+      ],
+    }));
+
+    expect(() => emitVanillaPackage(facts({ complexEnums }))).toThrow(
+      /refusing to emit: 2 gaps[\s\S]*a\.txt\): first[\s\S]*b\.txt\): second/
+    );
+  });
+
+  it("emits when every inventory was read whole", () => {
+    expect(() => emitVanillaPackage(facts())).not.toThrow();
+  });
+});
 
 describe("emitVanillaPackage runtime sets", () => {
   it("refuses to emit when the facts carry no registry a runtime id set needs", () => {

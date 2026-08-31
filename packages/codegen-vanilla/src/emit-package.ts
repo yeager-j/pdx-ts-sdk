@@ -43,6 +43,7 @@ import {
   trieIndexFile,
   type TablesPlan,
 } from "./emit.ts";
+import { assertExtractionComplete } from "./extraction-gap.ts";
 import type { InferredScope, ScriptedKind } from "./infer-scopes.ts";
 import {
   RUNTIME_ENUM_SET_NAMES,
@@ -157,11 +158,15 @@ export interface VanillaReport {
     readonly archiveEntries: number;
     readonly junkExcluded: number;
   };
-  /** The localization key inventory: how many keys shipped, from how many files. */
+  /**
+   * The localization key inventory: how many keys shipped, from how many files.
+   *
+   * No count of unrecognised lines, because there cannot be one: a file with
+   * any is a gap, and a run with a gap produces no report at all.
+   */
   readonly localization: {
     readonly keys: number;
     readonly files: number;
-    readonly unparsedLines: number;
     readonly missing: boolean;
   };
   readonly emittedFiles: number;
@@ -225,9 +230,9 @@ function attribute(inferred: readonly InferredScope[]): {
  * @param options - Emission policy the facts do not state.
  * @returns The emitted files, keyed by their path inside the package, and the
  * report a maintainer reads before committing them.
- * @throws Error If a string bound for emitted text fails the licensing gate, or
- * if the facts do not carry a registry or enum the SDK requires a runtime set
- * for.
+ * @throws Error If any inventory published as exact was read short, if a string
+ * bound for emitted text fails the licensing gate, or if the facts do not carry
+ * a registry or enum the SDK requires a runtime set for.
  */
 export function emitVanillaPackage(
   facts: VanillaBuildFacts,
@@ -236,6 +241,15 @@ export function emitVanillaPackage(
   files: ReadonlyMap<string, string>;
   report: VanillaReport;
 } {
+  // First, and before anything is built. Some of what follows is published as
+  // exact membership the SDK rejects against, and a reader that came back short
+  // has already made that a wrong answer rather than a missing completion —
+  // there is no partial output here worth producing.
+  assertExtractionComplete([
+    ...facts.complexEnums.flatMap((one) => one.gaps),
+    ...facts.localization.gaps,
+  ]);
+
   const threshold = options.trieThreshold ?? DEFAULT_TRIE_THRESHOLD;
   const { gameVersion } = facts;
   const scriptedRows = VANILLA_MANIFEST.filter(
@@ -454,7 +468,6 @@ export function emitVanillaPackage(
       localization: {
         keys: facts.localization.keys.length,
         files: facts.localization.files,
-        unparsedLines: facts.localization.unparsedLines,
         missing: facts.localization.missing,
       },
       emittedFiles: files.size,
