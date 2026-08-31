@@ -39,7 +39,7 @@ import {
   kebabCase as registryStem,
   safeIdentifier,
 } from "@pdx-ts/codegen-cwt/naming";
-import { compareUtf8 } from "@pdx-ts/sdk/internals";
+import { compareUtf8, isWindowsDeviceName } from "@pdx-ts/sdk/internals";
 
 import type { ScriptedDefinition } from "./read-scripted.ts";
 import type { TrieNode } from "./trie.ts";
@@ -179,6 +179,16 @@ export function assertVanillaPath(candidate: string, context: string): string {
 const FORBIDDEN_IN_STEM = ["/", "\\", ":", "*", "?", "<", ">", "|", " "];
 
 /**
+ * What every generated module's filename ends with.
+ *
+ * Named because the stem gate has to reserve room for it. A stem is checked
+ * against the filesystem's component limit, and the emitters then append this
+ * — so checking the stem alone would pass a 255-byte name and write a 258-byte
+ * file.
+ */
+const MODULE_SUFFIX = ".ts";
+
+/**
  * Passes a generated module's file stem through, or throws.
  *
  * Layered on {@link assertVanillaIdentifier} rather than restating it: a stem
@@ -217,9 +227,24 @@ export function assertVanillaModuleStem(candidate: string, context: string): str
   if (candidate.endsWith(".")) {
     reject('ends with a "."');
   }
+  // `con`, `nul`, `com1` and the rest are devices rather than files on Windows,
+  // reserved whatever extension follows — `events/con.ts` cannot be created
+  // there. Event namespaces are lowercase words read out of shipped event ids,
+  // so every one of these is a spelling the reader would accept. The SDK's own
+  // logical-path validator refuses them and this asks it rather than restating
+  // the list.
+  if (isWindowsDeviceName(candidate)) {
+    reject("names a device Windows reserves, so no file may be called this");
+  }
+  // The emitted filename, not the stem: `emitTrie` appends `.ts` immediately
+  // after this returns.
+  const limit = MAX_COMPONENT_BYTES - MODULE_SUFFIX.length;
   const bytes = UTF8.encode(candidate).length;
-  if (bytes > MAX_COMPONENT_BYTES) {
-    reject(`is ${bytes} bytes, over the ${MAX_COMPONENT_BYTES} a filename takes`);
+  if (bytes > limit) {
+    reject(
+      `is ${bytes} bytes, over the ${limit} left once "${MODULE_SUFFIX}" takes its share of the ` +
+        `${MAX_COMPONENT_BYTES} a filename takes`
+    );
   }
   return candidate;
 }

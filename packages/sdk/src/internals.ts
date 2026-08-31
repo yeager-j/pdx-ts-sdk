@@ -45,6 +45,7 @@ export {
   normalizeLogicalPath,
   type LogicalPath,
 } from "./ordering.ts";
+export { isWindowsDeviceName } from "./windows-names.ts";
 export type {
   CheckedVanillaId,
   InvalidVanillaId,

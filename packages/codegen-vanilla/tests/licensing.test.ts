@@ -203,6 +203,36 @@ describe("assertVanillaModuleStem", () => {
     expect(() => assertVanillaModuleStem("", "test")).toThrow(/empty/);
   });
 
+  it("refuses the names Windows reserves for devices", () => {
+    // `con`, `nul` and `com1` are all spellings the event reader's namespace
+    // rule accepts, and `events/con.ts` cannot be created on Windows whatever
+    // extension it carries.
+    for (const device of ["con", "CON", "nul", "aux", "prn", "com1", "lpt9", "Con"]) {
+      expect(() => assertVanillaModuleStem(device, "test"), device).toThrow(/reserves/);
+    }
+    // The reservation covers the basename, so a suffix does not escape it.
+    expect(() => assertVanillaModuleStem("con.backup", "test")).toThrow(/reserves/);
+    // Names that merely start with one are fine.
+    expect(assertVanillaModuleStem("console", "test")).toBe("console");
+    expect(assertVanillaModuleStem("com10", "test")).toBe("com10");
+  });
+
+  it("leaves room for the extension it knows will be appended", () => {
+    // The emitters append `.ts` straight after this returns, so a stem that
+    // exactly fills the 255-byte component limit produces a filename three
+    // bytes over it.
+    //
+    // Measured in bytes rather than characters, which is the only way the
+    // limit is reachable at all: the identifier gate caps a name at 120 UTF-16
+    // units first, so no ASCII stem gets near 255 bytes. A 3-byte character
+    // does — 85 of them is 255 bytes and well inside that cap.
+    const wide = "一";
+    expect(assertVanillaModuleStem(wide.repeat(84), "test")).toHaveLength(84);
+    expect(() => assertVanillaModuleStem(wide.repeat(85), "test")).toThrow(
+      /255 bytes, over the 252/
+    );
+  });
+
   it("is stricter than the path gate, which allows the separators it refuses", () => {
     // The two are not interchangeable, and this is the pair that says so: a
     // path is many components and a stem is one.
@@ -307,14 +337,35 @@ describe("negative control", () => {
   });
 });
 
-/** Every quoted string in an emitted file, specifiers included. */
-function quotedLiterals(text: string): string[] {
-  return [...text.matchAll(/"((?:[^"\\\n]|\\.)*)"/g)].map((match) => match[1]!);
+/**
+ * Every `import`/`export … from "…"` specifier, and every bare `import "…"`.
+ *
+ * Read off the statements rather than recognised by prefix, which is what this
+ * used to do. A prefix test answers "does this look like the specifiers we
+ * currently emit", and the question is "is this a specifier": `"../shared.ts"`
+ * and `"typescript"` match neither `./` nor `@pdx-ts/`, and both pass
+ * {@link assertVanillaIdentifier} — so an emitter that added either would have
+ * had its specifier waved through as an ordinary name.
+ */
+const MODULE_SPECIFIER =
+  /(?:^|\n)[ \t]*(?:import|export)\b[^;\n]*?\bfrom[ \t]*["']([^"']+)["']|(?:^|\n)[ \t]*import[ \t]+["']([^"']+)["']/g;
+
+function moduleSpecifiers(text: string): string[] {
+  // Two forms, and only these two: a `from` clause, or a bare side-effect
+  // `import "…"`. Requiring one of them is what keeps
+  // `export const NAME = "not_a_specifier";` out.
+  return [...text.matchAll(MODULE_SPECIFIER)].map((match) => match[1] ?? match[2]!);
 }
 
-/** A module specifier: either a bare package, or a relative path to a module. */
-function isModuleSpecifier(value: string): boolean {
-  return value.startsWith("./") || value.startsWith("@pdx-ts/");
+/**
+ * Every quoted string that is not part of an import or export statement.
+ *
+ * The statements are removed by position rather than by matching their
+ * specifier text, so a literal that happens to spell one is still inspected.
+ */
+function quotedLiterals(text: string): string[] {
+  const withoutStatements = text.replace(MODULE_SPECIFIER, "\n");
+  return [...withoutStatements.matchAll(/"((?:[^"\\\n]|\\.)*)"/g)].map((match) => match[1]!);
 }
 
 /**
@@ -338,7 +389,7 @@ describe("generated output", () => {
     let checked = 0;
     for (const [name, text] of generated.files) {
       const assert = name === "paths.ts" ? assertVanillaPath : assertVanillaIdentifier;
-      for (const literal of quotedLiterals(text).filter((one) => !isModuleSpecifier(one))) {
+      for (const literal of quotedLiterals(text)) {
         expect(() => assert(literal, name)).not.toThrow();
         checked += 1;
       }
@@ -360,7 +411,9 @@ describe("generated output", () => {
   it("names its modules with nothing the gate would not have let through", () => {
     let checked = 0;
     for (const [name, text] of generated.files) {
-      for (const specifier of quotedLiterals(text).filter(isModuleSpecifier)) {
+      for (const specifier of moduleSpecifiers(text)) {
+        // Relative or allow-listed, with nothing in between: a bare specifier
+        // that is not on the list fails here rather than being read as a name.
         if (!specifier.startsWith("./")) {
           expect(ALLOWED_PACKAGES.has(specifier), `${name} imports ${specifier}`).toBe(true);
           continue;
@@ -376,6 +429,36 @@ describe("generated output", () => {
     // barrel's re-exports, so a number this low would mean the walk found
     // nothing rather than that everything passed.
     expect(checked).toBeGreaterThan(20);
+  });
+
+  /**
+   * The predicate this check rests on, tested rather than assumed.
+   *
+   * The previous version recognised specifiers by their prefix, and the two
+   * shapes below are the ones that slipped through: neither starts `./` or
+   * `@pdx-ts/`, and both pass the identifier gate, so an emitter that added an
+   * unapproved package or a path escaping the output directory would not have
+   * been noticed.
+   */
+  it("recognises a specifier by its statement, not by how it starts", () => {
+    const module = [
+      'import type { A } from "../shared.ts";',
+      'import { b } from "typescript";',
+      'export type { C } from "./registries/technology.ts";',
+      'import "./side-effect.ts";',
+      'export const NAME = "not_a_specifier";',
+    ].join("\n");
+
+    expect(moduleSpecifiers(module)).toEqual([
+      "../shared.ts",
+      "typescript",
+      "./registries/technology.ts",
+      "./side-effect.ts",
+    ]);
+    expect(quotedLiterals(module)).toEqual(["not_a_specifier"]);
+    // Both would have been read as ordinary identifiers before, and both pass.
+    expect(assertVanillaIdentifier("../shared.ts", "test")).toBe("../shared.ts");
+    expect(assertVanillaIdentifier("typescript", "test")).toBe("typescript");
   });
 
   /**
