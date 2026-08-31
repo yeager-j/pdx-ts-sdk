@@ -22,7 +22,18 @@
 
 import type { PdxScalar } from "./ast.ts";
 
-const TERMINATORS = new Set([
+/**
+ * The characters that end a bare token, and the only table that says so.
+ *
+ * The lexer stops a token at these and `isBareToken` refuses text holding
+ * one, which is the same question asked from the two ends: whether some text
+ * is *one* token. A second copy is how the two ends stop agreeing — text the
+ * lexer would split still passing as one token on the way out, so a
+ * constructed scalar emits two tokens where it promised one, and the package
+ * stops being closed under its own syntax. So the lexer imports this rather
+ * than restating it.
+ */
+export const TOKEN_TERMINATORS: ReadonlySet<string> = new Set([
   " ",
   "\t",
   "\r",
@@ -48,7 +59,7 @@ export function isBareToken(text: string): boolean {
     return false;
   }
   for (const char of text) {
-    if (TERMINATORS.has(char)) {
+    if (TOKEN_TERMINATORS.has(char)) {
       return false;
     }
   }
