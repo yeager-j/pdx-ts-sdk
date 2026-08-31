@@ -4,8 +4,9 @@ import path from "node:path";
 /**
  * Lists files with a given extension under a registry directory in stable order.
  *
- * Set `recurse` from the registry's `path_strict` rule. A missing directory returns an empty
- * list so callers can report an empty corpus without handling a filesystem error.
+ * Set `recurse` from the registry's `path_strict` rule. A directory that does not exist returns an
+ * empty list so callers can report an empty corpus without handling an `ENOENT` filesystem error;
+ * all other filesystem errors propagate to the caller.
  */
 export function walkRegistryFiles(
   dir: string,
@@ -15,8 +16,11 @@ export function walkRegistryFiles(
   let names: string[];
   try {
     names = readdirSync(dir).sort();
-  } catch {
-    return [];
+  } catch (error: unknown) {
+    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+      return [];
+    }
+    throw error;
   }
   const found: string[] = [];
   for (const name of names) {

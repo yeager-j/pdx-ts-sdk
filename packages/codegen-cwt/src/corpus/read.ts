@@ -84,7 +84,7 @@ function descend(
       recordBlock(value, path, children, node.identityKey, seen, blockArity);
       return;
     case "weightModifiers":
-      recordWeightModifiers(value, path, node.strippedKeys ?? new Set(), seen, blockArity);
+      recordWeightModifiers(value, path, node.strippedKeys, seen, blockArity);
       return;
     case "triggeredModifierPotential":
       recordTriggeredModifierPotential(value, path, seen, blockArity);
@@ -96,8 +96,8 @@ function descend(
       recordTriggerStruct(value, path, node, children, seen, blockArity);
       return;
     default: {
-      const unreachable: never = node.mode;
-      throw new Error(`Unhandled descent mode: ${String(unreachable)}`);
+      const unreachable: never = node;
+      throw new Error(`Unhandled descent node: ${JSON.stringify(unreachable)}`);
     }
   }
 }
@@ -105,12 +105,12 @@ function descend(
 function recordTriggerStruct(
   value: PdxContainer,
   path: string,
-  node: DescentNode,
+  node: Extract<DescentNode, { mode: "triggerStruct" }>,
   children: ReadonlyMap<string, DescentNode>,
   seen: Map<string, PdxValue[]>,
   blockArity: Map<string, boolean>
 ): void {
-  const ordinaryKeys = new Set(node.ordinaryKeys ?? []);
+  const ordinaryKeys = new Set(node.ordinaryKeys);
   const ordinaryEntries = value.items.filter(
     (item): item is Extract<(typeof value.items)[number], { kind: "entry" }> =>
       item.kind === "entry" && ordinaryKeys.has(item.key)

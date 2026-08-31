@@ -195,6 +195,36 @@ describe("a sibling type sharing the directory", () => {
 });
 
 describe("file layout", () => {
+  it("propagates an unreadable registry path instead of treating it as empty", () => {
+    const root = mkdtempSync(path.join(tmpdir(), "pdx-corpus-"));
+    // A regular-file parent reliably makes readdirSync report ENOTDIR on both macOS and Linux,
+    // without depending on platform-specific permission handling.
+    const regularFile = path.join(root, "not-a-directory");
+    writeFileSync(regularFile, "", "utf8");
+
+    expect(() =>
+      readRegistryCorpus(root, {
+        registry: "system",
+        registryPath: "not-a-directory/registry",
+        keyword: null,
+        nameField: null,
+      })
+    ).toThrowError(expect.objectContaining({ code: "ENOTDIR" }));
+  });
+
+  it("returns an empty corpus for a genuinely absent registry directory", () => {
+    const root = mkdtempSync(path.join(tmpdir(), "pdx-corpus-"));
+
+    const corpus = readRegistryCorpus(root, {
+      registry: "system",
+      registryPath: "missing/registry",
+      keyword: null,
+      nameField: null,
+    });
+
+    expect(corpus).toEqual({ definitions: 0, files: 0, occurrences: new Map() });
+  });
+
   // A registry whose files are not `.txt` reads as an empty directory rather
   // than as an unread one, so the extension has to reach the reader or the
   // conformance evidence for it is vacuous.
