@@ -43,6 +43,7 @@ import {
   assertContentWitnessMembersKnown,
   assertHandWrittenTriggerExportsMatchRules,
   assertOverlayRegistriesKnown,
+  assertPatchRegistryPrerequisites,
   assertPatchWideningsTargetPatchableRegistries,
   assertScriptedModifierCategoryMapValid,
   OverlayAudit,
@@ -59,6 +60,15 @@ import {
 } from "@pdx-ts/codegen-cwt/policy/triggers";
 import { Emitter } from "@pdx-ts/codegen-cwt/render/emitter";
 import { describe, expect, it } from "vitest";
+
+// Read by path rather than through `@pdx-ts/sdk`: neither table is on any of
+// the package's exported subpaths, and widening the shipped surface so a
+// generator's test can read them would be the larger mistake. The generator
+// itself never imports the SDK — `assertPatchRegistryPrerequisites` takes the
+// facts as plain data, and this file is the only place the two sides meet.
+// `packages/create-stellaris-mod/tests` reaches for SDK internals the same way.
+import { REGISTRY_RULES } from "../../sdk/src/installation/vanilla/override-rules.ts";
+import { PARSED_REGISTRIES } from "../../sdk/src/installation/vanilla/parse.ts";
 
 const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
 const CONFIG = path.join(ROOT, "vendor/cwtools-stellaris-config/config");
@@ -165,6 +175,104 @@ describe("assertOverlayRegistriesKnown", () => {
         realRegistryNames
       )
     ).toThrow('CONTENT_WITNESSES names "scripted_modifierr", which is not a known registry');
+  });
+});
+
+describe("assertPatchRegistryPrerequisites", () => {
+  const parsedRegistryNames = new Set(PARSED_REGISTRIES.map((row) => row.registry));
+  const registryRules = new Map(REGISTRY_RULES.map((row) => [row.registry, row]));
+
+  it("passes every real CONTENT_PATCH_REGISTRIES row", () => {
+    expect(() =>
+      assertPatchRegistryPrerequisites(
+        CONTENT_PATCH_REGISTRIES.keys(),
+        parsedRegistryNames,
+        registryRules
+      )
+    ).not.toThrow();
+  });
+
+  it("passes the real patch permissions backed by assumed cells", () => {
+    const assumedPatchRegistries = new Map([
+      ["ascension_perk_category", { repeat: "assumed", replacement: "assumed" }],
+      ["megastructure", { repeat: "verified", replacement: "assumed" }],
+    ] as const);
+    expect(
+      [...assumedPatchRegistries.keys()].every((registry) => CONTENT_PATCH_REGISTRIES.has(registry))
+    ).toBe(true);
+    for (const [registry, expectedStates] of assumedPatchRegistries) {
+      const rule = registryRules.get(registry);
+      expect(rule?.repeat.state).toBe(expectedStates.repeat);
+      expect(rule?.replacement.state).toBe(expectedStates.replacement);
+    }
+    expect(() =>
+      assertPatchRegistryPrerequisites(
+        assumedPatchRegistries.keys(),
+        parsedRegistryNames,
+        registryRules
+      )
+    ).not.toThrow();
+  });
+
+  it("rejects a permission whose registry has no parse row", () => {
+    expect(() =>
+      assertPatchRegistryPrerequisites(
+        ["not_parsed"],
+        new Set<string>(),
+        new Map([
+          ["not_parsed", { repeat: { state: "verified" }, replacement: { state: "verified" } }],
+        ])
+      )
+    ).toThrow('CONTENT_PATCH_REGISTRIES names "not_parsed", which has no PARSED_REGISTRIES row');
+  });
+
+  it("rejects a permission whose registry has no rule row", () => {
+    expect(() =>
+      assertPatchRegistryPrerequisites(["not_ruled"], new Set(["not_ruled"]), new Map())
+    ).toThrow('CONTENT_PATCH_REGISTRIES names "not_ruled", which has no REGISTRY_RULES row');
+  });
+
+  it("rejects a permission whose repeat cell is refused", () => {
+    expect(() =>
+      assertPatchRegistryPrerequisites(
+        ["repeat_refused"],
+        new Set(["repeat_refused"]),
+        new Map([
+          ["repeat_refused", { repeat: { state: "refused" }, replacement: { state: "verified" } }],
+        ])
+      )
+    ).toThrow(
+      'CONTENT_PATCH_REGISTRIES names "repeat_refused", whose REGISTRY_RULES row has a refused repeat cell'
+    );
+  });
+
+  it("rejects a permission whose replacement cell is refused", () => {
+    expect(() =>
+      assertPatchRegistryPrerequisites(
+        ["replacement_refused"],
+        new Set(["replacement_refused"]),
+        new Map([
+          [
+            "replacement_refused",
+            { repeat: { state: "verified" }, replacement: { state: "refused" } },
+          ],
+        ])
+      )
+    ).toThrow(
+      'CONTENT_PATCH_REGISTRIES names "replacement_refused", whose REGISTRY_RULES row has a refused replacement cell'
+    );
+  });
+
+  it("accepts assumed repeat and replacement cells", () => {
+    expect(() =>
+      assertPatchRegistryPrerequisites(
+        ["assumed_rule"],
+        new Set(["assumed_rule"]),
+        new Map([
+          ["assumed_rule", { repeat: { state: "assumed" }, replacement: { state: "assumed" } }],
+        ])
+      )
+    ).not.toThrow();
   });
 });
 
