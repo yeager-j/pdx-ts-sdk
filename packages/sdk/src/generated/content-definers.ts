@@ -40,6 +40,7 @@
 // From: gfx/model_entities.cwt
 // From: gfx/particles.cwt
 
+import { snapshotAuthoredValue } from "../authoring/snapshot.ts";
 import { contentLocalizationRefs } from "../content/authoring.ts";
 import type {
   ContentItem,
@@ -180,7 +181,7 @@ export function defineTechnology<const Id extends string>(
     itemKind: "content",
     type: "technology",
     id: def.id,
-    def,
+    def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, TECHNOLOGY_LOCALISATION),
   };
 }
@@ -228,7 +229,7 @@ export function defineBuilding<const Id extends string>(
     itemKind: "content",
     type: "building",
     id: def.id,
-    def,
+    def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, BUILDING_LOCALISATION),
   };
 }
@@ -276,7 +277,7 @@ export function defineTradition<const Id extends string>(
     itemKind: "content",
     type: "tradition",
     id: def.id,
-    def,
+    def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, TRADITION_LOCALISATION),
   };
 }
@@ -296,7 +297,7 @@ export function defineTraditionCategory<const Id extends string>(
     itemKind: "content",
     type: "tradition_category",
     id: def.id,
-    def,
+    def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, TRADITION_CATEGORY_LOCALISATION),
   };
 }
@@ -316,7 +317,7 @@ export function defineAscensionPerk<const Id extends string>(
     itemKind: "content",
     type: "ascension_perk",
     id: def.id,
-    def,
+    def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, ASCENSION_PERK_LOCALISATION),
   };
 }
@@ -337,7 +338,7 @@ export function defineAscensionPerkCategory<const Id extends string>(
     itemKind: "content",
     type: "ascension_perk_category",
     id: def.id,
-    def,
+    def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, ASCENSION_PERK_CATEGORY_LOCALISATION),
   };
 }
@@ -385,7 +386,7 @@ export function defineResource<const Id extends string>(
     itemKind: "content",
     type: "resource",
     id: def.id,
-    def,
+    def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, RESOURCE_LOCALISATION),
   };
 }
@@ -405,7 +406,7 @@ export function defineCrisisPath<const Id extends string>(
     itemKind: "content",
     type: "crisis_path",
     id: def.id,
-    def,
+    def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, CRISIS_PATH_LOCALISATION),
   };
 }
@@ -425,7 +426,7 @@ export function defineCrisisLevel<const Id extends string>(
     itemKind: "content",
     type: "crisis_level",
     id: def.id,
-    def,
+    def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, CRISIS_LEVEL_LOCALISATION),
   };
 }
@@ -445,7 +446,7 @@ export function defineCrisisObjective<const Id extends string>(
     itemKind: "content",
     type: "crisis_objective",
     id: def.id,
-    def,
+    def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, CRISIS_OBJECTIVE_LOCALISATION),
   };
 }
@@ -465,7 +466,7 @@ export function defineMenacePerk<const Id extends string>(
     itemKind: "content",
     type: "menace_perk",
     id: def.id,
-    def,
+    def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, MENACE_PERK_LOCALISATION),
   };
 }
@@ -485,7 +486,7 @@ export function defineAgenda<const Id extends string>(
     itemKind: "content",
     type: "agenda",
     id: def.id,
-    def,
+    def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, AGENDA_LOCALISATION),
   };
 }
@@ -505,7 +506,7 @@ export function defineEdict<const Id extends string>(
     itemKind: "content",
     type: "edict",
     id: def.id,
-    def,
+    def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, EDICT_LOCALISATION),
   };
 }
@@ -528,7 +529,7 @@ export function defineDecision<const Id extends string, S extends DecisionScope 
     itemKind: "content",
     type: "decision",
     id: def.id,
-    def: rest as unknown as DecisionDef<Id, never>,
+    def: snapshotAuthoredValue(rest) as unknown as DecisionDef<Id, never>,
     loc: contentLocalizationRefs(def.id, DECISION_LOCALISATION),
   };
 }
@@ -548,7 +549,7 @@ export function defineJob<const Id extends string>(
     itemKind: "content",
     type: "job",
     id: def.id,
-    def,
+    def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, JOB_LOCALISATION),
   };
 }
@@ -568,7 +569,7 @@ export function defineGlobalShipDesign<const Id extends string>(
     itemKind: "content",
     type: "global_ship_design",
     id: def.id,
-    def,
+    def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, GLOBAL_SHIP_DESIGN_LOCALISATION),
   };
 }
@@ -591,7 +592,7 @@ export function defineUtilityComponentTemplate<const Id extends string>(
     itemKind: "content",
     type: "utility_component_template",
     id: def.id,
-    def,
+    def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, UTILITY_COMPONENT_TEMPLATE_LOCALISATION),
   };
 }
@@ -614,7 +615,7 @@ export function defineWeaponComponentTemplate<const Id extends string>(
     itemKind: "content",
     type: "weapon_component_template",
     id: def.id,
-    def,
+    def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, WEAPON_COMPONENT_TEMPLATE_LOCALISATION),
   };
 }
@@ -637,7 +638,7 @@ export function defineStrikeCraftComponentTemplate<const Id extends string>(
     itemKind: "content",
     type: "strike_craft_component_template",
     id: def.id,
-    def,
+    def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, STRIKE_CRAFT_COMPONENT_TEMPLATE_LOCALISATION),
   };
 }
@@ -657,7 +658,7 @@ export function defineShipSize<const Id extends string>(
     itemKind: "content",
     type: "ship_size",
     id: def.id,
-    def,
+    def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, SHIP_SIZE_LOCALISATION),
   };
 }
@@ -677,7 +678,7 @@ export function defineOpinionModifier<const Id extends string>(
     itemKind: "content",
     type: "opinion_modifier",
     id: def.id,
-    def,
+    def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, OPINION_MODIFIER_LOCALISATION),
   };
 }
@@ -714,7 +715,7 @@ export function defineStaticModifier<
     itemKind: "content",
     type: "static_modifier",
     id: def.id,
-    def: rest as unknown as Omit<StaticModifierDef<Id, never>, "hostScope">,
+    def: snapshotAuthoredValue(rest) as unknown as Omit<StaticModifierDef<Id, never>, "hostScope">,
     hostScope: hostScope as S,
     loc: contentLocalizationRefs(def.id, STATIC_MODIFIER_LOCALISATION),
   };
@@ -738,7 +739,7 @@ export function defineScriptedModifier<const Id extends string>(
     itemKind: "content",
     type: "scripted_modifier",
     id: def.id,
-    def,
+    def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, SCRIPTED_MODIFIER_LOCALISATION),
   };
 }
@@ -758,7 +759,7 @@ export function defineCasusBelli<const Id extends string>(
     itemKind: "content",
     type: "casus_belli",
     id: def.id,
-    def,
+    def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, CASUS_BELLI_LOCALISATION),
   };
 }
@@ -778,7 +779,7 @@ export function defineWarGoal<const Id extends string>(
     itemKind: "content",
     type: "war_goal",
     id: def.id,
-    def,
+    def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, WAR_GOAL_LOCALISATION),
   };
 }
@@ -798,7 +799,7 @@ export function defineAgreementPreset<const Id extends string>(
     itemKind: "content",
     type: "agreement_preset",
     id: def.id,
-    def,
+    def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, AGREEMENT_PRESET_LOCALISATION),
   };
 }
@@ -818,7 +819,7 @@ export function defineBombardmentStance<const Id extends string>(
     itemKind: "content",
     type: "bombardment_stance",
     id: def.id,
-    def,
+    def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, BOMBARDMENT_STANCE_LOCALISATION),
   };
 }
@@ -841,7 +842,7 @@ export function defineArchaeologicalSiteType<const Id extends string>(
     itemKind: "content",
     type: "archaeological_site_type",
     id: def.id,
-    def,
+    def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, ARCHAEOLOGICAL_SITE_TYPE_LOCALISATION),
   };
 }
@@ -861,7 +862,7 @@ export function defineRelic<const Id extends string>(
     itemKind: "content",
     type: "relic",
     id: def.id,
-    def,
+    def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, RELIC_LOCALISATION),
   };
 }
@@ -899,7 +900,7 @@ export function defineMissionCategory<const Id extends string>(
     itemKind: "content",
     type: "mission_category",
     id: def.id,
-    def,
+    def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, MISSION_CATEGORY_LOCALISATION),
   };
 }
@@ -933,7 +934,7 @@ export function defineScriptedLoc<const Id extends string>(
     itemKind: "content",
     type: "scripted_loc",
     id: def.id,
-    def,
+    def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, SCRIPTED_LOC_LOCALISATION),
   };
 }
@@ -953,7 +954,7 @@ export function defineCouncilor<const Id extends string>(
     itemKind: "content",
     type: "councilor",
     id: def.id,
-    def,
+    def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, COUNCILOR_LOCALISATION),
   };
 }
@@ -1014,7 +1015,7 @@ export function defineEconomicCategory<
     itemKind: "content",
     type: "economic_category",
     id: def.id,
-    def,
+    def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, ECONOMIC_CATEGORY_LOCALISATION),
   } as ContentItem<
     "economic_category",
@@ -1047,7 +1048,7 @@ export function defineCivicOrOrigin<const Id extends string>(
     itemKind: "content",
     type: "civic_or_origin",
     id: def.id,
-    def,
+    def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, CIVIC_OR_ORIGIN_LOCALISATION),
   };
 }
@@ -1067,7 +1068,7 @@ export function defineComponentSet<const Id extends string>(
     itemKind: "content",
     type: "component_set",
     id: def.id,
-    def,
+    def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, COMPONENT_SET_LOCALISATION),
   };
 }
@@ -1087,7 +1088,7 @@ export function defineSectionTemplate<const Id extends string>(
     itemKind: "content",
     type: "section_template",
     id: def.id,
-    def,
+    def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, SECTION_TEMPLATE_LOCALISATION),
   };
 }
@@ -1107,7 +1108,7 @@ export function defineAmbientObject<const Id extends string>(
     itemKind: "content",
     type: "ambient_object",
     id: def.id,
-    def,
+    def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, AMBIENT_OBJECT_LOCALISATION),
   };
 }
@@ -1127,7 +1128,7 @@ export function defineGraphicalCulture<const Id extends string>(
     itemKind: "content",
     type: "graphical_culture",
     id: def.id,
-    def,
+    def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, GRAPHICAL_CULTURE_LOCALISATION),
   };
 }
@@ -1147,7 +1148,7 @@ export function defineStarbaseLevel<const Id extends string>(
     itemKind: "content",
     type: "starbase_level",
     id: def.id,
-    def,
+    def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, STARBASE_LEVEL_LOCALISATION),
   };
 }
@@ -1167,7 +1168,7 @@ export function defineSpeciesClass<const Id extends string>(
     itemKind: "content",
     type: "species_class",
     id: def.id,
-    def,
+    def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, SPECIES_CLASS_LOCALISATION),
   };
 }
@@ -1188,7 +1189,7 @@ export function defineCountryShipOfSizeLimit<const Id extends string>(
     itemKind: "content",
     type: "country_ship_of_size_limit",
     id: def.id,
-    def,
+    def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, COUNTRY_SHIP_OF_SIZE_LIMIT_LOCALISATION),
   };
 }
@@ -1228,7 +1229,7 @@ export function defineSolarSystemInitializer<const Id extends string>(
     itemKind: "content",
     type: "solar_system_initializer",
     id: def.id,
-    def,
+    def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, SOLAR_SYSTEM_INITIALIZER_LOCALISATION),
   };
 }
@@ -1274,7 +1275,7 @@ export function defineSpecialProject<
     itemKind: "content",
     type: "special_project",
     id: def.id,
-    def: rest as unknown as SpecialProjectDef<Id, never>,
+    def: snapshotAuthoredValue(rest) as unknown as SpecialProjectDef<Id, never>,
     locationScope: locationScope as L,
     loc: contentLocalizationRefs(def.id, SPECIAL_PROJECT_LOCALISATION),
   };
@@ -1296,7 +1297,7 @@ export function defineMegastructure<const Id extends string>(
     itemKind: "content",
     type: "megastructure",
     id: def.id,
-    def,
+    def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, MEGASTRUCTURE_LOCALISATION),
   };
 }
@@ -1344,7 +1345,7 @@ export function defineSpriteType<const Id extends string>(
     itemKind: "content",
     type: "spriteType",
     id: def.id,
-    def,
+    def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, SPRITE_TYPE_LOCALISATION),
   };
 }
@@ -1364,7 +1365,7 @@ export function definePdxmesh<const Id extends string>(
     itemKind: "content",
     type: "pdxmesh",
     id: def.id,
-    def,
+    def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, PDXMESH_LOCALISATION),
   };
 }
@@ -1384,7 +1385,7 @@ export function definePdxparticle<const Id extends string>(
     itemKind: "content",
     type: "pdxparticle",
     id: def.id,
-    def,
+    def: snapshotAuthoredValue(def),
     loc: contentLocalizationRefs(def.id, PDXPARTICLE_LOCALISATION),
   };
 }

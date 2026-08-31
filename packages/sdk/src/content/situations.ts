@@ -16,6 +16,7 @@
  * available to package internals; public authors use mod capability methods.
  */
 
+import { snapshotAuthoredValue } from "../authoring/snapshot.ts";
 import type {
   ContentIdMinter,
   IdProfile,
@@ -402,7 +403,7 @@ export function defineSituationType<
     itemKind: "content",
     type: "situation_type",
     id: def.id,
-    def: rest as SituationTypeDef<Id>,
+    def: snapshotAuthoredValue(rest) as SituationTypeDef<Id>,
     loc: contentLocalizationRefs(def.id, SITUATION_TYPE_LOCALISATION),
     targetScope: targetScope as T,
   };

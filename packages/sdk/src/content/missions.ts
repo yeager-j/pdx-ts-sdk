@@ -6,6 +6,7 @@
  * and admit contract-only fields without exposing them on ordinary missions.
  */
 
+import { snapshotAuthoredValue } from "../authoring/snapshot.ts";
 import type {
   ContentIdMinter,
   IdProfile,
@@ -93,7 +94,7 @@ export function defineMission<
     itemKind: "content",
     type: "mission",
     id: def.id,
-    def: stored as MissionDef<Id, never>,
+    def: snapshotAuthoredValue(stored) as MissionDef<Id, never>,
     loc: contentLocalizationRefs(def.id, MISSION_LOCALISATION),
     locationScope: locationScope as L,
   };

@@ -142,7 +142,13 @@ export function finalizeMod(
     ),
     definedGroups: Object.freeze(
       definedGroups.map((group) =>
-        Object.freeze({ ...group, defined: Object.freeze([...group.defined]) })
+        Object.freeze({
+          ...group,
+          // Each definition too, not just the group and its list: the `def` it
+          // holds is frozen already, so freezing the instance is what makes the
+          // exposed structure immutable throughout (SDK-327).
+          defined: Object.freeze(group.defined.map((defined) => Object.freeze(defined))),
+        })
       )
     ),
     componentTagFiles: Object.freeze(
