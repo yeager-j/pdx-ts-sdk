@@ -35,12 +35,18 @@ and decoding belong to the caller; `parse` strips one UTF-8 BOM opening the
 document, and `serialize` refuses to emit a document that would open with one.
 `serialize` uses one canonical style with tabs and a final newline.
 
-The round-trip contract is semantic:
+The round-trip contract is semantic, and it is a claim about items rather than
+documents:
 
-```text
-parse(serialize(parse(source).items)) == parse(source)
+```ts
+const document = parse(source);
+const reparsed = parse(serialize(document.items));
+withoutLines(reparsed.items); // equals withoutLines(document.items)
 ```
 
+`withoutLines` is part of the claim. Canonical spacing moves entries onto
+different lines, so `line` differs even where nothing else does, and repaired
+input is written in its repaired form, so the reparse reports no diagnostics.
 Comments are normally dropped, whitespace is normalized, and quote choices may
 change. Order, duplicate keys, values, and structure remain stable.
 
