@@ -133,6 +133,12 @@ unterminated `@[`, unterminated `[[` region, a `]` with no opener, an
 operator with no key or no value, and nesting beyond the depth guard
 (fuzz-proofing — 100k open braces must error, not blow the stack).
 
+The depth guard is `MAX_NESTING_DEPTH`, and it bounds the language rather
+than only the parser: `serialize` refuses a tree nested deeper than a parse
+of its output could read, so a constructed tree cannot leave the set the
+parser accepts. It also caps the output, since one tab per level per line
+grows with the square of the depth.
+
 An unreadable region body is *not* an error — it is what `param-text` is
 for. The distinction is that the region's own delimiters are the file's
 structure, while what sits between them is the call site's.

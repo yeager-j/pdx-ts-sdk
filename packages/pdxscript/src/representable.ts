@@ -75,6 +75,24 @@ export function isBareToken(text: string): boolean {
 }
 
 /**
+ * The deepest nesting this package reads or writes.
+ *
+ * A level is a body: top-level items sit at 0, and the items inside a
+ * container or a `[[NAME] ... ]` region sit one deeper. A region with no tree
+ * counts too, since reading its output back opens a body either way.
+ *
+ * `parse` throws `PdxSyntaxError` for input past the limit, and `serialize`
+ * throws for a tree past it. The constructors do not check: depth belongs to
+ * a whole assembled tree, and `container()` sees only the level it is handed.
+ *
+ * The bound exists so absurd input errors instead of overflowing the stack,
+ * and it is shared rather than the parser's alone so that a tree the parser
+ * would refuse is a tree nothing can emit. It caps the output as well: one tab
+ * per level per line grows with the square of the depth.
+ */
+export const MAX_NESTING_DEPTH = 1000;
+
+/**
  * Every operator an entry can carry, in one list.
  *
  * `PdxOp` is derived from it rather than written beside it, so the type and

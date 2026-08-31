@@ -25,6 +25,7 @@ import {
   isOperator,
   kv,
   list,
+  MAX_NESTING_DEPTH,
   numberValue,
   numeral,
   parse,
@@ -40,6 +41,7 @@ import {
   withoutLines,
   type PdxDocument,
   type PdxEntry,
+  type PdxItem,
   type PdxOp,
   type PdxValue,
 } from "../src/index.ts";
@@ -375,6 +377,13 @@ describe("parser: top level", () => {
 
   it("throws when nesting exceeds the depth guard instead of overflowing the stack (jomini)", () => {
     expect(() => parse("a = " + "{".repeat(5000), "claims.txt")).toThrow(/Nesting exceeds/);
+  });
+
+  it("reads exactly MAX_NESTING_DEPTH levels and refuses the next one", () => {
+    expect(() => parse("a = " + "{".repeat(MAX_NESTING_DEPTH), "claims.txt")).not.toThrow();
+    expect(() => parse("a = " + "{".repeat(MAX_NESTING_DEPTH + 1), "claims.txt")).toThrow(
+      /Nesting exceeds/
+    );
   });
 });
 
@@ -847,6 +856,51 @@ describe("serializer", () => {
   it("quotes a key that cannot be written bare, instead of refusing it", () => {
     expect(serialize([kv("two words", 1)])).toBe('"two words" = 1\n');
     expectFixpoint('"two words" = 1');
+  });
+
+  /**
+   * The parser's depth bound is part of the language, so the writing end
+   * holds to it too (SDK-322): `container()` will nest as deep as it is
+   * asked, and a tree past the bound used to serialize and then fail to
+   * reparse. The boundary is checked from both sides, one level apart.
+   */
+  it("refuses to emit a tree nested deeper than the parser will read", () => {
+    /** An entry whose innermost container body sits at depth `levels`. */
+    const nest = (levels: number): PdxEntry => {
+      let item = kv("a", container([]));
+      for (let level = 1; level < levels; level += 1) {
+        item = kv("a", container([item]));
+      }
+      return item;
+    };
+    const deepest = serialize([nest(MAX_NESTING_DEPTH)]);
+    expect(parse(deepest, "depth.txt").diagnostics).toEqual([]);
+    expect(() => serialize([nest(MAX_NESTING_DEPTH + 1)])).toThrow(/nested deeper than/);
+  });
+
+  /**
+   * A region with no tree emits nothing one level down, which makes it look
+   * like a leaf. The parser does not read it as one: it opens a region body at
+   * `depth + 1` whether or not that body turns out to be a tree, so the guard
+   * has to count it. Without this the serializer emitted a region the parser
+   * then refused — the closure broken for the one node kind it was easiest to
+   * overlook.
+   */
+  it("counts a region with no tree against the depth limit, like every other body", () => {
+    // A body costing exactly one level. A body holding `{` would cost two —
+    // the region's, then the container's — which measures something else.
+    const region: PdxItem = { kind: "param-text", name: "X", negated: false, text: "\n\t}\n" };
+    /** A tree whose innermost body, holding `region`, sits at depth `levels`. */
+    const nestRegion = (levels: number): PdxEntry => {
+      let item = kv("a", container([region]));
+      for (let level = 1; level < levels; level += 1) {
+        item = kv("a", container([item]));
+      }
+      return item;
+    };
+    const deepest = serialize([nestRegion(MAX_NESTING_DEPTH - 1)]);
+    expect(parse(deepest, "depth.txt").diagnostics).toEqual([]);
+    expect(() => serialize([nestRegion(MAX_NESTING_DEPTH)])).toThrow(/nested deeper than/);
   });
 
   /**
