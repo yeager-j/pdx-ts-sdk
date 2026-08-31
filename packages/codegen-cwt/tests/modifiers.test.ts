@@ -90,6 +90,24 @@ describe("the modifier scope join", () => {
     expect(join.unscoped).toEqual([]);
   });
 
+  it("reports unknown scope tokens without losing known scopes from a category", () => {
+    const category = "Synthetic Mixed Category";
+    const unknownToken = "not_a_real_scope";
+    const modifierDocs = parseModifierDocs(`- synthetic_modifier, Category: ${category}\n`);
+    const modifierCategories = new Map(rules.modifierCategories);
+    modifierCategories.set(category, ["Colony", unknownToken]);
+    const joined = joinModifierScopes(
+      { ...rules, modifierCategories },
+      modifierDocs,
+      (token) => index.get(token.toLowerCase()) ?? null
+    );
+
+    expect(joined.unknownScopeTokens).toEqual([
+      `${unknownToken} — modifier_categories.cwt category:${category}`,
+    ]);
+    expect(joined.groups.get("colony")).toContain("synthetic_modifier");
+  });
+
   it("holds the version-pinned shape, so a game bump is a reviewed number change", () => {
     expect(join.universal).toHaveLength(1360);
     expect(join.groups.size).toBe(29);

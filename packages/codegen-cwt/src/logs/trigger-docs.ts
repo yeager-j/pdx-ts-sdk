@@ -1,3 +1,5 @@
+import { formatMalformedBlock, isMeaningful } from "./blocks.ts";
+
 /** A documented trigger or effect from the game's script documentation dumps. */
 export interface DocEntry {
   /** Script name of the trigger or effect. */
@@ -12,7 +14,7 @@ export interface DocEntry {
   readonly location: string;
 }
 
-/** Parsed trigger and effect documentation indexed by script name. */
+/** Parsed trigger and effect documentation, malformed candidates, and duplicate names. */
 export interface DocDump {
   /** Trigger documentation indexed by trigger name. */
   readonly triggers: ReadonlyMap<string, DocEntry>;
@@ -20,21 +22,18 @@ export interface DocDump {
   readonly effects: ReadonlyMap<string, DocEntry>;
   /** Candidate blocks that could not be parsed, identified by file, line, and text. */
   readonly malformed: readonly string[];
+  /** Duplicate trigger or effect names, identified by the later block's location. */
+  readonly duplicates: readonly string[];
 }
 
 interface ParsedSection {
   readonly entries: ReadonlyMap<string, DocEntry>;
   readonly malformed: readonly string[];
+  readonly duplicates: readonly string[];
 }
 
 const DOC_HEADING_PATTERN = /^([A-Za-z_][A-Za-z0-9_]*) - (.*)$/;
 const SUPPORTED_SCOPES_PATTERN = /^Supported Scopes:\s*(.*)$/;
-const SEPARATOR_PATTERN = /^=+$/;
-
-function isMeaningful(line: string): boolean {
-  const trimmedLine = line.trim();
-  return trimmedLine !== "" && !SEPARATOR_PATTERN.test(trimmedLine);
-}
 
 function parseDocBlock(
   lines: readonly string[],
@@ -61,14 +60,11 @@ function parseDocBlock(
   return null;
 }
 
-function formatMalformedBlock(location: string, lines: readonly string[]): string {
-  return `${location} ${lines.join(" ").trim().slice(0, 80)}`;
-}
-
 /** Ends blocks at `Supported Scopes:` because usage examples can contain blank lines. */
 function parseSection(file: string, source: string): ParsedSection {
   const entries = new Map<string, DocEntry>();
   const malformed: string[] = [];
+  const duplicates: string[] = [];
   let blockLines: string[] = [];
   let blockStartLine = 1;
   let meaningfulStartLine: number | null = null;
@@ -93,6 +89,9 @@ function parseSection(file: string, source: string): ParsedSection {
     if (entry === null) {
       malformed.push(formatMalformedBlock(location, blockLines));
     } else {
+      if (entries.has(entry.name)) {
+        duplicates.push(`${entry.name} — ${location}`);
+      }
       entries.set(entry.name, entry);
     }
 
@@ -105,12 +104,13 @@ function parseSection(file: string, source: string): ParsedSection {
     malformed.push(formatMalformedBlock(location, blockLines));
   }
 
-  return { entries, malformed };
+  return { entries, malformed, duplicates };
 }
 
 /**
  * Parses the game's trigger and effect documentation dumps into name-indexed maps. Blocks without
- * a readable heading or terminating supported-scope field remain available for reconciliation.
+ * a readable heading or terminating supported-scope field, and duplicate names with their later
+ * locations, remain available for reconciliation.
  */
 export function parseTriggerDocs(triggerLog: string, effectLog: string): DocDump {
   const triggerSection = parseSection("triggers.log", triggerLog);
@@ -120,5 +120,6 @@ export function parseTriggerDocs(triggerLog: string, effectLog: string): DocDump
     triggers: triggerSection.entries,
     effects: effectSection.entries,
     malformed: [...triggerSection.malformed, ...effectSection.malformed],
+    duplicates: [...triggerSection.duplicates, ...effectSection.duplicates],
   };
 }

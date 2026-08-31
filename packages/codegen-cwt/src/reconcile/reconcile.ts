@@ -4,7 +4,7 @@ import type { CwtDiagnostic } from "../cwt/parser.ts";
 import { scopeIndex, type AliasDecl, type LinkDecl, type RuleSet } from "../cwt/rules.ts";
 import { joinModifierScopes } from "../emit/script/modifiers.ts";
 import type { ModifierDocs } from "../logs/modifier-docs.ts";
-import type { ScopeLink } from "../logs/scopes.ts";
+import type { ScopeLinks } from "../logs/scopes.ts";
 import type { DocDump } from "../logs/trigger-docs.ts";
 import { compareStrings } from "../naming.ts";
 import { UNIVERSAL_SCOPES } from "../overlay/index.ts";
@@ -80,6 +80,8 @@ export interface DriftReport {
   };
   /** Modifier categories referenced by either source but absent from `modifier_categories.cwt`. */
   readonly unknownModifierCategories: readonly string[];
+  /** Unknown scope tokens referenced by modifier categories, with their category. */
+  readonly unknownModifierScopeTokens: readonly string[];
   /** Dumped modifier names the category join left without a single scope. */
   readonly unscopedModifierNames: readonly string[];
   /** Parser and classifier diagnostics other than unknown CWT value keywords. */
@@ -90,6 +92,14 @@ export interface DriftReport {
   readonly malformedDocBlocks: readonly string[];
   /** Modifier documentation lines that do not match the supported entry shape. */
   readonly malformedModifierBlocks: readonly string[];
+  /** Scope-link documentation blocks that look like entries but could not be parsed. */
+  readonly malformedScopeLinkBlocks: readonly string[];
+  /** Duplicate trigger or effect documentation names, identified by later location. */
+  readonly duplicateDocEntries: readonly string[];
+  /** Duplicate modifier documentation names, identified by later location. */
+  readonly duplicateModifierEntries: readonly string[];
+  /** Duplicate scope-link documentation names, identified by later location. */
+  readonly duplicateScopeLinkEntries: readonly string[];
   /**
    * Undefined scope names and stable summaries of their references. File-backed references use
    * `<file>:<count>` tokens; modifier categories use `modifier_categories.cwt category:<name>`.
@@ -286,7 +296,7 @@ export function reconcile(
   rules: RuleSet,
   docs: DocDump,
   modifierDocs: ModifierDocs,
-  dumpLinks: readonly ScopeLink[]
+  dumpLinks: ScopeLinks
 ): DriftReport {
   const canonicalScopes = scopeIndex(rules);
   const staticLinks = [...rules.links.values()].filter(
@@ -306,17 +316,22 @@ export function reconcile(
     effects: driftBetween(rules.effects.keys(), docs.effects.keys()),
     links: driftBetween(
       staticLinks.map((link) => link.name),
-      dumpLinks.map((link) => link.name).filter((name) => !SPECIAL_SCOPE_PATHS.has(name))
+      dumpLinks.links.map((link) => link.name).filter((name) => !SPECIAL_SCOPE_PATHS.has(name))
     ),
     modifiers: {
       rulesOnly: diff(rules.modifierDecls.keys(), new Set(modifierDocs.modifiers.keys())),
     },
     unknownModifierCategories: modifierJoin.unknownCategories,
+    unknownModifierScopeTokens: modifierJoin.unknownScopeTokens,
     unscopedModifierNames: modifierJoin.unscoped,
     malformedOptions: diagnostics.malformedOptions,
     unknownKeywords: diagnostics.unknownKeywords,
     malformedDocBlocks: [...docs.malformed].sort(),
     malformedModifierBlocks: [...modifierDocs.malformed].sort(),
+    malformedScopeLinkBlocks: [...dumpLinks.malformed].sort(),
+    duplicateDocEntries: [...docs.duplicates].sort(),
+    duplicateModifierEntries: [...modifierDocs.duplicates].sort(),
+    duplicateScopeLinkEntries: [...dumpLinks.duplicates].sort(),
     unknownScopes: describeUnknownScopeReferences(rules, docs, staticLinks, canonicalScopes),
     scopeConflicts: {
       triggers: triggerScopes.conflicts,

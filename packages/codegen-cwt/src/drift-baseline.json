@@ -21,6 +21,7 @@
     ]
   },
   "unknownModifierCategories": [],
+  "unknownModifierScopeTokens": [],
   "unscopedModifierNames": [],
   "malformedOptions": [
     "common/country_types.cwt:323 ## A module controls what code a country will use for a specific system, for instance we can decide to run a completely different economy module that uses cats as main currency ( if such a module exists, that is )",
@@ -30,6 +31,10 @@
   "unknownKeywords": [],
   "malformedDocBlocks": [],
   "malformedModifierBlocks": [],
+  "malformedScopeLinkBlocks": [],
+  "duplicateDocEntries": [],
+  "duplicateModifierEntries": [],
+  "duplicateScopeLinkEntries": [],
   "unknownScopes": ["pop — effects.log:52, triggers.log:73"],
   "scopeResolutions": [
     {
