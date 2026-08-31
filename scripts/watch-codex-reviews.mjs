@@ -9,6 +9,7 @@ const CODEX_SUMMARY_MARKER = "<!-- codex-pull-request-review-summary -->";
 const CODEX_REVIEW_MARKER = "### 💡 Codex Review";
 const DEFAULT_INTERVAL_SECONDS = 30;
 const MAX_TIMER_DELAY_MS = 2_147_483_647;
+const NO_FINDINGS_SETTLE_MS = 60_000;
 
 function isCodexAuthored(value) {
   return value?.user?.login === CODEX_LOGIN;
@@ -104,6 +105,7 @@ export function parsePullRequestReference(reference) {
 /**
  * Derives the current Codex activity and findings from GitHub REST API objects.
  * Human-authored comments and findings from older reviewed commits are ignored.
+ * @param observedAt ISO timestamp used to bound result propagation before reporting no findings.
  */
 export function deriveCodexReviewState(
   pullRequest,
@@ -111,7 +113,8 @@ export function deriveCodexReviewState(
   reviews,
   reviewComments,
   headCommit,
-  reactions = []
+  reactions = [],
+  observedAt
 ) {
   const summaries = issueComments.filter(
     (comment) => isCodexAuthored(comment) && comment.body?.includes(CODEX_SUMMARY_MARKER)
@@ -139,6 +142,18 @@ export function deriveCodexReviewState(
   const failedRows = rows.filter((cells) =>
     /\*\*(?:Failed|Cancelled|Canceled|Error|Timed out)\*\*/iu.test(cells[1] ?? "")
   );
+  const allTerminal =
+    rows.length > 0 &&
+    rows.every((cells) => /\*\*Completed\*\*/iu.test(cells[1] ?? "") || failedRows.includes(cells));
+  if (!allTerminal) {
+    return {
+      pullRequest,
+      status: "running",
+      commits,
+      summaryUpdatedAt: summary.updated_at,
+      findings: [],
+    };
+  }
   if (failedRows.length > 0) {
     return {
       pullRequest,
@@ -149,18 +164,6 @@ export function deriveCodexReviewState(
       findings: [],
     };
   }
-  const completed =
-    rows.length > 0 && rows.every((cells) => /\*\*Completed\*\*/iu.test(cells[1] ?? ""));
-  if (!completed) {
-    return {
-      pullRequest,
-      status: "running",
-      commits,
-      summaryUpdatedAt: summary.updated_at,
-      findings: [],
-    };
-  }
-
   const matchingReviews = reviews.filter(
     (review) =>
       isCodexAuthored(review) &&
@@ -169,6 +172,23 @@ export function deriveCodexReviewState(
       (triggerAt === undefined || compareTimestamps(review.submitted_at, triggerAt) >= 0)
   );
   const review = latestBy(matchingReviews, "submitted_at");
+  const matchingComments =
+    review === undefined
+      ? []
+      : reviewComments
+          .filter(
+            (comment) => isCodexAuthored(comment) && comment.pull_request_review_id === review.id
+          )
+          .sort((left, right) => compareTimestamps(left.created_at, right.created_at));
+  if (review !== undefined && matchingComments.length === 0) {
+    return {
+      pullRequest,
+      status: "settling",
+      commits,
+      summaryUpdatedAt: summary.updated_at,
+      findings: [],
+    };
+  }
   const noFindings = reactions.some(
     (reaction) =>
       isCodexAuthored(reaction) &&
@@ -177,7 +197,13 @@ export function deriveCodexReviewState(
       typeof summary.updated_at === "string" &&
       compareTimestamps(reaction.created_at, summary.updated_at) >= 0
   );
-  if (review === undefined && !noFindings) {
+  const completedAt = Date.parse(summary.updated_at ?? "");
+  const observedTime = Date.parse(observedAt ?? "");
+  const settleWindowElapsed =
+    Number.isFinite(completedAt) &&
+    Number.isFinite(observedTime) &&
+    observedTime - completedAt >= NO_FINDINGS_SETTLE_MS;
+  if (review === undefined && !noFindings && !settleWindowElapsed) {
     return {
       pullRequest,
       status: "settling",
@@ -189,23 +215,18 @@ export function deriveCodexReviewState(
   const findings =
     review === undefined
       ? []
-      : reviewComments
-          .filter(
-            (comment) => isCodexAuthored(comment) && comment.pull_request_review_id === review.id
-          )
-          .sort((left, right) => compareTimestamps(left.created_at, right.created_at))
-          .map((comment) => {
-            if (typeof comment.path !== "string") {
-              throw new Error(`Codex review comment ${comment.id} has no source path.`);
-            }
-            return {
-              id: comment.id,
-              path: comment.path,
-              line: comment.line ?? comment.original_line,
-              body: comment.body ?? "",
-              url: comment.html_url,
-            };
-          });
+      : matchingComments.map((comment) => {
+          if (typeof comment.path !== "string") {
+            throw new Error(`Codex review comment ${comment.id} has no source path.`);
+          }
+          return {
+            id: comment.id,
+            path: comment.path,
+            line: comment.line ?? comment.original_line,
+            body: comment.body ?? "",
+            url: comment.html_url,
+          };
+        });
 
   return {
     pullRequest,
@@ -280,7 +301,16 @@ async function loadCodexReviewState(pullRequest) {
   if (typeof headCommit !== "string") {
     throw new Error(`GitHub returned no head commit for ${pullRequest.label}.`);
   }
-  const status = deriveCodexReviewState(pullRequest, issueComments, [], [], headCommit);
+  const observedAt = new Date().toISOString();
+  const status = deriveCodexReviewState(
+    pullRequest,
+    issueComments,
+    [],
+    [],
+    headCommit,
+    [],
+    observedAt
+  );
   if (status.status !== "settling" && status.status !== "completed") {
     return status;
   }
@@ -296,8 +326,13 @@ async function loadCodexReviewState(pullRequest) {
     reviews,
     reviewComments,
     headCommit,
-    reactions
+    reactions,
+    observedAt
   );
+}
+
+function isTerminal(state) {
+  return state?.status === "completed" || state?.status === "failed";
 }
 
 /**
@@ -317,9 +352,19 @@ export async function watchCodexReviews(pullRequests, options = {}) {
     options.sleep ??
     ((duration) => new Promise((resolveSleep) => setTimeout(resolveSleep, duration)));
   const previous = new Map();
+  const statesByPullRequest = new Map();
 
   while (true) {
-    const states = await Promise.all(pullRequests.map((pullRequest) => loadState(pullRequest)));
+    const activePullRequests = pullRequests.filter(
+      (pullRequest) => !isTerminal(statesByPullRequest.get(pullRequest.label))
+    );
+    const loadedStates = await Promise.all(
+      activePullRequests.map((pullRequest) => loadState(pullRequest))
+    );
+    for (const state of loadedStates) {
+      statesByPullRequest.set(state.pullRequest.label, state);
+    }
+    const states = pullRequests.map((pullRequest) => statesByPullRequest.get(pullRequest.label));
     const changedReports = states
       .map((state) => ({ state, report: formatCodexReviewState(state) }))
       .filter(({ state, report }) => {
@@ -331,9 +376,7 @@ export async function watchCodexReviews(pullRequests, options = {}) {
     if (changedReports.length > 0) {
       write(changedReports.join("\n\n"));
     }
-    const allTerminal = states.every(
-      (state) => state.status === "completed" || state.status === "failed"
-    );
+    const allTerminal = states.every(isTerminal);
     if (options.once === true || allTerminal) {
       return states;
     }

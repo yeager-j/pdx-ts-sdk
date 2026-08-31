@@ -117,14 +117,18 @@ export interface WatchCodexReviewOptions {
 /** Parses a GitHub pull request URL or an `owner/repository#number` reference. */
 export function parsePullRequestReference(reference: string): PullRequestReference;
 
-/** Derives current Codex activity and findings from GitHub REST API objects. */
+/**
+ * Derives current Codex activity and findings from GitHub REST API objects.
+ * @param observedAt ISO timestamp used to bound result propagation before reporting no findings.
+ */
 export function deriveCodexReviewState(
   pullRequest: PullRequestReference,
   issueComments: readonly GitHubComment[],
   reviews: readonly GitHubReview[],
   reviewComments: readonly GitHubComment[],
   headCommit?: string,
-  reactions?: readonly GitHubReaction[]
+  reactions?: readonly GitHubReaction[],
+  observedAt?: string
 ): CodexReviewState;
 
 /** Formats one changed Codex state as concise, agent-readable text. */
