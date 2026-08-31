@@ -119,7 +119,7 @@ export function readVendoredDocDump(): VendoredDocDump {
       triggers: index(docs.triggers, entryBlock),
       effects: index(docs.effects, entryBlock),
       scopes: index(
-        parseScopeLinks(read("scopes.log")).map((link) => [link.name, link] as const),
+        parseScopeLinks(read("scopes.log")).links.map((link) => [link.name, link] as const),
         linkBlock
       ),
     },

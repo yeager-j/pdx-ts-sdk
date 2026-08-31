@@ -137,7 +137,7 @@ export function loadScopeFacts(configRoot: string, docsRoot: string): ScopeFacts
   const triggers = lowerRuleTable(rules.triggers, docs.triggers, emitter, index);
   const effects = lowerRuleTable(rules.effects, docs.effects, emitter, index);
   const dumpLinks = new Map(
-    parseScopeLinks(readFileSync(path.join(docsRoot, "scopes.log"), "utf8")).map((link) => [
+    parseScopeLinks(readFileSync(path.join(docsRoot, "scopes.log"), "utf8")).links.map((link) => [
       link.name,
       link,
     ])

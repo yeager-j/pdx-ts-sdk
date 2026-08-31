@@ -178,6 +178,11 @@ export function compareToBaseline(report: DriftReport, baseline: DriftBaseline):
       baseline.unknownModifierCategories
     ),
     ...describeListDifferences(
+      "unknown modifier scope token",
+      report.unknownModifierScopeTokens,
+      baseline.unknownModifierScopeTokens
+    ),
+    ...describeListDifferences(
       "unscoped modifier name",
       report.unscopedModifierNames,
       baseline.unscopedModifierNames
@@ -201,6 +206,26 @@ export function compareToBaseline(report: DriftReport, baseline: DriftBaseline):
       "malformed modifier doc block",
       report.malformedModifierBlocks,
       baseline.malformedModifierBlocks
+    ),
+    ...describeListDifferences(
+      "malformed scope-link doc block",
+      report.malformedScopeLinkBlocks,
+      baseline.malformedScopeLinkBlocks
+    ),
+    ...describeListDifferences(
+      "duplicate documentation entry",
+      report.duplicateDocEntries,
+      baseline.duplicateDocEntries
+    ),
+    ...describeListDifferences(
+      "duplicate modifier entry",
+      report.duplicateModifierEntries,
+      baseline.duplicateModifierEntries
+    ),
+    ...describeListDifferences(
+      "duplicate scope-link entry",
+      report.duplicateScopeLinkEntries,
+      baseline.duplicateScopeLinkEntries
     ),
     ...describeListDifferences("unknown scope", report.unknownScopes, baseline.unknownScopes),
     ...compareScopeEvidence(report, baseline),
@@ -228,8 +253,13 @@ function readBaseline(): DriftBaseline {
   // Missing join fields represent empty evidence so a newly added join surfaces all current drift.
   return {
     links: { rulesOnly: [], docsOnly: [] },
+    unknownModifierScopeTokens: [],
     malformedDocBlocks: [],
     malformedModifierBlocks: [],
+    malformedScopeLinkBlocks: [],
+    duplicateDocEntries: [],
+    duplicateModifierEntries: [],
+    duplicateScopeLinkEntries: [],
     ...(JSON.parse(readFileSync(BASELINE_PATH, "utf8")) as Partial<DriftBaseline>),
   } as DriftBaseline;
 }

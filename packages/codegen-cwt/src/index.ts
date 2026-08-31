@@ -299,7 +299,7 @@ function emitScriptRules(
   const triggers = emitTriggers(emitter, docs.triggers, loweredTriggers);
   const triggerUsage = emitter.endFile();
 
-  const documentedLinks = new Map(links.map((link) => [link.name, link]));
+  const documentedLinks = new Map(links.links.map((link) => [link.name, link]));
   const classifiedLinks = classifyLinks(emitter, documentedLinks, index);
   const reservedScopeLinkNames = new Set([...triggers.names, ...RESERVED_TRIGGER_EXPORT_NAMES]);
   const scopeLinks = emitScopeLinks(classifiedLinks, index, reservedScopeLinkNames);

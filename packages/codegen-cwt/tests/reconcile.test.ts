@@ -78,7 +78,7 @@ describe("the scope-link join", () => {
   });
 
   it("excludes the dump's special scope references rather than reporting them", () => {
-    const dumpNames = new Set(dumpLinks.map((link) => link.name));
+    const dumpNames = new Set(dumpLinks.links.map((link) => link.name));
     for (const scopePath of SPECIAL_SCOPE_PATHS) {
       expect(dumpNames.has(scopePath)).toBe(true);
       expect(report.links.docsOnly).not.toContain(scopePath);
@@ -115,6 +115,11 @@ describe("the drift gate", () => {
   it("finds no malformed doc-dump blocks in the vendored dumps today", () => {
     expect(report.malformedDocBlocks).toEqual([]);
     expect(report.malformedModifierBlocks).toEqual([]);
+    expect(report.malformedScopeLinkBlocks).toEqual([]);
+    expect(report.duplicateDocEntries).toEqual([]);
+    expect(report.duplicateModifierEntries).toEqual([]);
+    expect(report.duplicateScopeLinkEntries).toEqual([]);
+    expect(report.unknownModifierScopeTokens).toEqual([]);
   });
 
   it("catches a malformed trigger/effect doc block the baseline does not expect", () => {
@@ -133,6 +138,15 @@ describe("the drift gate", () => {
         malformedModifierBlocks: ["modifiers.log:1 made up line"],
       })
     ).toEqual(["  - malformed modifier doc block: modifiers.log:1 made up line"]);
+  });
+
+  it("catches an unknown modifier scope token the baseline does not expect", () => {
+    const modifierCategories = new Map(rules.modifierCategories);
+    modifierCategories.set("Colony", [...rules.modifierCategories.get("Colony")!, "made_up_scope"]);
+    const changed = reconcile({ ...rules, modifierCategories }, docs, modifierDocs, dumpLinks);
+    expect(compareToBaseline(changed, baseline)).toContain(
+      "  + unknown modifier scope token: made_up_scope — modifier_categories.cwt category:Colony"
+    );
   });
 
   it("names a trigger that appeared in only one source", () => {

@@ -57,6 +57,8 @@ export interface ModifierJoin {
   readonly unscoped: readonly string[];
   /** Categories the dump or `modifiers.cwt` name that the category table lacks. */
   readonly unknownCategories: readonly string[];
+  /** Unknown scope tokens in modifier categories, identified by their category. */
+  readonly unknownScopeTokens: readonly string[];
   /** Dynamic modifier families resolved from templates and audited overlays. */
   readonly dynamicFamilies: readonly DynamicModifierFamily[];
   /** Sound scope evidence for modifier categories, used by owned selectors. */
@@ -148,19 +150,23 @@ export function joinModifierScopes(
   canonical: CanonicalScope
 ): ModifierJoin {
   const categoryScopes = new Map<string, "any" | ReadonlySet<string>>();
+  const unknownScopeTokens = new Set<string>();
   for (const [category, tokens] of rules.modifierCategories) {
-    if (tokens.some((token) => UNIVERSAL_SCOPES.has(token))) {
-      categoryScopes.set(category, "any");
-      continue;
-    }
+    let universal = false;
     const scopes = new Set<string>();
     for (const token of tokens) {
-      const scope = canonical(token);
-      if (scope !== null) {
-        scopes.add(scope);
+      if (UNIVERSAL_SCOPES.has(token)) {
+        universal = true;
+        continue;
       }
+      const scope = canonical(token);
+      if (scope === null) {
+        unknownScopeTokens.add(`${token} — modifier_categories.cwt category:${category}`);
+        continue;
+      }
+      scopes.add(scope);
     }
-    categoryScopes.set(category, scopes);
+    categoryScopes.set(category, universal ? "any" : scopes);
   }
 
   const unknownCategories = new Set<string>();
@@ -213,6 +219,7 @@ export function joinModifierScopes(
     unscoped: unscoped.sort(),
     dynamicFamilies: dynamicModifierFamilies(rules, categoryScopes),
     unknownCategories: [...unknownCategories].sort(),
+    unknownScopeTokens: [...unknownScopeTokens].sort(),
     categoryScopes: new Map(
       [...categoryScopes].map(([category, scopes]) => [
         category,

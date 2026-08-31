@@ -21,6 +21,18 @@ const CONFIG = path.join(ROOT, "vendor/cwtools-stellaris-config/config");
 const DOCS = path.join(ROOT, "vendor/cwtools-stellaris-config/script-docs/v4.4.1");
 
 describe("malformed doc-dump blocks carry a re-findable identity", () => {
+  it("records a scope-link block that has no Output Scope line", () => {
+    const links = parseScopeLinks("some_link - A link\nSupported Scopes: country\n");
+    expect(links.links).toEqual([]);
+    expect(links.malformed).toEqual(["scopes.log:1 some_link - A link Supported Scopes: country"]);
+  });
+
+  it("keeps scope-link framing structural on the vendored dump", () => {
+    const links = parseScopeLinks(readFileSync(`${DOCS}/scopes.log`, "utf8"));
+    expect(links.links).toHaveLength(97);
+    expect(links.malformed).toEqual([]);
+  });
+
   it("names a trigger/effect block with no readable heading as triggers.log:<line>", () => {
     const docs = parseTriggerDocs("not a heading at all\nSupported Scopes: country\n", "");
     expect(docs.malformed).toEqual(["triggers.log:1 not a heading at all"]);
@@ -60,6 +72,29 @@ describe("malformed doc-dump blocks carry a re-findable identity", () => {
     );
     expect(docs.malformed).toEqual([]);
     expect(docs.triggers.size).toBe(1);
+  });
+
+  it("records duplicate trigger, effect, modifier, and scope-link names", () => {
+    const docs = parseTriggerDocs(
+      "same_trigger - first\nSupported Scopes: country\n\n" +
+        "same_trigger - later\nSupported Scopes: planet\n",
+      "same_effect - first\nSupported Scopes: country\n\n" +
+        "same_effect - later\nSupported Scopes: planet\n"
+    );
+    const modifiers = parseModifierDocs(
+      "- same_modifier, Category: Pops\n- same_modifier, Category: Colony\n"
+    );
+    const links = parseScopeLinks(
+      "same_link - first\nSupported Scopes: country\nOutput Scope: planet\n\n" +
+        "same_link - later\nSupported Scopes: ship\nOutput Scope: planet\n"
+    );
+
+    expect(docs.duplicates).toEqual([
+      "same_trigger — triggers.log:4",
+      "same_effect — effects.log:4",
+    ]);
+    expect(modifiers.duplicates).toEqual(["same_modifier — modifiers.log:2"]);
+    expect(links.duplicates).toEqual(["same_link — scopes.log:5"]);
   });
 });
 
@@ -104,6 +139,19 @@ describe("a malformed doc-dump block reaches the codegen-time drift gate", () =>
       baseline
     );
     expect(differences.some((line) => line.includes("malformed modifier doc block"))).toBe(true);
+  });
+
+  it("fails compareToBaseline once a scope-link block stops parsing", () => {
+    const corrupted = parseScopeLinks(
+      `${readFileSync(`${DOCS}/scopes.log`, "utf8")}\n` +
+        "truncated_link - this block never closes\n" +
+        "Supported Scopes: country\n"
+    );
+    const differences = compareToBaseline(
+      reconcile(rules, realDocs, modifierDocs, corrupted),
+      baseline
+    );
+    expect(differences.some((line) => line.includes("malformed scope-link doc block"))).toBe(true);
   });
 
   it("fails compareToBaseline once a NEW reference to an already-accepted scope appears", () => {
