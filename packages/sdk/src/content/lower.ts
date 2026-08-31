@@ -26,7 +26,12 @@ import {
 } from "../references.ts";
 import { recordEffects, withScriptCtx } from "../script/effects/recorder.ts";
 import type { AmbientScopeContext, ScriptCtx } from "../script/effects/types.ts";
-import { localizationScalar, refId, type TypedRef } from "../script/scalar.ts";
+import {
+  assertReferenceValue,
+  localizationScalar,
+  refId,
+  type TypedRef,
+} from "../script/scalar.ts";
 import { scriptValueScalar, type ScriptValue, type Trigger } from "../script/trigger-core.ts";
 import {
   ECONOMIC_RESOURCE_OPERATIONS,
@@ -342,6 +347,12 @@ function contentScalar(
     }
     return quote ? quoted(path) : scalar(path);
   }
+  if (field.conversion === "ref") {
+    // `refId` refuses a non-reference on its own; this adds the field name it
+    // has no way to know, so the author reads which member holds the value
+    // rather than only that some reference position did.
+    assertReferenceValue(value, joinPath(ctx?.path ?? "", field.key));
+  }
   const converted = field.conversion === "ref" ? refId(value as TypedRef<string> | string) : value;
   if (
     ctx?.collect !== undefined &&
@@ -554,7 +565,12 @@ export function fieldEntries(
       case "weightedEvents": {
         const arms = value as readonly { weight: number; event?: unknown }[];
         entries.push(
-          weightedEventBlock(field.key, arms, (event) => contentScalar(event, field, false, ctx))
+          weightedEventBlock(
+            field.key,
+            arms,
+            (event) => contentScalar(event, field, false, ctx),
+            `"${joinPath(ctx.path, field.key)}"`
+          )
         );
         break;
       }
