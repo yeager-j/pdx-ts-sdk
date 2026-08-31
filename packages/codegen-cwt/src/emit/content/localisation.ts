@@ -13,10 +13,24 @@ import { Emitter } from "../../render/emitter.ts";
 import type { FieldOmissionRow } from "../../render/field-rows.ts";
 import { member as renderMember } from "../../render/writer.ts";
 
-/** Canonical localisation slots and the declarations collapsed onto them. */
+/** One canonical localisation slot and its resolved authoring requiredness. */
+export interface LocalisationPlanEntry {
+  /** The vendored localisation slot name. */
+  readonly key: string;
+  /** The localisation key pattern. */
+  readonly pattern: string;
+  /** Whether CWT marks the slot optional. */
+  readonly optional: boolean;
+  /** The enclosing CWT subtype, or `null` for a type-level slot. */
+  readonly subtype: string | null;
+  /** Whether the authoring surface requires this slot. */
+  readonly authoringRequired: boolean;
+}
+
+/** Canonical localisation slots and their resolved authoring decisions. */
 export interface LocalisationPlan {
   /** One surviving localisation declaration per generated authoring member. */
-  readonly entries: ContentType["localisation"];
+  readonly entries: readonly LocalisationPlanEntry[];
   /** Duplicate or non-static declarations omitted from the generated surface. */
   readonly aliases: readonly FieldOmissionRow[];
 }
@@ -63,10 +77,7 @@ export function syntheticIdentityLocalisation(typeName: string): ContentType {
  * requiring it — the failure this closes is the SDK writing a raw key to the
  * game with no warning when an author does.
  */
-function conditionalRequirement(
-  type: ContentType,
-  entry: ContentType["localisation"][number]
-): string | null {
+function conditionalRequirement(type: ContentType, entry: LocalisationPlanEntry): string | null {
   if (entry.subtype === null || entry.optional) {
     return null;
   }
@@ -136,7 +147,22 @@ export function planLocalisation(emitter: Emitter, type: ContentType): Localisat
       subtype: null,
     });
   }
-  return { entries: [...byMember.values()], aliases };
+  const entries = [...byMember.values()].map((entry) => {
+    const member = camelCase(entry.key);
+    const requiredKey = `${type.name}.${member}`;
+    const overlayRequired = REQUIRED_LOCALISATION.has(requiredKey);
+    if (overlayRequired) {
+      emitter.overlayAudit.applied("REQUIRED_LOCALISATION", requiredKey);
+    }
+    return {
+      key: entry.key,
+      pattern: entry.pattern,
+      optional: entry.optional,
+      subtype: entry.subtype,
+      authoringRequired: entry.required || overlayRequired,
+    };
+  });
+  return { entries, aliases };
 }
 
 /** Renders a content type's localisation slots as generated interface members. */
@@ -148,17 +174,11 @@ export function localisationMembers(
   return plan.entries
     .map((entry) => {
       const field = camelCase(entry.key);
-      const requiredKey = `${type.name}.${field}`;
-      const overlayRequired = REQUIRED_LOCALISATION.has(requiredKey);
-      if (overlayRequired) {
-        emitter.overlayAudit.applied("REQUIRED_LOCALISATION", requiredKey);
-      }
-      const required = entry.required || overlayRequired;
       const pattern = entry.pattern.replace("$", "<id>");
       return renderMember({
         name: field,
         type: emitter.use("LocalizedText"),
-        optional: !required,
+        optional: !entry.authoringRequired,
         docs: [
           `Display text emitted to localization under \`${pattern}\`.`,
           "A bare string is the English shorthand.",
@@ -222,12 +242,6 @@ export function localisationMetadata(
     plan.entries
       .map((entry) => {
         const member = camelCase(entry.key);
-        const requiredKey = `${type.name}.${member}`;
-        const overlayRequired = REQUIRED_LOCALISATION.has(requiredKey);
-        if (overlayRequired) {
-          emitter.overlayAudit.applied("REQUIRED_LOCALISATION", requiredKey);
-        }
-        const required = entry.required || overlayRequired;
         const conditional = conditionalRequirement(type, entry);
         const requiredUnless =
           conditional === null ? "" : `, requiredUnless: ${JSON.stringify(conditional)}`;
@@ -236,7 +250,7 @@ export function localisationMetadata(
           pointer === undefined ? "" : `, pointerMember: ${JSON.stringify(pointer)}`;
         return (
           `  { member: ${JSON.stringify(member)}, pattern: ${JSON.stringify(entry.pattern)}, ` +
-          `required: ${required}${requiredUnless}${pointerMember} },\n`
+          `required: ${entry.authoringRequired}${requiredUnless}${pointerMember} },\n`
         );
       })
       .join("") +
