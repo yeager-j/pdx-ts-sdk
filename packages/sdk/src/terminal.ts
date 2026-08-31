@@ -61,6 +61,14 @@ interface TerminalTask {
  * to `1`. The function resolves to `undefined` after a reported failure so Node
  * does not print the same error and stack a second time.
  *
+ * The preview gallery is a secondary artifact written after the mod itself is
+ * already on disk, so its failure is reported as its own: the summary says the
+ * mod was built and the previews were not, `process.exitCode` is `1` because
+ * something the caller asked for did not happen, and the returned
+ * {@link WriteReport} is still the report of the write that did succeed.
+ * Returning `undefined` there would have denied a materialization that had
+ * already been committed.
+ *
  * @example
  * ```ts
  * await runBuild(buildTheMod(), {
@@ -87,27 +95,69 @@ export async function runBuild(
     const report = await write(options.outDir, rendered);
     task.message(`${report.status === "written" ? "Wrote" : "Checked"} ${report.outDir}`);
 
-    const previews =
-      options.previewsDir === undefined
-        ? undefined
-        : await writeSystemPreviews(options.previewsDir, mod);
-    if (previews !== undefined) {
-      task.message(`Rendered ${previews.previews.length} solar-system previews`);
-    }
+    // Everything from here on runs with the mod already materialized, so a
+    // failure below is no longer a build failure and must not be reported as
+    // one — `outDir` holds the new mod either way.
+    const previews = await materializePreviews(options, mod, task);
 
-    task.success(buildSummary(mod, rendered.size, report));
+    task.success(buildSummary(mod, rendered.size, report, previews));
     reportModWarnings(mod.warnings, context);
     reportMaterializationDetails(report, context);
-    if (previews !== undefined) {
-      reportPreviewDiagnostics(previews, context);
+    if (previews?.kind === "written") {
+      reportPreviewDiagnostics(previews.report, context);
     }
     log.info(`Output: ${report.outDir}`, { output: context.output });
+    if (previews?.kind === "failed") {
+      // Worded off the write's own status: a repeated build leaves the mod
+      // materialized without writing anything, and claiming it "was written"
+      // would be the same kind of inaccuracy this change exists to remove.
+      const materialization =
+        report.status === "written"
+          ? "The mod was written"
+          : "The mod is materialized and up to date";
+      log.error(`${materialization}; the solar-system previews were not.`, {
+        output: context.output,
+      });
+      reportFailure(previews.error, context);
+      process.exitCode = 1;
+    }
     return report;
   } catch (error) {
     task.error("Build failed");
     reportFailure(error, context);
     process.exitCode = 1;
     return undefined;
+  }
+}
+
+/** The outcome of the optional preview pass, or `undefined` when none was asked for. */
+type PreviewOutcome =
+  | { readonly kind: "written"; readonly report: SystemPreviewReport }
+  | { readonly kind: "failed"; readonly error: unknown };
+
+/**
+ * Writes the preview gallery, catching its failure rather than letting it join
+ * the build's own.
+ *
+ * The catch is what separates the two commits. Previews are materialized after
+ * the mod, so one `try` around both reported a preview fault as "Build failed"
+ * and returned `undefined` while `outDir` already held the new mod — the
+ * interface said nothing had happened, and the filesystem said otherwise.
+ */
+async function materializePreviews(
+  options: RunBuildOptions,
+  mod: PureMod,
+  task: TerminalTask
+): Promise<PreviewOutcome | undefined> {
+  if (options.previewsDir === undefined) {
+    return undefined;
+  }
+  try {
+    const report = await writeSystemPreviews(options.previewsDir, mod);
+    task.message(`Rendered ${report.previews.length} solar-system previews`);
+    return { kind: "written", report };
+  } catch (error) {
+    return { kind: "failed", error };
   }
 }
 
@@ -213,9 +263,18 @@ function reportRenderedPaths(
   }
 }
 
-function buildSummary(mod: PureMod, fileCount: number, report: WriteReport): string {
+function buildSummary(
+  mod: PureMod,
+  fileCount: number,
+  report: WriteReport,
+  previews: PreviewOutcome | undefined
+): string {
   const verb = report.status === "written" ? "Built" : "Already up to date";
-  return `${verb} ${mod.config.name} · ${count(fileCount, "file")} · ${assetSummary(mod)}`;
+  const summary = `${verb} ${mod.config.name} · ${count(fileCount, "file")} · ${assetSummary(mod)}`;
+  // The task still succeeded — this line reports the write, which happened.
+  // What did not happen is named rather than left to the reader to infer from
+  // an absent preview count.
+  return previews?.kind === "failed" ? `${summary} · previews failed` : summary;
 }
 
 function installSummary(mod: PureMod, report: InstallReport): string {

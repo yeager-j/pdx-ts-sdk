@@ -19,7 +19,10 @@ import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { resolveConfig, type ModConfig } from "../../sdk/src/compiler/config.ts";
-import { PROJECT_LAYOUT_FIELDS as SDK_PROJECT_LAYOUT_FIELDS } from "../../sdk/src/reference.ts";
+import {
+  PROJECT_LAYOUT_FIELDS as SDK_PROJECT_LAYOUT_FIELDS,
+  PROJECT_MOD_FIELDS as SDK_PROJECT_MOD_FIELDS,
+} from "../../sdk/src/reference.ts";
 import {
   findManifest,
   ManifestError,
@@ -402,6 +405,25 @@ describe("parseManifest", () => {
         description: authoritative.description,
         pattern: authoritative.pattern.source,
         error: authoritative.patternError("../invalid"),
+      });
+    }
+  });
+
+  it("keeps the standalone CLI projection equal to the SDK launcher-config authority", () => {
+    // The SDK parses this same half of the manifest at its own door, when a
+    // build script hands `createModProject` an imported JSON file. Two parsers
+    // reading one file must agree on which fields exist and what shape each
+    // holds, or a manifest this CLI wrote is one the SDK refuses (SDK-328).
+    expect(Object.keys(PROJECT_MOD_FIELDS)).toEqual(Object.keys(SDK_PROJECT_MOD_FIELDS));
+
+    for (const fieldName of Object.keys(PROJECT_MOD_FIELDS) as Array<
+      keyof typeof PROJECT_MOD_FIELDS
+    >) {
+      const projected = PROJECT_MOD_FIELDS[fieldName];
+      const authoritative = SDK_PROJECT_MOD_FIELDS[fieldName];
+      expect({ kind: projected.kind, required: projected.required }).toEqual({
+        kind: authoritative.kind,
+        required: authoritative.required,
       });
     }
   });

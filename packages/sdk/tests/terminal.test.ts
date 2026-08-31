@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { Writable } from "node:stream";
@@ -97,6 +97,79 @@ describe("terminal build and install runners", () => {
       .find((line) => line.includes("unresolved-visual"));
     expect(infoLine).toContain("●");
     expect(infoLine).not.toContain("▲");
+  });
+
+  it("reports a preview failure as its own, with the mod already written", async () => {
+    // A regular file where the previews directory should be: the gallery's
+    // own `mkdir` refuses it, and it refuses *after* the mod has been
+    // materialized, which is the case that used to be reported as a total
+    // build failure with `outDir` already holding the new mod (SDK-329).
+    const outDir = temporaryDirectory("terminal-preview-failure-build-");
+    const previewsDir = path.join(temporaryDirectory("terminal-preview-failure-"), "previews");
+    writeFileSync(previewsDir, "not a directory", "utf8");
+    const terminal = captureTerminal();
+
+    const report = await runBuild(compiledModWithPreviewInfo(), {
+      outDir,
+      previewsDir,
+      output: terminal.output,
+      verbose: false,
+    });
+
+    // The write happened, so the report describes it rather than being denied.
+    expect(report?.status).toBe("written");
+    // `outDir` is reported resolved, so the identity claim is the basename.
+    expect(report?.outDir).toContain(path.basename(outDir));
+    expect(existsSync(path.join(outDir, "descriptor.mod"))).toBe(true);
+
+    // What failed is named, and what did not fail is not blamed.
+    expect(terminal.text()).toContain("previews failed");
+    expect(terminal.text()).toContain("The mod was written; the solar-system previews were not.");
+    expect(terminal.text()).not.toContain("Build failed");
+
+    // Something the caller asked for did not happen, so the command still fails.
+    expect(process.exitCode).toBe(1);
+  });
+
+  it("does not claim an unchanged mod was written when previews fail", async () => {
+    // The second build into the same directory writes nothing, so the mod is
+    // materialized without having been written this time round. Saying it
+    // "was written" would be the inaccuracy this change exists to remove.
+    const outDir = temporaryDirectory("terminal-preview-unchanged-build-");
+    const previewsDir = path.join(temporaryDirectory("terminal-preview-unchanged-"), "previews");
+    writeFileSync(previewsDir, "not a directory", "utf8");
+    const options = { outDir, previewsDir, verbose: false };
+
+    await runBuild(compiledModWithPreviewInfo(), { ...options, output: captureTerminal().output });
+    process.exitCode = undefined;
+    const terminal = captureTerminal();
+    const report = await runBuild(compiledModWithPreviewInfo(), {
+      ...options,
+      output: terminal.output,
+    });
+
+    expect(report?.status).toBe("unchanged");
+    expect(terminal.text()).toContain("The mod is materialized and up to date");
+    expect(terminal.text()).not.toContain("The mod was written");
+    expect(terminal.text()).toContain("previews failed");
+    expect(process.exitCode).toBe(1);
+  });
+
+  it("still fails the whole build when the write itself fails", async () => {
+    const terminal = captureTerminal();
+    const outDir = path.join(temporaryDirectory("terminal-write-failure-"), "out");
+    writeFileSync(outDir, "not a directory", "utf8");
+
+    const report = await runBuild(compiledModWithPreviewInfo(), {
+      outDir,
+      previewsDir: temporaryDirectory("terminal-write-failure-previews-"),
+      output: terminal.output,
+      verbose: false,
+    });
+
+    expect(report).toBeUndefined();
+    expect(terminal.text()).toContain("Build failed");
+    expect(process.exitCode).toBe(1);
   });
 
   it("always shows definite preview findings in compact output", async () => {
