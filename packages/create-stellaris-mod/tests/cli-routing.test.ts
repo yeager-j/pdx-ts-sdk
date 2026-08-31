@@ -292,6 +292,32 @@ describe("init", () => {
       rmSync(root, { recursive: true, force: true });
     }
   });
+
+  it.each([
+    ["prefix", ["--prefix", "My-Mod"], "lowercase snake_case"],
+    ["name", ["--name", "My\nMod"], "newline"],
+    ["tags", ["--tags", 'Technology,Bad"Tag'], "tags[1]"],
+  ] as const)("rejects an SDK-invalid %s before writing", async (_field, flags, message) => {
+    const root = realpathSync.native(
+      mkdtempSync(path.join(tmpdir(), "create-stellaris-mod-config-"))
+    );
+    try {
+      const { io, out, err } = capture(root);
+      expect(await main(["--yes", "--no-git", "--no-install", ...flags, "my-mod"], io)).toBe(1);
+      expect(err()).toContain(message);
+      expect(out()).toBe("");
+      expect(existsSync(path.join(root, "my-mod"))).toBe(false);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects extra directories instead of silently ignoring them", async () => {
+    const { io, out, err } = capture();
+    expect(await main(["init", "one", "two", "--yes"], io)).toBe(1);
+    expect(err()).toContain("init takes at most one directory");
+    expect(out()).toBe("");
+  });
 });
 
 describe("dependency install recovery", () => {
@@ -419,9 +445,7 @@ describe("dependency install recovery", () => {
 
 /**
  * init's promise is that it never writes a Project Manifest `generate` cannot
- * read. `supportedVersion` is the one field an author can hand the CLI that
- * both `parseManifest` and the SDK's `resolveConfig` would refuse, so it is
- * checked during resolution — before anything reaches the disk.
+ * read. SDK configuration is checked during resolution, before disk writes.
  */
 describe("the launcher version init writes", () => {
   let root: string | undefined;

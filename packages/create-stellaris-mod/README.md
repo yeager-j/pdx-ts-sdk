@@ -9,7 +9,7 @@ the generated mod.
 
 ## Requirements and quick start
 
-The CLI requires Node.js 20 or newer. Generated projects require Node.js 22.18
+The CLI requires Node.js 22 or newer. Generated projects require Node.js 22.18
 or newer because their scripts execute erasable TypeScript directly.
 
 ```bash

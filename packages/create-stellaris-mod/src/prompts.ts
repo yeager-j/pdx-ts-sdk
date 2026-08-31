@@ -8,8 +8,9 @@
  */
 
 import { confirm, intro, isCancel, log, note, text } from "@clack/prompts";
+import { resolveConfig, type ResolvedModConfig } from "@pdx-ts/sdk/config";
 
-import { isValidPrefix, toDisplayName, toPrefix, toTags } from "./derive.ts";
+import { toDisplayName, toPrefix, toTags } from "./derive.ts";
 import { detectInstall, isInstall, readGameVersion, supportedVersionFor } from "./detect.ts";
 import { detectPackageManager } from "./exec.ts";
 import {
@@ -18,26 +19,17 @@ import {
   VERIFIED_SUPPORTED_VERSION,
 } from "./generated/verified-build.ts";
 import type { CliIo } from "./io.ts";
-import { SUPPORTED_VERSION_PATTERN } from "./manifest.ts";
 import type { ParsedArgv, Resolved } from "./options.ts";
 import { CancelledError } from "./terminal.ts";
 
 const INSTALL_SENTINEL = INSTALL_SENTINEL_PATH_SEGMENTS.join("/");
 
-/**
- * Why a name may not contain a double quote: it is written verbatim into
- * `descriptor.mod` as `name="<name>"`, and PDXScript has no escape for one, so
- * the launcher silently refuses the malformed result. `createMod` rejects it too
- * — this is the same rule said early, where the author can still retype.
- */
+/** Reports why a mod name cannot be used by a generated SDK project. */
 export function nameProblem(name: string): string | undefined {
   if (name.trim() === "") {
     return "A mod name cannot be empty.";
   }
-  if (name.includes('"')) {
-    return "A mod name cannot contain a double quote — the launcher descriptor has no way to escape it.";
-  }
-  return undefined;
+  return sdkConfigProblem({ name });
 }
 
 /**
@@ -51,15 +43,39 @@ export function nameProblem(name: string): string | undefined {
  * launcher would silently reject.
  */
 export function supportedVersionProblem(value: string): string | undefined {
-  if (SUPPORTED_VERSION_PATTERN.test(value)) {
+  return sdkConfigProblem({ supportedVersion: value });
+}
+
+function prefixProblem(prefix: string): string | undefined {
+  return sdkConfigProblem({ prefix });
+}
+
+function sdkConfigProblem(
+  fields: Partial<Pick<ResolvedModConfig, "name" | "prefix" | "supportedVersion">>
+): string | undefined {
+  try {
+    resolveConfig({
+      name: fields.name ?? "My Mod",
+      prefix: fields.prefix ?? "my_mod",
+      supportedVersion: fields.supportedVersion ?? "v4.4.*",
+    });
     return undefined;
+  } catch (error) {
+    return error instanceof Error ? error.message : String(error);
   }
-  return (
-    "A supported version must be a launcher version pattern — one to three dot-separated " +
-    'parts, each a number or "*", such as "v4.4.*", "v4.*" or "v4.4.6". It is written ' +
-    "verbatim into descriptor.mod, a format with no way to say anything else, and the " +
-    "launcher answers an unreadable one by refusing the mod without saying why."
-  );
+}
+
+function resolvedModConfig(
+  name: string,
+  prefix: string,
+  supportedVersion: string,
+  tags: readonly string[]
+): ResolvedModConfig {
+  const problem = nameProblem(name);
+  if (problem !== undefined) {
+    throw new Error(problem);
+  }
+  return resolveConfig({ name, prefix, supportedVersion, tags });
 }
 
 /**
@@ -128,13 +144,19 @@ export function resolveNonInteractive(argv: ParsedArgv, targetDir: string): Reso
     checkedSupportedVersionFlag(flag(values, "supported-version")) ??
     supportedVersionFor(gameVersion ?? VERIFIED_STELLARIS_BUILD) ??
     VERIFIED_SUPPORTED_VERSION;
+  const config = resolvedModConfig(
+    name,
+    flag(values, "prefix") ?? toPrefix(name),
+    supportedVersion,
+    toTags(flag(values, "tags"))
+  );
 
   return {
     targetDir,
-    name,
-    prefix: flag(values, "prefix") ?? toPrefix(name),
-    supportedVersion,
-    tags: toTags(flag(values, "tags")),
+    name: config.name,
+    prefix: config.prefix,
+    supportedVersion: config.supportedVersion,
+    tags: config.tags ?? [],
     installPath: detected?.installPath,
     installPathIsExplicit: explicitPath !== undefined && explicitPath !== "",
     gameVersion,
@@ -187,10 +209,7 @@ export async function resolveInteractive(argv: ParsedArgv, io: CliIo): Promise<R
         message: "Mod prefix? Every id and filename starts with it.",
         placeholder: toPrefix(name),
         defaultValue: toPrefix(name),
-        validate: (value = "") =>
-          isValidPrefix(value)
-            ? undefined
-            : `"${value}" must be lowercase snake_case, starting with a letter ([a-z][a-z0-9_]*).`,
+        validate: (value = "") => prefixProblem(value),
       })
     );
 
@@ -234,13 +253,14 @@ export async function resolveInteractive(argv: ParsedArgv, io: CliIo): Promise<R
   const shouldInstall =
     boolFlag(values, "install") ??
     unwrap(await confirm({ ...streams, message: `Install dependencies with ${packageManager}?` }));
+  const config = resolvedModConfig(name, prefix, supportedVersion, toTags(flag(values, "tags")));
 
   return {
     targetDir,
-    name,
-    prefix,
-    supportedVersion,
-    tags: toTags(flag(values, "tags")),
+    name: config.name,
+    prefix: config.prefix,
+    supportedVersion: config.supportedVersion,
+    tags: config.tags ?? [],
     installPath: install?.installPath,
     installPathIsExplicit: install?.isExplicit ?? false,
     gameVersion: install?.gameVersion,

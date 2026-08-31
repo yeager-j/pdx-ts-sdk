@@ -57,7 +57,14 @@ export {
   type ReplacementLocalizationItem,
 } from "./authoring/localization.ts";
 export { external, type ExternalReference } from "./authoring/external.ts";
-export type { BuildOptions, ModConfig } from "./compiler/config.ts";
+export {
+  DESCRIPTOR_VALUE_PATTERN,
+  MOD_PREFIX_PATTERN,
+  resolveConfig,
+  type BuildOptions,
+  type ModConfig,
+  type ResolvedModConfig,
+} from "./compiler/config.ts";
 export type {
   CompiledFeatureInput,
   CompiledVanillaInput,

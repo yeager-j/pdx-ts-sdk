@@ -7,7 +7,11 @@ import semver from "semver";
 
 /** The public packages that share one SDK release coordinate. */
 export const RELEASE_PACKAGES = [
-  { name: "create-stellaris-mod", directory: "packages/create-stellaris-mod" },
+  {
+    name: "create-stellaris-mod",
+    directory: "packages/create-stellaris-mod",
+    dependencies: [{ section: "dependencies", name: "@pdx-ts/sdk" }],
+  },
   { name: "@pdx-ts/pdxscript", directory: "packages/pdxscript" },
   {
     name: "@pdx-ts/sdk",

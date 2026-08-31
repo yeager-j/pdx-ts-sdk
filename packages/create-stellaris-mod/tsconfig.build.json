@@ -6,9 +6,9 @@
   // consumed through a workspace symlink, whose realpath escapes node_modules,
   // which is why they can ship raw `.ts` and this cannot.
   //
-  // Compiling is also what lets `engines` say `>=20` instead of `>=22.18`: the
-  // CLI stops needing type stripping, and only the project it generates still
-  // does — a requirement it states in its own package.json.
+  // Compiling also keeps the CLI below the generated project's `>=22.18`
+  // requirement: the CLI stops needing type stripping. Its SDK dependency sets
+  // the remaining Node 22 floor.
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "noEmit": false,

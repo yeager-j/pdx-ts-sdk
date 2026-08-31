@@ -94,3 +94,14 @@ describe("building without an install", () => {
     );
   });
 });
+
+describe("SDK-valid flags", () => {
+  it.each([
+    ["name", argv.with(2, "My\nMod"), "newline"],
+    ["prefix", argv.with(4, "My-Mod"), "lowercase snake_case"],
+  ])("refuses an invalid supplied %s after skipping its prompt", async (_field, args, message) => {
+    await expect(resolveInteractive(parseArgv(args), capture("/tmp", true).io)).rejects.toThrow(
+      message
+    );
+  });
+});

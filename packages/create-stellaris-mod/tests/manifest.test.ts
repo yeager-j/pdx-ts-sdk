@@ -7,12 +7,9 @@
  * through both and their accept/reject verdicts must match exactly — a schema
  * that is merely *nearly* right shows an in-editor error on a manifest the CLI
  * takes, or worse, stays silent on one it refuses. A parsed config then has a
- * one-way, type-only adapter into the SDK's `ModConfig`; the scaffolder does not
- * claim the reverse conversion or acquire a runtime SDK dependency.
- *
- * ajv is a devDependency and stays one: the runtime adapter is hand-rolled
- * because this package has no runtime dependency on the SDK and wants none on a
- * validator either.
+ * one-way adapter into the SDK's `ModConfig`; the scaffolder does not claim the
+ * reverse conversion. SDK configuration rules use the SDK's runtime validator;
+ * ajv stays a devDependency because only tests execute the editor schema.
  */
 
 import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
@@ -150,6 +147,21 @@ const CORPUS: readonly Case[] = [
   },
   { name: "a numeric name", bytes: withMod({ ...MINIMAL.mod.my_mod, name: 7 }), valid: false },
   {
+    name: "a name with a newline",
+    bytes: withMod({ ...MINIMAL.mod.my_mod, name: "My\nMod" }),
+    valid: false,
+  },
+  {
+    name: "a name with a NUL byte",
+    bytes: withMod({ ...MINIMAL.mod.my_mod, name: "My\0Mod" }),
+    valid: false,
+  },
+  {
+    name: "a name with a double quote",
+    bytes: withMod({ ...MINIMAL.mod.my_mod, name: 'My "Mod"' }),
+    valid: false,
+  },
+  {
     name: "a numeric version",
     bytes: withMod({ ...MINIMAL.mod.my_mod, version: 1 }),
     valid: false,
@@ -167,6 +179,11 @@ const CORPUS: readonly Case[] = [
   {
     name: "a tag that is not a string",
     bytes: withMod({ ...MINIMAL.mod.my_mod, tags: ["Technologies", 7] }),
+    valid: false,
+  },
+  {
+    name: "a tag with a carriage return",
+    bytes: withMod({ ...MINIMAL.mod.my_mod, tags: ["Technology\r"] }),
     valid: false,
   },
   {
@@ -447,13 +464,8 @@ describe("findManifest", () => {
 });
 
 /**
- * The two grammars this module restates are the SDK's, and a restatement is
- * only safe when something checks it. `SUPPORTED_VERSION_PATTERN` is not
- * exported from the SDK, so this compares *behavior* rather than regex source:
- * every sample goes through `resolveConfig` — the real validator a scaffolded
- * project's build runs — and through `parseManifest`, and the two must reach
- * the same verdict. Widening or tightening the SDK's grammar breaks this test
- * rather than a stranger's project.
+ * The manifest parser delegates these final configuration decisions to the SDK.
+ * This corpus keeps that boundary explicit and checks the schema projection too.
  */
 describe("the grammars restated from the SDK", () => {
   const SAMPLES = [
@@ -540,7 +552,7 @@ function parses(bytes: string): boolean {
 describe("the manifest init writes", () => {
   const resolved: Resolved = {
     targetDir: "/tmp/my-mod",
-    name: 'The "Real" Mod',
+    name: "The Real Mod",
     prefix: "my_mod",
     supportedVersion: "v4.4.*",
     tags: ["Technologies"],
@@ -562,7 +574,7 @@ describe("the manifest init writes", () => {
     const manifest = parseManifest(manifestJson(resolved), SOURCE);
     expect(manifest.prefix).toBe("my_mod");
     expect(manifest.config).toEqual({
-      name: 'The "Real" Mod',
+      name: "The Real Mod",
       version: "0.1.0",
       supportedVersion: "v4.4.*",
       tags: ["Technologies"],
