@@ -46,6 +46,18 @@ function latestBy(items, field) {
   return [...items].sort((left, right) => compareTimestamps(right[field], left[field]))[0];
 }
 
+function latestReviewTriggerAt(issueComments) {
+  const trigger = latestBy(
+    issueComments.filter(
+      (comment) =>
+        !isCodexAuthored(comment) &&
+        /(?:^|\s)@codex\s+(?:security\s+)?review\b/iu.test(comment.body ?? "")
+    ),
+    "created_at"
+  );
+  return trigger?.created_at;
+}
+
 /** Parses a GitHub pull request URL or an `owner/repository#number` reference. */
 export function parsePullRequestReference(reference) {
   const shorthand = /^([^/\s]+)\/([^/#\s]+)#([1-9]\d*)$/u.exec(reference);
@@ -111,11 +123,16 @@ export function deriveCodexReviewState(
 
   const rows = reviewRows(summary.body ?? "");
   const commits = commitsFromRows(rows);
-  if (headCommit !== undefined && !commits.some((commit) => headCommit.startsWith(commit))) {
+  const triggerAt = latestReviewTriggerAt(issueComments);
+  const staleAttempt =
+    typeof triggerAt === "string" && compareTimestamps(summary.updated_at, triggerAt) < 0;
+  const staleHead =
+    headCommit !== undefined && !commits.some((commit) => headCommit.startsWith(commit));
+  if (staleAttempt || staleHead) {
     return {
       pullRequest,
       status: "waiting",
-      commits: [headCommit.slice(0, 7)],
+      commits: headCommit === undefined ? commits : [headCommit.slice(0, 7)],
       findings: [],
     };
   }
@@ -148,7 +165,8 @@ export function deriveCodexReviewState(
     (review) =>
       isCodexAuthored(review) &&
       review.body?.includes(CODEX_REVIEW_MARKER) &&
-      commits.some((commit) => review.commit_id?.startsWith(commit))
+      commits.some((commit) => review.commit_id?.startsWith(commit)) &&
+      (triggerAt === undefined || compareTimestamps(review.submitted_at, triggerAt) >= 0)
   );
   const review = latestBy(matchingReviews, "submitted_at");
   const noFindings = reactions.some(
@@ -288,7 +306,7 @@ async function loadCodexReviewState(pullRequest) {
  */
 export async function watchCodexReviews(pullRequests, options = {}) {
   const intervalMs = options.intervalMs ?? DEFAULT_INTERVAL_SECONDS * 1_000;
-  if (!Number.isFinite(intervalMs) || intervalMs <= 0 || intervalMs > MAX_TIMER_DELAY_MS) {
+  if (!Number.isFinite(intervalMs) || intervalMs < 1 || intervalMs > MAX_TIMER_DELAY_MS) {
     throw new Error(
       `Polling interval must be between 1 and ${MAX_TIMER_DELAY_MS} milliseconds; received ${String(intervalMs)}.`
     );

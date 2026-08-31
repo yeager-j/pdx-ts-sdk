@@ -165,6 +165,43 @@ describe("Codex review polling", () => {
     ).toMatchObject({ status: "completed", findings: [] });
   });
 
+  it("does not reuse a review from before a same-head review request", () => {
+    const completedSummary = summary("✅ **Completed**");
+    const trigger: GitHubComment = {
+      id: 2,
+      user: { login: "reviewer" },
+      body: "@codex review",
+      created_at: "2026-08-31T00:08:35Z",
+    };
+    const priorReview: GitHubReview = {
+      id: 11,
+      user: codex,
+      submitted_at: "2026-08-31T00:08:29Z",
+      commit_id: "e363bfad81490a55614e2f3966c1cbbe3e595029",
+      body: "### 💡 Codex Review",
+    };
+    const headCommit = "e363bfad81490a55614e2f3966c1cbbe3e595029";
+
+    expect(
+      deriveCodexReviewState(
+        pullRequest,
+        [completedSummary, trigger],
+        [priorReview],
+        [],
+        headCommit
+      )
+    ).toMatchObject({ status: "waiting" });
+    expect(
+      deriveCodexReviewState(
+        pullRequest,
+        [{ ...completedSummary, updated_at: "2026-08-31T00:08:40Z" }, trigger],
+        [priorReview],
+        [],
+        headCommit
+      )
+    ).toMatchObject({ status: "settling" });
+  });
+
   it("rejects a malformed inline finding without a path", () => {
     expect(() =>
       deriveCodexReviewState(
@@ -252,6 +289,17 @@ describe("Codex review polling", () => {
     await expect(
       watchCodexReviews([pullRequest], {
         intervalMs: Number.NaN,
+        loadState: async () => ({
+          pullRequest,
+          status: "completed",
+          commits: [],
+          findings: [],
+        }),
+      })
+    ).rejects.toThrow("Polling interval must be between");
+    await expect(
+      watchCodexReviews([pullRequest], {
+        intervalMs: 0.5,
         loadState: async () => ({
           pullRequest,
           status: "completed",
