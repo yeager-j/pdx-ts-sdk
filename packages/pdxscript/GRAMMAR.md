@@ -143,6 +143,11 @@ An unreadable region body is *not* an error — it is what `param-text` is
 for. The distinction is that the region's own delimiters are the file's
 structure, while what sits between them is the call site's.
 
+That fallback is for syntax alone. `param-text` is a claim that the body is
+not a balanced item sequence, so only a syntax failure may produce one: a
+body that reaches the depth guard is refused like any other, and a defect in
+this package is raised rather than dressed up as a region with no tree.
+
 ## Serialization
 
 One canonical rendering; the round-trip claim is semantic (identical tree),
