@@ -46,6 +46,27 @@ describe("Codex review polling", () => {
     ).toMatchObject({ status: "running", commits: ["e363bfa"] });
   });
 
+  it("waits for the current head and stops on terminal failure", () => {
+    expect(
+      deriveCodexReviewState(
+        pullRequest,
+        [summary("✅ **Completed**")],
+        [],
+        [],
+        "bbbbbbb000000000000000000000000000000000"
+      )
+    ).toMatchObject({ status: "waiting", commits: ["bbbbbbb"] });
+    expect(
+      deriveCodexReviewState(
+        pullRequest,
+        [summary("❌ **Failed**")],
+        [],
+        [],
+        "e363bfa000000000000000000000000000000000"
+      )
+    ).toMatchObject({ status: "failed", failure: "❌ **Failed**" });
+  });
+
   it("links completed findings to the latest matching Codex review", () => {
     const reviews: GitHubReview[] = [
       {
@@ -115,6 +136,25 @@ describe("Codex review polling", () => {
     );
   });
 
+  it("rejects a malformed inline finding without a path", () => {
+    expect(() =>
+      deriveCodexReviewState(
+        pullRequest,
+        [summary("✅ **Completed**")],
+        [
+          {
+            id: 11,
+            user: codex,
+            submitted_at: "2026-08-31T00:08:29Z",
+            commit_id: "e363bfad81490a55614e2f3966c1cbbe3e595029",
+            body: "### 💡 Codex Review",
+          },
+        ],
+        [{ id: 21, user: codex, pull_request_review_id: 11, body: "Finding" }]
+      )
+    ).toThrow("Codex review comment 21 has no source path");
+  });
+
   it("does not write unchanged polls and stops after completion", async () => {
     const running: CodexReviewState = {
       pullRequest,
@@ -123,7 +163,7 @@ describe("Codex review polling", () => {
       findings: [],
     };
     const completed: CodexReviewState = { ...running, status: "completed" };
-    const observed = [running, running, completed];
+    const observed = [running, { ...running, summaryUpdatedAt: "2026-08-31T00:08:34Z" }, completed];
     const output: string[] = [];
     let polls = 0;
 
@@ -177,5 +217,19 @@ describe("Codex review polling", () => {
     expect(output[1]).toBe(
       "[yeager-j/pdx-ts-sdk#278] Codex review completed for aaaaaaa with no findings."
     );
+  });
+
+  it("rejects intervals that Node would coerce to a tight polling loop", async () => {
+    await expect(
+      watchCodexReviews([pullRequest], {
+        intervalMs: Number.NaN,
+        loadState: async () => ({
+          pullRequest,
+          status: "completed",
+          commits: [],
+          findings: [],
+        }),
+      })
+    ).rejects.toThrow("Polling interval must be between");
   });
 });

@@ -31,43 +31,66 @@ export interface CodexReviewState {
   /** Pull request being observed. */
   readonly pullRequest: PullRequestReference;
   /** Current lifecycle state reported by the Codex summary comment. */
-  readonly status: "waiting" | "running" | "completed";
+  readonly status: "waiting" | "running" | "completed" | "failed";
   /** Commit abbreviations listed in the current Codex status table. */
   readonly commits: readonly string[];
   /** Last update time of the Codex status comment. */
   readonly summaryUpdatedAt?: string;
   /** Matching GitHub review ID when Codex posted findings. */
   readonly reviewId?: number;
+  /** Terminal status text when Codex reports a failed review. */
+  readonly failure?: string;
   /** Inline findings attached to the matching review. */
   readonly findings: readonly CodexFinding[];
 }
 
+/** GitHub account identity attached to comments and reviews. */
+export interface GitHubUser {
+  /** GitHub account login. */
+  readonly login?: string;
+}
+
 /** Structural subset of a GitHub REST API comment used by the poller. */
 export interface GitHubComment {
+  /** GitHub comment ID. */
   readonly id: number;
-  readonly user?: { readonly login?: string };
+  /** Comment author when returned by GitHub. */
+  readonly user?: GitHubUser;
+  /** Markdown comment body. */
   readonly body?: string | null;
+  /** GitHub creation timestamp. */
   readonly created_at?: string;
+  /** GitHub last-update timestamp. */
   readonly updated_at?: string;
+  /** Browser URL for the comment. */
   readonly html_url?: string;
+  /** Repository-relative path for an inline review comment. */
   readonly path?: string;
+  /** Current diff line for an inline review comment. */
   readonly line?: number | null;
+  /** Original diff line when the current line is no longer available. */
   readonly original_line?: number | null;
+  /** Parent pull request review for an inline review comment. */
   readonly pull_request_review_id?: number | null;
 }
 
 /** Structural subset of a GitHub REST API pull request review used by the poller. */
 export interface GitHubReview {
+  /** GitHub pull request review ID. */
   readonly id: number;
-  readonly user?: { readonly login?: string };
+  /** Review author when returned by GitHub. */
+  readonly user?: GitHubUser;
+  /** Markdown top-level review body. */
   readonly body?: string | null;
+  /** Full commit SHA reviewed by GitHub. */
   readonly commit_id?: string;
+  /** GitHub review submission timestamp. */
   readonly submitted_at?: string;
 }
 
 /** Testable effect boundaries and timing controls for the polling loop. */
 export interface WatchCodexReviewOptions {
-  /** Delay between polls in milliseconds. */
+  /** Delay between polls in milliseconds, from 1 through Node's maximum timer delay. */
   readonly intervalMs?: number;
   /** Return after one request instead of waiting for completion. */
   readonly once?: boolean;
@@ -87,13 +110,14 @@ export function deriveCodexReviewState(
   pullRequest: PullRequestReference,
   issueComments: readonly GitHubComment[],
   reviews: readonly GitHubReview[],
-  reviewComments: readonly GitHubComment[]
+  reviewComments: readonly GitHubComment[],
+  headCommit?: string
 ): CodexReviewState;
 
 /** Formats one changed Codex state as concise, agent-readable text. */
 export function formatCodexReviewState(state: CodexReviewState): string;
 
-/** Polls pull requests, writes changed states, and stops when all reviews complete. */
+/** Polls pull requests, writes changed states, and stops when all reviews are terminal. */
 export function watchCodexReviews(
   pullRequests: readonly PullRequestReference[],
   options?: WatchCodexReviewOptions
