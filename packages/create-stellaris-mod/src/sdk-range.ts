@@ -21,24 +21,45 @@ export const VERIFIED_SDK_RANGE = SDK_COMPATIBILITY_POLICY.verifiedRange;
 export const SDK_PACKAGE = SDK_COMPATIBILITY_POLICY.packageName;
 
 /**
- * What reading `node_modules` established, as three distinct answers.
+ * What reading `node_modules` established about the SDK this project resolves.
  *
- * A single `string | undefined` cannot hold them. "No SDK is installed" is
- * ordinary — authors generate before installing, and a declared range provably
- * inside the verified one is evidence on its own. "An SDK is installed but its
- * metadata cannot be read" is the opposite: something is there, it is what the
- * project would resolve, and nothing at all can be proved about it. Collapsing
- * the second into the first lets the declared range stand as sufficient
- * evidence for a version nobody could read.
+ * Three answers rather than two, because "nothing is installed" and "something
+ * is installed and unreadable" are opposite facts. The first is ordinary:
+ * authors generate before installing, and a declared range provably inside the
+ * verified one is evidence on its own. The second is what the project would
+ * actually import, and nothing can be proved about it — so collapsing it into
+ * the first would let a declared range stand as evidence for a version nobody
+ * could read.
+ *
+ * Discriminate on `kind`.
  */
 export type InstalledSdk =
-  | { readonly kind: "absent" }
-  | { readonly kind: "installed"; readonly version: string }
   | {
-      /** Found, and unreadable: bad JSON, a refused read, or no string version. */
+      /** No SDK was found in any `node_modules` above the project. */
+      readonly kind: "absent";
+    }
+  | {
+      /** An SDK was found and its metadata was read. */
+      readonly kind: "installed";
+      /**
+       * The `version` its `package.json` declares, verbatim. Not yet known to
+       * be a valid semver version; {@link checkSdkCompatibility} decides that.
+       */
+      readonly version: string;
+    }
+  | {
+      /**
+       * An SDK was found where the project would resolve it, and its metadata
+       * could not be read: unparsable JSON, a refused read, or no string
+       * `version`.
+       */
       readonly kind: "unreadable";
-      /** The `package.json` that would have answered, for the message. */
+      /** Absolute path of the `package.json` that would have answered. */
       readonly file: string;
+      /**
+       * Why it could not be read, as a clause that completes "it cannot be
+       * read: …" — for example `it declares no version`.
+       */
       readonly detail: string;
     };
 

@@ -39,6 +39,7 @@ import { deriveNames, NameError } from "../catalog/names.ts";
 import type { ChoiceQuestion, DerivedNames, RecipeView } from "../catalog/types.ts";
 import { formatWithProjectPrettier } from "../format-project.ts";
 import type { CliIo } from "../io.ts";
+import { parseJsonFile } from "../json.ts";
 import { findManifest, MANIFEST_BASENAME, ManifestError } from "../manifest.ts";
 import { helpText, OptionsError, parseGenerateArgv, parseRecipeFlags } from "../options.ts";
 import { collisionMessage, preflightTarget, PublishError, publishExclusive } from "../publish.ts";
@@ -409,7 +410,7 @@ async function readProjectPackage(rootDir: string): Promise<ProjectPackage> {
 
   let root: unknown;
   try {
-    root = JSON.parse(bytes);
+    root = parseJsonFile(bytes);
   } catch (error) {
     throw new ManifestError(
       `${file} is not valid JSON: ${error instanceof Error ? error.message : String(error)}`
@@ -465,6 +466,20 @@ async function readProjectPackage(rootDir: string): Promise<ProjectPackage> {
 }
 
 /**
+ * The read failures that mean "nothing is installed at this level".
+ *
+ * Node's resolver treats a lookup location it cannot descend into as a miss and
+ * carries on to the next one, so these have to keep the walk going rather than
+ * end it. A stray regular file where `node_modules/@pdx-ts` should be a
+ * directory yields `ENOTDIR`, and a project whose SDK resolves perfectly well
+ * from an ancestor must not be refused over it.
+ *
+ * Everything else — `EACCES`, `EISDIR`, an I/O error — is the opposite fact:
+ * something is at that path and cannot be read, which is the unreadable state.
+ */
+const ABSENT_AT_THIS_LEVEL: ReadonlySet<string> = new Set(["ENOENT", "ENOTDIR", "ENAMETOOLONG"]);
+
+/**
  * What is installed where this project would resolve the SDK.
  *
  * The walk upward is Node's own lookup, not thoroughness for its own sake: in a
@@ -493,14 +508,15 @@ export async function findInstalledSdk(startDir: string): Promise<InstalledSdk> 
     try {
       bytes = await readFile(file, "utf8");
     } catch (error) {
-      if ((error as NodeJS.ErrnoException | undefined)?.code !== "ENOENT") {
+      const code = (error as NodeJS.ErrnoException | undefined)?.code;
+      if (code === undefined || !ABSENT_AT_THIS_LEVEL.has(code)) {
         return {
           kind: "unreadable",
           file,
           detail: error instanceof Error ? error.message : String(error),
         };
       }
-      // Not installed at this level; keep walking, the way Node would.
+      // Nothing installed at this level; keep walking, the way Node would.
     }
 
     if (bytes !== undefined) {
@@ -508,7 +524,7 @@ export async function findInstalledSdk(startDir: string): Promise<InstalledSdk> 
       // is the answer — including when the answer is that it cannot be read.
       let installed: unknown;
       try {
-        installed = JSON.parse(bytes);
+        installed = parseJsonFile(bytes);
       } catch (error) {
         return {
           kind: "unreadable",

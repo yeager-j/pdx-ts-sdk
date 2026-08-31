@@ -19,6 +19,7 @@ import {
   chmodSync,
   mkdirSync,
   mkdtempSync,
+  readFileSync,
   realpathSync,
   rmSync,
   symlinkSync,
@@ -151,6 +152,31 @@ describe("finding the installed SDK", () => {
     const found = await findInstalledSdk(project);
     expect(found.kind).toBe("unreadable");
     expect(found.kind === "unreadable" && found.detail).toContain("not valid JSON");
+  });
+
+  it("reads metadata Node would read, byte-order mark included", async () => {
+    // `readFile(..., "utf8")` decodes the mark rather than dropping it, and
+    // `JSON.parse` rejects it — but Node's own loaders strip it, so this
+    // installation resolves and imports perfectly well. Calling it unreadable
+    // would be refusing a project over a character the runtime ignores.
+    const project = writeProject(path.join(makeRoot(), "project"));
+    installSdk(project, "0.3.4");
+    const metadata = path.join(project, "node_modules/@pdx-ts/sdk/package.json");
+    writeFileSync(metadata, `\uFEFF${readFileSync(metadata, "utf8")}`);
+    expect(await findInstalledSdk(project)).toEqual({ kind: "installed", version: "0.3.4" });
+  });
+
+  it("keeps walking past a lookup location it cannot descend into", async () => {
+    // Node's resolver skips a location where `node_modules/@pdx-ts` is not a
+    // directory and resolves the hoisted copy above it. Reading that `ENOTDIR`
+    // as an unreadable installation would refuse a project whose SDK is fine.
+    const root = makeRoot();
+    const project = writeProject(path.join(root, "packages/mod"));
+    installSdk(root, "0.3.4");
+    mkdirSync(path.join(project, "node_modules"), { recursive: true });
+    writeFileSync(path.join(project, "node_modules/@pdx-ts"), "not a directory\n");
+
+    expect(await findInstalledSdk(project)).toEqual({ kind: "installed", version: "0.3.4" });
   });
 
   it("refuses to generate against an installation it cannot read", async () => {

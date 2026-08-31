@@ -21,6 +21,7 @@ import path from "node:path";
 import type { ModConfig } from "@pdx-ts/sdk";
 
 import { SUPPORTED_VERSION_PATTERN } from "./generated/verified-build.ts";
+import { parseJsonFile } from "./json.ts";
 import { parseProjectLayout, PROJECT_LAYOUT_FIELDS, type ProjectLayout } from "./project-layout.ts";
 
 /** The one filename a project's manifest can have. */
@@ -185,7 +186,7 @@ function quoteList(values: readonly string[]): string {
 export function parseManifest(bytes: string, sourcePath: string): ProjectManifest {
   let root: unknown;
   try {
-    root = JSON.parse(bytes);
+    root = parseJsonFile(bytes);
   } catch (error) {
     throw new ManifestError(
       `${sourcePath} is not valid JSON: ${error instanceof Error ? error.message : String(error)}`
