@@ -228,7 +228,7 @@ export function emitScopeLinks(
         `Trigger<${validIn}> | ScopeValue<${out}> {\n` +
         `  return "path" in arg\n` +
         `    ? navigateScope<${out}>(arg, ${key})\n` +
-        `    : trigger([block(${key}, [...arg.entries])]);\n}\n`
+        `    : trigger([block(${key}, [...arg.entries])], [...arg.refs]);\n}\n`
     );
   }
   return { code: chunks.join("\n"), emitted: classified.links.length };

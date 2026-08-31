@@ -14,7 +14,7 @@ import { describe, expect, it } from "vitest";
 import { createMod, render } from "../src/index.ts";
 import { recordEffects, withScriptCtx } from "../src/script/effects/recorder.ts";
 import type { ScriptCtx } from "../src/script/effects/types.ts";
-import { capitalScope, hasCountryFlag, owner } from "../src/script/triggers.ts";
+import { capitalScope, hasCountryFlag, hasTechnology, owner } from "../src/script/triggers.ts";
 
 // Kept past its authoring call on purpose: the assertions below read paths and
 // build triggers, which is the pure side of a ctx and stays usable anywhere.
@@ -72,6 +72,43 @@ from.owner = {
     expect(serialize([...owner(hasCountryFlag("ascended")).entries])).toBe(
       "owner = {\n\thas_country_flag = ascended\n}\n"
     );
+  });
+
+  it("rejects a dangling reference wrapped in a scope-link trigger", () => {
+    const mod = createMod({
+      name: "Dangling scope-link reference",
+      prefix: "dangling_link",
+      supportedVersion: "4.0.*",
+    });
+    const undefinedTechnology = mod.technologyHandle("never_defined");
+    const perk = mod.ascensionPerk("present", {
+      name: "Present",
+      potential: owner(hasTechnology(undefinedTechnology)),
+    });
+
+    expect(() => mod.compile([mod.feature("perks", [perk])])).toThrow(/no such technology/);
+  });
+
+  it("resolves a reference wrapped in a scope-link trigger when its definition is present", () => {
+    const mod = createMod({
+      name: "Resolved scope-link reference",
+      prefix: "resolved_link",
+      supportedVersion: "4.0.*",
+    });
+    const technology = mod.technologyHandle("defined");
+    const perk = mod.ascensionPerk("present", {
+      name: "Present",
+      potential: owner(hasTechnology(technology)),
+    });
+    const definedTechnology = technology.define({
+      name: "Defined",
+      cost: 100,
+      area: "physics",
+      tier: 1,
+      category: "particles",
+    });
+
+    expect(() => mod.compile([mod.feature("perks", [perk, definedTechnology])])).not.toThrow();
   });
 
   it("lowers a navigated scope into an effect argument, end to end", () => {
