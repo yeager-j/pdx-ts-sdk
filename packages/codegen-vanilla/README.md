@@ -76,9 +76,15 @@ locate installation and read version
   -> write stellaris-ids and print the report
 ```
 
+The arrow after "assemble" is the seam. `readVanillaFacts` is the impure shell:
+it takes an install root and returns one `VanillaBuildFacts` value, and it is
+the only step whose result can change without an argument changing.
+`emitVanillaPackage` is the pure core: it takes that value and returns files and
+a report, reading nothing. `generateVanillaPackage` composes the two for callers
+that hold a directory rather than facts.
+
 The CLI shell owns install discovery, file writes, package stamping, and report
-printing. `generateVanillaPackage` is the pure core and accepts explicit install,
-configuration, evidence, and version roots.
+printing.
 
 ## Registry identifiers
 
@@ -173,8 +179,9 @@ programmatic Prettier for output.
 ```text
 src/
 |-- index.ts          impure CLI shell
-|-- generate.ts       pure generation core
-|-- build-facts.ts    versioned in-memory evidence and extracted facts
+|-- generate.ts       reading and emission, composed
+|-- emit-package.ts   pure emission over parsed facts
+|-- read-facts.ts     impure install reader: versioned evidence and extracted facts
 |-- manifest.ts       selected registry rows and extras
 |-- resolve.ts        CWT registry-path resolution
 |-- read-ids.ts       identifier extraction with provenance
@@ -192,9 +199,10 @@ src/
 `-- verified-build-projection.ts writes those facts for SDK consumers
 ```
 
-The pure core is the seam for fixture tests and possible future consumer-side
-generation from an explicit root. It does not depend on global install
-discovery.
+The pure core is the seam for policy tests and possible future consumer-side
+generation from an explicit root. Policy tests supply facts directly and need no
+install; the reader's own tests still need a fixture one, which is the point of
+putting the boundary there.
 
 ## Verification
 
@@ -202,6 +210,12 @@ Hermetic tests run against `fixtures/fake-install/` and cover extraction,
 version checks, bucket layouts, nested directories, parameter forms, event
 scope and kind, duplicate failures, licensing, file sets, and deterministic
 bytes.
+
+Emission policy is tested against facts built in memory instead, which is what
+the pure core is for: trie thresholds, empty registries, and the refusals that
+fire when the facts carry no registry or enum a required runtime set names —
+refusals a fixture install cannot reach, because one either defines those
+registries or fails earlier.
 
 The generated artifact has an install-gated conformance test under
 `packages/stellaris-ids/tests/`. Where the matching real installation exists,

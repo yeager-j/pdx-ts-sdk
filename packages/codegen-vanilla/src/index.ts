@@ -17,8 +17,9 @@ import { fileURLToPath } from "node:url";
 import { locateInstall, requireGameVersion } from "@pdx-ts/sdk/installation";
 import { stampedVanillaPackageVersion } from "@pdx-ts/sdk/internals";
 
+import type { VanillaReport } from "./emit-package.ts";
 import { formatEmitted } from "./format.ts";
-import { generateVanillaPackage, type VanillaReport } from "./generate.ts";
+import { generateVanillaPackage } from "./generate.ts";
 
 /**
  * Anchored to the module rather than the process, so the repo this writes into
