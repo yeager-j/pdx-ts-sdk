@@ -256,7 +256,7 @@ export async function runGenerate(
     //     the one line stdout carries. Formatting failure is a warning rather
     //     than a failure: the file is already the author's.
     const written = await publishExclusive(preflight, generated.contents);
-    const formatWarning = await formatWithProjectPrettier(found.rootDir, written);
+    const formatWarning = await formatWithProjectPrettier(found.rootDir, written, io);
     if (formatWarning !== undefined) {
       io.stderr.write(`warning: ${formatWarning}\n`);
     }

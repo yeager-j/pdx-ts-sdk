@@ -10,7 +10,7 @@ import { once } from "node:events";
 import { existsSync, mkdtempSync, readFileSync, realpathSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { PassThrough, Writable } from "node:stream";
+import { PassThrough, Readable, Writable } from "node:stream";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { main } from "../src/cli.ts";
@@ -363,24 +363,40 @@ describe("dependency install recovery", () => {
     expect(describeCommand(quoted, "win32")).toBe(`echo "say ""hi"" and 'bye'"`);
   });
 
-  it("retains package-manager diagnostics written to stdout", async () => {
-    const stdout = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
-    try {
-      const result = await run(
-        {
-          command: process.execPath,
-          args: [
-            "-e",
-            'process.stdout.write("ETARGET: @pdx-ts/stellaris-ids has no matching version\\n"); process.exitCode = 1;',
-          ],
-        },
-        process.cwd()
-      );
-      expect(result.code).toBe(1);
-      expect(result.output).toContain("ETARGET: @pdx-ts/stellaris-ids has no matching version");
-    } finally {
-      stdout.mockRestore();
-    }
+  it("routes child output through the injected streams and retains diagnostics", async () => {
+    const captured = capture(process.cwd());
+    const result = await run(
+      {
+        command: process.execPath,
+        args: [
+          "-e",
+          'process.stdout.write("ETARGET: @pdx-ts/stellaris-ids has no matching version\\n"); process.stderr.write("install failed\\n"); process.exitCode = 1;',
+        ],
+      },
+      process.cwd(),
+      captured.io
+    );
+
+    expect(result.code).toBe(1);
+    expect(result.output).toContain("ETARGET: @pdx-ts/stellaris-ids has no matching version");
+    expect(result.output).toContain("install failed");
+    expect(captured.out()).toContain("ETARGET: @pdx-ts/stellaris-ids has no matching version");
+    expect(captured.err()).toContain("install failed");
+  });
+
+  it("routes injected stdin to the child", async () => {
+    const captured = capture(process.cwd());
+    const result = await run(
+      {
+        command: process.execPath,
+        args: ["-e", "process.stdin.pipe(process.stdout);"],
+      },
+      process.cwd(),
+      { ...captured.io, stdin: Readable.from(["from the seam\n"]) }
+    );
+
+    expect(result.code).toBe(0);
+    expect(captured.out()).toBe("from the seam\n");
   });
 
   it("preserves destination backpressure while retaining diagnostics", async () => {

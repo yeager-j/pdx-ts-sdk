@@ -9,6 +9,8 @@
 import { spawn } from "node:child_process";
 import type { Readable, Writable } from "node:stream";
 
+import type { CliIo } from "./io.ts";
+
 export interface Command {
   readonly command: string;
   readonly args: readonly string[];
@@ -34,11 +36,12 @@ export function teeCommandOutput(
   source.pipe(destination, { end: false });
 }
 
-export function run(command: Command, cwd: string): Promise<CommandResult> {
+/** Runs a command with all three standard streams routed through the CLI I/O seam. */
+export function run(command: Command, cwd: string, io: CliIo): Promise<CommandResult> {
   return new Promise((resolve) => {
     const child = spawn(command.command, [...command.args], {
       cwd,
-      stdio: ["inherit", "pipe", "pipe"],
+      stdio: ["pipe", "pipe", "pipe"],
       shell: command.shell ?? false,
     });
     let output = "";
@@ -46,10 +49,15 @@ export function run(command: Command, cwd: string): Promise<CommandResult> {
       const text = chunk.toString();
       output = `${output}${text}`.slice(-DIAGNOSTIC_LIMIT);
     };
-    teeCommandOutput(child.stdout, process.stdout, observe);
-    teeCommandOutput(child.stderr, process.stderr, observe);
+    io.stdin.pipe(child.stdin);
+    teeCommandOutput(child.stdout, io.stdout, observe);
+    teeCommandOutput(child.stderr, io.stderr, observe);
+    child.stdin.on("error", () => undefined);
     child.on("error", () => resolve({ code: -1, output }));
-    child.on("close", (code) => resolve({ code: code ?? -1, output }));
+    child.on("close", (code) => {
+      io.stdin.unpipe(child.stdin);
+      resolve({ code: code ?? -1, output });
+    });
   });
 }
 

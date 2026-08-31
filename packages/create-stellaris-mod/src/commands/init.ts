@@ -100,7 +100,7 @@ export async function runInit(argv: readonly string[], io: CliIo): Promise<numbe
     return 1;
   }
 
-  const outcomes = await runSteps(steps, targetDir);
+  const outcomes = await runSteps(steps, targetDir, io);
   const install = outcomes.get("install");
 
   io.stdout.write(
@@ -214,7 +214,8 @@ function previewSteps(steps: readonly ScaffoldStep[]): string[] {
  */
 async function runSteps(
   steps: readonly ScaffoldStep[],
-  targetDir: string
+  targetDir: string,
+  io: CliIo
 ): Promise<Map<StepId, CommandResult>> {
   const outcomes = new Map<StepId, CommandResult>();
   for (const step of steps) {
@@ -223,7 +224,7 @@ async function runSteps(
     }
     let last: CommandResult = { code: 0, output: "" };
     for (const command of step.commands) {
-      last = await run(command, targetDir);
+      last = await run(command, targetDir, io);
     }
     outcomes.set(step.id, last);
   }

@@ -15,12 +15,11 @@
  * project — reported as a warning, never as a failed generation.
  */
 
-import { execFile } from "node:child_process";
 import { createRequire } from "node:module";
 import path from "node:path";
-import { promisify } from "node:util";
 
-const run = promisify(execFile);
+import { run } from "./exec.ts";
+import type { CliIo } from "./io.ts";
 
 /**
  * Formats one written file with the Prettier resolved from `rootDir`, if any.
@@ -29,7 +28,8 @@ const run = promisify(execFile);
  */
 export async function formatWithProjectPrettier(
   rootDir: string,
-  filePath: string
+  filePath: string,
+  io: CliIo
 ): Promise<string | undefined> {
   let manifestPath: string;
   try {
@@ -51,9 +51,17 @@ export async function formatWithProjectPrettier(
     }
     // Their bin under this Node, from their root: the config and plugins that
     // apply are exactly the ones their own `prettier --write` would use.
-    await run(process.execPath, [path.join(path.dirname(manifestPath), bin), "--write", filePath], {
-      cwd: rootDir,
-    });
+    const result = await run(
+      {
+        command: process.execPath,
+        args: [path.join(path.dirname(manifestPath), bin), "--write", filePath],
+      },
+      rootDir,
+      io
+    );
+    if (result.code !== 0) {
+      throw new Error(result.output);
+    }
     return undefined;
   } catch (error) {
     const detail = error instanceof Error ? error.message.trim() : String(error);
