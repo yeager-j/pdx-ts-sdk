@@ -76,7 +76,9 @@ export function createFeature<T extends ModItem>(
   if (stem !== undefined) {
     assertFileStem(stem);
   }
-  return { itemKind: "feature", stem, items };
+  // The list is copied, not its items: an item is an SDK-built value, while
+  // the array around it belongs to the caller and could still be appended to.
+  return { itemKind: "feature", stem, items: Object.freeze([...items]) };
 }
 
 export type ModItemInput = Feature | readonly ModItemInput[];

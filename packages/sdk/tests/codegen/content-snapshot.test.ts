@@ -1788,10 +1788,12 @@ describe("generated content definers", () => {
     expect(definers).toMatch(/SpecialProjectItem<[\s\S]*?readonly locationScope: W/);
   });
 
-  it("preserves a definition's literal id, and registers nothing", () => {
+  it("preserves a definition's literal id, snapshots its def, and registers nothing", () => {
     // `loc` is minted from the registry's own slot table rather than spelled
     // out per registry, so an item's references and the keys the fold
     // registers for the same definition come from one derivation (SDK-305).
+    // The stored def is a snapshot, so mutating the object the author still
+    // holds cannot change a later build (SDK-325).
     expect(definers).toContain(
       "export function defineTechnology<const Id extends string>(\n" +
         "  def: TechnologyDef<Id>\n" +
@@ -1800,7 +1802,7 @@ describe("generated content definers", () => {
         '    itemKind: "content",\n' +
         '    type: "technology",\n' +
         "    id: def.id,\n" +
-        "    def,\n" +
+        "    def: snapshotAuthoredValue(def),\n" +
         "    loc: contentLocalizationRefs(def.id, TECHNOLOGY_LOCALISATION),\n" +
         "  };\n" +
         "}"

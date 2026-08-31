@@ -81,6 +81,7 @@ function contentDefinersModule(plans: readonly RegistryDefinerPlan[]): string {
   }
   const imports =
     importList("../content/types.ts", contentItemTypes) +
+    'import { snapshotAuthoredValue } from "../authoring/snapshot.ts";\n' +
     'import { contentLocalizationRefs } from "../content/authoring.ts";\n' +
     renderImports(witnessImports.snapshot()) +
     (refImports ? 'import { refId, type TypedRef } from "../script/scalar.ts";\n' : "") +

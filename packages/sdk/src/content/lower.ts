@@ -13,6 +13,7 @@ import {
 
 import type { AssetFileItem } from "../authoring/assets.ts";
 import { resolveDeferredLocalization } from "../authoring/deferred-localization.ts";
+import { snapshotAuthoredValue } from "../authoring/snapshot.ts";
 import { weightedEventBlock } from "../events/weighted-events.ts";
 import type { ScopeName } from "../generated/scopes.ts";
 import type { RecordedRefUse } from "../references.ts";
@@ -146,8 +147,16 @@ function resolveFromClosure(field: ContentField, value: unknown): unknown {
   if ((value as { readonly kind?: unknown }).kind === "trigger") {
     return value;
   }
-  return withScriptCtx<ScopeName, AmbientScopeContext, unknown>({}, (scriptCtx) =>
-    (value as (ctx: ScriptCtx<ScopeName, AmbientScopeContext>) => unknown)(scriptCtx)
+  // Snapshotted, because what a closure returns is as caller-owned as a plain
+  // field value: a closure that hands back an object it shares with its caller
+  // would otherwise have that object frozen in place when the definition is
+  // built (SDK-325). The copy is taken before the definition walk registers
+  // desc keys against the rows in it, so registration and lowering still key
+  // on one set of objects.
+  return snapshotAuthoredValue(
+    withScriptCtx<ScopeName, AmbientScopeContext, unknown>({}, (scriptCtx) =>
+      (value as (ctx: ScriptCtx<ScopeName, AmbientScopeContext>) => unknown)(scriptCtx)
+    )
   );
 }
 

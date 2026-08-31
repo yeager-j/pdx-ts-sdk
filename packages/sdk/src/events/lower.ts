@@ -596,6 +596,11 @@ function lowerEvent<S extends ScopeName, Context extends AmbientScopeContext>(
   };
 }
 
+/**
+ * The event's ambient scopes as a value of its own. Copied because the hook
+ * contract `on()` checks reads this map long after the event was defined, and
+ * the author still holds whatever they passed as `scopes`.
+ */
 function eventScopes<Context extends AmbientScopeContext>(scopes: Context | undefined): Context {
-  return (scopes ?? {}) as Context;
+  return Object.freeze({ ...scopes }) as Context;
 }

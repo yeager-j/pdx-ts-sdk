@@ -297,6 +297,11 @@ function createEventHandle<
 ): CapabilityEventHandle<P, N, Id, S, Context, Kind> {
   assertEventNumber(id);
   const eventId = `${namespace}.${id}` as MintedEventId<P, N, Id>;
+  // Copied once, here: the handle circulates as an event reference whose
+  // `scopes` the on-action contract check reads, and `.define()` may be called
+  // long afterwards, so both must see the map the handle was minted with
+  // rather than whatever the author's object holds by then (SDK-325).
+  const ambient = Object.freeze({ ...scopes }) as Context;
   const define = (
     definition: Omit<EventDef<S, Context>, "id" | "scopes">
   ): GeneratedCapabilityEventItem<P, N, Id, S, Context, Kind> => {
@@ -305,7 +310,7 @@ function createEventHandle<
       kind,
       scope,
       namespace,
-      { ...definition, id, scopes } as EventDef<S, Context>,
+      { ...definition, id, scopes: ambient } as EventDef<S, Context>,
       { register: (key, translations) => localizationEntries.push({ key, translations }) }
     );
     return {
@@ -319,7 +324,7 @@ function createEventHandle<
   return Object.freeze({
     kind: "event-ref",
     scope,
-    scopes,
+    scopes: ambient,
     id: eventId,
     define,
   }) as CapabilityEventHandle<P, N, Id, S, Context, Kind>;

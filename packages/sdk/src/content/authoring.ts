@@ -15,6 +15,7 @@ import {
   type LocalizationRefs,
   type LocalizedText,
 } from "../authoring/localization.ts";
+import { freezeAuthoredData } from "../authoring/snapshot.ts";
 import type { ModWarning } from "../diagnostics.ts";
 import type { ScopeName } from "../generated/scopes.ts";
 import type { AssetPathSink, RefUseSink } from "../references.ts";
@@ -410,7 +411,16 @@ export class ContentAuthoring {
       }
       this.nestedIds.set(identity, ids);
     }
-    const content = new ContentDefinition<K, D>(def, descriptor, registerLoc, this.onWarning);
+    // The item handed over a frozen snapshot, but the walk above rewrites the
+    // levels whose localization it resolved, and those new containers are what
+    // a `PureMod` exposes. Frozen rather than snapshotted: the walk registered
+    // desc keys against the modifier rows in this very tree (SDK-327).
+    const content = new ContentDefinition<K, D>(
+      freezeAuthoredData(def),
+      descriptor,
+      registerLoc,
+      this.onWarning
+    );
     definitions.push(content as ContentDefinition<string, ContentDef>);
     this.definitions.set(type, definitions);
     return content;

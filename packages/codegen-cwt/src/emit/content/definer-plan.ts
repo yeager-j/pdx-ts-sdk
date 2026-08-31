@@ -645,19 +645,23 @@ function definerFunctions(facts: RegistryDefinerFacts): {
     // so an item's references and the keys the fold registers for the same
     // definition come from one derivation.
     const loc = `loc: contentLocalizationRefs(def.id, ${emission.localisationConstant})`;
+    // The stored def is a snapshot, so mutating the object the author still
+    // holds cannot change a later build (SDK-325).
     const body =
       scoped === null
         ? contentWitness?.mode === "intersects"
-          ? `  return { itemKind: "content", type: ${key}, id: def.id, def, ${loc} } ` +
-            `as ${definerResult};\n`
-          : `  return { itemKind: "content", type: ${key}, id: def.id, def, ${loc} };\n`
+          ? `  return { itemKind: "content", type: ${key}, id: def.id, ` +
+            `def: snapshotAuthoredValue(def), ${loc} } as ${definerResult};\n`
+          : `  return { itemKind: "content", type: ${key}, id: def.id, ` +
+            `def: snapshotAuthoredValue(def), ${loc} };\n`
         : stripped.length === 0
           ? `  return { itemKind: "content", type: ${key}, id: def.id, ` +
-            `def: def as unknown as ${storedDefType(`${name}Def<Id, never>`, emission)}, ` +
-            `${loc} };\n`
+            `def: snapshotAuthoredValue(def) as unknown as ` +
+            `${storedDefType(`${name}Def<Id, never>`, emission)}, ${loc} };\n`
           : `  const { ${stripped.join(", ")}, ...rest } = def;\n` +
             `  return { itemKind: "content", type: ${key}, id: def.id, ` +
-            `def: rest as unknown as ${storedDefType(`${name}Def<Id, never>`, emission)}` +
+            `def: snapshotAuthoredValue(rest) as unknown as ` +
+            `${storedDefType(`${name}Def<Id, never>`, emission)}` +
             `${carried}, ${loc} };\n`;
     definitions.push(
       docComment([

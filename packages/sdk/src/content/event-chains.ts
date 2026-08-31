@@ -6,6 +6,7 @@
  * on the defined item and lets the script boundary enforce their relationship.
  */
 
+import { snapshotAuthoredValue } from "../authoring/snapshot.ts";
 import type {
   ContentIdMinter,
   IdProfile,
@@ -54,7 +55,7 @@ export function defineEventChain<const Id extends string, const Counter extends 
     itemKind: "content",
     type: "event_chain",
     id: def.id,
-    def: def as EventChainDef<Id>,
+    def: snapshotAuthoredValue(def) as EventChainDef<Id>,
     loc: contentLocalizationRefs(def.id, EVENT_CHAIN_LOCALISATION),
   };
 }

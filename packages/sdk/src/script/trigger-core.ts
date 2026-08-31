@@ -128,8 +128,13 @@ export function trigger<S extends ScopeName>(
     },
     {
       kind: "trigger",
-      entries,
-      refs,
+      // A trigger is a value that travels — into a content field, an event
+      // option, an effect's `limit` — and is read long after it was built, so
+      // its arrays are frozen rather than merely typed `readonly`. Every
+      // caller passes a fresh array; the recorders push into their own local
+      // sinks and build the trigger from them afterwards.
+      entries: Object.freeze(entries),
+      refs: Object.freeze(refs),
       and<T extends ScopeName>(this: Trigger<T>, ...others: readonly Trigger<T>[]): Trigger<T> {
         return conjoin([this, ...others]);
       },

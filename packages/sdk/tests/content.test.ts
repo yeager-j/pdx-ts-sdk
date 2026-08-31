@@ -3776,11 +3776,12 @@ describe("modifier desc keys are content-derived, not positional (SDK-48)", () =
     );
   });
 
-  it("refuses one row object shared by two occurrences the writer cannot tell apart", () => {
+  it("gives each occurrence of one shared row object its own key", () => {
     // Two repeated `struct` entries share a field key, so they share the
     // registration token, while deriving different keys from their differing
-    // paths. Only a shared row object can reach that, and keeping the last
-    // registration would render one occurrence under the other's key.
+    // paths. The definition takes its own copy of the row per occurrence
+    // (SDK-325), so each renders under the key its own path derives rather
+    // than under whichever occurrence registered last.
     const cap = capabilityFor(DESC_KEY_CONFIG);
     const sharedRow = { factor: 2, desc: { english: "Cheaper.", key: "frugal" } } as const;
     const technology = cap.technology("shared_nested_row", {
@@ -3800,9 +3801,15 @@ describe("modifier desc keys are content-derived, not positional (SDK-48)", () =
       ],
     });
 
-    expect(() => cap.compile([cap.feature(undefined, [technology])])).toThrow(
-      /The same modifier row object is used twice under "desc_key_test_tech_shared_nested_row"/
-    );
+    const mod = cap.compile([cap.feature(undefined, [technology])]);
+
+    const stem = "desc_key_test_tech_shared_nested_row_technology_swap";
+    const emitted = render(mod).get("common/technology/desc_key_test_technology.txt")!;
+    for (const index of [0, 1]) {
+      const key = `${stem}_${index}_weight_frugal`;
+      expect(localizationMap(mod).get(key)).toBe("Cheaper.");
+      expect(emitted).toContain(`desc = ${key}`);
+    }
   });
 
   it("rejects a desc key pin that is not lowercase snake_case", () => {

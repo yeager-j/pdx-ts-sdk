@@ -281,22 +281,11 @@ export function on<S extends ScopeName, Context extends AmbientScopeContext>(
 export function on(hook: OnActionRef<null, {}>, events: ScopelessOnActionEvents): OnActionHookItem;
 export function on(
   hook: OnActionRef,
-  events:
-    | readonly EventItemBase[]
-    | {
-        readonly events?: readonly EventItemBase[];
-        readonly randomEvents?: readonly OnActionRandomEvent[];
-      }
+  events: readonly EventItemBase[] | AuthoredContribution
 ): OnActionHookItem {
-  const contribution: {
-    readonly events?: readonly EventItemBase[];
-    readonly randomEvents?: readonly OnActionRandomEvent[];
-  } = Array.isArray(events)
+  const contribution: AuthoredContribution = Array.isArray(events)
     ? { events: events as readonly EventItemBase[] }
-    : (events as {
-        readonly events?: readonly EventItemBase[];
-        readonly randomEvents?: readonly OnActionRandomEvent[];
-      });
+    : (events as AuthoredContribution);
   if (contribution.events?.length === 0) {
     throw new Error(`On-action "${hook.name}" events must contain at least one event`);
   }
@@ -306,5 +295,34 @@ export function on(
   if (contribution.events === undefined && contribution.randomEvents === undefined) {
     throw new Error(`On-action "${hook.name}" must define events, randomEvents, or both`);
   }
-  return { itemKind: "on-action", hook, ...contribution } as OnActionHookItem;
+  return Object.freeze({
+    itemKind: "on-action",
+    hook,
+    ...snapshotContribution(contribution),
+  }) as OnActionHookItem;
+}
+
+/** What an author hands {@link on}, before the item takes a copy of it. */
+interface AuthoredContribution {
+  readonly events?: readonly EventItemBase[];
+  readonly randomEvents?: readonly OnActionRandomEvent[];
+}
+
+/**
+ * The contribution as the item's own data (SDK-325). Both lists and each
+ * weighted row are copied because the caller still holds them; the events and
+ * references inside them are SDK values, kept as they stand so the ownership
+ * and vanilla-reference checks still recognize them.
+ *
+ * A list the author omitted stays omitted rather than becoming empty, so an
+ * item reports the contribution it was given.
+ */
+function snapshotContribution(contribution: AuthoredContribution): AuthoredContribution {
+  const { events, randomEvents } = contribution;
+  return {
+    ...(events === undefined ? {} : { events: Object.freeze([...events]) }),
+    ...(randomEvents === undefined
+      ? {}
+      : { randomEvents: Object.freeze(randomEvents.map((row) => Object.freeze({ ...row }))) }),
+  };
 }

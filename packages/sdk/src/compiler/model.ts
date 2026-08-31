@@ -99,6 +99,12 @@ export interface PureMod {
    * it emits. For consumers that reason about the mod — inspection and
    * tooling — rather than serialize it; `contentFiles` carry the lowered
    * entries `render` writes.
+   *
+   * Immutable all the way down: the groups, their lists, each definition, and
+   * each definition's `def` are frozen, and no container inside a `def` is one
+   * the author still holds. An Item a definition names is shared rather than
+   * copied, so it keeps the identity it was minted with. `toEntries()` stays
+   * callable and reports the same entries every time it is called.
    */
   readonly definedGroups: readonly DefinedGroup[];
   /** Component-tag emission, one bare-scalar file per feature stem. */
