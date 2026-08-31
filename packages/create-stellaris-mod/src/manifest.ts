@@ -21,7 +21,7 @@ import {
   MOD_PREFIX_PATTERN,
   resolveConfig,
   type ModConfig,
-} from "@pdx-ts/sdk";
+} from "@pdx-ts/sdk/config";
 
 import { SUPPORTED_VERSION_PATTERN } from "./generated/verified-build.ts";
 import { parseJsonFile } from "./json.ts";

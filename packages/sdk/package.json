@@ -12,6 +12,11 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./config": {
+      "pdx-source": "./src/config.ts",
+      "types": "./dist/config.d.ts",
+      "default": "./dist/config.js"
+    },
     "./stellaris": {
       "pdx-source": "./src/stellaris.ts",
       "types": "./dist/stellaris.d.ts",

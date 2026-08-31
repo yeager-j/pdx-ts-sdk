@@ -8,7 +8,7 @@
  */
 
 import { confirm, intro, isCancel, log, note, text } from "@clack/prompts";
-import { resolveConfig, type ResolvedModConfig } from "@pdx-ts/sdk";
+import { resolveConfig, type ResolvedModConfig } from "@pdx-ts/sdk/config";
 
 import { toDisplayName, toPrefix, toTags } from "./derive.ts";
 import { detectInstall, isInstall, readGameVersion, supportedVersionFor } from "./detect.ts";
