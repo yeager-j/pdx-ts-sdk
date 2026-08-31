@@ -49,12 +49,22 @@ const BASE_RULE_FILES = [
   "common/fleet_actions.cwt",
 ];
 
-function cwtFiles(root: string, relative = ""): string[] {
+/**
+ * Lists every `.cwt` file under `root`, as `/`-separated paths relative to it.
+ *
+ * The separator is fixed rather than the platform's for two reasons, both of
+ * which `path.join` would break on Windows. These strings are compared against
+ * the `/`-spelled literals in {@link BASE_RULE_FILES} and the manifest to find
+ * the files the primary load already covers, and they become the `file` on a
+ * parse diagnostic, which reaches the drift baseline — a reviewed artifact
+ * compared byte for byte on every platform CI runs.
+ */
+export function cwtFiles(root: string, relative = ""): string[] {
   const directory = path.join(root, relative);
   const files: string[] = [];
   for (const name of readdirSync(directory).sort()) {
     const file = path.join(directory, name);
-    const child = path.join(relative, name);
+    const child = relative === "" ? name : `${relative}/${name}`;
     if (statSync(file).isDirectory()) {
       files.push(...cwtFiles(root, child));
       continue;
