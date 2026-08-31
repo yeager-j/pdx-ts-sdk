@@ -6,6 +6,7 @@
  */
 
 import type { Resolved } from "../options.ts";
+import { runScript } from "../package-manager.ts";
 import { quoteTs } from "../quote.ts";
 
 export function modTs(): string {
@@ -18,6 +19,11 @@ export function modTs(): string {
  * \`project.build()\` for a pre-compile customization. For a different pipeline,
  * compose \`discoverFeatures\`, \`mod.assetTree\`, and \`mod.compile\` directly.
  * Project declaration reads no source files; only \`buildTheMod()\` starts work.
+ *
+ * \`buildTheMod\` is \`async\` so that a refusal from \`loadVanilla()\` becomes a
+ * rejected promise rather than a synchronous throw. The entry points call it as
+ * \`runBuild(buildTheMod(), ...)\`, and a synchronous throw there would escape
+ * the runner that exists to present failures.
  */
 
 import { createModProject } from "@pdx-ts/sdk";
@@ -30,17 +36,17 @@ const project = createModProject(manifest, {
 
 export const { config, mod } = project;
 
-export function buildTheMod() {
+export async function buildTheMod() {
   return project.build({ vanilla: loadVanilla() });
 }
 
 `;
 }
 
-export function indexTs(): string {
+export function indexTs(resolved: Resolved): string {
   return `/**
- * The build. \`npm run build\` runs this file — Node executes TypeScript
- * directly, so nothing stands between this source and the emitted mod.
+ * The build. \`${runScript(resolved.packageManager, "build")}\` runs this file — Node executes
+ * TypeScript directly, so nothing stands between this source and the emitted mod.
  *
  * The SDK's terminal runner owns rendering, writing, previews, and presentation,
  * so formatting improvements arrive with SDK upgrades rather than being copied
@@ -58,9 +64,10 @@ await runBuild(buildTheMod(), { outDir, previewsDir });
 `;
 }
 
-export function installTs(): string {
+export function installTs(resolved: Resolved): string {
+  const pm = resolved.packageManager;
   return `/**
- * \`npm run install-mod\`: build, then put the result where the Stellaris
+ * \`${runScript(pm, "install-mod")}\`: build, then put the result where the Stellaris
  * launcher looks for it.
  *
  * \`install\` writes the content into the launcher's mod directory and drops the
@@ -71,7 +78,7 @@ export function installTs(): string {
  *
  * This shares \`buildTheMod\` with \`src/index.ts\` rather than folding content a
  * second time, so the mod that gets installed is built with the same vanilla
- * view (id collision checks included) as the one \`npm run build\` writes to
+ * view (id collision checks included) as the one \`${runScript(pm, "build")}\` writes to
  * \`out/\` — never a second, unchecked build. The SDK terminal runner owns
  * installation and presentation so existing projects receive formatting and
  * diagnostic improvements when they update the SDK.
@@ -89,9 +96,9 @@ await runInstall(buildTheMod());
 }
 
 /** Returns the generated project's YAML inspection entry point. */
-export function inspectTs(): string {
+export function inspectTs(resolved: Resolved): string {
   return `/**
- * \`npm run inspect\`: compile the project and print a deterministic YAML map
+ * \`${runScript(resolved.packageManager, "inspect")}\`: compile the project and print a deterministic YAML map
  * of its Features and Item ids, warnings, dependency versions, patch plans,
  * and vanilla evidence. It does not render or write the mod.
  */
@@ -120,11 +127,39 @@ export function vanillaTs(resolved: Resolved): string {
  * it only has no parsed vanilla view — so a teammate or a CI runner is never
  * blocked by not owning Stellaris. Set \`STELLARIS_PATH\` if the install is
  * somewhere the SDK does not look, or \`PDX_NO_VANILLA=1\` to skip it deliberately.
+ *
+ * There are exactly two ways to end up without the view, and both are stated
+ * rather than inferred: the deliberate opt-out, and the SDK finding no install
+ * on its own. Everything else a load can hit — an unreadable game directory, a
+ * game whose shape the parser does not recognize, a corrupt archive — is
+ * evidence that something is wrong, not evidence that there is no game. Those
+ * propagate, and \`${runScript(resolved.packageManager, "build")}\` reports them, because a build that
+ * silently drops id-collision checks, version evidence, and patch sources is
+ * one you cannot tell apart from a build that kept them.
+ *
+ * A \`STELLARIS_PATH\` that is not a game root propagates too. It is not a
+ * discovery miss: somebody set it on this machine and meant it, and a build
+ * that quietly ignored it would be checking against nothing while its author
+ * believed otherwise.
  */
 
+import { InstallNotFoundError } from "@pdx-ts/sdk";
 import * as stellaris from "@pdx-ts/sdk/installation";
 import type { VanillaView } from "@pdx-ts/sdk/installation";
 ${fallbackConst(resolved)}
+/**
+ * Whether this machine was pointed at a particular install.
+ *
+ * The SDK reports a bad \`STELLARIS_PATH\` and a fruitless search of the
+ * platform defaults with the same error, so telling them apart means asking
+ * what was asked for. Empty counts as unset, which is what the SDK's own
+ * lookup does with it.
+ */
+function namedAnInstall(): boolean {
+  const named = process.env["STELLARIS_PATH"];
+  return named !== undefined && named !== "";
+}
+
 export function loadVanilla(): VanillaView | undefined {
   if (process.env["PDX_NO_VANILLA"] === "1") {
     return undefined;
@@ -132,11 +167,13 @@ export function loadVanilla(): VanillaView | undefined {
   try {
     return stellaris.load(${loadArgument(resolved)});
   } catch (error) {
-    console.warn(
-      \`Building without the vanilla view: \${error instanceof Error ? error.message : String(error)}\`
-    );
-    console.warn("Set STELLARIS_PATH to the game root to enable vanilla inspection and patches.");
-    return undefined;
+    // A discovery miss is an absence; a path somebody named is a mistake they
+    // should hear about. \`${runScript(resolved.packageManager, "inspect")}\` reports whether a build had the
+    // view, so the absence stays visible without a print.
+    if (error instanceof InstallNotFoundError && !namedAnInstall()) {
+      return undefined;
+    }
+    throw error;
   }
 }
 `;
@@ -290,6 +327,11 @@ function fallbackConst(resolved: Resolved): string {
 /**
  * The install this project was scaffolded against. Machine-specific: set
  * \`STELLARIS_PATH\` instead if you share this repository, which wins over it.
+ *
+ * This path is a record of one machine rather than a request from whoever is
+ * building now, so a checkout where it does not resolve still builds — without
+ * the vanilla view. That is the opposite of a \`STELLARIS_PATH\` somebody set
+ * here, which is a request and fails loudly when it is wrong.
  */
 const SCAFFOLDED_INSTALL = ${quoteTs(resolved.installPath)};
 `;

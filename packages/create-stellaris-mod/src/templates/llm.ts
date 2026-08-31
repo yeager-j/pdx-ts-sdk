@@ -1,46 +1,104 @@
 import { SDK_DOCS_REVISION } from "../generated/package-version.ts";
+import type { Resolved } from "../options.ts";
+import { runScript } from "../package-manager.ts";
+import { SCAFFOLDER_RELEASE_MANIFEST } from "../release-manifest.ts";
 
-const AGENTS_MD =
+/**
+ * The SDK source the scaffold was built from, as the docs site spells it.
+ *
+ * `SDK_DOCS_REVISION` is a hash of `packages/sdk/src`, computed by the same
+ * script for this package and for the documentation site — so the site's
+ * `llms.txt` header carries the identical value whenever the two describe the
+ * same SDK source. Recording it here is what makes the revision comparison the
+ * guidance below asks for possible at all: without it the documentation expert
+ * is told to compare against a value the project does not hold.
+ */
+/**
+ * The provenance section, for a project depending on a published SDK.
+ *
+ * The recorded range is the one the scaffold writes into `package.json`, and
+ * the revision is the SDK source this release was built from — so an agent
+ * comparing them against the documentation site is comparing two descriptions
+ * of the same thing.
+ */
+const REGISTRY_PROVENANCE = [
+  `Scaffolded against \`${SCAFFOLDER_RELEASE_MANIFEST.sdk.packageName}\` ${SCAFFOLDER_RELEASE_MANIFEST.sdk.range}.`,
+  "",
+  `SDK source revision: \`${SDK_DOCS_REVISION}\``,
+  "",
+  "The documentation site publishes the same value as its `SDK revision:` line. The two agree exactly when the documentation was generated from the SDK source this project was scaffolded against.",
+  "",
+  "This is a record of one moment, not a live check. Once `package.json` declares an `@pdx-ts/sdk` version outside the range above, this revision describes an older SDK and the version match governs on its own.",
+];
+
+/**
+ * The provenance section, for a project scaffolded with `--local`.
+ *
+ * There is no honest record to write. `package.json` points `@pdx-ts/sdk` at a
+ * checkout whose contents are whatever they are now, which is neither the
+ * published range this release states nor necessarily the source it was built
+ * from — and the checkout keeps changing. Recording the release coordinates
+ * anyway would be worse than recording nothing: an agent would compare
+ * documentation against a version this project does not depend on, and either
+ * reject documentation that matches the checkout or accept documentation for a
+ * different API. The CLI already refuses to prove anything about a `file:`
+ * dependency, and this says the same thing to the agent.
+ */
+const LOCAL_PROVENANCE = [
+  "Not available. This project depends on a local `@pdx-ts/sdk` checkout through a `file:` link, so there is no published version or fixed source revision to compare documentation against.",
+  "",
+  "Published documentation describes releases, and a checkout is not one. Treat a version or revision match against it as unproven, say so when it matters to the answer, and prefer the checkout's own source when the two disagree.",
+];
+
+const PROVENANCE = (localSdk: string | undefined): string =>
   [
-    "# Agent guidance",
+    "## Documentation provenance",
     "",
-    "This is an `@pdx-ts/sdk` project that generates a Stellaris mod from TypeScript.",
-    "",
-    "<!-- pdx-project-collaboration:start -->",
-    "## Collaboration agreement",
-    "",
-    "Status: not configured.",
-    "",
-    "Before the first substantive project change, read and follow `.agents/skills/pdx-project-startup/SKILL.md` completely. Replace this marked section with the agreed working preferences, then resume the user's original task.",
-    "<!-- pdx-project-collaboration:end -->",
-    "",
-    "## SDK authoring",
-    "",
-    "Before adding, changing, reorganizing, or diagnosing SDK content, Feature modules, tests, Assets, or the build pipeline, read and follow `.agents/skills/pdx-sdk-authoring/SKILL.md` completely. It owns this project's stable authoring and Feature contract.",
-    "",
-    "## SDK documentation expert",
-    "",
-    "Use the project-scoped `pdx-docs-expert` subagent for SDK authoring questions: content fields, localization slots, coverage, scope effects and triggers, testing, and patching vanilla content.",
-    "",
-    "Invoke it by name. In Codex, spawn one subagent with the `pdx-docs-expert` agent type. In Claude Code, use `@pdx-docs-expert <question>` or ask Claude to use that subagent.",
-    "",
-    "Start it fresh, without forking or inheriting conversation history. Pass only the documentation question and the explicit project facts needed to answer it. Keep implementation and local verification in the main agent.",
-    "",
-    "Treat fetched SDK documentation as authoritative only after its declared SDK version matches this project's exact `@pdx-ts/sdk` dependency and its SDK source revision matches this scaffold. Generic Stellaris knowledge is not evidence for the SDK authoring surface.",
-    "",
-    "If the active client cannot use the configured subagent, read and follow `.agents/skills/pdx-sdk-docs/SKILL.md` completely and perform the same documentation retrieval directly.",
-    "If current documentation retrieval is blocked, return a concise blocker. Apart from the narrow `package.json` version check, do not inspect the project or substitute repository code or generic Stellaris knowledge for fetched documentation.",
-    "",
-    "## Solar-system diagnostics",
-    "",
-    "After adding or changing a solar-system initializer, run `npm run build`. The CLI prints advisory layout warnings and writes an interactive gallery to `previews/index.html` with one SVG per initializer.",
-    "",
-    "Address each warning deliberately, then inspect the relevant `previews/*.svg` files in a browser. Confirm that stars, planets, moons, orbital lines, and asteroid belts look correct. A clean diagnostic list is not a substitute for visual inspection because the preview uses documented approximations and the diagnostics are advisory.",
-    "",
-    "## Verification",
-    "",
-    "Run `npm run typecheck`, `npm test`, and `npm run build` after code changes. Also run `npm run lint` when that script exists. A task is complete only when the commands pass and any generated solar-system SVGs have been inspected when relevant.",
-  ].join("\n") + "\n";
+    ...(localSdk === undefined ? REGISTRY_PROVENANCE : LOCAL_PROVENANCE),
+  ].join("\n");
+
+const agentsMdLines = (resolved: Resolved): string[] => [
+  "# Agent guidance",
+  "",
+  "This is an `@pdx-ts/sdk` project that generates a Stellaris mod from TypeScript.",
+  "",
+  "<!-- pdx-project-collaboration:start -->",
+  "## Collaboration agreement",
+  "",
+  "Status: not configured.",
+  "",
+  "Before the first substantive project change, read and follow `.agents/skills/pdx-project-startup/SKILL.md` completely. Replace this marked section with the agreed working preferences, then resume the user's original task.",
+  "<!-- pdx-project-collaboration:end -->",
+  "",
+  "## SDK authoring",
+  "",
+  "Before adding, changing, reorganizing, or diagnosing SDK content, Feature modules, tests, Assets, or the build pipeline, read and follow `.agents/skills/pdx-sdk-authoring/SKILL.md` completely. It owns this project's stable authoring and Feature contract.",
+  "",
+  "## SDK documentation expert",
+  "",
+  "Use the project-scoped `pdx-docs-expert` subagent for SDK authoring questions: content fields, localization slots, coverage, scope effects and triggers, testing, and patching vanilla content.",
+  "",
+  "Invoke it by name. In Codex, spawn one subagent with the `pdx-docs-expert` agent type. In Claude Code, use `@pdx-docs-expert <question>` or ask Claude to use that subagent.",
+  "",
+  "Start it fresh, without forking or inheriting conversation history. Pass only the documentation question and the explicit project facts needed to answer it. Keep implementation and local verification in the main agent.",
+  "",
+  "Treat fetched SDK documentation as authoritative only after its declared SDK version matches this project's exact `@pdx-ts/sdk` dependency and its declared SDK revision matches the one recorded below. Generic Stellaris knowledge is not evidence for the SDK authoring surface.",
+  "",
+  "If the active client cannot use the configured subagent, read and follow `.agents/skills/pdx-sdk-docs/SKILL.md` completely and perform the same documentation retrieval directly.",
+  "If current documentation retrieval is blocked, return a concise blocker. Apart from the narrow `package.json` version check, do not inspect the project or substitute repository code or generic Stellaris knowledge for fetched documentation.",
+  "",
+  PROVENANCE(resolved.localSdk),
+  "",
+  "## Solar-system diagnostics",
+  "",
+  `After adding or changing a solar-system initializer, run \`${runScript(resolved.packageManager, "build")}\`. The CLI prints advisory layout warnings and writes an interactive gallery to \`previews/index.html\` with one SVG per initializer.`,
+  "",
+  "Address each warning deliberately, then inspect the relevant `previews/*.svg` files in a browser. Confirm that stars, planets, moons, orbital lines, and asteroid belts look correct. A clean diagnostic list is not a substitute for visual inspection because the preview uses documented approximations and the diagnostics are advisory.",
+  "",
+  "## Verification",
+  "",
+  `Run \`${runScript(resolved.packageManager, "typecheck")}\`, \`${runScript(resolved.packageManager, "test")}\`, and \`${runScript(resolved.packageManager, "build")}\` after code changes. Also run \`${runScript(resolved.packageManager, "lint")}\` when that script exists. A task is complete only when the commands pass and any generated solar-system SVGs have been inspected when relevant.`,
+];
 
 const PDX_PROJECT_STARTUP_SKILL =
   [
@@ -96,58 +154,57 @@ const PDX_PROJECT_STARTUP_SKILL =
     "Setup is complete when the unconfigured status is gone, every preference the user supplied appears once in the marked block, the optional Skills have been mentioned, and the original task has resumed.",
   ].join("\n") + "\n";
 
-const PDX_SDK_AUTHORING_SKILL =
-  [
-    "---",
-    "name: pdx-sdk-authoring",
-    "description: Author and modify an @pdx-ts/sdk Stellaris mod project. Use when adding or reorganizing Feature modules, shared authoring values, tests, Assets, or build-pipeline customization, or when diagnosing discovery, capability ownership, placement, references, or output identity.",
-    "---",
-    "",
-    "# Authoring an @pdx-ts/sdk project",
-    "",
-    "Use this Skill for the stable project and Feature contract. Use the project-scoped `pdx-docs-expert` from `AGENTS.md` for the exact generated authoring surface: content fields, localization slots, registry coverage, scope effects and triggers, patching, testing APIs, and working content examples.",
-    "",
-    "## Mental model",
-    "",
-    "This project is a TypeScript program that runs once at build time and emits an ordinary Stellaris mod. The game receives PDXScript, localization, metadata, and Asset files; it never runs the TypeScript.",
-    "",
-    "- `mod` is the immutable authoring capability bound to this project's prefix.",
-    "- Capability methods create typed **Items**: definitions, events, on-action contributions, localization, patches, and Assets.",
-    "- A **Feature** explicitly selects Items for the build and gives per-Feature outputs an authored file stem. Importing or exporting an Item does not select it.",
-    "- `mod.compile(features)` is the **Fold**. It validates the selected Features, assigns logical output paths, and produces one immutable mod value before rendering or disk writes.",
-    "",
-    "## Project contract",
-    "",
-    "- Treat `stellaris-mod.json` as the source of truth for mod identity, launcher metadata, and source layout. Its sole key under `mod` is the prefix.",
-    "- Import `mod`, `config`, and `buildTheMod` from `#mod`. The package import alias keeps Feature modules independent of their source depth.",
-    "- `createModProject` constructs the capability without discovering source. Each `project.build()` discovers the manifest's `contentDirectory`, captures the optional Asset tree, appends `additionalFeatures`, and performs one Fold.",
-    "- Use `additionalFeatures` for an additive pre-compile customization. Compose `discoverFeatures`, `mod.assetTree`, and `mod.compile` directly only when the project needs a different pipeline.",
-    "- `npm run inspect` performs the same Fold without writing the mod and prints deterministic YAML. Use it to review Feature stems, Item counts and ids, patch plans, warnings, dependency versions, and vanilla evidence.",
-    "",
-    "## Feature contract",
-    "",
-    "- Organize source around concepts maintained together. One Feature may coordinate Items from several registries; the Fold fans them out to the directories Stellaris expects.",
-    "- Every conventionally discovered module exports exactly one named, stemmed `feature`. Other named and default exports are ordinary module API and are ignored by discovery.",
-    "- Keep helper-only modules outside the discovered directory, or use a custom `discover.include` that selects only Feature modules. A custom pattern replaces the default. The default selects `.ts` and excludes test, spec, benchmark, declaration, and type-test companions.",
-    "- Use a lowercase `snake_case` Feature stem with no `/`. The stem controls per-Feature output filenames; the source filename and directory do not become content identity.",
-    "- Place only Items created by this project's `mod` in its Features. Every authored Item referenced by selected content must also belong to a selected Feature, or the Fold reports a dangling reference.",
-    "- Keep one event namespace in one Feature module. Keep its namespace handle local and place its events and firing hooks in that Feature.",
-    "",
-    "## References and identity",
-    "",
-    "- When a content method takes a logical name, pass only that logical name. The capability mints its full id from the project prefix, registry, and logical name. Use the docs expert to identify nested fields that require a complete authored id.",
-    "- Pass authored Item values as cross-content references so TypeScript and the Fold retain their registry and ownership information.",
-    "- Prefer checked `vanilla.*` references and generated scripted bindings for content supplied by Stellaris. Use raw strings deliberately for third-party content the checked vanilla package cannot contain.",
-    "",
-    "## Authoring sequence",
-    "",
-    "1. Read `stellaris-mod.json`, the package scripts, and the nearest existing Feature before deciding placement. This step is complete when the prefix, discovery directory, current Feature boundary, and available verification commands are known.",
-    "2. Ask the docs expert for every exact content method, field, localization slot, scope operation, or coverage decision the change needs. This step is complete when each SDK call is supported by version-matched documentation; generic Stellaris knowledge is context, not SDK API evidence.",
-    "3. Create Items through `mod`, preserve returned values for references, and group the Items that ship together. This step is complete when every intended Item is reachable from one selected Feature and every authored reference target is selected too.",
-    "4. Export exactly one named `feature` from each discovered module. Keep reusable sibling exports ordinary and keep helper-only modules outside discovery. This step is complete when discovery can select every Feature module without selecting a helper or companion.",
-    "5. Add or update colocated tests when the SDK test interpreter models the changed behavior. Treat its unsupported-semantics refusal as a limit of the harness rather than evidence about the game.",
-    "6. Run `npm run inspect` and the verification required by `AGENTS.md`. Address every build error and warning deliberately, and inspect generated previews when that guidance requires it. The change is complete when those gates pass and the YAML report places every intended id under the expected Feature.",
-  ].join("\n") + "\n";
+const pdxSdkAuthoringSkillLines = (packageManager: string): string[] => [
+  "---",
+  "name: pdx-sdk-authoring",
+  "description: Author and modify an @pdx-ts/sdk Stellaris mod project. Use when adding or reorganizing Feature modules, shared authoring values, tests, Assets, or build-pipeline customization, or when diagnosing discovery, capability ownership, placement, references, or output identity.",
+  "---",
+  "",
+  "# Authoring an @pdx-ts/sdk project",
+  "",
+  "Use this Skill for the stable project and Feature contract. Use the project-scoped `pdx-docs-expert` from `AGENTS.md` for the exact generated authoring surface: content fields, localization slots, registry coverage, scope effects and triggers, patching, testing APIs, and working content examples.",
+  "",
+  "## Mental model",
+  "",
+  "This project is a TypeScript program that runs once at build time and emits an ordinary Stellaris mod. The game receives PDXScript, localization, metadata, and Asset files; it never runs the TypeScript.",
+  "",
+  "- `mod` is the immutable authoring capability bound to this project's prefix.",
+  "- Capability methods create typed **Items**: definitions, events, on-action contributions, localization, patches, and Assets.",
+  "- A **Feature** explicitly selects Items for the build and gives per-Feature outputs an authored file stem. Importing or exporting an Item does not select it.",
+  "- `mod.compile(features)` is the **Fold**. It validates the selected Features, assigns logical output paths, and produces one immutable mod value before rendering or disk writes.",
+  "",
+  "## Project contract",
+  "",
+  "- Treat `stellaris-mod.json` as the source of truth for mod identity, launcher metadata, and source layout. Its sole key under `mod` is the prefix.",
+  "- Import `mod`, `config`, and `buildTheMod` from `#mod`. The package import alias keeps Feature modules independent of their source depth.",
+  "- `createModProject` constructs the capability without discovering source. Each `project.build()` discovers the manifest's `contentDirectory`, captures the optional Asset tree, appends `additionalFeatures`, and performs one Fold.",
+  "- Use `additionalFeatures` for an additive pre-compile customization. Compose `discoverFeatures`, `mod.assetTree`, and `mod.compile` directly only when the project needs a different pipeline.",
+  `- \`${runScript(packageManager, "inspect")}\` performs the same Fold without writing the mod and prints deterministic YAML. Use it to review Feature stems, Item counts and ids, patch plans, warnings, dependency versions, and vanilla evidence.`,
+  "",
+  "## Feature contract",
+  "",
+  "- Organize source around concepts maintained together. One Feature may coordinate Items from several registries; the Fold fans them out to the directories Stellaris expects.",
+  "- Every conventionally discovered module exports exactly one named, stemmed `feature`. Other named and default exports are ordinary module API and are ignored by discovery.",
+  "- Keep helper-only modules outside the discovered directory, or use a custom `discover.include` that selects only Feature modules. A custom pattern replaces the default. The default selects `.ts` and excludes test, spec, benchmark, declaration, and type-test companions.",
+  "- Use a lowercase `snake_case` Feature stem with no `/`. The stem controls per-Feature output filenames; the source filename and directory do not become content identity.",
+  "- Place only Items created by this project's `mod` in its Features. Every authored Item referenced by selected content must also belong to a selected Feature, or the Fold reports a dangling reference.",
+  "- Keep one event namespace in one Feature module. Keep its namespace handle local and place its events and firing hooks in that Feature.",
+  "",
+  "## References and identity",
+  "",
+  "- When a content method takes a logical name, pass only that logical name. The capability mints its full id from the project prefix, registry, and logical name. Use the docs expert to identify nested fields that require a complete authored id.",
+  "- Pass authored Item values as cross-content references so TypeScript and the Fold retain their registry and ownership information.",
+  "- Prefer checked `vanilla.*` references and generated scripted bindings for content supplied by Stellaris. Use raw strings deliberately for third-party content the checked vanilla package cannot contain.",
+  "",
+  "## Authoring sequence",
+  "",
+  "1. Read `stellaris-mod.json`, the package scripts, and the nearest existing Feature before deciding placement. This step is complete when the prefix, discovery directory, current Feature boundary, and available verification commands are known.",
+  "2. Ask the docs expert for every exact content method, field, localization slot, scope operation, or coverage decision the change needs. This step is complete when each SDK call is supported by version-matched documentation; generic Stellaris knowledge is context, not SDK API evidence.",
+  "3. Create Items through `mod`, preserve returned values for references, and group the Items that ship together. This step is complete when every intended Item is reachable from one selected Feature and every authored reference target is selected too.",
+  "4. Export exactly one named `feature` from each discovered module. Keep reusable sibling exports ordinary and keep helper-only modules outside discovery. This step is complete when discovery can select every Feature module without selecting a helper or companion.",
+  "5. Add or update colocated tests when the SDK test interpreter models the changed behavior. Treat its unsupported-semantics refusal as a limit of the harness rather than evidence about the game.",
+  `6. Run \`${runScript(packageManager, "inspect")}\` and the verification required by \`AGENTS.md\`. Address every build error and warning deliberately, and inspect generated previews when that guidance requires it. The change is complete when those gates pass and the YAML report places every intended id under the expected Feature.`,
+];
 
 const PDX_SDK_DOCS_SKILL =
   [
@@ -233,8 +290,8 @@ const CODEX_AGENT =
     "exclude_tmpdir_env_var = false",
   ].join("\n") + "\n";
 
-export function agentsMd(): string {
-  return AGENTS_MD;
+export function agentsMd(resolved: Resolved): string {
+  return `${agentsMdLines(resolved).join("\n")}\n`;
 }
 
 /** Returns the one-time collaboration setup Skill shared by Codex and Claude. */
@@ -243,8 +300,8 @@ export function pdxProjectStartupSkill(): string {
 }
 
 /** Returns the project-local authoring Skill shared by Codex and Claude. */
-export function pdxSdkAuthoringSkill(): string {
-  return PDX_SDK_AUTHORING_SKILL;
+export function pdxSdkAuthoringSkill(resolved: Resolved): string {
+  return `${pdxSdkAuthoringSkillLines(resolved.packageManager).join("\n")}\n`;
 }
 
 export function pdxSdkDocsSkill(): string {

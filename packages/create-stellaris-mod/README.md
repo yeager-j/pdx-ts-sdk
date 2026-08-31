@@ -47,7 +47,10 @@ typechecks, tests, and builds after installation.
    built mod where the launcher expects it.
 
 The generated README repeats these project-specific commands and records the
-game-version pin chosen during scaffolding.
+game-version pin chosen during scaffolding. The commands above assume the npm
+default; the generated README, `AGENTS.md`, and the terminal next steps all
+spell them with the package manager `--pm` selected, so a pnpm or Bun project is
+never told to run `npm install`.
 
 ## Commands
 
@@ -169,6 +172,19 @@ The build, inspect, and install commands call that same sequence and then add
 their one final operation. A custom project can pass discovery hooks or compose
 the SDK's lower-level interfaces directly.
 
+`src/vanilla.ts` returns no view in exactly two cases: `PDX_NO_VANILLA=1`, and
+the SDK finding no install on its own. Every other failure — an unreadable game
+directory, a game whose shape the parser does not recognize, a corrupt archive —
+propagates and the build reports it. An unexpected failure is not evidence that
+there is no game, and a build that silently drops id-collision checks, version
+evidence, and patch sources cannot be told apart from one that kept them.
+
+A `STELLARIS_PATH` that is not a game root propagates too, matching the CLI's
+own rule that an explicit invalid path is fatal. A path baked in by scaffolding
+is treated the opposite way: it records one machine rather than requesting
+anything here, so a checkout where it does not resolve still builds without the
+view.
+
 ## Recipe Catalog
 
 Recipes generate short, working TypeScript starters. An Item recipe emits one
@@ -191,8 +207,9 @@ question flags.
 
 The CLI uses `--stellaris-path` first, then `STELLARIS_PATH`, then the platform's
 normal Steam locations. A missing automatically detected install is not fatal:
-the project omits `src/vanilla.ts` and pins identifiers to the Stellaris build
-this scaffolder was verified against.
+the project still writes `src/vanilla.ts`, which finds the install later if one
+appears, and pins identifiers to the Stellaris build this scaffolder was
+verified against.
 
 An explicit invalid `--stellaris-path` is fatal. Treating a misspelled path as a
 request to disable install checks would hide user intent.
@@ -260,6 +277,22 @@ The generated agent instructions tell the documentation expert to compare the
 project's SDK dependency with documentation provenance before giving API advice.
 This is an agent workflow instruction, not a separate compatibility checker in
 the CLI.
+
+`AGENTS.md` carries the second half of that comparison in its
+`Documentation provenance` section: the `@pdx-ts/sdk` range the project was
+scaffolded against, and the SDK source revision behind it. The documentation
+site publishes the same hash as the `SDK revision:` line in its `llms.txt`, so
+the two agree exactly when the fetched documentation was generated from the SDK
+source this project was scaffolded against. It records one moment rather than
+checking continuously: once the project declares a version outside that range,
+the recorded revision describes an older SDK and the version match governs
+alone.
+
+A project scaffolded with `--local` records no provenance and says so. Its
+`@pdx-ts/sdk` is a `file:` link at a checkout, which is neither a published
+version nor a fixed revision, so there is nothing for published documentation to
+match. Recording the release coordinates anyway would point the documentation
+expert at a version the project does not depend on.
 
 Use `--no-llm` to omit the complete bundle.
 

@@ -1,8 +1,29 @@
 import type { Resolved } from "../options.ts";
+import { addDependency, runScript } from "../package-manager.ts";
 import { idsGameVersion, idsRange } from "./project.ts";
+
+/**
+ * The command block at the top, aligned to whichever manager was selected.
+ *
+ * The padding is computed rather than typed, because `pnpm run install-mod` is
+ * three characters longer than `npm run install-mod` and a column that was
+ * aligned by hand for npm is a ragged one everywhere else.
+ */
+function commandBlock(packageManager: string): string[] {
+  const commands = [
+    ["build", "write the mod into ./out/"],
+    ["inspect", "print a YAML map of the compiled project"],
+    ["install-mod", "build, then install it where the launcher looks"],
+    ["test", "run mod logic without launching the game"],
+    ["typecheck", "tsc --noEmit"],
+  ].map(([script, what]) => [runScript(packageManager, script!), what!] as const);
+  const width = Math.max(...commands.map(([command]) => command.length));
+  return commands.map(([command, what]) => `${command.padEnd(width)}  # ${what}`);
+}
 
 export function readme(resolved: Resolved): string {
   const p = resolved.prefix;
+  const pm = resolved.packageManager;
   const lines = [
     `# ${resolved.name}`,
     "",
@@ -11,11 +32,7 @@ export function readme(resolved: Resolved): string {
     "game never sees anything but normal PDXScript.",
     "",
     "```bash",
-    "npm run build        # write the mod into ./out/",
-    "npm run inspect      # print a YAML map of the compiled project",
-    "npm run install-mod  # build, then install it where the launcher looks",
-    "npm test             # run mod logic without launching the game",
-    "npm run typecheck    # tsc --noEmit",
+    ...commandBlock(pm),
     "```",
     "",
     "## Layout",
@@ -65,8 +82,8 @@ export function readme(resolved: Resolved): string {
     "customization, or compose `discoverFeatures`, `mod.assetTree`, and",
     "`mod.compile` directly for a fundamentally different pipeline.",
     "",
-    "`npm run inspect` performs that same Fold without rendering or writing the",
-    "mod. Its deterministic YAML report lists the manifest layout, installed and",
+    `\`${runScript(pm, "inspect")}\` performs that same Fold without rendering or writing`,
+    "the mod. Its deterministic YAML report lists the manifest layout, installed and",
     "requested SDK and identifier-package versions, vanilla-checking evidence,",
     "Feature stems, Item counts and ids, patch plans, and warnings. Use it to",
     "review what the project will ship or give a coding agent a compact map.",
@@ -117,7 +134,7 @@ export function readme(resolved: Resolved): string {
       "a different build, install the matching identifier package:",
       "",
       "```bash",
-      `npm install "@pdx-ts/stellaris-ids@${idsRange("<your game version>")}"`,
+      addDependency(pm, `"@pdx-ts/stellaris-ids@${idsRange("<your game version>")}"`),
       "```"
     );
   } else {
