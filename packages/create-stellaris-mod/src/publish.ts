@@ -21,13 +21,29 @@
  * gets a loud error, because the alternative is silently destroying the source
  * file an author spent the afternoon in.
  *
+ * Node exposes neither `openat` nor `linkat`, so pathname publication cannot be
+ * race-free against a process that concurrently replaces project directories.
+ * The destination directory and temporary file remain open through publication,
+ * identity is checked before and after the hard link, and a link made through a
+ * persistent swap is removed when it is still identifiable. These checks reduce
+ * the race surface and refuse observed changes; they are not a containment
+ * guarantee against hostile concurrent mutation.
+ *
  * Nothing here creates a directory before the author has confirmed: `preflight`
  * only looks, and `publishExclusive` is what runs afterwards.
  */
 
 import { randomBytes } from "node:crypto";
 import type { Stats } from "node:fs";
-import { link as fsLink, open as fsOpen, lstat, mkdir, realpath, unlink } from "node:fs/promises";
+import {
+  link as fsLink,
+  open as fsOpen,
+  lstat,
+  mkdir,
+  opendir,
+  realpath,
+  unlink,
+} from "node:fs/promises";
 import path from "node:path";
 
 import { parseProjectLayoutField } from "./project-layout.ts";
@@ -154,8 +170,13 @@ export async function preflightTarget(
 
 /** The part of a `FileHandle` publication uses. */
 export interface ExclusiveFile {
+  /** Returns the identity of the file opened with exclusive creation. */
+  stat(): Promise<Stats>;
+  /** Writes the generated source bytes. */
   writeFile(contents: string, encoding: BufferEncoding): Promise<void>;
+  /** Flushes the complete file before publication. */
   sync(): Promise<void>;
+  /** Releases the temporary file handle. */
   close(): Promise<void>;
 }
 
@@ -217,43 +238,60 @@ export async function publishExclusive(
   // exists rather than against what existed before the directories were made.
   const real = await realpath(dir);
   requireContainment(preflight.rootDir, real, dir);
+  const directoryIdentity = await requireRealDirectory(real);
+  const directoryHandle = await opendir(real);
 
   const target = path.join(real, preflight.basename);
   const temporary = path.join(real, `.${preflight.basename}.${randomBytes(12).toString("hex")}`);
 
-  const handle = await open(temporary, "wx", 0o644);
-  // One `finally` over the temporary file's whole life, because every way this
-  // can fail — a full disk mid-write, a refused fsync, an unlinkable target —
-  // leaves the same litter otherwise: a dotfile in somebody's source tree that
-  // nothing will ever come back for.
   try {
+    await requireUnchangedDirectory(preflight.rootDir, real, directoryIdentity);
+    const handle = await open(temporary, "wx", 0o644);
+    let temporaryIdentity: Stats | undefined;
     try {
+      temporaryIdentity = await handle.stat();
+      await requireUnchangedDirectory(preflight.rootDir, real, directoryIdentity);
+      await requireUnchangedFile(temporary, temporaryIdentity);
       await handle.writeFile(contents, "utf8");
       // Flushed before it is published, so the name never appears pointing at
       // bytes that are not on the disk yet.
       await handle.sync();
-    } finally {
-      await handle.close();
-    }
 
-    try {
-      await link(temporary, target);
-    } catch (error) {
-      const code = (error as NodeJS.ErrnoException).code;
-      if (code === "EEXIST") {
-        throw new CollisionError(collisionMessage(target));
+      await requireUnchangedDirectory(preflight.rootDir, real, directoryIdentity);
+      await requireUnchangedFile(temporary, temporaryIdentity);
+      try {
+        await link(temporary, target);
+      } catch (error) {
+        const code = (error as NodeJS.ErrnoException).code;
+        if (code === "EEXIST") {
+          throw new CollisionError(collisionMessage(target));
+        }
+        throw new UnsupportedPublicationError(
+          `${real} cannot publish a file without risking replacing one (${code ?? "unknown error"} ` +
+            `from link()). This CLI will not fall back to rename(), which overwrites — on that ` +
+            `path a file of somebody's own could be destroyed to write this one. Generate into a ` +
+            `directory on an ordinary local filesystem instead.`
+        );
       }
-      throw new UnsupportedPublicationError(
-        `${real} cannot publish a file without risking replacing one (${code ?? "unknown error"} ` +
-          `from link()). This CLI will not fall back to rename(), which overwrites — on that ` +
-          `path a file of somebody's own could be destroyed to write this one. Generate into a ` +
-          `directory on an ordinary local filesystem instead.`
-      );
+
+      try {
+        await requireUnchangedDirectory(preflight.rootDir, real, directoryIdentity);
+        await requireUnchangedFile(target, temporaryIdentity);
+      } catch (error) {
+        await unlinkIfSameFile(target, temporaryIdentity);
+        throw error;
+      }
+    } finally {
+      try {
+        await handle.close();
+      } finally {
+        if (temporaryIdentity !== undefined) {
+          await unlinkIfSameFile(temporary, temporaryIdentity);
+        }
+      }
     }
   } finally {
-    // A crash between the link and this leaves a complete target plus an
-    // orphaned dotfile: untidy, and the only failure mode worth having.
-    await unlink(temporary).catch(() => undefined);
+    await directoryHandle.close();
   }
 
   return target;
@@ -291,6 +329,67 @@ async function classify(targetPath: string): Promise<TargetKind> {
     return "dir";
   }
   return stats.isFile() ? "file" : "other";
+}
+
+async function requireRealDirectory(target: string): Promise<Stats> {
+  const stats = await lstatOrUndefined(target);
+  if (stats === undefined || stats.isSymbolicLink() || !stats.isDirectory()) {
+    throw new ContainmentError(
+      `${target} changed while publication was preparing it and is no longer a real directory. ` +
+        `Nothing was published.`
+    );
+  }
+  return stats;
+}
+
+async function requireUnchangedDirectory(
+  rootDir: string,
+  target: string,
+  expected: Stats
+): Promise<void> {
+  const observed = await lstatOrUndefined(target);
+  if (
+    observed === undefined ||
+    observed.isSymbolicLink() ||
+    !observed.isDirectory() ||
+    !sameInode(observed, expected)
+  ) {
+    throw new ContainmentError(
+      `${target} changed identity while publication was running. Nothing was published.`
+    );
+  }
+  const resolved = await realpath(target);
+  requireContainment(rootDir, resolved, target);
+  if (resolved !== target) {
+    throw new ContainmentError(
+      `${target} changed identity while publication was running. Nothing was published.`
+    );
+  }
+}
+
+async function requireUnchangedFile(target: string, expected: Stats): Promise<void> {
+  const observed = await lstatOrUndefined(target);
+  if (
+    observed === undefined ||
+    observed.isSymbolicLink() ||
+    !observed.isFile() ||
+    !sameInode(observed, expected)
+  ) {
+    throw new ContainmentError(
+      `${target} changed identity while publication was running. Nothing was published.`
+    );
+  }
+}
+
+async function unlinkIfSameFile(target: string, expected: Stats): Promise<void> {
+  const observed = await lstatOrUndefined(target);
+  if (observed !== undefined && observed.isFile() && sameInode(observed, expected)) {
+    await unlink(target).catch(() => undefined);
+  }
+}
+
+function sameInode(observed: Stats, expected: Stats): boolean {
+  return observed.dev === expected.dev && observed.ino === expected.ino;
 }
 
 function requireContainment(rootDir: string, real: string, shown: string): void {
