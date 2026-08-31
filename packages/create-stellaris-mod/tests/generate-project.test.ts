@@ -19,6 +19,7 @@ import {
   chmodSync,
   mkdirSync,
   mkdtempSync,
+  readFileSync,
   realpathSync,
   rmSync,
   symlinkSync,
@@ -29,7 +30,7 @@ import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { main } from "../src/cli.ts";
-import { findInstalledSdkVersion } from "../src/commands/generate.ts";
+import { findInstalledSdk } from "../src/commands/generate.ts";
 import { capture } from "./helpers/capture.ts";
 
 const MANIFEST = {
@@ -107,15 +108,15 @@ async function generate(
 }
 
 describe("finding the installed SDK", () => {
-  it("returns nothing when it is installed nowhere above the project", async () => {
+  it("reports a clean absence when it is installed nowhere above the project", async () => {
     const project = writeProject(path.join(makeRoot(), "project"));
-    expect(await findInstalledSdkVersion(project)).toBeUndefined();
+    expect(await findInstalledSdk(project)).toEqual({ kind: "absent" });
   });
 
   it("finds it beside the project", async () => {
     const project = writeProject(path.join(makeRoot(), "project"));
     installSdk(project, "0.3.4");
-    expect(await findInstalledSdkVersion(project)).toBe("0.3.4");
+    expect(await findInstalledSdk(project)).toEqual({ kind: "installed", version: "0.3.4" });
   });
 
   it("finds it hoisted to a workspace root above the project", async () => {
@@ -125,18 +126,70 @@ describe("finding the installed SDK", () => {
     const root = makeRoot();
     const project = writeProject(path.join(root, "packages/mod"));
     installSdk(root, "0.3.4");
-    expect(await findInstalledSdkVersion(project)).toBe("0.3.4");
+    expect(await findInstalledSdk(project)).toEqual({ kind: "installed", version: "0.3.4" });
   });
 
   it("stops at an installation whose package.json says nothing useful", async () => {
     // A malformed install is still the install that would be imported, so the
-    // answer is "no version to check" rather than some other copy's version.
+    // answer is about *this* copy rather than some other copy's version. It is
+    // not a clean absence either: something is installed, and nothing can be
+    // proved about it.
     const root = makeRoot();
     const project = writeProject(path.join(root, "packages/mod"));
     installSdk(root, "0.3.4");
     installSdk(project, "0.3.0");
     writeFileSync(path.join(project, "node_modules/@pdx-ts/sdk/package.json"), "null\n");
-    expect(await findInstalledSdkVersion(project)).toBeUndefined();
+    expect(await findInstalledSdk(project)).toMatchObject({
+      kind: "unreadable",
+      detail: "it declares no version",
+    });
+  });
+
+  it("distinguishes unparsable metadata from an absence too", async () => {
+    const project = writeProject(path.join(makeRoot(), "project"));
+    installSdk(project, "0.3.4");
+    writeFileSync(path.join(project, "node_modules/@pdx-ts/sdk/package.json"), "{ nope\n");
+    const found = await findInstalledSdk(project);
+    expect(found.kind).toBe("unreadable");
+    expect(found.kind === "unreadable" && found.detail).toContain("not valid JSON");
+  });
+
+  it("reads metadata Node would read, byte-order mark included", async () => {
+    // `readFile(..., "utf8")` decodes the mark rather than dropping it, and
+    // `JSON.parse` rejects it — but Node's own loaders strip it, so this
+    // installation resolves and imports perfectly well. Calling it unreadable
+    // would be refusing a project over a character the runtime ignores.
+    const project = writeProject(path.join(makeRoot(), "project"));
+    installSdk(project, "0.3.4");
+    const metadata = path.join(project, "node_modules/@pdx-ts/sdk/package.json");
+    writeFileSync(metadata, `\uFEFF${readFileSync(metadata, "utf8")}`);
+    expect(await findInstalledSdk(project)).toEqual({ kind: "installed", version: "0.3.4" });
+  });
+
+  it("keeps walking past a lookup location it cannot descend into", async () => {
+    // Node's resolver skips a location where `node_modules/@pdx-ts` is not a
+    // directory and resolves the hoisted copy above it. Reading that `ENOTDIR`
+    // as an unreadable installation would refuse a project whose SDK is fine.
+    const root = makeRoot();
+    const project = writeProject(path.join(root, "packages/mod"));
+    installSdk(root, "0.3.4");
+    mkdirSync(path.join(project, "node_modules"), { recursive: true });
+    writeFileSync(path.join(project, "node_modules/@pdx-ts"), "not a directory\n");
+
+    expect(await findInstalledSdk(project)).toEqual({ kind: "installed", version: "0.3.4" });
+  });
+
+  it("refuses to generate against an installation it cannot read", async () => {
+    // End to end. The declared range says what an install *should* be; it
+    // cannot stand in as evidence about the one that is actually there.
+    const project = writeProject(path.join(makeRoot(), "project"), { sdkSpecifier: "0.6.0" });
+    installSdk(project, "0.6.0");
+    writeFileSync(path.join(project, "node_modules/@pdx-ts/sdk/package.json"), "{ nope\n");
+
+    const { code, err } = await generate(project);
+    expect(code).toBe(1);
+    expect(err).toContain("cannot be read");
+    expect(err).toContain("--allow-unsupported-sdk");
   });
 
   it("takes the nearest one, which is the one that would resolve", async () => {
@@ -144,7 +197,7 @@ describe("finding the installed SDK", () => {
     const project = writeProject(path.join(root, "packages/mod"));
     installSdk(root, "0.3.0");
     installSdk(project, "0.3.4");
-    expect(await findInstalledSdkVersion(project)).toBe("0.3.4");
+    expect(await findInstalledSdk(project)).toEqual({ kind: "installed", version: "0.3.4" });
   });
 
   it("refuses a generation against a hoisted install the project has outgrown", async () => {
@@ -181,6 +234,15 @@ describe("a package.json that is not the shape it claims", () => {
       },
       /must be a version range written as a string/,
     ],
+    [
+      "two different SDK ranges",
+      {
+        imports: { "#mod": "./src/mod.ts" },
+        dependencies: { "@pdx-ts/sdk": "0.6.0" },
+        devDependencies: { "@pdx-ts/sdk": "0.5.0" },
+      },
+      /declares @pdx-ts\/sdk twice and differently/,
+    ],
   ])("reports %s as an ordinary fault", async (_case, packageJson, pattern) => {
     const project = writeProject(path.join(makeRoot(), "project"), { packageJson });
     const { code, err, out } = await generate(project);
@@ -190,6 +252,26 @@ describe("a package.json that is not the shape it claims", () => {
     // Not a crash: no stack frames, and nothing on stdout.
     expect(err).not.toContain("    at ");
     expect(out).toBe("");
+  });
+
+  /**
+   * SDK-387. Reading both blocks and taking the first was a silent preference:
+   * `dependencies` answered for a `devDependencies` entry asking for something
+   * else, and the command then claimed the generated source was checked against
+   * what the project resolves. It resolves one of them, and which one is not
+   * this command's to guess.
+   */
+  it("accepts the same SDK range declared in both blocks", async () => {
+    const project = writeProject(path.join(makeRoot(), "project"), {
+      packageJson: {
+        imports: { "#mod": "./src/mod.ts" },
+        dependencies: { "@pdx-ts/sdk": "0.6.0" },
+        devDependencies: { "@pdx-ts/sdk": "0.6.0" },
+      },
+    });
+    const { code, err } = await generate(project);
+    expect(err).not.toMatch(/twice and differently/);
+    expect(code).toBe(0);
   });
 });
 

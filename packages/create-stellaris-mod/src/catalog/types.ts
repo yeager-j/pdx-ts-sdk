@@ -78,8 +78,18 @@ export interface RecipeView {
 /** One normalized, complete request. The catalog demands nothing less. */
 export interface GenerateRecipeRequest {
   readonly recipeId: string;
-  /** What the author typed. Derivation happens inside the catalog, once. */
-  readonly name: string;
+  /**
+   * Every name the render needs, already derived and already validated.
+   *
+   * The refined value crosses the boundary rather than the raw text, because
+   * the command has to derive before it can preview a target path or a binding,
+   * and a second derivation inside the catalog would be a second decision
+   * governing the same file. Two decisions agree only while the derivation
+   * happens to be idempotent over its own output — a property nothing in the
+   * design guarantees, and one nobody would notice breaking until an author
+   * confirmed one path and received another.
+   */
+  readonly names: DerivedNames;
   /**
    * Every declared question answered with a declared choice. Defaults are the
    * CLI's business: by the time a request reaches the catalog there is no such

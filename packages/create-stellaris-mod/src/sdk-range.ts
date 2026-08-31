@@ -20,11 +20,54 @@ export const VERIFIED_SDK_RANGE = SDK_COMPATIBILITY_POLICY.verifiedRange;
 /** The dependency every check here is about. */
 export const SDK_PACKAGE = SDK_COMPATIBILITY_POLICY.packageName;
 
+/**
+ * What reading `node_modules` established about the SDK this project resolves.
+ *
+ * Three answers rather than two, because "nothing is installed" and "something
+ * is installed and unreadable" are opposite facts. The first is ordinary:
+ * authors generate before installing, and a declared range provably inside the
+ * verified one is evidence on its own. The second is what the project would
+ * actually import, and nothing can be proved about it — so collapsing it into
+ * the first would let a declared range stand as evidence for a version nobody
+ * could read.
+ *
+ * Discriminate on `kind`.
+ */
+export type InstalledSdk =
+  | {
+      /** No SDK was found in any `node_modules` above the project. */
+      readonly kind: "absent";
+    }
+  | {
+      /** An SDK was found and its metadata was read. */
+      readonly kind: "installed";
+      /**
+       * The `version` its `package.json` declares, verbatim. Not yet known to
+       * be a valid semver version; {@link checkSdkCompatibility} decides that.
+       */
+      readonly version: string;
+    }
+  | {
+      /**
+       * An SDK was found where the project would resolve it, and its metadata
+       * could not be read: unparsable JSON, a refused read, or no string
+       * `version`.
+       */
+      readonly kind: "unreadable";
+      /** Absolute path of the `package.json` that would have answered. */
+      readonly file: string;
+      /**
+       * Why it could not be read, as a clause that completes "it cannot be
+       * read: …" — for example `it declares no version`.
+       */
+      readonly detail: string;
+    };
+
 export interface SdkCompatibilityInput {
   /** What the project's package.json asks for, from either dependency block. */
   readonly declaredSpecifier: string | undefined;
-  /** What is actually installed, when `node_modules` could be read. */
-  readonly installedVersion: string | undefined;
+  /** What reading `node_modules` established. */
+  readonly installed: InstalledSdk;
 }
 
 export type SdkCompatibility =
@@ -35,7 +78,8 @@ export type SdkCompatibility =
         | "missing-dependency"
         | "unprovable-specifier"
         | "range-not-subset"
-        | "installed-version-unsupported";
+        | "installed-version-unsupported"
+        | "installed-metadata-unreadable";
       readonly detail: string;
     };
 
@@ -56,7 +100,7 @@ export function checkSdkCompatibility(
   input: SdkCompatibilityInput,
   policy: ReleaseCompatibilityPolicy = SDK_COMPATIBILITY_POLICY
 ): SdkCompatibility {
-  const { declaredSpecifier, installedVersion } = input;
+  const { declaredSpecifier, installed } = input;
   const { packageName: sdkPackage, verifiedRange } = policy;
 
   if (declaredSpecifier === undefined || declaredSpecifier.trim() === "") {
@@ -93,13 +137,26 @@ export function checkSdkCompatibility(
     };
   }
 
-  if (installedVersion === undefined) {
+  if (installed.kind === "absent") {
     return {
       supported: true,
-      detail: `${sdkPackage} ${declaredSpecifier} is inside ${verifiedRange}.`,
+      detail: `${sdkPackage} ${declaredSpecifier} is inside ${verifiedRange}, and nothing is installed yet.`,
     };
   }
 
+  if (installed.kind === "unreadable") {
+    return {
+      supported: false,
+      reason: "installed-metadata-unreadable",
+      detail:
+        `${installed.file} is what this project would resolve ${sdkPackage} to, and it cannot ` +
+        `be read: ${installed.detail}. A declared range says what an install should be, not ` +
+        `what this one is, so nothing can be proved about the SDK the generated source would ` +
+        `run against.`,
+    };
+  }
+
+  const installedVersion = installed.version;
   if (semver.valid(installedVersion) === null) {
     return {
       supported: false,

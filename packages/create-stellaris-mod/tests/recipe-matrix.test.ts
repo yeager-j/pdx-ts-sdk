@@ -37,7 +37,7 @@ import {
   VANILLA_CURATED_VALUES as TECHNOLOGY_VALUES,
 } from "../src/catalog/recipes/technology.ts";
 import type { ChoiceQuestion } from "../src/catalog/types.ts";
-import { NAME } from "./helpers/matrix.ts";
+import { NAMES } from "./helpers/matrix.ts";
 
 /** Every combination of every question's choices, in question order. */
 function variants(questions: readonly ChoiceQuestion[]): Record<string, string>[] {
@@ -105,7 +105,7 @@ describe("the vanilla ids the examples cite", () => {
   it.each(cited)("%s cites %s: %s, and it still exists", (recipeId, registry, id, answers) => {
     // Both directions. A declared id nothing renders would make the check below
     // pass forever on an example no author will ever read.
-    const generated = CATALOG.generate({ recipeId, name: NAME, answers });
+    const generated = CATALOG.generate({ recipeId, names: NAMES, answers });
     expect(
       generated.contents,
       `${id} is declared in ${recipeId}'s VANILLA_EXAMPLE_IDS but appears nowhere in the ` +
@@ -136,7 +136,7 @@ describe("the vanilla scalar combinations the examples cite", () => {
   );
 
   it("keeps the technology recipe's tier and cost paired in real definitions", () => {
-    const generated = CATALOG.generate({ recipeId: "technology", name: NAME, answers: {} });
+    const generated = CATALOG.generate({ recipeId: "technology", names: NAMES, answers: {} });
     for (const [field, value] of Object.entries(TECHNOLOGY_VALUES)) {
       expect(generated.contents).toContain(`${field}: ${value},`);
     }

@@ -27,6 +27,7 @@ import {
   freshOut,
   MATERIALIZATION_MANIFEST,
   NAME,
+  NAMES,
   PREFIX,
   STEM,
 } from "./helpers/matrix.ts";
@@ -34,7 +35,7 @@ import {
 const QUEST_VARIANTS = [["one"], ["two"]] as const;
 
 const generateProjects = (projects: "one" | "two"): GeneratedFeatureSource =>
-  CATALOG.generate({ recipeId: "research-quest", name: NAME, answers: { projects } });
+  CATALOG.generate({ recipeId: "research-quest", names: NAMES, answers: { projects } });
 
 describe.each(QUEST_VARIANTS)("research-quest, answering projects=%s", (projects) => {
   describeSource(`recipes/research-quest/${projects}.ts`, () => generateProjects(projects));
