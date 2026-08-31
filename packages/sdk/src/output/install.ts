@@ -248,9 +248,24 @@ async function installJournaled(
   }
   let descriptorMovedAside = false;
   try {
+    // The observation taken before staging is too old to activate on. Staging
+    // takes as long as the render is large, and in that window a descriptor can
+    // appear where there was none — which the rename below would overwrite
+    // without ever reporting it — or a file can become a directory, which that
+    // rename would set aside for the post-commit cleanup to delete whole. Both
+    // refuse through the rollback below, so neither half stays published.
+    const currentDescriptor = await observeDescriptor(descriptorPath);
+    if (!sameDescriptorSnapshot(descriptor, currentDescriptor)) {
+      throw new MaterializationError(contentDir, {
+        reason: "busy",
+        detail:
+          `the launcher descriptor ${descriptorPath} changed or appeared while ` +
+          `the output was being staged.`,
+      });
+    }
     // What is on disk, not what ownership implies: a replayed receipt can waive
     // a descriptor that drifted to absent, and there is then nothing to move.
-    if (descriptor.state !== "absent") {
+    if (currentDescriptor.state !== "absent") {
       await transaction.record("descriptor-deactivating");
       await rename(descriptorPath, descriptorPrevious);
       descriptorMovedAside = true;
@@ -379,6 +394,19 @@ function sameDescriptor(
     left.byteLength === right.byteLength &&
     left.sha256 === right.sha256
   );
+}
+
+/**
+ * Whether two observations of the descriptor path found the same thing. Only
+ * `file` carries an identity to compare; a symlink swapped for another symlink
+ * therefore compares equal, which is sound because an install moves and removes
+ * a descriptor symlink as a link whichever one it is, never its referent.
+ */
+function sameDescriptorSnapshot(left: DescriptorSnapshot, right: DescriptorSnapshot): boolean {
+  if (left.state === "file") {
+    return right.state === "file" && sameDescriptor(left, right);
+  }
+  return left.state === right.state;
 }
 
 function descriptorDrift(
