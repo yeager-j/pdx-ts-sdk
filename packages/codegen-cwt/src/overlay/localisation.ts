@@ -7,40 +7,65 @@
  */
 
 /**
- * Localisation slots the SDK always writes, and therefore requires.
+ * Localisation slots the SDK requires of an authored definition, each with the
+ * shipped evidence for requiring it.
  *
- * Slot *names* come straight from the rules — `name` and `desc` — which also
- * matches how the rest of the script surface reads, since `desc` is the key
- * events use for their description. Only the requiredness is ours: definitions
- * need a display name even where the rules do not mark the slot required.
+ * Slot *names* come from the rules — `name` and `desc` — which also matches how
+ * the rest of the script surface reads, since `desc` is the key events use for
+ * their description. Only the requiredness is ours.
  *
- * Description/flavor/effects slots stay optional. Missing tooltip text is a
- * lint to grow, not a reason to block generated placeholder content.
+ * Every row is a `name` slot, and that is the whole policy: a definition the
+ * game shows needs something to show. Description, flavor and effects slots stay
+ * optional, because missing tooltip text is a lint to grow rather than a reason
+ * to block a definition that is otherwise complete.
+ *
+ * Each row states how many definitions the game ships, how many resolve the
+ * slot's key pattern, and what any gap turns out to be. The figures are measured
+ * against Stellaris 4.4.6, the repository's `VERIFIED_STELLARIS_BUILD`, by
+ * reading each registry directory from its CWT `type[...]` path and resolving
+ * the `name` pattern against the install's English localisation keys. They are
+ * reproducible, and a row whose gap grows on a later build is a row to review.
  */
-export const REQUIRED_LOCALISATION = new Set([
-  "technology.name",
-  "building.name",
-  "tradition.name",
-  "tradition_category.name",
-  "ascension_perk.name",
-  "agenda.name",
-  "edict.name",
-  "councilor.name",
-  "decision.name",
-  "job.name",
-  "opinion_modifier.name",
-  // All 3096 shipped static modifiers carry a localised name: the game shows
-  // it wherever the modifier is applied, so an unnamed one is a visible bug.
-  "static_modifier.name",
-  "casus_belli.name",
-  "war_goal.name",
-  "agreement_preset.name",
-  "bombardment_stance.name",
-  "archaeological_site_type.name",
-  // All 164 shipped megastructures carry a localised name, and the game shows
-  // it in the construction menu and the outliner, so an unnamed one is a
-  // visible bug the same way an unnamed static modifier is.
-  "megastructure.name",
+export const REQUIRED_LOCALISATION = new Map<string, string>([
+  [
+    "technology.name",
+    "692 of 692 resolve `$`. The raw directory holds 698 entries, but the six in " +
+      "`common/technology/00_tier.txt` are tier definitions rather than technologies.",
+  ],
+  ["building.name", "498 of 498 resolve `$`."],
+  ["tradition.name", "234 of 234 resolve `$`."],
+  [
+    "tradition_category.name",
+    "32 of 33 resolve `$`. The one gap, `tradition_dummy` in `02_flexible_dummy.txt`, is a " +
+      "placeholder rather than a category the game shows.",
+  ],
+  ["ascension_perk.name", "49 of 49 resolve `$`."],
+  ["agenda.name", "90 of 90 resolve `council_agenda_$_name`."],
+  ["edict.name", "171 of 171 resolve `edict_$`."],
+  ["councilor.name", "179 of 179 resolve `$`."],
+  ["decision.name", "111 of 111 resolve `$`."],
+  ["job.name", "365 of 365 resolve `job_$`."],
+  ["opinion_modifier.name", "490 of 490 resolve `$`."],
+  [
+    "static_modifier.name",
+    "3081 of 3081 resolve `$`. The game shows the name wherever the modifier applies, so an " +
+      "unnamed one is a visible bug.",
+  ],
+  ["casus_belli.name", "45 of 45 resolve `casus_belli_$`."],
+  ["war_goal.name", "87 of 87 resolve `war_goal_$`."],
+  [
+    "agreement_preset.name",
+    "52 of 56 resolve `$`. All four gaps — `preset_release_sector` and the three " +
+      "`preset_payback_subsidiary_*` presets — carry `hidden = yes`, so every preset the " +
+      "diplomacy UI shows has a name. An author pays this requirement only for a hidden preset.",
+  ],
+  ["bombardment_stance.name", "13 of 13 resolve `bombardment_$`."],
+  ["archaeological_site_type.name", "124 of 124 resolve `$`."],
+  [
+    "megastructure.name",
+    "164 of 164 resolve `$`. The game shows the name in the construction menu and the " +
+      "outliner, so an unnamed one is a visible bug the same way an unnamed static modifier is.",
+  ],
 ]);
 
 /** Describes a generated localisation slot that the vendored type metadata omits. */
