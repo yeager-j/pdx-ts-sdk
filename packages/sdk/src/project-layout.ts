@@ -1,6 +1,11 @@
 /** One normalized interpretation of the source directories a mod project names. */
 
-const WINDOWS_DEVICE_NAME = String.raw`(?:[Cc][Oo][Nn]|[Pp][Rr][Nn]|[Aa][Uu][Xx]|[Nn][Uu][Ll]|[Cc][Oo][Mm][1-9]|[Ll][Pp][Tt][1-9])`;
+import { WINDOWS_DEVICE_NAME_SOURCE } from "./windows-names.ts";
+
+// Spliced in rather than compiled, because it sits inside a lookahead in a
+// larger pattern that is also emitted as a JSON Schema. `windows-names.ts`
+// owns which names these are.
+const WINDOWS_DEVICE_NAME = WINDOWS_DEVICE_NAME_SOURCE;
 const PORTABLE_COMPONENT =
   String.raw`(?!\.{1,2}(?:/|$))(?!${WINDOWS_DEVICE_NAME}(?:\.|/|$))(?! )` +
   String.raw`(?=[^/]{1,255}(?:/|$))[^<>:"#?%/\\|*\u0000-\u001f\u007f]*` +

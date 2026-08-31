@@ -12,11 +12,20 @@ and different failure modes. See the [context map](../../CONTEXT-MAP.md).
 ## Language
 
 **Chokepoint**:
-The licensing gate every emitted string literal passes through. Enforced by the
+The licensing gate every emitted string passes through. Enforced by the
 generator rather than left to convention, because the boundary is what makes
 this package publishable: identifiers, definition names, parameter lists, event
 ids and namespaces cross it; script bodies, localized text, descriptions, and
-asset data do not.
+asset data do not. Three doors, one counter — a name, a path, and a **module
+stem**, which is install text that names a generated file rather than sitting
+inside one.
+
+**Module stem**:
+One path component of a generated module's name, and the third thing the
+chokepoint inspects. A **bucket** key and an event namespace both become one,
+and both are install text, so a stem is a name plus the rules that keep it a
+single component: no separators, no drive letter, no leading or trailing dot,
+no space.
 
 **Extraction gap**:
 A part of an inventory this package publishes as *exact* that no reader read —

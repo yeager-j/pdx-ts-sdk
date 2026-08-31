@@ -18,6 +18,7 @@
  */
 
 import { LogicalPathError } from "./errors.ts";
+import { isWindowsDeviceName } from "./windows-names.ts";
 
 declare const logicalPathBrand: unique symbol;
 
@@ -73,8 +74,7 @@ export function normalizeLogicalPath(raw: string): LogicalPath {
           `or a trailing period`
       );
     }
-    const basename = component.split(".", 1)[0]!.toUpperCase();
-    if (/^(?:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$/.test(basename)) {
+    if (isWindowsDeviceName(component)) {
       throw new LogicalPathError(
         `Logical path ${JSON.stringify(raw)} uses reserved Windows device name ${JSON.stringify(
           component

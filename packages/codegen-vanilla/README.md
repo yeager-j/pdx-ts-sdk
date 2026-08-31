@@ -159,15 +159,33 @@ the verbatim id, including dots and other legal characters.
 
 ## Licensing chokepoint
 
-Every install-derived string literal that reaches generated output passes the
+Every install-derived string that reaches generated output passes the
 appropriate licensing chokepoint. `assertVanillaIdentifier` accepts
-identifier-shaped material, while `assertVanillaPath` validates emitted paths;
-both reject content outside their allowed shape.
+identifier-shaped material; `assertVanillaPath` validates emitted paths; and
+`assertVanillaModuleStem` validates the text that *names* a generated module.
+Each rejects content outside its allowed shape.
+
+The third door exists because module specifiers are not all generator-owned. An
+oversized registry's bucket files are named after the install's own files and
+directories, and an event namespace file is named after a namespace read out of
+a shipped event id. Both are install text, and a stem is one path component
+rather than a path: it is a name first, so the identifier rules apply, plus
+refusals for separators, drive letters, leading or trailing dots, spaces, the
+characters Windows reserves, and the device names Windows reserves — `con`,
+`nul`, `com1` and the rest, which the event reader's namespace rule would
+otherwise accept and which no file may be called whatever extension follows.
+The byte limit is measured against the emitted filename, extension included.
 
 This is an enforced architecture boundary, not a review convention. A negative
 control in the test suite deliberately attempts to emit forbidden content and
-must fail. Bodies used for scope inference remain inside `VanillaBuildFacts` and
-cannot reach an emitter.
+must fail, including a bucket key and an event namespace that try to escape
+their directory. The suite also checks every component of every relative
+specifier in the emitted output, that each one names a module the generator
+emitted, and that every bare specifier is a package this generator is allowed to
+import. Specifiers are read off the `import`/`export` statements rather than
+recognised by prefix, because a prefix test answers "does this look like what we
+emit today" instead of "is this a specifier". Bodies used for scope inference
+remain inside `VanillaBuildFacts` and cannot reach an emitter.
 
 The resulting package carries game identities and derived type facts without
 redistributing game implementation or presentation content.

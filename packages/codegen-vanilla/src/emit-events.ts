@@ -57,13 +57,19 @@ export function emitEventTrie(
           : `EventRef<${gate.literal(event.scope, "event scope")}, {}, ${gate.literal(event.subtype, "event subtype")}>`;
       return `readonly ${navigationKey}: ${reference} & { readonly id: ${id} };`;
     });
-    const file = `events/${namespace}.ts`;
+    // The namespace comes out of a shipped event id, so it is install text and
+    // the gate inspects it before it names a module. `read-events.ts` also
+    // checks the spelling, but that check is about whether the *id* is
+    // portable; this one is the licensing boundary, and it must not depend on
+    // another module continuing to be careful.
+    const stem = gate.moduleStem(namespace, "event namespace file stem");
+    const file = `events/${stem}.ts`;
     files.set(
       file,
       `${header(gameVersion)}import type { ${imported} } from "@pdx-ts/sdk/stellaris";\n\n` +
         `export interface ${name} {\n${eventMembers.join("\n")}\n}\n`
     );
-    imports.push(`import type { ${name} } from "./${namespace}.ts";\n`);
+    imports.push(`import type { ${name} } from "./${stem}.ts";\n`);
     members.push(`readonly ${gate.literal(namespace, "event namespace")}: ${name};`);
   }
 
