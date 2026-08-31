@@ -107,17 +107,17 @@ export interface ModifierDescKeyResult {
 }
 
 /**
- * Derives the localisation key for one desc-bearing `modifier_rule` row:
- * `<ownerId>_<fieldPath>_<pin-or-hash>`. Modifier rows are anonymous and
- * repeated with no id of their own, so the key cannot ride the row's own
- * identity and is derived instead. `ownerId` and `fieldPath` are already
- * unique per definition (mod-prefixed and duplicate-checked, or a fixed
- * field key/struct path); what disambiguates multiple rows on the same
- * field must be a function of the row's own content, never of its position
- * in the array — an index-derived key repoints at whatever row now occupies
- * that index after an insertion or reorder, silently misaligning any
- * shipped translation with no build error and no symptom until a player
- * reads that language (SDK-48).
+ * Derives the localisation key for one desc-bearing `modifier_rule` or
+ * `complex_trigger_modifier` row: `<ownerId>_<fieldPath>_<pin-or-hash>`.
+ * These rows are anonymous and repeated with no id of their own, so the key
+ * cannot ride the row's own identity and is derived instead. `ownerId` and
+ * `fieldPath` are already unique per definition (mod-prefixed and
+ * duplicate-checked, or a fixed field key/struct path); what disambiguates
+ * multiple rows on the same field must be a function of the row's own
+ * content, never of its position in the array — an index-derived key repoints
+ * at whatever row now occupies that index after an insertion or reorder,
+ * silently misaligning any shipped translation with no build error and no
+ * symptom until a player reads that language (SDK-48, SDK-334).
  *
  * The `key` member of the row's `desc` is preferred when given: stable under
  * reordering and under text edits, so it is the only scheme translations
@@ -131,8 +131,9 @@ export interface ModifierDescKeyResult {
  *
  * The single derivation, shared rather than duplicated per caller
  * (`content/authoring.ts`'s `collectModifierDescs`, `events/lower.ts`'s
- * `registerModifierDescs`) — every caller inherits a future change to this
- * scheme in one place.
+ * `registerModifierDescs`, and `installation/vanilla/patch.ts`'s
+ * `mintModifierDescs`) — every caller inherits a future change to this scheme
+ * in one place.
  */
 export function modifierDescKey(
   ownerId: string,

@@ -2234,7 +2234,7 @@ describe("generated content registries", () => {
         "\t\t\tdivide = 6\n" +
         "\t\t\tmin_value = 7\n" +
         "\t\t\tmax_value = 8\n" +
-        "\t\t\tdesc = wb_test_system_operation_order_usage_odds_0\n" +
+        "\t\t\tdesc = wb_test_system_operation_order_usage_odds_36dc90b5\n" +
         "\t\t\tpotential = {\n" +
         "\t\t\t\talways = yes\n" +
         "\t\t\t}\n" +
@@ -3914,6 +3914,126 @@ describe("modifier desc keys are content-derived, not positional (SDK-48)", () =
     const loc = files.get("localisation/english/desc_key_test_l_english.yml")!;
 
     await expect(loc).toMatchFileSnapshot("__snapshots__/content/desc-key-localisation.yml");
+  });
+});
+
+describe("complex modifier desc keys derive from content, not position (SDK-334)", () => {
+  const COMPLEX_DESC_KEY_CONFIG = configFor("Complex desc key test", "complex_desc_key_test");
+
+  function situationWithComplexRows(
+    mod: ReturnType<typeof capabilityFor>,
+    descs: readonly string[]
+  ) {
+    return mod.situationType("complex_reorder", {
+      name: "Complex Reorder Test",
+      monthlyProgress: {
+        base: 1,
+        modifiers: descs.map((desc) => ({
+          trigger: "check_galaxy_setup_value",
+          parameters: { setting: "habitable_worlds_scale" },
+          mode: "factor" as const,
+          desc,
+        })),
+      },
+    });
+  }
+
+  function keyForText(loc: ReadonlyMap<string, string>, text: string): string | undefined {
+    for (const [key, value] of loc) {
+      if (value === text) {
+        return key;
+      }
+    }
+    return undefined;
+  }
+
+  it("keeps each complex row's key stable when rows are reordered", () => {
+    const cap = capabilityFor(COMPLEX_DESC_KEY_CONFIG);
+    const descs = ["The first complex adjustment.", "The second complex adjustment."];
+    const before = cap.compile([cap.feature(undefined, [situationWithComplexRows(cap, descs)])]);
+    const after = cap.compile([
+      cap.feature(undefined, [situationWithComplexRows(cap, [...descs].reverse())]),
+    ]);
+
+    for (const desc of descs) {
+      expect(keyForText(localizationMap(after), desc)).toBe(
+        keyForText(localizationMap(before), desc)
+      );
+      expect(keyForText(localizationMap(after), desc)).toBeDefined();
+    }
+  });
+
+  it("honors a complex row's author-supplied key pin", () => {
+    const cap = capabilityFor(COMPLEX_DESC_KEY_CONFIG);
+    const situation = cap.situationType("complex_pinned", {
+      name: "Complex Pinned Key Test",
+      monthlyProgress: {
+        base: 1,
+        modifiers: [
+          {
+            trigger: "check_galaxy_setup_value",
+            parameters: { setting: "habitable_worlds_scale" },
+            mode: "factor",
+            desc: { english: "The pinned complex adjustment.", key: "pinned_complex" },
+          },
+        ],
+      },
+    });
+    const mod = cap.compile([cap.feature(undefined, [situation])]);
+    const key = "complex_desc_key_test_situation_complex_pinned_monthly_progress_pinned_complex";
+    const content = render(mod).get("common/situations/complex_desc_key_test_situations.txt")!;
+
+    expect(localizationMap(mod).get(key)).toBe("The pinned complex adjustment.");
+    expect(content).toContain(`desc = ${key}`);
+    expect(mod.warnings).toEqual([]);
+  });
+
+  it("rejects two complex rows pinned to one key with different text", () => {
+    const cap = capabilityFor(COMPLEX_DESC_KEY_CONFIG);
+    const situation = cap.situationType("complex_collision", {
+      name: "Complex Collision Test",
+      monthlyProgress: {
+        base: 1,
+        modifiers: [
+          {
+            trigger: "check_galaxy_setup_value",
+            mode: "factor",
+            desc: { english: "Complex text A.", key: "shared_complex" },
+          },
+          {
+            trigger: "check_galaxy_setup_value",
+            mode: "factor",
+            desc: { english: "Complex text B.", key: "shared_complex" },
+          },
+        ],
+      },
+    });
+
+    expect(() => cap.compile([cap.feature(undefined, [situation])])).toThrow(
+      'Duplicate localization key "complex_desc_key_test_situation_complex_collision_monthly_progress_shared_complex"'
+    );
+  });
+
+  it("deduplicates two complex rows pinned to one key with identical text", () => {
+    const cap = capabilityFor(COMPLEX_DESC_KEY_CONFIG);
+    const desc = { english: "The same complex adjustment.", key: "shared_complex" } as const;
+    const situation = cap.situationType("complex_shared", {
+      name: "Complex Shared Text Test",
+      monthlyProgress: {
+        base: 1,
+        modifiers: [
+          { trigger: "check_galaxy_setup_value", mode: "factor", desc },
+          { trigger: "check_galaxy_setup_value", mode: "factor", desc },
+        ],
+      },
+    });
+    const mod = cap.compile([cap.feature(undefined, [situation])]);
+    const key = "complex_desc_key_test_situation_complex_shared_monthly_progress_shared_complex";
+
+    expect(localizationMap(mod).get(key)).toBe("The same complex adjustment.");
+    expect([...localizationMap(mod).values()].filter((text) => text === desc.english)).toHaveLength(
+      1
+    );
   });
 });
 
