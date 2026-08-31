@@ -45,6 +45,83 @@ export interface TypedRef<T extends string> {
   readonly [refBrand]?: T;
 }
 
+/** Whether a value is object-shaped, counting the callable `vanilla.*` proxies. */
+function isObjectLike(value: unknown): value is object {
+  return (typeof value === "object" && value !== null) || typeof value === "function";
+}
+
+/**
+ * Which reference form an object-shaped value is, or null when it is none of
+ * them.
+ *
+ * The three forms are told apart in order because only the first two announce
+ * themselves. `ScopeValue` carries a `kind` discriminant and a localization
+ * reference a `refKind` one; a content reference is structurally open, so
+ * `id` is the whole of its runtime signature and anything reaching the last
+ * arm with no string `id` is not a reference at all.
+ *
+ * `id` is read rather than probed with `in`: a `vanilla.*` trie is a Proxy
+ * over a bare function, and a membership test that reached the function
+ * target would answer for the target rather than for the trie.
+ */
+function referenceForm(value: object): "scope" | "localization" | "typed" | null {
+  if ("kind" in value && value.kind === "scope-ref") {
+    return "scope";
+  }
+  if (isLocalizationRef(value)) {
+    return "localization";
+  }
+  return typeof (value as { readonly id?: unknown }).id === "string" ? "typed" : null;
+}
+
+/**
+ * Whether an authored value can stand in a reference position: one of the
+ * three reference forms, or a plain value a reference-or-literal rule accepts.
+ *
+ * A caller with a better diagnostic than {@link refId}'s own asks this first,
+ * so that its message rather than the generic refusal is the one an author
+ * sees.
+ */
+export function isReferenceValue(value: unknown): boolean {
+  return isObjectLike(value) ? referenceForm(value) !== null : true;
+}
+
+/** Describes an authored value for a diagnostic, without throwing on its shape. */
+function describeValue(value: unknown): string {
+  try {
+    return JSON.stringify(value) ?? String(value);
+  } catch {
+    return "a value that cannot be described";
+  }
+}
+
+/**
+ * The refusal shared by every reference position: what was passed, and the
+ * forms that would have been read. `subject` names the position when the
+ * caller knows it.
+ */
+function refusedReference(value: unknown, subject: string): Error {
+  return new Error(
+    `${subject} was given ${describeValue(value)}, which is not a reference. Write a content ` +
+      "reference (a definition's item, `vanilla.*`, `external.*`), a scope value (`ctx.self`, " +
+      "an event target), a localization reference, or the id as a bare string."
+  );
+}
+
+/**
+ * Refuses an object-shaped value that no reference position can read, naming
+ * the field that holds it.
+ *
+ * {@link refId} refuses the same value on its own, so this adds the field name
+ * rather than the check: a caller that has one gets `"prerequisites" was
+ * given {}` instead of the same refusal without a subject.
+ */
+export function assertReferenceValue(value: unknown, field: string): void {
+  if (!isReferenceValue(value)) {
+    throw refusedReference(value, `"${field}"`);
+  }
+}
+
 /**
  * Resolves an authored reference to the bare word the game expects, passing
  * plain values through.
@@ -61,18 +138,26 @@ export interface TypedRef<T extends string> {
  * presence of a `path` property. A content reference is structurally open, so
  * an object that is genuinely a `<planet_class>` may carry a path of its own
  * and must still serialize the id the game requires.
+ *
+ * @throws Error when an object-shaped value is none of the three forms. The
+ * generated types make that a compile error, so reaching it means a cast or
+ * erased types — and reading `id` off such a value would emit the word
+ * `undefined` as if it named content.
  */
 export function refId<T extends string | number | boolean>(
   value: TypedRef<string> | ScopeValue | LocalizationRef | T
 ): string | T {
-  if ((typeof value === "object" && value !== null) || typeof value === "function") {
-    if ("kind" in value && value.kind === "scope-ref") {
-      return value.path;
+  if (isObjectLike(value)) {
+    switch (referenceForm(value)) {
+      case "scope":
+        return (value as ScopeValue).path;
+      case "localization":
+        return (value as LocalizationRef).key;
+      case "typed":
+        return (value as TypedRef<string>).id;
+      default:
+        throw refusedReference(value, "A reference position");
     }
-    if (isLocalizationRef(value)) {
-      return value.key;
-    }
-    return (value as TypedRef<string>).id;
   }
   return value;
 }
@@ -158,14 +243,17 @@ export function localizationScalar(
   if (isLocalizedTextRecord(value)) {
     return deferLocalization(value, path);
   }
-  if ((typeof value === "object" && value !== null) || typeof value === "function") {
+  // Asked before unwrapping, so that a value which is no reference either
+  // falls to this field's own message below rather than to `refId`'s generic
+  // refusal — a localization position can say what it wanted, and does.
+  if (isReferenceValue(value)) {
     const lowered = refId(value as TypedRef<string> | ScopeValue);
     if (typeof lowered === "string") {
       return scalar(lowered);
     }
   }
   throw new Error(
-    `"${path}" was given ${JSON.stringify(value)}, which names no localization key. Write ` +
+    `"${path}" was given ${describeValue(value)}, which names no localization key. Write ` +
       "display text as a string or a language record, an existing key as a reference " +
       "(`mod.localization()`, a definition's `loc` member, `vanilla.localization()`, " +
       "`external.localization()`), and raw displayed text as `literalText()`."
@@ -329,12 +417,17 @@ export function toScalar(
   value: unknown,
   booleanLiterals: readonly ("yes" | "no")[] = []
 ): string | number | boolean | PdxScalar {
-  if ((typeof value === "object" && value !== null) || typeof value === "function") {
-    const lowered = refId(value as TypedRef<string> | ScopeValue);
-    if (typeof lowered === "string") {
-      return lowered;
+  if (isObjectLike(value)) {
+    // Same order as `localizationScalar`: this position's own message is the
+    // better one, so the reference check runs before the unwrapping that
+    // would otherwise throw the generic refusal.
+    if (isReferenceValue(value)) {
+      const lowered = refId(value as TypedRef<string> | ScopeValue);
+      if (typeof lowered === "string") {
+        return lowered;
+      }
     }
-    throw new Error(`Cannot serialize ${JSON.stringify(value)} as an effect argument`);
+    throw new Error(`Cannot serialize ${describeValue(value)} as an effect argument`);
   }
   const lowered = typeof value === "string" ? scriptValueScalar(value) : value;
   if (

@@ -221,8 +221,11 @@ export class OnActionAuthoring {
         }
         if (contribution.randomEvents.length > 0) {
           entries.push(
-            weightedEventBlock("random_events", contribution.randomEvents, (event) =>
-              scalar(eventId(event))
+            weightedEventBlock(
+              "random_events",
+              contribution.randomEvents,
+              (event) => scalar(eventId(event)),
+              `On-action "${name}"`
             )
           );
         }
