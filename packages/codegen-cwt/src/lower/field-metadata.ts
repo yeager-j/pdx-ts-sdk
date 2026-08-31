@@ -10,7 +10,7 @@ import { isOptional, isRepeated, type RuleField } from "../cwt/model.ts";
 import { camelCase } from "../naming.ts";
 import type { ContentFieldOverride } from "../overlay/index.ts";
 import type { TsValue } from "../render/emitter.ts";
-import { conversionFor, refTypesEntries } from "../render/writer.ts";
+import { refTypesEntries } from "../render/writer.ts";
 import { formOfShape } from "./authored-form.ts";
 import { contentShape } from "./content-shape.ts";
 import type { EmittedField } from "./fields.ts";
@@ -35,7 +35,7 @@ export function authoredLiterals(literals: readonly string[] | undefined): {
  * Closed reference values also include the registry names their ids must satisfy.
  */
 export function scalarMetadata(value: TsValue): string[] {
-  return [`conversion: ${JSON.stringify(conversionFor(value))}`, ...refTypesEntries(value)];
+  return [`conversion: ${JSON.stringify(value.conversion)}`, ...refTypesEntries(value)];
 }
 
 /** Renders an array type and preserves the grouping of union element types. */

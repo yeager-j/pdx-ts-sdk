@@ -97,7 +97,7 @@ import { reconcile } from "./reconcile/reconcile.ts";
 import { Emitter, type Usage } from "./render/emitter.ts";
 import { header, write, writeModule } from "./render/generated-file.ts";
 import { importList } from "./render/symbols.ts";
-import { printReport, reportSection } from "./report.ts";
+import { eventFieldSupportLossLines, printReport, reportSection } from "./report.ts";
 
 const REPOSITORY_ROOT = fileURLToPath(new URL("../../../", import.meta.url));
 const CWT_VENDOR_DIRECTORY = path.join(REPOSITORY_ROOT, "vendor/cwtools-stellaris-config");
@@ -200,6 +200,7 @@ interface CodegenReportInput {
   readonly aliasSplices: ReadonlyMap<string, AliasSpliceEmission>;
   readonly scriptGapLines: ReturnType<typeof formatScriptGapReport>;
   readonly classifiedLinks: ReturnType<typeof classifyLinks>;
+  readonly eventFieldPolicy: ReturnType<typeof createEventFieldPolicy>;
 }
 
 function readUpstreamCommit(vendorDirectory: string): string {
@@ -413,6 +414,7 @@ function buildCodegenReport(input: CodegenReportInput): string[] {
     contents,
     definers,
     effectPolicy,
+    eventFieldPolicy,
     effects,
     emitter,
     events,
@@ -509,6 +511,16 @@ function buildCodegenReport(input: CodegenReportInput): string[] {
     report,
     "Event kinds without full typing",
     events.skipped.map((entry) => `${entry.name} — ${entry.detail}`)
+  );
+  reportSection(
+    report,
+    "Event fields not fully supported",
+    eventFieldSupportLossLines(eventFieldPolicy.event)
+  );
+  reportSection(
+    report,
+    "Event option fields not fully supported",
+    eventFieldSupportLossLines(eventFieldPolicy.option)
   );
   reportSection(
     report,
@@ -933,6 +945,7 @@ async function main(): Promise<void> {
       aliasSplices,
       scriptGapLines: scriptRules.scriptGapLines,
       classifiedLinks: scriptRules.classifiedLinks,
+      eventFieldPolicy,
     })
   );
 }

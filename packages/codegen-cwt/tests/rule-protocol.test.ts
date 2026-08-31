@@ -882,7 +882,11 @@ describe("LoweredRule", () => {
     const map = (overrides: Partial<MapValue>): MapValue => ({
       keyName: "int",
       indexType: "number",
-      value: { type: "TraitRef | string", toScalar: (expression) => expression },
+      value: {
+        type: "TraitRef | string",
+        toScalar: (expression) => expression,
+        conversion: "identity",
+      },
       cardinality: { min: 0, max: null },
       splice: false,
       ...overrides,
@@ -1084,7 +1088,7 @@ describe("a spliced alias category with a script authoring surface", () => {
 describe("a repeated argument's declared bound", () => {
   const item: ArgValue = {
     kind: "scalar",
-    value: { type: "EthicRef", toScalar: (expression) => expression },
+    value: { type: "EthicRef", toScalar: (expression) => expression, conversion: "identity" },
   };
 
   it("spells a bounded repetition as the lengths it admits", () => {

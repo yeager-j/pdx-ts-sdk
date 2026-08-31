@@ -55,12 +55,7 @@ import {
   type FieldOmissionRow,
   type MemberDocRow,
 } from "../../render/field-rows.ts";
-import {
-  constArray,
-  conversionFor,
-  refTypesSuffix,
-  member as renderMember,
-} from "../../render/writer.ts";
+import { constArray, refTypesSuffix, member as renderMember } from "../../render/writer.ts";
 
 /** Generated authoring code and coverage evidence for one fixed-shape alias category. */
 export interface AliasStructEmission {
@@ -281,7 +276,7 @@ function valueField(key: string, value: TsValue): string {
   return (
     `  { key: ${JSON.stringify(key)}, member: ${JSON.stringify(memberName(key))}, ` +
     `shape: "value", form: ${JSON.stringify(formOfShape({ shape: "value" }))}, ` +
-    `conversion: ${JSON.stringify(conversionFor(value))}${refTypesSuffix(value)} },\n`
+    `conversion: ${JSON.stringify(value.conversion)}${refTypesSuffix(value)} },\n`
   );
 }
 
@@ -439,11 +434,11 @@ function clauseFieldsCode(
     `locKey: true },\n` +
     `  { key: "value", member: "values", shape: "value", ` +
     `form: ${JSON.stringify(formOfShape({ shape: "value", repeated: true }))}, ` +
-    `conversion: ${JSON.stringify(conversionFor(ref))}${suffix}, repeated: true },\n`;
+    `conversion: ${JSON.stringify(ref.conversion)}${suffix}, repeated: true },\n`;
   const clauseRows =
     `  { key: "value", member: "value", shape: "value", ` +
     `form: ${JSON.stringify(formOfShape({ shape: "value" }))}, ` +
-    `conversion: ${JSON.stringify(conversionFor(ref))}${suffix} },\n` +
+    `conversion: ${JSON.stringify(ref.conversion)}${suffix} },\n` +
     [...GROUP_KEYS]
       .map(
         (key) =>

@@ -72,12 +72,3 @@ export function refTypesEntries(value: TsValue | undefined): readonly string[] {
   const entry = refTypesEntry(value);
   return entry === undefined ? [] : [entry];
 }
-
-/**
- * Classifies whether a scalar value's authored form is already its serialized identity.
- * Reference-shaped values require their configured conversion before serialization.
- */
-export function conversionFor(value: TsValue): "identity" | "ref" {
-  const conversionProbe = "x";
-  return value.toScalar(conversionProbe) === conversionProbe ? "identity" : "ref";
-}
