@@ -132,18 +132,26 @@ still carries the exact full event id.
 For scripted triggers and effects, the generator extracts definition names and
 `$PARAM$` names. Default values and bodies do not reach an emitter.
 
-A parameter is required when some occurrence of it is substituted
-unconditionally and supplies no default. That is one rule over all of a name's
-occurrences: `$X|10$` in one place and `$X$` in another is required, because the
-second substitution has nothing to fall back on.
+Optionality is derived from what the caller's choices do to the body, not read
+off any single occurrence. The caller decides which `[[FLAG] ... ]` regions are
+active by supplying or omitting each flag; that decides which substitution sites
+are reached; and a parameter must be supplied when some reached site would
+substitute it with no default. So `$X|10$` in one place and `$X$` in another is
+required — the second substitution has nothing to fall back on.
 
-`[[FLAG] ... ]` regions make their parameters omissible and also tie them
-together. Where activating a region forces a parameter that nothing outside it
-substitutes, the emitted type is the union of the definition's call shapes
-rather than a flat object — supplying the condition then requires the rest, and
-omitting it forbids them. Two definitions in vanilla 4.4.6 are shaped this way.
-A region that forces nothing, because its parameters are required anyway or it
-substitutes only its own name, stays one flat shape.
+Negation is part of that reading. `[[!FLAG] ... ]` is active when its flag is
+*absent*, and vanilla nearly always pairs a region with its negated twin:
+`add_random_trait_evopred` writes `[[SPECIES] ... $TAG$ ... ]` beside
+`[[!SPECIES] ... $TAG$ ... ]`, so exactly one branch always runs and `TAG` is
+required however `SPECIES` is answered. Treating every region as
+presence-activated makes that look like a dependency between the two names and
+publishes a signature that refuses `{ TAG: "organic" }`.
+
+Where the choices genuinely disagree — a region with no negated twin, so its
+parameters are reachable only when its flag is supplied — the emitted type is
+the union of the definition's call shapes rather than one object. All 3,275
+vanilla 4.4.6 definitions collapse to one flat shape; the report counts any that
+do not.
 
 Scope inference reads a body only inside the private build stage. It finds
 rule-known keys evaluated by that body and intersects the scopes cwtools

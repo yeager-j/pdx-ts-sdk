@@ -13,7 +13,7 @@ function definition(name: string, body: string): ScriptedDefinition {
   return {
     name,
     params: [],
-    regions: [],
+    shapes: [{ params: [] }],
     body: item.value.items as readonly PdxItem[],
     source: `${name}.txt`,
     ordinal: 0,

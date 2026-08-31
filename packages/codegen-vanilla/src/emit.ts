@@ -41,7 +41,7 @@ import {
 } from "@pdx-ts/codegen-cwt/naming";
 import { compareUtf8, isWindowsDeviceName } from "@pdx-ts/sdk/internals";
 
-import type { ScriptedDefinition } from "./read-scripted.ts";
+import type { ScriptedCallShape, ScriptedDefinition } from "./read-scripted.ts";
 import type { TrieNode } from "./trie.ts";
 
 /**
@@ -488,50 +488,25 @@ export function emitTrie(
   // from the barrel would make the package's surface the trie's shape.
   return { files, exports: [{ name: root, file: trieIndexFile(registry) }] };
 }
-
-/**
- * How many regions one definition may force parameters through.
- *
- * A definition's call shapes are the combinations of its regions being on or
- * off, so this bounds the emitted union at 256 branches. Vanilla 4.4.6's
- * busiest definition has one, so the cap is not a policy about how much is
- * reasonable — it is the point at which emitting the exact contract stops being
- * the cheaper answer and someone should look at what the game started doing.
- */
-const MAX_FORCING_REGIONS = 8;
-
 /** The value every scripted parameter takes. */
 const PARAM_VALUE = "string | number";
 
 /**
- * One call shape: which regions are active, and what that requires.
+ * One call shape as a type literal.
  *
- * A parameter is spelled `?: never` when this shape cannot substitute it —
- * either it is a region's condition and the region is off, or it is confined to
- * a region that is off. Not merely optional: passing `NAME` without `FLAG`
- * writes a key into the emitted block that the game never reads, and the type
- * that admits it is the type that admits `{ FLAG: true }` on its own.
+ * `?: never` is what a shape says about a parameter it cannot substitute —
+ * a flag this call omits, or a name reachable only through a region this call
+ * leaves inactive. Not merely optional: passing `NAME` without the `FLAG` that
+ * reaches it writes a key the game never reads, and a type that admits that is
+ * the type that admits `{ FLAG: true }` with `$NAME$` left unsubstituted.
  */
-function callShape(
-  definition: ScriptedDefinition,
-  active: ReadonlySet<string>,
-  quoted: ReadonlyMap<string, string>
-): string {
-  const forcedBy = new Map<string, string>();
-  for (const region of definition.regions) {
-    for (const name of region.requires) {
-      forcedBy.set(name, region.condition);
+function renderShape(shape: ScriptedCallShape, quoted: ReadonlyMap<string, string>): string {
+  const members = shape.params.map(({ name, presence }) => {
+    const key = quoted.get(name)!;
+    if (presence === "forbidden") {
+      return `readonly ${key}?: never;`;
     }
-  }
-  const conditions = new Set(definition.regions.map((region) => region.condition));
-
-  const members = definition.params.map((param) => {
-    const key = quoted.get(param.name)!;
-    const governing = conditions.has(param.name) ? param.name : forcedBy.get(param.name);
-    if (governing === undefined) {
-      return `readonly ${key}${param.optional ? "?" : ""}: ${PARAM_VALUE};`;
-    }
-    return active.has(governing) ? `readonly ${key}: ${PARAM_VALUE};` : `readonly ${key}?: never;`;
+    return `readonly ${key}${presence === "optional" ? "?" : ""}: ${PARAM_VALUE};`;
   });
   return members.length === 0 ? "{}" : `{\n${members.join("\n")}\n}`;
 }
@@ -539,18 +514,17 @@ function callShape(
 /**
  * The parameter table: one member per definition, naming what a call may pass.
  *
- * A definition with no forcing region is one object, which is all but two of
- * vanilla 4.4.6's 3,275. One with forcing regions is the union of its call
- * shapes, because `[[FLAG] ... $NAME$ ... ]` does not describe two independent
- * optional parameters — it describes a choice, and flattening it published a
- * signature that accepted `{ FLAG: true }` and emitted a block whose `$NAME$`
- * had nothing to substitute.
+ * Almost always one object — every one of vanilla 4.4.6's 3,275 definitions,
+ * because a `[[X] ... ]` region nearly always ships beside its `[[!X] ... ]`
+ * twin and the two branches agree about what the call must supply. A union
+ * appears only where the caller's choices genuinely disagree, which
+ * `read-scripted.ts` decides.
  *
- * The shapes are enumerated over subsets of the regions rather than expressed
- * as an intersection of per-region unions, which reads more compactly and is
- * the wrong type: the SDK widens a parameter bag through a homomorphic mapped
- * type, and that distributes over a union while flattening an intersection —
- * quietly dropping the very constraint this exists to state.
+ * The union is over whole call shapes rather than an intersection of per-region
+ * alternatives. The compact form is the wrong type: the SDK widens a parameter
+ * bag through a homomorphic mapped type, and that distributes over a union
+ * while flattening an intersection — quietly dropping the constraint the shapes
+ * exist to state.
  */
 export function emitScriptedParams(
   registry: string,
@@ -569,31 +543,16 @@ export function emitScriptedParams(
       ])
     );
 
-    if (definition.regions.length === 0) {
-      return `readonly ${name}: ${callShape(definition, new Set(), quoted)};`;
-    }
-    if (definition.regions.length > MAX_FORCING_REGIONS) {
-      throw new Error(
-        `${registry}: ${definition.name} has ${definition.regions.length} parameter-forcing ` +
-          `regions, over the ${MAX_FORCING_REGIONS} this emits call shapes for. Its exact ` +
-          "contract needs a different shape than a union of combinations."
-      );
-    }
-
-    const conditions = definition.regions.map((region) => region.condition);
-    const shapes: string[] = [];
-    for (let mask = 0; mask < 1 << conditions.length; mask += 1) {
-      const active = new Set(conditions.filter((_, index) => (mask & (1 << index)) !== 0));
-      shapes.push(callShape(definition, active, quoted));
-    }
-    return `readonly ${name}:\n${shapes.map((shape) => `| ${shape}`).join("\n")};`;
+    const shapes = definition.shapes.map((shape) => renderShape(shape, quoted));
+    return shapes.length === 1
+      ? `readonly ${name}: ${shapes[0]!};`
+      : `readonly ${name}:\n${shapes.map((shape) => `| ${shape}`).join("\n")};`;
   });
   return (
     `${header(gameVersion)}export interface ${scriptedTypeName(registry)} {\n` +
     `${members.join("\n")}\n}\n`
   );
 }
-
 /**
  * The subpath a registry's bindings ship under: `scripted_trigger` becomes
  * `./triggers`, `scripted_effect` becomes `./effects`. The params table already

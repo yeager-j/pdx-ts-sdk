@@ -54,16 +54,22 @@ Which of the two scripted-definition kinds a definition is: `trigger` or
 `effect`.
 
 **Region**:
-A `[[FLAG] ... ]` block in a scripted definition's body, active only when the
-caller supplies `FLAG`. Recorded as a **forcing region** when activating it
-makes some other parameter necessary — that is a dependency between parameters,
-not two independent optional ones, and flattening it published a signature that
-accepted `{ FLAG: true }` and emitted a body with nothing to substitute.
+A `[[FLAG] ... ]` block in a scripted definition's body, active when the caller
+supplies `FLAG` — or, written `[[!FLAG] ... ]`, active when the caller *omits*
+it. The negation is load-bearing: vanilla nearly always pairs a region with its
+negated twin, so exactly one branch always runs and what both substitute is
+required rather than conditional.
 
 **Call shape**:
-One combination of a definition's forcing regions being on or off, emitted as
-one member of the parameter type's union. A definition with no forcing region
-has exactly one, which is the flat object almost every definition gets.
+One consistent set of caller choices and what it demands of every parameter:
+required, optional, or forbidden. A definition's parameter type is the union of
+its shapes; when the shapes agree about every parameter — every vanilla
+definition — they collapse to the one flat object.
+
+**Consistent choice**:
+A set of supplied flags that does not contradict itself. Omitting a flag the
+selected body then substitutes with no default describes a call nobody can make,
+so it is dropped — which is what makes a mandatory flag's region always active.
 
 **Inferred scope**:
 The scope a scripted definition is legal in, _derived_ rather than read off

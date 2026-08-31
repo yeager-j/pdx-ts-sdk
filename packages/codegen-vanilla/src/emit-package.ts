@@ -102,12 +102,15 @@ export interface ScriptedReport {
   readonly definitions: number;
   readonly parameterized: number;
   /**
-   * Definitions whose parameters are tied to a `[[FLAG] ... ]` region, so the
-   * emitted type is a union of call shapes rather than one object.
+   * Definitions whose `[[FLAG] ... ]` regions make the caller's choices
+   * disagree, so the emitted type is a union of call shapes rather than one
+   * object.
    *
-   * Two across vanilla 4.4.6. Worth watching after a patch: this is where a
-   * definition's signature stops being a flat bag, so a jump here explains a
-   * generated diff that would otherwise look like churn.
+   * Zero across vanilla 4.4.6: a region there nearly always ships beside its
+   * negated twin, and the two branches agree about what a call must supply.
+   * Worth watching after a patch — this is where a definition's signature stops
+   * being a flat bag, so a jump here explains a generated diff that would
+   * otherwise look like churn.
    */
   readonly regionDependent: number;
   readonly files: number;
@@ -380,7 +383,7 @@ export function emitVanillaPackage(
       registry: row.registry,
       definitions: read.definitions.length,
       parameterized: read.definitions.filter((one) => one.params.length > 0).length,
-      regionDependent: read.definitions.filter((one) => one.regions.length > 0).length,
+      regionDependent: read.definitions.filter((one) => one.shapes.length > 1).length,
       files: read.files,
       diagnostics: read.diagnostics,
       missing: read.missing,

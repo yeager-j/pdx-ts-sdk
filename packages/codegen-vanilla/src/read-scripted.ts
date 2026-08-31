@@ -7,25 +7,32 @@
  * check a call offline, and nothing more. Default values are body content and
  * are never captured, only the fact that one exists.
  *
- * A parameter is *required* when some occurrence of it will definitely be
- * substituted and supplies no default — one outside every `[[FLAG] ... ]`
- * region, spelled without a `|`. Everything else is omissible: `$AGE|10$`
- * supplies a default, an occurrence inside a region is only substituted when
- * the region is active, and `FLAG` itself, the region's own condition, is the
- * archetype of an optional parameter.
+ * Optionality is not read off any single occurrence. It is derived from what
+ * the caller's choices do to the body, because that is the only reading that
+ * survives the shapes vanilla actually writes.
  *
- * That is one rule over all of a name's occurrences rather than a property of
- * any one of them, and it has to be. A name written `$X|10$` in one place and
- * `$X$` in another is required: the second substitution has no default to fall
- * back on, and reading the first as permission to omit it produced a signature
- * that let a caller leave a hole in the emitted script.
+ * The caller chooses which `[[FLAG] ... ]` regions to activate, by supplying or
+ * omitting each flag. That choice decides which substitution sites are reached:
+ * a site inside a region is reached only when every region enclosing it is
+ * active, and a region is active when its flag is supplied — or, for `[[!FLAG]
+ * ... ]`, when its flag is *absent*. A parameter must be supplied for a given
+ * choice when some site it reaches would substitute it with no default to fall
+ * back on.
  *
- * Optional is not the same as independent, which is the other thing recorded
- * here. `[[FLAG] ... $NAME$ ... ]` makes both names omissible, and it also ties
- * them together: supplying `FLAG` activates the region, and then `$NAME$` is a
- * substitution site with nothing to substitute. So a region that forces a
- * parameter is kept as a {@link ScriptedRegion} rather than flattened into two
- * unrelated optional names.
+ * Reading the negation is what makes the difference. `add_random_trait_evopred`
+ * writes `[[SPECIES] ... $TAG$ ... ]` and `[[!SPECIES] ... $TAG$ ... ]`, so
+ * exactly one of the two always runs and `TAG` is required no matter what the
+ * caller does with `SPECIES`. Treating every region as presence-activated makes
+ * that look like a dependency between the two names, and publishes a signature
+ * that refuses `{ TAG: "organic" }` — a correct and ordinary call.
+ *
+ * So this enumerates the caller's consistent choices and records the resulting
+ * {@link ScriptedCallShape}s. Almost always they agree about every parameter
+ * and collapse to one flat object, which is what all 3,275 of vanilla 4.4.6's
+ * definitions do. When they disagree — `[[FLAG] ... $NAME$ ... ]` with no
+ * negated twin, so `NAME` is reachable only when `FLAG` is supplied — the
+ * shapes are kept apart, because that is a choice rather than two independent
+ * optional names.
  *
  * The parsed body, parameters, and provenance form one definition identity for
  * `infer-scopes.ts` to measure. Ambiguous duplicate identities stop the build;
@@ -43,36 +50,39 @@ import { parse, regionItems, type PdxItem } from "@pdx-ts/pdxscript";
 
 import { compareIdentifiers } from "./emit.ts";
 
-/** One `$PARAM$` a definition substitutes, and whether it may be left out. */
+/** One `$PARAM$` a definition substitutes, and whether any call may omit it. */
 export interface ScriptedParam {
   readonly name: string;
   readonly optional: boolean;
 }
 
+/** What one call shape says about one parameter. */
+export type ScriptedParamPresence =
+  /** Some site this call reaches substitutes it with no default. */
+  | "required"
+  /** A site reaches it, and every one of those supplies a default. */
+  | "optional"
+  /** No site this call reaches would substitute it, so passing it does nothing. */
+  | "forbidden";
+
 /**
- * A `[[NAME] ... ]` region whose activation forces other parameters.
+ * One consistent set of caller choices, and what it demands.
  *
- * Only regions that force something are recorded. A region whose parameters are
- * all required anyway, or that substitutes nothing but its own name, adds no
- * constraint a caller could violate, and listing it would only multiply the
- * call shapes the emitted type has to spell.
+ * A definition with a single shape is the ordinary flat parameter object. More
+ * than one means the choices genuinely disagree, and the emitted type is their
+ * union.
  */
-export interface ScriptedRegion {
-  /** The parameter whose presence activates the region. */
-  readonly condition: string;
-  /**
-   * Parameters that must be supplied when it is: the ones this region
-   * substitutes that nothing outside it does, and that carry no default.
-   */
-  readonly requires: readonly string[];
+export interface ScriptedCallShape {
+  /** Every parameter of the definition, byte-ordered by name. */
+  readonly params: readonly { readonly name: string; readonly presence: ScriptedParamPresence }[];
 }
 
 /** One scripted trigger or effect: its name, its parameters, and its body. */
 export interface ScriptedDefinition {
   readonly name: string;
   readonly params: readonly ScriptedParam[];
-  /** Regions whose activation forces parameters. Usually empty. */
-  readonly regions: readonly ScriptedRegion[];
+  /** The call shapes the definition admits. Almost always exactly one. */
+  readonly shapes: readonly ScriptedCallShape[];
   /** The parsed body. Read by the scope inference; never emitted. */
   readonly body: readonly PdxItem[];
   /** Slash-normalized path relative to the scripted registry directory. */
@@ -95,30 +105,38 @@ export interface ScriptedRegistry {
  */
 const PARAM_TOKEN = /\$([A-Za-z0-9_]+)(?:\|[^$]*)?\$/g;
 
+/** How many distinct region flags one definition may have. */
+const MAX_REGION_FLAGS = 8;
+
+/** One `[[NAME] ... ]` or `[[!NAME] ... ]` region enclosing an occurrence. */
+interface RegionRef {
+  readonly name: string;
+  /** `[[!NAME] ... ]`: active when the flag is *absent*. */
+  readonly negated: boolean;
+}
+
 interface Occurrence {
   /** The occurrence supplied a default, so the parameter may be omitted. */
   readonly defaulted: boolean;
   /**
-   * The `[[NAME] ... ]` regions enclosing it, outermost first.
+   * The regions enclosing it, outermost first.
    *
-   * The whole stack rather than one flag, because which region governs an
-   * occurrence is the fact a caller has to satisfy. Empty means the
-   * substitution always happens.
+   * The whole stack rather than one flag, because a site is reached only when
+   * every region around it is active. Empty means the site is always reached.
    */
-  readonly regions: readonly string[];
+  readonly regions: readonly RegionRef[];
   /**
-   * This occurrence *is* a region's condition rather than a substitution site.
+   * This occurrence *is* a region's header rather than a substitution site.
    *
    * Kept apart from the rest because the two say opposite things. A
-   * substitution outside every region makes a parameter required; a region
-   * header naming that same parameter is exactly what makes it omissible, and
-   * counting the header as a substitution would make every region's condition
-   * mandatory — which is to say, would make every region always active.
+   * substitution demands a value; a header naming that same parameter is the
+   * caller's switch for the region, and counting it as a substitution would
+   * make every flag mandatory — which is to say, every region always active.
    */
   readonly condition: boolean;
 }
 
-function scan(text: string, regions: readonly string[], into: Map<string, Occurrence[]>): void {
+function scan(text: string, regions: readonly RegionRef[], into: Map<string, Occurrence[]>): void {
   for (const match of text.matchAll(PARAM_TOKEN)) {
     const name = match[1]!;
     into.set(name, [
@@ -130,7 +148,7 @@ function scan(text: string, regions: readonly string[], into: Map<string, Occurr
 
 function recordCondition(
   name: string,
-  regions: readonly string[],
+  regions: readonly RegionRef[],
   into: Map<string, Occurrence[]>
 ): void {
   into.set(name, [...(into.get(name) ?? []), { defaulted: false, regions, condition: true }]);
@@ -138,7 +156,7 @@ function recordCondition(
 
 function walkItems(
   items: readonly PdxItem[],
-  regions: readonly string[],
+  regions: readonly RegionRef[],
   into: Map<string, Occurrence[]>
 ): void {
   for (const item of items) {
@@ -154,10 +172,10 @@ function walkItems(
         walkItems(item.items, regions, into);
         break;
       case "param":
-        // The block's own condition is a parameter, and one whose whole purpose
-        // is to be omissible.
+        // The region's own condition is a parameter, and one whose whole
+        // purpose is to be the caller's switch.
         recordCondition(item.name, regions, into);
-        walkItems(item.items, [...regions, item.name], into);
+        walkItems(item.items, [...regions, { name: item.name, negated: item.negated }], into);
         break;
       case "param-text":
         // The same construct without a tree. Its body is read through the
@@ -166,7 +184,11 @@ function walkItems(
         // package publishes, and a region nested inside comes back as a
         // region — its name is a parameter too.
         recordCondition(item.name, regions, into);
-        walkItems(regionItems(item), [...regions, item.name], into);
+        walkItems(
+          regionItems(item),
+          [...regions, { name: item.name, negated: item.negated }],
+          into
+        );
         break;
       case "str":
         scan(item.value, regions, into);
@@ -183,99 +205,124 @@ function walkItems(
   }
 }
 
-/** A substitution that definitely happens and supplies nothing to fall back on. */
-function isRequired(seen: readonly Occurrence[]): boolean {
-  return seen.some((one) => !one.condition && !one.defaulted && one.regions.length === 0);
+/** Whether a region is active given the flags the caller supplied. */
+function isActive(region: RegionRef, supplied: ReadonlySet<string>): boolean {
+  return region.negated ? !supplied.has(region.name) : supplied.has(region.name);
+}
+
+/** Whether this call reaches the site at all. */
+function isReached(occurrence: Occurrence, supplied: ReadonlySet<string>): boolean {
+  return occurrence.regions.every((region) => isActive(region, supplied));
+}
+
+function presenceOf(
+  seen: readonly Occurrence[],
+  supplied: ReadonlySet<string>
+): ScriptedParamPresence {
+  const reached = seen.filter((one) => !one.condition && isReached(one, supplied));
+  if (reached.some((one) => !one.defaulted)) {
+    return "required";
+  }
+  return reached.length > 0 ? "optional" : "forbidden";
 }
 
 /**
- * The regions every substitution of a name sits inside.
+ * Every set of flags the caller could supply that does not contradict itself.
  *
- * A name confined to exactly one region is the interesting case: it can only
- * ever be substituted when that region is active, so the region's activation is
- * the whole story about when it is needed. A name substituted both inside and
- * outside a region is not confined and is governed by its unconditional
- * occurrence instead.
+ * A choice is inconsistent when it leaves out a flag that the very body it
+ * selects then substitutes with no default: `$FLAG$` written outside every
+ * region means the caller has to pass `FLAG`, and a choice that omits it
+ * describes a call nobody can make. Dropping those is what keeps a region whose
+ * flag is mandatory from being offered as optional, and what resolves a flag
+ * that another region's body requires.
  */
-function confinedTo(seen: readonly Occurrence[]): ReadonlySet<string> {
-  const substitutions = seen.filter((one) => !one.condition);
-  const first = substitutions[0];
-  if (first === undefined) {
-    return new Set();
-  }
-  let shared = new Set<string>(first.regions);
-  for (const one of substitutions.slice(1)) {
-    shared = new Set([...shared].filter((region) => one.regions.includes(region)));
-  }
-  return shared;
-}
-
-/**
- * The regions that force something, and what each forces.
- *
- * A region qualifies when activating it turns an otherwise-omissible parameter
- * into a required one: its own condition is not already required (or the region
- * is always active and constrains nothing), and it confines at least one
- * undefaulted parameter of its own.
- *
- * The confinement has to be to *this* region alone. A parameter confined to two
- * nested regions would be forced by each of them independently, and the two
- * claims contradict each other in the call shape where only the outer one is
- * active. Vanilla 4.4.6 nests no regions at all, so this excludes nothing
- * today; it is here so that a game patch which starts nesting them produces a
- * weaker type rather than a wrong one.
- */
-function regionsOf(occurrences: ReadonlyMap<string, Occurrence[]>): ScriptedRegion[] {
-  const names = new Set(
-    [...occurrences].flatMap(([, seen]) =>
-      seen.flatMap((one) => (one.condition ? [] : one.regions))
-    )
-  );
-  for (const [name, seen] of occurrences) {
-    for (const one of seen) {
-      if (one.condition) {
-        names.add(name);
-      }
+function consistentChoices(
+  flags: readonly string[],
+  occurrences: ReadonlyMap<string, Occurrence[]>
+): ReadonlySet<string>[] {
+  const choices: ReadonlySet<string>[] = [];
+  for (let mask = 0; mask < 1 << flags.length; mask += 1) {
+    const supplied = new Set(flags.filter((_, index) => (mask & (1 << index)) !== 0));
+    const contradicts = flags.some(
+      (flag) =>
+        !supplied.has(flag) && presenceOf(occurrences.get(flag) ?? [], supplied) === "required"
+    );
+    if (!contradicts) {
+      choices.push(supplied);
     }
   }
-
-  const regions: ScriptedRegion[] = [];
-  for (const condition of [...names].sort(compareIdentifiers)) {
-    if (isRequired(occurrences.get(condition) ?? [])) {
-      continue;
-    }
-    const requires = [...occurrences]
-      .filter(([name, seen]) => {
-        if (name === condition || isRequired(seen)) {
-          return false;
-        }
-        const confined = confinedTo(seen);
-        return (
-          confined.size === 1 &&
-          confined.has(condition) &&
-          seen.some((one) => !one.condition && !one.defaulted)
-        );
-      })
-      .map(([name]) => name)
-      .sort(compareIdentifiers);
-    if (requires.length > 0) {
-      regions.push({ condition, requires });
-    }
-  }
-  return regions;
+  return choices;
 }
 
 function readParams(items: readonly PdxItem[]): {
   params: ScriptedParam[];
-  regions: ScriptedRegion[];
+  shapes: ScriptedCallShape[];
 } {
   const occurrences = new Map<string, Occurrence[]>();
   walkItems(items, [], occurrences);
+  const names = [...occurrences.keys()].sort(compareIdentifiers);
+  const flags = names.filter((name) => (occurrences.get(name) ?? []).some((one) => one.condition));
+  if (flags.length > MAX_REGION_FLAGS) {
+    throw new Error(
+      `a definition has ${flags.length} region flags, over the ${MAX_REGION_FLAGS} whose call ` +
+        "shapes this enumerates. Its exact contract needs a different shape than a union of " +
+        "combinations."
+    );
+  }
+
+  const choices = consistentChoices(flags, occurrences);
+  const shapes = choices.map((supplied) => ({
+    params: names.map((name) => ({
+      name,
+      // A flag is not read off the body: supplying it *is* the choice.
+      presence: flags.includes(name)
+        ? ((supplied.has(name) ? "required" : "forbidden") satisfies ScriptedParamPresence)
+        : presenceOf(occurrences.get(name) ?? [], supplied),
+    })),
+  }));
+
+  // Whether the choices actually disagree. When they do not — every vanilla
+  // definition, because a `[[X]]` region is nearly always paired with its
+  // `[[!X]]` twin — the flags are ordinary optional parameters and one flat
+  // shape says everything.
+  const nonFlagShape = (shape: ScriptedCallShape): string =>
+    JSON.stringify(shape.params.filter((one) => !flags.includes(one.name)));
+  const agree = shapes.every((shape) => nonFlagShape(shape) === nonFlagShape(shapes[0]!));
+
   return {
-    params: [...occurrences]
-      .map(([name, seen]) => ({ name, optional: !isRequired(seen) }))
-      .sort((left, right) => compareIdentifiers(left.name, right.name)),
-    regions: regionsOf(occurrences),
+    params: names.map((name) => ({
+      name,
+      optional: !shapes.every((shape) =>
+        shape.params.some((one) => one.name === name && one.presence === "required")
+      ),
+    })),
+    shapes: agree ? [flatShape(names, flags, shapes)] : shapes,
+  };
+}
+
+/**
+ * The single shape a definition takes when no choice changes what it demands.
+ *
+ * Every flag becomes an ordinary parameter — required when no consistent choice
+ * omits it, optional otherwise — and every other parameter keeps the presence
+ * all the choices agreed on.
+ */
+function flatShape(
+  names: readonly string[],
+  flags: readonly string[],
+  shapes: readonly ScriptedCallShape[]
+): ScriptedCallShape {
+  const first = shapes[0]!;
+  return {
+    params: names.map((name) => {
+      if (!flags.includes(name)) {
+        return first.params.find((one) => one.name === name)!;
+      }
+      const always = shapes.every((shape) =>
+        shape.params.some((one) => one.name === name && one.presence === "required")
+      );
+      return { name, presence: (always ? "required" : "optional") satisfies ScriptedParamPresence };
+    }),
   };
 }
 

@@ -40,6 +40,31 @@ fake_inert_region = {
 	]
 }
 
+# A region beside its negated twin, which is the shape vanilla actually writes:
+# `add_random_trait_evopred` is two near-identical branches chosen by whether
+# `SPECIES` was supplied. Exactly one always runs, so `$NAME$` is always
+# substituted and NAME is required however TOGGLE is answered. Reading the
+# negation as if it were `[[TOGGLE]` makes this look like a dependency and
+# refuses `{ NAME: "x" }`, which is the ordinary call.
+fake_negated_pair = {
+	[[TOGGLE]
+		has_country_flag = $NAME$
+	]
+	[[!TOGGLE]
+		has_country_flag = $NAME$
+	]
+}
+
+# A region whose flag the body also substitutes unconditionally. The caller
+# must supply GATE, so the region is always active, so what it substitutes is
+# required too. The call that omits GATE is one nobody can make.
+fake_mandatory_flag = {
+	has_country_flag = $GATE$
+	[[GATE]
+		has_technology = $INNER$
+	]
+}
+
 # Two cases the scope inference has to widen on rather than narrow, so the
 # generator's attribution report is testable without an install.
 
