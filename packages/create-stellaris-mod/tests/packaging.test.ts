@@ -1,9 +1,7 @@
 /**
  * What the published package promises, and what must not be true when it is.
  *
- * These are release rules a reviewer would otherwise have to remember, and one
- * of them — that the CLI must not take the SDK as a runtime dependency — is the
- * rule that keeps the CLI's release schedule independent of the SDK's.
+ * These are release rules a reviewer would otherwise have to remember.
  */
 
 import { readFileSync } from "node:fs";
@@ -64,13 +62,9 @@ describe("the published package", () => {
     expect(manifest.scripts["prepublishOnly"]).toBeUndefined();
   });
 
-  it("keeps the SDK a devDependency, so the CLI's release is not coupled to it", () => {
-    // Verified build protocol is generated into this package, and the manifest
-    // adapter's SDK reference is type-only. Neither introduces a runtime SDK
-    // dependency that would pin this CLI to one SDK version when it scaffolds
-    // projects against a release policy range.
-    expect(manifest.dependencies["@pdx-ts/sdk"]).toBeUndefined();
-    expect(manifest.devDependencies["@pdx-ts/sdk"]).toBeDefined();
+  it("uses the SDK's configuration validator at runtime", () => {
+    expect(manifest.dependencies["@pdx-ts/sdk"]).toBe("^0.6.0");
+    expect(manifest.devDependencies["@pdx-ts/sdk"]).toBeUndefined();
   });
 
   it("anchors scaffolded SDK ranges to the workspace packages this repository verifies", () => {
@@ -112,9 +106,9 @@ describe("the published package", () => {
   });
 
   it("does not require type stripping of its own", () => {
-    // Compiling is what buys the wider floor; the generated *project* still
-    // needs 22.18, and says so in its own package.json.
-    expect(manifest.engines["node"]).toBe(">=20");
+    // The SDK validator sets this floor. The generated project still needs
+    // 22.18, and says so in its own package.json.
+    expect(manifest.engines["node"]).toBe(">=22");
   });
 });
 

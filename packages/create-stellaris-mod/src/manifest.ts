@@ -5,11 +5,9 @@
  * metadata, and where Feature and Asset source goes. `init` writes it; later
  * commands read it and never repair or migrate it.
  *
- * The validation is hand-rolled rather than delegated to a schema validator at
- * runtime because this package has no runtime SDK dependency and wants none on
- * a validator either. Project Layout is a release-local projection of the SDK
- * rule used by generated builds; `manifest.test.ts` gates the two descriptors
- * against each other. The emitted schema is the editor's copy of those rules.
+ * Structural validation is local; SDK configuration rules are applied by the
+ * same validator generated projects use. The emitted schema projects those
+ * rules for editors.
  *
  * Every message names the file and the exact fault, because a manifest is
  * something an author edits by hand and "invalid manifest" is not a repair
@@ -18,7 +16,12 @@
 
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import type { ModConfig } from "@pdx-ts/sdk";
+import {
+  DESCRIPTOR_VALUE_PATTERN,
+  MOD_PREFIX_PATTERN,
+  resolveConfig,
+  type ModConfig,
+} from "@pdx-ts/sdk";
 
 import { SUPPORTED_VERSION_PATTERN } from "./generated/verified-build.ts";
 import { parseJsonFile } from "./json.ts";
@@ -27,8 +30,8 @@ import { parseProjectLayout, PROJECT_LAYOUT_FIELDS, type ProjectLayout } from ".
 /** The one filename a project's manifest can have. */
 export const MANIFEST_BASENAME = "stellaris-mod.json";
 
-/** The SDK's rule, restated only so this module needs no runtime dependency. */
-export const PREFIX_PATTERN = /^[a-z][a-z0-9_]*$/;
+/** The SDK's mod-prefix rule, exposed for the generated manifest schema. */
+export const PREFIX_PATTERN = MOD_PREFIX_PATTERN;
 
 /**
  * The launcher's `supported_version` grammar — one to three dot-separated parts,
@@ -72,8 +75,9 @@ export const PROJECT_MOD_FIELDS = {
     kind: "string",
     required: true,
     description: "Display name shown in the launcher.",
+    pattern: DESCRIPTOR_VALUE_PATTERN,
   },
-  version: { kind: "string", required: false },
+  version: { kind: "string", required: false, pattern: DESCRIPTOR_VALUE_PATTERN },
   supportedVersion: {
     kind: "string",
     required: true,
@@ -138,7 +142,11 @@ export function projectModFieldSchema(field: ProjectModField): Record<string, un
         ...(field.pattern === undefined ? {} : { pattern: field.pattern.source }),
       };
     case "string[]":
-      return { ...description, type: "array", items: { type: "string" } };
+      return {
+        ...description,
+        type: "array",
+        items: { type: "string", pattern: DESCRIPTOR_VALUE_PATTERN.source },
+      };
     case "boolean":
       return { ...description, type: "boolean" };
   }
@@ -245,14 +253,15 @@ function readMod(mod: unknown, sourcePath: string): { prefix: string; config: Pr
   }
 
   const prefix = prefixes[0]!;
-  if (!PREFIX_PATTERN.test(prefix)) {
+  const config = readModConfig(mod[prefix], prefix, sourcePath);
+  try {
+    resolveConfig({ ...config, prefix });
+  } catch (error) {
     throw new ManifestError(
-      `${sourcePath}: mod prefix ${JSON.stringify(prefix)} must be lowercase snake_case ` +
-        `([a-z][a-z0-9_]*). Every id and filename the mod emits starts with it.`
+      `${sourcePath}: ${error instanceof Error ? error.message : String(error)}`
     );
   }
-
-  return { prefix, config: readModConfig(mod[prefix], prefix, sourcePath) };
+  return { prefix, config };
 }
 
 function readModConfig(value: unknown, prefix: string, sourcePath: string): ProjectModConfig {
@@ -317,9 +326,8 @@ function readModConfig(value: unknown, prefix: string, sourcePath: string): Proj
 
 /**
  * The one-way bridge from a parsed Project Manifest to the SDK's authoring
- * config. This is type-only: the scaffolder still has no runtime SDK dependency
- * and deliberately does not claim that every SDK config can be represented by
- * a Project Manifest.
+ * config. The scaffolder deliberately does not claim that every SDK config can
+ * be represented by a Project Manifest.
  */
 export function toSdkModConfig(manifest: Pick<ProjectManifest, "prefix" | "config">): ModConfig {
   const config: SdkProjectModConfig = manifest.config;

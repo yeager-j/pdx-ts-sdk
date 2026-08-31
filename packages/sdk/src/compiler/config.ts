@@ -24,6 +24,12 @@ export type ResolvedModConfig<P extends string = string> = Readonly<Omit<ModConf
   readonly tags?: readonly string[];
 };
 
+/** Pattern accepted for launcher descriptor values written without escaping. */
+export const DESCRIPTOR_VALUE_PATTERN = /^[^\r\n\0"]*$/;
+
+/** Pattern accepted for a mod prefix. */
+export const MOD_PREFIX_PATTERN = LOWERCASE_SNAKE_CASE.pattern;
+
 const DESCRIPTOR_FORBIDDEN = /[\r\n\0"]/;
 
 function descriptorCharName(value: string): string {
@@ -41,7 +47,7 @@ function descriptorCharName(value: string): string {
 }
 
 function assertDescriptorSafe(field: string, value: string): void {
-  if (!DESCRIPTOR_FORBIDDEN.test(value)) {
+  if (DESCRIPTOR_VALUE_PATTERN.test(value)) {
     return;
   }
   throw new Error(
@@ -57,7 +63,7 @@ function assertDescriptorSafe(field: string, value: string): void {
 export function resolveConfig<P extends string>(
   config: Omit<ModConfig<P>, "tags"> & { readonly tags?: readonly string[] }
 ): ResolvedModConfig<P> {
-  if (!LOWERCASE_SNAKE_CASE.pattern.test(config.prefix)) {
+  if (!MOD_PREFIX_PATTERN.test(config.prefix)) {
     throw new Error(`Mod prefix "${config.prefix}" must be ${LOWERCASE_SNAKE_CASE.diagnostic}`);
   }
   assertDescriptorSafe("name", config.name);

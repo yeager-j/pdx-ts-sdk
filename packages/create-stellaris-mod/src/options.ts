@@ -210,6 +210,11 @@ export function parseArgv(argv: readonly string[]): ParsedArgv {
     strict: true,
   };
   const { values, positionals } = parseArgs(config);
+  if (positionals.length > 1) {
+    throw new OptionsError(
+      `init takes at most one directory, and received ${positionals.map((value) => JSON.stringify(value)).join(", ")}.`
+    );
+  }
   return { values: values as ParsedArgv["values"], positionals };
 }
 
