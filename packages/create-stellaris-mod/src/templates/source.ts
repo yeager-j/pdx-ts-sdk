@@ -129,19 +129,37 @@ export function vanillaTs(resolved: Resolved): string {
  * somewhere the SDK does not look, or \`PDX_NO_VANILLA=1\` to skip it deliberately.
  *
  * There are exactly two ways to end up without the view, and both are stated
- * rather than inferred: the deliberate opt-out, and no install where the SDK
- * looked. Everything else a load can hit — an unreadable game directory, a
+ * rather than inferred: the deliberate opt-out, and the SDK finding no install
+ * on its own. Everything else a load can hit — an unreadable game directory, a
  * game whose shape the parser does not recognize, a corrupt archive — is
  * evidence that something is wrong, not evidence that there is no game. Those
  * propagate, and \`${runScript(resolved.packageManager, "build")}\` reports them, because a build that
  * silently drops id-collision checks, version evidence, and patch sources is
  * one you cannot tell apart from a build that kept them.
+ *
+ * A \`STELLARIS_PATH\` that is not a game root propagates too. It is not a
+ * discovery miss: somebody set it on this machine and meant it, and a build
+ * that quietly ignored it would be checking against nothing while its author
+ * believed otherwise.
  */
 
 import { InstallNotFoundError } from "@pdx-ts/sdk";
 import * as stellaris from "@pdx-ts/sdk/installation";
 import type { VanillaView } from "@pdx-ts/sdk/installation";
 ${fallbackConst(resolved)}
+/**
+ * Whether this machine was pointed at a particular install.
+ *
+ * The SDK reports a bad \`STELLARIS_PATH\` and a fruitless search of the
+ * platform defaults with the same error, so telling them apart means asking
+ * what was asked for. Empty counts as unset, which is what the SDK's own
+ * lookup does with it.
+ */
+function namedAnInstall(): boolean {
+  const named = process.env["STELLARIS_PATH"];
+  return named !== undefined && named !== "";
+}
+
 export function loadVanilla(): VanillaView | undefined {
   if (process.env["PDX_NO_VANILLA"] === "1") {
     return undefined;
@@ -149,11 +167,10 @@ export function loadVanilla(): VanillaView | undefined {
   try {
     return stellaris.load(${loadArgument(resolved)});
   } catch (error) {
-    // The SDK raises this one error, and only this one, for "no Stellaris
-    // install here" — whether nothing was found at the platform defaults or a
-    // named path turned out not to be a game root. \`${runScript(resolved.packageManager, "inspect")}\` reports
-    // whether a build had the view, so the absence is visible without a print.
-    if (error instanceof InstallNotFoundError) {
+    // A discovery miss is an absence; a path somebody named is a mistake they
+    // should hear about. \`${runScript(resolved.packageManager, "inspect")}\` reports whether a build had the
+    // view, so the absence stays visible without a print.
+    if (error instanceof InstallNotFoundError && !namedAnInstall()) {
       return undefined;
     }
     throw error;
@@ -310,6 +327,11 @@ function fallbackConst(resolved: Resolved): string {
 /**
  * The install this project was scaffolded against. Machine-specific: set
  * \`STELLARIS_PATH\` instead if you share this repository, which wins over it.
+ *
+ * This path is a record of one machine rather than a request from whoever is
+ * building now, so a checkout where it does not resolve still builds — without
+ * the vanilla view. That is the opposite of a \`STELLARIS_PATH\` somebody set
+ * here, which is a request and fails loudly when it is wrong.
  */
 const SCAFFOLDED_INSTALL = ${quoteTs(resolved.installPath)};
 `;

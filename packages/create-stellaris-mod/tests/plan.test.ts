@@ -278,6 +278,30 @@ describe("the scaffolded tree", () => {
     expect(project({ llmSupport: false }).has("AGENTS.md")).toBe(false);
   });
 
+  /**
+   * `--local` writes a `file:` dependency at a checkout, whose contents are
+   * neither the published range this release states nor necessarily the source
+   * it was built from — and which keeps changing. Recording the release
+   * coordinates anyway would be worse than recording nothing: the agent would
+   * compare documentation against a version this project does not depend on.
+   * The CLI already refuses to prove anything about a `file:` dependency
+   * (`checkSdkCompatibility`'s `unprovable-specifier`); this says the same
+   * thing to the agent.
+   */
+  it("records no provenance for a project depending on a local checkout", () => {
+    const agents = plan({ localSdk: "/repo/pdx-sdk" }).get("AGENTS.md")!;
+    expect(agents).toContain("## Documentation provenance");
+    expect(agents).toContain("Not available.");
+    expect(agents).toContain("`file:` link");
+    expect(agents).not.toContain(SDK_DOCS_REVISION);
+    expect(agents).not.toContain("SDK source revision:");
+  });
+
+  it("still points a local project at its own checkout as the better evidence", () => {
+    const agents = plan({ localSdk: "/repo/pdx-sdk" }).get("AGENTS.md")!;
+    expect(agents).toContain("prefer the checkout's own source when the two disagree");
+  });
+
   it("drops the opt-outs and their dependencies together", () => {
     const files = plan({ prettier: false, eslint: false });
     expect(files.has(".prettierrc")).toBe(false);
@@ -594,8 +618,36 @@ describe("the vanilla view's absence and its failures", () => {
 
   it("returns no view for the deliberate opt-out and for a missing install", () => {
     expect(vanilla()).toContain('process.env["PDX_NO_VANILLA"] === "1"');
-    expect(vanilla()).toContain("if (error instanceof InstallNotFoundError) {");
+    expect(vanilla()).toContain("if (error instanceof InstallNotFoundError && !namedAnInstall())");
     expect(vanilla()).toContain('import { InstallNotFoundError } from "@pdx-ts/sdk";');
+  });
+
+  /**
+   * The SDK reports a `STELLARIS_PATH` that is not a game root and a fruitless
+   * search of the platform defaults with one error class, so the class alone
+   * cannot decide this. Only the second is an absence: the first is a request
+   * somebody made on this machine, and a build that ignored it would check
+   * against nothing while its author believed otherwise.
+   */
+  it("propagates a STELLARIS_PATH that is not a game root", () => {
+    for (const explicit of [true, false]) {
+      const source = vanilla({ installPath: "/games/Stellaris", installPathIsExplicit: explicit });
+      expect(source, String(explicit)).toContain('const named = process.env["STELLARIS_PATH"]');
+      // Empty counts as unset, which is what the SDK's own lookup does with it.
+      expect(source, String(explicit)).toContain('named !== undefined && named !== ""');
+    }
+  });
+
+  it("keeps a stale scaffolded path soft, because nobody asked for it here", () => {
+    // The teammate case the file promises: a machine path baked in by whoever
+    // ran the scaffolder is a record, not a request, so a checkout where it
+    // does not resolve still builds.
+    const source = vanilla({ installPath: "/weird/place", installPathIsExplicit: true });
+    expect(source).toContain("SCAFFOLDED_INSTALL");
+    expect(source).toContain("is a record of one machine rather than a request");
+    // And it is only ever passed when STELLARIS_PATH is unset, which is
+    // exactly when the guard above lets the failure be an absence.
+    expect(source).toContain('process.env["STELLARIS_PATH"] ? {} : { installPath:');
   });
 
   it("propagates every other failure instead of building without evidence", () => {

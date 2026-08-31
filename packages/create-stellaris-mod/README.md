@@ -173,12 +173,17 @@ their one final operation. A custom project can pass discovery hooks or compose
 the SDK's lower-level interfaces directly.
 
 `src/vanilla.ts` returns no view in exactly two cases: `PDX_NO_VANILLA=1`, and
-no Stellaris install where the SDK looked. Every other failure — an unreadable
-game directory, a game whose shape the parser does not recognize, a corrupt
-archive — propagates and the build reports it. An unexpected failure is not
-evidence that there is no game, and a build that silently drops id-collision
-checks, version evidence, and patch sources cannot be told apart from one that
-kept them.
+the SDK finding no install on its own. Every other failure — an unreadable game
+directory, a game whose shape the parser does not recognize, a corrupt archive —
+propagates and the build reports it. An unexpected failure is not evidence that
+there is no game, and a build that silently drops id-collision checks, version
+evidence, and patch sources cannot be told apart from one that kept them.
+
+A `STELLARIS_PATH` that is not a game root propagates too, matching the CLI's
+own rule that an explicit invalid path is fatal. A path baked in by scaffolding
+is treated the opposite way: it records one machine rather than requesting
+anything here, so a checkout where it does not resolve still builds without the
+view.
 
 ## Recipe Catalog
 
@@ -282,6 +287,12 @@ source this project was scaffolded against. It records one moment rather than
 checking continuously: once the project declares a version outside that range,
 the recorded revision describes an older SDK and the version match governs
 alone.
+
+A project scaffolded with `--local` records no provenance and says so. Its
+`@pdx-ts/sdk` is a `file:` link at a checkout, which is neither a published
+version nor a fixed revision, so there is nothing for published documentation to
+match. Recording the release coordinates anyway would point the documentation
+expert at a version the project does not depend on.
 
 Use `--no-llm` to omit the complete bundle.
 

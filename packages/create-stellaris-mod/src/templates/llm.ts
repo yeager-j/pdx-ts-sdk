@@ -13,9 +13,15 @@ import { SCAFFOLDER_RELEASE_MANIFEST } from "../release-manifest.ts";
  * guidance below asks for possible at all: without it the documentation expert
  * is told to compare against a value the project does not hold.
  */
-const PROVENANCE = [
-  "## Documentation provenance",
-  "",
+/**
+ * The provenance section, for a project depending on a published SDK.
+ *
+ * The recorded range is the one the scaffold writes into `package.json`, and
+ * the revision is the SDK source this release was built from — so an agent
+ * comparing them against the documentation site is comparing two descriptions
+ * of the same thing.
+ */
+const REGISTRY_PROVENANCE = [
   `Scaffolded against \`${SCAFFOLDER_RELEASE_MANIFEST.sdk.packageName}\` ${SCAFFOLDER_RELEASE_MANIFEST.sdk.range}.`,
   "",
   `SDK source revision: \`${SDK_DOCS_REVISION}\``,
@@ -23,9 +29,35 @@ const PROVENANCE = [
   "The documentation site publishes the same value as its `SDK revision:` line. The two agree exactly when the documentation was generated from the SDK source this project was scaffolded against.",
   "",
   "This is a record of one moment, not a live check. Once `package.json` declares an `@pdx-ts/sdk` version outside the range above, this revision describes an older SDK and the version match governs on its own.",
-].join("\n");
+];
 
-const agentsMdLines = (packageManager: string): string[] => [
+/**
+ * The provenance section, for a project scaffolded with `--local`.
+ *
+ * There is no honest record to write. `package.json` points `@pdx-ts/sdk` at a
+ * checkout whose contents are whatever they are now, which is neither the
+ * published range this release states nor necessarily the source it was built
+ * from — and the checkout keeps changing. Recording the release coordinates
+ * anyway would be worse than recording nothing: an agent would compare
+ * documentation against a version this project does not depend on, and either
+ * reject documentation that matches the checkout or accept documentation for a
+ * different API. The CLI already refuses to prove anything about a `file:`
+ * dependency, and this says the same thing to the agent.
+ */
+const LOCAL_PROVENANCE = [
+  "Not available. This project depends on a local `@pdx-ts/sdk` checkout through a `file:` link, so there is no published version or fixed source revision to compare documentation against.",
+  "",
+  "Published documentation describes releases, and a checkout is not one. Treat a version or revision match against it as unproven, say so when it matters to the answer, and prefer the checkout's own source when the two disagree.",
+];
+
+const PROVENANCE = (localSdk: string | undefined): string =>
+  [
+    "## Documentation provenance",
+    "",
+    ...(localSdk === undefined ? REGISTRY_PROVENANCE : LOCAL_PROVENANCE),
+  ].join("\n");
+
+const agentsMdLines = (resolved: Resolved): string[] => [
   "# Agent guidance",
   "",
   "This is an `@pdx-ts/sdk` project that generates a Stellaris mod from TypeScript.",
@@ -55,17 +87,17 @@ const agentsMdLines = (packageManager: string): string[] => [
   "If the active client cannot use the configured subagent, read and follow `.agents/skills/pdx-sdk-docs/SKILL.md` completely and perform the same documentation retrieval directly.",
   "If current documentation retrieval is blocked, return a concise blocker. Apart from the narrow `package.json` version check, do not inspect the project or substitute repository code or generic Stellaris knowledge for fetched documentation.",
   "",
-  PROVENANCE,
+  PROVENANCE(resolved.localSdk),
   "",
   "## Solar-system diagnostics",
   "",
-  `After adding or changing a solar-system initializer, run \`${runScript(packageManager, "build")}\`. The CLI prints advisory layout warnings and writes an interactive gallery to \`previews/index.html\` with one SVG per initializer.`,
+  `After adding or changing a solar-system initializer, run \`${runScript(resolved.packageManager, "build")}\`. The CLI prints advisory layout warnings and writes an interactive gallery to \`previews/index.html\` with one SVG per initializer.`,
   "",
   "Address each warning deliberately, then inspect the relevant `previews/*.svg` files in a browser. Confirm that stars, planets, moons, orbital lines, and asteroid belts look correct. A clean diagnostic list is not a substitute for visual inspection because the preview uses documented approximations and the diagnostics are advisory.",
   "",
   "## Verification",
   "",
-  `Run \`${runScript(packageManager, "typecheck")}\`, \`${runScript(packageManager, "test")}\`, and \`${runScript(packageManager, "build")}\` after code changes. Also run \`${runScript(packageManager, "lint")}\` when that script exists. A task is complete only when the commands pass and any generated solar-system SVGs have been inspected when relevant.`,
+  `Run \`${runScript(resolved.packageManager, "typecheck")}\`, \`${runScript(resolved.packageManager, "test")}\`, and \`${runScript(resolved.packageManager, "build")}\` after code changes. Also run \`${runScript(resolved.packageManager, "lint")}\` when that script exists. A task is complete only when the commands pass and any generated solar-system SVGs have been inspected when relevant.`,
 ];
 
 const PDX_PROJECT_STARTUP_SKILL =
@@ -259,7 +291,7 @@ const CODEX_AGENT =
   ].join("\n") + "\n";
 
 export function agentsMd(resolved: Resolved): string {
-  return `${agentsMdLines(resolved.packageManager).join("\n")}\n`;
+  return `${agentsMdLines(resolved).join("\n")}\n`;
 }
 
 /** Returns the one-time collaboration setup Skill shared by Codex and Claude. */
