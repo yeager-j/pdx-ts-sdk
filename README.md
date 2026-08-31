@@ -423,3 +423,16 @@ npm run build
 Generator, docs, example, and release gates are available as dedicated root
 scripts. [AGENTS.md](AGENTS.md) documents generated-file discipline, design
 boundaries, and the required verification for each kind of change.
+
+To wait for Codex reviews without sending repeated status text to a coding
+agent, pass one or more pull requests to the authenticated GitHub CLI poller:
+
+```bash
+npm run codex:watch -- \
+  https://github.com/yeager-j/pdx-ts-sdk/pull/277 \
+  yeager-j/pdx-ts-sdk#278
+```
+
+The poller checks every 30 seconds, prints only changed states and new findings,
+and exits after all listed reviews complete. Use `--interval <seconds>` to
+change the delay or `--once` to inspect the current state without waiting.
