@@ -10,7 +10,7 @@
 import type { RuleType } from "../../cwt/model.ts";
 import type { AliasDecl } from "../../cwt/rules.ts";
 import type { DocEntry } from "../../logs/trigger-docs.ts";
-import type { LoweredRule } from "../../lower/lowered-rule.ts";
+import { loweredRuleConflictSkips, type LoweredRule } from "../../lower/lowered-rule.ts";
 import {
   bareBlockValue,
   cardinalityArrayType,
@@ -738,6 +738,10 @@ export function emitTriggers(
       skipped.push(
         skippedRule(key, "removed-api", "declared removed by the rules (## api_status = removed)")
       );
+      continue;
+    }
+    if (rule.conflicts.length > 0) {
+      skipped.push(...loweredRuleConflictSkips(rule));
       continue;
     }
     const doc = docs.get(key);

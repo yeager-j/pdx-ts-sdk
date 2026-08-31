@@ -458,6 +458,17 @@ export function clauseScopeContext(scope: ScopeContext | null): ClauseScope {
   };
 }
 
+/** Reports whether every declaration of one nested clause has the same scope behavior. */
+export function clauseScopesAgree(candidates: readonly ClauseScope[]): boolean {
+  const [first] = candidates;
+  return (
+    first === undefined ||
+    candidates.every(
+      (candidate) => candidate.scope === first.scope && candidate.transition === first.transition
+    )
+  );
+}
+
 function inheritedClauseScope(scope: ClauseScope | string | null): ClauseScope {
   return typeof scope === "object" && scope !== null && "transition" in scope
     ? scope
@@ -479,11 +490,7 @@ function clauseScope(
   if (first === undefined) {
     return inherited;
   }
-  if (
-    candidates.some(
-      (candidate) => candidate.scope !== first.scope || candidate.transition !== first.transition
-    )
-  ) {
+  if (!clauseScopesAgree(candidates)) {
     return skipReason(
       "conflicting-clause-scope",
       `field "${name}" has incompatible scope transitions across its declarations`
