@@ -10,6 +10,7 @@
   "scripts": {
     "build": "npm run build --workspaces --if-present",
     "clean": "node scripts/clean.mjs",
+    "codex:watch": "node scripts/watch-codex-reviews.mjs",
     "codegen": "node --conditions=pdx-source packages/codegen-cwt/src/index.ts",
     "codegen:check": "node --conditions=pdx-source packages/codegen-cwt/src/index.ts && git diff --exit-code packages/sdk/src/generated",
     "codegen:vanilla": "node --conditions=pdx-source packages/codegen-vanilla/src/index.ts",
