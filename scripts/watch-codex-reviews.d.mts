@@ -36,8 +36,8 @@ export interface CodexReviewState {
   readonly commits: readonly string[];
   /** Last update time of the Codex status comment. */
   readonly summaryUpdatedAt?: string;
-  /** Matching GitHub review ID when Codex posted findings. */
-  readonly reviewId?: number;
+  /** Matching GitHub review IDs that supplied findings. */
+  readonly reviewIds?: readonly number[];
   /** Terminal status text when Codex reports a failed review. */
   readonly failure?: string;
   /** Inline findings attached to the matching review. */
@@ -119,6 +119,8 @@ export function parsePullRequestReference(reference: string): PullRequestReferen
 
 /**
  * Derives current Codex activity and findings from GitHub REST API objects.
+ * Human-authored issue comments must include any `@codex review` triggers so same-head attempts
+ * can be distinguished.
  * @param observedAt ISO timestamp used to bound result propagation before reporting no findings.
  */
 export function deriveCodexReviewState(

@@ -85,7 +85,9 @@ export function parsePullRequestReference(reference) {
   if (
     !["github.com", "www.github.com"].includes(url.hostname) ||
     owner === undefined ||
+    owner === "" ||
     repository === undefined ||
+    repository === "" ||
     kind !== "pull" ||
     number === undefined ||
     !/^[1-9]\d*$/u.test(number) ||
@@ -104,7 +106,8 @@ export function parsePullRequestReference(reference) {
 
 /**
  * Derives the current Codex activity and findings from GitHub REST API objects.
- * Human-authored comments and findings from older reviewed commits are ignored.
+ * Human-authored comments are ignored except for `@codex review` attempt boundaries.
+ * Findings from older commits and attempts are ignored.
  * @param observedAt ISO timestamp used to bound result propagation before reporting no findings.
  */
 export function deriveCodexReviewState(
@@ -171,16 +174,20 @@ export function deriveCodexReviewState(
       commits.some((commit) => review.commit_id?.startsWith(commit)) &&
       (triggerAt === undefined || compareTimestamps(review.submitted_at, triggerAt) >= 0)
   );
-  const review = latestBy(matchingReviews, "submitted_at");
-  const matchingComments =
-    review === undefined
-      ? []
-      : reviewComments
-          .filter(
-            (comment) => isCodexAuthored(comment) && comment.pull_request_review_id === review.id
-          )
-          .sort((left, right) => compareTimestamps(left.created_at, right.created_at));
-  if (review !== undefined && matchingComments.length === 0) {
+  const reviewIds = new Set(matchingReviews.map((review) => review.id));
+  const matchingComments = reviewComments
+    .filter(
+      (comment) =>
+        isCodexAuthored(comment) &&
+        comment.pull_request_review_id !== null &&
+        comment.pull_request_review_id !== undefined &&
+        reviewIds.has(comment.pull_request_review_id)
+    )
+    .sort((left, right) => compareTimestamps(left.created_at, right.created_at));
+  const unpublishedReview = matchingReviews.some(
+    (review) => !matchingComments.some((comment) => comment.pull_request_review_id === review.id)
+  );
+  if (unpublishedReview) {
     return {
       pullRequest,
       status: "settling",
@@ -203,7 +210,7 @@ export function deriveCodexReviewState(
     Number.isFinite(completedAt) &&
     Number.isFinite(observedTime) &&
     observedTime - completedAt >= NO_FINDINGS_SETTLE_MS;
-  if (review === undefined && !noFindings && !settleWindowElapsed) {
+  if (matchingReviews.length === 0 && !noFindings && !settleWindowElapsed) {
     return {
       pullRequest,
       status: "settling",
@@ -212,28 +219,25 @@ export function deriveCodexReviewState(
       findings: [],
     };
   }
-  const findings =
-    review === undefined
-      ? []
-      : matchingComments.map((comment) => {
-          if (typeof comment.path !== "string") {
-            throw new Error(`Codex review comment ${comment.id} has no source path.`);
-          }
-          return {
-            id: comment.id,
-            path: comment.path,
-            line: comment.line ?? comment.original_line,
-            body: comment.body ?? "",
-            url: comment.html_url,
-          };
-        });
+  const findings = matchingComments.map((comment) => {
+    if (typeof comment.path !== "string") {
+      throw new Error(`Codex review comment ${comment.id} has no source path.`);
+    }
+    return {
+      id: comment.id,
+      path: comment.path,
+      line: comment.line ?? comment.original_line,
+      body: comment.body ?? "",
+      url: comment.html_url,
+    };
+  });
 
   return {
     pullRequest,
     status: "completed",
     commits,
     summaryUpdatedAt: summary.updated_at,
-    reviewId: review?.id,
+    reviewIds: matchingReviews.map((review) => review.id),
     findings,
   };
 }

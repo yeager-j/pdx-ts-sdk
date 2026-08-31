@@ -37,6 +37,12 @@ describe("Codex review polling", () => {
       label: "yeager-j/pdx-ts-sdk#277",
     });
     expect(() => parsePullRequestReference("pdx-ts-sdk#277")).toThrow(/Invalid pull request/u);
+    expect(() => parsePullRequestReference("https://github.com/owner//pull/277")).toThrow(
+      /Invalid GitHub pull request URL/u
+    );
+    expect(() => parsePullRequestReference("https://github.com//repo/pull/277")).toThrow(
+      /Invalid GitHub pull request URL/u
+    );
   });
 
   it("reports waiting and running status from the summary comment", () => {
@@ -88,7 +94,7 @@ describe("Codex review polling", () => {
         id: 10,
         user: codex,
         submitted_at: "2026-08-30T23:00:00Z",
-        commit_id: "e363bfa000000000000000000000000000000000",
+        commit_id: "aaaaaaa000000000000000000000000000000000",
         body: "### 💡 Codex Review",
       },
       {
@@ -136,7 +142,7 @@ describe("Codex review polling", () => {
 
     expect(state).toMatchObject({
       status: "completed",
-      reviewId: 11,
+      reviewIds: [11],
       findings: [
         {
           id: 21,
@@ -149,6 +155,41 @@ describe("Codex review polling", () => {
     expect(formatCodexReviewState(state)).toContain(
       "[yeager-j/pdx-ts-sdk#277] Codex review completed for e363bfa with 1 finding.\n\nsrc/exec.ts:101"
     );
+  });
+
+  it("collects findings from every matching completed review", () => {
+    const reviews: GitHubReview[] = [
+      {
+        id: 11,
+        user: codex,
+        submitted_at: "2026-08-31T00:08:28Z",
+        commit_id: "e363bfad81490a55614e2f3966c1cbbe3e595029",
+        body: "### 💡 Codex Review",
+      },
+      {
+        id: 12,
+        user: codex,
+        submitted_at: "2026-08-31T00:08:29Z",
+        commit_id: "e363bfad81490a55614e2f3966c1cbbe3e595029",
+        body: "### 💡 Codex Review",
+      },
+    ];
+    const comments: GitHubComment[] = reviews.map((review, index) => ({
+      id: 20 + index,
+      user: codex,
+      pull_request_review_id: review.id,
+      path: `src/review-${index}.ts`,
+      line: index + 1,
+      body: `Finding ${index}`,
+    }));
+
+    expect(
+      deriveCodexReviewState(pullRequest, [summary("✅ **Completed**")], reviews, comments)
+    ).toMatchObject({
+      status: "completed",
+      reviewIds: [11, 12],
+      findings: [{ id: 20 }, { id: 21 }],
+    });
   });
 
   it("waits for GitHub to expose a completed result", () => {
