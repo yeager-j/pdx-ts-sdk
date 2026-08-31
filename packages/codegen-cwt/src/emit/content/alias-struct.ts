@@ -48,19 +48,14 @@ import type { RuleField, RuleType } from "../../cwt/model.ts";
 import type { AliasDecl } from "../../cwt/rules.ts";
 import { formOfShape } from "../../lower/authored-form.ts";
 import { camelCase, docComment, isPlainName, pascalCase } from "../../naming.ts";
-import type { Emitter, TsValue } from "../../render/emitter.ts";
+import { contentConversionOf, type Emitter, type TsValue } from "../../render/emitter.ts";
 import {
   omissionLine,
   type DocTable,
   type FieldOmissionRow,
   type MemberDocRow,
 } from "../../render/field-rows.ts";
-import {
-  constArray,
-  conversionFor,
-  refTypesSuffix,
-  member as renderMember,
-} from "../../render/writer.ts";
+import { constArray, refTypesSuffix, member as renderMember } from "../../render/writer.ts";
 
 /** Generated authoring code and coverage evidence for one fixed-shape alias category. */
 export interface AliasStructEmission {
@@ -281,7 +276,7 @@ function valueField(key: string, value: TsValue): string {
   return (
     `  { key: ${JSON.stringify(key)}, member: ${JSON.stringify(memberName(key))}, ` +
     `shape: "value", form: ${JSON.stringify(formOfShape({ shape: "value" }))}, ` +
-    `conversion: ${JSON.stringify(conversionFor(value))}${refTypesSuffix(value)} },\n`
+    `conversion: ${JSON.stringify(contentConversionOf(value.conversion))}${refTypesSuffix(value)} },\n`
   );
 }
 
@@ -439,11 +434,11 @@ function clauseFieldsCode(
     `locKey: true },\n` +
     `  { key: "value", member: "values", shape: "value", ` +
     `form: ${JSON.stringify(formOfShape({ shape: "value", repeated: true }))}, ` +
-    `conversion: ${JSON.stringify(conversionFor(ref))}${suffix}, repeated: true },\n`;
+    `conversion: ${JSON.stringify(contentConversionOf(ref.conversion))}${suffix}, repeated: true },\n`;
   const clauseRows =
     `  { key: "value", member: "value", shape: "value", ` +
     `form: ${JSON.stringify(formOfShape({ shape: "value" }))}, ` +
-    `conversion: ${JSON.stringify(conversionFor(ref))}${suffix} },\n` +
+    `conversion: ${JSON.stringify(contentConversionOf(ref.conversion))}${suffix} },\n` +
     [...GROUP_KEYS]
       .map(
         (key) =>

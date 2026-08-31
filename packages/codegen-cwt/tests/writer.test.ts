@@ -12,15 +12,16 @@
 import type { TsValue } from "@pdx-ts/codegen-cwt/render/emitter";
 import {
   constArray,
-  conversionFor,
   member,
   refTypesEntries,
   refTypesSuffix,
 } from "@pdx-ts/codegen-cwt/render/writer";
 import { describe, expect, it } from "vitest";
 
-/** A minimal `TsValue`: only `type` and `toScalar` are required by the interface. */
-function tsValue(overrides: Partial<TsValue> & Pick<TsValue, "type" | "toScalar">): TsValue {
+/** A minimal `TsValue` for testing writer metadata. */
+function tsValue(
+  overrides: Partial<TsValue> & Pick<TsValue, "type" | "toScalar" | "conversion">
+): TsValue {
   return overrides;
 }
 
@@ -91,10 +92,11 @@ describe("constArray", () => {
 
 const referencing: TsValue = tsValue({
   type: "TechnologyRef",
-  toScalar: (e) => `${e}.id`,
+  toScalar: (e) => `refId(${e})`,
+  conversion: "refId",
   refTypes: ["technology"],
 });
-const plain: TsValue = tsValue({ type: "string", toScalar: (e) => e });
+const plain: TsValue = tsValue({ type: "string", toScalar: (e) => e, conversion: "identity" });
 
 describe("refTypesSuffix / refTypesEntries share one fact about a value", () => {
   it("format the same presence/absence of refTypes two different ways", () => {
@@ -108,15 +110,5 @@ describe("refTypesSuffix / refTypesEntries share one fact about a value", () => 
   it("treat undefined the same as a value with no refTypes", () => {
     expect(refTypesSuffix(undefined)).toBe("");
     expect(refTypesEntries(undefined)).toEqual([]);
-  });
-});
-
-describe("conversionFor", () => {
-  it("is identity when toScalar returns its input unchanged", () => {
-    expect(conversionFor(plain)).toBe("identity");
-  });
-
-  it("is ref when toScalar transforms its input", () => {
-    expect(conversionFor(referencing)).toBe("ref");
   });
 });

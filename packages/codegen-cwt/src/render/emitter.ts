@@ -5,10 +5,37 @@
 
 import type { RuleType } from "../cwt/model.ts";
 import { scopeIndex, type RuleSet } from "../cwt/rules.ts";
+import type { ContentConversion } from "../lower/content-shape.ts";
 import { pascalCase } from "../naming.ts";
 import { OverlayAudit } from "../overlay/audit.ts";
 import { COMPLEX_ENUM_REFERENCE_OVERLAYS } from "../overlay/index.ts";
 import { ImportRecorder, knownSymbol, type FileImports, type SymbolKind } from "./symbols.ts";
+
+/**
+ * How an authored value becomes a PDXScript scalar — the expression shape
+ * {@link TsValue.toScalar} writes, not the coarser vocabulary the runtime records.
+ *
+ * The two are different questions and conflating them is a real defect. The
+ * runtime has three behaviours, so `refId(x)`, `x.path` and `x.text` all record
+ * as `"ref"`. Merging a union needs the finer answer: two arms that record the
+ * same way can still write different expressions, and taking one arm's
+ * `toScalar` for the other's values is how `.path` gets applied to a typed
+ * reference, which has no `path` and yields `undefined`.
+ */
+export type ScalarConversion = "identity" | "refId" | "stringRefId" | "scopePath" | "literalText";
+
+/**
+ * Projects a conversion onto the vocabulary the runtime field metadata records.
+ *
+ * Every non-identity conversion records as `"ref"` because `refId` implements
+ * all of them at runtime; the distinctions above matter only while choosing
+ * which expression to write.
+ */
+export function contentConversionOf(
+  conversion: ScalarConversion
+): Extract<ContentConversion, "identity" | "ref"> {
+  return conversion === "identity" ? "identity" : "ref";
+}
 
 /**
  * A lowered TypeScript value shape and the metadata needed to serialize it.
@@ -19,6 +46,8 @@ export interface TsValue {
   readonly type: string;
   /** Converts an expression of {@link TsValue.type} into a PDXScript scalar expression. */
   readonly toScalar: (expression: string) => string;
+  /** The runtime conversion required before the authored value is serialized. */
+  readonly conversion: ScalarConversion;
   /**
    * Content registries referenced when every admitted form is a typed reference.
    * Mixed or open forms leave this undefined so runtime validation does not infer false ownership.
@@ -366,11 +395,12 @@ export class Emitter {
         return {
           type: "boolean",
           toScalar: (expression) => expression,
+          conversion: "identity",
           literals: ["yes", "no"],
         };
       case "int":
       case "float":
-        return { type: "number", toScalar: (expression) => expression };
+        return { type: "number", toScalar: (expression) => expression, conversion: "identity" };
       case "valueField":
         // CWT's `value_field`/`int_value_field` admit a literal number, a
         // scripted variable, a `scope.variable` path, `value:<script_value>`,
@@ -382,6 +412,7 @@ export class Emitter {
         return {
           type: "ScriptValue",
           toScalar: (expression) => expression,
+          conversion: "identity",
           scriptValue: true,
           typeSymbols: ["ScriptValue"],
         };
@@ -396,6 +427,7 @@ export class Emitter {
         return {
           type: "LocalizationInput",
           toScalar: (expression) => `refId(${expression})`,
+          conversion: "refId",
           objectKinds: ["localization-ref", "localized-text"],
           typeSymbols: ["LocalizationInput"],
           scalarSymbol: "refId",
@@ -405,13 +437,14 @@ export class Emitter {
       case "filepath":
       case "icon":
       case "colour":
-        return { type: "string", toScalar: (expression) => expression };
+        return { type: "string", toScalar: (expression) => expression, conversion: "identity" };
       case "valueSet": {
         this.usedValueSets.add(type.name);
         this.scopedValueSets.add(type.name);
         return {
           type: this.valueSetTypeName(type.name),
           toScalar: (expression) => expression,
+          conversion: "identity",
         };
       }
       // `scope[X]` and `scope_group[G]` both name a scope the author has to
@@ -425,6 +458,7 @@ export class Emitter {
           return {
             type: "ScopeValue",
             toScalar: (expression) => `${expression}.path`,
+            conversion: "scopePath",
             objectKinds: ["scope-ref"],
             typeSymbols: ["ScopeValue"],
           };
@@ -432,11 +466,12 @@ export class Emitter {
         const canonical = this.canonicalScope(type.name);
         if (canonical === null) {
           this.unknownScopes.add(type.name);
-          return { type: "string", toScalar: (expression) => expression };
+          return { type: "string", toScalar: (expression) => expression, conversion: "identity" };
         }
         return {
           type: scopeValueType([canonical]),
           toScalar: (expression) => `${expression}.path`,
+          conversion: "scopePath",
           objectKinds: ["scope-ref"],
           typeSymbols: ["ScopeValue"],
         };
@@ -445,7 +480,7 @@ export class Emitter {
         const members = this.rules.scopeGroups.get(type.name);
         if (members === undefined) {
           this.unknownScopeGroups.add(type.name);
-          return { type: "string", toScalar: (expression) => expression };
+          return { type: "string", toScalar: (expression) => expression, conversion: "identity" };
         }
         const canonical = members.map((member) => this.canonicalScope(member));
         if (canonical.includes(null)) {
@@ -455,7 +490,7 @@ export class Emitter {
             }
           }
           this.unknownScopeGroups.add(type.name);
-          return { type: "string", toScalar: (expression) => expression };
+          return { type: "string", toScalar: (expression) => expression, conversion: "identity" };
         }
         this.usedScopeGroups.add(type.name);
         const scopes = [
@@ -464,6 +499,7 @@ export class Emitter {
         return {
           type: scopeValueType(scopes),
           toScalar: (expression) => `${expression}.path`,
+          conversion: "scopePath",
           objectKinds: ["scope-ref"],
           typeSymbols: ["ScopeValue"],
         };
@@ -472,13 +508,14 @@ export class Emitter {
         return {
           type: JSON.stringify(type.text),
           toScalar: (expression) => expression,
+          conversion: "identity",
           literals: [type.text],
           ...(type.text === "yes" || type.text === "no" ? { booleanLiterals: [type.text] } : {}),
         };
       case "enum": {
         const members = this.rules.enums.get(type.name);
         if (members === undefined) {
-          return { type: "string", toScalar: (expression) => expression };
+          return { type: "string", toScalar: (expression) => expression, conversion: "identity" };
         }
         this.usedEnums.add(type.name);
         this.scopedEnums.add(type.name);
@@ -489,6 +526,7 @@ export class Emitter {
             reference === undefined
               ? (expression) => expression
               : (expression) => `String(refId(${expression}))`,
+          conversion: reference === undefined ? "identity" : "stringRefId",
           ...(reference === undefined
             ? {}
             : {
@@ -508,6 +546,7 @@ export class Emitter {
         return {
           type: `${name} | string`,
           toScalar: (expression) => `refId(${expression})`,
+          conversion: "refId",
           refTypes: [type.name],
           objectKinds: ["typed-ref"],
           scalarSymbol: "refId",
@@ -545,6 +584,12 @@ export class Emitter {
         return {
           type: "LiteralText",
           toScalar: (expression) => `${expression}.text`,
+          // `refId` does not handle LiteralText: it falls through to
+          // `TypedRef.id` and would produce `undefined`. Every field emitted
+          // from this arm also carries `locKey: true`, so `contentScalar`
+          // short-circuits to `localizationScalar` before reading `conversion`;
+          // the resolved value is a plain string, which `refId` returns unchanged.
+          conversion: "literalText",
           objectKinds: ["literal-text"],
           typeSymbols: ["LiteralText"],
         };
@@ -554,6 +599,7 @@ export class Emitter {
         return {
           type: this.refTypeName(type.name),
           toScalar: (expression) => `refId(${expression})`,
+          conversion: "refId",
           refTypes: [type.name],
           objectKinds: ["typed-ref"],
           scalarSymbol: "refId",
@@ -585,8 +631,7 @@ export class Emitter {
     // Split compound members (`XRef | string`) so `string` dedupes across
     // arms instead of repeating in the joined union.
     const parts = mergeScopeArms([...new Set(values.flatMap((value) => value.type.split(" | ")))]);
-    const conversionProbe = "x";
-    const conversionExpressions = new Set(values.map((value) => value.toScalar(conversionProbe)));
+    const conversions = new Set(values.map((value) => value.conversion));
     const refTypes = referenceTargetsOf(types);
     // One open arm opens the whole union, the same rule `refTypes` follows: a
     // scalar arm makes every value legal, so the closed arms prove nothing.
@@ -600,13 +645,14 @@ export class Emitter {
     // the union of the arms' symbols is exactly what the joined type spells.
     const typeSymbols = [...new Set(values.flatMap((value) => value.typeSymbols ?? []))];
     const firstValue = values[0]!;
-    const conversionsDiffer = conversionExpressions.size > 1;
+    const conversionsDiffer = conversions.size > 1;
     // Propagated only when every conversion agrees: a mixed union uses `refId`,
     // which cannot be wrapped by `scriptValueScalar`. The real rules do not
     // overload a value_field arm alongside a typeRef.
     const scriptValue =
       !conversionsDiffer && values.every((value) => value.scriptValue === true) ? true : undefined;
     const scalarSymbol = conversionsDiffer ? "refId" : firstValue.scalarSymbol;
+    const conversion: ScalarConversion = conversionsDiffer ? "refId" : firstValue.conversion;
     // The sentinels a mixed localisation position keeps: `default` selects the
     // game's own fail text, `random` its own name generator, and neither is a
     // key the mod could supply. They keep precedence over English shorthand,
@@ -617,6 +663,7 @@ export class Emitter {
     return {
       type: parts.join(" | "),
       toScalar: conversionsDiffer ? (expression) => `refId(${expression})` : firstValue.toScalar,
+      conversion,
       refTypes,
       literals,
       ...(localisation ? { localizationInput: true as const } : {}),

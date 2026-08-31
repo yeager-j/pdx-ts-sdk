@@ -464,7 +464,12 @@ describe("trigger emission", () => {
       name: "trait",
       value: {
         kind: "scalar",
-        value: { type: "TraitRef | string", toScalar: (expr) => expr, refTypes: ["trait"] },
+        value: {
+          type: "TraitRef | string",
+          toScalar: (expr) => expr,
+          conversion: "identity",
+          refTypes: ["trait"],
+        },
       },
       optional: false,
       repeated: { min: 0, max: null },
