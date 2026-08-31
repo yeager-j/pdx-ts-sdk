@@ -48,7 +48,46 @@ describe("readLocalizationKeys", () => {
       // value tells them apart, so a prefix test would drop this one.
       "l_slot",
     ]);
-    expect(read).toMatchObject({ files: 1, unparsedLines: 0, missing: false });
+    expect(read).toMatchObject({ files: 1, unparsedLines: 0, gaps: [], missing: false });
+  });
+
+  it("records a line it does not recognise as a gap rather than only counting it", () => {
+    // The inventory is what `vanilla.localization()` accepts, so a line shape
+    // the reader stopped recognising is a key the published package refuses
+    // while the game resolves it. A count in the report did not stop that.
+    const root = installWithLocalisation();
+    writeFileSync(
+      path.join(root, "localisation/english/keys.yml"),
+      'l_english:\n kept:0 "Text"\n this line carries no key the reader knows\n'
+    );
+
+    const read = readLocalizationKeys(root);
+
+    expect(read.keys).toEqual(["kept"]);
+    expect(read.unparsedLines).toBe(1);
+    expect(read.gaps).toEqual([
+      {
+        inventory: "localization",
+        source: "localisation/english/keys.yml",
+        detail: "1 line names neither a key nor a language header, first at line 3",
+      },
+    ]);
+  });
+
+  it("reports one gap per file, however many lines it lost", () => {
+    const root = installWithLocalisation();
+    writeFileSync(
+      path.join(root, "localisation/english/keys.yml"),
+      "l_english:\n first bad line\n second bad line\n"
+    );
+
+    expect(readLocalizationKeys(root).gaps).toEqual([
+      {
+        inventory: "localization",
+        source: "localisation/english/keys.yml",
+        detail: "2 lines name neither a key nor a language header, first at line 2",
+      },
+    ]);
   });
 
   it("reports an absent tree rather than failing on it", () => {

@@ -58,6 +58,20 @@ The output package includes literal-union registry ids, event maps and refs,
 scripted trigger/effect parameter tables and bindings, file-bucketed tries,
 vanilla path data, and runtime sets used by SDK membership checks.
 
+Complex-enum unions and the localization key inventory are *exact membership*:
+the SDK rejects anything outside them. A reader that cannot read all of its
+source therefore records an extraction gap instead of returning a shorter list,
+and emission refuses while any gap is open. A short inventory would publish as a
+wrong answer rather than as a missing completion, so it is not a warning.
+
+One file is not a gap: one proved unable to hold a member. The install ships
+prose under extensions these enums search — `interface/credits.txt` is the
+credits, and `complex_enum[scrollbar_type]` searches `interface/` for `.txt` —
+and a member of an enum can only come from inside the block its selector names.
+A file whose text never contains that identifier cannot contribute one under any
+parse, so its unreadability costs that inventory nothing. This is checked per
+file, not a list of blessed filenames.
+
 It never emits script bodies, localized values, descriptions, default parameter
 values, or Asset bytes.
 
@@ -189,6 +203,7 @@ src/
 |-- read-scripted.ts  names and parameter lists
 |-- read-complex-enums.ts generated enum-member extraction
 |-- read-localization.ts  localization keys without localized values
+|-- extraction-gap.ts what a reader could not read, and the refusal to publish it
 |-- infer-scopes.ts   conservative scripted scope inference
 |-- callsites.ts      vanilla call-site observations for scope checks
 |-- trie.ts           bucket and trie construction
