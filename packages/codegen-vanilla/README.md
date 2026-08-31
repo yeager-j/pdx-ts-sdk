@@ -159,14 +159,26 @@ the verbatim id, including dots and other legal characters.
 
 ## Licensing chokepoint
 
-Every install-derived string literal that reaches generated output passes the
+Every install-derived string that reaches generated output passes the
 appropriate licensing chokepoint. `assertVanillaIdentifier` accepts
-identifier-shaped material, while `assertVanillaPath` validates emitted paths;
-both reject content outside their allowed shape.
+identifier-shaped material; `assertVanillaPath` validates emitted paths; and
+`assertVanillaModuleStem` validates the text that *names* a generated module.
+Each rejects content outside its allowed shape.
+
+The third door exists because module specifiers are not all generator-owned. An
+oversized registry's bucket files are named after the install's own files and
+directories, and an event namespace file is named after a namespace read out of
+a shipped event id. Both are install text, and a stem is one path component
+rather than a path: it is a name first, so the identifier rules apply, plus
+refusals for separators, drive letters, leading or trailing dots, spaces, and
+the characters Windows reserves.
 
 This is an enforced architecture boundary, not a review convention. A negative
 control in the test suite deliberately attempts to emit forbidden content and
-must fail. Bodies used for scope inference remain inside `VanillaBuildFacts` and
+must fail, including a bucket key and an event namespace that try to escape
+their directory. The suite also checks every component of every relative
+specifier in the emitted output, and that each one names a module the generator
+emitted. Bodies used for scope inference remain inside `VanillaBuildFacts` and
 cannot reach an emitter.
 
 The resulting package carries game identities and derived type facts without

@@ -15,9 +15,21 @@
  * and is short.
  *
  * {@link assertVanillaPath} is the same gate for the one emitted string that
- * is a path rather than a name — the install's path inventory. Two doors, one
- * counter: {@link Chokepoint} is still the only way a string reaches emitted
- * text, and the report's "identifiers checked" counts what went through both.
+ * is a path rather than a name — the install's path inventory.
+ *
+ * {@link assertVanillaModuleStem} is the third door, and the one that was
+ * missing. Module specifiers are mostly this generator's own file layout, and
+ * that is what made it easy to believe they all were: an oversized registry's
+ * bucket files are named after the *install's* files and directories, and an
+ * event namespace file is named after a namespace read out of a shipped event
+ * id. Both were interpolated straight into a path and an import. The event
+ * reader happens to validate its namespaces and the bucket keys happen to be
+ * tame, but a boundary that holds because two other modules are careful is not
+ * a boundary — it is a coincidence with a good record.
+ *
+ * Three doors, one counter: {@link Chokepoint} is still the only way install
+ * text reaches emitted output, and the report's "identifiers checked" counts
+ * what went through all three.
  */
 
 import type { RuleScopes } from "@pdx-ts/codegen-cwt/lower/scope-facts";
@@ -155,6 +167,64 @@ export function assertVanillaPath(candidate: string, context: string): string {
 }
 
 /**
+ * Characters that would make a stem stop being one path component.
+ *
+ * The separators first, because they are the whole point: a bucket key is
+ * install text and `../../etc/passwd` is a legal identifier as far as
+ * {@link assertVanillaIdentifier} is concerned — it has no braces, no `=`, no
+ * quotes, and its dots and slashes are the same characters
+ * `shield_effect_..._0.7s` spends. Then the four Windows reserves the rest of
+ * this repo already treats as filename hazards.
+ */
+const FORBIDDEN_IN_STEM = ["/", "\\", ":", "*", "?", "<", ">", "|", " "];
+
+/**
+ * Passes a generated module's file stem through, or throws.
+ *
+ * Layered on {@link assertVanillaIdentifier} rather than restating it: a stem
+ * is a name first, so everything that separates a name from a body already
+ * applies, and this adds only what separates one path *component* from a path.
+ * That ordering matters — the identifier rules are where `$`, braces and
+ * newlines are refused, and a stem gets all of them for free and keeps getting
+ * them when they change.
+ *
+ * Spaces are refused here though a name may spend two, because this one becomes
+ * a filename and an import specifier. Vanilla ships `flags/backgrounds/00
+ * solid.dds`; if a file like that ever named a trie bucket, generation should
+ * stop and be looked at rather than quietly emit `import "./00 solid.ts"`.
+ *
+ * Never returns a repaired stem, for the reason neither of the others does: a
+ * silently corrected filename is a module written somewhere nobody named.
+ */
+export function assertVanillaModuleStem(candidate: string, context: string): string {
+  assertVanillaIdentifier(candidate, context);
+  const reject = (reason: string): never => {
+    throw new Error(
+      `${context}: refusing to emit ${JSON.stringify(candidate.slice(0, 120))} — ${reason}. ` +
+        "A generated module's file stem is one path component."
+    );
+  };
+  for (const character of FORBIDDEN_IN_STEM) {
+    if (candidate.includes(character)) {
+      reject(`contains ${JSON.stringify(character)}`);
+    }
+  }
+  if (candidate.startsWith(".")) {
+    reject('starts with a "."');
+  }
+  // Windows drops a trailing dot or space from a filename, so two stems that
+  // differ only there would resolve to one file there and two here.
+  if (candidate.endsWith(".")) {
+    reject('ends with a "."');
+  }
+  const bytes = UTF8.encode(candidate).length;
+  if (bytes > MAX_COMPONENT_BYTES) {
+    reject(`is ${bytes} bytes, over the ${MAX_COMPONENT_BYTES} a filename takes`);
+  }
+  return candidate;
+}
+
+/**
  * Byte order, not locale order. Emission has to be reproducible on every
  * machine, and `localeCompare` is not: it treats `_` and case differently
  * depending on the environment's collation.
@@ -169,13 +239,24 @@ export interface Chokepoint {
   literal(candidate: string, context: string): string;
   /** The same, for the one kind of string that is a path rather than a name. */
   pathLiteral(candidate: string, context: string): string;
+  /**
+   * The same, for text that names a generated module rather than sitting
+   * inside one.
+   *
+   * Returns the stem unquoted, which is the one difference between this door
+   * and the other two. A bucket key becomes both a key in the emitted file map
+   * — where it is a path, not a literal — and part of an import specifier, and
+   * one call has to serve both or the two could disagree about what was
+   * checked.
+   */
+  moduleStem(candidate: string, context: string): string;
   readonly checked: () => number;
 }
 
 export function createChokepoint(): Chokepoint {
-  // One counter for both doors. The report's number answers "how many strings
-  // did the gate inspect", and a path inspected by the other assertion is
-  // still a string the gate inspected.
+  // One counter for all three doors. The report's number answers "how many
+  // strings did the gate inspect", and a path or a stem inspected by another
+  // assertion is still a string the gate inspected.
   let seen = 0;
   return {
     literal(candidate, context) {
@@ -185,6 +266,10 @@ export function createChokepoint(): Chokepoint {
     pathLiteral(candidate, context) {
       seen += 1;
       return JSON.stringify(assertVanillaPath(candidate, context));
+    },
+    moduleStem(candidate, context) {
+      seen += 1;
+      return assertVanillaModuleStem(candidate, context);
     },
     checked: () => seen,
   };
@@ -350,7 +435,13 @@ export function emitTrie(
       continue;
     }
     const name = unique(`${root}${pascalCase(key)}`, takenNames);
-    const stem = uniqueFileStem(kebabCase(key), takenStemIdentities);
+    // Through the gate, not merely derived from a key that went through it as
+    // a property name: `kebabCase` and the uniquing suffix both run after that
+    // check, and what lands in the specifier is what has to be inspected.
+    const stem = gate.moduleStem(
+      uniqueFileStem(kebabCase(key), takenStemIdentities),
+      `${context} file stem`
+    );
     files.set(
       `${dir}/${stem}.ts`,
       `${header(gameVersion)}import type { ${reference} } from "@pdx-ts/sdk/stellaris";\n\n` +

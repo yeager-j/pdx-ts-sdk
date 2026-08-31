@@ -21,9 +21,11 @@ import { describe, expect, it } from "vitest";
 import { emitEventTrie } from "../src/emit-events.ts";
 import {
   assertVanillaIdentifier,
+  assertVanillaModuleStem,
   assertVanillaPath,
   compareIdentifiers,
   createChokepoint,
+  emitTrie,
   emitVanillaGfxIds,
   emitVanillaLocalizationKeys,
   emitVanillaPaths,
@@ -161,6 +163,55 @@ describe("assertVanillaPath", () => {
   });
 });
 
+describe("assertVanillaModuleStem", () => {
+  it("passes the stems the install's own files and namespaces produce", () => {
+    for (const stem of [
+      "eventpictures",
+      "tox-ships-moves",
+      "toxoids",
+      "magnetic-aurora",
+      "utopia",
+    ]) {
+      expect(assertVanillaModuleStem(stem, "test")).toBe(stem);
+    }
+  });
+
+  it("refuses anything that stops being one path component", () => {
+    expect(() => assertVanillaModuleStem("../escape", "test")).toThrow(/contains "\/"/);
+    expect(() => assertVanillaModuleStem("a\\b", "test")).toThrow(/contains "\\\\"/);
+    expect(() => assertVanillaModuleStem(".hidden", "test")).toThrow(/starts with a "\."/);
+    expect(() => assertVanillaModuleStem("trailing.", "test")).toThrow(/ends with a "\."/);
+    expect(() => assertVanillaModuleStem("C:drive", "test")).toThrow(/contains ":"/);
+    for (const character of ["*", "?", "<", ">", "|"]) {
+      expect(() => assertVanillaModuleStem(`a${character}b`, "test")).toThrow(/refusing to emit/);
+    }
+  });
+
+  it("refuses a space, though a name may spend two", () => {
+    // `flags/backgrounds/00 solid.dds` is a real vanilla filename. A name like
+    // that is fine as an id and must not quietly become `import "./00 solid.ts"`.
+    expect(assertVanillaIdentifier("00 solid", "test")).toBe("00 solid");
+    expect(() => assertVanillaModuleStem("00 solid", "test")).toThrow(/contains " "/);
+  });
+
+  it("inherits every rule that separates a name from a body", () => {
+    // Layered rather than restated, so a change to the identifier gate reaches
+    // here without anyone copying it across.
+    expect(() => assertVanillaModuleStem("has_country_flag = x", "test")).toThrow(/contains "="/);
+    expect(() => assertVanillaModuleStem("a{b", "test")).toThrow(/contains "\{"/);
+    expect(() => assertVanillaModuleStem("has_trait_$TRAIT$", "test")).toThrow(/contains "\$"/);
+    expect(() => assertVanillaModuleStem("", "test")).toThrow(/empty/);
+  });
+
+  it("is stricter than the path gate, which allows the separators it refuses", () => {
+    // The two are not interchangeable, and this is the pair that says so: a
+    // path is many components and a stem is one.
+    const traversal = "gfx/models/ship.mesh";
+    expect(assertVanillaPath(traversal, "test")).toBe(traversal);
+    expect(() => assertVanillaModuleStem(traversal, "test")).toThrow(/contains "\/"/);
+  });
+});
+
 describe("negative control", () => {
   it("refuses to emit an inventory carrying anything but a path", () => {
     expect(() =>
@@ -202,6 +253,39 @@ describe("negative control", () => {
     ).toThrow(/sound id: refusing to emit "The Grand Herald has arrived\."/);
   });
 
+  it("refuses to name an event module after a namespace that escapes its directory", () => {
+    // The namespace is install text and it names a file. `read-events.ts`
+    // rejects this spelling too, but the boundary must not rest on that: the
+    // gate is what makes the escape impossible rather than merely unobserved.
+    expect(() =>
+      emitEventTrie(
+        [
+          {
+            key: "country_event",
+            subtype: "country",
+            scope: "country",
+            namespace: "../../../etc/passwd",
+            localId: "1",
+            id: "safe.1",
+            source: "events.txt",
+          },
+        ],
+        createChokepoint(),
+        "4.4.6"
+      )
+    ).toThrow(/event namespace file stem: refusing to emit/);
+  });
+
+  it("refuses to name a trie bucket file after a key that escapes its directory", () => {
+    const buckets = new Map([
+      ["../../escape", { id: null, children: new Map([["x", { id: "x", children: new Map() }]]) }],
+    ]);
+
+    expect(() => emitTrie("sound", "sound", buckets, createChokepoint(), "4.4.6")).toThrow(
+      /file stem: refusing to emit/
+    );
+  });
+
   it("routes event namespace, local id, full id, scope, and kind through the chokepoint", () => {
     expect(() =>
       emitEventTrie(
@@ -223,16 +307,24 @@ describe("negative control", () => {
   });
 });
 
-/**
- * Module specifiers are the one class of quoted string in the output that is
- * not an identifier — they are this generator's own file layout, written by the
- * emitters and never read from the install.
- */
-function identifierLiterals(text: string): string[] {
-  return [...text.matchAll(/"((?:[^"\\\n]|\\.)*)"/g)]
-    .map((match) => match[1]!)
-    .filter((value) => !value.startsWith("./") && !value.startsWith("@pdx-ts/"));
+/** Every quoted string in an emitted file, specifiers included. */
+function quotedLiterals(text: string): string[] {
+  return [...text.matchAll(/"((?:[^"\\\n]|\\.)*)"/g)].map((match) => match[1]!);
 }
+
+/** A module specifier: either a bare package, or a relative path to a module. */
+function isModuleSpecifier(value: string): boolean {
+  return value.startsWith("./") || value.startsWith("@pdx-ts/");
+}
+
+/**
+ * The only packages this generator imports from, spelled out.
+ *
+ * A bare specifier is generator-owned by construction — no install string
+ * becomes one — so the check that matters is that the set has not grown, not
+ * that each member is name-shaped.
+ */
+const ALLOWED_PACKAGES = new Set(["@pdx-ts/sdk/stellaris"]);
 
 describe("generated output", () => {
   /**
@@ -246,12 +338,62 @@ describe("generated output", () => {
     let checked = 0;
     for (const [name, text] of generated.files) {
       const assert = name === "paths.ts" ? assertVanillaPath : assertVanillaIdentifier;
-      for (const literal of identifierLiterals(text)) {
+      for (const literal of quotedLiterals(text).filter((one) => !isModuleSpecifier(one))) {
         expect(() => assert(literal, name)).not.toThrow();
         checked += 1;
       }
     }
     expect(checked).toBeGreaterThan(20);
+  });
+
+  /**
+   * The leg this suite used to be missing. Module specifiers were discarded on
+   * the premise that they are entirely generator-owned, and two kinds are not:
+   * an oversized registry's bucket files are named after the install's own
+   * files and directories, and an event namespace file is named after a
+   * namespace read out of a shipped event id.
+   *
+   * Every component of every relative specifier passes the stem gate, so this
+   * covers the segments the emitters choose as well as the ones the install
+   * does — the check does not have to know which is which, which is the point.
+   */
+  it("names its modules with nothing the gate would not have let through", () => {
+    let checked = 0;
+    for (const [name, text] of generated.files) {
+      for (const specifier of quotedLiterals(text).filter(isModuleSpecifier)) {
+        if (!specifier.startsWith("./")) {
+          expect(ALLOWED_PACKAGES.has(specifier), `${name} imports ${specifier}`).toBe(true);
+          continue;
+        }
+        expect(specifier, name).toMatch(/\.ts$/);
+        for (const segment of specifier.slice("./".length, -".ts".length).split("/")) {
+          expect(() => assertVanillaModuleStem(segment, name)).not.toThrow();
+          checked += 1;
+        }
+      }
+    }
+    // The fixture emits event namespace files, trie bucket files, and the
+    // barrel's re-exports, so a number this low would mean the walk found
+    // nothing rather than that everything passed.
+    expect(checked).toBeGreaterThan(20);
+  });
+
+  /**
+   * Every emitted file is reachable by the name something imports it under.
+   *
+   * The gate says a specifier is well shaped; this says it points at a file
+   * that exists. A stem that passed inspection and then got mangled — by
+   * case-folding, by a uniquing suffix applied on one side only — would leave
+   * a package that type-checks nowhere, and the gate alone would not see it.
+   */
+  it("imports only modules it emitted", () => {
+    for (const [name, text] of generated.files) {
+      const dir = name.includes("/") ? `${name.slice(0, name.lastIndexOf("/"))}/` : "";
+      for (const specifier of quotedLiterals(text).filter((one) => one.startsWith("./"))) {
+        const target = `${dir}${specifier.slice("./".length)}`;
+        expect(generated.files.has(target), `${name} imports missing ${target}`).toBe(true);
+      }
+    }
   });
 
   it("keeps every id and parameter table types-only", () => {
