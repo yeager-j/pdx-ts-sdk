@@ -149,7 +149,7 @@ export interface VanillaScriptedEffectParams {
   };
   readonly add_random_trait_evopred: {
     readonly SPECIES?: string | number;
-    readonly TAG?: string | number;
+    readonly TAG: string | number;
   };
   readonly add_rare_crystals: {};
   readonly add_rare_resources_effect: {

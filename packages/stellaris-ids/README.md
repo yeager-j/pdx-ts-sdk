@@ -124,6 +124,17 @@ objects preserve required and optional substitutions. A parameterless trigger
 also accepts an optional boolean, so `isMachineEmpire(false)` writes a negated
 call.
 
+A definition whose body wraps parameters in a `[[FLAG] ... ]` region is read by
+what each caller choice reaches. Vanilla nearly always pairs such a region with
+its negated `[[!FLAG] ... ]` twin, so exactly one branch runs and whatever both
+substitute is required: `addRandomTraitEvopred({ TAG: "organic" })` is a
+complete call, and `SPECIES` is an ordinary optional flag.
+
+Where a region has no negated twin its parameters are reachable only when its
+flag is supplied, and the parameter type becomes a union of call shapes —
+supplying the flag then requires the rest, and omitting it forbids them. No
+vanilla definition is shaped that way today.
+
 The binding carries an inferred scope. `isFallenEmpire()` is a
 `Trigger<"country">` because its body uses keys that cwtools declares legal in
 country scope. The analysis intersects those known key scopes. If it cannot

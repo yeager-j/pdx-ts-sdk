@@ -41,7 +41,7 @@ import {
 } from "@pdx-ts/codegen-cwt/naming";
 import { compareUtf8, isWindowsDeviceName } from "@pdx-ts/sdk/internals";
 
-import type { ScriptedDefinition } from "./read-scripted.ts";
+import type { ScriptedCallShape, ScriptedDefinition } from "./read-scripted.ts";
 import type { TrieNode } from "./trie.ts";
 
 /**
@@ -488,7 +488,44 @@ export function emitTrie(
   // from the barrel would make the package's surface the trie's shape.
   return { files, exports: [{ name: root, file: trieIndexFile(registry) }] };
 }
+/** The value every scripted parameter takes. */
+const PARAM_VALUE = "string | number";
 
+/**
+ * One call shape as a type literal.
+ *
+ * `?: never` is what a shape says about a parameter it cannot substitute —
+ * a flag this call omits, or a name reachable only through a region this call
+ * leaves inactive. Not merely optional: passing `NAME` without the `FLAG` that
+ * reaches it writes a key the game never reads, and a type that admits that is
+ * the type that admits `{ FLAG: true }` with `$NAME$` left unsubstituted.
+ */
+function renderShape(shape: ScriptedCallShape, quoted: ReadonlyMap<string, string>): string {
+  const members = shape.params.map(({ name, presence }) => {
+    const key = quoted.get(name)!;
+    if (presence === "forbidden") {
+      return `readonly ${key}?: never;`;
+    }
+    return `readonly ${key}${presence === "optional" ? "?" : ""}: ${PARAM_VALUE};`;
+  });
+  return members.length === 0 ? "{}" : `{\n${members.join("\n")}\n}`;
+}
+
+/**
+ * The parameter table: one member per definition, naming what a call may pass.
+ *
+ * Almost always one object — every one of vanilla 4.4.6's 3,275 definitions,
+ * because a `[[X] ... ]` region nearly always ships beside its `[[!X] ... ]`
+ * twin and the two branches agree about what the call must supply. A union
+ * appears only where the caller's choices genuinely disagree, which
+ * `read-scripted.ts` decides.
+ *
+ * The union is over whole call shapes rather than an intersection of per-region
+ * alternatives. The compact form is the wrong type: the SDK widens a parameter
+ * bag through a homomorphic mapped type, and that distributes over a union
+ * while flattening an intersection — quietly dropping the constraint the shapes
+ * exist to state.
+ */
 export function emitScriptedParams(
   registry: string,
   definitions: readonly ScriptedDefinition[],
@@ -497,19 +534,25 @@ export function emitScriptedParams(
 ): string {
   const members = definitions.map((definition) => {
     const name = gate.literal(definition.name, `${registry} name`);
-    const params = definition.params.map((param) => {
-      const key = gate.literal(param.name, `${registry} ${definition.name} parameter`);
-      return `readonly ${key}${param.optional ? "?" : ""}: string | number;`;
-    });
-    const shape = params.length === 0 ? "{}" : `{\n${params.join("\n")}\n}`;
-    return `readonly ${name}: ${shape};`;
+    // Once per parameter, before the shapes fan out, so the gate's count stays
+    // a count of parameters rather than of branches.
+    const quoted = new Map(
+      definition.params.map((param) => [
+        param.name,
+        gate.literal(param.name, `${registry} ${definition.name} parameter`),
+      ])
+    );
+
+    const shapes = definition.shapes.map((shape) => renderShape(shape, quoted));
+    return shapes.length === 1
+      ? `readonly ${name}: ${shapes[0]!};`
+      : `readonly ${name}:\n${shapes.map((shape) => `| ${shape}`).join("\n")};`;
   });
   return (
     `${header(gameVersion)}export interface ${scriptedTypeName(registry)} {\n` +
     `${members.join("\n")}\n}\n`
   );
 }
-
 /**
  * The subpath a registry's bindings ship under: `scripted_trigger` becomes
  * `./triggers`, `scripted_effect` becomes `./effects`. The params table already

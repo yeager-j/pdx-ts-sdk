@@ -171,7 +171,8 @@ function printReport(report: VanillaReport, removed: readonly string[]): void {
     report.scripted.map(
       (one) =>
         `${one.registry}: ${one.definitions} definitions from ${one.files} files ` +
-        `(${one.parameterized} parameterized)` +
+        `(${one.parameterized} parameterized, ${one.regionDependent} with region-dependent ` +
+        "parameters)" +
         (one.missing ? " — DIRECTORY MISSING" : "")
     )
   );
