@@ -99,12 +99,12 @@ It never overwrites an existing file, directory, or symlink. `--dry-run` prints
 the exact source without creating directories or files. A successful normal run
 writes only the created path to stdout.
 
-Publication rechecks the destination directory identity after opening its
-temporary file and before creating the final hard link. Node does not expose
-descriptor-relative `openat` or `linkat`; a hostile process that can replace and
-restore project directories entirely between filesystem calls remains outside
-this guarantee. Do not generate while an untrusted process can rename project
-directories.
+Publication holds the destination directory and temporary file open while it
+checks their identity before and after creating the final hard link. Node does
+not expose descriptor-relative `openat` or `linkat`, so pathname publication
+cannot guarantee containment against a hostile process that concurrently
+replaces project directories. Do not generate while an untrusted process can
+rename project directories.
 
 ## Generated project
 
