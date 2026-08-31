@@ -74,9 +74,19 @@ function collectRuleTypes(rules: RuleSet): CollectedRuleTypes {
   return { scalarTypes, unions };
 }
 
-function conversionInferredFromScalar(value: TsValue): "identity" | "ref" {
-  return value.toScalar("x") === "x" ? "identity" : "ref";
-}
+/**
+ * The expression each conversion promises to write, so the recorded tag is
+ * checked against `toScalar` itself rather than against a coarser reading of
+ * it. Tagging `refId(x)` and `x.path` alike is what let a union merge hand one
+ * arm's expression to the other arm's values.
+ */
+const CONVERSION_EXPRESSIONS: Record<TsValue["conversion"], string> = {
+  identity: "x",
+  refId: "refId(x)",
+  stringRefId: "String(refId(x))",
+  scopePath: "x.path",
+  literalText: "x.text",
+};
 
 describe("emitter scalar conversions", () => {
   it("records the conversion implemented by every real scalar value shape", () => {
@@ -92,11 +102,39 @@ describe("emitter scalar conversions", () => {
     ];
 
     expect(values.length).toBeGreaterThan(100);
-    expect(new Set(values.map((value) => value.conversion))).toEqual(new Set(["identity", "ref"]));
     expect(values.some((value) => value.type.includes("LiteralText"))).toBe(true);
 
     for (const value of values) {
-      expect(value.conversion).toBe(conversionInferredFromScalar(value));
+      expect(value.toScalar("x")).toBe(CONVERSION_EXPRESSIONS[value.conversion]);
     }
+  });
+
+  it("merges a union of differently converting arms onto one that fits them all", () => {
+    // `refId` handles a typed reference and a scope reference alike; `.path`
+    // handles only the second and yields `undefined` for the first. So a union
+    // mixing them has to pick `refId` whichever arm comes first — a distinction
+    // the runtime's own `identity`/`ref` vocabulary is too coarse to make.
+    const collected = collectRuleTypes(rules);
+    const emitter = new Emitter(rules);
+    let mixed = 0;
+
+    for (const types of collected.unions) {
+      const arms = types.map((type) => emitter.valueFor(type));
+      // A union with an arm the emitter cannot lower has no merged value to
+      // check; `unionFor` returns null for the whole union rather than a
+      // partial one.
+      if (!arms.every((arm): arm is TsValue => arm !== null)) {
+        continue;
+      }
+      if (new Set(arms.map((arm) => arm.conversion)).size < 2) {
+        continue;
+      }
+      mixed += 1;
+      const merged = emitter.unionFor(types);
+      expect(merged?.conversion).toBe("refId");
+      expect(merged?.toScalar("x")).toBe("refId(x)");
+    }
+
+    expect(mixed).toBeGreaterThan(0);
   });
 });

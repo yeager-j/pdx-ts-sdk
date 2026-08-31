@@ -92,8 +92,8 @@ describe("constArray", () => {
 
 const referencing: TsValue = tsValue({
   type: "TechnologyRef",
-  toScalar: (e) => `${e}.id`,
-  conversion: "ref",
+  toScalar: (e) => `refId(${e})`,
+  conversion: "refId",
   refTypes: ["technology"],
 });
 const plain: TsValue = tsValue({ type: "string", toScalar: (e) => e, conversion: "identity" });

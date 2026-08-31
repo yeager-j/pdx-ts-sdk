@@ -11,7 +11,31 @@ import { OverlayAudit } from "../overlay/audit.ts";
 import { COMPLEX_ENUM_REFERENCE_OVERLAYS } from "../overlay/index.ts";
 import { ImportRecorder, knownSymbol, type FileImports, type SymbolKind } from "./symbols.ts";
 
-type ScalarConversion = Extract<ContentConversion, "identity" | "ref">;
+/**
+ * How an authored value becomes a PDXScript scalar — the expression shape
+ * {@link TsValue.toScalar} writes, not the coarser vocabulary the runtime records.
+ *
+ * The two are different questions and conflating them is a real defect. The
+ * runtime has three behaviours, so `refId(x)`, `x.path` and `x.text` all record
+ * as `"ref"`. Merging a union needs the finer answer: two arms that record the
+ * same way can still write different expressions, and taking one arm's
+ * `toScalar` for the other's values is how `.path` gets applied to a typed
+ * reference, which has no `path` and yields `undefined`.
+ */
+export type ScalarConversion = "identity" | "refId" | "stringRefId" | "scopePath" | "literalText";
+
+/**
+ * Projects a conversion onto the vocabulary the runtime field metadata records.
+ *
+ * Every non-identity conversion records as `"ref"` because `refId` implements
+ * all of them at runtime; the distinctions above matter only while choosing
+ * which expression to write.
+ */
+export function contentConversionOf(
+  conversion: ScalarConversion
+): Extract<ContentConversion, "identity" | "ref"> {
+  return conversion === "identity" ? "identity" : "ref";
+}
 
 /**
  * A lowered TypeScript value shape and the metadata needed to serialize it.
@@ -403,7 +427,7 @@ export class Emitter {
         return {
           type: "LocalizationInput",
           toScalar: (expression) => `refId(${expression})`,
-          conversion: "ref",
+          conversion: "refId",
           objectKinds: ["localization-ref", "localized-text"],
           typeSymbols: ["LocalizationInput"],
           scalarSymbol: "refId",
@@ -434,7 +458,7 @@ export class Emitter {
           return {
             type: "ScopeValue",
             toScalar: (expression) => `${expression}.path`,
-            conversion: "ref",
+            conversion: "scopePath",
             objectKinds: ["scope-ref"],
             typeSymbols: ["ScopeValue"],
           };
@@ -447,7 +471,7 @@ export class Emitter {
         return {
           type: scopeValueType([canonical]),
           toScalar: (expression) => `${expression}.path`,
-          conversion: "ref",
+          conversion: "scopePath",
           objectKinds: ["scope-ref"],
           typeSymbols: ["ScopeValue"],
         };
@@ -475,7 +499,7 @@ export class Emitter {
         return {
           type: scopeValueType(scopes),
           toScalar: (expression) => `${expression}.path`,
-          conversion: "ref",
+          conversion: "scopePath",
           objectKinds: ["scope-ref"],
           typeSymbols: ["ScopeValue"],
         };
@@ -502,7 +526,7 @@ export class Emitter {
             reference === undefined
               ? (expression) => expression
               : (expression) => `String(refId(${expression}))`,
-          conversion: reference === undefined ? "identity" : "ref",
+          conversion: reference === undefined ? "identity" : "stringRefId",
           ...(reference === undefined
             ? {}
             : {
@@ -522,7 +546,7 @@ export class Emitter {
         return {
           type: `${name} | string`,
           toScalar: (expression) => `refId(${expression})`,
-          conversion: "ref",
+          conversion: "refId",
           refTypes: [type.name],
           objectKinds: ["typed-ref"],
           scalarSymbol: "refId",
@@ -565,7 +589,7 @@ export class Emitter {
           // from this arm also carries `locKey: true`, so `contentScalar`
           // short-circuits to `localizationScalar` before reading `conversion`;
           // the resolved value is a plain string, which `refId` returns unchanged.
-          conversion: "ref",
+          conversion: "literalText",
           objectKinds: ["literal-text"],
           typeSymbols: ["LiteralText"],
         };
@@ -575,7 +599,7 @@ export class Emitter {
         return {
           type: this.refTypeName(type.name),
           toScalar: (expression) => `refId(${expression})`,
-          conversion: "ref",
+          conversion: "refId",
           refTypes: [type.name],
           objectKinds: ["typed-ref"],
           scalarSymbol: "refId",
@@ -628,7 +652,7 @@ export class Emitter {
     const scriptValue =
       !conversionsDiffer && values.every((value) => value.scriptValue === true) ? true : undefined;
     const scalarSymbol = conversionsDiffer ? "refId" : firstValue.scalarSymbol;
-    const conversion: ScalarConversion = conversionsDiffer ? "ref" : firstValue.conversion;
+    const conversion: ScalarConversion = conversionsDiffer ? "refId" : firstValue.conversion;
     // The sentinels a mixed localisation position keeps: `default` selects the
     // game's own fail text, `random` its own name generator, and neither is a
     // key the mod could supply. They keep precedence over English shorthand,
