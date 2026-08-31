@@ -421,6 +421,7 @@ export function scopeOf(
     return null;
   }
   const block = replaced.value;
+  reportUnreadableScopeMembers(replaced, block, report);
   const read = (name: string): string | null => {
     const node = block.nodes.find(
       (candidate): candidate is CwtNode & { kind: "assignment" } =>
@@ -433,6 +434,56 @@ export function scopeOf(
     ...ambientScopeContext(read),
     replaces: true,
   };
+}
+
+/** The keys a `replace_scope(s)` block may assign: the block's own scope plus every ambient slot. */
+const SCOPE_CONTEXT_KEYS: ReadonlySet<string> = new Set<string>(["this", ...AMBIENT_SCOPE_KEYS]);
+
+/**
+ * Reports every member of a `replace_scope(s)` block that {@link scopeOf}
+ * cannot read.
+ *
+ * Checking the block's outer shape is not enough. `read` looks each slot up by
+ * name and accepts only a scalar, so a misspelled key, a bare member, or a
+ * block-valued assignment resolves to `null` — and because `replace_scopes`
+ * states the whole context, `null` *clears* the slot rather than inheriting it.
+ * A typo therefore drops a scope the rules meant to declare, silently changing
+ * the generated API. `common/missions.cwt:305` is the case in the vendored
+ * rules: it writes `fromform = country` where its own documentation comment
+ * two lines above says `fromfrom`.
+ *
+ * Diagnostics carry the option's line rather than the member's, because an
+ * option value is tokenized from the annotation's text alone and every line
+ * inside it is 1.
+ */
+function reportUnreadableScopeMembers(
+  option: CwtOption,
+  block: CwtBlock,
+  report?: ClassificationReporter
+): void {
+  if (report === undefined) {
+    return;
+  }
+  const malformed = (text: string): void => {
+    report({
+      kind: "malformed-option-value",
+      line: option.line,
+      text: `## ${option.name} ${text}`,
+    });
+  };
+  for (const node of block.nodes) {
+    if (node.kind !== "assignment") {
+      malformed("has a member that is not an assignment");
+      continue;
+    }
+    if (!SCOPE_CONTEXT_KEYS.has(node.key.text.toLowerCase())) {
+      malformed(`names "${node.key.text}", which is not a scope context key`);
+      continue;
+    }
+    if (node.value.kind !== "scalar") {
+      malformed(`gives "${node.key.text}" a value that is not a scope name`);
+    }
+  }
 }
 
 function reportMalformedOptionValue(option: CwtOption, report?: ClassificationReporter): void {

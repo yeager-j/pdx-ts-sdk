@@ -24,7 +24,8 @@
   "unscopedModifierNames": [],
   "malformedOptions": [
     "common/country_types.cwt:323 ## A module controls what code a country will use for a specific system, for instance we can decide to run a completely different economy module that uses cats as main currency ( if such a module exists, that is )",
-    "common/country_types.cwt:324 ## Only one module per module type is allowed"
+    "common/country_types.cwt:324 ## Only one module per module type is allowed",
+    "common/missions.cwt:305 ## replace_scopes names \"fromform\", which is not a scope context key"
   ],
   "unknownKeywords": [],
   "malformedDocBlocks": [],

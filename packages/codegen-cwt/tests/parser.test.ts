@@ -455,6 +455,36 @@ describe("structural option values", () => {
     ]);
   });
 
+  it.each([
+    ["fromform = country", 'names "fromform", which is not a scope context key'],
+    ["from = { country }", 'gives "from" a value that is not a scope name'],
+    ["country", "has a member that is not an assignment"],
+  ])("reports the unreadable member %s inside replace_scopes", (member, detail) => {
+    // `replace_scopes` states the whole context, so a slot it fails to read is
+    // cleared rather than inherited — a misspelling drops a scope the rules
+    // meant to declare. `common/missions.cwt:305` is the live instance.
+    const node = only(`## replace_scopes = { this = country ${member} }\nfield = scalar`);
+    const diagnostics: unknown[] = [];
+
+    const scope = scopeOf(node.options, (diagnostic) => diagnostics.push(diagnostic));
+
+    expect(scope?.this).toBe("country");
+    expect(diagnostics).toEqual([
+      { kind: "malformed-option-value", line: 1, text: `## replace_scopes ${detail}` },
+    ]);
+  });
+
+  it("reads a complete replace_scopes block without reporting anything", () => {
+    const node = only("## replace_scopes = { this = country fromfrom = fleet }\nfield = scalar");
+    const diagnostics: unknown[] = [];
+
+    const scope = scopeOf(node.options, (diagnostic) => diagnostics.push(diagnostic));
+
+    expect(scope?.this).toBe("country");
+    expect(scope?.fromfrom).toBe("fleet");
+    expect(diagnostics).toEqual([]);
+  });
+
   it("reads structural options without a reporter", () => {
     const node = only("## cardinality = 0..~1\nfield = scalar");
     expect(cardinalityOf(node.options)).toEqual({ min: 0, max: 1 });

@@ -141,11 +141,32 @@ describe("content-type codegen", () => {
     ).toBeNull();
   });
 
-  it("parses every manifest source without recovery", () => {
+  /**
+   * The one manifest source the generator cannot read cleanly, pinned so the
+   * claim below stays a gate rather than becoming a blanket allowance.
+   *
+   * `common/missions.cwt:305` writes `fromform = country` inside a
+   * `replace_scopes` block where its own documentation comment two lines above
+   * says `fromfrom`. `replace_scopes` states the whole scope context, so the
+   * slot the generator cannot read is cleared rather than inherited — that
+   * field's nested block loses its `fromfrom` scope. Correcting the rule
+   * belongs in the vendored fork, with the generated diff that follows from it;
+   * until then the loss is visible here and in the drift baseline instead of
+   * silent.
+   */
+  const KNOWN_MANIFEST_SOURCE_DIAGNOSTICS = [
+    'common/missions.cwt:305 ## replace_scopes names "fromform", which is not a scope context key',
+  ];
+
+  it("parses every manifest source without unrecorded recovery", () => {
     const manifestSources = new Set<string>(CONTENT_MANIFEST.map((entry) => entry.source));
-    expect(rules.diagnostics.filter((diagnostic) => manifestSources.has(diagnostic.file))).toEqual(
-      []
-    );
+
+    expect(
+      rules.diagnostics
+        .filter((diagnostic) => manifestSources.has(diagnostic.file))
+        .map((diagnostic) => `${diagnostic.file}:${diagnostic.line} ${diagnostic.text}`)
+        .sort()
+    ).toEqual(KNOWN_MANIFEST_SOURCE_DIAGNOSTICS);
   });
 
   it("carries a registry's body scope into trigger fields", () => {
