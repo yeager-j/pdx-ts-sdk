@@ -23,7 +23,9 @@ export interface ContentPatchRegistry {
  * object override whose load order and emission have to be verified per
  * registry — so `patchX` appears only where that evidence exists. The member
  * names are derived (`patchTechnology`, `ParsedTechnology`, `TechnologyPatch`);
- * the row is the permission.
+ * the row is the permission. The `assertPatchRegistryPrerequisites` gate in
+ * `overlay/audit.ts` holds each row to the `PARSED_REGISTRIES` and
+ * `REGISTRY_RULES` prerequisites cited by its reason.
  */
 export const CONTENT_PATCH_REGISTRIES = new Map<string, ContentPatchRegistry>([
   [

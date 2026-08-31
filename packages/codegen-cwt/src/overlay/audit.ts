@@ -57,6 +57,52 @@ export function assertOverlayRegistriesKnown(
   }
 }
 
+interface PatchRegistryRule {
+  readonly repeat: { readonly state: "verified" | "assumed" | "refused" };
+  readonly replacement: { readonly state: "verified" | "assumed" | "refused" };
+}
+
+/**
+ * Fails when a patch permission lacks either SDK prerequisite: a parsed
+ * registry row or a rule row whose repeat and replacement cells are usable.
+ * Both `verified` and `assumed` cells are usable; only `refused` carries no
+ * rule for the resolver to act on.
+ */
+export function assertPatchRegistryPrerequisites(
+  patchRegistryNames: Iterable<string>,
+  parsedRegistryNames: ReadonlySet<string>,
+  registryRules: ReadonlyMap<string, PatchRegistryRule>
+): void {
+  for (const registry of patchRegistryNames) {
+    if (!parsedRegistryNames.has(registry)) {
+      throw new Error(
+        `CONTENT_PATCH_REGISTRIES names "${registry}", which has no PARSED_REGISTRIES row — ` +
+          "retire the row or fix the key"
+      );
+    }
+
+    const rule = registryRules.get(registry);
+    if (rule === undefined) {
+      throw new Error(
+        `CONTENT_PATCH_REGISTRIES names "${registry}", which has no REGISTRY_RULES row — ` +
+          "retire the row or fix the key"
+      );
+    }
+
+    for (const [cellName, cell] of [
+      ["repeat", rule.repeat],
+      ["replacement", rule.replacement],
+    ] as const) {
+      if (cell.state === "refused") {
+        throw new Error(
+          `CONTENT_PATCH_REGISTRIES names "${registry}", whose REGISTRY_RULES row has a ` +
+            `refused ${cellName} cell — retire the row or fix the key`
+        );
+      }
+    }
+  }
+}
+
 /**
  * Fails when a complex-enum reference overlay cannot widen the loaded enum's
  * empty, install-derived member shape.
