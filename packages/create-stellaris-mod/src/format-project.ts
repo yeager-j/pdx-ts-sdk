@@ -17,6 +17,7 @@
 
 import { createRequire } from "node:module";
 import path from "node:path";
+import { Writable } from "node:stream";
 
 import { run } from "./exec.ts";
 import type { CliIo } from "./io.ts";
@@ -51,13 +52,18 @@ export async function formatWithProjectPrettier(
     }
     // Their bin under this Node, from their root: the config and plugins that
     // apply are exactly the ones their own `prettier --write` would use.
+    const suppressedOutput = new Writable({
+      write(_chunk, _encoding, callback) {
+        callback();
+      },
+    });
     const result = await run(
       {
         command: process.execPath,
         args: [path.join(path.dirname(manifestPath), bin), "--write", filePath],
       },
       rootDir,
-      io
+      { ...io, stdout: suppressedOutput, stderr: suppressedOutput }
     );
     if (result.code !== 0) {
       throw new Error(result.output);
