@@ -85,7 +85,8 @@ export interface CwtBareValue {
 export type CwtNode = CwtAssignment | CwtBareValue;
 
 /** A recoverable condition reported while reading CWT source. */
-export type DiagnosticKind = "malformed-option" | "orphan-comment" | "unknown-keyword";
+export type DiagnosticKind =
+  "malformed-option" | "malformed-option-value" | "orphan-comment" | "unknown-keyword";
 
 /**
  * Something in a CWT rule that parsing or classification recognised as

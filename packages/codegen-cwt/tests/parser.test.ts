@@ -1,7 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadContentTypesFrom } from "@pdx-ts/codegen-cwt/cwt/load";
-import { classify, supportedScopesOf } from "@pdx-ts/codegen-cwt/cwt/model";
+import { cardinalityOf, classify, scopeOf, supportedScopesOf } from "@pdx-ts/codegen-cwt/cwt/model";
 import { parseCwt, type CwtAssignment } from "@pdx-ts/codegen-cwt/cwt/parser";
 import { loadRules } from "@pdx-ts/codegen-cwt/load-rules";
 import { describe, expect, it } from "vitest";
@@ -324,8 +324,26 @@ describe("rule types", () => {
 });
 
 describe("content type declarations", () => {
-  const traditions = loadContentTypesFrom(CONFIG, ["common/traditions.cwt"]);
-  const traits = loadContentTypesFrom(CONFIG, ["common/traits.cwt"]);
+  const { contentTypes: traditions } = loadContentTypesFrom(CONFIG, ["common/traditions.cwt"]);
+  const { contentTypes: traits } = loadContentTypesFrom(CONFIG, ["common/traits.cwt"]);
+
+  it("returns parser diagnostics alongside content types", () => {
+    const result = loadContentTypesFrom(CONFIG, ["common/country_types.cwt"]);
+    expect(result.diagnostics).toEqual([
+      {
+        kind: "malformed-option",
+        file: "common/country_types.cwt",
+        line: 323,
+        text: "## A module controls what code a country will use for a specific system, for instance we can decide to run a completely different economy module that uses cats as main currency ( if such a module exists, that is )",
+      },
+      {
+        kind: "malformed-option",
+        file: "common/country_types.cwt",
+        line: 324,
+        text: "## Only one module per module type is allowed",
+      },
+    ]);
+  });
 
   it("keeps the subtype a localisation slot was declared inside", () => {
     expect(traditions.get("swapped_tradition")?.localisation).toEqual([
@@ -379,5 +397,97 @@ describe("content type declarations", () => {
     expect(absentUnless.get("auto_mod")).toBeNull();
     // More than one field, so no single key's absence selects it.
     expect(absentUnless.get("starting_ruler_trait")).toBeNull();
+  });
+});
+
+describe("structural option values", () => {
+  it.each([
+    ["0..inff", "field = scalar"],
+    ["2", "scalar"],
+  ])("reports malformed cardinality %s and keeps the fallback", (value, shape) => {
+    const node = only(`container = {\n## cardinality = ${value}\n${shape}\n}`);
+    const diagnostics: unknown[] = [];
+    const classified = classify(node.value, undefined, (diagnostic) =>
+      diagnostics.push(diagnostic)
+    );
+
+    const declaration =
+      classified.kind === "block" ? (classified.fields[0] ?? classified.bare[0]) : undefined;
+    expect(declaration?.cardinality).toEqual({ min: 1, max: 1 });
+    expect(diagnostics).toEqual([
+      { kind: "malformed-option-value", line: 2, text: `## cardinality = ${value}` },
+    ]);
+  });
+
+  it.each(["0..~1", "~1..1"])("accepts soft cardinality bound %s", (value) => {
+    const node = only(`container = {\n## cardinality = ${value}\nscalar\n}`);
+    const diagnostics: unknown[] = [];
+    const classified = classify(node.value, undefined, (diagnostic) =>
+      diagnostics.push(diagnostic)
+    );
+
+    expect(classified.kind === "block" ? classified.bare[0]?.cardinality : null).toEqual({
+      min: Number(value.split("..")[0]!.replace("~", "")),
+      max: 1,
+    });
+    expect(diagnostics).toEqual([]);
+  });
+
+  it.each([
+    ["replace_scopes", "country", "field = scalar"],
+    ["push_scope", "{ fleet }", "scalar"],
+  ])("reports a malformed %s value", (name, value, shape) => {
+    const node = only(`container = {\n## ${name} = ${value}\n${shape}\n}`);
+    const diagnostics: unknown[] = [];
+    const classified = classify(node.value, undefined, (diagnostic) =>
+      diagnostics.push(diagnostic)
+    );
+
+    const declaration =
+      classified.kind === "block" ? (classified.fields[0] ?? classified.bare[0]) : undefined;
+    expect(declaration?.scope).toBeNull();
+    expect(diagnostics).toEqual([
+      {
+        kind: "malformed-option-value",
+        line: 2,
+        text: `## ${name} = ${value === "country" ? value : "{...}"}`,
+      },
+    ]);
+  });
+
+  it.each([
+    ["fromform = country", 'names "fromform", which is not a scope context key'],
+    ["from = { country }", 'gives "from" a value that is not a scope name'],
+    ["country", "has a member that is not an assignment"],
+  ])("reports the unreadable member %s inside replace_scopes", (member, detail) => {
+    // `replace_scopes` states the whole context, so a slot it fails to read is
+    // cleared rather than inherited — a misspelling drops a scope the rules
+    // meant to declare. `common/missions.cwt:305` is the live instance.
+    const node = only(`## replace_scopes = { this = country ${member} }\nfield = scalar`);
+    const diagnostics: unknown[] = [];
+
+    const scope = scopeOf(node.options, (diagnostic) => diagnostics.push(diagnostic));
+
+    expect(scope?.this).toBe("country");
+    expect(diagnostics).toEqual([
+      { kind: "malformed-option-value", line: 1, text: `## replace_scopes ${detail}` },
+    ]);
+  });
+
+  it("reads a complete replace_scopes block without reporting anything", () => {
+    const node = only("## replace_scopes = { this = country fromfrom = fleet }\nfield = scalar");
+    const diagnostics: unknown[] = [];
+
+    const scope = scopeOf(node.options, (diagnostic) => diagnostics.push(diagnostic));
+
+    expect(scope?.this).toBe("country");
+    expect(scope?.fromfrom).toBe("fleet");
+    expect(diagnostics).toEqual([]);
+  });
+
+  it("reads structural options without a reporter", () => {
+    const node = only("## cardinality = 0..~1\nfield = scalar");
+    expect(cardinalityOf(node.options)).toEqual({ min: 0, max: 1 });
+    expect(scopeOf(node.options)).toBeNull();
   });
 });

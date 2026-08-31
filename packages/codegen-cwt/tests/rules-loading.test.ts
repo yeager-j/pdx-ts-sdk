@@ -12,6 +12,7 @@
 
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { cwtFiles } from "@pdx-ts/codegen-cwt/cwt/load";
 import type { SingleAliasTarget } from "@pdx-ts/codegen-cwt/cwt/model";
 import { parseCwt } from "@pdx-ts/codegen-cwt/cwt/parser";
 import {
@@ -93,6 +94,44 @@ describe("buildRuleSet order independence", () => {
     // the test above).
     const resolved = buildRuleSet([consumes, declares]).triggers.get("my_trigger")?.[0];
     expect(resolved?.type.kind).toBe("block");
+  });
+
+  it("retains parser diagnostics from secondary complex-enum files", () => {
+    const secondary = file("secondary.cwt", "## cardinality 0..1\nfield = bool");
+
+    expect(buildRuleSet([], [secondary]).diagnostics).toEqual([
+      { kind: "malformed-option", file: "secondary.cwt", line: 1, text: "## cardinality 0..1" },
+    ]);
+  });
+});
+
+describe("the CWT file sweep spells paths portably", () => {
+  // `path.join` would spell these with `\` on Windows, where two things break
+  // at once: the sweep stops recognising the `/`-spelled entries the primary
+  // load already covers, and a parse diagnostic reaches the drift baseline
+  // under a spelling no other platform produces. Both are invisible on a
+  // POSIX runner, so the separator is asserted rather than inferred.
+  it("returns nested files as `/`-separated relative paths", () => {
+    const nested = cwtFiles(CONFIG).filter((file) => file.includes("/"));
+
+    expect(nested.length).toBeGreaterThan(0);
+    expect(cwtFiles(CONFIG).filter((file) => file.includes("\\"))).toEqual([]);
+    expect(nested).toContain("events/events.cwt");
+  });
+
+  it("spells every swept path the way the primary rule list does", () => {
+    // The sweep's dedup is a plain `Set.has`, so a spelling difference silently
+    // re-parses every file the primary load already read.
+    const swept = new Set(cwtFiles(CONFIG));
+
+    expect(swept.has("common/governments.cwt")).toBe(true);
+    expect(swept.has("modifier_categories.cwt")).toBe(true);
+  });
+
+  it("gives every diagnostic a portable source file", () => {
+    for (const diagnostic of loadRules(CONFIG).diagnostics) {
+      expect(diagnostic.file).not.toContain("\\");
+    }
   });
 });
 

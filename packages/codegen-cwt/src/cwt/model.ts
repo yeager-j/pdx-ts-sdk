@@ -57,10 +57,10 @@ export type RuleType =
 
 type BlockRuleType = Extract<RuleType, { readonly kind: "block" }>;
 
-/** An unsupported bracketed keyword found while classifying a parsed value. */
+/** A recoverable problem found while classifying a parsed value or option. */
 export interface ClassificationDiagnostic extends Omit<CwtDiagnostic, "file" | "kind"> {
-  /** Identifies an unsupported bracketed keyword. */
-  readonly kind: "unknown-keyword";
+  /** Identifies the classification problem. */
+  readonly kind: "malformed-option-value" | "unknown-keyword";
 }
 
 /** Receives recoverable diagnostics produced during CWT classification. */
@@ -148,7 +148,9 @@ export interface RuleBareValue {
 const BRACKETED = /^([^\[\]]+)\[([^\[\]]*)\]$/;
 const VALUE_PAIR = /^value(?:_set)?\[[^\]]+\]:(?:localisation|<[^>]+>)$/;
 const RANGE = /^(-?[\d.]+|-?inf)\.\.(-?[\d.]+|-?inf)$/;
-const CARDINALITY = /^~?(\d+)\.\.(\d+|inf)$/;
+// CWT permits a soft bound on either side of a cardinality range. The leading
+// form was already accepted; the trailing form is used by the vendored rules.
+const CARDINALITY = /^~?(\d+)\.\.~?(\d+|inf)$/;
 
 function parseRange(text: string): Range | null {
   const match = RANGE.exec(text);
@@ -313,9 +315,9 @@ export function classifyBlock(
     }
     bare.push({
       type: classify(node.value, resolve, report),
-      cardinality: cardinalityOf(node.options),
+      cardinality: cardinalityOf(node.options, report),
       docs: node.docs,
-      scope: scopeOf(node.options),
+      scope: scopeOf(node.options, report),
       line: node.line,
     });
   }
@@ -361,9 +363,9 @@ function toField(
   return {
     key: classifyKey(key, report),
     type: classify(node.value, resolve, report),
-    cardinality: cardinalityOf(node.options),
+    cardinality: cardinalityOf(node.options, report),
     docs: node.docs,
-    scope: scopeOf(node.options),
+    scope: scopeOf(node.options, report),
     line: node.line,
     comparison: node.op === "==",
   };
@@ -375,11 +377,17 @@ export function findOption(options: readonly CwtOption[], name: string): CwtOpti
 }
 
 /** Reads field cardinality options, including the legacy `optional` flag. */
-export function cardinalityOf(options: readonly CwtOption[]): Cardinality {
+export function cardinalityOf(
+  options: readonly CwtOption[],
+  report?: ClassificationReporter
+): Cardinality {
   const option = findOption(options, "cardinality");
   const text = option?.value?.kind === "scalar" ? option.value.text : null;
   const match = text === null ? null : CARDINALITY.exec(text);
   if (match === null) {
+    if (option !== undefined) {
+      reportMalformedOptionValue(option, report);
+    }
     return findOption(options, "optional") === undefined ? REQUIRED : { min: 0, max: 1 };
   }
   return { min: Number(match[1]), max: match[2] === "inf" ? null : Number(match[2]) };
@@ -389,20 +397,31 @@ export function cardinalityOf(options: readonly CwtOption[]): Cardinality {
  * `replace_scope` swaps the whole scope context, `push_scope` only pushes
  * `this`. Either tells us which scope the block below runs in.
  */
-export function scopeOf(options: readonly CwtOption[]): ScopeContext | null {
+export function scopeOf(
+  options: readonly CwtOption[],
+  report?: ClassificationReporter
+): ScopeContext | null {
   const pushed = findOption(options, "push_scope");
-  if (pushed?.value?.kind === "scalar") {
-    return {
-      this: pushed.value.text,
-      ...ambientScopeContext(() => null),
-      replaces: false,
-    };
+  if (pushed !== undefined) {
+    if (pushed.value?.kind === "scalar") {
+      return {
+        this: pushed.value.text,
+        ...ambientScopeContext(() => null),
+        replaces: false,
+      };
+    }
+    reportMalformedOptionValue(pushed, report);
   }
   const replaced = findOption(options, "replace_scope") ?? findOption(options, "replace_scopes");
-  const block = replaced?.value;
-  if (block === undefined || block === null || block.kind !== "block") {
+  if (replaced === undefined) {
     return null;
   }
+  if (replaced.value?.kind !== "block") {
+    reportMalformedOptionValue(replaced, report);
+    return null;
+  }
+  const block = replaced.value;
+  reportUnreadableScopeMembers(replaced, block, report);
   const read = (name: string): string | null => {
     const node = block.nodes.find(
       (candidate): candidate is CwtNode & { kind: "assignment" } =>
@@ -415,6 +434,70 @@ export function scopeOf(options: readonly CwtOption[]): ScopeContext | null {
     ...ambientScopeContext(read),
     replaces: true,
   };
+}
+
+/** The keys a `replace_scope(s)` block may assign: the block's own scope plus every ambient slot. */
+const SCOPE_CONTEXT_KEYS: ReadonlySet<string> = new Set<string>(["this", ...AMBIENT_SCOPE_KEYS]);
+
+/**
+ * Reports every member of a `replace_scope(s)` block that {@link scopeOf}
+ * cannot read.
+ *
+ * Checking the block's outer shape is not enough. `read` looks each slot up by
+ * name and accepts only a scalar, so a misspelled key, a bare member, or a
+ * block-valued assignment resolves to `null` — and because `replace_scopes`
+ * states the whole context, `null` *clears* the slot rather than inheriting it.
+ * A typo therefore drops a scope the rules meant to declare, silently changing
+ * the generated API. `common/missions.cwt:305` is the case in the vendored
+ * rules: it writes `fromform = country` where its own documentation comment
+ * two lines above says `fromfrom`.
+ *
+ * Diagnostics carry the option's line rather than the member's, because an
+ * option value is tokenized from the annotation's text alone and every line
+ * inside it is 1.
+ */
+function reportUnreadableScopeMembers(
+  option: CwtOption,
+  block: CwtBlock,
+  report?: ClassificationReporter
+): void {
+  if (report === undefined) {
+    return;
+  }
+  const malformed = (text: string): void => {
+    report({
+      kind: "malformed-option-value",
+      line: option.line,
+      text: `## ${option.name} ${text}`,
+    });
+  };
+  for (const node of block.nodes) {
+    if (node.kind !== "assignment") {
+      malformed("has a member that is not an assignment");
+      continue;
+    }
+    if (!SCOPE_CONTEXT_KEYS.has(node.key.text.toLowerCase())) {
+      malformed(`names "${node.key.text}", which is not a scope context key`);
+      continue;
+    }
+    if (node.value.kind !== "scalar") {
+      malformed(`gives "${node.key.text}" a value that is not a scope name`);
+    }
+  }
+}
+
+function reportMalformedOptionValue(option: CwtOption, report?: ClassificationReporter): void {
+  if (report === undefined) {
+    return;
+  }
+  const operator = option.value === null ? "" : ` ${option.negated ? "<>" : "="} `;
+  const value =
+    option.value === null ? "" : option.value.kind === "scalar" ? option.value.text : "{...}";
+  report({
+    kind: "malformed-option-value",
+    line: option.line,
+    text: `## ${option.name}${operator}${value}`,
+  });
 }
 
 function ambientScopeContext(

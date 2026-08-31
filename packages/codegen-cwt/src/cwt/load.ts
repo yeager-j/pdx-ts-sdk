@@ -11,7 +11,7 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 
-import { parseCwt } from "./parser.ts";
+import { parseCwt, type CwtDiagnostic } from "./parser.ts";
 import {
   buildRuleSet,
   readContentTypes,
@@ -49,12 +49,22 @@ const BASE_RULE_FILES = [
   "common/fleet_actions.cwt",
 ];
 
-function cwtFiles(root: string, relative = ""): string[] {
+/**
+ * Lists every `.cwt` file under `root`, as `/`-separated paths relative to it.
+ *
+ * The separator is fixed rather than the platform's for two reasons, both of
+ * which `path.join` would break on Windows. These strings are compared against
+ * the `/`-spelled literals in {@link BASE_RULE_FILES} and the manifest to find
+ * the files the primary load already covers, and they become the `file` on a
+ * parse diagnostic, which reaches the drift baseline — a reviewed artifact
+ * compared byte for byte on every platform CI runs.
+ */
+export function cwtFiles(root: string, relative = ""): string[] {
   const directory = path.join(root, relative);
   const files: string[] = [];
   for (const name of readdirSync(directory).sort()) {
     const file = path.join(directory, name);
-    const child = path.join(relative, name);
+    const child = relative === "" ? name : `${relative}/${name}`;
     if (statSync(file).isDirectory()) {
       files.push(...cwtFiles(root, child));
       continue;
@@ -66,19 +76,29 @@ function cwtFiles(root: string, relative = ""): string[] {
   return files;
 }
 
-/** Loads only content type declarations from an explicit list of CWT files. */
+/** Content type declarations and parser diagnostics loaded from CWT files. */
+export interface ContentTypeLoadResult {
+  /** Content type declarations keyed by their CWT type name. */
+  readonly contentTypes: ReadonlyMap<string, ContentType>;
+  /** Recoverable parser diagnostics from the loaded files. */
+  readonly diagnostics: readonly CwtDiagnostic[];
+}
+
+/** Loads content type declarations and parser diagnostics from explicit CWT files. */
 export function loadContentTypesFrom(
   root: string,
   files: readonly string[]
-): ReadonlyMap<string, ContentType> {
+): ContentTypeLoadResult {
   const contentTypes = new Map<string, ContentType>();
+  const diagnostics: CwtDiagnostic[] = [];
   for (const relative of files) {
     const parsed = parseCwt(readFileSync(path.join(root, relative), "utf8"), relative);
+    diagnostics.push(...parsed.diagnostics);
     for (const [name, contentType] of readContentTypes(parsed.nodes)) {
       contentTypes.set(name, contentType);
     }
   }
-  return contentTypes;
+  return { contentTypes, diagnostics };
 }
 
 function parseFile(root: string, relative: string): ParsedRuleFile {
