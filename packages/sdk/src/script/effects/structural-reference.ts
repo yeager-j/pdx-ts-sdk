@@ -1,6 +1,13 @@
-/** Handwritten display metadata for the SDK-owned effect methods. */
+/**
+ * Handwritten display metadata for the SDK-owned effect methods. The fixed PDXScript
+ * key each method records is not repeated here: it comes from the generated
+ * `STRUCTURAL_EFFECT_IDENTITY`, whose policy table is its only authority.
+ */
 
-import type { StructuralEffectMethod } from "../../generated/effect-policy.ts";
+import {
+  STRUCTURAL_EFFECT_IDENTITY,
+  type StructuralEffectMethod,
+} from "../../generated/effect-policy.ts";
 import type { ScopeName } from "../../generated/scopes.ts";
 import type { StructuralEffects } from "./types.ts";
 
@@ -10,7 +17,6 @@ type StructuralAvailability =
 
 interface StructuralEffectReference {
   readonly method: StructuralEffectMethod;
-  readonly key?: string;
   readonly kind: "structural";
   readonly availability: StructuralAvailability;
   readonly signature: string;
@@ -20,7 +26,6 @@ interface StructuralEffectReference {
 const referencesByMethod = {
   if: {
     method: "if",
-    key: "if",
     kind: "structural",
     availability: { kind: "universal" },
     signature: "if(condition: Trigger<S>, body: () => void): IfChain<S>;",
@@ -32,7 +37,6 @@ const referencesByMethod = {
   },
   hiddenEffect: {
     method: "hiddenEffect",
-    key: "hidden_effect",
     kind: "structural",
     availability: { kind: "universal" },
     signature: "readonly hiddenEffect: SameScopeEffectPath<S>;",
@@ -43,7 +47,6 @@ const referencesByMethod = {
   },
   randomList: {
     method: "randomList",
-    key: "random_list",
     kind: "structural",
     availability: { kind: "universal" },
     signature: "randomList(arms: ReadonlyArray<RandomListArm<S>>): void;",
@@ -51,7 +54,6 @@ const referencesByMethod = {
   },
   lockedRandomList: {
     method: "lockedRandomList",
-    key: "locked_random_list",
     kind: "structural",
     availability: { kind: "universal" },
     signature: "lockedRandomList(arms: ReadonlyArray<RandomListArm<S>>): void;",
@@ -59,7 +61,6 @@ const referencesByMethod = {
   },
   random: {
     method: "random",
-    key: "random",
     kind: "structural",
     availability: { kind: "universal" },
     signature:
@@ -68,7 +69,6 @@ const referencesByMethod = {
   },
   whileLoop: {
     method: "whileLoop",
-    key: "while",
     kind: "structural",
     availability: { kind: "universal" },
     signature: "whileLoop(args: { count?: number; limit?: Trigger<S> }, body: () => void): void;",
@@ -76,7 +76,6 @@ const referencesByMethod = {
   },
   saveEventTargetAs: {
     method: "saveEventTargetAs",
-    key: "save_event_target_as",
     kind: "structural",
     availability: { kind: "universal" },
     signature: "saveEventTargetAs(target: EventTarget<S>): void;",
@@ -87,7 +86,6 @@ const referencesByMethod = {
   },
   saveGlobalEventTargetAs: {
     method: "saveGlobalEventTargetAs",
-    key: "save_global_event_target_as",
     kind: "structural",
     availability: { kind: "universal" },
     signature: "saveGlobalEventTargetAs(target: EventTarget<S>): void;",
@@ -95,7 +93,6 @@ const referencesByMethod = {
   },
   addResource: {
     method: "addResource",
-    key: "add_resource",
     kind: "structural",
     availability: { kind: "universal" },
     signature: "addResource(args: { resource: string; amount: number; mult?: number }): void;",
@@ -103,7 +100,6 @@ const referencesByMethod = {
   },
   addEventChainCounter: {
     method: "addEventChainCounter",
-    key: "add_event_chain_counter",
     kind: "structural",
     availability: { kind: "scopes", scopes: ["country"] },
     signature:
@@ -112,7 +108,6 @@ const referencesByMethod = {
   },
   resetEventChainCounter: {
     method: "resetEventChainCounter",
-    key: "reset_event_chain_counter",
     kind: "structural",
     availability: { kind: "scopes", scopes: ["country"] },
     signature:
@@ -130,7 +125,6 @@ const referencesByMethod = {
   },
   target: {
     method: "target",
-    key: "target",
     kind: "structural",
     availability: {
       kind: "scopes",
@@ -183,4 +177,20 @@ const exactStructuralBaseMethods: [
   : never = true;
 void exactStructuralBaseMethods;
 
-export const STRUCTURAL_EFFECT_REFERENCES = Object.values(referencesByMethod);
+type IdentityMethod = (typeof STRUCTURAL_EFFECT_IDENTITY)[number]["method"];
+type MissingIdentityMethod = Exclude<StructuralEffectMethod, IdentityMethod>;
+type UnexpectedIdentityMethod = Exclude<IdentityMethod, StructuralEffectMethod>;
+const exactIdentityMethods: [MissingIdentityMethod, UnexpectedIdentityMethod] extends [never, never]
+  ? true
+  : never = true;
+void exactIdentityMethods;
+
+const fixedKeyByMethod = Object.fromEntries(
+  STRUCTURAL_EFFECT_IDENTITY.map((identity) => [identity.method, identity.key])
+) as Record<StructuralEffectMethod, string | null>;
+
+/** Reference rows for every SDK-owned effect method, carrying the fixed key it records. */
+export const STRUCTURAL_EFFECT_REFERENCES = Object.values(referencesByMethod).map((reference) => {
+  const key = fixedKeyByMethod[reference.method];
+  return key === null ? reference : { ...reference, key };
+});

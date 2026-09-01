@@ -44,15 +44,52 @@ const STRUCTURAL_EFFECTS = {
   },
 } as const satisfies Record<string, { readonly method: string | null; readonly reason: string }>;
 
-/** SDK-only methods with no CWT effect key. */
-export const SYNTHETIC_STRUCTURAL_EFFECT_METHODS = ["previewModifier", "target", "run"] as const;
+/** The fixed key an SDK-only structural method records, and whether a generated method records it too. */
+interface SyntheticStructuralEffect {
+  /** The fixed PDXScript key the method always records, or `null` when it records none. */
+  readonly key: string | null;
+  /** Present when a generated effect method records the same fixed key on purpose. */
+  readonly sharesKeyWithGenerated?: { readonly reason: string };
+}
+
+/**
+ * SDK-only structural methods the CWT rules never declare, with the fixed PDXScript
+ * key each records. `target` writes a real `target = { ... }` block even though the
+ * rules contain no `alias[effect:target]`, and `previewModifier` writes the `tooltip`
+ * block the generated `tooltip()` effect also writes.
+ */
+const SYNTHETIC_STRUCTURAL_EFFECTS = {
+  previewModifier: {
+    key: "tooltip",
+    sharesKeyWithGenerated: {
+      reason:
+        "previewModifier renders a non-executing tooltip through the same `tooltip` block the generated tooltip() effect records; the two methods deliberately share the key",
+    },
+  },
+  target: { key: "target" },
+  run: { key: null },
+} as const satisfies Record<string, SyntheticStructuralEffect>;
+
+/** One public structural method and the fixed PDXScript key it records. */
+export interface StructuralEffectIdentity {
+  /** The public SDK method name. */
+  readonly method: string;
+  /** The fixed PDXScript key the method always records, or `null` when it records none. */
+  readonly key: string | null;
+  /** Present when a generated effect method records the same fixed key on purpose. */
+  readonly sharesKeyWithGenerated?: { readonly reason: string };
+}
 
 /** Indexed effect ownership and the method sets consumed by generator validation. */
 export interface EffectPolicy {
   /** Ownership entries keyed by normalized CWT effect key. */
   readonly byKey: ReadonlyMap<string, EffectPolicyEntry>;
+  /** Method-to-key identity of every public structural method, sorted by method. */
+  readonly structuralIdentity: readonly StructuralEffectIdentity[];
   /** Methods implemented by the hand-written structural effects surface. */
   readonly structuralMethods: ReadonlySet<string>;
+  /** CWT effect keys owned by the structural surface, including keys with no public method. */
+  readonly structuralKeys: ReadonlySet<string>;
   /** CWT keys implemented as typed event-fire methods. */
   readonly fireKeys: ReadonlySet<string>;
   /** Every public method name across generated and hand-written effects. */
@@ -94,12 +131,19 @@ export function createEffectPolicy(rules: RuleSet): EffectPolicy {
     }
   }
 
-  const structuralMethods = new Set([
-    ...Object.values(STRUCTURAL_EFFECTS).flatMap((entry) =>
-      entry.method === null ? [] : [entry.method]
+  const structuralIdentity = [
+    ...Object.entries(STRUCTURAL_EFFECTS).flatMap(([key, spec]) =>
+      spec.method === null ? [] : [{ method: spec.method, key }]
     ),
-    ...SYNTHETIC_STRUCTURAL_EFFECT_METHODS,
-  ]);
+    ...Object.entries(SYNTHETIC_STRUCTURAL_EFFECTS).map(([method, spec]) => ({
+      method,
+      ...spec,
+    })),
+  ].sort((left, right) => compareStrings(left.method, right.method));
+  const structuralMethods = new Set(structuralIdentity.map((identity) => identity.method));
+  const structuralKeys = new Set(
+    [...byKey.values()].flatMap((entry) => (entry.owner === "structural" ? [entry.key] : []))
+  );
   const fireKeys = new Set(
     [...byKey.values()].flatMap((entry) => (entry.owner === "fire" ? [entry.key] : []))
   );
@@ -107,15 +151,13 @@ export function createEffectPolicy(rules: RuleSet): EffectPolicy {
     ...structuralMethods,
     ...[...byKey.values()].flatMap((entry) => (entry.method === null ? [] : [entry.method])),
   ]);
-  return { byKey, structuralMethods, fireKeys, publicMethods };
+  return { byKey, structuralIdentity, structuralMethods, structuralKeys, fireKeys, publicMethods };
 }
 
 /** Emits the generated constants and union types that expose effect ownership to the SDK. */
 export function emitEffectPolicyProtocol(policy: EffectPolicy): string {
   const structural = [...policy.structuralMethods].sort();
-  const structuralKeys = [...policy.byKey.values()]
-    .flatMap((entry) => (entry.owner === "structural" ? [entry.key] : []))
-    .sort();
+  const structuralKeys = [...policy.structuralKeys].sort();
   const fireKeys = [...policy.fireKeys].sort();
   const nonGeneratedEntries = [...policy.byKey.values()]
     .filter((entry) => entry.owner !== "generated")
@@ -123,6 +165,16 @@ export function emitEffectPolicyProtocol(policy: EffectPolicy): string {
   return (
     `export const EFFECT_OWNERSHIP = ${JSON.stringify(nonGeneratedEntries)} as const;\n\n` +
     `export const STRUCTURAL_EFFECT_METHODS = ${JSON.stringify(structural)} as const;\n\n` +
+    "/**\n" +
+    " * The fixed PDXScript key each public structural method records, or `null` when\n" +
+    " * the method records no fixed key. The sole authority for structural\n" +
+    " * method-to-key identity; the hand-written reference ledger reads its keys from here.\n" +
+    " *\n" +
+    " * A row carrying `sharesKeyWithGenerated` records a key that a generated effect\n" +
+    " * method also records, deliberately: both methods write the same block, so the\n" +
+    " * key identifies the block rather than the method that produced it.\n" +
+    " */\n" +
+    `export const STRUCTURAL_EFFECT_IDENTITY = ${JSON.stringify(policy.structuralIdentity)} as const;\n\n` +
     `export const STRUCTURAL_EFFECT_KEYS = ${JSON.stringify(structuralKeys)} as const;\n\n` +
     `export const FIRE_EFFECT_KEYS = ${JSON.stringify(fireKeys)} as const;\n\n` +
     "export type StructuralEffectMethod = (typeof STRUCTURAL_EFFECT_METHODS)[number];\n" +
